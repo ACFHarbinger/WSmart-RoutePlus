@@ -51,6 +51,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `AttentionModel.__init__` default `n_encode_layers` aligned to 3 (Kool
   2019 / `am.yaml`); was 2. Tests that need a thinner net already pass the
   count explicitly.
+- `AttentionModelPolicy` default `hidden_dim` aligned to 512 (Kool 2019
+  encoder FF width / `am.yaml`); was 128. Integration tests already pass
+  128 explicitly.
 
 #### Hydra task aliases (`2026-08-27`)
 
@@ -179,7 +182,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Improvement family weaker: DACT 3/5 (dual-aspect collapsed), NeuOpt 3/5
   (encoder ignores incumbent tour), N2S 2/5 (k-NN attention on `tsp_kopt`,
   not PDP). Sym-NCO subsequently 4/5 after wiring the dead
-  `problem_symmetricity_loss` (see Fixed).
+  `problem_symmetricity_loss` (see Fixed). Line-check of the PDFs:
+  `MATNet.pdf` is a PV-forecasting namesake, not Kwon 2021; `NARGNN.pdf`
+  is Li/Chen/Koltun GCN+tree-search while `core/nargnn/` is a TSP heatmap
+  (score 2/5 vs that PDF). DR-ALNS Table 1 matches the 7-d state 1:1.
 
 #### TTOP Hydra config tree (#60, training/eval side) (`2026-08-27`)
 

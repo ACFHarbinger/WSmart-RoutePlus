@@ -22,10 +22,10 @@ Confirmed against the filesystem, not assumed from names. POMO has no `logic/src
 | `DeepACO.pdf` | `logic/src/models/core/deepaco/` | NAR heatmap + ACO |
 | `GFACS.pdf` | `logic/src/models/core/gfacs/` | DeepACO + GFlowNet TB |
 | `GLOP.pdf` | `logic/src/models/core/glop/` | hierarchical partition + local |
-| `MATNet.pdf` | `logic/src/models/core/matnet/` | matrix row/col constructive |
+| `MATNet.pdf` (**wrong PDF**: PV forecasting) | `logic/src/models/core/matnet/` (Kwon mixed-score) | matrix row/col constructive |
 | `MDAM.pdf` | `logic/src/models/core/mdam/` | multi-decoder constructive |
 | `N2S.pdf` | `logic/src/models/core/n2s/` | improvement (k-NN attention) |
-| `NARGNN.pdf` | `logic/src/models/core/nargnn/` | NAR GNN heatmap |
+| `NARGNN.pdf` (Li/Chen/Koltun GCN+tree search) | `logic/src/models/core/nargnn/` (TSP heatmap, no tree search) | mismatch |
 | `NeuOpt.pdf` | `logic/src/models/core/neuopt/` | improvement (pairwise) |
 | `PolyNet.pdf` | `logic/src/models/core/polynet/` | K-conditioned AM |
 
@@ -39,7 +39,8 @@ Shared building blocks most `core/` models compose: `logic/src/models/subnets/` 
 
 15 of 15 bibliography papers scored. Pattern:
 
-- Constructive AM-family (AM, Pointer, MDAM, PolyNet, MATNet) and NAR/ACO-family (NARGNN, DeepACO, GFACS, GLOP, DR-ALNS) are real implementations of the named papers, typically 4/5, with default-value or solver-choice drift rather than missing algorithms.
+- Constructive AM-family (AM, Pointer, MDAM, PolyNet) and ACO-family (DeepACO, GFACS, GLOP, DR-ALNS) are real implementations of the named papers, typically 4/5, with default-value or solver-choice drift rather than missing algorithms.
+- Two bibliography PDFs do not match the code they sit next to: `MATNet.pdf` is a PV-forecasting paper; `NARGNN.pdf` is Li/Chen/Koltun GCN+tree-search while `core/nargnn/` is a TSP heatmap constructor.
 - POMO and Sym-NCO are **training methods** on AM, not separate `core/` networks. Sym-NCO's problem-symmetricity loss is now wired (it was a commented no-op: `loss_ps` stayed 0).
 - The three improvement models (DACT, NeuOpt, N2S) share one pairwise `(i,j)` decoder template. DACT still has CPE; the dual-aspect collaborative attention that gives the paper its name is collapsed to a single stream. NeuOpt's encoder ignores the current tour. N2S keeps k-NN attention but is wired to `tsp_kopt`, not pickup-and-delivery.
 
@@ -49,7 +50,7 @@ Shared building blocks most `core/` models compose: `logic/src/models/subnets/` 
 
 | Model | Score | Rationale |
 | :---- | :---- | :-------- |
-| **AM** | 4/5 | Encoder/decoder/clip/mask match Kool et al. 2019. YAML defaults still diverge (instance norm, GELU). Class default `n_encode_layers` aligned to paper/YAML 3. `AttentionModelPolicy.hidden_dim` still defaults to 128 vs paper 512. |
+| **AM** | 4/5 | Encoder/decoder/clip/mask match Kool et al. 2019. Class defaults for depth and FF width now match the paper (3 / 512). YAML still uses instance norm and GELU. |
 | **Pointer** | 4/5 | LSTM encoder + pointer decoder with masking is Vinyals 2015. `tanh_clipping=10` is the AM-era clip, not in the original Ptr-Net paper. YAML `hidden_dim=128` vs policy default 512. |
 | **POMO** | 4/5 | Implemented as a REINFORCE trainer with dihedral-8 augment and multi-start shared baseline (Kwon 2020), plus `pomo_size` on AM. No standalone POMO network — that is how the paper is meant to be used. `mandatory_starts_only` is a domain extension. |
 | **Sym-NCO** | 4/5 | Projection head + all three paper losses. `problem_symmetricity_loss` was a commented no-op; now called. Inherits AM YAML norm/GELU drift. |
@@ -58,11 +59,11 @@ Shared building blocks most `core/` models compose: `logic/src/models/subnets/` 
 | **N2S** | 2/5 | k-NN masked attention is the paper's efficiency trick. Wired to `tsp_kopt` with a generic pair decoder, not PDP ruin/recreate of pickup-delivery pairs. |
 | **DeepACO** | 4/5 | GNN heatmap + ACO ants with α/β/ρ and optional local search. Default `n_iterations=1` is a thin ACS loop. |
 | **GFACS** | 4/5 | DeepACO plus learnable `logZ` and Trajectory Balance in `gfacs/model.py`. |
-| **DR-ALNS** | 4/5 | PPO agent with four heads (destroy/repair/severity/temperature) driving real ALNS operators. Compact 7-d search state. |
+| **DR-ALNS** | 4/5 | PPO, four heads, two×64 MLP, and Table 1's seven state features in order. Operator zoo is a VRPP subset. |
 | **MDAM** | 4/5 | Shared encoder, 5 decoder paths, pairwise KL to discourage collapse. |
 | **MATNet** | 4/5 | Row/column mixed-score encoder (Kwon et al. 2021), 5 layers, instance norm. |
 | **GLOP** | 4/5 | NAR partition then local subproblem. Default local solver is `"greedy"`, not LKH. |
-| **NARGNN** | 4/5 | NAR edge heatmap from a deep GNN (15 graph layers + 5 heatmap layers). |
+| **NARGNN** | 2/5 | `NARGNN.pdf` is Li, Chen & Koltun (GCN + guided tree search for vertex-subset NP-hard problems). The code is a TSP edge-heatmap NAR constructor (Joshi-style), with no tree search. |
 | **PolyNet** | 4/5 | AM encoder conditioned on K strategy vectors via `PolyNetDecoder`. |
 
 ---
@@ -103,14 +104,13 @@ Shared building blocks most `core/` models compose: `logic/src/models/subnets/` 
 
 3. **Class-default drift**
    - `AttentionModel.__init__` default `n_encode_layers` is now 3 (was 2; paper and `am.yaml` already said 3)
-   - `AttentionModelPolicy` default `hidden_dim=128`, paper and YAML say 512
-   - Instantiating `AttentionModelPolicy(...)` without Hydra still gets a thinner FF than Kool 2019. Factory paths that go through `am.yaml` are fine.
+   - `AttentionModelPolicy` default `hidden_dim` is now 512 (was 128; paper and `am.yaml` already said 512). Tests that want a thinner net already pass the count.
 
 4. **Extensions, labelled as such**
    - `pomo_size`, `spatial_bias`, `connection_type` (residual/dense/hyper), `temporal_horizon`, problem-specific context embedders (`VRPPContextEmbedder`, `WCVRPContextEmbedder`)
    - These are framework features, not paper claims
 
-**Overall**: architecture is the paper's AM. Score is 4/5 because of the class-default / YAML / paper three-way split on depth, FF width, and norm. Not a 3 — the composed training default is still an AM.
+**Overall**: architecture is the paper's AM. Class defaults for depth and FF width now match Kool 2019. Remaining 4/5 is YAML instance-norm / GELU vs the paper's batch-norm / ReLU.
 
 ---
 
@@ -230,7 +230,7 @@ POMO is a **training algorithm** for an existing constructive policy (almost alw
 
 ## 7. N2S (Li et al.)
 
-**Paper**: Li, Yan & Wu, Neural Neighborhood Search for pickup-and-delivery (`N2S.pdf`)
+**Paper**: Ma et al., "Efficient Neural Neighborhood Search for Pickup and Delivery Problems" (`N2S.pdf`)
 **Implementation**: `logic/src/models/core/n2s/{encoder,decoder,policy,model}.py`
 **Faithfulness**: ★★☆☆☆ (2/5)
 
@@ -306,8 +306,9 @@ POMO is a **training algorithm** for an existing constructive policy (almost alw
 
 ### Differences
 
-- Operator catalogue is a subset of a full ALNS zoo (three destroy, two repair)
-- Search-state feature vector is 7-d; not re-derived against the paper's exact feature list in this pass
+- Operator catalogue is a subset of a full ALNS zoo (three destroy, two repair). The paper's OPSWTW instantiation uses problem-specific destroy/repair; the code uses VRPP operators.
+
+**State vector vs Table 1 (line-checked).** Paper Table 1 is seven problem-agnostic features. `DRALNSState.to_tensor` emits exactly those, in order: Best improved, Current accepted, Current improved, Is current best, Cost difference best, Stagnation count, Search budget. MLP is two hidden layers of size 64, matching the paper's PPO network. Four action heads match A1–A4 (destroy, repair, severity 1–10, acceptance temperature).
 
 ---
 
@@ -332,20 +333,25 @@ POMO is a **training algorithm** for an existing constructive policy (almost alw
 
 ## 12. MATNet (Kwon et al. 2021)
 
-**Paper**: Kwon et al., "Matrix Encoding Networks for Neural Combinatorial Optimization" (`MATNet.pdf`)
-**Implementation**: `logic/src/models/core/matnet/`; `subnets/encoders/matnet/` (row/col layers); `subnets/decoders/matnet/`
-**Faithfulness**: ★★★★☆ (4/5)
+**Intended paper**: Kwon et al., Matrix Encoding Networks for Combinatorial Optimization (NeurIPS 2021)
+**File in `bibliography/models/MATNet.pdf`**: **wrong PDF** — Tortora et al., "MATNet: Multi-Level Fusion Transformer-Based Model for Day-Ahead PV Generation Forecasting" (IEEE Trans. Smart Grid). Namesake collision; that paper is not implemented here.
+**Implementation**: `logic/src/models/core/matnet/`; `MixedScoreMHA` in `subnets/modules/matnet_attention.py`
+**Faithfulness**: ★★★★☆ (4/5) to Kwon et al. (the architecture the code comments cite). Unscored against the PDF that is actually in the folder.
 
-### What matches
+### Mixed-score equation (line-checked against the Kwon architecture)
 
-- Dual embeddings: row and column, mixed-score attention over the cost/distance matrix
-- `MatNetEncoder` stacks `MatNetEncoderLayer` on `(row_emb, col_emb, matrix)`
-- Default `num_layers=5`, instance norm, tanh clip 10 — ATSP-scale MATNet
-- Init embedding is matrix-statistic based (`MatNetInitEmbedding`)
+`MixedScoreMHA.forward`:
+
+\[
+\mathrm{compat} = \frac{1}{\sqrt{d}} \big( Q_{\mathrm{row}} K_{\mathrm{col}}^\top + (Q_{\mathrm{col}} K_{\mathrm{row}}^\top)^\top + W_{\mathrm{mat}} \odot M \big)
+\]
+
+then row-softmax over columns and column-softmax over rows, values from the opposite stream. That *is* mixed-score attention (dot-product both ways plus a learned scale on the raw cost matrix). Dual FF + instance-norm residuals on each stream match the encoder-layer template. Defaults: 5 layers, FF 512, instance norm.
 
 ### Differences
 
-- Written for matrix problems (ATSP/FFSP). Using it on Euclidean VRPP would be a domain stretch; the architecture itself is the paper's.
+- Written for matrix problems (ATSP/FFSP). Euclidean VRPP is a domain stretch.
+- The bibliography file does not contain this paper. Anyone reading `MATNet.pdf` from `bibliography/models/` will audit the wrong work.
 
 ---
 
@@ -369,19 +375,23 @@ POMO is a **training algorithm** for an existing constructive policy (almost alw
 
 ## 14. NARGNN
 
-**Paper**: Non-autoregressive GNN heatmap constructor (`NARGNN.pdf`; Joshi et al. 2019 lineage)
-**Implementation**: `logic/src/models/core/nargnn/`; `subnets/encoders/nargnn/`
-**Faithfulness**: ★★★★☆ (4/5)
+**PDF in folder**: Li, Chen & Koltun, "Combinatorial Optimization with Graph Convolutional Networks and Guided Tree Search" (arXiv:1810.10659)
+**Implementation**: `logic/src/models/core/nargnn/` — NAR TSP *edge heatmap* + greedy/sampling decoder
+**Faithfulness**: ★★☆☆☆ (2/5) to the PDF that is actually in `bibliography/models/`
 
-### What matches
+### What the PDF describes
 
-- Predicts an `[N, N]` edge heatmap, then a NAR decoder (greedy / sampling / beam) extracts a tour
-- Deep GNN: 15 graph-encoder layers + 5 heatmap-generator layers, SiLU, mean aggregation — in the Joshi-style "deep GCN heatmap" family
+- Vertex-wise GCN that scores whether a *vertex* is in the optimal set
+- Diverse solution heads + **guided tree search** to explore the combinatorial space
+- Evaluated on SAT / MVC / MAXCUT-style problems, including graphs with 10⁵ nodes
 
-### Differences
+### What the code does
 
-- Defaults (`embed_dim=64`, `env_name="tsp"`) are TSP-sized, not VRPP-sized
-- Exact layer count / residual recipe vs the PDF was not line-checked; the *kind* of model matches
+- Predicts an `[N, N]` *edge* heatmap (Joshi-style NAR TSP constructor)
+- No tree search, no vertex-inclusion head, no SAT/MVC tasks
+- 15 graph layers + 5 heatmap layers, SiLU, mean aggregation
+
+The filename `NARGNN` matches a different literature thread (non-autoregressive GNN heatmaps). The PDF does not. This is a bibliography mapping error, not a quietly drifted Joshi clone.
 
 ---
 
@@ -409,6 +419,14 @@ POMO is a **training algorithm** for an existing constructive policy (almost alw
 1. **Class vs YAML defaults** (AM §1, Pointer §2) is the constructive-family failure mode. Factory paths that compose Hydra YAMLs are closer to the papers than raw `Cls(...)` construction.
 2. **Improvement-family copy-paste.** DACT, NeuOpt, and N2S decoders are the same pairwise Q·K block. Differentiating paper claims (DAC-Att, k-opt, PD ruin/recreate) did not survive the shared `ImprovementPolicy` template.
 3. **Sym-NCO `loss_ps`** was a concrete defect (helper existed, call did not). Wired in the follow-up commit; the invariance log now tracks the computed term.
-4. **Unscored `core/` dirs** (`hybrid_attention_model/`, `moe/`, `temporal_attention_model/`) still have no `bibliography/models/` PDF.
+4. **Bibliography PDF mismatches.** `MATNet.pdf` is a PV-forecasting transformer, not Kwon's matrix encoder. `NARGNN.pdf` is Li/Chen/Koltun GCN+tree-search, not the heatmap constructor in `core/nargnn/`. DR-ALNS Table 1 matches the 7-d state 1:1. Mixed-score attention in code matches Kwon's formula even though the PDF in the folder does not.
 
-No further bibliography/models papers remain. #63 first pass is complete; a later pass can line-check MATNet mixed-score equations and the DR-ALNS 7-d state against the PDFs.
+## In-house `core/` models (no PDF in `bibliography/models/`)
+
+Not scored 1–5. Recorded so they are not mistaken for missing bibliography entries.
+
+| Dir | What it is |
+|---|---|
+| `temporal_attention_model/` | AM + GRU/LSTM fill-level predictor fused before encoding. In-house WCVRP extension (`tam.yaml`). |
+| `moe/` | AM with sparse MoE layers (`num_experts=4`, top-2, noisy gating). Class default encoder depth still 2. |
+| `hybrid_attention_model/` | Two-stage: pick a vectorized classical constructor (HGS/ALNS/ACO) then apply vector local-search operators. Neural+OR hybrid, not a named paper in this folder. |
