@@ -28,6 +28,7 @@ from tensordict import TensorDict
 from logic.src.pipeline.rl.core.pomo import POMO
 from logic.src.utils.tasks.losses import (
     invariance_loss,
+    problem_symmetricity_loss,
     solution_symmetricity_loss,
 )
 
@@ -123,21 +124,27 @@ class SymNCO(POMO):
             ll = out["log_likelihood"].view(bs, n_aug, n_start)
 
             # 1. Problem symmetricity loss (consistency across augmentations)
+            loss_ps = problem_symmetricity_loss(reward, ll, dim=1)
 
             # 2. Solution symmetricity loss (consistency across starts)
             # Baseline is mean across starts for each augmentation
             loss_ss = solution_symmetricity_loss(reward, ll, dim=-1)
 
             # 3. Invariance loss (invariant representation across augmentations)
-            loss_inv_val: float | torch.Tensor
-            loss_inv_val = invariance_loss(out["proj_embeddings"], n_aug) if "proj_embeddings" in out else 0.0
+            if "proj_embeddings" in out:
+                loss_inv = invariance_loss(out["proj_embeddings"], n_aug)
+            else:
+                loss_inv = torch.zeros((), device=reward.device)
 
-            loss = loss_ps + self.beta * loss_ss + self.alpha * loss_inv_val
+            loss = loss_ps + self.beta * loss_ss + self.alpha * loss_inv
 
             if self.entropy_weight > 0 and "entropy" in out:
                 loss = loss - self.entropy_weight * out["entropy"].mean()
 
             out["loss"] = loss
+            out["loss_ps"] = loss_ps
+            out["loss_ss"] = loss_ss
+            out["loss_inv"] = loss_inv
 
             # Update metrics
             best_reward, _ = reward.view(bs, -1).max(dim=-1)

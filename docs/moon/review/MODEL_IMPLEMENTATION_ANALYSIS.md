@@ -40,7 +40,7 @@ Shared building blocks most `core/` models compose: `logic/src/models/subnets/` 
 15 of 15 bibliography papers scored. Pattern:
 
 - Constructive AM-family (AM, Pointer, MDAM, PolyNet, MATNet) and NAR/ACO-family (NARGNN, DeepACO, GFACS, GLOP, DR-ALNS) are real implementations of the named papers, typically 4/5, with default-value or solver-choice drift rather than missing algorithms.
-- POMO and Sym-NCO are **training methods** on AM, not separate `core/` networks. Sym-NCO's problem-symmetricity loss is dead code: `shared_step` comments the term, never imports `problem_symmetricity_loss`, and adds a tensor that stays 0.
+- POMO and Sym-NCO are **training methods** on AM, not separate `core/` networks. Sym-NCO's problem-symmetricity loss is now wired (it was a commented no-op: `loss_ps` stayed 0).
 - The three improvement models (DACT, NeuOpt, N2S) share one pairwise `(i,j)` decoder template. DACT still has CPE; the dual-aspect collaborative attention that gives the paper its name is collapsed to a single stream. NeuOpt's encoder ignores the current tour. N2S keeps k-NN attention but is wired to `tsp_kopt`, not pickup-and-delivery.
 
 ---
@@ -49,10 +49,10 @@ Shared building blocks most `core/` models compose: `logic/src/models/subnets/` 
 
 | Model | Score | Rationale |
 | :---- | :---- | :-------- |
-| **AM** | 4/5 | Encoder/decoder/clip/mask match Kool et al. 2019. YAML defaults diverge (instance norm, GELU, extras); class defaults diverge from both YAML and the paper (`n_encode_layers=2`). |
+| **AM** | 4/5 | Encoder/decoder/clip/mask match Kool et al. 2019. YAML defaults still diverge (instance norm, GELU). Class default `n_encode_layers` aligned to paper/YAML 3. `AttentionModelPolicy.hidden_dim` still defaults to 128 vs paper 512. |
 | **Pointer** | 4/5 | LSTM encoder + pointer decoder with masking is Vinyals 2015. `tanh_clipping=10` is the AM-era clip, not in the original Ptr-Net paper. YAML `hidden_dim=128` vs policy default 512. |
 | **POMO** | 4/5 | Implemented as a REINFORCE trainer with dihedral-8 augment and multi-start shared baseline (Kwon 2020), plus `pomo_size` on AM. No standalone POMO network — that is how the paper is meant to be used. `mandatory_starts_only` is a domain extension. |
-| **Sym-NCO** | 3/5 | Projection head + invariance + solution-symmetricity are present. Problem-symmetricity loss is commented in `shared_step` and never called (`loss_ps` stays 0). |
+| **Sym-NCO** | 4/5 | Projection head + all three paper losses. `problem_symmetricity_loss` was a commented no-op; now called. Inherits AM YAML norm/GELU drift. |
 | **DACT** | 3/5 | CPE and pairwise 2-opt decoder exist. Dual-aspect collaborative attention is a single stream (coords + positional add, then self-attention). |
 | **NeuOpt** | 3/5 | Pairwise decoder matches the improvement template; encoder never reads the current tour; no explicit k-opt action parameterisation. Relies on `tsp_kopt` env. |
 | **N2S** | 2/5 | k-NN masked attention is the paper's efficiency trick. Wired to `tsp_kopt` with a generic pair decoder, not PDP ruin/recreate of pickup-delivery pairs. |
@@ -101,10 +101,10 @@ Shared building blocks most `core/` models compose: `logic/src/models/subnets/` 
    - `am.yaml`: GELU
    - Assessment: modern Transformer default; undocumented relative to the paper. Not a correctness bug.
 
-3. **Class-default drift (the real mismatch)**
-   - `AttentionModel.__init__` default `n_encode_layers=2` (`model.py`), paper and YAML say 3
+3. **Class-default drift**
+   - `AttentionModel.__init__` default `n_encode_layers` is now 3 (was 2; paper and `am.yaml` already said 3)
    - `AttentionModelPolicy` default `hidden_dim=128`, paper and YAML say 512
-   - Anyone who instantiates `AttentionModel(...)` / `AttentionModelPolicy(...)` without the Hydra YAML gets a thinner net than Kool 2019. Factory paths that go through `am.yaml` are fine.
+   - Instantiating `AttentionModelPolicy(...)` without Hydra still gets a thinner FF than Kool 2019. Factory paths that go through `am.yaml` are fine.
 
 4. **Extensions, labelled as such**
    - `pomo_size`, `spatial_bias`, `connection_type` (residual/dense/hyper), `temporal_horizon`, problem-specific context embedders (`VRPPContextEmbedder`, `WCVRPContextEmbedder`)
@@ -165,7 +165,7 @@ POMO is a **training algorithm** for an existing constructive policy (almost alw
 
 **Paper**: Kim, Park & Park, "Sym-NCO: Leveraging Symmetricity for Neural Combinatorial Optimization", NeurIPS 2022 (`Sym-NCO.pdf`)
 **Implementation**: `logic/src/models/core/attention_model/symnco_policy.py` (projection head); `logic/src/pipeline/rl/core/symnco.py` (losses); `logic/configs/models/symnco.yaml`
-**Faithfulness**: ★★★☆☆ (3/5)
+**Faithfulness**: ★★★★☆ (4/5)
 
 ### What matches
 
@@ -176,11 +176,11 @@ POMO is a **training algorithm** for an existing constructive policy (almost alw
 
 ### Differences
 
-1. **Problem-symmetricity loss is dead.** `SymNCO.shared_step` comments "1. Problem symmetricity loss" and then never computes it. `problem_symmetricity_loss` is implemented and unit-tested, but `symnco.py` does not import it. `loss_ps` is initialised to `0.0` and added into the total. The paper's problem-symmetricity term (consistency across geometric augmentations of the *instance*) is therefore always zero.
-2. **Logging bug attached to the same block.** `self.log("train/loss_inv", loss_inv)` logs the leftover zero tensor, not `loss_inv_val`.
-3. Same AM default-drift inheritance as §1 (instance norm / GELU in `symnco.yaml`).
+1. **Problem-symmetricity loss was dead; now wired.** `shared_step` commented the term and never imported `problem_symmetricity_loss`. It now calls it on dim 1 (augmentation axis), matching `solution_symmetricity_loss` on dim -1 (starts). Regression: `test_shared_step_includes_problem_symmetricity_loss`.
+2. **`train/loss_inv` logged the leftover zero tensor.** It now logs the computed invariance term.
+3. Same AM YAML drift as §1 (instance norm / GELU in `symnco.yaml`).
 
-**Overall**: the projection head and two of three paper losses are live. Dropping the named third loss is why this is 3/5, not 4. Flagged for #61 rather than silently patched here.
+**Overall**: all three paper losses are live. Remaining 4/5 is inherited AM default/YAML drift, not a missing algorithm.
 
 ---
 
@@ -408,7 +408,7 @@ POMO is a **training algorithm** for an existing constructive policy (almost alw
 
 1. **Class vs YAML defaults** (AM §1, Pointer §2) is the constructive-family failure mode. Factory paths that compose Hydra YAMLs are closer to the papers than raw `Cls(...)` construction.
 2. **Improvement-family copy-paste.** DACT, NeuOpt, and N2S decoders are the same pairwise Q·K block. Differentiating paper claims (DAC-Att, k-opt, PD ruin/recreate) did not survive the shared `ImprovementPolicy` template.
-3. **Sym-NCO `loss_ps`** is a concrete defect, not a scoring quibble: the helper exists, the call does not. Logged on the bus for #61.
+3. **Sym-NCO `loss_ps`** was a concrete defect (helper existed, call did not). Wired in the follow-up commit; the invariance log now tracks the computed term.
 4. **Unscored `core/` dirs** (`hybrid_attention_model/`, `moe/`, `temporal_attention_model/`) still have no `bibliography/models/` PDF.
 
 No further bibliography/models papers remain. #63 first pass is complete; a later pass can line-check MATNet mixed-score equations and the DR-ALNS 7-d state against the PDFs.

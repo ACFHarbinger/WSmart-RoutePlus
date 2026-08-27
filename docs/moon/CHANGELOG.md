@@ -35,6 +35,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+#### Sym-NCO problem-symmetricity loss was a no-op (`2026-08-27`)
+
+- `SymNCO.shared_step` commented "1. Problem symmetricity loss" but never
+  called `problem_symmetricity_loss`; `loss_ps` stayed 0, so the paper's
+  instance-augmentation consistency term did not train. Wired the call
+  (augmentation axis, dim=1) next to the already-live solution-symmetricity
+  term. `train/loss_inv` now logs the computed invariance loss instead of
+  the leftover zero tensor. Regression:
+  `test_shared_step_includes_problem_symmetricity_loss`.
+- `AttentionModel.__init__` default `n_encode_layers` aligned to 3 (Kool
+  2019 / `am.yaml`); was 2. Tests that need a thinner net already pass the
+  count explicitly.
+
 #### Hydra task aliases (`2026-08-27`)
 
 - The documented `evaluation` and `sim_hpo` CLI aliases now select the real
@@ -156,8 +169,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - First pass complete (15/15). Constructive/NAR/ACO family mostly 4/5.
   Improvement family weaker: DACT 3/5 (dual-aspect collapsed), NeuOpt 3/5
   (encoder ignores incumbent tour), N2S 2/5 (k-NN attention on `tsp_kopt`,
-  not PDP). Sym-NCO 3/5: `problem_symmetricity_loss` exists but is never
-  called from `shared_step` (`loss_ps` stays 0) — flagged for #61.
+  not PDP). Sym-NCO subsequently 4/5 after wiring the dead
+  `problem_symmetricity_loss` (see Fixed).
 
 #### TTOP Hydra config tree (#60, training/eval side) (`2026-08-27`)
 

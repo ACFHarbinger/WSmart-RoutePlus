@@ -70,7 +70,7 @@ class AttentionModel(DecodingMixin, nn.Module):
         hidden_dim: int,
         problem: Any,
         component_factory: NeuralComponentFactory,
-        n_encode_layers: int = 2,
+        n_encode_layers: int = 3,
         n_encode_sublayers: Optional[int] = None,
         n_decode_layers: Optional[int] = None,
         dropout_rate: float = 0.1,
