@@ -152,8 +152,8 @@ data) before committing to the larger RL architecture change in **Option A**.
 directly rather than treating each stream as independent.
 
 **Effort × Impact**: High effort (Option A/C) / Medium effort (Option B) /
-High impact, contingent on future heterogeneous-fleet experiments `[Blocked]`
-— depends on single-vehicle TTOP landing first.
+High impact, contingent on future heterogeneous-fleet experiments
+— single-vehicle TTOP simulator integration landed 2026-08-27 (#59).
 
 ---
 
@@ -168,10 +168,10 @@ High impact, contingent on future heterogeneous-fleet experiments `[Blocked]`
 | §E.2 Option B+C (TSPLIB loader)                    | Medium    | Very High | P2              |
 | §E.5 Option B (fill-rate calibration)              | Medium    | Very High | P2              |
 | §E.4 Option C (contextual bandit policy selection) | Medium    | Very High | P2 `[Research]` |
+| §E.8 Option B (multi-instance heterogeneous fleet) | Medium    | High      | P2              |
 | §E.3 Option A (FastAPI server)                     | High      | High      | P3              |
 | §E.4 Option B (MetaRNN online adaptation)          | Very High | Very High | P3 `[Research]` |
 | §E.6 Option C (conditional generator)              | Very High | High      | P3 `[Research]` |
-| §E.8 Option B (multi-instance heterogeneous fleet) | Medium    | High      | P2 `[Blocked]`  |
 | §E.8 Option A (true fleet RL envs)                 | High      | High      | P3 `[Research]` |
 
 ---

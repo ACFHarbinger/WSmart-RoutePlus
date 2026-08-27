@@ -48,7 +48,7 @@ class SimConfig:
         policies: List of policy configurations to test on the WSR simulator.
         full_policies: Expanded policy names after config expansion (populated at runtime).
         data_distribution: Distribution to generate the bins daily waste fill.
-        problem: The problem the model was trained to solve.
+        problem: Problem variant to simulate (e.g. 'vrpp', 'cvrpp', 'wcvrp', 'cwcvrp', 'scwcvrp', 'ttop').
         days: Number of days to run the simulation for.
         seed: Random seed.
         output_dir: Name of WSR simulator test output directory.

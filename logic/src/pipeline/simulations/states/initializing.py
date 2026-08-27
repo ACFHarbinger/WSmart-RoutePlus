@@ -35,7 +35,7 @@ from logic.src.data.processor import (
 from logic.src.pipeline.simulations.actions.base import _flatten_config
 from logic.src.pipeline.simulations.bins import Bins
 from logic.src.pipeline.simulations.checkpoints import SimulationCheckpoint
-from logic.src.pipeline.simulations.repository import load_area_and_waste_type_params
+from logic.src.pipeline.simulations.repository import load_area_and_waste_type_params, load_temporal_params
 from logic.src.pipeline.simulations.states.base.base import SimState
 from logic.src.pipeline.simulations.states.running import RunningState
 from logic.src.tracking.logging.log_utils import setup_system_logger
@@ -205,7 +205,7 @@ class InitializingState(SimState):
                 print(f"\n[WARNING] Failed to load neural config {neural_cfg_path}: {e}")
 
     def _setup_capacities(self, ctx: SimulationContext) -> None:
-        """
+        """Sets up vehicle capacity and temporal parameters.
 
         Args:
             ctx: The simulation context object.
@@ -216,6 +216,11 @@ class InitializingState(SimState):
         graph = get_graph_config(sim)
         capacities, _, _, _, _ = load_area_and_waste_type_params(graph.area, graph.waste_type)
         ctx.vehicle_capacity = capacities
+
+        shift_hours, avg_speed_kmh, service_time_h = load_temporal_params()
+        ctx.shift_hours = shift_hours
+        ctx.avg_speed_kmh = avg_speed_kmh
+        ctx.service_time_h = service_time_h
 
     def _load_checkpoint_if_needed(self, ctx: SimulationContext) -> Tuple[Optional[Any], int]:
         """

@@ -259,12 +259,26 @@ class BaseRoutingPolicy(PolicyVizMixin, IRouteConstructor):
         # revenue_kg (€/kg) * density (kg/L) * bin_volume (L) / 100 = € per 1% fill
         revenue_scaled = revenue_kg * (density * bin_volume / 100.0)
 
+        shift_hours = policy_config.get("shift_hours")
+        avg_speed_kmh = policy_config.get("avg_speed_kmh")
+        service_time_h = policy_config.get("service_time_h")
+        if shift_hours is None or avg_speed_kmh is None or service_time_h is None:
+            from logic.src.pipeline.simulations.repository import load_temporal_params
+
+            t_shift, t_speed, t_service = load_temporal_params()
+            shift_hours = shift_hours if shift_hours is not None else t_shift
+            avg_speed_kmh = avg_speed_kmh if avg_speed_kmh is not None else t_speed
+            service_time_h = service_time_h if service_time_h is not None else t_service
+
         values: Dict[str, Any] = {
             "Q": capacity,
             "R": revenue_scaled,
             "C": cost_unit,
             "B": density,
             "V": bin_volume,
+            "shift_hours": float(shift_hours),
+            "avg_speed_kmh": float(avg_speed_kmh),
+            "service_time_h": float(service_time_h),
         }
         # Merge all policy config params into values for solver consumption
         values.update(policy_config)

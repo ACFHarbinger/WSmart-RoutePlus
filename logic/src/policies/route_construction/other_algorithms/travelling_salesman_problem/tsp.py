@@ -27,7 +27,7 @@ Reference:
     "Stochastic local search: Foundations and applications"
 """
 
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import fast_tsp
 import networkx as nx
@@ -118,43 +118,83 @@ def get_path_cost(G, p):
     return c
 
 
-def get_multi_tour(tour, bins_waste, max_capacity, distance_matrix):
+def get_multi_tour(
+    tour: List[int],
+    bins_waste: np.ndarray,
+    max_capacity: float,
+    distance_matrix: np.ndarray,
+    shift_hours: Optional[float] = None,
+    avg_speed_kmh: Optional[float] = None,
+    service_time_h: Optional[float] = None,
+) -> List[int]:
     """
-    Insert depot return trips to satisfy vehicle capacity constraints.
+    Insert depot return trips to satisfy vehicle capacity and time budget constraints.
 
-    Given a TSP tour that may violate capacity, inserts depot visits (0) whenever
-    cumulative load would exceed max_capacity. This converts a single long tour
-    into multiple depot round-trips.
+    Given a TSP tour that may violate capacity or duration limits, inserts depot visits (0)
+    whenever cumulative load would exceed max_capacity or cumulative trip duration would
+    exceed shift_hours. This converts a single long tour into multiple feasible depot round-trips.
 
     Args:
-        tour (List[int]): Initial TSP tour (may violate capacity)
-        bins_waste (np.ndarray): Waste amounts for each bin
-        max_capacity (float): Vehicle capacity limit
-        distance_matrix (np.ndarray): Distance matrix (for future cost calculation)
+        tour: Initial TSP tour (format [0, ..., 0]).
+        bins_waste: Waste amounts for each customer bin (0-indexed).
+        max_capacity: Vehicle capacity limit.
+        distance_matrix: Distance matrix between all nodes including depot (0).
+        shift_hours: Optional per-trip time budget in hours.
+        avg_speed_kmh: Optional average vehicle speed in km/h.
+        service_time_h: Optional service time per bin in hours.
 
     Returns:
         List[int]: Modified tour with depot returns inserted. Format: [0, ..., 0, ..., 0]
     """
-    depot_trips = 0
-    final_tour = tour
-    vehicle_collected = 0
-    tmp_tour = [x - 1 for x in tour if x != 0]
-    for i in range(len(tmp_tour)):
-        cur_bin = tmp_tour[i]
-        col_waste = bins_waste[cur_bin]
-        if vehicle_collected + col_waste < max_capacity:
-            vehicle_collected += col_waste
-        elif vehicle_collected + col_waste > max_capacity:
-            final_tour.insert(i + depot_trips, 0)
-            vehicle_collected = col_waste
-            depot_trips += 1
-            # cost += distance_matrix[tmp_tour[i - 1], 0] + distance_matrix[0, cur_bin]
-        else:
-            final_tour.insert(i + depot_trips - 1, 0)
-            vehicle_collected = 0
-            depot_trips += 1
-            # if i < len(tmp_tour) - 1:
-            # cost += distance_matrix[cur_bin, 0] + distance_matrix[0, tmp_tour[i + 1]]
+    customer_nodes = [x for x in tour if x != 0]
+    if not customer_nodes:
+        return [0, 0]
+
+    use_temporal = (
+        shift_hours is not None
+        and avg_speed_kmh is not None
+        and service_time_h is not None
+        and avg_speed_kmh > 0
+    )
+
+    final_tour = [0]
+    cur_load = 0.0
+    cur_trip_dist = 0.0
+    cur_trip_bins = 0
+    prev_node = 0
+
+    for node in customer_nodes:
+        cur_bin = node - 1
+        col_waste = float(bins_waste[cur_bin]) if cur_bin < len(bins_waste) else 0.0
+
+        step_dist = float(distance_matrix[prev_node, node])
+        return_dist = float(distance_matrix[node, 0])
+        candidate_trip_dist = cur_trip_dist + step_dist + return_dist
+
+        candidate_load = cur_load + col_waste
+
+        exceeds_capacity = candidate_load > max_capacity + 1e-6
+        exceeds_time = False
+        if use_temporal:
+            candidate_trip_time = (candidate_trip_dist / avg_speed_kmh) + ((cur_trip_bins + 1) * service_time_h)
+            exceeds_time = candidate_trip_time > shift_hours + 1e-6
+
+        # If adding this node violates either constraint and current trip already has stops:
+        if (exceeds_capacity or exceeds_time) and cur_trip_bins > 0:
+            final_tour.append(0)
+            cur_load = 0.0
+            cur_trip_dist = 0.0
+            cur_trip_bins = 0
+            prev_node = 0
+            step_dist = float(distance_matrix[0, node])
+
+        final_tour.append(node)
+        cur_load += col_waste
+        cur_trip_dist += step_dist
+        cur_trip_bins += 1
+        prev_node = node
+
+    final_tour.append(0)
     return final_tour
 
 

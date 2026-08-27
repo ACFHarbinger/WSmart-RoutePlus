@@ -15,7 +15,7 @@ import re
 from multiprocessing import cpu_count
 
 from logic.src.configs import Config
-from logic.src.constants import MAP_DEPOTS, WASTE_TYPES
+from logic.src.constants import MAP_DEPOTS, PROBLEMS, WASTE_TYPES
 
 
 def validate_sim_config(cfg: Config) -> None:
@@ -38,6 +38,11 @@ def validate_sim_config(cfg: Config) -> None:
     # --- Core constraints ---
     assert graph.n_days >= 1, "Must run the simulation for 1 or more days"
     assert graph.n_samples > 0, "Number of samples must be non-negative integer"
+
+    # --- Problem validation ---
+    problem = str(getattr(sim, "problem", "vrpp") or "vrpp").lower()
+    assert problem in PROBLEMS, f"Unknown problem {problem}, available problems: {PROBLEMS}"
+    sim.problem = problem
 
     # --- Sanitize area ---
     area = re.sub(r"[^a-zA-Z]", "", (graph.area or "").lower())

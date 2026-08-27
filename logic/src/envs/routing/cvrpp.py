@@ -106,7 +106,7 @@ class CVRPPEnv(VRPPEnv):
             tensordict["capacity"],
             tensordict["remaining_capacity"] - waste_at_node,
         )
-        tensordict["collected"] = tensordict["collected_waste"]  # Alias
+        tensordict["collected"] = tensordict["capacity"] - tensordict["remaining_capacity"]
 
         return tensordict
 

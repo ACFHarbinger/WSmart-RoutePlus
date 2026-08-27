@@ -86,6 +86,9 @@ class FinishingState(SimState):
 
         sample_metrics = dict(zip(SIM_METRICS, lg, strict=False))
         assert ctx.daily_log is not None
+        if "time_spent" in ctx.daily_log and ctx.daily_log["time_spent"]:
+            sample_metrics["time_spent"] = float(np.sum(ctx.daily_log["time_spent"]))
+
         daily_dict = {k: list(v) for k, v in ctx.daily_log.items()}
 
         update_policy_log_section(log_path, "samples", sample_metrics, sample_id=ctx.sample_id, lock=ctx.lock)
@@ -93,7 +96,7 @@ class FinishingState(SimState):
 
         if graph.n_samples == 1:
             update_policy_log_section(log_path, "mean", sample_metrics, lock=ctx.lock)
-            update_policy_log_section(log_path, "std", {m: 0.0 for m in SIM_METRICS}, lock=ctx.lock)
+            update_policy_log_section(log_path, "std", {m: 0.0 for m in sample_metrics}, lock=ctx.lock)
 
         save_matrix_to_excel(
             ctx.bins.get_fill_history(),

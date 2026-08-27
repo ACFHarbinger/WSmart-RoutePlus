@@ -325,7 +325,8 @@ class TestStateCVRPP:
 
         # 0 -> 2 (Load 6) -> Should be allowed now
         state = state.update(torch.tensor([2]))
-        assert state.td["collected_waste"].item() == 6.0
+        assert state.td["collected"].item() == 6.0
+        assert state.td["collected_waste"].item() == 12.0
 
 
 class TestCVRPP:

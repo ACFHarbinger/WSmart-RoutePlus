@@ -750,6 +750,10 @@ def display_simulation_summary_table(  # noqa: C901
     )
 
     # Core metrics to display in the table
+    has_time_spent = any(
+        isinstance(stats, dict) and "time_spent" in stats and stats["time_spent"] > 0
+        for stats in log.values()
+    )
     display_metrics = [
         ("Profit", "profit"),
         ("Collected", "kg"),
@@ -761,6 +765,8 @@ def display_simulation_summary_table(  # noqa: C901
         ("Days", "days"),
         ("Time", "time"),
     ]
+    if has_time_spent:
+        display_metrics.insert(-1, ("ShiftTime", "time_spent"))
 
     table.add_column("Policy", style="cyan", no_wrap=True)
     for label, _ in display_metrics:
@@ -795,6 +801,8 @@ def display_simulation_summary_table(  # noqa: C901
                 row.append(f"[{color}]{int(val)}[/]")
             elif key == "time":
                 row.append(f"{val:.2f}s")
+            elif key == "time_spent":
+                row.append(f"{val:.2f}h")
             else:
                 row.append(f"{val:.2f}")
         table.add_row(*row)
@@ -846,7 +854,6 @@ def display_per_policy_simulation_summary(  # noqa: C901
                 expand=False,
             )
 
-            # Define columns — 'day' is now derived from index (1-based), not stored
             columns = [
                 ("Day", "day", "cyan"),
                 ("Mandatory", "mandatory_nodes", "yellow"),
@@ -859,6 +866,10 @@ def display_per_policy_simulation_summary(  # noqa: C901
                 ("Eff", "kg/km", "yellow"),
                 ("Over", "overflows", "red"),
             ]
+            if "time_spent" in daily_log and any(
+                isinstance(v, (int, float)) and v > 0 for v in daily_log["time_spent"]
+            ):
+                columns.append(("ShiftTime", "time_spent", "white"))
 
             for label, _, style in columns:
                 table.add_column(label, style=style, justify="right" if label not in ("Tour", "Mandatory") else "left")
@@ -910,6 +921,8 @@ def display_per_policy_simulation_summary(  # noqa: C901
                                 row.append("0")
                         elif key == "ncol":
                             row.append(f"{int(val)}" if val is not None else "0")
+                        elif key == "time_spent":
+                            row.append(f"{val:.2f}h" if val is not None else "0.00h")
                         else:
                             row.append(str(val))
                     table.add_row(*row)

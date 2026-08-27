@@ -180,6 +180,9 @@ class SimulationContext:
         self.tic: float = 0
         self.config: Optional[Dict[str, Any]] = None
         self.vehicle_capacity: Optional[float] = None
+        self.shift_hours: float = 7.0
+        self.avg_speed_kmh: float = 35.0
+        self.service_time_h: float = 1.5 / 60.0
         self.transition_to(InitializingState())
 
     def transition_to(self, state: Optional[SimState]) -> None:

@@ -449,6 +449,11 @@ class SimulationDayContext(Mapping):
     seed: int = 42
     policy_seed: Optional[int] = None  # Policy-specific seed for RNG isolation
     display_name: str = ""
+    problem: str = "vrpp"
+    shift_hours: float = 7.0
+    avg_speed_kmh: float = 35.0
+    service_time_h: float = 1.5 / 60.0
+    vehicle_capacity: float = 100.0
 
     # Optional/Mutable Fields
     daily_log: Optional[Dict[str, Any]] = None
@@ -466,6 +471,7 @@ class SimulationDayContext(Mapping):
     extra_output: Any = None
     mandatory: Optional[List[int]] = None
     time: float = 0.0
+    time_spent: float = 0.0
 
     @property
     def field_names(self):
@@ -588,6 +594,7 @@ def get_daily_results(
     profit: float,
     time: float,
     mandatory_nodes: Optional[List[int]] = None,
+    time_spent: Optional[float] = None,
 ) -> Dict[str, Union[int, float, List[Union[int, str]]]]:
     """Formats raw simulation outputs into structured daily log dictionary.
 
@@ -604,6 +611,7 @@ def get_daily_results(
         time: Execution time of the routing policy (s).
         mandatory_nodes: Optional list of bin indices selected as mandatory
             before routing (iloc-based). Resolved to real IDs.
+        time_spent: Optional total shift time spent on route and services (h).
 
     Returns:
         Dictionary containing formatted daily metrics and the route.
@@ -613,6 +621,8 @@ def get_daily_results(
     dlog["overflows"] = new_overflows
     dlog["kg_lost"] = sum_lost
     dlog["time"] = time
+    if time_spent is not None:
+        dlog["time_spent"] = float(time_spent)
     mandatory_ids: List[int] = []
     for idx in mandatory_nodes or []:
         try:

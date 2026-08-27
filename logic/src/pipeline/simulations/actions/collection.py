@@ -47,9 +47,38 @@ class CollectAction(SimulationAction):
         # and expenses (raw_km * €/km).
         collected, total_collected, ncol, profit = bins.collect(tour, raw_km)
 
-        # 3. Update context with definitive source-of-truth metrics for LogAction
+        # 3. Calculate operational time spent (travel time + per-bin service time)
+        avg_speed_kmh = float(context.get("avg_speed_kmh", 35.0) or 35.0)
+        service_time_h = float(context.get("service_time_h", 1.5 / 60.0) or (1.5 / 60.0))
+        shift_hours = float(context.get("shift_hours", 7.0) or 7.0)
+
+        driving_time_h = raw_km / avg_speed_kmh if avg_speed_kmh > 0 else 0.0
+        service_time_total_h = ncol * service_time_h
+        time_spent_h = driving_time_h + service_time_total_h
+
+        # 4. If problem is TTOP, validate per-trip constraints (capacity + shift duration)
+        problem = str(context.get("problem", "vrpp") or "vrpp").lower()
+        if problem == "ttop" and tour and len(tour) > 2:
+            cur_trip_dist = 0.0
+            cur_trip_bins = 0
+            prev_node = tour[0]
+            for node in tour[1:]:
+                cur_trip_dist += float(dist_matrix[prev_node, node])
+                if node == 0:
+                    trip_time = (cur_trip_dist / avg_speed_kmh) + (cur_trip_bins * service_time_h)
+                    assert trip_time <= shift_hours + 1e-5, (
+                        f"TTOP violation: trip duration {trip_time:.4f}h exceeds shift budget {shift_hours:.4f}h"
+                    )
+                    cur_trip_dist = 0.0
+                    cur_trip_bins = 0
+                else:
+                    cur_trip_bins += 1
+                prev_node = node
+
+        # 5. Update context with definitive source-of-truth metrics for LogAction
         context["cost"] = raw_km
         context["collected"] = collected
         context["total_collected"] = total_collected
         context["ncol"] = ncol
         context["profit"] = profit
+        context["time_spent"] = time_spent_h

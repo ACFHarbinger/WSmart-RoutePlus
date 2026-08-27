@@ -32,7 +32,7 @@ import torch
 import logic.src.constants as udef
 import logic.src.tracking as wst
 from logic.src.configs import Config
-from logic.src.constants import MAP_DEPOTS, WASTE_TYPES
+from logic.src.constants import MAP_DEPOTS, PROBLEMS, WASTE_TYPES
 from logic.src.pipeline.features.test.config import expand_policy_configs
 from logic.src.pipeline.features.test.orchestrator import simulator_testing
 from logic.src.pipeline.simulations.repository import (
@@ -171,6 +171,11 @@ def _validate_sim_config(cfg: Config) -> None:
 
     assert sim.graph.n_days >= 1, "Must run the simulation for 1 or more days"
     assert sim.graph.n_samples > 0, "Number of samples must be a positive integer"
+
+    # Normalize and validate problem string
+    problem = str(getattr(sim, "problem", "vrpp") or "vrpp").lower()
+    assert problem in PROBLEMS, f"Unknown problem {problem}, available problems: {PROBLEMS}"
+    sim.problem = problem
 
     # Normalize area string (strip non-alpha, lowercase)
     sim.graph.area = re.sub(r"[^a-zA-Z]", "", sim.graph.area.lower())

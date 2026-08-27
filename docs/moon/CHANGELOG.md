@@ -34,6 +34,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### TTOP multi-day simulator support and dual constraint enforcement (`2026-08-27`)
+
+- **Simulation Problem Registration & Validation**: Registered `ttop` across `logic/src/constants/simulation.py`, `logic/src/configs/tasks/sim.py`, and `logic/src/pipeline/features/test/validation.py` / `engine.py`.
+- **Temporal Parameter Loading & Simulation Context**: Automated retrieval of working shift duration (`shift_hours`), average vehicle speed (`avg_speed_kmh`), and per-bin service time (`service_time_h`) in `InitializingState`, forwarded across `SimulationDayContext` and `SearchContext`.
+- **Dual Constraint Route Construction**: Extended `get_multi_tour` and `BaseRoutingPolicy` to enforce both vehicle waste capacity ($Q$) and shift time budget ($T_{\max}$) with depot returns.
+- **Operational Metric & KPI Tracking**: Implemented additive tracking for `time_spent = (raw_km / avg_speed_kmh) + (ncol * service_time_h)` in `CollectAction`, `LogAction`, and summary tables in `logic/src/tracking/logging/modules/analysis.py`.
+- **Unit Testing**: Added `logic/test/unit/pipeline/simulations/test_ttop_simulation.py` covering validation, dual constraint splitting, operational time calculation, and shift budget enforcement.
+
 #### Grok joins in place of Opencode; continuous work queued for all three agents (`2026-08-27`)
 
 - Grok replaces Opencode in the agent rotation. `git/messages/opencode_coauthor.msg`

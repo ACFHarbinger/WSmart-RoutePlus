@@ -197,6 +197,11 @@ class RunningState(SimState):
             engine=sim.policy_configs.get("engine"),
             threshold=sim.policy_configs.get("threshold"),
             seed=sim.seed,
+            problem=str(getattr(sim, "problem", "vrpp") or "vrpp").lower(),
+            shift_hours=float(getattr(ctx, "shift_hours", 7.0)),
+            avg_speed_kmh=float(getattr(ctx, "avg_speed_kmh", 35.0)),
+            service_time_h=float(getattr(ctx, "service_time_h", 1.5 / 60.0)),
+            vehicle_capacity=float(getattr(ctx, "vehicle_capacity", 100.0) if getattr(ctx, "vehicle_capacity", None) is not None else 100.0),
         )
 
     def _update_ctx_from_day_context(self, ctx, day_context):
