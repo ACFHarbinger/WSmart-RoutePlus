@@ -18,6 +18,7 @@ Example:
 """
 
 from .pytorch.attention_heatmaps import AttentionHeatmapCallback
+from .pytorch.gpu_memory_monitor import GPUMemoryMonitor
 from .pytorch.hpo_health import HpoHealthMetricsCallback
 from .pytorch.model_summary import ModelSummaryCallback
 from .pytorch.reptile import ReptileCallback
@@ -29,6 +30,7 @@ from .simulation.simulation_display import SimulationDisplayCallback
 
 __all__ = [
     "AttentionHeatmapCallback",
+    "GPUMemoryMonitor",
     "TrainingDisplayCallback",
     "HpoHealthMetricsCallback",
     "TrainingHealthCallback",
