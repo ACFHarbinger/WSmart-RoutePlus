@@ -105,6 +105,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   budget), #60 (Opencode — Hydra config tree completion, blocked in part on
   #59).
 
+#### Models-vs-bibliography analysis started (#63) (`2026-08-27`)
+
+- New `docs/moon/review/MODEL_IMPLEMENTATION_ANALYSIS.md`, templated on
+  the policy report. First increment: paper↔path map (POMO is an RL
+  trainer, not a `core/` model), AM 4/5, Pointer Network 4/5, POMO 4/5.
+  Remaining 12 bibliography papers TBD.
+
 #### TTOP Hydra config tree (#60, training/eval side) (`2026-08-27`)
 
 - `logic/configs/envs/ttop.yaml` rewritten to match the landed design
