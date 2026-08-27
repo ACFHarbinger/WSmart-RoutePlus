@@ -210,7 +210,7 @@ class SimulationDataMapper:
             "waste": torch.zeros(problem_size),
         }
 
-        if configs.get("problem") in ["vrpp", "cvrpp", "wcvrp", "cwcvrp", "sdwcvrp"]:
+        if configs.get("problem") in ["vrpp", "cvrpp", "ttop", "wcvrp", "cwcvrp", "sdwcvrp"]:
             model_data["max_waste"] = torch.as_tensor(MAX_WASTE, dtype=torch.float32)
         elif "problem" in configs:
             raise ValueError(f"Unknown problem: {configs['problem']}")

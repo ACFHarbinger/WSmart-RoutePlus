@@ -1,0 +1,105 @@
+# =============================================================================
+# Temporal Team Orienteering Problem (TTOP) Environment Configuration
+# =============================================================================
+# Single-vehicle, multi-trip variant of VRPP/CVRPP:
+#   - Each node has a profit/waste, same layout as VRPP
+#   - No weight/volume capacity constraint (uncapacitated, like VRPP)
+#   - Each depot-to-depot trip is bounded by a time budget instead: travel
+#     time (distance / avg_speed_kmh) + service time (service_time_h per
+#     bin visited) must not exceed shift_hours before the next depot return.
+#   - The vehicle may return to the depot and start a new trip within the
+#     same period; the episode ends once nothing is reachable even with a
+#     freshly reset budget. See logic/src/envs/routing/ttop.py.
+#   - "Team" is one vehicle, multiple trips here -- not a concurrent fleet.
+#     See docs/moon/roadmaps/new_features.md §E.8 for the true-fleet variant.
+#
+# Benchmark problem for testing neural constructive heuristics under a time
+# (rather than count/capacity) resource constraint.
+# =============================================================================
+
+name: "ttop" # Environment identifier
+
+# ===========================================================================
+# Temporal resource parameters
+# ===========================================================================
+# Mirror SimulationRepository.get_temporal_params() (one driver's shift).
+# Override here only for an experiment that deliberately studies a different
+# shift length/speed/service time -- the Python default is the source of
+# truth otherwise, so these are commented out by default and the generator
+# falls back to get_temporal_params().
+# shift_hours: 7.0        # Total time budget per trip (h)
+# avg_speed_kmh: 35.0      # Average driving speed (km/h)
+# service_time_h: 0.025    # Time to visit and empty a single bin (h) = 1min30s
+
+# ===========================================================================
+# Curriculum Learning
+# ===========================================================================
+# The first entry is also used for single-stage training.
+curriculum_graphs:
+  - num_loc: 100
+    n_samples: 12800
+    area: "riomaior"
+    waste_type: "plastic"
+    vertex_method: "mmn"
+    distance_method: "gmaps"
+    focus_size: 12800
+    focus_graph: "graphs_100V_1N_plastic.json"
+    start_day: 0
+    n_days: 100
+    dm_filepath: "gmaps_distmat_plastic[riomaior].csv"
+    # Objective: maximize (waste_weight × Σ wastes) - (cost_weight × total_distance)
+    # Same reward structure as vrpp -- the time budget is a feasibility
+    # constraint (enforced via the action mask / get_costs assertion), not
+    # an extra reward term.
+    reward:
+      waste_weight: 1.0
+      cost_weight: 2.5
+
+  - num_loc: 170
+    n_samples: 12800
+    area: "riomaior"
+    waste_type: "plastic"
+    vertex_method: "mmn"
+    distance_method: "gmaps"
+    focus_size: 12800
+    focus_graph: "graphs_170V_1N_plastic.json"
+    start_day: 0
+    n_days: 100
+    dm_filepath: "gmaps_distmat_plastic[riomaior].csv"
+    reward:
+      waste_weight: 1.0
+      cost_weight: 2.5
+
+# ===========================================================================
+# Evaluation Graphs
+# ===========================================================================
+eval_graphs:
+  - num_loc: 100
+    n_samples: 512
+    area: "riomaior"
+    waste_type: "plastic"
+    focus_size: 512
+    focus_graph: "graphs_100V_1N_plastic.json"
+    vertex_method: "mmn"
+    distance_method: "gmaps"
+    dm_filepath: "gmaps_distmat_plastic[riomaior].csv"
+    start_day: 0
+    n_days: 7
+    reward:
+      waste_weight: 1.0
+      cost_weight: 1.0
+
+  - num_loc: 170
+    n_samples: 512
+    area: "riomaior"
+    waste_type: "plastic"
+    focus_size: 512
+    focus_graph: "graphs_170V_1N_plastic.json"
+    vertex_method: "mmn"
+    distance_method: "gmaps"
+    dm_filepath: "gmaps_distmat_plastic[riomaior].csv"
+    start_day: 0
+    n_days: 7
+    reward:
+      waste_weight: 1.0
+      cost_weight: 2.5

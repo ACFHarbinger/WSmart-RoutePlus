@@ -118,6 +118,45 @@
 
 ---
 
+### §E.8 — True Multi-Vehicle Fleet TTOP
+
+**Pain**: The Temporal Team Orienteering Problem (TTOP, added 2026-08-27 — see
+`docs/moon/CHANGELOG.md`) is currently single-vehicle-multi-trip: one vehicle
+makes several depot-returning trips per period, each capped at the 7h shift
+budget from `SimulationRepository.get_temporal_params()`. The "Team" in the
+name is aspirational until a true fleet dimension exists. The motivating
+future scenario is heterogeneous waste-stream collection: e.g. 3 vehicles
+running concurrently from the same depot, one collecting paper, one plastic,
+one glass, each with its own 7h budget and its own route.
+
+**Options**
+
+- **A** — Add a fleet dimension to the RL envs (`envs/tasks`, `envs/routing`,
+  `envs/generators`): per-vehicle route assignment, joint reward across
+  routes, and a per-vehicle waste-type filter so each vehicle only collects
+  bins of its assigned stream. `[Research]`
+- **B** — Extend the actual test-simulator side (`pipeline/simulations/`,
+  `policies/`) to dispatch multiple concurrent single-vehicle TTOP instances
+  — one per waste type per period — and aggregate their KPIs, without
+  requiring a joint multi-agent RL formulation. Lower risk, reuses the
+  single-vehicle TTOP machinery as-is.
+- **C** — Full joint multi-agent formulation (shared policy conditioned on
+  fleet state, or independent policies with a coordination layer) for
+  studying inter-vehicle route interference/complementarity explicitly.
+  `[Research]`
+
+**Recommendation**: **Option B** first — it validates the heterogeneous-fleet
+scenario end-to-end (does per-waste-type dispatch even help, given the real
+data) before committing to the larger RL architecture change in **Option A**.
+**Option C** only once B's results motivate studying vehicle interaction
+directly rather than treating each stream as independent.
+
+**Effort × Impact**: High effort (Option A/C) / Medium effort (Option B) /
+High impact, contingent on future heterogeneous-fleet experiments `[Blocked]`
+— depends on single-vehicle TTOP landing first.
+
+---
+
 ### Effort × Impact Matrix — New Features
 
 | Item                                               | Effort    | Impact    | Priority        |
@@ -132,6 +171,8 @@
 | §E.3 Option A (FastAPI server)                     | High      | High      | P3              |
 | §E.4 Option B (MetaRNN online adaptation)          | Very High | Very High | P3 `[Research]` |
 | §E.6 Option C (conditional generator)              | Very High | High      | P3 `[Research]` |
+| §E.8 Option B (multi-instance heterogeneous fleet) | Medium    | High      | P2 `[Blocked]`  |
+| §E.8 Option A (true fleet RL envs)                 | High      | High      | P3 `[Research]` |
 
 ---
 

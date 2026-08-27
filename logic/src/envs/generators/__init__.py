@@ -25,6 +25,7 @@ from .pdp import PDPGenerator
 from .scwcvrp import SCWCVRPGenerator
 from .thop import ThOPGenerator
 from .tsp import TSPGenerator
+from .ttop import TTOPGenerator
 from .vrpp import VRPPGenerator
 from .wcvrp import WCVRPGenerator
 
@@ -32,6 +33,7 @@ from .wcvrp import WCVRPGenerator
 GENERATOR_REGISTRY: dict[str, type[Generator]] = {
     "vrpp": VRPPGenerator,
     "cvrpp": VRPPGenerator,  # Same generator, different env handles capacity
+    "ttop": TTOPGenerator,
     "wcvrp": WCVRPGenerator,
     "cwcvrp": WCVRPGenerator,
     "scwcvrp": SCWCVRPGenerator,
@@ -82,6 +84,7 @@ __all__ = [
     "PCTSPGenerator",
     "PDPGenerator",
     "ThOPGenerator",
+    "TTOPGenerator",
     "GENERATOR_REGISTRY",
     "get_generator",
 ]

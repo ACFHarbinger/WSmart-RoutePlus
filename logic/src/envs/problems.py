@@ -9,6 +9,7 @@ Attributes:
     VEHICLE_CAPACITY: Vehicle capacity
     VRPP: Capacitated VRP
     CVRPP: Capacitated VRP with waste
+    TTOP: VRPP with a per-trip time budget instead of a capacity constraint
     WCVRP: Waste-only CVRP
     CWCVRP: Capacitated VRP with waste and time windows
     SCWCVRP: Single-depot Capacitated VRP with waste and time windows
@@ -29,6 +30,7 @@ from logic.src.envs.tasks.base import BaseProblem
 from logic.src.envs.tasks.cvrpp import CVRPP
 from logic.src.envs.tasks.cwcvrp import CWCVRP
 from logic.src.envs.tasks.scwcvrp import SCWCVRP
+from logic.src.envs.tasks.ttop import TTOP
 from logic.src.envs.tasks.vrpp import VRPP
 from logic.src.envs.tasks.wcvrp import WCVRP
 
@@ -40,6 +42,7 @@ __all__ = [
     "VEHICLE_CAPACITY",
     "VRPP",
     "CVRPP",
+    "TTOP",
     "WCVRP",
     "CWCVRP",
     "SCWCVRP",
