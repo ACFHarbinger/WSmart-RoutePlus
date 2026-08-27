@@ -27,12 +27,13 @@ Example:
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Optional, Union
 
 import torch
 from tensordict import TensorDict
 
 from logic.src.envs.base.ops import OpsMixin
+from logic.src.envs.generators.ttop import TTOPGenerator
 from logic.src.envs.routing.cvrpp import CVRPPEnv
 from logic.src.envs.temporal import get_default_temporal_params
 
@@ -46,6 +47,59 @@ class TTOPEnv(CVRPPEnv):
     """
 
     name: str = "ttop"
+
+    def __init__(
+        self,
+        generator: Optional[TTOPGenerator] = None,
+        generator_params: Optional[dict] = None,
+        waste_weight: float = 1.0,
+        cost_weight: float = 1.0,
+        revenue_kg: Optional[float] = None,
+        cost_km: Optional[float] = None,
+        device: Union[str, torch.device] = "cpu",
+        **kwargs,
+    ) -> None:
+        """
+        Initialize TTOPEnv with a TTOPGenerator (not VRPPEnv's plain
+        VRPPGenerator).
+
+        Without this override, `get_env("ttop", shift_hours=6.5, ...)`
+        silently builds a VRPPGenerator via VRPPEnv.__init__: the
+        shift_hours/avg_speed_kmh/service_time_h kwargs are swallowed by
+        VRPPGenerator's **kwargs, never reach a TTOPGenerator, and
+        _reset_instance falls back to get_default_temporal_params()
+        regardless of what was requested. Confirmed live (Hydra config
+        overrides for these three keys were composing correctly but never
+        actually reaching the environment) before this fix.
+
+        Args:
+            generator: Pre-built TTOPGenerator instance. Built from
+                generator_params if not supplied.
+            generator_params: Keyword arguments forwarded to TTOPGenerator
+                when generator is None.
+            waste_weight: Weight for waste collection in reward.
+            cost_weight: Weight for travel cost in reward.
+            revenue_kg: Optional revenue per kg (overrides waste_weight).
+            cost_km: Optional cost per km (overrides cost_weight).
+            device: Device for torch tensors ('cpu' or 'cuda').
+            kwargs: Additional keyword arguments.
+        """
+        generator_params = generator_params or kwargs
+        if generator is None:
+            generator = TTOPGenerator(**generator_params, device=device)
+        # Pass the already-built TTOPGenerator through: VRPPEnv.__init__'s
+        # own `if generator is None` branch is then skipped, so it never
+        # constructs the wrong (plain VRPPGenerator) type.
+        super().__init__(
+            generator=generator,
+            generator_params=generator_params,
+            waste_weight=waste_weight,
+            cost_weight=cost_weight,
+            revenue_kg=revenue_kg,
+            cost_km=cost_km,
+            device=device,
+            **kwargs,
+        )
 
     def _reset_instance(self, tensordict: TensorDict) -> TensorDict:
         """Initialize TTOP state with per-trip time-budget tracking.

@@ -31,6 +31,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Resetting an initialized CVRPP/TTOP state preserves its remaining capacity
   and time resources, so resumed search keeps the original depot coordinate
   and resource accounting.
+- `TTOPEnv` had no `__init__` override, so it inherited `VRPPEnv`'s, which
+  always builds a plain `VRPPGenerator`. `get_env("ttop",
+  shift_hours=6.5, ...)` (including Hydra-composed overrides) silently
+  swallowed the three temporal kwargs in `VRPPGenerator.**kwargs`; they
+  never reached the environment and `_reset_instance` fell back to
+  `get_default_temporal_params()` regardless of what was requested.
+  Confirmed live before the fix (`env.generator` was a `VRPPGenerator`
+  with no `shift_hours` attribute at all). Added
+  `TTOPEnv.__init__`, building a `TTOPGenerator` and passing it through
+  to `VRPPEnv.__init__` (which then skips its own generator construction
+  since one is already supplied). Regression test added:
+  `test_get_env_factory_builds_a_ttop_generator_not_a_plain_vrpp_one`.
 
 ### Added
 
