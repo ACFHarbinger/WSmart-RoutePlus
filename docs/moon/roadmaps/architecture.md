@@ -13,9 +13,9 @@
 - **A** — Audit uncovered lines with `coverage report --show-missing`; write targeted parametric tests (`@pytest.mark.parametrize`) for the utility and module layers until coverage reaches 75%. `[Quick Win]`
 - **B** — Add mutation testing (`mutmut`) to the CI pipeline to distinguish tests that merely execute code from those that actually detect bugs.
 - **C** — Set per-module coverage floors in `.coveragerc` (e.g., `logic/src/utils/` ≥ 80%, `logic/src/models/modules/` ≥ 70%) to prevent regressions in well-tested modules while allowing lower thresholds in exploratory code.
-- **D** — Generate property-based tests with Hypothesis for mathematical invariants (e.g., `boolmask` always masks depot, distance matrices are symmetric after construction).
+- **D** — Generate property-based tests with Hypothesis for mathematical invariants (e.g., `boolmask` bit-packing lossless roundtrips and padding alignment in `test_boolmask_properties.py`, decoding top-k/top-p invariants, reward scaler normalization invariants). `[Completed 2026-08-27]`
 
-**Recommendation**: **Option C** immediately (configuration change, no new tests needed), then **Option A** to fill gaps. **Option D** is a high-value investment for mathematical correctness guarantees.
+**Recommendation**: **Option C** immediately (configuration change, no new tests needed), then **Option A** to fill gaps. **Option D** `[Delivered]` is a high-value investment for mathematical correctness guarantees.
 
 **Effort × Impact**: Low effort (Options A/C) / High impact
 
