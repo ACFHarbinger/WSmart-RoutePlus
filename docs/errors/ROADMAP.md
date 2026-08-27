@@ -7,8 +7,8 @@ mutation, device handling, and silent routing/solver failures.
 
 - [COMPLETED] CLI entry point and Hydra command dispatch (`main.py`, task routing) — normalized documented aliases `evaluation` → `eval` and `sim_hpo` → `hpo_sim`; regression coverage added.
 - [COMPLETED] Typed configuration composition and validation (`logic/src/configs/`) — all canonical task groups compose through Hydra; no additional typed-config defect confirmed in this pass.
-- [IN PROGRESS] Feature engines: train, evaluation, data generation, and simulation dispatch — also consolidated simulator validation into one public contract.
-- [PENDING] Routing environments, generators, and task objectives
+- [COMPLETED] Feature engines: train, evaluation, data generation, and simulation dispatch — repaired task-scoped curriculum graphs, CPU multiprocessing validation, failed-run tracking, and duplicate simulator validation.
+- [IN PROGRESS] Routing environments, generators, and task objectives
 - [PENDING] Model encoders, decoders, embeddings, and critic interfaces
 - [PENDING] Policy and solver construction, including exact and heuristic routes
 - [PENDING] RL training lifecycle, baselines, callbacks, and tracking
@@ -18,5 +18,5 @@ mutation, device handling, and silent routing/solver failures.
 
 ## Current pass
 
-Configuration composition is complete. Trace each feature engine's config
-extraction, factory call, and return contract next.
+Feature-engine entry paths are complete. Trace reset/step/reward/cost contracts
+through routing environments, generators, and task objectives next.
