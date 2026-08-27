@@ -376,8 +376,9 @@ then row-softmax over columns and column-softmax over rows, values from the oppo
 ## 14. NARGNN
 
 **PDF in folder**: Li, Chen & Koltun, "Combinatorial Optimization with Graph Convolutional Networks and Guided Tree Search" (arXiv:1810.10659)
+**Intended paper** (from the encoder: anisotropic/gated GNN + \(N\times N\) edge heatmap + NAR decode; also `docs/modules/MODELS_MODULE.md` §3.3.1): Joshi, Laurent & Bresson, "An Efficient Graph Convolutional Network Technique for the Travelling Salesman Problem", arXiv:1906.01227
 **Implementation**: `logic/src/models/core/nargnn/` — NAR TSP *edge heatmap* + greedy/sampling decoder
-**Faithfulness**: ★★☆☆☆ (2/5) to the PDF that is actually in `bibliography/models/`
+**Faithfulness**: ★★☆☆☆ (2/5) to the PDF in the folder; ★★★★☆ (4/5) to Joshi 2019 (heatmap + gated GCN; our default decoder is greedy/sampling rather than their parallel beam search). Replacement source is recorded in `bibliography/models/README.md` (#64).
 
 ### What the PDF describes
 
