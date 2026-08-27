@@ -89,7 +89,7 @@
       "enabled": true
     }
   },
-  "out_md": "docs/private/simulation_analysis.md",
+  "out_md": "docs/private/markdown/simulation_analysis.md",
   "figures_dir": "docs/private/figures/simulation",
   "private_dir": "docs/private/html/simulation"
 }

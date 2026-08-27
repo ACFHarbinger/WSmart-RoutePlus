@@ -33,6 +33,7 @@ Usage
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 
 import matplotlib
@@ -905,8 +906,13 @@ def main() -> None:
     if has_td:
         toc_items.append(f"{sec}. [TD vs NPZ Alignment](#{sec}-td-vs-npz-alignment)")
 
-    figures_rel = str(figures_dir).replace("docs/private/", "", 1)
-    private_rel = str(private_dir).replace("docs/private/", "", 1)
+    # Relative to out_md's own directory, not to the repo root: out_md now
+    # lives one level deeper (docs/private/markdown/) than figures_dir and
+    # private_dir (docs/private/figures/, docs/private/html/), so a naive
+    # prefix-strip would produce a broken sibling-style link. os.path.relpath
+    # gets this right regardless of how many levels apart they are.
+    figures_rel = os.path.relpath(figures_dir, start=out_md.parent)
+    private_rel = os.path.relpath(private_dir, start=out_md.parent)
 
     print(f"\nGenerating markdown: {out_md}")
     md = render_template(

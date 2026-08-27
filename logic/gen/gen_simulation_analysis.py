@@ -1913,8 +1913,17 @@ def build_context(df: pd.DataFrame, config: dict, theme: dict, n_days: int) -> d
 
 
 def _to_rel(p: Path) -> str:
+    """Path relative to out_md's directory (docs/private/markdown/), for
+    links inside the generated markdown. out_md sits one level deeper than
+    figures_dir/private_dir (docs/private/figures/, docs/private/html/), so
+    stripping "docs/private/" alone would produce a broken sibling-style
+    link -- the extra "../" accounts for that one level. This assumes the
+    fixed docs/private/markdown/ layout from json/simulation_analysis_config.json;
+    see gen_dataset_analysis.py's os.path.relpath(..., start=out_md.parent)
+    for the general version if out_md's location ever becomes configurable.
+    """
     s = str(p)
-    return s.replace("docs/private/", "", 1) if s.startswith("docs/private/") else s
+    return "../" + s.replace("docs/private/", "", 1) if s.startswith("docs/private/") else s
 
 
 def parse_args() -> argparse.Namespace:
