@@ -60,7 +60,7 @@ class MultiStartEval(EvalBase):
 
         for batch in tqdm(data_loader, disable=not self.progress, desc="Multi-Start Eval"):
             batch = move_to(batch, self.device)  # type: ignore[arg-type]
-            with torch.no_grad():
+            with torch.inference_mode():
                 out = policy(batch, strategy="greedy", num_starts=self.num_starts, **kwargs)
                 results.append(out)
 

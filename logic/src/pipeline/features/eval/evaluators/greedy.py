@@ -47,7 +47,7 @@ class GreedyEval(EvalBase):
 
         for batch in tqdm(data_loader, disable=not self.progress, desc="Greedy Eval"):
             batch = move_to(batch, self.device)  # type: ignore[arg-type]
-            with torch.no_grad():
+            with torch.inference_mode():
                 out = policy(batch, strategy="greedy", **kwargs)
                 results.append(out)
 
