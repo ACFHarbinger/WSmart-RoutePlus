@@ -17,6 +17,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+#### Reproducible paper build target (`2026-08-27`)
+
+- Added `just paper` shorthand recipe to regenerate simulation summary tables, protocol diagrams, network maps, and compile `paper.pdf` in one command (§I.2).
+
+#### Policy & operator review audit refresh (`2026-08-27`, #62)
+
+- Refreshed all four review documents in `docs/moon/review/` against the modern modular directory structure, expanding analysis to 80+ routing algorithms, 85+ operators, 23 standard acceptance criteria, and TTOP temporal/profit duality (§C.8).
+
+### Performance
+
+#### Evaluation engine inference optimization (`2026-08-27`, §F.1)
+
+- Adopted `torch.inference_mode()` across all evaluation evaluators (`GreedyEval`, `SamplingEval`, `AugmentationEval`, `MultiStartEval`, `MultiStartAugmentEval`), eliminating PyTorch version tracking and view mutation overhead during evaluation rollouts.
+
 ### Fixed
 
 #### Hydra task aliases (`2026-08-27`)
