@@ -151,3 +151,25 @@ class SimulationRepository(ABC):
         # Calculate percentage capacity
         vehicle_capacity = (vehicle_capacity / (bin_volume * density)) * 100
         return (vehicle_capacity, revenue, density, expenses, bin_volume)
+
+    @staticmethod
+    def get_temporal_params() -> Tuple[float, float, float]:
+        """
+        Retrieves the temporal resource parameters for time-constrained problems.
+
+        Returns the working-shift budget and travel/service rates used by
+        time-constrained problem variants (e.g. the Temporal Team Orienteering
+        Problem), where the binding resource is time spent rather than bin
+        count or vehicle capacity. Unlike get_area_params, these values are
+        not area- or waste-type-specific: they describe one driver's shift.
+
+        Returns:
+            Tuple containing:
+                - shift_hours: Total time budget per period/trip (h)
+                - avg_speed_kmh: Average driving speed (km/h)
+                - service_time_h: Time to visit and empty a single bin (h)
+        """
+        shift_hours = 7.0
+        avg_speed_kmh = 35.0
+        service_time_h = 1.5 / 60.0  # 1 min 30 s
+        return (shift_hours, avg_speed_kmh, service_time_h)
