@@ -9,7 +9,7 @@ the figures those fragments reference, written straight into the paper's own
 
 The point is that no number in the paper is typed by hand. Every table cell and
 every figure here is derived from
-``public/global/simulation/simulation_summary.csv`` (30-day horizon) and
+``docs/private/global/simulation/simulation_summary.csv`` (30-day horizon) and
 ``simulation_summary_90d.csv`` (90-day), so the paper cannot silently drift from
 the data the way a hand-maintained table does.
 
@@ -78,8 +78,8 @@ Usage
 -----
     uv run python logic/gen/gen_paper_latex.py --force
     uv run python logic/gen/gen_paper_latex.py \\
-        --horizon 30=public/global/simulation/simulation_summary.csv \\
-        --horizon 90=public/global/simulation/simulation_summary_90d.csv \\
+        --horizon 30=docs/private/global/simulation/simulation_summary.csv \\
+        --horizon 90=docs/private/global/simulation/simulation_summary_90d.csv \\
         --tables-dir assets/papers/<paper>/Tables \\
         --figures-dir assets/papers/<paper>/Images/Results/Generated \\
         --theme light --force
@@ -102,7 +102,7 @@ OUTPUT_DIR = REPO_ROOT / "assets" / "output" / "30days"
 
 #: Retained coordinate-derived maps produced by gen_simulation_analysis.py from
 #: the original (gitignored) bin-coordinate exports and OpenStreetMap roads.
-NETWORK_MAP_DIR = REPO_ROOT / "public" / "figures" / "simulation" / "30d"
+NETWORK_MAP_DIR = REPO_ROOT / "docs" / "private" / "figures" / "simulation" / "30d"
 
 #: Collected-tonnage shortfall, relative to the scenario-cell median, above which
 #: a run is treated as degenerate rather than merely bad. See the module
@@ -1175,8 +1175,8 @@ def fig_fill_trajectory(out_dir: Path) -> None:
 def parse_horizons(values: list[str] | None) -> dict[int, Path]:
     if not values:
         return {
-            30: REPO_ROOT / "public/global/simulation/simulation_summary.csv",
-            90: REPO_ROOT / "public/global/simulation/simulation_summary_90d.csv",
+            30: REPO_ROOT / "docs/private/global/simulation/simulation_summary.csv",
+            90: REPO_ROOT / "docs/private/global/simulation/simulation_summary_90d.csv",
         }
     out = {}
     for item in values:

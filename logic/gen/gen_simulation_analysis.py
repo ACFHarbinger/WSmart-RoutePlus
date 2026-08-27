@@ -36,12 +36,12 @@ Usage
 
     # Only one horizon, explicit CSV
     uv run python logic/gen/gen_simulation_analysis.py \\
-        --horizon 30=public/global/simulation/simulation_summary.csv --force
+        --horizon 30=docs/private/global/simulation/simulation_summary.csv --force
 
     # Regenerate a summary CSV from a raw output tree (old gen_simulation_csv)
     uv run python logic/gen/gen_simulation_analysis.py --parse-output \\
         --output-dir assets/output/90days \\
-        --out-csv public/global/simulation/simulation_summary_90d.csv
+        --out-csv docs/private/global/simulation/simulation_summary_90d.csv
 """
 
 from __future__ import annotations
@@ -1914,7 +1914,7 @@ def build_context(df: pd.DataFrame, config: dict, theme: dict, n_days: int) -> d
 
 def _to_rel(p: Path) -> str:
     s = str(p)
-    return s.replace("public/", "", 1) if s.startswith("public/") else s
+    return s.replace("docs/private/", "", 1) if s.startswith("docs/private/") else s
 
 
 def parse_args() -> argparse.Namespace:
@@ -1980,7 +1980,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--output-dir", default="assets/output/90days", help="Root of the raw simulation output tree")
     p.add_argument(
         "--out-csv",
-        default="public/global/simulation/simulation_summary_90d.csv",
+        default="docs/private/global/simulation/simulation_summary_90d.csv",
         help="Destination CSV path (with --parse-output)",
     )
     return p.parse_args()

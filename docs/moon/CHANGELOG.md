@@ -17,6 +17,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+#### Repository Documentation & Infrastructure Reorganization (`2026-08-27`)
+
+- `markdown/` → `docs/moon/markdown/`, `review/` → `docs/moon/review/`,
+  `reports/` → `docs/moon/reports/`, `mappings/` → `docs/moon/mappings/`
+  (`git mv`, history preserved).
+- `.agent/AGENTS.md` → `AGENTS.md` (repo root). `CLAUDE.md`/`GEMINI.md`
+  pointer includes and every other real reference (`README.md`,
+  `.agent/tasks/*.md`, `.agent/bus/AGENT_BUS.md`) repointed. The unrelated
+  `docs/errors/ROADMAP.md` referenced from `.agent/skills/systematic-bug-hunt.md`
+  is a different file and was left alone.
+- `docs/moon/ROADMAP.md` (3128 lines) split by its existing §A–§I sections into
+  `docs/moon/roadmaps/{analytics_interpretability,architecture,documentation,
+  gui_ux,new_features,performance,studio,presentation_studio,
+  publication_dissemination}.md`, mirroring the `Image-Toolkit` repo's
+  `docs/moon/roadmaps/` pattern. Root `ROADMAP.md` keeps the header, an Anchor
+  Index retargeted to the split files, and the Cross-Cutting Themes table.
+- `public/` → `docs/private/`, and its nested `public/private/` subdir →
+  `docs/private/html/`. Every real hardcoded reference to the old `public/...`
+  paths was repointed: `logic/gen/{export_website_data,gen_paper_latex,
+  gen_simulation_analysis,gen_presentation,gen_dataset_analysis}.py`, both
+  copies of the analysis/presentation config JSONs (`logic/gen/json/` and
+  `app/src/gen/config/`), the two generated markdown reports themselves, and
+  the `.agent/` briefs. `docs/website/public/` is a separate, unrelated dir
+  (the website's own Vite public assets) and was not touched. Historical
+  `docs/moon/CHANGELOG.md` entries and dated `.agent/bus/*.md` journal entries
+  citing the old paths were left untouched (append-only record).
+- `git/CODE_OF_CONDUCT.md`, `git/CODEOWNERS` added (were missing).
+- `.github/PULL_REQUEST_TEMPLATE.md` and `.github/ISSUE_TEMPLATE/{bug_report.md,
+  feature_request.md,bug_agent.yml,feature_agent.yml}` added, adapted from the
+  `Image-Toolkit` repo's templates to this repo's actual modules/labels.
+- `.gitea/` and `.forgejo/` mirror-host dirs added (`workflows/{ci,docs,
+  package-and-build}.yml` copied from `.github/workflows/`, GH-Actions-syntax
+  compatible but unverified on a real runner — see #57; `sync-to-public.yml`
+  deliberately not mirrored, it's GitHub-specific). `.gitlab/issue_templates/`
+  and `.gitlab/merge_request_templates/` added; `.gitlab-ci.yml` deferred to
+  #57 (different schema, needs a real GitLab runner to validate against).
+- New `infra` label created for these and future infrastructure issues.
+
+See #56 (closed, full change list) and #57 (open follow-up: mirror-host CI
+runner verification).
+
 ### Added
 
 #### Simulation Loop Architecture Diagram (`2026-08-27`)

@@ -680,7 +680,7 @@ Constructors with stable ranks are robust; those that improve or regress warrant
 
 
 *Figures are stored under `figures/simulation/`.*
-*Raw simulation data: `public/global/simulation/simulation_summary.csv`, `public/global/simulation/simulation_summary_90d.csv`.*
+*Raw simulation data: `docs/private/global/simulation/simulation_summary.csv`, `docs/private/global/simulation/simulation_summary_90d.csv`.*
 
 ## Interactive Charts
 

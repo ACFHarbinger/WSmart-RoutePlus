@@ -13,5 +13,6 @@ Streamlit dashboard and PySide6 GUI in July 2026).
 | [DEVELOPMENT.md](DEVELOPMENT.md) | Prerequisites, dev workflow, npm scripts, building bundles |
 
 Related repository-level docs live in [`../../docs/`](../../docs/), notably
-`docs/moon/ROADMAP.md` (§G Studio phases, §H Analysis & Presentation Studio)
+`docs/moon/roadmaps/studio.md` (§G Studio phases) and
+`docs/moon/roadmaps/presentation_studio.md` (§H Analysis & Presentation Studio)
 and the framework module docs referenced from `AGENTS.md`.

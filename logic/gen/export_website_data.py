@@ -696,8 +696,8 @@ def main() -> None:
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
     horizons = {
-        30: REPO_ROOT / "public/global/simulation/simulation_summary.csv",
-        90: REPO_ROOT / "public/global/simulation/simulation_summary_90d.csv",
+        30: REPO_ROOT / "docs/private/global/simulation/simulation_summary.csv",
+        90: REPO_ROOT / "docs/private/global/simulation/simulation_summary_90d.csv",
     }
 
     print("Enumerating policy space from the source tree:")

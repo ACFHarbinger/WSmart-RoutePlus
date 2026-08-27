@@ -41,7 +41,7 @@ Usage
 -----
     uv run python logic/gen/gen_presentation.py
     uv run python logic/gen/gen_presentation.py \\
-        --figures-dir public/figures/simulation/30d \\
+        --figures-dir docs/private/figures/simulation/30d \\
         --out assets/windows/wsmart_route_results.pptx \\
         --author "Afonso Fernandes" \\
         --coauthors "Jane Doe;John Smith" \\
@@ -2540,7 +2540,7 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument(
         "--figures-dir",
-        default="public/figures/simulation/30d",
+        default="docs/private/figures/simulation/30d",
         help="Directory with the simulation analysis figures to embed",
     )
     p.add_argument("--out", default="assets/windows/wsmart_route_results.pptx", help="Destination .pptx path")

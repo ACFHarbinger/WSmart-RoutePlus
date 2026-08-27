@@ -79,7 +79,7 @@ Our comprehensive documentation covers every aspect of the WSmart+ Route system:
 
 | Document                                          | Description                                                                                                                             | Target Audience                          |
 | :------------------------------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------- |
-| **[AGENTS.md](.agent/AGENTS.md)**                   | Complete registry of neural models, classical policies, and environment physics. The AI assistant guide for understanding the codebase. | Researchers, ML Engineers, AI Assistants |
+| **[AGENTS.md](AGENTS.md)**                          | Complete registry of neural models, classical policies, and environment physics. The AI assistant guide for understanding the codebase. | Researchers, ML Engineers, AI Assistants |
 | **[ARCHITECTURE.md](docs/ARCHITECTURE.md)**       | High-level system design, data flow diagrams, design patterns, and module boundaries.                                                   | Architects, Senior Developers            |
 | **[CONTRIBUTING.md](CONTRIBUTING.md)**            | Code style, Git workflow, PR process, and development guidelines.                                                                       | Contributors                             |
 | **[DEVELOPMENT.md](docs/DEVELOPMENT.md)**         | Environment setup, CLI reference, development workflows, and debugging guides.                                                          | Developers                               |

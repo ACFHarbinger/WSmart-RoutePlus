@@ -1,0 +1,94 @@
+name: "[Agent] Bug Report"
+description: Structured bug ticket for multi-agent orchestration (Claude/Codex/Gemini/Opencode) on Project 31.
+title: "[BUG] "
+labels: ["bug", "agent"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This template produces a machine-parsable issue for the multi-agent
+        workflow documented in `AGENTS.md` and `.agent/bus/`. Keep the option
+        labels stable so agents can parse them.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of the codebase is affected?
+      options:
+        - "Policies: route construction"
+        - "Policies: selection / mandatory selection"
+        - "Policies: route improvement / acceptance criteria / operators"
+        - "Models: neural (logic/src/models)"
+        - "Pipeline: simulation / training / eval"
+        - "Envs / data / configs"
+        - "GUI: WSmart-Route Studio (app/)"
+        - "Docs / roadmap / changelog"
+        - "Paper (assets/papers/)"
+        - "Infra / CI"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: Rough priority tier for sequencing against other open work.
+      options:
+        - "P0: Blocking other agents' work"
+        - "P1: Core deliverable"
+        - "P2: Nice to have"
+        - "P3: Backlog"
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One or two sentences describing the bug.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro_steps
+    attributes:
+      label: Reproduction Steps
+      description: Numbered steps to reproduce the bug (config/scenario, command, observed output).
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Expected Behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual_behavior
+    attributes:
+      label: Actual Behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence (CSV rows / logs / traceback)
+      description: Per project convention every reported number traces back to simulation_summary*.csv or raw logs — see AGENTS.md.
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: agent_notes
+    attributes:
+      label: Agent Notes
+      description: Additional machine-readable context (file paths, module names, suspected root cause).
+    validations:
+      required: false

@@ -22,12 +22,12 @@ Usage
     uv run python logic/gen/gen_dataset_analysis.py --force
     uv run python logic/gen/gen_dataset_analysis.py \\
         --theme light \\
-        --npz-csv public/global/datasets/npz_stats.csv \\
-        --td-csv public/global/datasets/td_stats.csv \\
+        --npz-csv docs/private/global/datasets/npz_stats.csv \\
+        --td-csv docs/private/global/datasets/td_stats.csv \\
         --npz-dir data/wsr_simulator/datasets \\
-        --out-md public/dataset_analysis.md \\
-        --figures-dir public/figures/datasets \\
-        --private-dir public/private/datasets
+        --out-md docs/private/dataset_analysis.md \\
+        --figures-dir docs/private/figures/datasets \\
+        --private-dir docs/private/html/datasets
 """
 
 from __future__ import annotations
@@ -905,8 +905,8 @@ def main() -> None:
     if has_td:
         toc_items.append(f"{sec}. [TD vs NPZ Alignment](#{sec}-td-vs-npz-alignment)")
 
-    figures_rel = str(figures_dir).replace("public/", "", 1)
-    private_rel = str(private_dir).replace("public/", "", 1)
+    figures_rel = str(figures_dir).replace("docs/private/", "", 1)
+    private_rel = str(private_dir).replace("docs/private/", "", 1)
 
     print(f"\nGenerating markdown: {out_md}")
     md = render_template(

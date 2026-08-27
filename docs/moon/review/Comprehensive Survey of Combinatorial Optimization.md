@@ -1054,4 +1054,4 @@ A major gap in NCO is the absence of approximation guarantees:
 
 ---
 
-*This report synthesizes content from the WSmart+ Route project's `markdown/` documentation suite and `reports/` research archive. For implementation details of the algorithms described here, consult the corresponding modules in `logic/src/policies/` and `logic/src/models/`.*
+*This report synthesizes content from the WSmart+ Route project's `docs/moon/markdown/` documentation suite and `docs/moon/reports/` research archive. For implementation details of the algorithms described here, consult the corresponding modules in `logic/src/policies/` and `logic/src/models/`.*

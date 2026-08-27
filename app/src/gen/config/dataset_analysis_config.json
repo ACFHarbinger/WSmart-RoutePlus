@@ -21,9 +21,9 @@
     "gamma2": "#a060e0"
   },
   "npz_dir": "data/wsr_simulator/datasets",
-  "npz_csv": "public/global/datasets/npz_stats.csv",
-  "td_csv": "public/global/datasets/td_stats.csv",
-  "out_md": "public/dataset_analysis.md",
-  "figures_dir": "public/figures/datasets",
-  "private_dir": "public/private/datasets"
+  "npz_csv": "docs/private/global/datasets/npz_stats.csv",
+  "td_csv": "docs/private/global/datasets/td_stats.csv",
+  "out_md": "docs/private/dataset_analysis.md",
+  "figures_dir": "docs/private/figures/datasets",
+  "private_dir": "docs/private/html/datasets"
 }

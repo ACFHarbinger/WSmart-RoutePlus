@@ -11,11 +11,11 @@
   "horizons": [
     {
       "days": 30,
-      "csv": "public/global/simulation/simulation_summary.csv"
+      "csv": "docs/private/global/simulation/simulation_summary.csv"
     },
     {
       "days": 90,
-      "csv": "public/global/simulation/simulation_summary_90d.csv"
+      "csv": "docs/private/global/simulation/simulation_summary_90d.csv"
     }
   ],
   "charts": {
@@ -89,7 +89,7 @@
       "enabled": true
     }
   },
-  "out_md": "public/simulation_analysis.md",
-  "figures_dir": "public/figures/simulation",
-  "private_dir": "public/private/simulation"
+  "out_md": "docs/private/simulation_analysis.md",
+  "figures_dir": "docs/private/figures/simulation",
+  "private_dir": "docs/private/html/simulation"
 }

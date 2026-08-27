@@ -206,7 +206,7 @@ training distribution matches simulation.*
 
 
 *Figures are stored in `figures/datasets/`.*
-*Raw statistics: `public/global/datasets/td_stats.csv` and `public/global/datasets/npz_stats.csv`.*
+*Raw statistics: `docs/private/global/datasets/td_stats.csv` and `docs/private/global/datasets/npz_stats.csv`.*
 
 
 ## Interactive Charts

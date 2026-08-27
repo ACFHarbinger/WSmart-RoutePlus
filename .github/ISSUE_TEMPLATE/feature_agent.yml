@@ -1,0 +1,82 @@
+name: "[Agent] Feature Request"
+description: Structured feature ticket for multi-agent orchestration (Claude/Codex/Gemini/Opencode) on Project 31.
+title: "[FEATURE] "
+labels: ["enhancement", "agent"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This template produces a machine-parsable issue for the multi-agent
+        workflow documented in `AGENTS.md` and `.agent/bus/`. Keep the option
+        labels stable so agents can parse them.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of the codebase does this feature touch?
+      options:
+        - "Policies: route construction"
+        - "Policies: selection / mandatory selection"
+        - "Policies: route improvement / acceptance criteria / operators"
+        - "Models: neural (logic/src/models)"
+        - "Pipeline: simulation / training / eval"
+        - "Envs / data / configs"
+        - "GUI: WSmart-Route Studio (app/)"
+        - "Docs / roadmap / changelog"
+        - "Paper (assets/papers/)"
+        - "Infra / CI"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: Rough priority tier for sequencing against other open work.
+      options:
+        - "P0: Blocking other agents' work"
+        - "P1: Core deliverable"
+        - "P2: Nice to have"
+        - "P3: Backlog"
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One or two sentences describing the feature.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Bullet list of conditions that must hold for this ticket to be closed.
+      placeholder: |
+        - [ ] Criterion 1
+        - [ ] Criterion 2
+      value: |
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Issue numbers or components this feature depends on (or "None").
+      placeholder: "#123, #456"
+    validations:
+      required: false
+
+  - type: textarea
+    id: agent_notes
+    attributes:
+      label: Agent Notes
+      description: Additional machine-readable context (file paths, module names, constraints, bus entry to consult).
+    validations:
+      required: false
