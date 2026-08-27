@@ -116,6 +116,19 @@
 
 ---
 
+### §C.8 — Policy, Operator, & Acceptance Review Reports Refresh
+
+**Pain**: Prior review documents in `docs/moon/review/` (`POLICY_IMPLEMENTATION_ANALYSIS.md`, `OPERATOR_IMPLEMENTATION_ANALYSIS.md`, `ACCEPTANCE_CRITERIA_ANALYSIS.md`, `OPERATOR_PROFIT_AWARE_FEEDBACK.md`) reflected the March 2026 layout with ~45 implementations and unmodularized paths.
+
+**Options**:
+- **A** — Full audit and synchronization against the modern modular structure (`logic/src/policies/route_construction/`, `mandatory_selection/`, `acceptance_criteria/`, `helpers/operators/`, and `vector/operators/`), covering 80+ policies, 85+ operators, 23 acceptance criteria, and TTOP temporal/profit duality. `[Completed 2026-08-27]`
+
+**Recommendation**: **Option A** `[Done]`
+
+**Effort × Impact**: Medium effort / High impact
+
+---
+
 ### Effort × Impact Matrix — Documentation
 
 | Item                                    | Effort   | Impact | Priority         |
@@ -123,6 +136,7 @@
 | §C.3 Option A (CHANGELOG.md)            | Very Low | Medium | P0 `[Quick Win]` |
 | §C.2 Option C (ruff D rules)            | Very Low | Medium | P0 `[Quick Win]` |
 | §C.4 Option A (Mermaid diagrams)        | Low      | High   | P0 `[Quick Win]` |
+| §C.8 Option A (Review reports refresh)  | Medium   | High   | P0 `[Done]`      |
 | §C.6 Option A (TROUBLESHOOTING refresh) | Low      | Medium | P1               |
 | §C.1 Option A (MkDocs Material)         | Medium   | High   | P1               |
 | §C.7 Option A (docs CI job)             | Low      | High   | P2 (after §C.1)  |
@@ -130,4 +144,5 @@
 | §C.5 Option B (nbval CI)                | Low      | High   | P2 (after §C.5)  |
 
 ---
+
 
