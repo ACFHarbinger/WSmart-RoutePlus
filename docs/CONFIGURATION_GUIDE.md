@@ -46,6 +46,7 @@ python main.py eval eval.decoding.strategy=sampling    # Change decoding
 # Simulation
 python main.py test_sim sim.days=31                    # 31-day simulation
 python main.py test_sim sim.policies=[hgs,alns]        # Compare policies
+python main.py task=test_sim sim.problem=ttop          # TTOP: capacity + shift time budget
 
 # Data Generation
 python main.py gen_data data.problem=cwcvrp            # Generate CWCVRP data

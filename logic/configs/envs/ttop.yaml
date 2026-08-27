@@ -23,8 +23,8 @@
 #   python main.py task=meta_train envs@meta_rl.env=ttop meta_rl.env.name=ttop
 #   python main.py task=hpo_sim envs@hpo_sim.env=ttop
 #   python main.py gen_data data.problem=ttop
-# test_sim: sim.problem=ttop is #59 (Agy); do not select it from here until
-# that dispatch actually consumes the value.
+#   python main.py task=test_sim sim.problem=ttop
+#     (#59 consumes this: dual capacity + T_max in get_multi_tour / CollectAction)
 # =============================================================================
 
 name: "ttop" # Environment identifier

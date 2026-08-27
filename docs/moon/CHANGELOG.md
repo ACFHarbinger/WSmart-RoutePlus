@@ -127,6 +127,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `docs/CONFIGURATION_GUIDE.md` env table and CLI examples now use the
   real group-override syntax (`envs@<task>.env=`) instead of the
   non-composed `envs=vrpp` form.
+- After #59 landed: `test_sim.yaml` documents `sim.problem=ttop` as the
+  switch (problem-level, not a per-policy "respects time budget" flag).
+  Default stays `vrpp` so the paper's 30-day factorial is unchanged.
+  Policy YAMLs were not given a new flag -- `BaseRoutingPolicy` already
+  reads optional `shift_hours` / `avg_speed_kmh` / `service_time_h` and
+  falls back to `load_temporal_params()`.
 
 ### Changed
 
