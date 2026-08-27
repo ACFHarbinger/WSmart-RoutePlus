@@ -25,6 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Hydra task groups (`eval` and `hpo_sim`) instead of composing a missing
   configuration group and failing before dispatch.
 
+#### Train curriculum configuration (`2026-08-27`)
+
+- Curriculum training now reads and injects graph settings under Hydra's
+  task-scoped `train.env`, preventing the silent one-epoch fallback caused by
+  looking for an uncomposed root `env` key.
+
 #### TTOP feasibility and state-resume review (`2026-08-27`)
 
 - TTOP now validates the full depot-to-depot trip, including a trailing or
