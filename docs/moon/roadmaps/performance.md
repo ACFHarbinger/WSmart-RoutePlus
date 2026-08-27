@@ -10,12 +10,12 @@
 
 **Options**
 
-- **A** — Wrap all `model.forward()` evaluation calls in `torch.inference_mode()` (context manager). Zero-code-change speedup of ~10-15% by disabling gradient tracking. `[Quick Win]`
+- **A** — Wrap all `model.forward()` evaluation calls in `torch.inference_mode()` (context manager). Zero-code-change speedup of ~10-15% by disabling gradient tracking and version counter overhead. `[Completed 2026-08-27]`
 - **B** — Apply `torch.compile(model, mode='reduce-overhead')` to the decoder at evaluation time (PyTorch 2.x); measure speedup on the target GPU.
 - **C** — Implement a `BatchedInferenceEngine` that collects N problem instances and runs a single batched forward pass; current code may process one instance at a time during simulation.
 - **D** — Export models to ONNX / TensorRT for production inference; 2-5× speedup on NVIDIA GPUs with quantization.
 
-**Recommendation**: **Option A** immediately (one context manager call), **Option B** as the next step (PyTorch 2.2 compile is mature for attention models), **Option C** for the simulation loop specifically.
+**Recommendation**: **Option A** `[Done]` (adopted across `logic/src/pipeline/features/eval/evaluators/`), **Option B** as the next step (PyTorch 2.2 compile is mature for attention models), **Option C** for the simulation loop specifically.
 
 **Effort × Impact**: Very Low–Medium effort / High impact
 
