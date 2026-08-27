@@ -17,6 +17,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+#### Temporal Team Orienteering Problem (TTOP) — foundation (`2026-08-27`)
+
+- New problem type: TTOP = CVRPP's existing objective and per-trip vehicle
+  capacity constraint, **plus** an independent per-trip time budget (travel
+  time at `avg_speed_kmh` + `service_time_h` per bin). Both constraints hold
+  simultaneously; neither replaces the other. Single-vehicle, multi-trip
+  within a period (not a concurrent fleet — see
+  `docs/moon/roadmaps/new_features.md` §E.8 for the future true-fleet
+  variant, added for the heterogeneous-waste-stream scenario).
+- `SimulationRepository.get_temporal_params()` (staticmethod, no args,
+  mirrors `get_area_params`'s shape) returns `(shift_hours=7.0,
+  avg_speed_kmh=35.0, service_time_h=0.025)`, plus a `load_temporal_params()`
+  wrapper. `EnvironmentTag.TIME_BUDGET` added.
+- `logic/src/envs/tasks/ttop.py`, `logic/src/envs/routing/ttop.py`,
+  `logic/src/envs/generators/ttop.py` (`TTOP(CVRPP)`, `TTOPEnv(CVRPPEnv)`,
+  `TTOPGenerator(VRPPGenerator)`), registered across `ENV_REGISTRY`,
+  `GENERATOR_REGISTRY`, the `envs.problems` facade, and
+  `utils.model.problem_factory.load_problem`. `logic/configs/envs/ttop.yaml`
+  added, mirroring `vrpp.yaml`.
+- KPI tracking made additive rather than fixed-schema: `cost_dict`/results
+  dicts now carry a `"time"` key only when the problem tracks one (ttop),
+  tolerated as absent everywhere else — the plug-and-play seam for future
+  problem-specific KPIs.
+- **Bug found and fixed, independent of TTOP**: `CVRPPEnv._step_instance`
+  never called `super()._step_instance()` — `current_node`/`visited`/
+  `tour_length`/`tour` never advanced past their reset values for any
+  cvrpp rollout. Capacity tracking ran, but the agent's position and the
+  episode's own state were frozen after the first action. Confirmed via
+  direct before/after rollout test. Any committed cvrpp results predating
+  this fix should be treated as suspect.
+- Delegated the rest of TTOP: #58 (Codex — adversarial review of the RL-envs
+  side + remaining training/eval pipeline gaps), #59 (Agy — wire the actual
+  test simulator `pipeline/simulations`/`policies` to respect a time
+  budget), #60 (Opencode — Hydra config tree completion, blocked in part on
+  #59).
+
 ### Changed
 
 #### Repository Documentation & Infrastructure Reorganization (`2026-08-27`)
