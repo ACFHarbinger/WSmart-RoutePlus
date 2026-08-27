@@ -56,6 +56,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and `.gitlab/merge_request_templates/` added; `.gitlab-ci.yml` deferred to
   #57 (different schema, needs a real GitLab runner to validate against).
 - New `infra` label created for these and future infrastructure issues.
+- `LICENSE.md` + `LICENSE.txt` merged into a single `LICENSE` file (Section A:
+  AGPL-3.0, Section B: commercial terms), mirroring the `Image-Toolkit` repo's
+  single-file license layout. `README.md` license links repointed.
+- `git/README.md`, `git/config/project_labels.json` (reference snapshot of
+  the actual label taxonomy), `git/messages/{claude,codex,gemini,opencode}_coauthor.msg`,
+  and `git/hooks/install.sh` added. `Image-Toolkit`'s `git/scripts/` and
+  `git/config/automation_rules.yaml` (a live Gemini-driven backlog-sync bot
+  wired to secrets and a GitHub Actions workflow) were deliberately **not**
+  ported — this repo's coordination mechanism is `.agent/bus/` + `AGENTS.md`,
+  and copying that automation verbatim would be dead/misleading tooling. See
+  `git/README.md` for the reasoning.
 
 See #56 (closed, full change list) and #57 (open follow-up: mirror-host CI
 runner verification).

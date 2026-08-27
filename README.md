@@ -567,9 +567,9 @@ This project is dual-licensed under an open-core model:
 
 - **Open source (free) — GNU AGPL-3.0.** Free to use, modify, and
   distribute for hobbyists, students, researchers, non-profits, and any
-  other use that complies with the [AGPL-3.0](LICENSE.md)'s copyleft and
-  network source-disclosure terms.
+  other use that complies with the [AGPL-3.0](LICENSE) (Section A)'s
+  copyleft and network source-disclosure terms.
 - **Commercial (paid).** For proprietary, closed-source, or SaaS use that
   can't comply with the AGPL's obligations, a paid
-  [commercial license](LICENSE.txt) is available — contact ACFHarbinger
-  <afonso.fernandes100@gmail.com> for pricing and terms.
+  [commercial license](LICENSE) (Section B) is available — contact
+  ACFHarbinger <afonso.fernandes100@gmail.com> for pricing and terms.
