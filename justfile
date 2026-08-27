@@ -175,6 +175,11 @@ run *args: helper::_print_header
 paper force="false": helper::_print_header
     just script::paper '{{ force }}'
 
+# Run comprehensive performance benchmark suite
+run-benchmark: helper::_print_header
+    just benchmark::benchmark
+
+
 
 # Run a batch of experiments from a YAML config file
 batch-run batch_cfg=batch_cfg dry_run=dry_run fail_fast=fail_fast n_cores=n_cores resume=resume: helper::_print_header

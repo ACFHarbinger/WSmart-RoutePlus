@@ -78,32 +78,44 @@ def benchmark_solvers(seed=42):
 
     for backend in ["gurobi", "hexaly"]:
         start = time.time()
-        run_swc_tcf_optimizer(
-            bins=bins,
-            distance_matrix=dist_matrix,
-            values=values,
-            binsids=binsids,
-            mandatory_nodes=mandatory_nodes,
-            optimizer=backend,
-            time_limit=10,
-            seed=seed,
-        )
-        end = time.time()
-        print(f"{backend:8s} | Solve Time: {end - start:7.4f} s")
+        try:
+            run_swc_tcf_optimizer(
+                bins=bins,
+                distance_matrix=dist_matrix,
+                values=values,
+                binsids=binsids,
+                mandatory_nodes=mandatory_nodes,
+                optimizer=backend,
+                time_limit=10,
+                seed=seed,
+            )
+            end = time.time()
+            print(f"{backend:8s} | Solve Time: {end - start:7.4f} s")
+        except Exception as e:
+            print(f"{backend:8s} | Skipped ({e})")
 
 
 def benchmark_ls_throughput(device="cpu", seed=42):
     print(f"\n--- Local Search Throughput (Device: {device}) ---")
     bs = 512
     n_nodes = 50
-    generator = torch.Generator(device=device).manual_seed(seed)
+    if device == "cuda":
+        torch.cuda.manual_seed_all(seed)
+        locs = torch.rand(bs, n_nodes, 2, device=device)
+        waste = torch.rand(bs, n_nodes, device=device)
+    else:
+        generator = torch.Generator().manual_seed(seed)
+        locs = torch.rand(bs, n_nodes, 2, generator=generator)
+        waste = torch.rand(bs, n_nodes, generator=generator)
+
     td = TensorDict(
         {
-            "locs": torch.rand(bs, n_nodes, 2, generator=generator, device=device),
-            "waste": torch.rand(bs, n_nodes, generator=generator, device=device),
+            "locs": locs,
+            "waste": waste,
             "capacity": torch.ones(bs, device=device),
         },
         batch_size=[bs],
+        device=device,
     )
 
     policy = RandomLocalSearchPolicy(env_name="cvrpp", n_iterations=100, seed=seed).to(device)
