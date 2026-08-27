@@ -34,7 +34,8 @@ This comprehensive guide covers all aspects of the WSmart-Route configuration sy
 ```bash
 # Training
 python main.py train                                    # Default (CWCVRP, AM, HGS-ALNS expert)
-python main.py train envs=vrpp model=tam               # Override environment & model
+python main.py train envs@train.env=vrpp model=tam     # Override environment & model
+python main.py train envs@train.env=ttop               # TTOP (CVRPP + time budget)
 python main.py train rl.algorithm=ppo                  # Change RL algorithm
 python main.py train train.n_epochs=50                 # Override parameters
 
@@ -52,15 +53,16 @@ python main.py gen_data data.problem=cwcvrp            # Generate CWCVRP data
 
 ### Configuration Cheat Sheet
 
-#### Environments (`envs=`)
+#### Environments (`envs@<task>.env=`)
 
-| Code      | Problem                              | Description                             |
-| --------- | ------------------------------------ | --------------------------------------- |
-| `cwcvrp`  | **Capacitated Waste Collection VRP** | Default. Multi-day, capacity, overflows |
-| `wcvrp`   | Waste Collection VRP                 | No capacity constraint                  |
-| `vrpp`    | VRP with Profits                     | Select profitable nodes                 |
-| `cvrpp`   | Capacitated VRP with Profits         | VRPP + capacity                         |
-| `scwcvrp` | Stochastic Capacitated WCVRP         | Stochastic waste generation             |
+| Code      | Problem                              | Description                                          |
+| --------- | ------------------------------------ | ---------------------------------------------------- |
+| `cwcvrp`  | **Capacitated Waste Collection VRP** | Default. Multi-day, capacity, overflows              |
+| `wcvrp`   | Waste Collection VRP                 | No capacity constraint                               |
+| `vrpp`    | VRP with Profits                     | Select profitable nodes                              |
+| `cvrpp`   | Capacitated VRP with Profits         | VRPP + capacity                                      |
+| `ttop`    | Temporal Team Orienteering Problem   | CVRPP + independent per-trip time budget             |
+| `scwcvrp` | Stochastic Capacitated WCVRP         | Stochastic waste generation                          |
 
 #### Models (`model=`)
 
@@ -123,7 +125,8 @@ outer.inner.key=value        # Nested override
 key=[val1,val2]             # List override (no spaces!)
 
 # Config group overrides
-envs=vrpp                    # Change environment
+envs@train.env=vrpp          # Change training environment (group swap)
+envs@train.env=ttop          # TTOP: CVRPP + per-trip time budget
 model=tam                    # Change model
 rl.algorithm=ppo            # Change RL algorithm
 
@@ -789,9 +792,10 @@ python main.py train env.num_loc=100
 python main.py train model=tam  # Temporal Attention Model
 python main.py train model=ptr  # Pointer Network
 
-# Change environment
-python main.py eval envs=vrpp  # Vehicle Routing with Profits
-python main.py eval envs=scwcvrp  # Stochastic Capacitated WCVRP
+# Change environment (swap the composed env group, not only env.name)
+python main.py eval envs@eval.env=vrpp eval.env.name=vrpp eval.problem=vrpp
+python main.py eval envs@eval.env=scwcvrp eval.env.name=scwcvrp eval.problem=scwcvrp
+python main.py eval envs@eval.env=ttop eval.env.name=ttop eval.problem=ttop
 
 # Change task
 python main.py task=eval  # Evaluation task
@@ -804,7 +808,7 @@ python main.py task=test_sim  # Simulation testing
 # Combine overrides
 python main.py train \
     model=tam \
-    envs=scwcvrp \
+    envs@train.env=scwcvrp \
     seed=42 \
     model.n_encode_layers=6 \
     rl.batch_size=512
@@ -888,7 +892,7 @@ python main.py -m train rl.batch_size=range(128,513,128)  # 128,256,384,512
 
 # Glob patterns (for sweeping over models/envs)
 python main.py -m train model=glob(*)  # All models
-python main.py -m train envs=glob(*)  # All environments
+python main.py -m train envs@train.env=glob(*)  # All environments
 ```
 
 ### Sweep Output Organization
@@ -922,17 +926,26 @@ outputs/
 
 ```bash
 python main.py train \
-  envs=vrpp \
+  envs@train.env=vrpp \
   model=am \
   train.n_epochs=100 \
   train.batch_size=256
+```
+
+### Example 1b: Train AM on TTOP (CVRPP + per-trip time budget)
+
+```bash
+python main.py train \
+  envs@train.env=ttop \
+  model=am \
+  train.env.shift_hours=7.0
 ```
 
 ### Example 2: Train TAM on CWCVRP with Adaptive Imitation
 
 ```bash
 python main.py train \
-  envs=cwcvrp \
+  envs@train.env=cwcvrp \
   model=tam \
   rl.algorithm=adaptive_imitation \
   rl.adaptive_imitation.policy_config@=/tasks/policies/rl/hgs_alns \
@@ -944,7 +957,7 @@ python main.py train \
 
 ```bash
 python main.py eval \
-  envs=cwcvrp \
+  envs@eval.env=cwcvrp \
   model=am \
   eval.model=checkpoints/best_model.pt \
   eval.decoding.strategy=beam_search \
@@ -978,7 +991,7 @@ python main.py gen_data \
 
 ```bash
 python main.py hpo \
-  envs=vrpp \
+  envs@hpo.env=vrpp \
   model=am \
   hpo.n_trials=100 \
   hpo.search_space=all
@@ -988,7 +1001,7 @@ python main.py hpo \
 
 ```bash
 python main.py meta_train \
-  envs=cwcvrp \
+  envs@meta_rl.env=cwcvrp \
   model=am \
   train.data_distributions=[gamma1,gamma2,uniform] \
   train.n_epochs=200
@@ -1310,7 +1323,7 @@ python main.py your_new_task
 python main.py gen_data data.problem=cwcvrp data.num_samples=10000
 
 # 2. Train with adaptive imitation
-python main.py train envs=cwcvrp model=am train.n_epochs=100
+python main.py train envs@train.env=cwcvrp model=am train.n_epochs=100
 
 # 3. Evaluate
 python main.py eval eval.model=checkpoints/best_model.pt
@@ -1332,7 +1345,7 @@ python main.py test_sim \
 ```bash
 # Automated HPO with Optuna
 python main.py hpo \
-  envs=vrpp \
+  envs@hpo.env=vrpp \
   model=am \
   hpo.n_trials=100
 ```
@@ -1342,7 +1355,7 @@ python main.py hpo \
 ```bash
 # Train on multiple distributions
 python main.py meta_train \
-  envs=cwcvrp \
+  envs@meta_rl.env=cwcvrp \
   train.data_distributions=[gamma1,gamma2,uniform] \
   train.n_epochs=200
 ```

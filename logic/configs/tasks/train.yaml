@@ -4,6 +4,9 @@
 # =============================================================================
 # Configuration for reinforcement learning training with PyTorch Lightning.
 # Used by: python main.py train
+# TTOP:    python main.py train envs@train.env=ttop
+#          (swap the env group; do not only set train.env.name -- that keeps
+#          the previously composed YAML's other fields)
 #
 # Key Features:
 #   - Adaptive Imitation Learning (IL → RL transition)

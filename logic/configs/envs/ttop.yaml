@@ -1,40 +1,66 @@
 # =============================================================================
 # Temporal Team Orienteering Problem (TTOP) Environment Configuration
 # =============================================================================
-# Single-vehicle, multi-trip variant of VRPP/CVRPP:
-#   - Each node has a profit/waste, same layout as VRPP
-#   - No weight/volume capacity constraint (uncapacitated, like VRPP)
-#   - Each depot-to-depot trip is bounded by a time budget instead: travel
-#     time (distance / avg_speed_kmh) + service time (service_time_h per
-#     bin visited) must not exceed shift_hours before the next depot return.
-#   - The vehicle may return to the depot and start a new trip within the
-#     same period; the episode ends once nothing is reachable even with a
-#     freshly reset budget. See logic/src/envs/routing/ttop.py.
+# Single-vehicle, multi-trip variant of CVRPP:
+#   - Same node/waste layout, prize-collection objective, and per-trip
+#     vehicle capacity as CVRPP. Capacity is UNCHANGED -- it is not
+#     replaced by the time budget.
+#   - Additional independent per-trip time budget: travel time
+#     (distance / avg_speed_kmh) + service time (service_time_h per bin)
+#     must not exceed shift_hours before the next depot return.
+#   - Both constraints hold simultaneously. The vehicle may return to the
+#     depot and start a new trip within the same period; the episode ends
+#     once nothing is reachable even with a freshly reset capacity AND
+#     time budget. See logic/src/envs/routing/ttop.py.
 #   - "Team" is one vehicle, multiple trips here -- not a concurrent fleet.
 #     See docs/moon/roadmaps/new_features.md §E.8 for the true-fleet variant.
 #
-# Benchmark problem for testing neural constructive heuristics under a time
-# (rather than count/capacity) resource constraint.
+# Select this env by swapping the Hydra env group (not only env.name --
+# that keeps the previously composed YAML's other fields):
+#   python main.py train envs@train.env=ttop
+#   python main.py task=eval envs@eval.env=ttop eval.env.name=ttop eval.problem=ttop
+#   python main.py task=hpo envs@hpo.env=ttop
+#   python main.py task=meta_train envs@meta_rl.env=ttop meta_rl.env.name=ttop
+#   python main.py task=hpo_sim envs@hpo_sim.env=ttop
+#   python main.py gen_data data.problem=ttop
+# test_sim: sim.problem=ttop is #59 (Agy); do not select it from here until
+# that dispatch actually consumes the value.
 # =============================================================================
 
 name: "ttop" # Environment identifier
+mean: 0.0
+variance: 0.0
+
+# =============================================================================
+# Capacity Constraint (same as cvrpp.yaml -- TTOP does not drop this)
+# =============================================================================
+capacity:
+  100.0 # Normalized vehicle capacity.
+  # Waste values typically sum to >capacity, forcing selective collection.
+  # Range: 0.5-2.0. Higher = less constrained routing.
 
 # ===========================================================================
 # Temporal resource parameters
 # ===========================================================================
-# Mirror SimulationRepository.get_temporal_params() (one driver's shift).
-# Override here only for an experiment that deliberately studies a different
-# shift length/speed/service time -- the Python default is the source of
-# truth otherwise, so these are commented out by default and the generator
-# falls back to get_temporal_params().
-# shift_hours: 7.0        # Total time budget per trip (h)
-# avg_speed_kmh: 35.0      # Average driving speed (km/h)
-# service_time_h: 0.025    # Time to visit and empty a single bin (h) = 1min30s
+# Keys must be present (even as null) so Hydra CLI can override them:
+#   python main.py train envs@train.env=ttop train.env.shift_hours=6.5
+# null = use the Python default from
+# SimulationRepository.get_temporal_params() (7.0 h, 35 km/h, 0.025 h/bin).
+# Set a number only for an experiment that deliberately studies a different
+# shift / speed / service time.
+shift_hours: null        # Total time budget per trip (h). Default 7.0
+avg_speed_kmh: null      # Average driving speed (km/h). Default 35.0
+service_time_h: null     # Time to visit and empty a single bin (h). Default 0.025
 
 # ===========================================================================
 # Curriculum Learning
 # ===========================================================================
 # The first entry is also used for single-stage training.
+# Graphs match vrpp.yaml (Rio Maior 100/170) rather than cvrpp.yaml's
+# 50-node stub -- those are the networks the rest of the framework trains
+# on. No ttop-specific .td datasets exist yet; omit load_dataset so the
+# generator builds instances on the fly. Produce them later with
+# `python main.py gen_data data.problem=ttop`.
 curriculum_graphs:
   - num_loc: 100
     n_samples: 12800
@@ -48,12 +74,13 @@ curriculum_graphs:
     n_days: 100
     dm_filepath: "gmaps_distmat_plastic[riomaior].csv"
     # Objective: maximize (waste_weight × Σ wastes) - (cost_weight × total_distance)
-    # Same reward structure as vrpp -- the time budget is a feasibility
-    # constraint (enforced via the action mask / get_costs assertion), not
-    # an extra reward term.
+    # Subject to: per-trip vehicle capacity AND per-trip time budget.
+    # The time budget is a feasibility constraint (action mask / get_costs
+    # assertion), not an extra reward term.
     reward:
       waste_weight: 1.0
       cost_weight: 2.5
+      overflow_penalty: 1.0
 
   - num_loc: 170
     n_samples: 12800
@@ -69,6 +96,7 @@ curriculum_graphs:
     reward:
       waste_weight: 1.0
       cost_weight: 2.5
+      overflow_penalty: 1.0
 
 # ===========================================================================
 # Evaluation Graphs
@@ -88,6 +116,7 @@ eval_graphs:
     reward:
       waste_weight: 1.0
       cost_weight: 1.0
+      overflow_penalty: 1.0
 
   - num_loc: 170
     n_samples: 512
@@ -103,3 +132,4 @@ eval_graphs:
     reward:
       waste_weight: 1.0
       cost_weight: 2.5
+      overflow_penalty: 1.0

@@ -97,6 +97,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   budget), #60 (Opencode — Hydra config tree completion, blocked in part on
   #59).
 
+#### TTOP Hydra config tree (#60, training/eval side) (`2026-08-27`)
+
+- `logic/configs/envs/ttop.yaml` rewritten to match the landed design
+  (`TTOP = CVRPP capacity + independent time budget`). The previous header
+  still described the discarded uncapacitated/VRPP-with-time-replacing-
+  capacity draft, and the file had no `capacity:` key — `VRPPGenerator`
+  would then default to `1.0` instead of CVRPP's `100.0`.
+- `EnvConfig` now declares optional `shift_hours` / `avg_speed_kmh` /
+  `service_time_h`. `ttop.yaml` lists them as `null` (Python default) so a
+  Hydra CLI override such as `train.env.shift_hours=6.5` is a real key
+  change rather than a struct-missing error.
+- Task YAMLs document the Hydra *group swap* needed to actually load
+  `ttop.yaml`: `envs@train.env=ttop`, `envs@eval.env=ttop` (plus the
+  hardcoded `eval.env.name` / `eval.problem` lockstep), `envs@hpo.env=ttop`,
+  `envs@meta_rl.env=ttop` (plus `meta_rl.env.name`), `envs@hpo_sim.env=ttop`,
+  `gen_data data.problem=ttop`, `slurm` `problem=ttop`. `test_sim.yaml` and
+  `logic/configs/policies/*.yaml` are untouched — blocked on #59.
+- `tracking/*.yaml` have no per-problem metric lists; ttop's additive
+  `"time"` KPI is code-side (`eval/engine.py`) and needs no tracking YAML.
+- `docs/CONFIGURATION_GUIDE.md` env table and CLI examples now use the
+  real group-override syntax (`envs@<task>.env=`) instead of the
+  non-composed `envs=vrpp` form.
+
 ### Changed
 
 #### Repository Documentation & Infrastructure Reorganization (`2026-08-27`)

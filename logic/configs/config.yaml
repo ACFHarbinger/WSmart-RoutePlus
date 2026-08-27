@@ -10,7 +10,8 @@
 #   3. model/* - Neural model architectures (am, tam, deep_decoder, ptr, symnco, moe)
 #
 # Override from CLI:
-#   python main.py train models=tam envs=vrpp seed=1234
+#   python main.py train models=tam envs@train.env=vrpp seed=1234
+#   python main.py train envs@train.env=ttop
 #   python main.py eval models.embed_dim=256
 #
 # See docs/HYDRA_GUIDE.md for full override syntax and multi-run examples.
