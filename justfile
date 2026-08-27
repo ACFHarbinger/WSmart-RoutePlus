@@ -171,6 +171,11 @@ algo-export constructors="" selectors="" improvement="" acceptance="" joint="" m
 run *args: helper::_print_header
     uv run python main.py {{ args }}
 
+# Regenerate paper tables and figures, and compile paper PDF
+paper force="false": helper::_print_header
+    just script::paper '{{ force }}'
+
+
 # Run a batch of experiments from a YAML config file
 batch-run batch_cfg=batch_cfg dry_run=dry_run fail_fast=fail_fast n_cores=n_cores resume=resume: helper::_print_header
     just controller::batch-run '{{ batch_cfg }}' '{{ dry_run }}' '{{ fail_fast }}' '{{ n_cores }}' '{{ resume }}'

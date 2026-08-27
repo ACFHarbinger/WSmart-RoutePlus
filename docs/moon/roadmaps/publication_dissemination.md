@@ -24,7 +24,7 @@
 - [x] Simulation Protocol loop diagram (`simulation_loop.png`) generated programmatically via `fig_simulation_loop` in `logic/gen/gen_paper_latex.py` and included in `sec:protocol` (issue #54, 2026-08-27)
 - [x] Network-map generation reuses tracked coordinate-derived analysis artifacts and fails explicitly when they are absent, avoiding geographic reconstruction from inconsistent distance-matrix copies (2026-08-25)
 - [x] Report/deck generators revived from `archive/gen/` to `logic/gen/` and brought up to ruff (2026-08-25)
-- [ ] `[Quick Win]` A `just paper` target that regenerates tables and figures and rebuilds the PDF in one step
+- [x] A `just paper` target that regenerates tables and figures and rebuilds the PDF in one step (2026-08-27)
 - [ ] Wire the same degenerate-run exclusion into `gen_simulation_analysis.py` and the Studio's native `app/src/gen/` engine, so all four consumers apply one rule
 - [ ] Port the LaTeX table path into the native §H engine, or decide explicitly that LaTeX stays Python-only
 
