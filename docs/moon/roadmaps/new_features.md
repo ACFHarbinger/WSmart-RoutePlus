@@ -10,11 +10,11 @@
 
 **Options**
 
-- **A** — Add a `benchmark` subcommand to `main.py` that: runs a configurable matrix of (policy × problem × graph_size), collects metrics, and writes a unified `benchmark_report.csv` and Markdown table. `[Quick Win]`
+- **A** — Add a `benchmark` runner (`logic/benchmark/run_all.py` / `just run-benchmark`) that runs neural latency/throughput scaling, vectorized local search throughput, and exact/metaheuristic OR solver benchmarks with structured metric logging. `[Completed 2026-08-27]`
 - **B** — Integrate with `ray[tune]` sweep (already a dependency) to parallelize the benchmark matrix across CPU cores.
 - **C** — Add a "Benchmark" tab to the Studio (synergises with §A.5) that configures the matrix via checkboxes and shows a live results table.
 
-**Recommendation**: **Option A** for the CLI benchmark runner, **Option C** for Studio-accessible results.
+**Recommendation**: **Option A** for the CLI benchmark runner `[Done]`, **Option C** for Studio-accessible results.
 
 **Effort × Impact**: Medium effort / High impact
 
