@@ -22,10 +22,10 @@ Confirmed against the filesystem, not assumed from names. POMO has no `logic/src
 | `DeepACO.pdf` | `logic/src/models/core/deepaco/` | NAR heatmap + ACO |
 | `GFACS.pdf` | `logic/src/models/core/gfacs/` | DeepACO + GFlowNet TB |
 | `GLOP.pdf` | `logic/src/models/core/glop/` | hierarchical partition + local |
-| `MATNet.pdf` (**wrong PDF**: PV forecasting) | `logic/src/models/core/matnet/` (Kwon mixed-score) | matrix row/col constructive |
+| `MATNet.pdf` | `logic/src/models/core/matnet/` | matrix row/col constructive |
 | `MDAM.pdf` | `logic/src/models/core/mdam/` | multi-decoder constructive |
 | `N2S.pdf` | `logic/src/models/core/n2s/` | improvement (k-NN attention) |
-| `NARGNN.pdf` (Li/Chen/Koltun GCN+tree search) | `logic/src/models/core/nargnn/` (TSP heatmap, no tree search) | mismatch |
+| `NARGNN.pdf` | `logic/src/models/core/nargnn/` | NAR GNN heatmap |
 | `NeuOpt.pdf` | `logic/src/models/core/neuopt/` | improvement (pairwise) |
 | `PolyNet.pdf` | `logic/src/models/core/polynet/` | K-conditioned AM |
 
@@ -40,7 +40,7 @@ Shared building blocks most `core/` models compose: `logic/src/models/subnets/` 
 15 of 15 bibliography papers scored. Pattern:
 
 - Constructive AM-family (AM, Pointer, MDAM, PolyNet) and ACO-family (DeepACO, GFACS, GLOP, DR-ALNS) are real implementations of the named papers, typically 4/5, with default-value or solver-choice drift rather than missing algorithms.
-- Two bibliography PDFs do not match the code they sit next to: `MATNet.pdf` is a PV-forecasting paper; `NARGNN.pdf` is Li/Chen/Koltun GCN+tree-search while `core/nargnn/` is a TSP heatmap constructor.
+- Two bibliography PDFs were the wrong papers (#64). They have been replaced from arXiv: `MATNet.pdf` is now Kwon et al. 2021; `NARGNN.pdf` is now Joshi, Laurent & Bresson 2019. The previous files sit under `bibliography/models/_mismatched/`.
 - POMO and Sym-NCO are **training methods** on AM, not separate `core/` networks. Sym-NCO's problem-symmetricity loss is now wired (it was a commented no-op: `loss_ps` stayed 0).
 - The three improvement models (DACT, NeuOpt, N2S) share one pairwise `(i,j)` decoder template. DACT still has CPE; the dual-aspect collaborative attention that gives the paper its name is collapsed to a single stream. NeuOpt's encoder ignores the current tour. N2S keeps k-NN attention but is wired to `tsp_kopt`, not pickup-and-delivery.
 
@@ -63,7 +63,7 @@ Shared building blocks most `core/` models compose: `logic/src/models/subnets/` 
 | **MDAM** | 4/5 | Shared encoder, 5 decoder paths, pairwise KL to discourage collapse. |
 | **MATNet** | 4/5 | Row/column mixed-score encoder (Kwon et al. 2021), 5 layers, instance norm. |
 | **GLOP** | 4/5 | NAR partition then local subproblem. Default local solver is `"greedy"`, not LKH. |
-| **NARGNN** | 2/5 | `NARGNN.pdf` is Li, Chen & Koltun (GCN + guided tree search for vertex-subset NP-hard problems). The code is a TSP edge-heatmap NAR constructor (Joshi-style), with no tree search. |
+| **NARGNN** | 4/5 | Joshi 2019 gated/anisotropic GCN + edge heatmap + NAR decode. Ours uses 15 GCN layers vs their 30, heatmap MLP 5 vs 3, greedy/sampling by default vs their beam 1280, and REINFORCE rather than supervised BCE. |
 | **PolyNet** | 4/5 | AM encoder conditioned on K strategy vectors via `PolyNetDecoder`. |
 
 ---
@@ -333,10 +333,9 @@ POMO is a **training algorithm** for an existing constructive policy (almost alw
 
 ## 12. MATNet (Kwon et al. 2021)
 
-**Intended paper**: Kwon et al., Matrix Encoding Networks for Combinatorial Optimization (NeurIPS 2021)
-**File in `bibliography/models/MATNet.pdf`**: **wrong PDF** — Tortora et al., "MATNet: Multi-Level Fusion Transformer-Based Model for Day-Ahead PV Generation Forecasting" (IEEE Trans. Smart Grid). Namesake collision; that paper is not implemented here.
+**Paper**: Kwon et al., "Matrix Encoding Networks for Neural Combinatorial Optimization", NeurIPS 2021 (`MATNet.pdf`, arXiv:2106.11113; replaced under #64)
 **Implementation**: `logic/src/models/core/matnet/`; `MixedScoreMHA` in `subnets/modules/matnet_attention.py`
-**Faithfulness**: ★★★★☆ (4/5) to Kwon et al. (the architecture the code comments cite). Unscored against the PDF that is actually in the folder.
+**Faithfulness**: ★★★★☆ (4/5)
 
 ### Mixed-score equation (line-checked against the Kwon architecture)
 
@@ -351,7 +350,7 @@ then row-softmax over columns and column-softmax over rows, values from the oppo
 ### Differences
 
 - Written for matrix problems (ATSP/FFSP). Euclidean VRPP is a domain stretch.
-- The bibliography file does not contain this paper. Anyone reading `MATNet.pdf` from `bibliography/models/` will audit the wrong work.
+- Kwon mixes the internal attention score with \(D_{ij}\) via a **per-head MLP**. Ours uses a learned scalar \(W_{\mathrm{mat}}\) times the matrix plus the two directed dots — the same three terms, a simpler mixer.
 
 ---
 
@@ -375,24 +374,23 @@ then row-softmax over columns and column-softmax over rows, values from the oppo
 
 ## 14. NARGNN
 
-**PDF in folder**: Li, Chen & Koltun, "Combinatorial Optimization with Graph Convolutional Networks and Guided Tree Search" (arXiv:1810.10659)
-**Intended paper** (from the encoder: anisotropic/gated GNN + \(N\times N\) edge heatmap + NAR decode; also `docs/modules/MODELS_MODULE.md` §3.3.1): Joshi, Laurent & Bresson, "An Efficient Graph Convolutional Network Technique for the Travelling Salesman Problem", arXiv:1906.01227
+**Paper**: Joshi, Laurent & Bresson, "An Efficient Graph Convolutional Network Technique for the Travelling Salesman Problem", 2019 (`NARGNN.pdf`, arXiv:1906.01227; replaced under #64)
 **Implementation**: `logic/src/models/core/nargnn/` — NAR TSP *edge heatmap* + greedy/sampling decoder
-**Faithfulness**: ★★☆☆☆ (2/5) to the PDF in the folder; ★★★★☆ (4/5) to Joshi 2019 (heatmap + gated GCN; our default decoder is greedy/sampling rather than their parallel beam search). Replacement source is recorded in `bibliography/models/README.md` (#64).
+**Faithfulness**: ★★★★☆ (4/5)
 
-### What the PDF describes
+### What matches
 
-- Vertex-wise GCN that scores whether a *vertex* is in the optimal set
-- Diverse solution heads + **guided tree search** to explore the combinatorial space
-- Evaluated on SAT / MVC / MAXCUT-style problems, including graphs with 10⁵ nodes
+- Anisotropic/gated graph conv with node *and* edge features, then an MLP on the last-layer edge embedding to an inclusion probability (heatmap)
+- Non-autoregressive: one GNN forward, then a search/greedy decode
+- 2-D coordinates as node input; TSP as the default task
 
-### What the code does
+### Differences
 
-- Predicts an `[N, N]` *edge* heatmap (Joshi-style NAR TSP constructor)
-- No tree search, no vertex-inclusion head, no SAT/MVC tasks
-- 15 graph layers + 5 heatmap layers, SiLU, mean aggregation
+- Joshi trains **supervised** BCE against Concorde labels, \(l_{\mathrm{conv}}=30\), \(l_{\mathrm{mlp}}=3\), hidden 300, beam width 1280 (plus a shortest-tour heuristic over the beam)
+- Ours: 15 GCN layers + 5 heatmap layers, SiLU, default greedy/sampling, **REINFORCE** wrapper in `NARGNN` rather than supervised BCE
+- Beam search exists as a NAR decoder option but is not the default inference path
 
-The filename `NARGNN` matches a different literature thread (non-autoregressive GNN heatmaps). The PDF does not. This is a bibliography mapping error, not a quietly drifted Joshi clone.
+The previous PDF (Li/Chen/Koltun GCN+tree-search) is under `bibliography/models/_mismatched/`.
 
 ---
 
@@ -420,7 +418,7 @@ The filename `NARGNN` matches a different literature thread (non-autoregressive 
 1. **Class vs YAML defaults** (AM §1, Pointer §2) is the constructive-family failure mode. Factory paths that compose Hydra YAMLs are closer to the papers than raw `Cls(...)` construction.
 2. **Improvement-family copy-paste.** DACT, NeuOpt, and N2S decoders are the same pairwise Q·K block. Differentiating paper claims (DAC-Att, k-opt, PD ruin/recreate) did not survive the shared `ImprovementPolicy` template.
 3. **Sym-NCO `loss_ps`** was a concrete defect (helper existed, call did not). Wired in the follow-up commit; the invariance log now tracks the computed term.
-4. **Bibliography PDF mismatches.** `MATNet.pdf` is a PV-forecasting transformer, not Kwon's matrix encoder. `NARGNN.pdf` is Li/Chen/Koltun GCN+tree-search, not the heatmap constructor in `core/nargnn/`. DR-ALNS Table 1 matches the 7-d state 1:1. Mixed-score attention in code matches Kwon's formula even though the PDF in the folder does not.
+4. **Bibliography PDF mismatches (fixed #64).** `MATNet.pdf` and `NARGNN.pdf` were the wrong papers; they now hold Kwon 2021 and Joshi 2019. The previous files are under `bibliography/models/_mismatched/`. DR-ALNS Table 1 matches the 7-d state 1:1. Kwon mixes \(D_{ij}\) with a per-head MLP; ours uses a learned scalar on the matrix.
 
 ## In-house `core/` models (no PDF in `bibliography/models/`)
 

@@ -196,9 +196,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   is Li/Chen/Koltun GCN+tree-search while `core/nargnn/` is a TSP heatmap
   (score 2/5 vs that PDF). DR-ALNS Table 1 matches the 7-d state 1:1.
 - `bibliography/models/README.md` (#64): filename → actual PDF title → intended
-  citation. Intended replacements (not fetched): Kwon et al. 2021
-  arXiv:2106.11113 for MATNet; Joshi, Laurent & Bresson 2019 arXiv:1906.01227
-  for NARGNN. PDFs left in place pending a human swap.
+  citation.
+- Replaced the two wrong files from arXiv (first pages verified):
+  `MATNet.pdf` is Kwon et al. 2021 (arXiv:2106.11113);
+  `NARGNN.pdf` is Joshi, Laurent & Bresson 2019 (arXiv:1906.01227).
+  Previous copies kept under `bibliography/models/_mismatched/`.
+  NARGNN re-scored 4/5 against Joshi (15 GCN layers vs 30, REINFORCE vs
+  supervised BCE, greedy vs beam-1280).
 
 #### TTOP Hydra config tree (#60, training/eval side) (`2026-08-27`)
 
