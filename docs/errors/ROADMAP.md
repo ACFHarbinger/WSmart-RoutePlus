@@ -5,8 +5,8 @@ Tracker for issue #61. The sequence follows the component flow in
 component is checked for cross-boundary shape/type errors, invalid state
 mutation, device handling, and silent routing/solver failures.
 
-- [IN PROGRESS] CLI entry point and Hydra command dispatch (`main.py`, task routing)
-- [PENDING] Typed configuration composition and validation (`logic/src/configs/`)
+- [COMPLETED] CLI entry point and Hydra command dispatch (`main.py`, task routing) — normalized documented aliases `evaluation` → `eval` and `sim_hpo` → `hpo_sim`; regression coverage added.
+- [IN PROGRESS] Typed configuration composition and validation (`logic/src/configs/`)
 - [PENDING] Feature engines: train, evaluation, data generation, and simulation dispatch
 - [PENDING] Routing environments, generators, and task objectives
 - [PENDING] Model encoders, decoders, embeddings, and critic interfaces
@@ -18,5 +18,5 @@ mutation, device handling, and silent routing/solver failures.
 
 ## Current pass
 
-Start with the CLI/Hydra hand-off. Record confirmed defects with their
-regression coverage before advancing to configuration composition.
+CLI/Hydra dispatch is complete. Trace Hydra composition from task-group
+selection through typed configuration validation next.

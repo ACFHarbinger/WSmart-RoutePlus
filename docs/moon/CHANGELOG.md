@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+#### Hydra task aliases (`2026-08-27`)
+
+- The documented `evaluation` and `sim_hpo` CLI aliases now select the real
+  Hydra task groups (`eval` and `hpo_sim`) instead of composing a missing
+  configuration group and failing before dispatch.
+
 #### TTOP feasibility and state-resume review (`2026-08-27`)
 
 - TTOP now validates the full depot-to-depot trip, including a trailing or

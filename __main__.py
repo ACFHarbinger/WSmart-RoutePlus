@@ -27,7 +27,8 @@ def main() -> None:
         print("\nFor non-Hydra commands (test_suite, file_system, etc.), use: python main.py <command>")
         sys.exit(1)
 
-    task = sys.argv.pop(1)
+    raw_task = sys.argv.pop(1)
+    task = {"evaluation": "eval", "sim_hpo": "hpo_sim"}.get(raw_task, raw_task)
     sys.argv.append(f"tasks={task}")
     sys.argv.append(f"task={task}")
     hydra_entry_point()
