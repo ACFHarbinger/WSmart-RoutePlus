@@ -158,7 +158,7 @@ def run_data_generation(cfg: Any) -> float:
     """Generate datasets for training, validation, or testing.
 
     Initialises the WSmart+ tracking run, calls the dataset generator, and
-    marks the run as completed regardless of outcome.
+    records whether that operation completed or failed.
 
     Args:
         cfg: Hydra ``Config`` object (structured config).
@@ -176,7 +176,13 @@ def run_data_generation(cfg: Any) -> float:
     wst.init(experiment_name=experiment_name)
     try:
         generate_datasets(cfg)
-    finally:
+    except Exception:
+        run = wst.get_active_run()
+        if run is not None:
+            run.set_tag("status", "failed")
+            run.flush()
+        raise
+    else:
         run = wst.get_active_run()
         if run is not None:
             run.set_tag("status", "completed")
