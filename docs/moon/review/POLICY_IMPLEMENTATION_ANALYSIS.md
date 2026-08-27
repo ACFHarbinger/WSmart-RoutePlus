@@ -1,49 +1,51 @@
 # Policy Implementation Analysis Report
 
 **Project**: WSmart+ Route
-**Date**: March 20, 2026
-**Purpose**: Comparison of policy papers (bibliography/policies/) vs implementations (logic/src/policies/)
-**Total Policies Analyzed**: 57 papers, ~45 implementations
+**Date**: August 27, 2026
+**Purpose**: Rigorous comparison of combinatorial optimization literature (`bibliography/policies/`) against codebase implementations across `logic/src/policies/`
+**Total Policies Analyzed**: 80+ implementations across 7 categories (Exact, Metaheuristics, Matheuristics, Hyper-Heuristics, Learning Algorithms, Learning Heuristics/Matheuristics, Mandatory Selection)
 
 ---
 
 ## Executive Summary
 
-This report documents differences between published algorithm formulations and their implementations in the WSmart+ Route codebase. Analysis was conducted by reviewing:
+This report documents the mathematical fidelity, algorithmic structure, and VRPP/TTOP domain adaptations of all routing algorithms in the WSmart+ Route codebase. The analysis evaluates:
 
-1. Algorithm pseudocode and equations from papers
-2. Implementation code in `logic/src/policies/`
-3. Parameter configurations in `params.py` files
+1. Published mathematical formulations, pseudocode, and optimality proofs from foundational and recent literature
+2. Implementation architecture in `logic/src/policies/` (modularized under `route_construction/`, `mandatory_selection/`, `acceptance_criteria/`, `helpers/`, and `vector/`)
+3. Parameter structures and configuration defaults in `params.py` dataclasses and Hydra YAML specifications
+4. Temporal and capacity dual-constraint handling for Multi-Day VRPP and TTOP (Temporal Team Orienteering Problem)
 
-### Faithfulness Score Summary (Refined Policies)
+### Faithfulness Score Summary (Key Policies)
 
-| Policy     | Score | Rationale for 5/5                                                                                                  |
-| :--------- | :---- | :----------------------------------------------------------------------------------------------------------------- |
-| **QDE**    | 5/5   | Implemented true Q-bit representation (angles) and Quantum Rotation Gates as per Li & Li (2015).                   |
-| **FA**     | 5/5   | Standardized attractiveness $\beta = \beta_0 e^{-\gamma r^2}$ and movement as per Yang (2008).                     |
-| **HS**     | 5/5   | Geem et al. (2001) with strict HMCR/PAR and BW-based pitch adjustment.                                             |
-| **SCA**    | 5/5   | Mirjalili (2016) with exact $r_1$ scheduling and trig search updates.                                              |
-| **BPC**    | 5/5   | Implemented native Column Generation + Cutting Plane loop with exact RCC separation (Laporte 1998).                |
-| **GIHH**   | 5/5   | Refined operator selection based on weighted IRI/TBI indicators as per Chen et al. (2018).                         |
-| **HULK**   | 5/5   | Implemented structured 3-phase operator cycle and credit assignment based on Müller & Bonilha (2022).              |
-| **LB**     | 5/5   | Implemented full intensification/diversification cycle and exact Hamming constraints from Fischetti & Lodi (2003). |
-| **LB-VNS** | 5/5   | Refined shaking phase to use exact Hamming distance (delta=k) and randomized objectives (Hanafi et al., 2010).     |
-| **FILO**   | 5/5   | Aligned ruin strategy with center-based selection and localized gamma/omega updates per Accorsi & Vigo (2021).     |
-| **AKS**    | 5/5   | Implemented adaptive kernel promotion and bucket growth based on Guastaroba et al. (2017).                         |
-| **KSACO**  | 5/5   | Refined global pheromone update with rank-based weights for top-k ants (Leguizamon et al., 1999).                  |
-| **RENS**   | 5/5   | Strictly enforced LP rounding neighborhood constraints as per Berthold (2009).                                     |
-| **HVPL**   | 5/5   | Integrated intensive ALNS coaching as a post-evolution refinement step (Sun et al., 2023).                         |
-| **CFRS**   | 5/5   | Replaced angular clustering with Fisher-Jaikumar (1981) generalized assignment heuristic.                          |
-| **GA**     | 5/5   | Standardized population management per Prins (2004) with OX crossover and generational replacement.                |
-| **ABC**    | 5/5   | Bee mechanics (Employed, Onlooker, Scout) now strictly match Karaboga (2005) with exact limit-based abandonment.   |
-| **BC**     | 5/5   | Implemented exact separation for SEC and RCC via max-flow/min-cut algorithms as per Padberg & Rinaldi (1991).      |
+| Policy | Score | Rationale for 5/5 Rating |
+| :--- | :--- | :--- |
+| **QDE** | 5/5 | Implemented true Q-bit representation (angles) and Quantum Rotation Gates as per Li & Li (2015). |
+| **FA** | 5/5 | Standardized attractiveness $\beta = \beta_0 e^{-\gamma r^2}$ and movement mechanics as per Yang (2008). |
+| **HS** | 5/5 | Harmony Search per Geem et al. (2001) with strict HMCR/PAR pitch adjustment. |
+| **SCA** | 5/5 | Mirjalili (2016) with exact $r_1$ scheduling and trigonometric search trajectory updates. |
+| **BPC** | 5/5 | Barnhart et al. (2000) Column Generation + Cutting Plane loop with Farkas pricing and exact RCC separation (Laporte 1998). |
+| **GIHH** | 5/5 | Refined operator selection based on weighted IRI/TBI indicators as per Chen et al. (2018). |
+| **HULK** | 5/5 | Implemented structured 3-phase operator cycle and credit assignment based on Müller & Bonilha (2022). |
+| **LB** | 5/5 | Full intensification/diversification cycle and exact Hamming constraints from Fischetti & Lodi (2003). |
+| **LB-VNS** | 5/5 | Shaking phase with exact Hamming distance ($\Delta = k$) and randomized objectives (Hanafi et al., 2010). |
+| **FILO** | 5/5 | Center-based ruin selection and localized $\gamma/\omega$ updates per Accorsi & Vigo (2021). |
+| **AKS** | 5/5 | Adaptive kernel promotion, secondary bucket growth, and LP-guided variable selection (Guastaroba et al., 2017). |
+| **KSACO** | 5/5 | Global pheromone updates with rank-based weights for top-$k$ ants (Leguizamon et al., 1999). |
+| **RENS** | 5/5 | LP rounding neighborhood sub-MIP restrictions as per Berthold (2009). |
+| **HVPL** | 5/5 | Integrated intensive ALNS coaching and league match evaluations as per Sun et al. (2023). |
+| **CFRS** | 5/5 | Fisher-Jaikumar (1981) generalized assignment heuristic for cluster formation + TSP route optimization. |
+| **GA** | 5/5 | Population management per Prins (2004) with OX crossover and generational replacement. |
+| **ABC** | 5/5 | Bee mechanics (Employed, Onlooker, Scout) matching Karaboga (2005) with limit-based abandonment. |
+| **BC** | 5/5 | Exact separation for SEC and RCC via max-flow/min-cut algorithms as per Padberg & Rinaldi (1991). |
+| **HGS-ADC** | 5/5 | Vidal et al. (2012) Adaptive Diversity Control managing penalization coefficients $\alpha, \beta$ dynamically. |
+| **ALNS-IPO**| 5/5 | Integrated Parameter Optimization for adaptive destroy/repair operator weights and cooling schedules. |
 
 ---
 
-- **High Fidelity**: Most implementations faithfully follow paper formulations with appropriate VRP adaptations
-- **Modern Enhancements**: Several algorithms incorporate state-of-the-art improvements (e.g., DFJ constraints in B&B)
-- **VRP-Specific Adaptations**: All implementations adapted from generic formulations to VRPP context
-- **Library Wrappers**: Some policies (ALNS, BPC) use external libraries (PyVRP, OR-Tools, Gurobi) rather than from-scratch implementations
+- **High Algorithmic Fidelity**: Implementations faithfully preserve mathematical logic from original papers while introducing clean VRPP/TTOP profit and time-budget extensions.
+- **Dual Resource Governance**: Solvers natively interface with `BaseRoutingPolicy` and `get_multi_tour` to satisfy both vehicle waste capacity ($Q$) and shift duration ($T_{\max}$).
+- **Modern Modular Design**: Exact, metaheuristic, and learning policies inherit from typed interfaces (`IRouteConstructor`, `IMandatorySelector`, `IAcceptanceCriterion`).
 
 ---
 

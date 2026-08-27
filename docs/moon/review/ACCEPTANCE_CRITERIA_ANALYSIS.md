@@ -1,34 +1,55 @@
 # Comprehensive Analysis: Acceptance Criteria in Route Construction
 
-This document evaluates the `logic/src/policies/route_construction` package of the `WSmart-Route` codebase, comprehensively indexing **every single algorithm**. We assess whether popular meta-heuristics, hyper-heuristics, and matheuristics seamlessly leverage the newly established `acceptance_criteria/` structure, or if they rely on hardcoded and localized conditionals to accept iterative solver moves.
-
-Our core finding validates the initial thesis: Despite the existence of 17 completely decoupled, typed, and mathematically sound criteria classes (e.g., `FitnessProportionalAcceptance`, `MonteCarloAcceptance`, `GreatDelugeAcceptance`), **zero algorithms actually orchestrate or depend upon them**. Currently, acceptance execution is entirely hardcoded deeply into specific routines, redundant across multiple modules, or evaluated deterministically as part of an exact execution layer.
+**Project**: WSmart+ Route
+**Date**: August 27, 2026
+**Purpose**: Systematic review of acceptance criteria implementations in `logic/src/policies/acceptance_criteria/` and their integration across route construction algorithms (`logic/src/policies/route_construction/`).
+**Total Criteria Modules**: 23 modular criteria (implementing `IAcceptanceCriterion`)
+**Total Algorithms Evaluated**: 80+ routing algorithms across exact, metaheuristic, matheuristic, hyper-heuristic, and learning paradigms
 
 ---
 
-## 1. Modular Acceptance Criteria Modules
+## Executive Summary
 
-The `logic/src/policies/route_construction/acceptance_criteria/` defines the following 17 distinct, interface-conforming (`IAcceptanceCriterion`) mathematical standards:
+This document evaluates the acceptance criteria architecture in the `WSmart+ Route` codebase. We assess whether metaheuristics, hyper-heuristics, and matheuristics leverage the decoupled `logic/src/policies/acceptance_criteria/` infrastructure or rely on hardcoded local conditionals.
 
-| Acceptance Criterion | Reference Paper | Small Description | Key Equation(s) |
+### Key Findings
+
+1. **Modular Architecture**: 23 decoupled, typed, and mathematically sound acceptance criteria classes implementing `IAcceptanceCriterion` are defined in `logic/src/policies/acceptance_criteria/`.
+2. **Acceptance Spectrum**: Coverage spans classical greedy descent (`OnlyImproving`), thermal/stochastic (`BoltzmannMetropolis`, `AdaptiveBoltzmannMetropolis`, `GeneralizedTsallisSA`), historical/threshold (`LateAcceptance`, `RecordToRecord`, `GreatDeluge`, `NonLinearGreatDeluge`, `OldBachelor`, `ThresholdAccepting`, `StepCountingHillClimbing`), game/tournament (`BinaryTournament`, `FitnessProportional`, `ProbabilisticTransition`), physics/energy (`DemonAlgorithm`), multiobjective (`ParetoDominance`, `EpsilonDominance`), and structural search (`SkewedVNS`).
+3. **Integration Status**: While modular criteria are fully tested in unit suites (`logic/test/unit/policies/test_acceptance_criteria.py`), several legacy metaheuristics continue to embed inline `if candidate_cost < current_cost` or local cooling loops. Standardized factory injection via `BaseRoutingPolicy` and Hydra configuration parameters provides the target unification pathway.
+
+---
+
+## 1. Modular Acceptance Criteria Modules (23 Standards)
+
+The `logic/src/policies/acceptance_criteria/` package defines 23 distinct mathematical acceptance criteria conforming to the `IAcceptanceCriterion` protocol:
+
+| Acceptance Criterion | Reference Paper | Description | Mathematical Rule / Formulation |
 | :--- | :--- | :--- | :--- |
-| **All Moves** | Baseline / Random Walk | Accepts all incoming proposed solutions regardless of objective degradation. | $P(accept) = 1$ |
-| **Aspiration Criterion** | Glover (1989) | Reverses a Tabu status if the move strictly beats the global known best. | $f\_{cand} > f\_{global\_best}$ |
-| **Boltzmann Metropolis** | Metropolis et al. (1953) | Probabilistically accepts worsening moves dependent on an exponential temperature matrix. | $P(A) = e^{-\Delta f / T}$ |
-| **Ensemble Move** | Ozcan et al. (2008) | Votes across multiple criteria objects and returns an aggregate mathematical decision. | $V = \sum w_i \cdot I_i(accept)$ |
-| **Fitness Proportional** | Holland (1975) | Roulette-Wheel selection. Acceptance probabilistically scaled relative to total fitness. | $P(A) = \frac{f\_{cand}}{f\_{cur} + f\_{cand}}$ |
-| **Great Deluge** | Dueck (1993) | Rejects solutions dropping below a mathematical "water level" constraint that steadily rises. | $f\_{cand} \ge Level$ |
-| **Improving & Equal** | Classic Hill Climbing | Accepts moves that are strictly better or completely equivalent to current cost. | $f\_{cand} \ge f\_{cur}$ |
-| **Late Acceptance** | Burke & Bykov (2017) | Compares candidate against a historical incumbent `L` trajectory steps ago. | $f\_{cand} \ge f\_{history}[i \pmod L]$ |
-| **Monte Carlo** | Random Choice | Fixed-probability acceptance metric applied identically against any worsening move. | $P(A \mid worsening) = p$ |
-| **Old Bachelor** | Hu et al. (1995) | Dynamic thresholding strategy that contracts on success and dilates upon failure. | $f\_{cand} > f\_{cur} - \tau\_{dynamic}$ |
-| **Only Improving** | Classic Greedy descent | Strictest elitist logic. Instantly disregards equivalent or worsening limits. | $f\_{cand} > f\_{cur}$ |
-| **Pareto Dominance** | Multiobjective Opt | Requires strict metric vector superiority (no value degradation permitted across the vector array). | $f\_{cand} \succ_{pareto} f\_{cur}$ |
-| **Probabilistic Transition**| Dorigo (1992) | Ant Colony proportional evaluation rule (scaled aggressively by parameterized $\alpha$ factor). | $P(A) = \frac{f\_{cand}^\alpha}{f\_{cur}^\alpha + f\_{cand}^\alpha}$ |
-| **Record-to-Record** | Dueck (1993) | Accepts any moves deviating by at most `tolerance`% strictly from the global best benchmark. | $f\_{cand} \ge f\_{best} - \text{dev}$ |
-| **Step Counting Hill** | Bykov (2003) | Locks in a fixed comparative bound for `K` strict iteration steps before explicitly resetting. | $f\_{cand} \ge bound\_{stagnant}$ |
-| **Threshold Accepting** | Dueck & Scheuer (1990) | Deterministic SA derivative. Strictly decays acceptable mathematical worsening linearly toward 0. | $f\_{cand} \ge f\_{cur} - T\_{decay}$ |
-| **Tournament** | Goldberg (1991) | Candidate mathematically wins/loses a loaded stochastic dice roll against the current solution. | $P(cand\_wins) = p$ |
+| **All Moves** | Baseline / Random Walk | Accepts all incoming proposed solutions unconditionally. | $P(\text{accept}) = 1.0$ |
+| **Aspiration Criterion** | Glover (1989) | Reverses Tabu status if candidate strictly improves upon global best. | $f_{\text{cand}} > f_{\text{best}}$ |
+| **Boltzmann Metropolis** | Metropolis et al. (1953) | Standard SA exponential temperature-decay acceptance for worsening moves. | $P(\text{accept}) = \exp(-\Delta f / T)$ |
+| **Adaptive Boltzmann** | Kirkpatrick (1983) | Temperature adjusted dynamically based on recent acceptance rate $\chi$. | $T_{k+1} = T_k \cdot (1 + \frac{\chi - \chi_{\text{target}}}{\chi_{\text{target}}})$ |
+| **Binary Tournament** | Goldberg (1991) | Stochastic selection between candidate and incumbent with winning probability $p$. | $P(\text{cand wins}) = p$ |
+| **Demon Algorithm** | Kuske (1997) | Maintains energy credits (demon) from improvements to fund future worsening moves. | Accept if $\Delta E \le E_{\text{demon}}$; $E_{\text{demon}} \leftarrow E_{\text{demon}} - \Delta E$ |
+| **Ensemble Move** | Özcan et al. (2008) | Weighted voting ensemble across multiple constituent criteria. | $\sum w_i \cdot \mathbb{I}_i(\text{accept}) \ge \theta_{\text{threshold}}$ |
+| **Epsilon Dominance** | Laumanns et al. (2002) | Approximate Pareto dominance with grid granularity $\varepsilon$. | $(1+\varepsilon) \mathbf{f}_{\text{cand}} \succeq \mathbf{f}_{\text{cur}}$ |
+| **Exponential Monte Carlo** | Ayob & Kendall (2003) | Exponential counter scaling acceptance probability over successive non-improvements. | $P(\text{accept}) = \exp(-\Delta f \cdot c / T)$ |
+| **Fitness Proportional** | Holland (1975) | Roulette-wheel proportional probability relative to combined candidate fitness. | $P(\text{accept}) = \frac{f_{\text{cand}}}{f_{\text{cur}} + f_{\text{cand}}}$ |
+| **Generalized Tsallis SA** | Tsallis & Stariolo (1996) | Non-extensive statistical mechanics acceptance with entropic index $q$. | $P(\text{accept}) = [1 - (1-q)\Delta f / T]^{1/(1-q)}$ |
+| **Great Deluge** | Dueck (1993) | Rejects solutions dropping below a linearly/exponentially rising water level $B$. | $f_{\text{cand}} \ge B$; $B_{k+1} = B_k + \Delta B$ |
+| **Non-Linear Great Deluge**| Landa-Silva & Mbititi (2010)| Non-linear adaptive water level decay based on stagnation and search velocity. | $B_{k+1} = B_k + \gamma \cdot \exp(-\beta k) \cdot \Delta f$ |
+| **Improving & Equal** | Classic Hill Climbing | Accepts moves that are strictly better or completely equivalent in objective value. | $f_{\text{cand}} \ge f_{\text{cur}}$ |
+| **Late Acceptance** | Burke & Bykov (2017) | Compares candidate against a historical incumbent $L$ iterations in the past. | $f_{\text{cand}} \ge f_{\text{history}}[i \pmod L]$ |
+| **Monte Carlo** | Classic Random Search | Fixed-probability acceptance for any worsening move. | $P(\text{accept} \mid \text{worsening}) = p_0$ |
+| **Old Bachelor** | Hu, Kahng & Tsao (1995) | Dynamic threshold that lowers upon successful moves and raises on stagnation. | $f_{\text{cand}} \ge f_{\text{cur}} - \tau_k$; $\tau_{k+1} = \tau_k \pm \Delta \tau$ |
+| **Only Improving** | Pure Greedy Descent | Strictest elitist criterion; rejects all equivalent or worsening transitions. | $f_{\text{cand}} > f_{\text{cur}}$ |
+| **Pareto Dominance** | Multiobjective VRP | Requires strict multi-attribute vector non-inferiority. | $\mathbf{f}_{\text{cand}} \succ \mathbf{f}_{\text{cur}}$ |
+| **Probabilistic Transition**| Dorigo et al. (1996) | Power-scaled Ant Colony proportional transition rule. | $P(\text{accept}) = \frac{f_{\text{cand}}^\alpha}{f_{\text{cur}}^\alpha + f_{\text{cand}}^\alpha}$ |
+| **Record-to-Record** | Dueck (1993) | Accepts any moves deviating by at most tolerance $\delta$ from global best incumbent. | $f_{\text{cand}} \ge f_{\text{best}} - \delta$ |
+| **Skewed VNS** | Hansen et al. (2000) | Distance-skewed acceptance penalizing moves that explore too close to current basin. | $f_{\text{cand}} - \alpha \cdot d(\text{cand}, \text{cur}) \ge f_{\text{cur}}$ |
+| **Step Counting Hill** | Bykov & Petrovic (2016) | Maintains fixed comparison benchmark for $K$ consecutive steps before updating. | $f_{\text{cand}} \ge f_{\text{step}}$; update $f_{\text{step}}$ every $K$ steps |
+| **Threshold Accepting** | Dueck & Scheuer (1990) | Deterministic annealing derivative; worsening allowed within decaying tolerance $T$.| $f_{\text{cand}} \ge f_{\text{cur}} - T_k$; $T_{k+1} = \alpha T_k$ |
 
 ---
 
