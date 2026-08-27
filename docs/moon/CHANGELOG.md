@@ -19,6 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Comprehensive performance benchmark suite runner (`2026-08-27`, §E.1)
+
+- Added `logic/benchmark/run_all.py` and root recipe `just run-benchmark` executing neural latency/throughput scaling, vectorized local search throughput, and exact/metaheuristic OR solver performance with structured metric logging.
+- Fixed CUDA device generator synchronization in `RandomLocalSearchPolicy` and `ImprovementPolicy`.
+
 #### Reproducible paper build target (`2026-08-27`)
 
 - Added `just paper` shorthand recipe to regenerate simulation summary tables, protocol diagrams, network maps, and compile `paper.pdf` in one command (§I.2).
