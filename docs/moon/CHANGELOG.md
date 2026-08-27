@@ -60,6 +60,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   task-scoped `train.env`, preventing the silent one-epoch fallback caused by
   looking for an uncomposed root `env` key.
 
+#### Evaluation device validation (`2026-08-27`)
+
+- CPU-only evaluation now reports that multiprocessing requires CUDA instead
+  of dividing by a zero CUDA-device count.
+
 #### TTOP feasibility and state-resume review (`2026-08-27`)
 
 - TTOP now validates the full depot-to-depot trip, including a trailing or

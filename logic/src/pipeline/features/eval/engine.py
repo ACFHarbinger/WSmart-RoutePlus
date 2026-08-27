@@ -446,7 +446,12 @@ def _eval_multiprocessing(dataset_path: str, beam_width: int, softmax_temp: floa
     Returns:
         List of evaluation results.
     """
+    if getattr(cfg.eval, "no_cuda", False) or getattr(cfg, "device", None) == "cpu":
+        raise ValueError("Multiprocess evaluation requires CUDA; set eval.multiprocessing=false for CPU evaluation.")
+
     num_processes = torch.cuda.device_count()
+    if num_processes == 0:
+        raise ValueError("Multiprocess evaluation requires at least one CUDA device.")
     assert cfg.eval.val_size % num_processes == 0, "val_size must be divisible by num_processes"
 
     with mp.Pool(num_processes) as pool:
