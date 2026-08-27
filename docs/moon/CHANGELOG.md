@@ -29,6 +29,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Performance
 
+#### GPU peak memory monitoring & profiling (`2026-08-27`, §F.2)
+
+- Added `GPUMemoryMonitor` Lightning callback (`logic/src/pipeline/callbacks/pytorch/gpu_memory_monitor.py`) to reset CUDA peak statistics at epoch start and log `memory/peak_allocated_mb` and `memory/peak_reserved_mb` at epoch end. Auto-registered in `WSTrainer` on CUDA devices.
+
 #### Evaluation engine inference optimization (`2026-08-27`, §F.1)
 
 - Adopted `torch.inference_mode()` across all evaluation evaluators (`GreedyEval`, `SamplingEval`, `AugmentationEval`, `MultiStartEval`, `MultiStartAugmentEval`), eliminating PyTorch version tracking and view mutation overhead during evaluation rollouts.
