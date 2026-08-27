@@ -19,6 +19,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Grok joins in place of Opencode; continuous work queued for all three agents (`2026-08-27`)
+
+- Grok replaces Opencode in the agent rotation. `git/messages/opencode_coauthor.msg`
+  renamed to `grok_coauthor.msg`; `.agent/bus/AGENT_BUS.md`'s roster table
+  updated with current assignments (it had gone stale — Agy's row still said
+  "website visual design" while actually on TTOP simulator work). Opencode's
+  prior website-interactive lane is left as historical record
+  (`.agent/tasks/opencode-website-interactive.md`), not rewritten.
+- Issue #60 (TTOP Hydra configs) reassigned Opencode → Grok, same scope.
+- Queued a second issue behind each agent's current one, so all three can
+  work continuously without needing a live check-in: #61 (Codex, after #58 —
+  general bug/lint pass over `logic/src/`, following the existing but
+  never-yet-run `.agent/skills/systematic-bug-hunt.md` convention, tracked
+  via a new `docs/errors/ROADMAP.md`), #62 (Agy, after #59 — refresh the
+  existing March-dated `docs/moon/review/{POLICY_IMPLEMENTATION_ANALYSIS,
+  OPERATOR_IMPLEMENTATION_ANALYSIS,ACCEPTANCE_CRITERIA_ANALYSIS,
+  OPERATOR_PROFIT_AWARE_FEEDBACK}.md` reports against current code and
+  extend their coverage), #63 (Grok, after #60 — new
+  `docs/moon/review/MODEL_IMPLEMENTATION_ANALYSIS.md`, no prior report
+  exists for `logic/src/models/` vs. `bibliography/models/`). All four are
+  the three codebase passes requested earlier in the session, now mapped
+  1:1 onto the three agents instead of held back for a later batch.
+- Fixed a real, pre-existing broken reference found while writing #61's
+  brief: `README.md` and `.agent/skills/systematic-bug-hunt.md` both
+  pointed at `docs/ARCHITECTURE.md`, which doesn't exist — the file is at
+  `docs/moon/ARCHITECTURE.md`. Both repointed.
+
 #### Temporal Team Orienteering Problem (TTOP) — foundation (`2026-08-27`)
 
 - New problem type: TTOP = CVRPP's existing objective and per-trip vehicle
