@@ -18,14 +18,7 @@ import torch
 from tensordict import TensorDict
 
 from logic.src.envs.generators.vrpp import VRPPGenerator
-
-# NOT a top-level import: logic.src.pipeline.simulations.repository transitively
-# imports logic.src.data, which imports logic.src.data.processor.setup, which
-# imports logic.src.pipeline.simulations.repository -- a top-level import here
-# closes that cycle during logic.src.envs.generators package init. Deferred to
-# call time in __init__ below, matching this module's own pattern in
-# VRPPGenerator (see its local `from logic.src.utils.data.loader import
-# load_grid_base`).
+from logic.src.envs.temporal import get_default_temporal_params
 
 
 class TTOPGenerator(VRPPGenerator):
@@ -35,9 +28,9 @@ class TTOPGenerator(VRPPGenerator):
     Same node/waste layout as VRPP (reused as-is: locations, depot, waste
     values), plus the per-instance temporal resource fields consumed by
     ``TTOPEnv``/``TTOP``: the working-shift time budget, average driving
-    speed, and per-bin service time. Defaults come from
-    ``SimulationRepository.get_temporal_params()`` (one driver's 7h shift);
-    pass ``shift_hours``/``avg_speed_kmh``/``service_time_h`` to override.
+    speed, and per-bin service time. Defaults describe one driver's 7h
+    shift; pass ``shift_hours``/``avg_speed_kmh``/``service_time_h`` to
+    override them.
 
     Attributes:
         shift_hours: Total time budget per trip (h).
@@ -64,11 +57,7 @@ class TTOPGenerator(VRPPGenerator):
             kwargs: Additional keyword arguments forwarded to VRPPGenerator.
         """
         super().__init__(*args, **kwargs)
-        from logic.src.pipeline.simulations.repository.base import SimulationRepository
-
-        default_shift_hours, default_avg_speed_kmh, default_service_time_h = (
-            SimulationRepository.get_temporal_params()
-        )
+        default_shift_hours, default_avg_speed_kmh, default_service_time_h = get_default_temporal_params()
         self.shift_hours = shift_hours if shift_hours is not None else default_shift_hours
         self.avg_speed_kmh = avg_speed_kmh if avg_speed_kmh is not None else default_avg_speed_kmh
         self.service_time_h = service_time_h if service_time_h is not None else default_service_time_h

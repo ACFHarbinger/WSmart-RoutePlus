@@ -16,11 +16,7 @@ from typing import Any, Dict, Optional, Tuple
 import torch
 
 from logic.src.envs.tasks.cvrpp import CVRPP
-
-# NOT a top-level import: see the equivalent comment in
-# logic.src.envs.generators.ttop -- importing SimulationRepository at module
-# level here closes an import cycle through logic.src.data. Deferred to call
-# time in get_costs below.
+from logic.src.envs.temporal import get_default_temporal_params
 
 
 class TTOP(CVRPP):
@@ -60,7 +56,7 @@ class TTOP(CVRPP):
             dataset: Problem data. Optional per-instance overrides
                 ``shift_hours``/``avg_speed_kmh``/``service_time_h``
                 (each shape (batch,)) take precedence over
-                get_temporal_params()'s defaults.
+                routing defaults.
             pi: Tours [batch, nodes].
             cw_dict: Cost weights dictionary.
             dist_matrix: Optional distance matrix.
@@ -80,11 +76,7 @@ class TTOP(CVRPP):
             c_dict["time"] = torch.zeros_like(cost)
             return cost, c_dict, aux
 
-        from logic.src.pipeline.simulations.repository.base import SimulationRepository
-
-        default_shift_hours, default_avg_speed_kmh, default_service_time_h = (
-            SimulationRepository.get_temporal_params()
-        )
+        default_shift_hours, default_avg_speed_kmh, default_service_time_h = get_default_temporal_params()
         bs = pi.size(0)
         device = pi.device
         shift_hours = dataset.get("shift_hours", torch.full((bs,), default_shift_hours, device=device))
@@ -97,8 +89,28 @@ class TTOP(CVRPP):
 
         # Coordinates in tour order, matching CVRPP's precedent of a
         # simple loop-based per-trip check for correctness/readability over
-        # a fully vectorized (and harder to verify) version.
+        # a fully vectorized (and harder to verify) version.  The feasibility
+        # calculation must use the same road matrix as the objective whenever
+        # one is supplied; otherwise an apparently legal Euclidean tour can
+        # exceed the actual driving-time limit.
         coords = loc_with_depot.gather(1, pi.unsqueeze(-1).expand(*pi.size(), 2))
+        temporal_distance_matrix = (
+            dist_matrix if dist_matrix is not None else dataset.get("dist_matrix", dataset.get("dm"))
+        )
+
+        def leg_distance(
+            batch: int,
+            source: int,
+            destination: int,
+            source_coord: torch.Tensor,
+            destination_coord: torch.Tensor,
+        ) -> float:
+            if temporal_distance_matrix is None:
+                return torch.norm(destination_coord - source_coord).item()
+            matrix_batch = batch if temporal_distance_matrix.dim() == 3 else 0
+            if temporal_distance_matrix.dim() == 3:
+                return temporal_distance_matrix[matrix_batch, source, destination].item()
+            return temporal_distance_matrix[source, destination].item()
 
         time_spent = torch.zeros(bs, device=device)
         for b in range(bs):
@@ -107,11 +119,17 @@ class TTOP(CVRPP):
             for i in range(pi.size(1)):
                 node = pi[b, i].item()
                 node_coord = coords[b, i]
-                dist = torch.norm(node_coord - prev_coord).item()
+                prev_node = pi[b, i - 1].item() if i else 0
+                dist = leg_distance(b, prev_node, node, prev_coord, node_coord)
                 travel_time = dist / avg_speed_kmh[b].item()
                 if node == 0:
                     # Returning to depot pays travel time, then the trip
                     # clock resets for the next outbound leg.
+                    cur_trip_time += travel_time
+                    assert cur_trip_time <= shift_hours[b].item() + 1e-6, (
+                        f"TTOP: trip time {cur_trip_time:.4f}h exceeds shift budget "
+                        f"{shift_hours[b].item():.4f}h at batch {b}, step {i}"
+                    )
                     time_spent[b] += travel_time
                     cur_trip_time = 0.0
                 else:
@@ -124,9 +142,13 @@ class TTOP(CVRPP):
                     )
                 prev_coord = node_coord
             if pi[b, -1].item() != 0:
-                # Final return-to-depot leg is charged for KPI purposes but
-                # does not need a feasibility check (no further stop follows).
-                time_spent[b] += torch.norm(depot[b] - prev_coord).item() / avg_speed_kmh[b].item()
+                final_return_distance = leg_distance(b, pi[b, -1].item(), 0, prev_coord, depot[b])
+                cur_trip_time += final_return_distance / avg_speed_kmh[b].item()
+                assert cur_trip_time <= shift_hours[b].item() + 1e-6, (
+                    f"TTOP: trip time {cur_trip_time:.4f}h exceeds shift budget "
+                    f"{shift_hours[b].item():.4f}h on final return at batch {b}"
+                )
+                time_spent[b] += final_return_distance / avg_speed_kmh[b].item()
 
         c_dict["time"] = time_spent
         return cost, c_dict, aux

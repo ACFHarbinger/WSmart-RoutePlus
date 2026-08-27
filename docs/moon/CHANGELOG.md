@@ -17,6 +17,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+#### TTOP feasibility and state-resume review (`2026-08-27`)
+
+- TTOP now validates the full depot-to-depot trip, including a trailing or
+  explicit return to the depot. Static scoring and the live action mask use a
+  supplied road-distance matrix for travel time, with the same inclusive
+  `1e-6` feasibility tolerance.
+- TTOP defaults now live in the routing package rather than importing the
+  simulation repository during environment construction, which removes an
+  import cycle that made `TTOPGenerator` unusable.
+- Resetting an initialized CVRPP/TTOP state preserves its remaining capacity
+  and time resources, so resumed search keeps the original depot coordinate
+  and resource accounting.
+
 ### Added
 
 #### Grok joins in place of Opencode; continuous work queued for all three agents (`2026-08-27`)

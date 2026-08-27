@@ -40,6 +40,7 @@ class CVRPPEnv(VRPPEnv):
         Returns:
             TensorDict: Initialized CVRPP state with capacity tracking.
         """
+        is_resuming = "visited" in tensordict.keys()
         tensordict = super()._reset_instance(tensordict)
 
         bs = tensordict.batch_size[0]
@@ -48,8 +49,12 @@ class CVRPPEnv(VRPPEnv):
         # Track remaining capacity
         capacity = tensordict.get("capacity", torch.ones(bs, device=device) * 100)
         tensordict["capacity"] = capacity  # Ensure it's in the TensorDict for _step
-        tensordict["remaining_capacity"] = capacity.clone()
-        tensordict["collected_waste"] = torch.zeros(bs, device=device)
+        if not is_resuming:
+            tensordict["remaining_capacity"] = capacity.clone()
+            tensordict["collected_waste"] = torch.zeros(bs, device=device)
+        else:
+            tensordict.setdefault("remaining_capacity", capacity.clone())
+            tensordict.setdefault("collected_waste", torch.zeros(bs, device=device))
         tensordict["collected"] = tensordict["collected_waste"]  # Alias
 
         return tensordict

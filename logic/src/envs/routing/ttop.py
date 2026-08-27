@@ -34,11 +34,7 @@ from tensordict import TensorDict
 
 from logic.src.envs.base.ops import OpsMixin
 from logic.src.envs.routing.cvrpp import CVRPPEnv
-
-# NOT a top-level import: see the equivalent comment in
-# logic.src.envs.generators.ttop -- importing SimulationRepository at module
-# level here closes an import cycle through logic.src.data. Deferred to call
-# time in _reset_instance below.
+from logic.src.envs.temporal import get_default_temporal_params
 
 
 class TTOPEnv(CVRPPEnv):
@@ -60,16 +56,13 @@ class TTOPEnv(CVRPPEnv):
         Returns:
             TensorDict: Initialized TTOP state with temporal tracking fields.
         """
+        is_resuming = "visited" in tensordict.keys()
         tensordict = super()._reset_instance(tensordict)
-
-        from logic.src.pipeline.simulations.repository.base import SimulationRepository
 
         bs = tensordict.batch_size[0]
         device = tensordict.device
 
-        default_shift_hours, default_avg_speed_kmh, default_service_time_h = (
-            SimulationRepository.get_temporal_params()
-        )
+        default_shift_hours, default_avg_speed_kmh, default_service_time_h = get_default_temporal_params()
         shift_hours = tensordict.get("shift_hours", torch.full((bs,), default_shift_hours, device=device))
         avg_speed_kmh = tensordict.get("avg_speed_kmh", torch.full((bs,), default_avg_speed_kmh, device=device))
         service_time_h = tensordict.get("service_time_h", torch.full((bs,), default_service_time_h, device=device))
@@ -77,8 +70,12 @@ class TTOPEnv(CVRPPEnv):
         tensordict["shift_hours"] = shift_hours
         tensordict["avg_speed_kmh"] = avg_speed_kmh
         tensordict["service_time_h"] = service_time_h
-        tensordict["remaining_time"] = shift_hours.clone()
-        tensordict["time_spent"] = torch.zeros(bs, device=device)
+        if not is_resuming:
+            tensordict["remaining_time"] = shift_hours.clone()
+            tensordict["time_spent"] = torch.zeros(bs, device=device)
+        else:
+            tensordict.setdefault("remaining_time", shift_hours.clone())
+            tensordict.setdefault("time_spent", torch.zeros(bs, device=device))
 
         return tensordict
 
@@ -160,13 +157,6 @@ class TTOPEnv(CVRPPEnv):
         capacity and time constraints must hold; this only narrows CVRPP's
         mask further, never widens it.
 
-        Known limitation: this lookahead uses Euclidean ``locs`` distance,
-        not a road distance matrix ``dm`` even when one is present (OPEnv
-        has the same limitation). ``_step_instance`` above does honour
-        ``dm`` for the actual budget consumption, so a road network with
-        distance != Euclidean can produce a mask that is slightly loose or
-        tight relative to the true reachable set.
-
         Args:
             tensordict: Input TensorDict containing graph structure and node properties.
 
@@ -177,20 +167,24 @@ class TTOPEnv(CVRPPEnv):
 
         current = tensordict["current_node"].squeeze(-1)
         locs = tensordict["locs"]
-        current_loc = locs.gather(1, current[:, None, None].expand(-1, -1, 2)).squeeze(1)
-
-        dist_current_to_node = (locs - current_loc.unsqueeze(1)).norm(p=2, dim=-1)  # [B, N+1]
-        dist_node_to_depot = (locs - locs[:, 0:1, :]).norm(p=2, dim=-1)  # [B, N+1]
+        dm = tensordict.get("dm")
+        if dm is None:
+            current_loc = locs.gather(1, current[:, None, None].expand(-1, -1, 2)).squeeze(1)
+            dist_current_to_node = (locs - current_loc.unsqueeze(1)).norm(p=2, dim=-1)
+            dist_node_to_depot = (locs - locs[:, 0:1, :]).norm(p=2, dim=-1)
+        else:
+            dist_current_to_node = dm.gather(1, current[:, None, None].expand(-1, -1, dm.size(-1))).squeeze(1)
+            dist_node_to_depot = dm[:, :, 0]
 
         avg_speed = tensordict["avg_speed_kmh"].unsqueeze(-1)
-        service_time = tensordict["service_time_h"].unsqueeze(-1)
+        service_time = tensordict["service_time_h"].unsqueeze(-1).expand_as(dist_current_to_node).clone()
+        service_time[:, 0] = 0.0
         remaining = tensordict["remaining_time"].unsqueeze(-1)
 
         required_time = (dist_current_to_node + dist_node_to_depot) / avg_speed + service_time
-        exceeds_budget = required_time > remaining
+        exceeds_budget = required_time > remaining + 1e-6
 
         mask = mask & ~exceeds_budget
-        mask[:, 0] = True  # depot is always reachable from itself and always legal
 
         return mask
 
