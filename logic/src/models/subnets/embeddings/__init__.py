@@ -61,6 +61,7 @@ from .static import StaticEmbedding
 INIT_EMBEDDING_REGISTRY: Dict[str, Any] = {
     "vrpp": VRPPInitEmbedding,
     "cvrpp": CVRPPInitEmbedding,
+    "ttop": CVRPPInitEmbedding,
     "wcvrp": WCVRPInitEmbedding,
     "cwcvrp": WCVRPInitEmbedding,
     "sdwcvrp": WCVRPInitEmbedding,

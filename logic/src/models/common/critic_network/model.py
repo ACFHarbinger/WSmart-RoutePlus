@@ -91,7 +91,7 @@ class LegacyCriticNetwork(nn.Module):
         self.aggregation_graph = aggregation_graph
 
         self.is_wc = problem.NAME in ("wcvrp", "cwcvrp", "sdwcvrp")
-        self.is_vrpp = problem.NAME in ("vrpp", "cvrpp")
+        self.is_vrpp = problem.NAME in ("vrpp", "cvrpp", "ttop")
 
         assert self.is_wc or self.is_vrpp, f"Unsupported problem: {problem.NAME}"
 

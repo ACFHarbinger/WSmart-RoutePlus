@@ -442,7 +442,7 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--problem",
         default="vrpp",
-        choices=["vrpp", "wcvrp", "sdwcvrp", "all"],
+        choices=["vrpp", "cvrpp", "ttop", "wcvrp", "sdwcvrp", "all"],
         help="Problem type tag used in the report filename. Default: vrpp",
     )
     parser.add_argument(

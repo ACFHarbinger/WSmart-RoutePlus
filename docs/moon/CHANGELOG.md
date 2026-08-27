@@ -31,6 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Resetting an initialized CVRPP/TTOP state preserves its remaining capacity
   and time resources, so resumed search keeps the original depot coordinate
   and resource accounting.
+- TTOP now resolves to the CVRPP initial, context, state, and edge embedding
+  components, allowing neural training and critic construction; the
+  drift-report CLI also accepts `--problem ttop`.
 - `TTOPEnv` had no `__init__` override, so it inherited `VRPPEnv`'s, which
   always builds a plain `VRPPGenerator`. `get_env("ttop",
   shift_hours=6.5, ...)` (including Hydra-composed overrides) silently

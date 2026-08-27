@@ -27,6 +27,7 @@ from .wcvrp import WCVRPEdgeEmbedding
 EDGE_EMBEDDING_REGISTRY: Dict[str, Any] = {
     "vrpp": TSPEdgeEmbedding,
     "cvrpp": CVRPPEdgeEmbedding,
+    "ttop": CVRPPEdgeEmbedding,
     "wcvrp": WCVRPEdgeEmbedding,
     "cwcvrp": WCVRPEdgeEmbedding,
     "sdwcvrp": WCVRPEdgeEmbedding,
