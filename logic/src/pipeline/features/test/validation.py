@@ -58,8 +58,8 @@ def validate_sim_config(cfg: Config) -> None:
         graph.waste_type = waste
 
     # --- Parse edge_threshold ---
-    et_str = str(graph.edge_threshold or "0")
-    graph.edge_threshold = et_str
+    threshold = str(graph.edge_threshold or "0")
+    graph.edge_threshold = float(threshold) if any(char in threshold.lower() for char in (".", "e")) else int(threshold)
 
     # --- CPU cores ---
     cores = getattr(sim, "cpu_cores", 0) or 0

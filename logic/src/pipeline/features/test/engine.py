@@ -22,8 +22,6 @@ Example:
 import contextlib
 import os
 import random
-import re
-from multiprocessing import cpu_count
 from typing import Any, Dict, List, Optional
 
 import numpy as np
@@ -32,9 +30,9 @@ import torch
 import logic.src.constants as udef
 import logic.src.tracking as wst
 from logic.src.configs import Config
-from logic.src.constants import MAP_DEPOTS, PROBLEMS, WASTE_TYPES
 from logic.src.pipeline.features.test.config import expand_policy_configs
 from logic.src.pipeline.features.test.orchestrator import simulator_testing
+from logic.src.pipeline.features.test.validation import validate_sim_config
 from logic.src.pipeline.simulations.repository import (
     load_simulator_data,
     set_repository_from_path,
@@ -167,35 +165,7 @@ def _validate_sim_config(cfg: Config) -> None:
     Args:
         cfg: Config.
     """
-    sim = cfg.sim
-
-    assert sim.graph.n_days >= 1, "Must run the simulation for 1 or more days"
-    assert sim.graph.n_samples > 0, "Number of samples must be a positive integer"
-
-    # Normalize and validate problem string
-    problem = str(getattr(sim, "problem", "vrpp") or "vrpp").lower()
-    assert problem in PROBLEMS, f"Unknown problem {problem}, available problems: {PROBLEMS}"
-    sim.problem = problem
-
-    # Normalize area string (strip non-alpha, lowercase)
-    sim.graph.area = re.sub(r"[^a-zA-Z]", "", sim.graph.area.lower())
-    assert sim.graph.area in MAP_DEPOTS, f"Unknown area {sim.graph.area}, available areas: {list(MAP_DEPOTS.keys())}"
-
-    # Normalize waste type
-    sim.graph.waste_type = re.sub(r"[^a-zA-Z]", "", sim.graph.waste_type.lower())
-    assert sim.graph.waste_type in WASTE_TYPES or sim.graph.waste_type is None, (
-        f"Unknown waste type {sim.graph.waste_type}, available: {list(WASTE_TYPES.keys())}"
-    )
-
-    # Coerce edge_threshold to numeric
-    sim.graph.edge_threshold = (
-        float(sim.graph.edge_threshold) if "." in str(sim.graph.edge_threshold) else int(sim.graph.edge_threshold)
-    )
-
-    assert sim.cpu_cores >= 0, "Number of CPU cores must be >= 0"
-    assert sim.cpu_cores <= cpu_count(), "Number of CPU cores to use cannot exceed system specifications"
-    if sim.cpu_cores == 0:
-        sim.cpu_cores = cpu_count()
+    validate_sim_config(cfg)
 
 
 # ---------------------------------------------------------------------------

@@ -86,6 +86,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Failed dataset-generation runs are now tagged `failed`, rather than being
   incorrectly recorded as completed.
 
+#### Simulator validation (`2026-08-27`)
+
+- The simulator engine now delegates to the public configuration validator;
+  both paths normalize numeric and scientific-notation edge thresholds alike.
+
 #### TTOP feasibility and state-resume review (`2026-08-27`)
 
 - TTOP now validates the full depot-to-depot trip, including a trailing or

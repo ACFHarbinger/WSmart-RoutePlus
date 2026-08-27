@@ -15,6 +15,7 @@ import pandas as pd
 import pytest
 from logic.src.configs import Config
 from logic.src.constants.simulation import PROBLEMS
+from logic.src.pipeline.features.test.engine import _validate_sim_config
 from logic.src.pipeline.features.test.validation import validate_sim_config
 from logic.src.pipeline.simulations.actions.collection import CollectAction
 from logic.src.pipeline.simulations.day_context import SimulationDayContext, get_daily_results
@@ -52,6 +53,18 @@ class TestTTOPValidation:
 
         with pytest.raises(AssertionError, match="Unknown problem"):
             validate_sim_config(cfg)
+
+    def test_engine_and_public_validation_normalize_edge_threshold_equally(self):
+        """The simulator entry point delegates to the public validation contract."""
+        public_cfg = Config()
+        engine_cfg = Config()
+        for cfg in (public_cfg, engine_cfg):
+            cfg.sim.graph.edge_threshold = "1e-3"
+            cfg.sim.cpu_cores = 1
+
+        validate_sim_config(public_cfg)
+        _validate_sim_config(engine_cfg)
+        assert public_cfg.sim.graph.edge_threshold == engine_cfg.sim.graph.edge_threshold == 1e-3
 
 
 class TestTTOPRouteSplitting:
