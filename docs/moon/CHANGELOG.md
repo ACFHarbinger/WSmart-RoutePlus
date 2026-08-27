@@ -131,7 +131,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New `docs/moon/review/MODEL_IMPLEMENTATION_ANALYSIS.md`, templated on
   the policy report. First increment: paper↔path map (POMO is an RL
   trainer, not a `core/` model), AM 4/5, Pointer Network 4/5, POMO 4/5.
-  Remaining 12 bibliography papers TBD.
+- First pass complete (15/15). Constructive/NAR/ACO family mostly 4/5.
+  Improvement family weaker: DACT 3/5 (dual-aspect collapsed), NeuOpt 3/5
+  (encoder ignores incumbent tour), N2S 2/5 (k-NN attention on `tsp_kopt`,
+  not PDP). Sym-NCO 3/5: `problem_symmetricity_loss` exists but is never
+  called from `shared_step` (`loss_ps` stays 0) — flagged for #61.
 
 #### TTOP Hydra config tree (#60, training/eval side) (`2026-08-27`)
 
