@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Hypothesis property-based testing suite for bit-packing utilities (`2026-08-27`, §B.1)
+
+- Added `logic/test/properties/test_boolmask_properties.py` using Hypothesis to formally verify `_pad_mask` 8-byte alignment, `_mask_bool2byte` / `_mask_byte2bool` lossless roundtrips, and `mask_bool2long` / `mask_long2bool` bit-packing invariants across arbitrary graph sizes.
+
 #### Comprehensive performance benchmark suite runner (`2026-08-27`, §E.1)
 
 - Added `logic/benchmark/run_all.py` and root recipe `just run-benchmark` executing neural latency/throughput scaling, vectorized local search throughput, and exact/metaheuristic OR solver performance with structured metric logging.
