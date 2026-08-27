@@ -27,12 +27,12 @@
 
 **Options**
 
-- **A** — Add `torch.cuda.memory_summary()` logging at the end of each epoch in the training callback; log peak allocated and reserved memory. `[Quick Win]`
+- **A** — Add `torch.cuda.memory_summary()` logging and peak memory metric logging (`memory/peak_allocated_mb`, `memory/peak_reserved_mb`) at the end of each epoch via `GPUMemoryMonitor`. `[Completed 2026-08-27]`
 - **B** — Use the existing `logic/src/tracking/profiling/memory.py` profiler to generate per-epoch memory traces and write them to `assets/profiling/`.
-- **C** — Add `torch.cuda.reset_peak_memory_stats()` at the start of each training epoch to get accurate per-epoch peak measurements.
+- **C** — Add `torch.cuda.reset_peak_memory_stats()` at the start of each training epoch to get accurate per-epoch peak measurements. `[Completed 2026-08-27]`
 - **D** — Use `torch.utils.checkpoint` (gradient checkpointing) on the encoder layers to trade compute for memory on large instances (100+ nodes).
 
-**Recommendation**: **Options A + C** as immediate monitoring (`[Quick Win]`); **Option B** for detailed profiling when a leak is suspected; **Option D** for scaling to larger instances.
+**Recommendation**: **Options A + C** `[Done]` (implemented via `GPUMemoryMonitor` callback and auto-registered in `WSTrainer`); **Option B** for detailed profiling when a leak is suspected; **Option D** for scaling to larger instances.
 
 **Effort × Impact**: Very Low effort (Options A/C) / High impact
 
