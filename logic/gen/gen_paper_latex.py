@@ -319,6 +319,17 @@ def fmt(value: float, decimals: int = 2, *, best: bool = False) -> str:
     return rf"\textbf{{{text}}}" if best else text
 
 
+def mc(text: str, span: int = 1) -> dict:
+    """One header cell for ``paper_results_table.tex.j2``, rendered as a centered
+    ``\\multicolumn`` regardless of the body column's own left/right alignment."""
+    return {"text": text, "span": span}
+
+
+def mc_list(texts: list[str]) -> list[dict]:
+    """Wrap a flat list of plain header strings into ordinary (span=1) header cells."""
+    return [mc(t) for t in texts]
+
+
 def aggregate(sub: pd.DataFrame, by: str, spec: list[tuple[str, str, int, str]]) -> pd.DataFrame:
     """Aggregate ``sub`` by one key into the (column, aggfunc) pairs a spec asks for."""
     out = pd.DataFrame(index=sorted(sub[by].unique()))
@@ -376,6 +387,13 @@ CONSTRUCTOR_SPEC = [
 
 STRATEGY_SPEC = CONSTRUCTOR_SPEC
 
+#: Header cells matching CONSTRUCTOR_SPEC/STRATEGY_SPEC's seven columns: the two
+#: headline metrics span a mean/median pair under one centered label, with the
+#: mean/median distinction carried by a second header row rather than by a
+#: literal "med." column label competing with the numbers for space.
+METRIC_GROUP_HEADERS = [mc("$n$"), mc("kg/km", 2), mc("Overflows", 2), mc("km"), mc("Time (s)")]
+METRIC_GROUP_SUBHEADERS = ["", "mean", "median", "mean", "median", "", ""]
+
 
 def table_constructors(clean: pd.DataFrame, horizon: int, cfg: dict) -> str:
     """Per-constructor means and medians over the balanced grid at one horizon."""
@@ -389,7 +407,8 @@ def table_constructors(clean: pd.DataFrame, horizon: int, cfg: dict) -> str:
         label=f"tab:constructors{horizon}",
         caption=cfg["captions"]["constructors"].format(horizon=horizon, runs=len(sub)),
         first_header=cfg["headers"]["constructor"],
-        headers=cfg["headers"]["metrics"],
+        headers=METRIC_GROUP_HEADERS,
+        subheaders=METRIC_GROUP_SUBHEADERS,
         column_spec="l" + "r" * len(CONSTRUCTOR_SPEC),
         rows=build_rows(agg, CONSTRUCTOR_SPEC),
         note=cfg["notes"]["constructors"].format(runs_per=int(counts.min())),
@@ -408,7 +427,8 @@ def table_strategies(clean: pd.DataFrame, horizon: int, cfg: dict) -> str:
         label=f"tab:strategies{horizon}",
         caption=cfg["captions"]["strategies"].format(horizon=horizon),
         first_header=cfg["headers"]["strategy"],
-        headers=cfg["headers"]["metrics"],
+        headers=METRIC_GROUP_HEADERS,
+        subheaders=METRIC_GROUP_SUBHEADERS,
         column_spec="l" + "r" * len(STRATEGY_SPEC),
         size=r"\footnotesize",
         rows=build_rows(agg, STRATEGY_SPEC),
@@ -458,7 +478,7 @@ def table_improvers(clean: pd.DataFrame, horizon: int, cfg: dict) -> str:
         label=f"tab:improvers{horizon}",
         caption=cfg["captions"]["improvers"].format(horizon=horizon, pairs=len(pairs)),
         first_header=cfg["headers"]["metric"],
-        headers=cfg["headers"]["improver"],
+        headers=mc_list(cfg["headers"]["improver"]),
         column_spec="lrrrrr",
         rows=rows,
         note=cfg["notes"]["improvers"],
@@ -488,7 +508,7 @@ def table_horizon(paired: pd.DataFrame, cfg: dict) -> str:
         label="tab:horizon",
         caption=cfg["captions"]["horizon"].format(pairs=len(paired)),
         first_header=cfg["headers"]["constructor"],
-        headers=cfg["headers"]["horizon"],
+        headers=mc_list(cfg["headers"]["horizon"]),
         column_spec="lrrrrr",
         rows=rows,
         note=cfg["notes"]["horizon"],
@@ -526,7 +546,7 @@ def table_scenarios(clean: pd.DataFrame, horizon: int, cfg: dict) -> str:
         label="tab:scenarios30",
         caption=cfg["captions"]["scenarios"].format(horizon=horizon),
         first_header=cfg["headers"]["scenario_factor"],
-        headers=cfg["headers"]["scenario_metrics"],
+        headers=mc_list(cfg["headers"]["scenario_metrics"]),
         column_spec="l" + "r" * len(metrics),
         size=r"\footnotesize",
         rows=build_rows(agg, metrics),
@@ -562,7 +582,7 @@ def table_excluded(degenerate: pd.DataFrame, cfg: dict) -> str:
         label="tab:excluded",
         caption=cfg["captions"]["excluded"],
         first_header=cfg["headers"]["constructor_short"],
-        headers=cfg["headers"]["excluded"],
+        headers=mc_list(cfg["headers"]["excluded"]),
         column_spec="lllrrrr",
         size=r"\footnotesize",
         rows=rows,
@@ -670,50 +690,50 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
 
     # Outer Day Container
     day_box = mpatches.FancyBboxPatch(
-        (0.02, 0.04), 0.96, 0.92,
+        (0.012, 0.03), 0.976, 0.94,
         boxstyle="round,pad=0.015,rounding_size=0.02",
         facecolor="#ffffff", edgecolor="#cbd5e1", linewidth=1.5, zorder=0
     )
     ax.add_patch(day_box)
-    ax.text(0.04, 0.92, "SIMULATED DAY CYCLE  (Day $t \\in \\{1, \\dots, H\\}$)", 
+    ax.text(0.035, 0.93, "SIMULATED DAY CYCLE  (Day $t \\in \\{1, \\dots, H\\}$)", 
             fontsize=9.5, fontweight="bold", color="#334155", zorder=1)
 
     # 1. Environment & Accumulation Box
     box_env = mpatches.FancyBboxPatch(
-        (0.04, 0.54), 0.26, 0.34,
+        (0.055, 0.54), 0.25, 0.35,
         boxstyle="round,pad=0.012,rounding_size=0.015",
         facecolor=c_env_fill, edgecolor=c_env_border, linewidth=1.3, zorder=1
     )
     ax.add_patch(box_env)
-    ax.text(0.17, 0.84, "1. Waste Dynamics", ha="center", fontsize=9.2, fontweight="bold", color=c_env_border)
-    ax.text(0.17, 0.76, "True bin state $\\mathbf{f}_{t-1} \\in [0, C]^N$\n+ Daily demand $\\Delta \\mathbf{f}_t \\sim \\mathcal{D}$\n$\\Downarrow$\nTrue fill: $f_{i,t} = f_{i,t-1} + \\Delta f_{i,t}$",
+    ax.text(0.180, 0.84, "1. Waste Dynamics", ha="center", fontsize=9.2, fontweight="bold", color=c_env_border)
+    ax.text(0.180, 0.76, "True bin state $\\mathbf{f}_{t-1} \\in [0, C]^N$\n+ Daily demand $\\Delta \\mathbf{f}_t \\sim \\mathcal{D}$\n$\\Downarrow$\nTrue fill: $f_{i,t} = f_{i,t-1} + \\Delta f_{i,t}$",
             ha="center", va="center", fontsize=7.6, color=c_text_dark, linespacing=1.3)
-    ax.text(0.17, 0.58, "Physical Ground Truth", ha="center", fontsize=7.0, fontweight="bold", color="#64748b")
+    ax.text(0.180, 0.58, "Physical Ground Truth", ha="center", fontsize=7.0, fontweight="bold", color="#64748b")
 
     # 2. Noisy Sensing Box (Asymmetry Highlight)
     box_noise = mpatches.FancyBboxPatch(
-        (0.04, 0.12), 0.26, 0.34,
+        (0.055, 0.13), 0.25, 0.34,
         boxstyle="round,pad=0.012,rounding_size=0.015",
         facecolor=c_noise_fill, edgecolor=c_noise_border, linewidth=1.3, zorder=1
     )
     ax.add_patch(box_noise)
-    ax.text(0.17, 0.42, "2. Sensed Telemetry", ha="center", fontsize=9.2, fontweight="bold", color=c_noise_border)
+    ax.text(0.180, 0.43, "2. Sensed Telemetry", ha="center", fontsize=9.2, fontweight="bold", color=c_noise_border)
     # The sensor model is a framework capability; the reported runs do not
     # exercise it. Earlier versions of this figure asserted the opposite in a
     # highlighted badge, contradicting the simulation protocol -- so the noise
     # term is now shown greyed, with the operative sigma = 0 identity in black.
-    ax.text(0.17, 0.355, "Sensor model: $\\tilde{f}_{i,t} = f_{i,t} + \\epsilon_{i,t}$,\n$\\epsilon_{i,t} \\sim \\mathcal{N}(0, \\sigma^2)$",
+    ax.text(0.180, 0.365, "Sensor model: $\\tilde{f}_{i,t} = f_{i,t} + \\epsilon_{i,t}$,\n$\\epsilon_{i,t} \\sim \\mathcal{N}(0, \\sigma^2)$",
             ha="center", va="center", fontsize=7.6, color="#94a3b8", linespacing=1.3)
-    ax.text(0.17, 0.275, "This study: $\\sigma = 0$, so $\\tilde{\\mathbf{f}}_t = \\mathbf{f}_t$",
+    ax.text(0.180, 0.285, "This study: $\\sigma = 0$, so $\\tilde{\\mathbf{f}}_t = \\mathbf{f}_t$",
             ha="center", va="center", fontsize=7.8, fontweight="bold", color=c_text_dark)
 
     # Scope Callout Badge 1 -- capability vs. exercised path
-    ax.text(0.17, 0.18, "Noise supported, not exercised:\nevery reported run sets $\\sigma = 0$,\nso policies observe true levels",
+    ax.text(0.180, 0.19, "Noise supported, not exercised:\nevery reported run sets $\\sigma = 0$,\nso policies observe true levels",
             ha="center", va="center", fontsize=6.8, fontweight="bold", color="#475569",
             bbox=dict(boxstyle="round,pad=0.3", facecolor="#f1f5f9", edgecolor="#94a3b8", linewidth=0.8))
 
     # Arrow 1 -> 2
-    ax.annotate("", xy=(0.17, 0.47), xytext=(0.17, 0.53),
+    ax.annotate("", xy=(0.180, 0.48), xytext=(0.180, 0.535),
                 arrowprops=dict(arrowstyle="-|>", linewidth=1.4, color=c_noise_border))
 
     # 3. Policy Pipeline Big Container (Middle)
@@ -766,7 +786,7 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
                 arrowprops=dict(arrowstyle="-|>", linewidth=1.3, color="#059669"))
 
     # Arrow Sensing -> Stage 1
-    ax.annotate("", xy=(0.355, 0.67), xytext=(0.305, 0.30),
+    ax.annotate("", xy=(0.355, 0.67), xytext=(0.315, 0.30),
                 arrowprops=dict(arrowstyle="-|>", connectionstyle="arc3,rad=-0.25", linewidth=1.5, color=c_noise_border))
 
     # 4. Route Execution Box (Top Right)
@@ -809,18 +829,16 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
 
     # Loop back arrow: 5 -> Next Day State -> 1.
     # Routed as an orthogonal polyline through the clear lane below the boxes
-    # and up the left margin. The previous arc3 curve from (0.725, 0.28) to
-    # (0.04, 0.71) cut straight across the policy container and struck through
-    # the Stage 1 and Stage 2 body text.
-    lane_y, lane_x = 0.078, 0.028
-    ax.plot([0.845, 0.845, lane_x, lane_x], [0.12, lane_y, lane_y, 0.71],
+    # and up the left margin.
+    lane_y, lane_x = 0.055, 0.024
+    ax.plot([0.845, 0.845, lane_x, lane_x], [0.108, lane_y, lane_y, 0.715],
             color="#475569", linewidth=1.6, linestyle="--", zorder=1,
             solid_capstyle="butt")
-    ax.annotate("", xy=(0.038, 0.71), xytext=(lane_x, 0.71),
+    ax.annotate("", xy=(0.042, 0.715), xytext=(lane_x, 0.715),
                 arrowprops=dict(arrowstyle="-|>", linewidth=1.6, color="#475569"))
     # The label sits on the lane; its opaque bbox breaks the dashed line, which
     # reads as one routed path rather than as a line colliding with text.
-    ax.text(0.47, lane_y, "Next-Day State Transition: uncollected residual fill carries forward to Day $t+1$",
+    ax.text(0.48, lane_y, "Next-Day State Transition: uncollected residual fill carries forward to Day $t+1$",
             fontsize=7.4, style="italic", color="#475569", ha="center", va="center", zorder=3,
             bbox=dict(boxstyle="round,pad=0.25", facecolor="#f8fafc", edgecolor="#cbd5e1"))
 
