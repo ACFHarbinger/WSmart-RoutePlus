@@ -19,6 +19,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Shared research, codebase, and manuscript audit (`2026-08-28`)
+
+- Added `.agent/reports/shared/COMPREHENSIVE_REPORT.md` as the collaborative
+  evidence-backed report of record for the MPVRPP research, archived
+  experiment, framework implementation, and paper. The initial audit includes
+  a claim-to-artifact matrix, prioritized amendment ledger, reproducibility
+  requirements, and explicit disagreement tracking.
+- Verified two new publication blockers from primary artifacts: all 36 archived
+  30-day configurations use `sim.n_vehicles: 0`, contradicting the paper's
+  single-vehicle description under the code's automatic/unlimited routing
+  semantics; and the tracked 174-row 90-day set does not reproduce either a
+  per-scenario or global-policy Pareto carry-forward rule.
+
 #### Hypothesis property-based testing suite for bit-packing utilities (`2026-08-27`, §B.1)
 
 - Added `logic/test/properties/test_boolmask_properties.py` using Hypothesis to formally verify `_pad_mask` 8-byte alignment, `_mask_bool2byte` / `_mask_byte2bool` lossless roundtrips, and `mask_bool2long` / `mask_long2bool` bit-packing invariants across arbitrary graph sizes.
