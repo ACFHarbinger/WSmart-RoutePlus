@@ -698,13 +698,19 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
     )
     ax.add_patch(box_noise)
     ax.text(0.17, 0.42, "2. Sensed Telemetry", ha="center", fontsize=9.2, fontweight="bold", color=c_noise_border)
-    ax.text(0.17, 0.33, "IoT fill-level sensors add\nnoise $\\epsilon_{i,t} \\sim \\mathcal{N}(0, \\sigma^2)$:\n$\\tilde{f}_{i,t} = f_{i,t} + \\epsilon_{i,t}$",
-            ha="center", va="center", fontsize=7.8, color=c_text_dark, linespacing=1.3)
-    
-    # Asymmetry Callout Badge 1
-    ax.text(0.17, 0.18, "Observation Asymmetry:\nPolicies receive noisy $\\tilde{\\mathbf{f}}_t$\n(Ground truth $\\mathbf{f}_t$ is hidden)",
-            ha="center", va="center", fontsize=6.8, fontweight="bold", color="#92400e",
-            bbox=dict(boxstyle="round,pad=0.3", facecolor="#fef3c7", edgecolor="#f59e0b", linewidth=0.8))
+    # The sensor model is a framework capability; the reported runs do not
+    # exercise it. Earlier versions of this figure asserted the opposite in a
+    # highlighted badge, contradicting the simulation protocol -- so the noise
+    # term is now shown greyed, with the operative sigma = 0 identity in black.
+    ax.text(0.17, 0.355, "Sensor model: $\\tilde{f}_{i,t} = f_{i,t} + \\epsilon_{i,t}$,\n$\\epsilon_{i,t} \\sim \\mathcal{N}(0, \\sigma^2)$",
+            ha="center", va="center", fontsize=7.6, color="#94a3b8", linespacing=1.3)
+    ax.text(0.17, 0.275, "This study: $\\sigma = 0$, so $\\tilde{\\mathbf{f}}_t = \\mathbf{f}_t$",
+            ha="center", va="center", fontsize=7.8, fontweight="bold", color=c_text_dark)
+
+    # Scope Callout Badge 1 -- capability vs. exercised path
+    ax.text(0.17, 0.18, "Noise supported, not exercised:\nevery reported run sets $\\sigma = 0$,\nso policies observe true levels",
+            ha="center", va="center", fontsize=6.8, fontweight="bold", color="#475569",
+            bbox=dict(boxstyle="round,pad=0.3", facecolor="#f1f5f9", edgecolor="#94a3b8", linewidth=0.8))
 
     # Arrow 1 -> 2
     ax.annotate("", xy=(0.17, 0.47), xytext=(0.17, 0.53),
@@ -728,7 +734,7 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
     )
     ax.add_patch(box_p1)
     ax.text(0.515, 0.72, "Stage 1: Mandatory Selection", ha="center", fontsize=8.4, fontweight="bold", color="#065f46")
-    ax.text(0.515, 0.64, "Input: Sensed $\\tilde{\\mathbf{f}}_t$\nOutput: Mandatory subset $\\mathcal{M}_t \\subseteq V$\n(LM-CF70/90, Look-Ahead, SL1/SL2)",
+    ax.text(0.515, 0.64, "Input: observed $\\tilde{\\mathbf{f}}_t$ ($= \\mathbf{f}_t$ here)\nOutput: Mandatory subset $\\mathcal{M}_t \\subseteq V$\n(LM70/LM90, LA, SL1/SL2)",
             ha="center", va="center", fontsize=7.2, color=c_text_dark, linespacing=1.2)
 
     # 3b. Stage 2: Route Construction
@@ -790,8 +796,10 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
     ax.text(0.845, 0.33, "Evaluates true state $\\mathbf{f}_t$:\n• Overflows: $f_{i,t} \\geq C$\n• Loss: $\\max(0, f_{i,t} - C)$\n• Efficiency: kg / km",
             ha="center", va="center", fontsize=7.4, color=c_text_dark, linespacing=1.2)
     
-    # Asymmetry Callout Badge 2
-    ax.text(0.845, 0.18, "Evaluation Asymmetry:\nExact ground-truth audit\n(Uncorrupted by sensor noise)",
+    # Callout Badge 2 -- accounting reads the true state, not the sensed signal.
+    # (With sigma = 0 the two coincide, so this is a statement about the
+    # accounting contract, not an observed asymmetry in these runs.)
+    ax.text(0.845, 0.18, "Exact ground-truth audit:\noverflow and loss are scored on\n$\\mathbf{f}_t$, never on the sensed signal",
             ha="center", va="center", fontsize=6.8, fontweight="bold", color="#991b1b",
             bbox=dict(boxstyle="round,pad=0.3", facecolor="#fee2e2", edgecolor="#ef4444", linewidth=0.8))
 
@@ -799,12 +807,21 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
     ax.annotate("", xy=(0.845, 0.47), xytext=(0.845, 0.53),
                 arrowprops=dict(arrowstyle="-|>", linewidth=1.4, color=c_eval_border))
 
-    # Loop back arrow: 5 -> Next Day State -> 1
-    ax.annotate("", xy=(0.04, 0.71), xytext=(0.725, 0.28),
-                arrowprops=dict(arrowstyle="-|>", connectionstyle="arc3,rad=0.35",
-                                linewidth=1.6, color="#475569", linestyle="--"))
-    ax.text(0.50, 0.065, "Next-Day State Transition: uncollected residual fill carries forward to Day $t+1$",
-            fontsize=7.4, style="italic", color="#475569", ha="center",
+    # Loop back arrow: 5 -> Next Day State -> 1.
+    # Routed as an orthogonal polyline through the clear lane below the boxes
+    # and up the left margin. The previous arc3 curve from (0.725, 0.28) to
+    # (0.04, 0.71) cut straight across the policy container and struck through
+    # the Stage 1 and Stage 2 body text.
+    lane_y, lane_x = 0.078, 0.028
+    ax.plot([0.845, 0.845, lane_x, lane_x], [0.12, lane_y, lane_y, 0.71],
+            color="#475569", linewidth=1.6, linestyle="--", zorder=1,
+            solid_capstyle="butt")
+    ax.annotate("", xy=(0.038, 0.71), xytext=(lane_x, 0.71),
+                arrowprops=dict(arrowstyle="-|>", linewidth=1.6, color="#475569"))
+    # The label sits on the lane; its opaque bbox breaks the dashed line, which
+    # reads as one routed path rather than as a line colliding with text.
+    ax.text(0.47, lane_y, "Next-Day State Transition: uncollected residual fill carries forward to Day $t+1$",
+            fontsize=7.4, style="italic", color="#475569", ha="center", va="center", zorder=3,
             bbox=dict(boxstyle="round,pad=0.25", facecolor="#f8fafc", edgecolor="#cbd5e1"))
 
     savefig(fig, out_dir / "simulation_loop.png")
@@ -838,7 +855,12 @@ def fig_strategy_tradeoff(clean: pd.DataFrame, horizon: int, out: Path, cfg: dic
     sub["variant"] = sub.strategy + sub.cf + sub.sl_var
     order = [v for v in cfg["variant_order"] if v in set(sub.variant)]
     agg = sub.groupby("variant")[["kgkm", "overflows"]].mean().reindex(order)
-    labels = [cfg["variant_labels"].get(v, v) for v in agg.index]
+    # Acronyms, not full names: five spelled-out variant names overprint each
+    # other on a 6.4in axis, which is how the published Fig. 6 lost the leading
+    # "S" of both Service-Level labels. These are the same short forms the
+    # appendix figure captions already use (LA, LM70, LM90, SL1, SL2).
+    short = cfg.get("variant_labels_short", {})
+    labels = [short.get(v, cfg["variant_labels"].get(v, v)) for v in agg.index]
 
     fig, ax_left = plt.subplots(figsize=(6.4, 3.8))
     x = np.arange(len(agg))

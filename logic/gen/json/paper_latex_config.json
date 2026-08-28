@@ -18,6 +18,13 @@
     "SLSL1": "Service-Level (SL1)",
     "SLSL2": "Service-Level (SL2)"
   },
+  "variant_labels_short": {
+    "LMCF90": "LM90",
+    "LMCF70": "LM70",
+    "LA": "LA",
+    "SLSL1": "SL1",
+    "SLSL2": "SL2"
+  },
   "headers": {
     "constructor": "Route constructor",
     "strategy": "Selection strategy",

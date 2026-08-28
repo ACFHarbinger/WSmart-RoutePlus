@@ -49,6 +49,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Refreshed all four review documents in `docs/moon/review/` against the modern modular directory structure, expanding analysis to 80+ routing algorithms, 85+ operators, 23 standard acceptance criteria, and TTOP temporal/profit duality (§C.8).
 
+### Changed
+
+#### Paper citation and scholarly-positioning audit (`2026-08-28`)
+
+- Verified the paper's publication-facing references against primary publisher
+  records and corrected Wentges, Lysgaard, Barnhart, Sun, Kool, and Ma
+  metadata or citation keys. Stable author–year keys now replace the remaining
+  generic and hash-like exports, and DOI fields no longer contain nested URLs.
+- Positioned the MPVRPP explicitly beside periodic VRP, inventory routing,
+  team orienteering, and multi-period profitable routing, with an additional
+  good-laboratory-practice anchor for the framework's component-level audit.
+- Corrected the regional-network provenance: both panels use OpenStreetMap
+  road geometry, while the route matrices use Google Maps for Rio Maior and
+  OpenStreetMap for Figueira da Foz. Added contributor and ODbL attribution.
+- Withdrew the shared report's RCP-034 finding after the primary Lin et al.
+  article confirmed that it explicitly uses Farkas pricing for an infeasible
+  restricted master problem. The rebuilt PDF has no undefined citations or
+  references; generated files under `Tables/` were not edited.
+
 ### Performance
 
 #### GPU peak memory monitoring & profiling (`2026-08-27`, §F.2)
