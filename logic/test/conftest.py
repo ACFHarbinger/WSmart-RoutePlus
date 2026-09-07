@@ -5,6 +5,8 @@ This file is automatically loaded by pytest and provides fixtures
 that can be used across all test files.
 """
 
+import atexit
+import contextlib
 import os
 import shutil
 import sqlite3
@@ -15,8 +17,10 @@ from pathlib import Path
 import pytest
 import torch
 
-# Global interception of sqlite3.connect to prevent updates to the production tracking.db
+# Global interception of sqlite3.connect to prevent updates to the production tracking.db.
+# Redirected databases live in a session temp dir so tests never leave tracking files in cwd.
 _original_sqlite3_connect = sqlite3.connect
+_TEST_SQLITE_DIR = Path(tempfile.mkdtemp(prefix="wsmart_test_tracking_"))
 
 
 def _test_safe_sqlite3_connect(database, *args, **kwargs):
@@ -29,14 +33,13 @@ def _test_safe_sqlite3_connect(database, *args, **kwargs):
             and "/assets/" in db_str
         )
         if is_prod_tracking or is_prod_telemetry:
-            test_dir = Path.cwd() / "test_tracking"
-            test_dir.mkdir(exist_ok=True, parents=True)
             fname = "telemetry.db" if is_prod_telemetry else "tracking.db"
-            database = str(test_dir / fname)
+            database = str(_TEST_SQLITE_DIR / fname)
     return _original_sqlite3_connect(database, *args, **kwargs)
 
 
 sqlite3.connect = _test_safe_sqlite3_connect
+atexit.register(lambda: shutil.rmtree(_TEST_SQLITE_DIR, ignore_errors=True))
 
 # The project root is THREE levels up from conftest.py:
 # conftest.py -> test -> logic -> WSmart-Route (Project Root)
@@ -221,12 +224,26 @@ def cleanup_test_root(request):
     request.addfinalizer(finalizer)
 
 
+def _cleanup_leftover_simulator_graphs():
+    """Remove index files tests used to persist under data/wsr_simulator."""
+    bins_selection = project_root / "data" / "wsr_simulator" / "bins_selection"
+    for name in ("test_graph.json", "test.json", "new.json"):
+        leftover = bins_selection / name
+        if leftover.exists():
+            with contextlib.suppress(Exception):
+                leftover.unlink()
+    if bins_selection.is_dir() and not any(bins_selection.iterdir()):
+        with contextlib.suppress(Exception):
+            bins_selection.rmdir()
+
+
 @pytest.fixture(scope="session", autouse=True)
 def session_cleanup():
     """
     Cleanup artifacts that might be left over after tests,
     specifically 'test_dehb_output' directory and 'dummy.log'.
     """
+    _cleanup_leftover_simulator_graphs()
     yield  # Run tests first
 
     artifacts_to_clean = [
@@ -234,6 +251,8 @@ def session_cleanup():
         Path("dummy.log"),
         Path("sim.log"),
         Path("test.log"),
+        Path("cli_gen_data_error.log"),
+        Path("dependency_graph.html"),
         Path("mlruns"),
         Path("checkpoints"),
         Path("logs"),
@@ -242,17 +261,25 @@ def session_cleanup():
         Path("test_tracking"),
         Path("test_mlruns"),
         Path("test_logs"),
+        Path("test_sim_out"),
         project_root / "assets" / "model_weights",
         project_root / "assets" / "keys" / "testkey.pkl",
         project_root / "assets" / "keys" / "testkey.salt",
         project_root / "assets" / "test_out",
+        _TEST_SQLITE_DIR,
+        project_root / "data" / "wsr_simulator" / "bins_selection" / "test_graph.json",
+        project_root / "data" / "wsr_simulator" / "bins_selection" / "test.json",
+        project_root / "data" / "wsr_simulator" / "bins_selection" / "new.json",
     ]
 
-    # We use os.getcwd() to look in the current working directory where tests were run
+    # Relative names are resolved against cwd; absolute paths (temp sqlite, leftover
+    # simulator graphs) are used as-is.
     cwd = Path.cwd()
 
     for artifact_name in artifacts_to_clean:
-        artifact_path = cwd / artifact_name
+        artifact_path = Path(artifact_name)
+        if not artifact_path.is_absolute():
+            artifact_path = cwd / artifact_path
         if artifact_path.exists():
             try:
                 if artifact_path.is_dir():
@@ -261,6 +288,8 @@ def session_cleanup():
                     os.remove(artifact_path)
             except Exception:
                 pass
+
+    _cleanup_leftover_simulator_graphs()
 
     # Clean up generated folders in assets/output/ (excluding the tracked 30days folder)
     output_dir = project_root / "assets" / "output"

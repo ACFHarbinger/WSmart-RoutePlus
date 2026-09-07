@@ -53,12 +53,11 @@ def test_cli_gen_data_smoke(tmp_path, problem):
 
     # Check for success
     if result.returncode != 0:
-        with open("cli_gen_data_error.log", "w") as f:
-            f.write(result.stdout)
-            f.write(result.stderr)
+        log_path = tmp_path / "cli_gen_data_error.log"
+        log_path.write_text(result.stdout + result.stderr)
         assert (
             result.returncode == 0
-        ), f"gen_data failed with return code {result.returncode}. See cli_gen_data_error.log"
+        ), f"gen_data failed with return code {result.returncode}. See {log_path}"
 
     # Expected filename for test_simulator: {area}{size}_{dist}_{name}_N{dataset_size}_seed{seed}.pkl
     # area defaults to 'riomaior', seed defaults to 42

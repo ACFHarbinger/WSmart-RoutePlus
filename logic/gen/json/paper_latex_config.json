@@ -29,15 +29,6 @@
     "constructor": "Route constructor",
     "strategy": "Selection strategy",
     "metric": "Metric",
-    "metrics": [
-      "$n$",
-      "kg/km",
-      "med.",
-      "Ovf.",
-      "med.",
-      "km",
-      "Time (s)"
-    ],
     "improver": [
       "CLS",
       "Fast-TSP",
@@ -65,7 +56,7 @@
     "scenario_metrics": [
       "$n$",
       "kg/km",
-      "Ovf.",
+      "Overflows",
       "km",
       "Time (s)"
     ]
