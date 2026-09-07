@@ -49,7 +49,7 @@ def test_simulation_day_context_mapping():
 def test_file_system_repository_init(tmp_path):
     """Test repository initialization and path resolution."""
     repo = FileSystemRepository(str(tmp_path))
-    expected_dir = os.path.join(str(tmp_path), "data", "wsr_simulator")
+    expected_dir = os.path.join(str(tmp_path), "data", "simulator")
     assert repo.default_data_dir == expected_dir
     assert repo._get_data_dir() == expected_dir
     assert repo._get_data_dir("override") == "override"

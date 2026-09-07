@@ -59,7 +59,7 @@ POLICIES="${SIM_POLICIES[@]:-alns bcp}"
 
 # Derived paths
 IDX_PATH="graphs_${SIZE}V_1N_${WASTE_TYPE}.json"
-DM_PATH="data/wsr_simulator/distance_matrix/gmaps_distmat_${WASTE_TYPE}[${AREA}].csv"
+DM_PATH="data/simulator/distance_matrix/gmaps_distmat_${WASTE_TYPE}[${AREA}].csv"
 WASTE_PATH="daily_waste/${AREA}${SIZE}_${DATA_DIST}_wsr${DAYS}_N${SAMPLES}_seed${SEED:-42}.npz"
 
 # Format policies as Hydra list

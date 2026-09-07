@@ -1,10 +1,10 @@
 """
-Upload dataset files from data/datasets and/or data/wsr_simulator to a cloud
+Upload dataset files from data/datasets and/or data/simulator to a cloud
 drive (OneDrive/SharePoint, Google Drive or Dropbox).
 
 Local directory structure is preserved under the destination folder, e.g.
-data/wsr_simulator/datasets/riomaior100_emp_wsr30_N1_seed42.npz uploads to
-<dest>/wsr_simulator/datasets/riomaior100_emp_wsr30_N1_seed42.npz.
+data/simulator/datasets/riomaior100_emp_wsr30_N1_seed42.npz uploads to
+<dest>/simulator/datasets/riomaior100_emp_wsr30_N1_seed42.npz.
 
 Credentials per provider are documented in logic/store/config.py.
 
@@ -12,7 +12,7 @@ Usage
 -----
     # All NPZ simulator datasets, to Google Drive
     uv run python -m logic.store.upload.datasets --provider gdrive \\
-        --source wsr_simulator --pattern "*.npz"
+        --source simulator --pattern "*.npz"
 
     # Everything from both dataset roots, to OneDrive
     uv run python -m logic.store.upload.datasets --provider onedrive --source both
@@ -30,7 +30,7 @@ from logic.store.transfer import collect_files, upload_tree
 DATA_ROOT = Path("data")
 SOURCES = {
     "datasets": DATA_ROOT / "datasets",
-    "wsr_simulator": DATA_ROOT / "wsr_simulator",
+    "simulator": DATA_ROOT / "simulator",
 }
 
 

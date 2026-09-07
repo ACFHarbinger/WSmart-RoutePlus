@@ -75,7 +75,7 @@ format_hydra_list() {
 # Derived values
 FOCUS_GRAPHS=()
 for size in ${SIZES[@]}; do
-    FOCUS_GRAPHS+=("data/wsr_simulator/bins_selection/graphs_${size}V_1N_${WTYPE}.json")
+    FOCUS_GRAPHS+=("data/simulator/bins_selection/graphs_${size}V_1N_${WTYPE}.json")
 done
 
 SIZES_STR=$(format_hydra_list "${SIZES[@]}")

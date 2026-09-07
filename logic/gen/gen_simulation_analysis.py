@@ -1379,7 +1379,7 @@ def gen_interactive_html(df: pd.DataFrame, dfm: pd.DataFrame, ctx: dict, out_dir
 
 # ── Bin-location maps ──────────────────────────────────────────────────────────
 
-_COORD_DIR = Path("data/wsr_simulator/coordinates")
+_COORD_DIR = Path("data/simulator/coordinates")
 
 
 def _fix_stripped_decimal(val: float, lo: float, hi: float) -> float:
@@ -1463,7 +1463,7 @@ def _load_selected_scenario_coords(city: str, n_bins: int) -> pd.DataFrame:
     include the depot as ID 0 — dropped here). Figueira da Foz: the plastic
     ("Mistura de embalagens") bins of `out_info[figdafoz].csv` sorted by ID —
     the base frame the simulator builds — indexed by the positional selection
-    in `data/wsr_simulator/bins_selection/graphs_{N}V_1N_plastic.json`.
+    in `data/simulator/bins_selection/graphs_{N}V_1N_plastic.json`.
     """
     if city == "Rio Maior":
         xlsx = _COORD_DIR / "selected_coordinates" / f"coordinates{n_bins}_plastic[riomaior].xlsx"

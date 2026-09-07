@@ -44,7 +44,7 @@ class TestLoader:
             "Lat": [39.0],
             "Lng": [-8.0]
         })
-        load_depot(data_dir="data/wsr_simulator", area="Rio Maior")
+        load_depot(data_dir="data/simulator", area="Rio Maior")
         assert mock_read_csv.called
 
     @pytest.mark.unit
@@ -76,5 +76,5 @@ class TestLoader:
             })
         ]
 
-        load_simulator_data("data/wsr_simulator", 5, area="riomaior", waste_type="paper")
+        load_simulator_data("data/simulator", 5, area="riomaior", waste_type="paper")
         assert mock_read_csv.call_count >= 1

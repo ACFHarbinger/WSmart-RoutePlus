@@ -12,7 +12,7 @@ import { axisStyle } from "../charts/common";
 import type { GenTheme } from "../config";
 import { joinPath, loadCsv, pathExists } from "../io";
 
-const COORD_DIR = "data/wsr_simulator/coordinates";
+const COORD_DIR = "data/simulator/coordinates";
 
 /** Recover a decimal point dropped during export (ports _fix_stripped_decimal). */
 export function fixStrippedDecimal(val: number, lo: number, hi: number): number {

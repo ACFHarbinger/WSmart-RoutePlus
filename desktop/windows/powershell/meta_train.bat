@@ -62,7 +62,7 @@ set F_SIZE=1280
 set VAL_F_SIZE=0
 set DM_METHOD=gmaps
 set F_GRAPH=graphs_%SIZE%V_1N_%WTYPE%.json
-set DM_PATH=data/wsr_simulator/distance_matrix/gmaps_distmat_%WTYPE%[%AREA%].csv
+set DM_PATH=data/simulator/distance_matrix/gmaps_distmat_%WTYPE%[%AREA%].csv
 
 set SEED=42
 set START=0

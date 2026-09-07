@@ -1,7 +1,7 @@
 """
 Generate a pairwise distance matrix CSV for a given region and waste type.
 
-Saves to data/wsr_simulator/distance_matrix/<dm-filepath>.
+Saves to data/simulator/distance_matrix/<dm-filepath>.
 
 The output format matches the existing project matrices:
   header row : -1,<depot_id>,<bin1_id>,...
@@ -76,7 +76,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--dm-filepath",
         required=True,
-        help="Output filename, saved to data/wsr_simulator/distance_matrix/",
+        help="Output filename, saved to data/simulator/distance_matrix/",
     )
     p.add_argument(
         "--num-bins",
@@ -95,7 +95,7 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
 
-    data_dir = os.path.join(ROOT_DIR, "data", "wsr_simulator")
+    data_dir = os.path.join(ROOT_DIR, "data", "simulator")
     set_repository_from_path(data_dir)
 
     # ── Load coordinates ──────────────────────────────────────────────────────
@@ -117,7 +117,7 @@ def main() -> None:
     dm = strategy.calculate(coords, env_filename=args.env_file)
 
     # ── Save in project-standard format ──────────────────────────────────────
-    out_path = os.path.join(ROOT_DIR, "data", "wsr_simulator", "distance_matrix", args.dm_filepath)
+    out_path = os.path.join(ROOT_DIR, "data", "simulator", "distance_matrix", args.dm_filepath)
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     print(f"Saving → {out_path}")
     with open(out_path, "w") as f:

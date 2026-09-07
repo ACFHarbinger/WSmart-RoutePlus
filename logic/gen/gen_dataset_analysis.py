@@ -24,7 +24,7 @@ Usage
         --theme light \\
         --npz-csv docs/private/global/datasets/npz_stats.csv \\
         --td-csv docs/private/global/datasets/td_stats.csv \\
-        --npz-dir data/wsr_simulator/datasets \\
+        --npz-dir data/simulator/datasets \\
         --out-md docs/private/dataset_analysis.md \\
         --figures-dir docs/private/figures/datasets \\
         --private-dir docs/private/html/datasets

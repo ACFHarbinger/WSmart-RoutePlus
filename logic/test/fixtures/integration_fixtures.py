@@ -102,7 +102,7 @@ def sim_opts(tmp_path, setup_sim_data):
         "vertex_method": "mmn",
         # Explicit data_dir provided to override default hardcoded lookup if logic allows,
         # but logic often uses ROOT_DIR. setup_sim_data mocks ROOT_DIR.
-        "data_dir": str(setup_sim_data / "data" / "wsr_simulator"),
+        "data_dir": str(setup_sim_data / "data" / "simulator"),
     }
 
 
@@ -137,7 +137,7 @@ def setup_sim_data(tmp_path, mocker):
     # Patch the _REPOSITORY in the module
     mocker.patch("logic.src.pipeline.simulations.repository._REPOSITORY", repo)
 
-    data_dir = tmp_path / "data" / "wsr_simulator"
+    data_dir = tmp_path / "data" / "simulator"
     data_dir.mkdir(parents=True, exist_ok=True)
 
     # Create checkpoints directory mock path points to

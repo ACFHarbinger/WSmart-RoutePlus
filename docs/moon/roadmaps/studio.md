@@ -170,7 +170,7 @@
 
 **Goal**: Visualize the raw optimization graph structure, pheromone trails, and node-edge weights.
 
-- [x] Load distance matrix from `assets/` as a weighted edge list: `graphTopology.ts` resolves sibling `gmaps_distmat.csv` or project `data/wsr_simulator/distance_matrix/`; k-NN edge list builder (§G.4)
+- [x] Load distance matrix from `assets/` as a weighted edge list: `graphTopology.ts` resolves sibling `gmaps_distmat.csv` or project `data/simulator/distance_matrix/`; k-NN edge list builder (§G.4)
 - [x] Render graph using Sigma.js (WebGL): node radius ∝ profit, edge thickness ∝ inverse distance: `GraphTopologyPanel` ECharts `graph` series — node size ∝ bin fill %, edge width ∝ inverse distance; View toggle adds `TopologySigmaView` Sigma.js WebGL with fill/pheromone styling + `TopologyCosmographView` dense point-mode WebGL (§G.4)
 - [x] Force-directed layout (ForceAtlas2) via Graphology: `TopologySigmaView` runs `graphology-layout-forceatlas2` on force layout; ECharts path keeps Fruchterman-Reingold in `forceDirectedLayout()` (§G.4)
 - [x] ACO pheromone trail visualization: edge opacity/color intensity ∝ accumulated pheromone weight after each iteration: `accumulateTourPheromone()` deposits τ on consecutive tour edges; amber edge styling in `GraphTopologyPanel` ECharts + Sigma.js + Cosmograph views (live ACO solver τ matrix deferred to logic layer)

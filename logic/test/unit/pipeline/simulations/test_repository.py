@@ -99,8 +99,8 @@ def test_get_area_params():
 
 def test_filesystem_repository_init_and_dir():
     repo = FileSystemRepository("/dummy/root")
-    assert repo.default_data_dir == "/dummy/root/data/wsr_simulator"
-    assert repo._get_data_dir() == "/dummy/root/data/wsr_simulator"
+    assert repo.default_data_dir == "/dummy/root/data/simulator"
+    assert repo._get_data_dir() == "/dummy/root/data/simulator"
     assert repo._get_data_dir("/override/path") == "/override/path"
 
 
@@ -126,7 +126,7 @@ def test_filesystem_repository_get_indices_generate(tmp_path):
 
 def test_filesystem_repository_get_depot(tmp_path):
     repo = FileSystemRepository(str(tmp_path))
-    coord_dir = tmp_path / "data" / "wsr_simulator" / "coordinates"
+    coord_dir = tmp_path / "data" / "simulator" / "coordinates"
     coord_dir.mkdir(parents=True)
     pd.DataFrame({
         "Sigla": ["CTEASO"],

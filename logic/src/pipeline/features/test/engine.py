@@ -140,7 +140,7 @@ def run_wsr_simulator_test(cfg: Config, sinks: Optional[List[Any]] = None) -> No
 
     # Log simulation data directory baseline hashes for change detection
     try:
-        data_dir = os.path.join(udef.ROOT_DIR, "data", "wsr_simulator")
+        data_dir = os.path.join(udef.ROOT_DIR, "data", "simulator")
         if os.path.isdir(data_dir):
             wst.FilesystemTracker(run).scan_directory(data_dir)
     except Exception:

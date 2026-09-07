@@ -59,7 +59,7 @@ a = Analysis(
     binaries=_binaries,
     datas=[
         # Simulation data and pre-trained weights
-        ("data/wsr_simulator/*", "data/wsr_simulator"),
+        ("data/simulator/*", "data/simulator"),
         ("assets/model_weights/*", "assets/model_weights"),
         ("assets/logs/*", "assets/logs"),
         # Hydra YAML configs (must mirror the installed layout)

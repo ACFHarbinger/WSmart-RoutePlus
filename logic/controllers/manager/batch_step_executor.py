@@ -111,7 +111,7 @@ def _step_gen_dist_matrix(args: Dict[str, Any], job: BatchJob) -> None:
     root = _project_root()
 
     if check_exists:
-        dm_path = root / "data" / "wsr_simulator" / "distance_matrix" / dm_filepath
+        dm_path = root / "data" / "simulator" / "distance_matrix" / dm_filepath
         if dm_path.exists():
             print(f"  [gen_dist_matrix] matrix already exists, skipping: {dm_filepath}")
             return

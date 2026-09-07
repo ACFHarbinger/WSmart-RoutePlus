@@ -261,7 +261,7 @@ def _render_matrix_loader(distance_strategy: str) -> Dict[str, Any]:
 
     if distance_strategy == "load_matrix":
         with st.sidebar.expander("Distance Matrix", expanded=False):
-            matrix_dir = os.path.join(ROOT_DIR, "data", "wsr_simulator", "distance_matrix")
+            matrix_dir = os.path.join(ROOT_DIR, "data", "simulator", "distance_matrix")
 
             # Helper to recursively find files
             matrix_files = []
@@ -280,7 +280,7 @@ def _render_matrix_loader(distance_strategy: str) -> Dict[str, Any]:
             )
 
             # Bin Index File Selector
-            bins_selection_dir = os.path.join(ROOT_DIR, "data", "wsr_simulator", "bins_selection")
+            bins_selection_dir = os.path.join(ROOT_DIR, "data", "simulator", "bins_selection")
             index_files = []
             if os.path.exists(bins_selection_dir):
                 for root, _dirs, files in os.walk(bins_selection_dir):

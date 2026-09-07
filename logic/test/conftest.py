@@ -225,8 +225,8 @@ def cleanup_test_root(request):
 
 
 def _cleanup_leftover_simulator_graphs():
-    """Remove index files tests used to persist under data/wsr_simulator."""
-    bins_selection = project_root / "data" / "wsr_simulator" / "bins_selection"
+    """Remove index files tests used to persist under data/simulator."""
+    bins_selection = project_root / "data" / "simulator" / "bins_selection"
     for name in ("test_graph.json", "test.json", "new.json"):
         leftover = bins_selection / name
         if leftover.exists():
@@ -267,9 +267,9 @@ def session_cleanup():
         project_root / "assets" / "keys" / "testkey.salt",
         project_root / "assets" / "test_out",
         _TEST_SQLITE_DIR,
-        project_root / "data" / "wsr_simulator" / "bins_selection" / "test_graph.json",
-        project_root / "data" / "wsr_simulator" / "bins_selection" / "test.json",
-        project_root / "data" / "wsr_simulator" / "bins_selection" / "new.json",
+        project_root / "data" / "simulator" / "bins_selection" / "test_graph.json",
+        project_root / "data" / "simulator" / "bins_selection" / "test.json",
+        project_root / "data" / "simulator" / "bins_selection" / "new.json",
     ]
 
     # Relative names are resolved against cwd; absolute paths (temp sqlite, leftover

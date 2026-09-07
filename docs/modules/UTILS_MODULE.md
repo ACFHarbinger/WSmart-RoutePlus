@@ -1960,7 +1960,7 @@ dist_matrix = load_distance_matrix(
 
 **Data Sources**:
 
-- `data/wsr_simulator/distance_matrix/*.csv`
+- `data/simulator/distance_matrix/*.csv`
 - Cached Google Maps API responses
 - OpenStreetMap data
 

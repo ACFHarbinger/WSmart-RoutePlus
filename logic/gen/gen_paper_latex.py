@@ -921,7 +921,7 @@ def fig_improver_paired(clean: pd.DataFrame, horizon: int, out: Path, cfg: dict)
 #: Where real per-bin coordinates live when the gitignored data tree is present.
 #: Absent from a fresh clone, which is why read_network_layout falls back to an
 #: embedding of the road-distance matrix and says so.
-COORD_DIR = REPO_ROOT / "data" / "wsr_simulator" / "graphs"
+COORD_DIR = REPO_ROOT / "data" / "simulator" / "graphs"
 
 
 def find_distance_matrix(scenario: dict) -> Path:

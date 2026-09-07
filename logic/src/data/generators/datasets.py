@@ -147,7 +147,7 @@ def _process_instance_generation(
         n_days = 1
 
     if graph is not None and not os.path.isfile(graph):
-        sim_dir = os.path.join(ROOT_DIR, "data", "wsr_simulator")
+        sim_dir = os.path.join(ROOT_DIR, "data", "simulator")
         if os.path.isfile(os.path.join(sim_dir, graph)):
             graph = os.path.join(sim_dir, graph)
         elif os.path.isfile(os.path.join(sim_dir, "bins_selection", graph)):

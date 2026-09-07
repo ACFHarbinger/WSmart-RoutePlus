@@ -77,9 +77,9 @@ def load_focus_coords(
     """
     from logic.src.utils.functions.path import get_path_until_string
 
-    focus_graph_dir = get_path_until_string(focus_graph, "wsr_simulator")
+    focus_graph_dir = get_path_until_string(focus_graph, "simulator")
     if focus_graph_dir is None:
-        raise ValueError(f"Could not find 'wsr_simulator' in path {focus_graph}")
+        raise ValueError(f"Could not find 'simulator' in path {focus_graph}")
 
     from logic.src.pipeline.simulations.repository import load_depot, load_simulator_data
 
@@ -243,7 +243,7 @@ def load_grid_base(
     from logic.src.pipeline.simulations.wsmart_bin_analysis import GridBase
 
     if data_dir is None:
-        data_dir = os.path.join(ROOT_DIR, "data", "wsr_simulator")
+        data_dir = os.path.join(ROOT_DIR, "data", "simulator")
 
     src_area = area.translate(str.maketrans("", "", "-_ ")).lower() if area is not None else ""
     src_area = COUNTY_ALIASES.get(src_area, src_area)

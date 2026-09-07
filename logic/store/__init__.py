@@ -10,10 +10,10 @@ upload/
                      assets/output/ to a cloud drive (OneDrive, Google Drive
                      or Dropbox).
     datasets.py      Upload dataset files from data/datasets and
-                     data/wsr_simulator to a cloud drive.
+                     data/simulator to a cloud drive.
 download/
     datasets.py      Download dataset files from a cloud drive into
-                     data/datasets / data/wsr_simulator.
+                     data/datasets / data/simulator.
 
 Providers and credentials are documented in logic/store/providers.py; all
 credentials are read from environment variables (see logic/store/config.py).

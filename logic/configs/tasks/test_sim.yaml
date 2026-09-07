@@ -127,7 +127,7 @@ sim:
   checkpoint_days: 0
   data_distribution: "emp"
 
-  # Relative to ROOT/data/wsr_simulator/
+  # Relative to ROOT/data/simulator/
   graph:
     n_days: 30
     num_loc: 350
@@ -137,7 +137,7 @@ sim:
     distance_method: "file"
     dm_filepath: "gmaps_distmat_${sim.graph.waste_type}[${sim.graph.area}].csv"
     focus_graph: "graphs_${sim.graph.num_loc}V_1N_${sim.graph.waste_type}.json"
-    load_dataset: "data/wsr_simulator/datasets/${sim.graph.area}${sim.graph.num_loc}_${sim.data_distribution}_wsr${sim.graph.n_days}_N${sim.graph.n_samples}_seed42.npz"
+    load_dataset: "data/simulator/datasets/${sim.graph.area}${sim.graph.num_loc}_${sim.data_distribution}_wsr${sim.graph.n_days}_N${sim.graph.n_samples}_seed42.npz"
     save_updated_dm: "gmaps_distmat.csv"
 
   # Policies to run

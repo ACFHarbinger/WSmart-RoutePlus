@@ -20,7 +20,7 @@
     "gamma1": "#e09020",
     "gamma2": "#a060e0"
   },
-  "npz_dir": "data/wsr_simulator/datasets",
+  "npz_dir": "data/simulator/datasets",
   "npz_csv": "docs/private/global/datasets/npz_stats.csv",
   "td_csv": "docs/private/global/datasets/td_stats.csv",
   "out_md": "docs/private/markdown/dataset_analysis.md",

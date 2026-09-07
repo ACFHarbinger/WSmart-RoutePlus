@@ -32,7 +32,7 @@ data:
   overwrite: true
   seed: 42
   dataset_type: "test_simulator" # train, train_time, test_simulator
-  data_dir: "wsr_simulator/datasets" # Directory to save generated data
+  data_dir: "simulator/datasets" # Directory to save generated data
   name: "wsr"
   filename: null
 

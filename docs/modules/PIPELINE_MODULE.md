@@ -1949,7 +1949,7 @@ Examples:
 | **Training Logs**      | `logs/<experiment_name>/`                        |
 | **Model Weights**      | `weights/<experiment_name>/`                     |
 | **Simulation Results** | `assets/<output_dir>/<days>_days/<area>_<size>/` |
-| **Distance Matrices**  | `data/wsr_simulator/distance_matrix/`            |
+| **Distance Matrices**  | `data/simulator/distance_matrix/`            |
 | **Checkpoints**        | `<checkpoint_dir>/`                              |
 
 ### Important Metrics

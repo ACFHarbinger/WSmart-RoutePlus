@@ -67,7 +67,7 @@ set F_SIZE=128000
 set VAL_F_SIZE=0
 set DM_METHOD=gmaps
 set F_GRAPH=graphs_170V_1N_plastic.json
-set DM_PATH=data/wsr_simulator/distance_matrix/gmaps_distmat_plastic[riomaior].csv
+set DM_PATH=data/simulator/distance_matrix/gmaps_distmat_plastic[riomaior].csv
 
 :: Note: N_BINS, N_DAYS, N_SAMPLES not defined in original, using defaults
 set N_BINS=170

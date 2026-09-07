@@ -17,7 +17,7 @@ def wsr_opts(tmp_path):
     Tests can modify ``cfg.sim.*`` attributes as needed.
     """
     # Create necessary subdirectories in tmp_path
-    (tmp_path / "data" / "wsr_simulator").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "data" / "simulator").mkdir(parents=True, exist_ok=True)
     results_dir = tmp_path / "assets" / "test_output" / "10_days" / "test_area_2"
     results_dir.mkdir(parents=True, exist_ok=True)
 

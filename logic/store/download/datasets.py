@@ -1,9 +1,9 @@
 """
 Download dataset files from a cloud drive (OneDrive/SharePoint, Google Drive
-or Dropbox) into data/datasets and/or data/wsr_simulator.
+or Dropbox) into data/datasets and/or data/simulator.
 
 Mirrors logic.store.upload.datasets: it expects the remote folder to contain
-'datasets/' and/or 'wsr_simulator/' subfolders (as produced by the uploader)
+'datasets/' and/or 'simulator/' subfolders (as produced by the uploader)
 and re-creates the remote structure locally.
 
 Credentials per provider are documented in logic/store/config.py.
@@ -12,7 +12,7 @@ Usage
 -----
     # Fetch all NPZ simulator datasets from Google Drive
     uv run python -m logic.store.download.datasets --provider gdrive \\
-        --source wsr_simulator --pattern "*.npz"
+        --source simulator --pattern "*.npz"
 
     # Fetch everything from both dataset roots on OneDrive
     uv run python -m logic.store.download.datasets --provider onedrive --source both
@@ -27,7 +27,7 @@ from logic.store.providers import get_provider
 from logic.store.transfer import download_tree
 
 DATA_ROOT = Path("data")
-SOURCES = ("datasets", "wsr_simulator")
+SOURCES = ("datasets", "simulator")
 
 
 def main() -> None:

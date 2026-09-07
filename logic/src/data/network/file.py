@@ -50,7 +50,7 @@ class FileStrategy(DistanceStrategy):
             os.path.join(
                 ROOT_DIR,
                 "data",
-                "wsr_simulator",
+                "simulator",
                 "distance_matrix",
                 dm_filepath,
             )

@@ -127,7 +127,7 @@ class SimulationContext:
         self.result: Optional[Dict[str, Any]] = None
 
         sim = cfg.sim
-        self.data_dir = os.path.join(ROOT_DIR, "data", "wsr_simulator")
+        self.data_dir = os.path.join(ROOT_DIR, "data", "simulator")
         self.results_dir = os.path.join(
             ROOT_DIR,
             "assets",
