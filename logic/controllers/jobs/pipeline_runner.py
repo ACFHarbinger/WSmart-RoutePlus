@@ -136,11 +136,11 @@ def run_simulation(cfg: Any) -> float:
     task = cfg.task
 
     if task == "test_sim":
-        from logic.src.pipeline.features.test import run_wsr_simulator_test
+        from logic.src.pipeline.features.test import run_simulator_test
 
         if cfg.tracking.verbose:
             _print_config(cfg, "SIMULATION", filter_keys=_ROOT_KEYS + ["sim"])  # type: ignore[arg-type]
-        run_wsr_simulator_test(cfg)
+        run_simulator_test(cfg)
         return 0.0
 
     if task in ("hpo_sim", "sim_hpo"):

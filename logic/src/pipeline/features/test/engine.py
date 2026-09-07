@@ -1,7 +1,7 @@
 """Run WSR Simulator Tests.
 
 Attributes:
-    run_wsr_simulator_test: Main entry point for the WSmart+ Route simulator test engine.
+    run_simulator_test: Main entry point for the WSmart+ Route simulator test engine.
     _validate_sim_config: Validate and normalize ``cfg.sim`` fields in place.
     _resolve_data_size: Resolve the available data size for the given area and requested size.
     _expand_data_distribution: Expand the data distribution field.
@@ -15,8 +15,8 @@ Attributes:
     _run_sim_via_zenml: Rerun simulation via ZenML.
 
 Example:
-    >>> from logic.src.pipeline.features.test import run_wsr_simulator_test
-    >>> run_wsr_simulator_test(config)
+    >>> from logic.src.pipeline.features.test import run_simulator_test
+    >>> run_simulator_test(config)
 """
 
 import contextlib
@@ -47,7 +47,7 @@ except ImportError:
 logger = get_pylogger(__name__)
 
 
-def run_wsr_simulator_test(cfg: Config, sinks: Optional[List[Any]] = None) -> None:
+def run_simulator_test(cfg: Config, sinks: Optional[List[Any]] = None) -> None:
     """
     Main entry point for the WSmart+ Route simulator test engine.
 
@@ -317,7 +317,7 @@ def _run_sim_via_zenml(cfg: Config) -> None:
 
     if configure_zenml_stack is None or not configure_zenml_stack(mlflow_uri, stack_name=stack_name):
         logger.warning("ZenML stack configuration failed — falling back to direct simulation.")
-        run_wsr_simulator_test(cfg, sinks=[])
+        run_simulator_test(cfg, sinks=[])
         return
 
     try:
@@ -328,4 +328,4 @@ def _run_sim_via_zenml(cfg: Config) -> None:
         simulation_pipeline(cfg)
     except Exception as exc:
         logger.warning(f"ZenML simulation pipeline failed — falling back to direct simulation: {exc}")
-        run_wsr_simulator_test(cfg, sinks=[])
+        run_simulator_test(cfg, sinks=[])
