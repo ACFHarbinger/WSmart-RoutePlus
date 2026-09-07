@@ -177,6 +177,15 @@ class TestCTOPCollectionAction:
 class TestCTOPLoggingAndContext:
     """Tests daily logging and context tracking of CTOP metrics."""
 
+    def test_logging_preserves_intermediate_depot_returns(self):
+        result = get_daily_results(
+            total_collected=20.0, ncol=2, cost=4.0, tour=[0, 1, 0, 2, 0],
+            day=1, new_overflows=0, sum_lost=0.0,
+            coordinates=pd.DataFrame({"ID": [0, 101, 102]}),
+            profit=1.0, time=0.1, time_spent=3.0,
+        )
+        assert result["tour"] == [0, 101, 0, 102, 0]
+
     def test_get_daily_results_with_time_spent(self):
         coords = pd.DataFrame({"ID": [0, 101, 102]}, index=[0, 1, 2])
         res = get_daily_results(

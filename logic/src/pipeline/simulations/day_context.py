@@ -640,9 +640,9 @@ def get_daily_results(
         dlog["kg/km"] = total_collected / cost if cost > 0 else 0
         dlog["reward"] = reward
         dlog["profit"] = profit
-        ids = np.array([x for x in tour if x != 0])
-        # Use iloc as node indices from the environment correspond to row positions in the coordinates DataFrame
-        dlog["tour"] = [0] + coordinates.iloc[ids]["ID"].tolist() + [0] # pyrefly: ignore [bad-index]
+        coordinate_ids = coordinates["ID"].tolist()
+        # Preserve trip boundaries so saved tours reproduce capacity/time checks.
+        dlog["tour"] = [0 if node == 0 else coordinate_ids[node] for node in tour]
     else:
         dlog["kg"] = 0
         dlog["ncol"] = 0

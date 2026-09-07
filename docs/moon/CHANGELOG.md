@@ -35,6 +35,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Resumed simulations reload time matrices against restored coordinates.
   CTOP environment masks, resource updates, and task evaluation accept directed
   time matrices in hours. Added regression coverage for these paths.
+- Saved daily tours retain intermediate depot visits, making split-trip
+  capacity and time checks reproducible from the logs.
+- Validation: CTOP/simulator/TSP regression tests pass; two-day real-data
+  simulations completed with uniform speed and a labelled seconds matrix.
+  The broad suite ran with 1,334 passing, three skipped, and four training
+  failures (tracking SQLite access and non-OmegaConf configuration inputs).
+  Focused lint/type checks pass; repository-wide checks still report unrelated
+  lint and typing issues. The standard test-suite wrapper also has a relocated
+  pytest launcher issue in this checkout; verification used `uv run python -m pytest`.
 
 #### Shared research, codebase, and manuscript audit (`2026-08-28`)
 
