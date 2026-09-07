@@ -1,10 +1,10 @@
-"""Regression tests for Temporal Team Orienteering Problem feasibility."""
+"""Regression tests for Capacitated Team Orienteering Problem feasibility."""
 
 import pytest
 import torch
-from logic.src.envs.generators.ttop import TTOPGenerator
-from logic.src.envs.routing.ttop import TTOPEnv
-from logic.src.envs.tasks.ttop import TTOP
+from logic.src.envs.generators.ctop import CTOPGenerator
+from logic.src.envs.routing.ctop import CTOPEnv
+from logic.src.envs.tasks.ctop import CTOP
 from tensordict import TensorDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -22,7 +22,7 @@ def _dataset(shift_hours: float = 1.0) -> dict[str, torch.Tensor]:
     }
 
 
-class TestTTOPCosts:
+class TestCTOPCosts:
     """The static evaluator must enforce every depot-to-depot trip."""
 
     def test_final_depot_return_is_time_feasible(self):
@@ -30,29 +30,29 @@ class TestTTOPCosts:
         data = _dataset()
         data["locs"] = torch.tensor([[[0.6, 0.0]]])
         with pytest.raises(AssertionError, match="trip time"):
-            TTOP.get_costs(data, torch.tensor([[1, 0]]), None)
+            CTOP.get_costs(data, torch.tensor([[1, 0]]), None)
 
     def test_road_distance_matrix_governs_time_feasibility(self):
         """Time validation follows supplied road legs rather than coordinates."""
         dist_matrix = torch.tensor([[[0.0, 2.0], [2.0, 0.0]]])
         with pytest.raises(AssertionError, match="trip time"):
-            TTOP.get_costs(_dataset(shift_hours=3.0), torch.tensor([[1, 0]]), None, dist_matrix)
+            CTOP.get_costs(_dataset(shift_hours=3.0), torch.tensor([[1, 0]]), None, dist_matrix)
 
     def test_one_microhour_tolerance_is_accepted(self):
         """The documented 1e-6 feasibility tolerance remains inclusive."""
         data = _dataset()
         data["locs"] = torch.tensor([[[0.5000005, 0.0]]])
-        _, costs, _ = TTOP.get_costs(data, torch.tensor([[1, 0]]), None)
+        _, costs, _ = CTOP.get_costs(data, torch.tensor([[1, 0]]), None)
         assert costs["time"].item() == pytest.approx(1.000001, abs=1e-6)
 
 
-class TestTTOPEnvironment:
-    """Live TTOP state uses the same physical constraints as its evaluator."""
+class TestCTOPEnvironment:
+    """Live CTOP state uses the same physical constraints as its evaluator."""
 
     @staticmethod
-    def _env() -> TTOPEnv:
-        return TTOPEnv(
-            generator=TTOPGenerator(
+    def _env() -> CTOPEnv:
+        return CTOPEnv(
+            generator=CTOPGenerator(
                 num_loc=1,
                 capacity=10.0,
                 shift_hours=2.5,
@@ -62,17 +62,17 @@ class TestTTOPEnvironment:
         )
 
     def test_generator_and_env_import_without_simulation_repository_cycle(self):
-        """TTOP remains constructible without initializing simulation repositories."""
+        """CTOP remains constructible without initializing simulation repositories."""
         td = self._env().reset(batch_size=[1])
         assert {"shift_hours", "avg_speed_kmh", "service_time_h"} <= set(td.keys())
         assert td["shift_hours"].item() == 2.5
         assert td["avg_speed_kmh"].item() == 20.0
         assert td["service_time_h"].item() == pytest.approx(0.1)
 
-    def test_get_env_factory_builds_a_ttop_generator_not_a_plain_vrpp_one(self):
-        """get_env("ttop", **kwargs) must route through TTOPGenerator.
+    def test_get_env_factory_builds_a_ctop_generator_not_a_plain_vrpp_one(self):
+        """get_env("ctop", **kwargs) must route through CTOPGenerator.
 
-        Regression test: TTOPEnv previously had no __init__ override, so it
+        Regression test: CTOPEnv previously had no __init__ override, so it
         inherited VRPPEnv's, which always built a plain VRPPGenerator. Any
         shift_hours/avg_speed_kmh/service_time_h kwarg passed through
         get_env (including a Hydra-composed override) was silently
@@ -82,8 +82,8 @@ class TestTTOPEnvironment:
         """
         from logic.src.envs.routing import get_env
 
-        env = get_env("ttop", num_loc=5, shift_hours=3.5, avg_speed_kmh=40.0)
-        assert isinstance(env.generator, TTOPGenerator)
+        env = get_env("ctop", num_loc=5, shift_hours=3.5, avg_speed_kmh=40.0)
+        assert isinstance(env.generator, CTOPGenerator)
         assert env.generator.shift_hours == 3.5
         assert env.generator.avg_speed_kmh == 40.0
 

@@ -283,13 +283,13 @@ class EnvConfig:
     """Environment configuration.
 
     Attributes:
-        name: Problem type ('vrpp', 'cvrpp', 'ttop', 'wcvrp', 'cwcvrp', 'sdwcvrp', 'scwcvrp').
+        name: Problem type ('vrpp', 'cvrpp', 'ctop', 'wcvrp', 'cwcvrp', 'sdwcvrp', 'scwcvrp').
         num_loc: Number of customer locations (excluding depot).
         min_loc: Minimum coordinate value for node generation.
         max_loc: Maximum coordinate value for node generation.
-        capacity: Vehicle capacity (None uses problem default). For ttop this
+        capacity: Vehicle capacity (None uses problem default). For ctop this
             is CVRPP's per-trip capacity, not replaced by the time budget.
-        shift_hours / avg_speed_kmh / service_time_h: Optional ttop temporal
+        shift_hours / avg_speed_kmh / service_time_h: Optional ctop temporal
             overrides; None uses SimulationRepository.get_temporal_params().
         graph: Graph connectivity settings.
         reward: Multi-objective reward weights.
@@ -321,8 +321,8 @@ class EnvConfig:
 # Standard VRPP with 50 locations
 env_config = EnvConfig(name="vrpp", num_loc=50)
 
-# TTOP: CVRPP capacity plus an independent per-trip time budget
-env_config = EnvConfig(name="ttop", capacity=100.0, shift_hours=7.0)
+# CTOP: CVRPP capacity plus an independent per-trip time budget
+env_config = EnvConfig(name="ctop", capacity=100.0, shift_hours=7.0)
 
 # Capacitated WCVRP with custom capacity
 env_config = EnvConfig(

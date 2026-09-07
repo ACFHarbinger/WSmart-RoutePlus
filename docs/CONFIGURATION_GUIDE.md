@@ -35,7 +35,7 @@ This comprehensive guide covers all aspects of the WSmart-Route configuration sy
 # Training
 python main.py train                                    # Default (CWCVRP, AM, HGS-ALNS expert)
 python main.py train envs@train.env=vrpp model=tam     # Override environment & model
-python main.py train envs@train.env=ttop               # TTOP (CVRPP + time budget)
+python main.py train envs@train.env=ctop               # CTOP (CVRPP + time budget)
 python main.py train rl.algorithm=ppo                  # Change RL algorithm
 python main.py train train.n_epochs=50                 # Override parameters
 
@@ -46,7 +46,7 @@ python main.py eval eval.decoding.strategy=sampling    # Change decoding
 # Simulation
 python main.py test_sim sim.days=31                    # 31-day simulation
 python main.py test_sim sim.policies=[hgs,alns]        # Compare policies
-python main.py task=test_sim sim.problem=ttop          # TTOP: capacity + shift time budget
+python main.py task=test_sim sim.problem=ctop          # CTOP: capacity + shift time budget
 
 # Data Generation
 python main.py gen_data data.problem=cwcvrp            # Generate CWCVRP data
@@ -62,7 +62,7 @@ python main.py gen_data data.problem=cwcvrp            # Generate CWCVRP data
 | `wcvrp`   | Waste Collection VRP                 | No capacity constraint                               |
 | `vrpp`    | VRP with Profits                     | Select profitable nodes                              |
 | `cvrpp`   | Capacitated VRP with Profits         | VRPP + capacity                                      |
-| `ttop`    | Temporal Team Orienteering Problem   | CVRPP + independent per-trip time budget             |
+| `ctop`    | Capacitated Team Orienteering Problem   | CVRPP + independent per-trip time budget             |
 | `scwcvrp` | Stochastic Capacitated WCVRP         | Stochastic waste generation                          |
 
 #### Models (`model=`)
@@ -127,7 +127,7 @@ key=[val1,val2]             # List override (no spaces!)
 
 # Config group overrides
 envs@train.env=vrpp          # Change training environment (group swap)
-envs@train.env=ttop          # TTOP: CVRPP + per-trip time budget
+envs@train.env=ctop          # CTOP: CVRPP + per-trip time budget
 model=tam                    # Change model
 rl.algorithm=ppo            # Change RL algorithm
 
@@ -796,7 +796,7 @@ python main.py train model=ptr  # Pointer Network
 # Change environment (swap the composed env group, not only env.name)
 python main.py eval envs@eval.env=vrpp eval.env.name=vrpp eval.problem=vrpp
 python main.py eval envs@eval.env=scwcvrp eval.env.name=scwcvrp eval.problem=scwcvrp
-python main.py eval envs@eval.env=ttop eval.env.name=ttop eval.problem=ttop
+python main.py eval envs@eval.env=ctop eval.env.name=ctop eval.problem=ctop
 
 # Change task
 python main.py task=eval  # Evaluation task
@@ -933,11 +933,11 @@ python main.py train \
   train.batch_size=256
 ```
 
-### Example 1b: Train AM on TTOP (CVRPP + per-trip time budget)
+### Example 1b: Train AM on CTOP (CVRPP + per-trip time budget)
 
 ```bash
 python main.py train \
-  envs@train.env=ttop \
+  envs@train.env=ctop \
   model=am \
   train.env.shift_hours=7.0
 ```

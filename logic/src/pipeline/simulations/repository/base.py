@@ -158,7 +158,7 @@ class SimulationRepository(ABC):
         Retrieves the temporal resource parameters for time-constrained problems.
 
         Returns the working-shift budget and travel/service rates used by
-        time-constrained problem variants (e.g. the Temporal Team Orienteering
+        time-constrained problem variants (e.g. the Capacitated Team Orienteering
         Problem), where the binding resource is time spent rather than bin
         count or vehicle capacity. Unlike get_area_params, these values are
         not area- or waste-type-specific: they describe one driver's shift.

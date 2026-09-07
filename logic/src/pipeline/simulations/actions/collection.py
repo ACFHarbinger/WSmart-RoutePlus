@@ -56,9 +56,9 @@ class CollectAction(SimulationAction):
         service_time_total_h = ncol * service_time_h
         time_spent_h = driving_time_h + service_time_total_h
 
-        # 4. If problem is TTOP, validate per-trip constraints (capacity + shift duration)
+        # 4. If problem is CTOP, validate per-trip constraints (capacity + shift duration)
         problem = str(context.get("problem", "vrpp") or "vrpp").lower()
-        if problem == "ttop" and tour and len(tour) > 2:
+        if problem == "ctop" and tour and len(tour) > 2:
             cur_trip_dist = 0.0
             cur_trip_bins = 0
             prev_node = tour[0]
@@ -67,7 +67,7 @@ class CollectAction(SimulationAction):
                 if node == 0:
                     trip_time = (cur_trip_dist / avg_speed_kmh) + (cur_trip_bins * service_time_h)
                     assert trip_time <= shift_hours + 1e-5, (
-                        f"TTOP violation: trip duration {trip_time:.4f}h exceeds shift budget {shift_hours:.4f}h"
+                        f"CTOP violation: trip duration {trip_time:.4f}h exceeds shift budget {shift_hours:.4f}h"
                     )
                     cur_trip_dist = 0.0
                     cur_trip_bins = 0

@@ -1,12 +1,12 @@
-"""ttop.py module.
+"""ctop.py module.
 
 Attributes:
-    TTOP: Temporal Team Orienteering Problem task, inheriting CVRPP's
+    CTOP: Capacitated Team Orienteering Problem task, inheriting CVRPP's
         prize-collection objective and per-trip capacity check, and adding
         a per-trip time-budget feasibility check on top.
 
 Example:
-    >>> import ttop
+    >>> import ctop
 """
 
 from __future__ import annotations
@@ -19,12 +19,12 @@ from logic.src.envs.tasks.cvrpp import CVRPP
 from logic.src.envs.temporal import get_default_temporal_params
 
 
-class TTOP(CVRPP):
+class CTOP(CVRPP):
     """
-    Temporal Team Orienteering Problem (TTOP).
+    Capacitated Team Orienteering Problem (CTOP).
 
     Same objective and capacity constraint as CVRPP (maximize
-    waste-collection profit, subject to a per-trip vehicle capacity). TTOP
+    waste-collection profit, subject to a per-trip vehicle capacity). CTOP
     adds a second, independent per-trip constraint on top: each trip
     (depot-to-depot leg of the tour) is also bounded by a working-shift
     *time* budget -- travel time plus per-bin service time -- from
@@ -33,13 +33,13 @@ class TTOP(CVRPP):
 
     "Team" here is one vehicle making multiple trips within a period, not a
     concurrent fleet; see the module docstring of
-    ``logic.src.envs.routing.ttop`` for the future true-fleet variant.
+    ``logic.src.envs.routing.ctop`` for the future true-fleet variant.
 
     Attributes:
         NAME: Environment name identifier.
     """
 
-    NAME = "ttop"
+    NAME = "ctop"
 
     @staticmethod
     def get_costs(
@@ -49,7 +49,7 @@ class TTOP(CVRPP):
         dist_matrix: Optional[torch.Tensor] = None,
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor], None]:
         """
-        Compute TTOP costs: CVRPP's objective + capacity check, plus a
+        Compute CTOP costs: CVRPP's objective + capacity check, plus a
         per-trip time check.
 
         Args:
@@ -127,7 +127,7 @@ class TTOP(CVRPP):
                     # clock resets for the next outbound leg.
                     cur_trip_time += travel_time
                     assert cur_trip_time <= shift_hours[b].item() + 1e-6, (
-                        f"TTOP: trip time {cur_trip_time:.4f}h exceeds shift budget "
+                        f"CTOP: trip time {cur_trip_time:.4f}h exceeds shift budget "
                         f"{shift_hours[b].item():.4f}h at batch {b}, step {i}"
                     )
                     time_spent[b] += travel_time
@@ -137,7 +137,7 @@ class TTOP(CVRPP):
                     time_spent[b] += step_time
                     cur_trip_time += step_time
                     assert cur_trip_time <= shift_hours[b].item() + 1e-6, (
-                        f"TTOP: trip time {cur_trip_time:.4f}h exceeds shift budget "
+                        f"CTOP: trip time {cur_trip_time:.4f}h exceeds shift budget "
                         f"{shift_hours[b].item():.4f}h at batch {b}, step {i}"
                     )
                 prev_coord = node_coord
@@ -145,7 +145,7 @@ class TTOP(CVRPP):
                 final_return_distance = leg_distance(b, pi[b, -1].item(), 0, prev_coord, depot[b])
                 cur_trip_time += final_return_distance / avg_speed_kmh[b].item()
                 assert cur_trip_time <= shift_hours[b].item() + 1e-6, (
-                    f"TTOP: trip time {cur_trip_time:.4f}h exceeds shift budget "
+                    f"CTOP: trip time {cur_trip_time:.4f}h exceeds shift budget "
                     f"{shift_hours[b].item():.4f}h on final return at batch {b}"
                 )
                 time_spent[b] += final_return_distance / avg_speed_kmh[b].item()

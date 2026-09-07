@@ -11,7 +11,7 @@
 #
 # Override from CLI:
 #   python main.py train models=tam envs@train.env=vrpp seed=1234
-#   python main.py train envs@train.env=ttop
+#   python main.py train envs@train.env=ctop
 #   python main.py eval models.embed_dim=256
 #
 # See docs/HYDRA_GUIDE.md for full override syntax and multi-run examples.

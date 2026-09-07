@@ -25,7 +25,7 @@ from .wcvrp import WCVRPState
 STATE_EMBEDDING_REGISTRY: Dict[str, Any] = {
     "vrpp": VRPPState,
     "cvrpp": CVRPPState,
-    "ttop": CVRPPState,
+    "ctop": CVRPPState,
     "wcvrp": WCVRPState,
     "cwcvrp": WCVRPState,
     "sdwcvrp": WCVRPState,

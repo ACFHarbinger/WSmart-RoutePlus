@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-This report provides comprehensive implementation analysis of all local search and heuristic operators in the WSmart+ Route codebase. Through detailed line-by-line code inspection and paper comparison, we document the implementation quality, algorithmic fidelity, and VRPP/TTOP mathematical compliance of 85+ operators across 13 functional modular directories:
+This report provides comprehensive implementation analysis of all local search and heuristic operators in the WSmart+ Route codebase. Through detailed line-by-line code inspection and paper comparison, we document the implementation quality, algorithmic fidelity, and VRPP/CTOP mathematical compliance of 85+ operators across 13 functional modular directories:
 
 1. **Destroy & Ruin Operators** (`destroy_ruin/`): Random, Worst, Cluster, Shaw, String, Route, Neighbor, Historical, Sector, SISR Slack-Induction
 2. **Recreate & Repair Operators** (`recreate_repair/`): Greedy, Regret-$k$, Savings, Blink, Deep, Farthest, Best-Insertion, Time-Constrained Insertion
@@ -29,7 +29,7 @@ This report provides comprehensive implementation analysis of all local search a
 ### Key Findings
 
 - **★★★★★ Algorithmic Fidelity**: Operators rigorously implement published mathematical formulations (Pisinger & Ropke 2007, Taillard 1993, Prins 2004, Accorsi & Vigo 2021, Laporte 1998, Glover 1989, Fischetti & Lodi 2003).
-- **VRPP & TTOP Dual Awareness**: Repair, insertion, and local search routines account for both unit revenues ($R \cdot \text{waste}$) and costs ($C \cdot \text{distance}$), as well as dual vehicle capacity ($Q$) and temporal shift budgets ($T_{\max}$).
+- **VRPP & CTOP Dual Awareness**: Repair, insertion, and local search routines account for both unit revenues ($R \cdot \text{waste}$) and costs ($C \cdot \text{distance}$), as well as dual vehicle capacity ($Q$) and temporal shift budgets ($T_{\max}$).
 - **Vectorized Acceleration**: High-performance tensor equivalents in `logic/src/policies/vector/` allow parallel evaluation of thousands of sub-routes simultaneously on CUDA devices.
 - **Production-Ready Modularity**: All operators adhere to standard type hints (`typing`), strict boundary checks, deterministic random number generator seeding (`seed`/`rng`), and comprehensive unit test coverage.
 

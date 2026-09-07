@@ -80,10 +80,10 @@ def test_check_evidently():
         _check_evidently()
 
 
-def test_parser_accepts_ttop_problem_tag():
+def test_parser_accepts_ctop_problem_tag():
     """The drift-report CLI accepts every temporal routing problem tag."""
-    args = _build_arg_parser().parse_args(["--reference", "reference.csv", "--current", "current.csv", "--problem", "ttop"])
-    assert args.problem == "ttop"
+    args = _build_arg_parser().parse_args(["--reference", "reference.csv", "--current", "current.csv", "--problem", "ctop"])
+    assert args.problem == "ctop"
 
 
 def test_multiprocess_evaluation_rejects_cpu_configuration():

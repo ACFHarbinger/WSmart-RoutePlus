@@ -19,7 +19,7 @@ from logic.src.envs.problems import (
     CVRPP,
     CWCVRP,
     SCWCVRP,
-    TTOP,
+    CTOP,
     VRPP,
     WCVRP,
 )
@@ -41,7 +41,7 @@ def load_problem(name: str) -> Type[Any]:
     problem = {
         "vrpp": VRPP,
         "cvrpp": CVRPP,
-        "ttop": TTOP,
+        "ctop": CTOP,
         "wcvrp": WCVRP,
         "cwcvrp": CWCVRP,
         "scwcvrp": SCWCVRP,

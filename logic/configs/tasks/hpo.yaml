@@ -4,7 +4,7 @@
 # =============================================================================
 # Configuration for automated hyperparameter search using Optuna/DEHB.
 # Used by: python main.py hp_optim
-# TTOP:    python main.py task=hpo envs@hpo.env=ttop
+# CTOP:    python main.py task=hpo envs@hpo.env=ctop
 #
 # Searches over model/training hyperparameters to find optimal configurations.
 # =============================================================================
@@ -36,7 +36,7 @@ hpo:
     # - "cost": Minimize total route cost
     # - "reward": Maximize collected reward/waste
     # - "both": Multi-objective (cost + reward)
-    # ttop's additive "time" KPI is not a selectable HPO metric here; the
+    # ctop's additive "time" KPI is not a selectable HPO metric here; the
     # search still ranks on cost/reward. A time-budget objective would need
     # a pipeline change, not just a YAML key.
 

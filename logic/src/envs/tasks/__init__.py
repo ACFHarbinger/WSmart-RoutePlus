@@ -15,7 +15,7 @@ Attributes:
     SPCTSP: SPCTSP class
     ThOP: ThOP class
     TSP: TSP class
-    TTOP: TTOP class
+    CTOP: CTOP class
     VRPP: VRPP class
     WCVRP: WCVRP class
 
@@ -44,7 +44,7 @@ from .scwcvrp import SCWCVRP
 from .spctsp import SPCTSP
 from .thop import ThOP
 from .tsp import TSP
-from .ttop import TTOP
+from .ctop import CTOP
 from .vrpp import VRPP
 from .wcvrp import WCVRP
 
@@ -68,5 +68,5 @@ __all__ = [
     "SPCTSP",
     "PDP",
     "ThOP",
-    "TTOP",
+    "CTOP",
 ]

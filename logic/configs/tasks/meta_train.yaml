@@ -4,7 +4,7 @@
 # =============================================================================
 # Configuration for meta-RL training across multiple problem distributions.
 # Used by: python main.py mrl_train
-# TTOP:    python main.py task=meta_train envs@meta_rl.env=ttop meta_rl.env.name=ttop
+# CTOP:    python main.py task=meta_train envs@meta_rl.env=ctop meta_rl.env.name=ctop
 #          meta_rl.env.name below is hardcoded and must stay in lockstep
 #          with the composed /envs@meta_rl.env group.
 #
@@ -35,7 +35,7 @@ meta_rl:
   # Environment
   # =============================================================================
   env:
-    name: "cwcvrp" # Problem type for meta-training. TTOP: set to "ttop" with envs@meta_rl.env=ttop.
+    name: "cwcvrp" # Problem type for meta-training. CTOP: set to "ctop" with envs@meta_rl.env=ctop.
     distance_method: "gmaps" # Distance calculation method
 
   # Meta-Learning Strategy

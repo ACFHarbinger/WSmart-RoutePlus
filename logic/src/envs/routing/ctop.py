@@ -1,7 +1,7 @@
 """
-TTOP Environment implementation.
+CTOP Environment implementation.
 
-Temporal Team Orienteering Problem: single-vehicle, multi-trip variant of
+Capacitated Team Orienteering Problem: single-vehicle, multi-trip variant of
 CVRPP where each trip is bounded by *both* constraints simultaneously --
 CVRPP's per-trip vehicle capacity, unchanged, plus a per-trip time budget
 (travel + service time). Neither constraint replaces the other. The vehicle
@@ -10,18 +10,18 @@ reset; the episode ends once it is back at the depot with nothing more
 reachable even at full budget.
 
 "Team" here means multiple *trips* by one vehicle within a period, not a
-concurrent multi-vehicle fleet. A true multi-vehicle fleet TTOP is tracked
+concurrent multi-vehicle fleet. A true multi-vehicle fleet CTOP is tracked
 as future work (docs/moon/roadmaps/new_features.md §E.8) for the
 heterogeneous-waste-stream scenario (e.g. one vehicle per waste type
 running simultaneously) -- that needs a fleet dimension this class does
 not have.
 
 Attributes:
-    TTOPEnv: TTOP environment.
+    CTOPEnv: CTOP environment.
 
 Example:
     >>> from logic.src.envs.routing import get_env
-    >>> env = get_env("ttop", num_loc=50)
+    >>> env = get_env("ctop", num_loc=50)
     >>> td = env.reset()
 """
 
@@ -33,24 +33,24 @@ import torch
 from tensordict import TensorDict
 
 from logic.src.envs.base.ops import OpsMixin
-from logic.src.envs.generators.ttop import TTOPGenerator
+from logic.src.envs.generators.ctop import CTOPGenerator
 from logic.src.envs.routing.cvrpp import CVRPPEnv
 from logic.src.envs.temporal import get_default_temporal_params
 
 
-class TTOPEnv(CVRPPEnv):
+class CTOPEnv(CVRPPEnv):
     """
-    Temporal Team Orienteering Problem: CVRPP plus a per-trip time budget.
+    Capacitated Team Orienteering Problem: CVRPP plus a per-trip time budget.
 
     Attributes:
         name: Name of the environment.
     """
 
-    name: str = "ttop"
+    name: str = "ctop"
 
     def __init__(
         self,
-        generator: Optional[TTOPGenerator] = None,
+        generator: Optional[CTOPGenerator] = None,
         generator_params: Optional[dict] = None,
         waste_weight: float = 1.0,
         cost_weight: float = 1.0,
@@ -60,22 +60,22 @@ class TTOPEnv(CVRPPEnv):
         **kwargs,
     ) -> None:
         """
-        Initialize TTOPEnv with a TTOPGenerator (not VRPPEnv's plain
+        Initialize CTOPEnv with a CTOPGenerator (not VRPPEnv's plain
         VRPPGenerator).
 
-        Without this override, `get_env("ttop", shift_hours=6.5, ...)`
+        Without this override, `get_env("ctop", shift_hours=6.5, ...)`
         silently builds a VRPPGenerator via VRPPEnv.__init__: the
         shift_hours/avg_speed_kmh/service_time_h kwargs are swallowed by
-        VRPPGenerator's **kwargs, never reach a TTOPGenerator, and
+        VRPPGenerator's **kwargs, never reach a CTOPGenerator, and
         _reset_instance falls back to get_default_temporal_params()
         regardless of what was requested. Confirmed live (Hydra config
         overrides for these three keys were composing correctly but never
         actually reaching the environment) before this fix.
 
         Args:
-            generator: Pre-built TTOPGenerator instance. Built from
+            generator: Pre-built CTOPGenerator instance. Built from
                 generator_params if not supplied.
-            generator_params: Keyword arguments forwarded to TTOPGenerator
+            generator_params: Keyword arguments forwarded to CTOPGenerator
                 when generator is None.
             waste_weight: Weight for waste collection in reward.
             cost_weight: Weight for travel cost in reward.
@@ -86,8 +86,8 @@ class TTOPEnv(CVRPPEnv):
         """
         generator_params = generator_params or kwargs
         if generator is None:
-            generator = TTOPGenerator(**generator_params, device=device)
-        # Pass the already-built TTOPGenerator through: VRPPEnv.__init__'s
+            generator = CTOPGenerator(**generator_params, device=device)
+        # Pass the already-built CTOPGenerator through: VRPPEnv.__init__'s
         # own `if generator is None` branch is then skipped, so it never
         # constructs the wrong (plain VRPPGenerator) type.
         super().__init__(
@@ -102,13 +102,13 @@ class TTOPEnv(CVRPPEnv):
         )
 
     def _reset_instance(self, tensordict: TensorDict) -> TensorDict:
-        """Initialize TTOP state with per-trip time-budget tracking.
+        """Initialize CTOP state with per-trip time-budget tracking.
 
         Args:
             tensordict: Input TensorDict containing graph structure and node properties.
 
         Returns:
-            TensorDict: Initialized TTOP state with temporal tracking fields.
+            TensorDict: Initialized CTOP state with temporal tracking fields.
         """
         is_resuming = "visited" in tensordict.keys()
         tensordict = super()._reset_instance(tensordict)
@@ -247,7 +247,7 @@ class TTOPEnv(CVRPPEnv):
         Episode ends at the depot once no customer remains reachable even
         with a freshly reset trip budget -- i.e. true exhaustion, not just
         "chose to return this time" (which would end a single-trip VRPP but
-        must not end a multi-trip TTOP episode early).
+        must not end a multi-trip CTOP episode early).
 
         Args:
             tensordict: Input TensorDict containing graph structure and node properties.

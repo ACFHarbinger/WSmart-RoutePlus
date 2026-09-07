@@ -121,7 +121,7 @@
 **Pain**: Prior review documents in `docs/moon/review/` (`POLICY_IMPLEMENTATION_ANALYSIS.md`, `OPERATOR_IMPLEMENTATION_ANALYSIS.md`, `ACCEPTANCE_CRITERIA_ANALYSIS.md`, `OPERATOR_PROFIT_AWARE_FEEDBACK.md`) reflected the March 2026 layout with ~45 implementations and unmodularized paths.
 
 **Options**:
-- **A** — Full audit and synchronization against the modern modular structure (`logic/src/policies/route_construction/`, `mandatory_selection/`, `acceptance_criteria/`, `helpers/operators/`, and `vector/operators/`), covering 80+ policies, 85+ operators, 23 acceptance criteria, and TTOP temporal/profit duality. `[Completed 2026-08-27]`
+- **A** — Full audit and synchronization against the modern modular structure (`logic/src/policies/route_construction/`, `mandatory_selection/`, `acceptance_criteria/`, `helpers/operators/`, and `vector/operators/`), covering 80+ policies, 85+ operators, 23 acceptance criteria, and CTOP temporal/profit duality. `[Completed 2026-08-27]`
 
 **Recommendation**: **Option A** `[Done]`
 

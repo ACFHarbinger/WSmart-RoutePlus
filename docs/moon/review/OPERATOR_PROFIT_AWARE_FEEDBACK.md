@@ -1,8 +1,8 @@
-# Comprehensive Review of VRPP & TTOP Heuristic Operators
+# Comprehensive Review of VRPP & CTOP Heuristic Operators
 
 **Project**: WSmart+ Route
 **Date**: August 27, 2026
-**Purpose**: Theoretical evaluation of profit-aware (economic exploitation) versus purely structural (geometric exploration) operator mechanics across VRPP and TTOP (Temporal Team Orienteering Problem) solvers.
+**Purpose**: Theoretical evaluation of profit-aware (economic exploitation) versus purely structural (geometric exploration) operator mechanics across VRPP and CTOP (Capacitated Team Orienteering Problem) solvers.
 
 To satisfy reviewers at top-tier AI and Operations Research venues (e.g., NeurIPS, INFORMS, Transportation Science), routing algorithms must maintain a rigorous balance between **exploitation** (optimizing the profit objective within capacity and shift boundaries) and **exploration** (escaping local optima via unconstrained structural moves).
 
@@ -12,7 +12,7 @@ To satisfy reviewers at top-tier AI and Operations Research venues (e.g., NeurIP
 
 _Goal: Reconstruct destroyed routes to maximize the net objective function._
 
-### The "Essential" Tier (Highly Justified for VRPP & TTOP)
+### The "Essential" Tier (Highly Justified for VRPP & CTOP)
 
 These operators perfectly map to the dual objective of maximizing collected rewards while minimizing routing costs.
 
@@ -22,7 +22,7 @@ These operators perfectly map to the dual objective of maximizing collected rewa
 
 ### The "Clever" Tier (Strongly Justified)
 
-- **Deep Insertion:** VRPP/TTOP is heavily constrained by the knapsack problem (vehicle capacity $Q$) and shift budget ($T_{\max}$). Deep insertion explicitly balances spatial efficiency with knapsack and time efficiency by penalizing routes that exhaust capacity or shift hours too quickly.
+- **Deep Insertion:** VRPP/CTOP is heavily constrained by the knapsack problem (vehicle capacity $Q$) and shift budget ($T_{\max}$). Deep insertion explicitly balances spatial efficiency with knapsack and time efficiency by penalizing routes that exhaust capacity or shift hours too quickly.
 
 ### The "Questionable" Tier (Requires Redesign or Low Weight)
 
@@ -86,11 +86,11 @@ _Goal: Violently cross fitness valleys to escape deep local optima. Structural d
 
 ---
 
-## 5. TTOP Temporal Duality: Shift-Time vs. Distance
+## 5. CTOP Temporal Duality: Shift-Time vs. Distance
 
 _Goal: Enforce working shift time budgets ($T_{\max}$) alongside vehicle capacity ($Q$)._
 
-In the Temporal Team Orienteering Problem (TTOP, integrated 2026-08-27):
+In the Capacitated Team Orienteering Problem (CTOP, integrated 2026-08-27):
 1. **Marginal Time Efficiency:** The insertion metric evaluates marginal profit per hour:
    $$\eta_i = \frac{\Delta P_i}{\Delta t_i} = \frac{R \cdot w_i - C \cdot \Delta d_i}{\frac{\Delta d_i}{v_{\text{avg}}} + t_{\text{service}}}$$
 2. **Dual Feasibility Enforcement:** Any candidate move must satisfy both $\sum w_i \le Q$ and $t(\text{route}) \le T_{\max}$.

@@ -47,9 +47,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Policy & operator review audit refresh (`2026-08-27`, #62)
 
-- Refreshed all four review documents in `docs/moon/review/` against the modern modular directory structure, expanding analysis to 80+ routing algorithms, 85+ operators, 23 standard acceptance criteria, and TTOP temporal/profit duality (§C.8).
+- Refreshed all four review documents in `docs/moon/review/` against the modern modular directory structure, expanding analysis to 80+ routing algorithms, 85+ operators, 23 standard acceptance criteria, and CTOP temporal/profit duality (§C.8).
 
 ### Changed
+
+#### Capacitated Team Orienteering naming (`2026-09-07`)
+
+- Renamed the time-constrained capacitated problem to Capacitated Team
+  Orienteering Problem (CTOP), including Python classes, module filenames,
+  registries, Hydra configuration, tests, and documentation. Use `ctop` as
+  the problem identifier and `envs@train.env=ctop` for training.
 
 #### Paper citation and scholarly-positioning audit (`2026-08-28`)
 
@@ -123,53 +130,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The simulator engine now delegates to the public configuration validator;
   both paths normalize numeric and scientific-notation edge thresholds alike.
 
-#### TTOP feasibility and state-resume review (`2026-08-27`)
+#### CTOP feasibility and state-resume review (`2026-08-27`)
 
-- TTOP now validates the full depot-to-depot trip, including a trailing or
+- CTOP now validates the full depot-to-depot trip, including a trailing or
   explicit return to the depot. Static scoring and the live action mask use a
   supplied road-distance matrix for travel time, with the same inclusive
   `1e-6` feasibility tolerance.
-- TTOP defaults now live in the routing package rather than importing the
+- CTOP defaults now live in the routing package rather than importing the
   simulation repository during environment construction, which removes an
-  import cycle that made `TTOPGenerator` unusable.
-- Resetting an initialized CVRPP/TTOP state preserves its remaining capacity
+  import cycle that made `CTOPGenerator` unusable.
+- Resetting an initialized CVRPP/CTOP state preserves its remaining capacity
   and time resources, so resumed search keeps the original depot coordinate
   and resource accounting.
-- TTOP now resolves to the CVRPP initial, context, state, and edge embedding
+- CTOP now resolves to the CVRPP initial, context, state, and edge embedding
   components, allowing neural training and critic construction; the
-  drift-report CLI also accepts `--problem ttop`.
-- `TTOPEnv` had no `__init__` override, so it inherited `VRPPEnv`'s, which
-  always builds a plain `VRPPGenerator`. `get_env("ttop",
+  drift-report CLI also accepts `--problem ctop`.
+- `CTOPEnv` had no `__init__` override, so it inherited `VRPPEnv`'s, which
+  always builds a plain `VRPPGenerator`. `get_env("ctop",
   shift_hours=6.5, ...)` (including Hydra-composed overrides) silently
   swallowed the three temporal kwargs in `VRPPGenerator.**kwargs`; they
   never reached the environment and `_reset_instance` fell back to
   `get_default_temporal_params()` regardless of what was requested.
   Confirmed live before the fix (`env.generator` was a `VRPPGenerator`
   with no `shift_hours` attribute at all). Added
-  `TTOPEnv.__init__`, building a `TTOPGenerator` and passing it through
+  `CTOPEnv.__init__`, building a `CTOPGenerator` and passing it through
   to `VRPPEnv.__init__` (which then skips its own generator construction
   since one is already supplied). Regression test added:
-  `test_get_env_factory_builds_a_ttop_generator_not_a_plain_vrpp_one`.
+  `test_get_env_factory_builds_a_ctop_generator_not_a_plain_vrpp_one`.
 
 ### Added
 
-#### TTOP multi-day simulator support and dual constraint enforcement (`2026-08-27`)
+#### CTOP multi-day simulator support and dual constraint enforcement (`2026-08-27`)
 
-- **Simulation Problem Registration & Validation**: Registered `ttop` across `logic/src/constants/simulation.py`, `logic/src/configs/tasks/sim.py`, and `logic/src/pipeline/features/test/validation.py` / `engine.py`.
+- **Simulation Problem Registration & Validation**: Registered `ctop` across `logic/src/constants/simulation.py`, `logic/src/configs/tasks/sim.py`, and `logic/src/pipeline/features/test/validation.py` / `engine.py`.
 - **Temporal Parameter Loading & Simulation Context**: Automated retrieval of working shift duration (`shift_hours`), average vehicle speed (`avg_speed_kmh`), and per-bin service time (`service_time_h`) in `InitializingState`, forwarded across `SimulationDayContext` and `SearchContext`.
 - **Dual Constraint Route Construction**: Extended `get_multi_tour` and `BaseRoutingPolicy` to enforce both vehicle waste capacity ($Q$) and shift time budget ($T_{\max}$) with depot returns.
 - **Operational Metric & KPI Tracking**: Implemented additive tracking for `time_spent = (raw_km / avg_speed_kmh) + (ncol * service_time_h)` in `CollectAction`, `LogAction`, and summary tables in `logic/src/tracking/logging/modules/analysis.py`.
-- **Unit Testing**: Added `logic/test/unit/pipeline/simulations/test_ttop_simulation.py` covering validation, dual constraint splitting, operational time calculation, and shift budget enforcement.
+- **Unit Testing**: Added `logic/test/unit/pipeline/simulations/test_ctop_simulation.py` covering validation, dual constraint splitting, operational time calculation, and shift budget enforcement.
 
 #### Grok joins in place of Opencode; continuous work queued for all three agents (`2026-08-27`)
 
 - Grok replaces Opencode in the agent rotation. `git/messages/opencode_coauthor.msg`
   renamed to `grok_coauthor.msg`; `.agent/bus/AGENT_BUS.md`'s roster table
   updated with current assignments (it had gone stale — Agy's row still said
-  "website visual design" while actually on TTOP simulator work). Opencode's
+  "website visual design" while actually on CTOP simulator work). Opencode's
   prior website-interactive lane is left as historical record
   (`.agent/tasks/opencode-website-interactive.md`), not rewritten.
-- Issue #60 (TTOP Hydra configs) reassigned Opencode → Grok, same scope.
+- Issue #60 (CTOP Hydra configs) reassigned Opencode → Grok, same scope.
 - Queued a second issue behind each agent's current one, so all three can
   work continuously without needing a live check-in: #61 (Codex, after #58 —
   general bug/lint pass over `logic/src/`, following the existing but
@@ -188,9 +195,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   pointed at `docs/ARCHITECTURE.md`, which doesn't exist — the file is at
   `docs/moon/ARCHITECTURE.md`. Both repointed.
 
-#### Temporal Team Orienteering Problem (TTOP) — foundation (`2026-08-27`)
+#### Capacitated Team Orienteering Problem (CTOP) — foundation (`2026-08-27`)
 
-- New problem type: TTOP = CVRPP's existing objective and per-trip vehicle
+- New problem type: CTOP = CVRPP's existing objective and per-trip vehicle
   capacity constraint, **plus** an independent per-trip time budget (travel
   time at `avg_speed_kmh` + `service_time_h` per bin). Both constraints hold
   simultaneously; neither replaces the other. Single-vehicle, multi-trip
@@ -201,24 +208,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   mirrors `get_area_params`'s shape) returns `(shift_hours=7.0,
   avg_speed_kmh=35.0, service_time_h=0.025)`, plus a `load_temporal_params()`
   wrapper. `EnvironmentTag.TIME_BUDGET` added.
-- `logic/src/envs/tasks/ttop.py`, `logic/src/envs/routing/ttop.py`,
-  `logic/src/envs/generators/ttop.py` (`TTOP(CVRPP)`, `TTOPEnv(CVRPPEnv)`,
-  `TTOPGenerator(VRPPGenerator)`), registered across `ENV_REGISTRY`,
+- `logic/src/envs/tasks/ctop.py`, `logic/src/envs/routing/ctop.py`,
+  `logic/src/envs/generators/ctop.py` (`CTOP(CVRPP)`, `CTOPEnv(CVRPPEnv)`,
+  `CTOPGenerator(VRPPGenerator)`), registered across `ENV_REGISTRY`,
   `GENERATOR_REGISTRY`, the `envs.problems` facade, and
-  `utils.model.problem_factory.load_problem`. `logic/configs/envs/ttop.yaml`
+  `utils.model.problem_factory.load_problem`. `logic/configs/envs/ctop.yaml`
   added, mirroring `vrpp.yaml`.
 - KPI tracking made additive rather than fixed-schema: `cost_dict`/results
-  dicts now carry a `"time"` key only when the problem tracks one (ttop),
+  dicts now carry a `"time"` key only when the problem tracks one (ctop),
   tolerated as absent everywhere else — the plug-and-play seam for future
   problem-specific KPIs.
-- **Bug found and fixed, independent of TTOP**: `CVRPPEnv._step_instance`
+- **Bug found and fixed, independent of CTOP**: `CVRPPEnv._step_instance`
   never called `super()._step_instance()` — `current_node`/`visited`/
   `tour_length`/`tour` never advanced past their reset values for any
   cvrpp rollout. Capacity tracking ran, but the agent's position and the
   episode's own state were frozen after the first action. Confirmed via
   direct before/after rollout test. Any committed cvrpp results predating
   this fix should be treated as suspect.
-- Delegated the rest of TTOP: #58 (Codex — adversarial review of the RL-envs
+- Delegated the rest of CTOP: #58 (Codex — adversarial review of the RL-envs
   side + remaining training/eval pipeline gaps), #59 (Agy — wire the actual
   test simulator `pipeline/simulations`/`policies` to respect a time
   budget), #60 (Opencode — Hydra config tree completion, blocked in part on
@@ -246,29 +253,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   NARGNN re-scored 4/5 against Joshi (15 GCN layers vs 30, REINFORCE vs
   supervised BCE, greedy vs beam-1280).
 
-#### TTOP Hydra config tree (#60, training/eval side) (`2026-08-27`)
+#### CTOP Hydra config tree (#60, training/eval side) (`2026-08-27`)
 
-- `logic/configs/envs/ttop.yaml` rewritten to match the landed design
-  (`TTOP = CVRPP capacity + independent time budget`). The previous header
+- `logic/configs/envs/ctop.yaml` rewritten to match the landed design
+  (`CTOP = CVRPP capacity + independent time budget`). The previous header
   still described the discarded uncapacitated/VRPP-with-time-replacing-
   capacity draft, and the file had no `capacity:` key — `VRPPGenerator`
   would then default to `1.0` instead of CVRPP's `100.0`.
 - `EnvConfig` now declares optional `shift_hours` / `avg_speed_kmh` /
-  `service_time_h`. `ttop.yaml` lists them as `null` (Python default) so a
+  `service_time_h`. `ctop.yaml` lists them as `null` (Python default) so a
   Hydra CLI override such as `train.env.shift_hours=6.5` is a real key
   change rather than a struct-missing error.
 - Task YAMLs document the Hydra *group swap* needed to actually load
-  `ttop.yaml`: `envs@train.env=ttop`, `envs@eval.env=ttop` (plus the
-  hardcoded `eval.env.name` / `eval.problem` lockstep), `envs@hpo.env=ttop`,
-  `envs@meta_rl.env=ttop` (plus `meta_rl.env.name`), `envs@hpo_sim.env=ttop`,
-  `gen_data data.problem=ttop`, `slurm` `problem=ttop`. `test_sim.yaml` and
+  `ctop.yaml`: `envs@train.env=ctop`, `envs@eval.env=ctop` (plus the
+  hardcoded `eval.env.name` / `eval.problem` lockstep), `envs@hpo.env=ctop`,
+  `envs@meta_rl.env=ctop` (plus `meta_rl.env.name`), `envs@hpo_sim.env=ctop`,
+  `gen_data data.problem=ctop`, `slurm` `problem=ctop`. `test_sim.yaml` and
   `logic/configs/policies/*.yaml` are untouched — blocked on #59.
-- `tracking/*.yaml` have no per-problem metric lists; ttop's additive
+- `tracking/*.yaml` have no per-problem metric lists; ctop's additive
   `"time"` KPI is code-side (`eval/engine.py`) and needs no tracking YAML.
 - `docs/CONFIGURATION_GUIDE.md` env table and CLI examples now use the
   real group-override syntax (`envs@<task>.env=`) instead of the
   non-composed `envs=vrpp` form.
-- After #59 landed: `test_sim.yaml` documents `sim.problem=ttop` as the
+- After #59 landed: `test_sim.yaml` documents `sim.problem=ctop` as the
   switch (problem-level, not a per-policy "respects time budget" flag).
   Default stays `vrpp` so the paper's 30-day factorial is unchanged.
   Policy YAMLs were not given a new flag -- `BaseRoutingPolicy` already

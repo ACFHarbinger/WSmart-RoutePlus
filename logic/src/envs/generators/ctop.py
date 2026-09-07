@@ -1,12 +1,12 @@
 """
-TTOP problem generator.
+CTOP problem generator.
 
 Attributes:
-    TTOPGenerator: TTOPGenerator class.
+    CTOPGenerator: CTOPGenerator class.
 
 Example:
-    >>> from logic.src.envs.generators import TTOPGenerator
-    >>> generator = TTOPGenerator(num_loc=50)
+    >>> from logic.src.envs.generators import CTOPGenerator
+    >>> generator = CTOPGenerator(num_loc=50)
     >>> instance = generator.generate()
 """
 
@@ -21,13 +21,13 @@ from logic.src.envs.generators.vrpp import VRPPGenerator
 from logic.src.envs.temporal import get_default_temporal_params
 
 
-class TTOPGenerator(VRPPGenerator):
+class CTOPGenerator(VRPPGenerator):
     """
-    Generator for Temporal Team Orienteering Problem (TTOP) instances.
+    Generator for Capacitated Team Orienteering Problem (CTOP) instances.
 
     Same node/waste layout as VRPP (reused as-is: locations, depot, waste
     values), plus the per-instance temporal resource fields consumed by
-    ``TTOPEnv``/``TTOP``: the working-shift time budget, average driving
+    ``CTOPEnv``/``CTOP``: the working-shift time budget, average driving
     speed, and per-bin service time. Defaults describe one driver's 7h
     shift; pass ``shift_hours``/``avg_speed_kmh``/``service_time_h`` to
     override them.
@@ -47,7 +47,7 @@ class TTOPGenerator(VRPPGenerator):
         **kwargs,
     ) -> None:
         """
-        Initialize TTOP generator.
+        Initialize CTOP generator.
 
         Args:
             args: Positional arguments forwarded to VRPPGenerator.
@@ -63,7 +63,7 @@ class TTOPGenerator(VRPPGenerator):
         self.service_time_h = service_time_h if service_time_h is not None else default_service_time_h
 
     def _generate(self, batch_size: tuple[int, ...]) -> TensorDict:
-        """Generate TTOP instances: VRPP fields plus temporal resource fields.
+        """Generate CTOP instances: VRPP fields plus temporal resource fields.
 
         Args:
             batch_size: Batch size.

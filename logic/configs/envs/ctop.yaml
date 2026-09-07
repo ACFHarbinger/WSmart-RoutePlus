@@ -1,5 +1,5 @@
 # =============================================================================
-# Temporal Team Orienteering Problem (TTOP) Environment Configuration
+# Capacitated Team Orienteering Problem (CTOP) Environment Configuration
 # =============================================================================
 # Single-vehicle, multi-trip variant of CVRPP:
 #   - Same node/waste layout, prize-collection objective, and per-trip
@@ -11,28 +11,28 @@
 #   - Both constraints hold simultaneously. The vehicle may return to the
 #     depot and start a new trip within the same period; the episode ends
 #     once nothing is reachable even with a freshly reset capacity AND
-#     time budget. See logic/src/envs/routing/ttop.py.
+#     time budget. See logic/src/envs/routing/ctop.py.
 #   - "Team" is one vehicle, multiple trips here -- not a concurrent fleet.
 #     See docs/moon/roadmaps/new_features.md §E.8 for the true-fleet variant.
 #
 # Select this env by swapping the Hydra env group (not only env.name --
 # that keeps the previously composed YAML's other fields):
-#   python main.py train envs@train.env=ttop
-#   python main.py task=eval envs@eval.env=ttop eval.env.name=ttop eval.problem=ttop
-#   python main.py task=hpo envs@hpo.env=ttop
-#   python main.py task=meta_train envs@meta_rl.env=ttop meta_rl.env.name=ttop
-#   python main.py task=hpo_sim envs@hpo_sim.env=ttop
-#   python main.py gen_data data.problem=ttop
-#   python main.py task=test_sim sim.problem=ttop
+#   python main.py train envs@train.env=ctop
+#   python main.py task=eval envs@eval.env=ctop eval.env.name=ctop eval.problem=ctop
+#   python main.py task=hpo envs@hpo.env=ctop
+#   python main.py task=meta_train envs@meta_rl.env=ctop meta_rl.env.name=ctop
+#   python main.py task=hpo_sim envs@hpo_sim.env=ctop
+#   python main.py gen_data data.problem=ctop
+#   python main.py task=test_sim sim.problem=ctop
 #     (#59 consumes this: dual capacity + T_max in get_multi_tour / CollectAction)
 # =============================================================================
 
-name: "ttop" # Environment identifier
+name: "ctop" # Environment identifier
 mean: 0.0
 variance: 0.0
 
 # =============================================================================
-# Capacity Constraint (same as cvrpp.yaml -- TTOP does not drop this)
+# Capacity Constraint (same as cvrpp.yaml -- CTOP does not drop this)
 # =============================================================================
 capacity:
   100.0 # Normalized vehicle capacity.
@@ -43,7 +43,7 @@ capacity:
 # Temporal resource parameters
 # ===========================================================================
 # Keys must be present (even as null) so Hydra CLI can override them:
-#   python main.py train envs@train.env=ttop train.env.shift_hours=6.5
+#   python main.py train envs@train.env=ctop train.env.shift_hours=6.5
 # null = use the Python default from
 # SimulationRepository.get_temporal_params() (7.0 h, 35 km/h, 0.025 h/bin).
 # Set a number only for an experiment that deliberately studies a different
@@ -58,9 +58,9 @@ service_time_h: null     # Time to visit and empty a single bin (h). Default 0.0
 # The first entry is also used for single-stage training.
 # Graphs match vrpp.yaml (Rio Maior 100/170) rather than cvrpp.yaml's
 # 50-node stub -- those are the networks the rest of the framework trains
-# on. No ttop-specific .td datasets exist yet; omit load_dataset so the
+# on. No ctop-specific .td datasets exist yet; omit load_dataset so the
 # generator builds instances on the fly. Produce them later with
-# `python main.py gen_data data.problem=ttop`.
+# `python main.py gen_data data.problem=ctop`.
 curriculum_graphs:
   - num_loc: 100
     n_samples: 12800

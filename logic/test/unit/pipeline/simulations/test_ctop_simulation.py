@@ -1,7 +1,7 @@
-"""Unit tests for Temporal Team Orienteering Problem (TTOP) simulation support.
+"""Unit tests for Capacitated Team Orienteering Problem (CTOP) simulation support.
 
 Validates:
-- Validation logic accepting 'ttop' as a supported problem type.
+- Validation logic accepting 'ctop' as a supported problem type.
 - Route splitting with dual constraints (vehicle capacity + working-shift time budget).
 - CollectAction computing exact operational time spent (driving + service).
 - SimulationDayContext and get_daily_results logging time_spent additively.
@@ -26,15 +26,15 @@ from logic.src.policies.route_construction.other_algorithms.travelling_salesman_
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
-class TestTTOPValidation:
-    """Tests that TTOP is a registered and validated problem variant."""
+class TestCTOPValidation:
+    """Tests that CTOP is a registered and validated problem variant."""
 
-    def test_ttop_in_problems(self):
-        assert "ttop" in PROBLEMS
+    def test_ctop_in_problems(self):
+        assert "ctop" in PROBLEMS
 
-    def test_validate_sim_config_accepts_ttop(self):
+    def test_validate_sim_config_accepts_ctop(self):
         cfg = Config()
-        cfg.sim.problem = "ttop"
+        cfg.sim.problem = "ctop"
         cfg.sim.graph.n_days = 5
         cfg.sim.graph.n_samples = 1
         cfg.sim.graph.area = "figueiradafoz"
@@ -42,7 +42,7 @@ class TestTTOPValidation:
         cfg.sim.cpu_cores = 1
 
         validate_sim_config(cfg)
-        assert cfg.sim.problem == "ttop"
+        assert cfg.sim.problem == "ctop"
 
     def test_validate_sim_config_rejects_unknown_problem(self):
         cfg = Config()
@@ -67,7 +67,7 @@ class TestTTOPValidation:
         assert public_cfg.sim.graph.edge_threshold == engine_cfg.sim.graph.edge_threshold == 1e-3
 
 
-class TestTTOPRouteSplitting:
+class TestCTOPRouteSplitting:
     """Tests dual-constraint splitting (capacity + time budget) in get_multi_tour."""
 
     def test_capacity_splitting_only(self):
@@ -116,8 +116,8 @@ class TestTTOPRouteSplitting:
         assert split_tour == [0, 1, 0, 2, 0]
 
 
-class TestTTOPCollectionAction:
-    """Tests operational time spent calculation and TTOP constraint validation in CollectAction."""
+class TestCTOPCollectionAction:
+    """Tests operational time spent calculation and CTOP constraint validation in CollectAction."""
 
     def test_time_spent_calculation(self):
         bins = MagicMock()
@@ -138,7 +138,7 @@ class TestTTOPCollectionAction:
             "avg_speed_kmh": 30.0,  # 45 / 30 = 1.5 h driving
             "service_time_h": 0.25,  # 2 bins * 0.25 = 0.5 h service
             "shift_hours": 7.0,
-            "problem": "ttop",
+            "problem": "ctop",
         }
 
         action = CollectAction()
@@ -148,7 +148,7 @@ class TestTTOPCollectionAction:
         assert context["ncol"] == 2
         assert context["time_spent"] == pytest.approx(1.5 + 0.5, rel=1e-5)
 
-    def test_ttop_shift_violation_raises(self):
+    def test_ctop_shift_violation_raises(self):
         bins = MagicMock()
         bins.collect.return_value = ([1], 50.0, 1, 100.0)
 
@@ -166,16 +166,16 @@ class TestTTOPCollectionAction:
             "avg_speed_kmh": 20.0,  # 200 / 20 = 10.0 h driving
             "service_time_h": 0.5,  # 1 bin * 0.5 = 0.5 h -> total 10.5 h
             "shift_hours": 8.0,  # budget 8.0 h < 10.5 h
-            "problem": "ttop",
+            "problem": "ctop",
         }
 
         action = CollectAction()
-        with pytest.raises(AssertionError, match="TTOP violation: trip duration"):
+        with pytest.raises(AssertionError, match="CTOP violation: trip duration"):
             action.execute(context)
 
 
-class TestTTOPLoggingAndContext:
-    """Tests daily logging and context tracking of TTOP metrics."""
+class TestCTOPLoggingAndContext:
+    """Tests daily logging and context tracking of CTOP metrics."""
 
     def test_get_daily_results_with_time_spent(self):
         coords = pd.DataFrame({"ID": [0, 101, 102]}, index=[0, 1, 2])
@@ -197,7 +197,7 @@ class TestTTOPLoggingAndContext:
         assert res["time_spent"] == 2.35
 
     def test_simulation_day_context_defaults(self):
-        ctx = SimulationDayContext(problem="ttop", shift_hours=7.5, avg_speed_kmh=40.0)
-        assert ctx.problem == "ttop"
+        ctx = SimulationDayContext(problem="ctop", shift_hours=7.5, avg_speed_kmh=40.0)
+        assert ctx.problem == "ctop"
         assert ctx.shift_hours == 7.5
         assert ctx.avg_speed_kmh == 40.0

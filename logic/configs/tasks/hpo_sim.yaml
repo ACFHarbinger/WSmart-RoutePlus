@@ -5,7 +5,7 @@
 # python main.py task=hpo_sim
 # python main.py task=hpo_sim hpo_sim.metrics=[profit,overflows] hpo_sim.method=nsgaii
 # python main.py task=hpo_sim hpo_sim.num_workers=4
-# TTOP: python main.py task=hpo_sim envs@hpo_sim.env=ttop
+# CTOP: python main.py task=hpo_sim envs@hpo_sim.env=ctop
 #   (SimHPOConfig currently declares `graph`, not `env` -- the composed
 #   env group is the same vestigial pattern as the vrpp default. Time as
 #   an HPO metric is blocked on #59 adding the additive KPI to sim output.)

@@ -118,9 +118,9 @@
 
 ---
 
-### §E.8 — True Multi-Vehicle Fleet TTOP
+### §E.8 — True Multi-Vehicle Fleet CTOP
 
-**Pain**: The Temporal Team Orienteering Problem (TTOP, added 2026-08-27 — see
+**Pain**: The Capacitated Team Orienteering Problem (CTOP, added 2026-08-27 — see
 `docs/moon/CHANGELOG.md`) is currently single-vehicle-multi-trip: one vehicle
 makes several depot-returning trips per period, each capped at the 7h shift
 budget from `SimulationRepository.get_temporal_params()`. The "Team" in the
@@ -136,10 +136,10 @@ one glass, each with its own 7h budget and its own route.
   routes, and a per-vehicle waste-type filter so each vehicle only collects
   bins of its assigned stream. `[Research]`
 - **B** — Extend the actual test-simulator side (`pipeline/simulations/`,
-  `policies/`) to dispatch multiple concurrent single-vehicle TTOP instances
+  `policies/`) to dispatch multiple concurrent single-vehicle CTOP instances
   — one per waste type per period — and aggregate their KPIs, without
   requiring a joint multi-agent RL formulation. Lower risk, reuses the
-  single-vehicle TTOP machinery as-is.
+  single-vehicle CTOP machinery as-is.
 - **C** — Full joint multi-agent formulation (shared policy conditioned on
   fleet state, or independent policies with a coordination layer) for
   studying inter-vehicle route interference/complementarity explicitly.
@@ -153,7 +153,7 @@ directly rather than treating each stream as independent.
 
 **Effort × Impact**: High effort (Option A/C) / Medium effort (Option B) /
 High impact, contingent on future heterogeneous-fleet experiments
-— single-vehicle TTOP simulator integration landed 2026-08-27 (#59).
+— single-vehicle CTOP simulator integration landed 2026-08-27 (#59).
 
 ---
 

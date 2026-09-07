@@ -151,5 +151,5 @@ PROBLEMS: List[str] = [
     "wcvrp",  # Waste Collection VRP (dynamic bin fill levels, no capacity)
     "cwcvrp",  # Capacitated Waste Collection VRP (bins + capacity, standard WSmart+ problem)
     "scwcvrp",  # Selective Capacitated WCVRP (choose subset of bins, profit-driven)
-    "ttop",  # Temporal Team Orienteering Problem (capacity + shift time budget)
+    "ctop",  # Capacitated Team Orienteering Problem (capacity + shift time budget)
 ]

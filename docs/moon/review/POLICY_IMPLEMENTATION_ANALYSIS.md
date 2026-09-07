@@ -9,12 +9,12 @@
 
 ## Executive Summary
 
-This report documents the mathematical fidelity, algorithmic structure, and VRPP/TTOP domain adaptations of all routing algorithms in the WSmart+ Route codebase. The analysis evaluates:
+This report documents the mathematical fidelity, algorithmic structure, and VRPP/CTOP domain adaptations of all routing algorithms in the WSmart+ Route codebase. The analysis evaluates:
 
 1. Published mathematical formulations, pseudocode, and optimality proofs from foundational and recent literature
 2. Implementation architecture in `logic/src/policies/` (modularized under `route_construction/`, `mandatory_selection/`, `acceptance_criteria/`, `helpers/`, and `vector/`)
 3. Parameter structures and configuration defaults in `params.py` dataclasses and Hydra YAML specifications
-4. Temporal and capacity dual-constraint handling for Multi-Day VRPP and TTOP (Temporal Team Orienteering Problem)
+4. Temporal and capacity dual-constraint handling for Multi-Day VRPP and CTOP (Capacitated Team Orienteering Problem)
 
 ### Faithfulness Score Summary (Key Policies)
 
@@ -43,7 +43,7 @@ This report documents the mathematical fidelity, algorithmic structure, and VRPP
 
 ---
 
-- **High Algorithmic Fidelity**: Implementations faithfully preserve mathematical logic from original papers while introducing clean VRPP/TTOP profit and time-budget extensions.
+- **High Algorithmic Fidelity**: Implementations faithfully preserve mathematical logic from original papers while introducing clean VRPP/CTOP profit and time-budget extensions.
 - **Dual Resource Governance**: Solvers natively interface with `BaseRoutingPolicy` and `get_multi_tour` to satisfy both vehicle waste capacity ($Q$) and shift duration ($T_{\max}$).
 - **Modern Modular Design**: Exact, metaheuristic, and learning policies inherit from typed interfaces (`IRouteConstructor`, `IMandatorySelector`, `IAcceptanceCriterion`).
 
