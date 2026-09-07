@@ -25,6 +25,16 @@ def _dataset(shift_hours: float = 1.0) -> dict[str, torch.Tensor]:
 class TestCTOPCosts:
     """The static evaluator must enforce every depot-to-depot trip."""
 
+    @pytest.mark.parametrize("tour", [[[1, 0]], [[0, 1]], [[1]]])
+    def test_time_matrix_overrides_distance_and_includes_return(self, tour):
+        data = _dataset(shift_hours=1.0)
+        data["time_matrix"] = torch.tensor([[[0.0, 0.2], [0.7, 0.0]]])
+        _, costs, _ = CTOP.get_costs(data, torch.tensor(tour), None)
+        assert costs["time"].item() == pytest.approx(0.9)
+        data["time_matrix"][0, 1, 0] = 0.9
+        with pytest.raises(AssertionError, match="trip time"):
+            CTOP.get_costs(data, torch.tensor(tour), None)
+
     def test_final_depot_return_is_time_feasible(self):
         """A route that cannot return before shift end is rejected."""
         data = _dataset()
@@ -48,6 +58,22 @@ class TestCTOPCosts:
 
 class TestCTOPEnvironment:
     """Live CTOP state uses the same physical constraints as its evaluator."""
+
+    def test_time_matrix_controls_mask_and_resource_consumption(self):
+        data = _dataset(shift_hours=1.0)
+        data["time_matrix"] = torch.tensor([[[0.0, 0.2], [0.7, 0.0]]])
+        env = self._env()
+        state = env.reset(TensorDict(data, batch_size=[1]))
+        assert state["action_mask"][0, 1]
+        state["action"] = torch.tensor([1])
+        state = env.step(state)["next"]
+        assert state["remaining_time"].item() == pytest.approx(0.8)
+        state["action"] = torch.tensor([0])
+        state = env.step(state)["next"]
+        assert state["time_spent"].item() == pytest.approx(0.9)
+        data["time_matrix"][0, 1, 0] = 0.9
+        state = env.reset(TensorDict(data, batch_size=[1]))
+        assert not state["action_mask"][0, 1]
 
     @staticmethod
     def _env() -> CTOPEnv:

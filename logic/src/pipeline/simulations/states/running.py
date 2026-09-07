@@ -199,6 +199,7 @@ class RunningState(SimState):
             seed=sim.seed,
             problem=str(getattr(sim, "problem", "vrpp") or "vrpp").lower(),
             shift_hours=float(getattr(ctx, "shift_hours", 7.0)),
+            time_matrix=getattr(ctx, "time_matrix", None),
             avg_speed_kmh=float(getattr(ctx, "avg_speed_kmh", 35.0)),
             service_time_h=float(getattr(ctx, "service_time_h", 1.5 / 60.0)),
             vehicle_capacity=float(getattr(ctx, "vehicle_capacity", 100.0) if getattr(ctx, "vehicle_capacity", None) is not None else 100.0),

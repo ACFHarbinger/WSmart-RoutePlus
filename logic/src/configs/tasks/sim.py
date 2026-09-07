@@ -76,6 +76,9 @@ class SimConfig:
     full_policies: List[str] = field(default_factory=list)
     data_distribution: str = "gamma1"
     problem: str = "vrpp"
+    shift_hours: float = 7.0
+    avg_speed_kmh: float = 35.0
+    service_time_h: float = 1.5 / 60.0
     days: int = 31
     seed: int = 42
     output_dir: str = "output"

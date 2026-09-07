@@ -4,7 +4,7 @@
 # =============================================================================
 # Configuration for automated hyperparameter search using Optuna/DEHB.
 # Used by: python main.py hp_optim
-# CTOP:    python main.py task=hpo envs@hpo.env=ctop
+# CTOP:    python main.py hpo envs@hpo.env=ctop
 #
 # Searches over model/training hyperparameters to find optimal configurations.
 # =============================================================================

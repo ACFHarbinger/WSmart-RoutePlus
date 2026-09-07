@@ -32,6 +32,7 @@ from logic.src.envs.base.improvement import ImprovementEnvBase
 from logic.src.envs.generators import (
     GENERATOR_REGISTRY,
     ATSPGenerator,
+    CTOPGenerator,
     CVRPGenerator,
     Generator,
     IRPGenerator,
@@ -39,12 +40,12 @@ from logic.src.envs.generators import (
     PCTSPGenerator,
     PDPGenerator,
     ThOPGenerator,
-    CTOPGenerator,
     VRPPGenerator,
     WCVRPGenerator,
     get_generator,
 )
 from logic.src.envs.routing.atsp import ATSPEnv
+from logic.src.envs.routing.ctop import CTOPEnv
 from logic.src.envs.routing.cvrp import CVRPEnv
 from logic.src.envs.routing.cvrpp import CVRPPEnv
 from logic.src.envs.routing.cwcvrp import CWCVRPEnv
@@ -56,7 +57,6 @@ from logic.src.envs.routing.spctsp import SPCTSPEnv
 from logic.src.envs.routing.swcvrp import SCWCVRPEnv
 from logic.src.envs.routing.thop import ThOPEnv
 from logic.src.envs.routing.tsp import TSPEnv
-from logic.src.envs.routing.ctop import CTOPEnv
 from logic.src.envs.routing.vrpp import VRPPEnv
 from logic.src.envs.routing.wcvrp import WCVRPEnv
 from logic.src.envs.tsp_kopt import TSPkoptEnv

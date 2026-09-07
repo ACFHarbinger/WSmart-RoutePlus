@@ -16,10 +16,10 @@ from __future__ import annotations
 from typing import Any, Type
 
 from logic.src.envs.problems import (
+    CTOP,
     CVRPP,
     CWCVRP,
     SCWCVRP,
-    CTOP,
     VRPP,
     WCVRP,
 )

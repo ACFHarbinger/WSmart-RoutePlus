@@ -33,6 +33,7 @@ from logic.src.constants.tasks import (
 
 from .atsp import ATSP
 from .base import BaseProblem
+from .ctop import CTOP
 from .cvrp import CVRP
 from .cvrpp import CVRPP
 from .cwcvrp import CWCVRP
@@ -44,7 +45,6 @@ from .scwcvrp import SCWCVRP
 from .spctsp import SPCTSP
 from .thop import ThOP
 from .tsp import TSP
-from .ctop import CTOP
 from .vrpp import VRPP
 from .wcvrp import WCVRP
 

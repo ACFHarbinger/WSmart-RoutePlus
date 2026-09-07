@@ -451,6 +451,7 @@ class SimulationDayContext(Mapping):
     display_name: str = ""
     problem: str = "vrpp"
     shift_hours: float = 7.0
+    time_matrix: Optional[np.ndarray] = None
     avg_speed_kmh: float = 35.0
     service_time_h: float = 1.5 / 60.0
     vehicle_capacity: float = 100.0
@@ -690,12 +691,14 @@ def run_day(context: SimulationDayContext) -> SimulationDayContext:
         RouteConstructionAction,
         RouteImprovementAction,
     )
+    from logic.src.pipeline.simulations.actions.time_constraints import TimeConstraintAction
 
     commands = [
         FillAction(),
         MandatorySelectionAction(),
         RouteConstructionAction(),
         RouteImprovementAction(),
+        TimeConstraintAction(),
         CollectAction(),
         LogAction(),
     ]

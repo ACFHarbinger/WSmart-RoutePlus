@@ -17,6 +17,7 @@ from typing import Any
 
 from .atsp import ATSPGenerator
 from .base import Generator
+from .ctop import CTOPGenerator
 from .cvrp import CVRPGenerator
 from .irp import IRPGenerator
 from .op import OPGenerator
@@ -25,7 +26,6 @@ from .pdp import PDPGenerator
 from .scwcvrp import SCWCVRPGenerator
 from .thop import ThOPGenerator
 from .tsp import TSPGenerator
-from .ctop import CTOPGenerator
 from .vrpp import VRPPGenerator
 from .wcvrp import WCVRPGenerator
 

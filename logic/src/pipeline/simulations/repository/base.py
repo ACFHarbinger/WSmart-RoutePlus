@@ -12,8 +12,9 @@ Example:
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple, Union
 
+import numpy as np
 import pandas as pd
 
 
@@ -153,23 +154,45 @@ class SimulationRepository(ABC):
         return (vehicle_capacity, revenue, density, expenses, bin_volume)
 
     @staticmethod
-    def get_temporal_params() -> Tuple[float, float, float]:
+    def get_temporal_params(
+        coords: Optional[pd.DataFrame] = None,
+        distance_matrix: Optional[np.ndarray] = None,
+        tm_filepath: Optional[str] = None,
+        shift_hours: float = 7.0,
+        avg_speed_kmh: float = 35.0,
+        service_time_h: float = 1.5 / 60.0,
+        time_unit: str = "seconds",
+    ) -> Tuple[float, Union[float, np.ndarray], float]:
         """
         Retrieves the temporal resource parameters for time-constrained problems.
 
         Returns the working-shift budget and travel/service rates used by
-        time-constrained problem variants (e.g. the Capacitated Team Orienteering
-        Problem), where the binding resource is time spent rather than bin
-        count or vehicle capacity. Unlike get_area_params, these values are
-        not area- or waste-type-specific: they describe one driver's shift.
+        time-constrained problem variants alongside their capacity constraint.
+        With coordinates and distances, the second value is a pairwise travel
+        time matrix in hours, loaded from ``tm_filepath`` or computed using
+        the uniform speed. Without matrix inputs the scalar-speed API remains
+        available to generated routing environments.
 
         Returns:
             Tuple containing:
                 - shift_hours: Total time budget per period/trip (h)
-                - avg_speed_kmh: Average driving speed (km/h)
+                - travel: Average speed (km/h), or travel-time matrix (h)
                 - service_time_h: Time to visit and empty a single bin (h)
         """
-        shift_hours = 7.0
-        avg_speed_kmh = 35.0
-        service_time_h = 1.5 / 60.0  # 1 min 30 s
+        if not np.isfinite(shift_hours) or shift_hours <= 0:
+            raise ValueError("shift_hours must be finite and positive")
+        if not np.isfinite(avg_speed_kmh) or avg_speed_kmh <= 0:
+            raise ValueError("avg_speed_kmh must be finite and positive")
+        if not np.isfinite(service_time_h) or service_time_h < 0:
+            raise ValueError("service_time_h must be finite and nonnegative")
+        if coords is not None and distance_matrix is not None:
+            from logic.src.data.time import compute_time_matrix
+
+            return (
+                shift_hours,
+                compute_time_matrix(coords, distance_matrix, tm_filepath, avg_speed_kmh, time_unit),
+                service_time_h,
+            )
+        if coords is not None or distance_matrix is not None or tm_filepath is not None:
+            raise ValueError("Travel-time loading requires both coordinates and distances")
         return (shift_hours, avg_speed_kmh, service_time_h)

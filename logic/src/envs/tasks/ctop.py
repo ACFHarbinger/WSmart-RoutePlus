@@ -72,7 +72,7 @@ class CTOP(CVRPP):
         """
         cost, c_dict, aux = CVRPP.get_costs(dataset, pi, cw_dict, dist_matrix)
 
-        if pi.size(-1) <= 1:
+        if pi.size(-1) == 0:
             c_dict["time"] = torch.zeros_like(cost)
             return cost, c_dict, aux
 
@@ -85,6 +85,7 @@ class CTOP(CVRPP):
 
         depot = dataset["depot"]
         loc_val = dataset.get("locs") if "locs" in dataset else dataset.get("loc")
+        assert loc_val is not None
         loc_with_depot = torch.cat((depot[:, None, :], loc_val), 1)
 
         # Coordinates in tour order, matching CVRPP's precedent of a
@@ -98,30 +99,35 @@ class CTOP(CVRPP):
             dist_matrix if dist_matrix is not None else dataset.get("dist_matrix", dataset.get("dm"))
         )
 
-        def leg_distance(
+        travel_matrix = dataset.get("time_matrix")
+
+        def leg_time(
             batch: int,
             source: int,
             destination: int,
             source_coord: torch.Tensor,
             destination_coord: torch.Tensor,
         ) -> float:
+            if travel_matrix is not None:
+                if travel_matrix.dim() == 3:
+                    return travel_matrix[batch, source, destination].item()
+                return travel_matrix[source, destination].item()
             if temporal_distance_matrix is None:
-                return torch.norm(destination_coord - source_coord).item()
+                return torch.norm(destination_coord - source_coord).item() / avg_speed_kmh[batch].item()
             matrix_batch = batch if temporal_distance_matrix.dim() == 3 else 0
             if temporal_distance_matrix.dim() == 3:
-                return temporal_distance_matrix[matrix_batch, source, destination].item()
-            return temporal_distance_matrix[source, destination].item()
+                return temporal_distance_matrix[matrix_batch, source, destination].item() / avg_speed_kmh[batch].item()
+            return temporal_distance_matrix[source, destination].item() / avg_speed_kmh[batch].item()
 
         time_spent = torch.zeros(bs, device=device)
         for b in range(bs):
             cur_trip_time = 0.0
             prev_coord = depot[b]
             for i in range(pi.size(1)):
-                node = pi[b, i].item()
+                node = int(pi[b, i].item())
                 node_coord = coords[b, i]
-                prev_node = pi[b, i - 1].item() if i else 0
-                dist = leg_distance(b, prev_node, node, prev_coord, node_coord)
-                travel_time = dist / avg_speed_kmh[b].item()
+                prev_node = int(pi[b, i - 1].item()) if i else 0
+                travel_time = leg_time(b, prev_node, node, prev_coord, node_coord)
                 if node == 0:
                     # Returning to depot pays travel time, then the trip
                     # clock resets for the next outbound leg.
@@ -142,13 +148,13 @@ class CTOP(CVRPP):
                     )
                 prev_coord = node_coord
             if pi[b, -1].item() != 0:
-                final_return_distance = leg_distance(b, pi[b, -1].item(), 0, prev_coord, depot[b])
-                cur_trip_time += final_return_distance / avg_speed_kmh[b].item()
+                final_return_time = leg_time(b, int(pi[b, -1].item()), 0, prev_coord, depot[b])
+                cur_trip_time += final_return_time
                 assert cur_trip_time <= shift_hours[b].item() + 1e-6, (
                     f"CTOP: trip time {cur_trip_time:.4f}h exceeds shift budget "
                     f"{shift_hours[b].item():.4f}h on final return at batch {b}"
                 )
-                time_spent[b] += final_return_distance / avg_speed_kmh[b].item()
+                time_spent[b] += final_return_time
 
         c_dict["time"] = time_spent
         return cost, c_dict, aux

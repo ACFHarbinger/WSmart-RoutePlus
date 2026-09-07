@@ -182,11 +182,15 @@ class CTOPEnv(CVRPPEnv):
         bs = tensordict.batch_size[0]
         device = tensordict.device
         prev_tour_length = tensordict.get("tour_length", torch.zeros(bs, device=device)).clone()
+        previous_node = tensordict["current_node"].reshape(-1).clone()
 
         tensordict = super()._step_instance(tensordict)
 
         step_distance = tensordict["tour_length"] - prev_tour_length
         step_travel_time = step_distance / tensordict["avg_speed_kmh"]
+        time_matrix = tensordict.get("time_matrix")
+        if time_matrix is not None:
+            step_travel_time = time_matrix[torch.arange(bs, device=device), previous_node, action]
         step_service_time = torch.where(is_depot, torch.zeros_like(step_travel_time), tensordict["service_time_h"])
         step_time = step_travel_time + step_service_time
 
@@ -236,6 +240,12 @@ class CTOPEnv(CVRPPEnv):
         remaining = tensordict["remaining_time"].unsqueeze(-1)
 
         required_time = (dist_current_to_node + dist_node_to_depot) / avg_speed + service_time
+        time_matrix = tensordict.get("time_matrix")
+        if time_matrix is not None:
+            travel_to_node = time_matrix.gather(1, current[:, None, None].expand(-1, -1, time_matrix.size(-1))).squeeze(
+                1
+            )
+            required_time = travel_to_node + time_matrix[:, :, 0] + service_time
         exceeds_budget = required_time > remaining + 1e-6
 
         mask = mask & ~exceeds_budget

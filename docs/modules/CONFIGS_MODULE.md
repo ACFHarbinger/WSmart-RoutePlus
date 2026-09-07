@@ -290,7 +290,7 @@ class EnvConfig:
         capacity: Vehicle capacity (None uses problem default). For ctop this
             is CVRPP's per-trip capacity, not replaced by the time budget.
         shift_hours / avg_speed_kmh / service_time_h: Optional ctop temporal
-            overrides; None uses SimulationRepository.get_temporal_params().
+            overrides; None uses routing temporal defaults (7 h, 35 km/h, 0.025 h).
         graph: Graph connectivity settings.
         reward: Multi-objective reward weights.
         data_distribution: Geographic distribution ('uniform', 'clustered', 'mixed').

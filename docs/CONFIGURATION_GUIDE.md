@@ -46,7 +46,7 @@ python main.py eval eval.decoding.strategy=sampling    # Change decoding
 # Simulation
 python main.py test_sim sim.days=31                    # 31-day simulation
 python main.py test_sim sim.policies=[hgs,alns]        # Compare policies
-python main.py task=test_sim sim.problem=ctop          # CTOP: capacity + shift time budget
+python main.py test_sim sim.problem=ctop          # CTOP: capacity + shift time budget
 
 # Data Generation
 python main.py gen_data data.problem=cwcvrp            # Generate CWCVRP data
@@ -64,6 +64,45 @@ python main.py gen_data data.problem=cwcvrp            # Generate CWCVRP data
 | `cvrpp`   | Capacitated VRP with Profits         | VRPP + capacity                                      |
 | `ctop`    | Capacitated Team Orienteering Problem   | CVRPP + independent per-trip time budget             |
 | `scwcvrp` | Stochastic Capacitated WCVRP         | Stochastic waste generation                          |
+
+#### CTOP simulations with travel-time constraints
+
+Use `uv run python main.py test_sim sim.problem=ctop` with your graph and
+policy overrides. Each depot-to-depot trip is constrained by vehicle capacity
+and `sim.shift_hours` (default 7 hours). Driving uses a uniform
+`sim.avg_speed_kmh=35.0` for every pair unless a time matrix is supplied;
+`sim.service_time_h=0.025` adds 90 seconds per bin visit (zero is supported).
+
+To use measured bin-pair times, add:
+
+```bash
+sim.graph.tm_filepath=data/simulator/time_matrix/matriz_c7_dashboard_tempo_seg.csv
+```
+
+Bare filenames resolve under `data/simulator/time_matrix`. CSVs must have
+row and column IDs and nonnegative finite entries. Set
+`sim.graph.time_matrix_unit=seconds` (default), `minutes`, or `hours`;
+the loader converts all times to hours. Dashboard labels such as
+`663 - 661` use the first ID (`663`). The loader independently aligns both
+axes to the selected simulation coordinates and preserves asymmetric times.
+Every selected customer must occur in the file. The example dashboard file
+uses a different ID set from the current Rio Maior and Figueira da Foz default
+coordinate files; use matching coordinates or explicitly map the IDs first.
+It contains customer pairs only: missing depot (ID 0) legs use distance divided
+by the configured speed. A supplied depot row and column override that fallback.
+
+After construction and improvement, all policies pass through the same CTOP
+route splitter. It preserves existing depot stops and inserts additional
+returns when either capacity or time would be exceeded. A selected customer
+that cannot fit a trip even on its own produces an explicit infeasibility
+error. Collection checks every complete trip before emptying bins. Distance
+and profit accounting remain in kilometres and currency; `time_spent` records
+total driving plus service hours and is summed across trips and days.
+
+The budget resets at each depot return, as in the existing multi-trip model;
+it is not a total daily fleet-hours limit. The time matrix is rebuilt against
+the restored coordinate order on checkpoint resume. CTOP environment inputs
+and task datasets can also supply `time_matrix` in hours.
 
 #### Models (`model=`)
 

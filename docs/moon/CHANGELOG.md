@@ -19,6 +19,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### CTOP travel-time matrices and simulation completion (`2026-09-07`)
+
+- Added `logic/src/data/time.compute_time_matrix`: uniform 35 km/h travel
+  or ID-aligned, directed CSV travel times, with explicit seconds/minutes/hours
+  conversion and validation. Bin-only dashboard files use distance/speed for
+  missing depot legs. Missing customer IDs raise an error.
+- Extended repository temporal parameter loading to return a travel-time matrix
+  when coordinates and distances are supplied, preserving the no-argument
+  scalar API. Added simulation shift, speed, service, and graph time-file options.
+- CTOP now splits every policy's final route after improvement using both
+  capacity and time, preserves depot stops, rejects individually infeasible
+  customers, and validates before changing bin contents. Time metrics use the
+  same matrix, including return legs and zero service-time overrides.
+- Resumed simulations reload time matrices against restored coordinates.
+  CTOP environment masks, resource updates, and task evaluation accept directed
+  time matrices in hours. Added regression coverage for these paths.
+
 #### Shared research, codebase, and manuscript audit (`2026-08-28`)
 
 - Added `.agent/reports/shared/COMPREHENSIVE_REPORT.md` as the collaborative

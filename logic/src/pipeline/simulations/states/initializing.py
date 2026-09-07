@@ -92,6 +92,19 @@ class InitializingState(SimState):
         else:
             self._initialize_new_state(ctx, data, bins_coordinates, depot)
 
+        # Rebuild on both new and resumed runs, using the restored node order.
+        if sim.problem.lower() == "ctop" or getattr(graph, "tm_filepath", None):
+            assert ctx.dist_tup is not None
+            ctx.shift_hours, ctx.time_matrix, ctx.service_time_h = load_temporal_params(
+                coords=ctx.coords,
+                distance_matrix=ctx.dist_tup[0],
+                tm_filepath=getattr(graph, "tm_filepath", None),
+                shift_hours=ctx.shift_hours,
+                avg_speed_kmh=ctx.avg_speed_kmh,
+                service_time_h=ctx.service_time_h,
+                time_unit=getattr(graph, "time_matrix_unit", "seconds"),
+            )
+
         logger.info(f"Initialization complete. Transitioning to RunningState for {ctx.pol_name} policy.")
         ctx.transition_to(RunningState())
 
@@ -217,7 +230,11 @@ class InitializingState(SimState):
         capacities, _, _, _, _ = load_area_and_waste_type_params(graph.area, graph.waste_type)
         ctx.vehicle_capacity = capacities
 
-        shift_hours, avg_speed_kmh, service_time_h = load_temporal_params()
+        shift_hours, avg_speed_kmh, service_time_h = load_temporal_params(
+            shift_hours=getattr(sim, "shift_hours", 7.0),
+            avg_speed_kmh=getattr(sim, "avg_speed_kmh", 35.0),
+            service_time_h=getattr(sim, "service_time_h", 1.5 / 60.0),
+        )
         ctx.shift_hours = shift_hours
         ctx.avg_speed_kmh = avg_speed_kmh
         ctx.service_time_h = service_time_h

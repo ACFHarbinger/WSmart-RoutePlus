@@ -4,7 +4,7 @@
 # =============================================================================
 # Configuration for meta-RL training across multiple problem distributions.
 # Used by: python main.py mrl_train
-# CTOP:    python main.py task=meta_train envs@meta_rl.env=ctop meta_rl.env.name=ctop
+# CTOP:    python main.py meta_train envs@meta_rl.env=ctop meta_rl.env.name=ctop
 #          meta_rl.env.name below is hardcoded and must stay in lockstep
 #          with the composed /envs@meta_rl.env group.
 #

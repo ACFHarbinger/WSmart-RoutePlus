@@ -4,7 +4,7 @@
 # =============================================================================
 # Configuration for evaluating trained models on test datasets.
 # Used by: python main.py eval
-# CTOP:    python main.py task=eval envs@eval.env=ctop eval.env.name=ctop eval.problem=ctop
+# CTOP:    python main.py eval envs@eval.env=ctop eval.env.name=ctop eval.problem=ctop
 #          eval.env.name and eval.problem below are hardcoded and must stay
 #          in lockstep with the composed /envs@eval.env group.
 #

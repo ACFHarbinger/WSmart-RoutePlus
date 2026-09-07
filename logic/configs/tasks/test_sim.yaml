@@ -5,14 +5,12 @@
 # Configuration for multi-day waste collection simulation testing.
 # =============================================================================
 # Used by: python main.py test_sim
-# CTOP:    python main.py task=test_sim sim.problem=ctop
+# CTOP:    python main.py test_sim sim.problem=ctop
 #          Time budget is a *problem-level* constraint, not a per-policy
-#          flag. #59 loads shift_hours/avg_speed_kmh/service_time_h via
+#          flag. Loads shift_hours/avg_speed_kmh/service_time_h via
 #          load_temporal_params() in InitializingState and enforces both
-#          capacity and T_max in get_multi_tour / CollectAction. Optional
-#          per-policy overrides of those three keys are already read by
-#          BaseRoutingPolicy._load_parameters; no policy YAML needs a
-#          "respects time budget" boolean.
+#          capacity and T_max after improvement and before collection.
+#          Configure budgets on sim and the matrix path on sim.graph.
 # =============================================================================
 
 defaults:
@@ -118,8 +116,11 @@ sim:
   n_vehicles: 0
   no_cuda: false
   problem: "vrpp" # vrpp | cvrpp | ctop | wcvrp | cwcvrp | scwcvrp
+  shift_hours: 7.0 # CTOP per depot-to-depot trip, including return and service
+  avg_speed_kmh: 35.0 # Uniform fallback for every bin and depot leg
+  service_time_h: 0.025
   # CTOP keeps this file's graph/policy lists; only the problem tag changes.
-  #   python main.py task=test_sim sim.problem=ctop
+  #   python main.py test_sim sim.problem=ctop
   # Do not flip the committed default -- the paper's 30-day factorial is vrpp.
   output_dir: "output"
   run_name: "lm_cls"
@@ -129,6 +130,8 @@ sim:
 
   # Relative to ROOT/data/simulator/
   graph:
+    tm_filepath: null # ID-labelled CSV; basename resolves under data/simulator/time_matrix
+    time_matrix_unit: seconds # seconds | minutes | hours; internal times are hours
     n_days: 30
     num_loc: 350
     n_samples: 1
