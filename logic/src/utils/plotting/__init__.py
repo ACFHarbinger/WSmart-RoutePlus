@@ -26,7 +26,7 @@ Attributes:
     log_plot: Execution function for saving static plots.
 
 Example:
-    >>> from logic.src.utils.expo import plot_tsp
+    >>> from logic.src.utils.plotting import plot_tsp
     >>> plot_tsp(xy, tour, ax)
 """
 

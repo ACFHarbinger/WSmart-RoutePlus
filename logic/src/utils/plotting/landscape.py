@@ -11,7 +11,7 @@ Attributes:
     RLMetric: Adapter for reinforcement learning cost computation.
 
 Example:
-    >>> from logic.src.utils.expo import plot_loss_landscape
+    >>> from logic.src.utils.plotting import plot_loss_landscape
     >>> plot_loss_landscape(model, cfg, "output/landscape/")
 """
 

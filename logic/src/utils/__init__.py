@@ -19,6 +19,7 @@ Attributes:
     io: Input/Output utilities
     model: Model utilities
     output: Output utilities
+    plotting: Visualization and plotting utilities
     policy: Policy utilities
     security: Security utilities
     tasks: Task utilities

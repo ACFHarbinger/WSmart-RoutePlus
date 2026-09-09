@@ -74,11 +74,7 @@ def extract_attention_matrix(
     elif arr.ndim == 3:
         dim0, dim1, dim2 = arr.shape
         # (heads, query, key) vs (batch, query, key)
-        arr = (
-            arr[head_idx]
-            if dim0 <= 32 and dim1 >= 4 and dim2 >= 4
-            else arr[batch_idx]
-        )
+        arr = arr[head_idx] if dim0 <= 32 and dim1 >= 4 and dim2 >= 4 else arr[batch_idx]
     elif arr.ndim != 2:
         return None
 
@@ -184,7 +180,7 @@ def capture_runtime_attention(
 def plot_attention_heatmaps(model: Any, output_dir: str, epoch: int = 0) -> List[str]:
     """Plot static Q/K/V weight heatmaps for all encoder layers.
 
-    Delegates to :mod:`logic.src.utils.expo.heatmaps` for weight-matrix plots.
+    Delegates to :mod:`logic.src.utils.plotting.heatmaps` for weight-matrix plots.
 
     Args:
         model: Policy or module containing attention layers.
@@ -195,17 +191,13 @@ def plot_attention_heatmaps(model: Any, output_dir: str, epoch: int = 0) -> List
         List of generated PNG paths (may be empty when unsupported).
     """
     try:
-        from logic.src.utils.expo.heatmaps import plot_attention_heatmaps as _plot_weights
+        from logic.src.utils.plotting.heatmaps import plot_attention_heatmaps as _plot_weights
 
         policy = _resolve_policy_module(model)
         _plot_weights(policy, output_dir, epoch=epoch)
         if not os.path.isdir(output_dir):
             return []
-        return [
-            os.path.join(output_dir, name)
-            for name in sorted(os.listdir(output_dir))
-            if name.endswith(".png")
-        ]
+        return [os.path.join(output_dir, name) for name in sorted(os.listdir(output_dir)) if name.endswith(".png")]
     except Exception:
         logger.debug("Failed to plot Q/K/V attention heatmaps", exc_info=True)
         return []

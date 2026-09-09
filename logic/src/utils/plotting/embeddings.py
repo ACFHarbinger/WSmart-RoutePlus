@@ -11,7 +11,7 @@ Attributes:
     project_node_embeddings: Projects 3D node features for TensorBoard analysis.
 
 Example:
-    >>> from logic.src.utils.expo import log_weight_distributions
+    >>> from logic.src.utils.plotting import log_weight_distributions
     >>> log_weight_distributions(model, epoch, "logs/tb/")
 """
 

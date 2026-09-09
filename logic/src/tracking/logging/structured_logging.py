@@ -154,6 +154,7 @@ def log_training(
     xname: str = "day" if train.train_time else "epoch"
     x_values: List[int] = list(range(table_df.shape[0]))
     if plot_logs:
-        from logic.src.utils.expo.log_visualization import plot_training_logs  # lazy — avoids circular import
+        from logic.src.utils.plotting.log_visualization import plot_training_logs  # lazy — avoids circular import
+
         return plot_training_logs(loss_keys, xname, x_values, swapped_df, output_dir, wandb_mode)
     return (loss_keys, xname, x_values, swapped_df, output_dir, wandb_mode)

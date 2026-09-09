@@ -12,7 +12,7 @@ Attributes:
     plot_vehicle_routes: Renders multi-vehicle routes with capacity annotations.
 
 Example:
-    >>> from logic.src.utils.expo import plot_tsp
+    >>> from logic.src.utils.plotting import plot_tsp
     >>> plot_tsp(xy_coords, tour_indices, matplotlib_ax)
 """
 

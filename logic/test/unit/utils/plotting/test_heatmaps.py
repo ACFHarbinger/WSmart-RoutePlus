@@ -5,12 +5,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
-from logic.src.utils.expo.heatmaps import plot_attention_heatmaps, plot_logit_lens
+from logic.src.utils.plotting.heatmaps import plot_attention_heatmaps, plot_logit_lens
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
-
-
-
 
 
 @pytest.fixture
@@ -25,11 +22,11 @@ def mock_model():
     layer = MagicMock()
     # att is SkipConnection, att.module is MultiHeadAttention
     mha = MagicMock()
-    mha.W_query.weight.data = torch.randn(2, 4, 4) # 3D weight
-    mha.W_key.weight.data = torch.randn(4, 4)      # 2D weight
-    mha.W_val.weight.data = torch.randn(4, 4)      # 2D weight
+    mha.W_query.weight.data = torch.randn(2, 4, 4)  # 3D weight
+    mha.W_key.weight.data = torch.randn(4, 4)  # 2D weight
+    mha.W_val.weight.data = torch.randn(4, 4)  # 2D weight
     layer.att.module = mha
-    layer.return_value = torch.randn(1, 5, 4) # (Batch, Nodes, Dim)
+    layer.return_value = torch.randn(1, 5, 4)  # (Batch, Nodes, Dim)
 
     model.embedder.layers = [layer]
     model.embedder.dropout.side_effect = lambda x: x
@@ -45,8 +42,9 @@ def mock_model():
 
     return model
 
-@patch("logic.src.utils.expo.heatmaps.plt")
-@patch("logic.src.utils.expo.heatmaps.sns")
+
+@patch("logic.src.utils.plotting.heatmaps.plt")
+@patch("logic.src.utils.plotting.heatmaps.sns")
 def test_plot_attention_heatmaps(mock_sns, mock_plt, mock_model, tmp_path):
     """Test attention weight heatmap plotting."""
     output_dir = str(tmp_path / "heatmaps")
@@ -56,8 +54,9 @@ def test_plot_attention_heatmaps(mock_sns, mock_plt, mock_model, tmp_path):
     assert mock_sns.heatmap.called
     assert mock_plt.savefig.called
 
-@patch("logic.src.utils.expo.heatmaps.plt")
-@patch("logic.src.utils.expo.heatmaps.sns")
+
+@patch("logic.src.utils.plotting.heatmaps.plt")
+@patch("logic.src.utils.plotting.heatmaps.sns")
 def test_plot_logit_lens(mock_sns, mock_plt, mock_model, tmp_path):
     """Test logit lens probability distribution plotting."""
     output_file = str(tmp_path / "logit_lens.png")

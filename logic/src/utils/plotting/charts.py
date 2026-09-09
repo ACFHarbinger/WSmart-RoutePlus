@@ -9,7 +9,7 @@ Attributes:
     plot_linechart: The primary entry point for generating metric charts.
 
 Example:
-    >>> from logic.src.utils.expo import plot_linechart
+    >>> from logic.src.utils.plotting import plot_linechart
     >>> plot_linechart("metrics.png", np.array([[1, 2], [3, 4]]), plt.plot, ["greedy"])
 """
 

@@ -14,7 +14,7 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 import torch
-from logic.src.utils.expo import (
+from logic.src.utils.plotting import (
     get_batch,
     imitation_loss_fn,
     log_weight_distributions,
@@ -33,8 +33,6 @@ from omegaconf import OmegaConf
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
-
-
 # ============================================================================
 # Core Visualization Utils Tests
 # ============================================================================
@@ -51,9 +49,9 @@ class TestVisualizeUtils(unittest.TestCase):
         self.assertTrue("depot" in batch)
         self.assertEqual(batch["depot"].shape, (2, 2))
 
-    @patch("logic.src.utils.expo.embeddings.plt")
-    @patch("logic.src.utils.expo.embeddings.os.listdir")
-    @patch("logic.src.utils.expo.embeddings.torch.load")
+    @patch("logic.src.utils.plotting.embeddings.plt")
+    @patch("logic.src.utils.plotting.embeddings.os.listdir")
+    @patch("logic.src.utils.plotting.embeddings.torch.load")
     def test_plot_weight_trajectories(self, mock_load, mock_listdir, mock_plt):
         """Test plotting of model weight changes over epochs."""
 
@@ -70,7 +68,7 @@ class TestVisualizeUtils(unittest.TestCase):
 
         mock_plt.savefig.assert_called()
 
-    @patch("logic.src.utils.expo.embeddings.SummaryWriter")
+    @patch("logic.src.utils.plotting.embeddings.SummaryWriter")
     def test_log_weight_distributions(self, mock_writer_cls):
         """Test logging of model weight histograms to TensorBoard."""
 
@@ -82,7 +80,7 @@ class TestVisualizeUtils(unittest.TestCase):
         mock_writer.add_histogram.assert_called()
         mock_writer.close.assert_called()
 
-    @patch("logic.src.utils.expo.embeddings.SummaryWriter")
+    @patch("logic.src.utils.plotting.embeddings.SummaryWriter")
     def test_project_node_embeddings(self, mock_writer_cls):
         """Test projection and logging of node embeddings to TensorBoard."""
 
@@ -95,8 +93,8 @@ class TestVisualizeUtils(unittest.TestCase):
         project_node_embeddings(model, batch, "logs")
         mock_writer.add_embedding.assert_called()
 
-    @patch("logic.src.utils.expo.heatmaps.plt")
-    @patch("logic.src.utils.expo.heatmaps.sns")
+    @patch("logic.src.utils.plotting.heatmaps.plt")
+    @patch("logic.src.utils.plotting.heatmaps.sns")
     def test_plot_attention_heatmaps(self, mock_sns, mock_plt):
         """Test generation of attention heatmaps for model layers."""
 
@@ -133,7 +131,7 @@ class TestVisualizeUtils(unittest.TestCase):
 # ============================================================================
 
 
-@patch("logic.src.utils.expo.charts.plt")
+@patch("logic.src.utils.plotting.charts.plt")
 class TestPlotUtils(unittest.TestCase):
     """Test suite for general plotting utilities."""
 
@@ -229,12 +227,12 @@ class TestVisualizeLossFunctions:
 class TestVisualizeEpochCoverage:
     """Class for visualize_epoch tests."""
 
-    @patch("logic.src.utils.expo.plot_weight_trajectories")
-    @patch("logic.src.utils.expo.log_weight_distributions")
-    @patch("logic.src.utils.expo.plot_attention_heatmaps")
-    @patch("logic.src.utils.expo.plot_loss_landscape")
-    @patch("logic.src.utils.expo.project_node_embeddings")
-    @patch("logic.src.utils.expo.get_batch")
+    @patch("logic.src.utils.plotting.plot_weight_trajectories")
+    @patch("logic.src.utils.plotting.log_weight_distributions")
+    @patch("logic.src.utils.plotting.plot_attention_heatmaps")
+    @patch("logic.src.utils.plotting.plot_loss_landscape")
+    @patch("logic.src.utils.plotting.project_node_embeddings")
+    @patch("logic.src.utils.plotting.get_batch")
     def test_visualize_epoch_all_modes(self, mock_batch, mock_embed, mock_loss, mock_att, mock_dist, mock_traj):
         """Test visualize_epoch with all modes enabled."""
         model = MagicMock()
@@ -244,20 +242,20 @@ class TestVisualizeEpochCoverage:
         model.parameters.side_effect = lambda: iter([p_mock])
 
         problem = MagicMock()
-        opts = OmegaConf.create({
-            "rl": {
-                "viz_modes": ["trajectory", "distributions", "embeddings", "heatmaps", "logit_lens", "loss"]
-            },
-            "log_dir": "logs",
-            "run_name": "test_run",
-            "graph_size": 20,
-            "save_dir": "checkpoints",
-            "model": {"name": "am", "temporal_horizon": 0},
-            "train": {"graph": {"num_loc": 20}}
-        })
+        opts = OmegaConf.create(
+            {
+                "rl": {"viz_modes": ["trajectory", "distributions", "embeddings", "heatmaps", "logit_lens", "loss"]},
+                "log_dir": "logs",
+                "run_name": "test_run",
+                "graph_size": 20,
+                "save_dir": "checkpoints",
+                "model": {"name": "am", "temporal_horizon": 0},
+                "train": {"graph": {"num_loc": 20}},
+            }
+        )
 
         # mock plot_logit_lens as it is also called
-        with patch("logic.src.utils.expo.plot_logit_lens") as mock_lens:
+        with patch("logic.src.utils.plotting.plot_logit_lens") as mock_lens:
             # Setup model mock for logit lens
             model.decoder._get_log_p.return_value = (torch.randn(2, 1, 20), None)
 
@@ -273,11 +271,9 @@ class TestVisualizeEpochCoverage:
     def test_visualize_epoch_no_modes(self):
         """Test visualize_epoch with no modes."""
         model = MagicMock()
-        opts = OmegaConf.create({
-            "rl": {"viz_modes": []},
-            "model": {"name": "am", "temporal_horizon": 0},
-            "train": {"graph": {}}
-        })
+        opts = OmegaConf.create(
+            {"rl": {"viz_modes": []}, "model": {"name": "am", "temporal_horizon": 0}, "train": {"graph": {}}}
+        )
         visualize_epoch(model, None, opts, 1)  # Should return immediately
 
     @patch(
@@ -292,8 +288,8 @@ class TestVisualizeEpochCoverage:
             "logs",
         ],
     )
-    @patch("logic.src.utils.expo.load_model_instance")
-    @patch("logic.src.utils.expo.log_weight_distributions")
+    @patch("logic.src.utils.plotting.load_model_instance")
+    @patch("logic.src.utils.plotting.log_weight_distributions")
     def test_main_distributions(self, mock_log, mock_load):
         """Test main function with distributions mode."""
         mock_load.return_value = MagicMock()
@@ -301,7 +297,7 @@ class TestVisualizeEpochCoverage:
         assert mock_log.called
 
     @patch("sys.argv", ["prog", "--mode", "trajectory", "--checkpoint_dir", "ckpt_dir"])
-    @patch("logic.src.utils.expo.plot_weight_trajectories")
+    @patch("logic.src.utils.plotting.plot_weight_trajectories")
     def test_main_trajectory(self, mock_plot):
         """Test main function with trajectory mode."""
         main()

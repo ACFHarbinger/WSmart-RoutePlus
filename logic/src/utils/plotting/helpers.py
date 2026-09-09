@@ -10,7 +10,7 @@ Attributes:
     load_model_instance: Reconstructs a model from a saved state.
 
 Example:
-    >>> from logic.src.utils.expo import get_batch
+    >>> from logic.src.utils.plotting import get_batch
     >>> batch = get_batch(device, size=50)
 """
 

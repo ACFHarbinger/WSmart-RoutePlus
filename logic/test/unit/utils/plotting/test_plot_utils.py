@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 import torch
-from logic.src.utils.expo import (
+from logic.src.utils.plotting import (
     discrete_cmap,
     draw_graph,
     plot_attention_maps_wrapper,
@@ -17,9 +17,8 @@ from logic.src.utils.expo import (
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
-
-@patch("logic.src.utils.expo.routes.plt")
-@patch("logic.src.utils.expo.routes.nx")
+@patch("logic.src.utils.plotting.routes.plt")
+@patch("logic.src.utils.plotting.routes.nx")
 def test_draw_graph(mock_nx, mock_plt):
     """Test graph drawing calls."""
     dm = np.zeros((3, 3))
@@ -27,7 +26,7 @@ def test_draw_graph(mock_nx, mock_plt):
     assert mock_nx.from_numpy_array.called
 
 
-@patch("logic.src.utils.expo.charts.plt")
+@patch("logic.src.utils.plotting.charts.plt")
 def test_plot_linechart_simple(mock_plt):
     """Test generic line chart plotting."""
     log = np.random.randn(5, 6)  # 2D log (single policy)
@@ -37,7 +36,7 @@ def test_plot_linechart_simple(mock_plt):
     assert mock_plt.savefig.called
 
 
-@patch("logic.src.utils.expo.charts.plt")
+@patch("logic.src.utils.plotting.charts.plt")
 def test_plot_linechart_pareto(mock_plt):
     """Test Pareto front calculation and plotting."""
     # Data: (x, y) where x is col 0, y is col 5
@@ -71,9 +70,9 @@ def test_discrete_cmap():
     assert cmap.N == 5
 
 
-@patch("logic.src.utils.expo.routes.plt.cm.get_cmap", side_effect=plt.cm.get_cmap)
-@patch("logic.src.utils.expo.routes.plt.figure")
-@patch("logic.src.utils.expo.routes.PatchCollection")
+@patch("logic.src.utils.plotting.routes.plt.cm.get_cmap", side_effect=plt.cm.get_cmap)
+@patch("logic.src.utils.plotting.routes.plt.figure")
+@patch("logic.src.utils.plotting.routes.PatchCollection")
 def test_plot_vehicle_routes(mock_pc, mock_fig, mock_get_cmap):
     """Test VRP route visualization."""
     data = {
@@ -89,8 +88,8 @@ def test_plot_vehicle_routes(mock_pc, mock_fig, mock_get_cmap):
     assert mock_pc.called
 
 
-@patch("logic.src.utils.expo.attention.plt")
-@patch("logic.src.utils.expo.attention.sns")
+@patch("logic.src.utils.plotting.attention.plt")
+@patch("logic.src.utils.plotting.attention.sns")
 def test_plot_attention_maps(mock_sns, mock_plt, tmp_path):
     """Test attention map wrapper."""
     # attention_weights shape: [layers, heads, batch, size, size]

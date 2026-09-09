@@ -10,7 +10,7 @@ Attributes:
 Example:
     >>> import numpy as np
     >>> import matplotlib.pyplot as plt
-    >>> from logic.src.utils.expo import plot_3dchart
+    >>> from logic.src.utils.plotting import plot_3dchart
     >>> data = np.random.rand(2, 10, 3)  # 2 policies, 10 points, (x, y, z)
     >>> plot_3dchart(
     ...     "metrics_3d.png",
@@ -184,8 +184,8 @@ def _set_3d_plot_attributes(
         policies: Policy names forwarded to ``ax.legend``.
     """
     if scale != "linear":
-        ax.set_xscale(scale) # pyrefly: ignore [not-callable]
-        ax.set_yscale(scale) # pyrefly: ignore [not-callable]
+        ax.set_xscale(scale)  # pyrefly: ignore [not-callable]
+        ax.set_yscale(scale)  # pyrefly: ignore [not-callable]
     if x_label is not None:
         ax.set_xlabel(x_label)
     if y_label is not None:

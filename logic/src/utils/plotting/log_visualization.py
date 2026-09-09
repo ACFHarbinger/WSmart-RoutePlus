@@ -7,7 +7,7 @@ Attributes:
     log_plot: Execution function for saving static plots.
 
 Example:
-    >>> from logic.src.utils.expo.log_visualization import log_plot
+    >>> from logic.src.utils.plotting.log_visualization import log_plot
     >>> log_plot(fig=my_fig, fig_filename="plot.png")
 """
 

@@ -9,7 +9,7 @@ Attributes:
     plot_attention_maps_wrapper: Primary entry point for attention visualization.
 
 Example:
-    >>> from logic.src.utils.expo import plot_attention_maps_wrapper
+    >>> from logic.src.utils.plotting import plot_attention_maps_wrapper
     >>> plot_attention_maps_wrapper("output/", attn_dict, "am", log_plot)
 """
 

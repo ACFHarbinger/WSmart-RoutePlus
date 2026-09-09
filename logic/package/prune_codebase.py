@@ -70,6 +70,7 @@ _CATEGORY_TO_FLAG: Dict[str, str] = {
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _load_config() -> Dict:
     if not _CONFIG_PATH.exists():
         _die(f"export_config.json not found at {_CONFIG_PATH}")
@@ -136,8 +137,7 @@ def _validate_acronyms(
     if unknown:
         _log(
             f"WARNING: The following acronyms are not listed in export_config.json "
-            f"for category '{category}' and will be ignored: "
-            + ", ".join(sorted(unknown))
+            f"for category '{category}' and will be ignored: " + ", ".join(sorted(unknown))
         )
 
 
@@ -160,10 +160,7 @@ def prune_optional_features(
     known_features = {k for k in opt if not k.startswith("_")}
     unknown = set(drop_features) - known_features
     if unknown:
-        _log(
-            "WARNING: Unknown optional features (will be ignored): "
-            + ", ".join(sorted(unknown))
-        )
+        _log("WARNING: Unknown optional features (will be ignored): " + ", ".join(sorted(unknown)))
 
     for feature_key in sorted(drop_features):
         feature_key = feature_key.upper()
@@ -172,10 +169,7 @@ def prune_optional_features(
         feature = opt[feature_key]
         script_rel = feature.get("remove_script")
         if script_rel is None:
-            _log(
-                f"Optional feature '{feature_key}' has no remove_script — "
-                "skipping (delete manually if needed)."
-            )
+            _log(f"Optional feature '{feature_key}' has no remove_script — skipping (delete manually if needed).")
             continue
 
         script_path = _PROJECT_ROOT / script_rel
@@ -187,6 +181,7 @@ def prune_optional_features(
             _log(f"  [DRY-RUN] Would run remove script for feature '{feature_key}': {script_path}")
         else:
             import subprocess  # noqa: PLC0415
+
             _log(f"  Dropping optional feature '{feature_key}' via {script_path.name} …")
             result = subprocess.run(
                 [sys.executable, str(script_path)],
@@ -309,8 +304,8 @@ def prune_subnets(
     pruning_cfg = config.get("subnet_pruning", {})
     models_cfg = config.get("algorithms", {}).get("models", {})
 
-    needed_decoders, needed_encoders, needed_factories, needed_modules, needed_other = (
-        _get_needed_subnet_deps(keep_model_acronyms, models_cfg)
+    needed_decoders, needed_encoders, needed_factories, needed_modules, needed_other = _get_needed_subnet_deps(
+        keep_model_acronyms, models_cfg
     )
 
     prunable_types = pruning_cfg.get("prunable_types", {})
@@ -368,6 +363,7 @@ def _prune_subdirs(
     dry_run: bool,
 ) -> None:
     import shutil  # noqa: PLC0415
+
     for subdir in all_subdirs:
         if subdir in keep:
             continue
@@ -438,9 +434,9 @@ def remove_logic_dev_dirs(dry_run: bool) -> None:
         _PROJECT_ROOT / "logic" / "configs" / "tasks" / "slurm.yaml",
         # Batch manager subpackage (dev/ops tooling, not part of the runtime solver)
         _PROJECT_ROOT / "logic" / "controllers" / "manager",
-        # Utils subdirs that are dev/expo/output only (not needed at runtime)
+        # Utils subdirs that are dev/plotting/output only (not needed at runtime)
         _PROJECT_ROOT / "logic" / "src" / "utils" / "docs",
-        _PROJECT_ROOT / "logic" / "src" / "utils" / "expo",
+        _PROJECT_ROOT / "logic" / "src" / "utils" / "plotting",
         _PROJECT_ROOT / "logic" / "src" / "utils" / "output",
         _PROJECT_ROOT / "logic" / "src" / "utils" / "target",
         # logic/validation/ promoted from logic/src/utils/validation/
@@ -584,19 +580,14 @@ def prune_category(
 
     _validate_acronyms(keep_upper, set(known.keys()), category_key)
 
-    to_prune: List[str] = [
-        acr for acr in sorted(known.keys()) if acr not in keep_upper
-    ]
+    to_prune: List[str] = [acr for acr in sorted(known.keys()) if acr not in keep_upper]
 
     if not to_prune:
         _log(f"Category '{category_key}': nothing to prune.")
         return 0
 
     kept_display = sorted(keep_upper & set(known.keys())) or ["(none)"]
-    _log(
-        f"Category '{category_key}': keeping {kept_display}, "
-        f"pruning {len(to_prune)} algorithm(s)."
-    )
+    _log(f"Category '{category_key}': keeping {kept_display}, pruning {len(to_prune)} algorithm(s).")
 
     cleanup_kwargs = _build_cleanup_kwargs(category_key, config)
     pruned = 0
@@ -704,12 +695,14 @@ def _filter_files(
         if protected_names and p.name in protected_names:
             continue
         stem = p.stem.lower()
+
         # Match if stem equals name exactly, OR — for single-word names only (no "_") —
         # if the stem ends with "_name" (e.g. "statistical_gamma"→"gamma").
         # Multi-word names like "sim_dataset" require an exact match to avoid
         # "html_sim_dataset" being kept when only "sim_dataset" is requested.
         def _matches(s: str, name: str) -> bool:
             return s == name or ("_" not in name and s.endswith("_" + name))
+
         keep = any(_matches(stem, name.lower()) for name in keep_names)
         if not keep:
             deleted_stems.add(p.stem)
@@ -823,8 +816,7 @@ def prune_policies_helpers(
 
     # Remove .py files in helpers/ not in needed (__init__.py always kept)
     all_helpers_files = sorted(
-        p for p in helpers_base.rglob("*.py")
-        if "__pycache__" not in p.parts and not p.name.startswith("__")
+        p for p in helpers_base.rglob("*.py") if "__pycache__" not in p.parts and not p.name.startswith("__")
     )
 
     removed = 0
@@ -870,6 +862,7 @@ def prune_empty_dirs(dry_run: bool) -> None:
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
@@ -1076,7 +1069,7 @@ def main(argv: Optional[List[str]] = None) -> None:
         _log("Filtering network strategies …")
         prune_network(keep_names=args.network, dry_run=args.dry_run)
 
-    # Remove dev-only logic/ subdirs (benchmark, docs, examples, test, utils/expo, …).
+    # Remove dev-only logic/ subdirs (benchmark, docs, examples, test, utils/plotting, …).
     _log("Removing dev-only logic/ subdirectories …")
     remove_logic_dev_dirs(dry_run=args.dry_run)
 
@@ -1089,10 +1082,7 @@ def main(argv: Optional[List[str]] = None) -> None:
     _log("Removing logic/package/ (self-cleanup) …")
     remove_packages_self(dry_run=args.dry_run)
 
-    _log(
-        f"{'[DRY-RUN] ' if args.dry_run else ''}Done. "
-        f"Total algorithms pruned: {total_pruned}."
-    )
+    _log(f"{'[DRY-RUN] ' if args.dry_run else ''}Done. Total algorithms pruned: {total_pruned}.")
 
 
 if __name__ == "__main__":
