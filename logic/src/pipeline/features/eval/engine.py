@@ -267,7 +267,10 @@ def _eval_dataset(
     results: List[Dict[str, Any]] = []
     for i, (seq, reward) in enumerate(zip(sequences_best, rewards_best, strict=False)):
         if seq is not None:
-            if model.problem.NAME in ("cvrpp", "cwcvrp", "sdwcvrp"):
+            if model.problem.NAME in ("cvrpp", "cwcvrp", "sdwcvrp", "ctop"):
+                # Multi-trip problems: keep the trailing depot-return marker
+                # (ctop is single-vehicle-multi-trip, same shape as cvrpp's
+                # per-trip capacity resets -- see logic/src/envs/tasks/ctop.py)
                 seq = np.trim_zeros(seq).tolist() + [0]
             elif model.problem.NAME in ("vrpp", "wcvrp"):
                 seq = np.trim_zeros(seq).tolist()
@@ -447,7 +450,12 @@ def _eval_multiprocessing(dataset_path: str, beam_width: int, softmax_temp: floa
     Returns:
         List of evaluation results.
     """
+    if getattr(cfg.eval, "no_cuda", False) or getattr(cfg, "device", None) == "cpu":
+        raise ValueError("Multiprocess evaluation requires CUDA; set eval.multiprocessing=false for CPU evaluation.")
+
     num_processes = torch.cuda.device_count()
+    if num_processes == 0:
+        raise ValueError("Multiprocess evaluation requires at least one CUDA device.")
     assert cfg.eval.val_size % num_processes == 0, "val_size must be divisible by num_processes"
 
     with mp.Pool(num_processes) as pool:

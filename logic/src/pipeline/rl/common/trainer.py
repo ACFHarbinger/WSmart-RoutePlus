@@ -30,6 +30,7 @@ from pytorch_lightning.loggers import Logger, WandbLogger
 
 from logic.src.pipeline.callbacks import (
     AttentionHeatmapCallback,
+    GPUMemoryMonitor,
     ModelSummaryCallback,
     TrainingDisplayCallback,
     TrainingHealthCallback,
@@ -245,6 +246,10 @@ class WSTrainer(pl.Trainer):
         # Training health guardrails (§A.4) — Studio Training Monitor ingest
         if TrainingHealthCallback not in callback_types:
             callbacks.append(TrainingHealthCallback())
+
+        # GPU memory monitoring (§F.2)
+        if GPUMemoryMonitor not in callback_types and torch.cuda.is_available():
+            callbacks.append(GPUMemoryMonitor())
 
         # Attention heatmaps to WandB / TensorBoard (§A.2 Option C)
         tracking_cfg = getattr(self, "_tracking_cfg", None)

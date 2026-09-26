@@ -48,7 +48,7 @@ class SimConfig:
         policies: List of policy configurations to test on the WSR simulator.
         full_policies: Expanded policy names after config expansion (populated at runtime).
         data_distribution: Distribution to generate the bins daily waste fill.
-        problem: The problem the model was trained to solve.
+        problem: Problem variant to simulate (e.g. 'vrpp', 'cvrpp', 'wcvrp', 'cwcvrp', 'scwcvrp', 'ctop').
         days: Number of days to run the simulation for.
         seed: Random seed.
         output_dir: Name of WSR simulator test output directory.
@@ -76,6 +76,9 @@ class SimConfig:
     full_policies: List[str] = field(default_factory=list)
     data_distribution: str = "gamma1"
     problem: str = "vrpp"
+    shift_hours: float = 7.0
+    avg_speed_kmh: float = 35.0
+    service_time_h: float = 1.5 / 60.0
     days: int = 31
     seed: int = 42
     output_dir: str = "output"

@@ -6,13 +6,16 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pandas as pd
 import pytest
+from logic.src.configs import Config
 from logic.src.pipeline.features.eval.drift_detection import (
+    _build_arg_parser,
     _check_evidently,
     _npz_to_dataframe,
     load_and_flatten,
     run_column_drift_suite,
     run_drift_detection,
 )
+from logic.src.pipeline.features.eval.engine import _eval_multiprocessing
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
@@ -75,6 +78,20 @@ def test_check_evidently():
     # Should not raise unless evidently is None (tested via patch if needed)
     with patch("logic.src.pipeline.features.eval.drift_detection.evidently", None), pytest.raises(ImportError):
         _check_evidently()
+
+
+def test_parser_accepts_ctop_problem_tag():
+    """The drift-report CLI accepts every temporal routing problem tag."""
+    args = _build_arg_parser().parse_args(["--reference", "reference.csv", "--current", "current.csv", "--problem", "ctop"])
+    assert args.problem == "ctop"
+
+
+def test_multiprocess_evaluation_rejects_cpu_configuration():
+    """CPU-only eval cannot create one worker per CUDA device."""
+    cfg = Config(device="cpu")
+    cfg.eval.multiprocessing = True
+    with pytest.raises(ValueError, match="requires CUDA"):
+        _eval_multiprocessing("unused.pkl", 0, 1.0, cfg)
 
 
 @pytest.mark.unit

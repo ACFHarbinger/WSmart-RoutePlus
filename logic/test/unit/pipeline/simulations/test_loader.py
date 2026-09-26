@@ -19,8 +19,12 @@ class TestFileSystemRepository:
 
     @pytest.fixture(autouse=True)
     def setup_repo(self, repo):
-        from logic.src.pipeline.simulations.repository import set_repository
-        set_repository(repo)
+        import logic.src.pipeline.simulations.repository as repo_module
+
+        original_repo = repo_module._REPOSITORY
+        repo_module.set_repository(repo)
+        yield
+        repo_module._REPOSITORY = original_repo
 
 
 

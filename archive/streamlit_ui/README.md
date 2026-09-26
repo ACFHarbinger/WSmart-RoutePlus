@@ -3,7 +3,8 @@
 The Streamlit dashboard removed in commit `31b1b19474bccf784618534a15e120493d57fb95`
 ("refactor!: remove Streamlit dashboard UI module (superseded by Studio)",
 2026-07-15), recovered from its parent commit and archived here — frozen,
-reference-only, like `archive/gen/`.
+reference-only. (The former `archive/gen/` report generators were revived and
+now live under `logic/gen/`.)
 
 The WSmart-Route Studio (`app/`) is the sole supported interface; this code is
 kept for reference (chart/analytics logic, pydeck map styling, service-layer

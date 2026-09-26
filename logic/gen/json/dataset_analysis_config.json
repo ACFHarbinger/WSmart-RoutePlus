@@ -1,0 +1,29 @@
+{
+  "theme": "dark",
+  "city_labels": {
+    "figueiradafoz": "Figueira da Foz",
+    "riomaior": "Rio Maior"
+  },
+  "dist_labels": {
+    "emp": "Empirical",
+    "gamma1": "Gamma-1",
+    "gamma2": "Gamma-2",
+    "gamma3": "Gamma-3"
+  },
+  "city_colors": {
+    "figueiradafoz": "#e08030",
+    "riomaior": "#4e88d9"
+  },
+  "dist_colors": {
+    "emp": "#5cb85c",
+    "gamma3": "#e05c5c",
+    "gamma1": "#e09020",
+    "gamma2": "#a060e0"
+  },
+  "npz_dir": "data/simulator/datasets",
+  "npz_csv": "docs/private/global/datasets/npz_stats.csv",
+  "td_csv": "docs/private/global/datasets/td_stats.csv",
+  "out_md": "docs/private/markdown/dataset_analysis.md",
+  "figures_dir": "docs/private/figures/datasets",
+  "private_dir": "docs/private/html/datasets"
+}

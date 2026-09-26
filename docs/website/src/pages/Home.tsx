@@ -4,7 +4,7 @@ import {
   Database,
   FlaskConical,
   Route,
-  ShieldCheck,
+  
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import RouteAtlas from "../components/RouteAtlas";
@@ -14,52 +14,39 @@ import { metrics, platformTracks, solvers } from "../data/site";
 export default function Home() {
   return (
     <>
-      <section className="hero">
-        <div>
-          <span className="eyebrow">
-            <span className="eyebrow-dot" />
-            Routing intelligence · research platform
-          </span>
-          <h1>
-            Find the route
-            <br />
-            <em>through uncertainty.</em>
-          </h1>
-          <p className="hero-lede">
-            WSmart+ Route bridges deep reinforcement learning and classical
-            operations research for waste collection vehicle routing — train
-            policies, prove baselines, and stress multi-day scenarios in one
-            laboratory.
-          </p>
-          <div className="hero-chips">
-            <span className="chip">VRPP</span>
-            <span className="chip">CWC VRP</span>
-            <span className="chip">SCWCVRP</span>
-            <span className="chip">Neural + OR</span>
+      <section className="hero hero-carto">
+        <div className="hero-content" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '48px', alignItems: 'center' }}>
+          <div>
+            <div className="civic-heading">Operations Research</div>
+            <h1 className="hero-title">
+              Routing intelligence for
+              <br />
+              <span style={{ color: 'var(--brand-route)' }}>civic infrastructure.</span>
+            </h1>
+            <p className="hero-subtitle">
+              WSmart+ Route bridges deep reinforcement learning and classical
+              operations research for waste collection vehicle routing — 
+              train policies, prove baselines, and stress multi-day scenarios.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '32px', fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>
+              <span style={{ border: '1px solid var(--border-strong)', padding: '4px 8px' }}>VRPP</span>
+              <span style={{ border: '1px solid var(--border-strong)', padding: '4px 8px' }}>CWC VRP</span>
+              <span style={{ border: '1px solid var(--border-strong)', padding: '4px 8px' }}>SCWCVRP</span>
+            </div>
+            <div className="hero-actions" style={{ display: 'flex', gap: '16px' }}>
+              <Link to="/platform" style={{ background: 'var(--btn-bg)', color: 'var(--btn-text)', padding: '12px 24px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                Explore Platform <ArrowUpRight size={16} />
+              </Link>
+              <Link to="/research" style={{ border: '1px solid var(--border-strong)', padding: '12px 24px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                Research Map <Compass size={16} />
+              </Link>
+            </div>
           </div>
-          <div className="hero-actions">
-            <Link className="btn btn-primary" to="/platform">
-              Explore the platform <ArrowUpRight size={16} />
-            </Link>
-            <Link className="btn btn-secondary" to="/research">
-              Research map <Compass size={16} />
-            </Link>
-            <Link className="btn btn-ghost" to="/studio">
-              Studio
-            </Link>
-          </div>
-          <p className="hero-note">
-            <ShieldCheck size={14} />
-            Research claims stay connected to their assumptions, budgets, and
-            evidence. The public site explains; the Studio operates.
-          </p>
-        </div>
 
-        <div className="hero-visual">
-          <div className="hero-card">
-            <div className="hero-card-head">
-              <span>Live route canvas</span>
-              <span className="live">● optimize</span>
+          <div className="hero-visual" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-strong)', padding: '16px', position: 'relative' }}>
+            <div style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: '12px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+              <span>Live Route Canvas</span>
+              <span style={{ color: 'var(--brand-eco)' }}>● Active</span>
             </div>
             <RouteGraph />
           </div>

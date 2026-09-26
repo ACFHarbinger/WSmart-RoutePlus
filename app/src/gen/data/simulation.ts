@@ -1,6 +1,6 @@
 /**
  * Simulation results data engine (§H.1) — native port of the data layer of
- * `archive/gen/gen_simulation_analysis.py`.
+ * `logic/gen/gen_simulation_analysis.py`.
  *
  * Covers: raw output-tree parsing (filename-encoded policy metadata),
  * horizon CSV loading, scenario detection, config filtering, CF/SL variant

@@ -1,7 +1,7 @@
 /**
  * Bundled brand/illustration assets for the native report/deck generator (§H).
  *
- * Ports `archive/gen/images/` + `archive/gen/svg/` into the Studio bundle.
+ * Ports `logic/gen/images/` + `logic/gen/svg/` into the Studio bundle.
  * All exports are Vite asset URLs; use `assetToDataUrl` to obtain base64
  * payloads for PPTX embedding or file export.
  */

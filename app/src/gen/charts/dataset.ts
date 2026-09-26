@@ -1,6 +1,6 @@
 /**
  * Dataset analysis chart library (§H.2) — native ECharts ports of every
- * figure generator in `archive/gen/gen_dataset_analysis.py`.
+ * figure generator in `logic/gen/gen_dataset_analysis.py`.
  */
 import type { SeriesOption } from "echarts";
 import { DATASET_CFG, type GenTheme } from "../config";

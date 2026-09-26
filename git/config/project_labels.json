@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema#",
+  "description": "Reference snapshot of the GitHub label taxonomy actually in use on ACFHarbinger/WSmart-Route (`gh label list`), kept here so the label set has one canonical, human-browsable home. Unlike Image-Toolkit's git/config/, this is not consumed by any automation script -- WSmart-Route's multi-agent workflow runs on the .agent/bus/ + AGENTS.md convention (see AGENTS.md), not a GraphQL sync bot. Regenerate by hand with `gh label list --limit 50` when labels change.",
+  "generated_from": "gh label list --limit 50 (2026-08-27)",
+  "labels": [
+    { "name": "bug", "color": "d73a4a", "description": "Something isn't working" },
+    { "name": "documentation", "color": "0075ca", "description": "Improvements or additions to documentation" },
+    { "name": "duplicate", "color": "cfd3d7", "description": "This issue or pull request already exists" },
+    { "name": "enhancement", "color": "a2eeef", "description": "New feature or request" },
+    { "name": "good first issue", "color": "7057ff", "description": "Good for newcomers" },
+    { "name": "help wanted", "color": "008672", "description": "Extra attention is needed" },
+    { "name": "invalid", "color": "e4e669", "description": "This doesn't seem right" },
+    { "name": "question", "color": "d876e3", "description": "Further information is requested" },
+    { "name": "wontfix", "color": "ffffff", "description": "This will not be worked on" },
+    { "name": "dependencies", "color": "0366d6", "description": "Pull requests that update a dependency file" },
+    { "name": "python", "color": "2b67c6", "description": "Pull requests that update python code" },
+    { "name": "data-integrity", "color": "b60205", "description": "Simulation output that cannot be trusted as-is" },
+    { "name": "website", "color": "1d76db", "description": "docs/website public portal" },
+    { "name": "agent", "color": "5319e7", "description": "Multi-agent coordination" },
+    { "name": "paper", "color": "0E8A16", "description": "Paper: MPVRPP simulation-framework manuscript" },
+    { "name": "infra", "color": "5D4037", "description": "Repository infrastructure: CI, mirror hosts, templates, tooling" }
+  ]
+}

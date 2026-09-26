@@ -34,7 +34,7 @@
 
 ## 1. Overview
 
-The `logic/src/utils` module provides the foundational toolkit for the WSmart+ Route framework. It encompasses 15 specialized sub-modules covering everything from configuration management and data processing to neural network training utilities and security features.
+The `logic/src/utils` module provides the foundational toolkit for the WSmart+ Route framework. It encompasses 16 specialized sub-modules covering everything from configuration management and data processing to neural network training utilities and security features.
 
 ### Design Philosophy
 
@@ -72,6 +72,7 @@ logic/src/utils/
 ├── hooks/            # PyTorch training monitors
 ├── input/            # File operations and input utilities
 ├── logging/          # Multi-layered logging system
+├── plotting/         # Visualization and plotting suite
 ├── model/            # Model loading and checkpointing
 ├── security/         # Cryptography and key management
 ├── tasks/            # RL loss functions and optimizers
@@ -1456,10 +1457,10 @@ rotate_log_files(
 
 ### Visualization
 
-#### Route Plotting (`plotting/routes.py`)
+#### Route Plotting (`logic/src/utils/plotting/routes.py`)
 
 ```python
-from logic.src.utils.logging.plotting.routes import plot_vrp_solution
+from logic.src.utils.plotting.routes import plot_vehicle_routes
 import matplotlib.pyplot as plt
 
 # Visualize VRP solution
@@ -1472,10 +1473,10 @@ fig, ax = plot_vrp_solution(
 plt.savefig("route.png")
 ```
 
-#### Heatmaps (`plotting/heatmaps.py`)
+#### Heatmaps (`logic/src/utils/plotting/heatmaps.py`)
 
 ```python
-from logic.src.utils.logging.plotting.heatmaps import plot_attention_heatmap
+from logic.src.utils.plotting.heatmaps import plot_attention_heatmaps
 
 # Visualize attention weights
 fig = plot_attention_heatmap(
@@ -1485,10 +1486,10 @@ fig = plot_attention_heatmap(
 )
 ```
 
-#### Loss Landscape (`visualization/landscape.py`)
+#### Loss Landscape (`logic/src/utils/plotting/landscape.py`)
 
 ```python
-from logic.src.utils.logging.visualization.landscape import plot_loss_landscape
+from logic.src.utils.plotting.landscape import plot_loss_landscape
 
 # Visualize loss surface around checkpoint
 plot_loss_landscape(
@@ -1960,7 +1961,7 @@ dist_matrix = load_distance_matrix(
 
 **Data Sources**:
 
-- `data/wsr_simulator/distance_matrix/*.csv`
+- `data/simulator/distance_matrix/*.csv`
 - Cached Google Maps API responses
 - OpenStreetMap data
 
@@ -2130,7 +2131,7 @@ from logic.src.utils.model import load_model
 from logic.src.utils.data import load_dataset
 from logic.src.utils.decoding import Greedy, BeamSearch
 from logic.src.utils.actions.distance import get_tour_length
-from logic.src.utils.logging.plotting.routes import plot_vrp_solution
+from logic.src.utils.plotting.routes import plot_vehicle_routes
 
 # Load pre-trained model
 model, config = load_model("checkpoints/best.pt", eval_mode=True)

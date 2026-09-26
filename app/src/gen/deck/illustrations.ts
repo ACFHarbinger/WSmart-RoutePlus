@@ -1,7 +1,7 @@
 /**
  * Procedural conceptual illustrations for the results deck (§H.3) — native
  * SVG ports of the `generate_*_image` builders and the fetch fallback in
- * `archive/gen/gen_presentation.py` (see config/referenceLinks.json for the
+ * `logic/gen/gen_presentation.py` (see config/referenceLinks.json for the
  * third-party references the native versions replace).
  */
 import { GEN_IMAGES, assetToDataUrl } from "../assets";

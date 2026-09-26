@@ -31,15 +31,17 @@ exclude = [
 
 [tool.pyrefly]
 # Core settings
-engine = "pylance"          # pyrefly usually wraps a core engine; pylance/pyright is standard
-ai_assisted = true          # Enables the "agentic" suggestions seen in your Antigravity view
-venvPath = "."              # The directory containing the venv
-venv = ".venv"              # The name of the venv folder
-type_checking_mode = "basic"
-include = ["logic"]
+project-includes = [
+    "logic",
+    "logic/src/pipeline/simulations/wsmart_bin_analysis/python",
+    "logic/src/pipeline/simulations/wsmart_bin_analysis/export",
+]     # Directories/files to include in type checking
 
-# Ignore rules (Migration of your pyright/pylance ignores)
-ignore = ["**/__init__.py"]
+project-excludes = [
+    "**/test/**",        # Exclude all test directories
+    "**/notebooks/**",   # Exclude all notebook directories
+    "**/__pycache__/**"  # Exclude cache if needed
+]
 
 [tool.pyrefly.errors]
 "implicit-import" = false
@@ -89,6 +91,12 @@ max-complexity = 15
 [tool.ruff.lint.per-file-ignores]
 # Ignore F401 (unused import) for __init__.py files
 "__init__.py" = ["F401"]
+# Report/deck generators (logic/gen/): long batch-style figure and slide builders
+# whose branching is inherent to the layout they emit — splitting them would not
+# make them clearer. Everything else in the module is linted normally.
+"logic/gen/gen_presentation.py" = ["C901"]
+"logic/gen/gen_simulation_analysis.py" = ["C901"]
+"logic/gen/gen_dataset_analysis.py" = ["C901"]
 
 
 

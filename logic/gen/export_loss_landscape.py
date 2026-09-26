@@ -122,6 +122,7 @@ def _probe_training_loss_surface(
     batch_size: int = 1,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, str]:
     import torch
+
     from logic.src.envs.generators import get_generator
     from logic.src.utils.model.loader import load_model
 

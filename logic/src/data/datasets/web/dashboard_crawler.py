@@ -106,9 +106,12 @@ def _parse_table(table: BeautifulSoup) -> pd.DataFrame:
         if col in df.columns:
             df[col] = df[col].str.replace(r"\s*%", "", regex=True).str.strip()
 
+    # Normalize Portuguese-locale comma decimal separators to dots before
+    # numeric conversion (e.g. "39,156337" → "39.156337").
     numeric_cols = ["% vol. atual", "% vol. média", "Acum. (%/dia)", "Volume (kg)", "Nº Cont.", "Latitude", "Longitude"]
     for col in numeric_cols:
         if col in df.columns:
+            df[col] = df[col].astype(str).str.replace(",", ".", regex=False)
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
     if "Local" in df.columns:
@@ -206,21 +209,29 @@ def to_simulation_data(
             raise ValueError(f"n_bins={n_bins} exceeds available locations ({len(df)}).")
         df = df.sample(n=n_bins, random_state=42).reset_index(drop=True)
 
-    data_df = pd.DataFrame(
-        {
-            "ID": df["ID"],
-            "Stock": df["Fill_Pct"] / 100.0,
-            "Accum_Rate": df["Acum_Rate_Pct"] / 100.0,
-        }
-    ).sort_values("ID").reset_index(drop=True)
+    data_df = (
+        pd.DataFrame(
+            {
+                "ID": df["ID"],
+                "Stock": df["Fill_Pct"] / 100.0,
+                "Accum_Rate": df["Acum_Rate_Pct"] / 100.0,
+            }
+        )
+        .sort_values("ID")
+        .reset_index(drop=True)
+    )
 
-    coordinates_df = pd.DataFrame(
-        {
-            "ID": df["ID"],
-            "Lat": df["Lat"],
-            "Lng": df["Lng"],
-        }
-    ).sort_values("ID").reset_index(drop=True)
+    coordinates_df = (
+        pd.DataFrame(
+            {
+                "ID": df["ID"],
+                "Lat": df["Lat"],
+                "Lng": df["Lng"],
+            }
+        )
+        .sort_values("ID")
+        .reset_index(drop=True)
+    )
 
     return data_df, coordinates_df
 

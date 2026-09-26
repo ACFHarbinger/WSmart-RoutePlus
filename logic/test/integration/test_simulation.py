@@ -27,7 +27,7 @@ def mock_sim_opts(tmp_path):
         "days": 2,
         "policies": ["regular_unif"],  # Needs distribution suffix usually
         "verbosity": 0,
-        "output_dir": "test_sim_out",
+        "output_dir": str(tmp_path / "test_sim_out"),
         "data_dir": str(data_dir),
         "resume": False,
         "store": False,

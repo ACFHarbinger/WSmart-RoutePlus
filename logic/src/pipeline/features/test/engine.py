@@ -1,7 +1,7 @@
 """Run WSR Simulator Tests.
 
 Attributes:
-    run_wsr_simulator_test: Main entry point for the WSmart+ Route simulator test engine.
+    run_simulator_test: Main entry point for the WSmart+ Route simulator test engine.
     _validate_sim_config: Validate and normalize ``cfg.sim`` fields in place.
     _resolve_data_size: Resolve the available data size for the given area and requested size.
     _expand_data_distribution: Expand the data distribution field.
@@ -15,15 +15,13 @@ Attributes:
     _run_sim_via_zenml: Rerun simulation via ZenML.
 
 Example:
-    >>> from logic.src.pipeline.features.test import run_wsr_simulator_test
-    >>> run_wsr_simulator_test(config)
+    >>> from logic.src.pipeline.features.test import run_simulator_test
+    >>> run_simulator_test(config)
 """
 
 import contextlib
 import os
 import random
-import re
-from multiprocessing import cpu_count
 from typing import Any, Dict, List, Optional
 
 import numpy as np
@@ -32,9 +30,9 @@ import torch
 import logic.src.constants as udef
 import logic.src.tracking as wst
 from logic.src.configs import Config
-from logic.src.constants import MAP_DEPOTS, WASTE_TYPES
 from logic.src.pipeline.features.test.config import expand_policy_configs
 from logic.src.pipeline.features.test.orchestrator import simulator_testing
+from logic.src.pipeline.features.test.validation import validate_sim_config
 from logic.src.pipeline.simulations.repository import (
     load_simulator_data,
     set_repository_from_path,
@@ -49,7 +47,7 @@ except ImportError:
 logger = get_pylogger(__name__)
 
 
-def run_wsr_simulator_test(cfg: Config, sinks: Optional[List[Any]] = None) -> None:
+def run_simulator_test(cfg: Config, sinks: Optional[List[Any]] = None) -> None:
     """
     Main entry point for the WSmart+ Route simulator test engine.
 
@@ -142,7 +140,7 @@ def run_wsr_simulator_test(cfg: Config, sinks: Optional[List[Any]] = None) -> No
 
     # Log simulation data directory baseline hashes for change detection
     try:
-        data_dir = os.path.join(udef.ROOT_DIR, "data", "wsr_simulator")
+        data_dir = os.path.join(udef.ROOT_DIR, "data", "simulator")
         if os.path.isdir(data_dir):
             wst.FilesystemTracker(run).scan_directory(data_dir)
     except Exception:
@@ -167,30 +165,7 @@ def _validate_sim_config(cfg: Config) -> None:
     Args:
         cfg: Config.
     """
-    sim = cfg.sim
-
-    assert sim.graph.n_days >= 1, "Must run the simulation for 1 or more days"
-    assert sim.graph.n_samples > 0, "Number of samples must be a positive integer"
-
-    # Normalize area string (strip non-alpha, lowercase)
-    sim.graph.area = re.sub(r"[^a-zA-Z]", "", sim.graph.area.lower())
-    assert sim.graph.area in MAP_DEPOTS, f"Unknown area {sim.graph.area}, available areas: {list(MAP_DEPOTS.keys())}"
-
-    # Normalize waste type
-    sim.graph.waste_type = re.sub(r"[^a-zA-Z]", "", sim.graph.waste_type.lower())
-    assert sim.graph.waste_type in WASTE_TYPES or sim.graph.waste_type is None, (
-        f"Unknown waste type {sim.graph.waste_type}, available: {list(WASTE_TYPES.keys())}"
-    )
-
-    # Coerce edge_threshold to numeric
-    sim.graph.edge_threshold = (
-        float(sim.graph.edge_threshold) if "." in str(sim.graph.edge_threshold) else int(sim.graph.edge_threshold)
-    )
-
-    assert sim.cpu_cores >= 0, "Number of CPU cores must be >= 0"
-    assert sim.cpu_cores <= cpu_count(), "Number of CPU cores to use cannot exceed system specifications"
-    if sim.cpu_cores == 0:
-        sim.cpu_cores = cpu_count()
+    validate_sim_config(cfg)
 
 
 # ---------------------------------------------------------------------------
@@ -342,7 +317,7 @@ def _run_sim_via_zenml(cfg: Config) -> None:
 
     if configure_zenml_stack is None or not configure_zenml_stack(mlflow_uri, stack_name=stack_name):
         logger.warning("ZenML stack configuration failed — falling back to direct simulation.")
-        run_wsr_simulator_test(cfg, sinks=[])
+        run_simulator_test(cfg, sinks=[])
         return
 
     try:
@@ -353,4 +328,4 @@ def _run_sim_via_zenml(cfg: Config) -> None:
         simulation_pipeline(cfg)
     except Exception as exc:
         logger.warning(f"ZenML simulation pipeline failed — falling back to direct simulation: {exc}")
-        run_wsr_simulator_test(cfg, sinks=[])
+        run_simulator_test(cfg, sinks=[])

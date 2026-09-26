@@ -80,7 +80,7 @@ class SamplingEval(EvalBase):
             batch_rep_obj: object = batch
             batch = do_batch_rep(batch_rep_obj, self.samples)
 
-            with torch.no_grad():
+            with torch.inference_mode():
                 out = policy(batch, strategy="sampling", **kwargs)
 
                 # Reshape outputs back to (batch_size, samples, ...)

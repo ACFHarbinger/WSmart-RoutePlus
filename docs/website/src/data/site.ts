@@ -2,6 +2,7 @@ export const navLinks = [
   { to: "/platform", label: "Platform" },
   { to: "/research", label: "Research" },
   { to: "/benchmarks", label: "Benchmarks" },
+  { to: "/simulation", label: "Simulation" },
   { to: "/studio", label: "Studio" },
   { to: "/docs", label: "Docs" },
   { to: "/roadmap", label: "Roadmap" },

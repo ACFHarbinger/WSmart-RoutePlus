@@ -73,7 +73,7 @@ export function resolveDistanceMatrixCandidates(
       candidates.push(
         joinPath(
           projectRoot,
-          `data/wsr_simulator/distance_matrix/gmaps_distmat_plastic[${areaKey}].csv`
+          `data/simulator/distance_matrix/gmaps_distmat_plastic[${areaKey}].csv`
         )
       );
     }

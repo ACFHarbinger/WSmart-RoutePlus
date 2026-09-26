@@ -1,0 +1,192 @@
+{
+  "paths": {
+    "paper_dir": "assets/papers/Simulation-Framework-for-the-MPVRP-with-Profits-in-Smart-Waste-Collection",
+    "tables_subdir": "Tables",
+    "figures_subdir": "Images/Results/Generated"
+  },
+  "variant_order": [
+    "LMCF90",
+    "LA",
+    "LMCF70",
+    "SLSL1",
+    "SLSL2"
+  ],
+  "variant_labels": {
+    "LMCF90": "Last-Minute (CF90)",
+    "LMCF70": "Last-Minute (CF70)",
+    "LA": "Look-Ahead",
+    "SLSL1": "Service-Level (SL1)",
+    "SLSL2": "Service-Level (SL2)"
+  },
+  "variant_labels_short": {
+    "LMCF90": "LM90",
+    "LMCF70": "LM70",
+    "LA": "LA",
+    "SLSL1": "SL1",
+    "SLSL2": "SL2"
+  },
+  "headers": {
+    "constructor": "Route constructor",
+    "strategy": "Selection strategy",
+    "metric": "Metric",
+    "improver": [
+      "CLS",
+      "Fast-TSP",
+      "$\\Delta$",
+      "CLS wins",
+      "Ties"
+    ],
+    "horizon": [
+      "Pairs",
+      "kg/km 30d",
+      "kg/km 90d",
+      "Ovf. 30d",
+      "Ovf. 90d"
+    ],
+    "excluded": [
+      "$H$",
+      "Scenario",
+      "Policy",
+      "kg",
+      "Short.",
+      "Ovf."
+    ],
+    "constructor_short": "Constructor",
+    "scenario_factor": "Scenario factor",
+    "scenario_metrics": [
+      "$n$",
+      "kg/km",
+      "Overflows",
+      "km",
+      "Time (s)"
+    ]
+  },
+  "metric_labels": {
+    "kgkm": "Efficiency (kg/km)",
+    "km": "Distance travelled (km)",
+    "overflows": "Overflow events",
+    "time": "Runtime (s)"
+  },
+  "improver_metrics": [
+    [
+      "kgkm",
+      2,
+      "max"
+    ],
+    [
+      "km",
+      0,
+      "min"
+    ],
+    [
+      "overflows",
+      1,
+      "min"
+    ],
+    [
+      "time",
+      0,
+      "min"
+    ]
+  ],
+  "captions": {
+    "constructors": "Route constructor performance at the {horizon}-day horizon over the balanced factorial grid ({runs} runs). Best value per column in bold.",
+    "strategies": "Mandatory-selection variants at the {horizon}-day horizon, ordered by observed collection efficiency, over the slices in which all five variants were run. Efficiency, overflow risk, distance and runtime all order monotonically along the observed efficiency--service trade-off.",
+    "improvers": "Classical Local Search against Fast-TSP at the {horizon}-day horizon over {pairs} matched-demand configuration pairs.",
+    "horizon": "Horizon sensitivity, computed on the {pairs} selected policy configurations observed at both horizons and compared against themselves.",
+    "scenarios": "Demand-process and network marginals at the {horizon}-day horizon, each restricted to policy slices shared by every level of the factor being compared.",
+    "excluded": "Runs excluded from all aggregate statistics as degenerate rather than merely poor."
+  },
+  "notes": {
+    "constructors": "Means and medians over the scenarios that survive the integrity filter. Every constructor faced the identical demand realisation within each scenario and contributes the same {runs_per} runs: the scenario cells containing the degenerate runs of Table~\\ref{{tab:excluded}} were dropped for all constructors, not only for the one that failed them, so no constructor is averaged over a subset that flatters it. Medians are reported alongside means because a single extreme scenario can move a mean substantially at this sample size.",
+    "strategies": "CF70/CF90 are Last-Minute critical-fill thresholds of 70\\% and 90\\%; SL1/SL2 are Service-Level projection horizons of one and two days. Restricted to the slices shared by all five variants so that the marginal means are comparable: the excluded runs of Table~\\ref{tab:excluded} removed the study's hardest scenario cell from Look-Ahead and Service-Level (SL2) but not from the other three variants, which would otherwise have flattered them. Medians are reported alongside means.",
+    "improvers": "Each pair has the same constructor, strategy, region and demand realisation, with a different configured improver. This is not a controlled improver treatment: upstream constructor outcomes also differ in some pairs, so the deltas are descriptive associations rather than causal effects. Win counts exclude ties, which are reported separately.",
+    "horizon": "Only configurations on the 30-day Pareto front were re-run at 90 days, so the 90-day sample is conditioned on 30-day performance. Constructors are therefore compared against themselves across horizons and never against each other at 90 days. The paired values describe this selected subset and do not estimate a horizon effect for the full factorial design.",
+    "scenarios": "The demand rows use the 216 policy slices present under both processes; the network rows use the 136 policy slices present on all three networks. Balancing prevents exclusions confined to Gamma-3 at $N=350$ from making the remaining levels look artificially better or worse.",
+    "excluded": "$H$ is the horizon in days and ``FF 350'' the Figueira da Foz network at $N=350$. Within a scenario every constructor collects from the same waste realisation, so collected tonnage is comparable by construction. These runs fell more than {threshold}\\% below their scenario median and did not complete; their overflow counts measure truncation, not policy behaviour."
+  },
+  "figure_titles": {
+    "pareto": "Efficiency against service failures ({horizon}-day horizon)",
+    "strategy": "The selection trade-off ({horizon}-day horizon)",
+    "improver": "CLS $-$ Fast-TSP efficiency, per matched pair ({horizon}d; CLS wins {wins} of {pairs})",
+    "scale": "Runtime against instance size ({horizon}-day horizon)"
+  },
+  "axis": {
+    "kgkm": "Efficiency (kg/km)",
+    "kgkm_delta": "$\\Delta$ kg/km",
+    "overflows": "Overflow events",
+    "time": "Mean runtime (s, log scale)",
+    "n_bins": "Bins in the instance ($N$)",
+    "pair_index": "Matched configuration ({pairs} pairs, sorted)"
+  },
+  "constructor_labels": {
+    "ACO_HH": "ACO-HH"
+  },
+  "policy_space": {
+    "benchmark_counts": {
+      "sel_bench": 5,
+      "con_bench": 8,
+      "imp_bench": 2,
+      "policies": 80
+    },
+    "stages": [
+      {
+        "title": "1. Mandatory selection",
+        "scope": "multi-period decision",
+        "color": "#0066cc",
+        "fill": "#f2f7fd",
+        "members": [
+          "Last-Minute (CF70, CF90)",
+          "Look-Ahead",
+          "Service-Level (SL1, SL2)"
+        ],
+        "footer": "3 strategies, {sel_bench} variants"
+      },
+      {
+        "title": "2. Route construction",
+        "scope": "single-period decision",
+        "color": "#00a859",
+        "fill": "#f1faf5",
+        "members": [
+          "ALNS  BPC  HGS  SANS",
+          "ACO-HH  PG-CLNS",
+          "PSOMA  SWC-TCF"
+        ],
+        "footer": "{con_bench} benchmarked constructors"
+      },
+      {
+        "title": "3. Route improvement",
+        "scope": "optional, geometry only",
+        "color": "#f26522",
+        "fill": "#fef5f0",
+        "members": [
+          "Classical Local Search",
+          "Fast-TSP"
+        ],
+        "footer": "{imp_bench} benchmarked improvers"
+      }
+    ],
+    "benchmarked": "This benchmark: {sel_bench} selection variants × {con_bench} constructors × {imp_bench} improvers = {policies} policies",
+    "footnote": "The framework registries expose a larger implementation space; this figure shows only the fully crossed benchmark subset."
+  },
+  "networks": {
+    "panels": [
+      {
+        "city": "Rio Maior",
+        "key": "riomaior170_plastic",
+        "N": 170,
+        "dm": "gmaps_distmat.csv",
+        "map_artifact": "riomaior170_selected_map.png",
+        "color": "#0066cc"
+      },
+      {
+        "city": "Figueira da Foz",
+        "key": "figueiradafoz350_plastic",
+        "N": 350,
+        "dm": "osm_distmat.csv",
+        "map_artifact": "figueiradafoz350_selected_map.png",
+        "color": "#00a859"
+      }
+    ]
+  }
+}

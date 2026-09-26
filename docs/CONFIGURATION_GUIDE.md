@@ -34,7 +34,8 @@ This comprehensive guide covers all aspects of the WSmart-Route configuration sy
 ```bash
 # Training
 python main.py train                                    # Default (CWCVRP, AM, HGS-ALNS expert)
-python main.py train envs=vrpp model=tam               # Override environment & model
+python main.py train envs@train.env=vrpp model=tam     # Override environment & model
+python main.py train envs@train.env=ctop               # CTOP (CVRPP + time budget)
 python main.py train rl.algorithm=ppo                  # Change RL algorithm
 python main.py train train.n_epochs=50                 # Override parameters
 
@@ -45,6 +46,7 @@ python main.py eval eval.decoding.strategy=sampling    # Change decoding
 # Simulation
 python main.py test_sim sim.days=31                    # 31-day simulation
 python main.py test_sim sim.policies=[hgs,alns]        # Compare policies
+python main.py test_sim sim.problem=ctop          # CTOP: capacity + shift time budget
 
 # Data Generation
 python main.py gen_data data.problem=cwcvrp            # Generate CWCVRP data
@@ -52,15 +54,55 @@ python main.py gen_data data.problem=cwcvrp            # Generate CWCVRP data
 
 ### Configuration Cheat Sheet
 
-#### Environments (`envs=`)
+#### Environments (`envs@<task>.env=`)
 
-| Code      | Problem                              | Description                             |
-| --------- | ------------------------------------ | --------------------------------------- |
-| `cwcvrp`  | **Capacitated Waste Collection VRP** | Default. Multi-day, capacity, overflows |
-| `wcvrp`   | Waste Collection VRP                 | No capacity constraint                  |
-| `vrpp`    | VRP with Profits                     | Select profitable nodes                 |
-| `cvrpp`   | Capacitated VRP with Profits         | VRPP + capacity                         |
-| `scwcvrp` | Stochastic Capacitated WCVRP         | Stochastic waste generation             |
+| Code      | Problem                              | Description                                          |
+| --------- | ------------------------------------ | ---------------------------------------------------- |
+| `cwcvrp`  | **Capacitated Waste Collection VRP** | Default. Multi-day, capacity, overflows              |
+| `wcvrp`   | Waste Collection VRP                 | No capacity constraint                               |
+| `vrpp`    | VRP with Profits                     | Select profitable nodes                              |
+| `cvrpp`   | Capacitated VRP with Profits         | VRPP + capacity                                      |
+| `ctop`    | Capacitated Team Orienteering Problem   | CVRPP + independent per-trip time budget             |
+| `scwcvrp` | Stochastic Capacitated WCVRP         | Stochastic waste generation                          |
+
+#### CTOP simulations with travel-time constraints
+
+Use `uv run python main.py test_sim sim.problem=ctop` with your graph and
+policy overrides. Each depot-to-depot trip is constrained by vehicle capacity
+and `sim.shift_hours` (default 7 hours). Driving uses a uniform
+`sim.avg_speed_kmh=35.0` for every pair unless a time matrix is supplied;
+`sim.service_time_h=0.025` adds 90 seconds per bin visit (zero is supported).
+
+To use measured bin-pair times, add:
+
+```bash
+sim.graph.tm_filepath=data/simulator/time_matrix/matriz_c7_dashboard_tempo_seg.csv
+```
+
+Bare filenames resolve under `data/simulator/time_matrix`. CSVs must have
+row and column IDs and nonnegative finite entries. Set
+`sim.graph.time_matrix_unit=seconds` (default), `minutes`, or `hours`;
+the loader converts all times to hours. Dashboard labels such as
+`663 - 661` use the first ID (`663`). The loader independently aligns both
+axes to the selected simulation coordinates and preserves asymmetric times.
+Every selected customer must occur in the file. The example dashboard file
+uses a different ID set from the current Rio Maior and Figueira da Foz default
+coordinate files; use matching coordinates or explicitly map the IDs first.
+It contains customer pairs only: missing depot (ID 0) legs use distance divided
+by the configured speed. A supplied depot row and column override that fallback.
+
+After construction and improvement, all policies pass through the same CTOP
+route splitter. It preserves existing depot stops and inserts additional
+returns when either capacity or time would be exceeded. A selected customer
+that cannot fit a trip even on its own produces an explicit infeasibility
+error. Collection checks every complete trip before emptying bins. Distance
+and profit accounting remain in kilometres and currency; `time_spent` records
+total driving plus service hours and is summed across trips and days.
+
+The budget resets at each depot return, as in the existing multi-trip model;
+it is not a total daily fleet-hours limit. The time matrix is rebuilt against
+the restored coordinate order on checkpoint resume. CTOP environment inputs
+and task datasets can also supply `time_matrix` in hours.
 
 #### Models (`model=`)
 
@@ -123,7 +165,8 @@ outer.inner.key=value        # Nested override
 key=[val1,val2]             # List override (no spaces!)
 
 # Config group overrides
-envs=vrpp                    # Change environment
+envs@train.env=vrpp          # Change training environment (group swap)
+envs@train.env=ctop          # CTOP: CVRPP + per-trip time budget
 model=tam                    # Change model
 rl.algorithm=ppo            # Change RL algorithm
 
@@ -789,9 +832,10 @@ python main.py train env.num_loc=100
 python main.py train model=tam  # Temporal Attention Model
 python main.py train model=ptr  # Pointer Network
 
-# Change environment
-python main.py eval envs=vrpp  # Vehicle Routing with Profits
-python main.py eval envs=scwcvrp  # Stochastic Capacitated WCVRP
+# Change environment (swap the composed env group, not only env.name)
+python main.py eval envs@eval.env=vrpp eval.env.name=vrpp eval.problem=vrpp
+python main.py eval envs@eval.env=scwcvrp eval.env.name=scwcvrp eval.problem=scwcvrp
+python main.py eval envs@eval.env=ctop eval.env.name=ctop eval.problem=ctop
 
 # Change task
 python main.py task=eval  # Evaluation task
@@ -804,7 +848,7 @@ python main.py task=test_sim  # Simulation testing
 # Combine overrides
 python main.py train \
     model=tam \
-    envs=scwcvrp \
+    envs@train.env=scwcvrp \
     seed=42 \
     model.n_encode_layers=6 \
     rl.batch_size=512
@@ -888,7 +932,7 @@ python main.py -m train rl.batch_size=range(128,513,128)  # 128,256,384,512
 
 # Glob patterns (for sweeping over models/envs)
 python main.py -m train model=glob(*)  # All models
-python main.py -m train envs=glob(*)  # All environments
+python main.py -m train envs@train.env=glob(*)  # All environments
 ```
 
 ### Sweep Output Organization
@@ -922,17 +966,26 @@ outputs/
 
 ```bash
 python main.py train \
-  envs=vrpp \
+  envs@train.env=vrpp \
   model=am \
   train.n_epochs=100 \
   train.batch_size=256
+```
+
+### Example 1b: Train AM on CTOP (CVRPP + per-trip time budget)
+
+```bash
+python main.py train \
+  envs@train.env=ctop \
+  model=am \
+  train.env.shift_hours=7.0
 ```
 
 ### Example 2: Train TAM on CWCVRP with Adaptive Imitation
 
 ```bash
 python main.py train \
-  envs=cwcvrp \
+  envs@train.env=cwcvrp \
   model=tam \
   rl.algorithm=adaptive_imitation \
   rl.adaptive_imitation.policy_config@=/tasks/policies/rl/hgs_alns \
@@ -944,7 +997,7 @@ python main.py train \
 
 ```bash
 python main.py eval \
-  envs=cwcvrp \
+  envs@eval.env=cwcvrp \
   model=am \
   eval.model=checkpoints/best_model.pt \
   eval.decoding.strategy=beam_search \
@@ -978,7 +1031,7 @@ python main.py gen_data \
 
 ```bash
 python main.py hpo \
-  envs=vrpp \
+  envs@hpo.env=vrpp \
   model=am \
   hpo.n_trials=100 \
   hpo.search_space=all
@@ -988,7 +1041,7 @@ python main.py hpo \
 
 ```bash
 python main.py meta_train \
-  envs=cwcvrp \
+  envs@meta_rl.env=cwcvrp \
   model=am \
   train.data_distributions=[gamma1,gamma2,uniform] \
   train.n_epochs=200
@@ -1310,7 +1363,7 @@ python main.py your_new_task
 python main.py gen_data data.problem=cwcvrp data.num_samples=10000
 
 # 2. Train with adaptive imitation
-python main.py train envs=cwcvrp model=am train.n_epochs=100
+python main.py train envs@train.env=cwcvrp model=am train.n_epochs=100
 
 # 3. Evaluate
 python main.py eval eval.model=checkpoints/best_model.pt
@@ -1332,7 +1385,7 @@ python main.py test_sim \
 ```bash
 # Automated HPO with Optuna
 python main.py hpo \
-  envs=vrpp \
+  envs@hpo.env=vrpp \
   model=am \
   hpo.n_trials=100
 ```
@@ -1342,7 +1395,7 @@ python main.py hpo \
 ```bash
 # Train on multiple distributions
 python main.py meta_train \
-  envs=cwcvrp \
+  envs@meta_rl.env=cwcvrp \
   train.data_distributions=[gamma1,gamma2,uniform] \
   train.n_epochs=200
 ```

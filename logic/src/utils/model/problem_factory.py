@@ -16,6 +16,7 @@ from __future__ import annotations
 from typing import Any, Type
 
 from logic.src.envs.problems import (
+    CTOP,
     CVRPP,
     CWCVRP,
     SCWCVRP,
@@ -40,6 +41,7 @@ def load_problem(name: str) -> Type[Any]:
     problem = {
         "vrpp": VRPP,
         "cvrpp": CVRPP,
+        "ctop": CTOP,
         "wcvrp": WCVRP,
         "cwcvrp": CWCVRP,
         "scwcvrp": SCWCVRP,

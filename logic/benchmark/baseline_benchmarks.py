@@ -34,14 +34,23 @@ def benchmark_random_local_search(
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"[*] Benchmarking Random LS on {device} (batch={batch_size}, nodes={num_nodes}, iters={iterations})...")
 
-    generator = torch.Generator(device=device).manual_seed(seed)
+    if device == "cuda":
+        torch.cuda.manual_seed_all(seed)
+        locs = torch.rand(batch_size, num_nodes, 2, device=device)
+        waste = torch.rand(batch_size, num_nodes, device=device)
+    else:
+        generator = torch.Generator().manual_seed(seed)
+        locs = torch.rand(batch_size, num_nodes, 2, generator=generator)
+        waste = torch.rand(batch_size, num_nodes, generator=generator)
+
     td = TensorDict(
         {
-            "locs": torch.rand(batch_size, num_nodes, 2, generator=generator, device=device),
-            "waste": torch.rand(batch_size, num_nodes, generator=generator, device=device),
+            "locs": locs,
+            "waste": waste,
             "capacity": torch.ones(batch_size, device=device),
         },
         batch_size=[batch_size],
+        device=device,
     )
 
     policy = RandomLocalSearchPolicy(env_name="cvrpp", n_iterations=iterations, seed=seed).to(device)

@@ -132,6 +132,9 @@ class RandomLocalSearchPolicy(ImprovementPolicy, PolicyVizMixin):
         # 1. Extract environment data
         locs = td["locs"]
         device = td.device if td.device is not None else locs.device
+        if device is not None and str(device) != str(self.generator.device):
+            self.device = torch.device(device)
+            self.generator = torch.Generator(device=device).manual_seed(self.seed)
         num_nodes = locs.shape[1]
 
         if locs.dim() == 3 and locs.shape[-1] == 2:

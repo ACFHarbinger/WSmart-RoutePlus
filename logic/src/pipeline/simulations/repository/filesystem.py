@@ -35,7 +35,7 @@ class FileSystemRepository(SimulationRepository):
     File-based implementation of SimulationRepository.
 
     Loads data from CSV, Excel, and JSON files stored in the project's
-    data/wsr_simulator directory. Supports multiple geographic areas
+    data/simulator directory. Supports multiple geographic areas
     and waste types with area-specific file naming conventions.
 
     Attributes:
@@ -49,7 +49,7 @@ class FileSystemRepository(SimulationRepository):
         Args:
             data_root_dir: Root directory path for data resolution.
         """
-        self.default_data_dir = os.path.join(data_root_dir, "data", "wsr_simulator")
+        self.default_data_dir = os.path.join(data_root_dir, "data", "simulator")
 
     def _get_data_dir(self, override_dir: Optional[str] = None) -> str:
         """get data dir.
@@ -389,7 +389,7 @@ class FileSystemRepository(SimulationRepository):
             bins_coordinates = pd.concat([bins_coordinates, coords_tmp])
             data = pd.concat([data, data_tmp])
 
-        return data, cast(pd.DataFrame, bins_coordinates)
+        return data, bins_coordinates
 
     def _preprocess_county_date(self, data: pd.DataFrame, date_str: str = "Date") -> pd.DataFrame:
         """Preprocess county date.

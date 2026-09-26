@@ -1,0 +1,713 @@
+{
+ "selection": [
+  {
+   "key": "bernoulli_random",
+   "name": "Bernoulli Random"
+  },
+  {
+   "key": "combined",
+   "name": "Combined"
+  },
+  {
+   "key": "cvar",
+   "name": "Cvar"
+  },
+  {
+   "key": "deadline",
+   "name": "Deadline"
+  },
+  {
+   "key": "fptas_knapsack",
+   "name": "FPTAS Knapsack"
+  },
+  {
+   "key": "filter_and_fan",
+   "name": "Filter-and-Fan"
+  },
+  {
+   "key": "fractional_knapsack",
+   "name": "Fractional Knapsack"
+  },
+  {
+   "key": "kmeans_sector",
+   "name": "K-Means Sector"
+  },
+  {
+   "key": "lagrangian",
+   "name": "Lagrangian"
+  },
+  {
+   "key": "last_minute",
+   "name": "Last-Minute"
+  },
+  {
+   "key": "learned",
+   "name": "Learned"
+  },
+  {
+   "key": "lookahead",
+   "name": "Look-Ahead"
+  },
+  {
+   "key": "mip_knapsack",
+   "name": "MIP Knapsack"
+  },
+  {
+   "key": "multi_day_prob",
+   "name": "Multi-day Overflow Probability"
+  },
+  {
+   "key": "pareto_front",
+   "name": "Pareto Front"
+  },
+  {
+   "key": "dispatcher_portfolio",
+   "name": "Portfolio Dispatcher"
+  },
+  {
+   "key": "profit_per_km",
+   "name": "Profit per km"
+  },
+  {
+   "key": "regular",
+   "name": "Regular"
+  },
+  {
+   "key": "revenue",
+   "name": "Revenue"
+  },
+  {
+   "key": "rollout",
+   "name": "Rollout"
+  },
+  {
+   "key": "savings",
+   "name": "Savings"
+  },
+  {
+   "key": "service_level",
+   "name": "Service-Level"
+  },
+  {
+   "key": "set_cover",
+   "name": "Set Cover"
+  },
+  {
+   "key": "spatial_synergy",
+   "name": "Spatial Synergy"
+  },
+  {
+   "key": "staggered_regular",
+   "name": "Staggered Regular"
+  },
+  {
+   "key": "stochastic_regret",
+   "name": "Stochastic Regret"
+  },
+  {
+   "key": "submodular_greedy",
+   "name": "Submodular Greedy"
+  },
+  {
+   "key": "supermodular_greedy",
+   "name": "Supermodular Greedy"
+  },
+  {
+   "key": "dispatcher_thompson",
+   "name": "Thompson Dispatcher"
+  },
+  {
+   "key": "wasserstein_robust",
+   "name": "Wasserstein Robust"
+  },
+  {
+   "key": "whittle",
+   "name": "Whittle"
+  }
+ ],
+ "construction": [
+  {
+   "family": "Exact & Decomposition",
+   "key": "exact_and_decomposition_solvers",
+   "constructors": [
+    {
+     "key": "bpc",
+     "name": "BPC"
+    },
+    {
+     "key": "bb",
+     "name": "Branch And Bound"
+    },
+    {
+     "key": "bc",
+     "name": "Branch And Cut"
+    },
+    {
+     "key": "bp",
+     "name": "Branch-and-Price"
+    },
+    {
+     "key": "cp_sat",
+     "name": "Constraint Programming With Boolean Satisfiability"
+    },
+    {
+     "key": "esdp",
+     "name": "Exact Stochastic Dynamic Programming"
+    },
+    {
+     "key": "ils_bd",
+     "name": "Integer L Shaped Benders Decomposition"
+    },
+    {
+     "key": "lbbd",
+     "name": "Logic Based Benders Decomposition"
+    },
+    {
+     "key": "ms_bpc_sp",
+     "name": "Multi Stage Branch And Price And Cut With Set Partition"
+    },
+    {
+     "key": "ph",
+     "name": "Progressive Hedging"
+    },
+    {
+     "key": "swc_tcf",
+     "name": "SWC-TCF"
+    },
+    {
+     "key": "st_ef",
+     "name": "Scenario Tree Extensive Form"
+    }
+   ]
+  },
+  {
+   "family": "Hyper-heuristics",
+   "key": "hyper_heuristics",
+   "constructors": [
+    {
+     "key": "aco_hh",
+     "name": "ACO-HH"
+    },
+    {
+     "key": "amphh",
+     "name": "Adaptive Memory Programming Hyper Heuristic"
+    },
+    {
+     "key": "gphh",
+     "name": "Genetic Programming Hyper Heuristic"
+    },
+    {
+     "key": "gp_mp_hh",
+     "name": "Genetic Programming Multi Period Hyper Heuristic"
+    },
+    {
+     "key": "gihh",
+     "name": "Guided Indicators Hyper Heuristic"
+    },
+    {
+     "key": "hmm_gd_hh",
+     "name": "Hidden Markov Model Great Deluge Hyper Heuristic"
+    },
+    {
+     "key": "hulk",
+     "name": "Hyper Heuristic Us Lk"
+    },
+    {
+     "key": "mhh",
+     "name": "Matheuristic Hyper Heuristic"
+    },
+    {
+     "key": "phh",
+     "name": "Population Based Hyper Heuristic"
+    },
+    {
+     "key": "shh",
+     "name": "Selection Hyper Heuristic"
+    },
+    {
+     "key": "ss_hh",
+     "name": "Sequence Based Selection Hyper Heuristic"
+    }
+   ]
+  },
+  {
+   "family": "Learning",
+   "key": "learning_algorithms",
+   "constructors": [
+    {
+     "key": "adp_rollout",
+     "name": "Approximate Dynamic Programming With Rollout"
+    },
+    {
+     "key": "hna",
+     "name": "Hierarchical Neural Agent"
+    },
+    {
+     "key": "na",
+     "name": "Neural Agent"
+    }
+   ]
+  },
+  {
+   "family": "Learning Heuristics",
+   "key": "learning_heuristic_algorithms",
+   "constructors": [
+    {
+     "key": "rl_alns",
+     "name": "Reinforcement Learning Adaptive Large Neighborhood Search"
+    },
+    {
+     "key": "rl_gd_hh",
+     "name": "Reinforcement Learning Great Deluge Hyper Heuristic"
+    },
+    {
+     "key": "rl_hvpl",
+     "name": "Reinforcement Learning Hybrid Volleyball Premier League"
+    }
+   ]
+  },
+  {
+   "family": "Learning Matheuristics",
+   "key": "learning_matheuristic_algorithms",
+   "constructors": [
+    {
+     "key": "abpc_hg",
+     "name": "Adaptive Branch And Price And Cut With Heuristic Guidance"
+    },
+    {
+     "key": "calm",
+     "name": "Concurrent Adaptive Lagrangian Matheuristic"
+    },
+    {
+     "key": "lasm",
+     "name": "Learning Allocated Sequential Matheuristic"
+    }
+   ]
+  },
+  {
+   "family": "Matheuristics",
+   "key": "matheuristics",
+   "constructors": [
+    {
+     "key": "aks",
+     "name": "Adaptive Kernel Search"
+    },
+    {
+     "key": "cf_rs",
+     "name": "Cluster First Route Second"
+    },
+    {
+     "key": "cgh",
+     "name": "Column Generation Heuristic"
+    },
+    {
+     "key": "egh",
+     "name": "Exact Guided Heuristic"
+    },
+    {
+     "key": "ils_rvnd_sp",
+     "name": "Iterated Local Search Randomized Variable Neighborhood Descent Set Partitioning"
+    },
+    {
+     "key": "ks",
+     "name": "Kernel Search"
+    },
+    {
+     "key": "lkh3",
+     "name": "LKH-3"
+    },
+    {
+     "key": "lrh",
+     "name": "Lagrangian Relaxation Heuristic"
+    },
+    {
+     "key": "lns_mip",
+     "name": "Large Neighborhood Search Mixed Integer Programming"
+    },
+    {
+     "key": "lb",
+     "name": "Local Branching"
+    },
+    {
+     "key": "lb_vns",
+     "name": "Local Branching Variable Neighborhood Search"
+    },
+    {
+     "key": "popmusic",
+     "name": "Partial Optimization Metaheuristic Under Special Intensification Conditions"
+    },
+    {
+     "key": "rfo",
+     "name": "Relax And Fix And Optimize"
+    },
+    {
+     "key": "rens",
+     "name": "Relaxation Enforced Neighborhood Search"
+    },
+    {
+     "key": "tpks",
+     "name": "Two Phase Kernel Search"
+    }
+   ]
+  },
+  {
+   "family": "Meta-heuristics",
+   "key": "meta_heuristics",
+   "constructors": [
+    {
+     "key": "alns",
+     "name": "ALNS"
+    },
+    {
+     "key": "alns_ipo",
+     "name": "Adaptive Large Neighborhood Search With Inter Period Operators"
+    },
+    {
+     "key": "aco_ks",
+     "name": "Ant Colony Optimization K Sparse"
+    },
+    {
+     "key": "abc",
+     "name": "Artificial Bee Colony"
+    },
+    {
+     "key": "de",
+     "name": "Differential Evolution"
+    },
+    {
+     "key": "es_mcl",
+     "name": "Evolution Strategy Mu Comma Lambda"
+    },
+    {
+     "key": "es_mkl",
+     "name": "Evolution Strategy Mu Kappa Lambda"
+    },
+    {
+     "key": "es_mpl",
+     "name": "Evolution Strategy Mu Plus Lambda"
+    },
+    {
+     "key": "filo",
+     "name": "Fast Iterative Localized Optimization"
+    },
+    {
+     "key": "fa",
+     "name": "Firefly Algorithm"
+    },
+    {
+     "key": "ga",
+     "name": "Genetic Algorithm"
+    },
+    {
+     "key": "genius",
+     "name": "Genius"
+    },
+    {
+     "key": "gls",
+     "name": "Guided Local Search"
+    },
+    {
+     "key": "hgs",
+     "name": "HGS"
+    },
+    {
+     "key": "hs",
+     "name": "Harmony Search"
+    },
+    {
+     "key": "hgs_adc",
+     "name": "Hybrid Genetic Search With Adaptive Diversity Control"
+    },
+    {
+     "key": "hgs_alns",
+     "name": "Hybrid Genetic Search With Adaptive Large Neighborhood Search"
+    },
+    {
+     "key": "hgs_rr",
+     "name": "Hybrid Genetic Search With Ruin And Recreate"
+    },
+    {
+     "key": "hmlns",
+     "name": "Hybrid Memetic Large Neighborhood Search"
+    },
+    {
+     "key": "hvpl",
+     "name": "Hybrid Volleyball Premier League"
+    },
+    {
+     "key": "ils",
+     "name": "Iterated Local Search"
+    },
+    {
+     "key": "kgls",
+     "name": "Knowledge Guided Local Search"
+    },
+    {
+     "key": "lca",
+     "name": "League Championship Algorithm"
+    },
+    {
+     "key": "ma",
+     "name": "Memetic Algorithm"
+    },
+    {
+     "key": "ma_dp",
+     "name": "Memetic Algorithm Dual Population"
+    },
+    {
+     "key": "ma_im",
+     "name": "Memetic Algorithm Island Model"
+    },
+    {
+     "key": "ma_ts",
+     "name": "Memetic Algorithm Tolerance Based Selection"
+    },
+    {
+     "key": "mp_aco",
+     "name": "Multi Period Ant Colony Optimization"
+    },
+    {
+     "key": "mp_ils",
+     "name": "Multi Period Iterated Local Search"
+    },
+    {
+     "key": "mp_pso",
+     "name": "Multi Period Particle Swarm Optimization"
+    },
+    {
+     "key": "mp_sa",
+     "name": "Multi Period Simulated Annealing"
+    },
+    {
+     "key": "pg_clns",
+     "name": "PG-CLNS"
+    },
+    {
+     "key": "psoma",
+     "name": "PSOMA"
+    },
+    {
+     "key": "pso",
+     "name": "Particle Swarm Optimization"
+    },
+    {
+     "key": "psoda",
+     "name": "Particle Swarm Optimization Distance Based Algorithm"
+    },
+    {
+     "key": "qde",
+     "name": "Quantum Differential Evolution"
+    },
+    {
+     "key": "rts",
+     "name": "Reactive Tabu Search"
+    },
+    {
+     "key": "sans",
+     "name": "SANS"
+    },
+    {
+     "key": "sa",
+     "name": "Simulated Annealing"
+    },
+    {
+     "key": "sca",
+     "name": "Sine Cosine Algorithm"
+    },
+    {
+     "key": "sisr",
+     "name": "Slack Induction By String Removal"
+    },
+    {
+     "key": "slc",
+     "name": "Soccer League Competition"
+    },
+    {
+     "key": "ts",
+     "name": "Tabu Search"
+    },
+    {
+     "key": "vns",
+     "name": "Variable Neighborhood Search"
+    },
+    {
+     "key": "vpl",
+     "name": "Volleyball Premier League"
+    }
+   ]
+  },
+  {
+   "family": "Other",
+   "key": "other_algorithms",
+   "constructors": [
+    {
+     "key": "arco",
+     "name": "Adaptive Route Constructor Orchestrator"
+    },
+    {
+     "key": "cvrp",
+     "name": "Capacitated Vehicle Routing Problem"
+    },
+    {
+     "key": "src",
+     "name": "Sequential Route Constructor"
+    },
+    {
+     "key": "tsp",
+     "name": "Travelling Salesman Problem"
+    }
+   ]
+  }
+ ],
+ "improvement": [
+  {
+   "key": "steepest_two_opt",
+   "name": "2-opt (steepest)"
+  },
+  {
+   "key": "adaptive_ensemble",
+   "name": "Adaptive Ensemble"
+  },
+  {
+   "key": "adaptive_large_neighborhood_search",
+   "name": "Adaptive LNS"
+  },
+  {
+   "key": "branch_and_price",
+   "name": "Branch-and-Price"
+  },
+  {
+   "key": "cheapest_insertion",
+   "name": "Cheapest Insertion"
+  },
+  {
+   "key": "classical_local_search",
+   "name": "Classical Local Search"
+  },
+  {
+   "key": "cross_exchange",
+   "name": "Cross Exchange"
+  },
+  {
+   "key": "dp_route_reopt",
+   "name": "DP Route Re-optimisation"
+  },
+  {
+   "key": "fast_tsp",
+   "name": "Fast-TSP"
+  },
+  {
+   "key": "fix_and_optimize",
+   "name": "Fix-and-Optimise"
+  },
+  {
+   "key": "guided_local_search",
+   "name": "Guided Local Search"
+  },
+  {
+   "key": "lkh",
+   "name": "LKH"
+  },
+  {
+   "key": "lkh2",
+   "name": "LKH-2"
+  },
+  {
+   "key": "learned",
+   "name": "Learned"
+  },
+  {
+   "key": "lk",
+   "name": "Lk"
+  },
+  {
+   "key": "mip_lns",
+   "name": "MIP LNS"
+  },
+  {
+   "key": "multi_phase",
+   "name": "Multi-phase"
+  },
+  {
+   "key": "neural_selector",
+   "name": "Neural Selector"
+  },
+  {
+   "key": "node_exchange_steepest",
+   "name": "Node Exchange (steepest)"
+  },
+  {
+   "key": "or_opt",
+   "name": "Or-opt"
+  },
+  {
+   "key": "or_opt_steepest",
+   "name": "Or-opt (steepest)"
+  },
+  {
+   "key": "path",
+   "name": "Path"
+  },
+  {
+   "key": "profitable_detour",
+   "name": "Profitable Detour"
+  },
+  {
+   "key": "random_local_search",
+   "name": "Random Local Search"
+  },
+  {
+   "key": "regret_k_insertion",
+   "name": "Regret-k Insertion"
+  },
+  {
+   "key": "ruin_recreate",
+   "name": "Ruin-and-Recreate"
+  },
+  {
+   "key": "set_cover",
+   "name": "Set Cover"
+  },
+  {
+   "key": "set_partitioning",
+   "name": "Set Partitioning"
+  },
+  {
+   "key": "set_partitioning_polish",
+   "name": "Set Partitioning (polish)"
+  },
+  {
+   "key": "simulated_annealing",
+   "name": "Simulated Annealing"
+  }
+ ],
+ "counts": {
+  "selection": 31,
+  "constructors": 96,
+  "families": 8,
+  "improvers": 30
+ },
+ "benchmark": {
+  "selection": [
+   "Last-Minute (CF70)",
+   "Last-Minute (CF90)",
+   "Look-Ahead",
+   "Service-Level (SL1)",
+   "Service-Level (SL2)"
+  ],
+  "constructors": [
+   "ALNS",
+   "BPC",
+   "HGS",
+   "ACO-HH",
+   "PG-CLNS",
+   "PSOMA",
+   "SANS",
+   "SWC-TCF"
+  ],
+  "improvers": [
+   "Classical Local Search",
+   "Fast-TSP"
+  ]
+ }
+}

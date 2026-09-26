@@ -1,6 +1,6 @@
 /**
  * Bin-location map figures (§H.2) — native port of `gen_bin_location_maps` /
- * `gen_selected_bin_maps` from `archive/gen/gen_simulation_analysis.py`.
+ * `gen_selected_bin_maps` from `logic/gen/gen_simulation_analysis.py`.
  *
  * Renders lat/lon scatter maps of all/selected bins per city. The Python
  * "street" mode fetched an OSMnx basemap; natively the interactive deck.gl
@@ -12,7 +12,7 @@ import { axisStyle } from "../charts/common";
 import type { GenTheme } from "../config";
 import { joinPath, loadCsv, pathExists } from "../io";
 
-const COORD_DIR = "data/wsr_simulator/coordinates";
+const COORD_DIR = "data/simulator/coordinates";
 
 /** Recover a decimal point dropped during export (ports _fix_stripped_decimal). */
 export function fixStrippedDecimal(val: number, lo: number, hi: number): number {

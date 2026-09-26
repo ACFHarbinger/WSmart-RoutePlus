@@ -37,8 +37,8 @@ class TestDayResults:
 
     @pytest.mark.unit
     def test_get_daily_results_empty_tour(self):
-        """Test results when no bins are collected."""
-        coords = pd.DataFrame({"ID": ["D", "B1", "B2"]}, index=[0, 1, 2])
+        """An empty solver tour must not erase the pre-solver mandatory set."""
+        coords = pd.DataFrame({"ID": [0, 101, 202]}, index=[0, 1, 2])
         res = get_daily_results(
             total_collected=0.0,
             ncol=0,
@@ -49,9 +49,11 @@ class TestDayResults:
             sum_lost=10.0,
             coordinates=coords,
             profit=0.0,
-            time=0.1
+            time=0.1,
+            mandatory_nodes=[1, 2],
         )
         assert res["kg"] == 0
         assert res["km"] == 0
         assert res["overflows"] == 1
         assert res["tour"] == [0]
+        assert res["mandatory_nodes"] == [101, 202]

@@ -1,6 +1,6 @@
 /**
  * Dataset analysis report generator (§H.5) — native port of the
- * orchestration + Jinja template of `archive/gen/gen_dataset_analysis.py`.
+ * orchestration + Jinja template of `logic/gen/gen_dataset_analysis.py`.
  */
 import { DATASET_CFG, loadTheme } from "../config";
 import { joinPath, pathExists, writeBinaryFile, writeTextFile } from "../io";

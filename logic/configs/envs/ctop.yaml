@@ -1,0 +1,135 @@
+# =============================================================================
+# Capacitated Team Orienteering Problem (CTOP) Environment Configuration
+# =============================================================================
+# Single-vehicle, multi-trip variant of CVRPP:
+#   - Same node/waste layout, prize-collection objective, and per-trip
+#     vehicle capacity as CVRPP. Capacity is UNCHANGED -- it is not
+#     replaced by the time budget.
+#   - Additional independent per-trip time budget: travel time
+#     (distance / avg_speed_kmh) + service time (service_time_h per bin)
+#     must not exceed shift_hours before the next depot return.
+#   - Both constraints hold simultaneously. The vehicle may return to the
+#     depot and start a new trip within the same period; the episode ends
+#     once nothing is reachable even with a freshly reset capacity AND
+#     time budget. See logic/src/envs/routing/ctop.py.
+#   - "Team" is one vehicle, multiple trips here -- not a concurrent fleet.
+#     See docs/moon/roadmaps/new_features.md §E.8 for the true-fleet variant.
+#
+# Select this env by swapping the Hydra env group (not only env.name --
+# that keeps the previously composed YAML's other fields):
+#   python main.py train envs@train.env=ctop
+#   python main.py eval envs@eval.env=ctop eval.env.name=ctop eval.problem=ctop
+#   python main.py hpo envs@hpo.env=ctop
+#   python main.py meta_train envs@meta_rl.env=ctop meta_rl.env.name=ctop
+#   python main.py hpo_sim envs@hpo_sim.env=ctop
+#   python main.py gen_data data.problem=ctop
+#   python main.py test_sim sim.problem=ctop
+#     (#59 consumes this: dual capacity + T_max in get_multi_tour / CollectAction)
+# =============================================================================
+
+name: "ctop" # Environment identifier
+mean: 0.0
+variance: 0.0
+
+# =============================================================================
+# Capacity Constraint (same as cvrpp.yaml -- CTOP does not drop this)
+# =============================================================================
+capacity:
+  100.0 # Normalized vehicle capacity.
+  # Waste values typically sum to >capacity, forcing selective collection.
+  # Range: 0.5-2.0. Higher = less constrained routing.
+
+# ===========================================================================
+# Temporal resource parameters
+# ===========================================================================
+# Keys must be present (even as null) so Hydra CLI can override them:
+#   python main.py train envs@train.env=ctop train.env.shift_hours=6.5
+# null = use the Python default from
+# SimulationRepository.get_temporal_params() (7.0 h, 35 km/h, 0.025 h/bin).
+# Set a number only for an experiment that deliberately studies a different
+# shift / speed / service time.
+shift_hours: null        # Total time budget per trip (h). Default 7.0
+avg_speed_kmh: null      # Average driving speed (km/h). Default 35.0
+service_time_h: null     # Time to visit and empty a single bin (h). Default 0.025
+
+# ===========================================================================
+# Curriculum Learning
+# ===========================================================================
+# The first entry is also used for single-stage training.
+# Graphs match vrpp.yaml (Rio Maior 100/170) rather than cvrpp.yaml's
+# 50-node stub -- those are the networks the rest of the framework trains
+# on. No ctop-specific .td datasets exist yet; omit load_dataset so the
+# generator builds instances on the fly. Produce them later with
+# `python main.py gen_data data.problem=ctop`.
+curriculum_graphs:
+  - num_loc: 100
+    n_samples: 12800
+    area: "riomaior"
+    waste_type: "plastic"
+    vertex_method: "mmn"
+    distance_method: "gmaps"
+    focus_size: 12800
+    focus_graph: "graphs_100V_1N_plastic.json"
+    start_day: 0
+    n_days: 100
+    dm_filepath: "gmaps_distmat_plastic[riomaior].csv"
+    # Objective: maximize (waste_weight × Σ wastes) - (cost_weight × total_distance)
+    # Subject to: per-trip vehicle capacity AND per-trip time budget.
+    # The time budget is a feasibility constraint (action mask / get_costs
+    # assertion), not an extra reward term.
+    reward:
+      waste_weight: 1.0
+      cost_weight: 2.5
+      overflow_penalty: 1.0
+
+  - num_loc: 170
+    n_samples: 12800
+    area: "riomaior"
+    waste_type: "plastic"
+    vertex_method: "mmn"
+    distance_method: "gmaps"
+    focus_size: 12800
+    focus_graph: "graphs_170V_1N_plastic.json"
+    start_day: 0
+    n_days: 100
+    dm_filepath: "gmaps_distmat_plastic[riomaior].csv"
+    reward:
+      waste_weight: 1.0
+      cost_weight: 2.5
+      overflow_penalty: 1.0
+
+# ===========================================================================
+# Evaluation Graphs
+# ===========================================================================
+eval_graphs:
+  - num_loc: 100
+    n_samples: 512
+    area: "riomaior"
+    waste_type: "plastic"
+    focus_size: 512
+    focus_graph: "graphs_100V_1N_plastic.json"
+    vertex_method: "mmn"
+    distance_method: "gmaps"
+    dm_filepath: "gmaps_distmat_plastic[riomaior].csv"
+    start_day: 0
+    n_days: 7
+    reward:
+      waste_weight: 1.0
+      cost_weight: 1.0
+      overflow_penalty: 1.0
+
+  - num_loc: 170
+    n_samples: 512
+    area: "riomaior"
+    waste_type: "plastic"
+    focus_size: 512
+    focus_graph: "graphs_170V_1N_plastic.json"
+    vertex_method: "mmn"
+    distance_method: "gmaps"
+    dm_filepath: "gmaps_distmat_plastic[riomaior].csv"
+    start_day: 0
+    n_days: 7
+    reward:
+      waste_weight: 1.0
+      cost_weight: 2.5
+      overflow_penalty: 1.0

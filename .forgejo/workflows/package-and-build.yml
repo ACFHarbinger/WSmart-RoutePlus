@@ -1,0 +1,414 @@
+# Mirrored from .github/workflows/ on 2026-08-27; GH-Actions-syntax compatible with Gitea/Forgejo Actions.
+# Not yet run on an actual Gitea/Forgejo runner — verify marketplace-action availability before relying on it.
+# See GitHub issue for the tracked follow-up.
+name: Algorithm Export — Package & Build
+
+on:
+  # Automatically triggered when packager.py pushes an algo-export branch.
+  push:
+    branches:
+      - 'algo-export*'
+
+  # Manual trigger (reads inputs instead of ci/workflow_config.json).
+  workflow_dispatch:
+    inputs:
+      constructors:
+        description: >
+          Route construction algorithm acronyms to keep (comma-separated).
+          Leave blank to retain all constructors.
+          Example: HGS,ALNS,BPC
+        required: false
+        default: ""
+        type: string
+
+      selectors:
+        description: >
+          Mandatory selection policy acronyms to keep (comma-separated).
+          Leave blank to retain all selectors.
+          Example: MS_REGULAR,MS_PPK,MS_SAVINGS
+        required: false
+        default: ""
+        type: string
+
+      improvement:
+        description: >
+          Route improvement operator acronyms to keep (comma-separated).
+          Leave blank to retain all improvement operators.
+          Example: RI_OROPT,RI_S2OPT,RI_GLS
+        required: false
+        default: ""
+        type: string
+
+      acceptance:
+        description: >
+          Acceptance criteria acronyms to keep (comma-separated).
+          Leave blank to retain all acceptance criteria.
+          Example: AC_GD,AC_OI,AC_BMC
+        required: false
+        default: ""
+        type: string
+
+      joint:
+        description: >
+          Joint selection-and-construction acronyms to keep (comma-separated).
+          Leave blank to retain all joint methods.
+          Example: JGO,JSA
+        required: false
+        default: ""
+        type: string
+
+      models:
+        description: >
+          Neural model architecture acronyms to keep (comma-separated).
+          Leave blank to retain all models.
+          Example: AM,TAM,MDAM
+        required: false
+        default: ""
+        type: string
+
+      rl_algorithms:
+        description: >
+          RL training algorithm acronyms to keep (comma-separated).
+          Leave blank to retain all RL algorithms.
+          Example: RL_REINFORCE,RL_PPO
+        required: false
+        default: ""
+        type: string
+
+      imitation_policies:
+        description: >
+          Imitation learning policy acronyms to keep (comma-separated).
+          Leave blank to retain all imitation policies.
+          Example: IP_HGS,IP_ALNS
+        required: false
+        default: ""
+        type: string
+
+      drop_features:
+        description: >
+          Optional pipeline features to REMOVE (comma-separated).
+          Leave blank to retain all features.
+          Available: META_LEARNING, HPO, EVAL, SECURITY, CALLBACKS, ENUMS, UI_LOGIC, DATA_WEB, CLI, TRACKING.
+          Example: META_LEARNING,HPO,SECURITY,CLI,TRACKING
+        required: false
+        default: ""
+        type: string
+
+      envs:
+        description: >
+          Environment names to KEEP (comma-separated).
+          Leave blank to keep all environments.
+          Example: vrpp
+        required: false
+        default: ""
+        type: string
+
+      sim_datasets:
+        description: >
+          Simulation dataset stems to KEEP (comma-separated).
+          Pytorch datasets are always kept. Leave blank to keep all.
+          Example: gen_dataset,sim_dataset
+        required: false
+        default: ""
+        type: string
+
+      distributions:
+        description: >
+          Data distribution stems to KEEP (comma-separated).
+          base.py is always kept. Leave blank to keep all.
+          Example: gamma,empirical
+        required: false
+        default: ""
+        type: string
+
+      network:
+        description: >
+          Network graph loading strategy stems to KEEP (comma-separated).
+          Leave blank to keep all.
+          Example: file
+        required: false
+        default: ""
+        type: string
+
+      skip_build:
+        description: Skip the PyInstaller build step (source-only export).
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+      dry_run:
+        description: >
+          Dry run — validate and log all steps without modifying files or git state.
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+# Prevent concurrent export runs to avoid branch conflicts.
+concurrency:
+  group: algo-export
+  cancel-in-progress: false
+
+jobs:
+  export:
+    name: Export Selected Algorithms
+    # Only run on algo-export branches of the private repo (same guard as sync-to-public).
+    if: github.repository == 'ACFHarbinger/WSmart-Route'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    permissions:
+      contents: write   # Needed to create and push the export branch.
+
+    steps:
+      # ------------------------------------------------------------------ #
+      # 1. Checkout                                                          #
+      # ------------------------------------------------------------------ #
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # Full history so branch creation works cleanly.
+
+      # ------------------------------------------------------------------ #
+      # 2. System dependencies                                               #
+      # ------------------------------------------------------------------ #
+      - name: Install system packages
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            tree \
+            jq \
+            zip \
+            upx-ucl
+          echo "System packages installed."
+
+      # ------------------------------------------------------------------ #
+      # 3. Python + uv                                                       #
+      # ------------------------------------------------------------------ #
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
+      - name: Sync Python environment
+        run: uv sync --all-packages --frozen
+        env:
+          UV_SYSTEM_PYTHON: "1"
+
+      # PyInstaller must be available in the environment.
+      - name: Ensure PyInstaller is installed
+        run: uv run python -m pip install pyinstaller --quiet
+
+      # ------------------------------------------------------------------ #
+      # 4. Configure git identity for the export commit                      #
+      # ------------------------------------------------------------------ #
+      - name: Configure git identity
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      # ------------------------------------------------------------------ #
+      # 5. Validate ci/export_config.json is present                        #
+      # ------------------------------------------------------------------ #
+      - name: Validate export config
+        run: |
+          if [ ! -f ci/export_config.json ]; then
+            echo "ERROR: ci/export_config.json not found." >&2
+            exit 1
+          fi
+          echo "ci/export_config.json found. Known categories:"
+          jq -r '.categories | keys[]' ci/export_config.json
+
+      # ------------------------------------------------------------------ #
+      # 6. Load parameters                                                   #
+      # When triggered by a push to an algo-export branch, parameters are   #
+      # read from ci/workflow_config.json (written by packager.py locally). #
+      # When triggered manually, workflow_dispatch inputs are used instead.  #
+      # ------------------------------------------------------------------ #
+      - name: Load parameters
+        id: params
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            CONFIG=ci/workflow_config.json
+            if [ ! -f "$CONFIG" ]; then
+              echo "ERROR: $CONFIG not found on this branch." >&2
+              exit 1
+            fi
+            echo "Reading parameters from $CONFIG"
+            echo "constructors=$(jq -r '.constructors // ""'       $CONFIG)" >> "$GITHUB_OUTPUT"
+            echo "selectors=$(jq -r '.selectors // ""'             $CONFIG)" >> "$GITHUB_OUTPUT"
+            echo "improvement=$(jq -r '.improvement // ""'         $CONFIG)" >> "$GITHUB_OUTPUT"
+            echo "acceptance=$(jq -r '.acceptance // ""'           $CONFIG)" >> "$GITHUB_OUTPUT"
+            echo "joint=$(jq -r '.joint // ""'                     $CONFIG)" >> "$GITHUB_OUTPUT"
+            echo "models=$(jq -r '.models // ""'                   $CONFIG)" >> "$GITHUB_OUTPUT"
+            echo "rl_algorithms=$(jq -r '.rl_algorithms // ""'     $CONFIG)" >> "$GITHUB_OUTPUT"
+            echo "imitation_policies=$(jq -r '.imitation_policies // ""' $CONFIG)" >> "$GITHUB_OUTPUT"
+            echo "drop_features=$(jq -r '.drop_features // ""'     $CONFIG)" >> "$GITHUB_OUTPUT"
+            echo "envs=$(jq -r '.envs // ""'                       $CONFIG)" >> "$GITHUB_OUTPUT"
+            echo "sim_datasets=$(jq -r '.sim_datasets // ""'       $CONFIG)" >> "$GITHUB_OUTPUT"
+            echo "distributions=$(jq -r '.distributions // ""'     $CONFIG)" >> "$GITHUB_OUTPUT"
+            echo "network=$(jq -r '.network // ""'                 $CONFIG)" >> "$GITHUB_OUTPUT"
+            echo "skip_build=$(jq -r '.skip_build // false'        $CONFIG)" >> "$GITHUB_OUTPUT"
+            echo "dry_run=$(jq -r '.dry_run // false'              $CONFIG)" >> "$GITHUB_OUTPUT"
+          else
+            echo "Reading parameters from workflow_dispatch inputs"
+            echo "constructors=${{ inputs.constructors }}"       >> "$GITHUB_OUTPUT"
+            echo "selectors=${{ inputs.selectors }}"             >> "$GITHUB_OUTPUT"
+            echo "improvement=${{ inputs.improvement }}"         >> "$GITHUB_OUTPUT"
+            echo "acceptance=${{ inputs.acceptance }}"           >> "$GITHUB_OUTPUT"
+            echo "joint=${{ inputs.joint }}"                     >> "$GITHUB_OUTPUT"
+            echo "models=${{ inputs.models }}"                   >> "$GITHUB_OUTPUT"
+            echo "rl_algorithms=${{ inputs.rl_algorithms }}"     >> "$GITHUB_OUTPUT"
+            echo "imitation_policies=${{ inputs.imitation_policies }}" >> "$GITHUB_OUTPUT"
+            echo "drop_features=${{ inputs.drop_features }}"     >> "$GITHUB_OUTPUT"
+            echo "envs=${{ inputs.envs }}"                       >> "$GITHUB_OUTPUT"
+            echo "sim_datasets=${{ inputs.sim_datasets }}"       >> "$GITHUB_OUTPUT"
+            echo "distributions=${{ inputs.distributions }}"     >> "$GITHUB_OUTPUT"
+            echo "network=${{ inputs.network }}"                 >> "$GITHUB_OUTPUT"
+            echo "skip_build=${{ inputs.skip_build }}"           >> "$GITHUB_OUTPUT"
+            echo "dry_run=${{ inputs.dry_run }}"                 >> "$GITHUB_OUTPUT"
+          fi
+
+      # ------------------------------------------------------------------ #
+      # 7. Build packager arguments                                         #
+      # ------------------------------------------------------------------ #
+      - name: Build packager argument string
+        id: build_args
+        run: |
+          ARGS=""
+
+          add_arg() {
+            local flag="$1"
+            local value="$2"
+            if [ -n "$value" ]; then
+              ARGS="$ARGS $flag '$value'"
+            fi
+          }
+
+          add_arg "--constructors"       "${{ steps.params.outputs.constructors }}"
+          add_arg "--selectors"          "${{ steps.params.outputs.selectors }}"
+          add_arg "--improvement"        "${{ steps.params.outputs.improvement }}"
+          add_arg "--acceptance"         "${{ steps.params.outputs.acceptance }}"
+          add_arg "--joint"              "${{ steps.params.outputs.joint }}"
+          add_arg "--models"             "${{ steps.params.outputs.models }}"
+          add_arg "--rl-algorithms"      "${{ steps.params.outputs.rl_algorithms }}"
+          add_arg "--imitation-policies" "${{ steps.params.outputs.imitation_policies }}"
+          add_arg "--drop-features"      "${{ steps.params.outputs.drop_features }}"
+          add_arg "--envs"               "${{ steps.params.outputs.envs }}"
+          add_arg "--sim-datasets"       "${{ steps.params.outputs.sim_datasets }}"
+          add_arg "--distributions"      "${{ steps.params.outputs.distributions }}"
+          add_arg "--network"            "${{ steps.params.outputs.network }}"
+
+          if [ "${{ steps.params.outputs.skip_build }}" = "true" ]; then
+            ARGS="$ARGS --skip-build"
+          fi
+
+          if [ "${{ steps.params.outputs.dry_run }}" = "true" ]; then
+            ARGS="$ARGS --dry-run"
+          fi
+
+          # In CI the codebase is already pruned (algo-export branch); skip
+          # the branch-creation and commit steps — just build the zip.
+          ARGS="$ARGS --no-commit --output-dir dist/exports"
+
+          echo "packager_args=$ARGS" >> "$GITHUB_OUTPUT"
+          echo "Packager args: $ARGS"
+
+      # ------------------------------------------------------------------ #
+      # 8. Run packager.py                                                   #
+      # ------------------------------------------------------------------ #
+      - name: Run packager
+        run: |
+          eval uv run python ci/packager.py ${{ steps.build_args.outputs.packager_args }}
+        env:
+          # Suppress Qt and other GUI-related imports that may fail in CI.
+          QT_QPA_PLATFORM: offscreen
+          # Prevent Weights & Biases from prompting for login.
+          WANDB_MODE: disabled
+          # Keep PyInstaller from requiring a display.
+          DISPLAY: ""
+
+      # ------------------------------------------------------------------ #
+      # 9. Locate the produced archive                                       #
+      # ------------------------------------------------------------------ #
+      - name: Locate export archive
+        id: find_archive
+        run: |
+          ARCHIVE=$(find dist/exports -name "wsmart_route_export_*.zip" \
+                    -printf '%T@ %p\n' | sort -n | tail -1 | cut -d' ' -f2-)
+          if [ -z "$ARCHIVE" ]; then
+            echo "ERROR: No export archive found in dist/exports/." >&2
+            ls -la dist/exports/ || true
+            exit 1
+          fi
+          echo "archive_path=$ARCHIVE" >> "$GITHUB_OUTPUT"
+          echo "archive_name=$(basename $ARCHIVE)" >> "$GITHUB_OUTPUT"
+          echo "Found archive: $ARCHIVE ($(du -sh $ARCHIVE | cut -f1))"
+
+      # ------------------------------------------------------------------ #
+      # 10. Upload artifact                                                  #
+      # ------------------------------------------------------------------ #
+      - name: Upload export artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.find_archive.outputs.archive_name }}
+          path: ${{ steps.find_archive.outputs.archive_path }}
+          retention-days: 30
+          if-no-files-found: error
+
+      # ------------------------------------------------------------------ #
+      # 11. Upload retained-files tree as a separate artifact               #
+      # ------------------------------------------------------------------ #
+      - name: Upload retained logic file tree
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: retained_logic_files_${{ github.run_id }}
+          path: retained_logic_files.txt
+          retention-days: 30
+          if-no-files-found: warn
+
+      # ------------------------------------------------------------------ #
+      # 12. Summary                                                          #
+      # ------------------------------------------------------------------ #
+      - name: Write job summary
+        if: always()
+        run: |
+          echo "## WSmart-Route Algorithm Export" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Input | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Constructors       | \`${{ steps.params.outputs.constructors || '(all)' }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Selectors          | \`${{ steps.params.outputs.selectors || '(all)' }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Improvement        | \`${{ steps.params.outputs.improvement || '(all)' }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Acceptance         | \`${{ steps.params.outputs.acceptance || '(all)' }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Joint              | \`${{ steps.params.outputs.joint || '(all)' }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Models             | \`${{ steps.params.outputs.models || '(all)' }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| RL Algorithms      | \`${{ steps.params.outputs.rl_algorithms || '(all)' }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Imitation Policies | \`${{ steps.params.outputs.imitation_policies || '(all)' }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Drop Features      | \`${{ steps.params.outputs.drop_features || '(none)' }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Environments       | \`${{ steps.params.outputs.envs || '(all)' }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Sim Datasets       | \`${{ steps.params.outputs.sim_datasets || '(all)' }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Distributions      | \`${{ steps.params.outputs.distributions || '(all)' }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Network Strategy   | \`${{ steps.params.outputs.network || '(all)' }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Skip Build         | \`${{ steps.params.outputs.skip_build }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Dry Run            | \`${{ steps.params.outputs.dry_run }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f retained_logic_files.txt ]; then
+            echo "<details><summary>Retained logic/src tree</summary>" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            cat retained_logic_files.txt >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            echo "</details>" >> "$GITHUB_STEP_SUMMARY"
+          fi

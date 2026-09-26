@@ -1,7 +1,7 @@
 """
 Matplotlib plotting style constants.
 
-Only used for post-simulation result visualisation (expo/output utilities).
+Only used for post-simulation result visualisation (plotting/output utilities).
 Not required for the simulator or training pipeline.
 
 Attributes:

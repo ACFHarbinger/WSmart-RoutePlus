@@ -7,7 +7,7 @@ import torch
 from logic.src.configs import Config
 from logic.src.configs.envs.graph import GraphConfig
 from logic.src.configs.tasks.sim import SimConfig
-from logic.src.pipeline.features.test import run_wsr_simulator_test as run_sim_test_func
+from logic.src.pipeline.features.test import run_simulator_test as run_sim_test_func
 from logic.src.pipeline.features.test import simulator_testing
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -114,7 +114,7 @@ class TestPipelineFeaturesTest:
     @patch("logic.src.pipeline.features.test.engine.simulator_testing")
     @patch("logic.src.pipeline.features.test.engine.os.makedirs")
     @patch("logic.src.pipeline.features.test.engine.expand_policy_configs")
-    def test_run_wsr_simulator_test(self, mock_expand, mock_makedirs, mock_sim_test, mock_load_data, mock_wst_init, cfg):
+    def test_run_simulator_test(self, mock_expand, mock_makedirs, mock_sim_test, mock_load_data, mock_wst_init, cfg):
         mock_load_data.return_value = ([1] * 10, None)
 
         run_sim_test_func(cfg)
@@ -127,7 +127,7 @@ class TestPipelineFeaturesTest:
     @patch("logic.src.pipeline.features.test.engine.simulator_testing")
     @patch("logic.src.pipeline.features.test.engine.os.makedirs")
     @patch("logic.src.pipeline.features.test.engine.expand_policy_configs")
-    def test_run_wsr_simulator_test_fallback(self, mock_expand, mock_makedirs, mock_sim_test, mock_load_data, mock_wst_init, cfg):
+    def test_run_simulator_test_fallback(self, mock_expand, mock_makedirs, mock_sim_test, mock_load_data, mock_wst_init, cfg):
         cfg.sim.graph.area = "mixrmbac"
         cfg.sim.graph.num_loc = 20
 

@@ -463,40 +463,40 @@ def remove_tracking_logging(file_path: Path):
         print(f"Error removing tracking.logging in {file_path}: {e}")
 
 
-def clean_expo_submodule(file_path: Path):
-    """Clean the newly organized visualization and plotting submodule located at logic/src/utils/expo."""
+def clean_plotting_submodule(file_path: Path):
+    """Clean the newly organized visualization and plotting submodule located at logic/src/utils/plotting."""
     root = get_project_root()
-    expo_dir = root / "logic/src/utils/expo"
-    if expo_dir.exists():
-        remove_path(expo_dir)
+    plotting_dir = root / "logic/src/utils/plotting"
+    if plotting_dir.exists():
+        remove_path(plotting_dir)
 
-    test_expo_dir = root / "logic/test/unit/utils/expo"
-    if test_expo_dir.exists():
-        remove_path(test_expo_dir)
+    test_plotting_dir = root / "logic/test/unit/utils/plotting"
+    if test_plotting_dir.exists():
+        remove_path(test_plotting_dir)
 
     try:
         if not file_path.exists():
             return
         content = file_path.read_text(errors="ignore")
 
-        if "logic.src.utils.expo" not in content:
+        if "logic.src.utils.plotting" not in content:
             return
 
-        print(f"Commenting out expo imports in: {file_path.relative_to(get_project_root())}")
+        print(f"Commenting out plotting imports in: {file_path.relative_to(get_project_root())}")
 
         content = re.sub(
-            r"(?m)^(\s*from\s+logic\.src\.utils\.expo\b.*)$",
+            r"(?m)^(\s*from\s+logic\.src\.utils\.plotting\b.*)$",
             r"# \1  # AUTO-REMOVED",
             content,
         )
         content = re.sub(
-            r"(?m)^(\s*import\s+logic\.src\.utils\.expo\b.*)$",
+            r"(?m)^(\s*import\s+logic\.src\.utils\.plotting\b.*)$",
             r"# \1  # AUTO-REMOVED",
             content,
         )
         file_path.write_text(content)
     except Exception as e:
-        print(f"Error cleaning expo submodule in {file_path}: {e}")
+        print(f"Error cleaning plotting submodule in {file_path}: {e}")
 
 
 def comment_justfile(justfile_path: Path):
@@ -579,8 +579,8 @@ def main():
         root / "logic/src/tracking/viz_mixin.py",
         root / "logic/configs/tracking",
         root / "logic/test/unit/utils/logging",
-        root / "logic/src/utils/expo",
-        root / "logic/test/unit/utils/expo",
+        root / "logic/src/utils/plotting",
+        root / "logic/test/unit/utils/plotting",
     ]
 
     for path in to_delete:
@@ -607,7 +607,7 @@ def main():
             comment_tracking_imports(p)
 
         remove_tracking_logging(p)
-        clean_expo_submodule(p)
+        clean_plotting_submodule(p)
 
     clean_test_functions(root / "logic/test/unit/utils/functions/test_functions.py")
 

@@ -126,7 +126,9 @@ def _get_primary_graph(cfg: Any, key: str, default: Any = None) -> Any:
         The attribute value or *default*.
     """
     try:
-        env = getattr(cfg, "env", None)
+        task = getattr(cfg, "task", "train")
+        task_cfg = getattr(cfg, task, cfg)
+        env = getattr(task_cfg, "env", getattr(cfg, "env", None))
         if env is None:
             return default
 
@@ -175,7 +177,10 @@ def _build_stage_config(cfg: Any, graph_cfg: Any, stage_idx: Optional[int] = Non
     else:
         g = {}
 
-    env_graph: Dict[str, Any] = raw.setdefault("env", {}).setdefault("graph", {})
+    task = str(raw.get("task", "train"))
+    task_cfg = raw.setdefault(task, {})
+    assert isinstance(task_cfg, dict), f"{task} config must be a dictionary"
+    env_graph: Dict[str, Any] = task_cfg.setdefault("env", {}).setdefault("graph", {})
     _GRAPH_KEYS = (
         "num_loc",
         "n_samples",
@@ -215,21 +220,22 @@ def _build_stage_config(cfg: Any, graph_cfg: Any, stage_idx: Optional[int] = Non
         else:
             reward_dict = {}
         if reward_dict:
-            raw.setdefault("env", {}).setdefault("graph", {})["reward"] = reward_dict
+            env_graph["reward"] = reward_dict
 
     # Clear curriculum_graphs to prevent recursive dispatch in the stage
-    raw.setdefault("env", {})["curriculum_graphs"] = []
+    task_env = task_cfg.setdefault("env", {})
+    task_env["curriculum_graphs"] = []
 
     # Filter eval_graphs to only include the one corresponding to this stage
     # if stage_idx is provided and eval_graphs exists.
     if stage_idx is not None:
-        eval_graphs = raw.get("env", {}).get("eval_graphs", [])
+        eval_graphs = task_env.get("eval_graphs", [])
         if eval_graphs and stage_idx < len(eval_graphs):
-            raw["env"]["eval_graphs"] = [eval_graphs[stage_idx]]
+            task_env["eval_graphs"] = [eval_graphs[stage_idx]]
         elif eval_graphs:
             # Fallback if eval_graphs is shorter than curriculum: empty list
             # which usually defaults to using env.graph
-            raw["env"]["eval_graphs"] = []
+            task_env["eval_graphs"] = []
 
     return OmegaConf.create(raw)
 
@@ -433,7 +439,9 @@ def run_training(cfg: Config, sinks: Optional[List[Any]] = None) -> float:
         return _run_training_via_zenml(cfg)
 
     # Curriculum dispatch
-    curriculum_graphs = list(getattr(getattr(cfg, "env", None), "curriculum_graphs", None) or [])
+    task_cfg = getattr(cfg, getattr(cfg, "task", "train"), cfg)
+    env_cfg = getattr(task_cfg, "env", getattr(cfg, "env", None))
+    curriculum_graphs = list(getattr(env_cfg, "curriculum_graphs", None) or [])
     if len(curriculum_graphs) > 1:
         logger.info(f"Curriculum learning enabled: {len(curriculum_graphs)} stage(s).")
         return _run_curriculum_stages(cfg, sinks, curriculum_graphs)

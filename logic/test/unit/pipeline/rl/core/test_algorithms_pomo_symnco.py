@@ -128,6 +128,50 @@ class TestSymNCO:
         assert out["reward"].shape == (batch_size,)
         assert not torch.isnan(out["loss"])
 
+    def test_shared_step_includes_problem_symmetricity_loss(self, symnco_module):
+        """Problem-symmetricity term must be live, not the leftover zero tensor."""
+        batch_size = 2
+        n_aug = 4
+        n_start = 5
+        batch = TensorDict({"locs": torch.rand(batch_size, 10, 2)}, batch_size=[batch_size])
+
+        class StructuredPolicy(torch.nn.Module):
+            def forward(self, td, env, strategy="sampling", num_starts=None, **kwargs):
+                current_bs = td.batch_size[0]
+                n_s = num_starts if num_starts is not None else n_start
+                # Rewards that differ across the augmentation axis so L_ps cannot
+                # collapse to the mean-zero case of identical views.
+                aug_idx = torch.arange(current_bs).repeat_interleave(n_s).float()
+                reward = aug_idx
+                # ll must correlate with the aug axis; constant ll makes L_ps
+                # mean to zero even when rewards differ, because advantages
+                # are zero-mean over that axis.
+                log_likelihood = aug_idx
+                return {
+                    "reward": reward,
+                    "log_likelihood": log_likelihood,
+                    "proj_embeddings": torch.randn(current_bs, 32),
+                }
+
+        class MockAug:
+            def __call__(self, td):
+                bs = td.batch_size[0]
+                return td.expand(n_aug, bs).contiguous().view(bs * n_aug)
+
+        symnco_module.policy = StructuredPolicy()
+        symnco_module.augmentation = MockAug()
+        symnco_module.num_augment = n_aug
+        symnco_module.num_starts = n_start
+
+        out = symnco_module.shared_step(batch, 0, "train")
+
+        assert "loss_ps" in out
+        assert "loss_ss" in out
+        assert "loss_inv" in out
+        assert out["loss_ps"].abs() > 0
+        expected = out["loss_ps"] + symnco_module.beta * out["loss_ss"] + symnco_module.alpha * out["loss_inv"]
+        assert torch.allclose(out["loss"], expected)
+
     def test_shared_step_val(self, symnco_module):
         """Test validation step logic."""
         batch_size = 2

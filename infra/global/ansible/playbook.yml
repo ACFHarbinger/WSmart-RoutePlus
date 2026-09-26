@@ -1,0 +1,6 @@
+---
+- name: Provision the optional REST API / remote-inference backend host
+  hosts: backend
+  become: true
+  roles:
+    - app

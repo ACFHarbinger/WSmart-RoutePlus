@@ -1,7 +1,7 @@
 /**
  * Hierarchical results table (§H.6) — native port of `compute_global_best`,
  * `render_hier_table_image` (as a native PPTX table instead of a raster) and
- * `export_results_excel` (via exceljs) from `archive/gen/gen_presentation.py`.
+ * `export_results_excel` (via exceljs) from `logic/gen/gen_presentation.py`.
  */
 import ExcelJS from "exceljs";
 import { SIM_CFG } from "../config";

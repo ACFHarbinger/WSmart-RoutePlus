@@ -1,0 +1,25 @@
+# WSmart+ Route — Cartographic/Civic Light Theme
+figure.facecolor: ffffff
+axes.facecolor: f4f6f8
+axes.edgecolor: bac4ce
+axes.linewidth: 1.2
+text.color: 1a202c
+axes.labelcolor: 4a5568
+xtick.color: 4a5568
+ytick.color: 4a5568
+grid.color: dce1e6
+grid.linestyle: --
+grid.linewidth: 1.0
+grid.alpha: 1.0
+axes.grid: True
+axes.spines.top: False
+axes.spines.right: False
+font.family: sans-serif
+font.sans-serif: Public Sans, Arial, Helvetica, Liberation Sans, DejaVu Sans, sans-serif
+axes.titleweight: bold
+axes.titlepad: 12
+axes.labelpad: 8
+legend.frameon: False
+lines.linewidth: 2.0
+scatter.edgecolors: white
+savefig.facecolor: ffffff

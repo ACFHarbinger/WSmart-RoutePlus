@@ -1,6 +1,6 @@
 /**
  * Plain-text equation fallback (§H.4) — ports `_plain_fallback` from
- * `archive/gen/gen_presentation.py`; the symbol table is kept as data.
+ * `logic/gen/gen_presentation.py`; the symbol table is kept as data.
  */
 
 const FALLBACK_SYMBOLS: [string, string][] = [

@@ -52,15 +52,15 @@ def compute_eoq_thresholds(context: SelectionContext) -> np.ndarray:
 
     if h <= 0 or S <= 0 or mu is None:
         # Assumes context.threshold is in the same units as context.max_fill (percent)
-        return np.full(n, float(context.threshold), dtype=float)
+        return np.full(n, context.threshold, dtype=float)
 
-    bin_mass_cap = float(context.bin_volume) * float(context.bin_density)
+    bin_mass_cap = context.bin_volume * context.bin_density
     if bin_mass_cap <= 0:
-        return np.full(n, float(context.threshold), dtype=float)
+        return np.full(n, context.threshold, dtype=float)
 
     # Convert mu (fill-percent/day) into kg/day using the same linear map
     # the rest of the codebase uses for mass.
-    demand_kg_day = (np.asarray(mu) / float(context.max_fill)) * bin_mass_cap
+    demand_kg_day = (np.asarray(mu) / context.max_fill) * bin_mass_cap
     demand_kg_day = np.where(demand_kg_day <= 0, 1e-9, demand_kg_day)
 
     Q_star = np.sqrt(2.0 * demand_kg_day * S / h)
@@ -69,7 +69,7 @@ def compute_eoq_thresholds(context: SelectionContext) -> np.ndarray:
     tau_ratio = np.minimum(1.0, Q_star / bin_mass_cap)
 
     # Convert to absolute units (e.g. 0-100)
-    tau = tau_ratio * float(context.max_fill)
+    tau = tau_ratio * context.max_fill
 
     # Safety assertion
     assert np.all(tau <= context.max_fill + 1e-9), "EOQ threshold exceeds max_fill"
@@ -97,6 +97,6 @@ def resolve_trigger_threshold(context: SelectionContext, fill_ratios: np.ndarray
     if getattr(context, "use_eoq_threshold", False):
         tau = compute_eoq_thresholds(context)
     else:
-        tau = np.full_like(current_fill, float(context.threshold), dtype=float)
+        tau = np.full_like(current_fill, context.threshold, dtype=float)
 
     return current_fill >= tau

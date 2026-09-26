@@ -73,7 +73,7 @@ def mock_dependencies(mocker):
 @pytest.fixture
 def mock_data_dir(tmp_path):
     """Creates a mock data directory structure."""
-    data_dir = tmp_path / "data" / "wsr_simulator"
+    data_dir = tmp_path / "data" / "simulator"
 
     # For loader.py (load_depot)
     coord_dir = data_dir / "coordinates"

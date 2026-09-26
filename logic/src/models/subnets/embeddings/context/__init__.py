@@ -25,6 +25,7 @@ from .wcvrp import WCVRPContextEmbedder
 CONTEXT_EMBEDDING_REGISTRY: Dict[str, Any] = {
     "vrpp": VRPPContextEmbedder,
     "cvrpp": CVRPPContextEmbedder,
+    "ctop": CVRPPContextEmbedder,
     "wcvrp": WCVRPContextEmbedder,
     "cwcvrp": WCVRPContextEmbedder,
     "sdwcvrp": WCVRPContextEmbedder,

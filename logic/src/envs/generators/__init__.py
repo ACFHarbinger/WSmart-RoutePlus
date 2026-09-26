@@ -17,6 +17,7 @@ from typing import Any
 
 from .atsp import ATSPGenerator
 from .base import Generator
+from .ctop import CTOPGenerator
 from .cvrp import CVRPGenerator
 from .irp import IRPGenerator
 from .op import OPGenerator
@@ -32,6 +33,7 @@ from .wcvrp import WCVRPGenerator
 GENERATOR_REGISTRY: dict[str, type[Generator]] = {
     "vrpp": VRPPGenerator,
     "cvrpp": VRPPGenerator,  # Same generator, different env handles capacity
+    "ctop": CTOPGenerator,
     "wcvrp": WCVRPGenerator,
     "cwcvrp": WCVRPGenerator,
     "scwcvrp": SCWCVRPGenerator,
@@ -82,6 +84,7 @@ __all__ = [
     "PCTSPGenerator",
     "PDPGenerator",
     "ThOPGenerator",
+    "CTOPGenerator",
     "GENERATOR_REGISTRY",
     "get_generator",
 ]

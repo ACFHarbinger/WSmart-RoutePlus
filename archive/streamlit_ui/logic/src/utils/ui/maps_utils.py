@@ -48,9 +48,9 @@ def load_distance_matrix(instance_name: str = "riomaior") -> Optional[pd.DataFra
     Returns:
         DataFrame containing the distance matrix, or None if not found.
     """
-    # Try to find a matching file in data/wsr_simulator/distance_matrix
+    # Try to find a matching file in data/simulator/distance_matrix
     # Common pattern seems to be gmaps_distmat_plastic[{instance_name}].csv
-    base_path = Path("data/wsr_simulator/distance_matrix")
+    base_path = Path("data/simulator/distance_matrix")
     if not base_path.exists():
         return None
 

@@ -461,7 +461,7 @@ costs, tours, durations = eval_dataset(...)
 
 **File**: `features/test/engine.py`
 
-**Key Function**: `run_wsr_simulator_test(opts)`
+**Key Function**: `run_simulator_test(opts)`
 
 **Workflow**:
 
@@ -475,7 +475,7 @@ costs, tours, durations = eval_dataset(...)
 **Usage**:
 
 ```python
-from logic.src.pipeline.features.test.engine import run_wsr_simulator_test
+from logic.src.pipeline.features.test.engine import run_simulator_test
 
 opts = {
     "seed": 42,
@@ -489,7 +489,7 @@ opts = {
     # ... other options
 }
 
-run_wsr_simulator_test(opts)
+run_simulator_test(opts)
 ```
 
 ---
@@ -1572,7 +1572,7 @@ print(f"Average inference time: {np.mean(durations):.4f}s")
 ### Example 3: Run Simulation
 
 ```python
-from logic.src.pipeline.features.test.engine import run_wsr_simulator_test
+from logic.src.pipeline.features.test.engine import run_simulator_test
 
 opts = {
     "seed": 42,
@@ -1594,7 +1594,7 @@ opts = {
     # ... other options
 }
 
-run_wsr_simulator_test(opts)
+run_simulator_test(opts)
 
 # Results saved to:
 # - assets/simulation_results/31_days/riomaior_50/log_mean_10N.json
@@ -1703,7 +1703,7 @@ distance_matrix = compute_distance_matrix(
 
 # Use in simulation
 opts["distance_matrix"] = distance_matrix
-run_wsr_simulator_test(opts)
+run_simulator_test(opts)
 ```
 
 ### Example 10: WSmart-Route Studio
@@ -1949,7 +1949,7 @@ Examples:
 | **Training Logs**      | `logs/<experiment_name>/`                        |
 | **Model Weights**      | `weights/<experiment_name>/`                     |
 | **Simulation Results** | `assets/<output_dir>/<days>_days/<area>_<size>/` |
-| **Distance Matrices**  | `data/wsr_simulator/distance_matrix/`            |
+| **Distance Matrices**  | `data/simulator/distance_matrix/`            |
 | **Checkpoints**        | `<checkpoint_dir>/`                              |
 
 ### Important Metrics

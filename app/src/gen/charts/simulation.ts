@@ -1,6 +1,6 @@
 /**
  * Simulation analysis chart library (§H.2) — native ECharts ports of every
- * figure generator in `archive/gen/gen_simulation_analysis.py`.
+ * figure generator in `logic/gen/gen_simulation_analysis.py`.
  *
  * Each builder returns a ChartSpec (option + pixel size) used identically for
  * in-app preview and PNG export.

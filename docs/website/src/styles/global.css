@@ -1,19 +1,4 @@
-:root {
-  --bg: #070a0f;
-  --bg-elevated: #0d1219;
-  --surface: rgba(255, 255, 255, 0.035);
-  --surface-hover: rgba(255, 255, 255, 0.06);
-  --border: rgba(255, 255, 255, 0.1);
-  --text: #eef2f7;
-  --text-muted: #8b95a8;
-  --eco: #3dffa8;
-  --route: #4cc9f0;
-  --amber: #f0b429;
-  --violet: #8b7cf6;
-  --font: "DM Sans", system-ui, sans-serif;
-  --mono: "DM Mono", ui-monospace, monospace;
-  --display: "Instrument Serif", Georgia, serif;
-}
+@import './tokens.css';
 
 *,
 *::before,
@@ -23,25 +8,29 @@
 
 html {
   scroll-behavior: smooth;
-  background: var(--bg);
+  background: var(--bg-base);
 }
 
 body {
   margin: 0;
   min-width: 320px;
-  font-family: var(--font);
-  color: var(--text);
-  background: var(--bg);
+  font-family: var(--font-body);
+  color: var(--text-main);
+  background: var(--bg-base);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  line-height: 1.6;
 }
 
 #root {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 a {
   color: inherit;
+  text-decoration: none;
 }
 
 button {
@@ -50,20 +39,22 @@ button {
   background: none;
   border: none;
   cursor: pointer;
+  padding: 0;
 }
 
-::selection {
-  color: var(--bg);
-  background: var(--eco);
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  margin-top: 0;
+  line-height: 1.2;
 }
 
-::-webkit-scrollbar {
-  width: 8px;
+code, pre {
+  font-family: var(--font-mono);
 }
-::-webkit-scrollbar-track {
-  background: var(--bg);
-}
-::-webkit-scrollbar-thumb {
-  background: #2a3344;
-  border-radius: 8px;
+
+/* Accessibility: Visible focus rings */
+:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
 }

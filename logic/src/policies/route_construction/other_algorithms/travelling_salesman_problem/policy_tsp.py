@@ -141,8 +141,14 @@ class TSPPolicy(BaseRoutingPolicy):
         # wastes_arr_bins should contain only customer nodes 1..M for get_multi_tour index mapping (x-1)
         wastes_arr_bins = np.array([sub_wastes[i] for i in range(1, len(sub_dist_matrix))])
 
-        # 2. Split the tour greedily based on capacity
-        full_tour = get_multi_tour(tour, wastes_arr_bins, capacity, sub_dist_matrix)
+        # 2. Split by capacity. The simulator applies CTOP time constraints
+        # after route improvement, using the full, correctly indexed matrix.
+        full_tour = get_multi_tour(
+            tour,
+            wastes_arr_bins,
+            capacity,
+            sub_dist_matrix,
+        )
 
         # 3. Convert flat tour to List[List[int]]
         real_routes: List[List[int]] = []

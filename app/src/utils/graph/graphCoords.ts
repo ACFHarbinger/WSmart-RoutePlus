@@ -19,8 +19,8 @@ export const GRAPH_PRESETS: GraphPreset[] = [
   {
     id: "rm-100",
     label: "RM-100 (Rio Maior)",
-    graphFile: "data/wsr_simulator/bins_selection/graphs_100V_1N_plastic.json",
-    coordFile: "data/wsr_simulator/coordinates/old_out_info[riomaior].csv",
+    graphFile: "data/simulator/bins_selection/graphs_100V_1N_plastic.json",
+    coordFile: "data/simulator/coordinates/old_out_info[riomaior].csv",
     area: "riomaior",
     wasteType: "Mistura de embalagens",
     depotSigla: "CTEASO",
@@ -28,8 +28,8 @@ export const GRAPH_PRESETS: GraphPreset[] = [
   {
     id: "rm-170",
     label: "RM-170 (Rio Maior)",
-    graphFile: "data/wsr_simulator/bins_selection/graphs_170V_1N_plastic.json",
-    coordFile: "data/wsr_simulator/coordinates/old_out_info[riomaior].csv",
+    graphFile: "data/simulator/bins_selection/graphs_170V_1N_plastic.json",
+    coordFile: "data/simulator/coordinates/old_out_info[riomaior].csv",
     area: "riomaior",
     wasteType: "Mistura de embalagens",
     depotSigla: "CTEASO",
@@ -37,8 +37,8 @@ export const GRAPH_PRESETS: GraphPreset[] = [
   {
     id: "ffz-350",
     label: "FFZ-350 (Figueira da Foz)",
-    graphFile: "data/wsr_simulator/bins_selection/graphs_350V_1N_plastic.json",
-    coordFile: "data/wsr_simulator/coordinates/out_info[figdafoz].csv",
+    graphFile: "data/simulator/bins_selection/graphs_350V_1N_plastic.json",
+    coordFile: "data/simulator/coordinates/out_info[figdafoz].csv",
     area: "figueiradafoz",
     wasteType: "Mistura de embalagens",
     depotSigla: "CITVRSU",
@@ -90,7 +90,7 @@ async function loadDepotCoords(
   projectRoot: string,
   sigla: string
 ): Promise<CoordRow | null> {
-  const path = joinPath(projectRoot, "data/wsr_simulator/coordinates/Facilities.csv");
+  const path = joinPath(projectRoot, "data/simulator/coordinates/Facilities.csv");
   const rows = await loadCsvRows(path);
   const facility = rows.find((r) => String(r.Sigla) === sigla);
   return facility ? rowLatLng(facility) : null;

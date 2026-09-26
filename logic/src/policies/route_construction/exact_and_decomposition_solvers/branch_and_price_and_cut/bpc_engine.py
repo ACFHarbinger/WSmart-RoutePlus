@@ -34,9 +34,9 @@ Paper-to-Implementation Mapping (BHV2000)
     rcspp_dp.py.
 
 §4.1 – Lifted Cover Inequalities (LCI)
-    Arc-capacity knapsack cuts lifted via the Gu, Nemhauser, Savelsbergh
-    (1995a) exact sequence-independent procedure.  Both the physical-capacity
-    engine (PhysicalCapacityLCIEngine) and the saturated-arc engine
+    "Lifted Cover Inequalities for 0-1 Integer Programs: Complexity" via the Gu,
+    Nemhauser, Savelsbergh (1995a) exact sequence-independent procedure.  Both the
+    physical-capacity engine (PhysicalCapacityLCIEngine) and the saturated-arc engine
     (SaturatedArcLCIEngine) are implemented; the latter matches §6 exactly.
     LCI duals γ_{lm} modify pricing arc costs as c'_{lm}^k = c_{lm}^k + γ_{lm}·α_{lm}^k.
     Implementation: cutting_planes.py; dual integration: rcspp_dp.py:

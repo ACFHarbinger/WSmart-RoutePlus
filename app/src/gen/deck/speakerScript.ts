@@ -1,6 +1,6 @@
 /**
  * Speaker script DOCX (§H.6) — native port of `gen_speaker_script` from
- * `archive/gen/gen_presentation.py`, replacing docxtpl + the .docx template
+ * `logic/gen/gen_presentation.py`, replacing docxtpl + the .docx template
  * with a programmatic `docx` document of the same structure.
  */
 import {

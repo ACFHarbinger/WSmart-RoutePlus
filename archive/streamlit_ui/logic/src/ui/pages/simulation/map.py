@@ -48,7 +48,7 @@ def load_custom_matrix(controls: Dict[str, Any]) -> Any:
     if controls.get("distance_strategy") == "load_matrix":
         selected_file = controls.get("selected_matrix_file")
         if selected_file:
-            matrix_path = os.path.join(ROOT_DIR, "data", "wsr_simulator", "distance_matrix", selected_file)
+            matrix_path = os.path.join(ROOT_DIR, "data", "simulator", "distance_matrix", selected_file)
             if os.path.isfile(matrix_path):
                 try:
                     if matrix_path.endswith((".xlsx", ".xls")):
@@ -64,7 +64,7 @@ def load_custom_matrix(controls: Dict[str, Any]) -> Any:
                         index_path = os.path.join(
                             ROOT_DIR,
                             "data",
-                            "wsr_simulator",
+                            "simulator",
                             "bins_selection",
                             selected_index_file,
                         )

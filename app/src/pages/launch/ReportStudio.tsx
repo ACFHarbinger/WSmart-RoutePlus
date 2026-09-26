@@ -26,7 +26,7 @@ import { useSpawnProcess } from "../../hooks/process/useSpawnProcess";
 import type { ProcessEntry } from "../../types";
 
 // Archived batch pipeline location (§H — retired from logic/gen)
-export const GEN_SCRIPTS_DIR = "archive/gen";
+export const GEN_SCRIPTS_DIR = "logic/gen";
 
 const TABS: { id: ReportGenTab; label: string }[] = [
   { id: "dataset", label: "Dataset Analysis" },
@@ -368,7 +368,7 @@ export function ReportStudio() {
           results presentation deck (PPTX + speaker DOCX + XLSX).{" "}
           <strong>Native</strong> renders everything in-app (ECharts figures, MathJax
           equations, pptxgenjs deck — §H); <strong>Legacy</strong> spawns the archived{" "}
-          <code>archive/gen</code> Python scripts.
+          <code>logic/gen</code> Python scripts.
         </p>
         <div className="flex gap-2 flex-wrap items-center">
           {TABS.map((t) => (

@@ -1,0 +1,487 @@
+{
+ "meta": {
+  "primary_horizon": 30,
+  "retained_runs": 456,
+  "constructor_n": 57
+ },
+ "constructors": [
+  {
+   "name": "BPC",
+   "color": "#a060e0",
+   "n": 57,
+   "kgkm": 6.65,
+   "kgkm_med": 6.31,
+   "overflows": 8.1,
+   "overflows_med": 4.0,
+   "km": 4018.0,
+   "time": 1140.0
+  },
+  {
+   "name": "PG-CLNS",
+   "color": "#f0a030",
+   "n": 57,
+   "kgkm": 6.31,
+   "kgkm_med": 6.22,
+   "overflows": 6.0,
+   "overflows_med": 4.0,
+   "km": 4340.0,
+   "time": 1967.0
+  },
+  {
+   "name": "ACO-HH",
+   "color": "#00c8a0",
+   "n": 57,
+   "kgkm": 6.3,
+   "kgkm_med": 6.04,
+   "overflows": 11.1,
+   "overflows_med": 4.0,
+   "km": 4266.0,
+   "time": 589.0
+  },
+  {
+   "name": "HGS",
+   "color": "#e05c5c",
+   "n": 57,
+   "kgkm": 6.16,
+   "kgkm_med": 5.99,
+   "overflows": 19.9,
+   "overflows_med": 6.0,
+   "km": 4553.0,
+   "time": 2309.0
+  },
+  {
+   "name": "ALNS",
+   "color": "#c04070",
+   "n": 57,
+   "kgkm": 6.13,
+   "kgkm_med": 6.22,
+   "overflows": 5.9,
+   "overflows_med": 4.0,
+   "km": 4497.0,
+   "time": 1168.0
+  },
+  {
+   "name": "SWC-TCF",
+   "color": "#5cb85c",
+   "n": 57,
+   "kgkm": 5.66,
+   "kgkm_med": 5.05,
+   "overflows": 15.6,
+   "overflows_med": 4.0,
+   "km": 5035.0,
+   "time": 1109.0
+  },
+  {
+   "name": "PSOMA",
+   "color": "#4e88d9",
+   "n": 57,
+   "kgkm": 5.62,
+   "kgkm_med": 5.14,
+   "overflows": 6.1,
+   "overflows_med": 4.0,
+   "km": 5294.0,
+   "time": 1067.0
+  },
+  {
+   "name": "SANS",
+   "color": "#a0a0a0",
+   "n": 57,
+   "kgkm": 5.36,
+   "kgkm_med": 5.25,
+   "overflows": 9.0,
+   "overflows_med": 4.0,
+   "km": 5211.0,
+   "time": 2439.0
+  }
+ ],
+ "strategies": [
+  {
+   "key": "LMCF90",
+   "name": "Last-Minute (CF90)",
+   "n": 80,
+   "kgkm": 7.38,
+   "overflows": 14.9,
+   "km": 2940.0,
+   "time": 892.0
+  },
+  {
+   "key": "LA",
+   "name": "Look-Ahead",
+   "n": 80,
+   "kgkm": 6.37,
+   "overflows": 5.6,
+   "km": 3396.0,
+   "time": 914.0
+  },
+  {
+   "key": "LMCF70",
+   "name": "Last-Minute (CF70)",
+   "n": 80,
+   "kgkm": 5.82,
+   "overflows": 4.3,
+   "km": 3788.0,
+   "time": 1171.0
+  },
+  {
+   "key": "SLSL1",
+   "name": "Service-Level (SL1)",
+   "n": 80,
+   "kgkm": 5.23,
+   "overflows": 3.3,
+   "km": 4147.0,
+   "time": 1376.0
+  },
+  {
+   "key": "SLSL2",
+   "name": "Service-Level (SL2)",
+   "n": 80,
+   "kgkm": 3.81,
+   "overflows": 1.2,
+   "km": 5711.0,
+   "time": 1941.0
+  }
+ ],
+ "improvers": {
+  "pairs": 224,
+  "wins": 202,
+  "losses": 22,
+  "ties": 0,
+  "mean_delta_kgkm": 0.74,
+  "mean_km_cls": 4358.0,
+  "mean_km_ftsp": 4662.0,
+  "loss_breakdown": [
+   {
+    "constructor": "PSOMA",
+    "n": 8,
+    "mean": -2.42
+   },
+   {
+    "constructor": "SWC-TCF",
+    "n": 8,
+    "mean": -2.02
+   },
+   {
+    "constructor": "HGS",
+    "n": 6,
+    "mean": -1.46
+   }
+  ]
+ },
+ "pareto": [
+  {
+   "name": "ACO-HH",
+   "kgkm": 6.3,
+   "overflows": 11.1,
+   "front": false
+  },
+  {
+   "name": "ALNS",
+   "kgkm": 6.13,
+   "overflows": 5.9,
+   "front": true
+  },
+  {
+   "name": "BPC",
+   "kgkm": 6.65,
+   "overflows": 8.1,
+   "front": true
+  },
+  {
+   "name": "HGS",
+   "kgkm": 6.16,
+   "overflows": 19.9,
+   "front": false
+  },
+  {
+   "name": "PG-CLNS",
+   "kgkm": 6.31,
+   "overflows": 6.0,
+   "front": true
+  },
+  {
+   "name": "PSOMA",
+   "kgkm": 5.62,
+   "overflows": 6.1,
+   "front": false
+  },
+  {
+   "name": "SANS",
+   "kgkm": 5.36,
+   "overflows": 9.0,
+   "front": false
+  },
+  {
+   "name": "SWC-TCF",
+   "kgkm": 5.66,
+   "overflows": 15.6,
+   "front": false
+  }
+ ],
+ "scenario": {
+  "by_dist": [
+   {
+    "dist": "Empirical",
+    "kgkm": 4.71,
+    "overflows": 6.1,
+    "kg_lost": 22.0
+   },
+   {
+    "dist": "Gamma-3",
+    "kgkm": 7.35,
+    "overflows": 15.0,
+    "kg_lost": 89.0
+   }
+  ],
+  "by_N": [
+   {
+    "N": 100,
+    "kgkm": 5.74,
+    "km": 2223.0,
+    "time": 815.0,
+    "overflows": 5.2
+   },
+   {
+    "N": 170,
+    "kgkm": 5.08,
+    "km": 4238.0,
+    "time": 1160.0,
+    "overflows": 6.3
+   },
+   {
+    "N": 350,
+    "kgkm": 6.99,
+    "km": 7618.0,
+    "time": 2608.0,
+    "overflows": 21.6
+   }
+  ]
+ },
+ "heatmap": {
+  "columns": [
+   "FFZ-350/Emp",
+   "FFZ-350/Gamma-3",
+   "RM-100/Emp",
+   "RM-100/Gamma-3",
+   "RM-170/Emp",
+   "RM-170/Gamma-3"
+  ],
+  "rows": [
+   {
+    "constructor": "ACO-HH",
+    "values": [
+     6.8,
+     9.05,
+     4.46,
+     7.97,
+     4.06,
+     6.59
+    ]
+   },
+   {
+    "constructor": "ALNS",
+    "values": [
+     6.46,
+     8.32,
+     4.49,
+     7.97,
+     4.24,
+     6.61
+    ]
+   },
+   {
+    "constructor": "BPC",
+    "values": [
+     7.9,
+     10.44,
+     4.43,
+     7.83,
+     4.3,
+     6.7
+    ]
+   },
+   {
+    "constructor": "HGS",
+    "values": [
+     6.54,
+     7.74,
+     5.31,
+     8.35,
+     4.6,
+     6.43
+    ]
+   },
+   {
+    "constructor": "PG-CLNS",
+    "values": [
+     6.97,
+     8.75,
+     4.49,
+     8.02,
+     4.28,
+     6.87
+    ]
+   },
+   {
+    "constructor": "PSOMA",
+    "values": [
+     5.27,
+     5.88,
+     4.46,
+     7.7,
+     4.4,
+     6.54
+    ]
+   },
+   {
+    "constructor": "SANS",
+    "values": [
+     5.69,
+     7.21,
+     3.65,
+     7.29,
+     3.46,
+     6.09
+    ]
+   },
+   {
+    "constructor": "SWC-TCF",
+    "values": [
+     4.48,
+     8.2,
+     4.4,
+     7.63,
+     3.95,
+     6.28
+    ]
+   }
+  ]
+ },
+ "horizon": {
+  "pairs": 165,
+  "positive_pairs": 140,
+  "mean_delta_kgkm": 0.26,
+  "by_constructor": [
+   {
+    "constructor": "HGS",
+    "pairs": 12,
+    "kgkm_30": 7.75,
+    "kgkm_90": 7.28,
+    "overflows_30": 38.1,
+    "overflows_90": 105.9
+   },
+   {
+    "constructor": "BPC",
+    "pairs": 57,
+    "kgkm_30": 6.65,
+    "kgkm_90": 6.96,
+    "overflows_30": 8.1,
+    "overflows_90": 28.5
+   },
+   {
+    "constructor": "PG-CLNS",
+    "pairs": 40,
+    "kgkm_30": 6.26,
+    "kgkm_90": 6.56,
+    "overflows_30": 5.0,
+    "overflows_90": 16.3
+   },
+   {
+    "constructor": "SWC-TCF",
+    "pairs": 5,
+    "kgkm_30": 5.83,
+    "kgkm_90": 6.33,
+    "overflows_30": 4.4,
+    "overflows_90": 25.6
+   },
+   {
+    "constructor": "ACO-HH",
+    "pairs": 28,
+    "kgkm_30": 5.35,
+    "kgkm_90": 5.68,
+    "overflows_30": 3.2,
+    "overflows_90": 11.5
+   },
+   {
+    "constructor": "SANS",
+    "pairs": 12,
+    "kgkm_30": 4.66,
+    "kgkm_90": 4.93,
+    "overflows_30": 2.8,
+    "overflows_90": 8.7
+   },
+   {
+    "constructor": "PSOMA",
+    "pairs": 11,
+    "kgkm_30": 4.49,
+    "kgkm_90": 4.79,
+    "overflows_30": 2.3,
+    "overflows_90": 7.3
+   }
+  ]
+ },
+ "excluded": [
+  {
+   "constructor": "SWC-TCF",
+   "horizon": 90,
+   "city": "Figueira da Foz",
+   "N": 350,
+   "policy": "LA/FTSP",
+   "kg": 31164.0,
+   "shortfall": 0.86,
+   "overflows": 23886.0
+  },
+  {
+   "constructor": "SWC-TCF",
+   "horizon": 30,
+   "city": "Figueira da Foz",
+   "N": 350,
+   "policy": "LA/FTSP",
+   "kg": 37065.0,
+   "shortfall": 0.47,
+   "overflows": 2166.0
+  },
+  {
+   "constructor": "SWC-TCF",
+   "horizon": 30,
+   "city": "Figueira da Foz",
+   "N": 350,
+   "policy": "LA/CLS",
+   "kg": 37065.0,
+   "shortfall": 0.47,
+   "overflows": 2168.0
+  },
+  {
+   "constructor": "SWC-TCF",
+   "horizon": 30,
+   "city": "Figueira da Foz",
+   "N": 350,
+   "policy": "SLSL2/FTSP",
+   "kg": 51086.0,
+   "shortfall": 0.3,
+   "overflows": 757.0
+  }
+ ],
+ "colors": {
+  "constructors": {
+   "ACO-HH": "#00c8a0",
+   "HGS": "#e05c5c",
+   "BPC": "#a060e0",
+   "SANS": "#a0a0a0",
+   "PG-CLNS": "#f0a030",
+   "PSOMA": "#4e88d9",
+   "ALNS": "#c04070",
+   "SWC-TCF": "#5cb85c"
+  },
+  "variants": {
+   "LA": "#4e88d9",
+   "LM (CF70)": "#e05c5c",
+   "LM (CF90)": "#e09020",
+   "SL (SL1)": "#20b2aa",
+   "SL (SL2)": "#20a020"
+  },
+  "improvers": {
+   "FTSP": "#5588dd",
+   "CLS": "#dd8844"
+  }
+ }
+}

@@ -1,6 +1,6 @@
 /**
  * Simulation analysis report generator (§H.5) — native port of the
- * orchestration + Jinja template of `archive/gen/gen_simulation_analysis.py`.
+ * orchestration + Jinja template of `logic/gen/gen_simulation_analysis.py`.
  *
  * Loads horizon CSVs (or parses raw output trees), renders every §H.2 chart
  * to PNG figures, builds all tables, renders the markdown template, and

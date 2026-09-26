@@ -19,6 +19,626 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### CTOP travel-time matrices and simulation completion (`2026-09-07`)
+
+- Added `logic/src/data/time.compute_time_matrix`: uniform 35 km/h travel
+  or ID-aligned, directed CSV travel times, with explicit seconds/minutes/hours
+  conversion and validation. Bin-only dashboard files use distance/speed for
+  missing depot legs. Missing customer IDs raise an error.
+- Extended repository temporal parameter loading to return a travel-time matrix
+  when coordinates and distances are supplied, preserving the no-argument
+  scalar API. Added simulation shift, speed, service, and graph time-file options.
+- CTOP now splits every policy's final route after improvement using both
+  capacity and time, preserves depot stops, rejects individually infeasible
+  customers, and validates before changing bin contents. Time metrics use the
+  same matrix, including return legs and zero service-time overrides.
+- Resumed simulations reload time matrices against restored coordinates.
+  CTOP environment masks, resource updates, and task evaluation accept directed
+  time matrices in hours. Added regression coverage for these paths.
+- Saved daily tours retain intermediate depot visits, making split-trip
+  capacity and time checks reproducible from the logs.
+- Validation: CTOP/simulator/TSP regression tests pass; two-day real-data
+  simulations completed with uniform speed and a labelled seconds matrix.
+  The broad suite ran with 1,334 passing, three skipped, and four training
+  failures (tracking SQLite access and non-OmegaConf configuration inputs).
+  Focused lint/type checks pass; repository-wide checks still report unrelated
+  lint and typing issues. The standard test-suite wrapper also has a relocated
+  pytest launcher issue in this checkout; verification used `uv run python -m pytest`.
+
+#### Shared research, codebase, and manuscript audit (`2026-08-28`)
+
+- Added `.agent/reports/shared/COMPREHENSIVE_REPORT.md` as the collaborative
+  evidence-backed report of record for the MPVRPP research, archived
+  experiment, framework implementation, and paper. The initial audit includes
+  a claim-to-artifact matrix, prioritized amendment ledger, reproducibility
+  requirements, and explicit disagreement tracking.
+- Verified two new publication blockers from primary artifacts: all 36 archived
+  30-day configurations use `sim.n_vehicles: 0`, contradicting the paper's
+  single-vehicle description under the code's automatic/unlimited routing
+  semantics; and the tracked 174-row 90-day set does not reproduce either a
+  per-scenario or global-policy Pareto carry-forward rule.
+
+#### Hypothesis property-based testing suite for bit-packing utilities (`2026-08-27`, §B.1)
+
+- Added `logic/test/properties/test_boolmask_properties.py` using Hypothesis to formally verify `_pad_mask` 8-byte alignment, `_mask_bool2byte` / `_mask_byte2bool` lossless roundtrips, and `mask_bool2long` / `mask_long2bool` bit-packing invariants across arbitrary graph sizes.
+
+#### Comprehensive performance benchmark suite runner (`2026-08-27`, §E.1)
+
+- Added `logic/benchmark/run_all.py` and root recipe `just run-benchmark` executing neural latency/throughput scaling, vectorized local search throughput, and exact/metaheuristic OR solver performance with structured metric logging.
+- Fixed CUDA device generator synchronization in `RandomLocalSearchPolicy` and `ImprovementPolicy`.
+
+#### Reproducible paper build target (`2026-08-27`)
+
+- Added `just paper` shorthand recipe to regenerate simulation summary tables, protocol diagrams, network maps, and compile `paper.pdf` in one command (§I.2).
+
+#### Policy & operator review audit refresh (`2026-08-27`, #62)
+
+- Refreshed all four review documents in `docs/moon/review/` against the modern modular directory structure, expanding analysis to 80+ routing algorithms, 85+ operators, 23 standard acceptance criteria, and CTOP temporal/profit duality (§C.8).
+
+### Changed
+
+#### Capacitated Team Orienteering naming (`2026-09-07`)
+
+- Renamed the time-constrained capacitated problem to Capacitated Team
+  Orienteering Problem (CTOP), including Python classes, module filenames,
+  registries, Hydra configuration, tests, and documentation. Use `ctop` as
+  the problem identifier and `envs@train.env=ctop` for training.
+
+#### Paper citation and scholarly-positioning audit (`2026-08-28`)
+
+- Verified the paper's publication-facing references against primary publisher
+  records and corrected Wentges, Lysgaard, Barnhart, Sun, Kool, and Ma
+  metadata or citation keys. Stable author–year keys now replace the remaining
+  generic and hash-like exports, and DOI fields no longer contain nested URLs.
+- Positioned the MPVRPP explicitly beside periodic VRP, inventory routing,
+  team orienteering, and multi-period profitable routing, with an additional
+  good-laboratory-practice anchor for the framework's component-level audit.
+- Corrected the regional-network provenance: both panels use OpenStreetMap
+  road geometry, while the route matrices use Google Maps for Rio Maior and
+  OpenStreetMap for Figueira da Foz. Added contributor and ODbL attribution.
+- Withdrew the shared report's RCP-034 finding after the primary Lin et al.
+  article confirmed that it explicitly uses Farkas pricing for an infeasible
+  restricted master problem. The rebuilt PDF has no undefined citations or
+  references; generated files under `Tables/` were not edited.
+
+### Performance
+
+#### GPU peak memory monitoring & profiling (`2026-08-27`, §F.2)
+
+- Added `GPUMemoryMonitor` Lightning callback (`logic/src/pipeline/callbacks/pytorch/gpu_memory_monitor.py`) to reset CUDA peak statistics at epoch start and log `memory/peak_allocated_mb` and `memory/peak_reserved_mb` at epoch end. Auto-registered in `WSTrainer` on CUDA devices.
+
+#### Evaluation engine inference optimization (`2026-08-27`, §F.1)
+
+- Adopted `torch.inference_mode()` across all evaluation evaluators (`GreedyEval`, `SamplingEval`, `AugmentationEval`, `MultiStartEval`, `MultiStartAugmentEval`), eliminating PyTorch version tracking and view mutation overhead during evaluation rollouts.
+
+### Fixed
+
+#### Sym-NCO problem-symmetricity loss was a no-op (`2026-08-27`)
+
+- `SymNCO.shared_step` commented "1. Problem symmetricity loss" but never
+  called `problem_symmetricity_loss`; `loss_ps` stayed 0, so the paper's
+  instance-augmentation consistency term did not train. Wired the call
+  (augmentation axis, dim=1) next to the already-live solution-symmetricity
+  term. `train/loss_inv` now logs the computed invariance loss instead of
+  the leftover zero tensor. Regression:
+  `test_shared_step_includes_problem_symmetricity_loss`.
+- `AttentionModel.__init__` default `n_encode_layers` aligned to 3 (Kool
+  2019 / `am.yaml`); was 2. Tests that need a thinner net already pass the
+  count explicitly.
+- `AttentionModelPolicy` default `hidden_dim` aligned to 512 (Kool 2019
+  encoder FF width / `am.yaml`); was 128. Integration tests already pass
+  128 explicitly.
+
+#### Hydra task aliases (`2026-08-27`)
+
+- The documented `evaluation` and `sim_hpo` CLI aliases now select the real
+  Hydra task groups (`eval` and `hpo_sim`) instead of composing a missing
+  configuration group and failing before dispatch.
+
+#### Train curriculum configuration (`2026-08-27`)
+
+- Curriculum training now reads and injects graph settings under Hydra's
+  task-scoped `train.env`, preventing the silent one-epoch fallback caused by
+  looking for an uncomposed root `env` key.
+
+#### Evaluation device validation (`2026-08-27`)
+
+- CPU-only evaluation now reports that multiprocessing requires CUDA instead
+  of dividing by a zero CUDA-device count.
+
+#### Data-generation tracking (`2026-08-27`)
+
+- Failed dataset-generation runs are now tagged `failed`, rather than being
+  incorrectly recorded as completed.
+
+#### Simulator validation (`2026-08-27`)
+
+- The simulator engine now delegates to the public configuration validator;
+  both paths normalize numeric and scientific-notation edge thresholds alike.
+
+#### CTOP feasibility and state-resume review (`2026-08-27`)
+
+- CTOP now validates the full depot-to-depot trip, including a trailing or
+  explicit return to the depot. Static scoring and the live action mask use a
+  supplied road-distance matrix for travel time, with the same inclusive
+  `1e-6` feasibility tolerance.
+- CTOP defaults now live in the routing package rather than importing the
+  simulation repository during environment construction, which removes an
+  import cycle that made `CTOPGenerator` unusable.
+- Resetting an initialized CVRPP/CTOP state preserves its remaining capacity
+  and time resources, so resumed search keeps the original depot coordinate
+  and resource accounting.
+- CTOP now resolves to the CVRPP initial, context, state, and edge embedding
+  components, allowing neural training and critic construction; the
+  drift-report CLI also accepts `--problem ctop`.
+- `CTOPEnv` had no `__init__` override, so it inherited `VRPPEnv`'s, which
+  always builds a plain `VRPPGenerator`. `get_env("ctop",
+  shift_hours=6.5, ...)` (including Hydra-composed overrides) silently
+  swallowed the three temporal kwargs in `VRPPGenerator.**kwargs`; they
+  never reached the environment and `_reset_instance` fell back to
+  `get_default_temporal_params()` regardless of what was requested.
+  Confirmed live before the fix (`env.generator` was a `VRPPGenerator`
+  with no `shift_hours` attribute at all). Added
+  `CTOPEnv.__init__`, building a `CTOPGenerator` and passing it through
+  to `VRPPEnv.__init__` (which then skips its own generator construction
+  since one is already supplied). Regression test added:
+  `test_get_env_factory_builds_a_ctop_generator_not_a_plain_vrpp_one`.
+
+### Added
+
+#### CTOP multi-day simulator support and dual constraint enforcement (`2026-08-27`)
+
+- **Simulation Problem Registration & Validation**: Registered `ctop` across `logic/src/constants/simulation.py`, `logic/src/configs/tasks/sim.py`, and `logic/src/pipeline/features/test/validation.py` / `engine.py`.
+- **Temporal Parameter Loading & Simulation Context**: Automated retrieval of working shift duration (`shift_hours`), average vehicle speed (`avg_speed_kmh`), and per-bin service time (`service_time_h`) in `InitializingState`, forwarded across `SimulationDayContext` and `SearchContext`.
+- **Dual Constraint Route Construction**: Extended `get_multi_tour` and `BaseRoutingPolicy` to enforce both vehicle waste capacity ($Q$) and shift time budget ($T_{\max}$) with depot returns.
+- **Operational Metric & KPI Tracking**: Implemented additive tracking for `time_spent = (raw_km / avg_speed_kmh) + (ncol * service_time_h)` in `CollectAction`, `LogAction`, and summary tables in `logic/src/tracking/logging/modules/analysis.py`.
+- **Unit Testing**: Added `logic/test/unit/pipeline/simulations/test_ctop_simulation.py` covering validation, dual constraint splitting, operational time calculation, and shift budget enforcement.
+
+#### Grok joins in place of Opencode; continuous work queued for all three agents (`2026-08-27`)
+
+- Grok replaces Opencode in the agent rotation. `git/messages/opencode_coauthor.msg`
+  renamed to `grok_coauthor.msg`; `.agent/bus/AGENT_BUS.md`'s roster table
+  updated with current assignments (it had gone stale — Agy's row still said
+  "website visual design" while actually on CTOP simulator work). Opencode's
+  prior website-interactive lane is left as historical record
+  (`.agent/tasks/opencode-website-interactive.md`), not rewritten.
+- Issue #60 (CTOP Hydra configs) reassigned Opencode → Grok, same scope.
+- Queued a second issue behind each agent's current one, so all three can
+  work continuously without needing a live check-in: #61 (Codex, after #58 —
+  general bug/lint pass over `logic/src/`, following the existing but
+  never-yet-run `.agent/skills/systematic-bug-hunt.md` convention, tracked
+  via a new `docs/errors/ROADMAP.md`), #62 (Agy, after #59 — refresh the
+  existing March-dated `docs/moon/review/{POLICY_IMPLEMENTATION_ANALYSIS,
+  OPERATOR_IMPLEMENTATION_ANALYSIS,ACCEPTANCE_CRITERIA_ANALYSIS,
+  OPERATOR_PROFIT_AWARE_FEEDBACK}.md` reports against current code and
+  extend their coverage), #63 (Grok, after #60 — new
+  `docs/moon/review/MODEL_IMPLEMENTATION_ANALYSIS.md`, no prior report
+  exists for `logic/src/models/` vs. `bibliography/models/`). All four are
+  the three codebase passes requested earlier in the session, now mapped
+  1:1 onto the three agents instead of held back for a later batch.
+- Fixed a real, pre-existing broken reference found while writing #61's
+  brief: `README.md` and `.agent/skills/systematic-bug-hunt.md` both
+  pointed at `docs/ARCHITECTURE.md`, which doesn't exist — the file is at
+  `docs/moon/ARCHITECTURE.md`. Both repointed.
+
+#### Capacitated Team Orienteering Problem (CTOP) — foundation (`2026-08-27`)
+
+- New problem type: CTOP = CVRPP's existing objective and per-trip vehicle
+  capacity constraint, **plus** an independent per-trip time budget (travel
+  time at `avg_speed_kmh` + `service_time_h` per bin). Both constraints hold
+  simultaneously; neither replaces the other. Single-vehicle, multi-trip
+  within a period (not a concurrent fleet — see
+  `docs/moon/roadmaps/new_features.md` §E.8 for the future true-fleet
+  variant, added for the heterogeneous-waste-stream scenario).
+- `SimulationRepository.get_temporal_params()` (staticmethod, no args,
+  mirrors `get_area_params`'s shape) returns `(shift_hours=7.0,
+  avg_speed_kmh=35.0, service_time_h=0.025)`, plus a `load_temporal_params()`
+  wrapper. `EnvironmentTag.TIME_BUDGET` added.
+- `logic/src/envs/tasks/ctop.py`, `logic/src/envs/routing/ctop.py`,
+  `logic/src/envs/generators/ctop.py` (`CTOP(CVRPP)`, `CTOPEnv(CVRPPEnv)`,
+  `CTOPGenerator(VRPPGenerator)`), registered across `ENV_REGISTRY`,
+  `GENERATOR_REGISTRY`, the `envs.problems` facade, and
+  `utils.model.problem_factory.load_problem`. `logic/configs/envs/ctop.yaml`
+  added, mirroring `vrpp.yaml`.
+- KPI tracking made additive rather than fixed-schema: `cost_dict`/results
+  dicts now carry a `"time"` key only when the problem tracks one (ctop),
+  tolerated as absent everywhere else — the plug-and-play seam for future
+  problem-specific KPIs.
+- **Bug found and fixed, independent of CTOP**: `CVRPPEnv._step_instance`
+  never called `super()._step_instance()` — `current_node`/`visited`/
+  `tour_length`/`tour` never advanced past their reset values for any
+  cvrpp rollout. Capacity tracking ran, but the agent's position and the
+  episode's own state were frozen after the first action. Confirmed via
+  direct before/after rollout test. Any committed cvrpp results predating
+  this fix should be treated as suspect.
+- Delegated the rest of CTOP: #58 (Codex — adversarial review of the RL-envs
+  side + remaining training/eval pipeline gaps), #59 (Agy — wire the actual
+  test simulator `pipeline/simulations`/`policies` to respect a time
+  budget), #60 (Opencode — Hydra config tree completion, blocked in part on
+  #59).
+
+#### Models-vs-bibliography analysis started (#63) (`2026-08-27`)
+
+- New `docs/moon/review/MODEL_IMPLEMENTATION_ANALYSIS.md`, templated on
+  the policy report. First increment: paper↔path map (POMO is an RL
+  trainer, not a `core/` model), AM 4/5, Pointer Network 4/5, POMO 4/5.
+- First pass complete (15/15). Constructive/NAR/ACO family mostly 4/5.
+  Improvement family weaker: DACT 3/5 (dual-aspect collapsed), NeuOpt 3/5
+  (encoder ignores incumbent tour), N2S 2/5 (k-NN attention on `tsp_kopt`,
+  not PDP). Sym-NCO subsequently 4/5 after wiring the dead
+  `problem_symmetricity_loss` (see Fixed). Line-check of the PDFs:
+  `MATNet.pdf` is a PV-forecasting namesake, not Kwon 2021; `NARGNN.pdf`
+  is Li/Chen/Koltun GCN+tree-search while `core/nargnn/` is a TSP heatmap
+  (score 2/5 vs that PDF). DR-ALNS Table 1 matches the 7-d state 1:1.
+- `bibliography/models/README.md` (#64): filename → actual PDF title → intended
+  citation.
+- Replaced the two wrong files from arXiv (first pages verified):
+  `MATNet.pdf` is Kwon et al. 2021 (arXiv:2106.11113);
+  `NARGNN.pdf` is Joshi, Laurent & Bresson 2019 (arXiv:1906.01227).
+  Previous copies kept under `bibliography/models/_mismatched/`.
+  NARGNN re-scored 4/5 against Joshi (15 GCN layers vs 30, REINFORCE vs
+  supervised BCE, greedy vs beam-1280).
+
+#### CTOP Hydra config tree (#60, training/eval side) (`2026-08-27`)
+
+- `logic/configs/envs/ctop.yaml` rewritten to match the landed design
+  (`CTOP = CVRPP capacity + independent time budget`). The previous header
+  still described the discarded uncapacitated/VRPP-with-time-replacing-
+  capacity draft, and the file had no `capacity:` key — `VRPPGenerator`
+  would then default to `1.0` instead of CVRPP's `100.0`.
+- `EnvConfig` now declares optional `shift_hours` / `avg_speed_kmh` /
+  `service_time_h`. `ctop.yaml` lists them as `null` (Python default) so a
+  Hydra CLI override such as `train.env.shift_hours=6.5` is a real key
+  change rather than a struct-missing error.
+- Task YAMLs document the Hydra *group swap* needed to actually load
+  `ctop.yaml`: `envs@train.env=ctop`, `envs@eval.env=ctop` (plus the
+  hardcoded `eval.env.name` / `eval.problem` lockstep), `envs@hpo.env=ctop`,
+  `envs@meta_rl.env=ctop` (plus `meta_rl.env.name`), `envs@hpo_sim.env=ctop`,
+  `gen_data data.problem=ctop`, `slurm` `problem=ctop`. `test_sim.yaml` and
+  `logic/configs/policies/*.yaml` are untouched — blocked on #59.
+- `tracking/*.yaml` have no per-problem metric lists; ctop's additive
+  `"time"` KPI is code-side (`eval/engine.py`) and needs no tracking YAML.
+- `docs/CONFIGURATION_GUIDE.md` env table and CLI examples now use the
+  real group-override syntax (`envs@<task>.env=`) instead of the
+  non-composed `envs=vrpp` form.
+- After #59 landed: `test_sim.yaml` documents `sim.problem=ctop` as the
+  switch (problem-level, not a per-policy "respects time budget" flag).
+  Default stays `vrpp` so the paper's 30-day factorial is unchanged.
+  Policy YAMLs were not given a new flag -- `BaseRoutingPolicy` already
+  reads optional `shift_hours` / `avg_speed_kmh` / `service_time_h` and
+  falls back to `load_temporal_params()`.
+
+### Changed
+
+#### Repository Documentation & Infrastructure Reorganization (`2026-08-27`)
+
+- `markdown/` → `docs/moon/markdown/`, `review/` → `docs/moon/review/`,
+  `reports/` → `docs/moon/reports/`, `mappings/` → `docs/moon/mappings/`
+  (`git mv`, history preserved).
+- `.agent/AGENTS.md` → `AGENTS.md` (repo root). `CLAUDE.md`/`GEMINI.md`
+  pointer includes and every other real reference (`README.md`,
+  `.agent/tasks/*.md`, `.agent/bus/AGENT_BUS.md`) repointed. The unrelated
+  `docs/errors/ROADMAP.md` referenced from `.agent/skills/systematic-bug-hunt.md`
+  is a different file and was left alone.
+- `docs/moon/ROADMAP.md` (3128 lines) split by its existing §A–§I sections into
+  `docs/moon/roadmaps/{analytics_interpretability,architecture,documentation,
+  gui_ux,new_features,performance,studio,presentation_studio,
+  publication_dissemination}.md`, mirroring the `Image-Toolkit` repo's
+  `docs/moon/roadmaps/` pattern. Root `ROADMAP.md` keeps the header, an Anchor
+  Index retargeted to the split files, and the Cross-Cutting Themes table.
+- `public/` → `docs/private/`, and its nested `public/private/` subdir →
+  `docs/private/html/`. Every real hardcoded reference to the old `public/...`
+  paths was repointed: `logic/gen/{export_website_data,gen_paper_latex,
+  gen_simulation_analysis,gen_presentation,gen_dataset_analysis}.py`, both
+  copies of the analysis/presentation config JSONs (`logic/gen/json/` and
+  `app/src/gen/config/`), the two generated markdown reports themselves, and
+  the `.agent/` briefs. `docs/website/public/` is a separate, unrelated dir
+  (the website's own Vite public assets) and was not touched. Historical
+  `docs/moon/CHANGELOG.md` entries and dated `.agent/bus/*.md` journal entries
+  citing the old paths were left untouched (append-only record).
+- `git/CODE_OF_CONDUCT.md`, `git/CODEOWNERS` added (were missing).
+- `.github/PULL_REQUEST_TEMPLATE.md` and `.github/ISSUE_TEMPLATE/{bug_report.md,
+  feature_request.md,bug_agent.yml,feature_agent.yml}` added, adapted from the
+  `Image-Toolkit` repo's templates to this repo's actual modules/labels.
+- `.gitea/` and `.forgejo/` mirror-host dirs added (`workflows/{ci,docs,
+  package-and-build}.yml` copied from `.github/workflows/`, GH-Actions-syntax
+  compatible but unverified on a real runner — see #57; `sync-to-public.yml`
+  deliberately not mirrored, it's GitHub-specific). `.gitlab/issue_templates/`
+  and `.gitlab/merge_request_templates/` added; `.gitlab-ci.yml` deferred to
+  #57 (different schema, needs a real GitLab runner to validate against).
+- New `infra` label created for these and future infrastructure issues.
+- `LICENSE.md` + `LICENSE.txt` merged into a single `LICENSE` file (Section A:
+  AGPL-3.0, Section B: commercial terms), mirroring the `Image-Toolkit` repo's
+  single-file license layout. `README.md` license links repointed.
+- `git/README.md`, `git/config/project_labels.json` (reference snapshot of
+  the actual label taxonomy), `git/messages/{claude,codex,gemini,opencode}_coauthor.msg`,
+  and `git/hooks/install.sh` added. `Image-Toolkit`'s `git/scripts/` and
+  `git/config/automation_rules.yaml` (a live Gemini-driven backlog-sync bot
+  wired to secrets and a GitHub Actions workflow) were deliberately **not**
+  ported — this repo's coordination mechanism is `.agent/bus/` + `AGENTS.md`,
+  and copying that automation verbatim would be dead/misleading tooling. See
+  `git/README.md` for the reasoning.
+
+See #56 (closed, full change list) and #57 (open follow-up: mirror-host CI
+runner verification).
+
+### Added
+
+#### Simulation Loop Architecture Diagram (`2026-08-27`)
+
+- Added programmatic simulation loop figure generator `fig_simulation_loop` in `logic/gen/gen_paper_latex.py`, emitting `simulation_loop.png` into `Images/Results/Generated/`.
+- Integrated `fig:sim_loop` into `Simulation Protocol` (`sec:protocol`) in `paper.tex`, illustrating the daily cycle: stochastic waste accumulation, observation asymmetry (noisy sensing $\tilde{\mathbf{f}}_t$ vs.\ exact ground-truth audit $\mathbf{f}_t$), modular three-stage policy pipeline from independent registries, physical execution, and multi-day state transition.
+
+### Changed
+
+#### Paper Abstract/Body Reconciliation (`2026-08-27`)
+
+- Reconciled the manuscript body with the immutable conference abstract of
+  record without altering the abstract or funding text. The Introduction now
+  distinguishes the framework's registered classical/NCO adapter scope from
+  the classical-only experiment and states the mandatory-selection result
+  explicitly.
+- Verified all stored benchmark rows against both summary CSVs and raw-log
+  names: the 480 thirty-day runs and 174 selected ninety-day runs contain only
+  the eight reported classical constructors. Related Work now states that the
+  current results include no learned-solver observation, while retaining NCO as
+  a valid framework topic and keyword.
+- Defined mandatory selection as dynamic dispatch at the service-request level
+  and scoped the unified baseline to the complete thirty-day factorial design.
+  Future Work now calls for benchmarking the registered learned constructors
+  under that same controlled protocol.
+- Rebuilt the 34-page paper from source in an isolated directory. The build has
+  no undefined citations or references, BibTeX/package/class warnings,
+  duplicate destinations, overfull boxes, or LaTeX errors.
+
+#### Paper Final Evidence and Citation Pass (`2026-08-27`)
+
+- Reworked Experimental Evaluation, Discussion, and Conclusion prose to remove
+  duplicated synthesis, causal language unsupported by the design, and the
+  contradictory claim that CLS dominates Fast-TSP. The granular raw figures now
+  carry an explicit integrity lead-in and no longer invite reconstruction of the
+  filtered marginal results.
+- Recomputed every retained closing-section quantity from the stored summary
+  CSVs. Corrected whole-cell exclusion from 23 to 21 additional peer runs and
+  replaced the claimed order-of-magnitude frontier increase with the supported
+  roughly sevenfold increase in distance per avoided overflow.
+- Gathered the study boundaries into a dedicated Limitations paragraph, moved
+  the sensing caveat into Simulation Protocol, separated Future Work, restored
+  LNCS `Sect.` references and en-dash compounds, and tightened the Discussion's
+  network-geometry and horizon explanations from mechanisms to testable
+  interpretations.
+- Completed the incomplete PSOMA and ACO-HH publication records and corrected
+  the Barnhart branch-and-price article from 1970 to its DOI-registered 1998
+  publication metadata. The rebuilt 30-page PDF has no undefined
+  citations or references, bibliography warnings, duplicate destinations,
+  overfull boxes, or LaTeX errors.
+
+#### Paper Figure Framing and Pareto Disambiguation (`2026-08-27`)
+
+- Disambiguated constructor-level aggregate Pareto trade-off (`fig:pareto`) from the granular per-run policy trade-off (`fig:app-pareto`) in `paper.tex`, making explicit the difference between the integrity-filtered constructor means and the full-factorial scenario evaluation.
+- Clarified captions on strategy trade-off and Empirical scenario heatmaps to explicitly document data-integrity exclusions and caveats.
+
+#### Website Civic Design Theme (`2026-08-26`)
+
+- Restored internal page component layouts while replacing all hardcoded colours with semantic token mappings from `tokens.css`, completing the cartographic and civic redesign across all pages.
+
+### Changed
+
+#### Simulation distance-matrix integrity (`2026-08-25`)
+
+- Made per-run distance-matrix publication atomic. Parallel policy workers
+  still share a scenario output path, but each now publishes one validated,
+  complete square matrix through a same-directory temporary file and
+  `os.replace`; workers can no longer concatenate or interleave CSV rows
+- Repaired all 14 malformed 30-day matrix copies from the unanimously matching
+  correctly sized artifacts for their network: one Rio Maior–100 copy, four
+  Rio Maior–170 copies, and nine Figueira da Foz–350 copies. The directional
+  road costs remain asymmetric by design
+- Added regression coverage for shape rejection and concurrent publication
+
+#### Empty-tour diagnostics (`2026-08-25`)
+
+- Preserved the pre-solver mandatory-node set in daily logs when a constructor
+  returns an empty tour. Previously that branch overwrote the set with `[]`,
+  making selection failure and solver infeasibility indistinguishable in the
+  stored evidence; issue #41's targeted rerun can now diagnose the boundary
+
+#### MPVRPP paper tracked as a submodule (`2026-08-25`)
+
+- Replaced the vendored `assets/papers/Simulation_Framework_for_the_MPVRP_with_Profits_in_Smart_Waste_Collection/`
+  copy and its zip with a git submodule at
+  `assets/papers/Simulation-Framework-for-the-MPVRP-with-Profits-in-Smart-Waste-Collection`
+  pointing at the paper's own repo. The paper's edit history now lives with
+  the paper instead of being duplicated and re-zipped inside this repo
+- `logic/gen/json/paper_latex_config.json`'s `paper_dir` updated to the new
+  path; `gen_paper_latex.py` re-verified idempotent against the submodule
+  (all tables and figures regenerate byte-identical)
+
+#### MPVRPP paper — final editorial, citation, and map pass (`2026-08-25`)
+
+- Reworked the introduction, contributions, problem definition, NCO survey, and
+  results commentary to remove repetition, synthetic contrasts, excessive
+  parenthetical interruptions, and causal language unsupported by the design.
+  The route model now has consistent per-bin capacities, explicit return-to-depot
+  indices, a valid travel summation, and uniqueness constraints that exclude the
+  repeated depot
+- Restored the six-author/affiliation block from the matching Optimization 2026
+  abstract, added PDF title/author metadata, and removed the generic dynamic-VRP
+  illustration whose availability semantics did not match the paper's use
+- Audited every cited key against its publication record. Corrected the Attention
+  Model and Neural k-opt publication years, promoted the Joshi generalisation
+  paper from its preprint record, completed the SIAM chapter metadata, normalised
+  malformed DOI fields, and rewrote the multi-period citation context to match
+  Zhang et al.'s scheduling formulation
+- Replaced the distance-matrix embeddings with real coordinate maps for Rio
+  Maior–170 and Figueira da Foz–350, composed reproducibly from the retained
+  selected-bin/OSM-road artifacts under `public/figures/simulation/30d/`. The
+  publication path no longer reconstructs geography from the disputed matrices
+- The converged 22-page PDF has complete author metadata and no undefined
+  references, bibliography warnings, duplicate destinations, or overfull boxes;
+  the LaTeX generator is byte-idempotent and `logic/gen` remains ruff-clean
+
+#### MPVRPP paper — Codex final editorial and data audit (`2026-08-25`)
+
+- Rewrote the abstract, contribution statement, multi-period Related Work, improver interpretation, horizon caveat, scenario-effects discussion, and Conclusion into one consistent manuscript voice. Learned constructors are now explicitly framework capability/future work, not a result of the classical benchmark
+- Corrected a missed balancing error in both the paper and website: demand-process and network-size marginals had retained unequal policy slices after the Gamma-3/$N=350$ exclusions. `balance_marginal` now supports scenario factors and includes every other policy stage in its slice key; a sixth generated LaTeX table reports the corrected like-for-like scenario marginals
+- Downgraded the CLS-versus-Fast-TSP result from causal to descriptive. Although 224 configurations can be matched on constructor, selection, scenario, and demand realisation, upstream collected tonnage differs in 90 pairs and collected-bin count in 128; the stored experiment therefore does not isolate the improver stage. Also corrected the loss distribution: 21 of 22, not all 22, occur at $N=350$
+- Removed stale hand-maintained registry totals from the paper figure. The website policy picker now reads literal registry decorator keys while continuing to count implementation files, so aliases and filenames no longer masquerade as configuration keys
+- Website light/dark choice now initializes from the operating-system preference and persists in `localStorage`; the results view carries the same improver and scenario-balance caveats as the paper
+- Eliminated duplicate PDF destinations from the current LaTeX/LLNCS combination with unique internal hypertext names
+
+### Added
+
+#### MPVRPP paper + abstract — build warnings cleared (`2026-08-27`)
+
+- **`caption` "Unknown document class"** — not cosmetic. `subcaption` pulls in
+  `caption`, which does not recognise `llncs` and therefore replaced the
+  class's caption format with its own for *every* caption in the document:
+  LNCS's bold label with period separator at `\small` ("**Fig. 1.**") had
+  become a plain label with a colon at `\normalsize` ("Fig. 1:"). Dropped
+  `subcaption` — it was used in one figure and nothing used `\subref` — and
+  rebuilt that figure from minipages with hand-set (a)/(b) panel labels
+- Caught only by building HEAD and the candidate *both from source* and
+  rasterising the same page; the committed `paper.pdf` was stale and still
+  showed the correct form, i.e. it failed in the reassuring direction. Do not
+  use a committed PDF as a formatting baseline in this repo
+- **`aliascnt` "The package is obsolete"** — raised by `llncs.cls` line 53,
+  so the call is Springer's. Filtered with `silence` before `\documentclass`
+  rather than patching a publisher's class. Not reproducible on this machine
+  (TeX Live here ships the 2018 aliascnt, which does not warn), so the filter
+  string was verified against a stub package emitting that exact message
+- **Abstract document** (`Simulation-Framework-Abstract`): `geometry`
+  over-specification in the h-direction (`paperwidth` + `inner` + `textwidth`
+  + `outer` fixes it three times over; dropped the redundant `textwidth`) and
+  `hyperref` draft mode (`[draft]` → `[hidelinks]`, which keeps the page
+  identical but lets hyperref emit metadata and anchors). Both lines sit in
+  the conference template's "do not modify" block, so the render was verified
+  pixel-identical at 150 dpi before and after rather than assumed
+
+#### MPVRPP paper — conference abstract restored as the version of record (`2026-08-27`)
+
+- The paper's abstract is now the one presented at conference, reproduced
+  verbatim from `assets/papers/Simulation-Framework-Abstract/main.tex` and
+  verified byte-identical after whitespace normalisation (#55)
+- A comment above `\begin{abstract}` records that it is the version of record
+  and that where it and the body disagree, the body moves — the failure mode
+  being a later pass quietly editing the abstract back toward the body
+- Carried the conference keyword list across via LNCS `\keywords`; the paper
+  had none before
+- The swap inverts a load-bearing claim: the replaced abstract ended "Learned
+  constructors share the framework interface but are not bench-marked here",
+  which set up both Related Work's "the present experiment does not benchmark
+  them" and Future Work's promise to exercise learned constructors against
+  this baseline. The abstract of record instead lists NCO among the algorithms
+  the paper adapts and benchmarks. Reconciliation delegated as #53, and it
+  moves the body, not the abstract
+- Delegated alongside it: #54 to Agy — a simulation-loop figure (`sec:protocol`
+  is the paper's core contribution and is entirely prose, while the abstract of
+  record makes the framework the headline contribution), plus the #51 figure
+  items the caption pass did not reach (house style across the two image sets,
+  colour-blind and greyscale safety, two text-only results)
+- Board hygiene: #50, #51 and #52 had never been added to project 31 —
+  `gh issue create --label` does not put anything on the board. Backfilled
+
+#### MPVRPP paper — Related Work restructured around exact and heuristic methods (`2026-08-27`)
+
+- Dropped `\subsection{Neural Combinatorial Optimization}`. It gave a whole
+  heading to the one family this paper does not benchmark, while the two it
+  actually exercises had none
+- New untitled Related Work intro distinguishes the families by what each
+  guarantees against what it costs — exact, heuristic/meta-heuristic,
+  hyper-heuristic, matheuristic, machine-learning — and condenses NCO into it.
+  Written so as *not* to repeat the Introduction's existing family list: the
+  Introduction names them to motivate the paper, the Related Work intro
+  distinguishes them
+- New `\subsection{Exact Methods}` (compact vs decomposition lineages, and the
+  three developments that made branch-price-and-cut practical for routing) and
+  `\subsection{Heuristic Methods}` (trajectory / population / hyper-heuristic
+  levels, then the waste-collection-specific heuristic literature)
+- Ordering is intro → MPVRPP → Exact → Heuristic, putting the methods survey
+  adjacent to the Methodology that implements it. Each new subsection
+  forward-references `sec:constructors` rather than re-explaining ng-route
+  pricing or Farkas pricing — Related Work cites the literature's positions,
+  Methodology describes this paper's implementations
+- Deleting the NCO subsection would have silently dropped eight references,
+  which BibTeX does not warn about; all eight were carried into the condensed
+  mention and the cited-key set was diffed to confirm no loss (25 → 33)
+- Fixed `Ryan1981ANIP` in `mybibliography.bib`: its booktitle was jammed into
+  the title in capitals, which BibTeX flagged the moment the entry was cited
+
+#### MPVRPP paper — Discussion subsection, and the closing-sections work split (`2026-08-27`)
+
+- New `\subsection{Discussion}` under Experimental Evaluation (#52). Written
+  as mechanism and interpretation rather than as a synthesis of the results
+  subsections, because the Conclusion already carries the headline result
+  verbatim and a summarising Discussion would only duplicate it
+- Its substantive additions: the three policy stages differ in *kind* and not
+  merely in effect size (a trade-off curve, a robustness-and-cost story, and
+  an experimental-design finding respectively); the remote depot as the
+  geometric mechanism that predicts the selection ordering a priori, stated
+  with a falsifiable bound on its own generality; the horizon result read the
+  same way (efficiency is route geometry, overflow an accumulated per-day
+  hazard); operating point over mechanism, given a sharply curved frontier;
+  and the three integrity problems named once as one failure family — a
+  filter correlated with the compared factor — instead of three cautions
+- Every number reused from already-generated text, none computed in prose
+- Delegated: #50 to Codex (prose review of Experimental Evaluation and
+  Conclusion/Limitations/Future Work), #51 to Agy (charts/plots in both
+  sections). Both issues carry the concrete defects already located, by line
+- Recorded in the same pass: the Overleaf sync moved three appendix figures
+  into the main body without their data-integrity lead-in, and introduced a
+  body sentence claiming CLS "dominates Fast-TSP on basically almost all
+  simulation scenarios" that contradicts §Route Improvers and #49
+- The user's pending Overleaf working-tree edits were committed separately
+  first (`63dc332` in the paper submodule) so no agent is credited with them
+
+#### MPVRPP paper — appendix with presentation figures and CLS results table (`2026-08-25`)
+
+- New `\appendix` in `paper.tex`: the Pareto front, strategy trade-off, and
+  Empirical-only per-scenario heatmaps (30d), the policy×scenario overflow
+  and efficiency heatmaps (90d, landscape), and the full CLS-only results
+  table (30d, landscape) from the results presentation. Pulled from their
+  generator source (`public/figures/simulation/`, and
+  `gen_presentation.py`'s own `render_hier_table_image`), not screenshots
+- Four of the six items predate the degenerate-run exclusion and still carry
+  the four truncated SWC-TCF runs (`tab:excluded`) as raw values — kept
+  as-is per explicit direction, with each caption stating exactly where the
+  artefact appears (e.g. the 2,168-overflow LA/CLS/Gamma-3/Figueira-da-Foz
+  cell) rather than silently reproducing an unqualified number the main text
+  excludes everywhere else
+
+#### MPVRPP paper — Methodology and Results rewritten against the real experiment (`assets/papers/Simulation_Framework_for_the_MPVRP_with_Profits_in_Smart_Waste_Collection/`)
+
+- **The paper described two different studies.** Methodology committed to eight route constructors (ALNS, HGS, SANS, PG-CLNS, PSOMA, BPC, SWC-TCF, ACO-HH) x three selection strategies x two improvers; Results discussed an Attention Model / gurobi / look-ahead comparison on Gamma-1/2/3 at N=20…317 over 31/93/365 days that nothing in the repo reproduces. `public/global/simulation/simulation_summary{,_90d}.csv` holds exactly the design Methodology promised, so Results, the stale Data subsection and the incoherent Baselines subsection were rewritten from it
+- **Methodology completed**: the four placeholder paragraphs (BPC, SANS, PG-CLNS, PSOMA) written from `logic/src/policies/` and `bibliography/`; the sentence that ended mid-clause finished; Look-Ahead described for the first time despite being a third of the experimental grid; the CF70/CF90 and SL1/SL2 variants used throughout the results finally defined; a new **Simulation Protocol** subsection stating the paired demand realisations, the sensing-noise gap, the overflow-flag vs. kg-lost distinction, and the single-vehicle/single-depot restriction the abstract had left implicit
+- **Results rebuilt from data**: every table and figure `\input` from generator output instead of hand-maintained. Findings that survived the cleaned data — selection matters more than construction (48% efficiency range across selection variants vs. 24% across all constructors); the efficiency/service trade-off is *not* a single dial (efficiency falls monotonically, overflow risk does not); constructor overflow *medians* are 4.0 for seven of eight, so the spread in the means is tail behaviour; CLS beats Fast-TSP on 202 of 224 matched pairs but all but one of the 22 losses are at N=350 under PSOMA/SWC-TCF/HGS; BPC is *not* the most expensive method (three meta-heuristics cost more per run at N=350); overflows accumulate at a roughly constant rate across horizons rather than compounding
+- **Data integrity is a section of the paper, not a silent filter**: the three degenerate SWC-TCF runs get their own table with the whole-cell exclusion justified, and the 90-day sample's conditioning on 30-day Pareto-front membership is disclosed before any 90-day number appears
+- Bare `&` escaped in the Vidal entry of `mybibliography.bib`, which broke bibtex as soon as that entry was first cited
+
+#### Paper LaTeX generator (`logic/gen/gen_paper_latex.py`)
+
+- New sibling to `gen_simulation_analysis.py` / `gen_presentation.py`: same summary-CSV schema, theme and Jinja machinery, emitting `.tex` fragments (`jinja/paper_results_table.tex.j2`, `json/paper_latex_config.json`) plus the figures they reference into the paper's own `Images/Results/Generated/` tree. Five tables (constructors, strategies, paired improvers, paired horizons, excluded runs) and four figures (Pareto, strategy trade-off, per-pair improver delta, runtime scaling)
+- **Degenerate-run detection**, centralised so the paper, the markdown reports and the website cannot disagree: flags runs whose collected tonnage falls >20% below their scenario-cell median. Justified rather than tuned — across 576 rows the shortfall distribution has median 0.00 and 99th percentile 0.057, then jumps to three rows above 0.20. Collection-day count is explicitly *not* used as a signal: it counts collection days, not elapsed days, and several of the best policies collect on 15 of 30 days by bundling well
+- **Whole affected scenario cells are dropped, not just the offending rows.** All three degenerate runs are SWC-TCF's, so removing only them would average SWC-TCF over the scenarios it did not fail while averaging rivals over those too — the same selection bias the module refuses to accept in the 90-day data. Costs 21 further runs and restores a uniform n=57
+- **Refuses to emit a cross-constructor 90-day aggregate.** Only 30-day Pareto-front policies were re-run at 90 days, so the 90-day sample is conditioned on the outcome variable; the horizon table pairs each configuration against itself instead, documented as a conservative estimate rather than an unbiased one
+- Means reported beside medians throughout: removing one run in ~90 moved Service-Level (SL2) from 9.3 to 1.4 mean overflows
+
+#### Report/deck generators revived from `archive/` into `logic/gen/`
+
+- `gen_dataset_analysis.py`, `gen_simulation_analysis.py`, `gen_presentation.py`, `report_utils.py` and their `jinja/ json/ style/ js/ images/ svg/ links/ templates/` assets moved back out of `archive/gen/` to `logic/gen/`, alongside `gen_dist_matrix.py` / `export_for_studio.py` / `export_loss_landscape.py`. The scripts resolve assets from `__file__`, so only path strings in docstrings, `app/src/gen/*` provenance comments and `ReportStudio.GEN_SCRIPTS_DIR` needed rewriting
+- `logic/` is linted where `archive/` was not: import blocks sorted, `zip(strict=True)` on the equal-length local-search point pairs, one dead colour constant dropped; `C901` waived per-file for the three generators in `pyproject.toml`
+
+#### Multi-agent coordination (`.agent/`)
+
+- `.agent/bus/` (index + dated daily log, modelled on the Image-Toolkit layout) and `.agent/tasks/` with a brief per agent: Codex as reviewer/co-lead, Agy on the website design system, Opencode on interactive/3D visualisation. GitHub issues #40–#47 track the same work
+
+#### Interactive simulation website (`docs/website/` + `logic/gen/export_website_data.py`)
+
+- **Website data generator** (`logic/gen/export_website_data.py`) emits four JSON documents into `docs/website/public/data/` so the site never hand-copies a number: `pipeline.json` (the policy configuration space enumerated from the plugin registries — 31 selection strategies, 8 construction families / 96 constructors, 30 improvers, with the benchmarked subset marked), `results.json` (the balanced 30-day aggregates, Pareto front, paired improver deltas, horizon pairs and constructor × scenario heatmap), `bin_fills.json` (real per-bin per-day fill levels plus recovered policy-independent daily increments), and `routes.json` (per-day tours with a 2-D layout by classical MDS of the real road-distance matrices). It imports and reuses `gen_paper_latex`'s `split_degenerate` / `drop_affected_cells` / `balance_marginal` / `improver_pairs` / `pareto_front`, so the website and the paper share one definition of "clean data" and one set of exclusions
+- **A new `/simulation` route** with four interactive components: a three-stage policy-pipeline picker (V1); a Last-Minute bin-selection widget that re-simulates the rule on the recovered increments so dragging the CF threshold moves the selected set and the overflow count (V2); a 30-day route scrubber with a lazy-loaded three.js "routes stacked in time" view — x/y the MDS embedding, z the day — code-split so three.js stays out of the initial bundle, with a WebGL-free 2-D SVG fallback (V3); and results charts with the caveats built in (Pareto front, paired CLS-vs-Fast-TSP with the N=350 loss breakdown, constructor × scenario heatmap that refuses to pool Gamma-3 with Empirical) (V4)
+- **Paper figure**: `fig_fill_trajectory` in `gen_paper_latex.py` renders the multi-period mechanism behind the paper's central claim — three bins' fill levels over the horizon under CF70 vs CF90 — and `paper.tex` gains `Fig.~fill`, the first figure that shows the fill-and-collect dynamic rather than a static aggregate
+- The two counts in the brief/paper prose that do not match the filesystem (32 selection / 33 improvers / "seven families") are surfaced on the agent bus rather than silently "corrected": the generator emits the registry truth (31 / 30 / 8)
+
 #### Analysis & Presentation Studio — native §H engine (`app/src/gen/`)
 
 Full native port of the archived `gen` pipeline into the Studio — no Python in the loop:

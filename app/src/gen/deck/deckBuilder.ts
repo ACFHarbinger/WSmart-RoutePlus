@@ -1,6 +1,6 @@
 /**
  * Results presentation deck builder (§H.6) — native pptxgenjs port of the
- * `DeckBuilder` class in `archive/gen/gen_presentation.py`.
+ * `DeckBuilder` class in `logic/gen/gen_presentation.py`.
  *
  * Reproduces the 21-slide structure: cover, agenda cards, content slides
  * (equations + figures + diagrams), native-shape objective/simulator slides,

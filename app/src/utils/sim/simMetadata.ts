@@ -1,6 +1,6 @@
 /**
  * Parse simulation log paths and policy labels (§G.1 metadata).
- * Mirrors conventions in archive/gen/json/simulation_metadata.json.
+ * Mirrors conventions in logic/gen/json/simulation_metadata.json.
  */
 
 export interface LogPathMeta {

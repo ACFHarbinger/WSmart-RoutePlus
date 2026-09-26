@@ -1,7 +1,7 @@
 /**
  * Typed configuration layer for the native report/deck generator (§H.0).
  *
- * Ports the archived `archive/gen/json/*` configs and `style/*.mplstyle`
+ * Ports the archived `logic/gen/json/*` configs and `style/*.mplstyle`
  * sheets into importable, typed data. Nothing downstream (charts, reports,
  * deck) hardcodes a colour, label or path — everything reads from here.
  */

@@ -24,6 +24,8 @@ class EnvironmentTag(Enum):
         TIME_WINDOWS: Strict [early, late] arrival constraints
         MULTI_DEPOT: Multiple start/end locations
         MULTI_PERIOD: Decisions span across a time horizon (days/weeks)
+        TIME_BUDGET: Total tour/trip time budget (orienteering-style resource
+            constraint), distinct from TIME_WINDOWS' per-node arrival window
         DETERMINISTIC: All info known at t=0
         STOCHASTIC: Node demands/presence are random variables
         DYNAMIC: Nodes appear over time during execution
@@ -38,6 +40,7 @@ class EnvironmentTag(Enum):
     # Constraints
     CAPACITATED = auto()  # Vehicle load limits
     TIME_WINDOWS = auto()  # Strict [early, late] arrival constraints
+    TIME_BUDGET = auto()  # Total tour/trip time budget (orienteering-style)
     MULTI_DEPOT = auto()  # Multiple start/end locations
     MULTI_PERIOD = auto()  # Decisions span across a time horizon (days/weeks)
 

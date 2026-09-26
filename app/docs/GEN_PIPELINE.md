@@ -1,7 +1,7 @@
 # Native Generation Engine (`src/gen/`) — §H
 
 The `gen/` tree is the native TypeScript port of the archived Python
-report/deck pipeline (`archive/gen/`). It powers the **Report Studio** page and
+report/deck pipeline (`logic/gen/`). It powers the **Report Studio** page and
 runs entirely in-app: data loading through Rust commands, figures as ECharts
 renders, documents via `pptxgenjs` / `docx` / `exceljs` / `jspdf`.
 
@@ -55,7 +55,7 @@ gen/
 - **Native** (default) — everything above, with live progress log and artefact
   chips; previews render in-app (`components/gen/ReportPreview`,
   `components/gen/DeckPreview`).
-- **Legacy** — spawns the archived Python scripts under `archive/gen/`
+- **Legacy** — spawns the archived Python scripts under `logic/gen/`
   (`gen_simulation_analysis.py`, `gen_dataset_analysis.py`,
   `gen_presentation.py`) through the process runner. Kept for parity checks;
   frozen, bugfix-only.

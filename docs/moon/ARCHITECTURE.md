@@ -716,7 +716,7 @@ sequenceDiagram
     participant Sim as Simulator States
 
     CLI->>Hydra: python main.py test_sim ...
-    Hydra->>Engine: run_wsr_simulator_test(cfg)
+    Hydra->>Engine: run_simulator_test(cfg)
     Engine->>Engine: _validate_sim_config(cfg)
     Engine->>Engine: _resolve_data_size(cfg) & config reps
     Engine->>Orch: simulator_testing(...)

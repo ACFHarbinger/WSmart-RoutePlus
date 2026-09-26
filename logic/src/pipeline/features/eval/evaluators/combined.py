@@ -68,7 +68,7 @@ class MultiStartAugmentEval(EvalBase):
         for batch in tqdm(data_loader, disable=not self.progress, desc="Multi-Start Augment Eval"):
             batch_obj: object = batch
             batch = move_to(batch_obj, self.device)  # type: ignore[arg-type]
-            with torch.no_grad():
+            with torch.inference_mode():
                 aug_batch = augment(batch)
                 out = policy(aug_batch, strategy="greedy", num_starts=self.num_starts, **kwargs)
 

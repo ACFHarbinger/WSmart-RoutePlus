@@ -1,6 +1,6 @@
 /**
  * Dataset statistics engine (§H.1) — native port of the data layer of
- * `archive/gen/gen_dataset_analysis.py`.
+ * `logic/gen/gen_dataset_analysis.py`.
  *
  * NPZ/TD statistics CSV loading, raw NPZ waste matrices (via the Rust
  * `load_npz_flat` reader), extended statistics (median, variance, quartiles,

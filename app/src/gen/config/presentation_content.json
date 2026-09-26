@@ -208,7 +208,7 @@
     "heatmaps": {
       "title": "Results — Overflow & KG / KM Heatmaps, 90 Days (Policies × Scenarios)",
       "figures": ["policy_scenario_heatmap_overflows.png", "policy_scenario_heatmap_kgkm.png"],
-      "figures_dir": "public/figures/simulation/90d",
+      "figures_dir": "docs/private/figures/simulation/90d",
       "note": "90-day runs (Pareto-front policies only — fewer rows, easier to read). Rows = policy configurations; columns = scenarios."
     },
     "improver_bubble": {

@@ -267,6 +267,29 @@ def load_area_and_waste_type_params(area, waste_type):
     return params
 
 
+def load_temporal_params(**kwargs):
+    """
+    Convenience wrapper to load the temporal (time-budget) resource params.
+
+    Returns:
+        Tuple of (shift_hours, speed_or_time_matrix, service_time_h). See
+        SimulationRepository.get_temporal_params.
+    """
+    params = SimulationRepository.get_temporal_params(**kwargs)
+    with contextlib.suppress(Exception):
+        run = get_active_run() if get_active_run is not None else None
+        if run is not None:
+            run.log_params(
+                {
+                    "data.temporal_shift_hours": params[0],
+                    "data.temporal_avg_speed_kmh": kwargs.get("avg_speed_kmh", 35.0),
+                    "data.temporal_matrix_path": str(kwargs.get("tm_filepath") or "uniform_speed"),
+                    "data.temporal_service_time_h": params[2],
+                }
+            )
+    return params
+
+
 __all__ = [
     "SimulationRepository",
     "FileSystemRepository",
@@ -277,4 +300,5 @@ __all__ = [
     "load_depot",
     "load_simulator_data",
     "load_area_and_waste_type_params",
+    "load_temporal_params",
 ]

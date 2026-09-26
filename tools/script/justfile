@@ -26,3 +26,9 @@ run-hpo:
 # Run simulation script (scripts/test_sim.sh)
 run-sim:
     bash scripts/test_sim.sh
+
+# Regenerate paper tables/figures and compile paper PDF
+paper force="false":
+    uv run python logic/gen/gen_paper_latex.py {{ if force == "true" { "--force" } else { "" } }}
+    cd assets/papers/Simulation-Framework-for-the-MPVRP-with-Profits-in-Smart-Waste-Collection && latexmk -pdf -interaction=nonstopmode paper.tex
+

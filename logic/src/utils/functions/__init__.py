@@ -52,6 +52,7 @@ Example:
 from .math import safe_exp
 from .parallel import run_all_in_pool
 from .path import get_path_until_string
+from .problem import is_tsp_problem, is_vrpp_problem, is_wc_problem
 from .sampling import sample_many
 from .tensors import compute_in_batches, do_batch_rep, move_to
 
@@ -63,4 +64,7 @@ __all__ = [
     "compute_in_batches",
     "do_batch_rep",
     "sample_many",
+    "is_wc_problem",
+    "is_vrpp_problem",
+    "is_tsp_problem",
 ]

@@ -15,6 +15,7 @@ Attributes:
     SPCTSP: SPCTSP class
     ThOP: ThOP class
     TSP: TSP class
+    CTOP: CTOP class
     VRPP: VRPP class
     WCVRP: WCVRP class
 
@@ -32,6 +33,7 @@ from logic.src.constants.tasks import (
 
 from .atsp import ATSP
 from .base import BaseProblem
+from .ctop import CTOP
 from .cvrp import CVRP
 from .cvrpp import CVRPP
 from .cwcvrp import CWCVRP
@@ -66,4 +68,5 @@ __all__ = [
     "SPCTSP",
     "PDP",
     "ThOP",
+    "CTOP",
 ]

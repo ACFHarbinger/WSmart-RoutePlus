@@ -1,0 +1,45 @@
+# Mirrored from .github/workflows/ on 2026-08-27; GH-Actions-syntax compatible with Gitea/Forgejo Actions.
+# Not yet run on an actual Gitea/Forgejo runner — verify marketplace-action availability before relying on it.
+# See GitHub issue for the tracked follow-up.
+name: Documentation
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Why are you running this?"
+        required: false
+        default: "Manual trigger"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Install dependencies
+        run: |
+          uv sync --all-packages --all-extras --all-groups
+
+      - name: Build docs
+        run: |
+          cd logic/docs
+          uv run make html
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./logic/docs/build/html

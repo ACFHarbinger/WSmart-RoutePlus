@@ -1,9 +1,9 @@
 
-
+import logic.src.pipeline.simulations.repository as repo_module
 import pandas as pd
 import pytest
-from logic.src.constants import ROOT_DIR
 from logic.src.pipeline.simulations.repository import (
+    FileSystemRepository,
     load_area_and_waste_type_params,
     load_depot,
     load_indices,
@@ -18,9 +18,11 @@ class TestLoader:
     """Class for data loading tests."""
 
     @pytest.fixture(autouse=True)
-    def setup_repo(self):
-        from logic.src.pipeline.simulations.repository import FileSystemRepository, set_repository
-        set_repository(FileSystemRepository(ROOT_DIR))
+    def setup_repo(self, tmp_path):
+        original_repo = repo_module._REPOSITORY
+        repo_module.set_repository(FileSystemRepository(str(tmp_path)))
+        yield
+        repo_module._REPOSITORY = original_repo
 
 
 
@@ -42,14 +44,13 @@ class TestLoader:
             "Lat": [39.0],
             "Lng": [-8.0]
         })
-        load_depot(data_dir="data/wsr_simulator", area="Rio Maior")
+        load_depot(data_dir="data/simulator", area="Rio Maior")
         assert mock_read_csv.called
 
     @pytest.mark.unit
     def test_load_indices(self, mock_load_dependencies):
         """Test loading bin indices."""
         mock_read_csv, _, _ = mock_load_dependencies
-        # get_indices
         indices = load_indices("test_graph.json", 1, 10, 100)
         assert isinstance(indices, list)
 
@@ -75,5 +76,5 @@ class TestLoader:
             })
         ]
 
-        load_simulator_data("data/wsr_simulator", 5, area="riomaior", waste_type="paper")
+        load_simulator_data("data/simulator", 5, area="riomaior", waste_type="paper")
         assert mock_read_csv.call_count >= 1

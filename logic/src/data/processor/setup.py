@@ -11,6 +11,7 @@ Example:
 
 import contextlib
 import os
+import tempfile
 
 import numpy as np
 import pandas as pd
@@ -43,6 +44,48 @@ def load_simulator_data(*args, **kwargs):
     from logic.src.pipeline.simulations.repository import load_simulator_data as _load_simulator_data
 
     return _load_simulator_data(*args, **kwargs)
+
+
+def _save_distance_matrix_atomic(save_path, node_ids, distance_matrix):
+    """Atomically save one complete matrix, even when simulation workers race.
+
+    Every policy worker in a simulation run shares ``save_path``.  Writing the
+    header and rows in separate append operations allowed those workers to
+    concatenate or interleave matrices.  A temporary file in the destination
+    directory followed by ``os.replace`` makes each worker publish a complete
+    snapshot; concurrent workers may replace one another, but cannot combine
+    their output.
+    """
+    matrix = np.asarray(distance_matrix)
+    ids = np.asarray(node_ids)
+    expected_shape = (len(ids), len(ids))
+    if matrix.shape != expected_shape:
+        raise ValueError(
+            f"Refusing to save distance matrix with shape {matrix.shape}; "
+            f"expected {expected_shape} for {len(ids)} node IDs"
+        )
+
+    destination = os.path.abspath(os.fspath(save_path))
+    os.makedirs(os.path.dirname(destination), exist_ok=True)
+    temp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            newline="",
+            dir=os.path.dirname(destination),
+            prefix=f".{os.path.basename(destination)}.",
+            suffix=".tmp",
+            delete=False,
+        ) as matrix_f:
+            temp_path = matrix_f.name
+            matrix_f.write(",".join(map(str, ids)) + "\n")
+            pd.DataFrame(matrix).to_csv(matrix_f, index=False, header=False)
+            matrix_f.flush()
+            os.fsync(matrix_f.fileno())
+        os.replace(temp_path, destination)
+    finally:
+        if temp_path is not None and os.path.exists(temp_path):
+            os.unlink(temp_path)
 
 
 def setup_basedata(n_bins, data_dir, area, waste_type):
@@ -121,11 +164,12 @@ def setup_dist_path_tup(
             f"{distribution}",
             save_updated_dm,
         )
-        print(f"[INFO] Saved {area} graph with {size} nodesdistancematrix to : ", save_path)
-        os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        with open(save_path, mode="w", newline="") as matrix_f:
-            matrix_f.write(",".join(map(str, bins_coordinates["ID"].to_numpy())) + "\n")
-        pd.DataFrame(dist_matrix_edges).to_csv(save_path, mode="a", index=False, header=False)
+        _save_distance_matrix_atomic(
+            save_path,
+            bins_coordinates["ID"].to_numpy(),
+            dist_matrix_edges,
+        )
+        print(f"[INFO] Saved {area} graph distance matrix ({size + 1} nodes) to: {save_path}")
     paths = get_paths_between_states(size + 1, shortest_paths)
     dm_tensor = torch.from_numpy(dist_matrix_edges / 100.0)
     distC = np.round(dist_matrix_edges * 10).astype("int32")

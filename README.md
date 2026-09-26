@@ -79,8 +79,8 @@ Our comprehensive documentation covers every aspect of the WSmart+ Route system:
 
 | Document                                          | Description                                                                                                                             | Target Audience                          |
 | :------------------------------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------- |
-| **[AGENTS.md](.agent/AGENTS.md)**                   | Complete registry of neural models, classical policies, and environment physics. The AI assistant guide for understanding the codebase. | Researchers, ML Engineers, AI Assistants |
-| **[ARCHITECTURE.md](docs/ARCHITECTURE.md)**       | High-level system design, data flow diagrams, design patterns, and module boundaries.                                                   | Architects, Senior Developers            |
+| **[AGENTS.md](AGENTS.md)**                          | Complete registry of neural models, classical policies, and environment physics. The AI assistant guide for understanding the codebase. | Researchers, ML Engineers, AI Assistants |
+| **[ARCHITECTURE.md](docs/moon/ARCHITECTURE.md)**  | High-level system design, data flow diagrams, design patterns, and module boundaries.                                                   | Architects, Senior Developers            |
 | **[CONTRIBUTING.md](CONTRIBUTING.md)**            | Code style, Git workflow, PR process, and development guidelines.                                                                       | Contributors                             |
 | **[DEVELOPMENT.md](docs/DEVELOPMENT.md)**         | Environment setup, CLI reference, development workflows, and debugging guides.                                                          | Developers                               |
 | **[TESTING.md](docs/TESTING.md)**                 | Test suite organization, fixtures, coverage requirements, and best practices.                                                           | QA Engineers, Developers                 |
@@ -567,9 +567,9 @@ This project is dual-licensed under an open-core model:
 
 - **Open source (free) — GNU AGPL-3.0.** Free to use, modify, and
   distribute for hobbyists, students, researchers, non-profits, and any
-  other use that complies with the [AGPL-3.0](LICENSE.md)'s copyleft and
-  network source-disclosure terms.
+  other use that complies with the [AGPL-3.0](LICENSE) (Section A)'s
+  copyleft and network source-disclosure terms.
 - **Commercial (paid).** For proprietary, closed-source, or SaaS use that
   can't comply with the AGPL's obligations, a paid
-  [commercial license](LICENSE.txt) is available — contact ACFHarbinger
-  <afonso.fernandes100@gmail.com> for pricing and terms.
+  [commercial license](LICENSE) (Section B) is available — contact
+  ACFHarbinger <afonso.fernandes100@gmail.com> for pricing and terms.

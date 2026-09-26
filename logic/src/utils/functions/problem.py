@@ -46,7 +46,10 @@ def is_vrpp_problem(problem: Any) -> bool:
     """
     name = problem if isinstance(problem, str) else getattr(problem, "NAME", "")
     name = name.lower()
-    return any(vrpp_tag in name for vrpp_tag in ["vrpp", "cvrpp", "pcvrp"])
+    # ctop subclasses VRPP (logic.src.envs.tasks.ctop.CTOP(VRPP)) and shares
+    # its node layout/reward -- it belongs to this family even though "ctop"
+    # doesn't contain the substring "vrpp".
+    return any(vrpp_tag in name for vrpp_tag in ["vrpp", "cvrpp", "pcvrp"]) or name == "ctop"
 
 
 def is_tsp_problem(problem: Any) -> bool:

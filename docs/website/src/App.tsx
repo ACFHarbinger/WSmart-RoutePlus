@@ -6,6 +6,7 @@ import Home from "./pages/Home";
 import Platform from "./pages/Platform";
 import Research from "./pages/Research";
 import Roadmap from "./pages/Roadmap";
+import Simulation from "./pages/Simulation";
 import Studio from "./pages/Studio";
 import "./styles/site.css";
 
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="platform" element={<Platform />} />
           <Route path="research" element={<Research />} />
           <Route path="benchmarks" element={<Benchmarks />} />
+          <Route path="simulation" element={<Simulation />} />
           <Route path="studio" element={<Studio />} />
           <Route path="docs" element={<Docs />} />
           <Route path="roadmap" element={<Roadmap />} />

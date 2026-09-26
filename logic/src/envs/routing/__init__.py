@@ -15,6 +15,7 @@ Attributes:
     PCTSPGenerator: Generator for Prize-Collecting TSP instances.
     PDPGenerator: Generator for Pickup and Delivery Problem instances.
     ThOPGenerator: Generator for Thief Orienteering Problem instances.
+    CTOPGenerator: Generator for Capacitated Team Orienteering Problem instances.
     RL4COEnvBase: Abstract base class for all routing environments.
     ImprovementEnvBase: Base class for improvement-based routing environments.
     ENV_REGISTRY: Mapping of problem name strings to their environment classes.
@@ -31,6 +32,7 @@ from logic.src.envs.base.improvement import ImprovementEnvBase
 from logic.src.envs.generators import (
     GENERATOR_REGISTRY,
     ATSPGenerator,
+    CTOPGenerator,
     CVRPGenerator,
     Generator,
     IRPGenerator,
@@ -43,6 +45,7 @@ from logic.src.envs.generators import (
     get_generator,
 )
 from logic.src.envs.routing.atsp import ATSPEnv
+from logic.src.envs.routing.ctop import CTOPEnv
 from logic.src.envs.routing.cvrp import CVRPEnv
 from logic.src.envs.routing.cvrpp import CVRPPEnv
 from logic.src.envs.routing.cwcvrp import CWCVRPEnv
@@ -75,6 +78,7 @@ ENV_REGISTRY = {
     "pctsp": PCTSPEnv,
     "spctsp": SPCTSPEnv,
     "pdp": PDPEnv,
+    "ctop": CTOPEnv,
 }
 
 
@@ -113,6 +117,7 @@ __all__ = [
     "PCTSPGenerator",
     "PDPGenerator",
     "ThOPGenerator",
+    "CTOPGenerator",
     "get_generator",
     "GENERATOR_REGISTRY",
     # Environments
@@ -131,6 +136,7 @@ __all__ = [
     "SPCTSPEnv",
     "PDPEnv",
     "ThOPEnv",
+    "CTOPEnv",
     # Registry
     "ENV_REGISTRY",
     "get_env",

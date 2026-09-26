@@ -440,16 +440,13 @@ Resultados/
 **/WSmartRoute/
 WSmartRoute.zip
 
-# Datafiles that exceed Github memory limit
-data/wsr_simulator/bins_waste/Enchimentos_de_Sensores\[RioMaior\].csv
-
 # Debugging files
 debug/
 .hypothesis/
 
 # Datasets
 /data/datasets/
-/data/wsr_simulator/
+/data/simulator/
 
 # Secrets
 assets/api

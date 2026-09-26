@@ -1,6 +1,6 @@
 /**
  * Markdown post-processing pipeline (§H.5) — native port of
- * `archive/gen/report_utils.py`: full-width <figure> wrapping and sequential
+ * `logic/gen/report_utils.py`: full-width <figure> wrapping and sequential
  * Figure/Table numbering.
  */
 

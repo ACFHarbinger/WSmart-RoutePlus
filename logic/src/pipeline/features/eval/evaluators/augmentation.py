@@ -73,7 +73,7 @@ class AugmentationEval(EvalBase):
 
         for batch in tqdm(data_loader, disable=not self.progress, desc=f"Augmentation Eval ({self.samples})"):
             batch = move_to(batch, self.device)  # type: ignore[arg-type]
-            with torch.no_grad():
+            with torch.inference_mode():
                 # Apply augmentation: returns [batch_size * num_augment, ...]
                 aug_batch = self.augmentation(batch)
                 out = policy(aug_batch, strategy="greedy", **kwargs)

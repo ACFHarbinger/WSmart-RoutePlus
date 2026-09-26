@@ -40,6 +40,7 @@ class CVRPPEnv(VRPPEnv):
         Returns:
             TensorDict: Initialized CVRPP state with capacity tracking.
         """
+        is_resuming = "visited" in tensordict.keys()
         tensordict = super()._reset_instance(tensordict)
 
         bs = tensordict.batch_size[0]
@@ -48,8 +49,12 @@ class CVRPPEnv(VRPPEnv):
         # Track remaining capacity
         capacity = tensordict.get("capacity", torch.ones(bs, device=device) * 100)
         tensordict["capacity"] = capacity  # Ensure it's in the TensorDict for _step
-        tensordict["remaining_capacity"] = capacity.clone()
-        tensordict["collected_waste"] = torch.zeros(bs, device=device)
+        if not is_resuming:
+            tensordict["remaining_capacity"] = capacity.clone()
+            tensordict["collected_waste"] = torch.zeros(bs, device=device)
+        else:
+            tensordict.setdefault("remaining_capacity", capacity.clone())
+            tensordict.setdefault("collected_waste", torch.zeros(bs, device=device))
         tensordict["collected"] = tensordict["collected_waste"]  # Alias
 
         return tensordict
@@ -78,24 +83,30 @@ class CVRPPEnv(VRPPEnv):
         """
         """Execute action with capacity tracking."""
         action = tensordict["action"]
+        if action.dim() > 1:
+            action = action.squeeze(-1)
 
-        # Update capacity when collecting
+        # Snapshot the node/at-depot status before super() advances current_node.
         waste = tensordict["waste"]
         waste_at_node = waste.gather(1, action.unsqueeze(-1)).squeeze(-1) if waste.dim() > 1 else waste
-
-        # Reset capacity at depot
         at_depot = action == 0
+
+        # Delegate distance / visited / current_node / tour updates, and
+        # VRPP's own cumulative collected_waste, to VRPPEnv/OpsMixin. Without
+        # this call, current_node/visited/tour_length/tour never advance past
+        # their reset values -- the bug this fixes: CVRPPEnv previously
+        # replaced the base state transition entirely instead of layering
+        # capacity tracking on top of it.
+        tensordict = super()._step_instance(tensordict)
+
+        # CVRPP-specific: track *per-trip* remaining capacity, reset at each
+        # depot return, separate from VRPP's all-time collected_waste total.
         tensordict["remaining_capacity"] = torch.where(
             at_depot,
             tensordict["capacity"],
             tensordict["remaining_capacity"] - waste_at_node,
         )
-        tensordict["collected_waste"] = torch.where(
-            at_depot,
-            torch.zeros_like(tensordict["collected_waste"]),
-            tensordict["collected_waste"] + waste_at_node,
-        )
-        tensordict["collected"] = tensordict["collected_waste"]  # Alias
+        tensordict["collected"] = tensordict["capacity"] - tensordict["remaining_capacity"]
 
         return tensordict
 

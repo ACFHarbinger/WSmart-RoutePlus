@@ -1,6 +1,6 @@
 """ZenML simulation pipeline for WSmart-Route.
 
-Wraps :func:`~logic.src.pipeline.features.test.engine.run_wsr_simulator_test`
+Wraps :func:`~logic.src.pipeline.features.test.engine.run_simulator_test`
 in a ZenML pipeline with **per-policy fan-out** steps:
 
 1. **prepare_sim_config** — serialise the Hydra config to a plain dict.
@@ -111,9 +111,9 @@ if _ZENML_AVAILABLE:
         sim.full_policies = filtered_policies
 
         bridge = ZenMLBridge()
-        from logic.src.pipeline.features.test.engine import run_wsr_simulator_test
+        from logic.src.pipeline.features.test.engine import run_simulator_test
 
-        run_wsr_simulator_test(cfg, sinks=[bridge])
+        run_simulator_test(cfg, sinks=[bridge])
         return batch_id
 
     @step  # type: ignore[misc]
