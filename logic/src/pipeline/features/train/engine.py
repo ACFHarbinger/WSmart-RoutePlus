@@ -166,6 +166,9 @@ def _build_stage_config(cfg: Any, graph_cfg: Any, stage_idx: Optional[int] = Non
     Returns:
         Modified DictConfig for this stage.
     """
+    if not OmegaConf.is_config(cfg):
+        # run_training may be called programmatically with the Config dataclass.
+        cfg = OmegaConf.structured(cfg)
     raw: Dict[str, Any] = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=False)  # type: ignore[assignment]
     assert isinstance(raw, dict), "cfg must be convertible to a plain dict"
 

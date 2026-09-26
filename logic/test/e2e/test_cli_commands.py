@@ -103,6 +103,12 @@ def test_cli_train_lightning_smoke(tmp_path):
                 "train.env.eval_graphs=[]",
                 "rl.adaptive_imitation.il_weight=0.0",
                 "train.env.curriculum_graphs.0.n_samples=2",
+                # vrpp.yaml has a second curriculum stage (170 bins, 12800 instances);
+                # shrink it too now that stage graph sizes are honoured (DS-01).
+                "train.env.curriculum_graphs.1.num_loc=10",
+                "train.env.curriculum_graphs.1.n_days=1",
+                "train.env.curriculum_graphs.1.load_dataset=null",
+                "train.env.curriculum_graphs.1.n_samples=2",
                 "device=cpu",
             ],
             capture_output=True,
@@ -212,6 +218,12 @@ def test_cli_train_lightning_ppo_smoke(tmp_path):
                 "train.env.eval_graphs=[]",
                 "rl.adaptive_imitation.il_weight=0.0",
                 "train.env.curriculum_graphs.0.n_samples=2",
+                # vrpp.yaml has a second curriculum stage (170 bins, 12800 instances);
+                # shrink it too now that stage graph sizes are honoured (DS-01).
+                "train.env.curriculum_graphs.1.num_loc=10",
+                "train.env.curriculum_graphs.1.n_days=1",
+                "train.env.curriculum_graphs.1.load_dataset=null",
+                "train.env.curriculum_graphs.1.n_samples=2",
                 "device=cpu",
             ],
             capture_output=True,
