@@ -27,6 +27,7 @@ Reference:
     "Stochastic local search: Foundations and applications"
 """
 
+import logging
 from typing import List, Optional, Tuple, cast
 
 import fast_tsp
@@ -38,6 +39,11 @@ from networkx.algorithms.shortest_paths.weighted import dijkstra_path
 from logic.src.constants.routing import SCALE
 
 from .two_opt import solve_tsp_2opt
+
+logger = logging.getLogger(__name__)
+
+# fast-tsp documents its distances as uint16; keep every scaled edge within that range.
+_FAST_TSP_MAX_DIST = 65535
 
 
 def find_route(C, to_collect, time_limit=2.0, seed=42, engine="fast_tsp"):
@@ -54,16 +60,23 @@ def find_route(C, to_collect, time_limit=2.0, seed=42, engine="fast_tsp"):
         engine: Only "fast_tsp" is available in this export.
 
     Returns:
-        List[int]: Tour starting and ending at depot. Format: [0, node1, node2, ..., 0]
+        List[int]: Tour starting and ending at depot. Format: [0, node1, node2, ..., 0].
+        If fast_tsp fails, the input order ``[0, *to_collect, 0]`` is returned unchanged.
     """
     if engine == "custom":
         return solve_tsp_2opt(C, list(to_collect), depot=0)
 
     to_collect_tmp = [0] + list(to_collect)
     tmpC = C[to_collect_tmp, :][:, to_collect_tmp]
-    # fast_tsp requires integer distance matrix
-    tmpC_int = np.round(tmpC * SCALE).astype(int)
-    tour = fast_tsp.find_tour(tmpC_int, duration_seconds=time_limit)
+    # fast_tsp needs integer distances within uint16: use SCALE unless the longest edge would overflow.
+    max_edge = float(np.max(tmpC)) if tmpC.size else 0.0
+    scale = SCALE if max_edge * SCALE <= _FAST_TSP_MAX_DIST else _FAST_TSP_MAX_DIST / max_edge
+    tmpC_int = np.round(tmpC * scale).astype(int)
+    try:
+        tour = fast_tsp.find_tour(tmpC_int, duration_seconds=time_limit)
+    except Exception as exc:  # the improver must never lose a feasible trip
+        logger.warning("fast_tsp failed (%s); keeping the input order", exc)
+        return to_collect_tmp + [0]
     zero_index = tour.index(0)
     tour = tour[zero_index:] + tour[:zero_index]
     # cost = fast_tsp.compute_cost(tour, tmpC)

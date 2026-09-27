@@ -2,16 +2,15 @@
 # route improvement: Fast TSP
 # =============================================================================
 # PURPOSE:
-#   Apply fast TSP solver (Christofides + 2-opt) to refine constructed routes.
-#   Optimizes node sequencing within each route independently.
+#   Re-sequence each depot-to-depot trip with the fast-tsp library.
+#   The set of bins in each trip is unchanged; only the order changes.
 #
 # ALGORITHM:
-#   1. For each route in solution:
-#      a. Extract route as TSP instance
-#      b. Apply Christofides heuristic (MST-based construction)
-#      c. Improve with 2-opt local search
-#      d. Replace original route with improved sequence
-#   2. Return refined multi-route solution
+#   For each trip: fast-tsp's find_tour on the trip's (depot + bins) matrix.
+#   Up to 20 bins it is exact (Held-Karp dynamic programming, repeatable);
+#   above that it is a time-budgeted local search (time_limit per trip),
+#   which is not repeatable run to run (the library has no seed).
+#   If the library fails, the trip is kept in its input order.
 #
 # USE CASES:
 #   - Refine neural policy outputs (AM, TAM often produce suboptimal sequences)
