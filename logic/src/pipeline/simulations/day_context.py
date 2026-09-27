@@ -16,6 +16,7 @@ Example:
 
 from __future__ import annotations
 
+import functools
 import os
 import random
 import re
@@ -24,7 +25,7 @@ import zlib
 from collections.abc import Mapping
 from dataclasses import dataclass, fields
 from multiprocessing.synchronize import Lock
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union, cast
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
 if TYPE_CHECKING:
     from logic.src.pipeline.simulations.bins import Bins
@@ -36,38 +37,58 @@ import torch
 from logic.src.constants import DAY_METRICS
 
 
-def get_canonical_policy_name(policy_name: str) -> str:
-    """
-    Get canonical algorithm name for RNG seeding.
+@functools.lru_cache(maxsize=1)
+def _registered_constructor_keys() -> Tuple[str, ...]:
+    """Return every route-constructor key, taken from ``logic/configs/policies/policy_<key>.yaml``.
 
-    This extracts the base algorithm name from the policy string to ensure
-    consistent seeding across different selection strategies.
+    The file names are used instead of the live ``RouteConstructorRegistry`` because the registry
+    only holds the adapters imported so far (SWC-TCF, for one, is imported lazily), which would
+    make the seed depend on import order.
+    """
+    from logic.src.constants.paths import CONFIGS_DIR
+
+    policies_dir = os.path.join(CONFIGS_DIR, "policies")
+    try:
+        names = os.listdir(policies_dir)
+    except OSError:  # pragma: no cover - frozen builds without configs fall back to the token heuristic
+        return ()
+    return tuple(sorted(n[len("policy_") : -len(".yaml")] for n in names if n.startswith("policy_") and n.endswith(".yaml")))
+
+
+def get_canonical_policy_name(policy_name: str, known_keys: Optional[Iterable[str]] = None) -> str:
+    """
+    Get the route-constructor key of a policy slug, used for RNG seeding.
+
+    The seed must depend on the constructor only, so that the same constructor
+    under different selectors or thresholds draws the same random stream, and
+    different constructors under the same selector do not. The constructor is the
+    leftmost-longest run of slug tokens that is a registered constructor key.
 
     Args:
-        policy_name: Full policy name (e.g., 'lookahead_ma_ts_custom_gamma3')
+        policy_name: Full policy slug (e.g., 'last_minute_cf70_aco_hh_custom_cls').
+        known_keys: Constructor keys to match; defaults to the ``policy_<key>.yaml`` names.
 
     Returns:
-        Canonical name for seeding (e.g., 'ma_ts')
+        The constructor key (e.g., 'aco_hh'). If no key matches, the slug with any
+        leading selection tokens removed is returned.
 
     Examples:
-        >>> get_canonical_policy_name('lookahead_ma_ts_custom_gamma3')
+        >>> get_canonical_policy_name('last_minute_cf70_aco_hh_custom_cls', ['aco_hh', 'alns'])
+        'aco_hh'
+        >>> get_canonical_policy_name('lookahead_ma_ts_custom_gamma3', ['ma', 'ma_ts'])
         'ma_ts'
     """
     parts = policy_name.lower().split("_")
+    keys = set(known_keys) if known_keys is not None else set(_registered_constructor_keys())
+    for width in range(len(parts), 0, -1):
+        for start in range(len(parts) - width + 1):
+            candidate = "_".join(parts[start : start + width])
+            if candidate in keys:
+                return candidate
 
-    # Try to find algorithm name (typically after lookahead/policy prefix)
-    for _i, part in enumerate(parts):
-        if part in ["lookahead", "policy", "regular", "lastminute", "revenue"]:
-            # Skip selection strategy prefixes
-            continue
-        if part in ["custom", "gamma", "gamma1", "gamma2", "gamma3"]:
-            # Skip config suffixes
-            break
-        # Found algorithm name
-        return part
-
-    # Fallback: return original name
-    return policy_name
+    selection_tokens = {"lookahead", "policy", "regular", "last", "minute", "lastminute", "revenue", "service"}
+    rest = [p for p in parts if p not in selection_tokens and not p.startswith(("cf", "level"))]
+    return "_".join(rest) if rest else policy_name.lower()
 
 
 def _clean(name: Any) -> str:  # noqa: C901
