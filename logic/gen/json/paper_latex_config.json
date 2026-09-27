@@ -54,7 +54,7 @@
     "constructor_short": "Constructor",
     "scenario_factor": "Scenario factor",
     "scenario_metrics": [
-      "$n$",
+      "Runs",
       "kg/km",
       "Overflows",
       "km",
@@ -103,7 +103,7 @@
     "improvers": "Each pair has the same constructor, strategy, region and demand realisation, with a different configured improver. This is not a controlled improver treatment: upstream constructor outcomes also differ in some pairs, so the deltas are descriptive associations rather than causal effects. Win counts exclude ties, which are reported separately.",
     "horizon": "The 90-day archive is a selected, non-factorial subset; its selection rule is pending recovery of the run records, and Pareto-only carry-forward is not established (Sect.~\\ref{sec:provenance}). Configurations are compared against themselves across horizons, not used to rank constructors at 90 days. The paired values describe this selected subset and do not estimate a horizon effect for the full factorial design.",
     "scenarios": "The demand rows use the 216 policy slices present under both processes; the network rows use the 136 policy slices present on all three networks. Balancing prevents exclusions confined to Gamma-3 at $n=350$ from making the remaining levels look artificially better or worse.",
-    "excluded": "$\\tau$ is the horizon in days and ``FF 350'' the Figueira da Foz network at $n=350$. Within a scenario every constructor collects from the same waste realisation, so collected tonnage is comparable by construction. These runs fell more than {threshold}\\% below their scenario median. Their logs run to the end of the horizon but collection stops partway (the 30-day runs after days 16, 16 and 22; the 90-day raw log is not available), so their overflow counts largely record bins left full after collection stopped, not policy behaviour over the horizon."
+    "excluded": "$\\tau$ is the horizon in days and ``FF 350'' the Figueira da Foz network at $n=350$. Runs below their scenario median by more than {threshold}\\% are excluded. The three 30-day logs contain all 30 daily records but last collect on days 16, 16 and 22; later full bins keep contributing overflow events. The 90-day raw log is pending recovery, so its termination and last collection day are not established. These are anomalous policy outputs; neither a crash nor truncated logging follows from the tonnage gap alone."
   },
   "figure_titles": {
     "pareto": "Efficiency against service failures ({horizon}-day horizon)",

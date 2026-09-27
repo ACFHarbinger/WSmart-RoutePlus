@@ -55,16 +55,11 @@ low value there is not evidence of truncation on its own: several of the best
 policies collect on 15 of 30 days precisely because they bundle well. Tonnage is
 the honest signal.
 
-**The 90-day sample is conditioned on 30-day performance.** Only policies on the
-30-day Pareto front were re-run at 90 days, so each constructor's 90-day rows are
-the scenarios where it already did well. Cross-constructor 90-day aggregates are
-therefore selection-biased and this module refuses to emit one. The horizon table
-is built by ``paired_horizon_frame`` from configurations present at *both*
-horizons, compared against themselves. That contrast is descriptive of the
-selected configurations, not an unbiased estimate for the full factorial
-design: a configuration reached 90 days because its 30-day result was on the
-Pareto front. Without replicated seeds, the size or even direction of the
-resulting selection effect cannot be estimated.
+**The 90-day selection rule is pending recovery.** The archive is a
+non-factorial subset and does not reproduce Pareto-only carry-forward.
+The horizon table pairs each observed configuration against itself;
+it does not rank constructors across differently composed subsets or
+estimate a population-level horizon effect.
 
 Non-Python content lives in sibling directories, as with the other generators:
   jinja/paper_*.tex.j2       LaTeX fragment templates
@@ -391,7 +386,7 @@ STRATEGY_SPEC = CONSTRUCTOR_SPEC
 #: headline metrics span a mean/median pair under one centered label, with the
 #: mean/median distinction carried by a second header row rather than by a
 #: literal "med." column label competing with the numbers for space.
-METRIC_GROUP_HEADERS = [mc("$n$"), mc("kg/km", 2), mc("Overflows", 2), mc("km"), mc("Time (s)")]
+METRIC_GROUP_HEADERS = [mc("Runs"), mc("kg/km", 2), mc("Overflows", 2), mc("km"), mc("Time (s)")]
 METRIC_GROUP_SUBHEADERS = ["", "mean", "median", "mean", "median", "", ""]
 
 
@@ -722,9 +717,9 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
     # exercise it. Earlier versions of this figure asserted the opposite in a
     # highlighted badge, contradicting the simulation protocol -- so the noise
     # term is now shown greyed, with the operative sigma = 0 identity in black.
-    ax.text(0.180, 0.365, "Sensor model: $\\tilde{f}_{i,t} = f_{i,t} + \\epsilon_{i,t}$,\n$\\epsilon_{i,t} \\sim \\mathcal{N}(0, \\sigma^2)$",
+    ax.text(0.180, 0.365, "Optional sensor noise:\n$\\epsilon_{i,t} \\sim \\mathcal{N}(0, \\sigma^2)$",
             ha="center", va="center", fontsize=7.6, color="#94a3b8", linespacing=1.3)
-    ax.text(0.180, 0.285, "This study: $\\sigma = 0$, so $\\tilde{\\mathbf{f}}_t = \\mathbf{f}_t$",
+    ax.text(0.180, 0.285, "This study: $\\sigma = 0$ (true observations)",
             ha="center", va="center", fontsize=7.8, fontweight="bold", color=c_text_dark)
 
     # Scope Callout Badge 1 -- capability vs. exercised path
@@ -754,7 +749,7 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
     )
     ax.add_patch(box_p1)
     ax.text(0.515, 0.72, "Stage 1: Mandatory Selection", ha="center", fontsize=8.4, fontweight="bold", color="#065f46")
-    ax.text(0.515, 0.64, "Input: true level $w_i^t$\nOutput: mandatory set $\\mathcal{M}^t$\n(LM70/LM90, LA, SL1/SL2)",
+    ax.text(0.515, 0.64, "Input: capped post-arrival level\nOutput: mandatory set $\\mathcal{M}^t$\n(LM70/LM90, LA, SL1/SL2)",
             ha="center", va="center", fontsize=7.2, color=c_text_dark, linespacing=1.2)
 
     # 3b. Stage 2: Route Construction
@@ -813,7 +808,7 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
     )
     ax.add_patch(box_eval)
     ax.text(0.845, 0.42, "5. Collection log", ha="center", fontsize=9.2, fontweight="bold", color=c_eval_border)
-    ax.text(0.845, 0.32, "Profit $= R\\cdot\\mathrm{kg} - C\\cdot\\mathrm{km}$.\nEfficiency $=$ total kg $/$ total km.\nTime $=$ select $+$ construct $+$ improve.",
+    ax.text(0.845, 0.32, "Profit $= R\\cdot\\mathrm{kg} - C\\cdot\\mathrm{km}$.\nEfficiency $=$ total kg $/$ total km.\nRevised time: all three policy stages.",
             ha="center", va="center", fontsize=7.1, color=c_text_dark, linespacing=1.25)
     
     # Callout Badge 2 -- accounting reads the true state, not the sensed signal.
