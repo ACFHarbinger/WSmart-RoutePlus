@@ -33,7 +33,7 @@ from .base.eoq import resolve_trigger_threshold
 class LastMinuteSelection(IMandatorySelectionStrategy):
     """Simple threshold-based reactive strategy.
 
-    Logic: Collect if current_fill > threshold.
+    Logic: Collect if current_fill >= threshold (both in percent of capacity).
 
     Attributes:
         None
@@ -48,8 +48,7 @@ class LastMinuteSelection(IMandatorySelectionStrategy):
         Returns:
             Tuple[List[int], SearchContext]: Selected bin IDs (1-based) and search context.
         """
-        fill_ratios = context.current_fill / context.max_fill
-        mandatory_mask = resolve_trigger_threshold(context, fill_ratios)
+        mandatory_mask = resolve_trigger_threshold(context)
         mandatory_indices = np.nonzero(mandatory_mask)[0]
         return (mandatory_indices + 1).tolist(), SearchContext.initialize(
             selection_metrics={"strategy": "LastMinuteSelection"}

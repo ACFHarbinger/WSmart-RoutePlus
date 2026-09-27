@@ -70,7 +70,7 @@ class ProfitPerKmSelection(IMandatorySelectionStrategy):
         if getattr(context, "use_eoq_threshold", False):
             # When EOQ is active, the trigger is the fill-level, but we still
             # check revenue-positivity as a secondary guard.
-            mandatory_mask = resolve_trigger_threshold(context, fill_ratios)
+            mandatory_mask = resolve_trigger_threshold(context)
             mandatory_indices = np.nonzero(mandatory_mask & (revenue > 0))[0]
         else:
             # distance_matrix[0] is the depot. Index 1: end are the bins.

@@ -77,21 +77,21 @@ def compute_eoq_thresholds(context: SelectionContext) -> np.ndarray:
     return tau
 
 
-def resolve_trigger_threshold(context: SelectionContext, fill_ratios: np.ndarray) -> np.ndarray:
+def resolve_trigger_threshold(context: SelectionContext) -> np.ndarray:
     """Return a boolean mask of bins whose fill meets the effective trigger.
 
     If ``context.use_eoq_threshold`` is True, the per-bin EOQ threshold is
-    used; otherwise a uniform ``context.threshold`` is applied.
+    used; otherwise a uniform ``context.threshold`` is applied. The comparison
+    is ``fill >= threshold`` in absolute units (percent of capacity, like
+    ``context.current_fill`` and the EOQ thresholds); a threshold of 70 is the
+    ratio 0.70.
 
     Args:
         context (SelectionContext): The selection context.
-        fill_ratios (np.ndarray): Normalized fill ratios (unused here but often passed).
 
     Returns:
         np.ndarray: Boolean mask where True indicates a bin meets the trigger.
     """
-    # Important: context.current_fill is absolute (percent), fill_ratios is normalized.
-    # We choose to compare in absolute units to match compute_eoq_thresholds output.
     current_fill = context.current_fill
 
     if getattr(context, "use_eoq_threshold", False):

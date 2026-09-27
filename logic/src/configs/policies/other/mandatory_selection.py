@@ -79,9 +79,11 @@ class ServiceLevelSelectionConfig:
 
     Attributes:
         confidence_factor: Confidence factor for statistical overflow prediction.
+        horizon_days: Days projected ahead (1 = SL1, 2 = SL2 in ``ms_service_level.yaml``).
     """
 
     confidence_factor: float = 1.0
+    horizon_days: int = 1
 
 
 @dataclass
