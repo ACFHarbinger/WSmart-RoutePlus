@@ -42,10 +42,10 @@ alns:
     # ---------------------------------------------------------------------
     # Simulated Annealing Parameters
     # ---------------------------------------------------------------------
-    - start_temp: 100
-      # Initial acceptance temperature T_0
-      # Higher values → accept more worse solutions early (better exploration)
-      # Range: 10-10000 (100 = moderate, 1000 = aggressive exploration)
+    - start_temp: 0
+      # Initial acceptance temperature T_0. 0 = calibrate from the starting solution with the
+      # Ropke & Pisinger (2006) rule T_0 = start_temp_control * |initial profit| / ln 2 (owner decision,
+      # 2026-09-27). A positive value fixes T_0 instead; every archived run before 2026-09-27 used 100.
 
     - cooling_rate: 0.995
       # Geometric cooling factor: T_new = cooling_rate * T_old
@@ -67,9 +67,9 @@ alns:
     - start_temp_control: 0.05
       # 'w' parameter of the Ropke & Pisinger (2006) start-temperature rule: T_0 = w * |initial profit| / ln 2,
       # i.e. a w-fraction worse solution is accepted with probability 0.5.
-      # ONLY ACTIVE WHEN start_temp: 0. With start_temp: 100 (the value every archived run used) this key
-      # has no effect and T_0 = 100 on the profit scale (about 15 EUR for plastic), so worsening moves
-      # of a few euros are accepted with probability close to 1 early on.
+      # Only active when start_temp: 0 (the default since 2026-09-27). With the archived start_temp: 100
+      # it had no effect: T_0 = 100 on a profit scale of about 15 EUR accepted worsening moves of a few
+      # euros with probability close to 1.
       # Range: 0.01-0.2 (0.01 = conservative, 0.2 = aggressive)
 
     - xi: 0.4

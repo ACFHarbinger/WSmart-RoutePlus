@@ -41,7 +41,7 @@ class ALNSConfig:
     time_limit: float = 60.0
     seed: Optional[int] = None
     max_iterations: int = 5000
-    start_temp: float = 100.0
+    start_temp: float = 0.0  # 0 = Ropke & Pisinger calibration from the initial profit
     cooling_rate: float = 0.995
     reaction_factor: float = 0.1
     min_removal: int = 1
