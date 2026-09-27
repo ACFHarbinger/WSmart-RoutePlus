@@ -17,11 +17,11 @@ Two properties of that data are enforced centrally, in this module, so that the
 paper, the markdown reports and the website cannot disagree about them:
 
 **Degenerate runs are excluded from aggregates.** The simulator gives every
-constructor the identical demand realisation within a scenario cell (same waste,
-bin by bin, day by day -- see appendix_notes.md, "Why the comparison across
-algorithms is fair"), so the total tonnage available to collect is fixed within
-a cell and every constructor should collect a comparable amount of it. Runs that
-collect drastically less did not lose on policy quality; they failed to complete.
+constructor the same arrival sequence within a scenario cell. Collectable mass
+is not fixed: waste above capacity is lost, so timing changes the kilograms
+that remain. Runs that collect drastically less are anomalous outcomes. The
+30-day logs in question still contain every day; they stop collecting
+mid-horizon rather than ending early.
 ``find_degenerate_runs`` flags rows whose collected tonnage falls more than
 ``SHORTFALL_THRESHOLD`` below their cell median. The threshold is not arbitrary:
 the shortfall distribution has median 0.0 and rises to only 0.071 outside the
@@ -695,7 +695,7 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
         facecolor="#ffffff", edgecolor="#cbd5e1", linewidth=1.5, zorder=0
     )
     ax.add_patch(day_box)
-    ax.text(0.035, 0.93, "SIMULATED DAY CYCLE  (Day $t \\in \\{1, \\dots, H\\}$)", 
+    ax.text(0.035, 0.93, "SIMULATED DAY CYCLE  (Day $t \\in \\{1, \\dots, \\tau\\}$)",
             fontsize=9.5, fontweight="bold", color="#334155", zorder=1)
 
     # 1. Environment & Accumulation Box
@@ -705,19 +705,19 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
         facecolor=c_env_fill, edgecolor=c_env_border, linewidth=1.3, zorder=1
     )
     ax.add_patch(box_env)
-    ax.text(0.180, 0.84, "1. Waste Dynamics", ha="center", fontsize=9.2, fontweight="bold", color=c_env_border)
-    ax.text(0.180, 0.76, "True bin state $\\mathbf{f}_{t-1} \\in [0, C]^N$\n+ Daily demand $\\Delta \\mathbf{f}_t \\sim \\mathcal{D}$\n$\\Downarrow$\nTrue fill: $f_{i,t} = f_{i,t-1} + \\Delta f_{i,t}$",
-            ha="center", va="center", fontsize=7.6, color=c_text_dark, linespacing=1.3)
-    ax.text(0.180, 0.58, "Physical Ground Truth", ha="center", fontsize=7.0, fontweight="bold", color="#64748b")
+    ax.text(0.180, 0.845, "1. Arrival and service flag", ha="center", fontsize=8.6, fontweight="bold", color=c_env_border)
+    ax.text(0.180, 0.74, "Add today's arrival, then cap at $E_i$.\n$o_i^t = 1$ if the level equals $E_i$.\n$\\ell_i^t$ is only the mass above $E_i$.\nBoth are scored before routing.",
+            ha="center", va="center", fontsize=7.2, color=c_text_dark, linespacing=1.25)
+    ax.text(0.180, 0.585, "Decision state, pre-collection", ha="center", fontsize=7.0, fontweight="bold", color="#64748b")
 
     # 2. Noisy Sensing Box (Asymmetry Highlight)
     box_noise = mpatches.FancyBboxPatch(
         (0.055, 0.13), 0.25, 0.34,
         boxstyle="round,pad=0.012,rounding_size=0.015",
-        facecolor=c_noise_fill, edgecolor=c_noise_border, linewidth=1.3, zorder=1
+        facecolor="#f8fafc", edgecolor="#94a3b8", linewidth=1.3, zorder=1
     )
     ax.add_patch(box_noise)
-    ax.text(0.180, 0.43, "2. Sensed Telemetry", ha="center", fontsize=9.2, fontweight="bold", color=c_noise_border)
+    ax.text(0.180, 0.43, "2. Sensor (unused)", ha="center", fontsize=9.2, fontweight="bold", color="#64748b")
     # The sensor model is a framework capability; the reported runs do not
     # exercise it. Earlier versions of this figure asserted the opposite in a
     # highlighted badge, contradicting the simulation protocol -- so the noise
@@ -734,7 +734,7 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
 
     # Arrow 1 -> 2
     ax.annotate("", xy=(0.180, 0.48), xytext=(0.180, 0.535),
-                arrowprops=dict(arrowstyle="-|>", linewidth=1.4, color=c_noise_border))
+                arrowprops=dict(arrowstyle="-|>", linewidth=1.4, color="#94a3b8"))
 
     # 3. Policy Pipeline Big Container (Middle)
     box_policy_bg = mpatches.FancyBboxPatch(
@@ -754,7 +754,7 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
     )
     ax.add_patch(box_p1)
     ax.text(0.515, 0.72, "Stage 1: Mandatory Selection", ha="center", fontsize=8.4, fontweight="bold", color="#065f46")
-    ax.text(0.515, 0.64, "Input: observed $\\tilde{\\mathbf{f}}_t$ ($= \\mathbf{f}_t$ here)\nOutput: Mandatory subset $\\mathcal{M}_t \\subseteq V$\n(LM70/LM90, LA, SL1/SL2)",
+    ax.text(0.515, 0.64, "Input: true level $w_i^t$\nOutput: mandatory set $\\mathcal{M}^t$\n(LM70/LM90, LA, SL1/SL2)",
             ha="center", va="center", fontsize=7.2, color=c_text_dark, linespacing=1.2)
 
     # 3b. Stage 2: Route Construction
@@ -765,7 +765,7 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
     )
     ax.add_patch(box_p2)
     ax.text(0.515, 0.50, "Stage 2: Route Construction", ha="center", fontsize=8.4, fontweight="bold", color="#065f46")
-    ax.text(0.515, 0.42, "Input: $\\mathcal{M}_t$, optional candidates, dist $\\mathbf{D}$\nOutput: Feasible tour $R_t$ (cap $Q$)\n(BPC, HGS, PG-CLNS, ALNS, SANS...)",
+    ax.text(0.515, 0.42, "Input: $\\mathcal{M}^t$, directed $d_{ij}$\nOutput: a tour (load not re-checked)\n(eight classical constructors)",
             ha="center", va="center", fontsize=7.2, color=c_text_dark, linespacing=1.2)
 
     # 3c. Stage 3: Route Improvement
@@ -776,7 +776,7 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
     )
     ax.add_patch(box_p3)
     ax.text(0.515, 0.28, "Stage 3: Route Improvement", ha="center", fontsize=8.4, fontweight="bold", color="#065f46")
-    ax.text(0.515, 0.20, "Input: Constructive route $R_t$\nOutput: Refined tour $R_t^*$\n(Classical Local Search, Fast-TSP)",
+    ax.text(0.515, 0.20, "Input: constructed tour\nOutput: refined tour\n(Classical Local Search, Fast-TSP)",
             ha="center", va="center", fontsize=7.2, color=c_text_dark, linespacing=1.2)
 
     # Internal pipeline arrows
@@ -787,7 +787,7 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
 
     # Arrow Sensing -> Stage 1
     ax.annotate("", xy=(0.355, 0.67), xytext=(0.315, 0.30),
-                arrowprops=dict(arrowstyle="-|>", connectionstyle="arc3,rad=-0.25", linewidth=1.5, color=c_noise_border))
+                arrowprops=dict(arrowstyle="-|>", connectionstyle="arc3,rad=-0.25", linewidth=1.5, color="#94a3b8"))
 
     # 4. Route Execution Box (Top Right)
     box_exec = mpatches.FancyBboxPatch(
@@ -797,8 +797,8 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
     )
     ax.add_patch(box_exec)
     ax.text(0.845, 0.84, "4. Route Execution", ha="center", fontsize=9.2, fontweight="bold", color=c_env_border)
-    ax.text(0.845, 0.71, "Vehicle traverses $R_t^*$\nEmpties visited bins:\n$f_{i,t} \\leftarrow 0 \\quad \\forall i \\in R_t^*$\nHauls load $\\leq Q$",
-            ha="center", va="center", fontsize=7.6, color=c_text_dark, linespacing=1.3)
+    ax.text(0.845, 0.71, "Empties visited bins.\nKilometres use directed $d_{ij}$.\nThese runs do not reject\na load above $Q$.",
+            ha="center", va="center", fontsize=7.3, color=c_text_dark, linespacing=1.25)
     ax.text(0.845, 0.58, "Physical Collection", ha="center", fontsize=7.0, fontweight="bold", color="#64748b")
 
     # Arrow Policy -> Execution
@@ -812,14 +812,14 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
         facecolor=c_eval_fill, edgecolor=c_eval_border, linewidth=1.3, zorder=1
     )
     ax.add_patch(box_eval)
-    ax.text(0.845, 0.42, "5. Exact Accounting", ha="center", fontsize=9.2, fontweight="bold", color=c_eval_border)
-    ax.text(0.845, 0.33, "Evaluates true state $\\mathbf{f}_t$:\n• Overflows: $f_{i,t} \\geq C$\n• Loss: $\\max(0, f_{i,t} - C)$\n• Efficiency: kg / km",
-            ha="center", va="center", fontsize=7.4, color=c_text_dark, linespacing=1.2)
+    ax.text(0.845, 0.42, "5. Collection log", ha="center", fontsize=9.2, fontweight="bold", color=c_eval_border)
+    ax.text(0.845, 0.32, "Profit $= R\\cdot\\mathrm{kg} - C\\cdot\\mathrm{km}$.\nEfficiency $=$ total kg $/$ total km.\nTime $=$ select $+$ construct $+$ improve.",
+            ha="center", va="center", fontsize=7.1, color=c_text_dark, linespacing=1.25)
     
     # Callout Badge 2 -- accounting reads the true state, not the sensed signal.
     # (With sigma = 0 the two coincide, so this is a statement about the
     # accounting contract, not an observed asymmetry in these runs.)
-    ax.text(0.845, 0.18, "Exact ground-truth audit:\noverflow and loss are scored on\n$\\mathbf{f}_t$, never on the sensed signal",
+    ax.text(0.845, 0.18, "Overflow and lost mass\nare recorded in step 1,\nnot after the route",
             ha="center", va="center", fontsize=6.8, fontweight="bold", color="#991b1b",
             bbox=dict(boxstyle="round,pad=0.3", facecolor="#fee2e2", edgecolor="#ef4444", linewidth=0.8))
 
