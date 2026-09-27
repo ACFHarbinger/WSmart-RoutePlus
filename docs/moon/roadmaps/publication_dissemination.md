@@ -27,6 +27,19 @@
   claim-to-artifact mapping, and a prioritized amendment ledger (2026-08-28)
 - [ ] `[Research]` Run a complete, replicated 90-day grid so cross-constructor and population-level horizon effects become estimable (see §I.3). Current paired values describe only policies selected on 30-day Pareto performance
 
+- [ ] **2026-09-27 paper update: beamer notation plus algorithms from the code.** Plan of record:
+  `.agent/cache/paper_update_2026-09-26.md` §8.1 (steps P0–P12). Gated on the owner rulings in §8.2
+  (Q1–Q20). Order:
+  - P1: build unblockers (the bib has 10 duplicate entries; `latexmk` exits 12);
+  - P2: a single notation sweep to the beamer's notation (with `S_i`→`w_i`);
+  - P3: §3 rewritten as the SWCRP → MPVRPP formulation;
+  - P4–P9: per-section algorithm, protocol and data text in parallel. P4 (mandatory selection) has
+    no rows yet;
+  - P10: results provenance caveats (text only);
+  - P11–P12: front matter, a final review and the page budget.
+
+  No reruns in this phase; they are the code track C6, gated on Q8.
+
 ### I.2 — Reproducible generation
 
 - [x] `logic/gen/gen_paper_latex.py`: six tables and seven figures generated from the summary CSVs/raw logs into the paper's own tree, including balanced demand/network marginals and the simulation loop architecture (2026-08-25, 2026-08-27)
@@ -41,7 +54,7 @@
 
 - [x] Degenerate-run detection on collected tonnage, with whole-cell exclusion so no constructor is averaged over a subset that flatters it (2026-08-25)
 - [x] Root-cause and repair the duplicated/partial road-distance artifacts: parallel policy workers shared one non-atomic CSV writer. All correctly sized copies agreed within each network; atomic publication now prevents mixed output (issue #48, 2026-08-25)
-- [ ] Root-cause the degenerate SWC-TCF runs at Figueira da Foz N=350 / Gamma-3. The stored logger erases `mandatory_nodes` whenever the returned tour is empty, so the current logs cannot distinguish a selection failure from solver infeasibility; instrument both values and the solver status in a targeted rerun (issue #41)
+- [ ] Root-cause the degenerate SWC-TCF runs at Figueira da Foz N=350 / Gamma-3. The stored logger erases `mandatory_nodes` whenever the returned tour is empty, so the current logs cannot distinguish a selection failure from solver infeasibility; instrument both values and the solver status in a targeted rerun (issue #41). **Premise corrected 2026-09-27:** the three excluded 30-day logs hold all 30 days and stop collecting on days 16/16/22. They are not truncated at day 13 (paper-update rows R-codex-08 and R-grok-01), so #41 must be rewritten as "stops collecting mid-horizon"
 - [ ] `[Research]` Re-run CLS and Fast-TSP from identical stored constructor outputs and controlled seeds; the current matched-demand pairs differ in upstream collected-bin counts and cannot identify a causal improver effect
 - [ ] `[Research]` Horizon-adaptive time budgets and constructor-specific timeout/fallback handling for long-horizon runs. This addresses an observed failure, not a hypothetical one
 - [ ] Recover and version the 90-day carry-forward manifest. The tracked 174

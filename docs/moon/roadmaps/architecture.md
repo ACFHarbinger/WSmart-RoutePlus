@@ -138,6 +138,28 @@
 
 ---
 
+### §B.9 — 2026-09-26 logic review follow-up (code track C1–C6)
+
+Plan of record: `.agent/cache/paper_update_2026-09-26.md` §8.1 (code track). The rows are in
+`.agent/cache/logic_review_2026-09-26.md`: 32 paper-fidelity rows (P), 61 bugs (B), 34 refactors
+(M) and 39 dead-code rows (D). Order:
+
+- **C1:** correctness items the paper or a rerun depends on:
+  - vrpp capacity is never checked at execution;
+  - ACO-HH seeding and ignored knobs;
+  - the PSOMA and PG-CLNS RNG and clock;
+  - Fast-TSP seeding, the BMC temperature and the SL horizon;
+  - the SWC-TCF incumbent handling;
+  - the `gen_dist_matrix` path.
+- **C2:** the import-broken EGH/LASM.
+- **C3:** robustness (resume, the NA path, the AM normalisation kwarg, the rollout baseline, BPC and
+  SWC minors).
+- **C4:** confirmed dead code. The disputed, test-only and owner-call rows need owner rulings.
+- **C5:** refactors, low risk first; PG-CLNS operators and MS-BPC-SP only behind parity tests.
+- **C6:** Phase-2 reruns, gated on C1 and the recovery of the run manifests.
+
+The paper track has priority; only C1 runs alongside it. Umbrella issue: #61.
+
 ### Effort × Impact Matrix — Architecture
 
 | Item                                                    | Effort   | Impact | Priority                  |
