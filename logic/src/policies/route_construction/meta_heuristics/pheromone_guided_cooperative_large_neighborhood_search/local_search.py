@@ -128,9 +128,9 @@ class LocalSearch(PolicyVizMixin, ABC):
 
         improved = True
         it = 0
-        t_start = time.process_time()
+        t_start = time.perf_counter()
         while improved and it < self.params.local_search_iterations:
-            if self.params.time_limit > 0 and time.process_time() - t_start > self.params.time_limit:
+            if self.params.time_limit > 0 and time.perf_counter() - t_start > self.params.time_limit:
                 break
 
             improved = False

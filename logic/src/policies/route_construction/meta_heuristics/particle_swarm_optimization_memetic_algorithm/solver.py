@@ -92,6 +92,8 @@ class PSOMASolver:
         self.n_nodes = len(dist_matrix) - 1
         self.clients = list(range(1, self.n_nodes + 1))
         self.random = random.Random(params.seed) if params.seed is not None else random.Random()
+        # One seeded numpy stream for every vector draw, so a run is repeatable outside the simulator's global reseed.
+        self.np_rng = np.random.default_rng(params.seed)
         self.split_solver = LinearSplit(
             dist_matrix=self.dist_matrix,
             wastes=self.wastes,
@@ -166,7 +168,7 @@ class PSOMASolver:
 
             # PSO Exploration
             for p in self.swarm:
-                r1, r2 = np.random.rand(self.n_nodes), np.random.rand(self.n_nodes)
+                r1, r2 = self.np_rng.random(self.n_nodes), self.np_rng.random(self.n_nodes)
                 p.V = (
                     self.params.omega * p.V
                     + self.params.c1 * r1 * (p.pbest_X - p.X)
@@ -213,7 +215,7 @@ class PSOMASolver:
         Returns:
             List[PSOMAParticle]: Initialized swarm of particles.
         """
-        self.swarm = [PSOMAParticle(self.clients, self.params, self.split_solver) for _ in range(self.params.pop_size)]
+        self.swarm = [PSOMAParticle(self.clients, self.params, self.split_solver, rng=self.np_rng) for _ in range(self.params.pop_size)]
         for p in self.swarm:
             if p.profit > self.gbest_profit:
                 self._set_gbest(p.X, p.giant_tour, p.mapping_indices, p.routes, p.profit)
@@ -286,7 +288,7 @@ class PSOMASolver:
         Returns:
             None
         """
-        op_idx = np.random.choice(3, p=self.probabilities)
+        op_idx = int(self.np_rng.choice(3, p=self.probabilities))
         op = self.operators[op_idx]
         initial_profit = self.gbest_profit
 
@@ -388,7 +390,7 @@ class PSOMASolver:
         if self.n_nodes < 2:
             return tour, X, mapping, 0.0
 
-        i, j = sorted(random.sample(range(self.n_nodes), 2))
+        i, j = sorted(self.random.sample(range(self.n_nodes), 2))
         N = self.n_nodes
         D = self.biased_dist_matrix
 
@@ -449,7 +451,7 @@ class PSOMASolver:
             return tour, X, mapping, 0.0
 
         # Choose two distinct positions; i < j implies moving a node 'backwards'
-        i, j = sorted(random.sample(range(self.n_nodes), 2))
+        i, j = sorted(self.random.sample(range(self.n_nodes), 2))
         N = self.n_nodes
         D = self.biased_dist_matrix
 
@@ -511,7 +513,7 @@ class PSOMASolver:
         if self.n_nodes < 2:
             return tour, X, mapping, 0.0
 
-        i, j = sorted(random.sample(range(self.n_nodes), 2))
+        i, j = sorted(self.random.sample(range(self.n_nodes), 2))
         N = self.n_nodes
         D = self.biased_dist_matrix
 

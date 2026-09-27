@@ -231,9 +231,9 @@ class LNSSolver(PolicyVizMixin):
         current_profit = best_profit
 
         T = self.params.start_temp
-        start_time = time.process_time()
+        start_time = time.perf_counter()
         for _it in range(self.params.max_iterations):
-            if self.params.time_limit > 0 and time.process_time() - start_time > self.params.time_limit:
+            if self.params.time_limit > 0 and time.perf_counter() - start_time > self.params.time_limit:
                 break
 
             new_routes, d_idx, r_idx = self._select_and_apply_operators(current_routes)

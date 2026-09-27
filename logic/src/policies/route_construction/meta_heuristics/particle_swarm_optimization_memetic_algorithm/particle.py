@@ -10,7 +10,7 @@ Example:
     >>> # particle = PSOMAParticle(clients, params, split_solver)
 """
 
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 
@@ -37,7 +37,13 @@ class PSOMAParticle:
         pbest_profit (float): Personal best objective value.
     """
 
-    def __init__(self, clients: List[int], params: PSOMAParams, split_solver: LinearSplit):
+    def __init__(
+        self,
+        clients: List[int],
+        params: PSOMAParams,
+        split_solver: LinearSplit,
+        rng: Optional[np.random.Generator] = None,
+    ):
         """
         Initializes a continuous PSOMA particle.
 
@@ -45,13 +51,15 @@ class PSOMAParticle:
             clients: List of node indices (excluding depot).
             params: PSOMA hyperparameters (bounds, velocities).
             split_solver: Initialized LinearSplit decoder instance.
+            rng: Seeded generator for the initial position and velocity (a fresh one if None).
         """
         self.n_clients = len(clients)
         self.clients = np.array(clients)
 
         # Continuous state
-        self.X = np.random.uniform(params.x_min, params.x_max, self.n_clients)
-        self.V = np.random.uniform(params.v_min, params.v_max, self.n_clients)
+        rng = rng if rng is not None else np.random.default_rng()
+        self.X = rng.uniform(params.x_min, params.x_max, self.n_clients)
+        self.V = rng.uniform(params.v_min, params.v_max, self.n_clients)
 
         # Discrete state mapping
         self.mapping_indices = np.argsort(self.X)

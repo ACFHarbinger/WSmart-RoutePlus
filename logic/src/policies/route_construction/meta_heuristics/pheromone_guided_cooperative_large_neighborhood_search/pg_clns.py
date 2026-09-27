@@ -98,7 +98,7 @@ class PGCLNSSolver(PolicyVizMixin):
         Returns:
             Tuple of (routes, profit, cost).
         """
-        start_time = time.process_time()
+        start_time = time.perf_counter()
 
         # 1. Initialization: Create the initial population
         population: List[Tuple[List[List[int]], float, float]] = []
@@ -115,7 +115,7 @@ class PGCLNSSolver(PolicyVizMixin):
 
         # 2. Iterations of the algorithm
         for _iteration in range(self.params.max_iterations):
-            if self.params.time_limit > 0 and time.process_time() - start_time > self.params.time_limit:
+            if self.params.time_limit > 0 and time.perf_counter() - start_time > self.params.time_limit:
                 break
 
             # 3. Coaching Phase: Apply LNS to each population member

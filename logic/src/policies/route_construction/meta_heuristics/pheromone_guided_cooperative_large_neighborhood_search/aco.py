@@ -188,9 +188,9 @@ class ACOSolver(PolicyVizMixin):
         """
         best_routes: List[List[int]] = []
         best_cost = float("inf")
-        start_time = time.process_time()
+        start_time = time.perf_counter()
         for _iteration in range(self.params.max_iterations):
-            if self.params.time_limit > 0 and time.process_time() - start_time > self.params.time_limit:
+            if self.params.time_limit > 0 and time.perf_counter() - start_time > self.params.time_limit:
                 break
 
             iteration_best_routes: List[List[int]] = []

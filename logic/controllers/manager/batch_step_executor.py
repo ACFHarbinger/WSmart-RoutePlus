@@ -116,7 +116,7 @@ def _step_gen_dist_matrix(args: Dict[str, Any], job: BatchJob) -> None:
             print(f"  [gen_dist_matrix] matrix already exists, skipping: {dm_filepath}")
             return
 
-    script = root / "logic" / "scripts" / "gen_dist_matrix.py"
+    script = root / "logic" / "gen" / "gen_dist_matrix.py"
     cmd = [
         sys.executable, str(script),
         "--area", area,
