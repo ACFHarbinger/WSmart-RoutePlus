@@ -102,7 +102,9 @@ class SimulationRepository(ABC):
 
         Returns:
             Tuple containing:
-                - vehicle_capacity: Max bin capacity units per vehicle (%)
+                - vehicle_capacity: Payload per trip, returned in percent of one full bin
+                  (the unit the constructors plan in). The constants below are kg and are
+                  converted at the end: e.g. 3500 kg / (2.5 * 19 kg per bin) * 100 = 7368.4 %.
                 - revenue: Revenue per kg of collected waste (€/kg)
                 - density: Waste density (kg/L)
                 - expenses: Cost per km traveled (€/km)
@@ -150,6 +152,7 @@ class SimulationRepository(ABC):
                 vehicle_capacity = 8000.0
 
         # Calculate percentage capacity
+        # kg per trip -> percent of one full bin (bin mass = bin_volume * density)
         vehicle_capacity = (vehicle_capacity / (bin_volume * density)) * 100
         return (vehicle_capacity, revenue, density, expenses, bin_volume)
 

@@ -80,6 +80,9 @@ class LogAction(SimulationAction):
             mandatory=context.get("mandatory"),
         )
         dlog["failure_analysis"] = failure_summary
+        dlog["trip_loads_kg"] = context.get("trip_loads_kg", [])
+        dlog["capacity_violations"] = int(context.get("capacity_violations", 0))
+        dlog["capacity_splits"] = int(context.get("capacity_splits", 0))
         context["daily_log"] = dlog
         policy_name = context.get("display_name", context["policy_name"])
 
