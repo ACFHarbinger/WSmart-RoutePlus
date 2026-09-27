@@ -524,16 +524,16 @@ def table_scenarios(clean: pd.DataFrame, horizon: int, cfg: dict) -> str:
     dist["level"] = dist["dist"].map(lambda value: f"Demand: {value}")
     network = balance_marginal(primary, "network").copy()
     network["level"] = network.apply(
-        lambda row: f"Network: {row.city} ($n={row.N}$)", axis=1
+        lambda row: f"Network: {row.city} ($N={row.N}$)", axis=1
     )
     frame = pd.concat([dist, network], ignore_index=True)
     agg = aggregate(frame, "level", metrics)
     order = [
         "Demand: Empirical",
         "Demand: Gamma-3",
-        "Network: Rio Maior ($n=100$)",
-        "Network: Rio Maior ($n=170$)",
-        "Network: Figueira da Foz ($n=350$)",
+        "Network: Rio Maior ($N=100$)",
+        "Network: Rio Maior ($N=170$)",
+        "Network: Figueira da Foz ($N=350$)",
     ]
     agg = agg.reindex(order)
     return render_template(
@@ -1074,7 +1074,7 @@ def fig_networks(out_dir: Path, cfg: dict) -> None:
         for spine in ax.spines.values():
             spine.set_color("#91a0aa")
             spine.set_linewidth(0.8)
-        ax.set_title(f"{scenario['city']}  ($n={scenario['N']}$)", fontsize=10,
+        ax.set_title(f"{scenario['city']}  ($N={scenario['N']}$)", fontsize=10,
                      fontweight="bold", pad=7)
         ax.text(0.03, 0.035, "selected plastic bins  |  OSM roads",
                 transform=ax.transAxes, fontsize=6.7, color="#35434c",
@@ -1196,7 +1196,7 @@ def fig_fill_trajectory(out_dir: Path) -> None:
         ax.grid(True, alpha=0.2)
     axes[0].set_ylabel("Fill level (% of capacity)", fontsize=8)
     axes[0].legend(fontsize=7, frameon=False, loc="upper left")
-    fig.suptitle("Last-Minute selection at two thresholds (Rio Maior, $n=100$, Gamma-3)",
+    fig.suptitle("Last-Minute selection at two thresholds (Rio Maior, $N=100$, Gamma-3)",
                  fontsize=10, y=1.02)
     fig.tight_layout()
     savefig(fig, out_dir / "fill_trajectory_30d.png")
