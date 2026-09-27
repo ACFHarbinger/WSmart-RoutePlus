@@ -65,9 +65,12 @@ alns:
       # Prevents degenerate moves; typically set to 1
 
     - start_temp_control: 0.05
-      # 'w' parameter: accept a 5% worse solution with 0.5 probability
+      # 'w' parameter of the Ropke & Pisinger (2006) start-temperature rule: T_0 = w * |initial profit| / ln 2,
+      # i.e. a w-fraction worse solution is accepted with probability 0.5.
+      # ONLY ACTIVE WHEN start_temp: 0. With start_temp: 100 (the value every archived run used) this key
+      # has no effect and T_0 = 100 on the profit scale (about 15 EUR for plastic), so worsening moves
+      # of a few euros are accepted with probability close to 1 early on.
       # Range: 0.01-0.2 (0.01 = conservative, 0.2 = aggressive)
-      # Controls initial exploration vs exploitation trade-off
 
     - xi: 0.4
       # 'xi' parameter: fraction of total nodes for max removal cap

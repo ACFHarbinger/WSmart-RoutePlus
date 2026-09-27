@@ -153,7 +153,11 @@ def _run_pyomo_tcf_optimizer(  # noqa: C901
     model.depot_empty_out = pyo.Constraint(
         expr=sum(model.h[0, j] for j in model.V_real if (0, j) in model.A) == Q * model.k_var
     )
-    model.depot_waste_out = pyo.Constraint(expr=sum(model.f[0, j] for j in model.V_real if (0, j) in model.A) == 0)
+    depot_out_arcs = [j for j in model.V_real if (0, j) in model.A]
+    if depot_out_arcs:
+        model.depot_waste_out = pyo.Constraint(expr=sum(model.f[0, j] for j in depot_out_arcs) == 0)
+    # With no depot arcs (all cut by MAX_ARC_DISTANCE_KM) the balance is 0 == 0, which pyomo rejects as a
+    # trivial Boolean; skipping it leaves the model infeasible or empty, like the native backends.
 
     model.vehicle_count = pyo.Constraint(
         expr=sum(model.x[0, j] for j in model.V_real if (0, j) in model.A) == model.k_var
@@ -232,10 +236,12 @@ def _run_pyomo_tcf_optimizer(  # noqa: C901
 
     def _has_solution(res) -> bool:
         tc = res.solver.termination_condition
-        return pyo.check_optimal_termination(res) or (
+        status_ok = pyo.check_optimal_termination(res) or (
             tc in (pyo.TerminationCondition.maxTimeLimit, pyo.TerminationCondition.feasible)
             and res.solver.status != pyo.SolverStatus.error
         )
+        # A time limit hit before any incumbent reports maxTimeLimit with no solution to load.
+        return status_ok and len(getattr(res, "solution", [])) > 0
 
     results = opt.solve(model, tee=False, load_solutions=False)
     if results.solver.termination_condition == pyo.TerminationCondition.infeasible and len(model.forced_visits) > 0:
@@ -246,8 +252,14 @@ def _run_pyomo_tcf_optimizer(  # noqa: C901
         raise RuntimeError(f"SWC-TCF model is infeasible (Pyomo/{solver_id}).")
 
     # 6. Parse Results
+    loaded = False
     if _has_solution(results):
-        model.solutions.load_from(results)
+        try:
+            model.solutions.load_from(results)
+            loaded = True
+        except ValueError as exc:  # e.g. "Cannot load a SolverResults object with bad status: aborted"
+            print(f"[WARN] Pyomo TCF ({solver_id}): no loadable incumbent ({exc}).")
+    if loaded:
         id_map = {0: 0}
         for i, bin_id in enumerate(pure_binsids, 1):
             id_map[i] = bin_id
