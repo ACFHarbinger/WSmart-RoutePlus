@@ -463,7 +463,7 @@ def apply_perturb(ctx: HyperOperatorContext, k: int = 3) -> bool:
     Returns:
         bool: True if an improving move was made, False otherwise.
     """
-    return perturb(ctx, k)
+    return perturb(ctx, k, rng=ctx.rng)
 
 
 def apply_kick(ctx: HyperOperatorContext, destroy_ratio: float = 0.2) -> bool:

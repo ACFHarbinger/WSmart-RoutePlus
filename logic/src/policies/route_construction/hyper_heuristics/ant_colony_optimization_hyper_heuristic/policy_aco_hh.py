@@ -24,9 +24,6 @@ from logic.src.policies.route_construction.base.factory import RouteConstructorR
 from logic.src.policies.route_construction.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_aco import (
     HyperHeuristicACO,
 )
-from logic.src.policies.route_construction.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_operators import (
-    OPERATOR_NAMES,
-)
 from logic.src.policies.route_construction.hyper_heuristics.ant_colony_optimization_hyper_heuristic.params import (
     HyperACOParams,
 )
@@ -127,12 +124,18 @@ class HyperACOPolicy(BaseRoutingPolicy):
             alpha=values.get("alpha", 1.0),
             beta=values.get("beta", 2.0),
             rho=values.get("rho", 0.5),
+            eta_decay=values.get("eta_decay", 0.5),
             tau_0=values.get("tau_0", 1.0),
+            Q=values.get("Q", 1.0),
+            lambda_val=values.get("lambda_val", 1.0001),
+            use_dynamic_lambda=values.get("use_dynamic_lambda", True),
             max_iterations=values.get("max_iterations", 50),
             time_limit=values.get("time_limit", 30.0),
             stagnation_limit=values.get("stagnation_limit", 10),
             elitism_ratio=values.get("elitism_ratio", 0.5),
-            operators=values.get("operators", OPERATOR_NAMES.copy()),
+            operators=values.get("operators"),
+            sequence_length=values.get("sequence_length"),
+            time_weighted_visibility=values.get("time_weighted_visibility", False),
             vrpp=values.get("vrpp", True),
             profit_aware_operators=values.get("profit_aware_operators", False),
             seed=values.get("seed", 42),

@@ -11,7 +11,7 @@ Example:
     20
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List, Optional
 
 from .other.mandatory_selection import MandatorySelectionConfig
@@ -60,11 +60,12 @@ class HyperHeuristicACOConfig:
     time_limit: float = 30.0
     seed: Optional[int] = None
     stagnation_limit: int = 10
-    sequence_length: int = 5
+    sequence_length: Optional[int] = None
     local_search: bool = True
     local_search_iterations: int = 500
     elitist_weight: float = 1.0
-    operators: List[str] = field(default_factory=lambda: ["swap", "2opt_intra", "relocate", "swap_star", "perturb"])
+    operators: Optional[List[str]] = None
+    time_weighted_visibility: bool = False
     vrpp: bool = True
     profit_aware_operators: bool = False
     mandatory_selection: Optional[List[MandatorySelectionConfig]] = None

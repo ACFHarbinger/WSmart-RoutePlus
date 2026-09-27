@@ -88,12 +88,12 @@ aco_hh:
     # ---------------------------------------------------------------------
     # Operator Sequence Construction
     # ---------------------------------------------------------------------
-    - sequence_length: 5
-      # Number of operators in each sequence
-      # Range: 2-10 (2 = simple chains, 10 = complex strategies)
-      # Example sequence: [swap, 2opt_intra, relocate, swap_star, 2opt_intra]
+    - sequence_length: null
+      # Operators per journey. null = one per operator in the pool (Chen et al. 2007, journey length n).
+      # Before 2026-09-27 this key was ignored and every run used null; the old value 5 never took effect.
 
-    - Q: 0.9
+    - Q: 1.0
+      # Before 2026-09-27 this key was not forwarded and every run used 1.0; the old value 0.9 never took effect.
       # Pheromone floor constant added to every improving-journey deposit.
 
     - lambda_val: 1.0001
@@ -108,7 +108,9 @@ aco_hh:
     # ---------------------------------------------------------------------
     # Local Search Operators Pool
     # ---------------------------------------------------------------------
-    - operators: ["swap", "2opt_intra", "relocate", "swap_star", "perturb"]
+    - operators: null
+      # null = every registered hyper-operator (all 11), which is what every run used before 2026-09-27,
+      # when this key was ignored. Give a subset to restrict the pool, e.g. ["swap", "2opt_intra", "relocate"].
       # Available improvement heuristics for sequence construction
       # Options:
       #   - swap: Exchange two nodes between routes

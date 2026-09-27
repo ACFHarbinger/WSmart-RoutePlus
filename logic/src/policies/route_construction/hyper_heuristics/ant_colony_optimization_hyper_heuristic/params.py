@@ -15,7 +15,7 @@ Example:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, List, Optional
 
 from .hyper_operators import OPERATOR_NAMES
@@ -52,7 +52,13 @@ class HyperACOParams:
         time_limit: Maximum runtime in seconds.
         stagnation_limit: Number of iterations without improvement before pv is halved
             (Strategic Oscillation, per Chen et al. 2007).
-        operators: List of operator names to include in the sequence construction.
+        operators: Operator names the ants choose from; None (default) means all registered
+            operators, which is what the archived runs used.
+        sequence_length: Operators per journey; None (default) means one per operator, the
+            journey length n of Chen et al. (2007) §III.B.
+        time_weighted_visibility: If True, divide each visibility contribution by the operator's
+            wall-clock runtime (a speed bonus). Off by default because it makes runs with the same
+            seed differ; the count-normalised form is deterministic.
         vrpp: If True, operators consider unvisited nodes (VRPP mode).
         profit_aware_operators: If True, use profit-weighted removal/insertion operators.
         seed: Random seed for reproducibility.
@@ -72,7 +78,9 @@ class HyperACOParams:
     elitism_ratio: float = 1.0
     time_limit: float = 30.0
     stagnation_limit: int = 10
-    operators: List[str] = field(default_factory=lambda: OPERATOR_NAMES.copy())
+    operators: Optional[List[str]] = None
+    sequence_length: Optional[int] = None
+    time_weighted_visibility: bool = False
     vrpp: bool = True
     profit_aware_operators: bool = False
     seed: Optional[int] = None
@@ -92,6 +100,12 @@ class HyperACOParams:
             raise ValueError(f"Pheromone floor constant Q must be >= 0, got {self.Q}")
         if not (0 < self.elitism_ratio <= 1):
             raise ValueError(f"elitism_ratio must be in (0, 1], got {self.elitism_ratio}")
+        if self.operators is not None:
+            unknown = [op for op in self.operators if op not in OPERATOR_NAMES]
+            if unknown or not self.operators:
+                raise ValueError(f"operators must be a non-empty subset of {OPERATOR_NAMES}; unknown: {unknown}")
+        if self.sequence_length is not None and self.sequence_length < 1:
+            raise ValueError(f"sequence_length must be >= 1, got {self.sequence_length}")
 
     @classmethod
     def from_config(cls, config: Any) -> HyperACOParams:
@@ -117,7 +131,9 @@ class HyperACOParams:
             elitism_ratio=getattr(config, "elitism_ratio", 1.0),
             time_limit=getattr(config, "time_limit", 30.0),
             stagnation_limit=getattr(config, "stagnation_limit", 10),
-            operators=getattr(config, "operators", OPERATOR_NAMES.copy()),
+            operators=getattr(config, "operators", None),
+            sequence_length=getattr(config, "sequence_length", None),
+            time_weighted_visibility=getattr(config, "time_weighted_visibility", False),
             vrpp=getattr(config, "vrpp", True),
             profit_aware_operators=getattr(config, "profit_aware_operators", False),
             seed=getattr(config, "seed", None),
