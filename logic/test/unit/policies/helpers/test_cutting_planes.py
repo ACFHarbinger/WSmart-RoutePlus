@@ -12,15 +12,11 @@ from logic.src.policies.helpers.solvers_and_matheuristics.search.cutting_planes 
     EdgeCliqueCutEngine,
     KnapsackCoverEngine,
     LimitedMemoryRank1CutEngine,
-    MinCutInequalityEngine,
-    NodeProfitBoundEngine,
-    PathEliminationEngine,
     PhysicalCapacityLCIEngine,
     RoundedCapacityCutEngine,
     RoundedMultistarCutEngine,
     SaturatedArcLCIEngine,
     SubsetRowCutEngine,
-    TriangleCliqueCutEngine,
     create_cutting_plane_engine,
 )
 from logic.src.policies.helpers.solvers_and_matheuristics.separation import (
@@ -264,40 +260,6 @@ def test_rounded_multistar_cut_engine(base_vrpp_model: VRPPModel) -> None:
         added = engine.separate_and_add_cuts(master, 10)
         assert added >= 0
 
-def test_min_cut_inequality_engine(base_vrpp_model: VRPPModel) -> None:
-    engine = MinCutInequalityEngine(base_vrpp_model)
-    assert engine.get_name() == "min_cut"
-
-    master = MagicMock()
-    master.model = MagicMock()
-    master.get_node_visitation.return_value = {1: 0.5}
-
-    r1 = Route(nodes=[1], cost=1.0, revenue=2.0, load=10.0, node_coverage={1})
-    master.routes = [r1]
-
-    var1 = MagicMock()
-    var1.X = 0.2
-    master.lambda_vars = [var1]
-
-    # Call with add_min_cut_constraint success
-    master.add_min_cut_constraint.return_value = True
-    added = engine.separate_and_add_cuts(master, 10)
-    assert added == 1
-
-def test_triangle_clique_cut_engine(base_vrpp_model: VRPPModel) -> None:
-    engine = TriangleCliqueCutEngine(base_vrpp_model)
-    assert engine.get_name() == "triangle_clique"
-
-    master = MagicMock()
-    master.model = MagicMock()
-    master.get_node_visitation.return_value = {1: 0.6, 2: 0.6, 3: 0.6}
-
-    master.add_conflict_cut.return_value = True
-    master.add_clique_cut.return_value = True
-
-    added = engine.separate_and_add_cuts(master, 10)
-    assert added >= 0
-
 def test_limited_memory_rank_1_cut_engine(base_vrpp_model: VRPPModel) -> None:
     engine = LimitedMemoryRank1CutEngine(base_vrpp_model)
     assert engine.get_name() == "limited_memory_rank1"
@@ -317,46 +279,18 @@ def test_limited_memory_rank_1_cut_engine(base_vrpp_model: VRPPModel) -> None:
     added = engine.separate_and_add_cuts(master, 10)
     assert added >= 0
 
-def test_node_profit_bound_engine(base_vrpp_model: VRPPModel) -> None:
-    engine = NodeProfitBoundEngine(base_vrpp_model)
-    assert engine.get_name() == "node_profit_bound"
-
-    master = MagicMock()
-    master.model = MagicMock()
-    master.get_node_visitation.return_value = {1: 0.5, 2: 0.5}
-
-    master.add_profit_bound_cut.return_value = True
-    added = engine.separate_and_add_cuts(master, 10)
-    assert added >= 0
-
-def test_path_elimination_engine(base_vrpp_model: VRPPModel) -> None:
-    engine = PathEliminationEngine(base_vrpp_model)
-    assert engine.get_name() == "path_elimination"
-
-    master = MagicMock()
-    master.model = MagicMock()
-    # high-flow arcs
-    master.get_edge_usage.return_value = {(1, 2): 0.8, (2, 3): 0.8}
-
-    master.add_path_elimination_cut.return_value = True
-    added = engine.separate_and_add_cuts(master, 10)
-    assert added >= 0
-
 def test_create_cutting_plane_engine(base_vrpp_model: VRPPModel) -> None:
     sep_engine = SeparationEngine(base_vrpp_model)
 
     # Test creation of all valid names
     for name in ["rcc", "sri", "edge_clique", "fleet_cover", "physical_lci",
-                 "saturated_arc_lci", "multistar", "cover", "min_cut",
-                 "triangle_clique", "limited_memory_rank1", "node_profit_bound",
-                 "path_elimination", "all", "composite"]:
+                 "saturated_arc_lci", "multistar", "cover",
+                 "limited_memory_rank1", "all", "composite"]:
         engine = create_cutting_plane_engine(name, base_vrpp_model, sep_engine=sep_engine)
         assert engine is not None
         assert engine.get_name() in ["rcc", "sri", "edge_clique", "fleet_cover",
                                     "physical_lci", "saturated_arc_lci", "multistar",
-                                    "cover", "min_cut", "triangle_clique",
-                                    "limited_memory_rank1", "node_profit_bound",
-                                    "path_elimination", "composite"]
+                                    "cover", "limited_memory_rank1", "composite"]
 
     with pytest.raises(ValueError):
         create_cutting_plane_engine("invalid_name", base_vrpp_model)

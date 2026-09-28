@@ -44,7 +44,8 @@ Paper-to-Implementation Mapping (BHV2000)
 
 §4.2 – LCI Dual Integration in Pricing
     Per-node α lifting coefficients are archived in the GlobalCutPool and
-    re-injected at descendant B&B nodes via ``apply_to_master``.  The
+    persist across B&B nodes through the single shared master object, which is
+    never rebuilt mid-search.  The
     composite dual dict emitted by ``get_reduced_cost_coefficients`` includes
     ``lci_duals`` and ``lci_node_alphas`` keys, which flow through to the
     label-extension step.
@@ -88,9 +89,8 @@ Additional components not in BHV2000 (VRPP adaptations):
     - Ryan-Foster (1981) node-pair branching for the SPP.
     - Rounded Capacity Cuts (RCC, Lysgaard et al. 2004).
     - Subset-Row Inequalities (3-SRI, Jepsen et al. 2008).
-    - Dual smoothing (Wentges 1997) for faster CG convergence.
-    - GlobalCutPool: centralised cut registry ensuring parent cuts are
-      re-injected at all descendant B&B nodes.
+    - GlobalCutPool: centralised cut registry; cuts persist across nodes
+      through the single shared master object, which is never rebuilt mid-search.
 
 Attributes:
     logger (logging.Logger): Module-level logger.
@@ -907,7 +907,6 @@ def _column_generation_loop(  # noqa: C901
         node_depth (int): Current B&B tree depth.
         rc_tolerance (float): Minimum reduced cost for column acceptance.
         cut_orthogonality_threshold (float): Minimum cut independence.
-        exact_mode (bool): If True, disables dual smoothing.
         cg_at_root_only (bool): If True, skips pricing at descendant nodes.
         branching_strategy (str): Active branching rule name.
         rcspp_timeout (float): Timeout for the RCSPP solver.
@@ -919,16 +918,12 @@ def _column_generation_loop(  # noqa: C901
     timed_out = False
     converged = False
     pricing_exhausted = False
-    smoothing_recovery = False
     obj_val = -float("inf")
     route_vals: Dict[int, float] = {}
     prev_obj_val = -float("inf")
     _iteration = 0
     consecutive_pricing_timeouts = 0
     max_consecutive_pricing_timeouts = 3
-    if exact_mode:
-        master.enable_dual_smoothing = False
-
     # Task 3: Fix Lagrangian default.
     # If no fleet limit is active, the worst-case number of vehicles is n_nodes.
     fleet_size: int = vehicle_limit if vehicle_limit is not None else master.n_nodes
@@ -1142,16 +1137,6 @@ def _column_generation_loop(  # noqa: C901
                 consecutive_pricing_timeouts = 0
 
             if added == 0:
-                if smoothing_recovery:
-                    logger.info("Smoothing Recovery Phase: Converged with exact duals.")
-                    converged = True
-                    break
-                elif master.enable_dual_smoothing:
-                    logger.info("Entering Smoothing Recovery Phase (Exact duals).")
-                    master.enable_dual_smoothing = False
-                    smoothing_recovery = True
-                    continue
-
                 # Task 1b: Check for fractional cycles in ng-relaxation if CG has converged
                 # locally. Dynamic ng-expansion serves as a lightweight cut separation.
                 cycles: List[Tuple[int, ...]] = []
@@ -1207,7 +1192,6 @@ def _column_generation_loop(  # noqa: C901
             converged
             and pricing_exhausted
             and not timed_out
-            and not getattr(master, "enable_dual_smoothing", False)
             and hasattr(pricing_solver, "last_max_rc")
         ):
             max_rc = getattr(pricing_solver, "last_max_rc", -float("inf"))
@@ -1490,7 +1474,6 @@ def run_ms_bpc_sp(  # noqa: C901
     max_routes_per_pricing = params.max_routes_per_pricing
     max_bb_nodes = params.max_bb_nodes
     time_limit = params.time_limit
-    search_strategy_name = params.search_strategy
     cutting_planes_name = params.cutting_planes
     branching_strategy_name = params.branching_strategy
 
@@ -1664,7 +1647,7 @@ def run_ms_bpc_sp(  # noqa: C901
 
     # 4. Initialize Branch-and-Bound Tree with search strategy
     bb_tree = BranchAndBoundTree(
-        v_model=v_model, params=params, search_strategy=search_strategy_name, strategy=branching_strategy_name
+        v_model=v_model, params=params
     )
 
     # 5. Initialize cutting engine

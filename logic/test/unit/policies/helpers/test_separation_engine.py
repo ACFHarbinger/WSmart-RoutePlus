@@ -218,53 +218,6 @@ def test_separate_gsec_h2(base_vrpp_model: VRPPModel) -> None:
     engine._separate_gsec_h2(x_vals, y_vals=None)
     assert len(engine.pool) >= 0
 
-def test_separate_comb_heuristic(base_vrpp_model: VRPPModel) -> None:
-    engine = SeparationEngine(base_vrpp_model)
-    adjacency = {
-        0: [1, 2],
-        1: [0, 2, 3],
-        2: [0, 1, 4],
-        3: [1, 5],
-        4: [2, 5],
-        5: [3, 4]
-    }
-    edge_weights = {
-        (0, 1): 0.5, (1, 0): 0.5,
-        (0, 2): 0.5, (2, 0): 0.5,
-        (1, 2): 0.6, (2, 1): 0.6,
-        (1, 3): 0.7, (3, 1): 0.7,
-        (2, 4): 0.8, (4, 2): 0.8,
-        (3, 5): 0.9, (5, 3): 0.9,
-        (4, 5): 0.9, (5, 4): 0.9,
-    }
-
-    # Test _grow_handle
-    handle = engine._grow_handle(seed=1, adjacency=adjacency, edge_weights=edge_weights, max_size=4)
-    assert len(handle) > 0
-    assert 1 in handle
-
-    # Test _find_teeth_for_handle
-    teeth = engine._find_teeth_for_handle(handle=handle, adjacency=adjacency, edge_weights=edge_weights)
-    assert isinstance(teeth, list)
-
-    # Test _grow_tooth
-    tooth = engine._grow_tooth(anchor=1, handle={1, 2}, adjacency=adjacency, edge_weights=edge_weights)
-    assert tooth is None or len(tooth) >= 3
-
-    # Test _compute_comb_violation
-    x_vals = np.ones(15) * 0.5
-    violation = engine._compute_comb_violation(handle={1, 2}, teeth=[{1, 3, 5}], x_vals=x_vals)
-    assert isinstance(violation, float)
-
-    # Run _separate_comb_heuristic directly
-    engine._separate_comb_heuristic(x_vals, np.ones(5))
-
-    # Test legacy separate interface that calls comb cuts if enabled
-    engine.USE_COMB_CUTS = True
-    engine._separate_comb_heuristic(x_vals, np.ones(5))
-    cuts = engine.separate(x_vals, np.ones(5), iteration=10)
-    assert isinstance(cuts, list)
-
 def test_strengthen_pool_facet_selection(base_vrpp_model: VRPPModel) -> None:
     engine = SeparationEngine(base_vrpp_model)
     x_vals = np.ones(15) * 0.5

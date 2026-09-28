@@ -22,10 +22,11 @@ Attributes:
     apply_string_removal: Wrapper for string removal operator.
 
 Example:
-    >>> from logic.src.policies.ant_colony_optimization_hyper_heuristic.hyper_operators import apply_2opt
+    >>> from logic.src.policies.route_construction.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_operators import apply_2opt
     >>> improved = apply_2opt(context)
 """
 
+import logging
 import random
 from typing import Callable, Dict, List, Optional, Tuple
 
@@ -48,6 +49,8 @@ from logic.src.policies.helpers.operators import (
     shaw_removal,
     string_removal,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class HyperOperatorContext:
@@ -522,7 +525,8 @@ def apply_shaw_removal(ctx: HyperOperatorContext, n: Optional[int] = None) -> bo
             )
         ctx._build_structures()
         return True
-    except Exception:
+    except (ValueError, IndexError, KeyError) as exc:
+        logger.warning("hyper operator degraded to no-op: %s", exc)
         return False
 
 
@@ -563,7 +567,8 @@ def apply_string_removal(ctx: HyperOperatorContext, n: Optional[int] = None) -> 
             )
         ctx._build_structures()
         return True
-    except Exception:
+    except (ValueError, IndexError, KeyError) as exc:
+        logger.warning("hyper operator degraded to no-op: %s", exc)
         return False
 
 
@@ -604,7 +609,8 @@ def apply_random_removal(ctx: HyperOperatorContext, n: Optional[int] = None) -> 
             )
         ctx._build_structures()
         return True
-    except Exception:
+    except (ValueError, IndexError, KeyError) as exc:
+        logger.warning("hyper operator degraded to no-op: %s", exc)
         return False
 
 

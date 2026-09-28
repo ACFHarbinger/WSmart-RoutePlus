@@ -116,7 +116,6 @@ class MasterProblemSupport(Protocol):
     dual_multistar_cuts: Dict[FrozenSet[int], float]
 
     # Dual stabilization configurations
-    dual_smoothing_alpha: float
     prev_dual_node_coverage: Dict[int, float]
     prev_dual_vehicle_limit: float
     prev_dual_capacity_cuts: Dict[FrozenSet[int], float]
@@ -125,7 +124,6 @@ class MasterProblemSupport(Protocol):
 
     column_deletion_enabled: bool
     strict_set_partitioning: bool
-    enable_dual_smoothing: bool
 
     # Core Methods
     def build_model(self, initial_routes: Optional[List[Route]] = None) -> None:
@@ -308,167 +306,12 @@ class MasterProblemSupport(Protocol):
             int: Number of redundant routes removed.
         """
         ...
-
-    def has_artificial_variables_active(self: MasterProblemSupport, tol: float = 1e-6) -> bool:
-        """Check whether any artificial variable is non-zero in the current solution.
-
-        Args:
-            tol (float): Threshold below which a variable value is considered zero.
-
-        Returns:
-            bool: True if at least one artificial variable is active (indicates infeasibility).
-        """
-        ...
-
-    # Constraint (cut) management methods
-    def add_edge_clique_cut(
-        self: MasterProblemSupport,
-        u: int,
-        v: int,
-        coefficients: Optional[Dict[int, float]] = None,
-        rhs: float = 1.0,
-    ) -> bool:
-        """Adds an Edge Clique Cut to the master problem.
-
-        Args:
-            u (int): First node of the edge.
-            v (int): Second node of the edge.
-            coefficients (Optional[Dict[int, float]]): Mapping of node to its coefficient in the clique.
-            rhs (float): Right-hand side of the inequality.
-
-        Returns:
-            bool: True if the cut was successfully added.
-        """
-        ...
-
-    def add_subset_row_cut(
-        self: MasterProblemSupport,
-        node_set: Union[List[int], Set[int], FrozenSet[int]],
-    ) -> bool:
-        """Adds a Subset-Row Inequality (SRI) cut to the master problem.
-
-        Args:
-            node_set (Union[List[int], Set[int], FrozenSet[int]]): The set of nodes in the inequality.
-
-        Returns:
-            bool: True if the cut was successfully added.
-        """
-        ...
-
-    def add_capacity_cut(
-        self: MasterProblemSupport,
-        node_list: List[int],
-        rhs: float,
-        coefficients: Optional[Dict[int, float]] = None,
-        is_global: bool = True,
-        _skip_pool: bool = False,
-    ) -> bool:
-        """Adds a Root-Capacity Cut (RCC) or generalized capacity cut.
-
-        Args:
-            node_list (List[int]): The set of nodes involved in the cut.
-            rhs (float): Right-hand side of the inequality.
-            coefficients (Optional[Dict[int, float]]): Variable coefficients.
-            is_global (bool): Whether the cut is globally valid across the B&B tree.
-            _skip_pool (bool): Whether to skip adding to the global cut pool.
-
-        Returns:
-            bool: True if the cut was successfully added.
-        """
-        ...
-
-    def add_lci_cut(
-        self: MasterProblemSupport,
-        node_list: List[int],
-        rhs: float,
-        coefficients: Dict[int, float],
-        node_alphas: Optional[Dict[int, float]] = None,
-        arc: Optional[Tuple[int, int]] = None,
-    ) -> bool:
-        """Adds a Lifted Cover Inequality (LCI) cut to the master problem.
-
-        Args:
-            node_list (List[int]): The cover set nodes.
-            rhs (float): Right-hand side.
-            coefficients (Dict[int, float]): Coefficients for coverage variables.
-            node_alphas (Optional[Dict[int, float]]): Lifting coefficients.
-            arc (Optional[Tuple[int, int]]): Branching arc associated with the cut.
-
-        Returns:
-            bool: True if the cut was successfully added.
-        """
-        ...
-
-    def add_multistar_cut(
-        self: "MasterProblemSupport",
-        node_list: List[int],
-        coefficients: Dict[int, float],
-    ) -> bool:
-        """Add a Generalized Multistar Inequality cut (Letchford et al. 2002).
-
-        The cut is stored as:  Σ_{k} (−a_k) · λ_k ≤ 0
-        where coefficients[k] = −a_k for each route k with |a_k| > 1e-6.
-
-        The Gurobi constraint is registered in ``active_multistar_cuts`` and
-        its dual γ_S (extracted in ``_extract_duals``) is emitted via
-        ``get_reduced_cost_coefficients`` under the ``"multistar_duals"`` key,
-        so the RCSPP pricer can apply the arc-level penalty in ``_extend_label``.
-
-        Implementation in ``VRPPMasterProblem`` (model.py):
-        ---------------------------------------------------
-        1. Build key:  node_key = frozenset(node_list)
-        2. Skip if already active: if node_key in self.active_multistar_cuts: return False
-        3. Build expr: sum(coefficients[i] * self.lambda_vars[i]
-                           for i in coefficients if i < len(self.lambda_vars))
-        4. Add constr: c = self.model.addConstr(expr <= 0.0, name=f"multistar_{hash(node_key)}")
-        5. Store: self.active_multistar_cuts[node_key] = c
-        6. Archive in GlobalCutPool: self.global_cut_pool.add_cut("multistar", (node_key, coefficients))
-        7. Wire new routes: update ``_wire_route_into_active_cuts`` to include multistar.
-        8. In ``_extract_duals``: self.dual_multistar_cuts = {s: max(0.0, c.Pi)
-               for s, c in self.active_multistar_cuts.items()}
-        9. In ``get_reduced_cost_coefficients``: add "multistar_duals": self.dual_multistar_cuts
-
-        Args:
-            node_list: Nodes forming the cut set S.
-            coefficients: {route_index: −a_k} for routes with |a_k| > 1e-6.
-
-        Returns:
-            bool: True if the cut was successfully added (False if duplicate).
-        """
-        ...
-
     def add_set_packing_capacity_cut(self: MasterProblemSupport, node_list: List[int], rhs: float) -> bool:
         """Adds a capacity cut specifically for set packing formulations.
 
         Args:
             node_list (List[int]): Nodes in the cut set.
             rhs (float): Right-hand side.
-
-        Returns:
-            bool: True if the cut was successfully added.
-        """
-        ...
-
-    def add_sec_cut(
-        self: MasterProblemSupport,
-        node_list: Union[List[int], Set[int], FrozenSet[int]],
-        rhs: float,
-        cut_name: str = "",
-        global_cut: bool = True,
-        node_i: int = -1,
-        node_j: int = -1,
-        facet_form: str = "2.1",
-    ) -> bool:
-        """Adds a Subtour Elimination Constraint (SEC).
-
-        Args:
-            node_list (Union[List[int], Set[int], FrozenSet[int]]): Nodes in the subtour.
-            rhs (float): Right-hand side.
-            cut_name (str): Name for the constraint.
-            global_cut (bool): Whether the cut is globally valid.
-            node_i (int): Specific node i for facet-defining forms.
-            node_j (int): Specific node j for facet-defining forms.
-            facet_form (str): Type of facet-defining inequality to use.
 
         Returns:
             bool: True if the cut was successfully added.
@@ -486,44 +329,6 @@ class MasterProblemSupport(Protocol):
             Number of crossings (entries/exits).
         """
         ...
-
-    def remove_local_cuts(self) -> int:
-        """Removes local cuts from the Gurobi model (used during B&B backtrack).
-
-        Returns:
-            int: Number of cuts removed.
-        """
-        ...
-
-    def find_and_add_violated_rcc(
-        self,
-        route_values: Dict[int, float],
-        routes: List[Route],
-        max_cuts: int = 5,
-    ) -> int:
-        """Identifies and adds violated Root-Capacity Cuts using the separation heuristic.
-
-        Args:
-            route_values (Dict[int, float]): Current fractional values of route variables.
-            routes (List[Route]): Active routes in the RMP.
-            max_cuts (int): Maximum number of cuts to add in one pass.
-
-        Returns:
-            int: Number of violated cuts added.
-        """
-        ...
-
-    def _find_customer_components(self, arc_flow: Dict[Tuple[int, int], float]) -> List[Set[int]]:
-        """Identifies connected components of customers in the fractional support graph.
-
-        Args:
-            arc_flow (Dict[Tuple[int, int], float]): Arc flows x_ij.
-
-        Returns:
-            List[Set[int]]: List of node sets representing connected components.
-        """
-        ...
-
 
 class VRPPMasterProblemSupportMixin:
     """Mixin containing methods that support the master problem.
@@ -779,19 +584,3 @@ class VRPPMasterProblemSupportMixin:
 
         self.global_column_pool = unique_pool
         return initial_count - len(unique_pool)
-
-    def has_artificial_variables_active(self: MasterProblemSupport, tol: float = 1e-6) -> bool:
-        """Check whether any artificial variable is non-zero in current solution.
-
-        Args:
-            tol: Threshold below which a variable value is considered zero.
-
-        Returns:
-            True if at least one artificial variable is active.
-        """
-
-        # artificial_vars have been removed; infeasibility is now signalled
-        # by GRB.INFEASIBLE status directly.
-        if self.model is None:
-            return False
-        return self.model.Status == GRB.INFEASIBLE

@@ -14,7 +14,6 @@ Example:
 References
 ----------
 Barnhart, Hane & Vance (2000) Operations Research 48(2):318-326 §3.
-Wentges (1997) — Dual smoothing used inside Phase II pricing.
 Jepsen et al. (2008) — SRI cut integration.
 """
 
@@ -115,16 +114,12 @@ def column_generation_loop(  # noqa: C901
     timed_out = False
     converged = False
     pricing_exhausted = False
-    smoothing_recovery = False
     obj_val = -float("inf")
     route_vals: Dict[int, float] = {}
     prev_obj_val = -float("inf")
     _iteration = 0
     consecutive_pricing_timeouts = 0
     max_consecutive_pricing_timeouts = 3
-    if exact_mode:
-        master.enable_dual_smoothing = False
-
     # Task 3: Fix Lagrangian default.
     # If no fleet limit is active, the worst-case number of vehicles is n_nodes.
     fleet_size: int = vehicle_limit if vehicle_limit is not None else master.n_nodes
@@ -358,16 +353,6 @@ def column_generation_loop(  # noqa: C901
                 )
 
             if added == 0:
-                if smoothing_recovery:
-                    logger.info("Smoothing Recovery Phase: Converged with exact duals.")
-                    converged = True
-                    break
-                elif master.enable_dual_smoothing:
-                    logger.info("Entering Smoothing Recovery Phase (Exact duals).")
-                    master.enable_dual_smoothing = False
-                    smoothing_recovery = True
-                    continue
-
                 # Task 1b: Check for fractional cycles in ng-relaxation if CG has converged
                 # locally. Dynamic ng-expansion serves as a lightweight cut separation.
                 cycles: List[Tuple[int, ...]] = []
@@ -431,7 +416,6 @@ def column_generation_loop(  # noqa: C901
             converged
             and pricing_exhausted
             and not timed_out
-            and not getattr(master, "enable_dual_smoothing", False)
             and hasattr(pricing_solver, "last_max_rc")
         ):
             max_rc = getattr(pricing_solver, "last_max_rc", -float("inf"))

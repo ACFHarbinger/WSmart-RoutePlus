@@ -18,6 +18,7 @@ from numpy.typing import NDArray
 
 from logic.src.constants.routing import HEURISTICS_RATIO, MIP_GAP, NODEFILE_START_GB
 
+from ._route_extraction import extract_depot_delimited_route
 from .params import MAX_ARC_DISTANCE_KM
 
 
@@ -120,7 +121,7 @@ def _run_gurobi_optimizer(  # noqa: C901
     mdl.addConstr(quicksum(f[0, j] for j in nodes_real if (0, j) in f) == 0)
 
     if number_vehicles == 0:
-        number_vehicles = len(binsids)
+        number_vehicles = n_bins
 
     MAX_TRUCKS = number_vehicles
     mdl.addConstr(k_var <= MAX_TRUCKS)
@@ -184,7 +185,6 @@ def _run_gurobi_optimizer(  # noqa: C901
     if time_limit > 0:
         mdl.Params.TimeLimit = float(time_limit)
 
-    contentores_coletados = []
     profit = 0.0
     cost = 0.0
     mdl.optimize()
@@ -198,39 +198,21 @@ def _run_gurobi_optimizer(  # noqa: C901
         raise RuntimeError(f"SWC-TCF model is infeasible (Gurobi status {mdl.Status}).")
     if mdl.SolCount == 0:
         print(f"[WARN][VRPP-Gurobi] No solution found (status {mdl.Status}); the day collects nothing.")
+        return [0, 0], 0.0, 0.0
     if mdl.SolCount > 0:
         id_map = {0: 0}
         for i, bin_id in enumerate(pure_binsids, 1):
             id_map[i] = bin_id
         arcos_ativos = [(i, j) for (i, j) in x.keys() if i != j and x[i, j].X > 0.5]
+        route = extract_depot_delimited_route(arcos_ativos, id_map)
 
-        rotas = []
-        visitados = set()
-        while True:
-            rota = []
-            atual = 0
-            while True:
-                prox = [j for (i, j) in arcos_ativos if i == atual and (i, j) not in visitados]
-                if not prox:
-                    break
-                j = prox[0]
-                visitados.add((atual, j))
-                rota.append((atual, j))
-                atual = j
-                if j == 0:
-                    break
-            if rota:
-                rotas.append(rota)
-            else:
-                break
-
-        for rota in rotas:
-            contentores_coletados.extend([id_map[j] for (i, j) in rota])
+        if route == [0, 0]:
+            # All-zero incumbent (or nothing collected): the shared empty-day shape.
+            return [0, 0], 0.0, 0.0
 
         profit = mdl.ObjVal
         cost = sum([x[i, j].X * distance_matrix[i][j] for i, j in pares_viaveis])
-        print(
-            f"[INFO][VRPP-Gurobi] Profit: {profit}, Cost: {cost}, MIPGap: {mdl.Params.MIPGap}, Collected: {len(contentores_coletados)}"
-        )
+        print(f"[INFO][VRPP-Gurobi] Profit: {profit}, Cost: {cost}, MIPGap: {mdl.Params.MIPGap}, Collected: {len(route) - 2}")
+        return route, profit, cost
 
-    return [0] + contentores_coletados, profit, cost
+    return [0, 0], 0.0, 0.0

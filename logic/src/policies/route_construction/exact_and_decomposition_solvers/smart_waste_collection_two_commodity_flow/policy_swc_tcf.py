@@ -133,7 +133,12 @@ class SWCTCFPolicy(BaseRoutingPolicy):
             values=values_to_pass,
             binsids=binsids,
             mandatory_nodes=mandatory_nodes,
-            number_vehicles=kwargs.get("number_vehicles", 1),
+            # Fleet limit from the simulation context (sim.n_vehicles); 0 or
+            # absent means unbounded, matching the other constructors. A plain
+            # default of 1 would silently cap every day at one vehicle.
+            number_vehicles=(
+                int(nv) if (nv := kwargs.get("n_vehicles", kwargs.get("number_vehicles"))) and int(nv) > 0 else 0
+            ),
             time_limit=float(params.time_limit),  # int() turned sub-second budgets into "no limit"
             framework=params.framework,
             optimizer=params.engine,
@@ -141,8 +146,19 @@ class SWCTCFPolicy(BaseRoutingPolicy):
             dual_values=kwargs.get("dual_values"),
         )
 
-        # 4. Normalize route to List[List[int]] format expected by _run_solver signature
-        # Standard dispatcher returns a single flat route list.
-        # We strip the leading depot if present (usually [0, ...]).
-        clean_route = [n for n in raw_route if n != 0]
-        return [clean_route] if clean_route else [], profit, cost
+        # 4. Normalize route to List[List[int]] format expected by _run_solver signature.
+        # The backends return a flat depot-delimited list
+        # ([0, route-1 bins..., 0, route-2 bins..., 0]); split on the depot
+        # marker so multi-route days keep their route boundaries.
+        routes: List[List[int]] = []
+        current: List[int] = []
+        for node in raw_route:
+            if node == 0:
+                if current:
+                    routes.append(current)
+                    current = []
+            else:
+                current.append(node)
+        if current:
+            routes.append(current)
+        return routes, profit, cost

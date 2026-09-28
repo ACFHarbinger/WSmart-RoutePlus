@@ -9,11 +9,10 @@ Attributes:
     HYPER_OPERATORS (list): List of available hyper-heuristic operators.
     HyperACOParams (class): Parameters for the Hyper-ACO algorithm.
     HyperHeuristicACO (class): The main solver class.
-    run_hyper_heuristic_aco (function): Helper function to run the solver.
 
 Example:
-    >>> from logic.src.policies.ant_colony_optimization_hyper_heuristic import run_hyper_heuristic_aco
-    >>> result = run_hyper_heuristic_aco(dist_matrix, wastes, ...)
+    >>> from logic.src.policies.route_construction.hyper_heuristics.ant_colony_optimization_hyper_heuristic import HyperHeuristicACO
+    >>> solver = HyperHeuristicACO(dist_matrix, wastes, capacity, R, C, params)
 """
 
 from .hyper_aco import HyperHeuristicACO

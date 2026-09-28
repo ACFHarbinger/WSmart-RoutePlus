@@ -15,6 +15,9 @@ import numpy as np
 import pyomo.environ as pyo
 from numpy.typing import NDArray
 
+from logic.src.constants.routing import MIP_GAP
+
+from ._route_extraction import extract_depot_delimited_route
 from .params import MAX_ARC_DISTANCE_KM
 
 
@@ -223,11 +226,15 @@ def _run_pyomo_tcf_optimizer(  # noqa: C901
     opt = pyo.SolverFactory(solver_id)
     if solver_id == "gurobi":
         opt.options["Seed"] = seed
+        opt.options["MIPGap"] = MIP_GAP
     elif solver_id == "scip":
         # SCIP uses randomseedshift to offset its default internal seed
         opt.options["randomization/randomseedshift"] = seed
+        opt.options["limits/gap"] = MIP_GAP
     elif solver_id in ["appsi_highs", "highs"]:
         opt.options["random_seed"] = seed
+        opt.options["mip_rel_gap"] = MIP_GAP
+        opt.options["time_limit"] = float(time_limit)
 
     if solver_id == "gurobi":
         opt.options["TimeLimit"] = time_limit
@@ -265,32 +272,11 @@ def _run_pyomo_tcf_optimizer(  # noqa: C901
             id_map[i] = bin_id
 
         arcos_ativos = [(i, j) for (i, j) in model.A if pyo.value(model.x[i, j]) > 0.5]
-
-        rotas = []
-        visitados = set()
-        for _ in range(int(round(pyo.value(model.k_var)))):
-            rota = []
-            atual = 0
-            while True:
-                prox = [j for (i, j) in arcos_ativos if i == atual and (i, j) not in visitados]
-                if not prox:
-                    break
-                j = prox[0]
-                visitados.add((atual, j))
-                rota.append((atual, j))
-                atual = j
-                if j == 0:
-                    break
-            if rota:
-                rotas.append(rota)
-
-        contentores_coletados = []
-        for rota in rotas:
-            contentores_coletados.extend([id_map[j] for (i, j) in rota])
+        route = extract_depot_delimited_route(arcos_ativos, id_map)
 
         profit = pyo.value(model.obj)
         cost = sum([pyo.value(model.x[i, j]) * distance_matrix[i][j] for i, j in model.A])
-        return [0] + contentores_coletados, profit, cost
+        return route, profit, cost
 
     print(f"[WARN] Pyomo TCF ({solver_id}) could not find a feasible solution.")
     return [0, 0], 0.0, 0.0

@@ -14,17 +14,14 @@
 #   Key decisions vs. the 60s YAML:
 #     - cg_at_root_only: FALSE — re-pricing at non-root nodes is mandatory
 #       for tight bounds when B&B has time to explore the tree.
-#     - cutting_planes: "all" — Min-Cut + Triangle Clique + limited-memory
-#       rank-1 SRI are the decisive cuts for VRPP integrality gap closure
-#       (Poggi, Viana, Uchoa 2010).
+#     - cutting_planes: "all" — lifted cover + rounded-capacity + subset-row
+#       (limited-memory rank-1) are the decisive cuts for VRPP integrality gap
+#       closure (Poggi, Viana, Uchoa 2010).
 #     - ng_neighborhood_size: 12 — practical ceiling before label explosion;
 #       combined with DSSR this approximates elementary pricing well.
 #     - enable_strong_branching_heuristic: false — disabled, see the key below.
 #     - lr_pre_pruning: true — at 300s the subgradient pass at root pays off
 #       by providing a tight LR bound that prunes subtrees before CG starts.
-#     - exact_mode: false — Wentges smoothing dramatically accelerates CG
-#       convergence; disabling it for "exactness" costs more than it gains
-#       at 100 nodes within any finite time budget.
 # =============================================================================
 
 bpc:
@@ -95,9 +92,6 @@ bpc:
       # Allow up to 150 CG iterations per node. With 300s and cg_at_root_only
       # false, non-root nodes get smaller budgets but deeper convergence.
 
-    - max_cut_iterations: 10
-      # 10 separation rounds per CG convergence — more rounds = tighter LP.
-
     - max_cuts_per_iteration: 10
       # Up to 10 cuts per round. Combined with cut_orthogonality_threshold
       # this adds diverse, non-redundant cuts efficiently.
@@ -167,40 +161,6 @@ bpc:
       # For true exact ESPPRC, set false — but intractable at 100 nodes.
 
     - ng_neighborhood_size: 12
-      # Practical ceiling before label count explodes. At 12, combined with
-      # DSSR, the relaxation is tight enough that non-elementary optimal
-      # solutions are extremely rare on VRPP instances.
-
-    - rcspp_timeout: 15.0
-      # 15s per pricing call. With 300s total and cg_at_root_only=false,
-      # we can afford longer exact pricing calls that return more diverse
-      # columns. Heuristic pricing still runs first (< 0.1s).
-
-    - rcspp_max_labels: 2000000
-      # 2M label cap. At Python speed (~10k labels/s) this gives ~200s of
-      # exact DP — the 15s timeout fires first on 100-node instances,
-      # but the cap prevents OOM if label density is higher than expected.
-
-    # -------------------------------------------------------------------------
-    # DSSR — Decremental State-Space Relaxation
-    # -------------------------------------------------------------------------
-    - enable_dssr: true
-      # Wrap exact RCSPP with DSSR (Righini & Salani 2008). Iteratively adds
-      # revisited vertices to ng-memory until returned paths are elementary.
-      # The decisive pricing improvement for TOP/VRPP (Keshtkaran et al. 2016).
-
-    - dssr_max_iters: 8
-      # Up to 8 refinement iterations. In practice convergence happens in 2–4;
-      # 8 is the safety ceiling without excessive overhead.
-
-    # -------------------------------------------------------------------------
-    # Reduced-Cost Arc Fixing
-    # -------------------------------------------------------------------------
-    - enable_reduced_cost_arc_fixing: true
-      # Eliminate arcs from the pricing graph whose min reduced cost exceeds
-      # the LP-incumbent gap (Irnich et al. 2010). Typically removes 20–40%
-      # of arcs after a few B&B nodes, cascading into faster labeling.
-
     # -------------------------------------------------------------------------
     # Advanced Cutting Plane Controls
     # -------------------------------------------------------------------------
@@ -227,10 +187,6 @@ bpc:
     # -------------------------------------------------------------------------
     # B&B Search and Branching Controls
     # -------------------------------------------------------------------------
-    - use_spatial_partitioning: false
-      # Coordinate-based arc-set partitioning. Disabled — the default
-      # flow-sorted median split is already well-balanced for most instances.
-
     - enable_strong_branching_heuristic: false
       # Disabled: the restricted-master lookahead (arc and node-visitation
       # candidates) re-solves the live master in place, and with it the search
@@ -246,19 +202,14 @@ bpc:
       # Periodically remove duplicate columns (same node set, different order).
       # Keeps the master LP size manageable without losing dual information.
 
-    - enable_hybrid_search: false
-      # Hybrid DFS/BFS. Keep false — pure DFS is better for basis reuse
-      # in the presence of cg_at_root_only=false.
-
     - rc_tolerance: 1e-6
       # Very tight reduced-cost acceptance threshold. With 300s we can afford
       # to accept nearly any improving column; 1e-6 filters only numerical
       # noise while 1e-5 may miss near-zero-RC columns near optimality.
 
     - exact_mode: false
-      # Keep Wentges dual smoothing active. Disabling it (exact_mode=true)
-      # is theoretically purer but convergence is 2–5× slower in practice.
-      # The smoothing recovery phase still guarantees exact bounds.
+      # Heuristic stops (optimality_gap / early_termination_gap) remain active;
+      # exact_mode additionally pins ng-neighborhoods and timing guards.
 
     - prefer_shorter_path_dfs: true
       # DFS child ordering per Barnhart §3.2: explore the branch that keeps

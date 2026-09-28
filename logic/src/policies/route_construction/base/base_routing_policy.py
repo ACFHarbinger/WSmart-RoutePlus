@@ -229,10 +229,10 @@ class BaseRoutingPolicy(PolicyVizMixin, IRouteConstructor):
             # Typed config takes priority, then overlay any runtime overrides
             config_key = self._get_config_key()
             runtime_overrides = config.get(config_key, config)  # Handle case where config IS the policy section
-            if not isinstance(runtime_overrides, dict):
-                runtime_overrides = (
-                    _flatten_raw_config(runtime_overrides) if hasattr(runtime_overrides, "items") else {}
-                )
+            if hasattr(runtime_overrides, "items") or isinstance(runtime_overrides, list):
+                runtime_overrides = _flatten_raw_config(runtime_overrides)
+            else:
+                runtime_overrides = {}
             policy_config = {**asdict(self._config), **runtime_overrides}
             if self._seed is not None and policy_config.get("seed") is None:
                 policy_config["seed"] = self._seed

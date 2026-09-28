@@ -155,12 +155,6 @@ class VRPPMasterProblem(VRPPMasterProblemConstraintsMixin, VRPPMasterProblemSupp
         self.vehicle_limit = vehicle_limit
         self.global_cut_pool = global_cut_pool or GlobalCutPool()
 
-        # BIG_M Calculation for potential fallbacks
-        max_single_node_revenue = max(self.wastes.values(), default=0.0) * self.R
-        min_demand = max(1.0, min((w for w in self.wastes.values() if w > 0), default=1.0))
-        max_nodes_per_route = max(1, int(self.capacity / min_demand))
-        max_route_profit = max_single_node_revenue * min(max_nodes_per_route, self.n_nodes)
-        self.BIG_M = max(1000.0, 10.0 * max_route_profit)
 
         self.model: Optional[gp.Model] = None
         self.routes: List[Route] = []
@@ -195,17 +189,10 @@ class VRPPMasterProblem(VRPPMasterProblemConstraintsMixin, VRPPMasterProblemSupp
         self.dual_edge_clique_cuts: Dict[Tuple[int, int], float] = {}
         self.dual_multistar_cuts: Dict[FrozenSet[int], float] = {}
 
-        # Dual stabilization configurations
-        self.dual_smoothing_alpha: float = 0.5
-        self.prev_dual_node_coverage: Dict[int, float] = {}
-        self.prev_dual_vehicle_limit: float = 0.0
-        self.prev_dual_capacity_cuts: Dict[FrozenSet[int], float] = {}
-        self.prev_dual_sri_cuts: Dict[FrozenSet[int], float] = {}
         self.farkas_duals: Dict[str, Dict[Any, float]] = {}
 
         self.column_deletion_enabled: bool = True
         self.strict_set_partitioning: bool = True
-        self.enable_dual_smoothing: bool = False
 
     def build_model(self, initial_routes: Optional[List[Route]] = None) -> None:
         """
@@ -400,35 +387,6 @@ class VRPPMasterProblem(VRPPMasterProblemConstraintsMixin, VRPPMasterProblemSupp
         self.dual_edge_clique_cuts = {e: max(0.0, c[0].Pi) for e, c in self.active_edge_clique_cuts.items()}
         # Multistar: ≤ 0 constraint in a MAX LP → dual Pi ≥ 0.
         self.dual_multistar_cuts = {s: max(0.0, c.Pi) for s, c in self.active_multistar_cuts.items()}
-
-        if self.enable_dual_smoothing:
-            self._apply_dual_smoothing()
-
-    def _apply_dual_smoothing(self) -> None:
-        """Apply Exponential Dual Smoothing to stabilize CG price signals.
-
-        pi_smoothed = alpha * pi_current + (1 - alpha) * pi_prev
-
-        WARNING: Smoothing modifies self.dual_node_coverage in-place.
-        When active, the duals passed to pricing are NOT the true LP duals.
-        This means:
-        - The Lagrangian upper bound (obj_val + K * max_rc) is not valid.
-        - CG convergence (added == 0) does not prove LP optimality.
-        Only enable this flag when running in heuristic (non-exact) mode.
-
-        Reference:
-            Wentges (1997), Guyenne et al. (1994).
-        """
-
-        alpha = self.dual_smoothing_alpha
-        for node, val in self.dual_node_coverage.items():
-            prev = self.prev_dual_node_coverage.get(node, val)
-            self.dual_node_coverage[node] = alpha * val + (1.0 - alpha) * prev
-        self.prev_dual_node_coverage = self.dual_node_coverage.copy()
-
-        prev_limit = self.prev_dual_vehicle_limit
-        self.dual_vehicle_limit = alpha * self.dual_vehicle_limit + (1.0 - alpha) * prev_limit
-        self.prev_dual_vehicle_limit = self.dual_vehicle_limit
 
     def solve_ip(self) -> Tuple[float, List[Route]]:
         """Solve the integer programme at the current B&B node.

@@ -82,3 +82,42 @@ def test_first_hop_deposits_on_real_rows_only():
     virtual = solver.tau[solver.n_operators]
     assert np.allclose(virtual, virtual[0]), "only evaporation may touch the virtual row"
     assert virtual[0] <= params.tau_0
+
+
+def test_elitism_sync_count_uses_ceiling():
+    """B-kimi-51: elitism syncs ceil(n_ants * ratio) ants, matching the flowchart."""
+    from logic.src.policies.route_construction.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_aco import (
+        _elitism_sync_count,
+    )
+
+    assert _elitism_sync_count(10, 0.35) == 4  # int() floor gave 3
+    assert _elitism_sync_count(10, 0.5) == 5
+    assert _elitism_sync_count(10, 1.0) == 10
+    assert _elitism_sync_count(10, 0.01) == 1  # floor of 0.1 would be 0 without the max
+
+
+def test_operator_wrappers_swallow_data_errors_only():
+    """B-kimi-50: operator wrappers return False on data errors but let programming errors propagate."""
+    import logic.src.policies.route_construction.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_operators as ops
+
+    dist, wastes, cap, init, mandatory = _instance(0, 9, 60.0, 5, 40)
+    ctx = ops.HyperOperatorContext(
+        routes=init, dist_matrix=dist, waste=wastes, capacity=cap, R=1.0, C=1.0, mandatory_nodes=mandatory
+    )
+
+    real_random_removal = ops.random_removal
+    try:
+        def raise_value_error(routes, n, rng=None):
+            raise ValueError("simulated node/matrix mismatch")
+
+        ops.random_removal = raise_value_error
+        assert ops.apply_random_removal(ctx) is False
+
+        def raise_type_error(routes, n, rng=None):
+            raise TypeError("simulated programming error")
+
+        ops.random_removal = raise_type_error
+        with pytest.raises(TypeError):
+            ops.apply_random_removal(ctx)
+    finally:
+        ops.random_removal = real_random_removal

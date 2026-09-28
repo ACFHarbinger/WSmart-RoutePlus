@@ -321,9 +321,8 @@ class VRPPMasterProblemConstraintsMixin:
         name = f"multistar_{abs(hash(node_set))}"
         constr = self.model.addConstr(lhs <= 0.0, name=name)
         self.active_multistar_cuts[node_set] = constr
-        # Archive so descendant B&B nodes replay the cut with freshly recomputed
-        # coefficients (route indices shift across nodes — pool.apply_to_master
-        # handles the recomputation via wastes / capacity).
+        # Archive centrally; the cut persists across B&B nodes through the single
+        # shared master object, which is never rebuilt mid-search.
         self.global_cut_pool.add_cut("multistar", (node_set, coefficients))
         self.model.update()
         return True

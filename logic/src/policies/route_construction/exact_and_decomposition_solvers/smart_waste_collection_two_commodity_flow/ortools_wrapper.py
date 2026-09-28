@@ -15,6 +15,9 @@ import numpy as np
 from numpy.typing import NDArray
 from ortools.linear_solver import pywraplp
 
+from logic.src.constants.routing import MIP_GAP
+
+from ._route_extraction import extract_depot_delimited_route
 from .params import MAX_ARC_DISTANCE_KM
 
 
@@ -66,6 +69,17 @@ def _run_ortools_tcf_optimizer(  # noqa: C901
     # 3. HiGHS Backend (Not natively accessible via string params in older OR-Tools)
     # If using HiGHS, you may need to rely on the C++ API or check the specific
     # OR-Tools version documentation for HiGHS parameter routing.
+
+    # One gap policy across backends (best-effort string routing).
+    try:
+        if solver_id == "GUROBI":
+            solver.SetSolverSpecificParametersAsString(f"MIPGap {MIP_GAP}")
+        elif solver_id == "SCIP":
+            solver.SetSolverSpecificParametersAsString(f"limits/gap = {MIP_GAP}")
+        elif solver_id == "HIGHS":
+            solver.SetSolverSpecificParametersAsString(f"mip_rel_gap = {MIP_GAP}")
+    except Exception as exc:  # backend rejected the parameter string
+        print(f"[WARN][VRPP-OR-Tools] could not set MIP gap on {solver_id}: {exc}")
 
     solver.SetTimeLimit(int(float(time_limit) * 1000))  # OR-Tools expects milliseconds
 
@@ -178,34 +192,12 @@ def _run_ortools_tcf_optimizer(  # noqa: C901
             id_map[i] = bin_id
 
         arcos_ativos = [(i, j) for (i, j) in valid_arcs if x[i, j].solution_value() > 0.5]
-
-        # Route construction
-        rotas = []
-        visitados = set()
-        for _ in range(int(k_var.solution_value())):
-            rota = []
-            atual = 0
-            while True:
-                prox = [j for (i, j) in arcos_ativos if i == atual and (i, j) not in visitados]
-                if not prox:
-                    break
-                j = prox[0]
-                visitados.add((atual, j))
-                rota.append((atual, j))
-                atual = j
-                if j == 0:
-                    break
-            if rota:
-                rotas.append(rota)
-
-        contentores_coletados = []
-        for rota in rotas:
-            contentores_coletados.extend([id_map[j] for (i, j) in rota])
+        route = extract_depot_delimited_route(arcos_ativos, id_map)
 
         profit = objective.Value()
         cost = sum([x[i, j].solution_value() * distance_matrix[i][j] for i, j in valid_arcs])
 
-        return [0] + contentores_coletados, profit, cost
+        return route, profit, cost
 
     else:
         print("[WARN] OR-Tools TCF could not find a feasible solution.")

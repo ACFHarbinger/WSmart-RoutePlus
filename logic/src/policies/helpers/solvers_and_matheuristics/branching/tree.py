@@ -108,9 +108,9 @@ class BranchAndBoundTree:
                     DeprecationWarning,
                     stacklevel=2,
                 )
-            self.max_nodes = getattr(params, "max_branch_nodes", max_nodes)
-            self.strategy = getattr(params, "branching_strategy", strategy)
-            self.search_strategy = getattr(params, "tree_search_strategy", search_strategy)
+            self.max_nodes = params.max_bb_nodes
+            self.strategy = params.branching_strategy
+            self.search_strategy = params.search_strategy
         else:
             self.max_nodes = max_nodes
             self.strategy = strategy
@@ -140,29 +140,6 @@ class BranchAndBoundTree:
 
         self.root = BranchNode()
         self.add_node(self.root)
-
-    def _get_coords_from_model(self, v_model: VRPPModel) -> Optional[np.ndarray]:
-        """Extract node coordinates from the model.
-
-        Args:
-            v_model: The VRPP model instance.
-
-        Returns:
-            Coordinates as an array or None.
-        """
-        if not hasattr(v_model, "node_coords"):
-            return None
-        node_coords = v_model.node_coords
-        if isinstance(node_coords, dict):
-            coords_arr = np.zeros((len(node_coords) + 1, 2))
-            for i, (x, y) in node_coords.items():
-                coords_arr[i] = [x, y]
-            return coords_arr
-        return node_coords
-
-    # ------------------------------------------------------------------
-    # Frontier Management
-    # ------------------------------------------------------------------
 
     def add_node(self, node: BranchNode) -> None:
         """Enqueue a new open node to the frontier.

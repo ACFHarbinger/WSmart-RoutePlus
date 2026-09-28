@@ -33,7 +33,6 @@ class BPCConfig:
         cutting_planes: Cutting plane family ('rcc', 'sri', 'lci', or 'all').
         branching_strategy: Branching rule ('ryan_foster', 'edge', or 'divergence').
         max_cg_iterations: Maximum iterations for column generation loop.
-        max_cut_iterations: Maximum iterations for cutting plane loop per CG iteration.
         max_cuts_per_iteration: Maximum cuts to add per iteration.
         max_routes_per_pricing: Maximum routes to add per pricing call.
         max_bb_nodes: Maximum nodes to explore in the B&B tree.
@@ -44,10 +43,8 @@ class BPCConfig:
         enable_heuristic_rcc_separation: Whether to enable (heuristic) fractional RCC separation.
         enable_comb_cuts: Whether to enable heuristic comb inequalities.
         cut_orthogonality_threshold: Cosine similarity ceiling for cut filtering.
-        use_spatial_partitioning: Whether to use spatial partitioning for branching.
         enable_strong_branching_heuristic: Whether to enable heuristic strong branching.
         enable_column_pool_deduplication: Whether to enable column pool deduplication.
-        enable_hybrid_search: Whether to enable hybrid DFS/BFS search.
         rc_tolerance: Minimum reduced cost to accept a new column.
         exact_mode: Whether to enable strict exact management.
         strong_branching_size: Number of candidates for strong branching.
@@ -84,7 +81,6 @@ class BPCConfig:
     cutting_planes: str = "rcc"
     branching_strategy: str = "divergence"
     max_cg_iterations: int = 50
-    max_cut_iterations: int = 5
     max_cuts_per_iteration: int = 5
     max_routes_per_pricing: int = 5
     max_bb_nodes: int = 1000
@@ -95,10 +91,8 @@ class BPCConfig:
     enable_heuristic_rcc_separation: bool = True
     enable_comb_cuts: bool = False
     cut_orthogonality_threshold: float = 0.8
-    use_spatial_partitioning: bool = False
     enable_strong_branching_heuristic: bool = False  # see policy_bpc.yaml
     enable_column_pool_deduplication: bool = True
-    enable_hybrid_search: bool = False
     rc_tolerance: float = 1e-5
     exact_mode: bool = False
     strong_branching_size: int = 5

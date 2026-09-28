@@ -220,39 +220,6 @@ class VRPPModel:
         """
         return sum(self.get_node_demand(i) for i in node_set if i != self.depot)
 
-    def validate_tour(self, tour: List[int]) -> Tuple[bool, str]:
-        """
-        Validate that a tour satisfies VRPP constraints.
-
-        Args:
-            tour: Sequence of node indices representing the tour.
-
-        Returns:
-            Tuple of (is_valid, error_message).
-        """
-        if not tour or tour[0] != self.depot or tour[-1] != self.depot:
-            return False, "Tour must start and end at depot (node 0)"
-
-        # Check capacity constraint
-        total_load = sum(self.get_node_demand(i) for i in tour[1:-1])
-        if total_load > self.capacity:
-            return False, f"Capacity violated: {total_load:.2f} > {self.capacity:.2f}"
-
-        # Check mandatory nodes
-        tour_set = set(tour)
-        missing_mandatory = self.mandatory_nodes - tour_set
-        if missing_mandatory:
-            return False, f"Mandatory nodes not visited: {missing_mandatory}"
-
-        # Check for cycles (no node visited more than once except depot)
-        visited_counts: Dict[int, int] = {}
-        for node in tour[1:-1]:  # Exclude depot returns
-            visited_counts[node] = visited_counts.get(node, 0) + 1
-            if visited_counts[node] > 1:
-                return False, f"Node {node} visited {visited_counts[node]} times"
-
-        return True, "Valid VRPP tour"
-
     def compute_tour_profit(self, tour: List[int]) -> float:
         """Compute the total profit of a tour.
 
@@ -275,14 +242,3 @@ class VRPPModel:
         travel_cost = total_distance * self.C
 
         return revenue - travel_cost
-
-    def compute_tour_cost(self, tour: List[int]) -> float:
-        """Compute the total travel distance/cost of a tour.
-
-        Args:
-            tour: Sequence of node IDs.
-
-        Returns:
-            Total distance-based travel cost.
-        """
-        return sum(self.cost_matrix[tour[i], tour[i + 1]] for i in range(len(tour) - 1))

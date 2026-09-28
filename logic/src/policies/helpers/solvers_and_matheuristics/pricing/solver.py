@@ -733,7 +733,7 @@ class RCSPPSolver:
 
                 self.labels_generated += 1
                 existing = labels_at_node.get(v, [])
-                if any(e.dominates(new_label, use_ng=use_ng, sri_dual_values=sri_dual_values) for e in existing):
+                if any(e.dominates(new_label, use_ng=use_ng) for e in existing):
                     self.labels_dominated += 1
                     continue
 
@@ -862,7 +862,7 @@ class RCSPPSolver:
         new_rc = label.reduced_cost + rc_delta
 
         # Final feasibility check
-        if self.is_farkas and new_rc < -1e-6 or not self.is_farkas and new_rc < -1e-6:
+        if new_rc < -1e-6:
             return None
 
         return Label(

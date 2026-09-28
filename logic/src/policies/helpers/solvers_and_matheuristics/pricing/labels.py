@@ -5,7 +5,6 @@ Attributes:
 
 Example:
     >>> label = Label(reduced_cost=10.0, node=1, load=5.0)
-    >>> is_feasible = label.is_feasible(capacity=100.0)
 """
 
 from __future__ import annotations
@@ -70,7 +69,6 @@ class Label:
         other: "Label",
         use_ng: bool = False,
         epsilon: float = 1e-6,
-        sri_dual_values: Optional[List[float]] = None,
     ) -> bool:
         """
         Check if this label dominates another label.
@@ -78,7 +76,7 @@ class Label:
         Dominance criteria:
         1. Same node
         2. Lower or equal load
-        3. Better or equal reduced cost (accounting for SRI potential)
+        3. Better or equal reduced cost
         4. Smaller or equal subset of visited/ng-memory nodes
         5. Subset-row inequality state compatibility
         6. Ryan-Foster conflict set compatibility
@@ -87,7 +85,6 @@ class Label:
             other: Label to compare against.
             use_ng: Whether to use ng-route memory for dominance.
             epsilon: Numerical tolerance for comparisons.
-            sri_dual_values: Dual values for active SRIs.
 
         Returns:
             True if this label dominates the other.
@@ -99,37 +96,17 @@ class Label:
         if not self.rf_unmatched.issubset(other.rf_unmatched):
             return False
 
-        # Exact ESPPRC requirement for SRI states
+        # Exact ESPPRC requirement: SRI states must coincide.
         if self.sri_state != other.sri_state:
             return False
 
-        total_potential_penalty = 0.0
-        if sri_dual_values is not None:
-            for s, o, dual in zip(self.sri_state, other.sri_state, sri_dual_values, strict=False):
-                if s == 1 and o in (0, 2):
-                    total_potential_penalty += dual
-        else:
-            if any(s > o for s, o in zip(self.sri_state, other.sri_state, strict=False)):
-                return False
-
-        if self.reduced_cost - total_potential_penalty < other.reduced_cost - epsilon:
+        if self.reduced_cost < other.reduced_cost - epsilon:
             return False
 
         if use_ng:
             return self.ng_memory.issubset(other.ng_memory)
         else:
             return self.visited.issubset(other.visited)
-
-    def is_feasible(self, capacity: float) -> bool:
-        """Check if the label satisfies resource constraints.
-
-        Args:
-            capacity: Maximum vehicle capacity.
-
-        Returns:
-            True if feasible, False otherwise.
-        """
-        return self.load <= capacity
 
     def reconstruct_path(self) -> List[int]:
         """Backtrack from the current label to the start node to recover the full route.

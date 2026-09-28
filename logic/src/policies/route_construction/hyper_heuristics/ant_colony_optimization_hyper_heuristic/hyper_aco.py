@@ -27,7 +27,7 @@ Attributes:
     HyperHeuristicACO: HyperHeuristicACO class.
 
 Example:
-    >>> from logic.src.policies.ant_colony_optimization_hyper_heuristic import HyperHeuristicACO
+    >>> from logic.src.policies.route_construction.hyper_heuristics.ant_colony_optimization_hyper_heuristic import HyperHeuristicACO
     >>> solver = HyperHeuristicACO(dist_matrix, wastes, capacity, R, C, params)
     >>> best_solution = solver.solve(initial_solution)
 """
@@ -70,6 +70,11 @@ from .hyper_operators import (
     HyperOperatorContext,
 )
 from .params import HyperACOParams
+
+
+def _elitism_sync_count(n_ants: int, elitism_ratio: float) -> int:
+    """Number of ants synced to the global best on improvement (ceil, per the flowchart)."""
+    return max(1, math.ceil(n_ants * elitism_ratio))
 
 
 class HyperHeuristicACO:
@@ -274,7 +279,7 @@ class HyperHeuristicACO:
                 # elitism_ratio < 1.0 → hedged elitism (VRPP diversity option).
                 # Paper: "For all ants: Sk = Sb"
                 # ----------------------------------------------------------------
-                sync_count = max(1, int(self.params.n_ants * self.params.elitism_ratio))
+                sync_count = _elitism_sync_count(self.params.n_ants, self.params.elitism_ratio)
 
                 for rank, (routes, _, _, _, ant_idx, _) in enumerate(ant_results):
                     if rank >= self.params.n_ants - sync_count:

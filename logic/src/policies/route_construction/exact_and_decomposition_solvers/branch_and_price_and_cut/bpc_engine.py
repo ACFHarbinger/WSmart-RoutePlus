@@ -44,7 +44,8 @@ Paper-to-Implementation Mapping (BHV2000)
 
 §4.2 – LCI Dual Integration in Pricing
     Per-node α lifting coefficients are archived in the GlobalCutPool and
-    re-injected at descendant B&B nodes via ``apply_to_master``.  The
+    persist across B&B nodes through the single shared master object, which is
+    never rebuilt mid-search.  The
     composite dual dict emitted by ``get_reduced_cost_coefficients`` includes
     ``lci_duals`` and ``lci_node_alphas`` keys, which flow through to the
     label-extension step.
@@ -88,9 +89,8 @@ Additional components not in BHV2000 (VRPP adaptations):
     - Ryan-Foster (1981) node-pair branching for the SPP.
     - Rounded Capacity Cuts (RCC, Lysgaard et al. 2004).
     - Subset-Row Inequalities (3-SRI, Jepsen et al. 2008).
-    - Dual smoothing (Wentges 1997) for faster CG convergence.
-    - GlobalCutPool: centralised cut registry ensuring parent cuts are
-      re-injected at all descendant B&B nodes.
+    - GlobalCutPool: centralised cut registry; cuts persist across nodes
+      through the single shared master object, which is never rebuilt mid-search.
 
 Attributes:
     logger (logging.Logger): Module-level logger.
@@ -126,7 +126,6 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import gurobipy as gp
 import numpy as np
-from gurobipy import GRB
 
 from logic.src.policies.helpers.operators.recreate_repair.greedy import greedy_insertion, greedy_profit_insertion
 from logic.src.policies.helpers.solvers_and_matheuristics.branching import BranchAndBoundTree
@@ -153,9 +152,6 @@ from logic.src.policies.helpers.solvers_and_matheuristics.pricing.smoothing impo
 from logic.src.policies.helpers.solvers_and_matheuristics.pricing.smoothing import (
     is_solution_integer as _is_solution_integer,
 )
-from logic.src.policies.helpers.solvers_and_matheuristics.pricing.smoothing import (
-    reduced_cost_arc_fixing as _reduced_cost_arc_fixing,
-)
 from logic.src.policies.helpers.solvers_and_matheuristics.search.column_generation import (
     column_generation_loop as _column_generation_loop,
 )
@@ -177,140 +173,6 @@ _FARKAS_TOL: float = 1e-6
 
 
 # BPCPruningException → imported from .bpc_utils.branching_utils
-
-
-def _select_nodes_knapsack(
-    dist_matrix: np.ndarray,
-    wastes: Dict[int, float],
-    capacity: float,
-    R: float,
-    C: float,
-    mandatory: Set[int],
-    n_nodes: int,
-    vehicle_limit: Optional[int] = None,
-    target_reduction: float = 0.60,  # aim to keep ~40% of optional nodes
-    time_limit: float = 10.0,
-    env: Optional[Any] = None,
-) -> Set[int]:
-    """Select profitable optional nodes via MIP knapsack before BPC routing.
-
-    Solves a relaxed node-selection problem: ignore routing structure,
-    approximate the routing cost of each node as its average distance to
-    its nearest neighbors × C, then solve a knapsack to pick the subset
-    of optional nodes where marginal revenue exceeds marginal routing cost.
-
-    This reduces the effective instance size from n to |selected| before
-    the RCSPP pricing subproblem is ever called.
-
-    Args:
-        dist_matrix: Full (n+1)×(n+1) distance matrix.
-        wastes: Node waste amounts.
-        capacity: Vehicle capacity.
-        R: Revenue per unit waste.
-        C: Cost per unit distance.
-        mandatory: Nodes that must be included regardless.
-        n_nodes: Number of customer nodes.
-        vehicle_limit: Optional vehicle limit.
-        target_reduction: Target reduction in number of optional nodes.
-        time_limit: MIP time limit in seconds.
-        env: Optional Gurobi environment.
-
-    Returns:
-        Set of selected node indices (mandatory ∪ profitable optional).
-    """
-    optional = [i for i in range(1, n_nodes + 1) if i not in mandatory]
-    if not optional:
-        return set(mandatory)
-
-    # --- Routing cost estimate ---
-    # Use Clarke-Wright savings-based approximation:
-    # Cost of inserting node i into a route ≈ detour cost from its nearest
-    # already-mandatory neighbor. This is tighter than average-distance.
-    # For isolated optional nodes, use distance to depot × 2 as upper bound.
-    depot = 0
-    node_insertion_cost: Dict[int, float] = {}
-    for i in optional:
-        # Best insertion cost: min over all mandatory nodes j of
-        #   dist(depot, i) + dist(i, j) - dist(depot, j)   (if inserting after depot)
-        # Simplified: use half the round-trip cost to nearest mandatory node
-        if mandatory:
-            nearest_mand_dist = min(dist_matrix[i, j] for j in mandatory)
-            insertion = C * (dist_matrix[depot, i] + nearest_mand_dist) / 2.0
-        else:
-            insertion = C * dist_matrix[depot, i]
-        node_insertion_cost[i] = insertion
-
-    # Net value: revenue minus realistic insertion cost
-    node_net_value: Dict[int, float] = {}
-    for i in optional:
-        revenue = R * wastes.get(i, 0.0)
-        node_net_value[i] = revenue - node_insertion_cost[i]
-
-    # Only consider nodes with positive net value
-    candidates = [i for i in optional if node_net_value[i] > 0]
-    if not candidates:
-        return set(mandatory)
-
-    # --- Capacity budget ---
-    # Total load that can be served = vehicle_limit × capacity.
-    # Subtract mandatory load to get budget for optional nodes.
-    n_vehicles = (
-        vehicle_limit
-        if vehicle_limit is not None
-        else max(2, int(np.ceil(sum(wastes.get(i, 0.0) for i in range(1, n_nodes + 1)) / capacity)))
-    )
-    total_capacity = n_vehicles * capacity
-    mandatory_load = sum(wastes.get(i, 0.0) for i in mandatory)
-    optional_budget = max(0.0, total_capacity - mandatory_load)
-
-    # --- Hard size limit ---
-    # Target at most (1 - target_reduction) × n_nodes selected nodes total,
-    # so RCSPP gets an instance small enough to solve in rcspp_timeout.
-    max_optional = max(5, int(n_nodes * (1 - target_reduction)) - len(mandatory))
-
-    try:
-        m = gp.Model("node_selection", env=env) if env else gp.Model("node_selection")
-        m.Params.OutputFlag = 0
-        m.Params.TimeLimit = time_limit
-        m.Params.MIPGap = 0.01
-
-        y = m.addVars(candidates, vtype=GRB.BINARY, name="y")
-
-        m.setObjective(
-            gp.quicksum(node_net_value[i] * y[i] for i in candidates),
-            GRB.MAXIMIZE,
-        )
-
-        # Hard capacity constraint
-        m.addConstr(gp.quicksum(wastes.get(i, 0.0) * y[i] for i in candidates) <= optional_budget, name="capacity")
-
-        # Hard size constraint — this is what was missing before
-        m.addConstr(gp.quicksum(y[i] for i in candidates) <= max_optional, name="max_nodes")
-
-        m.optimize()
-
-        selected = set(mandatory)
-        if m.SolCount > 0:
-            for i in candidates:
-                if y[i].X > 0.5:
-                    selected.add(i)
-        else:
-            # Fallback: take top-k by net value
-            top_k = sorted(candidates, key=lambda i: node_net_value[i], reverse=True)[:max_optional]
-            selected = set(mandatory) | set(top_k)
-
-        logger.info(
-            f"[Node Selection] Knapsack selected {len(selected)} nodes "
-            f"({len(selected) - len(mandatory)} optional, max_optional={max_optional}) "
-            f"from {n_nodes} total. Reduced by {n_nodes - len(selected)} nodes."
-        )
-        return selected
-
-    except Exception as e:
-        logger.warning(f"[Node Selection] Knapsack failed ({e}), using mandatory + top-k.")
-        top_k = sorted(candidates, key=lambda i: node_net_value[i], reverse=True)[:max_optional]
-        return set(mandatory) | set(top_k)
-
 
 def run_bpc(  # noqa: C901
     dist_matrix: np.ndarray,
@@ -388,7 +250,6 @@ def run_bpc(  # noqa: C901
     max_routes_per_pricing = params.max_routes_per_pricing
     max_bb_nodes = params.max_bb_nodes
     time_limit = params.time_limit
-    search_strategy_name = params.search_strategy
     cutting_planes_name = params.cutting_planes
     branching_strategy_name = params.branching_strategy
 
@@ -530,7 +391,7 @@ def run_bpc(  # noqa: C901
 
     # 4. Initialize Branch-and-Bound Tree with search strategy
     bb_tree = BranchAndBoundTree(
-        v_model=v_model, params=params, search_strategy=search_strategy_name, strategy=branching_strategy_name
+        v_model=v_model, params=params
     )
 
     # 5. Initialize cutting engine
@@ -548,22 +409,10 @@ def run_bpc(  # noqa: C901
     from logic.src.policies.helpers.solvers_and_matheuristics.search.cutting_planes import (
         CompositeCuttingPlaneEngine,
         LimitedMemoryRank1CutEngine,
-        MinCutInequalityEngine,
-        NodeProfitBoundEngine,
-        PathEliminationEngine,
-        TriangleCliqueCutEngine,
     )
 
     _supplemental_engines = [
-        MinCutInequalityEngine(v_model),
-        TriangleCliqueCutEngine(
-            v_model, dist_matrix=red_dist, route_budget=getattr(params, "route_budget", float("inf"))
-        ),
         LimitedMemoryRank1CutEngine(v_model, max_subset_size=5),
-        NodeProfitBoundEngine(v_model),
-        PathEliminationEngine(
-            v_model, dist_matrix=red_dist, route_budget=getattr(params, "route_budget", float("inf"))
-        ),
     ]
     # Wrap primary + supplemental engines together unless already "all"
     if cutting_planes_name not in ("all", "composite"):
@@ -718,26 +567,6 @@ def run_bpc(  # noqa: C901
                     if current_node.parent is not None and current_node.parent.lp_bound is not None
                     else current_node.lp_bound
                 )
-                if (
-                    bb_tree.best_integer_solution is not None
-                    and _parent_lp is not None
-                    and hasattr(pricing_solver, "_forbidden_arcs")
-                ):
-                    _n_fixed = _reduced_cost_arc_fixing(
-                        pricing_solver=pricing_solver,
-                        master_lp_bound=_parent_lp,
-                        incumbent_value=bb_tree.best_integer_solution,
-                        n_nodes=k_nodes,
-                        dist_matrix=red_dist,
-                        wastes=red_wastes,
-                        node_duals=master.get_dual_values() if hasattr(master, "get_dual_values") else {},
-                        capacity=capacity,
-                        R=R,
-                        C=C,
-                    )
-                    if _n_fixed > 0:
-                        logger.debug(f"Reduced-cost arc fixing: eliminated {_n_fixed} arcs.")
-
                 lp_obj, route_values, node_final_basis, node_timed_out = _column_generation_loop(
                     master=master,
                     pricing_solver=pricing_solver,

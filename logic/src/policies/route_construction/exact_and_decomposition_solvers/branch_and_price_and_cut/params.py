@@ -29,7 +29,6 @@ class BPCParams:
         cutting_planes (str): Cut type (rcc, etc).
         branching_strategy (str): Branching rule (divergence, etc).
         max_cg_iterations (int): Max CG rounds per node.
-        max_cut_iterations (int): Max cut rounds per node.
         max_cuts_per_iteration (int): Max cuts added per round.
         max_routes_per_pricing (int): Max columns added per pricing call.
         max_bb_nodes (int): Global node limit.
@@ -40,7 +39,6 @@ class BPCParams:
         enable_heuristic_rcc_separation (bool): Whether to enable fractional RCC separation.
         enable_comb_cuts (bool): Whether to enable heuristic comb inequalities.
         cut_orthogonality_threshold (float): Cosine similarity ceiling for cut filtering.
-        use_spatial_partitioning (bool): Enable spatial domain partitioning.
         enable_strong_branching_heuristic (bool): Use fast divergence-based branching.
         enable_column_pool_deduplication (bool): Whether to enable column pool deduplication.
         rc_tolerance (float): Minimum reduced cost to accept a new column.
@@ -56,18 +54,13 @@ class BPCParams:
         lr_op_time_limit (float): Time limit for OP solver in LR.
         lr_pre_pruning_depth_limit (int): Max depth for LR.
         lr_warm_start_cg (bool): Seed CG with LR result.
-        knapsack_proc_selection (bool): Process mandatory node selection with knapsack problem.
         enable_node_visitation_branching (bool): Enable hierarchical node-visitation branching.
-        enable_dssr (bool): Enable Decremental State-Space Relaxation in pricing.
-        dssr_max_iters (int): Maximum DSSR refinement iterations per pricing call.
-        enable_reduced_cost_arc_fixing (bool): Enable reduced-cost arc elimination from pricing graph.
         route_budget (float): Maximum route cost/distance budget for separation.
     """
 
     time_limit: float = 60.0
     profit_aware_operators: bool = False
     vrpp: bool = True
-    knapsack_proc_selection: bool = True
     seed: Optional[int] = None
     search_strategy: str = "depth_first"
     # Bug #1 fix: paper §4 uses Lifted Cover Inequalities on saturated arcs as its
@@ -78,7 +71,6 @@ class BPCParams:
     cutting_planes: str = "saturated_arc_lci"
     branching_strategy: str = "divergence"
     max_cg_iterations: int = 50
-    max_cut_iterations: int = 5
     max_cuts_per_iteration: int = 5
     max_routes_per_pricing: int = 5
     max_bb_nodes: int = 1000
@@ -89,7 +81,6 @@ class BPCParams:
     enable_heuristic_rcc_separation: bool = True
     enable_comb_cuts: bool = False
     cut_orthogonality_threshold: float = 0.8
-    use_spatial_partitioning: bool = False
     # Disabled by default. The current implementation is a heuristic proxy
     # that returns the top pre-sorted divergence candidate without solving
     # any child LP relaxations. When True, it bypasses fleet-size and
@@ -149,14 +140,11 @@ class BPCParams:
     Directly resolves the VRPP profit-selection × routing duality by branching
     on which nodes to visit (Boussier, Feillet, Gendreau 2007; Pessoa et al. 2020)."""
 
-    enable_dssr: bool = True
     """Enable Decremental State-Space Relaxation in pricing (Righini, Salani 2008).
     Iteratively adds cycled vertices to ng-memory until returned paths are elementary."""
 
-    dssr_max_iters: int = 8
     """Maximum DSSR refinement iterations per pricing call."""
 
-    enable_reduced_cost_arc_fixing: bool = True
     """Enable reduced-cost arc elimination from pricing graph (Irnich et al. 2010).
     Arcs whose min reduced cost exceeds the LP-incumbent gap are pruned."""
 
