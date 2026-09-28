@@ -9,9 +9,12 @@ Attributes:
 Example:
     >>> from logic.src.policies.acceptance_criteria.boltzmann_metropolis_criterion import BoltzmannAcceptance
     >>> criterion = BoltzmannAcceptance(initial_temp=1000.0, alpha=0.995, seed=42)
-    >>> criterion.setup(initial_objective=100.0)
-    >>> accepted, metrics = criterion.accept(current_obj=100.0, candidate_obj=98.0)
-    True, {'accepted': True, 'delta': -2.0, 'temperature': 1000.0}
+    >>> criterion.setup(initial_objective=10.0)
+    >>> accepted, metrics = criterion.accept(current_obj=10.0, candidate_obj=12.0)
+    >>> accepted
+    True
+    >>> criterion.accept(current_obj=10.0, candidate_obj=10.0)[0]  # ties are accepted
+    True
 """
 
 import math

@@ -8,8 +8,11 @@ Attributes:
 Example:
     >>> from logic.src.policies.acceptance_criteria.only_improving import OnlyImproving
     >>> criterion = OnlyImproving()
-    >>> accepted, metrics = criterion.accept(current_obj=100.0, candidate_obj=98.0)
-    True, {'accepted': True, 'delta': -2.0}
+    >>> accepted, metrics = criterion.accept(current_obj=10.0, candidate_obj=12.0)
+    >>> accepted
+    True
+    >>> criterion.accept(current_obj=10.0, candidate_obj=10.0)[0]  # ties are rejected
+    False
 """
 
 from typing import Any, Dict, Tuple, cast
