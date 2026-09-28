@@ -115,3 +115,76 @@ def test_b_gemini_03_revenue_units_and_ground_truth() -> None:
         assert ret_tour == tour
         assert ret_cost == cost
         assert pytest.approx(ret_profit, 1e-4) == 130.0
+
+
+def test_validate_mandatory_empty_and_nonempty_cases() -> None:
+    """Verify _validate_mandatory handles None, lists, tuples, sets, and tensors
+
+    (both 1D/2D boolean masks and integer ID lists/tensors) without ambiguous
+    truth value errors (Codex Finding 10.2 #1 regression test).
+    """
+    policy = NeuralAgentPolicy()
+
+    # None returns None (not an empty constraint)
+    assert policy._validate_mandatory(None) is None
+
+    # Lists
+    assert policy._validate_mandatory([]) == ([0, 0], 0.0, 0.0)
+    assert policy._validate_mandatory([1, 2]) is None
+
+    # Tuples and sets
+    assert policy._validate_mandatory(()) == ([0, 0], 0.0, 0.0)
+    assert policy._validate_mandatory((1, 2)) is None
+    assert policy._validate_mandatory(set()) == ([0, 0], 0.0, 0.0)
+    assert policy._validate_mandatory({1, 2}) is None
+
+    # Integer tensors
+    assert policy._validate_mandatory(torch.tensor([], dtype=torch.long)) == ([0, 0], 0.0, 0.0)
+    assert policy._validate_mandatory(torch.tensor([1, 2], dtype=torch.long)) is None
+
+    # Boolean tensors (1D)
+    assert policy._validate_mandatory(torch.tensor([False, False, False])) == ([0, 0], 0.0, 0.0)
+    assert policy._validate_mandatory(torch.tensor([False, True, False])) is None
+
+    # Boolean tensors (2D)
+    assert policy._validate_mandatory(torch.tensor([[False, False, False]])) == ([0, 0], 0.0, 0.0)
+    assert policy._validate_mandatory(torch.tensor([[False, True, False]])) is None
+
+    # Empty 0-element tensor
+    assert policy._validate_mandatory(torch.tensor([])) == ([0, 0], 0.0, 0.0)
+
+
+def test_execute_multi_element_tensor_mask_no_ambiguous_boolean_crash() -> None:
+    """Verify that NeuralAgentPolicy.execute does not crash with
+
+    'Boolean value of Tensor with more than one value is ambiguous'
+    when passed a multi-element boolean tensor mask (Codex finding 10.2 #1).
+    """
+    policy = NeuralAgentPolicy()
+    mask = torch.tensor([[False, True, False]])
+
+    # Because mask has True at index 1, it is non-empty; validation returns None.
+    # Execution proceeds to model unpacking, raising KeyError('model_env'), NOT RuntimeError.
+    with pytest.raises(KeyError) as exc_info:
+        policy.execute(mandatory=mask)
+    assert "model_env" in str(exc_info.value)
+
+
+def test_execute_empty_tensor_mask_early_exit() -> None:
+    """Verify that NeuralAgentPolicy.execute returns early [0, 0] without error
+
+    when passed an empty list or an empty boolean tensor mask.
+    """
+    policy = NeuralAgentPolicy()
+
+    # Empty list
+    res_list = policy.execute(mandatory=[])
+    assert res_list[0] == [0, 0]
+    assert res_list[1] == 0.0
+    assert res_list[2] == 0.0
+
+    # Empty 2D boolean tensor mask
+    res_tensor = policy.execute(mandatory=torch.tensor([[False, False, False]]))
+    assert res_tensor[0] == [0, 0]
+    assert res_tensor[1] == 0.0
+    assert res_tensor[2] == 0.0
