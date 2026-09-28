@@ -276,12 +276,11 @@ def paired_horizon_frame(clean: pd.DataFrame) -> pd.DataFrame:
     whose 90-day scenarios are a different, self-favouring subset.
 
     It does not identify a horizon effect for the full design. A configuration
-    reached 90 days precisely because its 30-day result put it on the Pareto
-    front, and there are no replicated seeds from which to estimate the
-    resulting selection effect. The paired difference is therefore descriptive
+    belongs to a non-factorial 90-day subset whose selection rule remains
+    pending recovery; no replicated seeds identify the selection effect. The paired difference is therefore descriptive
     of the selected configurations only.
     """
-    wide = clean.pivot_table(index=CONFIG_KEYS, columns="horizon", values=["kgkm", "overflows", "km", "time"])
+    wide = clean.pivot_table(index=CONFIG_KEYS, columns="horizon", values=["kgkm", "overflows", "km", "time", "kg_lost"])
     wide = wide.dropna()
     if wide.empty:
         return wide
@@ -377,6 +376,7 @@ CONSTRUCTOR_SPEC = [
     ("overflows", "mean", 1, "min"),
     ("overflows", "median", 1, "min"),
     ("km", "mean", 0, "min"),
+    ("kg_lost", "mean", 1, "min"),
     ("time", "mean", 0, "min"),
 ]
 
@@ -386,8 +386,8 @@ STRATEGY_SPEC = CONSTRUCTOR_SPEC
 #: headline metrics span a mean/median pair under one centered label, with the
 #: mean/median distinction carried by a second header row rather than by a
 #: literal "med." column label competing with the numbers for space.
-METRIC_GROUP_HEADERS = [mc("Runs"), mc("kg/km", 2), mc("Overflows", 2), mc("km"), mc("Time (s)")]
-METRIC_GROUP_SUBHEADERS = ["", "mean", "median", "mean", "median", "", ""]
+METRIC_GROUP_HEADERS = [mc("Runs"), mc("kg/km", 2), mc("Overflows", 2), mc("km"), mc("Lost (kg)"), mc("Time (s)")]
+METRIC_GROUP_SUBHEADERS = ["", "mean", "median", "mean", "median", "", "mean", ""]
 
 
 def table_constructors(clean: pd.DataFrame, horizon: int, cfg: dict) -> str:
@@ -399,12 +399,14 @@ def table_constructors(clean: pd.DataFrame, horizon: int, cfg: dict) -> str:
     agg.index = [display_name(c, cfg) for c in agg.index]
     return render_template(
         "paper_results_table.tex.j2",
+        tabcolsep=2,
         label=f"tab:constructors{horizon}",
         caption=cfg["captions"]["constructors"].format(horizon=horizon, runs=len(sub)),
         first_header=cfg["headers"]["constructor"],
         headers=METRIC_GROUP_HEADERS,
         subheaders=METRIC_GROUP_SUBHEADERS,
         column_spec="l" + "r" * len(CONSTRUCTOR_SPEC),
+        size=r"\footnotesize",
         rows=build_rows(agg, CONSTRUCTOR_SPEC),
         note=cfg["notes"]["constructors"].format(runs_per=int(counts.min())),
     )
@@ -419,6 +421,7 @@ def table_strategies(clean: pd.DataFrame, horizon: int, cfg: dict) -> str:
     agg.index = [cfg["variant_labels"].get(v, v) for v in agg.index]
     return render_template(
         "paper_results_table.tex.j2",
+        tabcolsep=2,
         label=f"tab:strategies{horizon}",
         caption=cfg["captions"]["strategies"].format(horizon=horizon),
         first_header=cfg["headers"]["strategy"],
@@ -442,7 +445,7 @@ def improver_pairs(clean: pd.DataFrame, horizon: int) -> pd.DataFrame:
     """
     sub = clean[clean.horizon == horizon]
     keys = [k for k in CONFIG_KEYS if k != "improver"]
-    wide = sub.pivot_table(index=keys, columns="improver", values=["kgkm", "km", "overflows", "time"])
+    wide = sub.pivot_table(index=keys, columns="improver", values=["kgkm", "km", "overflows", "time", "kg_lost"])
     return wide.dropna()
 
 
@@ -470,6 +473,7 @@ def table_improvers(clean: pd.DataFrame, horizon: int, cfg: dict) -> str:
         )
     return render_template(
         "paper_results_table.tex.j2",
+        tabcolsep=2,
         label=f"tab:improvers{horizon}",
         caption=cfg["captions"]["improvers"].format(horizon=horizon, pairs=len(pairs)),
         first_header=cfg["headers"]["metric"],
@@ -495,16 +499,20 @@ def table_horizon(paired: pd.DataFrame, cfg: dict) -> str:
                     fmt(grp[("kgkm", 90)].mean(), 2),
                     fmt(grp[("overflows", 30)].mean(), 1),
                     fmt(grp[("overflows", 90)].mean(), 1),
+                    fmt(grp[("kg_lost", 30)].mean(), 1),
+                    fmt(grp[("kg_lost", 90)].mean(), 1),
                 ],
             }
         )
     return render_template(
         "paper_results_table.tex.j2",
+        tabcolsep=2,
         label="tab:horizon",
         caption=cfg["captions"]["horizon"].format(pairs=len(paired)),
         first_header=cfg["headers"]["constructor"],
         headers=mc_list(cfg["headers"]["horizon"]),
-        column_spec="lrrrrr",
+        column_spec="lrrrrrrr",
+        size=r"\footnotesize",
         rows=rows,
         note=cfg["notes"]["horizon"],
     )
@@ -517,6 +525,7 @@ def table_scenarios(clean: pd.DataFrame, horizon: int, cfg: dict) -> str:
         ("kgkm", "mean", 2, "none"),
         ("overflows", "mean", 1, "none"),
         ("km", "mean", 0, "none"),
+        ("kg_lost", "mean", 1, "none"),
         ("time", "mean", 0, "none"),
     ]
     primary = clean[clean.horizon == horizon]
@@ -524,20 +533,21 @@ def table_scenarios(clean: pd.DataFrame, horizon: int, cfg: dict) -> str:
     dist["level"] = dist["dist"].map(lambda value: f"Demand: {value}")
     network = balance_marginal(primary, "network").copy()
     network["level"] = network.apply(
-        lambda row: f"Network: {row.city} ($N={row.N}$)", axis=1
+        lambda row: f"{row.city} ($N={row.N}$)", axis=1
     )
     frame = pd.concat([dist, network], ignore_index=True)
     agg = aggregate(frame, "level", metrics)
     order = [
         "Demand: Empirical",
         "Demand: Gamma-3",
-        "Network: Rio Maior ($N=100$)",
-        "Network: Rio Maior ($N=170$)",
-        "Network: Figueira da Foz ($N=350$)",
+        "Rio Maior ($N=100$)",
+        "Rio Maior ($N=170$)",
+        "Figueira da Foz ($N=350$)",
     ]
     agg = agg.reindex(order)
     return render_template(
         "paper_results_table.tex.j2",
+        tabcolsep=2,
         label="tab:scenarios30",
         caption=cfg["captions"]["scenarios"].format(horizon=horizon),
         first_header=cfg["headers"]["scenario_factor"],
@@ -555,7 +565,8 @@ def table_excluded(degenerate: pd.DataFrame, cfg: dict) -> str:
         return ""
     rows = []
     for _, r in degenerate.sort_values("shortfall", ascending=False).iterrows():
-        variant = f"{r.strategy}{r.cf}{r.sl_var}"
+        variant_key = f"{r.strategy}{r.cf}{r.sl_var}"
+        variant = cfg["variant_labels_short"].get(variant_key, variant_key)
         rows.append(
             {
                 "label": tex_escape(display_name(r.constructor, cfg)),
@@ -569,16 +580,18 @@ def table_excluded(degenerate: pd.DataFrame, cfg: dict) -> str:
                     fmt(r.kg, 0),
                     f"{r.shortfall:.0%}".replace("%", r"\%"),
                     fmt(r.overflows, 0),
+                    fmt(r.kg_lost, 1),
                 ],
             }
         )
     return render_template(
         "paper_results_table.tex.j2",
+        tabcolsep=2,
         label="tab:excluded",
         caption=cfg["captions"]["excluded"],
         first_header=cfg["headers"]["constructor_short"],
         headers=mc_list(cfg["headers"]["excluded"]),
-        column_spec="lllrrrr",
+        column_spec="lllrrrrr",
         size=r"\footnotesize",
         rows=rows,
         note=cfg["notes"]["excluded"].format(threshold=int(SHORTFALL_THRESHOLD * 100)),
@@ -690,7 +703,7 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
         facecolor="#ffffff", edgecolor="#cbd5e1", linewidth=1.5, zorder=0
     )
     ax.add_patch(day_box)
-    ax.text(0.035, 0.93, "SIMULATED DAY CYCLE  (Day $t \\in \\{1, \\dots, \\tau\\}$)",
+    ax.text(0.035, 0.93, "SIMULATED DAY CYCLE  (Day $d \\in \\{1, \\dots, D\\}$)",
             fontsize=9.5, fontweight="bold", color="#334155", zorder=1)
 
     # 1. Environment & Accumulation Box
@@ -701,7 +714,7 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
     )
     ax.add_patch(box_env)
     ax.text(0.180, 0.845, "1. Arrival and service flag", ha="center", fontsize=8.6, fontweight="bold", color=c_env_border)
-    ax.text(0.180, 0.74, "Add today's arrival, then cap at $E_i$.\n$o_i^t = 1$ if the level equals $E_i$.\n$\\ell_i^t$ is only the mass above $E_i$.\nBoth are scored before routing.",
+    ax.text(0.180, 0.74, "Add $a_{i,d}$, then cap at $\\mathrm{Cap}_i$.\n$o_{i,d}=1$ if that level equals $\\mathrm{Cap}_i$.\nLost mass is only the excess.\nScored before the route.",
             ha="center", va="center", fontsize=7.2, color=c_text_dark, linespacing=1.25)
     ax.text(0.180, 0.585, "Decision state, pre-collection", ha="center", fontsize=7.0, fontweight="bold", color="#64748b")
 
@@ -717,9 +730,9 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
     # exercise it. Earlier versions of this figure asserted the opposite in a
     # highlighted badge, contradicting the simulation protocol -- so the noise
     # term is now shown greyed, with the operative sigma = 0 identity in black.
-    ax.text(0.180, 0.365, "Optional sensor noise:\n$\\epsilon_{i,t} \\sim \\mathcal{N}(0, \\sigma^2)$",
+    ax.text(0.180, 0.365, "Optional sensor noise:\n$\\epsilon_{i,d} \\sim \\mathcal{N}(0, \\sigma^2)$",
             ha="center", va="center", fontsize=7.6, color="#94a3b8", linespacing=1.3)
-    ax.text(0.180, 0.285, "This study: $\\sigma = 0$ (true observations)",
+    ax.text(0.180, 0.285, "This study: $\\sigma = 0$",
             ha="center", va="center", fontsize=7.8, fontweight="bold", color=c_text_dark)
 
     # Scope Callout Badge 1 -- capability vs. exercised path
@@ -749,7 +762,7 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
     )
     ax.add_patch(box_p1)
     ax.text(0.515, 0.72, "Stage 1: Mandatory Selection", ha="center", fontsize=8.4, fontweight="bold", color="#065f46")
-    ax.text(0.515, 0.64, "Input: capped post-arrival level\nOutput: mandatory set $\\mathcal{M}^t$\n(LM70/LM90, LA, SL1/SL2)",
+    ax.text(0.515, 0.64, "Input: capped level\nOutput: mandatory set $\\mathcal{M}_d$\n(LM-CF70/LM-CF90, LA, SL1/SL2)",
             ha="center", va="center", fontsize=7.2, color=c_text_dark, linespacing=1.2)
 
     # 3b. Stage 2: Route Construction
@@ -760,7 +773,7 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
     )
     ax.add_patch(box_p2)
     ax.text(0.515, 0.50, "Stage 2: Route Construction", ha="center", fontsize=8.4, fontweight="bold", color="#065f46")
-    ax.text(0.515, 0.42, "Input: $\\mathcal{M}^t$, directed $d_{ij}$\nOutput: a tour (load not re-checked)\n(eight classical constructors)",
+    ax.text(0.515, 0.42, "Input: $\\mathcal{M}_d$, directed $\\mathrm{dist}_{ij}$\nOutput: a tour (load not re-checked)\n(eight classical constructors)",
             ha="center", va="center", fontsize=7.2, color=c_text_dark, linespacing=1.2)
 
     # 3c. Stage 3: Route Improvement
@@ -792,7 +805,7 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
     )
     ax.add_patch(box_exec)
     ax.text(0.845, 0.84, "4. Route Execution", ha="center", fontsize=9.2, fontweight="bold", color=c_env_border)
-    ax.text(0.845, 0.71, "Empties visited bins.\nKilometres use directed $d_{ij}$.\nThese runs do not reject\na load above $Q$.",
+    ax.text(0.845, 0.71, "Empties visited bins.\nKilometers use directed $\\mathrm{dist}_{ij}$.\nThese runs do not reject\na load above $Q$.",
             ha="center", va="center", fontsize=7.3, color=c_text_dark, linespacing=1.25)
     ax.text(0.845, 0.58, "Physical Collection", ha="center", fontsize=7.0, fontweight="bold", color="#64748b")
 
@@ -833,7 +846,7 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
                 arrowprops=dict(arrowstyle="-|>", linewidth=1.6, color="#475569"))
     # The label sits on the lane; its opaque bbox breaks the dashed line, which
     # reads as one routed path rather than as a line colliding with text.
-    ax.text(0.48, lane_y, "Next-Day State Transition: uncollected residual fill carries forward to Day $t+1$",
+    ax.text(0.48, lane_y, "Next day: capped residual carries forward to day $d+1$",
             fontsize=7.4, style="italic", color="#475569", ha="center", va="center", zorder=3,
             bbox=dict(boxstyle="round,pad=0.25", facecolor="#f8fafc", edgecolor="#cbd5e1"))
 
@@ -871,7 +884,7 @@ def fig_strategy_tradeoff(clean: pd.DataFrame, horizon: int, out: Path, cfg: dic
     # Acronyms, not full names: five spelled-out variant names overprint each
     # other on a 6.4in axis, which is how the published Fig. 6 lost the leading
     # "S" of both Service-Level labels. These are the same short forms the
-    # appendix figure captions already use (LA, LM70, LM90, SL1, SL2).
+    # body text uses (LA, LM-CF70, LM-CF90, SL1, SL2).
     short = cfg.get("variant_labels_short", {})
     labels = [short.get(v, cfg["variant_labels"].get(v, v)) for v in agg.index]
 

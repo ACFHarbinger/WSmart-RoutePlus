@@ -19,7 +19,7 @@
 % `size` lets an individual table step down further when its cells hold text
 % rather than numbers.
 << size | default('\\small') >>
-\setlength{\tabcolsep}{4pt}
+\setlength{\tabcolsep}{<< tabcolsep | default(4) >>pt}
 \begin{tabular}{<< column_spec >>}
 \toprule
 << first_header >><% for h in headers %> & \multicolumn{<< h.span >>}{c}{<< h.text >>}<% endfor %> \\
