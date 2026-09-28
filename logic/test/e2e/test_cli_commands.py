@@ -71,7 +71,6 @@ def test_cli_train_lightning_smoke(tmp_path):
     """Smoke test for training loop."""
     # Path to model weights that will be created during training
     weights_dir = tmp_path / "weights"
-    tracking_uri = tmp_path / "tracking"
 
     try:
         result = subprocess.run(
@@ -93,7 +92,6 @@ def test_cli_train_lightning_smoke(tmp_path):
                 "train.policy.model.encoder.n_layers=1",
                 "train.policy.model.encoder.n_heads=2",
                 "tracking.wandb_mode=offline",
-                f"tracking.wst_tracking_uri={tracking_uri}",
                 f"+output_dir={weights_dir}",
                 "hpo.n_trials=0",  # Explicitly disable HPO
                 "+trainer.fast_dev_run=true",
@@ -185,7 +183,6 @@ def test_cli_train_lightning_ppo_smoke(tmp_path):
     """Smoke test for PPO training loop via CLI."""
     # Path to model weights that will be created during training
     weights_dir = tmp_path / "weights_ppo"
-    tracking_uri = tmp_path / "tracking_ppo"
 
     try:
         result = subprocess.run(
@@ -208,7 +205,6 @@ def test_cli_train_lightning_ppo_smoke(tmp_path):
                 "train.policy.model.encoder.n_layers=1",
                 "train.policy.model.encoder.n_heads=2",
                 "tracking.wandb_mode=offline",
-                f"tracking.wst_tracking_uri={tracking_uri}",
                 f"+output_dir={weights_dir}",
                 "hpo.n_trials=0",  # Explicitly disable HPO
                 "+trainer.fast_dev_run=true",

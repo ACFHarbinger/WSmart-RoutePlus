@@ -25,7 +25,6 @@ class TrackingConfig:
     configured MLflow server.
 
     Attributes:
-        wst_tracking_uri: Directory that holds ``tracking.db`` and the
             ``artifacts/`` subtree for the native WSTracker backend.
         mlflow_enabled: When ``True``, attach an :class:`MLflowBridge`
             sink to every new run so data is dual-written to MLflow.
@@ -33,7 +32,6 @@ class TrackingConfig:
             paths (``mlruns``), ``http://`` addresses, and Databricks
             workspace URIs.
         mlflow_experiment_name: MLflow experiment name to create/reuse.
-        mlflow_run_name: Optional human-readable name shown in the MLflow
             UI.  Defaults to the first 8 characters of the WSTracker
             run UUID when ``None``.
         ray_tune_storage_path: Root directory for Ray Tune trial logs and
@@ -46,7 +44,6 @@ class TrackingConfig:
             orchestrated through versioned ZenML pipelines instead of being
             dispatched directly.  Requires ``zenml`` to be installed
             (``uv add "zenml[mlflow]"``).
-        zenml_store_url: ZenML metadata store URL.  An empty string uses the
             default local store (``~/.zenml``).  Supported formats:
             ``sqlite:///path/to/store.db`` and
             ``mysql://user:password@host/database``.
@@ -62,7 +59,6 @@ class TrackingConfig:
         profile: If ``True``, enable function-level execution time profiling.
         log_step: Frequency of metric logging (e.g., every N steps).
         log_level: Logging level (e.g., ``'INFO'``, ``'DEBUG'``).
-        real_time_log: If ``True``, enable real-time logging (e.g., dashboard).
         log_file: Path to the log file.
         log_gradients: Enabling per-layer gradient monitoring hooks.
         log_weights: Enabling model weight distribution logging.
@@ -77,18 +73,14 @@ class TrackingConfig:
         nan_guard: Enable gradient NaN/Inf detection hooks (raises on detection).
         viz_every_n_epochs: Frequency for expensive visualizations (embeddings,
             loss landscape, attention heatmaps).  ``0`` means only at train end.
-        profiler_buffer_size: Buffer size for the execution profiler CSV writer.
     """
 
-    wst_tracking_uri: str = "test_tracking" if os.environ.get("TEST_MODE") == "true" else "assets/tracking"
     mlflow_enabled: bool = False
     mlflow_tracking_uri: str = "test_mlruns" if os.environ.get("TEST_MODE") == "true" else "mlruns"
     mlflow_experiment_name: str = "wsmart-route"
-    mlflow_run_name: Optional[str] = None
     ray_tune_storage_path: str = "ray_results"
     ray_tune_mlflow_enabled: bool = False
     zenml_enabled: bool = False
-    zenml_store_url: str = ""
     zenml_stack_name: str = "wsmart-route-stack"
 
     # --- Logging & CLI Control (Migrated from root Config) ---
@@ -100,7 +92,6 @@ class TrackingConfig:
     profile: bool = False
     log_step: int = 10
     log_level: str = "INFO"
-    real_time_log: bool = False
     log_file: Optional[str] = None
 
     # --- Instrumentation & Diagnostics ---
@@ -116,4 +107,3 @@ class TrackingConfig:
     log_profiling_report: bool = False
     nan_guard: bool = False
     viz_every_n_epochs: int = 0
-    profiler_buffer_size: int = 200

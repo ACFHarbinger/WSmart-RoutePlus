@@ -3,15 +3,12 @@
 # =============================================================================
 # Tracking Configuration Override: Gen Data
 # =============================================================================
-wst_tracking_uri: "assets/tracking"
 mlflow_enabled: false
 mlflow_tracking_uri: "assets/logs/mlruns"
 mlflow_experiment_name: "wsmart-route"
-mlflow_run_name: null
 ray_tune_storage_path: "ray_results"
 ray_tune_mlflow_enabled: false
 zenml_enabled: false
-zenml_store_url: ""
 zenml_stack_name: "wsmart-route-stack"
 wandb_mode: "disabled"
 no_tensorboard: false
@@ -21,7 +18,6 @@ verbose: true
 profile: false
 log_step: 10
 log_level: "INFO"
-real_time_log: false
 log_file: null
 
 # --- Instrumentation & Diagnostics ---
@@ -37,4 +33,3 @@ log_attention_heatmaps: false
 log_profiling_report: false
 nan_guard: false
 viz_every_n_epochs: 0
-profiler_buffer_size: 200

@@ -13,8 +13,6 @@ Example:
     0.95
     >>> config.min_temperature
     0.01
-    >>> config.iterations_per_temp
-    100
     >>> config.nb_granular
     20
     >>> config.time_limit
@@ -46,7 +44,6 @@ class SAConfig:
         cooling_rate (float): Geometric cooling coefficient alpha in (0, 1).
             T_{k+1} = alpha * T_k.
         min_temperature (float): Termination temperature threshold T_{min}.
-        iterations_per_temp (int): Length of the Markov chain L_k at each temperature step.
             Allows the system to reach thermal equilibrium before cooling.
         nb_granular (int): Number of neighborhood search granular moves to try at each
             temperature step.
@@ -62,7 +59,6 @@ class SAConfig:
     initial_temperature: float = 100.0
     cooling_rate: float = 0.95
     min_temperature: float = 0.01
-    iterations_per_temp: int = 100
     nb_granular: int = 20
     time_limit: float = 60.0
     seed: Optional[int] = 42

@@ -9,7 +9,7 @@
 # EVOLUTION:
 #   This replaces the legacy `sans` and `lac` configurations. It removes
 #   ambiguous integer arrays in favor of explicit thermodynamic parameters
-#   (initial_temperature, cooling_rate, iterations_per_temp) mapped directly
+#   (initial_temperature, cooling_rate) mapped directly
 #   to the SAConfig dataclass.
 # =============================================================================
 
@@ -30,10 +30,6 @@ sa:
   # (Replaces legacy T_min)
   min_temperature: 0.01
 
-  # Length of the Markov chain L_k at each temperature step.
-  # Allows the system to reach thermal equilibrium before cooling.
-  # (Replaces legacy iterations_per_T / param index 0)
-  iterations_per_temp: 100
 
   # Number of neighborhood search granular moves to try at each
   # temperature step.
