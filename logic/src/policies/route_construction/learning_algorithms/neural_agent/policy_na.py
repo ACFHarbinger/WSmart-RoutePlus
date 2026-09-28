@@ -142,9 +142,18 @@ class NeuralAgentPolicy(BaseRoutingPolicy):
 
         # Compute profit: collected revenue - travel cost
         visited = {n for n in tour if n != 0}
-        collected_revenue = sum(
-            float(bins.c[n - 1]) * profit_vars.get("revenue_kg", 1.0) for n in visited if 1 <= n <= len(bins.c)
+        volume = getattr(bins, "volume", profit_vars.get("bin_volume", profit_vars.get("V", 1.0)) if profit_vars else 1.0)
+        density = getattr(bins, "density", profit_vars.get("density", profit_vars.get("B", 1.0)) if profit_vars else 1.0)
+        revenue_kg = profit_vars.get("revenue_kg", profit_vars.get("R_kg", 1.0)) if profit_vars else 1.0
+        c_vals = getattr(bins, "real_c", bins.c)
+        if c_vals is None:
+            c_vals = bins.c
+        collected_kg = sum(
+            (float(c_vals[n - 1]) / 100.0) * float(volume) * float(density)
+            for n in visited
+            if 1 <= n <= len(c_vals)
         )
+        collected_revenue = collected_kg * float(revenue_kg)
         profit = collected_revenue - cost * params.cost_weight
 
         return tour, cost, profit, kwargs.get("search_context"), kwargs.get("multi_day_context")
