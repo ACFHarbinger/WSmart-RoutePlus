@@ -458,8 +458,22 @@ class Bins:
         Returns:
             The processed filling tuple.
         """
-        todaysfilling = self.waste_fills[day] if self.start_with_fill else self.waste_fills[day - 1]
-        noisyfilling = self.noisy_waste_fills[day] if self.start_with_fill else self.noisy_waste_fills[day - 1]
+        if self.start_with_fill:
+            # Row 0 is the opening level copied by set_sample_waste. Day d
+            # deposits row d, so a horizon of n_days needs n_days + 1 rows.
+            # Indexing day - 1 here would deposit the opening observation again.
+            n_rows = len(self.waste_fills)
+            if day < 0 or day >= n_rows:
+                raise IndexError(
+                    f"stats-file waste sample has {n_rows} rows; day {day} needs row {day} "
+                    "because row 0 is the opening level and is not deposited again "
+                    f"(a {day}-day horizon needs {day + 1} rows)"
+                )
+            todaysfilling = self.waste_fills[day]
+            noisyfilling = self.noisy_waste_fills[day]
+        else:
+            todaysfilling = self.waste_fills[day - 1]
+            noisyfilling = self.noisy_waste_fills[day - 1]
         return self._process_filling(todaysfilling, noisyfilling)
 
     def __setDistribution(self, param1, param2):

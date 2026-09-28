@@ -464,15 +464,6 @@ def sequential_simulations(  # noqa: C901
         display, shared_metrics, log_tmp, last_reported_days, policy_names, loop_tic, counter
     )
     _run_name = getattr(sim, "run_name", "") or ""
-    results_dir = os.path.join(
-        ROOT_DIR,
-        "assets",
-        sim.output_dir,
-        f"{sim.graph.n_days}days",
-        f"{sim.graph.area}{sim.graph.num_loc}_{sim.graph.waste_type}",
-        sim.data_distribution,
-        *([_run_name] if _run_name else []),
-    )
 
     for pol_id, _ in enumerate(policies):
         pol_name = resolved_names[pol_id]
@@ -506,6 +497,17 @@ def sequential_simulations(  # noqa: C901
                     # Always append to log_full to support uniform aggregation logic
                     log_full[pol_name].append(lg)
                     log[pol_name] = lg
+                else:
+                    err = result_dict if isinstance(result_dict, dict) else {}
+                    failed_log.append(
+                        {
+                            "policy": err.get("policy", pol_name),
+                            "sample": sample_id,
+                            "sample_id": sample_id,
+                            "error": err.get("error", "simulation failed"),
+                            "traceback": err.get("traceback", ""),
+                        }
+                    )
 
                 # Final update for this sample
                 if display:
@@ -514,9 +516,17 @@ def sequential_simulations(  # noqa: C901
                     )
                     overall_progress.update()
 
-            except CheckpointError:
-                # Skip broken checkpoints
-                pass
+            except CheckpointError as checkpoint_error:
+                err = checkpoint_error.error_result if isinstance(checkpoint_error.error_result, dict) else {}
+                failed_log.append(
+                    {
+                        "policy": err.get("policy", pol_name),
+                        "sample": sample_id,
+                        "sample_id": sample_id,
+                        "error": err.get("error", str(checkpoint_error)),
+                        "traceback": err.get("traceback", ""),
+                    }
+                )
             except BaseException as e:
                 # If it's an Optuna pruning signal, re-raise it immediately
                 if "optuna" in sys.modules:
@@ -537,6 +547,7 @@ def sequential_simulations(  # noqa: C901
                     {
                         "policy": pol_name,
                         "sample": sample_id,
+                        "sample_id": sample_id,
                         "error": str(e),
                         "traceback": traceback.format_exc(),
                     }
@@ -552,15 +563,15 @@ def sequential_simulations(  # noqa: C901
                     str(ROOT_DIR),
                     sim.graph.n_days,
                     sim.graph.num_loc,
-                    sim.output_dir, # pyrefly: ignore [bad-argument-type]
+                    sim.output_dir,  # pyrefly: ignore [bad-argument-type]
                     sim.graph.area,
                     sim.graph.waste_type,
-                    sim.data_distribution, # pyrefly: ignore [bad-argument-type]
-                    _run_name, # pyrefly: ignore [bad-argument-count]
-                    nsamples=sim.graph.n_samples, # pyrefly: ignore [bad-keyword-argument]
-                    policies=[pol_name], # pyrefly: ignore [bad-keyword-argument]
-                    keys=SIM_METRICS, # pyrefly: ignore [bad-keyword-argument]
-                    lock=lock, # pyrefly: ignore [bad-keyword-argument]
+                    sim.data_distribution,  # pyrefly: ignore [bad-argument-type]
+                    _run_name,  # pyrefly: ignore [bad-argument-count]
+                    nsamples=sim.graph.n_samples,  # pyrefly: ignore [bad-keyword-argument]
+                    policies=[pol_name],  # pyrefly: ignore [bad-keyword-argument]
+                    keys=SIM_METRICS,  # pyrefly: ignore [bad-keyword-argument]
+                    lock=lock,  # pyrefly: ignore [bad-keyword-argument]
                 )
                 if res_log:
                     log.update(res_log)
@@ -573,14 +584,6 @@ def sequential_simulations(  # noqa: C901
                         log_std[pol_name] = [*map(statistics.stdev, zip(*log_full[pol_name], strict=False))]
                 elif log_std is not None:
                     log_std[pol_name] = [0.0] * len(log[pol_name])
-
-                os.makedirs(results_dir, exist_ok=True)
-                pol_log_path = os.path.join(results_dir, f"log_{pol_name}_{sim.graph.n_samples}N.json")
-                mean_dict = dict(zip(SIM_METRICS, log[pol_name], strict=False))
-                update_policy_log_section(pol_log_path, "mean", mean_dict, lock=lock)
-                if log_std is not None and pol_name in log_std:
-                    std_dict = dict(zip(SIM_METRICS, log_std[pol_name], strict=False))
-                    update_policy_log_section(pol_log_path, "std", std_dict, lock=lock)
 
     with contextlib.suppress(Exception):
         run = get_active_run() if get_active_run is not None else None

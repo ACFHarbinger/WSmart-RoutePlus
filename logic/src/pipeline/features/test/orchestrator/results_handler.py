@@ -92,15 +92,15 @@ def aggregate_final_results(log_tmp: Any, cfg: Config, lock: Any) -> Tuple[Dict[
                 log_full[key].extend(list(val))
 
             for pol_name in policy_names:
-                if log_full[pol_name]:
-                    log[pol_name] = [statistics.mean(v) for v in zip(*log_full[pol_name], strict=False)]
-                    log_std[pol_name] = [
-                        statistics.stdev(v) if len(log_full[pol_name]) > 1 else 0.0
-                        for v in zip(*log_full[pol_name], strict=False)
-                    ]
-                else:
-                    log[pol_name] = [0.0] * len(udef.SIM_METRICS)
-                    log_std[pol_name] = [0.0] * len(udef.SIM_METRICS)
+                # A policy with no successful sample is omitted. An all-zero mean
+                # would be written as if the policy had run (DS-18).
+                if not log_full[pol_name]:
+                    continue
+                log[pol_name] = [statistics.mean(v) for v in zip(*log_full[pol_name], strict=False)]
+                log_std[pol_name] = [
+                    statistics.stdev(v) if len(log_full[pol_name]) > 1 else 0.0
+                    for v in zip(*log_full[pol_name], strict=False)
+                ]
 
             _log_sim_metrics(log, log_std)
             return log, log_std

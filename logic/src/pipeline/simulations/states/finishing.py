@@ -97,10 +97,6 @@ class FinishingState(SimState):
         update_policy_log_section(log_path, "samples", sample_metrics, sample_id=ctx.sample_id, lock=ctx.lock)
         update_policy_log_section(log_path, "daily", daily_dict, sample_id=ctx.sample_id, lock=ctx.lock)
 
-        if graph.n_samples == 1:
-            update_policy_log_section(log_path, "mean", sample_metrics, lock=ctx.lock)
-            update_policy_log_section(log_path, "std", {m: 0.0 for m in sample_metrics}, lock=ctx.lock)
-
         save_matrix_to_excel(
             ctx.bins.get_fill_history(),
             ctx.results_dir,
@@ -112,7 +108,7 @@ class FinishingState(SimState):
 
         # Log the fill-history export as a "save" dataset event
         with contextlib.suppress(Exception):
-            run = get_active_run() # pyrefly: ignore [not-callable]
+            run = get_active_run()  # pyrefly: ignore [not-callable]
             if run is not None:
                 excel_path = os.path.join(
                     ctx.results_dir,
@@ -220,7 +216,7 @@ def _log_result_artifacts(ctx: Any, sim: Any, log_path: str) -> None:
         log_path: Path to the per-policy log file.
     """
     with contextlib.suppress(Exception):
-        run = get_active_run() # pyrefly: ignore [not-callable]
+        run = get_active_run()  # pyrefly: ignore [not-callable]
         if run is None:
             return
 

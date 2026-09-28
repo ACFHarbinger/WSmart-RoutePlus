@@ -41,6 +41,26 @@ if TYPE_CHECKING:
     from .base import SimulationContext
 
 
+def pad_model_ls(model_tup: Optional[tuple]) -> tuple:
+    """Return at least three model slots.
+
+    Neural-agent execution unpacks ``(model_data, graph, profit_vars)`` and the
+    branch-and-price policy indexes the same three positions. A missing or short
+    tuple must not raise ``ValueError`` before the policy runs.
+
+    Args:
+        model_tup: Models loaded for this sample, or None.
+
+    Returns:
+        The original tuple when it already has three or more entries, otherwise
+        padded with None.
+    """
+    items = tuple(model_tup) if model_tup else ()
+    if len(items) >= 3:
+        return items
+    return items + (None,) * (3 - len(items))
+
+
 class RunningState(SimState):
     """State handles the day-by-day simulation loop.
 
@@ -62,7 +82,9 @@ class RunningState(SimState):
             f"log_realtime_{sim.data_distribution}_{graph.n_samples}N.jsonl",
         )
 
-        ctx.tic = time.perf_counter() + ctx.run_time
+        # Stored elapsed is already spent. Subtract it so the next interval is
+        # that elapsed time plus new work, not a negative clock (DS-17).
+        ctx.tic = time.perf_counter() - ctx.run_time
 
         try:
             assert ctx.checkpoint is not None
@@ -167,7 +189,7 @@ class RunningState(SimState):
             graph_size=sim.graph.num_loc,
             full_policy=ctx.pol_name,
             policy_name=ctx.pol_name,
-            display_name=display_name, # pyrefly: ignore [bad-argument-type]
+            display_name=display_name,  # pyrefly: ignore [bad-argument-type]
             bins=ctx.bins,
             new_data=ctx.new_data,
             coords=ctx.coords,
@@ -175,7 +197,7 @@ class RunningState(SimState):
             overflows=ctx.overflows,
             day=day,
             model_env=ctx.model_env,
-            model_ls=ctx.model_tup or (None, None),
+            model_ls=pad_model_ls(ctx.model_tup),
             n_vehicles=sim.n_vehicles,
             area=sim.graph.area,
             realtime_log_path=realtime_log_path,
@@ -202,7 +224,9 @@ class RunningState(SimState):
             time_matrix=getattr(ctx, "time_matrix", None),
             avg_speed_kmh=float(getattr(ctx, "avg_speed_kmh", 35.0)),
             service_time_h=float(getattr(ctx, "service_time_h", 1.5 / 60.0)),
-            vehicle_capacity=float(getattr(ctx, "vehicle_capacity", 100.0) if getattr(ctx, "vehicle_capacity", None) is not None else 100.0),
+            vehicle_capacity=float(
+                getattr(ctx, "vehicle_capacity", 100.0) if getattr(ctx, "vehicle_capacity", None) is not None else 100.0
+            ),
         )
 
     def _update_ctx_from_day_context(self, ctx, day_context):
@@ -246,5 +270,5 @@ class RunningState(SimState):
                     "policy": ctx.pol_name,
                     "sample_id": ctx.sample_id,
                 }
-                return cumulative_metrics # pyrefly: ignore [bad-return]
+                return cumulative_metrics  # pyrefly: ignore [bad-return]
         return {}

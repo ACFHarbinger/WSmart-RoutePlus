@@ -129,34 +129,37 @@ class RouteConstructionAction(SimulationAction):
 
                 multi_day_context = MultiDayContext.initialize(day_index=day_idx)
 
-            # 2. Generate Scenario Tree (if configured or requested by policy)
-            # Check if policy inherits from MultiPeriod base or if specifically requested
-            from logic.src.pipeline.simulations.bins.prediction import ScenarioGenerator
-
-            horizon = flat_cfg.get("policy.horizon") or flat_cfg.get("policy.num_days") or 7
-            method = flat_cfg.get("policy.scenario_method") or "stochastic"
-            generator = ScenarioGenerator(method=method, horizon=horizon, seed=seed)
-
-            # Generate tree using bin stats and truth (if method is oracle)
-            bins_state = context.get("bins")
-            if bins_state is not None:
-                n = len(bins_state.c)
-                bin_stats = {
-                    "means": getattr(bins_state, "means", np.zeros(n)),
-                    "stds": getattr(bins_state, "std", np.zeros(n)),
-                }
-            else:
-                bin_stats = {"means": np.zeros(0), "stds": np.zeros(0)}
-            truth_generator = context.get("truth_generator")  # For Perfect Oracle mode
-
-            scenario_tree = generator.generate(
-                current_wastes=bins_state.c if bins_state is not None else np.zeros(0),
-                bin_stats=bin_stats,
-                truth_generator=truth_generator,
-            )
-            # Inject into context for policy consumption
-            context["scenario_tree"] = scenario_tree
+            # 2. Generate Scenario Tree unless the adapter opts out.
+            # Default is to build. Live multi-period policies read the tree, and
+            # none of the retained adapters set uses_scenario_tree to False.
             context["multi_day_context"] = multi_day_context
+            if getattr(adapter, "uses_scenario_tree", True) is False:
+                context["scenario_tree"] = None
+            else:
+                from logic.src.pipeline.simulations.bins.prediction import ScenarioGenerator
+
+                horizon = flat_cfg.get("policy.horizon") or flat_cfg.get("policy.num_days") or 7
+                method = flat_cfg.get("policy.scenario_method") or "stochastic"
+                generator = ScenarioGenerator(method=method, horizon=horizon, seed=seed)
+
+                # Generate tree using bin stats and truth (if method is oracle)
+                bins_state = context.get("bins")
+                if bins_state is not None:
+                    n = len(bins_state.c)
+                    bin_stats = {
+                        "means": getattr(bins_state, "means", np.zeros(n)),
+                        "stds": getattr(bins_state, "std", np.zeros(n)),
+                    }
+                else:
+                    bin_stats = {"means": np.zeros(0), "stds": np.zeros(0)}
+                truth_generator = context.get("truth_generator")  # For Perfect Oracle mode
+
+                scenario_tree = generator.generate(
+                    current_wastes=bins_state.c if bins_state is not None else np.zeros(0),
+                    bin_stats=bin_stats,
+                    truth_generator=truth_generator,
+                )
+                context["scenario_tree"] = scenario_tree
 
             start_time = time.perf_counter()
             # 3. Unpack adapter results: tour represents global bin IDs
@@ -168,9 +171,7 @@ class RouteConstructionAction(SimulationAction):
             viz_log = context.get("realtime_log_path")
             viz_lock = context.get("lock")
 
-            with PolicyVizStreamSession(
-                adapter, viz_policy, viz_sample, viz_day, viz_log, viz_lock
-            ):
+            with PolicyVizStreamSession(adapter, viz_policy, viz_sample, viz_day, viz_log, viz_lock):
                 results = adapter.execute(**context)
             tour, _, _, extra_output, updated_multi_day = results
             elapsed_time = time.perf_counter() - start_time

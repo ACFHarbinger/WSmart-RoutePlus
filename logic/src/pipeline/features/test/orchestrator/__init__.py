@@ -164,7 +164,7 @@ def simulator_testing(cfg: Config, data_size: int, device: Any) -> None:  # noqa
         data_size: Number of available data points for the area.
         device: Torch device for neural models.
     """
-    from logic.src.pipeline.simulations.day_context import resolve_policy_display_name, to_slug
+    from logic.src.pipeline.simulations.day_context import policy_result_key
 
     sim = cfg.sim
     log_file = setup_logger_redirection(echo_to_terminal=True)
@@ -205,8 +205,11 @@ def simulator_testing(cfg: Config, data_size: int, device: Any) -> None:  # noqa
         shared_metrics = manager.dict()
 
         raw_policies = sim.full_policies
-        policies = [to_slug(resolve_policy_display_name(p, sim)[1]) for p in raw_policies]
-        sample_idx_dict: Dict[str, List[int]] = {pol: list(range(sim.graph.n_samples)) for pol in raw_policies}
+        # Resume logs and workers are keyed by the display slug (ctx.pol_name),
+        # not the raw expander id. Both the initial sample lists and the resume
+        # filter use that same key, in policy order.
+        policies = [policy_result_key(p, sim) for p in raw_policies]
+        sample_idx_dict: Dict[str, List[int]] = {pol: list(range(sim.graph.n_samples)) for pol in policies}
 
         # ── Config snapshot ─────────────────────────────────────────────────────
         # Persist the fully-resolved Hydra config (including all CLI overrides)
@@ -350,6 +353,11 @@ def simulator_testing(cfg: Config, data_size: int, device: Any) -> None:  # noqa
             data_distribution=sim.data_distribution,
             run_name=sim.run_name,
         )
+        failed_records = [dict(row) for row in _failed_log]
+        if failed_records:
+            # SystemExit is not an Exception, so the engine does not rewrite it
+            # into a successful return. The process exit code is 1.
+            raise SystemExit(f"{len(failed_records)} simulation sample(s) failed")
     finally:
         with contextlib.suppress(Exception):
             manager.shutdown()

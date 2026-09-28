@@ -451,6 +451,9 @@ class InitializingState(SimState):
 
         graph = get_graph_config(sim)
         data_dist = sim.data_distribution
+        # With a stats file, row 0 of each waste sample is the opening stock and day d deposits row d
+        # (Bins.load_filling), so an n-day horizon needs n + 1 rows.
+        n_rows = graph.n_days + (1 if getattr(sim, "stats_filepath", None) is not None else 0)
         if "gamma" in data_dist:
             ctx.bins = Bins(
                 graph.num_loc,
@@ -461,7 +464,7 @@ class InitializingState(SimState):
                 waste_file=getattr(graph, "load_dataset", None),
                 noise_mean=sim.noise_mean,
                 noise_variance=sim.noise_variance,
-                n_days=graph.n_days,
+                n_days=n_rows,
                 n_samples=graph.n_samples,
                 seed=ctx.cfg.sim.seed + ctx.sample_id,
             )
@@ -487,7 +490,7 @@ class InitializingState(SimState):
                 waste_file=getattr(graph, "load_dataset", None),
                 noise_mean=sim.noise_mean,
                 noise_variance=sim.noise_variance,
-                n_days=graph.n_days,
+                n_days=n_rows,
                 n_samples=graph.n_samples,
                 seed=ctx.cfg.sim.seed + ctx.sample_id,
             )

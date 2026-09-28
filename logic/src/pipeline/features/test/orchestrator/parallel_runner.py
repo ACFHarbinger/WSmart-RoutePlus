@@ -170,9 +170,13 @@ def execute_and_monitor_tasks(
         sample_id = result.pop("sample_id", None)
         if not (isinstance(result, dict) and success):
             error_policy = result.get("policy", "unknown")
-            error_sample = result.get("sample_id", "unknown")
+            error_sample = sample_id if sample_id is not None else result.get("sample", "unknown")
             error_msg = result.get("error", "Unknown error")
             print(f"Simulation failed: {error_policy} #{error_sample} - {error_msg}")
+            result["policy"] = error_policy
+            result["sample"] = error_sample
+            result["sample_id"] = error_sample
+            result["error"] = error_msg
             failed_log.append(result)
             return
 

@@ -52,7 +52,34 @@ def _registered_constructor_keys() -> Tuple[str, ...]:
         names = os.listdir(policies_dir)
     except OSError:  # pragma: no cover - frozen builds without configs fall back to the token heuristic
         return ()
-    return tuple(sorted(n[len("policy_") : -len(".yaml")] for n in names if n.startswith("policy_") and n.endswith(".yaml")))
+    return tuple(
+        sorted(n[len("policy_") : -len(".yaml")] for n in names if n.startswith("policy_") and n.endswith(".yaml"))
+    )
+
+
+# Tokens that name a selector or an improvement stage, not a route constructor.
+_STRUCTURAL_NAME_TOKENS = frozenset({"ms", "ri", "none", "custom", "new", "og"})
+
+
+def _matching_constructor(parts: List[str]) -> Optional[str]:
+    """Longest registered constructor key inside an expanded policy id.
+
+    ``alns`` and ``hgs`` are constructors, so they are not skipped. Selection
+    tokens such as ``regular`` are not constructor keys and do not win.
+
+    Args:
+        parts: Underscore tokens of the policy id.
+
+    Returns:
+        The constructor key, or None when the registry has no match.
+    """
+    keys = set(_registered_constructor_keys())
+    for width in range(len(parts), 0, -1):
+        for start in range(len(parts) - width + 1):
+            candidate = "_".join(parts[start : start + width])
+            if candidate in keys and candidate not in _STRUCTURAL_NAME_TOKENS:
+                return candidate
+    return None
 
 
 def get_canonical_policy_name(policy_name: str, known_keys: Optional[Iterable[str]] = None) -> str:
@@ -351,12 +378,14 @@ def get_full_policy_name(pol_name: str, config: Dict[str, Any]) -> str:
         # If it looks expanded (e.g., 'ms_regular_alns_ri_none'), try to extract the middle
         parts = base_id.split("_")
         if "ms" in parts or "ri" in parts:
-            # It's already expanded, try to find the 'constructor' part
-            # This is a bit heuristic but should work for most cases
-            for p in parts:
-                if p not in ["ms", "ri", "none", "custom", "alns", "hgs", "new", "og"]:
-                    base_id = p
-                    break
+            matched = _matching_constructor(parts)
+            if matched is not None:
+                base_id = matched
+            else:
+                for part in parts:
+                    if part not in _STRUCTURAL_NAME_TOKENS:
+                        base_id = part
+                        break
 
     # 3. Extract Route Improvement
     ri = config.get("route_improvement")
@@ -470,7 +499,7 @@ class SimulationDayContext(Mapping):
     overflows: int = 0
     day: int = 0
     model_env: Any = None
-    model_ls: Tuple[Any, ...] = (None,)
+    model_ls: Tuple[Any, ...] = (None, None, None)
     n_vehicles: int = 1
     area: str = ""
     realtime_log_path: Optional[str] = None
