@@ -209,7 +209,7 @@ class TemporalAttentionModel(AttentionModel):
         predicted_fills = predicted_fills.view(batch_size, graph_size, 1)
 
         # 4. Handle depot separately (no fill prediction)
-        if self.is_vrpp or self.is_wc:
+        if (self.is_vrpp or self.is_wc) and predicted_fills.size(1) < base_embeddings.size(1):
             depot_fill = torch.zeros((batch_size, 1, 1), device=predicted_fills.device)
             predicted_fills = torch.cat((depot_fill, predicted_fills), dim=1)
 

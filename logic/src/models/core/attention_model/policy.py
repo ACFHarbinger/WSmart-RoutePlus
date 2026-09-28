@@ -15,7 +15,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 import torch
 from tensordict import TensorDict
@@ -97,6 +97,20 @@ class AttentionModelPolicy(AutoregressivePolicy):
             **kwargs,
         )
 
+    def _get_initial_embeddings(self, td: Any) -> Union[torch.Tensor, Tuple[torch.Tensor, Any]]:
+        """Extracts initial node embeddings from problem input.
+
+        Subclasses (such as ``TemporalAttentionModel``) override this hook to
+        inject and fuse dynamic or predicted temporal state features.
+
+        Args:
+            td: TensorDict or dict containing instance state.
+
+        Returns:
+            Initial node embeddings tensor or (embeddings, init_context) tuple.
+        """
+        return self.init_embedding(td)
+
     def forward(  # type: ignore[override]
         self,
         td: TensorDict,
@@ -134,8 +148,9 @@ class AttentionModelPolicy(AutoregressivePolicy):
             RuntimeError: If encoder or decoder subnets are uninitialized.
             ValueError: If `env_name` is missing from the state.
         """
-        # 1. Initialize embeddings
-        init_embeds = self.init_embedding(td)
+        # 1. Initialize embeddings (delegates to _get_initial_embeddings hook)
+        init_embeds_raw = self._get_initial_embeddings(td)
+        init_embeds = init_embeds_raw[0] if isinstance(init_embeds_raw, tuple) else init_embeds_raw
 
         # 2. Encoder
         edges = td.get("edges", None)
