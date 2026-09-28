@@ -39,7 +39,6 @@ class BCConfig:
         time_limit: Maximum time in seconds for the solver.
         mip_gap: Relative MIP optimality gap (0.0 = prove optimality).
         use_heuristics: Whether to use primal heuristics for warm start.
-        use_exact_separation: Use exact max-flow for SEC (slower but stronger).
         max_cuts_per_round: Maximum cuts to add per separation round.
         enable_fractional_capacity_cuts: Enable exact fractional RCC separation.
             True = Use O(V⁴) max-flow for fractional capacity cuts (small instances).
@@ -58,7 +57,6 @@ class BCConfig:
     time_limit: float = 300.0
     mip_gap: float = 0.0
     use_heuristics: bool = True
-    use_exact_separation: bool = False
     max_cuts_per_round: int = 50
     enable_fractional_capacity_cuts: bool = True
     profit_aware_operators: bool = False

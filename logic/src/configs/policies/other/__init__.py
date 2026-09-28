@@ -8,9 +8,6 @@ Attributes:
     RewardShapingConfig: Configuration for reward shaping strategies.
     FeatureExtractorConfig: Configuration for feature extractors.
     ContextFeatureExtractorConfig: Configuration for context feature extractors.
-    EvolutionaryCMABConfig: Configuration for evolutionary contextual multi-armed bandit policies.
-    GPCMABConfig: Configuration for Gaussian process multi-armed bandit policies.
-    LinUCBConfig: Configuration for linear UCB policies.
     TDLearningConfig: Configuration for TD learning policies.
     BanditConfig: Configuration for bandit policies.q
 
@@ -23,10 +20,7 @@ from .mandatory_selection import MandatorySelectionConfig
 from .reinforcement_learning import (
     BanditConfig,
     ContextFeatureExtractorConfig,
-    EvolutionaryCMABConfig,
     FeatureExtractorConfig,
-    GPCMABConfig,
-    LinUCBConfig,
     RewardShapingConfig,
     RLConfig,
     TDLearningConfig,

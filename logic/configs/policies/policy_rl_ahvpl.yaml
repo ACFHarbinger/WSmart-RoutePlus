@@ -198,17 +198,9 @@ rl_ahvpl:
         agent_type: "contextual"
         bandit:
           algorithm: "linucb"
-        evolution_cmab:
-          quality_weight: 0.5
-          improvement_weight: 1.0
-          diversity_weight: 0.2
-          novelty_weight: 1.0
-          reward_threshold: 1e-6
-          default_reward: 5.0
         context_features:
           alpha: 0.1
           feature_dim: 8
-          selection_threshold: 1e-9
           lambda_prior: 1.0
           noise_variance: 0.1
           epsilon: 0.15

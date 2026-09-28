@@ -8,7 +8,7 @@ Example:
     >>> from logic.src.configs.models import OptimConfig
     >>> config = OptimConfig()
     >>> print(config)
-    OptimConfig(optimizer='adam', lr=0.0001, weight_decay=0.0, lr_scheduler=None, lr_scheduler_kwargs={}, lr_critic=0.0001, lr_decay=1.0, lr_min_value=0.0, lr_min_decay=1e-08)
+    OptimConfig(optimizer='adam', lr=0.0001, weight_decay=0.0, lr_scheduler=None, lr_scheduler_kwargs={}, lr_critic=0.0001, lr_decay=1.0, lr_min_value=0.0)
 """
 
 from dataclasses import dataclass, field
@@ -36,4 +36,3 @@ class OptimConfig:
     lr_critic: float = 1e-4
     lr_decay: float = 1.0
     lr_min_value: float = 0.0
-    lr_min_decay: float = 1e-8

@@ -15,9 +15,6 @@ from logic.src.models.subnets.modules.activation_function import ActivationFunct
 from logic.src.models.subnets.modules.cross_attention import (
     MultiHeadCrossAttention,
 )
-from logic.src.models.subnets.modules.distance_graph_convolution import (
-    DistanceAwareGraphConvolution,
-)
 from logic.src.models.subnets.modules.efficient_graph_convolution import (
     PYG_AVAILABLE,
     EfficientGraphConvolution,
@@ -27,9 +24,6 @@ from logic.src.models.subnets.modules.gated_graph_convolution import GatedGraphC
 from logic.src.models.subnets.modules.graph_convolution import GraphConvolution
 from logic.src.models.subnets.modules.multi_head_attention import MultiHeadAttention
 from logic.src.models.subnets.modules.normalization import Normalization
-from logic.src.models.subnets.modules.normalized_activation_function import (
-    NormalizedActivationFunction,
-)
 from logic.src.models.subnets.modules.skip_connection import SkipConnection
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -55,37 +49,6 @@ class TestActivationFunction:
         out = model(x)
         assert torch.equal(out, torch.tensor([0.0, 0.4, 10.0, 10.0]))
 
-
-class TestDistanceAwareGraphConvolution:
-    """Tests for DistanceAwareGraphConvolution."""
-
-    def test_forward_batch(self):
-        """Verifies batched forward flow with distance."""
-        batch = 2
-        nodes = 5
-        feat = 3
-        out_feat = 4
-        model = DistanceAwareGraphConvolution(feat, out_feat, aggregation="mean")
-
-        h = torch.randn(batch, nodes, feat)
-        adj = torch.zeros(nodes, nodes)
-        dist = torch.randn(nodes, nodes).abs()
-
-        out = model(h, adj, dist)
-        assert out.shape == (batch, nodes, out_feat)
-
-    def test_forward_no_dist(self):
-        """Verifies forward flow without distance."""
-        batch = 2
-        nodes = 5
-        feat = 3
-        out_feat = 4
-        model = DistanceAwareGraphConvolution(feat, out_feat, aggregation="sum")
-        h = torch.randn(batch, nodes, feat)
-        adj = torch.ones(nodes, nodes)
-
-        out = model(h, adj)
-        assert out.shape == (batch, nodes, out_feat)
 
 
 @pytest.mark.skipif(
@@ -207,33 +170,6 @@ class TestNormalization:
         out = model(x)
         assert out.shape == x.shape
 
-
-class TestNormalizedActivationFunction:
-    """Tests for NormalizedActivationFunction."""
-
-    def test_softmax(self):
-        """Verifies Softmax output."""
-        model = NormalizedActivationFunction("softmax", dim=-1)
-        x = torch.randn(2, 5)
-        out = model(x)
-        assert torch.allclose(out.sum(dim=-1), torch.ones(2))
-
-    def test_adaptive_log_softmax(self):
-        """Verifies AdaptiveLogSoftmax behavior."""
-        dim = 128
-        n_classes = 10
-        model = NormalizedActivationFunction("adaptivelogsoftmax", dim=dim, n_classes=n_classes)
-
-        # Inference mode (no mask/target) -> returns log_prob
-        x = torch.randn(2, dim)
-        out = model(x)
-        assert out.shape == (2, n_classes)
-
-        # Training mode (with mask as target) -> returns namedtuple(output, loss)
-        target = torch.randint(0, n_classes, (2,))
-        out_tuple = model(x, mask=target)
-        assert hasattr(out_tuple, "output")
-        assert hasattr(out_tuple, "loss")
 
 
 class TestSkipConnection:

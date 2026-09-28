@@ -124,16 +124,6 @@ MAX_CAPACITY_PERCENT = 100.0  # percent (0-100 range)
 # Maximum route length constraints by problem size
 # Maps number of customer locations → max route length (hops, excluding depot returns)
 # Prevents unbounded route lengths in waste-collecting and selective problems.
-# Used in: VRPP, CVRPP environments to enforce route length limits
-# Rationale: Larger instances need proportionally longer routes (√n heuristic)
-MAX_LENGTHS: Dict[int, int] = {
-    20: 2,  # 20 customers → max 2 node visits per route
-    50: 3,  # 50 customers → max 3 node visits per route
-    100: 4,  # 100 customers → max 4 node visits per route
-    150: 5,  # 150 customers → max 5 node visits per route
-    225: 6,  # 225 customers → max 6 node visits per route
-    317: 7,  # 317 customers → max 7 node visits per route
-}
 
 # Default vehicle capacity (kilograms)
 # Used in: Capacitated VRP variants (CVRP, CWCVRP, SCWCVRP)

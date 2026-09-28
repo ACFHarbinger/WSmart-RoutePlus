@@ -42,15 +42,8 @@ class TrainConfig:
     # NEW FIELDS:
     train_time: bool = False
     accumulation_steps: int = 1
-    enable_scaler: bool = False
-    checkpoint_epochs: int = 1
     shrink_size: Optional[int] = None
-    route_improvement_epochs: int = 0
-    lr_route_improvement: float = 0.001
-    efficiency_weight: float = 0.8
-    overflow_weight: float = 0.2
     # Process control
-    eval_only: bool = False
     checkpoint_encoder: bool = False
     resume: Optional[str] = None
     model_weights_path: Optional[str] = None

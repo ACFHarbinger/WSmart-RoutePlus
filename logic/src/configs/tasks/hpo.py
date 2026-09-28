@@ -53,7 +53,6 @@ class HPOConfig:
         }
     )
     # NEW FIELDS:
-    hop_range: List[float] = field(default_factory=lambda: [0.0, 2.0])
     fevals: int = 100
     timeout: Optional[int] = None
     n_startup_trials: int = 5

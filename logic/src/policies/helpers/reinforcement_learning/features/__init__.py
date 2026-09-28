@@ -4,7 +4,6 @@ This module provides utilities for extracting features from the environment
 state and context, which are used as input to RL policies.
 
 Attributes:
-    context: Module for extracting contextual features.
     state: Module for extracting state-based features.
 
 Example:

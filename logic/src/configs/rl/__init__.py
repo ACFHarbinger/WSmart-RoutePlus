@@ -15,7 +15,6 @@ Example:
 from dataclasses import dataclass, field
 
 from .core.adaptive_imitation import AdaptiveImitationConfig
-from .core.dr_alns import DRALNSConfig
 from .core.gdpo import GDPOConfig
 from .core.grpo import GRPOConfig
 from .core.imitation import ImitationConfig
@@ -69,4 +68,3 @@ class RLConfig:
     imitation: ImitationConfig = field(default_factory=ImitationConfig)
     gdpo: GDPOConfig = field(default_factory=GDPOConfig)
     adaptive_imitation: AdaptiveImitationConfig = field(default_factory=AdaptiveImitationConfig)
-    dr_alns: DRALNSConfig = field(default_factory=DRALNSConfig)

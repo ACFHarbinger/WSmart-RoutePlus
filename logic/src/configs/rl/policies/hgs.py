@@ -39,8 +39,6 @@ class HGSConfig:
         mutation_rate: Probability of applying local search to offspring.
         repair_probability: Probability of repairing infeasible offspring.
         crossover_rate: Probability of applying crossover.
-        min_diversity: Minimum diversity threshold.
-        diversity_change_rate: Rate at which alpha diversity changes.
         local_search_iterations: Number of local search iterations.
         max_vehicles: Maximum number of vehicles (0 for unlimited).
         initial_penalty_capacity: Initial penalty for capacity violations.
@@ -64,8 +62,6 @@ class HGSConfig:
     crossover_rate: float = 1.0
 
     # Diversity management
-    min_diversity: float = 0.2
-    diversity_change_rate: float = 0.05
 
     # Local search
     local_search_iterations: int = 100

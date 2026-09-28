@@ -66,7 +66,6 @@ class AdaptiveKernelSearchConfig:
     # Adaptive Features (AKS)
     t_easy: float = 10.0
     epsilon: float = 0.1
-    time_limit_stage_1: float = 0.2
 
         # Infrastructure
         engine (str): Identifier for the optimization engine. Use "gurobi" to
@@ -91,7 +90,6 @@ class AdaptiveKernelSearchConfig:
     # Adaptive Features (AKS)
     t_easy: float = 10.0
     epsilon: float = 0.1
-    time_limit_stage_1: float = 0.2
 
     # Infrastructure
     engine: str = "gurobi"

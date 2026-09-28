@@ -1,5 +1,4 @@
 schc:
   method: schc
   params:
-    step_limit: 100
     maximization: true

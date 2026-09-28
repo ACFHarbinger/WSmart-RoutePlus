@@ -209,7 +209,6 @@ class MandatoryManagerSelectionConfig:
         hidden_dim: Dimension of the hidden layers.
         lstm_hidden: Dimension of the LSTM hidden layers.
         history_length: Length of the history.
-        manager_critical_threshold: Threshold for manager selection.
         manager_weights: Path to the manager weights.
         device: Device to use for training.
     """
@@ -217,7 +216,6 @@ class MandatoryManagerSelectionConfig:
     hidden_dim: int = 128
     lstm_hidden: int = 64
     history_length: int = 10
-    manager_critical_threshold: float = 0.9
     manager_weights: Optional[str] = None
     device: str = "cuda"
 
@@ -406,17 +404,7 @@ class LagrangianSelectionConfig:
 
 
 @dataclass
-class BernoulliSelectionConfig:
-    """Configuration for independent Bernoulli trial selection.
 
-    Attributes:
-        p: Probability of selecting a bin.
-    """
-
-    p: float = 0.5
-
-
-@dataclass
 class KMeansSectorSelectionConfig:
     """Configuration for geographic sector-based selection.
 
@@ -502,7 +490,6 @@ class MandatorySelectionConfig:
     thompson_dispatcher: ThompsonDispatcherSelectionConfig = field(default_factory=ThompsonDispatcherSelectionConfig)
     wasserstein: WassersteinSelectionConfig = field(default_factory=WassersteinSelectionConfig)
     lagrangian: LagrangianSelectionConfig = field(default_factory=LagrangianSelectionConfig)
-    bernoulli: BernoulliSelectionConfig = field(default_factory=BernoulliSelectionConfig)
     kmeans_sector: KMeansSectorSelectionConfig = field(default_factory=KMeansSectorSelectionConfig)
     staggered_regular: StaggeredRegularSelectionConfig = field(default_factory=StaggeredRegularSelectionConfig)
 

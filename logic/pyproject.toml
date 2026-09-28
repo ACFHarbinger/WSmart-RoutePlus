@@ -21,22 +21,16 @@ dependencies = [
     "rich>=14.1.0",
     "tqdm>=4.67.1",
     "networkx>=3.2.1",
-    "einops>=0.8.0",
     "scikit-learn>=1.6.1",
     "pyyaml>=6.0.2",
     "python-dotenv>=1.1.1",
-    "pydantic>=2.11.7",
     "joblib>=1.5.1",
     "cryptography>=45.0.6",
     "requests>=2.32.5",
     "wandb>=0.16.0",
     "openpyxl>=3.1.5",
     "torch-sparse>=0.6.18",
-    "ml-dtypes>=0.4.1",
     "protobuf==7.35.1",
-    "python-pptx>=1.0.2",
-    "docxtpl>=0.20.2",
-    "latex2mathml>=3.81.0",
 ]
 
 # Corrected 'dev' dependencies
@@ -70,9 +64,6 @@ gpu = [
     "triton>=2.2.0 ; sys_platform != 'win32'",
     "torch-tb-profiler>=0.4.3",
     "nvidia-ml-py>=13.580.65",
-    "gymnasium>=1.1.1",
-    "onnx>=1.19.0",
-    "onnxsim>=0.6.2 ; python_version >= '3.10'",
 ]
 geo = [
     "osmnx>=2.0.6",

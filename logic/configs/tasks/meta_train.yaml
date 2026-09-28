@@ -58,26 +58,4 @@ meta_rl:
     # Number of past timesteps to condition on.
 
   # Meta-RL Training Configuration
-  mrl_batch_size: 256 # Batch size for meta-training (can differ from base training)
-  mrl_step: 10 # Meta-update frequency (update meta-network every N steps)
 
-  # =============================================================================
-  # Hierarchical RL (HRL) Specific Parameters
-  # =============================================================================
-  # Used when meta_strategy="hrl"
-
-  hrl_epochs: 2 # Training epochs for manager network per meta-update
-
-  hrl_clip_eps: 0.2 # PPO clipping epsilon for manager updates
-
-  hrl_threshold:
-    0.9 # Fill level threshold for mandatory bin detection.
-    # Manager predicts which bins exceed this threshold.
-
-  # PID Controller for Adaptive Weighting
-  hrl_pid_target: 0.0003 # Target overflow rate for PID controller
-
-  # Adaptive Cost Weights (Manager learns to balance these)
-  hrl_lambda_waste: 300.0 # Initial weight for waste collection reward
-  hrl_lambda_cost: 0.5 # Initial weight for distance cost
-  hrl_lambda_overflow_initial: 2000.0 # Initial weight for overflow penalty

@@ -126,7 +126,6 @@ train:
         hidden_dim: 128
         lstm_hidden: 64
         history_length: 10
-        manager_critical_threshold: 0.9
         manager_weights: null
         device: "cuda"
 
@@ -208,22 +207,3 @@ rl:
     decay_step: 1 # Step size for IL weight decay
     epsilon: 1.0e-6 # Minimum IL weight (prevents complete IL shutdown)
     loss_fn: "weighted_nll" # Loss function. Options: nll, weighted_nll, kl, reverse_kl
-
-  dr_alns:
-    max_iterations: 100
-    n_destroy_ops: 3
-    n_repair_ops: 2
-
-    # PPO Hyperparameters
-    lr: 0.0003
-    gamma: 0.99
-    gae_lambda: 0.95
-    clip_epsilon: 0.2
-    value_loss_coef: 0.5
-    entropy_coef: 0.01
-    max_grad_norm: 0.5
-
-    # Training Control
-    n_steps_per_epoch: 2048
-    batch_size: 64
-    inner_epochs: 10

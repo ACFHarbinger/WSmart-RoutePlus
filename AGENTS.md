@@ -1,7 +1,7 @@
 # AGENTS.md - Instructions for Coding Assistant LLMs
 
 [![Python](https://img.shields.io/badge/Python-3.9+-3776ab?logo=python&logoColor=white)](https://www.python.org/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.2.2-ee4c2c?logo=pytorch&logoColor=white)](https://pytorch.org/get-started/locally/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.13.0-ee4c2c?logo=pytorch&logoColor=white)](https://pytorch.org/get-started/locally/)
 [![uv](https://img.shields.io/badge/managed%20by-uv-261230.svg)](https://github.com/astral-sh/uv)
 [![Gurobi](https://img.shields.io/badge/Gurobi-11.0-ED1C24?logo=gurobi&logoColor=white)](https://www.gurobi.com/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
@@ -104,7 +104,7 @@ The project bridges **Deep Reinforcement Learning (DRL)** with **Operations Rese
 
 | Framework             | Version | Purpose                            |
 | --------------------- | ------- | ---------------------------------- |
-| **PyTorch**           | 2.2.2   | Deep learning, CUDA-optimized      |
+| **PyTorch**           | 2.13.0  | Deep learning, CUDA-optimized      |
 | **PyTorch Geometric** | 2.3.1   | Graph neural networks              |
 | **Gurobi Optimizer**  | 11.0.3  | Exact optimization solver          |
 | **Hexaly**            | 14.0+   | High-performance local search      |
@@ -270,7 +270,7 @@ The agent is authorized to use external tools to assist in development:
 
 #### Invalid Move Prevention
 
-Decoders **must** implement masking via `logic/src/utils/functions/boolmask.py` before sampling nodes:
+Decoders **must** mask logits before sampling nodes:
 
 ```python
 # CORRECT: Apply mask before softmax
@@ -726,7 +726,6 @@ probs = F.softmax(logits, dim=-1)  # Can select invalid nodes
 # From logic/src/utils/definitions.py
 MAX_WASTE = 1.0
 VEHICLE_CAPACITY = 100.0
-MAX_LENGTHS = {20: 2, 50: 3, 100: 4, 150: 5, 225: 6, 317: 7}
 METRICS = ["overflows", "kg", "ncol", "kg_lost", "km", "kg/km", "cost", "profit"]
 ```
 

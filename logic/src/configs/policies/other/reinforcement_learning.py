@@ -101,48 +101,8 @@ class TDLearningConfig:
 
 
 @dataclass
-class LinUCBConfig:
-    """
-    Configuration for Contextual Multi-Armed Bandits (LinUCB).
-
-    Attributes:
-        alpha: Exploration parameter (controls the width of the confidence bound).
-        feature_dim: Dimension of the context feature vector.
-        lambda_prior: Regularization parameter for the ridge regression.
-        noise_variance: Variance of the observation noise (optional).
-        history_size: Size of reward history buffer.
-    """
-
-    alpha: float = 1.0
-    feature_dim: int = 8
-    lambda_prior: float = 1.0
-    noise_variance: float = 0.1
-    history_size: int = 50
 
 
-@dataclass
-class EvolutionaryCMABConfig:
-    """
-    Configuration for Contextual MABs used in evolutionary algorithms (e.g., crossover).
-
-    Attributes:
-        quality_weight: Weight for offspring quality in reward.
-        improvement_weight: Weight for improvement over parents.
-        diversity_weight: Weight for population diversity contribution.
-        novelty_weight: Weight for genetic novelty.
-        reward_threshold: Minimum improvement to consider a reward.
-        default_reward: Baseline reward multiplier.
-    """
-
-    quality_weight: float = 0.5
-    improvement_weight: float = 1.0
-    diversity_weight: float = 0.2
-    novelty_weight: float = 1.0
-    reward_threshold: float = 1e-6
-    default_reward: float = 5.0
-
-
-@dataclass
 class RewardShapingConfig:
     """
     Configuration for search outcome reward shaping.
@@ -154,7 +114,6 @@ class RewardShapingConfig:
         rejected_reward: Penalty for a rejected move.
         stagnation_penalty: Penalty per iteration of stagnation.
         improvement_threshold: Minimum difference to consider as an improvement.
-        rewards_size: Size of the rewards tracking buffer.
     """
 
     best_reward: float = 10.0
@@ -165,7 +124,6 @@ class RewardShapingConfig:
     adaptive_rewards: bool = False
     normalize_rewards: bool = False
     improvement_threshold: float = 1e-6
-    rewards_size: int = 20
 
 
 @dataclass
@@ -196,7 +154,6 @@ class ContextFeatureExtractorConfig:
     Attributes:
         alpha: Alpha parameter for feature extraction.
         feature_dim: Context dimension.
-        selection_threshold: Minimum activation for operator selection.
         lambda_prior: Bayesian prior lambda.
         noise_variance: Noise variance for contextual sampling.
         epsilon: Initial exploration rate.
@@ -207,7 +164,6 @@ class ContextFeatureExtractorConfig:
 
     alpha: float = 0.1
     feature_dim: int = 8
-    selection_threshold: float = 1e-9
     lambda_prior: float = 1.0
     noise_variance: float = 0.1
     epsilon: float = 0.15
@@ -217,28 +173,7 @@ class ContextFeatureExtractorConfig:
 
 
 @dataclass
-class GPCMABConfig:
-    """
-    Configuration for Gaussian Process Combinatorial Multi-Armed Bandits.
 
-    Attributes:
-        beta: Exploration parameter for GP-UCB (standard deviations).
-        length_scale: Length scale for the RBF kernel.
-        signal_variance: Signal variance for the RBF kernel.
-        noise_variance: Observation noise variance.
-        max_history: Maximum number of points to keep in GP history.
-        super_arm_size: Number of arms to select in a super-arm.
-    """
-
-    beta: float = 2.0
-    length_scale: float = 1.0
-    signal_variance: float = 1.0
-    noise_variance: float = 0.1
-    max_history: int = 500
-    super_arm_size: int = 1
-
-
-@dataclass
 class RLConfig:
     """
     Unified Reinforcement Learning configuration.
@@ -247,13 +182,10 @@ class RLConfig:
     into a single structured object.
 
     Attributes:
-        agent_type: Type of RL agent ('bandit', 'td_learning', 'contextual', 'gp_cmab').
+        agent_type: Type of RL agent ('bandit', 'td_learning').
         bandit: Configuration for MAB agents.
         td_learning: Configuration for TD agents (e.g., Q-Learning).
         sarsa: Optional configuration for SARSA agents.
-        contextual: Configuration for contextual bandits (LinUCB).
-        gp_cmab: Configuration for GP-CMAB agents.
-        evolution_cmab: Configuration for evolutionary MABs.
         reward: Configuration for reward shaping.
         features: Configuration for state feature extraction.
         context_features: Configuration for context feature extraction.
@@ -264,9 +196,6 @@ class RLConfig:
     bandit: BanditConfig = field(default_factory=BanditConfig)
     td_learning: TDLearningConfig = field(default_factory=TDLearningConfig)
     sarsa: Optional[TDLearningConfig] = None
-    contextual: LinUCBConfig = field(default_factory=LinUCBConfig)
-    gp_cmab: GPCMABConfig = field(default_factory=GPCMABConfig)
-    evolution_cmab: EvolutionaryCMABConfig = field(default_factory=EvolutionaryCMABConfig)
     reward: RewardShapingConfig = field(default_factory=RewardShapingConfig)
     features: FeatureExtractorConfig = field(default_factory=FeatureExtractorConfig)
     context_features: ContextFeatureExtractorConfig = field(default_factory=ContextFeatureExtractorConfig)

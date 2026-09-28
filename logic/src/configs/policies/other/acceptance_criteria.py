@@ -86,14 +86,12 @@ class DemonAlgorithmConfig:
     Attributes:
         initial_credit: Initial credit for the demon.
         is_stochastic: Whether the demon algorithm is stochastic.
-        max_demon_credit: Maximum credit the demon can accumulate.
         maximization: Whether the problem is a maximization problem.
         seed: Random seed for reproducibility.
     """
 
     initial_credit: float = 0.0
     is_stochastic: bool = False
-    max_demon_credit: Optional[float] = None
     maximization: bool = True
     seed: int = 42
 
@@ -190,11 +188,9 @@ class StepCountingConfig:
     """Configuration for Step Counting Hill Climbing.
 
     Attributes:
-        step_limit: Maximum number of steps to count.
         maximization: Whether the problem is a maximization problem.
     """
 
-    step_limit: int = 100
     maximization: bool = True
 
 
