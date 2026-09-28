@@ -27,10 +27,89 @@ def _tiny_instance() -> tuple:
     return bins, dist.tolist()
 
 
-def test_gurobi_empty_day_returns_d3_shape():
-    """B-kimi-56: a no-incumbent day returns [0, 0] like the other backends."""
+def test_gurobi_no_incumbent_day_is_deterministic(monkeypatch):
+    """B-kimi-56 / Codex review #6: a no-incumbent day returns [0, 0].
+
+    Deterministic: the zero-incumbent condition is mocked at the solver
+    boundary (no reliance on a 1 ms budget racing the trivial incumbent).
+    """
+    from unittest.mock import MagicMock
+
+    from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow import (
+        gurobi as gurobi_mod,
+    )
+
+    class _AnyExpr:
+        """Arbitrary arithmetic/comparison expression: every operation yields itself."""
+
+        def __add__(self, other):
+            return self
+
+        def __radd__(self, other):
+            return self
+
+        def __sub__(self, other):
+            return self
+
+        def __rsub__(self, other):
+            return self
+
+        def __mul__(self, other):
+            return self
+
+        def __rmul__(self, other):
+            return self
+
+        def __le__(self, other):
+            return self
+
+        def __ge__(self, other):
+            return self
+
+        def __eq__(self, other):
+            return self
+
+        def __hash__(self):
+            return id(self)
+
+    class _VarDict(dict):
+        def __missing__(self, key):
+            self[key] = _AnyExpr()
+            return self[key]
+
+    fake_model = MagicMock()
+    fake_model.SolCount = 0
+    fake_model.Status = gurobi_mod.GRB.TIME_LIMIT
+    fake_model.addVars.side_effect = lambda *a, **k: _VarDict()
+    fake_model.addVar.side_effect = lambda *a, **k: _AnyExpr()
+    monkeypatch.setattr(gurobi_mod.gp, "Model", lambda *a, **k: fake_model)
+
     bins, dist = _tiny_instance()
     values = {"Omega": 0.1, "psi": 1, "Q": 100.0, "R": 1.0, "B": 1.0, "C": 1.0, "V": 1.0}
+    route, profit, cost = gurobi_mod._run_gurobi_optimizer(
+        bins=bins,
+        distance_matrix=dist,
+        env=None,
+        values=values,
+        binsids=list(range(1, 9)),
+        mandatory=[],
+        number_vehicles=1,
+        time_limit=60,
+        seed=42,
+    )
+    assert fake_model.optimize.called
+    assert route == [0, 0]
+    assert profit == 0.0 and cost == 0.0
+
+
+def test_gurobi_empty_optimal_plan_returns_d3_shape():
+    """B-kimi-56: when the optimum collects nothing, the day is [0, 0].
+
+    Deterministic real solve: zero revenue makes any collection a pure cost,
+    so the optimal plan is empty and the empty-walk normalisation applies.
+    """
+    bins, dist = _tiny_instance()
+    values = {"Omega": 0.1, "psi": 1, "Q": 100.0, "R": 0.0, "B": 1.0, "C": 1.0, "V": 1.0}
     route, profit, cost = _run_gurobi_optimizer(
         bins=bins,
         distance_matrix=dist,
@@ -39,30 +118,76 @@ def test_gurobi_empty_day_returns_d3_shape():
         binsids=list(range(1, 9)),
         mandatory=[],
         number_vehicles=1,
-        time_limit=0.001,  # no time to find an incumbent
+        time_limit=30,
         seed=42,
     )
     assert route == [0, 0]
     assert profit == 0.0 and cost == 0.0
 
 
-def test_gurobi_fleet_fallback_uses_n_bins():
-    """B-kimi-57: number_vehicles=0 falls back to n_bins, not len(binsids)."""
-    bins, dist = _tiny_instance()
-    values = {"Omega": 0.1, "psi": 1, "Q": 500.0, "R": 1.0, "B": 1.0, "C": 1.0, "V": 1.0}
-    # binsids longer than n_bins exercises the old len(binsids) divergence.
-    route, _, _ = _run_gurobi_optimizer(
+def test_gurobi_unbounded_fleet_serves_capacity_requiring_witness():
+    """B-kimi-57/58 / Codex review #6: a witness that NEEDS two vehicles.
+
+    Four bins at 100 % with Q = 250 % cannot fit in one route; collecting all
+    is optimal, so an unbounded fleet must return a two-route day. A silent
+    one-vehicle cap (the pre-B-kimi-58 default) drops a bin and returns a
+    single route, so this fails on the prior implementation.
+    """
+    bins = np.array([100.0, 100.0, 100.0, 100.0])
+    rng = np.random.default_rng(3)
+    coords = rng.uniform(0, 10, size=(5, 2))
+    dist = np.sqrt(((coords[:, None, :] - coords[None, :, :]) ** 2).sum(-1)).tolist()
+    values = {"Omega": 0.1, "psi": 1, "Q": 250.0, "R": 1.0, "B": 1.0, "C": 1.0, "V": 1.0}
+    route, profit, _ = _run_gurobi_optimizer(
         bins=bins,
         distance_matrix=dist,
         env=None,
         values=values,
-        binsids=[0] + list(range(1, 9)) + [99, 100],
+        binsids=[0, 11, 12, 13, 14],
         mandatory=[],
         number_vehicles=0,
-        time_limit=10,
+        time_limit=30,
         seed=42,
     )
-    assert route[0] == 0 and len(route) > 2  # solved with an unbounded-by-bins fleet
+    assert route != [0, 0]
+    assert route[0] == 0 and route[-1] == 0
+    assert {n for n in route if n != 0} == {11, 12, 13, 14}, "a bin was dropped despite the unbounded fleet"
+    interior = [i for i, n in enumerate(route) if n == 0]
+    assert len(interior) >= 3, f"expected >= 2 depot-delimited routes, got {route}"
+    # each route carries at most Q percent
+    segs, cur = [], []
+    for n in route[1:]:
+        if n == 0:
+            segs.append(cur)
+            cur = []
+        else:
+            cur.append(n)
+    assert all(len(seg) * 100.0 <= 250.0 + 1e-6 for seg in segs if seg)
+    assert len([seg for seg in segs if seg]) >= 2, f"expected two non-empty routes, got {segs}"
+
+    # The bound is enforced, not ignored: capped at one vehicle the same
+    # instance must drop a bin and return a single route.
+    capped, _, _ = _run_gurobi_optimizer(
+        bins=bins,
+        distance_matrix=dist,
+        env=None,
+        values=values,
+        binsids=[0, 11, 12, 13, 14],
+        mandatory=[],
+        number_vehicles=1,
+        time_limit=30,
+        seed=42,
+    )
+    capped_segs, cur = [], []
+    for n in capped[1:]:
+        if n == 0:
+            if cur:
+                capped_segs.append(cur)
+            cur = []
+        else:
+            cur.append(n)
+    assert len([seg for seg in capped_segs if seg]) == 1, f"one-vehicle cap not enforced: {capped}"
+    assert {n for n in capped if n != 0} != {11, 12, 13, 14}
 
 
 def test_policy_splits_depot_delimited_flat_route(monkeypatch):

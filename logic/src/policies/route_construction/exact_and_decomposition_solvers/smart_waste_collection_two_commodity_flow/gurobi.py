@@ -212,7 +212,7 @@ def _run_gurobi_optimizer(  # noqa: C901
 
         profit = mdl.ObjVal
         cost = sum([x[i, j].X * distance_matrix[i][j] for i, j in pares_viaveis])
-        print(f"[INFO][VRPP-Gurobi] Profit: {profit}, Cost: {cost}, MIPGap: {mdl.Params.MIPGap}, Collected: {len(route) - 2}")
+        print(f"[INFO][VRPP-Gurobi] Profit: {profit}, Cost: {cost}, MIPGap: {mdl.Params.MIPGap}, Collected: {sum(1 for n in route if n != 0)}")
         return route, profit, cost
 
     return [0, 0], 0.0, 0.0
