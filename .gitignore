@@ -490,3 +490,6 @@ app/coverage/
 # Packaged exports
 /dist/
 /build/
+
+# The data directory is local and never tracked (a tracked data symlink once replaced it).
+/data
