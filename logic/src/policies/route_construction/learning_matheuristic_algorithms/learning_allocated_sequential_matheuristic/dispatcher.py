@@ -341,7 +341,7 @@ def run_lasm_pipeline(
     if run_bpc_stage is not None and not p.skip_bpc and tau_bpc > 5.0:
         logger.info("[LBBDPipeline] Stage 3 BPC   budget=%.1fs", tau_bpc)
 
-        # Build a minimal PipelineParams-compatible object for the shared stage
+        # Build a minimal ExactGuidedHeuristicParams-compatible object for the shared stage
         @_dc
         class _BPCProxy:
             bpc_ng_size_min: int = p.bpc_ng_size_min

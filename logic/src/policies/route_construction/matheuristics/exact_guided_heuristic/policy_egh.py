@@ -110,7 +110,7 @@ class ExactGuidedHeuristicPolicy(BaseRoutingPolicy):
         """Execute the four-stage pipeline.
 
         The ``values`` dict is the merged YAML configuration already flattened
-        by ``BaseRoutingPolicy``.  ``PipelineParams.from_config`` tolerates
+        by ``BaseRoutingPolicy``.  ``ExactGuidedHeuristicParams.from_config`` tolerates
         extra keys, so no pre-filtering is needed.
 
         Args:

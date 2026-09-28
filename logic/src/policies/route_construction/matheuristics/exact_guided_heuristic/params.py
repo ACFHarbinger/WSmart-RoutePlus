@@ -16,10 +16,10 @@ Stage budgets are computed as:
 All four values are then renormalized to sum to T.
 
 Attributes:
-    PipelineParams: Dataclass for pipeline solver configuration.
+    ExactGuidedHeuristicParams: Dataclass for pipeline solver configuration.
 
 Example:
-    >>> params = PipelineParams(alpha=0.5, time_limit=120.0)
+    >>> params = ExactGuidedHeuristicParams(alpha=0.5, time_limit=120.0)
     >>> budgets = params.stage_budgets()   # (τ_tcf, τ_alns, τ_bpc, τ_sp)
 """
 

@@ -182,7 +182,7 @@ def run_alns_stage(
     """
     t0 = time.perf_counter()
 
-    # Patch time_limit into params (avoids mutating the shared PipelineParams)
+    # Patch time_limit into params (avoids mutating the shared ExactGuidedHeuristicParams)
     patched_params = ALNSParams(
         time_limit=time_limit,
         max_iterations=params.max_iterations,

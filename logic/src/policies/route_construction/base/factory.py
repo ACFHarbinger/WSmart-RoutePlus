@@ -12,12 +12,17 @@ Example:
     >>> adapter = RouteConstructorFactory.get_adapter("hgs")
 """
 
+import importlib
+import logging
+import pkgutil
 from typing import Any, Optional
 
 # --- IRouteConstructor Interface ---
 from logic.src.interfaces.route_constructor import IRouteConstructor
 
 from .registry import RouteConstructorRegistry
+
+_logger = logging.getLogger(__name__)
 
 
 class RouteConstructorFactory:
@@ -63,6 +68,19 @@ class RouteConstructorFactory:
 
         # Joint Selection and Construction Algorithms
         import logic.src.policies.selection_and_construction as selection_and_construction  # noqa
+
+        # Some family packages do not import every adapter in their __init__ (SWC-TCF, EGH, LASM,
+        # CP-SAT, the stochastic/decomposition solvers, ...). Import every ``policy_*`` module so the
+        # registry never depends on which modules happen to have been imported already. A module
+        # whose optional solver library is missing is skipped with a warning.
+        import logic.src.policies.route_construction as route_construction
+
+        for info in pkgutil.walk_packages(route_construction.__path__, route_construction.__name__ + "."):
+            if info.name.rsplit(".", 1)[-1].startswith("policy_"):
+                try:
+                    importlib.import_module(info.name)
+                except ImportError as exc:
+                    _logger.warning("Route constructor %s not registered: %s", info.name, exc)
 
         cls._registered = True
 

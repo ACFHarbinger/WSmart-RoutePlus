@@ -78,6 +78,8 @@ class RouteConstructionAction(SimulationAction):
         solver_key = flat_cfg.get("policy.type") or flat_cfg.get("policy.solver") or flat_cfg.get("policy.engine")
 
         # Fallback: identify solver from keys in raw config matching registry
+        # (register every adapter first: the registry otherwise holds only the imported ones)
+        RouteConstructorFactory.ensure_registered()
         if not solver_key:
             registered = set(RouteConstructorRegistry.list_route_constructors())
             for key in registered:

@@ -65,3 +65,9 @@ lasm:
   # SP merge
   sp_pool_cap: 50000
   sp_mip_gap: 1e-4
+
+  # Simulator wiring (same as the other constructors; without these the
+  # simulator has no mandatory set and never routes this policy)
+  vrpp: true
+  mandatory_selection: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
+  route_improvement: { "other/ri_cls.yaml": ["default"] }
