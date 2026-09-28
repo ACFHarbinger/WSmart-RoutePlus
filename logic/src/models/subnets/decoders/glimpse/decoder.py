@@ -44,7 +44,6 @@ class GlimpseDecoder(nn.Module):
         seed (int): Random seed for reproducibility.
         generator (torch.Generator): Random number generator for selection.
         project_node_embeddings (nn.Linear): Linear projection for V/K/Q.
-        project_fixed_context (nn.Linear): Projection for the static graph context.
         project_step_context (nn.Linear): Projection for the dynamic step context.
         step_context_dim (int): Dimensionality of the step context embedding.
     """
@@ -105,7 +104,6 @@ class GlimpseDecoder(nn.Module):
 
         # Project node embeddings to MHA heads
         self.project_node_embeddings = nn.Linear(embed_dim, 3 * embed_dim, bias=False)
-        self.project_fixed_context = nn.Linear(embed_dim, embed_dim, bias=False)
         if isinstance(self.problem, str):
             env_name = self.problem.lower()
         else:
@@ -358,7 +356,6 @@ class GlimpseDecoder(nn.Module):
             AttentionDecoderCache: Cache object containing keys and values.
         """
         node_embeddings = embeddings
-        graph_context = self.project_fixed_context(node_embeddings.mean(1))
 
         # Joint projection
         qkv = self.project_node_embeddings(node_embeddings)
@@ -366,7 +363,7 @@ class GlimpseDecoder(nn.Module):
 
         fixed = AttentionDecoderCache(
             node_embeddings=node_embeddings,
-            graph_context=graph_context,
+            graph_context=None,
             glimpse_key=make_heads(glimpse_K, self.n_heads),
             glimpse_val=make_heads(glimpse_V, self.n_heads),
             logit_key=make_heads(logit_K, self.n_heads),

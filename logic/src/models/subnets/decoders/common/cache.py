@@ -46,7 +46,7 @@ class AttentionDecoderCache:
     """
 
     node_embeddings: torch.Tensor
-    graph_context: torch.Tensor
+    graph_context: Optional[torch.Tensor] = None
     glimpse_key: Optional[torch.Tensor] = None
     glimpse_val: Optional[torch.Tensor] = None
     logit_key: Optional[torch.Tensor] = None
@@ -67,7 +67,7 @@ class AttentionDecoderCache:
         if isinstance(key, int):
             return AttentionDecoderCache(
                 node_embeddings=self.node_embeddings[key].unsqueeze(0),
-                graph_context=self.graph_context[key].unsqueeze(0),
+                graph_context=(self.graph_context[key].unsqueeze(0) if self.graph_context is not None else None),
                 glimpse_key=(self.glimpse_key[key].unsqueeze(0) if self.glimpse_key is not None else None),
                 glimpse_val=(self.glimpse_val[key].unsqueeze(0) if self.glimpse_val is not None else None),
                 logit_key=(self.logit_key[key].unsqueeze(0) if self.logit_key is not None else None),
@@ -76,26 +76,26 @@ class AttentionDecoderCache:
         # Handle slice or tensor indexing (preserves batch dimension)
         return AttentionDecoderCache(
             node_embeddings=self.node_embeddings[key],
-            graph_context=self.graph_context[key],
+            graph_context=self.graph_context[key] if self.graph_context is not None else None,
             glimpse_key=self.glimpse_key[key] if self.glimpse_key is not None else None,
             glimpse_val=self.glimpse_val[key] if self.glimpse_val is not None else None,
             logit_key=self.logit_key[key] if self.logit_key is not None else None,
         )
 
     @property
-    def context_node_projected(self) -> torch.Tensor:
+    def context_node_projected(self) -> Optional[torch.Tensor]:
         """Alias for graph_context (backwards compatibility).
 
         Returns:
-            torch.Tensor: Same as self.graph_context.
+            Optional[torch.Tensor]: Same as self.graph_context.
         """
         return self.graph_context
 
     @context_node_projected.setter
-    def context_node_projected(self, value: torch.Tensor) -> None:
+    def context_node_projected(self, value: Optional[torch.Tensor]) -> None:
         """Setter for context_node_projected (backwards compatibility).
 
         Args:
-            value (torch.Tensor): New graph context tensor.
+            value (Optional[torch.Tensor]): New graph context tensor.
         """
         self.graph_context = value

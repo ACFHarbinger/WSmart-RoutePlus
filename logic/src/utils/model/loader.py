@@ -22,6 +22,8 @@ from typing import Any, Dict, Optional, Tuple, Type, cast
 from omegaconf import OmegaConf
 from torch import nn
 
+from logic.src.configs.models.activation_function import ActivationConfig
+from logic.src.configs.models.normalization import NormalizationConfig
 from logic.src.models.subnets.factories.attention import AttentionComponentFactory
 from logic.src.models.subnets.factories.base import NeuralComponentFactory
 from logic.src.models.subnets.factories.gac import GACComponentFactory
@@ -30,15 +32,15 @@ from logic.src.models.subnets.factories.ggac import GGACComponentFactory
 from logic.src.models.subnets.factories.mlp import MLPComponentFactory
 from logic.src.models.subnets.factories.tgc import TGCComponentFactory
 
-from logic.src.configs.models.activation_function import ActivationConfig
-from logic.src.configs.models.normalization import NormalizationConfig
-
 from .checkpoint_utils import torch_load_cpu
 from .config_utils import load_args
 from .problem_factory import load_problem
 
-
-_UNUSED_LEGACY_KEYS = ("context_embedder.project_step_context.",)
+_UNUSED_LEGACY_KEYS = (
+    "context_embedder.project_step_context.",
+    "decoder.project_fixed_context.",
+    "project_fixed_context.",
+)
 
 
 def load_model(path: str, epoch: Optional[int] = None) -> Tuple[nn.Module, Dict[str, Any]]:
@@ -179,7 +181,9 @@ def load_model(path: str, epoch: Optional[int] = None) -> Tuple[nn.Module, Dict[
                     break
             loaded_state_dict[k] = v
     else:
-        raise ValueError(f"Unsupported checkpoint layout in {model_filename}: expected a 'model' or 'state_dict' entry.")
+        raise ValueError(
+            f"Unsupported checkpoint layout in {model_filename}: expected a 'model' or 'state_dict' entry."
+        )
     if not loaded_state_dict:
         raise ValueError(f"Checkpoint {model_filename} contains no model parameters.")
 
@@ -188,10 +192,10 @@ def load_model(path: str, epoch: Optional[int] = None) -> Tuple[nn.Module, Dict[
     # context_embedder.project_step_context, which the decode path never uses (the
     # glimpse decoder owns its own context embedding). Anything else must match.
     missing = [k for k in result.missing_keys if not k.startswith(_UNUSED_LEGACY_KEYS)]
-    if missing or result.unexpected_keys:
+    unexpected = [k for k in result.unexpected_keys if not k.startswith(_UNUSED_LEGACY_KEYS)]
+    if missing or unexpected:
         msg = (
-            f"Checkpoint {model_filename} does not match the model: "
-            f"missing={missing[:10]} unexpected={list(result.unexpected_keys)[:10]}"
+            f"Checkpoint {model_filename} does not match the model: missing={missing[:10]} unexpected={unexpected[:10]}"
         )
         # Strictness is verified for AttentionModel checkpoints; other model classes
         # (e.g. TAM) may carry layout differences, so only warn for them.

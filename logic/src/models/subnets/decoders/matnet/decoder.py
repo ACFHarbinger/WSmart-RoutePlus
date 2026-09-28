@@ -121,7 +121,8 @@ class MatNetDecoder(GlimpseDecoder):
 
         # Add column information to fixed context
         col_avg = col_embeddings.mean(1)
-        fixed.graph_context = fixed.graph_context + self.project_col_context(col_avg)
+        proj_col = self.project_col_context(col_avg)
+        fixed.graph_context = proj_col if fixed.graph_context is None else fixed.graph_context + proj_col
 
         outputs = []
         sequences = []
