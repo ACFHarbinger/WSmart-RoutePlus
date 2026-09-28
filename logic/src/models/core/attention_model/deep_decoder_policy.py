@@ -15,24 +15,19 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any
 
-import torch
-from tensordict import TensorDict
-
-from logic.src.envs.base.base import RL4COEnvBase
-from logic.src.models.common.autoregressive.policy import AutoregressivePolicy
+from logic.src.models.core.attention_model.policy import AttentionModelPolicy
 from logic.src.models.subnets.decoders.gat import DeepGATDecoder
-from logic.src.models.subnets.embeddings import get_init_embedding
-from logic.src.models.subnets.encoders.gat import GraphAttentionEncoder
 
 
-class DeepDecoderPolicy(AutoregressivePolicy):
+class DeepDecoderPolicy(AttentionModelPolicy):
     """Routing policy with multi-layer attention construction.
 
-    Uses a standard GAT encoder but employs a DeepGATDecoder, which applies
-    multiple layers of cross-attention between the current state and node
-    embeddings at each decoding step.
+    Inherits the autoregressive decoding pipeline from AttentionModelPolicy
+    while employing a DeepGATDecoder, which applies multiple layers of
+    cross-attention between the current state and node embeddings at each
+    decoding step.
 
     Attributes:
         encoder (GraphAttentionEncoder): Graph feature extractor.
@@ -40,7 +35,6 @@ class DeepDecoderPolicy(AutoregressivePolicy):
         init_embedding (nn.Module): Problem-specific latent projection.
     """
 
-    encoder: GraphAttentionEncoder
     decoder: DeepGATDecoder
 
     def __init__(
@@ -68,15 +62,12 @@ class DeepDecoderPolicy(AutoregressivePolicy):
             dropout_rate: Dropout probability.
             kwargs: Additional keyword arguments.
         """
-        super().__init__(env_name=env_name, embed_dim=embed_dim)
-
-        self.init_embedding = get_init_embedding(env_name, embed_dim)
-
-        self.encoder = GraphAttentionEncoder(
-            n_heads=n_heads,
+        super().__init__(
+            env_name=env_name,
             embed_dim=embed_dim,
-            feed_forward_hidden=hidden_dim,
-            n_layers=n_encode_layers,
+            hidden_dim=hidden_dim,
+            n_encode_layers=n_encode_layers,
+            n_heads=n_heads,
             normalization=normalization,
             dropout_rate=dropout_rate,
             **kwargs,
@@ -91,95 +82,3 @@ class DeepDecoderPolicy(AutoregressivePolicy):
             dropout_rate=dropout_rate,
             **kwargs,
         )
-
-    def forward(
-        self,
-        td: TensorDict,
-        env: Optional[RL4COEnvBase] = None,
-        strategy: str = "sampling",
-        num_starts: int = 1,
-        actions: Optional[torch.Tensor] = None,
-        **kwargs: Any,
-    ) -> Dict[str, Any]:
-        """Executes the deep constructive decoding pass.
-
-        Args:
-            td: TensorDict containing problem instance data.
-            env: Environment managing problem physics.
-            strategy: Decoding strategy identifier (e.g., "greedy", "sampling").
-            num_starts: Number of parallel construction starts.
-            actions: Optional pre-selected actions for teacher forcing.
-            kwargs: Additional keyword arguments.
-
-        Returns:
-            Dict[str, Any]: Policy outputs including rewards, log-probs, and actions.
-
-        Raises:
-            AssertionError: If sub-components or env_name are uninitialized.
-        """
-        # 1. Initialize latent node representations
-        init_embeds = self.init_embedding(td)
-
-        # 2. Extract global graph features
-        assert self.encoder is not None, "Encoder is not initialized"
-        embeddings = self.encoder(init_embeds)
-
-        # 3. Cache constant encoding for step-wise construction
-        assert self.decoder is not None, "Decoder is not initialized"
-        fixed = self.decoder._precompute(embeddings)
-
-        # 4. Sequential construction loop
-        log_likelihood: float | torch.Tensor = 0.0
-        entropy: float | torch.Tensor = 0.0
-        output_actions = []
-        step_idx = 0
-
-        while not td["done"].all():
-            assert env is not None, "Environment must be provided for step-wise construction."
-            assert self.env_name is not None, "env_name must be set"
-            from logic.src.utils.data import TensorDictStateWrapper
-
-            state_wrapper = TensorDictStateWrapper(td, self.env_name)
-
-            # Masked attention over nodes
-            logits, mask = self.decoder._get_log_p(fixed, state_wrapper)
-
-            # Flatten head dimension if present
-            if logits.dim() == 3:
-                logits = logits[:, 0, :] if logits.size(1) > 1 else logits.squeeze(1)
-
-            # Invert validity mask (DeepDecoder returns invalid=True)
-            if mask.dim() == 3:
-                mask = mask.squeeze(1)
-            valid_mask = ~mask
-
-            if actions is not None:
-                # Teachers forcing for evaluation/distillation
-                action = actions[:, step_idx]
-                probs = torch.softmax(logits.masked_fill(~valid_mask, float("-inf")), dim=-1)
-                log_p = torch.log(probs.gather(1, action.unsqueeze(-1)) + 1e-10).squeeze(-1)
-            else:
-                # Stochastic or deterministic selection
-                action, log_p, entropy_step = self._select_action(logits, valid_mask, strategy)
-                if isinstance(entropy_step, torch.Tensor):
-                    entropy = entropy + entropy_step
-
-            # Transition to next step
-            td["action"] = action
-            td = env.step(td)["next"].clone()
-
-            log_likelihood = log_likelihood + log_p
-            output_actions.append(action)
-            step_idx += 1
-
-        # Calculate final solution reward
-        constructed_actions = torch.stack(output_actions, dim=1)
-        reward = env.get_reward(td, constructed_actions)
-
-        return {
-            "reward": reward,
-            "log_likelihood": log_likelihood,
-            "actions": constructed_actions,
-            "entropy": entropy,
-            "td": td,
-        }

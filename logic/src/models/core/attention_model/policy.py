@@ -172,6 +172,10 @@ class AttentionModelPolicy(AutoregressivePolicy):
             # Get logits from decoder (mask=True for invalid)
             logits, mask = self.decoder._get_log_p(fixed, state_wrapper)
 
+            # Flatten head dimension if present (e.g. DeepGATDecoder)
+            if logits.dim() == 3:
+                logits = logits[:, 0, :] if logits.size(1) > 1 else logits.squeeze(1)
+
             # Invert mask for _select_action (expects True=VALID)
             if mask.dim() == 3:
                 mask = mask.squeeze(1)

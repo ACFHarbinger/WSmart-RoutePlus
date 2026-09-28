@@ -9,7 +9,6 @@ from logic.src.models.subnets.decoders.gat.decoder import DeepGATDecoder
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
-
 def test_deep_decoder_init():
     """Verify initialization of DeepGATDecoder."""
     model = DeepGATDecoder(embed_dim=16, hidden_dim=16, n_heads=2, n_layers=1)
@@ -50,8 +49,6 @@ def test_deep_decoder_get_log_p():
 
     from unittest.mock import MagicMock
 
-
-
     state = MagicMock()
     # Mock current node (1 per batch)
     state.get_current_node.return_value = torch.zeros(batch, 1, dtype=torch.long)
@@ -73,3 +70,30 @@ def test_deep_decoder_slicing():
     sliced = fixed[0:2]
     assert sliced.node_embeddings.shape == (2, 5, 16)
     assert sliced.context_node_projected.shape == (2, 1, 16)
+
+
+def test_deep_decoder_policy_forward():
+    """Verify DeepDecoderPolicy forward pass using inherited AttentionModelPolicy loop (M-gemini-02)."""
+    from unittest.mock import patch
+
+    from logic.src.envs.routing.vrpp import VRPPEnv
+    from logic.src.models.core.attention_model.deep_decoder_policy import DeepDecoderPolicy
+
+    with patch("logic.src.utils.data.loader.load_grid_base", side_effect=FileNotFoundError):
+        env = VRPPEnv(num_loc=5)
+        env.NAME = env.name
+        td = env.reset(batch_size=[2])
+
+        policy = DeepDecoderPolicy(
+            env_name="vrpp",
+            embed_dim=32,
+            hidden_dim=32,
+            n_encode_layers=1,
+            n_decode_layers=1,
+            n_heads=2,
+        )
+        out = policy(td, env, strategy="greedy")
+        assert "actions" in out
+        assert "reward" in out
+        assert "log_likelihood" in out
+        assert out["actions"].shape[0] == 2
