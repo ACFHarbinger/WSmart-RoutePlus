@@ -214,6 +214,10 @@ def regret_k_insertion(  # noqa: C901
             mandatory_remaining = [n for n in unassigned if n in mandatory_nodes_set]
             if mandatory_remaining:
                 node = mandatory_remaining[0]
+                # Skip mandatory nodes that exceed capacity
+                if wastes.get(node, 0) > capacity:
+                    unassigned.remove(node)
+                    continue
                 routes.append([node])
                 loads.append(wastes.get(node, 0))
                 unassigned.remove(node)
@@ -490,6 +494,9 @@ def regret_k_profit_insertion(  # noqa: C901
             float: Profit of the new route.
         """
         node_waste = wastes.get(node_id, 0)
+        # Reject nodes that exceed vehicle capacity
+        if node_waste > capacity:
+            return -float("inf")
         revenue = node_waste * R
         new_cost = dist_matrix[0, node_id] + dist_matrix[node_id, 0]
         new_profit = revenue - (new_cost * C)
@@ -557,6 +564,10 @@ def regret_k_profit_insertion(  # noqa: C901
             mandatory_remaining = [n for n in unassigned if n in mandatory_nodes_set]
             if mandatory_remaining:
                 node = mandatory_remaining[0]
+                # Skip mandatory nodes that exceed capacity
+                if wastes.get(node, 0) > capacity:
+                    unassigned.remove(node)
+                    continue
                 routes.append([node])
                 loads.append(wastes.get(node, 0))
                 unassigned.remove(node)

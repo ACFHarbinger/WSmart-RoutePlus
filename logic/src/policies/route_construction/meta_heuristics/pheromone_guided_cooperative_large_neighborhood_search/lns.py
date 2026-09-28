@@ -26,7 +26,11 @@ import numpy as np
 
 from logic.src.tracking.viz_mixin import PolicyVizMixin
 
-from .operators import cluster_removal, greedy_insertion, random_removal, regret_2_insertion, worst_removal
+from logic.src.policies.helpers.operators.destroy_ruin.cluster import cluster_removal
+from logic.src.policies.helpers.operators.destroy_ruin.random import random_removal
+from logic.src.policies.helpers.operators.destroy_ruin.worst import worst_removal
+from logic.src.policies.helpers.operators.recreate_repair.greedy import greedy_profit_insertion
+from logic.src.policies.helpers.operators.recreate_repair.regret import regret_2_profit_insertion
 from .params import LNSParams
 
 
@@ -89,6 +93,7 @@ class LNSSolver(PolicyVizMixin):
         self.params = params
         self.mandatory_nodes = mandatory_nodes
         self.random = random.Random(seed) if seed is not None else random.Random()
+        self.np_random = np.random.default_rng(seed)
 
         self.n_nodes = len(dist_matrix) - 1
         self.nodes = list(range(1, self.n_nodes + 1))
@@ -96,29 +101,29 @@ class LNSSolver(PolicyVizMixin):
         # Operator registry
         self.destroy_ops = [
             lambda r, n: random_removal(r, n, rng=self.random),
-            lambda r, n: worst_removal(r, n, self.dist_matrix),
+            lambda r, n: worst_removal(r, n, self.dist_matrix, p=3.0, rng=self.np_random),
             lambda r, n: cluster_removal(r, n, self.dist_matrix, self.nodes, rng=self.random),
         ]
         self.repair_ops = [
-            lambda r, n: greedy_insertion(
+            lambda r, n: greedy_profit_insertion(
                 r,
                 n,
                 self.dist_matrix,
                 self.wastes,
                 self.capacity,
                 R=self.R,
+                C=self.C,
                 mandatory_nodes=self.mandatory_nodes,
-                cost_unit=self.C,
             ),
-            lambda r, n: regret_2_insertion(
+            lambda r, n: regret_2_profit_insertion(
                 r,
                 n,
                 self.dist_matrix,
                 self.wastes,
                 self.capacity,
                 R=self.R,
+                C=self.C,
                 mandatory_nodes=self.mandatory_nodes,
-                cost_unit=self.C,
             ),
         ]
 

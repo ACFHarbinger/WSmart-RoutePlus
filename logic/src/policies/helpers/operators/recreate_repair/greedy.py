@@ -294,6 +294,10 @@ def greedy_profit_insertion(  # noqa: C901
             float: Speculative seeding profit.
         """
         node_waste = wastes.get(node_id, 0)
+        # Reject nodes that exceed vehicle capacity (even mandatory ones can't
+        # be served if they physically don't fit)
+        if node_waste > capacity:
+            return -float("inf")
         revenue = node_waste * R
         new_cost = dist_matrix[0, node_id] + dist_matrix[node_id, 0]
         if noise != 0:
@@ -418,6 +422,10 @@ def greedy_profit_insertion(  # noqa: C901
             mandatory_remaining = [n for n in unassigned if n in mandatory_nodes_set]
             if mandatory_remaining:
                 node = mandatory_remaining[0]
+                # Skip mandatory nodes that exceed capacity (can't be served)
+                if wastes.get(node, 0) > capacity:
+                    unassigned.remove(node)
+                    continue
                 routes.append([node])
                 loads.append(wastes.get(node, 0))
                 unassigned.remove(node)

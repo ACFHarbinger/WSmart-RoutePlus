@@ -53,7 +53,7 @@ from logic.src.policies.helpers.operators import (
     random_removal,
 )
 
-from .alns import (
+from logic.src.policies.route_construction.meta_heuristics.adaptive_large_neighborhood_search.alns import (
     ALNSSolver,
 )
 from .maco import (
