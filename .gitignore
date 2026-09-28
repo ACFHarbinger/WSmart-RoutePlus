@@ -478,6 +478,7 @@ assets/tracking/tracking.db
 
 # Logic to include
 !logic/src/utils/target/
+!logic/test/unit/utils/target/
 !logic/src/utils/validation/target/
 !logic/src/pipeline/simulations/checkpoints/
 

@@ -1,38 +1,19 @@
-r"""Configuration parameters for the LBBD → ALNS → BPC → RL → SP pipeline.
+"""Runtime parameters for the Learning Allocated Sequential Matheuristic (LASM).
 
-Architecture overview
----------------------
-Stage 1  LBBD Master   — Knapsack-style MIP selects which customer nodes to visit.
-                         Receives Benders cuts from Stage 2 and RL-adjusted cut
-                         budgets from Stage 4.
-Stage 2  LBBD Sub      — Routing subproblem solved per master selection.
-                         Cut generation: no-good / optimality / Pareto-optimal
-                         (Magnanti-Wang 1981) Benders cuts fed back to master.
-Stage 3  ALNS          — Repairs and extends the LBBD incumbent using the
-                         project's existing ALNSSolver with pool harvesting.
-Stage 4  BPC           — Exact column generation with SP incumbent seeding.
-Stage 5  RL controller — Online bandit (LinUCB) or offline PPO policy that
-                         allocates time budgets across stages and selects
-                         cut families, ng-sizes, and ALNS operator weights.
-Stage 6  SP merge      — Set-Partitioning MIP over the global route pool.
-
-Quality / speed dial
---------------------
-A single ``alpha ∈ [0, 1]`` controls the default time allocation:
-
-    alpha = 0.0  →  LBBD + tiny ALNS only  (fastest, no BPC)
-    alpha = 0.5  →  balanced               (default)
-    alpha = 1.0  →  full BPC + ALNS + deep LBBD  (highest quality, slowest)
-
-The RL controller (when enabled) *overrides* the alpha-derived defaults
-after collecting enough experience across instances.
-
-Attributes:
-    LASMPipelineParams: Dataclass holding all solver configuration.
+The config dataclass ``LASMPipelineConfig`` in
+``logic/src/configs/policies/lasm.py`` is the single field authority.
+``LASMPipelineParams`` is a thin subclass: it inherits every field and
+re-declares only ``lbbd_cut_families`` and ``rl_state_features`` whose
+constructor default is ``None``; the ``__post_init__`` below then
+materializes the pipeline's built-in lists exactly as before, so
+constructed instances are iterable exactly as before. The derived runtime
+members (``stage_budgets``, ``alns_iterations``, ``bpc_ng_size``,
+``bpc_max_bb_nodes``, ``as_alns_values_dict``) and the
+``from_config``/``to_dict`` helpers are kept verbatim from the original
+class.
 
 Example:
-    >>> p = LASMPipelineParams(alpha=0.5, time_limit=120.0)
-    >>> budgets = p.stage_budgets()
+    >>> params = LASMPipelineParams(alpha=0.5, time_limit=120.0)
 """
 
 from __future__ import annotations
@@ -40,188 +21,21 @@ from __future__ import annotations
 from dataclasses import dataclass, fields
 from typing import Any, Dict, List, Optional, Tuple
 
+from logic.src.configs.policies import LASMPipelineConfig
+
 
 @dataclass
-class LASMPipelineParams:
-    """Configuration for the LBBD → ALNS → BPC → RL → SP pipeline.
+class LASMPipelineParams(LASMPipelineConfig):
+    """Runtime parameters for the LASM pipeline.
 
-    Attributes:
-    -----------
-    alpha : float
-        Quality/speed dial ∈ [0, 1].
-    time_limit : float
-        Total wall-clock budget in seconds.
-    seed : int or None
-        Global RNG seed.
-
-    LBBD master / sub
-    -----------------
-    lbbd_max_iterations : int
-        Maximum outer Benders iterations (master–sub cycles).
-    lbbd_master_time_frac : float
-        Fraction of stage budget given to each master solve.
-    lbbd_sub_solver : str
-        Routing sub-solver: 'alns', 'bpc', or 'greedy'.
-    lbbd_cut_families : list[str]
-        Active Benders cut types: any combination of
-        'nogood', 'optimality', 'pareto', 'combinatorial'.
-    lbbd_pareto_eps : float
-        Tolerance ε for Magnanti-Wang Pareto-optimal cut selection.
-    lbbd_sub_time_frac : float
-        Fraction of stage budget given to each sub-problem solve.
-    lbbd_min_cover_ratio : float
-        Minimum fraction of mandatory nodes the master must cover.
-    lbbd_use_warm_cuts : bool
-        If True, carry Benders cuts forward across RL episodes
-        (cross-instance cut pool).
-
-    ALNS
-    ----
-    alns_max_iterations : int
-        Hard iteration cap (0 = derive from alpha).
-    alns_segment_size : int
-        Ropke–Pisinger weight-update segment size.
-    alns_reaction_factor : float
-        Operator weight learning rate r.
-    alns_cooling_rate : float
-        SA temperature decay per iteration.
-    alns_start_temp_control : float
-        Acceptance probability at start temperature for w%-worse solutions.
-    alns_sigma_1 / sigma_2 / sigma_3 : float
-        Scoring constants for new-best / better / accepted-worse solutions.
-    alns_xi : float
-        Fraction of n for the removal upper-bound cap.
-    alns_min_removal : int
-        Minimum nodes removed per destroy step.
-    alns_noise_factor : float
-        Noise amplitude η for noisy repair operators.
-    alns_worst_removal_randomness : float
-        Randomness exponent p ≥ 1 for worst removal.
-    alns_shaw_randomization : float
-        Shaw relatedness randomisation factor.
-    alns_regret_pool : str
-        Regret variants: 'regret2', 'regret234', or 'regretAll'.
-    alns_extended_operators : bool
-        Add string/cluster/neighbor destroy operators.
-    alns_profit_aware_operators : bool
-        Use profit-aware operator variants.
-    alns_vrpp : bool
-        Allow insertion from full candidate pool.
-    alns_engine : str
-        ALNS backend ('custom', 'package', 'ortools').
-
-    BPC
-    ---
-    bpc_ng_size_min / bpc_ng_size_max : int
-        ng-neighborhood size range, interpolated by alpha.
-    bpc_max_bb_nodes_min / bpc_max_bb_nodes_max : int
-        B&B node cap range, interpolated by alpha.
-    bpc_cutting_planes : str
-        Cut family ('rcc', 'saturated_arc_lci', 'all').
-    bpc_branching_strategy : str
-        Branching rule ('divergence', 'ryan_foster', 'edge').
-    skip_bpc : bool
-        Force-skip the BPC stage.
-
-    RL controller
-    -------------
-    rl_mode : str
-        'online'   — LinUCB bandit, learns within a single run.
-        'offline'  — Pretrained PPO policy loaded from rl_policy_path.
-        'hybrid'   — Offline policy + online fine-tuning.
-        'disabled' — No RL; use alpha-derived budgets only.
-    rl_policy_path : str or None
-        Path to a serialised PPO/offline policy (pickle or JSON).
-    rl_exploration : float
-        LinUCB exploration coefficient λ (δ in Li et al. 2010).
-    rl_window : int
-        Sliding-window size for non-stationary reward tracking.
-        Set 0 to use all history (stationary assumption).
-    rl_min_samples : int
-        Minimum decisions before RL overrides alpha-derived budgets.
-    rl_reward_shaping : str
-        How profit improvement is shaped into a reward signal.
-        'absolute'  — reward = Δprofit.
-        'relative'  — reward = Δprofit / (|best_profit| + 1).
-        'efficiency'— reward = Δprofit / Δtime.
-    rl_state_features : list[str]
-        Which instance features form the RL context vector.
-        Options: 'n_nodes', 'fill_mean', 'fill_std', 'mandatory_ratio',
-                 'lp_gap', 'pool_size', 'time_remaining', 'alpha',
-                 'iter_count'.
-    rl_action_space : str
-        'budgets'   — action is a time-budget split across stages.
-        'operators' — action is ALNS operator weight multipliers.
-        'combined'  — both budgets and operator weights.
-    rl_discount : float
-        Discount factor γ for multi-step return (offline PPO only).
-
-    SP merge
-    --------
-    sp_pool_cap : int
-        Maximum routes in the SP MIP.
-    sp_mip_gap : float
-        Relative MIP gap for early termination.
+    Thin subclass of :class:`LASMPipelineConfig`. The two re-declared
+    fields keep the historical ``None`` constructor defaults; the
+    ``__post_init__`` below materializes the built-in family lists, so
+    constructed instances are iterable exactly as before.
     """
 
-    # ── Quality / speed dial ───────────────────────────────────────────────
-    alpha: float = 0.5
-    time_limit: float = 120.0
-    seed: Optional[int] = None
-
-    # ── LBBD ──────────────────────────────────────────────────────────────
-    lbbd_max_iterations: int = 20
-    lbbd_master_time_frac: float = 0.15
-    lbbd_sub_solver: str = "alns"  # 'alns' | 'bpc' | 'greedy'
-    lbbd_cut_families: List[str] = None  # type: ignore[assignment]
-    lbbd_pareto_eps: float = 1e-4
-    lbbd_sub_time_frac: float = 0.70
-    lbbd_min_cover_ratio: float = 1.0
-    lbbd_use_warm_cuts: bool = False
-
-    # ── ALNS ──────────────────────────────────────────────────────────────
-    alns_max_iterations: int = 0
-    alns_segment_size: int = 100
-    alns_reaction_factor: float = 0.1
-    alns_cooling_rate: float = 0.995
-    alns_start_temp_control: float = 0.05
-    alns_sigma_1: float = 33.0
-    alns_sigma_2: float = 9.0
-    alns_sigma_3: float = 13.0
-    alns_xi: float = 0.4
-    alns_min_removal: int = 4
-    alns_noise_factor: float = 0.025
-    alns_worst_removal_randomness: float = 3.0
-    alns_shaw_randomization: float = 6.0
-    alns_regret_pool: str = "regret234"
-    alns_extended_operators: bool = False
-    alns_profit_aware_operators: bool = True
-    alns_vrpp: bool = True
-    alns_engine: str = "custom"
-
-    # ── BPC ───────────────────────────────────────────────────────────────
-    bpc_ng_size_min: int = 8
-    bpc_ng_size_max: int = 16
-    bpc_max_bb_nodes_min: int = 200
-    bpc_max_bb_nodes_max: int = 1000
-    bpc_cutting_planes: str = "rcc"
-    bpc_branching_strategy: str = "divergence"
-    skip_bpc: bool = False
-
-    # ── RL controller ─────────────────────────────────────────────────────
-    rl_mode: str = "online"  # 'online'|'offline'|'hybrid'|'disabled'
-    rl_policy_path: Optional[str] = None
-    rl_exploration: float = 1.0
-    rl_window: int = 20
-    rl_min_samples: int = 5
-    rl_reward_shaping: str = "efficiency"
-    rl_state_features: List[str] = None  # type: ignore[assignment]
-    rl_action_space: str = "budgets"
-    rl_discount: float = 0.99
-
-    # ── SP merge ──────────────────────────────────────────────────────────
-    sp_pool_cap: int = 50_000
-    sp_mip_gap: float = 1e-4
+    lbbd_cut_families: Optional[List[str]] = None
+    rl_state_features: Optional[List[str]] = None
 
     def __post_init__(self) -> None:
         """Post-initialization hook.

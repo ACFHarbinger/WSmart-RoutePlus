@@ -41,14 +41,12 @@ from __future__ import annotations
 import argparse
 import sys
 
-from logic.src.utils.target.ms_updater import (
+from logic.src.utils.target.policy_link_updater import (
     list_available_ms_strategies,
-    list_strategy_keys,
-    update_mandatory_selection,
-)
-from logic.src.utils.target.ri_updater import (
     list_available_ri_improvers,
     list_improver_keys,
+    list_strategy_keys,
+    update_mandatory_selection,
     update_route_improvement,
 )
 

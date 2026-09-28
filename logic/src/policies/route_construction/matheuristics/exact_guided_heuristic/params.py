@@ -1,134 +1,32 @@
-r"""Configuration parameters for the TCF → ALNS → BPC → SP-merge pipeline.
+"""Runtime parameters for the Exact Guided Heuristic (TCF - ALNS - BPC - SP) pipeline.
 
-The pipeline is controlled by a single quality/speed dial ``alpha ∈ [0, 1]``
-that proportionally allocates the total time budget across the four stages:
-
-    alpha = 0.0  →  TCF + tiny ALNS only  (fastest, no BPC)
-    alpha = 0.5  →  balanced              (default)
-    alpha = 1.0  →  full BPC + large ALNS (highest quality, slowest)
-
-Stage budgets are computed as:
-    τ_TCF  = T * max(0.05, 0.15 − 0.10 * α)
-    τ_ALNS = T * (0.20  + 0.15 * α)
-    τ_BPC  = T * (0.00  + 0.65 * α)
-    τ_SP   = min(30, T * 0.05)              # always small
-
-All four values are then renormalized to sum to T.
-
-Attributes:
-    ExactGuidedHeuristicParams: Dataclass for pipeline solver configuration.
+The config dataclass ``ExactGuidedHeuristicConfig`` in
+``logic/src/configs/policies/egh.py`` is the single field authority.
+``ExactGuidedHeuristicParams`` is a thin subclass that adds the derived
+runtime members (``stage_budgets``, ``alns_iterations``, ``bpc_ng_size``,
+``bpc_max_bb_nodes``, ``as_alns_values_dict``) plus the
+``from_config``/``to_dict`` helpers used by the dispatcher and the policy
+adapter; it declares no fields of its own.
 
 Example:
     >>> params = ExactGuidedHeuristicParams(alpha=0.5, time_limit=120.0)
-    >>> budgets = params.stage_budgets()   # (τ_tcf, τ_alns, τ_bpc, τ_sp)
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, fields
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Tuple
+
+from logic.src.configs.policies import ExactGuidedHeuristicConfig
 
 
 @dataclass
-class ExactGuidedHeuristicParams:
-    """Configuration parameters for the TCF → ALNS → BPC → SP-merge pipeline.
+class ExactGuidedHeuristicParams(ExactGuidedHeuristicConfig):
+    """Runtime parameters for the TCF - ALNS - BPC - SP-merge pipeline.
 
-    Attributes:
-        alpha: Quality/speed dial ∈ [0, 1].
-            0.0 = TCF + tiny ALNS only (no BPC stage).
-            0.5 = balanced (default).
-            1.0 = full BPC + large ALNS (highest quality, slowest).
-        time_limit: Total wall-clock budget in seconds.
-        seed: Global RNG seed for reproducibility.
-
-        # ── ALNS overrides ─────────────────────────────────────────────────
-        alns_max_iterations: Hard iteration cap for ALNS (overrides the
-            alpha-derived default when set to a positive integer).
-            Default 0 = derive from alpha: max(500, 2000 + 18000 * alpha).
-        alns_segment_size: Weight-update segment size (Ropke & Pisinger 2006).
-        alns_reaction_factor: Learning rate r for weight updates.
-        alns_cooling_rate: SA temperature decay factor per iteration.
-        alns_start_temp_control: 'w' parameter — accept a solution 'w*100 %'
-            worse than current with probability 0.5 at start temperature.
-        alns_sigma_1: Score awarded for a new global-best solution.
-        alns_sigma_2: Score awarded for a better-than-current new solution.
-        alns_sigma_3: Score awarded for an accepted worse new solution.
-        alns_xi: Fraction of n for the removal upper-bound cap.
-        alns_min_removal: Minimum nodes removed per destroy step.
-        alns_noise_factor: Noise amplitude η for noisy repair operators.
-        alns_worst_removal_randomness: Randomness exponent p ≥ 1 for worst removal.
-        alns_shaw_randomization: Shaw randomisation factor p_shaw.
-        alns_regret_pool: Which regret variants to use
-            ('regret2', 'regret234', 'regretAll').
-        alns_extended_operators: If True, add string/cluster/neighbor destroy
-            operators (3 → 6 operators).
-        alns_profit_aware_operators: If True, use profit-aware operator variants.
-        alns_vrpp: If True, allow ALNS repair operators to insert nodes from the
-            full candidate pool (not only the just-removed set).
-        alns_engine: Which ALNS backend to use ('custom', 'package', 'ortools').
-
-        # ── BPC overrides ──────────────────────────────────────────────────
-        bpc_ng_size_min: Minimum ng-neighborhood size (used when alpha=0).
-        bpc_ng_size_max: Maximum ng-neighborhood size (used when alpha=1).
-            Effective ng_size = bpc_ng_size_min + int(alpha *
-                (bpc_ng_size_max − bpc_ng_size_min)).
-        bpc_max_bb_nodes_min: Minimum B&B node cap (alpha=0).
-        bpc_max_bb_nodes_max: Maximum B&B node cap (alpha=1).
-        bpc_cutting_planes: Cut family for BPC ('rcc', 'saturated_arc_lci',
-            'all', etc.).
-        bpc_branching_strategy: Branching rule ('divergence', 'ryan_foster',
-            'edge').
-        skip_bpc: Force-skip the BPC stage regardless of alpha or time budget.
-            Useful for very large instances or pure-heuristic runs.
-
-        # ── SP-merge overrides ─────────────────────────────────────────────
-        sp_pool_cap: Maximum number of routes kept in the SP-merge MIP.
-            If the collected pool exceeds this cap, the top-half by profit and
-            a random sample of the rest are retained.
-        sp_mip_gap: Relative gap at which the SP MIP is considered solved.
+    Thin subclass of :class:`ExactGuidedHeuristicConfig`: every field and
+    default is inherited from the config dataclass.
     """
-
-    # ── Quality / speed dial ───────────────────────────────────────────────
-    alpha: float = 0.5
-    time_limit: float = 120.0
-    seed: Optional[int] = None
-
-    # ── ALNS ──────────────────────────────────────────────────────────────
-    alns_max_iterations: int = 0  # 0 = derived from alpha
-    alns_segment_size: int = 100
-    alns_reaction_factor: float = 0.1
-    alns_cooling_rate: float = 0.995
-    alns_start_temp_control: float = 0.05
-    alns_sigma_1: float = 33.0
-    alns_sigma_2: float = 9.0
-    alns_sigma_3: float = 13.0
-    alns_xi: float = 0.4
-    alns_min_removal: int = 4
-    alns_noise_factor: float = 0.025
-    alns_worst_removal_randomness: float = 3.0
-    alns_shaw_randomization: float = 6.0
-    alns_regret_pool: str = "regret234"
-    alns_extended_operators: bool = False
-    alns_profit_aware_operators: bool = True
-    alns_vrpp: bool = True
-    alns_engine: str = "custom"
-
-    # ── BPC ───────────────────────────────────────────────────────────────
-    bpc_ng_size_min: int = 8
-    bpc_ng_size_max: int = 16
-    bpc_max_bb_nodes_min: int = 200
-    bpc_max_bb_nodes_max: int = 1000
-    bpc_cutting_planes: str = "rcc"
-    bpc_branching_strategy: str = "divergence"
-    skip_bpc: bool = False
-
-    # ── SP merge ──────────────────────────────────────────────────────────
-    sp_pool_cap: int = 50_000
-    sp_mip_gap: float = 1e-4
-
-    # ------------------------------------------------------------------
-    # Derived quantities
-    # ------------------------------------------------------------------
 
     def stage_budgets(self) -> Tuple[float, float, float, float]:
         """Compute per-stage time budgets from alpha and total time_limit.

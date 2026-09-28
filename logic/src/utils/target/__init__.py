@@ -40,12 +40,12 @@ Attributes:
     list_improver_keys: List top-level keys defined in an improver file.
 """
 
-from .ms_updater import (
+from .policy_link_updater import (
     list_available_ms_strategies,
     list_strategy_keys,
     update_mandatory_selection,
 )
-from .ri_updater import (
+from .policy_link_updater import (
     list_available_ri_improvers,
     list_improver_keys,
     update_route_improvement,
