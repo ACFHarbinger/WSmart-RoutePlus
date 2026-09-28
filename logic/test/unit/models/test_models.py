@@ -277,10 +277,12 @@ class TestReinforceBaselines:
         # candidate values mean 15 > baseline values mean 5 (improvement)
         cast(MagicMock, rb._rollout).side_effect = [torch.tensor([10.0, 20.0]), torch.tensor([5.0, 5.0])]
 
-        # We want to see if setup is called again
+        # A reporting val_dataset is not a comparison pool: without the baseline's own pool the
+        # callback must not promote (B-codex-01). Promotion with a pool is covered by the
+        # rollout lifecycle tests in logic/test/unit/pipeline/rl/.
         mock_setup = mocker.patch.object(rb, "setup")
         rb.epoch_callback(mock_policy, 0, val_dataset=MagicMock(), env=MagicMock())
-        assert mock_setup.called
+        assert not mock_setup.called
 
     def test_baseline_dataset(self):
         """Verifies dataset wrapping."""

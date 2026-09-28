@@ -97,6 +97,13 @@ class TestBaselines:
             ],
         )
 
+        # Promotion uses a private generated pool, never reporting validation.
+        from types import SimpleNamespace
+
+        comparison_env = SimpleNamespace(
+            generator=lambda batch_size: TensorDict({"x": torch.zeros(batch_size, 1)}, [batch_size])
+        )
+        bl.configure_comparison(comparison_env, 3, seed=7)
         mock_setup = mocker.patch.object(bl, "setup")
 
         val_dataset = [1, 2, 3]  # Dummy

@@ -14,15 +14,17 @@ Example:
 from __future__ import annotations
 
 import copy
-from typing import Any, Optional, cast
+import random
+from typing import Any, Dict, Optional, cast
 
+import numpy as np
 import torch
 from scipy import stats
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
 
 from logic.src.constants.routing import DEFAULT_ROLLOUT_BATCH_SIZE
-from logic.src.data.datasets import BaselineDataset, tensordict_collate_fn
+from logic.src.data.datasets import BaselineDataset, TensorDictDataset, tensordict_collate_fn
 from logic.src.tracking.logging.pylogger import get_pylogger
 from logic.src.utils.data.rl_utils import safe_td_copy
 from logic.src.utils.functions.rl import ensure_tensordict
@@ -68,6 +70,13 @@ class RolloutBaseline(Baseline):
         self.update_every = update_every
         self.bl_alpha = bl_alpha
 
+        self.comparison_dataset = None
+        # The environment is runtime state, not a trainable child module.
+        object.__setattr__(self, "comparison_env", None)
+        self.comparison_seed = 0
+        self.comparison_generation = 0
+        self.comparison_size = 0
+        self._comparison_restored = False
         self.baseline_policy = None
         if policy is not None:
             self.setup(policy)
@@ -83,6 +92,66 @@ class RolloutBaseline(Baseline):
             self.baseline_policy.eval()  # type: ignore[misc]
             for param in self.baseline_policy.parameters():
                 param.requires_grad = False
+
+    def configure_comparison(self, env: Any, sample_size: int, seed: int = 0) -> None:
+        """Create a private pool using the training environment's distribution.
+
+        Reporting validation graphs and their datasets are never used for
+        promotion. The pool size stays fixed across accepted replacements.
+        """
+        if sample_size < 2:
+            raise ValueError("Rollout comparison requires at least two instances")
+        if self.comparison_env is not None:
+            # A second Trainer.fit must not reset a pool retained after rejection
+            # or generated after a promotion. Construct a new baseline for a
+            # different training distribution, rather than silently reusing it.
+            return
+        object.__setattr__(self, "comparison_env", copy.deepcopy(env))
+        if not self._comparison_restored:
+            self.comparison_size = sample_size
+            self.comparison_seed = int(seed)
+            self.comparison_generation = 0
+        self.comparison_dataset = self._generate_comparison(self.comparison_generation)
+
+    def get_extra_state(self) -> Dict[str, int]:
+        """Save the deterministic pool identity without storing all instances."""
+        return {"seed": self.comparison_seed, "generation": self.comparison_generation, "size": self.comparison_size}
+
+    def set_extra_state(self, state: Dict[str, int]) -> None:
+        """Recreate the saved pool lazily after the environment is configured."""
+        if state.get("size", 0) >= 2:
+            self.comparison_seed = state["seed"]
+            self.comparison_generation = state["generation"]
+            self.comparison_size = state["size"]
+            self.comparison_dataset = None
+            self._comparison_restored = True
+
+    def _load_from_state_dict(self, state_dict, prefix, *args, **kwargs):
+        # Checkpoints predating the private pool contain only policy weights.
+        state_dict.setdefault(prefix + "_extra_state", {})
+        super()._load_from_state_dict(state_dict, prefix, *args, **kwargs)
+
+    def _generate_comparison(self, generation: int) -> Dataset:
+        """Generate reproducibly without consuming the training RNG streams."""
+        generator = copy.deepcopy(self.comparison_env.generator)
+        seed = self.comparison_seed + generation
+        if hasattr(generator, "rng"):
+            generator.rng = np.random.default_rng(seed)
+        if isinstance(getattr(generator, "generator", None), torch.Generator):
+            device = getattr(generator.generator, "device", "cpu")
+            generator.generator = torch.Generator(device=device).manual_seed(seed)
+        # Some generators use global RNGs in addition to their private streams.
+        py_state, np_state = random.getstate(), np.random.get_state()
+        try:
+            with torch.random.fork_rng():
+                torch.manual_seed(seed)
+                random.seed(seed)
+                np.random.seed(seed % (2**32))
+                data = generator(batch_size=self.comparison_size)
+        finally:
+            random.setstate(py_state)
+            np.random.set_state(np_state)
+        return TensorDictDataset(data)
 
     def train(self, mode: bool = True) -> RolloutBaseline:
         """Override train to keep baseline_policy in eval mode.
@@ -118,6 +187,17 @@ class RolloutBaseline(Baseline):
         if isinstance(td_or_dataset, Dataset):
             return self._rollout_dataset(policy, td_or_dataset, env)
         return self._rollout_batch(policy, td_or_dataset, env)
+
+    @staticmethod
+    def _invoke_greedy(policy: nn.Module, td: Any, env: Optional[Any]) -> Dict[str, Any]:
+        """Invoke either policy API, preserving the legacy reward tuple contract."""
+        if hasattr(policy, "set_strategy"):
+            cast(Any, policy).set_strategy("greedy")
+            result = cast(Any, policy)(td)
+            return {"reward": result[0]} if isinstance(result, tuple) else result
+        if env is None:
+            raise ValueError("Environment (env) is required for RolloutBaseline evaluation")
+        return cast(Any, policy)(td, env, strategy="greedy")
 
     def _rollout_dataset(self, policy: nn.Module, dataset: Any, env: Optional[Any] = None) -> torch.Tensor:
         """Run greedy rollout on a complete dataset.
@@ -168,12 +248,7 @@ class RolloutBaseline(Baseline):
                     padding_safe = safe_td_copy(padding)
                     td_data = torch.cat([td_data, padding_safe], 0)
 
-                if hasattr(policy, "set_strategy"):
-                    cast(Any, policy).set_strategy("greedy")
-                    res = cast(Any, policy)(td_data)
-                    out = {"reward": res[0]} if isinstance(res, tuple) else res
-                else:
-                    out = cast(Any, policy)(td_data, env, strategy="greedy")
+                out = self._invoke_greedy(policy, td_data, env)
 
                 # Unpad rewards
                 if real_size != batch_size:
@@ -203,14 +278,7 @@ class RolloutBaseline(Baseline):
 
         policy.eval()
         with torch.no_grad():
-            if hasattr(policy, "set_strategy"):
-                cast(Any, policy).set_strategy("greedy")
-                res = cast(Any, policy)(td_copy)
-                out = {"reward": res[0]} if isinstance(res, tuple) else res
-            else:
-                if env is None:
-                    raise ValueError("Environment (env) is required for RolloutBaseline evaluation")
-                out = cast(Any, policy)(td_copy, env, strategy="greedy")
+            out = self._invoke_greedy(policy, td_copy, env)
 
         return out["reward"]
 
@@ -292,26 +360,45 @@ class RolloutBaseline(Baseline):
             val_dataset: Dataset for evaluation.
             env: Environment instance.
         """
-        if (epoch + 1) % self.update_every == 0:
-            if (
-                val_dataset is not None
-                and len(val_dataset) > 0
-                and self.baseline_policy is not None
-                and env is not None
-            ):
-                # Evaluate candidate
-                candidate_vals = self._rollout(policy, val_dataset, env)
-                candidate_mean = candidate_vals.mean().item()
-
-                # Evaluate baseline
-                baseline_vals = self._rollout(self.baseline_policy, val_dataset, env)
-                baseline_mean = baseline_vals.mean().item()
-
-                # T-test for significance
-                t_stat, p_val = stats.ttest_rel(candidate_vals.cpu().numpy(), baseline_vals.cpu().numpy())
-
-                if candidate_mean > baseline_mean and p_val / 2 < self.bl_alpha:
-                    print(f"Update baseline: {baseline_mean:.4f} -> {candidate_mean:.4f} (p={p_val / 2:.4f})")
-                    self.setup(policy)
-            else:
-                self.setup(policy)
+        # val_dataset/env remain accepted for API compatibility; reporting
+        # validation must never become the promotion pool implicitly.
+        if (epoch + 1) % self.update_every != 0:
+            return
+        if self.comparison_dataset is None and self.comparison_env is not None and self._comparison_restored:
+            self.comparison_dataset = self._generate_comparison(self.comparison_generation)
+        if self.comparison_dataset is None or self.comparison_env is None or self.baseline_policy is None:
+            logger.warning("Skipping rollout promotion: comparison pool or baseline is not initialized")
+            return
+        if hasattr(self.comparison_env, "to"):
+            object.__setattr__(self, "comparison_env", self.comparison_env.to(next(policy.parameters()).device))
+        was_training = policy.training
+        strategies = {key: getattr(policy, key) for key in ("strategy", "_strategy") if hasattr(policy, key)}
+        try:
+            candidate_vals = self._rollout(policy, self.comparison_dataset, self.comparison_env).reshape(-1)
+            baseline_vals = self._rollout(self.baseline_policy, self.comparison_dataset, self.comparison_env).reshape(
+                -1
+            )
+        finally:
+            policy.train(was_training)
+            for key, value in strategies.items():
+                setattr(policy, key, value)
+        if (
+            candidate_vals.shape != baseline_vals.shape
+            or candidate_vals.numel() != self.comparison_size
+            or not torch.isfinite(candidate_vals).all()
+            or not torch.isfinite(baseline_vals).all()
+        ):
+            logger.warning("Skipping rollout promotion: invalid paired rewards")
+            return
+        candidate_mean, baseline_mean = candidate_vals.mean().item(), baseline_vals.mean().item()
+        if candidate_mean <= baseline_mean:
+            return
+        _, p_val = stats.ttest_rel(candidate_vals.cpu().numpy(), baseline_vals.cpu().numpy())
+        if np.isfinite(p_val) and p_val / 2 < self.bl_alpha:
+            # Prepare first: failed generation must not partially promote policy.
+            next_generation = self.comparison_generation + 1
+            dataset = self._generate_comparison(next_generation)
+            self.setup(policy)
+            self.comparison_dataset = dataset
+            self.comparison_generation = next_generation
+            logger.info(f"Update baseline: {baseline_mean:.4f} -> {candidate_mean:.4f} (p={p_val / 2:.4f})")

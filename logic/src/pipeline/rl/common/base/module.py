@@ -253,7 +253,7 @@ class RL4COLitModule(DataMixin, OptimizationMixin, StepMixin, pl.LightningModule
     def on_train_epoch_end(self):
         """Update baseline and regenerate dataset."""
         if hasattr(self.baseline, "epoch_callback"):
-            # For RolloutBaseline, we pass val_dataset for the T-test
+            # RolloutBaseline owns its promotion pool; validation stays reporting-only.
             self.baseline.epoch_callback(
                 self.policy,
                 self.current_epoch,

@@ -88,8 +88,9 @@ def test_lit_module_setup_fit(lit_setup):
     mock_data_train = TensorDict({"loc": torch.randn(4, 5, 2)}, batch_size=[4])
     mock_data_val = TensorDict({"loc": torch.randn(2, 5, 2)}, batch_size=[2])
 
-    # Use side_effect to return different data for train and val calls
-    lit_setup.env.generator.side_effect = [mock_data_train, mock_data_val]
+    # Training, fixed reporting validation, then the independent rollout pool.
+    mock_data_comparison = TensorDict({"loc": torch.randn(10, 5, 2)}, batch_size=[10])
+    lit_setup.env.generator.side_effect = [mock_data_train, mock_data_val, mock_data_comparison]
 
     lit_setup.setup("fit")
     assert lit_setup.train_dataset is not None

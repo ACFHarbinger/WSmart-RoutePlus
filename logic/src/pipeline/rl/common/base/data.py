@@ -285,6 +285,10 @@ class DataMixin:
                     val_data = cast(Any, gen)(batch_size=n_val)
                     self.val_dataset = TensorDictDataset(val_data)
                     assert self.val_dataset is not None
+            baseline = getattr(self, "baseline", None)
+            if hasattr(baseline, "configure_comparison"):
+                # Use training graph/distribution, independent of eval_graphs.
+                baseline.configure_comparison(self.env, max(2, n_train), int(_cfg_get(self.cfg, "seed", 0) or 0))
         else:
             pass
 
