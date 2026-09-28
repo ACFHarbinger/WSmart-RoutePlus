@@ -20,6 +20,7 @@ from typing import Any, Dict, Optional, Union
 import torch
 from tensordict import TensorDict
 
+from logic.src.configs.models.normalization import NormalizationConfig
 from logic.src.data.processor.transforms import batchify
 from logic.src.envs.base.base import RL4COEnvBase
 from logic.src.models.common.autoregressive.policy import AutoregressivePolicy
@@ -72,12 +73,19 @@ class AttentionModelPolicy(AutoregressivePolicy):
 
         self.init_embedding = get_init_embedding(env_name, embed_dim)
 
+        if "norm_config" in kwargs:
+            norm_config = kwargs.pop("norm_config")
+        elif normalization is not None:
+            norm_config = NormalizationConfig(norm_type=normalization)
+        else:
+            norm_config = None
+
         self.encoder = GraphAttentionEncoder(
             n_heads=n_heads,
             embed_dim=embed_dim,
             feed_forward_hidden=hidden_dim,
             n_layers=n_encode_layers,
-            normalization=normalization,
+            norm_config=norm_config,
             **kwargs,
         )
 
@@ -163,6 +171,10 @@ class AttentionModelPolicy(AutoregressivePolicy):
 
             # Get logits from decoder (mask=True for invalid)
             logits, mask = self.decoder._get_log_p(fixed, state_wrapper)
+
+            # Flatten head dimension if present (e.g. DeepGATDecoder)
+            if logits.dim() == 3:
+                logits = logits[:, 0, :] if logits.size(1) > 1 else logits.squeeze(1)
 
             # Invert mask for _select_action (expects True=VALID)
             if mask.dim() == 3:

@@ -13,7 +13,7 @@ Example:
     >>> route, cost, _ = policy.execute(model_env=env, model_ls=ls, ...)
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 import torch
 
@@ -58,6 +58,58 @@ class NeuralAgentPolicy(BaseRoutingPolicy):
         super().__init__(config)
         self._params_logged = False
 
+    @classmethod
+    def _config_class(cls) -> Optional[Type[Any]]:
+        """Return the dataclass type for this policy's config."""
+        return NeuralParams
+
+    def _get_config_key(self) -> str:
+        """Return the config key for this policy."""
+        return "na"
+
+    def _validate_mandatory(self, mandatory: Any) -> Optional[Tuple[List[int], float, float]]:
+        """
+        Validate mandatory input. Returns early result [0, 0], 0.0, 0.0 if empty.
+
+        Handles None, lists, tuples, sets, and PyTorch tensors (integer ID tensors
+        and 1D/2D boolean mask tensors) without ambiguous truth-value errors.
+
+        Args:
+            mandatory: List, tuple, set, or Tensor of mandatory targets or mask.
+
+        Returns:
+            Optional tuple containing ([0, 0], 0.0, 0.0) if mandatory is explicitly empty, else None.
+        """
+        if mandatory is None:
+            return None
+
+        if isinstance(mandatory, torch.Tensor):
+            if mandatory.numel() == 0:
+                return [0, 0], 0.0, 0.0
+            if mandatory.dtype == torch.bool:
+                if not mandatory.any():
+                    return [0, 0], 0.0, 0.0
+                return None
+            else:
+                # Integer or other numeric tensor of IDs
+                if mandatory.numel() == 0:
+                    return [0, 0], 0.0, 0.0
+                return None
+
+        if isinstance(mandatory, (list, tuple, set)):
+            if len(mandatory) == 0:
+                return [0, 0], 0.0, 0.0
+            return None
+
+        # Fallback for other objects
+        try:
+            if not mandatory:
+                return [0, 0], 0.0, 0.0
+        except Exception:
+            pass
+
+        return None
+
     def execute(
         self, **kwargs: Any
     ) -> Tuple[List[int], float, float, Optional[SearchContext], Optional[MultiDayContext]]:
@@ -92,6 +144,12 @@ class NeuralAgentPolicy(BaseRoutingPolicy):
                 - Optional[SearchContext]: Updated search context.
                 - Optional[MultiDayContext]: Updated multi-period context.
         """
+        if "mandatory" in kwargs and kwargs["mandatory"] is not None:
+            early_exit = self._validate_mandatory(kwargs["mandatory"])
+            if early_exit is not None:
+                tour, cost, profit = early_exit
+                return tour, cost, profit, kwargs.get("search_context"), kwargs.get("multi_day_context")
+
         model_env = kwargs["model_env"]
         model_ls = kwargs["model_ls"]
         bins = kwargs["bins"]
@@ -101,9 +159,11 @@ class NeuralAgentPolicy(BaseRoutingPolicy):
         hrl_manager = kwargs.get("hrl_manager")
 
         # 1. Initialize type-safe Params
-        # NeuralPolicy typically receives configuration via kwargs["config"] or initialization
-        values = kwargs.get("config", {}).get("na", {})
-        params = NeuralParams.from_config(self._config or values)
+        if self._config is not None and isinstance(self._config, NeuralParams):
+            params = self._config
+        else:
+            values = kwargs.get("config", {}).get(self._get_config_key(), kwargs.get("config", {}))
+            params = NeuralParams.from_config(self._config or values)
 
         model_data, graph, profit_vars = model_ls
         agent = NeuralAgent(model_env)
@@ -142,9 +202,20 @@ class NeuralAgentPolicy(BaseRoutingPolicy):
 
         # Compute profit: collected revenue - travel cost
         visited = {n for n in tour if n != 0}
-        collected_revenue = sum(
-            float(bins.c[n - 1]) * profit_vars.get("revenue_kg", 1.0) for n in visited if 1 <= n <= len(bins.c)
+        volume = getattr(
+            bins, "volume", profit_vars.get("bin_volume", profit_vars.get("V", 1.0)) if profit_vars else 1.0
         )
+        density = getattr(
+            bins, "density", profit_vars.get("density", profit_vars.get("B", 1.0)) if profit_vars else 1.0
+        )
+        revenue_kg = profit_vars.get("revenue_kg", profit_vars.get("R_kg", 1.0)) if profit_vars else 1.0
+        c_vals = getattr(bins, "real_c", bins.c)
+        if c_vals is None:
+            c_vals = bins.c
+        collected_kg = sum(
+            (float(c_vals[n - 1]) / 100.0) * float(volume) * float(density) for n in visited if 1 <= n <= len(c_vals)
+        )
+        collected_revenue = collected_kg * float(revenue_kg)
         profit = collected_revenue - cost * params.cost_weight
 
         return tour, cost, profit, kwargs.get("search_context"), kwargs.get("multi_day_context")

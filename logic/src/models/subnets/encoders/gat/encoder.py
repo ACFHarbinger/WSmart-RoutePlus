@@ -40,6 +40,7 @@ class GraphAttentionEncoder(TransformerEncoderBase):
         n_sublayers: Optional[int] = None,
         feed_forward_hidden: int = 512,
         norm_config: Optional[NormalizationConfig] = None,
+        normalization: Optional[str] = None,
         activation_config: Optional[ActivationConfig] = None,
         dropout_rate: float = 0.1,
         agg: Any = None,
@@ -56,6 +57,7 @@ class GraphAttentionEncoder(TransformerEncoderBase):
             n_sublayers: Number of sublayers (unused).
             feed_forward_hidden: Hidden dimension for feed-forward layers.
             norm_config: Normalization configuration.
+            normalization: Type of normalization ('batch', 'layer', etc.).
             activation_config: Activation function configuration.
             dropout_rate: Dropout probability.
             agg: Aggregation method (unused).
@@ -63,6 +65,9 @@ class GraphAttentionEncoder(TransformerEncoderBase):
             expansion_rate: Expansion factor for hyper-connections.
             kwargs: Additional keyword arguments.
         """
+        if norm_config is None and normalization is not None:
+            norm_config = NormalizationConfig(norm_type=normalization)
+
         super(GraphAttentionEncoder, self).__init__(
             n_heads=n_heads,
             embed_dim=embed_dim,

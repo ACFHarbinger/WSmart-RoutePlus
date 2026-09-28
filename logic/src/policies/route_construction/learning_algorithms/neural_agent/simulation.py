@@ -73,7 +73,7 @@ class SimulationMixin:
             if not has_mandatory:
                 for handle in hook_data["handles"]:
                     handle.remove()
-                return ([0], 0, {"attention_weights": torch.tensor([]), "graph_masks": [], "mandatory_empty": True})
+                return ([0, 0], 0, {"attention_weights": torch.tensor([]), "graph_masks": [], "mandatory_empty": True})
 
         mask = None
         input_for_model = input.copy()  # Shallow copy
