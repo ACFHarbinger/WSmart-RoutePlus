@@ -15,14 +15,14 @@ from __future__ import annotations
 
 import argparse
 import os
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 
 try:
     from bs4 import BeautifulSoup
-except ImportError as exc:
-    raise ImportError("beautifulsoup4 is required: uv add beautifulsoup4") from exc
+except ImportError:  # optional extra; dashboard parsing is not on the sim path
+    BeautifulSoup = None
 
 
 # ---------------------------------------------------------------------------
@@ -60,7 +60,7 @@ def _load_html(source: str) -> str:
         return fh.read()
 
 
-def _find_todos_os_locais_table(soup: BeautifulSoup) -> Optional[BeautifulSoup]:
+def _find_todos_os_locais_table(soup: Any) -> Optional[Any]:
     """
     Locate the 'Todos os Locais' table inside the dashboard HTML.
 
@@ -85,7 +85,7 @@ def _find_todos_os_locais_table(soup: BeautifulSoup) -> Optional[BeautifulSoup]:
     return None
 
 
-def _parse_table(table: BeautifulSoup) -> pd.DataFrame:
+def _parse_table(table: Any) -> pd.DataFrame:
     """Convert a BeautifulSoup table into a cleaned DataFrame."""
     headers = [th.get_text(strip=True) for th in table.find_all("th")]
     keep_indices = [i for i, h in enumerate(headers) if h != _EXCLUDED_COL]
@@ -138,6 +138,8 @@ def extract_dataframe(source: str) -> pd.DataFrame:
     Returns:
         DataFrame with one row per location.
     """
+    if BeautifulSoup is None:
+        raise ImportError("beautifulsoup4 is required: uv add beautifulsoup4")
     html = _load_html(source)
     soup = BeautifulSoup(html, "html.parser")
     table = _find_todos_os_locais_table(soup)

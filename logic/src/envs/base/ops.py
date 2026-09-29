@@ -22,6 +22,26 @@ from tensordict import TensorDictBase
 from torchrl.data import Categorical, TensorSpec, UnboundedContinuous
 
 
+def as_batch_nodes(index: torch.Tensor) -> torch.Tensor:
+    """Squeeze decoder node indices to shape ``[B]`` for gather/scatter.
+
+    Decoders emit ``[B]`` or ``[B, 1]``. Gathering a ``[B, N]`` feature with a
+    ``[B, 1, 1]`` index (the result of unsqueezing ``[B, 1]`` again) is a
+    silent shape error.
+
+    Args:
+        index: Node-index tensor of shape ``[]``, ``[B]``, or ``[B, 1]``.
+
+    Returns:
+        Long tensor of shape ``[B]``.
+    """
+    if index.dim() > 1:
+        index = index.squeeze(-1)
+    if index.dim() == 0:
+        index = index.unsqueeze(0)
+    return index
+
+
 class OpsMixin:
     """
     Mixin to handle Step, Reset, and Cost calculations.
@@ -254,19 +274,8 @@ class OpsMixin:
         Returns:
             TensorDict: The next state.
         """
-        action = tensordict["action"]
-        current = tensordict.get("current_node", torch.zeros_like(action))
-
-        # Robustly squeeze to [B]
-        if current.dim() > 1:
-            current = current.squeeze(-1)
-        if action.dim() > 1:
-            action = action.squeeze(-1)
-        # Ensure they are at least 1D for slicing
-        if current.dim() == 0:
-            current = current.unsqueeze(0)
-        if action.dim() == 0:
-            action = action.unsqueeze(0)
+        action = as_batch_nodes(tensordict["action"])
+        current = as_batch_nodes(tensordict.get("current_node", torch.zeros_like(action)))
 
         locs = tensordict["locs"]
 

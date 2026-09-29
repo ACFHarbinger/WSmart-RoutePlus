@@ -8,15 +8,56 @@ mutation, device handling, and silent routing/solver failures.
 - [COMPLETED] CLI entry point and Hydra command dispatch (`main.py`, task routing) — normalized documented aliases `evaluation` → `eval` and `sim_hpo` → `hpo_sim`; regression coverage added.
 - [COMPLETED] Typed configuration composition and validation (`logic/src/configs/`) — all canonical task groups compose through Hydra; no additional typed-config defect confirmed in this pass.
 - [COMPLETED] Feature engines: train, evaluation, data generation, and simulation dispatch — repaired task-scoped curriculum graphs, CPU multiprocessing validation, failed-run tracking, and duplicate simulator validation.
-- [IN PROGRESS] Routing environments, generators, and task objectives
-- [PENDING] Model encoders, decoders, embeddings, and critic interfaces
-- [PENDING] Policy and solver construction, including exact and heuristic routes
-- [PENDING] RL training lifecycle, baselines, callbacks, and tracking
-- [PENDING] Multi-day simulation state machine, day context, and result aggregation
-- [PENDING] Data repositories, processors, and dataset builders
-- [PENDING] Cross-cutting utilities, package imports, lint/type checks, and regression sweep
+- [COMPLETED] Routing environments, generators, and task objectives — 2026-09-29 Cursor pass (see below).
+- [SKIPPED] Model encoders, decoders, embeddings, and critic interfaces — covered by the 2026-09-26 logic review; not re-traced in this increment.
+- [SKIPPED] Policy and solver construction, including exact and heuristic routes — covered by the 2026-09-26 logic review.
+- [SKIPPED] RL training lifecycle, baselines, callbacks, and tracking — covered by the 2026-09-26 logic review.
+- [SKIPPED] Multi-day simulation state machine, day context, and result aggregation — covered by Grok's logic-review lane and #41 this round.
+- [COMPLETED] Data repositories, processors, and dataset builders — lazy-load optional dashboard/geo extras so core imports no longer hard-fail.
+- [COMPLETED] Controllers (`logic/controllers`) — Hydra dispatch now accepts `evaluation` when `main.py` did not rewrite `tasks=evaluation`.
+- [COMPLETED] Cross-cutting utilities, package imports, lint/type checks, and regression sweep — `as_batch_nodes` added in `envs/base/ops.py`; `utils/functions` and `utils/data` inspected, no additional clear defect in this increment.
 
-## Current pass
+## Current pass (2026-09-29, Cursor, components the logic review did not cover)
 
-Feature-engine entry paths are complete. Trace reset/step/reward/cost contracts
-through routing environments, generators, and task objectives next.
+Base `dfb049e7e`. Fixes landed in this increment:
+
+1. **WCVRP / OpsMixin action shape.** Decoder actions of shape `[B, 1]` were
+   unsqueezed again before `gather`, which is a silent index-shape error.
+   Shared helper `as_batch_nodes` squeezes to `[B]`. WCVRP also prepends a
+   depot column on a customer-only `mandatory` mask (same as CVRPP/VRPP).
+2. **CVRPP remaining capacity.** An illegal (unmasked) pickup could drive
+   `remaining_capacity` negative. It is now clamped at 0.
+3. **SCWCVRP overflow comparison.** `_get_reward` blindly unsqueezed
+   `max_waste` whenever `dim > 0`, so a per-node `[B, N+1]` tensor became
+   `[B, N+1, 1]` against customer waste `[B, N]`. It now slices like WCVRP.
+4. **Hydra `evaluation` alias.** `python main.py tasks=evaluation` bypasses
+   `main.py`'s rewrite and used to raise `Unknown task`. Dispatch now maps
+   `evaluation` → `eval` (and still maps `sim_hpo` → `hpo_sim`).
+5. **Optional extras on the data import path.** `logic.src.data.datasets`
+   eagerly imported the HTML dashboard crawler (hard `ImportError` without
+   beautifulsoup4), and `logic.src.data.network` eagerly imported geopy /
+   geopandas / googlemaps / OSM backends. Both are lazy. `haversine_distance`
+   and core dataset classes import without those extras.
+
+## Design decisions (not patched)
+
+- **WCVRP vehicle-capacity clamp vs `max_waste` credit.** The docstring says
+  collection is `min(waste, max_waste, remaining_capacity)`, but
+  `test_update_waste_clamping` (waste=15, `max_waste`=10, default capacity=1)
+  asserts collected credit 10. Waste / `max_waste` / `capacity` are not
+  guaranteed to share units. Clamping `current_load` to remaining capacity
+  would change that legal-path fixture. Left as-is; report rather than mix
+  the unit systems.
+- **`VRPP.get_costs` always prepends a depot waste column.** Dataset
+  generation stores customer-only waste, so the prepend is correct for the
+  training evaluator. After `VRPPEnv.reset` waste is already `[B, N+1]`;
+  calling `get_costs` on a reset TensorDict would shift every customer.
+  Unifying those conventions needs a design call (same family as #82's
+  training-vs-simulator unit gap).
+
+## Next session
+
+Resume is not required for the uncovered-component increment above. A later
+#61 pass can take the WCVRP unit-system decision and the `get_costs` depot
+column, or walk `utils/{decoding,model,security}` if those are still in
+scope after the logic review.

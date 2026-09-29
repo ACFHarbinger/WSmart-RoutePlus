@@ -37,11 +37,24 @@ except ImportError:
 from .base import DistanceStrategy, IterativeDistanceStrategy
 from .euclidean import EuclideanStrategy
 from .file import FileStrategy
-from .geodesic import GeodesicStrategy
-from .geopandas import GeoPandasStrategy
-from .google import GoogleMapsStrategy
 from .haversine import HaversineStrategy
-from .osm import OSMStrategy
+
+_OPTIONAL_STRATEGIES = {
+    "GeodesicStrategy": (".geodesic", "GeodesicStrategy"),
+    "GeoPandasStrategy": (".geopandas", "GeoPandasStrategy"),
+    "GoogleMapsStrategy": (".google", "GoogleMapsStrategy"),
+    "OSMStrategy": (".osm", "OSMStrategy"),
+}
+
+_METHOD_TO_ATTR = {
+    "gmaps": "GoogleMapsStrategy",
+    "gpd": "GeoPandasStrategy",
+    "osm": "OSMStrategy",
+    "gdsc": "GeodesicStrategy",
+    "hsd": "HaversineStrategy",
+    "ogd": "EuclideanStrategy",
+    "file": "FileStrategy",
+}
 
 
 def haversine_distance(
@@ -80,17 +93,7 @@ def compute_distance_matrix(coords: pd.DataFrame, method: str, **kwargs: Any) ->
     Returns:
         Distance matrix as a NumPy array.
     """
-    STRATEGIES = {
-        "gmaps": GoogleMapsStrategy,
-        "gpd": GeoPandasStrategy,
-        "osm": OSMStrategy,
-        "gdsc": GeodesicStrategy,
-        "hsd": HaversineStrategy,
-        "ogd": EuclideanStrategy,
-        "file": FileStrategy,
-    }
-
-    assert method in STRATEGIES, f"Method {method} not supported. usage: {list(STRATEGIES.keys())}"
+    assert method in _METHOD_TO_ATTR, f"Method {method} not supported. usage: {list(_METHOD_TO_ATTR.keys())}"
 
     # Caching Logic
     to_save = False
@@ -153,9 +156,9 @@ def compute_distance_matrix(coords: pd.DataFrame, method: str, **kwargs: Any) ->
                 matrix_f.write(",".join(map(str, coords["ID"].to_numpy())) + "\n")
             to_save = True
 
-    # Strategy Execution
-    strategy_cls = STRATEGIES[method]
-    strategy = strategy_cls()  # type: ignore[abstract, assignment]
+    # Strategy Execution. Optional geo/API backends are imported here so
+    # haversine_distance and Euclidean/file methods do not require the geo extra.
+    strategy = _strategy_class(method)()  # type: ignore[abstract, assignment]
 
     kwargs["verbose"] = to_save or kwargs.get("verbose", False)
 
@@ -198,6 +201,30 @@ def compute_distance_matrix(coords: pd.DataFrame, method: str, **kwargs: Any) ->
                 )
 
     return distance_matrix
+
+
+def _strategy_class(method: str) -> Any:
+    """Resolve a distance-method name to its strategy class."""
+    attr = _METHOD_TO_ATTR[method]
+    builtin = {
+        "HaversineStrategy": HaversineStrategy,
+        "EuclideanStrategy": EuclideanStrategy,
+        "FileStrategy": FileStrategy,
+    }
+    if attr in builtin:
+        return builtin[attr]
+    return __getattr__(attr)
+
+
+def __getattr__(name: str) -> Any:
+    """Import optional distance backends only when they are requested."""
+    if name in _OPTIONAL_STRATEGIES:
+        module_name, attr = _OPTIONAL_STRATEGIES[name]
+        module = __import__(f"{__name__}{module_name}", fromlist=[attr])
+        value = getattr(module, attr)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 __all__ = [

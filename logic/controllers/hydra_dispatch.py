@@ -31,6 +31,7 @@ cs.store(name="config", node=Config)
 
 _TRAINING_TASKS = frozenset({"train", "meta_train", "hpo"})
 _SIM_TASKS = frozenset({"test_sim", "hpo_sim", "sim_hpo"})
+_TASK_ALIASES = {"evaluation": "eval", "sim_hpo": "hpo_sim"}
 
 
 def _run_task(cfg: Config) -> float:
@@ -45,7 +46,7 @@ def _run_task(cfg: Config) -> float:
     Raises:
         ValueError: If ``cfg.task`` is not a recognised task name.
     """
-    task = cfg.task
+    task = _TASK_ALIASES.get(cfg.task, cfg.task)
 
     if task in _TRAINING_TASKS:
         from logic.controllers.jobs.pipeline_runner import run_training

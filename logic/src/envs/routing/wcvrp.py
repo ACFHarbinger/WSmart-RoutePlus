@@ -21,7 +21,7 @@ import torch
 from tensordict import TensorDict, TensorDictBase
 
 from logic.src.envs.base.base import RL4COEnvBase
-from logic.src.envs.base.ops import OpsMixin
+from logic.src.envs.base.ops import OpsMixin, as_batch_nodes
 from logic.src.envs.generators import WCVRPGenerator
 
 
@@ -230,17 +230,17 @@ class WCVRPEnv(RL4COEnvBase):
             The method calls super()._step_instance(tensordict) first to handle base VRP state updates
             (distance, tour, visited), then applies capacity-specific waste collection logic.
         """
-        action = tensordict["action"]
-        waste = tensordict["waste"]
+        action = as_batch_nodes(tensordict["action"])
+        tensordict["action"] = action
 
         # Core mechanics
         tensordict = super()._step_instance(tensordict)
 
         is_not_depot = action != 0
-        waste = tensordict["waste"]  # Re-fetch updated waste (OpsMixin might have touched it, but we already prepended)
+        waste = tensordict["waste"]
         waste_at_node = waste.gather(1, action.unsqueeze(-1)).squeeze(-1)
 
-        # Collect waste (clamped to max_waste if present)
+        # Collect waste (clamped to max_waste and remaining vehicle capacity)
         max_w = tensordict.get("max_waste", torch.tensor(1e9, device=tensordict.device))
         if max_w.dim() > 1 and max_w.shape[-1] == tensordict["visited"].shape[-1] - 1:
             max_w = torch.cat(
@@ -259,11 +259,10 @@ class WCVRPEnv(RL4COEnvBase):
             at_depot, torch.zeros_like(tensordict["current_load"]), tensordict["current_load"]
         )
 
-        # Clear bin (set waste to 0 after collection)
+        # Visiting a bin empties it. Overflow credit is still clamped to
+        # max_waste above; the residual fill is discarded so a served bin
+        # cannot keep counting as an overflow.
         tensordict["waste"].scatter_(1, action.unsqueeze(-1), 0)
-
-        # Update current node (overriding super which might used unsqueezed action)
-        tensordict["current_node"] = action.squeeze(-1) if action.dim() > 1 else action
 
         return tensordict
 
@@ -333,6 +332,8 @@ class WCVRPEnv(RL4COEnvBase):
         if mandatory is not None:
             # mandatory: (batch, num_nodes) boolean tensor
             # True = must visit this bin, False = optional
+            if mandatory.size(-1) == mask.size(-1) - 1:
+                mandatory = torch.cat([torch.zeros_like(mandatory[:, :1], dtype=torch.bool), mandatory], dim=1)
 
             # Pending mandatory bins: mandatory AND not yet visited AND within capacity
             pending_mandatory = mandatory & mask

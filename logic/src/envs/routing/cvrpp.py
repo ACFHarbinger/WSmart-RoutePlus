@@ -101,10 +101,11 @@ class CVRPPEnv(VRPPEnv):
 
         # CVRPP-specific: track *per-trip* remaining capacity, reset at each
         # depot return, separate from VRPP's all-time collected_waste total.
+        # Clamp so an illegal (unmasked) action cannot drive capacity negative.
         tensordict["remaining_capacity"] = torch.where(
             at_depot,
             tensordict["capacity"],
-            tensordict["remaining_capacity"] - waste_at_node,
+            (tensordict["remaining_capacity"] - waste_at_node).clamp(min=0),
         )
         tensordict["collected"] = tensordict["capacity"] - tensordict["remaining_capacity"]
 

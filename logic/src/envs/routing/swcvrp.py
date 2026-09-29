@@ -23,6 +23,7 @@ from typing import Optional, Union
 import torch
 from tensordict import TensorDict, TensorDictBase
 
+from logic.src.envs.base.ops import as_batch_nodes
 from logic.src.envs.generators import SCWCVRPGenerator
 from logic.src.envs.routing.wcvrp import WCVRPEnv
 
@@ -123,7 +124,8 @@ class SCWCVRPEnv(WCVRPEnv):
                 ``visited`` mask, ``current_node`` set to the selected action,
                 and the action appended to ``tour``.
         """
-        action = td["action"]
+        action = as_batch_nodes(td["action"])
+        td["action"] = action
         is_not_depot = action != 0
 
         # Collection logic for real waste
@@ -178,13 +180,17 @@ class SCWCVRPEnv(WCVRPEnv):
         not_at_depot = current != 0
         total_cost = cost + return_distance * not_at_depot.float()
 
-        # Overflows based on remaining REAL waste
+        # Overflows based on remaining REAL waste (customers only).
+        # Do not blindly unsqueeze: a per-node [B, N+1] tensor would become
+        # [B, N+1, 1] and broadcast against [B, N] incorrectly.
         max_waste = td.get("max_waste", torch.tensor(1.0, device=td.device))
-        if max_waste.dim() > 0:
+        real_waste = td["real_waste"][..., 1:]
+        if max_waste.dim() > 1 and max_waste.size(-1) == td["real_waste"].size(-1):
+            max_waste = max_waste[..., 1:]
+        elif max_waste.dim() == 1:
             max_waste = max_waste.unsqueeze(-1)
 
-        # In legacy, overflow is uncollected real waste >= max_waste
-        overflows = (td["real_waste"][..., 1:] >= max_waste).float().sum(-1)
+        overflows = (real_waste >= max_waste).float().sum(-1)
 
         # Store for logging
         td["real_collection"] = collection

@@ -29,6 +29,8 @@ Example:
     ...     break
 """
 
+from typing import Any
+
 # Import from utils.data.td_utils, not from a local td_utils
 from logic.src.utils.data.td_utils import td_kwargs, tensordict_collate_fn
 
@@ -44,7 +46,6 @@ from .simulation.npz_dataset import NumpyDictDataset
 from .simulation.pd_csv_dataset import PandasCsvDataset
 from .simulation.pd_xlsx_dataset import PandasExcelDataset
 from .simulation.sim_dataset import SimulationDataset
-from .web.html_sim_dataset import HtmlSimulationDataset
 
 __all__ = [
     "td_kwargs",
@@ -65,3 +66,17 @@ __all__ = [
     "HtmlSimulationDataset",
     "GenerativeDataset",
 ]
+
+
+def __getattr__(name: str) -> Any:
+    """Load the dashboard HTML dataset only when it is requested.
+
+    ``HtmlSimulationDataset`` pulls in the optional beautifulsoup4 crawler.
+    Importing it at module level made ``Bins`` and the pytest plugin chain
+    fail in environments that never parse dashboards.
+    """
+    if name == "HtmlSimulationDataset":
+        from .web.html_sim_dataset import HtmlSimulationDataset
+
+        return HtmlSimulationDataset
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
