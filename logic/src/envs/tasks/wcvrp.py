@@ -52,7 +52,7 @@ class WCVRP(BaseProblem):
                 None,
             )
 
-        waste_with_depot = torch.cat((torch.zeros_like(dataset["waste"][:, :1]), dataset["waste"]), 1)
+        waste_with_depot = WCVRP.get_waste_with_depot(dataset, pi)
         visited_mask = torch.zeros_like(waste_with_depot, dtype=torch.bool)
         visited_mask.scatter_(1, pi, True)
 
