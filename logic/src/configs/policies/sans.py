@@ -50,7 +50,8 @@ class SANSConfig:
         T_init: Initial temperature for simulated annealing.
         iterations_per_T: Number of iterations at each temperature level.
         alpha: Cooling rate (temperature multiplier).
-        combination: LAC combination type ('a' or 'b') for 'og' engine.
+        combination: Seven numbers read by position by the 'og' engine (iterations, initial
+            temperature, cooling factor, vehicle, load, route-difference and shift penalties).
         mandatory_selection: List of mandatory strategy config files.
         route_improvement: List of route improvement operations to apply.
     """
@@ -63,6 +64,6 @@ class SANSConfig:
     T_init: float = 75.0
     iterations_per_T: int = 5000
     alpha: float = 0.95
-    combination: Optional[Literal["a", "b"]] = None
+    combination: Optional[List[float]] = None
     mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

@@ -110,9 +110,11 @@ sans:
     engine: og
     # Execution backend: logic/src/policies/look_ahead_collection.py (legacy)
 
-    combination: a
-    # LAC tuning preset: "a" = conservative, "b" = aggressive
-    # Affects internal neighborhood operator weights
+    combination: [500, 75, 0.7, 0, 0.095, 0, 0]
+    # The seven numbers the legacy solver reads, by position (heuristics/anneal.py):
+    #   0 iterations, 1 initial temperature, 2 cooling factor, 3 vehicle penalty,
+    #   4 load penalty, 5 route-difference penalty, 6 shift penalty.
+    # WARNING: Do not modify unless reproducing exact published results.
 
     time_limit: 60
     # Maximum wall-clock seconds
@@ -123,18 +125,6 @@ sans:
 
     route_improvement: { "other/ri_cls.yaml": ["default"] }
     # No route improvement
-
-    # LAC-specific numeric parameters (legacy format)
-    # WARNING: Do not modify unless reproducing exact published results.
-    # Parameter meanings are undocumented in original code.
-    params:
-      - 500 # Parameter 0: Suspected to be initial iterations
-      - 75 # Parameter 1: Suspected to be initial temperature
-      - 0.7 # Parameter 2: Suspected to be cooling factor
-      - 0 # Parameter 3: Unknown (always 0)
-      - 0.095 # Parameter 4: Suspected to be acceptance threshold
-      - 0 # Parameter 5: Unknown (always 0)
-      - 0 # Parameter 6: Unknown (always 0)
 
   # ===========================================================================
   # ORIGINAL ENGINE: LAC (Look-Ahead Collection) - Variant B
@@ -145,8 +135,8 @@ sans:
     engine: og
     # Execution backend: logic/src/policies/look_ahead_collection.py (legacy)
 
-    combination: b
-    # LAC tuning preset: "b" = more iterations, same temperature
+    combination: [2000, 75, 0.7, 0, 0.095, 0, 0]
+    # Same positions as og_a; only the iteration count (position 0) differs.
 
     time_limit: 60
     # Maximum wall-clock seconds
@@ -158,16 +148,6 @@ sans:
     route_improvement: { "other/ri_cls.yaml": ["default"] }
     # No route improvement
 
-    # LAC-specific numeric parameters (legacy format)
-    params:
-      - 2000 # Parameter 0: Higher iteration count vs variant A
-      - 75 # Parameter 1: Same initial temperature
-      - 0.7 # Parameter 2: Same cooling factor
-      - 0 # Parameter 3: Unknown (always 0)
-      - 0.095 # Parameter 4: Same acceptance threshold
-      - 0 # Parameter 5: Unknown (always 0)
-      - 0 # Parameter 6: Unknown (always 0)
-
 # =============================================================================
 # BACKWARD COMPATIBILITY ALIASES
 # =============================================================================
@@ -177,37 +157,21 @@ sans:
 lac:
   a:
     engine: og
-    combination: a
+    combination: [500, 75, 0.7, 0, 0.095, 0, 0]
     time_limit: 60
     mandatory_selection: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
     # VRPP Settings
     vrpp: true
 
     route_improvement: []
-    params:
-      - 500
-      - 75
-      - 0.7
-      - 0
-      - 0.095
-      - 0
-      - 0
 
   b:
     engine: og
-    combination: b
+    combination: [2000, 75, 0.7, 0, 0.095, 0, 0]
     time_limit: 60
     mandatory_selection: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
     # VRPP Settings
     vrpp: true
 
     route_improvement: []
-    params:
-      - 2000
-      - 75
-      - 0.7
-      - 0
-      - 0.095
-      - 0
-      - 0
 # =============================================================================

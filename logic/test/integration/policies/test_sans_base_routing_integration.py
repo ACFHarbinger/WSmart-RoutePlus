@@ -142,6 +142,31 @@ def test_legacy_invalid_combination_reports_configuration_error(context):
         SANSPolicy().execute(**context)
 
 
+@pytest.mark.parametrize("path", [("sans", "og_a"), ("sans", "og_b"), ("lac", "a"), ("lac", "b")])
+def test_legacy_yaml_variants_carry_their_seven_numbers(path):
+    """og_a/og_b (and the lac aliases) used to set preset names and a 'params' list nothing read."""
+    from pathlib import Path
+
+    from omegaconf import OmegaConf
+
+    yaml_path = Path(__file__).resolve().parents[3] / "configs" / "policies" / "policy_sans.yaml"
+    variant = OmegaConf.load(yaml_path)[path[0]][path[1]]
+    assert "params" not in variant
+    params = SANSParams.from_config(variant)
+    assert params.engine == "og"
+    assert isinstance(params.combination, tuple) and len(params.combination) == 7
+    assert params.combination[1:] == (75.0, 0.7, 0.0, 0.095, 0.0, 0.0)
+
+
+def test_legacy_engine_runs_with_an_omegaconf_list_combination(context):
+    from omegaconf import OmegaConf
+
+    context["config"] = OmegaConf.create(context["config"])
+    context["config"].sans.engine = "og"
+    routes, _, _, _, _ = SANSPolicy().execute(**context)
+    assert set(context["mandatory"]).issubset(routes)
+
+
 def test_collinear_overlap_is_not_a_crossing():
     from logic.src.policies.route_construction.meta_heuristics.simulated_annealing_neighborhood_search.common.routes import (
         _find_crossed_arcs,
