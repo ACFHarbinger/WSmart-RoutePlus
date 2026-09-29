@@ -221,10 +221,10 @@ sim:
     - rts: ${p.rts.rts}
     - sa: ${p.sa.sa}
     - shh: ${p.shh.shh}
-    - sans: ${p.sans.new}
-    - sans_new: ${p.sans.new}
-    - sans_og_a: ${p.sans.og_a}
-    - sans_og_b: ${p.sans.og_b}
+    - sans: ${p.sans.sans.new}
+    - sans_new: ${p.sans.sans.new}
+    - sans_og_a: ${p.sans.sans.og_a}
+    - sans_og_b: ${p.sans.sans.og_b}
     - sca: ${p.sca.sca}
     - sisr: ${p.sisr.sisr}
     - slc: ${p.slc.slc}
