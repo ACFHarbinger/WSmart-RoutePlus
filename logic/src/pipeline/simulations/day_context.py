@@ -35,6 +35,7 @@ import pandas as pd
 import torch
 
 from logic.src.constants import DAY_METRICS
+from logic.src.pipeline.simulations.solver_status import current_solver_status, reset_solver_status
 
 
 @functools.lru_cache(maxsize=1)
@@ -542,6 +543,7 @@ class SimulationDayContext(Mapping):
     mandatory: Optional[List[int]] = None
     time: float = 0.0
     time_spent: float = 0.0
+    solver_status: str = ""
 
     @property
     def field_names(self):
@@ -652,6 +654,73 @@ def set_daily_waste(
     return move_to(model_data, device, non_blocking=True)
 
 
+def resolve_solver_status(
+    published: Optional[str],
+    tour: Optional[List[int]],
+    error: Optional[BaseException] = None,
+) -> str:
+    """Choose the status string written for one day.
+
+    A status the solver already published wins. Otherwise an exception is
+    named, an empty tour is ``empty_tour``, and a returned route is ``ok``.
+
+    Args:
+        published: Status noted by the constructor, if any.
+        tour: Tour returned for the day.
+        error: Exception that aborted the day, if the solver raised.
+
+    Returns:
+        The status token stored on the daily record.
+    """
+    if published:
+        return str(published)
+    if error is not None:
+        return f"{type(error).__name__}: {error}"
+    if not tour or len(tour) <= 2:
+        return "empty_tour"
+    return "ok"
+
+
+def record_aborted_day(context: Any, error: BaseException) -> Dict[str, Any]:
+    """Write one daily record before a constructor exception leaves the day.
+
+    The sample still fails. The record keeps the mandatory set and the solver
+    status so an empty or aborted day is not a blank log line.
+
+    Args:
+        context: The day context, used as a mapping.
+        error: The exception that aborted the day.
+
+    Returns:
+        The daily record stored on ``context["daily_log"]``.
+    """
+    status = resolve_solver_status(
+        context.get("solver_status") or current_solver_status(),
+        context.get("tour"),
+        error,
+    )
+    context["solver_status"] = status
+    coordinates = context.get("coords")
+    if coordinates is None:
+        coordinates = pd.DataFrame({"ID": []})
+    dlog = get_daily_results(
+        total_collected=float(context.get("total_collected") or 0.0),
+        ncol=int(context.get("ncol") or 0),
+        cost=float(context.get("cost") or 0.0),
+        tour=list(context.get("tour") or [0]),
+        day=int(context.get("day") or 0),
+        new_overflows=int(context.get("new_overflows") or 0),
+        sum_lost=float(context.get("sum_lost") or 0.0),
+        coordinates=coordinates,
+        profit=float(context.get("profit") or 0.0),
+        time=float(context.get("time") or 0.0),
+        mandatory_nodes=context.get("mandatory"),
+        solver_status=status,
+    )
+    context["daily_log"] = dlog
+    return dlog
+
+
 def get_daily_results(
     total_collected: float,
     ncol: int,
@@ -665,7 +734,8 @@ def get_daily_results(
     time: float,
     mandatory_nodes: Optional[List[int]] = None,
     time_spent: Optional[float] = None,
-) -> Dict[str, Union[int, float, List[Union[int, str]]]]:
+    solver_status: Optional[str] = None,
+) -> Dict[str, Any]:
     """Formats raw simulation outputs into structured daily log dictionary.
 
     Args:
@@ -682,6 +752,7 @@ def get_daily_results(
         mandatory_nodes: Optional list of bin indices selected as mandatory
             before routing (iloc-based). Resolved to real IDs.
         time_spent: Optional total shift time spent on route and services (h).
+        solver_status: Backend status for this day. An empty tour keeps it.
 
     Returns:
         Dictionary containing formatted daily metrics and the route.
@@ -700,6 +771,9 @@ def get_daily_results(
         except (IndexError, KeyError, TypeError, ValueError):
             mandatory_ids.append(idx)
     dlog["mandatory_nodes"] = mandatory_ids
+    # Kept on the empty-tour branch below. The stored logger used to drop the
+    # mandatory set whenever the tour had length at most two.
+    dlog["solver_status"] = resolve_solver_status(solver_status, tour)
 
     if tour and len(tour) > 2:
         reward = total_collected - new_overflows - cost
@@ -732,6 +806,10 @@ def run_day(context: SimulationDayContext) -> SimulationDayContext:
     Returns:
         The updated context after executing all daily actions.
     """
+    # Clear the preceding day before filling/selection can fail.
+    reset_solver_status()
+    context.solver_status = ""
+
     # Compute policy-specific seed for RNG isolation
     canonical_name = get_canonical_policy_name(context.policy_name)
     name_hash = zlib.adler32(canonical_name.encode()) & 0xFFFFFFFF
@@ -782,8 +860,17 @@ def run_day(context: SimulationDayContext) -> SimulationDayContext:
     for step, command in enumerate(commands):
         if step == log_step:
             context["time"] = policy_time
+            if not context.get("solver_status"):
+                context["solver_status"] = resolve_solver_status(current_solver_status(), context.get("tour"))
         start = time.perf_counter()
-        command.execute(cast(Dict[str, Any], context))
+        try:
+            command.execute(cast(Dict[str, Any], context))
+        except Exception as exc:
+            # Log the day, then let the sample fail. An infeasible constructor
+            # must not erase the mandatory set that was selected this morning.
+            if step != log_step and context.daily_log is None:
+                record_aborted_day(context, exc)
+            raise
         if step in policy_steps:
             policy_time += time.perf_counter() - start
 

@@ -814,6 +814,26 @@ def display_simulation_summary_table(  # noqa: C901
         console.print(table)
 
 
+def daily_row_is_visible(km_val: float, mandatory: Any, solver_status: Any) -> bool:
+    """Return whether one day belongs in the printed daily table.
+
+    Days that travelled are always shown. A day that did not travel is shown
+    when it still has a mandatory set or a solver status other than a skip or
+    a plain success, so an empty tour does not erase that evidence.
+
+    Args:
+        km_val: Distance recorded for the day.
+        mandatory: Mandatory bin ids recorded for the day.
+        solver_status: Solver status recorded for the day.
+
+    Returns:
+        True when the row should be printed.
+    """
+    if km_val > 0 or mandatory:
+        return True
+    return solver_status not in (None, "", "ok", "skipped", 0)
+
+
 def display_per_policy_simulation_summary(  # noqa: C901
     pol_name: str,
     sample_id: int,
@@ -856,6 +876,7 @@ def display_per_policy_simulation_summary(  # noqa: C901
 
             columns = [
                 ("Day", "day", "cyan"),
+                ("Status", "solver_status", "magenta"),
                 ("Mandatory", "mandatory_nodes", "yellow"),
                 ("Tour", "tour", "white"),
                 ("Profit", "profit", "green"),
@@ -872,60 +893,70 @@ def display_per_policy_simulation_summary(  # noqa: C901
                 columns.append(("ShiftTime", "time_spent", "white"))
 
             for label, _, style in columns:
-                table.add_column(label, style=style, justify="right" if label not in ("Tour", "Mandatory") else "left")
+                table.add_column(
+                    label,
+                    style=style,
+                    justify="right" if label not in ("Tour", "Mandatory", "Status") else "left",
+                )
 
             # Use km list length as the authoritative iteration count
             kms = daily_log.get("km", [])
+            mandatory_rows = daily_log.get("mandatory_nodes", [])
+            status_rows = daily_log.get("solver_status", [])
 
             has_active_days = False
             for i, km_val in enumerate(kms):
-                # Only show days where a route was performed (km > 0)
-                if km_val > 0:
-                    has_active_days = True
-                    row = []
-                    for _, key, _ in columns:
-                        if key == "day" or key is None:
-                            # "Day" column — synthetic 1-based index (not stored in daily_log)
-                            row.append(str(i + 1))
-                            continue
-                        vals = daily_log.get(key, [])
-                        val = vals[i] if i < len(vals) else None
+                mandatory = mandatory_rows[i] if i < len(mandatory_rows) else None
+                status = status_rows[i] if i < len(status_rows) else None
+                # A zero-km day still carries the mandatory set and the solver
+                # status. Hiding it is what made empty tours look like "no selection".
+                if not daily_row_is_visible(km_val, mandatory, status):
+                    continue
+                has_active_days = True
+                row = []
+                for _, key, _ in columns:
+                    if key == "day" or key is None:
+                        # "Day" column — synthetic 1-based index (not stored in daily_log)
+                        row.append(str(i + 1))
+                        continue
+                    vals = daily_log.get(key, [])
+                    val = vals[i] if i < len(vals) else None
 
-                        if key == "mandatory_nodes":
-                            mand_str = str(val) if val else "[]"
-                            if len(mand_str) > 40:
-                                mand_str = mand_str[:37] + "..."
-                            row.append(mand_str)
-                        elif key == "tour":
-                            tour_str = str(val) if val is not None else "[]"
-                            if len(tour_str) > 50:
-                                tour_str = tour_str[:47] + "..."
-                            row.append(tour_str)
-                        elif key == "profit":
-                            if val is not None:
-                                color = "green" if val > 0 else "red"
-                                row.append(f"[{color}]${val:,.2f}[/]")
-                            else:
-                                row.append("-")
-                        elif key in ["kg", "kg_lost"]:
-                            row.append(f"{val:,.1f}kg" if val is not None else "0.0kg")
-                        elif key == "km":
-                            row.append(f"{val:,.1f}km" if val is not None else "0.0km")
-                        elif key == "kg/km":
-                            row.append(f"{val:.2f}" if val is not None else "0.00")
-                        elif key == "overflows":
-                            if val is not None:
-                                color = "red" if val > 0 else "white"
-                                row.append(f"[{color}]{int(val)}[/]")
-                            else:
-                                row.append("0")
-                        elif key == "ncol":
-                            row.append(f"{int(val)}" if val is not None else "0")
-                        elif key == "time_spent":
-                            row.append(f"{val:.2f}h" if val is not None else "0.00h")
+                    if key == "mandatory_nodes":
+                        mand_str = str(val) if val else "[]"
+                        if len(mand_str) > 40:
+                            mand_str = mand_str[:37] + "..."
+                        row.append(mand_str)
+                    elif key == "tour":
+                        tour_str = str(val) if val is not None else "[]"
+                        if len(tour_str) > 50:
+                            tour_str = tour_str[:47] + "..."
+                        row.append(tour_str)
+                    elif key == "profit":
+                        if val is not None:
+                            color = "green" if val > 0 else "red"
+                            row.append(f"[{color}]${val:,.2f}[/]")
                         else:
-                            row.append(str(val))
-                    table.add_row(*row)
+                            row.append("-")
+                    elif key in ["kg", "kg_lost"]:
+                        row.append(f"{val:,.1f}kg" if val is not None else "0.0kg")
+                    elif key == "km":
+                        row.append(f"{val:,.1f}km" if val is not None else "0.0km")
+                    elif key == "kg/km":
+                        row.append(f"{val:.2f}" if val is not None else "0.00")
+                    elif key == "overflows":
+                        if val is not None:
+                            color = "red" if val > 0 else "white"
+                            row.append(f"[{color}]{int(val)}[/]")
+                        else:
+                            row.append("0")
+                    elif key == "ncol":
+                        row.append(f"{int(val)}" if val is not None else "0")
+                    elif key == "time_spent":
+                        row.append(f"{val:.2f}h" if val is not None else "0.00h")
+                    else:
+                        row.append(str(val))
+                table.add_row(*row)
 
             if has_active_days:
                 console.print("\n")

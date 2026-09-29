@@ -177,12 +177,16 @@ def _run_ortools_tcf_optimizer(  # noqa: C901
     objective.SetMaximization()
 
     # 5. Optimization & Parsing
+    from logic.src.pipeline.simulations.solver_status import format_backend_status, note_solver_status
+
     status = solver.Solve()
+    note_solver_status(format_backend_status("ortools", status))
     if status == pywraplp.Solver.INFEASIBLE and forced:
         print(f"[WARN] OR-Tools TCF: {len(forced)} forced visits are infeasible together; re-solving without forcing.")
         for ct in forced:
             ct.SetBounds(-solver.infinity(), solver.infinity())
         status = solver.Solve()
+        note_solver_status(format_backend_status("ortools", status), append=True)
     if status == pywraplp.Solver.INFEASIBLE:
         raise RuntimeError("SWC-TCF model is infeasible (OR-Tools).")
 

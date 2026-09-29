@@ -250,11 +250,15 @@ def _run_pyomo_tcf_optimizer(  # noqa: C901
         # A time limit hit before any incumbent reports maxTimeLimit with no solution to load.
         return status_ok and len(getattr(res, "solution", [])) > 0
 
+    from logic.src.pipeline.simulations.solver_status import format_backend_status, note_solver_status
+
     results = opt.solve(model, tee=False, load_solutions=False)
+    note_solver_status(format_backend_status("pyomo", results.solver.termination_condition))
     if results.solver.termination_condition == pyo.TerminationCondition.infeasible and len(model.forced_visits) > 0:
         print(f"[WARN] Pyomo TCF: {len(model.forced_visits)} forced visits are infeasible together; re-solving without forcing.")
         model.forced_visits.deactivate()
         results = opt.solve(model, tee=False, load_solutions=False)
+        note_solver_status(format_backend_status("pyomo", results.solver.termination_condition), append=True)
     if results.solver.termination_condition == pyo.TerminationCondition.infeasible:
         raise RuntimeError(f"SWC-TCF model is infeasible (Pyomo/{solver_id}).")
 

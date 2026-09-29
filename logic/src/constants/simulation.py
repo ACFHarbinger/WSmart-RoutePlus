@@ -102,7 +102,8 @@ SIM_METRICS: List[str] = METRICS + ["days"]
 # Additional fields:
 # - mandatory_nodes: List[int] (bin IDs selected as mandatory before routing)
 # - tour: List[int] (node sequence, e.g., [0, 5, 12, 8, 0] for depot→5→12→8→depot)
-DAY_METRICS: List[str] = METRICS + ["mandatory_nodes", "tour"]
+# - solver_status: str (backend status for this day, kept when the tour is empty)
+DAY_METRICS: List[str] = METRICS + ["mandatory_nodes", "tour", "solver_status"]
 
 # Neural network training loss components
 # Used in: RL training loops, logged to WandB/TensorBoard

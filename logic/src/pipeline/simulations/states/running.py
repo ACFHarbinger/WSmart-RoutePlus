@@ -96,7 +96,13 @@ class RunningState(SimState):
             logger.info(f"Simulation loop for policy {ctx.pol_name} complete. Processed {graph.n_days} days.")
             ctx.transition_to(FinishingState())
         except CheckpointError as e:
-            ctx.result = e.error_result
+            ctx.result = dict(e.error_result)
+            status_rows = (ctx.daily_log or {}).get("solver_status") or []
+            mandatory_rows = (ctx.daily_log or {}).get("mandatory_nodes") or []
+            if status_rows:
+                ctx.result["solver_status"] = status_rows[-1]
+            if mandatory_rows:
+                ctx.result["mandatory_nodes"] = mandatory_rows[-1]
             if ctx.result:
                 final_simulation_summary(ctx.result, ctx.pol_name, graph.n_samples)
             ctx.transition_to(None)
@@ -124,7 +130,14 @@ class RunningState(SimState):
             current_policy_config = self._get_current_policy_config(ctx)
             day_context = self._create_day_context(ctx, day, current_policy_config, realtime_log_path)
 
-            day_context = run_day(day_context)
+            try:
+                day_context = run_day(day_context)
+            except Exception:
+                # The day loop logged the aborted day before raising. Keep that
+                # row so the failure result still carries the mandatory set.
+                if day_context.daily_log is not None:
+                    self._update_metrics(ctx, day, day_context.output_dict, day_context.daily_log)
+                raise
             ctx.execution_time = time.perf_counter() - ctx.tic
 
             self._update_ctx_from_day_context(ctx, day_context)

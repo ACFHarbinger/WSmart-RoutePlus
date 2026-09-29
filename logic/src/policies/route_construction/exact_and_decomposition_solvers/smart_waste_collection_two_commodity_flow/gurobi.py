@@ -187,13 +187,17 @@ def _run_gurobi_optimizer(  # noqa: C901
 
     profit = 0.0
     cost = 0.0
+    from logic.src.pipeline.simulations.solver_status import format_backend_status, note_solver_status
+
     mdl.optimize()
+    note_solver_status(format_backend_status("gurobi", mdl.Status))
     if mdl.Status in (GRB.INFEASIBLE, GRB.INF_OR_UNBD) and forced:
         # Forcing every mandatory / over-psi bin can exceed the fleet's capacity.
         # Collect what is feasible instead of returning an empty day.
         print(f"[WARN][VRPP-Gurobi] {len(forced)} forced visits are infeasible together; re-solving without forcing.")
         mdl.remove(forced)
         mdl.optimize()
+        note_solver_status(format_backend_status("gurobi", mdl.Status), append=True)
     if mdl.Status in (GRB.INFEASIBLE, GRB.INF_OR_UNBD):
         raise RuntimeError(f"SWC-TCF model is infeasible (Gurobi status {mdl.Status}).")
     if mdl.SolCount == 0:

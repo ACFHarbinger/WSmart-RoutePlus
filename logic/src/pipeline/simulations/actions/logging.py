@@ -63,6 +63,7 @@ class LogAction(SimulationAction):
             time,
             mandatory_nodes=context.get("mandatory"),
             time_spent=time_spent,
+            solver_status=context.get("solver_status"),
         )
 
         bins = context["bins"]
@@ -103,7 +104,9 @@ class LogAction(SimulationAction):
         table.add_row("Profit", f"${profit:,.2f}")
         table.add_row("Collected", f"{total_collected:,.2f} kg")
         table.add_row("Bins Collected", str(ncol))
-        table.add_row("Mandatory Bins", str(len(context.get("mandatory", [])) if context.get("mandatory") else 0))
+        table.add_row("Mandatory Bins", str(len(dlog.get("mandatory_nodes") or [])))
+        table.add_row("Mandatory Set", str(dlog.get("mandatory_nodes", [])))
+        table.add_row("Solver Status", str(dlog.get("solver_status", "")))
         table.add_row("Distance", f"{km:.2f} km")
         table.add_row("Efficiency", f"{dlog.get('kg/km', 0):.2f} kg/km")
         if time_spent is not None and (str(context.get("problem", "")).lower() == "ctop" or time_spent > 0):

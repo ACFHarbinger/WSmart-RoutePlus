@@ -20,6 +20,8 @@ import numpy as np
 import torch
 from omegaconf import DictConfig, OmegaConf
 
+from logic.src.pipeline.simulations.day_context import resolve_solver_status
+from logic.src.pipeline.simulations.solver_status import current_solver_status, reset_solver_status
 from logic.src.policies.route_construction.base import RouteConstructorFactory, RouteConstructorRegistry
 
 from .base import SimulationAction, _flatten_config
@@ -108,6 +110,9 @@ class RouteConstructionAction(SimulationAction):
                     f"Unknown policy '{solver_key}' (from '{full_policy}'). Registered policies: {sorted(registered)}"
                 )
 
+        # A status noted on a previous day must not be copied onto this one.
+        reset_solver_status()
+
         # If no nodes to collect, skip policy and return to depot
         # VRPP policies (vrpp: true) let the solver decide which nodes to visit — don't skip them
         mandatory = context.get("mandatory", [])
@@ -115,6 +120,7 @@ class RouteConstructionAction(SimulationAction):
             context["tour"] = [0, 0]
             context["cost"] = 0.0
             context["extra_output"] = None
+            context["solver_status"] = "skipped"
             return
 
         try:
@@ -190,6 +196,7 @@ class RouteConstructionAction(SimulationAction):
             context["cost"] = raw_km
             context["extra_output"] = extra_output
             context["time"] = elapsed_time  # construction only; run_day replaces it with the full policy time
+            context["solver_status"] = resolve_solver_status(current_solver_status(), tour)
             # Preserve updated multi-day state for the next simulation day
             context["multi_day_context"] = updated_multi_day
 
@@ -197,5 +204,10 @@ class RouteConstructionAction(SimulationAction):
             if "regular" in full_policy:
                 context["cached"] = extra_output
 
-        except ValueError as e:
-            raise ValueError(f"Failed to load policy adapter for '{solver_key}': {e}") from e
+        except Exception as e:
+            context["solver_status"] = resolve_solver_status(current_solver_status(), context.get("tour"), e)
+            if context.get("tour") is None:
+                context["tour"] = [0, 0]
+            if isinstance(e, ValueError):
+                raise ValueError(f"Failed to load policy adapter for '{solver_key}': {e}") from e
+            raise
