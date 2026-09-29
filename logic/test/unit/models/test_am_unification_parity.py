@@ -464,3 +464,5 @@ def test_legacy_factory_preserves_activation_defaults_and_explicit_overrides():
             assert any(isinstance(module, torch.nn.GELU) for module in model.encoder.modules())
     canonical = AttentionModel(embed_dim=8, hidden_dim=16, problem="vrpp", n_heads=2, n_encode_layers=1)
     assert any(isinstance(module, torch.nn.ReLU) for module in canonical.encoder.modules())
+
+

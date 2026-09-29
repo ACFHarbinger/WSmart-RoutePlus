@@ -407,7 +407,6 @@ class AttentionModel(AttentionModelPolicy, DecodingMixin):
             strategy=strat,
             return_pi=return_pi,
             expert_pi=expert_pi,
-            **kwargs,
         )
 
         if isinstance(out_dec, tuple):
