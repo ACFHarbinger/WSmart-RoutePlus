@@ -18,6 +18,7 @@ from dataclasses import asdict, fields, is_dataclass
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
+from omegaconf import DictConfig, ListConfig, OmegaConf
 
 from logic.src.interfaces.context.search_context import ConstructionMetrics, SearchContext, merge_context
 from logic.src.interfaces.route_constructor import IRouteConstructor
@@ -41,13 +42,17 @@ def _flatten_raw_config(source: Any) -> Dict[str, Any]:
     """
 
     result: Dict[str, Any] = {}
-    if isinstance(source, list):
+    # The simulator hands sections over as OmegaConf nodes; a ListConfig 'custom' list is not a
+    # ``list`` and used to be dropped, leaving the policy on its dataclass defaults.
+    if isinstance(source, (list, ListConfig)):
         for item in source:
             result.update(_flatten_raw_config(item))
     elif hasattr(source, "items"):
         for k, v in source.items():
-            if k in ("gurobi", "ortools", "custom", "params") and isinstance(v, (dict, list)):
+            if k in ("gurobi", "ortools", "custom", "params") and isinstance(v, (dict, list, DictConfig, ListConfig)):
                 result.update(_flatten_raw_config(v))
+            elif isinstance(v, (DictConfig, ListConfig)):
+                result[k] = OmegaConf.to_container(v, resolve=True)
             else:
                 result[k] = v
     return result
@@ -137,9 +142,21 @@ class BaseRoutingPolicy(PolicyVizMixin, IRouteConstructor):
         if config_cls is None:
             return None, None
 
+        valid_fields = {f.name for f in fields(config_cls)}
+
         # Extract policy-specific section
         config_key = cls._get_config_key(cls)  # type: ignore[arg-type]
-        policy_section = raw_config.get(config_key, raw_config)
+        policy_section = raw_config.get(config_key)
+        if policy_section is None:
+            # The simulator keys a policy's section by its test_sim entry name (e.g. 'aco_hh',
+            # 'sans_og_a'), which need not match config_key; use that single section rather
+            # than silently falling back to the dataclass defaults.
+            sections = [
+                v
+                for k, v in raw_config.items()
+                if k != "seed" and k not in valid_fields and isinstance(v, (dict, list, DictConfig, ListConfig))
+            ]
+            policy_section = sections[0] if len(sections) == 1 else raw_config
 
         # Flatten nested structures (custom lists, engine dicts)
         flat = _flatten_raw_config(policy_section)
@@ -149,7 +166,6 @@ class BaseRoutingPolicy(PolicyVizMixin, IRouteConstructor):
             flat["seed"] = raw_config["seed"]
 
         # Filter to only fields the dataclass accepts
-        valid_fields = {f.name for f in fields(config_cls)}
         # Explicitly allow 'seed' even if not in the dataclass
         valid_fields.add("seed")
         filtered = {k: v for k, v in flat.items() if k in valid_fields}

@@ -223,10 +223,8 @@ sim:
     - shh: ${p.shh.shh}
     - sans: ${p.sans.sans.new}
     - sans_new: ${p.sans.sans.new}
-    # The legacy 'og' engine needs a seven-value numeric combination; og_a/og_b set the preset
-    # names 'a'/'b' (the yaml 'params' list is not read), so they raise. Pending an owner ruling (#90).
-    # - sans_og_a: ${p.sans.sans.og_a}
-    # - sans_og_b: ${p.sans.sans.og_b}
+    - sans_og_a: ${p.sans.sans.og_a}
+    - sans_og_b: ${p.sans.sans.og_b}
     - sca: ${p.sca.sca}
     - sisr: ${p.sisr.sisr}
     - slc: ${p.slc.slc}
