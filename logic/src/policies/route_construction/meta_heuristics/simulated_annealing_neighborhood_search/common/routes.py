@@ -80,7 +80,7 @@ def _find_crossed_arcs(route, points, route_idx, cache):
             F_2 = route[j + 1]
             line2 = LineString([(points[I_2][0], points[I_2][1]), (points[F_2][0], points[F_2][1])])
 
-            if line1.intersects(line2):
+            if line1.crosses(line2):
                 arc1 = [I_1, F_1]
                 arc2 = [I_2, F_2]
                 arc_pair = [arc1, arc2]
@@ -157,7 +157,12 @@ def uncross_arcs_in_routes(
         current_crossings = crossed_arcs_cache.get(idx, [])
         relevant_crossings = _remove_invalid_crossings(current_crossings, points)
 
+        seen_routes = set()
         while relevant_crossings:
+            signature = tuple(route)
+            if signature in seen_routes:
+                break
+            seen_routes.add(signature)
             # Perform swap on the first valid crossing
             first_crossing = relevant_crossings[0]
             swap_bin_1 = first_crossing[0][1]

@@ -10,7 +10,7 @@ Attributes:
     move_n_2_routes_consecutive: Move n consecutive bins from one route to another.
 
 Example:
-    >>> from logic.src.policies.route_construction.meta_heuristics.simulated_annealing_neighborhood_search.operators.inter_move import move_2_routes
+    >>> from logic.src.policies.helpers.operators.perturbation_shaking.sans.inter_move import move_2_routes
     >>> routes = [[0, 1, 2, 0], [0, 3, 4, 0]]
     >>> move_2_routes(routes, rng)
     >>> print(routes)

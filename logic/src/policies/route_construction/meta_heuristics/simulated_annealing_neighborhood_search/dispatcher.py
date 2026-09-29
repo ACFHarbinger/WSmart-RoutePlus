@@ -195,18 +195,24 @@ def execute_og(
     Q, R, C, area_values = policy._load_area_params(area, waste_type, config)
     policy._log_solver_params(area_values, kwargs)
 
+    # The base contract uses percentage points for fill/capacity and euros
+    # per percentage point for revenue. Legacy helpers multiply E*B; identity
+    # factors preserve these resolved units without applying density twice.
     values = {
         "Q": Q,
         "R": R,
-        "B": area_values.get("B", 0),
+        "B": 1.0,
         "C": C,
-        "V": params.V,
+        "V": 1.0,
+        "E": 1.0,
+        "vehicle_capacity": Q,
         "shift_duration": params.shift_duration,
         "perc_bins_can_overflow": params.perc_bins_can_overflow,
     }
 
-    # mandatory bins are 0-based, find_solutions expects 1-based
-    mandatory_1 = [b + 1 for b in mandatory]
+    # mandatory bins are already 1-based global IDs from the base class
+    # find_solutions expects 1-based IDs, so no conversion needed
+    mandatory_1 = list(mandatory)
 
     # Handle case where new_data might not be passed
     if new_data is None:
@@ -222,28 +228,35 @@ def execute_og(
         depot_row = pd.DataFrame([{"#bin": 0, "Stock": 0.0, "Accum_Rate": 0.0}])
         new_data = pd.concat([depot_row, new_data], ignore_index=True)
 
+    combination = params.combination
+    if not isinstance(combination, (list, tuple)) or len(combination) != 7:
+        raise ValueError("Legacy SANS requires a seven-value numeric combination, not a preset name")
+
     points = create_points(new_data, coords)
 
     rng = random.Random(kwargs.get("seed", params.seed))
     np_rng = np.random.default_rng(kwargs.get("seed", params.seed))
-    try:
-        res, _, _ = find_solutions(
-            new_data,
-            coords,
-            distance_matrix,
-            params.combination,
-            mandatory_1,
-            values,
-            bins.n,
-            points,
-            time_limit=params.time_limit,
-            rng=rng,
-            np_rng=np_rng,
-        )
-    except Exception:
-        return [0, 0], 0.0, 0.0, kwargs.get("search_context"), kwargs.get("multi_day_context")
+    res, _, _ = find_solutions(
+        new_data,
+        coords,
+        distance_matrix,
+        params.combination,
+        mandatory_1,
+        values,
+        bins.n,
+        points,
+        time_limit=params.time_limit,
+        rng=rng,
+        np_rng=np_rng,
+    )
 
-    tour = res[0] if res else [0, 0]
+    # Preserve every route, including mandatory visits in later vehicles.
+    tour = [0]
+    for route in res or []:
+        tour.extend(node for node in route if node != 0)
+        tour.append(0)
+    if len(tour) == 1:
+        tour.append(0)
     cost = get_route_cost(distance_matrix, tour)
 
     # Compute profit: collected revenue - distance cost

@@ -11,7 +11,7 @@ Attributes:
     between two different routes.
 
 Example:
-    >>> from logic.src.policies.route_construction.meta_heuristics.simulated_annealing_neighborhood_search.operators.inter_swap import swap_2_routes
+    >>> from logic.src.policies.helpers.operators.perturbation_shaking.sans.inter_swap import swap_2_routes
     >>> routes = [[0, 1, 2, 0], [0, 3, 4, 0]]
     >>> swap_2_routes(routes, rng)
     >>> print(routes)

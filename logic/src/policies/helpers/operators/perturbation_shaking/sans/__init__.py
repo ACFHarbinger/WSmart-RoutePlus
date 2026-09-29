@@ -16,7 +16,7 @@ Attributes:
     swap_n_route_random: Swap n random bins between two different routes.
 
 Example:
-    >>> from logic.src.policies.route_construction.meta_heuristics.simulated_annealing_neighborhood_search.operators import move_1_route, move_2_routes, move_n_2_routes_consecutive, move_n_2_routes_random, move_n_route_consecutive, move_n_route_random, swap_1_route, swap_2_routes, swap_n_2_routes_consecutive, swap_n_2_routes_random, swap_n_route_consecutive, swap_n_route_random
+    >>> from logic.src.policies.helpers.operators.perturbation_shaking.sans import move_1_route, move_2_routes, move_n_2_routes_consecutive, move_n_2_routes_random, move_n_route_consecutive, move_n_route_random, swap_1_route, swap_2_routes, swap_n_2_routes_consecutive, swap_n_2_routes_random, swap_n_route_consecutive, swap_n_route_random
     >>> routes = [[0, 1, 2, 0], [0, 3, 4, 0]]
     >>> move_1_route(routes, rng)
     >>> print(routes)

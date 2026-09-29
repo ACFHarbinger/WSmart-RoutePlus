@@ -168,7 +168,7 @@ def run_annealing_loop(
                     )
             else:
                 T = T_initial / (i**T_param)
-                if math.exp(delta / T) >= np.random.uniform(0, 1):
+                if T > 0 and math.exp(delta / T) >= np_rng.uniform(0, 1):
                     previous_sol = deepcopy(routes_list)
                     previous_sol_profit = current_sol_profit
                 else:

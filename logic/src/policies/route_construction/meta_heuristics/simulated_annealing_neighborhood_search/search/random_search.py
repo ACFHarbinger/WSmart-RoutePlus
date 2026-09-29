@@ -15,10 +15,7 @@ import random
 
 import numpy as np
 
-from logic.src.policies.route_construction.meta_heuristics.simulated_annealing_neighborhood_search.common.routes import (
-    rearrange_part_route,
-)
-from logic.src.policies.route_construction.meta_heuristics.simulated_annealing_neighborhood_search.operators.move import (
+from logic.src.policies.helpers.operators.perturbation_shaking.sans.move import (
     move_1_route,
     move_2_routes,
     move_n_2_routes_consecutive,
@@ -26,13 +23,16 @@ from logic.src.policies.route_construction.meta_heuristics.simulated_annealing_n
     move_n_route_consecutive,
     move_n_route_random,
 )
-from logic.src.policies.route_construction.meta_heuristics.simulated_annealing_neighborhood_search.operators.swap import (
+from logic.src.policies.helpers.operators.perturbation_shaking.sans.swap import (
     swap_1_route,
     swap_2_routes,
     swap_n_2_routes_consecutive,
     swap_n_2_routes_random,
     swap_n_route_consecutive,
     swap_n_route_random,
+)
+from logic.src.policies.route_construction.meta_heuristics.simulated_annealing_neighborhood_search.common.routes import (
+    rearrange_part_route,
 )
 from logic.src.policies.route_construction.meta_heuristics.simulated_annealing_neighborhood_search.select import (
     add_bin,
@@ -98,36 +98,11 @@ def local_search(  # noqa: C901
         "Rearrange part of 1 route",
     ]  #'Remove bins' #'Insert bins'
 
-    chosen_procedure = np_rng.choice(
-        procedures,
-        1,
-        p=[
-            1 / 19 + 4.440892098500626e-16,
-            1 / 19,
-            1 / 19,
-            1 / 19,
-            1 / 19,
-            1 / 19,
-            1 / 19,
-            1 / 19,
-            1 / 19,
-            1 / 19,
-            1 / 19,
-            1 / 19,
-            1 / 19,
-            1 / 19,
-            1 / 19,
-            1 / 19,
-            1 / 19,
-            1 / 19,
-            1 / 19,
-            0,
-            0,
-            0,
-            0,
-            1 / 19,
-        ],
-    )[0]
+    # Route-creation moves are disabled; weight each remaining move equally.
+    # Derive weights from names so adding/removing an operator cannot desync
+    # the probability vector from the procedure list.
+    weights = np.array([0.0 if name.startswith("Add route") else 1.0 for name in procedures])
+    chosen_procedure = np_rng.choice(procedures, p=weights / weights.sum())
     bin_to_remove = None
     bin_to_add = None
     bins_to_remove_random = []
