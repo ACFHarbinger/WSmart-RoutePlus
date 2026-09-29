@@ -359,6 +359,19 @@ def _load_hyperparameters(path: str) -> Dict[str, Any]:
         yaml_path = config_yaml_path if os.path.exists(config_yaml_path) else hparams_yaml_path
         cfg = OmegaConf.load(yaml_path)
 
+        if "train" in cfg and "model" not in cfg:
+            # Root Hydra config written next to trained weights: lift the training
+            # task's model/env blocks into the layout _parse_hydra_config expects.
+            train_cfg = cfg.train
+            policy_cfg = train_cfg.get("policy", {}) or {}
+            cfg = OmegaConf.create(
+                {
+                    "model": policy_cfg.get("model", {}) or {},
+                    "env": train_cfg.get("env", {}) or {},
+                    "rl": cfg.get("rl", {}) or {},
+                }
+            )
+
         if "model" in cfg and "env" in cfg:
             # Full Hydra Config
             args = _parse_hydra_config(cfg)
