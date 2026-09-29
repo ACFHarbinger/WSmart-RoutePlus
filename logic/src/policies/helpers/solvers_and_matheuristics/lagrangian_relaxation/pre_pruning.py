@@ -97,7 +97,7 @@ def compute_lr_bound_at_node(
         lr_subgradient_theta=params.lr_subgradient_theta,
         lr_op_time_limit=params.lr_op_time_limit,
         mip_gap=params.optimality_gap,
-        seed=params.seed if hasattr(params, "seed") else 42,
+        seed=params.seed if (hasattr(params, "seed") and params.seed is not None) else 42,
     )
 
     lam_star, ub_best, _lb, _history = run_subgradient(

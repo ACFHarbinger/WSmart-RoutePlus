@@ -121,7 +121,6 @@ References:
 import logging
 import time
 import warnings
-from types import SimpleNamespace
 from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple, Union
 
 import gurobipy as gp
@@ -133,7 +132,6 @@ from logic.src.policies.helpers.operators.recreate_repair.greedy import greedy_i
 from logic.src.policies.helpers.solvers_and_matheuristics import (
     AnyBranchingConstraint,
     BranchAndBoundTree,
-    BranchNode,
     CuttingPlaneEngine,
     RCSPPSolver,
     Route,
@@ -141,11 +139,23 @@ from logic.src.policies.helpers.solvers_and_matheuristics import (
     VRPPMasterProblem,
     create_cutting_plane_engine,
 )
-from logic.src.policies.helpers.solvers_and_matheuristics.lagrangian_relaxation.subgradient_optimization import (
-    run_subgradient,
+from logic.src.policies.helpers.solvers_and_matheuristics.branching.pruning import (
+    BPCPruningException,
 )
-from logic.src.policies.helpers.solvers_and_matheuristics.lagrangian_relaxation.uncapacitated_orienteering_problem import (
-    solve_uncapacitated_op,
+from logic.src.policies.helpers.solvers_and_matheuristics.branching.pruning import (
+    apply_branching_to_master as _apply_branching_to_master,
+)
+from logic.src.policies.helpers.solvers_and_matheuristics.branching.pruning import (
+    extract_forced_sets_from_constraints as _extract_forced_sets_from_constraints,
+)
+from logic.src.policies.helpers.solvers_and_matheuristics.branching.pruning import (
+    perform_strong_branching as _perform_strong_branching,
+)
+from logic.src.policies.helpers.solvers_and_matheuristics.branching.pruning import (
+    reset_master_constraints as _reset_master_constraints,  # noqa: F401  (re-exported for tests)
+)
+from logic.src.policies.helpers.solvers_and_matheuristics.lagrangian_relaxation.pre_pruning import (
+    compute_lr_bound_at_node as _compute_lr_bound_at_node,
 )
 from logic.src.policies.helpers.solvers_and_matheuristics.vrpp_model import VRPPModel
 from logic.src.tracking.viz_mixin import PolicyStateRecorder
@@ -160,697 +170,7 @@ logger = logging.getLogger(__name__)
 _FARKAS_TOL: float = 1e-6
 
 
-class MSBPCSPPruningException(Exception):
-    """Exception raised when a node is pruned by a bound (e.g., Lagrangian).
-
-    Attributes:
-        message (str): Explanation of the pruning reason.
-    """
-
-    pass
-
-
-# ---------------------------------------------------------------------------
-# Static Helpers for Master Problem State Management
-# ---------------------------------------------------------------------------
-
-
-def _reset_master_constraints(master: VRPPMasterProblem) -> None:
-    """Resets vehicle limits and node senses to their base problem state.
-
-    Args:
-        master (VRPPMasterProblem): The master problem instance to reset.
-    """
-    if master.model is None:
-        return
-
-    temp_c = master.model.getConstrByName("temp_min_vehicles")
-    if temp_c:
-        master.model.remove(temp_c)
-
-    if master.vehicle_limit is not None:
-        constr = master.model.getConstrByName("vehicle_limit")
-        if constr:
-            constr.RHS = float(master.vehicle_limit)
-            constr.Sense = GRB.LESS_EQUAL
-
-    # Reset coverage senses
-    for node in range(1, master.n_nodes + 1):
-        constr = master.model.getConstrByName(f"coverage_{node}")
-        if constr:
-            if node in master.mandatory_nodes:
-                constr.Sense = GRB.EQUAL if master.strict_set_partitioning else GRB.GREATER_EQUAL
-            else:
-                constr.Sense = GRB.LESS_EQUAL
-            constr.RHS = 1.0
-
-
-def _apply_route_level_branching_filters(master: VRPPMasterProblem, bc: AnyBranchingConstraint) -> None:
-    """Applies route-level feasibility filters based on branching constraints.
-
-    Args:
-        master (VRPPMasterProblem): The master problem instance.
-        bc (AnyBranchingConstraint): The branching constraint to apply.
-    """
-    for route, var in zip(master.routes, master.lambda_vars, strict=False):
-        if var.UB > 0.5 and not bc.is_route_feasible(route):
-            var.UB = 0.0
-
-
-def _apply_branching_to_master(
-    master: VRPPMasterProblem,
-    branching_constraints: List[AnyBranchingConstraint],
-    branching_strategy: str = "divergence",
-) -> None:
-    """
-    Filter the Master Problem column pool by disabling routes that violate
-    branching constraints at the current B&B node.
-
-    Column Contamination Problem:
-    ------------------------------
-    The Master Problem maintains a global column pool across the entire B&B tree.
-    When we branch at a node, we add constraints (e.g., "nodes r and s must be
-    together" or "arc (u,v) is forbidden"). However, the existing column pool
-    may contain routes generated at ancestor nodes that violate these new constraints.
-
-    If we don't filter these routes, the LP solver will select them, producing
-    fractional solutions that violate the branching decisions. This causes:
-    1. Incorrect LP bounds (too optimistic).
-    2. Infinite branching loops (same fractional solution reappears).
-    3. Invalid integer solutions.
-
-    COLUMN BACKTRACKING & RE-ACTIVATION:
-    ------------------------------------
-    Since we use a global column pool, we must reset all columns to a "clean"
-    state (UB=1.0) before applying the current path of branching constraints.
-    Failure to do this causes columns disabled in deep branches to remain
-    disabled when backtracking, leading to incorrect bounds and potential
-    missed optimal solutions.
-
-    Solution:
-    ---------
-    We temporarily disable violating routes by setting their upper bound to 0:
-        var.UB = 0.0
-
-    This is more efficient than:
-    - Deleting and re-adding columns (expensive Gurobi operations).
-    - Maintaining separate column pools per node (memory intensive).
-    - Adding explicit branching constraints to Gurobi (creates dense constraint matrix).
-
-    The routes remain in the model structure but cannot be selected in the LP solution.
-
-    Implementation:
-    ---------------
-    For each route k and its corresponding Gurobi variable λ_k:
-    1. Reset upper bound to 1.0 (clean state for this node).
-    2. Check if route satisfies all active branching constraints (ancestors + current).
-    3. If any constraint is violated, set var.UB = 0.0 to disable the route.
-
-    Args:
-        master: Master problem instance with Gurobi model.
-        branching_constraints: Complete list of branching constraints from root
-            to the current node (all ancestors + current node).
-        branching_strategy: Current branching rule name (e.g., "ryan_foster").
-
-    References:
-    -----------
-    Ryan-Foster branching (1981) is used here because it appropriately modifies the
-    Resource-Constrained Shortest Path Problem (RCSPP) used for VRPP pricing by
-    forbidding or enforcing pairs of nodes in the generated routes.
-    """
-    if master.model is None:
-        return
-
-    # Task 3/6: Harden Ryan-Foster Exactness
-    if branching_strategy == "ryan_foster" and not master.strict_set_partitioning:
-        raise RuntimeError(
-            "Mathematical Exactness Violation: Ryan-Foster branching requires "
-            "strict Set Partitioning (== 1.0). Current Master Problem allows "
-            "Set Covering (>= 1.0), which can erroneously prune optimal solutions."
-        )
-
-    # RESET-THEN-REFILTER PROTOCOL
-    # Step 1: Reset all columns to UB=1.0 (clean slate for this node).
-    #   Prevents constraints from a now-dead sibling branch from sticking
-    #   to columns that are valid in the current node's branch.
-    # Step 2 (the constraint loop below): Re-apply every constraint in the
-    #   current node's ancestor chain. A column added in a deep descendant
-    #   branch that is infeasible at the root level will be filtered here
-    #   because the root-level constraint that makes it infeasible is always
-    #   present in the ancestor chain.
-    # INVARIANT: Every column in master.routes satisfies the root LP's
-    #   structural constraints (capacity, degree). Only branching constraints
-    #   can cause a column to be filtered at a descendant node.
-    for var in master.lambda_vars:
-        var.UB = 1.0
-
-    # Task 2: Reset vehicle limit and node senses to base state
-    _reset_master_constraints(master)
-
-    if not branching_constraints:
-        master.model.update()
-        return
-
-    # Track effective bounds for global constraints
-    max_vehicles: float = master.vehicle_limit if master.vehicle_limit is not None else float("inf")
-    min_vehicles: float = 0.0
-    forced_nodes: Set[int] = set()
-
-    # Define child-local constraints
-    from logic.src.policies.helpers.solvers_and_matheuristics.branching import (
-        FleetSizeBranchingConstraint,
-        NodeVisitationBranchingConstraint,
-    )
-
-    # Apply all constraints in the current B&B path
-    for bc in branching_constraints or []:
-        # Global: Fleet Size
-        if isinstance(bc, FleetSizeBranchingConstraint):
-            if bc.is_upper:
-                max_vehicles = min(max_vehicles, bc.limit)
-            else:
-                min_vehicles = max(min_vehicles, bc.limit)
-        # Global: Node Visitation override
-        elif isinstance(bc, NodeVisitationBranchingConstraint) and bc.forced:
-            forced_nodes.add(bc.node)
-
-        # Route-level filtering
-        _apply_route_level_branching_filters(master, bc)
-
-    # Apply global fleet limits to the master model
-    # We can't easily add a lower bound without a new constraint if it doesn't exist.
-    # We assume 'vehicle_limit' exists from build_model if specified in Params.
-    vl_constr = master.model.getConstrByName("vehicle_limit")
-    if vl_constr:
-        # If we have a lower bound that equals the upper bound, force equality
-        if min_vehicles >= max_vehicles - 1e-4:
-            vl_constr.Sense = GRB.EQUAL
-            vl_constr.RHS = max_vehicles
-        else:
-            vl_constr.Sense = GRB.LESS_EQUAL
-            vl_constr.RHS = max_vehicles
-            # Lower bound (>=) is rarely reached in maximization, but we add it if significant
-            if min_vehicles > 0.5:
-                master.model.addConstr(gp.quicksum(master.lambda_vars) >= min_vehicles, name="temp_min_vehicles")
-
-    # Apply node visitation forcing (Sense change)
-    for node in forced_nodes:
-        constr = master.model.getConstrByName(f"coverage_{node}")
-        if constr:
-            constr.Sense = GRB.EQUAL
-            constr.RHS = 1.0
-
-    master.model.update()
-
-
-def _solve_farkas_pricing_step(
-    master: VRPPMasterProblem,
-    pricing_solver: RCSPPSolver,
-    branching_constraints: List[AnyBranchingConstraint],
-    farkas_duals: Any,
-    max_routes: int = 5,
-    timeout: float = 5.0,
-) -> Tuple[int, bool]:
-    """Phase I Pricing: Solve RCSPP with the Farkas dual ray to restore feasibility.
-
-    Implements the 2-Phase method by resolving LP primary infeasibility without
-    Big-M artificial variables. The Farkas ray identifies the direction of
-    infeasibility, guiding the DP pricer to find columns that restore the
-    mandatory coverage basis.
-
-    Args:
-        master (VRPPMasterProblem): The master problem instance.
-        pricing_solver (RCSPPSolver): The RCSPP solver for pricing.
-        branching_constraints (List[AnyBranchingConstraint]): Active branching constraints.
-        farkas_duals (Any): Dual values from the Farkas ray.
-        max_routes (int): Maximum number of routes to return.
-        timeout (Optional[float]): Time limit for the pricing step.
-
-    Returns:
-        Tuple[int, bool]: (Number of routes added, whether pricing was exhausted).
-    """
-    # Task 3/6: Extract forced nodes and RF conflicts for DP enforcement
-    forced_nodes: Set[int] = set()
-    rf_conflicts: Dict[int, Set[int]] = {}
-
-    from logic.src.policies.helpers.solvers_and_matheuristics.branching import (
-        NodeVisitationBranchingConstraint,
-        RyanFosterBranchingConstraint,
-    )
-
-    for bc in branching_constraints or []:
-        if isinstance(bc, NodeVisitationBranchingConstraint) and bc.forced:
-            forced_nodes.add(bc.node)
-        elif isinstance(bc, RyanFosterBranchingConstraint) and not bc.together:
-            node_r, node_s = bc.node_r, bc.node_s
-            rf_conflicts.setdefault(node_r, set()).add(node_s)
-            rf_conflicts.setdefault(node_s, set()).add(node_r)
-
-    # Solve subproblem
-    routes: List[Route] = pricing_solver.solve(
-        dual_values=farkas_duals,
-        branching_constraints=branching_constraints,
-        max_routes=max_routes,
-        forced_nodes=forced_nodes,
-        rf_conflicts=rf_conflicts,
-        is_farkas=True,
-        timeout=timeout,
-    )
-
-    added = 0
-    for r in routes:
-        # Phase I (Feasibility) Sign Convention:
-        # Reduced cost is calculated using Farkas duals. In Phase I, we search
-        # for columns with POSITIVE reduced cost to resolve infeasibility.
-        rc = r.reduced_cost if r.reduced_cost is not None else r.profit
-        if rc > _FARKAS_TOL:
-            master.add_route(r)
-            added += 1
-    # Proper exhausting flag for Lagrangian bound validity (Phase I).
-    # If last_max_rc <= 0, no improving column exists regardless of return count.
-    exhausted = getattr(pricing_solver, "last_max_rc", -float("inf")) <= 0.0
-    return added, exhausted
-
-
-def _separate_cuts(
-    master: VRPPMasterProblem,
-    cut_engine: CuttingPlaneEngine,
-    max_cuts: int,
-    iteration: int = 0,
-    node_depth: int = 0,
-    cut_orthogonality_threshold: float = 0.8,
-) -> int:
-    """Separate and add valid inequalities using the configured cutting plane engine.
-
-    This is a modular wrapper that delegates to the specific cutting plane
-    engine (RCC, fleet_cover, etc.) configured by the user.
-
-    Args:
-        master (VRPPMasterProblem): Master problem instance.
-        cut_engine (CuttingPlaneEngine): Cutting plane separation engine.
-        max_cuts (int): Maximum number of cuts to add.
-        iteration (int): Current B&B node iteration index.
-        node_depth (int): Current B&B tree depth.
-        cut_orthogonality_threshold (float): Minimum cosine distance between cut vectors.
-
-    Returns:
-        int: Number of cuts added.
-    """
-    return cut_engine.separate_and_add_cuts(
-        master,
-        max_cuts,
-        iteration=iteration,
-        node_depth=node_depth,
-        cut_orthogonality_threshold=cut_orthogonality_threshold,
-    )
-
-
-def _solve_pricing_step(
-    master: VRPPMasterProblem,
-    pricing_solver: RCSPPSolver,
-    branching_constraints: Optional[List[AnyBranchingConstraint]] = None,
-    max_routes: int = 5,
-    optimality_gap: float = 1e-4,
-    rc_tolerance: float = 1e-5,
-    timeout: Optional[float] = None,
-) -> Tuple[int, bool]:
-    """Phase II Pricing: Solve the RCSPP pricing subproblem for profitable columns.
-
-    Utilizes the current dual signal—optionally stabilized via Exponential
-    Dual Smoothing (Wentges 1997)—to identify routes with positive reduced cost.
-
-    Args:
-        master (VRPPMasterProblem): Master problem instance.
-        pricing_solver (RCSPPSolver): RCSPP solver for pricing.
-        branching_constraints (Optional[List[AnyBranchingConstraint]]): Active branching constraints.
-        max_routes (int): Maximum number of routes to return.
-        optimality_gap (float): Target optimality gap.
-        rc_tolerance (float): Minimum reduced cost to accept a column.
-        timeout (Optional[float]): Time limit for the pricing step.
-
-    Returns:
-        Tuple[int, bool]: (Number of columns added, whether pricing was exhausted).
-    """
-    dual_values = master.get_reduced_cost_coefficients()
-
-    # Task 3/6: Extract forced nodes and RF conflicts for DP enforcement
-    forced_nodes: Set[int] = set()
-    rf_conflicts: Dict[int, Set[int]] = {}
-
-    from logic.src.policies.helpers.solvers_and_matheuristics.branching import (
-        NodeVisitationBranchingConstraint,
-        RyanFosterBranchingConstraint,
-    )
-
-    for bc in branching_constraints or []:
-        if isinstance(bc, NodeVisitationBranchingConstraint) and bc.forced:
-            forced_nodes.add(bc.node)
-        elif isinstance(bc, RyanFosterBranchingConstraint) and not bc.together:
-            node_r, node_s = bc.node_r, bc.node_s
-            rf_conflicts.setdefault(node_r, set()).add(node_s)
-            rf_conflicts.setdefault(node_s, set()).add(node_r)
-
-    # RCSPPSolver.solve() handles composite dual dictionaries and branching.
-    routes: List[Route] = pricing_solver.solve(
-        dual_values=dual_values,
-        max_routes=max_routes,
-        branching_constraints=branching_constraints,
-        forced_nodes=forced_nodes,
-        rf_conflicts=rf_conflicts,
-        timeout=timeout,
-    )
-
-    if not routes:
-        exhausted = getattr(pricing_solver, "last_max_rc", -float("inf")) <= 0.0
-        return 0, exhausted
-
-    # Add new columns to master
-    added = 0
-    # routes is now a List[Route] from RCSPPSolver.solve
-    for route in routes:
-        # Phase II (Optimality) Sign Convention:
-        # VRPP is a MAXIMIZATION problem. Pricing subproblem searches for columns
-        # with POSITIVE reduced cost (rc > 0) to improve the objective.
-        rc = route.reduced_cost if route.reduced_cost is not None else route.profit
-        if rc > rc_tolerance:
-            master.add_route(route)
-            added += 1
-    # Proper exhausting flag for Lagrangian bound validity (Phase II).
-    # last_max_rc is the maximum reduced cost seen across all labels in the DP.
-    # If it is <= 0, no improving column exists; the pricing is truly exhausted.
-    exhausted = getattr(pricing_solver, "last_max_rc", -float("inf")) <= 0.0
-    return added, exhausted
-
-
-def _detect_cycles(nodes: List[int]) -> List[Tuple[int, ...]]:
-    """
-    Detect cyclic node sequences in a route (excluding the depot).
-
-    Identifies segments like (i, j, k, i) where a customer node is visited
-    more than once. These cycles violate the ng-route relaxation if the
-    intermediate nodes are outside the neighborhood of the cycle origin.
-
-    Args:
-        nodes: Sequence of node IDs.
-
-    Returns:
-        List[Tuple[int, ...]]: List of node tuples forming cycles.
-    """
-    seen: Dict[int, int] = {}
-    cycles: List[Tuple[int, ...]] = []
-    for i, node in enumerate(nodes):
-        if node == 0:
-            continue
-        if node in seen:
-            # Extract the cycle from the previous occurrence to the current one
-            cycle = tuple(nodes[seen[node] : i + 1])
-            cycles.append(cycle)
-            # Update index to detect nested or subsequent cycles involving this node
-            seen[node] = i
-        else:
-            seen[node] = i
-    return cycles
-
-
-def _is_solution_integer(routes: List[Route], route_values: Dict[int, float], tol: float = 1e-6) -> bool:
-    """
-    Check if LP solution is integer and strictly elementary.
-
-    Args:
-        routes: List of all routes in the Master Problem.
-        route_values: Dictionary of route indices to their LP values (λ_k).
-        tol: Numerical tolerance for integrality.
-
-    Returns:
-        bool: True if all fractional values are 0 or 1 AND every selected route
-            (λ_k > 0.5) is strictly elementary (no cycles).
-    """
-    for idx, val in route_values.items():
-        # Task 13: Clamp all values to [0, 1] before testing to guard against
-        # slight numerical drift in Set Covering/Partitioning LP solutions.
-        clamped = max(0.0, min(1.0, val))
-        if abs(clamped - round(clamped)) > tol:
-            return False
-
-        # Task 16/Fix 8: Enforce elementarity in integer solutions.
-        # If a variable is numerically integer (λ_k = 1.0) but represents a
-        # cyclic ng-route, it is NOT a valid integer solution for the original VRPP.
-        # This triggers further branching or ng-expansion.
-        if clamped > 0.5:
-            route = routes[idx]
-            if len(set(route.nodes)) != len(route.nodes):
-                return False
-
-    # Global LP/IP consistency check.
-    # A numerically binary solution in lambda-space (λ ∈ {0,1}) must also respect
-    # the Set Partitioning semantics in node-space (Σ a_ik λ_k = 1 for all visited i).
-    # If a node is covered by multiple columns that sum to 1.0 but have fractional
-    # values, it is NOT an integer solution. If they are binary (checked above),
-    # this sums to a visit count; we must ensure no node is visited more than once.
-    node_usage: Dict[int, int] = {}
-    for idx, val in route_values.items():
-        if val > 0.5:
-            for node in routes[idx].nodes:
-                node_usage[node] = node_usage.get(node, 0) + 1
-                if node_usage[node] > 1:
-                    return False
-
-    return True
-
-
-def _perform_strong_branching(  # noqa: C901
-    master: VRPPMasterProblem,
-    candidates: List[Tuple[int, List[Tuple[int, int]], List[Tuple[int, int]], float]],
-    current_node: Optional[BranchNode] = None,
-    strong_branching_size: int = 5,
-) -> Optional[Tuple[int, List[Tuple[int, int]], List[Tuple[int, int]], float]]:
-    """Evaluates branching candidates by solving child LP relaxations (lookahead).
-
-    Selects the branch that maximizes the estimated lower bound improvement.
-    Note: This is a restricted lookahead that does NOT solve full column
-    generation subproblems at children, only the sifted master problem.
-
-    Args:
-        master (VRPPMasterProblem): The master problem instance.
-        candidates (List[Tuple]): List of branching candidates.
-        current_node (Optional[BranchNode]): Current B&B node.
-        strong_branching_size (int): Number of candidates to evaluate.
-
-    Returns:
-        Optional[Tuple]: The best candidate selected by lookahead evaluation.
-    """
-    if not candidates:
-        return None
-
-    # Limit the number of candidates to evaluate to prevent excessive overhead
-    eval_candidates = candidates[:strong_branching_size]
-    if len(eval_candidates) <= 1:
-        return eval_candidates[0]
-
-    parent_obj = master.model.ObjVal if master.model is not None and master.model.Status == GRB.OPTIMAL else 0.0
-    best_candidate = eval_candidates[0]
-    best_score = -1.0
-
-    # Cache the current basis for warm-starting
-    parent_basis = None
-    if master.model is not None and master.model.Status == GRB.OPTIMAL:
-        parent_basis = master.save_basis()
-
-    for cand in eval_candidates:
-        cand_id, left_branch, right_branch, _ = cand
-
-        def evaluate_branch(arc_set: List[Tuple[int, int]]) -> float:
-            """Evaluates a potential branch by solving the master LP with disabled columns."""
-            forbidden_arcs_set = set(arc_set)
-            disabled_vars = []
-
-            # Temporarily disable columns that violate the branch (x_e = 0)
-            for idx, var in enumerate(master.lambda_vars):
-                if var.UB < 0.5:
-                    continue
-                route = master.routes[idx]
-                full_path = [0] + route.nodes + [0]
-                if any((full_path[i], full_path[i + 1]) in forbidden_arcs_set for i in range(len(full_path) - 1)):
-                    var.UB = 0.0
-                    disabled_vars.append(var)
-
-            if master.model is not None:
-                master.model.optimize()
-                obj = master.model.ObjVal if master.model.Status == GRB.OPTIMAL else -float("inf")
-            else:
-                obj = -float("inf")
-
-            # Revert bounds
-            for var in disabled_vars:
-                var.UB = 1.0
-
-            if parent_basis is not None:
-                master.restore_basis(*parent_basis)
-
-            return parent_obj - obj if obj != -float("inf") else float("inf")
-
-        left_deg = evaluate_branch(left_branch)
-        right_deg = evaluate_branch(right_branch)
-
-        # Product-based evaluation metric (Score = max(ΔL, ε) * max(ΔR, ε))
-        score = max(left_deg, 1e-6) * max(right_deg, 1e-6)
-
-        if score > best_score:
-            best_score = score
-            best_candidate = cand
-
-    # Restore master state fully and resolve once to ensure basis is clean
-    if master.model is not None:
-        if parent_basis is not None:
-            master.restore_basis(*parent_basis)
-
-        master.model.optimize()
-        if master.model.Status != GRB.OPTIMAL:
-            logger.warning(
-                "Strong branching left master in non-optimal state (status=%d). Falling back to first candidate.",
-                master.model.Status,
-            )
-            # Attempt a full reset by re-enabling all UBs and resolving.
-            for var in master.lambda_vars:
-                var.UB = 1.0
-            master.model.optimize()
-            if master.model.Status != GRB.OPTIMAL:
-                logger.error("Master could not be restored after strong branching.")
-            return eval_candidates[0]  # safe fallback
-
-    return best_candidate
-
-
-def _compute_lr_bound_at_node(
-    dist_matrix: np.ndarray,
-    wastes: Dict[int, float],
-    capacity: float,
-    R: float,
-    C: float,
-    mandatory: Set[int],
-    forced_out: Set[int],
-    params: "MSBPCSPParams",
-    time_budget: float,
-    env: Optional[Any],
-    recorder: Optional[PolicyStateRecorder],
-) -> Tuple[float, float, Set[int]]:
-    """
-    Compute a fast Lagrangian upper bound at a BPC B&B node.
-
-    Runs a lightweight subgradient pass over the *effective* customer set
-    (excluding customers already forced out by branching), then returns the
-    tightest Lagrangian bound found and λ* for optional CG warm-starting.
-
-    The forced_out set comes from the active branching constraints at this node.
-    Customers in forced_out are pre-excluded from the subproblem, making the
-    bound tighter and the UOP solve faster as the tree deepens.
-
-    Args:
-        dist_matrix:  Full distance matrix (n × n), index 0 = depot.
-        wastes:       {customer_id → fill_level}.
-        capacity:     Vehicle capacity Q.
-        R:            Revenue coefficient.
-        C:            Distance cost coefficient.
-        mandatory:      Customers forced in by branching (forced_in for the UOP).
-        forced_out:   Customers forced out by branching (excluded from UOP).
-        params:       BPCParams carrying the lr_* fields.
-        time_budget:  Wall-clock seconds available for the subgradient phase.
-        env:          Optional shared Gurobi environment.
-        recorder:     Optional telemetry recorder.
-
-    Returns:
-        (lr_upper_bound, lam_star, op_visited_set) where:
-            lr_upper_bound – Tightest Lagrangian bound found: min_k L(λ_k).
-            lam_star       – λ that achieved lr_upper_bound.
-            op_visited_set – Customer set from the UOP solve at λ*; used for
-                             optional column seeding (lr_warm_start_cg).
-    """
-    # Build a trimmed wastes dict that excludes forced-out customers.
-    # run_subgradient internally calls solve_uncapacitated_op, which already
-    # accepts forced_in and forced_out. We pass forced_out through the
-    # mandatory_indices mechanism by manipulating the wastes dict instead, so
-    # that the a-priori elimination step inside solve_uncapacitated_op skips them.
-    # The cleaner path is to pass forced_out explicitly. run_subgradient does
-    # not currently accept forced_out, so we filter wastes here.
-    trimmed_wastes = {k: v for k, v in wastes.items() if k not in forced_out}
-
-    # Create a temporary BBParams-compatible object to call run_subgradient.
-    # run_subgradient accepts a params object with these specific fields; we
-    # use a SimpleNamespace to avoid a hard dependency on BBParams in bpc_engine.
-    lr_params = SimpleNamespace(
-        lr_lambda_init=params.lr_lambda_init,
-        lr_max_subgradient_iters=params.lr_max_subgradient_iters,
-        lr_subgradient_theta=params.lr_subgradient_theta,
-        lr_op_time_limit=params.lr_op_time_limit,
-        mip_gap=params.optimality_gap,
-        seed=params.seed if (hasattr(params, "seed") and params.seed is not None) else 42,
-    )
-
-    lam_star, ub_best, _lb, _history = run_subgradient(
-        dist_matrix=dist_matrix,
-        wastes=trimmed_wastes,
-        capacity=capacity,
-        R=R,
-        C=C,
-        mandatory_indices=mandatory,
-        params=lr_params,
-        time_budget=time_budget,
-        env=env,
-        recorder=recorder,
-    )
-
-    # Resolve UOP at λ* to get the visited set for CG warm-starting.
-    # This is a single additional solve (cheap, reuses λ*).
-    op_visited: Set[int] = set()
-    if params.lr_warm_start_cg:
-        op_visited, _, _ = solve_uncapacitated_op(
-            dist_matrix=dist_matrix,
-            wastes=trimmed_wastes,
-            lam=lam_star,
-            R=R,
-            C=C,
-            forced_in=mandatory,
-            forced_out=forced_out,
-            time_limit=params.lr_op_time_limit,
-            seed=lr_params.seed,
-            env=env,
-            recorder=recorder,
-        )
-
-    return ub_best, lam_star, op_visited
-
-
-def _extract_forced_sets_from_constraints(
-    branching_constraints: Optional[List[AnyBranchingConstraint]],
-) -> Tuple[Set[int], Set[int]]:
-    """
-    Extract forced-in and forced-out customer sets from the active branching path.
-
-    Only `NodeVisitationBranchingConstraint` instances carry hard node-level
-    fixings. Edge and Ryan-Foster constraints fix arcs, not nodes directly,
-    so they are not reflected here (the LR subproblem is node-selection based).
-
-    Args:
-        branching_constraints: Active constraints from root to current node.
-
-    Returns:
-        (forced_in, forced_out) sets of customer indices.
-    """
-    from logic.src.policies.helpers.solvers_and_matheuristics.branching import (
-        NodeVisitationBranchingConstraint,
-    )
-
-    forced_in: Set[int] = set()
-    forced_out: Set[int] = set()
-
-    for bc in branching_constraints or []:
-        if isinstance(bc, NodeVisitationBranchingConstraint):
-            if bc.forced:
-                forced_in.add(bc.node)
-            else:
-                forced_out.add(bc.node)
-
-    return forced_in, forced_out
+MSBPCSPPruningException = BPCPruningException
 
 
 def _column_generation_loop(  # noqa: C901
@@ -1263,6 +583,274 @@ def _column_generation_loop(  # noqa: C901
 
     final_basis = master.save_basis()
     return obj_val, route_vals, final_basis, timed_out
+
+
+# ---------------------------------------------------------------------------
+# Static Helpers for Master Problem State Management
+# ---------------------------------------------------------------------------
+
+
+
+
+
+
+def _solve_farkas_pricing_step(
+    master: VRPPMasterProblem,
+    pricing_solver: RCSPPSolver,
+    branching_constraints: List[AnyBranchingConstraint],
+    farkas_duals: Any,
+    max_routes: int = 5,
+    timeout: float = 5.0,
+) -> Tuple[int, bool]:
+    """Phase I Pricing: Solve RCSPP with the Farkas dual ray to restore feasibility.
+
+    Implements the 2-Phase method by resolving LP primary infeasibility without
+    Big-M artificial variables. The Farkas ray identifies the direction of
+    infeasibility, guiding the DP pricer to find columns that restore the
+    mandatory coverage basis.
+
+    Args:
+        master (VRPPMasterProblem): The master problem instance.
+        pricing_solver (RCSPPSolver): The RCSPP solver for pricing.
+        branching_constraints (List[AnyBranchingConstraint]): Active branching constraints.
+        farkas_duals (Any): Dual values from the Farkas ray.
+        max_routes (int): Maximum number of routes to return.
+        timeout (Optional[float]): Time limit for the pricing step.
+
+    Returns:
+        Tuple[int, bool]: (Number of routes added, whether pricing was exhausted).
+    """
+    # Task 3/6: Extract forced nodes and RF conflicts for DP enforcement
+    forced_nodes: Set[int] = set()
+    rf_conflicts: Dict[int, Set[int]] = {}
+
+    from logic.src.policies.helpers.solvers_and_matheuristics.branching import (
+        NodeVisitationBranchingConstraint,
+        RyanFosterBranchingConstraint,
+    )
+
+    for bc in branching_constraints or []:
+        if isinstance(bc, NodeVisitationBranchingConstraint) and bc.forced:
+            forced_nodes.add(bc.node)
+        elif isinstance(bc, RyanFosterBranchingConstraint) and not bc.together:
+            node_r, node_s = bc.node_r, bc.node_s
+            rf_conflicts.setdefault(node_r, set()).add(node_s)
+            rf_conflicts.setdefault(node_s, set()).add(node_r)
+
+    # Solve subproblem
+    routes: List[Route] = pricing_solver.solve(
+        dual_values=farkas_duals,
+        branching_constraints=branching_constraints,
+        max_routes=max_routes,
+        forced_nodes=forced_nodes,
+        rf_conflicts=rf_conflicts,
+        is_farkas=True,
+        timeout=timeout,
+    )
+
+    added = 0
+    for r in routes:
+        # Phase I (Feasibility) Sign Convention:
+        # Reduced cost is calculated using Farkas duals. In Phase I, we search
+        # for columns with POSITIVE reduced cost to resolve infeasibility.
+        rc = r.reduced_cost if r.reduced_cost is not None else r.profit
+        if rc > _FARKAS_TOL:
+            master.add_route(r)
+            added += 1
+    # Proper exhausting flag for Lagrangian bound validity (Phase I).
+    # If last_max_rc <= 0, no improving column exists regardless of return count.
+    exhausted = getattr(pricing_solver, "last_max_rc", -float("inf")) <= 0.0
+    return added, exhausted
+
+
+def _separate_cuts(
+    master: VRPPMasterProblem,
+    cut_engine: CuttingPlaneEngine,
+    max_cuts: int,
+    iteration: int = 0,
+    node_depth: int = 0,
+    cut_orthogonality_threshold: float = 0.8,
+) -> int:
+    """Separate and add valid inequalities using the configured cutting plane engine.
+
+    This is a modular wrapper that delegates to the specific cutting plane
+    engine (RCC, fleet_cover, etc.) configured by the user.
+
+    Args:
+        master (VRPPMasterProblem): Master problem instance.
+        cut_engine (CuttingPlaneEngine): Cutting plane separation engine.
+        max_cuts (int): Maximum number of cuts to add.
+        iteration (int): Current B&B node iteration index.
+        node_depth (int): Current B&B tree depth.
+        cut_orthogonality_threshold (float): Minimum cosine distance between cut vectors.
+
+    Returns:
+        int: Number of cuts added.
+    """
+    return cut_engine.separate_and_add_cuts(
+        master,
+        max_cuts,
+        iteration=iteration,
+        node_depth=node_depth,
+        cut_orthogonality_threshold=cut_orthogonality_threshold,
+    )
+
+
+def _solve_pricing_step(
+    master: VRPPMasterProblem,
+    pricing_solver: RCSPPSolver,
+    branching_constraints: Optional[List[AnyBranchingConstraint]] = None,
+    max_routes: int = 5,
+    optimality_gap: float = 1e-4,
+    rc_tolerance: float = 1e-5,
+    timeout: Optional[float] = None,
+) -> Tuple[int, bool]:
+    """Phase II Pricing: Solve the RCSPP pricing subproblem for profitable columns.
+
+    Utilizes the current dual signal—optionally stabilized via Exponential
+    Dual Smoothing (Wentges 1997)—to identify routes with positive reduced cost.
+
+    Args:
+        master (VRPPMasterProblem): Master problem instance.
+        pricing_solver (RCSPPSolver): RCSPP solver for pricing.
+        branching_constraints (Optional[List[AnyBranchingConstraint]]): Active branching constraints.
+        max_routes (int): Maximum number of routes to return.
+        optimality_gap (float): Target optimality gap.
+        rc_tolerance (float): Minimum reduced cost to accept a column.
+        timeout (Optional[float]): Time limit for the pricing step.
+
+    Returns:
+        Tuple[int, bool]: (Number of columns added, whether pricing was exhausted).
+    """
+    dual_values = master.get_reduced_cost_coefficients()
+
+    # Task 3/6: Extract forced nodes and RF conflicts for DP enforcement
+    forced_nodes: Set[int] = set()
+    rf_conflicts: Dict[int, Set[int]] = {}
+
+    from logic.src.policies.helpers.solvers_and_matheuristics.branching import (
+        NodeVisitationBranchingConstraint,
+        RyanFosterBranchingConstraint,
+    )
+
+    for bc in branching_constraints or []:
+        if isinstance(bc, NodeVisitationBranchingConstraint) and bc.forced:
+            forced_nodes.add(bc.node)
+        elif isinstance(bc, RyanFosterBranchingConstraint) and not bc.together:
+            node_r, node_s = bc.node_r, bc.node_s
+            rf_conflicts.setdefault(node_r, set()).add(node_s)
+            rf_conflicts.setdefault(node_s, set()).add(node_r)
+
+    # RCSPPSolver.solve() handles composite dual dictionaries and branching.
+    routes: List[Route] = pricing_solver.solve(
+        dual_values=dual_values,
+        max_routes=max_routes,
+        branching_constraints=branching_constraints,
+        forced_nodes=forced_nodes,
+        rf_conflicts=rf_conflicts,
+        timeout=timeout,
+    )
+
+    if not routes:
+        exhausted = getattr(pricing_solver, "last_max_rc", -float("inf")) <= 0.0
+        return 0, exhausted
+
+    # Add new columns to master
+    added = 0
+    # routes is now a List[Route] from RCSPPSolver.solve
+    for route in routes:
+        # Phase II (Optimality) Sign Convention:
+        # VRPP is a MAXIMIZATION problem. Pricing subproblem searches for columns
+        # with POSITIVE reduced cost (rc > 0) to improve the objective.
+        rc = route.reduced_cost if route.reduced_cost is not None else route.profit
+        if rc > rc_tolerance:
+            master.add_route(route)
+            added += 1
+    # Proper exhausting flag for Lagrangian bound validity (Phase II).
+    # last_max_rc is the maximum reduced cost seen across all labels in the DP.
+    # If it is <= 0, no improving column exists; the pricing is truly exhausted.
+    exhausted = getattr(pricing_solver, "last_max_rc", -float("inf")) <= 0.0
+    return added, exhausted
+
+
+def _detect_cycles(nodes: List[int]) -> List[Tuple[int, ...]]:
+    """
+    Detect cyclic node sequences in a route (excluding the depot).
+
+    Identifies segments like (i, j, k, i) where a customer node is visited
+    more than once. These cycles violate the ng-route relaxation if the
+    intermediate nodes are outside the neighborhood of the cycle origin.
+
+    Args:
+        nodes: Sequence of node IDs.
+
+    Returns:
+        List[Tuple[int, ...]]: List of node tuples forming cycles.
+    """
+    seen: Dict[int, int] = {}
+    cycles: List[Tuple[int, ...]] = []
+    for i, node in enumerate(nodes):
+        if node == 0:
+            continue
+        if node in seen:
+            # Extract the cycle from the previous occurrence to the current one
+            cycle = tuple(nodes[seen[node] : i + 1])
+            cycles.append(cycle)
+            # Update index to detect nested or subsequent cycles involving this node
+            seen[node] = i
+        else:
+            seen[node] = i
+    return cycles
+
+
+def _is_solution_integer(routes: List[Route], route_values: Dict[int, float], tol: float = 1e-6) -> bool:
+    """
+    Check if LP solution is integer and strictly elementary.
+
+    Args:
+        routes: List of all routes in the Master Problem.
+        route_values: Dictionary of route indices to their LP values (λ_k).
+        tol: Numerical tolerance for integrality.
+
+    Returns:
+        bool: True if all fractional values are 0 or 1 AND every selected route
+            (λ_k > 0.5) is strictly elementary (no cycles).
+    """
+    for idx, val in route_values.items():
+        # Task 13: Clamp all values to [0, 1] before testing to guard against
+        # slight numerical drift in Set Covering/Partitioning LP solutions.
+        clamped = max(0.0, min(1.0, val))
+        if abs(clamped - round(clamped)) > tol:
+            return False
+
+        # Task 16/Fix 8: Enforce elementarity in integer solutions.
+        # If a variable is numerically integer (λ_k = 1.0) but represents a
+        # cyclic ng-route, it is NOT a valid integer solution for the original VRPP.
+        # This triggers further branching or ng-expansion.
+        if clamped > 0.5:
+            route = routes[idx]
+            if len(set(route.nodes)) != len(route.nodes):
+                return False
+
+    # Global LP/IP consistency check.
+    # A numerically binary solution in lambda-space (λ ∈ {0,1}) must also respect
+    # the Set Partitioning semantics in node-space (Σ a_ik λ_k = 1 for all visited i).
+    # If a node is covered by multiple columns that sum to 1.0 but have fractional
+    # values, it is NOT an integer solution. If they are binary (checked above),
+    # this sums to a visit count; we must ensure no node is visited more than once.
+    node_usage: Dict[int, int] = {}
+    for idx, val in route_values.items():
+        if val > 0.5:
+            for node in routes[idx].nodes:
+                node_usage[node] = node_usage.get(node, 0) + 1
+                if node_usage[node] > 1:
+                    return False
+
+    return True
+
+
+
+
 
 
 def _select_nodes_knapsack(

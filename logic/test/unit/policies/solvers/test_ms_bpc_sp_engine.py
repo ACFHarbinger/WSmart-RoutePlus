@@ -212,3 +212,24 @@ def test_compute_lr_bound_at_node():
     assert isinstance(ub, float)
     assert isinstance(lam, float)
     assert isinstance(visited, set)
+
+
+def test_ms_cg_loop_is_local_and_uses_local_pricing():
+    """M-kimi-01 revision (Codex review): the MS CG loop must stay local.
+
+    The imported shared loop resolves its pricing/cycle helpers differently
+    (e.g. cycle tuples ([5,6,5] locally vs arc-flavoured entries through the
+    imported loop) while consumers read them as node ids. Guard the boundary:
+    the engine's loop is the local definition and calls the local diverged
+    pricing twins.
+    """
+    import inspect
+
+    from logic.src.policies.route_construction.exact_and_decomposition_solvers.multi_stage_branch_and_price_and_cut_with_set_partition import (
+        ms_bpc_sp_engine,
+    )
+
+    src = inspect.getsource(ms_bpc_sp_engine._column_generation_loop)
+    assert "_solve_pricing_step(" in src, "MS loop must call the local diverged pricing step"
+    assert "_solve_farkas_pricing_step(" in src, "MS loop must call the local diverged Farkas step"
+    assert ms_bpc_sp_engine.MSBPCSPPruningException is ms_bpc_sp_engine.BPCPruningException
