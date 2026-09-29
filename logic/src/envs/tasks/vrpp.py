@@ -61,7 +61,7 @@ class VRPP(BaseProblem):
                 None,
             )
 
-        waste_with_depot = torch.cat((torch.zeros_like(dataset["waste"][:, :1]), dataset["waste"]), 1)
+        waste_with_depot = VRPP.get_waste_with_depot(dataset, pi)
         w = waste_with_depot.gather(1, pi)
         if "max_waste" in dataset:
             w = w.clamp(max=dataset["max_waste"][:, None])

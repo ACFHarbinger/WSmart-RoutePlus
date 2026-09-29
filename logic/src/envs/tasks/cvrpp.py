@@ -43,7 +43,7 @@ class CVRPP(VRPP):
         capacity = dataset.get("capacity", dataset.get("max_waste", torch.tensor(100.0)))
 
         # Extract trip waste
-        waste_with_depot = torch.cat((torch.zeros_like(dataset["waste"][:, :1]), dataset["waste"]), 1)
+        waste_with_depot = CVRPP.get_waste_with_depot(dataset, pi)
         # For each sequence in pi, calculate cumulative waste and reset at 0
         w = waste_with_depot.gather(1, pi)
 
