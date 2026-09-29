@@ -75,12 +75,13 @@ DYNAMIC_EMBEDDING_REGISTRY: Dict[str, Any] = {
 }
 
 
-def get_init_embedding(env_name: str, embed_dim: int = 128) -> nn.Module:
+def get_init_embedding(env_name: str, embed_dim: int = 128, **kwargs: Any) -> nn.Module:
     """Gets problem-specific initial embedding layer.
 
     Args:
         env_name: Environment/problem name.
         embed_dim: Embedding dimension.
+        **kwargs: Additional parameters forwarded to embedding constructor (e.g. temporal_horizon).
 
     Returns:
         nn.Module: Initialized embedding module.
@@ -92,7 +93,7 @@ def get_init_embedding(env_name: str, embed_dim: int = 128) -> nn.Module:
         raise ValueError(
             f"Unknown environment for embedding: {env_name}. Available: {list(INIT_EMBEDDING_REGISTRY.keys())}"
         )
-    return INIT_EMBEDDING_REGISTRY[env_name](embed_dim=embed_dim)
+    return INIT_EMBEDDING_REGISTRY[env_name](embed_dim=embed_dim, **kwargs)
 
 
 __all__: list[str] = [

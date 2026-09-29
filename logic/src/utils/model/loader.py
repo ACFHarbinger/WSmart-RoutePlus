@@ -165,21 +165,11 @@ def load_model(path: str, epoch: Optional[int] = None) -> Tuple[nn.Module, Dict[
         loaded_state_dict = data["model"]
     elif "state_dict" in data:
         # PyTorch Lightning checkpoint: keys are prefixed "policy.*" inside the REINFORCE module.
-        # Remap to the old AttentionModel key naming.
-        _KEY_MAP = {
-            "init_embedding.node_embed.": "context_embedder.init_embed.",
-            "init_embedding.depot_embed.": "context_embedder.init_embed_depot.",
-        }
         loaded_state_dict = {}
         for k, v in data["state_dict"].items():
             if not k.startswith("policy."):
                 continue
-            k = k[len("policy.") :]
-            for src, dst in _KEY_MAP.items():
-                if k.startswith(src):
-                    k = dst + k[len(src) :]
-                    break
-            loaded_state_dict[k] = v
+            loaded_state_dict[k[len("policy.") :]] = v
     else:
         raise ValueError(
             f"Unsupported checkpoint layout in {model_filename}: expected a 'model' or 'state_dict' entry."
