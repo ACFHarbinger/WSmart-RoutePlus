@@ -359,7 +359,7 @@ jobs:
       # 10. Upload artifact                                                  #
       # ------------------------------------------------------------------ #
       - name: Upload export artifact
-        uses: actions/upload-artifact@v4
+        uses: https://gitea.com/actions/upload-artifact@v3
         with:
           name: ${{ steps.find_archive.outputs.archive_name }}
           path: ${{ steps.find_archive.outputs.archive_path }}
@@ -371,7 +371,7 @@ jobs:
       # ------------------------------------------------------------------ #
       - name: Upload retained logic file tree
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: https://gitea.com/actions/upload-artifact@v3
         with:
           name: retained_logic_files_${{ github.run_id }}
           path: retained_logic_files.txt

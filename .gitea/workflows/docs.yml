@@ -38,8 +38,11 @@ jobs:
           cd logic/docs
           uv run make html
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      # The upstream gh-pages deploy action is not mirrored on gitea.com or
+      # code.forgejo.org, and a mirror runner cannot publish to GitHub Pages;
+      # keep the built documentation as a workflow artifact instead.
+      - name: Upload documentation artifact
+        uses: https://gitea.com/actions/upload-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./logic/docs/build/html
+          name: docs-html
+          path: ./logic/docs/build/html

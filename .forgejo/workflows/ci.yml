@@ -27,10 +27,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # The upstream uv setup action is not mirrored on gitea.com or
+      # code.forgejo.org (404 on both); install uv with the vendor script.
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
-        with:
-          version: "latest"
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -71,10 +73,12 @@ jobs:
           submodules: recursive
           token: ${{ secrets.PUBLIC_REPO_TOKEN }}
 
+      # The upstream uv setup action is not mirrored on gitea.com or
+      # code.forgejo.org (404 on both); install uv with the vendor script.
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
-        with:
-          version: "latest"
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -102,10 +106,12 @@ jobs:
           submodules: recursive
           token: ${{ secrets.PUBLIC_REPO_TOKEN }}
 
+      # The upstream uv setup action is not mirrored on gitea.com or
+      # code.forgejo.org (404 on both); install uv with the vendor script.
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
-        with:
-          version: "latest"
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -133,10 +139,12 @@ jobs:
           submodules: recursive
           token: ${{ secrets.PUBLIC_REPO_TOKEN }}
 
+      # The upstream uv setup action is not mirrored on gitea.com or
+      # code.forgejo.org (404 on both); install uv with the vendor script.
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
-        with:
-          version: "latest"
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -149,10 +157,14 @@ jobs:
       - name: Test Fast Unit with Coverage
         run: uv run pytest -m "unit and fast" --cov=logic/src --cov-report=xml --cov-report=term-missing
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+      # The upstream Codecov upload action is not mirrored on gitea.com or
+      # code.forgejo.org; keep the coverage report as a workflow artifact.
+      - name: Upload coverage artifact
+        uses: https://code.forgejo.org/actions/upload-artifact@v3
         with:
-          file: ./coverage.xml
+          name: coverage
+          path: ./coverage.xml
+          if-no-files-found: warn
 
   # Job 5: Slow Unit Test Suite Execution
   test-slow-unit:
@@ -169,10 +181,12 @@ jobs:
           submodules: recursive
           token: ${{ secrets.PUBLIC_REPO_TOKEN }}
 
+      # The upstream uv setup action is not mirrored on gitea.com or
+      # code.forgejo.org (404 on both); install uv with the vendor script.
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
-        with:
-          version: "latest"
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5

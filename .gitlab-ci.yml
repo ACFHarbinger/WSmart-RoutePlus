@@ -1,0 +1,305 @@
+# =============================================================================
+# GitLab CI equivalent of the four GitHub workflows (issue #57).
+#
+# Mapping (keep in sync with .github/workflows/):
+#   .github/workflows/ci.yml              -> jobs quality-checks, test-e2e,
+#                                            test-integration,
+#                                            test-fast-unit, test-slow-unit
+#   .github/workflows/docs.yml            -> job docs (the GitHub Pages deploy
+#                                            has no mirror equivalent; the
+#                                            built html is kept as an artifact)
+#   .github/workflows/sync-to-public.yml  -> job sync-to-public (manual)
+#   .github/workflows/package-and-build.yml -> job export (algo-export* branches
+#                                            or a manual web pipeline with
+#                                            EXPORT_* variables)
+#
+# Differences against GitHub Actions, by design:
+#   * `workflow_dispatch` inputs do not exist on GitLab; the export job reads
+#     the same parameters from CI/CD variables of the same names (see the
+#     `export` job's `variables`).
+#   * The Codecov upload and the GitHub Pages deploy are GitHub-only; the
+#     coverage report and the built docs are exposed as artifacts instead.
+#   * Submodules: `GIT_SUBMODULE_STRATEGY` is off by default because the
+#     Overleaf submodule (git.overleaf.com) cannot be fetched by a mirror
+#     runner. Jobs that need the GitHub-hosted submodules set
+#     GIT_SUBMODULE_STRATEGY: recursive, a runtime-only path allowlist and
+#     pre-checkout token rewriting; set the
+#     PUBLIC_REPO_TOKEN CI/CD variable (masked, protected) to a PAT with read
+#     access to the two private GitHub repos.
+# =============================================================================
+
+workflow:
+  rules:
+    # Admit export pushes before evaluating job-level rules.
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH =~ /^algo-export/'
+    # push to main / merge request / manual web pipeline (= workflow_dispatch)
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+
+stages: [quality, test, docs, deploy, export]
+
+default:
+  # Full (non-slim) image: `make` is required by the docs job.
+  image: python:3.11
+  interruptible: true
+
+variables:
+  UV_LINK: "https://astral.sh/uv/install.sh"
+  # Test jobs pin the interpreter exactly like actions/setup-python@v5.
+  PY_VERSION: "3.10"
+
+# --- shared script fragments -------------------------------------------------
+
+.setup_uv: &setup_uv |
+  curl -LsSf "$UV_LINK" | sh
+  export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
+  uv --version
+
+# Rewrite the private GitHub submodule URLs with the CI token, when present.
+.submodule_auth: &submodule_auth |
+  if [ -n "$PUBLIC_REPO_TOKEN" ]; then
+    git config --global url."https://x-access-token:${PUBLIC_REPO_TOKEN}@github.com/".insteadOf "https://github.com/"
+  fi
+
+# =============================================================================
+# .github/workflows/ci.yml — Job 1: quality-checks
+# =============================================================================
+quality-checks:
+  stage: quality
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none"   # static checks need no submodules
+  script:
+    - *setup_uv
+    - uv sync --all-packages --all-extras --all-groups --python "$PY_VERSION"
+    - uv run pre-commit run --all-files
+    - uv run ruff check . --fix
+    # Visibility first, mirroring continue-on-error on GitHub.
+    - uv run pip-audit || true
+    - uv run mypy . || true
+
+# =============================================================================
+# ci.yml — Jobs 2-5: the four test suites (all need the GitHub submodules)
+# =============================================================================
+.test-base:
+  stage: test
+  needs: [quality-checks]
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+    GIT_SUBMODULE_PATHS: logic/src/pipeline/simulations/wsmart_bin_analysis
+    GIT_DEPTH: "1"
+  hooks:
+    pre_get_sources_script:
+      - *submodule_auth
+  before_script:
+    - *setup_uv
+  script:
+    - uv sync --all-packages --all-extras --all-groups --python "$PY_VERSION"
+    - uv run pytest -m "$PYTEST_MARKERS"
+
+test-e2e:
+  extends: .test-base
+  variables:
+    PYTEST_MARKERS: "e2e"
+
+test-integration:
+  extends: .test-base
+  variables:
+    PYTEST_MARKERS: "integration"
+
+test-fast-unit:
+  extends: .test-base
+  variables:
+    PYTEST_MARKERS: "unit and fast"
+  script:
+    - uv sync --all-packages --all-extras --all-groups --python "$PY_VERSION"
+    - uv run pytest -m "unit and fast" --cov=logic/src --cov-report=xml --cov-report=term-missing
+    # Codecov is GitHub-only; keep the report as an artifact.
+  artifacts:
+    when: always
+    paths:
+      - coverage.xml
+    expire_in: 1 week
+
+test-slow-unit:
+  extends: .test-base
+  variables:
+    PYTEST_MARKERS: "unit and slow"
+
+# =============================================================================
+# .github/workflows/docs.yml — build the Sphinx documentation.
+# The peaceiris/actions-gh-pages deploy publishes to GitHub Pages, which a
+# mirror runner cannot do; the built html is kept as an artifact instead.
+# =============================================================================
+docs:
+  stage: docs
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none"
+  script:
+    - *setup_uv
+    - uv sync --all-packages --all-extras --all-groups --python "$PY_VERSION"
+    - cd logic/docs
+    - uv run make html
+  artifacts:
+    paths:
+      - logic/docs/build/html
+    expire_in: 1 week
+
+# =============================================================================
+# .github/workflows/sync-to-public.yml — mirror to the public GitHub repo.
+# GitHub guards with `github.repository == 'ACFHarbinger/WSmart-Route'`;
+# here the canonical repo sets the (protected, masked) SYNC_TO_PUBLIC
+# variable to "true"; mirrors leave it unset and the job is skipped.
+# =============================================================================
+sync-to-public:
+  stage: deploy
+  rules:
+    - if: '$SYNC_TO_PUBLIC == "true" && $CI_COMMIT_BRANCH == "main"'
+      when: manual
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none"
+    GIT_DEPTH: "0"          # full history, like fetch-depth: 0
+  script:
+    - git config --global user.name "gitlab-ci[bot]"
+    - git config --global user.email "gitlab-ci[bot]@users.noreply.gitlab.com"
+    # Remove the private directories from the public copy.
+    - |
+      REMOVED=0
+      if [ -d "bibliography" ]; then git rm -rf --ignore-unmatch bibliography; REMOVED=1; fi
+      if [ -d "assets" ]; then git rm -rf --ignore-unmatch assets; REMOVED=1; fi
+      if [ "$REMOVED" = "1" ] && ! git diff --cached --quiet; then
+        git commit -m "chore: exclude private directories from public sync"
+      fi
+    - git remote remove public || true
+    - git remote add public "https://x-access-token:${PUBLIC_REPO_TOKEN}@github.com/ACFHarbinger/WSmartPlus-Route.git"
+    # GitLab checks out a detached HEAD; push the sanitized commit explicitly.
+    - git push public HEAD:refs/heads/main --force
+
+# =============================================================================
+# .github/workflows/package-and-build.yml — algorithm export.
+# Push-to-branch trigger: any branch matching /algo-export.*/. Manual trigger:
+# a web pipeline (Run pipeline) with the EXPORT_* variables below; the branch
+# pipeline reads ci/workflow_config.json, exactly like the GitHub job.
+# resource_group is the concurrency group of the workflow.
+# =============================================================================
+export:
+  stage: export
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^algo-export/'
+    - if: '$CI_PIPELINE_SOURCE == "web" && $EXPORT_TRIGGER == "true"'
+      when: manual
+  resource_group: algo-export
+  timeout: 60m
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none"
+    # Manual-pipeline inputs (the workflow_dispatch inputs on GitHub).
+    EXPORT_TRIGGER: "false"
+    CONSTRUCTORS: ""
+    SELECTORS: ""
+    IMPROVEMENT: ""
+    ACCEPTANCE: ""
+    JOINT: ""
+    MODELS: ""
+    RL_ALGORITHMS: ""
+    IMITATION_POLICIES: ""
+    DROP_FEATURES: ""
+    ENVS: ""
+    SIM_DATASETS: ""
+    DISTRIBUTIONS: ""
+    NETWORK: ""
+    SKIP_BUILD: "false"
+    DRY_RUN: "false"
+  script:
+    - apt-get update -qq && apt-get install -y --no-install-recommends tree jq zip upx-ucl
+    - *setup_uv
+    - uv sync --all-packages --frozen --python "3.11"
+    - uv run python -m pip install pyinstaller --quiet
+    - git config user.name "gitlab-ci[bot]"
+    - git config user.email "gitlab-ci[bot]@users.noreply.gitlab.com"
+    # Validate the export config, as the GitHub job does.
+    - |
+      if [ ! -f ci/export_config.json ]; then
+        echo "ERROR: ci/export_config.json not found." >&2
+        exit 1
+      fi
+      echo "ci/export_config.json found. Known categories:"
+      jq -r '.categories | keys[]' ci/export_config.json
+    # Branch pushes read ci/workflow_config.json; manual pipelines use the
+    # EXPORT_* variables above (same names and semantics as the inputs).
+    - |
+      if [[ "$CI_PIPELINE_SOURCE" == "push" && "$CI_COMMIT_BRANCH" =~ ^algo-export ]]; then
+        CONFIG=ci/workflow_config.json
+        if [ ! -f "$CONFIG" ]; then
+          echo "ERROR: $CONFIG not found on this branch." >&2
+          exit 1
+        fi
+        echo "Reading parameters from $CONFIG"
+        CONSTRUCTORS=$(jq -r '.constructors // ""' "$CONFIG")
+        SELECTORS=$(jq -r '.selectors // ""' "$CONFIG")
+        IMPROVEMENT=$(jq -r '.improvement // ""' "$CONFIG")
+        ACCEPTANCE=$(jq -r '.acceptance // ""' "$CONFIG")
+        JOINT=$(jq -r '.joint // ""' "$CONFIG")
+        MODELS=$(jq -r '.models // ""' "$CONFIG")
+        RL_ALGORITHMS=$(jq -r '.rl_algorithms // ""' "$CONFIG")
+        IMITATION_POLICIES=$(jq -r '.imitation_policies // ""' "$CONFIG")
+        DROP_FEATURES=$(jq -r '.drop_features // ""' "$CONFIG")
+        ENVS=$(jq -r '.envs // ""' "$CONFIG")
+        SIM_DATASETS=$(jq -r '.sim_datasets // ""' "$CONFIG")
+        DISTRIBUTIONS=$(jq -r '.distributions // ""' "$CONFIG")
+        NETWORK=$(jq -r '.network // ""' "$CONFIG")
+        SKIP_BUILD=$(jq -r '.skip_build // false' "$CONFIG")
+        DRY_RUN=$(jq -r '.dry_run // false' "$CONFIG")
+      else
+        echo "Reading parameters from the pipeline variables"
+      fi
+    # Build packager arguments (same flags as the GitHub job).
+    - |
+      ARGS=()
+      add_arg() {
+        flag="$1"; value="$2"
+        if [ -n "$value" ]; then ARGS+=("$flag" "$value"); fi
+      }
+      add_arg --constructors "$CONSTRUCTORS"
+      add_arg --selectors "$SELECTORS"
+      add_arg --improvement "$IMPROVEMENT"
+      add_arg --acceptance "$ACCEPTANCE"
+      add_arg --joint "$JOINT"
+      add_arg --models "$MODELS"
+      add_arg --rl-algorithms "$RL_ALGORITHMS"
+      add_arg --imitation-policies "$IMITATION_POLICIES"
+      add_arg --drop-features "$DROP_FEATURES"
+      add_arg --envs "$ENVS"
+      add_arg --sim-datasets "$SIM_DATASETS"
+      add_arg --distributions "$DISTRIBUTIONS"
+      add_arg --network "$NETWORK"
+      if [ "$SKIP_BUILD" = "true" ]; then ARGS+=(--skip-build); fi
+      if [ "$DRY_RUN" = "true" ]; then ARGS+=(--dry-run); fi
+      # In CI the codebase is already pruned; skip branch/commit work.
+      ARGS+=(--no-commit --output-dir dist/exports)
+      uv run python ci/packager.py "${ARGS[@]}"
+    # Locate the produced archive (newest wins, like the GitHub job).
+    - |
+      ARCHIVE=$(find dist/exports -name "wsmart_route_export_*.zip" -printf '%T@ %p\n' | sort -n | tail -1 | cut -d' ' -f2-)
+      if [ -z "$ARCHIVE" ]; then
+        echo "ERROR: No export archive found in dist/exports/." >&2
+        ls -la dist/exports/ || true
+        exit 1
+      fi
+      echo "Found archive: $ARCHIVE"
+  artifacts:
+    when: always
+    paths:
+      - dist/exports/wsmart_route_export_*.zip
+      - retained_logic_files.txt
+    expire_in: 30 days
