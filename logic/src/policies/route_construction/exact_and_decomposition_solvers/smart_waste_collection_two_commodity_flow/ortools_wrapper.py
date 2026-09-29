@@ -18,7 +18,7 @@ from ortools.linear_solver import pywraplp
 from logic.src.constants.routing import MIP_GAP
 
 from ._route_extraction import extract_depot_delimited_route
-from .params import MAX_ARC_DISTANCE_KM
+from ._tcf_data import build_tcf_data
 
 
 def _run_ortools_tcf_optimizer(  # noqa: C901
@@ -84,26 +84,13 @@ def _run_ortools_tcf_optimizer(  # noqa: C901
     solver.SetTimeLimit(int(float(time_limit) * 1000))  # OR-Tools expects milliseconds
 
     # 1. Parameter Extraction
-    Omega, psi = values["Omega"], values["psi"]
-    Q, R, C = values["Q"], values["R"], values["C"]
-
-    n_bins = len(bins)
-    nodes = list(range(n_bins + 1))
-    idx_deposito = 0
-    nodes_real = [i for i in nodes if i != idx_deposito]
-
-    enchimentos = np.insert(bins, 0, 0.0)
-    # Percent fill, as in gurobi.py: the adapter passes Q in percent points and R in
-    # EUR per percent point, so a kg conversion here mixed unit systems.
-    S_dict = {i: float(enchimentos[i]) for i in nodes}
-
-    # Criticos Mapping
-    pure_binsids = binsids[1:] if len(binsids) == n_bins + 1 else binsids
-    criticos_dict = {0: False}
-    for i, bin_id in enumerate(pure_binsids, 1):
-        criticos_dict[i] = bin_id in mandatory_nodes
-
-    valid_arcs = [(i, j) for i in nodes for j in nodes if i != j and distance_matrix[i][j] <= MAX_ARC_DISTANCE_KM]
+    # Shared preparation (identical across all three backends).
+    d = build_tcf_data(bins, distance_matrix, values, binsids, mandatory_nodes, number_vehicles)
+    Omega, psi = d.Omega, d.psi
+    Q, R, C = d.Q, d.R, d.C
+    nodes, nodes_real = d.nodes, d.nodes_real
+    S_dict, criticos_dict = d.S_dict, d.criticos_dict
+    valid_arcs = d.valid_arcs
 
     # 2. Variable Definitions
     x = {}  # Arc selection (binary)
@@ -117,8 +104,7 @@ def _run_ortools_tcf_optimizer(  # noqa: C901
 
     g = {i: solver.BoolVar(f"g_{i}") for i in nodes}
 
-    max_trucks = number_vehicles if number_vehicles > 0 else n_bins
-    k_var = solver.IntVar(0, max_trucks, "k_var")
+    k_var = solver.IntVar(0, d.max_trucks, "k_var")
 
     # 3. Constraints
     # Capacity constraints on arcs
@@ -154,7 +140,7 @@ def _run_ortools_tcf_optimizer(  # noqa: C901
         solver.Add(solver.Sum(x[j, k] for k in nodes if (j, k) in valid_arcs) == g[j])
 
     # Mandatory & Pre-assignments
-    forced = [solver.Add(g[i] == 1) for i in nodes_real if criticos_dict[i] or enchimentos[i] >= psi * 100]
+    forced = [solver.Add(g[i] == 1) for i in nodes_real if criticos_dict[i] or S_dict[i] >= psi * 100]
 
     # 4. Objective Function
     objective = solver.Objective()
@@ -191,12 +177,9 @@ def _run_ortools_tcf_optimizer(  # noqa: C901
         raise RuntimeError("SWC-TCF model is infeasible (OR-Tools).")
 
     if status in [pywraplp.Solver.OPTIMAL, pywraplp.Solver.FEASIBLE]:
-        id_map = {0: 0}
-        for i, bin_id in enumerate(pure_binsids, 1):
-            id_map[i] = bin_id
 
         arcos_ativos = [(i, j) for (i, j) in valid_arcs if x[i, j].solution_value() > 0.5]
-        route = extract_depot_delimited_route(arcos_ativos, id_map)
+        route = extract_depot_delimited_route(arcos_ativos, d.id_map)
 
         profit = objective.Value()
         cost = sum([x[i, j].solution_value() * distance_matrix[i][j] for i, j in valid_arcs])

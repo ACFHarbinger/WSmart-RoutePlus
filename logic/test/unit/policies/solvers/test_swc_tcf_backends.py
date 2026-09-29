@@ -312,3 +312,33 @@ def test_route_extraction_parity_across_backends(capsys):
         assert abs(profit - g_profit) <= 1e-6 * max(1.0, abs(g_profit)), (
             f"{framework} profit {profit} diverges from native gurobi {g_profit}"
         )
+
+
+def test_build_tcf_data_shared_prep():
+    """M-kimi-03: one shared preparation for all backends (values pinned)."""
+    from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow._tcf_data import (
+        build_tcf_data,
+    )
+
+    bins = np.array([10.0, 50.0, 90.0])
+    dist = [
+        [0.0, 1.0, 7001.0, 7001.0],
+        [1.0, 0.0, 2.0, 7001.0],
+        [7001.0, 2.0, 0.0, 2.0],
+        [7001.0, 7001.0, 2.0, 0.0],
+    ]
+    values = {"Omega": 0.1, "psi": 1, "Q": 250.0, "R": 0.7, "C": 1.0}
+    d = build_tcf_data(bins, dist, values, [0, 11, 12, 13], [12], number_vehicles=0)
+
+    assert d.n_bins == 3 and d.nodes == [0, 1, 2, 3]
+    assert d.S_dict == {0: 0.0, 1: 10.0, 2: 50.0, 3: 90.0}
+    # bin 12 (local 2) is mandatory; the 7001 km arcs are cut, the 7001-km row/col
+    # for node 2 is isolated except the 2 km arc (2, 3) / (3, 2).
+    assert d.criticos_dict == {0: False, 1: False, 2: True, 3: False}
+    assert (0, 2) not in d.valid_arcs and (2, 0) not in d.valid_arcs
+    assert (2, 3) in d.valid_arcs and (1, 2) in d.valid_arcs
+    assert d.id_map == {0: 0, 1: 11, 2: 12, 3: 13}
+    assert d.max_trucks == 3  # unbounded falls back to n_bins
+
+    capped = build_tcf_data(bins, dist, values, [0, 11, 12, 13], [12], number_vehicles=2)
+    assert capped.max_trucks == 2

@@ -19,7 +19,7 @@ from numpy.typing import NDArray
 from logic.src.constants.routing import HEURISTICS_RATIO, MIP_GAP, NODEFILE_START_GB
 
 from ._route_extraction import extract_depot_delimited_route
-from .params import MAX_ARC_DISTANCE_KM
+from ._tcf_data import build_tcf_data
 
 
 def _run_gurobi_optimizer(  # noqa: C901
@@ -54,28 +54,13 @@ def _run_gurobi_optimizer(  # noqa: C901
             - profit: The total profit of the solution.
             - cost: The total travel cost of the solution.
     """
-    Omega, psi = values["Omega"], values["psi"]
-    Q, R, _B, C, _V = values["Q"], values["R"], values["B"], values["C"], values["V"]
-
-    n_bins = len(bins)
-    nodes = list(range(n_bins + 1))
-    idx_deposito = 0
-    nodes_real = [i for i in nodes if i != idx_deposito]
-
-    enchimentos = np.insert(bins, 0, 0.0)
-    # Use percent fill levels directly. Revenue R is already scaled to Euro per 1% fill
-    # by BaseRoutingPolicy, so (R * percent) gives Euro.
-    S_dict = {i: float(enchimentos[i]) for i in nodes}
-
-    # Normalize binsids to only include bin IDs (exclude depot if present)
-    pure_binsids = binsids[1:] if len(binsids) == n_bins + 1 else binsids
-    criticos_dict = {0: False}
-    for i, bin_id in enumerate(pure_binsids, 1):
-        criticos_dict[i] = bin_id in mandatory
-
-    pares_viaveis = [
-        (i, j) for i in nodes for j in nodes if i != j and distance_matrix[i][j] <= MAX_ARC_DISTANCE_KM
-    ]
+    # Shared preparation (identical across all three backends).
+    d = build_tcf_data(bins, distance_matrix, values, binsids, mandatory, number_vehicles)
+    Omega, psi = d.Omega, d.psi
+    Q, R, C = d.Q, d.R, d.C
+    nodes, nodes_real = d.nodes, d.nodes_real
+    S_dict, criticos_dict = d.S_dict, d.criticos_dict
+    pares_viaveis = d.valid_arcs
 
     mdl = gp.Model("VRPP", env=env) if env else gp.Model("VRPP")
     mdl.Params.Seed = seed
@@ -120,25 +105,21 @@ def _run_gurobi_optimizer(  # noqa: C901
     # Load leaving depot is 0
     mdl.addConstr(quicksum(f[0, j] for j in nodes_real if (0, j) in f) == 0)
 
-    if number_vehicles == 0:
-        number_vehicles = n_bins
+    mdl.addConstr(k_var <= d.max_trucks)
 
-    MAX_TRUCKS = number_vehicles
-    mdl.addConstr(k_var <= MAX_TRUCKS)
-
-    mdl.addConstr(quicksum(x[idx_deposito, j] for j in nodes_real if (idx_deposito, j) in x) == k_var)
-    mdl.addConstr(quicksum(x[j, idx_deposito] for j in nodes_real if (j, idx_deposito) in x) == k_var)
+    mdl.addConstr(quicksum(x[0, j] for j in nodes_real if (0, j) in x) == k_var)
+    mdl.addConstr(quicksum(x[j, 0] for j in nodes_real if (j, 0) in x) == k_var)
 
     for j in nodes_real:
-        if (idx_deposito, j) in x:
-            mdl.addConstr(x[idx_deposito, j] <= g[j])
-        if (j, idx_deposito) in x:
-            mdl.addConstr(x[j, idx_deposito] <= g[j])
+        if (0, j) in x:
+            mdl.addConstr(x[0, j] <= g[j])
+        if (j, 0) in x:
+            mdl.addConstr(x[j, 0] <= g[j])
 
     forced = [
         mdl.addConstr(g[i] == 1, name=f"forced_{i}")
         for i in nodes_real
-        if criticos_dict[i] or enchimentos[i] >= psi * 100
+        if criticos_dict[i] or S_dict[i] >= psi * 100
     ]
 
     for j in nodes_real:
@@ -151,7 +132,7 @@ def _run_gurobi_optimizer(  # noqa: C901
     if dual_values:
         # VRPP Pricing Phase: Maximize Reduced Cost = Profit - sum(π_i * g_i) - π_0 * k_var
         # Depot dual is usually at index 0 (representing the fleet limit constraint)
-        pi_0 = dual_values.get(idx_deposito, 0.0)
+        pi_0 = dual_values.get(0, 0.0)
         mdl.setObjective(
             quicksum((R * S_dict[i] - dual_values.get(i, 0.0)) * g[i] for i in nodes_real)
             - C * quicksum(x[i, j] * distance_matrix[i][j] for i, j in pares_viaveis)
@@ -204,11 +185,8 @@ def _run_gurobi_optimizer(  # noqa: C901
         print(f"[WARN][VRPP-Gurobi] No solution found (status {mdl.Status}); the day collects nothing.")
         return [0, 0], 0.0, 0.0
     if mdl.SolCount > 0:
-        id_map = {0: 0}
-        for i, bin_id in enumerate(pure_binsids, 1):
-            id_map[i] = bin_id
         arcos_ativos = [(i, j) for (i, j) in x.keys() if i != j and x[i, j].X > 0.5]
-        route = extract_depot_delimited_route(arcos_ativos, id_map)
+        route = extract_depot_delimited_route(arcos_ativos, d.id_map)
 
         if route == [0, 0]:
             # All-zero incumbent (or nothing collected): the shared empty-day shape.

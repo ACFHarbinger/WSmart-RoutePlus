@@ -18,7 +18,7 @@ from numpy.typing import NDArray
 from logic.src.constants.routing import MIP_GAP
 
 from ._route_extraction import extract_depot_delimited_route
-from .params import MAX_ARC_DISTANCE_KM
+from ._tcf_data import build_tcf_data
 
 
 def _run_pyomo_tcf_optimizer(  # noqa: C901
@@ -51,46 +51,21 @@ def _run_pyomo_tcf_optimizer(  # noqa: C901
         Tuple[List[int], float, float]: (route, profit, cost)
     """
     # 1. Parameter Extraction
-    Omega, psi = values["Omega"], values["psi"]
-    Q, R, C = values["Q"], values["R"], values["C"]
-
-    n_bins = len(bins)
-    nodes = list(range(n_bins + 1))
-    idx_deposito = 0
-    nodes_real = [i for i in nodes if i != idx_deposito]
-
-    enchimentos = np.insert(bins, 0, 0.0)
-    # Percent fill, as in gurobi.py: the adapter passes Q in percent points and R in
-    # EUR per percent point, so a kg conversion here mixed unit systems.
-    S_dict = {i: float(enchimentos[i]) for i in nodes}
-
-    pure_binsids = binsids[1:] if len(binsids) == n_bins + 1 else binsids
-    criticos_dict = {0: False}
-    for i, bin_id in enumerate(pure_binsids, 1):
-        criticos_dict[i] = bin_id in mandatory_nodes
-
-    max_dist = MAX_ARC_DISTANCE_KM
+    # Shared preparation (identical across all three backends).
+    d = build_tcf_data(bins, distance_matrix, values, binsids, mandatory_nodes, number_vehicles)
+    Omega, psi = d.Omega, d.psi
+    Q, R, C = d.Q, d.R, d.C
+    nodes, nodes_real = d.nodes, d.nodes_real
+    S_dict, criticos_dict = d.S_dict, d.criticos_dict
+    valid_arcs = d.valid_arcs
 
     # 2. Pyomo Model Initialization
     model = pyo.ConcreteModel(name="SWC_TCF_Pyomo")
     model.V = pyo.Set(initialize=nodes)
     model.V_real = pyo.Set(initialize=nodes_real)
 
-    def valid_arcs_rule(m, i, j):
-        """Rule to filter out invalid or excessively long arcs.
-
-        Args:
-            m (pyo.ConcreteModel): The Pyomo model instance.
-            i (int): Tail node index.
-            j (int): Head node index.
-
-        Returns:
-            bool: True if the arc is valid and within max_dist.
-        """
-        return i != j and distance_matrix[i][j] <= max_dist
-
-    # A filter-only set is never enumerated (it stayed empty); give it the candidates.
-    model.A = pyo.Set(within=model.V * model.V, initialize=[(i, j) for i in nodes for j in nodes], filter=valid_arcs_rule)
+    # Arc set from the shared preparation (same predicate the filter applied).
+    model.A = pyo.Set(within=model.V * model.V, initialize=valid_arcs)
 
     # Variables
     model.x = pyo.Var(model.A, within=pyo.Binary)
@@ -98,7 +73,7 @@ def _run_pyomo_tcf_optimizer(  # noqa: C901
     model.h = pyo.Var(model.A, within=pyo.NonNegativeReals)
     model.g = pyo.Var(model.V, within=pyo.Binary)
 
-    max_trucks = number_vehicles if number_vehicles > 0 else n_bins
+    max_trucks = d.max_trucks
     model.k_var = pyo.Var(within=pyo.Integers, bounds=(0, max_trucks))
 
     # 3. Constraints
@@ -197,7 +172,7 @@ def _run_pyomo_tcf_optimizer(  # noqa: C901
     # Mandatory & Pre-assignments
     model.forced_visits = pyo.ConstraintList()
     for i in nodes_real:
-        if criticos_dict[i] or enchimentos[i] >= psi * 100:
+        if criticos_dict[i] or S_dict[i] >= psi * 100:
             model.forced_visits.add(model.g[i] == 1)
 
     # 4. Objective Function
@@ -271,12 +246,9 @@ def _run_pyomo_tcf_optimizer(  # noqa: C901
         except ValueError as exc:  # e.g. "Cannot load a SolverResults object with bad status: aborted"
             print(f"[WARN] Pyomo TCF ({solver_id}): no loadable incumbent ({exc}).")
     if loaded:
-        id_map = {0: 0}
-        for i, bin_id in enumerate(pure_binsids, 1):
-            id_map[i] = bin_id
 
         arcos_ativos = [(i, j) for (i, j) in model.A if pyo.value(model.x[i, j]) > 0.5]
-        route = extract_depot_delimited_route(arcos_ativos, id_map)
+        route = extract_depot_delimited_route(arcos_ativos, d.id_map)
 
         profit = pyo.value(model.obj)
         cost = sum([pyo.value(model.x[i, j]) * distance_matrix[i][j] for i, j in model.A])
