@@ -263,6 +263,24 @@ class Bins:
                     },
                 )
 
+    def _require_external_stats_rows(self, horizon: int) -> None:
+        """Reject a file-backed stats-file sample that cannot cover the horizon.
+
+        Args:
+            horizon: Number of simulated days.
+
+        Raises:
+            ValueError: The sample has fewer than ``horizon + 1`` rows.
+        """
+        rows = len(self.waste_fills)
+        noisy_rows = len(self.noisy_waste_fills)
+        need = horizon + 1
+        if rows < need or noisy_rows < need:
+            raise ValueError(
+                f"stats-file waste sample has {rows} rows; a {horizon}-day horizon needs {need} "
+                "because row 0 is the opening level and is not deposited again"
+            )
+
     def is_stochastic(self) -> bool:
         """Checks if using stochastic filling.
 
@@ -319,16 +337,22 @@ class Bins:
         else:
             self.indices = np.array(range(self.n))
 
-    def set_sample_waste(self, sample_id: int) -> None:
+    def set_sample_waste(self, sample_id: int, horizon: Optional[int] = None) -> None:
         """Sets current waste profile from dataset.
 
         Args:
             sample_id: Index of the waste sample to load.
+            horizon: Simulation length in days. When a stats file is in use and
+                the sample comes from a file, the sample must hold ``horizon + 1``
+                rows (row 0 is the opening level). Generated samples are sized
+                by the caller and are not checked here.
         """
         assert self.waste_dataset is not None
         sample = self.waste_dataset[sample_id]
         self.waste_fills = sample["waste"]
         self.noisy_waste_fills = sample["noisy_waste"]
+        if self.start_with_fill and horizon is not None and not self.is_stochastic():
+            self._require_external_stats_rows(int(horizon))
         if self.start_with_fill:
             self.real_c = self.waste_fills[0].copy()
             self.c = self.noisy_waste_fills[0].copy()

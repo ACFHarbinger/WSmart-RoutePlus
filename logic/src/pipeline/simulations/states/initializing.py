@@ -435,7 +435,10 @@ class InitializingState(SimState):
             if sim.stats_filepath is not None:
                 ctx.bins.set_statistics(sim.stats_filepath)
             if ctx.bins.waste_dataset is not None:
-                ctx.bins.set_sample_waste(ctx.sample_id)
+                # File-backed stats-file samples are checked here, before day 1.
+                # Generated samples already draw n_days + 1 rows (see _initialize_bins).
+                sample_horizon = graph.n_days if sim.stats_filepath is not None else None
+                ctx.bins.set_sample_waste(ctx.sample_id, horizon=sample_horizon)
 
             ctx.bins.set_indices(ctx.indices)
         ctx.daily_log = {key: [] for key in DAY_METRICS}
