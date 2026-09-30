@@ -18,7 +18,7 @@ Example:
 
 import copy
 import os
-from typing import Any, Dict, List, Tuple, cast
+from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
 from omegaconf import OmegaConf
 
@@ -59,6 +59,11 @@ def expand_policy_configs(cfg: Config) -> None:  # noqa: C901
         cfg_path = _resolve_policy_cfg_path(pol_name)
         variants, variant_name = _extract_variants(pol_name, cfg_path)
         base_overrides = custom_overrides
+        caller_selection = _selection_keys_set_by(base_overrides)
+        # A caller-supplied mandatory selection replaces the yaml fan-out. Keeping
+        # every yaml variant would store the same selection under several names.
+        if "mandatory_selection" in caller_selection:
+            variants = _collapse_selection_variants(variants)
 
         for prefix, suffix, custom_cfg in variants:
             custom_overrides = copy.deepcopy(base_overrides)
@@ -130,10 +135,15 @@ def expand_policy_configs(cfg: Config) -> None:  # noqa: C901
                                 custom_overrides = merged_overrides
                             final_cfg.update(custom_overrides)
 
+            # The flattener keeps a top-level mandatory_selection and ignores the same
+            # key inside a nested custom list. Copy the caller's value onto every
+            # occurrence so the running policy sees that selection, not the yaml variant.
+            _apply_caller_selection(final_cfg, base_overrides)
             # Pin this variant's mandatory selection / acceptance criteria everywhere in the
             # stored config (including nested 'custom' lists) so naming and the daily
             # actions see exactly one variant instead of the unexpanded {file: [all]} form.
-            _pin_variant_selection(final_cfg, custom_cfg)
+            # Keys the caller already set are left alone.
+            _pin_variant_selection(final_cfg, custom_cfg, protected=caller_selection)
 
             policies.append(full_name)
             config_path[full_name] = final_cfg
@@ -142,20 +152,154 @@ def expand_policy_configs(cfg: Config) -> None:  # noqa: C901
     sim.config_path = config_path
 
 
+_SELECTION_KEYS = ("mandatory_selection", "acceptance_criteria")
 
-def _pin_variant_selection(obj: Any, var_cfg: Any) -> None:
+
+def _is_mapping(node: Any) -> bool:
+    """Return whether ``node`` is a dict-like config node."""
+    return isinstance(node, dict) or (hasattr(node, "items") and not isinstance(node, (str, bytes)))
+
+
+def _is_sequence(node: Any) -> bool:
+    """Return whether ``node`` is a non-string sequence of config nodes."""
+    return isinstance(node, (list, tuple)) or (
+        hasattr(node, "__iter__") and not isinstance(node, (str, bytes)) and not hasattr(node, "items")
+    )
+
+
+def _selection_keys_set_by(node: Any) -> Set[str]:
+    """Names among the pinned selection keys that ``node`` already sets.
+
+    Args:
+        node: Custom override tree from a ``sim.policies`` entry.
+
+    Returns:
+        Subset of ``mandatory_selection`` and ``acceptance_criteria`` present in ``node``.
+    """
+    found: Set[str] = set()
+
+    def _walk(obj: Any) -> None:
+        if _is_mapping(obj):
+            for key, value in dict(obj).items():
+                if key in _SELECTION_KEYS:
+                    found.add(str(key))
+                _walk(value)
+        elif _is_sequence(obj):
+            for item in obj:
+                _walk(item)
+
+    if node is not None:
+        _walk(node)
+    return found
+
+
+def _first_keyed_value(node: Any, key: str) -> Any:
+    """Return the first value stored under ``key`` in a nested config.
+
+    Args:
+        node: Config tree to search.
+        key: Key to look up.
+
+    Returns:
+        A deep copy of the first matching value, or ``None`` when absent.
+    """
+    found: List[Any] = []
+
+    def _walk(obj: Any) -> None:
+        if found:
+            return
+        if _is_mapping(obj):
+            data = dict(obj)
+            if key in data:
+                found.append(copy.deepcopy(data[key]))
+                return
+            for value in data.values():
+                _walk(value)
+        elif _is_sequence(obj):
+            for item in obj:
+                _walk(item)
+
+    _walk(node)
+    return found[0] if found else None
+
+
+def _overwrite_key(node: Any, key: str, value: Any) -> None:
+    """Replace every occurrence of ``key`` in ``node`` with ``value``.
+
+    Args:
+        node: Config tree updated in place.
+        key: Key to replace.
+        value: Value copied onto each occurrence.
+    """
+
+    def _walk(obj: Any) -> None:
+        if _is_mapping(obj):
+            if key in obj:
+                obj[key] = copy.deepcopy(value)
+            for child in list(obj.values()):
+                _walk(child)
+        elif _is_sequence(obj):
+            for item in obj:
+                _walk(item)
+
+    _walk(node)
+
+
+def _apply_caller_selection(final_cfg: Any, overrides: Any) -> None:
+    """Copy selection keys the caller set onto every matching key in ``final_cfg``.
+
+    Args:
+        final_cfg: Stored policy configuration, updated in place.
+        overrides: Custom override tree from the ``sim.policies`` entry.
+    """
+    for key in _selection_keys_set_by(overrides):
+        value = _first_keyed_value(overrides, key)
+        # Presence was established above; null explicitly disables the yaml selection.
+        _overwrite_key(final_cfg, key, value)
+
+
+def _collapse_selection_variants(
+    variants: List[Tuple[str, str, Any]],
+) -> List[Tuple[str, str, Any]]:
+    """Keep one body per route/acceptance suffix when the caller set the selection.
+
+    The yaml's mandatory-selection prefix is dropped so the stored name does not
+    claim a variant the caller replaced.
+
+    Args:
+        variants: ``(prefix, suffix, config)`` tuples from :func:`_extract_variants`.
+
+    Returns:
+        Variants with a single entry for each suffix and an empty selection prefix.
+    """
+    collapsed: List[Tuple[str, str, Any]] = []
+    seen: Set[str] = set()
+    for _prefix, suffix, custom_cfg in variants:
+        if suffix in seen:
+            continue
+        seen.add(suffix)
+        collapsed.append(("", suffix, custom_cfg))
+    return collapsed
+
+
+def _pin_variant_selection(obj: Any, var_cfg: Any, protected: Optional[Set[str]] = None) -> None:
     """Recursively overwrite selection/acceptance entries with the variant-specific ones.
 
     ``var_cfg`` (from :func:`_extract_variants`) carries ``mandatory_selection`` /
     ``acceptance_criteria`` already reduced to a single ``[{file: variant}]`` entry.
+    Keys in ``protected`` were set by the custom policy entry and are not replaced.
 
     Args:
         obj: Policy configuration (nested dicts / lists) to update in place.
         var_cfg: Variant configuration providing the pinned values.
+        protected: Selection keys the caller already set.
     """
     if not isinstance(var_cfg, dict):
         return
-    pinned = {k: var_cfg[k] for k in ("mandatory_selection", "acceptance_criteria") if var_cfg.get(k)}
+    pinned = {k: var_cfg[k] for k in _SELECTION_KEYS if var_cfg.get(k)}
+    if protected:
+        for key in protected:
+            pinned.pop(key, None)
     if not pinned:
         return
 
