@@ -49,6 +49,49 @@ class BaseProblem:
         return True
 
     @staticmethod
+    def get_waste_with_depot(
+        dataset: Dict[str, Any],
+        pi: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
+        """Extract waste tensor guaranteed to include depot at index 0.
+
+        If dataset['waste'] has width N (lacks depot column), prepends a zero
+        depot waste column. If it already has width N+1 (e.g. from env.reset),
+        returns it directly without shifting customer indices.
+
+        Args:
+            dataset: Problem dataset containing 'waste', optionally 'locs',
+                'depot', 'visited', or 'num_loc'.
+            pi: Optional tour tensor [batch, nodes].
+
+        Returns:
+            torch.Tensor: Waste tensor with depot at index 0.
+        """
+        waste = dataset["waste"]
+        locs = dataset.get("locs") if "locs" in dataset else dataset.get("loc")
+        depot = dataset.get("depot")
+
+        # Structural metadata takes precedence over coordinate equality: a
+        # customer may legitimately share the depot location or have zero waste.
+        num_customers = None
+        if "visited" in dataset:
+            num_customers = dataset["visited"].shape[-1] - 1
+        elif "num_loc" in dataset:
+            num_customers = int(dataset["num_loc"])
+        elif locs is not None and depot is not None and locs.shape[-2] > 1:
+            num_customers = locs.shape[-2] - int(torch.allclose(locs[..., 0, :], depot, atol=1e-4))
+
+        if num_customers is not None:
+            if waste.shape[-1] == num_customers + 1:
+                return waste
+            if waste.shape[-1] != num_customers:
+                raise ValueError("waste width must equal num_loc or num_loc + 1")
+
+        # Without schema metadata retain the legacy customer-only contract.
+        # Neither a zero first demand nor a partial tour proves a depot column.
+        return torch.cat((waste.new_zeros(*waste.shape[:-1], 1), waste), dim=-1)
+
+    @staticmethod
     def get_tour_length(
         dataset: Dict[str, Any],
         pi: torch.Tensor,
@@ -94,9 +137,18 @@ class BaseProblem:
         else:
             loc_val = dataset.get("locs") if "locs" in dataset else dataset.get("loc")
             waste_val = dataset.get("waste")
-            if loc_val is not None and loc_val.size(1) == dataset["depot"].size(0) + (
-                waste_val.size(1) if waste_val is not None else 0
-            ):
+            if "visited" in dataset:
+                has_depot_in_loc = loc_val is not None and loc_val.size(1) == dataset["visited"].size(-1)
+            elif "num_loc" in dataset:
+                has_depot_in_loc = loc_val is not None and loc_val.size(1) == int(dataset["num_loc"]) + 1
+            else:
+                has_depot_in_loc = (
+                    loc_val is not None
+                    and "depot" in dataset
+                    and loc_val.size(1) > 1
+                    and torch.allclose(loc_val[:, 0, :], dataset["depot"], atol=1e-4)
+                ) or (loc_val is not None and waste_val is not None and loc_val.size(1) == 1 + waste_val.size(1))
+            if has_depot_in_loc:
                 # already concatenated
                 loc_with_depot: Any = loc_val
             elif loc_val is not None:
@@ -273,7 +325,9 @@ class BaseProblem:
                         rows.append({cls._map_key(k): _to_tensor(v) for k, v in inst.items()})
                     else:  # legacy tuple layout: (depot, locs, waste, ...)
                         depot_i, locs_i, waste_i = inst[0], inst[1], inst[2]
-                        rows.append({"depot": _to_tensor(depot_i), "locs": _to_tensor(locs_i), "waste": _to_tensor(waste_i)})
+                        rows.append(
+                            {"depot": _to_tensor(depot_i), "locs": _to_tensor(locs_i), "waste": _to_tensor(waste_i)}
+                        )
                 data = {k: torch.stack([r[k] for r in rows]) for k in rows[0]}
         else:
             raise ValueError(f"Unsupported dataset format '{ext}' (expected .npz, .td, .pt or .pkl)")

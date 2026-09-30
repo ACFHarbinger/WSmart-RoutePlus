@@ -200,7 +200,7 @@ class WCVRPEnv(RL4COEnvBase):
 
         Collection Mechanics:
             - At customer nodes (action != 0):
-                * Collect min(waste_at_node, max_waste, remaining_capacity)
+                * Collect min(waste_at_node, max_waste) (capacity is enforced via action mask)
                 * Add collected amount to current_load and total_collected
                 * Set bin waste level to 0 after collection
             - At depot (action == 0):
