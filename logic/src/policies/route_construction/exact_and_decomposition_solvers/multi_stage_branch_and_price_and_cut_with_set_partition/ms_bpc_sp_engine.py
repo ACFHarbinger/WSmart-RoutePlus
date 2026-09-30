@@ -121,6 +121,7 @@ References:
 import logging
 import time
 import warnings
+from dataclasses import replace
 from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple, Union
 
 import gurobipy as gp
@@ -168,6 +169,11 @@ logger = logging.getLogger(__name__)
 # Columns with weight below this threshold do not meaningfully contribute
 # toward restoring LP feasibility and are discarded.
 _FARKAS_TOL: float = 1e-6
+
+# The empty-result relaxation retry (see run_ms_bpc_sp) is only applied on
+# instances with at most this many customer nodes to bound the extra work.
+# Instance size is not an optimality certificate.
+_RELAX_RETRY_MAX_NODES = 8
 
 
 MSBPCSPPruningException = BPCPruningException
@@ -998,6 +1004,8 @@ def run_ms_bpc_sp(  # noqa: C901
     env: Optional[Any] = None,
     node_coords: Optional[np.ndarray] = None,
     recorder: Optional[PolicyStateRecorder] = None,
+    _presel_retry: bool = False,
+    _keep_all_nodes: bool = False,
     **kwargs: Any,
 ) -> Tuple[List[List[int]], float]:
     """Solve Waste-Collecting CVRP using exact Branch-and-Price-and-Cut.
@@ -1076,20 +1084,29 @@ def run_ms_bpc_sp(  # noqa: C901
 
     # 1. Initialize Master Problem
     # Pre-select profitable nodes via knapsack to reduce RCSPP instance size.
-    # BPC then runs only on this reduced node set.
+    # BPC then runs only on this reduced node set. On the empty-result retry
+    # pass the budget is relaxed (no fleet scaling) because the capacity budget
+    # assumes per-node additive value, while route-cost sharing makes value
+    # non-additive: a node dropped by the budget can be half of the only
+    # profitable pairing, and the BPC never sees it.
     _knapsack_budget = min(10.0, time_limit * 0.05) if time_limit > 0 else 10.0
-    selected_nodes = _select_nodes_knapsack(
-        dist_matrix=dist_matrix,
-        wastes=wastes,
-        capacity=capacity,
-        R=R,
-        C=C,
-        mandatory=m_set,
-        n_nodes=n_nodes,
-        time_limit=_knapsack_budget,
-        env=env,
-        vehicle_limit=vehicle_limit,
-    )
+    if _keep_all_nodes:
+        # Relaxation pass over all nodes. Its returned incumbent is a feasible
+        # candidate, not an upper bound without a separate optimality certificate.
+        selected_nodes = set(range(1, n_nodes + 1)) | set(m_set)
+    else:
+        selected_nodes = _select_nodes_knapsack(
+            dist_matrix=dist_matrix,
+            wastes=wastes,
+            capacity=capacity,
+            R=R,
+            C=C,
+            mandatory=m_set,
+            n_nodes=n_nodes,
+            time_limit=_knapsack_budget,
+            env=env,
+            vehicle_limit=None if _presel_retry else vehicle_limit,
+        )
 
     # Build reduced problem: remap selected nodes to contiguous 1..k indices
     selected_list = sorted(selected_nodes)
@@ -1655,10 +1672,13 @@ def run_ms_bpc_sp(  # noqa: C901
                         )
                         insertions.append((gain, r_idx, pos))
 
-                # New route option (round-trip cost)
-                new_route_gain = revenue_i - C * 2.0 * dist_matrix[0, node_orig]
-                insertions.append((new_route_gain, -1, -1))
+                if vehicle_limit is None or len(final_routes) < vehicle_limit:
+                    # New route option (round-trip cost)
+                    new_route_gain = revenue_i - C * 2.0 * dist_matrix[0, node_orig]
+                    insertions.append((new_route_gain, -1, -1))
                 insertions.sort(reverse=True)
+                if not insertions:
+                    continue  # fleet limit reached and no route has spare capacity
 
                 best_gain_i = insertions[0][0]
                 if best_gain_i <= 0:
@@ -1744,6 +1764,12 @@ def run_ms_bpc_sp(  # noqa: C901
                     else:
                         sp_m.addConstr(expr <= 1)
 
+                # Enforce the fleet limit: the SP re-optimization must not undo the
+                # limit the BPC master enforced (pool routes can exceed it when
+                # Phase 3 opened extra routes or the pool mixes bounded/unbounded columns).
+                if vehicle_limit is not None:
+                    sp_m.addConstr(gp.quicksum(x_sp[k] for k in range(len(pool_list))) <= vehicle_limit, name="fleet_limit")
+
                 sp_m.optimize()
                 if sp_m.SolCount > 0:
                     sp_routes = [pool_list[k][0] for k in range(len(pool_list)) if x_sp[k].X > 0.5]
@@ -1755,6 +1781,80 @@ def run_ms_bpc_sp(  # noqa: C901
         except Exception as _e5:
             logger.warning(f"[Phase 5] SP failed: {_e5}. Using Phase 3 solution.")
     # ── End Phase 5 ────────────────────────────────────────────────────────
+
+    # Share the original finite budget across all fallback solves. Never pass
+    # zero on expiry: the solver interprets zero as an unlimited time budget.
+    retry_params = params
+    if time_limit > 0:
+        retry_remaining = time_limit - (time.perf_counter() - start_time)
+        retry_params = replace(params, time_limit=retry_remaining) if retry_remaining > 0 else None
+
+    # Retry only fleet-constrained empty results; preserve unlimited behavior.
+    if (
+        not final_routes
+        and k_nodes < n_nodes
+        and not _presel_retry
+        and vehicle_limit is not None
+        and retry_params is not None
+    ):
+        logger.info(
+            f"[Node Selection] Empty result after dropping {n_nodes - k_nodes} nodes; "
+            "re-solving without the capacity budget."
+        )
+        return run_ms_bpc_sp(
+            dist_matrix,
+            wastes,
+            capacity,
+            R,
+            C,
+            params=retry_params,
+            mandatory_indices=mandatory_indices,
+            vehicle_limit=vehicle_limit,
+            env=env,
+            node_coords=node_coords,
+            recorder=recorder,
+            _presel_retry=True,
+            **kwargs,
+        )
+
+    # Try a full-instance fleet relaxation when time remains. A returned
+    # incumbent fitting the original fleet is a feasible fallback only: this
+    # API returns no convergence/bound certificate, even on small instances.
+    if (
+        not final_routes
+        and vehicle_limit is not None
+        and not _keep_all_nodes
+        and retry_params is not None
+        and n_nodes <= _RELAX_RETRY_MAX_NODES
+    ):
+        fallback_routes, fallback_cost = run_ms_bpc_sp(
+            dist_matrix,
+            wastes,
+            capacity,
+            R,
+            C,
+            params=retry_params,
+            mandatory_indices=mandatory_indices,
+            vehicle_limit=None,
+            env=env,
+            node_coords=node_coords,
+            recorder=recorder,
+            _presel_retry=True,
+            _keep_all_nodes=True,
+            **kwargs,
+        )
+        if fallback_routes and len(fallback_routes) <= vehicle_limit and m_set.issubset(
+            {node for route in fallback_routes for node in route}
+        ):
+            logger.info(
+                f"[Node Selection] Unconstrained relaxation ({len(fallback_routes)} routes) "
+                f"fits the fleet limit {vehicle_limit}; accepting it as a feasible fallback."
+            )
+            return fallback_routes, fallback_cost
+        logger.info(
+            "[Node Selection] Relaxation has no non-empty fleet-feasible candidate covering "
+            "the mandatory nodes; keeping the fleet-constrained (empty) result."
+        )
 
     if recorder:
         recorder.record(

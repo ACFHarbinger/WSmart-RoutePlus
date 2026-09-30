@@ -233,3 +233,122 @@ def test_ms_cg_loop_is_local_and_uses_local_pricing():
     assert "_solve_pricing_step(" in src, "MS loop must call the local diverged pricing step"
     assert "_solve_farkas_pricing_step(" in src, "MS loop must call the local diverged Farkas step"
     assert ms_bpc_sp_engine.MSBPCSPPruningException is ms_bpc_sp_engine.BPCPruningException
+
+
+def _partitions(items):
+    if not items:
+        yield []
+        return
+    first, rest = items[0], items[1:]
+    for p in _partitions(rest):
+        yield [[first]] + p
+        for i in range(len(p)):
+            yield p[:i] + [[first] + p[i]] + p[i + 1 :]
+
+
+def _route_cost(dist_matrix, nodes):
+    import itertools
+
+    best = float("inf")
+    for perm in itertools.permutations(nodes):
+        path = (0,) + perm + (0,)
+        best = min(best, sum(dist_matrix[a][b] for a, b in zip(path, path[1:])))
+    return best
+
+
+def _brute_force_optimum(dist_matrix, wastes, capacity, R, C, vehicle_limit):
+    n = len(wastes)
+    ids = list(range(1, n + 1))
+    best = -float("inf")
+    for r in range(0, n + 1):
+        for subset in __import__("itertools").combinations(ids, r):
+            load = sum(wastes[i] for i in subset)
+            for part in _partitions(list(subset)):
+                if vehicle_limit is not None and len(part) > vehicle_limit:
+                    continue
+                if any(sum(wastes[i] for i in route) > capacity + 1e-9 for route in part):
+                    continue
+                km = sum(_route_cost(dist_matrix, route) for route in part)
+                best = max(best, R * load - C * km)
+    return best
+
+
+@_needs_license
+def test_ms_bpc_sp_enforces_vehicle_limit_in_phase3_and_phase5():
+    """#90: vehicle_limit must survive Phase 3 (regret greedy) and Phase 5 (SP).
+
+    Four bins, each with waste 6 and capacity 10 -> every bin needs its own
+    route. The unlimited fleet serves all four; a 2-vehicle fleet can serve at
+    most two. Before the fix, Phase 3 opened extra routes and Phase 5's SP
+    re-optimization had no fleet constraint, so the engine returned the
+    unlimited-fleet profit on limited-fleet instances.
+    """
+    dist_matrix = np.array(
+        [
+            [0.0, 1.0, 1.0, 1.0, 1.0],
+            [1.0, 0.0, 2.0, 2.0, 2.0],
+            [1.0, 2.0, 0.0, 2.0, 2.0],
+            [1.0, 2.0, 2.0, 0.0, 2.0],
+            [1.0, 2.0, 2.0, 2.0, 0.0],
+        ]
+    )
+    wastes = {1: 6.0, 2: 6.0, 3: 6.0, 4: 6.0}
+    capacity, R, C = 10.0, 10.0, 1.0
+    params = MSBPCSPParams(
+        optimality_gap=1e-9,
+        early_termination_gap=1e-9,
+        exact_mode=True,
+        max_bb_nodes=1000,
+        time_limit=60,
+        enable_strong_branching_heuristic=False,
+    )
+
+    routes_limited, profit_limited = run_ms_bpc_sp(
+        dist_matrix, wastes, capacity, R, C, params=params, vehicle_limit=2
+    )
+    assert len(routes_limited) <= 2, f"fleet limit violated: {len(routes_limited)} routes"
+    expected_limited = _brute_force_optimum(dist_matrix.tolist(), wastes, capacity, R, C, 2)
+    assert abs(profit_limited - expected_limited) <= 1e-6 * max(1.0, abs(expected_limited))
+
+    routes_unlimited, profit_unlimited = run_ms_bpc_sp(
+        dist_matrix, wastes, capacity, R, C, params=params, vehicle_limit=None
+    )
+    expected_unlimited = _brute_force_optimum(dist_matrix.tolist(), wastes, capacity, R, C, None)
+    assert len(routes_unlimited) == 4
+    assert abs(profit_unlimited - expected_unlimited) <= 1e-6 * max(1.0, abs(expected_unlimited))
+
+
+@_needs_license
+def test_ms_bpc_sp_empty_fleet_result_relaxes_to_unconstrained_when_it_fits():
+    """#90: an empty fleet-constrained result must not stand when the
+    unconstrained relaxation's optimum fits the fleet limit.
+
+    Gate instance s5_n5_m[]_v2: the only profitable structure is the pair
+    route [1, 5]; standalone gains are all negative, the capacity-budgeted
+    pre-selection drops node 5, and the fleet-constrained root CG does not
+    converge within the limit. Before the retry passes the engine returned
+    0.0 while the brute-force optimum is 6.1556 (one route, within the
+    2-vehicle limit).
+    """
+    rng = np.random.default_rng(5)
+    coords = rng.uniform(0, 20, size=(6, 2))
+    dist_matrix = np.sqrt(((coords[:, None, :] - coords[None, :, :]) ** 2).sum(-1))
+    wastes = {i + 1: float(rng.uniform(3, 9)) for i in range(5)}
+    capacity, R, C = 12.0, 3.0, 1.0
+    params = MSBPCSPParams(
+        optimality_gap=1e-9,
+        early_termination_gap=1e-9,
+        exact_mode=True,
+        max_bb_nodes=100000,
+        time_limit=120,
+        enable_strong_branching_heuristic=False,
+    )
+
+    routes, profit = run_ms_bpc_sp(
+        dist_matrix, wastes, capacity, R, C, params=params, vehicle_limit=2
+    )
+    expected = _brute_force_optimum(dist_matrix.tolist(), wastes, capacity, R, C, 2)
+    assert len(routes) <= 2, f"fleet limit violated: {len(routes)} routes"
+    assert abs(profit - expected) <= 1e-6 * max(1.0, abs(expected)), (
+        f"expected brute-force optimum {expected}, got {profit}"
+    )
