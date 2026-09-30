@@ -54,7 +54,7 @@ class SWCTCFConfig:
     seed: Optional[int] = None
     engine: str = "gurobi"
     gurobi_threads: int = 2
-    gurobi_soft_mem_limit_gb: float = 2.0
+    gurobi_soft_mem_limit_gb: float = 5.0
     framework: str = "ortools"
     mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

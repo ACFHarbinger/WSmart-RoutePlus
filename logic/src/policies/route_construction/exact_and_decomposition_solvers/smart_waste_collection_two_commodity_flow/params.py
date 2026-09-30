@@ -30,7 +30,7 @@ class SWCTCFParams:
     framework: str = "ortools"
     engine: str = "gurobi"
     gurobi_threads: int = 2
-    gurobi_soft_mem_limit_gb: float = 2.0
+    gurobi_soft_mem_limit_gb: float = 5.0
     time_limit: float = 60.0
     seed: int = 42
 

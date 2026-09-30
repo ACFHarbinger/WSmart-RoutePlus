@@ -57,7 +57,7 @@ def solve(values=None, env=None):
 def test_defaults_bound_threads_and_memory(model):
     solve()
     assert model.Params.Threads == 2
-    assert model.Params.SoftMemLimit == 2.0
+    assert model.Params.SoftMemLimit == 5.0
     model.dispose.assert_called_once()
 
 
