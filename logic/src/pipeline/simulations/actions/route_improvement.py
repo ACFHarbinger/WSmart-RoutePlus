@@ -17,15 +17,25 @@ from typing import Any, Dict
 
 from loguru import logger
 
+from logic.src.configs import RouteImprovingConfig
 from logic.src.constants import ROOT_DIR  # noqa: F401  (ROOT_DIR: test patch point)
 from logic.src.constants.paths import CONFIGS_DIR
-from logic.src.configs import RouteImprovingConfig
 from logic.src.interfaces import ITraversable
 from logic.src.policies.route_construction.other_algorithms.travelling_salesman_problem.tsp import get_route_cost
 from logic.src.policies.route_improvement import RouteImproverFactory
 from logic.src.utils.configs.config_loader import load_config
 
-from .base import SimulationAction, _flatten_config
+from .base import (
+    SimulationAction,
+    _as_plain_dict,
+    _file_yaml_pairs,
+    _flatten_config,
+    _is_mapping,
+    _load_policy_yaml_section,
+    _pop_context_key,
+    _record_live_params,
+    _set_live_capture_meta,
+)
 
 
 class RouteImprovementAction(SimulationAction):
@@ -43,6 +53,7 @@ class RouteImprovementAction(SimulationAction):
         Args:
             context: Shared dictionary containing simulation state.
         """
+        _set_live_capture_meta(context)
         tour = context.get("tour")
         if not tour or len(tour) <= 2:
             return
@@ -100,6 +111,8 @@ class RouteImprovementAction(SimulationAction):
         Returns:
             A list of instantiated route improver processors.
         """
+        # Each entry owns its own parameters; do not inherit the previous yaml.
+        _pop_context_key(context, "_ri_yaml_params")
         if isinstance(entry, RouteImprovingConfig):
             return RouteImproverFactory.create_from_config(entry)
 
@@ -119,7 +132,37 @@ class RouteImprovementAction(SimulationAction):
         """
         pp_name = ""
         # Resolve dict format: {"other/ri_ftsp.yaml": "default"} or {"other/ri_ftsp.yaml": ["default"]}
-        if isinstance(item, (dict, ITraversable)) or (hasattr(item, "items") and not isinstance(item, str)):
+        file_pairs = _file_yaml_pairs(item)
+        if file_pairs:
+            file_key, variant_val = file_pairs[0]
+            try:
+                cfg = _load_policy_yaml_section(file_key, variant_val)
+                if "methods" in cfg:
+                    processors = []
+                    ri_params = {k: v for k, v in cfg.items() if k != "methods"}
+                    context["_ri_yaml_params"] = ri_params
+                    live_ri = {"methods": list(cfg["methods"]), **ri_params}
+                    context["_live_ri"] = live_ri
+                    _record_live_params("route_improvement", live_ri)
+                    for method in cfg["methods"]:
+                        try:
+                            processors.append(factory.create(method, **ri_params))
+                        except TypeError:
+                            proc = factory.create(method)
+                            if hasattr(proc, "config") and isinstance(proc.config, dict):
+                                proc.config.update(ri_params)
+                            processors.append(proc)
+                        except Exception as e:
+                            logger.warning(f"Failed to create route improver {method}: {e}")
+                    return processors
+                for k, v in cfg.items():
+                    pp_name = k
+                    if _is_mapping(v):
+                        context["_ri_yaml_params"] = _as_plain_dict(v)
+            except (OSError, ValueError) as e:
+                logger.warning(f"Error loading route_improvement config {file_key}: {e}")
+                return []
+        elif isinstance(item, (dict, ITraversable)) or (hasattr(item, "items") and not isinstance(item, str)):
             item_dict = dict(item.items()) if hasattr(item, "items") else dict(item)
             if len(item_dict) == 1:
                 file_key, variant_val = next(iter(item_dict.items()))
@@ -148,12 +191,19 @@ class RouteImprovementAction(SimulationAction):
                                 cfg = _inner
                         if "methods" in cfg:
                             processors = []
-                            for k, v in cfg.items():
-                                if k != "methods":
-                                    context[k] = v
+                            ri_params = {k: v for k, v in cfg.items() if k != "methods"}
+                            context["_ri_yaml_params"] = ri_params
+                            live_ri = {"methods": list(cfg["methods"]), **ri_params}
+                            context["_live_ri"] = live_ri
+                            _record_live_params("route_improvement", live_ri)
                             for method in cfg["methods"]:
                                 try:
-                                    processors.append(factory.create(method))
+                                    processors.append(factory.create(method, **ri_params))
+                                except TypeError:
+                                    proc = factory.create(method)
+                                    if hasattr(proc, "config") and isinstance(proc.config, dict):
+                                        proc.config.update(ri_params)
+                                    processors.append(proc)
                                 except Exception as e:
                                     logger.warning(f"Failed to create route improver {method}: {e}")
                             return processors
@@ -181,12 +231,19 @@ class RouteImprovementAction(SimulationAction):
 
                 if "methods" in cfg:
                     processors = []
-                    for k, v in cfg.items():
-                        if k != "methods":
-                            context[k] = v
+                    ri_params = {k: v for k, v in cfg.items() if k != "methods"}
+                    context["_ri_yaml_params"] = ri_params
+                    live_ri = {"methods": list(cfg["methods"]), **ri_params}
+                    context["_live_ri"] = live_ri
+                    _record_live_params("route_improvement", live_ri)
                     for method in cfg["methods"]:
                         try:
-                            processors.append(factory.create(method))
+                            processors.append(factory.create(method, **ri_params))
+                        except TypeError:
+                            proc = factory.create(method)
+                            if hasattr(proc, "config") and isinstance(proc.config, dict):
+                                proc.config.update(ri_params)
+                            processors.append(proc)
                         except Exception as e:
                             logger.warning(f"Failed to create route improver {method}: {e}")
                     return processors
@@ -222,12 +279,12 @@ class RouteImprovementAction(SimulationAction):
         tour = context.get("tour")
         for processor in processors:
             try:
-                pf_params = {k: v for k, v in context.items() if k != "tour"}
+                pf_params = {k: v for k, v in context.items() if k not in ("tour", "_ri_yaml_params")}
+                ri_yaml = context.get("_ri_yaml_params") or {}
+                pf_params.update(ri_yaml)
                 from logic.src.tracking.logging.modules.policy_viz_emit import PolicyVizStreamSession
 
-                viz_policy = str(
-                    context.get("display_name") or context.get("policy_name") or "unknown"
-                )
+                viz_policy = str(context.get("display_name") or context.get("policy_name") or "unknown")
                 with PolicyVizStreamSession(
                     processor,
                     viz_policy,

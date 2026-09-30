@@ -55,6 +55,54 @@ Base `dfb049e7e`. Fixes landed in this increment:
   Unifying those conventions needs a design call (same family as #82's
   training-vs-simulator unit gap).
 
+## Config-propagation pass (2026-09-29, Cursor, open-issues-2)
+
+Base `606f79690`. Silent-default class outside route constructors:
+
+1. **Mandatory selection list variants.** `{file.yaml: [variant]}` (including
+   OmegaConf ListConfig) was treated as a strategy named after the filename
+   with empty params. Last-minute `threshold: 70/90` and lookahead
+   `current_collection_day: 0` now load from yaml.
+2. **Acceptance yaml never became `acceptance_criterion`.** Constructors read
+   the singular field and ignored `acceptance_criteria: {ac_bmc.yaml: [bmc]}`.
+   PSOMA therefore ran BMC at dataclass T0=3 / α=0.9 instead of yaml 100 /
+   0.995. MandatorySelectionAction (runs before construction) now injects a
+   typed `AcceptanceConfig` from the yaml.
+3. **CLS `ls_operator: 2opt` was ignored.** Classical local search always ran
+   the full relocate/swap/2-opt/… suite. `2opt` now means intra-route 2-opt
+   only, and `time_limit` is honoured. Yaml params are passed to `process()`
+   without overwriting the policy's constructor `time_limit` on the day
+   context.
+
+4. **Codex review amendment (DictConfig / RI leak).** `_gather_strategies`
+   treated a Hydra DictConfig mapping as a sequence of keys, so
+   `{ms_service_level.yaml: service_level2}` loaded every service-level
+   variant. Sequence detection now excludes mappings. `_create_processors`
+   clears `_ri_yaml_params` per entry so CLS yaml does not leak into the
+   next improver.
+
+5. **Consumer-level capture.** `AcceptanceCriterionFactory.create` records
+   the kwargs constructors actually pass (BMC instance T/α), last-minute
+   records `SelectionContext.threshold`, lookahead records
+   `current_collection_day`, and CLS `process()` records the operator /
+   iterations / time_limit it consumes. Live `main.py test_sim` must show
+   BMC 100/0.995, last-minute 70/90, CLS 2opt/1000/30 — not action-hook
+   snapshots alone. ALNS ``from_config`` reads ``getattr`` even on a dict, so
+   the live config is wrapped as an attribute-dict; otherwise BMC falls
+   back to ``start_temp`` (0) despite the action-level yaml snapshot.
+
+6. **Live `test_sim` context.** Nested Hydra DictConfig children stayed
+   struct-locked (`acceptance_criterion` not in struct). `SimulationDayContext`
+   is a Mapping without `setdefault`/`pop`; capture now uses setattr-style
+   list append and a pop helper.
+
+7. **Tagged live capture.** Consumer JSONL records include `policy` / `constructor` / `day`.
+   NA is untested (missing AMGAT weights). The raw files and invocation live under
+   `.agent/cache/patches/cursor/issue-61-config-propagation-live*`.
+
+Design items from the previous Cursor pass (WCVRP units, `VRPP.get_costs`
+depot column) remain Gemini's open-issues-2 lane.
+
 ## Next session
 
 Resume is not required for the uncovered-component increment above. A later

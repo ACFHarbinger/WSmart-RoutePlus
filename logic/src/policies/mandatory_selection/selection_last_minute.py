@@ -48,6 +48,18 @@ class LastMinuteSelection(IMandatorySelectionStrategy):
         Returns:
             Tuple[List[int], SearchContext]: Selected bin IDs (1-based) and search context.
         """
+        try:
+            from logic.src.pipeline.simulations.actions.base import _record_live_params
+
+            _record_live_params(
+                "consumer_last_minute",
+                {
+                    "threshold": float(context.threshold),
+                    "use_eoq_threshold": bool(getattr(context, "use_eoq_threshold", False)),
+                },
+            )
+        except Exception:
+            pass
         mandatory_mask = resolve_trigger_threshold(context)
         mandatory_indices = np.nonzero(mandatory_mask)[0]
         return (mandatory_indices + 1).tolist(), SearchContext.initialize(

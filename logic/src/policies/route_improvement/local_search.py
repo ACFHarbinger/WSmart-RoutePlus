@@ -11,7 +11,8 @@ Example:
     >>> best_tour, metrics = improver.process(tour, distance_matrix=dm, ls_operator="2opt")
 """
 
-from typing import Any, List, Tuple
+import time
+from typing import Any, Callable, List, Tuple
 
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.interfaces import IRouteImprovement
@@ -71,6 +72,16 @@ class ClassicalLocalSearchRouteImprover(IRouteImprovement):
         max_iter = kwargs.get("iterations", kwargs.get("n_iterations", self.config.get("iterations", 500)))
         operator_name = kwargs.get("ls_operator", kwargs.get("operator_name", self.config.get("ls_operator", "2opt")))
         seed = kwargs.get("seed", self.config.get("seed", 42))
+        time_limit = kwargs.get("time_limit", self.config.get("time_limit"))
+        try:
+            from logic.src.pipeline.simulations.actions.base import _record_live_params
+
+            _record_live_params(
+                "consumer_cls",
+                {"ls_operator": str(operator_name), "iterations": max_iter, "time_limit": time_limit},
+            )
+        except Exception:
+            pass
 
         # Problem parameters
         wastes = kwargs.get("wastes", self.config.get("wastes", {}))
@@ -94,16 +105,20 @@ class ClassicalLocalSearchRouteImprover(IRouteImprovement):
             "sp_polish": "SP_POLISH_PROFIT",
         }
 
-        op_key = Mapping.get(operator_name.lower())
+        op_key = Mapping.get(str(operator_name).lower())
         if op_key and op_key in INTENSIFICATION_OPERATORS:
             op_fn = INTENSIFICATION_OPERATORS[op_key]
             try:
                 refined_routes = op_fn(routes, dist_matrix, wastes, capacity, R=R, C=C, max_iter=max_iter)  # type: ignore[operator]
-                return assemble_tour(refined_routes), {"algorithm": "ClassicalLocalSearchRouteImprover"}
+                return assemble_tour(refined_routes), {
+                    "algorithm": "ClassicalLocalSearchRouteImprover",
+                    "ls_operator": str(operator_name),
+                    "iterations": max_iter,
+                }
             except Exception:
                 return tour, {"algorithm": "ClassicalLocalSearchRouteImprover"}
 
-        # Case 2: Multi-operator sequential search loop (from simplest to most complex)
+        # Case 2: Requested local-search operator(s)
         from logic.src.policies.helpers.local_search.local_search_manager import LocalSearchManager
 
         manager = LocalSearchManager(
@@ -117,30 +132,18 @@ class ClassicalLocalSearchRouteImprover(IRouteImprovement):
         )
         manager.set_routes(routes)
 
-        # Multi-operator list ordered from simplest (cheapest) to most complex (expensive)
-        # 1. relocate: Shift single node (simplest O(N) or O(N^2))
-        # 2. swap: Exchange two nodes (O(N^2))
-        # 3. two_opt_intra: Intra-route segment reversal (O(N^2))
-        # 4. or_opt_2: Relocate chain of 2 nodes (O(N^2))
-        # 5. or_opt_3: Relocate chain of 3 nodes (O(N^2))
-        # 6. two_opt_star: Inter-route tail swap (O(N^2))
-        # 7. swap_star: Inter-route node exchange with best insertion (O(N^2))
-        # 8. three_opt_intra: Intra-route 3-opt (O(N^3))
-        # 9. four_opt_intra: Intra-route 4-opt (O(N^4))
-        operators = [
-            manager.relocate,
-            manager.swap,
-            manager.two_opt_intra,
-            lambda: manager.or_opt(chain_len=2),
-            lambda: manager.or_opt(chain_len=3),
-            manager.two_opt_star,
-            manager.swap_star,
-            manager.three_opt_intra,
-            manager.four_opt_intra,
-        ]
+        operators = _cls_operator_callables(manager, str(operator_name))
+        deadline = None
+        if time_limit is not None:
+            try:
+                deadline = time.perf_counter() + float(time_limit)
+            except (TypeError, ValueError):
+                deadline = None
 
         try:
             for _ in range(max_iter):
+                if deadline is not None and time.perf_counter() >= deadline:
+                    break
                 improved = False
                 for op_func in operators:
                     if op_func():
@@ -148,6 +151,63 @@ class ClassicalLocalSearchRouteImprover(IRouteImprovement):
                         break  # restart search from simplest operator
                 if not improved:
                     break  # local optimum with respect to all operators reached
-            return assemble_tour(manager.get_routes()), {"algorithm": "ClassicalLocalSearchRouteImprover"}
+            return assemble_tour(manager.get_routes()), {
+                "algorithm": "ClassicalLocalSearchRouteImprover",
+                "ls_operator": str(operator_name),
+                "iterations": max_iter,
+                "time_limit": time_limit,
+            }
         except Exception:
             return tour, {"algorithm": "ClassicalLocalSearchRouteImprover"}
+
+
+def _cls_operator_callables(manager: Any, operator_name: str) -> List[Callable[[], bool]]:
+    """Map yaml ``ls_operator`` names onto LocalSearchManager methods.
+
+    ``2opt`` (ri_cls.yaml) is intra-route 2-opt only. ``all`` / ``multi`` keep the
+    previous sequential suite for callers that want it.
+
+    Args:
+        manager: LocalSearchManager instance.
+        operator_name: Operator name from yaml or kwargs.
+
+    Returns:
+        Ordered list of zero-argument callables that return True on improvement.
+    """
+    suite: List[Callable[[], bool]] = [
+        manager.relocate,
+        manager.swap,
+        manager.two_opt_intra,
+        lambda: manager.or_opt(chain_len=2),
+        lambda: manager.or_opt(chain_len=3),
+        manager.two_opt_star,
+        manager.swap_star,
+        manager.three_opt_intra,
+        manager.four_opt_intra,
+    ]
+    key = operator_name.lower().replace("-", "_")
+    if key in ("all", "multi", "sequential", "classical_local_search", "cls", "local_search"):
+        return suite
+    aliases = {
+        "2opt": manager.two_opt_intra,
+        "two_opt": manager.two_opt_intra,
+        "two_opt_intra": manager.two_opt_intra,
+        "3opt": manager.three_opt_intra,
+        "three_opt": manager.three_opt_intra,
+        "three_opt_intra": manager.three_opt_intra,
+        "4opt": manager.four_opt_intra,
+        "four_opt": manager.four_opt_intra,
+        "four_opt_intra": manager.four_opt_intra,
+        "relocate": manager.relocate,
+        "swap": manager.swap,
+        "or_opt": lambda: manager.or_opt(chain_len=2),
+        "or_opt_2": lambda: manager.or_opt(chain_len=2),
+        "or_opt_3": lambda: manager.or_opt(chain_len=3),
+        "two_opt_star": manager.two_opt_star,
+        "2opt_star": manager.two_opt_star,
+        "swap_star": manager.swap_star,
+    }
+    chosen = aliases.get(key)
+    if chosen is None:
+        return suite
+    return [chosen]

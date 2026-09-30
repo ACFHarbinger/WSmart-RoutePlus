@@ -12,7 +12,6 @@ from logic.src.policies.route_improvement import (
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
-
 @pytest.fixture
 def sample_route_data():
     """Sample data for route improvement tests."""
@@ -95,7 +94,7 @@ class TestClassicalLocalSearchRouteImprover:
         # Distance: d(0,4)=4, d(4,3)=1, d(3,5)=2, d(5,2)=3, d(2,1)=1, d(1,0)=1 -> Total = 12
         tour = [0, 4, 3, 5, 2, 1, 0]
         processor = ClassicalLocalSearchRouteImprover()
-        refined_tour, _ = processor.process(tour, distance_matrix=dist_matrix)
+        refined_tour, _ = processor.process(tour, distance_matrix=dist_matrix, operator_name="2opt", ls_operator="all")
 
         def get_tour_cost(t):
             return sum(dist_matrix[t[k], t[k + 1]] for k in range(len(t) - 1))

@@ -115,4 +115,16 @@ class AcceptanceCriterionFactory:
 
         # Instantiate. We use filter_kwargs pattern if needed, or rely on constructor signatures.
         # For now, we assume constructors are compatible with the params they receive.
-        return criterion_cls(**params)
+        inst = criterion_cls(**params)
+        consumed: Dict[str, Any] = {"name": name, "params": dict(params)}
+        if hasattr(inst, "T"):
+            consumed["instance_T"] = inst.T
+        if hasattr(inst, "alpha"):
+            consumed["instance_alpha"] = inst.alpha
+        try:
+            from logic.src.pipeline.simulations.actions.base import _record_live_params
+
+            _record_live_params("consumer_acceptance", consumed)
+        except Exception:
+            pass
+        return inst

@@ -9,12 +9,12 @@ Example:
 """
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Mapping, Optional
 
 from logic.src.interfaces.acceptance_criterion import IAcceptanceCriterion
 
 if TYPE_CHECKING:
-    from logic.src.configs.policies import HGSConfig
+    pass
 
 
 @dataclass
@@ -91,7 +91,7 @@ class HGSParams:
     acceptance_criterion: Optional[IAcceptanceCriterion] = None
 
     @classmethod
-    def from_config(cls, config: "HGSConfig") -> "HGSParams":
+    def from_config(cls, config: Any) -> "HGSParams":
         """Create HGSParams from a HGSConfig dataclass.
 
         Args:
@@ -100,44 +100,49 @@ class HGSParams:
         Returns:
             HGSParams instance with values from config.
         """
+
+        # Both simulator dicts and typed configs must use the same defaults.
+        def get(name: str, default: Any = None) -> Any:
+            return config.get(name, default) if isinstance(config, Mapping) else getattr(config, name, default)
+
         # Map config parameters to HGSParams, using defaults for new parameters
         params = cls(
-            time_limit=getattr(config, "time_limit", 0.0),
-            mu=getattr(config, "mu", 25),
-            n_offspring=getattr(config, "n_offspring", getattr(config, "lambda_param", 40)),
-            nb_elite=getattr(config, "nb_elite", 4),
-            nb_close=getattr(config, "nb_close", 5),
-            nb_granular=getattr(config, "nb_granular", 20),
-            target_feasible=getattr(config, "target_feasible", 0.2),
-            n_iterations_no_improvement=getattr(config, "n_iterations_no_improvement", 20000),
-            mutation_rate=getattr(config, "mutation_rate", 1.0),
-            repair_probability=getattr(config, "repair_probability", 0.5),
-            crossover_rate=getattr(config, "crossover_rate", 1.0),
-            local_search_iterations=getattr(config, "local_search_iterations", 500),
-            max_vehicles=getattr(config, "max_vehicles", 0),
-            initial_penalty_capacity=getattr(config, "initial_penalty_capacity", 1.0),
-            penalty_increase=getattr(config, "penalty_increase", 1.2),
-            penalty_decrease=getattr(config, "penalty_decrease", 0.85),
-            use_3opt=getattr(config, "use_3opt", False),
-            use_cross_exchange=getattr(config, "use_cross_exchange", False),
-            use_lambda_interchange=getattr(config, "use_lambda_interchange", False),
-            lambda_max=getattr(config, "lambda_max", 0),
-            use_ejection_chains=getattr(config, "use_ejection_chains", False),
-            vrpp=getattr(config, "vrpp", True),
-            profit_aware_operators=getattr(config, "profit_aware_operators", False),
-            seed=getattr(config, "seed", 42),
-            engine=getattr(config, "engine", "custom"),
-            restart_timer=getattr(config, "restart_timer", 0.0),
+            time_limit=get("time_limit", 0.0),
+            mu=get("mu", 25),
+            n_offspring=get("n_offspring", get("lambda_param", 40)),
+            nb_elite=get("nb_elite", 4),
+            nb_close=get("nb_close", 5),
+            nb_granular=get("nb_granular", 20),
+            target_feasible=get("target_feasible", 0.2),
+            n_iterations_no_improvement=get("n_iterations_no_improvement", 20000),
+            mutation_rate=get("mutation_rate", 1.0),
+            repair_probability=get("repair_probability", 0.5),
+            crossover_rate=get("crossover_rate", 1.0),
+            local_search_iterations=get("local_search_iterations", 500),
+            max_vehicles=get("max_vehicles", 0),
+            initial_penalty_capacity=get("initial_penalty_capacity", 1.0),
+            penalty_increase=get("penalty_increase", 1.2),
+            penalty_decrease=get("penalty_decrease", 0.85),
+            use_3opt=get("use_3opt", False),
+            use_cross_exchange=get("use_cross_exchange", False),
+            use_lambda_interchange=get("use_lambda_interchange", False),
+            lambda_max=get("lambda_max", 0),
+            use_ejection_chains=get("use_ejection_chains", False),
+            vrpp=get("vrpp", True),
+            profit_aware_operators=get("profit_aware_operators", False),
+            seed=get("seed", 42),
+            engine=get("engine", "custom"),
+            restart_timer=get("restart_timer", 0.0),
         )
 
         # Handle Acceptance Criterion Injection
         from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
 
-        acceptance_cfg = getattr(config, "acceptance_criterion", None)
+        acceptance_cfg = get("acceptance_criterion", None)
         if acceptance_cfg:
             params.acceptance_criterion = AcceptanceCriterionFactory.create(
-                name=acceptance_cfg.method,
-                config=acceptance_cfg.params,
+                name=acceptance_cfg.get("method") if isinstance(acceptance_cfg, dict) else acceptance_cfg.method,
+                config=acceptance_cfg.get("params") if isinstance(acceptance_cfg, dict) else acceptance_cfg.params,
             )
         else:
             # Default to only_improving for standard HGS

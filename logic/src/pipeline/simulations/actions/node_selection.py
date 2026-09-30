@@ -18,15 +18,29 @@ from typing import Any, Dict, List, cast
 
 import numpy as np
 
-from logic.src.constants.paths import CONFIGS_DIR
 from logic.src.configs import MandatorySelectionConfig
 from logic.src.constants import MAX_CAPACITY_PERCENT, ROOT_DIR  # noqa: F401  (ROOT_DIR: test patch point)
+from logic.src.constants.paths import CONFIGS_DIR
 from logic.src.interfaces import IBinContainer, ITraversable
 from logic.src.interfaces.context.search_context import SearchContext
 from logic.src.policies.mandatory_selection import MandatorySelectionFactory, SelectionContext
 from logic.src.utils.configs.config_loader import load_config
 
-from .base import SimulationAction, _flatten_config
+from .base import (
+    SimulationAction,
+    _append_context_list,
+    _as_plain_dict,
+    _ensure_mutable_config,
+    _file_yaml_pairs,
+    _flatten_config,
+    _inject_acceptance_into_config,
+    _is_mapping,
+    _is_non_string_sequence,
+    _live_ac_payload,
+    _load_policy_yaml_section,
+    _record_live_params,
+    _set_live_capture_meta,
+)
 
 
 class MandatorySelectionAction(SimulationAction):
@@ -47,6 +61,14 @@ class MandatorySelectionAction(SimulationAction):
         Returns:
             None
         """
+        _set_live_capture_meta(context)
+        raw_cfg = _ensure_mutable_config(context)
+        live_ac = _inject_acceptance_into_config(raw_cfg)
+        if live_ac is not None:
+            ac_payload = _live_ac_payload(live_ac)
+            context["_live_ac"] = ac_payload
+            _record_live_params("acceptance_criteria", ac_payload)
+
         # Early exit if neural network explicitly predicts selection
         model_name = ""
         pol_cfg = context.get("config", {})
@@ -111,6 +133,10 @@ class MandatorySelectionAction(SimulationAction):
 
             if not s_name:
                 continue
+
+            live_ms = {"name": s_name, "params": dict(s_params) if hasattr(s_params, "items") else {}}
+            _append_context_list(context, "_live_ms", live_ms)
+            _record_live_params("mandatory_selection", live_ms)
 
             # 2. Extract threshold and frequency parameters
             thresh = None
@@ -251,12 +277,7 @@ class MandatorySelectionAction(SimulationAction):
         if isinstance(config_mandatory, MandatorySelectionConfig):
             strategies.append({"config": config_mandatory})
         elif config_mandatory:
-            if isinstance(config_mandatory, (list, tuple)) or (
-                not isinstance(config_mandatory, (str, dict)) and hasattr(config_mandatory, "__iter__")
-            ):
-                items_to_parse = config_mandatory
-            else:
-                items_to_parse = [config_mandatory]
+            items_to_parse = config_mandatory if _is_non_string_sequence(config_mandatory) else [config_mandatory]
 
             for item in items_to_parse:
                 strategies.extend(self._parse_strategy_item(item))
@@ -274,35 +295,29 @@ class MandatorySelectionAction(SimulationAction):
         strategies: List[Dict[str, Any]] = []
         if isinstance(item, MandatorySelectionConfig):
             strategies.append({"config": item})
-        elif (isinstance(item, (dict, ITraversable)) or hasattr(item, "items")) and len(item) == 1:
-            item_dict = dict(item.items()) if hasattr(item, "items") else dict(item)  # type: ignore
-            key = next(iter(item_dict))
-            val = item_dict[key]
-            if isinstance(key, str) and isinstance(val, str) and (key.endswith(".yaml") or key.endswith(".xml")):
-                fpath = os.path.join(CONFIGS_DIR, "policies", key)
-                cfg = load_config(fpath)
-                if "config" in cfg and len(cfg) == 1:
-                    cfg = cfg["config"]
-                if val and val in cfg:
-                    cfg = cfg[val]
-                if "strategy" in cfg:
-                    cfg_dict = dict(cfg.items()) if hasattr(cfg, "items") else dict(cfg)  # type: ignore
+            return strategies
+
+        file_pairs = _file_yaml_pairs(item)
+        if file_pairs:
+            for file_key, variant in file_pairs:
+                section = _load_policy_yaml_section(file_key, variant)
+                if "strategy" in section:
+                    cfg_dict = dict(section)
                     strat_name = cfg_dict.pop("strategy")
                     strategies.append({"name": strat_name, "params": cfg_dict})
                 else:
-                    for k, v in cfg.items():
-                        strategies.append({"name": k, "params": v if isinstance(v, ITraversable) else {}})
-                return strategies
-            # Fall through to ITraversable handling below for non-file dicts
-            item_obj2: object = item
-            if isinstance(item_obj2, ITraversable) or hasattr(item_obj2, "items"):
-                item_dict2 = dict(item_obj2.items()) if hasattr(item_obj2, "items") else dict(item_obj2)  # type: ignore
-                if "strategy" in item_dict2:
-                    strat_name = item_dict2.pop("strategy")
-                    strategies.append({"name": strat_name, "params": item_dict2})
-                else:
-                    for k, v in item_dict2.items():
-                        strategies.append({"name": k, "params": v if isinstance(v, (dict, ITraversable)) else {}})
+                    for k, v in section.items():
+                        strategies.append({"name": k, "params": v if _is_mapping(v) else {}})
+            return strategies
+
+        if (isinstance(item, (dict, ITraversable)) or hasattr(item, "items")) and len(item) == 1:
+            item_dict2 = _as_plain_dict(item)
+            if "strategy" in item_dict2:
+                strat_name = item_dict2.pop("strategy")
+                strategies.append({"name": strat_name, "params": item_dict2})
+            else:
+                for k, v in item_dict2.items():
+                    strategies.append({"name": k, "params": v if _is_mapping(v) else {}})
             return strategies
         elif isinstance(item, str) and (item.endswith(".xml") or item.endswith(".yaml")):
             fpath = os.path.join(CONFIGS_DIR, "policies", item)

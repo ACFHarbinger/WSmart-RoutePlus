@@ -27,11 +27,12 @@ class RouteImproverFactory:
     """
 
     @staticmethod
-    def create(name: str) -> IRouteImprovement:  # noqa: C901
+    def create(name: str, **kwargs: Any) -> IRouteImprovement:  # noqa: C901
         """Create a route improver instance by name.
 
         Args:
             name (str): Unique identifier of the route improver.
+            kwargs (Any): Optional yaml parameters stored on ``improver.config``.
 
         Returns:
             IRouteImprovement: An instance of the requested route improver.
@@ -129,7 +130,10 @@ class RouteImproverFactory:
                 return AdaptiveEnsembleRouteImprover()
 
             raise ValueError(f"Unknown route improver: {name}")
-        return cls()
+        inst = cls()
+        if kwargs and isinstance(getattr(inst, "config", None), dict):
+            inst.config.update(kwargs)
+        return inst
 
     @classmethod
     def create_from_config(cls, config: Any) -> List[IRouteImprovement]:  # noqa: C901

@@ -183,7 +183,10 @@ class LookaheadSelection(IMandatorySelectionStrategy):
             else:
                 for j in range(current_collection_day + 1, next_collection_day):
                     # Accumulation counts the days from today, matching the vectorized selector.
-                    if current_fill_levels[i] + (j - current_collection_day) * accumulation_rates[i] >= MAX_CAPACITY_PERCENT:
+                    if (
+                        current_fill_levels[i] + (j - current_collection_day) * accumulation_rates[i]
+                        >= MAX_CAPACITY_PERCENT
+                    ):
                         mandatory_bins.append(i)
                         break
         return mandatory_bins
@@ -200,6 +203,15 @@ class LookaheadSelection(IMandatorySelectionStrategy):
         Returns:
             Tuple[List[int], SearchContext]: Selected bin IDs (1-based) and search context.
         """
+        try:
+            from logic.src.pipeline.simulations.actions.base import _record_live_params
+
+            _record_live_params(
+                "consumer_lookahead",
+                {"current_collection_day": int(getattr(context, "current_collection_day", 0))},
+            )
+        except Exception:
+            pass
         if context.accumulation_rates is None:
             return [], SearchContext.initialize(selection_metrics={"strategy": "LookaheadSelection"})
 

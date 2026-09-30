@@ -115,11 +115,15 @@ class ALNSParams:
         # Handle Acceptance Criterion Injection
         from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
 
-        acceptance_cfg = getattr(config, "acceptance_criterion", None)
+        acceptance_cfg = (
+            config.get("acceptance_criterion")
+            if isinstance(config, dict)
+            else getattr(config, "acceptance_criterion", None)
+        )
         if acceptance_cfg:
             params.acceptance_criterion = AcceptanceCriterionFactory.create(
-                name=acceptance_cfg.method,
-                config=acceptance_cfg.params,
+                name=acceptance_cfg.get("method") if isinstance(acceptance_cfg, dict) else acceptance_cfg.method,
+                config=acceptance_cfg.get("params") if isinstance(acceptance_cfg, dict) else acceptance_cfg.params,
             )
         else:
             # Automatic mapping for legacy compatibility
