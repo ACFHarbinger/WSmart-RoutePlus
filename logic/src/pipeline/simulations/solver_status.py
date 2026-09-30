@@ -24,6 +24,7 @@ GUROBI_STATUS_NAMES = {
     12: "NUMERIC",
     13: "SUBOPTIMAL",
     15: "USER_OBJ_LIMIT",
+    17: "MEM_LIMIT",
 }
 
 # OR-Tools MPSolver status codes (pywraplp.Solver).

@@ -39,6 +39,8 @@ class SWCTCFConfig:
     Attributes:
         Omega: Fixed cost per vehicle used (EUR).
         psi: Fill fraction at or above which a bin is forced into the plan.
+        gurobi_threads: Native Gurobi threads per solve (positive; independent of simulator workers).
+        gurobi_soft_mem_limit_gb: Native Gurobi soft memory ceiling in decimal GB.
         time_limit: Maximum time in seconds for the solver.
         engine: Solver engine to use ('gurobi', 'scip', 'highs', or 'cplex').
         framework: Solver framework to use ('ortools', 'pyomo').
@@ -51,6 +53,8 @@ class SWCTCFConfig:
     time_limit: float = 600.0
     seed: Optional[int] = None
     engine: str = "gurobi"
+    gurobi_threads: int = 2
+    gurobi_soft_mem_limit_gb: float = 2.0
     framework: str = "ortools"
     mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

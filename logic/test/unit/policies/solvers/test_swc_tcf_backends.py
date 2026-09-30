@@ -5,7 +5,6 @@ from typing import Any, Dict, Optional
 
 import numpy as np
 import pytest
-
 from logic.src.policies.route_construction.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow import (
     policy_swc_tcf,
@@ -78,6 +77,8 @@ def test_gurobi_no_incumbent_day_is_deterministic(monkeypatch):
             return self[key]
 
     fake_model = MagicMock()
+    fake_model.Params.Threads = 0
+    fake_model.Params.SoftMemLimit = float("inf")
     fake_model.SolCount = 0
     fake_model.Status = gurobi_mod.GRB.TIME_LIMIT
     fake_model.addVars.side_effect = lambda *a, **k: _VarDict()

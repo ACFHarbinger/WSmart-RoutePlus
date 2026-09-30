@@ -21,12 +21,16 @@ class SWCTCFParams:
     Attributes:
         framework: Optimization framework to use ('ortools' or 'pyomo').
         engine: Optimization engine to use ('gurobi', 'scip', 'highs', or 'cplex').
+        gurobi_threads: Native Gurobi threads per solve (positive; independent of simulator workers).
+        gurobi_soft_mem_limit_gb: Native Gurobi soft memory ceiling in decimal GB.
         time_limit: Time limit for the solver in seconds.
         seed: Random seed for reproducibility.
     """
 
     framework: str = "ortools"
     engine: str = "gurobi"
+    gurobi_threads: int = 2
+    gurobi_soft_mem_limit_gb: float = 2.0
     time_limit: float = 60.0
     seed: int = 42
 
