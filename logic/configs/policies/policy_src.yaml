@@ -24,9 +24,9 @@ src:
   # ---------------------------------------------------------------------
   # Solver Sequence
   # ---------------------------------------------------------------------
-  - constructors: ["tsp", "nn"]
+  - constructors: ["tsp", "alns"]
   # Registry names of route constructors to apply in order.
-  # Default: ["tsp", "nn"]
+  # Default: ["tsp", "alns"]
 
   # ---------------------------------------------------------------------
   # Runtime Control

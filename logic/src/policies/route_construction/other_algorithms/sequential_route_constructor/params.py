@@ -47,7 +47,7 @@ class SRCParams:
             SRCParams: Configuration parameters for the Sequential Route Constructor.
         """
         return cls(
-            constructors=getattr(config, "constructors", ["tsp", "nn"]),
+            constructors=getattr(config, "constructors", ["tsp", "alns"]),
             time_limit=getattr(config, "time_limit", 60.0),
             seed=getattr(config, "seed", 42),
         )

@@ -30,6 +30,6 @@ class SRCConfig:
         time_limit: Maximum wall-clock time (seconds) for the entire sequence.
     """
 
-    constructors: List[str] = field(default_factory=lambda: ["tsp", "nn"])
+    constructors: List[str] = field(default_factory=lambda: ["tsp", "alns"])
     time_limit: float = 60.0
     seed: int = 42

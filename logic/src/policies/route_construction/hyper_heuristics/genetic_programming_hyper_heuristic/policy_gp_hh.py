@@ -96,7 +96,7 @@ def _make_synthetic_training_envs(
     PolicyTag.CONSTRUCTION,
     PolicyTag.PROFIT_AWARE,
 )
-@RouteConstructorRegistry.register("gphh")
+@RouteConstructorRegistry.register("gp_hh")
 class GPHHPolicy(BaseRoutingPolicy):
     """
     Genetic Programming Hyper-Heuristic (GP-HH) policy class.

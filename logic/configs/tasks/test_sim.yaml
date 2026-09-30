@@ -70,7 +70,6 @@ defaults:
   - /policies@p.ma_ts: policy_ma_ts
   - /policies@p.mhh: policy_mhh
   - /policies@p.mp_aco: policy_mp_aco
-  - /policies@p.mp_bmc: policy_mp_bmc
   - /policies@p.mp_ils: policy_mp_ils
   - /policies@p.mp_pso: policy_mp_pso
   - /policies@p.na: policy_na
@@ -201,7 +200,6 @@ sim:
     - ma_ts: ${p.ma_ts.ma_ts}
     - mhh: ${p.mhh.mhh}
     - mp_aco: ${p.mp_aco.mp_aco}
-    - mp_bmc: ${p.mp_bmc.mp_bmc}
     - mp_ils: ${p.mp_ils.mp_ils}
     - mp_pso: ${p.mp_pso.mp_pso}
     - na: ${p.na.na}

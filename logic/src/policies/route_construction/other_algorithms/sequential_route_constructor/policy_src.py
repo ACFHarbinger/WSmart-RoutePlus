@@ -85,7 +85,7 @@ class SequentialRouteConstructor(BaseRoutingPolicy):
         if self.config is not None:
             self.params = SRCParams.from_config(self.config)
         else:
-            self.params = SRCParams(constructors=["tsp", "nn"])
+            self.params = SRCParams(constructors=["tsp", "alns"])
 
     @classmethod
     def _config_class(cls):
@@ -98,8 +98,7 @@ class SequentialRouteConstructor(BaseRoutingPolicy):
 
         return SRCConfig
 
-    @classmethod
-    def _get_config_key(cls) -> str:
+    def _get_config_key(self) -> str:
         """Get the config key for the Sequential Route Constructor.
 
         Returns:
