@@ -13,6 +13,7 @@ Example:
     >>> route, cost, _ = policy.execute(model_env=env, model_ls=ls, ...)
 """
 
+from dataclasses import fields
 from typing import Any, Dict, List, Optional, Tuple, Type
 
 import torch
@@ -55,6 +56,13 @@ class NeuralAgentPolicy(BaseRoutingPolicy):
         Args:
             config: Configuration object or dictionary.
         """
+        if config is not None and not isinstance(config, dict) and hasattr(config, "items"):
+            try:
+                from omegaconf import OmegaConf
+
+                config = OmegaConf.to_container(config, resolve=True)
+            except Exception:
+                config = dict(config.items())
         super().__init__(config)
         self._params_logged = False
 
@@ -66,6 +74,45 @@ class NeuralAgentPolicy(BaseRoutingPolicy):
     def _get_config_key(self) -> str:
         """Return the config key for this policy."""
         return "na"
+
+    @classmethod
+    def _build_config(cls, raw_config: Dict[str, Any]) -> Any:
+        """Build NeuralParams, including the nested ``decoding:`` yaml block.
+
+        ``BaseRoutingPolicy._build_config`` keeps only dataclass field names, so
+        ``decoding.beam_width`` (yaml 5) was dropped and the adapter ran at the
+        dataclass default 1. ``NeuralParams.from_config`` already unpacks that
+        block (and the ``amgat:`` list wrapper).
+        """
+        from omegaconf import DictConfig, ListConfig
+
+        config_key = "na"
+        policy_section = raw_config.get(config_key) if hasattr(raw_config, "get") else None
+        if policy_section is None:
+            valid_fields = {f.name for f in fields(NeuralParams)}
+            sections = [
+                v
+                for k, v in raw_config.items()
+                if k not in {"seed", "decoding", "model"} and k not in valid_fields and isinstance(v, (dict, list, DictConfig, ListConfig))
+            ]
+            policy_section = sections[0] if len(sections) == 1 else raw_config
+        params = NeuralParams.from_config(policy_section)
+        # Preserve the public flat dataclass form as well as nested YAML decoding.
+        # Explicit nested settings retain precedence when both forms are present.
+        if hasattr(policy_section, "get"):
+            nested = policy_section.get("decoding")
+            model = policy_section.get("model", {})
+            if not nested and hasattr(model, "get"):
+                decoder = model.get("decoder", {})
+                nested = decoder.get("decoding") if hasattr(decoder, "get") else None
+            if not nested:
+                for key in ("decoding_strategy", "beam_width", "reward_weight", "length_penalty_alpha"):
+                    if key in policy_section:
+                        setattr(params, key, policy_section[key])
+        seed = raw_config.get("seed", params.seed) if hasattr(raw_config, "get") else params.seed
+        if seed is not None:
+            params.seed = int(seed)
+        return params, params.seed
 
     def _validate_mandatory(self, mandatory: Any) -> Optional[Tuple[List[int], float, float]]:
         """
@@ -144,6 +191,27 @@ class NeuralAgentPolicy(BaseRoutingPolicy):
                 - Optional[SearchContext]: Updated search context.
                 - Optional[MultiDayContext]: Updated multi-period context.
         """
+        # Typed params first so yaml decoding is captured even on an empty mandatory day.
+        if self._config is not None and isinstance(self._config, NeuralParams):
+            params = self._config
+        else:
+            values = kwargs.get("config", {}).get(self._get_config_key(), kwargs.get("config", {}))
+            params = NeuralParams.from_config(self._config or values)
+        try:
+            from logic.src.pipeline.simulations.actions.base import _record_live_params
+
+            _record_live_params(
+                "consumer_decoding",
+                {
+                    "strategy": params.decoding_strategy,
+                    "beam_width": int(params.beam_width),
+                    "reward_weight": float(params.reward_weight),
+                    "length_penalty_alpha": float(params.length_penalty_alpha),
+                },
+            )
+        except Exception:
+            pass
+
         if "mandatory" in kwargs and kwargs["mandatory"] is not None:
             early_exit = self._validate_mandatory(kwargs["mandatory"])
             if early_exit is not None:
@@ -157,13 +225,6 @@ class NeuralAgentPolicy(BaseRoutingPolicy):
         fill = kwargs["fill"]
         dm_tensor = kwargs["dm_tensor"]
         hrl_manager = kwargs.get("hrl_manager")
-
-        # 1. Initialize type-safe Params
-        if self._config is not None and isinstance(self._config, NeuralParams):
-            params = self._config
-        else:
-            values = kwargs.get("config", {}).get(self._get_config_key(), kwargs.get("config", {}))
-            params = NeuralParams.from_config(self._config or values)
 
         model_data, graph, profit_vars = model_ls
         agent = NeuralAgent(model_env)

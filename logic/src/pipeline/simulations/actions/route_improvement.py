@@ -54,11 +54,12 @@ class RouteImprovementAction(SimulationAction):
             context: Shared dictionary containing simulation state.
         """
         _set_live_capture_meta(context)
+        pp_configs = self._get_route_improvement_configs(context)
+        if not pp_configs:
+            _record_live_params("consumer_ri", {"entries": []})
         tour = context.get("tour")
         if not tour or len(tour) <= 2:
             return
-
-        pp_configs = self._get_route_improvement_configs(context)
 
         if pp_configs:
             for entry in pp_configs:

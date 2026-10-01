@@ -100,8 +100,24 @@ Base `606f79690`. Silent-default class outside route constructors:
    NA is untested (missing AMGAT weights). The raw files and invocation live under
    `.agent/cache/patches/cursor/issue-61-config-propagation-live*`.
 
-Design items from the previous Cursor pass (WCVRP units, `VRPP.get_costs`
-depot column) remain Gemini's open-issues-2 lane.
+## NA live capture (2026-09-30, Cursor, open-issues-3)
+
+Base `43b422e27`. Round 2 left NA untested. A trained AM checkpoint at
+`~/.cache/wsr-review/open-int-smoke/am` is now used (`p.na.na.amgat.0.model_path`).
+
+1. **Decoding yaml dropped at the adapter.** `policy_na.yaml` sets
+   `decoding.beam_width: 5`. `NeuralParams.from_config` already unpacked that
+   nested map, but `BaseRoutingPolicy._build_config` kept only dataclass field
+   names, so the adapter ran at the default `beam_width=1`. NA `_build_config`
+   now calls `from_config`. Fail-before:
+   `test_na_adapter_honours_yaml_decoding_not_dataclass_beam_width`.
+2. **Consumer capture.** `execute` records `consumer_decoding` (strategy,
+   beam_width, reward_weight, length_penalty_alpha) before the empty-mandatory
+   early return. The decoder records the same with `applied: true`. Empty
+   `route_improvement: []` records `consumer_ri` `{entries: []}` even when the
+   tour is `[0, 0]`. Lookahead is the existing `consumer_lookahead` path.
+3. **Live `test_sim`.** NA-only riomaior-20 run with the AM checkpoint; report
+   sits next to the eight-constructor table.
 
 ## Next session
 

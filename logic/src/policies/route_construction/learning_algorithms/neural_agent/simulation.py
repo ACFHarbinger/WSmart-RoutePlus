@@ -94,6 +94,21 @@ class SimulationMixin:
             # But model forward will handle batching.
 
         strategy = params.decoding_strategy if params else "greedy"
+        try:
+            from logic.src.pipeline.simulations.actions.base import _record_live_params
+
+            _record_live_params(
+                "consumer_decoding",
+                {
+                    "strategy": strategy,
+                    "beam_width": int(params.beam_width) if params else 1,
+                    "reward_weight": float(params.reward_weight) if params else 0.0,
+                    "length_penalty_alpha": float(params.length_penalty_alpha) if params else 0.0,
+                    "applied": True,
+                },
+            )
+        except Exception:
+            pass
         if strategy == "beam_search":
             beam_width = params.beam_width if params else 1
 
