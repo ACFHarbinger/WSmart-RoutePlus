@@ -1,14 +1,10 @@
-
-
 import os
 
 import pytest
 from logic.src.pipeline.simulations.checkpoints.manager import CheckpointError, checkpoint_manager
+from logic.src.pipeline.simulations.checkpoints.persistence import SimulationCheckpoint
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
-
-
-
 
 
 class TestCheckpoints:
@@ -74,5 +70,70 @@ class TestCheckpoints:
         # Ensure dir is empty for this test
         basic_checkpoint.clear()
         state, day = basic_checkpoint.load_state(day=99)
+        assert state is None
+        assert day == 0
+
+    @pytest.mark.unit
+    def test_distinct_run_directories_do_not_share_checkpoints(self, tmp_path):
+        """Two results directories with the same policy and sample stay isolated.
+
+        The results directory already carries ``sim.run_name``. A second run must
+        not load, list, or clear the first run's live checkpoint. The same
+        directory still resumes at day N, which is the state after day N.
+        Completing a run clears only the live files; the end-of-run copy remains,
+        and resume does not treat that copy as a live checkpoint.
+        """
+        policy = "swc_tcf_gurobi_cls_gamma3"
+        sample_id = 0
+        lookahead = SimulationCheckpoint(
+            output_dir=str(tmp_path / "results" / "la"),
+            checkpoint_dir="checkpoints",
+            policy=policy,
+            sample_id=sample_id,
+        )
+        service_level = SimulationCheckpoint(
+            output_dir=str(tmp_path / "results" / "sl2"),
+            checkpoint_dir="checkpoints",
+            policy=policy,
+            sample_id=sample_id,
+        )
+
+        lookahead.save_state({"run": "la", "bins": [1.0]}, day=3)
+
+        live_file = lookahead.get_checkpoint_file(day=3)
+        assert os.path.isfile(live_file)
+        assert str(tmp_path / "results" / "la") in live_file
+        assert os.path.basename(os.path.dirname(live_file)) == "checkpoints_live"
+
+        assert service_level.find_last_checkpoint_day() == 0
+        other_state, other_day = service_level.load_state()
+        assert other_state is None
+        assert other_day == 0
+
+        resumed = SimulationCheckpoint(
+            output_dir=str(tmp_path / "results" / "la"),
+            checkpoint_dir="checkpoints",
+            policy=policy,
+            sample_id=sample_id,
+        )
+        state, day = resumed.load_state()
+        assert day == 3
+        assert state == {"run": "la", "bins": [1.0]}
+
+        lookahead.save_state({"run": "la", "bins": [2.0]}, day=4)
+        state, day = resumed.load_state()
+        assert day == 4
+        assert state["bins"] == [2.0]
+
+        service_level.clear()
+        state, day = resumed.load_state()
+        assert day == 4
+
+        final_file = lookahead.get_checkpoint_file(day=4, end_simulation=True)
+        lookahead.save_state({"run": "la", "done": True}, day=4, end_simulation=True)
+        assert lookahead.clear() >= 1
+        assert os.path.isfile(final_file)
+        assert final_file != live_file
+        state, day = resumed.load_state()
         assert state is None
         assert day == 0

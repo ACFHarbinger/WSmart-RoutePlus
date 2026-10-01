@@ -13,6 +13,7 @@ Example:
 """
 
 import contextlib
+import hashlib
 import os
 import pickle
 from datetime import datetime
@@ -20,12 +21,28 @@ from typing import Any, Optional, Tuple
 
 from loguru import logger
 
-from logic.src.constants import ROOT_DIR
-
 try:
     from logic.src.tracking.core.run import get_active_run
 except ImportError:
     get_active_run = None  # type: ignore[assignment,misc]
+
+
+def _temporary_checkpoint_dir(output_dir: str, checkpoint_dir: str) -> str:
+    """Return the mid-run checkpoint directory for one results directory.
+
+    ``output_dir`` is the run's results directory, which already includes
+    ``sim.run_name``. A relative ``checkpoint_dir`` is stored under that
+    directory, beside the final-artifact folder, so two runs of the same
+    policy and sample do not share files. Completion clears only this live
+    directory. An absolute ``checkpoint_dir`` is an explicit location and is
+    used as a base with a stable results-directory namespace.
+    """
+    if os.path.isabs(checkpoint_dir):
+        run_key = hashlib.sha256(os.fsencode(os.path.realpath(output_dir))).hexdigest()
+        return os.path.join(checkpoint_dir, run_key, "live")
+    if ".." in checkpoint_dir.replace("\\", "/").split("/"):
+        raise ValueError("Relative checkpoint_dir must stay within the run directory")
+    return os.path.join(os.path.abspath(output_dir), f"{checkpoint_dir}_live")
 
 
 class SimulationCheckpoint:
@@ -47,8 +64,12 @@ class SimulationCheckpoint:
             policy: Policy identifier string.
             sample_id: Integer sample ID.
         """
-        self.checkpoint_dir = os.path.join(ROOT_DIR, checkpoint_dir)
-        self.output_dir = os.path.join(output_dir, checkpoint_dir)
+        self.checkpoint_dir = _temporary_checkpoint_dir(output_dir, checkpoint_dir)
+        self.output_dir = (
+            os.path.join(os.path.dirname(self.checkpoint_dir), "final")
+            if os.path.isabs(checkpoint_dir)
+            else os.path.join(output_dir, checkpoint_dir)
+        )
         self.policy = policy
         self.sample_id = sample_id
 

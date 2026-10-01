@@ -9,16 +9,12 @@ from logic.src.pipeline.simulations.checkpoints.persistence import SimulationChe
 
 
 @pytest.fixture
-def basic_checkpoint(mocker, tmp_path):
+def basic_checkpoint(tmp_path):
     """
     Sets up a real (not mocked) SimulationCheckpoint in a temporary directory.
-    - Mocks ROOT_DIR to a temporary path.
+    Live files are stored under ``output_dir``, so the temporary path never
+    touches the repository root.
     """
-    # Mock ROOT_DIR to point to a temporary path to avoid polluting real project
-    mock_root = tmp_path / "mock_root"
-    mock_root.mkdir(parents=True, exist_ok=True)
-    mocker.patch("logic.src.pipeline.simulations.checkpoints.persistence.ROOT_DIR", str(mock_root))
-
     output_dir = tmp_path / "test_assets" / "results"
     cp = SimulationCheckpoint(
         output_dir=str(output_dir),
