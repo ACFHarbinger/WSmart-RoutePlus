@@ -168,12 +168,11 @@ class AdaptiveRouteConstructorOrchestrator(BaseRoutingPolicy):
 
         return ARCOConfig
 
-    @classmethod
-    def _get_config_key(cls) -> str:
-        """Docstring.
+    def _get_config_key(self) -> str:
+        """Get the config key for the ARCO orchestrator.
 
         Returns:
-            Description of return value.
+            str: The config key for the Adaptive Route Constructor Orchestrator.
         """
         return "arco"
 

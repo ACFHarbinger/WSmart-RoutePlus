@@ -40,7 +40,7 @@ class ARCOConfig:
         seed: Random seed for reproducible exploration.
     """
 
-    constructors: List[str] = field(default_factory=lambda: ["nn", "alns"])
+    constructors: List[str] = field(default_factory=lambda: ["tsp", "alns"])
     time_limit: float = 120.0
     selection_strategy: str = "epsilon_greedy"
     epsilon: float = 0.15

@@ -8,7 +8,7 @@ Example:
     >>> from logic.src.policies.route_construction.other_algorithms.adaptive_route_constructor_orchestrator import ARCOParams
     >>> params = ARCOParams()
     >>> params
-    ARCOParams(constructors=['nn', 'alns'], time_limit=120.0, selection_strategy='epsilon_greedy', epsilon=0.15, temperature=1.0, alpha_ema=0.15, weight_init=1.0, weight_floor=0.01, decay=1.0, seed=42)
+    ARCOParams(constructors=['tsp', 'alns'], time_limit=120.0, selection_strategy='epsilon_greedy', epsilon=0.15, temperature=1.0, alpha_ema=0.15, weight_init=1.0, weight_floor=0.01, decay=1.0, seed=42)
 """
 
 from __future__ import annotations
@@ -37,7 +37,7 @@ class ARCOParams:
         seed: Random seed for reproducible exploration.
     """
 
-    constructors: List[str] = field(default_factory=lambda: ["nn", "alns"])
+    constructors: List[str] = field(default_factory=lambda: ["tsp", "alns"])
     time_limit: float = 120.0
     selection_strategy: str = "epsilon_greedy"
     epsilon: float = 0.15
@@ -59,7 +59,7 @@ class ARCOParams:
             ARCOParams: The parameters for the ARCO algorithm.
         """
         return cls(
-            constructors=getattr(config, "constructors", ["nn", "alns"]),
+            constructors=getattr(config, "constructors", ["tsp", "alns"]),
             time_limit=getattr(config, "time_limit", 120.0),
             selection_strategy=getattr(config, "selection_strategy", "epsilon_greedy"),
             epsilon=getattr(config, "epsilon", 0.15),

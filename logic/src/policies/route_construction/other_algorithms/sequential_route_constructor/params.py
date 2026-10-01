@@ -8,7 +8,7 @@ Example:
     >>> from logic.src.policies.route_construction.other_algorithms.sequential_route_constructor import SRCParams
     >>> params = SRCParams()
     >>> params.constructors
-    ['tsp', 'nn']
+    ['tsp', 'alns']
     >>> params.time_limit
     60.0
     >>> params.seed

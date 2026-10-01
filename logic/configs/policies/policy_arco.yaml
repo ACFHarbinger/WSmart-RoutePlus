@@ -68,19 +68,19 @@ arco:
   # ---------------------------------------------------------------------------
   # Constructor Pool
   # ---------------------------------------------------------------------------
-  - constructors: ["nn", "alns", "hgs"]
+  - constructors: ["tsp", "alns", "hgs"]
     # Registry names of route constructors to permute and execute.
     # ARCO selects an ordering of these at each call; the chain is always
     # a full permutation (every constructor runs exactly once per call).
     #
     # Recommended combinations:
-    #   Fast chain   : ["nn", "alns"]
-    #   Balanced     : ["nn", "alns", "hgs"]        ← default
-    #   Deep search  : ["nn", "hgs", "alns", "bpc"]
+    #   Fast chain   : ["tsp", "alns"]
+    #   Balanced     : ["tsp", "alns", "hgs"]        ← default
+    #   Deep search  : ["tsp", "hgs", "alns", "bpc"]
     #   Neural-guided: ["na", "alns", "hgs"]
     #
-    # Note: "nn" (nearest-neighbour) provides a fast warm-start; placing it
-    # first allows downstream solvers to improve from a feasible baseline.
+    # Note: "tsp" (exact TSP over the mandatory set) provides a fast warm-start;
+    # placing it first allows downstream solvers to improve from a feasible baseline.
 
   # ---------------------------------------------------------------------------
   # Runtime Control
@@ -178,14 +178,14 @@ arco:
 # =============================================================================
 #
 # --- FAST (2-constructor, greedy, no learning overhead) ---
-#   constructors: ["nn", "alns"]
+#   constructors: ["tsp", "alns"]
 #   selection_strategy: "greedy"
 #   time_limit: 60
 #   alpha_ema: 0.20
 #   decay: 1.0
 #
 # --- DEEP SEARCH (4-constructor, slow-learning) ---
-#   constructors: ["nn", "hgs", "alns", "bpc"]
+#   constructors: ["tsp", "hgs", "alns", "bpc"]
 #   selection_strategy: "epsilon_greedy"
 #   epsilon: 0.10
 #   time_limit: 300
@@ -193,7 +193,7 @@ arco:
 #   decay: 0.99
 #
 # --- EXPLORATION-HEAVY (early simulation days / cold start) ---
-#   constructors: ["nn", "alns", "hgs"]
+#   constructors: ["tsp", "alns", "hgs"]
 #   selection_strategy: "epsilon_greedy"
 #   epsilon: 0.35
 #   time_limit: 120
@@ -201,7 +201,7 @@ arco:
 #   decay: 0.98
 #
 # --- SOFTMAX (smooth probabilistic control) ---
-#   constructors: ["nn", "alns", "hgs"]
+#   constructors: ["tsp", "alns", "hgs"]
 #   selection_strategy: "softmax"
 #   temperature: 0.8
 #   time_limit: 120

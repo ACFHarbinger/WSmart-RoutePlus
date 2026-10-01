@@ -10,7 +10,7 @@ Example:
     >>> from configs.policies.src import SRCConfig
     >>> config = SRCConfig()
     >>> config.constructors
-    ['tsp', 'nn']
+    ['tsp', 'alns']
     >>> config.time_limit
     60.0
     >>> config.seed
