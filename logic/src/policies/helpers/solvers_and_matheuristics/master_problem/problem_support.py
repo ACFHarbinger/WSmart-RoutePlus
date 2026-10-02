@@ -158,8 +158,11 @@ class MasterProblemSupport(Protocol):
         """Applies exponential smoothing to dual values to stabilize column generation."""
         ...
 
-    def solve_ip(self) -> Tuple[float, List[Route]]:
+    def solve_ip(self, time_limit: Optional[float] = None) -> Tuple[float, List[Route]]:
         """Solves the RMP as an Integer Program.
+
+        Args:
+            time_limit: Optional time limit in seconds for the IP solve.
 
         Returns:
             Tuple[float, List[Route]]: (IP objective value, list of selected routes).

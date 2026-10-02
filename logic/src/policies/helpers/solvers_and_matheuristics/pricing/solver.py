@@ -27,6 +27,7 @@ from __future__ import annotations
 import heapq
 import logging
 import time
+from enum import Enum
 from typing import TYPE_CHECKING, Any, Dict, FrozenSet, List, Optional, Set, Tuple, Union, cast
 
 import numpy as np
@@ -38,6 +39,16 @@ if TYPE_CHECKING:
     from logic.src.policies.helpers.solvers_and_matheuristics.branching.constraints import AnyBranchingConstraint
 
 logger = logging.getLogger(__name__)
+
+
+class PricingStatus(str, Enum):
+    """Explicit certification state of a pricing subproblem solve."""
+
+    EXHAUSTIVE = "exhaustive"
+    HEURISTIC = "heuristic"
+    PARTIAL = "partial"
+    TIMED_OUT = "timed_out"
+
 
 # Type alias for LCI cover items passed to the DP extension step.
 # Each tuple: (cover_set, node_alpha_dict, dual_value, source_arc_or_none)
@@ -128,6 +139,7 @@ class RCSPPSolver:
 
         # Dual for the vehicle-limit convexity constraint (set by solve() before use)
         self.vehicle_dual: float = 0.0
+        self.pricing_status: PricingStatus = PricingStatus.PARTIAL
 
         # Precompute distance-sorted neighbor lists
         self._sorted_neighbors: Dict[int, List[int]] = self._precompute_sorted_neighbors()
@@ -269,7 +281,10 @@ class RCSPPSolver:
             rcc_duals = complex_duals.get("rcc_duals", {})
             sri_duals = complex_duals.get("sri_duals", {})
             edge_clique_duals = complex_duals.get("edge_clique_duals", {})
-            self.vehicle_dual = complex_duals.get("vehicle_limit", 0.0)
+            v_dual = complex_duals.get("vehicle_limit", 0.0) or complex_duals.get("fleet_dual", 0.0)
+            if not v_dual and isinstance(node_duals, dict):
+                v_dual = node_duals.get("vehicle_limit", 0.0)
+            self.vehicle_dual = float(v_dual or 0.0)
             lci_duals_raw = complex_duals.get("lci_duals", {})
             lci_node_alphas_raw = complex_duals.get("lci_node_alphas", {})
             lci_arcs_raw = complex_duals.get("lci_arcs", {})
@@ -279,7 +294,8 @@ class RCSPPSolver:
             rcc_duals = capacity_cut_duals or {}
             sri_duals = sri_cut_duals or {}
             edge_clique_duals = edge_clique_cut_duals or {}
-            self.vehicle_dual = 0.0
+            v_dual = node_duals.get("vehicle_limit", 0.0) if isinstance(node_duals, dict) else 0.0
+            self.vehicle_dual = float(v_dual or 0.0)
             lci_duals_raw = {}
             lci_node_alphas_raw = {}
             lci_arcs_raw = {}
@@ -350,7 +366,7 @@ class RCSPPSolver:
             # positive-RC columns, skip the expensive exact DP entirely.
             # Only fall back to exact DP when heuristic is insufficient.
             heuristic_routes: List[Route] = []
-            if self.n_nodes > 40:
+            if not exact_mode and self.n_nodes > 40:
                 heuristic_routes = self._heuristic_pricing(
                     max_routes=max_routes,
                     node_duals=self.dual_values,
@@ -358,9 +374,11 @@ class RCSPPSolver:
                     forbidden_arcs=forbidden_arcs,
                 )
 
-            if len(heuristic_routes) >= max_routes // 2:
+            if not exact_mode and len(heuristic_routes) >= max_routes // 2:
                 # Enough good columns found heuristically — skip exact DP
                 routes = heuristic_routes
+                self.pricing_status = PricingStatus.HEURISTIC
+                self.last_max_rc = max((r.reduced_cost for r in routes if r.reduced_cost is not None), default=0.0)
             else:
                 routes = self._label_correcting_algorithm(
                     max_routes=max_routes,
@@ -473,6 +491,8 @@ class RCSPPSolver:
 
             # Complete route: return to depot
             route_rc -= self.cost_matrix[current, self.depot] * self.C
+            if not self.is_farkas and self.vehicle_dual > 1e-9:
+                route_rc -= self.vehicle_dual
 
             # Only add if positive RC and not seen before
             key = frozenset(route_nodes)
@@ -511,6 +531,8 @@ class RCSPPSolver:
                         continue
 
                     edge_cost = 0.0 if self.is_farkas else (self.cost_matrix[i, j] * self.C)
+                    if j == self.depot and not self.is_farkas and self.vehicle_dual > 1e-9:
+                        edge_cost += self.vehicle_dual
                     if self.is_farkas:
                         node_rev = 0.0
                     elif self.node_prizes is not None:
@@ -661,7 +683,7 @@ class RCSPPSolver:
         # are returned within the timeout budget.
         # n=27: cap = min(max_labels, 27^1.5*200) ~ 28k -> ~3s
         # n=14: cap = min(max_labels, 14^1.5*200) ~ 10k -> ~1s
-        adaptive_max_labels = min(self.max_labels, int(self.n_nodes**1.5 * 200))
+        adaptive_max_labels = self.max_labels if exact_mode else min(self.max_labels, int(self.n_nodes**1.5 * 200))
 
         start_time = time.perf_counter()
         while queue:
@@ -741,7 +763,6 @@ class RCSPPSolver:
                 labels_at_node[v].append(new_label)
                 _counter += 1
                 heapq.heappush(queue, (-new_label.reduced_cost, _counter, new_label))
-                global_max_rc = max(global_max_rc, new_label.reduced_cost)
 
             # Attempt depot return
             if u != self.depot:
@@ -763,7 +784,23 @@ class RCSPPSolver:
                         completed_routes.append(final)
                         global_max_rc = max(global_max_rc, final.reduced_cost)
 
-        self.last_max_rc = global_max_rc
+        if self._timed_out:
+            self.pricing_status = PricingStatus.TIMED_OUT
+            max_potential = max(
+                (lbl.reduced_cost + self.bounds_to[lbl.node] for _, _, lbl in queue),
+                default=-float("inf"),
+            )
+            self.last_max_rc = max(global_max_rc, max_potential)
+        elif self.labels_generated >= self.max_labels:
+            self.pricing_status = PricingStatus.PARTIAL
+            max_potential = max(
+                (lbl.reduced_cost + self.bounds_to[lbl.node] for _, _, lbl in queue),
+                default=-float("inf"),
+            )
+            self.last_max_rc = max(global_max_rc, max_potential)
+        else:
+            self.pricing_status = PricingStatus.EXHAUSTIVE if exact_mode else PricingStatus.HEURISTIC
+            self.last_max_rc = global_max_rc
         routes: List[Route] = []
         seen_node_sets: set = set()
         for label in sorted(completed_routes, key=lambda x: x.reduced_cost, reverse=True):
@@ -828,6 +865,12 @@ class RCSPPSolver:
         # including the return to the depot (as in _extend_label).
         cost = 0.0 if self.is_farkas else self.cost_matrix[current_node, next_node] * self.C
         rc_delta = -cost
+
+        # Vehicle limit dual penalty: each generated route consumes 1 vehicle
+        if not self.is_farkas and self.vehicle_dual > 1e-9:
+            rc_delta -= self.vehicle_dual
+        elif self.is_farkas and abs(self.vehicle_dual) > 1e-9:
+            rc_delta += self.vehicle_dual
 
         # 1. RCC Duals (Boundary check)
         for subset, dual in rcc_duals.items():

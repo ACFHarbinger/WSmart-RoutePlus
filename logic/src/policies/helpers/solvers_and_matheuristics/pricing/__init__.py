@@ -25,6 +25,6 @@ Example:
 from __future__ import annotations
 
 from logic.src.policies.helpers.solvers_and_matheuristics.pricing.labels import Label
-from logic.src.policies.helpers.solvers_and_matheuristics.pricing.solver import RCSPPSolver
+from logic.src.policies.helpers.solvers_and_matheuristics.pricing.solver import PricingStatus, RCSPPSolver
 
-__all__ = ["Label", "RCSPPSolver"]
+__all__ = ["Label", "PricingStatus", "RCSPPSolver"]

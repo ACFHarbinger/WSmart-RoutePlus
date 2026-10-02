@@ -84,14 +84,9 @@ def test_lagrangian_bound_tracking():
     # Covering one node gives rc = 50 - 60 = -10.
     # last_max_rc should still track the absolute max rc seen.
     solver.solve(dual_values={1: 60.0, 2: 60.0})
-    # Note: solve() only returns routes with rc > 1e-6.
-    # But last_max_rc should track even negative ones if they reached the depot?
-    # Actually _label_correcting_algorithm only adds to completed_routes if rc > 1e-6.
-    # But the instruction said: "update this variable to track the absolute maximum
-    # reduced cost among all valid completed paths."
-    # My implementation updates it BEFORE the > 1e-6 check.
-    assert solver.last_max_rc == max(solver.last_max_rc, -10.0) # wait, it resets in solve.
-    # So second solve: last_max_rc should be ~ -10.0 (best single node)
+    # No completed route has a positive reduced cost, so the tracked maximum is
+    # non-positive. It is -inf when completion-bound pruning skips every return
+    # to the depot; consumers clamp it at zero.
     assert solver.last_max_rc < 0.0
 
 def test_farkas_pricing_objective_correction():

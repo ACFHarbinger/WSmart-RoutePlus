@@ -340,8 +340,11 @@ class VRPPMasterProblem(VRPPMasterProblemConstraintsMixin, VRPPMasterProblemSupp
                 if constr is not None:
                     farkas_node_duals["vehicle_limit"] = -constr.FarkasDual
 
+            farkas_fleet_dual = farkas_node_duals.get("vehicle_limit", 0.0)
             self.farkas_duals = {
                 "node_duals": farkas_node_duals,
+                "vehicle_limit": farkas_fleet_dual,
+                "fleet_dual": farkas_fleet_dual,
                 "rcc_duals": {s: -c.FarkasDual for s, c in self.active_capacity_cuts.items()},
                 "sri_duals": {s: -c.FarkasDual for s, c in self.active_sri_cuts.items()},
                 "edge_clique_duals": {e: -c[0].FarkasDual for e, c in self.active_edge_clique_cuts.items()},
@@ -388,26 +391,35 @@ class VRPPMasterProblem(VRPPMasterProblemConstraintsMixin, VRPPMasterProblemSupp
         # Multistar: ≤ 0 constraint in a MAX LP → dual Pi ≥ 0.
         self.dual_multistar_cuts = {s: max(0.0, c.Pi) for s, c in self.active_multistar_cuts.items()}
 
-    def solve_ip(self) -> Tuple[float, List[Route]]:
+    def solve_ip(self, time_limit: Optional[float] = None) -> Tuple[float, List[Route]]:
         """Solve the integer programme at the current B&B node.
 
         Re-imposes binary integrality on all λ variables and calls Gurobi's
         MIP solver.
 
+        Args:
+            time_limit: Optional time limit in seconds for the IP solve. If provided,
+                the model's TimeLimit parameter is set to this value during the solve
+                and restored afterward.
+
         Returns:
             Tuple containing:
                 - IP objective value.
-                - List of routes selected in the optimal solution (λ_k = 1).
+                - List of routes selected in the solution (λ_k = 1).
 
         Raises:
             ValueError: If build_model() has not been called.
-            RuntimeError: If the MIP solve fails.
+            RuntimeError: If the MIP solve fails (no feasible solution found).
         """
 
         if self.model is None:
             raise ValueError("Model not built.")
         if self.model.NumVars == 0:
             return 0.0, []
+
+        old_time_limit = self.model.Params.TimeLimit
+        if time_limit is not None:
+            self.model.Params.TimeLimit = max(0.1, float(time_limit))
 
         # Enforce Integrality
         for var in self.lambda_vars:
@@ -416,10 +428,14 @@ class VRPPMasterProblem(VRPPMasterProblemConstraintsMixin, VRPPMasterProblemSupp
 
         try:
             self.model.optimize()
-            if self.model.Status not in [GRB.OPTIMAL, GRB.SUBOPTIMAL]:
-                raise RuntimeError(f"IP solve failed: {self.model.Status}")
-            return self.model.ObjVal, [self.routes[i] for i, v in enumerate(self.lambda_vars) if v.X > 0.5]
+            if self.model.Status in [GRB.OPTIMAL, GRB.SUBOPTIMAL] or (
+                self.model.Status == GRB.TIME_LIMIT and self.model.SolCount > 0
+            ):
+                return self.model.ObjVal, [self.routes[i] for i, v in enumerate(self.lambda_vars) if v.X > 0.5]
+            raise RuntimeError(f"IP solve failed: {self.model.Status}")
         finally:
+            if time_limit is not None:
+                self.model.Params.TimeLimit = old_time_limit
             # Revert to continuous for further CG iterations
             for var in self.lambda_vars:
                 var.VType = GRB.CONTINUOUS
@@ -631,8 +647,9 @@ class VRPPMasterProblem(VRPPMasterProblemConstraintsMixin, VRPPMasterProblemSupp
 
         # node_duals: include vehicle_limit dual under its own key
         node_duals = dict(self.dual_node_coverage)
-        if self.dual_vehicle_limit > 1e-9:
-            node_duals["vehicle_limit"] = self.dual_vehicle_limit
+        fleet_dual = self.dual_vehicle_limit if self.dual_vehicle_limit > 1e-9 else 0.0
+        if fleet_dual > 0.0:
+            node_duals["vehicle_limit"] = fleet_dual
 
         # rcc_duals: dict of (set: dual) consumed by RCSPPSolver.solve()
         rcc_duals = {s: d for s, d in self.dual_capacity_cuts.items() if d > 1e-8}
@@ -645,6 +662,8 @@ class VRPPMasterProblem(VRPPMasterProblemConstraintsMixin, VRPPMasterProblemSupp
 
         return {
             "node_duals": node_duals,
+            "vehicle_limit": fleet_dual,
+            "fleet_dual": fleet_dual,
             "rcc_duals": rcc_duals,
             "sri_duals": sri_duals,
             "edge_clique_duals": dict(self.dual_edge_clique_cuts),

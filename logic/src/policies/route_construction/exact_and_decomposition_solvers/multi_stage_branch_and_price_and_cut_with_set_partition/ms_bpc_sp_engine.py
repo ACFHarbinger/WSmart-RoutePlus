@@ -134,6 +134,7 @@ from logic.src.policies.helpers.solvers_and_matheuristics import (
     AnyBranchingConstraint,
     BranchAndBoundTree,
     CuttingPlaneEngine,
+    PricingStatus,
     RCSPPSolver,
     Route,
     SeparationEngine,
@@ -379,12 +380,13 @@ def _column_generation_loop(  # noqa: C901
                         _rem_t = min(_rem_t, 5.0)  # hard cap: no single RCSPP call exceeds 5s
                     else:
                         _rem_t = 5.0
-                    added, _ = _solve_farkas_pricing_step(
+                    added, farkas_exhausted = _solve_farkas_pricing_step(
                         master,
                         pricing_solver,
                         branching_constraints,  # type: ignore[arg-type]
                         farkas,
                         timeout=_rem_t,
+                        exact_mode=exact_mode,
                     )
                     # If the pricer timed out, it cannot certify that no improving
                     # column exists. Track consecutive timeouts and bail out of CG
@@ -402,6 +404,9 @@ def _column_generation_loop(  # noqa: C901
                     else:
                         consecutive_pricing_timeouts = 0
                     if added == 0:
+                        if not farkas_exhausted:
+                            timed_out = True
+                            break
                         raise RuntimeError("LP infeasible at B&B node - Farkas pricing failed to find columns")
                     _inner_iter += 1
                     continue
@@ -426,7 +431,8 @@ def _column_generation_loop(  # noqa: C901
             # The global column pool (built during root CG) is already sifted above;
             # no new columns are generated, so we converge immediately.
             if cg_at_root_only and node_depth > 0:
-                converged = True
+                # A restricted descendant LP has no full pricing certificate.
+                timed_out = True
                 break
 
             _elapsed = time.perf_counter() - start_time
@@ -444,6 +450,7 @@ def _column_generation_loop(  # noqa: C901
                 optimality_gap=optimality_gap,
                 rc_tolerance=rc_tolerance,
                 timeout=_rem_t,
+                exact_mode=exact_mode,
             )
             # Consecutive RCSPP timeout detection.
             # A timed-out pricer returns partial results — it cannot certify
@@ -463,6 +470,16 @@ def _column_generation_loop(  # noqa: C901
                 consecutive_pricing_timeouts = 0
 
             if added == 0:
+                if not pricing_exhausted:
+                    logger.warning(
+                        f"CG incomplete at depth {node_depth}: 0 columns added but pricing was not exhausted "
+                        f"(status={getattr(pricing_solver, 'pricing_status', None)}, "
+                        f"timed_out={getattr(pricing_solver, '_timed_out', False)}, "
+                        f"last_max_rc={getattr(pricing_solver, 'last_max_rc', None):.4f})."
+                    )
+                    timed_out = True
+                    break
+
                 # Task 1b: Check for fractional cycles in ng-relaxation if CG has converged
                 # locally. Dynamic ng-expansion serves as a lightweight cut separation.
                 cycles: List[Tuple[int, ...]] = []
@@ -586,6 +603,7 @@ def _column_generation_loop(  # noqa: C901
             f"CG+Cut loop hit max_cg_iterations={max_cg_iterations} without full convergence.",
             stacklevel=3,
         )
+        timed_out = True
 
     final_basis = master.save_basis()
     return obj_val, route_vals, final_basis, timed_out
@@ -607,6 +625,7 @@ def _solve_farkas_pricing_step(
     farkas_duals: Any,
     max_routes: int = 5,
     timeout: float = 5.0,
+    exact_mode: bool = False,
 ) -> Tuple[int, bool]:
     """Phase I Pricing: Solve RCSPP with the Farkas dual ray to restore feasibility.
 
@@ -622,6 +641,7 @@ def _solve_farkas_pricing_step(
         farkas_duals (Any): Dual values from the Farkas ray.
         max_routes (int): Maximum number of routes to return.
         timeout (Optional[float]): Time limit for the pricing step.
+        exact_mode (bool): Whether exact pricing is enforced.
 
     Returns:
         Tuple[int, bool]: (Number of routes added, whether pricing was exhausted).
@@ -651,6 +671,7 @@ def _solve_farkas_pricing_step(
         forced_nodes=forced_nodes,
         rf_conflicts=rf_conflicts,
         is_farkas=True,
+        exact_mode=exact_mode,
         timeout=timeout,
     )
 
@@ -660,12 +681,20 @@ def _solve_farkas_pricing_step(
         # Reduced cost is calculated using Farkas duals. In Phase I, we search
         # for columns with POSITIVE reduced cost to resolve infeasibility.
         rc = r.reduced_cost if r.reduced_cost is not None else r.profit
-        if rc > _FARKAS_TOL:
-            master.add_route(r)
+        if rc > _FARKAS_TOL and master.add_route(r):
             added += 1
-    # Proper exhausting flag for Lagrangian bound validity (Phase I).
-    # If last_max_rc <= 0, no improving column exists regardless of return count.
-    exhausted = getattr(pricing_solver, "last_max_rc", -float("inf")) <= 0.0
+
+    pricer_status = getattr(pricing_solver, "pricing_status", PricingStatus.PARTIAL)
+    pricer_timed_out = getattr(pricing_solver, "_timed_out", False)
+    last_max_rc = getattr(pricing_solver, "last_max_rc", -float("inf"))
+
+    # Explicit certification: only an exhaustive solve with no timeout and
+    # last_max_rc <= _FARKAS_TOL can certify exhaustion.
+    exhausted = (
+        pricer_status == PricingStatus.EXHAUSTIVE
+        and not pricer_timed_out
+        and last_max_rc <= _FARKAS_TOL
+    )
     return added, exhausted
 
 
@@ -710,6 +739,7 @@ def _solve_pricing_step(
     optimality_gap: float = 1e-4,
     rc_tolerance: float = 1e-5,
     timeout: Optional[float] = None,
+    exact_mode: bool = False,
 ) -> Tuple[int, bool]:
     """Phase II Pricing: Solve the RCSPP pricing subproblem for profitable columns.
 
@@ -724,6 +754,7 @@ def _solve_pricing_step(
         optimality_gap (float): Target optimality gap.
         rc_tolerance (float): Minimum reduced cost to accept a column.
         timeout (Optional[float]): Time limit for the pricing step.
+        exact_mode (bool): Whether exact pricing is enforced.
 
     Returns:
         Tuple[int, bool]: (Number of columns added, whether pricing was exhausted).
@@ -754,14 +785,10 @@ def _solve_pricing_step(
         branching_constraints=branching_constraints,
         forced_nodes=forced_nodes,
         rf_conflicts=rf_conflicts,
+        exact_mode=exact_mode,
         timeout=timeout,
     )
 
-    if not routes:
-        exhausted = getattr(pricing_solver, "last_max_rc", -float("inf")) <= 0.0
-        return 0, exhausted
-
-    # Add new columns to master
     added = 0
     # routes is now a List[Route] from RCSPPSolver.solve
     for route in routes:
@@ -769,13 +796,20 @@ def _solve_pricing_step(
         # VRPP is a MAXIMIZATION problem. Pricing subproblem searches for columns
         # with POSITIVE reduced cost (rc > 0) to improve the objective.
         rc = route.reduced_cost if route.reduced_cost is not None else route.profit
-        if rc > rc_tolerance:
-            master.add_route(route)
+        if rc > rc_tolerance and master.add_route(route):
             added += 1
-    # Proper exhausting flag for Lagrangian bound validity (Phase II).
-    # last_max_rc is the maximum reduced cost seen across all labels in the DP.
-    # If it is <= 0, no improving column exists; the pricing is truly exhausted.
-    exhausted = getattr(pricing_solver, "last_max_rc", -float("inf")) <= 0.0
+
+    pricer_status = getattr(pricing_solver, "pricing_status", PricingStatus.PARTIAL)
+    pricer_timed_out = getattr(pricing_solver, "_timed_out", False)
+    last_max_rc = getattr(pricing_solver, "last_max_rc", -float("inf"))
+
+    # Explicit pricing certification: only an EXHAUSTIVE solve that didn't time out
+    # with maximum reduced cost <= rc_tolerance can certify exhaustion.
+    exhausted = (
+        pricer_status == PricingStatus.EXHAUSTIVE
+        and not pricer_timed_out
+        and last_max_rc <= rc_tolerance
+    )
     return added, exhausted
 
 
@@ -926,8 +960,26 @@ def _select_nodes_knapsack(
         revenue = R * wastes.get(i, 0.0)
         node_net_value[i] = revenue - node_insertion_cost[i]
 
-    # Only consider nodes with positive net value
-    candidates = [i for i in optional if node_net_value[i] > 0]
+    # Pairwise synergy check: a node i might have individual insertion cost > revenue,
+    # but when paired with neighbor j, the shared routing cost makes the pair profitable.
+    synergistic_nodes: Set[int] = set()
+    for i in optional:
+        rev_i = R * wastes.get(i, 0.0)
+        w_i = wastes.get(i, 0.0)
+        for j in range(1, n_nodes + 1):
+            if i == j:
+                continue
+            w_j = wastes.get(j, 0.0)
+            if w_i + w_j > capacity:
+                continue
+            rev_pair = rev_i + (R * w_j if j in optional else 0.0)
+            cost_pair = C * (dist_matrix[depot, i] + dist_matrix[i, j] + dist_matrix[j, depot])
+            if rev_pair - cost_pair > 0:
+                synergistic_nodes.add(i)
+                break
+
+    # Only consider nodes with positive net value or pairwise synergy
+    candidates = [i for i in optional if node_net_value[i] > 0 or i in synergistic_nodes]
     if not candidates:
         return set(mandatory)
 
@@ -945,8 +997,8 @@ def _select_nodes_knapsack(
 
     # --- Hard size limit ---
     # Target at most (1 - target_reduction) × n_nodes selected nodes total,
-    # so RCSPP gets an instance small enough to solve in rcspp_timeout.
-    max_optional = max(5, int(n_nodes * (1 - target_reduction)) - len(mandatory))
+    # floored at 20 so small-to-moderate instances are not over-reduced.
+    max_optional = max(20, int(n_nodes * (1 - target_reduction)) - len(mandatory))
 
     try:
         m = gp.Model("node_selection", env=env) if env else gp.Model("node_selection")
@@ -1090,9 +1142,8 @@ def run_ms_bpc_sp(  # noqa: C901
     # non-additive: a node dropped by the budget can be half of the only
     # profitable pairing, and the BPC never sees it.
     _knapsack_budget = min(10.0, time_limit * 0.05) if time_limit > 0 else 10.0
-    if _keep_all_nodes:
-        # Relaxation pass over all nodes. Its returned incumbent is a feasible
-        # candidate, not an upper bound without a separate optimality certificate.
+    if _keep_all_nodes or params.exact_mode or n_nodes <= 12:
+        # Exact mode, small instances, or relaxation pass: keep all nodes to prevent lossy reduction.
         selected_nodes = set(range(1, n_nodes + 1)) | set(m_set)
     else:
         selected_nodes = _select_nodes_knapsack(
@@ -1429,9 +1480,44 @@ def run_ms_bpc_sp(  # noqa: C901
                 # node's dynamic ng-expansion.
                 pricing_solver.restore_ng_snapshot(ng_snapshot)
 
-            # Task 3: Global Time Limit tracking
+            # Task 3: Global Time Limit tracking / Incomplete node handling
             if node_timed_out:
-                logger.warning(f"B&B node at depth {current_node.depth} timed out. Terminating search.")
+                logger.warning(
+                    f"B&B node at depth {current_node.depth} timed out or incomplete. "
+                    "Preserving feasible incumbent before terminating."
+                )
+                current_node.lp_bound = float("inf")
+                if _is_solution_integer(master.routes, route_values):
+                    current_node.is_integer = True
+                    current_node.ip_solution = lp_obj
+                    current_node.route_values = route_values
+                    bb_tree.update_incumbent(current_node, lp_obj)
+                else:
+                    try:
+                        _rem_ip = (
+                            max(0.1, time_limit - (time.perf_counter() - start_time))
+                            if time_limit > 0
+                            else None
+                        )
+                        ip_obj, ip_routes = master.solve_ip(time_limit=_rem_ip)
+                        if ip_obj > (
+                            bb_tree.best_integer_solution
+                            if bb_tree.best_integer_solution is not None
+                            else -float("inf")
+                        ):
+                            selected_indices = {}
+                            for r in ip_routes:
+                                try:
+                                    idx = master.routes.index(r)
+                                    selected_indices[idx] = 1.0
+                                except ValueError:
+                                    pass
+                            current_node.is_integer = True
+                            current_node.ip_solution = ip_obj
+                            current_node.route_values = selected_indices
+                            bb_tree.update_incumbent(current_node, ip_obj)
+                    except Exception as e:
+                        logger.debug(f"IP solve at incomplete node failed: {e}")
                 break
             current_node.lp_basis = node_final_basis
         except MSBPCSPPruningException:

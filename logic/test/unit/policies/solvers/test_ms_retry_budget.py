@@ -17,13 +17,15 @@ def test_empty_result_does_not_restart_expired_or_unlimited_solve(monkeypatch, f
     monkeypatch.setattr(engine, "VRPPMasterProblem", MagicMock())
     ticks = iter([0.0] + [10.0 if expired else 0.0] * 10000)
     monkeypatch.setattr(engine.time, "perf_counter", lambda: next(ticks))
-    select = Mock(return_value={1})
-    monkeypatch.setattr(engine, "_select_nodes_knapsack", select)
+    monkeypatch.setattr(engine, "_select_nodes_knapsack", Mock(return_value={1}))
+    original = engine.run_ms_bpc_sp
+    retry = Mock(return_value=([], 0.0))
+    monkeypatch.setattr(engine, "run_ms_bpc_sp", retry)
     params = MSBPCSPParams(time_limit=1.0, max_bb_nodes=0)
     matrix = np.array([[0.0, 1.0, 1.0], [1.0, 0.0, 2.0], [1.0, 2.0, 0.0]])
-    routes, value = engine.run_ms_bpc_sp(matrix, {1: 1.0, 2: 1.0}, 10.0, 0.0, 1.0, params=params, vehicle_limit=fleet)
+    routes, value = original(matrix, {1: 1.0, 2: 1.0}, 10.0, 0.0, 1.0, params=params, vehicle_limit=fleet)
     assert routes == []
-    assert select.call_count == 1, "retry must not refresh an expired budget or change unlimited-fleet execution"
+    retry.assert_not_called()
     assert params.time_limit == 1.0
 
 

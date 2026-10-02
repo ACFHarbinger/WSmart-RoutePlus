@@ -30,7 +30,7 @@ from logic.src.policies.helpers.solvers_and_matheuristics.branching import (
 )
 from logic.src.policies.helpers.solvers_and_matheuristics.common import BranchNode, Route
 from logic.src.policies.helpers.solvers_and_matheuristics.master_problem import GlobalCutPool, VRPPMasterProblem
-from logic.src.policies.helpers.solvers_and_matheuristics.pricing import Label, RCSPPSolver
+from logic.src.policies.helpers.solvers_and_matheuristics.pricing import Label, PricingStatus, RCSPPSolver
 from logic.src.policies.helpers.solvers_and_matheuristics.search import (
     BasicFleetCoverEngine,
     BestFirstSearch,
@@ -74,6 +74,7 @@ __all__ = [
     "GlobalCutPool",
     "Route",
     "VRPPMasterProblem",
+    "PricingStatus",
     "RCSPPSolver",
     "Label",
     "CapacityCut",

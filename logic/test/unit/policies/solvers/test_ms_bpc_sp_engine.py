@@ -192,6 +192,7 @@ def test_perform_strong_branching():
     master.restore_basis.assert_called()
 
 
+@_needs_license
 def test_compute_lr_bound_at_node():
     dist_matrix = np.array([[0, 10, 15], [10, 0, 5], [15, 5, 0]])
     wastes = {1: 5.0, 2: 5.0}
@@ -252,7 +253,7 @@ def _route_cost(dist_matrix, nodes):
     best = float("inf")
     for perm in itertools.permutations(nodes):
         path = (0,) + perm + (0,)
-        best = min(best, sum(dist_matrix[a][b] for a, b in zip(path, path[1:])))
+        best = min(best, sum(dist_matrix[a][b] for a, b in zip(path, path[1:], strict=False)))
     return best
 
 
@@ -352,3 +353,220 @@ def test_ms_bpc_sp_empty_fleet_result_relaxes_to_unconstrained_when_it_fits():
     assert abs(profit - expected) <= 1e-6 * max(1.0, abs(expected)), (
         f"expected brute-force optimum {expected}, got {profit}"
     )
+
+
+def test_pricing_status_and_duplicate_timeout_safeguard():
+    """Verify explicit pricing certification and incomplete-node safeguard."""
+    import time
+    from types import SimpleNamespace
+    from unittest.mock import MagicMock
+
+    from logic.src.policies.helpers.solvers_and_matheuristics import PricingStatus
+    from logic.src.policies.route_construction.exact_and_decomposition_solvers.multi_stage_branch_and_price_and_cut_with_set_partition import (
+        ms_bpc_sp_engine as engine,
+    )
+
+    master = MagicMock()
+    master.n_nodes = 6
+    master.active_sri_cuts = {}
+    master.model.Status = engine.GRB.OPTIMAL
+    master.phase = 2
+    master.solve_lp_relaxation.return_value = (10.0, {})
+    master.add_route.return_value = False
+
+    pricing = MagicMock()
+    pricing.pricing_status = PricingStatus.TIMED_OUT
+    pricing._timed_out = True
+    pricing.last_max_rc = 5.0
+    pricing.solve.return_value = [SimpleNamespace(reduced_cost=5.0, profit=5.0)]
+
+    cut_engine = MagicMock()
+    cut_engine.separate_and_add_cuts.return_value = 0
+
+    result = engine._column_generation_loop(
+        master, pricing, cut_engine, [], 1, 0, 60, time.perf_counter(), exact_mode=True
+    )
+    assert result[3], "Incomplete pricing with duplicates must be flagged as timed_out/incomplete node"
+    assert pricing.solve.call_args.kwargs.get("exact_mode") is True, "exact_mode must be passed to pricing pricer"
+
+
+@_needs_license
+def test_fleet_dual_integration_in_rcspp():
+    """Verify fleet-limit dual enters pricing solver and penalizes routes."""
+    from logic.src.policies.helpers.solvers_and_matheuristics import RCSPPSolver, Route, VRPPMasterProblem
+
+    dist_matrix = np.array([
+        [0.0, 5.0, 5.0],
+        [5.0, 0.0, 2.0],
+        [5.0, 2.0, 0.0],
+    ])
+    wastes = {1: 5.0, 2: 5.0}
+    master = VRPPMasterProblem(
+        n_nodes=2,
+        mandatory_nodes=set(),
+        cost_matrix=dist_matrix,
+        wastes=wastes,
+        capacity=10.0,
+        revenue_per_kg=10.0,
+        cost_per_km=1.0,
+        vehicle_limit=1,
+    )
+    r1 = Route(nodes=[1], cost=10.0, revenue=50.0, load=5.0, node_coverage={1})
+    master.add_route(r1)
+    master.build_model()
+    master.solve_lp_relaxation()
+    duals = master.get_reduced_cost_coefficients()
+    assert "vehicle_limit" in duals
+    assert "fleet_dual" in duals
+
+    pricing = RCSPPSolver(
+        n_nodes=2,
+        cost_matrix=dist_matrix,
+        wastes=wastes,
+        capacity=10.0,
+        revenue_per_kg=10.0,
+        cost_per_km=1.0,
+    )
+    pricing.solve(dual_values={"node_duals": {1: 10.0, 2: 10.0}, "vehicle_limit": 25.0}, exact_mode=True)
+    assert abs(pricing.vehicle_dual - 25.0) < 1e-6
+
+
+def test_master_solve_ip_time_limit_and_incumbent_recovery():
+    """Verify solve_ip respects time_limit parameter and extracts incumbent on TIME_LIMIT."""
+    from unittest.mock import MagicMock
+
+    from gurobipy import GRB
+    from logic.src.policies.helpers.solvers_and_matheuristics import Route, VRPPMasterProblem
+
+    r1 = Route(nodes=[1], cost=10.0, revenue=50.0, load=5.0, node_coverage={1})
+    master = VRPPMasterProblem.__new__(VRPPMasterProblem)
+    master.routes = [r1]
+    mock_var = MagicMock()
+    mock_var.X = 1.0
+    master.lambda_vars = [mock_var]
+    master.model = MagicMock()
+    master.model.NumVars = 1
+    master.model.Params = MagicMock()
+    master.model.Params.TimeLimit = 123.0
+    master.model.Status = GRB.OPTIMAL
+    master.model.SolCount = 1
+    master.model.ObjVal = 40.0
+
+    # Case 1: Normal solve with custom time_limit sets and restores old time_limit
+    obj, routes = master.solve_ip(time_limit=2.5)
+    assert master.model.Params.TimeLimit == 123.0
+    assert obj == 40.0
+    assert len(routes) == 1
+
+    # Case 2: TIME_LIMIT status with SolCount > 0 extracts incumbent
+    master.model.Status = GRB.TIME_LIMIT
+    master.model.Params.TimeLimit = 50.0
+    obj, routes = master.solve_ip(time_limit=1.0)
+    assert obj == 40.0
+    assert len(routes) == 1
+    assert master.model.Params.TimeLimit == 50.0
+
+    # Case 3: TIME_LIMIT status with SolCount == 0 raises RuntimeError
+    master.model.SolCount = 0
+    with pytest.raises(RuntimeError):
+        master.solve_ip(time_limit=1.0)
+
+
+@_needs_license
+def test_master_solve_ip_real_gurobi():
+    """Verify solve_ip on a live Gurobi model with license."""
+    from logic.src.policies.helpers.solvers_and_matheuristics import Route, VRPPMasterProblem
+
+    dist_matrix = np.array([
+        [0.0, 5.0, 5.0],
+        [5.0, 0.0, 2.0],
+        [5.0, 2.0, 0.0],
+    ])
+    wastes = {1: 5.0, 2: 5.0}
+    master = VRPPMasterProblem(
+        n_nodes=2,
+        mandatory_nodes=set(),
+        cost_matrix=dist_matrix,
+        wastes=wastes,
+        capacity=10.0,
+        revenue_per_kg=10.0,
+        cost_per_km=1.0,
+        vehicle_limit=1,
+    )
+    r1 = Route(nodes=[1], cost=10.0, revenue=50.0, load=5.0, node_coverage={1})
+    master.add_route(r1)
+    master.build_model()
+    master.model.Params.TimeLimit = 123.0
+    obj, routes = master.solve_ip(time_limit=2.5)
+    assert master.model.Params.TimeLimit == 123.0
+    assert obj == 40.0
+    assert len(routes) == 1
+
+
+def test_cg_at_root_only_descendant_leaves_node_incomplete():
+    """Skipping pricing at descendant nodes under cg_at_root_only must flag node timed_out."""
+    import time
+    from unittest.mock import MagicMock
+
+    from logic.src.policies.route_construction.exact_and_decomposition_solvers.multi_stage_branch_and_price_and_cut_with_set_partition import (
+        ms_bpc_sp_engine as e,
+    )
+
+    m = MagicMock()
+    m.n_nodes = 2
+    m.active_sri_cuts = {}
+    m.model.Status = e.GRB.OPTIMAL
+    m.phase = 2
+    m.solve_lp_relaxation.return_value = (10.0, {})
+    p = MagicMock()
+    p._timed_out = False
+    c = MagicMock()
+    c.separate_and_add_cuts.return_value = 0
+    r = e._column_generation_loop(m, p, c, [], 1, 0, 60, time.perf_counter(), node_depth=1, cg_at_root_only=True)
+    assert r[3], "Skipped descendant pricing cannot certify its restricted LP bound"
+    assert p.solve.call_count == 0
+
+
+def test_restricted_pricing_certification():
+    """Restricted-neighbor pricing must not certify EXHAUSTIVE when exact_mode=False."""
+    from logic.src.policies.helpers.solvers_and_matheuristics import PricingStatus, RCSPPSolver
+
+    p = RCSPPSolver(
+        n_nodes=6,
+        cost_matrix=np.ones((7, 7)) - np.eye(7),
+        wastes={i: 1 for i in range(1, 7)},
+        capacity=2,
+        revenue_per_kg=0,
+        cost_per_km=1,
+    )
+    p.solve({}, exact_mode=False)
+    assert p.pricing_status != PricingStatus.EXHAUSTIVE, "Restricted-neighbor pricing falsely certified exhaustive"
+    p.solve({}, exact_mode=True)
+    assert p.pricing_status == PricingStatus.EXHAUSTIVE
+
+
+def test_farkas_unexhausted_preserves_incomplete_node():
+    """Unexhausted Farkas pricing returning no columns must flag node timed_out/incomplete."""
+    import time
+    from unittest.mock import MagicMock
+
+    from logic.src.policies.helpers.solvers_and_matheuristics import PricingStatus
+    from logic.src.policies.route_construction.exact_and_decomposition_solvers.multi_stage_branch_and_price_and_cut_with_set_partition import (
+        ms_bpc_sp_engine as engine,
+    )
+
+    master = MagicMock()
+    master.n_nodes = 2
+    master.active_sri_cuts = {}
+    master.model.Status = engine.GRB.INFEASIBLE
+    master.phase = 1
+    master.farkas_duals = {1: 1.0}
+    master.solve_lp_relaxation.return_value = (0.0, {})
+    pricing = MagicMock()
+    pricing._timed_out = False
+    pricing.pricing_status = PricingStatus.PARTIAL
+    pricing.last_max_rc = 0.0
+    pricing.solve.return_value = []
+    result = engine._column_generation_loop(master, pricing, MagicMock(), [], 1, 0, 60, time.perf_counter())
+    assert result[3], "Unexhausted Farkas pricing must leave the node incomplete"
+
