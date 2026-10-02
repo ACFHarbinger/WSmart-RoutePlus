@@ -41,6 +41,10 @@ src:
   - vrpp: true
   # Profit-aware routing mode (Vehicle Routing Problem with Profits).
 
+  - mandatory_selection: {"other/ms_lookahead.yaml": ["default"]}
+  # Node selection strategy for waste collection problems.
+  # Without one, every day's mandatory set is empty and SRC collects nothing.
+
   # ---------------------------------------------------------------------
   # Determinism
   # ---------------------------------------------------------------------
