@@ -29,16 +29,40 @@ def encode_data(data: Any) -> bytes:
     Encodes various data types into bytes for encryption.
 
     Args:
-        data (Any): Data to encode (str, int, float, list, dict, etc.).
+        data (Any): Data to encode (str, int, float, bytes, list, dict, etc.).
 
     Returns:
         bytes: Encoded byte representation.
+
+    Note:
+        This function encodes data for encryption. decrypt_file_data() returns a string
+        if the decrypted bytes are valid UTF-8, otherwise returns raw bytes. This allows
+        recovery of the encoded bytes; it does not reconstruct the original Python
+        type. Single-precision float encoding may lose precision.
     """
     if isinstance(data, str):
         return data.encode("utf-8")
+    elif isinstance(data, bytes):
+        # Raw bytes are returned as-is
+        return data
+    elif isinstance(data, bool):
+        # Handle bool before int (bool is a subclass of int in Python)
+        return b"\x01" if data else b"\x00"
     elif isinstance(data, int):
-        return data.to_bytes((data.bit_length() + 7) // 8, byteorder="big")
+        # Handle zero and negative integers
+        if data == 0:
+            return b"\x00"
+        elif data > 0:
+            # Positive integer: use unsigned representation
+            return data.to_bytes((data.bit_length() + 7) // 8, byteorder="big", signed=False)
+        else:
+            # Negative integer: use signed representation
+            # Calculate the number of bytes needed for signed representation
+            byte_length = (data.bit_length() + 8) // 8  # +8 for sign bit
+            return data.to_bytes(byte_length, byteorder="big", signed=True)
     elif isinstance(data, float):
+        # Use single precision (4 bytes) for backward compatibility
+        # Note: This loses precision for double-precision floats
         return struct.pack("!f", data)
     else:  # elif isinstance(data, list) or isinstance(data, ITraversable):
         return pickle.dumps(data)
@@ -75,7 +99,7 @@ def encrypt_file_data(
 
 def decrypt_file_data(
     key: bytes, input: Union[str, os.PathLike, Any], output_file: Optional[Union[str, os.PathLike]] = None
-) -> str:
+) -> Union[str, bytes]:
     """
     Decrypt a file or data bytes using Fernet symmetric encryption.
 
@@ -85,7 +109,10 @@ def decrypt_file_data(
         output_file (Union[str, os.PathLike], optional): Path to save decrypted content.
 
     Returns:
-        str: The decrypted data (decoded as utf-8 string).
+        Union[str, bytes]: The decrypted data. Returns a string if the decrypted bytes
+            are valid UTF-8, otherwise returns raw bytes. This allows round-trip
+            encryption/decryption of payloads, not original Python object types.
+            If output_file is supplied, its contents are the exact plaintext bytes.
     """
     fernet = Fernet(key)
     if isinstance(input, (str, Path)) and os.path.isfile(input):
@@ -97,8 +124,17 @@ def decrypt_file_data(
             raise TypeError(f"Expected file path or bytes for decryption, got {type(input)}")
         encrypted_data = input
 
-    decrypted_data = fernet.decrypt(encrypted_data).decode("utf-8")
+    decrypted_bytes = fernet.decrypt(encrypted_data)
+
+    # Try to decode as UTF-8 for backward compatibility with text data
+    # If decoding fails, return raw bytes for binary data
+    try:
+        decrypted_data = decrypted_bytes.decode("utf-8")
+    except UnicodeDecodeError:
+        decrypted_data = decrypted_bytes
+
     if output_file:
-        with open(output_file, "w") as f:
-            f.write(decrypted_data)
+        # Preserve the authenticated plaintext bytes regardless of locale/newlines.
+        with open(output_file, "wb") as f:
+            f.write(decrypted_bytes)
     return decrypted_data

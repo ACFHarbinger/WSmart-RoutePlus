@@ -43,5 +43,4 @@ __all__ = [
     "decrypt_directory",
     "encrypt_zip_directory",
     "decrypt_zip",
-    "decrypt_zip",
 ]
