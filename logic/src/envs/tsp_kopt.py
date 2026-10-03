@@ -114,35 +114,62 @@ class TSPkoptEnv(ImprovementEnvBase):
         return full_tour
 
     def _step_instance(self, td: TensorDict) -> TensorDict:
-        """
-        Apply k-opt move to the solution.
-        Action: (idx1, idx2) - edges to swap for 2-opt.
+        """Apply a 2-opt local search move to the solution.
+
+        Action contract:
+            The action tensor `td["action"]` of shape `[batch, 2]` specifies either:
+            1. Node IDs (standard for neural improvement decoders): `action[b] = (node_u, node_v)`.
+               The environment resolves each node ID to its current index in `solution[b]` and
+               reverses the subpath between them (reversing slice `idx_min + 1 : idx_max + 1`).
+            2. Tour positions (explicit positional indexing): when `td["action_is_position"] = True`
+               for that batch element. No implicit positional fallback is allowed.
+            Only two-column actions are supported. NeuOpt basis sequences and N2S
+            request reinsertion require their own transition implementation.
 
         Args:
-            td: TensorDict containing the state.
+            td: TensorDict containing 'solution' [batch, N] and 'action' [batch, 2].
 
         Returns:
-            TensorDict containing the next state.
+            TensorDict: Updated state with the modified 'solution'.
         """
-        action = td["action"]  # [batch, 2] or combined
+        action = td["action"]  # [batch, 2]
         solution = td["solution"]
 
-        # 2-opt implementation: reverse section between i and j
-        # Assuming action contains i and j
-        if action.dim() == 1:  # Single int encoding if necessary
-            # Convert if needed
-            pass
-
+        if action.ndim != 2 or action.shape != (solution.size(0), 2):
+            raise ValueError("TSPkoptEnv supports exactly two action columns; basis sequences require a separate executor")
+        if action.is_floating_point() or action.is_complex() or action.dtype == torch.bool:
+            raise ValueError("2-opt actions must contain integer node IDs or positions")
         i, j = action[:, 0], action[:, 1]
+        is_pos_val = td.get("action_is_position", None)
+        if isinstance(is_pos_val, torch.Tensor):
+            modes = is_pos_val.reshape(-1)
+            if modes.numel() not in (1, solution.size(0)):
+                raise ValueError("action_is_position must be scalar or contain one flag per instance")
+            modes = modes.expand(solution.size(0))
+        else:
+            modes = [bool(is_pos_val)] * solution.size(0)
 
-        # Ensure i < j
-        i, j = torch.min(i, j), torch.max(i, j)
-
-        # Apply 2-opt reversal
         new_solution = solution.clone()
         for b in range(solution.size(0)):
-            # slice [i+1:j+1] reversed
-            idx_i, idx_j = i[b].item(), j[b].item()
+            sol_b = solution[b]
+            val_i = i[b].item()
+            val_j = j[b].item()
+
+            if bool(modes[b]):
+                if not (0 <= val_i < sol_b.numel() and 0 <= val_j < sol_b.numel()):
+                    raise ValueError("2-opt action positions are outside the tour")
+                idx_i, idx_j = min(val_i, val_j), max(val_i, val_j)
+            else:
+                # Map node IDs to positions in current tour
+                pos_i_match = (sol_b == val_i).nonzero(as_tuple=True)[0]
+                pos_j_match = (sol_b == val_j).nonzero(as_tuple=True)[0]
+                if len(pos_i_match) > 0 and len(pos_j_match) > 0:
+                    pos_i = pos_i_match[0].item()
+                    pos_j = pos_j_match[0].item()
+                    idx_i, idx_j = min(pos_i, pos_j), max(pos_i, pos_j)
+                else:
+                    raise ValueError("2-opt action node IDs must be present in the tour")
+
             if idx_i < idx_j:
                 new_solution[b, idx_i + 1 : idx_j + 1] = solution[b, idx_i + 1 : idx_j + 1].flip(0)
 

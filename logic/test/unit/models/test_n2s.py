@@ -23,8 +23,7 @@ def test_n2s_policy_forward():
     # Run one step of policy
     out = policy(td, env, strategy="greedy", max_steps=3)
 
-    assert "actions" in out.keys()
-    assert out["actions"].shape == (2, 3, 2)  # batch, steps, 2 nodes
+    assert out["actions"].shape == (2, 3, 4)  # batch, steps, 4 action components (i+, i-, j, k)
 
     # Check that it moves
     assert td["solution"].shape == (2, 21)
