@@ -16,6 +16,7 @@ Examples:
 """
 
 import random
+import time
 from copy import deepcopy
 from typing import List
 
@@ -114,6 +115,20 @@ def _remove_invalid_crossings(crossings, points):
     return valid_crossings
 
 
+def _uncross_deadline_expired(values):
+    """Return True when values carries a perf_counter deadline that has passed.
+
+    Missing the key means the caller did not set a budget, so the walk runs
+    to completion. A deadline of "now" stops before the first geometric scan.
+    """
+    if not isinstance(values, dict):
+        return False
+    deadline = values.get("_uncross_deadline")
+    if deadline is None:
+        return False
+    return time.perf_counter() >= float(deadline)
+
+
 def uncross_arcs_in_routes(
     previous_solution,
     p_vehicle,
@@ -147,18 +162,26 @@ def uncross_arcs_in_routes(
     # Local cache instead of globals
     crossed_arcs_cache = {}  # type: ignore[var-annotated]
 
-    # 1. Identify initial crossings
-    for idx, route in enumerate(previous_solution):
-        _find_crossed_arcs(route, points, idx, crossed_arcs_cache)
+    # 1. Identify initial crossings. Stop before the scan once the caller's
+    # budget is gone; a long distinct-route walk used to ignore time_limit.
+    if not _uncross_deadline_expired(values):
+        for idx, route in enumerate(previous_solution):
+            if _uncross_deadline_expired(values):
+                break
+            _find_crossed_arcs(route, points, idx, crossed_arcs_cache)
 
     # 2. Process and resolve crossings
     for idx, route in enumerate(previous_solution):
+        if _uncross_deadline_expired(values):
+            break
         # Retrieve crossings for this route
         current_crossings = crossed_arcs_cache.get(idx, [])
         relevant_crossings = _remove_invalid_crossings(current_crossings, points)
 
         seen_routes = set()
         while relevant_crossings:
+            if _uncross_deadline_expired(values):
+                break
             signature = tuple(route)
             if signature in seen_routes:
                 break

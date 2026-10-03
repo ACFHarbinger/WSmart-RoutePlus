@@ -12,6 +12,8 @@ Example:
     >>> print(f"Cost: {cost}, Profit: {profit}")
 """
 
+import time
+
 from logic.src.policies.route_construction.meta_heuristics.simulated_annealing_neighborhood_search.common.routes import (
     uncross_arcs_in_routes,
 )
@@ -66,6 +68,11 @@ def find_solutions(
     p_route_difference = chosen_combination[5]
     p_shift = chosen_combination[6]
 
+    # Copy so an absolute deadline cannot leak into the caller's next day.
+    uncross_values = dict(values)
+    if time_limit is not None:
+        uncross_values["_uncross_deadline"] = time.perf_counter() + float(time_limit)
+
     # 1. Initial Solution
     initial_solution = find_initial_solution(
         data,
@@ -86,7 +93,7 @@ def find_solutions(
         data,
         points,
         distance_matrix,
-        values,
+        uncross_values,
     )
 
     # 2. Simulated Annealing Phase
@@ -113,7 +120,7 @@ def find_solutions(
         data,
         points,
         distance_matrix,
-        values,
+        uncross_values,
         iterations=p_iterations,
     )
 
