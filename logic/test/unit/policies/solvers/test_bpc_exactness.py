@@ -62,7 +62,8 @@ def test_set_partitioning_enforcement():
         assert node in master.dual_node_coverage
 
 def test_lagrangian_bound_tracking():
-    """Verify that RCSPPSolver tracks the maximum reduced cost across all paths."""
+    """Verify completed-route reduced costs and exhausted no-improvement pricing."""
+    from logic.src.policies.helpers.solvers_and_matheuristics.pricing import PricingStatus
     n_nodes = 2
     cost_matrix = np.zeros((3, 3))
     wastes = {1: 50.0, 2: 50.0}
@@ -77,13 +78,16 @@ def test_lagrangian_bound_tracking():
     )
 
     # Duals = 0, so max_rc should be 100 (covering both nodes)
-    solver.solve(dual_values={1: 0.0, 2: 0.0})
+    solver.solve(dual_values={1: 0.0, 2: 0.0}, exact_mode=True)
     assert solver.last_max_rc >= 100.0
 
     # With duals = 60, covering both nodes gives rc = 100 - 120 = -20.
     # Covering one node gives rc = 50 - 60 = -10.
-    # last_max_rc should still track the absolute max rc seen.
-    solver.solve(dual_values={1: 60.0, 2: 60.0})
+    # Completion-bound pruning may skip every unprofitable depot return.
+    routes = solver.solve(dual_values={1: 60.0, 2: 60.0}, exact_mode=True)
+    assert routes == []
+    assert solver.pricing_status == PricingStatus.EXHAUSTIVE
+    assert not solver._timed_out
     # No completed route has a positive reduced cost, so the tracked maximum is
     # non-positive. It is -inf when completion-bound pruning skips every return
     # to the depot; consumers clamp it at zero.
