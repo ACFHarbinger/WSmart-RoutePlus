@@ -28,18 +28,15 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from logic.src.policies.helpers.operators import (
-    greedy_insertion,
-    greedy_profit_insertion,
-    random_removal,
-    regret_2_insertion,
-    regret_2_profit_insertion,
-    worst_profit_removal,
-    worst_removal,
-)
-from logic.src.policies.helpers.operators.destroy_ruin import cluster_removal
-from logic.src.policies.helpers.operators.solution_initialization.greedy_si import (
-    build_greedy_routes,
+from logic.src.policies.helpers.operators.search_heuristics.destroy_repair_llh import (
+    build_greedy_initial_routes,
+    llh_cluster_greedy,
+    llh_random_greedy,
+    llh_random_regret_2,
+    llh_worst_greedy,
+    llh_worst_regret_2,
+    routes_net_profit,
+    routes_total_distance,
 )
 
 from .params import VNSParams
@@ -208,29 +205,18 @@ class VNSSolver:
         use_profit = self.params.profit_aware_operators
         expand_pool = self.params.vrpp
 
-        if use_profit:
-            partial, removed = random_removal(routes, 1, self.random)
-            return greedy_profit_insertion(
-                partial,
-                removed,
-                self.dist_matrix,
-                self.wastes,
-                self.capacity,
-                self.R,
-                self.C,
-                mandatory_nodes=self.mandatory_nodes,
-                expand_pool=expand_pool,
-            )
-
-        partial, removed = random_removal(routes, 1, self.random)
-        return greedy_insertion(
-            partial,
-            removed,
+        return llh_random_greedy(
+            routes,
+            1,
             self.dist_matrix,
             self.wastes,
             self.capacity,
+            self.R,
+            self.C,
             mandatory_nodes=self.mandatory_nodes,
             expand_pool=expand_pool,
+            profit_aware=use_profit,
+            rng=self.random,
         )
 
     def _shake_n2(self, routes: List[List[int]]) -> List[List[int]]:
@@ -247,29 +233,18 @@ class VNSSolver:
         use_profit = self.params.profit_aware_operators
         expand_pool = self.params.vrpp
 
-        if use_profit:
-            partial, removed = random_removal(routes, 2, self.random)
-            return greedy_profit_insertion(
-                partial,
-                removed,
-                self.dist_matrix,
-                self.wastes,
-                self.capacity,
-                self.R,
-                self.C,
-                mandatory_nodes=self.mandatory_nodes,
-                expand_pool=expand_pool,
-            )
-
-        partial, removed = random_removal(routes, 2, self.random)
-        return greedy_insertion(
-            partial,
-            removed,
+        return llh_random_greedy(
+            routes,
+            2,
             self.dist_matrix,
             self.wastes,
             self.capacity,
+            self.R,
+            self.C,
             mandatory_nodes=self.mandatory_nodes,
             expand_pool=expand_pool,
+            profit_aware=use_profit,
+            rng=self.random,
         )
 
     def _shake_n3(self, routes: List[List[int]]) -> List[List[int]]:
@@ -286,29 +261,18 @@ class VNSSolver:
         use_profit = self.params.profit_aware_operators
         expand_pool = self.params.vrpp
 
-        if use_profit:
-            partial, removed = worst_profit_removal(routes, 2, self.dist_matrix, self.wastes, self.R, self.C)
-            return regret_2_profit_insertion(
-                partial,
-                removed,
-                self.dist_matrix,
-                self.wastes,
-                self.capacity,
-                self.R,
-                self.C,
-                mandatory_nodes=self.mandatory_nodes,
-                expand_pool=expand_pool,
-            )
-
-        partial, removed = worst_removal(routes, 2, self.dist_matrix)
-        return regret_2_insertion(
-            partial,
-            removed,
+        return llh_worst_regret_2(
+            routes,
+            2,
             self.dist_matrix,
             self.wastes,
             self.capacity,
+            self.R,
+            self.C,
             mandatory_nodes=self.mandatory_nodes,
             expand_pool=expand_pool,
+            profit_aware=use_profit,
+            rng=self.random,
         )
 
     def _shake_n4(self, routes: List[List[int]]) -> List[List[int]]:
@@ -325,29 +289,19 @@ class VNSSolver:
         use_profit = self.params.profit_aware_operators
         expand_pool = self.params.vrpp
 
-        if use_profit:
-            partial, removed = cluster_removal(routes, 3, self.dist_matrix, self.nodes, self.random)
-            return greedy_profit_insertion(
-                partial,
-                removed,
-                self.dist_matrix,
-                self.wastes,
-                self.capacity,
-                self.R,
-                self.C,
-                mandatory_nodes=self.mandatory_nodes,
-                expand_pool=expand_pool,
-            )
-
-        partial, removed = cluster_removal(routes, 3, self.dist_matrix, self.nodes, self.random)
-        return greedy_insertion(
-            partial,
-            removed,
+        return llh_cluster_greedy(
+            routes,
+            3,
             self.dist_matrix,
             self.wastes,
             self.capacity,
+            self.R,
+            self.C,
             mandatory_nodes=self.mandatory_nodes,
             expand_pool=expand_pool,
+            profit_aware=use_profit,
+            rng=self.random,
+            nodes=self.nodes,
         )
 
     def _shake_n5(self, routes: List[List[int]]) -> List[List[int]]:
@@ -364,29 +318,18 @@ class VNSSolver:
         use_profit = self.params.profit_aware_operators
         expand_pool = self.params.vrpp
 
-        if use_profit:
-            partial, removed = random_removal(routes, 3, self.random)
-            return regret_2_profit_insertion(
-                partial,
-                removed,
-                self.dist_matrix,
-                self.wastes,
-                self.capacity,
-                self.R,
-                self.C,
-                mandatory_nodes=self.mandatory_nodes,
-                expand_pool=expand_pool,
-            )
-
-        partial, removed = random_removal(routes, 3, self.random)
-        return regret_2_insertion(
-            partial,
-            removed,
+        return llh_random_regret_2(
+            routes,
+            3,
             self.dist_matrix,
             self.wastes,
             self.capacity,
+            self.R,
+            self.C,
             mandatory_nodes=self.mandatory_nodes,
             expand_pool=expand_pool,
+            profit_aware=use_profit,
+            rng=self.random,
         )
 
     # ------------------------------------------------------------------
@@ -447,29 +390,18 @@ class VNSSolver:
         use_profit = self.params.profit_aware_operators
         expand_pool = self.params.vrpp
 
-        if use_profit:
-            partial, removed = random_removal(routes, n, self.random)
-            return greedy_profit_insertion(
-                partial,
-                removed,
-                self.dist_matrix,
-                self.wastes,
-                self.capacity,
-                self.R,
-                self.C,
-                mandatory_nodes=self.mandatory_nodes,
-                expand_pool=expand_pool,
-            )
-
-        partial, removed = random_removal(routes, n, self.random)
-        return greedy_insertion(
-            partial,
-            removed,
+        return llh_random_greedy(
+            routes,
+            n,
             self.dist_matrix,
             self.wastes,
             self.capacity,
+            self.R,
+            self.C,
             mandatory_nodes=self.mandatory_nodes,
             expand_pool=expand_pool,
+            profit_aware=use_profit,
+            rng=self.random,
         )
 
     def _llh1(self, routes: List[List[int]], n: int) -> List[List[int]]:
@@ -486,29 +418,18 @@ class VNSSolver:
         use_profit = self.params.profit_aware_operators
         expand_pool = self.params.vrpp
 
-        if use_profit:
-            partial, removed = worst_profit_removal(routes, n, self.dist_matrix, self.wastes, self.R, self.C)
-            return regret_2_profit_insertion(
-                partial,
-                removed,
-                self.dist_matrix,
-                self.wastes,
-                self.capacity,
-                self.R,
-                self.C,
-                mandatory_nodes=self.mandatory_nodes,
-                expand_pool=expand_pool,
-            )
-
-        partial, removed = worst_removal(routes, n, self.dist_matrix)
-        return regret_2_insertion(
-            partial,
-            removed,
+        return llh_worst_regret_2(
+            routes,
+            n,
             self.dist_matrix,
             self.wastes,
             self.capacity,
+            self.R,
+            self.C,
             mandatory_nodes=self.mandatory_nodes,
             expand_pool=expand_pool,
+            profit_aware=use_profit,
+            rng=self.random,
         )
 
     def _llh2(self, routes: List[List[int]], n: int) -> List[List[int]]:
@@ -525,29 +446,19 @@ class VNSSolver:
         use_profit = self.params.profit_aware_operators
         expand_pool = self.params.vrpp
 
-        if use_profit:
-            partial, removed = cluster_removal(routes, n, self.dist_matrix, self.nodes, self.random)
-            return greedy_profit_insertion(
-                partial,
-                removed,
-                self.dist_matrix,
-                self.wastes,
-                self.capacity,
-                self.R,
-                self.C,
-                mandatory_nodes=self.mandatory_nodes,
-                expand_pool=expand_pool,
-            )
-
-        partial, removed = cluster_removal(routes, n, self.dist_matrix, self.nodes, self.random)
-        return greedy_insertion(
-            partial,
-            removed,
+        return llh_cluster_greedy(
+            routes,
+            n,
             self.dist_matrix,
             self.wastes,
             self.capacity,
+            self.R,
+            self.C,
             mandatory_nodes=self.mandatory_nodes,
             expand_pool=expand_pool,
+            profit_aware=use_profit,
+            rng=self.random,
+            nodes=self.nodes,
         )
 
     def _llh3(self, routes: List[List[int]], n: int) -> List[List[int]]:
@@ -564,29 +475,18 @@ class VNSSolver:
         use_profit = self.params.profit_aware_operators
         expand_pool = self.params.vrpp
 
-        if use_profit:
-            partial, removed = worst_profit_removal(routes, n, self.dist_matrix, self.wastes, self.R, self.C)
-            return greedy_profit_insertion(
-                partial,
-                removed,
-                self.dist_matrix,
-                self.wastes,
-                self.capacity,
-                self.R,
-                self.C,
-                mandatory_nodes=self.mandatory_nodes,
-                expand_pool=expand_pool,
-            )
-
-        partial, removed = worst_removal(routes, n, self.dist_matrix)
-        return greedy_insertion(
-            partial,
-            removed,
+        return llh_worst_greedy(
+            routes,
+            n,
             self.dist_matrix,
             self.wastes,
             self.capacity,
+            self.R,
+            self.C,
             mandatory_nodes=self.mandatory_nodes,
             expand_pool=expand_pool,
+            profit_aware=use_profit,
+            rng=self.random,
         )
 
     def _llh4(self, routes: List[List[int]], n: int) -> List[List[int]]:
@@ -603,29 +503,18 @@ class VNSSolver:
         use_profit = self.params.profit_aware_operators
         expand_pool = self.params.vrpp
 
-        if use_profit:
-            partial, removed = random_removal(routes, n, self.random)
-            return regret_2_profit_insertion(
-                partial,
-                removed,
-                self.dist_matrix,
-                self.wastes,
-                self.capacity,
-                self.R,
-                self.C,
-                mandatory_nodes=self.mandatory_nodes,
-                expand_pool=expand_pool,
-            )
-
-        partial, removed = random_removal(routes, n, self.random)
-        return regret_2_insertion(
-            partial,
-            removed,
+        return llh_random_regret_2(
+            routes,
+            n,
             self.dist_matrix,
             self.wastes,
             self.capacity,
+            self.R,
+            self.C,
             mandatory_nodes=self.mandatory_nodes,
             expand_pool=expand_pool,
+            profit_aware=use_profit,
+            rng=self.random,
         )
 
     # ------------------------------------------------------------------
@@ -642,7 +531,7 @@ class VNSSolver:
         Returns:
             List[List[int]]: List of routes.
         """
-        return build_greedy_routes(
+        return build_greedy_initial_routes(
             dist_matrix=self.dist_matrix,
             wastes=self.wastes,
             capacity=self.capacity,
@@ -662,10 +551,7 @@ class VNSSolver:
         Returns:
             float: Total profit.
         """
-        if not routes:
-            return 0.0
-        rev = sum(self.wastes.get(n, 0.0) * self.R for r in routes for n in r)
-        return rev - self._cost(routes) * self.C
+        return routes_net_profit(routes, self.dist_matrix, self.wastes, self.R, self.C)
 
     def _cost(self, routes: List[List[int]]) -> float:
         """
@@ -677,12 +563,4 @@ class VNSSolver:
         Returns:
             float: Total cost.
         """
-        total = 0.0
-        for route in routes:
-            if not route:
-                continue
-            total += self.dist_matrix[0][route[0]]
-            for k in range(len(route) - 1):
-                total += self.dist_matrix[route[k]][route[k + 1]]
-            total += self.dist_matrix[route[-1]][0]
-        return total
+        return routes_total_distance(routes, self.dist_matrix)

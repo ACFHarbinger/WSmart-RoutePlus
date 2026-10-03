@@ -17,16 +17,15 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from logic.src.policies.helpers.operators import (
-    build_greedy_routes,
-    cluster_removal,
-    greedy_insertion,
-    greedy_profit_insertion,
-    random_removal,
-    regret_2_insertion,
-    regret_2_profit_insertion,
-    worst_profit_removal,
-    worst_removal,
+from logic.src.policies.helpers.operators.search_heuristics.destroy_repair_llh import (
+    build_greedy_initial_routes,
+    llh_cluster_greedy,
+    llh_random_greedy,
+    llh_random_regret_2,
+    llh_worst_greedy,
+    llh_worst_regret_2,
+    routes_net_profit,
+    routes_total_distance,
 )
 
 from .params import ILSParams
@@ -204,35 +203,22 @@ class ILSSolver:
 
         n_remove = max(2, int(len(flat) * self.params.perturbation_strength))
 
-        # Random removal of a large chunk
-        partial, removed = random_removal(routes, n_remove, self.random)
-
-        # Reinsert removed nodes
-        if self.params.profit_aware_operators:
-            return greedy_profit_insertion(
-                routes=partial,
-                removed_nodes=removed,
-                dist_matrix=self.dist_matrix,
-                wastes=self.wastes,
-                capacity=self.capacity,
-                R=self.R,
-                C=self.C,
-                mandatory_nodes=self.mandatory_nodes,
-                expand_pool=self.params.vrpp,
-            )
-        else:
-            return greedy_insertion(
-                routes=partial,
-                removed_nodes=removed,
-                dist_matrix=self.dist_matrix,
-                wastes=self.wastes,
-                capacity=self.capacity,
-                mandatory_nodes=self.mandatory_nodes,
-                expand_pool=self.params.vrpp,
-            )
+        return llh_random_greedy(
+            routes,
+            n_remove,
+            self.dist_matrix,
+            self.wastes,
+            self.capacity,
+            self.R,
+            self.C,
+            mandatory_nodes=self.mandatory_nodes,
+            expand_pool=self.params.vrpp,
+            profit_aware=self.params.profit_aware_operators,
+            rng=self.random,
+        )
 
     # ------------------------------------------------------------------
-    # LLH pool
+    # LLH pool (shared composites from helpers.operators.search_heuristics)
     # ------------------------------------------------------------------
 
     def _llh0(self, routes: List[List[int]], n: int) -> List[List[int]]:
@@ -245,29 +231,19 @@ class ILSSolver:
         Returns:
             Repaired routes.
         """
-        partial, removed = random_removal(routes, n, self.random)
-        if self.params.profit_aware_operators:
-            return greedy_profit_insertion(
-                partial,
-                removed,
-                self.dist_matrix,
-                self.wastes,
-                self.capacity,
-                self.R,
-                self.C,
-                self.mandatory_nodes,
-                self.params.vrpp,
-            )
-        else:
-            return greedy_insertion(
-                partial,
-                removed,
-                self.dist_matrix,
-                self.wastes,
-                self.capacity,
-                mandatory_nodes=self.mandatory_nodes,
-                expand_pool=self.params.vrpp,
-            )
+        return llh_random_greedy(
+            routes,
+            n,
+            self.dist_matrix,
+            self.wastes,
+            self.capacity,
+            self.R,
+            self.C,
+            mandatory_nodes=self.mandatory_nodes,
+            expand_pool=self.params.vrpp,
+            profit_aware=self.params.profit_aware_operators,
+            rng=self.random,
+        )
 
     def _llh1(self, routes: List[List[int]], n: int) -> List[List[int]]:
         """Worst removal + Regret-2 insertion.
@@ -279,24 +255,19 @@ class ILSSolver:
         Returns:
             Repaired routes.
         """
-        if self.params.profit_aware_operators:
-            partial, removed = worst_profit_removal(routes, n, self.dist_matrix, self.wastes, self.R, self.C)
-            return regret_2_profit_insertion(
-                partial,
-                removed,
-                self.dist_matrix,
-                self.wastes,
-                self.capacity,
-                self.R,
-                self.C,
-                self.mandatory_nodes,
-                self.params.vrpp,
-            )
-        else:
-            partial, removed = worst_removal(routes, n, self.dist_matrix)
-            return regret_2_insertion(
-                partial, removed, self.dist_matrix, self.wastes, self.capacity, self.mandatory_nodes, self.params.vrpp
-            )
+        return llh_worst_regret_2(
+            routes,
+            n,
+            self.dist_matrix,
+            self.wastes,
+            self.capacity,
+            self.R,
+            self.C,
+            mandatory_nodes=self.mandatory_nodes,
+            expand_pool=self.params.vrpp,
+            profit_aware=self.params.profit_aware_operators,
+            rng=self.random,
+        )
 
     def _llh2(self, routes: List[List[int]], n: int) -> List[List[int]]:
         """Cluster removal + Greedy insertion.
@@ -308,29 +279,20 @@ class ILSSolver:
         Returns:
             Repaired routes.
         """
-        partial, removed = cluster_removal(routes, n, self.dist_matrix, self.nodes, self.random)
-        if self.params.profit_aware_operators:
-            return greedy_profit_insertion(
-                partial,
-                removed,
-                self.dist_matrix,
-                self.wastes,
-                self.capacity,
-                self.R,
-                self.C,
-                self.mandatory_nodes,
-                self.params.vrpp,
-            )
-        else:
-            return greedy_insertion(
-                partial,
-                removed,
-                self.dist_matrix,
-                self.wastes,
-                self.capacity,
-                mandatory_nodes=self.mandatory_nodes,
-                expand_pool=self.params.vrpp,
-            )
+        return llh_cluster_greedy(
+            routes,
+            n,
+            self.dist_matrix,
+            self.wastes,
+            self.capacity,
+            self.R,
+            self.C,
+            mandatory_nodes=self.mandatory_nodes,
+            expand_pool=self.params.vrpp,
+            profit_aware=self.params.profit_aware_operators,
+            rng=self.random,
+            nodes=self.nodes,
+        )
 
     def _llh3(self, routes: List[List[int]], n: int) -> List[List[int]]:
         """Worst removal + Greedy insertion.
@@ -342,30 +304,19 @@ class ILSSolver:
         Returns:
             Repaired routes.
         """
-        if self.params.profit_aware_operators:
-            partial, removed = worst_profit_removal(routes, n, self.dist_matrix, self.wastes, self.R, self.C)
-            return greedy_profit_insertion(
-                partial,
-                removed,
-                self.dist_matrix,
-                self.wastes,
-                self.capacity,
-                self.R,
-                self.C,
-                self.mandatory_nodes,
-                self.params.vrpp,
-            )
-        else:
-            partial, removed = worst_removal(routes, n, self.dist_matrix)
-            return greedy_insertion(
-                partial,
-                removed,
-                self.dist_matrix,
-                self.wastes,
-                self.capacity,
-                mandatory_nodes=self.mandatory_nodes,
-                expand_pool=self.params.vrpp,
-            )
+        return llh_worst_greedy(
+            routes,
+            n,
+            self.dist_matrix,
+            self.wastes,
+            self.capacity,
+            self.R,
+            self.C,
+            mandatory_nodes=self.mandatory_nodes,
+            expand_pool=self.params.vrpp,
+            profit_aware=self.params.profit_aware_operators,
+            rng=self.random,
+        )
 
     def _llh4(self, routes: List[List[int]], n: int) -> List[List[int]]:
         """Random removal + Regret-2 insertion.
@@ -377,29 +328,19 @@ class ILSSolver:
         Returns:
             Repaired routes.
         """
-        partial, removed = random_removal(routes, n, self.random)
-        if self.params.profit_aware_operators:
-            return regret_2_profit_insertion(
-                partial,
-                removed,
-                self.dist_matrix,
-                self.wastes,
-                self.capacity,
-                self.R,
-                self.C,
-                self.mandatory_nodes,
-                self.params.vrpp,
-            )
-        else:
-            return regret_2_insertion(
-                partial,
-                removed,
-                self.dist_matrix,
-                self.wastes,
-                self.capacity,
-                self.mandatory_nodes,
-                self.params.vrpp,
-            )
+        return llh_random_regret_2(
+            routes,
+            n,
+            self.dist_matrix,
+            self.wastes,
+            self.capacity,
+            self.R,
+            self.C,
+            mandatory_nodes=self.mandatory_nodes,
+            expand_pool=self.params.vrpp,
+            profit_aware=self.params.profit_aware_operators,
+            rng=self.random,
+        )
 
     # ------------------------------------------------------------------
     # Helpers
@@ -411,7 +352,7 @@ class ILSSolver:
         Returns:
             Set of routes.
         """
-        return build_greedy_routes(
+        return build_greedy_initial_routes(
             dist_matrix=self.dist_matrix,
             wastes=self.wastes,
             capacity=self.capacity,
@@ -430,10 +371,7 @@ class ILSSolver:
         Returns:
             Net profit.
         """
-        if not routes:
-            return 0.0
-        rev = sum(self.wastes.get(n, 0.0) * self.R for r in routes for n in r)
-        return rev - self._cost(routes) * self.C
+        return routes_net_profit(routes, self.dist_matrix, self.wastes, self.R, self.C)
 
     def _cost(self, routes: List[List[int]]) -> float:
         """Total routing distance.
@@ -444,12 +382,4 @@ class ILSSolver:
         Returns:
             Total distance.
         """
-        total = 0.0
-        for route in routes:
-            if not route:
-                continue
-            total += self.dist_matrix[0][route[0]]
-            for k in range(len(route) - 1):
-                total += self.dist_matrix[route[k]][route[k + 1]]
-            total += self.dist_matrix[route[-1]][0]
-        return total
+        return routes_total_distance(routes, self.dist_matrix)
