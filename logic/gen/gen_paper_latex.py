@@ -88,7 +88,13 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from report_utils import apply_theme, load_json, load_theme, render_template, savefig
+
+if __package__:
+    # Package-style import (e.g. the import sweep: logic.gen.gen_paper_latex).
+    from .report_utils import apply_theme, load_json, load_theme, render_template, savefig
+else:
+    # Script-style invocation keeps working: python logic/gen/gen_paper_latex.py
+    from report_utils import apply_theme, load_json, load_theme, render_template, savefig
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 

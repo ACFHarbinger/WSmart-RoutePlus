@@ -1,8 +1,8 @@
-"""Every registered route constructor must honour the config contract (issue #61, round 3).
+"""Every registered route constructor must honour the config contract (issue #61, rounds 3+5).
 
 The 2026-09-29 round fixed the three broken ``test_sim`` entries but only
 covered the entries ``test_sim`` actually fans out to. ``arco`` is registered
-and has a yaml, yet no ``test_sim`` entry, so its defects were invisible:
+and has a yaml, yet had no ``test_sim`` entry, so its defects were invisible:
 ``_get_config_key`` was a ``@classmethod`` while
 ``BaseRoutingPolicy._build_config`` calls ``cls._get_config_key(cls)``
 (the same crash ``src`` had), and its constructor pool defaulted to ``"nn"``,
@@ -22,18 +22,26 @@ This test generalises the check to the whole registry, not just ``test_sim``:
    ``logic/configs/policies/policy_*.yaml``. A pool naming an unregistered
    constructor can only fail at run time with
    ``ValueError: Unknown policy`` from ``RouteConstructorFactory.get_adapter``.
+3. Every **orchestrator** — a registered policy whose yaml fans out to a
+   ``constructors`` pool — must be exercised by a ``test_sim`` entry (an
+   orchestrator's adapter is only built through one, which is exactly why
+   ``arco`` stayed invisible) and must set a ``mandatory_selection``
+   (without one, every day's mandatory set is empty and the orchestrator
+   collects nothing — the ``src`` lesson).
 
-Before the fixes this failed on ``arco`` (TypeError from the classmethod) and
-on the ``"nn"`` pool names in ``ARCOParams``, ``ARCOConfig`` and
-``policy_arco.yaml``.
+Before the round-3 fixes this failed on ``arco`` (TypeError from the
+classmethod) and on the ``"nn"`` pool names in ``ARCOParams``, ``ARCOConfig``
+and ``policy_arco.yaml``. Before the round-5 entry, contract 3 failed on
+``arco`` (no ``test_sim`` entry).
 """
 
 import importlib
 import pkgutil
+import re
 from dataclasses import fields, is_dataclass
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Iterator, List, Tuple
+from typing import Any, Dict, Iterator, List, Tuple
 
 import pytest
 import yaml
@@ -42,6 +50,7 @@ from logic.src.policies.route_construction.base.registry import RouteConstructor
 
 _REPO_ROOT = Path(__file__).resolve().parents[5]
 _POLICY_YAMLS = sorted((_REPO_ROOT / "logic" / "configs" / "policies").glob("policy_*.yaml"))
+_TEST_SIM = _REPO_ROOT / "logic" / "configs" / "tasks" / "test_sim.yaml"
 
 RouteConstructorFactory.ensure_registered()
 _REGISTERED = sorted(RouteConstructorRegistry.list_route_constructors())
@@ -142,4 +151,73 @@ def test_constructor_pool_names_are_registered(source: str, name: str):
         f"{source} names constructor {name!r}, which is not registered in "
         "RouteConstructorRegistry; RouteConstructorFactory.get_adapter would "
         "raise ValueError: Unknown policy."
+    )
+
+
+# ---------------------------------------------------------------------------
+# Contract 3 (round 5): orchestrators must be exercised by test_sim and must
+# select a mandatory set, or they are invisible and collect nothing.
+# ---------------------------------------------------------------------------
+
+
+def _orchestrators() -> Dict[str, Tuple[str, Dict[str, Any]]]:
+    """(registry key -> (yaml file, merged yaml section)) for every registered
+    policy whose yaml fans out to a ``constructors`` pool."""
+    registered = set(_REGISTERED)
+    found: Dict[str, Tuple[str, Dict[str, Any]]] = {}
+    for yaml_file in _POLICY_YAMLS:
+        data = yaml.safe_load(yaml_file.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            continue
+        for key, section in data.items():
+            if key not in registered or not isinstance(section, list):
+                continue
+            merged = {k: v for item in section if isinstance(item, dict) for k, v in item.items()}
+            if isinstance(merged.get("constructors"), list):
+                found[key] = (str(yaml_file.relative_to(_REPO_ROOT)), merged)
+    assert found, "no orchestrator (constructor-pool) policy yamls found"
+    return found
+
+
+def _test_sim_policy_keys() -> List[str]:
+    """The keys of the default ``sim.policies`` list, read statically so no
+    Hydra composition is needed."""
+    in_policies = False
+    keys: List[str] = []
+    for line in _TEST_SIM.read_text(encoding="utf-8").splitlines():
+        if re.match(r"^sim:", line):
+            in_policies = True
+            continue
+        if in_policies:
+            m = re.match(r"^    - ([A-Za-z0-9_]+):", line)
+            if m:
+                keys.append(m.group(1))
+            elif line and not line.startswith(" "):
+                break  # left the sim: block
+    assert keys, "no sim.policies entries found in test_sim.yaml"
+    return keys
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("key", sorted(_orchestrators()))
+def test_orchestrator_has_a_test_sim_entry(key: str):
+    """An orchestrator's adapter is only built through a ``test_sim`` entry;
+    without one neither the simulator nor the entries test ever builds it."""
+    yaml_file, _ = _orchestrators()[key]
+    assert key in _test_sim_policy_keys(), (
+        f"{key} is a registered orchestrator ({yaml_file} fans out to a "
+        "constructors pool) but has no test_sim entry; its adapter and "
+        "sub-constructor wiring are never exercised."
+    )
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("key", sorted(_orchestrators()))
+def test_orchestrator_yaml_sets_a_mandatory_selection(key: str):
+    """Without a mandatory_selection every day's mandatory set is empty and
+    the orchestrator collects nothing (the ``src`` lesson)."""
+    yaml_file, merged = _orchestrators()[key]
+    assert merged.get("mandatory_selection"), (
+        f"{yaml_file} defines an orchestrator but sets no mandatory_selection; "
+        f"{key} would collect 0 kg in every simulated day."
     )

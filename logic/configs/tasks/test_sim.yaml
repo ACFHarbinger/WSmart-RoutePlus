@@ -23,6 +23,7 @@ defaults:
   - /policies@p.amphh: policy_amphh
   - /policies@p.alns: policy_alns
   - /policies@p.alns_ipo: policy_alns_ipo
+  - /policies@p.arco: policy_arco
   - /policies@p.bb: policy_bb
   - /policies@p.bc: policy_bc
   - /policies@p.bp: policy_bp
@@ -153,6 +154,7 @@ sim:
     - amphh: ${p.amphh.amphh}
     - alns: ${p.alns.alns}
     - alns_ipo: ${p.alns_ipo.alns_ipo}
+    - arco: ${p.arco.arco}
     - bb: ${p.bb.bb}
     - bc: ${p.bc.bc}
     - bp: ${p.bp.bp}
