@@ -694,8 +694,6 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
 
     c_env_border = "#1f4e78"
     c_env_fill = "#f0f4f8"
-    c_noise_border = "#d97706"
-    c_noise_fill = "#fffbeb"
     c_policy_border = "#059669"
     c_policy_fill = "#f0fdf4"
     c_eval_border = "#b91c1c"
@@ -829,7 +827,7 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
     ax.text(0.845, 0.42, "5. Collection log", ha="center", fontsize=9.2, fontweight="bold", color=c_eval_border)
     ax.text(0.845, 0.32, "Profit $= R\\cdot\\mathrm{kg} - C\\cdot\\mathrm{km}$.\nEfficiency $=$ total kg $/$ total km.\nRevised time: all three policy stages.",
             ha="center", va="center", fontsize=7.1, color=c_text_dark, linespacing=1.25)
-    
+
     # Callout Badge 2 -- accounting reads the true state, not the sensed signal.
     # (With sigma = 0 the two coincide, so this is a statement about the
     # accounting contract, not an observed asymmetry in these runs.)
