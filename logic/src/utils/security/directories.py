@@ -27,6 +27,14 @@ from logic.src.utils.input.files import extract_zip, zip_directory
 from .data import decrypt_file_data, encrypt_file_data
 
 
+def _validate_input_directory(input_dir: Union[str, os.PathLike]) -> Path:
+    """Resolve an existing source directory before any output is created."""
+    source = Path(input_dir).resolve(strict=True)
+    if not source.is_dir():
+        raise NotADirectoryError(f"Input path is not a directory: {input_dir}")
+    return source
+
+
 def encrypt_directory(
     key: bytes, input_dir: Union[str, os.PathLike], output_dir: Optional[Union[str, os.PathLike]] = None
 ) -> List[bytes]:
@@ -44,12 +52,14 @@ def encrypt_directory(
     Raises:
         Exception: If directory creation fails.
         ValueError: If paths escape the roots or output is nested inside input.
+        FileNotFoundError: If the input directory does not exist.
+        NotADirectoryError: If the input path is not a directory.
     """
     if output_dir is None:
         output_dir = input_dir
 
     # Resolve paths to prevent symlink attacks
-    input_dir_resolved = Path(input_dir).resolve()
+    input_dir_resolved = _validate_input_directory(input_dir)
     output_dir_resolved = Path(output_dir).resolve()
     if input_dir_resolved in output_dir_resolved.parents:
         raise ValueError("Output directory must not be inside input directory")
@@ -103,12 +113,14 @@ def decrypt_directory(
     Raises:
         Exception: If directory creation fails.
         ValueError: If paths escape the roots or output is nested inside input.
+        FileNotFoundError: If the input directory does not exist.
+        NotADirectoryError: If the input path is not a directory.
     """
     if output_dir is None:
         output_dir = input_dir
 
     # Resolve paths to prevent symlink and path traversal attacks
-    input_dir_resolved = Path(input_dir).resolve()
+    input_dir_resolved = _validate_input_directory(input_dir)
     output_dir_resolved = Path(output_dir).resolve()
     if input_dir_resolved in output_dir_resolved.parents:
         raise ValueError("Output directory must not be inside input directory")
@@ -165,8 +177,12 @@ def encrypt_zip_directory(
 
     Returns:
         bytes: The encrypted zip data.
+
+    Raises:
+        FileNotFoundError: If the input directory does not exist.
+        NotADirectoryError: If the input path is not a directory.
     """
-    # str(input_dir) to satisfy os.path functions if it's PathLike
+    _validate_input_directory(input_dir)
     input_dir_str = str(input_dir)
     if output_enczip is None:
         norm_path = os.path.normpath(input_dir_str)
