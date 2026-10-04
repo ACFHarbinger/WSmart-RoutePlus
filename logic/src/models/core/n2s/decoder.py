@@ -13,7 +13,8 @@ which factorizes neighborhood search moves into:
      conditioned on the removed node and its tour partner.
    - Enforces precedence and validity constraints (masking immediate predecessor and identity).
    - Samples reinsertion target with log P_reinsert|remove.
-3. Joint action [x_rem, x_target] and factorized log-likelihood log P_rem + log P_reinsert.
+3. Joint action [i_plus, i_minus, j, k] and factorized log-likelihood log P_rem + log P_reinsert.
+   The request pickup/delivery nodes are reinserted after residual-tour anchor nodes j/k.
 
 Attributes:
     N2SDecoder: Paper-faithful removal and conditional reinsertion decoder.
@@ -356,7 +357,7 @@ class N2SDecoder(ImprovementDecoder):
         env: RL4COEnvBase,
         **kwargs: Any,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Predicts an improvement move [x_rem, x_target] via paper factorized removal and reinsertion.
+        """Predicts a request move [i_plus, i_minus, j, k] via removal and reinsertion.
 
         Args:
             td: TensorDict containing problem and solution state.
@@ -367,7 +368,9 @@ class N2SDecoder(ImprovementDecoder):
         Returns:
             Tuple[torch.Tensor, torch.Tensor]:
                 - log_p: Joint log-likelihood of the selected move [B].
-                - actions: Pair of node indices [x_rem, x_target] [B, 2].
+                - actions: Node IDs [i_plus, i_minus, j, k] [B, 4]. The pickup i_plus
+                  and delivery i_minus are inserted after residual-tour anchors j and k;
+                  when j == k, the pickup is inserted before the delivery.
         """
         h = embeddings[0] if isinstance(embeddings, (tuple, list)) else embeddings
         bs, n, d = h.shape
