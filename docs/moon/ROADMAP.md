@@ -30,6 +30,29 @@ Tags: `[Quick Win]` ≤ 1 day · `[Research]` involves novel work · `[Blocked]`
 
 ---
 
+## Research-code follow-through — 2026-10-04
+
+Round-5 implementation is integrated. The
+[issue #61 tracker](../errors/ROADMAP.md#current-status--2026-10-04) records
+commit evidence, reviewed limitations, and the remaining work.
+
+- ✅ Integrated: ARCO simulator entry and generator import, old-SANS deadline,
+  shared ILS/VNS operators, security utility fixes, revised DACT/NeuOpt/N2S
+  decoders, and the strengthened certified-pricing regression.
+- 🚧 Pending integration: the reviewed security source-validation patch,
+  N2S action-contract documentation, and generator lint cleanup. Patch locations
+  and checks are linked from the tracker.
+- ❌ Figueira reruns blocked: resolve the bin-selection discrepancy and validate
+  fill/matrix ordering before placing inputs and running those cells. Archived
+  90-day logs are also needed for historical result comparisons.
+- 🚧 Separate follow-up: deterministic worst-removal RNG for ILS/VNS. The
+  completed extraction preserves the previous behavior.
+
+This status update does not close #61, #83, or #90, change paper claims, or
+certify GPU training or full paper equivalence.
+
+---
+
 ## Cross-Cutting Themes
 
 Several items across sections are tightly coupled and should be sequenced together:

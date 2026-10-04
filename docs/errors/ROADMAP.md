@@ -5,6 +5,53 @@ Tracker for issue #61. The sequence follows the component flow in
 component is checked for cross-boundary shape/type errors, invalid state
 mutation, device handling, and silent routing/solver failures.
 
+## Current status — 2026-10-04
+
+This update supersedes the open design decisions and “Next session” suggestions
+in the dated pass notes below. Those notes remain as the audit history. This
+tracker records local evidence; it does not close the GitHub issue.
+
+| Item | Status | Evidence |
+|---|---|---|
+| WCVRP capacity / `max_waste` contract | Resolved | `792193bbb`: capacity feasibility remains enforced by the action mask; the collection docstring was corrected and the existing clamping fixture retained. |
+| VRPP depot waste column | Fixed | `792193bbb`: `get_waste_with_depot` uses structural metadata and accepts customer-only or depot-inclusive widths; parity and schema regressions included. |
+| Security utility review | Integrated; follow-up pending | `23a1a1fd2`: Qwen v2 plus Codex's binary-output and directory-containment amendments. The later invalid-source validation patch is tested but **not integrated**; see pending work below. |
+| Generator package import / ARCO simulator entry | Integrated | `1a2a9430e`: package and script imports supported; ARCO added to simulator defaults with its existing lookahead selection. |
+| DACT / NeuOpt / N2S decoders | Integrated with amendments | `a840a9370`: Gemini v7 plus Codex's PDP contract fixes. Acceptance is limited to the reviewed implementation; it does not establish full paper equivalence or training quality. |
+| Old-SANS uncross deadline | Integrated | `dd113dc89`: best-effort checks between scans, not a hard whole-solver time cap. |
+| ILS / VNS shared operators | Integrated | `ee1c76586`: behavior-preserving extraction; legacy unseeded worst removal remains a separate follow-up. |
+| Certified-pricing bound regression | Integrated | `d894bc60f`: strengthened last-max-reduced-cost test. |
+
+The recorded integrated suite result is **1914 passed, 4 skipped**, from
+[Claude's integration evidence](../../.agent/cache/patches/claude/open5-integration-2026-10-03/suite-summary.txt).
+Fresh focused reviews on 2026-10-04 passed; their counts cover overlapping suites
+and must not be added together as a distinct-test total. See the
+[agent bus](../../.agent/bus/2026-10-02.md) for the individual reports.
+
+### Pending integration and rerun prerequisites
+
+- **Security input validation:**
+  [patch and review](../../.agent/cache/patches/codex/qwen-followup-2026-10-04/review.md).
+  Eight fail-before cases; 37 security tests pass after the fix. Missing/file
+  sources must fail before creating directory or encrypted-ZIP outputs.
+- **N2S action documentation:**
+  [patch and review](../../.agent/cache/patches/codex/gemini-followup-2026-10-04/review.md).
+  Correct the obsolete two-column description to `[i_plus, i_minus, j, k]`.
+- **Generator lint cleanup:**
+  [patch and review](../../.agent/cache/patches/codex/mistral-followup-2026-10-04/review.md).
+  Remove two unused constants and blank-line whitespace; no rendering change.
+- **#83 Figueira input provenance:** two 350-entry selection files differ at six
+  row indices. Resolve the archived coordinate mapping or owner ruling, then
+  validate ordering against fill data and the matrix before Figueira reruns.
+  [Selection evidence](../../.agent/cache/patches/codex/open5-integration-review-2026-10-04/review.md).
+  Cursor's 13 staged files have not been placed in shared data and do not alone
+  clear this blocker. Archived 90-day logs remain unavailable locally.
+- **ILS/VNS seed reproducibility:** the current refactor deliberately preserves
+  the entropy fallback. RNG threading changes trajectories and needs a separate
+  implementation and validation pass.
+
+## Historical component checklist — 2026-09-29
+
 - [COMPLETED] CLI entry point and Hydra command dispatch (`main.py`, task routing) — normalized documented aliases `evaluation` → `eval` and `sim_hpo` → `hpo_sim`; regression coverage added.
 - [COMPLETED] Typed configuration composition and validation (`logic/src/configs/`) — all canonical task groups compose through Hydra; no additional typed-config defect confirmed in this pass.
 - [COMPLETED] Feature engines: train, evaluation, data generation, and simulation dispatch — repaired task-scoped curriculum graphs, CPU multiprocessing validation, failed-run tracking, and duplicate simulator validation.

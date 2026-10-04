@@ -17,6 +17,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Research-code integration and tracker reconciliation — 2026-10-04
+
+- Recorded the integrated round-5 fixes: generator import and ARCO entry
+  (`1a2a9430e`), old-SANS uncross deadline (`dd113dc89`), ILS/VNS shared
+  operators (`ee1c76586`), security utilities (`23a1a1fd2`), DACT/NeuOpt/N2S
+  decoders with review amendments (`a840a9370`), and bound-test strengthening
+  (`d894bc60f`).
+- Reconciled the [issue #61 tracker](../errors/ROADMAP.md) with the resolved
+  WCVRP and VRPP decisions (`792193bbb`), preserving historical pass notes.
+- Recorded three reviewed patches as pending integration: directory-source
+  validation, N2S action documentation, and generator lint cleanup. They are
+  not described as shipped fixes.
+- Retained the Figueira selection-provenance blocker and missing local 90-day
+  archives as rerun limitations. No new experiment results or issue closures
+  are implied by this documentation update.
+
+
 ### Added
 
 #### CTOP travel-time matrices and simulation completion (`2026-09-07`)
