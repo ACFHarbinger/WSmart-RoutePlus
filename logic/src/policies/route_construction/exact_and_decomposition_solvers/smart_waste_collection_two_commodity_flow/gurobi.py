@@ -66,11 +66,13 @@ def _clarke_wright_trips(d: TCFData, distance_matrix: List[List[float]], visit: 
 def _warm_starts(d: TCFData, distance_matrix: List[List[float]], forced_nodes: List[int]) -> List[List[List[int]]]:
     """Feasible MIP starts: Clarke-Wright trips over the forced bins and over every bin with waste.
 
-    At 350 bins and a 60 s limit Gurobi can end without any incumbent when only
-    part of the bins is forced, and the day then collected nothing (#41). A
-    forced-only start alone fixes that but anchors the search on a small plan;
-    the collect-everything start supplies the multi-trip plan Gurobi finds on
-    its good days. Gurobi keeps the better one and improves it.
+    Used only when ``warm_start`` is enabled; the published model (Ramos et al.,
+    2018) has no MIP start. At 350 bins and a 60 s limit Gurobi can end without
+    any incumbent when only part of the bins is forced, and the day then
+    collected nothing (#41). A forced-only start alone fixes that but anchors
+    the search on a small plan; the collect-everything start supplies the
+    multi-trip plan Gurobi finds on its good days. Gurobi keeps the better one
+    and improves it.
 
     Args:
         d: Shared TCF model data.
@@ -95,6 +97,13 @@ def _plan_objective(d: TCFData, distance_matrix: List[List[float]], trips: List[
     cost = sum(distance_matrix[a][b] for trip in trips for a, b in zip([0, *trip], [*trip, 0], strict=False))
     profit = d.R * sum(d.S_dict[i] for trip in trips for i in trip) - d.C * cost - d.Omega * len(trips)
     return profit, cost
+
+
+def _flag(value: object) -> bool:
+    """Read a yaml/OmegaConf boolean that may arrive as a string."""
+    if isinstance(value, str):
+        return value.strip().lower() in ("1", "true", "yes", "on")
+    return bool(value)
 
 
 def _run_gurobi_optimizer(  # noqa: C901
@@ -218,7 +227,8 @@ def _run_gurobi_optimizer(  # noqa: C901
             mdl.addConstr(quicksum(x[j, k] for k in nodes if (j, k) in x) == g[j])
 
         forced_nodes = [i for i in nodes_real if criticos_dict[i] or S_dict[i] >= psi * 100]
-        starts = _warm_starts(d, distance_matrix, forced_nodes)
+        # Optional, off by default: not part of the published model (#41).
+        starts = _warm_starts(d, distance_matrix, forced_nodes) if _flag(values.get("warm_start", False)) else []
         if starts:
             # Complete MIP starts: every variable gets a value, so Gurobi checks
             # each start directly instead of repairing a partial assignment.

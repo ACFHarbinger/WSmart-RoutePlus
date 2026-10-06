@@ -25,6 +25,10 @@ class SWCTCFParams:
         gurobi_soft_mem_limit_gb: Native Gurobi soft memory ceiling in decimal GB.
         time_limit: Time limit for the solver in seconds.
         seed: Random seed for reproducibility.
+        warm_start: Native Gurobi only. Not part of the published model (Ramos et al., 2018).
+            When true, Clarke-Wright MIP starts (forced bins only; every bin with waste)
+            are loaded, and the best one is executed if Gurobi ends without a solution.
+            Default false keeps the original algorithm.
     """
 
     framework: str = "ortools"
@@ -33,6 +37,7 @@ class SWCTCFParams:
     gurobi_soft_mem_limit_gb: float = 5.0
     time_limit: float = 60.0
     seed: int = 42
+    warm_start: bool = False
 
     @classmethod
     def from_config(cls, config: Any) -> SWCTCFParams:

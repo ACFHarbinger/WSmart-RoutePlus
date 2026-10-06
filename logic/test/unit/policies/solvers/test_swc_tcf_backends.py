@@ -5,7 +5,6 @@ from typing import Any, Dict, Optional
 
 import numpy as np
 import pytest
-from logic.src.constants.routing import MIP_GAP
 from logic.src.policies.route_construction.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow import (
     policy_swc_tcf,
@@ -308,10 +307,10 @@ def test_route_extraction_parity_across_backends(capsys):
         route, profit = results[framework]
         if route == [0, 0]:
             pytest.skip(f"{framework} backend unavailable in this environment")
-        # Visit order may differ among equal-profit optima; the collected bin
-        # set must agree, and profit within the MIP gap every backend stops at.
+        # Visit order may differ among equal-profit optima; profit and the
+        # collected bin set must agree.
         assert _bins(route) == _bins(g_route), f"{framework} collected a different bin set"
-        assert abs(profit - g_profit) <= MIP_GAP * max(1.0, abs(g_profit)), (
+        assert abs(profit - g_profit) <= 1e-6 * max(1.0, abs(g_profit)), (
             f"{framework} profit {profit} diverges from native gurobi {g_profit}"
         )
 
@@ -353,7 +352,7 @@ def _forced_instance() -> tuple:
     dist = np.sqrt(((coords[:, None, :] - coords[None, :, :]) ** 2).sum(-1)).tolist()
     bins = rng.uniform(5.0, 60.0, n)
     mandatory = list(range(1, n + 1, 5))
-    values = {"Omega": 0.1, "psi": 1, "Q": 200.0, "R": 0.3, "B": 1.0, "C": 1.0, "V": 1.0}
+    values = {"Omega": 0.1, "psi": 1, "Q": 200.0, "R": 0.3, "B": 1.0, "C": 1.0, "V": 1.0, "warm_start": True}
     return bins, dist, mandatory, values
 
 
@@ -456,3 +455,34 @@ def test_warm_starts_cover_forced_bins_and_respect_the_model():
     # One truck cannot carry the forced bins at this capacity, and a bin above capacity rules out any start.
     assert _warm_starts(build_tcf_data(bins, dist, {**values, "Q": 60.0}, ids, mandatory, 1), dist, mandatory) == []
     assert _warm_starts(build_tcf_data(bins, dist, {**values, "Q": 10.0}, ids, mandatory, 0), dist, mandatory) == []
+
+
+def test_warm_start_is_off_by_default():
+    """The published model has no MIP start: without ``warm_start`` no start is loaded."""
+    from unittest.mock import patch
+
+    from logic.src.configs.policies import SWCTCFConfig
+    from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow import (
+        gurobi as gurobi_mod,
+    )
+    from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.params import (
+        SWCTCFParams,
+    )
+
+    assert SWCTCFParams().warm_start is False
+    assert SWCTCFConfig().warm_start is False
+    bins, dist, mandatory, values = _forced_instance()
+    values = {k: v for k, v in values.items() if k != "warm_start"}
+    with patch.object(gurobi_mod, "_warm_starts", wraps=gurobi_mod._warm_starts) as starts:
+        gurobi_mod._run_gurobi_optimizer(
+            bins=bins,
+            distance_matrix=dist,
+            env=None,
+            values=values,
+            binsids=list(range(1, len(bins) + 1)),
+            mandatory=mandatory,
+            number_vehicles=0,
+            time_limit=5,
+            seed=1,
+        )
+    starts.assert_not_called()
