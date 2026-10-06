@@ -38,10 +38,11 @@ def prepare_parallel_task_args(
     Returns:
         List[Tuple[Any, ...]]: List of argument tuples for parallel tasks.
     """
+    # Only the samples still listed per policy: a resumed run must skip finished ones.
     if n_samples > 1:
         return [(indices[sid], sid, pol_id) for pol_id in range(len(policies)) for sid in sample_idx_ls[pol_id]]
     else:
-        return [(indices[0], 0, pol_id) for pol_id in range(len(policies))]
+        return [(indices[0], 0, pol_id) for pol_id in range(len(policies)) if 0 in sample_idx_ls[pol_id]]
 
 
 def print_execution_info(task_count: int, n_cores: int) -> None:
