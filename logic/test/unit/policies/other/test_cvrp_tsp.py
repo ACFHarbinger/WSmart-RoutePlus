@@ -74,11 +74,11 @@ def test_tsp_policy(mock_params):
 
 def test_cvrp_policy(mock_params):
     with patch("logic.src.pipeline.simulations.repository.load_area_and_waste_type_params") as mock_load, \
-         patch("logic.src.policies.route_construction.other_algorithms.capacitated_vehicle_routing_problem.policy_cvrp.find_routes") as mock_find:
+         patch("logic.src.policies.route_construction.other_algorithms.capacitated_vehicle_routing_problem.policy_cvrp.find_routes_ortools") as mock_find:
 
         mock_load.return_value = (100.0, 1.0, 1.0, 1.0, 1.0)
 
-        # Mock find_routes (CVRP)
+        # Mock the default (OR-Tools) CVRP engine
         mock_find.return_value = [0, 1, 2, 0, 3, 4, 5, 0] # 2 routes
 
         cls = RouteConstructorRegistry.get("cvrp")

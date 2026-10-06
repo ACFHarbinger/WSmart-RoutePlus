@@ -8,7 +8,7 @@ Example:
     >>> from logic.src.policies.route_construction.other_algorithms.capacitated_vehicle_routing_problem import CVRPParams
     >>> params = CVRPParams()
     >>> params
-    CVRPParams(engine='pyvrp', time_limit=2.0, seed=42)
+    CVRPParams(engine='ortools', time_limit=2.0, seed=42)
 """
 
 from __future__ import annotations
@@ -23,12 +23,12 @@ class CVRPParams:
     Configuration parameters for the CVRP solver.
 
     Attributes:
-        engine: Optimization engine to use ('pyvrp' or 'ortools').
+        engine: Optimization engine to use ('ortools', 'pyvrp' or 'clarke_wright').
         time_limit: Time limit for the solver in seconds.
         seed: Random seed for reproducibility.
     """
 
-    engine: str = "pyvrp"
+    engine: str = "ortools"
     time_limit: float = 2.0
     seed: int = 42
 
@@ -43,12 +43,14 @@ class CVRPParams:
             CVRPParams: Configured CVRP parameters.
         """
         if isinstance(config, dict):
-            return cls(**{k: v for k, v in config.items() if k in {f.name for f in fields(cls)}})
+            values = {k: v for k, v in config.items() if k in {f.name for f in fields(cls)} and v is not None}
+            return cls(**values)
 
+        seed = getattr(config, "seed", None)
         return cls(
-            engine=getattr(config, "engine", "pyvrp"),
+            engine=getattr(config, "engine", "ortools"),
             time_limit=getattr(config, "time_limit", 2.0),
-            seed=getattr(config, "seed", 42),
+            seed=42 if seed is None else seed,
         )
 
     def to_dict(self) -> Dict[str, Any]:

@@ -33,7 +33,7 @@ cvrp:
     # ---------------------------------------------------------------------
     - engine: "ortools"
       # Execution backend: Google OR-Tools VRP solver
-      # Options: "ortools" (OR-Tools GLS), "pyvrp" (PyVRP HGS)
+      # Options: "ortools" (OR-Tools GLS), "pyvrp" (PyVRP HGS), "clarke_wright" (savings)
 
     - n_vehicles: 0
       # Use unlimited/dynamic number of vehicles by default
@@ -54,7 +54,7 @@ cvrp:
     # ---------------------------------------------------------------------
     # Node Selection Strategy
     # ---------------------------------------------------------------------
-    - mandatory_selection: {"other/ms_regular.yaml": ["lvl3", "lvl4", "lvl5"]}
+    - mandatory_selection: {"other/ms_regular.yaml": ["regular_lvl3", "regular_lvl4", "regular_lvl5"]}
     # Multiple selection strategies for waste collection
     # Collects bins when fill level exceeds 70%, 80%, or 90%
     # Note: Uses regular thresholds instead of lookahead prediction

@@ -72,9 +72,10 @@ def find_routes(
     Returns:
         List[int]: Flattened tour with depot separators. Format: [0, route1..., 0, route2..., 0]
     """
-    if engine == "custom":
+    if engine in ("custom", "clarke_wright"):
         # Mapper for wastes dict
-        w_dict = {i: wastes[i - 1] for i in to_collect}
+        to_collect = [int(i) for i in to_collect]
+        w_dict = {i: float(wastes[i - 1]) for i in to_collect}
         return clarke_wright_solve(dist_mat, w_dict, max_caps, to_collect, depot)
 
     # Mapping: subset index -> original index
@@ -88,7 +89,9 @@ def find_routes(
     clients_list = []
     for i in range(1, len(subset_indices)):
         original_idx = subset_indices[i]
-        d = int(wastes[original_idx - 1])
+        # Fill levels are fractional percentages; scale like the OR-Tools path so
+        # integer truncation cannot overload a vehicle.
+        d = round(float(wastes[original_idx - 1]) * SCALE)
         # Use delivery for waste
         clients_list.append(pyvrp.Client(x=0, y=0, delivery=[d]))
 
@@ -98,7 +101,7 @@ def find_routes(
     if n_vehicles == 0:
         n_vehicles = len(clients_list)
 
-    vehicle_types_list = [pyvrp.VehicleType(capacity=[int(max_caps)], num_available=n_vehicles)]
+    vehicle_types_list = [pyvrp.VehicleType(capacity=[int(float(max_caps) * SCALE)], num_available=n_vehicles)]
 
     # Matrix
     # PyVRP expects List[numpy.ndarray[int]]

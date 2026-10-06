@@ -40,6 +40,7 @@ def clarke_wright_solve(
     Returns:
         Description of return value.
     """
+    to_collect = [int(node) for node in to_collect]
     if not to_collect:
         return [depot]
 

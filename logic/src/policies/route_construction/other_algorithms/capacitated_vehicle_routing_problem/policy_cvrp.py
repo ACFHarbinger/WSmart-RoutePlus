@@ -116,8 +116,8 @@ class CVRPPolicy(BaseRoutingPolicy):
         This policy solves the problem of finding optimal routes for a fleet
         of vehicles to deliver or collect waste from a set of bins, subject
         to vehicle capacity constraints and mandatory collection requirements.
-        It supports multiple engines, including OR-Tools and custom geometric
-        heuristics (Clarke-Wright savings).
+        It supports OR-Tools (default), PyVRP and the Clarke-Wright savings
+        heuristic (``engine: clarke_wright``).
 
         Args:
             kwargs: Context dictionary containing:
@@ -158,8 +158,12 @@ class CVRPPolicy(BaseRoutingPolicy):
 
         to_collect = list(mandatory) if mandatory else list(range(1, bins.n + 1))
 
+        if distancesC is None:
+            # Same integer matrix the simulator builds (0.1 km units).
+            distancesC = np.round(np.asarray(distance_matrix, dtype=float) * 10).astype("int32")
+
         # Load capacity and other area-specific constant params
-        capacity, _, _, values = self._load_area_params(area, waste_type, config)
+        capacity, revenue, cost_unit, values = self._load_area_params(area, waste_type, config)
         self._log_solver_params(values, kwargs)
 
         # Initialize type-safe Params
@@ -170,17 +174,31 @@ class CVRPPolicy(BaseRoutingPolicy):
             tour = cached
         else:
             seed = kwargs.get("seed") if kwargs.get("seed") is not None else params.seed
-            solver_fn = find_routes_ortools if params.engine == "ortools" else find_routes
-            tour = solver_fn(
-                distancesC,
-                bins.c,
-                capacity,
-                np.array(to_collect),
-                n_vehicles,
-                coords,
-                time_limit=params.time_limit,
-                seed=seed,
-            )
+            if params.engine == "ortools":
+                tour = find_routes_ortools(
+                    distancesC,
+                    bins.c,
+                    capacity,
+                    np.array(to_collect),
+                    n_vehicles,
+                    coords,
+                    time_limit=params.time_limit,
+                    seed=seed,
+                )
+            elif params.engine in ("pyvrp", "custom", "clarke_wright"):
+                tour = find_routes(
+                    distancesC,
+                    bins.c,
+                    capacity,
+                    np.array(to_collect),
+                    n_vehicles,
+                    coords,
+                    time_limit=params.time_limit,
+                    seed=seed,
+                    engine=params.engine,
+                )
+            else:
+                raise ValueError(f"Unknown CVRP engine: {params.engine!r}")
         # Ensure list format
         if hasattr(tour, "tolist"):
             tour = tour.tolist()
@@ -188,11 +206,9 @@ class CVRPPolicy(BaseRoutingPolicy):
             tour = list(tour)
 
         cost = self._compute_cost(distance_matrix, tour)
-        # Compute profit
-        R = values.get("revenue_kg", 1.0)
-        C = values.get("cost_km", 1.0)
+        # Compute profit in the base-class units: revenue per percent of fill, cost per km.
         visited = {n for n in tour if n != 0}
-        collected_revenue = sum(float(bins.c[n - 1]) * R for n in visited if 1 <= n <= bins.n)
-        profit = collected_revenue - cost * C
+        collected_revenue = sum(float(bins.c[n - 1]) * revenue for n in visited if 1 <= n <= bins.n)
+        profit = collected_revenue - cost * cost_unit
 
         return tour, cost, profit, kwargs.get("search_context"), kwargs.get("multi_day_context")
