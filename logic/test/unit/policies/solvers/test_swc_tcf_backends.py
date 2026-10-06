@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional
 
 import numpy as np
 import pytest
+from logic.src.constants.routing import MIP_GAP
 from logic.src.policies.route_construction.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow import (
     policy_swc_tcf,
@@ -307,10 +308,10 @@ def test_route_extraction_parity_across_backends(capsys):
         route, profit = results[framework]
         if route == [0, 0]:
             pytest.skip(f"{framework} backend unavailable in this environment")
-        # Visit order may differ among equal-profit optima; profit and the
-        # collected bin set must agree.
+        # Visit order may differ among equal-profit optima; the collected bin
+        # set must agree, and profit within the MIP gap every backend stops at.
         assert _bins(route) == _bins(g_route), f"{framework} collected a different bin set"
-        assert abs(profit - g_profit) <= 1e-6 * max(1.0, abs(g_profit)), (
+        assert abs(profit - g_profit) <= MIP_GAP * max(1.0, abs(g_profit)), (
             f"{framework} profit {profit} diverges from native gurobi {g_profit}"
         )
 
@@ -343,3 +344,105 @@ def test_build_tcf_data_shared_prep():
 
     capped = build_tcf_data(bins, dist, values, [0, 11, 12, 13], [12], number_vehicles=2)
     assert capped.max_trucks == 2
+
+
+def _forced_instance() -> tuple:
+    rng = np.random.default_rng(1)
+    n = 60
+    coords = rng.uniform(0, 10, size=(n + 1, 2))
+    dist = np.sqrt(((coords[:, None, :] - coords[None, :, :]) ** 2).sum(-1)).tolist()
+    bins = rng.uniform(5.0, 60.0, n)
+    mandatory = list(range(1, n + 1, 5))
+    values = {"Omega": 0.1, "psi": 1, "Q": 200.0, "R": 0.3, "B": 1.0, "C": 1.0, "V": 1.0}
+    return bins, dist, mandatory, values
+
+
+def test_gurobi_forced_bins_have_an_incumbent_at_once():
+    """#41: forced bins get a Clarke-Wright MIP start, so even a 10 ms budget returns a plan covering them."""
+    bins, dist, mandatory, values = _forced_instance()
+    route, _profit, cost = _run_gurobi_optimizer(
+        bins=bins,
+        distance_matrix=dist,
+        env=None,
+        values=values,
+        binsids=list(range(1, len(bins) + 1)),
+        mandatory=mandatory,
+        number_vehicles=0,
+        time_limit=0.01,
+        seed=1,
+    )
+    assert set(mandatory) <= set(route)
+    assert cost > 0.0
+
+
+def test_gurobi_no_incumbent_executes_the_forced_start(monkeypatch):
+    """#41: if Gurobi still ends without a solution, the forced bins are collected by the start trips."""
+    from unittest.mock import MagicMock
+
+    from logic.src.pipeline.simulations.solver_status import current_solver_status, note_solver_status
+    from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow import (
+        gurobi as gurobi_mod,
+    )
+
+    real_model = gurobi_mod.gp.Model
+
+    def no_incumbent_model(*args, **kwargs):
+        model = real_model(*args, **kwargs)
+        model.Params.TimeLimit = 0.0
+        model.Params.Heuristics = 0.0
+        wrapper = MagicMock(wraps=model)
+        wrapper.Params = model.Params
+        wrapper.addVars.side_effect = model.addVars
+        wrapper.addVar.side_effect = model.addVar
+        wrapper.addConstr.side_effect = model.addConstr
+        wrapper.setObjective.side_effect = model.setObjective
+        wrapper.SolCount = 0
+        wrapper.Status = gurobi_mod.GRB.TIME_LIMIT
+        wrapper.optimize.side_effect = lambda: None
+        wrapper.dispose.side_effect = model.dispose
+        return wrapper
+
+    monkeypatch.setattr(gurobi_mod.gp, "Model", no_incumbent_model)
+    bins, dist, mandatory, values = _forced_instance()
+    note_solver_status(None)
+    route, profit, cost = gurobi_mod._run_gurobi_optimizer(
+        bins=bins,
+        distance_matrix=dist,
+        env=None,
+        values=values,
+        binsids=list(range(1, len(bins) + 1)),
+        mandatory=mandatory,
+        number_vehicles=0,
+        time_limit=60,
+        seed=1,
+    )
+    assert sorted(set(route) - {0}) == mandatory
+    assert route[0] == 0 and route[-1] == 0
+    assert cost > 0.0
+    assert profit == pytest.approx(
+        values["R"] * sum(bins[i - 1] for i in mandatory) - values["C"] * cost - values["Omega"] * (route.count(0) - 1)
+    )
+    assert current_solver_status().endswith("fallback:clarke_wright")
+
+
+def test_forced_warm_start_rejects_infeasible_trips():
+    """A forced bin above capacity or a fleet too small for the trips gives no start."""
+    from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow._tcf_data import (
+        build_tcf_data,
+    )
+    from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.gurobi import (
+        _forced_warm_start,
+    )
+
+    bins, dist, mandatory, values = _forced_instance()
+    ids = list(range(1, len(bins) + 1))
+    d = build_tcf_data(bins, dist, values, ids, mandatory, 0)
+    trips = _forced_warm_start(d, dist, mandatory)
+    assert trips is not None
+    assert sorted(n for t in trips for n in t) == mandatory
+    assert all(sum(bins[n - 1] for n in t) <= values["Q"] for t in trips)
+
+    one_truck = build_tcf_data(bins, dist, {**values, "Q": 60.0}, ids, mandatory, 1)
+    assert _forced_warm_start(one_truck, dist, mandatory) is None
+    too_big = build_tcf_data(bins, dist, {**values, "Q": 10.0}, ids, mandatory, 0)
+    assert _forced_warm_start(too_big, dist, mandatory) is None
