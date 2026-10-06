@@ -44,6 +44,12 @@ class SWCTCFConfig:
         time_limit: Maximum time in seconds for the solver.
         engine: Solver engine to use ('gurobi', 'scip', 'highs', or 'cplex').
         framework: Solver framework to use ('ortools', 'pyomo').
+        formulation: Native Gurobi model: 'paper' (published SWCR model, default) or 'directed'.
+        depot_inflow: 'equal' (eq. 15, default) or 'le' (collectioncompare notebook).
+        solver_tuning: Optional Gurobi tuning (MIPFocus, cuts, 1% gap); off by default.
+        relax_forced_on_infeasible: Optional re-solve without forced visits; off by default.
+        link_depot_arcs: Optional x[0, j] <= g[j]; off by default.
+        max_arc_distance_km: Optional arc length cutoff; None keeps every arc.
         warm_start: Native Gurobi only; off by default. Loads Clarke-Wright MIP
             starts, which are not part of the published model (#41).
         mandatory_selection: List of mandatory strategy config files.
@@ -58,6 +64,12 @@ class SWCTCFConfig:
     gurobi_threads: int = 2
     gurobi_soft_mem_limit_gb: float = 5.0
     framework: str = "ortools"
+    formulation: str = "paper"
+    depot_inflow: str = "equal"
+    solver_tuning: bool = False
+    relax_forced_on_infeasible: bool = False
+    link_depot_arcs: bool = False
+    max_arc_distance_km: Optional[float] = None
     warm_start: bool = False
     mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

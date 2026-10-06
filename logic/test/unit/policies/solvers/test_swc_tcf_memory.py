@@ -173,6 +173,15 @@ def test_omegaconf_policy_resources_reach_native_model(model, monkeypatch):
 def test_infeasible_retry_releases_model(model):
     model.optimize.side_effect = lambda: setattr(model, "Status", gurobi.GRB.INFEASIBLE)
     with pytest.raises(RuntimeError, match="infeasible"):
-        solve({"psi": 0.1})
+        solve({"psi": 0.1, "relax_forced_on_infeasible": True})
     assert model.optimize.call_count == 2
+    model.dispose.assert_called_once()
+
+
+def test_infeasible_without_relaxation_solves_once(model):
+    # The original model has no retry: an infeasible forced set is reported at once.
+    model.optimize.side_effect = lambda: setattr(model, "Status", gurobi.GRB.INFEASIBLE)
+    with pytest.raises(RuntimeError, match="infeasible"):
+        solve({"psi": 0.1})
+    assert model.optimize.call_count == 1
     model.dispose.assert_called_once()

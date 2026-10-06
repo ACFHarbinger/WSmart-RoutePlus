@@ -166,13 +166,26 @@ def test_gurobi_unbounded_fleet_serves_capacity_requiring_witness():
     assert all(len(seg) * 100.0 <= 250.0 + 1e-6 for seg in segs if seg)
     assert len([seg for seg in segs if seg]) >= 2, f"expected two non-empty routes, got {segs}"
 
-    # The bound is enforced, not ignored: capped at one vehicle the same
-    # instance must drop a bin and return a single route.
+    # The bound is enforced, not ignored: capped at one vehicle the four forced
+    # (psi) bins cannot all be served, so the original model is infeasible ...
+    with pytest.raises(RuntimeError, match="infeasible"):
+        _run_gurobi_optimizer(
+            bins=bins,
+            distance_matrix=dist,
+            env=None,
+            values=values,
+            binsids=[0, 11, 12, 13, 14],
+            mandatory=[],
+            number_vehicles=1,
+            time_limit=30,
+            seed=42,
+        )
+    # ... and with the optional relaxation the day drops a bin and returns a single route.
     capped, _, _ = _run_gurobi_optimizer(
         bins=bins,
         distance_matrix=dist,
         env=None,
-        values=values,
+        values={**values, "relax_forced_on_infeasible": True},
         binsids=[0, 11, 12, 13, 14],
         mandatory=[],
         number_vehicles=1,

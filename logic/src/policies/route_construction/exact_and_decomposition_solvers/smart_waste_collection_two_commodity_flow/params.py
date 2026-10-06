@@ -10,7 +10,7 @@ Example:
 from __future__ import annotations
 
 from dataclasses import dataclass, fields
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 
 @dataclass
@@ -25,10 +25,20 @@ class SWCTCFParams:
         gurobi_soft_mem_limit_gb: Native Gurobi soft memory ceiling in decimal GB.
         time_limit: Time limit for the solver in seconds.
         seed: Random seed for reproducibility.
-        warm_start: Native Gurobi only. Not part of the published model (Ramos et al., 2018).
-            When true, Clarke-Wright MIP starts (forced bins only; every bin with waste)
-            are loaded, and the best one is executed if Gurobi ends without a solution.
-            Default false keeps the original algorithm.
+        formulation: Native Gurobi model. 'paper' (default) is the published SWCR model
+            (Ramos et al., 2018, eqs. 6, 8, 11-15, 17-21; collectioncompare ``policy_gurobi``).
+            'directed' is the earlier directed two-commodity flow.
+
+        The options below are not part of the published model; each defaults to the
+        original algorithm (native Gurobi only).
+
+        depot_inflow: 'equal' is eq. (15), sum y_i0 = Q k; 'le' is the notebook's <=.
+        solver_tuning: MIPFocus/heuristics/cut/presolve settings and a 1% MIP gap.
+        relax_forced_on_infeasible: re-solve without forced visits when infeasible.
+        link_depot_arcs: add x[0, j] <= g[j].
+        max_arc_distance_km: drop arcs longer than this (None keeps every arc).
+        warm_start: Clarke-Wright MIP starts (forced bins only; every bin with waste);
+            the best one is executed if Gurobi ends without a solution (#41).
     """
 
     framework: str = "ortools"
@@ -37,6 +47,12 @@ class SWCTCFParams:
     gurobi_soft_mem_limit_gb: float = 5.0
     time_limit: float = 60.0
     seed: int = 42
+    formulation: str = "paper"
+    depot_inflow: str = "equal"
+    solver_tuning: bool = False
+    relax_forced_on_infeasible: bool = False
+    link_depot_arcs: bool = False
+    max_arc_distance_km: Optional[float] = None
     warm_start: bool = False
 
     @classmethod
