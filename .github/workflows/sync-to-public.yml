@@ -34,29 +34,32 @@ jobs:
           # 2. Clean up extraheader if set by checkout action to avoid authentication conflicts
           git config --local --unset-all http.https://github.com/.extraheader || true
 
-          # 3. Remove directories you don't want public
-          # We use 'git rm -rf --ignore-unmatch' to remove them from the index and the working tree
-          REMOVED=0
-          if [ -d "bibliography" ]; then
-            git rm -rf --ignore-unmatch bibliography
-            REMOVED=1
-          fi
-          if [ -d "assets" ]; then
-            git rm -rf --ignore-unmatch assets
-            REMOVED=1
-          fi
-          if [ -d ".agent" ]; then
-            git rm -rf --ignore-unmatch .agent
-            REMOVED=1
-          fi
-          if [ "$REMOVED" = "1" ] && ! git diff --cached --quiet; then
-            git commit -m "chore: exclude private directories from public sync"
-          fi
+          # 3. Remove private directories from the whole history, not just the tip.
+          # git filter-repo is deterministic, so unchanged input gives the same SHAs
+          # and repeated force pushes do not diverge. The callback also drops the
+          # assets/ submodule entries (paper repos, Overleaf URL) from every .gitmodules.
+          pipx install git-filter-repo==2.47.0
+          git filter-repo --force --invert-paths \
+            --path bibliography --path assets --path .agent \
+            --file-info-callback '
+          if filename != b".gitmodules":
+              return (filename, mode, blob_id)
+          contents = value.get_contents_by_identifier(blob_id)
+          kept, skip = [], False
+          for line in contents.splitlines(keepends=True):
+              if line.strip().startswith(b"[submodule"):
+                  skip = b"\"assets/" in line
+              if not skip:
+                  kept.append(line)
+          new = b"".join(kept)
+          if new == contents:
+              return (filename, mode, blob_id)
+          return (filename, mode, value.insert_file_with_contents(new))
+          '
 
-          # 4. Clean up and add remote
+          # 4. Add the public remote (filter-repo already removed origin)
           git remote remove public || true
           git remote add public https://x-access-token:${PAT_TOKEN}@github.com/ACFHarbinger/WSmartPlus-Route.git
 
-          # 5. Force push the modified local state
-          # This will make the public repo match your local state (minus bibliography, assets and .agent)
+          # 5. Force push the rewritten history (no bibliography, assets or .agent in any commit)
           git push public main --force
