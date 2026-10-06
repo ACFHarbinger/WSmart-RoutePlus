@@ -24,19 +24,13 @@ from ._tcf_data import TCFData, build_tcf_data
 from .params import SWCTCFParams
 
 
-def _forced_warm_start(
-    d: TCFData, distance_matrix: List[List[float]], forced_nodes: List[int]
-) -> Optional[List[List[int]]]:
-    """Build Clarke-Wright trips over the forced bins as a feasible MIP start.
-
-    At 350 bins and a 60 s limit Gurobi can end without any incumbent when only
-    a subset of bins is forced, and the day then collected nothing (#41). These
-    trips give the solver a feasible incumbent to improve and a fallback plan.
+def _clarke_wright_trips(d: TCFData, distance_matrix: List[List[float]], visit: List[int]) -> Optional[List[List[int]]]:
+    """Build Clarke-Wright trips over ``visit`` that are feasible in the TCF model.
 
     Args:
         d: Shared TCF model data (local node indices, depot 0).
         distance_matrix: Full kilometre matrix in local indexing.
-        forced_nodes: Local indices whose visit is forced.
+        visit: Local indices of the bins to collect.
 
     Returns:
         Trips as lists of local node indices, or None when the trips would not
@@ -47,11 +41,9 @@ def _forced_warm_start(
         clarke_wright_solve,
     )
 
-    if not forced_nodes or any(d.S_dict[i] > d.Q for i in forced_nodes):
+    if not visit or any(d.S_dict[i] > d.Q for i in visit):
         return None
-    tour = clarke_wright_solve(
-        np.asarray(distance_matrix, dtype=float), {i: d.S_dict[i] for i in forced_nodes}, d.Q, forced_nodes
-    )
+    tour = clarke_wright_solve(np.asarray(distance_matrix, dtype=float), {i: d.S_dict[i] for i in visit}, d.Q, visit)
     trips: List[List[int]] = []
     current: List[int] = []
     for node in tour[1:]:
@@ -69,6 +61,40 @@ def _forced_warm_start(
     if len(trips) > d.max_trucks:
         return None
     return trips
+
+
+def _warm_starts(d: TCFData, distance_matrix: List[List[float]], forced_nodes: List[int]) -> List[List[List[int]]]:
+    """Feasible MIP starts: Clarke-Wright trips over the forced bins and over every bin with waste.
+
+    At 350 bins and a 60 s limit Gurobi can end without any incumbent when only
+    part of the bins is forced, and the day then collected nothing (#41). A
+    forced-only start alone fixes that but anchors the search on a small plan;
+    the collect-everything start supplies the multi-trip plan Gurobi finds on
+    its good days. Gurobi keeps the better one and improves it.
+
+    Args:
+        d: Shared TCF model data.
+        distance_matrix: Full kilometre matrix in local indexing.
+        forced_nodes: Local indices whose visit is forced.
+
+    Returns:
+        Distinct feasible starts, each a list of trips.
+    """
+    starts: List[List[List[int]]] = []
+    candidates = [forced_nodes, [i for i in d.nodes_real if d.S_dict[i] > 0]]
+    for visit in candidates:
+        if visit and all(i in visit for i in forced_nodes):
+            trips = _clarke_wright_trips(d, distance_matrix, visit)
+            if trips is not None and trips not in starts:
+                starts.append(trips)
+    return starts
+
+
+def _plan_objective(d: TCFData, distance_matrix: List[List[float]], trips: List[List[int]]) -> Tuple[float, float]:
+    """Return (profit, travel cost) of a trip plan under the standard objective."""
+    cost = sum(distance_matrix[a][b] for trip in trips for a, b in zip([0, *trip], [*trip, 0], strict=False))
+    profit = d.R * sum(d.S_dict[i] for trip in trips for i in trip) - d.C * cost - d.Omega * len(trips)
+    return profit, cost
 
 
 def _run_gurobi_optimizer(  # noqa: C901
@@ -192,23 +218,27 @@ def _run_gurobi_optimizer(  # noqa: C901
             mdl.addConstr(quicksum(x[j, k] for k in nodes if (j, k) in x) == g[j])
 
         forced_nodes = [i for i in nodes_real if criticos_dict[i] or S_dict[i] >= psi * 100]
-        start_trips = _forced_warm_start(d, distance_matrix, forced_nodes)
-        if start_trips is not None:
-            # Complete MIP start: every variable gets a value, so Gurobi checks it
-            # directly instead of repairing a partial assignment.
-            for var in (*x.values(), *g.values(), *f.values(), *h.values()):
-                var.Start = 0.0
-            for trip in start_trips:
-                load = 0.0
-                path = [0, *trip, 0]
-                for a, b in zip(path, path[1:], strict=False):
-                    x[a, b].Start = 1.0
-                    f[a, b].Start = load
-                    h[a, b].Start = Q - load
-                    if b != 0:
-                        g[b].Start = 1.0
-                        load += S_dict[b]
-            k_var.Start = float(len(start_trips))
+        starts = _warm_starts(d, distance_matrix, forced_nodes)
+        if starts:
+            # Complete MIP starts: every variable gets a value, so Gurobi checks
+            # each start directly instead of repairing a partial assignment.
+            all_vars = [*x.values(), *g.values(), *f.values(), *h.values()]
+            mdl.NumStart = len(starts)
+            for number, trips in enumerate(starts):
+                mdl.Params.StartNumber = number
+                mdl.setAttr("Start", all_vars, [0.0] * len(all_vars))
+                start_vars, start_vals = [k_var], [float(len(trips))]
+                for trip in trips:
+                    load = 0.0
+                    path = [0, *trip, 0]
+                    for a, b in zip(path, path[1:], strict=False):
+                        start_vars += [x[a, b], f[a, b], h[a, b]]
+                        start_vals += [1.0, load, Q - load]
+                        if b != 0:
+                            start_vars.append(g[b])
+                            start_vals.append(1.0)
+                            load += S_dict[b]
+                mdl.setAttr("Start", start_vars, start_vals)
 
         # Two-commodity flow handles subtour elimination and capacity automatically.
         # No need for the old 'f' based commodity flow here.
@@ -267,15 +297,22 @@ def _run_gurobi_optimizer(  # noqa: C901
         if mdl.Status in (GRB.INFEASIBLE, GRB.INF_OR_UNBD):
             raise RuntimeError(f"SWC-TCF model is infeasible (Gurobi status {mdl.Status}).")
         if mdl.SolCount == 0:
-            if start_trips is not None and not dual_values:
-                # The start is feasible by construction; execute it rather than skip the forced bins.
-                arcs = [(a, b) for trip in start_trips for a, b in zip([0, *trip], [*trip, 0], strict=False)]
+            best = max(starts, key=lambda t: _plan_objective(d, distance_matrix, t)[0]) if starts else None
+            # Without forced bins the empty plan (profit 0) is feasible and wins unless a start beats it.
+            if (
+                best is not None
+                and not dual_values
+                and (forced_nodes or _plan_objective(d, distance_matrix, best)[0] > 0)
+            ):
+                # The starts are feasible by construction; execute the best one
+                # rather than skip the forced bins.
+                trips = best
+                profit, cost = _plan_objective(d, distance_matrix, trips)
+                arcs = [(a, b) for trip in trips for a, b in zip([0, *trip], [*trip, 0], strict=False)]
                 route = extract_depot_delimited_route(arcs, d.id_map)
-                cost = sum(distance_matrix[a][b] for a, b in arcs)
-                profit = R * sum(S_dict[i] for trip in start_trips for i in trip) - C * cost - Omega * len(start_trips)
                 print(
                     f"[WARN][VRPP-Gurobi] No solution found (status {mdl.Status}); "
-                    f"executing the Clarke-Wright start over {len(forced_nodes)} forced bins."
+                    f"executing the best Clarke-Wright start ({len(trips)} trips)."
                 )
                 note_solver_status("fallback:clarke_wright", append=True)
                 return route, profit, cost

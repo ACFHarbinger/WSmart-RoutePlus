@@ -85,7 +85,16 @@ def test_native_model_released_on_failure(model, stage):
 
 
 def test_memory_limit_without_incumbent_is_visible(model):
-    assert solve() == ([0, 0], 0.0, 0.0)
+    # No incumbent: the profitable collect-everything start (#41) is executed and the
+    # memory stop stays visible in the day's status.
+    assert solve() == ([0, 1, 0], pytest.approx(47.9), 2.0)
+    assert current_solver_status() == "gurobi:MEM_LIMIT -> fallback:clarke_wright"
+    model.dispose.assert_called_once()
+
+
+def test_memory_limit_without_incumbent_keeps_an_empty_day_when_no_start_pays(model):
+    # Nothing forced and the only start loses money: the empty plan is better.
+    assert solve({"R": 0.01}) == ([0, 0], 0.0, 0.0)
     assert current_solver_status() == "gurobi:MEM_LIMIT"
     model.dispose.assert_called_once()
 

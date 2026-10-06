@@ -358,7 +358,7 @@ def _forced_instance() -> tuple:
 
 
 def test_gurobi_forced_bins_have_an_incumbent_at_once():
-    """#41: forced bins get a Clarke-Wright MIP start, so even a 10 ms budget returns a plan covering them."""
+    """#41: Clarke-Wright MIP starts give an incumbent at once; a 10 ms budget still covers every forced bin."""
     bins, dist, mandatory, values = _forced_instance()
     route, _profit, cost = _run_gurobi_optimizer(
         bins=bins,
@@ -375,74 +375,84 @@ def test_gurobi_forced_bins_have_an_incumbent_at_once():
     assert cost > 0.0
 
 
-def test_gurobi_no_incumbent_executes_the_forced_start(monkeypatch):
-    """#41: if Gurobi still ends without a solution, the forced bins are collected by the start trips."""
-    from unittest.mock import MagicMock
-
+def test_gurobi_no_incumbent_executes_the_best_start(monkeypatch):
+    """#41: if Gurobi still ends without a solution, the most profitable start is executed."""
     from logic.src.pipeline.simulations.solver_status import current_solver_status, note_solver_status
     from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow import (
         gurobi as gurobi_mod,
     )
+    from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow._tcf_data import (
+        build_tcf_data,
+    )
 
     real_model = gurobi_mod.gp.Model
 
+    class NoIncumbent:
+        """Real model whose optimize() does nothing and reports no solution."""
+
+        SolCount = 0
+        Status = gurobi_mod.GRB.TIME_LIMIT
+
+        def __init__(self, model):
+            object.__setattr__(self, "_model", model)
+
+        def __getattr__(self, name):
+            return getattr(self._model, name)
+
+        def __setattr__(self, name, value):
+            setattr(self._model, name, value)
+
+        def optimize(self):
+            pass
+
     def no_incumbent_model(*args, **kwargs):
-        model = real_model(*args, **kwargs)
-        model.Params.TimeLimit = 0.0
-        model.Params.Heuristics = 0.0
-        wrapper = MagicMock(wraps=model)
-        wrapper.Params = model.Params
-        wrapper.addVars.side_effect = model.addVars
-        wrapper.addVar.side_effect = model.addVar
-        wrapper.addConstr.side_effect = model.addConstr
-        wrapper.setObjective.side_effect = model.setObjective
-        wrapper.SolCount = 0
-        wrapper.Status = gurobi_mod.GRB.TIME_LIMIT
-        wrapper.optimize.side_effect = lambda: None
-        wrapper.dispose.side_effect = model.dispose
-        return wrapper
+        return NoIncumbent(real_model(*args, **kwargs))
 
     monkeypatch.setattr(gurobi_mod.gp, "Model", no_incumbent_model)
     bins, dist, mandatory, values = _forced_instance()
+    ids = list(range(1, len(bins) + 1))
+    d = build_tcf_data(bins, dist, values, ids, mandatory, 0)
+    starts = gurobi_mod._warm_starts(d, dist, mandatory)
+    best = max(starts, key=lambda t: gurobi_mod._plan_objective(d, dist, t)[0])
+    best_profit, best_cost = gurobi_mod._plan_objective(d, dist, best)
+
     note_solver_status(None)
     route, profit, cost = gurobi_mod._run_gurobi_optimizer(
         bins=bins,
         distance_matrix=dist,
         env=None,
         values=values,
-        binsids=list(range(1, len(bins) + 1)),
+        binsids=ids,
         mandatory=mandatory,
         number_vehicles=0,
         time_limit=60,
         seed=1,
     )
-    assert sorted(set(route) - {0}) == mandatory
-    assert route[0] == 0 and route[-1] == 0
-    assert cost > 0.0
-    assert profit == pytest.approx(
-        values["R"] * sum(bins[i - 1] for i in mandatory) - values["C"] * cost - values["Omega"] * (route.count(0) - 1)
-    )
+    assert set(mandatory) <= set(route)
+    assert sorted(set(route) - {0}) == sorted(n for t in best for n in t)
+    assert profit == pytest.approx(best_profit) and cost == pytest.approx(best_cost)
     assert current_solver_status().endswith("fallback:clarke_wright")
 
 
-def test_forced_warm_start_rejects_infeasible_trips():
-    """A forced bin above capacity or a fleet too small for the trips gives no start."""
+def test_warm_starts_cover_forced_bins_and_respect_the_model():
+    """Starts: forced bins only, and every bin with waste; none when trips cannot be feasible."""
     from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow._tcf_data import (
         build_tcf_data,
     )
     from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.gurobi import (
-        _forced_warm_start,
+        _warm_starts,
     )
 
     bins, dist, mandatory, values = _forced_instance()
     ids = list(range(1, len(bins) + 1))
     d = build_tcf_data(bins, dist, values, ids, mandatory, 0)
-    trips = _forced_warm_start(d, dist, mandatory)
-    assert trips is not None
-    assert sorted(n for t in trips for n in t) == mandatory
-    assert all(sum(bins[n - 1] for n in t) <= values["Q"] for t in trips)
+    starts = _warm_starts(d, dist, mandatory)
+    assert [sorted(n for t in s for n in t) for s in starts] == [mandatory, ids]
+    for trips in starts:
+        assert all(sum(bins[n - 1] for n in t) <= values["Q"] for t in trips)
 
-    one_truck = build_tcf_data(bins, dist, {**values, "Q": 60.0}, ids, mandatory, 1)
-    assert _forced_warm_start(one_truck, dist, mandatory) is None
-    too_big = build_tcf_data(bins, dist, {**values, "Q": 10.0}, ids, mandatory, 0)
-    assert _forced_warm_start(too_big, dist, mandatory) is None
+    # Without forced bins only the collect-everything start remains.
+    assert len(_warm_starts(build_tcf_data(bins, dist, values, ids, [], 0), dist, [])) == 1
+    # One truck cannot carry the forced bins at this capacity, and a bin above capacity rules out any start.
+    assert _warm_starts(build_tcf_data(bins, dist, {**values, "Q": 60.0}, ids, mandatory, 1), dist, mandatory) == []
+    assert _warm_starts(build_tcf_data(bins, dist, {**values, "Q": 10.0}, ids, mandatory, 0), dist, mandatory) == []
