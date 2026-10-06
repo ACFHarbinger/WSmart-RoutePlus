@@ -45,6 +45,10 @@ jobs:
             git rm -rf --ignore-unmatch assets
             REMOVED=1
           fi
+          if [ -d ".agent" ]; then
+            git rm -rf --ignore-unmatch .agent
+            REMOVED=1
+          fi
           if [ "$REMOVED" = "1" ] && ! git diff --cached --quiet; then
             git commit -m "chore: exclude private directories from public sync"
           fi
@@ -54,5 +58,5 @@ jobs:
           git remote add public https://x-access-token:${PAT_TOKEN}@github.com/ACFHarbinger/WSmartPlus-Route.git
 
           # 5. Force push the modified local state
-          # This will make the public repo match your local state (minus bibliography)
+          # This will make the public repo match your local state (minus bibliography, assets and .agent)
           git push public main --force
