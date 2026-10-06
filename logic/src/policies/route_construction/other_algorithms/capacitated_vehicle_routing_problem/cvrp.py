@@ -16,8 +16,8 @@ Attributes:
     None
 
 Example:
-    >>> from logic.src.policies.capacitated_vehicle_routing_problem.cvrp import find_routes
-    >>> routes = find_routes(dist_matrix, wastes, capacity, num_vehicles)
+    >>> from logic.src.policies.route_construction.other_algorithms.capacitated_vehicle_routing_problem.cvrp import find_routes
+    >>> tour = find_routes(dist_matrix, wastes, capacity, to_collect, n_vehicles=0)
 
 Reference:
     Wouda, N. A., Lan, L., & Kool, W.

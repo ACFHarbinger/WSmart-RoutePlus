@@ -4,26 +4,22 @@
 # CVRP (Capacitated Vehicle Routing Problem) Solver Configuration
 # =============================================================================
 # PURPOSE:
-#   Fast heuristic solver for standard CVRP using OR-Tools local search.
-#   Balances solution quality and speed for medium instances (50-150 nodes).
+#   Static baseline: visit exactly the selected (mandatory) bins with a
+#   capacitated fleet and minimise distance. No profit-driven optional visits.
+#   With the default regular selection below, every bin is collected on a
+#   fixed schedule (every 3, 4 or 5 days).
 #
-# ALGORITHM:
-#   1. Construct initial solution using savings heuristic
-#   2. Improve via Guided Local Search (GLS) metaheuristic
-#   3. Apply 2-opt and relocate moves until local optimum
+# ALGORITHM (engine: ortools):
+#   1. First solution: PATH_CHEAPEST_ARC
+#   2. Improve with Guided Local Search until time_limit
 #
-# BACKEND:
-#   OR-Tools VRP solver with heuristic mode (no branch-and-bound)
+# ENGINES:
+#   ortools        OR-Tools routing solver (default)
+#   pyvrp          PyVRP hybrid genetic search
+#   clarke_wright  Clarke-Wright savings, no time limit
+#   All three use fill levels (% of one bin) as demands and the simulator's
+#   0.1 km integer distance matrix.
 #
-# TYPICAL USE CASES:
-#   - Real-time routing (requires <10s response)
-#   - Large fleets (100-200 nodes) where BPC times out
-#   - Baseline comparison for neural policies
-#
-# PERFORMANCE EXPECTATIONS:
-#   - 50 nodes: Good solutions (gap ~3-5%), <5s runtime
-#   - 100 nodes: Acceptable (gap ~5-10%), ~10s runtime
-#   - 200 nodes: Fast but suboptimal (gap ~15%), ~20s runtime
 # =============================================================================
 
 cvrp:
@@ -76,15 +72,8 @@ cvrp:
       # OR-Tools already applies: 2-opt, Relocate, Exchange, CROSS
 
     # ---------------------------------------------------------------------
-    # Solver Parameters (Implicit)
+    # Solver code
     # ---------------------------------------------------------------------
-    # OR-Tools CVRP parameters configured in:
-    #   logic/src/policies/multi_vehicle.py
-    #
-    # Key implicit settings:
-    #   - First solution: SAVINGS (Clarke-Wright heuristic)
-    #   - Metaheuristic: GUIDED_LOCAL_SEARCH (escape local optima)
-    #   - Local search operators: 2-opt, Relocate, Exchange, Cross
-    #   - Solution pool: Best 10 solutions maintained
-    #   - Node limit: No limit (runs until time_limit)
+    # logic/src/policies/route_construction/other_algorithms/
+    #   capacitated_vehicle_routing_problem/cvrp.py
 # =============================================================================
