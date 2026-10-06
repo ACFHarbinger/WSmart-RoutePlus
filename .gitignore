@@ -492,5 +492,9 @@ app/coverage/
 /dist/
 /build/
 
-# The data directory is local and never tracked (a tracked data symlink once replaced it).
+# The data directory is local and never tracked
 /data
+
+# Agentic files and directories to ignore
+.claude
+.antigravity
