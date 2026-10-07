@@ -30,7 +30,7 @@ curriculum_graphs:
   #  start_day: 0
   #  n_days: 31
   #  dm_filepath: "gmaps_distmat_plastic[riomaior].csv"
-  #  load_dataset: "data/datasets/vrpp/vrpp50_gamma3_time100_seed42.td"
+  #  load_dataset: "data/datasets/ptp/ptp50_gamma3_time100_seed42.td"
   #  reward:
   #    waste_weight: 1.0
   #    cost_weight: 2.0
@@ -46,7 +46,7 @@ curriculum_graphs:
     start_day: 0
     n_days: 100
     dm_filepath: "gmaps_distmat_plastic[riomaior].csv"
-    load_dataset: "data/datasets/vrpp/vrpp100_emp_time100_seed42.td"
+    load_dataset: "data/datasets/ptp/ptp100_emp_time100_seed42.td"
     # Objective: maximize (waste_weight × Σ wastes) - (cost_weight × total_distance)
     reward:
       waste_weight: 1.0 # Weight for node wastes/rewards. Typical range: 0.5-2.0.
@@ -63,7 +63,7 @@ curriculum_graphs:
     start_day: 0
     n_days: 100
     dm_filepath: "gmaps_distmat_plastic[riomaior].csv"
-    load_dataset: "data/datasets/vrpp/vrpp170_emp_time100_seed42.td"
+    load_dataset: "data/datasets/ptp/ptp170_emp_time100_seed42.td"
     reward:
       waste_weight: 1.0
       cost_weight: 2.5
@@ -84,7 +84,7 @@ eval_graphs:
   #  vertex_method: "mmn"
   #  distance_method: "gmaps"
   #  dm_filepath: "gmaps_distmat_plastic[riomaior].csv"
-  #  load_dataset: "data/datasets/vrpp/vrpp50_gamma3_val_time100_seed42.td"
+  #  load_dataset: "data/datasets/ptp/ptp50_gamma3_val_time100_seed42.td"
   #  start_day: 0
   #  n_days: 7
   #  reward:
@@ -100,7 +100,7 @@ eval_graphs:
     vertex_method: "mmn"
     distance_method: "gmaps"
     dm_filepath: "gmaps_distmat_plastic[riomaior].csv"
-    load_dataset: "data/datasets/vrpp/vrpp100_emp_val_time7_seed42.td"
+    load_dataset: "data/datasets/ptp/ptp100_emp_val_time7_seed42.td"
     start_day: 0
     n_days: 7
     reward:
@@ -116,7 +116,7 @@ eval_graphs:
     vertex_method: "mmn"
     distance_method: "gmaps"
     dm_filepath: "gmaps_distmat_plastic[riomaior].csv"
-    load_dataset: "data/datasets/vrpp/vrpp170_emp_val_time7_seed42.td"
+    load_dataset: "data/datasets/ptp/ptp170_emp_val_time7_seed42.td"
     start_day: 0
     n_days: 7
     reward:
