@@ -1,5 +1,5 @@
 diff --git a/README.md b/README.md
-index d63ac48f3..7f0d28269 100644
+index d63ac48f3..6e27d40df 100644
 --- a/README.md
 +++ b/README.md
 @@ -16,15 +16,14 @@ removed.
@@ -18,7 +18,7 @@ index d63ac48f3..7f0d28269 100644
  
  ```
 -main.py                  Hydra entry point: train | eval | test_sim | gen_data
-+__main__.py              Hydra entry point (`python . <task>`): train | eval | test_sim
++__main__.py              Hydra entry point (`python . <task>`): train | test_sim
  logic/configs/           Hydra YAML (tasks, envs, models, policies)
  logic/controllers/       Hydra dispatch and job runners
  logic/src/               configs, constants, data, envs, interfaces, models,
@@ -78,29 +78,27 @@ index d63ac48f3..7f0d28269 100644
    p.na.na.amgat.0.model_path=weights/am
  ```
  
-@@ -103,9 +96,13 @@ as one `log_<policy>_<N>N.json` per policy plus a real-time `.jsonl` stream.
+@@ -103,9 +96,9 @@ as one `log_<policy>_<N>N.json` per policy plus a real-time `.jsonl` stream.
  - The problems are `ptp` (Profitable Tour Problem) and `mvptp` (Multi-Vehicle
    Profitable Tour Problem). Checkpoints and datasets that record the former names
    (`vrpp`, `cvrpp`) are rejected; retrain or regenerate them.
 -- Experiment tracking calls (`logic.src.tracking`) are inert no-ops; only the
 -  result-file writers under `logic/src/tracking/logging` remain functional.
 -- `python main.py eval` evaluates a checkpoint on `.npz` simulator datasets
+-  (every sample/day pair is one instance, fills normalised by `max_waste`),
+-  `.td`/`.pt` TensorDict datasets or `.pkl` instance lists, e.g.
+-  `python main.py eval eval.policy.model.load_path=weights/am 'eval.datasets=[data/my_set.npz]' eval.problem=ptp eval.env.name=ptp`.
 +- The package does not generate data. Training reads the `.td` file in each graph's
 +  `load_dataset` (and in every `eval_graphs` entry); without a separate validation
 +  dataset it validates on the first training instances. Multi-day training needs
 +  datasets that hold every day.
 +- There is no experiment tracking or provenance logging; `logic.src.tracking` only holds
 +  the writers of the result files and the console/file loggers.
-+- `python . eval` evaluates a checkpoint on `.npz` simulator datasets
-   (every sample/day pair is one instance, fills normalised by `max_waste`),
-   `.td`/`.pt` TensorDict datasets or `.pkl` instance lists, e.g.
--  `python main.py eval eval.policy.model.load_path=weights/am 'eval.datasets=[data/my_set.npz]' eval.problem=ptp eval.env.name=ptp`.
-+  `python . eval eval.policy.model.load_path=weights/am 'eval.datasets=[data/my_set.npz]' eval.problem=ptp eval.env.name=ptp`.
 diff --git a/__main__.py b/__main__.py
-index d16b8dce1..b064e8da2 100644
+index d16b8dce1..728c556e1 100644
 --- a/__main__.py
 +++ b/__main__.py
-@@ -1,15 +1,38 @@
+@@ -1,15 +1,37 @@
  #!/usr/bin/env python
  """
 -Entry Point for Package Execution (Hydra commands only).
@@ -112,7 +110,6 @@ index d16b8dce1..b064e8da2 100644
 +Every command is routed through the Hydra configuration system:
 +
 +    python . train    [overrides...]
-+    python . eval     [overrides...]
 +    python . test_sim [overrides...]
  """
  
@@ -143,12 +140,12 @@ index d16b8dce1..b064e8da2 100644
  from logic.controllers.hydra_dispatch import hydra_entry_point
  
  warnings.filterwarnings(
-@@ -18,21 +41,33 @@ warnings.filterwarnings(
+@@ -18,21 +40,33 @@ warnings.filterwarnings(
      message="jax.tree_util.register_keypaths is deprecated",
  )
  
-+_TASK_ALIASES = {"evaluation": "eval"}
-+_TASKS = {"train", "eval", "test_sim"}
++_TASK_ALIASES: dict = {}
++_TASKS = {"train", "test_sim"}
 +
  
  def main() -> None:
@@ -1320,10 +1317,10 @@ HcmV?d00001
 
 diff --git a/assets/files/FILE_LIST.txt b/assets/files/FILE_LIST.txt
 new file mode 100644
-index 000000000..802f8df72
+index 000000000..5bd215556
 --- /dev/null
 +++ b/assets/files/FILE_LIST.txt
-@@ -0,0 +1,486 @@
+@@ -0,0 +1,471 @@
 +.
 +|-- logic
 +|   |-- configs
@@ -1344,7 +1341,6 @@ index 000000000..802f8df72
 +|   |   |   |-- policy_sans.yaml
 +|   |   |   `-- policy_swc_tcf.yaml
 +|   |   `-- tasks
-+|   |       |-- eval.yaml
 +|   |       |-- test_sim.yaml
 +|   |       `-- train.yaml
 +|   |-- controllers
@@ -1386,7 +1382,6 @@ index 000000000..802f8df72
 +|       |   |   |   `-- __init__.py
 +|       |   |   `-- __init__.py
 +|       |   |-- tasks
-+|       |   |   |-- eval.py
 +|       |   |   |-- __init__.py
 +|       |   |   |-- sim.py
 +|       |   |   `-- train.py
@@ -1534,19 +1529,6 @@ index 000000000..802f8df72
 +|       |-- pipeline
 +|       |   |-- features
 +|       |   |   |-- base.py
-+|       |   |   |-- eval
-+|       |   |   |   |-- engine.py
-+|       |   |   |   |-- eval_base.py
-+|       |   |   |   |-- evaluate.py
-+|       |   |   |   |-- evaluators
-+|       |   |   |   |   |-- augmentation.py
-+|       |   |   |   |   |-- combined.py
-+|       |   |   |   |   |-- greedy.py
-+|       |   |   |   |   |-- __init__.py
-+|       |   |   |   |   |-- multi_start.py
-+|       |   |   |   |   `-- sampling.py
-+|       |   |   |   |-- __init__.py
-+|       |   |   |   `-- validation.py
 +|       |   |   |-- __init__.py
 +|       |   |   |-- test
 +|       |   |   |   |-- config.py
@@ -1811,10 +1793,27 @@ index 000000000..802f8df72
 +|               `-- simulation_utils.py
 +`-- __main__.py
 diff --git a/ci/simulator.spec b/ci/simulator.spec
-index 7b6c15f8d..b32ead6bc 100644
+index 7b6c15f8d..9b99e2dba 100644
 --- a/ci/simulator.spec
 +++ b/ci/simulator.spec
-@@ -42,7 +42,7 @@ hiddenimports += ["shapely.geometry", "openpyxl", "jinja2"]
+@@ -2,7 +2,7 @@
+ #
+ # WSmart-Route minimal-export executable (PyInstaller one-dir build).
+ #
+-# Bundles the training / evaluation pipeline (Attention Model + REINFORCE), the
++# Bundles the training pipeline (Attention Model + REINFORCE), the
+ # nine simulator policies and the simulator. Build from the repository root with
+ # an environment that has the core + solvers dependencies and PyInstaller:
+ #
+@@ -16,7 +16,6 @@
+ #
+ #   /path/to/wsmart_route/WSmartRoute gen_data  [hydra overrides...]
+ #   /path/to/wsmart_route/WSmartRoute train     [hydra overrides...]
+-#   /path/to/wsmart_route/WSmartRoute eval      [hydra overrides...]
+ #   /path/to/wsmart_route/WSmartRoute test_sim  [hydra overrides...]
+ #
+ # data/simulator is not bundled; outputs (assets/, logs, outputs/) are written to
+@@ -42,7 +41,7 @@ hiddenimports += ["shapely.geometry", "openpyxl", "jinja2"]
  # (e.g. gurobipy._attrutil); bundle them whole.
  binaries = []
  _solver_datas = []
@@ -1823,7 +1822,7 @@ index 7b6c15f8d..b32ead6bc 100644
      _d, _b, _h = collect_all(pkg)
      _solver_datas += _d
      binaries += _b
-@@ -51,7 +51,6 @@ for pkg in ("gurobipy", "ortools", "fast_tsp"):
+@@ -51,7 +50,6 @@ for pkg in ("gurobipy", "ortools", "fast_tsp"):
  datas = [
      (os.path.join(ROOT, "logic/configs"), "logic/configs"),
      (os.path.join(ROOT, "logic/src/tracking/logging/modules/popup.html"), "logic/src/tracking/logging/modules"),
@@ -1831,7 +1830,7 @@ index 7b6c15f8d..b32ead6bc 100644
  ]
  datas += _solver_datas
  # Hydra ships its own config files; Lightning reads version files at import.
-@@ -61,7 +60,7 @@ for pkg in ("hydra", "pytorch_lightning", "lightning_fabric", "lightning_utiliti
+@@ -61,7 +59,7 @@ for pkg in ("hydra", "pytorch_lightning", "lightning_fabric", "lightning_utiliti
  for dist in (
      "torch", "tensordict", "torchrl", "pytorch-lightning", "lightning-fabric", "lightning-utilities",
      "hydra-core", "omegaconf", "numpy", "pandas", "scipy", "tqdm", "rich", "loguru", "networkx",
@@ -1840,7 +1839,7 @@ index 7b6c15f8d..b32ead6bc 100644
  ):
      try:
          datas += copy_metadata(dist)
-@@ -69,7 +68,7 @@ for dist in (
+@@ -69,7 +67,7 @@ for dist in (
          pass
  
  a = Analysis(
@@ -1850,15 +1849,15 @@ index 7b6c15f8d..b32ead6bc 100644
      binaries=binaries,
      datas=datas,
 diff --git a/logic/configs/config.yaml b/logic/configs/config.yaml
-index 60b3a931f..c73bd03e8 100644
+index 60b3a931f..99280ac0f 100644
 --- a/logic/configs/config.yaml
 +++ b/logic/configs/config.yaml
-@@ -5,14 +5,14 @@
+@@ -5,14 +5,13 @@
  #
  # Composition Order (Hydra defaults list):
  #   1. _self_ - This file's settings (base layer)
 -#   2. tasks/* - Task-specific configs (train, eval, test_sim, gen_data, hpo, meta_train)
-+#   2. tasks/* - Task-specific configs (train, eval, test_sim)
++#   2. tasks/* - Task-specific configs (train, test_sim)
  #              Each task config declares its own envs group entry.
  #   3. model/* - Neural model architectures (am, tam, deep_decoder, ptr, symnco, moe)
  #
@@ -1868,7 +1867,6 @@ index 60b3a931f..c73bd03e8 100644
 -#   python main.py eval models.embed_dim=256
 +#   python . train models=tam envs@train.env=ptp seed=1234
 +#   python . train envs@train.env=mvptp
-+#   python . eval models.embed_dim=256
  #
  # See docs/HYDRA_GUIDE.md for full override syntax and multi-run examples.
  # =============================================================================
@@ -2018,21 +2016,6 @@ index ba355bfcc..7bf7d9d2c 100644
  
      # ---------------------------------------------------------------------
      # Gurobi Solver Parameters (Implicit)
-diff --git a/logic/configs/tasks/eval.yaml b/logic/configs/tasks/eval.yaml
-index 67791126a..d157375c5 100644
---- a/logic/configs/tasks/eval.yaml
-+++ b/logic/configs/tasks/eval.yaml
-@@ -3,8 +3,8 @@
- # Evaluation Task Configuration
- # =============================================================================
- # Configuration for evaluating trained models on test datasets.
--# Used by: python main.py eval
--# MVPTP:   python main.py eval envs@eval.env=mvptp eval.env.name=mvptp eval.problem=mvptp
-+# Used by: python . eval
-+# MVPTP:   python . eval envs@eval.env=mvptp eval.env.name=mvptp eval.problem=mvptp
- #          eval.env.name and eval.problem below are hardcoded and must stay
- #          in lockstep with the composed /envs@eval.env group.
- #
 diff --git a/logic/configs/tasks/test_sim.yaml b/logic/configs/tasks/test_sim.yaml
 index 77bf45ff0..52a8bceca 100644
 --- a/logic/configs/tasks/test_sim.yaml
@@ -2091,25 +2074,29 @@ index 61c2f04b7..36f7b558d 100644
    exp_beta: 0.6 # Exponential moving average coefficient
    entropy_weight: 0.05 # Entropy bonus weight — mild exploration to avoid policy collapse
 diff --git a/logic/controllers/__init__.py b/logic/controllers/__init__.py
-index 4f0373c7c..d42485dc4 100644
+index 4f0373c7c..6360822cb 100644
 --- a/logic/controllers/__init__.py
 +++ b/logic/controllers/__init__.py
-@@ -5,7 +5,7 @@ Entry points and command controllers for the WSmart-Route application.
+@@ -4,8 +4,8 @@ Entry points and command controllers for the WSmart-Route application.
+ 
  Hydra-driven controllers
  ------------------------
- All neural-model commands (``train``, ``meta_train``, ``hpo``, ``eval``) and
+-All neural-model commands (``train``, ``meta_train``, ``hpo``, ``eval``) and
 -simulation/data commands (``test_sim``, ``hpo_sim``, ``gen_data``) are handled by
++All neural-model commands (``train``) and
 +simulation commands (``test_sim``, ``hpo_sim``) are handled by
  :mod:`~logic.controllers.jobs.pipeline_runner`.
  
  Argparse-driven controllers
 diff --git a/logic/controllers/hydra_dispatch.py b/logic/controllers/hydra_dispatch.py
-index 470d349c9..ad3d0dc9d 100644
+index 470d349c9..b37f693eb 100644
 --- a/logic/controllers/hydra_dispatch.py
 +++ b/logic/controllers/hydra_dispatch.py
-@@ -10,14 +10,12 @@ Supported tasks
+@@ -8,16 +8,12 @@ dispatch table.
+ Supported tasks
+ ---------------
  - ``train`` / ``meta_train`` / ``hpo`` → :func:`~logic.controllers.jobs.pipeline_runner.run_training`
- - ``eval``                              → :func:`~logic.controllers.jobs.pipeline_runner.run_evaluation`
+-- ``eval``                              → :func:`~logic.controllers.jobs.pipeline_runner.run_evaluation`
  - ``test_sim`` / ``hpo_sim``            → :func:`~logic.controllers.jobs.pipeline_runner.run_simulation`
 -- ``gen_data``                          → :func:`~logic.controllers.jobs.pipeline_runner.run_data_generation`
  
@@ -2120,12 +2107,30 @@ index 470d349c9..ad3d0dc9d 100644
 -    python main.py test_sim sim.days=31
 -    python main.py gen_data data.problem=ptp
 +    python . train model=am env.name=ptp env.num_loc=50
-+    python . eval eval.model_path=./weights/best.pt
 +    python . test_sim sim.days=31
  """
  
  import hydra
-@@ -63,10 +61,6 @@ def _run_task(cfg: Config) -> float:
+@@ -31,7 +27,7 @@ cs.store(name="config", node=Config)
+ 
+ _TRAINING_TASKS = frozenset({"train"})
+ _SIM_TASKS = frozenset({"test_sim", "hpo_sim", "sim_hpo"})
+-_TASK_ALIASES = {"evaluation": "eval", "sim_hpo": "hpo_sim"}
++_TASK_ALIASES = {"sim_hpo": "hpo_sim"}
+ 
+ 
+ def _run_task(cfg: Config) -> float:
+@@ -53,20 +49,11 @@ def _run_task(cfg: Config) -> float:
+ 
+         return run_training(cfg)
+ 
+-    if task == "eval":
+-        from logic.controllers.jobs.pipeline_runner import run_evaluation
+-
+-        return run_evaluation(cfg)
+-
+     if task in _SIM_TASKS:
+         from logic.controllers.jobs.pipeline_runner import run_simulation
  
          return run_simulation(cfg)
  
@@ -2136,7 +2141,7 @@ index 470d349c9..ad3d0dc9d 100644
  
      raise ValueError(f"Unknown task: {task!r}")
  
-@@ -75,52 +69,10 @@ def _run_task(cfg: Config) -> float:
+@@ -75,52 +62,10 @@ def _run_task(cfg: Config) -> float:
  def hydra_entry_point(cfg: Config) -> float:
      """Unified Hydra entry point for all configuration-driven commands.
  
@@ -2191,40 +2196,47 @@ index 470d349c9..ad3d0dc9d 100644
 -def stop_global_profiling(*args, **kwargs): pass
 +    return _run_task(cfg)
 diff --git a/logic/controllers/jobs/__init__.py b/logic/controllers/jobs/__init__.py
-index d7091a235..d1bd4f41b 100644
+index d7091a235..377215f28 100644
 --- a/logic/controllers/jobs/__init__.py
 +++ b/logic/controllers/jobs/__init__.py
-@@ -8,7 +8,6 @@ Hydra Pipeline Runner
+@@ -6,9 +6,7 @@ Hydra Pipeline Runner
+ ---------------------
+ :mod:`~logic.controllers.jobs.pipeline_runner` provides:
  - :func:`~logic.controllers.jobs.pipeline_runner.run_training` — train / meta_train / hpo
- - :func:`~logic.controllers.jobs.pipeline_runner.run_evaluation` — eval
+-- :func:`~logic.controllers.jobs.pipeline_runner.run_evaluation` — eval
  - :func:`~logic.controllers.jobs.pipeline_runner.run_simulation` — test_sim / hpo_sim
 -- :func:`~logic.controllers.jobs.pipeline_runner.run_data_generation` — gen_data
  
  Argparse Operations Runner
  --------------------------
-@@ -21,7 +20,6 @@ Argparse Operations Runner
+@@ -21,17 +19,13 @@ Argparse Operations Runner
  """
  
  from .pipeline_runner import (
 -    run_data_generation,
-     run_evaluation,
+-    run_evaluation,
      run_simulation,
      run_training,
-@@ -31,7 +29,6 @@ __all__ = [
+ )
+ 
+ __all__ = [
      "run_training",
-     "run_evaluation",
+-    "run_evaluation",
      "run_simulation",
 -    "run_data_generation",
      "run_benchmarks",
      "run_test_suite",
      "run_file_system",
 diff --git a/logic/controllers/jobs/pipeline_runner.py b/logic/controllers/jobs/pipeline_runner.py
-index c92272414..e87843ad2 100644
+index c92272414..712baaf13 100644
 --- a/logic/controllers/jobs/pipeline_runner.py
 +++ b/logic/controllers/jobs/pipeline_runner.py
-@@ -4,17 +4,15 @@ Unified entry point for all configuration-driven pipeline execution tasks:
+@@ -2,19 +2,16 @@
  
- - Neural model training and evaluation: ``train``, ``meta_train``, ``hpo``, ``eval``
+ Unified entry point for all configuration-driven pipeline execution tasks:
+ 
+-- Neural model training and evaluation: ``train``, ``meta_train``, ``hpo``, ``eval``
++- Neural model training: ``train``
  - Simulation engine execution: ``test_sim``, ``hpo_sim`` / ``sim_hpo``
 -- Dataset generation: ``gen_data``
  
@@ -2238,12 +2250,36 @@ index c92272414..e87843ad2 100644
 -    python main.py test_sim sim.days=31 sim.policies=regular,gurobi,alns
 -    python main.py gen_data data.problem=ptp data.graph_sizes=[50]
 +    python . train model=am env.name=ptp env.num_loc=50
-+    python . eval eval.model_path=./weights/best.pt
 +    python . test_sim sim.days=31 sim.policies=regular,gurobi,alns
  """
  
  from typing import Any, List
-@@ -142,38 +140,3 @@ def run_simulation(cfg: Any) -> float:
+@@ -90,24 +87,6 @@ def run_training(cfg: Any) -> float:
+     return _train(cfg)
+ 
+ 
+-def run_evaluation(cfg: Any) -> float:
+-    """Run model evaluation.
+-
+-    Args:
+-        cfg: Hydra ``Config`` object (structured config).
+-
+-    Returns:
+-        0.0 on success.
+-    """
+-    from logic.src.pipeline.features.eval import run_evaluate_model
+-
+-    if cfg.tracking.verbose:
+-        _print_config(cfg, "EVALUATION", filter_keys=_ROOT_KEYS + ["eval"])  # type: ignore[arg-type]
+-
+-    run_evaluate_model(cfg)
+-    return 0.0
+-
+-
+ # ---------------------------------------------------------------------------
+ # Simulation & Data Generation
+ # ---------------------------------------------------------------------------
+@@ -142,38 +121,3 @@ def run_simulation(cfg: Any) -> float:
  
      raise ValueError(f"Unknown simulation task: {task!r}")
  
@@ -2313,18 +2349,19 @@ index 18d407fa0..344d1a79e 100644
      "statsmodels>=0.14.6",
      "plotext>=5.3.2",
 diff --git a/logic/src/configs/__init__.py b/logic/src/configs/__init__.py
-index eaf4b73ff..c603d57b9 100644
+index eaf4b73ff..78f7b46f5 100644
 --- a/logic/src/configs/__init__.py
 +++ b/logic/src/configs/__init__.py
-@@ -21,7 +21,6 @@ Example:
+@@ -21,8 +21,6 @@ Example:
              learning_rate_decay_rate=0.9999, patience=5, min_learning_rate=1e-5
          ),
          optim=OptimConfig(type='adamw', lr=0.001, beta1=0.9, beta2=0.999, eps=1e-08, weight_decay=0.0, amsgrad=False, foreach=False, grad_clip_norm=None, gradient_clipping=None),
 -        data=DataConfig(data_dir="", train_size=100, val_size=20, test_size=20, n_train_workers=4, n_val_workers=2, n_test_workers=2, shuffle=True, pin_memory=False, persistent_workers=False, batch_size=32, val_batch_size=32, test_batch_size=32),
-         eval=EvalConfig(eval_size=20, n_workers=2, batch_size=32, shuffle=True, pin_memory=False, persistent_workers=False),
+-        eval=EvalConfig(eval_size=20, n_workers=2, batch_size=32, shuffle=True, pin_memory=False, persistent_workers=False),
          sim=SimConfig(n_agents=1, n_simulations=1000, n_parallel_sims=10, visualize=True, batch_size=32, val_batch_size=32, test_batch_size=32, val_size=20, test_size=20, n_train_workers=0, n_test_workers=0),
          tracking=TrackingConfig(name="", project_name=None, use_mlflow=False, use_tensorboard=False, use_wandb=True),
-@@ -34,9 +33,9 @@ from typing import Any, Dict, Optional
+         seed=42, device='cuda', experiment_name=None, task='train', run_name=None, verbose=True, start=0, p={}, callbacks={})
+@@ -34,9 +32,9 @@ from typing import Any, Dict, Optional
  
  from .envs import EnvConfig, GraphConfig, ObjectiveConfig
  from .models import DecoderConfig, DecodingConfig, EncoderConfig, ModelConfig, OptimConfig
@@ -2332,13 +2369,15 @@ index eaf4b73ff..c603d57b9 100644
 +from .policies.other import MandatorySelectionConfig
  from .rl import RLConfig
 -from .tasks import DataConfig, EvalConfig, SimConfig, TrainConfig
-+from .tasks import EvalConfig, SimConfig, TrainConfig
++from .tasks import SimConfig, TrainConfig
  from .tracking import TrackingConfig
  
  
-@@ -52,12 +51,11 @@ class Config:
+@@ -50,14 +48,12 @@ class Config:
+         rl: RL algorithm configuration.
+         meta_rl: Meta-RL configuration.
          hpo: HPO configuration.
-         eval: Evaluation configuration.
+-        eval: Evaluation configuration.
          sim: Simulation configuration.
 -        data: Data generation configuration.
          tracking: Tracking backend configuration (WSTracker + optional MLflow).
@@ -2346,21 +2385,25 @@ index eaf4b73ff..c603d57b9 100644
          device: Device to use ('cpu', 'cuda').
          experiment_name: Optional name for the experiment.
 -        task: Task to perform ('train', 'eval', 'test_sim', 'gen_data').
-+        task: Task to perform ('train', 'eval', 'test_sim').
++        task: Task to perform ('train', 'test_sim').
          wandb_mode: Weights & Biases mode ('online', 'offline', 'disabled').
          no_tensorboard: If True, disable TensorBoard logging.
          no_progress_bar: If True, disable the progress bar.
-@@ -72,7 +70,6 @@ class Config:
+@@ -70,9 +66,7 @@ class Config:
+     train: TrainConfig = field(default_factory=TrainConfig)
+     optim: OptimConfig = field(default_factory=OptimConfig)
      rl: RLConfig = field(default_factory=RLConfig)
-     eval: EvalConfig = field(default_factory=EvalConfig)
+-    eval: EvalConfig = field(default_factory=EvalConfig)
      sim: SimConfig = field(default_factory=SimConfig)
 -    data: DataConfig = field(default_factory=DataConfig)
      tracking: TrackingConfig = field(default_factory=TrackingConfig)
      seed: int = 42
      device: str = "cuda"
-@@ -92,10 +89,8 @@ __all__ = [
+@@ -90,12 +84,9 @@ __all__ = [
+     "TrainConfig",
+     "OptimConfig",
      "RLConfig",
-     "EvalConfig",
+-    "EvalConfig",
      "SimConfig",
 -    "DataConfig",
      "TrackingConfig",
@@ -3481,33 +3524,36 @@ index 0399fde74..4cb8c7373 100644
          max_grad_norm: Maximum gradient norm for clipping.
      """
 diff --git a/logic/src/configs/tasks/__init__.py b/logic/src/configs/tasks/__init__.py
-index db32d7164..c5e405837 100644
+index db32d7164..ad2af36b6 100644
 --- a/logic/src/configs/tasks/__init__.py
 +++ b/logic/src/configs/tasks/__init__.py
-@@ -2,7 +2,6 @@
+@@ -2,8 +2,6 @@
  Pipeline configuration dataclasses.
  
  Attributes:
 -    DataConfig: Configuration for data pipeline.
-     EvalConfig: Configuration for evaluation pipeline.
+-    EvalConfig: Configuration for evaluation pipeline.
      HPOConfig: Configuration for hyperparameter optimization pipeline.
      MetaRLConfig: Configuration for meta-reinforcement learning pipeline.
-@@ -14,7 +13,6 @@ Example:
+     SimConfig: Configuration for simulation pipeline.
+@@ -14,8 +12,6 @@ Example:
      None
  """
  
 -from .data import DataConfig
- from .eval import EvalConfig
+-from .eval import EvalConfig
  # from .hpo import HPOConfig  # AUTO-REMOVED
  # from .hpo_sim import SimHPOConfig  # AUTO-REMOVED
-@@ -23,7 +21,6 @@ from .sim import SimConfig
+ # from .meta_rl import MetaRLConfig  # AUTO-REMOVED
+@@ -23,8 +19,6 @@ from .sim import SimConfig
  from .train import TrainConfig
  
  __all__ = [
 -    "DataConfig",
-     "EvalConfig",
+-    "EvalConfig",
      "SimConfig",
      "TrainConfig",
+ ]
 diff --git a/logic/src/configs/tasks/sim.py b/logic/src/configs/tasks/sim.py
 index c63351eee..3cc7ae199 100644
 --- a/logic/src/configs/tasks/sim.py
@@ -4684,6 +4730,250 @@ index 26fb9be8d..a410f18fc 100644
 -    )
 +
      return (dist_matrix_edges, paths, dm_tensor, distC), adj_matrix
+diff --git a/logic/src/data/processor/transforms.py b/logic/src/data/processor/transforms.py
+index efd3e4730..044c96d18 100644
+--- a/logic/src/data/processor/transforms.py
++++ b/logic/src/data/processor/transforms.py
+@@ -3,27 +3,11 @@ Data augmentation transforms for RL4CO.
+ 
+ Attributes:
+     batchify: Repeats the TensorDict along a new dimension.
+-    dihedral_8_augmentation: Augmentation (x8) for grid-based data (x, y) using Dihedral group D4.
+-    dihedral_8_augmentation_wrapper: Wrapper for dihedral_8_augmentation.
+-    symmetric_transform: Symmetric rotation and reflection transform.
+-    symmetric_augmentation: Augment xy data by `num_augment` times via symmetric transform.
+-    min_max_normalize: Normalize tensor to [0, 1] range using min-max scaling.
+-    get_augment_function: Get augmentation function by name or return callable directly.
+-    StateAugmentation: Augment state by N times via symmetric rotation/reflection transform.
+ 
+ Example:
+     batchify(td, num_samples)
+-    dihedral_8_augmentation(xy)
+-    dihedral_8_augmentation_wrapper(xy, reduce=True)
+-    symmetric_transform(x, y, phi, offset=0.5)
+-    symmetric_augmentation(xy, num_augment=8, first_augment=False)
+-    min_max_normalize(x)
+-    get_augment_function("dihedral8")
+-    state_augmentation = StateAugmentation(num_augment=8, augment_fn="symmetric")
+ """
+ 
+-import math
+-from typing import Callable, List, Optional, Union
+ 
+ import torch
+ from tensordict import TensorDict
+@@ -66,211 +50,3 @@ def batchify(td: TensorDict, num_samples: int) -> TensorDict:
+                     new_td[key] = batchify(val, num_samples)
+         return new_td
+ 
+-
+-def dihedral_8_augmentation(xy: torch.Tensor) -> torch.Tensor:
+-    """
+-    Augmentation (x8) for grid-based data (x, y) using Dihedral group D4.
+-    Args:
+-        xy: [batch, graph, 2] tensor of x and y coordinates
+-
+-    Returns:
+-        [batch*8, graph, 2] tensor of augmented x and y coordinates
+-    """
+-    x, y = xy.split(1, dim=2)
+-    # Augmentations [batch, graph, 2]
+-    z0 = torch.cat((x, y), dim=2)
+-    z1 = torch.cat((1 - x, y), dim=2)
+-    z2 = torch.cat((x, 1 - y), dim=2)
+-    z3 = torch.cat((1 - x, 1 - y), dim=2)
+-    z4 = torch.cat((y, x), dim=2)
+-    z5 = torch.cat((1 - y, x), dim=2)
+-    z6 = torch.cat((y, 1 - x), dim=2)
+-    z7 = torch.cat((1 - y, 1 - x), dim=2)
+-    # [batch*8, graph, 2]
+-    aug_xy = torch.cat((z0, z1, z2, z3, z4, z5, z6, z7), dim=0)
+-    return aug_xy
+-
+-
+-def dihedral_8_augmentation_wrapper(xy: torch.Tensor, reduce: bool = True, *args, **kw) -> torch.Tensor:
+-    """Wrapper for dihedral_8_augmentation.
+-
+-    Args:
+-        xy: [batch, graph, 2] tensor of x and y coordinates
+-        reduce: Whether to reduce the batch size by a factor of 8.
+-        args: Additional arguments.
+-        kw: Additional keyword arguments.
+-
+-    Returns:
+-        [batch*8, graph, 2] tensor of augmented x and y coordinates
+-    """
+-    if reduce:
+-        if xy.shape[0] % 8 != 0:
+-            # Fallback or warning if batch size is not divisible by 8
+-            print(f"Batch size {xy.shape[0]} is not divisible by 8 for dihedral8 augmentation. Using full batch.")
+-        else:
+-            xy = xy[: xy.shape[0] // 8]
+-    return dihedral_8_augmentation(xy)
+-
+-
+-def symmetric_transform(x: torch.Tensor, y: torch.Tensor, phi: torch.Tensor, offset: float = 0.5):
+-    """Symmetric rotation and reflection transform.
+-
+-    Args:
+-        x: x coordinates.
+-        y: y coordinates.
+-        phi: Rotation angles.
+-        offset: Offset for transformation.
+-
+-    Returns:
+-        Augmented coordinates.
+-    """
+-    x, y = x - offset, y - offset
+-    # Random rotation
+-    x_prime = torch.cos(phi) * x - torch.sin(phi) * y
+-    y_prime = torch.sin(phi) * x + torch.cos(phi) * y
+-    # Random reflection if phi > 2*pi
+-    mask = phi > 2 * math.pi
+-    xy = torch.cat((x_prime, y_prime), dim=-1)
+-    xy = torch.where(mask, xy.flip(-1), xy)
+-    return xy + offset
+-
+-
+-def symmetric_augmentation(
+-    xy: torch.Tensor,
+-    num_augment: int = 8,
+-    first_augment: bool = False,
+-    generator: Optional[torch.Generator] = None,
+-    **kwargs,
+-):
+-    """Augment xy data by `num_augment` times via symmetric transform.
+-
+-    Args:
+-        xy: [batch, graph, 2] tensor of x and y coordinates
+-        num_augment: Number of augmented copies to generate.
+-        first_augment: If True, first augmentation is the identity.
+-        generator: Random number generator.
+-        kwargs: Additional keyword arguments.
+-
+-    Returns:
+-        [batch*num_augment, graph, 2] tensor of augmented x and y coordinates
+-    """
+-    if generator is None:
+-        generator = torch.Generator(device=xy.device)
+-    total_batch = xy.shape[0]
+-    phi = torch.rand(total_batch, device=xy.device, generator=generator) * 4 * math.pi
+-    if first_augment:
+-        # Identity for the first augmentation of each sample
+-        # Assuming batchify was used: [S0_A0, S0_A1, ..., S0_AN, S1_A0, ...]
+-        idx = torch.arange(0, total_batch, num_augment, device=xy.device)
+-        phi[idx] = 0.0
+-
+-    x, y = xy.split(1, dim=-1)
+-    return symmetric_transform(x, y, phi[:, None, None])
+-
+-
+-def min_max_normalize(x):
+-    """
+-    Normalize tensor to [0, 1] range using min-max scaling.
+-
+-    Args:
+-        x: Input tensor.
+-
+-    Returns:
+-        torch.Tensor: Normalized tensor.
+-    """
+-    return (x - x.min()) / (x.max() - x.min() + 1e-8)
+-
+-
+-def get_augment_function(augment_fn: Union[str, Callable]):
+-    """
+-    Get augmentation function by name or return callable directly.
+-
+-    Args:
+-        augment_fn: Either a string ('dihedral8', 'symmetric') or a callable.
+-
+-    Returns:
+-        Callable: The augmentation function.
+-
+-    Raises:
+-        ValueError: If augment_fn string is not recognized.
+-    """
+-    if callable(augment_fn):
+-        return augment_fn
+-    if augment_fn == "dihedral8":
+-        return dihedral_8_augmentation_wrapper
+-    if augment_fn == "symmetric":
+-        return symmetric_augmentation
+-    raise ValueError(f"Unknown augment_fn: {augment_fn}")
+-
+-
+-class StateAugmentation:
+-    """
+-    Augment state by N times via symmetric rotation/reflection transform.
+-
+-    Attributes:
+-        num_augment: Number of augmented copies to generate.
+-        augment_fn: Augmentation function ('symmetric', 'dihedral8', or callable).
+-        first_aug_identity: If True, first augmentation is the identity.
+-        normalize: Whether to apply min-max normalization after augmentation.
+-        feats: List of feature names to augment (default: ['locs']).
+-    """
+-
+-    def __init__(
+-        self,
+-        num_augment: int = 8,
+-        augment_fn: Union[str, Callable] = "symmetric",
+-        first_aug_identity: bool = True,
+-        normalize: bool = False,
+-        feats: Optional[List[str]] = None,
+-    ):
+-        """
+-        Initialize StateAugmentation transform.
+-
+-        Args:
+-            num_augment: Number of augmented copies to generate.
+-            augment_fn: Augmentation function ('symmetric', 'dihedral8', or callable).
+-            first_aug_identity: If True, first augmentation is the identity.
+-            normalize: Whether to apply min-max normalization after augmentation.
+-            feats: List of feature names to augment (default: ['locs']).
+-        """
+-        self.augmentation = get_augment_function(augment_fn)
+-        if feats is None:
+-            self.feats = ["locs"]
+-        else:
+-            self.feats = feats
+-        self.num_augment = num_augment
+-        self.normalize = normalize
+-        self.first_aug_identity = first_aug_identity
+-
+-    def __call__(self, td: TensorDict) -> TensorDict:
+-        """
+-        Apply augmentation to a TensorDict.
+-
+-        Args:
+-            td: Input TensorDict to augment.
+-
+-        Returns:
+-            TensorDict: Augmented TensorDict with num_augment copies.
+-        """
+-        # (batch) -> (batch, num_augment) -> (batch * num_augment)
+-        td_aug = batchify(td, self.num_augment)
+-        batch_size = td.batch_size[0]
+-        idx = torch.arange(0, batch_size * self.num_augment, self.num_augment, device=td.device)
+-
+-        for feat in self.feats:
+-            init_aug_feat = None
+-            if self.first_aug_identity:
+-                init_aug_feat = td_aug[feat][idx].clone()
+-
+-            # Apply transformation
+-            aug_feat = self.augmentation(td_aug[feat], num_augment=self.num_augment)
+-
+-            if self.normalize:
+-                aug_feat = min_max_normalize(aug_feat)
+-
+-            if self.first_aug_identity and init_aug_feat is not None:
+-                aug_feat[idx] = init_aug_feat
+-
+-            td_aug[feat] = aug_feat
+-
+-        return td_aug
 diff --git a/logic/src/envs/generators/ptp.py b/logic/src/envs/generators/ptp.py
 index d12ab96df..cef5cfa7c 100644
 --- a/logic/src/envs/generators/ptp.py
@@ -5285,269 +5575,41 @@ index 49b076563..3250ba008 100644
  
 -__all__ = ["GraphAttentionEncoder", "GATFeedForwardSubLayer", "GATMultiHeadAttentionLayer"]
 +__all__ = ["GraphAttentionEncoder", "GATMultiHeadAttentionLayer"]
-diff --git a/logic/src/pipeline/features/eval/__init__.py b/logic/src/pipeline/features/eval/__init__.py
-index 4b12f70dc..5d19b444b 100644
---- a/logic/src/pipeline/features/eval/__init__.py
-+++ b/logic/src/pipeline/features/eval/__init__.py
-@@ -15,41 +15,23 @@ from typing import Any, List, Optional
- import numpy as np
- import torch
- # 
--import logic.src.tracking as wst
- from logic.src.configs import Config
- from logic.src.tracking.logging.pylogger import get_pylogger  
+diff --git a/logic/src/pipeline/__init__.py b/logic/src/pipeline/__init__.py
+index 5c635921e..61c01ac9f 100644
+--- a/logic/src/pipeline/__init__.py
++++ b/logic/src/pipeline/__init__.py
+@@ -2,16 +2,15 @@
+ Pipeline Module.
  
- from .engine import eval_dataset, eval_dataset_mp, get_best
- from .validation import validate_eval_args, validate_eval_config
+ This package orchestrates the primary operational workflows of the WSmart-Route framework:
+-- **Features**: Training, evaluation, and testing entry points.
++- **Features**: Training and simulation-testing entry points.
+ - **RL**: Reinforcement learning and imitation learning subpackages.
+ - **Simulator**: The underlying physics engine and environment management.
  
--try:
--    from logic.src.pipeline.features.eval.zenml_eval_pipeline import eval_pipeline
--#     from logic.src.tracking.integrations.zenml_bridge import configure_zenml_stack  # AUTO-REMOVED
--except ImportError:
--    configure_zenml_stack = None  # type: ignore[assignment]
--    eval_pipeline = None  # type: ignore[assignment]
- # 
- logger = get_pylogger(__name__)  # AUTO-REMOVED
+ Attributes:
+-    features: Sub-package for train, eval, and test entry points.
++    features: Sub-package for train and test entry points.
+     rl: Sub-package for RL algorithms, baselines, and HPO.
+     simulations: Sub-package for the simulation engine and state machine.
  
- 
--def run_evaluate_model(cfg: Config, sinks: Optional[List[Any]] = None) -> None:
-+def run_evaluate_model(cfg: Config) -> None:
-     """Main entry point for the evaluation script.
- 
-     Args:
-         cfg: Root Hydra configuration with ``cfg.eval`` containing evaluation
-             parameters.
--        sinks: Optional list of tracking sinks (e.g. :class:`ZenMLBridge`)
--            to attach to the WSTracker run.  When ``None`` (the default),
--            :class:`MLflowBridge` is auto-attached if
--            ``cfg.tracking.mlflow_enabled`` is ``True``.
-     """
--    # ----- ZenML dispatch (opt-in) -----
--    tracking = getattr(cfg, "tracking", None)
--    zenml_enabled = bool(getattr(tracking, "zenml_enabled", False))
--    if zenml_enabled and sinks is None:
--        _run_eval_via_zenml(cfg)
--        return
--
-     # Validate and sanitize config values
-     validate_eval_config(cfg)
- 
-@@ -72,108 +54,21 @@ def run_evaluate_model(cfg: Config, sinks: Optional[List[Any]] = None) -> None:
-     else:
-         beam_widths = [bw]
- 
--    # --- Centralised experiment tracking ---
--    model_path = ev.policy.model.load_path if ev.policy else "unknown"
--    _ev_graph = getattr(getattr(ev, "env", None), "graph", None)
--    _ev_num_loc = getattr(_ev_graph, "num_loc", "")
--    experiment_name = f"eval-{ev.problem}-{_ev_num_loc}loc-{strategy}"
--    tracker = wst.init(experiment_name=experiment_name)
--    run_tags = {
--        "problem": ev.problem,
--        "num_loc": str(_ev_num_loc),
--        "strategy": strategy,
--        "model_path": str(model_path),
--        "seed": str(ev.seed),
--        "val_size": str(ev.val_size),
--    }
--    run = tracker.start_run(experiment_name, run_type="evaluation", tags=run_tags)
--    run.__enter__()
--
--    # ----- Attach secondary sinks -----
--    if sinks is not None:
--        for sink in sinks:
--            run.add_sink(sink)
--    else:
--        mlflow_enabled = bool(getattr(tracking, "mlflow_enabled", False))
--        if mlflow_enabled:
--            with contextlib.suppress(Exception):
--                wst.MLflowBridge.attach(
--                    run,
--                    mlflow_tracking_uri=str(getattr(tracking, "mlflow_tracking_uri", "mlruns")),
--                    experiment_name=str(getattr(tracking, "mlflow_experiment_name", "wsmart-route")),
--                    run_name=run.run_id[:8],
--                    tags=run_tags,
--                )
--
--    # Log evaluation params
--    run.log_params(
--        {
--            "eval.problem": ev.problem,
--            "eval.strategy": strategy,
--            "eval.val_size": ev.val_size,
--            "eval.eval_batch_size": ev.eval_batch_size,
--            "eval.offset": ev.offset,
--            "eval.model_path": str(model_path),
--            "eval.beam_widths": str(beam_widths),
--            "eval.num_loc": _ev_num_loc,
--            "eval.area": getattr(_ev_graph, "area", ""),
--            "eval.data_distribution": str(ev.data_distribution),
--            "eval.multiprocessing": ev.multiprocessing,
--        }
--    )
--
--    try:
--        for beam_width in beam_widths:
--            datasets = ev.datasets
--            if not datasets:
--                print("No datasets for evaluation found. Skipping evaluation.")
--                run.__exit__(None, None, None)
--                return
--
--            if isinstance(datasets, str):
--                datasets = [datasets]
--            else:  # list / tuple / OmegaConf ListConfig
--                datasets = [str(d) for d in datasets]
--
--            for dataset_path in datasets:
--                temp = ev.decoding.temperature if ev.decoding else 1.0
--                eval_dataset(dataset_path, beam_width, temp, cfg, strategy=strategy, run=run)
--
--        run.__exit__(None, None, None)
--    except Exception as exc:
--        run.__exit__(type(exc), exc, exc.__traceback__)
--        raise
--
--
--# ---------------------------------------------------------------------------
--# ZenML dispatch
--# ---------------------------------------------------------------------------
--
--
--def _run_eval_via_zenml(cfg: Config) -> None:
--    """Dispatch evaluation to the ZenML evaluation pipeline.
--
--    Called when ``cfg.tracking.zenml_enabled`` is ``True`` and no external
--    sinks were injected.
-+    for beam_width in beam_widths:
-+        datasets = ev.datasets
-+        if not datasets:
-+            print("No datasets for evaluation found. Skipping evaluation.")
-+            return
-+
-+        if isinstance(datasets, str):
-+            datasets = [datasets]
-+        else:  # list / tuple / OmegaConf ListConfig
-+            datasets = [str(d) for d in datasets]
-+
-+        for dataset_path in datasets:
-+            temp = ev.decoding.temperature if ev.decoding else 1.0
-+            eval_dataset(dataset_path, beam_width, temp, cfg, strategy=strategy)
- 
--    Args:
--        cfg: Configuration object containing evaluation parameters.
--    """
--    tracking = getattr(cfg, "tracking", None)
--    mlflow_uri = str(getattr(tracking, "mlflow_tracking_uri", "mlruns"))
--    stack_name = str(getattr(tracking, "zenml_stack_name", "wsmart-route-stack"))
--
--    if configure_zenml_stack is None or not configure_zenml_stack(mlflow_uri, stack_name=stack_name):
--        print("ZenML stack configuration failed — falling back to direct evaluation.")
--        run_evaluate_model(cfg, sinks=[])
--        return
--
--    try:
--        if eval_pipeline is not None:
--            eval_pipeline(cfg)
--    except Exception as exc:
--        print(f"ZenML evaluation pipeline failed — falling back to direct evaluation: {exc}")
--        run_evaluate_model(cfg, sinks=[])
- 
- 
- __all__ = ["run_evaluate_model", "eval_dataset", "eval_dataset_mp", "get_best", "validate_eval_args"]
-diff --git a/logic/src/pipeline/features/eval/engine.py b/logic/src/pipeline/features/eval/engine.py
-index 9d7eed9c2..04633a24c 100644
---- a/logic/src/pipeline/features/eval/engine.py
-+++ b/logic/src/pipeline/features/eval/engine.py
-@@ -44,7 +44,6 @@ Example:
-     >>> # print(f"Evaluation results: {results}")
+ Example:
+-    >>> from logic.src.pipeline.features.eval import run_evaluate_model
+     >>> from logic.src.pipeline.simulations.simulator import Simulator
  """
+diff --git a/logic/src/pipeline/features/__init__.py b/logic/src/pipeline/features/__init__.py
+index b572273ed..9a3473c5a 100644
+--- a/logic/src/pipeline/features/__init__.py
++++ b/logic/src/pipeline/features/__init__.py
+@@ -3,7 +3,6 @@ Features Module.
  
--import contextlib
- import datetime
- import itertools
- import math
-@@ -321,7 +320,6 @@ def eval_dataset(
-     cfg: Config,
-     method: Optional[str] = None,
-     strategy: Optional[str] = None,
--    run: Optional[Any] = None,
- ) -> Tuple[List[float], List[Optional[List[int]]], List[float]]:
-     """Evaluates a model on a given dataset.
+ This package orchestrates the primary operational workflows of the WSmart-Route framework:
+ - **Training**: Model training and hyperparameter optimization (`train.py`).
+-- **Evaluation**: Model inference and performance benchmarking (`eval.py`).
+ - **Testing**: Large-scale simulation testing across various policies and scenarios (`test.py`).
  
-@@ -332,7 +330,6 @@ def eval_dataset(
-         cfg: Root Hydra configuration.
-         method: Decoding method override.
-         strategy: Decoding strategy override.
--        run: Optional WSTracker :class:`Run` for metric/artifact logging.
- 
-     Returns:
-         Tuple of (costs, tours, durations).
-@@ -395,35 +392,6 @@ def eval_dataset(
- 
-     save_dataset((results, parallelism), out_file)
- 
--    # Log evaluation metrics and artifact to WSTracker run
--    if run is not None:
--        ds_name = os.path.splitext(os.path.basename(dataset_path))[0]
--        prefix = f"eval/{ds_name}/bw{beam_width}"
--        with contextlib.suppress(Exception):
--            run.log_metric(f"{prefix}/avg_cost", float(avg_metrics["cost"]))  # type: ignore[arg-type]
--            run.log_metric(f"{prefix}/std_cost", float(avg_metrics["std"]))  # type: ignore[arg-type]
--            run.log_metric(f"{prefix}/avg_km", float(avg_metrics["km"]))  # type: ignore[arg-type]
--            run.log_metric(f"{prefix}/avg_kg", float(avg_metrics["kg"]))  # type: ignore[arg-type]
--            run.log_metric(f"{prefix}/avg_overflows", float(avg_metrics["overflows"]))  # type: ignore[arg-type]
--            run.log_metric(f"{prefix}/avg_duration", float(np.mean(durations)))  # type: ignore[arg-type]
--            run.log_metric(f"{prefix}/n_samples", float(len(costs)))  # type: ignore[arg-type]
--        with contextlib.suppress(Exception):
--            run.log_artifact(out_file, artifact_type="eval_results")
--        with contextlib.suppress(Exception):
--            run.log_dataset_event(  # type: ignore[union-attr]
--                "load",
--                file_path=dataset_path,
--                num_samples=len(costs),
--                metadata={
--                    "event": "eval_dataset",
--                    "beam_width": beam_width,
--                    "strategy": strategy or method or "",
--                    "variable_name": "dataset_path",
--                    "source_file": "features/eval/engine.py",
--                    "source_line": 299,
--                },
--            )
--
-     return costs, tours, durations
- 
- 
-@@ -523,28 +491,3 @@ def _get_eval_output_path(
-             ext,
-         ),
-     )
--
--
--# Dummy tracking fallbacks to avoid E402 and NameErrors
--class DummyRun:
--    def __enter__(self): return self
--    def __exit__(self, *args): pass
--    def add_sink(self, *args): pass
--    def log_dataset_event(self, *args, **kwargs): pass
--    def watch_file(self, *args): pass
--    def log_artifact(self, *args, **kwargs): pass
--    def log_metric(self, *args, **kwargs): pass
--    def log_params(self, *args): pass
--    @property
--    def run_id(self): return "dummy_run"
--
--class DummyTracker:
--    def start_run(self, *args, **kwargs): return DummyRun()
--
--class DummyWst:
--    Run = DummyRun
--    @staticmethod
--    def init(*args, **kwargs): return DummyTracker()
--
--wst = DummyWst
--configure_zenml_stack = None
+ Attributes:
 diff --git a/logic/src/pipeline/features/test/engine.py b/logic/src/pipeline/features/test/engine.py
 index c11009018..7673c5bb8 100644
 --- a/logic/src/pipeline/features/test/engine.py
@@ -9625,11 +9687,135 @@ index fa9402364..a861680da 100644
 -    "sparsify_graph",
 -    "get_full_graph_edge_index",
  ]
+diff --git a/logic/src/utils/data/__init__.py b/logic/src/utils/data/__init__.py
+index 4910e430b..67c718542 100644
+--- a/logic/src/utils/data/__init__.py
++++ b/logic/src/utils/data/__init__.py
+@@ -9,9 +9,6 @@ Attributes:
+     load_grid_base: Load grid base from a file.
+     load_simulation_dataset: Load a simulation dataset from a file.
+     load_td_dataset: Load a TensorDict dataset from a file.
+-    save_dataset: Save a dataset to a file.
+-    save_simulation_dataset: Save a simulation dataset to a file.
+-    save_td_dataset: Save a TensorDict dataset to a file.
+     TensorDictStateWrapper: A wrapper for TensorDict that exposes methods expected by legacy model components (Decoders).
+ 
+ Example:
+@@ -23,9 +20,6 @@ Example:
+     ...     load_grid_base,
+     ...     load_simulation_dataset,
+     ...     load_td_dataset,
+-    ...     save_dataset,
+-    ...     save_simulation_dataset,
+-    ...     save_td_dataset,
+     ...     TensorDictStateWrapper,
+     ... )
+ """
+@@ -38,17 +32,11 @@ from .loader import (
+     load_grid_base,
+     load_simulation_dataset,
+     load_td_dataset,
+-    save_dataset,
+-    save_simulation_dataset,
+-    save_td_dataset,
+ )
+ from .td_state_wrapper import TensorDictStateWrapper
+ 
+ __all__ = [
+     "check_extension",
+-    "save_dataset",
+-    "save_simulation_dataset",
+-    "save_td_dataset",
+     "load_td_dataset",
+     "load_dataset",
+     "load_simulation_dataset",
 diff --git a/logic/src/utils/data/loader.py b/logic/src/utils/data/loader.py
-index 085435820..ace9e9cee 100644
+index 085435820..5c54e02c6 100644
 --- a/logic/src/utils/data/loader.py
 +++ b/logic/src/utils/data/loader.py
-@@ -243,7 +243,7 @@ def load_grid_base(
+@@ -4,11 +4,8 @@ Attributes:
+     collate_fn: Collate function for PyTorch DataLoader.
+     load_focus_coords: Loads coordinates and depot information from simulator data.
+     check_extension: Ensures filename has the specified extension.
+-    save_dataset: Saves a dataset using pickle.
+-    save_td_dataset: Saves a TensorDict dataset.
+     load_td_dataset: Loads a TensorDict dataset.
+     load_dataset: Loads a dataset from a pickle file.
+-    save_simulation_dataset: Saves a simulation dataset as a compressed .npz file.
+     load_simulation_dataset: Loads a simulation dataset from a .npz file.
+     load_grid_base: Loads grid base data from simulation files.
+ 
+@@ -124,43 +121,6 @@ def check_extension(filename: str, extension: str = ".pkl") -> str:
+     return filename
+ 
+ 
+-def save_dataset(dataset: Any, filename: str) -> None:
+-    """
+-    Saves a dataset using pickle.
+-
+-    Args:
+-        dataset: The data to save.
+-        filename: Target filename.
+-
+-    Raises:
+-        Exception: If directory creation fails.
+-    """
+-    filedir = os.path.split(filename)[0]
+-    if filedir and not os.path.isdir(filedir):
+-        try:
+-            os.makedirs(filedir, exist_ok=True)
+-        except Exception as e:
+-            raise Exception("directories to save datasets do not exist and could not be created") from e
+-
+-    with open(filename, "wb") as f:
+-        pickle.dump(dataset, f)
+-
+-
+-def save_td_dataset(td: TensorDict, filename: str) -> None:
+-    """
+-    Saves a TensorDict dataset.
+-
+-    Args:
+-        td: The TensorDict to save.
+-        filename: Target filename.
+-    """
+-    filedir = os.path.split(filename)[0]
+-    if filedir and not os.path.isdir(filedir):
+-        os.makedirs(filedir, exist_ok=True)
+-
+-    torch.save(td, check_extension(filename, ".td"))
+-
+-
+ def load_td_dataset(filename: str, device: str = "cpu") -> TensorDict:
+     """
+     Loads a TensorDict dataset.
+@@ -189,25 +149,6 @@ def load_dataset(filename: str) -> Any:
+         return pickle.load(f)
+ 
+ 
+-def save_simulation_dataset(dataset: Dict[str, np.ndarray], filename: str) -> None:
+-    """
+-    Saves a simulation dataset as a compressed .npz file.
+-
+-    Args:
+-        dataset: Dict of named numpy arrays (e.g. 'waste', 'noisy_waste', 'depot', 'locs', 'max_waste').
+-        filename: Target filename (extension will be set to .npz).
+-    """
+-    filedir = os.path.split(filename)[0]
+-    if filedir and not os.path.isdir(filedir):
+-        try:
+-            os.makedirs(filedir, exist_ok=True)
+-        except Exception as e:
+-            raise Exception("directories to save datasets do not exist and could not be created") from e
+-
+-    print(f"[INFO] Saving compressed dataset to '{filename}'... (This may take a minute for large datasets)")
+-    np.savez_compressed(check_extension(filename, ".npz"), **dataset)
+-
+-
+ def load_simulation_dataset(filename: str) -> Dict[str, np.ndarray]:
+     """
+     Loads a simulation dataset from a .npz file.
+@@ -243,7 +184,7 @@ def load_grid_base(
      """
      from logic.src.constants.paths import ROOT_DIR
      from logic.src.constants.waste import COUNTY_ALIASES
@@ -9638,7 +9824,7 @@ index 085435820..ace9e9cee 100644
  
      if data_dir is None:
          data_dir = os.path.join(ROOT_DIR, "data", "simulator")
-@@ -306,4 +306,4 @@ def load_grid_base(
+@@ -306,4 +247,4 @@ def load_grid_base(
  # --- Logic Strategy Imports (Below function definitions) ---
  
  if TYPE_CHECKING:
@@ -9778,7 +9964,7 @@ index c06adbc3e..fb12350e3 100644
      >>> import dummy_problem
  """
 diff --git a/pyproject.toml b/pyproject.toml
-index 8f3681856..e15a94b37 100644
+index 8f3681856..3dd7f8b82 100644
 --- a/pyproject.toml
 +++ b/pyproject.toml
 @@ -31,7 +31,6 @@ exclude = [
@@ -9789,3 +9975,11 @@ index 8f3681856..e15a94b37 100644
  ]     # Directories/files to include in type checking
  
  project-excludes = [
+@@ -130,7 +129,6 @@ markers = [
+     "train: marks tests related to training command",
+     "mrl_train: marks tests related to meta-reinforcement learning training",
+     "hp_optim: marks tests related to hyperparameter optimization",
+-    "eval: marks tests related to evaluation command",
+     "test_sim: marks tests related to simulator test command",
+     "gen_data: marks tests related to data generation command",
+     "file_system: marks tests related to file system operations",

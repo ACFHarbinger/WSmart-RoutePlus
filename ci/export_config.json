@@ -6168,7 +6168,7 @@
   "export_profiles": {
     "_comment": "Applied to an export tree by logic/package/apply_export_profile.py (see its docstring). The patch is relative to the tree after remove_paths.",
     "minimal-ptp": {
-      "description": "2026-10-07 package: PTP/MVPTP; lookahead, last-minute and service-level selection; PG-CLNS (own operators), SANS, SWC-TCF (Gurobi) and the Neural Agent; Attention Model + REINFORCE trained on pre-generated datasets. No route improvement, acceptance criteria, tracking/provenance, callbacks, POMO baseline, data generation, multi-period context, scenario trees, Euclidean distances, travel-time matrices or non-empirical distributions; only .npz simulation datasets.",
+      "description": "2026-10-07 package: PTP/MVPTP; tasks train and test_sim only; lookahead, last-minute and service-level selection; PG-CLNS (own operators), SANS, SWC-TCF (Gurobi) and the Neural Agent; Attention Model + REINFORCE trained on pre-generated datasets. No evaluation task, route improvement, acceptance criteria, tracking/provenance, callbacks, POMO baseline, data generation, multi-period context, scenario trees, Euclidean distances, travel-time matrices or non-empirical distributions; only .npz simulation datasets.",
       "entrypoints": "dunder",
       "engines": "swc_tcf=gurobi",
       "remove_paths": [
@@ -6178,6 +6178,7 @@
         "logic/configs/policies/other/ac_bmc.yaml",
         "logic/configs/policies/other/ac_oi.yaml",
         "logic/configs/policies/other/ri_ftsp.yaml",
+        "logic/configs/tasks/eval.yaml",
         "logic/configs/tasks/gen_data.yaml",
         "logic/src/configs/policies/aco_ks.py",
         "logic/src/configs/policies/alns.py",
@@ -6185,6 +6186,7 @@
         "logic/src/configs/policies/other/reinforcement_learning.py",
         "logic/src/configs/policies/other/route_improvement.py",
         "logic/src/configs/tasks/data.py",
+        "logic/src/configs/tasks/eval.py",
         "logic/src/constants/data.py",
         "logic/src/constants/tasks.py",
         "logic/src/constants/user_interface.py",
@@ -6210,7 +6212,7 @@
         "logic/src/models/subnets/decoders/common/selection.py",
         "logic/src/models/subnets/encoders/gat/gat_feed_forward_sublayer.py",
         "logic/src/pipeline/callbacks",
-        "logic/src/pipeline/features/eval/zenml_eval_pipeline.py",
+        "logic/src/pipeline/features/eval",
         "logic/src/pipeline/features/test/zenml_sim_pipeline.py",
         "logic/src/pipeline/features/train/zenml_train_pipeline.py",
         "logic/src/pipeline/rl/common/baselines/pomo.py",
