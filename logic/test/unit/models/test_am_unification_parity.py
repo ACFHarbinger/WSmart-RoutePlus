@@ -352,7 +352,7 @@ def test_nonzero_temporal_horizon_projection_shape():
     assert old_shape == new_shape == (8, 6), f"Shape mismatch: old={old_shape}, new={new_shape}"
 
 
-@pytest.mark.parametrize("env_name", ["vrpp", "cvrpp", "wcvrp"])
+@pytest.mark.parametrize("env_name", ["vrpp", "cvrpp"])
 def test_canonical_policy_preserves_historical_depot_projection(env_name):
     """Checkpoint weights retain the canonical depot projection for every shared embedder."""
     policy = AttentionModelPolicy(env_name=env_name, embed_dim=8, hidden_dim=16, n_heads=2, n_encode_layers=1)
@@ -372,15 +372,13 @@ def test_canonical_policy_preserves_historical_depot_projection(env_name):
     assert torch.equal(actual, expected)
 
 
-@pytest.mark.parametrize("env_name", ["vrpp", "cvrpp", "wcvrp"])
+@pytest.mark.parametrize("env_name", ["vrpp", "cvrpp"])
 @pytest.mark.parametrize("horizon", [0, 3])
 def test_legacy_model_retains_context_embedding_projection(env_name, horizon):
     """Legacy context modules are the oracle, including actual nonzero temporal features."""
     from logic.src.models.subnets.embeddings.context.vrpp import VRPPContextEmbedder
-    from logic.src.models.subnets.embeddings.context.wcvrp import WCVRPContextEmbedder
 
-    old_class = WCVRPContextEmbedder if env_name == "wcvrp" else VRPPContextEmbedder
-    old = old_class(8, temporal_horizon=horizon)
+    old = VRPPContextEmbedder(8, temporal_horizon=horizon)
     model = AttentionModel(
         embed_dim=8, hidden_dim=16, problem=env_name, n_heads=2, n_encode_layers=1, temporal_horizon=horizon
     )
@@ -399,28 +397,6 @@ def test_legacy_model_retains_context_embedding_projection(env_name, horizon):
         assert model.init_embedding.legacy_depot_projection
         with torch.no_grad():
             assert torch.equal(model.init_embedding(td), old.init_node_embeddings(td))
-
-
-def test_legacy_wcvrp_disabled_temporal_features_preserves_projection_width():
-    """Disabling temporal inputs still pads the legacy WCVRP projection's feature width."""
-    from logic.src.models.subnets.embeddings.context.wcvrp import WCVRPContextEmbedder
-
-    old = WCVRPContextEmbedder(8, temporal_horizon=3)
-    model = AttentionModel(
-        embed_dim=8, hidden_dim=16, problem="wcvrp", n_heads=2, n_encode_layers=1, temporal_horizon=3
-    )
-    model.init_embedding.node_embed.load_state_dict(old.init_embed.state_dict())
-    model.init_embedding.depot_embed.load_state_dict(old.init_embed_depot.state_dict())
-    td = {
-        "locs": torch.tensor([[[0.0, 0.0], [1.0, 1.0]]]),
-        "waste": torch.tensor([[0.0, 1.0]]),
-        "depot": torch.zeros(1, 2),
-        "temporal_features": torch.ones(1, 2, 3),
-    }
-    with torch.no_grad():
-        expected = old.init_node_embeddings(td, temporal_features=False)
-        actual = model.context_embedder.init_node_embeddings(td, temporal_features=False)
-    assert torch.equal(actual, expected)
 
 
 def test_legacy_factory_preserves_activation_defaults_and_explicit_overrides():

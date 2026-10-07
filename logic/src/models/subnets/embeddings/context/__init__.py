@@ -20,17 +20,11 @@ from .base import ContextEmbedder
 from .cvrpp import CVRPPContextEmbedder
 from .generic import GenericContextEmbedder
 from .vrpp import VRPPContextEmbedder
-from .wcvrp import WCVRPContextEmbedder
 
 CONTEXT_EMBEDDING_REGISTRY: Dict[str, Any] = {
     "vrpp": VRPPContextEmbedder,
     "cvrpp": CVRPPContextEmbedder,
     "ctop": CVRPPContextEmbedder,
-    "wcvrp": WCVRPContextEmbedder,
-    "cwcvrp": WCVRPContextEmbedder,
-    "sdwcvrp": WCVRPContextEmbedder,
-    "swcvrp": WCVRPContextEmbedder,
-    "scwcvrp": WCVRPContextEmbedder,
 }
 
 __all__: list[str] = [
@@ -38,6 +32,5 @@ __all__: list[str] = [
     "CVRPPContextEmbedder",
     "GenericContextEmbedder",
     "VRPPContextEmbedder",
-    "WCVRPContextEmbedder",
     "CONTEXT_EMBEDDING_REGISTRY",
 ]

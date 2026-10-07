@@ -1,11 +1,11 @@
-"""Tests for problem environment physics (VRPP, WCVRP, etc)."""
+"""Tests for problem environment physics (VRPP, CVRPP, etc)."""
 
 from unittest.mock import patch
 
 import pytest
 import torch
 from logic.src.envs import problems as problem_module
-from logic.src.envs.problems import CVRPP, VRPP, WCVRP
+from logic.src.envs.problems import CVRPP, VRPP
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
@@ -131,132 +131,6 @@ class TestStateVRPP:
         mask = state.get_mask()
         assert mask[:, 0, 1].item()  # Node 1 visited, now infeasible
         assert not mask[:, 0, 2].item()  # Node 2 unvisited
-
-
-class TestWCVRP:
-    """Tests for the WCVRP problem class."""
-
-    @pytest.mark.unit
-    def test_get_costs_overflow(self):
-        """Test cost calculation with overflows for WCVRP."""
-        problem_module.COST_KM = 1.0
-        problem_module.REVENUE_KG = 0.1
-
-        dataset = {
-            "depot": torch.tensor([[0.0, 0.0]]),
-            "loc": torch.tensor([[[1.0, 0.0]]]),  # (1, 1, 2)
-            "waste": torch.tensor([[120.0]]),  # (1, 1)
-            "max_waste": torch.tensor([100.0]),  # (1)
-        }
-
-        pi = torch.tensor([[1, 0]])  # (1, 2) - Visit 1 then padded 0
-
-        cost, c_dict, _ = WCVRP.get_costs(dataset, pi, cw_dict=None)
-
-        # Overflows: 120 >= 100 but visited -> 0 remaining overflows
-        assert c_dict["overflows"] == 0.0
-
-        # Length: 0->1 (1.0) + 1->0 (1.0) = 2.0
-        assert c_dict["length"] == 2.0
-
-        # Cost check: overflows + length - waste ??
-        # Or cost logic in WCVRP?
-        # cost = overflows + length - waste
-        # 1.0 + 2.0 - 100.0 (waste clamped to max) = -97.0
-
-        # Wait, waste calculation in WCVRP:
-        # w = waste.gather... clamp(max)
-        # So collected waste is 100.
-
-        assert torch.allclose(cost, torch.tensor([-98.0]))
-
-    @pytest.mark.unit
-    def test_make_state_is_callable(self):
-        """Test that WCVRP.make_state is callable."""
-        # WCVRP inherits make_state from BaseProblem.
-        # We just check it runs without error for a mock.
-        input_data = {
-            "depot": torch.zeros(1, 2),
-            "loc": torch.rand(1, 2, 2),
-            "waste": torch.rand(1, 2),
-            "max_waste": torch.ones(1),
-        }
-        state = WCVRP.make_state(input_data)
-        assert state is not None
-
-    def test_dataset_generation(self, mocker):
-        """Test dataset generation calls for WCVRP."""
-        from logic.src.envs.generators import WCVRPGenerator
-
-        generator = WCVRPGenerator(num_loc=10)
-        td = generator(batch_size=2)
-        assert td.batch_size[0] == 2
-        assert td["waste"].shape == (2, 10)
-
-
-class TestStateWCVRP:
-    """Tests for StateWCVRP logic."""
-
-    @pytest.mark.unit
-    def test_initialize(self):
-        """Test initialization of StateWCVRP."""
-        # Input mock
-        batch_size = 1
-        n_loc = 2
-        input_data = {
-            "depot": torch.zeros(batch_size, 2),
-            "loc": torch.rand(batch_size, n_loc, 2),
-            "waste": torch.tensor([[5.0, 12.0]]),  # Consistent with loc (B, 2)
-            "max_waste": torch.tensor([10.0]),
-        }
-        state = WCVRP.make_state(input_data)
-
-        # Check initial overflows
-        # cur_overflows is in td for WCVRP
-        assert state.td["cur_overflows"].item() == 1.0
-
-    @pytest.mark.unit
-    def test_update_waste_clamping(self):
-        """Test that collected waste is clamped to max_waste."""
-        batch_size = 1
-        input_data = {
-            "depot": torch.zeros(batch_size, 2),
-            "loc": torch.tensor([[[1.0, 0.0]]]),
-            "waste": torch.tensor([[15.0]]),  # 15 > 10
-            "max_waste": torch.tensor([10.0]),
-        }
-        state = WCVRP.make_state(input_data)
-
-        # Initial checks
-        assert state.td["cur_overflows"].item() == 1.0
-
-        # Update: Visit node 1
-        selected = torch.tensor([1])
-        state = state.update(selected)
-
-        # In WCVRPEnv, collected waste is cumulative
-        assert state.td["collected_waste"].item() == 10.0
-
-    @pytest.mark.unit
-    def test_batched_max_waste_broadcasting(self):
-        """Test that WCVRP handles multi-instance batch with 1D max_waste."""
-        from logic.src.envs.problems import WCVRP
-
-
-
-        batch_size = 2
-        n_loc = 3
-        input_data = {
-            "depot": torch.zeros(batch_size, 2),
-            "loc": torch.rand(batch_size, n_loc, 2),
-            "waste": torch.tensor([[0.5, 1.2, 0.8], [1.5, 0.4, 1.1]]),  # Instance 1: 1 overflow, Instance 2: 2
-            "max_waste": torch.tensor([1.0, 1.0]),  # 1D batched scalars
-        }
-        state = WCVRP.make_state(input_data)
-
-        # Check initial overflows for each instance
-        expected_overflows = torch.tensor([1.0, 2.0])
-        assert torch.all(state.td["cur_overflows"] == expected_overflows)
 
 
 class TestStateCVRPP:

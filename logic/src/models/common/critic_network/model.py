@@ -26,7 +26,6 @@ from logic.src.models.common.critic_network.policy import (  # noqa: F401
 )
 from logic.src.models.subnets.embeddings import (
     VRPPContextEmbedder,
-    WCVRPContextEmbedder,
 )
 from logic.src.models.subnets.modules import ActivationFunction
 
@@ -42,7 +41,6 @@ class LegacyCriticNetwork(nn.Module):
         hidden_dim: Dimensionality of the value head hidden layers.
         embed_dim: Dimensionality of the node embeddings.
         aggregation_graph: Graph aggregation mode ('avg', 'sum', 'max').
-        is_wc: Whether the problem is waste-collection based.
         is_vrpp: Whether the problem is VRPP-based.
         context_embedder: Problem-specific node feature encoder.
         encoder: The graph neural network used for feature extraction.
@@ -90,19 +88,13 @@ class LegacyCriticNetwork(nn.Module):
         self.embed_dim = embed_dim
         self.aggregation_graph = aggregation_graph
 
-        self.is_wc = problem.NAME in ("wcvrp", "cwcvrp", "sdwcvrp")
         self.is_vrpp = problem.NAME in ("vrpp", "cvrpp", "ctop")
 
-        assert self.is_wc or self.is_vrpp, f"Unsupported problem: {problem.NAME}"
+        assert self.is_vrpp, f"Unsupported problem: {problem.NAME}"
 
         node_dim = 3
 
-        if self.is_wc:
-            self.context_embedder = WCVRPContextEmbedder(
-                embed_dim, node_dim=node_dim, temporal_horizon=temporal_horizon
-            )
-        else:
-            self.context_embedder = VRPPContextEmbedder(embed_dim, node_dim=node_dim, temporal_horizon=temporal_horizon)  # type: ignore[assignment]
+        self.context_embedder = VRPPContextEmbedder(embed_dim, node_dim=node_dim, temporal_horizon=temporal_horizon)
 
         self.encoder = component_factory.create_encoder(
             n_heads=n_heads,

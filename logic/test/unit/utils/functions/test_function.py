@@ -39,10 +39,6 @@ class TestLoadProblem:
         env_cls = load_problem("vrpp")
         assert env_cls is not None
 
-    def test_loads_wcvrp(self):
-        env_cls = load_problem("wcvrp")
-        assert env_cls is not None
-
     def test_invalid_problem_raises(self):
         with pytest.raises(AssertionError):
             load_problem("invalid_problem")

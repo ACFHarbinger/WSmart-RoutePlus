@@ -10,7 +10,7 @@ Attributes:
 
 Example:
     >>> from logic.src.policies.vector.hybrid_volleyball_premier_league import VectorizedHVPL
-    >>> policy = VectorizedHVPL(env_name="wcvrp")
+    >>> policy = VectorizedHVPL(env_name="vrpp")
     >>> out = policy(td)
 """
 

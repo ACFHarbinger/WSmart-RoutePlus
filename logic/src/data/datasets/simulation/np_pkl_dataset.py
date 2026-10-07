@@ -26,7 +26,7 @@ class NumpyPickleDataset(SimulationDataset):
     Dataset wrapping legacy pickle simulation data.
 
     The old format is a list of tuples per sample, where each tuple is either:
-        - (depot, locs, waste, noisy_waste, max_waste) for SWCVRP
+        - (depot, locs, waste, noisy_waste, max_waste) (legacy stochastic datasets)
         - (depot, locs, waste, max_waste) for standard problems
 
     This class normalises access so that __getitem__ always returns a dict

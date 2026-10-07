@@ -5,7 +5,6 @@ This module provides RL4CO-style environment abstractions for
 combinatorial optimization problems.
 
 Attributes:
-    WCVRPGenerator: Generator for Waste Collection VRP instances.
     VRPPGenerator: Generator for VRP with Profits instances.
     Generator: Abstract base class for all instance generators.
     IRPGenerator: Generator for Inventory Routing Problem instances.
@@ -41,33 +40,26 @@ from logic.src.envs.generators import (
     PDPGenerator,
     ThOPGenerator,
     VRPPGenerator,
-    WCVRPGenerator,
     get_generator,
 )
 from logic.src.envs.routing.atsp import ATSPEnv
 from logic.src.envs.routing.ctop import CTOPEnv
 from logic.src.envs.routing.cvrp import CVRPEnv
 from logic.src.envs.routing.cvrpp import CVRPPEnv
-from logic.src.envs.routing.cwcvrp import CWCVRPEnv
 from logic.src.envs.routing.irp import IRPEnv
 from logic.src.envs.routing.op import OPEnv
 from logic.src.envs.routing.pctsp import PCTSPEnv
 from logic.src.envs.routing.pdp import PDPEnv
 from logic.src.envs.routing.spctsp import SPCTSPEnv
-from logic.src.envs.routing.swcvrp import SCWCVRPEnv
 from logic.src.envs.routing.thop import ThOPEnv
 from logic.src.envs.routing.tsp import TSPEnv
 from logic.src.envs.routing.vrpp import VRPPEnv
-from logic.src.envs.routing.wcvrp import WCVRPEnv
 from logic.src.envs.tsp_kopt import TSPkoptEnv
 
 # Environment registry
 ENV_REGISTRY = {
     "vrpp": VRPPEnv,
     "cvrpp": CVRPPEnv,
-    "wcvrp": WCVRPEnv,
-    "cwcvrp": CWCVRPEnv,
-    "scwcvrp": SCWCVRPEnv,
     "tsp": TSPEnv,
     "tsp_kopt": TSPkoptEnv,
     "thop": ThOPEnv,
@@ -87,7 +79,7 @@ def get_env(name: str, **kwargs) -> RL4COEnvBase:
     Factory function to get environment by name.
 
     Args:
-        name: Environment name (vrpp, cvrpp, wcvrp, irp, atsp, cvrp, op, etc.)
+        name: Environment name (vrpp, cvrpp, ctop, irp, atsp, cvrp, op, etc.)
         kwargs: Environment configuration parameters.
 
     Returns:
@@ -109,7 +101,6 @@ __all__ = [
     # Generators
     "Generator",
     "VRPPGenerator",
-    "WCVRPGenerator",
     "IRPGenerator",
     "ATSPGenerator",
     "CVRPGenerator",
@@ -123,9 +114,6 @@ __all__ = [
     # Environments
     "VRPPEnv",
     "CVRPPEnv",
-    "WCVRPEnv",
-    "CWCVRPEnv",
-    "SCWCVRPEnv",
     "TSPEnv",
     "TSPkoptEnv",
     "IRPEnv",

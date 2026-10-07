@@ -18,10 +18,7 @@ from typing import Any, Type
 from logic.src.envs.problems import (
     CTOP,
     CVRPP,
-    CWCVRP,
-    SCWCVRP,
     VRPP,
-    WCVRP,
 )
 
 
@@ -30,7 +27,7 @@ def load_problem(name: str) -> Type[Any]:
     Factory function to load a problem class by name.
 
     Args:
-        name: The problem name (e.g., 'vrpp', 'wcvrp').
+        name: The problem name (e.g., 'vrpp', 'cvrpp').
 
     Returns:
         The problem class.
@@ -42,9 +39,6 @@ def load_problem(name: str) -> Type[Any]:
         "vrpp": VRPP,
         "cvrpp": CVRPP,
         "ctop": CTOP,
-        "wcvrp": WCVRP,
-        "cwcvrp": CWCVRP,
-        "scwcvrp": SCWCVRP,
     }.get(name)
     assert problem is not None, "Currently unsupported problem: {}!".format(name)
     return problem

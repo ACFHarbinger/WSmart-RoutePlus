@@ -24,7 +24,7 @@ encoder:
   # Dimensions
   embed_dim:
     128 # Node embedding dimension. Powers of 2 recommended (64, 128, 256, 512).
-    # Larger values = more expressive but slower. 128 is good default for VRPP/WCVRP.
+    # Larger values = more expressive but slower. 128 is good default for VRPP/CVRPP.
 
   hidden_dim:
     512 # Feed-forward hidden layer size. Typically 4x embed_dim.
@@ -112,4 +112,4 @@ decoder:
 # =============================================================================
 temporal_horizon:
   0 # Temporal lookahead for multi-day problems (TAM).
-  # 0 = static (single-day VRPP/CVRPP), 10+ for WCVRP simulation.
+  # 0 = static (single-day VRPP/CVRPP), 10+ for multi-day simulation.

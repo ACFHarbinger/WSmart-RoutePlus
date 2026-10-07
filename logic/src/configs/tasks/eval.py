@@ -93,4 +93,4 @@ class EvalConfig:
     results_dir: str = "results"
     multiprocessing: bool = False
     env: Any = field(default_factory=EnvConfig)
-    problem: str = "cwcvrp"
+    problem: str = "vrpp"

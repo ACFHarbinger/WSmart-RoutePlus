@@ -101,14 +101,14 @@ class MyModelWrapper(nn.Module):
         return self.model(input, cost_weights, return_pi, pad, mask, expert_pi)
 
 
-def load_model_instance(model_path, device, size=100, problem_name="wcvrp"):
+def load_model_instance(model_path, device, size=100, problem_name="vrpp"):
     """Loads a model for visualization with default architecture parameters.
 
     Args:
         model_path: Absolute or relative path to the .pt checkpoint.
         device: Device to load the model onto.
         size: Expected problem graph size. Defaults to 100.
-        problem_name: Name of the problem environment. Defaults to 'wcvrp'.
+        problem_name: Name of the problem environment. Defaults to 'vrpp'.
 
     Returns:
         nn.Module: The instantiated and loaded AttentionModel.

@@ -12,7 +12,7 @@ Attributes:
 
 Example:
     >>> from logic.src.policies.vector.hgs_alns import VectorizedHGSALNS
-    >>> policy = VectorizedHGSALNS(env_name="wcvrp")
+    >>> policy = VectorizedHGSALNS(env_name="vrpp")
     >>> out = policy(td)
 """
 

@@ -110,11 +110,6 @@ class TestFunctions:
         problem = load_problem("vrpp")
         assert problem.NAME == "vrpp"
 
-    def test_load_problem_wcvrp(self):
-        """Test load_problem for WCVRP."""
-        problem = load_problem("wcvrp")
-        assert problem.NAME == "wcvrp"
-
     def test_load_problem_cvrpp(self):
         """Test load_problem for CVRPP."""
         problem = load_problem("cvrpp")

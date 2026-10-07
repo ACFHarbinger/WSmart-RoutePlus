@@ -6,18 +6,15 @@ Attributes:
     BaseProblem: BaseProblem class
     CVRP: CVRP class
     CVRPP: CVRPP class
-    CWCVRP: CWCVRP class
     IRP: IRP class
     OP: OP class
     PCTSP: PCTSP class
     PDP: PDP class
-    SCWCVRP: SCWCVRP class
     SPCTSP: SPCTSP class
     ThOP: ThOP class
     TSP: TSP class
     CTOP: CTOP class
     VRPP: VRPP class
-    WCVRP: WCVRP class
 
 Example:
     >>> from logic.src.envs import TSPEnv
@@ -36,17 +33,14 @@ from .base import BaseProblem
 from .ctop import CTOP
 from .cvrp import CVRP
 from .cvrpp import CVRPP
-from .cwcvrp import CWCVRP
 from .irp import IRP
 from .op import OP
 from .pctsp import PCTSP
 from .pdp import PDP
-from .scwcvrp import SCWCVRP
 from .spctsp import SPCTSP
 from .thop import ThOP
 from .tsp import TSP
 from .vrpp import VRPP
-from .wcvrp import WCVRP
 
 __all__ = [
     "BaseProblem",
@@ -56,9 +50,6 @@ __all__ = [
     "VEHICLE_CAPACITY",
     "VRPP",
     "CVRPP",
-    "WCVRP",
-    "CWCVRP",
-    "SCWCVRP",
     "IRP",
     "ATSP",
     "TSP",

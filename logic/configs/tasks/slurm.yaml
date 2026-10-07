@@ -23,7 +23,7 @@ command: "train"  # Command to execute. Options: train, eval, test_sim, gen_data
 model: ["amgc"]  # List of model names to run (for batch job submission).
                  # Example: ["am", "tam", "deep_decoder"]
 
-problem: "wcvrp"  # Problem type. CTOP: problem=ctop (and match the inner
+problem: "vrpp"  # Problem type. CTOP: problem=ctop (and match the inner
                   # task's env group, e.g. envs@train.env=ctop when command=train).
 
 gs: 20  # Graph size (number of nodes) - abbreviated for brevity

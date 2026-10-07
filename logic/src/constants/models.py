@@ -32,7 +32,6 @@ Attributes:
     NODE_DIM: Dimension of node features
     STATIC_DIM: Dimension of static coordinate features
     DEPOT_DIM: Dimension of depot coordinate features
-    WC_STEP_CONTEXT_OFFSET: Offset for waste collection step context
     VRPP_STEP_CONTEXT_OFFSET: Offset for vehicle routing with profit problem step context
     DEFAULT_TEMPORAL_HORIZON: Default lookahead horizon for time-dependent models
     TANH_CLIPPING: Tanh clipping value for numerical stability
@@ -90,9 +89,6 @@ DEPOT_DIM: int = 2  # 2D Euclidean coordinates (x, y) in [0, 1] range
 # Additional context features beyond basic node attributes.
 # Added to NODE_DIM to compute total decoder context size.
 
-# Waste Collection (WC) context: [current_capacity, remaining_capacity]
-# Used in: wcvrp.py state embeddings for capacity-aware decoding
-WC_STEP_CONTEXT_OFFSET: int = 2  # 2 extra dims for vehicle capacity tracking
 
 # VRPP context: [unvisited_waste_sum, mean_dist_to_unvisited_nodes]
 # Used in: vrpp.py context embeddings for profit-aware early-termination decoding

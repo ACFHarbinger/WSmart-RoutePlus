@@ -115,7 +115,7 @@ sim:
   cpu_cores: 0
   n_vehicles: 0
   no_cuda: false
-  problem: "vrpp" # vrpp | cvrpp | ctop | wcvrp | cwcvrp | scwcvrp
+  problem: "vrpp" # vrpp | cvrpp | ctop
   shift_hours: 7.0 # CTOP per depot-to-depot trip, including return and service
   avg_speed_kmh: 35.0 # Uniform fallback for every bin and depot leg
   service_time_h: 0.025

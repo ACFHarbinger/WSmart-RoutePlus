@@ -64,7 +64,7 @@ class MetaRLModule(pl.LightningModule):
 
         # Initial weights configuration
         initial_weights = {
-            "collection": 10.0,  # Default for WCVRPP
+            "collection": 10.0,  # Default collection weight
             "cost": 1.0,
         }
 

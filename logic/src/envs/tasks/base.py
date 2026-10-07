@@ -432,8 +432,6 @@ class BaseProblem:
             cap = kwargs.get("vehicle_capacity") or kwargs.get("profit_vars", {}).get("vehicle_capacity")
             if cap:
                 td["capacity"] = torch.full((bs,), cap, device=td.device)
-            elif env_name in ["wcvrp", "cwcvrp", "sdwcvrp", "scwcvrp"]:
-                td["capacity"] = torch.ones(bs, device=td.device)
 
 
 class _InstanceDataset(torch.utils.data.Dataset):

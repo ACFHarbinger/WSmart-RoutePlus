@@ -270,22 +270,7 @@ def _get_next_day_waste(
                 gen = gen.to("cpu")
             fresh_fill = gen._generate_fill_levels([batch_size]).to(device)
 
-            # Apply stochastic noise if it's SCWCVRP
-            has_noise = env.name == "scwcvrp"
-            noise_variance = getattr(gen, "noise_variance", 0.0)
-            noise_mean = getattr(gen, "noise_mean", 0.0)
-            if has_noise:
-                noise = torch.normal(
-                    mean=float(noise_mean),
-                    std=float(noise_variance) ** 0.5,
-                    size=fresh_fill.size(),
-                    device=device,
-                    generator=generator,
-                )
-                noisy_waste = (fresh_fill + noise).clamp(min=0.0, max=float(getattr(gen, "capacity", 1.0)))
-                next_day_waste = noisy_waste
-            else:
-                next_day_waste = fresh_fill
+            next_day_waste = fresh_fill
         except Exception as e:
             logger.warning(f"Failed to generate fresh waste on the fly: {e}")
 

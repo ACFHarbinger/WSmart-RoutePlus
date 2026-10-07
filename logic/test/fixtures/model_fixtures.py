@@ -240,7 +240,7 @@ def mock_ppo_deps(mocker):
     mock_baseline.eval.side_effect = lambda td, reward, env=None: torch.ones_like(reward)
 
     mock_problem = MagicMock()
-    mock_problem.NAME = "cwcvrp"
+    mock_problem.NAME = "cvrpp"
     mock_problem.get_costs.return_value = (torch.tensor([1.0, 1.0]), {}, None)
 
     dataset_list = [

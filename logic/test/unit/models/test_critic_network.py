@@ -22,7 +22,6 @@ def test_critic_network_init():
         problem=problem, component_factory=component_factory, embed_dim=16, hidden_dim=16, n_layers=1, n_sublayers=1
     )
     assert model.embed_dim == 16
-    assert not model.is_wc
     assert model.is_vrpp
 
 

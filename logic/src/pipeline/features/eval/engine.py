@@ -267,12 +267,12 @@ def _eval_dataset(
     results: List[Dict[str, Any]] = []
     for i, (seq, reward) in enumerate(zip(sequences_best, rewards_best, strict=False)):
         if seq is not None:
-            if model.problem.NAME in ("cvrpp", "cwcvrp", "sdwcvrp", "ctop"):
+            if model.problem.NAME in ("cvrpp", "ctop"):
                 # Multi-trip problems: keep the trailing depot-return marker
                 # (ctop is single-vehicle-multi-trip, same shape as cvrpp's
                 # per-trip capacity resets -- see logic/src/envs/tasks/ctop.py)
                 seq = np.trim_zeros(seq).tolist() + [0]
-            elif model.problem.NAME in ("vrpp", "wcvrp"):
+            elif model.problem.NAME == "vrpp":
                 seq = np.trim_zeros(seq).tolist()
             else:
                 seq = None

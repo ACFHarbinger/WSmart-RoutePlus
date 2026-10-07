@@ -136,28 +136,6 @@ class Generator(ABC):
                 }
             )
 
-        # For WCVRP:
-        if hasattr(self, "min_fill"):
-            kwargs.update(
-                {
-                    "min_fill": self.min_fill,
-                    "max_fill": self.max_fill,  # type: ignore[attr-defined]
-                    "fill_distribution": self.fill_distribution,  # type: ignore[attr-defined]
-                    "capacity": self.capacity,  # type: ignore[attr-defined]
-                    "cost_km": self.cost_km,  # type: ignore[attr-defined]
-                    "revenue_kg": self.revenue_kg,  # type: ignore[attr-defined]
-                    "depot_type": self.depot_type,  # type: ignore[attr-defined]
-                }
-            )
-
-        # For SCWCVRP:
-        if hasattr(self, "noise_mean"):
-            kwargs.update(
-                {
-                    "noise_mean": self.noise_mean,
-                    "noise_variance": self.noise_variance,  # type: ignore[attr-defined]
-                }
-            )
 
         # For IRP:
         if hasattr(self, "num_periods"):
@@ -228,7 +206,6 @@ class Generator(ABC):
                 "prize_type",
                 "penalty_factor",
                 "num_periods",
-                "min_fill",
                 "num_items_per_city",
             )
         ):

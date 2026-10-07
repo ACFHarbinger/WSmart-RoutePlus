@@ -15,7 +15,7 @@
 # =============================================================================
 
 defaults:
-  - /envs@meta_rl.env: cwcvrp
+  - /envs@meta_rl.env: vrpp
   - _self_
   - override /tracking: meta_train
 
@@ -35,7 +35,7 @@ meta_rl:
   # Environment
   # =============================================================================
   env:
-    name: "cwcvrp" # Problem type for meta-training. CTOP: set to "ctop" with envs@meta_rl.env=ctop.
+    name: "vrpp" # Problem type for meta-training. CTOP: set to "ctop" with envs@meta_rl.env=ctop.
     distance_method: "gmaps" # Distance calculation method
 
   # Meta-Learning Strategy

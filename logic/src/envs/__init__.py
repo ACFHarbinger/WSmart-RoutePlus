@@ -26,31 +26,24 @@ from logic.src.envs.generators import (
     PCTSPGenerator,
     PDPGenerator,
     VRPPGenerator,
-    WCVRPGenerator,
     get_generator,
 )
 from logic.src.envs.routing.atsp import ATSPEnv
 from logic.src.envs.routing.cvrp import CVRPEnv
 from logic.src.envs.routing.cvrpp import CVRPPEnv
-from logic.src.envs.routing.cwcvrp import CWCVRPEnv
 from logic.src.envs.routing.irp import IRPEnv
 from logic.src.envs.routing.op import OPEnv
 from logic.src.envs.routing.pctsp import PCTSPEnv
 from logic.src.envs.routing.pdp import PDPEnv
 from logic.src.envs.routing.spctsp import SPCTSPEnv
-from logic.src.envs.routing.swcvrp import SCWCVRPEnv
 from logic.src.envs.routing.tsp import TSPEnv
 from logic.src.envs.routing.vrpp import VRPPEnv
-from logic.src.envs.routing.wcvrp import WCVRPEnv
 from logic.src.envs.tsp_kopt import TSPkoptEnv
 
 # Environment registry
 ENV_REGISTRY = {
     "vrpp": VRPPEnv,
     "cvrpp": CVRPPEnv,
-    "wcvrp": WCVRPEnv,
-    "cwcvrp": CWCVRPEnv,
-    "scwcvrp": SCWCVRPEnv,
     "tsp": TSPEnv,
     "tsp_kopt": TSPkoptEnv,
     "irp": IRPEnv,
@@ -93,7 +86,6 @@ __all__ = [
     # Generators
     "Generator",
     "VRPPGenerator",
-    "WCVRPGenerator",
     "IRPGenerator",
     "ATSPGenerator",
     "CVRPGenerator",
@@ -105,9 +97,6 @@ __all__ = [
     # Environments
     "VRPPEnv",
     "CVRPPEnv",
-    "WCVRPEnv",
-    "CWCVRPEnv",
-    "SCWCVRPEnv",
     "TSPEnv",
     "TSPkoptEnv",
     "IRPEnv",

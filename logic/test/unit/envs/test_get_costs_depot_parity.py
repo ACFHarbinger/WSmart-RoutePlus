@@ -1,4 +1,4 @@
-"""Unit tests verifying VRPP, CVRPP, and WCVRP get_costs parity across width N and N+1 waste shapes.
+"""Unit tests verifying VRPP and CVRPP get_costs parity across width N and N+1 waste shapes.
 
 Addresses Issue #61 design item:
 - VRPP.get_costs unconditionally prepended a depot waste column, shifting customer
@@ -13,7 +13,6 @@ from logic.src.envs.routing.vrpp import VRPPEnv
 from logic.src.envs.tasks.base import BaseProblem
 from logic.src.envs.tasks.cvrpp import CVRPP
 from logic.src.envs.tasks.vrpp import VRPP
-from logic.src.envs.tasks.wcvrp import WCVRP
 
 
 @pytest.mark.unit
@@ -142,40 +141,6 @@ def test_cvrpp_get_costs_width_n_vs_n1_parity() -> None:
     assert torch.allclose(cost_N, cost_N1)
     assert torch.allclose(c_dict_N["waste"], c_dict_N1["waste"])
     assert torch.allclose(c_dict_N["length"], c_dict_N1["length"])
-
-
-@pytest.mark.unit
-@pytest.mark.fast
-def test_wcvrp_get_costs_width_n_vs_n1_parity() -> None:
-    """WCVRP.get_costs must produce identical cost dict on width N and N+1."""
-    depot = torch.zeros(1, 2)
-    locs_N = torch.tensor([[[1.0, 0.0], [2.0, 0.0]]])
-    waste_N = torch.tensor([[120.0, 40.0]])
-    dataset_N = {
-        "depot": depot,
-        "locs": locs_N,
-        "waste": waste_N,
-        "max_waste": torch.tensor([100.0]),
-    }
-
-    locs_N1 = torch.cat([depot.unsqueeze(1), locs_N], dim=1)
-    waste_N1 = torch.cat([torch.zeros(1, 1), waste_N], dim=1)
-    dataset_N1 = {
-        "depot": depot,
-        "locs": locs_N1,
-        "waste": waste_N1,
-        "max_waste": torch.tensor([100.0]),
-    }
-
-    pi = torch.tensor([[0, 1, 0]])
-
-    cost_N, c_dict_N, _ = WCVRP.get_costs(dataset_N, pi, cw_dict=None)
-    cost_N1, c_dict_N1, _ = WCVRP.get_costs(dataset_N1, pi, cw_dict=None)
-
-    assert torch.allclose(cost_N, cost_N1)
-    assert torch.allclose(c_dict_N["waste"], c_dict_N1["waste"])
-    assert torch.allclose(c_dict_N["length"], c_dict_N1["length"])
-    assert torch.allclose(c_dict_N["overflows"], c_dict_N1["overflows"])
 
 
 @pytest.mark.unit

@@ -18,7 +18,7 @@ class TestAttentionModelStructure:
     @pytest.fixture
     def mock_problem(self):
         problem = MagicMock()
-        problem.NAME = "wcvrp"
+        problem.NAME = "vrpp"
         return problem
 
     @pytest.fixture
@@ -29,21 +29,6 @@ class TestAttentionModelStructure:
         factory.create_decoder.return_value = MagicMock()
         return factory
 
-    def test_initialization_wcvrp(self, mock_problem, mock_factory):
-        """Test initialization for WCVRP context."""
-        mock_problem.NAME = "wcvrp"
-
-        model = AttentionModel(
-            embed_dim=128, hidden_dim=64, problem=mock_problem, component_factory=mock_factory, n_encode_layers=2
-        )
-
-        # Verify Context Embedder Strategy
-        assert model.is_wc
-        assert not model.is_vrpp
-        # Verify components creation
-        assert mock_factory.create_encoder.called
-        assert mock_factory.create_decoder.called
-
     def test_initialization_vrpp(self, mock_problem, mock_factory):
         """Test initialization for VRPP context."""
         mock_problem.NAME = "vrpp"
@@ -51,7 +36,6 @@ class TestAttentionModelStructure:
         model = AttentionModel(embed_dim=128, hidden_dim=64, problem=mock_problem, component_factory=mock_factory)
 
         assert model.is_vrpp
-        assert not model.is_wc
 
     def test_forward_structure(self, mock_problem, mock_factory):
         """Test basic forward flow (mocked)."""

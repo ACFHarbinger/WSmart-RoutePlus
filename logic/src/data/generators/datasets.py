@@ -52,8 +52,6 @@ def generate_datasets(cfg: Config) -> None:
     gamma_dists = ["gamma1", "gamma2", "gamma3", "gamma4"]
     distributions_per_problem = {
         "vrpp": ["empty", "const", "unif", "dist", "emp", *gamma_dists],
-        "wcvrp": ["empty", "const", "unif", "dist", "emp", *gamma_dists],
-        "swcvrp": ["empty", "const", "unif", "dist", "emp", *gamma_dists],
     }
 
     # Define the problem distribution(s)
@@ -194,15 +192,6 @@ def _apply_noise_config(builder: VRPInstanceBuilder, problem: str, data: DataCon
         if isinstance(sigma, list):
             sigma = sigma[0]
         builder.set_noise(data.mu[0] if isinstance(data.mu, list) else data.mu, (sigma**2 if sigma > 0 else 0.0))
-    elif problem == "swcvrp":
-        sigma = data.sigma
-        if isinstance(sigma, list):
-            sigma = sigma[0]
-        mu = data.mu[0] if isinstance(data.mu, list) and data.mu else 0.0
-        builder.set_noise(
-            mu if mu is not None else 0.0,
-            (sigma**2 if sigma > 0 else 1.0),
-        )
 
 
 def _generate_test_simulator_data(

@@ -24,7 +24,7 @@ start: 0 # Starting epoch/index (usually 0)
 # =============================================================================
 data:
   # Problem Configuration
-  problem: "vrpp" # Problem type. Options: vrpp, cvrpp, ctop, wcvrp, cwcvrp, sdwcvrp, scwcvrp
+  problem: "vrpp" # Problem type. Options: vrpp, cvrpp, ctop
   # CTOP: python main.py gen_data data.problem=ctop
   # Instances carry VRPP/CVRPP fields plus shift_hours/avg_speed_kmh/service_time_h.
   data_distributions: ["gamma3"] # Waste generation distributions to use.

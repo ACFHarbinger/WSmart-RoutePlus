@@ -22,7 +22,7 @@ def benchmark(problem="vrpp", sizes=None, num_instances=16):
     Benchmark routing policies on a given problem.
 
     Args:
-        problem: Problem name ('vrpp', 'wcvrp', etc.).
+        problem: Problem name ('vrpp', 'cvrpp', etc.).
         sizes: List of graph sizes to test.
         num_instances: Number of instances per size for averaging.
 

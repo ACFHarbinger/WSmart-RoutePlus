@@ -218,7 +218,7 @@ class VRPInstanceBuilder:
         return self
 
     def set_problem_name(self, problem_name: str):
-        """Sets the name of the problem (e.g., 'vrpp', 'wcvrp').
+        """Sets the name of the problem (e.g., 'vrpp', 'cvrpp').
 
         Args:
             problem_name: Description of problem_name.
@@ -252,7 +252,7 @@ class VRPInstanceBuilder:
                 - 'depot': np.ndarray of shape (dataset_size, coord_dim)
                 - 'locs': np.ndarray of shape (dataset_size, problem_size, coord_dim)
                 - 'waste': np.ndarray of shape (dataset_size, num_days, problem_size)
-                - 'noisy_waste': np.ndarray of same shape as waste (equals waste when not SWCVRP)
+                - 'noisy_waste': np.ndarray of same shape as waste (equals waste)
                 - 'max_waste': np.ndarray of shape (dataset_size,)
         """
         depot, loc, grid, idx, node_ids = self._prepare_coordinates()
@@ -276,11 +276,7 @@ class VRPInstanceBuilder:
         # simulation datasets store in [0, 100] percentage scale to match Bins.
         fill_arr = fill_arr * MAX_CAPACITY_PERCENT
 
-        if self._problem_name == "swcvrp":
-            noise = self.np_rng.normal(self._noise_mean, np.sqrt(self._noise_variance), fill_arr.shape)
-            noisy_fill_arr = np.clip(fill_arr + noise, 0, MAX_CAPACITY_PERCENT)
-        else:
-            noisy_fill_arr = fill_arr.copy()
+        noisy_fill_arr = fill_arr.copy()
 
         # Tile node_ids to match dataset_size (bs, n_nodes) - exclude depot (index 0)
         node_ids_val = node_ids.values if hasattr(node_ids, "values") else node_ids
@@ -323,38 +319,15 @@ class VRPInstanceBuilder:
         depot_tensor = torch.tensor(depot, dtype=torch.float32, device=device)
         locs_tensor = torch.tensor(loc, dtype=torch.float32, device=device)
 
-        # Handle noise for stochastic variants
-        if self._problem_name == "swcvrp":
-            real_waste = torch.tensor(fill_vals, dtype=torch.float32, device=device)
-            noise = (
-                torch.randn(real_waste.shape, dtype=torch.float32, device=device, generator=self.generator)
-                * np.sqrt(self._noise_variance)
-                + self._noise_mean
-            )
-            noisy_waste = torch.clamp(real_waste + noise, 0, MAX_WASTE)
+        waste = torch.tensor(fill_vals, dtype=torch.float32, device=device)
+        if self._num_days == 1:
+            waste = waste.squeeze(1)
 
-            # For TensorDict, we usually want (bs, num_loc) for waste.
-            # If num_days == 1, squeeze it.
-            if self._num_days == 1:
-                real_waste = real_waste.squeeze(1)
-                noisy_waste = noisy_waste.squeeze(1)
-
-            td_data = {
-                "depot": depot_tensor,
-                "locs": locs_tensor,
-                "real_waste": real_waste,
-                "waste": noisy_waste,
-            }
-        else:
-            waste = torch.tensor(fill_vals, dtype=torch.float32, device=device)
-            if self._num_days == 1:
-                waste = waste.squeeze(1)
-
-            td_data = {
-                "depot": depot_tensor,
-                "locs": locs_tensor,
-                "waste": torch.clamp(waste, 0, MAX_WASTE),
-            }
+        td_data = {
+            "depot": depot_tensor,
+            "locs": locs_tensor,
+            "waste": torch.clamp(waste, 0, MAX_WASTE),
+        }
 
         # Common attributes - exclude depot (index 0) from node_ids to match locs
         node_ids_val = node_ids.values if hasattr(node_ids, "values") else node_ids

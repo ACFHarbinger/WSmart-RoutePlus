@@ -56,7 +56,7 @@ class TensorDictStateWrapper:
         # Expose common properties directly
         self.dist_matrix = td.get("dist", None)
 
-        # Handle 'waste_with_depot' for WCVRP partial updates (now standardized to 'waste')
+        # Handle 'waste_with_depot' for partial updates (now standardized to 'waste')
         self.waste_with_depot = td.get("waste")
 
     def get_mask(self) -> Optional[torch.Tensor]:
@@ -109,7 +109,7 @@ class TensorDictStateWrapper:
 
     def get_current_efficiency(self) -> torch.Tensor:
         """
-        For WCVRP: get current efficiency.
+        Get current efficiency (legacy placeholder).
 
         Returns:
             The current efficiency.
@@ -120,7 +120,7 @@ class TensorDictStateWrapper:
 
     def get_remaining_overflows(self) -> torch.Tensor:
         """
-        For WCVRP: get remaining overflows.
+        Get remaining overflows (legacy placeholder).
 
         Returns:
             The remaining overflows.

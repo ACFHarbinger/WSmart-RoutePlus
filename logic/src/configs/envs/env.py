@@ -26,7 +26,7 @@ class EnvConfig:
     ``curriculum_graphs`` acts as the primary training graph.
 
     Attributes:
-        name: Name of the environment (e.g., 'vrpp', 'cvrpp', 'ctop', 'wcvrp').
+        name: Name of the environment (e.g., 'vrpp', 'cvrpp', 'ctop').
         min_loc: Minimum coordinate value.
         max_loc: Maximum coordinate value.
         capacity: Vehicle capacity (optional). For ``ctop`` this is the same

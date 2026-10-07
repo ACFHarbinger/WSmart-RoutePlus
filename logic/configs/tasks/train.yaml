@@ -10,7 +10,7 @@
 #
 # Key Features:
 #   - Adaptive Imitation Learning (IL → RL transition)
-#   - Multi-day temporal training for WCVRP
+#   - Multi-day temporal training for VRPP
 #   - mandatory bin selection strategies
 #   - Lightning-based distributed training
 # =============================================================================
@@ -33,7 +33,7 @@ start: 0 # Starting epoch (for resuming training)
 # Training Settings
 # =============================================================================
 train:
-  train_time: true # Enable multi-day temporal training (for WCVRP)
+  train_time: true # Enable multi-day temporal training (multi-day VRPP)
 
   data_distribution: "emp" # Waste generation distribution. Options: gamma1, gamma2, uniform, beta
   seed: 42 # Random seed for dataset generation
@@ -56,7 +56,7 @@ train:
   policy:
     model:
       name: "am" # Model architecture
-      temporal_horizon: 0 # Temporal lookahead (0 for static, 7+ for WCVRP)
+      temporal_horizon: 0 # Temporal lookahead (0 for static, 7+ for multi-day VRPP)
 
       # Encoder Architecture
       encoder:

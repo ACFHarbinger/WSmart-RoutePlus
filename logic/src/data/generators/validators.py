@@ -75,13 +75,6 @@ def validate_data_config(cfg: Config) -> None:
         is_single_problem = isinstance(data.problem, str) and data.problem != "all"
         assert is_single_problem and dataset_count <= 1, "Can only specify filename when generating a single dataset"
 
-    # --- Problem-specific validation ---
-    if data.problem in ["all", "swcvrp"]:
-        assert data.mu is not None, "Must specify mu when generating swcvrp datasets"
-        assert data.sigma is not None, "Must specify sigma when generating swcvrp datasets"
-        if isinstance(data.mu, list) and isinstance(data.sigma, list):
-            assert len(data.mu) == len(data.sigma), "mu and sigma must have same length"
-
     # --- Sanitize graph configs ---
     for graph in graphs:
         graph.area = _sanitize_area(graph.area)

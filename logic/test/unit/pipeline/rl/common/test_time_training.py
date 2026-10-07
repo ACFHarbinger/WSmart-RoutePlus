@@ -74,7 +74,7 @@ class TestTimeTraining:
         # B1 Node 3: Was 0.5 -> Reset 0 -> Add Day 1 Waste (0.3) -> 0.3
         assert torch.isclose(new_waste[1, 3], torch.tensor(0.3))
 
-    def test_apply_time_step_on_the_fly_stochastic(self):
+    def test_apply_time_step_on_the_fly(self):
         # Mock dataset and TensorDict for on-the-fly generation (2D waste)
         batch_size = 2
         num_nodes = 3  # + 1 depot = 4 cols
@@ -113,7 +113,7 @@ class TestTimeTraining:
         env = MagicMock()
         gen = DummyGenerator()
         env.generator = gen
-        env.name = "scwcvrp"
+        env.name = "vrpp"
 
         # Actions
         # B0 visited 1, 2
@@ -127,12 +127,10 @@ class TestTimeTraining:
         # Ensure generator was called
         assert env.generator.called
 
-        # B0 Node 1: Reset to 0 -> Add noisy Day 1 Waste (~0.3)
-        # Because of variance 0.01, std is 0.1.
-        # Value should be close to 0.3 (not exact)
-        assert new_waste[0, 1] > 0.0 and new_waste[0, 1] < 0.6
-        # Node 3 wasn't visited, carryover was 0.5. New total ~0.8
-        assert new_waste[0, 3] > 0.5 and new_waste[0, 3] < 1.0
+        # B0 Node 1: Reset to 0 -> Add Day 1 Waste (0.3); no noise is applied
+        assert torch.isclose(new_waste[0, 1], torch.tensor(0.3))
+        # Node 3 wasn't visited, carryover was 0.5. New total 0.8
+        assert torch.isclose(new_waste[0, 3], torch.tensor(0.8))
 
     def test_prepare_epoch_time_metadata(self):
         # Test that current_day is injected when train_time is True

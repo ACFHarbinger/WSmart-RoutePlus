@@ -4,7 +4,7 @@ Integration tests for training workflows.
 
 import pytest
 import torch
-from logic.src.envs import VRPPEnv, WCVRPEnv
+from logic.src.envs import VRPPEnv
 from logic.src.pipeline.rl.core import A2C, PPO, REINFORCE
 from logic.src.policies.vector import AttentionModelPolicy
 from pytorch_lightning import Trainer
@@ -65,9 +65,9 @@ def test_reinforce_training_loop():
 @pytest.mark.integration
 def test_ppo_training_loop():
     """Test PPO training loop for a few steps."""
-    env = WCVRPEnv(num_loc=10, batch_size=[1], check_env_specs=False)
+    env = VRPPEnv(num_loc=10, batch_size=[1], check_env_specs=False)
     policy = AttentionModelPolicy(
-        env_name="wcvrp",
+        env_name="vrpp",
         embed_dim=128,
         hidden_dim=128,
         n_encode_layers=2,
@@ -99,9 +99,9 @@ def test_ppo_training_loop():
 @pytest.mark.integration
 def test_a2c_training_loop():
     """Test A2C training loop for a few steps."""
-    env = WCVRPEnv(num_loc=10, batch_size=[2], check_env_specs=False)
+    env = VRPPEnv(num_loc=10, batch_size=[2], check_env_specs=False)
     policy = AttentionModelPolicy(
-        env_name="wcvrp",
+        env_name="vrpp",
         embed_dim=128,
         hidden_dim=128,
     )

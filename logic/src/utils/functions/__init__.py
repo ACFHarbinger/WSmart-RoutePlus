@@ -5,7 +5,6 @@ Attributes:
     safe_exp: Compute exponent with overflow/underflow protection.
     run_all_in_pool: Runs a function over a dataset in parallel.
     get_path_until_string: Truncates a path up to a specific directory component.
-    is_wc_problem: Check if the problem is a Waste Collection (WC) variant.
     is_vrpp_problem: Check if the problem is a Vehicle Routing Problem with Profits (VRPP) variant.
     is_tsp_problem: Check if the problem is a Traveling Salesperson Problem (TSP) variant.
     ensure_tensordict: Converts various input types to TensorDict.
@@ -15,7 +14,7 @@ Attributes:
     do_batch_rep: Replicates a variable n times along the batch dimension.
 
 Example:
-    >>> from logic.src.utils.functions import safe_exp, run_all_in_pool, get_path_until_string, is_wc_problem, is_vrpp_problem, is_tsp_problem, ensure_tensordict, sample_many, move_to, compute_in_batches, do_batch_rep
+    >>> from logic.src.utils.functions import safe_exp, run_all_in_pool, get_path_until_string, is_vrpp_problem, is_tsp_problem, ensure_tensordict, sample_many, move_to, compute_in_batches, do_batch_rep
     >>> # Mathematical utility
     >>> safe_exp(1000)
     inf
@@ -29,8 +28,6 @@ Example:
     >>> get_path_until_string(path, "src")
     '/home/user/project/src'
     >>> # Problem type checking
-    >>> is_wc_problem("wcvrp")
-    True
     >>> is_vrpp_problem("cvrpp")
     True
     >>> is_tsp_problem("tsp")
@@ -52,7 +49,7 @@ Example:
 from .math import safe_exp
 from .parallel import run_all_in_pool
 from .path import get_path_until_string
-from .problem import is_tsp_problem, is_vrpp_problem, is_wc_problem
+from .problem import is_tsp_problem, is_vrpp_problem
 from .sampling import sample_many
 from .tensors import compute_in_batches, do_batch_rep, move_to
 
@@ -64,7 +61,6 @@ __all__ = [
     "compute_in_batches",
     "do_batch_rep",
     "sample_many",
-    "is_wc_problem",
     "is_vrpp_problem",
     "is_tsp_problem",
 ]

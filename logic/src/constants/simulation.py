@@ -127,7 +127,7 @@ MAX_CAPACITY_PERCENT = 100.0  # percent (0-100 range)
 # Prevents unbounded route lengths in waste-collecting and selective problems.
 
 # Default vehicle capacity (kilograms)
-# Used in: Capacitated VRP variants (CVRP, CWCVRP, SCWCVRP)
+# Used in: Capacitated VRP variants (CVRP, CVRPP, CTOP)
 # Route terminates when cumulative collected waste ≥ VEHICLE_CAPACITY
 # Typical real-world values: 80-120 kg for small trucks, 200-300 kg for large trucks
 VEHICLE_CAPACITY: float = 200.0  # kg (default for synthetic instances)
@@ -139,8 +139,5 @@ VEHICLE_CAPACITY: float = 200.0  # kg (default for synthetic instances)
 PROBLEMS: List[str] = [
     "vrpp",  # Vehicle Routing Problem with Profits (maximize profit - cost)
     "cvrpp",  # Capacitated VRPP (add vehicle capacity constraint)
-    "wcvrp",  # Waste Collection VRP (dynamic bin fill levels, no capacity)
-    "cwcvrp",  # Capacitated Waste Collection VRP (bins + capacity, standard WSmart+ problem)
-    "scwcvrp",  # Selective Capacitated WCVRP (choose subset of bins, profit-driven)
     "ctop",  # Capacitated Team Orienteering Problem (capacity + shift time budget)
 ]

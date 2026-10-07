@@ -3,7 +3,7 @@
 This module provides the implementation of the Attention Model (Kool et al. 2019),
 a graph-based neural network that uses multi-head attention to constructively
 solve Vehicle Routing Problems. It supports various problem domains
-including TSP, VRPP, and WCVRP.
+including TSP, VRPP, CVRPP and CTOP.
 
 Attributes:
     AttentionModel: The primary constructive neural routing policy.
@@ -36,7 +36,7 @@ from logic.src.models.core.attention_model.decoding import DecodingMixin
 from logic.src.models.core.attention_model.policy import AttentionModelPolicy
 from logic.src.models.subnets.embeddings import get_init_embedding
 from logic.src.models.subnets.factories import NeuralComponentFactory
-from logic.src.utils.functions.problem import is_tsp_problem, is_vrpp_problem, is_wc_problem
+from logic.src.utils.functions.problem import is_tsp_problem, is_vrpp_problem
 
 
 class _ContextEmbedderAdapter:
@@ -148,8 +148,6 @@ class AttentionModel(AttentionModelPolicy, DecodingMixin):
             env_name = problem.NAME.lower()
         elif hasattr(problem, "name") and isinstance(problem.name, str):
             env_name = problem.name.lower()
-        elif is_wc_problem(problem):
-            env_name = "wcvrp"
         elif is_vrpp_problem(problem):
             env_name = "vrpp"
         elif is_tsp_problem(problem):
@@ -286,11 +284,6 @@ class AttentionModel(AttentionModelPolicy, DecodingMixin):
     def is_vrpp(self) -> bool:
         """Determines if the model is configured for VRP with Profits."""
         return is_vrpp_problem(self.problem)
-
-    @property
-    def is_wc(self) -> bool:
-        """Determines if the model is configured for Waste Collection."""
-        return is_wc_problem(self.problem)
 
     @property
     def context_embedder(self) -> Any:

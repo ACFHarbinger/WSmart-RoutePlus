@@ -22,7 +22,7 @@ from logic.src.pipeline.rl.meta.weight_optimizer import (
 def hpo_opts():
     """Provide standard HPO options."""
     return {
-        "problem": "wcvrp",
+        "problem": "vrpp",
         "graph_size": 20,
         "save_dir": "test_save_dir",
         "load_path": "test_load_path",

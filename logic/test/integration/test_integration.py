@@ -9,7 +9,7 @@ import pytest
 import torch
 from logic.src.configs import Config
 from logic.src.configs.envs.graph import GraphConfig
-from logic.src.envs.problems import VRPP, WCVRP
+from logic.src.envs.problems import VRPP
 from logic.src.pipeline.features.train import run_training
 from logic.src.pipeline.simulations.simulator import sequential_simulations
 from logic.src.policies.route_construction.base.registry import RouteConstructorRegistry
@@ -24,7 +24,7 @@ pytestmark = [pytest.mark.integration, pytest.mark.slow]
 class TestIntegrationTraining:
     """Integration tests for Training workflows."""
 
-    @pytest.mark.parametrize("problem_name", ["vrpp", "wcvrp"])
+    @pytest.mark.parametrize("problem_name", ["vrpp", "cvrpp"])
     def test_run_training_integration(self, problem_name, tmp_path):
         """Test standard training orchestration with real entry point (mocked trainer)."""
         cfg = Config()
@@ -66,7 +66,7 @@ class TestIntegrationSimulation:
             "device": opts["device"],
             "sim": {**opts, "full_policies": opts["policies"], "config_path": None, "noise_mean": 0.0, "noise_variance": 1.0, "policy_configs": {}, "run_name": None, "output_dir": "output", "data_distribution": "gamma1", "graph": {**opts, "area": "Rio Maior", "num_loc": opts["size"], "size": opts["size"], "n_days": opts.get("days", 1), "n_samples": opts.get("n_samples", 1)}},
             "tracking": {"no_progress_bar": True, "log_file": None, "log_dir": "logs", "log_level": "INFO"},
-            "env": {"name": "wcvrp", "graph_size": opts["size"]},
+            "env": {"name": "vrpp", "graph_size": opts["size"]},
             "model": {},
             "train": {"train_time": False}
         })
@@ -138,22 +138,3 @@ class TestIntegrationProblems:
         next_state = state.update(action)
         assert next_state.td["i"] == 1
         assert next_state.td["visited"][:, 1].all()
-
-    def test_wcvrp_physics_flow(self):
-        """Verify WCVRP physics behaves correctly."""
-        depot = torch.rand(1, 2)
-        customers = torch.rand(1, 4, 2)
-        loc = torch.cat([depot.unsqueeze(1), customers], dim=1) # (1, 5, 2)
-
-        batch = {
-            "loc": loc,
-            "depot": depot,
-            "waste": torch.rand(1, 5),
-            "max_waste": torch.ones(1, 5),
-        }
-        edges = torch.ones(1, 5, 5)
-        state = WCVRP.make_state(batch, edges=edges)
-
-        action = torch.tensor([1])
-        next_state = state.update(action)
-        assert next_state.td["i"] == 1

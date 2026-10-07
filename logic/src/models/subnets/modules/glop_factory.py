@@ -20,7 +20,6 @@ ADAPTER_REGISTRY = {
     "tsp": TSPAdapter,
     "cvrp": VRPAdapter,
     "vrpp": TSPAdapter,  # VRP variants can use TSP for subproblems
-    "wcvrp": VRPAdapter,
 }
 
 

@@ -36,8 +36,8 @@ class DataConfig:
         name: Name to identify dataset. For training data, this will result in .td files.
         filename: Filename of the dataset to create (ignores datadir).
         data_dir: Create datasets in data.
-        problem: Problem type selection. Should be 'vrpp', 'cvrpp', 'ctop',
-            'wcvrp', 'cwcvrp', 'sdwcvrp', 'scwcvrp', or 'all'.
+        problem: Problem type selection. Should be 'vrpp', 'cvrpp', 'ctop'
+            or 'all'.
         mu: Mean of Gaussian noise (implies Gaussian noise generation if set).
         sigma: Variance of Gaussian noise.
         data_distributions: Distributions to generate for problems.

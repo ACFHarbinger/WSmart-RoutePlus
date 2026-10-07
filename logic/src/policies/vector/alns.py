@@ -8,7 +8,7 @@ Attributes:
     VectorizedALNS: ALNS solver wrapper for the RL4CO pipeline.
 
 Example:
-    >>> policy = VectorizedALNS(env_name="wcvrp")
+    >>> policy = VectorizedALNS(env_name="vrpp")
     >>> out = policy(td)
 """
 

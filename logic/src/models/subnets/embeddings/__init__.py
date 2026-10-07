@@ -22,14 +22,12 @@ from torch import nn
 
 from logic.src.models.subnets.embeddings.cvrpp import CVRPPInitEmbedding
 from logic.src.models.subnets.embeddings.vrpp import VRPPInitEmbedding
-from logic.src.models.subnets.embeddings.wcvrp import WCVRPInitEmbedding
 
 from .context import (
     CONTEXT_EMBEDDING_REGISTRY,
     ContextEmbedder,
     GenericContextEmbedder,
     VRPPContextEmbedder,
-    WCVRPContextEmbedder,
 )
 from .dynamic import DynamicEmbedding
 from .edges import (
@@ -38,7 +36,6 @@ from .edges import (
     EdgeEmbedding,
     NoEdgeEmbedding,
     TSPEdgeEmbedding,
-    WCVRPEdgeEmbedding,
     get_edge_embedding,
 )
 from .positional import (
@@ -51,9 +48,7 @@ from .state import (
     STATE_EMBEDDING_REGISTRY,
     CVRPPState,
     EnvState,
-    SWCVRPState,
     VRPPState,
-    WCVRPState,
 )
 from .static import StaticEmbedding
 
@@ -62,11 +57,6 @@ INIT_EMBEDDING_REGISTRY: Dict[str, Any] = {
     "vrpp": VRPPInitEmbedding,
     "cvrpp": CVRPPInitEmbedding,
     "ctop": CVRPPInitEmbedding,
-    "wcvrp": WCVRPInitEmbedding,
-    "cwcvrp": WCVRPInitEmbedding,
-    "sdwcvrp": WCVRPInitEmbedding,
-    "swcvrp": WCVRPInitEmbedding,
-    "scwcvrp": WCVRPInitEmbedding,
 }
 
 DYNAMIC_EMBEDDING_REGISTRY: Dict[str, Any] = {
@@ -99,21 +89,16 @@ def get_init_embedding(env_name: str, embed_dim: int = 128, **kwargs: Any) -> nn
 __all__: list[str] = [
     "VRPPInitEmbedding",
     "CVRPPInitEmbedding",
-    "WCVRPInitEmbedding",
     "EnvState",
     "VRPPState",
     "CVRPPState",
-    "WCVRPState",
-    "SWCVRPState",
     "ContextEmbedder",
     "VRPPContextEmbedder",
-    "WCVRPContextEmbedder",
     "DynamicEmbedding",
     "StaticEmbedding",
     "EdgeEmbedding",
     "TSPEdgeEmbedding",
     "CVRPPEdgeEmbedding",
-    "WCVRPEdgeEmbedding",
     "NoEdgeEmbedding",
     "INIT_EMBEDDING_REGISTRY",
     "STATE_EMBEDDING_REGISTRY",

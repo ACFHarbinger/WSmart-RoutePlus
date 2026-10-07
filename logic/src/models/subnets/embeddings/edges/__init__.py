@@ -22,17 +22,11 @@ from .base import EdgeEmbedding
 from .cvrpp import CVRPPEdgeEmbedding
 from .none import NoEdgeEmbedding
 from .tsp import TSPEdgeEmbedding
-from .wcvrp import WCVRPEdgeEmbedding
 
 EDGE_EMBEDDING_REGISTRY: Dict[str, Any] = {
     "vrpp": TSPEdgeEmbedding,
     "cvrpp": CVRPPEdgeEmbedding,
     "ctop": CVRPPEdgeEmbedding,
-    "wcvrp": WCVRPEdgeEmbedding,
-    "cwcvrp": WCVRPEdgeEmbedding,
-    "sdwcvrp": WCVRPEdgeEmbedding,
-    "swcvrp": WCVRPEdgeEmbedding,
-    "scwcvrp": WCVRPEdgeEmbedding,
     "none": NoEdgeEmbedding,
 }
 
@@ -67,7 +61,6 @@ __all__: list[str] = [
     "CVRPPEdgeEmbedding",
     "NoEdgeEmbedding",
     "TSPEdgeEmbedding",
-    "WCVRPEdgeEmbedding",
     "EDGE_EMBEDDING_REGISTRY",
     "get_edge_embedding",
 ]

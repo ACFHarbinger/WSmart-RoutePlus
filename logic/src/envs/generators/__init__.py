@@ -23,20 +23,15 @@ from .irp import IRPGenerator
 from .op import OPGenerator
 from .pctsp import PCTSPGenerator
 from .pdp import PDPGenerator
-from .scwcvrp import SCWCVRPGenerator
 from .thop import ThOPGenerator
 from .tsp import TSPGenerator
 from .vrpp import VRPPGenerator
-from .wcvrp import WCVRPGenerator
 
 # Registry of available generators
 GENERATOR_REGISTRY: dict[str, type[Generator]] = {
     "vrpp": VRPPGenerator,
     "cvrpp": VRPPGenerator,  # Same generator, different env handles capacity
     "ctop": CTOPGenerator,
-    "wcvrp": WCVRPGenerator,
-    "cwcvrp": WCVRPGenerator,
-    "scwcvrp": SCWCVRPGenerator,
     "tsp": TSPGenerator,
     "irp": IRPGenerator,
     "atsp": ATSPGenerator,
@@ -56,7 +51,7 @@ def get_generator(name: str, **kwargs: Any) -> Generator:
 
 
     Args:
-        name: Generator name (e.g., "vrpp", "wcvrp", "tsp", "irp", "atsp", "cvrp").
+        name: Generator name (e.g., "vrpp", "cvrpp", "tsp", "irp", "atsp", "cvrp").
         kwargs: Generator configuration parameters.
 
     Returns:
@@ -74,8 +69,6 @@ def get_generator(name: str, **kwargs: Any) -> Generator:
 __all__ = [
     "Generator",
     "VRPPGenerator",
-    "WCVRPGenerator",
-    "SCWCVRPGenerator",
     "TSPGenerator",
     "IRPGenerator",
     "ATSPGenerator",

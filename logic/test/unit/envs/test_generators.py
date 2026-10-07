@@ -3,10 +3,8 @@
 import pytest
 import torch
 from logic.src.envs.generators import (
-    SCWCVRPGenerator,
     TSPGenerator,
     VRPPGenerator,
-    WCVRPGenerator,
     get_generator,
 )
 
@@ -96,36 +94,6 @@ class TestVRPPGenerator:
         gen = VRPPGenerator(waste_distribution="dist")
         td = gen(5)
         assert td["waste"].shape == (5, 50)
-
-
-class TestWCVRPGenerator:
-    """Tests for WCVRPGenerator."""
-
-    def test_fill_distributions(self):
-        """Test uniform and beta fill distributions."""
-        # Beta
-        gen_b = WCVRPGenerator(fill_distribution="beta", fill_alpha=0.5, fill_beta=0.5)
-        td_b = gen_b(10)
-        assert td_b["waste"].shape == (10, 50)
-
-
-class TestSCWCVRPGenerator:
-    """Tests for SCWCVRPGenerator."""
-
-    def test_noise_injection(self):
-        """Test that noise is actually added to real_waste."""
-        gen = SCWCVRPGenerator(noise_variance=0.1)
-        td = gen(10)
-        assert "real_waste" in td.keys()
-        assert "waste" in td.keys()
-        # They should be different because of noise
-        assert not torch.allclose(td["real_waste"], td["waste"])
-
-    def test_no_noise(self):
-        """Test that zero variance means no noise."""
-        gen = SCWCVRPGenerator(noise_variance=0.0)
-        td = gen(5)
-        assert torch.allclose(td["real_waste"], td["waste"])
 
 
 class TestTSPGenerator:

@@ -4,7 +4,6 @@ import pytest
 import torch
 from logic.src.models.subnets.embeddings.context.vrpp import VRPPContextEmbedder as CVRPPContext
 from logic.src.models.subnets.embeddings.context.vrpp import VRPPContextEmbedder as VRPPContext
-from logic.src.models.subnets.embeddings.context.wcvrp import WCVRPContextEmbedder as SWCVRPContext
 from logic.src.models.subnets.embeddings.dynamic import DynamicEmbedding
 from logic.src.models.subnets.embeddings.static import StaticEmbedding
 from tensordict import TensorDict
@@ -49,23 +48,6 @@ class TestContextEmbedding:
 
         out = model(embeddings, td)
         assert out.shape == (batch, 1, embed_dim)
-
-    def test_swcvrp_context(self):
-        """Verify SWCVRPContext works."""
-        batch = 2
-        nodes = 5
-        embed_dim = 16
-        model = SWCVRPContext(embed_dim)
-
-        embeddings = torch.randn(batch, nodes, embed_dim)
-        td = TensorDict({
-            "current_node": torch.zeros(batch, dtype=torch.long),
-            "remaining_capacity": torch.rand(batch, 1)
-        }, batch_size=batch)
-
-        out = model(embeddings, td)
-        assert out.shape == (batch, 1, embed_dim)
-
 
 class TestDynamicEmbedding:
     """Tests for DynamicEmbeddings."""

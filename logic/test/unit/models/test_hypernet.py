@@ -22,7 +22,7 @@ def vrpp_problem():
 
 @pytest.fixture
 def wc_problem():
-    return MockProblem("wcvrp")
+    return MockProblem("cvrpp")
 
 class TestHypernetwork:
     """Tests for the Hypernetwork module."""
@@ -35,7 +35,7 @@ class TestHypernetwork:
         assert model.layers[-1].out_features == 6
 
     def test_initialization_wc(self, wc_problem):
-        """Test initialization with WCVRP problem dims."""
+        """Test initialization with CVRPP problem dims."""
         model = Hypernetwork(input_dim=6, output_dim=3)
         assert model.output_dim == 3
 
