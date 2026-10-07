@@ -38,8 +38,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import subprocess
 import sys
+import tempfile
 import zipfile
 from datetime import datetime
 from pathlib import Path
@@ -50,6 +52,7 @@ from typing import Any, Dict, List, Optional, Set
 # ---------------------------------------------------------------------------
 PROJECT_ROOT = Path(__file__).resolve().parent.parent  # WSmart-Route/
 PRUNE_SCRIPT = PROJECT_ROOT / "logic" / "package" / "prune_codebase.py"
+PROFILE_SCRIPT = PROJECT_ROOT / "logic" / "package" / "apply_export_profile.py"
 SPEC_FILE = PROJECT_ROOT / "ci" / "simulator.spec"
 CONFIG_FILE = PROJECT_ROOT / "ci" / "export_config.json"
 LOGIC_SRC = PROJECT_ROOT / "logic" / "src"
@@ -296,6 +299,35 @@ def _step_prune(
     _run(cmd)
 
 
+def _stage_profile_tool() -> Path:
+    """Copy the profile tool, config and patches to a temporary folder that survives pruning."""
+    staged = Path(tempfile.mkdtemp(prefix="wsr-profile-"))
+    shutil.copy2(PROFILE_SCRIPT, staged / PROFILE_SCRIPT.name)
+    shutil.copy2(CONFIG_FILE, staged / CONFIG_FILE.name)
+    patches = CONFIG_FILE.parent / "export_profiles"
+    if patches.is_dir():
+        shutil.copytree(patches, staged / "export_profiles")
+    return staged
+
+
+def _step_profile(
+    staged: Path, profile: Optional[str], entrypoints: Optional[str], engines: Optional[str], dry_run: bool
+) -> None:
+    """Apply the export profile, entry-point and engine choices to the pruned tree."""
+    cmd = [sys.executable, str(staged / PROFILE_SCRIPT.name), "--root", str(PROJECT_ROOT),
+           "--config", str(staged / CONFIG_FILE.name)]
+    if profile:
+        cmd += ["--profile", profile]
+    if entrypoints:
+        cmd += ["--entrypoints", entrypoints]
+    if engines:
+        cmd += ["--engines", engines]
+    if dry_run:
+        cmd.append("--dry-run")
+    _run(cmd)
+    shutil.rmtree(staged, ignore_errors=True)
+
+
 def _step_tree(output_file: Path) -> None:
     try:
         result = subprocess.run(
@@ -452,6 +484,24 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Comma/space-separated network strategy stems to KEEP (e.g. 'file').",
     )
     p.add_argument(
+        "--profile",
+        metavar="NAME",
+        default=None,
+        help="Export profile from ci/export_config.json (export_profiles) applied after pruning.",
+    )
+    p.add_argument(
+        "--entrypoints",
+        choices=["both", "main", "dunder", "none"],
+        default=None,
+        help="Keep main.py, __main__.py, both (default) or neither in the package.",
+    )
+    p.add_argument(
+        "--engines",
+        metavar="SPEC",
+        default=None,
+        help="Solver frameworks per kept policy, e.g. 'swc_tcf=gurobi'. Default: all (or the profile's choice).",
+    )
+    p.add_argument(
         "--output-dir", metavar="PATH",
         default=str(PROJECT_ROOT / "dist" / "exports"),
         dest="output_dir",
@@ -542,6 +592,8 @@ def main(argv: Optional[List[str]] = None) -> None:
 
         # 4. Prune codebase (algorithms + optional features + subnets)
         _log("Step 1/4 — Pruning codebase …")
+        # The pruner deletes logic/package/ when it finishes, so stage the profile tool first.
+        profile_dir = _stage_profile_tool() if (args.profile or args.entrypoints or args.engines) else None
         _step_prune(
             selections,
             drop_features,
@@ -551,6 +603,8 @@ def main(argv: Optional[List[str]] = None) -> None:
             distributions=distributions,
             network=network,
         )
+        if profile_dir is not None:
+            _step_profile(profile_dir, args.profile, args.entrypoints, args.engines, args.dry_run)
 
         # 5. Commit pruned state
         if not args.dry_run and not args.no_commit:

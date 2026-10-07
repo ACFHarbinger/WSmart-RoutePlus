@@ -6115,5 +6115,117 @@
       "operators/improvement_descent/or_opt_steepest.py",
       "operators/improvement_descent/steepest_two_opt.py"
     ]
+  },
+  "policy_engines": {
+    "_comment": "Solver frameworks per kept policy. apply_export_profile.py --engines 'policy=a,b' keeps the listed engines (default: all); the others lose their files and pyproject dependencies, and default_framework is pointed at the first kept engine.",
+    "swc_tcf": {
+      "engines": {
+        "gurobi": {
+          "files": [],
+          "dependencies": [
+            "gurobipy"
+          ]
+        },
+        "ortools": {
+          "files": [
+            "logic/src/policies/route_construction/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/ortools_wrapper.py"
+          ],
+          "dependencies": [
+            "ortools"
+          ]
+        },
+        "pyomo": {
+          "files": [
+            "logic/src/policies/route_construction/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/pyomo_wrapper.py"
+          ],
+          "dependencies": [
+            "pyomo"
+          ]
+        }
+      },
+      "default_framework": {
+        "value": "ortools",
+        "rewrites": [
+          {
+            "files": [
+              "logic/src/policies/route_construction/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/params.py",
+              "logic/src/configs/policies/swc_tcf.py"
+            ],
+            "pattern": "framework: str = \"{value}\"",
+            "replacement": "framework: str = \"{value}\""
+          },
+          {
+            "files": [
+              "logic/src/configs/policies/swc_tcf.py"
+            ],
+            "pattern": ">>> config.framework\\n    '{value}'",
+            "replacement": ">>> config.framework\\n    '{value}'"
+          }
+        ]
+      }
+    }
+  },
+  "export_profiles": {
+    "_comment": "Applied to an export tree by logic/package/apply_export_profile.py (see its docstring). The patch is relative to the tree after remove_paths.",
+    "minimal-ptp": {
+      "description": "2026-10-07 package: PTP/MVPTP; lookahead, last-minute and service-level selection; PG-CLNS (own operators), SANS, SWC-TCF and the Neural Agent; Attention Model + REINFORCE. No route improvement, tracking/provenance, callbacks, POMO baseline, dataset generation, multi-period context, scenario trees, Euclidean distances or non-empirical distributions; only .npz simulation datasets.",
+      "entrypoints": "dunder",
+      "engines": "swc_tcf=gurobi",
+      "remove_paths": [
+        ".gitignore",
+        ".python-version",
+        "LICENSE",
+        "logic/configs/policies/other/ri_ftsp.yaml",
+        "logic/configs/tasks/gen_data.yaml",
+        "logic/src/configs/policies/other/route_improvement.py",
+        "logic/src/configs/tasks/data.py",
+        "logic/src/data/datasets/simulation/gen_dataset.py",
+        "logic/src/data/datasets/simulation/np_pkl_dataset.py",
+        "logic/src/data/datasets/simulation/pd_csv_dataset.py",
+        "logic/src/data/datasets/simulation/pd_xlsx_dataset.py",
+        "logic/src/data/distributions/spatial_distance.py",
+        "logic/src/data/distributions/statistical_beta.py",
+        "logic/src/data/distributions/statistical_constant.py",
+        "logic/src/data/distributions/statistical_gamma.py",
+        "logic/src/data/distributions/statistical_uniform.py",
+        "logic/src/data/generators",
+        "logic/src/data/network/base/iterative_distance_strategy.py",
+        "logic/src/data/network/euclidean.py",
+        "logic/src/data/processor/_logging.py",
+        "logic/src/interfaces/context/multi_day_context.py",
+        "logic/src/interfaces/context/problem_context.py",
+        "logic/src/interfaces/context/solution_context.py",
+        "logic/src/interfaces/model.py",
+        "logic/src/interfaces/route_improvement.py",
+        "logic/src/models/subnets/decoders/common/selection.py",
+        "logic/src/models/subnets/encoders/gat/gat_feed_forward_sublayer.py",
+        "logic/src/pipeline/callbacks",
+        "logic/src/pipeline/features/eval/zenml_eval_pipeline.py",
+        "logic/src/pipeline/features/test/zenml_sim_pipeline.py",
+        "logic/src/pipeline/features/train/zenml_train_pipeline.py",
+        "logic/src/pipeline/rl/common/baselines/pomo.py",
+        "logic/src/pipeline/simulations/actions/route_improvement.py",
+        "logic/src/pipeline/simulations/wsmart_bin_analysis/LICENSE",
+        "logic/src/pipeline/simulations/wsmart_bin_analysis/export/container.py",
+        "logic/src/pipeline/simulations/wsmart_bin_analysis/export/enums",
+        "logic/src/pipeline/simulations/wsmart_bin_analysis/export/modules",
+        "logic/src/policies/helpers",
+        "logic/src/policies/route_construction/other_algorithms",
+        "logic/src/policies/route_improvement",
+        "logic/src/policies/vector",
+        "logic/src/utils/actions/graph.py",
+        "logic/src/utils/actions/pomo.py",
+        "logic/src/utils/actions/probabilistic.py",
+        "logic/src/utils/actions/tensor.py",
+        "logic/src/utils/functions/math.py",
+        "logic/src/utils/functions/parallel.py",
+        "logic/src/utils/graph/algorithms.py",
+        "logic/src/utils/model/processing.py",
+        "logic/src/utils/policy",
+        "logic/src/utils/tasks/losses.py",
+        "uv.lock"
+      ],
+      "patch": "export_profiles/minimal-ptp.patch"
+    }
   }
 }
