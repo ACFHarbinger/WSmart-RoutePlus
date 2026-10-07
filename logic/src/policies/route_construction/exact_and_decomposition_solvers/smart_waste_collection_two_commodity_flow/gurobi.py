@@ -112,7 +112,7 @@ def _warm_starts(d: TCFData, distance_matrix: List[List[float]], forced_nodes: L
 
 def _plan_objective(d: TCFData, distance_matrix: List[List[float]], trips: List[List[int]]) -> Tuple[float, float]:
     """Return (profit, travel cost) of a trip plan under the standard objective."""
-    cost = sum(distance_matrix[a][b] for trip in trips for a, b in zip([0, *trip], [*trip, 0], strict=False))
+    cost = float(sum(distance_matrix[a][b] for trip in trips for a, b in zip([0, *trip], [*trip, 0], strict=False)))
     profit = d.R * sum(d.S_dict[i] for trip in trips for i in trip) - d.C * cost - d.Omega * len(trips)
     return profit, cost
 
@@ -514,11 +514,11 @@ def _run_gurobi_optimizer(  # noqa: C901
         if route == [0, 0]:
             # All-zero incumbent (or nothing collected): the shared empty-day shape.
             return [0, 0], 0.0, 0.0
-        profit = mdl.ObjVal
+        profit = float(mdl.ObjVal)
         local = {gid: i for i, gid in d.id_map.items()}
         tour = [local[n] for n in route]
         # Travel cost of the executed tour on the (possibly asymmetric) matrix.
-        cost = sum(distance_matrix[a][b] for a, b in zip(tour, tour[1:], strict=False))
+        cost = float(sum(distance_matrix[a][b] for a, b in zip(tour, tour[1:], strict=False)))
         print(
             f"[INFO][VRPP-Gurobi] Profit: {profit}, Cost: {cost}, MIPGap: {mdl.Params.MIPGap}, "
             f"Collected: {sum(1 for n in route if n != 0)}"
