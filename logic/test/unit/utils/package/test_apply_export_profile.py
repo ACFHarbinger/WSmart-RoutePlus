@@ -133,5 +133,5 @@ def test_source_zip_archives_and_removes_the_source_folder(tmp_path):
     (tmp_path / "__main__.py").write_text("")
     write_file_list(tmp_path, "assets/files/FILE_LIST.txt", dry_run=False)
     out = zip_source(tmp_path, "package_source.zip", dry_run=False)
-    assert sorted(zipfile.ZipFile(out).namelist()) == ["source/__main__.py", "source/logic/mod.py"]
+    assert sorted(zipfile.ZipFile(out).namelist()) == ["__main__.py", "logic/mod.py"]
     assert not (tmp_path / "source").exists()

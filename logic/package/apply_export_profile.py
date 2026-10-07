@@ -16,8 +16,8 @@ export tree into a narrower package, so a re-cut reproduces them without hand ed
    policy's ``default_framework`` settings are pointed at the first kept engine.
 5. A static check that no kept module imports a removed one.
 6. Optionally (``--file-list PATH``), a ``source/`` folder with the entry points and ``logic/``
-   and its ``tree`` listing saved to ``PATH``. With ``--source-zip ZIP`` the folder is then
-   archived to ``ZIP`` and deleted.
+   and its ``tree`` listing saved to ``PATH``. With ``--source-zip ZIP`` its contents are then
+   archived to ``ZIP`` (no ``source/`` prefix) and the folder is deleted.
 7. Optionally, as the last step, ``include``: files or directories copied into the package at the
    same relative path, taken from ``--include-from`` (default: this repository); the profile's
    ``include`` list plus every ``--include PATH``.
@@ -199,7 +199,7 @@ def write_file_list(root: Path, target: str, dry_run: bool) -> Path:
 
 
 def zip_source(root: Path, target: str, dry_run: bool) -> Path:
-    """Archive ``root/source`` (built by write_file_list) to ``target`` and delete the folder."""
+    """Archive the contents of ``root/source`` (entry points and logic/, no parent folder) to ``target``; delete the folder."""
     source, out = root / "source", root / target
     _log(f"source zip: source/ -> {target}")
     if dry_run:
@@ -209,7 +209,7 @@ def zip_source(root: Path, target: str, dry_run: bool) -> Path:
     out.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as zf:
         for path in sorted(p for p in source.rglob("*") if p.is_file()):
-            zf.write(path, path.relative_to(root))
+            zf.write(path, path.relative_to(source))
     shutil.rmtree(source)
     return out
 
