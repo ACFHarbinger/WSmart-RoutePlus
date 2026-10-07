@@ -6210,9 +6210,9 @@
         "logic/src/pipeline/rl/common/baselines/pomo.py",
         "logic/src/pipeline/simulations/actions/route_improvement.py",
         "logic/src/pipeline/simulations/wsmart_bin_analysis/LICENSE",
-        "logic/src/pipeline/simulations/wsmart_bin_analysis/export/container.py",
-        "logic/src/pipeline/simulations/wsmart_bin_analysis/export/enums",
-        "logic/src/pipeline/simulations/wsmart_bin_analysis/export/modules",
+        "logic/src/pipeline/simulations/wsmart_bin_analysis/container.py",
+        "logic/src/pipeline/simulations/wsmart_bin_analysis/enums",
+        "logic/src/pipeline/simulations/wsmart_bin_analysis/modules",
         "logic/src/policies/acceptance_criteria",
         "logic/src/policies/helpers",
         "logic/src/policies/route_construction/other_algorithms",
@@ -6234,6 +6234,12 @@
       "include": [
         "assets/diagrams/wsr_simulator-estima\u00e7\u00e3o-e-predi\u00e7\u00e3o.pdf",
         "assets/diagrams/wsr_simulator-planeamento-de-rotas.pdf"
+      ],
+      "moves": [
+        {
+          "from": "logic/src/pipeline/simulations/wsmart_bin_analysis/export",
+          "to": "logic/src/pipeline/simulations/wsmart_bin_analysis"
+        }
       ]
     }
   }

@@ -4,6 +4,7 @@ import pytest
 from logic.package.apply_export_profile import (
     apply_engines,
     apply_entrypoints,
+    apply_moves,
     check_imports,
     copy_includes,
     write_file_list,
@@ -85,12 +86,14 @@ def test_file_list_builds_source_and_saves_the_tree(tmp_path):
     (tmp_path / "logic" / "src" / "__pycache__").mkdir(parents=True)
     (tmp_path / "logic" / "src" / "mod.py").write_text("")
     (tmp_path / "logic" / "src" / "__pycache__" / "mod.cpython-310.pyc").write_text("")
+    (tmp_path / "logic" / "src" / "gone" / "__pycache__").mkdir(parents=True)
     (tmp_path / "__main__.py").write_text("")
     out = write_file_list(tmp_path, "assets/files/FILE_LIST.txt", dry_run=False)
     assert out == tmp_path / "assets" / "files" / "FILE_LIST.txt"
     assert sorted(p.name for p in (tmp_path / "source").iterdir()) == ["__main__.py", "logic"]
     listing = out.read_text()
     assert listing.startswith(".") and "__main__.py" in listing and "mod.py" in listing and "__pycache__" not in listing
+    assert "gone" not in listing
 
 
 def test_includes_copy_files_and_directories_and_reject_escapes(tmp_path):
@@ -106,3 +109,16 @@ def test_includes_copy_files_and_directories_and_reject_escapes(tmp_path):
         copy_includes(pkg, src, ["../outside"], dry_run=False)
     with pytest.raises(SystemExit):
         copy_includes(pkg, src, ["assets/missing.pdf"], dry_run=False)
+
+
+def test_moves_replace_parent_entries_and_delete_the_source(tmp_path):
+    pkg = tmp_path / "pkg"
+    (pkg / "export").mkdir(parents=True)
+    (pkg / "__init__.py").write_text("old")
+    (pkg / "keep.py").write_text("keep")
+    (pkg / "export" / "__init__.py").write_text("new")
+    (pkg / "export" / "grid.py").write_text("grid")
+    apply_moves(tmp_path, [{"from": "pkg/export", "to": "pkg"}], dry_run=False)
+    assert sorted(p.name for p in pkg.iterdir()) == ["__init__.py", "grid.py", "keep.py"]
+    assert (pkg / "__init__.py").read_text() == "new"
+    apply_moves(tmp_path, [{"from": "pkg/export", "to": "pkg"}], dry_run=False)  # already applied: no-op

@@ -3,10 +3,13 @@
 A profile (``export_profiles`` in ``ci/export_config.json``) describes the changes that turn an
 export tree into a narrower package, so a re-cut reproduces them without hand edits:
 
-1. ``remove_paths``: files and directories to delete.
+0. ``moves``: ``{"from": DIR, "to": PARENT}`` entries; each item of ``DIR`` replaces the
+   same-named file or directory in ``PARENT`` (e.g. the parent's ``__init__.py``), then ``DIR`` is
+   deleted.
+1. ``remove_paths``: files and directories to delete (relative to the tree after step 0).
 2. ``entrypoints``: which of ``main.py`` / ``__main__.py`` to keep (``both``, ``main``, ``dunder``,
    ``none``); overridable with ``--entrypoints``.
-3. ``patch``: a unified diff (relative to the tree after step 1) with the edits to the files that
+3. ``patch``: a unified diff (relative to the tree after steps 0-2) with the edits to the files that
    stay, applied with ``git apply --3way`` when the tree is a git checkout.
 4. ``engines``: per-policy solver frameworks to keep; overridable with ``--engines``. Each engine
    in ``policy_engines`` lists its files and dependencies; unselected engines lose both, and a
@@ -64,6 +67,34 @@ def _remove(root: Path, rel: str, dry_run: bool) -> None:
         path.unlink()
 
 
+def apply_moves(root: Path, moves: List[Dict[str, str]], dry_run: bool) -> None:
+    """Move the contents of each ``from`` directory into ``to``, replacing same-named entries, then delete ``from``."""
+    for move in moves:
+        src, dst = root / move["from"], root / move["to"]
+        if src.is_symlink() or dst.is_symlink():
+            raise SystemExit(f"refusing to move through a symlink: {move}")
+        if not src.exists():
+            _log(f"move {move['from']}: already applied")
+            continue
+        _log(f"move {move['from']}/* -> {move['to']}/")
+        if dry_run:
+            continue
+        dst.mkdir(parents=True, exist_ok=True)
+        for child in sorted(src.iterdir()):
+            if child.name == "__pycache__":
+                continue
+            _remove(root, str((dst / child.name).relative_to(root)), dry_run)
+            shutil.move(str(child), str(dst / child.name))
+        shutil.rmtree(src)
+        if _is_git(root):
+            # Stage the move so the 3-way patch step sees the moved files in the index.
+            subprocess.run(["git", "-C", str(root), "add", "-A", "--", move["from"], move["to"]], check=True)
+
+
+def _is_git(root: Path) -> bool:
+    return subprocess.run(["git", "-C", str(root), "rev-parse"], capture_output=True).returncode == 0
+
+
 def apply_entrypoints(root: Path, choice: str, dry_run: bool) -> None:
     """Keep only the requested entry-point scripts at the package root."""
     if choice not in _ENTRYPOINTS:
@@ -77,8 +108,7 @@ def apply_patch(root: Path, patch: Path, dry_run: bool) -> None:
     """Apply the profile's edits to the kept files (3-way when the tree is a git checkout)."""
     if not patch.exists():
         raise SystemExit(f"profile patch not found: {patch}")
-    is_git = subprocess.run(["git", "-C", str(root), "rev-parse"], capture_output=True).returncode == 0
-    cmd = ["git", "apply", "--whitespace=nowarn"] + (["--3way"] if is_git else []) + (["--check"] if dry_run else [])
+    cmd = ["git", "apply", "--whitespace=nowarn"] + (["--3way"] if _is_git(root) else []) + (["--check"] if dry_run else [])
     _log(f"apply {patch.name}")
     result = subprocess.run(cmd + [str(patch.resolve())], cwd=root, capture_output=True, text=True)
     if result.returncode != 0:
@@ -135,7 +165,7 @@ def write_file_list(root: Path, target: str, dry_run: bool) -> Path:
     """Copy the entry points and logic/ into ``root/source`` and save ``tree`` run there to ``target``.
 
     ``target`` is relative to ``root`` (e.g. ``assets/files/FILE_LIST.txt``). ``source/`` is
-    recreated on every call; ``__pycache__`` folders are not copied.
+    recreated on every call; ``__pycache__`` folders, and folders left empty without them, are not copied.
     """
     source = root / "source"
     out = root / target
@@ -151,6 +181,10 @@ def write_file_list(root: Path, target: str, dry_run: bool) -> Path:
         if (root / name).is_file():
             shutil.copy2(root / name, source / name)
     shutil.copytree(root / "logic", source / "logic", ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    # Folders that only held caches (left behind by removed modules) are not part of the package.
+    for path in sorted((p for p in (source / "logic").rglob("*") if p.is_dir()), key=lambda p: len(p.parts), reverse=True):
+        if not any(path.iterdir()):
+            path.rmdir()
     try:
         listing = subprocess.run(
             ["tree", "--charset", "ascii", "--noreport", "-a", "."], cwd=source, capture_output=True, text=True, check=True
@@ -239,6 +273,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             raise SystemExit(f"unknown profile {args.profile!r}; known: {sorted(config.get('export_profiles', {}))}")
     root = args.root.resolve()
 
+    apply_moves(root, profile.get("moves", []), args.dry_run)
     for rel in profile.get("remove_paths", []):
         _remove(root, rel, args.dry_run)
     apply_entrypoints(root, args.entrypoints or profile.get("entrypoints", "both"), args.dry_run)
