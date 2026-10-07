@@ -1810,7 +1810,7 @@ index 000000000..79a9b6c70
 +|               `-- simulation_utils.py
 +`-- __main__.py
 diff --git a/ci/simulator.spec b/ci/simulator.spec
-index 7b6c15f8d..af7cae015 100644
+index 7b6c15f8d..c2622850f 100644
 --- a/ci/simulator.spec
 +++ b/ci/simulator.spec
 @@ -1,22 +1,23 @@
@@ -1887,16 +1887,19 @@ index 7b6c15f8d..af7cae015 100644
      pathex=[ROOT],
      binaries=binaries,
      datas=datas,
-@@ -86,6 +86,8 @@ a = Analysis(
+@@ -86,6 +86,11 @@ a = Analysis(
          "pytest", "hypothesis", "expecttest",
          # unused torch companions
          "torchaudio", "torchvision",
 +        # solver backends this export does not ship
 +        "ortools", "pyomo",
++        # optional extras of torchrl/Lightning that a development environment may hold; a partial
++        # copy breaks start-up (torchrl imports ray when it finds it)
++        "ray", "wandb", "mlflow", "zenml", "optuna",
      ],
      noarchive=False,
      optimize=0,
-@@ -96,11 +98,8 @@ a = Analysis(
+@@ -96,11 +101,8 @@ a = Analysis(
  
  pyz = PYZ(a.pure)
  
@@ -1910,7 +1913,7 @@ index 7b6c15f8d..af7cae015 100644
      name="WSmartRoute",
      debug=False,
      bootloader_ignore_signals=False,
-@@ -114,12 +113,10 @@ exe = EXE(
+@@ -114,12 +116,10 @@ exe = EXE(
      entitlements_file=None,
  )
  
