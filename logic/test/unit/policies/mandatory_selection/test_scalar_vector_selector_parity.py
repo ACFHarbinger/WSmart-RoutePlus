@@ -9,9 +9,9 @@ from logic.src.interfaces.context.selection_context import SelectionContext
 from logic.src.policies.mandatory_selection.selection_last_minute import LastMinuteSelection
 from logic.src.policies.mandatory_selection.selection_lookahead import LookaheadSelection
 from logic.src.policies.mandatory_selection.selection_service_level import ServiceLevelSelection
-from logic.src.policies.vector.selection.last_minute import LastMinuteSelector
-from logic.src.policies.vector.selection.lookahead import LookaheadSelector
-from logic.src.policies.vector.selection.service_level import ServiceLevelSelector
+from logic.src.policies.mandatory_selection.vectorized.last_minute import LastMinuteSelector
+from logic.src.policies.mandatory_selection.vectorized.lookahead import LookaheadSelector
+from logic.src.policies.mandatory_selection.vectorized.service_level import ServiceLevelSelector
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

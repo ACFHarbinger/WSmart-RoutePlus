@@ -80,7 +80,7 @@ def mock_run_day_deps(mocker):
     )
 
     mocker.patch("logic.src.pipeline.simulations.actions.logging.send_daily_output_to_gui")
-    mocker.patch("logic.src.policies.route_construction.other_algorithms.travelling_salesman_problem.tsp.get_route_cost", return_value=50.0)
+    mocker.patch("logic.src.utils.routing.tours.get_route_cost", return_value=50.0)
     mocker.patch("logic.src.policies.route_construction.other_algorithms.travelling_salesman_problem.tsp.find_route", return_value=[0, 1, 0])
 
     return {

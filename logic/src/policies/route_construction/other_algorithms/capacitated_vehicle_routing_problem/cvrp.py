@@ -37,8 +37,7 @@ from pyvrp.stop import MaxRuntime
 
 from logic.src.constants.routing import SCALE
 from logic.src.tracking.viz_mixin import PolicyStateRecorder
-
-from .clark_wright import clarke_wright_solve
+from logic.src.utils.routing.clark_wright import clarke_wright_solve
 
 
 def find_routes(

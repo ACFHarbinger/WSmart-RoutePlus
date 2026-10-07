@@ -40,13 +40,12 @@ Example:
 """
 
 import random
-from typing import Any, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 
 from logic.src.data.processor import convert_to_dict
-from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.search_context import SearchContext
 from logic.src.policies.route_construction.meta_heuristics.simulated_annealing_neighborhood_search import (
     improved_simulated_annealing,
@@ -62,12 +61,15 @@ from logic.src.policies.route_construction.meta_heuristics.simulated_annealing_n
 )
 from logic.src.policies.route_construction.other_algorithms.travelling_salesman_problem.tsp import get_route_cost
 
+if TYPE_CHECKING:
+    from logic.src.interfaces.context.multi_day_context import MultiDayContext
+
 from .params import SANSParams
 
 
 def execute_new(
     policy: Any, params: SANSParams, **kwargs: Any
-) -> Tuple[List[int], float, float, Optional[SearchContext], Optional[MultiDayContext]]:
+) -> Tuple[List[int], float, float, Optional[SearchContext], Optional["MultiDayContext"]]:
     """Execute the improved simulated annealing engine.
 
     Args:
@@ -161,7 +163,7 @@ def execute_new(
 
 def execute_og(
     policy: Any, params: SANSParams, **kwargs: Any
-) -> Tuple[List[int], float, float, Optional[SearchContext], Optional[MultiDayContext]]:
+) -> Tuple[List[int], float, float, Optional[SearchContext], Optional["MultiDayContext"]]:
     """Execute the original LAC (look-ahead collection) engine.
 
     Args:

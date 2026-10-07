@@ -81,7 +81,7 @@ class CollectAction(SimulationAction):
         Args:
             context: Shared dictionary containing simulation state.
         """
-        from logic.src.policies.route_construction.other_algorithms.travelling_salesman_problem.tsp import (
+        from logic.src.utils.routing.tours import (
             get_route_cost,
         )
 

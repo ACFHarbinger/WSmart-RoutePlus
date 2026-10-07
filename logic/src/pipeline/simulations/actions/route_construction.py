@@ -131,9 +131,12 @@ class RouteConstructionAction(SimulationAction):
             day_idx = context.get("day", 0)
             multi_day_context = context.get("multi_day_context")
             if multi_day_context is None:
-                from logic.src.interfaces.context.multi_day_context import MultiDayContext
-
-                multi_day_context = MultiDayContext.initialize(day_index=day_idx)
+                try:
+                    from logic.src.interfaces.context.multi_day_context import MultiDayContext
+                except ImportError:  # builds without multi-period policies drop the module
+                    MultiDayContext = None  # type: ignore[assignment,misc]
+                if MultiDayContext is not None:
+                    multi_day_context = MultiDayContext.initialize(day_index=day_idx)
 
             # 2. Generate Scenario Tree unless the adapter opts out.
             # Default is to build. Live multi-period policies read the tree, and
@@ -186,7 +189,7 @@ class RouteConstructionAction(SimulationAction):
             # Calculate preliminary KM from the construction phase. Note that final
             # definitive metrics (KM and Profit) are re-computed in CollectAction
             # to account for the entire policy pipeline (mandatory + construction + improvement).
-            from logic.src.policies.route_construction.other_algorithms.travelling_salesman_problem.tsp import (
+            from logic.src.utils.routing.tours import (
                 get_route_cost,
             )
 

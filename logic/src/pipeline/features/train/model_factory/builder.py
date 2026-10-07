@@ -32,7 +32,7 @@ from logic.src.policies.vector import (
     VectorizedHGS,
     VectorizedHGSALNS,
 )
-from logic.src.policies.vector.selection.factory import create_selector_from_config
+from logic.src.policies.mandatory_selection.vectorized.factory import create_selector_from_config
 from logic.src.tracking.logging.pylogger import get_pylogger
 
 try:

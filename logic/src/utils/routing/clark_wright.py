@@ -16,7 +16,7 @@ Attributes:
             List of routes.
 
 Example:
-    >>> from logic.src.policies.route_construction.other_algorithms.capacitated_vehicle_routing_problem import clarke_wright_solve
+    >>> from logic.src.utils.routing.clark_wright import clarke_wright_solve
     >>> routes = clarke_wright_solve(dist_matrix, wastes, capacity, to_collect)
 """
 

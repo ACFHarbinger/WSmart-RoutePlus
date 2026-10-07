@@ -21,12 +21,12 @@ import torch
 if TYPE_CHECKING:
     from .params import NeuralParams
 
-from logic.src.policies.route_construction.other_algorithms.travelling_salesman_problem.tsp import (
-    get_route_cost,
-)
 from logic.src.tracking.hooks.attention_hooks import add_attention_hooks
 from logic.src.utils.decoding.beam_search import _beam_search
 from logic.src.utils.decoding.decoding_utils import backtrack
+from logic.src.utils.routing.tours import (
+    get_route_cost,
+)
 
 
 class SimulationMixin:

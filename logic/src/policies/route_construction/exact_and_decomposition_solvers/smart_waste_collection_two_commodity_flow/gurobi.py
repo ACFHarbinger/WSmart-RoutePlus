@@ -55,9 +55,7 @@ def _clarke_wright_trips(d: TCFData, distance_matrix: List[List[float]], visit: 
         be feasible in the model (a bin above capacity, a missing arc, or more
         trips than the fleet bound).
     """
-    from logic.src.policies.route_construction.other_algorithms.capacitated_vehicle_routing_problem.clark_wright import (
-        clarke_wright_solve,
-    )
+    from logic.src.utils.routing.clark_wright import clarke_wright_solve
 
     if not visit or any(d.S_dict[i] > d.Q for i in visit):
         return None

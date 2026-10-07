@@ -14,18 +14,20 @@ Example:
 """
 
 from dataclasses import fields
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type
 
 import torch
 
 from logic.src.enums import GlobalRegistry, PolicyTag
-from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.search_context import SearchContext
+from logic.src.policies.mandatory_selection.vectorized import get_vectorized_selector
 from logic.src.policies.route_construction.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.route_construction.base.factory import RouteConstructorRegistry
-from logic.src.policies.vector.selection import get_vectorized_selector
 from logic.src.tracking.core.run import get_active_run
 from logic.src.utils.functions import move_to
+
+if TYPE_CHECKING:
+    from logic.src.interfaces.context.multi_day_context import MultiDayContext
 
 from .agent import NeuralAgent
 from .params import NeuralParams
@@ -159,7 +161,7 @@ class NeuralAgentPolicy(BaseRoutingPolicy):
 
     def execute(
         self, **kwargs: Any
-    ) -> Tuple[List[int], float, float, Optional[SearchContext], Optional[MultiDayContext]]:
+    ) -> Tuple[List[int], float, float, Optional[SearchContext], Optional["MultiDayContext"]]:
         """
         Execute the Neural Policy by performing inference on a DRL model.
 

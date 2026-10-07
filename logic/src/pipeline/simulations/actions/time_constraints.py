@@ -5,7 +5,7 @@ from typing import Any, Dict
 
 import numpy as np
 
-from logic.src.policies.route_construction.other_algorithms.travelling_salesman_problem.tsp import get_multi_tour
+from logic.src.utils.routing.tours import get_multi_tour
 
 from .base import SimulationAction
 
