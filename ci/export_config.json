@@ -6225,7 +6225,11 @@
         "logic/src/utils/tasks/losses.py",
         "uv.lock"
       ],
-      "patch": "export_profiles/minimal-ptp.patch"
+      "patch": "export_profiles/minimal-ptp.patch",
+      "include": [
+        "assets/diagrams/wsr_simulator-estima\u00e7\u00e3o-e-predi\u00e7\u00e3o.pdf",
+        "assets/diagrams/wsr_simulator-planeamento-de-rotas.pdf"
+      ]
     }
   }
 }

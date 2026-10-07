@@ -14,6 +14,9 @@ export tree into a narrower package, so a re-cut reproduces them without hand ed
 5. A static check that no kept module imports a removed one.
 6. Optionally (``--file-list PATH``), a ``source/`` folder with the entry points and ``logic/``
    and its ``tree`` listing saved to ``PATH``.
+7. Optionally, as the last step, ``include``: files or directories copied into the package at the
+   same relative path, taken from ``--include-from`` (default: this repository); the profile's
+   ``include`` list plus every ``--include PATH``.
 
 Usage (from the main repository, against a re-cut export checkout)::
 
@@ -159,6 +162,25 @@ def write_file_list(root: Path, target: str, dry_run: bool) -> Path:
     return out
 
 
+def copy_includes(root: Path, source_root: Path, paths: List[str], dry_run: bool) -> None:
+    """Copy each relative path from ``source_root`` into ``root`` at the same location."""
+    for rel in paths:
+        rel_path = Path(rel)
+        if rel_path.is_absolute() or ".." in rel_path.parts:
+            raise SystemExit(f"--include paths must be relative and inside the repository: {rel}")
+        src, dst = source_root / rel_path, root / rel_path
+        if src.is_symlink() or not src.exists():
+            raise SystemExit(f"cannot include {rel}: missing or a symlink in {source_root}")
+        _log(f"include {rel}")
+        if dry_run:
+            continue
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        if src.is_dir():
+            shutil.copytree(src, dst, dirs_exist_ok=True, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+        else:
+            shutil.copy2(src, dst)
+
+
 def check_imports(root: Path) -> List[str]:
     """Return 'file: module' for every import of a logic.* module that no longer exists."""
     problems = []
@@ -202,6 +224,10 @@ def main(argv: Optional[List[str]] = None) -> None:
                    help="Override the profile, e.g. 'swc_tcf=gurobi;sans=new'. Policies left out keep the profile choice.")
     p.add_argument("--file-list", metavar="PATH", default=None,
                    help="Create source/ (entry points + logic/) and save its tree listing to PATH (relative to --root).")
+    p.add_argument("--include", metavar="PATH", action="append", default=[],
+                   help="Copy PATH (file or directory, relative) from --include-from into the package; repeatable.")
+    p.add_argument("--include-from", metavar="DIR", type=Path, default=_PROJECT_ROOT,
+                   help="Where --include paths are read from (default: this repository).")
     p.add_argument("--dry-run", action="store_true")
     args = p.parse_args(argv)
 
@@ -229,6 +255,9 @@ def main(argv: Optional[List[str]] = None) -> None:
             raise SystemExit(f"{len(problems)} import(s) of removed modules")
     if args.file_list:
         write_file_list(root, args.file_list, args.dry_run)
+    includes = list(profile.get("include", [])) + list(args.include)
+    if includes:
+        copy_includes(root, args.include_from.resolve(), includes, args.dry_run)
     _log("done")
 
 

@@ -299,9 +299,24 @@ def _step_prune(
     _run(cmd)
 
 
-def _stage_profile_tool() -> Path:
-    """Copy the profile tool, config and patches to a temporary folder that survives pruning."""
+def _stage_profile_tool(includes: Optional[List[str]] = None) -> Path:
+    """Copy the profile tool, config, patches and include files to a folder that survives pruning."""
     staged = Path(tempfile.mkdtemp(prefix="wsr-profile-"))
+    config = json.loads(CONFIG_FILE.read_text())
+    wanted = set(includes or [])
+    for prof in config.get("export_profiles", {}).values():
+        if isinstance(prof, dict):
+            wanted.update(prof.get("include", []))
+    for rel in sorted(wanted):
+        src = PROJECT_ROOT / rel
+        if src.is_symlink() or not src.exists():
+            _die(f"--include path missing or a symlink: {rel}")
+        dst = staged / "include" / rel
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        if src.is_dir():
+            shutil.copytree(src, dst)
+        else:
+            shutil.copy2(src, dst)
     shutil.copy2(PROFILE_SCRIPT, staged / PROFILE_SCRIPT.name)
     shutil.copy2(CONFIG_FILE, staged / CONFIG_FILE.name)
     patches = CONFIG_FILE.parent / "export_profiles"
@@ -316,6 +331,7 @@ def _step_profile(
     entrypoints: Optional[str],
     engines: Optional[str],
     file_list: Optional[str],
+    includes: List[str],
     dry_run: bool,
 ) -> None:
     """Apply the export profile, entry-point and engine choices to the pruned tree."""
@@ -329,6 +345,9 @@ def _step_profile(
         cmd += ["--engines", engines]
     if file_list:
         cmd += ["--file-list", file_list]
+    for rel in includes:
+        cmd += ["--include", rel]
+    cmd += ["--include-from", str(staged / "include")]
     if dry_run:
         cmd.append("--dry-run")
     _run(cmd)
@@ -517,6 +536,14 @@ def _build_parser() -> argparse.ArgumentParser:
         "(relative to the package root, e.g. assets/files/FILE_LIST.txt).",
     )
     p.add_argument(
+        "--include",
+        metavar="PATH",
+        action="append",
+        default=[],
+        help="Last step: copy PATH (file or directory, relative to the repository) into the package at the same "
+        "location; repeatable. Added to the profile's include list.",
+    )
+    p.add_argument(
         "--output-dir", metavar="PATH",
         default=str(PROJECT_ROOT / "dist" / "exports"),
         dest="output_dir",
@@ -609,7 +636,9 @@ def main(argv: Optional[List[str]] = None) -> None:
         _log("Step 1/4 — Pruning codebase …")
         # The pruner deletes logic/package/ when it finishes, so stage the profile tool first.
         profile_dir = (
-            _stage_profile_tool() if (args.profile or args.entrypoints or args.engines or args.file_list) else None
+            _stage_profile_tool(args.include)
+            if (args.profile or args.entrypoints or args.engines or args.file_list or args.include)
+            else None
         )
         _step_prune(
             selections,
@@ -621,7 +650,9 @@ def main(argv: Optional[List[str]] = None) -> None:
             network=network,
         )
         if profile_dir is not None:
-            _step_profile(profile_dir, args.profile, args.entrypoints, args.engines, args.file_list, args.dry_run)
+            _step_profile(
+                profile_dir, args.profile, args.entrypoints, args.engines, args.file_list, args.include, args.dry_run
+            )
 
         # 5. Commit pruned state
         if not args.dry_run and not args.no_commit:

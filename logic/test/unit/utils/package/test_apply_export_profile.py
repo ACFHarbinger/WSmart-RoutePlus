@@ -1,7 +1,13 @@
 """apply_export_profile: entry-point choice, engine selection and the removed-import check."""
 
 import pytest
-from logic.package.apply_export_profile import apply_engines, apply_entrypoints, check_imports, write_file_list
+from logic.package.apply_export_profile import (
+    apply_engines,
+    apply_entrypoints,
+    check_imports,
+    copy_includes,
+    write_file_list,
+)
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
@@ -85,3 +91,18 @@ def test_file_list_builds_source_and_saves_the_tree(tmp_path):
     assert sorted(p.name for p in (tmp_path / "source").iterdir()) == ["__main__.py", "logic"]
     listing = out.read_text()
     assert listing.startswith(".") and "__main__.py" in listing and "mod.py" in listing and "__pycache__" not in listing
+
+
+def test_includes_copy_files_and_directories_and_reject_escapes(tmp_path):
+    src, pkg = tmp_path / "repo", tmp_path / "pkg"
+    (src / "assets" / "diagrams" / "more").mkdir(parents=True)
+    (src / "assets" / "diagrams" / "a.pdf").write_text("a")
+    (src / "assets" / "diagrams" / "more" / "b.pdf").write_text("b")
+    pkg.mkdir()
+    copy_includes(pkg, src, ["assets/diagrams/a.pdf", "assets/diagrams/more"], dry_run=False)
+    assert (pkg / "assets" / "diagrams" / "a.pdf").read_text() == "a"
+    assert (pkg / "assets" / "diagrams" / "more" / "b.pdf").read_text() == "b"
+    with pytest.raises(SystemExit):
+        copy_includes(pkg, src, ["../outside"], dry_run=False)
+    with pytest.raises(SystemExit):
+        copy_includes(pkg, src, ["assets/missing.pdf"], dry_run=False)
