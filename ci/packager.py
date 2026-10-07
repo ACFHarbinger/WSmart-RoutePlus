@@ -311,7 +311,12 @@ def _stage_profile_tool() -> Path:
 
 
 def _step_profile(
-    staged: Path, profile: Optional[str], entrypoints: Optional[str], engines: Optional[str], dry_run: bool
+    staged: Path,
+    profile: Optional[str],
+    entrypoints: Optional[str],
+    engines: Optional[str],
+    file_list: Optional[str],
+    dry_run: bool,
 ) -> None:
     """Apply the export profile, entry-point and engine choices to the pruned tree."""
     cmd = [sys.executable, str(staged / PROFILE_SCRIPT.name), "--root", str(PROJECT_ROOT),
@@ -322,6 +327,8 @@ def _step_profile(
         cmd += ["--entrypoints", entrypoints]
     if engines:
         cmd += ["--engines", engines]
+    if file_list:
+        cmd += ["--file-list", file_list]
     if dry_run:
         cmd.append("--dry-run")
     _run(cmd)
@@ -502,6 +509,14 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Solver frameworks per kept policy, e.g. 'swc_tcf=gurobi'. Default: all (or the profile's choice).",
     )
     p.add_argument(
+        "--file-list",
+        metavar="PATH",
+        default=None,
+        dest="file_list",
+        help="Create source/ (main.py/__main__.py + logic/) and save the tree listing run inside it to PATH "
+        "(relative to the package root, e.g. assets/files/FILE_LIST.txt).",
+    )
+    p.add_argument(
         "--output-dir", metavar="PATH",
         default=str(PROJECT_ROOT / "dist" / "exports"),
         dest="output_dir",
@@ -593,7 +608,9 @@ def main(argv: Optional[List[str]] = None) -> None:
         # 4. Prune codebase (algorithms + optional features + subnets)
         _log("Step 1/4 — Pruning codebase …")
         # The pruner deletes logic/package/ when it finishes, so stage the profile tool first.
-        profile_dir = _stage_profile_tool() if (args.profile or args.entrypoints or args.engines) else None
+        profile_dir = (
+            _stage_profile_tool() if (args.profile or args.entrypoints or args.engines or args.file_list) else None
+        )
         _step_prune(
             selections,
             drop_features,
@@ -604,7 +621,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             network=network,
         )
         if profile_dir is not None:
-            _step_profile(profile_dir, args.profile, args.entrypoints, args.engines, args.dry_run)
+            _step_profile(profile_dir, args.profile, args.entrypoints, args.engines, args.file_list, args.dry_run)
 
         # 5. Commit pruned state
         if not args.dry_run and not args.no_commit:

@@ -12,6 +12,8 @@ export tree into a narrower package, so a re-cut reproduces them without hand ed
    in ``policy_engines`` lists its files and dependencies; unselected engines lose both, and a
    policy's ``default_framework`` settings are pointed at the first kept engine.
 5. A static check that no kept module imports a removed one.
+6. Optionally (``--file-list PATH``), a ``source/`` folder with the entry points and ``logic/``
+   and its ``tree`` listing saved to ``PATH``.
 
 Usage (from the main repository, against a re-cut export checkout)::
 
@@ -126,6 +128,37 @@ def _edit(path: Path, pattern: str, repl: str, dry_run: bool) -> None:
             path.write_text(new)
 
 
+def write_file_list(root: Path, target: str, dry_run: bool) -> Path:
+    """Copy the entry points and logic/ into ``root/source`` and save ``tree`` run there to ``target``.
+
+    ``target`` is relative to ``root`` (e.g. ``assets/files/FILE_LIST.txt``). ``source/`` is
+    recreated on every call; ``__pycache__`` folders are not copied.
+    """
+    source = root / "source"
+    out = root / target
+    _log(f"file list: source/ -> {target}")
+    if dry_run:
+        return out
+    if source.is_symlink():
+        raise SystemExit("refusing to replace a symlinked source/")
+    if source.exists():
+        shutil.rmtree(source)
+    source.mkdir()
+    for name in ("main.py", "__main__.py"):
+        if (root / name).is_file():
+            shutil.copy2(root / name, source / name)
+    shutil.copytree(root / "logic", source / "logic", ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    try:
+        listing = subprocess.run(
+            ["tree", "--charset", "ascii", "--noreport", "-a", "."], cwd=source, capture_output=True, text=True, check=True
+        ).stdout
+    except FileNotFoundError as exc:
+        raise SystemExit("the 'tree' command is required for --file-list") from exc
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(listing)
+    return out
+
+
 def check_imports(root: Path) -> List[str]:
     """Return 'file: module' for every import of a logic.* module that no longer exists."""
     problems = []
@@ -167,6 +200,8 @@ def main(argv: Optional[List[str]] = None) -> None:
                    help="Override the profile: keep main.py, __main__.py, both or neither.")
     p.add_argument("--engines", default=None,
                    help="Override the profile, e.g. 'swc_tcf=gurobi;sans=new'. Policies left out keep the profile choice.")
+    p.add_argument("--file-list", metavar="PATH", default=None,
+                   help="Create source/ (entry points + logic/) and save its tree listing to PATH (relative to --root).")
     p.add_argument("--dry-run", action="store_true")
     args = p.parse_args(argv)
 
@@ -192,6 +227,8 @@ def main(argv: Optional[List[str]] = None) -> None:
         if problems:
             print("\n".join(problems))
             raise SystemExit(f"{len(problems)} import(s) of removed modules")
+    if args.file_list:
+        write_file_list(root, args.file_list, args.dry_run)
     _log("done")
 
 

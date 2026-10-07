@@ -1,7 +1,7 @@
 """apply_export_profile: entry-point choice, engine selection and the removed-import check."""
 
 import pytest
-from logic.package.apply_export_profile import apply_engines, apply_entrypoints, check_imports
+from logic.package.apply_export_profile import apply_engines, apply_entrypoints, check_imports, write_file_list
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
@@ -73,3 +73,15 @@ def test_check_imports_reports_removed_modules_but_not_guarded_ones(tmp_path):
         "from logic.src.gone import x\ntry:\n    from logic.src.optional import y\nexcept ImportError:\n    y = None\n"
     )
     assert check_imports(tmp_path) == ["logic/src/a.py: logic.src.gone"]
+
+
+def test_file_list_builds_source_and_saves_the_tree(tmp_path):
+    (tmp_path / "logic" / "src" / "__pycache__").mkdir(parents=True)
+    (tmp_path / "logic" / "src" / "mod.py").write_text("")
+    (tmp_path / "logic" / "src" / "__pycache__" / "mod.cpython-310.pyc").write_text("")
+    (tmp_path / "__main__.py").write_text("")
+    out = write_file_list(tmp_path, "assets/files/FILE_LIST.txt", dry_run=False)
+    assert out == tmp_path / "assets" / "files" / "FILE_LIST.txt"
+    assert sorted(p.name for p in (tmp_path / "source").iterdir()) == ["__main__.py", "logic"]
+    listing = out.read_text()
+    assert listing.startswith(".") and "__main__.py" in listing and "mod.py" in listing and "__pycache__" not in listing
