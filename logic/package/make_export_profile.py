@@ -101,10 +101,14 @@ def main() -> None:
                 break
         removed.add(entry)
 
-    patch = _git(args.repo, "diff", "--no-renames", "--binary", "--diff-filter=AM", base, args.target)
+    # Bytes, not text: universal-newline decoding would turn CRLF files (e.g. .bat) into LF.
+    patch = subprocess.run(
+        ["git", "-C", str(args.repo), "diff", "--no-renames", "--binary", "--diff-filter=AM", base, args.target],
+        capture_output=True, check=True,
+    ).stdout
     patch_rel = f"export_profiles/{args.name}.patch"
     (args.config.parent / patch_rel).parent.mkdir(parents=True, exist_ok=True)
-    (args.config.parent / patch_rel).write_text(patch)
+    (args.config.parent / patch_rel).write_bytes(patch)
 
     profiles = config.setdefault("export_profiles", {})
     # Keys this script does not derive (e.g. ``include``) are kept from the existing entry.
@@ -118,7 +122,7 @@ def main() -> None:
         "patch": patch_rel,
     }
     args.config.write_text(json.dumps(config, indent=2) + "\n")
-    print(f"{args.name}: {len(removed)} remove paths, {patch.count(chr(10) + 'diff --git') + bool(patch)} patched files")
+    print(f"{args.name}: {len(removed)} remove paths, {patch.count(b'\ndiff --git') + bool(patch)} patched files")
 
 
 if __name__ == "__main__":
