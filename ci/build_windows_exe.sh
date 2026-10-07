@@ -19,6 +19,13 @@ TORCH="${TORCH:-2.13.0}"       # must match the pin in logic/pyproject.toml
 CUDA_TAG="${CUDA_TAG:-cu130}"  # PyTorch wheel index: https://download.pytorch.org/whl/<tag>
 py() { wine 'C:\Python310\python.exe' "$@"; }
 
+# Wine gaps that only affect the build host (the finished .exe needs neither on Windows):
+# - Intel OpenMP aborts on Wine's missing NUMA call unless thread affinity is off;
+# - Wine's built-in ucrtbase lacks functions torch imports (crealf), so Microsoft's ucrtbase.dll
+#   (e.g. from the conda-forge "ucrt" package, Library/bin/ucrtbase.dll) must sit in C:\Python310.
+export KMP_AFFINITY=disabled WINEDLLOVERRIDES="${WINEDLLOVERRIDES:-ucrtbase=n,b}"
+test -f "$WINEPREFIX/drive_c/Python310/ucrtbase.dll" || { echo "missing C:\\Python310\\ucrtbase.dll (see the comment in this script)"; exit 1; }
+
 cd "$PKG"
 py -m pip install --upgrade pip
 py -m pip install "torch==$TORCH" --index-url "https://download.pytorch.org/whl/$CUDA_TAG"
