@@ -35,7 +35,7 @@ class TestGetInnerModel:
 
 
 class TestLoadProblem:
-    def test_loads_vrpp(self):
+    def test_loads_ptp(self):
         env_cls = load_problem("ptp")
         assert env_cls is not None
 

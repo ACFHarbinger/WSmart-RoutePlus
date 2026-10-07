@@ -12,7 +12,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 class TestContextEmbedder:
 
-    def test_vrpp_embedder_shapes(self):
+    def test_ptp_embedder_shapes(self):
         """Test PTP embedder output shapes."""
         embed_dim = 64
         model = PTPContextEmbedder(embed_dim=embed_dim, node_dim=3, temporal_horizon=0)

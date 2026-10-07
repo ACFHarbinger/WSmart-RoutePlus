@@ -17,7 +17,7 @@ class MockProblem:
         self.NAME = name
 
 @pytest.fixture
-def vrpp_problem():
+def ptp_problem():
     return MockProblem("ptp")
 
 @pytest.fixture
@@ -27,7 +27,7 @@ def wc_problem():
 class TestHypernetwork:
     """Tests for the Hypernetwork module."""
 
-    def test_initialization_vrpp(self, vrpp_problem):
+    def test_initialization_ptp(self, ptp_problem):
         """Test initialization with PTP problem dims."""
         model = Hypernetwork(input_dim=6, output_dim=6, n_days=31, embed_dim=8, hidden_dim=16)
         # input_dim = 6. embed_dim = 8. combined_dim = 6 + 8 = 14
@@ -39,7 +39,7 @@ class TestHypernetwork:
         model = Hypernetwork(input_dim=6, output_dim=3)
         assert model.output_dim == 3
 
-    def test_forward_pass(self, vrpp_problem):
+    def test_forward_pass(self, ptp_problem):
         """Test forward pass output shapes and values."""
         batch_size = 4
         model = Hypernetwork(input_dim=6, output_dim=6, n_days=31, embed_dim=8, hidden_dim=16)
@@ -57,12 +57,12 @@ class TestHypernetworkOptimizer:
     """Tests for the HypernetworkOptimizer class."""
 
     @pytest.fixture
-    def optimizer(self, vrpp_problem):
+    def optimizer(self, ptp_problem):
         return HypernetworkOptimizer(
             cost_weight_keys=["km", "kg", "overflows"],
             constraint_value=1.0,
             device=torch.device("cpu"),
-            problem=vrpp_problem
+            problem=ptp_problem
         )
 
     def test_update_buffer(self, optimizer):

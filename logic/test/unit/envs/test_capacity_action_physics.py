@@ -8,7 +8,7 @@ from tensordict import TensorDict
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
-def test_cvrpp_remaining_capacity_never_goes_negative() -> None:
+def test_mvptp_remaining_capacity_never_goes_negative() -> None:
     env = MVPTPEnv(generator_params={"num_loc": 2}, check_env_specs=False)
     td = TensorDict(
         {

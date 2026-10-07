@@ -2,7 +2,7 @@
 
 import pytest
 import torch
-from logic.src.models.subnets.embeddings.context.ptp import PTPContextEmbedder as CVRPPContext
+from logic.src.models.subnets.embeddings.context.ptp import PTPContextEmbedder as MVPTPContext
 from logic.src.models.subnets.embeddings.context.ptp import PTPContextEmbedder as VRPPContext
 from logic.src.models.subnets.embeddings.dynamic import DynamicEmbedding
 from logic.src.models.subnets.embeddings.static import StaticEmbedding
@@ -17,7 +17,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.fast]
 class TestContextEmbedding:
     """Tests for ContextEmbeddings."""
 
-    def test_vrpp_context(self):
+    def test_ptp_context(self):
         """Verify VRPPContext output shape."""
         batch = 2
         nodes = 5
@@ -38,7 +38,7 @@ class TestContextEmbedding:
         batch = 2
         nodes = 5
         embed_dim = 16
-        model = CVRPPContext(embed_dim)
+        model = MVPTPContext(embed_dim)
 
         embeddings = torch.randn(batch, nodes, embed_dim)
         td = TensorDict({

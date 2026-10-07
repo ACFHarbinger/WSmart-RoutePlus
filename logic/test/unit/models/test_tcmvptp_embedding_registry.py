@@ -20,7 +20,7 @@ def test_ctop_uses_cvrpp_model_components():
     assert STATE_EMBEDDING_REGISTRY["tcmvptp"] is STATE_EMBEDDING_REGISTRY["mvptp"]
 
 
-def test_legacy_critic_accepts_ctop():
+def test_legacy_critic_accepts_tcmvptp():
     """The deprecated compatibility critic remains usable by saved pipelines."""
     problem = MagicMock()
     problem.NAME = "tcmvptp"

@@ -118,7 +118,7 @@ class TestGetPotentialPTP:
 class TestGetPotentialFn:
     """Tests for the potential function registry."""
 
-    def test_vrpp_returns_correct_fn(self):
+    def test_ptp_returns_correct_fn(self):
         """Registry returns get_potential_ptp for 'ptp'."""
         fn = get_potential_fn("ptp")
         assert fn is get_potential_ptp

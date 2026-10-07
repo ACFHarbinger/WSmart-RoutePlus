@@ -41,6 +41,8 @@ class MVPTP(PTP):
 
         # MVPTP specific: Check total capacity PER TRIP
         capacity = dataset.get("capacity", dataset.get("max_waste", torch.tensor(100.0)))
+        # One value per instance; a scalar (as passed by eval) applies to the whole batch.
+        capacity = torch.as_tensor(capacity, dtype=torch.float32).reshape(-1).expand(pi.size(0))
 
         # Extract trip waste
         waste_with_depot = MVPTP.get_waste_with_depot(dataset, pi)

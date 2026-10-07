@@ -203,11 +203,11 @@ class TestStateMVPTP:
         assert state.td["collected_waste"].item() == 12.0
 
 
-class TestCVRPP:
+class TestMVPTP:
     """Tests for the MVPTP problem class."""
 
     @pytest.mark.unit
-    def test_make_state_uses_cvrpp_state(self):
+    def test_make_state_uses_mvptp_state(self):
         """Test that MVPTP uses StateMVPTP."""
         problem_module.COST_KM = 1.0
         problem_module.REVENUE_KG = 0.1
@@ -254,3 +254,19 @@ class TestCVRPP:
         # get_costs logic sums gathered waste. gather([1, 0, 2]) -> [60, 0, 60]. Sum = 120.
         # Profit = 120 - 6 = 114. Negative Profit = -114.
         assert torch.allclose(cost, torch.tensor([-114.0]))
+
+    @pytest.mark.unit
+    def test_get_costs_scalar_capacity_applies_to_every_instance(self):
+        """A 0-dim capacity (as eval passes it) is the limit for every instance in the batch."""
+        problem_module.COST_KM = 1.0
+        problem_module.REVENUE_KG = 1.0
+        dataset = {
+            "depot": torch.zeros(2, 2),
+            "loc": torch.tensor([[[1.0, 0.0], [2.0, 0.0]]] * 2),
+            "waste": torch.tensor([[60.0, 60.0]] * 2),
+            "capacity": torch.tensor(100.0),
+        }
+        cost, _, _ = MVPTP.get_costs(dataset, torch.tensor([[1, 0, 2], [2, 0, 1]]), cw_dict=None)
+        assert cost.shape == (2,)
+        with pytest.raises(AssertionError, match="Used more than capacity"):
+            MVPTP.get_costs(dataset, torch.tensor([[1, 0, 2], [1, 2, 0]]), cw_dict=None)

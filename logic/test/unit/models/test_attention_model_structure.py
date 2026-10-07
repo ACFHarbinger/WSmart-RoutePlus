@@ -29,7 +29,7 @@ class TestAttentionModelStructure:
         factory.create_decoder.return_value = MagicMock()
         return factory
 
-    def test_initialization_vrpp(self, mock_problem, mock_factory):
+    def test_initialization_ptp(self, mock_problem, mock_factory):
         """Test initialization for PTP context."""
         mock_problem.NAME = "ptp"
 

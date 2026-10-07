@@ -17,7 +17,7 @@ from logic.src.envs.tasks.ptp import PTP
 
 @pytest.mark.unit
 @pytest.mark.fast
-def test_vrpp_get_costs_width_n_vs_n1_parity() -> None:
+def test_ptp_get_costs_width_n_vs_n1_parity() -> None:
     """PTP.get_costs must produce identical cost dict and profit for width N and N+1."""
     depot = torch.tensor([[0.0, 0.0]])
     locs_N = torch.tensor([[[1.0, 0.0], [2.0, 0.0], [3.0, 0.0], [4.0, 0.0]]])
@@ -62,7 +62,7 @@ def test_vrpp_get_costs_width_n_vs_n1_parity() -> None:
 
 @pytest.mark.unit
 @pytest.mark.fast
-def test_vrpp_get_costs_no_customer_shift_on_reset_tensordict() -> None:
+def test_ptp_get_costs_no_customer_shift_on_reset_tensordict() -> None:
     """Calling get_costs on a reset TensorDict must not shift customer indices."""
     env = PTPEnv(num_loc=5, batch_size=[1])
     td_raw = env.generator(1)
@@ -85,7 +85,7 @@ def test_vrpp_get_costs_no_customer_shift_on_reset_tensordict() -> None:
 
 @pytest.mark.unit
 @pytest.mark.fast
-def test_vrpp_get_costs_batched_parity() -> None:
+def test_ptp_get_costs_batched_parity() -> None:
     """Verify batched parity across width N and N+1 with multiple instances."""
     B, N = 4, 6
     torch.manual_seed(123)
@@ -110,7 +110,7 @@ def test_vrpp_get_costs_batched_parity() -> None:
 
 @pytest.mark.unit
 @pytest.mark.fast
-def test_cvrpp_get_costs_width_n_vs_n1_parity() -> None:
+def test_mvptp_get_costs_width_n_vs_n1_parity() -> None:
     """MVPTP.get_costs must produce identical cost dict and trip capacity check on both shapes."""
     depot = torch.zeros(1, 2)
     locs_N = torch.tensor([[[1.0, 0.0], [2.0, 0.0]]])

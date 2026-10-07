@@ -105,12 +105,12 @@ class TestFunctions:
         assert isinstance(result, dict)
         assert all(v.device.type == "cpu" for v in result.values())
 
-    def test_load_problem_vrpp(self):
+    def test_load_problem_ptp(self):
         """Test load_problem for PTP."""
         problem = load_problem("ptp")
         assert problem.NAME == "ptp"
 
-    def test_load_problem_cvrpp(self):
+    def test_load_problem_mvptp(self):
         """Test load_problem for MVPTP."""
         problem = load_problem("mvptp")
         assert problem.NAME == "mvptp"

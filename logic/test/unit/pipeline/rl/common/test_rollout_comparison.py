@@ -157,7 +157,7 @@ def test_repeated_setup_keeps_pool_identity(promote):
     assert baseline.comparison_generation == generation
 
 
-def test_real_vrpp_pool_and_greedy_rollout():
+def test_real_ptp_pool_and_greedy_rollout():
     from logic.src.envs.routing.ptp import PTPEnv
     from logic.src.models.core.attention_model.policy import AttentionModelPolicy
 

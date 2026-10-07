@@ -95,7 +95,7 @@ class TestCTOPEnvironment:
         assert td["avg_speed_kmh"].item() == 20.0
         assert td["service_time_h"].item() == pytest.approx(0.1)
 
-    def test_get_env_factory_builds_a_ctop_generator_not_a_plain_vrpp_one(self):
+    def test_get_env_factory_builds_a_tcmvptp_generator_not_a_plain_ptp_one(self):
         """get_env("tcmvptp", **kwargs) must route through TCMVPTPGenerator.
 
         Regression test: TCMVPTPEnv previously had no __init__ override, so it

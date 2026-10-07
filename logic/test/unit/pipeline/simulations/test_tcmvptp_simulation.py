@@ -29,10 +29,10 @@ pytestmark = [pytest.mark.unit, pytest.mark.fast]
 class TestCTOPValidation:
     """Tests that TCMVPTP is a registered and validated problem variant."""
 
-    def test_ctop_in_problems(self):
+    def test_tcmvptp_in_problems(self):
         assert "tcmvptp" in PROBLEMS
 
-    def test_validate_sim_config_accepts_ctop(self):
+    def test_validate_sim_config_accepts_tcmvptp(self):
         cfg = Config()
         cfg.sim.problem = "tcmvptp"
         cfg.sim.graph.n_days = 5
@@ -148,7 +148,7 @@ class TestCTOPCollectionAction:
         assert context["ncol"] == 2
         assert context["time_spent"] == pytest.approx(1.5 + 0.5, rel=1e-5)
 
-    def test_ctop_shift_violation_raises(self):
+    def test_tcmvptp_shift_violation_raises(self):
         bins = MagicMock()
         bins.collect.return_value = ([1], 50.0, 1, 100.0)
 
