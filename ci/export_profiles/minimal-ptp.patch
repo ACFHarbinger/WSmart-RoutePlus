@@ -1320,10 +1320,10 @@ HcmV?d00001
 
 diff --git a/assets/files/FILE_LIST.txt b/assets/files/FILE_LIST.txt
 new file mode 100644
-index 000000000..30a3d157c
+index 000000000..802f8df72
 --- /dev/null
 +++ b/assets/files/FILE_LIST.txt
-@@ -0,0 +1,496 @@
+@@ -0,0 +1,486 @@
 +.
 +|-- logic
 +|   |-- configs
@@ -1373,14 +1373,11 @@ index 000000000..30a3d157c
 +|       |   |   |-- normalization.py
 +|       |   |   `-- optim.py
 +|       |   |-- policies
-+|       |   |   |-- aco_ks.py
-+|       |   |   |-- alns.py
 +|       |   |   |-- __init__.py
 +|       |   |   |-- na.py
 +|       |   |   |-- other
 +|       |   |   |   |-- __init__.py
-+|       |   |   |   |-- mandatory_selection.py
-+|       |   |   |   `-- reinforcement_learning.py
++|       |   |   |   `-- mandatory_selection.py
 +|       |   |   |-- pg_clns.py
 +|       |   |   |-- sans.py
 +|       |   |   `-- swc_tcf.py
@@ -1395,7 +1392,6 @@ index 000000000..30a3d157c
 +|       |   |   `-- train.py
 +|       |   `-- tracking.py
 +|       |-- constants
-+|       |   |-- data.py
 +|       |   |-- __init__.py
 +|       |   |-- metrics.py
 +|       |   |-- models.py
@@ -1403,8 +1399,6 @@ index 000000000..30a3d157c
 +|       |   |-- routing.py
 +|       |   |-- simulation.py
 +|       |   |-- system.py
-+|       |   |-- tasks.py
-+|       |   |-- user_interface.py
 +|       |   `-- waste.py
 +|       |-- data
 +|       |   |-- datasets
@@ -1630,14 +1624,10 @@ index 000000000..30a3d157c
 +|       |       |   |-- __init__.py
 +|       |       |   `-- running.py
 +|       |       `-- wsmart_bin_analysis
-+|       |           |-- export
-+|       |           |   |-- grid.py
-+|       |           |   |-- __init__.py
-+|       |           |   `-- save_load.py
-+|       |           `-- __init__.py
++|       |           |-- grid.py
++|       |           |-- __init__.py
++|       |           `-- save_load.py
 +|       |-- policies
-+|       |   |-- acceptance_criteria
-+|       |   |   `-- base
 +|       |   |-- __init__.py
 +|       |   |-- mandatory_selection
 +|       |   |   |-- base
@@ -2405,100 +2395,311 @@ index 61dda78f7..11bedaf5f 100644
      edge_threshold: Union[float, int, str] = "0"
      edge_method: Optional[str] = None
 diff --git a/logic/src/configs/policies/__init__.py b/logic/src/configs/policies/__init__.py
-index 9c81255a5..90609e986 100644
+index 9c81255a5..d8ce6b508 100644
 --- a/logic/src/configs/policies/__init__.py
 +++ b/logic/src/configs/policies/__init__.py
-@@ -68,7 +68,6 @@ Attributes:
+@@ -1,293 +1,28 @@
+ """
+ Policy configuration dataclasses.
+-Attributes:
+-    ABCConfig: ABC policy configuration.
+-    ABPCHGConfig: ABC + PC + HG policy configuration.
+-    HyperHeuristicACOConfig: Hyper-heuristic ACO policy configuration.
+-    KSparseACOConfig: K-sparse ACO policy configuration.
+-    ADPRolloutConfig: ADP rollout policy configuration.
+ 
+-    AdaptiveKernelSearchConfig: Adaptive kernel search policy configuration.
+-    ALNSConfig: ALNS policy configuration.
+-    ALNSIPOConfig: ALNS-IPO policy configuration.
+-    AMPHHConfig: AMPHH policy configuration.
+-    ARCOConfig: ARCO policy configuration.
+-    BBConfig: BB policy configuration.
+-    BCConfig: BC policy configuration.
+-    BPConfig: BP policy configuration.
+-    BPCConfig: BPC policy configuration.
+-    CALMConfig: CALM policy configuration.
+-    CFRSConfig: CFRS policy configuration.
+-    CGHConfig: CGH policy configuration.
+-    CPSATConfig: CP-SAT policy configuration.
+-    CVRPConfig: CVRP policy configuration.
+-    DEConfig: DE policy configuration.
+-    MuCommaLambdaESConfig: Mu, lambda ES policy configuration.
+-    MuKappaLambdaESConfig: Mu, kappa, lambda ES policy configuration.
+-    MuPlusLambdaESConfig: Mu + lambda ES policy configuration.
+-    ExactSDPConfig: Exact SDP policy configuration.
+-    FAConfig: FA policy configuration.
+-    FILOConfig: FILO policy configuration.
+-    GAConfig: GA policy configuration.
+-    GIHHConfig: GIHH policy configuration.
+-    GLSConfig: GLS policy configuration.
+-    GPHHConfig: GPHH policy configuration.
+-    GP_MP_HH_Config: GP-MP-HH policy configuration.
+-    HGSConfig: HGS policy configuration.
+-    HGSADCConfig: HGS-ADC policy configuration.
+-    HGSALNSConfig: HGS-ALNS policy configuration.
+-    HGSRRConfig: HGS-RR policy configuration.
+-    HMMGDHHConfig: HMM-GD-HH policy configuration.
+-    HybridMemeticLargeNeighborhoodSearchConfig: Hybrid memetic large neighborhood search policy configuration.
+-    HNAPolicyConfig: HNA policy configuration.
+-    HSConfig: HS policy configuration.
+-    HULKConfig: HULK policy configuration.
+-    HVPLConfig: HVPL policy configuration.
+-    ILSConfig: ILS policy configuration.
+-    IntegerLShapedBendersConfig: Integer L-shaped Benders policy configuration.
+-    ILSRVNDSPConfig: ILS-RVND-SP policy configuration.
+-    JointGreedyConfig: Joint greedy policy configuration.
+-    JointSAConfig: Joint SA policy configuration.
+-    KGLSConfig: KGLS policy configuration.
+-    KernelSearchConfig: Kernel search policy configuration.
+-    LocalBranchingConfig: Local branching policy configuration.
+-    LocalBranchingVNSConfig: Local branching-VNS policy configuration.
+-    LBBDConfig: LBBD policy configuration.
+-    LCAConfig: LCA policy configuration.
+-    LKH3Config: LKH3 policy configuration.
+-    LRHConfig: LRH policy configuration.
+-    MAConfig: MA policy configuration.
+-    MemeticAlgorithmDualPopulationConfig: Memetic algorithm dual population policy configuration.
+-    MemeticAlgorithmIslandModelConfig: Memetic algorithm island model policy configuration.
+-    MemeticAlgorithmToleranceBasedSelectionConfig: Memetic algorithm tolerance-based selection policy configuration.
+-    MHHConfig: MHH policy configuration.
+-    MP_ACO_Config: MP-ACO policy configuration.
+-    MP_ILS_Config: MP-ILS policy configuration.
+-    MP_PSO_Config: MP-PSO policy configuration.
+-    MP_SA_Config: MP-SA policy configuration.
++Attributes:
      NeuralAgentConfig: Neural agent policy configuration.
-     NDSBRKGAConfig: NDSBRKGA policy configuration.
+-    NDSBRKGAConfig: NDSBRKGA policy configuration.
      MandatorySelectionConfig: Mandatory selection policy configuration.
 -    RouteImprovingConfig: Route improving policy configuration.
-     PHConfig: PH policy configuration.
-     PHHConfig: PHH policy configuration.
-     POPMUSICConfig: POPMUSIC policy configuration.
-@@ -168,7 +167,7 @@ from .alns import ALNSConfig
- # from .mp_sa import MP_SA_Config  # AUTO-CLEANED
- # from .ms_bpc_sp import MSBPCSPConfig  # AUTO-CLEANED
+-    PHConfig: PH policy configuration.
+-    PHHConfig: PHH policy configuration.
+-    POPMUSICConfig: POPMUSIC policy configuration.
+-    PSOConfig: PSO policy configuration.
+-    DistancePSOConfig: Distance PSO policy configuration.
+-    PSOMAConfig: PSOMA policy configuration.
+-    QDEConfig: QDE policy configuration.
+-    RENSConfig: RENS policy configuration.
+-    RFOConfig: RFO policy configuration.
+-    RLALNSConfig: RL-ALNS policy configuration.
+-    RLGDHHConfig: RL-GD-HH policy configuration.
+-    RLHVPLConfig: RL-HVPL policy configuration.
+-    RTSConfig: RTS policy configuration.
+-    SAConfig: SA policy configuration.
+-    SANSConfig: SANS policy configuration.
+-    SCAConfig: SCA policy configuration.
+-    SHHConfig: SHH policy configuration.
+-    SISRConfig: SISR policy configuration.
+-    SLCConfig: SLC policy configuration.
+-    SRCConfig: SRC policy configuration.
+-    SSHHConfig: SSHH policy configuration.
+-    ScenarioTreeExtensiveFormConfig: Scenario tree extensive form policy configuration.
+-    SWCTCFConfig: SWCTCF policy configuration.
+-    TSConfig: TS policy configuration.
+-    TSPConfig: TSP policy configuration.
+-    VNSConfig: VNS policy configuration.
+-    VPLConfig: VPL policy configuration.
+-    ExactGuidedHeuristicConfig: Exact Guided Heuristic policy configuration.
+     PGCLNSConfig: PG-CLNS policy configuration.
++    SANSConfig: SANS policy configuration.
++    SWCTCFConfig: SWC-TCF policy configuration.
+ 
+ Example:
+-    >>> from logic.src.configs.policies import ARCOConfig
+-    >>> config = ARCOConfig()
+-    >>> print(config)
+-    ARCOConfig(name='arco', solve_timeout=0.0, solution_timeout=0.0, solve_time_limit=600.0, solution_time_limit=1800.0, workers=1, solve_workers=None, verbose=0, logging_level='INFO', debug=False, random_seed=None, cache_dir='data/models', dataset_dir='data/datasets', policy_config=None, model=None, model_config=<ModelConfig(name='am', encoder=<EncoderConfig(type='gat', embed_dim=128, hidden_dim=512, n_layers=3, n_heads=8, n_sublayers=None, normalization=<NormalizationConfig(embed_dim=128, use_layer_norm=True)>, activation=<ActivationConfig(type='gelu')>, dropout=0.1, mask_inner=True, mask_graph=False, spatial_bias=False, connection_type='residual', aggregation_graph='avg', aggregation_node='sum', spatial_bias_scale=1.0, hyper_expansion=4)>, decoder=<DecoderConfig(type='attention', embed_dim=128, hidden_dim=512, n_layers=3, n_heads=8, normalization=<NormalizationConfig(embed_dim=128, use_layer_norm=True)>, activation=<ActivationConfig(type='gelu')>, decoding=<DecodingConfig(strategy='greedy', beam_width=1, temperature=1.0, top_k=None, top_p=None, tanh_clipping=0.0, mask_logits=True, multistart=False, num_starts=1, select_best=False)>, dropout=0.1, mask_logits=True, connection_type='residual', n_predictor_layers=None, tanh_clipping=10.0, hyper_expansion=4)>, reward=<ObjectiveConfig(type='vrpp')>, temporal_horizon=0, policy_config=None, load_path=None)>, training_config=None, dataset_config=None, rollout_config=None, evaluation_config=None, problem_config=None)
++    >>> from logic.src.configs.policies import SANSConfig
++    >>> config = SANSConfig()
+ """
+ 
+-# from .abc import ABCConfig  # AUTO-CLEANED
+-# from .abpc_hg import ABPCHGConfig  # AUTO-CLEANED
+-# from .aco_ks import KSparseACOConfig  # AUTO-CLEANED
+-# from .adp import ADPRolloutConfig  # AUTO-CLEANED
+-# from .aks import AdaptiveKernelSearchConfig  # AUTO-CLEANED
+-from .alns import ALNSConfig
+-# from .alns_ipo import ALNSIPOConfig  # AUTO-CLEANED
+-# from .amphh import AMPHHConfig  # AUTO-CLEANED
+-# from .arco import ARCOConfig  # AUTO-CLEANED
+-# from .bb import BBConfig  # AUTO-CLEANED
+-# from .bc import BCConfig  # AUTO-CLEANED
+-# from .bp import BPConfig  # AUTO-CLEANED
+-# from .calm import CALMConfig  # AUTO-CLEANED
+-# from .cf_rs import CFRSConfig  # AUTO-CLEANED
+-# from .cgh import CGHConfig  # AUTO-CLEANED
+-# from .cp_sat import CPSATConfig  # AUTO-CLEANED
+-# from .cvrp import CVRPConfig  # AUTO-CLEANED
+-# from .de import DEConfig  # AUTO-CLEANED
+-# from .egh import ExactGuidedHeuristicConfig  # AUTO-CLEANED
+-# from .es_mcl import MuCommaLambdaESConfig  # AUTO-CLEANED
+-# from .es_mkl import MuKappaLambdaESConfig  # AUTO-CLEANED
+-# from .es_mpl import MuPlusLambdaESConfig  # AUTO-CLEANED
+-# from .esdp import ExactSDPConfig  # AUTO-CLEANED
+-# from .fa import FAConfig  # AUTO-CLEANED
+-# from .filo import FILOConfig  # AUTO-CLEANED
+-# from .ga import GAConfig  # AUTO-CLEANED
+-# from .gihh import GIHHConfig  # AUTO-CLEANED
+-# from .gls import GLSConfig  # AUTO-CLEANED
+-# from .gp_hh import GPHHConfig  # AUTO-CLEANED
+-# from .gp_mp_hh import GP_MP_HH_Config  # AUTO-CLEANED
+-# from .hgs_adc import HGSADCConfig  # AUTO-CLEANED
+-# from .hgs_alns import HGSALNSConfig  # AUTO-CLEANED
+-# from .hgs_rr import HGSRRConfig  # AUTO-CLEANED
+-# from .hmlns import HybridMemeticLargeNeighborhoodSearchConfig  # AUTO-CLEANED
+-# from .hmm_gd_hh import HMMGDHHConfig  # AUTO-CLEANED
+-# from .hna import HNAPolicyConfig  # AUTO-CLEANED
+-# from .hs import HSConfig  # AUTO-CLEANED
+-# from .hulk import HULKConfig  # AUTO-CLEANED
+-# from .hvpl import HVPLConfig  # AUTO-CLEANED
+-# from .ils import ILSConfig  # AUTO-CLEANED
+-# from .ils_bd import IntegerLShapedBendersConfig  # AUTO-CLEANED
+-# from .ils_rvnd_sp import ILSRVNDSPConfig  # AUTO-CLEANED
+-# from .kgls import KGLSConfig  # AUTO-CLEANED
+-# from .ks import KernelSearchConfig  # AUTO-CLEANED
+-# from .lasm import LASMPipelineConfig  # AUTO-CLEANED
+-# from .lb import LocalBranchingConfig  # AUTO-CLEANED
+-# from .lb_vns import LocalBranchingVNSConfig  # AUTO-CLEANED
+-# from .lbbd import LBBDConfig  # AUTO-CLEANED
+-# from .lca import LCAConfig  # AUTO-CLEANED
+-# from .lkh3 import LKH3Config  # AUTO-CLEANED
+-# from .lrh import LRHConfig  # AUTO-CLEANED
+-# from .ma import MAConfig  # AUTO-CLEANED
+-# from .ma_dp import MemeticAlgorithmDualPopulationConfig  # AUTO-CLEANED
+-# from .ma_im import MemeticAlgorithmIslandModelConfig  # AUTO-CLEANED
+-# from .ma_ts import MemeticAlgorithmToleranceBasedSelectionConfig  # AUTO-CLEANED
+-# from .mhh import MHHConfig  # AUTO-CLEANED
+-# from .mp_aco import MP_ACO_Config  # AUTO-CLEANED
+-# from .mp_ils import MP_ILS_Config  # AUTO-CLEANED
+-# from .mp_pso import MP_PSO_Config  # AUTO-CLEANED
+-# from .mp_sa import MP_SA_Config  # AUTO-CLEANED
+-# from .ms_bpc_sp import MSBPCSPConfig  # AUTO-CLEANED
  from .na import NeuralAgentConfig
 -from .other import MandatorySelectionConfig, RouteImprovingConfig
 +from .other import MandatorySelectionConfig
  from .pg_clns import PGCLNSConfig
- # from .ph import PHConfig  # AUTO-CLEANED
- # from .phh import PHHConfig  # AUTO-CLEANED
-@@ -233,7 +232,6 @@ __all__ = [
+-# from .ph import PHConfig  # AUTO-CLEANED
+-# from .phh import PHHConfig  # AUTO-CLEANED
+-# from .popmusic import POPMUSICConfig  # AUTO-CLEANED
+-# from .pso import PSOConfig  # AUTO-CLEANED
+-# from .psoda import DistancePSOConfig  # AUTO-CLEANED
+-# from .qde import QDEConfig  # AUTO-CLEANED
+-# from .rens import RENSConfig  # AUTO-CLEANED
+-# from .rfo import RFOConfig  # AUTO-CLEANED
+-# from .rl_alns import RLALNSConfig  # AUTO-CLEANED
+-# from .rl_gd_hh import RLGDHHConfig  # AUTO-CLEANED
+-# from .rl_hvpl import RLHVPLConfig  # AUTO-CLEANED
+-# from .rts import RTSConfig  # AUTO-CLEANED
+-# from .sa import SAConfig  # AUTO-CLEANED
+ from .sans import SANSConfig
+-# from .sca import SCAConfig  # AUTO-CLEANED
+-# from .shh import SHHConfig  # AUTO-CLEANED
+-# from .sisr import SISRConfig  # AUTO-CLEANED
+-# from .slc import SLCConfig  # AUTO-CLEANED
+-# from .src import SRCConfig  # AUTO-CLEANED
+-# from .ss_hh import SSHHConfig  # AUTO-CLEANED
+-# from .st_ef import ScenarioTreeExtensiveFormConfig  # AUTO-CLEANED
+ from .swc_tcf import SWCTCFConfig
+-# from .ts import TSConfig  # AUTO-CLEANED
+-# from .tsp import TSPConfig  # AUTO-CLEANED
+-# from .vns import VNSConfig  # AUTO-CLEANED
+-# from .vpl import VPLConfig  # AUTO-CLEANED
+ 
+ __all__ = [
+-#     "ARCOConfig",  # AUTO-CLEANED
+-    "AdaptiveKernelSearchConfig",
+-    "ABPCHGConfig",
+-    "ADPRolloutConfig",
+-    "KSparseACOConfig",
+-    "ALNSConfig",
+-    "ALNSIPOConfig",
+-#     "BBConfig",  # AUTO-CLEANED
+-#     "BCConfig",  # AUTO-CLEANED
+-#     "BPConfig",  # AUTO-CLEANED
+-#     "CALMConfig",  # AUTO-CLEANED
+-    "CFRSConfig",
+-#     "CVRPConfig",  # AUTO-CLEANED
+-    "DistancePSOConfig",
+-#     "FILOConfig",  # AUTO-CLEANED
+-#     "GIHHConfig",  # AUTO-CLEANED
+-    "HGSADCConfig",
+-    "HGSALNSConfig",
+-    "HGSRRConfig",
+-    "HNAPolicyConfig",
+-    "ILSRVNDSPConfig",
+-    "IntegerLShapedBendersConfig",
+-#     "HVPLConfig",  # AUTO-CLEANED
+-#     "KGLSConfig",  # AUTO-CLEANED
+-#     "LKH3Config",  # AUTO-CLEANED
++    "MandatorySelectionConfig",
+     "NeuralAgentConfig",
+-    "RLALNSConfig",
+-    "RLGDHHConfig",
+-    "RLHVPLConfig",
++    "PGCLNSConfig",
+     "SANSConfig",
+-#     "SISRConfig",  # AUTO-CLEANED
+-#     "TSPConfig",  # AUTO-CLEANED
      "SWCTCFConfig",
- #     "POPMUSICConfig",  # AUTO-CLEANED
-     "MandatorySelectionConfig",
+-#     "POPMUSICConfig",  # AUTO-CLEANED
+-    "MandatorySelectionConfig",
 -    "RouteImprovingConfig",
- #     "HULKConfig",  # AUTO-CLEANED
- #     "QDEConfig",  # AUTO-CLEANED
-     "HybridMemeticLargeNeighborhoodSearchConfig",
-diff --git a/logic/src/configs/policies/aco_ks.py b/logic/src/configs/policies/aco_ks.py
-index 2a3abcecf..214efff4d 100644
---- a/logic/src/configs/policies/aco_ks.py
-+++ b/logic/src/configs/policies/aco_ks.py
-@@ -14,9 +14,7 @@ Example:
- from dataclasses import dataclass
- from typing import List, Optional
- 
--from .other.acceptance_criteria import AcceptanceConfig
- from .other.mandatory_selection import MandatorySelectionConfig
--from .other.route_improvement import RouteImprovingConfig
- 
- 
- @dataclass
-@@ -39,8 +37,6 @@ class KSparseACOConfig:
-         local_search_iterations: Number of local search iterations.
-         elitist_weight: Weight for elitist pheromone update.
-         mandatory_selection: List of mandatory strategy config files.
--        route_improvement: List of route improvement operations to apply.
--        acceptance_criterion: Acceptance criterion config for local search.
-     """
- 
-     n_ants: int = 20
-@@ -60,5 +56,3 @@ class KSparseACOConfig:
-     elitist_weight: float = 1.0
-     vrpp: bool = True
-     mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
--    route_improvement: Optional[List[RouteImprovingConfig]] = None
--    acceptance_criterion: AcceptanceConfig = AcceptanceConfig(method="oi")
-diff --git a/logic/src/configs/policies/alns.py b/logic/src/configs/policies/alns.py
-index 115a4213c..f9b5e32db 100644
---- a/logic/src/configs/policies/alns.py
-+++ b/logic/src/configs/policies/alns.py
-@@ -11,12 +11,10 @@ Example:
-     60.0
- """
- 
--from dataclasses import dataclass, field
-+from dataclasses import dataclass
- from typing import List, Optional
- 
--from .other.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
- from .other.mandatory_selection import MandatorySelectionConfig
--from .other.route_improvement import RouteImprovingConfig
- 
- 
- @dataclass
-@@ -34,8 +32,6 @@ class ALNSConfig:
-         xi: 'xi' parameter: fraction of total nodes for max removal cap
-         engine: Solver engine to use ('custom', 'alns').
-         mandatory_selection: List of mandatory strategy config files.
--        route_improvement: List of route improvement operations to apply.
--        acceptance_criterion: Acceptance criterion config for local search.
-     """
- 
-     time_limit: float = 60.0
-@@ -52,9 +48,3 @@ class ALNSConfig:
-     profit_aware_operators: bool = False
-     extended_operators: bool = False
-     mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
--    route_improvement: Optional[List[RouteImprovingConfig]] = None
--    acceptance_criterion: AcceptanceConfig = field(
--        default_factory=lambda: AcceptanceConfig(
--            method="bmc", params=BoltzmannAcceptanceConfig(initial_temp=100.0, alpha=0.995)
--        )
--    )
+-#     "HULKConfig",  # AUTO-CLEANED
+-#     "QDEConfig",  # AUTO-CLEANED
+-    "HybridMemeticLargeNeighborhoodSearchConfig",
+-    "KernelSearchConfig",
+-#     "ABCConfig",  # AUTO-CLEANED
+-#     "FAConfig",  # AUTO-CLEANED
+-#     "SCAConfig",  # AUTO-CLEANED
+-#     "HSConfig",  # AUTO-CLEANED
+-#     "SLCConfig",  # AUTO-CLEANED
+-    "MemeticAlgorithmToleranceBasedSelectionConfig",
+-#     "LCAConfig",  # AUTO-CLEANED
+-    "MemeticAlgorithmIslandModelConfig",
+-    "MuCommaLambdaESConfig",
+-    "MuKappaLambdaESConfig",
+-    "MuPlusLambdaESConfig",
+-    "GPHHConfig",
+-    "HMMGDHHConfig",
+-    "SSHHConfig",
+-#     "VNSConfig",  # AUTO-CLEANED
+-#     "VPLConfig",  # AUTO-CLEANED
+-    "MemeticAlgorithmDualPopulationConfig",
+-#     "PSOConfig",  # AUTO-CLEANED
+-#     "MAConfig",  # AUTO-CLEANED
+-#     "TSConfig",  # AUTO-CLEANED
+-#     "SAConfig",  # AUTO-CLEANED
+-    "LocalBranchingConfig",
+-    "LocalBranchingVNSConfig",
+-#     "RENSConfig",  # AUTO-CLEANED
+-#     "GAConfig",  # AUTO-CLEANED
+-#     "DEConfig",  # AUTO-CLEANED
+-#     "GLSConfig",  # AUTO-CLEANED
+-#     "ILSConfig",  # AUTO-CLEANED
+-#     "RTSConfig",  # AUTO-CLEANED
+-    "ExactSDPConfig",
+-#     "PHConfig",  # AUTO-CLEANED
+-    "ScenarioTreeExtensiveFormConfig",
+-#     "LBBDConfig",  # AUTO-CLEANED
+-    "CPSATConfig",
+-#     "SRCConfig",  # AUTO-CLEANED
+-#     "AMPHHConfig",  # AUTO-CLEANED
+-#     "CGHConfig",  # AUTO-CLEANED
+-    "GP_MP_HH_Config",
+-#     "LRHConfig",  # AUTO-CLEANED
+-#     "MHHConfig",  # AUTO-CLEANED
+-    "MP_ACO_Config",
+-    "MP_SA_Config",
+-    "MP_ILS_Config",
+-    "MP_PSO_Config",
+-#     "PHHConfig",  # AUTO-CLEANED
+-#     "RFOConfig",  # AUTO-CLEANED
+-#     "SHHConfig",  # AUTO-CLEANED
+-    "NDSBRKGAConfig",
+-    "JointSAConfig",
+-    "JointGreedyConfig",
+-    "ExactGuidedHeuristicConfig",
+-    "PGCLNSConfig",
+ ]
 diff --git a/logic/src/configs/policies/na.py b/logic/src/configs/policies/na.py
 index 5be82a06a..4da5b9fb9 100644
 --- a/logic/src/configs/policies/na.py
@@ -2519,54 +2720,644 @@ index 5be82a06a..4da5b9fb9 100644
      seed: Optional[int] = None
      vrpp: bool = True
 diff --git a/logic/src/configs/policies/other/__init__.py b/logic/src/configs/policies/other/__init__.py
-index 1086d254c..8deb2e0e1 100644
+index 1086d254c..9fedb65dd 100644
 --- a/logic/src/configs/policies/other/__init__.py
 +++ b/logic/src/configs/policies/other/__init__.py
-@@ -2,7 +2,6 @@
+@@ -2,42 +2,12 @@
  Miscellaneous configuration dataclasses.
  
  Attributes:
 -    AcceptanceConfig: Configuration for the acceptance criterion (e.g., simulated annealing).
      MandatorySelectionConfig: Configuration for mandatory node selection strategies.
-     RLConfig: Configuration for reinforcement learning policies.
-     RewardShapingConfig: Configuration for reward shaping strategies.
-@@ -15,7 +14,6 @@ Example:
+-    RLConfig: Configuration for reinforcement learning policies.
+-    RewardShapingConfig: Configuration for reward shaping strategies.
+-    FeatureExtractorConfig: Configuration for feature extractors.
+-    ContextFeatureExtractorConfig: Configuration for context feature extractors.
+-    TDLearningConfig: Configuration for TD learning policies.
+-    BanditConfig: Configuration for bandit policies.q
+ 
+ Example:
      None
  """
  
 -from .acceptance_criteria import AcceptanceConfig
  from .mandatory_selection import MandatorySelectionConfig
- from .reinforcement_learning import (
-     BanditConfig,
-@@ -25,7 +23,6 @@ from .reinforcement_learning import (
-     RLConfig,
-     TDLearningConfig,
- )
+-from .reinforcement_learning import (
+-    BanditConfig,
+-    ContextFeatureExtractorConfig,
+-    FeatureExtractorConfig,
+-    RewardShapingConfig,
+-    RLConfig,
+-    TDLearningConfig,
+-)
 -from .route_improvement import RouteImprovingConfig
  
- __all__ = [
-     "BanditConfig",
-@@ -38,6 +35,4 @@ __all__ = [
-     "ContextFeatureExtractorConfig",
-     "RLConfig",
-     "MandatorySelectionConfig",
+-__all__ = [
+-    "BanditConfig",
+-    "TDLearningConfig",
+-    "LinUCBConfig",
+-    "GPCMABConfig",
+-    "EvolutionaryCMABConfig",
+-    "RewardShapingConfig",
+-    "FeatureExtractorConfig",
+-    "ContextFeatureExtractorConfig",
+-    "RLConfig",
+-    "MandatorySelectionConfig",
 -    "RouteImprovingConfig",
 -    "AcceptanceConfig",
- ]
+-]
++__all__ = ["MandatorySelectionConfig"]
+diff --git a/logic/src/configs/policies/other/mandatory_selection.py b/logic/src/configs/policies/other/mandatory_selection.py
+index 7ae7f9282..c0b412a1b 100644
+--- a/logic/src/configs/policies/other/mandatory_selection.py
++++ b/logic/src/configs/policies/other/mandatory_selection.py
+@@ -2,52 +2,23 @@
+ Mandatory Selection Config module.
+ 
+ Configures the strategies used to determine which bins must be collected
+-during simulation or training. This module follows the modular pattern of
+-nested dataclasses for each algorithm.
++during simulation or training: one nested dataclass per strategy.
+ 
+ Attributes:
+-    last_minute (LastMinuteSelectionConfig): Configuration for last-minute selection.
+-    regular (RegularSelectionConfig): Configuration for regular selection.
+-    service_level (ServiceLevelSelectionConfig): Configuration for service-level selection.
+-    revenue (RevenueSelectionConfig): Configuration for revenue-based selection.
+-    lookahead (LookaheadSelectionConfig): Configuration for lookahead selection.
+-    deadline (DeadlineSelectionConfig): Configuration for deadline-based selection.
+-    multi_day_prob (MultiDayProbSelectionConfig): Configuration for multi-day probability selection.
+-    pareto_front (ParetoFrontSelectionConfig): Configuration for Pareto front selection.
+-    profit_per_km (ProfitPerKmSelectionConfig): Configuration for profit per km selection.
+-    spatial_synergy (SpatialSynergySelectionConfig): Configuration for spatial synergy selection.
+-    stochastic_regret (StochasticRegretSelectionConfig): Configuration for stochastic regret selection.
+-    combined (CombinedSelectionConfig): Configuration for combined selection.
+-    mandatory_manager (MandatoryManagerSelectionConfig): Configuration for neural network-based selection.
+-    knapsack (KnapsackSelectionConfig): Base configuration for knapsack-based economic coupling.
+-    mip_knapsack (MIPKnapsackSelectionConfig): Configuration for exact 0/1 multiple-knapsack MIP selection.
+-    fractional_knapsack (FractionalKnapsackSelectionConfig): Configuration for greedy net-profit density selection.
+-    rollout (RolloutSelectionConfig): Configuration for rollout-based predictive selection.
+-    whittle (WhittleSelectionConfig): Configuration for Whittle index-based allocation.
+-    cvar (CVaRSelectionConfig): Configuration for Conditional Value at Risk selection.
+-    savings (SavingsSelectionConfig): Configuration for savings-based pre-selection.
+-    set_cover (SetCoverSelectionConfig): Configuration for set-covering based selection.
+-    modular_greedy (ModularGreedySelectionConfig): Configuration for modular greedy selection.
+-    learned (LearnedSelectionConfig): Configuration for learned selection models.
+-    thompson_dispatcher (ThompsonDispatcherSelectionConfig): Configuration for contextual Thompson sampling dispatcher.
+-    wasserstein (WassersteinSelectionConfig): Configuration for distributionally robust Wasserstein selection.
+-    lagrangian (LagrangianSelectionConfig): Configuration for Lagrangian relaxation based selection.
+-    bernoulli (BernoulliSelectionConfig): Configuration for independent Bernoulli trial selection.
+-    kmeans_sector (KMeansSectorSelectionConfig): Configuration for geographic sector-based selection.
+-    staggered_regular (StaggeredRegularSelectionConfig): Configuration for staggered regular selection.
+-    method: The method to be used for selection.
++    LastMinuteSelectionConfig: Configuration for last-minute selection.
++    ServiceLevelSelectionConfig: Configuration for service-level selection.
++    LookaheadSelectionConfig: Configuration for lookahead selection.
++    MandatorySelectionConfig: Main configuration composing the strategy sub-configs.
+ 
+ Example:
+     >>> from configs.policies.other.mandatory_selection import MandatorySelectionConfig
+-    >>> config = MandatorySelectionConfig(method='last_minute', last_minute=LastMinuteSelectionConfig(threshold=0.8))
+-    >>> config.method
++    >>> config = MandatorySelectionConfig(strategy='last_minute')
++    >>> config.strategy
+     'last_minute'
+-    >>> config.last_minute.threshold
+-    0.8
+ """
+ 
+ from dataclasses import dataclass, field
+-from typing import Any, Dict, List, Optional
++from typing import Any, Dict, Optional
+ 
+ 
+ @dataclass
+@@ -61,17 +32,6 @@ class LastMinuteSelectionConfig:
+     threshold: float = 0.7
+ 
+ 
+-@dataclass
+-class RegularSelectionConfig:
+-    """Configuration for periodic collection on scheduled days.
+-
+-    Attributes:
+-        frequency: Frequency of regular selection.
+-    """
+-
+-    frequency: int = 3
+-
+-
+ @dataclass
+ class ServiceLevelSelectionConfig:
+     """Configuration for statistical overflow prediction.
+@@ -85,21 +45,6 @@ class ServiceLevelSelectionConfig:
+     horizon_days: int = 1
+ 
+ 
+-@dataclass
+-class RevenueSelectionConfig:
+-    """Configuration for revenue-based selection.
+-
+-    Attributes:
+-        revenue_kg: Revenue per kilogram.
+-        bin_capacity: Capacity of the bin.
+-        revenue_threshold: Threshold for revenue-based selection.
+-    """
+-
+-    revenue_kg: float = 1.0
+-    bin_capacity: float = 1.0
+-    revenue_threshold: float = 0.0
+-
+-
+ @dataclass
+ class LookaheadSelectionConfig:
+     """Configuration for predictive collection within a horizon.
+@@ -111,320 +56,6 @@ class LookaheadSelectionConfig:
+     current_collection_day: int = 0
+ 
+ 
+-@dataclass
+-class DeadlineSelectionConfig:
+-    """Configuration for deterministic days-to-overflow selection.
+-
+-    Attributes:
+-        horizon_days: Number of days to look ahead.
+-        threshold: Threshold for deadline selection.
+-    """
+-
+-    horizon_days: int = 3
+-    threshold: float = 0.9
+-
+-
+-@dataclass
+-class MultiDayProbSelectionConfig:
+-    """Configuration for stochastic overflow risk over K days.
+-
+-    Attributes:
+-        horizon_days: Number of days to look ahead.
+-        threshold: Threshold for multi-day probability selection.
+-    """
+-
+-    horizon_days: int = 3
+-    threshold: float = 0.5
+-
+-
+-@dataclass
+-class ParetoFrontSelectionConfig:
+-    """Configuration for multi-objective (urgency x distance) optimization.
+-
+-    Attributes:
+-        threshold: Threshold for Pareto front selection.
+-    """
+-
+-    threshold: float = 0.5
+-
+-
+-@dataclass
+-class ProfitPerKmSelectionConfig:
+-    """Configuration for spatial ROI (Expected revenue / distance).
+-
+-    Attributes:
+-        threshold: Threshold for profit per km selection.
+-        revenue_kg: Revenue per kilogram.
+-    """
+-
+-    threshold: float = 0.0
+-    revenue_kg: float = 1.0
+-
+-
+-@dataclass
+-class SpatialSynergySelectionConfig:
+-    """Configuration for critical bins + opportunistic neighbors.
+-
+-    Attributes:
+-        critical_threshold: Threshold for critical bins.
+-        synergy_threshold: Threshold for synergistic bins.
+-        radius: Radius for opportunistic neighbors.
+-    """
+-
+-    critical_threshold: float = 0.90
+-    synergy_threshold: float = 0.60
+-    radius: float = 10.0
+-
+-
+-@dataclass
+-class StochasticRegretSelectionConfig:
+-    """Configuration for expected overflow volume minimization.
+-
+-    Attributes:
+-        threshold: Threshold for stochastic regret selection.
+-    """
+-
+-    threshold: float = 0.1
+-
+-
+-@dataclass
+-class CombinedSelectionConfig:
+-    """Configuration for combining multiple strategies with OR/AND logic.
+-
+-    Attributes:
+-        strategies: List of strategies to combine.
+-        logic: Logic to combine the strategies (or/and).
+-    """
+-
+-    strategies: Optional[List[Dict[str, Any]]] = None
+-    logic: str = "or"
+-
+-
+-@dataclass
+-class MandatoryManagerSelectionConfig:
+-    """Configuration for neural network-based selection (MandatoryManager).
+-
+-    Attributes:
+-        hidden_dim: Dimension of the hidden layers.
+-        lstm_hidden: Dimension of the LSTM hidden layers.
+-        history_length: Length of the history.
+-        manager_weights: Path to the manager weights.
+-        device: Device to use for training.
+-    """
+-
+-    hidden_dim: int = 128
+-    lstm_hidden: int = 64
+-    history_length: int = 10
+-    manager_weights: Optional[str] = None
+-    device: str = "cuda"
+-
+-
+-@dataclass
+-class KnapsackSelectionConfig:
+-    """Base configuration for knapsack-based economic coupling.
+-
+-    Attributes:
+-        n_vehicles: Number of vehicles.
+-        cost_per_km: Cost per kilometer.
+-        use_eoq_threshold: Whether to use EOQ threshold.
+-    """
+-
+-    n_vehicles: int = 1
+-    cost_per_km: float = 0.1
+-    use_eoq_threshold: bool = False
+-    holding_cost_per_kg_day: float = 0.0
+-    ordering_cost_per_visit: float = 0.0
+-
+-
+-@dataclass
+-class MIPKnapsackSelectionConfig(KnapsackSelectionConfig):
+-    """Configuration for exact 0/1 multiple-knapsack MIP selection.
+-
+-    Attributes:
+-        overflow_penalty_frac: Additional penalty for overflow event.
+-    """
+-
+-    overflow_penalty_frac: float = 1.0
+-
+-
+-@dataclass
+-class FractionalKnapsackSelectionConfig(KnapsackSelectionConfig):
+-    """Configuration for greedy net-profit density selection.
+-
+-    Attributes:
+-        revenue_kg: Revenue per kilogram.
+-        bin_capacity: Capacity of the bin.
+-        holding_cost_per_kg_day: Holding cost per kilogram per day.
+-        ordering_cost_per_visit: Ordering cost per visit.
+-    """
+-
+-    revenue_kg: float = 1.0
+-    bin_capacity: float = 1.0
+-    holding_cost_per_kg_day: float = 0.01
+-    ordering_cost_per_visit: float = 10.0
+-
+-
+-@dataclass
+-class RolloutSelectionConfig:
+-    """Configuration for rollout-based predictive selection.
+-
+-    Attributes:
+-        rollout_horizon: Horizon for rollout.
+-        rollout_base_policy: Base policy for rollout.
+-        rollout_n_scenarios: Number of scenarios for rollout.
+-        rollout_discount: Discount factor for rollout.
+-    """
+-
+-    rollout_horizon: int = 5
+-    rollout_base_policy: str = "last_minute"
+-    rollout_n_scenarios: int = 1
+-    rollout_discount: float = 0.95
+-
+-
+-@dataclass
+-class WhittleSelectionConfig:
+-    """Configuration for Whittle index-based allocation.
+-
+-    Attributes:
+-        whittle_discount: Discount factor for Whittle index.
+-        whittle_grid_size: Grid size for Whittle index.
+-        n_vehicles: Number of vehicles.
+-    """
+-
+-    whittle_discount: float = 0.95
+-    whittle_grid_size: int = 21
+-    n_vehicles: int = 1
+-
+-
+-@dataclass
+-class CVaRSelectionConfig:
+-    """Configuration for Conditional Value at Risk selection.
+-
+-    Attributes:
+-        cvar_alpha: Confidence level for CVaR.
+-        threshold: Threshold for CVaR selection.
+-    """
+-
+-    cvar_alpha: float = 0.95
+-    threshold: float = 0.0
+-
+-
+-@dataclass
+-class SavingsSelectionConfig:
+-    """Configuration for savings-based (Clarke-Wright) pre-selection.
+-
+-    Attributes:
+-        savings_min_fill_ratio: Minimum fill ratio for savings selection.
+-    """
+-
+-    savings_min_fill_ratio: float = 0.5
+-
+-
+-@dataclass
+-class SetCoverSelectionConfig:
+-    """Configuration for set-covering based selection.
+-
+-    Attributes:
+-        service_radius: Radius for set cover.
+-        critical_threshold: Threshold for critical set cover.
+-    """
+-
+-    service_radius: float = 5.0
+-    critical_threshold: float = 0.90
+-
+-
+-@dataclass
+-class ModularGreedySelectionConfig:
+-    """Configuration for (Super/Sub-)Modular greedy selection.
+-
+-    Attributes:
+-        modular_alpha: Alpha parameter for modularity.
+-        modular_budget: Budget for modular selection.
+-    """
+-
+-    modular_alpha: float = 1.0
+-    modular_budget: int = 0
+-
+-
+-@dataclass
+-class LearnedSelectionConfig:
+-    """Configuration for imitation/learned selection models.
+-
+-    Attributes:
+-        learned_model_path: Path to the learned model.
+-        learned_threshold: Threshold for learned selection.
+-    """
+-
+-    learned_model_path: Optional[str] = None
+-    learned_threshold: float = 0.5
+-
+-
+-@dataclass
+-class ThompsonDispatcherSelectionConfig:
+-    """Configuration for contextual Thompson sampling dispatcher.
+-
+-    Attributes:
+-        dispatcher_state_path: Path to the dispatcher state.
+-        dispatcher_candidate_strategies: List of candidate strategies.
+-        dispatcher_exploration: Exploration parameter for Thompson sampling.
+-        dispatcher_mode: Mode for combining strategies (union/intersection).
+-    """
+-
+-    dispatcher_state_path: Optional[str] = None
+-    dispatcher_candidate_strategies: Optional[List[str]] = None
+-    dispatcher_exploration: float = 1.0
+-    dispatcher_mode: str = "union"
+-
+-
+-@dataclass
+-class WassersteinSelectionConfig:
+-    """Configuration for distributionally robust Wasserstein selection.
+-
+-    Attributes:
+-        wasserstein_radius: Radius for Wasserstein distance.
+-        wasserstein_p: Power parameter for Wasserstein distance.
+-    """
+-
+-    wasserstein_radius: float = 0.1
+-    wasserstein_p: int = 1
+-
+-
+-@dataclass
+-class LagrangianSelectionConfig:
+-    """Configuration for Lagrangian relaxation based selection.
+-
+-    Attributes:
+-        n_vehicles: Number of vehicles.
+-        cost_per_km: Cost per kilometer.
+-    """
+-
+-    n_vehicles: int = 1
+-    cost_per_km: float = 0.1
+-
+-
+-@dataclass
+-
+-class KMeansSectorSelectionConfig:
+-    """Configuration for geographic sector-based selection.
+-
+-    Attributes:
+-        n_sectors: Number of sectors for clustering.
+-    """
+-
+-    n_sectors: int = 5
+-
+-
+-@dataclass
+-class StaggeredRegularSelectionConfig:
+-    """Configuration for phased-staggered periodic selection.
+-
+-    Attributes:
+-        period: Period for staggered selection.
+-    """
+-
+-    period: int = 1
+-
+-
+ @dataclass
+ class MandatorySelectionConfig:
+     """Main configuration for mandatory bin selection.
+@@ -434,30 +65,8 @@ class MandatorySelectionConfig:
+     Attributes:
+         strategy: Primary selection strategy name.
+         last_minute: Params for LastMinuteSelection.
+-        regular: Params for RegularSelection.
+         service_level: Params for ServiceLevelSelection.
+-        revenue: Params for RevenueSelection.
+         lookahead: Params for LookaheadSelection.
+-        deadline: Params for DeadlineDrivenSelection.
+-        multi_day_prob: Params for MultiDayOverflowSelection.
+-        pareto_front: Params for ParetoFrontSelection.
+-        profit_per_km: Params for ProfitPerKmSelection.
+-        spatial_synergy: Params for SpatialSynergySelection.
+-        stochastic_regret: Params for StochasticRegretSelection.
+-        combined: Params for CombinedSelection.
+-        manager: Params for neural MandatoryManager.
+-        mip_knapsack: Params for MIPKnapsackSelection.
+-        fractional_knapsack: Params for FractionalKnapsackSelection.
+-        rollout: Params for RolloutSelection.
+-        whittle: Params for WhittleIndexSelection.
+-        cvar: Params for CVaRSelection.
+-        savings: Params for SavingsSelection.
+-        set_cover: Params for SetCoverSelection.
+-        modular_greedy: Params for ModularGreedySelection.
+-        learned: Params for LearnedSelection.
+-        thompson_dispatcher: Params for ThompsonDispatcher.
+-        wasserstein: Params for WassersteinSelection.
+-        lagrangian: Params for LagrangianSelection.
+         params: Additional strategy-specific parameters as a dictionary.
+     """
+ 
+@@ -465,32 +74,8 @@ class MandatorySelectionConfig:
+ 
+     # Strategy-specific sub-configs
+     last_minute: LastMinuteSelectionConfig = field(default_factory=LastMinuteSelectionConfig)
+-    regular: RegularSelectionConfig = field(default_factory=RegularSelectionConfig)
+     service_level: ServiceLevelSelectionConfig = field(default_factory=ServiceLevelSelectionConfig)
+-    revenue: RevenueSelectionConfig = field(default_factory=RevenueSelectionConfig)
+     lookahead: LookaheadSelectionConfig = field(default_factory=LookaheadSelectionConfig)
+-    deadline: DeadlineSelectionConfig = field(default_factory=DeadlineSelectionConfig)
+-    multi_day_prob: MultiDayProbSelectionConfig = field(default_factory=MultiDayProbSelectionConfig)
+-    pareto_front: ParetoFrontSelectionConfig = field(default_factory=ParetoFrontSelectionConfig)
+-    profit_per_km: ProfitPerKmSelectionConfig = field(default_factory=ProfitPerKmSelectionConfig)
+-    spatial_synergy: SpatialSynergySelectionConfig = field(default_factory=SpatialSynergySelectionConfig)
+-    stochastic_regret: StochasticRegretSelectionConfig = field(default_factory=StochasticRegretSelectionConfig)
+-    combined: CombinedSelectionConfig = field(default_factory=CombinedSelectionConfig)
+-    manager: MandatoryManagerSelectionConfig = field(default_factory=MandatoryManagerSelectionConfig)
+-    mip_knapsack: MIPKnapsackSelectionConfig = field(default_factory=MIPKnapsackSelectionConfig)
+-    fractional_knapsack: FractionalKnapsackSelectionConfig = field(default_factory=FractionalKnapsackSelectionConfig)
+-    rollout: RolloutSelectionConfig = field(default_factory=RolloutSelectionConfig)
+-    whittle: WhittleSelectionConfig = field(default_factory=WhittleSelectionConfig)
+-    cvar: CVaRSelectionConfig = field(default_factory=CVaRSelectionConfig)
+-    savings: SavingsSelectionConfig = field(default_factory=SavingsSelectionConfig)
+-    set_cover: SetCoverSelectionConfig = field(default_factory=SetCoverSelectionConfig)
+-    modular_greedy: ModularGreedySelectionConfig = field(default_factory=ModularGreedySelectionConfig)
+-    learned: LearnedSelectionConfig = field(default_factory=LearnedSelectionConfig)
+-    thompson_dispatcher: ThompsonDispatcherSelectionConfig = field(default_factory=ThompsonDispatcherSelectionConfig)
+-    wasserstein: WassersteinSelectionConfig = field(default_factory=WassersteinSelectionConfig)
+-    lagrangian: LagrangianSelectionConfig = field(default_factory=LagrangianSelectionConfig)
+-    kmeans_sector: KMeansSectorSelectionConfig = field(default_factory=KMeansSectorSelectionConfig)
+-    staggered_regular: StaggeredRegularSelectionConfig = field(default_factory=StaggeredRegularSelectionConfig)
+ 
+     # Additional parameters
+     params: Dict[str, Any] = field(default_factory=dict)
 diff --git a/logic/src/configs/policies/pg_clns.py b/logic/src/configs/policies/pg_clns.py
-index 67b9da98f..6b3a9f888 100644
+index 67b9da98f..dc79df99d 100644
 --- a/logic/src/configs/policies/pg_clns.py
 +++ b/logic/src/configs/policies/pg_clns.py
-@@ -12,7 +12,7 @@ Example:
+@@ -2,6 +2,8 @@
+ PG-CLNS (Pheromone-Guided Cooperative Large Neighborhood Search) configuration.
+ 
+ Attributes:
++    PGCLNSACOConfig: ACO component configuration.
++    PGCLNSLNSConfig: LNS component configuration.
+     PGCLNSConfig: Attributes for PG-CLNS configuration.
+ 
+ Example:
+@@ -12,10 +14,83 @@ Example:
  """
  
  from dataclasses import dataclass, field
 -from typing import Any, List, Optional
 +from typing import List, Optional
  
- from .aco_ks import KSparseACOConfig
- from .alns import ALNSConfig
-@@ -33,7 +33,6 @@ class PGCLNSConfig:
+-from .aco_ks import KSparseACOConfig
+-from .alns import ALNSConfig
++from .other.mandatory_selection import MandatorySelectionConfig
++
++
++@dataclass
++class PGCLNSACOConfig:
++    """Configuration of the K-sparse ACO construction component of PG-CLNS.
++
++    Attributes:
++        n_ants: Number of ants in the colony.
++        alpha: Pheromone importance factor.
++        beta: Heuristic (distance) importance factor.
++        rho: Pheromone evaporation rate.
++        tau_0: Initial pheromone level.
++        tau_min: Minimum pheromone bound.
++        tau_max: Maximum pheromone bound.
++        max_iterations: Maximum number of ACO iterations.
++        scale: Scaling factor for heuristic information.
++        time_limit: Maximum time in seconds for the solver.
++        k_sparse: Number of nearest neighbors to consider.
++        local_search: Whether to apply local search after construction.
++        local_search_iterations: Number of local search iterations.
++        elitist_weight: Weight for elitist pheromone update.
++        mandatory_selection: List of mandatory strategy config files.
++    """
++
++    n_ants: int = 20
++    alpha: float = 1.0
++    beta: float = 2.0
++    rho: float = 0.1
++    tau_0: float = 1.0
++    tau_min: float = 0.01
++    tau_max: float = 10.0
++    max_iterations: int = 50
++    scale: float = 5.0
++    time_limit: float = 30.0
++    seed: Optional[int] = None
++    k_sparse: int = 15
++    local_search: bool = True
++    local_search_iterations: int = 500
++    elitist_weight: float = 1.0
++    vrpp: bool = True
++    mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
++
++
++@dataclass
++class PGCLNSLNSConfig:
++    """Configuration of the adaptive LNS component of PG-CLNS.
++
++    Attributes:
++        time_limit: Maximum time in seconds for the solver.
++        max_iterations: Maximum number of ALNS iterations.
++        start_temp: Initial temperature for simulated annealing acceptance.
++        cooling_rate: Rate at which temperature decreases each iteration.
++        reaction_factor: Weight update reaction factor for operator scores.
++        min_removal: Minimum number of nodes to remove per destroy operation.
++        start_temp_control: 'w' parameter: accept a 5% worse solution with 0.5 probability
++        xi: 'xi' parameter: fraction of total nodes for max removal cap
++        engine: Solver engine to use ('custom', 'alns').
++        mandatory_selection: List of mandatory strategy config files.
++    """
++
++    time_limit: float = 60.0
++    seed: Optional[int] = None
++    max_iterations: int = 5000
++    start_temp: float = 0.0  # 0 = Ropke & Pisinger calibration from the initial profit
++    cooling_rate: float = 0.995
++    reaction_factor: float = 0.1
++    min_removal: int = 1
++    start_temp_control: float = 0.05
++    xi: float = 0.4
++    engine: str = "custom"
++    vrpp: bool = True
++    profit_aware_operators: bool = False
++    extended_operators: bool = False
++    mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
+ 
+ 
+ @dataclass
+@@ -33,7 +108,6 @@ class PGCLNSConfig:
          vrpp: Whether to enable VRP with Profits logic.
          profit_aware_operators: Whether to use operators aware of node profits.
          mandatory_selection: List of mandatory strategy config files.
@@ -2574,7 +3365,29 @@ index 67b9da98f..6b3a9f888 100644
      """
  
      # Population Parameters
-@@ -79,4 +78,3 @@ class PGCLNSConfig:
+@@ -46,8 +120,8 @@ class PGCLNSConfig:
+     seed: Optional[int] = None
+ 
+     # Nested component configs
+-    aco: KSparseACOConfig = field(
+-        default_factory=lambda: KSparseACOConfig(
++    aco: PGCLNSACOConfig = field(
++        default_factory=lambda: PGCLNSACOConfig(
+             n_ants=10,
+             k_sparse=10,
+             alpha=1.0,
+@@ -63,8 +137,8 @@ class PGCLNSConfig:
+             elitist_weight=1.0,
+         )
+     )
+-    lns: ALNSConfig = field(
+-        default_factory=lambda: ALNSConfig(
++    lns: PGCLNSLNSConfig = field(
++        default_factory=lambda: PGCLNSLNSConfig(
+             max_iterations=100,
+             start_temp=100.0,
+             cooling_rate=0.95,
+@@ -79,4 +153,3 @@ class PGCLNSConfig:
      vrpp: bool = True
      profit_aware_operators: bool = True
      mandatory_selection: List[str] = field(default_factory=list)
@@ -2717,41 +3530,43 @@ index c63351eee..3cc7ae199 100644
      problem: str = "ptp"
      shift_hours: float = 7.0
      avg_speed_kmh: float = 35.0
-diff --git a/logic/src/constants/data.py b/logic/src/constants/data.py
-index 7d18d143c..8eacf2408 100644
---- a/logic/src/constants/data.py
-+++ b/logic/src/constants/data.py
-@@ -2,27 +2,14 @@
- Data constants for WSmart-Route.
+diff --git a/logic/src/constants/__init__.py b/logic/src/constants/__init__.py
+index 2f02de737..773a384f2 100644
+--- a/logic/src/constants/__init__.py
++++ b/logic/src/constants/__init__.py
+@@ -2,16 +2,11 @@
+ Configuration constants and global mappings.
  
  Attributes:
--    GAMMA_PRESETS: Preset gamma parameter options for per-node heterogeneous waste generation
-     DATASET_EXTENSIONS: Dataset file extensions for simulations
+-    data: Data configuration constants
+-    hpo: Hyperparameter optimization configuration constants
+     models: Model configuration constants
+     paths: Path configuration constants
+     routing: Routing configuration constants
+     simulation: Simulation configuration constants
+-    stats: Statistical function mappings
+     system: System configuration constants
+-    testing: Testing configuration constants
+-    user_interface: User interface configuration constants
+     waste: Waste configuration constants
  
  Example:
--    >>> from logic.src.constants import GAMMA_PRESETS, DATASET_EXTENSIONS
--    >>> GAMMA_PRESETS[0]
--    ([5, 5, 5, 5, 5, 10, 10, 10, 10, 10], [5, 2])
-+    >>> from logic.src.constants import DATASET_EXTENSIONS
-     >>> DATASET_EXTENSIONS
--    {'.npz', '.xlsx', '.csv'}
-+    {'.npz'}
- """
+@@ -23,15 +18,9 @@ Example:
+ from __future__ import annotations
  
--from typing import List, Tuple
--
--# Preset gamma parameter options for per-node heterogeneous waste generation.
--# Each option defines (alpha_pattern, theta_pattern) that are tiled across nodes.
--GAMMA_PRESETS: List[Tuple[List[int], List[int]]] = [
--    ([5, 5, 5, 5, 5, 10, 10, 10, 10, 10], [5, 2]),  # Option 0 (gamma1)
--    ([2, 2, 2, 2, 2, 6, 6, 6, 6, 6], [6, 4]),  # Option 1 (gamma2)
--    ([1, 1, 1, 1, 1, 3, 3, 3, 3, 3], [8, 6]),  # Option 2 (gamma3)
--    ([5, 2], [10]),  # Option 3 (gamma4)
--]
- 
- # Dataset file extensions for simulations
--DATASET_EXTENSIONS = {".npz", ".xlsx", ".csv"}
-+DATASET_EXTENSIONS = {".npz"}
+ # Re-exporting from split modules
+-from .data import *  # noqa: F403
+-# from .hpo import *  # noqa: F403  # AUTO-REMOVED
+ from .models import *  # noqa: F403
+ from .paths import *  # noqa: F403
+-# from .plotting import *  # noqa: F403  # AUTO-REMOVED
+ from .routing import *  # noqa: F403
+ from .simulation import *  # noqa: F403
+-# from .stats import *  # noqa: F403  # AUTO-REMOVED
+ from .system import *  # noqa: F403
+-# from .testing import *  # noqa: F403  # AUTO-REMOVED
+-from .user_interface import *  # noqa: F403
+ from .waste import *  # noqa: F403
 diff --git a/logic/src/constants/models.py b/logic/src/constants/models.py
 index a59f1fbe6..d521b51d0 100644
 --- a/logic/src/constants/models.py
@@ -2858,7 +3673,7 @@ index a59f1fbe6..d521b51d0 100644
 -    },
 -}
 diff --git a/logic/src/constants/paths.py b/logic/src/constants/paths.py
-index a3d95dfd9..5f1ffcd6c 100644
+index a3d95dfd9..f2c336adb 100644
 --- a/logic/src/constants/paths.py
 +++ b/logic/src/constants/paths.py
 @@ -5,7 +5,7 @@ This module provides platform-independent path resolution for the WSmart+ Route
@@ -2893,15 +3708,16 @@ index a3d95dfd9..5f1ffcd6c 100644
  """
  
  import os
-@@ -77,8 +73,3 @@ ROOT_DIR: Path = root_dir
- # regardless of which subdirectory the entry-point file lives in.
+@@ -78,7 +74,5 @@ ROOT_DIR: Path = root_dir
  # paths.py is at logic/src/constants/paths.py, so .parent×3 == logic/
  CONFIGS_DIR: str = str(Path(__file__).parent.parent.parent / "configs")
--
+ 
 -# Application icon (PNG format, white logo on transparent background)
 -# Used by exported tooling and report generators
 -# Dimensions: 512x512 px (scales down for UI)
 -ICON_FILE: str = os.path.join(ROOT_DIR, "assets", "images", "logo-wsmartroute-white.png")
++# Dataset file extensions for simulations
++DATASET_EXTENSIONS = {".npz"}
 diff --git a/logic/src/constants/routing.py b/logic/src/constants/routing.py
 index e0e6053bd..e376b0a1f 100644
 --- a/logic/src/constants/routing.py
@@ -3054,7 +3870,7 @@ index f64162380..e60842dab 100644
  # --------------------------------------------
  # Physical and operational constraints for VRP variants.
 diff --git a/logic/src/constants/system.py b/logic/src/constants/system.py
-index 6ce395fa5..037141292 100644
+index 6ce395fa5..08fa2ba43 100644
 --- a/logic/src/constants/system.py
 +++ b/logic/src/constants/system.py
 @@ -1,30 +1,12 @@
@@ -3090,12 +3906,13 @@ index 6ce395fa5..037141292 100644
  separate copy of the module globals.
  
  Attributes:
-@@ -32,19 +14,13 @@ Attributes:
+@@ -32,19 +14,14 @@ Attributes:
      LOCK_TIMEOUT: Dynamic timeout (milliseconds) scaled by CPU count
      update_lock_wait_time: Updates the global LOCK_TIMEOUT based on the number of CPU cores
      CONFIRM_TIMEOUT: GUI confirmation dialog timeout (seconds)
 -    FS_COMMANDS: Supported file system operations in GUI
 -    OPERATION_MAP: Operator string → callable function mapping
++    PBAR_WAIT_TIME: Progress bar update interval (seconds)
  
  Example:
 -    >>> op_func = OPERATION_MAP["+="]
@@ -3113,11 +3930,10 @@ index 6ce395fa5..037141292 100644
  
  # Multi-core processing settings
  # Base timeout (milliseconds) for file/resource locking in single-core mode
-@@ -75,61 +51,3 @@ def update_lock_wait_time(num_cpu_cores: Optional[int] = None) -> int:
- # GUI confirmation dialog timeout (seconds). After this duration, destructive
+@@ -76,60 +53,6 @@ def update_lock_wait_time(num_cpu_cores: Optional[int] = None) -> int:
  # operations (delete, update) are auto-cancelled if user does not respond.
  CONFIRM_TIMEOUT: int = 30
--
+ 
 -# Supported file system operations (Studio System Tools page + file_system CLI).
 -# - create: New file/directory generation
 -# - read: File content display
@@ -3175,33 +3991,9 @@ index 6ce395fa5..037141292 100644
 -    "in": lambda x, y: x in y,  # Membership (x is element of y)
 -    "notin": lambda x, y: x not in y,  # Non-membership
 -}
-diff --git a/logic/src/constants/user_interface.py b/logic/src/constants/user_interface.py
-index 541355e1b..e366df460 100644
---- a/logic/src/constants/user_interface.py
-+++ b/logic/src/constants/user_interface.py
-@@ -3,22 +3,9 @@ Constants for simulation progress bar display.
- 
- Attributes:
-     PBAR_WAIT_TIME: Progress bar update interval (seconds)
--    TQDM_COLOURS: TQDM progress bar color cycling for parallel workers
- """
- 
--from typing import List
- 
- # Progress bar update interval (seconds)
- # Controls tqdm refresh rate for multi-core simulation workers.
- PBAR_WAIT_TIME: float = 0.1  # seconds (100ms refresh interval)
--
--# TQDM progress bar color cycling
--# Used in: Parallel simulation workers (one color per worker)
--TQDM_COLOURS: List[str] = [
--    "red",
--    "blue",
--    "green",
--    "yellow",
--    "magenta",
--    "cyan",
--]
++# Progress bar update interval (seconds)
++# Controls tqdm refresh rate for multi-core simulation workers.
++PBAR_WAIT_TIME: float = 0.1  # seconds (100ms refresh interval)
 diff --git a/logic/src/constants/waste.py b/logic/src/constants/waste.py
 index 2ebedbcdd..aefc8ddbb 100644
 --- a/logic/src/constants/waste.py
@@ -3940,6 +4732,61 @@ index d12ab96df..cef5cfa7c 100644
          if isinstance(waste, np.ndarray):
              waste = torch.from_numpy(waste).float()
          return waste.to(self.device).view(*batch_size, self.num_loc)
+diff --git a/logic/src/envs/problems.py b/logic/src/envs/problems.py
+index bc271acb4..5ae3bebe1 100644
+--- a/logic/src/envs/problems.py
++++ b/logic/src/envs/problems.py
+@@ -4,22 +4,12 @@ Example:
+     >>> from logic.src.envs.problems import PTP
+ """
+ 
+-from logic.src.constants.tasks import (
+-    BIN_CAPACITY,
+-    COST_KM,
+-    REVENUE_KG,
+-    VEHICLE_CAPACITY,
+-)
+ from logic.src.envs.tasks.base import BaseProblem
+ from logic.src.envs.tasks.mvptp import MVPTP
+ from logic.src.envs.tasks.ptp import PTP
+ 
+ __all__ = [
+     "BaseProblem",
+-    "COST_KM",
+-    "REVENUE_KG",
+-    "BIN_CAPACITY",
+-    "VEHICLE_CAPACITY",
+     "PTP",
+     "MVPTP",
+ ]
+diff --git a/logic/src/envs/tasks/__init__.py b/logic/src/envs/tasks/__init__.py
+index d2fc1966b..fc0d25a99 100644
+--- a/logic/src/envs/tasks/__init__.py
++++ b/logic/src/envs/tasks/__init__.py
+@@ -10,23 +10,12 @@ Example:
+     >>> from logic.src.envs.tasks import PTP
+ """
+ 
+-from logic.src.constants.tasks import (
+-    BIN_CAPACITY,
+-    COST_KM,
+-    REVENUE_KG,
+-    VEHICLE_CAPACITY,
+-)
+-
+ from .base import BaseProblem
+ from .mvptp import MVPTP
+ from .ptp import PTP
+ 
+ __all__ = [
+     "BaseProblem",
+-    "COST_KM",
+-    "REVENUE_KG",
+-    "BIN_CAPACITY",
+-    "VEHICLE_CAPACITY",
+     "PTP",
+     "MVPTP",
+ ]
 diff --git a/logic/src/envs/tasks/base.py b/logic/src/envs/tasks/base.py
 index 4820f5703..d00705739 100644
 --- a/logic/src/envs/tasks/base.py
@@ -3953,6 +4800,29 @@ index 4820f5703..d00705739 100644
            ``depot``, ``waste`` with shape ``[samples, days, nodes]`` and
            ``max_waste``): every (sample, day) pair becomes one instance and
            fill levels are normalised by ``max_waste``.
+diff --git a/logic/src/envs/tasks/ptp.py b/logic/src/envs/tasks/ptp.py
+index 32de09b0c..67d773832 100644
+--- a/logic/src/envs/tasks/ptp.py
++++ b/logic/src/envs/tasks/ptp.py
+@@ -22,7 +22,6 @@ Example:
+ 
+ import torch
+ 
+-from logic.src.constants.tasks import COST_KM, REVENUE_KG
+ from logic.src.envs.tasks.base import BaseProblem
+ 
+ 
+@@ -68,8 +67,8 @@ class PTP(BaseProblem):
+         waste = w.sum(dim=-1)
+         length = PTP.get_tour_length(dataset, pi, dist_matrix)
+ 
+-        cost_km = dataset.get("cost_km", COST_KM)
+-        revenue_kg = dataset.get("revenue_kg", REVENUE_KG)
++        cost_km = dataset.get("cost_km", 1.0)
++        revenue_kg = dataset.get("revenue_kg", 1.0)
+ 
+         neg_profit = length * cost_km - waste * revenue_kg
+         if cw_dict is not None:
 diff --git a/logic/src/interfaces/__init__.py b/logic/src/interfaces/__init__.py
 index 720452be3..035896efa 100644
 --- a/logic/src/interfaces/__init__.py
