@@ -96,11 +96,8 @@ a = Analysis(
 
 pyz = PYZ(a.pure)
 
-exe = EXE(
-    pyz,
-    a.scripts,
-    [],
-    exclude_binaries=True,  # one-dir: binaries go to _internal/ via COLLECT
+ONEFILE = os.environ.get("WSR_ONEFILE", "") not in ("", "0")
+_common = dict(
     name="WSmartRoute",
     debug=False,
     bootloader_ignore_signals=False,
@@ -114,12 +111,10 @@ exe = EXE(
     entitlements_file=None,
 )
 
-coll = COLLECT(
-    exe,
-    a.binaries,
-    a.datas,
-    strip=False,
-    upx=False,
-    upx_exclude=[],
-    name="wsmart_route",
-)
+if ONEFILE:
+    # one-file (WSR_ONEFILE=1): everything is packed into the launcher and unpacked at start-up
+    exe = EXE(pyz, a.scripts, a.binaries, a.datas, [], runtime_tmpdir=None, **_common)
+else:
+    # one-dir: binaries go to _internal/ via COLLECT
+    exe = EXE(pyz, a.scripts, [], exclude_binaries=True, **_common)
+    coll = COLLECT(exe, a.binaries, a.datas, strip=False, upx=False, upx_exclude=[], name="wsmart_route")

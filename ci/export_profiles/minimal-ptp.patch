@@ -1,5 +1,5 @@
 diff --git a/README.md b/README.md
-index d63ac48f3..6e27d40df 100644
+index d63ac48f3..f17ec2142 100644
 --- a/README.md
 +++ b/README.md
 @@ -16,15 +16,14 @@ removed.
@@ -34,7 +34,7 @@ index d63ac48f3..6e27d40df 100644
  ```
  
  ## Setup
-@@ -44,14 +44,10 @@ source .venv/bin/activate
+@@ -44,22 +44,19 @@ source .venv/bin/activate
  python -c "import torch; print(torch.cuda.is_available())"
  ```
  
@@ -51,7 +51,27 @@ index d63ac48f3..6e27d40df 100644
  - Limit simulator parallelism on small machines with `sim.cpu_cores=4`; the
    default `0` starts one worker per spare core, each loading torch/CUDA.
  
-@@ -77,19 +73,16 @@ The target needs a Linux with the same or newer glibc, an NVIDIA driver for GPU
+-## Executable (PyInstaller one-dir)
++## Executable (PyInstaller)
+ 
+ ```bash
+ uv pip install pyinstaller==6.19.0          # in the environment from "Setup"
+-pyinstaller ci/simulator.spec --clean --noconfirm
++pyinstaller ci/simulator.spec --clean --noconfirm                # folder: dist/wsmart_route/
++WSR_ONEFILE=1 pyinstaller ci/simulator.spec --clean --noconfirm  # single file: dist/WSmartRoute
+ ```
+ 
+ This produces `dist/wsmart_route/` (about 4.4 GB with CUDA torch): the `WSmartRoute`
+@@ -71,25 +68,25 @@ launcher plus `_internal/`. Ship the whole folder. Run it from a folder that con
+ /path/to/wsmart_route/WSmartRoute train [overrides...]
+ ```
+ 
++The single file unpacks itself into `$TMPDIR` (default `/tmp`) on every start, which takes
++several GB and some seconds; point `TMPDIR` at a disk folder when `/tmp` is small or in RAM.
++
+ The target needs a Linux with the same or newer glibc, an NVIDIA driver for GPU use
+ (it falls back to CPU otherwise) and a Gurobi licence for `swc_tcf`.
+ 
  ## Running
  
  ```bash
@@ -78,7 +98,7 @@ index d63ac48f3..6e27d40df 100644
    p.na.na.amgat.0.model_path=weights/am
  ```
  
-@@ -103,9 +96,9 @@ as one `log_<policy>_<N>N.json` per policy plus a real-time `.jsonl` stream.
+@@ -103,9 +100,9 @@ as one `log_<policy>_<N>N.json` per policy plus a real-time `.jsonl` stream.
  - The problems are `ptp` (Profitable Tour Problem) and `mvptp` (Multi-Vehicle
    Profitable Tour Problem). Checkpoints and datasets that record the former names
    (`vrpp`, `cvrpp`) are rejected; retrain or regenerate them.
@@ -1317,10 +1337,10 @@ HcmV?d00001
 
 diff --git a/assets/files/FILE_LIST.txt b/assets/files/FILE_LIST.txt
 new file mode 100644
-index 000000000..5bd215556
+index 000000000..79a9b6c70
 --- /dev/null
 +++ b/assets/files/FILE_LIST.txt
-@@ -0,0 +1,471 @@
+@@ -0,0 +1,468 @@
 +.
 +|-- logic
 +|   |-- configs
@@ -1732,9 +1752,6 @@ index 000000000..5bd215556
 +|       |       |   `-- storage.py
 +|       |       `-- pylogger.py
 +|       `-- utils
-+|           |-- actions
-+|           |   |-- distance.py
-+|           |   `-- __init__.py
 +|           |-- configs
 +|           |   |-- config_loader.py
 +|           |   `-- __init__.py
@@ -1793,36 +1810,58 @@ index 000000000..5bd215556
 +|               `-- simulation_utils.py
 +`-- __main__.py
 diff --git a/ci/simulator.spec b/ci/simulator.spec
-index 7b6c15f8d..9b99e2dba 100644
+index 7b6c15f8d..af7cae015 100644
 --- a/ci/simulator.spec
 +++ b/ci/simulator.spec
-@@ -2,7 +2,7 @@
+@@ -1,22 +1,23 @@
+ # -*- mode: python ; coding: utf-8 -*-
  #
- # WSmart-Route minimal-export executable (PyInstaller one-dir build).
+-# WSmart-Route minimal-export executable (PyInstaller one-dir build).
++# WSmart-Route minimal-export executable (PyInstaller; one-dir by default, one-file with WSR_ONEFILE=1).
  #
 -# Bundles the training / evaluation pipeline (Attention Model + REINFORCE), the
+-# nine simulator policies and the simulator. Build from the repository root with
 +# Bundles the training pipeline (Attention Model + REINFORCE), the
- # nine simulator policies and the simulator. Build from the repository root with
++# four simulator policies and the simulator. Build from the repository root with
  # an environment that has the core + solvers dependencies and PyInstaller:
  #
-@@ -16,7 +16,6 @@
+ #   uv sync --frozen --package wsmart-route --extra solvers --no-dev
+ #   uv pip install pyinstaller==6.19.0
+ #   pyinstaller ci/simulator.spec --clean --noconfirm
  #
- #   /path/to/wsmart_route/WSmartRoute gen_data  [hydra overrides...]
++#   WSR_ONEFILE=1 pyinstaller ci/simulator.spec --clean --noconfirm   # single file: dist/WSmartRoute
++#
+ # Output: dist/wsmart_route/WSmartRoute (launcher) + dist/wsmart_route/_internal/.
+-# Ship the whole dist/wsmart_route/ folder. Usage, from a folder that contains
++# Ship the whole dist/wsmart_route/ folder (or the single dist/WSmartRoute file, which
++# unpacks itself into $TMPDIR on every start). Usage, from a folder that contains
+ # data/simulator (or with WSMART_ROUTE_ROOT pointing at one):
+ #
+-#   /path/to/wsmart_route/WSmartRoute gen_data  [hydra overrides...]
  #   /path/to/wsmart_route/WSmartRoute train     [hydra overrides...]
 -#   /path/to/wsmart_route/WSmartRoute eval      [hydra overrides...]
  #   /path/to/wsmart_route/WSmartRoute test_sim  [hydra overrides...]
  #
  # data/simulator is not bundled; outputs (assets/, logs, outputs/) are written to
-@@ -42,7 +41,7 @@ hiddenimports += ["shapely.geometry", "openpyxl", "jinja2"]
+@@ -34,7 +35,7 @@ sys.path.insert(0, ROOT)  # make `logic` importable for collect_submodules
+ # Policies, models and configs are resolved through string-keyed registries and
+ # Hydra _target_ strings, so collect every logic module explicitly.
+ hiddenimports = collect_submodules("logic")
+-for pkg in ("hydra", "omegaconf", "tensordict", "torchrl", "pytorch_lightning", "lightning_fabric", "pyomo"):
++for pkg in ("hydra", "omegaconf", "tensordict", "torchrl", "pytorch_lightning", "lightning_fabric"):
+     hiddenimports += collect_submodules(pkg)
+ hiddenimports += ["shapely.geometry", "openpyxl", "jinja2"]
+ 
+@@ -42,7 +43,7 @@ hiddenimports += ["shapely.geometry", "openpyxl", "jinja2"]
  # (e.g. gurobipy._attrutil); bundle them whole.
  binaries = []
  _solver_datas = []
 -for pkg in ("gurobipy", "ortools", "fast_tsp"):
-+for pkg in ("gurobipy", "ortools"):
++for pkg in ("gurobipy",):
      _d, _b, _h = collect_all(pkg)
      _solver_datas += _d
      binaries += _b
-@@ -51,7 +50,6 @@ for pkg in ("gurobipy", "ortools", "fast_tsp"):
+@@ -51,7 +52,6 @@ for pkg in ("gurobipy", "ortools", "fast_tsp"):
  datas = [
      (os.path.join(ROOT, "logic/configs"), "logic/configs"),
      (os.path.join(ROOT, "logic/src/tracking/logging/modules/popup.html"), "logic/src/tracking/logging/modules"),
@@ -1830,16 +1869,16 @@ index 7b6c15f8d..9b99e2dba 100644
  ]
  datas += _solver_datas
  # Hydra ships its own config files; Lightning reads version files at import.
-@@ -61,7 +59,7 @@ for pkg in ("hydra", "pytorch_lightning", "lightning_fabric", "lightning_utiliti
+@@ -61,7 +61,7 @@ for pkg in ("hydra", "pytorch_lightning", "lightning_fabric", "lightning_utiliti
  for dist in (
      "torch", "tensordict", "torchrl", "pytorch-lightning", "lightning-fabric", "lightning-utilities",
      "hydra-core", "omegaconf", "numpy", "pandas", "scipy", "tqdm", "rich", "loguru", "networkx",
 -    "gurobipy", "ortools", "fast-tsp", "pyomo", "shapely", "jinja2", "openpyxl", "protobuf", "packaging",
-+    "gurobipy", "ortools", "pyomo", "shapely", "jinja2", "openpyxl", "protobuf", "packaging",
++    "gurobipy", "shapely", "jinja2", "openpyxl", "protobuf", "packaging",
  ):
      try:
          datas += copy_metadata(dist)
-@@ -69,7 +67,7 @@ for dist in (
+@@ -69,7 +69,7 @@ for dist in (
          pass
  
  a = Analysis(
@@ -1848,6 +1887,49 @@ index 7b6c15f8d..9b99e2dba 100644
      pathex=[ROOT],
      binaries=binaries,
      datas=datas,
+@@ -86,6 +86,8 @@ a = Analysis(
+         "pytest", "hypothesis", "expecttest",
+         # unused torch companions
+         "torchaudio", "torchvision",
++        # solver backends this export does not ship
++        "ortools", "pyomo",
+     ],
+     noarchive=False,
+     optimize=0,
+@@ -96,11 +98,8 @@ a = Analysis(
+ 
+ pyz = PYZ(a.pure)
+ 
+-exe = EXE(
+-    pyz,
+-    a.scripts,
+-    [],
+-    exclude_binaries=True,  # one-dir: binaries go to _internal/ via COLLECT
++ONEFILE = os.environ.get("WSR_ONEFILE", "") not in ("", "0")
++_common = dict(
+     name="WSmartRoute",
+     debug=False,
+     bootloader_ignore_signals=False,
+@@ -114,12 +113,10 @@ exe = EXE(
+     entitlements_file=None,
+ )
+ 
+-coll = COLLECT(
+-    exe,
+-    a.binaries,
+-    a.datas,
+-    strip=False,
+-    upx=False,
+-    upx_exclude=[],
+-    name="wsmart_route",
+-)
++if ONEFILE:
++    # one-file: everything is packed into the launcher and unpacked at start-up
++    exe = EXE(pyz, a.scripts, a.binaries, a.datas, [], runtime_tmpdir=None, **_common)
++else:
++    # one-dir: binaries go to _internal/ via COLLECT
++    exe = EXE(pyz, a.scripts, [], exclude_binaries=True, **_common)
++    coll = COLLECT(exe, a.binaries, a.datas, strip=False, upx=False, upx_exclude=[], name="wsmart_route")
 diff --git a/logic/configs/config.yaml b/logic/configs/config.yaml
 index 60b3a931f..99280ac0f 100644
 --- a/logic/configs/config.yaml
@@ -9637,56 +9719,18 @@ index 6d620f49c..66ff7ff42 100644
 -        if lock is not None:
 -            lock.release()
 -    return new_logs
-diff --git a/logic/src/utils/actions/__init__.py b/logic/src/utils/actions/__init__.py
-index fa9402364..a861680da 100644
---- a/logic/src/utils/actions/__init__.py
-+++ b/logic/src/utils/actions/__init__.py
-@@ -8,14 +8,6 @@ Attributes:
-     get_distance_matrix: Compute pairwise Euclidean distance matrix from coordinates.
-     get_tour_length: Compute total tour length for a batch of ordered location sequences.
-     get_open_tour_length: Compute total tour length for open tours (no return to start).
--    get_full_graph_edge_index: Get full graph edge index for a batch of node features.
--    sparsify_graph: Sparsify graph by keeping only k-nearest neighbors for each node.
--    select_start_nodes: Select start nodes for a batch of problems.
--    select_start_nodes_by_distance: Select start nodes based on distance.
--    get_num_starts: Get number of starts for a batch of problems.
--    get_best_actions: Get best actions for a batch of problems.
--    unbatchify_and_gather: Unbatchify and gather for a batch of problems.
--    calculate_entropy: Calculate entropy for a batch of problems.
+diff --git a/logic/src/utils/__init__.py b/logic/src/utils/__init__.py
+index 721668025..ee6b6c784 100644
+--- a/logic/src/utils/__init__.py
++++ b/logic/src/utils/__init__.py
+@@ -9,7 +9,6 @@ Contains helper modules for:
+ - Environment and model setup.
  
- Example:
-     >>> from logic.src.utils.actions import get_distance
-@@ -42,30 +34,10 @@ from .distance import (
-     get_open_tour_length,
-     get_tour_length,
- )
--from .graph import (
--    get_full_graph_edge_index,
--    sparsify_graph,
--)
--from .pomo import (
--    get_best_actions,
--    get_num_starts,
--    select_start_nodes,
--    select_start_nodes_by_distance,
--)
--from .probabilistic import calculate_entropy
--from .tensor import unbatchify_and_gather
- 
- __all__ = [
-     "get_distance",
-     "get_distance_matrix",
-     "get_tour_length",
-     "get_open_tour_length",
--    "calculate_entropy",
--    "select_start_nodes",
--    "select_start_nodes_by_distance",
--    "get_num_starts",
--    "get_best_actions",
--    "unbatchify_and_gather",
--    "sparsify_graph",
--    "get_full_graph_edge_index",
- ]
+ Attributes:
+-    actions: Tensor actions/operations utilities
+     configs: Configuration utilities
+     data: Data processing utilities
+     decoding: Decoding utilities
 diff --git a/logic/src/utils/data/__init__.py b/logic/src/utils/data/__init__.py
 index 4910e430b..67c718542 100644
 --- a/logic/src/utils/data/__init__.py

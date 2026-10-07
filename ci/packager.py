@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -145,9 +146,11 @@ def _validate_features(drop_features: List[str], config: Dict) -> None:
 # Git helpers
 # ---------------------------------------------------------------------------
 
-def _run(cmd: List[str], cwd: Optional[Path] = None, check: bool = True) -> subprocess.CompletedProcess:
+def _run(
+    cmd: List[str], cwd: Optional[Path] = None, check: bool = True, env: Optional[Dict[str, str]] = None
+) -> subprocess.CompletedProcess:
     _log(f"$ {' '.join(cmd)}")
-    return subprocess.run(cmd, cwd=cwd or PROJECT_ROOT, check=check)
+    return subprocess.run(cmd, cwd=cwd or PROJECT_ROOT, check=check, env=env)
 
 
 def _run_capture(cmd: List[str], cwd: Optional[Path] = None) -> str:
@@ -379,18 +382,20 @@ def _step_tree(output_file: Path) -> None:
         _log(f"Fallback listing written to {output_file.relative_to(PROJECT_ROOT)}")
 
 
-def _step_build(dry_run: bool) -> Path:
+def _step_build(dry_run: bool, onefile: bool = False) -> Path:
     if not SPEC_FILE.exists():
         _die(f"simulator.spec not found at {SPEC_FILE}")
 
     dist_dir = PROJECT_ROOT / "dist"
 
     if dry_run:
-        _log(f"[DRY-RUN] Would run: pyinstaller {SPEC_FILE} --clean")
+        _log(f"[DRY-RUN] Would run: {'WSR_ONEFILE=1 ' if onefile else ''}pyinstaller {SPEC_FILE} --clean")
         _log(f"[DRY-RUN] Build output would be at: {dist_dir}")
         return dist_dir
 
-    _run([sys.executable, "-m", "PyInstaller", str(SPEC_FILE), "--clean"])
+    # The spec builds a single self-extracting file instead of a folder when WSR_ONEFILE=1.
+    env = {**os.environ, "WSR_ONEFILE": "1"} if onefile else None
+    _run([sys.executable, "-m", "PyInstaller", str(SPEC_FILE), "--clean"], env=env)
 
     if not dist_dir.exists():
         _die(f"PyInstaller ran but dist/ directory not found at {dist_dir}")
@@ -550,6 +555,8 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--skip-build", action="store_true", dest="skip_build")
+    p.add_argument("--onefile", action="store_true",
+                   help="Build a single-file executable (dist/WSmartRoute) instead of the dist/wsmart_route folder.")
     p.add_argument("--no-commit", action="store_true", dest="no_commit")
     return p
 
@@ -670,7 +677,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             dist_dir = PROJECT_ROOT / "dist" / "_nonexistent_skip_build"
         else:
             _log("Step 3/4 — Building executable with PyInstaller …")
-            dist_dir = _step_build(dry_run=args.dry_run)
+            dist_dir = _step_build(dry_run=args.dry_run, onefile=args.onefile)
 
         # 8. Package into zip
         _log("Step 4/4 — Creating zip archive …")
