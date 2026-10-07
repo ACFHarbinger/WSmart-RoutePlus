@@ -122,7 +122,8 @@ def main() -> None:
         "patch": patch_rel,
     }
     args.config.write_text(json.dumps(config, indent=2) + "\n")
-    print(f"{args.name}: {len(removed)} remove paths, {patch.count(b'\ndiff --git') + bool(patch)} patched files")
+    n_patched = patch.count(b"\ndiff --git") + bool(patch)
+    print(f"{args.name}: {len(removed)} remove paths, {n_patched} patched files")
 
 
 if __name__ == "__main__":
