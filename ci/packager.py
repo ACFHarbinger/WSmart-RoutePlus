@@ -336,6 +336,7 @@ def _step_profile(
     file_list: Optional[str],
     includes: List[str],
     dry_run: bool,
+    source_zip: Optional[str] = None,
 ) -> None:
     """Apply the export profile, entry-point and engine choices to the pruned tree."""
     cmd = [sys.executable, str(staged / PROFILE_SCRIPT.name), "--root", str(PROJECT_ROOT),
@@ -348,6 +349,8 @@ def _step_profile(
         cmd += ["--engines", engines]
     if file_list:
         cmd += ["--file-list", file_list]
+    if source_zip:
+        cmd += ["--source-zip", source_zip]
     for rel in includes:
         cmd += ["--include", rel]
     cmd += ["--include-from", str(staged / "include")]
@@ -541,6 +544,13 @@ def _build_parser() -> argparse.ArgumentParser:
         "(relative to the package root, e.g. assets/files/FILE_LIST.txt).",
     )
     p.add_argument(
+        "--source-zip",
+        metavar="ZIP",
+        default=None,
+        dest="source_zip",
+        help="With --file-list: archive the source/ folder to ZIP (relative to the package root) and delete it.",
+    )
+    p.add_argument(
         "--include",
         metavar="PATH",
         action="append",
@@ -658,7 +668,8 @@ def main(argv: Optional[List[str]] = None) -> None:
         )
         if profile_dir is not None:
             _step_profile(
-                profile_dir, args.profile, args.entrypoints, args.engines, args.file_list, args.include, args.dry_run
+                profile_dir, args.profile, args.entrypoints, args.engines, args.file_list, args.include, args.dry_run,
+                source_zip=args.source_zip,
             )
 
         # 5. Commit pruned state

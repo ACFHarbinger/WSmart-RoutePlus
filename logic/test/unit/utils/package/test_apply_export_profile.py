@@ -8,6 +8,7 @@ from logic.package.apply_export_profile import (
     check_imports,
     copy_includes,
     write_file_list,
+    zip_source,
 )
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -122,3 +123,15 @@ def test_moves_replace_parent_entries_and_delete_the_source(tmp_path):
     assert sorted(p.name for p in pkg.iterdir()) == ["__init__.py", "grid.py", "keep.py"]
     assert (pkg / "__init__.py").read_text() == "new"
     apply_moves(tmp_path, [{"from": "pkg/export", "to": "pkg"}], dry_run=False)  # already applied: no-op
+
+
+def test_source_zip_archives_and_removes_the_source_folder(tmp_path):
+    import zipfile
+
+    (tmp_path / "logic").mkdir()
+    (tmp_path / "logic" / "mod.py").write_text("x = 1\n")
+    (tmp_path / "__main__.py").write_text("")
+    write_file_list(tmp_path, "assets/files/FILE_LIST.txt", dry_run=False)
+    out = zip_source(tmp_path, "package_source.zip", dry_run=False)
+    assert sorted(zipfile.ZipFile(out).namelist()) == ["source/__main__.py", "source/logic/mod.py"]
+    assert not (tmp_path / "source").exists()

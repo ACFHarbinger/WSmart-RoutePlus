@@ -6172,9 +6172,9 @@
       "entrypoints": "dunder",
       "engines": "swc_tcf=gurobi",
       "remove_paths": [
-        ".gitignore",
         ".python-version",
         "LICENSE",
+        "ci",
         "logic/configs/policies/other/ac_bmc.yaml",
         "logic/configs/policies/other/ac_oi.yaml",
         "logic/configs/policies/other/ri_ftsp.yaml",
