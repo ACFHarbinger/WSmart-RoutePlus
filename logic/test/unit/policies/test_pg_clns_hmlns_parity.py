@@ -1,9 +1,8 @@
-"""PG-CLNS on the shared operators (M-qwen-01) and HMLNS on the canonical ALNS (M-qwen-03).
+"""PG-CLNS random removal and HMLNS on the canonical ALNS (M-qwen-03).
 
-Random removal is the one PG-CLNS operator whose behavior is unchanged: it is checked against outputs
-recorded from the previous PG-CLNS implementation (commit 63f116656) on seeded asymmetric instances.
-Cluster removal (now the shared MST-based variant), greedy repair (now opens a new route for profitable
-optional bins) and regret-2 repair (different route opening and tie-breaking) changed intentionally.
+PG-CLNS runs on its own operators again (owner ruling 2026-10-07, restoring the pre-ed45f86f1 package);
+random removal is checked against outputs recorded from that implementation (commit 63f116656) on seeded
+asymmetric instances.
 """
 
 import copy
@@ -19,12 +18,6 @@ from logic.src.policies.route_construction.meta_heuristics.hybrid_memetic_large_
 )
 from logic.src.policies.route_construction.meta_heuristics.hybrid_memetic_large_neighborhood_search.solver import (
     HybridMemeticLargeNeighborhoodSearchSolver,
-)
-from logic.src.policies.route_construction.meta_heuristics.pheromone_guided_cooperative_large_neighborhood_search.lns import (
-    LNSSolver,
-)
-from logic.src.policies.route_construction.meta_heuristics.pheromone_guided_cooperative_large_neighborhood_search.params import (
-    LNSParams,
 )
 
 pytestmark = [pytest.mark.unit]
@@ -55,21 +48,6 @@ def test_random_removal_matches_the_previous_pg_clns_implementation(seed):
     assert not np.allclose(d, d.T), "the fixture must be asymmetric"
     new_routes, removed = random_removal(copy.deepcopy(routes), 4, rng=random.Random(seed))
     assert [new_routes, sorted(removed)] == PREVIOUS_RANDOM_REMOVAL[str(seed)]
-
-
-def test_pg_clns_repair_rejects_a_bin_above_capacity_and_serves_mandatory_bins():
-    """Through the PG-CLNS adapter (LNSSolver.repair_ops), not the operator functions directly."""
-    d = np.array([[0, 1, 1, 9], [1, 0, 1, 9], [1, 1, 0, 9], [9, 9, 9, 0]], dtype=float)
-    wastes = {1: 20.0, 2: 3.0, 3: 4.0}
-    solver = LNSSolver(
-        d, wastes, capacity=10.0, R=1.0, C=1.0, params=LNSParams(max_iterations=1), mandatory_nodes=[3], seed=1
-    )
-    for repair in solver.repair_ops:
-        routes = repair([], [1, 2, 3])
-        served = {n for r in routes for n in r}
-        assert 1 not in served, "a bin heavier than the vehicle must not be routed"
-        assert 3 in served, "the mandatory bin must be served even though it is unprofitable"
-        assert all(sum(wastes[n] for n in r) <= 10.0 for r in routes)
 
 
 def test_hmlns_calibrates_through_the_canonical_alns_even_with_negative_profit():

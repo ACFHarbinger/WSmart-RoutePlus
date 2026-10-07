@@ -27,17 +27,15 @@ import numpy as np
 
 from logic.src.tracking.viz_mixin import PolicyVizMixin
 
-from logic.src.policies.helpers.operators.intra_route_local_search.k_opt import (
+from .operators import (
     move_2opt_intra,
+    move_2opt_star,
     move_3opt_intra,
-)
-from logic.src.policies.helpers.operators.intra_route_local_search.relocate import (
     move_or_opt,
     move_relocate,
+    move_swap,
+    move_swap_star,
 )
-from logic.src.policies.helpers.operators.intra_route_local_search.swap import move_swap
-from logic.src.policies.helpers.operators.inter_route_local_search.k_opt_star import move_2opt_star
-from logic.src.policies.helpers.operators.inter_route_local_search.swap_star import move_swap_star
 
 
 class LocalSearch(PolicyVizMixin, ABC):
@@ -336,7 +334,7 @@ class LocalSearch(PolicyVizMixin, ABC):
         Perform or-opt move.
 
         Args:
-            u: Node to move (unused, derived from r_u/p_u by shared operator).
+            u: Node to move.
             chain_len: Length of the chain to move.
             r_u: Route index of node u.
             p_u: Position index of node u.
@@ -344,7 +342,7 @@ class LocalSearch(PolicyVizMixin, ABC):
         Returns:
             bool: Whether the move was successful.
         """
-        return move_or_opt(self, r_u, p_u, chain_len)
+        return move_or_opt(self, u, chain_len, r_u, p_u)
 
 
 class ACOLocalSearch(LocalSearch):
