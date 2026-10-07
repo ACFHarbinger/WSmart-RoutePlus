@@ -1,5 +1,5 @@
 # =============================================================================
-# Vehicle Routing Problem with Profits (VRPP) Environment Configuration
+# Profitable Tour Problem (PTP) Environment Configuration
 # =============================================================================
 # Classic waste-collecting routing problem:
 #   - Each node has a profit/waste
@@ -9,7 +9,7 @@
 # Benchmark problem for testing neural constructive heuristics.
 # =============================================================================
 
-name: "vrpp" # Environment identifier
+name: "ptp" # Environment identifier
 
 # ===========================================================================
 # Curriculum Learning

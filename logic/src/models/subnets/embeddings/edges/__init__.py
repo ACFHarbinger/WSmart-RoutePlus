@@ -9,7 +9,7 @@ Attributes:
 
 Example:
     >>> from logic.src.models.subnets.embeddings.edges import get_edge_embedding
-    >>> embedder = get_edge_embedding("vrpp", embed_dim=128)
+    >>> embedder = get_edge_embedding("ptp", embed_dim=128)
 """
 
 from __future__ import annotations
@@ -19,14 +19,14 @@ from typing import Any, Dict
 from torch import nn
 
 from .base import EdgeEmbedding
-from .cvrpp import CVRPPEdgeEmbedding
+from .mvptp import MVPTPEdgeEmbedding
 from .none import NoEdgeEmbedding
 from .tsp import TSPEdgeEmbedding
 
 EDGE_EMBEDDING_REGISTRY: Dict[str, Any] = {
-    "vrpp": TSPEdgeEmbedding,
-    "cvrpp": CVRPPEdgeEmbedding,
-    "ctop": CVRPPEdgeEmbedding,
+    "ptp": TSPEdgeEmbedding,
+    "mvptp": MVPTPEdgeEmbedding,
+    "tcmvptp": MVPTPEdgeEmbedding,
     "none": NoEdgeEmbedding,
 }
 
@@ -58,7 +58,7 @@ def get_edge_embedding(
 
 __all__: list[str] = [
     "EdgeEmbedding",
-    "CVRPPEdgeEmbedding",
+    "MVPTPEdgeEmbedding",
     "NoEdgeEmbedding",
     "TSPEdgeEmbedding",
     "EDGE_EMBEDDING_REGISTRY",

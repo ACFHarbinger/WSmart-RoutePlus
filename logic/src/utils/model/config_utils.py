@@ -127,10 +127,10 @@ def load_args(filename: str) -> Dict[str, Any]:
         args["data_distribution"] = None
         if "problem" in args and args["problem"] is not None:
             probl, *dist = args["problem"].split("_")
-            if "vrpp" in probl:
+            if "ptp" in probl:
                 args["problem"] = probl
                 args["data_distribution"] = dist[0] if dist else None
         else:
-            args["problem"] = "vrpp"  # Default fallback
+            args["problem"] = "ptp"  # Default fallback
 
     return args

@@ -55,8 +55,8 @@ class RLConfig:
     """Enable episode-level PBRS shaping (default: False)."""
     pbrs_shaping_weight: float = 1.0
     """Scale factor applied to F before adding to R_base (default: 1.0)."""
-    pbrs_potential: str = "vrpp"
-    """Potential function key. Currently supported: 'vrpp'. Others log a warning
+    pbrs_potential: str = "ptp"
+    """Potential function key. Currently supported: 'ptp'. Others log a warning
     and fall back to zero shaping."""
 
     # Algorithm specific sub-configs

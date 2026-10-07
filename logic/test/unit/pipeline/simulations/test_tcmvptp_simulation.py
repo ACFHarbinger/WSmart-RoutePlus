@@ -1,7 +1,7 @@
-"""Unit tests for Capacitated Team Orienteering Problem (CTOP) simulation support.
+"""Unit tests for Time-Constrained Multi-Vehicle Profitable Tour Problem (TCMVPTP) simulation support.
 
 Validates:
-- Validation logic accepting 'ctop' as a supported problem type.
+- Validation logic accepting 'tcmvptp' as a supported problem type.
 - Route splitting with dual constraints (vehicle capacity + working-shift time budget).
 - CollectAction computing exact operational time spent (driving + service).
 - SimulationDayContext and get_daily_results logging time_spent additively.
@@ -27,14 +27,14 @@ pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 class TestCTOPValidation:
-    """Tests that CTOP is a registered and validated problem variant."""
+    """Tests that TCMVPTP is a registered and validated problem variant."""
 
     def test_ctop_in_problems(self):
-        assert "ctop" in PROBLEMS
+        assert "tcmvptp" in PROBLEMS
 
     def test_validate_sim_config_accepts_ctop(self):
         cfg = Config()
-        cfg.sim.problem = "ctop"
+        cfg.sim.problem = "tcmvptp"
         cfg.sim.graph.n_days = 5
         cfg.sim.graph.n_samples = 1
         cfg.sim.graph.area = "figueiradafoz"
@@ -42,7 +42,7 @@ class TestCTOPValidation:
         cfg.sim.cpu_cores = 1
 
         validate_sim_config(cfg)
-        assert cfg.sim.problem == "ctop"
+        assert cfg.sim.problem == "tcmvptp"
 
     def test_validate_sim_config_rejects_unknown_problem(self):
         cfg = Config()
@@ -117,7 +117,7 @@ class TestCTOPRouteSplitting:
 
 
 class TestCTOPCollectionAction:
-    """Tests operational time spent calculation and CTOP constraint validation in CollectAction."""
+    """Tests operational time spent calculation and TCMVPTP constraint validation in CollectAction."""
 
     def test_time_spent_calculation(self):
         bins = MagicMock()
@@ -138,7 +138,7 @@ class TestCTOPCollectionAction:
             "avg_speed_kmh": 30.0,  # 45 / 30 = 1.5 h driving
             "service_time_h": 0.25,  # 2 bins * 0.25 = 0.5 h service
             "shift_hours": 7.0,
-            "problem": "ctop",
+            "problem": "tcmvptp",
         }
 
         action = CollectAction()
@@ -166,23 +166,30 @@ class TestCTOPCollectionAction:
             "avg_speed_kmh": 20.0,  # 200 / 20 = 10.0 h driving
             "service_time_h": 0.5,  # 1 bin * 0.5 = 0.5 h -> total 10.5 h
             "shift_hours": 8.0,  # budget 8.0 h < 10.5 h
-            "problem": "ctop",
+            "problem": "tcmvptp",
         }
 
         action = CollectAction()
-        with pytest.raises(AssertionError, match="CTOP violation: trip duration"):
+        with pytest.raises(AssertionError, match="TCMVPTP violation: trip duration"):
             action.execute(context)
 
 
 class TestCTOPLoggingAndContext:
-    """Tests daily logging and context tracking of CTOP metrics."""
+    """Tests daily logging and context tracking of TCMVPTP metrics."""
 
     def test_logging_preserves_intermediate_depot_returns(self):
         result = get_daily_results(
-            total_collected=20.0, ncol=2, cost=4.0, tour=[0, 1, 0, 2, 0],
-            day=1, new_overflows=0, sum_lost=0.0,
+            total_collected=20.0,
+            ncol=2,
+            cost=4.0,
+            tour=[0, 1, 0, 2, 0],
+            day=1,
+            new_overflows=0,
+            sum_lost=0.0,
             coordinates=pd.DataFrame({"ID": [0, 101, 102]}),
-            profit=1.0, time=0.1, time_spent=3.0,
+            profit=1.0,
+            time=0.1,
+            time_spent=3.0,
         )
         assert result["tour"] == [0, 101, 0, 102, 0]
 
@@ -206,7 +213,7 @@ class TestCTOPLoggingAndContext:
         assert res["time_spent"] == 2.35
 
     def test_simulation_day_context_defaults(self):
-        ctx = SimulationDayContext(problem="ctop", shift_hours=7.5, avg_speed_kmh=40.0)
-        assert ctx.problem == "ctop"
+        ctx = SimulationDayContext(problem="tcmvptp", shift_hours=7.5, avg_speed_kmh=40.0)
+        assert ctx.problem == "tcmvptp"
         assert ctx.shift_hours == 7.5
         assert ctx.avg_speed_kmh == 40.0

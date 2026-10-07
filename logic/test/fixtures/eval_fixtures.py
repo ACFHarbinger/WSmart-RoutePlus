@@ -41,7 +41,7 @@ def eval_opts():
 def mock_eval_model(eval_opts):
     """Mocks the model used in evaluation."""
     mock_model = MagicMock()
-    mock_model.problem.NAME = "cvrpp"
+    mock_model.problem.NAME = "mvptp"
     mock_model.problem.make_dataset.return_value = MagicMock()
 
     # Common mock behaviors could go here

@@ -1,10 +1,10 @@
 # =============================================================================
-# Capacitated Vehicle Routing Problem with Profits (CVRPP) Configuration
+# Multi-Vehicle Profitable Tour Problem (MVPTP) Configuration
 # =============================================================================
 # Waste-collecting routing WITH vehicle capacity constraints.
 #
 # Combines:
-#   - VRPP: Waste/profit collection objective
+#   - PTP: Waste/profit collection objective
 #   - CVRP: Capacity constraints
 #
 # Realistic variant where vehicle has limited capacity and must return
@@ -13,7 +13,7 @@
 # Benchmark: Standard OR problem for testing capacity-aware algorithms.
 # =============================================================================
 
-name: "cvrpp" # Environment identifier
+name: "mvptp" # Environment identifier
 mean: 0.0
 variance: 0.0
 

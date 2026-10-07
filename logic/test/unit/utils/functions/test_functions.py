@@ -106,14 +106,14 @@ class TestFunctions:
         assert all(v.device.type == "cpu" for v in result.values())
 
     def test_load_problem_vrpp(self):
-        """Test load_problem for VRPP."""
-        problem = load_problem("vrpp")
-        assert problem.NAME == "vrpp"
+        """Test load_problem for PTP."""
+        problem = load_problem("ptp")
+        assert problem.NAME == "ptp"
 
     def test_load_problem_cvrpp(self):
-        """Test load_problem for CVRPP."""
-        problem = load_problem("cvrpp")
-        assert problem.NAME == "cvrpp"
+        """Test load_problem for MVPTP."""
+        problem = load_problem("mvptp")
+        assert problem.NAME == "mvptp"
 
     def test_parse_softmax_temperature_float(self):
         """Test parse_softmax_temperature with float."""

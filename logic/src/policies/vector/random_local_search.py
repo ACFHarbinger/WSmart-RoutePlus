@@ -8,7 +8,7 @@ Attributes:
     RandomLocalSearchPolicy: Expert policy using stochastic local search.
 
 Example:
-    >>> policy = RandomLocalSearchPolicy(env_name="vrpp")
+    >>> policy = RandomLocalSearchPolicy(env_name="ptp")
     >>> out = policy(td)
 """
 

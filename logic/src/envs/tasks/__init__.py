@@ -5,7 +5,7 @@ Attributes:
     ATSP: ATSP class
     BaseProblem: BaseProblem class
     CVRP: CVRP class
-    CVRPP: CVRPP class
+    MVPTP: MVPTP class
     IRP: IRP class
     OP: OP class
     PCTSP: PCTSP class
@@ -13,8 +13,8 @@ Attributes:
     SPCTSP: SPCTSP class
     ThOP: ThOP class
     TSP: TSP class
-    CTOP: CTOP class
-    VRPP: VRPP class
+    TCMVPTP: TCMVPTP class
+    PTP: PTP class
 
 Example:
     >>> from logic.src.envs import TSPEnv
@@ -30,17 +30,17 @@ from logic.src.constants.tasks import (
 
 from .atsp import ATSP
 from .base import BaseProblem
-from .ctop import CTOP
 from .cvrp import CVRP
-from .cvrpp import CVRPP
 from .irp import IRP
+from .mvptp import MVPTP
 from .op import OP
 from .pctsp import PCTSP
 from .pdp import PDP
+from .ptp import PTP
 from .spctsp import SPCTSP
+from .tcmvptp import TCMVPTP
 from .thop import ThOP
 from .tsp import TSP
-from .vrpp import VRPP
 
 __all__ = [
     "BaseProblem",
@@ -48,8 +48,8 @@ __all__ = [
     "REVENUE_KG",
     "BIN_CAPACITY",
     "VEHICLE_CAPACITY",
-    "VRPP",
-    "CVRPP",
+    "PTP",
+    "MVPTP",
     "IRP",
     "ATSP",
     "TSP",
@@ -59,5 +59,5 @@ __all__ = [
     "SPCTSP",
     "PDP",
     "ThOP",
-    "CTOP",
+    "TCMVPTP",
 ]

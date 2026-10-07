@@ -8,8 +8,8 @@ Attributes:
         to their respective context embedding classes.
 
 Example:
-    >>> from logic.src.models.subnets.embeddings.context import VRPPContextEmbedder
-    >>> embedder = VRPPContextEmbedder(embed_dim=128)
+    >>> from logic.src.models.subnets.embeddings.context import PTPContextEmbedder
+    >>> embedder = PTPContextEmbedder(embed_dim=128)
 """
 
 from __future__ import annotations
@@ -17,20 +17,20 @@ from __future__ import annotations
 from typing import Any, Dict
 
 from .base import ContextEmbedder
-from .cvrpp import CVRPPContextEmbedder
 from .generic import GenericContextEmbedder
-from .vrpp import VRPPContextEmbedder
+from .mvptp import MVPTPContextEmbedder
+from .ptp import PTPContextEmbedder
 
 CONTEXT_EMBEDDING_REGISTRY: Dict[str, Any] = {
-    "vrpp": VRPPContextEmbedder,
-    "cvrpp": CVRPPContextEmbedder,
-    "ctop": CVRPPContextEmbedder,
+    "ptp": PTPContextEmbedder,
+    "mvptp": MVPTPContextEmbedder,
+    "tcmvptp": MVPTPContextEmbedder,
 }
 
 __all__: list[str] = [
     "ContextEmbedder",
-    "CVRPPContextEmbedder",
+    "MVPTPContextEmbedder",
     "GenericContextEmbedder",
-    "VRPPContextEmbedder",
+    "PTPContextEmbedder",
     "CONTEXT_EMBEDDING_REGISTRY",
 ]

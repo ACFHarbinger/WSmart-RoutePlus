@@ -28,7 +28,7 @@ class TestNARGNN:
         self.batch_size = 2
         self.num_nodes = 50   # Increased to avoid k_sparse issues
         self.env = MagicMock()
-        self.env.name = "vrpp"
+        self.env.name = "ptp"
 
         # Mock env.step to return results matching input batch size
         self.step_count = 0
@@ -47,14 +47,14 @@ class TestNARGNN:
 
         self.policy = NARGNNPolicy(
             embed_dim=32,
-            env_name="vrpp",
+            env_name="ptp",
             num_layers_heatmap_generator=2,
             num_layers_graph_encoder=2,
         )
 
         self.model = NARGNN(
             embed_dim=32,
-            env_name="vrpp",
+            env_name="ptp",
             num_layers_heatmap_generator=2,
             num_layers_graph_encoder=2,
             baseline=None,

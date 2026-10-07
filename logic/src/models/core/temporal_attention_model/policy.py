@@ -9,7 +9,7 @@ Attributes:
 
 Example:
     >>> from logic.src.models.core.temporal_attention_model.policy import TemporalAMPolicy
-    >>> policy = TemporalAMPolicy(env_name="vrpp", temporal_horizon=5)
+    >>> policy = TemporalAMPolicy(env_name="ptp", temporal_horizon=5)
     >>> out = policy(td, env)
 """
 

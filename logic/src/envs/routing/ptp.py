@@ -1,17 +1,17 @@
 """
-VRPP Environment implementation.
+PTP Environment implementation.
 
-Vehicle Routing Problem with Profits: Select profitable subset
+Profitable Tour Problem: Select profitable subset
 of nodes to visit while minimizing travel cost.
 
 Attributes:
-    NAME: Environment identifier string ``"vrpp"``.
+    NAME: Environment identifier string ``"ptp"``.
     name: Alias for NAME used by the registry.
     node_dim: Number of node features (x, y, waste, profit) = 4.
 
 Example:
     >>> from logic.src.envs.routing import get_env
-    >>> env = get_env("vrpp", num_loc=50)
+    >>> env = get_env("ptp", num_loc=50)
     >>> td = env.reset()
 """
 
@@ -24,28 +24,28 @@ from tensordict import TensorDict, TensorDictBase
 
 from logic.src.envs.base.base import RL4COEnvBase
 from logic.src.envs.base.ops import OpsMixin
-from logic.src.envs.generators import VRPPGenerator
+from logic.src.envs.generators import PTPGenerator
 
 
-class VRPPEnv(RL4COEnvBase):
+class PTPEnv(RL4COEnvBase):
     """
-    Vehicle Routing Problem with Profits Environment.
+    Profitable Tour Problem Environment.
 
     The agent must select which nodes to visit to maximize
     total waste collected minus travel cost.
 
     Attributes:
-        NAME: Environment identifier string ``"vrpp"``.
+        NAME: Environment identifier string ``"ptp"``.
         name: Alias for NAME used by the registry.
         node_dim: Number of node features (x, y, waste, profit) = 4.
     """
 
-    NAME = "vrpp"
-    name: str = "vrpp"
+    NAME = "ptp"
+    name: str = "ptp"
 
     def __init__(
         self,
-        generator: Optional[VRPPGenerator] = None,
+        generator: Optional[PTPGenerator] = None,
         generator_params: Optional[dict] = None,
         waste_weight: float = 1.0,
         cost_weight: float = 1.0,
@@ -55,7 +55,7 @@ class VRPPEnv(RL4COEnvBase):
         **kwargs,
     ):
         """
-        Initialize VRPPEnv.
+        Initialize PTPEnv.
 
         Args:
             generator: Problem instance generator.
@@ -69,7 +69,7 @@ class VRPPEnv(RL4COEnvBase):
         """
         generator_params = generator_params or kwargs
         if generator is None:
-            generator = VRPPGenerator(**generator_params, device=device)
+            generator = PTPGenerator(**generator_params, device=device)
 
         super().__init__(generator, generator_params, device, **kwargs)
         self.waste_weight = revenue_kg if revenue_kg is not None else waste_weight
@@ -77,7 +77,7 @@ class VRPPEnv(RL4COEnvBase):
 
     def _reset_instance(self, tensordict: TensorDict) -> TensorDict:
         """
-        This method sets up the initial state for a Vehicle Routing Problem with Profits (VRPP)
+        This method sets up the initial state for a Profitable Tour Problem (PTP)
         episode. It handles depot prepending logic to ensure coordinates are in the correct format
         (N+1 nodes including depot at index 0), and initializes all tracking fields.
 
@@ -134,7 +134,7 @@ class VRPPEnv(RL4COEnvBase):
         # Robust N vs N+1 logic
         # gen_n represents customers only. If shape is gen_n + 1, it already has depot.
         if self.generator is None:
-            raise ValueError("Generator must be initialized for VRPP environment.")
+            raise ValueError("Generator must be initialized for PTP environment.")
         gen_n = self.generator.num_loc
 
         needs_prepend = False
@@ -173,7 +173,7 @@ class VRPPEnv(RL4COEnvBase):
         return tensordict
 
     def _step(self, tensordict: TensorDict) -> TensorDict:
-        """Execute action and update state for VRPP.
+        """Execute action and update state for PTP.
 
         Args:
             tensordict: Current state TensorDict containing ``action``, ``current_node``,
@@ -192,7 +192,7 @@ class VRPPEnv(RL4COEnvBase):
         Execute a routing action and update the episode state.
 
         Delegates common routing mechanics (distance, visited, current_node, tour)
-        to OpsMixin._step_instance, then applies VRPP-specific waste collection.
+        to OpsMixin._step_instance, then applies PTP-specific waste collection.
 
         Args:
             tensordict (TensorDict): Current state containing:
@@ -233,7 +233,7 @@ class VRPPEnv(RL4COEnvBase):
         bs = tensordict.batch_size
         device = tensordict.device
 
-        # Waste collection (VRPP-specific)
+        # Waste collection (PTP-specific)
         waste = tensordict.get("waste")
         if waste is not None and waste.shape[-1] == tensordict["visited"].shape[-1] - 1:
             waste = torch.cat([torch.zeros(*bs, 1, device=device), waste], dim=1)
@@ -249,7 +249,7 @@ class VRPPEnv(RL4COEnvBase):
 
     def _get_action_mask(self, tensordict: TensorDict) -> torch.Tensor:
         """
-        Compute action mask for VRPP with VRPP-correct termination logic.
+        Compute action mask for PTP with PTP-correct termination logic.
 
         Standard behavior:
         - Mask out already-visited nodes.
@@ -326,7 +326,7 @@ class VRPPEnv(RL4COEnvBase):
 
     def _get_reward(self, tensordict: TensorDictBase, actions: Optional[torch.Tensor] = None) -> torch.Tensor:
         """
-        Compute VRPP reward: waste - cost.
+        Compute PTP reward: waste - cost.
 
         Reward = (waste_weight * total_waste) - (cost_weight * tour_length)
 

@@ -1,10 +1,10 @@
-"""Regression tests for Capacitated Team Orienteering Problem feasibility."""
+"""Regression tests for Time-Constrained Multi-Vehicle Profitable Tour Problem feasibility."""
 
 import pytest
 import torch
-from logic.src.envs.generators.ctop import CTOPGenerator
-from logic.src.envs.routing.ctop import CTOPEnv
-from logic.src.envs.tasks.ctop import CTOP
+from logic.src.envs.generators.tcmvptp import TCMVPTPGenerator
+from logic.src.envs.routing.tcmvptp import TCMVPTPEnv
+from logic.src.envs.tasks.tcmvptp import TCMVPTP
 from tensordict import TensorDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -29,35 +29,35 @@ class TestCTOPCosts:
     def test_time_matrix_overrides_distance_and_includes_return(self, tour):
         data = _dataset(shift_hours=1.0)
         data["time_matrix"] = torch.tensor([[[0.0, 0.2], [0.7, 0.0]]])
-        _, costs, _ = CTOP.get_costs(data, torch.tensor(tour), None)
+        _, costs, _ = TCMVPTP.get_costs(data, torch.tensor(tour), None)
         assert costs["time"].item() == pytest.approx(0.9)
         data["time_matrix"][0, 1, 0] = 0.9
         with pytest.raises(AssertionError, match="trip time"):
-            CTOP.get_costs(data, torch.tensor(tour), None)
+            TCMVPTP.get_costs(data, torch.tensor(tour), None)
 
     def test_final_depot_return_is_time_feasible(self):
         """A route that cannot return before shift end is rejected."""
         data = _dataset()
         data["locs"] = torch.tensor([[[0.6, 0.0]]])
         with pytest.raises(AssertionError, match="trip time"):
-            CTOP.get_costs(data, torch.tensor([[1, 0]]), None)
+            TCMVPTP.get_costs(data, torch.tensor([[1, 0]]), None)
 
     def test_road_distance_matrix_governs_time_feasibility(self):
         """Time validation follows supplied road legs rather than coordinates."""
         dist_matrix = torch.tensor([[[0.0, 2.0], [2.0, 0.0]]])
         with pytest.raises(AssertionError, match="trip time"):
-            CTOP.get_costs(_dataset(shift_hours=3.0), torch.tensor([[1, 0]]), None, dist_matrix)
+            TCMVPTP.get_costs(_dataset(shift_hours=3.0), torch.tensor([[1, 0]]), None, dist_matrix)
 
     def test_one_microhour_tolerance_is_accepted(self):
         """The documented 1e-6 feasibility tolerance remains inclusive."""
         data = _dataset()
         data["locs"] = torch.tensor([[[0.5000005, 0.0]]])
-        _, costs, _ = CTOP.get_costs(data, torch.tensor([[1, 0]]), None)
+        _, costs, _ = TCMVPTP.get_costs(data, torch.tensor([[1, 0]]), None)
         assert costs["time"].item() == pytest.approx(1.000001, abs=1e-6)
 
 
 class TestCTOPEnvironment:
-    """Live CTOP state uses the same physical constraints as its evaluator."""
+    """Live TCMVPTP state uses the same physical constraints as its evaluator."""
 
     def test_time_matrix_controls_mask_and_resource_consumption(self):
         data = _dataset(shift_hours=1.0)
@@ -76,9 +76,9 @@ class TestCTOPEnvironment:
         assert not state["action_mask"][0, 1]
 
     @staticmethod
-    def _env() -> CTOPEnv:
-        return CTOPEnv(
-            generator=CTOPGenerator(
+    def _env() -> TCMVPTPEnv:
+        return TCMVPTPEnv(
+            generator=TCMVPTPGenerator(
                 num_loc=1,
                 capacity=10.0,
                 shift_hours=2.5,
@@ -88,7 +88,7 @@ class TestCTOPEnvironment:
         )
 
     def test_generator_and_env_import_without_simulation_repository_cycle(self):
-        """CTOP remains constructible without initializing simulation repositories."""
+        """TCMVPTP remains constructible without initializing simulation repositories."""
         td = self._env().reset(batch_size=[1])
         assert {"shift_hours", "avg_speed_kmh", "service_time_h"} <= set(td.keys())
         assert td["shift_hours"].item() == 2.5
@@ -96,20 +96,20 @@ class TestCTOPEnvironment:
         assert td["service_time_h"].item() == pytest.approx(0.1)
 
     def test_get_env_factory_builds_a_ctop_generator_not_a_plain_vrpp_one(self):
-        """get_env("ctop", **kwargs) must route through CTOPGenerator.
+        """get_env("tcmvptp", **kwargs) must route through TCMVPTPGenerator.
 
-        Regression test: CTOPEnv previously had no __init__ override, so it
-        inherited VRPPEnv's, which always built a plain VRPPGenerator. Any
+        Regression test: TCMVPTPEnv previously had no __init__ override, so it
+        inherited PTPEnv's, which always built a plain PTPGenerator. Any
         shift_hours/avg_speed_kmh/service_time_h kwarg passed through
         get_env (including a Hydra-composed override) was silently
-        swallowed by VRPPGenerator's **kwargs and never reached the
+        swallowed by PTPGenerator's **kwargs and never reached the
         environment -- _reset_instance fell back to
         get_default_temporal_params() regardless of what was requested.
         """
         from logic.src.envs.routing import get_env
 
-        env = get_env("ctop", num_loc=5, shift_hours=3.5, avg_speed_kmh=40.0)
-        assert isinstance(env.generator, CTOPGenerator)
+        env = get_env("tcmvptp", num_loc=5, shift_hours=3.5, avg_speed_kmh=40.0)
+        assert isinstance(env.generator, TCMVPTPGenerator)
         assert env.generator.shift_hours == 3.5
         assert env.generator.avg_speed_kmh == 40.0
 

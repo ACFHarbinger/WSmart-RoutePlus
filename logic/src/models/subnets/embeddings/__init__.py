@@ -11,7 +11,7 @@ Attributes:
 
 Example:
     >>> from logic.src.models.subnets.embeddings import get_init_embedding
-    >>> embedding = get_init_embedding("vrpp", embed_dim=128)
+    >>> embedding = get_init_embedding("ptp", embed_dim=128)
 """
 
 from __future__ import annotations
@@ -20,20 +20,20 @@ from typing import Any, Dict
 
 from torch import nn
 
-from logic.src.models.subnets.embeddings.cvrpp import CVRPPInitEmbedding
-from logic.src.models.subnets.embeddings.vrpp import VRPPInitEmbedding
+from logic.src.models.subnets.embeddings.mvptp import MVPTPInitEmbedding
+from logic.src.models.subnets.embeddings.ptp import PTPInitEmbedding
 
 from .context import (
     CONTEXT_EMBEDDING_REGISTRY,
     ContextEmbedder,
     GenericContextEmbedder,
-    VRPPContextEmbedder,
+    PTPContextEmbedder,
 )
 from .dynamic import DynamicEmbedding
 from .edges import (
     EDGE_EMBEDDING_REGISTRY,
-    CVRPPEdgeEmbedding,
     EdgeEmbedding,
+    MVPTPEdgeEmbedding,
     NoEdgeEmbedding,
     TSPEdgeEmbedding,
     get_edge_embedding,
@@ -46,17 +46,17 @@ from .positional import (
 )
 from .state import (
     STATE_EMBEDDING_REGISTRY,
-    CVRPPState,
     EnvState,
-    VRPPState,
+    MVPTPState,
+    PTPState,
 )
 from .static import StaticEmbedding
 
 # Embedding registry
 INIT_EMBEDDING_REGISTRY: Dict[str, Any] = {
-    "vrpp": VRPPInitEmbedding,
-    "cvrpp": CVRPPInitEmbedding,
-    "ctop": CVRPPInitEmbedding,
+    "ptp": PTPInitEmbedding,
+    "mvptp": MVPTPInitEmbedding,
+    "tcmvptp": MVPTPInitEmbedding,
 }
 
 DYNAMIC_EMBEDDING_REGISTRY: Dict[str, Any] = {
@@ -87,18 +87,18 @@ def get_init_embedding(env_name: str, embed_dim: int = 128, **kwargs: Any) -> nn
 
 
 __all__: list[str] = [
-    "VRPPInitEmbedding",
-    "CVRPPInitEmbedding",
+    "PTPInitEmbedding",
+    "MVPTPInitEmbedding",
     "EnvState",
-    "VRPPState",
-    "CVRPPState",
+    "PTPState",
+    "MVPTPState",
     "ContextEmbedder",
-    "VRPPContextEmbedder",
+    "PTPContextEmbedder",
     "DynamicEmbedding",
     "StaticEmbedding",
     "EdgeEmbedding",
     "TSPEdgeEmbedding",
-    "CVRPPEdgeEmbedding",
+    "MVPTPEdgeEmbedding",
     "NoEdgeEmbedding",
     "INIT_EMBEDDING_REGISTRY",
     "STATE_EMBEDDING_REGISTRY",

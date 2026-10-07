@@ -13,7 +13,7 @@ Directory Structure and Module Descriptions:
 2. configs
    - Configuration management module for Hydra YAML definitions.
    - Subdirectories:
-     - envs: Environment specific variables (e.g. CVRP, VRPP).
+     - envs: Environment specific variables (e.g. CVRP, PTP).
      - models: Architecture defaults for ML policies (e.g. Attention Models).
      - policies: Solver parameters and heuristics settings (e.g. ALNS, HGS, PSOMA).
      - tasks: Config overrides defining specific workflows (e.g. train, test_sim).

@@ -127,7 +127,7 @@ MAX_CAPACITY_PERCENT = 100.0  # percent (0-100 range)
 # Prevents unbounded route lengths in waste-collecting and selective problems.
 
 # Default vehicle capacity (kilograms)
-# Used in: Capacitated VRP variants (CVRP, CVRPP, CTOP)
+# Used in: Capacitated VRP variants (CVRP, MVPTP, TCMVPTP)
 # Route terminates when cumulative collected waste ≥ VEHICLE_CAPACITY
 # Typical real-world values: 80-120 kg for small trucks, 200-300 kg for large trucks
 VEHICLE_CAPACITY: float = 200.0  # kg (default for synthetic instances)
@@ -137,7 +137,7 @@ VEHICLE_CAPACITY: float = 200.0  # kg (default for synthetic instances)
 # Environment registry for problem selection via CLI/config.
 # Format: {problem_name} → logic/src/envs/{problem_name}.py
 PROBLEMS: List[str] = [
-    "vrpp",  # Vehicle Routing Problem with Profits (maximize profit - cost)
-    "cvrpp",  # Capacitated VRPP (add vehicle capacity constraint)
-    "ctop",  # Capacitated Team Orienteering Problem (capacity + shift time budget)
+    "ptp",  # Profitable Tour Problem (maximize profit - cost)
+    "mvptp",  # Multi-Vehicle Profitable Tour Problem (adds the vehicle capacity constraint)
+    "tcmvptp",  # Time-Constrained Multi-Vehicle Profitable Tour Problem (capacity + shift time budget)
 ]

@@ -5,7 +5,7 @@
 # Configuration for multi-day waste collection simulation testing.
 # =============================================================================
 # Used by: python main.py test_sim
-# CTOP:    python main.py test_sim sim.problem=ctop
+# TCMVPTP:    python main.py test_sim sim.problem=tcmvptp
 #          Time budget is a *problem-level* constraint, not a per-policy
 #          flag. Loads shift_hours/avg_speed_kmh/service_time_h via
 #          load_temporal_params() in InitializingState and enforces both
@@ -115,13 +115,13 @@ sim:
   cpu_cores: 0
   n_vehicles: 0
   no_cuda: false
-  problem: "vrpp" # vrpp | cvrpp | ctop
-  shift_hours: 7.0 # CTOP per depot-to-depot trip, including return and service
+  problem: "ptp" # ptp | mvptp | tcmvptp
+  shift_hours: 7.0 # TCMVPTP per depot-to-depot trip, including return and service
   avg_speed_kmh: 35.0 # Uniform fallback for every bin and depot leg
   service_time_h: 0.025
-  # CTOP keeps this file's graph/policy lists; only the problem tag changes.
-  #   python main.py test_sim sim.problem=ctop
-  # Do not flip the committed default -- the paper's 30-day factorial is vrpp.
+  # TCMVPTP keeps this file's graph/policy lists; only the problem tag changes.
+  #   python main.py test_sim sim.problem=tcmvptp
+  # Do not flip the committed default -- the paper's 30-day factorial is ptp.
   output_dir: "output"
   run_name: "lm_cls"
   checkpoint_dir: "checkpoints"

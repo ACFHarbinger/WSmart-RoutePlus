@@ -18,7 +18,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 class MockEnv(RL4COEnvBase):
-    name = "vrpp"
+    name = "ptp"
     def __init__(self):
         self.device = torch.device("cpu")
 
@@ -46,7 +46,7 @@ def mdam_decoder():
         embed_dim=16,
         num_heads=2,
         num_paths=2,
-        env_name="vrpp"
+        env_name="ptp"
     )
 
 def test_mdam_decoder_init(mdam_decoder):
@@ -56,7 +56,7 @@ def test_mdam_decoder_init(mdam_decoder):
 
 def test_mdam_path_precompute():
     embed_dim = 16
-    path = MDAMPath(embed_dim=embed_dim, env_name="vrpp", num_heads=2)
+    path = MDAMPath(embed_dim=embed_dim, env_name="ptp", num_heads=2)
 
     batch_size = 2
     num_nodes = 5

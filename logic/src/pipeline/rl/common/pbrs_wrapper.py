@@ -29,11 +29,11 @@ Episode-Level Note:
 
 Attributes:
     PBRSShaper:            Episode-level PBRS engine.
-    get_potential_vrpp:    Potential function for VRPPEnv.
+    get_potential_ptp:    Potential function for PTPEnv.
     get_potential_fn:      Factory that returns the correct Φ for an env name.
 
 Example:
-    >>> shaper = PBRSShaper(gamma=1.0, env_name="vrpp")
+    >>> shaper = PBRSShaper(gamma=1.0, env_name="ptp")
     >>> shaper.record_initial(td_after_reset)
     >>> shaped, F = shaper.apply(base_reward, final_td)
 """
@@ -54,8 +54,8 @@ logger = get_pylogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-def get_potential_vrpp(td: TensorDict) -> torch.Tensor:
-    """Potential function Φ(s) for VRPPEnv.
+def get_potential_ptp(td: TensorDict) -> torch.Tensor:
+    """Potential function Φ(s) for PTPEnv.
 
     Φ(s) = collected_waste / max_possible_waste  ∈  [0, 1]
 
@@ -105,7 +105,7 @@ def _get_potential_not_implemented(td: TensorDict) -> torch.Tensor:
 
 #: Registry mapping env-name → Φ callable.
 _POTENTIAL_REGISTRY: dict[str, Callable[[TensorDict], torch.Tensor]] = {
-    "vrpp": get_potential_vrpp,
+    "ptp": get_potential_ptp,
 }
 
 
@@ -113,7 +113,7 @@ def get_potential_fn(env_name: str) -> Callable[[TensorDict], torch.Tensor]:
     """Return the potential function registered for *env_name*.
 
     Args:
-        env_name: Name of the environment (e.g. ``"vrpp"``).
+        env_name: Name of the environment (e.g. ``"ptp"``).
 
     Returns:
         Callable that maps a TensorDict state → scalar potential tensor.
@@ -177,9 +177,9 @@ class PBRSShaper:
 
         Args:
             gamma:          Discount factor γ. Pass ``rl.gamma`` from config.
-                            For non-discounted episodic tasks (VRPP/POMO/REINFORCE)
+                            For non-discounted episodic tasks (PTP/POMO/REINFORCE)
                             this is typically ``1.0``.
-            env_name:       Environment name (e.g. ``"vrpp"``). Used to select
+            env_name:       Environment name (e.g. ``"ptp"``). Used to select
                             the registered potential function.
             shaping_weight: Scale applied to F before adding to R_base (default 1.0).
             potential_fn:   Override the registered Φ with a custom callable.
@@ -201,7 +201,7 @@ class PBRSShaper:
 
         Must be called once per batch before ``apply()``.
 
-        For VRPPEnv this will always be **0** because ``collected_waste`` is
+        For PTPEnv this will always be **0** because ``collected_waste`` is
         initialised to zero at reset. The call is still required to ensure
         the batch dimension is captured correctly.
 
@@ -224,10 +224,10 @@ class PBRSShaper:
             shaping = γ · Φ(s_final) − Φ(s_0)
 
         **Φ(s) is formulated as**:
-            collected_waste / sum(waste)  for VRPPEnv  (see :func:`get_potential_vrpp`).
+            collected_waste / sum(waste)  for PTPEnv  (see :func:`get_potential_ptp`).
 
         **Terminal state handling**:
-            For VRPPEnv, ``Φ(s_0) = 0`` (no waste collected at reset).
+            For PTPEnv, ``Φ(s_0) = 0`` (no waste collected at reset).
             ``Φ(s_final)`` is evaluated from ``final_td["collected_waste"]`` after
             the complete tour; it is **not** forced to 0 because doing so would
             make F = 0 always (degenerate case for constructive RL).

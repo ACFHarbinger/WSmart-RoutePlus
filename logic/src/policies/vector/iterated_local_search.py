@@ -9,7 +9,7 @@ Attributes:
     IteratedLocalSearchPolicy: ILS solver for combinatorial routing problems.
 
 Example:
-    >>> policy = IteratedLocalSearchPolicy(env_name="vrpp")
+    >>> policy = IteratedLocalSearchPolicy(env_name="ptp")
     >>> out = policy(td)
 """
 

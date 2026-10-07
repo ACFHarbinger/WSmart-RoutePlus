@@ -1,14 +1,14 @@
-"""VRPP specific context embedding module.
+"""PTP specific context embedding module.
 
-This module provides the VRPPState component, which extracts problem-specific
-metadata like remaining tour length or capacity for the VRPP context.
+This module provides the PTPState component, which extracts problem-specific
+metadata like remaining tour length or capacity for the PTP context.
 
 Attributes:
-    VRPPState: State encoder for Vehicle Routing Problems with Profits.
+    PTPState: State encoder for Vehicle Routing Problems with Profits.
 
 Example:
-    >>> from logic.src.models.subnets.embeddings.state.vrpp import VRPPState
-    >>> state_embedder = VRPPState(embed_dim=128)
+    >>> from logic.src.models.subnets.embeddings.state.ptp import PTPState
+    >>> state_embedder = PTPState(embed_dim=128)
     >>> context = state_embedder(embeddings, td)
 """
 
@@ -21,8 +21,8 @@ import torch
 from .env import EnvState
 
 
-class VRPPState(EnvState):
-    """Context embedding for VRPP.
+class PTPState(EnvState):
+    """Context embedding for PTP.
 
     Evolves the environment context by incorporating dynamic features such
     as the remaining allowed tour length or available vehicle capacity.
@@ -32,7 +32,7 @@ class VRPPState(EnvState):
     """
 
     def __init__(self, embed_dim: int) -> None:
-        """Initializes VRPPState.
+        """Initializes PTPState.
 
         Args:
             embed_dim: Resulting embedding dimensionality.

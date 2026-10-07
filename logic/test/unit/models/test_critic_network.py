@@ -15,20 +15,20 @@ pytestmark = [pytest.mark.unit, pytest.mark.fast]
 def test_critic_network_init():
     """Verify initialization of CriticNetwork."""
     problem = MagicMock()
-    problem.NAME = "vrpp"
+    problem.NAME = "ptp"
     component_factory = MagicMock()
 
     model = LegacyCriticNetwork(
         problem=problem, component_factory=component_factory, embed_dim=16, hidden_dim=16, n_layers=1, n_sublayers=1
     )
     assert model.embed_dim == 16
-    assert model.is_vrpp
+    assert model.is_ptp
 
 
 def test_critic_network_forward():
     """Verify forward flow logic."""
     problem = MagicMock()
-    problem.NAME = "vrpp"
+    problem.NAME = "ptp"
     component_factory = MagicMock()
 
     # Mock encoder

@@ -1,12 +1,12 @@
 """
-CVRPP Environment implementation.
+MVPTP Environment implementation.
 
 Attributes:
-    CVRPPEnv: CVRPP environment.
+    MVPTPEnv: MVPTP environment.
 
 Example:
     >>> from logic.src.envs.routing import get_env
-    >>> env = get_env("cvrpp", num_loc=50)
+    >>> env = get_env("mvptp", num_loc=50)
     >>> td = env.reset()
 """
 
@@ -18,27 +18,27 @@ import torch
 from tensordict import TensorDict
 
 from logic.src.envs.base.ops import OpsMixin
-from logic.src.envs.routing.vrpp import VRPPEnv
+from logic.src.envs.routing.ptp import PTPEnv
 
 
-class CVRPPEnv(VRPPEnv):
+class MVPTPEnv(PTPEnv):
     """
-    Capacitated VRPP: VRPP with vehicle capacity constraints.
+    Multi-Vehicle Profitable Tour Problem: PTP with vehicle capacity constraints.
 
     Attributes:
         name: Name of the environment.
     """
 
-    name: str = "cvrpp"
+    name: str = "mvptp"
 
     def _reset_instance(self, tensordict: TensorDict) -> TensorDict:
-        """Initialize CVRPP state with capacity tracking.
+        """Initialize MVPTP state with capacity tracking.
 
         Args:
             tensordict: Input TensorDict containing graph structure and node properties.
 
         Returns:
-            TensorDict: Initialized CVRPP state with capacity tracking.
+            TensorDict: Initialized MVPTP state with capacity tracking.
         """
         is_resuming = "visited" in tensordict.keys()
         tensordict = super()._reset_instance(tensordict)
@@ -92,15 +92,15 @@ class CVRPPEnv(VRPPEnv):
         at_depot = action == 0
 
         # Delegate distance / visited / current_node / tour updates, and
-        # VRPP's own cumulative collected_waste, to VRPPEnv/OpsMixin. Without
+        # PTP's own cumulative collected_waste, to PTPEnv/OpsMixin. Without
         # this call, current_node/visited/tour_length/tour never advance past
-        # their reset values -- the bug this fixes: CVRPPEnv previously
+        # their reset values -- the bug this fixes: MVPTPEnv previously
         # replaced the base state transition entirely instead of layering
         # capacity tracking on top of it.
         tensordict = super()._step_instance(tensordict)
 
-        # CVRPP-specific: track *per-trip* remaining capacity, reset at each
-        # depot return, separate from VRPP's all-time collected_waste total.
+        # MVPTP-specific: track *per-trip* remaining capacity, reset at each
+        # depot return, separate from PTP's all-time collected_waste total.
         # Clamp so an illegal (unmasked) action cannot drive capacity negative.
         tensordict["remaining_capacity"] = torch.where(
             at_depot,
@@ -126,7 +126,7 @@ class CVRPPEnv(VRPPEnv):
         """
         Mask nodes that would exceed capacity, respecting mandatory constraints.
 
-        Applies capacity constraints on top of base VRPP mask, then
+        Applies capacity constraints on top of base PTP mask, then
         re-applies mandatory logic to determine depot validity.
 
         Args:

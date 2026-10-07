@@ -17,7 +17,7 @@ from typing import Any, Dict
 
 import pytest
 import torch
-from logic.src.envs.routing.vrpp import VRPPEnv
+from logic.src.envs.routing.ptp import PTPEnv
 from logic.src.models.core.attention_model import AttentionModel, AttentionModelPolicy
 from logic.src.models.core.moe import MoEAttentionModel
 from logic.src.models.core.temporal_attention_model import TemporalAttentionModel
@@ -35,7 +35,7 @@ def _build_test_models(seed: int = 42) -> tuple[AttentionModelPolicy, AttentionM
     n_layers = 2
 
     policy = AttentionModelPolicy(
-        env_name="vrpp",
+        env_name="ptp",
         embed_dim=embed_dim,
         hidden_dim=hidden_dim,
         n_encode_layers=n_layers,
@@ -45,7 +45,7 @@ def _build_test_models(seed: int = 42) -> tuple[AttentionModelPolicy, AttentionM
     model = AttentionModel(
         embed_dim=embed_dim,
         hidden_dim=hidden_dim,
-        problem="vrpp",
+        problem="ptp",
         n_encode_layers=n_layers,
         n_heads=n_heads,
     )
@@ -78,7 +78,7 @@ def test_m_gemini_01_parameter_keys_and_count():
 def test_m_gemini_01_weight_level_output_parity_greedy():
     """Verify shared decoding parity with both variants configured for legacy depot projection."""
     policy, model = _build_test_models(seed=123)
-    env = VRPPEnv(num_loc=6)
+    env = PTPEnv(num_loc=6)
     td = env.reset(batch_size=[3])
 
     with torch.no_grad():
@@ -156,7 +156,7 @@ def test_m_gemini_01_loader_roundtrip(tmp_path: Path):
     embed_dim = 32
     hidden_dim = 64
     hparams = {
-        "problem": "vrpp",
+        "problem": "ptp",
         "model": "am",
         "encoder": "gat",
         "embed_dim": embed_dim,
@@ -188,7 +188,7 @@ def test_m_gemini_01_loader_roundtrip(tmp_path: Path):
         json.dump(hparams, f)
 
     policy = AttentionModelPolicy(
-        env_name="vrpp",
+        env_name="ptp",
         embed_dim=embed_dim,
         hidden_dim=hidden_dim,
         n_encode_layers=1,
@@ -204,7 +204,7 @@ def test_m_gemini_01_loader_roundtrip(tmp_path: Path):
     assert isinstance(loaded_model, AttentionModel)
 
     # Verify parity between loaded model and original policy
-    env = VRPPEnv(num_loc=5)
+    env = PTPEnv(num_loc=5)
     td = env.reset(batch_size=[2])
     with torch.no_grad():
         out_p = policy(td.clone(), env, strategy="greedy")
@@ -220,7 +220,7 @@ def test_m_gemini_01_subclasses():
     tam = TemporalAttentionModel(
         embed_dim=32,
         hidden_dim=64,
-        problem="vrpp",
+        problem="ptp",
         component_factory=None,
         n_encode_layers=1,
         n_heads=4,
@@ -233,7 +233,7 @@ def test_m_gemini_01_subclasses():
     moe = MoEAttentionModel(
         embed_dim=32,
         hidden_dim=64,
-        problem="vrpp",
+        problem="ptp",
         n_encode_layers=1,
         n_heads=4,
         num_experts=2,
@@ -270,13 +270,13 @@ def test_tam_forward_calls_temporal_embedding_override():
     model = TemporalAttentionModel(
         embed_dim=8,
         hidden_dim=16,
-        problem="vrpp",
+        problem="ptp",
         component_factory=None,
         n_heads=2,
         n_encode_layers=1,
         dropout_rate=0,
     )
-    env = VRPPEnv(num_loc=2)
+    env = PTPEnv(num_loc=2)
     state = env.reset(batch_size=[1])
     model.eval()
     with patch.object(model, "_get_initial_embeddings", wraps=model._get_initial_embeddings) as hook:
@@ -286,13 +286,13 @@ def test_tam_forward_calls_temporal_embedding_override():
 
 
 def test_depot_embedding_parity_concatenated_and_separate():
-    """Verify bitwise depot and node embedding parity between VRPPContextEmbedder and VRPPInitEmbedding."""
-    from logic.src.models.subnets.embeddings.context.vrpp import VRPPContextEmbedder
-    from logic.src.models.subnets.embeddings.vrpp import VRPPInitEmbedding
+    """Verify bitwise depot and node embedding parity between PTPContextEmbedder and PTPInitEmbedding."""
+    from logic.src.models.subnets.embeddings.context.ptp import PTPContextEmbedder
+    from logic.src.models.subnets.embeddings.ptp import PTPInitEmbedding
 
     torch.manual_seed(123)
-    old = VRPPContextEmbedder(8, temporal_horizon=0)
-    new = VRPPInitEmbedding(8, legacy_depot_projection=True)
+    old = PTPContextEmbedder(8, temporal_horizon=0)
+    new = PTPInitEmbedding(8, legacy_depot_projection=True)
     new.node_embed.load_state_dict(old.init_embed.state_dict())
     new.depot_embed.load_state_dict(old.init_embed_depot.state_dict())
 
@@ -321,7 +321,7 @@ def test_depot_embedding_parity_concatenated_and_separate():
 
 def test_nested_parent_module_checkpoint_loading():
     """Verify that AttentionModel nested inside an outer Module loads legacy checkpoints with strict=True."""
-    child = AttentionModel(embed_dim=8, hidden_dim=16, problem="vrpp", n_heads=2, n_encode_layers=1)
+    child = AttentionModel(embed_dim=8, hidden_dim=16, problem="ptp", n_heads=2, n_encode_layers=1)
     wrapper = torch.nn.Module()
     wrapper.policy = child
 
@@ -342,17 +342,17 @@ def test_nested_parent_module_checkpoint_loading():
 
 def test_nonzero_temporal_horizon_projection_shape():
     """Verify that temporal_horizon > 0 expands node projection input dimension matching historical embedder."""
-    from logic.src.models.subnets.embeddings.context.vrpp import VRPPContextEmbedder
+    from logic.src.models.subnets.embeddings.context.ptp import PTPContextEmbedder
 
     horizon_model = AttentionModel(
-        embed_dim=8, hidden_dim=16, problem="vrpp", n_heads=2, n_encode_layers=1, temporal_horizon=3
+        embed_dim=8, hidden_dim=16, problem="ptp", n_heads=2, n_encode_layers=1, temporal_horizon=3
     )
-    old_shape = tuple(VRPPContextEmbedder(8, temporal_horizon=3).init_embed.weight.shape)
+    old_shape = tuple(PTPContextEmbedder(8, temporal_horizon=3).init_embed.weight.shape)
     new_shape = tuple(horizon_model.init_embedding.node_embed.weight.shape)
     assert old_shape == new_shape == (8, 6), f"Shape mismatch: old={old_shape}, new={new_shape}"
 
 
-@pytest.mark.parametrize("env_name", ["vrpp", "cvrpp"])
+@pytest.mark.parametrize("env_name", ["ptp", "mvptp"])
 def test_canonical_policy_preserves_historical_depot_projection(env_name):
     """Checkpoint weights retain the canonical depot projection for every shared embedder."""
     policy = AttentionModelPolicy(env_name=env_name, embed_dim=8, hidden_dim=16, n_heads=2, n_encode_layers=1)
@@ -372,13 +372,13 @@ def test_canonical_policy_preserves_historical_depot_projection(env_name):
     assert torch.equal(actual, expected)
 
 
-@pytest.mark.parametrize("env_name", ["vrpp", "cvrpp"])
+@pytest.mark.parametrize("env_name", ["ptp", "mvptp"])
 @pytest.mark.parametrize("horizon", [0, 3])
 def test_legacy_model_retains_context_embedding_projection(env_name, horizon):
     """Legacy context modules are the oracle, including actual nonzero temporal features."""
-    from logic.src.models.subnets.embeddings.context.vrpp import VRPPContextEmbedder
+    from logic.src.models.subnets.embeddings.context.ptp import PTPContextEmbedder
 
-    old = VRPPContextEmbedder(8, temporal_horizon=horizon)
+    old = PTPContextEmbedder(8, temporal_horizon=horizon)
     model = AttentionModel(
         embed_dim=8, hidden_dim=16, problem=env_name, n_heads=2, n_encode_layers=1, temporal_horizon=horizon
     )
@@ -429,7 +429,7 @@ def test_legacy_factory_preserves_activation_defaults_and_explicit_overrides():
             model = AttentionModel(
                 embed_dim=8,
                 hidden_dim=16,
-                problem="vrpp",
+                problem="ptp",
                 n_heads=2,
                 n_encode_layers=1,
                 component_factory=factory,
@@ -438,7 +438,7 @@ def test_legacy_factory_preserves_activation_defaults_and_explicit_overrides():
         assert encoder.call_args.kwargs["activation_config"] == expected
         if not kwargs:
             assert any(isinstance(module, torch.nn.GELU) for module in model.encoder.modules())
-    canonical = AttentionModel(embed_dim=8, hidden_dim=16, problem="vrpp", n_heads=2, n_encode_layers=1)
+    canonical = AttentionModel(embed_dim=8, hidden_dim=16, problem="ptp", n_heads=2, n_encode_layers=1)
     assert any(isinstance(module, torch.nn.ReLU) for module in canonical.encoder.modules())
 
 

@@ -276,7 +276,7 @@ def main():
     parser.add_argument("--batch_size", type=int, default=16, help="Batch size for evaluation")
     parser.add_argument("--resolution", type=int, default=10, help="Resolution for landscapes")
     parser.add_argument("--span", type=float, default=1.0, help="Span for landscapes")
-    parser.add_argument("--problem", type=str, default="vrpp", help="Problem type")
+    parser.add_argument("--problem", type=str, default="ptp", help="Problem type")
 
     parser.add_argument(
         "--mode",

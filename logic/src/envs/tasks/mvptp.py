@@ -1,32 +1,32 @@
-"""cvrpp.py module.
+"""mvptp.py module.
 
 Attributes:
-    CVRPP: Capacitated VRPP task inheriting prize-collection and capacity logic from VRPP.
+    MVPTP: Multi-Vehicle Profitable Tour Problem task inheriting prize-collection and capacity logic from PTP.
 
 Example:
-    >>> import cvrpp
+    >>> import mvptp
 """
 
 import torch
 
-from logic.src.envs.tasks.vrpp import VRPP
+from logic.src.envs.tasks.ptp import PTP
 
 
-class CVRPP(VRPP):
+class MVPTP(PTP):
     """
-    Capacitated VRPP.
+    Multi-Vehicle Profitable Tour Problem.
     Includes vehicle capacity constraints.
 
     Attributes:
         NAME: Environment name identifier.
     """
 
-    NAME = "cvrpp"
+    NAME = "mvptp"
 
     @staticmethod
     def get_costs(dataset, pi, cw_dict, dist_matrix=None):
         """
-        Compute CVRPP costs (same as VRPP but checks capacity).
+        Compute MVPTP costs (same as PTP but checks capacity).
 
         Args:
             dataset: Problem data.
@@ -37,13 +37,13 @@ class CVRPP(VRPP):
         Returns:
             Tuple of (cost, dict, None).
         """
-        cost, c_dict, _ = VRPP.get_costs(dataset, pi, cw_dict, dist_matrix)
+        cost, c_dict, _ = PTP.get_costs(dataset, pi, cw_dict, dist_matrix)
 
-        # CVRPP specific: Check total capacity PER TRIP
+        # MVPTP specific: Check total capacity PER TRIP
         capacity = dataset.get("capacity", dataset.get("max_waste", torch.tensor(100.0)))
 
         # Extract trip waste
-        waste_with_depot = CVRPP.get_waste_with_depot(dataset, pi)
+        waste_with_depot = MVPTP.get_waste_with_depot(dataset, pi)
         # For each sequence in pi, calculate cumulative waste and reset at 0
         w = waste_with_depot.gather(1, pi)
 

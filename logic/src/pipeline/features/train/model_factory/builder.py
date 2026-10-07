@@ -142,7 +142,7 @@ def _init_environment(cfg: Config) -> IEnv:
     """
     env_cfg, _, _ = _resolve_configs(cfg)
     env_dict = _config_to_dict(env_cfg) if env_cfg else {}
-    env_name = env_dict.get("name", "vrpp")
+    env_name = env_dict.get("name", "ptp")
 
     # Extract base env fields (excluding name and the structured sub-configs)
     _ENV_DICT_SKIP = {"name", "graph", "reward", "curriculum_graphs", "eval_graphs"}
@@ -235,7 +235,7 @@ def _init_policy(cfg: Config, env: Any):
         return _init_hybrid_policy(cfg)
 
     # Flatten ModelConfig for policy initialization
-    policy_kwargs: Dict[str, Any] = {"env_name": getattr(env_cfg, "name", "vrpp") if env_cfg else "vrpp"}
+    policy_kwargs: Dict[str, Any] = {"env_name": getattr(env_cfg, "name", "ptp") if env_cfg else "ptp"}
 
     if model_cfg and hasattr(model_cfg, "encoder"):
         enc = model_cfg.encoder
@@ -301,7 +301,7 @@ def _init_hybrid_policy(cfg: Config):
     ref_time = getattr(cfg.rl, "refinement_time_limit", 5.0)
     ref_iters = getattr(cfg.rl, "refinement_iterations", 500)
     max_v = getattr(cfg.rl, "max_vehicles", 0)
-    env_name = getattr(env_cfg, "name", "vrpp") if env_cfg else "vrpp"
+    env_name = getattr(env_cfg, "name", "ptp") if env_cfg else "ptp"
 
     if ref_strategy == "alns":
         heuristic_policy = VectorizedALNS(

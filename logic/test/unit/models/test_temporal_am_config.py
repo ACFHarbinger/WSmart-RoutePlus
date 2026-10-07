@@ -50,7 +50,7 @@ class TestTemporalAMConfig:
     def test_policy_init_gru(self):
         """Test policy initialization with GRU predictor."""
         policy = TemporalAMPolicy(
-            env_name="vrpp",
+            env_name="ptp",
             embed_dim=128,
             hidden_dim=128,
             predictor_type="gru"
@@ -60,7 +60,7 @@ class TestTemporalAMConfig:
     def test_policy_init_lstm(self):
         """Test policy initialization with LSTM predictor."""
         policy = TemporalAMPolicy(
-            env_name="vrpp",
+            env_name="ptp",
             embed_dim=128,
             hidden_dim=128,
             predictor_type="lstm"
@@ -70,7 +70,7 @@ class TestTemporalAMConfig:
     def test_policy_default(self):
         """Test policy initialization with default (GRU)."""
         policy = TemporalAMPolicy(
-            env_name="vrpp",
+            env_name="ptp",
             embed_dim=128,
             hidden_dim=128
         )

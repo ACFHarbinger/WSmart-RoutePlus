@@ -18,7 +18,7 @@ class TestAttentionModelStructure:
     @pytest.fixture
     def mock_problem(self):
         problem = MagicMock()
-        problem.NAME = "vrpp"
+        problem.NAME = "ptp"
         return problem
 
     @pytest.fixture
@@ -30,12 +30,12 @@ class TestAttentionModelStructure:
         return factory
 
     def test_initialization_vrpp(self, mock_problem, mock_factory):
-        """Test initialization for VRPP context."""
-        mock_problem.NAME = "vrpp"
+        """Test initialization for PTP context."""
+        mock_problem.NAME = "ptp"
 
         model = AttentionModel(embed_dim=128, hidden_dim=64, problem=mock_problem, component_factory=mock_factory)
 
-        assert model.is_vrpp
+        assert model.is_ptp
 
     def test_forward_structure(self, mock_problem, mock_factory):
         """Test basic forward flow (mocked)."""

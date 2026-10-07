@@ -2,7 +2,7 @@
 Data generation tools for creating synthetic VRP instances.
 
 Provides builders, dataset generation scripts, and validators for
-VRPP, CVRPP and CTOP problem types.
+PTP, MVPTP and TCMVPTP problem types.
 
 Attributes:
     generate_datasets: Generate datasets based on the provided arguments.

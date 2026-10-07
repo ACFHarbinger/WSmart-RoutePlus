@@ -8,7 +8,7 @@ Attributes:
     Bins: Manager class for bin state and dynamics.
 
 Example:
-    >>> # bins = Bins(n=100, data_dir="data/vrpp")
+    >>> # bins = Bins(n=100, data_dir="data/ptp")
     >>> # bins.collect(tour=[0, 1, 2, 0], cost=15.5)
 """
 

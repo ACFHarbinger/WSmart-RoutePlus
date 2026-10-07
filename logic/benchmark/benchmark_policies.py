@@ -17,12 +17,12 @@ from logic.src.pipeline.features.train import create_model
 from logic.src.tracking.logging.structured_logging import log_benchmark_metric
 
 
-def benchmark(problem="vrpp", sizes=None, num_instances=16):
+def benchmark(problem="ptp", sizes=None, num_instances=16):
     """
     Benchmark routing policies on a given problem.
 
     Args:
-        problem: Problem name ('vrpp', 'cvrpp', etc.).
+        problem: Problem name ('ptp', 'mvptp', etc.).
         sizes: List of graph sizes to test.
         num_instances: Number of instances per size for averaging.
 

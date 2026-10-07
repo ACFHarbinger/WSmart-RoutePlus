@@ -4,7 +4,7 @@ import os
 import shutil
 
 import pytest
-from logic.src.envs.routing.vrpp import VRPPEnv
+from logic.src.envs.routing.ptp import PTPEnv
 from logic.src.models.common.critic_network.policy import CriticNetwork as CriticNetworkPolicy
 from logic.src.models.core.attention_model.policy import AttentionModelPolicy
 from logic.src.models.subnets.factories.attention import AttentionComponentFactory
@@ -31,13 +31,13 @@ def clean_logs():
 @pytest.mark.integration
 def test_dr_grpo_training_loop(clean_logs):
     """Test the DR-GRPO algorithm training loop."""
-    env = VRPPEnv(num_loc=20)
+    env = PTPEnv(num_loc=20)
     # Monkeypatch NAME for compatibility with CriticNetwork which expects .NAME (uppercase)
-    # VRPPEnv only has .name (lowercase)
+    # PTPEnv only has .name (lowercase)
     env.NAME = env.name
 
     policy = AttentionModelPolicy(
-        env_name="vrpp",
+        env_name="ptp",
         embed_dim=128,
         hidden_dim=128,
         n_encode_layers=2,
@@ -46,7 +46,7 @@ def test_dr_grpo_training_loop(clean_logs):
 
     factory = AttentionComponentFactory()
     critic = CriticNetworkPolicy(
-        env_name="vrpp", component_factory=factory, embed_dim=128, hidden_dim=128, n_layers=2, n_sublayers=1, n_heads=8
+        env_name="ptp", component_factory=factory, embed_dim=128, hidden_dim=128, n_layers=2, n_sublayers=1, n_heads=8
     )
 
     # DR-GRPO configuration
@@ -57,7 +57,7 @@ def test_dr_grpo_training_loop(clean_logs):
         optimizer="adam",
         lr=1e-4,
         max_grad_norm=1.0,
-        env_name="vrpp",
+        env_name="ptp",
     )
 
     trainer = Trainer(
@@ -77,11 +77,11 @@ def test_dr_grpo_training_loop(clean_logs):
 @pytest.mark.integration
 def test_gdpo_training_loop(clean_logs):
     """Test the GDPO algorithm training loop."""
-    env = VRPPEnv(num_loc=20)
+    env = PTPEnv(num_loc=20)
     env.NAME = env.name
 
     policy = AttentionModelPolicy(
-        env_name="vrpp",
+        env_name="ptp",
         embed_dim=128,
         hidden_dim=128,
         n_encode_layers=2,
@@ -89,7 +89,7 @@ def test_gdpo_training_loop(clean_logs):
 
     factory = AttentionComponentFactory()
     critic = CriticNetworkPolicy(
-        env_name="vrpp", component_factory=factory, embed_dim=128, hidden_dim=128, n_layers=2, n_sublayers=1, n_heads=8
+        env_name="ptp", component_factory=factory, embed_dim=128, hidden_dim=128, n_layers=2, n_sublayers=1, n_heads=8
     )
 
     # GDPO configuration with objective keys
@@ -101,7 +101,7 @@ def test_gdpo_training_loop(clean_logs):
         gdpo_objective_weights=[1.0],
         optimizer="adam",
         lr=1e-4,
-        env_name="vrpp",
+        env_name="ptp",
     )
 
     trainer = Trainer(
@@ -120,8 +120,8 @@ def test_gdpo_training_loop(clean_logs):
 @pytest.mark.integration
 def test_training_resume(tmp_path):
     """Test resuming training from a checkpoint."""
-    env = VRPPEnv(num_loc=10)
-    policy = AttentionModelPolicy(env_name="vrpp", embed_dim=64, hidden_dim=64, n_encode_layers=1)
+    env = PTPEnv(num_loc=10)
+    policy = AttentionModelPolicy(env_name="ptp", embed_dim=64, hidden_dim=64, n_encode_layers=1)
     module = REINFORCE(
         env=env,
         policy=policy,

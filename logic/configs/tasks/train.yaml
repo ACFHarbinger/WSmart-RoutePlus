@@ -4,13 +4,13 @@
 # =============================================================================
 # Configuration for reinforcement learning training with PyTorch Lightning.
 # Used by: python main.py train
-# CTOP:    python main.py train envs@train.env=ctop
+# TCMVPTP:    python main.py train envs@train.env=tcmvptp
 #          (swap the env group; do not only set train.env.name -- that keeps
 #          the previously composed YAML's other fields)
 #
 # Key Features:
 #   - Adaptive Imitation Learning (IL → RL transition)
-#   - Multi-day temporal training for VRPP
+#   - Multi-day temporal training for PTP
 #   - mandatory bin selection strategies
 #   - Lightning-based distributed training
 # =============================================================================
@@ -18,7 +18,7 @@
 defaults:
   - /models/policies/hgs_alns@rl.imitation.policy_config
   - /models/policies/hgs_alns@rl.adaptive_imitation.policy_config
-  - /envs@train.env: vrpp
+  - /envs@train.env: ptp
   - _self_
   - override /tracking: train
 
@@ -33,7 +33,7 @@ start: 0 # Starting epoch (for resuming training)
 # Training Settings
 # =============================================================================
 train:
-  train_time: true # Enable multi-day temporal training (multi-day VRPP)
+  train_time: true # Enable multi-day temporal training (multi-day PTP)
 
   data_distribution: "emp" # Waste generation distribution. Options: gamma1, gamma2, uniform, beta
   seed: 42 # Random seed for dataset generation
@@ -56,7 +56,7 @@ train:
   policy:
     model:
       name: "am" # Model architecture
-      temporal_horizon: 0 # Temporal lookahead (0 for static, 7+ for multi-day VRPP)
+      temporal_horizon: 0 # Temporal lookahead (0 for static, 7+ for multi-day PTP)
 
       # Encoder Architecture
       encoder:
@@ -170,13 +170,13 @@ rl:
   # reward to provide denser learning signals without changing the optimal policy.
   #
   # The discount factor (gamma above) is reused — no separate key needed.
-  # Phi(s_0) = 0 at reset; Phi(s_final) = collected_waste / max_waste for VRPP.
+  # Phi(s_0) = 0 at reset; Phi(s_final) = collected_waste / max_waste for PTP.
   #
   # Anti-pattern guard: {phase}/reward always logs R_base (not the shaped value)
   # so val/test metrics are never inflated by the shaping signal.
   use_pbrs: false # Set to true to enable PBRS during training
   pbrs_shaping_weight: 1.0 # Scale factor applied to F before adding to R_base
-  pbrs_potential: "vrpp" # Potential function key ('vrpp'; others log a warning)
+  pbrs_potential: "ptp" # Potential function key ('ptp'; others log a warning)
 
   # =============================================================================
   # Algorithm-Specific Configurations

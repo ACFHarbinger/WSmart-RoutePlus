@@ -8,7 +8,7 @@ Attributes:
     VectorizedHGS: Hybrid Genetic Search policy wrapper.
 
 Example:
-    >>> policy = VectorizedHGS(env_name="vrpp")
+    >>> policy = VectorizedHGS(env_name="ptp")
     >>> out = policy(td)
 """
 

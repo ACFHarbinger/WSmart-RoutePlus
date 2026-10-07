@@ -1,12 +1,12 @@
 """
-VRPP problem generator.
+PTP problem generator.
 
 Attributes:
-    VRPPGenerator: VRPPGenerator class.
+    PTPGenerator: PTPGenerator class.
 
 Example:
-    >>> from logic.src.envs.generators import VRPPGenerator
-    >>> generator = VRPPGenerator(num_loc=50)
+    >>> from logic.src.envs.generators import PTPGenerator
+    >>> generator = PTPGenerator(num_loc=50)
     >>> instance = generator.generate()
     >>> instance
     TensorDict(
@@ -36,9 +36,9 @@ from tensordict import TensorDict
 from .base import Generator
 
 
-class VRPPGenerator(Generator):
+class PTPGenerator(Generator):
     """
-    Generator for Vehicle Routing Problem with Profits (VRPP) instances.
+    Generator for Profitable Tour Problem (PTP) instances.
 
     Generates instances with:
     - Depot location
@@ -79,7 +79,7 @@ class VRPPGenerator(Generator):
         **kwargs: Any,
     ) -> None:
         """
-        Initialize VRPP generator.
+        Initialize PTP generator.
 
         Args:
             num_loc: Number of customer locations.
@@ -117,7 +117,7 @@ class VRPPGenerator(Generator):
             pass
 
     def _generate(self, batch_size: tuple[int, ...]) -> TensorDict:
-        """Generate VRPP instances.
+        """Generate PTP instances.
 
         Args:
             batch_size: Batch size.

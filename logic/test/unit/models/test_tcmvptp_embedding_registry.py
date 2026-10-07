@@ -1,4 +1,4 @@
-"""Regression coverage for CTOP model-component registration."""
+"""Regression coverage for TCMVPTP model-component registration."""
 
 from unittest.mock import MagicMock
 
@@ -13,17 +13,17 @@ pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 def test_ctop_uses_cvrpp_model_components():
-    """CTOP is a temporal CVRPP and needs every shared model registry entry."""
-    assert INIT_EMBEDDING_REGISTRY["ctop"] is INIT_EMBEDDING_REGISTRY["cvrpp"]
-    assert CONTEXT_EMBEDDING_REGISTRY["ctop"] is CONTEXT_EMBEDDING_REGISTRY["cvrpp"]
-    assert EDGE_EMBEDDING_REGISTRY["ctop"] is EDGE_EMBEDDING_REGISTRY["cvrpp"]
-    assert STATE_EMBEDDING_REGISTRY["ctop"] is STATE_EMBEDDING_REGISTRY["cvrpp"]
+    """TCMVPTP is a temporal MVPTP and needs every shared model registry entry."""
+    assert INIT_EMBEDDING_REGISTRY["tcmvptp"] is INIT_EMBEDDING_REGISTRY["mvptp"]
+    assert CONTEXT_EMBEDDING_REGISTRY["tcmvptp"] is CONTEXT_EMBEDDING_REGISTRY["mvptp"]
+    assert EDGE_EMBEDDING_REGISTRY["tcmvptp"] is EDGE_EMBEDDING_REGISTRY["mvptp"]
+    assert STATE_EMBEDDING_REGISTRY["tcmvptp"] is STATE_EMBEDDING_REGISTRY["mvptp"]
 
 
 def test_legacy_critic_accepts_ctop():
     """The deprecated compatibility critic remains usable by saved pipelines."""
     problem = MagicMock()
-    problem.NAME = "ctop"
+    problem.NAME = "tcmvptp"
     model = LegacyCriticNetwork(
         problem=problem,
         component_factory=MagicMock(),
@@ -32,4 +32,4 @@ def test_legacy_critic_accepts_ctop():
         n_layers=1,
         n_sublayers=1,
     )
-    assert model.is_vrpp
+    assert model.is_ptp

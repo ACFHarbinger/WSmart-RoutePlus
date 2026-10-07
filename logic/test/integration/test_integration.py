@@ -9,7 +9,7 @@ import pytest
 import torch
 from logic.src.configs import Config
 from logic.src.configs.envs.graph import GraphConfig
-from logic.src.envs.problems import VRPP
+from logic.src.envs.problems import PTP
 from logic.src.pipeline.features.train import run_training
 from logic.src.pipeline.simulations.simulator import sequential_simulations
 from logic.src.policies.route_construction.base.registry import RouteConstructorRegistry
@@ -24,7 +24,7 @@ pytestmark = [pytest.mark.integration, pytest.mark.slow]
 class TestIntegrationTraining:
     """Integration tests for Training workflows."""
 
-    @pytest.mark.parametrize("problem_name", ["vrpp", "cvrpp"])
+    @pytest.mark.parametrize("problem_name", ["ptp", "mvptp"])
     def test_run_training_integration(self, problem_name, tmp_path):
         """Test standard training orchestration with real entry point (mocked trainer)."""
         cfg = Config()
@@ -66,7 +66,7 @@ class TestIntegrationSimulation:
             "device": opts["device"],
             "sim": {**opts, "full_policies": opts["policies"], "config_path": None, "noise_mean": 0.0, "noise_variance": 1.0, "policy_configs": {}, "run_name": None, "output_dir": "output", "data_distribution": "gamma1", "graph": {**opts, "area": "Rio Maior", "num_loc": opts["size"], "size": opts["size"], "n_days": opts.get("days", 1), "n_samples": opts.get("n_samples", 1)}},
             "tracking": {"no_progress_bar": True, "log_file": None, "log_dir": "logs", "log_level": "INFO"},
-            "env": {"name": "vrpp", "graph_size": opts["size"]},
+            "env": {"name": "ptp", "graph_size": opts["size"]},
             "model": {},
             "train": {"train_time": False}
         })
@@ -123,14 +123,14 @@ class TestIntegrationProblems:
     """Tests for problem physics and state transitions (End-to-End)."""
 
     def test_vrpp_physics_flow(self):
-        """Verify VRPP physics behaves correctly in an end-to-end state update."""
+        """Verify PTP physics behaves correctly in an end-to-end state update."""
         batch = {
             "loc": torch.rand(1, 10, 2),
             "depot": torch.rand(1, 2),
             "waste": torch.rand(1, 10),
             "max_waste": torch.ones(1, 10),
         }
-        state = VRPP.make_state(batch)
+        state = PTP.make_state(batch)
         assert state.td["i"] == 0
 
         # Take an action

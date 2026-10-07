@@ -394,25 +394,16 @@
         "_comment": "Env-specific embedding files pruned when that env is dropped",
         "base_path": "logic/src/models/subnets/embeddings",
         "env_files": {
-          "vrpp": [
-            "context/vrpp.py",
-            "state/vrpp.py",
-            "vrpp.py"
+          "ptp": [
+            "context/ptp.py",
+            "state/ptp.py",
+            "ptp.py"
           ],
-          "cvrpp": [
-            "context/cvrpp.py",
-            "cvrpp.py",
-            "edges/cvrpp.py",
-            "state/cvrpp.py"
-          ],
-          "wcvrp": [
-            "context/wcvrp.py",
-            "edges/wcvrp.py",
-            "state/wcvrp.py",
-            "wcvrp.py"
-          ],
-          "swcvrp": [
-            "state/swcvrp.py"
+          "mvptp": [
+            "context/mvptp.py",
+            "edges/mvptp.py",
+            "mvptp.py",
+            "state/mvptp.py"
           ]
         },
         "model_files": {

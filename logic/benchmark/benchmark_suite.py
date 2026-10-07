@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from logic.src.envs.problems import VRPP
+from logic.src.envs.problems import PTP
 from logic.src.models import AttentionModel
 from logic.src.models.subnets.factories import AttentionComponentFactory
 from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.policy_swc_tcf import (
@@ -18,7 +18,7 @@ def get_dummy_model(device="cpu"):
     model = AttentionModel(
         embed_dim=128,
         hidden_dim=128,
-        problem=VRPP,
+        problem=PTP,
         component_factory=factory,
         n_heads=8,
         n_encode_layers=3,
@@ -118,7 +118,7 @@ def benchmark_ls_throughput(device="cpu", seed=42):
         device=device,
     )
 
-    policy = RandomLocalSearchPolicy(env_name="cvrpp", n_iterations=100, seed=seed).to(device)
+    policy = RandomLocalSearchPolicy(env_name="mvptp", n_iterations=100, seed=seed).to(device)
 
     class MockEnv:
         waste_weight = 1.0

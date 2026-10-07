@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 import pytest
 import torch
 import torch.nn as nn
-from logic.src.envs.routing.vrpp import VRPPEnv
+from logic.src.envs.routing.ptp import PTPEnv
 from logic.src.models.common.transductive.active_search import ActiveSearch
 from logic.src.models.common.transductive.eas import EAS
 from logic.src.models.common.transductive.eas_embeddings import EASEmb
@@ -42,7 +42,7 @@ class MockPolicy(nn.Module):
 
 def test_active_search_forward():
     """Test Active Search fine-tuning loop."""
-    env = VRPPEnv(num_loc=10)
+    env = PTPEnv(num_loc=10)
     am = AttentionModel(embed_dim=64, hidden_dim=64, problem=env, component_factory=AttentionComponentFactory())
 
     # Active Search wrapper
@@ -67,7 +67,7 @@ def test_active_search_forward():
 
 def test_eas_forward():
     """Test EAS selective fine-tuning."""
-    env = VRPPEnv(num_loc=10)
+    env = PTPEnv(num_loc=10)
     am = AttentionModel(embed_dim=64, hidden_dim=64, problem=env, component_factory=AttentionComponentFactory())
 
     # EAS wrapper targeting only the projection layer

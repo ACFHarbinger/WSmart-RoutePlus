@@ -1,6 +1,6 @@
 """M-cursor-02: training reward vs simulator profit, via production call sites.
 
-``VRPP.get_costs``, ``Bins.collect``, and ``BaseRoutingPolicy._load_area_params``
+``PTP.get_costs``, ``Bins.collect``, and ``BaseRoutingPolicy._load_area_params``
 use three unit systems. This test calls those implementations rather than
 re-coding their formulas, so a regression in either production path fails here.
 Merging them would rescale RL rewards and crosses other lanes' files.
@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 import torch
 from logic.src.constants.tasks import COST_KM, REVENUE_KG
-from logic.src.envs.tasks.vrpp import VRPP
+from logic.src.envs.tasks.ptp import PTP
 from logic.src.pipeline.simulations.bins import Bins
 from logic.src.policies.route_construction.base.base_routing_policy import BaseRoutingPolicy
 
@@ -84,7 +84,7 @@ def test_simulator_collect_and_policy_scaled_profit_agree(tmp_path: Any) -> None
 
 
 def test_training_get_costs_is_the_legacy_unit_proxy() -> None:
-    """VRPP.get_costs uses COST_KM=REVENUE_KG=1.0 on fraction waste, not €/kg."""
+    """PTP.get_costs uses COST_KM=REVENUE_KG=1.0 on fraction waste, not €/kg."""
     assert COST_KM == 1.0
     assert REVENUE_KG == 1.0
     dataset = {
@@ -95,7 +95,7 @@ def test_training_get_costs_is_the_legacy_unit_proxy() -> None:
         "revenue_kg": REVENUE_KG,
     }
     pi = torch.tensor([[0, 1, 0]])
-    neg_profit, cost_dict, _ = VRPP.get_costs(dataset, pi, cw_dict=None)
+    neg_profit, cost_dict, _ = PTP.get_costs(dataset, pi, cw_dict=None)
     assert cost_dict["waste"].item() == pytest.approx(1.0)
     assert cost_dict["length"].item() == pytest.approx(2.0)
     assert neg_profit.item() == pytest.approx(1.0)
@@ -111,7 +111,7 @@ def test_training_proxy_does_not_equal_bins_collect_on_the_same_numbers(tmp_path
         "cost_km": COST_KM,
         "revenue_kg": REVENUE_KG,
     }
-    training_neg = VRPP.get_costs(dataset, torch.tensor([[0, 1, 0]]), cw_dict=None)[0].item()
+    training_neg = PTP.get_costs(dataset, torch.tensor([[0, 1, 0]]), cw_dict=None)[0].item()
 
     bins = _plastic_bins(tmp_path, n=1)
     bins.real_c[:] = 100.0

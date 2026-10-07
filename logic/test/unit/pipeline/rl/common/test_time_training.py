@@ -113,7 +113,7 @@ class TestTimeTraining:
         env = MagicMock()
         gen = DummyGenerator()
         env.generator = gen
-        env.name = "vrpp"
+        env.name = "ptp"
 
         # Actions
         # B0 visited 1, 2

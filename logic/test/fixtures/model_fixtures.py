@@ -34,7 +34,7 @@ def mock_adj_matrix():
 def am_setup(mocker):
     """Fixture for AttentionModel"""
     mock_problem = mocker.MagicMock()
-    mock_problem.NAME = "vrpp"
+    mock_problem.NAME = "ptp"
     mock_problem.get_costs.return_value = (torch.zeros(1), {}, None)
 
     mock_encoder = mocker.MagicMock()
@@ -100,7 +100,7 @@ def gat_lstm_setup():
 def tam_setup(mocker):
     """Fixture for TemporalAttentionModel"""
     mock_problem = mocker.MagicMock()
-    mock_problem.NAME = "vrpp"  # To trigger temporal features
+    mock_problem.NAME = "ptp"  # To trigger temporal features
     mock_problem.get_costs.return_value = (torch.zeros(1), {}, None)
 
     mock_encoder = mocker.MagicMock()
@@ -240,7 +240,7 @@ def mock_ppo_deps(mocker):
     mock_baseline.eval.side_effect = lambda td, reward, env=None: torch.ones_like(reward)
 
     mock_problem = MagicMock()
-    mock_problem.NAME = "cvrpp"
+    mock_problem.NAME = "mvptp"
     mock_problem.get_costs.return_value = (torch.tensor([1.0, 1.0]), {}, None)
 
     dataset_list = [
@@ -313,7 +313,7 @@ def mock_dr_grpo_deps():
     dataset.__getitem__ = MagicMock(return_value={"input": torch.tensor([1.0, 2.0])})
 
     problem = MagicMock()
-    problem.NAME = "vrpp"
+    problem.NAME = "ptp"
 
     return {
         "model": model,
@@ -362,7 +362,7 @@ def mock_gspo_deps():
     dataset.__getitem__ = MagicMock(return_value={"input": torch.tensor([1])})
 
     problem = MagicMock()
-    problem.NAME = "vrpp"
+    problem.NAME = "ptp"
 
     return {
         "model": model,
@@ -411,7 +411,7 @@ def mock_sapo_deps():
     dataset.__getitem__ = MagicMock(return_value={"input": torch.tensor([1])})
 
     problem = MagicMock()
-    problem.NAME = "vrpp"
+    problem.NAME = "ptp"
 
     return {
         "model": model,

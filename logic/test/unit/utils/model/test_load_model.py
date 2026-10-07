@@ -4,7 +4,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
-
 from logic.src.utils.model.loader import load_model
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -25,7 +24,7 @@ class TestLoadModel:
         model_dir.mkdir()
 
         hparams = {
-            "problem": "vrpp",
+            "problem": "ptp",
             "model": "am",
             "encoder": "gat",
             "embed_dim": 128,

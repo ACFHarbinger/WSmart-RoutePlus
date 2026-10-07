@@ -10,7 +10,7 @@ Attributes:
 
 Example:
     >>> # config = HGSConfig(iterations=100)
-    >>> # agent = AdaptiveImitation(config, env_name="vrpp")
+    >>> # agent = AdaptiveImitation(config, env_name="ptp")
     >>> # trainer.fit(agent)
 """
 

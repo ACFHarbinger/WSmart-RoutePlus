@@ -32,7 +32,7 @@ def _make_test_cfg(**overrides):
         policies=["am_dirichlet", "vrpp_gurobi_dirichlet"],
         full_policies=["am_dirichlet", "vrpp_gurobi_dirichlet"],
         data_distribution="dirichlet",
-        problem="vrpp",
+        problem="ptp",
         days=2,
         seed=1234,
         output_dir="test_out",

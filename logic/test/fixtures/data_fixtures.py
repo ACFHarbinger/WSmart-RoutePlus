@@ -13,7 +13,7 @@ def gen_data_opts():
     """Returns a basic set of mock arguments (opts) for generate_datasets."""
     return {
         "name": "test_suite",
-        "problem": "vrpp",
+        "problem": "ptp",
         "n_samples": 100,
         "graph_sizes": [20],
         "data_distributions": ["all"],

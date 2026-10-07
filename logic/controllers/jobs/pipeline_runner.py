@@ -11,10 +11,10 @@ logic is implemented in the corresponding feature pipelines.
 
 Example::
 
-    python main.py train model=am env.name=vrpp env.num_loc=50
+    python main.py train model=am env.name=ptp env.num_loc=50
     python main.py eval eval.model_path=./weights/best.pt
     python main.py test_sim sim.days=31 sim.policies=regular,gurobi,alns
-    python main.py gen_data data.problem=vrpp data.graph_sizes=[50]
+    python main.py gen_data data.problem=ptp data.graph_sizes=[50]
 """
 
 from typing import Any, List

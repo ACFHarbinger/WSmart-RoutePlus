@@ -109,7 +109,7 @@ class LogAction(SimulationAction):
         table.add_row("Solver Status", str(dlog.get("solver_status", "")))
         table.add_row("Distance", f"{km:.2f} km")
         table.add_row("Efficiency", f"{dlog.get('kg/km', 0):.2f} kg/km")
-        if time_spent is not None and (str(context.get("problem", "")).lower() == "ctop" or time_spent > 0):
+        if time_spent is not None and (str(context.get("problem", "")).lower() == "tcmvptp" or time_spent > 0):
             table.add_row("Shift Time Spent", f"{time_spent:.2f} h")
         table.add_row("Overflows", f"[bold red]{new_overflows}[/]")
         table.add_row("Waste Lost", f"[bold red]{sum_lost:.2f} kg")

@@ -21,7 +21,7 @@ class TestGFACS:
         self.batch_size = 2
         self.num_nodes = 50
         self.env = MagicMock()
-        self.env.name = "vrpp"
+        self.env.name = "ptp"
         self.env.curriculum_graphs[0].num_loc = self.num_nodes
 
         # Mock env.reset
@@ -64,7 +64,7 @@ class TestGFACS:
 
         self.policy = GFACSPolicy(
             embed_dim=32,
-            env_name="vrpp",
+            env_name="ptp",
             num_encoder_layers=1,
             n_ants=2,
             train_with_local_search=True,

@@ -16,7 +16,7 @@ Example:
     builder.set_focus_graph("graph.pkl", 20)
     builder.set_method("random")
     builder.set_num_days(1)
-    builder.set_problem_name("vrpp")
+    builder.set_problem_name("ptp")
     builder.set_noise(0.0, 0.0)
     builder.build()
 """
@@ -218,7 +218,7 @@ class VRPInstanceBuilder:
         return self
 
     def set_problem_name(self, problem_name: str):
-        """Sets the name of the problem (e.g., 'vrpp', 'cvrpp').
+        """Sets the name of the problem (e.g., 'ptp', 'mvptp').
 
         Args:
             problem_name: Description of problem_name.

@@ -53,7 +53,7 @@ def benchmark_random_local_search(
         device=device,
     )
 
-    policy = RandomLocalSearchPolicy(env_name="cvrpp", n_iterations=iterations, seed=seed).to(device)
+    policy = RandomLocalSearchPolicy(env_name="mvptp", n_iterations=iterations, seed=seed).to(device)
 
     class MockEnv:
         waste_weight = 1.0

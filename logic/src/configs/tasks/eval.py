@@ -40,7 +40,7 @@ Example:
         multiprocessing=False,
         graph=GraphConfig(),
         reward=ObjectiveConfig(),
-        problem="vrpp",
+        problem="ptp",
     )
 """
 
@@ -93,4 +93,4 @@ class EvalConfig:
     results_dir: str = "results"
     multiprocessing: bool = False
     env: Any = field(default_factory=EnvConfig)
-    problem: str = "vrpp"
+    problem: str = "ptp"

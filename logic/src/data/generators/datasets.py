@@ -51,7 +51,7 @@ def generate_datasets(cfg: Config) -> None:
 
     gamma_dists = ["gamma1", "gamma2", "gamma3", "gamma4"]
     distributions_per_problem = {
-        "vrpp": ["empty", "const", "unif", "dist", "emp", *gamma_dists],
+        "ptp": ["empty", "const", "unif", "dist", "emp", *gamma_dists],
     }
 
     # Define the problem distribution(s)

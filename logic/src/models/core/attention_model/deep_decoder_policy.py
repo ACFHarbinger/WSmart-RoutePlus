@@ -9,7 +9,7 @@ Attributes:
 
 Example:
     >>> from logic.src.models.core.attention_model.deep_decoder_policy import DeepDecoderPolicy
-    >>> policy = DeepDecoderPolicy(env_name="vrpp", n_decode_layers=3)
+    >>> policy = DeepDecoderPolicy(env_name="ptp", n_decode_layers=3)
     >>> out = policy(td, env)
 """
 

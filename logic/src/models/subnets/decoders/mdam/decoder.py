@@ -62,7 +62,7 @@ class MDAMDecoder(nn.Module):
         embed_dim: int = 128,
         num_heads: int = 8,
         num_paths: int = 5,
-        env_name: str = "vrpp",
+        env_name: str = "ptp",
         mask_inner: bool = True,
         mask_logits: bool = True,
         eg_step_gap: int = 200,

@@ -25,12 +25,12 @@ def test_capacity_report_counts_over_capacity_trips_and_converts_to_kg():
 
 
 def test_over_capacity_trips_are_split_on_the_true_fill():
-    """Owner decision 2026-09-27: non-CTOP routes that overflow the vehicle are split, not executed as is."""
+    """Owner decision 2026-09-27: non-TCMVPTP routes that overflow the vehicle are split, not executed as is."""
     from logic.src.pipeline.simulations.actions.time_constraints import TimeConstraintAction
 
     bins = SimpleNamespace(real_c=np.array([80.0, 50.0, 30.0, 90.0]), c=np.zeros(4), volume=2.5, density=20.0)
     dist = np.ones((5, 5)) - np.eye(5)
-    ctx = {"problem": "vrpp", "tour": [0, 1, 2, 3, 4, 0], "vehicle_capacity": 150.0, "bins": bins, "distance_matrix": dist}
+    ctx = {"problem": "ptp", "tour": [0, 1, 2, 3, 4, 0], "vehicle_capacity": 150.0, "bins": bins, "distance_matrix": dist}
     TimeConstraintAction().execute(ctx)
     assert ctx["tour"] == [0, 1, 2, 0, 3, 4, 0]
     assert ctx["capacity_splits"] == 1
@@ -41,6 +41,6 @@ def test_feasible_route_is_left_alone():
     from logic.src.pipeline.simulations.actions.time_constraints import TimeConstraintAction
 
     bins = SimpleNamespace(real_c=np.array([10.0, 10.0]), c=np.zeros(2), volume=2.5, density=20.0)
-    ctx = {"problem": "vrpp", "tour": [0, 2, 1, 0], "vehicle_capacity": 150.0, "bins": bins, "distance_matrix": np.ones((3, 3))}
+    ctx = {"problem": "ptp", "tour": [0, 2, 1, 0], "vehicle_capacity": 150.0, "bins": bins, "distance_matrix": np.ones((3, 3))}
     TimeConstraintAction().execute(ctx)
     assert ctx["tour"] == [0, 2, 1, 0] and ctx["capacity_splits"] == 0

@@ -13,7 +13,7 @@ def _cfg() -> SimpleNamespace:
     return SimpleNamespace(
         tracking=SimpleNamespace(verbose=False),
         experiment_name=None,
-        data=SimpleNamespace(problem="vrpp"),
+        data=SimpleNamespace(problem="ptp"),
     )
 
 

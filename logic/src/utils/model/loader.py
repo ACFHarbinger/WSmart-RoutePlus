@@ -260,7 +260,7 @@ def _parse_hydra_config(cfg: Any) -> Dict[str, Any]:
         act = enc.get("activation", {})
 
         args = {
-            "problem": env.get("name", "vrpp"),
+            "problem": env.get("name", "ptp"),
             "encoder": enc.get("type", "gat"),
             "model": model.get("name", "am"),
             "embed_dim": enc.get("embed_dim", 128),
@@ -299,7 +299,7 @@ def _parse_hydra_config(cfg: Any) -> Dict[str, Any]:
     else:
         # Fallback to legacy flat structure
         args = {
-            "problem": env.get("name", "vrpp"),
+            "problem": env.get("name", "ptp"),
             "encoder": model.get("encoder_type", "gat"),
             "model": model.get("name", "am"),
             "embed_dim": model.get("embed_dim", 128),

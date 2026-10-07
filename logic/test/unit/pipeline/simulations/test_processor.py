@@ -114,7 +114,7 @@ class TestSimulationDataMapper:
         coords = pd.DataFrame({"Lat": [0.0, 10.0], "Lng": [0.0, 10.0]})
         dist_matrix = np.zeros((2, 2))
         device = torch.device("cpu")
-        configs = {"problem": "vrpp", "model": "tam", "graph_size": 2, "temporal_horizon": 5}
+        configs = {"problem": "ptp", "model": "tam", "graph_size": 2, "temporal_horizon": 5}
 
         with patch("logic.src.pipeline.simulations.repository.load_area_and_waste_type_params") as mock_load:
             # ret: CAPACITY, REVENUE, DENSITY, COST, VOLUME
@@ -145,7 +145,7 @@ class TestSimulationDataMapper:
     def test_process_model_input_with_edges(self, mapper):
         coords = pd.DataFrame({"Lat": [0, 1], "Lng": [0, 1]})
         dist_matrix = np.array([[0, 1], [1, 0]])
-        configs = {"problem": "vrpp"}
+        configs = {"problem": "ptp"}
         device = torch.device("cpu")
 
         with (

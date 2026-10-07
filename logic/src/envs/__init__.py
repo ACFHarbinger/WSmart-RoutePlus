@@ -9,9 +9,9 @@ Attributes:
     get_env: Factory function to get environment by name.
 
 Example:
-    >>> env = get_env("vrpp", num_loc=25, seed=42)
+    >>> env = get_env("ptp", num_loc=25, seed=42)
     >>> env
-    <logic.src.envs.routing.vrpp.VRPPEnv object at 0x...>
+    <logic.src.envs.routing.ptp.PTPEnv object at 0x...>
 """
 
 from logic.src.envs.base.base import RL4COEnvBase
@@ -25,25 +25,27 @@ from logic.src.envs.generators import (
     OPGenerator,
     PCTSPGenerator,
     PDPGenerator,
-    VRPPGenerator,
+    PTPGenerator,
     get_generator,
 )
 from logic.src.envs.routing.atsp import ATSPEnv
 from logic.src.envs.routing.cvrp import CVRPEnv
-from logic.src.envs.routing.cvrpp import CVRPPEnv
 from logic.src.envs.routing.irp import IRPEnv
+from logic.src.envs.routing.mvptp import MVPTPEnv
 from logic.src.envs.routing.op import OPEnv
 from logic.src.envs.routing.pctsp import PCTSPEnv
 from logic.src.envs.routing.pdp import PDPEnv
+from logic.src.envs.routing.ptp import PTPEnv
 from logic.src.envs.routing.spctsp import SPCTSPEnv
+from logic.src.envs.routing.tcmvptp import TCMVPTPEnv
 from logic.src.envs.routing.tsp import TSPEnv
-from logic.src.envs.routing.vrpp import VRPPEnv
 from logic.src.envs.tsp_kopt import TSPkoptEnv
 
 # Environment registry
 ENV_REGISTRY = {
-    "vrpp": VRPPEnv,
-    "cvrpp": CVRPPEnv,
+    "ptp": PTPEnv,
+    "mvptp": MVPTPEnv,
+    "tcmvptp": TCMVPTPEnv,
     "tsp": TSPEnv,
     "tsp_kopt": TSPkoptEnv,
     "irp": IRPEnv,
@@ -85,7 +87,7 @@ __all__ = [
     "ImprovementEnvBase",
     # Generators
     "Generator",
-    "VRPPGenerator",
+    "PTPGenerator",
     "IRPGenerator",
     "ATSPGenerator",
     "CVRPGenerator",
@@ -95,8 +97,9 @@ __all__ = [
     "get_generator",
     "GENERATOR_REGISTRY",
     # Environments
-    "VRPPEnv",
-    "CVRPPEnv",
+    "PTPEnv",
+    "MVPTPEnv",
+    "TCMVPTPEnv",
     "TSPEnv",
     "TSPkoptEnv",
     "IRPEnv",

@@ -19,7 +19,7 @@ from .vrp_adapter import VRPAdapter
 ADAPTER_REGISTRY = {
     "tsp": TSPAdapter,
     "cvrp": VRPAdapter,
-    "vrpp": TSPAdapter,  # VRP variants can use TSP for subproblems
+    "ptp": TSPAdapter,  # VRP variants can use TSP for subproblems
 }
 
 

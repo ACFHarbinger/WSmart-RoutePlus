@@ -2,14 +2,14 @@
 # Temporal Attention Model (TAM) Configuration
 # =============================================================================
 # Extension of the Attention Model for multi-day routing problems with temporal
-# dynamics (e.g., multi-day VRPP).
+# dynamics (e.g., multi-day PTP).
 #
 # Key Features:
 #   - Temporal horizon for future waste prediction
 #   - GRF (Gated Recurrent Flow) predictor for bin fill forecasting
 #   - Time-aware attention mechanisms
 #
-# Best For: multi-day VRPP (waste collection)
+# Best For: multi-day PTP (waste collection)
 # Not Needed For: VRPP, CVRPP (static single-day problems)
 # =============================================================================
 

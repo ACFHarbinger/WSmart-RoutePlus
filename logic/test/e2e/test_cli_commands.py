@@ -29,7 +29,7 @@ def test_cli_help():
 
 
 @pytest.mark.e2e
-@pytest.mark.parametrize("problem", ["vrpp"])
+@pytest.mark.parametrize("problem", ["ptp"])
 def test_cli_gen_data_smoke(tmp_path, problem):
     """Smoke test for data generation."""
     output_dir = tmp_path / "data"
@@ -78,7 +78,7 @@ def test_cli_train_lightning_smoke(tmp_path):
                 sys.executable,
                 "main.py",
                 "train",
-                "train.env.name=vrpp",
+                "train.env.name=ptp",
                 "train.env.curriculum_graphs.0.num_loc=10",
                 "train.env.curriculum_graphs.0.n_days=1",
                 "train.batch_size=2",
@@ -101,7 +101,7 @@ def test_cli_train_lightning_smoke(tmp_path):
                 "train.env.eval_graphs=[]",
                 "rl.adaptive_imitation.il_weight=0.0",
                 "train.env.curriculum_graphs.0.n_samples=2",
-                # vrpp.yaml has a second curriculum stage (170 bins, 12800 instances);
+                # ptp.yaml has a second curriculum stage (170 bins, 12800 instances);
                 # shrink it too now that stage graph sizes are honoured (DS-01).
                 "train.env.curriculum_graphs.1.num_loc=10",
                 "train.env.curriculum_graphs.1.n_days=1",
@@ -136,7 +136,7 @@ def test_cli_eval_smoke(tmp_path):
             "main.py",
             "gen_data",
             "data.dataset_type=test_simulator",
-            "data.problem=vrpp",
+            "data.problem=ptp",
             "data.data_distributions=[unif]",
             "data.graphs=[{num_loc: 10, n_days: 1, n_samples: 2}]",
             f"data.data_dir={data_dir}",
@@ -190,7 +190,7 @@ def test_cli_train_lightning_ppo_smoke(tmp_path):
                 sys.executable,
                 "main.py",
                 "train",
-                "train.env.name=vrpp",
+                "train.env.name=ptp",
                 "train.env.curriculum_graphs.0.num_loc=10",
                 "+experiment=ppo",  # Use + to append new config group if not in schema
                 "train.env.curriculum_graphs.0.n_days=1",
@@ -214,7 +214,7 @@ def test_cli_train_lightning_ppo_smoke(tmp_path):
                 "train.env.eval_graphs=[]",
                 "rl.adaptive_imitation.il_weight=0.0",
                 "train.env.curriculum_graphs.0.n_samples=2",
-                # vrpp.yaml has a second curriculum stage (170 bins, 12800 instances);
+                # ptp.yaml has a second curriculum stage (170 bins, 12800 instances);
                 # shrink it too now that stage graph sizes are honoured (DS-01).
                 "train.env.curriculum_graphs.1.num_loc=10",
                 "train.env.curriculum_graphs.1.n_days=1",

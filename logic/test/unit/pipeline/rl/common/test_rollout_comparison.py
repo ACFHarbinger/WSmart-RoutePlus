@@ -21,7 +21,7 @@ def generate(batch_size):
 def make_baseline():
     policy = torch.nn.Linear(1, 1)
     baseline = RolloutBaseline(policy)
-    env = SimpleNamespace(generator=generate, batch_size=[2], name="vrpp")
+    env = SimpleNamespace(generator=generate, batch_size=[2], name="ptp")
     baseline.configure_comparison(env, 3, seed=123)
     return policy, baseline, env
 
@@ -83,7 +83,7 @@ def test_seeded_refresh_and_global_rng_isolation():
 
 @pytest.mark.parametrize("warmup", [0, 2])
 def test_multigraph_reporting_is_separate_and_worse_candidate_rejected(warmup):
-    env = SimpleNamespace(name="vrpp", generator=generate, batch_size=[2])
+    env = SimpleNamespace(name="ptp", generator=generate, batch_size=[2])
     reporting_env = SimpleNamespace(name="other", generator=generate, batch_size=[2])
     cfg = OmegaConf.create(
         {
@@ -101,7 +101,7 @@ def test_multigraph_reporting_is_separate_and_worse_candidate_rejected(warmup):
     assert model.val_dataset is None
     reporting = model.val_datasets[0]
     assert len(reporting) == 5 and len(baseline.comparison_dataset) == 3
-    assert baseline.comparison_env.name == "vrpp"
+    assert baseline.comparison_env.name == "ptp"
     frozen = baseline.baseline_policy
     with patch.object(baseline, "_rollout", side_effect=[torch.zeros(3), torch.ones(3)]):
         model.on_train_epoch_end()
@@ -158,12 +158,12 @@ def test_repeated_setup_keeps_pool_identity(promote):
 
 
 def test_real_vrpp_pool_and_greedy_rollout():
-    from logic.src.envs.routing.vrpp import VRPPEnv
+    from logic.src.envs.routing.ptp import PTPEnv
     from logic.src.models.core.attention_model.policy import AttentionModelPolicy
 
-    env = VRPPEnv(num_loc=5, batch_size=2, device="cpu")
+    env = PTPEnv(num_loc=5, batch_size=2, device="cpu")
     env.NAME = env.name
-    policy = AttentionModelPolicy(env_name="vrpp", embed_dim=16, hidden_dim=32, n_encode_layers=1, n_heads=2)
+    policy = AttentionModelPolicy(env_name="ptp", embed_dim=16, hidden_dim=32, n_encode_layers=1, n_heads=2)
     baseline = RolloutBaseline(policy)
     baseline.configure_comparison(env, 3, seed=123)
     data = baseline.comparison_dataset.data.clone()

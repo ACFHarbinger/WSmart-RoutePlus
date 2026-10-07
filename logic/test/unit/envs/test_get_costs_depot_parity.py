@@ -1,7 +1,7 @@
-"""Unit tests verifying VRPP and CVRPP get_costs parity across width N and N+1 waste shapes.
+"""Unit tests verifying PTP and MVPTP get_costs parity across width N and N+1 waste shapes.
 
 Addresses Issue #61 design item:
-- VRPP.get_costs unconditionally prepended a depot waste column, shifting customer
+- PTP.get_costs unconditionally prepended a depot waste column, shifting customer
   indices when dataset was a reset TensorDict (width N+1).
 - Prepends only when waste lacks the depot column (width N), ensuring exact parity
   and preventing customer index shift.
@@ -9,16 +9,16 @@ Addresses Issue #61 design item:
 
 import pytest
 import torch
-from logic.src.envs.routing.vrpp import VRPPEnv
+from logic.src.envs.routing.ptp import PTPEnv
 from logic.src.envs.tasks.base import BaseProblem
-from logic.src.envs.tasks.cvrpp import CVRPP
-from logic.src.envs.tasks.vrpp import VRPP
+from logic.src.envs.tasks.mvptp import MVPTP
+from logic.src.envs.tasks.ptp import PTP
 
 
 @pytest.mark.unit
 @pytest.mark.fast
 def test_vrpp_get_costs_width_n_vs_n1_parity() -> None:
-    """VRPP.get_costs must produce identical cost dict and profit for width N and N+1."""
+    """PTP.get_costs must produce identical cost dict and profit for width N and N+1."""
     depot = torch.tensor([[0.0, 0.0]])
     locs_N = torch.tensor([[[1.0, 0.0], [2.0, 0.0], [3.0, 0.0], [4.0, 0.0]]])
     waste_N = torch.tensor([[10.0, 20.0, 30.0, 40.0]])
@@ -33,7 +33,7 @@ def test_vrpp_get_costs_width_n_vs_n1_parity() -> None:
     # Tour visits node 1 (waste 10) and node 3 (waste 30)
     pi = torch.tensor([[0, 1, 3, 0]])
 
-    # Format N+1: prepended with depot (as produced by VRPPEnv.reset)
+    # Format N+1: prepended with depot (as produced by PTPEnv.reset)
     locs_N1 = torch.cat([depot.unsqueeze(1), locs_N], dim=1)
     waste_N1 = torch.cat([torch.zeros(1, 1), waste_N], dim=1)
     dataset_N1 = {
@@ -44,8 +44,8 @@ def test_vrpp_get_costs_width_n_vs_n1_parity() -> None:
         "revenue_kg": 1.0,
     }
 
-    neg_profit_N, c_dict_N, _ = VRPP.get_costs(dataset_N, pi, cw_dict=None)
-    neg_profit_N1, c_dict_N1, _ = VRPP.get_costs(dataset_N1, pi, cw_dict=None)
+    neg_profit_N, c_dict_N, _ = PTP.get_costs(dataset_N, pi, cw_dict=None)
+    neg_profit_N1, c_dict_N1, _ = PTP.get_costs(dataset_N1, pi, cw_dict=None)
 
     # Waste: customer 1 (10) + customer 3 (30) = 40.0
     assert torch.allclose(c_dict_N["waste"], torch.tensor([40.0]))
@@ -64,7 +64,7 @@ def test_vrpp_get_costs_width_n_vs_n1_parity() -> None:
 @pytest.mark.fast
 def test_vrpp_get_costs_no_customer_shift_on_reset_tensordict() -> None:
     """Calling get_costs on a reset TensorDict must not shift customer indices."""
-    env = VRPPEnv(num_loc=5, batch_size=[1])
+    env = PTPEnv(num_loc=5, batch_size=[1])
     td_raw = env.generator(1)
     # Distinct waste values for each customer: 10, 20, 30, 40, 50
     td_raw["waste"] = torch.tensor([[10.0, 20.0, 30.0, 40.0, 50.0]])
@@ -74,12 +74,12 @@ def test_vrpp_get_costs_no_customer_shift_on_reset_tensordict() -> None:
 
     # Tour visiting specifically customer 1: must collect exactly 10.0 (not depot 0.0)
     pi_c1 = torch.tensor([[0, 1, 0]])
-    _, c_dict_c1, _ = VRPP.get_costs(td_reset, pi_c1, cw_dict=None)
+    _, c_dict_c1, _ = PTP.get_costs(td_reset, pi_c1, cw_dict=None)
     assert c_dict_c1["waste"].item() == pytest.approx(10.0)
 
     # Tour visiting specifically customer 5 (last customer): must collect 50.0 (not customer 4's 40.0)
     pi_c5 = torch.tensor([[0, 5, 0]])
-    _, c_dict_c5, _ = VRPP.get_costs(td_reset, pi_c5, cw_dict=None)
+    _, c_dict_c5, _ = PTP.get_costs(td_reset, pi_c5, cw_dict=None)
     assert c_dict_c5["waste"].item() == pytest.approx(50.0)
 
 
@@ -100,8 +100,8 @@ def test_vrpp_get_costs_batched_parity() -> None:
 
     pi = torch.tensor([[0, 1, 2, 4, 0]] * B)
 
-    c_N = VRPP.get_costs(dataset_N, pi, cw_dict=None)
-    c_N1 = VRPP.get_costs(dataset_N1, pi, cw_dict=None)
+    c_N = PTP.get_costs(dataset_N, pi, cw_dict=None)
+    c_N1 = PTP.get_costs(dataset_N1, pi, cw_dict=None)
 
     assert torch.allclose(c_N[0], c_N1[0])
     assert torch.allclose(c_N[1]["waste"], c_N1[1]["waste"])
@@ -111,7 +111,7 @@ def test_vrpp_get_costs_batched_parity() -> None:
 @pytest.mark.unit
 @pytest.mark.fast
 def test_cvrpp_get_costs_width_n_vs_n1_parity() -> None:
-    """CVRPP.get_costs must produce identical cost dict and trip capacity check on both shapes."""
+    """MVPTP.get_costs must produce identical cost dict and trip capacity check on both shapes."""
     depot = torch.zeros(1, 2)
     locs_N = torch.tensor([[[1.0, 0.0], [2.0, 0.0]]])
     waste_N = torch.tensor([[20.0, 30.0]])
@@ -135,8 +135,8 @@ def test_cvrpp_get_costs_width_n_vs_n1_parity() -> None:
 
     pi = torch.tensor([[0, 1, 2, 0]])
 
-    cost_N, c_dict_N, _ = CVRPP.get_costs(dataset_N, pi, cw_dict=None)
-    cost_N1, c_dict_N1, _ = CVRPP.get_costs(dataset_N1, pi, cw_dict=None)
+    cost_N, c_dict_N, _ = MVPTP.get_costs(dataset_N, pi, cw_dict=None)
+    cost_N1, c_dict_N1, _ = MVPTP.get_costs(dataset_N1, pi, cw_dict=None)
 
     assert torch.allclose(cost_N, cost_N1)
     assert torch.allclose(c_dict_N["waste"], c_dict_N1["waste"])
@@ -222,8 +222,8 @@ def test_evaluator_parity_width_n_vs_n1() -> None:
 
     seq = torch.tensor([[0, 1, 2, 0]])
 
-    _, c_dict_N, _ = VRPP.get_costs(instance_N, seq, None)
-    _, c_dict_N1, _ = VRPP.get_costs(instance_N1, seq, None)
+    _, c_dict_N, _ = PTP.get_costs(instance_N, seq, None)
+    _, c_dict_N1, _ = PTP.get_costs(instance_N1, seq, None)
 
     # Parity check across all metrics produced for evaluation results
     assert c_dict_N["length"].item() == pytest.approx(c_dict_N1["length"].item())

@@ -223,7 +223,7 @@ class TestGlimpseDecoder:
         from unittest.mock import MagicMock
 
         problem = MagicMock()
-        problem.NAME = "vrpp"
+        problem.NAME = "ptp"
         model = GlimpseDecoder(embed_dim=16, hidden_dim=16, problem=problem)
         assert isinstance(model, nn.Module)
 
@@ -232,7 +232,7 @@ class TestGlimpseDecoder:
         from unittest.mock import MagicMock
 
         problem = MagicMock()
-        problem.NAME = "vrpp"
+        problem.NAME = "ptp"
         model = GlimpseDecoder(embed_dim=16, hidden_dim=16, problem=problem, n_heads=2)
 
         batch, nodes, dim = 2, 5, 16
@@ -249,7 +249,7 @@ class TestGlimpseDecoder:
         from unittest.mock import MagicMock
 
         problem = MagicMock()
-        problem.NAME = "vrpp"
+        problem.NAME = "ptp"
         model = GlimpseDecoder(embed_dim=16, hidden_dim=16, problem=problem)
 
         batch, nodes, dim = 2, 5, 16
@@ -268,7 +268,7 @@ class TestGlimpseDecoder:
 
 
         problem = MagicMock()
-        problem.NAME = "vrpp"
+        problem.NAME = "ptp"
         model = GlimpseDecoder(embed_dim=16, hidden_dim=16, problem=problem)
 
         probs = torch.tensor([[0.1, 0.8, 0.1], [0.3, 0.3, 0.4]])

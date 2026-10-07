@@ -227,7 +227,7 @@ class GFACS(nn.Module):
             from logic.src.utils.decoding import unbatchify
 
             return unbatchify(torch.from_numpy(log_b_p).to(actions.device), n_ants)
-        elif self.env.name in ("op", "pctsp", "vrpp"):
+        elif self.env.name in ("op", "pctsp", "ptp"):
             return torch.tensor(math.log(1 / 2))
         else:
             raise ValueError(f"Unknown environment: {self.env.name}")

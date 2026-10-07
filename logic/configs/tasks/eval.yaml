@@ -4,7 +4,7 @@
 # =============================================================================
 # Configuration for evaluating trained models on test datasets.
 # Used by: python main.py eval
-# CTOP:    python main.py eval envs@eval.env=ctop eval.env.name=ctop eval.problem=ctop
+# TCMVPTP:    python main.py eval envs@eval.env=tcmvptp eval.env.name=tcmvptp eval.problem=tcmvptp
 #          eval.env.name and eval.problem below are hardcoded and must stay
 #          in lockstep with the composed /envs@eval.env group.
 #
@@ -15,7 +15,7 @@
 # =============================================================================
 
 defaults:
-  - /envs@eval.env: vrpp
+  - /envs@eval.env: ptp
   - _self_
   - override /tracking: eval
 
@@ -34,8 +34,8 @@ eval:
   # Environment
   # =============================================================================
   env:
-    name: "vrpp" # Problem type to evaluate. Should match training environment.
-    # CTOP: set to "ctop" together with /envs@eval.env=ctop and eval.problem=ctop.
+    name: "ptp" # Problem type to evaluate. Should match training environment.
+    # TCMVPTP: set to "tcmvptp" together with /envs@eval.env=tcmvptp and eval.problem=tcmvptp.
 
   # Decoding Strategy
   decoding:
@@ -78,7 +78,7 @@ eval:
     # Can specify multiple for batch evaluation.
 
   # Problem Configuration
-  problem: "vrpp" # Problem type (should match env.name). Options include ctop.
+  problem: "ptp" # Problem type (should match env.name). Options include tcmvptp.
 
   # =============================================================================
   # Execution Flags

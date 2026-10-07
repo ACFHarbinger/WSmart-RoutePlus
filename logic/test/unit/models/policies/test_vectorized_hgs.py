@@ -25,7 +25,7 @@ def test_vectorized_hgs():
     }, batch_size=[batch_size])
 
     policy = VectorizedHGS(
-        env_name="vrpp",
+        env_name="ptp",
         time_limit=0.5,
         population_size=10,
         n_generations=5,

@@ -1,5 +1,5 @@
 """
-Unit tests for PBRSShaper and the VRPP potential function.
+Unit tests for PBRSShaper and the PTP potential function.
 
 Tests verify:
 1. Φ(s_0) = 0 at episode start.
@@ -20,7 +20,7 @@ import torch
 from logic.src.pipeline.rl.common.pbrs_wrapper import (
     PBRSShaper,
     get_potential_fn,
-    get_potential_vrpp,
+    get_potential_ptp,
 )
 from tensordict import TensorDict
 
@@ -39,7 +39,7 @@ def _make_td(
     batch_size: int = 1,
     device: str = "cpu",
 ) -> TensorDict:
-    """Build a minimal VRPP TensorDict for testing."""
+    """Build a minimal PTP TensorDict for testing."""
     n = len(waste)
     return TensorDict(
         {
@@ -54,17 +54,17 @@ def _make_td(
 
 
 # ---------------------------------------------------------------------------
-# get_potential_vrpp
+# get_potential_ptp
 # ---------------------------------------------------------------------------
 
 
-class TestGetPotentialVRPP:
-    """Tests for the VRPP potential function Φ(s)."""
+class TestGetPotentialPTP:
+    """Tests for the PTP potential function Φ(s)."""
 
     def test_zero_at_initial_state(self):
         """Φ(s_0) = 0 when nothing has been collected."""
         td = _make_td(collected=0.0, waste=[0.3, 0.5, 0.2])
-        phi = get_potential_vrpp(td)
+        phi = get_potential_ptp(td)
         assert phi.shape == torch.Size([1])
         assert torch.allclose(phi, torch.zeros(1))
 
@@ -72,26 +72,26 @@ class TestGetPotentialVRPP:
         """Φ = 1.0 when all waste is collected (perfect tour)."""
         waste = [0.3, 0.5, 0.2]
         td = _make_td(collected=sum(waste), waste=waste)
-        phi = get_potential_vrpp(td)
+        phi = get_potential_ptp(td)
         assert torch.allclose(phi, torch.ones(1), atol=1e-6)
 
     def test_partial_collection(self):
         """Φ = collected / total for a partial tour."""
         waste = [1.0, 1.0, 1.0, 1.0]  # total = 4
         td = _make_td(collected=2.0, waste=waste)
-        phi = get_potential_vrpp(td)
+        phi = get_potential_ptp(td)
         assert torch.allclose(phi, torch.tensor([0.5]), atol=1e-6)
 
     def test_batch_size_preserved(self):
         """Φ output batch size matches input."""
         td = _make_td(collected=1.0, waste=[1.0, 1.0], batch_size=8)
-        phi = get_potential_vrpp(td)
+        phi = get_potential_ptp(td)
         assert phi.shape == torch.Size([8])
 
     def test_missing_fields_returns_zeros(self):
         """Missing 'collected_waste' or 'waste' → safe zero fallback."""
         td = TensorDict({}, batch_size=[4])
-        phi = get_potential_vrpp(td)
+        phi = get_potential_ptp(td)
         assert phi.shape == torch.Size([4])
         assert (phi == 0.0).all()
 
@@ -99,13 +99,13 @@ class TestGetPotentialVRPP:
         """Φ is clamped to [0, 1] even if collected > total (data anomaly)."""
         waste = [1.0]
         td = _make_td(collected=9999.0, waste=waste)
-        phi = get_potential_vrpp(td)
+        phi = get_potential_ptp(td)
         assert phi.item() <= 1.0
 
     def test_zero_waste_does_not_divide_by_zero(self):
         """All-zero waste tensor should not produce NaN or inf."""
         td = _make_td(collected=0.0, waste=[0.0, 0.0])
-        phi = get_potential_vrpp(td)
+        phi = get_potential_ptp(td)
         assert not torch.isnan(phi).any()
         assert not torch.isinf(phi).any()
 
@@ -119,9 +119,9 @@ class TestGetPotentialFn:
     """Tests for the potential function registry."""
 
     def test_vrpp_returns_correct_fn(self):
-        """Registry returns get_potential_vrpp for 'vrpp'."""
-        fn = get_potential_fn("vrpp")
-        assert fn is get_potential_vrpp
+        """Registry returns get_potential_ptp for 'ptp'."""
+        fn = get_potential_fn("ptp")
+        assert fn is get_potential_ptp
 
     def test_unknown_env_logs_warning_and_returns_zero(self):
         """Unknown env name logs a warning and returns a zero-shaping stub."""
@@ -149,7 +149,7 @@ class TestPBRSShaperCore:
     def _make_shaper(
         self, gamma: float = 1.0, shaping_weight: float = 1.0
     ) -> PBRSShaper:
-        return PBRSShaper(gamma=gamma, env_name="vrpp", shaping_weight=shaping_weight)
+        return PBRSShaper(gamma=gamma, env_name="ptp", shaping_weight=shaping_weight)
 
     # --- Requirement: γ is defined and applied --------------------------------
 
@@ -304,7 +304,7 @@ class TestPBRSShaperCore:
         """__repr__ includes env name, gamma, and weight."""
         shaper = self._make_shaper(gamma=0.95, shaping_weight=2.0)
         r = repr(shaper)
-        assert "vrpp" in r
+        assert "ptp" in r
         assert "0.95" in r
         assert "2.0" in r
 

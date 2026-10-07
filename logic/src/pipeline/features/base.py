@@ -71,7 +71,7 @@ def remap_legacy_keys(common_kwargs: Dict[str, Any], cfg: Any) -> None:
     model = getattr(policy, "model", getattr(cfg, "model", None))
 
     # The simulation's load_model expects legacy key names
-    common_kwargs["problem"] = getattr(env, "name", "vrpp") if env else "vrpp"
+    common_kwargs["problem"] = getattr(env, "name", "ptp") if env else "ptp"
     common_kwargs["model"] = getattr(model, "name", "am") if model else "am"
 
     if model:

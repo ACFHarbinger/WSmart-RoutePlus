@@ -72,7 +72,7 @@ class MVMoE_AM(REINFORCE):
             moe_kwargs = DEFAULT_MOE_KWARGS
 
         if policy is None:
-            env_name = kwargs.get("env_name", "vrpp")
+            env_name = kwargs.get("env_name", "ptp")
             policy = AttentionModelPolicy(
                 env_name=env_name,
                 moe_kwargs=moe_kwargs,

@@ -10,7 +10,7 @@ from logic.src.configs import Config
 from logic.src.configs.envs.graph import GraphConfig
 from logic.src.configs.models.activation_function import ActivationConfig
 from logic.src.configs.models.normalization import NormalizationConfig
-from logic.src.envs.problems import VRPP
+from logic.src.envs.problems import PTP
 from logic.src.models.core.attention_model import AttentionModel
 from logic.src.models.subnets.factories.attention import AttentionComponentFactory
 from logic.src.pipeline.features.eval import eval_dataset
@@ -29,7 +29,7 @@ def temp_eval_setup(tmp_path):
     """
     # 1. Define model arguments
     model_args = {
-        "problem": "vrpp",
+        "problem": "ptp",
         "data_distribution": "const",
         "model": "am",
         "encoder": "gat",
@@ -60,7 +60,7 @@ def temp_eval_setup(tmp_path):
     }
 
     # 2. Initialize and save model
-    problem = VRPP()
+    problem = PTP()
     # Mocking component factory creation implicitly done in model __init__ usually,
     # but here we use the classes directly or just let load_model handle it.
     # To save a checkpoint that load_model can read, we need to save the state dict.
@@ -139,7 +139,7 @@ def patch_validate_tours(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def patch_vrpp_make_dataset():
-    """Patches VRPP to include make_dataset which is missing in codebase but used in eval.py"""
+    """Patches PTP to include make_dataset which is missing in codebase but used in eval.py"""
 
     def make_dataset(filename, num_samples=None, offset=0, **kwargs):
         with open(filename, "rb") as f:
@@ -149,10 +149,10 @@ def patch_vrpp_make_dataset():
         return ListDataset(data)
 
     # verify if it exists, if not patch it
-    if not hasattr(VRPP, "make_dataset"):
-        VRPP.make_dataset = staticmethod(make_dataset)
+    if not hasattr(PTP, "make_dataset"):
+        PTP.make_dataset = staticmethod(make_dataset)
         yield
-        del VRPP.make_dataset
+        del PTP.make_dataset
     else:
         yield
 
@@ -173,7 +173,7 @@ def test_eval_dataset_integration(temp_eval_setup):
     # Options dict mimicking what argparse would produce
     opts = Config()
     opts.task = "eval"
-    opts.eval.env.name = "vrpp"
+    opts.eval.env.name = "ptp"
     opts.eval.policy.model.load_path = setup["model_path"]
     opts.eval.val_size = 5
     opts.eval.offset = 0
@@ -211,7 +211,7 @@ def test_eval_dataset_sampling_integration(temp_eval_setup):
 
     opts = Config()
     opts.task = "eval"
-    opts.eval.env.name = "vrpp"
+    opts.eval.env.name = "ptp"
     opts.eval.policy.model.load_path = setup["model_path"]
     opts.eval.val_size = 2
     opts.eval.offset = 0

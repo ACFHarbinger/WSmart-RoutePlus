@@ -35,7 +35,7 @@ def _make_integration_cfg(**overrides):
         policies=[{"am_gamma1": {"model": {"name": "am"}}}],
         full_policies=["am_gamma1"],
         data_distribution="unif",
-        problem="vrpp",
+        problem="ptp",
         days=2,
         seed=42,
         output_dir="test_out",

@@ -239,7 +239,7 @@ class TestVectorizedPolicies:
         )
 
         class ALNSPolicyWrapper(nn.Module):
-            def __init__(self, env_name="cvrpp", time_limit=1.0, max_iterations=100):
+            def __init__(self, env_name="mvptp", time_limit=1.0, max_iterations=100):
                 super().__init__()
                 self.env_name = env_name
                 self.time_limit = time_limit
@@ -298,7 +298,7 @@ class TestVectorizedPolicies:
         )
         td["waste"][:, 0] = 0.0
 
-        policy = ALNSPolicyWrapper(env_name="cvrpp", time_limit=1.0, max_iterations=5).to(device)
+        policy = ALNSPolicyWrapper(env_name="mvptp", time_limit=1.0, max_iterations=5).to(device)
 
         # Mock environment
         class MockEnv:

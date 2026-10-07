@@ -55,7 +55,7 @@ class PolyNetDecoder(nn.Module):
         embed_dim: int = 128,
         poly_layer_dim: int = 256,
         num_heads: int = 8,
-        env_name: str = "vrpp",
+        env_name: str = "ptp",
         mask_inner: bool = True,
         out_bias: bool = False,
         linear_bias: bool = False,

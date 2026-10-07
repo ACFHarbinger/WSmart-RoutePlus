@@ -8,7 +8,7 @@ Attributes:
 
 Example:
     >>> from logic.src.models.subnets.decoders.mdam.path import MDAMPath
-    >>> path = MDAMPath(embed_dim=128, env_name="vrpp", num_heads=8)
+    >>> path = MDAMPath(embed_dim=128, env_name="ptp", num_heads=8)
     >>> fixed_cache = path.precompute(h_embed)
 """
 

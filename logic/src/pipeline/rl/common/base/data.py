@@ -78,7 +78,7 @@ def _create_eval_env_and_gen(cfg: Any, eval_graph: Any) -> tuple:
     from logic.src.envs import get_env
 
     env_cfg = _task_env_cfg(cfg)
-    env_name = str(_cfg_get(env_cfg, "name", "vrpp") or "vrpp")
+    env_name = str(_cfg_get(env_cfg, "name", "ptp") or "ptp")
     env_graph = _cfg_get(env_cfg, "graph", None)
     train_cfg = getattr(cfg, "train", None)
 

@@ -98,7 +98,7 @@ class A2C(RL4COLitModule):
         # Critic network
         if critic is None:
             critic = LegacyCriticNetwork(
-                env_name=env.name if hasattr(env, "name") else "vrpp",
+                env_name=env.name if hasattr(env, "name") else "ptp",
                 embed_dim=getattr(policy, "embed_dim", 128),
                 hidden_dim=256,
                 n_layers=3,

@@ -25,7 +25,7 @@ from logic.src.models.common.critic_network.policy import (  # noqa: F401
     create_critic_from_actor,
 )
 from logic.src.models.subnets.embeddings import (
-    VRPPContextEmbedder,
+    PTPContextEmbedder,
 )
 from logic.src.models.subnets.modules import ActivationFunction
 
@@ -41,7 +41,7 @@ class LegacyCriticNetwork(nn.Module):
         hidden_dim: Dimensionality of the value head hidden layers.
         embed_dim: Dimensionality of the node embeddings.
         aggregation_graph: Graph aggregation mode ('avg', 'sum', 'max').
-        is_vrpp: Whether the problem is VRPP-based.
+        is_ptp: Whether the problem is in the PTP family.
         context_embedder: Problem-specific node feature encoder.
         encoder: The graph neural network used for feature extraction.
         value_head: Linear layers to predict state value.
@@ -88,13 +88,13 @@ class LegacyCriticNetwork(nn.Module):
         self.embed_dim = embed_dim
         self.aggregation_graph = aggregation_graph
 
-        self.is_vrpp = problem.NAME in ("vrpp", "cvrpp", "ctop")
+        self.is_ptp = problem.NAME in ("ptp", "mvptp", "tcmvptp")
 
-        assert self.is_vrpp, f"Unsupported problem: {problem.NAME}"
+        assert self.is_ptp, f"Unsupported problem: {problem.NAME}"
 
         node_dim = 3
 
-        self.context_embedder = VRPPContextEmbedder(embed_dim, node_dim=node_dim, temporal_horizon=temporal_horizon)
+        self.context_embedder = PTPContextEmbedder(embed_dim, node_dim=node_dim, temporal_horizon=temporal_horizon)
 
         self.encoder = component_factory.create_encoder(
             n_heads=n_heads,

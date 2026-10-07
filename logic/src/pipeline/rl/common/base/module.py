@@ -225,7 +225,7 @@ class RL4COLitModule(DataMixin, OptimizationMixin, StepMixin, pl.LightningModule
         # Pull γ from rl.gamma (same field consumed by DRALNS, PPO, etc.)
         gamma: float = float(getattr(rl_cfg, "gamma", 1.0))
         shaping_weight: float = float(getattr(rl_cfg, "pbrs_shaping_weight", 1.0))
-        potential_key: str = str(getattr(rl_cfg, "pbrs_potential", "vrpp"))
+        potential_key: str = str(getattr(rl_cfg, "pbrs_potential", "ptp"))
 
         # env_name is used to look up the registered potential function
         env_name: str = getattr(self.env, "name", potential_key)

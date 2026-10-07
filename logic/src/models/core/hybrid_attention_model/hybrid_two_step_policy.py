@@ -92,7 +92,7 @@ class HybridTwoStagePolicy(AutoregressivePolicy):
         """Initializes the hybrid two-stage policy.
 
         Args:
-            env_name: Name of the environment (e.g., "tsp", "vrpp").
+            env_name: Name of the environment (e.g., "tsp", "ptp").
             embed_dim: Dimension of node embeddings.
             hidden_dim: MLP hidden layer dimension.
             n_encode_layers: Number of Graph Attention Encoder layers.

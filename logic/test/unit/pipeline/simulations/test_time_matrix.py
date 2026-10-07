@@ -1,4 +1,4 @@
-"""Directed travel-time loading and CTOP simulation regression tests."""
+"""Directed travel-time loading and TCMVPTP simulation regression tests."""
 
 from pathlib import Path
 from types import SimpleNamespace
@@ -74,7 +74,7 @@ def test_matrix_repair_and_collection_use_same_directed_times():
     bins.c = np.array([10.0, 10.0])
     bins.collect.return_value = (np.array([10.0, 10.0]), 20.0, 2, 12.0)
     context = {
-        "problem": "ctop",
+        "problem": "tcmvptp",
         "tour": [0, 1, 2, 0],
         "bins": bins,
         "distance_matrix": np.array([[0, 1, 1], [1, 0, 1], [1, 1, 0]]),
@@ -95,7 +95,7 @@ def test_matrix_repair_and_collection_use_same_directed_times():
 def test_infeasible_return_does_not_mutate_bins(tour):
     bins = MagicMock()
     context = {
-        "problem": "ctop",
+        "problem": "tcmvptp",
         "tour": tour,
         "bins": bins,
         "distance_matrix": np.zeros((2, 2)),
@@ -112,7 +112,7 @@ def test_capacity_violation_does_not_mutate_bins():
     bins = MagicMock()
     bins.c = np.array([60, 60])
     context = {
-        "problem": "ctop",
+        "problem": "tcmvptp",
         "tour": [0, 1, 2, 0],
         "bins": bins,
         "distance_matrix": np.zeros((3, 3)),
@@ -148,7 +148,7 @@ def test_initialization_loads_times_after_new_or_restored_coordinates(tmp_path, 
     path = tmp_path / "times.csv"
     path.write_text(",0,101\n0,0,360\n101,720,0\n")
     graph = GraphConfig(num_loc=1, area="riomaior", waste_type="plastic", tm_filepath=str(path))
-    sim = SimConfig(seed=42, graph=graph, resume=resume, problem="ctop")
+    sim = SimConfig(seed=42, graph=graph, resume=resume, problem="tcmvptp")
     ctx = SimpleNamespace(
         cfg=SimpleNamespace(sim=sim),
         data_dir=str(tmp_path),

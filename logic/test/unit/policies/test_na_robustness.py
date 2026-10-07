@@ -25,7 +25,7 @@ def test_b_gemini_01_normalization_forwarded_to_gat_encoder() -> None:
     not BatchNorm1d (B-gemini-01 regression test).
     """
     policy = AttentionModelPolicy(
-        env_name="vrpp",
+        env_name="ptp",
         embed_dim=32,
         n_encode_layers=2,
         normalization="layer",
@@ -39,7 +39,7 @@ def test_b_gemini_01_normalization_forwarded_to_gat_encoder() -> None:
 
     # When normalization='batch', should use BatchNorm1d
     policy_batch = AttentionModelPolicy(
-        env_name="vrpp",
+        env_name="ptp",
         embed_dim=32,
         n_encode_layers=2,
         normalization="batch",

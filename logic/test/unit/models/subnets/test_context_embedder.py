@@ -2,7 +2,7 @@
 
 import pytest
 import torch
-from logic.src.models.subnets.embeddings.context.vrpp import VRPPContextEmbedder
+from logic.src.models.subnets.embeddings.context.ptp import PTPContextEmbedder
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
@@ -13,9 +13,9 @@ pytestmark = [pytest.mark.unit, pytest.mark.fast]
 class TestContextEmbedder:
 
     def test_vrpp_embedder_shapes(self):
-        """Test VRPP embedder output shapes."""
+        """Test PTP embedder output shapes."""
         embed_dim = 64
-        model = VRPPContextEmbedder(embed_dim=embed_dim, node_dim=3, temporal_horizon=0)
+        model = PTPContextEmbedder(embed_dim=embed_dim, node_dim=3, temporal_horizon=0)
 
         input_data = {
             "loc": torch.rand(1, 5, 2),  # Test 'loc' vs 'locs' key fallback
@@ -29,5 +29,5 @@ class TestContextEmbedder:
         assert embeddings.shape == (1, 6, embed_dim)
 
         # Check step context dim
-        # VRPP: embed_dim + 2
+        # PTP: embed_dim + 2
         assert model.step_context_dim == embed_dim + 2

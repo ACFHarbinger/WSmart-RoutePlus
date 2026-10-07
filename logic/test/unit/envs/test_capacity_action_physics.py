@@ -1,15 +1,15 @@
-"""Capacity and action-shape physics for CVRPP."""
+"""Capacity and action-shape physics for MVPTP."""
 
 import pytest
 import torch
-from logic.src.envs.routing.cvrpp import CVRPPEnv
+from logic.src.envs.routing.mvptp import MVPTPEnv
 from tensordict import TensorDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 def test_cvrpp_remaining_capacity_never_goes_negative() -> None:
-    env = CVRPPEnv(generator_params={"num_loc": 2}, check_env_specs=False)
+    env = MVPTPEnv(generator_params={"num_loc": 2}, check_env_specs=False)
     td = TensorDict(
         {
             "locs": torch.tensor([[[0.0, 0.0], [1.0, 0.0]]]),

@@ -1,4 +1,4 @@
-"""Make the final route vehicle-feasible after construction and improvement (CTOP: also shift-feasible)."""
+"""Make the final route vehicle-feasible after construction and improvement (TCMVPTP: also shift-feasible)."""
 
 import logging
 from typing import Any, Dict
@@ -13,9 +13,9 @@ logger = logging.getLogger(__name__)
 
 
 class TimeConstraintAction(SimulationAction):
-    """Insert depot returns so every trip fits the vehicle (and, for CTOP, the shift).
+    """Insert depot returns so every trip fits the vehicle (and, for TCMVPTP, the shift).
 
-    CTOP: capacity and per-trip time, on the observed fill, as before.
+    TCMVPTP: capacity and per-trip time, on the observed fill, as before.
     Other problems (owner decision 2026-09-27): capacity only, on the true fill that the
     vehicle actually loads. A trip that would overflow gets a depot return at the point
     where the next bin no longer fits; the order of visits is kept, and the extra
@@ -24,7 +24,7 @@ class TimeConstraintAction(SimulationAction):
 
     def execute(self, context: Dict[str, Any]) -> None:
         """Repair the final route before collection mutates any bin contents."""
-        if str(context.get("problem", "")).lower() != "ctop":
+        if str(context.get("problem", "")).lower() != "tcmvptp":
             self._split_over_capacity_trips(context)
             return
         tour = context.get("tour")
@@ -41,7 +41,7 @@ class TimeConstraintAction(SimulationAction):
 
     @staticmethod
     def _split_over_capacity_trips(context: Dict[str, Any]) -> None:
-        """Split every trip whose true load exceeds the vehicle capacity (non-CTOP problems)."""
+        """Split every trip whose true load exceeds the vehicle capacity (non-TCMVPTP problems)."""
         tour = context.get("tour")
         capacity = context.get("vehicle_capacity")
         bins = context.get("bins")

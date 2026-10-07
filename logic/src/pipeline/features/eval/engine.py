@@ -60,8 +60,8 @@ from logic.src.configs import Config
 from logic.src.interfaces import ITraversable
 from logic.src.pipeline.features.eval.evaluate import evaluate_policy, get_automatic_batch_size
 from logic.src.utils.data.loader import save_dataset
-from logic.src.utils.model.loader import load_model
 from logic.src.utils.functions import move_to
+from logic.src.utils.model.loader import load_model
 
 mp = torch.multiprocessing.get_context("spawn")
 
@@ -258,7 +258,7 @@ def _eval_dataset(
         first_batch = move_to(next(iter(dataloader)), device)
         maybe_log_eval_attention_heatmaps(model, first_batch, cfg, output_subdir="eval_attention")
 
-    # Evaluators return rewards (VRPP: profit, higher is better); problem.get_costs and
+    # Evaluators return rewards (PTP: profit, higher is better); problem.get_costs and
     # the reported "cost" use the opposite sign.
     rewards_best = eval_results["rewards"]
     sequences_best = eval_results["sequences"].cpu().numpy()
@@ -267,12 +267,12 @@ def _eval_dataset(
     results: List[Dict[str, Any]] = []
     for i, (seq, reward) in enumerate(zip(sequences_best, rewards_best, strict=False)):
         if seq is not None:
-            if model.problem.NAME in ("cvrpp", "ctop"):
+            if model.problem.NAME in ("mvptp", "tcmvptp"):
                 # Multi-trip problems: keep the trailing depot-return marker
-                # (ctop is single-vehicle-multi-trip, same shape as cvrpp's
-                # per-trip capacity resets -- see logic/src/envs/tasks/ctop.py)
+                # (tcmvptp is single-vehicle-multi-trip, same shape as mvptp's
+                # per-trip capacity resets -- see logic/src/envs/tasks/tcmvptp.py)
                 seq = np.trim_zeros(seq).tolist() + [0]
-            elif model.problem.NAME == "vrpp":
+            elif model.problem.NAME == "ptp":
                 seq = np.trim_zeros(seq).tolist()
             else:
                 seq = None
@@ -316,7 +316,7 @@ def _eval_dataset(
             "kg": c_dict["waste"].item() * 100,
             "overflows": c_dict["overflows"].item(),
         }
-        # Additive KPI: only present when the problem tracks it (e.g. ctop's
+        # Additive KPI: only present when the problem tracks it (e.g. tcmvptp's
         # "time" key from get_costs), so this stays plug-and-play for future
         # problem-specific KPIs without a fixed schema here.
         if "time" in c_dict:

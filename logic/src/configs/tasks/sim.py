@@ -8,7 +8,7 @@ Example:
         policies=["alns", "hgs", "sans", "aco_ks", "aco_hh", "pso", "psoma", "swc_tcf", "na"],
         full_policies=["alns", "hgs", "sans", "aco_ks", "aco_hh", "pso", "psoma", "swc_tcf", "na"],
         data_distribution="gamma1",
-        problem="vrpp",
+        problem="ptp",
         days=31,
         seed=42,
         output_dir="output",
@@ -48,7 +48,7 @@ class SimConfig:
         policies: List of policy configurations to test on the WSR simulator.
         full_policies: Expanded policy names after config expansion (populated at runtime).
         data_distribution: Distribution to generate the bins daily waste fill.
-        problem: Problem variant to simulate (e.g. 'vrpp', 'cvrpp', 'ctop').
+        problem: Problem variant to simulate (e.g. 'ptp', 'mvptp', 'tcmvptp').
         days: Number of days to run the simulation for.
         seed: Random seed.
         output_dir: Name of WSR simulator test output directory.
@@ -75,7 +75,7 @@ class SimConfig:
     policies: List[Any] = field(default_factory=list)
     full_policies: List[str] = field(default_factory=list)
     data_distribution: str = "gamma1"
-    problem: str = "vrpp"
+    problem: str = "ptp"
     shift_hours: float = 7.0
     avg_speed_kmh: float = 35.0
     service_time_h: float = 1.5 / 60.0

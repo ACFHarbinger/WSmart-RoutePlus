@@ -14,10 +14,10 @@ Supported tasks
 
 Example::
 
-    python main.py train model=am env.name=vrpp env.num_loc=50
+    python main.py train model=am env.name=ptp env.num_loc=50
     python main.py eval eval.model_path=./weights/best.pt
     python main.py test_sim sim.days=31
-    python main.py gen_data data.problem=vrpp
+    python main.py gen_data data.problem=ptp
 """
 
 import hydra

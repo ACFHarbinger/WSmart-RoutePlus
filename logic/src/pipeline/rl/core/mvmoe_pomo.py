@@ -80,7 +80,7 @@ class MVMoE_POMO(POMO):
             moe_kwargs = DEFAULT_MOE_KWARGS
 
         if policy is None:
-            env_name = kwargs.get("env_name", "vrpp")
+            env_name = kwargs.get("env_name", "ptp")
             # Inject MoE kwargs into policy, using MVMoE recommended defaults
             policy = AttentionModelPolicy(
                 env_name=env_name,

@@ -35,7 +35,7 @@ def wsr_opts(tmp_path):
         policies=["test_policy_gamma1"],
         full_policies=["test_policy_gamma1"],
         data_distribution="gamma",
-        problem="vrpp",
+        problem="ptp",
         days=10,
         seed=42,
         output_dir="test_output",

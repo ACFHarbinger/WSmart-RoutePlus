@@ -30,7 +30,7 @@ def test_random_local_search_policy_basic():
     )
     td["waste"][:, 0] = 0.0  # Depot
 
-    policy = RandomLocalSearchPolicy(env_name="cvrpp", n_iterations=10, device=device).to(device)
+    policy = RandomLocalSearchPolicy(env_name="mvptp", n_iterations=10, device=device).to(device)
 
     # Mock environment
     class MockEnv:
@@ -74,7 +74,7 @@ def test_random_local_search_policy_custom_probs():
         "three_opt": 0.0,
     }
 
-    policy = RandomLocalSearchPolicy(env_name="cvrpp", n_iterations=5, op_probs=op_probs, device=device).to(device)
+    policy = RandomLocalSearchPolicy(env_name="mvptp", n_iterations=5, op_probs=op_probs, device=device).to(device)
 
     assert torch.allclose(
         policy.probs, torch.tensor([0.0, 0.0, 0.0, 0.0, 1.0, 0.0])

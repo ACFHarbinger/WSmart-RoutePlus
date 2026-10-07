@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 from logic.src.data.datasets import BaselineDataset
 from logic.src.envs import problems as problem_module
-from logic.src.envs.problems import CVRPP
+from logic.src.envs.problems import MVPTP
 from logic.src.models.core.attention_model import AttentionModel
 from logic.src.models.core.moe import MoEAttentionModel, MoETemporalAttentionModel
 from logic.src.models.subnets.encoders.moe.encoder import MoEGraphAttentionEncoder
@@ -423,7 +423,7 @@ class TestMoEModel:
     def test_model_initialization_and_forward(self):
         """Test MoEAttentionModel initialization and forward flow."""
         # Mock problem
-        problem = CVRPP()
+        problem = MVPTP()
 
         model = MoEAttentionModel(
             embed_dim=16,
@@ -454,7 +454,7 @@ class TestMoEModel:
 
     def test_temporal_model_initialization(self):
         """Test MoETemporalAttentionModel initialization."""
-        problem = CVRPP()
+        problem = MVPTP()
         model = MoETemporalAttentionModel(
             embed_dim=16,
             hidden_dim=32,

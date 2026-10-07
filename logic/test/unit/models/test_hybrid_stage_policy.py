@@ -59,7 +59,7 @@ def test_hybrid_two_stage_policy_forward(dummy_td):
     embed_dim = 16
 
     policy = HybridTwoStagePolicy(
-        env_name="cvrpp",
+        env_name="mvptp",
         embed_dim=embed_dim,
         hidden_dim=16,
         n_encode_layers=2,
@@ -80,7 +80,7 @@ def test_hybrid_two_stage_policy_forward(dummy_td):
 def test_hybrid_two_stage_policy_sampling(dummy_td):
     embed_dim = 16
     policy = HybridTwoStagePolicy(
-        env_name="cvrpp",
+        env_name="mvptp",
         embed_dim=embed_dim,
         hidden_dim=16,
         n_encode_layers=2,

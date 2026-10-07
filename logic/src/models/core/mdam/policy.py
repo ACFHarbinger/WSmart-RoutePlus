@@ -8,7 +8,7 @@ Attributes:
     MDAMPolicy: Autoregressive policy with multi-decoder expansion.
 
 Example:
-    >>> policy = MDAMPolicy(env_name="vrpp", num_paths=5)
+    >>> policy = MDAMPolicy(env_name="ptp", num_paths=5)
     >>> out = policy(td, env)
 """
 
@@ -49,7 +49,7 @@ class MDAMPolicy(AutoregressivePolicy):
         encoder: Optional[MDAMGraphAttentionEncoder] = None,
         decoder: Optional[MDAMDecoder] = None,
         embed_dim: int = 128,
-        env_name: str = "vrpp",
+        env_name: str = "ptp",
         num_encoder_layers: int = 3,
         num_heads: int = 8,
         num_paths: int = 5,

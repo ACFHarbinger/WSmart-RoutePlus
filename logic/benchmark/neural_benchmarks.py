@@ -38,11 +38,11 @@ def benchmark_neural_model(
     # Setup environment
     from logic.src.envs import get_env
     from logic.src.envs.base import RL4COEnvBase
-    env: RL4COEnvBase = get_env("vrpp", device=device)
+    env: RL4COEnvBase = get_env("ptp", device=device)
 
     # Instantiate policy directly
     policy = AttentionModelPolicy(
-        env_name="vrpp",
+        env_name="ptp",
         embed_dim=128,
         hidden_dim=128,
         n_encode_layers=3,

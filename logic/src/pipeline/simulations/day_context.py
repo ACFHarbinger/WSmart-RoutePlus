@@ -519,7 +519,7 @@ class SimulationDayContext(Mapping):
     seed: int = 42
     policy_seed: Optional[int] = None  # Policy-specific seed for RNG isolation
     display_name: str = ""
-    problem: str = "vrpp"
+    problem: str = "ptp"
     shift_hours: float = 7.0
     time_matrix: Optional[np.ndarray] = None
     avg_speed_kmh: float = 35.0

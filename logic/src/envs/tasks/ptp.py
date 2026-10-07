@@ -1,12 +1,12 @@
 """
-VRPP and CVRPP problem definitions.
+PTP and MVPTP problem definitions.
 
 Attributes:
-    VRPP: Vehicle Routing Problem with Profits (VRPP) definition.
+    PTP: Profitable Tour Problem (PTP) definition.
 
 Example:
     >>> import torch
-    >>> from logic.src.envs.tasks.vrpp import VRPP
+    >>> from logic.src.envs.tasks.ptp import PTP
     >>> dataset = {
     ...     "locs": torch.tensor([[[0.0, 0.0], [1.0, 0.0]]]),
     ...     "waste": torch.tensor([[0.0, 10.0]]),
@@ -15,7 +15,7 @@ Example:
     ...     "revenue_kg": 2.0,
     ... }
     >>> pi = torch.tensor([[[0, 1, 0]]])
-    >>> length, cost_dict, _ = VRPP.get_costs(dataset, pi)
+    >>> length, cost_dict, _ = PTP.get_costs(dataset, pi)
     >>> print(length)
     tensor([-2.0])
 """
@@ -26,9 +26,9 @@ from logic.src.constants.tasks import COST_KM, REVENUE_KG
 from logic.src.envs.tasks.base import BaseProblem
 
 
-class VRPP(BaseProblem):
+class PTP(BaseProblem):
     """
-    Vehicle Routing Problem with Profits (VRPP).
+    Profitable Tour Problem (PTP).
 
     Objective: Maximize Profit (Revenue - Cost).
 
@@ -36,12 +36,12 @@ class VRPP(BaseProblem):
         NAME: Environment name identifier.
     """
 
-    NAME = "vrpp"
+    NAME = "ptp"
 
     @staticmethod
     def get_costs(dataset, pi, cw_dict, dist_matrix=None):
         """
-        Compute VRPP costs/rewards.
+        Compute PTP costs/rewards.
 
         Args:
             dataset: Problem data.
@@ -52,7 +52,7 @@ class VRPP(BaseProblem):
         Returns:
             Tuple of (negative_profit, cost_dict, None).
         """
-        VRPP.validate_tours(pi)
+        PTP.validate_tours(pi)
         if pi.size(-1) == 1:
             z = torch.zeros(pi.size(0), device=pi.device)
             return (
@@ -61,12 +61,12 @@ class VRPP(BaseProblem):
                 None,
             )
 
-        waste_with_depot = VRPP.get_waste_with_depot(dataset, pi)
+        waste_with_depot = PTP.get_waste_with_depot(dataset, pi)
         w = waste_with_depot.gather(1, pi)
         if "max_waste" in dataset:
             w = w.clamp(max=dataset["max_waste"][:, None])
         waste = w.sum(dim=-1)
-        length = VRPP.get_tour_length(dataset, pi, dist_matrix)
+        length = PTP.get_tour_length(dataset, pi, dist_matrix)
 
         cost_km = dataset.get("cost_km", COST_KM)
         revenue_kg = dataset.get("revenue_kg", REVENUE_KG)

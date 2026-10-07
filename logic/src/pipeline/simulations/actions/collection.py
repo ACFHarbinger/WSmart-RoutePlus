@@ -113,9 +113,9 @@ class CollectAction(SimulationAction):
         service_time_total_h = sum(node != 0 for node in tour) * service_time_h
         time_spent_h = driving_time_h + service_time_total_h
 
-        # 4. If problem is CTOP, validate per-trip constraints (capacity + shift duration)
-        problem = str(context.get("problem", "vrpp") or "vrpp").lower()
-        if problem == "ctop" and tour and len(tour) > 2:
+        # 4. If problem is TCMVPTP, validate per-trip constraints (capacity + shift duration)
+        problem = str(context.get("problem", "ptp") or "ptp").lower()
+        if problem == "tcmvptp" and tour and len(tour) > 2:
             cur_trip_time = 0.0
             cur_load = 0.0
             cur_trip_bins = 0
@@ -126,10 +126,10 @@ class CollectAction(SimulationAction):
                     trip_time = cur_trip_time + (cur_trip_bins * service_time_h)
                     if trip_time > shift_hours + 1e-6:
                         raise AssertionError(
-                            f"CTOP violation: trip duration {trip_time:.4f}h exceeds shift budget {shift_hours:.4f}h"
+                            f"TCMVPTP violation: trip duration {trip_time:.4f}h exceeds shift budget {shift_hours:.4f}h"
                         )
                     if cur_load > context.get("vehicle_capacity", float("inf")) + 1e-6:
-                        raise AssertionError("CTOP violation: trip exceeds vehicle capacity")
+                        raise AssertionError("TCMVPTP violation: trip exceeds vehicle capacity")
                     cur_trip_time = 0.0
                     cur_load = 0.0
                     cur_trip_bins = 0
@@ -139,8 +139,8 @@ class CollectAction(SimulationAction):
                         cur_load += float(bins.c[node - 1])
                 prev_node = node
 
-        # Per-trip payload telemetry, for every problem type. CTOP rejects violations above;
-        # for the VRPP variants the simulator still executes the tour, so record and warn.
+        # Per-trip payload telemetry, for every problem type. TCMVPTP rejects violations above;
+        # for the PTP variants the simulator still executes the tour, so record and warn.
         capacity_pct = float(context.get("vehicle_capacity", float("inf")) or float("inf"))
         try:
             loads_pct, loads_kg, violations = capacity_report(tour, bins, capacity_pct)
@@ -150,7 +150,7 @@ class CollectAction(SimulationAction):
         context["trip_loads_pct"] = loads_pct
         context["trip_loads_kg"] = loads_kg
         context["capacity_violations"] = violations
-        if violations and problem != "ctop":
+        if violations and problem != "tcmvptp":
             logger.warning(
                 "%d trip(s) exceed the vehicle capacity (%.1f %% of a bin): loads %s",
                 violations,

@@ -1,9 +1,9 @@
 # =============================================================================
-# Capacitated Team Orienteering Problem (CTOP) Environment Configuration
+# Time-Constrained Multi-Vehicle Profitable Tour Problem (TCMVPTP) Environment Configuration
 # =============================================================================
-# Single-vehicle, multi-trip variant of CVRPP:
+# Single-vehicle, multi-trip variant of MVPTP:
 #   - Same node/waste layout, prize-collection objective, and per-trip
-#     vehicle capacity as CVRPP. Capacity is UNCHANGED -- it is not
+#     vehicle capacity as MVPTP. Capacity is UNCHANGED -- it is not
 #     replaced by the time budget.
 #   - Additional independent per-trip time budget: travel time
 #     (distance / avg_speed_kmh) + service time (service_time_h per bin)
@@ -11,28 +11,28 @@
 #   - Both constraints hold simultaneously. The vehicle may return to the
 #     depot and start a new trip within the same period; the episode ends
 #     once nothing is reachable even with a freshly reset capacity AND
-#     time budget. See logic/src/envs/routing/ctop.py.
+#     time budget. See logic/src/envs/routing/tcmvptp.py.
 #   - "Team" is one vehicle, multiple trips here -- not a concurrent fleet.
 #     See docs/moon/roadmaps/new_features.md §E.8 for the true-fleet variant.
 #
 # Select this env by swapping the Hydra env group (not only env.name --
 # that keeps the previously composed YAML's other fields):
-#   python main.py train envs@train.env=ctop
-#   python main.py eval envs@eval.env=ctop eval.env.name=ctop eval.problem=ctop
-#   python main.py hpo envs@hpo.env=ctop
-#   python main.py meta_train envs@meta_rl.env=ctop meta_rl.env.name=ctop
-#   python main.py hpo_sim envs@hpo_sim.env=ctop
-#   python main.py gen_data data.problem=ctop
-#   python main.py test_sim sim.problem=ctop
+#   python main.py train envs@train.env=tcmvptp
+#   python main.py eval envs@eval.env=tcmvptp eval.env.name=tcmvptp eval.problem=tcmvptp
+#   python main.py hpo envs@hpo.env=tcmvptp
+#   python main.py meta_train envs@meta_rl.env=tcmvptp meta_rl.env.name=tcmvptp
+#   python main.py hpo_sim envs@hpo_sim.env=tcmvptp
+#   python main.py gen_data data.problem=tcmvptp
+#   python main.py test_sim sim.problem=tcmvptp
 #     (#59 consumes this: dual capacity + T_max in get_multi_tour / CollectAction)
 # =============================================================================
 
-name: "ctop" # Environment identifier
+name: "tcmvptp" # Environment identifier
 mean: 0.0
 variance: 0.0
 
 # =============================================================================
-# Capacity Constraint (same as cvrpp.yaml -- CTOP does not drop this)
+# Capacity Constraint (same as mvptp.yaml -- TCMVPTP does not drop this)
 # =============================================================================
 capacity:
   100.0 # Normalized vehicle capacity.
@@ -43,7 +43,7 @@ capacity:
 # Temporal resource parameters
 # ===========================================================================
 # Keys must be present (even as null) so Hydra CLI can override them:
-#   python main.py train envs@train.env=ctop train.env.shift_hours=6.5
+#   python main.py train envs@train.env=tcmvptp train.env.shift_hours=6.5
 # null = use the Python default from
 # SimulationRepository.get_temporal_params() (7.0 h, 35 km/h, 0.025 h/bin).
 # Set a number only for an experiment that deliberately studies a different
@@ -56,11 +56,11 @@ service_time_h: null     # Time to visit and empty a single bin (h). Default 0.0
 # Curriculum Learning
 # ===========================================================================
 # The first entry is also used for single-stage training.
-# Graphs match vrpp.yaml (Rio Maior 100/170) rather than cvrpp.yaml's
+# Graphs match ptp.yaml (Rio Maior 100/170) rather than mvptp.yaml's
 # 50-node stub -- those are the networks the rest of the framework trains
-# on. No ctop-specific .td datasets exist yet; omit load_dataset so the
+# on. No tcmvptp-specific .td datasets exist yet; omit load_dataset so the
 # generator builds instances on the fly. Produce them later with
-# `python main.py gen_data data.problem=ctop`.
+# `python main.py gen_data data.problem=tcmvptp`.
 curriculum_graphs:
   - num_loc: 100
     n_samples: 12800

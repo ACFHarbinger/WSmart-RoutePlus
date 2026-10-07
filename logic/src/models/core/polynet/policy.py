@@ -9,7 +9,7 @@ Attributes:
     PolyNetPolicy: Strategy-conditioned constructive policy.
 
 Example:
-    >>> policy = PolyNetPolicy(k=128, env_name="vrpp")
+    >>> policy = PolyNetPolicy(k=128, env_name="ptp")
     >>> out = policy(td, env)
 """
 
@@ -56,7 +56,7 @@ class PolyNetPolicy(AutoregressivePolicy):
         num_heads: int = 8,
         normalization: str = "instance",
         feedforward_hidden: int = 512,
-        env_name: str = "vrpp",
+        env_name: str = "ptp",
         temperature: float = 1.0,
         tanh_clipping: float = 10.0,
         mask_logits: bool = True,

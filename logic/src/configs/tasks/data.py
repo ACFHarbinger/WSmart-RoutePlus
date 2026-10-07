@@ -9,7 +9,7 @@ Example:
         name="test",
         filename="test.pkl",
         data_dir="datasets",
-        problem="vrpp",
+        problem="ptp",
         mu=[10.0, 10.0],
         sigma=0.6,
         data_distributions=["gaussian"],
@@ -36,7 +36,7 @@ class DataConfig:
         name: Name to identify dataset. For training data, this will result in .td files.
         filename: Filename of the dataset to create (ignores datadir).
         data_dir: Create datasets in data.
-        problem: Problem type selection. Should be 'vrpp', 'cvrpp', 'ctop'
+        problem: Problem type selection. Should be 'ptp', 'mvptp', 'tcmvptp'
             or 'all'.
         mu: Mean of Gaussian noise (implies Gaussian noise generation if set).
         sigma: Variance of Gaussian noise.

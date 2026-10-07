@@ -59,7 +59,7 @@ def _create_imitation(cfg: Config, policy, env, kw: Dict[str, Any]) -> pl.Lightn
     return ImitationLearning(
         # ImitationLearning specific
         policy_config=policy_config,
-        env_name=getattr(env_cfg, "name", "vrpp") if env_cfg else "vrpp",
+        env_name=getattr(env_cfg, "name", "ptp") if env_cfg else "ptp",
         loss_fn=cfg.rl.imitation.loss_fn,
         seed=cfg.seed,
         device=cfg.device,
@@ -108,7 +108,7 @@ def _create_adaptive_imitation(cfg: Config, policy, env, kw: Dict[str, Any]) -> 
     return AdaptiveImitation(
         # AdaptiveImitation specific
         policy_config=policy_config,
-        env_name=getattr(env_cfg, "name", "vrpp") if env_cfg else "vrpp",
+        env_name=getattr(env_cfg, "name", "ptp") if env_cfg else "ptp",
         il_weight=cfg.rl.adaptive_imitation.il_weight,
         il_decay=cfg.rl.adaptive_imitation.il_decay,
         patience=cfg.rl.adaptive_imitation.patience,
@@ -155,7 +155,7 @@ def _create_critic_helper(policy, cfg: Config) -> Any:
 
     return create_critic_from_actor(
         policy,
-        env_name=getattr(env_cfg, "name", "vrpp") if env_cfg else "vrpp",
+        env_name=getattr(env_cfg, "name", "ptp") if env_cfg else "ptp",
         embed_dim=getattr(enc, "embed_dim", 128) if enc else 128,
         hidden_dim=getattr(enc, "hidden_dim", 512) if enc else 512,
         n_layers=getattr(enc, "n_layers", 3) if enc else 3,

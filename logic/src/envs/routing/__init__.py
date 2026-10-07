@@ -5,7 +5,7 @@ This module provides RL4CO-style environment abstractions for
 combinatorial optimization problems.
 
 Attributes:
-    VRPPGenerator: Generator for VRP with Profits instances.
+    PTPGenerator: Generator for Profitable Tour Problem instances.
     Generator: Abstract base class for all instance generators.
     IRPGenerator: Generator for Inventory Routing Problem instances.
     ATSPGenerator: Generator for Asymmetric TSP instances.
@@ -14,7 +14,7 @@ Attributes:
     PCTSPGenerator: Generator for Prize-Collecting TSP instances.
     PDPGenerator: Generator for Pickup and Delivery Problem instances.
     ThOPGenerator: Generator for Thief Orienteering Problem instances.
-    CTOPGenerator: Generator for Capacitated Team Orienteering Problem instances.
+    TCMVPTPGenerator: Generator for Time-Constrained Multi-Vehicle Profitable Tour Problem instances.
     RL4COEnvBase: Abstract base class for all routing environments.
     ImprovementEnvBase: Base class for improvement-based routing environments.
     ENV_REGISTRY: Mapping of problem name strings to their environment classes.
@@ -22,7 +22,7 @@ Attributes:
 
 Example:
     >>> from logic.src.envs.routing import get_env
-    >>> env = get_env("vrpp", num_loc=50)
+    >>> env = get_env("ptp", num_loc=50)
     >>> td = env.reset()
 """
 
@@ -31,35 +31,35 @@ from logic.src.envs.base.improvement import ImprovementEnvBase
 from logic.src.envs.generators import (
     GENERATOR_REGISTRY,
     ATSPGenerator,
-    CTOPGenerator,
     CVRPGenerator,
     Generator,
     IRPGenerator,
     OPGenerator,
     PCTSPGenerator,
     PDPGenerator,
+    PTPGenerator,
+    TCMVPTPGenerator,
     ThOPGenerator,
-    VRPPGenerator,
     get_generator,
 )
 from logic.src.envs.routing.atsp import ATSPEnv
-from logic.src.envs.routing.ctop import CTOPEnv
 from logic.src.envs.routing.cvrp import CVRPEnv
-from logic.src.envs.routing.cvrpp import CVRPPEnv
 from logic.src.envs.routing.irp import IRPEnv
+from logic.src.envs.routing.mvptp import MVPTPEnv
 from logic.src.envs.routing.op import OPEnv
 from logic.src.envs.routing.pctsp import PCTSPEnv
 from logic.src.envs.routing.pdp import PDPEnv
+from logic.src.envs.routing.ptp import PTPEnv
 from logic.src.envs.routing.spctsp import SPCTSPEnv
+from logic.src.envs.routing.tcmvptp import TCMVPTPEnv
 from logic.src.envs.routing.thop import ThOPEnv
 from logic.src.envs.routing.tsp import TSPEnv
-from logic.src.envs.routing.vrpp import VRPPEnv
 from logic.src.envs.tsp_kopt import TSPkoptEnv
 
 # Environment registry
 ENV_REGISTRY = {
-    "vrpp": VRPPEnv,
-    "cvrpp": CVRPPEnv,
+    "ptp": PTPEnv,
+    "mvptp": MVPTPEnv,
     "tsp": TSPEnv,
     "tsp_kopt": TSPkoptEnv,
     "thop": ThOPEnv,
@@ -70,7 +70,7 @@ ENV_REGISTRY = {
     "pctsp": PCTSPEnv,
     "spctsp": SPCTSPEnv,
     "pdp": PDPEnv,
-    "ctop": CTOPEnv,
+    "tcmvptp": TCMVPTPEnv,
 }
 
 
@@ -79,7 +79,7 @@ def get_env(name: str, **kwargs) -> RL4COEnvBase:
     Factory function to get environment by name.
 
     Args:
-        name: Environment name (vrpp, cvrpp, ctop, irp, atsp, cvrp, op, etc.)
+        name: Environment name (ptp, mvptp, tcmvptp, irp, atsp, cvrp, op, etc.)
         kwargs: Environment configuration parameters.
 
     Returns:
@@ -100,7 +100,7 @@ __all__ = [
     "ImprovementEnvBase",
     # Generators
     "Generator",
-    "VRPPGenerator",
+    "PTPGenerator",
     "IRPGenerator",
     "ATSPGenerator",
     "CVRPGenerator",
@@ -108,12 +108,12 @@ __all__ = [
     "PCTSPGenerator",
     "PDPGenerator",
     "ThOPGenerator",
-    "CTOPGenerator",
+    "TCMVPTPGenerator",
     "get_generator",
     "GENERATOR_REGISTRY",
     # Environments
-    "VRPPEnv",
-    "CVRPPEnv",
+    "PTPEnv",
+    "MVPTPEnv",
     "TSPEnv",
     "TSPkoptEnv",
     "IRPEnv",
@@ -124,7 +124,7 @@ __all__ = [
     "SPCTSPEnv",
     "PDPEnv",
     "ThOPEnv",
-    "CTOPEnv",
+    "TCMVPTPEnv",
     # Registry
     "ENV_REGISTRY",
     "get_env",

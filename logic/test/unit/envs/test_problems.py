@@ -1,22 +1,22 @@
-"""Tests for problem environment physics (VRPP, CVRPP, etc)."""
+"""Tests for problem environment physics (PTP, MVPTP, etc)."""
 
 from unittest.mock import patch
 
 import pytest
 import torch
 from logic.src.envs import problems as problem_module
-from logic.src.envs.problems import CVRPP, VRPP
+from logic.src.envs.problems import MVPTP, PTP
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 
 class TestVRPP:
-    """Tests for the VRPP problem class."""
+    """Tests for the PTP problem class."""
 
     @pytest.mark.unit
     def test_get_costs_basic(self):
-        """Test cost calculation for a simple VRPP route."""
+        """Test cost calculation for a simple PTP route."""
         # Inject globals
         problem_module.COST_KM = 1.0
         problem_module.REVENUE_KG = 0.1
@@ -30,7 +30,7 @@ class TestVRPP:
         }
         pi = torch.tensor([[1, 2]])  # (1, 2)
 
-        neg_profit, c_dict, _ = VRPP.get_costs(dataset, pi, cw_dict=None)
+        neg_profit, c_dict, _ = PTP.get_costs(dataset, pi, cw_dict=None)
 
         # Length calculation:
         # 0->1: sqrt(1^2) = 1.0
@@ -54,27 +54,27 @@ class TestVRPP:
         problem_module.BIN_CAPACITY = 100.0
 
         with patch("logic.src.envs.problems.BaseProblem.make_state") as mock_init:
-            VRPP.make_state(input_data="mock_input", profit_vars={"cost_km": 1.0})
+            PTP.make_state(input_data="mock_input", profit_vars={"cost_km": 1.0})
 
             args, kwargs = mock_init.call_args
             assert "profit_vars" in kwargs
             assert kwargs["profit_vars"]["cost_km"] == 1.0
 
-        # VRPPDataset is now handled via VRPPGenerator + TensorDictDataset
-        from logic.src.envs.generators import VRPPGenerator
+        # VRPPDataset is now handled via PTPGenerator + TensorDictDataset
+        from logic.src.envs.generators import PTPGenerator
 
-        generator = VRPPGenerator(num_loc=10)
+        generator = PTPGenerator(num_loc=10)
         td = generator(batch_size=2)
         assert td.batch_size[0] == 2
         assert td["waste"].shape == (2, 10)
 
 
-class TestStateVRPP:
-    """Tests for StateVRPP logic."""
+class TestStatePTP:
+    """Tests for StatePTP logic."""
 
     @pytest.mark.unit
     def test_initialize(self):
-        """Test initialization of StateVRPP."""
+        """Test initialization of StatePTP."""
         # Input mock
         batch_size = 2
         n_loc = 3
@@ -85,7 +85,7 @@ class TestStateVRPP:
             "max_waste": torch.ones(batch_size) * 10.0,
         }
 
-        state = VRPP.make_state(input_data)
+        state = PTP.make_state(input_data)
 
         assert state.ids.shape == (batch_size, 1)
         # In new envs, visited is (B, N+1) and usually boolean
@@ -105,7 +105,7 @@ class TestStateVRPP:
             "waste": torch.tensor([[5.0, 6.0]]),
             "max_waste": torch.tensor([10.0]),
         }
-        state = VRPP.make_state(input_data)
+        state = PTP.make_state(input_data)
 
         # Test mask at start (depot is 0, others unvisited)
         # get_mask returns mask where True means INVALID
@@ -133,8 +133,8 @@ class TestStateVRPP:
         assert not mask[:, 0, 2].item()  # Node 2 unvisited
 
 
-class TestStateCVRPP:
-    """Tests for StateCVRPP logic."""
+class TestStateMVPTP:
+    """Tests for StateMVPTP logic."""
 
     @pytest.mark.unit
     def test_capacity_mask(self):
@@ -158,7 +158,7 @@ class TestStateCVRPP:
             "bin_capacity": 10.0,
             "vehicle_capacity": 10.0,
         }
-        state = CVRPP.make_state(input_data, profit_vars=profit_vars)
+        state = MVPTP.make_state(input_data, profit_vars=profit_vars)
 
         # Visit Node 1
         selected = torch.tensor([1])
@@ -187,7 +187,7 @@ class TestStateCVRPP:
             "bin_capacity": 10.0,
             "vehicle_capacity": 10.0,
         }
-        state = CVRPP.make_state(input_data, profit_vars=profit_vars)
+        state = MVPTP.make_state(input_data, profit_vars=profit_vars)
 
         # 0 -> 1 (Load 6)
         state = state.update(torch.tensor([1]))
@@ -204,22 +204,22 @@ class TestStateCVRPP:
 
 
 class TestCVRPP:
-    """Tests for the CVRPP problem class."""
+    """Tests for the MVPTP problem class."""
 
     @pytest.mark.unit
     def test_make_state_uses_cvrpp_state(self):
-        """Test that CVRPP uses StateCVRPP."""
+        """Test that MVPTP uses StateMVPTP."""
         problem_module.COST_KM = 1.0
         problem_module.REVENUE_KG = 0.1
         problem_module.BIN_CAPACITY = 100.0
 
         with patch("logic.src.envs.problems.BaseProblem.make_state") as mock_init:
-            CVRPP.make_state(input_data="mock")
+            MVPTP.make_state(input_data="mock")
             mock_init.assert_called_once()
 
     @pytest.mark.unit
     def test_get_costs_multitrip(self):
-        """Test CVRPP.get_costs with multi-trip capacity logic."""
+        """Test MVPTP.get_costs with multi-trip capacity logic."""
         # Setup: Vehicle Capacity 100.
         problem_module.BIN_CAPACITY = 100.0
         problem_module.VEHICLE_CAPACITY = 100.0
@@ -237,11 +237,11 @@ class TestCVRPP:
         # Scenario 1: Visit 1 -> 2 directly (Total 120) -> Should Fail Assertion
         pi_fail = torch.tensor([[1, 2]])
         with pytest.raises(AssertionError, match="Used more than capacity"):
-            CVRPP.get_costs(dataset, pi_fail, cw_dict=None)
+            MVPTP.get_costs(dataset, pi_fail, cw_dict=None)
 
         # Scenario 2: Visit 1 -> 0 (Depot) -> 2 (Total 60 reset 60)
         pi_route = torch.tensor([[1, 0, 2]])
-        cost, c_dict, _ = CVRPP.get_costs(dataset, pi_route, cw_dict=None)
+        cost, c_dict, _ = MVPTP.get_costs(dataset, pi_route, cw_dict=None)
 
         # Check Profit
         # Length:

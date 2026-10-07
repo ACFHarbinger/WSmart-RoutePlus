@@ -12,7 +12,7 @@ def train_opts(tmp_path):
     """Base options for training integration tests, derived from Config defaults."""
     # We populate a flat dict to match legacy expectations in integration tests
     opts = {
-        "problem": "vrpp",
+        "problem": "ptp",
         "graph_size": 10,
         "batch_size": 2,
         "epoch_size": 10,
@@ -53,7 +53,7 @@ def train_opts(tmp_path):
 def sim_opts(tmp_path, setup_sim_data):
     """Base options for simulation integration tests."""
     return {
-        "problem": "vrpp",
+        "problem": "ptp",
         "size": 10,  # Small graph
         "days": 2,
         "n_samples": 1,

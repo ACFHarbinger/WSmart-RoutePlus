@@ -33,7 +33,7 @@ class TensorDictStateWrapper:
         waste_with_depot: The waste with depot.
     """
 
-    def __init__(self, td: TensorDict, problem_name: str = "vrpp", env=None):
+    def __init__(self, td: TensorDict, problem_name: str = "ptp", env=None):
         """Initialize TensorDictStateWrapper.
 
         Args:
@@ -96,7 +96,7 @@ class TensorDictStateWrapper:
 
     def get_current_profit(self) -> torch.Tensor:
         """
-        For VRPP: get cumulative collected waste.
+        For PTP: get cumulative collected waste.
 
         Returns:
             The cumulative collected waste.

@@ -40,7 +40,7 @@ def validate_sim_config(cfg: Config) -> None:
     assert graph.n_samples > 0, "Number of samples must be non-negative integer"
 
     # --- Problem validation ---
-    problem = str(getattr(sim, "problem", "vrpp") or "vrpp").lower()
+    problem = str(getattr(sim, "problem", "ptp") or "ptp").lower()
     assert problem in PROBLEMS, f"Unknown problem {problem}, available problems: {PROBLEMS}"
     sim.problem = problem
 

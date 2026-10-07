@@ -18,7 +18,7 @@ def test_d_gemini_01_glimpse_decoder_has_no_project_fixed_context() -> None:
     decoder = GlimpseDecoder(
         embed_dim=64,
         hidden_dim=128,
-        problem="vrpp",
+        problem="ptp",
         n_heads=4,
     )
     assert not hasattr(decoder, "project_fixed_context"), "GlimpseDecoder still has dead project_fixed_context layer"
@@ -43,7 +43,7 @@ def test_checkpoint_load_legacy_project_fixed_context(tmp_path: Path) -> None:
     embed_dim = 32
     hidden_dim = 64
     hparams = {
-        "problem": "vrpp",
+        "problem": "ptp",
         "model": "am",
         "encoder": "gat",
         "embed_dim": embed_dim,
@@ -78,7 +78,7 @@ def test_checkpoint_load_legacy_project_fixed_context(tmp_path: Path) -> None:
     from logic.src.models.subnets.factories.attention import AttentionComponentFactory
     from logic.src.utils.model.problem_factory import load_problem
 
-    problem = load_problem("vrpp")
+    problem = load_problem("ptp")
     base_model = AttentionModel(
         embed_dim=embed_dim,
         hidden_dim=hidden_dim,

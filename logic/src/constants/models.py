@@ -32,7 +32,7 @@ Attributes:
     NODE_DIM: Dimension of node features
     STATIC_DIM: Dimension of static coordinate features
     DEPOT_DIM: Dimension of depot coordinate features
-    VRPP_STEP_CONTEXT_OFFSET: Offset for vehicle routing with profit problem step context
+    PTP_STEP_CONTEXT_OFFSET: Offset for profitable tour problem step context
     DEFAULT_TEMPORAL_HORIZON: Default lookahead horizon for time-dependent models
     TANH_CLIPPING: Tanh clipping value for numerical stability
     NORM_EPSILON: Epsilon for normalization stability
@@ -90,13 +90,13 @@ DEPOT_DIM: int = 2  # 2D Euclidean coordinates (x, y) in [0, 1] range
 # Added to NODE_DIM to compute total decoder context size.
 
 
-# VRPP context: [unvisited_waste_sum, mean_dist_to_unvisited_nodes]
-# Used in: vrpp.py context embeddings for profit-aware early-termination decoding
-VRPP_STEP_CONTEXT_OFFSET: int = 2  # 2 extra dims: remaining profit + mean travel cost signal
+# PTP context: [unvisited_waste_sum, mean_dist_to_unvisited_nodes]
+# Used in: ptp.py context embeddings for profit-aware early-termination decoding
+PTP_STEP_CONTEXT_OFFSET: int = 2  # 2 extra dims: remaining profit + mean travel cost signal
 
-# CVRPP context: [unvisited_waste_sum, mean_dist_to_unvisited_nodes, remaining_capacity]
-# Used in: cvrpp.py context embeddings — extends VRPP with hard capacity constraint signal
-CVRPP_STEP_CONTEXT_OFFSET: int = 3  # 3 extra dims: profit signal + distance signal + capacity
+# MVPTP context: [unvisited_waste_sum, mean_dist_to_unvisited_nodes, remaining_capacity]
+# Used in: mvptp.py context embeddings — extends PTP with hard capacity constraint signal
+MVPTP_STEP_CONTEXT_OFFSET: int = 3  # 3 extra dims: profit signal + distance signal + capacity
 
 # Temporal Defaults
 # ------------------

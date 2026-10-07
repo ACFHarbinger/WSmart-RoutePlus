@@ -430,7 +430,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "--envs",
         metavar="ENVS",
         default=None,
-        help="Comma/space-separated environment names to KEEP (e.g. 'vrpp'). Omit to keep all.",
+        help="Comma/space-separated environment names to KEEP (e.g. 'ptp'). Omit to keep all.",
     )
     p.add_argument(
         "--sim-datasets",

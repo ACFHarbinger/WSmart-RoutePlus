@@ -13,29 +13,29 @@ pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 class MockProblem:
     """Mock problem class for testing."""
-    def __init__(self, name="vrpp"):
+    def __init__(self, name="ptp"):
         self.NAME = name
 
 @pytest.fixture
 def vrpp_problem():
-    return MockProblem("vrpp")
+    return MockProblem("ptp")
 
 @pytest.fixture
 def wc_problem():
-    return MockProblem("cvrpp")
+    return MockProblem("mvptp")
 
 class TestHypernetwork:
     """Tests for the Hypernetwork module."""
 
     def test_initialization_vrpp(self, vrpp_problem):
-        """Test initialization with VRPP problem dims."""
+        """Test initialization with PTP problem dims."""
         model = Hypernetwork(input_dim=6, output_dim=6, n_days=31, embed_dim=8, hidden_dim=16)
         # input_dim = 6. embed_dim = 8. combined_dim = 6 + 8 = 14
         assert model.layers[0].in_features == 14
         assert model.layers[-1].out_features == 6
 
     def test_initialization_wc(self, wc_problem):
-        """Test initialization with CVRPP problem dims."""
+        """Test initialization with MVPTP problem dims."""
         model = Hypernetwork(input_dim=6, output_dim=3)
         assert model.output_dim == 3
 

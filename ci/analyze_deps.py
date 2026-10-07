@@ -244,7 +244,7 @@ def analyze_model(model_dir: Path, verbose: bool = False) -> Dict[str, List[str]
 def _env_name_from_embedding_rel(rel_path: str) -> Optional[str]:
     """Heuristic: stem matches a known env name."""
     stem = Path(rel_path).stem.lower()
-    for env_candidate in ("vrpp", "cvrpp", "wcvrp", "swcvrp", "cwcvrp", "atsp", "tsp"):
+    for env_candidate in ("ptp", "mvptp", "tcmvptp", "atsp", "tsp"):
         if stem == env_candidate:
             return env_candidate
     return None
@@ -451,7 +451,7 @@ def _process_embeddings(
     print("[analyze_deps] Analyzing embedding dependencies …")
     all_env_names = list(
         prunable_types.get("embeddings", {}).get("env_files", {}).keys()
-    ) or ["vrpp", "cvrpp", "wcvrp", "swcvrp"]
+    ) or ["ptp", "mvptp"]
 
     env_files_map, model_files_map = analyze_embeddings(
         all_env_names, all_model_entries, verbose=args.verbose

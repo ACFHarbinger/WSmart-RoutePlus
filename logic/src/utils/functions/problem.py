@@ -2,12 +2,12 @@
 Problem-specific utility functions.
 
 Attributes:
-    is_vrpp_problem: Check if the problem is a Vehicle Routing Problem with Profits (VRPP) variant.
+    is_ptp_problem: Check if the problem is a Profitable Tour Problem (PTP) variant.
     is_tsp_problem: Check if the problem is a Traveling Salesperson Problem (TSP) variant.
 
 Example:
-    >>> from logic.src.utils.functions import is_vrpp_problem, is_tsp_problem
-    >>> is_vrpp_problem("cvrpp")
+    >>> from logic.src.utils.functions import is_ptp_problem, is_tsp_problem
+    >>> is_ptp_problem("mvptp")
     True
     >>> is_tsp_problem("tsp")
     True
@@ -16,22 +16,21 @@ Example:
 from typing import Any
 
 
-def is_vrpp_problem(problem: Any) -> bool:
+def is_ptp_problem(problem: Any) -> bool:
     """
-    Check if the problem is a Vehicle Routing Problem with Profits (VRPP) variant.
+    Check if the problem is a Profitable Tour Problem (PTP) variant.
 
     Args:
         problem: Problem instance or name string.
 
     Returns:
-        bool: True if it's a VRPP variant.
+        bool: True if it's a PTP variant.
     """
     name = problem if isinstance(problem, str) else getattr(problem, "NAME", "")
     name = name.lower()
-    # ctop subclasses VRPP (logic.src.envs.tasks.ctop.CTOP(VRPP)) and shares
-    # its node layout/reward -- it belongs to this family even though "ctop"
-    # doesn't contain the substring "vrpp".
-    return any(vrpp_tag in name for vrpp_tag in ["vrpp", "cvrpp", "pcvrp"]) or name == "ctop"
+    # ptp, mvptp and tcmvptp all contain "ptp"; tcmvptp subclasses MVPTP and
+    # shares the node layout and reward.
+    return "ptp" in name or "pcvrp" in name
 
 
 def is_tsp_problem(problem: Any) -> bool:

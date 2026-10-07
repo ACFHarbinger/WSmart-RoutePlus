@@ -6,7 +6,7 @@ Attributes:
 
 Example:
     >>> from src.envs.generators import get_generator
-    >>> generator = get_generator("vrpp", num_loc=20)
+    >>> generator = get_generator("ptp", num_loc=20)
     >>> problem = generator.generate()
     >>> problem
     <ProblemInstance: ...>
@@ -124,7 +124,7 @@ class Generator(ABC):
         if hasattr(self, "indices"):
             kwargs["indices"] = self.indices
 
-        # For VRPP:
+        # For PTP:
         if hasattr(self, "min_waste"):
             kwargs.update(
                 {

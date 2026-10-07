@@ -3,14 +3,14 @@
 This module provides the implementation of the Attention Model (Kool et al. 2019),
 a graph-based neural network that uses multi-head attention to constructively
 solve Vehicle Routing Problems. It supports various problem domains
-including TSP, VRPP, CVRPP and CTOP.
+including TSP, PTP, MVPTP and TCMVPTP.
 
 Attributes:
     AttentionModel: The primary constructive neural routing policy.
 
 Example:
     >>> from logic.src.models.core.attention_model.model import AttentionModel
-    >>> model = AttentionModel(embed_dim=128, hidden_dim=512, problem="vrpp")
+    >>> model = AttentionModel(embed_dim=128, hidden_dim=512, problem="ptp")
     >>> out = model(td, env, strategy="greedy")
 """
 
@@ -36,7 +36,7 @@ from logic.src.models.core.attention_model.decoding import DecodingMixin
 from logic.src.models.core.attention_model.policy import AttentionModelPolicy
 from logic.src.models.subnets.embeddings import get_init_embedding
 from logic.src.models.subnets.factories import NeuralComponentFactory
-from logic.src.utils.functions.problem import is_tsp_problem, is_vrpp_problem
+from logic.src.utils.functions.problem import is_ptp_problem, is_tsp_problem
 
 
 class _ContextEmbedderAdapter:
@@ -113,7 +113,7 @@ class AttentionModel(AttentionModelPolicy, DecodingMixin):
         self,
         embed_dim: int = 128,
         hidden_dim: int = 512,
-        problem: Any = "vrpp",
+        problem: Any = "ptp",
         component_factory: Optional[NeuralComponentFactory] = None,
         n_encode_layers: int = 3,
         n_encode_sublayers: Optional[int] = None,
@@ -148,12 +148,12 @@ class AttentionModel(AttentionModelPolicy, DecodingMixin):
             env_name = problem.NAME.lower()
         elif hasattr(problem, "name") and isinstance(problem.name, str):
             env_name = problem.name.lower()
-        elif is_vrpp_problem(problem):
-            env_name = "vrpp"
+        elif is_ptp_problem(problem):
+            env_name = "ptp"
         elif is_tsp_problem(problem):
             env_name = "tsp"
         else:
-            env_name = "vrpp"
+            env_name = "ptp"
 
         if norm_config is None:
             norm_config = NormalizationConfig(
@@ -281,9 +281,9 @@ class AttentionModel(AttentionModelPolicy, DecodingMixin):
             self.init_embedding.legacy_depot_projection = True
 
     @property
-    def is_vrpp(self) -> bool:
-        """Determines if the model is configured for VRP with Profits."""
-        return is_vrpp_problem(self.problem)
+    def is_ptp(self) -> bool:
+        """Determines if the model is configured for Profitable Tour Problem."""
+        return is_ptp_problem(self.problem)
 
     @property
     def context_embedder(self) -> Any:
