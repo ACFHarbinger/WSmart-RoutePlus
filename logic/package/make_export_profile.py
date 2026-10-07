@@ -68,7 +68,9 @@ def main() -> None:
     config = json.loads(args.config.read_text())
     profiles = config.setdefault("export_profiles", {})
     old = profiles.get(args.name, {})
+    # Keys this script does not derive (e.g. ``include``) are kept from the existing entry.
     profiles[args.name] = {
+        **old,
         "description": args.description or old.get("description", ""),
         "entrypoints": args.entrypoints,
         "engines": args.engines,

@@ -1,16 +1,16 @@
 diff --git a/README.md b/README.md
-index d63ac48f3..6512ede32 100644
+index d63ac48f3..7f0d28269 100644
 --- a/README.md
 +++ b/README.md
-@@ -16,15 +16,15 @@ removed.
+@@ -16,15 +16,14 @@ removed.
  | Environments | `ptp` (Profitable Tour Problem), `mvptp` (Multi-Vehicle Profitable Tour Problem) |
  | Route construction policies | `pg_clns`, `sans`, `swc_tcf`, `na` (Neural Agent) |
  | Mandatory-bin selection | `lookahead`, `last_minute`, `service_level` |
 -| Route improvement | `fast_tsp` |
-+| Route improvement | none (routes are used as each constructor returns them) |
- | Acceptance criteria | `bmc` (Boltzmann/Metropolis), `oi` (only-improving) |
+-| Acceptance criteria | `bmc` (Boltzmann/Metropolis), `oi` (only-improving) |
 -| Distance matrices | `file` (pre-computed CSV) and `ogd` (Euclidean) |
 -| Data | dataset generators, `gamma`/`empirical`/`uniform` fill distributions, simulator repositories |
++| Route improvement | none (routes are used as each constructor returns them) |
 +| Distance matrices | `file` (pre-computed CSV under `data/simulator/distance_matrix`) |
 +| Data | loaders for pre-generated `.npz` simulator datasets, the empirical fill distribution, simulator repositories (no dataset generation) |
  
@@ -22,7 +22,7 @@ index d63ac48f3..6512ede32 100644
  logic/configs/           Hydra YAML (tasks, envs, models, policies)
  logic/controllers/       Hydra dispatch and job runners
  logic/src/               configs, constants, data, envs, interfaces, models,
-@@ -32,8 +32,9 @@ logic/src/               configs, constants, data, envs, interfaces, models,
+@@ -32,8 +31,9 @@ logic/src/               configs, constants, data, envs, interfaces, models,
  logic/src/pipeline/simulations/wsmart_bin_analysis/
                           vendored GridBase subset of wsmart_bin_analysis (AGPL-3.0,
                           upstream commit a405da8), used by the empirical distribution
@@ -34,7 +34,7 @@ index d63ac48f3..6512ede32 100644
  ```
  
  ## Setup
-@@ -44,14 +45,10 @@ source .venv/bin/activate
+@@ -44,14 +44,10 @@ source .venv/bin/activate
  python -c "import torch; print(torch.cuda.is_available())"
  ```
  
@@ -51,18 +51,19 @@ index d63ac48f3..6512ede32 100644
  - Limit simulator parallelism on small machines with `sim.cpu_cores=4`; the
    default `0` starts one worker per spare core, each loading torch/CUDA.
  
-@@ -77,19 +74,16 @@ The target needs a Linux with the same or newer glibc, an NVIDIA driver for GPU
+@@ -77,19 +73,16 @@ The target needs a Linux with the same or newer glibc, an NVIDIA driver for GPU
  ## Running
  
  ```bash
 -# Generate a simulator dataset
 -python main.py gen_data data.problem=ptp 'data.graphs=[{num_loc: 20, n_days: 10, n_samples: 1}]'
 -
- # Train the Attention Model with REINFORCE (PTP, 20 bins, 1 epoch = 1 day; envs@train.env=mvptp for MVPTP)
+-# Train the Attention Model with REINFORCE (PTP, 20 bins, 1 epoch = 1 day; envs@train.env=mvptp for MVPTP)
 -python main.py train train.env.name=ptp \
 -  'train.env.curriculum_graphs=[{num_loc: 20, n_samples: 256, area: riomaior, waste_type: plastic, distance_method: ogd, focus_size: 256, focus_graph: graphs_20V_1N_plastic.json, n_days: 1, load_dataset: null}]' \
++# Train the Attention Model with REINFORCE on a pre-generated dataset (PTP, 20 bins, 1 epoch = 1 day; envs@train.env=mvptp for MVPTP)
 +python . train train.env.name=ptp \
-+  'train.env.curriculum_graphs=[{num_loc: 20, n_samples: 256, area: riomaior, waste_type: plastic, distance_method: file, dm_filepath: "gmaps_distmat_plastic[riomaior].csv", focus_size: 256, focus_graph: graphs_20V_1N_plastic.json, n_days: 1, load_dataset: null}]' \
++  'train.env.curriculum_graphs=[{num_loc: 20, n_samples: 256, area: riomaior, waste_type: plastic, distance_method: file, dm_filepath: "gmaps_distmat_plastic[riomaior].csv", focus_size: 256, focus_graph: graphs_20V_1N_plastic.json, n_days: 1, load_dataset: data/datasets/ptp/ptp20_emp_wsr1_seed42.td}]' \
    'train.env.eval_graphs=[]' train.batch_size=32 train.num_workers=0 \
    train.model_weights_path=weights/ckpt train.final_model_path=weights/am/epoch-1.pt
  
@@ -77,11 +78,19 @@ index d63ac48f3..6512ede32 100644
    p.na.na.amgat.0.model_path=weights/am
  ```
  
-@@ -105,7 +99,7 @@ as one `log_<policy>_<N>N.json` per policy plus a real-time `.jsonl` stream.
+@@ -103,9 +96,13 @@ as one `log_<policy>_<N>N.json` per policy plus a real-time `.jsonl` stream.
+ - The problems are `ptp` (Profitable Tour Problem) and `mvptp` (Multi-Vehicle
+   Profitable Tour Problem). Checkpoints and datasets that record the former names
    (`vrpp`, `cvrpp`) are rejected; retrain or regenerate them.
- - Experiment tracking calls (`logic.src.tracking`) are inert no-ops; only the
-   result-file writers under `logic/src/tracking/logging` remain functional.
+-- Experiment tracking calls (`logic.src.tracking`) are inert no-ops; only the
+-  result-file writers under `logic/src/tracking/logging` remain functional.
 -- `python main.py eval` evaluates a checkpoint on `.npz` simulator datasets
++- The package does not generate data. Training reads the `.td` file in each graph's
++  `load_dataset` (and in every `eval_graphs` entry); without a separate validation
++  dataset it validates on the first training instances. Multi-day training needs
++  datasets that hold every day.
++- There is no experiment tracking or provenance logging; `logic.src.tracking` only holds
++  the writers of the result files and the console/file loggers.
 +- `python . eval` evaluates a checkpoint on `.npz` simulator datasets
    (every sample/day pair is one instance, fills normalised by `max_waste`),
    `.td`/`.pt` TensorDict datasets or `.pkl` instance lists, e.g.
@@ -234,10 +243,10 @@ index 60b3a931f..c73bd03e8 100644
  # See docs/HYDRA_GUIDE.md for full override syntax and multi-run examples.
  # =============================================================================
 diff --git a/logic/configs/envs/mvptp.yaml b/logic/configs/envs/mvptp.yaml
-index 5c31f5e67..7c02db543 100644
+index 5c31f5e67..3048ad822 100644
 --- a/logic/configs/envs/mvptp.yaml
 +++ b/logic/configs/envs/mvptp.yaml
-@@ -34,6 +34,8 @@ curriculum_graphs:
+@@ -34,9 +34,12 @@ curriculum_graphs:
    - num_loc: 50
      area: "riomaior"
      waste_type: "plastic"
@@ -246,6 +255,10 @@ index 5c31f5e67..7c02db543 100644
      n_days: 31
      n_samples: 12800
      start_day: 0
++    load_dataset: "data/datasets/mvptp/mvptp50_emp_wsr31_seed42.td" # pre-generated; training does not generate data
+ 
+     # =========================================================================
+     # Objective Function Weights
 diff --git a/logic/configs/envs/ptp.yaml b/logic/configs/envs/ptp.yaml
 index b1a6d2777..58a1cafd9 100644
 --- a/logic/configs/envs/ptp.yaml
@@ -781,59 +794,71 @@ index 9c81255a5..90609e986 100644
  #     "QDEConfig",  # AUTO-CLEANED
      "HybridMemeticLargeNeighborhoodSearchConfig",
 diff --git a/logic/src/configs/policies/aco_ks.py b/logic/src/configs/policies/aco_ks.py
-index 2a3abcecf..5ffe18982 100644
+index 2a3abcecf..214efff4d 100644
 --- a/logic/src/configs/policies/aco_ks.py
 +++ b/logic/src/configs/policies/aco_ks.py
-@@ -16,7 +16,6 @@ from typing import List, Optional
+@@ -14,9 +14,7 @@ Example:
+ from dataclasses import dataclass
+ from typing import List, Optional
  
- from .other.acceptance_criteria import AcceptanceConfig
+-from .other.acceptance_criteria import AcceptanceConfig
  from .other.mandatory_selection import MandatorySelectionConfig
 -from .other.route_improvement import RouteImprovingConfig
  
  
  @dataclass
-@@ -39,7 +38,6 @@ class KSparseACOConfig:
+@@ -39,8 +37,6 @@ class KSparseACOConfig:
          local_search_iterations: Number of local search iterations.
          elitist_weight: Weight for elitist pheromone update.
          mandatory_selection: List of mandatory strategy config files.
 -        route_improvement: List of route improvement operations to apply.
-         acceptance_criterion: Acceptance criterion config for local search.
+-        acceptance_criterion: Acceptance criterion config for local search.
      """
  
-@@ -60,5 +58,4 @@ class KSparseACOConfig:
+     n_ants: int = 20
+@@ -60,5 +56,3 @@ class KSparseACOConfig:
      elitist_weight: float = 1.0
      vrpp: bool = True
      mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
 -    route_improvement: Optional[List[RouteImprovingConfig]] = None
-     acceptance_criterion: AcceptanceConfig = AcceptanceConfig(method="oi")
+-    acceptance_criterion: AcceptanceConfig = AcceptanceConfig(method="oi")
 diff --git a/logic/src/configs/policies/alns.py b/logic/src/configs/policies/alns.py
-index 115a4213c..636102a58 100644
+index 115a4213c..f9b5e32db 100644
 --- a/logic/src/configs/policies/alns.py
 +++ b/logic/src/configs/policies/alns.py
-@@ -16,7 +16,6 @@ from typing import List, Optional
+@@ -11,12 +11,10 @@ Example:
+     60.0
+ """
  
- from .other.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
+-from dataclasses import dataclass, field
++from dataclasses import dataclass
+ from typing import List, Optional
+ 
+-from .other.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
  from .other.mandatory_selection import MandatorySelectionConfig
 -from .other.route_improvement import RouteImprovingConfig
  
  
  @dataclass
-@@ -34,7 +33,6 @@ class ALNSConfig:
+@@ -34,8 +32,6 @@ class ALNSConfig:
          xi: 'xi' parameter: fraction of total nodes for max removal cap
          engine: Solver engine to use ('custom', 'alns').
          mandatory_selection: List of mandatory strategy config files.
 -        route_improvement: List of route improvement operations to apply.
-         acceptance_criterion: Acceptance criterion config for local search.
+-        acceptance_criterion: Acceptance criterion config for local search.
      """
  
-@@ -52,7 +50,6 @@ class ALNSConfig:
+     time_limit: float = 60.0
+@@ -52,9 +48,3 @@ class ALNSConfig:
      profit_aware_operators: bool = False
      extended_operators: bool = False
      mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
 -    route_improvement: Optional[List[RouteImprovingConfig]] = None
-     acceptance_criterion: AcceptanceConfig = field(
-         default_factory=lambda: AcceptanceConfig(
-             method="bmc", params=BoltzmannAcceptanceConfig(initial_temp=100.0, alpha=0.995)
+-    acceptance_criterion: AcceptanceConfig = field(
+-        default_factory=lambda: AcceptanceConfig(
+-            method="bmc", params=BoltzmannAcceptanceConfig(initial_temp=100.0, alpha=0.995)
+-        )
+-    )
 diff --git a/logic/src/configs/policies/na.py b/logic/src/configs/policies/na.py
 index 5be82a06a..4da5b9fb9 100644
 --- a/logic/src/configs/policies/na.py
@@ -854,10 +879,26 @@ index 5be82a06a..4da5b9fb9 100644
      seed: Optional[int] = None
      vrpp: bool = True
 diff --git a/logic/src/configs/policies/other/__init__.py b/logic/src/configs/policies/other/__init__.py
-index 1086d254c..c00c2e4d7 100644
+index 1086d254c..8deb2e0e1 100644
 --- a/logic/src/configs/policies/other/__init__.py
 +++ b/logic/src/configs/policies/other/__init__.py
-@@ -25,7 +25,6 @@ from .reinforcement_learning import (
+@@ -2,7 +2,6 @@
+ Miscellaneous configuration dataclasses.
+ 
+ Attributes:
+-    AcceptanceConfig: Configuration for the acceptance criterion (e.g., simulated annealing).
+     MandatorySelectionConfig: Configuration for mandatory node selection strategies.
+     RLConfig: Configuration for reinforcement learning policies.
+     RewardShapingConfig: Configuration for reward shaping strategies.
+@@ -15,7 +14,6 @@ Example:
+     None
+ """
+ 
+-from .acceptance_criteria import AcceptanceConfig
+ from .mandatory_selection import MandatorySelectionConfig
+ from .reinforcement_learning import (
+     BanditConfig,
+@@ -25,7 +23,6 @@ from .reinforcement_learning import (
      RLConfig,
      TDLearningConfig,
  )
@@ -865,26 +906,13 @@ index 1086d254c..c00c2e4d7 100644
  
  __all__ = [
      "BanditConfig",
-@@ -38,6 +37,5 @@ __all__ = [
+@@ -38,6 +35,4 @@ __all__ = [
      "ContextFeatureExtractorConfig",
      "RLConfig",
      "MandatorySelectionConfig",
 -    "RouteImprovingConfig",
-     "AcceptanceConfig",
+-    "AcceptanceConfig",
  ]
-diff --git a/logic/src/configs/policies/other/acceptance_criteria.py b/logic/src/configs/policies/other/acceptance_criteria.py
-index 865e87cb7..359b77682 100644
---- a/logic/src/configs/policies/other/acceptance_criteria.py
-+++ b/logic/src/configs/policies/other/acceptance_criteria.py
-@@ -28,7 +28,7 @@ Example:
- """
- 
- from dataclasses import dataclass, field
--from typing import Any, Optional
-+from typing import Any
- 
- 
- @dataclass
 diff --git a/logic/src/configs/policies/pg_clns.py b/logic/src/configs/policies/pg_clns.py
 index 67b9da98f..6b3a9f888 100644
 --- a/logic/src/configs/policies/pg_clns.py
@@ -2273,10 +2301,15 @@ index 4820f5703..d00705739 100644
            ``max_waste``): every (sample, day) pair becomes one instance and
            fill levels are normalised by ``max_waste``.
 diff --git a/logic/src/interfaces/__init__.py b/logic/src/interfaces/__init__.py
-index 720452be3..cda270dfb 100644
+index 720452be3..035896efa 100644
 --- a/logic/src/interfaces/__init__.py
 +++ b/logic/src/interfaces/__init__.py
-@@ -8,10 +8,8 @@ Attributes:
+@@ -3,40 +3,31 @@ Interfaces for WSmart-Route logic components.
+ DEFINING PROTOCOLS TO DECOUPLE MODULES.
+ 
+ Attributes:
+-    IAcceptanceCriterion: Interface for acceptance criteria
+     IBinContainer: Interface for bin containers
      IDistanceMetric: Interface for distance metrics
      IEnv: Interface for environments
      IMandatorySelectionStrategy: Interface for mandatory selection strategies
@@ -2287,7 +2320,10 @@ index 720452be3..cda270dfb 100644
      ITensorDictLike: Interface for tensor dict like objects
      ITraversable: Interface for traversable objects
  
-@@ -22,10 +20,8 @@ Example:
+ Example:
+     >>> from logic.src.interfaces import (
+-        IAcceptanceCriterion,
+         IBinContainer,
          IDistanceMetric,
          IEnv,
          IMandatorySelectionStrategy,
@@ -2298,15 +2334,18 @@ index 720452be3..cda270dfb 100644
          ITensorDictLike,
          ITraversable,
      )
-@@ -36,7 +32,6 @@ from .bin_container import IBinContainer
+ """
+ 
+-from .acceptance_criterion import IAcceptanceCriterion
+ from .bin_container import IBinContainer
  from .context import (
-     AcceptanceMetrics,
+-    AcceptanceMetrics,
      ConstructionMetrics,
 -    ImprovementMetrics,
      SearchContext,
      SearchPhase,
      SelectionMetrics,
-@@ -44,10 +39,8 @@ from .context import (
+@@ -44,21 +35,16 @@ from .context import (
  )
  from .env import IEnv
  from .mandatory_selection import IMandatorySelectionStrategy
@@ -2317,8 +2356,8 @@ index 720452be3..cda270dfb 100644
  from .tensor_dict_like import ITensorDictLike
  from .traversable import ITraversable
  
-@@ -55,10 +48,8 @@ __all__ = [
-     "IAcceptanceCriterion",
+ __all__ = [
+-    "IAcceptanceCriterion",
      "IRouteConstructor",
      "IEnv",
 -    "IModel",
@@ -2328,18 +2367,19 @@ index 720452be3..cda270dfb 100644
      "ITensorDictLike",
      "ITraversable",
      "IBinContainer",
-@@ -68,6 +59,5 @@ __all__ = [
+@@ -67,7 +53,5 @@ __all__ = [
+     "SearchPhase",
      "SelectionMetrics",
      "ConstructionMetrics",
-     "AcceptanceMetrics",
+-    "AcceptanceMetrics",
 -    "ImprovementMetrics",
      "merge_context",
  ]
 diff --git a/logic/src/interfaces/context/__init__.py b/logic/src/interfaces/context/__init__.py
-index 3003b71db..60eaa7b84 100644
+index 3003b71db..32248ed28 100644
 --- a/logic/src/interfaces/context/__init__.py
 +++ b/logic/src/interfaces/context/__init__.py
-@@ -2,13 +2,9 @@
+@@ -2,13 +2,8 @@
  Context interfaces for WSmart-Route logic components.
  
  Attributes:
@@ -2347,15 +2387,17 @@ index 3003b71db..60eaa7b84 100644
 -    ProblemContext: Problem definition context
 -    SolutionContext: Solution context
      SearchContext: Search context.
-     AcceptanceMetrics: Acceptance metrics.
+-    AcceptanceMetrics: Acceptance metrics.
      ConstructionMetrics: Construction metrics.
 -    ImprovementMetrics: Improvement metrics.
      SelectionMetrics: Selection metrics.
      SearchPhase: Search phase.
      SelectionContext: Data container for selection context and state.
-@@ -18,31 +14,23 @@ Example:
+@@ -16,44 +11,29 @@ Attributes:
+ 
+ Example:
      >>> from logic.src.interfaces.context import (
-         AcceptanceMetrics,
+-        AcceptanceMetrics,
          ConstructionMetrics,
 -        ImprovementMetrics,
          SearchContext,
@@ -2372,7 +2414,7 @@ index 3003b71db..60eaa7b84 100644
 -from .multi_day_context import MultiDayContext
 -from .problem_context import ProblemContext
  from .search_context import (
-     AcceptanceMetrics,
+-    AcceptanceMetrics,
      ConstructionMetrics,
 -    ImprovementMetrics,
      SearchContext,
@@ -2385,10 +2427,10 @@ index 3003b71db..60eaa7b84 100644
  
  __all__ = [
      "SearchContext",
-@@ -50,10 +38,6 @@ __all__ = [
+     "SearchPhase",
      "SelectionMetrics",
      "ConstructionMetrics",
-     "AcceptanceMetrics",
+-    "AcceptanceMetrics",
 -    "ImprovementMetrics",
      "merge_context",
 -    "MultiDayContext",
@@ -2397,7 +2439,7 @@ index 3003b71db..60eaa7b84 100644
      "SelectionContext",
  ]
 diff --git a/logic/src/interfaces/context/search_context.py b/logic/src/interfaces/context/search_context.py
-index aec296e44..a0cb83377 100644
+index aec296e44..0ecef4cef 100644
 --- a/logic/src/interfaces/context/search_context.py
 +++ b/logic/src/interfaces/context/search_context.py
 @@ -2,7 +2,7 @@
@@ -2409,28 +2451,44 @@ index aec296e44..a0cb83377 100644
  may hold mutable state that belongs in this ledger (e.g. ``self.info = {}``).
  
  Architecture
-@@ -17,12 +17,6 @@ Phase 2 — Route Construction
-     ``ConstructionMetrics`` and, on each acceptance-criterion call,
-     the returned ``AcceptanceMetrics`` via ``merge_context()``.
+@@ -14,14 +14,7 @@ Phase 1 — Mandatory Selection
  
+ Phase 2 — Route Construction
+     Receives the ``SearchContext`` from Phase 1.  Merges its own
+-    ``ConstructionMetrics`` and, on each acceptance-criterion call,
+-    the returned ``AcceptanceMetrics`` via ``merge_context()``.
+-
 -Phase 3 — Route Improvement
 -    Receives the ``SearchContext`` from Phase 2.  Appends
 -    ``ImprovementMetrics`` (trajectory statistics, local-optima counts).
 -    As the terminal node in the pipeline, the final context may be
 -    logged to a tracker (e.g., Weights & Biases) or discarded.
--
++    ``ConstructionMetrics`` via ``merge_context()``.
+ 
  Immutability Contract
  ---------------------
- ``SearchContext`` is a frozen dataclass.  Modifications MUST go through
-@@ -44,7 +38,6 @@ Attributes:
+@@ -43,8 +36,6 @@ Attributes:
+     SearchContext: Immutable state ledger that flows through the three-phase pipeline
      SelectionMetrics: Intermediate outputs from Mandatory Selection
      ConstructionMetrics: Intermediate outputs from Route Construction
-     AcceptanceMetrics: Per-step acceptance criterion outputs
+-    AcceptanceMetrics: Per-step acceptance criterion outputs
 -    ImprovementMetrics: Statistics from Route Improvement
      SearchPhase: Enum for pipeline phases
      merge_context: Function to merge contexts
  
-@@ -72,12 +65,10 @@ class SearchPhase(str, Enum):
+@@ -56,10 +47,9 @@ Example:
+ >>> ctx2 = merge_context(ctx, construction_metrics={"insertion_costs": [1.2, 0.8]})
+ """
+ 
+-import copy
+ from dataclasses import dataclass, field
+ from enum import Enum
+-from typing import Any, Dict, List, Optional
++from typing import Any, Dict, Optional
+ 
+ # ---------------------------------------------------------------------------
+ # Phase Enum
+@@ -72,12 +62,10 @@ class SearchPhase(str, Enum):
      Attributes:
          SELECTION: Selection phase
          CONSTRUCTION: Construction phase
@@ -2443,10 +2501,21 @@ index aec296e44..a0cb83377 100644
  
  
  # ---------------------------------------------------------------------------
-@@ -115,16 +106,6 @@ ConstructionMetrics = Dict[str, Any]
- #   "step_count"        int         — number of criterion steps taken so far
- AcceptanceMetrics = Dict[str, Any]
+@@ -104,26 +92,6 @@ SelectionMetrics = Dict[str, Any]
+ #   "construction_time_s" float     — wall-clock time for this phase
+ ConstructionMetrics = Dict[str, Any]
  
+-# AcceptanceMetrics — populated on each IAcceptanceCriterion.accept() call.
+-# Expected keys (all optional, criterion-specific):
+-#   "criterion"         str         — registered name of the criterion (e.g. "bmc")
+-#   "temperature"       float       — current temperature (SA-style criteria)
+-#   "water_level"       float       — current water level (GD-style criteria)
+-#   "threshold"         float       — current threshold (RRT, TA, etc.)
+-#   "accepted"          bool        — outcome of this specific accept() call
+-#   "delta"             float       — candidate_obj - current_obj
+-#   "step_count"        int         — number of criterion steps taken so far
+-AcceptanceMetrics = Dict[str, Any]
+-
 -# ImprovementMetrics — populated during Route Improvement (Phase 3).
 -# Expected keys (all optional):
 -#   "algorithm"         str         — name of the improvement algorithm
@@ -2456,11 +2525,10 @@ index aec296e44..a0cb83377 100644
 -#   "acceptance_trace"  List[AcceptanceMetrics] — per-step criterion telemetry
 -#   "improvement_time_s" float      — wall-clock time for this phase
 -ImprovementMetrics = Dict[str, Any]
--
+ 
  
  # ---------------------------------------------------------------------------
- # SearchContext — the immutable ledger
-@@ -134,7 +115,7 @@ ImprovementMetrics = Dict[str, Any]
+@@ -134,7 +102,7 @@ ImprovementMetrics = Dict[str, Any]
  @dataclass(frozen=True)
  class SearchContext:
      """
@@ -2469,34 +2537,35 @@ index aec296e44..a0cb83377 100644
  
      All fields are frozen at creation time.  Use ``merge_context()`` to
      produce a new instance with updated fields.
-@@ -144,9 +125,7 @@ class SearchContext:
+@@ -143,18 +111,12 @@ class SearchContext:
+         phase: The pipeline phase that last wrote to this context.
          selection_metrics: Intermediate outputs from Mandatory Selection.
          construction_metrics: Intermediate outputs from Route Construction.
-         acceptance_trace: Ordered list of per-step ``AcceptanceMetrics``
+-        acceptance_trace: Ordered list of per-step ``AcceptanceMetrics``
 -            emitted by ``IAcceptanceCriterion.accept()`` during construction
 -            or improvement.
 -        improvement_metrics: Statistics from Route Improvement.
-+            emitted by ``IAcceptanceCriterion.accept()`` during construction.
          metadata: Catch-all for run-level annotations (e.g. day index, seed).
      """
  
-@@ -154,7 +133,6 @@ class SearchContext:
+     phase: SearchPhase = SearchPhase.SELECTION
      selection_metrics: SelectionMetrics = field(default_factory=dict)
      construction_metrics: ConstructionMetrics = field(default_factory=dict)
-     acceptance_trace: List[AcceptanceMetrics] = field(default_factory=list)
+-    acceptance_trace: List[AcceptanceMetrics] = field(default_factory=list)
 -    improvement_metrics: ImprovementMetrics = field(default_factory=dict)
      metadata: Dict[str, Any] = field(default_factory=dict)
  
      @classmethod
-@@ -178,7 +156,6 @@ class SearchContext:
+@@ -177,8 +139,6 @@ class SearchContext:
+             phase=SearchPhase.SELECTION,
              selection_metrics=selection_metrics or {},
              construction_metrics={},
-             acceptance_trace=[],
+-            acceptance_trace=[],
 -            improvement_metrics={},
              metadata=metadata or {},
          )
  
-@@ -197,7 +174,6 @@ class SearchContext:
+@@ -197,12 +157,10 @@ class SearchContext:
              phase=other.phase,
              selection_metrics=other.selection_metrics,
              construction_metrics=other.construction_metrics,
@@ -2504,16 +2573,26 @@ index aec296e44..a0cb83377 100644
              metadata=other.metadata,
          )
  
-@@ -216,7 +192,6 @@ def merge_context(
+ 
+-# TODO: Concatenate acceptance_trace if needed in a future update.
+ 
+ 
+ # ---------------------------------------------------------------------------
+@@ -215,8 +173,6 @@ def merge_context(
+     phase: Optional[SearchPhase] = None,
      selection_metrics: Optional[SelectionMetrics] = None,
      construction_metrics: Optional[ConstructionMetrics] = None,
-     acceptance_metrics: Optional[AcceptanceMetrics] = None,
+-    acceptance_metrics: Optional[AcceptanceMetrics] = None,
 -    improvement_metrics: Optional[ImprovementMetrics] = None,
      metadata: Optional[Dict[str, Any]] = None,
  ) -> SearchContext:
      """
-@@ -229,7 +204,7 @@ def merge_context(
-     to the running ``acceptance_trace`` list, rather than replacing it.
+@@ -225,11 +181,9 @@ def merge_context(
+     This is the only sanctioned mutation path.  All existing fields are
+     shallow-copied; the caller's original ``ctx`` is never modified.
+ 
+-    For ``acceptance_metrics``  a single step's metrics dict is **appended**
+-    to the running ``acceptance_trace`` list, rather than replacing it.
  
      For ``Dict``-typed metrics fields (``selection_metrics``,
 -    ``construction_metrics``, ``improvement_metrics``) the patch is
@@ -2521,26 +2600,34 @@ index aec296e44..a0cb83377 100644
      *merged* (shallow ``{**existing, **patch}``) rather than replaced.
  
      Args:
-@@ -238,7 +213,6 @@ def merge_context(
+@@ -237,8 +191,6 @@ def merge_context(
+         phase: New phase to set.  Defaults to the existing phase.
          selection_metrics: Patch to merge into ``ctx.selection_metrics``.
          construction_metrics: Patch to merge into ``ctx.construction_metrics``.
-         acceptance_metrics: One step's acceptance telemetry to append.
+-        acceptance_metrics: One step's acceptance telemetry to append.
 -        improvement_metrics: Patch to merge into ``ctx.improvement_metrics``.
          metadata: Patch to merge into ``ctx.metadata``.
  
      Returns:
-@@ -246,7 +220,6 @@ def merge_context(
+@@ -246,21 +198,12 @@ def merge_context(
      """
      new_selection = {**ctx.selection_metrics, **(selection_metrics or {})}
      new_construction = {**ctx.construction_metrics, **(construction_metrics or {})}
 -    new_improvement = {**ctx.improvement_metrics, **(improvement_metrics or {})}
      new_metadata = {**ctx.metadata, **(metadata or {})}
  
-     # Append the new acceptance step without mutating the frozen list
-@@ -261,6 +234,5 @@ def merge_context(
+-    # Append the new acceptance step without mutating the frozen list
+-    new_trace: List[AcceptanceMetrics]
+-    if acceptance_metrics is not None:
+-        new_trace = list(ctx.acceptance_trace) + [copy.copy(acceptance_metrics)]
+-    else:
+-        new_trace = list(ctx.acceptance_trace)
+ 
+     return SearchContext(
+         phase=phase if phase is not None else ctx.phase,
          selection_metrics=new_selection,
          construction_metrics=new_construction,
-         acceptance_trace=new_trace,
+-        acceptance_trace=new_trace,
 -        improvement_metrics=new_improvement,
          metadata=new_metadata,
      )
@@ -3765,9 +3852,18 @@ index 7b06edc37..fcfa52f70 100644
              "edge_threshold": graph_dict.get("edge_threshold", "0"),
              "edge_method": graph_dict.get("edge_method"),
 diff --git a/logic/src/pipeline/rl/common/__init__.py b/logic/src/pipeline/rl/common/__init__.py
-index 5d93833bc..83acba5cb 100644
+index 5d93833bc..a8122990c 100644
 --- a/logic/src/pipeline/rl/common/__init__.py
 +++ b/logic/src/pipeline/rl/common/__init__.py
+@@ -2,7 +2,7 @@
+ Training common subpackage for WSmart-Route.
+ 
+ This package contains training utilities and common components
+-like epoch preparation, dataset regeneration, and training hooks.
++like epoch preparation and training hooks.
+ 
+ Attributes:
+     None
 @@ -18,7 +18,6 @@ from logic.src.pipeline.rl.common.baselines import (
      ExponentialBaseline,
      MeanBaseline,
@@ -3785,7 +3881,7 @@ index 5d93833bc..83acba5cb 100644
      "get_baseline",
      "BASELINE_REGISTRY",
 diff --git a/logic/src/pipeline/rl/common/base/data.py b/logic/src/pipeline/rl/common/base/data.py
-index 166586239..cd95157ce 100644
+index 166586239..9f06817da 100644
 --- a/logic/src/pipeline/rl/common/base/data.py
 +++ b/logic/src/pipeline/rl/common/base/data.py
 @@ -90,7 +90,7 @@ def _create_eval_env_and_gen(cfg: Any, eval_graph: Any) -> tuple:
@@ -3806,6 +3902,148 @@ index 166586239..cd95157ce 100644
      )
      dm_filepath = _cfg_get(eval_graph, "dm_filepath", _cfg_get(env_graph, "dm_filepath", None))
      start_day = int(_cfg_get(eval_graph, "start_day", _cfg_get(env_graph, "start_day", 0)) or 0)
+@@ -188,29 +188,21 @@ class DataMixin:
+             stage: The stage ('fit', 'validate', 'test', or 'predict').
+         """
+         if stage == "fit":
+-            gen = self.env.generator
+-            assert gen is not None
+-            if hasattr(gen, "to"):
+-                gen = gen.to("cpu")
+-
+             # Safely resolve training dataset size from config (cfg may be None in tests)
+             _cfg_env = _task_env_cfg(self.cfg)
+             _cfg_graph = _cfg_get(_cfg_env, "graph", None)
+             n_train = int(_cfg_get(_cfg_graph, "n_samples", 10))
+ 
+-            assert gen is not None
+-            if self.train_dataset_path is not None and os.path.exists(self.train_dataset_path):
+-                if self.local_rank == 0:
+-                    print(f"Loading training dataset from {self.train_dataset_path}")
+-
+-                self.train_dataset = TensorDictDataset.load(self.train_dataset_path)
+-                if n_train < len(self.train_dataset):
+-                    self.train_dataset = TensorDictDataset(self.train_dataset.data[:n_train])
+-            else:
+-                if self.local_rank == 0:
+-                    print(f"Generating training dataset ({n_train} instances) on CPU...")
+-                data = gen(batch_size=n_train)
+-                self.train_dataset = TensorDictDataset(data)
++            # This export trains on pre-generated datasets only (the graph's load_dataset).
++            if self.train_dataset_path is None or not os.path.exists(self.train_dataset_path):
++                raise ValueError(
++                    f"Training needs a pre-generated .td dataset (load_dataset), not found: {self.train_dataset_path}"
++                )
++            if self.local_rank == 0:
++                print(f"Loading training dataset from {self.train_dataset_path}")
++            self.train_dataset = TensorDictDataset.load(self.train_dataset_path)
++            if n_train < len(self.train_dataset):
++                self.train_dataset = TensorDictDataset(self.train_dataset.data[:n_train])
+ 
+             # Build validation datasets from eval_graphs (multi-graph) or fall back to single dataset
+             eval_graphs = _get_eval_graphs(self.cfg)
+@@ -220,23 +212,16 @@ class DataMixin:
+                 for eval_graph in eval_graphs:
+                     n_samples = int(_cfg_get(eval_graph, "n_samples", n_train))
+                     num_loc = int(_cfg_get(eval_graph, "num_loc", 50))
+-                    eval_env, eval_gen = _create_eval_env_and_gen(self.cfg, eval_graph)
++                    eval_env, _ = _create_eval_env_and_gen(self.cfg, eval_graph)
+ 
+                     load_dataset = _cfg_get(eval_graph, "load_dataset", None)
+-                    if load_dataset is not None and os.path.exists(load_dataset):
+-                        if self.local_rank == 0:
+-                            print(
+-                                f"Loading eval dataset from {load_dataset} ({n_samples} instances, {num_loc} nodes)"
+-                            )
+-                        val_ds = TensorDictDataset.load(load_dataset)
+-                    else:
+-                        if self.local_rank == 0:
+-                            print(f"Generating eval dataset ({n_samples} instances, {num_loc} nodes) on CPU...")
+-                        val_data = eval_gen(batch_size=n_samples) if eval_gen is not None else None
+-                        if val_data is not None:
+-                            val_ds = TensorDictDataset(val_data)
+-                        else:
+-                            continue
++                    if load_dataset is None or not os.path.exists(load_dataset):
++                        raise ValueError(
++                            f"Each eval graph needs a pre-generated .td dataset (load_dataset), not found: {load_dataset}"
++                        )
++                    if self.local_rank == 0:
++                        print(f"Loading eval dataset from {load_dataset} ({n_samples} instances, {num_loc} nodes)")
++                    val_ds = TensorDictDataset.load(load_dataset)
+ 
+                     # Trim to n_samples before possible day-expansion
+                     if n_samples < len(val_ds):
+@@ -280,15 +265,16 @@ class DataMixin:
+                         print(f"Loading validation dataset from {self.val_dataset_path}")
+                     self.val_dataset = TensorDictDataset.load(self.val_dataset_path)
+                 else:
++                    # No separate validation file: validate on the first instances of the training dataset.
+                     if self.local_rank == 0:
+-                        print(f"Generating validation dataset ({n_val} instances) on CPU...")
+-                    val_data = cast(Any, gen)(batch_size=n_val)
+-                    self.val_dataset = TensorDictDataset(val_data)
+-                    assert self.val_dataset is not None
++                        print(f"Validating on the first {n_val} instances of the training dataset")
++                    self.val_dataset = TensorDictDataset(self.train_dataset.data[:n_val])
+             baseline = getattr(self, "baseline", None)
+             if hasattr(baseline, "configure_comparison"):
+                 # Use training graph/distribution, independent of eval_graphs.
+-                baseline.configure_comparison(self.env, max(2, n_train), int(_cfg_get(self.cfg, "seed", 0) or 0))
++                baseline.configure_comparison(
++                    self.env, max(2, n_train), int(_cfg_get(self.cfg, "seed", 0) or 0), source=self.train_dataset
++                )
+         else:
+             pass
+ 
+diff --git a/logic/src/pipeline/rl/common/base/module.py b/logic/src/pipeline/rl/common/base/module.py
+index 1a8d8a5a2..746d95a60 100644
+--- a/logic/src/pipeline/rl/common/base/module.py
++++ b/logic/src/pipeline/rl/common/base/module.py
+@@ -20,11 +20,11 @@ import torch
+ from omegaconf import OmegaConf
+ 
+ from logic.src.pipeline.rl.common.baselines import WarmupBaseline, get_baseline
+-from logic.src.pipeline.rl.common.epoch import apply_time_step, prepare_epoch, regenerate_dataset
++from logic.src.pipeline.rl.common.epoch import apply_time_step, prepare_epoch
+ from logic.src.pipeline.rl.common.pbrs_wrapper import PBRSShaper
+ from logic.src.tracking.logging.pylogger import get_pylogger  
+ 
+-from .data import DataMixin, _task_env_cfg
++from .data import DataMixin
+ from .optimization import OptimizationMixin
+ from .steps import StepMixin
+ 
+@@ -251,7 +251,7 @@ class RL4COLitModule(DataMixin, OptimizationMixin, StepMixin, pl.LightningModule
+         )
+ 
+     def on_train_epoch_end(self):
+-        """Update baseline and regenerate dataset."""
++        """Update the baseline and apply the multi-day time step."""
+         if hasattr(self.baseline, "epoch_callback"):
+             # RolloutBaseline owns its promotion pool; validation stays reporting-only.
+             self.baseline.epoch_callback(
+@@ -278,20 +278,3 @@ class RL4COLitModule(DataMixin, OptimizationMixin, StepMixin, pl.LightningModule
+                 mean_fill = td[key].mean() if key in td.keys() else 0.0
+                 self.log("train/current_day", float(self.current_epoch + 1), sync_dist=True)
+                 self.log("train/mean_fill", mean_fill, sync_dist=True)
+-
+-        # Regenerate training dataset for next epoch if configured
+-        if (
+-            self.hparams.get("regenerate_per_epoch", False)
+-            and self.trainer.max_epochs is not None
+-            and self.current_epoch < self.trainer.max_epochs - 1
+-            and hasattr(self.env, "generator")
+-        ):
+-            _graph = getattr(_task_env_cfg(self.cfg), "graph", None)
+-            n_samples = int(getattr(_graph, "n_samples", 1) or 1)
+-            new_dataset = regenerate_dataset(self.env, n_samples)
+-            if new_dataset is not None:
+-                self.train_dataset = new_dataset
+-
+-            # Log generation
+-            if self.local_rank == 0:
+-                print(f"Regenerated training dataset for epoch {self.current_epoch + 1}")
 diff --git a/logic/src/pipeline/rl/common/baselines/__init__.py b/logic/src/pipeline/rl/common/baselines/__init__.py
 index 7a2e7d283..b2dd28633 100644
 --- a/logic/src/pipeline/rl/common/baselines/__init__.py
@@ -3834,6 +4072,211 @@ index 7a2e7d283..b2dd28633 100644
      "RolloutBaseline",
      "WarmupBaseline",
      "BASELINE_REGISTRY",
+diff --git a/logic/src/pipeline/rl/common/baselines/rollout.py b/logic/src/pipeline/rl/common/baselines/rollout.py
+index ae842f389..0145dc7c5 100644
+--- a/logic/src/pipeline/rl/common/baselines/rollout.py
++++ b/logic/src/pipeline/rl/common/baselines/rollout.py
+@@ -14,7 +14,6 @@ Example:
+ from __future__ import annotations
+ 
+ import copy
+-import random
+ from typing import Any, Dict, Optional, cast
+ 
+ import numpy as np
+@@ -93,8 +92,8 @@ class RolloutBaseline(Baseline):
+             for param in self.baseline_policy.parameters():
+                 param.requires_grad = False
+ 
+-    def configure_comparison(self, env: Any, sample_size: int, seed: int = 0) -> None:
+-        """Create a private pool using the training environment's distribution.
++    def configure_comparison(self, env: Any, sample_size: int, seed: int = 0, source: Optional[Any] = None) -> None:
++        """Create a private comparison pool drawn from the pre-generated training dataset ``source``.
+ 
+         Reporting validation graphs and their datasets are never used for
+         promotion. The pool size stays fixed across accepted replacements.
+@@ -106,7 +105,10 @@ class RolloutBaseline(Baseline):
+             # or generated after a promotion. Construct a new baseline for a
+             # different training distribution, rather than silently reusing it.
+             return
++        if source is None:
++            raise ValueError("The rollout baseline draws its comparison pool from a pre-generated dataset (source)")
+         object.__setattr__(self, "comparison_env", copy.deepcopy(env))
++        object.__setattr__(self, "comparison_source", source)
+         if not self._comparison_restored:
+             self.comparison_size = sample_size
+             self.comparison_seed = int(seed)
+@@ -132,26 +134,14 @@ class RolloutBaseline(Baseline):
+         super()._load_from_state_dict(state_dict, prefix, *args, **kwargs)
+ 
+     def _generate_comparison(self, generation: int) -> Dataset:
+-        """Generate reproducibly without consuming the training RNG streams."""
+-        generator = copy.deepcopy(self.comparison_env.generator)
+-        seed = self.comparison_seed + generation
+-        if hasattr(generator, "rng"):
+-            generator.rng = np.random.default_rng(seed)
+-        if isinstance(getattr(generator, "generator", None), torch.Generator):
+-            device = getattr(generator.generator, "device", "cpu")
+-            generator.generator = torch.Generator(device=device).manual_seed(seed)
+-        # Some generators use global RNGs in addition to their private streams.
+-        py_state, np_state = random.getstate(), np.random.get_state()
+-        try:
+-            with torch.random.fork_rng():
+-                torch.manual_seed(seed)
+-                random.seed(seed)
+-                np.random.seed(seed % (2**32))
+-                data = generator(batch_size=self.comparison_size)
+-        finally:
+-            random.setstate(py_state)
+-            np.random.set_state(np_state)
+-        return TensorDictDataset(data)
++        """Draw a reproducible pool from the training dataset without touching the training RNG streams."""
++        source = getattr(self, "comparison_source", None)
++        if source is None:
++            raise ValueError("The rollout baseline has no pre-generated dataset to draw its comparison pool from")
++        n = len(source)
++        rng = np.random.default_rng(self.comparison_seed + generation)
++        idx = rng.choice(n, size=self.comparison_size, replace=self.comparison_size > n)
++        return TensorDictDataset(source.data[torch.as_tensor(np.sort(idx))])
+ 
+     def train(self, mode: bool = True) -> RolloutBaseline:
+         """Override train to keep baseline_policy in eval mode.
+diff --git a/logic/src/pipeline/rl/common/baselines/warmup.py b/logic/src/pipeline/rl/common/baselines/warmup.py
+index aa01540db..d13c2acf9 100644
+--- a/logic/src/pipeline/rl/common/baselines/warmup.py
++++ b/logic/src/pipeline/rl/common/baselines/warmup.py
+@@ -63,10 +63,10 @@ class WarmupBaseline(Baseline):
+         self.warmup_baseline = ExponentialBaseline(beta=beta, exp_beta=exp_beta)
+         self.alpha = 0.0
+ 
+-    def configure_comparison(self, env: Any, sample_size: int, seed: int = 0) -> None:
++    def configure_comparison(self, env: Any, sample_size: int, seed: int = 0, source: Optional[Any] = None) -> None:
+         """Forward private comparison setup to a rollout target, if present."""
+         if hasattr(self.baseline, "configure_comparison"):
+-            self.baseline.configure_comparison(env, sample_size, seed)
++            self.baseline.configure_comparison(env, sample_size, seed, source=source)
+ 
+     def eval(self, td: TensorDict, reward: torch.Tensor, env: Optional[Any] = None) -> torch.Tensor:  # type: ignore[override]
+         """
+diff --git a/logic/src/pipeline/rl/common/epoch.py b/logic/src/pipeline/rl/common/epoch.py
+index 66d180d4d..9419b7cf2 100644
+--- a/logic/src/pipeline/rl/common/epoch.py
++++ b/logic/src/pipeline/rl/common/epoch.py
+@@ -5,24 +5,20 @@ and time-based training (train_time) logic.
+ 
+ Attributes:
+     prepare_epoch (function): Prepare dataset for a new epoch by handling baseline wrapping and temporal metadata injection.
+-    regenerate_dataset (function): Regenerate training dataset using environment generator.
+     compute_validation_metrics (function): Compute rich validation metrics beyond simple reward.
+     _add_reward_metric (function): Add mean reward to metrics.
+     _add_costs_metrics (function): Add detailed cost breakdown from environment if available.
+     _add_efficiency_metric (function): Compute efficiency ratio (kg/km) from waste and distance.
+     _add_overflow_metrics (function): Add constraint violation counts (overflows) from environment if available.
+     _build_visited_mask (function): Build a boolean mask of visited nodes from accumulated epoch actions.
+-    _get_next_day_waste (function): Determine the next day's waste from pre-generated data or on-the-fly generation.
++    _get_next_day_waste (function): Determine the next day's waste from the pre-generated multi-day dataset.
+ 
+ Example:
+-    >>> from logic.src.pipeline.rl.common.epoch import prepare_epoch, regenerate_dataset, compute_validation_metrics
++    >>> from logic.src.pipeline.rl.common.epoch import prepare_epoch, compute_validation_metrics
+     >>>
+     >>> # Prepare dataset for a new epoch
+     >>> dataset = prepare_epoch(model, env, baseline, dataset, epoch)
+     >>>
+-    >>> # Regenerate training dataset
+-    >>> new_dataset = regenerate_dataset(env, size)
+-    >>>
+     >>> # Compute validation metrics
+     >>> metrics = compute_validation_metrics(out, batch, env)
+ """
+@@ -34,7 +30,6 @@ from tensordict import TensorDict
+ from torch import nn
+ from torch.utils.data import Dataset
+ 
+-from logic.src.data.datasets import TensorDictDataset
+ from logic.src.tracking.logging.pylogger import get_pylogger  
+ # 
+ logger = get_pylogger(__name__)  # AUTO-REMOVED
+@@ -80,30 +75,6 @@ def prepare_epoch(
+     return dataset
+ 
+ 
+-def regenerate_dataset(
+-    env: Any,
+-    size: int,
+-) -> Optional[Dataset]:
+-    """
+-    Regenerate training dataset using environment generator.
+-
+-    Args:
+-        env: The environment instance.
+-        size: The number of samples to generate.
+-
+-    Returns:
+-        The regenerated dataset.
+-    """
+-    if hasattr(env, "generator"):
+-        # Pre-generate for efficiency
+-        gen = env.generator
+-        if hasattr(gen, "to"):
+-            gen = gen.to("cpu")
+-        data = gen(batch_size=size)
+-        return TensorDictDataset(data)
+-    return None
+-
+-
+ def compute_validation_metrics(out: Dict, batch: TensorDict, env: Any) -> Dict[str, float]:
+     """
+     Compute rich validation metrics beyond simple reward.
+@@ -231,7 +202,7 @@ def _get_next_day_waste(
+     key: str = "waste",
+     generator: Optional[torch.Generator] = None,
+ ) -> torch.Tensor:
+-    """Determine the next day's waste from pre-generated data or on-the-fly generation.
++    """Determine the next day's waste from the pre-generated multi-day dataset.
+ 
+     Args:
+         td: The input TensorDict containing pre-generated sequences.
+@@ -241,15 +212,11 @@ def _get_next_day_waste(
+         batch_size: The batch size.
+         device: The device.
+         key: Key for the waste data (default: "waste").
+-        generator: Random number generator for on-the-fly generation.
++        generator: Unused; kept for the call signature.
+ 
+     Returns:
+         The waste levels for the next day.
+     """
+-    next_day_waste = torch.zeros_like(current_fill)
+-    if generator is None:
+-        generator = torch.Generator(device=device)
+-
+     full_key = f"_{key}_full"
+     if full_key in td.keys() and td[full_key].dim() == 3:
+         # Use the sequence stored in the hidden key
+@@ -261,18 +228,10 @@ def _get_next_day_waste(
+         total_days = td[key].shape[1]
+         next_day_idx = min(day + 1, total_days - 1)
+         next_day_waste = td[key][:, next_day_idx, :]
+-    elif hasattr(env, "generator"):
+-        # On-the-fly dataset (2D waste)
+-        gen = env.generator
+-        try:
+-            # Generate raw fill levels for the next step (following builder logic)
+-            if hasattr(gen, "to"):
+-                gen = gen.to("cpu")
+-            fresh_fill = gen._generate_fill_levels([batch_size]).to(device)
+-
+-            next_day_waste = fresh_fill
+-        except Exception as e:
+-            print(f"Failed to generate fresh waste on the fly: {e}")
++    else:
++        raise ValueError(
++            "Multi-day training needs a pre-generated dataset whose waste holds every day ([batch, days, nodes])"
++        )
+ 
+     return next_day_waste
+ 
 diff --git a/logic/src/pipeline/rl/common/trainer.py b/logic/src/pipeline/rl/common/trainer.py
 index 413f31af5..ed507c8f3 100644
 --- a/logic/src/pipeline/rl/common/trainer.py
@@ -5768,12 +6211,15 @@ index 92bbe0ae4..06b8d258b 100644
      def _viz_record(self, **kwargs: Any) -> None:  # noqa: B027
          pass
 diff --git a/logic/src/policies/route_construction/base/factory.py b/logic/src/policies/route_construction/base/factory.py
-index a26d63c2f..22ca09872 100644
+index a26d63c2f..8e0fae147 100644
 --- a/logic/src/policies/route_construction/base/factory.py
 +++ b/logic/src/policies/route_construction/base/factory.py
-@@ -53,8 +53,6 @@ class RouteConstructorFactory:
-         # Acceptance Criteria
-         import logic.src.policies.acceptance_criteria as acceptance_criteria  # noqa
+@@ -50,11 +50,7 @@ class RouteConstructorFactory:
+         # Learning Algorithms
+         import logic.src.policies.route_construction.learning_algorithms as learning_algorithms  # noqa
+ 
+-        # Acceptance Criteria
+-        import logic.src.policies.acceptance_criteria as acceptance_criteria  # noqa
  
 -        # Other Algorithms
 -        import logic.src.policies.route_construction.other_algorithms as other_algorithms  # noqa
