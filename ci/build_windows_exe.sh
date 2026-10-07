@@ -22,7 +22,15 @@ py() { wine 'C:\Python310\python.exe' "$@"; }
 cd "$PKG"
 py -m pip install --upgrade pip
 py -m pip install "torch==$TORCH" --index-url "https://download.pytorch.org/whl/$CUDA_TAG"
-py -m pip install "./logic[solvers]" pyinstaller==6.19.0
+# Only the dependencies are installed: PyInstaller reads logic/ straight from the package folder.
+python3 - > build_requirements.txt <<'PYEOF'
+import re
+text = open("logic/pyproject.toml").read()
+deps = re.search(r"^dependencies = \[(.*?)^\]", text, re.S | re.M).group(1)
+solvers = re.search(r"^solvers = \[(.*?)^\]", text, re.S | re.M).group(1)
+print("\n".join(re.findall(r'"([^"]+)"', deps + solvers)))
+PYEOF
+py -m pip install -r build_requirements.txt pyinstaller==6.19.0
 # Stop before the long build if the CUDA build is not the one installed.
 py -c "import torch; assert torch.version.cuda, 'CPU-only torch installed'; print('torch', torch.__version__, 'CUDA', torch.version.cuda)"
 WSR_ONEFILE=1 py -m PyInstaller ci/simulator.spec --clean --noconfirm --distpath "$(winepath -w "$OUT")" --workpath "$(winepath -w "$PKG/build")"
