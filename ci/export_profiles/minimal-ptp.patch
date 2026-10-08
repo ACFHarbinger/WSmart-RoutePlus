@@ -1925,7 +1925,7 @@ HcmV?d00001
 
 diff --git a/assets/files/FILE_LIST.txt b/assets/files/FILE_LIST.txt
 new file mode 100644
-index 000000000..79a9b6c70
+index 000000000..e5b5b3568
 --- /dev/null
 +++ b/assets/files/FILE_LIST.txt
 @@ -0,0 +1,468 @@
@@ -1934,7 +1934,7 @@ index 000000000..79a9b6c70
 +|   |-- configs
 +|   |   |-- config.yaml
 +|   |   |-- envs
-+|   |   |   |-- mvptp.yaml
++|   |   |   |-- cptp.yaml
 +|   |   |   `-- ptp.yaml
 +|   |   |-- __init__.py
 +|   |   |-- models
@@ -2046,13 +2046,13 @@ index 000000000..79a9b6c70
 +|       |   |-- __init__.py
 +|       |   |-- problems.py
 +|       |   |-- routing
++|       |   |   |-- cptp.py
 +|       |   |   |-- __init__.py
-+|       |   |   |-- mvptp.py
 +|       |   |   `-- ptp.py
 +|       |   `-- tasks
 +|       |       |-- base.py
++|       |       |-- cptp.py
 +|       |       |-- __init__.py
-+|       |       |-- mvptp.py
 +|       |       `-- ptp.py
 +|       |-- __init__.py
 +|       |-- interfaces
@@ -2104,11 +2104,11 @@ index 000000000..79a9b6c70
 +|       |       |-- embeddings
 +|       |       |   |-- context
 +|       |       |   |   |-- base.py
++|       |       |   |   |-- cptp.py
 +|       |       |   |   |-- __init__.py
-+|       |       |   |   |-- mvptp.py
 +|       |       |   |   `-- ptp.py
++|       |       |   |-- cptp.py
 +|       |       |   |-- __init__.py
-+|       |       |   |-- mvptp.py
 +|       |       |   `-- ptp.py
 +|       |       |-- encoders
 +|       |       |   |-- common
@@ -7349,10 +7349,10 @@ index c11009018..7673c5bb8 100644
 -wst = DummyWst
 -configure_zenml_stack = None
 diff --git a/logic/src/pipeline/features/test/orchestrator/__init__.py b/logic/src/pipeline/features/test/orchestrator/__init__.py
-index d459bb4f3..deb178634 100644
+index d459bb4f3..28c68d54e 100644
 --- a/logic/src/pipeline/features/test/orchestrator/__init__.py
 +++ b/logic/src/pipeline/features/test/orchestrator/__init__.py
-@@ -28,7 +28,6 @@ from loguru import logger
+@@ -28,12 +28,14 @@ from loguru import logger
  from omegaconf import OmegaConf
  
  import logic.src.constants as udef
@@ -7360,7 +7360,16 @@ index d459bb4f3..deb178634 100644
  from logic.src.constants.paths import CONFIGS_DIR
  from logic.src.configs import Config
  
-@@ -41,7 +40,6 @@ from logic.src.pipeline.simulations.simulator import (
+ # Local imports from modular components
+-from logic.src.pipeline.features.test.orchestrator.parallel_runner import run_parallel_simulations
++from logic.src.pipeline.features.test.orchestrator.parallel_runner import (
++    pool_start_method,
++    run_parallel_simulations,
++)
+ from logic.src.pipeline.simulations.repository import load_indices
+ from logic.src.pipeline.simulations.simulator import (
+     display_log_metrics,
+@@ -41,7 +43,6 @@ from logic.src.pipeline.simulations.simulator import (
  )
  from logic.src.tracking.logging.log_utils import (  
      output_stats,
@@ -7368,7 +7377,7 @@ index d459bb4f3..deb178634 100644
      send_final_output_to_gui,
  )
  from logic.src.tracking.logging.logger_writer import LoggerWriter, setup_logger_redirection  
-@@ -50,7 +48,6 @@ __all__ = [
+@@ -50,7 +51,6 @@ __all__ = [
      "simulator_testing",
      "LoggerWriter",
      "setup_logger_redirection",
@@ -7376,7 +7385,7 @@ index d459bb4f3..deb178634 100644
      "output_stats",
      "send_final_output_to_gui",
      "display_log_metrics",
-@@ -59,13 +56,11 @@ __all__ = [
+@@ -59,13 +59,11 @@ __all__ = [
      "run_parallel_simulations",
      "Config",
      "udef",
@@ -7390,7 +7399,15 @@ index d459bb4f3..deb178634 100644
      "send_final_output_to_gui",
      "LoggerWriter",
      "setup_logger_redirection",
-@@ -272,14 +267,6 @@ def simulator_testing(cfg: Config, data_size: int, device: Any) -> None:  # noqa
+@@ -194,6 +192,7 @@ def simulator_testing(cfg: Config, data_size: int, device: Any) -> None:  # noqa
+ 
+     signal.signal(signal.SIGINT, _shutdown_handler)
+ 
++    mp.set_start_method(pool_start_method(sim, device), force=True)
+     manager = mp.Manager()
+     try:
+         lock = manager.Lock()
+@@ -272,14 +271,6 @@ def simulator_testing(cfg: Config, data_size: int, device: Any) -> None:  # noqa
  
          weights_path = os.path.join(udef.ROOT_DIR, "assets", "model_weights")
  
@@ -7405,7 +7422,7 @@ index d459bb4f3..deb178634 100644
          if n_cores > 1:
              log, log_std, failed_log = run_parallel_simulations(
                  cfg,
-@@ -294,8 +281,6 @@ def simulator_testing(cfg: Config, data_size: int, device: Any) -> None:  # noqa
+@@ -294,8 +285,6 @@ def simulator_testing(cfg: Config, data_size: int, device: Any) -> None:  # noqa
                  log_file,
                  original_stderr,
                  shared_metrics,
@@ -7415,10 +7432,36 @@ index d459bb4f3..deb178634 100644
          else:
              log, log_std, failed_log = sequential_simulations(
 diff --git a/logic/src/pipeline/features/test/orchestrator/parallel_runner.py b/logic/src/pipeline/features/test/orchestrator/parallel_runner.py
-index d324abaa8..16bc986b6 100644
+index d324abaa8..e6d344f2d 100644
 --- a/logic/src/pipeline/features/test/orchestrator/parallel_runner.py
 +++ b/logic/src/pipeline/features/test/orchestrator/parallel_runner.py
-@@ -47,8 +47,6 @@ def run_parallel_simulations(
+@@ -34,6 +34,25 @@ from logic.src.utils.tasks.simulation_utils import (
+ )
+ 
+ 
++def pool_start_method(sim: Any, device: Any) -> str:
++    """
++    Start method of the simulation pool: 'spawn' for CUDA to avoid initialization errors, or 'fork'
++    for CPU if requested.
++
++    It must be set before any Manager, Lock or Value is created: an object made in one context
++    cannot be shared with workers started in another.
++
++    Args:
++        sim: Simulation configuration.
++        device: Torch device.
++
++    Returns:
++        The multiprocessing start method name.
++    """
++    is_cuda = "cuda" in str(device)
++    return "spawn" if is_cuda else ("fork" if getattr(sim, "no_cuda", False) else "spawn")
++
++
+ def run_parallel_simulations(
+     cfg: Config,
+     device: Any,
+@@ -47,8 +66,6 @@ def run_parallel_simulations(
      log_file: Optional[str],
      original_stderr: Any,
      shared_metrics: Any,
@@ -7427,7 +7470,7 @@ index d324abaa8..16bc986b6 100644
  ) -> Tuple[Dict[str, Any], Optional[Dict[str, Any]], List[Dict[str, Any]]]:
      """
      Execute simulations in parallel using a multiprocessing pool.
-@@ -66,8 +64,6 @@ def run_parallel_simulations(
+@@ -66,8 +83,6 @@ def run_parallel_simulations(
          log_file: Path to log file for worker redirection.
          original_stderr: Original stderr for shutdown messages.
          shared_metrics: Multiprocessing Manager.dict for real-time stats.
@@ -7436,7 +7479,27 @@ index d324abaa8..16bc986b6 100644
  
      Returns:
          Tuple containing:
-@@ -95,7 +91,7 @@ def run_parallel_simulations(
+@@ -77,6 +92,7 @@ def run_parallel_simulations(
+     """
+     sim = cfg.sim
+     udef.update_lock_wait_time(n_cores)
++    mp.set_start_method(pool_start_method(sim, device), force=True)
+     counter = mp.Value("i", 0)
+ 
+     # Prepare task arguments
+@@ -85,17 +101,14 @@ def run_parallel_simulations(
+     # Print execution info
+     print_execution_info(task_count, n_cores)
+ 
+-    # Create multiprocessing pool
+-    # Use 'spawn' for CUDA to avoid initialization errors, or 'fork' for CPU if requested
+-    is_cuda = "cuda" in str(device)
+-    start_method = "spawn" if is_cuda else ("fork" if getattr(sim, "no_cuda", False) else "spawn")
+-    mp.set_start_method(start_method, force=True)
++    # Create multiprocessing pool (same start method as the Manager and the counter above)
++    mp.set_start_method(pool_start_method(sim, device), force=True)
+     from logic.src.pipeline.simulations.simulator import init_single_sim_worker
+ 
      pool = Pool(
          processes=n_cores,
          initializer=init_single_sim_worker,
