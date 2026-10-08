@@ -507,7 +507,7 @@ index 02f400728..1161b00e4 100644
 +uv.lock
 +code.zip
 diff --git a/README.md b/README.md
-index d63ac48f3..6c695cb04 100644
+index d63ac48f3..d04a64705 100644
 --- a/README.md
 +++ b/README.md
 @@ -1,7 +1,7 @@
@@ -519,8 +519,12 @@ index d63ac48f3..6c695cb04 100644
  run the multi-day waste-collection simulator with the retained routing
  policies. The Studio desktop app, dashboards, experiment tracking, HPO,
  meta-learning, the other neural architectures and the other ~200 policies were
-@@ -16,96 +16,122 @@ removed.
- | Environments | `ptp` (Profitable Tour Problem), `mvptp` (Multi-Vehicle Profitable Tour Problem) |
+@@ -13,99 +13,125 @@ removed.
+ | --- | --- |
+ | Neural model | Attention Model (`am`, graph-attention encoder, glimpse decoder) |
+ | RL algorithm | REINFORCE (exponential / rollout / critic baselines) |
+-| Environments | `ptp` (Profitable Tour Problem), `mvptp` (Multi-Vehicle Profitable Tour Problem) |
++| Environments | `ptp` (Profitable Tour Problem), `cptp` (Capacitated Profitable Tour Problem) |
  | Route construction policies | `pg_clns`, `sans`, `swc_tcf`, `na` (Neural Agent) |
  | Mandatory-bin selection | `lookahead`, `last_minute`, `service_level` |
 -| Route improvement | `fast_tsp` |
@@ -631,7 +635,7 @@ index d63ac48f3..6c695cb04 100644
 -# Train the Attention Model with REINFORCE (PTP, 20 bins, 1 epoch = 1 day; envs@train.env=mvptp for MVPTP)
 -python main.py train train.env.name=ptp \
 -  'train.env.curriculum_graphs=[{num_loc: 20, n_samples: 256, area: riomaior, waste_type: plastic, distance_method: ogd, focus_size: 256, focus_graph: graphs_20V_1N_plastic.json, n_days: 1, load_dataset: null}]' \
-+# Train the Attention Model with REINFORCE on a pre-generated dataset (PTP, 20 bins, 1 epoch = 1 day; envs@train.env=mvptp for MVPTP)
++# Train the Attention Model with REINFORCE on a pre-generated dataset (PTP, 20 bins, 1 epoch = 1 day; envs@train.env=cptp for CPTP)
 +python . train train.env.name=ptp \
 +  'train.env.curriculum_graphs=[{num_loc: 20, n_samples: 256, area: riomaior, waste_type: plastic, distance_method: file, dm_filepath: "gmaps_distmat_plastic[riomaior].csv", focus_size: 256, focus_graph: graphs_20V_1N_plastic.json, n_days: 1, load_dataset: data/datasets/ptp/ptp20_emp_wsr1_seed42.td}]' \
    'train.env.eval_graphs=[]' train.batch_size=32 train.num_workers=0 \
@@ -681,15 +685,17 @@ index d63ac48f3..6c695cb04 100644
 +
  ## Notes
  
- - The problems are `ptp` (Profitable Tour Problem) and `mvptp` (Multi-Vehicle
+-- The problems are `ptp` (Profitable Tour Problem) and `mvptp` (Multi-Vehicle
++- The problems are `ptp` (Profitable Tour Problem) and `cptp` (Capacitated
    Profitable Tour Problem). Checkpoints and datasets that record the former names
-   (`vrpp`, `cvrpp`) are rejected; retrain or regenerate them.
+-  (`vrpp`, `cvrpp`) are rejected; retrain or regenerate them.
 -- Experiment tracking calls (`logic.src.tracking`) are inert no-ops; only the
 -  result-file writers under `logic/src/tracking/logging` remain functional.
 -- `python main.py eval` evaluates a checkpoint on `.npz` simulator datasets
 -  (every sample/day pair is one instance, fills normalised by `max_waste`),
 -  `.td`/`.pt` TensorDict datasets or `.pkl` instance lists, e.g.
 -  `python main.py eval eval.policy.model.load_path=weights/am 'eval.datasets=[data/my_set.npz]' eval.problem=ptp eval.env.name=ptp`.
++  (`vrpp`, `cvrpp`, `mvptp`) are rejected; retrain or regenerate them.
 +- The package does not generate data. Training reads the `.td` file in each graph's
 +  `load_dataset` (and in every `eval_graphs` entry); without a separate validation
 +  dataset it validates on the first training instances. Multi-day training needs
@@ -2392,7 +2398,7 @@ index 000000000..79a9b6c70
 +|               `-- simulation_utils.py
 +`-- __main__.py
 diff --git a/logic/configs/config.yaml b/logic/configs/config.yaml
-index 60b3a931f..99280ac0f 100644
+index 60b3a931f..121636266 100644
 --- a/logic/configs/config.yaml
 +++ b/logic/configs/config.yaml
 @@ -5,14 +5,13 @@
@@ -2409,27 +2415,74 @@ index 60b3a931f..99280ac0f 100644
 -#   python main.py train envs@train.env=mvptp
 -#   python main.py eval models.embed_dim=256
 +#   python . train models=tam envs@train.env=ptp seed=1234
-+#   python . train envs@train.env=mvptp
++#   python . train envs@train.env=cptp
  #
  # See docs/HYDRA_GUIDE.md for full override syntax and multi-run examples.
  # =============================================================================
-diff --git a/logic/configs/envs/mvptp.yaml b/logic/configs/envs/mvptp.yaml
-index 5c31f5e67..3048ad822 100644
---- a/logic/configs/envs/mvptp.yaml
-+++ b/logic/configs/envs/mvptp.yaml
-@@ -34,9 +34,12 @@ curriculum_graphs:
-   - num_loc: 50
-     area: "riomaior"
-     waste_type: "plastic"
+diff --git a/logic/configs/envs/cptp.yaml b/logic/configs/envs/cptp.yaml
+new file mode 100644
+index 000000000..427cd9f47
+--- /dev/null
++++ b/logic/configs/envs/cptp.yaml
+@@ -0,0 +1,58 @@
++# =============================================================================
++# Capacitated Profitable Tour Problem (CPTP) Configuration
++# =============================================================================
++# Waste-collecting routing WITH vehicle capacity constraints.
++#
++# Combines:
++#   - PTP: Waste/profit collection objective
++#   - CVRP: Capacity constraints
++#
++# Realistic variant where vehicle has limited capacity and must return
++# to depot to empty before continuing collection.
++#
++# Benchmark: Standard OR problem for testing capacity-aware algorithms.
++# =============================================================================
++
++name: "cptp" # Environment identifier
++mean: 0.0
++variance: 0.0
++
++# =============================================================================
++# Capacity Constraint
++# =============================================================================
++capacity:
++  100.0 # Normalized vehicle capacity.
++  # Waste values typically sum to >capacity, forcing selective collection.
++  # Range: 0.5-2.0. Higher = less constrained routing.
++
++# ===========================================================================
++# Curriculum Learning
++# ===========================================================================
++# The first entry is also used for single-stage training.
++# Each entry may include a 'reward:' block to override objective weights.
++curriculum_graphs:
++  - num_loc: 50
++    area: "riomaior"
++    waste_type: "plastic"
 +    distance_method: "file"
 +    dm_filepath: "gmaps_distmat_plastic[riomaior].csv"
-     n_days: 31
-     n_samples: 12800
-     start_day: 0
-+    load_dataset: "data/datasets/mvptp/mvptp50_emp_wsr31_seed42.td" # pre-generated; training does not generate data
- 
-     # =========================================================================
-     # Objective Function Weights
++    n_days: 31
++    n_samples: 12800
++    start_day: 0
++    load_dataset: "data/datasets/cptp/cptp50_emp_wsr31_seed42.td" # pre-generated; training does not generate data
++
++    # =========================================================================
++    # Objective Function Weights
++    # =========================================================================
++    # Objective: maximize (waste_weight × Σ wastes) - (cost_weight × total_distance)
++    # Subject to: vehicle capacity constraints
++    reward:
++      cost_weight: 1.0      # Weight for travel distance.
++      waste_weight: 1.0     # Weight for waste collection.
++      overflow_penalty: 1.0 # Penalty factor for overflows.
++
++# ===========================================================================
++# Evaluation Graphs
++# ===========================================================================
++# Each entry may include a 'reward:' block to evaluate under different weights.
++eval_graphs: []
 diff --git a/logic/configs/envs/ptp.yaml b/logic/configs/envs/ptp.yaml
 index b1a6d2777..58a1cafd9 100644
 --- a/logic/configs/envs/ptp.yaml
@@ -2488,6 +2541,34 @@ index b1a6d2777..58a1cafd9 100644
      dm_filepath: "gmaps_distmat_plastic[riomaior].csv"
      load_dataset: "data/datasets/ptp/ptp170_emp_val_time7_seed42.td"
      start_day: 0
+diff --git a/logic/configs/models/am.yaml b/logic/configs/models/am.yaml
+index c2e9bde38..b3c6aac50 100644
+--- a/logic/configs/models/am.yaml
++++ b/logic/configs/models/am.yaml
+@@ -24,7 +24,7 @@ encoder:
+   # Dimensions
+   embed_dim:
+     128 # Node embedding dimension. Powers of 2 recommended (64, 128, 256, 512).
+-    # Larger values = more expressive but slower. 128 is good default for PTP/MVPTP.
++    # Larger values = more expressive but slower. 128 is good default for PTP/CPTP.
+ 
+   hidden_dim:
+     512 # Feed-forward hidden layer size. Typically 4x embed_dim.
+@@ -96,7 +96,7 @@ decoder:
+   n_heads: 8
+   n_predictor_layers:
+     2 # Depth of GRF predictor (for temporal models like TAM).
+-    # Set to 0 for static problems (PTP, MVPTP).
++    # Set to 0 for static problems (PTP, CPTP).
+ 
+   normalization:
+     norm_type: "instance"
+@@ -112,4 +112,4 @@ decoder:
+ # =============================================================================
+ temporal_horizon:
+   0 # Temporal lookahead for multi-day problems (TAM).
+-  # 0 = static (single-day PTP/MVPTP), 10+ for multi-day simulation.
++  # 0 = static (single-day PTP/CPTP), 10+ for multi-day simulation.
 diff --git a/logic/configs/policies/policy_na.yaml b/logic/configs/policies/policy_na.yaml
 index df2cf8da3..5e6ce3cd4 100644
 --- a/logic/configs/policies/policy_na.yaml
@@ -2560,7 +2641,7 @@ index ba355bfcc..7bf7d9d2c 100644
      # ---------------------------------------------------------------------
      # Gurobi Solver Parameters (Implicit)
 diff --git a/logic/configs/tasks/test_sim.yaml b/logic/configs/tasks/test_sim.yaml
-index 77bf45ff0..52a8bceca 100644
+index 77bf45ff0..7e3f6bb02 100644
 --- a/logic/configs/tasks/test_sim.yaml
 +++ b/logic/configs/tasks/test_sim.yaml
 @@ -4,8 +4,8 @@
@@ -2570,10 +2651,19 @@ index 77bf45ff0..52a8bceca 100644
 -# Used by: python main.py test_sim
 -# MVPTP:   python main.py test_sim sim.problem=mvptp
 +# Used by: python . test_sim
-+# MVPTP:   python . test_sim sim.problem=mvptp
++# CPTP:   python . test_sim sim.problem=cptp
  #          Configure budgets on sim and the matrix path on sim.graph.
  # =============================================================================
  
+@@ -25,7 +25,7 @@ sim:
+   cpu_cores: 0
+   n_vehicles: 0
+   no_cuda: false
+-  problem: "ptp" # ptp | mvptp
++  problem: "ptp" # ptp | cptp
+   shift_hours: 7.0 # shift telemetry only (time spent per day)
+   avg_speed_kmh: 35.0 # Uniform fallback for every bin and depot leg
+   service_time_h: 0.025
 @@ -36,8 +36,6 @@ sim:
  
    # Relative to ROOT/data/simulator/
@@ -2584,7 +2674,7 @@ index 77bf45ff0..52a8bceca 100644
      num_loc: 350
      n_samples: 1
 diff --git a/logic/configs/tasks/train.yaml b/logic/configs/tasks/train.yaml
-index 61c2f04b7..36f7b558d 100644
+index 61c2f04b7..533b075ba 100644
 --- a/logic/configs/tasks/train.yaml
 +++ b/logic/configs/tasks/train.yaml
 @@ -3,8 +3,8 @@
@@ -2594,7 +2684,7 @@ index 61c2f04b7..36f7b558d 100644
 -# Used by: python main.py train
 -# MVPTP:   python main.py train envs@train.env=mvptp
 +# Used by: python . train
-+# MVPTP:   python . train envs@train.env=mvptp
++# CPTP:   python . train envs@train.env=cptp
  #          (swap the env group; do not only set train.env.name -- that keeps
  #          the previously composed YAML's other fields)
  #
@@ -2987,6 +3077,38 @@ index eaf4b73ff..78f7b46f5 100644
      "Config",
      "EncoderConfig",
      "DecoderConfig",
+diff --git a/logic/src/configs/envs/env.py b/logic/src/configs/envs/env.py
+index cd24980b9..5bc9d0ca2 100644
+--- a/logic/src/configs/envs/env.py
++++ b/logic/src/configs/envs/env.py
+@@ -26,13 +26,13 @@ class EnvConfig:
+     ``curriculum_graphs`` acts as the primary training graph.
+ 
+     Attributes:
+-        name: Name of the environment ('ptp' or 'mvptp').
++        name: Name of the environment ('ptp' or 'cptp').
+         min_loc: Minimum coordinate value.
+         max_loc: Maximum coordinate value.
+-        capacity: Vehicle capacity (optional; used by ``mvptp``).
+-        shift_hours: Optional per-trip time budget in hours (not used by ``ptp`` or ``mvptp``).
+-        avg_speed_kmh: Optional average driving speed in km/h (not used by ``ptp`` or ``mvptp``).
+-        service_time_h: Optional per-bin service time in hours (not used by ``ptp`` or ``mvptp``).
++        capacity: Vehicle capacity (optional; used by ``cptp``).
++        shift_hours: Optional per-trip time budget in hours (not used by ``ptp`` or ``cptp``).
++        avg_speed_kmh: Optional average driving speed in km/h (not used by ``ptp`` or ``cptp``).
++        service_time_h: Optional per-bin service time in hours (not used by ``ptp`` or ``cptp``).
+         curriculum_graphs: Ordered list of graphs for sequential curriculum
+             learning. The **first entry** is used for single-stage training.
+             Each :class:`GraphConfig` entry carries an optional ``reward`` field
+@@ -45,7 +45,7 @@ class EnvConfig:
+     min_loc: float = 0.0
+     max_loc: float = 1.0
+     capacity: Optional[float] = None
+-    # Temporal resource fields; ptp and mvptp do not read them
++    # Temporal resource fields; ptp and cptp do not read them
+     shift_hours: Optional[float] = None
+     avg_speed_kmh: Optional[float] = None
+     service_time_h: Optional[float] = None
 diff --git a/logic/src/configs/envs/graph.py b/logic/src/configs/envs/graph.py
 index 61dda78f7..11bedaf5f 100644
 --- a/logic/src/configs/envs/graph.py
@@ -4130,7 +4252,7 @@ index db32d7164..ad2af36b6 100644
      "TrainConfig",
  ]
 diff --git a/logic/src/configs/tasks/sim.py b/logic/src/configs/tasks/sim.py
-index c63351eee..3cc7ae199 100644
+index c63351eee..9c3a41f8b 100644
 --- a/logic/src/configs/tasks/sim.py
 +++ b/logic/src/configs/tasks/sim.py
 @@ -7,7 +7,7 @@ Example:
@@ -4142,6 +4264,15 @@ index c63351eee..3cc7ae199 100644
          problem="ptp",
          days=31,
          seed=42,
+@@ -45,7 +45,7 @@ class SimConfig:
+         policies: List of policy configurations to test on the WSR simulator.
+         full_policies: Expanded policy names after config expansion (populated at runtime).
+         data_distribution: Distribution to generate the bins daily waste fill.
+-        problem: Problem variant to simulate ('ptp' or 'mvptp').
++        problem: Problem variant to simulate ('ptp' or 'cptp').
+         days: Number of days to run the simulation for.
+         seed: Random seed.
+         output_dir: Name of WSR simulator test output directory.
 @@ -68,7 +68,7 @@ class SimConfig:
  
      policies: List[Any] = field(default_factory=list)
@@ -4189,7 +4320,7 @@ index 2f02de737..773a384f2 100644
 -from .user_interface import *  # noqa: F403
  from .waste import *  # noqa: F403
 diff --git a/logic/src/constants/models.py b/logic/src/constants/models.py
-index a59f1fbe6..d521b51d0 100644
+index a59f1fbe6..2ec765b52 100644
 --- a/logic/src/constants/models.py
 +++ b/logic/src/constants/models.py
 @@ -26,47 +26,23 @@ Propagation flow:
@@ -4256,20 +4387,26 @@ index a59f1fbe6..d521b51d0 100644
  # Step Context Dimensionality Offsets
  # ------------------------------------
  # Additional context features beyond basic node attributes.
-@@ -98,13 +66,6 @@ PTP_STEP_CONTEXT_OFFSET: int = 2  # 2 extra dims: remaining profit + mean travel
- # Used in: mvptp.py context embeddings — extends PTP with hard capacity constraint signal
- MVPTP_STEP_CONTEXT_OFFSET: int = 3  # 3 extra dims: profit signal + distance signal + capacity
+@@ -94,16 +62,9 @@ DEPOT_DIM: int = 2  # 2D Euclidean coordinates (x, y) in [0, 1] range
+ # Used in: ptp.py context embeddings for profit-aware early-termination decoding
+ PTP_STEP_CONTEXT_OFFSET: int = 2  # 2 extra dims: remaining profit + mean travel cost signal
  
+-# MVPTP context: [unvisited_waste_sum, mean_dist_to_unvisited_nodes, remaining_capacity]
+-# Used in: mvptp.py context embeddings — extends PTP with hard capacity constraint signal
+-MVPTP_STEP_CONTEXT_OFFSET: int = 3  # 3 extra dims: profit signal + distance signal + capacity
+-
 -# Temporal Defaults
 -# ------------------
 -# Default lookahead horizon for time-dependent models (TAM, HRL Manager).
 -# Defines how many future timesteps to predict/consider.
 -# Used in: Temporal Attention Model (TAM), HRL manager network
 -DEFAULT_TEMPORAL_HORIZON: int = 10  # Days. Typical waste collection planning horizon is 7-14 days.
--
++# CPTP context: [unvisited_waste_sum, mean_dist_to_unvisited_nodes, remaining_capacity]
++# Used in: cptp.py context embeddings — extends PTP with hard capacity constraint signal
++CPTP_STEP_CONTEXT_OFFSET: int = 3  # 3 extra dims: profit signal + distance signal + capacity
+ 
  # Architecture Constants
  # -----------------------
- # Standard hyperparameter values for transformer-based models.
 @@ -130,22 +91,3 @@ NUMERICAL_EPSILON: float = 1e-8  # Standard for probability and division safety
  # Transformer standard: hidden_dim = embed_dim * FEED_FORWARD_EXPANSION
  # Used in: feed_forward.py module instantiation
@@ -4447,7 +4584,7 @@ index e0e6053bd..e376b0a1f 100644
 -# Default penalty for inter-dummy edges (prevents empty intermediate routes)
 -DEFAULT_HIGH_PENALTY = 1e9
 diff --git a/logic/src/constants/simulation.py b/logic/src/constants/simulation.py
-index f64162380..e60842dab 100644
+index f64162380..eac73042a 100644
 --- a/logic/src/constants/simulation.py
 +++ b/logic/src/constants/simulation.py
 @@ -23,7 +23,6 @@ Three metric lists serve different scopes:
@@ -4490,6 +4627,22 @@ index f64162380..e60842dab 100644
  # Problem Definition - Constraint Parameters
  # --------------------------------------------
  # Physical and operational constraints for VRP variants.
+@@ -127,7 +118,7 @@ MAX_CAPACITY_PERCENT = 100.0  # percent (0-100 range)
+ # Prevents unbounded route lengths in waste-collecting and selective problems.
+ 
+ # Default vehicle capacity (kilograms)
+-# Used in: Capacitated VRP variants (CVRP, MVPTP)
++# Used in: Capacitated VRP variants (CVRP, CPTP)
+ # Route terminates when cumulative collected waste ≥ VEHICLE_CAPACITY
+ # Typical real-world values: 80-120 kg for small trucks, 200-300 kg for large trucks
+ VEHICLE_CAPACITY: float = 200.0  # kg (default for synthetic instances)
+@@ -138,5 +129,5 @@ VEHICLE_CAPACITY: float = 200.0  # kg (default for synthetic instances)
+ # Format: {problem_name} → logic/src/envs/{problem_name}.py
+ PROBLEMS: List[str] = [
+     "ptp",  # Profitable Tour Problem (maximize profit - cost)
+-    "mvptp",  # Multi-Vehicle Profitable Tour Problem (adds the vehicle capacity constraint)
++    "cptp",  # Capacitated Profitable Tour Problem (adds the vehicle capacity constraint)
+ ]
 diff --git a/logic/src/constants/system.py b/logic/src/constants/system.py
 index 6ce395fa5..08fa2ba43 100644
 --- a/logic/src/constants/system.py
@@ -5179,6 +5332,19 @@ index 026f77405..795d7d738 100644
 -        sample_id=sample_id,
 -    )
      return result
+diff --git a/logic/src/data/processor/mapper.py b/logic/src/data/processor/mapper.py
+index d8db73eb4..b492d60bb 100644
+--- a/logic/src/data/processor/mapper.py
++++ b/logic/src/data/processor/mapper.py
+@@ -210,7 +210,7 @@ class SimulationDataMapper:
+             "waste": torch.zeros(problem_size),
+         }
+ 
+-        if configs.get("problem") in ["ptp", "mvptp"]:
++        if configs.get("problem") in ["ptp", "cptp"]:
+             model_data["max_waste"] = torch.as_tensor(MAX_WASTE, dtype=torch.float32)
+         elif "problem" in configs:
+             raise ValueError(f"Unknown problem: {configs['problem']}")
 diff --git a/logic/src/data/processor/processing.py b/logic/src/data/processor/processing.py
 index 40935bab1..d595868ce 100644
 --- a/logic/src/data/processor/processing.py
@@ -5549,6 +5715,60 @@ index efd3e4730..044c96d18 100644
 -            td_aug[feat] = aug_feat
 -
 -        return td_aug
+diff --git a/logic/src/envs/__init__.py b/logic/src/envs/__init__.py
+index bafea12b3..c3ffb51e2 100644
+--- a/logic/src/envs/__init__.py
++++ b/logic/src/envs/__init__.py
+@@ -1,4 +1,4 @@
+-"""Environments package (minimal export: PTP and MVPTP).
++"""Environments package (minimal export: PTP and CPTP).
+ 
+ Attributes:
+     ENV_REGISTRY: Registry of available environments.
+@@ -12,13 +12,13 @@ from logic.src.envs.generators import (
+     PTPGenerator,
+     get_generator,
+ )
+-from logic.src.envs.routing.mvptp import MVPTPEnv
++from logic.src.envs.routing.cptp import CPTPEnv
+ from logic.src.envs.routing.ptp import PTPEnv
+ 
+ # Environment registry
+ ENV_REGISTRY = {
+     "ptp": PTPEnv,
+-    "mvptp": MVPTPEnv,
++    "cptp": CPTPEnv,
+ }
+ 
+ 
+@@ -37,7 +37,7 @@ __all__ = [
+     "get_generator",
+     "GENERATOR_REGISTRY",
+     "PTPEnv",
+-    "MVPTPEnv",
++    "CPTPEnv",
+     "ENV_REGISTRY",
+     "get_env",
+ ]
+diff --git a/logic/src/envs/generators/__init__.py b/logic/src/envs/generators/__init__.py
+index 5cedf553c..95e915441 100644
+--- a/logic/src/envs/generators/__init__.py
++++ b/logic/src/envs/generators/__init__.py
+@@ -1,4 +1,4 @@
+-"""Instance generators (minimal export: PTP and MVPTP).
++"""Instance generators (minimal export: PTP and CPTP).
+ 
+ Attributes:
+     GENERATOR_REGISTRY: Mapping of problem names to generator classes.
+@@ -13,7 +13,7 @@ from .ptp import PTPGenerator
+ # Registry of available generators
+ GENERATOR_REGISTRY: dict[str, type[Generator]] = {
+     "ptp": PTPGenerator,
+-    "mvptp": PTPGenerator,  # Same generator, the env handles capacity
++    "cptp": PTPGenerator,  # Same generator, the env handles capacity
+ }
+ 
+ 
 diff --git a/logic/src/envs/generators/ptp.py b/logic/src/envs/generators/ptp.py
 index d12ab96df..cef5cfa7c 100644
 --- a/logic/src/envs/generators/ptp.py
@@ -5598,10 +5818,14 @@ index d12ab96df..cef5cfa7c 100644
              waste = torch.from_numpy(waste).float()
          return waste.to(self.device).view(*batch_size, self.num_loc)
 diff --git a/logic/src/envs/problems.py b/logic/src/envs/problems.py
-index bc271acb4..5ae3bebe1 100644
+index bc271acb4..bd46046c8 100644
 --- a/logic/src/envs/problems.py
 +++ b/logic/src/envs/problems.py
-@@ -4,22 +4,12 @@ Example:
+@@ -1,25 +1,15 @@
+-"""Problem definitions (minimal export: PTP and MVPTP).
++"""Problem definitions (minimal export: PTP and CPTP).
+ 
+ Example:
      >>> from logic.src.envs.problems import PTP
  """
  
@@ -5612,7 +5836,8 @@ index bc271acb4..5ae3bebe1 100644
 -    VEHICLE_CAPACITY,
 -)
  from logic.src.envs.tasks.base import BaseProblem
- from logic.src.envs.tasks.mvptp import MVPTP
+-from logic.src.envs.tasks.mvptp import MVPTP
++from logic.src.envs.tasks.cptp import CPTP
  from logic.src.envs.tasks.ptp import PTP
  
  __all__ = [
@@ -5622,13 +5847,234 @@ index bc271acb4..5ae3bebe1 100644
 -    "BIN_CAPACITY",
 -    "VEHICLE_CAPACITY",
      "PTP",
-     "MVPTP",
+-    "MVPTP",
++    "CPTP",
  ]
+diff --git a/logic/src/envs/routing/__init__.py b/logic/src/envs/routing/__init__.py
+index 555115ee7..677d77a76 100644
+--- a/logic/src/envs/routing/__init__.py
++++ b/logic/src/envs/routing/__init__.py
+@@ -1,8 +1,8 @@
+-"""Routing environments (minimal export: PTP and MVPTP).
++"""Routing environments (minimal export: PTP and CPTP).
+ 
+ Attributes:
+     PTPEnv: Profitable Tour Problem environment.
+-    MVPTPEnv: Multi-Vehicle Profitable Tour Problem environment.
++    CPTPEnv: Capacitated Profitable Tour Problem environment.
+     ENV_REGISTRY: Mapping of problem name strings to their environment classes.
+     get_env: Factory function that instantiates an environment by name.
+ """
+@@ -14,13 +14,13 @@ from logic.src.envs.generators import (
+     PTPGenerator,
+     get_generator,
+ )
+-from logic.src.envs.routing.mvptp import MVPTPEnv
++from logic.src.envs.routing.cptp import CPTPEnv
+ from logic.src.envs.routing.ptp import PTPEnv
+ 
+ # Environment registry
+ ENV_REGISTRY = {
+     "ptp": PTPEnv,
+-    "mvptp": MVPTPEnv,
++    "cptp": CPTPEnv,
+ }
+ 
+ 
+@@ -39,7 +39,7 @@ __all__ = [
+     "get_generator",
+     "GENERATOR_REGISTRY",
+     "PTPEnv",
+-    "MVPTPEnv",
++    "CPTPEnv",
+     "ENV_REGISTRY",
+     "get_env",
+ ]
+diff --git a/logic/src/envs/routing/cptp.py b/logic/src/envs/routing/cptp.py
+new file mode 100644
+index 000000000..a9e1e4726
+--- /dev/null
++++ b/logic/src/envs/routing/cptp.py
+@@ -0,0 +1,167 @@
++"""
++CPTP Environment implementation.
++
++Attributes:
++    CPTPEnv: CPTP environment.
++
++Example:
++    >>> from logic.src.envs.routing import get_env
++    >>> env = get_env("cptp", num_loc=50)
++    >>> td = env.reset()
++"""
++
++from __future__ import annotations
++
++from typing import Optional
++
++import torch
++from tensordict import TensorDict
++
++from logic.src.envs.base.ops import OpsMixin
++from logic.src.envs.routing.ptp import PTPEnv
++
++
++class CPTPEnv(PTPEnv):
++    """
++    Capacitated Profitable Tour Problem: PTP with vehicle capacity constraints.
++
++    Attributes:
++        name: Name of the environment.
++    """
++
++    name: str = "cptp"
++
++    def _reset_instance(self, tensordict: TensorDict) -> TensorDict:
++        """Initialize CPTP state with capacity tracking.
++
++        Args:
++            tensordict: Input TensorDict containing graph structure and node properties.
++
++        Returns:
++            TensorDict: Initialized CPTP state with capacity tracking.
++        """
++        is_resuming = "visited" in tensordict.keys()
++        tensordict = super()._reset_instance(tensordict)
++
++        bs = tensordict.batch_size[0]
++        device = tensordict.device
++
++        # Track remaining capacity
++        capacity = tensordict.get("capacity", torch.ones(bs, device=device) * 100)
++        tensordict["capacity"] = capacity  # Ensure it's in the TensorDict for _step
++        if not is_resuming:
++            tensordict["remaining_capacity"] = capacity.clone()
++            tensordict["collected_waste"] = torch.zeros(bs, device=device)
++        else:
++            tensordict.setdefault("remaining_capacity", capacity.clone())
++            tensordict.setdefault("collected_waste", torch.zeros(bs, device=device))
++        tensordict["collected"] = tensordict["collected_waste"]  # Alias
++
++        return tensordict
++
++    def _reset(self, tensordict: Optional[TensorDict] = None, **kwargs) -> TensorDict:  # type: ignore[override]
++        """Reset the environment.
++
++        Args:
++            tensordict: Input TensorDict containing graph structure and node properties.
++            kwargs: Additional keyword arguments.
++
++        Returns:
++            TensorDict: Reset environment state.
++        """
++        return super()._reset(tensordict, **kwargs)
++
++    def _step_instance(self, tensordict: TensorDict) -> TensorDict:
++        """reset.
++
++        Args:
++            tensordict (Optional[TensorDict]): Description of tensordict.
++            kwargs (Any): Additional keyword arguments.
++
++        Returns:
++            Any: Updated TensorDict or tensor containing the result.
++        """
++        """Execute action with capacity tracking."""
++        action = tensordict["action"]
++        if action.dim() > 1:
++            action = action.squeeze(-1)
++
++        # Snapshot the node/at-depot status before super() advances current_node.
++        waste = tensordict["waste"]
++        waste_at_node = waste.gather(1, action.unsqueeze(-1)).squeeze(-1) if waste.dim() > 1 else waste
++        at_depot = action == 0
++
++        # Delegate distance / visited / current_node / tour updates, and
++        # PTP's own cumulative collected_waste, to PTPEnv/OpsMixin. Without
++        # this call, current_node/visited/tour_length/tour never advance past
++        # their reset values -- the bug this fixes: CPTPEnv previously
++        # replaced the base state transition entirely instead of layering
++        # capacity tracking on top of it.
++        tensordict = super()._step_instance(tensordict)
++
++        # CPTP-specific: track *per-trip* remaining capacity, reset at each
++        # depot return, separate from PTP's all-time collected_waste total.
++        # Clamp so an illegal (unmasked) action cannot drive capacity negative.
++        tensordict["remaining_capacity"] = torch.where(
++            at_depot,
++            tensordict["capacity"],
++            (tensordict["remaining_capacity"] - waste_at_node).clamp(min=0),
++        )
++        tensordict["collected"] = tensordict["capacity"] - tensordict["remaining_capacity"]
++
++        return tensordict
++
++    def _step(self, tensordict: TensorDict) -> TensorDict:
++        """Step the environment.
++
++        Args:
++            tensordict: Input TensorDict containing action.
++
++        Returns:
++            TensorDict: Environment state after action.
++        """
++        return OpsMixin._step(self, tensordict)
++
++    def _get_action_mask(self, tensordict: TensorDict) -> torch.Tensor:
++        """
++        Mask nodes that would exceed capacity, respecting mandatory constraints.
++
++        Applies capacity constraints on top of base PTP mask, then
++        re-applies mandatory logic to determine depot validity.
++
++        Args:
++            tensordict: Input TensorDict containing graph structure and node properties.
++
++        Returns:
++            torch.Tensor: Action mask.
++        """
++        # Get base mask (without mandatory depot logic applied yet)
++        base_mask = ~tensordict["visited"].clone()
++
++        # Mask nodes whose waste exceeds remaining capacity
++        waste = tensordict["waste"]
++        remaining = tensordict["remaining_capacity"].unsqueeze(-1)
++        exceeds_capacity = waste > remaining
++
++        mask = base_mask & ~exceeds_capacity
++
++        # Mandatory routing logic (same as parent but considering capacity)
++        mandatory = tensordict.get("mandatory", None)
++        if mandatory is not None:
++            # Handle dimension mismatch (if mandatory excludes depot)
++            if mandatory.size(-1) == mask.size(-1) - 1:
++                mandatory = torch.cat([torch.zeros_like(mandatory[:, :1], dtype=torch.bool), mandatory], dim=1)
++
++            # Pending mandatory bins: mandatory AND not yet visited AND within capacity
++            pending_mandatory = mandatory & mask
++
++            # Check if any mandatory bins remain (excluding depot at index 0)
++            has_pending_mandatory = pending_mandatory[:, 1:].any(dim=1)
++
++            # Depot is valid only if no pending mandatory bins remain
++            mask[:, 0] = ~has_pending_mandatory
++        else:
++            # No mandatory constraint: depot always valid
++            mask[:, 0] = True
++
++        return mask
 diff --git a/logic/src/envs/tasks/__init__.py b/logic/src/envs/tasks/__init__.py
-index d2fc1966b..fc0d25a99 100644
+index d2fc1966b..a61103867 100644
 --- a/logic/src/envs/tasks/__init__.py
 +++ b/logic/src/envs/tasks/__init__.py
-@@ -10,23 +10,12 @@ Example:
+@@ -4,29 +4,18 @@ Problem definitions sub-package (minimal export).
+ Attributes:
+     BaseProblem: BaseProblem class
+     PTP: PTP class
+-    MVPTP: MVPTP class
++    CPTP: CPTP class
+ 
+ Example:
      >>> from logic.src.envs.tasks import PTP
  """
  
@@ -5640,7 +6086,8 @@ index d2fc1966b..fc0d25a99 100644
 -)
 -
  from .base import BaseProblem
- from .mvptp import MVPTP
+-from .mvptp import MVPTP
++from .cptp import CPTP
  from .ptp import PTP
  
  __all__ = [
@@ -5650,7 +6097,8 @@ index d2fc1966b..fc0d25a99 100644
 -    "BIN_CAPACITY",
 -    "VEHICLE_CAPACITY",
      "PTP",
-     "MVPTP",
+-    "MVPTP",
++    "CPTP",
  ]
 diff --git a/logic/src/envs/tasks/base.py b/logic/src/envs/tasks/base.py
 index 4820f5703..d00705739 100644
@@ -5665,10 +6113,88 @@ index 4820f5703..d00705739 100644
            ``depot``, ``waste`` with shape ``[samples, days, nodes]`` and
            ``max_waste``): every (sample, day) pair becomes one instance and
            fill levels are normalised by ``max_waste``.
+diff --git a/logic/src/envs/tasks/cptp.py b/logic/src/envs/tasks/cptp.py
+new file mode 100644
+index 000000000..cb7938c0d
+--- /dev/null
++++ b/logic/src/envs/tasks/cptp.py
+@@ -0,0 +1,65 @@
++"""cptp.py module.
++
++Attributes:
++    CPTP: Capacitated Profitable Tour Problem task inheriting prize-collection and capacity logic from PTP.
++
++Example:
++    >>> import cptp
++"""
++
++import torch
++
++from logic.src.envs.tasks.ptp import PTP
++
++
++class CPTP(PTP):
++    """
++    Capacitated Profitable Tour Problem.
++    Includes vehicle capacity constraints.
++
++    Attributes:
++        NAME: Environment name identifier.
++    """
++
++    NAME = "cptp"
++
++    @staticmethod
++    def get_costs(dataset, pi, cw_dict, dist_matrix=None):
++        """
++        Compute CPTP costs (same as PTP but checks capacity).
++
++        Args:
++            dataset: Problem data.
++            pi: Tours.
++            cw_dict: Cost weights.
++            dist_matrix: optional.
++
++        Returns:
++            Tuple of (cost, dict, None).
++        """
++        cost, c_dict, _ = PTP.get_costs(dataset, pi, cw_dict, dist_matrix)
++
++        # CPTP specific: Check total capacity PER TRIP
++        capacity = dataset.get("capacity", dataset.get("max_waste", torch.tensor(100.0)))
++        # One value per instance; a scalar (as passed by eval) applies to the whole batch.
++        capacity = torch.as_tensor(capacity, dtype=torch.float32).reshape(-1).expand(pi.size(0))
++
++        # Extract trip waste
++        waste_with_depot = CPTP.get_waste_with_depot(dataset, pi)
++        # For each sequence in pi, calculate cumulative waste and reset at 0
++        w = waste_with_depot.gather(1, pi)
++
++        # Simple loop-based trip check for robustness in tests
++        for b in range(pi.size(0)):
++            cur_trip_waste = 0.0  # Initialize as float to satisfy type checker
++            for i in range(pi.size(1)):
++                node = pi[b, i].item()
++                if node == 0:
++                    cur_trip_waste = 0.0
++                else:
++                    # cur_trip_waste is now consistently float
++                    cur_trip_waste += w[b, i].item()
++                    # Use a small epsilon for float comparison
++                    assert cur_trip_waste <= capacity[b].item() + 1e-6, "Used more than capacity"
++
++        return cost, c_dict, _
 diff --git a/logic/src/envs/tasks/ptp.py b/logic/src/envs/tasks/ptp.py
-index 32de09b0c..67d773832 100644
+index 32de09b0c..8c6f8e16d 100644
 --- a/logic/src/envs/tasks/ptp.py
 +++ b/logic/src/envs/tasks/ptp.py
+@@ -1,5 +1,5 @@
+ """
+-PTP and MVPTP problem definitions.
++PTP and CPTP problem definitions.
+ 
+ Attributes:
+     PTP: Profitable Tour Problem (PTP) definition.
 @@ -22,7 +22,6 @@ Example:
  
  import torch
@@ -6104,6 +6630,28 @@ index 66c7fa7d7..94184ff78 100644
                  - ``search_context``: Updated ``SearchContext``.
 -                - ``multi_day_context``: Rolling horizon state metadata.
          """
+diff --git a/logic/src/models/core/attention_model/model.py b/logic/src/models/core/attention_model/model.py
+index 69bd3f950..c1d0d265f 100644
+--- a/logic/src/models/core/attention_model/model.py
++++ b/logic/src/models/core/attention_model/model.py
+@@ -3,7 +3,7 @@
+ This module provides the implementation of the Attention Model (Kool et al. 2019),
+ a graph-based neural network that uses multi-head attention to constructively
+ solve Vehicle Routing Problems. It supports various problem domains
+-including the PTP and MVPTP.
++including the PTP and CPTP.
+ 
+ Attributes:
+     AttentionModel: The primary constructive neural routing policy.
+@@ -218,7 +218,7 @@ class AttentionModel(DecodingMixin, nn.Module):
+         if is_ptp_problem(self.problem):
+             self.context_embedder = PTPContextEmbedder(self.embed_dim, temporal_horizon=self.temporal_horizon)
+         else:
+-            raise NotImplementedError(f"Problem {self.problem!r} is not included in this export; use ptp or mvptp.")
++            raise NotImplementedError(f"Problem {self.problem!r} is not included in this export; use ptp or cptp.")
+ 
+     @property
+     def is_ptp(self) -> bool:
 diff --git a/logic/src/models/subnets/decoders/common/__init__.py b/logic/src/models/subnets/decoders/common/__init__.py
 index 92ac29d30..7e92aecd1 100644
 --- a/logic/src/models/subnets/decoders/common/__init__.py
@@ -6129,6 +6677,372 @@ index 92ac29d30..7e92aecd1 100644
 -    "select_action",
 -    "select_action_log_prob",
  ]
+diff --git a/logic/src/models/subnets/embeddings/__init__.py b/logic/src/models/subnets/embeddings/__init__.py
+index 96c1e3e8b..1e1cbdb4e 100644
+--- a/logic/src/models/subnets/embeddings/__init__.py
++++ b/logic/src/models/subnets/embeddings/__init__.py
+@@ -18,20 +18,20 @@ from typing import Any, Dict
+ 
+ from torch import nn
+ 
+-from logic.src.models.subnets.embeddings.mvptp import MVPTPInitEmbedding
++from logic.src.models.subnets.embeddings.cptp import CPTPInitEmbedding
+ from logic.src.models.subnets.embeddings.ptp import PTPInitEmbedding
+ 
+ from .context import (
+     CONTEXT_EMBEDDING_REGISTRY,
+     ContextEmbedder,
+-    MVPTPContextEmbedder,
++    CPTPContextEmbedder,
+     PTPContextEmbedder,
+ )
+ 
+ # Embedding registry
+ INIT_EMBEDDING_REGISTRY: Dict[str, Any] = {
+     "ptp": PTPInitEmbedding,
+-    "mvptp": MVPTPInitEmbedding,
++    "cptp": CPTPInitEmbedding,
+ }
+ 
+ def get_init_embedding(env_name: str, embed_dim: int = 128) -> nn.Module:
+@@ -56,10 +56,10 @@ def get_init_embedding(env_name: str, embed_dim: int = 128) -> nn.Module:
+ 
+ __all__: list[str] = [
+     "PTPInitEmbedding",
+-    "MVPTPInitEmbedding",
++    "CPTPInitEmbedding",
+     "ContextEmbedder",
+     "PTPContextEmbedder",
+-    "MVPTPContextEmbedder",
++    "CPTPContextEmbedder",
+     "INIT_EMBEDDING_REGISTRY",
+     "get_init_embedding",
+     "CONTEXT_EMBEDDING_REGISTRY",
+diff --git a/logic/src/models/subnets/embeddings/context/__init__.py b/logic/src/models/subnets/embeddings/context/__init__.py
+index 1f121cc2c..eeba63005 100644
+--- a/logic/src/models/subnets/embeddings/context/__init__.py
++++ b/logic/src/models/subnets/embeddings/context/__init__.py
+@@ -17,17 +17,17 @@ from __future__ import annotations
+ from typing import Any, Dict
+ 
+ from .base import ContextEmbedder
+-from .mvptp import MVPTPContextEmbedder
++from .cptp import CPTPContextEmbedder
+ from .ptp import PTPContextEmbedder
+ 
+ CONTEXT_EMBEDDING_REGISTRY: Dict[str, Any] = {
+     "ptp": PTPContextEmbedder,
+-    "mvptp": MVPTPContextEmbedder,
++    "cptp": CPTPContextEmbedder,
+ }
+ 
+ __all__: list[str] = [
+     "ContextEmbedder",
+     "PTPContextEmbedder",
+-    "MVPTPContextEmbedder",
++    "CPTPContextEmbedder",
+     "CONTEXT_EMBEDDING_REGISTRY",
+ ]
+diff --git a/logic/src/models/subnets/embeddings/context/cptp.py b/logic/src/models/subnets/embeddings/context/cptp.py
+new file mode 100644
+index 000000000..369ff5b31
+--- /dev/null
++++ b/logic/src/models/subnets/embeddings/context/cptp.py
+@@ -0,0 +1,226 @@
++"""CPTP-specific context embedding module.
++
++This module provides ``CPTPContextEmbedder``, a capacity-aware extension of
++``PTPContextEmbedder`` for the Capacitated Profitable Tour Problem (CPTP).
++
++While the uncapacitated PTP context uses (unvisited waste, mean travel distance)
++to guide early termination, the CPTP additionally exposes the vehicle's remaining
++capacity so the decoder can learn to stop visiting bins when the vehicle is nearly
++full even if profitable nodes remain.
++
++Attributes:
++    CPTPContextEmbedder: Context embedder for CPTP / orienteering with capacity.
++
++Example:
++    >>> from logic.src.models.subnets.embeddings.context.cptp import CPTPContextEmbedder
++    >>> embedder = CPTPContextEmbedder(embed_dim=128)
++    >>> context = embedder(embeddings, state)   # [B, 1, 128]
++"""
++
++from __future__ import annotations
++
++from typing import Any, Dict
++
++import torch
++from torch import nn
++
++from logic.src.constants.models import CPTP_STEP_CONTEXT_OFFSET, NODE_DIM
++
++from .base import ContextEmbedder
++
++
++class CPTPContextEmbedder(ContextEmbedder):
++    """Context embedder for Capacitated Profitable Tour Problem (CPTP).
++
++    Extends the pure-PTP context with a vehicle remaining-capacity scalar,
++    giving the decoder three dynamic signals per decoding step:
++
++    1. **Unvisited waste sum** — total profit still available on the map.
++    2. **Mean distance to unvisited profitable nodes** — spatial cost signal.
++    3. **Remaining capacity** — hard constraint signal.
++
++    This combination lets the policy learn: "is there still enough space and
++    enough nearby profit to justify continuing the route?"
++
++    Attributes:
++        init_embed (nn.Linear): Projection for non-depot customer features.
++        init_embed_depot (nn.Linear): Projection for depot location.
++        project_step_context (nn.Linear): Projection for fused step context.
++    """
++
++    def __init__(self, embed_dim: int, node_dim: int = NODE_DIM, temporal_horizon: int = 0) -> None:
++        """Initializes CPTPContextEmbedder.
++
++        Args:
++            embed_dim: Target embedding dimensionality.
++            node_dim: Base dimensionality of node features.
++            temporal_horizon: Size of temporal feature window (if any).
++        """
++        super().__init__(embed_dim, node_dim, temporal_horizon)
++        input_dim = node_dim
++        if temporal_horizon > 0:
++            input_dim += temporal_horizon
++
++        self.init_embed = nn.Linear(input_dim, embed_dim)
++        self.init_embed_depot = nn.Linear(2, embed_dim)
++
++        # Step context projection: embed_dim + CPTP_STEP_CONTEXT_OFFSET → embed_dim
++        self.project_step_context = nn.Linear(self.step_context_dim, embed_dim)
++
++    def init_node_embeddings(self, nodes: Dict[str, Any], temporal_features: bool = True) -> torch.Tensor:
++        """Initializes node embeddings from locations and problem-specific features.
++
++        Delegates to the same logic used by ``PTPContextEmbedder``: projects
++        ``[locs, waste]`` per customer node and the depot separately.
++
++        Args:
++            nodes: Input dictionary containing ``locs``, ``waste``, ``depot``.
++            temporal_features: Whether to include temporal features if horizon > 0.
++
++        Returns:
++            torch.Tensor: Initial node embeddings including the depot.
++        """
++        locs = nodes.get("locs") if "locs" in nodes.keys() else nodes.get("loc")
++        if locs is None:
++            return torch.zeros(
++                1,
++                1,
++                self.embed_dim,
++                device=nodes.device if hasattr(nodes, "device") else None,
++            )
++
++        waste = nodes.get("waste")
++        if waste is None:
++            waste = torch.zeros(locs.shape[0], locs.shape[1], 1, device=locs.device) if self.node_dim > 2 else None
++
++        node_features: list[torch.Tensor] = [locs]
++        if waste is not None:
++            if waste.dim() == 2:
++                waste = waste.unsqueeze(-1)
++            node_features.append(waste)
++
++        if self.temporal_horizon > 0 and temporal_features:
++            temp_feat = nodes.get("temporal_features")
++            if temp_feat is not None:
++                node_features.append(temp_feat)
++            else:
++                node_features.append(torch.zeros(locs.size(0), locs.size(1), self.temporal_horizon, device=locs.device))
++
++        node_features_tensor = torch.cat(node_features, -1)
++
++        depot = nodes["depot"]
++        waste_raw = nodes.get("waste")
++        is_concatenated = waste_raw is not None and (
++            locs.size(1) == waste_raw.size(1) + 1
++            or (locs.size(1) == waste_raw.size(1) and torch.allclose(locs[..., 0, :], depot, atol=1e-4))
++        )
++
++        if is_concatenated:
++            return self.init_embed(node_features_tensor)  # type: ignore[misc]
++
++        return torch.cat(
++            (
++                self.init_embed_depot(depot)[:, None, :],
++                self.init_embed(node_features_tensor),  # type: ignore[misc]
++            ),
++            dim=1,
++        )
++
++    def _step_context(self, embeddings: torch.Tensor, state: Any) -> torch.Tensor:
++        """Extracts current CPTP step context.
++
++        Fuses four signals at each decoding step:
++        1. Current node embedding.
++        2. Sum of waste on unvisited nodes (remaining profit signal).
++        3. Mean Euclidean distance to unvisited profitable nodes (travel cost signal).
++        4. Remaining vehicle capacity (hard constraint signal).
++
++        Tensor shapes:
++            current_node_embed  : [B, 1, embed_dim]
++            unvisited_waste_sum : [B, 1, 1]
++            mean_dist_unvisited : [B, 1, 1]
++            remaining_capacity  : [B, 1, 1]
++            combined            : [B, 1, embed_dim + 3]  → [B, 1, embed_dim]
++
++        TensorDict keys consumed:
++            ``waste``               : [B, N]    — waste per node (depot = 0)
++            ``visited``             : [B, N]    — visit flags
++            ``locs``                : [B, N, 2] — Euclidean coordinates
++            ``remaining_capacity``  : [B]       — residual vehicle capacity
++            ``current_load``        : [B]       — alternative capacity key
++            ``current_node``        : [B] or [B, 1]
++
++        Args:
++            embeddings: Current node embeddings, shape (batch, num_nodes, embed_dim).
++            state: Current environment state (TensorDict or compatible).
++
++        Returns:
++            torch.Tensor: Projected step context embedding, shape (batch, 1, embed_dim).
++        """
++        batch_size = embeddings.size(0)
++        current_node = state.get_current_node() if hasattr(state, "get_current_node") else state.get("current_node")
++
++        if current_node.dim() > 1:
++            current_node = current_node.squeeze(-1)  # [B]
++
++        # 1. Current node embedding [B, 1, embed_dim]
++        current_node_embed = embeddings.gather(
++            1,
++            current_node.unsqueeze(1).unsqueeze(-1).expand(batch_size, 1, self.embed_dim),
++        )
++
++        # Gather shared state tensors
++        td = getattr(state, "td", state)
++        waste = td.get("waste", None)  # [B, N] or [B, N-1]
++        visited = td.get("visited", None)  # [B, N]
++        locs = td.get("locs", None)  # [B, N, 2]
++
++        # Align waste to visited shape (depot column may be absent)
++        if waste is not None and visited is not None and waste.shape[-1] < visited.shape[-1]:
++            waste = torch.cat([torch.zeros(batch_size, 1, device=embeddings.device), waste], dim=-1)
++
++        # 2. Mean of waste on unvisited nodes [B, 1, 1]
++        if waste is not None and visited is not None:
++            unvisited_mask = (~visited).float()
++            num_nodes = waste.shape[-1]
++            unvisited_waste_mean = (waste * unvisited_mask).sum(dim=-1, keepdim=True).unsqueeze(1) / num_nodes
++        else:
++            unvisited_waste_mean = torch.zeros(batch_size, 1, 1, device=embeddings.device)
++
++        # 3. Mean Euclidean distance from current node to unvisited profitable nodes [B, 1, 1]
++        if locs is not None and visited is not None and waste is not None:
++            cur_idx = current_node.unsqueeze(-1).unsqueeze(-1).expand(batch_size, 1, 2)
++            cur_pos = locs.gather(1, cur_idx).squeeze(1)  # [B, 2]
++            dist_to_all = torch.norm(locs - cur_pos.unsqueeze(1), dim=-1)  # [B, N]
++            unvisited_profitable = (~visited) & (waste > 0)
++            unvisited_profitable[:, 0] = False  # exclude depot
++            count = unvisited_profitable.float().sum(dim=-1, keepdim=True).clamp(min=1.0)
++            mean_dist = (dist_to_all * unvisited_profitable.float()).sum(dim=-1, keepdim=True) / count
++            mean_dist_unvisited = mean_dist.unsqueeze(1)  # [B, 1, 1]
++        else:
++            mean_dist_unvisited = torch.zeros(batch_size, 1, 1, device=embeddings.device)
++
++        # 4. Remaining vehicle capacity [B, 1, 1]
++        remaining_cap = td.get("remaining_capacity", None)
++        if remaining_cap is None:
++            remaining_cap = td.get(
++                "current_load",
++                torch.zeros(batch_size, device=embeddings.device),
++            )
++        if remaining_cap.dim() == 1:
++            remaining_cap = remaining_cap.unsqueeze(-1)
++        if remaining_cap.dim() == 2:
++            remaining_cap = remaining_cap.unsqueeze(1)  # [B, 1, 1]
++
++        # Concat all signals and project [B, 1, embed_dim+3] → [B, 1, embed_dim]
++        combined = torch.cat([current_node_embed, unvisited_waste_mean, mean_dist_unvisited, remaining_cap], dim=-1)
++        return self.project_step_context(combined)
++
++    @property
++    def step_context_dim(self) -> int:
++        """Gets the dimensionality of the fused CPTP step context.
++
++        Returns:
++            int: ``embed_dim + CPTP_STEP_CONTEXT_OFFSET`` (= embed_dim + 3).
++        """
++        return self.embed_dim + CPTP_STEP_CONTEXT_OFFSET
+diff --git a/logic/src/models/subnets/embeddings/cptp.py b/logic/src/models/subnets/embeddings/cptp.py
+new file mode 100644
+index 000000000..9c9667b55
+--- /dev/null
++++ b/logic/src/models/subnets/embeddings/cptp.py
+@@ -0,0 +1,62 @@
++"""CPTP Embedding module.
++
++This module provides the CPTPInitEmbedding layer, which encodes locations
++and waste levels for Capacitated Vehicle Routing Problems with Profits.
++
++Attributes:
++    CPTPInitEmbedding: Initial feature encoder for CPTP instances.
++
++Example:
++    >>> from logic.src.models.subnets.embeddings.cptp import CPTPInitEmbedding
++    >>> embed = CPTPInitEmbedding(embed_dim=128)
++    >>> h = embed(td)
++"""
++
++from __future__ import annotations
++
++import torch
++from tensordict import TensorDict
++from torch import nn
++
++
++class CPTPInitEmbedding(nn.Module):
++    """Initial embedding for CPTP (Capacitated Profitable Tour Problem).
++
++    Projects static node features (coordinates and waste/demand quantities)
++    into a joint embedding space.
++
++    Attributes:
++        node_embed (nn.Linear): Linear projection for customer node features.
++        depot_embed (nn.Linear): Specialized linear projection for depot location.
++    """
++
++    def __init__(self, embed_dim: int = 128) -> None:
++        """Initializes CPTPInitEmbedding.
++
++        Args:
++            embed_dim: Internal embedding dimensionality.
++        """
++        super().__init__()
++        # Node features: x, y, waste
++        self.node_embed = nn.Linear(3, embed_dim)
++        self.depot_embed = nn.Linear(2, embed_dim)
++
++    def forward(self, td: TensorDict) -> torch.Tensor:
++        """Encodes CPTP features into initial node embeddings.
++
++        Args:
++            td: TensorDict containing instance metadata ('locs', 'waste', 'depot').
++
++        Returns:
++            torch.Tensor: Initial node embeddings of shape (batch, num_nodes, dim).
++        """
++        locs = td["locs"]
++        waste = td.get("waste", torch.zeros(td.batch_size[0], locs.size(1), device=td.device))
++
++        node_features = torch.cat([locs, waste.unsqueeze(-1)], dim=-1)
++        embeddings = self.node_embed(node_features)
++
++        depot_emb = self.depot_embed(td["depot"])
++        embeddings[:, 0] = depot_emb
++
++        return embeddings
 diff --git a/logic/src/models/subnets/encoders/gat/__init__.py b/logic/src/models/subnets/encoders/gat/__init__.py
 index 49b076563..3250ba008 100644
 --- a/logic/src/models/subnets/encoders/gat/__init__.py
@@ -10368,7 +11282,7 @@ index 085435820..5c54e02c6 100644
 -    from logic.src.pipeline.simulations.wsmart_bin_analysis import GridBase
 +    from logic.src.pipeline.simulations.wsmart_bin_analysis.grid import GridBase
 diff --git a/logic/src/utils/functions/__init__.py b/logic/src/utils/functions/__init__.py
-index 5c1c64738..466d6f6a9 100644
+index 5c1c64738..e569b1cfa 100644
 --- a/logic/src/utils/functions/__init__.py
 +++ b/logic/src/utils/functions/__init__.py
 @@ -2,8 +2,6 @@
@@ -10380,7 +11294,7 @@ index 5c1c64738..466d6f6a9 100644
      get_path_until_string: Truncates a path up to a specific directory component.
      is_ptp_problem: Check if the problem is a Profitable Tour Problem (PTP) variant.
      is_tsp_problem: Check if the problem is a Traveling Salesperson Problem (TSP) variant.
-@@ -14,15 +12,12 @@ Attributes:
+@@ -14,21 +12,18 @@ Attributes:
      do_batch_rep: Replicates a variable n times along the batch dimension.
  
  Example:
@@ -10396,6 +11310,13 @@ index 5c1c64738..466d6f6a9 100644
      >>> # Path manipulation
      >>> path = "/home/user/project/src/module.py"
      >>> get_path_until_string(path, "src")
+     '/home/user/project/src'
+     >>> # Problem type checking
+-    >>> is_ptp_problem("mvptp")
++    >>> is_ptp_problem("cptp")
+     True
+     >>> is_tsp_problem("tsp")
+     True
 @@ -46,8 +41,6 @@ Example:
      torch.Size([6])
  """
@@ -10414,6 +11335,28 @@ index 5c1c64738..466d6f6a9 100644
      "get_path_until_string",
      "compute_in_batches",
      "do_batch_rep",
+diff --git a/logic/src/utils/functions/problem.py b/logic/src/utils/functions/problem.py
+index 082c821e1..c0ca9f0f7 100644
+--- a/logic/src/utils/functions/problem.py
++++ b/logic/src/utils/functions/problem.py
+@@ -7,7 +7,7 @@ Attributes:
+ 
+ Example:
+     >>> from logic.src.utils.functions import is_ptp_problem, is_tsp_problem
+-    >>> is_ptp_problem("mvptp")
++    >>> is_ptp_problem("cptp")
+     True
+     >>> is_tsp_problem("tsp")
+     True
+@@ -28,7 +28,7 @@ def is_ptp_problem(problem: Any) -> bool:
+     """
+     name = problem if isinstance(problem, str) else getattr(problem, "NAME", "")
+     name = name.lower()
+-    # ptp and mvptp both contain "ptp".
++    # ptp and cptp both contain "ptp".
+     return "ptp" in name or "pcvrp" in name
+ 
+ 
 diff --git a/logic/src/utils/graph/__init__.py b/logic/src/utils/graph/__init__.py
 index ef8d838a8..b2bd0cde7 100644
 --- a/logic/src/utils/graph/__init__.py
@@ -10484,6 +11427,37 @@ index 2c11df3bc..1e2429ade 100644
      "load_problem",
 -    "parse_softmax_temperature",
  ]
+diff --git a/logic/src/utils/model/problem_factory.py b/logic/src/utils/model/problem_factory.py
+index a789b9a60..9c85e0c56 100644
+--- a/logic/src/utils/model/problem_factory.py
++++ b/logic/src/utils/model/problem_factory.py
+@@ -15,7 +15,7 @@ from __future__ import annotations
+ 
+ from typing import Any, Type
+ 
+-from logic.src.envs.problems import MVPTP, PTP
++from logic.src.envs.problems import CPTP, PTP
+ 
+ 
+ def load_problem(name: str) -> Type[Any]:
+@@ -23,7 +23,7 @@ def load_problem(name: str) -> Type[Any]:
+     Factory function to load a problem class by name.
+ 
+     Args:
+-        name: The problem name (e.g., 'ptp', 'mvptp').
++        name: The problem name (e.g., 'ptp', 'cptp').
+ 
+     Returns:
+         The problem class.
+@@ -33,7 +33,7 @@ def load_problem(name: str) -> Type[Any]:
+     """
+     problem = {
+         "ptp": PTP,
+-        "mvptp": MVPTP,
++        "cptp": CPTP,
+     }.get(name)
+     assert problem is not None, "Currently unsupported problem: {}!".format(name)
+     return problem
 diff --git a/logic/src/utils/tasks/__init__.py b/logic/src/utils/tasks/__init__.py
 index c06adbc3e..fb12350e3 100644
 --- a/logic/src/utils/tasks/__init__.py
