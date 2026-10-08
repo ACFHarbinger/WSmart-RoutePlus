@@ -31,5 +31,5 @@ run-sim:
 paper force="false":
     uv run python logic/gen/gen_paper_latex.py {{ if force == "true" { "--force" } else { "" } }}
     cd assets/papers/Simulation-Framework-for-the-MPVRP-with-Profits-in-Smart-Waste-Collection && latexmk -pdf -shell-escape -interaction=nonstopmode paper.tex
-    cd assets/papers/Combinatorial-Optimization-Analysis && latexmk -pdf -shell-escape -interaction=nonstopmode main.tex
+    cd assets/papers/A-Comprehensive-Combinatorial-Optimization-Algorithms-Analysis && latexmk -pdf -shell-escape -interaction=nonstopmode main.tex
 
