@@ -34,6 +34,25 @@ from logic.src.utils.tasks.simulation_utils import (
 )
 
 
+def pool_start_method(sim: Any, device: Any) -> str:
+    """
+    Start method of the simulation pool: 'spawn' for CUDA to avoid initialization errors, or 'fork'
+    for CPU if requested.
+
+    It must be set before any Manager, Lock or Value is created: an object made in one context
+    cannot be shared with workers started in another.
+
+    Args:
+        sim: Simulation configuration.
+        device: Torch device.
+
+    Returns:
+        The multiprocessing start method name.
+    """
+    is_cuda = "cuda" in str(device)
+    return "spawn" if is_cuda else ("fork" if getattr(sim, "no_cuda", False) else "spawn")
+
+
 def run_parallel_simulations(
     cfg: Config,
     device: Any,
@@ -77,6 +96,7 @@ def run_parallel_simulations(
     """
     sim = cfg.sim
     udef.update_lock_wait_time(n_cores)
+    mp.set_start_method(pool_start_method(sim, device), force=True)
     counter = mp.Value("i", 0)
 
     # Prepare task arguments
@@ -85,11 +105,8 @@ def run_parallel_simulations(
     # Print execution info
     print_execution_info(task_count, n_cores)
 
-    # Create multiprocessing pool
-    # Use 'spawn' for CUDA to avoid initialization errors, or 'fork' for CPU if requested
-    is_cuda = "cuda" in str(device)
-    start_method = "spawn" if is_cuda else ("fork" if getattr(sim, "no_cuda", False) else "spawn")
-    mp.set_start_method(start_method, force=True)
+    # Create multiprocessing pool (same start method as the Manager and the counter above)
+    mp.set_start_method(pool_start_method(sim, device), force=True)
     from logic.src.pipeline.simulations.simulator import init_single_sim_worker
 
     pool = Pool(

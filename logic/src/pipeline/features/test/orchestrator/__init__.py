@@ -34,7 +34,10 @@ from logic.src.configs import Config
 from logic.src.pipeline.callbacks import PolicySummaryCallback
 
 # Local imports from modular components
-from logic.src.pipeline.features.test.orchestrator.parallel_runner import run_parallel_simulations
+from logic.src.pipeline.features.test.orchestrator.parallel_runner import (
+    pool_start_method,
+    run_parallel_simulations,
+)
 from logic.src.pipeline.simulations.repository import load_indices
 from logic.src.pipeline.simulations.simulator import (
     display_log_metrics,
@@ -199,6 +202,7 @@ def simulator_testing(cfg: Config, data_size: int, device: Any) -> None:  # noqa
 
     signal.signal(signal.SIGINT, _shutdown_handler)
 
+    mp.set_start_method(pool_start_method(sim, device), force=True)
     manager = mp.Manager()
     try:
         lock = manager.Lock()
