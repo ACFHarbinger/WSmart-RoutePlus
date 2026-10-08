@@ -3,7 +3,7 @@
 This module provides the implementation of the Attention Model (Kool et al. 2019),
 a graph-based neural network that uses multi-head attention to constructively
 solve Vehicle Routing Problems. It supports various problem domains
-including TSP, PTP, MVPTP and TCMVPTP.
+including TSP, PTP, CPTP and TCPTP.
 
 Attributes:
     AttentionModel: The primary constructive neural routing policy.

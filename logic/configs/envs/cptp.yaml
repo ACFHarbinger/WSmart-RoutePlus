@@ -1,5 +1,5 @@
 # =============================================================================
-# Multi-Vehicle Profitable Tour Problem (MVPTP) Configuration
+# Capacitated Profitable Tour Problem (CPTP) Configuration
 # =============================================================================
 # Waste-collecting routing WITH vehicle capacity constraints.
 #
@@ -13,7 +13,7 @@
 # Benchmark: Standard OR problem for testing capacity-aware algorithms.
 # =============================================================================
 
-name: "mvptp" # Environment identifier
+name: "cptp" # Environment identifier
 mean: 0.0
 variance: 0.0
 

@@ -1,7 +1,7 @@
-"""Unit tests for Time-Constrained Multi-Vehicle Profitable Tour Problem (TCMVPTP) simulation support.
+"""Unit tests for Time-constrained Capacitated Profitable Tour Problem (TCPTP) simulation support.
 
 Validates:
-- Validation logic accepting 'tcmvptp' as a supported problem type.
+- Validation logic accepting 'tcptp' as a supported problem type.
 - Route splitting with dual constraints (vehicle capacity + working-shift time budget).
 - CollectAction computing exact operational time spent (driving + service).
 - SimulationDayContext and get_daily_results logging time_spent additively.
@@ -27,14 +27,14 @@ pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 class TestCTOPValidation:
-    """Tests that TCMVPTP is a registered and validated problem variant."""
+    """Tests that TCPTP is a registered and validated problem variant."""
 
-    def test_tcmvptp_in_problems(self):
-        assert "tcmvptp" in PROBLEMS
+    def test_tcptp_in_problems(self):
+        assert "tcptp" in PROBLEMS
 
-    def test_validate_sim_config_accepts_tcmvptp(self):
+    def test_validate_sim_config_accepts_tcptp(self):
         cfg = Config()
-        cfg.sim.problem = "tcmvptp"
+        cfg.sim.problem = "tcptp"
         cfg.sim.graph.n_days = 5
         cfg.sim.graph.n_samples = 1
         cfg.sim.graph.area = "figueiradafoz"
@@ -42,7 +42,7 @@ class TestCTOPValidation:
         cfg.sim.cpu_cores = 1
 
         validate_sim_config(cfg)
-        assert cfg.sim.problem == "tcmvptp"
+        assert cfg.sim.problem == "tcptp"
 
     def test_validate_sim_config_rejects_unknown_problem(self):
         cfg = Config()
@@ -117,7 +117,7 @@ class TestCTOPRouteSplitting:
 
 
 class TestCTOPCollectionAction:
-    """Tests operational time spent calculation and TCMVPTP constraint validation in CollectAction."""
+    """Tests operational time spent calculation and TCPTP constraint validation in CollectAction."""
 
     def test_time_spent_calculation(self):
         bins = MagicMock()
@@ -138,7 +138,7 @@ class TestCTOPCollectionAction:
             "avg_speed_kmh": 30.0,  # 45 / 30 = 1.5 h driving
             "service_time_h": 0.25,  # 2 bins * 0.25 = 0.5 h service
             "shift_hours": 7.0,
-            "problem": "tcmvptp",
+            "problem": "tcptp",
         }
 
         action = CollectAction()
@@ -148,7 +148,7 @@ class TestCTOPCollectionAction:
         assert context["ncol"] == 2
         assert context["time_spent"] == pytest.approx(1.5 + 0.5, rel=1e-5)
 
-    def test_tcmvptp_shift_violation_raises(self):
+    def test_tcptp_shift_violation_raises(self):
         bins = MagicMock()
         bins.collect.return_value = ([1], 50.0, 1, 100.0)
 
@@ -166,16 +166,16 @@ class TestCTOPCollectionAction:
             "avg_speed_kmh": 20.0,  # 200 / 20 = 10.0 h driving
             "service_time_h": 0.5,  # 1 bin * 0.5 = 0.5 h -> total 10.5 h
             "shift_hours": 8.0,  # budget 8.0 h < 10.5 h
-            "problem": "tcmvptp",
+            "problem": "tcptp",
         }
 
         action = CollectAction()
-        with pytest.raises(AssertionError, match="TCMVPTP violation: trip duration"):
+        with pytest.raises(AssertionError, match="TCPTP violation: trip duration"):
             action.execute(context)
 
 
 class TestCTOPLoggingAndContext:
-    """Tests daily logging and context tracking of TCMVPTP metrics."""
+    """Tests daily logging and context tracking of TCPTP metrics."""
 
     def test_logging_preserves_intermediate_depot_returns(self):
         result = get_daily_results(
@@ -213,7 +213,7 @@ class TestCTOPLoggingAndContext:
         assert res["time_spent"] == 2.35
 
     def test_simulation_day_context_defaults(self):
-        ctx = SimulationDayContext(problem="tcmvptp", shift_hours=7.5, avg_speed_kmh=40.0)
-        assert ctx.problem == "tcmvptp"
+        ctx = SimulationDayContext(problem="tcptp", shift_hours=7.5, avg_speed_kmh=40.0)
+        assert ctx.problem == "tcptp"
         assert ctx.shift_hours == 7.5
         assert ctx.avg_speed_kmh == 40.0

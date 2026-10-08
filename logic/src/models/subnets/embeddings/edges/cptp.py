@@ -1,14 +1,14 @@
-"""MVPTP Edge embedding module.
+"""CPTP Edge embedding module.
 
-This module provides the MVPTPEdgeEmbedding layer, which constructs graph
+This module provides the CPTPEdgeEmbedding layer, which constructs graph
 representations for Capacitated VRPs, preserving critical depot connectivity.
 
 Attributes:
-    MVPTPEdgeEmbedding: Edge encoder with guaranteed depot-to-customer links.
+    CPTPEdgeEmbedding: Edge encoder with guaranteed depot-to-customer links.
 
 Example:
-    >>> from logic.src.models.subnets.embeddings.edges.mvptp import MVPTPEdgeEmbedding
-    >>> embedder = MVPTPEdgeEmbedding(embed_dim=128)
+    >>> from logic.src.models.subnets.embeddings.edges.cptp import CPTPEdgeEmbedding
+    >>> embedder = CPTPEdgeEmbedding(embed_dim=128)
     >>> pyg_batch = embedder(td, init_embeddings)
 """
 
@@ -25,7 +25,7 @@ from logic.src.utils.actions import get_full_graph_edge_index, sparsify_graph
 from .base import EdgeEmbedding
 
 
-class MVPTPEdgeEmbedding(EdgeEmbedding):
+class CPTPEdgeEmbedding(EdgeEmbedding):
     """Edge embedding for capacitated VRP problems.
 
     Extends the base EdgeEmbedding logic to ensure all customer nodes maintain

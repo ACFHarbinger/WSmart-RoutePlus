@@ -218,7 +218,7 @@ class VRPInstanceBuilder:
         return self
 
     def set_problem_name(self, problem_name: str):
-        """Sets the name of the problem (e.g., 'ptp', 'mvptp').
+        """Sets the name of the problem (e.g., 'ptp', 'cptp').
 
         Args:
             problem_name: Description of problem_name.

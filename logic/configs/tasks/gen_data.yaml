@@ -24,9 +24,9 @@ start: 0 # Starting epoch/index (usually 0)
 # =============================================================================
 data:
   # Problem Configuration
-  problem: "ptp" # Problem type. Options: ptp, mvptp, tcmvptp
-  # TCMVPTP: python main.py gen_data data.problem=tcmvptp
-  # Instances carry PTP/MVPTP fields plus shift_hours/avg_speed_kmh/service_time_h.
+  problem: "ptp" # Problem type. Options: ptp, cptp, tcptp
+  # TCPTP: python main.py gen_data data.problem=tcptp
+  # Instances carry PTP/CPTP fields plus shift_hours/avg_speed_kmh/service_time_h.
   data_distributions: ["gamma3"] # Waste generation distributions to use.
   penalty_factor: 3.0
   overwrite: true

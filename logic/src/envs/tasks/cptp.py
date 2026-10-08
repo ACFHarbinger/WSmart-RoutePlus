@@ -1,10 +1,10 @@
-"""mvptp.py module.
+"""cptp.py module.
 
 Attributes:
-    MVPTP: Multi-Vehicle Profitable Tour Problem task inheriting prize-collection and capacity logic from PTP.
+    CPTP: Capacitated Profitable Tour Problem task inheriting prize-collection and capacity logic from PTP.
 
 Example:
-    >>> import mvptp
+    >>> import cptp
 """
 
 import torch
@@ -12,21 +12,21 @@ import torch
 from logic.src.envs.tasks.ptp import PTP
 
 
-class MVPTP(PTP):
+class CPTP(PTP):
     """
-    Multi-Vehicle Profitable Tour Problem.
+    Capacitated Profitable Tour Problem.
     Includes vehicle capacity constraints.
 
     Attributes:
         NAME: Environment name identifier.
     """
 
-    NAME = "mvptp"
+    NAME = "cptp"
 
     @staticmethod
     def get_costs(dataset, pi, cw_dict, dist_matrix=None):
         """
-        Compute MVPTP costs (same as PTP but checks capacity).
+        Compute CPTP costs (same as PTP but checks capacity).
 
         Args:
             dataset: Problem data.
@@ -39,13 +39,13 @@ class MVPTP(PTP):
         """
         cost, c_dict, _ = PTP.get_costs(dataset, pi, cw_dict, dist_matrix)
 
-        # MVPTP specific: Check total capacity PER TRIP
+        # CPTP specific: Check total capacity PER TRIP
         capacity = dataset.get("capacity", dataset.get("max_waste", torch.tensor(100.0)))
         # One value per instance; a scalar (as passed by eval) applies to the whole batch.
         capacity = torch.as_tensor(capacity, dtype=torch.float32).reshape(-1).expand(pi.size(0))
 
         # Extract trip waste
-        waste_with_depot = MVPTP.get_waste_with_depot(dataset, pi)
+        waste_with_depot = CPTP.get_waste_with_depot(dataset, pi)
         # For each sequence in pi, calculate cumulative waste and reset at 0
         w = waste_with_depot.gather(1, pi)
 

@@ -16,9 +16,9 @@ from __future__ import annotations
 from typing import Any, Type
 
 from logic.src.envs.problems import (
-    MVPTP,
+    CPTP,
     PTP,
-    TCMVPTP,
+    TCPTP,
 )
 
 
@@ -27,7 +27,7 @@ def load_problem(name: str) -> Type[Any]:
     Factory function to load a problem class by name.
 
     Args:
-        name: The problem name (e.g., 'ptp', 'mvptp').
+        name: The problem name (e.g., 'ptp', 'cptp').
 
     Returns:
         The problem class.
@@ -37,8 +37,8 @@ def load_problem(name: str) -> Type[Any]:
     """
     problem = {
         "ptp": PTP,
-        "mvptp": MVPTP,
-        "tcmvptp": TCMVPTP,
+        "cptp": CPTP,
+        "tcptp": TCPTP,
     }.get(name)
     assert problem is not None, "Currently unsupported problem: {}!".format(name)
     return problem

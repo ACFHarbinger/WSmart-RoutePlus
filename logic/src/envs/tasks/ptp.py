@@ -1,5 +1,5 @@
 """
-PTP and MVPTP problem definitions.
+PTP and CPTP problem definitions.
 
 Attributes:
     PTP: Profitable Tour Problem (PTP) definition.

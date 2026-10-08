@@ -1,14 +1,14 @@
-"""MVPTP Embedding module.
+"""CPTP Embedding module.
 
-This module provides the MVPTPInitEmbedding layer, which encodes locations
+This module provides the CPTPInitEmbedding layer, which encodes locations
 and waste levels for Capacitated Vehicle Routing Problems with Profits.
 
 Attributes:
-    MVPTPInitEmbedding: Initial feature encoder for MVPTP instances.
+    CPTPInitEmbedding: Initial feature encoder for CPTP instances.
 
 Example:
-    >>> from logic.src.models.subnets.embeddings.mvptp import MVPTPInitEmbedding
-    >>> embed = MVPTPInitEmbedding(embed_dim=128)
+    >>> from logic.src.models.subnets.embeddings.cptp import CPTPInitEmbedding
+    >>> embed = CPTPInitEmbedding(embed_dim=128)
     >>> h = embed(td)
 """
 
@@ -21,8 +21,8 @@ from tensordict import TensorDict
 from torch import nn
 
 
-class MVPTPInitEmbedding(nn.Module):
-    """Initial embedding for MVPTP (Multi-Vehicle Profitable Tour Problem).
+class CPTPInitEmbedding(nn.Module):
+    """Initial embedding for CPTP (Capacitated Profitable Tour Problem).
 
     Projects static node features (coordinates and waste/demand quantities)
     into a joint embedding space.
@@ -35,7 +35,7 @@ class MVPTPInitEmbedding(nn.Module):
     def __init__(
         self, embed_dim: int = 128, node_dim: int = 3, temporal_horizon: int = 0, legacy_depot_projection: bool = False
     ) -> None:
-        """Initializes MVPTPInitEmbedding.
+        """Initializes CPTPInitEmbedding.
 
         Args:
             embed_dim: Internal embedding dimensionality.
@@ -53,7 +53,7 @@ class MVPTPInitEmbedding(nn.Module):
         self.depot_embed = nn.Linear(2, embed_dim)
 
     def forward(self, td: Union[TensorDict, Dict[str, Any]], temporal_features: bool = True) -> torch.Tensor:
-        """Encodes MVPTP features into initial node embeddings.
+        """Encodes CPTP features into initial node embeddings.
 
         Args:
             td: TensorDict or dict containing instance metadata ('locs', 'waste', 'depot').

@@ -1,12 +1,12 @@
 """
-TCMVPTP problem generator.
+TCPTP problem generator.
 
 Attributes:
-    TCMVPTPGenerator: TCMVPTPGenerator class.
+    TCPTPGenerator: TCPTPGenerator class.
 
 Example:
-    >>> from logic.src.envs.generators import TCMVPTPGenerator
-    >>> generator = TCMVPTPGenerator(num_loc=50)
+    >>> from logic.src.envs.generators import TCPTPGenerator
+    >>> generator = TCPTPGenerator(num_loc=50)
     >>> instance = generator.generate()
 """
 
@@ -21,13 +21,13 @@ from logic.src.envs.generators.ptp import PTPGenerator
 from logic.src.envs.temporal import get_default_temporal_params
 
 
-class TCMVPTPGenerator(PTPGenerator):
+class TCPTPGenerator(PTPGenerator):
     """
-    Generator for Time-Constrained Multi-Vehicle Profitable Tour Problem (TCMVPTP) instances.
+    Generator for Time-constrained Capacitated Profitable Tour Problem (TCPTP) instances.
 
     Same node/waste layout as PTP (reused as-is: locations, depot, waste
     values), plus the per-instance temporal resource fields consumed by
-    ``TCMVPTPEnv``/``TCMVPTP``: the working-shift time budget, average driving
+    ``TCPTPEnv``/``TCPTP``: the working-shift time budget, average driving
     speed, and per-bin service time. Defaults describe one driver's 7h
     shift; pass ``shift_hours``/``avg_speed_kmh``/``service_time_h`` to
     override them.
@@ -47,7 +47,7 @@ class TCMVPTPGenerator(PTPGenerator):
         **kwargs,
     ) -> None:
         """
-        Initialize TCMVPTP generator.
+        Initialize TCPTP generator.
 
         Args:
             args: Positional arguments forwarded to PTPGenerator.
@@ -63,7 +63,7 @@ class TCMVPTPGenerator(PTPGenerator):
         self.service_time_h = service_time_h if service_time_h is not None else default_service_time_h
 
     def _generate(self, batch_size: tuple[int, ...]) -> TensorDict:
-        """Generate TCMVPTP instances: PTP fields plus temporal resource fields.
+        """Generate TCPTP instances: PTP fields plus temporal resource fields.
 
         Args:
             batch_size: Batch size.

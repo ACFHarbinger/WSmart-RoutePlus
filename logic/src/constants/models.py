@@ -94,9 +94,9 @@ DEPOT_DIM: int = 2  # 2D Euclidean coordinates (x, y) in [0, 1] range
 # Used in: ptp.py context embeddings for profit-aware early-termination decoding
 PTP_STEP_CONTEXT_OFFSET: int = 2  # 2 extra dims: remaining profit + mean travel cost signal
 
-# MVPTP context: [unvisited_waste_sum, mean_dist_to_unvisited_nodes, remaining_capacity]
-# Used in: mvptp.py context embeddings — extends PTP with hard capacity constraint signal
-MVPTP_STEP_CONTEXT_OFFSET: int = 3  # 3 extra dims: profit signal + distance signal + capacity
+# CPTP context: [unvisited_waste_sum, mean_dist_to_unvisited_nodes, remaining_capacity]
+# Used in: cptp.py context embeddings — extends PTP with hard capacity constraint signal
+CPTP_STEP_CONTEXT_OFFSET: int = 3  # 3 extra dims: profit signal + distance signal + capacity
 
 # Temporal Defaults
 # ------------------

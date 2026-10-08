@@ -5,7 +5,7 @@ Attributes:
     ATSP: ATSP class
     BaseProblem: BaseProblem class
     CVRP: CVRP class
-    MVPTP: MVPTP class
+    CPTP: CPTP class
     IRP: IRP class
     OP: OP class
     PCTSP: PCTSP class
@@ -13,7 +13,7 @@ Attributes:
     SPCTSP: SPCTSP class
     ThOP: ThOP class
     TSP: TSP class
-    TCMVPTP: TCMVPTP class
+    TCPTP: TCPTP class
     PTP: PTP class
 
 Example:
@@ -32,13 +32,13 @@ from .atsp import ATSP
 from .base import BaseProblem
 from .cvrp import CVRP
 from .irp import IRP
-from .mvptp import MVPTP
+from .cptp import CPTP
 from .op import OP
 from .pctsp import PCTSP
 from .pdp import PDP
 from .ptp import PTP
 from .spctsp import SPCTSP
-from .tcmvptp import TCMVPTP
+from .tcptp import TCPTP
 from .thop import ThOP
 from .tsp import TSP
 
@@ -49,7 +49,7 @@ __all__ = [
     "BIN_CAPACITY",
     "VEHICLE_CAPACITY",
     "PTP",
-    "MVPTP",
+    "CPTP",
     "IRP",
     "ATSP",
     "TSP",
@@ -59,5 +59,5 @@ __all__ = [
     "SPCTSP",
     "PDP",
     "ThOP",
-    "TCMVPTP",
+    "TCPTP",
 ]

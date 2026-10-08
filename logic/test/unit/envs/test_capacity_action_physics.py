@@ -1,15 +1,15 @@
-"""Capacity and action-shape physics for MVPTP."""
+"""Capacity and action-shape physics for CPTP."""
 
 import pytest
 import torch
-from logic.src.envs.routing.mvptp import MVPTPEnv
+from logic.src.envs.routing.cptp import CPTPEnv
 from tensordict import TensorDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
-def test_mvptp_remaining_capacity_never_goes_negative() -> None:
-    env = MVPTPEnv(generator_params={"num_loc": 2}, check_env_specs=False)
+def test_cptp_remaining_capacity_never_goes_negative() -> None:
+    env = CPTPEnv(generator_params={"num_loc": 2}, check_env_specs=False)
     td = TensorDict(
         {
             "locs": torch.tensor([[[0.0, 0.0], [1.0, 0.0]]]),

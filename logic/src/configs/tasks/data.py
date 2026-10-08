@@ -36,7 +36,7 @@ class DataConfig:
         name: Name to identify dataset. For training data, this will result in .td files.
         filename: Filename of the dataset to create (ignores datadir).
         data_dir: Create datasets in data.
-        problem: Problem type selection. Should be 'ptp', 'mvptp', 'tcmvptp'
+        problem: Problem type selection. Should be 'ptp', 'cptp', 'tcptp'
             or 'all'.
         mu: Mean of Gaussian noise (implies Gaussian noise generation if set).
         sigma: Variance of Gaussian noise.

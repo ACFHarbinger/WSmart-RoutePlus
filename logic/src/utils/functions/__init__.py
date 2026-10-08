@@ -28,7 +28,7 @@ Example:
     >>> get_path_until_string(path, "src")
     '/home/user/project/src'
     >>> # Problem type checking
-    >>> is_ptp_problem("mvptp")
+    >>> is_ptp_problem("cptp")
     True
     >>> is_tsp_problem("tsp")
     True

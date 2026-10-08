@@ -4,7 +4,7 @@
 # =============================================================================
 # Configuration for evaluating trained models on test datasets.
 # Used by: python main.py eval
-# TCMVPTP:    python main.py eval envs@eval.env=tcmvptp eval.env.name=tcmvptp eval.problem=tcmvptp
+# TCPTP:    python main.py eval envs@eval.env=tcptp eval.env.name=tcptp eval.problem=tcptp
 #          eval.env.name and eval.problem below are hardcoded and must stay
 #          in lockstep with the composed /envs@eval.env group.
 #
@@ -35,7 +35,7 @@ eval:
   # =============================================================================
   env:
     name: "ptp" # Problem type to evaluate. Should match training environment.
-    # TCMVPTP: set to "tcmvptp" together with /envs@eval.env=tcmvptp and eval.problem=tcmvptp.
+    # TCPTP: set to "tcptp" together with /envs@eval.env=tcptp and eval.problem=tcptp.
 
   # Decoding Strategy
   decoding:
@@ -78,7 +78,7 @@ eval:
     # Can specify multiple for batch evaluation.
 
   # Problem Configuration
-  problem: "ptp" # Problem type (should match env.name). Options include tcmvptp.
+  problem: "ptp" # Problem type (should match env.name). Options include tcptp.
 
   # =============================================================================
   # Execution Flags

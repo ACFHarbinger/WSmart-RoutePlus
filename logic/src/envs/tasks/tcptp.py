@@ -1,12 +1,12 @@
-"""tcmvptp.py module.
+"""tcptp.py module.
 
 Attributes:
-    TCMVPTP: Time-Constrained Multi-Vehicle Profitable Tour Problem task, inheriting MVPTP's
+    TCPTP: Time-constrained Capacitated Profitable Tour Problem task, inheriting CPTP's
         prize-collection objective and per-trip capacity check, and adding
         a per-trip time-budget feasibility check on top.
 
 Example:
-    >>> import tcmvptp
+    >>> import tcptp
 """
 
 from __future__ import annotations
@@ -15,16 +15,16 @@ from typing import Any, Dict, Optional, Tuple
 
 import torch
 
-from logic.src.envs.tasks.mvptp import MVPTP
+from logic.src.envs.tasks.cptp import CPTP
 from logic.src.envs.temporal import get_default_temporal_params
 
 
-class TCMVPTP(MVPTP):
+class TCPTP(CPTP):
     """
-    Time-Constrained Multi-Vehicle Profitable Tour Problem (TCMVPTP).
+    Time-constrained Capacitated Profitable Tour Problem (TCPTP).
 
-    Same objective and capacity constraint as MVPTP (maximize
-    waste-collection profit, subject to a per-trip vehicle capacity). TCMVPTP
+    Same objective and capacity constraint as CPTP (maximize
+    waste-collection profit, subject to a per-trip vehicle capacity). TCPTP
     adds a second, independent per-trip constraint on top: each trip
     (depot-to-depot leg of the tour) is also bounded by a working-shift
     *time* budget -- travel time plus per-bin service time -- from
@@ -33,13 +33,13 @@ class TCMVPTP(MVPTP):
 
     "Team" here is one vehicle making multiple trips within a period, not a
     concurrent fleet; see the module docstring of
-    ``logic.src.envs.routing.tcmvptp`` for the future true-fleet variant.
+    ``logic.src.envs.routing.tcptp`` for the future true-fleet variant.
 
     Attributes:
         NAME: Environment name identifier.
     """
 
-    NAME = "tcmvptp"
+    NAME = "tcptp"
 
     @staticmethod
     def get_costs(
@@ -49,7 +49,7 @@ class TCMVPTP(MVPTP):
         dist_matrix: Optional[torch.Tensor] = None,
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor], None]:
         """
-        Compute TCMVPTP costs: MVPTP's objective + capacity check, plus a
+        Compute TCPTP costs: CPTP's objective + capacity check, plus a
         per-trip time check.
 
         Args:
@@ -63,14 +63,14 @@ class TCMVPTP(MVPTP):
 
         Returns:
             Tuple of (negative_profit, cost_dict, None). cost_dict adds a
-            "time" key (total time spent, hours) to MVPTP's
+            "time" key (total time spent, hours) to CPTP's
             {"length", "waste", "overflows", "total"}.
 
         Raises:
             AssertionError: If any trip exceeds its vehicle capacity
-                (from MVPTP.get_costs) or its shift time budget.
+                (from CPTP.get_costs) or its shift time budget.
         """
-        cost, c_dict, aux = MVPTP.get_costs(dataset, pi, cw_dict, dist_matrix)
+        cost, c_dict, aux = CPTP.get_costs(dataset, pi, cw_dict, dist_matrix)
 
         if pi.size(-1) == 0:
             c_dict["time"] = torch.zeros_like(cost)
@@ -88,7 +88,7 @@ class TCMVPTP(MVPTP):
         assert loc_val is not None
         loc_with_depot = torch.cat((depot[:, None, :], loc_val), 1)
 
-        # Coordinates in tour order, matching MVPTP's precedent of a
+        # Coordinates in tour order, matching CPTP's precedent of a
         # simple loop-based per-trip check for correctness/readability over
         # a fully vectorized (and harder to verify) version.  The feasibility
         # calculation must use the same road matrix as the objective whenever
@@ -133,7 +133,7 @@ class TCMVPTP(MVPTP):
                     # clock resets for the next outbound leg.
                     cur_trip_time += travel_time
                     assert cur_trip_time <= shift_hours[b].item() + 1e-6, (
-                        f"TCMVPTP: trip time {cur_trip_time:.4f}h exceeds shift budget "
+                        f"TCPTP: trip time {cur_trip_time:.4f}h exceeds shift budget "
                         f"{shift_hours[b].item():.4f}h at batch {b}, step {i}"
                     )
                     time_spent[b] += travel_time
@@ -143,7 +143,7 @@ class TCMVPTP(MVPTP):
                     time_spent[b] += step_time
                     cur_trip_time += step_time
                     assert cur_trip_time <= shift_hours[b].item() + 1e-6, (
-                        f"TCMVPTP: trip time {cur_trip_time:.4f}h exceeds shift budget "
+                        f"TCPTP: trip time {cur_trip_time:.4f}h exceeds shift budget "
                         f"{shift_hours[b].item():.4f}h at batch {b}, step {i}"
                     )
                 prev_coord = node_coord
@@ -151,7 +151,7 @@ class TCMVPTP(MVPTP):
                 final_return_time = leg_time(b, int(pi[b, -1].item()), 0, prev_coord, depot[b])
                 cur_trip_time += final_return_time
                 assert cur_trip_time <= shift_hours[b].item() + 1e-6, (
-                    f"TCMVPTP: trip time {cur_trip_time:.4f}h exceeds shift budget "
+                    f"TCPTP: trip time {cur_trip_time:.4f}h exceeds shift budget "
                     f"{shift_hours[b].item():.4f}h on final return at batch {b}"
                 )
                 time_spent[b] += final_return_time

@@ -4,7 +4,7 @@
 # =============================================================================
 # Configuration for meta-RL training across multiple problem distributions.
 # Used by: python main.py mrl_train
-# TCMVPTP:    python main.py meta_train envs@meta_rl.env=tcmvptp meta_rl.env.name=tcmvptp
+# TCPTP:    python main.py meta_train envs@meta_rl.env=tcptp meta_rl.env.name=tcptp
 #          meta_rl.env.name below is hardcoded and must stay in lockstep
 #          with the composed /envs@meta_rl.env group.
 #
@@ -35,7 +35,7 @@ meta_rl:
   # Environment
   # =============================================================================
   env:
-    name: "ptp" # Problem type for meta-training. TCMVPTP: set to "tcmvptp" with envs@meta_rl.env=tcmvptp.
+    name: "ptp" # Problem type for meta-training. TCPTP: set to "tcptp" with envs@meta_rl.env=tcptp.
     distance_method: "gmaps" # Distance calculation method
 
   # Meta-Learning Strategy

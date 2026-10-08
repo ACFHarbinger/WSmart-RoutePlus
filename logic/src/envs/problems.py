@@ -8,8 +8,8 @@ Attributes:
     BIN_CAPACITY: Bin capacity
     VEHICLE_CAPACITY: Vehicle capacity
     PTP: Capacitated VRP
-    MVPTP: Capacitated VRP with waste
-    TCMVPTP: PTP with both per-trip capacity and time constraints
+    CPTP: Capacitated VRP with waste
+    TCPTP: PTP with both per-trip capacity and time constraints
 
 Example:
     from logic.src.envs.problems import PTP
@@ -24,9 +24,9 @@ from logic.src.constants.tasks import (
     VEHICLE_CAPACITY,
 )
 from logic.src.envs.tasks.base import BaseProblem
-from logic.src.envs.tasks.mvptp import MVPTP
+from logic.src.envs.tasks.cptp import CPTP
 from logic.src.envs.tasks.ptp import PTP
-from logic.src.envs.tasks.tcmvptp import TCMVPTP
+from logic.src.envs.tasks.tcptp import TCPTP
 
 __all__ = [
     "BaseProblem",
@@ -35,6 +35,6 @@ __all__ = [
     "BIN_CAPACITY",
     "VEHICLE_CAPACITY",
     "PTP",
-    "MVPTP",
-    "TCMVPTP",
+    "CPTP",
+    "TCPTP",
 ]

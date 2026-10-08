@@ -113,9 +113,9 @@ class CollectAction(SimulationAction):
         service_time_total_h = sum(node != 0 for node in tour) * service_time_h
         time_spent_h = driving_time_h + service_time_total_h
 
-        # 4. If problem is TCMVPTP, validate per-trip constraints (capacity + shift duration)
+        # 4. If problem is TCPTP, validate per-trip constraints (capacity + shift duration)
         problem = str(context.get("problem", "ptp") or "ptp").lower()
-        if problem == "tcmvptp" and tour and len(tour) > 2:
+        if problem == "tcptp" and tour and len(tour) > 2:
             cur_trip_time = 0.0
             cur_load = 0.0
             cur_trip_bins = 0
@@ -126,10 +126,10 @@ class CollectAction(SimulationAction):
                     trip_time = cur_trip_time + (cur_trip_bins * service_time_h)
                     if trip_time > shift_hours + 1e-6:
                         raise AssertionError(
-                            f"TCMVPTP violation: trip duration {trip_time:.4f}h exceeds shift budget {shift_hours:.4f}h"
+                            f"TCPTP violation: trip duration {trip_time:.4f}h exceeds shift budget {shift_hours:.4f}h"
                         )
                     if cur_load > context.get("vehicle_capacity", float("inf")) + 1e-6:
-                        raise AssertionError("TCMVPTP violation: trip exceeds vehicle capacity")
+                        raise AssertionError("TCPTP violation: trip exceeds vehicle capacity")
                     cur_trip_time = 0.0
                     cur_load = 0.0
                     cur_trip_bins = 0
@@ -139,7 +139,7 @@ class CollectAction(SimulationAction):
                         cur_load += float(bins.c[node - 1])
                 prev_node = node
 
-        # Per-trip payload telemetry, for every problem type. TCMVPTP rejects violations above;
+        # Per-trip payload telemetry, for every problem type. TCPTP rejects violations above;
         # for the PTP variants the simulator still executes the tour, so record and warn.
         capacity_pct = float(context.get("vehicle_capacity", float("inf")) or float("inf"))
         try:
@@ -150,7 +150,7 @@ class CollectAction(SimulationAction):
         context["trip_loads_pct"] = loads_pct
         context["trip_loads_kg"] = loads_kg
         context["capacity_violations"] = violations
-        if violations and problem != "tcmvptp":
+        if violations and problem != "tcptp":
             logger.warning(
                 "%d trip(s) exceed the vehicle capacity (%.1f %% of a bin): loads %s",
                 violations,

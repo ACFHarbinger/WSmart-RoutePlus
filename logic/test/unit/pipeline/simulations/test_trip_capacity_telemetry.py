@@ -25,7 +25,7 @@ def test_capacity_report_counts_over_capacity_trips_and_converts_to_kg():
 
 
 def test_over_capacity_trips_are_split_on_the_true_fill():
-    """Owner decision 2026-09-27: non-TCMVPTP routes that overflow the vehicle are split, not executed as is."""
+    """Owner decision 2026-09-27: non-TCPTP routes that overflow the vehicle are split, not executed as is."""
     from logic.src.pipeline.simulations.actions.time_constraints import TimeConstraintAction
 
     bins = SimpleNamespace(real_c=np.array([80.0, 50.0, 30.0, 90.0]), c=np.zeros(4), volume=2.5, density=20.0)

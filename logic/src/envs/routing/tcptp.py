@@ -1,27 +1,27 @@
 """
-TCMVPTP Environment implementation.
+TCPTP Environment implementation.
 
-Time-Constrained Multi-Vehicle Profitable Tour Problem: single-vehicle, multi-trip variant of
-MVPTP where each trip is bounded by *both* constraints simultaneously --
-MVPTP's per-trip vehicle capacity, unchanged, plus a per-trip time budget
+Time-constrained Capacitated Profitable Tour Problem: single-vehicle, multi-trip variant of
+CPTP where each trip is bounded by *both* constraints simultaneously --
+CPTP's per-trip vehicle capacity, unchanged, plus a per-trip time budget
 (travel + service time). Neither constraint replaces the other. The vehicle
 may return to the depot and start a new trip with both budgets freshly
 reset; the episode ends once it is back at the depot with nothing more
 reachable even at full budget.
 
 "Team" here means multiple *trips* by one vehicle within a period, not a
-concurrent multi-vehicle fleet. A true multi-vehicle fleet TCMVPTP is tracked
+concurrent multi-vehicle fleet. A true multi-vehicle fleet TCPTP is tracked
 as future work (docs/moon/roadmaps/new_features.md §E.8) for the
 heterogeneous-waste-stream scenario (e.g. one vehicle per waste type
 running simultaneously) -- that needs a fleet dimension this class does
 not have.
 
 Attributes:
-    TCMVPTPEnv: TCMVPTP environment.
+    TCPTPEnv: TCPTP environment.
 
 Example:
     >>> from logic.src.envs.routing import get_env
-    >>> env = get_env("tcmvptp", num_loc=50)
+    >>> env = get_env("tcptp", num_loc=50)
     >>> td = env.reset()
 """
 
@@ -33,24 +33,24 @@ import torch
 from tensordict import TensorDict
 
 from logic.src.envs.base.ops import OpsMixin
-from logic.src.envs.generators.tcmvptp import TCMVPTPGenerator
-from logic.src.envs.routing.mvptp import MVPTPEnv
+from logic.src.envs.generators.tcptp import TCPTPGenerator
+from logic.src.envs.routing.cptp import CPTPEnv
 from logic.src.envs.temporal import get_default_temporal_params
 
 
-class TCMVPTPEnv(MVPTPEnv):
+class TCPTPEnv(CPTPEnv):
     """
-    Time-Constrained Multi-Vehicle Profitable Tour Problem: MVPTP plus a per-trip time budget.
+    Time-constrained Capacitated Profitable Tour Problem: CPTP plus a per-trip time budget.
 
     Attributes:
         name: Name of the environment.
     """
 
-    name: str = "tcmvptp"
+    name: str = "tcptp"
 
     def __init__(
         self,
-        generator: Optional[TCMVPTPGenerator] = None,
+        generator: Optional[TCPTPGenerator] = None,
         generator_params: Optional[dict] = None,
         waste_weight: float = 1.0,
         cost_weight: float = 1.0,
@@ -60,22 +60,22 @@ class TCMVPTPEnv(MVPTPEnv):
         **kwargs,
     ) -> None:
         """
-        Initialize TCMVPTPEnv with a TCMVPTPGenerator (not PTPEnv's plain
+        Initialize TCPTPEnv with a TCPTPGenerator (not PTPEnv's plain
         PTPGenerator).
 
-        Without this override, `get_env("tcmvptp", shift_hours=6.5, ...)`
+        Without this override, `get_env("tcptp", shift_hours=6.5, ...)`
         silently builds a PTPGenerator via PTPEnv.__init__: the
         shift_hours/avg_speed_kmh/service_time_h kwargs are swallowed by
-        PTPGenerator's **kwargs, never reach a TCMVPTPGenerator, and
+        PTPGenerator's **kwargs, never reach a TCPTPGenerator, and
         _reset_instance falls back to get_default_temporal_params()
         regardless of what was requested. Confirmed live (Hydra config
         overrides for these three keys were composing correctly but never
         actually reaching the environment) before this fix.
 
         Args:
-            generator: Pre-built TCMVPTPGenerator instance. Built from
+            generator: Pre-built TCPTPGenerator instance. Built from
                 generator_params if not supplied.
-            generator_params: Keyword arguments forwarded to TCMVPTPGenerator
+            generator_params: Keyword arguments forwarded to TCPTPGenerator
                 when generator is None.
             waste_weight: Weight for waste collection in reward.
             cost_weight: Weight for travel cost in reward.
@@ -86,8 +86,8 @@ class TCMVPTPEnv(MVPTPEnv):
         """
         generator_params = generator_params or kwargs
         if generator is None:
-            generator = TCMVPTPGenerator(**generator_params, device=device)
-        # Pass the already-built TCMVPTPGenerator through: PTPEnv.__init__'s
+            generator = TCPTPGenerator(**generator_params, device=device)
+        # Pass the already-built TCPTPGenerator through: PTPEnv.__init__'s
         # own `if generator is None` branch is then skipped, so it never
         # constructs the wrong (plain PTPGenerator) type.
         super().__init__(
@@ -102,13 +102,13 @@ class TCMVPTPEnv(MVPTPEnv):
         )
 
     def _reset_instance(self, tensordict: TensorDict) -> TensorDict:
-        """Initialize TCMVPTP state with per-trip time-budget tracking.
+        """Initialize TCPTP state with per-trip time-budget tracking.
 
         Args:
             tensordict: Input TensorDict containing graph structure and node properties.
 
         Returns:
-            TensorDict: Initialized TCMVPTP state with temporal tracking fields.
+            TensorDict: Initialized TCPTP state with temporal tracking fields.
         """
         is_resuming = "visited" in tensordict.keys()
         tensordict = super()._reset_instance(tensordict)
@@ -160,11 +160,11 @@ class TCMVPTPEnv(MVPTPEnv):
         """Execute action with per-trip time-budget tracking.
 
         Reads the per-step travel distance from the ``tour_length`` delta
-        produced by MVPTPEnv/PTPEnv/OpsMixin's own step (so this honours a
+        produced by CPTPEnv/PTPEnv/OpsMixin's own step (so this honours a
         road distance matrix ``dm`` when present, exactly like every other
         distance consumer in the mixin) rather than recomputing distance
         from raw coordinates. That same ``super()`` call also applies
-        MVPTP's capacity tracking, so both constraints update together.
+        CPTP's capacity tracking, so both constraints update together.
 
         Args:
             tensordict: Input TensorDict containing action and state.
@@ -205,14 +205,14 @@ class TCMVPTPEnv(MVPTPEnv):
     def _get_action_mask(self, tensordict: TensorDict) -> torch.Tensor:
         """
         Mask nodes unreachable within the remaining per-trip time budget,
-        layered on top of MVPTP's own capacity-aware mask.
+        layered on top of CPTP's own capacity-aware mask.
 
-        A customer is valid only if MVPTP's mask allows it (not visited,
+        A customer is valid only if CPTP's mask allows it (not visited,
         has waste, mandatory logic, fits remaining capacity) AND the
         vehicle can reach it, service it, and still get back to the depot
         before ``remaining_time`` runs out -- the same reach-and-return
         structure as OPEnv's distance budget, translated to time. Both the
-        capacity and time constraints must hold; this only narrows MVPTP's
+        capacity and time constraints must hold; this only narrows CPTP's
         mask further, never widens it.
 
         Args:
@@ -257,7 +257,7 @@ class TCMVPTPEnv(MVPTPEnv):
         Episode ends at the depot once no customer remains reachable even
         with a freshly reset trip budget -- i.e. true exhaustion, not just
         "chose to return this time" (which would end a single-trip PTP but
-        must not end a multi-trip TCMVPTP episode early).
+        must not end a multi-trip TCPTP episode early).
 
         Args:
             tensordict: Input TensorDict containing graph structure and node properties.

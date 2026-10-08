@@ -14,7 +14,7 @@ Attributes:
     PCTSPGenerator: Generator for Prize-Collecting TSP instances.
     PDPGenerator: Generator for Pickup and Delivery Problem instances.
     ThOPGenerator: Generator for Thief Orienteering Problem instances.
-    TCMVPTPGenerator: Generator for Time-Constrained Multi-Vehicle Profitable Tour Problem instances.
+    TCPTPGenerator: Generator for Time-constrained Capacitated Profitable Tour Problem instances.
     RL4COEnvBase: Abstract base class for all routing environments.
     ImprovementEnvBase: Base class for improvement-based routing environments.
     ENV_REGISTRY: Mapping of problem name strings to their environment classes.
@@ -38,20 +38,20 @@ from logic.src.envs.generators import (
     PCTSPGenerator,
     PDPGenerator,
     PTPGenerator,
-    TCMVPTPGenerator,
+    TCPTPGenerator,
     ThOPGenerator,
     get_generator,
 )
 from logic.src.envs.routing.atsp import ATSPEnv
 from logic.src.envs.routing.cvrp import CVRPEnv
 from logic.src.envs.routing.irp import IRPEnv
-from logic.src.envs.routing.mvptp import MVPTPEnv
+from logic.src.envs.routing.cptp import CPTPEnv
 from logic.src.envs.routing.op import OPEnv
 from logic.src.envs.routing.pctsp import PCTSPEnv
 from logic.src.envs.routing.pdp import PDPEnv
 from logic.src.envs.routing.ptp import PTPEnv
 from logic.src.envs.routing.spctsp import SPCTSPEnv
-from logic.src.envs.routing.tcmvptp import TCMVPTPEnv
+from logic.src.envs.routing.tcptp import TCPTPEnv
 from logic.src.envs.routing.thop import ThOPEnv
 from logic.src.envs.routing.tsp import TSPEnv
 from logic.src.envs.tsp_kopt import TSPkoptEnv
@@ -59,7 +59,7 @@ from logic.src.envs.tsp_kopt import TSPkoptEnv
 # Environment registry
 ENV_REGISTRY = {
     "ptp": PTPEnv,
-    "mvptp": MVPTPEnv,
+    "cptp": CPTPEnv,
     "tsp": TSPEnv,
     "tsp_kopt": TSPkoptEnv,
     "thop": ThOPEnv,
@@ -70,7 +70,7 @@ ENV_REGISTRY = {
     "pctsp": PCTSPEnv,
     "spctsp": SPCTSPEnv,
     "pdp": PDPEnv,
-    "tcmvptp": TCMVPTPEnv,
+    "tcptp": TCPTPEnv,
 }
 
 
@@ -79,7 +79,7 @@ def get_env(name: str, **kwargs) -> RL4COEnvBase:
     Factory function to get environment by name.
 
     Args:
-        name: Environment name (ptp, mvptp, tcmvptp, irp, atsp, cvrp, op, etc.)
+        name: Environment name (ptp, cptp, tcptp, irp, atsp, cvrp, op, etc.)
         kwargs: Environment configuration parameters.
 
     Returns:
@@ -108,12 +108,12 @@ __all__ = [
     "PCTSPGenerator",
     "PDPGenerator",
     "ThOPGenerator",
-    "TCMVPTPGenerator",
+    "TCPTPGenerator",
     "get_generator",
     "GENERATOR_REGISTRY",
     # Environments
     "PTPEnv",
-    "MVPTPEnv",
+    "CPTPEnv",
     "TSPEnv",
     "TSPkoptEnv",
     "IRPEnv",
@@ -124,7 +124,7 @@ __all__ = [
     "SPCTSPEnv",
     "PDPEnv",
     "ThOPEnv",
-    "TCMVPTPEnv",
+    "TCPTPEnv",
     # Registry
     "ENV_REGISTRY",
     "get_env",

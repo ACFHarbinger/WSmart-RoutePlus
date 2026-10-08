@@ -2,7 +2,7 @@
 
 import pytest
 import torch
-from logic.src.models.subnets.embeddings.context.ptp import PTPContextEmbedder as MVPTPContext
+from logic.src.models.subnets.embeddings.context.ptp import PTPContextEmbedder as CPTPContext
 from logic.src.models.subnets.embeddings.context.ptp import PTPContextEmbedder as VRPPContext
 from logic.src.models.subnets.embeddings.dynamic import DynamicEmbedding
 from logic.src.models.subnets.embeddings.static import StaticEmbedding
@@ -38,7 +38,7 @@ class TestContextEmbedding:
         batch = 2
         nodes = 5
         embed_dim = 16
-        model = MVPTPContext(embed_dim)
+        model = CPTPContext(embed_dim)
 
         embeddings = torch.randn(batch, nodes, embed_dim)
         td = TensorDict({

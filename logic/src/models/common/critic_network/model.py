@@ -88,7 +88,7 @@ class LegacyCriticNetwork(nn.Module):
         self.embed_dim = embed_dim
         self.aggregation_graph = aggregation_graph
 
-        self.is_ptp = problem.NAME in ("ptp", "mvptp", "tcmvptp")
+        self.is_ptp = problem.NAME in ("ptp", "cptp", "tcptp")
 
         assert self.is_ptp, f"Unsupported problem: {problem.NAME}"
 

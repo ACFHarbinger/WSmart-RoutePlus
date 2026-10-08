@@ -18,18 +18,18 @@ from typing import Any, Dict
 
 from .base import ContextEmbedder
 from .generic import GenericContextEmbedder
-from .mvptp import MVPTPContextEmbedder
+from .cptp import CPTPContextEmbedder
 from .ptp import PTPContextEmbedder
 
 CONTEXT_EMBEDDING_REGISTRY: Dict[str, Any] = {
     "ptp": PTPContextEmbedder,
-    "mvptp": MVPTPContextEmbedder,
-    "tcmvptp": MVPTPContextEmbedder,
+    "cptp": CPTPContextEmbedder,
+    "tcptp": CPTPContextEmbedder,
 }
 
 __all__: list[str] = [
     "ContextEmbedder",
-    "MVPTPContextEmbedder",
+    "CPTPContextEmbedder",
     "GenericContextEmbedder",
     "PTPContextEmbedder",
     "CONTEXT_EMBEDDING_REGISTRY",

@@ -31,21 +31,21 @@ from logic.src.envs.generators import (
 from logic.src.envs.routing.atsp import ATSPEnv
 from logic.src.envs.routing.cvrp import CVRPEnv
 from logic.src.envs.routing.irp import IRPEnv
-from logic.src.envs.routing.mvptp import MVPTPEnv
+from logic.src.envs.routing.cptp import CPTPEnv
 from logic.src.envs.routing.op import OPEnv
 from logic.src.envs.routing.pctsp import PCTSPEnv
 from logic.src.envs.routing.pdp import PDPEnv
 from logic.src.envs.routing.ptp import PTPEnv
 from logic.src.envs.routing.spctsp import SPCTSPEnv
-from logic.src.envs.routing.tcmvptp import TCMVPTPEnv
+from logic.src.envs.routing.tcptp import TCPTPEnv
 from logic.src.envs.routing.tsp import TSPEnv
 from logic.src.envs.tsp_kopt import TSPkoptEnv
 
 # Environment registry
 ENV_REGISTRY = {
     "ptp": PTPEnv,
-    "mvptp": MVPTPEnv,
-    "tcmvptp": TCMVPTPEnv,
+    "cptp": CPTPEnv,
+    "tcptp": TCPTPEnv,
     "tsp": TSPEnv,
     "tsp_kopt": TSPkoptEnv,
     "irp": IRPEnv,
@@ -98,8 +98,8 @@ __all__ = [
     "GENERATOR_REGISTRY",
     # Environments
     "PTPEnv",
-    "MVPTPEnv",
-    "TCMVPTPEnv",
+    "CPTPEnv",
+    "TCPTPEnv",
     "TSPEnv",
     "TSPkoptEnv",
     "IRPEnv",

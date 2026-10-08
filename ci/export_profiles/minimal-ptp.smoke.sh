@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Acceptance smoke for the minimal-ptp export (run from the package root, or point PY at a wrapper for the executable).
-# train (tiny AM, empirical fills; PTP and MVPTP, from pre-generated .td datasets) -> test_sim of the four route constructors.
+# train (tiny AM, empirical fills; PTP and CPTP, from pre-generated .td datasets) -> test_sim of the four route constructors.
 # Fails unless every policy log routes (km > 0) on some day.
 #
 # Needs data/simulator and two small training sets, made with the main repository (the package cannot generate data):
-#   python main.py gen_data data.problem=<ptp|mvptp> data.dataset_type=train 'data.data_distributions=[emp]' \
+#   python main.py gen_data data.problem=<ptp|cptp> data.dataset_type=train 'data.data_distributions=[emp]' \
 #     data.filename=<package>/data/datasets/<problem>/<problem>20_emp_smoke_seed42.td \
 #     'data.graphs=[{num_loc: 20, n_samples: 64, area: riomaior, waste_type: plastic, focus_size: 64, focus_graph: graphs_20V_1N_plastic.json, start_day: 0, n_days: 1, vertex_method: mmn, distance_method: file, dm_filepath: "gmaps_distmat_plastic[riomaior].csv"}]'
 set -euo pipefail
@@ -17,8 +17,8 @@ STAMP="$OUT/.stamp"; touch "$STAMP"
 echo "[smoke] output: $OUT"
 
 DS="data/simulator/datasets/riomaior100_emp_wsr30_N1_seed42.npz"; test -f "$DS"; echo "[smoke] dataset: $DS"
-TD_PTP="${TD_PTP:-data/datasets/ptp/ptp20_emp_smoke_seed42.td}"; TD_MVPTP="${TD_MVPTP:-data/datasets/mvptp/mvptp20_emp_smoke_seed42.td}"
-test -f "$TD_PTP" && test -f "$TD_MVPTP"
+TD_PTP="${TD_PTP:-data/datasets/ptp/ptp20_emp_smoke_seed42.td}"; TD_CPTP="${TD_CPTP:-data/datasets/cptp/cptp20_emp_smoke_seed42.td}"
+test -f "$TD_PTP" && test -f "$TD_CPTP"
 
 train() {  # <env> <n_samples> <dataset> <tag>
   "$PY" . train envs@train.env="$1" train.env.name="$1" \
@@ -31,7 +31,7 @@ train() {  # <env> <n_samples> <dataset> <tag>
   test -f "$OUT/am$4/epoch-1.pt"
 }
 train ptp 64 "$TD_PTP" "";         echo "[smoke] train ok"
-train mvptp 32 "$TD_MVPTP" _mvptp; echo "[smoke] train (mvptp) ok"
+train cptp 32 "$TD_CPTP" _cptp; echo "[smoke] train (cptp) ok"
 
 "$PY" . test_sim sim.graph.area=riomaior sim.graph.num_loc=100 sim.graph.n_days="$DAYS" \
   'sim.graph.dm_filepath="gmaps_distmat_plastic[riomaior].csv"' sim.graph.focus_graph=graphs_100V_1N_plastic.json \

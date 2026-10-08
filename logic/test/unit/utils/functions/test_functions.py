@@ -110,10 +110,10 @@ class TestFunctions:
         problem = load_problem("ptp")
         assert problem.NAME == "ptp"
 
-    def test_load_problem_mvptp(self):
-        """Test load_problem for MVPTP."""
-        problem = load_problem("mvptp")
-        assert problem.NAME == "mvptp"
+    def test_load_problem_cptp(self):
+        """Test load_problem for CPTP."""
+        problem = load_problem("cptp")
+        assert problem.NAME == "cptp"
 
     def test_parse_softmax_temperature_float(self):
         """Test parse_softmax_temperature with float."""

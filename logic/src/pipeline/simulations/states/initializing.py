@@ -100,7 +100,7 @@ class InitializingState(SimState):
             self._initialize_new_state(ctx, data, bins_coordinates, depot)
 
         # Rebuild on both new and resumed runs, using the restored node order.
-        if sim.problem.lower() == "tcmvptp" or getattr(graph, "tm_filepath", None):
+        if sim.problem.lower() == "tcptp" or getattr(graph, "tm_filepath", None):
             assert ctx.dist_tup is not None
             ctx.shift_hours, ctx.time_matrix, ctx.service_time_h = load_temporal_params(
                 coords=ctx.coords,

@@ -23,15 +23,15 @@ from .op import OPGenerator
 from .pctsp import PCTSPGenerator
 from .pdp import PDPGenerator
 from .ptp import PTPGenerator
-from .tcmvptp import TCMVPTPGenerator
+from .tcptp import TCPTPGenerator
 from .thop import ThOPGenerator
 from .tsp import TSPGenerator
 
 # Registry of available generators
 GENERATOR_REGISTRY: dict[str, type[Generator]] = {
     "ptp": PTPGenerator,
-    "mvptp": PTPGenerator,  # Same generator, different env handles capacity
-    "tcmvptp": TCMVPTPGenerator,
+    "cptp": PTPGenerator,  # Same generator, different env handles capacity
+    "tcptp": TCPTPGenerator,
     "tsp": TSPGenerator,
     "irp": IRPGenerator,
     "atsp": ATSPGenerator,
@@ -51,7 +51,7 @@ def get_generator(name: str, **kwargs: Any) -> Generator:
 
 
     Args:
-        name: Generator name (e.g., "ptp", "mvptp", "tsp", "irp", "atsp", "cvrp").
+        name: Generator name (e.g., "ptp", "cptp", "tsp", "irp", "atsp", "cvrp").
         kwargs: Generator configuration parameters.
 
     Returns:
@@ -77,7 +77,7 @@ __all__ = [
     "PCTSPGenerator",
     "PDPGenerator",
     "ThOPGenerator",
-    "TCMVPTPGenerator",
+    "TCPTPGenerator",
     "GENERATOR_REGISTRY",
     "get_generator",
 ]

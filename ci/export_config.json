@@ -399,11 +399,11 @@
             "state/ptp.py",
             "ptp.py"
           ],
-          "mvptp": [
-            "context/mvptp.py",
-            "edges/mvptp.py",
-            "mvptp.py",
-            "state/mvptp.py"
+          "cptp": [
+            "context/cptp.py",
+            "edges/cptp.py",
+            "cptp.py",
+            "state/cptp.py"
           ]
         },
         "model_files": {
@@ -6168,7 +6168,7 @@
   "export_profiles": {
     "_comment": "Applied to an export tree by logic/package/apply_export_profile.py (see its docstring). The patch is relative to the tree after remove_paths.",
     "minimal-ptp": {
-      "description": "2026-10-07 package: PTP/MVPTP; tasks train and test_sim only; lookahead, last-minute and service-level selection; PG-CLNS (own operators), SANS, SWC-TCF (Gurobi) and the Neural Agent; Attention Model + REINFORCE trained on pre-generated datasets. No evaluation task, route improvement, acceptance criteria, tracking/provenance, callbacks, POMO baseline, data generation, multi-period context, scenario trees, Euclidean distances, travel-time matrices or non-empirical distributions; only .npz simulation datasets.",
+      "description": "2026-10-07 package: PTP/CPTP; tasks train and test_sim only; lookahead, last-minute and service-level selection; PG-CLNS (own operators), SANS, SWC-TCF (Gurobi) and the Neural Agent; Attention Model + REINFORCE trained on pre-generated datasets. No evaluation task, route improvement, acceptance criteria, tracking/provenance, callbacks, POMO baseline, data generation, multi-period context, scenario trees, Euclidean distances, travel-time matrices or non-empirical distributions; only .npz simulation datasets.",
       "entrypoints": "dunder",
       "engines": "swc_tcf=gurobi",
       "remove_paths": [

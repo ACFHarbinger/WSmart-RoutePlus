@@ -1,12 +1,12 @@
 """
-MVPTP Environment implementation.
+CPTP Environment implementation.
 
 Attributes:
-    MVPTPEnv: MVPTP environment.
+    CPTPEnv: CPTP environment.
 
 Example:
     >>> from logic.src.envs.routing import get_env
-    >>> env = get_env("mvptp", num_loc=50)
+    >>> env = get_env("cptp", num_loc=50)
     >>> td = env.reset()
 """
 
@@ -21,24 +21,24 @@ from logic.src.envs.base.ops import OpsMixin
 from logic.src.envs.routing.ptp import PTPEnv
 
 
-class MVPTPEnv(PTPEnv):
+class CPTPEnv(PTPEnv):
     """
-    Multi-Vehicle Profitable Tour Problem: PTP with vehicle capacity constraints.
+    Capacitated Profitable Tour Problem: PTP with vehicle capacity constraints.
 
     Attributes:
         name: Name of the environment.
     """
 
-    name: str = "mvptp"
+    name: str = "cptp"
 
     def _reset_instance(self, tensordict: TensorDict) -> TensorDict:
-        """Initialize MVPTP state with capacity tracking.
+        """Initialize CPTP state with capacity tracking.
 
         Args:
             tensordict: Input TensorDict containing graph structure and node properties.
 
         Returns:
-            TensorDict: Initialized MVPTP state with capacity tracking.
+            TensorDict: Initialized CPTP state with capacity tracking.
         """
         is_resuming = "visited" in tensordict.keys()
         tensordict = super()._reset_instance(tensordict)
@@ -94,12 +94,12 @@ class MVPTPEnv(PTPEnv):
         # Delegate distance / visited / current_node / tour updates, and
         # PTP's own cumulative collected_waste, to PTPEnv/OpsMixin. Without
         # this call, current_node/visited/tour_length/tour never advance past
-        # their reset values -- the bug this fixes: MVPTPEnv previously
+        # their reset values -- the bug this fixes: CPTPEnv previously
         # replaced the base state transition entirely instead of layering
         # capacity tracking on top of it.
         tensordict = super()._step_instance(tensordict)
 
-        # MVPTP-specific: track *per-trip* remaining capacity, reset at each
+        # CPTP-specific: track *per-trip* remaining capacity, reset at each
         # depot return, separate from PTP's all-time collected_waste total.
         # Clamp so an illegal (unmasked) action cannot drive capacity negative.
         tensordict["remaining_capacity"] = torch.where(

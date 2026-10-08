@@ -26,16 +26,16 @@ class EnvConfig:
     ``curriculum_graphs`` acts as the primary training graph.
 
     Attributes:
-        name: Name of the environment (e.g., 'ptp', 'mvptp', 'tcmvptp').
+        name: Name of the environment (e.g., 'ptp', 'cptp', 'tcptp').
         min_loc: Minimum coordinate value.
         max_loc: Maximum coordinate value.
-        capacity: Vehicle capacity (optional). For ``tcmvptp`` this is the same
-            per-trip vehicle capacity as MVPTP; it is not replaced by the
+        capacity: Vehicle capacity (optional). For ``tcptp`` this is the same
+            per-trip vehicle capacity as CPTP; it is not replaced by the
             time budget.
-        shift_hours: Optional per-trip time budget in hours (``tcmvptp`` only).
+        shift_hours: Optional per-trip time budget in hours (``tcptp`` only).
             ``None`` falls through to ``SimulationRepository.get_temporal_params()``.
-        avg_speed_kmh: Optional average driving speed in km/h (``tcmvptp`` only).
-        service_time_h: Optional per-bin service time in hours (``tcmvptp`` only).
+        avg_speed_kmh: Optional average driving speed in km/h (``tcptp`` only).
+        service_time_h: Optional per-bin service time in hours (``tcptp`` only).
         curriculum_graphs: Ordered list of graphs for sequential curriculum
             learning. The **first entry** is used for single-stage training.
             Each :class:`GraphConfig` entry carries an optional ``reward`` field
@@ -48,7 +48,7 @@ class EnvConfig:
     min_loc: float = 0.0
     max_loc: float = 1.0
     capacity: Optional[float] = None
-    # tcmvptp temporal resource (ignored by every other problem; None = use
+    # tcptp temporal resource (ignored by every other problem; None = use
     # SimulationRepository.get_temporal_params() when the env actually reads them)
     shift_hours: Optional[float] = None
     avg_speed_kmh: Optional[float] = None

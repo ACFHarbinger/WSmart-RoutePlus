@@ -4,7 +4,7 @@
 # =============================================================================
 # Configuration for reinforcement learning training with PyTorch Lightning.
 # Used by: python main.py train
-# TCMVPTP:    python main.py train envs@train.env=tcmvptp
+# TCPTP:    python main.py train envs@train.env=tcptp
 #          (swap the env group; do not only set train.env.name -- that keeps
 #          the previously composed YAML's other fields)
 #

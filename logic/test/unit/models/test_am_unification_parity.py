@@ -352,7 +352,7 @@ def test_nonzero_temporal_horizon_projection_shape():
     assert old_shape == new_shape == (8, 6), f"Shape mismatch: old={old_shape}, new={new_shape}"
 
 
-@pytest.mark.parametrize("env_name", ["ptp", "mvptp"])
+@pytest.mark.parametrize("env_name", ["ptp", "cptp"])
 def test_canonical_policy_preserves_historical_depot_projection(env_name):
     """Checkpoint weights retain the canonical depot projection for every shared embedder."""
     policy = AttentionModelPolicy(env_name=env_name, embed_dim=8, hidden_dim=16, n_heads=2, n_encode_layers=1)
@@ -372,7 +372,7 @@ def test_canonical_policy_preserves_historical_depot_projection(env_name):
     assert torch.equal(actual, expected)
 
 
-@pytest.mark.parametrize("env_name", ["ptp", "mvptp"])
+@pytest.mark.parametrize("env_name", ["ptp", "cptp"])
 @pytest.mark.parametrize("horizon", [0, 3])
 def test_legacy_model_retains_context_embedding_projection(env_name, horizon):
     """Legacy context modules are the oracle, including actual nonzero temporal features."""

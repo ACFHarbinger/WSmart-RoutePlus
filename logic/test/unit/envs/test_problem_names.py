@@ -1,4 +1,4 @@
-"""The problem names are ptp, mvptp and tcmvptp; the former names are rejected (no aliases)."""
+"""The problem names are ptp, cptp and tcptp; the former names are rejected (no aliases)."""
 
 import pytest
 from logic.src.envs import ENV_REGISTRY, get_env
@@ -12,7 +12,7 @@ from logic.src.utils.model.problem_factory import load_problem
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
-NEW = ("ptp", "mvptp", "tcmvptp")
+NEW = ("ptp", "cptp", "tcptp")
 OLD = ("vrpp", "cvrpp", "ctop", "wcvrp", "cwcvrp", "swcvrp", "scwcvrp", "sdwcvrp")
 
 

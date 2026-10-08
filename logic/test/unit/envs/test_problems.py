@@ -1,11 +1,11 @@
-"""Tests for problem environment physics (PTP, MVPTP, etc)."""
+"""Tests for problem environment physics (PTP, CPTP, etc)."""
 
 from unittest.mock import patch
 
 import pytest
 import torch
 from logic.src.envs import problems as problem_module
-from logic.src.envs.problems import MVPTP, PTP
+from logic.src.envs.problems import CPTP, PTP
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
@@ -133,8 +133,8 @@ class TestStatePTP:
         assert not mask[:, 0, 2].item()  # Node 2 unvisited
 
 
-class TestStateMVPTP:
-    """Tests for StateMVPTP logic."""
+class TestStateCPTP:
+    """Tests for StateCPTP logic."""
 
     @pytest.mark.unit
     def test_capacity_mask(self):
@@ -158,7 +158,7 @@ class TestStateMVPTP:
             "bin_capacity": 10.0,
             "vehicle_capacity": 10.0,
         }
-        state = MVPTP.make_state(input_data, profit_vars=profit_vars)
+        state = CPTP.make_state(input_data, profit_vars=profit_vars)
 
         # Visit Node 1
         selected = torch.tensor([1])
@@ -187,7 +187,7 @@ class TestStateMVPTP:
             "bin_capacity": 10.0,
             "vehicle_capacity": 10.0,
         }
-        state = MVPTP.make_state(input_data, profit_vars=profit_vars)
+        state = CPTP.make_state(input_data, profit_vars=profit_vars)
 
         # 0 -> 1 (Load 6)
         state = state.update(torch.tensor([1]))
@@ -203,23 +203,23 @@ class TestStateMVPTP:
         assert state.td["collected_waste"].item() == 12.0
 
 
-class TestMVPTP:
-    """Tests for the MVPTP problem class."""
+class TestCPTP:
+    """Tests for the CPTP problem class."""
 
     @pytest.mark.unit
-    def test_make_state_uses_mvptp_state(self):
-        """Test that MVPTP uses StateMVPTP."""
+    def test_make_state_uses_cptp_state(self):
+        """Test that CPTP uses StateCPTP."""
         problem_module.COST_KM = 1.0
         problem_module.REVENUE_KG = 0.1
         problem_module.BIN_CAPACITY = 100.0
 
         with patch("logic.src.envs.problems.BaseProblem.make_state") as mock_init:
-            MVPTP.make_state(input_data="mock")
+            CPTP.make_state(input_data="mock")
             mock_init.assert_called_once()
 
     @pytest.mark.unit
     def test_get_costs_multitrip(self):
-        """Test MVPTP.get_costs with multi-trip capacity logic."""
+        """Test CPTP.get_costs with multi-trip capacity logic."""
         # Setup: Vehicle Capacity 100.
         problem_module.BIN_CAPACITY = 100.0
         problem_module.VEHICLE_CAPACITY = 100.0
@@ -237,11 +237,11 @@ class TestMVPTP:
         # Scenario 1: Visit 1 -> 2 directly (Total 120) -> Should Fail Assertion
         pi_fail = torch.tensor([[1, 2]])
         with pytest.raises(AssertionError, match="Used more than capacity"):
-            MVPTP.get_costs(dataset, pi_fail, cw_dict=None)
+            CPTP.get_costs(dataset, pi_fail, cw_dict=None)
 
         # Scenario 2: Visit 1 -> 0 (Depot) -> 2 (Total 60 reset 60)
         pi_route = torch.tensor([[1, 0, 2]])
-        cost, c_dict, _ = MVPTP.get_costs(dataset, pi_route, cw_dict=None)
+        cost, c_dict, _ = CPTP.get_costs(dataset, pi_route, cw_dict=None)
 
         # Check Profit
         # Length:
@@ -266,7 +266,7 @@ class TestMVPTP:
             "waste": torch.tensor([[60.0, 60.0]] * 2),
             "capacity": torch.tensor(100.0),
         }
-        cost, _, _ = MVPTP.get_costs(dataset, torch.tensor([[1, 0, 2], [2, 0, 1]]), cw_dict=None)
+        cost, _, _ = CPTP.get_costs(dataset, torch.tensor([[1, 0, 2], [2, 0, 1]]), cw_dict=None)
         assert cost.shape == (2,)
         with pytest.raises(AssertionError, match="Used more than capacity"):
-            MVPTP.get_costs(dataset, torch.tensor([[1, 0, 2], [1, 2, 0]]), cw_dict=None)
+            CPTP.get_costs(dataset, torch.tensor([[1, 0, 2], [1, 2, 0]]), cw_dict=None)

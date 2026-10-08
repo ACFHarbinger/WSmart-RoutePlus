@@ -267,10 +267,10 @@ def _eval_dataset(
     results: List[Dict[str, Any]] = []
     for i, (seq, reward) in enumerate(zip(sequences_best, rewards_best, strict=False)):
         if seq is not None:
-            if model.problem.NAME in ("mvptp", "tcmvptp"):
+            if model.problem.NAME in ("cptp", "tcptp"):
                 # Multi-trip problems: keep the trailing depot-return marker
-                # (tcmvptp is single-vehicle-multi-trip, same shape as mvptp's
-                # per-trip capacity resets -- see logic/src/envs/tasks/tcmvptp.py)
+                # (tcptp is single-vehicle-multi-trip, same shape as cptp's
+                # per-trip capacity resets -- see logic/src/envs/tasks/tcptp.py)
                 seq = np.trim_zeros(seq).tolist() + [0]
             elif model.problem.NAME == "ptp":
                 seq = np.trim_zeros(seq).tolist()
@@ -316,7 +316,7 @@ def _eval_dataset(
             "kg": c_dict["waste"].item() * 100,
             "overflows": c_dict["overflows"].item(),
         }
-        # Additive KPI: only present when the problem tracks it (e.g. tcmvptp's
+        # Additive KPI: only present when the problem tracks it (e.g. tcptp's
         # "time" key from get_costs), so this stays plug-and-play for future
         # problem-specific KPIs without a fixed schema here.
         if "time" in c_dict:
