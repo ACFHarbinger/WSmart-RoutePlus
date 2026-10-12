@@ -174,14 +174,15 @@ def test_infeasible_retry_releases_model(model):
     model.optimize.side_effect = lambda: setattr(model, "Status", gurobi.GRB.INFEASIBLE)
     with pytest.raises(RuntimeError, match="infeasible"):
         solve({"psi": 0.1, "relax_forced_on_infeasible": True})
-    assert model.optimize.call_count == 2
-    model.dispose.assert_called_once()
+    # tight tolerance, then a fresh default-tolerance model that relaxes the forced set once
+    assert model.optimize.call_count == 3
+    assert model.dispose.call_count == 2
 
 
 def test_infeasible_without_relaxation_solves_once(model):
-    # The original model has no retry: an infeasible forced set is reported at once.
+    # Without relaxation, the tight-tolerance verdict is retried once at the default tolerance, then reported.
     model.optimize.side_effect = lambda: setattr(model, "Status", gurobi.GRB.INFEASIBLE)
     with pytest.raises(RuntimeError, match="infeasible"):
         solve({"psi": 0.1})
-    assert model.optimize.call_count == 1
-    model.dispose.assert_called_once()
+    assert model.optimize.call_count == 2
+    assert model.dispose.call_count == 2

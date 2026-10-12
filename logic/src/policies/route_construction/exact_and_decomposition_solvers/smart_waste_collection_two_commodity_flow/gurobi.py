@@ -17,6 +17,8 @@ Everything that is not in those sources is optional and off by default:
 - ``link_depot_arcs``: ``x[0, j] <= g[j]``.
 - ``max_arc_distance_km``: drop arcs longer than this.
 - ``warm_start``: Clarke-Wright MIP starts and a no-incumbent fallback (#41).
+- ``asymmetric``: directed arcs at their own cost (``_build_asymmetric``) instead of the
+  undirected edges of the published model; requires ``formulation: paper``.
 
 Attributes:
     _run_gurobi_optimizer: Solves one day's SWC-TCF model with native Gurobi.
@@ -152,6 +154,17 @@ class _Built:
         self.extract_route = extract_route
 
 
+def _copy_depot_distance(distance_matrix: List[List[float]], copy: int, i: int, j: int) -> float:
+    """Distance (km) from i to j where the copy depot ``copy`` is a second copy of the real depot 0."""
+    if i == copy and j == copy:
+        return float(distance_matrix[0][0])
+    if j == copy:
+        return float(distance_matrix[0][i])
+    if i == copy:
+        return float(distance_matrix[0][j])
+    return float(distance_matrix[i][j])
+
+
 def _build_paper(  # noqa: C901
     mdl: gp.Model,
     d: TCFData,
@@ -174,13 +187,7 @@ def _build_paper(  # noqa: C901
     nodes = [0, *bins, copy]
 
     def dist(i: int, j: int) -> float:
-        if i == copy and j == copy:
-            return float(distance_matrix[0][0])
-        if j == copy:
-            return float(distance_matrix[0][i])
-        if i == copy:
-            return float(distance_matrix[0][j])
-        return float(distance_matrix[i][j])
+        return _copy_depot_distance(distance_matrix, copy, i, j)
 
     cutoff = options["max_arc_distance_km"]
     pairs = [
@@ -273,6 +280,108 @@ def _build_paper(  # noqa: C901
                 if not nxt:
                     break
                 prev, cur, steps = cur, nxt[0], steps + 1
+            route.append(0)
+        return route if len(route) > 1 else [0, 0]
+
+    return _Built(x, g, k_var, forced, set_starts, extract_route)
+
+
+def _build_asymmetric(  # noqa: C901
+    mdl: gp.Model,
+    d: TCFData,
+    distance_matrix: List[List[float]],
+    forced_nodes: List[int],
+    number_vehicles: int,
+    dual_values: Optional[Dict[int, float]],
+    options: Dict[str, Any],
+) -> _Built:
+    """Asymmetric version of the published model (``asymmetric: true``; not the published model).
+
+    Same node set and copy depot as ``_build_paper``, but every arc is directed and costs
+    ``distance_matrix[i][j]`` in its own direction. A route is a directed path
+    ``0 -> bins -> copy``. ``load[i, j]`` is the waste still on board when the vehicle
+    traverses the arc, bounded by Q on used arcs; the copy depot receives the collected
+    waste. The objective charges each traversed arc once (no factor one half).
+    """
+    Q, R, C, Omega = d.Q, d.R, d.C, d.Omega
+    S = d.S_dict
+    bins = d.nodes_real
+    copy = d.n_bins + 1
+
+    def dist(i: int, j: int) -> float:
+        # Return legs use the bin's own distance back to the depot; the copy depot only
+        # receives arcs, so the asymmetric matrix is never read in the reverse direction.
+        if j == copy:
+            return float(distance_matrix[i][0])
+        return float(distance_matrix[i][j])
+
+    origins = [0, *bins]
+    targets = [*bins, copy]
+    cutoff = options["max_arc_distance_km"]
+    pairs = [(i, j) for i in origins for j in targets if i != j and (cutoff is None or dist(i, j) <= cutoff)]
+
+    x = mdl.addVars(pairs, vtype=GRB.BINARY, name="x")
+    load = mdl.addVars(pairs, vtype=GRB.CONTINUOUS, lb=0.0, name="load")
+    g = mdl.addVars(bins, vtype=GRB.BINARY, name="g")
+    k_var = mdl.addVar(lb=0, vtype=GRB.INTEGER, name="k")
+
+    collected = quicksum(S[i] * g[i] for i in bins)
+    # each visited bin has one successor and one predecessor
+    for i in bins:
+        mdl.addConstr(quicksum(x[i, j] for j in targets if (i, j) in x) == g[i], name=f"out_{i}")
+        mdl.addConstr(quicksum(x[j, i] for j in origins if (j, i) in x) == g[i], name=f"in_{i}")
+    # each route leaves the real depot and enters the copy depot once
+    mdl.addConstr(quicksum(x[0, j] for j in targets if (0, j) in x) == k_var, name="depot_out")
+    mdl.addConstr(quicksum(x[i, copy] for i in origins if (i, copy) in x) == k_var, name="copy_in")
+    if number_vehicles > 0:
+        mdl.addConstr(k_var <= number_vehicles, name="fleet")
+    # load on a used arc is at most the vehicle capacity; an unused arc carries nothing
+    for i, j in pairs:
+        mdl.addConstr(load[i, j] <= Q * x[i, j], name=f"cap_{i}_{j}")
+    # the vehicle leaves the depot empty and picks up each visited bin's waste
+    for i in bins:
+        mdl.addConstr(
+            quicksum(load[i, j] for j in targets if (i, j) in load)
+            - quicksum(load[j, i] for j in origins if (j, i) in load)
+            == S[i] * g[i],
+            name=f"load_{i}",
+        )
+    mdl.addConstr(quicksum(load[0, j] for j in targets if (0, j) in load) == 0, name="load_out")
+    mdl.addConstr(quicksum(load[i, copy] for i in origins if (i, copy) in load) == collected, name="load_in")
+    if options["link_depot_arcs"]:
+        for j in bins:
+            if (0, j) in x:
+                mdl.addConstr(x[0, j] <= g[j])
+    forced = [mdl.addConstr(g[i] == 1, name=f"forced_{i}") for i in forced_nodes]
+
+    travel = C * quicksum(x[i, j] * dist(i, j) for i, j in pairs)
+    if dual_values:
+        pi_0 = dual_values.get(0, 0.0)
+        mdl.setObjective(
+            quicksum((R * S[i] - dual_values.get(i, 0.0)) * g[i] for i in bins) - travel - pi_0 * k_var,
+            GRB.MAXIMIZE,
+        )
+    else:
+        mdl.setObjective(R * collected - travel - Omega * k_var, GRB.MAXIMIZE)
+
+    def set_starts(starts: List[List[List[int]]]) -> None:
+        raise NotImplementedError("Clarke-Wright warm starts are not defined for the asymmetric model.")
+
+    def extract_route() -> List[int]:
+        succ: Dict[int, List[int]] = {i: [] for i in [0, *bins, copy]}
+        for i, j in pairs:
+            if x[i, j].X > 0.5:
+                succ[i].append(j)
+        route = [0]
+        for first in succ[0]:
+            if first == copy:
+                continue  # an unused vehicle: the zero-length depot arc
+            cur, steps = first, 0
+            while cur != copy and steps <= len(bins) + 1:
+                route.append(d.id_map[cur])
+                if not succ[cur]:
+                    break
+                cur, steps = succ[cur][0], steps + 1
             route.append(0)
         return route if len(route) > 1 else [0, 0]
 
@@ -388,6 +497,7 @@ def _options(values: Dict[str, Any]) -> Dict[str, Any]:
         ),
         "link_depot_arcs": _flag(values.get("link_depot_arcs", SWCTCFParams.link_depot_arcs)),
         "warm_start": _flag(values.get("warm_start", SWCTCFParams.warm_start)),
+        "asymmetric": _flag(values.get("asymmetric", SWCTCFParams.asymmetric)),
     }
 
 
@@ -451,7 +561,14 @@ def _run_gurobi_optimizer(  # noqa: C901
         print(f"[INFO][VRPP-Gurobi] Threads={mdl.Params.Threads}, SoftMemLimit={mdl.Params.SoftMemLimit} GB")
         mdl.Params.Seed = seed
 
-        build = _build_paper if options["formulation"] == "paper" else _build_directed
+        if options["asymmetric"] and options["formulation"] != "paper":
+            raise ValueError("asymmetric requires formulation: paper")
+        if options["asymmetric"] and options["warm_start"]:
+            raise ValueError("warm_start is not defined for the asymmetric model")
+        if options["formulation"] != "paper":
+            build = _build_directed
+        else:
+            build = _build_asymmetric if options["asymmetric"] else _build_paper
         built = build(mdl, d, distance_matrix, forced_nodes, number_vehicles, dual_values, options)
 
         # Optional, off by default: not part of the published model (#41).
@@ -520,7 +637,9 @@ def _run_gurobi_optimizer(  # noqa: C901
             # Hit the limit before any incumbent: the day would otherwise collect nothing. The retry uses the
             # default tolerance and no further retry, so one day costs at most 4x the limit (1x + 3x).
             longer = int(time_limit * NO_SOLUTION_TIME_FACTOR)
-            print(f"[WARN][VRPP-Gurobi] No incumbent in {time_limit}s; re-solving at the default tolerance with {longer}s.")
+            print(
+                f"[WARN][VRPP-Gurobi] No incumbent in {time_limit}s; re-solving at the default tolerance with {longer}s."
+            )
             note_solver_status("fallback:time_limit", append=True)
             return _run_gurobi_optimizer(
                 bins,
