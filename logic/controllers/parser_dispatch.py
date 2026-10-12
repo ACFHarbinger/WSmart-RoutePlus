@@ -12,6 +12,7 @@ Supported commands
 - ``"file_system"`` + sub-command       → :func:`~logic.controllers.jobs.ops_runner.run_file_system`
 - ``"clean_results"`` / ``"excel_summary"`` → :func:`~logic.controllers.jobs.ops_runner.run_output_command`
 - ``"update_ms"`` / ``"update_ri"``     → :func:`~logic.controllers.jobs.ops_runner.run_target_update`
+- ``"sync_drive"``                    → :func:`~logic.cloud.cli.run_sync` (rclone copy to or from Google Drive)
 
 Example::
 
@@ -121,6 +122,10 @@ def parser_entry_point(
                 run_output_command(comm, opts)
             elif comm in _TARGET_COMMANDS:
                 run_target_update(comm, opts)
+            elif comm == "sync_drive":
+                from logic.cloud.cli import run_sync
+
+                run_sync(opts)
             else:
                 assert comm == "test_suite"
                 run_test_suite(opts)

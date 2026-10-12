@@ -89,3 +89,17 @@ def test_missing_rclone_is_reported(repo, drive, monkeypatch):
     monkeypatch.setattr(remote_module.shutil, "which", lambda name: None)
     with pytest.raises(RuntimeError, match="rclone is not installed"):
         upload("data", drive, config="/dev/null")
+
+
+def test_sync_drive_command_parses_and_runs(repo, drive, tmp_path):
+    from logic.cloud.cli import run_sync
+    from logic.controllers.cli.registry import get_parser
+
+    (repo / "assets" / "output").mkdir(parents=True)
+    args = get_parser().parse_args(
+        ["sync_drive", "--direction", "upload", "--target", "all", "--remote", drive, "--dry-run"]
+    )
+    commands = run_sync({k: v for k, v in vars(args).items() if k != "command"})
+    assert len(commands) == 2
+    assert not (tmp_path / "drive" / "data").exists()
+    assert not (tmp_path / "drive" / "outputs").exists()

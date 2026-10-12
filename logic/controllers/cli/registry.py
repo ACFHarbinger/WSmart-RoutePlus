@@ -13,6 +13,7 @@ Example:
 
 from logic.controllers.cli.base import ConfigsParser
 from logic.controllers.cli.bench_parser import add_benchmark_args
+from logic.controllers.cli.drive_parser import add_drive_sync_args
 from logic.controllers.cli.fs_parser import add_files_args
 from logic.controllers.cli.out_parser import add_excel_summary_args, add_output_args
 from logic.controllers.cli.tgt_parser import add_ms_update_args, add_ri_update_args
@@ -69,6 +70,13 @@ def get_parser() -> ConfigsParser:
         help="Batch-update route_improvement overrides in policy YAML files",
     )
     add_ri_update_args(update_ri_parser)
+
+    # Google Drive sync of the data and outputs directories
+    sync_parser = subparsers.add_parser(
+        "sync_drive",
+        help="Copy data and outputs to or from a Google Drive folder (rclone, copy only)",
+    )
+    add_drive_sync_args(sync_parser)
 
     # TUI
     return parser
