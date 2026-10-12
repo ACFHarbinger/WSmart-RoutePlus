@@ -43,9 +43,6 @@ from ._route_extraction import extract_depot_delimited_route
 from ._tcf_data import TCFData, build_tcf_data
 from .params import SWCTCFParams
 
-# A day that ends at the time limit with no incumbent is re-solved once with this multiple of the limit.
-NO_SOLUTION_TIME_FACTOR = 3
-
 
 def _clarke_wright_trips(d: TCFData, distance_matrix: List[List[float]], visit: List[int]) -> Optional[List[List[int]]]:
     """Build Clarke-Wright trips over ``visit`` that are feasible in the TCF model.
@@ -487,6 +484,9 @@ def _options(values: Dict[str, Any]) -> Dict[str, Any]:
     cutoff = _optional_float(values.get("max_arc_distance_km", SWCTCFParams.max_arc_distance_km))
     if cutoff is not None and not (math.isfinite(cutoff) and cutoff > 0):
         raise ValueError("max_arc_distance_km must be positive and finite, or null")
+    no_solution_factor = float(values.get("no_solution_time_factor", SWCTCFParams.no_solution_time_factor))
+    if not (math.isfinite(no_solution_factor) and no_solution_factor >= 1):
+        raise ValueError("no_solution_time_factor must be a finite number at least 1")
     return {
         "formulation": formulation,
         "depot_inflow": depot_inflow,
@@ -498,6 +498,7 @@ def _options(values: Dict[str, Any]) -> Dict[str, Any]:
         "link_depot_arcs": _flag(values.get("link_depot_arcs", SWCTCFParams.link_depot_arcs)),
         "warm_start": _flag(values.get("warm_start", SWCTCFParams.warm_start)),
         "asymmetric": _flag(values.get("asymmetric", SWCTCFParams.asymmetric)),
+        "no_solution_time_factor": no_solution_factor,
     }
 
 
@@ -635,8 +636,8 @@ def _run_gurobi_optimizer(  # noqa: C901
             raise RuntimeError(f"SWC-TCF model is infeasible (Gurobi status {mdl.Status}).")
         if mdl.SolCount == 0 and mdl.Status == GRB.TIME_LIMIT and time_limit > 0 and allow_escalation:
             # Hit the limit before any incumbent: the day would otherwise collect nothing. The retry uses the
-            # default tolerance and no further retry, so one day costs at most 4x the limit (1x + 3x).
-            longer = int(time_limit * NO_SOLUTION_TIME_FACTOR)
+            # default tolerance and no further retry, so one day costs at most (1 + factor) x the limit.
+            longer = int(time_limit * options["no_solution_time_factor"])
             print(
                 f"[WARN][VRPP-Gurobi] No incumbent in {time_limit}s; re-solving at the default tolerance with {longer}s."
             )

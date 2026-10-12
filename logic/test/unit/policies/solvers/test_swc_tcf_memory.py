@@ -186,3 +186,16 @@ def test_infeasible_without_relaxation_solves_once(model):
         solve({"psi": 0.1})
     assert model.optimize.call_count == 2
     assert model.dispose.call_count == 2
+
+
+def test_no_incumbent_retry_uses_configured_factor(model):
+    model.optimize.side_effect = lambda: setattr(model, "Status", gurobi.GRB.TIME_LIMIT)
+    solve({"no_solution_time_factor": 9})
+    # one retry at the default tolerance with 9x the 60 s limit, which then collects nothing
+    assert model.Params.TimeLimit == 540
+    assert model.optimize.call_count == 2
+
+
+def test_no_solution_factor_must_be_at_least_one():
+    with pytest.raises(ValueError, match="no_solution_time_factor"):
+        gurobi._options({"no_solution_time_factor": 0.5})

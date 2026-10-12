@@ -39,6 +39,8 @@ class SWCTCFParams:
         max_arc_distance_km: drop arcs longer than this (None keeps every arc).
         warm_start: Clarke-Wright MIP starts (forced bins only; every bin with waste);
             the best one is executed if Gurobi ends without a solution (#41).
+        no_solution_time_factor: a day that reaches the time limit with no incumbent is re-solved
+            once, at the default tolerance, with this multiple of the limit (at least 1).
         asymmetric: directed arcs at their own cost (not the undirected published model);
             requires formulation 'paper' and cannot be combined with warm_start.
     """
@@ -57,6 +59,7 @@ class SWCTCFParams:
     max_arc_distance_km: Optional[float] = None
     warm_start: bool = False
     asymmetric: bool = False
+    no_solution_time_factor: float = 3.0
 
     @classmethod
     def from_config(cls, config: Any) -> SWCTCFParams:
