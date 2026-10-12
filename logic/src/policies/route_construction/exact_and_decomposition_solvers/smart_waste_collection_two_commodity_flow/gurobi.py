@@ -41,6 +41,9 @@ from ._route_extraction import extract_depot_delimited_route
 from ._tcf_data import TCFData, build_tcf_data
 from .params import SWCTCFParams
 
+# A day that ends at the time limit with no incumbent is re-solved once with this multiple of the limit.
+NO_SOLUTION_TIME_FACTOR = 3
+
 
 def _clarke_wright_trips(d: TCFData, distance_matrix: List[List[float]], visit: List[int]) -> Optional[List[List[int]]]:
     """Build Clarke-Wright trips over ``visit`` that are feasible in the TCF model.
@@ -399,6 +402,9 @@ def _run_gurobi_optimizer(  # noqa: C901
     time_limit: int = 60,
     seed: int = 42,
     dual_values: Optional[Dict[int, float]] = None,
+    default_feastol: bool = False,
+    allow_escalation: bool = True,
+    retry: bool = False,
 ) -> Tuple[List[int], float, float]:
     """Solve one day of the Smart Waste Collection Routing model.
 
@@ -453,11 +459,13 @@ def _run_gurobi_optimizer(  # noqa: C901
         if starts:
             built.set_starts(starts)
 
+        tight_tol = False
         if not env:
             mdl.Params.LogToConsole = 0
             mdl.Params.OutputFlag = 0
-            if options["formulation"] == "paper":
+            if options["formulation"] == "paper" and not default_feastol:
                 mdl.Params.FeasibilityTol = 1e-09  # as in collectioncompare's policy_gurobi
+                tight_tol = True
             if options["solver_tuning"]:
                 mdl.Params.MIPFocus = 1
                 mdl.Params.Heuristics = HEURISTICS_RATIO
@@ -476,7 +484,27 @@ def _run_gurobi_optimizer(  # noqa: C901
         from logic.src.pipeline.simulations.solver_status import format_backend_status, note_solver_status
 
         mdl.optimize()
-        note_solver_status(format_backend_status("gurobi", mdl.Status))
+        note_solver_status(format_backend_status("gurobi", mdl.Status), append=retry)
+        if mdl.Status in (GRB.INFEASIBLE, GRB.INF_OR_UNBD) and tight_tol:
+            # The 1e-9 feasibility tolerance can report a feasible model as infeasible. Re-optimizing this model
+            # keeps that verdict, so re-solve on a fresh model at Gurobi's default tolerance.
+            print("[WARN][VRPP-Gurobi] Infeasible at FeasibilityTol=1e-09; re-solving at the default tolerance.")
+            note_solver_status("fallback:default_feastol", append=True)
+            return _run_gurobi_optimizer(
+                bins,
+                distance_matrix,
+                env,
+                values,
+                binsids,
+                mandatory,
+                number_vehicles,
+                time_limit,
+                seed,
+                dual_values,
+                default_feastol=True,
+                allow_escalation=False,
+                retry=True,
+            )
         if mdl.Status in (GRB.INFEASIBLE, GRB.INF_OR_UNBD) and built.forced and options["relax_forced_on_infeasible"]:
             # Forcing every mandatory / over-psi bin can exceed the fleet's capacity.
             print(
@@ -488,6 +516,27 @@ def _run_gurobi_optimizer(  # noqa: C901
             note_solver_status(format_backend_status("gurobi", mdl.Status), append=True)
         if mdl.Status in (GRB.INFEASIBLE, GRB.INF_OR_UNBD):
             raise RuntimeError(f"SWC-TCF model is infeasible (Gurobi status {mdl.Status}).")
+        if mdl.SolCount == 0 and mdl.Status == GRB.TIME_LIMIT and time_limit > 0 and allow_escalation:
+            # Hit the limit before any incumbent: the day would otherwise collect nothing. The retry uses the
+            # default tolerance and no further retry, so one day costs at most 4x the limit (1x + 3x).
+            longer = int(time_limit * NO_SOLUTION_TIME_FACTOR)
+            print(f"[WARN][VRPP-Gurobi] No incumbent in {time_limit}s; re-solving at the default tolerance with {longer}s.")
+            note_solver_status("fallback:time_limit", append=True)
+            return _run_gurobi_optimizer(
+                bins,
+                distance_matrix,
+                env,
+                values,
+                binsids,
+                mandatory,
+                number_vehicles,
+                longer,
+                seed,
+                dual_values,
+                default_feastol=True,
+                allow_escalation=False,
+                retry=True,
+            )
         if mdl.SolCount == 0:
             best = max(starts, key=lambda t: _plan_objective(d, distance_matrix, t)[0]) if starts else None
             # Without forced bins the empty plan (profit 0) is feasible and wins unless a start beats it.
