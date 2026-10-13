@@ -12,12 +12,12 @@ Root Directory Resolution
 The ROOT_DIR is dynamically computed by searching upward from cwd until finding
 the project root marker directory name. This supports:
 - Running from any subdirectory (notebooks/, logic/test/, gui/)
-- Multiple project clones (WSmart-Route, WSmartPlus-Route)
+- Multiple project clones (WSmart-Route, WSmart-Simulator)
 - Virtual environment isolation (paths work regardless of venv location)
 
 Path Resolution Order:
 1. Get current working directory
-2. Search upward for "WSmart-Route" or "WSmartPlus-Route" in path parts
+2. Search upward for "WSmart-Route" or "WSmart-Simulator" in path parts
 3. Set ROOT_DIR to that location
 4. Derive asset paths relative to ROOT_DIR
 

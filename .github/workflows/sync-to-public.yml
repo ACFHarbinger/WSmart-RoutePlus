@@ -59,7 +59,7 @@ jobs:
 
           # 4. Add the public remote (filter-repo already removed origin)
           git remote remove public || true
-          git remote add public https://x-access-token:${PAT_TOKEN}@github.com/ACFHarbinger/WSmartPlus-Route.git
+          git remote add public https://x-access-token:${PAT_TOKEN}@github.com/ACFHarbinger/WSmart-Simulator.git
 
           # 5. Force push the rewritten history (no bibliography, assets or .agent in any commit)
           git push public main --force

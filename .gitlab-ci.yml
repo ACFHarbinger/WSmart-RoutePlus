@@ -182,7 +182,7 @@ sync-to-public:
         git commit -m "chore: exclude private directories from public sync"
       fi
     - git remote remove public || true
-    - git remote add public "https://x-access-token:${PUBLIC_REPO_TOKEN}@github.com/ACFHarbinger/WSmartPlus-Route.git"
+    - git remote add public "https://x-access-token:${PUBLIC_REPO_TOKEN}@github.com/ACFHarbinger/WSmart-Simulator.git"
     # GitLab checks out a detached HEAD; push the sanitized commit explicitly.
     - git push public HEAD:refs/heads/main --force
 
