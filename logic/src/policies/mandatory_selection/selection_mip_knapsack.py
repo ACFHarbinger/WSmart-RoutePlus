@@ -191,7 +191,7 @@ class MIPKnapsackSelection(IMandatorySelectionStrategy):
         overflow_penalty_frac (float): Additional penalty per overflow event.
     """
 
-    def __init__(self, overflow_penalty_frac: float = 1.0) -> None:
+    def __init__(self, overflow_penalty_frac: Optional[float] = None) -> None:
         """
         Initializes the MIP knapsack selection strategy.
 
@@ -227,7 +227,9 @@ class MIPKnapsackSelection(IMandatorySelectionStrategy):
             current_fill=context.current_fill,
             bin_mass=np.full_like(mass_all, bin_cap),
             scenario_tree=context.scenario_tree,
-            overflow_penalty_frac=context.overflow_penalty_frac,
+            overflow_penalty_frac=(
+                self.overflow_penalty_frac if self.overflow_penalty_frac is not None else context.overflow_penalty_frac
+            ),
         )
 
         # Only consider bins with a non-zero overflow risk and positive mass.

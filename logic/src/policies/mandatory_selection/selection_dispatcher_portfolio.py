@@ -14,7 +14,7 @@ Example:
     >>> bins = strategy.select_bins(context)
 """
 
-from typing import List, Set, Tuple
+from typing import List, Optional, Set, Tuple
 
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.interfaces.context import SearchContext, SelectionContext
@@ -35,6 +35,19 @@ class PortfolioDispatcher(IMandatorySelectionStrategy):
         None
     """
 
+    def __init__(
+        self,
+        dispatcher_mode: Optional[str] = None,
+        dispatcher_candidate_strategies: Optional[List[str]] = None,
+    ) -> None:
+        """
+        Args:
+            dispatcher_mode (Optional[str]): 'union' or 'intersection'; ``None`` uses ``context.dispatcher_mode``.
+            dispatcher_candidate_strategies (Optional[List[str]]): Candidate names; ``None`` uses the context.
+        """
+        self.dispatcher_mode = dispatcher_mode
+        self.dispatcher_candidate_strategies = dispatcher_candidate_strategies
+
     def select_bins(self, context: SelectionContext) -> Tuple[List[int], SearchContext]:
         """
         Run multiple strategies and aggregate via union or intersection.
@@ -47,8 +60,12 @@ class PortfolioDispatcher(IMandatorySelectionStrategy):
         """
         from logic.src.policies.mandatory_selection.base.selection_factory import MandatorySelectionFactory
 
-        candidates = context.dispatcher_candidate_strategies or ["last_minute", "deadline", "mip_knapsack"]
-        mode = context.dispatcher_mode or "union"
+        candidates = (
+            self.dispatcher_candidate_strategies
+            or context.dispatcher_candidate_strategies
+            or ["last_minute", "deadline", "mip_knapsack"]
+        )
+        mode = self.dispatcher_mode or context.dispatcher_mode or "union"
 
         if mode not in ("union", "intersection"):
             raise ValueError(f"PortfolioDispatcher: Unknown mode '{mode}'. Use 'union' or 'intersection'.")
@@ -57,14 +74,10 @@ class PortfolioDispatcher(IMandatorySelectionStrategy):
         master_ctx = SearchContext.initialize(selection_metrics={"strategy": "PortfolioDispatcher", "mode": mode})
 
         for name in candidates:
-            try:
-                strategy = MandatorySelectionFactory.create_strategy(name)
-                mandatory, sub_ctx = strategy.select_bins(context)
-                results.append(set(mandatory))
-                master_ctx = master_ctx.merge(sub_ctx)
-            except Exception:
-                # Skip failed strategies
-                continue
+            strategy = MandatorySelectionFactory.create_strategy(name)
+            mandatory, sub_ctx = strategy.select_bins(context)
+            results.append(set(mandatory))
+            master_ctx = master_ctx.merge(sub_ctx)
 
         if not results:
             return [], master_ctx

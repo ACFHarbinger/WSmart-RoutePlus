@@ -55,7 +55,7 @@ Example:
     >>> bins = strategy.select_bins(context)
 """
 
-from typing import List, Set, Tuple
+from typing import List, Optional, Set, Tuple
 
 import numpy as np
 
@@ -170,6 +170,15 @@ class FractionalKnapsackSelection(IMandatorySelectionStrategy):
 
         return packed
 
+    def __init__(self, n_vehicles: Optional[int] = None, cost_per_km: Optional[float] = None) -> None:
+        """
+        Args:
+            n_vehicles (Optional[int]): Fleet size; ``None`` uses ``context.n_vehicles``.
+            cost_per_km (Optional[float]): Cost per kilometre; ``None`` uses ``context.cost_per_km``.
+        """
+        self.n_vehicles = n_vehicles
+        self.cost_per_km = cost_per_km
+
     def select_bins(self, context: SelectionContext) -> Tuple[List[int], SearchContext]:
         """Return the selected bin IDs (1-based) under the multi-vehicle plan.
 
@@ -199,7 +208,7 @@ class FractionalKnapsackSelection(IMandatorySelectionStrategy):
         revenue = mass * context.revenue_kg
         dist_depot = np.asarray(dm[0, 1:], dtype=float)
 
-        cost_per_km = float(getattr(context, "cost_per_km", 0.0))
+        cost_per_km = self.cost_per_km if self.cost_per_km is not None else float(getattr(context, "cost_per_km", 0.0))
         net_profit_depot = revenue - cost_per_km * (2.0 * dist_depot)
 
         # Eligible = positive mass and positive standalone net profit.
@@ -208,7 +217,7 @@ class FractionalKnapsackSelection(IMandatorySelectionStrategy):
         if not eligible_idx:
             return [], SearchContext.initialize(selection_metrics={"strategy": "FractionalKnapsackSelection"})
 
-        n_vehicles = int(getattr(context, "n_vehicles", 1))
+        n_vehicles = self.n_vehicles if self.n_vehicles is not None else int(getattr(context, "n_vehicles", 1))
 
         # Unbounded knapsacks: capacity does not bind.
         if n_vehicles <= 0:

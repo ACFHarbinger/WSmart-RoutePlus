@@ -13,7 +13,7 @@ Example:
     >>> bins = strategy.select_bins(context)
 """
 
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 
@@ -38,6 +38,15 @@ class RevenueThresholdSelection(IMandatorySelectionStrategy):
         None
     """
 
+    def __init__(self, revenue_kg: Optional[float] = None, revenue_threshold: Optional[float] = None) -> None:
+        """
+        Args:
+            revenue_kg (Optional[float]): Revenue per kilogram; ``None`` uses ``context.revenue_kg``.
+            revenue_threshold (Optional[float]): Selection threshold; ``None`` uses ``context.threshold``.
+        """
+        self.revenue_kg = revenue_kg
+        self.revenue_threshold = revenue_threshold
+
     def select_bins(self, context: SelectionContext) -> Tuple[List[int], SearchContext]:
         """Select bins where expected revenue exceeds the threshold.
 
@@ -49,7 +58,8 @@ class RevenueThresholdSelection(IMandatorySelectionStrategy):
         """
         bin_cap = context.bin_volume * context.bin_density
         fill_ratios = context.current_fill / context.max_fill
-        expected_revenue = fill_ratios * bin_cap * context.revenue_kg
+        revenue_kg = self.revenue_kg if self.revenue_kg is not None else context.revenue_kg
+        expected_revenue = fill_ratios * bin_cap * revenue_kg
 
         if getattr(context, "use_eoq_threshold", False):
             # When EOQ is active, the trigger is the fill-level, but we still
@@ -57,7 +67,8 @@ class RevenueThresholdSelection(IMandatorySelectionStrategy):
             mandatory_mask = resolve_trigger_threshold(context)
             mandatory_indices = np.nonzero(mandatory_mask & (expected_revenue > 0))[0]
         else:
-            mandatory_indices = np.nonzero(expected_revenue > context.threshold)[0]
+            threshold = self.revenue_threshold if self.revenue_threshold is not None else context.threshold
+            mandatory_indices = np.nonzero(expected_revenue > threshold)[0]
 
         return (mandatory_indices + 1).tolist(), SearchContext.initialize(
             selection_metrics={"strategy": "RevenueThresholdSelection"}

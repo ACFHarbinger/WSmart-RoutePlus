@@ -96,9 +96,9 @@ class RevenueSelectionConfig:
         revenue_threshold: Threshold for revenue-based selection.
     """
 
-    revenue_kg: float = 1.0
+    revenue_kg: Optional[float] = None
     bin_capacity: float = 1.0
-    revenue_threshold: float = 0.0
+    revenue_threshold: Optional[float] = None
 
 
 @dataclass
@@ -230,11 +230,11 @@ class KnapsackSelectionConfig:
         use_eoq_threshold: Whether to use EOQ threshold.
     """
 
-    n_vehicles: int = 1
-    cost_per_km: float = 0.1
-    use_eoq_threshold: bool = False
-    holding_cost_per_kg_day: float = 0.0
-    ordering_cost_per_visit: float = 0.0
+    n_vehicles: Optional[int] = None
+    cost_per_km: Optional[float] = None
+    use_eoq_threshold: Optional[bool] = None
+    holding_cost_per_kg_day: Optional[float] = None
+    ordering_cost_per_visit: Optional[float] = None
 
 
 @dataclass
@@ -245,7 +245,7 @@ class MIPKnapsackSelectionConfig(KnapsackSelectionConfig):
         overflow_penalty_frac: Additional penalty for overflow event.
     """
 
-    overflow_penalty_frac: float = 1.0
+    overflow_penalty_frac: Optional[float] = None
 
 
 @dataclass
@@ -259,10 +259,10 @@ class FractionalKnapsackSelectionConfig(KnapsackSelectionConfig):
         ordering_cost_per_visit: Ordering cost per visit.
     """
 
-    revenue_kg: float = 1.0
-    bin_capacity: float = 1.0
-    holding_cost_per_kg_day: float = 0.01
-    ordering_cost_per_visit: float = 10.0
+    revenue_kg: Optional[float] = None
+    bin_capacity: Optional[float] = None
+    holding_cost_per_kg_day: Optional[float] = None
+    ordering_cost_per_visit: Optional[float] = None
 
 
 @dataclass
@@ -404,7 +404,6 @@ class LagrangianSelectionConfig:
 
 
 @dataclass
-
 class KMeansSectorSelectionConfig:
     """Configuration for geographic sector-based selection.
 
@@ -424,6 +423,60 @@ class StaggeredRegularSelectionConfig:
     """
 
     period: int = 1
+
+
+@dataclass
+class BernoulliRandomSelectionConfig:
+    """Configuration for independent Bernoulli trial selection.
+
+    Attributes:
+        p: Selection probability in [0, 1]; None uses the context threshold.
+        min_fill: Minimum fill ratio for a bin to enter the trial.
+    """
+
+    p: Optional[float] = None
+    min_fill: float = 0.0
+
+
+@dataclass
+class FilterAndFanSelectionConfig:
+    """Configuration for the filter-and-fan selection.
+
+    Attributes:
+        filter_width: Seed size; None uses the context value.
+        fan_depth: Add/remove passes; None uses the context value.
+    """
+
+    filter_width: Optional[int] = None
+    fan_depth: Optional[int] = None
+
+
+@dataclass
+class FPTASKnapsackSelectionConfig:
+    """Configuration for the FPTAS knapsack selection.
+
+    Attributes:
+        epsilon: Precision parameter.
+        alpha: Weight between overflow risk and net profit in the scalarisation.
+        overflow_penalty_frac: Overflow penalty fraction; None uses the context value.
+    """
+
+    epsilon: float = 0.1
+    alpha: float = 0.5
+    overflow_penalty_frac: Optional[float] = None
+
+
+@dataclass
+class PortfolioDispatcherSelectionConfig:
+    """Configuration for the portfolio dispatcher.
+
+    Attributes:
+        dispatcher_mode: 'union' or 'intersection'; None uses the context value.
+        dispatcher_candidate_strategies: Candidate strategy names; None uses the context value.
+    """
+
+    dispatcher_mode: Optional[str] = None
+    dispatcher_candidate_strategies: Optional[List[str]] = None
 
 
 @dataclass
@@ -492,6 +545,10 @@ class MandatorySelectionConfig:
     lagrangian: LagrangianSelectionConfig = field(default_factory=LagrangianSelectionConfig)
     kmeans_sector: KMeansSectorSelectionConfig = field(default_factory=KMeansSectorSelectionConfig)
     staggered_regular: StaggeredRegularSelectionConfig = field(default_factory=StaggeredRegularSelectionConfig)
+    bernoulli_random: BernoulliRandomSelectionConfig = field(default_factory=BernoulliRandomSelectionConfig)
+    filter_and_fan: FilterAndFanSelectionConfig = field(default_factory=FilterAndFanSelectionConfig)
+    fptas_knapsack: FPTASKnapsackSelectionConfig = field(default_factory=FPTASKnapsackSelectionConfig)
+    portfolio_dispatcher: PortfolioDispatcherSelectionConfig = field(default_factory=PortfolioDispatcherSelectionConfig)
 
     # Additional parameters
     params: Dict[str, Any] = field(default_factory=dict)

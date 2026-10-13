@@ -52,6 +52,15 @@ class BernoulliRandomSelection(IMandatorySelectionStrategy):
                           Bernoulli trial. Defaults to 0.0.
     """
 
+    def __init__(self, p: Optional[float] = None, min_fill: float = 0.0) -> None:
+        """
+        Args:
+            p (Optional[float]): Selection probability in [0, 1]; ``None`` uses ``context.threshold``.
+            min_fill (float): Minimum fill ratio for a bin to be eligible for the trial.
+        """
+        self.p = None if p is None else float(min(max(p, 0.0), 1.0))
+        self.min_fill = float(min_fill)
+
     def select_bins(self, context: SelectionContext) -> Tuple[List[int], SearchContext]:
         """
         Sample each eligible bin independently via Bernoulli(p).
@@ -69,7 +78,7 @@ class BernoulliRandomSelection(IMandatorySelectionStrategy):
         Returns:
             Tuple[List[int], SearchContext]: Selected bin IDs and search context.
         """
-        p: float = float(getattr(context, "threshold", 0.5))
+        p: float = self.p if self.p is not None else float(getattr(context, "threshold", 0.5))
         p = max(0.0, min(1.0, p))  # Clip to valid Bernoulli parameter range.
 
         min_fill: float = float(getattr(self, "min_fill", 0.0))

@@ -1,0 +1,11 @@
+# =============================================================================
+# Mandatory Strategy: Filter-and-Fan Selection
+# =============================================================================
+# Filter phase keeps the top-ranked bins; fan phase refines them with add and
+# remove passes. filter_width 0 means automatic (max(5, n_bins // 3)).
+# =============================================================================
+
+default:
+  strategy: filter_and_fan
+  filter_width: 0
+  fan_depth: 3

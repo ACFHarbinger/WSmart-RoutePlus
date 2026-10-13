@@ -24,7 +24,7 @@ Example:
     >>> bins = strategy.select_bins(context)
 """
 
-from typing import List, Set, Tuple
+from typing import List, Optional, Set, Tuple
 
 import numpy as np
 
@@ -54,6 +54,15 @@ class FilterAndFanSelection(IMandatorySelectionStrategy):
         None
     """
 
+    def __init__(self, filter_width: Optional[int] = None, fan_depth: Optional[int] = None) -> None:
+        """
+        Args:
+            filter_width (Optional[int]): Seed size; ``None`` uses ``context.ff_filter_width``.
+            fan_depth (Optional[int]): Add/remove passes; ``None`` uses ``context.ff_fan_depth``.
+        """
+        self.filter_width = filter_width
+        self.fan_depth = fan_depth
+
     def select_bins(self, context: SelectionContext) -> Tuple[List[int], SearchContext]:
         """Select bins using the Filter-and-Fan procedure.
 
@@ -67,8 +76,9 @@ class FilterAndFanSelection(IMandatorySelectionStrategy):
         if n_bins == 0:
             return [], SearchContext.initialize(selection_metrics={"strategy": "FilterAndFanSelection"})
 
-        filter_width: int = context.ff_filter_width if context.ff_filter_width > 0 else max(5, n_bins // 3)
-        fan_depth: int = context.ff_fan_depth
+        requested_width = self.filter_width if self.filter_width is not None else context.ff_filter_width
+        filter_width: int = requested_width if requested_width > 0 else max(5, n_bins // 3)
+        fan_depth: int = self.fan_depth if self.fan_depth is not None else context.ff_fan_depth
 
         # ── Per-bin economics ────────────────────────────────────────────────
         bin_cap = context.bin_volume * context.bin_density

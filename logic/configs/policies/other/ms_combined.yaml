@@ -1,0 +1,13 @@
+# =============================================================================
+# Mandatory Strategy: Combined (OR) of Two Strategies
+# =============================================================================
+# The union of the mandatory sets of the listed strategies.
+# =============================================================================
+
+default:
+  strategy: combined
+  logic: or
+  strategies:
+    - strategy: last_minute
+      threshold: 70.0
+    - strategy: deadline

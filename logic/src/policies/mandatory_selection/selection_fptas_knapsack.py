@@ -369,7 +369,7 @@ class FPTASKnapsackSelection(IMandatorySelectionStrategy):
         self,
         epsilon: float = 0.1,
         alpha: float = 0.5,
-        overflow_penalty_frac: float = 1.0,
+        overflow_penalty_frac: Optional[float] = None,
     ) -> None:
         """
         Initializes the FPTAS knapsack selection.
@@ -385,7 +385,7 @@ class FPTASKnapsackSelection(IMandatorySelectionStrategy):
             raise ValueError(f"alpha must be in [0, 1], got {alpha!r}")
         self.epsilon = float(epsilon)
         self.alpha = float(alpha)
-        self.overflow_penalty_frac = float(overflow_penalty_frac)
+        self.overflow_penalty_frac = None if overflow_penalty_frac is None else float(overflow_penalty_frac)
 
     # ------------------------------------------------------------------
     # IMandatorySelectionStrategy interface
@@ -421,7 +421,11 @@ class FPTASKnapsackSelection(IMandatorySelectionStrategy):
         dist_depot = dm[0, 1:].astype(np.float64)
 
         # ---- Overflow risk (kg) ------------------------------------------
-        overflow_penalty_frac = float(getattr(context, "overflow_penalty_frac", self.overflow_penalty_frac))
+        overflow_penalty_frac = (
+            self.overflow_penalty_frac
+            if self.overflow_penalty_frac is not None
+            else float(getattr(context, "overflow_penalty_frac", 1.0))
+        )
         risk_all = _compute_overflow_risk(
             current_fill=context.current_fill,
             bin_mass=np.full_like(mass_all, bin_cap),

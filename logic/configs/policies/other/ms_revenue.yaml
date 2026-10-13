@@ -1,0 +1,11 @@
+# =============================================================================
+# Mandatory Strategy: Revenue Threshold Selection
+# =============================================================================
+# Selects bins whose expected revenue (fill x bin capacity x revenue per kg)
+# exceeds a threshold. Unset values fall back to the simulation context.
+# =============================================================================
+
+revenue:
+  strategy: revenue
+  revenue_kg: 1.0
+  revenue_threshold: 0.0

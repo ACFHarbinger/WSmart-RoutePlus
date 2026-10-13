@@ -1,0 +1,12 @@
+# =============================================================================
+# Mandatory Strategy: FPTAS Knapsack Selection
+# =============================================================================
+# Scalarises overflow risk and net profit (weight alpha), then runs a
+# value-scaled 0/1 dynamic programme with precision epsilon.
+# =============================================================================
+
+default:
+  strategy: fptas_knapsack
+  epsilon: 0.1
+  alpha: 0.5
+  overflow_penalty_frac: 1.0

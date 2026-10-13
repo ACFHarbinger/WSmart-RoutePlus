@@ -13,11 +13,30 @@ Example:
     >>> strategy = MandatorySelectionFactory.create_strategy("regular", threshold=2)
 """
 
+import inspect
+import logging
 from typing import Any, Optional, Type, cast
 
 from logic.src.interfaces.mandatory_selection import IMandatorySelectionStrategy
 
 from .selection_registry import MandatorySelectionRegistry
+
+logger = logging.getLogger(__name__)
+
+
+def _instantiate(strategy_cls: Any, kwargs: dict, name: str) -> Any:
+    """Build a strategy from the settings it accepts.
+
+    ``None`` values mean "unset" and are never reported. A set value the class does
+    not accept is reported with a warning, not silently dropped.
+    """
+    set_values = {key: value for key, value in kwargs.items() if value is not None}
+    accepted = set(inspect.signature(strategy_cls.__init__).parameters) - {"self"}
+    dropped = sorted(set(set_values) - accepted)
+    if dropped:
+        logger.warning("Selection strategy %s does not accept %s; these settings are ignored", name, dropped)
+    return strategy_cls(**{key: value for key, value in set_values.items() if key in accepted})
+
 
 # Strategy to sub-config attribute mapping in MandatorySelectionConfig
 CONFIG_MAPPING = {
@@ -48,7 +67,7 @@ CONFIG_MAPPING = {
     "learned": "learned",
     "wasserstein_robust": "wasserstein",
     "dispatcher_thompson": "thompson_dispatcher",
-    "dispatcher_portfolio": "thompson_dispatcher",
+    "dispatcher_portfolio": "portfolio_dispatcher",
     "lagrangian": "lagrangian",
     "filter_and_fan": "filter_and_fan",
     "bernoulli_random": "bernoulli_random",
@@ -151,21 +170,12 @@ class MandatorySelectionFactory:
         # Check explicit registry first
         cls = MandatorySelectionRegistry.get_strategy_class(name)
         if cls:
-            # If strategy accepts kwargs, pass them.
-            try:
-                return cls(**kwargs)
-            except TypeError:
-                # Fallback for strategies that don't accept args
-                return cls()
+            return _instantiate(cls, kwargs, name)
 
         # Check default map
         cls_def = cast(Optional[Type[IMandatorySelectionStrategy]], default_map.get(name.lower()))
         if cls_def:
-            try:
-                return cls_def(**kwargs)
-            except TypeError:
-                # Fallback for strategies that don't accept args
-                return cls_def()
+            return _instantiate(cls_def, kwargs, name)
 
         raise ValueError(f"Unknown selection strategy: {name}")
 
@@ -205,8 +215,6 @@ class MandatorySelectionFactory:
                     sub_params["threshold"] = sub_params.pop("confidence_factor")
                 elif strategy_name == "learned" and "learned_threshold" in sub_params:
                     sub_params["threshold"] = sub_params.pop("learned_threshold")
-                elif strategy_name == "bernoulli_random" and "p" in sub_params:
-                    sub_params["threshold"] = sub_params.pop("p")
                 elif strategy_name == "kmeans_sector" and "n_sectors" in sub_params:
                     sub_params["threshold"] = sub_params.pop("n_sectors")
                 elif strategy_name == "staggered_regular" and "period" in sub_params:
