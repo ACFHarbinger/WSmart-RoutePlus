@@ -193,6 +193,14 @@ def load_model(path: str, epoch: Optional[int] = None) -> Tuple[nn.Module, Dict[
             raise ValueError(msg)
         print(f"  [!] {msg}")
 
+    # A "state_dict" checkpoint was trained as an AttentionModelPolicy, which embeds the depot
+    # with its own depot layer. AttentionModel switches to the historical node-layer projection
+    # for old "model" checkpoints; with that left on, the trained depot weights are ignored and
+    # the loaded network decodes different routes than the one that was trained.
+    init_embedding = getattr(model, "init_embedding", None)
+    if "model" not in data and hasattr(init_embedding, "legacy_depot_projection"):
+        init_embedding.legacy_depot_projection = False
+
     rel_model_filename = model_filename.replace(os.path.expanduser("~"), "~")
     print("  [*] Loaded model from {}".format(rel_model_filename))
     model.eval()
