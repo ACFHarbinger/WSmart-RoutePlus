@@ -336,7 +336,9 @@ class VRPInstanceBuilder:
         td_data.update(
             {
                 "node_ids": node_ids_tensor,
-                "capacity": torch.full((bs,), self.vehicle_cap, device=device),
+                # waste in this TensorDict is a bin-fill fraction (MAX_WASTE), while vehicle_cap is a
+                # percentage of a full bin. Convert so that capacity and waste share the same unit.
+                "capacity": torch.full((bs,), self.vehicle_cap / MAX_CAPACITY_PERCENT * MAX_WASTE, device=device),
                 "max_waste": torch.full((bs,), float(MAX_WASTE), device=device),
             }
         )

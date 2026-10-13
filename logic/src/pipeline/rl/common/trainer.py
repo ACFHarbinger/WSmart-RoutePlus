@@ -216,7 +216,10 @@ class WSTrainer(pl.Trainer):
                     monitor="val/reward",
                     mode="max",
                     save_top_k=3,
-                    filename="{epoch}-{val_reward:.4f}",
+                    # The monitored key 'val/reward' contains '/', which cannot be a format field,
+                    # and 'val_reward' was never logged, so the name always showed 0.0000.
+                    # The reward per epoch is in metrics.csv.
+                    filename="{epoch}-{step}",
                     save_last=True,
                 )
             )
