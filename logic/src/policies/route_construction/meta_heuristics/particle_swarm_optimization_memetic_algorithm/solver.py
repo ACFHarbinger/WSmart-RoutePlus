@@ -109,7 +109,9 @@ class PSOMASolver:
         assert params.acceptance_criterion is not None, "Acceptance criterion must be provided."
         self.acceptance_criterion = params.acceptance_criterion
 
-        self.metropolis_steps = max(1, self.n_nodes * (self.n_nodes - 1))
+        # Steps per SA search: capped so one search cannot consume the whole time budget.
+        self.metropolis_steps = max(1, min(self.n_nodes * (self.n_nodes - 1), params.sa_steps))
+        self._deadline = float("inf")
         self.operators = [self._swap, self._insert, self._inverse]
         self.probabilities = np.array([1 / 3, 1 / 3, 1 / 3])
         self.rewards = np.zeros(3)
@@ -154,6 +156,8 @@ class PSOMASolver:
             return [], 0.0, 0.0
 
         start_time = time.perf_counter()
+        if self.params.time_limit > 0:
+            self._deadline = start_time + self.params.time_limit
         self._init_swarm()
 
         self.acceptance_criterion.setup(self.gbest_profit)
@@ -209,13 +213,20 @@ class PSOMASolver:
     # Private helpers
     # ------------------------------------------------------------------
 
+    def _out_of_time(self) -> bool:
+        """True once the solve's wall-clock budget is spent."""
+        return time.perf_counter() > self._deadline
+
     def _init_swarm(self):
         """Initialises the swarm with random feasible solutions.
 
         Returns:
             List[PSOMAParticle]: Initialized swarm of particles.
         """
-        self.swarm = [PSOMAParticle(self.clients, self.params, self.split_solver, rng=self.np_rng) for _ in range(self.params.pop_size)]
+        self.swarm = [
+            PSOMAParticle(self.clients, self.params, self.split_solver, rng=self.np_rng)
+            for _ in range(self.params.pop_size)
+        ]
         for p in self.swarm:
             if p.profit > self.gbest_profit:
                 self._set_gbest(p.X, p.giant_tour, p.mapping_indices, p.routes, p.profit)
@@ -273,6 +284,8 @@ class PSOMASolver:
             None
         """
         for i, op in enumerate(self.operators):
+            if self._out_of_time():
+                break
             best_pf, _, _, _ = self._sa_search(op)
             # Only improvements earn reward, as in the main loop (abs() rewarded worsening).
             self.rewards[i] = max(0.0, best_pf - self.gbest_profit) / self.metropolis_steps
@@ -325,6 +338,8 @@ class PSOMASolver:
         best_mapping = np.copy(current_mapping)
 
         for _ in range(self.metropolis_steps):
+            if self._out_of_time():
+                break
             # 1. Generate neighborhood move and O(1) Surrogate Delta simultaneously
             new_tour, new_X, new_mapping, delta_dist = operator(current_tour, current_X, current_mapping)
 

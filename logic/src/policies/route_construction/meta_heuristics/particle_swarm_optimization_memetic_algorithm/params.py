@@ -57,6 +57,7 @@ class PSOMAParams:
     T0: float = 3.0
     lambda_cooling: float = 0.9
     time_limit: float = 60.0
+    sa_steps: int = 5000
     vrpp: bool = True
     profit_aware_operators: bool = False
     seed: Optional[int] = 42
@@ -89,6 +90,7 @@ class PSOMAParams:
                 T0=getattr(config, "T0", 3.0),
                 lambda_cooling=getattr(config, "lambda_cooling", 0.9),
                 time_limit=getattr(config, "time_limit", 60.0),
+                sa_steps=getattr(config, "sa_steps", 5000),
                 vrpp=getattr(config, "vrpp", True),
                 seed=getattr(config, "seed", 42),
             )
