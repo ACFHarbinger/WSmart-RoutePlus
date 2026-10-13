@@ -227,9 +227,36 @@ class PSOMASolver:
             PSOMAParticle(self.clients, self.params, self.split_solver, rng=self.np_rng)
             for _ in range(self.params.pop_size)
         ]
+        if self.params.seed_nearest_neighbour and self.swarm:
+            self._seed_particle(self.swarm[0])
         for p in self.swarm:
             if p.profit > self.gbest_profit:
                 self._set_gbest(p.X, p.giant_tour, p.mapping_indices, p.routes, p.profit)
+
+    def _nearest_neighbour_order(self) -> List[int]:
+        """Client order of a nearest-neighbour tour from the depot (true distances)."""
+        unvisited = set(self.clients)
+        order, current = [], 0
+        while unvisited:
+            nxt = min(unvisited, key=lambda j: self.dist_matrix[current, j])
+            order.append(nxt)
+            unvisited.remove(nxt)
+            current = nxt
+        return order
+
+    def _seed_particle(self, p) -> None:
+        """Place one particle on the nearest-neighbour giant tour (ROV keys ranked along the tour)."""
+        keys = np.empty(self.n_nodes)
+        ranks = np.linspace(self.params.x_min, self.params.x_max, self.n_nodes)
+        for rank, node in enumerate(self._nearest_neighbour_order()):
+            keys[node - 1] = ranks[rank]
+        p.X = keys
+        p.giant_tour, p.mapping_indices = p._rov_rule(p.X)
+        p.routes, p.profit = self.split_solver.split(p.giant_tour.tolist())
+        p.pbest_X = np.copy(p.X)
+        p.pbest_giant_tour = np.copy(p.giant_tour)
+        p.pbest_mapping_indices = np.copy(p.mapping_indices)
+        p.pbest_profit = p.profit
 
     def _set_gbest(
         self,
