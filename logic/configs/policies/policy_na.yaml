@@ -38,16 +38,15 @@ na:
     # ---------------------------------------------------------------------
     - model_path: "assets/model_weights/vrpp100_riomaior_plastic/emp/amgat0"
       # Path to trained model directory containing:
-      #   - config.yaml: Model architecture and training hyperparameters
-      #   - best.ckpt: PyTorch Lightning checkpoint with learned weights
-      #   - hparams.yaml: Hyperparameters used during training
+      #   - args.json: Model architecture and training hyperparameters (sidecar written by training)
+      #   - epoch-<N>.pt: Weights of the final model; the newest epoch-*.pt is loaded
+      #   - config.yaml: Full Hydra config of the training run, when available
       #
       # Directory structure example:
       #   amgat/
+      #   ├── args.json
       #   ├── config.yaml
-      #   ├── best.ckpt
-      #   ├── hparams.yaml
-      #   └── version_0/  (Lightning logs)
+      #   └── epoch-31.pt
       #
       # Model was trained on:
       #   - Problem: CWCVRP (Capacitated Waste Collection VRP)
@@ -99,9 +98,9 @@ na:
     # Model Loading (Automatic)
     # ---------------------------------------------------------------------
     # The simulator automatically:
-    #   1. Reads model_path/config.yaml to determine architecture
+    #   1. Reads model_path/args.json to determine architecture
     #   2. Instantiates model (AM, TAM, etc.) with correct dimensions
-    #   3. Loads weights from best.ckpt
+    #   3. Loads the newest epoch-*.pt weights (args.json holds the hyperparameters)
     #   4. Moves model to GPU (if available)
     #   5. Sets model.eval() mode (disables dropout/batchnorm training behavior)
     #
