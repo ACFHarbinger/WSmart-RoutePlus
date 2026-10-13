@@ -31,6 +31,11 @@ class CPTPEnv(PTPEnv):
 
     name: str = "cptp"
 
+    # A depot visit unloads the vehicle and the day continues. The day ends when the depot is
+    # chosen while the vehicle is already at the depot ("stop"), and that end is permanent.
+    # Subclasses with their own end rule (TCPTP) switch this off.
+    explicit_stop: bool = True
+
     def _reset_instance(self, tensordict: TensorDict) -> TensorDict:
         """Initialize CPTP state with capacity tracking.
 
@@ -56,6 +61,9 @@ class CPTPEnv(PTPEnv):
             tensordict.setdefault("remaining_capacity", capacity.clone())
             tensordict.setdefault("collected_waste", torch.zeros(bs, device=device))
         tensordict["collected"] = tensordict["collected_waste"]  # Alias
+
+        if not is_resuming or "finished" not in tensordict.keys():
+            tensordict["finished"] = torch.zeros(bs, dtype=torch.bool, device=device)
 
         return tensordict
 
@@ -91,6 +99,12 @@ class CPTPEnv(PTPEnv):
         waste_at_node = waste.gather(1, action.unsqueeze(-1)).squeeze(-1) if waste.dim() > 1 else waste
         at_depot = action == 0
 
+        # Choosing the depot from the depot ends the day (also as the very first action).
+        was_at_depot = tensordict["current_node"].reshape(-1) == 0
+        finished = tensordict.get("finished", torch.zeros_like(at_depot))
+        if self.explicit_stop:
+            finished = finished | (at_depot & was_at_depot)
+
         # Delegate distance / visited / current_node / tour updates, and
         # PTP's own cumulative collected_waste, to PTPEnv/OpsMixin. Without
         # this call, current_node/visited/tour_length/tour never advance past
@@ -108,6 +122,7 @@ class CPTPEnv(PTPEnv):
             (tensordict["remaining_capacity"] - waste_at_node).clamp(min=0),
         )
         tensordict["collected"] = tensordict["capacity"] - tensordict["remaining_capacity"]
+        tensordict["finished"] = finished
 
         return tensordict
 
@@ -164,4 +179,31 @@ class CPTPEnv(PTPEnv):
             # No mandatory constraint: depot always valid
             mask[:, 0] = True
 
+        # A finished day stays at the depot; the padding steps cost nothing.
+        finished = tensordict.get("finished", None)
+        if self.explicit_stop and finished is not None:
+            mask[finished, 1:] = False
+            mask[finished, 0] = True
+
         return mask
+
+    def _check_done(self, tensordict: TensorDict) -> torch.Tensor:
+        """
+        The day is done once the vehicle has stopped at the depot, or is at the depot with
+        no bin left that it could collect. A plain depot return only unloads.
+
+        Args:
+            tensordict: Input TensorDict containing the state after the step.
+
+        Returns:
+            torch.Tensor: Boolean tensor indicating if the episode is done, shape (batch,).
+        """
+        if not self.explicit_stop:
+            return super()._check_done(tensordict)
+        current = tensordict["current_node"].reshape(-1)
+        step = tensordict["i"].reshape(-1)
+        mask = tensordict.get("action_mask", None)
+        if mask is None:
+            mask = self._get_action_mask(tensordict)
+        exhausted = (current == 0) & (step > 0) & ~mask[:, 1:].any(dim=1)
+        return tensordict["finished"] | exhausted
