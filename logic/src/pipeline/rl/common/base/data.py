@@ -302,7 +302,9 @@ class DataMixin:
         return DataLoader(
             cast(Any, self.train_dataset),
             batch_size=self.batch_size,
-            shuffle=True,
+            # Time training empties the collected bins row by row from the epoch's actions in the
+            # order they were produced, so the batches must follow the dataset order.
+            shuffle=not getattr(self, "train_time", False),
             num_workers=self.num_workers,
             collate_fn=tensordict_collate_fn,
             pin_memory=self.pin_memory if self.num_workers > 0 and self.train_dataset is not None else False,
