@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Fixed
 
+- CPTP training reward balance: `waste_weight` is 9.0 in `logic/configs/envs/cptp.yaml`. The previous 1.0 paid 0.045 per bin against about 0.045 km per bin of travel, so the reward was negative for almost any tour. The value comes from the 50-bin instance: about 20 km per full day against 2.28 units of fill gives about 9 (`96eea4d82`).
 - Vehicle capacity on the TensorDict training path is in the same unit as the waste it carries. Waste is a bin-fill fraction (`MAX_WASTE`), while the capacity was the percent default (100), so the route-capacity limit could never bind for CPTP and CVRP training data (`logic/src/data/generators/builders.py`).
 - Training checkpoints are named by epoch and step. The filename referenced `val_reward`, which is never logged (the monitor is `val/reward`), so every checkpoint was named `val_reward=0.0000` (`logic/src/pipeline/rl/common/trainer.py`).
 - The neural policy comments describe the saved model directory the loader reads: `args.json` and the newest `epoch-*.pt` (`logic/configs/policies/policy_na.yaml`).
