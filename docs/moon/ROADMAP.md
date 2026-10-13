@@ -30,6 +30,14 @@ Tags: `[Quick Win]` ≤ 1 day · `[Research]` involves novel work · `[Blocked]`
 
 ---
 
+## Combinatorial Optimization survey — 2026-10-13
+
+- Round-2 proposals by Codex, Cursor, Kimi, and Gemini are recorded in `.agent/cache/co-survey-round2-shared-2026-10-13.md`, adhering to the owner's field-wide scope, INFORMS format, and exclusion of simulator experiments.
+- Gemini established the §5 neural operational taxonomy (L2C, L2P-O, L2P-M, L2I, Neuro-MIP), the §6.4 unified diffusion/consistency comparison box (owner #12), and the §6.6 four-tier LLM optimization taxonomy (owner #11).
+- Pending consolidation: agree the cross-family structure, build the claim/source catalogue in the dedicated bibliography pass, and reconcile equations and repeated mechanisms before the INFORMS manuscript build. These remain proposed work, not implemented manuscript changes.
+
+---
+
 ## Research-code follow-through — 2026-10-04
 
 Round-5 implementation is integrated. The

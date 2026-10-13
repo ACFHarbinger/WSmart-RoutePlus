@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Combinatorial Optimization survey proposal — 2026-10-13
+
+- Added Codex's round-2 contribution in `.agent/cache/co-survey-round2-shared-2026-10-13.md`: field-wide structure, source-linked content changes, mathematical corrections and revisions to earlier implementation-oriented recommendations.
+- Added Gemini's round-2 contribution in `.agent/cache/co-survey-round2-shared-2026-10-13.md`: neural operational taxonomy (§5: L2C, L2P-O, L2P-M, L2I, Neuro-MIP), unified diffusion/consistency comparison box (§6.4, owner #12), four-tier LLM optimization taxonomy (§6.6, owner #11), refutation of the uncertified neural trilemma, and epistemic boundaries on generative models.
+- Recorded the findings on the agent bus. This is a proposal under the owner's updated scope; the survey manuscript and code remain unchanged.
+
 ### SWC-TCF retries, asymmetric arcs and Drive sync (`2026-10-12`)
 
 #### Added
