@@ -5,7 +5,7 @@ Integrates with the WSmart+ Route CLI registry as the ``clean_results`` and
 
     # Remove targeted simulation runs via main CLI
     python main.py clean_results \\
-        --results-dir outputs/simulator/30_days/riomaior_100 \\
+        --results-dir outputs/simulations/30_days/riomaior_100 \\
         --distribution emp \\
         --constructor alns \\
         --improver ftsp \\
@@ -17,7 +17,7 @@ Integrates with the WSmart+ Route CLI registry as the ``clean_results`` and
 
     # Standalone with subcommands
     uv run python -m logic.controllers.cli.out_parser clean \\
-        --results-dir outputs/simulator/30_days/riomaior_100 \\
+        --results-dir outputs/simulations/30_days/riomaior_100 \\
         --ms-strategy lookahead --distribution gamma3
 
     uv run python -m logic.controllers.cli.out_parser excel
@@ -42,7 +42,7 @@ from logic.src.constants import ROOT_DIR
 from logic.src.utils.output.excel_summary import discover_and_aggregate
 from logic.src.utils.output.remover import PolicyFilter, remove_targeted_runs
 
-_DEFAULT_EXCEL_OUTPUT = os.path.join(ROOT_DIR, "outputs", "simulator", "simulation_summary.xlsx")
+_DEFAULT_EXCEL_OUTPUT = os.path.join(ROOT_DIR, "outputs", "simulations", "simulation_summary.xlsx")
 
 
 def add_output_args(parser: argparse.ArgumentParser) -> None:
@@ -57,7 +57,7 @@ def add_output_args(parser: argparse.ArgumentParser) -> None:
         metavar="DIR",
         help=(
             "Path to the results directory, "
-            "e.g. 'outputs/simulator/30_days/riomaior_100'.  "
+            "e.g. 'outputs/simulations/30_days/riomaior_100'.  "
             "Supports any area / day-count combination."
         ),
     )
@@ -124,7 +124,7 @@ def add_excel_summary_args(parser: argparse.ArgumentParser) -> None:
         default=[],
         metavar="DIR",
         help=(
-            "Whitelist of sub-directories under outputs/simulator/ to include, "
+            "Whitelist of sub-directories under outputs/simulations/ to include, "
             "e.g. '31_days/riomaior_104 30_days/riomaior_104'.  "
             "When omitted, all directories are scanned."
         ),
