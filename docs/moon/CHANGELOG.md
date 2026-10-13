@@ -17,6 +17,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### CPTP time training, survey paper and test coverage (`2026-10-13`)
+
+#### Fixed
+
+- Vehicle capacity on the TensorDict training path is in the same unit as the waste it carries. Waste is a bin-fill fraction (`MAX_WASTE`), while the capacity was the percent default (100), so the route-capacity limit could never bind for CPTP and CVRP training data (`logic/src/data/generators/builders.py`).
+- Training checkpoints are named by epoch and step. The filename referenced `val_reward`, which is never logged (the monitor is `val/reward`), so every checkpoint was named `val_reward=0.0000` (`logic/src/pipeline/rl/common/trainer.py`).
+- The neural policy comments describe the saved model directory the loader reads: `args.json` and the newest `epoch-*.pt` (`logic/configs/policies/policy_na.yaml`).
+- The CVaR selection comment described the VaR <= 0 branch as an upper bound. The code computes CVaR of max(0, X) exactly, and the comment now says so (`logic/src/policies/mandatory_selection/selection_cvar.py`).
+
+#### Added
+
+- Regression tests: capacity and waste share units on the TensorDict path (`logic/test/unit/data/test_builder_capacity_units.py`); CVaR selection threshold against quadrature (`logic/test/unit/policies/mandatory_selection/test_selection_cvar.py`); the 2-opt\* gain equals the real route-cost change (`logic/test/unit/policies/helpers/test_k_opt_star_delta.py`).
+
+#### Changed
+
+- Survey paper branch (submodule, not merged): corrections to the 2-opt\* reconnection, the set-partitioning master, mandatory selection (12 items), neural and routing marks, registered metaheuristic variants, the INFORMS document class, and the author block. Consolidated proposal and paper roadmap in `.agent/tasks/`.
+
 ### Combinatorial Optimization survey proposal — 2026-10-13
 
 - Added Codex's round-2 contribution in `.agent/cache/co-survey-round2-shared-2026-10-13.md`: field-wide structure, source-linked content changes, mathematical corrections and revisions to earlier implementation-oriented recommendations.
