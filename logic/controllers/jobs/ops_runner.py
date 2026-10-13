@@ -21,9 +21,9 @@ Example::
 
     python main.py benchmark --subset all --device auto
     python main.py test_suite --module test_models --verbose
-    python main.py file_system update --target_entry outputs/simulator/ --output_key cost
-    python main.py clean_results --results-dir outputs/simulator/30_days/riomaior_100 --dry-run
-    python main.py excel_summary --output-path outputs/simulator/simulation_summary.xlsx
+    python main.py file_system update --target_entry outputs/simulations/ --output_key cost
+    python main.py clean_results --results-dir outputs/simulations/30_days/riomaior_100 --dry-run
+    python main.py excel_summary --output-path outputs/simulations/simulation_summary.xlsx
     python main.py update_ms --constructors aco_hh alns bpc hgs --file ms_service_level --keys service_level1
     python main.py update_ri --constructors aco_hh alns --file ri_ftsp --keys ftsp
 """

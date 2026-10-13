@@ -139,7 +139,7 @@ def setup_dist_path_tup(
         n_days: Number of simulation days (used to construct the save path).
         focus_idx: Optional focus indices.
         save_updated_dm: Optional filename to save the updated distance matrix under
-            ``outputs/simulator/{n_days}days/{area}{size}_{area}/{distribution}/{run_name}/``.
+            ``outputs/simulations/{n_days}days/{area}{size}_{area}/{distribution}/{run_name}/``.
 
     Returns:
         Tuple of ((dist_matrix_edges, paths, dm_tensor, distC), adj_matrix).
