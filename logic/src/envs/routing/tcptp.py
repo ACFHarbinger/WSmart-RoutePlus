@@ -48,6 +48,9 @@ class TCPTPEnv(CPTPEnv):
 
     name: str = "tcptp"
 
+    # TCPTP ends a day on exhaustion (see _check_done), not on an explicit stop.
+    explicit_stop: bool = False
+
     def __init__(
         self,
         generator: Optional[TCPTPGenerator] = None,
