@@ -740,3 +740,10 @@ METRICS = ["overflows", "kg", "ncol", "kg_lost", "km", "kg/km", "cost", "profit"
 ---
 
 **This guide is the authoritative reference for AI assistants working on WSmart+ Route. Keep it updated as the codebase evolves.**
+
+## Paper work location (CO survey)
+
+- All paper changes are made in WSmart-Route, in the submodule at `assets/papers/A-Comprehensive-Combinatorial-Optimization-Algorithms-Analysis` on its `main` branch.
+- Do not create worktrees, forks, or other copies of the paper, and do not edit it from anywhere else. The former `wsr-survey` worktree was merged and removed on 2026-10-13.
+- After a paper change is committed in the submodule, record the new commit in WSmart-Route by committing the submodule pointer on a branch and merging it into `main`.
+- Commits and pushes are made by the user; do not push from the submodule or WSmart-Route.
