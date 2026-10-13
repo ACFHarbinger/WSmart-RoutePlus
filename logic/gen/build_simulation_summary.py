@@ -124,7 +124,7 @@ def collect(root: pathlib.Path) -> Dict[str, List[Dict[str, object]]]:
 def main(argv: Optional[List[str]] = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("out_dir", type=pathlib.Path, help="Folder for the two summary CSVs.")
-    parser.add_argument("--root", type=pathlib.Path, default=pathlib.Path("assets/output"))
+    parser.add_argument("--root", type=pathlib.Path, default=pathlib.Path("outputs/simulator"))
     args = parser.parse_args(argv)
 
     rows = collect(args.root)

@@ -37,7 +37,7 @@ _DISPLAY_METRICS = [
 ]
 
 # Whitelist of directories to include in the summary.
-# If empty, all directories under assets/output/ are included.
+# If empty, all directories under outputs/simulator/ are included.
 # Example: ["31_days/riomaior_104", "30_days/riomaior_104"]
 SELECTED_DIRS: List[str] = [
     "31_days/riomaior_104",
@@ -87,7 +87,7 @@ def discover_and_aggregate() -> pd.DataFrame:
     Returns:
         pd.DataFrame: A DataFrame containing the aggregated simulation results.
     """
-    output_root = os.path.join(ROOT_DIR, "assets", "output")
+    output_root = os.path.join(ROOT_DIR, "outputs", "simulator")
     all_rows: List[Dict[str, Any]] = []
 
     if not os.path.isdir(output_root):

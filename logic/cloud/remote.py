@@ -36,7 +36,7 @@ class SyncTarget:
 
 TARGETS = {
     "data": SyncTarget(local=Path("data"), remote_dir="data"),
-    "output": SyncTarget(local=Path("assets/output"), remote_dir="output"),
+    "output": SyncTarget(local=Path("outputs/simulator"), remote_dir="output"),
     "tracking": SyncTarget(local=Path("assets/tracking"), remote_dir="tracking"),
 }
 

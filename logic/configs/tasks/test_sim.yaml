@@ -122,7 +122,7 @@ sim:
   # TCPTP keeps this file's graph/policy lists; only the problem tag changes.
   #   python main.py test_sim sim.problem=tcptp
   # Do not flip the committed default -- the paper's 30-day factorial is ptp.
-  output_dir: "output"
+  output_dir: "outputs/simulator"
   run_name: "lm_cls"
   checkpoint_dir: "checkpoints"
   checkpoint_days: 0

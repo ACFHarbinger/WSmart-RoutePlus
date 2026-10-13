@@ -6,7 +6,7 @@ Quick start::
 
     # Remove all 'emp' ALNS runs from a results directory
     remove_targeted_runs(
-        results_dir="assets/output/30_days/riomaior_100",
+        results_dir="outputs/simulator/30_days/riomaior_100",
         policy_filter=PolicyFilter(
             distributions=["emp"],
             constructors=["alns"],
@@ -15,7 +15,7 @@ Quick start::
 
     # Dry-run to preview
     removed = remove_targeted_runs(
-        results_dir="assets/output/30_days/riomaior_100",
+        results_dir="outputs/simulator/30_days/riomaior_100",
         policy_filter=PolicyFilter(improvers=["ftsp"]),
         dry_run=True,
     )

@@ -99,7 +99,7 @@ else:
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 #: Raw simulation output tree, source of the road-distance matrices.
-OUTPUT_DIR = REPO_ROOT / "assets" / "output" / "30days"
+OUTPUT_DIR = REPO_ROOT / "outputs" / "simulator" / "30days"
 
 #: Retained coordinate-derived maps produced by gen_simulation_analysis.py from
 #: the original (gitignored) bin-coordinate exports and OpenStreetMap roads.

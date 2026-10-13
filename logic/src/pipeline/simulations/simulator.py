@@ -185,7 +185,6 @@ def display_log_metrics(
     """
     abs_output_dir = os.path.join(
         ROOT_DIR,
-        "assets",
         output_dir,
         f"{days}days",
         f"{area}{size}_{waste_type}" if waste_type else f"{area}{size}",

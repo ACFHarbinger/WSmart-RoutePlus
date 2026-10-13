@@ -56,7 +56,7 @@ def test_download_fills_the_local_directory(repo, drive, tmp_path):
     remote_outputs.mkdir(parents=True)
     (remote_outputs / "result.json").write_text("{}")
     download("output", drive, config="/dev/null")
-    assert (repo / "assets" / "output" / "30days" / "result.json").read_text() == "{}"
+    assert (repo / "outputs" / "simulator" / "30days" / "result.json").read_text() == "{}"
 
 
 def test_nothing_is_deleted_on_either_side(repo, drive, tmp_path):
@@ -79,8 +79,8 @@ def test_symlinked_source_directory_is_refused(tmp_path, monkeypatch):
 def test_symlinked_download_destination_is_refused(repo, drive, tmp_path):
     other = tmp_path / "other"
     other.mkdir()
-    (repo / "assets" / "output").parent.mkdir(parents=True, exist_ok=True)
-    (repo / "assets" / "output").symlink_to(other)
+    (repo / "outputs" / "simulator").parent.mkdir(parents=True, exist_ok=True)
+    (repo / "outputs" / "simulator").symlink_to(other)
     with pytest.raises(ValueError, match="symlink"):
         download("output", drive, config="/dev/null")
 
@@ -95,7 +95,7 @@ def test_sync_drive_command_parses_and_runs(repo, drive, tmp_path):
     from logic.cloud.cli import run_sync
     from logic.controllers.cli.registry import get_parser
 
-    (repo / "assets" / "output").mkdir(parents=True)
+    (repo / "outputs" / "simulator").mkdir(parents=True)
     (repo / "assets" / "tracking").mkdir(parents=True)
     args = get_parser().parse_args(
         ["sync_drive", "--direction", "upload", "--target", "all", "--remote", drive, "--dry-run"]
