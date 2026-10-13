@@ -17,7 +17,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 import torch
 from tensordict import TensorDict, TensorDictBase
@@ -74,6 +74,55 @@ class PTPEnv(RL4COEnvBase):
         super().__init__(generator, generator_params, device, **kwargs)
         self.waste_weight = revenue_kg if revenue_kg is not None else waste_weight
         self.cost_weight = cost_km if cost_km is not None else cost_weight
+        # Road distances (km) for instances that name their bins; see _attach_road_distances.
+        self.dm_filepath: Optional[str] = (generator_params or {}).get("dm_filepath")
+        self._road_ids: Optional[dict[Any, int]] = None
+        self._road_matrix: Optional[torch.Tensor] = None
+        self._road_cache: dict[tuple[int, ...], torch.Tensor] = {}
+
+    def _attach_road_distances(self, tensordict: TensorDict) -> None:
+        """Add the road distance matrix ``dm`` (km) for instances built on a real network.
+
+        Instances from a focus graph carry ``node_ids``. With a distance file configured,
+        tour lengths and the reward then use road kilometres, as the simulator does, and not
+        straight lines between normalised coordinates. Instances without ``node_ids`` (random
+        layouts) are left alone.
+
+        Args:
+            tensordict: State after the depot has been prepended to ``locs``.
+        """
+        if self.dm_filepath is None or "dm" in tensordict.keys() or "node_ids" not in tensordict.keys():
+            return
+        node_ids = tensordict["node_ids"]
+        if node_ids.dim() != 2 or node_ids.shape[-1] != tensordict["locs"].shape[-2] - 1:
+            return
+
+        if self._road_matrix is None:
+            from logic.src.data.network.file import load_labelled_distance_matrix
+
+            ids, body = load_labelled_distance_matrix(self.dm_filepath)
+            self._road_ids = {bin_id: pos for pos, bin_id in enumerate(ids)}
+            self._road_matrix = torch.as_tensor(body, dtype=torch.float32)
+        assert self._road_ids is not None
+
+        def submatrix(row: torch.Tensor) -> torch.Tensor:
+            key = tuple(int(i) for i in row.tolist())
+            if key not in self._road_cache:
+                assert self._road_ids is not None and self._road_matrix is not None
+                missing = [i for i in key if i not in self._road_ids]
+                if 0 not in self._road_ids or missing:
+                    raise ValueError(f"Distance matrix {self.dm_filepath} lacks the depot or bins {missing[:5]}")
+                pos = torch.tensor([self._road_ids[0]] + [self._road_ids[i] for i in key])
+                self._road_cache[key] = self._road_matrix[pos][:, pos]
+            return self._road_cache[key]
+
+        bs = tensordict.batch_size[0]
+        device = tensordict.device
+        if bool((node_ids == node_ids[:1]).all()):
+            dm = submatrix(node_ids[0]).to(device).unsqueeze(0).expand(bs, -1, -1)
+        else:
+            dm = torch.stack([submatrix(row) for row in node_ids]).to(device)
+        tensordict["dm"] = dm
 
     def _reset_instance(self, tensordict: TensorDict) -> TensorDict:
         """
@@ -170,6 +219,7 @@ class PTPEnv(RL4COEnvBase):
         tensordict["tour"] = torch.zeros(*bs, 0, dtype=torch.long, device=device)
         tensordict["tour_length"] = torch.zeros(*bs, device=device)
         tensordict["collected_waste"] = torch.zeros(*bs, device=device)
+        self._attach_road_distances(tensordict)
         return tensordict
 
     def _step(self, tensordict: TensorDict) -> TensorDict:

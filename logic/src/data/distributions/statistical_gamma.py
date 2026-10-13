@@ -82,7 +82,9 @@ class Gamma(BaseDistribution):
             generator = torch.Generator()
         if self.option is not None:
             # Use per-node heterogeneous params; fall back to numpy then convert
-            seed = generator.initial_seed() if generator else None
+            # Draw a fresh seed per call: seeding from initial_seed() repeated the same sample,
+            # so every day of a multi-day dataset held identical waste.
+            seed = int(torch.randint(0, 2**31 - 1, (1,), generator=generator, device=generator.device).item())
             rng = np.random.default_rng(seed)
             return torch.from_numpy(self._sample_array(size, rng=rng)).float()
 
