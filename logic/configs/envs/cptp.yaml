@@ -55,15 +55,17 @@ curriculum_graphs:
     # Objective: maximize (waste_weight × Σ wastes) - (cost_weight × total_distance)
     # Subject to: vehicle capacity constraints
     # Tour length is in road km (dm_filepath). The weights are the simulator's economics for
-    # Rio Maior plastic, divided by 40 to keep the reward near the scale of the model's
-    # other problems:
-    #   revenue: 0.5837 EUR/kg x 47.5 kg per full bin = 27.7 EUR per bin fill -> 0.7
-    #   cost:    1 EUR/km                                                     -> 0.025
+    # Rio Maior plastic, so the reward is the day's profit in EUR:
+    #   revenue: 0.5837 EUR/kg x 47.5 kg per full bin = 27.7 EUR per bin fill
+    #   cost:    1 EUR/km
     # A day brings about 2.4 bin fills (66 EUR) and the depot is about 51 km from the bins,
     # so one day's waste does not pay for a tour; two or more do.
+    # Do not scale both weights down: the entropy bonus (rl.entropy_weight x entropy summed
+    # over the route, about 5 for a 50-bin route) then outweighs the reward and the policy
+    # never learns to stop.
     reward:
-      cost_weight: 0.025    # Weight for travel distance (per road km).
-      waste_weight: 0.7     # Weight for waste collection (per unit of bin fill).
+      cost_weight: 1.0      # Weight for travel distance (EUR per road km).
+      waste_weight: 27.7    # Weight for waste collection (EUR per unit of bin fill).
       overflow_penalty: 1.0 # Penalty factor for overflows.
 
 # ===========================================================================
