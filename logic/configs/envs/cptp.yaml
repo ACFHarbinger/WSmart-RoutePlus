@@ -44,8 +44,13 @@ curriculum_graphs:
     # Objective: maximize (waste_weight × Σ wastes) - (cost_weight × total_distance)
     # Subject to: vehicle capacity constraints
     reward:
-      cost_weight: 1.0      # Weight for travel distance.
-      waste_weight: 1.0     # Weight for waste collection.
+      cost_weight: 1.0      # Weight for travel distance (km).
+      # Calibrated so that collecting every bin of a day roughly breaks even with its tour:
+      #   a 50-bin day holds about 2.28 units of waste (fill fraction, emp distribution) and its
+      #   tour is about 20.3 km, so 20.3 / 2.28 is about 9. Per bin: 0.045 x 9 = 0.40 km, the
+      #   median nearest-neighbour distance on the Rio Maior matrix is 0.35 km. Both tour length
+      #   and total fill grow with the number of bins, so the ratio carries over to other sizes.
+      waste_weight: 9.0     # Weight for waste collection (per unit of bin fill).
       overflow_penalty: 1.0 # Penalty factor for overflows.
 
 # ===========================================================================
