@@ -20,20 +20,32 @@ variance: 0.0
 # =============================================================================
 # Capacity Constraint
 # =============================================================================
-capacity:
-  100.0 # Normalized vehicle capacity.
-  # Waste values typically sum to >capacity, forcing selective collection.
-  # Range: 0.5-2.0. Higher = less constrained routing.
+# Vehicle capacity in bin fills (one full bin = 1.0), used only when instances are generated
+# on the fly. Datasets built by gen_data carry the simulator's capacity for their area and
+# waste type (percent of a bin divided by 100), e.g. Rio Maior plastic:
+# 3500 kg / (2.5 * 19 kg per bin) = 73.68 bins. Keep this value in line with the graph below.
+capacity: 73.68
 
 # ===========================================================================
 # Curriculum Learning
 # ===========================================================================
 # The first entry is also used for single-stage training.
 # Each entry may include a 'reward:' block to override objective weights.
+# Without focus_graph and load_dataset the instances are random points in the unit square,
+# not the real network. The datasets are built with:
+#   python main.py gen_data data.problem=cptp data.data_distributions=[emp] \
+#     data.dataset_type=train_time data.data_dir=datasets data.name=time data.seed=42 \
+#     data.graphs=[{num_loc:50,n_samples:12800,focus_size:12800,n_days:31,...}]
 curriculum_graphs:
   - num_loc: 50
     area: "riomaior"
     waste_type: "plastic"
+    vertex_method: "mmn"
+    distance_method: "gmaps"
+    focus_size: 12800
+    focus_graph: "graphs_50V_1N_plastic.json"
+    dm_filepath: "gmaps_distmat_plastic[riomaior].csv"
+    load_dataset: "data/datasets/cptp/cptp50_emp_time31_seed42.td"
     n_days: 31
     n_samples: 12800
     start_day: 0
@@ -43,18 +55,32 @@ curriculum_graphs:
     # =========================================================================
     # Objective: maximize (waste_weight × Σ wastes) - (cost_weight × total_distance)
     # Subject to: vehicle capacity constraints
+    # The weights follow the simulator's economics for Rio Maior plastic, in the units the
+    # model trains in (bin fills, and Euclidean length on min-max normalised coordinates):
+    #   revenue: 0.5837 EUR/kg x 47.5 kg per full bin = 27.7 EUR per bin fill
+    #   cost:    1 EUR/km x about 40 km per unit of normalised length (road matrix against
+    #            normalised coordinates on the 50-bin graph) = 40 EUR per unit
+    #   27.7 / 40 = 0.69. A day brings about 2.4 bin fills (1.7 in reward) and the depot is
+    #   about 0.9 units away, so one day's waste does not pay for a tour; two or more do.
     reward:
-      cost_weight: 1.0      # Weight for travel distance (km).
-      # Calibrated so that collecting every bin of a day roughly breaks even with its tour:
-      #   a 50-bin day holds about 2.28 units of waste (fill fraction, emp distribution) and its
-      #   tour is about 20.3 km, so 20.3 / 2.28 is about 9. Per bin: 0.045 x 9 = 0.40 km, the
-      #   median nearest-neighbour distance on the Rio Maior matrix is 0.35 km. Both tour length
-      #   and total fill grow with the number of bins, so the ratio carries over to other sizes.
-      waste_weight: 9.0     # Weight for waste collection (per unit of bin fill).
+      cost_weight: 1.0      # Weight for travel distance (normalised length).
+      waste_weight: 0.7     # Weight for waste collection (per unit of bin fill).
       overflow_penalty: 1.0 # Penalty factor for overflows.
 
 # ===========================================================================
 # Evaluation Graphs
 # ===========================================================================
 # Each entry may include a 'reward:' block to evaluate under different weights.
-eval_graphs: []
+eval_graphs:
+  - num_loc: 50
+    area: "riomaior"
+    waste_type: "plastic"
+    vertex_method: "mmn"
+    distance_method: "gmaps"
+    focus_size: 512
+    focus_graph: "graphs_50V_1N_plastic.json"
+    dm_filepath: "gmaps_distmat_plastic[riomaior].csv"
+    load_dataset: "data/datasets/cptp/cptp50_emp_val31_seed43.td"
+    n_days: 1
+    n_samples: 512
+    start_day: 0
