@@ -163,3 +163,37 @@ def _matrix_for_bin_ids(distance_matrix: np.ndarray, matrix_ids: np.ndarray, req
 
     idx = np.asarray(positions, dtype=int)
     return distance_matrix[np.ix_(idx, idx)]
+
+
+def load_labelled_distance_matrix(dm_filepath: str) -> tuple[list[Any], np.ndarray]:
+    """Load a distance matrix file together with the bin id of each row and column.
+
+    Args:
+        dm_filepath: File name under ``data/simulator/distance_matrix`` or a full path.
+
+    Returns:
+        The ids in matrix order (the depot is id 0) and the square distance body in km.
+
+    Raises:
+        FileNotFoundError: The file does not exist.
+        ValueError: The file is neither of the two labelled layouts.
+    """
+    filename_only = os.path.basename(dm_filepath) == dm_filepath and not os.path.isabs(dm_filepath)
+    matrix_path = (
+        os.path.join(ROOT_DIR, "data", "simulator", "distance_matrix", dm_filepath) if filename_only else dm_filepath
+    )
+    if not os.path.isfile(matrix_path):
+        raise FileNotFoundError(f"Distance matrix file not found: {matrix_path}")
+
+    raw = np.loadtxt(matrix_path, delimiter=",")
+    if getattr(raw, "ndim", 0) != 2:
+        raise ValueError(f"Distance matrix {matrix_path} must be a 2-d array")
+    if raw.shape[0] == raw.shape[1] + 1:
+        # One header row of ids, then the body with no id column.
+        ids, body = raw[0], raw[1:]
+    elif raw.shape[0] == raw.shape[1]:
+        # An id row and an id column around the body.
+        ids, body = raw[0, 1:], raw[1:, 1:]
+    else:
+        raise ValueError(f"Distance matrix {matrix_path} has shape {raw.shape}; expected a labelled square matrix")
+    return [_bin_id(i) for i in ids], body

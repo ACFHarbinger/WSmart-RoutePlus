@@ -69,7 +69,7 @@ class PTPGenerator(Generator):
         min_waste: float = 0.0,
         max_waste: float = 1.0,
         waste_distribution: str = "uniform",
-        capacity: float = 1.0,
+        capacity: Optional[float] = None,
         depot_type: str = "corner",
         device: Union[str, torch.device] = "cpu",
         area: Optional[str] = None,
@@ -89,7 +89,9 @@ class PTPGenerator(Generator):
             min_waste: Minimum waste value.
             max_waste: Maximum waste value.
             waste_distribution: Distribution for waste generation.
-            capacity: Vehicle capacity.
+            capacity: Vehicle capacity in bin fills. When omitted it is the simulator's
+                capacity for the area and waste type (percent of a full bin, divided by 100),
+                or 1.0 when those are not known.
             depot_type: Depot placement ("center", "corner", "random").
             device: Device to place tensors on.
             area: Area for grid generation.
@@ -103,7 +105,7 @@ class PTPGenerator(Generator):
         self.min_waste = min_waste
         self.max_waste = max_waste
         self.waste_distribution = kwargs.get("data_distribution", waste_distribution)
-        self.capacity = capacity if capacity is not None else 1.0
+        self.capacity = capacity if capacity is not None else self._simulator_capacity(area, kwargs.get("waste_type"))
         self.depot_type = depot_type
         self.data_dir = data_dir
         self.area = area
@@ -115,6 +117,28 @@ class PTPGenerator(Generator):
             self.grid = load_grid_base(self.indices, self.area, self.data_dir)
         except FileNotFoundError:
             pass
+
+    @staticmethod
+    def _simulator_capacity(area: Optional[str], waste_type: Optional[str]) -> float:
+        """Vehicle capacity in bin fills for an area and waste type, as the simulator uses it.
+
+        Args:
+            area: Geographic area.
+            waste_type: Waste stream.
+
+        Returns:
+            The simulator's capacity (percent of a full bin) divided by 100, or 1.0 when the
+            area or waste type is missing or unknown.
+        """
+        if not area or not waste_type:
+            return 1.0
+        try:
+            from logic.src.constants import MAX_CAPACITY_PERCENT
+            from logic.src.pipeline.simulations.repository import load_area_and_waste_type_params
+
+            return float(load_area_and_waste_type_params(area, waste_type)[0]) / MAX_CAPACITY_PERCENT
+        except (AssertionError, ImportError, KeyError, TypeError, ValueError):
+            return 1.0
 
     def _generate(self, batch_size: tuple[int, ...]) -> TensorDict:
         """Generate PTP instances.
