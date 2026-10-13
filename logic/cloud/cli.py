@@ -2,7 +2,7 @@
 
 Example:
     python main.py sync_drive --direction upload --target data --dry-run
-    python main.py sync_drive --direction download --target outputs --remote gdrive:WSmart-Route
+    python main.py sync_drive --direction download --target output --remote gdrive:WSmart-Route
 """
 
 from __future__ import annotations

@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `asymmetric: true` for the SWC-TCF paper formulation: directed arcs, each traversed at its own cost, and a load bounded by Q on used arcs. The default (`false`) keeps the undirected published model. On symmetric matrices both give the same optimal profit; on asymmetric matrices the reported profit equals the recomputed profit of the returned route.
 - `logic/cloud`: copy-only `rclone` wrapper that synchronises `data/` and `assets/output/` with a Google Drive folder, with `uploader` and `downloader` entry points. Symlinked directories are refused, dry runs are supported, and nothing is deleted on either side.
-- `python main.py sync_drive --direction upload|download [--target data|outputs|all] [--dry-run]` runs the same sync from the main CLI.
+- `python main.py sync_drive --direction upload|download [--target data|output|tracking|all] [--dry-run]` runs the same sync from the main CLI.
 
 #### Fixed
 

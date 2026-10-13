@@ -23,7 +23,7 @@ def upload(
     """Copy a local directory to its remote folder.
 
     Args:
-        target: Key of ``TARGETS`` (``data`` or ``outputs``).
+        target: Key of ``TARGETS`` (``data``, ``output`` or ``tracking``).
         remote: rclone path of the Drive root folder.
         dry_run: Report only.
         excludes: rclone exclude patterns.

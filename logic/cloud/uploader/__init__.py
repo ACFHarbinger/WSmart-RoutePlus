@@ -1,4 +1,4 @@
-"""Upload the local data and outputs directories to Google Drive."""
+"""Upload the local data, output and tracking directories to Google Drive."""
 
 from logic.cloud.uploader.sync import upload
 

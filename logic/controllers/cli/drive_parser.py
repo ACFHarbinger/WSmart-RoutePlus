@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import argparse
 
-from logic.cloud.remote import DEFAULT_REMOTE
+from logic.cloud.remote import DEFAULT_REMOTE, TARGETS
 
 
 def add_drive_sync_args(parser: argparse.ArgumentParser) -> None:
@@ -28,12 +28,12 @@ def add_drive_sync_args(parser: argparse.ArgumentParser) -> None:
         "--direction",
         required=True,
         choices=["upload", "download"],
-        help="upload: local data/outputs to Drive; download: Drive folders to local.",
+        help="upload: local directories to Drive; download: Drive folders to local.",
     )
     parser.add_argument(
         "--target",
         default="all",
-        choices=["data", "outputs", "all"],
+        choices=[*sorted(TARGETS), "all"],
         help="Which directory to sync (default: all).",
     )
     parser.add_argument(

@@ -1,7 +1,7 @@
 """Download a Google Drive folder into its local directory (copy only, nothing is deleted).
 
 Example:
-    python -m logic.cloud.downloader.sync --target outputs --dry-run
+    python -m logic.cloud.downloader.sync --target output --dry-run
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ def download(
     """Copy a remote folder into the local directory of a target.
 
     Args:
-        target: Key of ``TARGETS`` (``data`` or ``outputs``).
+        target: Key of ``TARGETS`` (``data``, ``output`` or ``tracking``).
         remote: rclone path of the Drive root folder.
         dry_run: Report only.
         excludes: rclone exclude patterns.

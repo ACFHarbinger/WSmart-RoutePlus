@@ -52,10 +52,10 @@ def test_upload_honours_excludes(repo, drive, tmp_path):
 
 
 def test_download_fills_the_local_directory(repo, drive, tmp_path):
-    remote_outputs = tmp_path / "drive" / "outputs" / "30days"
+    remote_outputs = tmp_path / "drive" / "output" / "30days"
     remote_outputs.mkdir(parents=True)
     (remote_outputs / "result.json").write_text("{}")
-    download("outputs", drive, config="/dev/null")
+    download("output", drive, config="/dev/null")
     assert (repo / "assets" / "output" / "30days" / "result.json").read_text() == "{}"
 
 
@@ -82,7 +82,7 @@ def test_symlinked_download_destination_is_refused(repo, drive, tmp_path):
     (repo / "assets" / "output").parent.mkdir(parents=True, exist_ok=True)
     (repo / "assets" / "output").symlink_to(other)
     with pytest.raises(ValueError, match="symlink"):
-        download("outputs", drive, config="/dev/null")
+        download("output", drive, config="/dev/null")
 
 
 def test_missing_rclone_is_reported(repo, drive, monkeypatch):
@@ -96,10 +96,22 @@ def test_sync_drive_command_parses_and_runs(repo, drive, tmp_path):
     from logic.controllers.cli.registry import get_parser
 
     (repo / "assets" / "output").mkdir(parents=True)
+    (repo / "assets" / "tracking").mkdir(parents=True)
     args = get_parser().parse_args(
         ["sync_drive", "--direction", "upload", "--target", "all", "--remote", drive, "--dry-run"]
     )
     commands = run_sync({k: v for k, v in vars(args).items() if k != "command"})
-    assert len(commands) == 2
+    assert len(commands) == 3
     assert not (tmp_path / "drive" / "data").exists()
-    assert not (tmp_path / "drive" / "outputs").exists()
+    assert not (tmp_path / "drive" / "output").exists()
+    assert not (tmp_path / "drive" / "tracking").exists()
+
+
+def test_tracking_database_round_trips(repo, drive, tmp_path):
+    (repo / "assets" / "tracking").mkdir(parents=True)
+    (repo / "assets" / "tracking" / "tracking.db").write_bytes(b"sqlite")
+    upload("tracking", drive, config="/dev/null")
+    assert (tmp_path / "drive" / "tracking" / "tracking.db").read_bytes() == b"sqlite"
+    (repo / "assets" / "tracking" / "tracking.db").unlink()
+    download("tracking", drive, config="/dev/null")
+    assert (repo / "assets" / "tracking" / "tracking.db").read_bytes() == b"sqlite"

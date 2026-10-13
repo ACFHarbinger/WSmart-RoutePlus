@@ -1,7 +1,7 @@
 """Shared plumbing for the Drive sync: sync targets, remote paths and the rclone call.
 
 Attributes:
-    TARGETS: The two synchronised directories, keyed by their CLI name.
+    TARGETS: The synchronised directories (``data``, ``output``, ``tracking``), keyed by their CLI name.
     DEFAULT_REMOTE: Drive root used when no remote is given (``rclone`` remote name and folder).
 
 Example:
@@ -36,7 +36,8 @@ class SyncTarget:
 
 TARGETS = {
     "data": SyncTarget(local=Path("data"), remote_dir="data"),
-    "outputs": SyncTarget(local=Path("assets/output"), remote_dir="outputs"),
+    "output": SyncTarget(local=Path("assets/output"), remote_dir="output"),
+    "tracking": SyncTarget(local=Path("assets/tracking"), remote_dir="tracking"),
 }
 
 

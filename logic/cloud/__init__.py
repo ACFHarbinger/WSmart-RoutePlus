@@ -1,4 +1,4 @@
-"""Synchronise the local data and outputs directories with Google Drive folders.
+"""Synchronise the local data, output and tracking directories with Google Drive folders.
 
 The sync is a thin, copy-only wrapper around ``rclone``. It needs an rclone remote
 for Google Drive, created once with ``rclone config`` (the OAuth token stays in the
