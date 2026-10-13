@@ -336,14 +336,33 @@ class VRPInstanceBuilder:
         td_data.update(
             {
                 "node_ids": node_ids_tensor,
-                # waste in this TensorDict is a bin-fill fraction (MAX_WASTE), while vehicle_cap is a
-                # percentage of a full bin. Convert so that capacity and waste share the same unit.
-                "capacity": torch.full((bs,), self.vehicle_cap / MAX_CAPACITY_PERCENT * MAX_WASTE, device=device),
+                # waste in this TensorDict is a bin-fill fraction (MAX_WASTE), while the vehicle
+                # capacity is a percentage of a full bin. Convert so that both share the same unit.
+                "capacity": torch.full(
+                    (bs,), self._vehicle_cap_percent() / MAX_CAPACITY_PERCENT * MAX_WASTE, device=device
+                ),
                 "max_waste": torch.full((bs,), float(MAX_WASTE), device=device),
             }
         )
 
         return TensorDict(td_data, batch_size=[bs], device=device)
+
+    def _vehicle_cap_percent(self) -> float:
+        """Vehicle capacity in percent of one full bin.
+
+        The simulator derives it from the area and waste type; the same value is used here so
+        that a model trains under the capacity it is later simulated with. ``vehicle_cap`` is
+        the fallback when the area or waste type is not one the simulator knows.
+
+        Returns:
+            Vehicle capacity in percent of a full bin.
+        """
+        from logic.src.pipeline.simulations.repository import load_area_and_waste_type_params
+
+        try:
+            return float(load_area_and_waste_type_params(self._area, self._waste_type)[0])
+        except (AssertionError, AttributeError, KeyError, TypeError, ValueError):
+            return float(self.vehicle_cap)
 
     def _prepare_coordinates(self):
         """Internal helper to prepare depot and location coordinates.

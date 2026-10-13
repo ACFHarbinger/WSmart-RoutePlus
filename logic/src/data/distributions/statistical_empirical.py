@@ -88,11 +88,12 @@ class Empirical(BaseDistribution):
         if generator is None:
             generator = torch.Generator()
         batch_size = size[0]
+        # Draw a fresh seed from the generator on every call. Seeding from initial_seed() gave
+        # the same sample each time, so every day of a multi-day dataset held identical waste.
+        draw_seed = int(torch.randint(0, 2**31 - 1, (1,), generator=generator, device=generator.device).item())
         if self.dataset is not None:
             if isinstance(self.dataset, pandas.DataFrame):
-                # Use generator seed for pandas reproducibility
-                rs = generator.initial_seed() if generator else 42
-                vals = self.dataset.sample(n=batch_size, random_state=rs).values
+                vals = self.dataset.sample(n=batch_size, random_state=draw_seed).values
                 vals_tensor = torch.tensor(vals).float() / 100.0
             elif isinstance(self.dataset, np.ndarray):
                 vals = self.dataset[np.random.choice(len(self.dataset), batch_size)]
@@ -105,7 +106,7 @@ class Empirical(BaseDistribution):
             else:
                 raise ValueError("Dataset must be a pandas DataFrame, numpy array, dictionary, or torch Tensor.")
         elif self.grid is not None:
-            vals = self.grid.sample(n_samples=batch_size, rng=np.random.default_rng(generator.initial_seed()))
+            vals = self.grid.sample(n_samples=batch_size, rng=np.random.default_rng(draw_seed))
             vals_tensor = torch.from_numpy(vals).float() / 100.0
         else:
             raise ValueError("No grid or dataset found.")
