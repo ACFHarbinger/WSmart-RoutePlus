@@ -74,11 +74,12 @@ class CVaRSelection(IMandatorySelectionStrategy):
         # CVaR_alpha for X (signed surplus)
         cvar_x = x_mu + x_sigma * (norm.pdf(z_alpha) / (1.0 - alpha))
 
-        # We care about CVaR_alpha(max(0, X)) i.e. the tail of overflow.
-        # 1. If var_alpha > 0, the entire tail is positive, so CVaR(max(0, X)) = CVaR(X).
-        # 2. If var_alpha <= 0, the tail includes 0.
-        # Approximation when var_alpha <= 0: we use E[max(0,X)] / (1 - alpha) as an
-        # upper bound on CVaR_alpha(max(0,X)). Tight when P(X > 0) <= 1 - alpha.
+        # We care about CVaR_alpha(max(0, X)) i.e. the tail of overflow. Since max(0, .) is
+        # monotone, VaR_u(max(0, X)) = max(0, VaR_u(X)), so:
+        # 1. If var_alpha > 0, the whole tail is positive, so CVaR(max(0, X)) = CVaR(X).
+        # 2. If var_alpha <= 0, the tail starts at the atom at zero. The quantiles below
+        #    P(X <= 0) are clipped to 0, which leaves CVaR(max(0, X)) = E[max(0, X)] / (1 - alpha).
+        #    This is exact, not a bound (checked by quadrature in test_selection_cvar.py).
 
         # Expected value E[max(0, X)]
         z_zero = x_mu / x_sigma
