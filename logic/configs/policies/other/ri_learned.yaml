@@ -10,7 +10,7 @@ default:
     - "learned"
 
   # Learned post-processor parameters
-  learned_weights_path: null  # defaults to assets/model_weights/learned_postprocessor.pt
+  learned_weights_path: null  # defaults to model_weights/learned_postprocessor.pt
   learned_max_iter: 100
   learned_min_improvement: 0.0001
   learned_neighborhood_size: 20

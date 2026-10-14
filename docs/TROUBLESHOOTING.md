@@ -931,10 +931,10 @@ python main.py eval --decode_strategy greedy
 
 ```bash
 # List available checkpoints
-ls -la assets/model_weights/vrpp_20/
+ls -la model_weights/vrpp_20/
 
 # Use correct path
-python main.py train --load_path assets/model_weights/vrpp_20/am/epoch-99.pt
+python main.py train --load_path model_weights/vrpp_20/am/epoch-99.pt
 ```
 
 ### 13.2 Model Architecture Mismatch
@@ -983,7 +983,7 @@ model = model.to(device)
 | `ModuleNotFoundError: No module named 'logic'`                | Virtual environment issue                   | `source .venv/bin/activate; uv sync`              |
 | `CUDA out of memory`                                          | Batch size too large                        | Reduce `--batch_size`                             |
 | `AssertionError: Invalid graph size`                          | Config mismatch                             | Check `--graph_size` matches data                 |
-| `FileNotFoundError: model not found`                          | Wrong model path                            | Verify path with `ls assets/model_weights/`       |
+| `FileNotFoundError: model not found`                          | Wrong model path                            | Verify path with `ls model_weights/`       |
 | `ValueError: Cannot perform reduction on dimension 0`         | Empty batch                                 | Check dataloader and batch size                   |
 | `RuntimeError: Expected all tensors to be on the same device` | Device mismatch                             | Ensure all tensors on same device (CPU/CUDA)      |
 | `OSError: [Errno 28] No space left on device`                 | Disk full                                   | Free up disk space, clean temp files              |

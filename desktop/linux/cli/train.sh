@@ -70,7 +70,7 @@ MODEL="${MODEL_NAME:-am}"
 ENCODER="${MODEL_ENCODER_TYPE:-gat}"
 TEMPORAL_HORIZON="${MODEL_TEMPORAL_HORIZON:-0}"
 LOAD_DATASET_PATH="data/datasets/${DATA_PROBLEM}${SIZE}_${DATA_DISTRIBUTION}_${TRAIN_LOAD_DATASET}${EPOCHS}_seed${SEED}.td"
-FINAL_MODEL_PATH="assets/model_weights/${PROBLEM}${SIZE}_${AREA}_${WASTE_TYPE}/${DATA_DISTRIBUTION}/${MODEL}${ENCODER}${TEMPORAL_HORIZON}/epoch-${EPOCHS-1}.pt"
+FINAL_MODEL_PATH="model_weights/${PROBLEM}${SIZE}_${AREA}_${WASTE_TYPE}/${DATA_DISTRIBUTION}/${MODEL}${ENCODER}${TEMPORAL_HORIZON}/epoch-${EPOCHS-1}.pt"
 
 echo -e "${BLUE}╔══════════════════════════════════════════╗${NC}"
 echo -e "${BLUE}║       TRAINING MODULE (Hydra-based)      ║${NC}"

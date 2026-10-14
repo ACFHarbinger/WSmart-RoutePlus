@@ -36,7 +36,7 @@ na:
     # ---------------------------------------------------------------------
     # Model Checkpoint
     # ---------------------------------------------------------------------
-    - model_path: "assets/model_weights/vrpp100_riomaior_plastic/emp/amgat0"
+    - model_path: "model_weights/vrpp100_riomaior_plastic/emp/amgat0"
       # Path to trained model directory containing:
       #   - args.json: Model architecture and training hyperparameters (sidecar written by training)
       #   - epoch-<N>.pt: Weights of the final model; the newest epoch-*.pt is loaded

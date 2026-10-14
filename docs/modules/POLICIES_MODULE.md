@@ -2620,7 +2620,7 @@ from logic.src.policies import NeuralAgent
 from logic.src.models import load_model
 
 # Load trained model
-model = load_model("assets/model_weights/am_wcvrp_100.pt")
+model = load_model("model_weights/am_wcvrp_100.pt")
 
 # Create agent
 agent = NeuralAgent(
@@ -2658,7 +2658,7 @@ tour, cost, _ = neural_policy.execute(
     distance_matrix=dist_matrix,
     config={
         "neural": {
-            "model_path": "assets/model_weights/best_model.pt",
+            "model_path": "model_weights/best_model.pt",
             "decode_type": "beam_search",
             "beam_width": 10
         }
@@ -3892,7 +3892,7 @@ hgs:
 
 ```yaml
 neural:
-  model_path: assets/model_weights/am_wcvrp_100.pt
+  model_path: model_weights/am_wcvrp_100.pt
   decode_type: beam_search
   beam_width: 10
   temperature: 1.0

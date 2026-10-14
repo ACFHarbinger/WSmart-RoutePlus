@@ -298,7 +298,7 @@ def simulator_testing(cfg: Config, data_size: int, device: Any) -> None:  # noqa
         else:
             indices: List[Optional[Any]] = [None] * sim.graph.n_samples  # type: ignore[no-redef]
 
-        weights_path = os.path.join(udef.ROOT_DIR, "assets", "model_weights")
+        weights_path = os.path.join(udef.ROOT_DIR, "model_weights")
 
         # Extract active tracking context so parallel workers can attach to the
         # parent run.  Sequential workers run in the same process and already

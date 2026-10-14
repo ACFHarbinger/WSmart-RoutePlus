@@ -125,8 +125,9 @@ WSmart-Route/
 │   ├── vrpp/                # VRPP datasets
 │   ├── wcvrp/               # Waste collection datasets
 │   └── real_world/          # Real-world instances
+├── model_weights/            # Final trained models
+├── checkpoints/              # Training checkpoints
 ├── assets/                   # Assets Layer
-│   ├── model_weights/       # Trained models
 │   ├── configs/             # Configuration files
 │   └── output/              # Experiment outputs
 └── scripts/                  # Automation Scripts
@@ -1021,7 +1022,7 @@ python main.py train --wandb
 ```bash
 python main.py eval \
   data/vrpp/vrpp20_test_seed1234.pkl \
-  --model assets/model_weights/vrpp_20/am/epoch-99.pt \
+  --model model_weights/vrpp_20/am/epoch-99.pt \
   --decode_strategy greedy
 ```
 
@@ -1047,7 +1048,7 @@ python main.py test_sim \
   --problem vrpp \
   --size 20 \
   --days 31 \
-  --model_path assets/model_weights/vrpp_20/am/epoch-99.pt \
+  --model_path model_weights/vrpp_20/am/epoch-99.pt \
   --decode_strategy greedy
 ```
 
