@@ -1,5 +1,5 @@
 # =============================================================================
-# mandatory Strategy: Pareto-Front (Bi-Objective Non-Dominated Sorting)
+# packing algorithm: Pareto-Front (Bi-Objective Non-Dominated Sorting)
 # =============================================================================
 # PURPOSE:
 #   Select all bins that lie on the non-dominated Pareto front in the

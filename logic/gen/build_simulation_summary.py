@@ -47,7 +47,7 @@ AREAS = {
     "riomaior170": ("Rio Maior", 170),
 }
 DISTS = {"emp": "Empirical", "gamma3": "Gamma-3"}
-# (policy-key stem without the improver suffix, constructor label, acceptance label)
+# (policy-key stem without the improver suffix, routing algorithm label, acceptance label)
 CONSTRUCTORS = [
     ("swc_tcf_gurobi", "SWC-TCF", "gurobi"),
     ("bpc_custom", "BPC", "custom"),

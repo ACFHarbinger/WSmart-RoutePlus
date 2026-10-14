@@ -27,7 +27,7 @@ class NeuralAgentConfig:
     Attributes:
         model: Model configuration (architecture and load path).
         reward: Objective/reward weights configuration.
-        mandatory_selection: List of mandatory strategy config files.
+        packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
         seed: Random seed for reproducibility.
         vrpp: Whether the problem is a VRP with Profits.
@@ -35,7 +35,7 @@ class NeuralAgentConfig:
 
     model: ModelConfig = field(default_factory=ModelConfig)
     reward: ObjectiveConfig = field(default_factory=ObjectiveConfig)
-    mandatory_selection: Optional[Any] = None
+    packing: Optional[Any] = None
     route_improvement: Optional[Any] = None
     seed: Optional[int] = None
     vrpp: bool = True

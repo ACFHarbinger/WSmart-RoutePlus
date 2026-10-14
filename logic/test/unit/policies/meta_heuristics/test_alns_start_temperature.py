@@ -6,8 +6,8 @@ import numpy as np
 import pytest
 from logic.src.configs.policies.alns import ALNSConfig
 from logic.src.policies.acceptance_criteria.boltzmann_metropolis_criterion import BoltzmannAcceptance
-from logic.src.policies.route_construction.meta_heuristics.adaptive_large_neighborhood_search.alns import ALNSSolver
-from logic.src.policies.route_construction.meta_heuristics.adaptive_large_neighborhood_search.params import (
+from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns import ALNSSolver
+from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.params import (
     ALNSParams,
 )
 

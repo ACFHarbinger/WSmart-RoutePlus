@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import numpy as np
 import pytest
-from logic.src.policies.route_construction.other_algorithms.travelling_salesman_problem import tsp
+from logic.src.policies.routing.other_algorithms.travelling_salesman_problem import tsp
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

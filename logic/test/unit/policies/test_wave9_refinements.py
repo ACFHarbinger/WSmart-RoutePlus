@@ -5,11 +5,11 @@ Verification tests for Wave 9 refinements (GA, CFRS, HULK).
 import numpy as np
 import pandas as pd
 import pytest
-from logic.src.policies.route_construction.hyper_heuristics.hyper_heuristic_us_lk.hulk import HULKParams, HULKSolver
-from logic.src.policies.route_construction.matheuristics.cluster_first_route_second.solver import (
+from logic.src.policies.routing.hyper_heuristics.hyper_heuristic_us_lk.hulk import HULKParams, HULKSolver
+from logic.src.policies.routing.matheuristics.cluster_first_route_second.solver import (
     fisher_jaikumar_clustering,
 )
-from logic.src.policies.route_construction.meta_heuristics.genetic_algorithm.solver import GAParams, GASolver
+from logic.src.policies.routing.meta_heuristics.genetic_algorithm.solver import GAParams, GASolver
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

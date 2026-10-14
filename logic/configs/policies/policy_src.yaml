@@ -1,7 +1,7 @@
 # Policy Configuration
 
 # =============================================================================
-# SRC (Sequential Route Constructor) Meta-Solver Configuration
+# SRC (Sequential Routing Algorithm) Meta-Solver Configuration
 # =============================================================================
 # PURPOSE:
 #   Orchestrates a sequence of routing solvers, where each solver uses the
@@ -25,7 +25,7 @@ src:
   # Solver Sequence
   # ---------------------------------------------------------------------
   - constructors: ["tsp", "alns"]
-  # Registry names of route constructors to apply in order.
+  # Registry names of routing algorithms to apply in order.
   # Default: ["tsp", "alns"]
 
   # ---------------------------------------------------------------------
@@ -41,7 +41,7 @@ src:
   - vrpp: true
   # Profit-aware routing mode (Vehicle Routing Problem with Profits).
 
-  - mandatory_selection: {"other/ms_lookahead.yaml": ["default"]}
+  - packing: {"other/ms_lookahead.yaml": ["default"]}
   # Node selection strategy for waste collection problems.
   # Without one, every day's mandatory set is empty and SRC collects nothing.
 

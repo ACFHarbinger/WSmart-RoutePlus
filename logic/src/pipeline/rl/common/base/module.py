@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from logic.src.configs import Config
     from logic.src.interfaces.env import IEnv
     from logic.src.interfaces.policy import IPolicy
-    from logic.src.policies.mandatory_selection.vectorized import VectorizedSelector
+    from logic.src.policies.packing.vectorized import VectorizedSelector
 
 logger = get_pylogger(__name__)
 

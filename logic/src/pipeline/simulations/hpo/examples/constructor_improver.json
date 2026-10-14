@@ -3,7 +3,7 @@
     "type": "int",
     "low": 1000,
     "high": 10000,
-    "description": "Route constructor parameter."
+    "description": "Routing algorithm parameter."
   },
   "route_improvement.0.time_limit": {
     "type": "float",

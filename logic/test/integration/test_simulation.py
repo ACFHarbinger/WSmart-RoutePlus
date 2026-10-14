@@ -95,10 +95,10 @@ def test_run_day_execution():
     mock_context.bins = None
 
     with patch("logic.src.pipeline.simulations.actions.FillAction") as MockFill, \
-         patch("logic.src.pipeline.simulations.actions.RouteConstructionAction") as MockPolicy, \
+         patch("logic.src.pipeline.simulations.actions.RoutingAction") as MockPolicy, \
          patch("logic.src.pipeline.simulations.actions.CollectAction") as MockCollect, \
          patch("logic.src.pipeline.simulations.actions.LogAction") as MockLog, \
-         patch("logic.src.pipeline.simulations.actions.MandatorySelectionAction") as MockSelection, \
+         patch("logic.src.pipeline.simulations.actions.PackingAction") as MockSelection, \
          patch("logic.src.pipeline.simulations.actions.RouteImprovementAction") as MockRouteImprovement:
 
         run_day(mock_context)

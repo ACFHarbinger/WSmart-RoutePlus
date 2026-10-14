@@ -51,7 +51,7 @@ class RLGDHHConfig:
         initial_utility: Initial utility.
         quality_lb: Lower bound for quality.
         vrpp: Whether to use VRPP.
-        mandatory_selection: List of mandatory nodes.
+        packing: List of mandatory nodes.
         route_improvement: List of route improvements.
         acceptance_criterion: Acceptance criterion configuration.
     """
@@ -85,7 +85,7 @@ class RLGDHHConfig:
     vrpp: bool = True
 
     # --- Infrastructure Hooks ---
-    mandatory_selection: Optional[List[Any]] = field(default_factory=list)
+    packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)
     acceptance_criterion: AcceptanceConfig = field(
         default_factory=lambda: AcceptanceConfig(

@@ -23,7 +23,7 @@
         "type": "object",
         "default": "factory"
     },
-    "mandatory_selection": {
+    "packing": {
         "type": "categorical",
         "choices": [],
         "default": "factory"

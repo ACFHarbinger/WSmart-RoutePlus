@@ -1,7 +1,7 @@
 """
 NDS-BRKGA Configuration for Hydra.
 
-This dataclass mirrors :class:`~logic.src.policies.selection_and_construction.non_dominated_sorting_biased_random_key_genetic_algorithm.params.NDSBRKGAParams`
+This dataclass mirrors :class:`~logic.src.policies.packing_and_routing.non_dominated_sorting_biased_random_key_genetic_algorithm.params.NDSBRKGAParams`
 with Hydra-compatible field types.  It is referenced by the Hydra config
 system when ``policy=nds_brkga`` is specified on the command line.
 
@@ -33,7 +33,7 @@ from typing import Any, List, Optional
 @dataclass
 class NDSBRKGAConfig:
     """
-    Hydra configuration for the NDS-BRKGA joint selection-and-construction policy.
+    Hydra configuration for the NDS-BRKGA joint packing-and-routing policy.
 
     Attributes:
         pop_size: Total population size per generation.
@@ -46,7 +46,7 @@ class NDSBRKGAConfig:
         seed: Random seed for reproducibility.
         vrpp: If ``True``, optional bins can be included for additional profit.
         overflow_penalty: Weight applied to the overflow-cost objective.
-        seed_selection_strategy: Name of the mandatory-selection strategy used
+        seed_selection_strategy: Name of the packing algorithm used
             to generate seeded initial chromosomes.
         seed_routing_strategy: Name of the routing operator used to build the
             routing component of seed chromosomes (``"greedy"`` uses the
@@ -54,7 +54,7 @@ class NDSBRKGAConfig:
         n_seed_solutions: Number of seed solutions per sub-problem strategy.
         selection_threshold_min: Threshold for max-risk bins (almost always selected).
         selection_threshold_max: Threshold for zero-risk bins (rarely selected).
-        mandatory_selection: Unused placeholder for Hydra config composition
+        packing: Unused placeholder for Hydra config composition
             compatibility.
         route_improvement: Unused placeholder for Hydra config composition
             compatibility.
@@ -78,5 +78,5 @@ class NDSBRKGAConfig:
     selection_threshold_max: float = 0.90
 
     # Hydra compatibility placeholders
-    mandatory_selection: Optional[List[Any]] = field(default_factory=list)
+    packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)

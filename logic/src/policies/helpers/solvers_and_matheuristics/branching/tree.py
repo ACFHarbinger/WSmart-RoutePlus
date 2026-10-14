@@ -32,7 +32,7 @@ from logic.src.policies.helpers.solvers_and_matheuristics.common.node import Bra
 if TYPE_CHECKING:
     from logic.src.policies.helpers.solvers_and_matheuristics.common.route import Route
     from logic.src.policies.helpers.solvers_and_matheuristics.vrpp_model import VRPPModel
-    from logic.src.policies.route_construction.exact_and_decomposition_solvers.branch_and_price_and_cut.params import (
+    from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price_and_cut.params import (
         BPCParams,
     )
 

@@ -8,7 +8,7 @@ run on the dataclass defaults.
 from pathlib import Path
 
 import pytest
-from logic.src.policies.route_construction.base import RouteConstructorFactory
+from logic.src.policies.routing.base import RoutingAlgorithmFactory
 from omegaconf import OmegaConf
 
 POLICY_DIR = Path(__file__).resolve().parents[3] / "configs" / "policies"
@@ -23,13 +23,13 @@ def _section(filename, *path):
 
 @pytest.fixture(autouse=True, scope="module")
 def _registered():
-    RouteConstructorFactory.ensure_registered()
+    RoutingAlgorithmFactory.ensure_registered()
 
 
 def test_aco_hh_entry_name_reads_its_yaml():
     section = _section("policy_aco_hh.yaml", "aco_hh")
-    config = RouteConstructorFactory.get_adapter("aco_hh", config={"aco_hh": section, "seed": 1})._config
-    keyed = RouteConstructorFactory.get_adapter("aco_hh", config={"hyper_aco": section, "seed": 1})._config
+    config = RoutingAlgorithmFactory.get_adapter("aco_hh", config={"aco_hh": section, "seed": 1})._config
+    keyed = RoutingAlgorithmFactory.get_adapter("aco_hh", config={"hyper_aco": section, "seed": 1})._config
     assert config == keyed
     assert (config.n_ants, config.rho, config.time_limit, config.profit_aware_operators) == (10, 0.5, 60.0, True)
 
@@ -38,14 +38,14 @@ def test_aco_hh_entry_name_reads_its_yaml():
 def test_sans_legacy_variant_entry_name_selects_the_og_engine(variant):
     section = _section("policy_sans.yaml", "sans", variant)
     for wrapped in (section, OmegaConf.create(section)):  # the simulator passes a DictConfig section
-        config = RouteConstructorFactory.get_adapter("sans", config={f"sans_{variant}": wrapped, "seed": 1})._config
+        config = RoutingAlgorithmFactory.get_adapter("sans", config={f"sans_{variant}": wrapped, "seed": 1})._config
         assert config.engine == "og"
         assert len(config.combination) == 7
 
 
 def test_flat_config_with_a_dict_field_is_not_mistaken_for_a_section():
-    flat = {"engine": "og", "time_limit": 5, "mandatory_selection": {"other/ms_last_minute.yaml": ["x"]}}
-    config = RouteConstructorFactory.get_adapter("sans", config=flat)._config
+    flat = {"engine": "og", "time_limit": 5, "packing": {"other/ms_last_minute.yaml": ["x"]}}
+    config = RoutingAlgorithmFactory.get_adapter("sans", config=flat)._config
     assert (config.engine, config.time_limit) == ("og", 5)
 
 
@@ -60,6 +60,6 @@ def test_flat_config_with_a_dict_field_is_not_mistaken_for_a_section():
 def test_omegaconf_custom_lists_reach_the_typed_config(entry, filename, expected):
     """The simulator passes each section as a DictConfig whose 'custom'/'gurobi' block is a ListConfig."""
     section = OmegaConf.create(_section(filename, entry))
-    config = RouteConstructorFactory.get_adapter(entry, config={entry: section, "seed": 1})._config
+    config = RoutingAlgorithmFactory.get_adapter(entry, config={entry: section, "seed": 1})._config
     assert {k: getattr(config, k) for k in expected} == expected
     assert all(not OmegaConf.is_config(v) for v in vars(config).values())

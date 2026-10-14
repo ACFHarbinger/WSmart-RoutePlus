@@ -11,26 +11,26 @@ import pytest
 # to avoid descriptor creation errors if another test imports protobuf.
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
-from logic.src.policies.selection_and_construction.non_dominated_sorting_biased_random_key_genetic_algorithm.chromosome import (
+from logic.src.policies.packing_and_routing.non_dominated_sorting_biased_random_key_genetic_algorithm.chromosome import (
     Chromosome,
     compute_adaptive_thresholds,
 )
-from logic.src.policies.selection_and_construction.non_dominated_sorting_biased_random_key_genetic_algorithm.crossover import (
+from logic.src.policies.packing_and_routing.non_dominated_sorting_biased_random_key_genetic_algorithm.crossover import (
     biased_crossover,
 )
-from logic.src.policies.selection_and_construction.non_dominated_sorting_biased_random_key_genetic_algorithm.nsga2 import (
+from logic.src.policies.packing_and_routing.non_dominated_sorting_biased_random_key_genetic_algorithm.nsga2 import (
     fast_non_dominated_sort,
 )
-from logic.src.policies.selection_and_construction.non_dominated_sorting_biased_random_key_genetic_algorithm.objectives import (
+from logic.src.policies.packing_and_routing.non_dominated_sorting_biased_random_key_genetic_algorithm.objectives import (
     compute_overflow_risk,
 )
-from logic.src.policies.selection_and_construction.non_dominated_sorting_biased_random_key_genetic_algorithm.params import (
+from logic.src.policies.packing_and_routing.non_dominated_sorting_biased_random_key_genetic_algorithm.params import (
     NDSBRKGAParams,
 )
-from logic.src.policies.selection_and_construction.non_dominated_sorting_biased_random_key_genetic_algorithm.policy_nds_brkga import (
+from logic.src.policies.packing_and_routing.non_dominated_sorting_biased_random_key_genetic_algorithm.policy_nds_brkga import (
     NDSBRKGAPolicy,
 )
-from logic.src.policies.selection_and_construction.non_dominated_sorting_biased_random_key_genetic_algorithm.population import (
+from logic.src.policies.packing_and_routing.non_dominated_sorting_biased_random_key_genetic_algorithm.population import (
     Population,
 )
 

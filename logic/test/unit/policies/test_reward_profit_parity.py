@@ -14,7 +14,7 @@ import torch
 from logic.src.constants.tasks import COST_KM, REVENUE_KG
 from logic.src.envs.tasks.ptp import PTP
 from logic.src.pipeline.simulations.bins import Bins
-from logic.src.policies.route_construction.base.base_routing_policy import BaseRoutingPolicy
+from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

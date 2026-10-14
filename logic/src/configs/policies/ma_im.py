@@ -16,7 +16,7 @@ Example:
 from dataclasses import dataclass
 from typing import List, Optional
 
-from .other.mandatory_selection import MandatorySelectionConfig
+from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -37,7 +37,7 @@ class MemeticAlgorithmIslandModelConfig:
         seed (Optional[int]): Random seed.
         vrpp (bool): Whether the problem is a VRRP.
         profit_aware_operators (bool): Whether to use profit-aware operators.
-        mandatory_selection (Optional[List[MandatorySelectionConfig]]): Mandatory customers/requests selection strategies.
+        packing (Optional[List[PackingConfig]]): Mandatory customers/requests selection strategies.
         route_improvement (Optional[List[RouteImprovingConfig]]): Route improvement strategies.
     """
 
@@ -51,5 +51,5 @@ class MemeticAlgorithmIslandModelConfig:
     seed: Optional[int] = None
     vrpp: bool = True
     profit_aware_operators: bool = False
-    mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
+    packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

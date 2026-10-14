@@ -2,7 +2,7 @@
 Batch expander — Cartesian-product expansion of dimension axes.
 
 When a batch YAML entry contains an ``expand`` block, the user declares one or
-more *dimensions* (e.g. ``policies``, ``mandatory_selection``, ``rl_algorithm``)
+more *dimensions* (e.g. ``policies``, ``packing``, ``rl_algorithm``)
 each with a list of values.  The expander computes the Cartesian product of all
 dimensions and returns one ``BatchJob`` per combination.
 
@@ -14,8 +14,8 @@ inside the ``expand`` block as ``dim_overrides: {dim_name: "override_template"}`
 
 Built-in dimension mappings (all as ``override_template``):
     policies            → ``sim.policies=[{value}]``
-    mandatory_selection → ``sim.policy.mandatory_selection.strategy={value}``
-    constructors        → ``sim.policy.constructor={value}``
+    packing → ``sim.policy.packing.strategy={value}``
+    routing algorithms        → ``sim.policy.constructor={value}``
     route_improvers     → ``sim.policy.route_improver={value}``
     acceptance_criteria → ``sim.policy.acceptance_criterion={value}``
     models              → ``train.policy.model.name={value}``
@@ -31,8 +31,8 @@ Example YAML expand block
     - task: test_sim
       expand:
         policies: [[alns], [hgs], [psoma]]
-        mandatory_selection: [lookahead, last_minute_cf70]
-      name_template: "{policies[0]}_{mandatory_selection}"
+        packing: [lookahead, last_minute_cf70]
+      name_template: "{policies[0]}_{packing}"
       base_overrides:
         - "sim.graph.area=figueiradafoz"
       post_steps:
@@ -60,7 +60,7 @@ __all__ = ["BatchExpander", "BUILTIN_DIM_OVERRIDES"]
 
 BUILTIN_DIM_OVERRIDES: Dict[str, str] = {
     "policies": "sim.policies=[{value}]",
-    "mandatory_selection": "sim.policy.mandatory_selection.strategy={value}",
+    "packing": "sim.policy.packing.strategy={value}",
     "constructors": "sim.policy.constructor={value}",
     "route_improvers": "sim.policy.route_improver={value}",
     "acceptance_criteria": "sim.policy.acceptance_criterion={value}",

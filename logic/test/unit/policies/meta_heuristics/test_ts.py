@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 import pytest
 from logic.src.configs.policies.ts import TSConfig
-from logic.src.policies.route_construction.meta_heuristics.tabu_search.policy_ts import TSPolicy
-from logic.src.policies.route_construction.meta_heuristics.tabu_search.solver import TSParams, TSSolver
+from logic.src.policies.routing.meta_heuristics.tabu_search.policy_ts import TSPolicy
+from logic.src.policies.routing.meta_heuristics.tabu_search.solver import TSParams, TSSolver
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

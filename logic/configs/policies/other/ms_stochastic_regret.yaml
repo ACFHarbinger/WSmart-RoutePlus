@@ -1,5 +1,5 @@
 # =============================================================================
-# mandatory Strategy: Stochastic Regret (Expected Overflow Volume)
+# packing algorithm: Stochastic Regret (Expected Overflow Volume)
 # =============================================================================
 # PURPOSE:
 #   Select bins based on the mathematically exact expected amount of waste

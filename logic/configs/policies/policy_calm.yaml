@@ -1,5 +1,5 @@
 calm:
-  _target_: logic.src.policies.route_construction.learning_matheuristic_algorithms.concurrent_adaptive_lagrangian_matheuristic.policy_calm.CALMPolicy
+  _target_: logic.src.policies.routing.learning_matheuristic_algorithms.concurrent_adaptive_lagrangian_matheuristic.policy_calm.CALMPolicy
   time_limit: 600.0
   seed: 42
   verbose: false

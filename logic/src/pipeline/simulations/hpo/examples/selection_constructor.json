@@ -5,14 +5,14 @@
     "high": 10000,
     "description": "Constructor parameter (relative path)."
   },
-  "mandatory_selection.0.max_fill": {
+  "packing.0.max_fill": {
     "type": "float",
     "low": 0.5,
     "high": 1.0,
     "step": 0.1,
-    "description": "Mandatory selection parameter using nested dot notation. Reaches into the first element of the selection list."
+    "description": "Packing parameter using nested dot notation. Reaches into the first element of the selection list."
   },
-  "mandatory_selection.0.threshold": {
+  "packing.0.threshold": {
     "type": "float",
     "low": 0.1,
     "high": 0.9,

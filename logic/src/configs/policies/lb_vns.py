@@ -18,7 +18,7 @@ from typing import Optional
 
 from logic.src.configs.policies.other.acceptance_criteria import AcceptanceConfig
 
-from .other.mandatory_selection import MandatorySelectionConfig
+from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -74,7 +74,7 @@ class LocalBranchingVNSConfig:
 
         framework (str): Solver framework to use ('ortools', 'pyomo').
 
-        mandatory_selection (Optional[MandatorySelectionConfig]): Configuration for identifying
+        packing (Optional[PackingConfig]): Configuration for identifying
             and enforcing mandatory nodes in the routing problem.
 
         route_improvement (Optional[RouteImprovingConfig]): Optional local search or
@@ -97,6 +97,6 @@ class LocalBranchingVNSConfig:
     # Infrastructure
     engine: str = "gurobi"
     framework: str = "ortools"
-    mandatory_selection: Optional[MandatorySelectionConfig] = None
+    packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None
     acceptance_criterion: AcceptanceConfig = field(default_factory=lambda: AcceptanceConfig(method="only_improving"))

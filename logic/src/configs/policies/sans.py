@@ -25,7 +25,7 @@ Example:
     0.95
     >>> config.combination
     None
-    >>> config.mandatory_selection
+    >>> config.packing
     None
     >>> config.route_improvement
     None
@@ -34,7 +34,7 @@ Example:
 from dataclasses import dataclass
 from typing import List, Literal, Optional
 
-from .other.mandatory_selection import MandatorySelectionConfig
+from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -52,7 +52,7 @@ class SANSConfig:
         alpha: Cooling rate (temperature multiplier).
         combination: Seven numbers read by position by the 'og' engine (iterations, initial
             temperature, cooling factor, vehicle, load, route-difference and shift penalties).
-        mandatory_selection: List of mandatory strategy config files.
+        packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
     """
 
@@ -65,5 +65,5 @@ class SANSConfig:
     iterations_per_T: int = 5000
     alpha: float = 0.95
     combination: Optional[List[float]] = None
-    mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
+    packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

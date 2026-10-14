@@ -58,7 +58,7 @@ def test_backend_status_names():
 
 
 def test_aborted_day_records_mandatory_set_and_status():
-    """A constructor exception still leaves a daily record for that day."""
+    """A routing algorithm exception still leaves a daily record for that day."""
     coords = pd.DataFrame({"ID": [0, 11, 22]})
     ctx = {
         "mandatory": [1, 2],

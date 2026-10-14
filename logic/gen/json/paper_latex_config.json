@@ -141,7 +141,7 @@
     },
     "stages": [
       {
-        "title": "1. Mandatory selection",
+        "title": "1. Packing",
         "scope": "multi-period decision",
         "color": "#0066cc",
         "fill": "#f2f7fd",
@@ -153,7 +153,7 @@
         "footer": "3 strategies, {sel_bench} variants"
       },
       {
-        "title": "2. Route construction",
+        "title": "2. Routing",
         "scope": "single-period decision",
         "color": "#00a859",
         "fill": "#f1faf5",

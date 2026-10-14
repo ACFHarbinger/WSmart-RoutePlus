@@ -20,5 +20,5 @@ ga:
     - profit_aware_operators: false
     - vrpp: true
 
-    - mandatory_selection: {"other/ms_lookahead.yaml": ["default"]}
+    - packing: {"other/ms_lookahead.yaml": ["default"]}
     - route_improvement: []

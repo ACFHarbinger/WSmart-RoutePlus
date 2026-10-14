@@ -1,10 +1,10 @@
-"""Mandatory Selection Head for Node Categorization.
+"""Packing Head for Node Categorization.
 
-This module provides the `MandatorySelectionHead`, which determines if a node must
+This module provides the `PackingHead`, which determines if a node must
 be collected in the current period based on local and spatial context.
 
 Attributes:
-    MandatorySelectionHead: MLP-based binary categorical selection head.
+    PackingHead: MLP-based binary categorical selection head.
 
 Example:
     None
@@ -16,7 +16,7 @@ import torch
 from torch import nn
 
 
-class MandatorySelectionHead(nn.Module):
+class PackingHead(nn.Module):
     """MLP head for per-node mandatory status selection.
 
     Produces categorical logits for each node independently, indicating whether

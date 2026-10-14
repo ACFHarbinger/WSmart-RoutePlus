@@ -13,7 +13,7 @@ kgls:
     - width
     - length
     - width_length
-  mandatory_selection: {"other/ms_lookahead.yaml": ["default"]}
+  packing: {"other/ms_lookahead.yaml": ["default"]}
 
   # VRPP Settings
   vrpp: true

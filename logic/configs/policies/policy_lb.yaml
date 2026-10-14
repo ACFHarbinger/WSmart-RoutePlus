@@ -55,7 +55,7 @@ lb:
     - engine: "gurobi"
       # Specifies the use of the project's gurobi Local Branching engine.
 
-    - mandatory_selection: {"other/ms_lookahead.yaml": ["default"]}
+    - packing: {"other/ms_lookahead.yaml": ["default"]}
     # Defines which bins are prioritized for mandatory collection.
 
     - route_improvement: []

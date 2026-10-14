@@ -3,7 +3,7 @@ Joint Selection–Construction Context Module.
 
 This module defines :class:`JointSelectionConstructionContext`, a unified
 data-container that carries all inputs required by algorithms that solve
-mandatory-bin selection **and** route construction simultaneously within
+mandatory-bin selection **and** routing simultaneously within
 a single optimisation loop (e.g., NDS-BRKGA).
 
 It mirrors the scalar fields of :class:`SelectionContext` (for the bin-level
@@ -12,10 +12,10 @@ revenue, cost) so that the joint solver can evaluate both objectives without
 switching between two separate context objects.
 
 Attributes:
-    JointSelectionConstructionContext: Unified context for joint bin-selection and route-construction solvers
+    JointSelectionConstructionContext: Unified context for joint packing and routing solvers
 
 Example:
-    >>> from logic.src.policies.selection_and_construction.base.joint_context import (
+    >>> from logic.src.policies.packing_and_routing.base.joint_context import (
     ...     JointSelectionConstructionContext,
     ... )
     >>> ctx = JointSelectionConstructionContext(
@@ -38,7 +38,7 @@ from numpy.typing import NDArray
 @dataclass
 class JointSelectionConstructionContext:
     """
-    Unified context for joint bin-selection and route-construction solvers.
+    Unified context for joint packing and routing solvers.
 
     Attributes:
         bin_ids: 1-based global bin IDs for all candidate bins.  Shape ``(N,)``.

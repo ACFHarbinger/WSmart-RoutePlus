@@ -4,10 +4,10 @@ import pytest
 import torch
 import torch.nn as nn
 from logic.src.models.core.attention_model.policy import AttentionModelPolicy
-from logic.src.policies.route_construction.learning_algorithms.neural_agent.policy_na import (
+from logic.src.policies.routing.learning_algorithms.neural_agent.policy_na import (
     NeuralAgentPolicy,
 )
-from logic.src.policies.route_construction.learning_algorithms.neural_agent.simulation import (
+from logic.src.policies.routing.learning_algorithms.neural_agent.simulation import (
     SimulationMixin,
 )
 
@@ -98,7 +98,7 @@ def test_b_gemini_03_revenue_units_and_ground_truth() -> None:
 
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(
-            "logic.src.policies.route_construction.learning_algorithms.neural_agent.policy_na.NeuralAgent.compute_simulator_day",
+            "logic.src.policies.routing.learning_algorithms.neural_agent.policy_na.NeuralAgent.compute_simulator_day",
             lambda *args, **kwargs: (tour, cost, {}),
         )
 

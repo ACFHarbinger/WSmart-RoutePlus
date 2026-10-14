@@ -6,18 +6,18 @@ from unittest.mock import patch
 import numpy as np
 import pandas as pd
 import pytest
-from logic.src.policies.route_construction.base import base_routing_policy
-from logic.src.policies.route_construction.meta_heuristics.simulated_annealing_neighborhood_search import dispatcher
-from logic.src.policies.route_construction.meta_heuristics.simulated_annealing_neighborhood_search.common.revenue import (
+from logic.src.policies.routing.base import base_routing_policy
+from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search import dispatcher
+from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.common.revenue import (
     compute_waste_collection_revenue,
 )
-from logic.src.policies.route_construction.meta_heuristics.simulated_annealing_neighborhood_search.common.solution_initialization import (
+from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.common.solution_initialization import (
     _get_bin_stock,
 )
-from logic.src.policies.route_construction.meta_heuristics.simulated_annealing_neighborhood_search.params import (
+from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.params import (
     SANSParams,
 )
-from logic.src.policies.route_construction.meta_heuristics.simulated_annealing_neighborhood_search.policy_sans import (
+from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.policy_sans import (
     SANSPolicy,
 )
 
@@ -115,7 +115,7 @@ def test_full_bin_override_preserves_optional_profit(context):
     assert matrix.shape == (6, 6)
     assert len(wastes) == 5
     with patch(
-        "logic.src.policies.route_construction.meta_heuristics.simulated_annealing_neighborhood_search.policy_sans.execute_new",
+        "logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.policy_sans.execute_new",
         return_value=([0, 2, 3, 0], 6.0, 94.0, None, None),
     ):
         result = policy.execute(**context)
@@ -168,7 +168,7 @@ def test_legacy_engine_runs_with_an_omegaconf_list_combination(context):
 
 
 def test_collinear_overlap_is_not_a_crossing():
-    from logic.src.policies.route_construction.meta_heuristics.simulated_annealing_neighborhood_search.common.routes import (
+    from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.common.routes import (
         _find_crossed_arcs,
     )
 

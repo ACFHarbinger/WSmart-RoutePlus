@@ -26,7 +26,7 @@ from rich.table import Table
 class ModelSummaryCallback(Callback):
     """
     Callback to print a detailed summary of the model architecture,
-    including encoder, decoder, and mandatory selection details.
+    including encoder, decoder, and packing details.
 
     Attributes:
         trainer (pl.Trainer): The PyTorch Lightning trainer instance.
@@ -120,7 +120,7 @@ class ModelSummaryCallback(Callback):
             bl_name = model.baseline.__class__.__name__
             table.add_row("3", "baseline", bl_name, fmt_params(model.baseline), "train", "0")
 
-        # 4. Mandatory Selection
+        # 4. Packing
         if hasattr(model, "mandatory_selector") and model.mandatory_selector is not None:
             selector = model.mandatory_selector
             strategy = getattr(selector, "strategy", selector.__class__.__name__.replace("Selector", "").lower())

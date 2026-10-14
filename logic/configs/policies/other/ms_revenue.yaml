@@ -1,5 +1,5 @@
 # =============================================================================
-# Mandatory Strategy: Revenue Threshold Selection
+# Packing Algorithm: Revenue Threshold Selection
 # =============================================================================
 # Selects bins whose expected revenue (fill x bin capacity x revenue per kg)
 # exceeds a threshold. Unset values fall back to the simulation context.

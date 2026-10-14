@@ -7,12 +7,12 @@ may hold mutable state that belongs in this ledger (e.g. ``self.info = {}``).
 
 Architecture
 ------------
-Phase 1 — Mandatory Selection
+Phase 1 — Packing
     Creates a new ``SearchContext`` via ``SearchContext.initialize()``,
     populating ``selection_metrics`` with intermediate outputs
     (attention tensors, knapsack matrices, bin importance scores).
 
-Phase 2 — Route Construction
+Phase 2 — Routing
     Receives the ``SearchContext`` from Phase 1.  Merges its own
     ``ConstructionMetrics`` and, on each acceptance-criterion call,
     the returned ``AcceptanceMetrics`` via ``merge_context()``.
@@ -41,8 +41,8 @@ simulation iterations.
 
 Attributes:
     SearchContext: Immutable state ledger that flows through the three-phase pipeline
-    SelectionMetrics: Intermediate outputs from Mandatory Selection
-    ConstructionMetrics: Intermediate outputs from Route Construction
+    SelectionMetrics: Intermediate outputs from Packing
+    ConstructionMetrics: Intermediate outputs from Routing
     AcceptanceMetrics: Per-step acceptance criterion outputs
     ImprovementMetrics: Statistics from Route Improvement
     SearchPhase: Enum for pipeline phases
@@ -85,7 +85,7 @@ class SearchPhase(str, Enum):
 # The docstrings below define the *expected* schema for each phase.
 # ---------------------------------------------------------------------------
 
-# SelectionMetrics — populated during Mandatory Selection (Phase 1).
+# SelectionMetrics — populated during Packing (Phase 1).
 # Expected keys (all optional depending on strategy):
 #   "strategy"          str         — name of the selection strategy used
 #   "bin_scores"        List[float] — per-bin priority / score vector
@@ -95,7 +95,7 @@ class SearchPhase(str, Enum):
 #   "selection_time_s"  float       — wall-clock time for this phase
 SelectionMetrics = Dict[str, Any]
 
-# ConstructionMetrics — populated during Route Construction (Phase 2).
+# ConstructionMetrics — populated during Routing (Phase 2).
 # Expected keys (all optional):
 #   "algorithm"         str         — name of the construction algorithm
 #   "insertion_costs"   List[float] — per-step cheapest-insertion delta
@@ -141,8 +141,8 @@ class SearchContext:
 
     Attributes:
         phase: The pipeline phase that last wrote to this context.
-        selection_metrics: Intermediate outputs from Mandatory Selection.
-        construction_metrics: Intermediate outputs from Route Construction.
+        selection_metrics: Intermediate outputs from Packing.
+        construction_metrics: Intermediate outputs from Routing.
         acceptance_trace: Ordered list of per-step ``AcceptanceMetrics``
             emitted by ``IAcceptanceCriterion.accept()`` during construction
             or improvement.
@@ -167,7 +167,7 @@ class SearchContext:
         Factory: create a fresh ``SearchContext`` at the start of Phase 1.
 
         Args:
-            selection_metrics: Outputs from the mandatory-selection strategy.
+            selection_metrics: Outputs from the packing algorithm.
             metadata: Run-level annotations (e.g. ``{"day": 3, "seed": 42}``).
 
         Returns:

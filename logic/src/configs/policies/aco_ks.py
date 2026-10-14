@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 from .other.acceptance_criteria import AcceptanceConfig
-from .other.mandatory_selection import MandatorySelectionConfig
+from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -38,7 +38,7 @@ class KSparseACOConfig:
         local_search: Whether to apply local search after construction.
         local_search_iterations: Number of local search iterations.
         elitist_weight: Weight for elitist pheromone update.
-        mandatory_selection: List of mandatory strategy config files.
+        packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
         acceptance_criterion: Acceptance criterion config for local search.
     """
@@ -59,6 +59,6 @@ class KSparseACOConfig:
     local_search_iterations: int = 500
     elitist_weight: float = 1.0
     vrpp: bool = True
-    mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
+    packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
     acceptance_criterion: AcceptanceConfig = AcceptanceConfig(method="oi")

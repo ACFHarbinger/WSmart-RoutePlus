@@ -1,5 +1,5 @@
 # =============================================================================
-# Mandatory Strategy: Staggered Regular Selection
+# Packing Algorithm: Staggered Regular Selection
 # =============================================================================
 # PURPOSE:
 #   Eliminates load spikes by staggering periodic collection across bins.

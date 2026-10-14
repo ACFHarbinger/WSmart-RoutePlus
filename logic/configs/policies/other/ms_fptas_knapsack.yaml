@@ -1,5 +1,5 @@
 # =============================================================================
-# Mandatory Strategy: FPTAS Knapsack Selection
+# Packing Algorithm: FPTAS Knapsack Selection
 # =============================================================================
 # Scalarises overflow risk and net profit (weight alpha), then runs a
 # value-scaled 0/1 dynamic programme with precision epsilon.

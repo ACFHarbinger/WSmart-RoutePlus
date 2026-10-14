@@ -60,7 +60,7 @@ rl_gd_hh:
     - vrpp: true
 
     # Selection algorithm for mandatory bin visited nodes.
-    - mandatory_selection: {"other/ms_lookahead.yaml": ["default"]}
+    - packing: {"other/ms_lookahead.yaml": ["default"]}
 
     # Optional route improvement passes.
     - route_improvement: []

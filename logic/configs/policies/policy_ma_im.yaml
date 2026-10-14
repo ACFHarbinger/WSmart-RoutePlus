@@ -54,7 +54,7 @@ ma_im:
     - profit_aware_operators: false
     - vrpp: true
 
-    - mandatory_selection: {"other/ms_lookahead.yaml": ["default"]}
+    - packing: {"other/ms_lookahead.yaml": ["default"]}
       # Node selection strategy for waste collection problems
 
     - route_improvement: []

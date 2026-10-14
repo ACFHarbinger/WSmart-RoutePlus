@@ -63,7 +63,7 @@
         "type": "int",
         "default": 10
     },
-    "mandatory_selection": {
+    "packing": {
         "type": "object",
         "default": null
     },

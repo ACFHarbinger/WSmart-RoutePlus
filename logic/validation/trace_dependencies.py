@@ -8,7 +8,7 @@ Attributes:
     main: Main function to trace dependencies.
 
 Example:
-    >>> python logic/validation/trace_dependencies.py logic/src/policies/route_construction/exact_and_decomposition_solvers/branch_and_cut/bc.py
+    >>> python logic/validation/trace_dependencies.py logic/src/policies/routing/exact_and_decomposition_solvers/branch_and_cut/bc.py
 """
 
 import argparse

@@ -32,7 +32,7 @@ ms_bpc_sp:
     # ---------------------------------------------------------------------
     # Infrastructure Settings
     # ---------------------------------------------------------------------
-    - mandatory_selection: {"other/ms_lookahead.yaml": ["default"]}
+    - packing: {"other/ms_lookahead.yaml": ["default"]}
     - time_limit: 60.0
     - route_improvement: []
 

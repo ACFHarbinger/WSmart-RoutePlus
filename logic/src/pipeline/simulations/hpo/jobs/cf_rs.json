@@ -55,7 +55,7 @@
         ],
         "default": "minimize_cost"
     },
-    "mandatory_selection": {
+    "packing": {
         "type": "object",
         "default": null
     },

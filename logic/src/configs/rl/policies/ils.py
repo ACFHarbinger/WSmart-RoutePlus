@@ -45,7 +45,7 @@ class ILSConfig:
         time_limit: Maximum time in seconds for the solver.
         op_probs: Operator selection probabilities.
         perturb_probs: Perturbation method probabilities.
-        mandatory_selection: List of mandatory strategy config files.
+        packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
     """
 

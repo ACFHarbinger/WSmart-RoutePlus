@@ -15,12 +15,12 @@ from logic.src.utils.target.policy_link_updater import (
     list_available_ri_improvers,
     list_improver_keys,
     list_strategy_keys,
-    update_mandatory_selection,
+    update_packing,
     update_route_improvement,
 )
 
 POLICY_YAML = """name: test_constructor
-mandatory_selection: { "other/ms_last_minute.yaml": ["old_key"] }
+packing: { "other/ms_last_minute.yaml": ["old_key"] }
 route_improvement: { "other/ri_cls.yaml": ["old_key"] }
 other_key: 1
 """
@@ -39,9 +39,9 @@ def _make_tree(tmp_path: Path) -> str:
     return str(configs)
 
 
-def test_update_mandatory_selection_roundtrip(tmp_path):
+def test_update_packing_roundtrip(tmp_path):
     configs = _make_tree(tmp_path)
-    modified = update_mandatory_selection(
+    modified = update_packing(
         constructors=["testc"],
         ms_yaml="ms_last_minute",
         keys=["last_minute_cf70", "last_minute_cf90"],
@@ -54,7 +54,7 @@ def test_update_mandatory_selection_roundtrip(tmp_path):
     assert os.path.basename(filepath) == "policy_testc.yaml"
     content = Path(filepath).read_text(encoding="utf-8")
     assert (
-        'mandatory_selection: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }'
+        'packing: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }'
         in content
     )
     # the unrelated override is untouched
@@ -73,7 +73,7 @@ def test_update_route_improvement_roundtrip(tmp_path):
     assert len(modified) == 1
     content = Path(modified[0][0]).read_text(encoding="utf-8")
     assert 'route_improvement: { "other/ri_ftsp.yaml": ["ftsp"] }' in content
-    assert 'mandatory_selection: { "other/ms_last_minute.yaml": ["old_key"] }' in content
+    assert 'packing: { "other/ms_last_minute.yaml": ["old_key"] }' in content
 
 
 def test_listing_helpers(tmp_path):
@@ -90,7 +90,7 @@ def test_listing_helpers(tmp_path):
 def test_unknown_key_raises(tmp_path):
     configs = _make_tree(tmp_path)
     try:
-        update_mandatory_selection(
+        update_packing(
             constructors=["testc"],
             ms_yaml="ms_last_minute",
             keys=["missing_key"],
@@ -105,7 +105,7 @@ def test_unknown_key_raises(tmp_path):
 
 def test_dry_run_does_not_write(tmp_path):
     configs = _make_tree(tmp_path)
-    modified = update_mandatory_selection(
+    modified = update_packing(
         constructors=["testc"],
         ms_yaml="ms_last_minute",
         keys=["last_minute_cf70"],

@@ -3,7 +3,7 @@
 import pytest
 import torch
 from logic.src.envs.routing.cptp import CPTPEnv
-from logic.src.policies.route_construction.learning_algorithms.neural_agent.agent import NeuralAgent
+from logic.src.policies.routing.learning_algorithms.neural_agent.agent import NeuralAgent
 from tensordict import TensorDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

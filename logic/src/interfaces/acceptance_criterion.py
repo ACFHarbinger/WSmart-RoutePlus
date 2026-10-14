@@ -2,7 +2,7 @@
 IAcceptanceCriterion — Move Acceptance Interface.
 
 Defines the contract for all pluggable move-acceptance strategies used
-during route construction and improvement.  Every concrete implementation
+during routing and improvement.  Every concrete implementation
 MUST be stateless between ``accept()`` calls; internal state (temperature,
 water level, etc.) is advanced only via ``step()``.
 

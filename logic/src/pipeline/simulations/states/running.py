@@ -165,7 +165,7 @@ class RunningState(SimState):
 
         # 1. START WITH GLOBAL CONFIGS (mandatory, route_improvement)
         if ctx.config:
-            for g_key in ["mandatory_selection", "route_improvement"]:
+            for g_key in ["packing", "route_improvement"]:
                 if g_key in ctx.config:
                     current_policy_config[g_key] = ctx.config[g_key]
 

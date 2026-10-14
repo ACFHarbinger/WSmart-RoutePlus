@@ -1,5 +1,5 @@
 # =============================================================================
-# mandatory Strategy: Service Level (Statistical Overflow Prediction)
+# packing algorithm: Service Level (Statistical Overflow Prediction)
 # =============================================================================
 # PURPOSE:
 #   Statistical prediction using mean + confidence_factor * stddev.

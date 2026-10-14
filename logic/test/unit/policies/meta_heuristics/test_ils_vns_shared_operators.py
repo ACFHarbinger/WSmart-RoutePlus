@@ -40,10 +40,10 @@ from logic.src.policies.helpers.operators.search_heuristics.destroy_repair_llh i
     routes_net_profit,
     routes_total_distance,
 )
-from logic.src.policies.route_construction.meta_heuristics.iterated_local_search.params import ILSParams
-from logic.src.policies.route_construction.meta_heuristics.iterated_local_search.solver import ILSSolver
-from logic.src.policies.route_construction.meta_heuristics.variable_neighborhood_search.params import VNSParams
-from logic.src.policies.route_construction.meta_heuristics.variable_neighborhood_search.solver import VNSSolver
+from logic.src.policies.routing.meta_heuristics.iterated_local_search.params import ILSParams
+from logic.src.policies.routing.meta_heuristics.iterated_local_search.solver import ILSSolver
+from logic.src.policies.routing.meta_heuristics.variable_neighborhood_search.params import VNSParams
+from logic.src.policies.routing.meta_heuristics.variable_neighborhood_search.solver import VNSSolver
 
 CAPACITY = 60.0
 R_REVENUE = 2.0

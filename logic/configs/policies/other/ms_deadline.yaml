@@ -1,5 +1,5 @@
 # =============================================================================
-# mandatory Strategy: Deadline-Driven (Exact Days-to-Overflow)
+# packing algorithm: Deadline-Driven (Exact Days-to-Overflow)
 # =============================================================================
 # PURPOSE:
 #   Obligate collection for any bin whose guaranteed overflow is within
@@ -15,7 +15,7 @@
 #   - strategy: "deadline" (required)
 #   - horizon_days: Lookahead window in simulation days (default: 2)
 #     Range: 1-7 (1 = collect only bins overflowing tomorrow, 7 = week ahead)
-#   - threshold: Alias for horizon_days when using MandatorySelectionConfig directly.
+#   - threshold: Alias for horizon_days when using PackingConfig directly.
 #     Range: 1-7
 #
 # REQUIRES:

@@ -33,7 +33,7 @@ class MemeticAlgorithmDualPopulationConfig:
         seed (Optional[int]): Random seed.
         vrpp (bool): Whether the problem is a VRRP.
         profit_aware_operators (bool): Whether to use profit-aware operators.
-        mandatory_selection (List[str]): Mandatory customer/request selection strategy.
+        packing (List[str]): Mandatory customer/request selection strategy.
         route_improvement (List[Any]): Route improvement strategies.
     """
 
@@ -52,5 +52,5 @@ class MemeticAlgorithmDualPopulationConfig:
     # Common policy fields
     vrpp: bool = True
     profit_aware_operators: bool = False
-    mandatory_selection: List[str] = field(default_factory=list)
+    packing: List[str] = field(default_factory=list)
     route_improvement: List[Any] = field(default_factory=list)

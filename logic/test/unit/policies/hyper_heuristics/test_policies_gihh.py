@@ -6,8 +6,8 @@ This module tests the Hyper-Heuristic with Two Guidance Indicators (GIHH) policy
 
 import numpy as np
 import pytest
-from logic.src.policies.route_construction.base.factory import RouteConstructorFactory
-from logic.src.policies.route_construction.hyper_heuristics.guided_indicators_hyper_heuristic import (
+from logic.src.policies.routing.base.factory import RoutingAlgorithmFactory
+from logic.src.policies.routing.hyper_heuristics.guided_indicators_hyper_heuristic import (
     GIHHParams,
     GIHHSolver,
 )
@@ -157,7 +157,7 @@ class TestGIHHPolicy:
         assert isinstance(profit, float)
 
     def test_gihh_policy_adapter(self, simple_instance):
-        """Test GIHH through RouteConstructorFactory."""
+        """Test GIHH through RoutingAlgorithmFactory."""
         dist_matrix, wastes, capacity, R, C = simple_instance
 
         config = {
@@ -168,5 +168,5 @@ class TestGIHHPolicy:
             }
         }
 
-        policy = RouteConstructorFactory.get_adapter("gihh", config=config)
+        policy = RoutingAlgorithmFactory.get_adapter("gihh", config=config)
         assert policy is not None

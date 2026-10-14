@@ -30,7 +30,7 @@ class GPHHConfig:
         n_training_instances: Sub-instances for fitness averaging.
         training_sample_ratio: Fraction of nodes sampled per training instance.
         vrpp: If True, solver operates in full VRPP mode (optional nodes).
-        mandatory_selection: Mandatory selection strategy config list.
+        packing: Packing algorithm config list.
         route_improvement: Route improvement operation config list.
     """
 
@@ -44,5 +44,5 @@ class GPHHConfig:
     training_sample_ratio: float = 0.5
     seed: Optional[int] = None
     vrpp: bool = True
-    mandatory_selection: Optional[List[Any]] = field(default_factory=list)
+    packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)

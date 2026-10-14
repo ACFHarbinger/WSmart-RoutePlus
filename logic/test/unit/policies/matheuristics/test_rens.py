@@ -11,7 +11,7 @@ import pytest
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../..")))
 
 import numpy as np
-from logic.src.policies.route_construction.matheuristics.relaxation_enforced_neighborhood_search.solver import (
+from logic.src.policies.routing.matheuristics.relaxation_enforced_neighborhood_search.solver import (
     run_rens_gurobi,
 )
 

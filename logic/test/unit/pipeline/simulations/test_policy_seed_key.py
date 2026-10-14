@@ -1,4 +1,4 @@
-"""The per-policy RNG seed depends on the constructor only (B-grok-01)."""
+"""The per-policy RNG seed depends on the routing algorithm only (B-grok-01)."""
 
 import pytest
 from logic.src.pipeline.simulations.day_context import get_canonical_policy_name

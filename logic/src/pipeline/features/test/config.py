@@ -60,9 +60,9 @@ def expand_policy_configs(cfg: Config) -> None:  # noqa: C901
         variants, variant_name = _extract_variants(pol_name, cfg_path)
         base_overrides = custom_overrides
         caller_selection = _selection_keys_set_by(base_overrides)
-        # A caller-supplied mandatory selection replaces the yaml fan-out. Keeping
+        # A caller-supplied packing replaces the yaml fan-out. Keeping
         # every yaml variant would store the same selection under several names.
-        if "mandatory_selection" in caller_selection:
+        if "packing" in caller_selection:
             variants = _collapse_selection_variants(variants)
 
         for prefix, suffix, custom_cfg in variants:
@@ -79,14 +79,14 @@ def expand_policy_configs(cfg: Config) -> None:  # noqa: C901
                 full_name = f"{full_name}{dist_suffix}"
 
             # If custom_overrides is already a fully-resolved variant config (contains
-            # top-level policy-level keys such as engine/mandatory_selection/route_improvement),
+            # top-level policy-level keys such as engine/packing/route_improvement),
             # it IS the specific variant — store it directly rather than loading the full YAML
             # and merging.  The full-YAML merge path leaves sibling variants (e.g. og_a/og_b)
             # inside the stored config, which causes find_policy_keys to discover the wrong
-            # mandatory_selection when it recurses over all sub-trees.
+            # packing when it recurses over all sub-trees.
             _override_keys: set = set(custom_overrides.keys()) if isinstance(custom_overrides, dict) else set()
             _is_resolved_variant = bool(
-                _override_keys & {"engine", "mandatory_selection", "route_improvement", "time_limit", "params"}
+                _override_keys & {"engine", "packing", "route_improvement", "time_limit", "params"}
             )
             if custom_overrides and _is_resolved_variant:
                 # Use the resolved variant config directly, wrapped under the policy name key
@@ -135,11 +135,11 @@ def expand_policy_configs(cfg: Config) -> None:  # noqa: C901
                                 custom_overrides = merged_overrides
                             final_cfg.update(custom_overrides)
 
-            # The flattener keeps a top-level mandatory_selection and ignores the same
+            # The flattener keeps a top-level packing and ignores the same
             # key inside a nested custom list. Copy the caller's value onto every
             # occurrence so the running policy sees that selection, not the yaml variant.
             _apply_caller_selection(final_cfg, base_overrides)
-            # Pin this variant's mandatory selection / acceptance criteria everywhere in the
+            # Pin this variant's packing / acceptance criteria everywhere in the
             # stored config (including nested 'custom' lists) so naming and the daily
             # actions see exactly one variant instead of the unexpanded {file: [all]} form.
             # Keys the caller already set are left alone.
@@ -152,7 +152,7 @@ def expand_policy_configs(cfg: Config) -> None:  # noqa: C901
     sim.config_path = config_path
 
 
-_SELECTION_KEYS = ("mandatory_selection", "acceptance_criteria")
+_SELECTION_KEYS = ("packing", "acceptance_criteria")
 
 
 def _is_mapping(node: Any) -> bool:
@@ -174,7 +174,7 @@ def _selection_keys_set_by(node: Any) -> Set[str]:
         node: Custom override tree from a ``sim.policies`` entry.
 
     Returns:
-        Subset of ``mandatory_selection`` and ``acceptance_criteria`` present in ``node``.
+        Subset of ``packing`` and ``acceptance_criteria`` present in ``node``.
     """
     found: Set[str] = set()
 
@@ -263,7 +263,7 @@ def _collapse_selection_variants(
 ) -> List[Tuple[str, str, Any]]:
     """Keep one body per route/acceptance suffix when the caller set the selection.
 
-    The yaml's mandatory-selection prefix is dropped so the stored name does not
+    The yaml's packing prefix is dropped so the stored name does not
     claim a variant the caller replaced.
 
     Args:
@@ -285,7 +285,7 @@ def _collapse_selection_variants(
 def _pin_variant_selection(obj: Any, var_cfg: Any, protected: Optional[Set[str]] = None) -> None:
     """Recursively overwrite selection/acceptance entries with the variant-specific ones.
 
-    ``var_cfg`` (from :func:`_extract_variants`) carries ``mandatory_selection`` /
+    ``var_cfg`` (from :func:`_extract_variants`) carries ``packing`` /
     ``acceptance_criteria`` already reduced to a single ``[{file: variant}]`` entry.
     Keys in ``protected`` were set by the custom policy entry and are not replaced.
 
@@ -404,7 +404,7 @@ def _extract_variants(pol_name: str, cfg_path: str) -> Tuple[List[Tuple[str, str
         if len(ms_list_iter) <= 1 and len(ac_list_iter) <= 1:
             var_cfg = copy.deepcopy(merged_cfg)
             if ms_list_iter and ms_list_iter[0]:
-                var_cfg["mandatory_selection"] = [ms_list_iter[0]]
+                var_cfg["packing"] = [ms_list_iter[0]]
             if ac_list_iter and ac_list_iter[0]:
                 var_cfg["acceptance_criteria"] = [ac_list_iter[0]]
 
@@ -428,14 +428,14 @@ def _extract_variants(pol_name: str, cfg_path: str) -> Tuple[List[Tuple[str, str
                 if clean_prefix and clean_prefix in pol_name:
                     var_cfg = copy.deepcopy(merged_cfg)
                     if ms_item:
-                        var_cfg["mandatory_selection"] = [ms_item]
+                        var_cfg["packing"] = [ms_item]
                     if ac_item:
                         var_cfg["acceptance_criteria"] = [ac_item]
                     return [(prefix, suffix, var_cfg)], variant_name
 
                 var_cfg = copy.deepcopy(merged_cfg)
                 if ms_item:
-                    var_cfg["mandatory_selection"] = [ms_item]
+                    var_cfg["packing"] = [ms_item]
                 if ac_item:
                     var_cfg["acceptance_criteria"] = [ac_item]
                 variants.append((prefix, suffix, var_cfg))
@@ -470,7 +470,7 @@ def _find_inner_config(pol_cfg: Any, pol_name: str = "") -> Tuple[Any, Any]:
                     k in v_dict
                     for k in [
                         "mandatory",
-                        "mandatory_selection",
+                        "packing",
                         "route_improvement",
                         "acceptance_criteria",
                         "engine",
@@ -491,7 +491,7 @@ def _find_inner_config(pol_cfg: Any, pol_name: str = "") -> Tuple[Any, Any]:
                             sk in sub_v_dict
                             for sk in [
                                 "mandatory",
-                                "mandatory_selection",
+                                "packing",
                                 "route_improvement",
                                 "acceptance_criteria",
                                 "engine",
@@ -531,8 +531,8 @@ def _parse_inner_components(
         item_obj: object = item
         if isinstance(item_obj, ITraversable) or hasattr(item_obj, "items"):
             item_dict = dict(item_obj)
-            if "mandatory_selection" in item_dict:
-                ms_list = item_dict["mandatory_selection"]
+            if "packing" in item_dict:
+                ms_list = item_dict["packing"]
                 ms_idx = idx
             elif "mandatory" in item_dict:
                 ms_list = item_dict["mandatory"]
@@ -564,8 +564,8 @@ def _apply_overrides(var_cfg: Any, ms_idx: int, ms_item: Any, ac_idx: int, ac_it
             if ms_item is not None and 0 <= ms_idx < len(var_inner):
                 item_obj = var_inner[ms_idx]
                 if isinstance(item_obj, (dict, ITraversable)):
-                    if "mandatory_selection" in item_obj:
-                        cast(Any, item_obj)["mandatory_selection"] = [ms_item]
+                    if "packing" in item_obj:
+                        cast(Any, item_obj)["packing"] = [ms_item]
                     else:
                         cast(Any, item_obj)["mandatory"] = [ms_item]
             if ac_item is not None and 0 <= ac_idx < len(var_inner):
@@ -574,8 +574,8 @@ def _apply_overrides(var_cfg: Any, ms_idx: int, ms_item: Any, ac_idx: int, ac_it
                     cast(Any, item_obj)["acceptance_criteria"] = [ac_item]
         else:  # dict
             if ms_item is not None:
-                if "mandatory_selection" in var_inner:
-                    var_inner["mandatory_selection"] = [ms_item]
+                if "packing" in var_inner:
+                    var_inner["packing"] = [ms_item]
                 elif "mandatory" in var_inner:
                     var_inner["mandatory"] = [ms_item]
             if ac_item is not None:
@@ -583,14 +583,14 @@ def _apply_overrides(var_cfg: Any, ms_idx: int, ms_item: Any, ac_idx: int, ac_it
 
 
 def _expand_dict_ms_list(ms_list: Any) -> List[Any]:
-    """Expand a dict-format mandatory_selection into a flat list of single-variant dicts.
+    """Expand a dict-format packing into a flat list of single-variant dicts.
 
     A dict like ``{"other/ms_last_minute.yaml": ["cf70", "cf90"]}`` expands to
     ``[{"other/ms_last_minute.yaml": "cf70"}, {"other/ms_last_minute.yaml": "cf90"}]``.
     Plain lists of strings or already-flat lists are returned unchanged.
 
     Args:
-        ms_list: Raw value from the mandatory_selection key.
+        ms_list: Raw value from the packing key.
 
     Returns:
         Flat list of items (strings or single-variant dicts ``{file: variant}``).

@@ -1,4 +1,4 @@
-"""Script to clean up Route Constructor Policies used for training models with Imitation Learning."""
+"""Script to clean up Routing Algorithm Policies used for training models with Imitation Learning."""
 
 import os
 import sys

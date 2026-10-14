@@ -1,4 +1,4 @@
-"""Script to clean up other Policy components (Acceptance Criteria, Route Improvers, Mandatory Selection, Selection & Construction)."""
+"""Script to clean up other Policy components (Acceptance Criteria, Route Improvers, Packing, Selection & Construction)."""
 
 import os
 import sys

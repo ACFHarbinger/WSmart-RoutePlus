@@ -5,7 +5,7 @@ Attributes:
     position_independent_crossover: Position independent_crossover function.
 
 Example:
-    >>> from logic.src.policies.route_construction.meta_heuristics.hybrid_genetic_search.individual import Individual
+    >>> from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.individual import Individual
     >>> operator = position_independent_crossover(
     ...    Individual(giant_tour=[1, 2, 3, 4]),
     ...    Individual(giant_tour=[4, 3, 2, 1]),
@@ -18,7 +18,7 @@ import random
 from typing import TYPE_CHECKING, List, Optional
 
 if TYPE_CHECKING:
-    from logic.src.policies.route_construction.meta_heuristics.hybrid_genetic_search.individual import (
+    from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.individual import (
         Individual,
     )
 
@@ -30,7 +30,7 @@ def _get_individual_class() -> type:
     Returns:
         type: Individual class.
     """
-    from logic.src.policies.route_construction.meta_heuristics.hybrid_genetic_search.individual import Individual
+    from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.individual import Individual
 
     return Individual
 

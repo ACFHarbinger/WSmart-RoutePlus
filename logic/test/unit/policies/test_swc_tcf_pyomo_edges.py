@@ -6,7 +6,7 @@ import pytest
 pytest.importorskip("pyomo")
 pytest.importorskip("gurobipy")
 
-from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.dispatcher import (  # noqa: E402
+from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.dispatcher import (  # noqa: E402
     run_swc_tcf_optimizer,
 )
 

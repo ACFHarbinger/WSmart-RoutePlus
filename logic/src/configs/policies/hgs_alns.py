@@ -38,5 +38,5 @@ class HGSALNSConfig:
     alns: ALNSConfig = field(default_factory=ALNSConfig)
 
     # Common policy fields
-    mandatory_selection: List[str] = field(default_factory=list)
+    packing: List[str] = field(default_factory=list)
     route_improvement: List[Any] = field(default_factory=list)

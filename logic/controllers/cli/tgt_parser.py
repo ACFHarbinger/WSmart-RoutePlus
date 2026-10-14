@@ -3,7 +3,7 @@
 Integrates with the WSmart+ Route CLI registry as the ``update_ms`` and
 ``update_ri`` sub-commands, and can also be run standalone::
 
-    # Update mandatory-selection strategy via main CLI
+    # Update packing algorithm via main CLI
     python main.py update_ms \\
         --constructors aco_hh alns bpc hgs \\
         --file ms_service_level \\
@@ -26,7 +26,7 @@ Integrates with the WSmart+ Route CLI registry as the ``update_ms`` and
         --file ri_cls \\
         --keys default
 
-All constructor names match the ``policy_{constructor}.yaml`` filenames in
+All routing algorithm names match the ``policy_{constructor}.yaml`` filenames in
 ``logic/configs/policies/``.  Use ``--list-strategies`` / ``--list-improvers``
 to discover available files and ``--list-keys`` to see valid key names.
 
@@ -46,7 +46,7 @@ from logic.src.utils.target.policy_link_updater import (
     list_available_ri_improvers,
     list_improver_keys,
     list_strategy_keys,
-    update_mandatory_selection,
+    update_packing,
     update_route_improvement,
 )
 
@@ -73,13 +73,13 @@ def add_ms_update_args(parser: argparse.ArgumentParser) -> None:
         nargs="+",
         default=_ALL_CONSTRUCTORS,
         metavar="CON",
-        help=(f"Route constructor(s) whose policy file(s) to update.  Defaults to all: {' '.join(_ALL_CONSTRUCTORS)}"),
+        help=(f"Routing algorithm(s) whose policy file(s) to update.  Defaults to all: {' '.join(_ALL_CONSTRUCTORS)}"),
     )
     parser.add_argument(
         "--file",
         metavar="MS_FILE",
         help=(
-            "Mandatory-selection strategy file stem, e.g. 'ms_service_level'.  "
+            "Packing algorithm file stem, e.g. 'ms_service_level'.  "
             "Must be present in logic/configs/policies/other/.  "
             "Required unless --list-strategies or --list-keys is used."
         ),
@@ -97,7 +97,7 @@ def add_ms_update_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--list-strategies",
         action="store_true",
-        help="Print available mandatory-selection strategy files and exit.",
+        help="Print available packing algorithm files and exit.",
     )
     parser.add_argument(
         "--list-keys",
@@ -127,7 +127,7 @@ def add_ri_update_args(parser: argparse.ArgumentParser) -> None:
         nargs="+",
         default=_ALL_CONSTRUCTORS,
         metavar="CON",
-        help=(f"Route constructor(s) whose policy file(s) to update.  Defaults to all: {' '.join(_ALL_CONSTRUCTORS)}"),
+        help=(f"Routing algorithm(s) whose policy file(s) to update.  Defaults to all: {' '.join(_ALL_CONSTRUCTORS)}"),
     )
     parser.add_argument(
         "--file",
@@ -180,7 +180,7 @@ def _run_ms_from_namespace(args: argparse.Namespace) -> int:
     """
     if getattr(args, "list_strategies", False):
         strategies = list_available_ms_strategies()
-        print("Available mandatory-selection strategies:")
+        print("Available packing algorithms:")
         for s in strategies:
             print(f"  {s}")
         return 0
@@ -208,7 +208,7 @@ def _run_ms_from_namespace(args: argparse.Namespace) -> int:
         return 1
 
     try:
-        modified = update_mandatory_selection(
+        modified = update_packing(
             constructors=args.constructors,
             ms_yaml=args.file,
             keys=args.keys,
@@ -296,7 +296,7 @@ def main(argv=None) -> int:
         prog="python -m logic.controllers.cli.tgt_parser",
         description=(
             "Batch-update policy YAML config overrides for WSmart+ Route.\n\n"
-            "  ms  — update mandatory-selection strategy overrides\n"
+            "  ms  — update packing algorithm overrides\n"
             "  ri  — update route-improver overrides"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -305,7 +305,7 @@ def main(argv=None) -> int:
 
     ms_parser = subparsers.add_parser(
         "ms",
-        help="Update mandatory-selection strategy overrides",
+        help="Update packing algorithm overrides",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     add_ms_update_args(ms_parser)

@@ -22,8 +22,8 @@ import numpy as np
 from .local_search_base import LocalSearch
 
 if TYPE_CHECKING:
-    from logic.src.policies.route_construction.meta_heuristics.hybrid_genetic_search.individual import Individual
-    from logic.src.policies.route_construction.meta_heuristics.hybrid_genetic_search.params import HGSParams
+    from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.individual import Individual
+    from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.params import HGSParams
 
 
 class HGSLocalSearch(LocalSearch):

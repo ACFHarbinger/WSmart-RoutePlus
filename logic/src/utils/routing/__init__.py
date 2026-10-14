@@ -1,1 +1,1 @@
-"""Routing helpers shared across constructors and the simulator (tours, Clarke-Wright savings)."""
+"""Routing helpers shared across routing algorithms and the simulator (tours, Clarke-Wright savings)."""

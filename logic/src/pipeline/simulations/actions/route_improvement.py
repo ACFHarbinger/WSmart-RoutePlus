@@ -21,7 +21,7 @@ from logic.src.configs import RouteImprovingConfig
 from logic.src.constants import ROOT_DIR  # noqa: F401  (ROOT_DIR: test patch point)
 from logic.src.constants.paths import CONFIGS_DIR
 from logic.src.interfaces import ITraversable
-from logic.src.policies.route_construction.other_algorithms.travelling_salesman_problem.tsp import get_route_cost
+from logic.src.policies.routing.other_algorithms.travelling_salesman_problem.tsp import get_route_cost
 from logic.src.policies.route_improvement import RouteImproverFactory
 from logic.src.utils.configs.config_loader import load_config
 

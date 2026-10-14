@@ -3,11 +3,11 @@
 import numpy as np
 import pytest
 from logic.src.configs.policies import SWCTCFConfig
-from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.gurobi import (
+from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.gurobi import (
     _options,
     _run_gurobi_optimizer,
 )
-from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.params import (
+from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.params import (
     SWCTCFParams,
 )
 

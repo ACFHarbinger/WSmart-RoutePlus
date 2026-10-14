@@ -1,5 +1,5 @@
 # =============================================================================
-# mandatory Strategy: Lookahead (Predictive Overflow Detection)
+# packing algorithm: Lookahead (Predictive Overflow Detection)
 # =============================================================================
 # PURPOSE:
 #   Collect bins predicted to overflow within the next collection cycle.
@@ -8,7 +8,7 @@
 # ALGORITHM:
 #   1. Predict fill level for each bin at current_collection_day + lookahead_days
 #   2. Mark bins as mandatory if predicted_fill >= max_fill (1.0)
-#   3. Neural models use this prediction during route construction
+#   3. Neural models use this prediction during routing
 #
 # USE CASES:
 #   - Temporal environments (CWCVRP, SCWCVRP) with multi-day simulation

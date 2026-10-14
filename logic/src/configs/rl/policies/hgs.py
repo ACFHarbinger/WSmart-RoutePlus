@@ -14,7 +14,7 @@ Example:
         n_generations=100,
         max_vehicles=0,
         engine="custom",
-        mandatory_selection=[],
+        packing=[],
         route_improvement=[],
     )
 """

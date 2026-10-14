@@ -72,5 +72,5 @@ hulk:
   # Adaptive weight learning
   weight_learning_rate: 0.1
   weight_decay: 0.95
-  mandatory_selection: {"other/ms_lookahead.yaml": ["default"]}
+  packing: {"other/ms_lookahead.yaml": ["default"]}
   route_improvement: []

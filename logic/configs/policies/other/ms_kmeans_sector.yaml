@@ -1,5 +1,5 @@
 # =============================================================================
-# Mandatory Strategy: K-Means Geographic Sector Selection
+# Packing Algorithm: K-Means Geographic Sector Selection
 # =============================================================================
 # PURPOSE:
 #   Simulates traditional zone-based collection schedules by partitioning

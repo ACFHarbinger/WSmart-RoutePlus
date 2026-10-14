@@ -14,7 +14,7 @@ Example:
 from dataclasses import dataclass
 from typing import Optional
 
-from .other.mandatory_selection import MandatorySelectionConfig
+from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -72,7 +72,7 @@ class AdaptiveKernelSearchConfig:
             invoke the project's native Gurobi-based AKS solver.
         framework (str): Identifier for the optimization framework. Options
             include "ortools" and "pyomon".
-        mandatory_selection (Optional[MandatorySelectionConfig]): Configuration for
+        packing (Optional[PackingConfig]): Configuration for
             mandatory node selection policies (e.g., must collect full bins).
         route_improvement (Optional[RouteImprovingConfig]): Optional configuration
             for local search refinement steps applied after the main AKS loop.
@@ -94,5 +94,5 @@ class AdaptiveKernelSearchConfig:
     # Infrastructure
     engine: str = "gurobi"
     framework: str = "ortools"
-    mandatory_selection: Optional[MandatorySelectionConfig] = None
+    packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None

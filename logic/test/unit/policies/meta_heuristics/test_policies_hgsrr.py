@@ -6,8 +6,8 @@ This module tests the Hybrid Genetic Search with Ruin-and-Recreate (HGS-RR) poli
 
 import numpy as np
 import pytest
-from logic.src.policies.route_construction.base.factory import RouteConstructorFactory
-from logic.src.policies.route_construction.meta_heuristics.hybrid_genetic_search_with_ruin_and_recreate import (
+from logic.src.policies.routing.base.factory import RoutingAlgorithmFactory
+from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search_with_ruin_and_recreate import (
     HGSRRParams,
     HGSRRSolver,
 )
@@ -112,7 +112,7 @@ class TestHGSRRPolicy:
         assert cost > 0
 
     def test_hgs_rr_policy_adapter(self, simple_instance):
-        """Test HGS-RR through RouteConstructorFactory."""
+        """Test HGS-RR through RoutingAlgorithmFactory."""
         dist_matrix, wastes, capacity, R, C = simple_instance
 
         config = {
@@ -124,5 +124,5 @@ class TestHGSRRPolicy:
             }
         }
 
-        policy = RouteConstructorFactory.get_adapter("hgs_rr", config=config)
+        policy = RoutingAlgorithmFactory.get_adapter("hgs_rr", config=config)
         assert policy is not None

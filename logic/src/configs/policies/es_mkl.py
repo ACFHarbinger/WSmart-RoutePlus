@@ -16,7 +16,7 @@ Example:
 from dataclasses import dataclass
 from typing import List, Optional
 
-from .other.mandatory_selection import MandatorySelectionConfig
+from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -47,7 +47,7 @@ class MuKappaLambdaESConfig:
         vrpp (bool): Whether the problem is a VRRP.
         profit_aware_operators (bool): Whether to use profit-aware operators.
         seed (Optional[int]): Seed for the random number generator.
-        mandatory_selection (Optional[List[MandatorySelectionConfig]]): Mandatory selection configurations.
+        packing (Optional[List[PackingConfig]]): Packing configurations.
         route_improvement (Optional[List[RouteImprovingConfig]]): Route improvement configurations.
     """
 
@@ -88,5 +88,5 @@ class MuKappaLambdaESConfig:
     vrpp: bool = True
     profit_aware_operators: bool = False
     seed: Optional[int] = None
-    mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
+    packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

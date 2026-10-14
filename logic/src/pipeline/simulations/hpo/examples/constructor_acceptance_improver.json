@@ -3,7 +3,7 @@
     "type": "int",
     "low": 500,
     "high": 5000,
-    "description": "Route constructor parameter."
+    "description": "Routing algorithm parameter."
   },
   "acceptance_criterion.params.initial_temp": {
     "type": "float",

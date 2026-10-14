@@ -7,10 +7,10 @@ Attributes:
     IBinContainer: Interface for bin containers
     IDistanceMetric: Interface for distance metrics
     IEnv: Interface for environments
-    IMandatorySelectionStrategy: Interface for mandatory selection strategies
+    IPackingAlgorithm: Interface for packing algorithms
     IModel: Interface for models
     IPolicy: Interface for policies
-    IRouteConstructor: Interface for route constructors
+    IRoutingAlgorithm: Interface for routing algorithms
     IRouteImprovement: Interface for route improvements
     ITensorDictLike: Interface for tensor dict like objects
     ITraversable: Interface for traversable objects
@@ -21,10 +21,10 @@ Example:
         IBinContainer,
         IDistanceMetric,
         IEnv,
-        IMandatorySelectionStrategy,
+        IPackingAlgorithm,
         IModel,
         IPolicy,
-        IRouteConstructor,
+        IRoutingAlgorithm,
         IRouteImprovement,
         ITensorDictLike,
         ITraversable,
@@ -43,20 +43,20 @@ from .context import (
     merge_context,
 )
 from .env import IEnv
-from .mandatory_selection import IMandatorySelectionStrategy
+from .packing import IPackingAlgorithm
 from .model import IModel
 from .policy import IPolicy
-from .route_constructor import IRouteConstructor
+from .routing_algorithm import IRoutingAlgorithm
 from .route_improvement import IRouteImprovement
 from .tensor_dict_like import ITensorDictLike
 from .traversable import ITraversable
 
 __all__ = [
     "IAcceptanceCriterion",
-    "IRouteConstructor",
+    "IRoutingAlgorithm",
     "IEnv",
     "IModel",
-    "IMandatorySelectionStrategy",
+    "IPackingAlgorithm",
     "IPolicy",
     "IRouteImprovement",
     "ITensorDictLike",

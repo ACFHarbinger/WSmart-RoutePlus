@@ -11,7 +11,7 @@ import pytest
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../..")))
 
 import numpy as np
-from logic.src.policies.route_construction.matheuristics.local_branching_variable_neighborhood_search.lb_vns import (
+from logic.src.policies.routing.matheuristics.local_branching_variable_neighborhood_search.lb_vns import (
     GUROBI_AVAILABLE,
     LBVNSParams,
     run_lb_vns_gurobi,

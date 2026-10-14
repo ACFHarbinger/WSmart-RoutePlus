@@ -16,7 +16,7 @@ Attributes:
 Example:
     >>> from logic.src.tracking.logging.modules.analysis import load_log_dict
     >>> db = load_log_dict("/path/to/project", "output")
-    >>> db.filter(mandatory_selection="lookahead", n_bins=100).mean_metrics()
+    >>> db.filter(packing="lookahead", n_bins=100).mean_metrics()
 """
 
 import contextlib
@@ -65,7 +65,7 @@ _ROUTE_IMPROVERS: List[str] = [
     "tsp",
 ]
 
-_ROUTE_CONSTRUCTORS: List[str] = [
+_ROUTING_ALGORITHMS: List[str] = [
     "vrpp_gurobi",
     "pg_clns",
     "swc_tcf",
@@ -85,7 +85,7 @@ _ROUTE_CONSTRUCTORS: List[str] = [
 
 # Empty by default — these are highly project-specific and must be supplied by
 # the caller via load_log_dict / _parse_slug when present in slug names.
-_ROUTE_CONSTRUCTOR_ENGINES: List[str] = []
+_ROUTING_ALGORITHM_ENGINES: List[str] = []
 
 _ACCEPTANCE_CRITERIA: List[str] = []
 
@@ -93,64 +93,64 @@ _ACCEPTANCE_CRITERIA: List[str] = []
 def _parse_slug(
     slug: str,
     mandatory_prefixes: Optional[List[str]] = None,
-    route_constructors: Optional[List[str]] = None,
+    routing_algorithms: Optional[List[str]] = None,
     route_improvers: Optional[List[str]] = None,
-    route_constructor_engines: Optional[List[str]] = None,
+    routing_algorithm_engines: Optional[List[str]] = None,
     acceptance_criteria: Optional[List[str]] = None,
 ) -> Dict[str, str]:
     """Best-effort decomposition of a policy slug into its five named components.
 
     The expected slug format is::
 
-        {mandatory_selection}_{route_constructor}_{route_constructor_engine}_{acceptance_criterion}_{route_improver}
+        {packing}_{routing_algorithm}_{routing_algorithm_engine}_{acceptance_criterion}_{route_improver}
 
     Any component may be absent.  Parsing proceeds in this order so that each
     vocabulary is applied to the right portion of the slug:
 
-    1. Strip the ``mandatory_selection`` prefix (longest match from the start).
+    1. Strip the ``packing`` prefix (longest match from the start).
     2. Strip the ``route_improver`` suffix (longest match from the end).
-    3. Strip the ``route_constructor`` prefix (longest match from the start).
-    4. Strip the ``route_constructor_engine`` prefix (longest match from the
+    3. Strip the ``routing_algorithm`` prefix (longest match from the start).
+    4. Strip the ``routing_algorithm_engine`` prefix (longest match from the
        start of the remainder).
     5. Match ``acceptance_criterion`` from the vocabulary (longest prefix match);
        fall back to consuming the whole remainder when no vocabulary entry
        matches.
 
     Vocabulary lists default to the module-level constants when ``None``
-    is passed.  ``_ROUTE_CONSTRUCTOR_ENGINES`` and ``_ACCEPTANCE_CRITERIA``
+    is passed.  ``_ROUTING_ALGORITHM_ENGINES`` and ``_ACCEPTANCE_CRITERIA``
     default to empty lists, so callers must supply them when their slugs
     contain those components.
 
     Args:
         slug: Full policy slug, e.g.
             ``"lookahead_aco_hh_ortools_custom_ftsp"``.
-        mandatory_prefixes: Ordered mandatory-selection prefixes (longest-first).
+        mandatory_prefixes: Ordered packing prefixes (longest-first).
             Defaults to ``_MANDATORY_PREFIXES``.
-        route_constructors: Ordered route-constructor names.  Defaults to
-            ``_ROUTE_CONSTRUCTORS``.
+        routing_algorithms: Ordered routing-algorithm names.  Defaults to
+            ``_ROUTING_ALGORITHMS``.
         route_improvers: Ordered route-improver suffixes (longest-first).
             Defaults to ``_ROUTE_IMPROVERS``.
-        route_constructor_engines: Ordered constructor-engine names
-            (longest-first).  Defaults to ``_ROUTE_CONSTRUCTOR_ENGINES``
+        routing_algorithm_engines: Ordered constructor-engine names
+            (longest-first).  Defaults to ``_ROUTING_ALGORITHM_ENGINES``
             (empty — must be supplied when engines appear in slugs).
         acceptance_criteria: Ordered acceptance-criterion names (longest-first).
             Defaults to ``_ACCEPTANCE_CRITERIA`` (empty — whatever remains
             after all other components are stripped becomes the criterion).
 
     Returns:
-        Dict with keys ``mandatory_selection``, ``route_constructor``,
-        ``route_constructor_engine``, ``acceptance_criterion``, and
+        Dict with keys ``packing``, ``routing_algorithm``,
+        ``routing_algorithm_engine``, ``acceptance_criterion``, and
         ``route_improver``.  Missing components are empty strings.
     """
     m_prefixes = mandatory_prefixes if mandatory_prefixes is not None else _MANDATORY_PREFIXES
-    r_constructors = route_constructors if route_constructors is not None else _ROUTE_CONSTRUCTORS
+    r_constructors = routing_algorithms if routing_algorithms is not None else _ROUTING_ALGORITHMS
     r_improvers = route_improvers if route_improvers is not None else _ROUTE_IMPROVERS
-    r_engines = route_constructor_engines if route_constructor_engines is not None else _ROUTE_CONSTRUCTOR_ENGINES
+    r_engines = routing_algorithm_engines if routing_algorithm_engines is not None else _ROUTING_ALGORITHM_ENGINES
     a_criteria = acceptance_criteria if acceptance_criteria is not None else _ACCEPTANCE_CRITERIA
 
     remainder = slug
 
-    # 1. Strip mandatory-selection prefix from the start.
+    # 1. Strip packing prefix from the start.
     mandatory = ""
     for prefix in m_prefixes:
         if remainder.startswith(prefix + "_"):
@@ -166,7 +166,7 @@ def _parse_slug(
             remainder = remainder[: -(len(suf) + 1)]
             break
 
-    # 3. Strip route-constructor prefix from the start.
+    # 3. Strip routing-algorithm prefix from the start.
     constructor = ""
     for c in r_constructors:
         if remainder.startswith(c):
@@ -175,7 +175,7 @@ def _parse_slug(
             remainder = rest[1:] if rest.startswith("_") else rest
             break
 
-    # 4. Strip constructor engine from the start of what remains.
+    # 4. Strip routing algorithm engine from the start of what remains.
     engine = ""
     for e in r_engines:
         if remainder.startswith(e):
@@ -198,9 +198,9 @@ def _parse_slug(
         acceptance = remainder
 
     return {
-        "mandatory_selection": mandatory,
-        "route_constructor": constructor,
-        "route_constructor_engine": engine,
+        "packing": mandatory,
+        "routing_algorithm": constructor,
+        "routing_algorithm_engine": engine,
         "acceptance_criterion": acceptance,
         "route_improver": improver,
     }
@@ -221,9 +221,9 @@ class ResultsDB:
 
         db = load_log_dict(home_dir, "output")
         # Filter then view as DataFrame
-        df = db.filter(mandatory_selection="lookahead", n_bins=100).mean_metrics()
-        # Group by constructor, average profit across graph sizes
-        db.to_dataframe().groupby("route_constructor")["profit"].mean()
+        df = db.filter(packing="lookahead", n_bins=100).mean_metrics()
+        # Group by routing algorithm, average profit across graph sizes
+        db.to_dataframe().groupby("routing_algorithm")["profit"].mean()
     """
 
     METADATA_COLS: List[str] = [
@@ -235,9 +235,9 @@ class ResultsDB:
         "run_name",
         "policy_slug",
         "n_samples",
-        "mandatory_selection",
-        "route_constructor",
-        "route_constructor_engine",
+        "packing",
+        "routing_algorithm",
+        "routing_algorithm_engine",
         "acceptance_criterion",
         "route_improver",
     ]
@@ -266,9 +266,9 @@ class ResultsDB:
         data_distribution: Optional[str] = None,
         run_name: Optional[str] = None,
         policy_slug: Optional[str] = None,
-        mandatory_selection: Optional[str] = None,
-        route_constructor: Optional[str] = None,
-        route_constructor_engine: Optional[str] = None,
+        packing: Optional[str] = None,
+        routing_algorithm: Optional[str] = None,
+        routing_algorithm_engine: Optional[str] = None,
         acceptance_criterion: Optional[str] = None,
         route_improver: Optional[str] = None,
     ) -> "ResultsDB":
@@ -298,9 +298,9 @@ class ResultsDB:
         _apply("data_distribution", data_distribution)
         _apply("run_name", run_name)
         _apply("policy_slug", policy_slug)
-        _apply("mandatory_selection", mandatory_selection)
-        _apply("route_constructor", route_constructor)
-        _apply("route_constructor_engine", route_constructor_engine)
+        _apply("packing", packing)
+        _apply("routing_algorithm", routing_algorithm)
+        _apply("routing_algorithm_engine", routing_algorithm_engine)
         _apply("acceptance_criterion", acceptance_criterion)
         _apply("route_improver", route_improver)
 
@@ -357,7 +357,7 @@ class ResultsDB:
             f"  distributions : {_uniq('data_distribution')}\n"
             f"  n_bins        : {_uniq('n_bins')}\n"
             f"  run_names     : {_uniq('run_name')}\n"
-            f"  constructors  : {_uniq('route_constructor')}"
+            f"  constructors  : {_uniq('routing_algorithm')}"
         )
 
 
@@ -366,9 +366,9 @@ def load_log_dict(  # noqa: C901
     output_dir: str = "output",
     *,
     mandatory_prefixes: Optional[List[str]] = None,
-    route_constructors: Optional[List[str]] = None,
+    routing_algorithms: Optional[List[str]] = None,
     route_improvers: Optional[List[str]] = None,
-    route_constructor_engines: Optional[List[str]] = None,
+    routing_algorithm_engines: Optional[List[str]] = None,
     acceptance_criteria: Optional[List[str]] = None,
     load_samples: bool = False,
     load_daily: bool = False,
@@ -383,7 +383,7 @@ def load_log_dict(  # noqa: C901
     * **Path metadata**: ``n_days``, ``n_bins``, ``area``, ``waste_type``,
       ``data_distribution``, ``run_name``.
     * **Policy components** (best-effort slug decomposition):
-      ``mandatory_selection``, ``route_constructor``, ``acceptance_criterion``,
+      ``packing``, ``routing_algorithm``, ``acceptance_criterion``,
       ``route_improver``, ``policy_slug``.
     * **Mean / std metrics**: read directly from the ``"mean"`` / ``"std"``
       sections of each JSON; computed from ``"samples"`` when those sections are
@@ -406,7 +406,7 @@ def load_log_dict(  # noqa: C901
         db = load_log_dict(
             home_dir,
             mandatory_prefixes=["my_custom_strat", "fallback"],
-            route_constructors=["vrpp_gurobi", "gurobi", "my_solver"],
+            routing_algorithms=["vrpp_gurobi", "gurobi", "my_solver"],
             route_improvers=["tsp_fast_tsp", "ftsp", "tsp"],
         )
 
@@ -415,13 +415,13 @@ def load_log_dict(  # noqa: C901
         output_dir: Sub-directory under ``assets/`` holding the results tree.
         mandatory_prefixes: Override the default ``_MANDATORY_PREFIXES`` list
             used by slug parsing.  Pass ``None`` to keep the built-in defaults.
-        route_constructors: Override the default ``_ROUTE_CONSTRUCTORS`` list.
+        routing_algorithms: Override the default ``_ROUTING_ALGORITHMS`` list.
             Pass ``None`` to keep the built-in defaults.
         route_improvers: Override the default ``_ROUTE_IMPROVERS`` list.
             Pass ``None`` to keep the built-in defaults.
-        route_constructor_engines: Override the default
-            ``_ROUTE_CONSTRUCTOR_ENGINES`` list (empty by default — must be
-            supplied when constructor engines appear in slug names).
+        routing_algorithm_engines: Override the default
+            ``_ROUTING_ALGORITHM_ENGINES`` list (empty by default — must be
+            supplied when routing algorithm engines appear in slug names).
         acceptance_criteria: Override the default ``_ACCEPTANCE_CRITERIA`` list
             (empty by default — whatever remains after all other components are
             stripped becomes the acceptance criterion).
@@ -437,11 +437,11 @@ def load_log_dict(  # noqa: C901
 
         db = load_log_dict(home_dir)
         # All 100-bin lookahead results for the emp distribution
-        sub = db.filter(n_bins=100, mandatory_selection="lookahead",
+        sub = db.filter(n_bins=100, packing="lookahead",
                         data_distribution="emp")
         print(sub.mean_metrics())
-        # Compare profit across constructors
-        sub.groupby("route_constructor")["profit"].mean().sort_values()
+        # Compare profit across routing algorithms
+        sub.groupby("routing_algorithm")["profit"].mean().sort_values()
     """
     import glob as _glob
 
@@ -523,9 +523,9 @@ def load_log_dict(  # noqa: C901
             **_parse_slug(
                 slug,
                 mandatory_prefixes,
-                route_constructors,
+                routing_algorithms,
                 route_improvers,
-                route_constructor_engines,
+                routing_algorithm_engines,
                 acceptance_criteria,
             ),
         }

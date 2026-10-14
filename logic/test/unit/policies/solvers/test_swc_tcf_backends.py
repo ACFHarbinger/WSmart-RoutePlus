@@ -5,11 +5,11 @@ from typing import Any, Dict, Optional
 
 import numpy as np
 import pytest
-from logic.src.policies.route_construction.base.base_routing_policy import BaseRoutingPolicy
-from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow import (
+from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
+from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow import (
     policy_swc_tcf,
 )
-from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.gurobi import (
+from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.gurobi import (
     _run_gurobi_optimizer,
 )
 
@@ -34,7 +34,7 @@ def test_gurobi_no_incumbent_day_is_deterministic(monkeypatch):
     """
     from unittest.mock import MagicMock
 
-    from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow import (
+    from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow import (
         gurobi as gurobi_mod,
     )
 
@@ -265,7 +265,7 @@ class _TypedPolicy(BaseRoutingPolicy):
 def test_typed_path_flattens_engine_nested_overrides(monkeypatch):
     """B-kimi-59: engine-nested runtime overrides reach the values dict on the typed path."""
     monkeypatch.setattr(
-        "logic.src.policies.route_construction.base.base_routing_policy.load_area_and_waste_type_params",
+        "logic.src.policies.routing.base.base_routing_policy.load_area_and_waste_type_params",
         lambda area, wt: (100.0, 0.5, 1.0, 1.0, 1.0),
     )
     policy = _TypedPolicy(config=_FakeConfig())
@@ -284,7 +284,7 @@ def test_typed_path_flattens_engine_nested_overrides(monkeypatch):
 
 def test_route_extraction_parity_across_backends(capsys):
     """M-kimi-02: one shared extractor — all three backends must agree on a fixed instance."""
-    from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.dispatcher import (
+    from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.dispatcher import (
         run_swc_tcf_optimizer,
     )
 
@@ -330,7 +330,7 @@ def test_route_extraction_parity_across_backends(capsys):
 
 def test_build_tcf_data_shared_prep():
     """M-kimi-03: one shared preparation for all backends (values pinned)."""
-    from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow._tcf_data import (
+    from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow._tcf_data import (
         build_tcf_data,
     )
 
@@ -390,10 +390,10 @@ def test_gurobi_forced_bins_have_an_incumbent_at_once():
 def test_gurobi_no_incumbent_executes_the_best_start(monkeypatch):
     """#41: if Gurobi still ends without a solution, the most profitable start is executed."""
     from logic.src.pipeline.simulations.solver_status import current_solver_status, note_solver_status
-    from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow import (
+    from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow import (
         gurobi as gurobi_mod,
     )
-    from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow._tcf_data import (
+    from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow._tcf_data import (
         build_tcf_data,
     )
 
@@ -448,10 +448,10 @@ def test_gurobi_no_incumbent_executes_the_best_start(monkeypatch):
 
 def test_warm_starts_cover_forced_bins_and_respect_the_model():
     """Starts: forced bins only, and every bin with waste; none when trips cannot be feasible."""
-    from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow._tcf_data import (
+    from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow._tcf_data import (
         build_tcf_data,
     )
-    from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.gurobi import (
+    from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.gurobi import (
         _warm_starts,
     )
 
@@ -475,10 +475,10 @@ def test_warm_start_is_off_by_default():
     from unittest.mock import patch
 
     from logic.src.configs.policies import SWCTCFConfig
-    from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow import (
+    from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow import (
         gurobi as gurobi_mod,
     )
-    from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.params import (
+    from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.params import (
         SWCTCFParams,
     )
 

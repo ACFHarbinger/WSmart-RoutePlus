@@ -9,10 +9,10 @@ pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 def test_rl_alns_solver():
     print("\n=== Testing RLALNSSolver ===")
-    from logic.src.policies.route_construction.learning_heuristic_algorithms.reinforcement_learning_adaptive_large_neighborhood_search.params import (
+    from logic.src.policies.routing.learning_heuristic_algorithms.reinforcement_learning_adaptive_large_neighborhood_search.params import (
         RLALNSParams,
     )
-    from logic.src.policies.route_construction.learning_heuristic_algorithms.reinforcement_learning_adaptive_large_neighborhood_search.solver import (
+    from logic.src.policies.routing.learning_heuristic_algorithms.reinforcement_learning_adaptive_large_neighborhood_search.solver import (
         RLALNSSolver,
     )
 

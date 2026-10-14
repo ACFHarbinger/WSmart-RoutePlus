@@ -13,7 +13,7 @@ Example:
 from dataclasses import dataclass
 from typing import List, Optional
 
-from .other.mandatory_selection import MandatorySelectionConfig
+from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -33,7 +33,7 @@ class CPSATConfig:
         overflow_penalty: Penalty per unit of overflow.
         mean_increment: Expected daily waste increment for bins.
         seed: Random seed for reproducibility.
-        mandatory_selection: Node selection strategy configuration.
+        packing: Node selection strategy configuration.
         route_improvement: Route improvement operations.
     """
 
@@ -50,5 +50,5 @@ class CPSATConfig:
 
     seed: Optional[int] = None
 
-    mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
+    packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

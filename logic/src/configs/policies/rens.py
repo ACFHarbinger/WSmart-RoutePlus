@@ -16,7 +16,7 @@ Example:
 from dataclasses import dataclass
 from typing import Optional
 
-from .other.mandatory_selection import MandatorySelectionConfig
+from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -45,8 +45,8 @@ class RENSConfig:
         vrpp (bool): Whether the problem is a VRP with Profits.
         framework: Optimization framework to use ('ortools' or 'pyomo').
         engine: Optimization engine to use ('gurobi', 'scip', 'highs', or 'cplex').
-        mandatory_selection (Optional[MandatorySelectionConfig]): Composition handle
-            for bin selection strategies (e.g., collecting bins at risk of overflow).
+        packing (Optional[PackingConfig]): Composition handle
+            for packing algorithms (e.g., collecting bins at risk of overflow).
         route_improvement (Optional[RouteImprovingConfig]): Settings for
             post-optimization refinement (e.g., Local Search or Route-Smoothing).
     """
@@ -61,5 +61,5 @@ class RENSConfig:
     # Infrastructure
     framework: str = "ortools"
     engine: str = "gurobi"
-    mandatory_selection: Optional[MandatorySelectionConfig] = None
+    packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None

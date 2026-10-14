@@ -70,7 +70,7 @@
         ],
         "default": false
     },
-    "mandatory_selection": {
+    "packing": {
         "type": "categorical",
         "choices": [],
         "default": "factory"

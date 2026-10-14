@@ -43,7 +43,7 @@ class ILSRVNDSPConfig(ABCConfig):
         engine (str): Solver engine to use.
         framework (str): Framework for the algorithm.
         local_search_iterations (int): Number of local search iterations.
-        mandatory_selection (Optional[List[MandatorySelectionConfig]]): Mandatory selection configurations.
+        packing (Optional[List[PackingConfig]]): Packing configurations.
         route_improvement (Optional[List[RouteImprovingConfig]]): Route improvement configurations.
         acceptance_criterion (AcceptanceConfig): Acceptance criterion configuration.
     """
@@ -77,6 +77,6 @@ class ILSRVNDSPConfig(ABCConfig):
     local_search_iterations: int = 500
 
     # --- Infrastructure Hooks ---
-    mandatory_selection: Optional[List[Any]] = field(default_factory=list)
+    packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)
     acceptance_criterion: AcceptanceConfig = field(default_factory=lambda: AcceptanceConfig(method="only_improving"))

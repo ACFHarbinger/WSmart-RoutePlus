@@ -39,7 +39,7 @@ class LBBDConfig:
         seed (Optional[int]): Seed for random number generator.
         vrpp (bool): Whether the problem is a VRRP.
         profit_aware_operators (bool): Whether to use profit-aware operators.
-        mandatory_selection (Optional[List[Any]]): Mandatory customers/requests selection.
+        packing (Optional[List[Any]]): Mandatory customers/requests selection.
         route_improvement (Optional[List[Any]]): Route improvement strategies.
     """
 

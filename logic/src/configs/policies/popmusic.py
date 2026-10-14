@@ -30,7 +30,7 @@ from typing import List, Optional
 
 from .alns import ALNSConfig
 from .hgs import HGSConfig
-from .other.mandatory_selection import MandatorySelectionConfig
+from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
 from .tsp import TSPConfig
 
@@ -65,7 +65,7 @@ class POPMUSICConfig:
         initial_solver: Solver used to generate the initial solution (e.g., 'nearest_neighbor').
         seed: Random seed for reproducibility.
         vrpp: Whether this is a VRPP problem.
-        mandatory_selection: List of mandatory strategy config files.
+        packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
     """
 
@@ -86,5 +86,5 @@ class POPMUSICConfig:
     # Infrastructure
     vrpp: bool = True
     profit_aware_operators: bool = False
-    mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
+    packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

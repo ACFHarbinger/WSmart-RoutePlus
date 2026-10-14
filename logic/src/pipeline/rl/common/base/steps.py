@@ -25,7 +25,7 @@ from logic.src.utils.functions.rl import ensure_tensordict
 if TYPE_CHECKING:
     from logic.src.interfaces.env import IEnv
     from logic.src.interfaces.policy import IPolicy
-    from logic.src.policies.mandatory_selection import VectorizedSelector
+    from logic.src.policies.packing import VectorizedSelector
 
 logger = get_pylogger(__name__)
 
@@ -59,9 +59,9 @@ class StepMixin:
         self.last_out: Any = None
         self.trainer: Any  # provided by LightningModule at runtime
 
-    def _apply_mandatory_selection(self, td: TensorDict) -> TensorDict:  # noqa: C901
+    def _apply_packing(self, td: TensorDict) -> TensorDict:  # noqa: C901
         """
-        Apply mandatory selection to determine which bins must be collected.
+        Apply packing to determine which bins must be collected.
 
         Args:
             td: TensorDict with problem instance data.
@@ -80,7 +80,7 @@ class StepMixin:
                 break
 
         if fill_levels is None:
-            logger.warning("No fill levels found in TensorDict for mandatory selection")
+            logger.warning("No fill levels found in TensorDict for packing")
             return td
 
         selector_kwargs: dict = {}
@@ -230,7 +230,7 @@ class StepMixin:
 
         # Apply mandatory selector if configured
         if self.mandatory_selector is not None:
-            td = self._apply_mandatory_selection(td)
+            td = self._apply_packing(td)
 
         td = _env.reset(td)
 

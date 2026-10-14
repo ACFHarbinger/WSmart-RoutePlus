@@ -1,5 +1,5 @@
 # =============================================================================
-# Mandatory Strategy: Overflow-Minimising 0/1 Multiple-Knapsack (MIP)
+# Packing Algorithm: Overflow-Minimising 0/1 Multiple-Knapsack (MIP)
 # =============================================================================
 # Exact MIP over bins with an overflow penalty fraction. Restricted-pool
 # certificate only: no time limit or gap is set by this configuration.

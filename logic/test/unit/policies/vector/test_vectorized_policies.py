@@ -7,7 +7,7 @@ import torch
 from logic.src.policies.vector.adaptive_large_neighborhood_search import (
     VectorizedALNS,
 )
-from logic.src.policies.vector.hgs_core.evaluation import calc_broken_pairs_distance
+from logic.src.policies.vector.core.evaluation import calc_broken_pairs_distance
 from logic.src.policies.vector.hybrid_genetic_search import (
     VectorizedHGS,
     VectorizedPopulation,

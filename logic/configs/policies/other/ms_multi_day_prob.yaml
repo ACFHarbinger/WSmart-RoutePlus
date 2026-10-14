@@ -1,5 +1,5 @@
 # =============================================================================
-# mandatory Strategy: Multi-Day Overflow Probability
+# packing algorithm: Multi-Day Overflow Probability
 # =============================================================================
 # PURPOSE:
 #   Stochastically select bins that have a high probability of overflowing

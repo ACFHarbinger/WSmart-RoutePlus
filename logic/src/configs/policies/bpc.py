@@ -14,7 +14,7 @@ Example:
 from dataclasses import dataclass
 from typing import List, Optional
 
-from .other.mandatory_selection import MandatorySelectionConfig
+from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -27,7 +27,7 @@ class BPCConfig:
         profit_aware_operators: Whether to use profit-aware operators.
         vrpp: Whether to use VRPP.
         seed: Random seed for reproducibility.
-        mandatory_selection: List of mandatory strategy config files.
+        packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
         search_strategy: B&B node selection strategy ('best_first' or 'depth_first').
         cutting_planes: Cutting plane family ('rcc', 'sri', 'lci', or 'all').
@@ -75,7 +75,7 @@ class BPCConfig:
     profit_aware_operators: bool = False
     vrpp: bool = True
     seed: Optional[int] = None
-    mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
+    packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
     search_strategy: str = "depth_first"
     cutting_planes: str = "rcc"

@@ -123,7 +123,7 @@ def _estimate_cores(task: str, overrides: List[str], pre_steps: Any) -> int:
     n_ri = 1
     for step in pre_steps:
         if getattr(step, "type", None) == "patch_policy_yaml":
-            n_ms = _MS_VARIANT_COUNT.get(step.args.get("mandatory_selection", ""), 1)
+            n_ms = _MS_VARIANT_COUNT.get(step.args.get("packing", ""), 1)
             n_ri = _RI_VARIANT_COUNT.get(step.args.get("route_improvement", ""), 1)
             break
 
@@ -163,7 +163,7 @@ class BatchManager:
         self._root = project_root
 
     # -----------------------------------------------------------------------
-    # Constructors
+    # Routing Algorithms
     # -----------------------------------------------------------------------
 
     @classmethod

@@ -51,7 +51,7 @@ class RLHVPLConfig:
         vrpp: Whether to use VRPP.
         seed: Random seed.
         profit_aware_operators: Whether to use profit-aware operators.
-        mandatory_selection: List of mandatory nodes.
+        packing: List of mandatory nodes.
         route_improvement: List of route improvements.
     """
 
@@ -77,5 +77,5 @@ class RLHVPLConfig:
     vrpp: bool = True
     seed: Optional[int] = None
     profit_aware_operators: bool = False
-    mandatory_selection: List[str] = field(default_factory=list)
+    packing: List[str] = field(default_factory=list)
     route_improvement: List[Any] = field(default_factory=list)

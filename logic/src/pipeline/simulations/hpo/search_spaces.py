@@ -7,7 +7,7 @@ space is defined as a dictionary with parameter names as keys and their HPO
 specifications as values.
 
 Search space JSON files are stored in sub-directories next to this module:
-  - jobs/         Route constructor parameter search spaces.
+  - jobs/         Routing algorithm parameter search spaces.
   - interceptors/ Route improver parameter search spaces.
   - filters/      Mandatory node selection parameter search spaces.
   - rules/        Move acceptance criteria parameter search spaces.
@@ -22,7 +22,7 @@ Functions:
     load_all_search_spaces:     Load all JSON search spaces from the jobs/ directory.
     generate_policy_filters:            Scaffold JSON templates from policy dataclass configs.
     generate_route_improvement_interceptors: Scaffold JSON templates for route improvers.
-    generate_mandatory_selection_jobs:  Scaffold JSON templates for mandatory selectors.
+    generate_packing_jobs:  Scaffold JSON templates for mandatory selectors.
     generate_acceptance_criteria_rules: Scaffold JSON templates for acceptance criteria.
 
 Example:
@@ -48,13 +48,13 @@ from typing import Any, Dict, List, Optional, Union
 # Directory constants
 # ---------------------------------------------------------------------------
 
-# Mandatory node selection strategy parameter search spaces
+# Packing algorithm parameter search spaces
 FILTERS_DIR = os.path.join(os.path.dirname(__file__), "filters")
 
 # Route improver parameter search spaces
 INTERCEPTORS_DIR = os.path.join(os.path.dirname(__file__), "interceptors")
 
-# Route constructor parameter search spaces  (primary source loaded at import)
+# Routing algorithm parameter search spaces  (primary source loaded at import)
 JOBS_DIR = os.path.join(os.path.dirname(__file__), "jobs")
 
 # Move acceptance criteria parameter search spaces
@@ -193,7 +193,7 @@ def get_component_search_space(
     """Retrieve search space for a specific component with its config path prefix.
 
     Component types and their associated prefixes:
-      - 'filter'      -> 'mandatory_selection.0.'
+      - 'filter'      -> 'packing.0.'
       - 'interceptor' -> 'route_improvement.0.'
       - 'rule'        -> 'acceptance_criterion.params.'
       - 'job'         -> '' (relative to policy config root)
@@ -207,7 +207,7 @@ def get_component_search_space(
         Dict[str, Dict[str, Any]]: Mapping of prefixed config paths to HPO specs.
     """
     registry_map = {
-        "filter": (FILTER_SPACES, "mandatory_selection.{idx}."),
+        "filter": (FILTER_SPACES, "packing.{idx}."),
         "interceptor": (INTERCEPTOR_SPACES, "route_improvement.{idx}."),
         "rule": (RULE_SPACES, "acceptance_criterion.params."),
         "job": (JOB_SPACES, ""),
@@ -468,22 +468,22 @@ def generate_route_improvement_interceptors() -> None:
         print(f"[generate_route_improvement_interceptors] Generated: {output_path}")
 
 
-def generate_mandatory_selection_jobs() -> None:
-    """Scaffold JSON search space templates for mandatory selection configs.
+def generate_packing_jobs() -> None:
+    """Scaffold JSON search space templates for packing configs.
 
-    Scans ``logic.src.configs.policies.other.mandatory_selection`` and writes
+    Scans ``logic.src.configs.policies.other.packing`` and writes
     template JSON files to :data:`FILTERS_DIR`.  Existing files are not
     overwritten.
     """
-    from logic.src.configs.policies.other import mandatory_selection
+    from logic.src.configs.policies.other import packing
 
     os.makedirs(FILTERS_DIR, exist_ok=True)
 
-    for name, obj in inspect.getmembers(mandatory_selection):
+    for name, obj in inspect.getmembers(packing):
         if not (
             name.endswith("Config")
             and dataclasses.is_dataclass(obj)
-            and getattr(obj, "__module__", "") == mandatory_selection.__name__
+            and getattr(obj, "__module__", "") == packing.__name__
         ):
             continue
 
@@ -491,13 +491,13 @@ def generate_mandatory_selection_jobs() -> None:
         output_path = os.path.join(FILTERS_DIR, f"{base_name}.json")
 
         if os.path.exists(output_path):
-            print(f"[generate_mandatory_selection_jobs] Skipping existing: {output_path}")
+            print(f"[generate_packing_jobs] Skipping existing: {output_path}")
             continue
 
         params = _extract_params_from_config(obj)
         with open(output_path, "w") as fh:
             json.dump(params, fh, indent=4)
-        print(f"[generate_mandatory_selection_jobs] Generated: {output_path}")
+        print(f"[generate_packing_jobs] Generated: {output_path}")
 
 
 def generate_acceptance_criteria_rules() -> None:
@@ -541,5 +541,5 @@ def generate_acceptance_criteria_rules() -> None:
 if __name__ == "__main__":
     generate_policy_filters()
     generate_route_improvement_interceptors()
-    generate_mandatory_selection_jobs()
+    generate_packing_jobs()
     generate_acceptance_criteria_rules()

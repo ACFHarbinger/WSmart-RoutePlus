@@ -1,6 +1,6 @@
 {
   "title": "A Simulation Framework for the Multi-Period Vehicle Routing Problem with Profits in Smart Waste Collection",
-  "subtitle": "Simulation Study of Selection Strategies, Route Constructors and Improvers",
+  "subtitle": "Simulation Study of Selection Strategies, Routing Algorithms and Improvers",
   "author": "Afonso Cruz Fernandes¹",
   "coauthors": [
     "Héctor Bonilla-Londoño²",
@@ -16,8 +16,8 @@
   "agenda": [
     "Introduction: Problem and Objective",
     "Simulator Overview",
-    "Mandatory Node Selection Strategies",
-    "Route Constructors",
+    "Packing Algorithms",
+    "Routing Algorithms",
     "Route Improvers",
     "Experimental Methodology",
     "Experimental Results",
@@ -44,7 +44,7 @@
         "Multi-day sequential decision problem over scenarios: RM-100, RM-170, FFZ-350 × {Empirical, Gamma-3} × {30, 90} days"
       ],
       "speaker_notes": [
-        "The waste collection VRPP is a multi-day sequential decision problem: every day we decide which bins to visit (the mandatory selection) and in what order (the route), trading off the revenue from collected waste against the travel cost.",
+        "The waste collection VRPP is a multi-day sequential decision problem: every day we decide which bins to visit (the packing) and in what order (the route), trading off the revenue from collected waste against the travel cost.",
         "Bins fill stochastically between visits following an empirical or parametric distribution (Gamma-3). When a bin overflows, waste spills — a service failure we want to minimise.",
         "The two KPIs are in direct tension: selecting fewer bins reduces km (higher KG/KM efficiency) but risks overflows; selecting more bins prevents overflows but drives up distance cost.",
         "The policy π must make this trade-off optimally over D days and multiple scenarios — that is the core challenge we benchmark."
@@ -107,13 +107,13 @@
       "speaker_notes": [
         "The simulator collects nine KPIs per run: (1) overflows — bins that exceeded capacity, a service failure; (2) number of bins collected — how many collection visits were performed; (3) kg collected — total waste removed; (4) km driven — total vehicle distance; (5) KG/KM — efficiency ratio, kg collected per km driven; (6) reinforcement-learning reward — the RL training/evaluation signal, computed uniformly for every policy so exact and heuristic methods stay comparable; (7) total profit — revenue from collected waste minus travel cost; (8) simulation run execution time — the wall-clock cost of running the policy; (9) number of days with a collection tour — out of the full horizon, how many days actually dispatched a vehicle.",
         "Every algorithm, exact or heuristic, runs under the same simulator and the same scenarios — this is what makes the comparison fair: identical demand realisations, identical KPI definitions, identical vehicle constraints.",
-        "The framework lets us ask: given the same mandatory selection strategy and the same daily scenario, how does BPC compare to HGS or ACO-HH on overflow prevention and route efficiency?"
+        "The framework lets us ask: given the same packing algorithm and the same daily scenario, how does BPC compare to HGS or ACO-HH on overflow prevention and route efficiency?"
       ]
     },
     "simulator": {
       "title": "Routing Simulator Philosophy — Modular Policy Pipeline",
       "diagram": "pipeline",
-      "caption": "Every daily routing policy decomposes into a mandatory bin-selection strategy, a route constructor, an optional acceptance criterion and an optional route improver.",
+      "caption": "Every daily routing policy decomposes into a packing algorithm, a routing algorithm, an optional acceptance criterion and an optional route improver.",
       "show_bullets": false,
       "bullets": [
         "Every daily routing policy is a composition of interchangeable stages, benchmarked under identical conditions",
@@ -123,15 +123,15 @@
     "policy_overview": {
       "title": "Big Picture: Policy Configuration Space",
       "diagram": "policy_grid",
-      "caption": "Every simulated policy is one path through the three columns: a mandatory selection strategy, a route constructor (exact / meta-heuristic / hyper-heuristic) and an optional route improver.",
+      "caption": "Every simulated policy is one path through the three columns: a packing algorithm, a routing algorithm (exact / meta-heuristic / hyper-heuristic) and an optional route improver.",
       "show_bullets": false,
       "bullets": [
-        "Mandatory selection × route constructor × route improver — every combination is run through the same multi-day simulator",
-        "Exact methods and meta-/hyper-heuristics are interchangeable route constructors under the identical selection and improvement stages"
+        "Packing × routing algorithm × route improver — every combination is run through the same multi-day simulator",
+        "Exact methods and meta-/hyper-heuristics are interchangeable routing algorithms under the identical selection and improvement stages"
       ]
     },
     "strategies": {
-      "title": "Mandatory Node Selection Strategies",
+      "title": "Packing Algorithms",
       "equation": [
         "Look-Ahead (LA):$\\ $",
         "Step 1 — Flag mandatory bins: $\\mathcal{M}_0=\\{\\,i : w_{i,t}+\\bar{\\delta}_i \\geq \\tau\\,\\}$",
@@ -222,7 +222,7 @@
       "bullets": [
         "Meta-heuristics balance exploration and exploitation; trajectory-based (SANS, PG-CLNS) vs population-based (HGS, PSOMA)",
         "ACO-HH is a hyper-heuristic: pheromones select which low-level heuristic to apply next, not which solution move",
-        "All are interchangeable route constructors in the same pipeline"
+        "All are interchangeable routing algorithms in the same pipeline"
       ]
     },
     "improvers": {
@@ -247,7 +247,7 @@
       "show_bullets": false,
       "bullets": [
         "Regions/graph sizes: RM-100, RM-170 (Rio Maior), FFZ-350 (Figueira da Foz) — two waste distributions each: Empirical and Gamma-3",
-        "5 mandatory selection variants × 8 route constructors × up to 2 improvers, replicated at 30 and 90 days"
+        "5 packing variants × 8 routing algorithms × up to 2 improvers, replicated at 30 and 90 days"
       ]
     },
     "conclusion": {
@@ -256,7 +256,7 @@
         "policy_radar.png",
         "policy_radar_combined.png"
       ],
-      "caption": "Overlaid radar charts comparing route constructors across overflow, efficiency, distance and profit axes (outer = better) — a curated subset (left) and every constructor (right).",
+      "caption": "Overlaid radar charts comparing routing algorithms across overflow, efficiency, distance and profit axes (outer = better) — a curated subset (left) and every constructor (right).",
       "show_bullets": false,
       "bullets": [
         "The selection strategy dominates the overflow/efficiency trade-off: SL prevents overflows (SL2 + ACO-HH reached 0 at FFZ-350), LM (CF90) maximises KG / KM (~12), LA balances",
@@ -284,17 +284,17 @@
     "kpi": {
       "title": "Results — Summary KPI Analysis by Selection Strategy",
       "figure": "kpi_combined.png",
-      "note": "Mean ± min/max range across route constructors; colours discriminate the mandatory selection strategies."
+      "note": "Mean ± min/max range across routing algorithms; colours discriminate the packing algorithms."
     },
     "strategy_bubble": {
       "title": "Results — Strategy Trade-off (Overflows vs KG / KM)",
       "figure": "strategy_bubble_log.png",
-      "note": "Each bubble = (selection strategy, scenario) averaged over constructors and improvers — coloured by mandatory selection strategy (LA/LM/SL)."
+      "note": "Each bubble = (selection strategy, scenario) averaged over constructors and improvers — coloured by packing algorithm (LA/LM/SL)."
     },
     "scenario_heatmaps": {
       "title": "Results — Per-Scenario Heatmaps (Constructors × Strategy·Improver, Empirical Distribution)",
       "figure": "scenario_constructor_heatmap_empirical.png",
-      "note": "30-day runs, Empirical distribution only. One panel per scenario; route constructors on the rows, selection × improver combinations on the columns."
+      "note": "30-day runs, Empirical distribution only. One panel per scenario; routing algorithms on the rows, selection × improver combinations on the columns."
     },
     "heatmaps": {
       "title": "Results — Overflow & KG / KM Heatmaps, 90 Days (Policies × Scenarios)",

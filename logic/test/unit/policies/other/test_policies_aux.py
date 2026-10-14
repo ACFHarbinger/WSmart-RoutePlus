@@ -34,23 +34,23 @@ from logic.src.policies.helpers.operators.perturbation_shaking.sans.move import 
     move_n_route_consecutive,
     move_n_route_random,
 )
-from logic.src.policies.route_construction.meta_heuristics.hybrid_genetic_search import evolution, individual
-from logic.src.policies.route_construction.meta_heuristics.hybrid_genetic_search import params as hgs_params
-from logic.src.policies.route_construction.meta_heuristics.hybrid_genetic_search import split as split_module
+from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search import evolution, individual
+from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search import params as hgs_params
+from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search import split as split_module
 
 # Look-ahead auxiliary imports
-from logic.src.policies.route_construction.meta_heuristics.simulated_annealing_neighborhood_search.common.check import (
+from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.common.check import (
     check_bins_overflowing_feasibility,
     check_solution_admissibility,
 )
-from logic.src.policies.route_construction.meta_heuristics.simulated_annealing_neighborhood_search.common.solution_initialization import (
+from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.common.solution_initialization import (
     compute_initial_solution,
     find_initial_solution,
 )
-from logic.src.policies.route_construction.meta_heuristics.simulated_annealing_neighborhood_search.heuristics.sans import (
+from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.heuristics.sans import (
     improved_simulated_annealing,
 )
-from logic.src.policies.route_construction.meta_heuristics.simulated_annealing_neighborhood_search.select import (
+from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.select import (
     add_bin,
     add_n_bins_random,
     add_route_random,

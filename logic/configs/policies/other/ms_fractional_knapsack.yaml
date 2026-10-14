@@ -1,5 +1,5 @@
 # =============================================================================
-# Mandatory Strategy: Density-Greedy 0/1 Multiple-Knapsack
+# Packing Algorithm: Density-Greedy 0/1 Multiple-Knapsack
 # =============================================================================
 # Packs bins by net-profit density and returns the better of the greedy
 # solution and the best single bin (1/2-approximation). Unset values fall back

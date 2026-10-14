@@ -16,7 +16,7 @@ Example:
 from dataclasses import dataclass, field
 from typing import List, Optional
 
-from .other.mandatory_selection import MandatorySelectionConfig
+from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -40,7 +40,7 @@ class HybridMemeticLargeNeighborhoodSearchConfig:
         seed (Optional[int]): Seed for the random number generator.
         alns (dict): ALNS parameters.
         maco (dict): MACO parameters.
-        mandatory_selection (Optional[List[MandatorySelectionConfig]]): Mandatory selection configurations.
+        packing (Optional[List[PackingConfig]]): Packing configurations.
         route_improvement (Optional[List[RouteImprovingConfig]]): Route improvement configurations.
     """
 
@@ -57,5 +57,5 @@ class HybridMemeticLargeNeighborhoodSearchConfig:
     seed: Optional[int] = None
     alns: dict = field(default_factory=dict)
     maco: dict = field(default_factory=dict)
-    mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
+    packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

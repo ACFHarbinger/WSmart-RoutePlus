@@ -1,7 +1,7 @@
 # =============================================================================
 # Attention Model (AM) Configuration
 # =============================================================================
-# The Attention Model is a Transformer-based neural constructor for combinatorial
+# The Attention Model is a Transformer-based neural routing algorithm for combinatorial
 # optimization. It encodes the problem graph via multi-head attention and decodes
 # solutions autoregressively by pointing to nodes.
 #

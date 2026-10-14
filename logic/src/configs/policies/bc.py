@@ -14,7 +14,7 @@ Example:
 from dataclasses import dataclass
 from typing import List, Optional
 
-from .other.mandatory_selection import MandatorySelectionConfig
+from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -47,7 +47,7 @@ class BCConfig:
             Note: Automatically disabled for instances with n > 75 regardless of setting.
         profit_aware_operators: Whether to use profit-aware operators.
         vrpp: Whether to use VRPP expand pool.
-        mandatory_selection: List of mandatory strategy config files.
+        packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
         seed: Random seed for reproducibility.
         use_saa: Whether to use Sample Average Approximation (SAA) for SIRP.
@@ -63,6 +63,6 @@ class BCConfig:
     vrpp: bool = False
     use_saa: bool = False
     num_scenarios: int = 10
-    mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
+    packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
     seed: Optional[int] = None

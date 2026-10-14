@@ -38,7 +38,7 @@ class RTSConfig:
         seed: Random seed for the algorithm.
         vrpp: Whether to use VRPP.
         profit_aware_operators: Whether to use profit-aware operators.
-        mandatory_selection: List of mandatory nodes.
+        packing: List of mandatory nodes.
         route_improvement: List of route improvements.
         acceptance_criterion: Acceptance criterion configuration.
     """
@@ -55,6 +55,6 @@ class RTSConfig:
     seed: Optional[int] = None
     vrpp: bool = True
     profit_aware_operators: bool = False
-    mandatory_selection: Optional[List[Any]] = field(default_factory=list)
+    packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)
     acceptance_criterion: AcceptanceConfig = AcceptanceConfig(method="ac", params=AspirationConfig())

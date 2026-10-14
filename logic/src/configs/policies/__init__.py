@@ -67,7 +67,7 @@ Attributes:
     MP_SA_Config: MP-SA policy configuration.
     NeuralAgentConfig: Neural agent policy configuration.
     NDSBRKGAConfig: NDSBRKGA policy configuration.
-    MandatorySelectionConfig: Mandatory selection policy configuration.
+    PackingConfig: Packing policy configuration.
     RouteImprovingConfig: Route improving policy configuration.
     PHConfig: PH policy configuration.
     PHHConfig: PHH policy configuration.
@@ -174,7 +174,7 @@ from .mp_sa import MP_SA_Config
 from .ms_bpc_sp import MSBPCSPConfig
 from .na import NeuralAgentConfig
 from .nds_brkga import NDSBRKGAConfig
-from .other import MandatorySelectionConfig, RouteImprovingConfig
+from .other import PackingConfig, RouteImprovingConfig
 from .pg_clns import PGCLNSConfig
 from .ph import PHConfig
 from .phh import PHHConfig
@@ -244,7 +244,7 @@ __all__ = [
     "TSPConfig",
     "SWCTCFConfig",
     "POPMUSICConfig",
-    "MandatorySelectionConfig",
+    "PackingConfig",
     "RouteImprovingConfig",
     "HULKConfig",
     "QDEConfig",

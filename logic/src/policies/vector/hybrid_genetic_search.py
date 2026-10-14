@@ -20,8 +20,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import torch
 
-from logic.src.policies.vector.hgs_core.crossover import vectorized_ordered_crossover
-from logic.src.policies.vector.hgs_core.population import VectorizedPopulation
+from logic.src.policies.vector.core.crossover import vectorized_ordered_crossover
+from logic.src.policies.vector.core.population import VectorizedPopulation
 from logic.src.policies.vector.local_search import (
     vectorized_relocate,
     vectorized_swap,

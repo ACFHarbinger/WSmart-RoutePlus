@@ -75,7 +75,7 @@ ks:
     - engine: "gurobi"
     # Specifies the use of the project's gurobi Kernel Search engine.
 
-    - mandatory_selection: {"other/ms_lookahead.yaml": ["default"]}
+    - packing: {"other/ms_lookahead.yaml": ["default"]}
     # Selection strategy for mandatory collections. Kernel Search will
     # ensure these nodes are included in the math model constraints.
 

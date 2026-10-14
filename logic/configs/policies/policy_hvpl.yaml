@@ -177,7 +177,7 @@ hvpl:
     - profit_aware_operators: true
     - vrpp: true
 
-    - mandatory_selection: {"other/ms_lookahead.yaml": ["default"]}
+    - packing: {"other/ms_lookahead.yaml": ["default"]}
     # Node selection strategy
 
     - route_improvement: []

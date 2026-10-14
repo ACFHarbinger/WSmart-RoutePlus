@@ -25,7 +25,7 @@ Example:
     None
     >>> config.vrpp
     True
-    >>> config.mandatory_selection
+    >>> config.packing
     []
     >>> config.route_improvement
     []
@@ -51,7 +51,7 @@ class SSHHConfig:
         threshold_feasible_base: Base acceptance threshold T (Eq. 4).
         threshold_decay_rate: Time-decay coefficient for T (Eq. 4).
         vrpp: If True, solver operates in full VRPP mode.
-        mandatory_selection: Mandatory selection strategy config list.
+        packing: Packing algorithm config list.
         route_improvement: Route improvement operation config list.
     """
 
@@ -64,5 +64,5 @@ class SSHHConfig:
     threshold_decay_rate: float = 0.01
     seed: Optional[int] = None
     vrpp: bool = True
-    mandatory_selection: Optional[List[Any]] = field(default_factory=list)
+    packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)

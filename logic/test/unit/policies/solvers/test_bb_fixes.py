@@ -9,9 +9,9 @@ import numpy as np
 import pytest
 from gurobipy import GRB
 from logic.src.policies.helpers.solvers_and_matheuristics.common.node import Node
-from logic.src.policies.route_construction.exact_and_decomposition_solvers.branch_and_bound.dfj import _dfj_callback
-from logic.src.policies.route_construction.exact_and_decomposition_solvers.branch_and_bound.mtz import BBSolver
-from logic.src.policies.route_construction.exact_and_decomposition_solvers.branch_and_bound.policy_bb import (
+from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_bound.dfj import _dfj_callback
+from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_bound.mtz import BBSolver
+from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_bound.policy_bb import (
     BranchAndBoundPolicy,
 )
 
@@ -25,7 +25,7 @@ def test_fix_1_root_initialization():
     wastes = {1: 10.0}
     solver = BBSolver(dist_matrix, wastes, 100.0, 1.0, 1.0, 0.001)
 
-    with patch('logic.src.policies.route_construction.exact_and_decomposition_solvers.branch_and_bound.mtz.Node') as mock_node:
+    with patch('logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_bound.mtz.Node') as mock_node:
         with contextlib.suppress(BaseException):
             solver.solve()
         assert mock_node.call_args_list[0][1]['bound'] == float('inf')
@@ -142,7 +142,7 @@ def test_fix_5_monetary_cost_return():
     """Fix 5: policy_bb.py must return monetary travel cost."""
     policy = BranchAndBoundPolicy()
 
-    with patch('logic.src.policies.route_construction.exact_and_decomposition_solvers.branch_and_bound.policy_bb.run_bb_optimizer') as mock_run:
+    with patch('logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_bound.policy_bb.run_bb_optimizer') as mock_run:
         mock_run.return_value = ([[1, 2]], 100.0)
 
         sub_dist_matrix = np.array([
@@ -185,7 +185,7 @@ def test_fix_6_dfj_directed_cut():
             return _FakeConstr()
 
     _qs_path = (
-        "logic.src.policies.route_construction"
+        "logic.src.policies.routing"
         ".exact_and_decomposition_solvers.branch_and_bound.dfj.quicksum"
     )
     with patch(_qs_path, return_value=_FakeLinExpr()), \

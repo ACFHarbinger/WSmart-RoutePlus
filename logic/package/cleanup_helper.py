@@ -7,7 +7,7 @@ from typing import Optional
 
 # Set of directory names and files that should not be deleted under any circumstances
 PROTECTED_DIRS = {
-    "route_construction",
+    "routing",
     "exact_and_decomposition_solvers",
     "hyper_heuristics",
     "learning_algorithms",
@@ -17,9 +17,9 @@ PROTECTED_DIRS = {
     "meta_heuristics",
     "other_algorithms",
     "acceptance_criteria",
-    "mandatory_selection",
+    "packing",
     "route_improvement",
-    "selection_and_construction",
+    "packing_and_routing",
     "base",
     "common",
     "generators",
@@ -36,24 +36,24 @@ PROTECTED_DIRS = {
     "losses",
 }
 
-# Category 1: Route Constructors
-ROUTE_CONSTRUCTORS = {
+# Category 1: Routing Algorithms
+ROUTING_ALGORITHMS = {
     "yaml_dirs": ["logic/configs/policies"],
     "config_dirs": ["logic/src/configs/policies"],
-    "impl_dirs": ["logic/src/policies/route_construction"],
+    "impl_dirs": ["logic/src/policies/routing"],
     "yaml_prefixes": ["policy"],
     "config_prefixes": [],
 }
 
-# Category 2: Others (mandatory selection, route improver, acceptance criteria, selection and construction)
+# Category 2: Others (packing, route improver, acceptance criteria, packing and routing)
 POLICY_OTHERS = {
     "yaml_dirs": ["logic/configs/policies/other"],
     "config_dirs": ["logic/src/configs/policies/other"],
     "impl_dirs": [
         "logic/src/policies/acceptance_criteria",
-        "logic/src/policies/mandatory_selection",
+        "logic/src/policies/packing",
         "logic/src/policies/route_improvement",
-        "logic/src/policies/selection_and_construction",
+        "logic/src/policies/packing_and_routing",
     ],
     "yaml_prefixes": ["ac", "ms", "ri"],
     "config_prefixes": ["ac", "ms", "ri"],

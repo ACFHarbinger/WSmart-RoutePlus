@@ -3,7 +3,7 @@ Miscellaneous configuration dataclasses.
 
 Attributes:
     AcceptanceConfig: Configuration for the acceptance criterion (e.g., simulated annealing).
-    MandatorySelectionConfig: Configuration for mandatory node selection strategies.
+    PackingConfig: Configuration for packing algorithms.
     RLConfig: Configuration for reinforcement learning policies.
     RewardShapingConfig: Configuration for reward shaping strategies.
     FeatureExtractorConfig: Configuration for feature extractors.
@@ -16,7 +16,7 @@ Example:
 """
 
 from .acceptance_criteria import AcceptanceConfig
-from .mandatory_selection import MandatorySelectionConfig
+from .packing import PackingConfig
 from .reinforcement_learning import (
     BanditConfig,
     ContextFeatureExtractorConfig,
@@ -37,7 +37,7 @@ __all__ = [
     "FeatureExtractorConfig",
     "ContextFeatureExtractorConfig",
     "RLConfig",
-    "MandatorySelectionConfig",
+    "PackingConfig",
     "RouteImprovingConfig",
     "AcceptanceConfig",
 ]

@@ -11,7 +11,7 @@
 # Key Features:
 #   - Adaptive Imitation Learning (IL → RL transition)
 #   - Multi-day temporal training for PTP
-#   - mandatory bin selection strategies
+#   - packing algorithms
 #   - Lightning-based distributed training
 # =============================================================================
 
@@ -102,7 +102,7 @@ train:
         mask_logits: true
         connection_type: "residual"
 
-    mandatory_selection:
+    packing:
       strategy: "lookahead" # Default strategy for training
 
       lookahead:

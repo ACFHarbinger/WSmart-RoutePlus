@@ -5,7 +5,7 @@ from typing import Any
 
 import pytest
 import torch
-from logic.src.policies.vector.hgs_core.evaluation import calc_broken_pairs_distance
+from logic.src.policies.vector.core.evaluation import calc_broken_pairs_distance
 from logic.src.policies.vector.hybrid_genetic_search import (
     VectorizedHGS,
     VectorizedPopulation,
@@ -187,7 +187,7 @@ class TestHGS:
 
     @pytest.mark.unit
     def test_vectorized_linear_split(self, device, sample_data):
-        """Test vectorized linear split for route construction."""
+        """Test vectorized linear split for routing."""
         dist, wastes = sample_data
         # 5 nodes + depot. wastes = 1 each.
         # Capacity = 2.

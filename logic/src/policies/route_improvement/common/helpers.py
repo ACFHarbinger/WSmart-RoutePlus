@@ -27,7 +27,7 @@ def resolve_mandatory_nodes(
 
     Checks keys in priority order:
         1. kwargs["mandatory_nodes"] — explicit caller override
-        2. kwargs["mandatory"]         — mandatory selection action output
+        2. kwargs["mandatory"]         — packing action output
         3. config["mandatory_nodes"] — config file default
 
     Args:

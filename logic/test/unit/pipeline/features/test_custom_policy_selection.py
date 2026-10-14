@@ -1,7 +1,7 @@
 """A custom sim.policies entry keeps the selection it sets.
 
-``expand_policy_configs`` fans the policy yaml out into mandatory-selection variants
-and then pins each variant's ``mandatory_selection`` back onto the stored config.
+``expand_policy_configs`` fans the policy yaml out into packing variants
+and then pins each variant's ``packing`` back onto the stored config.
 A caller that already set a selection, such as lookahead, was overwritten by the
 yaml's own last-minute variants, so that selection could not be expressed.
 """
@@ -31,7 +31,7 @@ def _selections(cfg):
     found = []
     for stored in cfg.sim.config_path.values():
         flat = _flatten_config(stored)
-        found.append(flat.get("mandatory_selection", find_policy_keys(stored).get("mandatory_selection")))
+        found.append(flat.get("packing", find_policy_keys(stored).get("packing")))
     return found
 
 
@@ -44,7 +44,7 @@ def test_custom_dict_lookahead_is_not_replaced_by_the_yaml_variant():
                     "custom": [
                         {"time_limit": 2.0},
                         {"engine": "custom"},
-                        {"mandatory_selection": _LOOKAHEAD},
+                        {"packing": _LOOKAHEAD},
                         {"route_improvement": {"other/ri_cls.yaml": "default"}},
                     ]
                 }
@@ -58,7 +58,7 @@ def test_custom_dict_lookahead_is_not_replaced_by_the_yaml_variant():
         assert selection == [_LOOKAHEAD] or selection == _LOOKAHEAD
 
 
-def test_resolved_custom_variant_keeps_its_own_mandatory_selection():
+def test_resolved_custom_variant_keeps_its_own_packing():
     """A one-key override that already names the selection is stored as given."""
     cfg = _expand(
         [
@@ -66,7 +66,7 @@ def test_resolved_custom_variant_keeps_its_own_mandatory_selection():
                 "swc_tcf": {
                     "engine": "gurobi",
                     "time_limit": 60.0,
-                    "mandatory_selection": _LOOKAHEAD,
+                    "packing": _LOOKAHEAD,
                     "route_improvement": {"other/ri_cls.yaml": "default"},
                 }
             }

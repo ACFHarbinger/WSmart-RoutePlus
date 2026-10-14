@@ -57,10 +57,10 @@ def get_parser() -> ConfigsParser:
     )
     add_excel_summary_args(excel_parser)
 
-    # Update mandatory-selection config overrides
+    # Update packing config overrides
     update_ms_parser = subparsers.add_parser(
         "update_ms",
-        help="Batch-update mandatory_selection overrides in policy YAML files",
+        help="Batch-update packing overrides in policy YAML files",
     )
     add_ms_update_args(update_ms_parser)
 

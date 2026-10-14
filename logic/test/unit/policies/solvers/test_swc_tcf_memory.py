@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 from logic.src.pipeline.simulations.solver_status import current_solver_status, reset_solver_status
-from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow import (
+from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow import (
     gurobi,
 )
 
@@ -140,7 +140,7 @@ def test_invalid_limits_rejected_before_build(model, values):
 
 def test_omegaconf_policy_resources_reach_native_model(model, monkeypatch):
     """The typed policy must retain resource controls through the dispatcher."""
-    from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.policy_swc_tcf import (
+    from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.policy_swc_tcf import (
         SWCTCFPolicy,
     )
     from omegaconf import OmegaConf
@@ -159,7 +159,7 @@ def test_omegaconf_policy_resources_reach_native_model(model, monkeypatch):
     )
     policy = SWCTCFPolicy(config)
     from logic.src.pipeline.simulations import repository
-    from logic.src.policies.route_construction.base import base_routing_policy
+    from logic.src.policies.routing.base import base_routing_policy
 
     monkeypatch.setattr(base_routing_policy, "load_area_and_waste_type_params", lambda *a: (100, 1, 1, 1, 1))
     monkeypatch.setattr(repository, "load_temporal_params", lambda: (8, 40, 0.1))

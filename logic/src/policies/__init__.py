@@ -30,65 +30,65 @@ Example:
     >>> routes = find_routes(distance_matrix, wastes, capacity)
 """
 
-from .route_construction.base import IRouteConstructor, RouteConstructorFactory, RouteConstructorRegistry
-from .route_construction.hyper_heuristics.guided_indicators_hyper_heuristic.policy_gihh import (
+from .routing.base import IRoutingAlgorithm, RoutingAlgorithmFactory, RoutingAlgorithmRegistry
+from .routing.hyper_heuristics.guided_indicators_hyper_heuristic.policy_gihh import (
     GIHHParams,
     GIHHSolver,
 )
-from .route_construction.learning_algorithms.neural_agent.policy_na import NeuralAgent
-from .route_construction.meta_heuristics.adaptive_large_neighborhood_search.params import ALNSParams
-from .route_construction.meta_heuristics.adaptive_large_neighborhood_search.policy_alns import (
+from .routing.learning_algorithms.neural_agent.policy_na import NeuralAgent
+from .routing.meta_heuristics.adaptive_large_neighborhood_search.params import ALNSParams
+from .routing.meta_heuristics.adaptive_large_neighborhood_search.policy_alns import (
     run_alns,
 )
-from .route_construction.meta_heuristics.differential_evolution.params import DEParams
-from .route_construction.meta_heuristics.differential_evolution.solver import DESolver
-from .route_construction.meta_heuristics.evolution_strategy_mu_comma_lambda.solver import (
+from .routing.meta_heuristics.differential_evolution.params import DEParams
+from .routing.meta_heuristics.differential_evolution.solver import DESolver
+from .routing.meta_heuristics.evolution_strategy_mu_comma_lambda.solver import (
     MuCommaLambdaESParams,
     MuCommaLambdaESSolver,
 )
-from .route_construction.meta_heuristics.evolution_strategy_mu_plus_lambda.solver import (
+from .routing.meta_heuristics.evolution_strategy_mu_plus_lambda.solver import (
     MuPlusLambdaESParams,
     MuPlusLambdaESSolver,
 )
-from .route_construction.meta_heuristics.hybrid_genetic_search.policy_hgs import run_hgs
-from .route_construction.meta_heuristics.hybrid_genetic_search_with_ruin_and_recreate.policy_hgs_rr import (
+from .routing.meta_heuristics.hybrid_genetic_search.policy_hgs import run_hgs
+from .routing.meta_heuristics.hybrid_genetic_search_with_ruin_and_recreate.policy_hgs_rr import (
     HGSRRParams,
     HGSRRSolver,
 )
-from .route_construction.meta_heuristics.hybrid_memetic_large_neighborhood_search.params import (
+from .routing.meta_heuristics.hybrid_memetic_large_neighborhood_search.params import (
     HybridMemeticLargeNeighborhoodSearchParams,
 )
-from .route_construction.meta_heuristics.hybrid_memetic_large_neighborhood_search.solver import (
+from .routing.meta_heuristics.hybrid_memetic_large_neighborhood_search.solver import (
     HybridMemeticLargeNeighborhoodSearchSolver,
 )
-from .route_construction.meta_heuristics.memetic_algorithm_dual_population.params import (
+from .routing.meta_heuristics.memetic_algorithm_dual_population.params import (
     MemeticAlgorithmDualPopulationParams,
 )
-from .route_construction.meta_heuristics.memetic_algorithm_dual_population.solver import (
+from .routing.meta_heuristics.memetic_algorithm_dual_population.solver import (
     MemeticAlgorithmDualPopulationSolver,
 )
-from .route_construction.meta_heuristics.memetic_algorithm_island_model.params import (
+from .routing.meta_heuristics.memetic_algorithm_island_model.params import (
     MemeticAlgorithmIslandModelParams,
 )
-from .route_construction.meta_heuristics.memetic_algorithm_island_model.solver import (
+from .routing.meta_heuristics.memetic_algorithm_island_model.solver import (
     MemeticAlgorithmIslandModelSolver,
 )
-from .route_construction.meta_heuristics.memetic_algorithm_tolerance_based_selection.params import (
+from .routing.meta_heuristics.memetic_algorithm_tolerance_based_selection.params import (
     MemeticAlgorithmToleranceBasedSelectionParams,
 )
-from .route_construction.meta_heuristics.memetic_algorithm_tolerance_based_selection.solver import (
+from .routing.meta_heuristics.memetic_algorithm_tolerance_based_selection.solver import (
     MemeticAlgorithmToleranceBasedSelectionSolver,
 )
-from .route_construction.meta_heuristics.particle_swarm_optimization_distance_based_algorithm.solver import (
+from .routing.meta_heuristics.particle_swarm_optimization_distance_based_algorithm.solver import (
     DistancePSOParams,
     DistancePSOSolver,
 )
-from .route_construction.other_algorithms.capacitated_vehicle_routing_problem.cvrp import (
+from .routing.other_algorithms.capacitated_vehicle_routing_problem.cvrp import (
     find_routes,
     find_routes_ortools,
 )
-from .route_construction.other_algorithms.travelling_salesman_problem.tsp import find_route
-from .selection_and_construction import (
+from .routing.other_algorithms.travelling_salesman_problem.tsp import find_route
+from .packing_and_routing import (
     JointGreedyParams,
     JointGreedyPolicy,
     JointSAParams,
@@ -100,9 +100,9 @@ from .selection_and_construction import (
 __all__ = [
     "ALNSParams",
     "run_alns",
-    "IRouteConstructor",
-    "RouteConstructorFactory",
-    "RouteConstructorRegistry",
+    "IRoutingAlgorithm",
+    "RoutingAlgorithmFactory",
+    "RoutingAlgorithmRegistry",
     "find_routes",
     "find_routes_ortools",
     "GIHHSolver",

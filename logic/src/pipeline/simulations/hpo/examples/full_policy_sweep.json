@@ -3,7 +3,7 @@
     "type": "int",
     "low": 1000,
     "high": 5000,
-    "description": "Route constructor parameter (main policy config)."
+    "description": "Routing algorithm parameter (main policy config)."
   },
   "cooling_rate": {
     "type": "float",
@@ -11,7 +11,7 @@
     "high": 0.99,
     "description": "Another constructor parameter."
   },
-  "mandatory_selection.0.max_fill": {
+  "packing.0.max_fill": {
     "type": "float",
     "low": 0.7,
     "high": 1.0,

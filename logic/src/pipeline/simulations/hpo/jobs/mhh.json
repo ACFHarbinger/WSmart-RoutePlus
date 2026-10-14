@@ -15,7 +15,7 @@
         ],
         "default": true
     },
-    "mandatory_selection": {
+    "packing": {
         "type": "object",
         "default": null
     },

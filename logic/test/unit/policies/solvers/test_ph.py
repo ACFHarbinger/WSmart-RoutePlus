@@ -7,8 +7,8 @@ import pytest
 from logic.src.configs.policies import PHConfig
 from logic.src.interfaces.context.problem_context import ProblemContext
 from logic.src.pipeline.simulations.bins.prediction import ScenarioTree, ScenarioTreeNode
-from logic.src.policies.route_construction.exact_and_decomposition_solvers.branch_and_cut.bc import GUROBI_AVAILABLE
-from logic.src.policies.route_construction.exact_and_decomposition_solvers.progressive_hedging import (
+from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_cut.bc import GUROBI_AVAILABLE
+from logic.src.policies.routing.exact_and_decomposition_solvers.progressive_hedging import (
     ProgressiveHedgingPolicy,
 )
 

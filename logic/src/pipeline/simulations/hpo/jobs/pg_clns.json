@@ -43,7 +43,7 @@
         ],
         "default": true
     },
-    "mandatory_selection": {
+    "packing": {
         "type": "categorical",
         "choices": [],
         "default": "factory"

@@ -4,10 +4,10 @@ import random
 
 import numpy as np
 import pytest
-from logic.src.policies.route_construction.meta_heuristics.particle_swarm_optimization_memetic_algorithm.params import (
+from logic.src.policies.routing.meta_heuristics.particle_swarm_optimization_memetic_algorithm.params import (
     PSOMAParams,
 )
-from logic.src.policies.route_construction.meta_heuristics.particle_swarm_optimization_memetic_algorithm.solver import (
+from logic.src.policies.routing.meta_heuristics.particle_swarm_optimization_memetic_algorithm.solver import (
     PSOMASolver,
 )
 

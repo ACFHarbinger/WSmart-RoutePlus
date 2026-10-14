@@ -1,11 +1,11 @@
 """Policy YAML config-override updater.
 
 One parameterised implementation of the batch updater that rewrites the
-``mandatory_selection`` or ``route_improvement`` inline override in policy
-YAML files for one or more route constructors. The two public sides keep
+``packing`` or ``route_improvement`` inline override in policy
+YAML files for one or more routing algorithms. The two public sides keep
 their historical names:
 
-- ``update_mandatory_selection`` / ``list_available_ms_strategies`` /
+- ``update_packing`` / ``list_available_ms_strategies`` /
   ``list_strategy_keys`` (files prefixed ``ms_``);
 - ``update_route_improvement`` / ``list_available_ri_improvers`` /
   ``list_improver_keys`` (files prefixed ``ri_``).
@@ -13,11 +13,11 @@ their historical names:
 Quick start::
 
     from logic.src.utils.target.policy_link_updater import (
-        update_mandatory_selection,
+        update_packing,
         update_route_improvement,
     )
 
-    update_mandatory_selection(
+    update_packing(
         constructors=["aco_hh", "alns", "bpc"],
         ms_yaml="ms_service_level",
         keys=["service_level1", "service_level2"],
@@ -100,7 +100,7 @@ def _update(
     missing_file_noun: str,
 ) -> List[Tuple[str, int]]:
     """Replace every ``<field_label>: { ... }`` entry in the policy files of
-    *constructors* with an inline dict referencing the strategy file and
+    *routing algorithms* with an inline dict referencing the strategy file and
     *keys*.
 
     Returns:
@@ -163,11 +163,11 @@ def _update(
     return modified
 
 
-# --- mandatory selection (files prefixed ``ms_``) ----------------------------
+# --- packing (files prefixed ``ms_``) ----------------------------
 
 
 def list_available_ms_strategies(configs_dir: str = _DEFAULT_CONFIGS_DIR) -> List[str]:
-    """Return the sorted stems of the available mandatory-selection files."""
+    """Return the sorted stems of the available packing files."""
     return _list_available(configs_dir, "ms_")
 
 
@@ -176,7 +176,7 @@ def list_strategy_keys(ms_yaml: str, configs_dir: str = _DEFAULT_CONFIGS_DIR) ->
     return _list_keys(_resolve_stem(ms_yaml), configs_dir)
 
 
-def update_mandatory_selection(
+def update_packing(
     constructors: List[str],
     ms_yaml: str,
     keys: List[str],
@@ -184,9 +184,9 @@ def update_mandatory_selection(
     dry_run: bool = False,
     verbose: bool = True,
 ) -> List[Tuple[str, int]]:
-    """Update ``mandatory_selection`` in the policy YAML files of *constructors*."""
+    """Update ``packing`` in the policy YAML files of *routing algorithms*."""
     return _update(
-        field_label="mandatory_selection",
+        field_label="packing",
         file_prefix="ms_",
         constructors=constructors,
         yaml_stem_arg=ms_yaml,
@@ -194,7 +194,7 @@ def update_mandatory_selection(
         configs_dir=configs_dir,
         dry_run=dry_run,
         verbose=verbose,
-        missing_file_noun="Mandatory-selection file",
+        missing_file_noun="Packing file",
     )
 
 
@@ -219,7 +219,7 @@ def update_route_improvement(
     dry_run: bool = False,
     verbose: bool = True,
 ) -> List[Tuple[str, int]]:
-    """Update ``route_improvement`` in the policy YAML files of *constructors*."""
+    """Update ``route_improvement`` in the policy YAML files of *routing algorithms*."""
     return _update(
         field_label="route_improvement",
         file_prefix="ri_",

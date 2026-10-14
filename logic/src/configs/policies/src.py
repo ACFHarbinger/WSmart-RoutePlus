@@ -1,8 +1,8 @@
 """
-SRC (Sequential Route Constructor) configuration dataclass.
+SRC (Sequential Routing Algorithm) configuration dataclass.
 
 Attributes:
-    constructors: List of route constructor names to run in sequence.
+    constructors: List of routing algorithm names to run in sequence.
     time_limit: Maximum wall-clock time (seconds) for the entire sequence.
     seed: Random seed for reproducibility.
 
@@ -23,10 +23,10 @@ from typing import List
 
 @dataclass
 class SRCConfig:
-    """Configuration for the Sequential Route Constructor (SRC).
+    """Configuration for the Sequential Routing Algorithm (SRC).
 
     Attributes:
-        constructors: List of route constructor names to run in sequence.
+        constructors: List of routing algorithm names to run in sequence.
         time_limit: Maximum wall-clock time (seconds) for the entire sequence.
     """
 

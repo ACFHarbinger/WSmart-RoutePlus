@@ -1,5 +1,5 @@
 # =============================================================================
-# Mandatory Strategy: Filter-and-Fan Selection
+# Packing Algorithm: Filter-and-Fan Selection
 # =============================================================================
 # Filter phase keeps the top-ranked bins; fan phase refines them with add and
 # remove passes. filter_width 0 means automatic (max(5, n_bins // 3)).

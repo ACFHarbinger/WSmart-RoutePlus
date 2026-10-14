@@ -99,7 +99,7 @@ def test_bpc_policy_adapter_profit_alignment():
     """Verify that BPCPolicy._run_solver correctly interprets solver output."""
     from unittest.mock import patch
 
-    from logic.src.policies.route_construction.exact_and_decomposition_solvers.branch_and_price_and_cut.policy_bpc import (
+    from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price_and_cut.policy_bpc import (
         BPCPolicy,
     )
 
@@ -113,7 +113,7 @@ def test_bpc_policy_adapter_profit_alignment():
     mock_routes = [[1]]
     mock_profit = 90.0 # 100 revenue - 10 cost
 
-    with patch("logic.src.policies.route_construction.exact_and_decomposition_solvers.branch_and_price_and_cut.policy_bpc.run_bpc") as mock_run:
+    with patch("logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price_and_cut.policy_bpc.run_bpc") as mock_run:
         mock_run.return_value = (mock_routes, mock_profit)
 
         routes, profit, solver_cost = policy._run_solver(

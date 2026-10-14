@@ -4,8 +4,8 @@ from types import SimpleNamespace
 
 import pytest
 from logic.src.configs.policies.other.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
-from logic.src.policies.route_construction.meta_heuristics.adaptive_large_neighborhood_search.params import ALNSParams
-from logic.src.policies.route_construction.meta_heuristics.hybrid_genetic_search.params import HGSParams
+from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.params import ALNSParams
+from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.params import HGSParams
 
 
 @pytest.mark.parametrize("cls", [ALNSParams, HGSParams])

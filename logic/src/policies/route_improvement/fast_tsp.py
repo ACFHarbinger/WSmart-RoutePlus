@@ -18,7 +18,7 @@ import numpy as np
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.interfaces.context.search_context import ImprovementMetrics
 from logic.src.interfaces.route_improvement import IRouteImprovement
-from logic.src.policies.route_construction.other_algorithms.travelling_salesman_problem.tsp import (
+from logic.src.policies.routing.other_algorithms.travelling_salesman_problem.tsp import (
     find_route,
 )
 

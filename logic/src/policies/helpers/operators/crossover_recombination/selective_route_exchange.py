@@ -5,7 +5,7 @@ Attributes:
     selective_route_exchange_crossover: Selective route exchange crossover function.
 
 Example:
-    >>> from logic.src.policies.route_construction.meta_heuristics.hybrid_genetic_search.individual import Individual
+    >>> from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.individual import Individual
     >>> operator = selective_route_exchange_crossover(
     ...    Individual(giant_tour=[1, 2, 3, 4]),
     ...    Individual(giant_tour=[4, 3, 2, 1]),
@@ -22,7 +22,7 @@ import numpy as np
 from .ordered import ordered_crossover
 
 if TYPE_CHECKING:
-    from logic.src.policies.route_construction.meta_heuristics.hybrid_genetic_search.individual import (
+    from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.individual import (
         Individual,
     )
 
@@ -34,7 +34,7 @@ def _get_individual_class() -> type:
     Returns:
         type: The Individual class.
     """
-    from logic.src.policies.route_construction.meta_heuristics.hybrid_genetic_search.individual import Individual
+    from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.individual import Individual
 
     return Individual
 

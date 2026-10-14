@@ -4,12 +4,12 @@ from unittest.mock import patch
 
 import numpy as np
 import pytest
-from logic.src.policies.route_construction.meta_heuristics.pheromone_guided_cooperative_large_neighborhood_search.params import (
+from logic.src.policies.routing.meta_heuristics.pheromone_guided_cooperative_large_neighborhood_search.params import (
     ACOParams,
     LNSParams,
     PGCLNSParams,
 )
-from logic.src.policies.route_construction.meta_heuristics.pheromone_guided_cooperative_large_neighborhood_search.pg_clns import (
+from logic.src.policies.routing.meta_heuristics.pheromone_guided_cooperative_large_neighborhood_search.pg_clns import (
     PGCLNSSolver,
 )
 

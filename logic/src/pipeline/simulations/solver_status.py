@@ -1,4 +1,4 @@
-"""Per-day solver status published by a constructor and read by the day logger.
+"""Per-day solver status published by a routing algorithm and read by the day logger.
 
 The value lives in a :class:`contextvars.ContextVar` so a worker process keeps
 its own status and a later day cannot inherit the previous day's code.

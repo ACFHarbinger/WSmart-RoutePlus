@@ -7,7 +7,7 @@
         "type": "object",
         "default": "factory"
     },
-    "mandatory_selection": {
+    "packing": {
         "type": "object",
         "default": null
     },

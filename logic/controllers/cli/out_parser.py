@@ -73,14 +73,14 @@ def add_output_args(parser: argparse.ArgumentParser) -> None:
         nargs="+",
         default=[],
         metavar="CON",
-        help="Route constructor(s) to target: alns  hgs  aco_hh  bpc  pg_clns  sans  psoma …",
+        help="Routing algorithm(s) to target: alns  hgs  aco_hh  bpc  pg_clns  sans  psoma …",
     )
     parser.add_argument(
         "--ms-strategy",
         nargs="+",
         default=[],
         metavar="MS",
-        help="Mandatory-selection strategy/ies: lookahead  last_minute  regular …",
+        help="Packing algorithm/ies: lookahead  last_minute  regular …",
     )
     parser.add_argument(
         "--improver",

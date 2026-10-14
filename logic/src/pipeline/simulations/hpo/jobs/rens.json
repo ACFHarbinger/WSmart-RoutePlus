@@ -41,7 +41,7 @@
         ],
         "default": "gurobi"
     },
-    "mandatory_selection": {
+    "packing": {
         "type": "object",
         "default": null
     },
