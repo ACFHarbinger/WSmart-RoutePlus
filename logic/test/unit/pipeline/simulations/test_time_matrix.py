@@ -10,7 +10,7 @@ import pytest
 from logic.src.configs.envs.graph import GraphConfig
 from logic.src.configs.tasks.sim import SimConfig
 from logic.src.constants import ROOT_DIR
-from logic.src.data.time import compute_time_matrix
+from logic.src.data.processor.temporal import compute_time_matrix
 from logic.src.pipeline.simulations.actions.collection import CollectAction
 from logic.src.pipeline.simulations.actions.time_constraints import TimeConstraintAction
 from logic.src.pipeline.simulations.repository import load_temporal_params
