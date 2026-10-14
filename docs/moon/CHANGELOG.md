@@ -17,6 +17,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Packing and routing names (`2026-10-15`)
+
+#### Changed
+
+- **Breaking:** the policy stages are renamed. Mandatory selection strategies are now packing algorithms and route constructors are now routing algorithms (`f6efa50c0`).
+  - Packages: `policies/mandatory_selection` is now `policies/packing`, `policies/route_construction` is now `policies/routing`, `policies/selection_and_construction` is now `policies/packing_and_routing`, and `policies/vector/hgs_core` is now `policies/vector/core`.
+  - Policy configs: the YAML and dataclass key `mandatory_selection` is now `packing`, so `train.policy.mandatory_selection=null` becomes `train.policy.packing=null`.
+  - Classes: `MandatorySelectionConfig` is now `PackingConfig`, `IMandatorySelectionStrategy` is now `IPackingAlgorithm`, `IRouteConstructor` is now `IRoutingAlgorithm`, and `RouteConstructorRegistry` is now `RoutingAlgorithmRegistry`.
+  - Tags: `PolicyTag.SELECTION`, `CONSTRUCTION` and `JOINT` are now `PACKING`, `ROUTING` and `PACKING_AND_ROUTING`.
+  - Old configs and pickled checkpoints that name the old modules or keys no longer load.
+- The docs, app, notebooks, flowcharts, paper table generator and papers use the new terms (`d0a1a2ad9`).
+
 ### CPTP training on the real network (`2026-10-13` to `2026-10-14`)
 
 #### Fixed
