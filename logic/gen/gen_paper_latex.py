@@ -35,7 +35,7 @@ reintroduce the same selection bias this module refuses to accept in the 90-day
 data: all four degenerate runs are SWC-TCF's, so removing just them would
 average SWC-TCF over the scenarios where it did not fail while its rivals are
 averaged over those too. Losing the cell for everyone costs rows but keeps every
-constructor's mean over an identical set of scenarios, which is the only thing
+routing algorithm's mean over an identical set of scenarios, which is the only thing
 that makes the marginal means comparable.
 
 ``balance_marginal`` handles the same problem for every *other* stage or
@@ -219,7 +219,7 @@ def drop_affected_cells(df: pd.DataFrame, degenerate: pd.DataFrame) -> pd.DataFr
     those scenarios too -- a mean quietly computed on a favourable subset.
 
     Removing the whole cell costs the other routing algorithms those scenarios as well,
-    but keeps every constructor's mean over an identical set of scenarios, which
+    but keeps every routing algorithm's mean over an identical set of scenarios, which
     is the only reason the marginal means are comparable in the first place.
     """
     if degenerate.empty:
@@ -228,7 +228,7 @@ def drop_affected_cells(df: pd.DataFrame, degenerate: pd.DataFrame) -> pd.DataFr
     keep = ~df[CELL_KEYS].apply(lambda row: tuple(row) in affected, axis=1)
     dropped = int((~keep).sum())
     print(
-        f"  Dropped {dropped} further run(s) so that every constructor is averaged "
+        f"  Dropped {dropped} further run(s) so that every routing algorithm is averaged "
         f"over the same {len(affected)} fewer scenario cells"
     )
     return df[keep].copy()
@@ -777,7 +777,7 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
     )
     ax.add_patch(box_p2)
     ax.text(0.515, 0.50, "Stage 2: Routing", ha="center", fontsize=8.4, fontweight="bold", color="#065f46")
-    ax.text(0.515, 0.42, "Input: $\\mathcal{M}_d$, directed $\\mathrm{dist}_{ij}$\nOutput: a tour (load not re-checked)\n(eight classical constructors)",
+    ax.text(0.515, 0.42, "Input: $\\mathcal{M}_d$, directed $\\mathrm{dist}_{ij}$\nOutput: a tour (load not re-checked)\n(eight classical routing algorithms)",
             ha="center", va="center", fontsize=7.2, color=c_text_dark, linespacing=1.2)
 
     # 3c. Stage 3: Route Improvement
