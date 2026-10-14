@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Tags: `PolicyTag.SELECTION`, `CONSTRUCTION` and `JOINT` are now `PACKING`, `ROUTING` and `PACKING_AND_ROUTING`.
   - Old configs and pickled checkpoints that name the old modules or keys no longer load.
 - The docs, app, notebooks, flowcharts, paper table generator and papers use the new terms (`d0a1a2ad9`).
+- **Breaking:** the travel-time matrix module `logic/src/data/time` moved to `logic/src/data/processor/temporal.py`. `compute_time_matrix` is now imported from `logic.src.data.processor.temporal`.
 
 ### CPTP training on the real network (`2026-10-13` to `2026-10-14`)
 

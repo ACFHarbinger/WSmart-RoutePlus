@@ -189,7 +189,7 @@ class SimulationRepository(ABC):
         if not np.isfinite(service_time_h) or service_time_h < 0:
             raise ValueError("service_time_h must be finite and nonnegative")
         if coords is not None and distance_matrix is not None:
-            from logic.src.data.time import compute_time_matrix
+            from logic.src.data.processor.temporal import compute_time_matrix
 
             return (
                 shift_hours,
