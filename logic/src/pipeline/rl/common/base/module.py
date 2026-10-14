@@ -238,9 +238,52 @@ class RL4COLitModule(DataMixin, OptimizationMixin, StepMixin, pl.LightningModule
         logger.info(f"PBRS enabled — env={env_name}, γ={gamma}, weight={shaping_weight}, potential='{potential_key}'")
         return shaper
 
+    def _time_training_td(self) -> Optional[Any]:
+        """The unwrapped training TensorDict that time training mutates, if any."""
+        ds = self.train_dataset
+        if ds is not None and hasattr(self.baseline, "unwrap_dataset"):
+            ds = self.baseline.unwrap_dataset(ds)
+        td = getattr(ds, "data", None)
+        return td if td is not None and hasattr(td, "keys") else None
+
+    def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
+        """Store the carried bin fill, so a resumed time-training run continues from it."""
+        td = self._time_training_td() if getattr(self, "train_time", False) else None
+        if td is None:
+            return
+        key = "waste" if "waste" in td.keys() else "fill_level"
+        if key in td.keys() and td[key].dim() == 2:
+            checkpoint["time_training_fill"] = {"key": key, "fill": td[key].detach().cpu().clone()}
+
+    def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
+        """Keep the stored bin fill until the training dataset exists (see on_train_epoch_start)."""
+        self._resume_fill = checkpoint.get("time_training_fill")
+        if getattr(self, "train_time", False) and self._resume_fill is None:
+            logger.warning(
+                "Checkpoint has no time-training fill (saved before this was stored): "
+                "the bins restart from the initial accumulation, on the resumed day."
+            )
+
+    def _restore_time_training_fill(self) -> None:
+        """Put the fill stored in a resumed checkpoint back into the training dataset, once."""
+        saved = getattr(self, "_resume_fill", None)
+        self._resume_fill = None
+        td = self._time_training_td()
+        if saved is None or td is None:
+            return
+        key, fill = saved["key"], saved["fill"]
+        if key not in td.keys() or tuple(td.batch_size) != tuple(fill.shape[:1]):
+            logger.warning("Stored time-training fill does not match the dataset; not restored.")
+            return
+        if td[key].dim() == 3 and f"_{key}_full" not in td.keys():
+            td.set(f"_{key}_full", td[key])
+        td.set(key, fill.to(td.device))
+        logger.info(f"Restored the time-training fill from the checkpoint. Mean fill: {fill.mean():.3f}")
+
     def on_train_epoch_start(self) -> None:
         """Prepare dataset for the new epoch (e.g. wrap with baseline)."""
         assert self.train_dataset is not None
+        self._restore_time_training_fill()
         self.train_dataset = prepare_epoch(
             self.policy,  # type: ignore[arg-type]
             self.env,
