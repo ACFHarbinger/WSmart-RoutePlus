@@ -2,8 +2,8 @@ This template produces a machine-parsable issue for the multi-agent workflow doc
 
 ### **Area**
 
-* \[ \] Policies: route construction
-* \[ \] Policies: selection / mandatory selection
+* \[ \] Policies: routing
+* \[ \] Policies: selection / packing
 * \[ \] Policies: route improvement / acceptance criteria / operators
 * \[ \] Models: neural (logic/src/models)
 * \[ \] Pipeline: simulation / training / eval

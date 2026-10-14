@@ -104,16 +104,16 @@ Base `dfb049e7e`. Fixes landed in this increment:
 
 ## Config-propagation pass (2026-09-29, Cursor, open-issues-2)
 
-Base `606f79690`. Silent-default class outside route constructors:
+Base `606f79690`. Silent-default class outside routing algorithms:
 
-1. **Mandatory selection list variants.** `{file.yaml: [variant]}` (including
+1. **Packing list variants.** `{file.yaml: [variant]}` (including
    OmegaConf ListConfig) was treated as a strategy named after the filename
    with empty params. Last-minute `threshold: 70/90` and lookahead
    `current_collection_day: 0` now load from yaml.
 2. **Acceptance yaml never became `acceptance_criterion`.** Constructors read
    the singular field and ignored `acceptance_criteria: {ac_bmc.yaml: [bmc]}`.
    PSOMA therefore ran BMC at dataclass T0=3 / α=0.9 instead of yaml 100 /
-   0.995. MandatorySelectionAction (runs before construction) now injects a
+   0.995. PackingAction (runs before construction) now injects a
    typed `AcceptanceConfig` from the yaml.
 3. **CLS `ls_operator: 2opt` was ignored.** Classical local search always ran
    the full relocate/swap/2-opt/… suite. `2opt` now means intra-route 2-opt

@@ -16,8 +16,8 @@ body:
       label: Area
       description: Which part of the codebase is affected?
       options:
-        - "Policies: route construction"
-        - "Policies: selection / mandatory selection"
+        - "Policies: routing"
+        - "Policies: selection / packing"
         - "Policies: route improvement / acceptance criteria / operators"
         - "Models: neural (logic/src/models)"
         - "Pipeline: simulation / training / eval"

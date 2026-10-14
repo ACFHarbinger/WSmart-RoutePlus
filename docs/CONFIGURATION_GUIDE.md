@@ -361,7 +361,7 @@ Task configurations define **what** the system does (training, evaluation, simul
 - **Optimizer:** Learning rate, scheduler, gradient clipping
 - **Baselines:** Exponential, rollout, critic
 - **Expert Policies:** Loaded from `tasks/policies/rl/`
-- **mandatory Strategy:** Bin selection for WCVRP
+- **packing algorithm:** Bin selection for WCVRP
 
 **Example Configuration:**
 
@@ -661,7 +661,7 @@ hgs:
     - elite_size: 10 # Elite preservation
     - mutation_rate: 0.2 # Mutation probability
     - engine: "custom" # PyVRP backend
-    - mandatory_selection: ["other/ms_lookahead.yaml"]
+    - packing: ["other/ms_lookahead.yaml"]
     - route_improvement: []
 ```
 
@@ -742,14 +742,14 @@ neural:
   custom:
     - model_path: "checkpoints/best_model.pt"
     - decoding_strategy: "greedy"
-    - mandatory_selection: ["other/ms_lookahead.yaml"]
+    - packing: ["other/ms_lookahead.yaml"]
 ```
 
 ---
 
 ### 6. Auxiliary Configurations: `policies/helpers/*.yaml`
 
-#### 6.1 mandatory Strategies
+#### 6.1 packing algorithms
 
 **Purpose:** Determine which bins **must** be collected in waste collection problems.
 
@@ -763,10 +763,10 @@ neural:
 **Example:**
 
 ```bash
-# Change mandatory strategy for HGS
+# Change packing algorithm for HGS
 python main.py test_sim \
   sim.policies=[hgs] \
-  +hgs.custom[0].mandatory_selection=["other/ms_last_minute_cf90.yaml"]
+  +hgs.custom[0].packing=["other/ms_last_minute_cf90.yaml"]
 ```
 
 #### 6.2 route improvement

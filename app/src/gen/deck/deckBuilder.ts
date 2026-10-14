@@ -285,12 +285,12 @@ export class NativeDeckBuilder {
   private policyGridDiagram(slide: Slide): void {
     const columns: [string, (string | [string, string[]])[], "flat" | "grouped"][] = [
       [
-        "Mandatory Selection",
+        "Packing",
         ["Look-Ahead (LA)", "Last-Minute (LM, CF70)", "Last-Minute (LM, CF90)", "Service-Level (SL1)", "Service-Level (SL2)"],
         "flat",
       ],
       [
-        "Route Constructor",
+        "Routing Algorithm",
         [
           ["Exact Methods", ["BPC", "SWC-TCF"]],
           ["Meta-Heuristics", ["HGS", "ALNS", "SANS", "PG-CLNS", "PSOMA"]],

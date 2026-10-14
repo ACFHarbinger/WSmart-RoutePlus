@@ -116,14 +116,14 @@
 
 **Delivered (§A.3 Option A — hundred-ninth pass)**
 
-- [x] ``POLICY_VIZ_START:`` stdout + JSONL log marker from ``policy_viz_emit.py`` after route construction / improvement when ``PolicyVizMixin.get_viz_data()`` is non-empty
+- [x] ``POLICY_VIZ_START:`` stdout + JSONL log marker from ``policy_viz_emit.py`` after routing / improvement when ``PolicyVizMixin.get_viz_data()`` is non-empty
 - [x] Rust ``parse_policy_viz_line`` + ``load_policy_viz_log`` + ``sim:policy_viz_update`` watcher events
 - [x] Studio ``PolicyTelemetryPanel`` — ECharts cost trajectories, operator histograms, and algorithm-specific charts (ALNS/HGS/ACO/ILS/selector/generic) on Simulation Monitor
 - [x] Live ingest via ``process:stdout`` parser + historical load on log open; PNG/SVG export via ``ChartExportButtons`` (§G.7)
 
 **Delivered (§A.3 Option B — hundred-nineteenth pass)**
 
-- [x] ``PolicyVizStreamSession`` — daemon thread emits growing ring-buffer snapshots every 0.5 s (2 Hz) during route construction / improvement
+- [x] ``PolicyVizStreamSession`` — daemon thread emits growing ring-buffer snapshots every 0.5 s (2 Hz) during routing / improvement
 - [x] Route actions wrap ``adapter.execute`` and ``processor.process`` in stream sessions; final snapshot on context exit
 - [x] Studio sim store upserts policy-viz entries by policy/sample/day/type (replaces stale snapshots during live runs)
 - [x] ``PolicyTelemetryPanel`` — 2 Hz throttled ECharts refresh + **Live · 2 Hz** badge when file-watcher or ``test_sim`` process is active

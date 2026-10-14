@@ -16,7 +16,7 @@ classDiagram
   class ABCConfig {
     limit : int
     local_search_iterations : int
-    mandatory_selection : Optional[List[Any]]
+    packing : Optional[List[Any]]
     max_iterations : int
     n_removal : int
     n_sources : int
@@ -151,7 +151,7 @@ classDiagram
     alns_elite_iterations : int
     alns_not_coached_iterations : int
     hgs
-    mandatory_selection : List[str]
+    packing : List[str]
     max_iterations : int
     n_teams : int
     profit_aware_operators : bool
@@ -224,7 +224,7 @@ classDiagram
     cooling_rate : float
     engine : str
     extended_operators : bool
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     max_iterations : int
     max_removal_pct : float
     min_removal : int
@@ -436,7 +436,7 @@ classDiagram
   }
   class AMPHHConfig {
     iters : int
-    mandatory_selection : Optional[MandatorySelectionConfig]
+    packing : Optional[PackingConfig]
     mem_size : int
     route_improvement : Optional[RouteImprovingConfig]
     seed : int
@@ -621,7 +621,7 @@ classDiagram
     epsilon : float
     framework : str
     initial_kernel_size : int
-    mandatory_selection : Optional[MandatorySelectionConfig]
+    packing : Optional[PackingConfig]
     max_buckets : int
     mip_gap : float
     mip_limit_nodes : int
@@ -693,8 +693,8 @@ classDiagram
     adapt(progress: float)
     compute_reward() float
   }
-  class AdaptiveRouteConstructorOrchestrator {
-    constructors : List[IRouteConstructor]
+  class AdaptiveRoutingAlgorithmOrchestrator {
+    constructors : List[IRoutingAlgorithm]
     params
     best_sequence() List[str]
     execute() Tuple[Union[List[int], List[List[int]]], float, float, Optional[SearchContext], Optional[Any]]
@@ -796,7 +796,7 @@ classDiagram
     lr_op_time_limit : float
     lr_subgradient_theta : float
     lr_subgradient_time_fraction : float
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     mip_gap : float
     route_improvement : Optional[List[RouteImprovingConfig]]
     seed : Optional[int]
@@ -847,7 +847,7 @@ classDiagram
   }
   class BCConfig {
     enable_fractional_capacity_cuts : bool
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     max_cuts_per_round : int
     mip_gap : float
     num_scenarios : int
@@ -896,7 +896,7 @@ classDiagram
     lr_pre_pruning_depth_limit : int
     lr_subgradient_theta : float
     lr_warm_start_cg : bool
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     max_bb_nodes : int
     max_cg_iterations : int
     max_cut_iterations : int
@@ -967,7 +967,7 @@ classDiagram
   class BPCPruningException {
   }
   class BPConfig {
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     max_iterations : int
     max_routes_per_iteration : int
     multi_day_mode : bool
@@ -1307,7 +1307,7 @@ classDiagram
   }
   class CFRSConfig {
     assignment_method : str
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     mip_objective : str
     num_clusters : int
     route_improvement : Optional[List[RouteImprovingConfig]]
@@ -1332,7 +1332,7 @@ classDiagram
   }
   class CGHConfig {
     cg_iters : int
-    mandatory_selection : Optional[MandatorySelectionConfig]
+    packing : Optional[PackingConfig]
     route_improvement : Optional[RouteImprovingConfig]
     routes_per_iter : int
     seed : int
@@ -1374,7 +1374,7 @@ classDiagram
   }
   class CPSATConfig {
     cost_weight : float
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     mean_increment : float
     mip_gap : float
     num_days : int
@@ -1422,7 +1422,7 @@ classDiagram
   class CVRPConfig {
     cache : bool
     engine : str
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     route_improvement : Optional[List[RouteImprovingConfig]]
     seed : Optional[int]
     time_limit : float
@@ -1576,7 +1576,7 @@ classDiagram
     hpo
     hpo_sim
     load_dataset : Optional[str]
-    mandatory_selection
+    packing
     meta_rl
     model
     optim
@@ -1786,7 +1786,7 @@ classDiagram
     crossover_rate : float
     evolution_strategy : str
     local_search_iterations : int
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     max_iterations : int
     mutation_factor : float
     n_removal : int
@@ -2181,7 +2181,7 @@ classDiagram
     inertia_weight_end : float
     inertia_weight_start : float
     local_search_iterations : int
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     max_iterations : int
     n_removal : int
     population_size : int
@@ -2549,7 +2549,7 @@ classDiagram
     gamma : float
     gamma_cost : float
     local_search_iterations : int
-    mandatory_selection : Optional[List[Any]]
+    packing : Optional[List[Any]]
     max_iterations : int
     n_removal : int
     pop_size : int
@@ -2789,7 +2789,7 @@ classDiagram
   }
   class GAConfig {
     crossover_rate : float
-    mandatory_selection : Optional[List[Any]]
+    packing : Optional[List[Any]]
     max_generations : int
     mutation_rate : float
     n_removal : int
@@ -2854,7 +2854,7 @@ classDiagram
     renormalize : bool
   }
   class GENIUSConfig {
-    mandatory_selection : Optional[List[Any]]
+    packing : Optional[List[Any]]
     n_iterations : int
     neighborhood_size : int
     random_us_sampling : bool
@@ -2935,7 +2935,7 @@ classDiagram
     alpha : float
     beta : float
     gamma : float
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     max_iterations : int
     min_prob : float
     nonimp_threshold : int
@@ -3004,7 +3004,7 @@ classDiagram
     fls_coupling_prob : float
     inner_iterations : int
     lambda_param : float
-    mandatory_selection : Optional[List[Any]]
+    packing : Optional[List[Any]]
     n_llh : int
     n_removal : int
     penalty_cycles : int
@@ -3089,7 +3089,7 @@ classDiagram
   }
   class GPHHConfig {
     gp_pop_size : int
-    mandatory_selection : Optional[List[Any]]
+    packing : Optional[List[Any]]
     max_gp_generations : int
     n_training_instances : int
     parsimony_coefficient : float
@@ -3142,7 +3142,7 @@ classDiagram
   }
   class GP_MP_HH_Config {
     gens : int
-    mandatory_selection : Optional[MandatorySelectionConfig]
+    packing : Optional[PackingConfig]
     pop_size : int
     prog_len : int
     route_improvement : Optional[RouteImprovingConfig]
@@ -3471,7 +3471,7 @@ classDiagram
   class HGSALNSConfig {
     alns
     hgs
-    mandatory_selection : List[str]
+    packing : List[str]
     profit_aware_operators : bool
     route_improvement : List[Any]
     vrpp : bool
@@ -3512,7 +3512,7 @@ classDiagram
     initial_penalty_capacity : float
     lambda_max : int
     local_search_iterations : int
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     max_vehicles : int
     mu : int
     mutation_rate : float
@@ -3604,7 +3604,7 @@ classDiagram
     decay_parameter : float
     destroy_operators : List[str]
     elite_size : int
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     max_removal_pct : float
     max_vehicles : int
     min_removal_pct : float
@@ -3693,7 +3693,7 @@ classDiagram
     flood_margin : float
     learning_rate : float
     local_search_iterations : int
-    mandatory_selection : Optional[List[Any]]
+    packing : Optional[List[Any]]
     max_iterations : int
     n_llh : int
     n_removal : int
@@ -3820,7 +3820,7 @@ classDiagram
     PAR : float
     hm_size : int
     local_search_iterations : int
-    mandatory_selection : Optional[List[Any]]
+    packing : Optional[List[Any]]
     max_iterations : int
     profit_aware_operators : bool
     route_improvement : Optional[List[Any]]
@@ -3972,7 +3972,7 @@ classDiagram
     alns
     crossover_rate : float
     elite_size : int
-    mandatory_selection : List[str]
+    packing : List[str]
     max_iterations : int
     mutation_rate : float
     n_teams : int
@@ -4033,7 +4033,7 @@ classDiagram
     aco_init_iterations : int
     crossover_rate : float
     elitism_count : int
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     max_generations : int
     mutation_rate : float
     n_removal : int
@@ -4173,7 +4173,7 @@ classDiagram
     elitist_weight : float
     local_search : bool
     local_search_iterations : int
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     max_iterations : int
     n_ants : int
     operators : List[str]
@@ -4310,7 +4310,7 @@ classDiagram
     acceptance_criterion
     engine : str
     inner_iterations : int
-    mandatory_selection : Optional[List[Any]]
+    packing : Optional[List[Any]]
     n_llh : int
     n_removal : int
     n_restarts : int
@@ -4358,7 +4358,7 @@ classDiagram
     engine : str
     framework : str
     local_search_iterations : int
-    mandatory_selection : Optional[List[Any]]
+    packing : Optional[List[Any]]
     max_iter_ils : int
     max_restarts : int
     mip_time_limit : float
@@ -4432,7 +4432,7 @@ classDiagram
     wastes : Dict[int, float]
     solve() Tuple[List[List[int]], float, float]
   }
-  class IMandatorySelectionStrategy {
+  class IPackingAlgorithm {
     select_bins(context: 'SelectionContext') Tuple[List[int], 'SearchContext']
   }
   class IModel {
@@ -4472,7 +4472,7 @@ classDiagram
     num_periods : int
     vehicle_capacity : float
   }
-  class IRouteConstructor {
+  class IRoutingAlgorithm {
     execute()* Tuple[Union[List[int], List[List[int]]], float, float, Optional['SearchContext'], Optional['MultiDayContext']]
   }
   class IRouteImprovement {
@@ -4625,7 +4625,7 @@ classDiagram
     framework : str
     horizon : int
     initial_inventory : float
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     master_time_limit : float
     max_benders_iterations : int
     max_cuts_per_round : int
@@ -4680,7 +4680,7 @@ classDiagram
   class JointGreedyConfig {
     distance_weight : float
     k_best : int
-    mandatory_selection : Optional[List[Any]]
+    packing : Optional[List[Any]]
     n_starts : int
     route_improvement : Optional[List[Any]]
     seed : Optional[int]
@@ -4709,7 +4709,7 @@ classDiagram
   }
   class JointSAConfig {
     cooling_rate : float
-    mandatory_selection : Optional[List[Any]]
+    packing : Optional[List[Any]]
     max_steps : int
     overflow_penalty : float
     prob_bit_flip : float
@@ -4863,7 +4863,7 @@ classDiagram
     k_sparse : int
     local_search : bool
     local_search_iterations : int
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     max_iterations : int
     n_ants : int
     q0 : float
@@ -4925,7 +4925,7 @@ classDiagram
     engine : str
     framework : str
     initial_kernel_size : int
-    mandatory_selection : Optional[MandatorySelectionConfig]
+    packing : Optional[PackingConfig]
     max_buckets : int
     mip_gap : float
     mip_limit_nodes : int
@@ -5046,7 +5046,7 @@ classDiagram
   class LCAConfig {
     crossover_prob : float
     local_search_iterations : int
-    mandatory_selection : Optional[List[Any]]
+    packing : Optional[List[Any]]
     max_iterations : int
     n_removal : int
     n_teams : int
@@ -5091,7 +5091,7 @@ classDiagram
     alns_iterations : int
     deep_plateau_limit : int
     dynamic_topology_discovery : bool
-    mandatory_selection : Optional[List[Any]]
+    packing : Optional[List[Any]]
     max_k_opt : int
     max_pool_size : int
     max_trials : int
@@ -5196,7 +5196,7 @@ classDiagram
   }
   class LRHConfig {
     halving_freq : int
-    mandatory_selection : Optional[MandatorySelectionConfig]
+    packing : Optional[PackingConfig]
     max_iter : int
     route_improvement : Optional[RouteImprovingConfig]
     seed : int
@@ -5346,7 +5346,7 @@ classDiagram
     engine : str
     framework : str
     k : int
-    mandatory_selection : Optional[MandatorySelectionConfig]
+    packing : Optional[PackingConfig]
     max_iterations : int
     mip_gap : float
     node_limit_per_iteration : int
@@ -5366,7 +5366,7 @@ classDiagram
     k_max : int
     k_min : int
     k_step : int
-    mandatory_selection : Optional[MandatorySelectionConfig]
+    packing : Optional[PackingConfig]
     max_lb_iterations : int
     mip_gap : float
     route_improvement : Optional[RouteImprovingConfig]
@@ -5488,7 +5488,7 @@ classDiagram
   class MAConfig {
     crossover_rate : float
     local_search_rate : float
-    mandatory_selection : Optional[List[Any]]
+    packing : Optional[List[Any]]
     max_generations : int
     mutation_rate : float
     n_removal : int
@@ -5598,7 +5598,7 @@ classDiagram
   }
   class MHHConfig {
     iters : int
-    mandatory_selection : Optional[MandatorySelectionConfig]
+    packing : Optional[PackingConfig]
     route_improvement : Optional[RouteImprovingConfig]
     seed : int
     vrpp : bool
@@ -5670,7 +5670,7 @@ classDiagram
     alpha : float
     beta : float
     iters : int
-    mandatory_selection : Optional[MandatorySelectionConfig]
+    packing : Optional[PackingConfig]
     n_ants : int
     rho : float
     route_improvement : Optional[RouteImprovingConfig]
@@ -5697,7 +5697,7 @@ classDiagram
   }
   class MP_ILS_Config {
     iters : int
-    mandatory_selection : Optional[MandatorySelectionConfig]
+    packing : Optional[PackingConfig]
     perturb_size : int
     route_improvement : Optional[RouteImprovingConfig]
     seed : int
@@ -5714,7 +5714,7 @@ classDiagram
     c1 : float
     c2 : float
     iters : int
-    mandatory_selection : Optional[MandatorySelectionConfig]
+    packing : Optional[PackingConfig]
     route_improvement : Optional[RouteImprovingConfig]
     seed : int
     swarm_size : int
@@ -5735,7 +5735,7 @@ classDiagram
     cooling_rate : float
     init_temp : float
     iters : int
-    mandatory_selection : Optional[MandatorySelectionConfig]
+    packing : Optional[PackingConfig]
     route_improvement : Optional[RouteImprovingConfig]
     seed : int
     vrpp : bool
@@ -5791,10 +5791,10 @@ classDiagram
     manager_critical_threshold : float
     manager_weights : Optional[str]
   }
-  class MandatorySelectionAction {
+  class PackingAction {
     execute(context: Dict[str, Any]) None
   }
-  class MandatorySelectionConfig {
+  class PackingConfig {
     bernoulli
     combined
     cvar
@@ -5827,16 +5827,16 @@ classDiagram
     wasserstein
     whittle
   }
-  class MandatorySelectionFactory {
-    create_from_config(config: Any) IMandatorySelectionStrategy
-    create_strategy(name: str) IMandatorySelectionStrategy
+  class PackingFactory {
+    create_from_config(config: Any) IPackingAlgorithm
+    create_strategy(name: str) IPackingAlgorithm
   }
-  class MandatorySelectionHead {
+  class PackingHead {
     net : Sequential
     forward(x: torch.Tensor) torch.Tensor
   }
-  class MandatorySelectionRegistry {
-    get_strategy_class(name: str) Optional[Type[IMandatorySelectionStrategy]]
+  class PackingRegistry {
+    get_strategy_class(name: str) Optional[Type[IPackingAlgorithm]]
     list_strategies() list
     register(name: str)
   }
@@ -5977,7 +5977,7 @@ classDiagram
     elite_count : int
     elite_learning_weights : Optional[List[float]]
     local_search_iterations : int
-    mandatory_selection : List[str]
+    packing : List[str]
     max_iterations : int
     population_size : int
     profit_aware_operators : bool
@@ -6023,7 +6023,7 @@ classDiagram
   class MemeticAlgorithmIslandModelConfig {
     island_size : int
     local_search_iterations : int
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     max_generations : int
     n_islands : int
     n_removal : int
@@ -6065,7 +6065,7 @@ classDiagram
   }
   class MemeticAlgorithmToleranceBasedSelectionConfig {
     local_search_iterations : int
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     max_iterations : int
     n_removal : int
     perturbation_strength : int
@@ -6323,7 +6323,7 @@ classDiagram
   class MuCommaLambdaESConfig {
     lambda_ : int
     local_search_iterations : int
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     max_iterations : int
     mu : int
     n_removal : int
@@ -6368,7 +6368,7 @@ classDiagram
     kappa : int
     lambda_ : int
     local_search_iterations : int
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     max_iterations : int
     max_sigma : float
     min_sigma : float
@@ -6431,7 +6431,7 @@ classDiagram
   class MuPlusLambdaESConfig {
     lambda_ : int
     local_search_iterations : int
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     max_iterations : int
     mu : int
     n_removal : int
@@ -6681,7 +6681,7 @@ classDiagram
   }
   class NDSBRKGAConfig {
     bias_elite : float
-    mandatory_selection : Optional[List[Any]]
+    packing : Optional[List[Any]]
     max_generations : int
     n_elite : int
     n_mutants : int
@@ -6748,7 +6748,7 @@ classDiagram
     seed : NoneType, int
   }
   class NeuralAgentConfig {
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     model
     reward
     route_improvement : Optional[List[RouteImprovingConfig]]
@@ -7020,7 +7020,7 @@ classDiagram
     consensus_scope : str
     convergence_tol : float
     horizon : int
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     max_iterations : int
     num_scenarios : int
     rho : float
@@ -7033,7 +7033,7 @@ classDiagram
   }
   class PHHConfig {
     gens : int
-    mandatory_selection : Optional[MandatorySelectionConfig]
+    packing : Optional[PackingConfig]
     pop_size : int
     route_improvement : Optional[RouteImprovingConfig]
     seed : int
@@ -7088,7 +7088,7 @@ classDiagram
     cluster_solver_config : Optional[POPMUSICSubSolverConfig]
     initial_solver : str
     k_prox : int
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     max_iterations : Optional[int]
     profit_aware_operators : bool
     route_improvement : Optional[List[RouteImprovingConfig]]
@@ -7178,7 +7178,7 @@ classDiagram
     cognitive_coef : float
     inertia_weight_end : float
     inertia_weight_start : float
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     max_iterations : int
     pop_size : int
     position_max : float
@@ -7196,7 +7196,7 @@ classDiagram
     c2 : float
     local_search_freq : int
     local_search_iterations : int
-    mandatory_selection : Optional[List[Any]]
+    packing : Optional[List[Any]]
     max_iterations : int
     n_removal : int
     omega : float
@@ -7589,7 +7589,7 @@ classDiagram
   class QDEConfig {
     CR : float
     F : float
-    mandatory_selection : Optional[List[Any]]
+    packing : Optional[List[Any]]
     max_iterations : int
     n_removal : int
     pop_size : int
@@ -7676,7 +7676,7 @@ classDiagram
     engine : str
     framework : str
     lp_time_limit : float
-    mandatory_selection : Optional[MandatorySelectionConfig]
+    packing : Optional[PackingConfig]
     mip_gap : float
     mip_limit_nodes : int
     route_improvement : Optional[RouteImprovingConfig]
@@ -7696,7 +7696,7 @@ classDiagram
     execute() Tuple[List[int], float, float, Optional[SearchContext], Optional[MultiDayContext]]
   }
   class RFOConfig {
-    mandatory_selection : Optional[MandatorySelectionConfig]
+    packing : Optional[PackingConfig]
     mip_gap : float
     mip_time : float
     route_improvement : Optional[RouteImprovingConfig]
@@ -7756,7 +7756,7 @@ classDiagram
     gls_penalty_step : int
     gls_probability : float
     hgs
-    mandatory_selection : List[str]
+    packing : List[str]
     max_iterations : int
     n_teams : int
     not_coached_max_iterations : int
@@ -7968,7 +7968,7 @@ classDiagram
   class RLGDHHConfig {
     acceptance_criterion
     initial_utility : float
-    mandatory_selection : Optional[List[Any]]
+    packing : Optional[List[Any]]
     max_iterations : int
     min_utility : float
     penalty_worsening : float
@@ -8018,7 +8018,7 @@ classDiagram
     alns
     elite_coaching_iterations : int
     elite_size : int
-    mandatory_selection : List[str]
+    packing : List[str]
     max_iterations : int
     n_teams : int
     pheromone_update_strategy : str
@@ -8096,7 +8096,7 @@ classDiagram
   class RTSConfig {
     acceptance_criterion
     initial_tenure : int
-    mandatory_selection : Optional[List[Any]]
+    packing : Optional[List[Any]]
     max_iterations : int
     max_tenure : int
     min_tenure : int
@@ -8321,16 +8321,16 @@ classDiagram
     reduced_cost : Optional[float]
     revenue : float
   }
-  class RouteConstructionAction {
+  class RoutingAction {
     execute(context: Dict[str, Any]) None
   }
-  class RouteConstructorFactory {
+  class RoutingAlgorithmFactory {
     ensure_registered() None
-    get_adapter(name: str, config: Optional[dict], engine: Optional[str], threshold: Optional[float]) IRouteConstructor
+    get_adapter(name: str, config: Optional[dict], engine: Optional[str], threshold: Optional[float]) IRoutingAlgorithm
   }
-  class RouteConstructorRegistry {
-    get(name: str) Optional[Type[IRouteConstructor]]
-    list_route_constructors() List[str]
+  class RoutingAlgorithmRegistry {
+    get(name: str) Optional[Type[IRoutingAlgorithm]]
+    list_routing_algorithms() List[str]
     register(name: str) Callable
   }
   class RouteImprovementAction {
@@ -8459,7 +8459,7 @@ classDiagram
     cooling_rate : float
     initial_temperature : float
     iterations_per_temp : int
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     min_temperature : float
     nb_granular : int
     profit_aware_operators : bool
@@ -8475,7 +8475,7 @@ classDiagram
     combination : Optional[Literal['a', 'b']]
     engine : Literal['new', 'og']
     iterations_per_T : int
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     perc_bins_can_overflow : float
     route_improvement : Optional[List[RouteImprovingConfig]]
     seed : Optional[int]
@@ -8510,7 +8510,7 @@ classDiagram
   }
   class SCAConfig {
     a_max : float
-    mandatory_selection : Optional[List[Any]]
+    packing : Optional[List[Any]]
     max_iterations : int
     pop_size : int
     route_improvement : Optional[List[Any]]
@@ -8572,7 +8572,7 @@ classDiagram
   class SHHConfig {
     history_len : int
     iters : int
-    mandatory_selection : Optional[MandatorySelectionConfig]
+    packing : Optional[PackingConfig]
     route_improvement : Optional[RouteImprovingConfig]
     seed : int
     vrpp : bool
@@ -8589,7 +8589,7 @@ classDiagram
     blink_rate : float
     cooling_rate : float
     destroy_ratio : float
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     max_iterations : int
     max_string_len : int
     profit_aware_operators : bool
@@ -8628,7 +8628,7 @@ classDiagram
   }
   class SLCConfig {
     local_search_iterations : int
-    mandatory_selection : Optional[List[Any]]
+    packing : Optional[List[Any]]
     max_iterations : int
     n_removal : int
     n_teams : int
@@ -8688,7 +8688,7 @@ classDiagram
     from_config(config: Any) SRCParams
   }
   class SSHHConfig {
-    mandatory_selection : Optional[List[Any]]
+    packing : Optional[List[Any]]
     max_iterations : int
     n_llh : int
     n_removal : int
@@ -8749,7 +8749,7 @@ classDiagram
     delta : float
     engine : str
     framework : str
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     psi : float
     route_improvement : Optional[List[RouteImprovingConfig]]
     seed : Optional[int]
@@ -8978,8 +8978,8 @@ classDiagram
     separate_fractional(x_vals: np.ndarray, y_vals: Optional[np.ndarray], max_cuts: int, iteration: int, node_count: int) List[Inequality]
     separate_integer(x_vals: np.ndarray, y_vals: Optional[np.ndarray], max_cuts: int, iteration: int, sec_only: bool) List[Inequality]
   }
-  class SequentialRouteConstructor {
-    constructors : List[IRouteConstructor]
+  class SequentialRoutingAlgorithm {
+    constructors : List[IRoutingAlgorithm]
     params
     execute() Tuple[Union[List[int], List[List[int]]], float, float, Optional[SearchContext], Optional[MultiDayContext]]
   }
@@ -9632,7 +9632,7 @@ classDiagram
     frequency_penalty_weight : float
     intensification_enabled : bool
     intensification_interval : int
-    mandatory_selection : Optional[List[Any]]
+    packing : Optional[List[Any]]
     max_iterations : int
     max_iterations_no_improve : int
     max_tenure : int
@@ -9671,7 +9671,7 @@ classDiagram
   class TSPConfig {
     cache : bool
     engine : str
-    mandatory_selection : Optional[List[MandatorySelectionConfig]]
+    packing : Optional[List[PackingConfig]]
     route_improvement : Optional[List[RouteImprovingConfig]]
     seed : Optional[int]
     time_limit : float
@@ -10153,7 +10153,7 @@ classDiagram
     acceptance_criterion
     k_max : int
     local_search_iterations : int
-    mandatory_selection : Optional[List[Any]]
+    packing : Optional[List[Any]]
     max_iterations : int
     n_llh : int
     n_removal : int
@@ -10197,7 +10197,7 @@ classDiagram
     coaching_weight_3 : float
     elite_size : int
     local_search_iterations : int
-    mandatory_selection : List[str]
+    packing : List[str]
     max_iterations : int
     n_teams : int
     route_improvement : List[Any]
@@ -10849,8 +10849,8 @@ classDiagram
   CollectAction --|> SimulationAction
   FillAction --|> SimulationAction
   LogAction --|> SimulationAction
-  MandatorySelectionAction --|> SimulationAction
-  RouteConstructionAction --|> SimulationAction
+  PackingAction --|> SimulationAction
+  RoutingAction --|> SimulationAction
   RouteImprovementAction --|> SimulationAction
   DatasetRepository --|> SimulationRepository
   FileSystemRepository --|> SimulationRepository
@@ -10884,36 +10884,36 @@ classDiagram
   CapacityCut --|> Inequality
   CombInequality --|> Inequality
   PCSubtourEliminationCut --|> Inequality
-  BernoulliRandomSelection --|> IMandatorySelectionStrategy
-  CombinedSelection --|> IMandatorySelectionStrategy
-  CVaRSelection --|> IMandatorySelectionStrategy
-  DeadlineDrivenSelection --|> IMandatorySelectionStrategy
-  PortfolioDispatcher --|> IMandatorySelectionStrategy
-  ThompsonDispatcher --|> IMandatorySelectionStrategy
-  FilterAndFanSelection --|> IMandatorySelectionStrategy
-  FractionalKnapsackSelection --|> IMandatorySelectionStrategy
-  KMeansGeographicSectorSelection --|> IMandatorySelectionStrategy
-  LagrangianSelection --|> IMandatorySelectionStrategy
-  LastMinuteSelection --|> IMandatorySelectionStrategy
-  LearnedSelection --|> IMandatorySelectionStrategy
-  LookaheadSelection --|> IMandatorySelectionStrategy
-  MIPKnapsackSelection --|> IMandatorySelectionStrategy
-  MultiDayOverflowSelection --|> IMandatorySelectionStrategy
-  ParetoFrontSelection --|> IMandatorySelectionStrategy
-  ProfitPerKmSelection --|> IMandatorySelectionStrategy
-  RegularSelection --|> IMandatorySelectionStrategy
-  RevenueThresholdSelection --|> IMandatorySelectionStrategy
-  RolloutSelection --|> IMandatorySelectionStrategy
-  SavingsSelection --|> IMandatorySelectionStrategy
-  ServiceLevelSelection --|> IMandatorySelectionStrategy
-  SetCoverSelection --|> IMandatorySelectionStrategy
-  SpatialSynergySelection --|> IMandatorySelectionStrategy
-  StaggeredRegularSelection --|> IMandatorySelectionStrategy
-  StochasticRegretSelection --|> IMandatorySelectionStrategy
-  SubmodularGreedySelection --|> IMandatorySelectionStrategy
-  SupermodularGreedySelection --|> IMandatorySelectionStrategy
-  WassersteinRobustSelection --|> IMandatorySelectionStrategy
-  WhittleIndexSelection --|> IMandatorySelectionStrategy
+  BernoulliRandomSelection --|> IPackingAlgorithm
+  CombinedSelection --|> IPackingAlgorithm
+  CVaRSelection --|> IPackingAlgorithm
+  DeadlineDrivenSelection --|> IPackingAlgorithm
+  PortfolioDispatcher --|> IPackingAlgorithm
+  ThompsonDispatcher --|> IPackingAlgorithm
+  FilterAndFanSelection --|> IPackingAlgorithm
+  FractionalKnapsackSelection --|> IPackingAlgorithm
+  KMeansGeographicSectorSelection --|> IPackingAlgorithm
+  LagrangianSelection --|> IPackingAlgorithm
+  LastMinuteSelection --|> IPackingAlgorithm
+  LearnedSelection --|> IPackingAlgorithm
+  LookaheadSelection --|> IPackingAlgorithm
+  MIPKnapsackSelection --|> IPackingAlgorithm
+  MultiDayOverflowSelection --|> IPackingAlgorithm
+  ParetoFrontSelection --|> IPackingAlgorithm
+  ProfitPerKmSelection --|> IPackingAlgorithm
+  RegularSelection --|> IPackingAlgorithm
+  RevenueThresholdSelection --|> IPackingAlgorithm
+  RolloutSelection --|> IPackingAlgorithm
+  SavingsSelection --|> IPackingAlgorithm
+  ServiceLevelSelection --|> IPackingAlgorithm
+  SetCoverSelection --|> IPackingAlgorithm
+  SpatialSynergySelection --|> IPackingAlgorithm
+  StaggeredRegularSelection --|> IPackingAlgorithm
+  StochasticRegretSelection --|> IPackingAlgorithm
+  SubmodularGreedySelection --|> IPackingAlgorithm
+  SupermodularGreedySelection --|> IPackingAlgorithm
+  WassersteinRobustSelection --|> IPackingAlgorithm
+  WhittleIndexSelection --|> IPackingAlgorithm
   AdaptiveBoltzmannMetropolis --|> IAcceptanceCriterion
   AllMovesAccepted --|> IAcceptanceCriterion
   AspirationCriterion --|> IAcceptanceCriterion
@@ -10939,7 +10939,7 @@ classDiagram
   StepCountingHillClimbing --|> IAcceptanceCriterion
   ThresholdAccepting --|> IAcceptanceCriterion
   BaseMultiPeriodRoutingPolicy --|> BaseRoutingPolicy
-  BaseRoutingPolicy --|> IRouteConstructor
+  BaseRoutingPolicy --|> IRoutingAlgorithm
   BaseRoutingPolicy --|> PolicyVizMixin
   BranchAndBoundPolicy --|> BaseRoutingPolicy
   BranchAndCutPolicy --|> BaseRoutingPolicy
@@ -11048,9 +11048,9 @@ classDiagram
   TSPolicy --|> BaseRoutingPolicy
   VNSPolicy --|> BaseRoutingPolicy
   VPLPolicy --|> BaseRoutingPolicy
-  AdaptiveRouteConstructorOrchestrator --|> BaseRoutingPolicy
+  AdaptiveRoutingAlgorithmOrchestrator --|> BaseRoutingPolicy
   CVRPPolicy --|> BaseRoutingPolicy
-  SequentialRouteConstructor --|> BaseRoutingPolicy
+  SequentialRoutingAlgorithm --|> BaseRoutingPolicy
   TSPPolicy --|> BaseRoutingPolicy
   AdaptiveEnsembleRouteImprover --|> IRouteImprovement
   AdaptiveLargeNeighborhoodSearchRouteImprover --|> IRouteImprovement
@@ -11081,7 +11081,7 @@ classDiagram
   SetPartitioningPolishRouteImprover --|> IRouteImprovement
   SimulatedAnnealingRouteImprover --|> IRouteImprovement
   SteepestTwoOptRouteImprover --|> IRouteImprovement
-  BaseJointPolicy --|> IRouteConstructor
+  BaseJointPolicy --|> IRoutingAlgorithm
   BaseJointPolicy --|> PolicyVizMixin
   JointGreedyPolicy --|> BaseJointPolicy
   JointSAPolicy --|> BaseJointPolicy
@@ -11151,35 +11151,35 @@ classDiagram
   AcceptanceConfig --* SAConfig : acceptance_criterion
   AcceptanceConfig --* TSConfig : acceptance_criterion
   AcceptanceConfig --* VNSConfig : acceptance_criterion
-  BernoulliSelectionConfig --* MandatorySelectionConfig : bernoulli
-  CVaRSelectionConfig --* MandatorySelectionConfig : cvar
-  CombinedSelectionConfig --* MandatorySelectionConfig : combined
-  DeadlineSelectionConfig --* MandatorySelectionConfig : deadline
-  FractionalKnapsackSelectionConfig --* MandatorySelectionConfig : fractional_knapsack
-  KMeansSectorSelectionConfig --* MandatorySelectionConfig : kmeans_sector
-  LagrangianSelectionConfig --* MandatorySelectionConfig : lagrangian
-  LastMinuteSelectionConfig --* MandatorySelectionConfig : last_minute
-  LearnedSelectionConfig --* MandatorySelectionConfig : learned
-  LookaheadSelectionConfig --* MandatorySelectionConfig : lookahead
-  MIPKnapsackSelectionConfig --* MandatorySelectionConfig : mip_knapsack
-  MandatoryManagerSelectionConfig --* MandatorySelectionConfig : manager
-  MandatorySelectionConfig --* Config : mandatory_selection
-  ModularGreedySelectionConfig --* MandatorySelectionConfig : modular_greedy
-  MultiDayProbSelectionConfig --* MandatorySelectionConfig : multi_day_prob
-  ParetoFrontSelectionConfig --* MandatorySelectionConfig : pareto_front
-  ProfitPerKmSelectionConfig --* MandatorySelectionConfig : profit_per_km
-  RegularSelectionConfig --* MandatorySelectionConfig : regular
-  RevenueSelectionConfig --* MandatorySelectionConfig : revenue
-  RolloutSelectionConfig --* MandatorySelectionConfig : rollout
-  SavingsSelectionConfig --* MandatorySelectionConfig : savings
-  ServiceLevelSelectionConfig --* MandatorySelectionConfig : service_level
-  SetCoverSelectionConfig --* MandatorySelectionConfig : set_cover
-  SpatialSynergySelectionConfig --* MandatorySelectionConfig : spatial_synergy
-  StaggeredRegularSelectionConfig --* MandatorySelectionConfig : staggered_regular
-  StochasticRegretSelectionConfig --* MandatorySelectionConfig : stochastic_regret
-  ThompsonDispatcherSelectionConfig --* MandatorySelectionConfig : thompson_dispatcher
-  WassersteinSelectionConfig --* MandatorySelectionConfig : wasserstein
-  WhittleSelectionConfig --* MandatorySelectionConfig : whittle
+  BernoulliSelectionConfig --* PackingConfig : bernoulli
+  CVaRSelectionConfig --* PackingConfig : cvar
+  CombinedSelectionConfig --* PackingConfig : combined
+  DeadlineSelectionConfig --* PackingConfig : deadline
+  FractionalKnapsackSelectionConfig --* PackingConfig : fractional_knapsack
+  KMeansSectorSelectionConfig --* PackingConfig : kmeans_sector
+  LagrangianSelectionConfig --* PackingConfig : lagrangian
+  LastMinuteSelectionConfig --* PackingConfig : last_minute
+  LearnedSelectionConfig --* PackingConfig : learned
+  LookaheadSelectionConfig --* PackingConfig : lookahead
+  MIPKnapsackSelectionConfig --* PackingConfig : mip_knapsack
+  MandatoryManagerSelectionConfig --* PackingConfig : manager
+  PackingConfig --* Config : packing
+  ModularGreedySelectionConfig --* PackingConfig : modular_greedy
+  MultiDayProbSelectionConfig --* PackingConfig : multi_day_prob
+  ParetoFrontSelectionConfig --* PackingConfig : pareto_front
+  ProfitPerKmSelectionConfig --* PackingConfig : profit_per_km
+  RegularSelectionConfig --* PackingConfig : regular
+  RevenueSelectionConfig --* PackingConfig : revenue
+  RolloutSelectionConfig --* PackingConfig : rollout
+  SavingsSelectionConfig --* PackingConfig : savings
+  ServiceLevelSelectionConfig --* PackingConfig : service_level
+  SetCoverSelectionConfig --* PackingConfig : set_cover
+  SpatialSynergySelectionConfig --* PackingConfig : spatial_synergy
+  StaggeredRegularSelectionConfig --* PackingConfig : staggered_regular
+  StochasticRegretSelectionConfig --* PackingConfig : stochastic_regret
+  ThompsonDispatcherSelectionConfig --* PackingConfig : thompson_dispatcher
+  WassersteinSelectionConfig --* PackingConfig : wasserstein
+  WhittleSelectionConfig --* PackingConfig : whittle
   BanditConfig --* RLConfig : bandit
   ContextFeatureExtractorConfig --* RLConfig : context_features
   EvolutionaryCMABConfig --* RLConfig : evolution_cmab
@@ -11269,7 +11269,7 @@ classDiagram
   PolyNetPolicy --* PolyNet : policy
   CriticHead --* MandatoryManager : critic
   GateHead --* MandatoryManager : gate_head
-  MandatorySelectionHead --* MandatoryManager : mandatory_head
+  PackingHead --* MandatoryManager : mandatory_head
   MandatoryManager --* ManagerSelector : manager
   MandatoryManager --* ManagerSelector : manager
   TemporalEncoder --* MandatoryManager : temporal_encoder
@@ -11496,10 +11496,10 @@ classDiagram
   MP_PSO_Params --* MultiPeriodPSOPolicy : params
   MP_BMC_Params --* MultiPeriodSimulatedAnnealingPolicy : params
   RTSParams --* RLAHVPLParams : rts_params
-  ARCOParams --* AdaptiveRouteConstructorOrchestrator : params
-  ARCOParams --* AdaptiveRouteConstructorOrchestrator : params
-  SRCParams --* SequentialRouteConstructor : params
-  SRCParams --* SequentialRouteConstructor : params
+  ARCOParams --* AdaptiveRoutingAlgorithmOrchestrator : params
+  ARCOParams --* AdaptiveRoutingAlgorithmOrchestrator : params
+  SRCParams --* SequentialRoutingAlgorithm : params
+  SRCParams --* SequentialRoutingAlgorithm : params
   OperatorSelectionPolicy --* NeuralSelectorRouteImprover : policy_net
   JsonFormatter --* LogstashTcpHandler : formatter
   CPSATConfig --o CPSATEngine : config

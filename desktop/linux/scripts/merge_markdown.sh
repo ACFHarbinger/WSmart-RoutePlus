@@ -7,8 +7,8 @@ OUTPUT="$DST_DIR/algorithms.md"
 
 # Define the files in the specific mandatory order
 FILES=(
-    "$SRC_DIR/mandatory_selection.md"
-    "$SRC_DIR/route_construction.md"
+    "$SRC_DIR/packing.md"
+    "$SRC_DIR/routing.md"
     "$SRC_DIR/acceptance_criteria.md"
     "$SRC_DIR/route_improvement.md"
 )

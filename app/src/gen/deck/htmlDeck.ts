@@ -275,8 +275,8 @@ ${groups.length ? `<p class="groups">${esc(groups.join("   ·   "))}</p>` : ""}
   // native-shape diagrams as HTML/CSS
   private pipelineHtml(): string {
     const stages: [string, string][] = [
-      ["Mandatory bin selection strategy", "LA · LM · SL — which bins today?"],
-      ["Route constructor", "exact · meta-h. · hyper-h. — build the routes"],
+      ["Packing algorithm", "LA · LM · SL — which bins today?"],
+      ["Routing algorithm", "exact · meta-h. · hyper-h. — build the routes"],
       ["Acceptance criterion (optional)", "constructor-dependent, e.g. BMC, OI"],
       ["Route improver (optional)", "CLS · FTSP — post-optimisation"],
     ];
@@ -301,10 +301,10 @@ ${groups.length ? `<p class="groups">${esc(groups.join("   ·   "))}</p>` : ""}
         )
         .join("");
     return `<div class="policy-grid">${col(
-      "Mandatory Selection",
+      "Packing",
       flat(["Look-Ahead (LA)", "Last-Minute (LM, CF70)", "Last-Minute (LM, CF90)", "Service-Level (SL1)", "Service-Level (SL2)"])
     )}${col(
-      "Route Constructor",
+      "Routing Algorithm",
       grouped([
         ["Exact Methods", ["BPC", "SWC-TCF"]],
         ["Meta-Heuristics", ["HGS", "ALNS", "SANS", "PG-CLNS", "PSOMA"]],

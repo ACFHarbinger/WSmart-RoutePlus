@@ -221,7 +221,7 @@ batch = {
 tours, log_probs = model(batch, return_pi=True)
 ```
 
-#### MandatorySelectionManager (`models/gat_lstm_manager.py`)
+#### PackingManager (`models/gat_lstm_manager.py`)
 
 The **GAT-LSTM Manager** is a high-level agent for Hierarchical Reinforcement Learning (HRL). It decides _when_ to trigger a collection route based on temporal patterns.
 
@@ -234,9 +234,9 @@ The **GAT-LSTM Manager** is a high-level agent for Hierarchical Reinforcement Le
 **Usage in HRL:**
 
 ```python
-from logic.src.models.gat_lstm_manager import MandatorySelectionManager
+from logic.src.models.gat_lstm_manager import PackingManager
 
-manager = MandatorySelectionManager(
+manager = PackingManager(
     input_dim=64,
     hidden_dim=128,
     n_layers=2
@@ -1704,7 +1704,7 @@ A:
 
 - Small instances (< 50 nodes): AttentionModel with GATEncoder
 - Large instances (> 100 nodes): TransGCN or DeepDecoderAM
-- Temporal problems: MandatorySelectionManager + AttentionModel (HRL)
+- Temporal problems: PackingManager + AttentionModel (HRL)
 - Distribution shift: MetaRNN
 
 **Q: How do I export a trained model for deployment?**

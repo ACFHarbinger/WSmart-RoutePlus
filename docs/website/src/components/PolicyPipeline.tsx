@@ -42,13 +42,13 @@ export default function PolicyPipeline() {
       </div>
       <div className="viz-pipeline">
         <div className="viz-stage">
-          <div className="viz-stage-label">Stage 1 · Mandatory selection</div>
+          <div className="viz-stage-label">Stage 1 · Packing</div>
           <div className="viz-stage-count">{data.counts.selection} strategies</div>
           <select
             className="viz-select"
             value={selection}
             onChange={(e) => setSelection(e.target.value)}
-            aria-label="Choose a mandatory-selection strategy"
+            aria-label="Choose a packing algorithm"
           >
             <option value="">Select a strategy…</option>
             {data.selection.map((s) => (
@@ -60,7 +60,7 @@ export default function PolicyPipeline() {
         </div>
 
         <div className="viz-stage">
-          <div className="viz-stage-label">Stage 2 · Route construction</div>
+          <div className="viz-stage-label">Stage 2 · Routing</div>
           <div className="viz-stage-count">
             {data.counts.constructors} constructors · {data.counts.families} families
           </div>
@@ -68,7 +68,7 @@ export default function PolicyPipeline() {
             className="viz-select"
             value={constructor}
             onChange={(e) => setConstructor(e.target.value)}
-            aria-label="Choose a route constructor"
+            aria-label="Choose a routing algorithm"
           >
             <option value="">Select a constructor…</option>
             {data.construction.map((f) => (

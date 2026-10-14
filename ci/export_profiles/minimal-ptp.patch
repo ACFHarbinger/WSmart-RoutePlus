@@ -525,7 +525,7 @@ index d63ac48f3..d04a64705 100644
  | RL algorithm | REINFORCE (exponential / rollout / critic baselines) |
 -| Environments | `ptp` (Profitable Tour Problem), `mvptp` (Multi-Vehicle Profitable Tour Problem) |
 +| Environments | `ptp` (Profitable Tour Problem), `cptp` (Capacitated Profitable Tour Problem) |
- | Route construction policies | `pg_clns`, `sans`, `swc_tcf`, `na` (Neural Agent) |
+ | Routing policies | `pg_clns`, `sans`, `swc_tcf`, `na` (Neural Agent) |
  | Mandatory-bin selection | `lookahead`, `last_minute`, `service_level` |
 -| Route improvement | `fast_tsp` |
 -| Acceptance criteria | `bmc` (Boltzmann/Metropolis), `oi` (only-improving) |
@@ -1981,7 +1981,7 @@ index 000000000..e5b5b3568
 +|       |   |   |-- na.py
 +|       |   |   |-- other
 +|       |   |   |   |-- __init__.py
-+|       |   |   |   `-- mandatory_selection.py
++|       |   |   |   `-- packing.py
 +|       |   |   |-- pg_clns.py
 +|       |   |   |-- sans.py
 +|       |   |   `-- swc_tcf.py
@@ -2063,9 +2063,9 @@ index 000000000..e5b5b3568
 +|       |   |   `-- selection_context.py
 +|       |   |-- env.py
 +|       |   |-- __init__.py
-+|       |   |-- mandatory_selection.py
++|       |   |-- packing.py
 +|       |   |-- policy.py
-+|       |   |-- route_constructor.py
++|       |   |-- routing_algorithm.py
 +|       |   |-- tensor_dict_like.py
 +|       |   `-- traversable.py
 +|       |-- models
@@ -2188,7 +2188,7 @@ index 000000000..e5b5b3568
 +|       |       |   |-- __init__.py
 +|       |       |   |-- logging.py
 +|       |       |   |-- node_selection.py
-+|       |       |   |-- route_construction.py
++|       |       |   |-- routing.py
 +|       |       |   `-- time_constraints.py
 +|       |       |-- bins
 +|       |       |   |-- base.py
@@ -2219,7 +2219,7 @@ index 000000000..e5b5b3568
 +|       |           `-- save_load.py
 +|       |-- policies
 +|       |   |-- __init__.py
-+|       |   |-- mandatory_selection
++|       |   |-- packing
 +|       |   |   |-- base
 +|       |   |   |   |-- eoq.py
 +|       |   |   |   |-- __init__.py
@@ -2236,7 +2236,7 @@ index 000000000..e5b5b3568
 +|       |   |       |-- last_minute.py
 +|       |   |       |-- lookahead.py
 +|       |   |       `-- service_level.py
-+|       |   `-- route_construction
++|       |   `-- routing
 +|       |       |-- base
 +|       |       |   |-- base_routing_policy.py
 +|       |       |   |-- factory.py
@@ -2592,7 +2592,7 @@ index 8c5e64349..f150130fc 100644
 @@ -83,5 +83,4 @@ pg_clns:
      - profit_aware_operators: true
      - vrpp: true
-     - mandatory_selection: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
+     - packing: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
 -    - route_improvement: { "other/ri_ftsp.yaml": ["default"] }
  # =============================================================================
 diff --git a/logic/configs/policies/policy_sans.yaml b/logic/configs/policies/policy_sans.yaml
@@ -3030,8 +3030,8 @@ index eaf4b73ff..78f7b46f5 100644
  
  from .envs import EnvConfig, GraphConfig, ObjectiveConfig
  from .models import DecoderConfig, DecodingConfig, EncoderConfig, ModelConfig, OptimConfig
--from .policies.other import MandatorySelectionConfig, RouteImprovingConfig
-+from .policies.other import MandatorySelectionConfig
+-from .policies.other import PackingConfig, RouteImprovingConfig
++from .policies.other import PackingConfig
  from .rl import RLConfig
 -from .tasks import DataConfig, EvalConfig, SimConfig, TrainConfig
 +from .tasks import SimConfig, TrainConfig
@@ -3072,7 +3072,7 @@ index eaf4b73ff..78f7b46f5 100644
      "SimConfig",
 -    "DataConfig",
      "TrackingConfig",
-     "MandatorySelectionConfig",
+     "PackingConfig",
 -    "RouteImprovingConfig",
      "Config",
      "EncoderConfig",
@@ -3209,7 +3209,7 @@ index 9c81255a5..d8ce6b508 100644
 +Attributes:
      NeuralAgentConfig: Neural agent policy configuration.
 -    NDSBRKGAConfig: NDSBRKGA policy configuration.
-     MandatorySelectionConfig: Mandatory selection policy configuration.
+     PackingConfig: Packing policy configuration.
 -    RouteImprovingConfig: Route improving policy configuration.
 -    PHConfig: PH policy configuration.
 -    PHHConfig: PHH policy configuration.
@@ -3314,8 +3314,8 @@ index 9c81255a5..d8ce6b508 100644
 -# from .mp_sa import MP_SA_Config  # AUTO-CLEANED
 -# from .ms_bpc_sp import MSBPCSPConfig  # AUTO-CLEANED
  from .na import NeuralAgentConfig
--from .other import MandatorySelectionConfig, RouteImprovingConfig
-+from .other import MandatorySelectionConfig
+-from .other import PackingConfig, RouteImprovingConfig
++from .other import PackingConfig
  from .pg_clns import PGCLNSConfig
 -# from .ph import PHConfig  # AUTO-CLEANED
 -# from .phh import PHHConfig  # AUTO-CLEANED
@@ -3370,7 +3370,7 @@ index 9c81255a5..d8ce6b508 100644
 -#     "HVPLConfig",  # AUTO-CLEANED
 -#     "KGLSConfig",  # AUTO-CLEANED
 -#     "LKH3Config",  # AUTO-CLEANED
-+    "MandatorySelectionConfig",
++    "PackingConfig",
      "NeuralAgentConfig",
 -    "RLALNSConfig",
 -    "RLGDHHConfig",
@@ -3381,7 +3381,7 @@ index 9c81255a5..d8ce6b508 100644
 -#     "TSPConfig",  # AUTO-CLEANED
      "SWCTCFConfig",
 -#     "POPMUSICConfig",  # AUTO-CLEANED
--    "MandatorySelectionConfig",
+-    "PackingConfig",
 -    "RouteImprovingConfig",
 -#     "HULKConfig",  # AUTO-CLEANED
 -#     "QDEConfig",  # AUTO-CLEANED
@@ -3447,7 +3447,7 @@ index 5be82a06a..4da5b9fb9 100644
 @@ -28,7 +28,6 @@ class NeuralAgentConfig:
          model: Model configuration (architecture and load path).
          reward: Objective/reward weights configuration.
-         mandatory_selection: List of mandatory strategy config files.
+         packing: List of packing algorithm config files.
 -        route_improvement: List of route improvement operations to apply.
          seed: Random seed for reproducibility.
          vrpp: Whether the problem is a VRP with Profits.
@@ -3455,7 +3455,7 @@ index 5be82a06a..4da5b9fb9 100644
 @@ -36,6 +35,5 @@ class NeuralAgentConfig:
      model: ModelConfig = field(default_factory=ModelConfig)
      reward: ObjectiveConfig = field(default_factory=ObjectiveConfig)
-     mandatory_selection: Optional[Any] = None
+     packing: Optional[Any] = None
 -    route_improvement: Optional[Any] = None
      seed: Optional[int] = None
      vrpp: bool = True
@@ -3468,7 +3468,7 @@ index 1086d254c..9fedb65dd 100644
  
  Attributes:
 -    AcceptanceConfig: Configuration for the acceptance criterion (e.g., simulated annealing).
-     MandatorySelectionConfig: Configuration for mandatory node selection strategies.
+     PackingConfig: Configuration for packing algorithms.
 -    RLConfig: Configuration for reinforcement learning policies.
 -    RewardShapingConfig: Configuration for reward shaping strategies.
 -    FeatureExtractorConfig: Configuration for feature extractors.
@@ -3481,7 +3481,7 @@ index 1086d254c..9fedb65dd 100644
  """
  
 -from .acceptance_criteria import AcceptanceConfig
- from .mandatory_selection import MandatorySelectionConfig
+ from .packing import PackingConfig
 -from .reinforcement_learning import (
 -    BanditConfig,
 -    ContextFeatureExtractorConfig,
@@ -3502,17 +3502,17 @@ index 1086d254c..9fedb65dd 100644
 -    "FeatureExtractorConfig",
 -    "ContextFeatureExtractorConfig",
 -    "RLConfig",
--    "MandatorySelectionConfig",
+-    "PackingConfig",
 -    "RouteImprovingConfig",
 -    "AcceptanceConfig",
 -]
-+__all__ = ["MandatorySelectionConfig"]
-diff --git a/logic/src/configs/policies/other/mandatory_selection.py b/logic/src/configs/policies/other/mandatory_selection.py
++__all__ = ["PackingConfig"]
+diff --git a/logic/src/configs/policies/other/packing.py b/logic/src/configs/policies/other/packing.py
 index 7ae7f9282..c0b412a1b 100644
---- a/logic/src/configs/policies/other/mandatory_selection.py
-+++ b/logic/src/configs/policies/other/mandatory_selection.py
+--- a/logic/src/configs/policies/other/packing.py
++++ b/logic/src/configs/policies/other/packing.py
 @@ -2,52 +2,23 @@
- Mandatory Selection Config module.
+ Packing Config module.
  
  Configures the strategies used to determine which bins must be collected
 -during simulation or training. This module follows the modular pattern of
@@ -3553,13 +3553,13 @@ index 7ae7f9282..c0b412a1b 100644
 +    LastMinuteSelectionConfig: Configuration for last-minute selection.
 +    ServiceLevelSelectionConfig: Configuration for service-level selection.
 +    LookaheadSelectionConfig: Configuration for lookahead selection.
-+    MandatorySelectionConfig: Main configuration composing the strategy sub-configs.
++    PackingConfig: Main configuration composing the strategy sub-configs.
  
  Example:
-     >>> from configs.policies.other.mandatory_selection import MandatorySelectionConfig
--    >>> config = MandatorySelectionConfig(method='last_minute', last_minute=LastMinuteSelectionConfig(threshold=0.8))
+     >>> from configs.policies.other.packing import PackingConfig
+-    >>> config = PackingConfig(method='last_minute', last_minute=LastMinuteSelectionConfig(threshold=0.8))
 -    >>> config.method
-+    >>> config = MandatorySelectionConfig(strategy='last_minute')
++    >>> config = PackingConfig(strategy='last_minute')
 +    >>> config.strategy
      'last_minute'
 -    >>> config.last_minute.threshold
@@ -3931,9 +3931,9 @@ index 7ae7f9282..c0b412a1b 100644
 -
 -
  @dataclass
- class MandatorySelectionConfig:
+ class PackingConfig:
      """Main configuration for mandatory bin selection.
-@@ -434,30 +65,8 @@ class MandatorySelectionConfig:
+@@ -434,30 +65,8 @@ class PackingConfig:
      Attributes:
          strategy: Primary selection strategy name.
          last_minute: Params for LastMinuteSelection.
@@ -3964,7 +3964,7 @@ index 7ae7f9282..c0b412a1b 100644
          params: Additional strategy-specific parameters as a dictionary.
      """
  
-@@ -465,32 +74,8 @@ class MandatorySelectionConfig:
+@@ -465,32 +74,8 @@ class PackingConfig:
  
      # Strategy-specific sub-configs
      last_minute: LastMinuteSelectionConfig = field(default_factory=LastMinuteSelectionConfig)
@@ -4019,7 +4019,7 @@ index 67b9da98f..dc79df99d 100644
  
 -from .aco_ks import KSparseACOConfig
 -from .alns import ALNSConfig
-+from .other.mandatory_selection import MandatorySelectionConfig
++from .other.packing import PackingConfig
 +
 +
 +@dataclass
@@ -4041,7 +4041,7 @@ index 67b9da98f..dc79df99d 100644
 +        local_search: Whether to apply local search after construction.
 +        local_search_iterations: Number of local search iterations.
 +        elitist_weight: Weight for elitist pheromone update.
-+        mandatory_selection: List of mandatory strategy config files.
++        packing: List of packing algorithm config files.
 +    """
 +
 +    n_ants: int = 20
@@ -4060,7 +4060,7 @@ index 67b9da98f..dc79df99d 100644
 +    local_search_iterations: int = 500
 +    elitist_weight: float = 1.0
 +    vrpp: bool = True
-+    mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
++    packing: Optional[List[PackingConfig]] = None
 +
 +
 +@dataclass
@@ -4077,7 +4077,7 @@ index 67b9da98f..dc79df99d 100644
 +        start_temp_control: 'w' parameter: accept a 5% worse solution with 0.5 probability
 +        xi: 'xi' parameter: fraction of total nodes for max removal cap
 +        engine: Solver engine to use ('custom', 'alns').
-+        mandatory_selection: List of mandatory strategy config files.
++        packing: List of packing algorithm config files.
 +    """
 +
 +    time_limit: float = 60.0
@@ -4093,14 +4093,14 @@ index 67b9da98f..dc79df99d 100644
 +    vrpp: bool = True
 +    profit_aware_operators: bool = False
 +    extended_operators: bool = False
-+    mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
++    packing: Optional[List[PackingConfig]] = None
  
  
  @dataclass
 @@ -33,7 +108,6 @@ class PGCLNSConfig:
          vrpp: Whether to enable VRP with Profits logic.
          profit_aware_operators: Whether to use operators aware of node profits.
-         mandatory_selection: List of mandatory strategy config files.
+         packing: List of packing algorithm config files.
 -        route_improvement: List of route improvement operations to apply.
      """
  
@@ -4130,7 +4130,7 @@ index 67b9da98f..dc79df99d 100644
 @@ -79,4 +153,3 @@ class PGCLNSConfig:
      vrpp: bool = True
      profit_aware_operators: bool = True
-     mandatory_selection: List[str] = field(default_factory=list)
+     packing: List[str] = field(default_factory=list)
 -    route_improvement: List[Any] = field(default_factory=list)
 diff --git a/logic/src/configs/policies/sans.py b/logic/src/configs/policies/sans.py
 index d8d7f7e12..30692a428 100644
@@ -4138,7 +4138,7 @@ index d8d7f7e12..30692a428 100644
 +++ b/logic/src/configs/policies/sans.py
 @@ -27,7 +27,6 @@ Example:
      None
-     >>> config.mandatory_selection
+     >>> config.packing
      None
 -    >>> config.route_improvement
      None
@@ -4147,7 +4147,7 @@ index d8d7f7e12..30692a428 100644
 @@ -35,7 +34,6 @@ from dataclasses import dataclass
  from typing import List, Literal, Optional
  
- from .other.mandatory_selection import MandatorySelectionConfig
+ from .other.packing import PackingConfig
 -from .other.route_improvement import RouteImprovingConfig
  
  
@@ -4155,7 +4155,7 @@ index d8d7f7e12..30692a428 100644
 @@ -53,7 +51,6 @@ class SANSConfig:
          combination: Seven numbers read by position by the 'og' engine (iterations, initial
              temperature, cooling factor, vehicle, load, route-difference and shift penalties).
-         mandatory_selection: List of mandatory strategy config files.
+         packing: List of packing algorithm config files.
 -        route_improvement: List of route improvement operations to apply.
      """
  
@@ -4163,7 +4163,7 @@ index d8d7f7e12..30692a428 100644
 @@ -66,4 +63,3 @@ class SANSConfig:
      alpha: float = 0.95
      combination: Optional[List[float]] = None
-     mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
+     packing: Optional[List[PackingConfig]] = None
 -    route_improvement: Optional[List[RouteImprovingConfig]] = None
 diff --git a/logic/src/configs/policies/swc_tcf.py b/logic/src/configs/policies/swc_tcf.py
 index 582f186fc..12553010d 100644
@@ -4171,7 +4171,7 @@ index 582f186fc..12553010d 100644
 +++ b/logic/src/configs/policies/swc_tcf.py
 @@ -21,7 +21,6 @@ Example:
      'ortools'
-     >>> config.mandatory_selection
+     >>> config.packing
      None
 -    >>> config.route_improvement
      None
@@ -4180,7 +4180,7 @@ index 582f186fc..12553010d 100644
 @@ -29,7 +28,6 @@ from dataclasses import dataclass
  from typing import List, Optional
  
- from .other.mandatory_selection import MandatorySelectionConfig
+ from .other.packing import PackingConfig
 -from .other.route_improvement import RouteImprovingConfig
  
  
@@ -4197,7 +4197,7 @@ index 582f186fc..12553010d 100644
 @@ -53,7 +51,6 @@ class SWCTCFConfig:
          warm_start: Native Gurobi only; off by default. Loads Clarke-Wright MIP
              starts, which are not part of the published model (#41).
-         mandatory_selection: List of mandatory strategy config files.
+         packing: List of packing algorithm config files.
 -        route_improvement: List of route improvement operations to apply.
      """
  
@@ -4205,7 +4205,7 @@ index 582f186fc..12553010d 100644
 @@ -72,4 +69,3 @@ class SWCTCFConfig:
      max_arc_distance_km: Optional[float] = None
      warm_start: bool = False
-     mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
+     packing: Optional[List[PackingConfig]] = None
 -    route_improvement: Optional[List[RouteImprovingConfig]] = None
 diff --git a/logic/src/configs/rl/__init__.py b/logic/src/configs/rl/__init__.py
 index 0399fde74..4cb8c7373 100644
@@ -6226,10 +6226,10 @@ index 720452be3..035896efa 100644
      IBinContainer: Interface for bin containers
      IDistanceMetric: Interface for distance metrics
      IEnv: Interface for environments
-     IMandatorySelectionStrategy: Interface for mandatory selection strategies
+     IPackingAlgorithm: Interface for packing algorithms
 -    IModel: Interface for models
      IPolicy: Interface for policies
-     IRouteConstructor: Interface for route constructors
+     IRoutingAlgorithm: Interface for routing algorithms
 -    IRouteImprovement: Interface for route improvements
      ITensorDictLike: Interface for tensor dict like objects
      ITraversable: Interface for traversable objects
@@ -6240,10 +6240,10 @@ index 720452be3..035896efa 100644
          IBinContainer,
          IDistanceMetric,
          IEnv,
-         IMandatorySelectionStrategy,
+         IPackingAlgorithm,
 -        IModel,
          IPolicy,
-         IRouteConstructor,
+         IRoutingAlgorithm,
 -        IRouteImprovement,
          ITensorDictLike,
          ITraversable,
@@ -6262,20 +6262,20 @@ index 720452be3..035896efa 100644
 @@ -44,21 +35,16 @@ from .context import (
  )
  from .env import IEnv
- from .mandatory_selection import IMandatorySelectionStrategy
+ from .packing import IPackingAlgorithm
 -from .model import IModel
  from .policy import IPolicy
- from .route_constructor import IRouteConstructor
+ from .routing_algorithm import IRoutingAlgorithm
 -from .route_improvement import IRouteImprovement
  from .tensor_dict_like import ITensorDictLike
  from .traversable import ITraversable
  
  __all__ = [
 -    "IAcceptanceCriterion",
-     "IRouteConstructor",
+     "IRoutingAlgorithm",
      "IEnv",
 -    "IModel",
-     "IMandatorySelectionStrategy",
+     "IPackingAlgorithm",
      "IPolicy",
 -    "IRouteImprovement",
      "ITensorDictLike",
@@ -6365,9 +6365,9 @@ index aec296e44..0ecef4cef 100644
  may hold mutable state that belongs in this ledger (e.g. ``self.info = {}``).
  
  Architecture
-@@ -14,14 +14,7 @@ Phase 1 — Mandatory Selection
+@@ -14,14 +14,7 @@ Phase 1 — Packing
  
- Phase 2 — Route Construction
+ Phase 2 — Routing
      Receives the ``SearchContext`` from Phase 1.  Merges its own
 -    ``ConstructionMetrics`` and, on each acceptance-criterion call,
 -    the returned ``AcceptanceMetrics`` via ``merge_context()``.
@@ -6383,8 +6383,8 @@ index aec296e44..0ecef4cef 100644
  ---------------------
 @@ -43,8 +36,6 @@ Attributes:
      SearchContext: Immutable state ledger that flows through the three-phase pipeline
-     SelectionMetrics: Intermediate outputs from Mandatory Selection
-     ConstructionMetrics: Intermediate outputs from Route Construction
+     SelectionMetrics: Intermediate outputs from Packing
+     ConstructionMetrics: Intermediate outputs from Routing
 -    AcceptanceMetrics: Per-step acceptance criterion outputs
 -    ImprovementMetrics: Statistics from Route Improvement
      SearchPhase: Enum for pipeline phases
@@ -6453,8 +6453,8 @@ index aec296e44..0ecef4cef 100644
      produce a new instance with updated fields.
 @@ -143,18 +111,12 @@ class SearchContext:
          phase: The pipeline phase that last wrote to this context.
-         selection_metrics: Intermediate outputs from Mandatory Selection.
-         construction_metrics: Intermediate outputs from Route Construction.
+         selection_metrics: Intermediate outputs from Packing.
+         construction_metrics: Intermediate outputs from Routing.
 -        acceptance_trace: Ordered list of per-step ``AcceptanceMetrics``
 -            emitted by ``IAcceptanceCriterion.accept()`` during construction
 -            or improvement.
@@ -6562,16 +6562,16 @@ index 6b0029a0f..e2fdc3a48 100644
      # --- Filter-and-Fan ---
      ff_filter_width: int = 0  # 0 = auto (max(5, n_bins // 3))
      ff_fan_depth: int = 3  # number of add/remove sweep passes
-diff --git a/logic/src/interfaces/route_constructor.py b/logic/src/interfaces/route_constructor.py
+diff --git a/logic/src/interfaces/routing_algorithm.py b/logic/src/interfaces/routing_algorithm.py
 index 66c7fa7d7..94184ff78 100644
---- a/logic/src/interfaces/route_constructor.py
-+++ b/logic/src/interfaces/route_constructor.py
+--- a/logic/src/interfaces/routing_algorithm.py
++++ b/logic/src/interfaces/routing_algorithm.py
 @@ -12,7 +12,6 @@ Attributes:
  Example:
-     >>> from logic.src.interfaces.route_constructor import IRouteConstructor
+     >>> from logic.src.interfaces.routing_algorithm import IRoutingAlgorithm
      >>> from logic.src.interfaces.context.search_context import SearchContext
 -    >>> from logic.src.interfaces.context.multi_day_context import MultiDayContext
-     >>> class MyRouteConstructor(IRouteConstructor):
+     >>> class MyRoutingAlgorithm(IRoutingAlgorithm):
      ...     def execute(
      ...         self,
 @@ -22,20 +21,18 @@ Example:
@@ -6583,8 +6583,8 @@ index 66c7fa7d7..94184ff78 100644
 -    ...         return [], 0.0, 0.0, None, None
 +    ...         return [], 0.0, 0.0, None
      ...
-     >>> route_constructor = MyRouteConstructor()
-     >>> route_constructor.execute()
+     >>> routing_algorithm = MyRoutingAlgorithm()
+     >>> routing_algorithm.execute()
 -    ([], 0.0, 0.0, None, None)
 +    ([], 0.0, 0.0, None)
  """
@@ -6597,7 +6597,7 @@ index 66c7fa7d7..94184ff78 100644
      from logic.src.interfaces.context.search_context import SearchContext
  
  
-@@ -46,8 +43,7 @@ class IRouteConstructor(ABC):
+@@ -46,8 +43,7 @@ class IRoutingAlgorithm(ABC):
      Adapts various policies (Neural, Classical, Heuristic) to a common
      execution interface for the simulator.  The ``execute()`` method
      returns the ``SearchContext`` enriched during Phase 2 in the fourth
@@ -6607,7 +6607,7 @@ index 66c7fa7d7..94184ff78 100644
  
      Attributes:
          None: No attributes
-@@ -62,7 +58,6 @@ class IRouteConstructor(ABC):
+@@ -62,7 +58,6 @@ class IRoutingAlgorithm(ABC):
          float,
          float,
          Optional["SearchContext"],
@@ -6615,7 +6615,7 @@ index 66c7fa7d7..94184ff78 100644
      ]:
          """
          Execute the policy to generate a route.
-@@ -70,7 +65,7 @@ class IRouteConstructor(ABC):
+@@ -70,7 +65,7 @@ class IRoutingAlgorithm(ABC):
          Args:
              kwargs: Context dictionary containing simulation state.
                  May include ``search_context`` (a ``SearchContext`` from
@@ -6624,7 +6624,7 @@ index 66c7fa7d7..94184ff78 100644
  
          Returns:
              Tuple containing:
-@@ -78,5 +73,4 @@ class IRouteConstructor(ABC):
+@@ -78,5 +73,4 @@ class IRoutingAlgorithm(ABC):
                  - ``cost``: Total routing cost.
                  - ``profit``: Net profit (revenue - cost).
                  - ``search_context``: Updated ``SearchContext``.
@@ -7923,7 +7923,7 @@ index 7b06edc37..fcfa52f70 100644
  from logic.src.pipeline.rl import REINFORCE
 -from logic.src.policies.vector import AttentionModelPolicy
 +from logic.src.models.core.attention_model.policy import AttentionModelPolicy
- from logic.src.policies.mandatory_selection.vectorized.factory import create_selector_from_config
+ from logic.src.policies.packing.vectorized.factory import create_selector_from_config
  from logic.src.tracking.logging.pylogger import get_pylogger  
  
 -try:
@@ -8492,16 +8492,16 @@ index 76067b0d4..f41eb96db 100644
 +++ b/logic/src/pipeline/simulations/actions/__init__.py
 @@ -14,7 +14,6 @@ from .fill import FillAction
  from .logging import LogAction
- from .node_selection import MandatorySelectionAction
- from .route_construction import RouteConstructionAction
+ from .node_selection import PackingAction
+ from .routing import RoutingAction
 -from .route_improvement import RouteImprovementAction
  
  __all__ = [
      "SimulationAction",
 @@ -22,7 +21,6 @@ __all__ = [
      "FillAction",
-     "MandatorySelectionAction",
-     "RouteConstructionAction",
+     "PackingAction",
+     "RoutingAction",
 -    "RouteImprovementAction",
      "CollectAction",
      "LogAction",
@@ -8551,19 +8551,19 @@ index 5aa92c165..3b61b6129 100644
 @@ -21,7 +21,7 @@ import numpy as np
  
  from logic.src.constants.paths import CONFIGS_DIR
- from logic.src.configs import MandatorySelectionConfig
+ from logic.src.configs import PackingConfig
 -from logic.src.constants import MAX_CAPACITY_PERCENT, ROOT_DIR
 +from logic.src.constants import MAX_CAPACITY_PERCENT
  from logic.src.interfaces import IBinContainer, ITraversable
  from logic.src.interfaces.context.search_context import SearchContext
- from logic.src.policies.mandatory_selection import MandatorySelectionFactory, SelectionContext
-diff --git a/logic/src/pipeline/simulations/actions/route_construction.py b/logic/src/pipeline/simulations/actions/route_construction.py
+ from logic.src.policies.packing import PackingFactory, SelectionContext
+diff --git a/logic/src/pipeline/simulations/actions/routing.py b/logic/src/pipeline/simulations/actions/routing.py
 index 7b0a8c8a3..9c1041348 100644
---- a/logic/src/pipeline/simulations/actions/route_construction.py
-+++ b/logic/src/pipeline/simulations/actions/route_construction.py
-@@ -126,57 +126,16 @@ class RouteConstructionAction(SimulationAction):
+--- a/logic/src/pipeline/simulations/actions/routing.py
++++ b/logic/src/pipeline/simulations/actions/routing.py
+@@ -126,57 +126,16 @@ class RoutingAction(SimulationAction):
          try:
-             adapter = RouteConstructorFactory.get_adapter(solver_key, config=raw_cfg)
+             adapter = RoutingAlgorithmFactory.get_adapter(solver_key, config=raw_cfg)
  
 -            # --- MULTI-PERIOD ENHANCEMENTS ---
 -            # 1. Initialize or Retrieve MultiDayContext
@@ -8618,11 +8618,11 @@ index 7b0a8c8a3..9c1041348 100644
              # Calculate preliminary KM from the construction phase. Note that final
              # definitive metrics (KM and Profit) are re-computed in CollectAction
 -            # to account for the entire policy pipeline (mandatory + construction + improvement).
-+            # to account for the entire policy pipeline (mandatory selection + construction).
++            # to account for the entire policy pipeline (packing + construction).
              from logic.src.utils.routing.tours import (
                  get_route_cost,
              )
-@@ -188,8 +147,6 @@ class RouteConstructionAction(SimulationAction):
+@@ -188,8 +147,6 @@ class RoutingAction(SimulationAction):
              context["extra_output"] = extra_output
              context["time"] = elapsed_time  # construction only; run_day replaces it with the full policy time
              context["solver_status"] = resolve_solver_status(current_solver_status(), tour)
@@ -9231,29 +9231,29 @@ index 91a3ae32b..20f911525 100644
 +++ b/logic/src/pipeline/simulations/day_context.py
 @@ -836,7 +836,6 @@ def run_day(context: SimulationDayContext) -> SimulationDayContext:
          LogAction,
-         MandatorySelectionAction,
-         RouteConstructionAction,
+         PackingAction,
+         RoutingAction,
 -        RouteImprovementAction,
      )
      from logic.src.pipeline.simulations.actions.time_constraints import TimeConstraintAction
  
 @@ -844,17 +843,16 @@ def run_day(context: SimulationDayContext) -> SimulationDayContext:
          FillAction(),
-         MandatorySelectionAction(),
-         RouteConstructionAction(),
+         PackingAction(),
+         RoutingAction(),
 -        RouteImprovementAction(),
          TimeConstraintAction(),
          CollectAction(),
          LogAction(),
      ]
  
-     # The day's "time" is the full policy: mandatory selection + route construction
+     # The day's "time" is the full policy: packing + routing
 -    # + route improvement (owner ruling DS-15). Simulator work (filling, collection,
 +    # (owner ruling DS-15). Simulator work (filling, collection,
      # logging) is excluded; the sample time is the sum of these daily times.
      # (Marked by position rather than isinstance so the actions can be mocked.)
--    policy_steps = {1, 2, 3}  # MandatorySelection, RouteConstruction, RouteImprovement
-+    policy_steps = {1, 2}  # MandatorySelection, RouteConstruction
+-    policy_steps = {1, 2, 3}  # Packing, Routing, RouteImprovement
++    policy_steps = {1, 2}  # Packing, Routing
      log_step = len(commands) - 1  # LogAction
      policy_time = 0.0
      for step, command in enumerate(commands):
@@ -10202,30 +10202,30 @@ index 60064d73f..6576a0cd7 100644
 +++ b/logic/src/policies/__init__.py
 @@ -2,7 +2,7 @@
  
- Route-construction policies retained: PG-CLNS, SANS, SWC-TCF and the Neural Agent.
- Mandatory-selection strategies retained: lookahead, last-minute and service-level.
+ Routing policies retained: PG-CLNS, SANS, SWC-TCF and the Neural Agent.
+ Packing algorithms retained: lookahead, last-minute and service-level.
 -Route improvement retained: Fast-TSP.
 +No route improvement step is shipped.
  
  Attributes:
      NeuralAgent (class): Neural policy wrapper.
-diff --git a/logic/src/policies/mandatory_selection/selection_service_level.py b/logic/src/policies/mandatory_selection/selection_service_level.py
+diff --git a/logic/src/policies/packing/selection_service_level.py b/logic/src/policies/packing/selection_service_level.py
 index 50cc0e90a..a50d29be3 100644
---- a/logic/src/policies/mandatory_selection/selection_service_level.py
-+++ b/logic/src/policies/mandatory_selection/selection_service_level.py
+--- a/logic/src/policies/packing/selection_service_level.py
++++ b/logic/src/policies/packing/selection_service_level.py
 @@ -10,7 +10,7 @@ Attributes:
      ServiceLevelSelection: Selection strategy using linear projection of future fill.
  
  Example:
 -    >>> from logic.src.policies.helpers.mandatory.selection_service_level import ServiceLevelSelection
-+    >>> from logic.src.policies.mandatory_selection.selection_service_level import ServiceLevelSelection
++    >>> from logic.src.policies.packing.selection_service_level import ServiceLevelSelection
      >>> strategy = ServiceLevelSelection()
      >>> bins = strategy.select_bins(context)
  """
-diff --git a/logic/src/policies/mandatory_selection/vectorized/base.py b/logic/src/policies/mandatory_selection/vectorized/base.py
+diff --git a/logic/src/policies/packing/vectorized/base.py b/logic/src/policies/packing/vectorized/base.py
 index 1665d3c60..acdc43a07 100644
---- a/logic/src/policies/mandatory_selection/vectorized/base.py
-+++ b/logic/src/policies/mandatory_selection/vectorized/base.py
+--- a/logic/src/policies/packing/vectorized/base.py
++++ b/logic/src/policies/packing/vectorized/base.py
 @@ -20,7 +20,6 @@ from abc import ABC, abstractmethod
  from typing import Any
  
@@ -10234,10 +10234,10 @@ index 1665d3c60..acdc43a07 100644
  
  
  class VectorizedSelector(ABC):
-diff --git a/logic/src/policies/route_construction/__init__.py b/logic/src/policies/route_construction/__init__.py
+diff --git a/logic/src/policies/routing/__init__.py b/logic/src/policies/routing/__init__.py
 index 7ab949e09..be5016441 100644
---- a/logic/src/policies/route_construction/__init__.py
-+++ b/logic/src/policies/route_construction/__init__.py
+--- a/logic/src/policies/routing/__init__.py
++++ b/logic/src/policies/routing/__init__.py
 @@ -14,11 +14,9 @@ Example:
  from . import exact_and_decomposition_solvers as exact_and_decomposition_solvers
  from . import learning_algorithms as learning_algorithms
@@ -10250,20 +10250,20 @@ index 7ab949e09..be5016441 100644
      "meta_heuristics",
 -    "other_algorithms",
  ]
-diff --git a/logic/src/policies/route_construction/base/base_routing_policy.py b/logic/src/policies/route_construction/base/base_routing_policy.py
+diff --git a/logic/src/policies/routing/base/base_routing_policy.py b/logic/src/policies/routing/base/base_routing_policy.py
 index 92bbe0ae4..06b8d258b 100644
---- a/logic/src/policies/route_construction/base/base_routing_policy.py
-+++ b/logic/src/policies/route_construction/base/base_routing_policy.py
+--- a/logic/src/policies/routing/base/base_routing_policy.py
++++ b/logic/src/policies/routing/base/base_routing_policy.py
 @@ -23,8 +23,6 @@ from omegaconf import DictConfig, ListConfig, OmegaConf
  from logic.src.interfaces.context.search_context import ConstructionMetrics, SearchContext, merge_context
- from logic.src.interfaces.route_constructor import IRouteConstructor
+ from logic.src.interfaces.routing_algorithm import IRoutingAlgorithm
  from logic.src.pipeline.simulations.repository import load_area_and_waste_type_params
 -# from logic.src.tracking.core.run import get_active_run  # AUTO-REMOVED
 -from typing import Any  # AUTO-REPLACED
  
  
  def _flatten_raw_config(source: Any) -> Dict[str, Any]:
-@@ -425,50 +423,15 @@ class BaseRoutingPolicy(IRouteConstructor):
+@@ -425,50 +423,15 @@ class BaseRoutingPolicy(IRoutingAlgorithm):
  
          pass
  
@@ -10316,7 +10316,7 @@ index 92bbe0ae4..06b8d258b 100644
  
          Args:
              kwargs: Simulation context containing:
-@@ -480,20 +443,18 @@ class BaseRoutingPolicy(IRouteConstructor):
+@@ -480,20 +443,18 @@ class BaseRoutingPolicy(IRoutingAlgorithm):
                  - waste_type (str): Waste type (e.g., "plastic").
                  - config (dict): Policy configuration overrides.
                  - search_context (SearchContext): Incoming metrics ledger.
@@ -10339,7 +10339,7 @@ index 92bbe0ae4..06b8d258b 100644
  
          # Ensure we have a ledger even if Phase 1 was skipped (e.g., unit tests)
          if incoming_ctx is None:
-@@ -502,7 +463,7 @@ class BaseRoutingPolicy(IRouteConstructor):
+@@ -502,7 +463,7 @@ class BaseRoutingPolicy(IRoutingAlgorithm):
          # 1. Validate
          early_result = self._validate_mandatory(mandatory)
          if early_result is not None:
@@ -10348,7 +10348,7 @@ index 92bbe0ae4..06b8d258b 100644
  
          # 2. Extract context
          bins = kwargs["bins"]
-@@ -513,7 +474,6 @@ class BaseRoutingPolicy(IRouteConstructor):
+@@ -513,7 +474,6 @@ class BaseRoutingPolicy(IRoutingAlgorithm):
  
          # 3. Load parameters
          capacity, revenue, cost_unit, values = self._load_area_params(area, waste_type, config)
@@ -10356,7 +10356,7 @@ index 92bbe0ae4..06b8d258b 100644
          # 4. Create subset problem
          # use_all_bins=True (VRPP mode) allows the solver to CONSIDER all bins,
          # but only forcefully visit the mandatory list (mandatory_nodes).
-@@ -606,7 +566,7 @@ class BaseRoutingPolicy(IRouteConstructor):
+@@ -606,7 +566,7 @@ class BaseRoutingPolicy(IRoutingAlgorithm):
          else:
              out_ctx = None
  
@@ -10365,26 +10365,26 @@ index 92bbe0ae4..06b8d258b 100644
  
      def _viz_record(self, **kwargs: Any) -> None:  # noqa: B027
          pass
-diff --git a/logic/src/policies/route_construction/base/factory.py b/logic/src/policies/route_construction/base/factory.py
+diff --git a/logic/src/policies/routing/base/factory.py b/logic/src/policies/routing/base/factory.py
 index a26d63c2f..8e0fae147 100644
---- a/logic/src/policies/route_construction/base/factory.py
-+++ b/logic/src/policies/route_construction/base/factory.py
-@@ -50,11 +50,7 @@ class RouteConstructorFactory:
+--- a/logic/src/policies/routing/base/factory.py
++++ b/logic/src/policies/routing/base/factory.py
+@@ -50,11 +50,7 @@ class RoutingAlgorithmFactory:
          # Learning Algorithms
-         import logic.src.policies.route_construction.learning_algorithms as learning_algorithms  # noqa
+         import logic.src.policies.routing.learning_algorithms as learning_algorithms  # noqa
  
 -        # Acceptance Criteria
 -        import logic.src.policies.acceptance_criteria as acceptance_criteria  # noqa
  
 -        # Other Algorithms
--        import logic.src.policies.route_construction.other_algorithms as other_algorithms  # noqa
+-        import logic.src.policies.routing.other_algorithms as other_algorithms  # noqa
  
          # Some family packages do not import every adapter in their __init__ (SWC-TCF, EGH, LASM,
          # CP-SAT, the stochastic/decomposition solvers, ...). Import every ``policy_*`` module so the
-diff --git a/logic/src/policies/route_construction/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/params.py b/logic/src/policies/route_construction/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/params.py
+diff --git a/logic/src/policies/routing/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/params.py b/logic/src/policies/routing/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/params.py
 index 9e609bb33..89e2efe62 100644
---- a/logic/src/policies/route_construction/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/params.py
-+++ b/logic/src/policies/route_construction/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/params.py
+--- a/logic/src/policies/routing/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/params.py
++++ b/logic/src/policies/routing/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/params.py
 @@ -4,7 +4,7 @@ Attributes:
      SWCTCFParams: Dataclass for TCF solver configuration.
  
@@ -10403,10 +10403,10 @@ index 9e609bb33..89e2efe62 100644
          engine: Optimization engine to use ('gurobi', 'scip', 'highs', or 'cplex').
          gurobi_threads: Native Gurobi threads per solve (positive; independent of simulator workers).
          gurobi_soft_mem_limit_gb: Native Gurobi soft memory ceiling in decimal GB.
-diff --git a/logic/src/policies/route_construction/learning_algorithms/neural_agent/policy_na.py b/logic/src/policies/route_construction/learning_algorithms/neural_agent/policy_na.py
+diff --git a/logic/src/policies/routing/learning_algorithms/neural_agent/policy_na.py b/logic/src/policies/routing/learning_algorithms/neural_agent/policy_na.py
 index 76a438df2..5c23c5d26 100644
---- a/logic/src/policies/route_construction/learning_algorithms/neural_agent/policy_na.py
-+++ b/logic/src/policies/route_construction/learning_algorithms/neural_agent/policy_na.py
+--- a/logic/src/policies/routing/learning_algorithms/neural_agent/policy_na.py
++++ b/logic/src/policies/routing/learning_algorithms/neural_agent/policy_na.py
 @@ -13,15 +13,13 @@ Example:
      >>> route, cost, _ = policy.execute(model_env=env, model_ls=ls, ...)
  """
@@ -10417,9 +10417,9 @@ index 76a438df2..5c23c5d26 100644
  import torch
 -from logic.src.interfaces.context.multi_day_context import MultiDayContext
  from logic.src.interfaces.context.search_context import SearchContext
- from logic.src.policies.route_construction.base.base_routing_policy import BaseRoutingPolicy
- from logic.src.policies.route_construction.base.factory import RouteConstructorRegistry
- from logic.src.policies.mandatory_selection.vectorized import get_vectorized_selector
+ from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
+ from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
+ from logic.src.policies.packing.vectorized import get_vectorized_selector
 -# from logic.src.tracking.core.run import get_active_run  # AUTO-REMOVED
  from logic.src.utils.functions import move_to
  
@@ -10509,10 +10509,10 @@ index 76a438df2..5c23c5d26 100644
  
      def _get_mandatory_mask(
          self,
-diff --git a/logic/src/policies/route_construction/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/local_search.py b/logic/src/policies/route_construction/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/local_search.py
+diff --git a/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/local_search.py b/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/local_search.py
 index cc1c5c435..d33e15867 100644
---- a/logic/src/policies/route_construction/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/local_search.py
-+++ b/logic/src/policies/route_construction/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/local_search.py
+--- a/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/local_search.py
++++ b/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/local_search.py
 @@ -24,7 +24,6 @@ from abc import ABC, abstractmethod
  from typing import Any, Dict, List, Optional, Set, Tuple
  
@@ -10521,10 +10521,10 @@ index cc1c5c435..d33e15867 100644
  
  from .operators import (
      move_2opt_intra,
-diff --git a/logic/src/policies/route_construction/meta_heuristics/simulated_annealing_neighborhood_search/dispatcher.py b/logic/src/policies/route_construction/meta_heuristics/simulated_annealing_neighborhood_search/dispatcher.py
+diff --git a/logic/src/policies/routing/meta_heuristics/simulated_annealing_neighborhood_search/dispatcher.py b/logic/src/policies/routing/meta_heuristics/simulated_annealing_neighborhood_search/dispatcher.py
 index 8a79b3bc6..2df69d806 100644
---- a/logic/src/policies/route_construction/meta_heuristics/simulated_annealing_neighborhood_search/dispatcher.py
-+++ b/logic/src/policies/route_construction/meta_heuristics/simulated_annealing_neighborhood_search/dispatcher.py
+--- a/logic/src/policies/routing/meta_heuristics/simulated_annealing_neighborhood_search/dispatcher.py
++++ b/logic/src/policies/routing/meta_heuristics/simulated_annealing_neighborhood_search/dispatcher.py
 @@ -29,10 +29,10 @@ Example:
      >>> params = SANSParams()
      >>> # Note: policy.execute() would be called in a real scenario
@@ -10544,7 +10544,7 @@ index 8a79b3bc6..2df69d806 100644
  from logic.src.data.processor import convert_to_dict
 -from logic.src.interfaces.context.multi_day_context import MultiDayContext
  from logic.src.interfaces.context.search_context import SearchContext
- from logic.src.policies.route_construction.meta_heuristics.simulated_annealing_neighborhood_search import (
+ from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search import (
      improved_simulated_annealing,
 @@ -56,7 +55,7 @@ from .params import SANSParams
  
@@ -10587,30 +10587,30 @@ index 8a79b3bc6..2df69d806 100644
 -    return tour, last_distance, best_profit, kwargs.get("search_context"), kwargs.get("multi_day_context")
 +    return tour, last_distance, best_profit, kwargs.get("search_context")
  
-diff --git a/logic/src/policies/route_construction/meta_heuristics/simulated_annealing_neighborhood_search/heuristics/sans.py b/logic/src/policies/route_construction/meta_heuristics/simulated_annealing_neighborhood_search/heuristics/sans.py
+diff --git a/logic/src/policies/routing/meta_heuristics/simulated_annealing_neighborhood_search/heuristics/sans.py b/logic/src/policies/routing/meta_heuristics/simulated_annealing_neighborhood_search/heuristics/sans.py
 index 6fef1323f..e0559438d 100644
---- a/logic/src/policies/route_construction/meta_heuristics/simulated_annealing_neighborhood_search/heuristics/sans.py
-+++ b/logic/src/policies/route_construction/meta_heuristics/simulated_annealing_neighborhood_search/heuristics/sans.py
-@@ -33,7 +33,6 @@ from logic.src.policies.route_construction.meta_heuristics.simulated_annealing_n
- from logic.src.policies.route_construction.meta_heuristics.simulated_annealing_neighborhood_search.heuristics.sans_state import (
+--- a/logic/src/policies/routing/meta_heuristics/simulated_annealing_neighborhood_search/heuristics/sans.py
++++ b/logic/src/policies/routing/meta_heuristics/simulated_annealing_neighborhood_search/heuristics/sans.py
+@@ -33,7 +33,6 @@ from logic.src.policies.routing.meta_heuristics.simulated_annealing_n
+ from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.heuristics.sans_state import (
      compute_profit,
  )
 -from typing import Any  # AUTO-REPLACED
  
  
  def _initialize_solution_state(
-diff --git a/logic/src/policies/route_construction/meta_heuristics/simulated_annealing_neighborhood_search/policy_sans.py b/logic/src/policies/route_construction/meta_heuristics/simulated_annealing_neighborhood_search/policy_sans.py
+diff --git a/logic/src/policies/routing/meta_heuristics/simulated_annealing_neighborhood_search/policy_sans.py b/logic/src/policies/routing/meta_heuristics/simulated_annealing_neighborhood_search/policy_sans.py
 index 4dfa7d55a..b777622e3 100644
---- a/logic/src/policies/route_construction/meta_heuristics/simulated_annealing_neighborhood_search/policy_sans.py
-+++ b/logic/src/policies/route_construction/meta_heuristics/simulated_annealing_neighborhood_search/policy_sans.py
+--- a/logic/src/policies/routing/meta_heuristics/simulated_annealing_neighborhood_search/policy_sans.py
++++ b/logic/src/policies/routing/meta_heuristics/simulated_annealing_neighborhood_search/policy_sans.py
 @@ -18,7 +18,6 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
  import numpy as np
  
  from logic.src.configs.policies import SANSConfig
 -from logic.src.interfaces.context.multi_day_context import MultiDayContext
  from logic.src.interfaces.context.search_context import SearchContext
- from logic.src.policies.route_construction.base.base_routing_policy import BaseRoutingPolicy
- from logic.src.policies.route_construction.base.factory import RouteConstructorRegistry
+ from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
+ from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 @@ -97,7 +96,7 @@ class SANSPolicy(BaseRoutingPolicy):
  
      def execute(
@@ -10882,7 +10882,7 @@ index 1c7a47c88..de8facfc6 100644
  Example:
      >>> from logic.src.tracking.logging.modules.analysis import load_log_dict
 @@ -19,7 +17,6 @@ Example:
-     >>> db.filter(mandatory_selection="lookahead", n_bins=100).mean_metrics()
+     >>> db.filter(packing="lookahead", n_bins=100).mean_metrics()
  """
  
 -import contextlib

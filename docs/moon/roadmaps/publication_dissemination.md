@@ -20,7 +20,7 @@
 - [x] Final publication edit: concise introduction/contributions, corrected route formulation, evidence-calibrated Results prose, six-author block and PDF metadata, citation records checked against original publication pages (2026-08-25)
 - [x] Primary-source citation and scholarly-positioning audit: corrected Wentges, Lysgaard, Barnhart, Sun, Kool, and Ma records/keys; added periodic VRP, inventory routing, team orienteering, and optimization-reproducibility anchors; verified that Lin et al. explicitly support the cited Farkas-pricing proposition; and corrected Google/OSM matrix-versus-basemap attribution and ODbL credit (RCP-014/RCP-034, 2026-08-28)
 - [x] Final Experimental Evaluation and closing-section review: removed the unsupported CLS-dominance claim, restored integrity framing for raw granular figures, gathered Limitations/Future Work, corrected the exclusion and frontier arithmetic, and repaired the remaining BibTeX defects, including the Barnhart publication year (issue #50, 2026-08-27)
-- [x] Conference-abstract reconciliation: preserved the abstract of record verbatim, separated registered NCO capability from the classical-only stored benchmark, defined the mandatory-selection dispatch referent, and scoped the unified baseline to the complete 30-day factorial design (issue #53, 2026-08-27)
+- [x] Conference-abstract reconciliation: preserved the abstract of record verbatim, separated registered NCO capability from the classical-only stored benchmark, defined the packing dispatch referent, and scoped the unified baseline to the complete 30-day factorial design (issue #53, 2026-08-27)
 - [x] Real side-by-side coordinate maps for Rio Maior–170 and Figueira da Foz–350 from the retained selected-bin maps over OpenStreetMap drive-network geometry; MDS layouts removed from the paper figure (2026-08-25)
 - [x] Started the collaborative research/codebase/manuscript audit at
   `.agent/reports/shared/COMPREHENSIVE_REPORT.md`, with evidence statuses,
@@ -33,7 +33,7 @@
   - P1: build unblockers (the bib has 10 duplicate entries; `latexmk` exits 12);
   - P2: a single notation sweep to the beamer's notation (with `S_i`→`w_i`);
   - P3: §3 rewritten as the SWCRP → MPVRPP formulation;
-  - P4–P9: per-section algorithm, protocol and data text in parallel. P4 (mandatory selection) has
+  - P4–P9: per-section algorithm, protocol and data text in parallel. P4 (packing) has
     no rows yet;
   - P10: results provenance caveats (text only);
   - P11–P12: front matter, a final review and the page budget.

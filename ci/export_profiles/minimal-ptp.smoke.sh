@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Acceptance smoke for the minimal-ptp export (run from the package root, or point PY at a wrapper for the executable).
-# train (tiny AM, empirical fills; PTP and CPTP, from pre-generated .td datasets) -> test_sim of the four route constructors.
+# train (tiny AM, empirical fills; PTP and CPTP, from pre-generated .td datasets) -> test_sim of the four routing algorithms.
 # Fails unless every policy log routes (km > 0) on some day.
 #
 # Needs data/simulator and two small training sets, made with the main repository (the package cannot generate data):
@@ -25,7 +25,7 @@ train() {  # <env> <n_samples> <dataset> <tag>
     'train.env.curriculum_graphs=[{num_loc: 20, n_samples: '"$2"', area: riomaior, waste_type: plastic, distance_method: file, dm_filepath: "gmaps_distmat_plastic[riomaior].csv", focus_size: '"$2"', focus_graph: graphs_20V_1N_plastic.json, n_days: 1, load_dataset: '"$3"'}]' \
     'train.env.eval_graphs=[]' train.batch_size=16 train.num_workers=0 train.policy.model.encoder.embed_dim=32 \
     train.policy.model.encoder.hidden_dim=64 train.policy.model.encoder.n_layers=1 train.policy.model.encoder.n_heads=2 \
-    train.policy.model.decoder.n_heads=2 train.policy.mandatory_selection=null train.data_distribution=emp \
+    train.policy.model.decoder.n_heads=2 train.policy.packing=null train.data_distribution=emp \
     train.train_time=false train.model_weights_path="$OUT/ckpt$4" train.final_model_path="$OUT/am$4/epoch-1.pt" \
     > "$OUT/train$4.log" 2>&1 || { tail -20 "$OUT/train$4.log"; exit 1; }
   test -f "$OUT/am$4/epoch-1.pt"

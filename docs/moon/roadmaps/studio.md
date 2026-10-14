@@ -49,7 +49,7 @@
 **Goal**: Reproduce and extend the existing static `simulation_analysis.md` charts as interactive ECharts panels.
 
 #### 1.1 KPI Summary Bar / Box Charts
-- [x] Mean ± std overflows per constructor, grouped by mandatory-selection strategy: `GroupedMetricBarChart` overflows by selection strategy on Simulation Summary; portfolio mode swaps to overflows by city/scale across loaded runs (§G.1.1)
+- [x] Mean ± std overflows per constructor, grouped by packing algorithm: `GroupedMetricBarChart` overflows by selection strategy on Simulation Summary; portfolio mode swaps to overflows by city/scale across loaded runs (§G.1.1)
 - [x] Mean ± std kg/km per constructor, grouped by city/scale: `GroupedMetricBarChart` kg/km by constructor on Simulation Summary; portfolio mode swaps to kg/km by city/scale across loaded runs (§G.1.1)
 - [x] Grouped metric bar charts follow global ``logScale``: overflows groups use symlog y-axis; kg/km groups use log y-axis; error-bar whiskers via ``errorBarBounds`` when log on (§G.1.1 / §G.7)
 - [x] Interactive brushing: selecting a bar cross-filters all panels on the dashboard: `PolicyBrushBar` + `toggleBrush` dims non-selected policies across all charts; `SimulationSummary` ingests log → DuckDB + `SqlQueryPanel` `brushSqlSync` / `brushedPoliciesSql` (§G.1)
@@ -86,7 +86,7 @@
 - [x] Brushing on any axis instantly filters all other panels: ECharts parallel-axis brush toolbox on `PolicyParallelChart` → `handleBrushPolicies` cross-filter; click polyline → `toggleBrush`; DuckDB SQL sync via `brushSqlSync` (§G.1)
 - [x] Highlight corridor: drag brush on overflows ≤ threshold to identify zero-overflow configs: overflow corridor slider + parallel-axis overflows brush syncs `overflowMax` + `effectiveBrushed` cross-filter on Simulation Summary (§G.1)
 - [x] Parallel coordinates follow global ``logScale``: ``PolicyParallelChart`` + ``BenchmarkPortfolioParallel`` log-normalise profit · kg/km · km axes; symlog overflows; corridor brush inverts symlog via ``invertParallelAxisValue`` (§G.1.4 / §G.7)
-- [x] Color polylines by mandatory-selection strategy: `strategyColor()` on `PolicyParallelChart` polylines; `BenchmarkPortfolioParallel` colours run polylines via `resolveRunSelectionStrategy()` + `selectionStrategyColor()` from log path / dominant policy with strategy legend (§G.1.4)
+- [x] Color polylines by packing algorithm: `strategyColor()` on `PolicyParallelChart` polylines; `BenchmarkPortfolioParallel` colours run polylines via `resolveRunSelectionStrategy()` + `selectionStrategyColor()` from log path / dominant policy with strategy legend (§G.1.4)
 - [x] BenchmarkPortfolioParallel PNG export: ``exportChartPng()`` on portfolio parallel-coordinates panel with toast feedback (§G.1.4 / §G.7)
 
 #### 1.5 Constructor Ranking Chart
@@ -126,7 +126,7 @@
 - [x] Breadcrumb trail showing current filter path; click to navigate back up: `HierarchyBreadcrumb` in `PolicyHierarchyPanel` with root **All** reset (§G.2)
 - [x] Treemap alternative view: area = profit, color = overflows (toggle with Sunburst): sunburst/treemap view toggle on Simulation Summary; kg/km vs overflows colour mode selector on `PolicyHierarchyPanel` (§G.2)
 - [x] Shared strategy colour legend: `SELECTION_STRATEGY_LEGEND` + `StrategyLegend` chips on `PolicyParallelChart`, `BenchmarkPortfolioParallel`, and `PolicyHierarchyPanel` (§G.1.4 / §G.2)
-- [x] Drill-down profit bars coloured by mandatory-selection strategy at strategy depth; constructor depth uses kg/km or overflow gradient via `resolveDrillBarColor()` (§G.2)
+- [x] Drill-down profit bars coloured by packing algorithm at strategy depth; constructor depth uses kg/km or overflow gradient via `resolveDrillBarColor()` (§G.2)
 
 **Status**: §G.2 complete — all checklist items delivered.
 

@@ -10,7 +10,7 @@ Performs AST-based import analysis to discover:
 2. **Policy helpers dependencies** — which files in
    ``logic/src/policies/helpers/`` (including 2nd-order transitive deps)
    are required by each policy in the constructors, improvers,
-   mandatory_selections, acceptance_criteria, and selection_and_construction
+   packings, acceptance_criteria, and packing_and_routing
    categories.
 
 Results are written back to ``ci/export_config.json``:

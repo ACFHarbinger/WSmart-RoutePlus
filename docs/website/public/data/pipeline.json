@@ -542,7 +542,7 @@
    "constructors": [
     {
      "key": "arco",
-     "name": "Adaptive Route Constructor Orchestrator"
+     "name": "Adaptive Routing Algorithm Orchestrator"
     },
     {
      "key": "cvrp",
@@ -550,7 +550,7 @@
     },
     {
      "key": "src",
-     "name": "Sequential Route Constructor"
+     "name": "Sequential Routing Algorithm"
     },
     {
      "key": "tsp",

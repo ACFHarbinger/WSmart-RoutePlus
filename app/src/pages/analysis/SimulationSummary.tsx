@@ -1043,7 +1043,7 @@ function PolicyParallelChart({
             Policy Parallel Coordinates{logScale ? " · log-normalised axes" : ""}
           </p>
           <p className="text-[10px] text-canvas-muted">
-            One polyline per policy · coloured by mandatory-selection strategy
+            One polyline per policy · coloured by packing algorithm
           </p>
           {(onAxisBrush || onOverflowCorridorBrush) && (
             <p className="text-[10px] text-canvas-muted">
@@ -1266,7 +1266,7 @@ function PolicyHierarchyPanel({
           <p className="text-[10px] text-canvas-muted">
             Span = profit · color ={" "}
             {colorMode === "kgkm" ? "kg/km efficiency" : "mean overflows"} · strategy ring
-            borders + drill bars use mandatory-selection palette
+            borders + drill bars use packing palette
           </p>
         </div>
         <div className="flex items-center gap-2">

@@ -1,5 +1,5 @@
 /**
- * Mandatory-selection strategy colour legend (LA · LM-CF70 · …) for §G.1.4 charts.
+ * Packing algorithm colour legend (LA · LM-CF70 · …) for §G.1.4 charts.
  */
 import { SELECTION_STRATEGY_LEGEND, selectionStrategyColor } from "../../../utils/sim/simMetadata";
 

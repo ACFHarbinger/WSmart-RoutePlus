@@ -161,12 +161,12 @@ export function strategyColor(policy: string, policyMeta?: Record<string, Policy
   return selectionStrategyColor(strat);
 }
 
-/** Colour for a resolved mandatory-selection strategy label (LA · LM-CF70 · …). */
+/** Colour for a resolved packing algorithm label (LA · LM-CF70 · …). */
 export function selectionStrategyColor(strategy: string): string {
   return STRATEGY_COLORS[strategy] ?? "#a78bfa";
 }
 
-/** Resolve mandatory-selection strategy for a portfolio run (log path or dominant policy). */
+/** Resolve packing algorithm for a portfolio run (log path or dominant policy). */
 export function resolveRunSelectionStrategy(path: string, policies: string[] = []): string {
   const lower = path.toLowerCase();
   if (/cf\s*90|cf90/i.test(lower)) return "LM-CF90";

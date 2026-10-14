@@ -1,6 +1,6 @@
 # WSmart+ Route — Simulation Analysis Report
 
-> **Scope:** 30-day and 90-day simulation runs across 3 region/network configurations × 2 distributions × 3 selection strategies × 2 route improvers × 8 route constructors
+> **Scope:** 30-day and 90-day simulation runs across 3 region/network configurations × 2 distributions × 3 packing algorithms × 2 route improvers × 8 routing algorithms
 > **Total logs analysed (30d):** 480
 > **Total logs analysed (90d):** 174
 > **Scenarios:** RM-100 / Empirical, RM-100 / Gamma-3, RM-170 / Empirical, RM-170 / Gamma-3, FFZ-350 / Empirical, FFZ-350 / Gamma-3
@@ -27,8 +27,8 @@
 |-----------|--------|
 | **Scenarios (region / N)** | RM-100 (N=100), RM-170 (N=170), FFZ-350 (N=350) |
 | **Waste distribution** | Empirical, Gamma-3 |
-| **Mandatory selection strategy** | LA, LM, SL |
-| **Route constructors** | ACO_HH, ALNS, BPC, HGS, PG-CLNS, PSOMA, SANS, SWC-TCF |
+| **Packing algorithm** | LA, LM, SL |
+| **Routing algorithms** | ACO_HH, ALNS, BPC, HGS, PG-CLNS, PSOMA, SANS, SWC-TCF |
 | **Acceptance criteria** | bmc, custom, custom_bmc, custom_oi, gurobi, new |
 | **Route improvers** | FTSP, CLS |
 | **Simulation horizons (days)** | 30, 90 |
@@ -36,7 +36,7 @@
 ### Policy Naming Convention
 
 Each log file encodes the full pipeline as:
-`{mandatory_selection}_{route_constructor}[_{acceptance_criterion}]_{route_improver}`
+`{packing}_{routing_algorithm}[_{acceptance_criterion}]_{route_improver}`
 
 For Last-Minute (LM), two critical fill threshold variants are tested: **CF70** (70% fill triggers mandatory collection) and **CF90** (90% threshold). Service-Level (SL) tests two service level targets: **SL1** and **SL2**. Results in this report aggregate CF70 and CF90 under **LM**, and SL1/SL2 under **SL**, unless otherwise specified.
 
@@ -67,7 +67,7 @@ For Last-Minute (LM), two critical fill threshold variants are tested: **CF70** 
 
 <figure style="display:block;width:100%;margin:0.8em 0;padding:0;"><img src="../figures/simulation/30d/pareto_scatter.png" alt="Overflow vs Efficiency — Pareto Front" width="100%" style="width:100% !important;max-width:100% !important;height:auto !important;display:block !important;margin:0;" /></figure>
 
-**Figure 1:** *Scatter of all 30-day runs in the overflows–kg/km space, one panel per waste distribution. Colour encodes the mandatory selection variant, marker shape encodes the scenario (region/N), filled markers = FTSP, open markers = CLS. Dashed lines = Pareto fronts, one colour per scenario (region × N × distribution).*
+**Figure 1:** *Scatter of all 30-day runs in the overflows–kg/km space, one panel per waste distribution. Colour encodes the packing variant, marker shape encodes the scenario (region/N), filled markers = FTSP, open markers = CLS. Dashed lines = Pareto fronts, one colour per scenario (region × N × distribution).*
 
 
 <figure style="display:block;width:100%;margin:0.8em 0;padding:0;"><img src="../figures/simulation/30d/pareto_scatter_log.png" alt="Overflow vs Efficiency — Pareto Front (log scale)" width="100%" style="width:100% !important;max-width:100% !important;height:auto !important;display:block !important;margin:0;" /></figure>
@@ -115,7 +115,7 @@ For Last-Minute (LM), two critical fill threshold variants are tested: **CF70** 
 
 <figure style="display:block;width:100%;margin:0.8em 0;padding:0;"><img src="../figures/simulation/30d/overflow_by_config.png" alt="Overflow Count by Configuration" width="100%" style="width:100% !important;max-width:100% !important;height:auto !important;display:block !important;margin:0;" /></figure>
 
-**Figure 3:** *Mean overflow count per scenario and selection strategy (mean ± min/max range across route constructors); route improvers shown as paired bars within each configuration.*
+**Figure 3:** *Mean overflow count per scenario and packing algorithm (mean ± min/max range across routing algorithms); route improvers shown as paired bars within each configuration.*
 
 
 <figure style="display:block;width:100%;margin:0.8em 0;padding:0;"><img src="../figures/simulation/30d/overflow_by_config_log.png" alt="Overflow Count by Configuration (log scale)" width="100%" style="width:100% !important;max-width:100% !important;height:auto !important;display:block !important;margin:0;" /></figure>
@@ -123,7 +123,7 @@ For Last-Minute (LM), two critical fill threshold variants are tested: **CF70** 
 **Figure 4:** *Same chart with symlog Y axis — reveals structure compressed in the linear scale.*
 
 
-**Table 4:** *Overflow counts by configuration over 30 days — min/max/mean across route constructors, per route improver.*
+**Table 4:** *Overflow counts by configuration over 30 days — min/max/mean across routing algorithms, per route improver.*
 
 | Config | FTSP Min | FTSP Max | FTSP Mean | CLS Min | CLS Max | CLS Mean |
 |--------|-----|-----|------|-----|-----|------|
@@ -152,9 +152,9 @@ For Last-Minute (LM), two critical fill threshold variants are tested: **CF70** 
 
 <figure style="display:block;width:100%;margin:0.8em 0;padding:0;"><img src="../figures/simulation/30d/kgkm_by_config.png" alt="kg/km Efficiency by Configuration" width="100%" style="width:100% !important;max-width:100% !important;height:auto !important;display:block !important;margin:0;" /></figure>
 
-**Figure 5:** *Mean kg/km efficiency per scenario and selection strategy, with min–max whiskers across constructors; improvers as paired bars.*
+**Figure 5:** *Mean kg/km efficiency per scenario and packing algorithm, with min–max whiskers across constructors; improvers as paired bars.*
 
-**Table 5:** *Route efficiency (kg/km) by configuration over 30 days — min/max/mean across route constructors, per route improver.*
+**Table 5:** *Route efficiency (kg/km) by configuration over 30 days — min/max/mean across routing algorithms, per route improver.*
 
 | Config | FTSP Min | FTSP Max | FTSP Mean | CLS Min | CLS Max | CLS Mean |
 |--------|-----|-----|------|-----|-----|------|
@@ -183,9 +183,9 @@ For Last-Minute (LM), two critical fill threshold variants are tested: **CF70** 
 
 <figure style="display:block;width:100%;margin:0.8em 0;padding:0;"><img src="../figures/simulation/30d/km_violin.png" alt="Vehicle Distance by Strategy" width="100%" style="width:100% !important;max-width:100% !important;height:auto !important;display:block !important;margin:0;" /></figure>
 
-**Figure 6:** *Distribution of total vehicle distance (km) per selection strategy and scenario (all constructors and improvers pooled), one panel per waste distribution.*
+**Figure 6:** *Distribution of total vehicle distance (km) per packing algorithm and scenario (all constructors and improvers pooled), one panel per waste distribution.*
 
-**Table 6:** *Vehicle distance driven (km) by configuration over 30 days — min/max/mean across route constructors, per route improver.*
+**Table 6:** *Vehicle distance driven (km) by configuration over 30 days — min/max/mean across routing algorithms, per route improver.*
 
 | Config | FTSP Min | FTSP Max | FTSP Mean | CLS Min | CLS Max | CLS Mean |
 |--------|-----|-----|------|-----|-----|------|
@@ -222,14 +222,14 @@ For Last-Minute (LM), two critical fill threshold variants are tested: **CF70** 
 
 <figure style="display:block;width:100%;margin:0.8em 0;padding:0;"><img src="../figures/simulation/30d/scenario_constructor_heatmap.png" alt="Per-Scenario Constructor Heatmaps" width="100%" style="width:100% !important;max-width:100% !important;height:auto !important;display:block !important;margin:0;" /></figure>
 
-**Figure 9:** *One panel per scenario: route constructors on the rows, selection strategy × route improver combinations on the columns.*
+**Figure 9:** *One panel per scenario: routing algorithms on the rows, packing algorithm × route improver combinations on the columns.*
 
 **[Interactive heatmap](../html/simulation/30d/policy_heatmap_interactive.html)**
 
 
 <!-- [ANALYSIS: Insert your observations here] -->
 
-### 2.4 Selection Strategy Comparison (LA vs LM vs SL)
+### 2.4 Packing Algorithm Comparison (LA vs LM vs SL)
 
 <figure style="display:block;width:100%;margin:0.8em 0;padding:0;"><img src="../figures/simulation/30d/strategy_bubble.png" alt="Strategy Trade-off Bubble Chart" width="100%" style="width:100% !important;max-width:100% !important;height:auto !important;display:block !important;margin:0;" /></figure>
 
@@ -317,17 +317,17 @@ For Last-Minute (LM), two critical fill threshold variants are tested: **CF70** 
 
 <figure style="display:block;width:100%;margin:0.8em 0;padding:0;"><img src="../figures/simulation/30d/policy_radar_combined.png" alt="Policy Performance Radar — All Constructors" width="100%" style="width:100% !important;max-width:100% !important;height:auto !important;display:block !important;margin:0;" /></figure>
 
-**Figure 15:** *Same normalised radar, overlaying every route constructor instead of the curated subset above.*
+**Figure 15:** *Same normalised radar, overlaying every routing algorithm instead of the curated subset above.*
 
-<figure style="display:block;width:100%;margin:0.8em 0;padding:0;"><img src="../figures/simulation/30d/constructor_ranking.png" alt="Route Constructor Average Rank" width="100%" style="width:100% !important;max-width:100% !important;height:auto !important;display:block !important;margin:0;" /></figure>
+<figure style="display:block;width:100%;margin:0.8em 0;padding:0;"><img src="../figures/simulation/30d/constructor_ranking.png" alt="Routing Algorithm Average Rank" width="100%" style="width:100% !important;max-width:100% !important;height:auto !important;display:block !important;margin:0;" /></figure>
 
-**Figure 16:** *Average rank of each route constructor across all scenarios and strategies (improvers pooled). Bars grow upward — shorter = better.*
+**Figure 16:** *Average rank of each routing algorithm across all scenarios and strategies (improvers pooled). Bars grow upward — shorter = better.*
 
 <!-- [ANALYSIS: Insert your observations here] -->
 
 ### 2.7 Full Results Table
 
-**Table 7:** *Full results over the 30-day horizon — rows: graph size × region × data distribution; columns: mandatory selection strategy × route constructor × route improver. Each cell reports mean±std overflows and mean±std kg/km.*
+**Table 7:** *Full results over the 30-day horizon — rows: graph size × region × data distribution; columns: packing algorithm × routing algorithm × route improver. Each cell reports mean±std overflows and mean±std kg/km.*
 
 | Region | N | Distribution | LA<br>ACO_HH<br>FTSP | LA<br>ACO_HH<br>CLS | LA<br>ALNS<br>FTSP | LA<br>ALNS<br>CLS | LA<br>BPC<br>FTSP | LA<br>BPC<br>CLS | LA<br>HGS<br>FTSP | LA<br>HGS<br>CLS | LA<br>PG-CLNS<br>FTSP | LA<br>PG-CLNS<br>CLS | LA<br>PSOMA<br>FTSP | LA<br>PSOMA<br>CLS | LA<br>SANS<br>FTSP | LA<br>SANS<br>CLS | LA<br>SWC-TCF<br>FTSP | LA<br>SWC-TCF<br>CLS | LM<br>ACO_HH<br>FTSP | LM<br>ACO_HH<br>CLS | LM<br>ALNS<br>FTSP | LM<br>ALNS<br>CLS | LM<br>BPC<br>FTSP | LM<br>BPC<br>CLS | LM<br>HGS<br>FTSP | LM<br>HGS<br>CLS | LM<br>PG-CLNS<br>FTSP | LM<br>PG-CLNS<br>CLS | LM<br>PSOMA<br>FTSP | LM<br>PSOMA<br>CLS | LM<br>SANS<br>FTSP | LM<br>SANS<br>CLS | LM<br>SWC-TCF<br>FTSP | LM<br>SWC-TCF<br>CLS | SL<br>ACO_HH<br>FTSP | SL<br>ACO_HH<br>CLS | SL<br>ALNS<br>FTSP | SL<br>ALNS<br>CLS | SL<br>BPC<br>FTSP | SL<br>BPC<br>CLS | SL<br>HGS<br>FTSP | SL<br>HGS<br>CLS | SL<br>PG-CLNS<br>FTSP | SL<br>PG-CLNS<br>CLS | SL<br>PSOMA<br>FTSP | SL<br>PSOMA<br>CLS | SL<br>SANS<br>FTSP | SL<br>SANS<br>CLS | SL<br>SWC-TCF<br>FTSP | SL<br>SWC-TCF<br>CLS |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -352,7 +352,7 @@ For Last-Minute (LM), two critical fill threshold variants are tested: **CF70** 
 
 <figure style="display:block;width:100%;margin:0.8em 0;padding:0;"><img src="../figures/simulation/90d/pareto_scatter.png" alt="Overflow vs Efficiency — Pareto Front" width="100%" style="width:100% !important;max-width:100% !important;height:auto !important;display:block !important;margin:0;" /></figure>
 
-**Figure 17:** *Scatter of all 90-day runs in the overflows–kg/km space, one panel per waste distribution. Colour encodes the mandatory selection variant, marker shape encodes the scenario (region/N), filled markers = FTSP, open markers = CLS. Dashed lines = Pareto fronts, one colour per scenario (region × N × distribution).*
+**Figure 17:** *Scatter of all 90-day runs in the overflows–kg/km space, one panel per waste distribution. Colour encodes the packing variant, marker shape encodes the scenario (region/N), filled markers = FTSP, open markers = CLS. Dashed lines = Pareto fronts, one colour per scenario (region × N × distribution).*
 
 
 <figure style="display:block;width:100%;margin:0.8em 0;padding:0;"><img src="../figures/simulation/90d/pareto_scatter_log.png" alt="Overflow vs Efficiency — Pareto Front (log scale)" width="100%" style="width:100% !important;max-width:100% !important;height:auto !important;display:block !important;margin:0;" /></figure>
@@ -391,7 +391,7 @@ For Last-Minute (LM), two critical fill threshold variants are tested: **CF70** 
 
 <figure style="display:block;width:100%;margin:0.8em 0;padding:0;"><img src="../figures/simulation/90d/overflow_by_config.png" alt="Overflow Count by Configuration" width="100%" style="width:100% !important;max-width:100% !important;height:auto !important;display:block !important;margin:0;" /></figure>
 
-**Figure 19:** *Mean overflow count per scenario and selection strategy (mean ± min/max range across route constructors); route improvers shown as paired bars within each configuration.*
+**Figure 19:** *Mean overflow count per scenario and packing algorithm (mean ± min/max range across routing algorithms); route improvers shown as paired bars within each configuration.*
 
 
 <figure style="display:block;width:100%;margin:0.8em 0;padding:0;"><img src="../figures/simulation/90d/overflow_by_config_log.png" alt="Overflow Count by Configuration (log scale)" width="100%" style="width:100% !important;max-width:100% !important;height:auto !important;display:block !important;margin:0;" /></figure>
@@ -399,7 +399,7 @@ For Last-Minute (LM), two critical fill threshold variants are tested: **CF70** 
 **Figure 20:** *Same chart with symlog Y axis — reveals structure compressed in the linear scale.*
 
 
-**Table 9:** *Overflow counts by configuration over 90 days — min/max/mean across route constructors, per route improver.*
+**Table 9:** *Overflow counts by configuration over 90 days — min/max/mean across routing algorithms, per route improver.*
 
 | Config | FTSP Min | FTSP Max | FTSP Mean | CLS Min | CLS Max | CLS Mean |
 |--------|-----|-----|------|-----|-----|------|
@@ -428,9 +428,9 @@ For Last-Minute (LM), two critical fill threshold variants are tested: **CF70** 
 
 <figure style="display:block;width:100%;margin:0.8em 0;padding:0;"><img src="../figures/simulation/90d/kgkm_by_config.png" alt="kg/km Efficiency by Configuration" width="100%" style="width:100% !important;max-width:100% !important;height:auto !important;display:block !important;margin:0;" /></figure>
 
-**Figure 21:** *Mean kg/km efficiency per scenario and selection strategy, with min–max whiskers across constructors; improvers as paired bars.*
+**Figure 21:** *Mean kg/km efficiency per scenario and packing algorithm, with min–max whiskers across constructors; improvers as paired bars.*
 
-**Table 10:** *Route efficiency (kg/km) by configuration over 90 days — min/max/mean across route constructors, per route improver.*
+**Table 10:** *Route efficiency (kg/km) by configuration over 90 days — min/max/mean across routing algorithms, per route improver.*
 
 | Config | FTSP Min | FTSP Max | FTSP Mean | CLS Min | CLS Max | CLS Mean |
 |--------|-----|-----|------|-----|-----|------|
@@ -459,9 +459,9 @@ For Last-Minute (LM), two critical fill threshold variants are tested: **CF70** 
 
 <figure style="display:block;width:100%;margin:0.8em 0;padding:0;"><img src="../figures/simulation/90d/km_violin.png" alt="Vehicle Distance by Strategy" width="100%" style="width:100% !important;max-width:100% !important;height:auto !important;display:block !important;margin:0;" /></figure>
 
-**Figure 22:** *Distribution of total vehicle distance (km) per selection strategy and scenario (all constructors and improvers pooled), one panel per waste distribution.*
+**Figure 22:** *Distribution of total vehicle distance (km) per packing algorithm and scenario (all constructors and improvers pooled), one panel per waste distribution.*
 
-**Table 11:** *Vehicle distance driven (km) by configuration over 90 days — min/max/mean across route constructors, per route improver.*
+**Table 11:** *Vehicle distance driven (km) by configuration over 90 days — min/max/mean across routing algorithms, per route improver.*
 
 | Config | FTSP Min | FTSP Max | FTSP Mean | CLS Min | CLS Max | CLS Mean |
 |--------|-----|-----|------|-----|-----|------|
@@ -498,14 +498,14 @@ For Last-Minute (LM), two critical fill threshold variants are tested: **CF70** 
 
 <figure style="display:block;width:100%;margin:0.8em 0;padding:0;"><img src="../figures/simulation/90d/scenario_constructor_heatmap.png" alt="Per-Scenario Constructor Heatmaps" width="100%" style="width:100% !important;max-width:100% !important;height:auto !important;display:block !important;margin:0;" /></figure>
 
-**Figure 25:** *One panel per scenario: route constructors on the rows, selection strategy × route improver combinations on the columns.*
+**Figure 25:** *One panel per scenario: routing algorithms on the rows, packing algorithm × route improver combinations on the columns.*
 
 **[Interactive heatmap](../html/simulation/90d/policy_heatmap_interactive.html)**
 
 
 <!-- [ANALYSIS: Insert your observations here] -->
 
-### 3.4 Selection Strategy Comparison (LA vs LM vs SL)
+### 3.4 Packing Algorithm Comparison (LA vs LM vs SL)
 
 <figure style="display:block;width:100%;margin:0.8em 0;padding:0;"><img src="../figures/simulation/90d/strategy_bubble.png" alt="Strategy Trade-off Bubble Chart" width="100%" style="width:100% !important;max-width:100% !important;height:auto !important;display:block !important;margin:0;" /></figure>
 
@@ -593,17 +593,17 @@ For Last-Minute (LM), two critical fill threshold variants are tested: **CF70** 
 
 <figure style="display:block;width:100%;margin:0.8em 0;padding:0;"><img src="../figures/simulation/90d/policy_radar_combined.png" alt="Policy Performance Radar — All Constructors" width="100%" style="width:100% !important;max-width:100% !important;height:auto !important;display:block !important;margin:0;" /></figure>
 
-**Figure 31:** *Same normalised radar, overlaying every route constructor instead of the curated subset above.*
+**Figure 31:** *Same normalised radar, overlaying every routing algorithm instead of the curated subset above.*
 
-<figure style="display:block;width:100%;margin:0.8em 0;padding:0;"><img src="../figures/simulation/90d/constructor_ranking.png" alt="Route Constructor Average Rank" width="100%" style="width:100% !important;max-width:100% !important;height:auto !important;display:block !important;margin:0;" /></figure>
+<figure style="display:block;width:100%;margin:0.8em 0;padding:0;"><img src="../figures/simulation/90d/constructor_ranking.png" alt="Routing Algorithm Average Rank" width="100%" style="width:100% !important;max-width:100% !important;height:auto !important;display:block !important;margin:0;" /></figure>
 
-**Figure 32:** *Average rank of each route constructor across all scenarios and strategies (improvers pooled). Bars grow upward — shorter = better.*
+**Figure 32:** *Average rank of each routing algorithm across all scenarios and strategies (improvers pooled). Bars grow upward — shorter = better.*
 
 <!-- [ANALYSIS: Insert your observations here] -->
 
 ### 3.7 Full Results Table
 
-**Table 12:** *Full results over the 90-day horizon — rows: graph size × region × data distribution; columns: mandatory selection strategy × route constructor × route improver. Each cell reports mean±std overflows and mean±std kg/km.*
+**Table 12:** *Full results over the 90-day horizon — rows: graph size × region × data distribution; columns: packing algorithm × routing algorithm × route improver. Each cell reports mean±std overflows and mean±std kg/km.*
 
 | Region | N | Distribution | LA<br>ACO_HH<br>FTSP | LA<br>ACO_HH<br>CLS | LA<br>BPC<br>FTSP | LA<br>BPC<br>CLS | LA<br>HGS<br>FTSP | LA<br>HGS<br>CLS | LA<br>PG-CLNS<br>FTSP | LA<br>PG-CLNS<br>CLS | LA<br>PSOMA<br>FTSP | LA<br>PSOMA<br>CLS | LA<br>SANS<br>FTSP | LA<br>SANS<br>CLS | LA<br>SWC-TCF<br>FTSP | LA<br>SWC-TCF<br>CLS | LM<br>ACO_HH<br>FTSP | LM<br>ACO_HH<br>CLS | LM<br>BPC<br>FTSP | LM<br>BPC<br>CLS | LM<br>HGS<br>FTSP | LM<br>HGS<br>CLS | LM<br>PG-CLNS<br>FTSP | LM<br>PG-CLNS<br>CLS | LM<br>PSOMA<br>FTSP | LM<br>PSOMA<br>CLS | LM<br>SANS<br>FTSP | LM<br>SANS<br>CLS | LM<br>SWC-TCF<br>FTSP | LM<br>SWC-TCF<br>CLS | SL<br>ACO_HH<br>FTSP | SL<br>ACO_HH<br>CLS | SL<br>BPC<br>FTSP | SL<br>BPC<br>CLS | SL<br>HGS<br>FTSP | SL<br>HGS<br>CLS | SL<br>PG-CLNS<br>FTSP | SL<br>PG-CLNS<br>CLS | SL<br>PSOMA<br>FTSP | SL<br>PSOMA<br>CLS | SL<br>SANS<br>FTSP | SL<br>SANS<br>CLS | SL<br>SWC-TCF<br>FTSP | SL<br>SWC-TCF<br>CLS |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -663,7 +663,7 @@ Constructors with stable ranks are robust; those that improve or regress warrant
 
 ### Full Results Table — All Horizons
 
-**Table 13:** *Full results across all simulation horizons — rows: graph size × region × data distribution; columns: horizon × mandatory selection strategy × route constructor × route improver. Each cell reports mean±std overflows and mean±std kg/km.*
+**Table 13:** *Full results across all simulation horizons — rows: graph size × region × data distribution; columns: horizon × packing algorithm × routing algorithm × route improver. Each cell reports mean±std overflows and mean±std kg/km.*
 
 | Region | N | Distribution | 30d<br>LA<br>ACO_HH<br>FTSP | 30d<br>LA<br>ACO_HH<br>CLS | 30d<br>LA<br>ALNS<br>FTSP | 30d<br>LA<br>ALNS<br>CLS | 30d<br>LA<br>BPC<br>FTSP | 30d<br>LA<br>BPC<br>CLS | 30d<br>LA<br>HGS<br>FTSP | 30d<br>LA<br>HGS<br>CLS | 30d<br>LA<br>PG-CLNS<br>FTSP | 30d<br>LA<br>PG-CLNS<br>CLS | 30d<br>LA<br>PSOMA<br>FTSP | 30d<br>LA<br>PSOMA<br>CLS | 30d<br>LA<br>SANS<br>FTSP | 30d<br>LA<br>SANS<br>CLS | 30d<br>LA<br>SWC-TCF<br>FTSP | 30d<br>LA<br>SWC-TCF<br>CLS | 30d<br>LM<br>ACO_HH<br>FTSP | 30d<br>LM<br>ACO_HH<br>CLS | 30d<br>LM<br>ALNS<br>FTSP | 30d<br>LM<br>ALNS<br>CLS | 30d<br>LM<br>BPC<br>FTSP | 30d<br>LM<br>BPC<br>CLS | 30d<br>LM<br>HGS<br>FTSP | 30d<br>LM<br>HGS<br>CLS | 30d<br>LM<br>PG-CLNS<br>FTSP | 30d<br>LM<br>PG-CLNS<br>CLS | 30d<br>LM<br>PSOMA<br>FTSP | 30d<br>LM<br>PSOMA<br>CLS | 30d<br>LM<br>SANS<br>FTSP | 30d<br>LM<br>SANS<br>CLS | 30d<br>LM<br>SWC-TCF<br>FTSP | 30d<br>LM<br>SWC-TCF<br>CLS | 30d<br>SL<br>ACO_HH<br>FTSP | 30d<br>SL<br>ACO_HH<br>CLS | 30d<br>SL<br>ALNS<br>FTSP | 30d<br>SL<br>ALNS<br>CLS | 30d<br>SL<br>BPC<br>FTSP | 30d<br>SL<br>BPC<br>CLS | 30d<br>SL<br>HGS<br>FTSP | 30d<br>SL<br>HGS<br>CLS | 30d<br>SL<br>PG-CLNS<br>FTSP | 30d<br>SL<br>PG-CLNS<br>CLS | 30d<br>SL<br>PSOMA<br>FTSP | 30d<br>SL<br>PSOMA<br>CLS | 30d<br>SL<br>SANS<br>FTSP | 30d<br>SL<br>SANS<br>CLS | 30d<br>SL<br>SWC-TCF<br>FTSP | 30d<br>SL<br>SWC-TCF<br>CLS | 90d<br>LA<br>ACO_HH<br>FTSP | 90d<br>LA<br>ACO_HH<br>CLS | 90d<br>LA<br>BPC<br>FTSP | 90d<br>LA<br>BPC<br>CLS | 90d<br>LA<br>HGS<br>FTSP | 90d<br>LA<br>HGS<br>CLS | 90d<br>LA<br>PG-CLNS<br>FTSP | 90d<br>LA<br>PG-CLNS<br>CLS | 90d<br>LA<br>PSOMA<br>FTSP | 90d<br>LA<br>PSOMA<br>CLS | 90d<br>LA<br>SANS<br>FTSP | 90d<br>LA<br>SANS<br>CLS | 90d<br>LA<br>SWC-TCF<br>FTSP | 90d<br>LA<br>SWC-TCF<br>CLS | 90d<br>LM<br>ACO_HH<br>FTSP | 90d<br>LM<br>ACO_HH<br>CLS | 90d<br>LM<br>BPC<br>FTSP | 90d<br>LM<br>BPC<br>CLS | 90d<br>LM<br>HGS<br>FTSP | 90d<br>LM<br>HGS<br>CLS | 90d<br>LM<br>PG-CLNS<br>FTSP | 90d<br>LM<br>PG-CLNS<br>CLS | 90d<br>LM<br>PSOMA<br>FTSP | 90d<br>LM<br>PSOMA<br>CLS | 90d<br>LM<br>SANS<br>FTSP | 90d<br>LM<br>SANS<br>CLS | 90d<br>LM<br>SWC-TCF<br>FTSP | 90d<br>LM<br>SWC-TCF<br>CLS | 90d<br>SL<br>ACO_HH<br>FTSP | 90d<br>SL<br>ACO_HH<br>CLS | 90d<br>SL<br>BPC<br>FTSP | 90d<br>SL<br>BPC<br>CLS | 90d<br>SL<br>HGS<br>FTSP | 90d<br>SL<br>HGS<br>CLS | 90d<br>SL<br>PG-CLNS<br>FTSP | 90d<br>SL<br>PG-CLNS<br>CLS | 90d<br>SL<br>PSOMA<br>FTSP | 90d<br>SL<br>PSOMA<br>CLS | 90d<br>SL<br>SANS<br>FTSP | 90d<br>SL<br>SANS<br>CLS | 90d<br>SL<br>SWC-TCF<br>FTSP | 90d<br>SL<br>SWC-TCF<br>CLS |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|

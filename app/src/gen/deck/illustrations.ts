@@ -224,7 +224,7 @@ export async function knapsackIllustration(): Promise<string> {
   const svg = new SvgCanvas(W, H);
   const X = (v: number) => (v / 11.6) * W;
   const Y = (v: number) => H - (v / 10) * H;
-  svg.text(W / 2, 28, "Mandatory Selection ≈ a Knapsack Problem", { size: 24, bold: true, color: DARK });
+  svg.text(W / 2, 28, "Packing ≈ a Knapsack Problem", { size: 24, bold: true, color: DARK });
 
   svg.roundRect(X(0.6), Y(6.8), X(4.6) - X(0.6), Y(1.6) - Y(6.8), {
     fill: FAINT,

@@ -187,7 +187,7 @@ classDiagram
   }
   class acceptance_criteria {
   }
-  class mandatory_selection {
+  class packing {
   }
   class reinforcement_learning {
   }
@@ -587,13 +587,13 @@ classDiagram
   }
   class env {
   }
-  class mandatory_selection {
+  class packing {
   }
   class model {
   }
   class policy {
   }
-  class route_constructor {
+  class routing_algorithm {
   }
   class route_improvement {
   }
@@ -811,7 +811,7 @@ classDiagram
   }
   class hgs_alns {
   }
-  class hgs_core {
+  class core {
   }
   class crossover {
   }
@@ -1443,7 +1443,7 @@ classDiagram
   }
   class node_selection {
   }
-  class route_construction {
+  class routing {
   }
   class route_improvement {
   }
@@ -1859,7 +1859,7 @@ classDiagram
   }
   class vrpp_model {
   }
-  class mandatory_selection {
+  class packing {
   }
   class base {
   }
@@ -1931,7 +1931,7 @@ classDiagram
   }
   class selection_whittle {
   }
-  class route_construction {
+  class routing {
   }
   class acceptance_criteria {
   }
@@ -2895,7 +2895,7 @@ classDiagram
   }
   class other_algorithms {
   }
-  class adaptive_route_constructor_orchestrator {
+  class adaptive_routing_algorithm_orchestrator {
   }
   class params {
   }
@@ -2911,7 +2911,7 @@ classDiagram
   }
   class policy_cvrp {
   }
-  class sequential_route_constructor {
+  class sequential_routing_algorithm {
   }
   class params {
   }
@@ -2993,7 +2993,7 @@ classDiagram
   }
   class steepest_two_opt {
   }
-  class selection_and_construction {
+  class packing_and_routing {
   }
   class base {
   }
@@ -3579,116 +3579,116 @@ classDiagram
   policies --> tsp
   policies --> vns
   policies --> vpl
-  aco_hh --> mandatory_selection
+  aco_hh --> packing
   aco_hh --> route_improvement
   aco_ks --> acceptance_criteria
-  aco_ks --> mandatory_selection
+  aco_ks --> packing
   aco_ks --> route_improvement
   ahvpl --> aco_ks
   ahvpl --> alns
   ahvpl --> hgs
-  aks --> mandatory_selection
+  aks --> packing
   aks --> route_improvement
   alns --> acceptance_criteria
-  alns --> mandatory_selection
+  alns --> packing
   alns --> route_improvement
-  amphh --> mandatory_selection
+  amphh --> packing
   amphh --> route_improvement
-  bb --> mandatory_selection
+  bb --> packing
   bb --> route_improvement
-  bc --> mandatory_selection
+  bc --> packing
   bc --> route_improvement
-  bp --> mandatory_selection
+  bp --> packing
   bp --> route_improvement
-  bpc --> mandatory_selection
+  bpc --> packing
   bpc --> route_improvement
-  cf_rs --> mandatory_selection
+  cf_rs --> packing
   cf_rs --> route_improvement
-  cgh --> mandatory_selection
+  cgh --> packing
   cgh --> route_improvement
-  cp_sat --> mandatory_selection
+  cp_sat --> packing
   cp_sat --> route_improvement
-  cvrp --> mandatory_selection
+  cvrp --> packing
   cvrp --> route_improvement
-  de --> mandatory_selection
+  de --> packing
   de --> route_improvement
-  es_mcl --> mandatory_selection
+  es_mcl --> packing
   es_mcl --> route_improvement
-  es_mkl --> mandatory_selection
+  es_mkl --> packing
   es_mkl --> route_improvement
-  es_mpl --> mandatory_selection
+  es_mpl --> packing
   es_mpl --> route_improvement
   filo --> abc
   gihh --> acceptance_criteria
-  gihh --> mandatory_selection
+  gihh --> packing
   gihh --> route_improvement
-  gp_mp_hh --> mandatory_selection
+  gp_mp_hh --> packing
   gp_mp_hh --> route_improvement
   hgs --> acceptance_criteria
-  hgs --> mandatory_selection
+  hgs --> packing
   hgs --> route_improvement
   hgs_alns --> alns
   hgs_alns --> hgs
-  hgs_rr --> mandatory_selection
+  hgs_rr --> packing
   hgs_rr --> route_improvement
-  hms --> mandatory_selection
+  hms --> packing
   hms --> route_improvement
   hvpl --> aco_ks
   hvpl --> alns
   ils --> acceptance_criteria
-  ils_bd --> mandatory_selection
+  ils_bd --> packing
   ils_bd --> route_improvement
   ils_rvnd_sp --> abc
   ils_rvnd_sp --> acceptance_criteria
   kgls --> abc
-  ks --> mandatory_selection
+  ks --> packing
   ks --> route_improvement
-  lb --> mandatory_selection
+  lb --> packing
   lb --> route_improvement
   lb_vns --> acceptance_criteria
-  lb_vns --> mandatory_selection
+  lb_vns --> packing
   lb_vns --> route_improvement
-  lrh --> mandatory_selection
+  lrh --> packing
   lrh --> route_improvement
-  ma_im --> mandatory_selection
+  ma_im --> packing
   ma_im --> route_improvement
-  ma_ts --> mandatory_selection
+  ma_ts --> packing
   ma_ts --> route_improvement
-  mhh --> mandatory_selection
+  mhh --> packing
   mhh --> route_improvement
-  mp_aco --> mandatory_selection
+  mp_aco --> packing
   mp_aco --> route_improvement
-  mp_ils --> mandatory_selection
+  mp_ils --> packing
   mp_ils --> route_improvement
-  mp_pso --> mandatory_selection
+  mp_pso --> packing
   mp_pso --> route_improvement
-  mp_sa --> mandatory_selection
+  mp_sa --> packing
   mp_sa --> route_improvement
   na --> objective
   na --> model
-  na --> mandatory_selection
+  na --> packing
   na --> route_improvement
   other --> acceptance_criteria
-  other --> mandatory_selection
+  other --> packing
   other --> reinforcement_learning
   other --> route_improvement
   route_improvement --> acceptance_criteria
-  ph --> mandatory_selection
+  ph --> packing
   ph --> route_improvement
-  phh --> mandatory_selection
+  phh --> packing
   phh --> route_improvement
   popmusic --> alns
   popmusic --> hgs
-  popmusic --> mandatory_selection
+  popmusic --> packing
   popmusic --> route_improvement
   popmusic --> tsp
-  pso --> mandatory_selection
+  pso --> packing
   pso --> route_improvement
-  psoda --> mandatory_selection
+  psoda --> packing
   psoda --> route_improvement
-  rens --> mandatory_selection
+  rens --> packing
   rens --> route_improvement
-  rfo --> mandatory_selection
+  rfo --> packing
   rfo --> route_improvement
   rl_ahvpl --> aco_ks
   rl_ahvpl --> alns
@@ -3703,18 +3703,18 @@ classDiagram
   rl_hvpl --> other
   rts --> acceptance_criteria
   sa --> acceptance_criteria
-  sa --> mandatory_selection
+  sa --> packing
   sa --> route_improvement
-  sans --> mandatory_selection
+  sans --> packing
   sans --> route_improvement
-  shh --> mandatory_selection
+  shh --> packing
   shh --> route_improvement
-  sisr --> mandatory_selection
+  sisr --> packing
   sisr --> route_improvement
-  swc_tcf --> mandatory_selection
+  swc_tcf --> packing
   swc_tcf --> route_improvement
   ts --> acceptance_criteria
-  tsp --> mandatory_selection
+  tsp --> packing
   tsp --> route_improvement
   vns --> acceptance_criteria
   rl --> adaptive_imitation
@@ -4075,10 +4075,10 @@ classDiagram
   interfaces --> bin_container
   interfaces --> context
   interfaces --> env
-  interfaces --> mandatory_selection
+  interfaces --> packing
   interfaces --> model
   interfaces --> policy
-  interfaces --> route_constructor
+  interfaces --> routing_algorithm
   interfaces --> route_improvement
   interfaces --> tensor_dict_like
   interfaces --> traversable
@@ -4416,9 +4416,9 @@ classDiagram
   hgs_alns --> adaptive_large_neighborhood_search
   hgs_alns --> hgs
   hgs_alns --> hybrid_genetic_search
-  hgs_core --> crossover
-  hgs_core --> evaluation
-  hgs_core --> population
+  core --> crossover
+  core --> evaluation
+  core --> population
   population --> evaluation
   hybrid_genetic_search --> crossover
   hybrid_genetic_search --> population
@@ -5145,7 +5145,7 @@ classDiagram
   actions --> fill
   actions --> logging
   actions --> node_selection
-  actions --> route_construction
+  actions --> routing
   actions --> route_improvement
   collection --> base
   collection --> tsp
@@ -5159,14 +5159,14 @@ classDiagram
   node_selection --> interfaces
   node_selection --> search_context
   node_selection --> base
-  node_selection --> mandatory_selection
+  node_selection --> packing
   node_selection --> selection_factory
   node_selection --> config_loader
-  route_construction --> multi_day_context
-  route_construction --> base
-  route_construction --> prediction
-  route_construction --> base
-  route_construction --> tsp
+  routing --> multi_day_context
+  routing --> base
+  routing --> prediction
+  routing --> base
+  routing --> tsp
   route_improvement --> configs
   route_improvement --> constants
   route_improvement --> interfaces
@@ -5293,7 +5293,7 @@ classDiagram
   policies --> solver
   policies --> cvrp
   policies --> tsp
-  policies --> selection_and_construction
+  policies --> packing_and_routing
   context --> context
   local_search --> local_search_aco
   local_search --> local_search_base
@@ -5577,43 +5577,43 @@ classDiagram
   separation --> engine
   separation --> inequality
   engine --> inequality
-  mandatory_selection --> interfaces
-  mandatory_selection --> selection
-  mandatory_selection --> base
-  mandatory_selection --> selection_bernoulli_random
-  mandatory_selection --> selection_combined
-  mandatory_selection --> selection_cvar
-  mandatory_selection --> selection_deadline
-  mandatory_selection --> selection_dispatcher_portfolio
-  mandatory_selection --> selection_dispatcher_thompson
-  mandatory_selection --> selection_filter_and_fan
-  mandatory_selection --> selection_fractional_knapsack
-  mandatory_selection --> selection_kmeans_sector
-  mandatory_selection --> selection_lagrangian
-  mandatory_selection --> selection_last_minute
-  mandatory_selection --> selection_learned
-  mandatory_selection --> selection_lookahead
-  mandatory_selection --> selection_mip_knapsack
-  mandatory_selection --> selection_multi_day_prob
-  mandatory_selection --> selection_pareto
-  mandatory_selection --> selection_profit_per_km
-  mandatory_selection --> selection_regular
-  mandatory_selection --> selection_revenue
-  mandatory_selection --> selection_rollout
-  mandatory_selection --> selection_savings
-  mandatory_selection --> selection_service_level
-  mandatory_selection --> selection_set_cover
-  mandatory_selection --> selection_spatial_synergy
-  mandatory_selection --> selection_staggered_regular
-  mandatory_selection --> selection_stochastic_regret
-  mandatory_selection --> selection_submodular_greedy
-  mandatory_selection --> selection_supermodular_greedy
-  mandatory_selection --> selection_wasserstein
+  packing --> interfaces
+  packing --> selection
+  packing --> base
+  packing --> selection_bernoulli_random
+  packing --> selection_combined
+  packing --> selection_cvar
+  packing --> selection_deadline
+  packing --> selection_dispatcher_portfolio
+  packing --> selection_dispatcher_thompson
+  packing --> selection_filter_and_fan
+  packing --> selection_fractional_knapsack
+  packing --> selection_kmeans_sector
+  packing --> selection_lagrangian
+  packing --> selection_last_minute
+  packing --> selection_learned
+  packing --> selection_lookahead
+  packing --> selection_mip_knapsack
+  packing --> selection_multi_day_prob
+  packing --> selection_pareto
+  packing --> selection_profit_per_km
+  packing --> selection_regular
+  packing --> selection_revenue
+  packing --> selection_rollout
+  packing --> selection_savings
+  packing --> selection_service_level
+  packing --> selection_set_cover
+  packing --> selection_spatial_synergy
+  packing --> selection_staggered_regular
+  packing --> selection_stochastic_regret
+  packing --> selection_submodular_greedy
+  packing --> selection_supermodular_greedy
+  packing --> selection_wasserstein
   base --> selection_context
   base --> selection_factory
   base --> selection_registry
   eoq --> selection_context
-  selection_factory --> mandatory_selection
+  selection_factory --> packing
   selection_factory --> selection_registry
   selection_factory --> selection_bernoulli_random
   selection_factory --> selection_combined
@@ -5645,165 +5645,165 @@ classDiagram
   selection_factory --> selection_supermodular_greedy
   selection_factory --> selection_wasserstein
   selection_factory --> selection_whittle
-  selection_registry --> mandatory_selection
+  selection_registry --> packing
   selection_bernoulli_random --> enums
   selection_bernoulli_random --> search_context
-  selection_bernoulli_random --> mandatory_selection
+  selection_bernoulli_random --> packing
   selection_bernoulli_random --> selection_context
   selection_bernoulli_random --> selection_registry
   selection_combined --> enums
   selection_combined --> search_context
-  selection_combined --> mandatory_selection
+  selection_combined --> packing
   selection_combined --> selection_context
   selection_combined --> selection_factory
   selection_combined --> selection_registry
   selection_cvar --> enums
   selection_cvar --> search_context
-  selection_cvar --> mandatory_selection
+  selection_cvar --> packing
   selection_cvar --> selection_context
   selection_cvar --> selection_registry
   selection_deadline --> enums
   selection_deadline --> search_context
-  selection_deadline --> mandatory_selection
+  selection_deadline --> packing
   selection_deadline --> selection_context
   selection_deadline --> selection_registry
   selection_dispatcher_portfolio --> enums
   selection_dispatcher_portfolio --> search_context
-  selection_dispatcher_portfolio --> mandatory_selection
+  selection_dispatcher_portfolio --> packing
   selection_dispatcher_portfolio --> selection_context
   selection_dispatcher_portfolio --> selection_factory
   selection_dispatcher_portfolio --> selection_registry
   selection_dispatcher_thompson --> enums
   selection_dispatcher_thompson --> search_context
-  selection_dispatcher_thompson --> mandatory_selection
+  selection_dispatcher_thompson --> packing
   selection_dispatcher_thompson --> selection_context
   selection_dispatcher_thompson --> selection_factory
   selection_dispatcher_thompson --> selection_registry
   selection_filter_and_fan --> enums
   selection_filter_and_fan --> search_context
-  selection_filter_and_fan --> mandatory_selection
+  selection_filter_and_fan --> packing
   selection_filter_and_fan --> selection_context
   selection_filter_and_fan --> selection_registry
   selection_fractional_knapsack --> enums
   selection_fractional_knapsack --> search_context
-  selection_fractional_knapsack --> mandatory_selection
+  selection_fractional_knapsack --> packing
   selection_fractional_knapsack --> selection_context
   selection_fractional_knapsack --> selection_registry
   selection_kmeans_sector --> enums
   selection_kmeans_sector --> search_context
-  selection_kmeans_sector --> mandatory_selection
+  selection_kmeans_sector --> packing
   selection_kmeans_sector --> selection_context
   selection_kmeans_sector --> selection_registry
   selection_lagrangian --> enums
   selection_lagrangian --> search_context
-  selection_lagrangian --> mandatory_selection
+  selection_lagrangian --> packing
   selection_lagrangian --> selection_context
   selection_lagrangian --> selection_registry
   selection_last_minute --> enums
   selection_last_minute --> search_context
-  selection_last_minute --> mandatory_selection
+  selection_last_minute --> packing
   selection_last_minute --> eoq
   selection_last_minute --> selection_context
   selection_last_minute --> selection_registry
   selection_learned --> enums
   selection_learned --> search_context
-  selection_learned --> mandatory_selection
+  selection_learned --> packing
   selection_learned --> selection_context
   selection_learned --> selection_registry
   selection_lookahead --> constants
   selection_lookahead --> enums
   selection_lookahead --> search_context
-  selection_lookahead --> mandatory_selection
+  selection_lookahead --> packing
   selection_lookahead --> selection_context
   selection_lookahead --> selection_registry
   selection_mip_knapsack --> enums
   selection_mip_knapsack --> search_context
-  selection_mip_knapsack --> mandatory_selection
+  selection_mip_knapsack --> packing
   selection_mip_knapsack --> selection_context
   selection_mip_knapsack --> selection_registry
   selection_multi_day_prob --> enums
   selection_multi_day_prob --> search_context
-  selection_multi_day_prob --> mandatory_selection
+  selection_multi_day_prob --> packing
   selection_multi_day_prob --> selection_context
   selection_multi_day_prob --> selection_registry
   selection_pareto --> enums
   selection_pareto --> search_context
-  selection_pareto --> mandatory_selection
+  selection_pareto --> packing
   selection_pareto --> selection_context
   selection_pareto --> selection_registry
   selection_profit_per_km --> enums
   selection_profit_per_km --> search_context
-  selection_profit_per_km --> mandatory_selection
+  selection_profit_per_km --> packing
   selection_profit_per_km --> eoq
   selection_profit_per_km --> selection_context
   selection_profit_per_km --> selection_registry
   selection_regular --> enums
   selection_regular --> search_context
-  selection_regular --> mandatory_selection
+  selection_regular --> packing
   selection_regular --> selection_context
   selection_regular --> selection_registry
   selection_revenue --> enums
   selection_revenue --> search_context
-  selection_revenue --> mandatory_selection
+  selection_revenue --> packing
   selection_revenue --> eoq
   selection_revenue --> selection_context
   selection_revenue --> selection_registry
   selection_rollout --> enums
   selection_rollout --> search_context
-  selection_rollout --> mandatory_selection
+  selection_rollout --> packing
   selection_rollout --> selection_context
   selection_rollout --> selection_factory
   selection_rollout --> selection_registry
   selection_rollout --> selection_last_minute
   selection_savings --> enums
   selection_savings --> search_context
-  selection_savings --> mandatory_selection
+  selection_savings --> packing
   selection_savings --> selection_context
   selection_savings --> selection_registry
   selection_service_level --> constants
   selection_service_level --> enums
   selection_service_level --> search_context
-  selection_service_level --> mandatory_selection
+  selection_service_level --> packing
   selection_service_level --> selection_context
   selection_service_level --> selection_registry
   selection_set_cover --> enums
   selection_set_cover --> search_context
-  selection_set_cover --> mandatory_selection
+  selection_set_cover --> packing
   selection_set_cover --> selection_context
   selection_set_cover --> selection_registry
   selection_spatial_synergy --> enums
   selection_spatial_synergy --> search_context
-  selection_spatial_synergy --> mandatory_selection
+  selection_spatial_synergy --> packing
   selection_spatial_synergy --> selection_context
   selection_spatial_synergy --> selection_registry
   selection_staggered_regular --> enums
   selection_staggered_regular --> search_context
-  selection_staggered_regular --> mandatory_selection
+  selection_staggered_regular --> packing
   selection_staggered_regular --> selection_context
   selection_staggered_regular --> selection_registry
   selection_stochastic_regret --> enums
   selection_stochastic_regret --> search_context
-  selection_stochastic_regret --> mandatory_selection
+  selection_stochastic_regret --> packing
   selection_stochastic_regret --> selection_context
   selection_stochastic_regret --> selection_registry
   selection_submodular_greedy --> enums
   selection_submodular_greedy --> search_context
-  selection_submodular_greedy --> mandatory_selection
+  selection_submodular_greedy --> packing
   selection_submodular_greedy --> selection_context
   selection_submodular_greedy --> selection_registry
   selection_supermodular_greedy --> enums
   selection_supermodular_greedy --> search_context
-  selection_supermodular_greedy --> mandatory_selection
+  selection_supermodular_greedy --> packing
   selection_supermodular_greedy --> selection_context
   selection_supermodular_greedy --> selection_registry
   selection_wasserstein --> enums
   selection_wasserstein --> search_context
-  selection_wasserstein --> mandatory_selection
+  selection_wasserstein --> packing
   selection_wasserstein --> selection_context
   selection_wasserstein --> selection_registry
   selection_whittle --> enums
   selection_whittle --> search_context
-  selection_whittle --> mandatory_selection
+  selection_whittle --> packing
   selection_whittle --> selection_context
   selection_whittle --> selection_registry
   adaptive_boltzmann_metropolis --> acceptance_criterion
@@ -5894,14 +5894,14 @@ classDiagram
   base_multi_period_policy --> prediction
   base_multi_period_policy --> base_routing_policy
   base_routing_policy --> search_context
-  base_routing_policy --> route_constructor
+  base_routing_policy --> routing_algorithm
   base_routing_policy --> repository
   base_routing_policy --> tsp
   base_routing_policy --> run
   base_routing_policy --> viz_mixin
-  factory --> route_constructor
+  factory --> routing_algorithm
   factory --> registry
-  registry --> route_constructor
+  registry --> routing_algorithm
   exact_and_decomposition_solvers --> branch_and_bound
   exact_and_decomposition_solvers --> branch_and_cut
   exact_and_decomposition_solvers --> branch_and_price
@@ -7244,15 +7244,15 @@ classDiagram
   solver --> nearest_neighbor_si
   solver --> params
   solver --> params
-  other_algorithms --> adaptive_route_constructor_orchestrator
+  other_algorithms --> adaptive_routing_algorithm_orchestrator
   other_algorithms --> capacitated_vehicle_routing_problem
-  other_algorithms --> sequential_route_constructor
+  other_algorithms --> sequential_routing_algorithm
   other_algorithms --> travelling_salesman_problem
-  adaptive_route_constructor_orchestrator --> params
-  adaptive_route_constructor_orchestrator --> policy_arco
+  adaptive_routing_algorithm_orchestrator --> params
+  adaptive_routing_algorithm_orchestrator --> policy_arco
   policy_arco --> arco
   policy_arco --> enums
-  policy_arco --> route_constructor
+  policy_arco --> routing_algorithm
   policy_arco --> base_routing_policy
   policy_arco --> factory
   policy_arco --> params
@@ -7265,11 +7265,11 @@ classDiagram
   policy_cvrp --> factory
   policy_cvrp --> cvrp
   policy_cvrp --> params
-  sequential_route_constructor --> params
-  sequential_route_constructor --> policy_src
+  sequential_routing_algorithm --> params
+  sequential_routing_algorithm --> policy_src
   policy_src --> src
   policy_src --> enums
-  policy_src --> route_constructor
+  policy_src --> routing_algorithm
   policy_src --> base_routing_policy
   policy_src --> factory
   policy_src --> params
@@ -7492,16 +7492,16 @@ classDiagram
   steepest_two_opt --> route_improvement
   steepest_two_opt --> improvement_descent
   steepest_two_opt --> base
-  selection_and_construction --> base
-  selection_and_construction --> joint_greedy_orienteering
-  selection_and_construction --> joint_simulated_annealing
-  selection_and_construction --> non_dominated_sorting_biased_random_key_genetic_algorithm
+  packing_and_routing --> base
+  packing_and_routing --> joint_greedy_orienteering
+  packing_and_routing --> joint_simulated_annealing
+  packing_and_routing --> non_dominated_sorting_biased_random_key_genetic_algorithm
   base --> base_joint_policy
   base --> factory
   base --> registry
   base_joint_policy --> joint_context
   base_joint_policy --> search_context
-  base_joint_policy --> route_constructor
+  base_joint_policy --> routing_algorithm
   base_joint_policy --> repository
   base_joint_policy --> viz_mixin
   factory --> base_joint_policy
@@ -7862,10 +7862,10 @@ classDiagram
   task_utils --> graph
   sim_page --> log_parser
   statistical_empirical ..> wsmart_bin_analysis
-  mandatory_selection ..> search_context
-  mandatory_selection ..> selection_context
-  route_constructor ..> multi_day_context
-  route_constructor ..> search_context
+  packing ..> search_context
+  packing ..> selection_context
+  routing_algorithm ..> multi_day_context
+  routing_algorithm ..> search_context
   ppo_trainer ..> dr_alns
   hybrid_neural_heuristic_policy ..> alns
   hybrid_neural_heuristic_policy ..> hgs
@@ -7880,7 +7880,7 @@ classDiagram
   module ..> selection
   steps ..> env
   steps ..> policy
-  steps ..> mandatory_selection
+  steps ..> packing
   trainer ..> tracking
   gdpo ..> env
   reinforce ..> env

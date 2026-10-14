@@ -140,7 +140,7 @@ export function BenchmarkPortfolioParallel({
         />
       </div>
       <p className="text-[10px] text-canvas-muted">
-        {runs.length} simulation log(s) — one polyline per loaded run · coloured by mandatory-selection
+        {runs.length} simulation log(s) — one polyline per loaded run · coloured by packing algorithm
         strategy
       </p>
       <StrategyLegend />

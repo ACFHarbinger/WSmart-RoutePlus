@@ -101,7 +101,7 @@ logic/src/configs/
 │   ├── bpc.py               # Branch-and-Price-and-Cut exact solver
 │   ├── neural.py            # Neural policy wrapper
 │   ├── other/               # Modular extensions
-│   │   ├── mandatory_selection.py       # Pre-selection strategies
+│   │   ├── packing.py       # Pre-selection strategies
 │   │   └── route_improvement.py
 │   └── README.md
 │
@@ -146,7 +146,7 @@ from logic.src.configs import (
     TrainConfig, EvalConfig, SimConfig, MetaRLConfig, HPOConfig,
     # Policies
     ALNSConfig, HGSConfig, ACOConfig, BPCConfig, ILSConfig,
-    MandatorySelectionConfig, route improvementConfig,
+    PackingConfig, route improvementConfig,
     # RL
     RLConfig, PPOConfig, POMOConfig, ImitationConfig,
 )
@@ -178,7 +178,7 @@ class Config:
         eval: Evaluation configuration.
         sim: Simulation configuration.
         data: Data generation configuration.
-        mandatory_selection: mandatory selection strategy configuration.
+        packing: packing algorithm configuration.
         route_improvement: Route refinement configuration.
         seed: Random seed for reproducibility.
         device: Device to use ('cpu', 'cuda', 'cuda:0').
@@ -200,7 +200,7 @@ class Config:
     eval: EvalConfig = field(default_factory=EvalConfig)
     sim: SimConfig = field(default_factory=SimConfig)
     data: DataConfig = field(default_factory=DataConfig)
-    mandatory_selection: MandatorySelectionConfig = field(default_factory=MandatorySelectionConfig)
+    packing: PackingConfig = field(default_factory=PackingConfig)
     route_improvement: route improvementConfig = field(default_factory=route improvementConfig)
 
     seed: int = 42
@@ -837,7 +837,7 @@ class ALNSConfig:
         min_removal: Minimum nodes to remove per destroy.
         max_removal_pct: Maximum % of nodes to remove.
         engine: Solver engine ('custom', 'alns' third-party).
-        mandatory_selection: Pre-selection strategies.
+        packing: Pre-selection strategies.
         route_improvement: Refinement steps.
     """
 
@@ -849,7 +849,7 @@ class ALNSConfig:
     min_removal: int = 1
     max_removal_pct: float = 0.3
     engine: str = "custom"
-    mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
+    packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[route improvementConfig]] = None
 ```
 
@@ -871,8 +871,8 @@ alns_config = ALNSConfig(
 
 # With pre-selection and route improvement
 alns_config = ALNSConfig(
-    mandatory_selection=[
-        MandatorySelectionConfig(strategy="last_minute", threshold=0.9)
+    packing=[
+        PackingConfig(strategy="last_minute", threshold=0.9)
     ],
     route_improvement=[
         route improvementConfig(methods=["2opt", "relocate"])
@@ -966,16 +966,16 @@ class ILSConfig:
     })
 ```
 
-### MandatorySelectionConfig
+### PackingConfig
 
-**File**: `policies/helpers/mandatory_selection.py`
+**File**: `policies/helpers/packing.py`
 
 Pre-selection strategy for mandatory collections.
 
 ```python
 @dataclass
-class MandatorySelectionConfig:
-    """mandatory selection configuration.
+class PackingConfig:
+    """packing configuration.
 
     Attributes:
         strategy: Selector logic ('last_minute', 'regular', 'manager',
@@ -1015,19 +1015,19 @@ class MandatorySelectionConfig:
 
 ```python
 # Last-minute collection at 90% fill
-mandatory_selection = MandatorySelectionConfig(
+packing = PackingConfig(
     strategy="last_minute",
     threshold=0.9
 )
 
 # Regular collection every 3 days
-mandatory_selection = MandatorySelectionConfig(
+packing = PackingConfig(
     strategy="regular",
     frequency=3
 )
 
 # Combined strategy
-mandatory_selection = MandatorySelectionConfig(
+packing = PackingConfig(
     strategy="combined",
     logic="or",
     combined_strategies=[
@@ -1037,7 +1037,7 @@ mandatory_selection = MandatorySelectionConfig(
 )
 
 # Neural manager
-mandatory_selection = MandatorySelectionConfig(
+packing = PackingConfig(
     strategy="manager",
     manager_weights="assets/manager_weights.pt",
     critical_threshold=0.85
@@ -1661,7 +1661,7 @@ results = run_simulation(config, policies=["gurobi", "hgs", "am"])
 
 ```python
 from logic.src.configs import (
-    Config, ALNSConfig, MandatorySelectionConfig, route improvementConfig
+    Config, ALNSConfig, PackingConfig, route improvementConfig
 )
 
 config = Config(
@@ -1672,8 +1672,8 @@ config = Config(
         max_iterations=10000,
         max_removal_pct=0.4,
 
-        mandatory_selection=[
-            MandatorySelectionConfig(
+        packing=[
+            PackingConfig(
                 strategy="combined",
                 logic="or",
                 combined_strategies=[
@@ -1984,7 +1984,7 @@ from logic.src.configs.models import (
 # Policy configs
 from logic.src.configs.policies import (
     ALNSConfig, HGSConfig, ACOConfig, ILSConfig, BPCConfig,
-    MandatorySelectionConfig, route improvementConfig
+    PackingConfig, route improvementConfig
 )
 
 # RL configs
@@ -2033,7 +2033,7 @@ Config
 ├── hpo: HPOConfig
 ├── data: DataConfig
 │   └── graph: GraphConfig
-├── mandatory_selection: MandatorySelectionConfig
+├── packing: PackingConfig
 └── route_improvement: route improvementConfig
 ```
 
@@ -2056,7 +2056,7 @@ Config
 | **SimConfig**            | days=31, warmup_days=5, stochastic=True                     |
 | **ALNSConfig**           | time_limit=60.0, max_iterations=5000, cooling_rate=0.995    |
 | **HGSConfig**            | population_size=50, elite_size=10, mutation_rate=0.2        |
-| **MandatorySelectionConfig**         | strategy=None, threshold=0.7, frequency=3                   |
+| **PackingConfig**         | strategy=None, threshold=0.7, frequency=3                   |
 | **route improvementConfig** | methods=["fast_tsp"], iterations=50                         |
 
 ### File Size Reference
@@ -2077,7 +2077,7 @@ Config
 | `rl/core/ppo.py`            | 14    | PPOConfig         |
 | `rl/core/pomo.py`           | ~20   | POMOConfig        |
 | `policies/alns.py`          | 39    | ALNSConfig        |
-| `policies/helpers/mandatory_selection.py` | ~60   | MandatorySelectionConfig      |
+| `policies/helpers/packing.py` | ~60   | PackingConfig      |
 | `tasks/train.py`            | 75    | TrainConfig       |
 | `tasks/sim.py`              | ~20   | SimConfig         |
 
