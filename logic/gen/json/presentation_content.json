@@ -228,7 +228,7 @@
     "improvers": {
       "title": "Route Improvers: Classical Local Search vs Fast-TSP",
       "figure": "ls_operators.png",
-      "caption": "CLS polishes routes via 2-opt / or-opt / swap / relocate local search to a local optimum. Fast-TSP re-orders each route as its own TSP — exact for short routes, stochastic local search beyond ~20 nodes. Improver choice is a second-order effect: selection strategy and constructor dominate the KPI outcomes.",
+      "caption": "CLS polishes routes via 2-opt / or-opt / swap / relocate local search to a local optimum. Fast-TSP re-orders each route as its own TSP — exact for short routes, stochastic local search beyond ~20 nodes. Improver choice is a second-order effect: packing algorithm and routing algorithm dominate the KPI outcomes.",
       "show_bullets": false,
       "bullets": [
         "CLS: exhaustive local search (2-opt, or-opt, swap, relocate) — best KG / KM polish",
@@ -256,14 +256,14 @@
         "policy_radar.png",
         "policy_radar_combined.png"
       ],
-      "caption": "Overlaid radar charts comparing routing algorithms across overflow, efficiency, distance and profit axes (outer = better) — a curated subset (left) and every constructor (right).",
+      "caption": "Overlaid radar charts comparing routing algorithms across overflow, efficiency, distance and profit axes (outer = better) — a curated subset (left) and every routing algorithm (right).",
       "show_bullets": false,
       "bullets": [
-        "The selection strategy dominates the overflow/efficiency trade-off: SL prevents overflows (SL2 + ACO-HH reached 0 at FFZ-350), LM (CF90) maximises KG / KM (~12), LA balances",
-        "BPC and PG-CLNS are the most frequent Pareto-front constructors; ACO-HH is the most robust across scenarios and horizons",
+        "The packing algorithm dominates the overflow/efficiency trade-off: SL prevents overflows (SL2 + ACO-HH reached 0 at FFZ-350), LM (CF90) maximises KG / KM (~12), LA balances",
+        "BPC and PG-CLNS are the most frequent Pareto-front routing algorithms; ACO-HH is the most robust across scenarios and horizons",
         "Patterns are stable from 30 to 90 days; overflow pressure grows with the horizon while KG / KM stays consistent",
         "Limitations: single vehicle type/depot per region; waste models calibrated on limited data; 90-day runs only cover the 30-day Pareto-front policies",
-        "Future work: richer acceptance criteria, neural constructors (e.g. Attention Model) in the same pipeline, multi-vehicle fleets, intra-day re-routing, CO₂-aware objectives"
+        "Future work: richer acceptance criteria, neural routing algorithms (e.g. Attention Model) in the same pipeline, multi-vehicle fleets, intra-day re-routing, CO₂-aware objectives"
       ]
     },
     "qa": {
@@ -279,7 +279,7 @@
     "pareto": {
       "title": "Results — Pareto Front (Overflows vs KG / KM)",
       "figure": "pareto_scatter_log.png",
-      "note": "Symlog X axis (overflows). Colour = selection variant, shape = scenario. Pareto fronts are styled by region — solid dark purple (RM-100), dashed dark bronze (RM-170), dotted dark slate (FFZ-350) — identically in both panels, so the same region's front is directly comparable across the Empirical and Gamma-3 distributions."
+      "note": "Symlog X axis (overflows). Colour = packing variant, shape = scenario. Pareto fronts are styled by region — solid dark purple (RM-100), dashed dark bronze (RM-170), dotted dark slate (FFZ-350) — identically in both panels, so the same region's front is directly comparable across the Empirical and Gamma-3 distributions."
     },
     "kpi": {
       "title": "Results — Summary KPI Analysis by Selection Strategy",
@@ -289,10 +289,10 @@
     "strategy_bubble": {
       "title": "Results — Strategy Trade-off (Overflows vs KG / KM)",
       "figure": "strategy_bubble_log.png",
-      "note": "Each bubble = (selection strategy, scenario) averaged over constructors and improvers — coloured by packing algorithm (LA/LM/SL)."
+      "note": "Each bubble = (packing algorithm, scenario) averaged over routing algorithms and improvers — coloured by packing algorithm (LA/LM/SL)."
     },
     "scenario_heatmaps": {
-      "title": "Results — Per-Scenario Heatmaps (Constructors × Strategy·Improver, Empirical Distribution)",
+      "title": "Results — Per-Scenario Heatmaps (Routing algorithms × Strategy·Improver, Empirical Distribution)",
       "figure": "scenario_constructor_heatmap_empirical.png",
       "note": "30-day runs, Empirical distribution only. One panel per scenario; routing algorithms on the rows, selection × improver combinations on the columns."
     },
@@ -309,7 +309,7 @@
       "title": "Results — Route Improver Comparison",
       "figure": "improver_bubble_log.png",
       "fallback_figure": "improver_bubble.png",
-      "note": "Each bubble = (improver, scenario) averaged over strategies and constructors — FTSP vs CLS contrasted directly."
+      "note": "Each bubble = (improver, scenario) averaged over strategies and routing algorithms — FTSP vs CLS contrasted directly."
     }
   }
 }
