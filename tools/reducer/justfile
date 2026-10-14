@@ -37,16 +37,16 @@ clean-large-outputs:
     find assets/output -type d -name "checkpoints" -exec rm -rf {} +
     find assets/output -type f -name "log_realtime*.jsonl" -exec rm -f {} +
 
-# Clean up Route Constructor configs and implementations
+# Clean up Routing Algorithm configs and implementations
 
-# Usage: just reducer::cleanup-route-constructors acronyms="alns,bpc"
-cleanup-route-constructors acronyms="":
+# Usage: just reducer::cleanup-routing-algorithms acronyms="alns,bpc"
+cleanup-routing-algorithms acronyms="":
     @printf "\033[0;36m╔════════════════════════════════════════════════════════════╗\033[0m\n"
-    @printf "\033[0;36m║\033[0m \033[1m%-58s\033[0m   \033[0;36m║\033[0m\n" "🧹 CLEANING ROUTE CONSTRUCTORS"
+    @printf "\033[0;36m║\033[0m \033[1m%-58s\033[0m   \033[0;36m║\033[0m\n" "🧹 CLEANING ROUTING ALGORITHMS"
     @printf "\033[0;36m╠════════════════════════════════════════════════════════════╣\033[0m\n"
     @printf "\033[0;36m║\033[0m \033[0;33m%-15s\033[0m \033[0;35m%-42s\033[0m \033[0;36m║\033[0m\n" "Acronyms:" "{{ acronyms }}"
     @printf "\033[0;36m╚════════════════════════════════════════════════════════════╝\033[0m\n"
-    uv run python logic/package/remove_route_constructors.py "{{ acronyms }}"
+    uv run python logic/package/remove_routing_algorithms.py "{{ acronyms }}"
 
 # Clean up other Policy configs and implementations
 
@@ -92,7 +92,7 @@ cleanup-rl-algorithms acronyms="":
     @printf "\033[0;36m╚════════════════════════════════════════════════════════════╝\033[0m\n"
     uv run python logic/package/remove_rl_algorithms.py "{{ acronyms }}"
 
-# Clean up Route Constructor policies used for Imitation Learning
+# Clean up Routing Algorithm policies used for Imitation Learning
 
 # Usage: just reducer::cleanup-imitation-policies acronyms="aco"
 cleanup-imitation-policies acronyms="":
@@ -146,8 +146,8 @@ cleanup-security:
 # Parameters:
 #   results_dir  — path to the output folder (required)
 #   distribution — space-separated distribution tags  (emp gamma1 gamma2 gamma3)
-#   constructor  — route constructor(s)               (alns hgs aco_hh bpc psoma …)
-#   ms_strategy  — mandatory-selection strategy/ies   (lookahead last_minute regular)
+#   constructor  — routing algorithm(s)               (alns hgs aco_hh bpc psoma …)
+#   ms_strategy  — packing algorithm/ies   (lookahead last_minute regular)
 #   improver     — route improver(s)                  (ftsp rls rds none …)
 #   dry_run      — set to "true" to preview without deleting (default: false)
 #   quiet        — set to "true" to suppress per-item output (default: false)

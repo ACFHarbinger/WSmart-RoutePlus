@@ -14,7 +14,7 @@ on:
     inputs:
       constructors:
         description: >
-          Route construction algorithm acronyms to keep (comma-separated).
+          Routing algorithm acronyms to keep (comma-separated).
           Leave blank to retain all constructors.
           Example: HGS,ALNS,BPC
         required: false
@@ -23,7 +23,7 @@ on:
 
       selectors:
         description: >
-          Mandatory selection policy acronyms to keep (comma-separated).
+          Packing policy acronyms to keep (comma-separated).
           Leave blank to retain all selectors.
           Example: MS_REGULAR,MS_PPK,MS_SAVINGS
         required: false
@@ -50,7 +50,7 @@ on:
 
       joint:
         description: >
-          Joint selection-and-construction acronyms to keep (comma-separated).
+          Joint packing-and-routing acronyms to keep (comma-separated).
           Leave blank to retain all joint methods.
           Example: JGO,JSA
         required: false

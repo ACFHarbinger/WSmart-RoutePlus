@@ -19,7 +19,7 @@
 6. [Exact Optimization](#exact-optimization)
 7. [Neural Policies](#neural-policies)
 8. [Operators Library](#operators-library)
-9. [mandatory Selection Strategies](#mandatory-selection-strategies)
+9. [packing algorithms](#packing-algorithms)
 10. [route improvement & Refinement](#route improvement--refinement)
 11. [Local Search](#local-search)
 12. [Integration Examples](#integration-examples)
@@ -30,7 +30,7 @@
 
 ## 1. Overview
 
-The `policies` module provides a comprehensive technical ecosystem of routing optimization algorithms designed to solve diverse variants of the Vehicle Routing Problem (VRP). It integrates **13 distinct policy implementations**, **26 specialized operators**, **6 mandatory selection strategies**, and **5 route improvement methods** into a unified operational framework.
+The `policies` module provides a comprehensive technical ecosystem of routing optimization algorithms designed to solve diverse variants of the Vehicle Routing Problem (VRP). It integrates **13 distinct policy implementations**, **26 specialized operators**, **6 packing algorithms**, and **5 route improvement methods** into a unified operational framework.
 
 ### Key Features
 
@@ -40,7 +40,7 @@ The `policies` module provides a comprehensive technical ecosystem of routing op
 - **Multi-Engine Integration**: Out-of-the-box support for Gurobi, OR-Tools, Hexaly, and PyVRP.
 - **Operator Composability**: Mix and match atomic operators to construct complex metaheuristics.
 - **Workflow Standardization**: Template-based execution logic that handles common preprocessing and mapping steps.
-- **Integrated mandatory Selection**: Advanced strategies for identifying and prioritizing mandatory collection points.
+- **Integrated packing**: Advanced strategies for identifying and prioritizing mandatory collection points.
 - **route improvement Pipeline**: Automated route refinement and local search improvement after main solver execution.
 
 ### Supported Problems
@@ -79,7 +79,7 @@ The `policies` module utilizes established design patterns to maintain scalabili
 2.  **Factory Pattern** (`adapters/factory.py`): Centralizes the instantiation logic for all policy adapters.
 3.  **Registry Pattern** (`adapters/registry.py`): Facilitates dynamic discovery and decoupled registration of new optimization strategies.
 4.  **Template Method Pattern** (`adapters/base_routing_policy.py`): Defines a standardized skeleton for routing execution, ensuring consistent data preparation and result mapping.
-5.  **Strategy Pattern** (`other/mandatory_selection/`): Enables pluggable logic for customer selection and prioritization.
+5.  **Strategy Pattern** (`other/packing/`): Enables pluggable logic for customer selection and prioritization.
 6.  **Command Pattern** (`operators/`): Encapsulates atomic neighborhood search actions to support composable heuristics.
 
 ### Core Interface Definitions
@@ -130,7 +130,7 @@ logic/src/policies/
 │   ├── __init__.py
 │   ├── base_routing_policy.py              # Template base class
 │   ├── factory.py                           # PolicyFactory
-│   ├── registry.py                          # RouteConstructorRegistry
+│   ├── registry.py                          # RoutingAlgorithmRegistry
 │   ├── policy_alns.py                       # ALNS adapter
 │   ├── policy_bpc.py                        # BPC adapter
 │   ├── policy_cvrp.py                       # CVRP adapter
@@ -238,7 +238,7 @@ logic/src/policies/
 │       └── lambda_interchange.py            # λ-interchange
 │
 ├── other/                                   # Auxiliary Components
-│   ├── mandatory_selection/                             # mandatory Selection (6 strategies)
+│   ├── packing/                             # packing (6 strategies)
 │   │   ├── base/                            # Selection framework
 │   │   │   ├── selection_context.py         # Context object
 │   │   │   ├── selection_factory.py         # Factory
@@ -286,7 +286,7 @@ logic/src/policies/
 - **Total Files**: 157 Python modules
 - **Policy Adapters**: 13 implementations
 - **Operators**: 26 specialized operators
-- **mandatory Strategies**: 6 selection methods
+- **packing algorithms**: 6 selection methods
 - **Post-Processors**: 5 refinement methods
 - **Local Search Variants**: 3 implementations
 
@@ -311,7 +311,7 @@ policy = PolicyFactory.get_adapter("hgs")
 
 # Execute policy
 tour, cost, metadata = policy.execute(
-    mandatory_selection=[1, 5, 10, 15],
+    packing=[1, 5, 10, 15],
     bins=bins_state,
     distance_matrix=dist_matrix,
     area="riomaior",
@@ -327,28 +327,28 @@ tour, cost, metadata = policy.execute(
 - `"neural"`, `"am"`, `"ddam"`, `"tam"`, `"transgcn"`
 - `"tsp"`, `"cvrp"`, `"swc_tcf"`
 
-### 4.2 RouteConstructorRegistry
+### 4.2 RoutingAlgorithmRegistry
 
 **File**: `adapters/registry.py`
 
-The `RouteConstructorRegistry` maintains a decentralized map of all available optimization engines, enabling automated discovery and type-safe access through the registration decorator.
+The `RoutingAlgorithmRegistry` maintains a decentralized map of all available optimization engines, enabling automated discovery and type-safe access through the registration decorator.
 
 ```python
-from logic.src.policies.adapters import RouteConstructorRegistry
+from logic.src.policies.adapters import RoutingAlgorithmRegistry
 
 # Register custom policy
-@RouteConstructorRegistry.register("my_custom_policy")
+@RoutingAlgorithmRegistry.register("my_custom_policy")
 class MyCustomPolicy(IPolicyAdapter):
     def execute(self, **kwargs):
         # Implementation
         return tour, cost, metadata
 
 # Get registered policy
-policy_cls = RouteConstructorRegistry.get("my_custom_policy")
+policy_cls = RoutingAlgorithmRegistry.get("my_custom_policy")
 policy = policy_cls()
 
 # List all policies
-all_policies = RouteConstructorRegistry.list_policies()
+all_policies = RoutingAlgorithmRegistry.list_policies()
 print(all_policies)
 # ['alns', 'hgs', 'bpc', 'neural', 'my_custom_policy', ...]
 ```
@@ -788,7 +788,7 @@ Comprehensive SA-based search with multiple neighborhoods.
 
 ```text
 Algorithm: Simulated Annealing Neighborhood Search (SANS)
-1. Initialize route and bin selection S ← GenerateInitialSolution(mandatory_selection_bins)
+1. Initialize route and bin selection S ← GenerateInitialSolution(packing_bins)
 2. S_best ← S
 3. T ← T_initial
 4. While T > T_final:
@@ -816,7 +816,7 @@ Algorithm: Simulated Annealing Neighborhood Search (SANS)
 
 - **Multi-Neighborhood Exploration**: Fuses Simulated Annealing with Variable Neighborhood Search principles. It dynamically applies a suite of inter-route and intra-route operators (e.g., Relocate, Swap, 2-Opt) to thoroughly explore the structural landscape without getting trapped in a single operator's local minimum.
 
-- **Look-Ahead Integration Readiness**: Designed to naturally pair with look-ahead heuristics that flag mandatory_selection nodes, isolating the combinatorial routing logic from the predictive inventory management logic.
+- **Look-Ahead Integration Readiness**: Designed to naturally pair with look-ahead heuristics that flag packing nodes, isolating the combinatorial routing logic from the predictive inventory management logic.
 
 #### Mathematical Formulation
 
@@ -867,7 +867,7 @@ sans_policy = PolicyFactory.get_adapter("sans")
 
 # Execute policy with geometric cooling and multi-neighborhood search
 tour, cost, _ = sans_policy.execute(
-    mandatory_selection=mandatory_selection_bins,
+    packing=packing_bins,
     bins=bins_state,
     distance_matrix=dist_matrix,
     config={
@@ -1152,7 +1152,7 @@ from logic.src.policies.adapters import PolicyFactory
 
 rl_hvpl_policy = PolicyFactory.get_adapter("rl_hvpl")
 tour, cost, _ = rl_hvpl_policy.execute(
-    mandatory_selection=mandatory_selection_bins,
+    packing=packing_bins,
     bins=bins_state,
     distance_matrix=dist_matrix,
     config={
@@ -2555,7 +2555,7 @@ routes, cost = run_bpc(
 ```python
 bpc_policy = PolicyFactory.get_adapter("bpc")
 tour, cost, _ = bpc_policy.execute(
-    mandatory_selection=mandatory_selection_bins,
+    packing=packing_bins,
     bins=bins_state,
     distance_matrix=dist_matrix,
     config={
@@ -2653,7 +2653,7 @@ neural_policy = PolicyFactory.get_adapter("neural")
 
 # Configure model path
 tour, cost, _ = neural_policy.execute(
-    mandatory_selection=mandatory_selection_bins,
+    packing=packing_bins,
     bins=bins_state,
     distance_matrix=dist_matrix,
     config={
@@ -3042,9 +3042,9 @@ new_routes, delta_cost = lambda_interchange(
 
 ---
 
-## 9. mandatory Selection Strategies
+## 9. packing algorithms
 
-**Directory**: `other/mandatory_selection/`
+**Directory**: `other/packing/`
 **Purpose**: Pre-selection of mandatory collection nodes
 
 ### 9.1 Selection Framework
@@ -3068,23 +3068,23 @@ context = SelectionContext(
 )
 ```
 
-#### MandatorySelectionSelectionFactory
+#### PackingFactory
 
 **File**: `base/selection_factory.py`
 
 Factory for creating selectors.
 
 ```python
-from logic.src.policies.helpers import MandatorySelectionSelectionFactory
+from logic.src.policies.helpers import PackingFactory
 
 # Create selector
-selector = MandatorySelectionSelectionFactory.create_selector(
+selector = PackingFactory.create_selector(
     strategy="last_minute",
     threshold=0.9
 )
 
 # Execute selection
-mandatory_selection_bins = selector.select(context)
+packing_bins = selector.select(context)
 ```
 
 ### 9.2 Selection Strategies
@@ -3096,12 +3096,12 @@ mandatory_selection_bins = selector.select(context)
 Select bins exceeding fill threshold.
 
 ```python
-from logic.src.policies.helpers.mandatory_selection import LastMinuteSelector
+from logic.src.policies.helpers.packing import LastMinuteSelector
 
 selector = LastMinuteSelector(threshold=0.9)
 
 # Select bins with fill ≥ 90%
-mandatory_selection = selector.select(context)
+packing = selector.select(context)
 ```
 
 #### Regular Selector
@@ -3111,12 +3111,12 @@ mandatory_selection = selector.select(context)
 Select bins on fixed-frequency schedule.
 
 ```python
-from logic.src.policies.helpers.mandatory_selection import RegularSelector
+from logic.src.policies.helpers.packing import RegularSelector
 
 # Collect every 3 days
 selector = RegularSelector(frequency=3)
 
-mandatory_selection = selector.select(context)
+packing = selector.select(context)
 ```
 
 #### Lookahead Selector
@@ -3126,7 +3126,7 @@ mandatory_selection = selector.select(context)
 Select bins predicted to overflow within N days.
 
 ```python
-from logic.src.policies.helpers.mandatory_selection import LookaheadSelector
+from logic.src.policies.helpers.packing import LookaheadSelector
 
 # Predict 7 days ahead
 selector = LookaheadSelector(
@@ -3134,7 +3134,7 @@ selector = LookaheadSelector(
     predictor=fill_predictor_model
 )
 
-mandatory_selection = selector.select(context)
+packing = selector.select(context)
 ```
 
 #### Revenue Selector
@@ -3144,14 +3144,14 @@ mandatory_selection = selector.select(context)
 Select bins where profit exceeds cost.
 
 ```python
-from logic.src.policies.helpers.mandatory_selection import RevenueSelector
+from logic.src.policies.helpers.packing import RevenueSelector
 
 selector = RevenueSelector(
     revenue_per_kg=1.0,
     cost_per_km=0.5
 )
 
-mandatory_selection = selector.select(context)
+packing = selector.select(context)
 ```
 
 #### Service-Level Selector
@@ -3161,7 +3161,7 @@ mandatory_selection = selector.select(context)
 Statistical overflow prediction.
 
 ```python
-from logic.src.policies.helpers.mandatory_selection import ServiceLevelSelector
+from logic.src.policies.helpers.packing import ServiceLevelSelector
 
 # 95% service level
 selector = ServiceLevelSelector(
@@ -3169,7 +3169,7 @@ selector = ServiceLevelSelector(
     fill_std_dev=0.1
 )
 
-mandatory_selection = selector.select(context)
+packing = selector.select(context)
 ```
 
 #### Combined Selector
@@ -3179,7 +3179,7 @@ mandatory_selection = selector.select(context)
 Combine multiple strategies with AND/OR logic.
 
 ```python
-from logic.src.policies.helpers.mandatory_selection import CombinedSelector
+from logic.src.policies.helpers.packing import CombinedSelector
 
 selector = CombinedSelector(
     logic="or",  # or "and"
@@ -3190,20 +3190,20 @@ selector = CombinedSelector(
 )
 
 # Select if last_minute OR regular triggers
-mandatory_selection = selector.select(context)
+packing = selector.select(context)
 ```
 
 ### 9.3 Usage in Simulation
 
 ```python
 from logic.src.policies import create_policy
-from logic.src.policies.helpers import MandatorySelectionSelectionFactory
+from logic.src.policies.helpers import PackingFactory
 
 # Create policy
 policy = create_policy("hgs")
 
 # Create mandatory selector
-selector = MandatorySelectionSelectionFactory.create_selector(
+selector = PackingFactory.create_selector(
     strategy="combined",
     logic="or",
     strategies=[
@@ -3213,11 +3213,11 @@ selector = MandatorySelectionSelectionFactory.create_selector(
 )
 
 # Execute selection
-mandatory_selection = selector.select(context)
+packing = selector.select(context)
 
 # Execute policy
 tour, cost, _ = policy.execute(
-    mandatory_selection=mandatory_selection,
+    packing=packing,
     bins=context.bins,
     distance_matrix=context.distance_matrix
 )
@@ -3443,13 +3443,13 @@ improved_routes = ls.search(
 ```python
 from logic.src.policies import create_policy
 from logic.src.policies.helpers import (
-    MandatorySelectionSelectionFactory,
+    PackingFactory,
     RouteImproverFactory,
     SelectionContext
 )
 
 # 1. Create mandatory selector
-selector = MandatorySelectionSelectionFactory.create_selector(
+selector = PackingFactory.create_selector(
     strategy="combined",
     logic="or",
     strategies=[
@@ -3474,11 +3474,11 @@ context = SelectionContext(
 )
 
 # 5. Select mandatory bins
-mandatory_selection = selector.select(context)
+packing = selector.select(context)
 
 # 6. Generate tour with policy
 tour, cost, _ = policy.execute(
-    mandatory_selection=mandatory_selection,
+    packing=packing,
     bins=bins_state,
     distance_matrix=dist_matrix,
     config=config_dict
@@ -3505,7 +3505,7 @@ for policy_name in policies:
     policy = create_policy(policy_name)
 
     tour, cost, metadata = policy.execute(
-        mandatory_selection=mandatory_selection_bins,
+        packing=packing_bins,
         bins=bins_state,
         distance_matrix=dist_matrix,
         config=config
@@ -3525,9 +3525,9 @@ print(f"Best policy: {best_policy} with cost {results[best_policy]['cost']:.2f}"
 ### 12.3 Custom Policy Implementation
 
 ```python
-from logic.src.policies.adapters import BaseRoutingPolicy, RouteConstructorRegistry
+from logic.src.policies.adapters import BaseRoutingPolicy, RoutingAlgorithmRegistry
 
-@RouteConstructorRegistry.register("my_custom_policy")
+@RoutingAlgorithmRegistry.register("my_custom_policy")
 class MyCustomPolicy(BaseRoutingPolicy):
     """Custom routing policy implementation."""
 
@@ -3575,7 +3575,7 @@ class MyCustomPolicy(BaseRoutingPolicy):
 # Usage
 policy = create_policy("my_custom_policy")
 tour, cost, _ = policy.execute(
-    mandatory_selection=mandatory_selection_bins,
+    packing=packing_bins,
     bins=bins_state,
     distance_matrix=dist_matrix
 )
@@ -3636,7 +3636,7 @@ policy = HGSPolicy()
 
 ```python
 # ✅ GOOD: Register for discoverability
-@RouteConstructorRegistry.register("my_policy")
+@RoutingAlgorithmRegistry.register("my_policy")
 class MyPolicy(IPolicyAdapter):
     ...
 
@@ -3649,11 +3649,11 @@ class MyPolicy(IPolicyAdapter):
 
 ```python
 # ✅ GOOD: Configurable selection strategy
-selector = MandatorySelectionSelectionFactory.create_selector("last_minute", threshold=0.9)
-mandatory_selection = selector.select(context)
+selector = PackingFactory.create_selector("last_minute", threshold=0.9)
+packing = selector.select(context)
 
 # ❌ BAD: Hardcoded selection logic
-mandatory_selection = [i for i, fill in enumerate(bins.c) if fill > 0.9]
+packing = [i for i, fill in enumerate(bins.c) if fill > 0.9]
 ```
 
 **Apply route improvement**
@@ -3792,7 +3792,7 @@ for i in range(n):
 
 ```python
 # Policy creation
-from logic.src.policies.adapters import PolicyFactory, RouteConstructorRegistry
+from logic.src.policies.adapters import PolicyFactory, RoutingAlgorithmRegistry
 
 # Main policies
 from logic.src.policies import (
@@ -3813,9 +3813,9 @@ from logic.src.policies.operators import (
     greedy_insertion, regret_k_insertion
 )
 
-# mandatory selection
+# packing
 from logic.src.policies.helpers import (
-    MandatorySelectionSelectionFactory, MandatorySelectionSelectionRegistry,
+    PackingFactory, PackingRegistry,
     SelectionContext
 )
 
@@ -3905,7 +3905,7 @@ neural:
 | ----------------- | --------------------------------------------- |
 | Policy Adapters   | `adapters/policy_*.py` (13 files)             |
 | Operators         | `operators/` (26 implementations)             |
-| mandatory Selectors | `other/mandatory_selection/selection_*.py` (6 strategies) |
+| mandatory Selectors | `other/packing/selection_*.py` (6 strategies) |
 | Post-Processors   | `other/route_improvement/*.py` (5 methods)      |
 | ALNS              | `adaptive_large_neighborhood_search/`         |
 | HGS               | `hybrid_genetic_search/`                      |

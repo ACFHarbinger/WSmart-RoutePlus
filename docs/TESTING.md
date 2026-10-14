@@ -93,7 +93,7 @@ WSmart-Route/
 │       ├── test_policies_aux.py     # Policy utilities
 │       ├── test_problems.py         # Problem environments
 │       ├── test_simulator.py        # Simulation engine
-│       ├── test_selection_action.py # Selection strategies (MandatorySelection/composed)
+│       ├── test_selection_action.py # Selection strategies (Packing/composed)
 │       ├── test_subnets.py          # Encoders and decoders
 │       ├── test_suite.py            # Test runner wrapper
 │       ├── test_train.py            # Training pipeline

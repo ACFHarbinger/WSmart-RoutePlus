@@ -279,7 +279,7 @@ function horizonSection(h: HorizonTemplateCtx, improvers: string[], strategies: 
 
 ![Overflow vs Efficiency — Pareto Front](${f}/pareto_scatter.png)
 
-*Scatter of all ${h.days}-day runs in the overflows–kg/km space, one panel per waste distribution. Colour encodes the mandatory selection variant, marker shape encodes the scenario (region/N), filled markers = ${improvers[0]}, open markers = ${improvers[improvers.length - 1]}. Dashed lines = Pareto fronts, one colour per scenario (region × N × distribution).*
+*Scatter of all ${h.days}-day runs in the overflows–kg/km space, one panel per waste distribution. Colour encodes the packing variant, marker shape encodes the scenario (region/N), filled markers = ${improvers[0]}, open markers = ${improvers[improvers.length - 1]}. Dashed lines = Pareto fronts, one colour per scenario (region × N × distribution).*
 ${h.flags.paretoLog ? `
 ![Overflow vs Efficiency — Pareto Front (log scale)](${f}/pareto_scatter_log.png)
 
@@ -301,13 +301,13 @@ ${PLACEHOLDER}
 
 ![Overflow Count by Configuration](${f}/overflow_by_config.png)
 
-*Mean overflow count per scenario and selection strategy (mean ± min/max range across route constructors); route improvers shown as paired bars within each configuration.*
+*Mean overflow count per scenario and packing algorithm (mean ± min/max range across routing algorithms); route improvers shown as paired bars within each configuration.*
 ${h.flags.overflowLog ? `
 ![Overflow Count by Configuration (log scale)](${f}/overflow_by_config_log.png)
 
 *Same chart with symlog Y axis — reveals structure compressed in the linear scale.*
 ` : ""}
-_TABCAP_: Overflow counts by configuration over ${h.days} days — min/max/mean across route constructors, per route improver.
+_TABCAP_: Overflow counts by configuration over ${h.days} days — min/max/mean across routing algorithms, per route improver.
 
 ${h.overflowTable}
 
@@ -317,9 +317,9 @@ ${PLACEHOLDER}
 
 ![kg/km Efficiency by Configuration](${f}/kgkm_by_config.png)
 
-*Mean kg/km efficiency per scenario and selection strategy, with min–max whiskers across constructors; improvers as paired bars.*
+*Mean kg/km efficiency per scenario and packing algorithm, with min–max whiskers across constructors; improvers as paired bars.*
 
-_TABCAP_: Route efficiency (kg/km) by configuration over ${h.days} days — min/max/mean across route constructors, per route improver.
+_TABCAP_: Route efficiency (kg/km) by configuration over ${h.days} days — min/max/mean across routing algorithms, per route improver.
 
 ${h.efficiencyTable}
 
@@ -329,9 +329,9 @@ ${PLACEHOLDER}
 
 ![Vehicle Distance by Strategy](${f}/km_violin.png)
 
-*Distribution of total vehicle distance (km) per selection strategy and scenario (all constructors and improvers pooled), one panel per waste distribution.*
+*Distribution of total vehicle distance (km) per packing algorithm and scenario (all constructors and improvers pooled), one panel per waste distribution.*
 
-_TABCAP_: Vehicle distance driven (km) by configuration over ${h.days} days — min/max/mean across route constructors, per route improver.
+_TABCAP_: Vehicle distance driven (km) by configuration over ${h.days} days — min/max/mean across routing algorithms, per route improver.
 
 ${h.kmTable}
 
@@ -349,13 +349,13 @@ ${PLACEHOLDER}
 
 ![Per-Scenario Constructor Heatmaps](${f}/scenario_constructor_heatmap.png)
 
-*One panel per scenario: route constructors on the rows, selection strategy × route improver combinations on the columns.*
+*One panel per scenario: routing algorithms on the rows, packing algorithm × route improver combinations on the columns.*
 ${h.interactive ? `
 **[Interactive heatmap](${h.privateRel}/policy_heatmap_interactive.html)**
 ` : ""}
 ${PLACEHOLDER}
 
-### ${n}.4 Selection Strategy Comparison (${strategies.join(" vs ")})
+### ${n}.4 Packing Algorithm Comparison (${strategies.join(" vs ")})
 
 ![Strategy Trade-off Bubble Chart](${f}/strategy_bubble.png)
 
@@ -391,17 +391,17 @@ ${PLACEHOLDER}
 
 ![Policy Performance Radar — All Constructors](${f}/policy_radar_combined.png)
 
-*Same normalised radar, overlaying every route constructor instead of the curated subset above.*
+*Same normalised radar, overlaying every routing algorithm instead of the curated subset above.*
 
-![Route Constructor Average Rank](${f}/constructor_ranking.png)
+![Routing Algorithm Average Rank](${f}/constructor_ranking.png)
 
-*Average rank of each route constructor across all scenarios and strategies (improvers pooled). Bars grow upward — shorter = better.*
+*Average rank of each routing algorithm across all scenarios and strategies (improvers pooled). Bars grow upward — shorter = better.*
 
 ${PLACEHOLDER}
 
 ### ${n}.7 Full Results Table
 
-_TABCAP_: Full results over the ${h.days}-day horizon — rows: graph size × region × data distribution; columns: mandatory selection strategy × route constructor × route improver. Each cell reports mean±std overflows and mean±std kg/km.
+_TABCAP_: Full results over the ${h.days}-day horizon — rows: graph size × region × data distribution; columns: packing algorithm × routing algorithm × route improver. Each cell reports mean±std overflows and mean±std kg/km.
 
 ${h.fullResultsTable}
 
@@ -464,7 +464,7 @@ ${PLACEHOLDER}
 
 ### Full Results Table — All Horizons
 
-_TABCAP_: Full results across all simulation horizons — rows: graph size × region × data distribution; columns: horizon × mandatory selection strategy × route constructor × route improver. Each cell reports mean±std overflows and mean±std kg/km.
+_TABCAP_: Full results across all simulation horizons — rows: graph size × region × data distribution; columns: horizon × packing algorithm × routing algorithm × route improver. Each cell reports mean±std overflows and mean±std kg/km.
 
 ${cmp.fullResultsTable}
 
@@ -620,8 +620,8 @@ export async function generateSimulationReport(
   const scope =
     `${horizons.map((h) => `${h.days}-day`).join(" and ")} simulation runs across ` +
     `${ctx0.regions.length} region/network configurations × ${ctx0.dists.length} distributions × ` +
-    `${ctx0.strategies.length} selection strategies × ${ctx0.improvers.length} route improvers × ` +
-    `${ctx0.constructors.length} route constructors`;
+    `${ctx0.strategies.length} packing algorithms × ${ctx0.improvers.length} route improvers × ` +
+    `${ctx0.constructors.length} routing algorithms`;
 
   const header = `# WSmart+ Route — Simulation Analysis Report
 
@@ -648,15 +648,15 @@ _TABCAP_: Configuration space — experimental dimensions and the values tested 
 |-----------|--------|
 | **Scenarios (region / N)** | ${ctx0.regions.map(([c, n]) => `${regionLabel(c, n)} (N=${n})`).join(", ")} |
 | **Waste distribution** | ${ctx0.dists.join(", ")} |
-| **Mandatory selection strategy** | ${ctx0.strategies.join(", ")} |
-| **Route constructors** | ${ctx0.constructors.join(", ")} |
+| **Packing algorithm** | ${ctx0.strategies.join(", ")} |
+| **Routing algorithms** | ${ctx0.constructors.join(", ")} |
 ${acceptance.length ? `| **Acceptance criteria** | ${acceptance.join(", ")} |\n` : ""}| **Route improvers** | ${ctx0.improvers.join(", ")} |
 | **Simulation horizons (days)** | ${horizons.map((h) => h.days).join(", ")} |
 
 ### Policy Naming Convention
 
 Each log file encodes the full pipeline as:
-\`{mandatory_selection}_{route_constructor}[_{acceptance_criterion}]_{route_improver}\`
+\`{packing}_{routing_algorithm}[_{acceptance_criterion}]_{route_improver}\`
 
 For Last-Minute (LM), two critical fill threshold variants are tested: **CF70** (70% fill triggers mandatory collection) and **CF90** (90% threshold). Service-Level (SL) tests two service level targets: **SL1** and **SL2**. Results in this report aggregate CF70 and CF90 under **LM**, and SL1/SL2 under **SL**, unless otherwise specified.
 

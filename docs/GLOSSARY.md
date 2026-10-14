@@ -40,4 +40,4 @@ This document provides a reference for common abbreviations, acronyms, and domai
 | **B**          | Tensors      | Often used for Batch size dimension.                      |
 | **N**          | Tensors      | Often used for Number of nodes dimension.                 |
 | **cur_loc**    | Simulation   | The current location index of a vehicle.                  |
-| **mandatory_selection**    | Simulation   | Locations that _must_ be visited today (e.g., full bins). |
+| **packing**    | Simulation   | Locations that _must_ be visited today (e.g., full bins). |

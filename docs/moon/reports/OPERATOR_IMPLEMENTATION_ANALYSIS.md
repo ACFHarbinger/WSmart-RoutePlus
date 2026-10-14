@@ -2764,7 +2764,7 @@ if pos < len(best_seq):
 
 Complex construction and optimization heuristics.
 
-### 7.1 Greedy Route Construction
+### 7.1 Greedy Routing
 
 **Paper**: Various (foundational heuristic, adapted for VRPP)
 **Implementation**: `logic.src.policies.helpers/operators/heuristics/greedy_initialization.py`

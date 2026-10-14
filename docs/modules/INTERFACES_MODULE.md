@@ -15,7 +15,7 @@
 4.  [**Model Interface**](#4-model-interface)
 5.  [**Policy Interface**](#5-policy-interface)
 6.  [**Policy Adapter Interface**](#6-policy-adapter-interface)
-7.  [**mandatory Selection Interface**](#7-mandatory-selection-interface)
+7.  [**packing Interface**](#7-packing-interface)
 8.  [**route improvement Interface**](#8-route improvement-interface)
 9.  [**Infrastructure & Utility Protocols**](#9-infrastructure--utility-protocols)
 10. [**Integration Examples**](#10-integration-examples)
@@ -56,7 +56,7 @@ from logic.src.interfaces import (
     IModel,
     IPolicy,
     IPolicyAdapter,
-    IMandatorySelectionSelection,
+    IPackingAlgorithm,
     Iroute improvement
 )
 ```
@@ -72,7 +72,7 @@ logic/src/interfaces/
 ├── model.py                 # IModel protocol
 ├── policy.py                # IPolicy abstract base class
 ├── adapter.py               # IPolicyAdapter protocol
-├── mandatory_selection.py               # IMandatorySelectionSelection protocol
+├── packing.py               # IPackingAlgorithm protocol
 └── route_improvement.py       # Iroute improvement protocol
 ```
 
@@ -90,7 +90,7 @@ logic/src/interfaces/
 ┌─────────────────────────────────────────────────────┐
 │               Specialized Interfaces                 │
 ├─────────────────────────────────────────────────────┤
-│ IPolicyAdapter  │ IMandatorySelectionSelection │ Iroute improvement │
+│ IPolicyAdapter  │ IPackingAlgorithm │ Iroute improvement │
 │ (Bridge)        │ (Pre-selection)  │ (Refinement)    │
 └─────────────────────────────────────────────────────┘
 ```
@@ -291,7 +291,7 @@ class IPolicy(ABC):
 
         Args:
             **kwargs: Context-specific parameters (distance_matrix,
-                     mandatory_selection_bins, state, etc.)
+                     packing_bins, state, etc.)
 
         Returns:
             Tuple of (tour, cost, metadata):
@@ -311,7 +311,7 @@ The primary execution entry point for all policies.
 **Common Inputs** (via `kwargs`):
 
 - `distance_matrix`: `np.ndarray` - Pairwise distances
-- `mandatory_selection_bins`: `List[int]` - Mandatory nodes
+- `packing_bins`: `List[int]` - Mandatory nodes
 - `state`: `Dict` - Current environment state
 - `capacity`: `float` - Vehicle capacity
 - `depot`: `int` - Depot node index (usually 0)
@@ -337,7 +337,7 @@ policy: IPolicy = HGSPolicy(
 # Execute policy
 tour, cost, metadata = policy.run(
     distance_matrix=dist_matrix,
-    mandatory_selection_bins=[1, 5, 10],
+    packing_bins=[1, 5, 10],
     capacity=100.0,
     depot=0
 )
@@ -405,11 +405,11 @@ tour, cost, _ = policy.run(state=environment_state)
 
 ---
 
-## 7. mandatory Selection Interface
+## 7. packing Interface
 
-**File**: `logic/src/interfaces/mandatory_selection.py`
+**File**: `logic/src/interfaces/packing.py`
 
-The `IMandatorySelectionSelection` protocol standardizes logic for pre-selecting mandatory collection targets before routing begins.
+The `IPackingAlgorithm` protocol standardizes logic for pre-selecting mandatory collection targets before routing begins.
 
 ### Protocol Definition
 
@@ -419,15 +419,15 @@ from dataclasses import dataclass
 
 @dataclass
 class SelectionContext:
-    """Context for mandatory selection."""
+    """Context for packing."""
     fill_rates: List[float]
     days_since_last_collection: List[int]
     revenue: List[float]
     capacity: float
     threshold: float
 
-class IMandatorySelectionSelection(Protocol):
-    """Protocol for mandatory selection strategies."""
+class IPackingAlgorithm(Protocol):
+    """Protocol for packing algorithms."""
 
     def select_bins(self, context: SelectionContext) -> List[int]:
         """
@@ -445,11 +445,11 @@ class IMandatorySelectionSelection(Protocol):
 ### Usage Example
 
 ```python
-from logic.src.interfaces import IMandatorySelectionSelection, SelectionContext
-from logic.src.policies.helpers.mandatory_selection import LastMinuteSelection
+from logic.src.interfaces import IPackingAlgorithm, SelectionContext
+from logic.src.policies.helpers.packing import LastMinuteSelection
 
-# Selection strategy implements IMandatorySelectionSelection
-selector: IMandatorySelectionSelection = LastMinuteSelection(threshold=0.9)
+# Selection strategy implements IPackingAlgorithm
+selector: IPackingAlgorithm = LastMinuteSelection(threshold=0.9)
 
 # Create context
 context = SelectionContext(
@@ -461,7 +461,7 @@ context = SelectionContext(
 )
 
 # Select mandatory bins
-mandatory_selection_bins = selector.select_bins(context)
+packing_bins = selector.select_bins(context)
 # Result: [1, 3] (bins with fill_rate >= 0.9)
 ```
 
@@ -606,17 +606,17 @@ def check_policy_selection(bins: IBinContainer, mask: torch.Tensor):
 
 ```python
 from logic.src.interfaces import (
-    IEnv, IPolicy, IMandatorySelectionSelection, Iroute improvement
+    IEnv, IPolicy, IPackingAlgorithm, Iroute improvement
 )
 from logic.src.envs import WCVRPEnv
 from logic.src.policies import HGSPolicy
-from logic.src.policies.helpers.mandatory_selection import LastMinuteSelection
+from logic.src.policies.helpers.packing import LastMinuteSelection
 from logic.src.policies.helpers.route_improvement import TwoOptProcessor
 
 def run_routing_pipeline(
     env: IEnv,
     policy: IPolicy,
-    selector: IMandatorySelectionSelection,
+    selector: IPackingAlgorithm,
     refiner: Iroute improvement
 ):
     """Complete routing pipeline using interfaces."""
@@ -626,12 +626,12 @@ def run_routing_pipeline(
 
     # 2. Select mandatory bins
     context = create_selection_context(state)
-    mandatory_selection_bins = selector.select_bins(context)
+    packing_bins = selector.select_bins(context)
 
     # 3. Solve routing problem
     tour, cost, metadata = policy.run(
         state=state,
-        mandatory_selection_bins=mandatory_selection_bins,
+        packing_bins=packing_bins,
         distance_matrix=state["distance_matrix"]
     )
 
@@ -665,7 +665,7 @@ neural_policy = NeuralAdapter(
 ).get_policy(decode_type="greedy")
 
 # Use different selection strategy
-from logic.src.policies.helpers.mandatory_selection import RegularSelection
+from logic.src.policies.helpers.packing import RegularSelection
 
 regular_selector = RegularSelection(frequency=3)
 
@@ -863,7 +863,7 @@ from logic.src.interfaces import IEnv, IModel, IPolicy
 # Specialized interfaces
 from logic.src.interfaces import (
     IPolicyAdapter,
-    IMandatorySelectionSelection,
+    IPackingAlgorithm,
     Iroute improvement,
     ITraversable,
     ITensorDictLike,
@@ -871,7 +871,7 @@ from logic.src.interfaces import (
 )
 
 # Context classes
-from logic.src.interfaces.mandatory_selection import SelectionContext
+from logic.src.interfaces.packing import SelectionContext
 ```
 
 ### Interface Summary
@@ -882,7 +882,7 @@ from logic.src.interfaces.mandatory_selection import SelectionContext
 | `IModel`           | Neural network standardization | `forward`, `to`, `train`, `eval` |
 | `IPolicy`          | Solver standardization         | `run`                            |
 | `IPolicyAdapter`   | Bridge neural/classical        | `get_policy`, `get_model`        |
-| `IMandatorySelectionSelection` | Pre-selection strategy         | `select_bins`                    |
+| `IPackingAlgorithm` | Pre-selection strategy         | `select_bins`                    |
 | `Iroute improvement`  | Tour refinement                | `process`                        |
 | `ITraversable`     | Configuration standardization  | `get`, `items`, `keys`           |
 | `ITensorDictLike`  | Tensor storage standardization | `batch_size`, `device`, `get`    |
@@ -896,7 +896,7 @@ from logic.src.interfaces.mandatory_selection import SelectionContext
 | `model.py`            | ~30   | IModel protocol definition  |
 | `policy.py`           | ~25   | IPolicy abstract base class |
 | `adapter.py`          | ~20   | IPolicyAdapter protocol     |
-| `mandatory_selection.py`          | ~35   | IMandatorySelectionSelection protocol   |
+| `packing.py`          | ~35   | IPackingAlgorithm protocol   |
 | `route_improvement.py`  | ~20   | Iroute improvement protocol    |
 | `traversable.py`      | ~50   | ITraversable protocol       |
 | `tensor_dict_like.py` | ~60   | ITensorDictLike protocol    |

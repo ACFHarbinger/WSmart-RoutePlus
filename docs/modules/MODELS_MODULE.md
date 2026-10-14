@@ -2142,7 +2142,7 @@ for day in range(30):
     daily_goals = manager(city_state)
 
     # 2. Worker executes based on those goals
-    route = worker(city_state, mask=daily_goals['mandatory_selection_mask'])
+    route = worker(city_state, mask=daily_goals['packing_mask'])
 
     # 3. Environment advances
     city_state = env.step(route)

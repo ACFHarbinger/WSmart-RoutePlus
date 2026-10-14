@@ -190,7 +190,7 @@ classDiagram
     }
     class MandatoryManager {
         +gate_head: GateHead
-        +mandatory_head: MandatorySelectionHead
+        +mandatory_head: PackingHead
         +forward(td) gate_prob
     }
 
@@ -265,7 +265,7 @@ classDiagram
         +configure(cfg)
     }
     class BaseRoutingPolicy {
-        +mandatory_selection: List
+        +packing: List
         +route_improvement: List
     }
     class BaseMultiPeriodPolicy {
@@ -273,7 +273,7 @@ classDiagram
         +horizon: int
     }
     class BaseJointPolicy {
-        +constructor: IRouteConstructor
+        +constructor: IRoutingAlgorithm
         +improver: IRouteImprovement
     }
 
@@ -594,14 +594,14 @@ classDiagram
         +policies: List~str~
         +n_days: int
         +area: str
-        +mandatory_selection: List
+        +packing: List
         +route_improvement: List
     }
     class SolverConfig {
         <<abstract>>
         +seed: Optional~int~
         +time_limit: float
-        +mandatory_selection: List
+        +packing: List
         +route_improvement: List
     }
     class ALNSConfig {

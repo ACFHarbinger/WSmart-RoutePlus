@@ -3,9 +3,9 @@
   "description": "WSmart-Route algorithm export configuration \u2014 maps user-facing acronyms to implementation paths and cleanup metadata.",
   "categories": {
     "constructor": {
-      "description": "Route construction algorithms (exact solvers, metaheuristics, learning-based)",
-      "cleanup_category": "ROUTE_CONSTRUCTORS",
-      "impl_root": "logic/src/policies/route_construction",
+      "description": "Routing algorithms (exact solvers, metaheuristics, learning-based)",
+      "cleanup_category": "ROUTING_ALGORITHMS",
+      "impl_root": "logic/src/policies/routing",
       "yaml_dirs": [
         "logic/configs/policies"
       ],
@@ -13,7 +13,7 @@
         "logic/src/configs/policies"
       ],
       "impl_dirs": [
-        "logic/src/policies/route_construction"
+        "logic/src/policies/routing"
       ],
       "yaml_prefixes": [
         "policy"
@@ -23,7 +23,7 @@
     "selector": {
       "description": "Mandatory bin-selection policies (decide which bins to collect each day)",
       "cleanup_category": "POLICY_OTHERS",
-      "impl_root": "logic/src/policies/mandatory_selection",
+      "impl_root": "logic/src/policies/packing",
       "yaml_dirs": [
         "logic/configs/policies/other"
       ],
@@ -31,7 +31,7 @@
         "logic/src/configs/policies/other"
       ],
       "impl_dirs": [
-        "logic/src/policies/mandatory_selection"
+        "logic/src/policies/packing"
       ],
       "yaml_prefixes": [
         "ms"
@@ -81,9 +81,9 @@
       ]
     },
     "joint": {
-      "description": "Joint selection-and-construction methods (combined phases)",
+      "description": "Joint packing-and-routing methods (combined phases)",
       "cleanup_category": "POLICY_OTHERS",
-      "impl_root": "logic/src/policies/selection_and_construction",
+      "impl_root": "logic/src/policies/packing_and_routing",
       "yaml_dirs": [
         "logic/configs/policies/other"
       ],
@@ -91,7 +91,7 @@
         "logic/src/configs/policies/other"
       ],
       "impl_dirs": [
-        "logic/src/policies/selection_and_construction"
+        "logic/src/policies/packing_and_routing"
       ],
       "yaml_prefixes": [],
       "config_prefixes": []
@@ -179,13 +179,13 @@
       "logic/src/data/processor",
       "logic/src/policies/helpers",
       "logic/src/policies/context",
-      "logic/src/policies/route_construction/base",
-      "logic/src/policies/route_construction/other_algorithms",
+      "logic/src/policies/routing/base",
+      "logic/src/policies/routing/other_algorithms",
       "logic/src/policies/route_improvement/base",
       "logic/src/policies/route_improvement/common",
-      "logic/src/policies/mandatory_selection/base",
+      "logic/src/policies/packing/base",
       "logic/src/policies/acceptance_criteria/base",
-      "logic/src/policies/selection_and_construction/base"
+      "logic/src/policies/packing_and_routing/base"
     ]
   },
   "optional_features": {
@@ -447,84 +447,84 @@
       "BB": {
         "description": "Branch-and-Bound exact solver",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/exact_and_decomposition_solvers/branch_and_bound",
+        "path": "logic/src/policies/routing/exact_and_decomposition_solvers/branch_and_bound",
         "internal_acronym": "bb",
         "subcategory": "exact_and_decomposition_solvers"
       },
       "BC": {
         "description": "Branch-and-Cut with cutting planes",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/exact_and_decomposition_solvers/branch_and_cut",
+        "path": "logic/src/policies/routing/exact_and_decomposition_solvers/branch_and_cut",
         "internal_acronym": "bc",
         "subcategory": "exact_and_decomposition_solvers"
       },
       "BP": {
         "description": "Branch-and-Price with column generation",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/exact_and_decomposition_solvers/branch_and_price",
+        "path": "logic/src/policies/routing/exact_and_decomposition_solvers/branch_and_price",
         "internal_acronym": "bp",
         "subcategory": "exact_and_decomposition_solvers"
       },
       "BPC": {
         "description": "Branch-and-Price-and-Cut (BHV2000 implementation)",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/exact_and_decomposition_solvers/branch_and_price_and_cut",
+        "path": "logic/src/policies/routing/exact_and_decomposition_solvers/branch_and_price_and_cut",
         "internal_acronym": "bpc",
         "subcategory": "exact_and_decomposition_solvers"
       },
       "CPBS": {
         "description": "Constraint Programming with Boolean Satisfiability",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/exact_and_decomposition_solvers/constraint_programming_with_boolean_satisfiability",
+        "path": "logic/src/policies/routing/exact_and_decomposition_solvers/constraint_programming_with_boolean_satisfiability",
         "internal_acronym": "cp_sat",
         "subcategory": "exact_and_decomposition_solvers"
       },
       "ESDP": {
         "description": "Exact Stochastic Dynamic Programming",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/exact_and_decomposition_solvers/exact_stochastic_dynamic_programming",
+        "path": "logic/src/policies/routing/exact_and_decomposition_solvers/exact_stochastic_dynamic_programming",
         "internal_acronym": "esdp",
         "subcategory": "exact_and_decomposition_solvers"
       },
       "ILSBD": {
         "description": "Integer L-Shaped Benders Decomposition",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/exact_and_decomposition_solvers/integer_l_shaped_benders_decomposition",
+        "path": "logic/src/policies/routing/exact_and_decomposition_solvers/integer_l_shaped_benders_decomposition",
         "internal_acronym": "ils_bd",
         "subcategory": "exact_and_decomposition_solvers"
       },
       "LBBD": {
         "description": "Logic-Based Benders Decomposition",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/exact_and_decomposition_solvers/logic_based_benders_decomposition",
+        "path": "logic/src/policies/routing/exact_and_decomposition_solvers/logic_based_benders_decomposition",
         "internal_acronym": "lbbd",
         "subcategory": "exact_and_decomposition_solvers"
       },
       "MSBPC_SP": {
         "description": "Multi-Stage Branch-and-Price-and-Cut with Set Partitioning",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/exact_and_decomposition_solvers/multi_stage_branch_and_price_and_cut_with_set_partition",
+        "path": "logic/src/policies/routing/exact_and_decomposition_solvers/multi_stage_branch_and_price_and_cut_with_set_partition",
         "internal_acronym": "ms_bpc_sp",
         "subcategory": "exact_and_decomposition_solvers"
       },
       "PH": {
         "description": "Progressive Hedging (stochastic decomposition)",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/exact_and_decomposition_solvers/progressive_hedging",
+        "path": "logic/src/policies/routing/exact_and_decomposition_solvers/progressive_hedging",
         "internal_acronym": "ph",
         "subcategory": "exact_and_decomposition_solvers"
       },
       "STEF": {
         "description": "Scenario Tree Extensive Form",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/exact_and_decomposition_solvers/scenario_tree_extensive_form",
+        "path": "logic/src/policies/routing/exact_and_decomposition_solvers/scenario_tree_extensive_form",
         "internal_acronym": "st_ef",
         "subcategory": "exact_and_decomposition_solvers"
       },
       "SWCTCF": {
         "description": "Smart Waste Collection Two-Commodity Flow",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow",
+        "path": "logic/src/policies/routing/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow",
         "internal_acronym": "swc_tcf",
         "subcategory": "exact_and_decomposition_solvers"
       },
@@ -532,294 +532,294 @@
       "ALNS": {
         "description": "Adaptive Large Neighborhood Search",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/adaptive_large_neighborhood_search",
+        "path": "logic/src/policies/routing/meta_heuristics/adaptive_large_neighborhood_search",
         "internal_acronym": "alns",
         "subcategory": "meta_heuristics"
       },
       "ALIOPO": {
         "description": "ALNS with Inter-Period Operators",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/adaptive_large_neighborhood_search_with_inter_period_operators",
+        "path": "logic/src/policies/routing/meta_heuristics/adaptive_large_neighborhood_search_with_inter_period_operators",
         "internal_acronym": "alns_ipo",
         "subcategory": "meta_heuristics"
       },
       "ACO": {
         "description": "Ant Colony Optimization (k-Sparse)",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/ant_colony_optimization_k_sparse",
+        "path": "logic/src/policies/routing/meta_heuristics/ant_colony_optimization_k_sparse",
         "internal_acronym": "aco_ks",
         "subcategory": "meta_heuristics"
       },
       "ABC": {
         "description": "Artificial Bee Colony",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/artificial_bee_colony",
+        "path": "logic/src/policies/routing/meta_heuristics/artificial_bee_colony",
         "internal_acronym": "abc",
         "subcategory": "meta_heuristics"
       },
       "DE": {
         "description": "Differential Evolution",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/differential_evolution",
+        "path": "logic/src/policies/routing/meta_heuristics/differential_evolution",
         "internal_acronym": "de",
         "subcategory": "meta_heuristics"
       },
       "FILO": {
         "description": "Fast Iterative Localized Optimization",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/fast_iterative_localized_optimization",
+        "path": "logic/src/policies/routing/meta_heuristics/fast_iterative_localized_optimization",
         "internal_acronym": "filo",
         "subcategory": "meta_heuristics"
       },
       "FA": {
         "description": "Firefly Algorithm",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/firefly_algorithm",
+        "path": "logic/src/policies/routing/meta_heuristics/firefly_algorithm",
         "internal_acronym": "fa",
         "subcategory": "meta_heuristics"
       },
       "GA": {
         "description": "Genetic Algorithm",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/genetic_algorithm",
+        "path": "logic/src/policies/routing/meta_heuristics/genetic_algorithm",
         "internal_acronym": "ga",
         "subcategory": "meta_heuristics"
       },
       "GENIUS": {
         "description": "GENIUS insertion heuristic",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/genius",
+        "path": "logic/src/policies/routing/meta_heuristics/genius",
         "internal_acronym": "genius",
         "subcategory": "meta_heuristics"
       },
       "GLS": {
         "description": "Guided Local Search",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/guided_local_search",
+        "path": "logic/src/policies/routing/meta_heuristics/guided_local_search",
         "internal_acronym": "gls",
         "subcategory": "meta_heuristics"
       },
       "HS": {
         "description": "Harmony Search",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/harmony_search",
+        "path": "logic/src/policies/routing/meta_heuristics/harmony_search",
         "internal_acronym": "hs",
         "subcategory": "meta_heuristics"
       },
       "HGS": {
         "description": "Hybrid Genetic Search (PyVRP core)",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/hybrid_genetic_search",
+        "path": "logic/src/policies/routing/meta_heuristics/hybrid_genetic_search",
         "internal_acronym": "hgs",
         "subcategory": "meta_heuristics"
       },
       "HGS_ADC": {
         "description": "HGS with Adaptive Diversity Control",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/hybrid_genetic_search_with_adaptive_diversity_control",
+        "path": "logic/src/policies/routing/meta_heuristics/hybrid_genetic_search_with_adaptive_diversity_control",
         "internal_acronym": "hgs_adc",
         "subcategory": "meta_heuristics"
       },
       "HGS_ALNS": {
         "description": "HGS augmented with Adaptive Large Neighborhood Search",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/hybrid_genetic_search_with_adaptive_large_neighborhood_search",
+        "path": "logic/src/policies/routing/meta_heuristics/hybrid_genetic_search_with_adaptive_large_neighborhood_search",
         "internal_acronym": "hgs_alns",
         "subcategory": "meta_heuristics"
       },
       "HGS_RR": {
         "description": "HGS with Ruin-and-Recreate operators",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/hybrid_genetic_search_with_ruin_and_recreate",
+        "path": "logic/src/policies/routing/meta_heuristics/hybrid_genetic_search_with_ruin_and_recreate",
         "internal_acronym": "hgs_rr",
         "subcategory": "meta_heuristics"
       },
       "HMLNS": {
         "description": "Hybrid Memetic Large Neighborhood Search",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/hybrid_memetic_large_neighborhood_search",
+        "path": "logic/src/policies/routing/meta_heuristics/hybrid_memetic_large_neighborhood_search",
         "internal_acronym": "hmlns",
         "subcategory": "meta_heuristics"
       },
       "HVPL": {
         "description": "Hybrid Volleyball Premier League",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/hybrid_volleyball_premier_league",
+        "path": "logic/src/policies/routing/meta_heuristics/hybrid_volleyball_premier_league",
         "internal_acronym": "hvpl",
         "subcategory": "meta_heuristics"
       },
       "ILS": {
         "description": "Iterated Local Search",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/iterated_local_search",
+        "path": "logic/src/policies/routing/meta_heuristics/iterated_local_search",
         "internal_acronym": "ils",
         "subcategory": "meta_heuristics"
       },
       "KGLS": {
         "description": "Knowledge-Guided Local Search",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/knowledge_guided_local_search",
+        "path": "logic/src/policies/routing/meta_heuristics/knowledge_guided_local_search",
         "internal_acronym": "kgls",
         "subcategory": "meta_heuristics"
       },
       "LCA": {
         "description": "League Championship Algorithm",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/league_championship_algorithm",
+        "path": "logic/src/policies/routing/meta_heuristics/league_championship_algorithm",
         "internal_acronym": "lca",
         "subcategory": "meta_heuristics"
       },
       "MA": {
         "description": "Memetic Algorithm",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/memetic_algorithm",
+        "path": "logic/src/policies/routing/meta_heuristics/memetic_algorithm",
         "internal_acronym": "ma",
         "subcategory": "meta_heuristics"
       },
       "MA_DP": {
         "description": "Memetic Algorithm with Dual Population",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/memetic_algorithm_dual_population",
+        "path": "logic/src/policies/routing/meta_heuristics/memetic_algorithm_dual_population",
         "internal_acronym": "ma_dp",
         "subcategory": "meta_heuristics"
       },
       "MA_IM": {
         "description": "Memetic Algorithm Island Model",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/memetic_algorithm_island_model",
+        "path": "logic/src/policies/routing/meta_heuristics/memetic_algorithm_island_model",
         "internal_acronym": "ma_im",
         "subcategory": "meta_heuristics"
       },
       "MA_TBS": {
         "description": "Memetic Algorithm with Tolerance-Based Selection",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/memetic_algorithm_tolerance_based_selection",
+        "path": "logic/src/policies/routing/meta_heuristics/memetic_algorithm_tolerance_based_selection",
         "internal_acronym": "ma_ts",
         "subcategory": "meta_heuristics"
       },
       "MACO": {
         "description": "Multi-Period Ant Colony Optimization",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/multi_period_ant_colony_optimization",
+        "path": "logic/src/policies/routing/meta_heuristics/multi_period_ant_colony_optimization",
         "internal_acronym": "mp_aco",
         "subcategory": "meta_heuristics"
       },
       "MILS": {
         "description": "Multi-Period Iterated Local Search",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/multi_period_iterated_local_search",
+        "path": "logic/src/policies/routing/meta_heuristics/multi_period_iterated_local_search",
         "internal_acronym": "mp_ils",
         "subcategory": "meta_heuristics"
       },
       "MPSO": {
         "description": "Multi-Period Particle Swarm Optimization",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/multi_period_particle_swarm_optimization",
+        "path": "logic/src/policies/routing/meta_heuristics/multi_period_particle_swarm_optimization",
         "internal_acronym": "mp_pso",
         "subcategory": "meta_heuristics"
       },
       "MSA": {
         "description": "Multi-Period Simulated Annealing",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/multi_period_simulated_annealing",
+        "path": "logic/src/policies/routing/meta_heuristics/multi_period_simulated_annealing",
         "internal_acronym": "mp_sa",
         "subcategory": "meta_heuristics"
       },
       "PSO": {
         "description": "Particle Swarm Optimization",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/particle_swarm_optimization",
+        "path": "logic/src/policies/routing/meta_heuristics/particle_swarm_optimization",
         "internal_acronym": "pso",
         "subcategory": "meta_heuristics"
       },
       "PSO_DBA": {
         "description": "PSO Distance-Based Algorithm",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/particle_swarm_optimization_distance_based_algorithm",
+        "path": "logic/src/policies/routing/meta_heuristics/particle_swarm_optimization_distance_based_algorithm",
         "internal_acronym": "psoda",
         "subcategory": "meta_heuristics"
       },
       "PSO_MA": {
         "description": "PSO\u2013Memetic Algorithm hybrid",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/particle_swarm_optimization_memetic_algorithm",
+        "path": "logic/src/policies/routing/meta_heuristics/particle_swarm_optimization_memetic_algorithm",
         "internal_acronym": "psoma",
         "subcategory": "meta_heuristics"
       },
       "PGCLNS": {
         "description": "Pheromone-Guided Cooperative Large Neighborhood Search",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search",
+        "path": "logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search",
         "internal_acronym": "pg_clns",
         "subcategory": "meta_heuristics"
       },
       "QDE": {
         "description": "Quantum Differential Evolution",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/quantum_differential_evolution",
+        "path": "logic/src/policies/routing/meta_heuristics/quantum_differential_evolution",
         "internal_acronym": "qde",
         "subcategory": "meta_heuristics"
       },
       "RTS": {
         "description": "Reactive Tabu Search",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/reactive_tabu_search",
+        "path": "logic/src/policies/routing/meta_heuristics/reactive_tabu_search",
         "internal_acronym": "rts",
         "subcategory": "meta_heuristics"
       },
       "SA": {
         "description": "Simulated Annealing",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/simulated_annealing",
+        "path": "logic/src/policies/routing/meta_heuristics/simulated_annealing",
         "internal_acronym": "sa",
         "subcategory": "meta_heuristics"
       },
       "SANS": {
         "description": "Simulated Annealing with Neighborhood Search",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/simulated_annealing_neighborhood_search",
+        "path": "logic/src/policies/routing/meta_heuristics/simulated_annealing_neighborhood_search",
         "internal_acronym": "sans",
         "subcategory": "meta_heuristics"
       },
       "SCA": {
         "description": "Sine Cosine Algorithm",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/sine_cosine_algorithm",
+        "path": "logic/src/policies/routing/meta_heuristics/sine_cosine_algorithm",
         "internal_acronym": "sca",
         "subcategory": "meta_heuristics"
       },
       "SISR": {
         "description": "Slack Induction by String Removal",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/slack_induction_by_string_removal",
+        "path": "logic/src/policies/routing/meta_heuristics/slack_induction_by_string_removal",
         "internal_acronym": "sisr",
         "subcategory": "meta_heuristics"
       },
       "SLC": {
         "description": "Soccer League Competition",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/soccer_league_competition",
+        "path": "logic/src/policies/routing/meta_heuristics/soccer_league_competition",
         "internal_acronym": "slc",
         "subcategory": "meta_heuristics"
       },
       "TS": {
         "description": "Tabu Search",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/tabu_search",
+        "path": "logic/src/policies/routing/meta_heuristics/tabu_search",
         "internal_acronym": "ts",
         "subcategory": "meta_heuristics"
       },
       "VNS": {
         "description": "Variable Neighborhood Search",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/variable_neighborhood_search",
+        "path": "logic/src/policies/routing/meta_heuristics/variable_neighborhood_search",
         "internal_acronym": "vns",
         "subcategory": "meta_heuristics"
       },
       "VPL": {
         "description": "Volleyball Premier League",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/volleyball_premier_league",
+        "path": "logic/src/policies/routing/meta_heuristics/volleyball_premier_league",
         "internal_acronym": "vpl",
         "subcategory": "meta_heuristics"
       },
@@ -827,105 +827,105 @@
       "AKS": {
         "description": "Adaptive Kernel Search",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/matheuristics/adaptive_kernel_search",
+        "path": "logic/src/policies/routing/matheuristics/adaptive_kernel_search",
         "internal_acronym": "aks",
         "subcategory": "matheuristics"
       },
       "CFRS": {
         "description": "Cluster-First Route-Second",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/matheuristics/cluster_first_route_second",
+        "path": "logic/src/policies/routing/matheuristics/cluster_first_route_second",
         "internal_acronym": "cf_rs",
         "subcategory": "matheuristics"
       },
       "CGH": {
         "description": "Column Generation Heuristic",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/matheuristics/column_generation_heuristic",
+        "path": "logic/src/policies/routing/matheuristics/column_generation_heuristic",
         "internal_acronym": "cgh",
         "subcategory": "matheuristics"
       },
       "EGH": {
         "description": "Exact-Guided Heuristic",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/matheuristics/exact_guided_heuristic",
+        "path": "logic/src/policies/routing/matheuristics/exact_guided_heuristic",
         "internal_acronym": "egh",
         "subcategory": "matheuristics"
       },
       "ILS_RVND_SP": {
         "description": "ILS with RVND and Set Partitioning",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/matheuristics/iterated_local_search_randomized_variable_neighborhood_descent_set_partitioning",
+        "path": "logic/src/policies/routing/matheuristics/iterated_local_search_randomized_variable_neighborhood_descent_set_partitioning",
         "internal_acronym": "ils_rvnd_sp",
         "subcategory": "matheuristics"
       },
       "KS": {
         "description": "Kernel Search",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/matheuristics/kernel_search",
+        "path": "logic/src/policies/routing/matheuristics/kernel_search",
         "internal_acronym": "ks",
         "subcategory": "matheuristics"
       },
       "LRH": {
         "description": "Lagrangian Relaxation Heuristic",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/matheuristics/lagrangian_relaxation_heuristic",
+        "path": "logic/src/policies/routing/matheuristics/lagrangian_relaxation_heuristic",
         "internal_acronym": "lrh",
         "subcategory": "matheuristics"
       },
       "LNS_MIP": {
         "description": "Large Neighborhood Search with MIP",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/matheuristics/large_neighborhood_search_mixed_integer_programming",
+        "path": "logic/src/policies/routing/matheuristics/large_neighborhood_search_mixed_integer_programming",
         "internal_acronym": "lns_mip",
         "subcategory": "matheuristics"
       },
       "LKH3": {
         "description": "Lin\u2013Kernighan\u2013Helsgott 3 matheuristic",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/matheuristics/lin_kernighan_helsgaun_three",
+        "path": "logic/src/policies/routing/matheuristics/lin_kernighan_helsgaun_three",
         "internal_acronym": "lkh3",
         "subcategory": "matheuristics"
       },
       "LB": {
         "description": "Local Branching",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/matheuristics/local_branching",
+        "path": "logic/src/policies/routing/matheuristics/local_branching",
         "internal_acronym": "lb",
         "subcategory": "matheuristics"
       },
       "LB_VNS": {
         "description": "Local Branching with VNS",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/matheuristics/local_branching_variable_neighborhood_search",
+        "path": "logic/src/policies/routing/matheuristics/local_branching_variable_neighborhood_search",
         "internal_acronym": "lb_vns",
         "subcategory": "matheuristics"
       },
       "POMESIC": {
         "description": "Partial Optimization Metaheuristic Under Special Intensification Conditions",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/matheuristics/partial_optimization_metaheuristic_under_special_intensification_conditions",
+        "path": "logic/src/policies/routing/matheuristics/partial_optimization_metaheuristic_under_special_intensification_conditions",
         "internal_acronym": "popmusic",
         "subcategory": "matheuristics"
       },
       "RAF_O": {
         "description": "Relax-and-Fix-and-Optimize",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/matheuristics/relax_and_fix_and_optimize",
+        "path": "logic/src/policies/routing/matheuristics/relax_and_fix_and_optimize",
         "internal_acronym": "rfo",
         "subcategory": "matheuristics"
       },
       "RENS": {
         "description": "Relaxation Enforced Neighborhood Search",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/matheuristics/relaxation_enforced_neighborhood_search",
+        "path": "logic/src/policies/routing/matheuristics/relaxation_enforced_neighborhood_search",
         "internal_acronym": "rens",
         "subcategory": "matheuristics"
       },
       "TPKS": {
         "description": "Two-Phase Kernel Search",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/matheuristics/two_phase_kernel_search",
+        "path": "logic/src/policies/routing/matheuristics/two_phase_kernel_search",
         "internal_acronym": "tpks",
         "subcategory": "matheuristics"
       },
@@ -933,77 +933,77 @@
       "AMPH_HH": {
         "description": "Adaptive Memory Programming Hyper-Heuristic",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/hyper_heuristics/adaptive_memory_programming_hyper_heuristic",
+        "path": "logic/src/policies/routing/hyper_heuristics/adaptive_memory_programming_hyper_heuristic",
         "internal_acronym": "amphh",
         "subcategory": "hyper_heuristics"
       },
       "ACO_HH": {
         "description": "Ant Colony Optimization Hyper-Heuristic",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/hyper_heuristics/ant_colony_optimization_hyper_heuristic",
+        "path": "logic/src/policies/routing/hyper_heuristics/ant_colony_optimization_hyper_heuristic",
         "internal_acronym": "aco_hh",
         "subcategory": "hyper_heuristics"
       },
       "GP_HH": {
         "description": "Genetic Programming Hyper-Heuristic",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/hyper_heuristics/genetic_programming_hyper_heuristic",
+        "path": "logic/src/policies/routing/hyper_heuristics/genetic_programming_hyper_heuristic",
         "internal_acronym": "gp_hh",
         "subcategory": "hyper_heuristics"
       },
       "GP_MPHH": {
         "description": "Genetic Programming Multi-Period Hyper-Heuristic",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/hyper_heuristics/genetic_programming_multi_period_hyper_heuristic",
+        "path": "logic/src/policies/routing/hyper_heuristics/genetic_programming_multi_period_hyper_heuristic",
         "internal_acronym": "gp_mp_hh",
         "subcategory": "hyper_heuristics"
       },
       "GIHH": {
         "description": "Guided Indicators Hyper-Heuristic",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/hyper_heuristics/guided_indicators_hyper_heuristic",
+        "path": "logic/src/policies/routing/hyper_heuristics/guided_indicators_hyper_heuristic",
         "internal_acronym": "gihh",
         "subcategory": "hyper_heuristics"
       },
       "HMMGD_HH": {
         "description": "Hidden Markov Model Great Deluge Hyper-Heuristic",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/hyper_heuristics/hidden_markov_model_great_deluge_hyper_heuristic",
+        "path": "logic/src/policies/routing/hyper_heuristics/hidden_markov_model_great_deluge_hyper_heuristic",
         "internal_acronym": "hmm_gd_hh",
         "subcategory": "hyper_heuristics"
       },
       "HH_USLK": {
         "description": "Hyper-Heuristic US-LK",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/hyper_heuristics/hyper_heuristic_us_lk",
+        "path": "logic/src/policies/routing/hyper_heuristics/hyper_heuristic_us_lk",
         "internal_acronym": "hulk",
         "subcategory": "hyper_heuristics"
       },
       "MHH": {
         "description": "Matheuristic Hyper-Heuristic",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/hyper_heuristics/matheuristic_hyper_heuristic",
+        "path": "logic/src/policies/routing/hyper_heuristics/matheuristic_hyper_heuristic",
         "internal_acronym": "mhh",
         "subcategory": "hyper_heuristics"
       },
       "PB_HH": {
         "description": "Population-Based Hyper-Heuristic",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/hyper_heuristics/population_based_hyper_heuristic",
+        "path": "logic/src/policies/routing/hyper_heuristics/population_based_hyper_heuristic",
         "internal_acronym": "phh",
         "subcategory": "hyper_heuristics"
       },
       "SHH": {
         "description": "Selection Hyper-Heuristic",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/hyper_heuristics/selection_hyper_heuristic",
+        "path": "logic/src/policies/routing/hyper_heuristics/selection_hyper_heuristic",
         "internal_acronym": "shh",
         "subcategory": "hyper_heuristics"
       },
       "SBSHH": {
         "description": "Sequence-Based Selection Hyper-Heuristic",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/hyper_heuristics/sequence_based_selection_hyper_heuristic",
+        "path": "logic/src/policies/routing/hyper_heuristics/sequence_based_selection_hyper_heuristic",
         "internal_acronym": "ss_hh",
         "subcategory": "hyper_heuristics"
       },
@@ -1011,63 +1011,63 @@
       "ADPR": {
         "description": "Approximate Dynamic Programming with Rollout",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/learning_algorithms/approximate_dynamic_programming_with_rollout",
+        "path": "logic/src/policies/routing/learning_algorithms/approximate_dynamic_programming_with_rollout",
         "internal_acronym": "adp",
         "subcategory": "learning_algorithms"
       },
       "HNA": {
         "description": "Hierarchical Neural Agent (Manager-Worker DRL)",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/learning_algorithms/hierarchical_neural_agent",
+        "path": "logic/src/policies/routing/learning_algorithms/hierarchical_neural_agent",
         "internal_acronym": "hna",
         "subcategory": "learning_algorithms"
       },
       "NA": {
         "description": "Neural Agent (single-level DRL)",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/learning_algorithms/neural_agent",
+        "path": "logic/src/policies/routing/learning_algorithms/neural_agent",
         "internal_acronym": "na",
         "subcategory": "learning_algorithms"
       },
       "RL_ALNS": {
         "description": "RL-guided Adaptive Large Neighborhood Search",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/learning_heuristic_algorithms/reinforcement_learning_adaptive_large_neighborhood_search",
+        "path": "logic/src/policies/routing/learning_heuristic_algorithms/reinforcement_learning_adaptive_large_neighborhood_search",
         "internal_acronym": "rl_alns",
         "subcategory": "learning_heuristic_algorithms"
       },
       "RL_GDHH": {
         "description": "RL Great Deluge Hyper-Heuristic",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/learning_heuristic_algorithms/reinforcement_learning_great_deluge_hyper_heuristic",
+        "path": "logic/src/policies/routing/learning_heuristic_algorithms/reinforcement_learning_great_deluge_hyper_heuristic",
         "internal_acronym": "rl_gd_hh",
         "subcategory": "learning_heuristic_algorithms"
       },
       "RL_HVPL": {
         "description": "RL Hybrid Volleyball Premier League",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/learning_heuristic_algorithms/reinforcement_learning_hybrid_volleyball_premier_league",
+        "path": "logic/src/policies/routing/learning_heuristic_algorithms/reinforcement_learning_hybrid_volleyball_premier_league",
         "internal_acronym": "rl_hvpl",
         "subcategory": "learning_heuristic_algorithms"
       },
       "ABPC_HG": {
         "description": "Adaptive Branch-and-Price-and-Cut with Heuristic Guidance",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/learning_matheuristic_algorithms/adaptive_branch_and_price_and_cut_with_heuristic_guidance",
+        "path": "logic/src/policies/routing/learning_matheuristic_algorithms/adaptive_branch_and_price_and_cut_with_heuristic_guidance",
         "internal_acronym": "abpc_hg",
         "subcategory": "learning_matheuristic_algorithms"
       },
       "CALM": {
         "description": "Concurrent Adaptive Lagrangian Matheuristic",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/learning_matheuristic_algorithms/concurrent_adaptive_lagrangian_matheuristic",
+        "path": "logic/src/policies/routing/learning_matheuristic_algorithms/concurrent_adaptive_lagrangian_matheuristic",
         "internal_acronym": "calm",
         "subcategory": "learning_matheuristic_algorithms"
       },
       "LASM": {
         "description": "Learning-Allocated Sequential Matheuristic",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/learning_matheuristic_algorithms/learning_allocated_sequential_matheuristic",
+        "path": "logic/src/policies/routing/learning_matheuristic_algorithms/learning_allocated_sequential_matheuristic",
         "internal_acronym": "lasm",
         "subcategory": "learning_matheuristic_algorithms"
       },
@@ -1075,261 +1075,261 @@
       "TSP": {
         "description": "Travelling Salesman Problem baseline constructor",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/other_algorithms/travelling_salesman_problem",
+        "path": "logic/src/policies/routing/other_algorithms/travelling_salesman_problem",
         "internal_acronym": "tsp",
         "subcategory": "other_algorithms"
       },
       "CVRP": {
         "description": "Capacitated Vehicle Routing Problem baseline constructor",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/other_algorithms/capacitated_vehicle_routing_problem",
+        "path": "logic/src/policies/routing/other_algorithms/capacitated_vehicle_routing_problem",
         "internal_acronym": "cvrp",
         "subcategory": "other_algorithms"
       },
-      "_comment_joint": "Joint selection-and-construction",
+      "_comment_joint": "Joint packing-and-routing",
       "JGO": {
         "description": "Joint Greedy Orienteering",
         "category": "joint",
-        "path": "logic/src/policies/selection_and_construction/joint_greedy_orienteering",
+        "path": "logic/src/policies/packing_and_routing/joint_greedy_orienteering",
         "internal_acronym": "jgo",
         "subcategory": null
       },
       "JSA": {
         "description": "Joint Simulated Annealing",
         "category": "joint",
-        "path": "logic/src/policies/selection_and_construction/joint_simulated_annealing",
+        "path": "logic/src/policies/packing_and_routing/joint_simulated_annealing",
         "internal_acronym": "jsa",
         "subcategory": null
       },
       "NDSBRK_GA": {
         "description": "Non-Dominated Sorting Biased Random-Key Genetic Algorithm",
         "category": "joint",
-        "path": "logic/src/policies/selection_and_construction/non_dominated_sorting_biased_random_key_genetic_algorithm",
+        "path": "logic/src/policies/packing_and_routing/non_dominated_sorting_biased_random_key_genetic_algorithm",
         "internal_acronym": "ndsbrkga",
         "subcategory": null
       },
       "ARCO": {
-        "description": "Adaptive Route Constructor Orchestrator",
+        "description": "Adaptive Routing Algorithm Orchestrator",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/other_algorithms/adaptive_route_constructor_orchestrator",
+        "path": "logic/src/policies/routing/other_algorithms/adaptive_routing_algorithm_orchestrator",
         "internal_acronym": "arco",
         "subcategory": "other_algorithms"
       },
       "ES_MCL": {
         "description": "Evolution Strategy Mu Comma Lambda",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/evolution_strategy_mu_comma_lambda",
+        "path": "logic/src/policies/routing/meta_heuristics/evolution_strategy_mu_comma_lambda",
         "internal_acronym": "es_mcl",
         "subcategory": "meta_heuristics"
       },
       "ES_MKL": {
         "description": "Evolution Strategy Mu Kappa Lambda",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/evolution_strategy_mu_kappa_lambda",
+        "path": "logic/src/policies/routing/meta_heuristics/evolution_strategy_mu_kappa_lambda",
         "internal_acronym": "es_mkl",
         "subcategory": "meta_heuristics"
       },
       "ES_MPL": {
         "description": "Evolution Strategy Mu Plus Lambda",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/meta_heuristics/evolution_strategy_mu_plus_lambda",
+        "path": "logic/src/policies/routing/meta_heuristics/evolution_strategy_mu_plus_lambda",
         "internal_acronym": "es_mpl",
         "subcategory": "meta_heuristics"
       },
       "SRC": {
-        "description": "Sequential Route Constructor",
+        "description": "Sequential Routing Algorithm",
         "category": "constructor",
-        "path": "logic/src/policies/route_construction/other_algorithms/sequential_route_constructor",
+        "path": "logic/src/policies/routing/other_algorithms/sequential_routing_algorithm",
         "internal_acronym": "src",
         "subcategory": "other_algorithms"
       }
     },
     "selectors": {
-      "_comment": "Mandatory selection policies \u2014 strip MS_ prefix for internal_acronym",
+      "_comment": "Packing policies \u2014 strip MS_ prefix for internal_acronym",
       "MS_RANDOM": {
         "description": "Bernoulli random selection baseline",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_bernoulli_random.py",
+        "path": "logic/src/policies/packing/selection_bernoulli_random.py",
         "internal_acronym": "bernoulli_random"
       },
       "MS_COMBINED": {
         "description": "Combined multi-criteria selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_combined.py",
+        "path": "logic/src/policies/packing/selection_combined.py",
         "internal_acronym": "combined"
       },
       "MS_CVAR": {
         "description": "Conditional Value-at-Risk selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_cvar.py",
+        "path": "logic/src/policies/packing/selection_cvar.py",
         "internal_acronym": "cvar"
       },
       "MS_DEADLINE": {
         "description": "Deadline-driven urgent bin selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_deadline.py",
+        "path": "logic/src/policies/packing/selection_deadline.py",
         "internal_acronym": "deadline"
       },
       "MS_DISP_PORTFOLIO": {
         "description": "Dispatcher portfolio selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_dispatcher_portfolio.py",
+        "path": "logic/src/policies/packing/selection_dispatcher_portfolio.py",
         "internal_acronym": "dispatcher_portfolio"
       },
       "MS_DISP_THOMPSON": {
         "description": "Thompson Sampling dispatcher",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_dispatcher_thompson.py",
+        "path": "logic/src/policies/packing/selection_dispatcher_thompson.py",
         "internal_acronym": "dispatcher_thompson"
       },
       "MS_FAF": {
         "description": "Filter-and-Fan selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_filter_and_fan.py",
+        "path": "logic/src/policies/packing/selection_filter_and_fan.py",
         "internal_acronym": "filter_and_fan"
       },
       "MS_FPTAS_KP": {
         "description": "FPTAS Knapsack selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_fptas_knapsack.py",
+        "path": "logic/src/policies/packing/selection_fptas_knapsack.py",
         "internal_acronym": "fptas_knapsack"
       },
       "MS_FRAC_KP": {
         "description": "Fractional Knapsack greedy selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_fractional_knapsack.py",
+        "path": "logic/src/policies/packing/selection_fractional_knapsack.py",
         "internal_acronym": "fractional_knapsack"
       },
       "MS_KMEANS": {
         "description": "K-Means spatial sector selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_kmeans_sector.py",
+        "path": "logic/src/policies/packing/selection_kmeans_sector.py",
         "internal_acronym": "kmeans_sector"
       },
       "MS_LAGRANGIAN": {
         "description": "Lagrangian relaxation-based selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_lagrangian.py",
+        "path": "logic/src/policies/packing/selection_lagrangian.py",
         "internal_acronym": "lagrangian"
       },
       "MS_LAST_MIN": {
         "description": "Last-Minute reactive selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_last_minute.py",
+        "path": "logic/src/policies/packing/selection_last_minute.py",
         "internal_acronym": "last_minute"
       },
       "MS_LEARNED": {
         "description": "Neural learned selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_learned.py",
+        "path": "logic/src/policies/packing/selection_learned.py",
         "internal_acronym": "learned"
       },
       "MS_LOOKAHEAD": {
         "description": "Multi-step lookahead selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_lookahead.py",
+        "path": "logic/src/policies/packing/selection_lookahead.py",
         "internal_acronym": "lookahead"
       },
       "MS_MIP_KP": {
         "description": "MIP Knapsack exact selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_mip_knapsack.py",
+        "path": "logic/src/policies/packing/selection_mip_knapsack.py",
         "internal_acronym": "mip_knapsack"
       },
       "MS_MDPROB": {
         "description": "Multi-Day Probability selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_multi_day_prob.py",
+        "path": "logic/src/policies/packing/selection_multi_day_prob.py",
         "internal_acronym": "multi_day_prob"
       },
       "MS_PARETO": {
         "description": "Pareto-dominance multi-objective selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_pareto.py",
+        "path": "logic/src/policies/packing/selection_pareto.py",
         "internal_acronym": "pareto"
       },
       "MS_PPK": {
         "description": "Profit-per-Kilometre greedy selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_profit_per_km.py",
+        "path": "logic/src/policies/packing/selection_profit_per_km.py",
         "internal_acronym": "profit_per_km"
       },
       "MS_REGULAR": {
         "description": "Regular threshold-based selector (default production policy)",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_regular.py",
+        "path": "logic/src/policies/packing/selection_regular.py",
         "internal_acronym": "regular"
       },
       "MS_REVENUE": {
         "description": "Revenue-maximising selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_revenue.py",
+        "path": "logic/src/policies/packing/selection_revenue.py",
         "internal_acronym": "revenue"
       },
       "MS_ROLLOUT": {
         "description": "Policy rollout selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_rollout.py",
+        "path": "logic/src/policies/packing/selection_rollout.py",
         "internal_acronym": "rollout"
       },
       "MS_SAVINGS": {
         "description": "Clarke-Wright Savings selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_savings.py",
+        "path": "logic/src/policies/packing/selection_savings.py",
         "internal_acronym": "savings"
       },
       "MS_SLA": {
         "description": "Service-Level Agreement selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_service_level.py",
+        "path": "logic/src/policies/packing/selection_service_level.py",
         "internal_acronym": "service_level"
       },
       "MS_SET_COVER": {
         "description": "Set-Cover selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_set_cover.py",
+        "path": "logic/src/policies/packing/selection_set_cover.py",
         "internal_acronym": "set_cover"
       },
       "MS_SPATIAL": {
         "description": "Spatial Synergy selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_spatial_synergy.py",
+        "path": "logic/src/policies/packing/selection_spatial_synergy.py",
         "internal_acronym": "spatial_synergy"
       },
       "MS_STAGGERED": {
         "description": "Staggered Regular selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_staggered_regular.py",
+        "path": "logic/src/policies/packing/selection_staggered_regular.py",
         "internal_acronym": "staggered_regular"
       },
       "MS_STOCH_REG": {
         "description": "Stochastic Regret selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_stochastic_regret.py",
+        "path": "logic/src/policies/packing/selection_stochastic_regret.py",
         "internal_acronym": "stochastic_regret"
       },
       "MS_SUBMOD": {
         "description": "Submodular Greedy selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_submodular_greedy.py",
+        "path": "logic/src/policies/packing/selection_submodular_greedy.py",
         "internal_acronym": "submodular_greedy"
       },
       "MS_SUPERMOD": {
         "description": "Supermodular Greedy selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_supermodular_greedy.py",
+        "path": "logic/src/policies/packing/selection_supermodular_greedy.py",
         "internal_acronym": "supermodular_greedy"
       },
       "MS_WASS": {
         "description": "Wasserstein distributionally robust selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_wasserstein.py",
+        "path": "logic/src/policies/packing/selection_wasserstein.py",
         "internal_acronym": "wasserstein"
       },
       "MS_WHITTLE": {
         "description": "Whittle Index selector",
         "category": "selector",
-        "path": "logic/src/policies/mandatory_selection/selection_whittle.py",
+        "path": "logic/src/policies/packing/selection_whittle.py",
         "internal_acronym": "whittle"
       }
     },
@@ -6128,7 +6128,7 @@
         },
         "ortools": {
           "files": [
-            "logic/src/policies/route_construction/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/ortools_wrapper.py"
+            "logic/src/policies/routing/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/ortools_wrapper.py"
           ],
           "dependencies": [
             "ortools"
@@ -6136,7 +6136,7 @@
         },
         "pyomo": {
           "files": [
-            "logic/src/policies/route_construction/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/pyomo_wrapper.py"
+            "logic/src/policies/routing/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/pyomo_wrapper.py"
           ],
           "dependencies": [
             "pyomo"
@@ -6148,7 +6148,7 @@
         "rewrites": [
           {
             "files": [
-              "logic/src/policies/route_construction/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/params.py",
+              "logic/src/policies/routing/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/params.py",
               "logic/src/configs/policies/swc_tcf.py"
             ],
             "pattern": "framework: str = \"{value}\"",
@@ -6228,7 +6228,7 @@
         "logic/src/pipeline/simulations/wsmart_bin_analysis/modules",
         "logic/src/policies/acceptance_criteria",
         "logic/src/policies/helpers",
-        "logic/src/policies/route_construction/other_algorithms",
+        "logic/src/policies/routing/other_algorithms",
         "logic/src/policies/route_improvement",
         "logic/src/policies/vector",
         "logic/src/utils/actions",

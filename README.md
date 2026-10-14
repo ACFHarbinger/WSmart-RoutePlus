@@ -230,7 +230,7 @@ We provide a comprehensive library of neural architectures and classical policie
 | Model                         | Architecture                  | Use Case                                      |
 | ----------------------------- | ----------------------------- | --------------------------------------------- |
 | **AttentionModel (AM)**       | Transformer (Encoder-Decoder) | General-purpose constructive routing          |
-| **MandatorySelectionManager** | GNN + RNN                     | High-level temporal gating for HRL            |
+| **PackingManager** | GNN + RNN                     | High-level temporal gating for HRL            |
 | **TemporalAM**                | Transformer                   | Time-dependent attention mechanism            |
 | **MetaRNN**                   | RNN/LSTM                      | Meta-learning for distribution generalization |
 | **DeepDecoderAM**             | Deep Transformer              | Enhanced decoder for large instances          |

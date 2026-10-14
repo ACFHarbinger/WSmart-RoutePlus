@@ -1,8 +1,8 @@
-# Comprehensive Analysis: Acceptance Criteria in Route Construction
+# Comprehensive Analysis: Acceptance Criteria in Routing
 
 **Project**: WSmart+ Route
 **Date**: August 27, 2026
-**Purpose**: Systematic review of acceptance criteria implementations in `logic/src/policies/acceptance_criteria/` and their integration across route construction algorithms (`logic/src/policies/route_construction/`).
+**Purpose**: Systematic review of acceptance criteria implementations in `logic/src/policies/acceptance_criteria/` and their integration across routing algorithms (`logic/src/policies/routing/`).
 **Total Criteria Modules**: 23 modular criteria (implementing `IAcceptanceCriterion`)
 **Total Algorithms Evaluated**: 80+ routing algorithms across exact, metaheuristic, matheuristic, hyper-heuristic, and learning paradigms
 
@@ -180,4 +180,4 @@ These exist largely as standard or historical base implementations.
 ---
 
 ### Conclusion
-A major architectural refactor is highly required if the goal is system-wide interoperability. `WSmart-Route`'s `route_construction` pipeline currently defines 74 distinct computational routing mechanics, nearly all of which isolate and hard-code their iteration and survival boundaries. Linking the `acceptance_criteria/` directory as a factory-driven injection parameter to each heuristic's `solver.py` loop would drastically cut code redundancy and explode cross-configuration capability.
+A major architectural refactor is highly required if the goal is system-wide interoperability. `WSmart-Route`'s `routing` pipeline currently defines 74 distinct computational routing mechanics, nearly all of which isolate and hard-code their iteration and survival boundaries. Linking the `acceptance_criteria/` directory as a factory-driven injection parameter to each heuristic's `solver.py` loop would drastically cut code redundancy and explode cross-configuration capability.

@@ -625,7 +625,7 @@ class RL4COLitModule(DataMixin, OptimizationMixin, StepMixin, pl.LightningModule
         val_dataset_path: Optional[str] = None,
         batch_size: int = 256,
         num_workers: int = 4,
-        mandatory_selection_selector: Optional[VectorizedSelector] = None,
+        packing_selector: Optional[VectorizedSelector] = None,
         **kwargs,
     ):
         # Initialization logic
@@ -942,7 +942,7 @@ simulations/
 ├── actions/
 │   ├── base.py                 # SimulationAction abstract
 │   ├── fill.py                 # FillAction (waste accumulation)
-│   ├── selection.py            # MandatorySelectionSelectionAction
+│   ├── selection.py            # PackingAction
 │   ├── policy.py               # PolicyExecutionAction
 │   ├── post_process.py         # PostProcessAction
 │   ├── collection.py           # CollectAction (emptying bins)
@@ -1222,17 +1222,17 @@ class FillAction(SimulationAction):
         context.bins.fill(day, context.opts["data_distribution"])
 ```
 
-#### 2. MandatorySelectionSelectionAction
+#### 2. PackingAction
 
 **File**: `actions/selection.py`
 
 ```python
-class MandatorySelectionSelectionAction(SimulationAction):
+class PackingAction(SimulationAction):
     def execute(self, context: SimulationContext, **kwargs):
         """Select bins that must be collected."""
-        selector = context.mandatory_selection_selector
-        mandatory_selection_indices = selector.select(context.bins, context.opts)
-        return mandatory_selection_indices
+        selector = context.packing_selector
+        packing_indices = selector.select(context.bins, context.opts)
+        return packing_indices
 ```
 
 #### 3. PolicyExecutionAction
@@ -1241,11 +1241,11 @@ class MandatorySelectionSelectionAction(SimulationAction):
 
 ```python
 class PolicyExecutionAction(SimulationAction):
-    def execute(self, context: SimulationContext, mandatory_selection: List[int], **kwargs):
+    def execute(self, context: SimulationContext, packing: List[int], **kwargs):
         """Execute routing policy to generate tour."""
         policy = context.policy_adapter
         tour, cost, metadata = policy.execute(
-            mandatory_selection=mandatory_selection,
+            packing=packing,
             bins=context.bins,
             distance_matrix=context.distance_matrix,
             area=context.opts["area"],
@@ -1301,7 +1301,7 @@ class LogAction(SimulationAction):
 # In RunningState.handle()
 actions = [
     FillAction(),
-    MandatorySelectionSelectionAction(),
+    PackingAction(),
     PolicyExecutionAction(),
     CollectAction(),
     LogAction(),
@@ -1428,7 +1428,7 @@ class SimulationAction(ABC):
 
 # Concrete commands
 fill_action = FillAction()
-selection_action = MandatorySelectionSelectionAction()
+selection_action = PackingAction()
 policy_action = PolicyExecutionAction()
 collect_action = CollectAction()
 log_action = LogAction()
