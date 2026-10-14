@@ -38,8 +38,8 @@ ph:
   # Random seed for scenario generation reproducibility.
   seed: 42
 
-  # mandatory node selection strategies.
-  mandatory_selection: []
+  # packing algorithms.
+  packing: []
 
   # route improvement refinement.
   route_improvement: []

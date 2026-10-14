@@ -81,12 +81,12 @@ class PolicyTag(Enum):
     # ==========================================
     # 3. PIPELINE PHASE (What role does this play in the lifecycle?)
     # ==========================================
-    SELECTION = auto()  # Selects mandatory nodes to serve
-    CONSTRUCTION = auto()  # Builds routes from scratch (Initialization)
+    PACKING = auto()  # Packs the mandatory nodes to serve
+    ROUTING = auto()  # Builds routes from scratch (Initialization)
     IMPROVEMENT = auto()  # Improves routes (Local Search, etc.)
     OPERATOR = auto()  # Operators (2-Opt, Relocate, Cross Exchange, etc.)
     ACCEPTANCE = auto()  # Acceptance criteria (Metropolis-Hastings, Simulated Annealing, etc.)
-    JOINT = auto()  # Joint selection and construction
+    PACKING_AND_ROUTING = auto()  # Joint packing and routing
 
     # ==========================================
     # 4. PROBLEM TOPOLOGY & DOMAIN (What constraints can it handle?)

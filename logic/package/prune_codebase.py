@@ -881,14 +881,14 @@ def _build_parser() -> argparse.ArgumentParser:
         nargs="*",
         metavar="ACRONYM",
         default=None,
-        help="Route construction algorithms to keep (e.g. HGS ALNS BPC).",
+        help="Routing algorithms to keep (e.g. HGS ALNS BPC).",
     )
     p.add_argument(
         "--selectors",
         nargs="*",
         metavar="ACRONYM",
         default=None,
-        help="Mandatory selection policies to keep (e.g. MS_REGULAR MS_PPK).",
+        help="Packing policies to keep (e.g. MS_REGULAR MS_PPK).",
     )
     p.add_argument(
         "--improvement",
@@ -909,7 +909,7 @@ def _build_parser() -> argparse.ArgumentParser:
         nargs="*",
         metavar="ACRONYM",
         default=None,
-        help="Joint selection-and-construction methods to keep (e.g. JGO JSA).",
+        help="Joint packing-and-routing methods to keep (e.g. JGO JSA).",
     )
     p.add_argument(
         "--models",

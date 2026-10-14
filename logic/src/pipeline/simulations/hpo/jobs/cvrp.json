@@ -22,7 +22,7 @@
         "type": "int",
         "default": null
     },
-    "mandatory_selection": {
+    "packing": {
         "type": "object",
         "default": null
     },

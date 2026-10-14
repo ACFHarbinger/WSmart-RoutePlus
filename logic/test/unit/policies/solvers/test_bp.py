@@ -5,7 +5,7 @@ Unit tests for Pure Branch-and-Price Solver.
 import numpy as np
 import pytest
 from logic.src.policies.helpers.solvers_and_matheuristics import Route, VRPPMasterProblem
-from logic.src.policies.route_construction.exact_and_decomposition_solvers.branch_and_price.bp import (
+from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price.bp import (
     BranchAndPriceSolver,
 )
 

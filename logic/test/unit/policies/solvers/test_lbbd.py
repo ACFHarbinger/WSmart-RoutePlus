@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.pipeline.simulations.bins.prediction import ScenarioGenerator
-from logic.src.policies.route_construction.exact_and_decomposition_solvers.logic_based_benders_decomposition.policy_lbbd import (
+from logic.src.policies.routing.exact_and_decomposition_solvers.logic_based_benders_decomposition.policy_lbbd import (
     LBBDPolicy,
 )
 

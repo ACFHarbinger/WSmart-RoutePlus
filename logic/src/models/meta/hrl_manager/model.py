@@ -34,7 +34,7 @@ from logic.src.tracking.logging.pylogger import get_pylogger
 
 from .critic_head import CriticHead
 from .gate_head import GateHead
-from .mandatory_head import MandatorySelectionHead
+from .mandatory_head import PackingHead
 from .temporal_encoder import TemporalEncoder
 
 logger = get_pylogger(__name__)
@@ -58,7 +58,7 @@ class MandatoryManager(nn.Module):
         temporal_encoder (nn.Module): RNN/Transformer for waste history.
         feature_embedding (nn.Linear): projection for fused features.
         gat_encoder (nn.Module): spatial context encoder (e.g., GAT).
-        mandatory_head (MandatorySelectionHead): actor for bin categorization.
+        mandatory_head (PackingHead): actor for bin categorization.
         gate_head (GateHead): actor for fleet dispatch gating.
         critic (CriticHead): value function for state evaluation.
         states_static (List[torch.Tensor]): history of static features.
@@ -296,8 +296,8 @@ class MandatoryManager(nn.Module):
             lstm_hidden: width of temporal embeddings.
             global_input_dim: count of environmental global features.
         """
-        # Mandatory Selection Head (Actor 1)
-        self.mandatory_head = MandatorySelectionHead(input_dim=hidden_dim + lstm_hidden, hidden_dim=hidden_dim)
+        # Packing Head (Actor 1)
+        self.mandatory_head = PackingHead(input_dim=hidden_dim + lstm_hidden, hidden_dim=hidden_dim)
 
         # Route Gate Head (Actor 2)
         self.gate_head = GateHead(input_dim=hidden_dim + global_input_dim, hidden_dim=hidden_dim)
@@ -357,7 +357,7 @@ class MandatoryManager(nn.Module):
 
         Returns:
             Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-                - mandatory_logits: Categorical logits for mandatory selection [B, N, 2].
+                - mandatory_logits: Categorical logits for packing [B, N, 2].
                 - gate_logits: Categorical logits for dispatch toggle [B, 2].
                 - value: State value estimation [B, 1].
         """
@@ -370,7 +370,7 @@ class MandatoryManager(nn.Module):
         # SKIP CONNECTION: Concatenate temporal_embed (LSTM output) to h
         h_skip = torch.cat([h, temporal_embed], dim=-1)
 
-        # Mandatory Selection Logits
+        # Packing Logits
         mandatory_logits = self.mandatory_head(h_skip)
 
         # Global Pooling for Gate/Critic
@@ -407,7 +407,7 @@ class MandatoryManager(nn.Module):
             global_features: env-wide status.
             deterministic: if true, uses argmax selection.
             threshold: probability cutoff for route dispatch.
-            mandatory_threshold: probability cutoff for mandatory selection.
+            mandatory_threshold: probability cutoff for packing.
             target_mandatory: explicit labels for supervised training components.
 
         Returns:
@@ -434,7 +434,7 @@ class MandatoryManager(nn.Module):
         else:
             gate_action = gate_dist.sample()
 
-        # 2. Mandatory Selection (Which bins must be collected)
+        # 2. Packing (Which bins must be collected)
         mandatory_probs = F.softmax(mandatory_logits, dim=-1)
         mandatory_dist = torch.distributions.Categorical(mandatory_probs)
 

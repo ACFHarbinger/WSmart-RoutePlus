@@ -1,14 +1,14 @@
 """
 Action for mandatory bin selection.
 
-This module provides the MandatorySelectionAction class, which identifies
+This module provides the PackingAction class, which identifies
 which bins MUST be visited during a simulation day based on configured strategies.
 
 Attributes:
-    MandatorySelectionAction: Command for mandatory bin identification.
+    PackingAction: Command for mandatory bin identification.
 
 Example:
-    >>> # action = MandatorySelectionAction()
+    >>> # action = PackingAction()
     >>> # action.execute(context)
 """
 
@@ -18,12 +18,12 @@ from typing import Any, Dict, List, cast
 
 import numpy as np
 
-from logic.src.configs import MandatorySelectionConfig
+from logic.src.configs import PackingConfig
 from logic.src.constants import MAX_CAPACITY_PERCENT, ROOT_DIR  # noqa: F401  (ROOT_DIR: test patch point)
 from logic.src.constants.paths import CONFIGS_DIR
 from logic.src.interfaces import IBinContainer, ITraversable
 from logic.src.interfaces.context.search_context import SearchContext
-from logic.src.policies.mandatory_selection import MandatorySelectionFactory, SelectionContext
+from logic.src.policies.packing import PackingFactory, SelectionContext
 from logic.src.utils.configs.config_loader import load_config
 
 from .base import (
@@ -43,7 +43,7 @@ from .base import (
 )
 
 
-class MandatorySelectionAction(SimulationAction):
+class PackingAction(SimulationAction):
     """
     Identifies which bins are targets for collection based on various strategies.
 
@@ -53,7 +53,7 @@ class MandatorySelectionAction(SimulationAction):
 
     def execute(self, context: Dict[str, Any]) -> None:  # noqa: C901
         """
-        Execute mandatory selection strategies and update context['mandatory'].
+        Execute packing algorithms and update context['mandatory'].
 
         Args:
             context: Shared dictionary containing simulation state.
@@ -118,7 +118,7 @@ class MandatorySelectionAction(SimulationAction):
                 s_params = m_config.params.copy()
 
                 # Find the sub-config attribute name
-                from logic.src.policies.mandatory_selection.base.selection_factory import CONFIG_MAPPING
+                from logic.src.policies.packing.base.selection_factory import CONFIG_MAPPING
 
                 attr_name = CONFIG_MAPPING.get(s_name.lower())
                 if attr_name and hasattr(m_config, attr_name):
@@ -136,7 +136,7 @@ class MandatorySelectionAction(SimulationAction):
 
             live_ms = {"name": s_name, "params": dict(s_params) if hasattr(s_params, "items") else {}}
             _append_context_list(context, "_live_ms", live_ms)
-            _record_live_params("mandatory_selection", live_ms)
+            _record_live_params("packing", live_ms)
 
             # 2. Extract threshold and frequency parameters
             thresh = None
@@ -234,14 +234,14 @@ class MandatorySelectionAction(SimulationAction):
             if "config" in strat_info:
                 # Use structured config
                 m_config = strat_info["config"]
-                strategy = MandatorySelectionFactory.create_from_config(m_config)
+                strategy = PackingFactory.create_from_config(m_config)
                 res, sub_ctx = strategy.select_bins(sel_ctx)
                 # s_name is already normalized above
             elif s_name == "select_all":
                 res = (sel_ctx.bin_ids + 1).tolist()
                 sub_ctx = SearchContext.initialize(selection_metrics={"strategy": "select_all"})
             else:
-                strategy = MandatorySelectionFactory.create_strategy(str(s_name), **cast(Dict[str, Any], s_params))
+                strategy = PackingFactory.create_strategy(str(s_name), **cast(Dict[str, Any], s_params))
                 res, sub_ctx = strategy.select_bins(sel_ctx)
 
             # Ensure list
@@ -272,9 +272,9 @@ class MandatorySelectionAction(SimulationAction):
         strategies: List[Dict[str, Any]] = []
         raw_cfg = context.get("config", {})
         flat_cfg = _flatten_config(raw_cfg)
-        config_mandatory = flat_cfg.get("mandatory_selection")
+        config_mandatory = flat_cfg.get("packing")
 
-        if isinstance(config_mandatory, MandatorySelectionConfig):
+        if isinstance(config_mandatory, PackingConfig):
             strategies.append({"config": config_mandatory})
         elif config_mandatory:
             items_to_parse = config_mandatory if _is_non_string_sequence(config_mandatory) else [config_mandatory]
@@ -293,7 +293,7 @@ class MandatorySelectionAction(SimulationAction):
             A list of strategy definitions parsed from the item.
         """
         strategies: List[Dict[str, Any]] = []
-        if isinstance(item, MandatorySelectionConfig):
+        if isinstance(item, PackingConfig):
             strategies.append({"config": item})
             return strategies
 

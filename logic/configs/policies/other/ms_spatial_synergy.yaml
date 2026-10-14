@@ -1,5 +1,5 @@
 # =============================================================================
-# mandatory Strategy: Spatial Synergy (Critical + Opportunistic Neighbors)
+# packing algorithm: Spatial Synergy (Critical + Opportunistic Neighbors)
 # =============================================================================
 # PURPOSE:
 #   Identify critically full bins and extend the mandatory set to include

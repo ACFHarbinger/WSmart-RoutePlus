@@ -9,7 +9,7 @@ project's health and output artefacts:
 - ``file_system``     — file update / delete / cryptographic operations
 - ``clean_results``   — remove targeted simulation runs from output artefacts
 - ``excel_summary``   — aggregate simulation results into a single Excel file
-- ``update_ms``       — batch-update mandatory-selection strategy overrides
+- ``update_ms``       — batch-update packing algorithm overrides
 - ``update_ri``       — batch-update route-improver overrides
 
 These commands share no domain logic; they are grouped here because they are
@@ -232,7 +232,7 @@ def run_target_update(comm: str, opts: Dict[str, Any]) -> None:
     """Batch-update policy YAML overrides.
 
     Args:
-        comm: Either ``"update_ms"`` (mandatory-selection strategy) or
+        comm: Either ``"update_ms"`` (packing algorithm) or
             ``"update_ri"`` (route-improver).
         opts: Validated options dict for the chosen command.
 

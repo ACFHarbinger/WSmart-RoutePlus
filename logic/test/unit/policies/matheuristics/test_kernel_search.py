@@ -11,7 +11,7 @@ import pytest
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../..")))
 
 import numpy as np
-from logic.src.policies.route_construction.matheuristics.kernel_search.solver import run_kernel_search_gurobi
+from logic.src.policies.routing.matheuristics.kernel_search.solver import run_kernel_search_gurobi
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

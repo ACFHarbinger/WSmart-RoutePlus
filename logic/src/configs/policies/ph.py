@@ -27,7 +27,7 @@ Example:
     300.0
     >>> config.verbose
     True
-    >>> config.mandatory_selection
+    >>> config.packing
     None
     >>> config.route_improvement
     None
@@ -38,7 +38,7 @@ Example:
 from dataclasses import dataclass
 from typing import List, Optional
 
-from .other.mandatory_selection import MandatorySelectionConfig
+from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -60,7 +60,7 @@ class PHConfig:
         num_scenarios: Number of scenarios for SAA if none are provided.
         time_limit: Total wall-clock time limit in seconds.
         verbose: Enable detailed logging of PH iterations and convergence stats.
-        mandatory_selection: List of mandatory strategy config files.
+        packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
         seed: Random seed for reproducibility.
     """
@@ -75,6 +75,6 @@ class PHConfig:
     stockout_penalty: float = 500.0
     time_limit: float = 300.0
     verbose: bool = True
-    mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
+    packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
     seed: Optional[int] = None

@@ -2,7 +2,7 @@
 # This policy builds a deterministic equivalent of the stochastic problem.
 # Performance is exponential in num_days and num_realizations.
 st_ef:
-  _target_: logic.src.policies.route_construction.exact_and_decomposition_solvers.scenario_tree_extensive_form.policy_st_ef.ScenarioTreeExtensiveFormPolicy
+  _target_: logic.src.policies.routing.exact_and_decomposition_solvers.scenario_tree_extensive_form.policy_st_ef.ScenarioTreeExtensiveFormPolicy
   num_days: 2
   num_realizations: 2
   mean_increment: 0.2

@@ -14,7 +14,7 @@ Example:
         min_removal=1,
         max_removal_pct=0.3,
         engine="custom",
-        mandatory_selection=[],
+        packing=[],
         route_improvement=[],
     )
 """
@@ -35,7 +35,7 @@ class ALNSConfig:
         min_removal: Minimum number of nodes to remove per destroy operation.
         max_removal_pct: Maximum percentage of nodes to remove per destroy operation.
         engine: Solver engine to use ('custom', 'alns').
-        mandatory_selection: List of mandatory strategy config files.
+        packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
     """
 

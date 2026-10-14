@@ -3,10 +3,10 @@
 import numpy as np
 import pytest
 from logic.src.policies import run_hgs
-from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.policy_swc_tcf import (
+from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.policy_swc_tcf import (
     run_swc_tcf_optimizer,
 )
-from logic.src.policies.route_construction.other_algorithms.capacitated_vehicle_routing_problem.cvrp import (
+from logic.src.policies.routing.other_algorithms.capacitated_vehicle_routing_problem.cvrp import (
     find_routes,
     find_routes_ortools,
 )

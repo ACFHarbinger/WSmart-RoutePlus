@@ -44,7 +44,7 @@ tsp:
     # ---------------------------------------------------------------------
     # Node Selection Strategy
     # ---------------------------------------------------------------------
-    - mandatory_selection: {"other/ms_last_minute.yaml": ["cf70"]}
+    - packing: {"other/ms_last_minute.yaml": ["cf70"]}
     # VRPP Settings
     - vrpp: true
     # Pre-filter nodes before TSP solving

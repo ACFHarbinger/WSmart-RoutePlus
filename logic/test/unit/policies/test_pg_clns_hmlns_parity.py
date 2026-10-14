@@ -13,10 +13,10 @@ import numpy as np
 import pytest
 from logic.src.policies.acceptance_criteria.boltzmann_metropolis_criterion import BoltzmannAcceptance
 from logic.src.policies.helpers.operators.destroy_ruin.random import random_removal
-from logic.src.policies.route_construction.meta_heuristics.hybrid_memetic_large_neighborhood_search.params import (
+from logic.src.policies.routing.meta_heuristics.hybrid_memetic_large_neighborhood_search.params import (
     HybridMemeticLargeNeighborhoodSearchParams,
 )
-from logic.src.policies.route_construction.meta_heuristics.hybrid_memetic_large_neighborhood_search.solver import (
+from logic.src.policies.routing.meta_heuristics.hybrid_memetic_large_neighborhood_search.solver import (
     HybridMemeticLargeNeighborhoodSearchSolver,
 )
 

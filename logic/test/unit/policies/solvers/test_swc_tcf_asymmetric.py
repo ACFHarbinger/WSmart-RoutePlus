@@ -2,7 +2,7 @@
 
 import numpy as np
 import pytest
-from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow import (
+from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow import (
     gurobi,
 )
 

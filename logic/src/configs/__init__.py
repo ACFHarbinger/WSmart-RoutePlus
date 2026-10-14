@@ -34,7 +34,7 @@ from typing import Any, Dict, Optional
 
 from .envs import EnvConfig, GraphConfig, ObjectiveConfig
 from .models import DecoderConfig, DecodingConfig, EncoderConfig, ModelConfig, OptimConfig
-from .policies.other import MandatorySelectionConfig, RouteImprovingConfig
+from .policies.other import PackingConfig, RouteImprovingConfig
 from .rl import RLConfig
 from .tasks import DataConfig, EvalConfig, HPOConfig, MetaRLConfig, SimConfig, SimHPOConfig, TrainConfig
 from .tracking import TrackingConfig
@@ -100,7 +100,7 @@ __all__ = [
     "SimHPOConfig",
     "DataConfig",
     "TrackingConfig",
-    "MandatorySelectionConfig",
+    "PackingConfig",
     "RouteImprovingConfig",
     "Config",
     "EncoderConfig",

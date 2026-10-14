@@ -6,8 +6,8 @@ from logic.src.policies.helpers.operators.generalized_insertion_and_deletion imp
     apply_type_i_us,
     apply_type_iii_us,
 )
-from logic.src.policies.route_construction.meta_heuristics.differential_evolution.params import DEParams
-from logic.src.policies.route_construction.meta_heuristics.differential_evolution.solver import DESolver
+from logic.src.policies.routing.meta_heuristics.differential_evolution.params import DEParams
+from logic.src.policies.routing.meta_heuristics.differential_evolution.solver import DESolver
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

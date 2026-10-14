@@ -3,14 +3,14 @@
     "type": "int",
     "low": 2000,
     "high": 8000,
-    "description": "Route constructor parameter."
+    "description": "Routing algorithm parameter."
   },
-  "mandatory_selection.0.max_fill": {
+  "packing.0.max_fill": {
     "type": "float",
     "low": 0.6,
     "high": 1.0,
     "step": 0.05,
-    "description": "Mandatory selection parameter (nested)."
+    "description": "Packing parameter (nested)."
   },
   "acceptance_criterion.params.initial_temp": {
     "type": "float",

@@ -17,7 +17,7 @@ Two properties of that data are enforced centrally, in this module, so that the
 paper, the markdown reports and the website cannot disagree about them:
 
 **Degenerate runs are excluded from aggregates.** The simulator gives every
-constructor the same arrival sequence within a scenario cell. Collectable mass
+routing algorithm the same arrival sequence within a scenario cell. Collectable mass
 is not fixed: waste above capacity is lost, so timing changes the kilograms
 that remain. Runs that collect drastically less are anomalous outcomes. The
 30-day logs in question still contain every day; they stop collecting
@@ -30,7 +30,7 @@ Excluded rows are reported in their own table rather than dropped silently --
 they are a real and citable scale limit of the two-commodity-flow MIP.
 
 ``drop_affected_cells`` then removes the *entire* scenario cell each degenerate
-run belonged to, for every constructor. Dropping only the offending rows would
+run belonged to, for every routing algorithm. Dropping only the offending rows would
 reintroduce the same selection bias this module refuses to accept in the 90-day
 data: all four degenerate runs are SWC-TCF's, so removing just them would
 average SWC-TCF over the scenarios where it did not fail while its rivals are
@@ -41,7 +41,7 @@ that makes the marginal means comparable.
 ``balance_marginal`` handles the same problem for every *other* stage or
 scenario factor. Because
 ``constructor`` is absent from ``CELL_KEYS``, dropping a cell removes all
-constructors together and the constructor marginal stays balanced for free. Any
+routing algorithms together and the routing algorithm marginal stays balanced for free. Any
 other stage -- selection variant, improver -- is *inside* ``CELL_KEYS``, so
 dropping a cell removes one level of that stage and leaves its siblings intact.
 That is how the selection-strategy table came to average Look-Ahead over a
@@ -58,7 +58,7 @@ the honest signal.
 **The 90-day selection rule is pending recovery.** The archive is a
 non-factorial subset and does not reproduce Pareto-only carry-forward.
 The horizon table pairs each observed configuration against itself;
-it does not rank constructors across differently composed subsets or
+it does not rank routing algorithms across differently composed subsets or
 estimate a population-level horizon effect.
 
 Non-Python content lives in sibling directories, as with the other generators:
@@ -119,8 +119,8 @@ SHORTFALL_THRESHOLD = 0.20
 #: next-highest shortfall in the data is 0.071, so the gap remains unambiguous.
 MIN_CELL_SIZE = 2
 
-#: The columns that identify a scenario cell: everything except the constructor,
-#: so that the constructors within a cell are exactly the competitors that faced
+#: The columns that identify a scenario cell: everything except the routing algorithm,
+#: so that the routing algorithms within a cell are exactly the competitors that faced
 #: the identical demand realisation.
 CELL_KEYS = ["horizon", "city", "N", "dist", "strategy", "cf", "sl_var", "improver"]
 
@@ -180,7 +180,7 @@ def find_degenerate_runs(df: pd.DataFrame) -> pd.Series:
     """
     Boolean mask of runs that failed to complete rather than merely performing badly.
 
-    Within a scenario cell every constructor faces the identical demand
+    Within a scenario cell every routing algorithm faces the identical demand
     realisation, so collected tonnage is comparable by construction. A run far
     below its cell median did not collect the waste that was there to collect.
     """
@@ -210,7 +210,7 @@ def split_degenerate(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
 
 def drop_affected_cells(df: pd.DataFrame, degenerate: pd.DataFrame) -> pd.DataFrame:
     """
-    Remove every scenario cell that contained a degenerate run, for all constructors.
+    Remove every scenario cell that contained a degenerate run, for all routing algorithms.
 
     Dropping only the degenerate rows would reintroduce exactly the bias this
     module refuses to accept for the 90-day sample. All four degenerate runs
@@ -218,7 +218,7 @@ def drop_affected_cells(df: pd.DataFrame, degenerate: pd.DataFrame) -> pd.DataFr
     the scenarios where it did *not* fail while every rival is averaged over
     those scenarios too -- a mean quietly computed on a favourable subset.
 
-    Removing the whole cell costs the other constructors those scenarios as well,
+    Removing the whole cell costs the other routing algorithms those scenarios as well,
     but keeps every constructor's mean over an identical set of scenarios, which
     is the only reason the marginal means are comparable in the first place.
     """
@@ -238,8 +238,8 @@ def balance_marginal(df: pd.DataFrame, stage: str) -> pd.DataFrame:
     """
     Restrict ``df`` to the slices in which *every* level of ``stage`` is present.
 
-    ``drop_affected_cells`` balances the constructor marginal only, because
-    ``constructor`` is absent from ``CELL_KEYS`` and so all constructors in a
+    ``drop_affected_cells`` balances the routing algorithm marginal only, because
+    ``constructor`` is absent from ``CELL_KEYS`` and so all routing algorithms in a
     cell are removed together. Any other stage is inside ``CELL_KEYS``, so
     dropping a cell removes one level of that stage and leaves its siblings
     intact --- which is how the selection-strategy table came to average
@@ -299,12 +299,12 @@ def paired_horizon_frame(clean: pd.DataFrame) -> pd.DataFrame:
 
 
 def display_name(raw: str, cfg: dict) -> str:
-    """Map a CSV constructor key to the name the paper uses (ACO_HH -> ACO-HH)."""
+    """Map a CSV routing algorithm key to the name the paper uses (ACO_HH -> ACO-HH)."""
     return cfg.get("constructor_labels", {}).get(raw, raw)
 
 
 def tex_escape(s: object) -> str:
-    """Escape the LaTeX specials that appear in this data (constructor names, mostly)."""
+    """Escape the LaTeX specials that appear in this data (routing algorithm names, mostly)."""
     out = str(s)
     for a, b in (("\\", r"\textbackslash{}"), ("&", r"\&"), ("%", r"\%"), ("_", r"\_"), ("#", r"\#")):
         out = out.replace(a, b)
@@ -445,7 +445,7 @@ def improver_pairs(clean: pd.DataFrame, horizon: int) -> pd.DataFrame:
     CLS against Fast-TSP on the configurations that differ *only* in improver.
 
     Pairing rather than averaging controls scenario mix: every pair has the same
-    constructor, selection strategy, scenario and demand realisation. It does
+    routing algorithm, packing algorithm, scenario and demand realisation. It does
     not isolate a causal improver effect, because stochastic upstream
     construction outcomes are not identical in every pair.
     """
@@ -491,7 +491,7 @@ def table_improvers(clean: pd.DataFrame, horizon: int, cfg: dict) -> str:
 
 
 def table_horizon(paired: pd.DataFrame, cfg: dict) -> str:
-    """Paired 30d-vs-90d comparison, per constructor, on matched configurations."""
+    """Paired 30d-vs-90d comparison, per routing algorithm, on matched configurations."""
     if paired.empty:
         return ""
     rows = []
@@ -758,25 +758,25 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
     ax.text(0.515, 0.84, "3. Modular Policy Pipeline", ha="center", fontsize=9.6, fontweight="bold", color=c_policy_border)
     ax.text(0.515, 0.80, "Three Independently Swappable Plugin Registries", ha="center", fontsize=7.0, style="italic", color="#047857")
 
-    # 3a. Stage 1: Mandatory Selection
+    # 3a. Stage 1: Packing
     box_p1 = mpatches.FancyBboxPatch(
         (0.36, 0.58), 0.31, 0.18,
         boxstyle="round,pad=0.01,rounding_size=0.012",
         facecolor="#ffffff", edgecolor="#059669", linewidth=1.1, zorder=2
     )
     ax.add_patch(box_p1)
-    ax.text(0.515, 0.72, "Stage 1: Mandatory Selection", ha="center", fontsize=8.4, fontweight="bold", color="#065f46")
+    ax.text(0.515, 0.72, "Stage 1: Packing", ha="center", fontsize=8.4, fontweight="bold", color="#065f46")
     ax.text(0.515, 0.64, "Input: capped level\nOutput: mandatory set $\\mathcal{M}_d$\n(LM-CF70/LM-CF90, LA, SL1/SL2)",
             ha="center", va="center", fontsize=7.2, color=c_text_dark, linespacing=1.2)
 
-    # 3b. Stage 2: Route Construction
+    # 3b. Stage 2: Routing
     box_p2 = mpatches.FancyBboxPatch(
         (0.36, 0.36), 0.31, 0.18,
         boxstyle="round,pad=0.01,rounding_size=0.012",
         facecolor="#ffffff", edgecolor="#059669", linewidth=1.1, zorder=2
     )
     ax.add_patch(box_p2)
-    ax.text(0.515, 0.50, "Stage 2: Route Construction", ha="center", fontsize=8.4, fontweight="bold", color="#065f46")
+    ax.text(0.515, 0.50, "Stage 2: Routing", ha="center", fontsize=8.4, fontweight="bold", color="#065f46")
     ax.text(0.515, 0.42, "Input: $\\mathcal{M}_d$, directed $\\mathrm{dist}_{ij}$\nOutput: a tour (load not re-checked)\n(eight classical constructors)",
             ha="center", va="center", fontsize=7.2, color=c_text_dark, linespacing=1.2)
 
@@ -858,7 +858,7 @@ def fig_simulation_loop(out_dir: Path, cfg: dict) -> None:
 
 
 def fig_pareto(clean: pd.DataFrame, horizon: int, out: Path, colors: dict, cfg: dict) -> None:
-    """kg/km against overflows, per constructor, with the non-dominated front drawn."""
+    """kg/km against overflows, per routing algorithm, with the non-dominated front drawn."""
     sub = clean[clean.horizon == horizon]
     agg = sub.groupby("constructor").agg(kgkm=("kgkm", "mean"), overflows=("overflows", "mean"))
     fig, ax = plt.subplots(figsize=(6.4, 4.2))
@@ -1110,7 +1110,7 @@ def fig_networks(out_dir: Path, cfg: dict) -> None:
 
 
 def fig_scale(clean: pd.DataFrame, horizon: int, out: Path, colors: dict, cfg: dict) -> None:
-    """Runtime against instance size, per constructor -- the cost side of the trade-off."""
+    """Runtime against instance size, per routing algorithm -- the cost side of the trade-off."""
     sub = clean[clean.horizon == horizon]
     agg = sub.pivot_table(index="N", columns="constructor", values="time", aggfunc="mean")
     fig, ax = plt.subplots(figsize=(6.4, 4.0))

@@ -21,7 +21,7 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
-from logic.src.configs import Config, MandatorySelectionConfig
+from logic.src.configs import Config, PackingConfig
 from logic.src.constants import CONFIGS_DIR
 from logic.src.interfaces import ITraversable
 from logic.src.pipeline.simulations.actions.base import _flatten_config
@@ -139,12 +139,12 @@ class PolicySummaryCallback:
         """
         raw_cfg = config
         flat_cfg = _flatten_config(raw_cfg)
-        config_mandatory = flat_cfg.get("mandatory_selection")
+        config_mandatory = flat_cfg.get("packing")
 
         strategies = []
 
         items = []
-        if isinstance(config_mandatory, MandatorySelectionConfig):
+        if isinstance(config_mandatory, PackingConfig):
             items = [config_mandatory]
         elif isinstance(config_mandatory, (list, tuple)):
             items = list(config_mandatory)
@@ -173,7 +173,7 @@ class PolicySummaryCallback:
         params: str = ""
 
         item_obj: object = item
-        if isinstance(item_obj, MandatorySelectionConfig):
+        if isinstance(item_obj, PackingConfig):
             name = str(item_obj.strategy)
             params = self._parse_mandatory_config_params(item_obj)
 
@@ -237,8 +237,8 @@ class PolicySummaryCallback:
 
         return name, params
 
-    def _parse_mandatory_config_params(self, config: MandatorySelectionConfig) -> str:
-        """Extract formatted parameters from a MandatorySelectionConfig object.
+    def _parse_mandatory_config_params(self, config: PackingConfig) -> str:
+        """Extract formatted parameters from a PackingConfig object.
 
         Args:
             config: Configuration of the policy.

@@ -33,7 +33,7 @@ cvrp:
 
     - n_vehicles: 0
       # Use unlimited/dynamic number of vehicles by default
-      # so that mandatory_selection strategies don't fail due to 1-vehicle capacity limit.
+      # so that packing strategies don't fail due to 1-vehicle capacity limit.
 
     # ---------------------------------------------------------------------
     # Performance Tuning
@@ -50,7 +50,7 @@ cvrp:
     # ---------------------------------------------------------------------
     # Node Selection Strategy
     # ---------------------------------------------------------------------
-    - mandatory_selection: {"other/ms_regular.yaml": ["regular_lvl3", "regular_lvl4", "regular_lvl5"]}
+    - packing: {"other/ms_regular.yaml": ["regular_lvl3", "regular_lvl4", "regular_lvl5"]}
     # Multiple selection strategies for waste collection
     # Collects bins when fill level exceeds 70%, 80%, or 90%
     # Note: Uses regular thresholds instead of lookahead prediction
@@ -74,6 +74,6 @@ cvrp:
     # ---------------------------------------------------------------------
     # Solver code
     # ---------------------------------------------------------------------
-    # logic/src/policies/route_construction/other_algorithms/
+    # logic/src/policies/routing/other_algorithms/
     #   capacitated_vehicle_routing_problem/cvrp.py
 # =============================================================================

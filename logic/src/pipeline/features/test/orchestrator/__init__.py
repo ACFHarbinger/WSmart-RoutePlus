@@ -96,8 +96,8 @@ def _expand_other_ref(ref_dict: dict, root_dir: str) -> dict:
 
 
 def _expand_refs_recursive(obj: Any, root_dir: str) -> Any:
-    """Recursively expand mandatory_selection and route_improvement YAML references."""
-    _expandable = ("mandatory_selection", "route_improvement")
+    """Recursively expand packing and route_improvement YAML references."""
+    _expandable = ("packing", "route_improvement")
     if isinstance(obj, dict):
         result = {}
         for k, v in obj.items():

@@ -12,7 +12,7 @@ import warnings
 import pytest
 
 from logic.src.policies.helpers.solvers_and_matheuristics.branching.tree import BranchAndBoundTree
-from logic.src.policies.route_construction.exact_and_decomposition_solvers.branch_and_price_and_cut.params import (
+from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price_and_cut.params import (
     BPCParams,
 )
 

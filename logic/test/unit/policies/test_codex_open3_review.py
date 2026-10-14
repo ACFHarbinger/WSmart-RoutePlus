@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 from logic.src.pipeline.simulations.checkpoints.persistence import SimulationCheckpoint
-from logic.src.policies.route_construction.learning_algorithms.neural_agent.policy_na import NeuralAgentPolicy
+from logic.src.policies.routing.learning_algorithms.neural_agent.policy_na import NeuralAgentPolicy
 
 
 @pytest.mark.parametrize(
@@ -38,10 +38,10 @@ def test_absolute_checkpoint_base_still_isolates_runs(tmp_path):
 
 
 def test_registry_scan_checks_fallback_even_when_dataclass_has_default(monkeypatch):
-    from logic.src.policies.route_construction.other_algorithms.adaptive_route_constructor_orchestrator.params import (
+    from logic.src.policies.routing.other_algorithms.adaptive_routing_algorithm_orchestrator.params import (
         ARCOParams,
     )
-    from logic.test.unit.policies.route_construction import test_registry_constructor_contract as contract
+    from logic.test.unit.policies.routing import test_registry_constructor_contract as contract
 
     monkeypatch.setattr(
         ARCOParams, "from_config", classmethod(lambda cls, cfg: SimpleNamespace(constructors=["missing_test_name"]))

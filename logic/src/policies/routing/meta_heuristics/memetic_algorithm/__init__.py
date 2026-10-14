@@ -1,0 +1,21 @@
+"""Memetic Algorithm (MA) implementation for VRPP.
+
+Attributes:
+    MASolver: Main solver class for the Memetic Algorithm.
+    MAPolicy: Policy class for the Memetic Algorithm.
+    MAParams: Parameter dataclass for the Memetic Algorithm.
+
+Example:
+    >>> from logic.src.policies.routing.meta_heuristics.memetic_algorithm import MAPolicy
+    >>> policy = MAPolicy()
+"""
+
+from .params import MAParams
+from .policy_ma import MAPolicy
+from .solver import MASolver
+
+__all__ = [
+    "MASolver",
+    "MAParams",
+    "MAPolicy",
+]

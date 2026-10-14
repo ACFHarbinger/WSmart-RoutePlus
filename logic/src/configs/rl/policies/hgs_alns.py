@@ -14,7 +14,7 @@ Example:
         n_generations=100,
         max_vehicles=0,
         engine="custom",
-        mandatory_selection=[],
+        packing=[],
         route_improvement=[],
     )
 """
@@ -35,7 +35,7 @@ class HGSALNSConfig:
         n_generations: Number of generations to evolve.
         max_vehicles: Maximum number of vehicles (0 for unlimited).
         engine: Solver engine to use.
-        mandatory_selection: List of mandatory strategy config files.
+        packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
     """
 

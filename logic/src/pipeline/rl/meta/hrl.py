@@ -59,7 +59,7 @@ class HRLModule(pl.LightningModule):
         Initialize HRLModule.
 
         Args:
-            manager: High-level MandatoryManager for mandatory selection and dispatch.
+            manager: High-level MandatoryManager for packing and dispatch.
             worker: Low-level ConstructivePolicy for routing.
             env: RL environment.
             lr: Learning rate for manager optimizer.
@@ -127,7 +127,7 @@ class HRLModule(pl.LightningModule):
 
         if len(dispatch_indices) > 0:
             td_worker = td[dispatch_indices]
-            # Apply manager's mandatory selection to the TensorDict
+            # Apply manager's packing to the TensorDict
             # mandatory = True means bin must be collected
             mandatory_mask = mandatory_action[dispatch_indices].bool()
             # Depot (index 0) should never be mandatory

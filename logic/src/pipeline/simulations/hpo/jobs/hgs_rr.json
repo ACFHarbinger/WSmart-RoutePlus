@@ -109,7 +109,7 @@
         "type": "float",
         "default": 3.0
     },
-    "mandatory_selection": {
+    "packing": {
         "type": "object",
         "default": null
     },

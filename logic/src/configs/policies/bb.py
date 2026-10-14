@@ -17,7 +17,7 @@ Example:
 from dataclasses import dataclass
 from typing import List, Optional
 
-from .other.mandatory_selection import MandatorySelectionConfig
+from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -71,7 +71,7 @@ class BBConfig:
             Defaults to True.
         seed (Optional[int]): Random seed passed to the underlying Gurobi engine
             for deterministic results. Defaults to None.
-        mandatory_selection (Optional[List[MandatorySelectionConfig]]): List of
+        packing (Optional[List[PackingConfig]]): List of
             strategies determining mandatory nodes to visit. Defaults to None.
         route_improvement (Optional[List[RouteImprovingConfig]]): List of operations
             to refine the tour after the exact search completes. Defaults to None.
@@ -105,7 +105,7 @@ class BBConfig:
     strong_branching_limit: int = 5
     vrpp: bool = True
     seed: Optional[int] = None
-    mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
+    packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
 
     # LR-UOP: Subgradient phase

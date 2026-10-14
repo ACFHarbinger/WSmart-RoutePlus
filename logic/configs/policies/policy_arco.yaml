@@ -1,23 +1,23 @@
 # Policy Configuration
 
 # =============================================================================
-# ARCO (Adaptive Route Constructor Orchestrator) Configuration
+# ARCO (Adaptive Routing Algorithm Orchestrator) Configuration
 # =============================================================================
 # PURPOSE:
 #   Meta-constructor that runs a dynamically ordered chain of route
-#   constructors, learning which ordering is most effective over time.
-#   Each call selects a full permutation of the constructor pool using
+#   routing algorithms, learning which ordering is most effective over time.
+#   Each call selects a full permutation of the routing algorithm pool using
 #   adaptive pair-wise weights and updates those weights from the
 #   per-step marginal improvement observed during execution.
 #
 # ALGORITHM:
 #   At each simulation call ARCO performs three phases:
 #
-#   1. SELECTION — Build an ordered permutation of the constructor pool
+#   1. SELECTION — Build an ordered permutation of the routing algorithm pool
 #      using pair-wise transition weights  W[i, j]:
 #        Step 1: choose c_0 from  w_first  (first-position scores).
 #        Step k: choose c_k from  W[c_{k-1}, :]  masking already-chosen
-#                constructors — sequential elimination with conditional
+#                routing algorithms — sequential elimination with conditional
 #                marginal probabilities.
 #
 #   2. EXECUTION — Run the selected chain, threading (tour, cost, profit,
@@ -27,19 +27,19 @@
 #   3. UPDATE — Observe per-step Δprofit (or Δcost) and apply EMA:
 #        W[c_{k-1}, c_k] ← (1−α)·W[c_{k-1}, c_k] + α·sigmoid(Δ)
 #      Weights persist across calls, so the orchestrator learns the best
-#      constructor ordering for the current instance distribution.
+#      routing algorithm ordering for the current instance distribution.
 #
 # WEIGHT SEMANTICS:
-#   w_first[i]    — desirability of constructor i as the first solver.
+#   w_first[i]    — desirability of routing algorithm i as the first solver.
 #   W[i, j]       — desirability of running j immediately after i.
 #   All weights are initialised uniformly and updated online.
-#   Diagonal of W is always 0 (a constructor cannot follow itself).
+#   Diagonal of W is always 0 (a routing algorithm cannot follow itself).
 #
 # SELECTION STRATEGIES:
-#   epsilon_greedy  Best-weight constructor with prob (1-ε); uniform
+#   epsilon_greedy  Best-weight routing algorithm with prob (1-ε); uniform
 #                   random with prob ε. Good balance of exploration and
 #                   exploitation throughout a multi-day simulation.
-#   greedy          Always pick the maximum-weight constructor. Use only
+#   greedy          Always pick the maximum-weight routing algorithm. Use only
 #                   after the weights have converged (late in training).
 #   softmax         Boltzmann-proportional sampling. Smooth exploration;
 #                   lower temperature → sharper, more greedy.
@@ -47,12 +47,12 @@
 # PERFORMANCE:
 #   - Overhead beyond SRC: negligible (~µs for weight lookups).
 #   - Learning speed: typically stabilises within 20-50 simulation days.
-#   - Best with ≥ 3 constructors; 2-constructor chains also supported.
+#   - Best with ≥ 3 routing algorithms; 2-constructor chains also supported.
 #
 # TYPICAL USE CASES:
 #   - Rolling-horizon waste collection: learns daily ordering patterns.
-#   - Benchmarking constructor compositions (ACO → HGS → ALNS, etc.).
-#   - Replacing SRC when the optimal constructor order is unknown a priori.
+#   - Benchmarking routing algorithm compositions (ACO → HGS → ALNS, etc.).
+#   - Replacing SRC when the optimal routing algorithm order is unknown a priori.
 #
 # REFERENCE:
 #   Cowling, P., Kendall, G., & Soubeiga, E. (2001). A hyper-heuristic
@@ -66,12 +66,12 @@
 
 arco:
   # ---------------------------------------------------------------------------
-  # Constructor Pool
+  # Routing Algorithm Pool
   # ---------------------------------------------------------------------------
   - constructors: ["tsp", "alns", "hgs"]
-    # Registry names of route constructors to permute and execute.
+    # Registry names of routing algorithms to permute and execute.
     # ARCO selects an ordering of these at each call; the chain is always
-    # a full permutation (every constructor runs exactly once per call).
+    # a full permutation (every routing algorithm runs exactly once per call).
     #
     # Recommended combinations:
     #   Fast chain   : ["tsp", "alns"]
@@ -96,7 +96,7 @@ arco:
   # Selection Strategy
   # ---------------------------------------------------------------------------
   - selection_strategy: "epsilon_greedy"
-    # How ARCO picks the next constructor at each position.
+    # How ARCO picks the next routing algorithm at each position.
     #   "epsilon_greedy"  Recommended. Exploits best weights (1-ε) of the
     #                     time; explores uniformly with probability ε.
     #                     Robust for non-stationary instance distributions.
@@ -130,12 +130,12 @@ arco:
 
   - weight_init: 1.0
     # Initial value for all pair-wise transition weights.
-    # All constructors start equally preferred; weights diverge through
+    # All routing algorithms start equally preferred; weights diverge through
     # online learning. Values > 1.0 slow early convergence; < 1.0 is
     # equivalent (only ratios matter after normalisation in softmax/EMA).
 
   - weight_floor: 0.01
-    # Minimum allowed weight. Prevents any constructor transition from
+    # Minimum allowed weight. Prevents any routing algorithm transition from
     # having exactly 0 desirability, preserving permanent exploration
     # capacity even for consistently underperforming transitions.
     # Range: 0.001-0.1 (0.01 is a safe default).
@@ -156,14 +156,14 @@ arco:
     # Profit-aware routing mode (Vehicle Routing Problem with Profits).
     # Must match the mode of all sub-constructors in the pool.
 
-  - mandatory_selection: {"other/ms_lookahead.yaml": ["default"]}
-    # Node selection strategy applied before the constructor chain runs.
+  - packing: {"other/ms_lookahead.yaml": ["default"]}
+    # Node selection strategy applied before the routing algorithm chain runs.
     # Options: ms_lookahead.yaml, ms_last_minute_*.yaml, ms_regular_*.yaml
     # See: docs/MUST_GO_STRATEGIES.md
 
   - route_improvement: []
     # Optional post-chain local-search refinement applied to the final tour.
-    # Empty = use the raw output of the last constructor in the chain.
+    # Empty = use the raw output of the last routing algorithm in the chain.
     # Example: {"other/ac_bmc.yaml": ["bmc"]} for a BMC acceptance criterion pass.
 
   # ---------------------------------------------------------------------------

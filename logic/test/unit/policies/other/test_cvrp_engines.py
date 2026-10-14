@@ -6,20 +6,20 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 from logic.src.configs.policies import CVRPConfig
-from logic.src.policies.route_construction.other_algorithms.capacitated_vehicle_routing_problem.cvrp import (
+from logic.src.policies.routing.other_algorithms.capacitated_vehicle_routing_problem.cvrp import (
     find_routes,
     find_routes_ortools,
 )
-from logic.src.policies.route_construction.other_algorithms.capacitated_vehicle_routing_problem.params import (
+from logic.src.policies.routing.other_algorithms.capacitated_vehicle_routing_problem.params import (
     CVRPParams,
 )
-from logic.src.policies.route_construction.other_algorithms.capacitated_vehicle_routing_problem.policy_cvrp import (
+from logic.src.policies.routing.other_algorithms.capacitated_vehicle_routing_problem.policy_cvrp import (
     CVRPPolicy,
 )
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
-MODULE = "logic.src.policies.route_construction.other_algorithms.capacitated_vehicle_routing_problem.policy_cvrp"
+MODULE = "logic.src.policies.routing.other_algorithms.capacitated_vehicle_routing_problem.policy_cvrp"
 
 
 @pytest.fixture

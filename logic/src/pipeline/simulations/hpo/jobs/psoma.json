@@ -71,7 +71,7 @@
         "type": "int",
         "default": 42
     },
-    "mandatory_selection": {
+    "packing": {
         "type": "object",
         "default": "factory"
     },

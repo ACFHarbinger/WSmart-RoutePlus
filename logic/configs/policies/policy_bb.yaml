@@ -53,16 +53,16 @@ bb:
 
   # Whether to enable VRPP mode (Vehicle Routing Problem with Profits).
   # - true: The solver considers all bins and selects the most profitable ones to visit.
-  # - false: The solver only visits nodes specified in 'mandatory_selection'.
+  # - false: The solver only visits nodes specified in 'packing'.
   vrpp: true
 
-  # List of mandatory strategy configuration files.
+  # List of packing algorithm configuration files.
   # These strategies define which nodes MUST be visited regardless of profit.
   # Example:
-  # mandatory_selection:
+  # packing:
   #   - name: "fill_level"
   #     threshold: 90.0
-  mandatory_selection: {"other/ms_lookahead.yaml": ["default"]}
+  packing: {"other/ms_lookahead.yaml": ["default"]}
 
   # List of route improvement operations to apply after the search.
   # Example:

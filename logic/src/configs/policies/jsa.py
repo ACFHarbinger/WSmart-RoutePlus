@@ -31,7 +31,7 @@ class JointSAConfig:
         seed (Optional[int]): Random seed for reproducibility.
         time_limit (float): Time limit in seconds.
         vrpp (bool): Whether the problem is a VRRP.
-        mandatory_selection (Optional[List[Any]]): Mandatory customers/requests selection.
+        packing (Optional[List[Any]]): Mandatory customers/requests selection.
         route_improvement (Optional[List[Any]]): Route improvement strategies.
     """
 
@@ -47,5 +47,5 @@ class JointSAConfig:
 
     # Hydra compatibility placeholders
     vrpp: bool = True
-    mandatory_selection: Optional[List[Any]] = field(default_factory=list)
+    packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)

@@ -32,7 +32,7 @@ class ILSConfig:
         seed (Optional[int]): Random seed for reproducibility.
         vrpp (bool): Whether the problem is a VRRP.
         profit_aware_operators (bool): Use profit-aware operators.
-        mandatory_selection (Optional[List[Any]]): Mandatory customers/requests selection.
+        packing (Optional[List[Any]]): Mandatory customers/requests selection.
         route_improvement (Optional[List[Any]]): Route improvement strategies.
         acceptance_criterion (AcceptanceConfig): Acceptance criteria for new solutions.
     """
@@ -47,6 +47,6 @@ class ILSConfig:
     seed: Optional[int] = None
     vrpp: bool = True
     profit_aware_operators: bool = False
-    mandatory_selection: Optional[List[Any]] = field(default_factory=list)
+    packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)
     acceptance_criterion: AcceptanceConfig = field(default_factory=lambda: AcceptanceConfig(method="oi"))

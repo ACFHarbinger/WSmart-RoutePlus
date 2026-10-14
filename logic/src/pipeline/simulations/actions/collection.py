@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 def trip_loads(tour: List[int], fill_pct: np.ndarray) -> List[float]:
     """Load of every depot-to-depot trip in ``tour``, in percent-of-one-bin units.
 
-    This is the unit the route constructors plan in: ``load_area_and_waste_type_params``
+    This is the unit the routing algorithms plan in: ``load_area_and_waste_type_params``
     returns the vehicle capacity in percent of one bin too (3500 kg at Rio Maior plastic
     is 7368.4 %), so each value compares directly with it.
 
@@ -94,7 +94,7 @@ class CollectAction(SimulationAction):
         context["tour"] = tour
 
         # 1. METRIC CONSISTENCY: Always re-calculate KM from the final tour
-        # This combines mandatory selection, construction, and any route improvements.
+        # This combines packing, construction, and any route improvements.
         # We use the raw distance matrix from the context (guaranteed to be KM).
         dist_matrix = context["distance_matrix"]
         raw_km = get_route_cost(dist_matrix, tour)

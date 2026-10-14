@@ -5,8 +5,8 @@ from unittest.mock import patch
 
 import numpy as np
 import pytest
-from logic.src.policies.route_construction.base.factory import RouteConstructorRegistry
-from logic.src.policies.route_construction.exact_and_decomposition_solvers.branch_and_bound.policy_bb import (
+from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
+from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_bound.policy_bb import (
     BranchAndBoundPolicy,
 )
 
@@ -57,7 +57,7 @@ class TestBBPolicy:
 
     @pytest.mark.unit
     def test_bb_adapter_registration(self):
-        policy = RouteConstructorRegistry.get("bb")
+        policy = RoutingAlgorithmRegistry.get("bb")
         assert policy is not None
         instance = policy()
         assert isinstance(instance, BranchAndBoundPolicy)
@@ -67,9 +67,9 @@ class TestBBPolicy:
         # We mock gurobipy to avoid license issues in CI/Test env if needed,
         # but here we want to test if the logic holds.
         # However, for a unit test of the ADAPTER, we can mock run_bb.
-        with patch("logic.src.policies.route_construction.exact_and_decomposition_solvers.branch_and_bound.policy_bb.run_bb_optimizer") as mock_run:
+        with patch("logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_bound.policy_bb.run_bb_optimizer") as mock_run:
             mock_run.return_value = ([[1, 2]], 25.0)
-            policy = cast(Callable, RouteConstructorRegistry.get("bb"))()
+            policy = cast(Callable, RoutingAlgorithmRegistry.get("bb"))()
             tour, cost, extra, *_ = policy.execute(**bb_test_data)
 
             assert tour[0] == 0
@@ -81,7 +81,7 @@ class TestBBPolicy:
     @pytest.mark.integration
     def test_bb_solver_integration(self, bb_test_data, check_license, backend):
         """Integration test with Gurobi (requires license)."""
-        policy = RouteConstructorRegistry.get("bb")
+        policy = RoutingAlgorithmRegistry.get("bb")
         assert policy is not None
         instance = policy()
         tour, cost, profit, *_ = instance.execute(**bb_test_data)

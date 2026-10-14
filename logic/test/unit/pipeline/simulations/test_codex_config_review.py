@@ -4,14 +4,14 @@ from typing import Any, Iterator
 from unittest.mock import MagicMock
 
 import numpy as np
-from logic.src.pipeline.simulations.actions.node_selection import MandatorySelectionAction
+from logic.src.pipeline.simulations.actions.node_selection import PackingAction
 from logic.src.pipeline.simulations.actions.route_improvement import RouteImprovementAction
 from omegaconf import OmegaConf
 
 
 def test_hydra_mapping_keeps_selected_service_level():
-    cfg = OmegaConf.create({"mandatory_selection": {"other/ms_service_level.yaml": "service_level2"}})
-    parsed = MandatorySelectionAction()._gather_strategies({"config": cfg})
+    cfg = OmegaConf.create({"packing": {"other/ms_service_level.yaml": "service_level2"}})
+    parsed = PackingAction()._gather_strategies({"config": cfg})
     assert len(parsed) == 1
     assert parsed[0]["name"] == "service_level"
     assert parsed[0]["params"]["horizon_days"] == 2
@@ -40,9 +40,9 @@ def test_inject_acceptance_into_struct_locked_nested_hydra_node() -> None:
         "config": {"alns": nested},
         "day": 0,
         "max_capacity": 100.0,
-        "mandatory_selection": [],
+        "packing": [],
     }
-    MandatorySelectionAction().execute(context)
+    PackingAction().execute(context)
     live = context.get("_live_ac")
     assert live is not None
     assert live["method"] == "bmc"
@@ -71,7 +71,7 @@ class _DayContextLike:
         return len(self.__dict__)
 
 
-def test_mandatory_selection_does_not_call_setdefault_on_day_context() -> None:
+def test_packing_does_not_call_setdefault_on_day_context() -> None:
     bins = MagicMock()
     bins.get.side_effect = lambda key: {
         "c": np.zeros(2),
@@ -82,12 +82,12 @@ def test_mandatory_selection_does_not_call_setdefault_on_day_context() -> None:
     bins.n = 2
     ctx = _DayContextLike(
         bins=bins,
-        config={"mandatory_selection": {"other/ms_last_minute.yaml": "last_minute_cf70"}},
+        config={"packing": {"other/ms_last_minute.yaml": "last_minute_cf70"}},
         day=0,
         max_capacity=100.0,
         threshold=None,
     )
-    MandatorySelectionAction().execute(ctx)
+    PackingAction().execute(ctx)
     assert ctx.get("_live_ms")
     assert ctx["_live_ms"][0]["params"]["threshold"] == 70
 

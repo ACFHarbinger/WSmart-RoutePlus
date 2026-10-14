@@ -33,7 +33,7 @@ from logic.src.policies.vector import (
     VectorizedHGS,
     VectorizedHGSALNS,
 )
-from logic.src.policies.mandatory_selection.vectorized.factory import create_selector_from_config
+from logic.src.policies.packing.vectorized.factory import create_selector_from_config
 from logic.src.tracking.logging.pylogger import get_pylogger
 
 try:
@@ -429,10 +429,10 @@ def _prepare_rl_kwargs(cfg: Config, env: Any, policy: Any):
 
     # Mandatory selector
     mandatory_selector = None
-    mandatory_selection = getattr(policy_cfg, "mandatory_selection", getattr(cfg, "mandatory_selection", None))
-    if mandatory_selection is not None:
-        mandatory_selector = create_selector_from_config(mandatory_selection)
+    packing = getattr(policy_cfg, "packing", getattr(cfg, "packing", None))
+    if packing is not None:
+        mandatory_selector = create_selector_from_config(packing)
         if mandatory_selector:
-            logger.info(f"Mandatory selector created: {mandatory_selection.strategy}")
+            logger.info(f"Mandatory selector created: {packing.strategy}")
     common_kwargs["mandatory_selector"] = mandatory_selector
     return common_kwargs

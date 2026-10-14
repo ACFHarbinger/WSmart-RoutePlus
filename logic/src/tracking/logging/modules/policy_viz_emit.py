@@ -69,7 +69,7 @@ def _collect_viz_sources(source: Any) -> List[Any]:
 class PolicyVizStreamSession:
     """Emit growing ring-buffer snapshots at 2 Hz during solver execution (§A.3 Option B).
 
-    Wraps route construction / improvement so the Studio receives live telemetry via
+    Wraps routing / improvement so the Studio receives live telemetry via
     ``process:stdout`` and ``sim:policy_viz_update`` without waiting for solver completion.
     """
 

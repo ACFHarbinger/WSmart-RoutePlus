@@ -15,7 +15,7 @@ from logic.src.pipeline.simulations.actions.collection import CollectAction
 from logic.src.pipeline.simulations.actions.time_constraints import TimeConstraintAction
 from logic.src.pipeline.simulations.repository import load_temporal_params
 from logic.src.pipeline.simulations.states.initializing import InitializingState
-from logic.src.policies.route_construction.other_algorithms.travelling_salesman_problem.tsp import get_multi_tour
+from logic.src.policies.routing.other_algorithms.travelling_salesman_problem.tsp import get_multi_tour
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

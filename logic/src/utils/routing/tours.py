@@ -1,5 +1,5 @@
 """
-Tour helpers shared by the simulator and the route constructors.
+Tour helpers shared by the simulator and the routing algorithms.
 
 Attributes:
     None

@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 from logic.src.pipeline.simulations.bins.prediction import ScenarioGenerator
-from logic.src.policies.route_construction.exact_and_decomposition_solvers.constraint_programming_with_boolean_satisfiability.policy_cp_sat import (
+from logic.src.policies.routing.exact_and_decomposition_solvers.constraint_programming_with_boolean_satisfiability.policy_cp_sat import (
     CPSATPolicy,
 )
 

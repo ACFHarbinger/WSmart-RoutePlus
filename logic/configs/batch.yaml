@@ -12,7 +12,7 @@
 # Output structure (mirrors 30-day layout):
 #   outputs/simulations/90days/{area}{N}_plastic/{dist}/{run_name}/
 #
-# Pareto-front constructors per run type:
+# Pareto-front routing algorithms per run type:
 #   la_cls  — Lookahead  + CLS:  bpc, pg_clns
 #   la_ftsp — Lookahead  + FTSP: aco_hh, bpc, swc_tcf
 #   lm_cls  — Last Minute (CF70+CF90) + CLS:  bpc, hgs, pg_clns
@@ -27,7 +27,7 @@
 #
 # Policy YAML patching
 # --------------------
-# Each run type requires a different mandatory_selection / route_improvement
+# Each run type requires a different packing / route_improvement
 # combination.  A patch_policy_yaml pre-step rewrites the relevant policy YAML
 # files before launching the Hydra subprocess (exactly as was done manually for
 # the 30-day runs), and a restore_policy_yaml post-step (condition: always)
@@ -74,7 +74,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [bpc, pg_clns]
-          mandatory_selection: lookahead
+          packing: lookahead
           route_improvement: cls
       - type: gen_dist_matrix
         args:
@@ -110,7 +110,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [bpc, pg_clns]
-          mandatory_selection: lookahead
+          packing: lookahead
           route_improvement: cls
       - type: gen_dist_matrix
         args:
@@ -146,7 +146,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [bpc, pg_clns]
-          mandatory_selection: lookahead
+          packing: lookahead
           route_improvement: cls
       - type: gen_dist_matrix
         args:
@@ -182,7 +182,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [bpc, pg_clns]
-          mandatory_selection: lookahead
+          packing: lookahead
           route_improvement: cls
       - type: gen_dist_matrix
         args:
@@ -217,7 +217,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [bpc, pg_clns]
-          mandatory_selection: lookahead
+          packing: lookahead
           route_improvement: cls
       - type: gen_dist_matrix
         args:
@@ -252,7 +252,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [bpc, pg_clns]
-          mandatory_selection: lookahead
+          packing: lookahead
           route_improvement: cls
       - type: gen_dist_matrix
         args:
@@ -292,7 +292,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [aco_hh, bpc, swc_tcf]
-          mandatory_selection: lookahead
+          packing: lookahead
           route_improvement: ftsp
       - type: gen_dist_matrix
         args:
@@ -328,7 +328,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [aco_hh, bpc, swc_tcf]
-          mandatory_selection: lookahead
+          packing: lookahead
           route_improvement: ftsp
       - type: gen_dist_matrix
         args:
@@ -364,7 +364,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [aco_hh, bpc, swc_tcf]
-          mandatory_selection: lookahead
+          packing: lookahead
           route_improvement: ftsp
       - type: gen_dist_matrix
         args:
@@ -400,7 +400,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [aco_hh, bpc, swc_tcf]
-          mandatory_selection: lookahead
+          packing: lookahead
           route_improvement: ftsp
       - type: gen_dist_matrix
         args:
@@ -435,7 +435,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [aco_hh, bpc, swc_tcf]
-          mandatory_selection: lookahead
+          packing: lookahead
           route_improvement: ftsp
       - type: gen_dist_matrix
         args:
@@ -470,7 +470,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [aco_hh, bpc, swc_tcf]
-          mandatory_selection: lookahead
+          packing: lookahead
           route_improvement: ftsp
       - type: gen_dist_matrix
         args:
@@ -510,7 +510,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [bpc, hgs, pg_clns]
-          mandatory_selection: last_minute
+          packing: last_minute
           route_improvement: cls
       - type: gen_dist_matrix
         args:
@@ -546,7 +546,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [bpc, hgs, pg_clns]
-          mandatory_selection: last_minute
+          packing: last_minute
           route_improvement: cls
       - type: gen_dist_matrix
         args:
@@ -582,7 +582,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [bpc, hgs, pg_clns]
-          mandatory_selection: last_minute
+          packing: last_minute
           route_improvement: cls
       - type: gen_dist_matrix
         args:
@@ -618,7 +618,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [bpc, hgs, pg_clns]
-          mandatory_selection: last_minute
+          packing: last_minute
           route_improvement: cls
       - type: gen_dist_matrix
         args:
@@ -653,7 +653,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [bpc, hgs, pg_clns]
-          mandatory_selection: last_minute
+          packing: last_minute
           route_improvement: cls
       - type: gen_dist_matrix
         args:
@@ -688,7 +688,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [bpc, hgs, pg_clns]
-          mandatory_selection: last_minute
+          packing: last_minute
           route_improvement: cls
       - type: gen_dist_matrix
         args:
@@ -728,7 +728,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [bpc]
-          mandatory_selection: last_minute
+          packing: last_minute
           route_improvement: ftsp
       - type: gen_dist_matrix
         args:
@@ -764,7 +764,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [bpc]
-          mandatory_selection: last_minute
+          packing: last_minute
           route_improvement: ftsp
       - type: gen_dist_matrix
         args:
@@ -800,7 +800,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [bpc]
-          mandatory_selection: last_minute
+          packing: last_minute
           route_improvement: ftsp
       - type: gen_dist_matrix
         args:
@@ -836,7 +836,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [bpc]
-          mandatory_selection: last_minute
+          packing: last_minute
           route_improvement: ftsp
       - type: gen_dist_matrix
         args:
@@ -871,7 +871,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [bpc]
-          mandatory_selection: last_minute
+          packing: last_minute
           route_improvement: ftsp
       - type: gen_dist_matrix
         args:
@@ -906,7 +906,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [bpc]
-          mandatory_selection: last_minute
+          packing: last_minute
           route_improvement: ftsp
       - type: gen_dist_matrix
         args:
@@ -946,7 +946,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [aco_hh, bpc, pg_clns, sans]
-          mandatory_selection: service_level
+          packing: service_level
           route_improvement: cls
       - type: gen_dist_matrix
         args:
@@ -982,7 +982,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [aco_hh, bpc, pg_clns, sans]
-          mandatory_selection: service_level
+          packing: service_level
           route_improvement: cls
       - type: gen_dist_matrix
         args:
@@ -1018,7 +1018,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [aco_hh, bpc, pg_clns, sans]
-          mandatory_selection: service_level
+          packing: service_level
           route_improvement: cls
       - type: gen_dist_matrix
         args:
@@ -1054,7 +1054,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [aco_hh, bpc, pg_clns, sans]
-          mandatory_selection: service_level
+          packing: service_level
           route_improvement: cls
       - type: gen_dist_matrix
         args:
@@ -1089,7 +1089,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [aco_hh, bpc, pg_clns, sans]
-          mandatory_selection: service_level
+          packing: service_level
           route_improvement: cls
       - type: gen_dist_matrix
         args:
@@ -1124,7 +1124,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [aco_hh, bpc, pg_clns, sans]
-          mandatory_selection: service_level
+          packing: service_level
           route_improvement: cls
       - type: gen_dist_matrix
         args:
@@ -1164,7 +1164,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [aco_hh, bpc, pg_clns, psoma]
-          mandatory_selection: service_level
+          packing: service_level
           route_improvement: ftsp
       - type: gen_dist_matrix
         args:
@@ -1200,7 +1200,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [aco_hh, bpc, pg_clns, psoma]
-          mandatory_selection: service_level
+          packing: service_level
           route_improvement: ftsp
       - type: gen_dist_matrix
         args:
@@ -1236,7 +1236,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [aco_hh, bpc, pg_clns, psoma]
-          mandatory_selection: service_level
+          packing: service_level
           route_improvement: ftsp
       - type: gen_dist_matrix
         args:
@@ -1272,7 +1272,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [aco_hh, bpc, pg_clns, psoma]
-          mandatory_selection: service_level
+          packing: service_level
           route_improvement: ftsp
       - type: gen_dist_matrix
         args:
@@ -1307,7 +1307,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [aco_hh, bpc, pg_clns, psoma]
-          mandatory_selection: service_level
+          packing: service_level
           route_improvement: ftsp
       - type: gen_dist_matrix
         args:
@@ -1342,7 +1342,7 @@ runs:
       - type: patch_policy_yaml
         args:
           policies: [aco_hh, bpc, pg_clns, psoma]
-          mandatory_selection: service_level
+          packing: service_level
           route_improvement: ftsp
       - type: gen_dist_matrix
         args:

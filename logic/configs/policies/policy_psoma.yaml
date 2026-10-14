@@ -116,7 +116,7 @@ psoma:
   profit_aware_operators: true
   vrpp: true
 
-  mandatory_selection: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
+  packing: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
   # Node selection strategy for waste collection problems
 
   route_improvement: { "other/ri_cls.yaml": ["default"] }

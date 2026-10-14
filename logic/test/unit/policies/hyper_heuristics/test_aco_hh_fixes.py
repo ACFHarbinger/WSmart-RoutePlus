@@ -5,13 +5,13 @@ import random
 import numpy as np
 import pytest
 from logic.src.policies.helpers.operators.solution_initialization.greedy_si import build_greedy_routes
-from logic.src.policies.route_construction.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_aco import (
+from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_aco import (
     HyperHeuristicACO,
 )
-from logic.src.policies.route_construction.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_operators import (
+from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_operators import (
     OPERATOR_NAMES,
 )
-from logic.src.policies.route_construction.hyper_heuristics.ant_colony_optimization_hyper_heuristic.params import (
+from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic.params import (
     HyperACOParams,
 )
 
@@ -86,7 +86,7 @@ def test_first_hop_deposits_on_real_rows_only():
 
 def test_elitism_sync_count_uses_ceiling():
     """B-kimi-51: elitism syncs ceil(n_ants * ratio) ants, matching the flowchart."""
-    from logic.src.policies.route_construction.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_aco import (
+    from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_aco import (
         _elitism_sync_count,
     )
 
@@ -98,7 +98,7 @@ def test_elitism_sync_count_uses_ceiling():
 
 def test_operator_wrappers_swallow_data_errors_only():
     """B-kimi-50: operator wrappers return False on data errors but let programming errors propagate."""
-    import logic.src.policies.route_construction.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_operators as ops
+    import logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_operators as ops
 
     dist, wastes, cap, init, mandatory = _instance(0, 9, 60.0, 5, 40)
     ctx = ops.HyperOperatorContext(

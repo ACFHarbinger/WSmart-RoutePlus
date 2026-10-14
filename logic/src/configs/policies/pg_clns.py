@@ -32,7 +32,7 @@ class PGCLNSConfig:
         lns: Nested configuration for the LNS component.
         vrpp: Whether to enable VRP with Profits logic.
         profit_aware_operators: Whether to use operators aware of node profits.
-        mandatory_selection: List of mandatory strategy config files.
+        packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
     """
 
@@ -78,5 +78,5 @@ class PGCLNSConfig:
     # Common policy fields
     vrpp: bool = True
     profit_aware_operators: bool = True
-    mandatory_selection: List[str] = field(default_factory=list)
+    packing: List[str] = field(default_factory=list)
     route_improvement: List[Any] = field(default_factory=list)

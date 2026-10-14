@@ -115,9 +115,9 @@ ils_bd:
       # Requires: ortools Python package
 
     # ---------------------------------------------------------------------
-    # mandatory Strategy
+    # packing algorithm
     # ---------------------------------------------------------------------
-    - mandatory_selection: {"other/ms_lookahead.yaml": ["default"]}
+    - packing: {"other/ms_lookahead.yaml": ["default"]}
       # Selection strategy for mandatory visits.
 
     # ---------------------------------------------------------------------

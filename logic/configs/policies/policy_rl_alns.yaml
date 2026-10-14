@@ -17,7 +17,7 @@ rl_alns:
     - vrpp: true
     - profit_aware_operators: false
 
-    - mandatory_selection: {"other/ms_lookahead.yaml": ["default"]}
+    - packing: {"other/ms_lookahead.yaml": ["default"]}
     - route_improvement: []
 
     # Centralized RL Configuration

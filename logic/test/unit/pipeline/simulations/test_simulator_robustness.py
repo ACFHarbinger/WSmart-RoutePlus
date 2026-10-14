@@ -105,10 +105,10 @@ def test_resume_clock_adds_stored_elapsed(mock_cp_manager, mock_run_day, ctx_var
 
 
 def test_expanded_id_keeps_alns_constructor():
-    """ms_regular_alns_ri_none names the ALNS constructor, not an empty slot."""
+    """ms_regular_alns_ri_none names the ALNS routing algorithm, not an empty slot."""
     name = get_full_policy_name(
         "ms_regular_alns_ri_none",
-        {"mandatory_selection": "regular", "route_improvement": "none"},
+        {"packing": "regular", "route_improvement": "none"},
     )
     assert name.split(" + ")[1] == "ALNS"
 

@@ -12,7 +12,7 @@ from logic.src.configs.envs.graph import GraphConfig
 from logic.src.envs.problems import PTP
 from logic.src.pipeline.features.train import run_training
 from logic.src.pipeline.simulations.simulator import sequential_simulations
-from logic.src.policies.route_construction.base.registry import RouteConstructorRegistry
+from logic.src.policies.routing.base.registry import RoutingAlgorithmRegistry
 from omegaconf import OmegaConf
 
 pytestmark = [pytest.mark.integration, pytest.mark.slow]
@@ -78,8 +78,8 @@ class TestIntegrationSimulation:
         # Ensure we have some policies to test
         sim_opts["policies"] = ["policy_regular_emp"]
         MockPolicy = MagicMock()
-        RouteConstructorRegistry.register("policy_regular_emp")(MockPolicy)
-        RouteConstructorRegistry.register("none_regular_none")(MockPolicy)
+        RoutingAlgorithmRegistry.register("policy_regular_emp")(MockPolicy)
+        RoutingAlgorithmRegistry.register("none_regular_none")(MockPolicy)
         instance = MockPolicy.return_value
         instance.execute.return_value = ([0, 1, 2, 0], 10.0, None)
         try:
@@ -87,10 +87,10 @@ class TestIntegrationSimulation:
             assert not failed
             assert any("regular" in k for k in log.keys())
         finally:
-            if "policy_regular_emp" in RouteConstructorRegistry._registry:
-                del RouteConstructorRegistry._registry["policy_regular_emp"]
-            if "none_regular_none" in RouteConstructorRegistry._registry:
-                del RouteConstructorRegistry._registry["none_regular_none"]
+            if "policy_regular_emp" in RoutingAlgorithmRegistry._registry:
+                del RoutingAlgorithmRegistry._registry["policy_regular_emp"]
+            if "none_regular_none" in RoutingAlgorithmRegistry._registry:
+                del RoutingAlgorithmRegistry._registry["none_regular_none"]
 
     @pytest.mark.unit
     @patch("logic.src.pipeline.simulations.states.initializing.setup_model")
@@ -98,8 +98,8 @@ class TestIntegrationSimulation:
         """Test Neural policy integration in simulation."""
         # Register a Mock class that accepts any arguments (like config)
         MockPolicy = MagicMock()
-        RouteConstructorRegistry.register("meanstd0.84_am_emp")(MockPolicy)
-        RouteConstructorRegistry.register("none_meanstd0.84_am_none")(MockPolicy)
+        RoutingAlgorithmRegistry.register("meanstd0.84_am_emp")(MockPolicy)
+        RoutingAlgorithmRegistry.register("none_meanstd0.84_am_none")(MockPolicy)
 
         instance = MockPolicy.return_value
         instance.execute.return_value = ([0, 1, 2, 0], 10.0, None)
@@ -113,10 +113,10 @@ class TestIntegrationSimulation:
             assert not failed
             assert any("am" in k for k in log.keys())
         finally:
-            if "meanstd0.84_am_emp" in RouteConstructorRegistry._registry:
-                del RouteConstructorRegistry._registry["meanstd0.84_am_emp"]
-            if "none_meanstd0.84_am_none" in RouteConstructorRegistry._registry:
-                del RouteConstructorRegistry._registry["none_meanstd0.84_am_none"]
+            if "meanstd0.84_am_emp" in RoutingAlgorithmRegistry._registry:
+                del RoutingAlgorithmRegistry._registry["meanstd0.84_am_emp"]
+            if "none_meanstd0.84_am_none" in RoutingAlgorithmRegistry._registry:
+                del RoutingAlgorithmRegistry._registry["none_meanstd0.84_am_none"]
 
 
 class TestIntegrationProblems:

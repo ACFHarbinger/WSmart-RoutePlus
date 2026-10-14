@@ -1,5 +1,5 @@
 # =============================================================================
-# mandatory Strategy: Regular (Periodic Collection)
+# packing algorithm: Regular (Periodic Collection)
 # =============================================================================
 # PURPOSE:
 #   Fixed-frequency collection schedule - collect every N days regardless

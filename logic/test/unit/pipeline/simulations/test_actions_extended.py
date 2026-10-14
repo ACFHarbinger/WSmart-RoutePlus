@@ -8,7 +8,7 @@ import pytest
 from logic.src.pipeline.simulations.actions import (
     CollectAction,
     FillAction,
-    MandatorySelectionAction,
+    PackingAction,
     RouteImprovementAction,
 )
 
@@ -45,9 +45,9 @@ def base_context(mock_bins):
         'distance_matrix': np.zeros((6, 6))
     })
 
-class TestMandatorySelectionActionDetailed:
+class TestPackingActionDetailed:
     def test_regular_mapping(self, base_context):
-        action = MandatorySelectionAction()
+        action = PackingAction()
         base_context['full_policy'] = 'regular7'
         action.execute(base_context)
         assert 'mandatory' in base_context

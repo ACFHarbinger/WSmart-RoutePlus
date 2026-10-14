@@ -2,7 +2,7 @@
 Context interfaces for WSmart-Route logic components.
 
 Attributes:
-    JointSelectionConstructionContext: Joint selection and construction context
+    JointSelectionConstructionContext: Joint packing and routing context
     MultiDayContext: Multi-day routing context
     ProblemContext: Problem definition context
     SolutionContext: Solution context

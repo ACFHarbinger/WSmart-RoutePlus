@@ -18,7 +18,7 @@ Example:
 from dataclasses import dataclass
 from typing import Optional
 
-from .other.mandatory_selection import MandatorySelectionConfig
+from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -35,7 +35,7 @@ class MP_PSO_Config:
         c2 (float): Social coefficient. Defaults to 2.0.
         seed (int): Random seed for reproducibility. Defaults to 42.
         vrpp (bool): Whether the problem is a VRP with Profits. Defaults to True.
-        mandatory_selection (Optional[MandatorySelectionConfig]): Configuration for
+        packing (Optional[PackingConfig]): Configuration for
             mandatory node selection policies.
         route_improvement (Optional[RouteImprovingConfig]): Optional configuration
             for local search refinement steps.
@@ -49,5 +49,5 @@ class MP_PSO_Config:
     seed: int = 42
     vrpp: bool = True
 
-    mandatory_selection: Optional[MandatorySelectionConfig] = None
+    packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None

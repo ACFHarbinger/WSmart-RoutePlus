@@ -1,5 +1,5 @@
 # =============================================================================
-# mandatory Strategy: Last Minute (Threshold-Based)
+# packing algorithm: Last Minute (Threshold-Based)
 # =============================================================================
 # PURPOSE:
 #   Collect bins when current fill level exceeds a fixed threshold.

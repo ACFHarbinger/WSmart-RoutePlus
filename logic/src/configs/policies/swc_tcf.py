@@ -19,7 +19,7 @@ Example:
     'gurobi'
     >>> config.framework
     'ortools'
-    >>> config.mandatory_selection
+    >>> config.packing
     None
     >>> config.route_improvement
     None
@@ -28,7 +28,7 @@ Example:
 from dataclasses import dataclass
 from typing import List, Optional
 
-from .other.mandatory_selection import MandatorySelectionConfig
+from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -52,7 +52,7 @@ class SWCTCFConfig:
         max_arc_distance_km: Optional arc length cutoff; None keeps every arc.
         warm_start: Native Gurobi only; off by default. Loads Clarke-Wright MIP
             starts, which are not part of the published model (#41).
-        mandatory_selection: List of mandatory strategy config files.
+        packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
     """
 
@@ -71,5 +71,5 @@ class SWCTCFConfig:
     link_depot_arcs: bool = False
     max_arc_distance_km: Optional[float] = None
     warm_start: bool = False
-    mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
+    packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

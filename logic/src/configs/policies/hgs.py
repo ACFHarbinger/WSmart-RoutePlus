@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 from .other.acceptance_criteria import AcceptanceConfig, OnlyImprovingConfig
-from .other.mandatory_selection import MandatorySelectionConfig
+from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -50,7 +50,7 @@ class HGSConfig:
         penalty_decrease: Multiplier for decreasing penalty.
         engine: Solver engine to use ('custom', 'pyvrp').
         vrpp: Whether this is a VRPP problem.
-        mandatory_selection: List of mandatory strategy config files.
+        packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
         acceptance_criterion: Acceptance criterion config for local search.
     """
@@ -90,6 +90,6 @@ class HGSConfig:
     engine: str = "custom"
     vrpp: bool = True
     profit_aware_operators: bool = False
-    mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
+    packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
     acceptance_criterion: AcceptanceConfig = AcceptanceConfig(method="oi", params=OnlyImprovingConfig())

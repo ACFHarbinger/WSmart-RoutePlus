@@ -113,7 +113,7 @@ class TestCleanupComponents(unittest.TestCase):
         mock_impl.suffix = ".py"
         mock_impl.is_file.return_value = True
         mock_impl.is_dir.return_value = False
-        mock_impl.parent.name = "route_construction"  # Protected, so only delete the file, not parent
+        mock_impl.parent.name = "routing"  # Protected, so only delete the file, not parent
 
         mock_impl_dir = MagicMock(spec=Path)
         mock_impl_dir.name = "my_custom_alns"
@@ -133,7 +133,7 @@ class TestCleanupComponents(unittest.TestCase):
             acronym="alns",
             yaml_dirs=["logic/configs/policies"],
             config_dirs=["logic/src/configs/policies"],
-            impl_dirs=["logic/src/policies/route_construction"]
+            impl_dirs=["logic/src/policies/routing"]
         )
 
         # Verify deletes occurred

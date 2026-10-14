@@ -17,7 +17,7 @@ Example:
 from dataclasses import dataclass
 from typing import List, Optional
 
-from .other.mandatory_selection import MandatorySelectionConfig
+from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -59,7 +59,7 @@ class CFRSConfig:
         mip_objective: MIP objective for exact assignment mode.
             "minimize_cost" (default): Minimize total insertion cost for benchmarks.
             "maximize_profit": Maximize profit (revenue - cost) for simulation.
-        mandatory_selection: List of mandatory strategy configuration files or dicts.
+        packing: List of packing algorithm configuration files or dicts.
             Controls which bins are selected for collection on a given day.
         route_improvement: List of route improvement operations (e.g., local search)
             to apply to the resulting tours for further refinement.
@@ -97,8 +97,8 @@ class CFRSConfig:
     # Use "minimize_cost" for benchmark compliance with A-VRP dataset
     mip_objective: str = "minimize_cost"
 
-    # Bin selection strategies (VRPP/WCVRP specific)
-    mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
+    # Packing algorithms (VRPP/WCVRP specific)
+    packing: Optional[List[PackingConfig]] = None
 
     # Tour refinement strategies
     route_improvement: Optional[List[RouteImprovingConfig]] = None

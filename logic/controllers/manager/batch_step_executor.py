@@ -295,10 +295,10 @@ _RI_CONFIGS: Dict[str, Any] = {
 
 
 def _patch_recursive(obj: Any, ms_value: Any, ri_value: Any) -> None:
-    """Recursively replace mandatory_selection and route_improvement values in a YAML object."""
+    """Recursively replace packing and route_improvement values in a YAML object."""
     if isinstance(obj, dict):
         for key in list(obj.keys()):
-            if ms_value is not None and key == "mandatory_selection":
+            if ms_value is not None and key == "packing":
                 obj[key] = ms_value
             elif ri_value is not None and key == "route_improvement":
                 obj[key] = ri_value
@@ -320,7 +320,7 @@ def _step_patch_policy_yaml(args: Dict[str, Any], job: BatchJob) -> None:
 
     Args:
         args: ``policies`` (list[str]) — policy names whose YAML files to patch.
-              ``mandatory_selection`` (str) — shorthand key: ``"lookahead"``,
+              ``packing`` (str) — shorthand key: ``"lookahead"``,
               ``"last_minute"``, or ``"service_level"``.
               ``route_improvement`` (str) — shorthand key: ``"cls"`` or ``"ftsp"``.
         job: Parent job.  ``job.runtime_env`` is updated with
@@ -332,14 +332,14 @@ def _step_patch_policy_yaml(args: Dict[str, Any], job: BatchJob) -> None:
     import yaml as _yaml
 
     policies: list = args.get("policies", [])
-    ms_key: str = args.get("mandatory_selection", "")
+    ms_key: str = args.get("packing", "")
     ri_key: str = args.get("route_improvement", "")
 
     ms_value = _MS_CONFIGS.get(ms_key)
     ri_value = _RI_CONFIGS.get(ri_key)
 
     if ms_value is None and ms_key:
-        raise ValueError(f"Unknown mandatory_selection shorthand '{ms_key}'. Valid: {list(_MS_CONFIGS)}")
+        raise ValueError(f"Unknown packing shorthand '{ms_key}'. Valid: {list(_MS_CONFIGS)}")
     if ri_value is None and ri_key:
         raise ValueError(f"Unknown route_improvement shorthand '{ri_key}'. Valid: {list(_RI_CONFIGS)}")
 

@@ -6,7 +6,7 @@ logic.src.policies.helpers.operators.*. Do NOT re-implement operators here.
 
 Attributes:
     initial_plan_greedy: Build an initial D-day plan using the specified initialization method.
-    _build_single_day_routes: Dispatch single-day route construction to the appropriate operator.
+    _build_single_day_routes: Dispatch single-day routing to the appropriate operator.
     greedy_day_route: Greedy nearest-profit-ratio construction for a single day.
     two_opt: Standard 2-opt improvement on a single route (depot excluded).
 
@@ -104,7 +104,7 @@ def _build_single_day_routes(
     method: str,
 ) -> List[List[int]]:
     """
-    Dispatch single-day route construction to the appropriate operator.
+    Dispatch single-day routing to the appropriate operator.
 
     Args:
         problem:  ProblemContext for day 0.

@@ -49,7 +49,7 @@ def _find_key(d: Any, target_key: str) -> Any:
     return None
 
 
-_EXPANDED_KEYS = ("mandatory_selection", "route_improvement", "acceptance_criteria", "acceptance_criterion")
+_EXPANDED_KEYS = ("packing", "route_improvement", "acceptance_criteria", "acceptance_criterion")
 
 
 def _flatten_config(cfg: Any) -> dict:  # noqa: C901
@@ -71,7 +71,7 @@ def _flatten_config(cfg: Any) -> dict:  # noqa: C901
         # Safer key extraction
         key = next(iter(curr.keys()))
 
-        if key in ["mandatory_selection", "policy", "route_improvement", "acceptance_criterion", "acceptance_criteria"]:
+        if key in ["packing", "policy", "route_improvement", "acceptance_criterion", "acceptance_criteria"]:
             break
         curr = curr[key]
 
@@ -104,7 +104,7 @@ def _flatten_config(cfg: Any) -> dict:  # noqa: C901
                 if primitive_list:
                     flat[_k] = primitive_list
 
-        for target in ["mandatory_selection", "route_improvement", "acceptance_criterion", "acceptance_criteria"]:
+        for target in ["packing", "route_improvement", "acceptance_criterion", "acceptance_criteria"]:
             if target not in flat:
                 val = _find_key(curr, target)
                 if val is not None:
@@ -248,11 +248,11 @@ def _params_as_dict(params: Any) -> Dict[str, Any]:
 
 
 def _make_acceptance_config(method: str, params: Any) -> Any:
-    """Build the typed AcceptanceConfig the constructors already consume.
+    """Build the typed AcceptanceConfig the routing algorithms already consume.
 
     Args:
         method: Criterion name from yaml (``bmc``, ``oi``, ...).
-        params: Mapping or dataclass of constructor kwargs.
+        params: Mapping or dataclass of routing algorithm kwargs.
 
     Returns:
         ``AcceptanceConfig`` with nested param dataclass for BMC / OI.
@@ -314,7 +314,7 @@ def _acceptance_config_from_entry(raw: Any) -> Optional[Any]:
 def _inject_acceptance_into_config(cfg: Any) -> Optional[Any]:
     """Write yaml acceptance params onto ``acceptance_criterion`` in ``cfg``.
 
-    Constructors read ``acceptance_criterion`` (singular) and ignore the
+    Routing algorithms read ``acceptance_criterion`` (singular) and ignore the
     policy-level ``acceptance_criteria: {file: [variant]}`` key. Injecting the
     typed object here is what makes PSOMA / ALNS / HGS honour ``ac_bmc.yaml``
     and ``ac_oi.yaml``.
@@ -333,7 +333,7 @@ def _inject_acceptance_into_config(cfg: Any) -> Optional[Any]:
         if resolved is None:
             return None
         # Already a typed criterion / mapping with method — still ensure the
-        # constructor field is present as AcceptanceConfig.
+        # routing algorithm field is present as AcceptanceConfig.
         if not hasattr(resolved, "method"):
             return None
 
@@ -498,7 +498,7 @@ def _record_live_params(kind: str, payload: Dict[str, Any]) -> None:
     plain dict.
 
     Args:
-        kind: ``mandatory_selection``, ``route_improvement``, or ``acceptance_criteria``.
+        kind: ``packing``, ``route_improvement``, or ``acceptance_criteria``.
         payload: JSON-serialisable snapshot of the live parameters.
     """
     path = os.environ.get("WSR_CAPTURE_STRATEGY_JSON")

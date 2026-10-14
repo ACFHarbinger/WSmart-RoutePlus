@@ -1,4 +1,4 @@
 default:
   strategy: learned
-  learned_model_path: assets/models/mandatory_selection_imitator.pkl
+  learned_model_path: assets/models/packing_imitator.pkl
   learned_threshold: 0.5

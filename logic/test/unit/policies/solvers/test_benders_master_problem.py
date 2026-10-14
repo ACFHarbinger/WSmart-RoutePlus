@@ -9,12 +9,12 @@ from logic.src.policies.helpers.solvers_and_matheuristics import (
     PCSubtourEliminationCut,
 )
 from logic.src.policies.helpers.solvers_and_matheuristics.vrpp_model import VRPPModel
-from logic.src.policies.route_construction.exact_and_decomposition_solvers.integer_l_shaped_benders_decomposition.master_problem import (
+from logic.src.policies.routing.exact_and_decomposition_solvers.integer_l_shaped_benders_decomposition.master_problem import (
     GUROBI_AVAILABLE,
     InventoryMasterProblem,
     MasterProblem,
 )
-from logic.src.policies.route_construction.exact_and_decomposition_solvers.integer_l_shaped_benders_decomposition.params import (
+from logic.src.policies.routing.exact_and_decomposition_solvers.integer_l_shaped_benders_decomposition.params import (
     ILSBDParams,
 )
 
@@ -61,7 +61,7 @@ def test_master_problem_gurobi_missing():
 
     with (
         patch(
-            "logic.src.policies.route_construction.exact_and_decomposition_solvers.integer_l_shaped_benders_decomposition.master_problem.GUROBI_AVAILABLE",
+            "logic.src.policies.routing.exact_and_decomposition_solvers.integer_l_shaped_benders_decomposition.master_problem.GUROBI_AVAILABLE",
             False,
         ),
         pytest.raises(ImportError, match="Gurobi \\(gurobipy\\) is required"),

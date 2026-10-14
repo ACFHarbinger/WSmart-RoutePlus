@@ -14,7 +14,7 @@ Example:
 from dataclasses import dataclass
 from typing import List, Optional
 
-from .other.mandatory_selection import MandatorySelectionConfig
+from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -54,7 +54,7 @@ class IntegerLShapedBendersConfig:
         enable_comb_cuts: Enable heuristic comb inequality separation.
         engine: Solver engine to use ('gurobi', 'scip', 'highs', or 'cplex').
         framework: Solver framework to use ('ortools', 'pyomo').
-        mandatory_selection: List of mandatory strategy configuration files.
+        packing: List of packing algorithm configuration files.
         route_improvement: List of route improvement operations to apply.
     """
 
@@ -83,5 +83,5 @@ class IntegerLShapedBendersConfig:
     enable_comb_cuts: bool = False
     engine: str = "gurobi"
     framework: str = "ortools"
-    mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
+    packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

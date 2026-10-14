@@ -18,7 +18,7 @@ Example:
 from dataclasses import dataclass
 from typing import List, Optional
 
-from .other.mandatory_selection import MandatorySelectionConfig
+from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -57,7 +57,7 @@ class MuPlusLambdaESConfig:
 
         seed (Optional[int]): Random seed for deterministic reproducibility.
 
-        mandatory_selection (Optional[List[MandatorySelectionConfig]]): Configuration
+        packing (Optional[List[PackingConfig]]): Configuration
             for node selection strategies.
 
         route_improvement (Optional[List[RouteImprovingConfig]]): List of
@@ -73,5 +73,5 @@ class MuPlusLambdaESConfig:
     vrpp: bool = True
     profit_aware_operators: bool = False
     seed: Optional[int] = None
-    mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
+    packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

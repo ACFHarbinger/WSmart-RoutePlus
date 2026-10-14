@@ -6,18 +6,18 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pandas as pd
 import pytest
-from logic.src.policies.route_construction.base.factory import RouteConstructorFactory
-from logic.src.policies.route_construction.exact_and_decomposition_solvers.branch_and_price_and_cut.policy_bpc import (
+from logic.src.policies.routing.base.factory import RoutingAlgorithmFactory
+from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price_and_cut.policy_bpc import (
     BPCPolicy,
 )
-from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.policy_swc_tcf import (
+from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.policy_swc_tcf import (
     SWCTCFPolicy,
 )
-from logic.src.policies.route_construction.meta_heuristics.adaptive_large_neighborhood_search.policy_alns import (
+from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.policy_alns import (
     ALNSPolicy,
 )
-from logic.src.policies.route_construction.meta_heuristics.hybrid_genetic_search.policy_hgs import HGSPolicy
-from logic.src.policies.route_construction.meta_heuristics.simulated_annealing_neighborhood_search.policy_sans import (
+from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.policy_hgs import HGSPolicy
+from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.policy_sans import (
     SANSPolicy,
 )
 
@@ -84,16 +84,16 @@ def mock_engine_data():
 
 @pytest.mark.unit
 def test_policy_factory_standardized():
-    # Test that RouteConstructorFactory correctly identifies policies from Registry
-    p = RouteConstructorFactory.get_adapter("hgs")
+    # Test that RoutingAlgorithmFactory correctly identifies policies from Registry
+    p = RoutingAlgorithmFactory.get_adapter("hgs")
     assert isinstance(p, HGSPolicy)
 
 @pytest.mark.unit
 def test_bcp_engine_override(mock_engine_data):
-    with patch("logic.src.policies.route_construction.exact_and_decomposition_solvers.branch_and_price_and_cut.policy_bpc.run_bpc") as mock_run:
+    with patch("logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price_and_cut.policy_bpc.run_bpc") as mock_run:
         mock_run.return_value = ([[1, 0]], 10.0)
 
-        policy = RouteConstructorFactory.get_adapter("bpc")
+        policy = RoutingAlgorithmFactory.get_adapter("bpc")
         assert isinstance(policy, BPCPolicy)
         policy.execute(**mock_engine_data)
 
@@ -108,10 +108,10 @@ def test_swc_tcf_engine_override(mocker, mock_engine_data):
     mocker.patch("logic.src.pipeline.simulations.repository.load_area_and_waste_type_params",
                  return_value=(4000, 0.16, 21.0, 1.0, 2.5))
 
-    with patch("logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.policy_swc_tcf.run_swc_tcf_optimizer") as mock_opt:
+    with patch("logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.policy_swc_tcf.run_swc_tcf_optimizer") as mock_opt:
         mock_opt.return_value = ([0, 1, 0], 10.0, 5.0)
 
-        policy = RouteConstructorFactory.get_adapter("swc_tcf")
+        policy = RoutingAlgorithmFactory.get_adapter("swc_tcf")
         assert isinstance(policy, SWCTCFPolicy)
         policy.execute(**mock_engine_data)
 
@@ -119,10 +119,10 @@ def test_swc_tcf_engine_override(mocker, mock_engine_data):
 
 @pytest.mark.unit
 def test_hgs_engine_override(mock_engine_data):
-    with patch("logic.src.policies.route_construction.meta_heuristics.hybrid_genetic_search.policy_hgs.run_hgs") as mock_run:
+    with patch("logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.policy_hgs.run_hgs") as mock_run:
         mock_run.return_value = ([[1, 0]], 10.0, 5.0)
 
-        policy = RouteConstructorFactory.get_adapter("hgs")
+        policy = RoutingAlgorithmFactory.get_adapter("hgs")
         assert isinstance(policy, HGSPolicy)
         policy.execute(**mock_engine_data)
 
@@ -130,13 +130,13 @@ def test_hgs_engine_override(mock_engine_data):
 
 @pytest.mark.unit
 def test_alns_engine_override(mock_engine_data):
-    with patch("logic.src.policies.route_construction.meta_heuristics.adaptive_large_neighborhood_search.policy_alns.run_alns") as mock_run:
+    with patch("logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.policy_alns.run_alns") as mock_run:
         mock_run.return_value = ([[1, 0]], 10.0, 5.0)
 
         # Set specific engine in config
         mock_engine_data["config"]["alns"]["engine"] = "ortools"
 
-        policy = RouteConstructorFactory.get_adapter("alns")
+        policy = RoutingAlgorithmFactory.get_adapter("alns")
         assert isinstance(policy, ALNSPolicy)
         policy.execute(**mock_engine_data)
 
@@ -150,13 +150,13 @@ def test_alns_engine_override(mock_engine_data):
 
 def test_sans_execution(mock_engine_data):
     # Patch improved_simulated_annealing in its home module (or where it's used)
-    with patch("logic.src.policies.route_construction.meta_heuristics.simulated_annealing_neighborhood_search.dispatcher.improved_simulated_annealing") as mock_sans, \
+    with patch("logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.dispatcher.improved_simulated_annealing") as mock_sans, \
          patch("logic.src.pipeline.simulations.repository.load_area_and_waste_type_params") as mock_load:
 
         mock_load.return_value = (100.0, 1.0, 1.0, 1.0, 1.0)
         mock_sans.return_value = ([[1, 0]], 10.0, 5.0, 2.0, 10.0)
 
-        policy = RouteConstructorFactory.get_adapter("sans")
+        policy = RoutingAlgorithmFactory.get_adapter("sans")
         assert isinstance(policy, SANSPolicy)
         policy.execute(**mock_engine_data)
 

@@ -146,7 +146,7 @@ pso:
     - vrpp: true
     - profit_aware_operators: false
 
-    - mandatory_selection: {"other/ms_lookahead.yaml": ["default"]}
+    - packing: {"other/ms_lookahead.yaml": ["default"]}
       # Node selection strategy for waste collection problems
       # Options: ms_lookahead.yaml, ms_last_minute_*.yaml, ms_regular.yaml
 

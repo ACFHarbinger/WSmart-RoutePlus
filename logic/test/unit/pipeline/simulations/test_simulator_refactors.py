@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 import torch
-from logic.src.pipeline.simulations.actions.route_construction import RouteConstructionAction
+from logic.src.pipeline.simulations.actions.routing import RoutingAction
 from logic.src.pipeline.simulations.simulator import display_log_metrics, sequential_simulations
 from logic.src.pipeline.simulations.states import FinishingState, SimulationContext
 from logic.test.unit.pipeline.simulations.test_simulator_robustness import _orch_cfg
@@ -40,13 +40,13 @@ def _route_context(adapter_flag):
 def _run_route(adapter, context):
     generator = MagicMock()
     with (
-        patch("logic.src.policies.route_construction.base.factory.RouteConstructorFactory.ensure_registered"),
+        patch("logic.src.policies.routing.base.factory.RoutingAlgorithmFactory.ensure_registered"),
         patch(
-            "logic.src.policies.route_construction.base.factory.RouteConstructorFactory.get_adapter",
+            "logic.src.policies.routing.base.factory.RoutingAlgorithmFactory.get_adapter",
             return_value=adapter,
         ),
         patch(
-            "logic.src.policies.route_construction.base.registry.RouteConstructorRegistry.list_route_constructors",
+            "logic.src.policies.routing.base.registry.RoutingAlgorithmRegistry.list_routing_algorithms",
             return_value=["alns"],
         ),
         patch(
@@ -57,7 +57,7 @@ def _run_route(adapter, context):
     ):
         viz.return_value.__enter__.return_value = None
         viz.return_value.__exit__.return_value = False
-        RouteConstructionAction().execute(context)
+        RoutingAction().execute(context)
     return generator
 
 

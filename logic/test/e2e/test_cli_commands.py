@@ -95,7 +95,7 @@ def test_cli_train_lightning_smoke(tmp_path):
                 f"+output_dir={weights_dir}",
                 "hpo.n_trials=0",  # Explicitly disable HPO
                 "+trainer.fast_dev_run=true",
-                "train.policy.mandatory_selection=null",
+                "train.policy.packing=null",
                 "train.data_distribution=unif",
                 "train.env.curriculum_graphs.0.load_dataset=null",
                 "train.env.eval_graphs=[]",
@@ -208,7 +208,7 @@ def test_cli_train_lightning_ppo_smoke(tmp_path):
                 f"+output_dir={weights_dir}",
                 "hpo.n_trials=0",  # Explicitly disable HPO
                 "+trainer.fast_dev_run=true",
-                "train.policy.mandatory_selection=null",
+                "train.policy.packing=null",
                 "train.data_distribution=unif",
                 "train.env.curriculum_graphs.0.load_dataset=null",
                 "train.env.eval_graphs=[]",

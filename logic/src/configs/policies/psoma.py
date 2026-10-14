@@ -23,7 +23,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 
 from .other.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
-from .other.mandatory_selection import MandatorySelectionConfig
+from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -49,7 +49,7 @@ class PSOMAConfig:
         vrpp: If True, solver operates in full VRPP mode.
         profit_aware_operators: Whether to use profit-aware operators.
         seed: Random seed for reproducibility.
-        mandatory_selection: Mandatory selection strategy config list.
+        packing: Packing algorithm config list.
         route_improvement: Route improvement operation config list.
         acceptance_criterion: Acceptance criterion config for local search.
     """
@@ -70,7 +70,7 @@ class PSOMAConfig:
     vrpp: bool = True
     profit_aware_operators: bool = False
     seed: Optional[int] = 42
-    mandatory_selection: Optional[List[MandatorySelectionConfig]] = field(default_factory=list)
+    packing: Optional[List[PackingConfig]] = field(default_factory=list)
     route_improvement: Optional[List[RouteImprovingConfig]] = field(default_factory=list)
     acceptance_criterion: AcceptanceConfig = field(
         default_factory=lambda: AcceptanceConfig(

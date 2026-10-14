@@ -21,7 +21,7 @@ filo:
   n_cw: 100
   local_search_iterations: 500
   seed: 42
-  mandatory_selection: {"other/ms_lookahead.yaml": ["default"]}
+  packing: {"other/ms_lookahead.yaml": ["default"]}
   # VRPP Settings
   vrpp: true
   profit_aware_operators: false

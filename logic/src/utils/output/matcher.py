@@ -11,7 +11,7 @@ Examples:
 
 Attributes:
     DISTRIBUTIONS: Known distribution tags.
-    MS_STRATEGIES: Known mandatory-selection strategy prefixes.
+    MS_STRATEGIES: Known packing algorithm prefixes.
     IMPROVERS: Known route-improver tags.
     PolicyFilter: Dataclass for specifying filter criteria.
     slug_matches_filter: Test whether a policy slug matches a filter.
@@ -64,9 +64,9 @@ class PolicyFilter:
     Attributes:
         distributions: Accept only runs whose distribution tag is one of these
             (e.g. ``["emp", "gamma3"]``).
-        constructors: Accept only runs whose route-constructor segment contains
+        constructors: Accept only runs whose routing-algorithm segment contains
             one of these tokens (e.g. ``["alns", "hgs", "aco_hh"]``).
-        ms_strategies: Accept only runs whose mandatory-selection prefix matches
+        ms_strategies: Accept only runs whose packing prefix matches
             one of these (e.g. ``["lookahead", "last_minute"]``).
         improvers: Accept only runs whose route-improver tag is one of these
             (e.g. ``["ftsp", "none"]``).
@@ -138,7 +138,7 @@ def _parse_slug(slug: str) -> dict:
             s = s[len(ms) + 1 :] if s.startswith(f"{ms}_") else ""
             break
 
-    # 4. Everything remaining is the constructor (may include variant like "custom")
+    # 4. Everything remaining is the routing algorithm (may include variant like "custom")
     constructor = s
 
     return {

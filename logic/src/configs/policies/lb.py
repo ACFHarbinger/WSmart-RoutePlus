@@ -16,7 +16,7 @@ Example:
 from dataclasses import dataclass
 from typing import Optional
 
-from .other.mandatory_selection import MandatorySelectionConfig
+from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -42,7 +42,7 @@ class LocalBranchingConfig:
         # Infrastructure
         engine (str): Solver engine to use ('gurobi', 'scip', 'highs', or 'cplex').
         framework (str): Solver framework to use ('ortools', 'pyomo').
-        mandatory_selection (Optional[MandatorySelectionConfig]): Configuration for mandatory
+        packing (Optional[PackingConfig]): Configuration for mandatory
             node selection.
         route_improvement (Optional[RouteImprovingConfig]): Optional local search refinement.
     """
@@ -59,5 +59,5 @@ class LocalBranchingConfig:
     # Infrastructure
     engine: str = "gurobi"
     framework: str = "ortools"
-    mandatory_selection: Optional[MandatorySelectionConfig] = None
+    packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None

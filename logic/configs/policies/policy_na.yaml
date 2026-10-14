@@ -58,7 +58,7 @@ na:
     # ---------------------------------------------------------------------
     # Decoding Strategy
     # ---------------------------------------------------------------------
-    # Configures how the neural model selects nodes during route construction:
+    # Configures how the neural model selects nodes during routing:
     #   - greedy: Select highest-probability node (fast, deterministic)
     #   - sampling: Sample from distribution (stochastic, diverse)
     #   - beam_search: Explore top-k partial solutions (highest quality)
@@ -73,12 +73,12 @@ na:
 
     # Node Selection Strategy
     # ---------------------------------------------------------------------
-    - mandatory_selection: {"other/ms_lookahead.yaml": ["default"]}
+    - packing: {"other/ms_lookahead.yaml": ["default"]}
       # Pre-filter nodes before neural model inference
       # Options: ms_lookahead.yaml (predict overflow), ms_last_minute_*.yaml
       # See: docs/MUST_GO_STRATEGIES.md
       #
-      # Flow: mandatory_selection selector → neural model → route
+      # Flow: packing selector → neural model → route
       # Example: If 100 bins but only 30 exceed threshold → model sees 30 nodes
 
     # VRPP Settings

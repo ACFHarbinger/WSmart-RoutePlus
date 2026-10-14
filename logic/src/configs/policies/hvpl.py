@@ -43,7 +43,7 @@ class HVPLConfig:
         aco_init_iterations (int): Number of ACO iterations for initialization.
         time_limit (float): Time limit in seconds.
         seed (Optional[int]): Seed for the random number generator.
-        mandatory_selection (Optional[List[MandatorySelectionConfig]]): Mandatory selection configurations.
+        packing (Optional[List[PackingConfig]]): Packing configurations.
         route_improvement (Optional[List[RouteImprovingConfig]]): Route improvement configurations.
     """
 
@@ -98,5 +98,5 @@ class HVPLConfig:
     # Common policy fields
     vrpp: bool = True
     profit_aware_operators: bool = False
-    mandatory_selection: List[str] = field(default_factory=list)
+    packing: List[str] = field(default_factory=list)
     route_improvement: List[Any] = field(default_factory=list)

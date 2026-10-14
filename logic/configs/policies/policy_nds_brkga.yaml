@@ -4,7 +4,7 @@
 # NDS-BRKGA (Non-Dominated Sorting Biased Random-Key Genetic Algorithm)
 # =============================================================================
 # PURPOSE:
-#   Joint mandatory-bin selection and route construction. This solver
+#   Joint mandatory-packing and routing. This solver
 #   optimizes bins to visit and their visit order simultaneously in a
 #   single evolutionary loop.
 #

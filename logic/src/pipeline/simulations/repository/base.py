@@ -103,7 +103,7 @@ class SimulationRepository(ABC):
         Returns:
             Tuple containing:
                 - vehicle_capacity: Payload per trip, returned in percent of one full bin
-                  (the unit the constructors plan in). The constants below are kg and are
+                  (the unit the routing algorithms plan in). The constants below are kg and are
                   converted at the end: e.g. 3500 kg / (2.5 * 19 kg per bin) * 100 = 7368.4 %.
                 - revenue: Revenue per kg of collected waste (€/kg)
                 - density: Waste density (kg/L)

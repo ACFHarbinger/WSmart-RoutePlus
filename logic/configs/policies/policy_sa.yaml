@@ -57,7 +57,7 @@ sa:
   # Modular Sub-Policies
   # ---------------------------------------------------------------------------
   # List of mandatory collection filters executed prior to meta-heuristic search.
-  mandatory_selection:
+  packing:
     - {"other/ms_lookahead.yaml": ["default"]}
   # List of route improvement refinement operations.
   route_improvement: []

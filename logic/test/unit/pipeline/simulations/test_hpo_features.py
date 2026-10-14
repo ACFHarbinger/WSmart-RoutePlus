@@ -16,7 +16,7 @@ from logic.src.pipeline.simulations.hpo.search_spaces import (
     _extract_params_from_config,
     compose_search_space,
     generate_acceptance_criteria_rules,
-    generate_mandatory_selection_jobs,
+    generate_packing_jobs,
     generate_policy_filters,
     generate_route_improvement_interceptors,
     get_component_search_space,
@@ -252,7 +252,7 @@ class TestSearchSpaces:
             rule="test_rule",
         )
         assert "p" in composed
-        assert "mandatory_selection.0.p" in composed
+        assert "packing.0.p" in composed
         assert "route_improvement.0.p" in composed
         assert "acceptance_criterion.params.p" in composed
 
@@ -300,6 +300,6 @@ class TestSearchSpaces:
         with patch("logic.src.configs.policies", MagicMock(__path__=["mock_path"])):
             generate_policy_filters()
         generate_route_improvement_interceptors()
-        generate_mandatory_selection_jobs()
+        generate_packing_jobs()
         generate_acceptance_criteria_rules()
         assert mock_makedirs.called

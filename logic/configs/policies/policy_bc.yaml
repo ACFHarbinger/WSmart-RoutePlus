@@ -100,9 +100,9 @@ bc:
       #   for large instances. Disabling falls back to heuristic capacity cuts.
 
     # ---------------------------------------------------------------------
-    # mandatory Strategy
+    # packing algorithm
     # ---------------------------------------------------------------------
-    - mandatory_selection: {"other/ms_lookahead.yaml": ["default"]}
+    - packing: {"other/ms_lookahead.yaml": ["default"]}
       # Node selection strategy for waste collection problems
       # Options:
       #   - ms_lookahead.yaml: Predict overflow within N days

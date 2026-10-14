@@ -26,7 +26,7 @@ def test_fill_failure_does_not_inherit_previous_day_solver_status(monkeypatch):
 
 
 def test_forced_visit_retry_retains_both_solver_statuses():
-    from logic.src.policies.route_construction.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.ortools_wrapper import (
+    from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.ortools_wrapper import (
         _run_ortools_tcf_optimizer,
     )
 

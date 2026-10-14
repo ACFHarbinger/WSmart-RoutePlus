@@ -8,7 +8,7 @@ Example:
     >>> from logic.src.configs.policies import ABCConfig
     >>> config = ABCConfig()
     >>> print(config)
-    ABCConfig(n_sources=20, limit=10, max_iterations=200, n_removal=1, local_search_iterations=500, time_limit=60.0, seed=None, vrpp=True, profit_aware_operators=False, mandatory_selection=[], route_improvement=[])
+    ABCConfig(n_sources=20, limit=10, max_iterations=200, n_removal=1, local_search_iterations=500, time_limit=60.0, seed=None, vrpp=True, profit_aware_operators=False, packing=[], route_improvement=[])
 """
 
 from dataclasses import dataclass, field
@@ -28,7 +28,7 @@ class ABCConfig:
         local_search_iterations: Number of local search iterations.
         time_limit: Wall-clock time limit in seconds.
         vrpp: If True, solver operates in full VRPP mode.
-        mandatory_selection: Mandatory selection strategy config list.
+        packing: Packing algorithm config list.
         route_improvement: Route improvement operation config list.
     """
 
@@ -41,5 +41,5 @@ class ABCConfig:
     seed: Optional[int] = None
     vrpp: bool = True
     profit_aware_operators: bool = False
-    mandatory_selection: Optional[List[Any]] = field(default_factory=list)
+    packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)

@@ -72,7 +72,7 @@ lb_vns:
     - engine: "gurobi"
       # Specifies the use of the project's gurobi Local Branching with Variable Neighborhood Search engine.
 
-    - mandatory_selection: {"other/ms_lookahead.yaml": ["default"]}
+    - packing: {"other/ms_lookahead.yaml": ["default"]}
     # Selection logic for mandatory nodes.
 
     - route_improvement: []

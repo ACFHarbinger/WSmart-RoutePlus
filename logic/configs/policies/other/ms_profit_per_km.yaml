@@ -1,5 +1,5 @@
 # =============================================================================
-# mandatory Strategy: Profit-Per-Km (Spatial ROI)
+# packing algorithm: Profit-Per-Km (Spatial ROI)
 # =============================================================================
 # PURPOSE:
 #   Select bins that are economically worthwhile to collect relative to

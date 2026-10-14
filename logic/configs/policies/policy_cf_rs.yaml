@@ -53,7 +53,7 @@ cf_rs:
       # Policy implementation reference.
       # Source: logic/src/policies/cluster_first_route_second/policy_cf_rs.py
 
-    - mandatory_selection: {"other/ms_lookahead.yaml": ["default"]}
+    - packing: {"other/ms_lookahead.yaml": ["default"]}
       # Selection logic for bin collection (WSmart+ Route specific).
       # Defines which bins are 'mandatory' collection targets based on fill rates.
       # ms_lookahead: Proactive selection based on predicted overflow.

@@ -1,5 +1,5 @@
 # =============================================================================
-# Mandatory Strategy: Bernoulli Trial Random Selection
+# Packing Algorithm: Bernoulli Trial Random Selection
 # =============================================================================
 # PURPOSE:
 #   Stochastic null baseline where each bin is independently mandated

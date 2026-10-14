@@ -170,7 +170,7 @@ de:
     - profit_aware_operators: false
     - vrpp: true
 
-    - mandatory_selection: {"other/ms_lookahead.yaml": ["default"]}
+    - packing: {"other/ms_lookahead.yaml": ["default"]}
     - route_improvement: []
       # Wall-clock time limit in seconds
       # Range: 30.0-300.0

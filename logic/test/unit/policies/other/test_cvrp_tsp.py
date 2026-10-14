@@ -5,11 +5,11 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
-from logic.src.policies.route_construction.base import RouteConstructorRegistry
-from logic.src.policies.route_construction.other_algorithms.capacitated_vehicle_routing_problem.policy_cvrp import (
+from logic.src.policies.routing.base import RoutingAlgorithmRegistry
+from logic.src.policies.routing.other_algorithms.capacitated_vehicle_routing_problem.policy_cvrp import (
     CVRPPolicy,
 )
-from logic.src.policies.route_construction.other_algorithms.travelling_salesman_problem.policy_tsp import TSPPolicy
+from logic.src.policies.routing.other_algorithms.travelling_salesman_problem.policy_tsp import TSPPolicy
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
@@ -42,8 +42,8 @@ def mock_params():
 
 def test_tsp_policy(mock_params):
     with patch("logic.src.pipeline.simulations.repository.load_area_and_waste_type_params") as mock_load, \
-         patch("logic.src.policies.route_construction.other_algorithms.travelling_salesman_problem.policy_tsp.find_route") as mock_find, \
-         patch("logic.src.policies.route_construction.other_algorithms.travelling_salesman_problem.policy_tsp.get_multi_tour") as mock_get_multi:
+         patch("logic.src.policies.routing.other_algorithms.travelling_salesman_problem.policy_tsp.find_route") as mock_find, \
+         patch("logic.src.policies.routing.other_algorithms.travelling_salesman_problem.policy_tsp.get_multi_tour") as mock_get_multi:
 
         # Mock load: cap, rev, dens, exp, vol
         mock_load.return_value = (100.0, 1.0, 1.0, 1.0, 1.0)
@@ -56,7 +56,7 @@ def test_tsp_policy(mock_params):
         # Assume it just returns the tour if valid
         mock_get_multi.return_value = [0, 1, 2, 3, 4, 5, 0]
 
-        cls = RouteConstructorRegistry.get("tsp")
+        cls = RoutingAlgorithmRegistry.get("tsp")
         assert cls is not None
         policy = cls()
         assert isinstance(policy, TSPPolicy)
@@ -74,14 +74,14 @@ def test_tsp_policy(mock_params):
 
 def test_cvrp_policy(mock_params):
     with patch("logic.src.pipeline.simulations.repository.load_area_and_waste_type_params") as mock_load, \
-         patch("logic.src.policies.route_construction.other_algorithms.capacitated_vehicle_routing_problem.policy_cvrp.find_routes_ortools") as mock_find:
+         patch("logic.src.policies.routing.other_algorithms.capacitated_vehicle_routing_problem.policy_cvrp.find_routes_ortools") as mock_find:
 
         mock_load.return_value = (100.0, 1.0, 1.0, 1.0, 1.0)
 
         # Mock the default (OR-Tools) CVRP engine
         mock_find.return_value = [0, 1, 2, 0, 3, 4, 5, 0] # 2 routes
 
-        cls = RouteConstructorRegistry.get("cvrp")
+        cls = RoutingAlgorithmRegistry.get("cvrp")
         assert cls is not None
         policy = cls()
         assert isinstance(policy, CVRPPolicy)

@@ -40,9 +40,9 @@ from logic.src.pipeline.simulations.solver_status import current_solver_status, 
 
 @functools.lru_cache(maxsize=1)
 def _registered_constructor_keys() -> Tuple[str, ...]:
-    """Return every route-constructor key, taken from ``logic/configs/policies/policy_<key>.yaml``.
+    """Return every routing-algorithm key, taken from ``logic/configs/policies/policy_<key>.yaml``.
 
-    The file names are used instead of the live ``RouteConstructorRegistry`` because the registry
+    The file names are used instead of the live ``RoutingAlgorithmRegistry`` because the registry
     only holds the adapters imported so far (SWC-TCF, for one, is imported lazily), which would
     make the seed depend on import order.
     """
@@ -58,21 +58,21 @@ def _registered_constructor_keys() -> Tuple[str, ...]:
     )
 
 
-# Tokens that name a selector or an improvement stage, not a route constructor.
+# Tokens that name a selector or an improvement stage, not a routing algorithm.
 _STRUCTURAL_NAME_TOKENS = frozenset({"ms", "ri", "none", "custom", "new", "og"})
 
 
 def _matching_constructor(parts: List[str]) -> Optional[str]:
-    """Longest registered constructor key inside an expanded policy id.
+    """Longest registered routing algorithm key inside an expanded policy id.
 
-    ``alns`` and ``hgs`` are constructors, so they are not skipped. Selection
-    tokens such as ``regular`` are not constructor keys and do not win.
+    ``alns`` and ``hgs`` are routing algorithms, so they are not skipped. Selection
+    tokens such as ``regular`` are not routing algorithm keys and do not win.
 
     Args:
         parts: Underscore tokens of the policy id.
 
     Returns:
-        The constructor key, or None when the registry has no match.
+        The routing algorithm key, or None when the registry has no match.
     """
     keys = set(_registered_constructor_keys())
     for width in range(len(parts), 0, -1):
@@ -85,19 +85,19 @@ def _matching_constructor(parts: List[str]) -> Optional[str]:
 
 def get_canonical_policy_name(policy_name: str, known_keys: Optional[Iterable[str]] = None) -> str:
     """
-    Get the route-constructor key of a policy slug, used for RNG seeding.
+    Get the routing-algorithm key of a policy slug, used for RNG seeding.
 
-    The seed must depend on the constructor only, so that the same constructor
+    The seed must depend on the routing algorithm only, so that the same routing algorithm
     under different selectors or thresholds draws the same random stream, and
-    different constructors under the same selector do not. The constructor is the
-    leftmost-longest run of slug tokens that is a registered constructor key.
+    different routing algorithms under the same selector do not. The routing algorithm is the
+    leftmost-longest run of slug tokens that is a registered routing algorithm key.
 
     Args:
         policy_name: Full policy slug (e.g., 'last_minute_cf70_aco_hh_custom_cls').
-        known_keys: Constructor keys to match; defaults to the ``policy_<key>.yaml`` names.
+        known_keys: Routing algorithm keys to match; defaults to the ``policy_<key>.yaml`` names.
 
     Returns:
-        The constructor key (e.g., 'aco_hh'). If no key matches, the slug with any
+        The routing algorithm key (e.g., 'aco_hh'). If no key matches, the slug with any
         leading selection tokens removed is returned.
 
     Examples:
@@ -198,7 +198,7 @@ def _clean(name: Any) -> str:  # noqa: C901
 # Recursive helper to find naming keys in potentially nested/listed configs
 def find_policy_keys(obj: Any) -> Dict[str, Any]:
     """
-    Recursively find mandatory_selection and route_improvement keys in a config.
+    Recursively find packing and route_improvement keys in a config.
     Searches for synonyms and handles deep nesting.
 
     Args:
@@ -210,7 +210,7 @@ def find_policy_keys(obj: Any) -> Dict[str, Any]:
     found = {}
 
     # Synonyms for metadata keys
-    MS_KEYS = {"mandatory_selection", "ms", "node_selection", "selection_strategy"}
+    MS_KEYS = {"packing", "ms", "node_selection", "selection_strategy"}
     RI_KEYS = {"route_improvement", "ri", "improvement_strategy", "local_search"}
     AC_KEYS = {"acceptance_criteria", "acceptance_criterion", "ac"}
 
@@ -220,7 +220,7 @@ def find_policy_keys(obj: Any) -> Dict[str, Any]:
         for key, value in obj.items():
             if key in MS_KEYS:
                 if value is not None and str(value).lower() not in ["none", "null", "false", "[]"]:
-                    found["mandatory_selection"] = value
+                    found["packing"] = value
             elif key in RI_KEYS and value is not None and str(value).lower() not in ["none", "null", "false", "[]"]:
                 found["route_improvement"] = value
             elif key in AC_KEYS and value is not None and str(value).lower() not in ["none", "null", "false", "[]"]:
@@ -255,13 +255,13 @@ def build_naming_config(pol_cfg: Any, global_sim_cfg: Any) -> Dict[str, Any]:
         global_sim_cfg: The global simulation configuration (ctx.cfg.sim).
 
     Returns:
-        A dictionary with 'mandatory_selection' and 'route_improvement' keys.
+        A dictionary with 'packing' and 'route_improvement' keys.
     """
     # 1. Extract keys from policy config (recursive)
     extracted = find_policy_keys(pol_cfg)
 
     # 2. Fallback to global simulation defaults if keys are missing or None
-    for key in ["mandatory_selection", "route_improvement", "acceptance_criteria"]:
+    for key in ["packing", "route_improvement", "acceptance_criteria"]:
         if not extracted.get(key) and hasattr(global_sim_cfg, key):
             val = getattr(global_sim_cfg, key)
             if val:
@@ -350,23 +350,23 @@ def to_slug(name: str) -> str:
 
 def get_full_policy_name(pol_name: str, config: Dict[str, Any]) -> str:
     """
-    Construct a descriptive policy name including mandatory selection and route improvement.
+    Construct a descriptive policy name including packing and route improvement.
 
     This reflects the entire construction and improvement stack.
 
     Args:
-        pol_name: Base policy name (the route constructor).
+        pol_name: Base policy name (the routing algorithm).
         config: The naming configuration dictionary.
 
     Returns:
         A formatted name string (e.g., 'Lookahead + AM + None').
     """
 
-    # 1. Extract Mandatory Selection
-    ms = config.get("mandatory_selection")
+    # 1. Extract Packing
+    ms = config.get("packing")
     ms_name = _clean(ms)
 
-    # 2. Extract Route Construction (Base Policy)
+    # 2. Extract Routing (Base Policy)
     # Strip common prefixes/suffixes
     base_id = pol_name.lower().replace("policy_", "")
 
@@ -392,7 +392,7 @@ def get_full_policy_name(pol_name: str, config: Dict[str, Any]) -> str:
     ri = config.get("route_improvement")
     ri_name = _clean(ri)
 
-    # Remove redundant mandatory selection name from base_id to prevent duplication
+    # Remove redundant packing name from base_id to prevent duplication
     ms_slug = ms_name.lower().replace(" ", "_")
     if ms_slug != "none" and ms_slug in base_id:
         base_id = base_id.replace(f"_{ms_slug}", "").replace(f"{ms_slug}_", "").replace(ms_slug, "")
@@ -665,7 +665,7 @@ def resolve_solver_status(
     named, an empty tour is ``empty_tour``, and a returned route is ``ok``.
 
     Args:
-        published: Status noted by the constructor, if any.
+        published: Status noted by the routing algorithm, if any.
         tour: Tour returned for the day.
         error: Exception that aborted the day, if the solver raised.
 
@@ -682,7 +682,7 @@ def resolve_solver_status(
 
 
 def record_aborted_day(context: Any, error: BaseException) -> Dict[str, Any]:
-    """Write one daily record before a constructor exception leaves the day.
+    """Write one daily record before a routing algorithm exception leaves the day.
 
     The sample still fails. The record keeps the mandatory set and the solver
     status so an empty or aborted day is not a blank log line.
@@ -834,27 +834,27 @@ def run_day(context: SimulationDayContext) -> SimulationDayContext:
         CollectAction,
         FillAction,
         LogAction,
-        MandatorySelectionAction,
-        RouteConstructionAction,
+        PackingAction,
+        RoutingAction,
         RouteImprovementAction,
     )
     from logic.src.pipeline.simulations.actions.time_constraints import TimeConstraintAction
 
     commands = [
         FillAction(),
-        MandatorySelectionAction(),
-        RouteConstructionAction(),
+        PackingAction(),
+        RoutingAction(),
         RouteImprovementAction(),
         TimeConstraintAction(),
         CollectAction(),
         LogAction(),
     ]
 
-    # The day's "time" is the full policy: mandatory selection + route construction
+    # The day's "time" is the full policy: packing + routing
     # + route improvement (owner ruling DS-15). Simulator work (filling, collection,
     # logging) is excluded; the sample time is the sum of these daily times.
     # (Marked by position rather than isinstance so the actions can be mocked.)
-    policy_steps = {1, 2, 3}  # MandatorySelection, RouteConstruction, RouteImprovement
+    policy_steps = {1, 2, 3}  # Packing, Routing, RouteImprovement
     log_step = len(commands) - 1  # LogAction
     policy_time = 0.0
     for step, command in enumerate(commands):
@@ -866,7 +866,7 @@ def run_day(context: SimulationDayContext) -> SimulationDayContext:
         try:
             command.execute(cast(Dict[str, Any], context))
         except Exception as exc:
-            # Log the day, then let the sample fail. An infeasible constructor
+            # Log the day, then let the sample fail. An infeasible routing algorithm
             # must not erase the mandatory set that was selected this morning.
             if step != log_step and context.daily_log is None:
                 record_aborted_day(context, exc)

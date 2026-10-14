@@ -30,7 +30,7 @@ class GAConfig:
         vrpp (bool): Whether the problem is a VRRP.
         profit_aware_operators (bool): Whether to use profit-aware operators.
         seed (Optional[int]): Seed for the random number generator.
-        mandatory_selection (Optional[List[MandatorySelectionConfig]]): Mandatory selection configurations.
+        packing (Optional[List[PackingConfig]]): Packing configurations.
         route_improvement (Optional[List[RouteImprovingConfig]]): Route improvement configurations.
     """
 
@@ -44,5 +44,5 @@ class GAConfig:
     seed: Optional[int] = None
     vrpp: bool = True
     profit_aware_operators: bool = False
-    mandatory_selection: Optional[List[Any]] = field(default_factory=list)
+    packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)

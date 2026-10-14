@@ -2,7 +2,7 @@
 
 import numpy as np
 import pytest
-from logic.src.policies.route_construction.meta_heuristics.hybrid_volleyball_premier_league.policy_hvpl import (
+from logic.src.policies.routing.meta_heuristics.hybrid_volleyball_premier_league.policy_hvpl import (
     HVPLPolicy,
 )
 

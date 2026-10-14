@@ -8,7 +8,7 @@ Attributes:
     MultiDayContext: State ledger for rolling horizon multi-day optimization
 
 Example:
-    >>> from logic.src.policies.selection_and_construction.base.multi_day_context import (
+    >>> from logic.src.policies.packing_and_routing.base.multi_day_context import (
     ...     MultiDayContext,
     ... )
     >>> ctx = MultiDayContext(

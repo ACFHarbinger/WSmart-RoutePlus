@@ -114,7 +114,7 @@ class AcceptanceCriterionFactory:
         params.update(kwargs)
 
         # Instantiate. We use filter_kwargs pattern if needed, or rely on constructor signatures.
-        # For now, we assume constructors are compatible with the params they receive.
+        # For now, we assume routing algorithms are compatible with the params they receive.
         inst = criterion_cls(**params)
         consumed: Dict[str, Any] = {"name": name, "params": dict(params)}
         if hasattr(inst, "T"):

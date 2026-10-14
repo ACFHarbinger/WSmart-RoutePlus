@@ -1,5 +1,5 @@
 """
-ARCO (Adaptive Route Constructor Orchestrator) configuration dataclass.
+ARCO (Adaptive Routing Algorithm Orchestrator) configuration dataclass.
 
 Attributes:
     ARCOConfig: Attributes for ARCO configuration.
@@ -18,16 +18,16 @@ from typing import List
 @dataclass
 class ARCOConfig:
     """
-    Configuration for the Adaptive Route Constructor Orchestrator (ARCO).
+    Configuration for the Adaptive Routing Algorithm Orchestrator (ARCO).
 
     Attributes:
-        constructors: Ordered candidate list of route constructor names.
+        constructors: Ordered candidate list of routing algorithm names.
             The orchestrator selects a permutation of these at runtime.
         time_limit: Maximum wall-clock time (seconds) for the full chain.
-        selection_strategy: How to select the next constructor.
+        selection_strategy: How to select the next routing algorithm.
             - ``"epsilon_greedy"``: exploit best weight with probability
               (1 − epsilon), explore uniformly otherwise.
-            - ``"greedy"``: always pick the highest-weight constructor.
+            - ``"greedy"``: always pick the highest-weight routing algorithm.
             - ``"softmax"``: Boltzmann-proportional sampling.
         epsilon: Exploration rate for ε-greedy strategy ∈ [0, 1].
         temperature: Softmax temperature > 0 (lower → greedier).

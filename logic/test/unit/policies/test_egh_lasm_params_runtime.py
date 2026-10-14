@@ -14,11 +14,11 @@ cannot recur silently.
 import pytest
 
 from logic.src.configs.policies import ExactGuidedHeuristicConfig, LASMPipelineConfig
-from logic.src.policies.route_construction.matheuristics.exact_guided_heuristic import dispatcher as egh_dispatcher
-from logic.src.policies.route_construction.matheuristics.exact_guided_heuristic.params import (
+from logic.src.policies.routing.matheuristics.exact_guided_heuristic import dispatcher as egh_dispatcher
+from logic.src.policies.routing.matheuristics.exact_guided_heuristic.params import (
     ExactGuidedHeuristicParams,
 )
-from logic.src.policies.route_construction.learning_matheuristic_algorithms.learning_allocated_sequential_matheuristic.params import (
+from logic.src.policies.routing.learning_matheuristic_algorithms.learning_allocated_sequential_matheuristic.params import (
     LASMPipelineParams,
 )
 

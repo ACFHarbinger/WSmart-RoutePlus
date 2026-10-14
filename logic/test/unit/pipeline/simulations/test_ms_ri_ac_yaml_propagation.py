@@ -1,7 +1,7 @@
 """Fail-before tests: MS / RI / AC yaml parameters must reach the live action path.
 
 The paper policies store these as ``{file.yaml: [variant]}`` (often an OmegaConf
-ListConfig). Constructors used to honour only a string variant and silently ran
+ListConfig). Routing algorithms used to honour only a string variant and silently ran
 on dataclass defaults; acceptance yaml never became ``acceptance_criterion``.
 """
 
@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
-from logic.src.pipeline.simulations.actions.node_selection import MandatorySelectionAction
+from logic.src.pipeline.simulations.actions.node_selection import PackingAction
 from logic.src.pipeline.simulations.actions.route_improvement import RouteImprovementAction
 from logic.src.policies.route_improvement.local_search import ClassicalLocalSearchRouteImprover
 from omegaconf import OmegaConf
@@ -20,7 +20,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 def test_last_minute_list_variant_loads_yaml_threshold() -> None:
     """``{ms_last_minute.yaml: [last_minute_cf70]}`` must not be treated as a strategy name."""
-    action = MandatorySelectionAction()
+    action = PackingAction()
     parsed = action._parse_strategy_item({"other/ms_last_minute.yaml": ["last_minute_cf70"]})
     assert parsed, "expected at least one strategy"
     assert parsed[0]["name"] == "last_minute"
@@ -29,13 +29,13 @@ def test_last_minute_list_variant_loads_yaml_threshold() -> None:
 
 def test_last_minute_omegaconf_listconfig_variant_loads_yaml_threshold() -> None:
     item = OmegaConf.create({"other/ms_last_minute.yaml": ["last_minute_cf90"]})
-    parsed = MandatorySelectionAction()._parse_strategy_item(item)
+    parsed = PackingAction()._parse_strategy_item(item)
     assert parsed[0]["name"] == "last_minute"
     assert parsed[0]["params"].get("threshold") == 90
 
 
 def test_lookahead_default_list_variant_reads_yaml_day() -> None:
-    parsed = MandatorySelectionAction()._parse_strategy_item({"other/ms_lookahead.yaml": ["default"]})
+    parsed = PackingAction()._parse_strategy_item({"other/ms_lookahead.yaml": ["default"]})
     assert parsed[0]["name"] == "lookahead"
     assert parsed[0]["params"].get("current_collection_day") == 0
 
@@ -59,14 +59,14 @@ def test_bmc_yaml_is_injected_as_typed_acceptance_criterion() -> None:
             "psoma": {
                 "custom": [
                     {"acceptance_criteria": {"other/ac_bmc.yaml": ["bmc"]}},
-                    {"mandatory_selection": []},
+                    {"packing": []},
                 ]
             }
         },
         "day": 0,
         "max_capacity": 100.0,
     }
-    MandatorySelectionAction().execute(context)
+    PackingAction().execute(context)
     live = context.get("_live_ac") or _find_acceptance(context["config"])
     assert live is not None, "acceptance yaml was not resolved onto the live config"
     method, params = _ac_method_and_params(live)
@@ -91,7 +91,7 @@ def test_oi_yaml_is_injected_as_only_improving() -> None:
         "day": 0,
         "max_capacity": 100.0,
     }
-    MandatorySelectionAction().execute(context)
+    PackingAction().execute(context)
     live = context.get("_live_ac") or _find_acceptance(context["config"])
     assert live is not None
     method, _params = _ac_method_and_params(live)
@@ -106,7 +106,7 @@ def test_psoma_from_config_consumes_injected_bmc_not_dataclass_t0() -> None:
         AcceptanceConfig,
         BoltzmannAcceptanceConfig,
     )
-    from logic.src.policies.route_construction.meta_heuristics.particle_swarm_optimization_memetic_algorithm.params import (  # noqa: E501
+    from logic.src.policies.routing.meta_heuristics.particle_swarm_optimization_memetic_algorithm.params import (  # noqa: E501
         PSOMAParams,
     )
 
@@ -145,7 +145,7 @@ def test_alns_from_config_consumes_injected_bmc_on_attrdict() -> None:
         BoltzmannAcceptanceConfig,
     )
     from logic.src.pipeline.simulations.actions.base import _attrify
-    from logic.src.policies.route_construction.meta_heuristics.adaptive_large_neighborhood_search.params import (
+    from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.params import (
         ALNSParams,
     )
 
@@ -176,7 +176,7 @@ def test_hgs_from_config_consumes_injected_oi() -> None:
 
     from logic.src.configs.policies.other.acceptance_criteria import AcceptanceConfig, OnlyImprovingConfig
     from logic.src.policies.acceptance_criteria.only_improving import OnlyImproving
-    from logic.src.policies.route_construction.meta_heuristics.hybrid_genetic_search.params import HGSParams
+    from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.params import HGSParams
 
     cfg = SimpleNamespace(
         acceptance_criterion=AcceptanceConfig(method="oi", params=OnlyImprovingConfig()),
@@ -340,7 +340,7 @@ def test_expanded_paper_policies_match_ms_ri_ac_yaml() -> None:
     cfg.sim.full_policies = []
     expand_policy_configs(cfg)
 
-    action = MandatorySelectionAction()
+    action = PackingAction()
     assert cfg.sim.config_path, "expander stored no policies"
     cls_yaml = _load_policy_yaml_section("other/ri_cls.yaml", "default")
     bmc_yaml = _load_policy_yaml_section("other/ac_bmc.yaml", "bmc")["params"]
@@ -352,7 +352,7 @@ def test_expanded_paper_policies_match_ms_ri_ac_yaml() -> None:
     for stored in cfg.sim.config_path.values():
         cfg_copy = OmegaConf.to_container(stored, resolve=True) if OmegaConf.is_config(stored) else stored
         parsed = action._gather_strategies({"config": cfg_copy})
-        assert parsed, "mandatory selection did not resolve"
+        assert parsed, "packing did not resolve"
         for item in parsed:
             if item["name"] == "last_minute":
                 saw_last_minute = True
@@ -397,7 +397,7 @@ def test_live_test_sim_captures_ms_ri_ac(tmp_path, monkeypatch) -> None:
         "engine": "custom",
         "time_limit": 2.0,
         "max_iterations": 20,
-        "mandatory_selection": {"other/ms_last_minute.yaml": "last_minute_cf70"},
+        "packing": {"other/ms_last_minute.yaml": "last_minute_cf70"},
         "route_improvement": {"other/ri_cls.yaml": "default"},
         "acceptance_criteria": {"other/ac_bmc.yaml": "bmc"},
     }
@@ -427,10 +427,10 @@ def test_live_test_sim_captures_ms_ri_ac(tmp_path, monkeypatch) -> None:
 
     records = [json.loads(line) for line in capture.read_text().splitlines() if line.strip()]
     kinds = {row["kind"] for row in records}
-    assert "mandatory_selection" in kinds
+    assert "packing" in kinds
     assert "route_improvement" in kinds
     assert "acceptance_criteria" in kinds
-    ms = next(row["payload"] for row in records if row["kind"] == "mandatory_selection")
+    ms = next(row["payload"] for row in records if row["kind"] == "packing")
     assert ms["name"] == "last_minute"
     assert ms["params"]["threshold"] == 70
     ri = next(row["payload"] for row in records if row["kind"] == "route_improvement")

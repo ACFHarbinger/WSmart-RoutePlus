@@ -15,7 +15,7 @@ Example:
     42
     >>> config.vrpp
     True
-    >>> config.mandatory_selection
+    >>> config.packing
     None
     >>> config.route_improvement
     None
@@ -24,7 +24,7 @@ Example:
 from dataclasses import dataclass
 from typing import Optional
 
-from .other.mandatory_selection import MandatorySelectionConfig
+from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -41,7 +41,7 @@ class PHHConfig:
         gens (int): Number of generations. Defaults to 20.
         seed (int): Random seed for reproducibility. Defaults to 42.
         vrpp (bool): Whether the problem is a VRP with Profits. Defaults to True.
-        mandatory_selection (Optional[MandatorySelectionConfig]): Configuration for
+        packing (Optional[PackingConfig]): Configuration for
             mandatory node selection policies.
         route_improvement (Optional[RouteImprovingConfig]): Optional configuration
             for local search refinement steps.
@@ -52,5 +52,5 @@ class PHHConfig:
     seed: int = 42
     vrpp: bool = True
 
-    mandatory_selection: Optional[MandatorySelectionConfig] = None
+    packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None

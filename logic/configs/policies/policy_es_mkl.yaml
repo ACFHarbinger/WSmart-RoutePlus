@@ -128,7 +128,7 @@ es_mkl:
     - profit_aware_operators: false
     - vrpp: true
 
-    - mandatory_selection: {"other/ms_lookahead.yaml": ["default"]}
+    - packing: {"other/ms_lookahead.yaml": ["default"]}
     - route_improvement: ["2opt_intra", "relocate"]
 
 # =============================================================================

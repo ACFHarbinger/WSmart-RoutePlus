@@ -17,7 +17,7 @@ Example:
 from dataclasses import dataclass
 from typing import Optional
 
-from .other.mandatory_selection import MandatorySelectionConfig
+from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -55,7 +55,7 @@ class KernelSearchConfig:
             invoke the project's native Gurobi-based KS solver.
         framework (str): Identifier for the optimization framework. Options
             include "ortools" and "pyomon".
-        mandatory_selection (Optional[MandatorySelectionConfig]): Logic for pre-selecting
+        packing (Optional[PackingConfig]): Logic for pre-selecting
             mandatory bins (e.g., those nearly full or overdue).
         route_improvement (Optional[RouteImprovingConfig]): Settings for applying
             localized refinement (e.g., 2-opt, Or-opt) to the final matheuristic tour.
@@ -73,5 +73,5 @@ class KernelSearchConfig:
     # Infrastructure
     engine: str = "gurobi"
     framework: str = "ortools"
-    mandatory_selection: Optional[MandatorySelectionConfig] = None
+    packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None

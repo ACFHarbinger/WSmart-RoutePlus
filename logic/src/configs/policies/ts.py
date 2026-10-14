@@ -13,7 +13,7 @@ Example:
     60.0
     >>> config.vrpp
     True
-    >>> config.mandatory_selection
+    >>> config.packing
     []
     >>> config.route_improvement
     []
@@ -57,7 +57,7 @@ class TSConfig:
         seed: Random seed for reproducibility.
         vrpp: Whether the problem is a Vehicle Routing Problem with Profits.
         profit_aware_operators: Whether to use profit-aware considerations in neighborhood operators.
-        mandatory_selection: List of mandatory node selection strategies to apply.
+        packing: List of packing algorithms to apply.
         route_improvement: List of route improvement strategies to apply.
         acceptance_criterion: Configuration for the acceptance criterion (e.g., simulated annealing).
     """
@@ -104,6 +104,6 @@ class TSConfig:
     seed: Optional[int] = None
     vrpp: bool = True
     profit_aware_operators: bool = False
-    mandatory_selection: Optional[List[Any]] = field(default_factory=list)
+    packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)
     acceptance_criterion: AcceptanceConfig = field(default_factory=lambda: AcceptanceConfig(method="ac"))

@@ -9,8 +9,8 @@ all, and ``src`` crashed in ``_build_config`` because its
 This test walks the default ``sim.policies`` list of
 ``logic/configs/tasks/test_sim.yaml`` — exactly what the simulator fans
 out — and for every entry does what the live path does
-(``actions/route_construction.py``): compose the task the way ``main.py``
-does, resolve the entry's yaml node, find a registered constructor through
+(``actions/routing.py``): compose the task the way ``main.py``
+does, resolve the entry's yaml node, find a registered routing algorithm through
 the same solver-key chain (explicit ``policy.type``/``solver``/``engine``
 key, registry-key match, then the compound-name word-boundary fallback
 that resolves variants like ``sans_new`` → ``sans``), and build the
@@ -19,7 +19,7 @@ injection. The adapter's typed config must equal an independent
 ``_build_config`` of the same section, so nothing between ``get_adapter``
 and the dataclass drops or mutates the yaml values.
 
-Before the fixes this failed on ``gp_hh`` (no registered constructor for
+Before the fixes this failed on ``gp_hh`` (no registered routing algorithm for
 the entry name, compound fallback included), ``mp_bmc`` (no
 implementation anywhere) and ``src`` (TypeError: ``_get_config_key()``
 takes 1 positional argument but 2 were given).
@@ -32,8 +32,8 @@ from typing import Any, Dict, List, Optional
 
 import pytest
 from hydra import compose, initialize_config_dir
-from logic.src.policies.route_construction.base.factory import RouteConstructorFactory
-from logic.src.policies.route_construction.base.registry import RouteConstructorRegistry
+from logic.src.policies.routing.base.factory import RoutingAlgorithmFactory
+from logic.src.policies.routing.base.registry import RoutingAlgorithmRegistry
 from omegaconf import OmegaConf
 
 _REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -41,7 +41,7 @@ _CONFIGS_DIR = _REPO_ROOT / "logic" / "configs"
 _TEST_SIM = _CONFIGS_DIR / "tasks" / "test_sim.yaml"
 
 # The seed the simulator injects into every policy's raw config
-# (actions/route_construction.py, run_day's policy_seed fallback).
+# (actions/routing.py, run_day's policy_seed fallback).
 _SIM_SEED = 1234
 
 _CFG = None
@@ -57,7 +57,7 @@ def _compose_test_sim() -> Any:
     if _CFG is None:
         with initialize_config_dir(str(_CONFIGS_DIR), version_base=None):
             _CFG = compose(config_name="config", overrides=["tasks=test_sim"])
-        RouteConstructorFactory.ensure_registered()
+        RoutingAlgorithmFactory.ensure_registered()
     return _CFG
 
 
@@ -94,7 +94,7 @@ def _raw_entry_config(cfg: Any, key: str) -> Dict[str, Any]:
 def _resolve_solver_key(raw: Dict[str, Any], key: str) -> Optional[str]:
     """The action's solver-key chain, minus the display-name last resort
     (which only exists on the live per-day path)."""
-    registered = set(RouteConstructorRegistry.list_route_constructors())
+    registered = set(RoutingAlgorithmRegistry.list_routing_algorithms())
     # 1. Explicit engine/solver/type inside the policy section.
     for path in ("policy.type", "policy.solver", "policy.engine"):
         node = raw.get(key)
@@ -119,22 +119,22 @@ def test_test_sim_entry_resolves_and_builds(key: str):
     cfg = _compose_test_sim()
     raw = _raw_entry_config(cfg, key)
 
-    # 1. The entry maps to a registered route constructor through the same
+    # 1. The entry maps to a registered routing algorithm through the same
     #    chain the live action uses.
     solver_key = _resolve_solver_key(raw, key)
     assert solver_key is not None, (
-        f"test_sim entry {key!r} resolves to no registered route constructor "
+        f"test_sim entry {key!r} resolves to no registered routing algorithm "
         "(explicit key, registry key and compound-name fallback all failed); "
         "fix the registry key or remove the entry."
     )
 
     # 2. The adapter builds from the section, as the simulator calls it.
-    adapter = RouteConstructorFactory.get_adapter(solver_key, config=raw)
+    adapter = RoutingAlgorithmFactory.get_adapter(solver_key, config=raw)
 
     # 3. The adapter's typed config equals an independent build from the
     #    same section (policies with their own config parsing, such as the
     #    joint policies, are exempt from the BaseRoutingPolicy contract).
-    cls = RouteConstructorRegistry.get(solver_key)
+    cls = RoutingAlgorithmRegistry.get(solver_key)
     if cls._config_class() is not None and hasattr(cls, "_build_config"):
         expected, _seed = cls._build_config(OmegaConf.create(raw))
         assert isinstance(adapter.config, cls._config_class()), key

@@ -10,7 +10,7 @@ Attributes:
     pattern_itinerary_crossover: Pattern and Itinerary Crossover (PAIX).
 
 Example:
-    >>> from logic.src.policies.route_construction.meta_heuristics.hybrid_genetic_search_with_adaptive_diversity_control.individual import Individual
+    >>> from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search_with_adaptive_diversity_control.individual import Individual
     >>> operator = pattern_itinerary_crossover(
     ...    Individual(giant_tour=[1, 2, 3, 4]),
     ...    Individual(giant_tour=[4, 3, 2, 1]),
@@ -21,7 +21,7 @@ import random
 
 import numpy as np
 
-from logic.src.policies.route_construction.meta_heuristics.hybrid_genetic_search_with_adaptive_diversity_control.individual import (
+from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search_with_adaptive_diversity_control.individual import (
     Individual,
 )
 

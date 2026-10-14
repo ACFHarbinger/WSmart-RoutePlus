@@ -29,7 +29,7 @@ from logic.src.pipeline.rl.common.baselines import (
 from logic.src.pipeline.rl.common.baselines import (
     WarmupBaseline as WarmupBaseline,
 )
-from logic.src.policies.route_construction.learning_algorithms.neural_agent import NeuralAgent
+from logic.src.policies.routing.learning_algorithms.neural_agent import NeuralAgent
 from tensordict import TensorDict
 from torch.utils.data import Dataset
 

@@ -8,30 +8,30 @@ import random
 import numpy as np
 import pytest
 from logic.src.policies.helpers.operators.solution_initialization import build_greedy_routes
-from logic.src.policies.route_construction.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_aco import (
+from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_aco import (
     HyperHeuristicACO,
 )
-from logic.src.policies.route_construction.hyper_heuristics.ant_colony_optimization_hyper_heuristic.params import (
+from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic.params import (
     HyperACOParams,
 )
-from logic.src.policies.route_construction.hyper_heuristics.genetic_programming_hyper_heuristic.params import GPHHParams
-from logic.src.policies.route_construction.hyper_heuristics.genetic_programming_hyper_heuristic.solver import GPHHSolver
-from logic.src.policies.route_construction.hyper_heuristics.hidden_markov_model_great_deluge_hyper_heuristic.params import (
+from logic.src.policies.routing.hyper_heuristics.genetic_programming_hyper_heuristic.params import GPHHParams
+from logic.src.policies.routing.hyper_heuristics.genetic_programming_hyper_heuristic.solver import GPHHSolver
+from logic.src.policies.routing.hyper_heuristics.hidden_markov_model_great_deluge_hyper_heuristic.params import (
     HMMGDHHParams,
 )
-from logic.src.policies.route_construction.hyper_heuristics.hidden_markov_model_great_deluge_hyper_heuristic.solver import (
+from logic.src.policies.routing.hyper_heuristics.hidden_markov_model_great_deluge_hyper_heuristic.solver import (
     HMMGDHHSolver,
 )
-from logic.src.policies.route_construction.hyper_heuristics.sequence_based_selection_hyper_heuristic.params import (
+from logic.src.policies.routing.hyper_heuristics.sequence_based_selection_hyper_heuristic.params import (
     SSHHParams,
 )
-from logic.src.policies.route_construction.hyper_heuristics.sequence_based_selection_hyper_heuristic.solver import (
+from logic.src.policies.routing.hyper_heuristics.sequence_based_selection_hyper_heuristic.solver import (
     SSHHSolver,
 )
-from logic.src.policies.route_construction.learning_heuristic_algorithms.reinforcement_learning_great_deluge_hyper_heuristic.params import (
+from logic.src.policies.routing.learning_heuristic_algorithms.reinforcement_learning_great_deluge_hyper_heuristic.params import (
     RLGDHHParams,
 )
-from logic.src.policies.route_construction.learning_heuristic_algorithms.reinforcement_learning_great_deluge_hyper_heuristic.solver import (
+from logic.src.policies.routing.learning_heuristic_algorithms.reinforcement_learning_great_deluge_hyper_heuristic.solver import (
     RLGDHHSolver,
 )
 

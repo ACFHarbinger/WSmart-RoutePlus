@@ -33,7 +33,7 @@ class RLSConfig:
                  Supported keys: 'two_opt', 'swap', 'relocate', 'two_opt_star', 'swap_star', 'three_opt'.
                  Normalized internally if they don't sum to 1.
         time_limit: Maximum time in seconds for the solver.
-        mandatory_selection: List of mandatory strategy config files.
+        packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
     """
 

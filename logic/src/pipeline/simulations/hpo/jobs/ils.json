@@ -50,7 +50,7 @@
         ],
         "default": false
     },
-    "mandatory_selection": {
+    "packing": {
         "type": "object",
         "default": "factory"
     },

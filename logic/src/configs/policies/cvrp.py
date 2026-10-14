@@ -14,7 +14,7 @@ Example:
 from dataclasses import dataclass
 from typing import List, Optional
 
-from .other.mandatory_selection import MandatorySelectionConfig
+from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -27,7 +27,7 @@ class CVRPConfig:
         time_limit: Maximum time in seconds for the solver.
         seed: Random seed for reproducibility.
         engine: Solver engine to use ('ortools', 'gurobi').
-        mandatory_selection: List of mandatory strategy config files.
+        packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
     """
 
@@ -35,5 +35,5 @@ class CVRPConfig:
     time_limit: float = 60.0
     engine: str = "ortools"
     seed: Optional[int] = None
-    mandatory_selection: Optional[List[MandatorySelectionConfig]] = None
+    packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

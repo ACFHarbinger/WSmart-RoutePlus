@@ -29,7 +29,7 @@ class JointGreedyConfig:
         seed (Optional[int]): Seed for random number generator.
         time_limit (float): Time limit in seconds.
         vrpp (bool): Whether the problem is a VRRP.
-        mandatory_selection (Optional[List[Any]]): Mandatory customers/requests.
+        packing (Optional[List[Any]]): Mandatory customers/requests.
         route_improvement (Optional[List[Any]]): Route improvement strategies.
     """
 
@@ -41,5 +41,5 @@ class JointGreedyConfig:
 
     # Hydra compatibility placeholders
     vrpp: bool = True
-    mandatory_selection: Optional[List[Any]] = field(default_factory=list)
+    packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)

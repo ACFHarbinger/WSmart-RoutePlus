@@ -94,7 +94,7 @@ sans:
     # -------------------------------------------------------------------------
     # Infrastructure Settings
     # -------------------------------------------------------------------------
-    mandatory_selection: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
+    packing: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
     # VRPP Settings
     vrpp: true
 
@@ -119,7 +119,7 @@ sans:
     time_limit: 60
     # Maximum wall-clock seconds
 
-    mandatory_selection: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
+    packing: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
     # VRPP Settings
     vrpp: true
 
@@ -141,7 +141,7 @@ sans:
     time_limit: 60
     # Maximum wall-clock seconds
 
-    mandatory_selection: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
+    packing: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
     # VRPP Settings
     vrpp: true
 
@@ -159,7 +159,7 @@ lac:
     engine: og
     combination: [500, 75, 0.7, 0, 0.095, 0, 0]
     time_limit: 60
-    mandatory_selection: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
+    packing: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
     # VRPP Settings
     vrpp: true
 
@@ -169,7 +169,7 @@ lac:
     engine: og
     combination: [2000, 75, 0.7, 0, 0.095, 0, 0]
     time_limit: 60
-    mandatory_selection: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
+    packing: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
     # VRPP Settings
     vrpp: true
 

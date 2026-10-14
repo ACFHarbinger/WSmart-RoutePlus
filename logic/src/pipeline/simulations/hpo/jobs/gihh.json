@@ -51,7 +51,7 @@
         "type": "int",
         "default": 150
     },
-    "mandatory_selection": {
+    "packing": {
         "type": "object",
         "default": null
     },

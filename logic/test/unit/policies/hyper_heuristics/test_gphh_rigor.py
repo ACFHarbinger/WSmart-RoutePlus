@@ -14,9 +14,9 @@ import random
 
 import numpy as np
 import pytest
-from logic.src.policies.route_construction.hyper_heuristics.genetic_programming_hyper_heuristic.params import GPHHParams
-from logic.src.policies.route_construction.hyper_heuristics.genetic_programming_hyper_heuristic.solver import GPHHSolver
-from logic.src.policies.route_construction.hyper_heuristics.genetic_programming_hyper_heuristic.tree import (
+from logic.src.policies.routing.hyper_heuristics.genetic_programming_hyper_heuristic.params import GPHHParams
+from logic.src.policies.routing.hyper_heuristics.genetic_programming_hyper_heuristic.solver import GPHHSolver
+from logic.src.policies.routing.hyper_heuristics.genetic_programming_hyper_heuristic.tree import (
     _TERMINALS,
     ConstantNode,
     FunctionNode,

@@ -12,7 +12,7 @@ from logic.src.policies.helpers.solvers_and_matheuristics.branching import (
     FleetSizeBranchingConstraint,
     NodeVisitationBranchingConstraint,
 )
-from logic.src.policies.route_construction.exact_and_decomposition_solvers.multi_stage_branch_and_price_and_cut_with_set_partition.ms_bpc_sp_engine import (
+from logic.src.policies.routing.exact_and_decomposition_solvers.multi_stage_branch_and_price_and_cut_with_set_partition.ms_bpc_sp_engine import (
     _apply_branching_to_master,
     _compute_lr_bound_at_node,
     _detect_cycles,
@@ -21,7 +21,7 @@ from logic.src.policies.route_construction.exact_and_decomposition_solvers.multi
     _reset_master_constraints,
     run_ms_bpc_sp,
 )
-from logic.src.policies.route_construction.exact_and_decomposition_solvers.multi_stage_branch_and_price_and_cut_with_set_partition.params import (
+from logic.src.policies.routing.exact_and_decomposition_solvers.multi_stage_branch_and_price_and_cut_with_set_partition.params import (
     MSBPCSPParams,
 )
 
@@ -226,7 +226,7 @@ def test_ms_cg_loop_is_local_and_uses_local_pricing():
     """
     import inspect
 
-    from logic.src.policies.route_construction.exact_and_decomposition_solvers.multi_stage_branch_and_price_and_cut_with_set_partition import (
+    from logic.src.policies.routing.exact_and_decomposition_solvers.multi_stage_branch_and_price_and_cut_with_set_partition import (
         ms_bpc_sp_engine,
     )
 
@@ -362,7 +362,7 @@ def test_pricing_status_and_duplicate_timeout_safeguard():
     from unittest.mock import MagicMock
 
     from logic.src.policies.helpers.solvers_and_matheuristics import PricingStatus
-    from logic.src.policies.route_construction.exact_and_decomposition_solvers.multi_stage_branch_and_price_and_cut_with_set_partition import (
+    from logic.src.policies.routing.exact_and_decomposition_solvers.multi_stage_branch_and_price_and_cut_with_set_partition import (
         ms_bpc_sp_engine as engine,
     )
 
@@ -508,7 +508,7 @@ def test_cg_at_root_only_descendant_leaves_node_incomplete():
     import time
     from unittest.mock import MagicMock
 
-    from logic.src.policies.route_construction.exact_and_decomposition_solvers.multi_stage_branch_and_price_and_cut_with_set_partition import (
+    from logic.src.policies.routing.exact_and_decomposition_solvers.multi_stage_branch_and_price_and_cut_with_set_partition import (
         ms_bpc_sp_engine as e,
     )
 
@@ -551,7 +551,7 @@ def test_farkas_unexhausted_preserves_incomplete_node():
     from unittest.mock import MagicMock
 
     from logic.src.policies.helpers.solvers_and_matheuristics import PricingStatus
-    from logic.src.policies.route_construction.exact_and_decomposition_solvers.multi_stage_branch_and_price_and_cut_with_set_partition import (
+    from logic.src.policies.routing.exact_and_decomposition_solvers.multi_stage_branch_and_price_and_cut_with_set_partition import (
         ms_bpc_sp_engine as engine,
     )
 

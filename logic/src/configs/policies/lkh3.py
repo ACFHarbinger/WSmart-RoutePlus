@@ -39,7 +39,7 @@ class LKH3Config:
         sa_max_trials: Maximum number of trials for Simulated Annealing.
         deep_plateau_limit: Number of iterations without improvement before triggering deep search.
         native_prize_collecting: If True, solver uses native prize collecting.
-        mandatory_selection: Mandatory selection strategy config list.
+        packing: Packing algorithm config list.
         route_improvement: Route improvement operation config list.
     """
 
@@ -64,5 +64,5 @@ class LKH3Config:
     native_prize_collecting: bool = False
     seed: Optional[int] = None
 
-    mandatory_selection: Optional[List[Any]] = field(default_factory=list)
+    packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)

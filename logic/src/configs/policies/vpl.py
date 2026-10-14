@@ -61,7 +61,7 @@ class VPLConfig:
         time_limit: Maximum time in seconds to run the search.
         seed: Random seed for reproducibility.
         vrpp: Whether the problem is a Vehicle Routing Problem with Profits.
-        mandatory_selection: List of mandatory node selection strategies to apply.
+        packing: List of packing algorithms to apply.
         route_improvement: List of route improvement strategies to apply.
     """
 
@@ -85,5 +85,5 @@ class VPLConfig:
 
     # Common policy fields
     vrpp: bool = True
-    mandatory_selection: List[str] = field(default_factory=list)
+    packing: List[str] = field(default_factory=list)
     route_improvement: List[Any] = field(default_factory=list)

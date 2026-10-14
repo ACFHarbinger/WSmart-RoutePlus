@@ -10,10 +10,10 @@ from typing import Any, Dict
 
 import pytest
 from logic.src.constants.paths import CONFIGS_DIR
-from logic.src.pipeline.simulations.actions.node_selection import MandatorySelectionAction
+from logic.src.pipeline.simulations.actions.node_selection import PackingAction
 from logic.src.pipeline.simulations.actions.route_improvement import RouteImprovementAction
-from logic.src.policies.route_construction.base.factory import RouteConstructorFactory
-from logic.src.policies.route_construction.learning_algorithms.neural_agent.params import (
+from logic.src.policies.routing.base.factory import RoutingAlgorithmFactory
+from logic.src.policies.routing.learning_algorithms.neural_agent.params import (
     NeuralParams,
 )
 from omegaconf import OmegaConf
@@ -27,7 +27,7 @@ def _na_yaml() -> Any:
 
 def _adapter_from_yaml() -> Any:
     cfg = _na_yaml()
-    return RouteConstructorFactory.get_adapter(
+    return RoutingAlgorithmFactory.get_adapter(
         "na",
         config={"na": OmegaConf.to_container(cfg.na, resolve=True)},
     )
@@ -58,13 +58,13 @@ def test_na_adapter_honours_yaml_decoding_not_dataclass_beam_width() -> None:
 
 def test_na_adapter_honours_omegaconf_amgat_section() -> None:
     cfg = _na_yaml()
-    adapter = RouteConstructorFactory.get_adapter("na", config={"na": cfg.na})
+    adapter = RoutingAlgorithmFactory.get_adapter("na", config={"na": cfg.na})
     assert adapter.config.beam_width == 5
     assert adapter.config.decoding_strategy == "greedy"
 
 
 def test_na_yaml_lookahead_list_variant_loads_day_zero() -> None:
-    parsed = MandatorySelectionAction()._parse_strategy_item({"other/ms_lookahead.yaml": ["default"]})
+    parsed = PackingAction()._parse_strategy_item({"other/ms_lookahead.yaml": ["default"]})
     assert parsed[0]["name"] == "lookahead"
     assert parsed[0]["params"].get("current_collection_day") == 0
 
