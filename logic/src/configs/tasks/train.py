@@ -46,6 +46,7 @@ class TrainConfig:
     # Process control
     checkpoint_encoder: bool = False
     resume: Optional[str] = None
+    init_fill_from: Optional[str] = None  # checkpoint whose time-training bin fill starts this run
     model_weights_path: Optional[str] = None
     final_model_path: Optional[str] = None
     eval_batch_size: int = 256

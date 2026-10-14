@@ -55,3 +55,13 @@ def test_fill_of_another_dataset_size_is_not_restored() -> None:
     resumed.on_load_checkpoint(checkpoint)
     resumed._restore_time_training_fill()
     assert torch.equal(resumed.train_dataset.data["waste"], start)
+
+
+@pytest.mark.parametrize(("start_day", "epoch", "day"), [(None, 3, 3), (0, 3, 3), (16, 0, 16), (16, 14, 30)])
+def test_training_day_is_the_start_day_plus_the_epoch(start_day, epoch, day) -> None:
+    graph = types.SimpleNamespace(start_day=start_day)
+    mod = types.SimpleNamespace(
+        cfg=types.SimpleNamespace(task="train", train=types.SimpleNamespace(env=types.SimpleNamespace(graph=graph))),
+        current_epoch=epoch,
+    )
+    assert RL4COLitModule._time_training_day(mod) == day

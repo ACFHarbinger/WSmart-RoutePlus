@@ -72,7 +72,7 @@ class TestTrainingOrchestration:
 
         assert reward == 0.5
         mock_create.assert_called_once()
-        mock_trainer.fit.assert_called_once_with(mock_model)
+        mock_trainer.fit.assert_called_once_with(mock_model, ckpt_path=None)
 
     @pytest.mark.unit
     def test_create_model_complex_algos(self):

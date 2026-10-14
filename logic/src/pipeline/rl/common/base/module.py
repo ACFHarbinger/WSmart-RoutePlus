@@ -280,6 +280,14 @@ class RL4COLitModule(DataMixin, OptimizationMixin, StepMixin, pl.LightningModule
         td.set(key, fill.to(td.device))
         logger.info(f"Restored the time-training fill from the checkpoint. Mean fill: {fill.mean():.3f}")
 
+    def _time_training_day(self) -> int:
+        """Zero-based simulated day of this epoch: the training graph's start_day plus the epoch.
+
+        A stage with start_day=16 trains on days 17.. of the dataset (e.g. RL after 16 days of imitation).
+        """
+        _stage_graph = getattr(_task_env_cfg(self.cfg), "graph", None)
+        return int(_cfg_get(_stage_graph, "start_day", 0) or 0) + self.current_epoch
+
     def on_train_epoch_start(self) -> None:
         """Prepare dataset for the new epoch (e.g. wrap with baseline)."""
         assert self.train_dataset is not None
@@ -289,7 +297,7 @@ class RL4COLitModule(DataMixin, OptimizationMixin, StepMixin, pl.LightningModule
             self.env,
             self.baseline,
             self.train_dataset,
-            self.current_epoch,
+            self._time_training_day(),
             phase="train",
         )
 
@@ -315,7 +323,7 @@ class RL4COLitModule(DataMixin, OptimizationMixin, StepMixin, pl.LightningModule
             apply_time_step(
                 dataset=ds_ref,
                 epoch_actions=self._epoch_actions,
-                day=self.current_epoch,
+                day=self._time_training_day(),
                 env=self.env,
                 refresh_fraction=float(_cfg_get(_stage_graph, "state_refresh_fraction", 0.0) or 0.0),
                 refresh_max_days=int(_cfg_get(_stage_graph, "init_accumulation_days", 1) or 1),
@@ -327,7 +335,7 @@ class RL4COLitModule(DataMixin, OptimizationMixin, StepMixin, pl.LightningModule
             if isinstance(td, dict) or hasattr(td, "get"):
                 key = "waste" if "waste" in td.keys() else "fill_level"
                 mean_fill = td[key].mean() if key in td.keys() else 0.0
-                self.log("train/current_day", float(self.current_epoch + 1), sync_dist=True)
+                self.log("train/current_day", float(self._time_training_day() + 1), sync_dist=True)
                 self.log("train/mean_fill", mean_fill, sync_dist=True)
 
         # Regenerate training dataset for next epoch if configured
