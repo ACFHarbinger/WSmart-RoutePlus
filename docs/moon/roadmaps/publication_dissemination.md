@@ -79,3 +79,12 @@
 - [x] Website data generator `logic/gen/export_website_data.py` reuses the paper's integrity machinery (2026-08-25)
 
 ---
+
+## CO survey checkpoint — 2026-10-13
+
+Codex implemented the catalogue generator and initial bibliography on the isolated
+`survey/proposal-2026-10-13` paper branch (`7e07531`, plus whitespace cleanup).
+The 114-page draft builds successfully. Remaining work: verify 88 pending source
+identities and inherited numerical claims, audit maturity/code/benchmark links,
+then perform the planned manuscript restructuring and finalize the abstract.
+Consult the paper `WORKLOG.md`; no submodule-pointer update has been made.

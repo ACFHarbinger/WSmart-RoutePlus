@@ -6903,3 +6903,9 @@ The **Old RL Pipeline** (`logic/src/pipeline/reinforcement_learning/`) features 
 ---
 
 [Unreleased]: https://github.com/ACFHarbinger/WSmart-Route/compare/HEAD...HEAD
+
+### CO survey catalogue checkpoint (`2026-10-13`, Codex)
+
+- On isolated paper branch `survey/proposal-2026-10-13`, added the canonical 164-record catalogue, generated five table views, 82-entry bibliography with metadata provenance, citation corrections and provisional abstract (`7e07531`, plus whitespace cleanup).
+- Validated a 114-page INFORMS build and catalogue consistency; source/claim review remains open for 88 records. Details and deferred work are in the paper's `WORKLOG.md`.
+- No WSmart-Route implementation edits, shared pytest run, push, merge or submodule-pointer update.
