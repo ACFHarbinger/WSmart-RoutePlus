@@ -17,6 +17,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### CPTP training on the real network (`2026-10-13` to `2026-10-14`)
+
+#### Fixed
+
+- A CPTP day ends on an explicit stop: a depot visit unloads, choosing the depot from the depot ends the day, and the end is permanent. Before, a day ended only when the whole batch was at the depot, so every instance visited every bin (`233dfad33`).
+- Time training keeps the dataset order, so the bins a route collected are emptied in the same rows the next day (`537bd766f`).
+- Training instances use the real network (`focus_graph`) and the simulator's vehicle capacity for the area and waste type divided by 100, e.g. 73.68 bins for Rio Maior plastic. The empirical and Gamma samplers draw a new day on each call; before, every day of a multi-day dataset was the same (`f2ddc6909`, `7ed5178f0`).
+- Real-network instances are costed in road km from `dm_filepath`, and capacity is derived from the simulator when not set (`7ed5178f0`).
+- The CPTP reward is in EUR: `cost_weight` 1.0 per road km and `waste_weight` 27.7 per bin fill (0.5837 EUR/kg x 47.5 kg). This replaces the 9.0 recorded on 2026-10-13 (`4dcdedf4d`).
+- `load_model` rebuilt trained policies with the legacy depot projection, so evaluated routes differed from those of the trained network (#104, `a0d09d327`).
+- The imitation factories pass the full training setup to the module. They passed a short list without `cfg` and `train_time`, so imitation trained one batch per epoch outside time training (`edcef3544`).
+
+#### Added
+
+- `init_accumulation_days` and `state_refresh_fraction` per curriculum graph: time training starts from 1 to N days of waste and redraws a share of the instances each epoch, so the bin state does not settle at one day's waste (`d9f605599`, `6e619d368`).
+- `rl.normalize_advantage` divides the REINFORCE advantage by its batch standard deviation (`d9f605599`).
+- Profitable nearest-neighbour expert for imitation (`models/policies@rl.imitation.policy_config=profitable_nn`): a nearest-neighbour tour over the bins with waste on road km, 2-opt, then removal of each bin whose detour costs more than its waste earns; it stays at the depot when the tour does not pay (`edcef3544`).
+- `train.policy.model.load_path` starts training from saved policy weights (`edcef3544`).
+
 ### CPTP time training, survey paper and test coverage (`2026-10-13`)
 
 #### Fixed
