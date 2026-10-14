@@ -44,7 +44,6 @@ class PolicyTag(Enum):
         STOCHASTIC: Handles distributions (Stochastic Demands, Markov Decision Processes)
         DYNAMIC: Online routing (orders arrive during execution)
         PROFIT_AWARE: Orienteering, VRP with Profits (evaluates p_i over c_i)
-        ORIENTEERING: Orienteering, Team Orienteering
         TIME_WINDOWS: Strictly enforces [e_i, l_i] temporal bounds
         ANYTIME: Can be safely interrupted at any time to return the current best solution
         GPU_ACCELERATED: PyTorch/Tensor-based algorithms (POMO, NCO models)
@@ -98,7 +97,6 @@ class PolicyTag(Enum):
     STOCHASTIC = auto()  # Handles distributions (Stochastic Demands, Markov Decision Processes)
     DYNAMIC = auto()  # Online routing (orders arrive during execution)
     PROFIT_AWARE = auto()  # Orienteering, VRP with Profits (evaluates p_i over c_i)
-    ORIENTEERING = auto()  # Orienteering, Team Orienteering
     TIME_WINDOWS = auto()  # Strictly enforces [e_i, l_i] temporal bounds
 
     # ==========================================
