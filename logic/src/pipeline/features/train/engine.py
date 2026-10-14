@@ -351,7 +351,12 @@ def _run_single_stage(
             )
             run.watch_file(val_ds)
 
-        trainer.fit(model)
+        # train.resume continues an interrupted run from a Lightning checkpoint: weights,
+        # optimizer, epoch counter and, for time training, the carried bin fill.
+        resume = getattr(cfg.train, "resume", None) or None
+        if resume:
+            logger.info("Resuming training from checkpoint: %s", resume)
+        trainer.fit(model, ckpt_path=resume)
 
         # Reload best checkpoint so state_dict carries optimal weights into the next
         # curriculum stage (or into the final save), not just the last training epoch.
