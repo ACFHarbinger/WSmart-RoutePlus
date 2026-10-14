@@ -244,7 +244,6 @@ def session_cleanup():
     specifically 'test_dehb_output' directory and 'dummy.log'.
     """
     _cleanup_leftover_simulator_graphs()
-    yield  # Run tests first
 
     artifacts_to_clean = [
         Path("test_dehb_output"),
@@ -275,12 +274,18 @@ def session_cleanup():
     # Relative names are resolved against cwd; absolute paths (temp sqlite, leftover
     # simulator graphs) are used as-is.
     cwd = Path.cwd()
+    artifact_paths = [a if Path(a).is_absolute() else cwd / a for a in map(Path, artifacts_to_clean)]
+    # Only remove what this session created. Run from a checkout, "outputs", "logs" and
+    # "model_weights" hold simulation results and trained models; on 2026-10-13 a test run in
+    # the main checkout deleted outputs/simulations this way.
+    preexisting = {p for p in artifact_paths if p.exists()}
+    output_dir = project_root / "assets" / "output"
+    preexisting_output = set(output_dir.iterdir()) if output_dir.exists() else set()
 
-    for artifact_name in artifacts_to_clean:
-        artifact_path = Path(artifact_name)
-        if not artifact_path.is_absolute():
-            artifact_path = cwd / artifact_path
-        if artifact_path.exists():
+    yield  # Run tests first
+
+    for artifact_path in artifact_paths:
+        if artifact_path.exists() and artifact_path not in preexisting:
             try:
                 if artifact_path.is_dir():
                     shutil.rmtree(artifact_path)
@@ -293,11 +298,10 @@ def session_cleanup():
 
     # Clean up generated folders in assets/output/ (excluding the tracked folders:
     # 30days and the notebook dashboards/analytics results)
-    output_dir = project_root / "assets" / "output"
     tracked_output = {"30days", "notebooks"}
     if output_dir.exists():
         for item in output_dir.iterdir():
-            if item.name not in tracked_output:
+            if item.name not in tracked_output and item not in preexisting_output:
                 try:
                     if item.is_dir():
                         shutil.rmtree(item)
