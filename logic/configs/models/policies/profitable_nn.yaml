@@ -1,0 +1,20 @@
+# @package _global_
+
+# =============================================================================
+# Profitable Nearest-Neighbour Expert Policy Configuration for RL Training
+# =============================================================================
+# PURPOSE:
+#   Selective expert for Imitation Learning on PTP and CPTP: a nearest-neighbour
+#   tour over the bins with waste on road distances, shortened with 2-opt, minus
+#   each bin whose detour costs more than its waste is worth. It stays at the
+#   depot when the tour does not pay.
+#
+# USAGE:
+#   python main.py train rl.algorithm=imitation \
+#     models/policies@rl.imitation.policy_config=profitable_nn
+# =============================================================================
+
+_target_: logic.src.configs.rl.policies.ProfitableNNConfig
+
+two_opt_passes: 5
+# Maximum number of full 2-opt sweeps per tour

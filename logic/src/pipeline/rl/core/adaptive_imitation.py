@@ -29,6 +29,7 @@ from logic.src.configs.rl.policies import (
     HGSALNSConfig,
     HGSConfig,
     ILSConfig,
+    ProfitableNNConfig,
     RLSConfig,
 )
 from logic.src.pipeline.rl.core.losses import (
@@ -43,6 +44,7 @@ from logic.src.policies.vector.ant_colony_system import VectorizedACOPolicy
 from logic.src.policies.vector.hgs import VectorizedHGS
 from logic.src.policies.vector.hgs_alns import VectorizedHGSALNS
 from logic.src.policies.vector.iterated_local_search import IteratedLocalSearchPolicy
+from logic.src.policies.vector.profitable_nearest_neighbour import ProfitableNearestNeighbourPolicy
 from logic.src.policies.vector.random_local_search import RandomLocalSearchPolicy
 
 
@@ -174,6 +176,7 @@ class AdaptiveImitation(REINFORCE):
             RLSConfig: RandomLocalSearchPolicy,
             ILSConfig: IteratedLocalSearchPolicy,
             ACOConfig: VectorizedACOPolicy,
+            ProfitableNNConfig: ProfitableNearestNeighbourPolicy,
         }
 
         # Get the policy class for this config type

@@ -56,29 +56,16 @@ def _create_imitation(cfg: Config, policy, env, kw: Dict[str, Any]) -> pl.Lightn
     if hasattr(policy_config, "_target_") or (isinstance(policy_config, dict) and "_target_" in policy_config):
         policy_config = instantiate(policy_config)
 
+    # Forward the full keyword set, as REINFORCE receives it: the base module reads the
+    # training setup (cfg, train_time, batch sizes, curriculum) from it.
+    module_kw = {k: v for k, v in kw.items() if k not in ("policy_config", "seed", "device", "loss_fn")}
     return ImitationLearning(
-        # ImitationLearning specific
         policy_config=policy_config,
         env_name=getattr(env_cfg, "name", "ptp") if env_cfg else "ptp",
         loss_fn=cfg.rl.imitation.loss_fn,
         seed=cfg.seed,
         device=cfg.device,
-        # RL4COLitModule parameters
-        env=kw["env"],
-        policy=kw["policy"],
-        baseline=kw.get("baseline", "rollout"),
-        optimizer=kw.get("optimizer", "adam"),
-        optimizer_kwargs=kw.get("optimizer_kwargs", {}),
-        lr_scheduler=kw.get("lr_scheduler"),
-        lr_scheduler_kwargs=kw.get("lr_scheduler_kwargs", {}),
-        val_dataset_path=kw.get("val_dataset_path"),
-        train_dataset_path=kw.get("train_dataset_path"),
-        batch_size=kw.get("batch_size", 256),
-        eval_batch_size=kw.get("eval_batch_size", 256),
-        num_workers=kw.get("num_workers", 4),
-        persistent_workers=kw.get("persistent_workers", True),
-        pin_memory=kw.get("pin_memory", False),
-        mandatory_selector=kw.get("mandatory_selector"),
+        **module_kw,
     )
 
 
@@ -105,8 +92,9 @@ def _create_adaptive_imitation(cfg: Config, policy, env, kw: Dict[str, Any]) -> 
     if hasattr(policy_config, "_target_") or (isinstance(policy_config, dict) and "_target_" in policy_config):
         policy_config = instantiate(policy_config)
 
+    il_keys = ("policy_config", "il_weight", "il_decay", "patience", "threshold", "decay_step", "epsilon", "loss_fn", "seed")
+    module_kw = {k: v for k, v in kw.items() if k not in il_keys}
     return AdaptiveImitation(
-        # AdaptiveImitation specific
         policy_config=policy_config,
         env_name=getattr(env_cfg, "name", "ptp") if env_cfg else "ptp",
         il_weight=cfg.rl.adaptive_imitation.il_weight,
@@ -117,26 +105,7 @@ def _create_adaptive_imitation(cfg: Config, policy, env, kw: Dict[str, Any]) -> 
         epsilon=cfg.rl.adaptive_imitation.epsilon,
         loss_fn=cfg.rl.adaptive_imitation.loss_fn,
         seed=cfg.seed,
-        # REINFORCE parameters
-        entropy_weight=kw.get("entropy_weight", 0.0),
-        max_grad_norm=kw.get("max_grad_norm", 1.0),
-        lr_critic=kw.get("lr_critic", 1e-4),
-        # RL4COLitModule parameters
-        env=kw["env"],
-        policy=kw["policy"],
-        baseline=kw.get("baseline", "rollout"),
-        optimizer=kw.get("optimizer", "adam"),
-        optimizer_kwargs=kw.get("optimizer_kwargs", {}),
-        lr_scheduler=kw.get("lr_scheduler"),
-        lr_scheduler_kwargs=kw.get("lr_scheduler_kwargs", {}),
-        val_dataset_path=kw.get("val_dataset_path"),
-        train_dataset_path=kw.get("train_dataset_path"),
-        batch_size=kw.get("batch_size", 256),
-        eval_batch_size=kw.get("eval_batch_size", 256),
-        num_workers=kw.get("num_workers", 4),
-        persistent_workers=kw.get("persistent_workers", True),
-        pin_memory=kw.get("pin_memory", False),
-        mandatory_selector=kw.get("mandatory_selector"),
+        **module_kw,
     )
 
 

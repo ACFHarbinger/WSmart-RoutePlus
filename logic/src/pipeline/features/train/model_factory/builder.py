@@ -12,6 +12,7 @@ from dataclasses import asdict, is_dataclass
 from typing import TYPE_CHECKING, Any, Dict, cast
 
 import pytorch_lightning as pl
+import torch
 from omegaconf import DictConfig, OmegaConf
 
 from logic.src.configs import Config
@@ -72,6 +73,9 @@ def create_model(cfg: Config) -> pl.LightningModule:
 
     # 2. Initialize Policy
     policy = _init_policy(cfg, env)
+    _, _, model_cfg = _resolve_configs(cfg)
+    if getattr(model_cfg, "load_path", None):
+        _load_initial_weights(policy, model_cfg.load_path)
 
     # 3. Initialize RL Module Keyword Arguments
     common_kwargs = _prepare_rl_kwargs(cfg, env, policy)
@@ -129,6 +133,20 @@ def create_model(cfg: Config) -> pl.LightningModule:
             run.log_params(params)
 
     return model
+
+
+def _load_initial_weights(policy: Any, load_path: str) -> None:
+    """Start training from saved policy weights, before the baseline copies the policy.
+
+    Args:
+        policy: Freshly built policy.
+        load_path: Final weights file (``epoch-*.pt``) or Lightning checkpoint (``*.ckpt``).
+    """
+    ckpt = torch.load(load_path, map_location="cpu", weights_only=False)
+    state = ckpt.get("state_dict", ckpt) if isinstance(ckpt, dict) else ckpt
+    policy_state = {k[len("policy.") :]: v for k, v in state.items() if k.startswith("policy.")}
+    policy.load_state_dict(policy_state or state)
+    logger.info(f"Initial policy weights loaded from {load_path}")
 
 
 def _init_environment(cfg: Config) -> IEnv:

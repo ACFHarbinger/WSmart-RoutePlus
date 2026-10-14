@@ -16,8 +16,8 @@
 # =============================================================================
 
 defaults:
-  - /models/policies/hgs_alns@rl.imitation.policy_config
-  - /models/policies/hgs_alns@rl.adaptive_imitation.policy_config
+  - /models/policies@rl.imitation.policy_config: hgs_alns
+  - /models/policies@rl.adaptive_imitation.policy_config: hgs_alns
   - /envs@train.env: ptp
   - _self_
   - override /tracking: train
@@ -189,16 +189,16 @@ rl:
 
   # Imitation Learning
   imitation:
-    # Expert policy configuration loaded from defaults: /tasks/policies/rl/hgs_alns
-    # Override via CLI: rl.imitation.policy_config@=/tasks/policies/rl/hgs
+    # Expert policy configuration loaded from defaults: /models/policies/hgs_alns
+    # Override via CLI: models/policies@rl.imitation.policy_config=profitable_nn
     # Override params: rl.imitation.policy_config.time_limit=60.0
     # policy_config is populated by defaults list (see top of file)
     loss_fn: "nll" # Loss function. Options: nll, weighted_nll, kl, reverse_kl, js
 
   # Adaptive Imitation Learning (IL → RL)
   adaptive_imitation:
-    # Expert policy configuration loaded from defaults: /tasks/policies/rl/hgs_alns
-    # Override via CLI: rl.adaptive_imitation.policy_config@=/tasks/policies/rl/hgs
+    # Expert policy configuration loaded from defaults: /models/policies/hgs_alns
+    # Override via CLI: models/policies@rl.adaptive_imitation.policy_config=profitable_nn
     # policy_config is populated by defaults list (see top of file)
     il_weight: 1.0 # Initial imitation loss weight (1.0 = pure IL, 0.0 = pure RL)
     il_decay: 0.95 # IL weight decay per epoch (gradual transition to RL)
