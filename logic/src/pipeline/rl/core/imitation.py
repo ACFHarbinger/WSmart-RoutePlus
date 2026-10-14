@@ -172,6 +172,12 @@ class ImitationLearning(RL4COLitModule):
         Returns:
             Scalar loss tensor.
         """
+        # The policy's own rollout is only logged here. Detaching it frees its graph before the
+        # teacher-forced pass, which otherwise holds both graphs at once (out of memory at 350 bins).
+        for key in ("log_likelihood", "entropy"):
+            if isinstance(out.get(key), torch.Tensor):
+                out[key] = out[key].detach()
+
         # 1. Generate Expert Solutions
         if self.expert_policy is None:
             raise ValueError("expert_policy must be provided for ImitationLearning.")

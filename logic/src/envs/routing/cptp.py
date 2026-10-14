@@ -36,6 +36,10 @@ class CPTPEnv(PTPEnv):
     # Subclasses with their own end rule (TCPTP) switch this off.
     explicit_stop: bool = True
 
+    # Mask bins that hold no waste, unless they are mandatory. Off in training; the simulator turns
+    # it on for neural routing, where an empty bin only adds distance.
+    mask_empty_bins: bool = False
+
     def _reset_instance(self, tensordict: TensorDict) -> TensorDict:
         """Initialize CPTP state with capacity tracking.
 
@@ -159,6 +163,16 @@ class CPTPEnv(PTPEnv):
         exceeds_capacity = waste > remaining
 
         mask = base_mask & ~exceeds_capacity
+
+        if self.mask_empty_bins:
+            keep = waste > 0
+            pending = tensordict.get("mandatory", None)
+            if pending is not None:
+                if pending.size(-1) == keep.size(-1) - 1:
+                    pending = torch.cat([torch.zeros_like(pending[:, :1], dtype=torch.bool), pending], dim=1)
+                keep = keep | pending.bool()
+            keep[:, 0] = True
+            mask = mask & keep
 
         # Mandatory routing logic (same as parent but considering capacity)
         mandatory = tensordict.get("mandatory", None)
