@@ -53,6 +53,11 @@ curriculum_graphs:
     # the nearest bin and return), so the policy learned to stay at the depot before it saw
     # bins worth collecting. A nearest-neighbour tour breaks even at about 3 days of waste.
     init_accumulation_days: 10
+    # At the end of each epoch half of the instances are redrawn to 1-10 days of waste; the
+    # other half follow the policy's own collections. Without it every instance falls back
+    # to one day of waste as soon as the policy collects daily, and the policy then learns
+    # to stay home whatever the bins hold (runs version_14 and version_17).
+    state_refresh_fraction: 0.5
 
     # =========================================================================
     # Objective Function Weights

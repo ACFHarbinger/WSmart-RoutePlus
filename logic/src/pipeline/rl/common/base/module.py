@@ -24,7 +24,7 @@ from logic.src.pipeline.rl.common.epoch import apply_time_step, prepare_epoch, r
 from logic.src.pipeline.rl.common.pbrs_wrapper import PBRSShaper
 from logic.src.tracking.logging.pylogger import get_pylogger
 
-from .data import DataMixin, _task_env_cfg
+from .data import DataMixin, _cfg_get, _task_env_cfg
 from .optimization import OptimizationMixin
 from .steps import StepMixin
 
@@ -268,7 +268,15 @@ class RL4COLitModule(DataMixin, OptimizationMixin, StepMixin, pl.LightningModule
             if hasattr(self.baseline, "unwrap_dataset"):
                 ds_ref = self.baseline.unwrap_dataset(ds_ref)
 
-            apply_time_step(dataset=ds_ref, epoch_actions=self._epoch_actions, day=self.current_epoch, env=self.env)
+            _stage_graph = getattr(_task_env_cfg(self.cfg), "graph", None)
+            apply_time_step(
+                dataset=ds_ref,
+                epoch_actions=self._epoch_actions,
+                day=self.current_epoch,
+                env=self.env,
+                refresh_fraction=float(_cfg_get(_stage_graph, "state_refresh_fraction", 0.0) or 0.0),
+                refresh_max_days=int(_cfg_get(_stage_graph, "init_accumulation_days", 1) or 1),
+            )
             self._epoch_actions.clear()
 
             # Log current day properties

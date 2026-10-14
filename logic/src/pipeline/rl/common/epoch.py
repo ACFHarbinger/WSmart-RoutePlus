@@ -304,7 +304,58 @@ def _get_next_day_waste(
     return next_day_waste
 
 
-def apply_time_step(dataset: Dataset, epoch_actions: List[torch.Tensor], day: int, env: Any) -> Dataset:
+def refresh_fill(
+    fill: torch.Tensor, waste_full: torch.Tensor, fraction: float, max_days: int, day: int
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Redraw the bin state of a share of the instances to 1..``max_days`` days of waste.
+
+    While a policy collects every bin every day, time training only ever shows it one day of
+    waste, where staying at the depot is always right; it then learns to stay home whatever
+    the bins hold. Redrawing some instances each epoch keeps states where a tour pays and
+    states where it does not in every batch. The redrawn state is the sum of the waste of
+    consecutive days taken from the instance's own series, starting at a random day.
+
+    Args:
+        fill: Current fill ``[batch, bins]``.
+        waste_full: Per-day waste ``[batch, days, bins]``.
+        fraction: Share of instances to redraw, between 0 and 1.
+        max_days: Largest number of days accumulated in a redrawn state.
+        day: Current day, which seeds the draw so a run is reproducible.
+
+    Returns:
+        The updated fill and the boolean mask of the redrawn instances.
+    """
+    batch, n_days, _ = waste_full.shape
+    chosen = torch.zeros(batch, dtype=torch.bool, device=fill.device)
+    if fraction <= 0.0 or max_days < 1:
+        return fill, chosen
+
+    rng = torch.Generator().manual_seed(1_000_003 * (day + 1))
+    chosen = (torch.rand(batch, generator=rng) < fraction).to(fill.device)
+    if not bool(chosen.any()):
+        return fill, chosen
+
+    span = min(max_days, n_days)
+    n_chosen = int(chosen.sum())
+    length = torch.randint(1, span + 1, (n_chosen,), generator=rng).to(fill.device)
+    start = torch.randint(0, n_days, (n_chosen,), generator=rng).to(fill.device)
+    offsets = torch.arange(span, device=fill.device)
+    day_index = (start[:, None] + offsets[None, :]) % n_days  # [chosen, span]
+    window = waste_full[chosen].gather(1, day_index[:, :, None].expand(-1, -1, waste_full.shape[-1]))
+    keep = (offsets[None, :] < length[:, None]).to(window.dtype)
+    fill = fill.clone()
+    fill[chosen] = (window * keep[:, :, None]).sum(dim=1).clamp(0.0, 1.0).to(fill.dtype)
+    return fill, chosen
+
+
+def apply_time_step(
+    dataset: Dataset,
+    epoch_actions: List[torch.Tensor],
+    day: int,
+    env: Any,
+    refresh_fraction: float = 0.0,
+    refresh_max_days: int = 1,
+) -> Dataset:
     """
     Applies the time-step progression to the training dataset for an epoch.
     - Marks visited nodes (collected bins) to have 0 waste.
@@ -315,6 +366,8 @@ def apply_time_step(dataset: Dataset, epoch_actions: List[torch.Tensor], day: in
         epoch_actions: List of action tensors taken during the epoch.
         day: Current day index (zero-based).
         env: The environment, used for generation rate or fresh generation.
+        refresh_fraction: Share of instances whose state is redrawn (see ``refresh_fill``).
+        refresh_max_days: Largest number of days of waste in a redrawn state.
 
     Returns:
         The mutated dataset.
@@ -369,6 +422,14 @@ def apply_time_step(dataset: Dataset, epoch_actions: List[torch.Tensor], day: in
     # 4. Clamp to [0, 1] (waste is normalized; bins can't exceed capacity)
     new_fill = torch.clamp(new_fill, min=0.0, max=1.0)
 
+    # 5. Redraw a share of the instances so the states keep a spread of waste levels
+    full_key = f"_{key}_full"
+    n_refreshed = 0
+    if refresh_fraction > 0.0 and full_key in td.keys() and td[full_key].dim() == 3 and new_fill.dim() == 2:
+        if new_fill.shape[-1] == td[full_key].shape[-1]:
+            new_fill, chosen = refresh_fill(new_fill, td[full_key], refresh_fraction, refresh_max_days, day)
+            n_refreshed = int(chosen.sum())
+
     td[key] = new_fill
     if "waste" in td.keys() and key != "waste" and td["waste"].dim() == 2:
         td["waste"] = new_fill
@@ -376,6 +437,9 @@ def apply_time_step(dataset: Dataset, epoch_actions: List[torch.Tensor], day: in
     # Always ensure current_day is set
     td.set("current_day", torch.full(td.batch_size, day + 1, device=device))
 
-    logger.info(f"Time Training: Updated dataset for Day {day + 1}. Mean fill: {new_fill.mean():.3f}")
+    logger.info(
+        f"Time Training: Updated dataset for Day {day + 1}. Mean fill: {new_fill.mean():.3f}"
+        + (f" ({n_refreshed} instances redrawn)" if n_refreshed else "")
+    )
 
     return dataset
