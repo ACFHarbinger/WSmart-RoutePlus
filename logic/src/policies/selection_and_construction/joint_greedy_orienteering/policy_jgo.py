@@ -29,7 +29,6 @@ from .params import JointGreedyParams
 
 @GlobalRegistry.register(
     PolicyTag.HEURISTIC,
-    PolicyTag.ORIENTEERING,
     PolicyTag.SELECTION,
     PolicyTag.CONSTRUCTION,
     PolicyTag.PROFIT_AWARE,
