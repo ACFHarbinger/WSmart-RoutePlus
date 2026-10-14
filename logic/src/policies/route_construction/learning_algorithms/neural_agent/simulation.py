@@ -239,14 +239,22 @@ class SimulationMixin:
             # We explicitly pass the strategy to the model to avoid it trying to do
             # its own (potentially unsupported) beam search from internal config.
             model_strategy = strategy if strategy in ("greedy", "sampling") else "greedy"
-            out = self.model(  # type: ignore[attr-defined]
-                input_for_model,
-                return_pi=True,
-                mask=mask,
-                strategy=model_strategy,
-                profit_vars=profit_vars,
-                cost_weights=cost_weights,
-            )
+            env = self._training_env(profit_vars, device=input_for_model["locs"].device)
+            if env is not None:
+                # Decode in the environment the model was trained in. The legacy path below uses
+                # the old problem state, whose capacity, depot and stop rules differ from training,
+                # so a model that skips empty bins in training visited them in the simulator.
+                td = self._training_td(input_for_model, profit_vars, mandatory)
+                out = self.model(env.reset(td), env, strategy=model_strategy)  # type: ignore[attr-defined]
+            else:
+                out = self.model(  # type: ignore[attr-defined]
+                    input_for_model,
+                    return_pi=True,
+                    mask=mask,
+                    strategy=model_strategy,
+                    profit_vars=profit_vars,
+                    cost_weights=cost_weights,
+                )
             if isinstance(out, dict):
                 pi = out.get("actions")
                 if pi is None:
@@ -272,6 +280,72 @@ class SimulationMixin:
         if hasattr(self, "_viz_record"):
             self._viz_record(cost=float(cost), n_visited=n_visited, route_len=len(route_list))
         return (route_list, cost, {"attention_weights": attention_weights, "graph_masks": hook_data["masks"]})
+
+    def _training_env(self, profit_vars: Optional[Dict[str, Any]], device: Any = "cpu") -> Optional[Any]:
+        """Return the RL environment of the model's problem, priced with the simulator's economics.
+
+        Args:
+            profit_vars: Simulator profit variables (revenue_kg, bin_capacity, cost_km, vehicle_capacity).
+            device: Device of the model input; the environment runs on it.
+
+        Returns:
+            The environment, or None when the model's problem has no RL environment.
+        """
+        from logic.src.envs import get_env
+
+        env_name = getattr(self.model, "env_name", None) or getattr(self.problem, "NAME", None)
+        if env_name not in ("ptp", "cptp"):
+            return None
+        pv = profit_vars or {}
+        cache_key = (env_name, str(device), tuple(sorted((k, float(v)) for k, v in pv.items() if isinstance(v, (int, float)))))
+        if getattr(self, "_env_cache_key", None) != cache_key:
+            self._env = get_env(
+                env_name,
+                generator_params={"num_loc": 1},
+                check_env_specs=False,
+                waste_weight=float(pv.get("revenue_kg", 1.0)) * float(pv.get("bin_capacity", 1.0)),
+                cost_weight=float(pv.get("cost_km", 1.0)),
+                device=device,
+            )
+            if hasattr(self._env, "mask_empty_bins"):
+                self._env.mask_empty_bins = True
+            self._env_cache_key = cache_key
+        return self._env
+
+    @staticmethod
+    def _training_td(
+        input_for_model: Dict[str, Any], profit_vars: Optional[Dict[str, Any]], mandatory: Optional[torch.Tensor]
+    ) -> Any:
+        """Build the TensorDict the training environment resets from.
+
+        Args:
+            input_for_model: Simulator model input (locs, depot, waste in bin fills).
+            profit_vars: Simulator profit variables; ``vehicle_capacity`` is in bin fills.
+            mandatory: Optional mandatory-bin mask.
+
+        Returns:
+            TensorDict with one instance.
+        """
+        from tensordict import TensorDict
+
+        locs = input_for_model["locs"]
+        locs = locs.unsqueeze(0) if locs.dim() == 2 else locs
+        depot = input_for_model["depot"]
+        depot = depot.unsqueeze(0) if depot.dim() == 1 else depot
+        waste = input_for_model["waste"]
+        waste = waste.unsqueeze(0) if waste.dim() == 1 else waste
+        td = TensorDict(
+            {"locs": locs.float(), "depot": depot.float(), "waste": waste.float()},
+            batch_size=[locs.size(0)],
+            device=locs.device,
+        )
+        capacity = (profit_vars or {}).get("vehicle_capacity")
+        if capacity is not None:
+            td["capacity"] = torch.full((locs.size(0),), float(capacity), device=locs.device)
+        if mandatory is not None:
+            m = mandatory if isinstance(mandatory, torch.Tensor) else torch.as_tensor(mandatory)
+            td["mandatory"] = (m.unsqueeze(0) if m.dim() == 1 else m).bool().to(locs.device)
+        return td
 
     def _validate_mandatory(self, mandatory: torch.Tensor) -> torch.Tensor:
         """Validates if any bins are marked as mandatory.
