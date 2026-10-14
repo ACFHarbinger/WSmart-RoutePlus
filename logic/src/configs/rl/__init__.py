@@ -32,6 +32,8 @@ class RLConfig:
         algorithm: RL algorithm name ('reinforce', 'ppo', 'sapo', etc.).
         baseline: Baseline type ('rollout', 'critic', 'pomo', 'warmup').
         entropy_weight: Weight for entropy regularization.
+        normalize_advantage: Divide the REINFORCE advantage by its batch standard deviation, so
+            the entropy weight means the same at any reward scale.
         max_grad_norm: Maximum gradient norm for clipping.
     """
 
@@ -39,6 +41,7 @@ class RLConfig:
     baseline: str = "rollout"
     bl_warmup_epochs: int = 0
     entropy_weight: float = 0.0
+    normalize_advantage: bool = False
     max_grad_norm: float = 1.0
     gamma: float = 0.99
     exp_beta: float = 0.8

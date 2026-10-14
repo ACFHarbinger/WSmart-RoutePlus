@@ -48,6 +48,11 @@ curriculum_graphs:
     n_days: 31
     n_samples: 12800
     start_day: 0
+    # Instance i starts with (i mod 10) + 1 days of waste in its bins. With one day's waste
+    # everywhere, a tour never pays (about 66 EUR of waste against at least 65 km to reach
+    # the nearest bin and return), so the policy learned to stay at the depot before it saw
+    # bins worth collecting. A nearest-neighbour tour breaks even at about 3 days of waste.
+    init_accumulation_days: 10
 
     # =========================================================================
     # Objective Function Weights
@@ -85,3 +90,6 @@ eval_graphs:
     n_days: 1
     n_samples: 512
     start_day: 0
+    # Validate on the same spread of bin states, so the best checkpoint has to stay home
+    # when a tour does not pay and collect when it does.
+    init_accumulation_days: 10

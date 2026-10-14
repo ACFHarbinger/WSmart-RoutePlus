@@ -178,6 +178,33 @@ def _add_overflow_metrics(metrics: Dict[str, float], out: Dict, batch: TensorDic
         metrics["val/overflows"] = overflows.float().mean().item()
 
 
+def accumulate_initial_fill(td: TensorDict, max_days: int, key: str = "waste") -> TensorDict:
+    """Start a multi-day dataset from a spread of bin states instead of one day's waste.
+
+    With one day's waste in every instance, leaving the depot never pays, so a policy learns
+    to stay home before it ever sees bins that are worth a tour. Instance ``i`` starts here
+    with the waste of ``(i mod max_days) + 1`` days, so each batch holds states where staying
+    home is right and states where collecting is right. The per-day waste moves to the hidden
+    ``_<key>_full`` entry that the time-step update reads the following days from.
+
+    Args:
+        td: Dataset TensorDict whose ``key`` entry is ``[batch, days, bins]``.
+        max_days: Largest number of days accumulated at the start.
+        key: Name of the waste entry.
+
+    Returns:
+        The same TensorDict, with a ``[batch, bins]`` fill under ``key``.
+    """
+    waste = td.get(key, None)
+    if waste is None or waste.dim() != 3 or max_days <= 1:
+        return td
+    days = torch.arange(waste.shape[0], device=waste.device) % min(max_days, waste.shape[1])
+    fill = waste.cumsum(dim=1)[torch.arange(waste.shape[0], device=waste.device), days]
+    td.set(f"_{key}_full", waste)
+    td.set(key, fill.clamp(0.0, 1.0))
+    return td
+
+
 def _build_visited_mask(
     epoch_actions: List[torch.Tensor], batch_size: int, num_nodes: int, device: torch.device
 ) -> torch.Tensor:
