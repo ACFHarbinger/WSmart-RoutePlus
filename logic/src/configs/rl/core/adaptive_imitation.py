@@ -25,11 +25,12 @@ from logic.src.configs.rl.policies import (
     HGSALNSConfig,
     HGSConfig,
     ILSConfig,
+    ProfitableNNConfig,
     RLSConfig,
 )
 
 # Type alias for expert policy configurations
-ExpertPolicyConfig = Union[HGSConfig, ALNSConfig, ILSConfig, RLSConfig, ACOConfig, HGSALNSConfig]
+ExpertPolicyConfig = Union[HGSConfig, ALNSConfig, ILSConfig, RLSConfig, ACOConfig, HGSALNSConfig, ProfitableNNConfig]
 
 
 @dataclass

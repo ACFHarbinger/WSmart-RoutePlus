@@ -30,6 +30,7 @@ from logic.src.configs.rl.policies import (
     HGSALNSConfig,
     HGSConfig,
     ILSConfig,
+    ProfitableNNConfig,
     RLSConfig,
 )
 from logic.src.pipeline.rl.common.base import RL4COLitModule
@@ -45,6 +46,7 @@ from logic.src.policies.vector.ant_colony_system import VectorizedACOPolicy
 from logic.src.policies.vector.hgs import VectorizedHGS
 from logic.src.policies.vector.hgs_alns import VectorizedHGSALNS
 from logic.src.policies.vector.iterated_local_search import IteratedLocalSearchPolicy
+from logic.src.policies.vector.profitable_nearest_neighbour import ProfitableNearestNeighbourPolicy
 from logic.src.policies.vector.random_local_search import RandomLocalSearchPolicy
 from logic.src.utils.data.rl_utils import safe_td_copy
 
@@ -131,6 +133,7 @@ class ImitationLearning(RL4COLitModule):
             RLSConfig: RandomLocalSearchPolicy,
             ILSConfig: IteratedLocalSearchPolicy,
             ACOConfig: VectorizedACOPolicy,
+            ProfitableNNConfig: ProfitableNearestNeighbourPolicy,
         }
 
         # Get the policy class for this config type

@@ -45,6 +45,7 @@ Attributes:
     HGSALNSConfig: Configuration for HGSALNS algorithm.
     HVPLConfig: Configuration for HVPL algorithm.
     ILSConfig: Configuration for ILS algorithm.
+    ProfitableNNConfig: Configuration for the profitable nearest-neighbour expert.
     RLSConfig: Configuration for RLS algorithm.
 
 Example:
@@ -57,6 +58,7 @@ from .hgs import HGSConfig
 from .hgs_alns import HGSALNSConfig
 from .hvpl import HVPLConfig
 from .ils import ILSConfig
+from .profitable_nn import ProfitableNNConfig
 from .rls import RLSConfig
 
 __all__ = [
@@ -68,5 +70,6 @@ __all__ = [
     "RLSConfig",
     "ACOConfig",
     "HGSALNSConfig",
+    "ProfitableNNConfig",
     "RLSConfig",
 ]
