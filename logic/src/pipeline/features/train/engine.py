@@ -283,7 +283,8 @@ def _run_single_stage(
 
     callbacks = _build_callbacks(cfg)
     trainer = WSTrainer(
-        max_epochs=_get_primary_graph(cfg, "n_days", 1),
+        # n_days is the last day; a stage starting at start_day trains n_days - start_day days.
+        max_epochs=max(int(_get_primary_graph(cfg, "n_days", 1)) - int(_get_primary_graph(cfg, "start_day", 0) or 0), 1),
         project_name="wsmart-route",
         experiment_name=cfg.experiment_name,
         accelerator=cfg.device if cfg.device != "cuda" else "auto",
@@ -356,6 +357,15 @@ def _run_single_stage(
         resume = getattr(cfg.train, "resume", None) or None
         if resume:
             logger.info("Resuming training from checkpoint: %s", resume)
+        # train.init_fill_from starts time training from the bin fill stored in another run's
+        # checkpoint (e.g. RL continuing the days after imitation); a resumed checkpoint's fill wins.
+        init_fill = getattr(cfg.train, "init_fill_from", None) or None
+        if init_fill and not resume:
+            saved = torch.load(init_fill, map_location="cpu", weights_only=False).get("time_training_fill")
+            if saved is None:
+                raise ValueError(f"train.init_fill_from={init_fill} has no time-training fill")
+            model._resume_fill = saved
+            logger.info("Starting the bin fill from checkpoint: %s", init_fill)
         trainer.fit(model, ckpt_path=resume)
 
         # Reload best checkpoint so state_dict carries optimal weights into the next
