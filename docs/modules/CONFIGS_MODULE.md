@@ -210,7 +210,7 @@ class Config:
     wandb_mode: str = "offline"
     no_tensorboard: bool = False
     no_progress_bar: bool = False
-    output_dir: str = "assets/model_weights"
+    output_dir: str = "model_weights"
     log_dir: str = "logs"
     run_name: Optional[str] = None
     verbose: bool = True
@@ -576,7 +576,7 @@ model_config = ModelConfig(
 # Load pre-trained weights
 model_config = ModelConfig(
     name="am",
-    load_path="assets/model_weights/best_model.pt"
+    load_path="model_weights/best_model.pt"
 )
 ```
 
@@ -1395,7 +1395,7 @@ train_config = TrainConfig(
 
 # Resume from checkpoint
 train_config = TrainConfig(
-    resume="assets/model_weights/epoch_50.ckpt",
+    resume="model_weights/epoch_50.ckpt",
     epoch_start=50
 )
 
@@ -1614,7 +1614,7 @@ config = Config(
     ),
 
     model=ModelConfig(
-        load_path="assets/model_weights/best_model.pt",
+        load_path="model_weights/best_model.pt",
         decoder=DecoderConfig(
             decoding=DecodingConfig(
                 strategy="beam_search",

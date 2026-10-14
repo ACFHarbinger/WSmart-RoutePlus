@@ -541,7 +541,7 @@ just studio
 | File/Directory          | Protection Level                |
 | ----------------------- | ------------------------------- |
 | `assets/keys/`          | Never commit to git             |
-| `assets/model_weights/` | Large files - use Git LFS       |
+| `model_weights/` | Large files - use Git LFS       |
 | `.env` files            | Never commit - contains secrets |
 | `*.lic` files           | License files - never commit    |
 
@@ -718,7 +718,7 @@ probs = F.softmax(logits, dim=-1)  # Can select invalid nodes
 | Simulator engine    | `logic/src/pipeline/simulations/` |
 | Studio desktop app  | `app/` (React + Tauri)            |
 | Configuration       | `assets/configs/`                 |
-| Model weights       | `assets/model_weights/`           |
+| Model weights       | `model_weights/`           |
 
 ### A.2 Important Constants
 

@@ -386,13 +386,13 @@ python main.py train --no_cuda
 
 ```bash
 # Greedy evaluation
-python main.py eval data/vrpp/vrpp20_test_seed1234.pkl --model assets/model_weights/vrpp_20/am --decode_strategy greedy
+python main.py eval data/vrpp/vrpp20_test_seed1234.pkl --model model_weights/vrpp_20/am --decode_strategy greedy
 
 # Sampling evaluation (best of 1280)
-python main.py eval data/vrpp/vrpp20_test_seed1234.pkl --model assets/model_weights/vrpp_20/am --decode_strategy sample --width 1280
+python main.py eval data/vrpp/vrpp20_test_seed1234.pkl --model model_weights/vrpp_20/am --decode_strategy sample --width 1280
 
 # Beam search
-python main.py eval data/vrpp/vrpp20_test_seed1234.pkl --model assets/model_weights/vrpp_20/am --decode_strategy bs --width 16
+python main.py eval data/vrpp/vrpp20_test_seed1234.pkl --model model_weights/vrpp_20/am --decode_strategy bs --width 16
 ```
 
 ### Simulation Testing
@@ -402,7 +402,7 @@ python main.py eval data/vrpp/vrpp20_test_seed1234.pkl --model assets/model_weig
 python main.py test_sim --policies policy_last_minute policy_regular policy_look_ahead_a gurobi --problem vrpp --size 20 --days 31 --n_vehicles 1
 
 # Test neural model on 365-day scenario
-python main.py test_sim --policies am --problem vrpp --size 20 --days 365 --model_path assets/model_weights/vrpp_20/am/epoch-99.pt
+python main.py test_sim --policies am --problem vrpp --size 20 --days 365 --model_path model_weights/vrpp_20/am/epoch-99.pt
 
 # Multi-sample testing with resume support
 python main.py test_sim --policies gurobi alns --problem vrpp --size 100 --days 365 --n_samples 10 --resume --cpu_cores -1

@@ -138,7 +138,7 @@ class LearnedRouteImprover(IRouteImprovement):
         >>> tour, metrics = improver.process(tour, distance_matrix=dm)
     """
 
-    DEFAULT_WEIGHTS_PATH = Path("assets") / "model_weights" / "learned_route_improver.pt"
+    DEFAULT_WEIGHTS_PATH = Path("model_weights") / "learned_route_improver.pt"
 
     def __init__(self, **kwargs: Any) -> None:
         """Initialise the learned improver.
