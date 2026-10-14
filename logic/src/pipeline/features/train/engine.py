@@ -200,6 +200,7 @@ def _build_stage_config(cfg: Any, graph_cfg: Any, stage_idx: Optional[int] = Non
         "edge_method",
         "load_dataset",
         "init_accumulation_days",
+        "state_refresh_fraction",
     )
     for key in _GRAPH_KEYS:
         val = g.get(key)

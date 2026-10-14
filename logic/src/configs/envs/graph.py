@@ -37,6 +37,9 @@ class GraphConfig:
         init_accumulation_days: For multi-day datasets, start instance ``i`` with the waste of
             ``(i mod init_accumulation_days) + 1`` days already in the bins. 1 keeps a single
             day's waste for every instance.
+        state_refresh_fraction: In time training, share of instances whose bins are redrawn at
+            the end of each epoch to 1..``init_accumulation_days`` days of waste. The rest
+            follow the policy's own collections. 0 is pure time training.
         reward: Per-graph objective/reward weights. When set, overrides ``env.reward``
             for this graph during curriculum or evaluation. When ``None``, the
             global ``env.reward`` is used.
@@ -60,4 +63,5 @@ class GraphConfig:
     start_day: int = 0
     n_days: int = 1
     init_accumulation_days: int = 1
+    state_refresh_fraction: float = 0.0
     reward: Optional[ObjectiveConfig] = field(default=None)
