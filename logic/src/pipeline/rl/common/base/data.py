@@ -17,6 +17,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from logic.src.data.datasets import TensorDictDataset
+from logic.src.pipeline.rl.common.epoch import accumulate_initial_fill
 from logic.src.tracking.logging.pylogger import get_pylogger
 from logic.src.utils.data.td_utils import tensordict_collate_fn
 
@@ -212,6 +213,9 @@ class DataMixin:
                 data = gen(batch_size=n_train)
                 self.train_dataset = TensorDictDataset(data)
 
+            init_days = int(_cfg_get(_cfg_graph, "init_accumulation_days", 1) or 1)
+            accumulate_initial_fill(self.train_dataset.data, init_days)
+
             # Build validation datasets from eval_graphs (multi-graph) or fall back to single dataset
             eval_graphs = _get_eval_graphs(self.cfg)
             if eval_graphs:
@@ -241,6 +245,7 @@ class DataMixin:
                     # Trim to n_samples before possible day-expansion
                     if n_samples < len(val_ds):
                         val_ds = TensorDictDataset(val_ds.data[:n_samples])
+                    accumulate_initial_fill(val_ds.data, int(_cfg_get(eval_graph, "init_accumulation_days", 1) or 1))
 
                     # Multi-day expansion: replicate each instance once per eval day,
                     # injecting 'current_day' so the env selects the right waste slice.

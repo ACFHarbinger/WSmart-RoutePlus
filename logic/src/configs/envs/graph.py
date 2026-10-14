@@ -34,6 +34,9 @@ class GraphConfig:
         n_samples: Number of samples/instances to generate for this graph.
         start_day: The starting day of the simulation.
         n_days: Number of days to generate for this graph.
+        init_accumulation_days: For multi-day datasets, start instance ``i`` with the waste of
+            ``(i mod init_accumulation_days) + 1`` days already in the bins. 1 keeps a single
+            day's waste for every instance.
         reward: Per-graph objective/reward weights. When set, overrides ``env.reward``
             for this graph during curriculum or evaluation. When ``None``, the
             global ``env.reward`` is used.
@@ -56,4 +59,5 @@ class GraphConfig:
     n_samples: int = 1
     start_day: int = 0
     n_days: int = 1
+    init_accumulation_days: int = 1
     reward: Optional[ObjectiveConfig] = field(default=None)

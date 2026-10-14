@@ -55,6 +55,7 @@ class REINFORCE(RL4COLitModule):
         entropy_weight: float = 0.0,
         max_grad_norm: float = 1.0,
         lr_critic: float = 1e-4,
+        normalize_advantage: bool = False,
         **kwargs,
     ):
         """
@@ -64,11 +65,16 @@ class REINFORCE(RL4COLitModule):
             entropy_weight: Weight for the entropy bonus (default: 0.0).
             max_grad_norm: Maximum gradient norm for clipping (default: 1.0).
             lr_critic: Learning rate for the critic optimizer (default: 1e-4).
+            normalize_advantage: Divide the advantage by its batch standard deviation. The
+                reward scale then no longer decides how much the entropy bonus weighs: with
+                rewards in the hundreds the bonus is otherwise negligible and the policy can
+                become deterministic and stop learning (default: False).
             kwargs: Additional arguments to pass to the parent class (RL4COLitModule).
         """
         super().__init__(**kwargs)
         self.entropy_weight = entropy_weight
         self.max_grad_norm = max_grad_norm
+        self.normalize_advantage = normalize_advantage
 
     def calculate_loss(
         self,
@@ -110,7 +116,10 @@ class REINFORCE(RL4COLitModule):
         advantage = reward - baseline_val
 
         # Policy gradient loss
-        loss = -(advantage.detach() * log_likelihood).mean()
+        weight = advantage.detach()
+        if self.normalize_advantage and weight.numel() > 1:
+            weight = weight / weight.std().clamp_min(1e-8)
+        loss = -(weight * log_likelihood).mean()
 
         # Log loss components
         self.log("train/policy_loss", loss, sync_dist=True)
