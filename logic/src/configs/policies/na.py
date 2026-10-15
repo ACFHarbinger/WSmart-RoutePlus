@@ -10,6 +10,7 @@ Example:
     >>> config.seed
     None
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -61,7 +62,11 @@ class NeuralAgentConfig:
             key, val = next(iter(config.items()))
             if isinstance(val, (list, tuple)) or type(val).__name__ == "ListConfig":
                 config = val
-            elif key not in cls.__dataclass_fields__ and (isinstance(val, dict) or type(val).__name__ == "DictConfig"):
+            elif (
+                key not in cls.__dataclass_fields__
+                and key not in ("decoding", "model")
+                and (isinstance(val, dict) or type(val).__name__ == "DictConfig")
+            ):
                 # Plain-mapping YAML (P-13): ``{amgat: {decoding: ..., ...}}``.
                 config = val
 
