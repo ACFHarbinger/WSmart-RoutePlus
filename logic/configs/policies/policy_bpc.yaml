@@ -1,216 +1,42 @@
-# =============================================================================
-# BPC Policy — Near-Optimal Configuration (300s budget)
-# =============================================================================
-# TARGET: Closest possible to the true optimum on 100-node VRPP instances
-#         within a 300-second wall-clock budget.
-#
-# ARCHITECTURE RATIONALE:
-#   With 300s the bottleneck shifts from "get any integer solution" to
-#   "close the LP integrality gap." The strategy is:
-#     1. Rich root CG with full cut suite (≈ 60–80s)
-#     2. Moderate B&B with node-visitation branching (≈ 180s)
-#     3. Reserve ≈ 40s for cut separation overhead + SP merge
-#
-#   Key decisions vs. the 60s YAML:
-#     - cg_at_root_only: FALSE — re-pricing at non-root nodes is mandatory
-#       for tight bounds when B&B has time to explore the tree.
-#     - cutting_planes: "all" — lifted cover + rounded-capacity + subset-row
-#       (limited-memory rank-1) are the decisive cuts for VRPP integrality gap
-#       closure (Poggi, Viana, Uchoa 2010).
-#     - ng_neighborhood_size: 12 — practical ceiling before label explosion;
-#       combined with DSSR this approximates elementary pricing well.
-#     - enable_strong_branching_heuristic: false — disabled, see the key below.
-#     - lr_pre_pruning: true — at 300s the subgradient pass at root pays off
-#       by providing a tight LR bound that prunes subtrees before CG starts.
-# =============================================================================
-
 bpc:
   custom:
-    # -------------------------------------------------------------------------
-    # VRPP Problem Settings
-    # -------------------------------------------------------------------------
-    - profit_aware_operators: true
-      # Use profit-aware greedy insertion for warm-start routes.
-      # Ensures the initial column pool covers profitable optional nodes,
-      # giving the LP non-zero duals for optional nodes from iteration 1.
-
-    - vrpp: true
-
-    # -------------------------------------------------------------------------
-    # Infrastructure
-    # -------------------------------------------------------------------------
-    - packing: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
-
-    - time_limit: 60.0
-      # Full wall-clock budget.
-
-    - route_improvement: { "other/ri_cls.yaml": ["default"] }
-
-    # -------------------------------------------------------------------------
-    # Branch-and-Bound Search Strategy
-    # -------------------------------------------------------------------------
-    - search_strategy: "depth_first"
-      # DFS maximises LP basis reuse across parent→child transitions,
-      # giving 3–5× speedup on child LP solves via dual simplex warm-start.
-      # Required for correctness with spatial divergence branching.
-
-    # -------------------------------------------------------------------------
-    # Cutting Plane Strategy
-    # -------------------------------------------------------------------------
-    - cutting_planes: "all"
-      # Activates every registered cut family:
-      #   RCC  — Rounded Capacity Cuts (Lysgaard et al. 2004)
-      #   SRI  — 3-Subset-Row Inequalities (Jepsen et al. 2008)
-      #   Min-Cut — Flow-consistency cuts on y_v (Poggi et al. 2010)
-      #   Triangle Clique — Incompatibility cuts on node triples
-      #   Limited-memory rank-1 — Up to 5-row SRI (Pecin et al. 2017)
-      #   Node profit bound — Knapsack UB cuts on y (Dang et al. 2013)
-      #   Path elimination — Infeasible partial-path cuts
-      #   Fleet cover + LCI (Saturated-arc and Physical-capacity variants)
-      # These cut families are the primary mechanism for closing the VRPP
-      # integrality gap; without them the LP bound is too loose for B&B.
-
-    # -------------------------------------------------------------------------
-    # Branching Strategy
-    # -------------------------------------------------------------------------
-    - branching_strategy: "divergence"
-      # Spatial divergence branching (Barnhart et al. 1998): traces the two
-      # highest-λ fractional routes from the depot until they diverge, then
-      # partitions outgoing arcs by polar angle. Balanced spatial splits
-      # minimise tree depth vs. edge branching.
-
-    - enable_node_visitation_branching: true
-      # Hierarchical y_v branching BEFORE arc/Ryan-Foster decisions.
-      # Directly resolves the profit-selection × routing duality by
-      # branching on which optional nodes to visit (Boussier et al. 2007).
-      # Phase 0/1/2 pipeline: heuristic rank → restricted LP eval → pick best.
-
-    # -------------------------------------------------------------------------
-    # Column Generation Hyperparameters
-    # -------------------------------------------------------------------------
-    - max_cg_iterations: 150
-      # Allow up to 150 CG iterations per node. With 300s and cg_at_root_only
-      # false, non-root nodes get smaller budgets but deeper convergence.
-
-    - max_cuts_per_iteration: 10
-      # Up to 10 cuts per round. Combined with cut_orthogonality_threshold
-      # this adds diverse, non-redundant cuts efficiently.
-
-    - max_routes_per_pricing: 50
-      # 50 columns per pricer call. Heuristic pricing generates many good
-      # columns quickly; higher values give the master LP richer signal.
-
-    - cg_at_root_only: false
-      # CRITICAL for near-optimality: re-price at every B&B node.
-      # cg_at_root_only=true gives a heuristic bound at non-root nodes and
-      # can prune incorrectly, missing the optimal solution. With 300s this
-      # is affordable — non-root CG is warm-started from parent basis.
-
-    - optimality_gap: 0.005
-      # Stop B&B when the gap between LP bound and best integer is ≤ 0.5%.
-      # Tighter than 60s config (2%); achievable within 300s on most instances.
-
-    - early_termination_gap: 0.01
-      # Heuristic early stop at 1% gap. The last 0.5% of gap closure often
-      # requires disproportionate B&B time; 1% is practically optimal.
-
-    - max_bb_nodes: 2000
-      # Up to 2000 B&B nodes. With 300s and DFS, this explores deep subtrees
-      # while maintaining LP basis reuse benefits.
-
-    # -------------------------------------------------------------------------
-    # Lagrangian Relaxation Pre-Pruning
-    # -------------------------------------------------------------------------
-    - lr_pre_pruning: true
-      # Enable LR pre-pruning at B&B nodes (Poggi de Aragão et al. 2010).
-      # A fast subgradient pass computes a Lagrangian UB before CG starts;
-      # if UB ≤ incumbent, the node is pruned without touching the master LP.
-      # At 300s this saves meaningful time at deeper nodes.
-
-    - lr_lambda_init: 0.0
-      # Start multiplier at 0 (unpenalised capacity). The subgradient will
-      # quickly find a good λ* from the warm-start dual information.
-
-    - lr_max_subgradient_iters: 40
-      # 40 Polyak iterations — enough to tighten the LR bound significantly
-      # without exceeding the per-node LR time budget.
-
-    - lr_subgradient_theta: 1.0
-      # Step-size multiplier θ=1.0 (standard Polyak rule). Values > 1 can
-      # be aggressive but cause oscillation; 1.0 is the safe default.
-
-    - lr_op_time_limit: 5.0
-      # 5s per uncapacitated OP solve inside the subgradient. At 300s total
-      # this is affordable and gives a tighter bound than 3s.
-
-    - lr_pre_pruning_depth_limit: -1
-      # Apply LR pruning at ALL tree depths. At shallow nodes the LR bound
-      # is strong; at deep nodes it degrades but costs little (warm-started).
-
-    - lr_warm_start_cg: true
-      # Seed the initial column pool at each node with the UOP solution at λ*.
-      # Provides a stronger starting point for CG, reducing iteration count.
-      # Only meaningful when lr_pre_pruning is also true (shares λ*).
-
-    # -------------------------------------------------------------------------
-    # RCSPP Pricing Relaxation
-    # -------------------------------------------------------------------------
-    - use_ng_routes: true
-      # ng-route relaxation (Baldacci, Mingozzi, Roberti 2011). Avoids O(2^n)
-      # exact elementarity while providing a tight bound in practice.
-      # For true exact ESPPRC, set false — but intractable at 100 nodes.
-
-    - ng_neighborhood_size: 12
-    # -------------------------------------------------------------------------
-    # Advanced Cutting Plane Controls
-    # -------------------------------------------------------------------------
-    - enable_heuristic_rcc_separation: true
-      # Heuristic max-flow RCC separation in addition to connected-component
-      # heuristic. Finds violated RCCs on non-component subsets — important
-      # for VRPP instances with spatially distributed mandatory bins.
-
-    - enable_comb_cuts: false
-      # Comb separation is O(n³) per round. At 100 nodes this consumes ~5s
-      # per separation call — too expensive even with 300s total. The
-      # Min-Cut and Triangle Clique cuts are more effective for VRPP.
-
-    - cut_orthogonality_threshold: 0.7
-      # Lower than the 60s config (0.8) — with more time we can afford more
-      # distinct cuts per round, reducing redundancy and tightening the LP
-      # more aggressively. Below 0.5 the overhead from filter checks grows.
-
-    - route_budget: .inf
-      # No explicit route-distance budget cap. Set this to the vehicle's
-      # maximum travel distance/time if known — enables Triangle Clique and
-      # Path Elimination cuts based on temporal infeasibility.
-
-    # -------------------------------------------------------------------------
-    # B&B Search and Branching Controls
-    # -------------------------------------------------------------------------
-    - enable_strong_branching_heuristic: false
-      # Disabled: the restricted-master lookahead (arc and node-visitation
-      # candidates) re-solves the live master in place, and with it the search
-      # returned suboptimal plans on brute-force-checked instances (e.g. 19.16
-      # vs 19.96). B&B without it matched every checked optimum. Keep off until
-      # the lookahead works on a copy of the master.
-
-    - strong_branching_size: 5
-      # Evaluate top 5 candidates in Phase 1, pick best 2 for Phase 2.
-      # Beyond 5 the marginal node-count reduction doesn't justify the cost.
-
-    - enable_column_pool_deduplication: true
-      # Periodically remove duplicate columns (same node set, different order).
-      # Keeps the master LP size manageable without losing dual information.
-
-    - rc_tolerance: 1e-6
-      # Very tight reduced-cost acceptance threshold. With 300s we can afford
-      # to accept nearly any improving column; 1e-6 filters only numerical
-      # noise while 1e-5 may miss near-zero-RC columns near optimality.
-
-    - exact_mode: false
-      # Heuristic stops (optimality_gap / early_termination_gap) remain active;
-      # exact_mode additionally pins ng-neighborhoods and timing guards.
-
-    - prefer_shorter_path_dfs: true
-      # DFS child ordering per Barnhart §3.2: explore the branch that keeps
-      # the shorter path first, finding feasible solutions earlier in the tree.
+    profit_aware_operators: true
+    vrpp: true
+    packing:
+      other/pk_last_minute.yaml:
+      - last_minute_cf70
+      - last_minute_cf90
+    time_limit: 60.0
+    route_improvement:
+      other/ri_cls.yaml:
+      - default
+    search_strategy: depth_first
+    cutting_planes: all
+    branching_strategy: divergence
+    enable_node_visitation_branching: true
+    max_cg_iterations: 150
+    max_cuts_per_iteration: 10
+    max_routes_per_pricing: 50
+    cg_at_root_only: false
+    optimality_gap: 0.005
+    early_termination_gap: 0.01
+    max_bb_nodes: 2000
+    lr_pre_pruning: true
+    lr_lambda_init: 0.0
+    lr_max_subgradient_iters: 40
+    lr_subgradient_theta: 1.0
+    lr_op_time_limit: 5.0
+    lr_pre_pruning_depth_limit: -1
+    lr_warm_start_cg: true
+    use_ng_routes: true
+    ng_neighborhood_size: 12
+    enable_heuristic_rcc_separation: true
+    enable_comb_cuts: false
+    cut_orthogonality_threshold: 0.7
+    route_budget: .inf
+    enable_strong_branching_heuristic: false
+    strong_branching_size: 5
+    enable_column_pool_deduplication: true
+    rc_tolerance: 1e-6
+    exact_mode: false
+    prefer_shorter_path_dfs: true

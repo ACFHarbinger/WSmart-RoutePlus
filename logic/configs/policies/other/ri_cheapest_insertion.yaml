@@ -1,9 +1,6 @@
-# route improvement: Cheapest Insertion
-
 default:
   methods:
-    - "cheapest_insertion"
-
+  - cheapest_insertion
   insertion:
     cost_per_km: 0.5
     revenue_kg: 1.0

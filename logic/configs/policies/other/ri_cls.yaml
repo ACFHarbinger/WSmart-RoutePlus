@@ -1,38 +1,6 @@
-# =============================================================================
-# route improvement: Classical Local Search (2-opt)
-# =============================================================================
-# PURPOSE:
-#   Deterministic 2-opt local search for intra-route optimization.
-#   Systematically evaluates all edge-swap moves until local optimum.
-#
-# ALGORITHM:
-#   1. For each route:
-#      a. For each pair of edges (i,i+1) and (j,j+1):
-#         - Try reversing segment [i+1, j]
-#         - Accept if cost improvement found
-#      b. Repeat until no improving moves found
-#   2. Terminate after max iterations or convergence
-#
-# USE CASES:
-#   - Guaranteed convergence to 2-opt local optimum
-#   - Deterministic refinement (reproducible results)
-#   - Comparison baseline for stochastic local search
-#
-# PERFORMANCE:
-#   - Slower than fast_tsp but more thorough
-#   - Improvement: 3-8% over greedy construction
-#   - Runtime: O(n² × iterations) per route
-#
-# PARAMETERS:
-#   - ls_operator: 2opt (edge-reversal moves)
-#   - iterations: 1000 (maximum 2-opt iterations per route)
-#     Range: 100-5000 (100 = quick, 1000 = thorough, 5000 = exhaustive)
-# =============================================================================
-
 default:
   methods:
-    - "classical_local_search"
-
+  - classical_local_search
   ls_operator: 2opt
   iterations: 1000
   time_limit: 30.0

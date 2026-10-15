@@ -1,9 +1,6 @@
-# route improvement: Ruin and Recreate (LNS)
-
 default:
   methods:
-    - "ruin_recreate"
-
+  - ruin_recreate
   ruin_recreate:
     lns_iterations: 100
     ruin_fraction: 0.2

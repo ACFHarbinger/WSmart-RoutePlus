@@ -1,12 +1,4 @@
-# Multi-Period Iterated Local Search (MP-ILS) Policy Configuration
-# Iterative perturbation and local search for multi-period routing.
-
 mp_ils:
-  # Number of iterations.
   iters: 50
-
-  # Random seed for reproducibility.
   seed: 42
-
-  # Whether to use VRP with Profits objectives.
   vrpp: true

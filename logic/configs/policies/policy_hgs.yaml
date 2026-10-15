@@ -1,175 +1,36 @@
-# HGS Policy Configuration
-
-# =============================================================================
-# HGS (Hybrid Genetic Search) Policy Configuration
-# =============================================================================
-# PURPOSE:
-#   State-of-the-art metaheuristic combining genetic algorithm with local
-#   search and Split algorithm. Consistently produces best-known solutions
-#   for CVRP benchmarks. Recommended for production and benchmarking.
-#
-# ALGORITHM:
-#   1. Maintain population of elite and diverse solutions
-#   2. Crossover: OX operator to generate offspring
-#   3. Local Search: 2-opt, relocate, swap on each offspring
-#   4. Split: Optimal route partitioning from giant tour
-#   5. Population Management: Biased fitness + diversity preservation
-#
-# PERFORMANCE:
-#   Often matches or beats commercial solvers (Gurobi, CPLEX) on CVRP.
-#   Published benchmarks show <1% gap on instances up to 500 nodes.
-#
-# REFERENCE:
-#   Vidal, T. (2022). "Hybrid genetic search for the CVRP: Open-source
-#   implementation and SWAP* neighborhood" Computers & Operations Research, 140, 105643.
-#
-# TYPICAL USE CASES:
-#   - Production deployment (60s budget yields excellent solutions)
-#   - Academic benchmarking (compare against published results)
-#   - Large instances (150-500 nodes) where exact methods fail
-# =============================================================================
-
 hgs:
   custom:
-    # ---------------------------------------------------------------------
-    # Runtime Control (Vidal 2022)
-    # ---------------------------------------------------------------------
-    - time_limit: 60.0
-      # Maximum wall-clock seconds for optimization (0 = unlimited)
-      # Range: 0 (unlimited), 30-600 (30s = quick, 300s = thorough)
-      # Recommendation: 60s for simulation (iteration-based stopping is too slow)
-
-    - restart_timer: 60
-      # Maximum wall-clock seconds for optimization, before restarting the algorithm (0 = unlimited)
-      # Range: 0 (unlimited), 30-600 (30s = quick, 300s = thorough)
-      # Recommendation: 60s for simulation (iteration-based stopping is too slow)
-
-    - n_iterations_no_improvement: 20000
-      # Maximum iterations without improvement before stopping
-      # Range: 5000-20000
-      # Recommendation: 20000 (Vidal 2022 default), or 1000-5000 for faster runs
-
-    - local_search_iterations: 100
-      # Number of iterations to run local search
-      # Range: 50-200
-      # Recommendation: 100 (balanced)
-
-    # ---------------------------------------------------------------------
-    # Population Management (Vidal 2022 - Dual Subpopulations)
-    # ---------------------------------------------------------------------
-    - mu: 25
-      # Minimum population size per subpopulation (feasible/infeasible)
-      # Range: 10-50
-      # Vidal 2022 default: 25
-      # Each subpopulation maintains at least mu individuals
-
-    - lambda_param: 40
-      # Generation size - number of individuals before survivor selection
-      # Range: 20-80
-      # Vidal 2022 default: 40
-      # Maximum population size = mu + lambda_param
-
-    - nb_elite: 4
-      # Number of elite solutions preserved across generations
-      # Range: 2-10 (typically ~15% of mu)
-      # Vidal 2022 default: 4
-
-    - nb_close: 5
-      # Number of close individuals for diversity measurement
-      # Range: 3-10
-      # Vidal 2022 default: 5
-
-    - nb_granular: 20
-      # Granular search parameter for local search moves
-      # Range: 10-40
-      # Vidal 2022 default: 20
-
-    - target_feasible: 0.2
-      # Target proportion of feasible solutions (20%)
-      # Range: 0.1-0.3
-      # Vidal 2022 default: 0.2
-      # Penalty coefficients auto-adjust to maintain this ratio
-
-    # ---------------------------------------------------------------------
-    # Genetic Operators (Vidal 2022)
-    # ---------------------------------------------------------------------
-    - mutation_rate: 1.0
-      # Probability of applying local search (education) to offspring
-      # Vidal 2022 default: 1.0 (always educate)
-
-    - repair_probability: 0.5
-      # Probability of repairing infeasible offspring
-      # Vidal 2022 default: 0.5 (50% as per Algorithm 1)
-
-    - crossover_rate: 1.0
-      # Probability of applying crossover
-      # Vidal 2022 default: 1.0 (always apply)
-
-    # ---------------------------------------------------------------------
-    # Penalty Management (Vidal 2022 - Adaptive)
-    # ---------------------------------------------------------------------
-    - initial_penalty_capacity: 1.0
-      # Initial penalty coefficient for capacity violations
-      # Range: 0.1-10.0
-
-    - penalty_increase: 1.2
-      # Multiplier for increasing penalty (when too many feasible)
-      # Range: 1.1-1.5
-      # Vidal 2022 default: 1.2
-
-    - penalty_decrease: 0.85
-      # Multiplier for decreasing penalty (when too many infeasible)
-      # Range: 0.5-0.95
-      # Vidal 2022 default: 0.85
-
-    # Crossover operator: Order Crossover (OX)
-    #   - Preserves relative order from parents
-    #   - Controlled by crossover_rate: 0.95 (hardcoded)
-    # ---------------------------------------------------------------------
-    # ENHANCED: Advanced Local Search Parameters (NEW)
-    # ---------------------------------------------------------------------
-    - use_cross_exchange: false
-      # Enable cross-exchange (segment swaps between routes)
-
-    - use_lambda_interchange: false
-      # Enable λ-interchange neighborhood search
-
-    - lambda_max: 2
-      # Maximum segment length for λ-interchange
-
-    - use_ejection_chains: false
-      # Enable ejection chain moves (route minimization)
-
-    - use_3opt: false
-      # Enable 3-opt intra-route
-
-    # Local Search Operators (applied to all offspring):
-    #   - 2-opt intra-route & inter-route (2-opt*)
-    #   - 3-opt intra-route
-    #   - Relocate inter-route
-    #   - Swap inter-route & swap*
-    #   - Or-opt (chains of 1-3 nodes)
-    #   - Cross-exchange (segment swaps)
-    #   - λ-interchange (systematic cross-exchange)
-    #   - Ejection chains (route minimization)
-    # ---------------------------------------------------------------------
-    # Infrastructure Settings
-    # ---------------------------------------------------------------------
-    # VRPP Settings
-    - profit_aware_operators: true
-    - vrpp: true
-
-    - engine: "custom"
-      # Execution backend: logic/src/policies/hybrid_genetic_search.py
-      # Uses PyVRP library (https://pyvrp.org/)
-
-    - packing: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
-      # Node selection strategy for waste collection problems
-      # Options: ms_lookahead.yaml, ms_last_minute.yaml, ms_regular.yaml
-      # See: docs/MUST_GO_STRATEGIES.md
-
-    - route_improvement: { "other/ri_cls.yaml": ["default"] }
-    - acceptance_criteria: { "other/ac_oi.yaml": ["oi"] }
-      # HGS local search is comprehensive; external route improvement redundant
-      # Empty = use HGS output directly
-# =============================================================================
+    time_limit: 60.0
+    restart_timer: 60
+    n_iterations_no_improvement: 20000
+    local_search_iterations: 100
+    mu: 25
+    lambda_param: 40
+    nb_elite: 4
+    nb_close: 5
+    nb_granular: 20
+    target_feasible: 0.2
+    mutation_rate: 1.0
+    repair_probability: 0.5
+    crossover_rate: 1.0
+    initial_penalty_capacity: 1.0
+    penalty_increase: 1.2
+    penalty_decrease: 0.85
+    use_cross_exchange: false
+    use_lambda_interchange: false
+    lambda_max: 2
+    use_ejection_chains: false
+    use_3opt: false
+    profit_aware_operators: true
+    vrpp: true
+    engine: custom
+    packing:
+      other/pk_last_minute.yaml:
+      - last_minute_cf70
+      - last_minute_cf90
+    route_improvement:
+      other/ri_cls.yaml:
+      - default
+    acceptance_criteria:
+      other/ac_oi.yaml:
+      - oi

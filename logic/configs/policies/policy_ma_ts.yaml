@@ -1,114 +1,18 @@
-# Stochastic Tournament Genetic Algorithm Policy Configuration
-
-# =============================================================================
-# Memetic Algorithm Tolerance-based Selection (MA-TS) Policy Configuration
-# =============================================================================
-# PURPOSE:
-#   Genetic algorithm with stochastic tournament selection using
-#   infeasibility tolerance. Replaces metaphor-based LCA.
-# =============================================================================
-
 ma_ts:
   custom:
-    # ---------------------------------------------------------------------
-    # Population Parameters
-    # ---------------------------------------------------------------------
-    - local_search_iterations: 500
-      # Number of local search iterations per individual
-
-    - population_size: 10
-      # Number of chromosomes in population (N parameter)
-      # Range: 20-200
-      # Recommendation: 50 for balanced search
-
-    - n_removal: 1
-      # Number of nodes to remove during perturbation
-      # Range: 1-n_nodes
-
-    # ---------------------------------------------------------------------
-    # Selection Parameters
-    # ---------------------------------------------------------------------
-    - tournament_competitors: 5
-      # Number of opponents per individual in tournament
-      # Range: 2-10
-      # Recommendation: 5 for moderate selection pressure
-      # Higher values increase selection pressure
-
-    - selection_pressure: 0.1
-      # Controls stochastic tournament probability (β coefficient)
-      # Range: 0.01-1.0
-      # Recommendation: 0.1 for sigmoid-based selection
-      # P(select i over j) = 1 / (1 + exp(-β × (fitness_i - fitness_j)))
-
-    # ---------------------------------------------------------------------
-    # Genetic Operators
-    # ---------------------------------------------------------------------
-    - crossover_rate: 0.6
-      # Probability of applying crossover operator
-      # Range: 0.5-1.0
-      # Recommendation: 0.8 (standard GA setting)
-
-    - mutation_rate: 0.2
-      # Probability of applying mutation operator
-      # Range: 0.05-0.5
-      # Recommendation: 0.2 for balanced exploration
-
-    - elitism_count: 2
-      # Number of top individuals preserved unchanged
-      # Range: 1-10
-      # Recommendation: 2 for small elite preservation
-      # Prevents loss of best solutions across generations
-
-    # ---------------------------------------------------------------------
-    # Runtime Control
-    # ---------------------------------------------------------------------
-    - max_generations: 100
-      # Maximum number of evolution cycles
-      # Range: 50-500
-      # Recommendation: 100 for production
-
-    - time_limit: 60.0
-      # Maximum wall-clock seconds for optimization
-      # Range: 10-600 (0 = unlimited)
-      # Recommendation: 60s for production
-
-    # ---------------------------------------------------------------------
-    # Infrastructure Settings
-    # ---------------------------------------------------------------------
-    # VRPP Settings
-    - profit_aware_operators: false
-    - vrpp: true
-
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-      # Node selection strategy for waste collection problems
-      # Options: ms_lookahead.yaml, ms_last_minute_*.yaml, ms_regular.yaml
-      # See: docs/MUST_GO_STRATEGIES.md
-
-    - route_improvement: []
-      # Route refinement heuristics applied after optimization
-      # Empty list = use raw output
-      # Options: ["2opt_intra", "relocate", "swap"]
-
-# =============================================================================
-# ALGORITHM STRUCTURE
-# =============================================================================
-# Each generation:
-#   1. Fitness Evaluation: Compute objective values for all N individuals
-#   2. Tournament Selection:
-#      - Each individual competes against tournament_competitors opponents
-#      - Selection probability: P(i defeats j) = σ(β × (f(i) - f(j)))
-#      - where σ(x) = 1/(1 + exp(-x)), β = selection_pressure
-#   3. Crossover: Apply recombination to selected parents with probability crossover_rate
-#   4. Mutation: Perturb offspring with probability mutation_rate
-#   5. Replacement: Keep elitism_count best + new offspring
-#
-# Complexity:
-#   - Space: O(N × n) for population storage
-#   - Time per generation: O(N × tournament_size × eval_cost)
-#
-# Interpretation of "League Championship" Metaphor:
-#   - "League Schedule/Fixtures" → Pairwise fitness evaluation cycles
-#   - "Playing Strength" → Objective function value (fitness score)
-#   - "Match Outcome (Win/Loss)" → Stochastic tournament result
-#   - "Team Formation" → Recombination/crossover operator
-# =============================================================================
+    local_search_iterations: 500
+    population_size: 10
+    n_removal: 1
+    tournament_competitors: 5
+    selection_pressure: 0.1
+    crossover_rate: 0.6
+    mutation_rate: 0.2
+    elitism_count: 2
+    max_generations: 100
+    time_limit: 60.0
+    profit_aware_operators: false
+    vrpp: true
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    route_improvement: []

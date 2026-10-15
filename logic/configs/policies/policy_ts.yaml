@@ -1,64 +1,35 @@
-# Policy Configuration
-# =============================================================================
-# TS (Tabu Search) Policy Configuration
-# =============================================================================
-# PURPOSE:
-#   Classic Tabu Search metaheuristic with adaptive memory structures.
-#   Uses short-term memory (recency-based tabu list) to prevent cycling,
-#   long-term memory (frequency-based) for intensification/diversification,
-#   aspiration criteria, elite solutions, and path relinking.
-#
-# REFERENCE:
-#   Glover, F. "Tabu Search Fundamentals and Uses", 1995.
-# =============================================================================
-
 ts:
   custom:
-    # Short-term memory (Recency-based)
-    - tabu_tenure: 7 # Base tabu tenure (iterations)
-    - dynamic_tenure: true # Adjust tenure based on search state
-    - min_tenure: 5 # Minimum tenure for dynamic adjustment
-    - max_tenure: 15 # Maximum tenure for dynamic adjustment
-
-    # Aspiration criteria
-    - aspiration_enabled: true # Override tabu for globally improving moves
-
-    # Long-term memory (Frequency-based)
-    - intensification_enabled: true # Enable intensification strategies
-    - diversification_enabled: true # Enable diversification strategies
-    - intensification_interval: 100 # Iterations between intensification phases
-    - diversification_interval: 200 # Iterations between diversification phases
-    - elite_size: 5 # Number of elite solutions to maintain
-    - frequency_penalty_weight: 0.1 # Weight for frequency-based penalties
-
-    # Candidate list strategies
-    - candidate_list_enabled: true # Restrict neighborhood to candidate list
-    - candidate_list_size: 20 # Maximum candidate list size
-
-    # Strategic oscillation (experimental)
-    - oscillation_enabled: false # Enable feasible/infeasible oscillation
-    - feasibility_tolerance: 0.1 # Tolerance for infeasibility
-
-    # General search parameters
-    - max_iterations: 5000 # Maximum iterations
-    - max_iterations_no_improve: 500 # Restart after stagnation
-    - n_removal: 3 # Nodes removed per destroy step
-    - n_llh: 5 # Number of low-level heuristics
-    - time_limit: 60.0 # Time limit in seconds
-
-    # Neighborhood structure
-    - use_swap: true # Enable swap neighborhood
-    - use_relocate: true # Enable relocate neighborhood
-    - use_2opt: true # Enable 2-opt neighborhood
-    - use_insertion: true # Enable insertion-based neighborhoods
-
-    # Standard configuration
-    # VRPP Settings
-    - profit_aware_operators: false
-    - vrpp: true
-
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-    - route_improvement: []
-
-    # Acceptance Criterion
-    - acceptance_criteria: {"other/ac_oi.yaml": ["oi"]}
+    tabu_tenure: 7
+    dynamic_tenure: true
+    min_tenure: 5
+    max_tenure: 15
+    aspiration_enabled: true
+    intensification_enabled: true
+    diversification_enabled: true
+    intensification_interval: 100
+    diversification_interval: 200
+    elite_size: 5
+    frequency_penalty_weight: 0.1
+    candidate_list_enabled: true
+    candidate_list_size: 20
+    oscillation_enabled: false
+    feasibility_tolerance: 0.1
+    max_iterations: 5000
+    max_iterations_no_improve: 500
+    n_removal: 3
+    n_llh: 5
+    time_limit: 60.0
+    use_swap: true
+    use_relocate: true
+    use_2opt: true
+    use_insertion: true
+    profit_aware_operators: false
+    vrpp: true
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    route_improvement: []
+    acceptance_criteria:
+      other/ac_oi.yaml:
+      - oi

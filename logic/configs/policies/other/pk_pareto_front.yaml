@@ -1,0 +1,3 @@
+default:
+  strategy: pareto_front
+  threshold: 7.0

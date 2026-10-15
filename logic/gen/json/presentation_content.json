@@ -145,7 +145,7 @@
         "Last-Minute (LM): $f_i(t) \\geq CF,\\quad CF\\in\\{70\\%,\\ 90\\%\\}$"
       ],
       "eq_size_pt": 12,
-      "caption": "Look-Ahead (LA) flags today's overflowing bins (Step 1), simulates their collection (Step 3), then predicts the earliest day any of them would overflow again — the next collection day nc (Step 4) — and, if that day has not already arrived, bundles in any other bin that would overflow before it (Step 6), so it is not visited on its own extra trip (ports LookaheadSelection.select_bins). Service-Level flags a bin once its n-day-ahead worst case (mean fill + z_α standard deviations) crosses capacity τ. Last-Minute reacts once the fill ratio f_i crosses a fixed critical threshold CF.",
+      "caption": "Look-Ahead (LA) flags today's overflowing bins (Step 1), simulates their collection (Step 3), then predicts the earliest day any of them would overflow again — the next collection day nc (Step 4) — and, if that day has not already arrived, bundles in any other bin that would overflow before it (Step 6), so it is not visited on its own extra trip (ports LookaheadSelection.pack). Service-Level flags a bin once its n-day-ahead worst case (mean fill + z_α standard deviations) crosses capacity τ. Last-Minute reacts once the fill ratio f_i crosses a fixed critical threshold CF.",
       "figure": "knapsack_illustration.png",
       "show_bullets": false,
       "bullets": [

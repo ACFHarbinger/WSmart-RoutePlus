@@ -12,7 +12,7 @@ Attributes:
     ImprovementMetrics: Improvement metrics.
     SelectionMetrics: Selection metrics.
     SearchPhase: Search phase.
-    SelectionContext: Data container for selection context and state.
+    PackingContext: Data container for selection context and state.
     merge_context: Merge contexts.
 
 Example:
@@ -23,7 +23,7 @@ Example:
         SearchContext,
         SearchPhase,
         SelectionMetrics,
-        SelectionContext,
+        PackingContext,
         merge_context,
         MultiDayContext,
         ProblemContext,
@@ -44,7 +44,7 @@ from .search_context import (
     SelectionMetrics,
     merge_context,
 )
-from .selection_context import SelectionContext
+from .packing_context import PackingContext
 from .solution_context import SolutionContext
 
 __all__ = [
@@ -59,5 +59,5 @@ __all__ = [
     "ProblemContext",
     "SolutionContext",
     "JointSelectionConstructionContext",
-    "SelectionContext",
+    "PackingContext",
 ]

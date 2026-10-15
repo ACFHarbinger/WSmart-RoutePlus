@@ -1,27 +1,8 @@
-# HNA Policy Configuration (Simulator-Callable Adapter)
-# Reference: Hierarchical Deep Reinforcement Learning for Multi-Period IRP
-# Manager-Worker architecture: Manager schedules nodes, Worker solves CVRP.
-
 hna:
-  # Path to a pre-trained HRLIRPModule checkpoint (.ckpt file).
-  # Set to null to use the threshold-based heuristic fallback.
   checkpoint_path: null
-
-  # Torch device for neural inference ("cpu", "cuda", "cuda:0", etc.).
-  device: "cpu"
-
-  # Planning horizon T (number of days).
+  device: cpu
   horizon: 7
-
-  # Per-unit overflow penalty used in reward computation and fallback.
   overflow_penalty: 500.0
-
-  # Fill level threshold (%) for the fallback mandatory node selection.
-  # Nodes above this level are treated as mandatory when no checkpoint.
   greedy_threshold: 75.0
-
-  # Random seed for stochastic components.
   seed: 42
-
-  # Enable per-day inference logging.
   verbose: false

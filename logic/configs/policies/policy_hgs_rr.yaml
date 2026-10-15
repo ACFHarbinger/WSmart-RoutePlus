@@ -1,242 +1,39 @@
-# HGS-RR Policy Configuration
-
-# =============================================================================
-# HGS-RR (Hybrid Genetic Search with Ruin-and-Recreate) Policy Configuration
-# =============================================================================
-# PURPOSE:
-#   Advanced variant of HGS that replaces traditional mutation with adaptive
-#   ruin-and-recreate operators. Combines genetic algorithm's global search
-#   with ALNS-style destroy-repair heuristics for enhanced diversification.
-#
-# ALGORITHM:
-#   1. Maintain population of elite and diverse solutions (standard HGS)
-#   2. Crossover: OX operator to generate offspring
-#   3. Mutation: Adaptive ruin-recreate (replaces random swap/insert)
-#      - Stopping: Convergence based on n_iterations_no_improvement
-#      - Destroy: Remove q nodes using adaptive operator selection
-#      - Repair: Reinsert nodes using regret-based insertion
-#   4. Local Search: 2-opt, relocate, swap on each offspring
-#   5. Split: Optimal route partitioning from giant tour
-#   6. Population Management: Biased fitness + diversity preservation
-#   7. Operator Adaptation: Track destroy/repair operator performance
-#
-# PERFORMANCE:
-#   Often outperforms standard HGS on large instances (200+ nodes) and
-#   problems with heterogeneous node distributions. Superior exploration
-#   capability reduces risk of premature convergence.
-#
-# REFERENCE:
-#   Combines Vidal's HGS (2012) with adaptive ruin-recreate from
-#   Ropke & Pisinger's ALNS (2006). Operator scoring follows ALNS
-#   sigma-parameter framework.
-#
-# TYPICAL USE CASES:
-#   - Large-scale routing (200-500 nodes)
-#   - Clustered or sparse node distributions
-#   - Multi-depot or multi-objective problems
-#   - Benchmarking against ALNS and HGS baselines
-# =============================================================================
-
 hgs_rr:
   custom:
-    # ---------------------------------------------------------------------
-    # Runtime Control
-    # ---------------------------------------------------------------------
-    - time_limit: 60.0
-      # Maximum wall-clock seconds for optimization
-      # Range: 30-600 (30s = quick, 300s = thorough, 600s = benchmark)
-      # Recommendation: 60s for production (CONSERVATIVE)
-
-    - vrpp: true
-      # Enable VRPP mode (visit subset profitably)
-      # true = only visit nodes where profit > cost
-      # false = visit all nodes (CVRP mode)
-
-    - max_vehicles: 0
-      # Maximum number of vehicles (0 = unlimited)
-      # Range: 0-50 (0 = minimize vehicles automatically)
-
-    # ---------------------------------------------------------------------
-    # Genetic Algorithm Parameters
-    # ---------------------------------------------------------------------
-    - population_size: 50
-      # Total individuals in genetic pool (elite + diverse)
-      # Range: 25-100
-      # Larger populations → better diversity but slower iterations
-      # Recommendation: 50 for stable optimization (CONSERVATIVE)
-
-    - elite_size: 10
-      # Number of top solutions preserved across generations
-      # Range: 5-25 (typically 20% of population_size)
-      # Elite solutions drive intensification (exploitation)
-
-    - n_iterations_no_improvement: 20000
-      # Max iterations without improvement before stopping
-      # Range: 50-20000
-      # Recommendation: 20000 for stable optimization (COMPREHENSIVE)
-
-    - mutation_rate: 0.3
-      # Probability of applying ruin-recreate mutation after crossover
-      # Range: 0.0-0.5 (higher = more aggressive exploration)
-      # Recommendation: 0.3 (higher than HGS 0.2 due to adaptive operators)
-
-    - crossover_rate: 0.7
-      # Probability of applying crossover after mutation
-      # Range: 0.0-1.0 (0.0 = pure mutation, 1.0 = pure crossover)
-      # Recommendation: 0.7 for CVRP, 0.5 for VRPTW
-
-    # ---------------------------------------------------------------------
-    # Population Diversity Management
-    # ---------------------------------------------------------------------
-    - no_improvement_threshold: 20
-      # Generations without improvement to trigger diversity boost
-      # Range: 10-50
-      # Recommendation: 20 for stable optimization (CONSERVATIVE)
-
-    - survivor_threshold: 2.0
-      # Threshold for survivor selection
-      # Range: 1.0-10.0
-      # Recommendation: 2.0 for stable optimization (CONSERVATIVE)
-
-    - neighbor_list_size: 10
-      # Number of nearest neighbors for diversity calculation
-      # Range: 5-20
-      # Used in biased fitness computation
-
-    # ---------------------------------------------------------------------
-    # Ruin-and-Recreate Parameters
-    # ---------------------------------------------------------------------
-    - min_removal_pct: 0.1
-      # Minimum percentage of nodes to remove in destroy phase
-      # Range: 0.05-0.3 (lower = local perturbation)
-      # Recommendation: 0.1 for balanced exploration
-
-    - max_removal_pct: 0.4
-      # Maximum percentage of nodes to remove in destroy phase
-      # Range: 0.2-0.6 (higher = global perturbation)
-      # Recommendation: 0.4 for standard CVRP
-      # Note: Actual removal sampled uniformly from [min, max]
-
-    - noise_factor: 0.015
-      # Randomization factor for regret-based insertion
-      # Range: 0.0-0.1 (0.0 = pure greedy, 0.1 = high randomness)
-      # cost_with_noise = cost * (1 + noise_factor * U[0,1])
-      # Recommendation: 0.015 for controlled stochasticity
-
-    - reaction_factor: 0.1
-      # Rate of operator weight updates (ALNS reaction parameter)
-      # Range: 0.01-0.5 (higher = faster adaptation)
-      # weights_new = reaction_factor * score + (1 - reaction_factor) * weights_old
-      # Recommendation: 0.1 for stable learning
-
-    - decay_parameter: 0.95
-      # Exponential decay rate for operator weights
-      # Range: 0.9-0.999
-      # weights_t = weights_0 * (decay_parameter)^t
-      # Recommendation: 0.95 for medium-term memory
-
-    # ---------------------------------------------------------------------
-    # Destroy Operators (Adaptive Selection)
-    # ---------------------------------------------------------------------
-    - destroy_operators:
-        - random_removal
-        - worst_removal
-        - cluster_removal
-        - shaw_removal
-        - string_removal
-      # Destroy heuristics for node removal
-      # - random_removal: Uniformly random selection
-      # - worst_removal: Remove highest-cost nodes first
-      # - cluster_removal: Remove spatially/temporally close nodes
-      # - shaw_removal: Remove similar nodes (distance + time + demand)
-      # - string_removal: Remove consecutive sequences
-      # Weights updated via adaptive scoring (sigma parameters)
-
-    - operator_decay_rate: 0.95
-      # Exponential decay for operator weights
-      # Range: 0.9-0.999
-      # Should match decay_parameter for consistency
-
-    # ---------------------------------------------------------------------
-    # Repair Operators (Adaptive Selection)
-    # ---------------------------------------------------------------------
-    - repair_operators:
-        - greedy_insertion
-        - regret_2_insertion
-        - regret_k_insertion
-        - greedy_insertion_with_blinks
-      # Repair heuristics for node reinsertion
-      # - greedy_insertion: Insert at minimum-cost position
-      # - regret_2_insertion: Maximize regret (2nd best - best cost)
-      # - regret_k_insertion: Maximize k-regret (generalized)
-      # - greedy_insertion_with_blinks: Greedy with random skips
-      # Weights updated via adaptive scoring (sigma parameters)
-
-    # ---------------------------------------------------------------------
-    # Adaptive Scoring Parameters (ALNS Framework)
-    # ---------------------------------------------------------------------
-    - score_sigma_1: 33.0
-      # Score awarded for new global best solution
-      # Range: 20-50
-      # Highest reward tier
-
-    - score_sigma_2: 9.0
-      # Score awarded for solution improving current (but not global best)
-      # Range: 5-15
-      # Medium reward tier
-
-    - score_sigma_3: 3.0
-      # Score awarded for solution accepted but not improving
-      # Range: 1-5
-      # Minimal reward for maintaining search diversity
-      # Note: Unaccepted solutions receive 0 score
-
-    # ---------------------------------------------------------------------
-    # Infrastructure Settings
-    # ---------------------------------------------------------------------
-    # VRPP Settings
-    - profit_aware_operators: false
-    - vrpp: true
-
-    - engine: "custom"
-      # Execution backend: logic/src/policies/hybrid_genetic_search.py
-      # Uses PyVRP library (https://pyvrp.org/)
-
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-      # Node selection strategy for waste collection problems
-      # Options: ms_lookahead.yaml, ms_last_minute_*.yaml, ms_regular.yaml
-      # See: docs/MUST_GO_STRATEGIES.md
-
-    - route_improvement: []
-      # Optional route improvement operations
-      # Empty = use HGS-RR output directly
-      # HGS-RR local search is comprehensive; external route improvement redundant
-
-# =============================================================================
-# PARAMETER TUNING RECOMMENDATIONS
-# =============================================================================
-# For faster convergence (time_limit < 30s):
-#   - population_size: 30, n_iterations_no_improvement: 50
-#   - min_removal_pct: 0.15, max_removal_pct: 0.3 (smaller perturbations)
-#   - mutation_rate: 0.2 (less ruin-recreate overhead)
-#
-# For better solution quality (time_limit > 120s):
-#   - population_size: 75, n_iterations_no_improvement: 200
-#   - min_removal_pct: 0.1, max_removal_pct: 0.5 (wider exploration range)
-#   - mutation_rate: 0.4 (aggressive ruin-recreate)
-#   - reaction_factor: 0.05 (slower, more stable weight updates)
-#
-# For large instances (300+ nodes):
-#   - max_removal_pct: 0.5 (stronger perturbations needed)
-#   - destroy_operators: Add 'route_removal' for full route elimination
-#   - neighbor_list_size: 15 (better diversity metrics)
-#
-# For highly clustered instances:
-#   - cluster_removal + shaw_removal get higher initial weights
-#   - noise_factor: 0.025 (more randomness in repair)
-#
-# Comparison to HGS:
-#   HGS-RR: Better on heterogeneous, large, or multi-depot problems
-#   HGS: Faster on homogeneous, small-medium CVRP instances
-#   Recommendation: Run both if time_limit > 120s, pick best solution
-# =============================================================================
+    time_limit: 60.0
+    vrpp: true
+    max_vehicles: 0
+    population_size: 50
+    elite_size: 10
+    n_iterations_no_improvement: 20000
+    mutation_rate: 0.3
+    crossover_rate: 0.7
+    no_improvement_threshold: 20
+    survivor_threshold: 2.0
+    neighbor_list_size: 10
+    min_removal_pct: 0.1
+    max_removal_pct: 0.4
+    noise_factor: 0.015
+    reaction_factor: 0.1
+    decay_parameter: 0.95
+    destroy_operators:
+    - random_removal
+    - worst_removal
+    - cluster_removal
+    - shaw_removal
+    - string_removal
+    operator_decay_rate: 0.95
+    repair_operators:
+    - greedy_insertion
+    - regret_2_insertion
+    - regret_k_insertion
+    - greedy_insertion_with_blinks
+    score_sigma_1: 33.0
+    score_sigma_2: 9.0
+    score_sigma_3: 3.0
+    profit_aware_operators: false
+    engine: custom
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    route_improvement: []

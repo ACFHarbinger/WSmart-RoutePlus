@@ -108,7 +108,7 @@ def test_released_classical_imports_do_not_load_torch():
     script = dedent(
         """
         import sys
-        from logic.src.policies.packing.base.selection_factory import PackingFactory
+        from logic.src.policies.packing.base.factory import PackingFactory
         from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
         from logic.src.policies.route_improvement.base.factory import RouteImproverFactory
         import logic.src.models as models

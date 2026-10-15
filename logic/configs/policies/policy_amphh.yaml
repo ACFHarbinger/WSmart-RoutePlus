@@ -1,15 +1,5 @@
-# Adaptive Memory Programming Hyper-Heuristic (AMP-HH) Policy Configuration
-# Component-based reconstruction from adaptive memory.
-
 amphh:
-  # Size of the adaptive memory.
   mem_size: 10
-
-  # Number of iterations.
   iters: 50
-
-  # Random seed for reproducibility.
   seed: 42
-
-  # Whether to use VRP with Profits objectives.
   vrpp: true

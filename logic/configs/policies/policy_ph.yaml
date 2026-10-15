@@ -1,45 +1,14 @@
-# Progressive Hedging (PH) Policy Configuration
-# Reference: Rockafellar, R. T., & Wets, R. J. B. (1991). "Scenarios and policy aggregation in optimization under uncertainty."
-
 ph:
-  # Penalty parameter for the quadratic non-anticipativity term.
-  # Adjust rho balancing convergence speed vs solution quality.
   rho: 1.0
-
-  # Maximum number of PH iterations (usually 10-100).
   max_iterations: 30
-
-  # Tolerance for consensual visit decisions (non-anticipativity error).
-  # PH stops if the root-mean-square deviation from consensus is below this.
   convergence_tol: 0.05
-
-  # Key of the deterministic solver to use for subproblems.
-  # Options: 'bc' (Branch-and-Cut), 'alns' (Adaptive Large Neighborhood Search), 'hgs'.
-  sub_solver: "bc"
-
-  # Number of scenarios for Sample Average Approximation (SAA).
+  sub_solver: bc
   num_scenarios: 10
-
-  # Multi-period planning horizon.
   horizon: 7
-
-  # Scope of the consensus constraints ('day_0' or 'full').
-  consensus_scope: "day_0"
-
-  # Penalty for stockouts (bin overflows) in scenario evaluations.
+  consensus_scope: day_0
   stockout_penalty: 500.0
-
-  # Wall-clock time limit in seconds.
   time_limit: 300.0
-
-  # Enable detailed logging of PH iterations.
   verbose: true
-
-  # Random seed for scenario generation reproducibility.
   seed: 42
-
-  # packing algorithms.
   packing: []
-
-  # route improvement refinement.
   route_improvement: []

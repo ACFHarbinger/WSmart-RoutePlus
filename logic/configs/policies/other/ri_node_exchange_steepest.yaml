@@ -1,13 +1,5 @@
-# =============================================================================
-# route improvement: Steepest Node Exchange
-# =============================================================================
-# PURPOSE:
-#   Perform pairwise node swaps until a local minimum is reached.
-# =============================================================================
-
 default:
   methods:
-    - "node_exchange_steepest"
-
+  - node_exchange_steepest
   max_iter: 300
   seed: 42

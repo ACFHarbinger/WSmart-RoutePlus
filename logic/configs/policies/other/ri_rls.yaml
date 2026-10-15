@@ -1,48 +1,6 @@
-# =============================================================================
-# route improvement: Random Local Search (Multi-Operator)
-# =============================================================================
-# PURPOSE:
-#   Stochastic local search using weighted random operator selection.
-#   Explores neighborhood more broadly than deterministic 2-opt.
-#
-# ALGORITHM:
-#   1. For each iteration:
-#      a. Select operator randomly based on probability weights:
-#         - two_opt: 20% (intra-route edge reversal)
-#         - two_opt_star: 20% (inter-route edge exchange)
-#         - swap: 15% (exchange two nodes between routes)
-#         - swap_star: 15% (multi-node swap variant)
-#         - relocate: 15% (move node to different route)
-#         - three_opt: 10% (3-edge reconnection)
-#      b. Apply operator, accept if improvement found
-#   2. Repeat for iterations cycles
-#
-# USE CASES:
-#   - Escape 2-opt local optima via operator diversity
-#   - Benchmarking stochastic vs deterministic search
-#   - Multi-route refinement (inter-route operators)
-#
-# PERFORMANCE:
-#   - More exploratory than classical 2-opt
-#   - Improvement: 5-12% over greedy construction
-#   - Non-deterministic (results vary across runs)
-#
-# PARAMETERS:
-#   - Operator probabilities (must sum to ≤1.0):
-#     - two_opt: 0.2 (intra-route, fast)
-#     - two_opt_star: 0.2 (inter-route edge swap)
-#     - swap: 0.15 (node exchange between routes)
-#     - swap_star: 0.15 (enhanced swap)
-#     - relocate: 0.15 (node relocation)
-#     - three_opt: 0.1 (complex 3-edge moves)
-#   - iterations: 1000 (total operator applications)
-# =============================================================================
-
 rls:
   methods:
-    - "random_local_search"
-
-  # Operator selection probabilities (weights for random choice)
+  - random_local_search
   params:
     two_opt: 0.2
     two_opt_star: 0.2
@@ -50,6 +8,5 @@ rls:
     swap_star: 0.15
     relocate: 0.15
     three_opt: 0.1
-
   iterations: 1000
   time_limit: 30.0

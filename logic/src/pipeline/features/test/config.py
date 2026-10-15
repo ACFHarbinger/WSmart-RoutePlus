@@ -394,11 +394,14 @@ def _extract_variants(pol_name: str, cfg_path: str) -> Tuple[List[Tuple[str, str
         ms_list_iter = ms_list if ms_list else [None]
         ac_list_iter = ac_list if ac_list else [None]
 
-        # Flatten the inner_cfg into a single dictionary
-        merged_cfg = {}
-        for item in inner_cfg:
-            if isinstance(item, dict) or hasattr(item, "items"):
-                merged_cfg.update(dict(item))
+        # Merge the inner section (a mapping after P-13, or a leftover list).
+        if isinstance(inner_cfg, dict) or hasattr(inner_cfg, "items"):
+            merged_cfg = dict(inner_cfg)
+        else:
+            merged_cfg = {}
+            for item in inner_cfg:
+                if isinstance(item, dict) or hasattr(item, "items"):
+                    merged_cfg.update(dict(item))
 
         # If neither has multiple items, treat as a single variant
         if len(ms_list_iter) <= 1 and len(ac_list_iter) <= 1:
@@ -408,7 +411,7 @@ def _extract_variants(pol_name: str, cfg_path: str) -> Tuple[List[Tuple[str, str
             if ac_list_iter and ac_list_iter[0]:
                 var_cfg["acceptance_criteria"] = [ac_list_iter[0]]
 
-            prefix = f"{_clean_id(ms_list[0], 'ms_')}_" if ms_list else ""
+            prefix = f"{_clean_id(ms_list[0], 'pk_')}_" if ms_list else ""
             ac_suffix = f"_{_clean_id(ac_list[0], 'ac_')}" if ac_list else ""
             pp_suffix = f"_{_clean_id(pp_list[0], 'ri_')}" if pp_list else ""
             suffix = f"{ac_suffix}{pp_suffix}"
@@ -417,7 +420,7 @@ def _extract_variants(pol_name: str, cfg_path: str) -> Tuple[List[Tuple[str, str
         variants: List[Tuple[str, str, Any]] = []
         for ms_item in ms_list_iter:
             for ac_item in ac_list_iter:
-                prefix = f"{_clean_id(ms_item, 'ms_')}_" if ms_item else ""
+                prefix = f"{_clean_id(ms_item, 'pk_')}_" if ms_item else ""
                 ac_suffix = f"_{_clean_id(ac_item, 'ac_')}" if ac_item else ""
                 pp_suffix = f"_{_clean_id(pp_list[0], 'ri_')}" if pp_list else ""
                 suffix = f"{ac_suffix}{pp_suffix}"
@@ -585,8 +588,8 @@ def _apply_overrides(var_cfg: Any, ms_idx: int, ms_item: Any, ac_idx: int, ac_it
 def _expand_dict_ms_list(ms_list: Any) -> List[Any]:
     """Expand a dict-format packing into a flat list of single-variant dicts.
 
-    A dict like ``{"other/ms_last_minute.yaml": ["cf70", "cf90"]}`` expands to
-    ``[{"other/ms_last_minute.yaml": "cf70"}, {"other/ms_last_minute.yaml": "cf90"}]``.
+    A dict like ``{"other/pk_last_minute.yaml": ["cf70", "cf90"]}`` expands to
+    ``[{"other/pk_last_minute.yaml": "cf70"}, {"other/pk_last_minute.yaml": "cf90"}]``.
     Plain lists of strings or already-flat lists are returned unchanged.
 
     Args:

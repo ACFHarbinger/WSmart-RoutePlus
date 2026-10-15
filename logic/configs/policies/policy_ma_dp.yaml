@@ -1,51 +1,18 @@
-# Policy Configuration
-
-# =============================================================================
-# MA-DP (Memetic Algorithm with Dual Population)
-# =============================================================================
-# PURPOSE:
-#   Mathematically rigorous multi-population genetic algorithm that replaces
-#   metaphor-based sports algorithms (VPL). It features parallel sub-
-#   populations, elite-guided search, and diversity injection.
-#
-# REFERENCE:
-#   VPL (Legacy Metaphorical Component)
-# =============================================================================
-
 ma_dp:
   custom:
-    - population_size: 10
-    # Number of individuals in active population
-    # (Total population = 2 * population_size)
-    - max_iterations: 50
-      # Total number of evolution cycles.
-
-    - diversity_injection_rate: 0.2
-      # Probability of substituting with reserve individual.
-      # Aliased as substitution_rate.
-
-    - elite_count: 3
-      # Number of best solutions preserved (immune to substitution).
-      # Aliased as elite_size.
-
-    - elite_learning_weights: [0.5, 0.3, 0.2]
-      # Weights for learning from top-3 elite solutions.
-      # Aliased as coaching_weight_1, 2, 3.
-
-    - local_search_iterations: 100
-      # Local search iterations per solution.
-
-    # ---------------------------------------------------------------------
-    # Global Parameters
-    # ---------------------------------------------------------------------
-    - time_limit: 60.0
-
-    # ---------------------------------------------------------------------
-    # Infrastructure Settings
-    # ---------------------------------------------------------------------
-    # VRPP Settings
-    - profit_aware_operators: false
-    - vrpp: true
-
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-    - route_improvement: []
+    population_size: 10
+    max_iterations: 50
+    diversity_injection_rate: 0.2
+    elite_count: 3
+    elite_learning_weights:
+    - 0.5
+    - 0.3
+    - 0.2
+    local_search_iterations: 100
+    time_limit: 60.0
+    profit_aware_operators: false
+    vrpp: true
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    route_improvement: []

@@ -1,0 +1,7 @@
+default:
+  strategy: combined
+  logic: or
+  combined_strategies:
+  - strategy: last_minute
+    threshold: 70.0
+  - strategy: deadline

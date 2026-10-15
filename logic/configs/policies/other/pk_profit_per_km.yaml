@@ -1,0 +1,4 @@
+default:
+  strategy: profit_per_km
+  threshold: 0.5
+  revenue_kg: 1.0

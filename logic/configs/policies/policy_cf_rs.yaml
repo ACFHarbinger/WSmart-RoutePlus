@@ -1,64 +1,10 @@
-# Policy Configuration Override
-
-# =============================================================================
-# CF-RS (Cluster-First Route-Second) Policy Configuration
-# =============================================================================
-# PURPOSE:
-#   A geometric decomposition heuristic specifically designed for the Vehicle
-#   Routing Problem. It leverages polar coordinates to partition service areas
-#   into disjoint angular sectors, drastically reducing problem complexity
-#   while ensuring intuitive, geographically-local routes.
-#
-# ALGORITHM PHASES:
-#   1. CLUSTERING: Nodes are assigned to one of K clusters based on their polar
-#      angle relative to a central depot. K often corresponds to the vehicle fleet.
-#   2. ROUTING: For each sector, an independent Traveling Salesman Problem (TSP)
-#      is solved, ensuring a locally optimal route within that sector.
-#
-# KEY STRENGTHS:
-#   - Scalability: Decouples the global routing problem into K independent sub-problems.
-#   - Explainability: Produces routes that are easy for human dispatchers to understand.
-#   - Zero-Knowledge: Effective даже при отсутствии сложной топологической информации,
-#     relying purely on geometric distribution.
-#
-# REFERENCE:
-#   Fisher, M. L., & Jaikumar, R. (1981). "A generalized assignment heuristic
-#   for vehicle routing". Networks, 11(2), 109-124.
-# =============================================================================
-
 cf_rs:
   custom:
-    # ---------------------------------------------------------------------
-    # Clustering (Phase 1)
-    # ---------------------------------------------------------------------
-    - num_clusters: 0
-      # Target number of angular sectors/clusters.
-      # [0]: Automatic mode. Uses the current day's available vehicle count.
-      # [1-N]: Fixed mode. Partitions the area into precisely N sectors regardless
-      #       of vehicle availability (useful for predefined service territories).
-      # Recommendation: Use 0 for dynamic fleet environments.
-
-    - time_limit: 2.0
-      # Maximum time in seconds for the routing phase (per sector).
-      # Default: 60.0 (1 minute). High values allow for more thorough search
-      # in complex sectors.
-
-    # ---------------------------------------------------------------------
-    # Infrastructure & Pipeline
-    # ---------------------------------------------------------------------
-    # VRPP Settings
-    - vrpp: true
-
-    - engine: "custom"
-      # Policy implementation reference.
-      # Source: logic/src/policies/cluster_first_route_second/policy_cf_rs.py
-
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-      # Selection logic for bin collection (WSmart+ Route specific).
-      # Defines which bins are 'mandatory' collection targets based on fill rates.
-      # ms_lookahead: Proactive selection based on predicted overflow.
-
-    - route_improvement: []
-      # Additional optimization passes (e.g., LKH, 2-opt) applied to the final tours.
-      # Empty list = use raw sector tours.
-# =============================================================================
+    num_clusters: 0
+    time_limit: 2.0
+    vrpp: true
+    engine: custom
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    route_improvement: []

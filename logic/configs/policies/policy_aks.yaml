@@ -1,79 +1,15 @@
-# Policy Configuration Override for Adaptive Kernel Search (AKS)
-# =============================================================================
-# ADAPTIVE KERNEL SEARCH (AKS) - STANDALONE MATHEURISTIC
-# =============================================================================
-#
-# MISSION:
-#   AKS enhances the Kernel Search framework with adaptive behavior. It
-#   dynamically manages computational resources by adjusting sub-problem
-#   sizes and promoting variables based on real-time solver performance.
-#
-# STRATEGY:
-#   1. LP RELAXATION: Solves the continuous relaxation of the VRPP model
-#      to rank all decision variables (edges and nodes) by their potential
-#      contribution to the objective (profitability).
-#   2. ADAPTIVE ITERATIONS:
-#      - Variable Promotion: If a sub-MIP solve improves the current best
-#        objective value, the variables that took positive values in that
-#        solution are permanently "promoted" to the Kernel.
-#      - Dynamic Bucket Sizing: The number of variables added in each step
-#        initially matches 'bucket_size' but grows exponentially based on
-#        'bucket_growth_factor' whenever an improvement is found.
-#      - Adaptive Time Limits: The remaining 'time_limit' is re-allocated
-#        uniformly among remaining buckets at each step, ensuring the full
-#        time budget is used effectively without stalling on early iterations.
-#
-# REFERENCE:
-#   Guastaroba, G., Savelsbergh, M., & Speranza, M. G. (2017). "Adaptive Kernel
-#   Search: A heuristic for solving Mixed Integer linear Programs".
-#   European Journal of Operational Research.
-# =============================================================================
-
 aks:
   custom:
-    # ---------------------------------------------------------------------
-    # Decomposition & Adaptive Parameters
-    # ---------------------------------------------------------------------
-    - initial_kernel_size: 100
-      # The number of high-ranking variables used to seed the initial model.
-      # Increasing this yields better early solutions but slower first steps.
-
-    - bucket_size: 40
-      # The amount of new variables introduced in the first improvement step.
-
-    - max_buckets: 15
-      # Hard cap on the number of sub-MIP iterations. Controls the trade-off
-      # between exhaustive search and fast termination.
-
-    # ---------------------------------------------------------------------
-    # Solver Control
-    # ---------------------------------------------------------------------
-    - time_limit: 60.0
-      # Total wall-clock time limit for the policy within the simulator.
-
-    - mip_limit_nodes: 10000
-      # Node limit per sub-MIP to prevent the solver from being trapped in
-      # difficult proving of optimality for small improvements.
-
-    - mip_gap: 0.01
-      # Relative optimality gap for sub-problems (0.01 = 1%).
-
-    # ---------------------------------------------------------------------
-    # Integration & Feature Extensions
-    # ---------------------------------------------------------------------
-    # VRPP Settings
-    - vrpp: true
-
-    - framework: "ortools"
-      # Execution framework: logic/src/policies/smart_waste_collection_two_commodity_flow/ortools.py
-      # Requires: ortools Python package
-
-    - engine: "gurobi"
-      # Specifies the use of the project's gurobi Adaptive Kernel Search engine.
-
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-      # Points to the YAML defining the lookahead-based node selection strategy.
-
-    - route_improvement: []
-      # External local search refinement (e.g., 2-opt) applied to the result.
-# =============================================================================
+    initial_kernel_size: 100
+    bucket_size: 40
+    max_buckets: 15
+    time_limit: 60.0
+    mip_limit_nodes: 10000
+    mip_gap: 0.01
+    vrpp: true
+    framework: ortools
+    engine: gurobi
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    route_improvement: []

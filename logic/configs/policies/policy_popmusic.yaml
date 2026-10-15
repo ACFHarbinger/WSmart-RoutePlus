@@ -1,150 +1,77 @@
-# Policy Configuration Override
-
-# =============================================================================
-# POPMUSIC (Partial Optimization Metaheuristic Under Special Intensification Conditions)
-# =============================================================================
-# PURPOSE:
-#   A matheuristic decomposition framework for large-scale routing problems.
-#   It iteratively optimizes sub-parts of the solution (overlapping subproblems)
-#   until a local optimum is achieved across all route neighborhoods.
-#
-# ALGORITHM:
-#   1. Initial Solution: Generate a baseline set of routes.
-#   2. Neighborhood Definition: Identify proximity-based route neighborhoods
-#      of size R (subproblem_size).
-#   3. Intensification: Optimize each neighborhood independently. If an
-#      improvement is found, update the global solution and continue.
-#
-# REFERENCE:
-#   Taillard, E. D., & Voss, S. (2002). "POPMUSIC: Partial Optimization
-#   Metaheuristic Under Special Intensification Conditions". Essays and
-#   Surveys in Metaheuristics, 613-629.
-# =============================================================================
-
 popmusic:
   custom:
-    # ---------------------------------------------------------------------
-    # Decomposition Parameters
-    # ---------------------------------------------------------------------
-    - subproblem_size: 3
-    # Number of neighboring routes (R) to include in each subproblem.
-    # Smaller values → faster execution, likely to get stuck in local optima.
-    # Larger values → more intensive search, slower iterations.
-    # Range: 2-10 (Recommendation: 3-5)
-
-    - k_prox: 10
-    # Proximity network size for O(log p) search.
-    # Set to 0 to disable KD-Tree acceleration and use brute-force scan.
-
-    - seed_strategy: "lifo"
-    # Strategy for selecting seeds from the active list.
-    # Options: "lifo" (Paper Rec), "fifo", "random"
-
-    - max_iterations: 100
-    # Maximum number of subproblem optimization attempts without improvement.
-    # Prevents excessive runtime on very large instances.
-
-    # ---------------------------------------------------------------------
-    # Optimization Backend
-    # ---------------------------------------------------------------------
-    - base_solver: "alns"
-    # The solver used to optimize identified subproblems.
-    # Supported: "fast_tsp", "hgs", "alns"
-
-    - base_solver_config:
-        # ---------------------------------------------------------------------
-        # Sub-Solver Parameters (ALNS / HGS / FastTSP)
-        # ---------------------------------------------------------------------
-        # These override the defaults of the selected base_solver.
-        # Structure mirrored from policy_hms.yaml
-
-        fast_tsp:
-          time_limit: 1.0
-
-        alns:
-          time_limit: 1.0
-          max_iterations: 1000
-          start_temp: 100
-          cooling_rate: 0.995
-          reaction_factor: 0.1
-          min_removal: 1
-          max_removal_pct: 0.3
-
-        hgs:
-          time_limit: 1.0
-          mu: 25 # Min population size
-          lambda_param: 40 # Generation size
-          nb_elite: 4 # Elite solutions preserved
-          nb_close: 5 # Number of close solutions to generate
-          nb_granular: 20 # Granular search parameter
-          n_iterations_no_improvement: 20000
-          local_search_iterations: 500
-          target_feasible: 0.2
-          mutation_rate: 1.0
-          crossover_rate: 1.0
-          repair_probability: 0.5
-          initial_penalty_capacity: 1.0
-          penalty_increase: 1.2
-          penalty_decrease: 0.85
-          use_cross_exchange: false
-          use_lambda_interchange: false
-          lambda_max: 2
-          use_ejection_chains: false
-
-    - cluster_solver: "fast_tsp"
-    # The solver used to optimize the inital route clusters.
-
-    - cluster_solver_config:
-        # ---------------------------------------------------------------------
-        # Pre-Optimization Parameters (FastTSP Recommended)
-        # ---------------------------------------------------------------------
-        # Configures the solver used for initial cluster construction.
-        # Use short time limits here to ensure fast simulation startup.
-
-        fast_tsp:
-          time_limit: 0.1
-
-        alns:
-          time_limit: 1.0
-          max_iterations: 1000
-          start_temp: 100
-          cooling_rate: 0.995
-          reaction_factor: 0.1
-          min_removal: 1
-          max_removal_pct: 0.3
-
-        hgs:
-          time_limit: 1.0
-          mu: 25 # Min population size
-          lambda_param: 40 # Generation size
-          nb_elite: 4 # Elite solutions preserved
-          nb_close: 5 # Number of close solutions to generate
-          nb_granular: 20 # Granular search parameter
-          n_iterations_no_improvement: 20000
-          local_search_iterations: 500
-          target_feasible: 0.2
-          mutation_rate: 1.0
-          crossover_rate: 1.0
-          repair_probability: 0.5
-          initial_penalty_capacity: 1.0
-          penalty_increase: 1.2
-          penalty_decrease: 0.85
-          use_cross_exchange: false
-          use_lambda_interchange: false
-          lambda_max: 2
-          use_ejection_chains: false
-
-    - initial_solver: "pmedian"
-    # Heuristic used to construct the initial set of routes for decomposition.
-
-    # ---------------------------------------------------------------------
-    # Infrastructure Settings
-    # ---------------------------------------------------------------------
-    # VRPP Settings
-    - profit_aware_operators: false
-    - vrpp: true
-
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-    - route_improvement: []
-    # Node selection and final refinement strategies.
-# =============================================================================
+    subproblem_size: 3
+    k_prox: 10
+    seed_strategy: lifo
+    max_iterations: 100
+    base_solver: alns
+    base_solver_config:
+      fast_tsp:
+        time_limit: 1.0
+      alns:
+        time_limit: 1.0
+        max_iterations: 1000
+        start_temp: 100
+        cooling_rate: 0.995
+        reaction_factor: 0.1
+        min_removal: 1
+        max_removal_pct: 0.3
+      hgs:
+        time_limit: 1.0
+        mu: 25
+        lambda_param: 40
+        nb_elite: 4
+        nb_close: 5
+        nb_granular: 20
+        n_iterations_no_improvement: 20000
+        local_search_iterations: 500
+        target_feasible: 0.2
+        mutation_rate: 1.0
+        crossover_rate: 1.0
+        repair_probability: 0.5
+        initial_penalty_capacity: 1.0
+        penalty_increase: 1.2
+        penalty_decrease: 0.85
+        use_cross_exchange: false
+        use_lambda_interchange: false
+        lambda_max: 2
+        use_ejection_chains: false
+    cluster_solver: fast_tsp
+    cluster_solver_config:
+      fast_tsp:
+        time_limit: 0.1
+      alns:
+        time_limit: 1.0
+        max_iterations: 1000
+        start_temp: 100
+        cooling_rate: 0.995
+        reaction_factor: 0.1
+        min_removal: 1
+        max_removal_pct: 0.3
+      hgs:
+        time_limit: 1.0
+        mu: 25
+        lambda_param: 40
+        nb_elite: 4
+        nb_close: 5
+        nb_granular: 20
+        n_iterations_no_improvement: 20000
+        local_search_iterations: 500
+        target_feasible: 0.2
+        mutation_rate: 1.0
+        crossover_rate: 1.0
+        repair_probability: 0.5
+        initial_penalty_capacity: 1.0
+        penalty_increase: 1.2
+        penalty_decrease: 0.85
+        use_cross_exchange: false
+        use_lambda_interchange: false
+        lambda_max: 2
+        use_ejection_chains: false
+    initial_solver: pmedian
+    profit_aware_operators: false
+    vrpp: true
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    route_improvement: []

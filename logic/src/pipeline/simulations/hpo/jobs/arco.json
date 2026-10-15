@@ -1,9 +1,4 @@
 {
-    "constructors": {
-        "type": "categorical",
-        "choices": [],
-        "default": "factory"
-    },
     "time_limit": {
         "type": "float",
         "default": 120.0
@@ -42,5 +37,10 @@
     "seed": {
         "type": "int",
         "default": 42
+    },
+    "routing_algorithms": {
+        "type": "categorical",
+        "choices": [],
+        "default": "factory"
     }
 }

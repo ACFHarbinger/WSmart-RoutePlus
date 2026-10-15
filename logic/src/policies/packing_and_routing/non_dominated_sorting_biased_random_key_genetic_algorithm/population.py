@@ -94,10 +94,10 @@ def _seed_selection(
         Sorted list of 1-based bin IDs selected by the strategy.
     """
     try:
-        from logic.src.interfaces.context.selection_context import SelectionContext
-        from logic.src.policies.packing.base.selection_factory import PackingFactory
+        from logic.src.interfaces.context.packing_context import PackingContext
+        from logic.src.policies.packing.base.factory import PackingFactory
 
-        ctx = SelectionContext(
+        ctx = PackingContext(
             bin_ids=np.arange(1, n_bins + 1, dtype=np.int32),
             current_fill=current_fill.copy(),
             distance_matrix=distance_matrix,
@@ -111,7 +111,7 @@ def _seed_selection(
             n_vehicles=1,
         )
         strategy = PackingFactory.create_strategy(strategy_name)
-        selected, _ = strategy.select_bins(ctx)
+        selected, _ = strategy.pack(ctx)
         return sorted(selected)
     except Exception:
         # Fallback: threshold heuristic

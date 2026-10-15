@@ -1,18 +1,6 @@
-# Genetic Programming Multi-Period Hyper-Heuristic (GP-MP-HH) Policy Configuration
-# Evolves heuristic sequences via GP.
-
 gp_mp_hh:
-  # Size of the GP population.
   pop_size: 10
-
-  # Number of generations.
   gens: 20
-
-  # Maximum length of a GP individual (program).
   prog_len: 5
-
-  # Random seed for reproducibility.
   seed: 42
-
-  # Whether to use VRP with Profits objectives.
   vrpp: true

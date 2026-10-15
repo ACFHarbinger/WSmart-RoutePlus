@@ -1,103 +1,15 @@
-# Policy Configuration
-
-# =============================================================================
-# GP-HH (Genetic Programming Hyper-Heuristic) Policy Configuration
-# =============================================================================
-# PURPOSE:
-#   Evolves a GP tree that acts as a constructive insertion scoring function.
-#   At each construction step, every feasible (node, route, position) candidate
-#   is scored by the GP tree; the highest-scored insertion is executed.
-#   This is "Heuristic Generation" (Burke et al., 2009): the GP tree IS the
-#   construction heuristic, not a selector of pre-built heuristics.
-#
-# TERMINAL SET (local insertion features):
-#   - node_profit:         Revenue of the candidate node (wastes[n] × R)
-#   - distance_to_route:   Min distance from candidate to nearest route node
-#   - insertion_cost:       Delta route distance at cheapest insertion position
-#   - remaining_capacity:   Vehicle capacity left after inserting this node
-#
-# FUNCTION SET:
-#   ADD, SUB, MUL, DIV (protected), MAX, MIN
-#
-# CONSTRUCTIVE ALGORITHM:
-#   1. Start from empty routes
-#   2. For each unvisited node × each route (+ new route):
-#      a. Find cheapest insertion position
-#      b. Profitability gate: skip if revenue < insertion_cost × C
-#      c. Score with GP tree
-#   3. Execute highest-scored insertion
-#   4. Repeat until no profitable insertions remain
-#
-# TRAIN/TEST PARADIGM:
-#   During GP evolution, fitness = average normalised profit across
-#   n_training_instances sub-instances (random node subsets).
-#   The best tree is then applied to the full instance.
-#
-# PERFORMANCE EXPECTATIONS:
-#   - Inner loop: O(N × R) tree evaluations per insertion step
-#   - Total construction: O(N² × R) evaluations
-#   - Training overhead: n_training_instances × gp_pop_size × max_gp_generations
-# =============================================================================
-
 gp_hh:
   custom:
-    # -------------------------------------------------------------------------
-    # GP Meta-Population
-    # -------------------------------------------------------------------------
-    - gp_pop_size: 20
-      # Number of GP scoring trees in the meta-population
-      # Range: 10-50 (10 = fast, 20 = balanced, 50 = thorough)
-
-    - max_gp_generations: 30
-      # GP evolution generations (crossover/mutation cycles)
-      # Range: 10-100 (15 = quick, 30 = production, 60 = benchmark)
-
-    - tournament_size: 3
-      # Tournament selection size for GP parent selection
-      # Range: 2-7 (2 = weak pressure, 5 = strong pressure)
-
-    # -------------------------------------------------------------------------
-    # GP Tree Structure
-    # -------------------------------------------------------------------------
-    - tree_depth: 3
-      # Maximum depth of GP expression trees
-      # Range: 2-5 (2 = simple scoring, 3 = moderate, 5 = complex)
-      # Deeper trees can express sophisticated insertion priorities but
-      # risk overfitting and increase evaluation cost per candidate
-
-    - parsimony_coefficient: 0.0
-      # Parsimony pressure: penalty weight for tree node count
-      # fitness = avg_normalised_profit - (parsimony_coefficient × tree_size)
-      # Range: 0.0-0.1 (0.0 = no penalty, 0.01 = light, 0.05 = moderate)
-
-    # -------------------------------------------------------------------------
-    # Training / Generalisation
-    # -------------------------------------------------------------------------
-    - n_training_instances: 3
-      # Number of sub-instances for fitness averaging during evolution
-      # Higher = better generalisation but slower evolution
-      # Range: 1-10 (1 = fast/overfits, 3 = balanced, 5 = robust)
-
-    - training_sample_ratio: 0.5
-      # Fraction of nodes sampled per training sub-instance
-      # Range: 0.3-0.8 (0.3 = small/fast, 0.5 = balanced, 0.8 = full)
-      # Mandatory nodes are always included regardless of this ratio
-
-    # -------------------------------------------------------------------------
-    # Runtime Control
-    # -------------------------------------------------------------------------
-    - time_limit: 60.0
-      # Maximum wall-clock seconds (60% for evolution, 40% for final construction)
-      # Range: 30-300 (60s = production, 120s = benchmark)
-
-    # -------------------------------------------------------------------------
-    # Infrastructure Settings
-    # -------------------------------------------------------------------------
-    - vrpp: true
-
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-      # Node selection strategy for waste collection problems
-
-    - route_improvement: []
-      # Empty = use GPHH-constructed solution directly
-# =============================================================================
+    gp_pop_size: 20
+    max_gp_generations: 30
+    tournament_size: 3
+    tree_depth: 3
+    parsimony_coefficient: 0.0
+    n_training_instances: 3
+    training_sample_ratio: 0.5
+    time_limit: 60.0
+    vrpp: true
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    route_improvement: []

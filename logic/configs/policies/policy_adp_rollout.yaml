@@ -1,41 +1,12 @@
-# ADP Rollout Policy Configuration
-# Reference: Powell, W. B. (2011). Approximate Dynamic Programming:
-# Solving the Curses of Dimensionality. Wiley-Interscience.
-
 adp_rollout:
-  # Planning horizon T (number of days).
   horizon: 7
-
-  # Rollout lookahead depth H (number of days to simulate forward).
   look_ahead_days: 3
-
-  # Number of Monte Carlo scenarios sampled per rollout step.
   n_scenarios: 10
-
-  # Minimum fill level (%) required to include a node as a candidate.
   fill_threshold: 60.0
-
-  # Strategy for generating candidate node sets.
-  # Options:
-  #   "threshold" - include all nodes above fill_threshold
-  #   "top_k"     - include the top-K nodes by fill level
-  #   "beam"      - explore max_candidate_sets random subsets
-  candidate_strategy: "threshold"
-
-  # Maximum number of candidate sets to evaluate (beam strategy).
+  candidate_strategy: threshold
   max_candidate_sets: 20
-
-  # Number of top-fill nodes to include (top_k strategy).
   top_k: 10
-
-  # Penalty per unit of bin overflow per day.
   stockout_penalty: 500.0
-
-  # Maximum wall-clock time per solve call (seconds, 0 = unlimited).
   time_limit: 60.0
-
-  # Random seed for scenario sampling.
   seed: 42
-
-  # Enable per-day progress logging.
   verbose: false

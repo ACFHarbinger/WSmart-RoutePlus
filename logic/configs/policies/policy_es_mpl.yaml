@@ -1,87 +1,14 @@
-# (μ+λ) Evolution Strategy Policy Configuration
-
-# =============================================================================
-# (μ+λ) Evolution Strategy Policy Configuration
-# =============================================================================
-# PURPOSE:
-#   Canonical (μ+λ) evolution strategy. Maintains a population of μ parent
-#   solutions. Each iteration generates λ offspring via recombination and
-#   mutation, and selects the absolute best μ individuals from the combined
-#   pool of parents and offspring.
-#
-# ALGORITHM:
-#   1. Variation: Create λ offspring via recombination and mutative local perturbation.
-#   2. Pool: Combine the μ parents and λ offspring into a single group of size (μ+λ).
-#   3. Selection: Elitist truncation selection; keep only the top μ individuals.
-#
-# PERFORMANCE:
-#   Steady-state evolutionary algorithm with strong elitism. Convergence
-#   is typically slower but guarantees monotonic improvement since the best
-#   parents are never lost unless strictly outperformed.
-#
-# REFERENCE:
-#   Beyer, H. G., & Schwefel, H. P. (2002). "Evolution strategies–A comprehensive
-#   introduction." Natural Computing, 1(1), 3-52.
-# =============================================================================
-
 es_mpl:
   custom:
-    # ---------------------------------------------------------------------
-    # Population Parameters (μ+λ)
-    # ---------------------------------------------------------------------
-    - mu: 10
-      # Number of parent solutions in archive (μ parameter)
-      # Range: 5-30
-      # Recommendation: 10 for balanced diversity and convergence
-
-    - lambda_: 5
-      # Number of offspring generated per cycle (λ parameter)
-      # Range: 1-10
-      # Recommendation: 5. (If set to 1, this operates as a pure (μ+1)-ES).
-
-    # ---------------------------------------------------------------------
-    # Genetic Operators
-    # ---------------------------------------------------------------------
-    - n_removal: 3
-      # Perturbation strength (number of nodes removed during mutation)
-      # Range: 1-10
-      # Recommendation: 3 for moderate perturbation
-
-    # ---------------------------------------------------------------------
-    # Local Search Parameters
-    # ---------------------------------------------------------------------
-    - local_search_iterations: 100
-      # Number of local search improvement steps per offspring
-
-    # ---------------------------------------------------------------------
-    # Runtime Control
-    # ---------------------------------------------------------------------
-    - max_iterations: 500
-      # Maximum number of evolution cycles
-
-    - time_limit: 60.0
-      # Maximum wall-clock seconds for optimization
-
-    # ---------------------------------------------------------------------
-    # Infrastructure Settings
-    # ---------------------------------------------------------------------
-    # VRPP Settings
-    - profit_aware_operators: false
-    - vrpp: true
-
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-    - route_improvement: []
-
-# =============================================================================
-# ALGORITHM STRUCTURE
-# =============================================================================
-# Each iteration:
-#   1. Recombination & Mutation -> λ Offspring
-#   2. Evaluate all offspring
-#   3. Sort Pool of (μ + λ)
-#   4. Retain top μ.
-#
-# Complexity:
-#   - Space: O((μ+λ) × n) for population storage
-#   - Time per iteration: O(λ × n²) for offspring generation and evaluation
-# =============================================================================
+    mu: 10
+    lambda_: 5
+    n_removal: 3
+    local_search_iterations: 100
+    max_iterations: 500
+    time_limit: 60.0
+    profit_aware_operators: false
+    vrpp: true
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    route_improvement: []

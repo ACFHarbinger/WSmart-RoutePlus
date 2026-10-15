@@ -1,9 +1,6 @@
-# route improvement: Regret-k Insertion
-
 default:
   methods:
-    - "regret_k_insertion"
-
+  - regret_k_insertion
   regret_k_insertion:
     regret_k: 2
     cost_per_km: 0.5

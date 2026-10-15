@@ -1,253 +1,145 @@
-# Policy Configuration
-
-# =============================================================================
-# RL-AHVPL (Reinforcement Learning Augmented Hybrid Volleyball Premier League)
-# =============================================================================
-# PURPOSE:
-#   Advanced metaheuristic integrating four optimization components into a
-#   unified engine, heavily driven by Reinforcement Learning:
-#   ACO (initialization), VPL (population management), HGS (crossover),
-#   and ALNS (local search).
-#
-# FULL COMPONENTS:
-#   1. Q-Learning sparse ACO logic for initialization
-#   2. ALNS enhanced with State-Action-Reward-State-Action (SARSA)
-#   3. Contextual Multi-Armed Bandits (CMAB) for operator selection
-#   4. Guided Local Search with penalties on edges
-#   5. Reactive Tabu Search
-# =============================================================================
-
 rl_ahvpl:
   custom:
-    # ---------------------------------------------------------------------
-    # VRPP Settings
-    # ---------------------------------------------------------------------
-    - profit_aware_operators: false
-      # Whether to use profit-aware insertion heuristics
-      # true = Use farthest_profit_insertion
-      # false = Use standard farthest_insertion
-
-    - vrpp: true
-      # Whether to use VRPP-specific pool expansion
-      # true = Set expand_pool=true (consider all nodes)
-      # false = Set expand_pool=false (consider only unassigned)
-
-    # ---------------------------------------------------------------------
-    # VPL League Parameters
-    # ---------------------------------------------------------------------
-    - n_teams: 10
-      # Number of solutions (teams) in the league population
-      # Range: 5-20 (5 = fast, 10 = balanced, 20 = thorough)
-
-    - max_iterations: 1000
-      # Number of league seasons (main loop iterations)
-
-    - sub_rate: 0.2
-      # Fraction of weakest teams replaced per iteration
-
-    - time_limit: 60
-      # Maximum wall-clock seconds for the full algorithm
-
-    # ---------------------------------------------------------------------
-    # HGS Parameters (Diversity Management & Crossover)
-    # ---------------------------------------------------------------------
-    - hgs_time_limit: 60
-      # Maximum wall-clock seconds for the full algorithm
-
-    - hgs_n_offspring: 100
-      # Number of offspring (lambda) for HGS
-
-    - hgs_nb_elite: 5
-      # Number of elite solutions for biased fitness ranking
-
-    - hgs_mutation_rate: 0.2
-      # Probability of HGS local search mutation after ALNS coaching
-
-    - hgs_crossover_rate: 0.7
-      # Probability of applying OX crossover per generation
-
-    - hgs_n_iterations_no_improvement: 20
-      # Number of iterations without improvement
-
-    - hgs_survivor_threshold: 2
-      # Threshold for survivor selection
-
-    - hgs_nb_granular: 10
-      # Number of nearest neighbors to consider
-
-    - hgs_max_vehicles: 0
-      # Maximum vehicles allowed (0 = unlimited, determined by problem)
-
-    - hgs_mu: 50
-      # HGS internal population size for diversity management
-
-    - hgs_local_search_iterations: 500
-      # Number of local search iterations per generation
-
-    # ---------------------------------------------------------------------
-    # ACO Parameters (Initialization)
-    # ---------------------------------------------------------------------
-    - aco_n_ants: 10
-      # Number of ants for solution construction
-
-    - aco_k_sparse: 10
-      # Number of nearest neighbors in sparse ACO graph
-
-    - aco_alpha: 1.0
-      # Weight of pheromone trail
-
-    - aco_beta: 2.0
-      # Weight of heuristic information
-
-    - aco_rho: 0.1
-      # Pheromone evaporation rate
-
-    - aco_q0: 0.9
-      # Probability of choosing the best edge in construction
-
-    - aco_tau_0: 0.1
-      # Initial pheromone level
-
-    - aco_tau_min: 0.001
-      # Minimum pheromone level
-
-    - aco_tau_max: 10.0
-      # Maximum pheromone level
-
-    - aco_iterations: 1
-      # ACO iterations per construction call
-
-    - aco_local_search: False
-      # Whether to apply local search after ACO construction
-
-    - aco_local_search_iterations: 0
-      # Number of local search iterations per construction call
-
-    - aco_elitist_weight: 1.0
-      # Weight of elitist ant in pheromone update
-
-    - aco_time_limit: 30
-      # Maximum wall-clock seconds for the full algorithm
-
-    # ---------------------------------------------------------------------
-    # ALNS Parameters (Local Search)
-    # ---------------------------------------------------------------------
-    - alns_iterations: 500
-      # Number of destroy-repair cycles per coaching session
-
-    - alns_start_temp: 100.0
-      # Initial simulated annealing temperature
-
-    - alns_cooling_rate: 0.95
-      # Temperature decay per iteration
-
-    - alns_reaction_factor: 0.1
-      # Reaction factor for simulated annealing
-
-    - alns_min_removal: 1
-      # Minimum number of nodes to remove in destroy phase
-
-    - alns_max_removal_pct: 0.2
-      # Maximum fraction of nodes to remove in destroy phase
-
-    - alns_time_limit: 60
-      # Maximum wall-clock seconds for the full algorithm
-
-    - alns_elite_iterations: 500
-      # Number of destroy-repair cycles for elite solutions provided by HGS
-
-    - aco:
-        n_ants: 10
-        k_sparse: 10
-        alpha: 1.0
-        beta: 2.0
-        rho: 0.1
-        q0: 0.9
-        tau_min: 0.001
-        tau_max: 10.0
-        max_iterations: 1
-        elitist_weight: 1.0
-    - alns:
-        max_iterations: 500
-        start_temp: 100.0
-        cooling_rate: 0.95
-        reaction_factor: 0.1
-        min_removal: 1
-        max_removal_pct: 0.2
-    - hgs:
-        mu: 50
-        nb_elite: 5
-        mutation_rate: 0.2
-        crossover_rate: 0.7
-        n_offspring: 100
-        n_iterations_no_improvement: 20
-        survivor_threshold: 2
-        nb_granular: 10
-        local_search_iterations: 500
-        max_vehicles: 0
-    - rts:
-        initial_tenure: 7
-        min_tenure: 3
-        max_tenure: 20
-        tenure_increase: 1.5
-        tenure_decrease: 0.9
-        max_iterations: 500
-        n_removal: 2
-        n_llh: 5
-    - rl_config:
-        agent_type: "contextual"
-        bandit:
-          algorithm: "linucb"
-        context_features:
-          alpha: 0.1
-          feature_dim: 8
-          lambda_prior: 1.0
-          noise_variance: 0.1
-          epsilon: 0.15
-          epsilon_decay: 0.995
-          epsilon_decay_step: 20
-          epsilon_min: 0.05
-        features:
-          diversity_history_size: 10
-          improvement_history_size: 10
-        reward:
-          improvement_threshold: 1e-6
-        td_learning:
-          algorithm: "q_learning"
-          alpha: 0.1
-          gamma: 0.9
-          epsilon: 0.1
-          epsilon_decay: 0.99
-          epsilon_decay_step: 10
-          epsilon_min: 0.05
-          history_size: 10
-        sarsa:
-          algorithm: "sarsa"
-          alpha: 0.1
-          gamma: 0.95
-          epsilon: 0.15
-          epsilon_decay: 0.995
-          epsilon_decay_step: 50
-          epsilon_min: 0.05
-          history_size: 10
-        params:
-          bandit_max_iterations: 1000
-          cfe_operator_reward_size: 50
-          qlearning_rewards_size: 20
-          qlearning_improvement_thresholds: [1e-4, -1e-4]
-          sarsa_scores_size: 50
-          sarsa_qtable_size_rate: 0.5
-          sarsa_improvement_thresholds: [-1e-6, 1e-6]
-          sarsa_operator_progress_thresholds: [0.33, 0.67]
-          sarsa_operator_stagnation_thresholds: [10, 30]
-          sarsa_operator_diversity_thresholds: [0.3, 0.7]
-    - tabu_no_repeat_threshold: 2
-    - gls_penalty_lambda: 1.0
-    - gls_penalty_alpha: 0.5
-    - gls_penalty_step: 10
-    - gls_probability: 0.5
-    - vrpp: true
-
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-    - route_improvement: []
-      # ALNS + HGS local search is comprehensive; no further refinement needed
+    profit_aware_operators: false
+    vrpp: true
+    n_teams: 10
+    max_iterations: 1000
+    sub_rate: 0.2
+    time_limit: 60
+    hgs_time_limit: 60
+    hgs_n_offspring: 100
+    hgs_nb_elite: 5
+    hgs_mutation_rate: 0.2
+    hgs_crossover_rate: 0.7
+    hgs_n_iterations_no_improvement: 20
+    hgs_survivor_threshold: 2
+    hgs_nb_granular: 10
+    hgs_max_vehicles: 0
+    hgs_mu: 50
+    hgs_local_search_iterations: 500
+    aco_n_ants: 10
+    aco_k_sparse: 10
+    aco_alpha: 1.0
+    aco_beta: 2.0
+    aco_rho: 0.1
+    aco_q0: 0.9
+    aco_tau_0: 0.1
+    aco_tau_min: 0.001
+    aco_tau_max: 10.0
+    aco_iterations: 1
+    aco_local_search: false
+    aco_local_search_iterations: 0
+    aco_elitist_weight: 1.0
+    aco_time_limit: 30
+    alns_iterations: 500
+    alns_start_temp: 100.0
+    alns_cooling_rate: 0.95
+    alns_reaction_factor: 0.1
+    alns_min_removal: 1
+    alns_max_removal_pct: 0.2
+    alns_time_limit: 60
+    alns_elite_iterations: 500
+    aco:
+      n_ants: 10
+      k_sparse: 10
+      alpha: 1.0
+      beta: 2.0
+      rho: 0.1
+      q0: 0.9
+      tau_min: 0.001
+      tau_max: 10.0
+      max_iterations: 1
+      elitist_weight: 1.0
+    alns:
+      max_iterations: 500
+      start_temp: 100.0
+      cooling_rate: 0.95
+      reaction_factor: 0.1
+      min_removal: 1
+      max_removal_pct: 0.2
+    hgs:
+      mu: 50
+      nb_elite: 5
+      mutation_rate: 0.2
+      crossover_rate: 0.7
+      n_offspring: 100
+      n_iterations_no_improvement: 20
+      survivor_threshold: 2
+      nb_granular: 10
+      local_search_iterations: 500
+      max_vehicles: 0
+    rts:
+      initial_tenure: 7
+      min_tenure: 3
+      max_tenure: 20
+      tenure_increase: 1.5
+      tenure_decrease: 0.9
+      max_iterations: 500
+      n_removal: 2
+      n_llh: 5
+    rl_config:
+      agent_type: contextual
+      bandit:
+        algorithm: linucb
+      context_features:
+        alpha: 0.1
+        feature_dim: 8
+        lambda_prior: 1.0
+        noise_variance: 0.1
+        epsilon: 0.15
+        epsilon_decay: 0.995
+        epsilon_decay_step: 20
+        epsilon_min: 0.05
+      features:
+        diversity_history_size: 10
+        improvement_history_size: 10
+      reward:
+        improvement_threshold: 1e-6
+      td_learning:
+        algorithm: q_learning
+        alpha: 0.1
+        gamma: 0.9
+        epsilon: 0.1
+        epsilon_decay: 0.99
+        epsilon_decay_step: 10
+        epsilon_min: 0.05
+        history_size: 10
+      sarsa:
+        algorithm: sarsa
+        alpha: 0.1
+        gamma: 0.95
+        epsilon: 0.15
+        epsilon_decay: 0.995
+        epsilon_decay_step: 50
+        epsilon_min: 0.05
+        history_size: 10
+      params:
+        bandit_max_iterations: 1000
+        cfe_operator_reward_size: 50
+        qlearning_rewards_size: 20
+        qlearning_improvement_thresholds:
+        - 1e-4
+        - -1e-4
+        sarsa_scores_size: 50
+        sarsa_qtable_size_rate: 0.5
+        sarsa_improvement_thresholds:
+        - -1e-6
+        - 1e-6
+        sarsa_operator_progress_thresholds:
+        - 0.33
+        - 0.67
+        sarsa_operator_stagnation_thresholds:
+        - 10
+        - 30
+        sarsa_operator_diversity_thresholds:
+        - 0.3
+        - 0.7
+    tabu_no_repeat_threshold: 2
+    gls_penalty_lambda: 1.0
+    gls_penalty_alpha: 0.5
+    gls_penalty_step: 10
+    gls_probability: 0.5
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    route_improvement: []

@@ -7,7 +7,7 @@ Attributes:
 Example:
     >>> from logic.src.policies.routing.other_algorithms.sequential_routing_algorithm import SRCParams
     >>> params = SRCParams()
-    >>> params.constructors
+    >>> params.routing_algorithms
     ['tsp', 'alns']
     >>> params.time_limit
     60.0
@@ -32,7 +32,7 @@ class SRCParams:
         seed: Random seed for deterministic execution.
     """
 
-    constructors: List[str]
+    routing_algorithms: List[str]
     time_limit: float = 60.0
     seed: int = 42
 
@@ -47,7 +47,9 @@ class SRCParams:
             SRCParams: Configuration parameters for the Sequential Routing Algorithm.
         """
         return cls(
-            constructors=getattr(config, "constructors", ["tsp", "alns"]),
+            routing_algorithms=getattr(
+                config, "routing_algorithms", getattr(config, "constructors", ["tsp", "alns"])
+            ),
             time_limit=getattr(config, "time_limit", 60.0),
             seed=getattr(config, "seed", 42),
         )

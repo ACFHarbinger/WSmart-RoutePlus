@@ -1,12 +1,4 @@
-# Matheuristic Hyper-Heuristic (MHH) Policy Configuration
-# Iterative application of matheuristic LLHs.
-
 mhh:
-  # Number of iterations.
   iters: 10
-
-  # Random seed for reproducibility.
   seed: 42
-
-  # Whether to use VRP with Profits objectives.
   vrpp: true

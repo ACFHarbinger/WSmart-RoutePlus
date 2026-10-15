@@ -1,8 +1,0 @@
-default:
-  strategy: dispatcher_thompson
-  dispatcher_state_path: assets/state/thompson_posterior.pkl
-  dispatcher_candidate_strategies:
-    - last_minute
-    - deadline
-    - mip_knapsack
-  dispatcher_exploration: 1.0

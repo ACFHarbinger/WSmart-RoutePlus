@@ -1,6 +1,4 @@
-# Configuration for the RL-HVPL policy
 rl_hvpl:
-  # League Parameters
   n_teams: 10
   max_iterations: 100
   sub_rate: 0.2
@@ -8,14 +6,10 @@ rl_hvpl:
   elite_coaching_iterations: 300
   regular_coaching_iterations: 100
   elite_size: 3
-  pheromone_update_strategy: "profit"
+  pheromone_update_strategy: profit
   profit_weight: 1.0
-
-  # VRPP Settings
   profit_aware_operators: false
   vrpp: true
-
-  # Nested component configs
   aco:
     n_ants: 10
     k_sparse: 10
@@ -29,7 +23,6 @@ rl_hvpl:
     local_search: true
     local_search_iterations: 50
     elitist_weight: 1.0
-
   alns:
     max_iterations: 200
     start_temp: 100.0
@@ -38,7 +31,6 @@ rl_hvpl:
     min_removal: 1
     max_removal_pct: 0.3
     perturb_k: 3
-
   rl_config:
     td_learning:
       alpha: 0.1
@@ -47,7 +39,7 @@ rl_hvpl:
       epsilon_decay: 0.99
       epsilon_decay_step: 1
       epsilon_min: 0.05
-
-  # Common policy fields
-  packing: {"other/ms_lookahead.yaml": ["default"]}
+  packing:
+    other/pk_lookahead.yaml:
+    - default
   route_improvement: []
