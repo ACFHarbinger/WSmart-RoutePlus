@@ -51,7 +51,7 @@ Example:
     ...     capacity=10,
     ...     routing_cost_unit=1,
     ...     mandatory_nodes=[],
-    ...     tpks_params=TPKSParams(),
+    ...     tpks_params=TpksConfig(),
     ...     hard_fix_bins=None,
     ...     engine="greedy",
     ...     prior_cuts=None,
@@ -66,7 +66,7 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from logic.src.policies.routing.matheuristics.two_phase_kernel_search.params import TPKSParams
+from logic.src.configs.policies.tpks import TpksConfig
 from logic.src.policies.routing.matheuristics.two_phase_kernel_search.solver import (
     run_tpks_gurobi,
 )
@@ -161,7 +161,7 @@ def solve_selection_period(
     capacity: float,
     routing_cost_unit: float,
     mandatory_nodes: List[int],
-    tpks_params: TPKSParams,
+    tpks_params: TpksConfig,
     hard_fix_bins: Optional[List[int]] = None,
     engine: str = "tpks",
     prior_cuts: Optional[Dict[int, float]] = None,
@@ -176,7 +176,7 @@ def solve_selection_period(
         capacity: vehicle capacity constraint for the period.
         routing_cost_unit: C, distance cost coefficient.
         mandatory_nodes: bin ids (1-based) that MUST be visited this period.
-        tpks_params: TPKSParams.
+        tpks_params: TpksConfig.
         hard_fix_bins: bin ids (1-based) forced to be visited via mandatory set
             augmentation.  If None, regret preprocessing is either soft-only or
             not applied for this period.

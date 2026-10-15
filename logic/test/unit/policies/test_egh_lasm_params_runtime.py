@@ -1,7 +1,7 @@
 """Runtime contract tests for the EGH/LASM params classes (M-mistral-02 revision).
 
-The #82 refactor made ``ExactGuidedHeuristicParams`` and
-``LASMPipelineParams`` thin subclasses of their config dataclasses. The
+The #82 refactor made ``ExactGuidedHeuristicConfig`` and
+``LASMPipelineConfig`` thin subclasses of their config dataclasses. The
 first delivery dropped the derived runtime members that live between the
 field block and ``from_config`` (``stage_budgets``, ``alns_iterations``,
 ``bpc_ng_size``, ``bpc_max_bb_nodes``, ``as_alns_values_dict``) and LASM's
@@ -15,19 +15,15 @@ import pytest
 
 from logic.src.configs.policies import ExactGuidedHeuristicConfig, LASMPipelineConfig
 from logic.src.policies.routing.matheuristics.exact_guided_heuristic import dispatcher as egh_dispatcher
-from logic.src.policies.routing.matheuristics.exact_guided_heuristic.params import (
-    ExactGuidedHeuristicParams,
-)
-from logic.src.policies.routing.learning_matheuristic_algorithms.learning_allocated_sequential_matheuristic.params import (
-    LASMPipelineParams,
-)
+from logic.src.configs.policies.egh import ExactGuidedHeuristicConfig
+from logic.src.configs.policies.lasm import LASMPipelineConfig
 
 
 # ---------------------------------------------------------------- EGH
 
 
 def test_egh_stage_budgets_sums_to_time_limit():
-    p = ExactGuidedHeuristicParams(alpha=0.5, time_limit=120.0)
+    p = ExactGuidedHeuristicConfig(alpha=0.5, time_limit=120.0)
     budgets = p.stage_budgets()
     assert len(budgets) == 4
     assert all(b > 0 for b in budgets)
@@ -35,14 +31,14 @@ def test_egh_stage_budgets_sums_to_time_limit():
 
 
 def test_egh_derived_scalars():
-    p = ExactGuidedHeuristicParams(alpha=1.0, time_limit=60.0)
+    p = ExactGuidedHeuristicConfig(alpha=1.0, time_limit=60.0)
     assert isinstance(p.alns_iterations(), int) and p.alns_iterations() > 0
     assert p.bpc_ng_size() >= p.bpc_ng_size_min
     assert p.bpc_max_bb_nodes() >= p.bpc_max_bb_nodes_min
 
 
 def test_egh_as_alns_values_dict_shape():
-    p = ExactGuidedHeuristicParams()
+    p = ExactGuidedHeuristicConfig()
     values = p.as_alns_values_dict()
     assert isinstance(values, dict)
     assert values["engine"] == p.alns_engine
@@ -54,7 +50,7 @@ def test_egh_dispatcher_builds_alns_params():
     """The dispatcher's first step for the ALNS stage: it consumes
     ``as_alns_values_dict()`` through ``_build_alns_params`` — the exact
     call that failed before this revision restored the members."""
-    p = ExactGuidedHeuristicParams(alpha=0.5, time_limit=30.0)
+    p = ExactGuidedHeuristicConfig(alpha=0.5, time_limit=30.0)
     alns_params = egh_dispatcher._build_alns_params(p, time_limit=7.5)
     assert alns_params.time_limit == 7.5
     assert alns_params.max_iterations == p.alns_iterations()
@@ -62,8 +58,8 @@ def test_egh_dispatcher_builds_alns_params():
 
 def test_egh_from_config_object_roundtrip():
     cfg = ExactGuidedHeuristicConfig(alpha=0.25, time_limit=45.0)
-    p = ExactGuidedHeuristicParams.from_config(cfg)
-    assert isinstance(p, ExactGuidedHeuristicParams)
+    p = ExactGuidedHeuristicConfig.from_config(cfg)
+    assert isinstance(p, ExactGuidedHeuristicConfig)
     assert p.alpha == 0.25 and p.time_limit == 45.0
     assert p.stage_budgets() is not None
 
@@ -72,7 +68,7 @@ def test_egh_from_config_object_roundtrip():
 
 
 def test_lasm_post_init_materializes_lists():
-    p = LASMPipelineParams()
+    p = LASMPipelineConfig()
     assert p.lbbd_cut_families == ["nogood", "optimality", "pareto"]
     assert p.rl_state_features is not None
     assert "n_nodes" in p.rl_state_features and "fill_mean" in p.rl_state_features
@@ -81,7 +77,7 @@ def test_lasm_post_init_materializes_lists():
 def test_lasm_lists_are_iterable():
     """Codex's runtime regression: with __post_init__ dropped, consumers
     iterating these fields received None."""
-    p = LASMPipelineParams()
+    p = LASMPipelineConfig()
     families = [f for f in p.lbbd_cut_families]
     features = [f for f in p.rl_state_features]
     assert len(families) == 3
@@ -89,7 +85,7 @@ def test_lasm_lists_are_iterable():
 
 
 def test_lasm_explicit_lists_are_kept():
-    p = LASMPipelineParams(
+    p = LASMPipelineConfig(
         lbbd_cut_families=["nogood"],
         rl_state_features=["alpha"],
     )
@@ -98,7 +94,7 @@ def test_lasm_explicit_lists_are_kept():
 
 
 def test_lasm_stage_budgets_and_alns_dict():
-    p = LASMPipelineParams(alpha=0.5, time_limit=100.0)
+    p = LASMPipelineConfig(alpha=0.5, time_limit=100.0)
     budgets = p.stage_budgets()
     assert len(budgets) == 5
     assert all(b >= 0 for b in budgets)
@@ -110,8 +106,8 @@ def test_lasm_stage_budgets_and_alns_dict():
 
 def test_lasm_from_config_object_roundtrip():
     cfg = LASMPipelineConfig(alpha=0.5, time_limit=50.0)
-    p = LASMPipelineParams.from_config(cfg)
-    assert isinstance(p, LASMPipelineParams)
+    p = LASMPipelineConfig.from_config(cfg)
+    assert isinstance(p, LASMPipelineConfig)
     assert p.alpha == 0.5
     # __post_init__ ran during construction
     assert p.lbbd_cut_families is not None

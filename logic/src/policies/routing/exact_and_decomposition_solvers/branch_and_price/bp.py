@@ -35,7 +35,7 @@ from logic.src.policies.helpers.solvers_and_matheuristics import (
     VRPPMasterProblem,
 )
 
-from .params import BPParams
+from logic.src.configs.policies.bp import BPConfig
 from .pricing_subproblem import PricingSubproblem
 
 
@@ -53,7 +53,7 @@ class BranchAndPriceSolver:
         - "ryan_foster": Selection of a node-pair (r, s) to branch on.
 
     Attributes:
-        params (BPParams): Standardized configuration parameters.
+        params (BPConfig): Standardized configuration parameters.
         n_nodes (int): Number of customer nodes.
         cost_matrix (np.ndarray): Symmetric distance matrix.
         wastes (Dict[int, float]): Map from node to waste volume.
@@ -95,7 +95,7 @@ class BranchAndPriceSolver:
         early_termination_gap: float = 1e-3,
         multiple_waste_types: bool = False,
         allow_heuristic_ryan_foster: bool = False,
-        params: Optional[BPParams] = None,
+        params: Optional[BPConfig] = None,
     ) -> None:
         """Initialise the Branch-and-Price solver.
 
@@ -127,7 +127,7 @@ class BranchAndPriceSolver:
         """
         if params is None:
             # Create a params object from explicit arguments for backward compatibility
-            params = BPParams(
+            params = BPConfig(
                 max_iterations=max_iterations,
                 max_routes_per_iteration=max_routes_per_iteration,
                 optimality_gap=optimality_gap,

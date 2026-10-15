@@ -1,7 +1,7 @@
 """Particle Swarm Optimization (PSO) with velocity momentum.
 
 Attributes:
-    PSOParams: Parameter dataclass for Particle Swarm Optimization.
+    PSOConfig: Parameter dataclass for Particle Swarm Optimization.
     PSOPolicyAdapter: Policy class for Particle Swarm Optimization.
     PSOSolver: Main solver class for Particle Swarm Optimization.
 
@@ -10,8 +10,8 @@ Example:
     >>> policy = PSOPolicyAdapter()
 """
 
-from .params import PSOParams
+from logic.src.configs.policies.pso import PSOConfig
 from .policy_pso import PSOPolicyAdapter
 from .solver import PSOSolver
 
-__all__ = ["PSOParams", "PSOPolicyAdapter", "PSOSolver"]
+__all__ = ["PSOConfig", "PSOPolicyAdapter", "PSOSolver"]

@@ -17,6 +17,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Scripted migration of the unreleased policies (`2026-10-15`)
+
+#### Changed
+
+- **Breaking:** the unreleased policies read the typed config dataclass; their `params.py` layer is deleted (Q-8b, WP-06). `tools/migrate_unreleased_params.py` migrated 84 of the 86 remaining params modules in one scripted pass:
+  - **Groups A/B/D** (a wired config exists): params-only fields are appended to the config dataclass with their params defaults (shared-field defaults are kept as the config's; the value that runs is the YAML's), and every `XParams` reference is rewritten to the config class.
+  - **Group C** (no config anywhere): the params dataclass moved to `logic/src/configs/policies/<key>.py` as `<Key>Config` with `from_config` dropped (new: `LnsMipConfig`, `TpksConfig`).
+  - **Group C-unwired** (a config existed but the adapter returned `None`): params-only fields merged into the existing config and the adapter wired — `sa`, `na`, the `mp_*` multi-period family, the hyper-heuristics, `cgh`, `lrh`, `rfo`, `hgs_adc`, `rl_alns` now have typed configs their HPO jobs validate against.
+  - Adapter `XParams.from_config(values)` calls become `self._effective_config(values)` (the base filters and structured-loads the same values, with the simulator seed).
+- **Breaking:** two config files gained deferred imports instead of import-time cycles: `configs/policies/{ils_rvnd_sp,rl_gd_hh}.py` import the acceptance factory inside `__post_init__` (P-11 relocation is still pending for them). `configs/policies/rl_hvpl.py` references `KSparseACOConfig` from `aco_ks` instead of the deleted `KSACOParams`.
+- Two params modules remain as the hand-fix queue (Q-8b decision point): `calm` (six nested dataclasses) and `hmlns` (`MACOParams` + `HybridMemeticLargeNeighborhoodSearchParams`); their references still resolve.
+
+#### Removed
+
+- 84 `params.py` modules under `logic/src/policies/` (−9.7k lines gross). `tools/check_params_refs.py` bans all 95 deleted `*Params` symbols (WP-04/05/06); with `calm` and `hmlns` still to migrate, the final ban is on any `*Params` symbol once they land.
+
+#### Migration
+
+- HPO jobs (P-56 gate): `na.seed` default aligned to the config's `None` (the simulator injects the seed); `sa.iterations_per_temp` dropped — a stale key the config-less SA path never validated, now loud because SA is wired. All 96 jobs check green.
+- Cross-params imports (`KSACOParams` in `rl_hvpl`, the aco-ks operator config in eight solvers) now import from `logic.src.configs.policies.*`.
+
 ### Released routing configs: ALNS family and HGS (WP-05, `2026-10-15`)
 
 #### Changed

@@ -13,7 +13,7 @@ of low-level heuristics that are applied sequentially to an initial solution.
 
 Attributes:
     GPMPHHPolicy: Implements the GP-MP-HH policy.
-    GP_MP_HH_Params: Parameters for the GP-MP-HH policy.
+    GP_MP_HH_Config: Parameters for the GP-MP-HH policy.
 
 Example:
     >>> solver = GPMPHHPolicy(config)
@@ -22,7 +22,7 @@ Example:
     SolutionContext(...)
 """
 
-from .params import GP_MP_HH_Params
+from logic.src.configs.policies.gp_mp_hh import GP_MP_HH_Config
 from .policy_gp_mp_hh import GPMPHHPolicy
 
-__all__ = ["GPMPHHPolicy", "GP_MP_HH_Params"]
+__all__ = ["GPMPHHPolicy", "GP_MP_HH_Config"]

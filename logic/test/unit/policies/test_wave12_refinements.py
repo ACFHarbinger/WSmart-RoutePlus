@@ -6,7 +6,7 @@ from logic.src.policies.helpers.operators.generalized_insertion_and_deletion imp
     apply_type_i_us,
     apply_type_iii_us,
 )
-from logic.src.policies.routing.meta_heuristics.differential_evolution.params import DEParams
+from logic.src.configs.policies.de import DEConfig
 from logic.src.policies.routing.meta_heuristics.differential_evolution.solver import DESolver
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -19,7 +19,7 @@ def test_de_binomial_crossover_j_rand():
     """Verify that j_rand component is always inherited from mutant in DE."""
     dist_matrix = np.zeros((3, 3))
     wastes = {1: 10.0, 2: 10.0}
-    params = DEParams(pop_size=5, crossover_rate=0.0, seed=42) # CR=0 ensures only j_rand comes from mutant
+    params = DEConfig(pop_size=5, crossover_rate=0.0, seed=42) # CR=0 ensures only j_rand comes from mutant
 
     solver = DESolver(dist_matrix, wastes, 100.0, 1.0, 1.0, params)
 

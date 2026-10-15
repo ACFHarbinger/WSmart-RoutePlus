@@ -6,10 +6,10 @@ Set Partitioning post-optimization.
 
 Attributes:
     ILSRVNDSPSolver: Core ILS-RVND-SP solver class.
-    ILSRVNDSPParams: Configuration parameters dataclass.
+    ILSRVNDSPConfig: Configuration parameters dataclass.
 
 Example:
-    >>> from logic.src.policies.routing.matheuristics.iterated_local_search_randomized_variable_neighborhood_descent_set_partitioning import ILSRVNDSPSolver, ILSRVNDSPParams
-    >>> params = ILSRVNDSPParams()
+    >>> from logic.src.policies.routing.matheuristics.iterated_local_search_randomized_variable_neighborhood_descent_set_partitioning import ILSRVNDSPSolver, ILSRVNDSPConfig
+    >>> params = ILSRVNDSPConfig()
     >>> solver = ILSRVNDSPSolver(dist_matrix, wastes, capacity, R, C, params)
 """

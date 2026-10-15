@@ -16,7 +16,7 @@ from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import SAParams
+from logic.src.configs.policies.sa import SAConfig
 from .solver import SASolver
 
 
@@ -53,7 +53,7 @@ class SAPolicy(BaseRoutingPolicy):
         Returns:
             None (dictionary based).
         """
-        return None
+        return SAConfig
 
     def _run_solver(
         self,
@@ -82,7 +82,7 @@ class SAPolicy(BaseRoutingPolicy):
             Tuple of (routes, profit, cost).
         """
         # 1. Parse parameters
-        params = SAParams.from_config(values)
+        params = self._effective_config(values)
 
         # 2. Instantiate core solver
         solver = SASolver(

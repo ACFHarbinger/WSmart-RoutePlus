@@ -3,9 +3,7 @@
 import numpy as np
 import pytest
 from logic.src.policies.routing.meta_heuristics.fast_iterative_localized_optimization.filo import FILOSolver
-from logic.src.policies.routing.meta_heuristics.fast_iterative_localized_optimization.params import (
-    FILOParams,
-)
+from logic.src.configs.policies.filo import FILOConfig
 
 pytestmark = [pytest.mark.unit, pytest.mark.slow]
 
@@ -23,7 +21,7 @@ def filo_inputs():
     capacity = 50.0
     R = 1.0
     C = 0.1
-    params = FILOParams(
+    params = FILOConfig(
         max_iterations=100,
         time_limit=10.0,
         seed=42

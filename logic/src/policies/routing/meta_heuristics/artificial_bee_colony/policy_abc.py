@@ -21,7 +21,7 @@ from logic.src.configs.policies.abc import ABCConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import ABCParams
+from logic.src.configs.policies.abc import ABCConfig
 from .solver import ABCSolver
 
 
@@ -100,7 +100,7 @@ class ABCPolicy(BaseRoutingPolicy):
         Returns:
             Tuple containing (routes, profit, cost).
         """
-        params = ABCParams(
+        params = ABCConfig(
             n_sources=int(values.get("n_sources", 20)),
             limit=int(values.get("limit", 10)),
             max_iterations=int(values.get("max_iterations", 200)),

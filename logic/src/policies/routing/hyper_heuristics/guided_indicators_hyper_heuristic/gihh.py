@@ -41,7 +41,7 @@ from logic.src.policies.routing.hyper_heuristics.guided_indicators_hyper_heurist
     ScoreAIndicator,
     ScoreBIndicator,
 )
-from logic.src.policies.routing.hyper_heuristics.guided_indicators_hyper_heuristic.params import GIHHParams
+from logic.src.configs.policies.gihh import GIHHConfig
 from logic.src.policies.routing.hyper_heuristics.guided_indicators_hyper_heuristic.solution import Solution
 
 
@@ -67,7 +67,7 @@ class GIHHSolver:
         capacity (float): Capacity of the vehicle.
         R (float): Revenue per unit distance.
         C (float): Cost per unit distance.
-        params (GIHHParams): Parameters for the GIHH solver.
+        params (GIHHConfig): Parameters for the GIHH solver.
         mandatory_nodes (Optional[List[int]]): List of mandatory nodes.
         rng (random.Random): Random number generator.
         score_a (ScoreAIndicator): ScoreA indicator.
@@ -88,7 +88,7 @@ class GIHHSolver:
         capacity: float,
         R: float,
         C: float,
-        params: GIHHParams,
+        params: GIHHConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """Initialize GIHHSolver.
@@ -99,7 +99,7 @@ class GIHHSolver:
             capacity (float): Capacity of the vehicle.
             R (float): Revenue per unit distance.
             C (float): Cost per unit distance.
-            params (GIHHParams): Parameters for the GIHH solver.
+            params (GIHHConfig): Parameters for the GIHH solver.
             mandatory_nodes (Optional[List[int]]): List of mandatory nodes.
         """
         self.dist_matrix = dist_matrix

@@ -22,7 +22,7 @@ from logic.src.configs.policies.genius import GENIUSConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import GENIUSParams
+from logic.src.configs.policies.genius import GENIUSConfig
 from .solver import GENIUSSolver
 
 
@@ -118,7 +118,7 @@ class GENIUSPolicy(BaseRoutingPolicy):
                 - profit: Total calculated net profit (Total Revenue - Total Cost).
                 - cost: Total travel cost calculated by the solver.
         """
-        params = GENIUSParams(
+        params = GENIUSConfig(
             neighborhood_size=int(values.get("neighborhood_size", 5)),
             unstring_type=int(values.get("unstring_type", 1)),
             string_type=int(values.get("string_type", 1)),

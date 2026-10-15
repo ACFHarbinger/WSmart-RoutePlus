@@ -16,19 +16,19 @@ Reference:
     Operations Research, 40(6), 1086-1094.
 
 Attributes:
-    GENIUSParams: Configuration parameters dataclass.
+    GENIUSConfig: Configuration parameters dataclass.
     GENIUSPolicy: Policy adapter for the routing framework.
     GENIUSSolver: The main solver class.
 
 Example:
-    >>> from logic.src.policies.routing.meta_heuristics.genius import GENIUSSolver, GENIUSParams
-    >>> params = GENIUSParams(neighborhood_size=5)
+    >>> from logic.src.policies.routing.meta_heuristics.genius import GENIUSSolver, GENIUSConfig
+    >>> params = GENIUSConfig(neighborhood_size=5)
     >>> solver = GENIUSSolver(dist_matrix, wastes, capacity, R, C, params)
     >>> routes, profit, cost = solver.solve()
 """
 
-from .params import GENIUSParams
+from logic.src.configs.policies.genius import GENIUSConfig
 from .policy_genius import GENIUSPolicy
 from .solver import GENIUSSolver
 
-__all__ = ["GENIUSSolver", "GENIUSParams", "GENIUSPolicy"]
+__all__ = ["GENIUSSolver", "GENIUSConfig", "GENIUSPolicy"]

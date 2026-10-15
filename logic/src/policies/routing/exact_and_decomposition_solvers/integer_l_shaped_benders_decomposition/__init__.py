@@ -15,7 +15,7 @@ Attributes:
     MasterProblem (class): Gurobi MILP master problem.
     RecourseEvaluator (class): Benders cut generator.
     ScenarioGenerator (class): SAA scenario generation.
-    ILSBDParams (class): Configuration dataclass.
+    IntegerLShapedBendersConfig (class): Configuration dataclass.
     run_ils_bd (func): Canonical solver entry point.
 
 Example:
@@ -28,7 +28,7 @@ import numpy as np
 
 from .ils_bd_engine import IntegerLShapedEngine
 from .master_problem import MasterProblem
-from .params import ILSBDParams
+from logic.src.configs.policies.ils_bd import IntegerLShapedBendersConfig
 from .scenario import ScenarioGenerator
 from .subproblem import RecourseEvaluator
 
@@ -39,7 +39,7 @@ def run_ils_bd(
     capacity: float,
     revenue: float,
     cost_unit: float,
-    params: ILSBDParams,
+    params: IntegerLShapedBendersConfig,
     mandatory_indices: Set[int],
     vehicle_limit: int = 1,
     **kwargs: Any,
@@ -56,7 +56,7 @@ def run_ils_bd(
         capacity: Vehicle payload capacity.
         revenue: Revenue per unit of waste collected.
         cost_unit: Cost per unit of distance traveled.
-        params: ILSBDParams configuration for the solver.
+        params: IntegerLShapedBendersConfig configuration for the solver.
         mandatory_indices: Set of local node indices that are mandatory.
         vehicle_limit: Number of vehicles available (defaults to 1).
         kwargs: Additional keyword arguments (e.g., scenario tree).
@@ -95,5 +95,5 @@ __all__ = [
     "MasterProblem",
     "RecourseEvaluator",
     "ScenarioGenerator",
-    "ILSBDParams",
+    "IntegerLShapedBendersConfig",
 ]

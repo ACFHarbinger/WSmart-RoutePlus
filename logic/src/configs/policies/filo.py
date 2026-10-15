@@ -10,6 +10,7 @@ Example:
     >>> config.time_limit
     60.0
 """
+from __future__ import annotations
 
 from dataclasses import dataclass
 
@@ -62,3 +63,4 @@ class FILOConfig(ABCConfig):
     seed: int = 42
     vrpp: bool = True
     profit_aware_operators: bool = False
+    route_min_sa_temp: float = 1.0

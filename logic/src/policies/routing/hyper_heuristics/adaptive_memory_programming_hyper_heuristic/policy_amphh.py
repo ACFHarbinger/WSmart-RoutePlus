@@ -25,9 +25,7 @@ from logic.src.interfaces.context.problem_context import ProblemContext
 from logic.src.interfaces.context.solution_context import SolutionContext
 from logic.src.policies.routing.base.base_multi_period_policy import BaseMultiPeriodRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-from logic.src.policies.routing.hyper_heuristics.adaptive_memory_programming_hyper_heuristic.params import (
-    AMPHHParams,
-)
+from logic.src.configs.policies.amphh import AMPHHConfig
 from logic.src.utils.policy.llh_pool import LLHPool
 from logic.src.utils.policy.routes import route_profit
 from logic.src.utils.policy.wrappers import greedy_day_route
@@ -71,7 +69,7 @@ class AMPHHPolicy(BaseMultiPeriodRoutingPolicy):
         rng (random.Random): Random number generator.
         llhs (List[Callable]): List of Low-Level Heuristics.
         memory (List[Tuple[float, List[List[List[int]]]]]): Adaptive memory.
-        params (AMPHHParams): Parameters for the solver.
+        params (AMPHHConfig): Parameters for the solver.
     """
 
     def __init__(self, config: Any = None):
@@ -82,7 +80,7 @@ class AMPHHPolicy(BaseMultiPeriodRoutingPolicy):
             config (Any): Configuration for the policy.
         """
         super().__init__(config)
-        self.params = AMPHHParams.from_config(config)
+        self.params = self._effective_config(config)
         self.mem_size = self.params.mem_size
         self.iters = self.params.iters
         self.seed = self.params.seed

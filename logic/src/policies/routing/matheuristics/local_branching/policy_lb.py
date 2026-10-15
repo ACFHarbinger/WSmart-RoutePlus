@@ -27,7 +27,7 @@ from logic.src.interfaces.context.search_context import SearchContext
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.routing.matheuristics.local_branching.lb import run_local_branching_gurobi
-from logic.src.policies.routing.matheuristics.local_branching.params import LBParams
+from logic.src.configs.policies.lb import LocalBranchingConfig
 
 
 @GlobalRegistry.register(
@@ -162,7 +162,7 @@ class LocalBranchingPolicy(BaseRoutingPolicy):
             kwargs: Description of kwargs.
         """
         # 1. Initialize type-safe Params
-        params = LBParams.from_config(self._config or kwargs.get("config", {}).get("lb", {}))
+        params = LocalBranchingConfig.from_config(self._config or kwargs.get("config", {}).get("lb", {}))
 
         # 2. Extract state parameters
         distance_matrix = kwargs["distance_matrix"]

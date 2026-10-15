@@ -20,7 +20,7 @@ from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolic
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
 from .kgls import KGLSSolver
-from .params import KGLSParams
+from logic.src.configs.policies.kgls import KGLSConfig
 
 
 @RoutingAlgorithmRegistry.register("kgls")
@@ -114,7 +114,7 @@ class KGLSPolicy(BaseRoutingPolicy):
                 - profit: Total calculated net profit (Total Revenue - Total Cost).
                 - cost: Total travel cost calculated by the solver.
         """
-        params = KGLSParams(
+        params = KGLSConfig(
             time_limit=float(values.get("time_limit", 60.0)),
             num_perturbations=int(values.get("num_perturbations", 3)),
             neighborhood_size=int(values.get("neighborhood_size", 20)),

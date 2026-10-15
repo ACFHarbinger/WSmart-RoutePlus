@@ -23,7 +23,7 @@ from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import TSPParams
+from logic.src.configs.policies.tsp import TSPConfig
 from .tsp import find_route, get_multi_tour, get_route_cost
 
 
@@ -130,7 +130,7 @@ class TSPPolicy(BaseRoutingPolicy):
 
         """
         # 1. Initialize type-safe Params
-        params = TSPParams.from_config(self._config or values)
+        params = TSPConfig.from_config(self._config or values)
 
         # 2. Find a giant tour visiting all potential targets
         # Note: find_route expects global indices usually, but we pass local ones here.

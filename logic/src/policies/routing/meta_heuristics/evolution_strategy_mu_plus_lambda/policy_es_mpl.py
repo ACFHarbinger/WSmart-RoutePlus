@@ -17,7 +17,7 @@ from logic.src.configs.policies import MuPlusLambdaESConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import MuPlusLambdaESParams
+from logic.src.configs.policies.es_mpl import MuPlusLambdaESConfig
 from .solver import MuPlusLambdaESSolver
 
 
@@ -88,7 +88,7 @@ class MuPlusLambdaESPolicy(BaseRoutingPolicy):
         Returns:
             Tuple of (routes, profit, cost).
         """
-        params = MuPlusLambdaESParams(
+        params = MuPlusLambdaESConfig(
             mu=values.get("mu", 10),
             lambda_=values.get("lambda_", 5),
             n_removal=values.get("n_removal", 3),

@@ -39,10 +39,8 @@ from logic.src.policies.helpers.operators import (
     random_removal,
 )
 from logic.src.policies.helpers.operators.solution_initialization.nearest_neighbor_si import build_nn_routes
-from logic.src.policies.routing.meta_heuristics.ant_colony_optimization_k_sparse.params import (
-    KSACOParams,
-)
-from logic.src.policies.routing.meta_heuristics.volleyball_premier_league.params import VPLParams
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
+from logic.src.configs.policies.vpl import VPLConfig
 
 
 class VPLSolver:
@@ -74,7 +72,7 @@ class VPLSolver:
         capacity: float,
         R: float,
         C: float,
-        params: VPLParams,
+        params: VPLConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """
@@ -101,7 +99,7 @@ class VPLSolver:
         self.random = random.Random(params.seed) if params.seed is not None else random.Random()
 
         # Initialize ACO Local Search for elite learning
-        aco_params = KSACOParams(
+        aco_params = KSparseACOConfig(
             local_search_iterations=self.params.local_search_iterations,
             vrpp=self.params.vrpp,
             profit_aware_operators=self.params.profit_aware_operators,

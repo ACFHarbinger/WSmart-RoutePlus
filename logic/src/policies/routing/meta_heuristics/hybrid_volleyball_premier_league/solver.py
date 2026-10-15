@@ -43,9 +43,7 @@ from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_h
 from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns import (
     ALNSSolver,
 )
-from logic.src.policies.routing.meta_heuristics.hybrid_volleyball_premier_league.params import (
-    HVPLParams,
-)
+from logic.src.configs.policies.hvpl import HVPLConfig
 
 
 class HVPLSolver:
@@ -75,7 +73,7 @@ class HVPLSolver:
         capacity: float,
         R: float,
         C: float,
-        params: HVPLParams,
+        params: HVPLConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """Initialize HVPL solver.

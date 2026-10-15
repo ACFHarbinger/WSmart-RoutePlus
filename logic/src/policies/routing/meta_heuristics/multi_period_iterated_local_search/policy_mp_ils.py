@@ -21,9 +21,7 @@ from logic.src.interfaces.context.problem_context import ProblemContext
 from logic.src.interfaces.context.solution_context import SolutionContext
 from logic.src.policies.routing.base.base_multi_period_policy import BaseMultiPeriodRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-from logic.src.policies.routing.meta_heuristics.multi_period_iterated_local_search.params import (
-    MP_ILS_Params,
-)
+from logic.src.configs.policies.mp_ils import MP_ILS_Config
 from logic.src.utils.policy.routes import (
     route_profit,
 )
@@ -69,7 +67,7 @@ class MultiPeriodILSPolicy(BaseMultiPeriodRoutingPolicy):
             None.
         """
         super().__init__(config)
-        self.params = MP_ILS_Params.from_config(config)
+        self.params = self._effective_config(config)
         self.max_iter = self.params.iters
         self.perturb_size = self.params.perturb_size
         self.seed = self.params.seed

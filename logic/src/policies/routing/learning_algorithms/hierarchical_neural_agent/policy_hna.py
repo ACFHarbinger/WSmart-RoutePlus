@@ -31,7 +31,7 @@ from logic.src.interfaces.context.solution_context import SolutionContext
 from logic.src.policies.helpers.operators import greedy_insertion
 from logic.src.policies.routing.base.base_multi_period_policy import BaseMultiPeriodRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-from logic.src.policies.routing.learning_algorithms.hierarchical_neural_agent.params import HNAParams
+from logic.src.configs.policies.hna import HNAPolicyConfig
 
 
 @GlobalRegistry.register(
@@ -81,7 +81,7 @@ class HierarchicalNeuralAgentPolicy(BaseMultiPeriodRoutingPolicy):
             config: Configuration for the HNA policy.
         """
         super().__init__(config)
-        self.params = HNAParams.from_config(config)
+        self.params = self._effective_config(config)
         self._module: Optional[Any] = None  # loaded lazily from checkpoint
         self._module_loaded: bool = False
 
@@ -202,7 +202,7 @@ class HierarchicalNeuralAgentPolicy(BaseMultiPeriodRoutingPolicy):
                 - full_plan: Collection plan spanning the entire horizon.
                 - stats: Execution statistics and checkpoint usage metadata.
         """
-        params = HNAParams.from_config(self.config)
+        params = HNAPolicyConfig.from_config(self.config)
         sub_dist_matrix = problem.distance_matrix
         sub_wastes = problem.wastes
         mandatory_base = problem.mandatory

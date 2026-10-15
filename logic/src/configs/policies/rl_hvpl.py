@@ -22,9 +22,9 @@ Example:
 from dataclasses import dataclass, field
 from typing import Any, List, Optional
 
-from .aco_ks import KSparseACOConfig
-from .alns import ALNSConfig
-from .other import RLConfig
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
+from logic.src.configs.policies.alns import ALNSConfig
+from logic.src.configs.policies.other import RLConfig
 
 
 @dataclass
@@ -79,3 +79,31 @@ class RLHVPLConfig:
     profit_aware_operators: bool = False
     packing: List[str] = field(default_factory=list)
     route_improvement: List[Any] = field(default_factory=list)
+    aco_params: KSparseACOConfig = field(
+        default_factory=lambda: KSparseACOConfig(
+            n_ants=10,
+            k_sparse=10,
+            alpha=1.0,
+            beta=2.0,
+            rho=0.1,
+            scale=5.0,
+            tau_0=None,
+            tau_min=0.001,
+            tau_max=10.0,
+            max_iterations=1,  # Single construction per call
+            time_limit=10.0,
+            local_search=True,
+            local_search_iterations=50,
+            elitist_weight=1.0,
+        )
+    )
+    alns_params: ALNSConfig = field(
+        default_factory=lambda: ALNSConfig(
+            max_iterations=200,
+            start_temp=100.0,
+            cooling_rate=0.97,
+            reaction_factor=0.5,
+            max_removal_pct=0.3,
+            time_limit=20.0,
+        )
+    )

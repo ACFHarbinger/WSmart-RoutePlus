@@ -46,12 +46,8 @@ from logic.src.policies.helpers.operators.destroy_ruin.shaw import shaw_profit_r
 from logic.src.policies.helpers.operators.solution_initialization.nearest_neighbor_si import (
     build_nn_routes,
 )
-from logic.src.policies.routing.meta_heuristics.ant_colony_optimization_k_sparse.params import (
-    KSACOParams,
-)
-from logic.src.policies.routing.meta_heuristics.soccer_league_competition.params import (
-    SLCParams,
-)
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
+from logic.src.configs.policies.slc import SLCConfig
 
 
 class SLCSolver:
@@ -64,7 +60,7 @@ class SLCSolver:
         capacity (float): Vehicle capacity.
         R (float): Revenue per kg of waste.
         C (float): Cost per km traveled.
-        params (SLCParams): Algorithm parameters.
+        params (SLCConfig): Algorithm parameters.
         mandatory_nodes (Optional[List[int]]): Mandatory nodes.
         random (np.random.Generator): Random number generator.
         ls (GeneralLocalSearch): Local search instance.
@@ -77,7 +73,7 @@ class SLCSolver:
         capacity: float,
         R: float,
         C: float,
-        params: SLCParams,
+        params: SLCConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """Initializes the Soccer League Competition solver.
@@ -88,7 +84,7 @@ class SLCSolver:
             capacity (float): Maximum vehicle collection capacity.
             R (float): Revenue per kg of waste.
             C (float): Cost per km traveled.
-            params (SLCParams): Algorithm-specific parameters (teams, size).
+            params (SLCConfig): Algorithm-specific parameters (teams, size).
             mandatory_nodes (Optional[List[int]]): Nodes that must be visited.
         """
         self.dist_matrix = dist_matrix
@@ -103,7 +99,7 @@ class SLCSolver:
         self.random = random.Random(params.seed) if params.seed is not None else random.Random()
 
         # Pre-instantiate Local Search for reuse
-        aco_params = KSACOParams(
+        aco_params = KSparseACOConfig(
             local_search_iterations=self.params.local_search_iterations,
             vrpp=self.params.vrpp,
             profit_aware_operators=self.params.profit_aware_operators,

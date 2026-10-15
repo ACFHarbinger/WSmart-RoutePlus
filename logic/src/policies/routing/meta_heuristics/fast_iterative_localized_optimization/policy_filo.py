@@ -18,7 +18,7 @@ from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolic
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
 from .filo import FILOSolver
-from .params import FILOParams
+from logic.src.configs.policies.filo import FILOConfig
 
 
 @RoutingAlgorithmRegistry.register("filo")
@@ -86,7 +86,7 @@ class FILOPolicy(BaseRoutingPolicy):
             Tuple of (routes, profit, cost).
         """
         # Build parameters from config
-        params = FILOParams(
+        params = FILOConfig(
             time_limit=float(values.get("time_limit", 60.0)),
             max_iterations=int(values.get("max_iterations", 100)),
             initial_temperature_factor=float(values.get("initial_temperature_factor", 10.0)),

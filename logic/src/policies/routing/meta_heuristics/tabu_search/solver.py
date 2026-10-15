@@ -33,7 +33,7 @@ from logic.src.policies.helpers.operators.recreate_repair import (
 )
 from logic.src.policies.helpers.operators.solution_initialization.greedy_si import build_greedy_routes
 
-from .params import TSParams
+from logic.src.configs.policies.ts import TSConfig
 
 
 class TSSolver:
@@ -77,7 +77,7 @@ class TSSolver:
         capacity: float,
         R: float,
         C: float,
-        params: TSParams,
+        params: TSConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """Initializes the Tabu Search solver.

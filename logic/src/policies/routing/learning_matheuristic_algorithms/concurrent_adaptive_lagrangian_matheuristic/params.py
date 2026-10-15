@@ -46,7 +46,7 @@ from __future__ import annotations
 from dataclasses import MISSING, dataclass, field, fields
 from typing import Any, Dict, List, Optional
 
-from logic.src.policies.routing.matheuristics.two_phase_kernel_search.params import TPKSParams
+from logic.src.configs.policies.tpks import TpksConfig
 
 # ---------------------------------------------------------------------------
 # Lookahead (scenario tree + per-bin DP)
@@ -286,7 +286,7 @@ class CALMParams:
     dual_bound: DualBoundParams = field(default_factory=DualBoundParams)
     bandit: BanditParams = field(default_factory=BanditParams)
     regret: RegretParams = field(default_factory=RegretParams)
-    tpks: TPKSParams = field(default_factory=TPKSParams)
+    tpks: TpksConfig = field(default_factory=TpksConfig)
 
     # Global time budget (seconds).  Distributed across outer iterations.
     time_limit: float = 600.0
@@ -332,7 +332,7 @@ class CALMParams:
                 "DualBoundParams",
                 "BanditParams",
                 "RegretParams",
-                "TPKSParams",
+                "TpksConfig",
             ):
                 top_kwargs[f.name] = _hydrate(f.default_factory, sub_cfg)  # type: ignore[arg-type]
             else:

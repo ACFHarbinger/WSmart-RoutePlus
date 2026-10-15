@@ -66,3 +66,7 @@ class BCConfig:
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
     seed: Optional[int] = None
+    verbose: bool = False
+    enable_heuristic_rcc_separation: bool = True
+    enable_exact_rcc_separation: bool = False
+    use_comb_cuts: bool = False

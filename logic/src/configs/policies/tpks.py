@@ -1,24 +1,15 @@
-"""
-Configuration parameters for the Two-Phase Kernel Search (TPKS) matheuristic.
+"""TpksConfig: configuration dataclass for the ``tpks`` policy.
 
-Attributes:
-    TPKSParams: The Two-Phase Kernel Search parameters.
-
-Example:
-    >>> from logic.src.policies.routing.matheuristics.two_phase_kernel_search.params import TPKSParams
-    >>> params = TPKSParams.from_config({"time_limit": 600.0})
-    >>> print(params.time_limit)
-    600.0
+Moved from the policy's ``params.py`` by the WP-06 scripted migration(Q-8b): the config dataclass is the single source of truth (P-10).
 """
 
 from __future__ import annotations
 
-from dataclasses import MISSING, dataclass, fields
-from typing import Any
+from dataclasses import dataclass, fields
 
 
 @dataclass
-class TPKSParams:
+class TpksConfig:
     """
     Parameters for the Two-Phase Kernel Search (TPKS) algorithm.
 
@@ -63,24 +54,6 @@ class TPKSParams:
     seed: int = 42
     engine: str = "gurobi"
 
-    @classmethod
-    def from_config(cls, config: Any) -> "TPKSParams":
-        """Creates a TPKSParams instance from a Hydra or OmegaConf configuration object.
-
-        Args:
-            config (Any): Configuration object with parameter overrides.
-
-        Returns:
-            TPKSParams: Initialized parameter dataclass.
-        """
-        params = {}
-        for f in fields(cls):
-            val = getattr(config, f.name, f.default)
-            # Handle MISSING from dataclasses fields or OmegaConf
-            if str(val) == "MISSING" or val is MISSING:
-                continue
-            params[f.name] = val
-        return cls(**params)
 
     def to_dict(self):
         """Converts the parameter dataclass into a standard Python dictionary.

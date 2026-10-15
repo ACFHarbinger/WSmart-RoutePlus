@@ -25,7 +25,7 @@ from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.packing_and_routing.base.base_joint_policy import BaseJointPolicy
 from logic.src.policies.packing_and_routing.base.registry import JointPolicyRegistry
 
-from .params import JointSAParams
+from logic.src.configs.policies.jsa import JointSAConfig
 
 
 @GlobalRegistry.register(
@@ -96,7 +96,7 @@ class JointSAPolicy(BaseJointPolicy):
                 - profit: Best found net profit.
                 - cost: Routing cost of the best solution.
         """
-        params = JointSAParams.from_config(self._config) if self._config else JointSAParams()
+        params = self._effective_config(asdict(self._config)) if self._config else JointSAConfig()
 
         start_time = time.time()
         random.seed(params.seed)
@@ -222,7 +222,7 @@ class JointSAPolicy(BaseJointPolicy):
         selected_bins: List[int],
         routes: List[List[int]],
         context: JointSelectionConstructionContext,
-        params: JointSAParams,
+        params: JointSAConfig,
     ) -> Tuple[float, float, float]:
         """Calculate state score (Profit minus Overflow Penalties).
 
@@ -230,7 +230,7 @@ class JointSAPolicy(BaseJointPolicy):
             selected_bins (List[int]): Current selection IDs.
             routes (List[List[int]]): Current routes (local indices).
             context (JointSelectionConstructionContext): Problem state.
-            params (JointSAParams): Configuration weights.
+            params (JointSAConfig): Configuration weights.
 
         Returns:
             Tuple[float, float, float]:
@@ -266,14 +266,14 @@ class JointSAPolicy(BaseJointPolicy):
         return score, profit, dist_cost
 
     def _total_overflow_penalty(
-        self, selected_bins: List[int], context: JointSelectionConstructionContext, params: JointSAParams
+        self, selected_bins: List[int], context: JointSelectionConstructionContext, params: JointSAConfig
     ) -> float:
         """Estimate penalty for unserved at-risk bins.
 
         Args:
             selected_bins (List[int]): Served bin IDs.
             context (JointSelectionConstructionContext): Environmental data.
-            params (JointSAParams): Penalty coefficients.
+            params (JointSAConfig): Penalty coefficients.
 
         Returns:
             float: Total aggregated penalty.
@@ -294,7 +294,7 @@ class JointSAPolicy(BaseJointPolicy):
         current_selection: List[int],
         current_routes: List[List[int]],
         context: JointSelectionConstructionContext,
-        params: JointSAParams,
+        params: JointSAConfig,
     ) -> Tuple[List[int], List[List[int]]]:
         """Apply a stochastic move to generate a neighboring solution.
 
@@ -302,7 +302,7 @@ class JointSAPolicy(BaseJointPolicy):
             current_selection (List[int]): Current selection mask.
             current_routes (List[List[int]]): Current routing plan.
             context (JointSelectionConstructionContext): Environmental state.
-            params (JointSAParams): Movement probabilities.
+            params (JointSAConfig): Movement probabilities.
 
         Returns:
             Tuple[List[int], List[List[int]]]: The neighboring selection and routing.

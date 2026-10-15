@@ -24,9 +24,7 @@ from logic.src.policies.packing_and_routing.non_dominated_sorting_biased_random_
 from logic.src.policies.packing_and_routing.non_dominated_sorting_biased_random_key_genetic_algorithm.objectives import (
     compute_overflow_risk,
 )
-from logic.src.policies.packing_and_routing.non_dominated_sorting_biased_random_key_genetic_algorithm.params import (
-    NDSBRKGAParams,
-)
+from logic.src.configs.policies.nds_brkga import NDSBRKGAConfig
 from logic.src.policies.packing_and_routing.non_dominated_sorting_biased_random_key_genetic_algorithm.policy_nds_brkga import (
     NDSBRKGAPolicy,
 )
@@ -69,7 +67,7 @@ def test_chromosome_decoding(mock_nds_problem):
     """Test that chromosome decodes to valid selection and routes."""
     data = mock_nds_problem
     n_bins = len(data["current_fill"])
-    NDSBRKGAParams()
+    NDSBRKGAConfig()
 
     # 2N keys
     keys = np.random.rand(2 * n_bins)
@@ -133,7 +131,7 @@ def test_population_seeding(mock_nds_problem):
     """Test that seeding produces chromosomes."""
     data = mock_nds_problem
     n_bins = len(data["current_fill"])
-    params = NDSBRKGAParams(n_seed_solutions=2)
+    params = NDSBRKGAConfig(n_seed_solutions=2)
 
     # Evaluate threshold and risk for population init
     bin_mass = np.full(n_bins, 50.0) # 0.5 * 100

@@ -2,7 +2,7 @@ r"""ALNS with Inter-Period Operators (ALNS-IPO) for Multi-Period IRP.
 
 Attributes:
     ALNSSolverIPO: Core ALNS-IPO implementation.
-    ALNSIPOParams: Configuration parameters for ALNS-IPO.
+    ALNSIPOConfig: Configuration parameters for ALNS-IPO.
     ALNSInterPeriodOperatorsPolicy: Policy adapter for ALNS-IPO.
 
 Example:
@@ -11,7 +11,7 @@ Example:
 """
 
 from .alns_ipo import ALNSSolverIPO
-from .params import ALNSIPOParams
+from logic.src.configs.policies.alns_ipo import ALNSIPOConfig
 from .policy_alns_ipo import ALNSInterPeriodOperatorsPolicy
 
-__all__ = ["ALNSSolverIPO", "ALNSIPOParams", "ALNSInterPeriodOperatorsPolicy"]
+__all__ = ["ALNSSolverIPO", "ALNSIPOConfig", "ALNSInterPeriodOperatorsPolicy"]

@@ -13,7 +13,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.
 import numpy as np
 from logic.src.policies.routing.matheuristics.local_branching_variable_neighborhood_search.lb_vns import (
     GUROBI_AVAILABLE,
-    LBVNSParams,
+    LocalBranchingVNSConfig,
     run_lb_vns_gurobi,
 )
 
@@ -43,7 +43,7 @@ def test_lb_vns_basic():
     R = 1.0
     C = 0.5
     mandatory_nodes = [2]
-    params = LBVNSParams(
+    params = LocalBranchingVNSConfig(
         k_min=5,
         k_max=15,
         k_step=5,

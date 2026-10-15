@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 import torch
 
 if TYPE_CHECKING:
-    from .params import NeuralParams
+    from logic.src.configs.policies.na import NeuralAgentConfig
 
 from logic.src.tracking.hooks.attention_hooks import add_attention_hooks
 from logic.src.utils.decoding.beam_search import _beam_search
@@ -46,7 +46,7 @@ class SimulationMixin:
         waste_history: Optional[torch.Tensor] = None,
         cost_weights: Optional[Dict[str, float]] = None,
         mandatory: Optional[torch.Tensor] = None,
-        params: Optional[NeuralParams] = None,
+        params: Optional[NeuralAgentConfig] = None,
         **kwargs: Any,
     ):
         """Execute neural routing policy for a single simulation day.

@@ -11,7 +11,7 @@ is explicitly biased toward breaking these features using a targeted
 
 Attributes:
     GLSSolver (Type): Core solver class for Guided Local Search.
-    GLSParams (Type): Parameter dataclass for the solver.
+    GLSConfig (Type): Parameter dataclass for the solver.
 
 Example:
     >>> solver = GLSSolver(dist_matrix, wastes, capacity, R, C, params)
@@ -41,7 +41,7 @@ from logic.src.policies.helpers.operators import (
 )
 from logic.src.policies.helpers.operators.solution_initialization.nearest_neighbor_si import build_nn_routes
 
-from .params import GLSParams
+from logic.src.configs.policies.gls import GLSConfig
 
 
 class GLSSolver:
@@ -69,7 +69,7 @@ class GLSSolver:
         capacity: float,
         R: float,
         C: float,
-        params: GLSParams,
+        params: GLSConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """

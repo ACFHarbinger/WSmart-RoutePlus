@@ -15,11 +15,11 @@ Reference:
 
 Attributes:
     HULKSolver: Main solver class that coordinates operator selection and solution improvement.
-    HULKParams: Parameters for HULK hyper-heuristic.
+    HULKConfig: Parameters for HULK hyper-heuristic.
     run_hulk: Runs HULK hyper-heuristic on the given problem context.
 
 Example:
-    >>> from logic.src.policies.routing.hyper_heuristics.hyper_heuristic_us_lk import HULKSolver, HULKParams, run_hulk
+    >>> from logic.src.policies.routing.hyper_heuristics.hyper_heuristic_us_lk import HULKSolver, HULKConfig, run_hulk
     >>> solver = HULKSolver(dist_matrix, wastes, capacity, R, C, params)
     >>> best_solution, best_profit, best_cost = solver.solve()
     >>> print(best_solution, best_profit, best_cost)
@@ -28,12 +28,12 @@ Example:
 from typing import Any, List, Optional, Tuple
 
 from .hulk import HULKSolver
-from .params import HULKParams
+from logic.src.configs.policies.hulk import HULKConfig
 
-__all__ = ["HULKSolver", "HULKParams", "run_hulk"]
+__all__ = ["HULKSolver", "HULKConfig", "run_hulk"]
 
 
-def run_hulk(context: Any, params: Optional[HULKParams] = None) -> Tuple[List[List[int]], float, float]:
+def run_hulk(context: Any, params: Optional[HULKConfig] = None) -> Tuple[List[List[int]], float, float]:
     """
     Run HULK hyper-heuristic on the given problem context.
 
@@ -45,7 +45,7 @@ def run_hulk(context: Any, params: Optional[HULKParams] = None) -> Tuple[List[Li
         Tuple of (best_routes, best_profit, best_cost).
     """
     if params is None:
-        params = HULKParams()
+        params = HULKConfig()
 
     solver = HULKSolver(
         dist_matrix=context.dist_matrix,

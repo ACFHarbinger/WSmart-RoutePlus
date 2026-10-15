@@ -35,7 +35,7 @@ from logic.src.policies.helpers.operators.solution_initialization.greedy_si impo
     build_greedy_routes,
 )
 
-from .params import SISRParams
+from logic.src.configs.policies.sisr import SISRConfig
 
 
 class SISRSolver:
@@ -60,7 +60,7 @@ class SISRSolver:
         capacity: float,
         R: float,
         C: float,
-        params: SISRParams,
+        params: SISRConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """

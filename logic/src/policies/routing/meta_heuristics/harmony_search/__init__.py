@@ -3,15 +3,15 @@
 Attributes:
     HSSolver: Main solver class for Harmony Search.
     HSPolicy: Policy class for Harmony Search.
-    HSParams: Parameter dataclass for Harmony Search.
+    HSConfig: Parameter dataclass for Harmony Search.
 
 Example:
     >>> from logic.src.policies.routing.meta_heuristics.harmony_search import HSPolicy
     >>> policy = HSPolicy()
 """
 
-from .params import HSParams
+from logic.src.configs.policies.hs import HSConfig
 from .policy_hs import HSPolicy
 from .solver import HSSolver
 
-__all__ = ["HSSolver", "HSPolicy", "HSParams"]
+__all__ = ["HSSolver", "HSPolicy", "HSConfig"]

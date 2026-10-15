@@ -13,7 +13,7 @@ Reference:
 
 Attributes:
     GIHHSolver: Solver for the GIHH policy.
-    GIHHParams: Parameters for the GIHH policy.
+    GIHHConfig: Parameters for the GIHH policy.
 
 Example:
     >>> solver = GIHHSolver(dist_matrix, wastes, capacity, R, C, params)
@@ -24,6 +24,6 @@ Example:
 """
 
 from .gihh import GIHHSolver
-from .params import GIHHParams
+from logic.src.configs.policies.gihh import GIHHConfig
 
-__all__ = ["GIHHSolver", "GIHHParams"]
+__all__ = ["GIHHSolver", "GIHHConfig"]

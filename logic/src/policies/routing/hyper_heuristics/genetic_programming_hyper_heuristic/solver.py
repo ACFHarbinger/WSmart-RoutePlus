@@ -64,7 +64,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
-from .params import GPHHParams
+from logic.src.configs.policies.gp_hh import GPHHConfig
 from .tree import GPNode, _mutate, _random_tree, _subtree_crossover, to_callable
 
 # Type alias for a training environment triple
@@ -86,7 +86,7 @@ class GPHHSolver:
     Attributes:
         R: Revenue parameter.
         C: Cost parameter.
-        params: GPHHParams object.
+        params: GPHHConfig object.
         mandatory_nodes: List of mandatory nodes.
         training_environments: List of training environments.
         dist_matrix: Distance matrix.
@@ -106,7 +106,7 @@ class GPHHSolver:
         capacity: float,
         R: float,
         C: float,
-        params: GPHHParams,
+        params: GPHHConfig,
         mandatory_nodes: Optional[List[int]] = None,
         training_environments: Optional[List[TrainingEnv]] = None,
     ):

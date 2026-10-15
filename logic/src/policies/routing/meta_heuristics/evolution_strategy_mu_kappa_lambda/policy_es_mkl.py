@@ -18,7 +18,7 @@ from logic.src.configs.policies import MuKappaLambdaESConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import MuKappaLambdaESParams
+from logic.src.configs.policies.es_mkl import MuKappaLambdaESConfig
 from .solver import MuKappaLambdaESSolver
 
 
@@ -95,7 +95,7 @@ class MuKappaLambdaESPolicy(BaseRoutingPolicy):
             Tuple of (routes, profit, cost).
         """
         tau_default: float = 1.0 / (2.0**0.5)
-        params = MuKappaLambdaESParams(
+        params = MuKappaLambdaESConfig(
             mu=values.get("mu", 10),
             kappa=values.get("kappa", 5),
             lambda_=values.get("lambda_", 5),

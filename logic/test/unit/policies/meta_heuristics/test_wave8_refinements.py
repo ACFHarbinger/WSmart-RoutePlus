@@ -2,9 +2,9 @@
 
 import numpy as np
 import pytest
-from logic.src.policies.routing.meta_heuristics.differential_evolution.params import DEParams
+from logic.src.configs.policies.de import DEConfig
 from logic.src.policies.routing.meta_heuristics.differential_evolution.solver import DESolver
-from logic.src.policies.routing.meta_heuristics.hybrid_volleyball_premier_league.params import HVPLParams
+from logic.src.configs.policies.hvpl import HVPLConfig
 from logic.src.policies.routing.meta_heuristics.hybrid_volleyball_premier_league.solver import HVPLSolver
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -27,7 +27,7 @@ def small_instance():
 
 def test_de_j_rand_enforcement(small_instance):
     dist_matrix, wastes, capacity = small_instance
-    params = DEParams(
+    params = DEConfig(
         pop_size=5,
         max_iterations=2,
         mutation_factor=0.5,
@@ -60,7 +60,7 @@ def test_de_j_rand_enforcement(small_instance):
 
 def test_hvpl_phases(small_instance):
     dist_matrix, wastes, capacity = small_instance
-    params = HVPLParams(
+    params = HVPLConfig(
         n_teams=4,
         max_iterations=2,
         aco_init_iterations=10,

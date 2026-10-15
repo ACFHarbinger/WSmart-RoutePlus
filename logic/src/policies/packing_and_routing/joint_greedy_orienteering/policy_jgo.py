@@ -24,7 +24,7 @@ from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.packing_and_routing.base.base_joint_policy import BaseJointPolicy
 from logic.src.policies.packing_and_routing.base.registry import JointPolicyRegistry
 
-from .params import JointGreedyParams
+from logic.src.configs.policies.jgo import JointGreedyConfig
 
 
 @GlobalRegistry.register(
@@ -89,7 +89,7 @@ class JointGreedyPolicy(BaseJointPolicy):
                 - total_profit: Net profit (Revenue - Distance Cost).
                 - total_cost: Total routing cost.
         """
-        params = JointGreedyParams.from_config(self._config) if self._config else JointGreedyParams()
+        params = self._effective_config(asdict(self._config)) if self._config else JointGreedyConfig()
 
         start_time = time.time()
         random.seed(params.seed)
@@ -114,13 +114,13 @@ class JointGreedyPolicy(BaseJointPolicy):
         return best_selection, best_routes, best_profit, best_cost
 
     def _single_greedy_run(
-        self, context: JointSelectionConstructionContext, params: JointGreedyParams
+        self, context: JointSelectionConstructionContext, params: JointGreedyConfig
     ) -> Tuple[List[int], List[List[int]], float, float]:
         """One randomized greedy construction pass.
 
         Args:
             context (JointSelectionConstructionContext): The problem data.
-            params (JointGreedyParams): Solver configurations.
+            params (JointGreedyConfig): Solver configurations.
 
         Returns:
             Tuple[List[int], List[List[int]], float, float]:

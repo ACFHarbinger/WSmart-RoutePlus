@@ -29,9 +29,7 @@ from logic.src.policies.packing_and_routing.non_dominated_sorting_biased_random_
     compute_overflow_risk,
     evaluate_population,
 )
-from logic.src.policies.packing_and_routing.non_dominated_sorting_biased_random_key_genetic_algorithm.params import (
-    NDSBRKGAParams,
-)
+from logic.src.configs.policies.nds_brkga import NDSBRKGAConfig
 from logic.src.policies.packing_and_routing.non_dominated_sorting_biased_random_key_genetic_algorithm.population import (
     Population,
 )
@@ -157,7 +155,7 @@ class NDSBRKGAPolicy(BaseJointPolicy):
                 - total_profit: Net profit (Revenue - Distance Cost).
                 - total_cost: Total routing cost.
         """
-        params = NDSBRKGAParams.from_config(self._config) if self._config else NDSBRKGAParams()
+        params = self._effective_config(asdict(self._config)) if self._config else NDSBRKGAConfig()
         n_bins = len(context.current_fill)
         if n_bins == 0:
             return [], [], 0.0, 0.0

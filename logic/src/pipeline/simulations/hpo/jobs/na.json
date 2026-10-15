@@ -9,6 +9,6 @@
     },
     "seed": {
         "type": "int",
-        "default": 42
+        "default": null
     }
 }

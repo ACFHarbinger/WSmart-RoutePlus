@@ -23,7 +23,7 @@ from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolic
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
 from .gihh import GIHHSolver
-from .params import GIHHParams
+from logic.src.configs.policies.gihh import GIHHConfig
 
 
 @GlobalRegistry.register(
@@ -115,7 +115,7 @@ class GIHHPolicy(BaseRoutingPolicy):
                 - profit: Total calculated net profit (Total Revenue - Total Cost).
                 - cost: Total travel cost calculated by the solver.
         """
-        params = GIHHParams(
+        params = GIHHConfig(
             time_limit=float(values.get("time_limit", 60.0)),
             max_iterations=int(values.get("max_iterations", 1000)),
             seed=values.get("seed", 42),

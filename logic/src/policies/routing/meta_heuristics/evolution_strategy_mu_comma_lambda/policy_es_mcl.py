@@ -17,7 +17,7 @@ from logic.src.configs.policies import MuCommaLambdaESConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import MuCommaLambdaESParams
+from logic.src.configs.policies.es_mcl import MuCommaLambdaESConfig
 from .solver import MuCommaLambdaESSolver
 
 
@@ -93,7 +93,7 @@ class MuCommaLambdaESPolicy(BaseRoutingPolicy):
             Tuple of (routes, profit, cost).
         """
         # Map configuration dictionary to strict ES parameters
-        params = MuCommaLambdaESParams(
+        params = MuCommaLambdaESConfig(
             mu=values.get("mu", 15),
             lambda_=values.get("lambda_", 100),
             n_removal=values.get("n_removal", 3),

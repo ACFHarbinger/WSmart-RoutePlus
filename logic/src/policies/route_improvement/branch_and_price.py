@@ -51,7 +51,7 @@ try:
     from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price.bp import (
         BranchAndPriceSolver,
     )
-    from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price.params import BPParams
+    from logic.src.configs.policies.bp import BPConfig
 
     _HAS_INHOUSE_BP = True
 except ImportError as e:
@@ -282,7 +282,7 @@ class BranchAndPriceRouteImprover(IRouteImprovement):
         """
         n_nodes = dm.shape[0] - 1
 
-        # Build BPParams from kwargs with bp_* prefixes, falling back to
+        # Build BPConfig from kwargs with bp_* prefixes, falling back to
         # route improver-appropriate defaults.
         #
         # Note: use_exact_pricing defaults to True here because a route improver
@@ -358,7 +358,7 @@ class BranchAndPriceRouteImprover(IRouteImprovement):
             if kwargs.get("bp_allow_heuristic_ryan_foster") is not None
             else self.config.get("bp_allow_heuristic_ryan_foster", False)
         )
-        params = BPParams(
+        params = BPConfig(
             max_iterations=max_iterations,
             max_routes_per_iteration=max_routes_per_iteration,
             optimality_gap=optimality_gap,
