@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Cross-package review (`2026-10-15`)
+
+- Codex review: propagated the structured-loader correction so invalid user values cannot bypass OmegaConf validation. Focused BPC/MS-BPC-SP regression selection passes.
+
 ### Solver consolidation: one engine contract per solver family (WP-11, `2026-10-15`)
 
 #### Changed
