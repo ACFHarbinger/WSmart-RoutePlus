@@ -11,7 +11,7 @@ Example:
 """
 
 from dataclasses import dataclass
-from typing import Any, Union
+from typing import Any, Optional, Union
 
 from logic.src.configs.rl.policies import (
     ACOConfig,
@@ -37,7 +37,17 @@ class ImitationConfig:
         policy_config: Configuration for the expert policy to imitate.
                       Can be any of: HGSConfig, ALNSConfig, ILSConfig, RLSConfig, ACOConfig, HGSALNSConfig.
         loss_fn: Loss function to use ('nll' for negative log-likelihood, 'mse' for mean squared error).
+        fill_from: Whose routes empty the bins between time-training days: 'model' (the model's
+                   sampled rollout; trained the paper models) or 'expert' (the expert's tours;
+                   the model rollout is skipped).
+        expert_cache: Directory of the expert solve cache (profitable nearest-neighbour expert
+                      only), e.g. 'data/cache/expert/cptp100_emp'; None disables it.
+        precompute: Only fill the expert cache, without training the model (needs
+                    fill_from='expert' and expert_cache).
     """
 
     policy_config: Any = None
     loss_fn: str = "nll"
+    fill_from: str = "model"
+    expert_cache: Optional[str] = None
+    precompute: bool = False

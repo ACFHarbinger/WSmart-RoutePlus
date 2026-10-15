@@ -1,9 +1,9 @@
-"""Vectorised (GPU) policies and short-name model registry.
+"""Policies module for WSmart-Route.
 
-This package re-exports model policies and the vectorised solvers lazily
-(owner ruling Q-4a: importing one expert or model must not pull the whole
-neural stack), and provides ``get_policy``/``get_policy_class`` for the
-short CLI identifiers.
+This package contains all neural, classical, and heuristic policy
+implementations for combinatorial optimization. It provides a centralized
+registry and factory functions for looking up and instantiating policies
+via short CLI identifiers.
 
 Attributes:
     get_policy: Function to instantiate a policy by its identifier.
@@ -21,20 +21,22 @@ from typing import Any, Dict, Tuple
 
 from torch import nn
 
-# Lazy name -> "module:attribute" re-exports. Accessed via module __getattr__.
-_LAZY: Dict[str, str] = {
+from logic.src.utils.registry import lazy_getattr
+
+# Public names load on first access, so importing the package loads none of them.
+_LAZY = {
     "ConstructivePolicy": "logic.src.models.common:ConstructivePolicy",
     "ImprovementPolicy": "logic.src.models.common:ImprovementPolicy",
     "NonAutoregressivePolicy": "logic.src.models.common:NonAutoregressivePolicy",
+    "DeepDecoderPolicy": "logic.src.models.core.attention_model.deep_decoder_policy:DeepDecoderPolicy",
     "AttentionModelPolicy": "logic.src.models.core.attention_model.policy:AttentionModelPolicy",
-    "DeepDecoderPolicy": (
-        "logic.src.models.core.attention_model.deep_decoder_policy:DeepDecoderPolicy"
-    ),
     "SymNCOPolicy": "logic.src.models.core.attention_model.symnco_policy:SymNCOPolicy",
     "DACTPolicy": "logic.src.models.core.dact.policy:DACTPolicy",
     "DeepACOPolicy": "logic.src.models.core.deepaco.policy:DeepACOPolicy",
     "GFACSPolicy": "logic.src.models.core.gfacs.policy:GFACSPolicy",
     "GLOPPolicy": "logic.src.models.core.glop.policy:GLOPPolicy",
+    "NeuralHeuristicHybrid": "logic.src.models.core.hybrid_attention_model.hybrid_neural_heuristic_policy:NeuralHeuristicHybrid",
+    "HybridTwoStagePolicy": "logic.src.models.core.hybrid_attention_model.hybrid_two_step_policy:HybridTwoStagePolicy",
     "MDAMPolicy": "logic.src.models.core.mdam.policy:MDAMPolicy",
     "MoEPolicy": "logic.src.models.core.moe.policy:MoEPolicy",
     "N2SPolicy": "logic.src.models.core.n2s.policy:N2SPolicy",
@@ -42,28 +44,15 @@ _LAZY: Dict[str, str] = {
     "NeuOptPolicy": "logic.src.models.core.neuopt.policy:NeuOptPolicy",
     "PointerNetworkPolicy": "logic.src.models.core.pointer_network.policy:PointerNetworkPolicy",
     "PolyNetPolicy": "logic.src.models.core.polynet.policy:PolyNetPolicy",
-    "TemporalAMPolicy": (
-        "logic.src.models.core.temporal_attention_model.policy:TemporalAMPolicy"
-    ),
-    "NeuralHeuristicHybrid": (
-        "logic.src.models.core.hybrid_attention_model.hybrid_neural_heuristic_policy"
-        ":NeuralHeuristicHybrid"
-    ),
-    "HybridTwoStagePolicy": (
-        "logic.src.models.core.hybrid_attention_model.hybrid_two_step_policy"
-        ":HybridTwoStagePolicy"
-    ),
+    "TemporalAMPolicy": "logic.src.models.core.temporal_attention_model.policy:TemporalAMPolicy",
     "VectorizedALNS": "logic.src.policies.vector.alns:VectorizedALNS",
     "VectorizedACOPolicy": "logic.src.policies.vector.ant_colony_system:VectorizedACOPolicy",
     "VectorizedHGS": "logic.src.policies.vector.hgs:VectorizedHGS",
     "VectorizedHGSALNS": "logic.src.policies.vector.hgs_alns:VectorizedHGSALNS",
-    "VectorizedHVPL": (
-        "logic.src.policies.vector.hybrid_volleyball_premier_league:VectorizedHVPL"
-    ),
-    "IteratedLocalSearchPolicy": (
-        "logic.src.policies.vector.iterated_local_search:IteratedLocalSearchPolicy"
-    ),
+    "VectorizedHVPL": "logic.src.policies.vector.hybrid_volleyball_premier_league:VectorizedHVPL",
+    "IteratedLocalSearchPolicy": "logic.src.policies.vector.iterated_local_search:IteratedLocalSearchPolicy",
 }
+
 
 # Short-name registry: CLI model name -> (module_path, class_name)
 # This enables ``get_policy("am")`` without importing everything eagerly.
@@ -170,10 +159,4 @@ __all__ = [
 
 
 def __getattr__(name: str) -> Any:
-    if name in _LAZY:
-        module_name, _, attr = _LAZY[name].partition(":")
-        module = importlib.import_module(module_name)
-        obj = getattr(module, attr)
-        globals()[name] = obj
-        return obj
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    return lazy_getattr(globals(), _LAZY, name)

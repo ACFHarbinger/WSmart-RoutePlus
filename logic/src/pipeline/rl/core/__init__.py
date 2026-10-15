@@ -8,26 +8,24 @@ Example:
     None
 """
 
-# Algorithms load lazily (P-25 / Q-12a): importing REINFORCE or ImitationLearning
-# must not pull every RL algorithm or the meta stack.
 from typing import Any
 
-from logic.src.pipeline.rl.common.base import RL4COLitModule
-from logic.src.pipeline.rl.common.baselines import (
-    BASELINE_REGISTRY,
-    Baseline,
-    CriticBaseline,
-    ExponentialBaseline,
-    MeanBaseline,
-    NoBaseline,
-    POMOBaseline,
-    RolloutBaseline,
-    SharedBaseline,
-    WarmupBaseline,
-    get_baseline,
-)
+from logic.src.utils.registry import lazy_getattr
 
+# Public names load on first access, so importing the package loads none of them.
 _LAZY = {
+    "RL4COLitModule": "logic.src.pipeline.rl.common.base:RL4COLitModule",
+    "BASELINE_REGISTRY": "logic.src.pipeline.rl.common.baselines:BASELINE_REGISTRY",
+    "Baseline": "logic.src.pipeline.rl.common.baselines:Baseline",
+    "CriticBaseline": "logic.src.pipeline.rl.common.baselines:CriticBaseline",
+    "ExponentialBaseline": "logic.src.pipeline.rl.common.baselines:ExponentialBaseline",
+    "MeanBaseline": "logic.src.pipeline.rl.common.baselines:MeanBaseline",
+    "NoBaseline": "logic.src.pipeline.rl.common.baselines:NoBaseline",
+    "POMOBaseline": "logic.src.pipeline.rl.common.baselines:POMOBaseline",
+    "RolloutBaseline": "logic.src.pipeline.rl.common.baselines:RolloutBaseline",
+    "SharedBaseline": "logic.src.pipeline.rl.common.baselines:SharedBaseline",
+    "WarmupBaseline": "logic.src.pipeline.rl.common.baselines:WarmupBaseline",
+    "get_baseline": "logic.src.pipeline.rl.common.baselines:get_baseline",
     "A2C": "logic.src.pipeline.rl.core.a2c:A2C",
     "AdaptiveImitation": "logic.src.pipeline.rl.core.adaptive_imitation:AdaptiveImitation",
     "DRGRPO": "logic.src.pipeline.rl.core.dr_grpo:DRGRPO",
@@ -44,19 +42,6 @@ _LAZY = {
     "HRLModule": "logic.src.pipeline.rl.meta.hrl:HRLModule",
     "MetaRLModule": "logic.src.pipeline.rl.meta.module:MetaRLModule",
 }
-
-
-def __getattr__(name: str) -> Any:
-    if name in _LAZY:
-        import importlib
-
-        module_name, _, attr = _LAZY[name].partition(":")
-        module = importlib.import_module(module_name)
-        obj = getattr(module, attr)
-        globals()[name] = obj
-        return obj
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
 
 __all__ = [
     "RL4COLitModule",
@@ -87,3 +72,7 @@ __all__ = [
     "MVMoE_POMO",
     "MVMoE_AM",
 ]
+
+
+def __getattr__(name: str) -> Any:
+    return lazy_getattr(globals(), _LAZY, name)

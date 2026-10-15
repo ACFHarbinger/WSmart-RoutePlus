@@ -7,41 +7,49 @@ Example:
     >>> import registry
 """
 
-from typing import Any, Dict
+import functools
+from typing import Any, Callable, Dict, Optional
 
-from logic.src.pipeline.rl import REINFORCE
+from logic.src.utils.registry import import_target
 
-from .constructive import _create_pomo, _create_symnco
-from .hrl import _create_hrl
-from .imitation import _create_adaptive_imitation, _create_imitation
-from .ppo import _create_gdpo, _create_ppo_family
+_FACTORY = "logic.src.pipeline.features.train.model_factory"
+_PPO_FAMILY = ("ppo", "sapo", "gspo", "dr_grpo")
+
+# Algorithm name -> "module:factory". Factories load on lookup, so the training stack imports
+# only the algorithm a run uses (the release ships REINFORCE and imitation, Q-12).
+_ALGO_REGISTRY: Dict[str, str] = {
+    **{name: f"{_FACTORY}.ppo:_create_ppo_family" for name in _PPO_FAMILY},
+    "gdpo": f"{_FACTORY}.ppo:_create_gdpo",
+    "pomo": f"{_FACTORY}.constructive:_create_pomo",
+    "symnco": f"{_FACTORY}.constructive:_create_symnco",
+    "hrl": f"{_FACTORY}.hrl:_create_hrl",
+    "imitation": f"{_FACTORY}.imitation:_create_imitation",
+    "adaptive_imitation": f"{_FACTORY}.adaptive_imitation:_create_adaptive_imitation",
+    "reinforce": f"{_FACTORY}.registry:_create_reinforce",
+}
 
 
-def _create_reinforce(cfg, policy, env, kw):
-    """create reinforce.
+def _create_reinforce(cfg: Any, policy: Any, env: Any, kw: Dict[str, Any]) -> Any:
+    """Create the REINFORCE module from the shared keyword set.
 
     Args:
-    cfg (Any): Description of cfg.
-    policy (Any): Description of policy.
-    env (Any): Description of env.
-    kw (Any): Description of kw.
+        cfg: Full training configuration (unused).
+        policy: Policy (already in ``kw``).
+        env: Environment (already in ``kw``).
+        kw: Module keyword arguments.
 
     Returns:
-        Any: Description of return value.
+        The REINFORCE module.
     """
+    from logic.src.pipeline.rl.core.reinforce import REINFORCE
+
     return REINFORCE(**kw)
 
 
-_ALGO_REGISTRY: Dict[str, Any] = {
-    "ppo": lambda c, p, e, kw: _create_ppo_family("ppo", c, p, e, kw),
-    "sapo": lambda c, p, e, kw: _create_ppo_family("sapo", c, p, e, kw),
-    "gspo": lambda c, p, e, kw: _create_ppo_family("gspo", c, p, e, kw),
-    "dr_grpo": lambda c, p, e, kw: _create_ppo_family("dr_grpo", c, p, e, kw),
-    "gdpo": _create_gdpo,
-    "pomo": _create_pomo,
-    "symnco": _create_symnco,
-    "hrl": _create_hrl,
-    "imitation": _create_imitation,
-    "adaptive_imitation": _create_adaptive_imitation,
-    "reinforce": _create_reinforce,
-}
+def get_algorithm_factory(name: str) -> Optional[Callable[..., Any]]:
+    """The factory ``(cfg, policy, env, kw) -> module`` of algorithm ``name``, or None."""
+    target = _ALGO_REGISTRY.get(name)
+    if target is None:
+        return None
+    factory = import_target(target)
+    return functools.partial(factory, name) if name in _PPO_FAMILY else factory

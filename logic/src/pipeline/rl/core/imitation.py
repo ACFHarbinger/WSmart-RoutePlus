@@ -19,7 +19,7 @@ Example:
 from __future__ import annotations
 
 from dataclasses import asdict
-from typing import Any
+from typing import Any, Optional
 
 import torch
 from tensordict import TensorDict
@@ -32,6 +32,8 @@ from logic.src.pipeline.rl.core.losses import (
     reverse_kl_divergence_loss,
     weighted_nll_loss,
 )
+from logic.src.policies.vector.expert_cache import CachedExpert
+from logic.src.policies.vector.profitable_nearest_neighbour import ProfitableNearestNeighbourPolicy
 from logic.src.utils.data.rl_utils import safe_td_copy
 
 # Expert policies load lazily so that importing the imitation trainer does not
@@ -91,6 +93,9 @@ class ImitationLearning(RL4COLitModule):
         loss_fn: str = "nll",
         seed: int = 42,
         device: str = "cpu",
+        fill_from: str = "model",
+        expert_cache: Optional[str] = None,
+        precompute: bool = False,
         **kwargs,
     ):
         """
@@ -102,8 +107,20 @@ class ImitationLearning(RL4COLitModule):
             loss_fn: Loss function to use ('nll', 'weighted_nll', 'kl', 'reverse_kl', 'js').
             seed: Random seed for reproducibility.
             device: Device to run the policy on.
+            fill_from: Whose routes empty the bins between time-training days: "model" (the
+                model's sampled rollout, which trained the paper models) or "expert" (the
+                expert's tours; the model rollout is then skipped).
+            expert_cache: Directory of the expert solve cache (profitable nearest-neighbour expert
+                only), or None for no cache.
+            precompute: Only fill the expert cache: solve every training state with the expert,
+                advance the bins with the expert's tours, and skip the model's training passes.
+                Needs ``fill_from="expert"`` and ``expert_cache``.
             kwargs: Additional arguments to pass to the parent class.
         """
+        if fill_from not in ("model", "expert"):
+            raise ValueError(f"fill_from must be 'model' or 'expert', not {fill_from!r}")
+        if precompute and (fill_from != "expert" or not expert_cache):
+            raise ValueError("precompute needs fill_from='expert' and an expert_cache directory")
         # Baseline is not used in IL, but we keep the structure
         kwargs["baseline"] = "none"
 
@@ -114,6 +131,10 @@ class ImitationLearning(RL4COLitModule):
 
         # Create expert policy from config
         self.expert_policy = self._create_expert_policy(policy_config, env_name, seed, device)
+        if expert_cache:
+            if not isinstance(self.expert_policy, ProfitableNearestNeighbourPolicy):
+                raise ValueError("expert_cache supports the profitable nearest-neighbour expert only")
+            self.expert_policy = CachedExpert(self.expert_policy, expert_cache)
         self.expert_name = type(policy_config).__name__.replace("Config", "").lower()
 
         # Map loss functions
@@ -126,6 +147,8 @@ class ImitationLearning(RL4COLitModule):
         }
         self.loss_fn_name = loss_fn
         self.loss_fn = self._loss_map.get(loss_fn, nll_loss)
+        self.fill_from = fill_from
+        self.precompute = precompute
 
     def _create_expert_policy(self, policy_config: Any, env_name: str, seed: int, device: str) -> Any:
         """Create expert policy from configuration.
@@ -150,6 +173,35 @@ class ImitationLearning(RL4COLitModule):
 
         # Create and return the policy
         return policy_cls(**config_dict)
+
+    def _rollout(self, td: TensorDict, env: Any, phase: str) -> dict:
+        """Skip the model rollout in training when the expert's routes empty the bins.
+
+        With ``fill_from="expert"`` the training step returns the expert's solve, marked with
+        ``source="expert"``: its actions drive time training and the loss reuses it. The
+        model's sampled decode, which only fed logging and the fill update, is not run, so the
+        sampling random numbers it drew are no longer drawn.
+
+        Args:
+            td: Reset environment state.
+            env: Environment to decode in.
+            phase: One of "train", "val", "test".
+
+        Returns:
+            Policy or expert output.
+        """
+        if phase != "train" or self.fill_from != "expert":
+            return super()._rollout(td, env, phase)
+        out = dict(self._expert_solve(td))
+        out["source"] = "expert"
+        return out
+
+    def _expert_solve(self, td: TensorDict) -> dict:
+        """Expert actions and reward for the reset state ``td``."""
+        if self.expert_policy is None:
+            raise ValueError("expert_policy must be provided for ImitationLearning.")
+        with torch.no_grad():
+            return self.expert_policy(td, self.env)
 
     def calculate_loss(
         self,
@@ -176,13 +228,11 @@ class ImitationLearning(RL4COLitModule):
             if isinstance(out.get(key), torch.Tensor):
                 out[key] = out[key].detach()
 
-        # 1. Generate Expert Solutions
-        if self.expert_policy is None:
-            raise ValueError("expert_policy must be provided for ImitationLearning.")
-
-        with torch.no_grad():
-            expert_out = self.expert_policy(td, self.env)
-            expert_actions = expert_out["actions"]
+        # 1. Generate Expert Solutions (already done by the step when fill_from="expert")
+        expert_out = out if out.get("source") == "expert" else self._expert_solve(td)
+        expert_actions = expert_out["actions"]
+        if self.precompute:
+            return None  # type: ignore[return-value]  # Lightning skips the optimiser step
 
         # 2. Clone state and reset to ensure clean state for teacher forcing
         td_clone = safe_td_copy(td)
@@ -221,3 +271,11 @@ class ImitationLearning(RL4COLitModule):
                 self.log("train/expert_cost", ec.mean())
 
         return loss
+
+    def on_train_epoch_end(self) -> None:
+        """Write the day's new expert solves to the cache, then advance the day."""
+        if isinstance(self.expert_policy, CachedExpert):
+            self.expert_policy.flush()
+            self.log("train/expert_cache_hits", float(self.expert_policy.hits))
+            self.log("train/expert_cache_misses", float(self.expert_policy.misses))
+        super().on_train_epoch_end()

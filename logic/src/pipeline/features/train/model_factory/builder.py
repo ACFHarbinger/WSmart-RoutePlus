@@ -19,7 +19,7 @@ from logic.src.configs import Config
 from logic.src.envs import get_env
 from logic.src.interfaces import IEnv, ITraversable
 from logic.src.pipeline.features.base import deep_sanitize, flatten_config_dict, remap_legacy_keys
-from logic.src.pipeline.rl import REINFORCE, MetaRLModule
+from logic.src.pipeline.rl.core.reinforce import REINFORCE
 from logic.src.policies.packing.vectorized.factory import create_selector_from_config
 from logic.src.tracking.logging.pylogger import get_pylogger
 
@@ -28,7 +28,9 @@ try:
 except ImportError:
     get_active_run = None  # type: ignore[assignment]
 
-from .registry import _ALGO_REGISTRY
+from logic.src.utils.registry import import_target
+
+from .registry import get_algorithm_factory
 
 if TYPE_CHECKING:
     from logic.src.models.common.autoregressive.policy import AutoregressivePolicy
@@ -69,13 +71,15 @@ def create_model(cfg: Config) -> pl.LightningModule:
 
     # 4. Algorithm Factory
     algo_name = cfg.rl.algorithm
-    factory = _ALGO_REGISTRY.get(algo_name)
+    factory = get_algorithm_factory(algo_name)
     if factory is not None:
         model: pl.LightningModule = factory(cfg, policy, env, common_kwargs)
     else:
         model = REINFORCE(**common_kwargs)
 
     if getattr(cfg.meta_rl, "use_meta", False):
+        from logic.src.pipeline.rl.meta.module import MetaRLModule
+
         model = MetaRLModule(
             agent=model,
             meta_lr=cfg.meta_rl.meta_lr,
@@ -210,6 +214,9 @@ def _init_environment(cfg: Config) -> IEnv:
     return get_env(env_name, **env_kwargs)
 
 
+_HYBRID = "logic.src.models.core.hybrid_attention_model.hybrid_neural_heuristic_policy:NeuralHeuristicHybrid"
+
+
 def _init_policy(cfg: Config, env: Any):
     """Initialize the policy based on config.
 
@@ -222,32 +229,19 @@ def _init_policy(cfg: Config, env: Any):
     """
     env_cfg, _, model_cfg = _resolve_configs(cfg)
 
-    from logic.src.policies.vector import (
-        AttentionModelPolicy,
-        DeepDecoderPolicy,
-        HybridTwoStagePolicy,
-        MoEPolicy,
-        NeuralHeuristicHybrid,
-        PointerNetworkPolicy,
-        SymNCOPolicy,
-        TemporalAMPolicy,
-        VectorizedALNS,
-        VectorizedHGS,
-        VectorizedHGSALNS,
-    )
-
+    # Model name -> "module:class"; only the chosen class is imported.
     policy_map = {
-        "am": AttentionModelPolicy,
-        "moe": MoEPolicy,
-        "deep_decoder": DeepDecoderPolicy,
-        "temporal": TemporalAMPolicy,
-        "pointer": PointerNetworkPolicy,
-        "symnco": SymNCOPolicy,
-        "alns": VectorizedALNS,
-        "hgs": VectorizedHGS,
-        "hgs_alns": VectorizedHGSALNS,
-        "hybrid": NeuralHeuristicHybrid,
-        "hybrid_two_stage": HybridTwoStagePolicy,
+        "am": "logic.src.models.core.attention_model.policy:AttentionModelPolicy",
+        "moe": "logic.src.models.core.moe.policy:MoEPolicy",
+        "deep_decoder": "logic.src.models.core.attention_model.deep_decoder_policy:DeepDecoderPolicy",
+        "temporal": "logic.src.models.core.temporal_attention_model.policy:TemporalAMPolicy",
+        "pointer": "logic.src.models.core.pointer_network.policy:PointerNetworkPolicy",
+        "symnco": "logic.src.models.core.attention_model.symnco_policy:SymNCOPolicy",
+        "alns": "logic.src.policies.vector.alns:VectorizedALNS",
+        "hgs": "logic.src.policies.vector.hgs:VectorizedHGS",
+        "hgs_alns": "logic.src.policies.vector.hgs_alns:VectorizedHGSALNS",
+        "hybrid": _HYBRID,
+        "hybrid_two_stage": "logic.src.models.core.hybrid_attention_model.hybrid_two_step_policy:HybridTwoStagePolicy",
     }
 
     if getattr(model_cfg, "name", "") == "hybrid":
@@ -291,7 +285,7 @@ def _init_policy(cfg: Config, env: Any):
     for key in ["lr_critic", "lr_critic_value"]:
         policy_kwargs.pop(key, None)
 
-    return policy_map[getattr(model_cfg, "name", "am") if model_cfg else "am"](**policy_kwargs)
+    return import_target(policy_map[getattr(model_cfg, "name", "am") if model_cfg else "am"])(**policy_kwargs)
 
 
 def _init_hybrid_policy(cfg: Config):
@@ -316,7 +310,6 @@ def _init_hybrid_policy(cfg: Config):
     neural_policy = cast("AutoregressivePolicy", create_model(cast(Config, neural_cfg)).policy)
 
     # 2. Heuristic refinement policy
-    from logic.src.policies.vector import NeuralHeuristicHybrid, VectorizedALNS, VectorizedHGS
 
     ref_strategy = getattr(cfg.rl, "refinement_strategy", "alns")
     ref_time = getattr(cfg.rl, "refinement_time_limit", 5.0)
@@ -325,12 +318,14 @@ def _init_hybrid_policy(cfg: Config):
     env_name = getattr(env_cfg, "name", "ptp") if env_cfg else "ptp"
 
     if ref_strategy == "alns":
-        heuristic_policy = VectorizedALNS(
+        heuristic_policy = import_target("logic.src.policies.vector.alns:VectorizedALNS")(
             env_name=env_name, time_limit=ref_time, max_iterations=ref_iters, max_vehicles=max_v
         )
     else:
-        heuristic_policy = VectorizedHGS(env_name=env_name, time_limit=ref_time, max_iterations=ref_iters)  # type: ignore[assignment]
-    return NeuralHeuristicHybrid(neural_policy=neural_policy, heuristic_policy=heuristic_policy)
+        heuristic_policy = import_target("logic.src.policies.vector.hgs:VectorizedHGS")(
+            env_name=env_name, time_limit=ref_time, max_iterations=ref_iters
+        )
+    return import_target(_HYBRID)(neural_policy=neural_policy, heuristic_policy=heuristic_policy)
 
 
 def _config_to_dict(obj: Any) -> Dict[str, Any]:
