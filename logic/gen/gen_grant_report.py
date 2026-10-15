@@ -1,7 +1,7 @@
 """
-Generate the grant holder's final report (Relatório Final do Bolseiro e Orientador) as an editable .docx.
+Generate the grant holder's grant renewal report (Relatório de Actividades do Bolseiro) as an editable .docx.
 
-The layout follows the university's "Modelo do Relatório Final" form: the institution logo in the
+The layout follows the university's "Modelo do Relatório de Actividades do Bolseiro" form: the institution logo in the
 page header, a centred title and subtitle, the grant holder's full name and grant ID, and the
 research report (a list of paragraphs). The logo is the IST mark (``logic/gen/svg/Tecnico_ID_Principal_RBG-COR.svg``),
 rasterised with Inkscape (ImageMagick as a fallback).
@@ -19,7 +19,7 @@ Usage
 -----
     uv run python logic/gen/gen_grant_report.py
     uv run python logic/gen/gen_grant_report.py --config my_report.json \\
-        --out docs/private/reports/relatorio_final_bolseiro.docx --force
+        --out docs/private/reports/relatorio_renovacao_bolsa.docx --force
 """
 
 from __future__ import annotations
@@ -39,7 +39,7 @@ from xml.sax.saxutils import escape
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG = Path(__file__).resolve().parent / "json" / "grant_report.json"
-DEFAULT_OUT = ROOT / "docs" / "private" / "reports" / "relatorio_final_bolseiro.docx"
+DEFAULT_OUT = ROOT / "docs" / "private" / "reports" / "relatorio_renovacao_bolsa.docx"
 
 EMU_PER_CM = 360000
 LOGO_PX_HEIGHT = 400  # raster height; the document scales it to logo_height_cm
@@ -97,7 +97,7 @@ def run(text: str, font: str, size_pt: float, bold: bool = False) -> str:
     props = f'<w:rFonts w:ascii="{font}" w:hAnsi="{font}" w:cs="{font}"/>'
     if bold:
         props += "<w:b/><w:bCs/>"
-    half = int(round(size_pt * 2))
+    half = round(size_pt * 2)
     props += f'<w:sz w:val="{half}"/><w:szCs w:val="{half}"/>'
     return f'<w:r><w:rPr>{props}</w:rPr><w:t xml:space="preserve">{escape(text)}</w:t></w:r>'
 
@@ -182,7 +182,7 @@ HEADER_RELS = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
 def build_styles(cfg: Dict[str, Any]) -> str:
     """Default paragraph font and language (pt-PT) so new text typed in the editor matches."""
-    font, half = cfg["font"], int(round(float(cfg["font_size_pt"]) * 2))
+    font, half = cfg["font"], round(float(cfg["font_size_pt"]) * 2)
     return (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'

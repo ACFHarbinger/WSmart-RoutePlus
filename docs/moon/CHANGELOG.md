@@ -17,12 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Grant final-report generator (`2026-10-15`)
+### Grant renewal-report generator (`2026-10-15`)
 
 #### Added
 
-- `logic/gen/gen_grant_report.py`: generates the grant holder's final report ("Relatório Final do Bolseiro e Orientador") as an editable `.docx`, with the IST logo (`logic/gen/svg/Tecnico_ID_Principal_RBG-COR.svg`, rasterised with Inkscape or ImageMagick) in the page header, a centred title and subtitle, the grant holder's full name and grant ID, and the research report (a list of paragraphs). The package is written as plain Office Open XML with the standard library, so there is no new Python dependency. Default output: `docs/private/reports/relatorio_final_bolseiro.docx`. The generator does not overwrite an existing report (which may hold your edits) without `--force`.
+- `logic/gen/gen_grant_report.py`: generates the grant holder's renewal report ("Relatório de Actividades do Bolseiro") as an editable `.docx`, with the IST logo (`logic/gen/svg/Tecnico_ID_Principal_RBG-COR.svg`, rasterised with Inkscape or ImageMagick) in the page header, a centred title (and an optional subtitle), the grant holder's full name and grant ID, and the research report (a list of paragraphs). The package is written as plain Office Open XML with the standard library, so there is no new Python dependency. Default output: `docs/private/reports/relatorio_renovacao_bolsa.docx`. The generator does not overwrite an existing report (which may hold your edits) without `--force`.
 - `logic/gen/json/grant_report.json`: the full name, the grant ID (2025.06860.BDANA) and a one-page Portuguese research report for the WSmart Route+ work at INESC-ID: the simulator and the work with the partner company, exact and heuristic methods, the neural models, the survey and the papers. The partner company's name and the collaboration details are placeholders to fill in.
+- `tools/gen/justfile`, imported in the root justfile as `gen` and listed in `just help`: `grant-report` (regenerates the report, overwriting it), `paper-tables`, `paper-pdf` and `paper`, `deck`, `analysis` and `deck-all` (the Studio's headless runner; `just app::install` first), `sim-summary` and `dist-matrix`. Recipes that take many options pass their flags through to the script, e.g. `just gen::deck --pdf --speaker-script --force`.
 
 ### Packing and routing names (`2026-10-15`)
 
