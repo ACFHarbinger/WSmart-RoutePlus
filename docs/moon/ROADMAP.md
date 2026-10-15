@@ -37,6 +37,7 @@ Tags: `[Quick Win]` ≤ 1 day · `[Research]` involves novel work · `[Blocked]`
 - WP-03 (Cursor: `refactor/v1-wp03-config-rename`, #108): P-13 plain-mapping policy YAML with loud unknown-key failure, P-45 rename leftovers (`pk_*.yaml`, `pack`, `PackingContext`, `routing_algorithms`), P-54 packing field names (`threshold`).
 - WP-03 (Mistral: `refactor/v1-wp03-usage-audit-hpo`, #108): P-55 corrected usage audit (`tools/audit_param_usage.py`, no-false-INERT three-pattern method; evidence appendix committed) and P-56 HPO job conversion + key-liveness CI gate (`tools/check_hpo_jobs.py`, 96 jobs converted, check in all four CI files).
 - Remaining packages: WP-07 ESPPRC envs, WP-08 modular simulator. See `.agent/tasks/simulator-v1-refactor-proposal-2026-10-15.md` §12.
+- WP-11 (`refactor/v1-wp11-solver-consolidation`, #116): one engine contract per solver family. Cursor finished Kimi's P-33 leftover — both BPC engines share `search_bpc_tree`; MS-BPC-SP is knapsack + that walk + Phase 3/5 set partitioning. P-30/P-31/P-34/P-35 already on the branch. Q-14 still waits for `sim chain done`. Codex reviews; Claude integrates. Not on `main`.
 
 ---
 
