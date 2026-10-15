@@ -87,6 +87,9 @@ excluded_packages:
   - logic.src.pipeline.simulations.hpo               # Q-6: HPO stays out of 1.0.0
   - logic.src.pipeline.rl.hpo                        # Q-6
   - logic.src.pipeline.rl.meta                       # not in the paper's stack (Q-12a)
+  - logic.cloud                                      # `sync_drive` CLI job defer-imports it (drive_parser/parser_dispatch); cloud sync is out of scope (Q-1/Q-2)
+  - logic.benchmark                                  # `benchmark` CLI job defer-imports it (jobs/ops_runner.py); out of scope
+  - logic.test                                       # `test_suite` CLI job runner (jobs/ops_runner.py); the release ships the curated test files (P-06), not the runner
   # Pending WP-08 (uncommitted on its branch): wsmart_bin_analysis moves to
   # packages/wsmart_bin_analysis (import packages.wsmart_bin_analysis), after
   # which bins/base.py's GridBase import goes and this exclusion activates
