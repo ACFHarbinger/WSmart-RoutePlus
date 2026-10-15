@@ -21,6 +21,7 @@ _LAZY = {
     "create_selector_from_config": "logic.src.policies.packing.vectorized:create_selector_from_config",
     "CombinedSelection": "logic.src.policies.packing.combined:CombinedSelection",
     "LastMinuteSelection": "logic.src.policies.packing.last_minute:LastMinuteSelection",
+    "LastMinuteEOQSelection": "logic.src.policies.packing.eoq_last_minute:LastMinuteEOQSelection",
     "RevenueThresholdSelection": "logic.src.policies.packing.revenue:RevenueThresholdSelection",
     "DeadlineDrivenSelection": "logic.src.policies.packing.deadline:DeadlineDrivenSelection",
     "MultiDayOverflowSelection": "logic.src.policies.packing.multi_day_prob:MultiDayOverflowSelection",

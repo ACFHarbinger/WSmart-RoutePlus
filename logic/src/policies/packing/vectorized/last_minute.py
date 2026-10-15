@@ -1,43 +1,29 @@
-"""Last-minute packing algorithm.
+"""Last-minute packing adapter (batched Torch).
 
-This module provides a threshold-based reactive packing algorithm that marks
-bins for collection only when their fill levels exceed a specified limit.
+Implements ``packing.spec.last_minute`` on ``[B, N]`` fraction tensors.
 
 Attributes:
     LastMinuteSelector: Threshold-based reactive selection policy.
-
-Example:
-    >>> selector = LastMinuteSelector(threshold=80)
-    >>> mask = selector.select(fill_levels)
 """
-
-from __future__ import annotations
 
 from typing import Any, Optional
 
 import torch
 
 from .base import VectorizedSelector
+from .spec import last_minute as last_minute_rule
 
 
 class LastMinuteSelector(VectorizedSelector):
-    """Threshold-based reactive packing algorithm.
-
-    Selects bins where the current fill level exceeds a predefined threshold.
-    This strategy is simple but reactive, only triggering collection when bins
-    are nearly full.
-
-    Attributes:
-        threshold: Default fill level threshold for selection.
-    """
+    """Threshold-based reactive packing algorithm."""
 
     def __init__(self, threshold: float = 70.0) -> None:
         """Initialize the last-minute selector.
 
         Args:
-            threshold: Fill level threshold in percent (0-100), the same unit as the
-                simulator's ms_last_minute.yaml (cf70 -> 70). Fill levels passed to
-                ``select`` are fractions in [0, 1].
+            threshold: Fill level threshold in percent (0-100), matching
+                ``pk_last_minute.yaml`` (cf70 -> 70). Fills passed to
+                ``select`` are fractions in ``[0, 1]``.
         """
         self.threshold = threshold
 
@@ -50,18 +36,12 @@ class LastMinuteSelector(VectorizedSelector):
         """Select bins exceeding the fill threshold.
 
         Args:
-            fill_levels: Current fill levels of bins [B, N].
-            threshold: Override for the default fill threshold.
-            kwargs: Additional keyword arguments.
+            fill_levels: Current fill levels of bins ``[B, N]``.
+            threshold: Override for the default fill threshold (percent).
+            kwargs: Unused extra features.
 
         Returns:
-            torch.Tensor: Boolean mask [B, N] where True indicates collection.
+            torch.Tensor: Boolean mask ``[B, N]``; depot is False.
         """
         thresh = threshold if threshold is not None else self.threshold
-        mandatory = fill_levels >= float(thresh) / 100.0  # percent threshold vs fraction fills
-
-        # Depot (index 0) is never mandatory
-        mandatory = mandatory.clone()
-        mandatory[:, 0] = False
-
-        return mandatory
+        return last_minute_rule(fill_levels, float(thresh))

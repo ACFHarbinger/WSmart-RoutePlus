@@ -1,6 +1,5 @@
 eoq:
-  strategy: last_minute
-  use_eoq_threshold: true
+  strategy: eoq_last_minute
   holding_cost_per_kg_day: 0.02
   ordering_cost_per_visit: 50.0
   bin_volume: 2.5

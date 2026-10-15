@@ -52,10 +52,16 @@ class VectorizedSelector(PolicyVizMixin, ABC):
             def _instrumented(self: Any, fill_levels: torch.Tensor, **kw: Any) -> torch.Tensor:
                 mask = original(self, fill_levels, **kw)
                 day = kw.get("current_day")
+                if day is None:
+                    day_val = -1
+                elif hasattr(day, "max"):
+                    day_val = int(day.max().item())
+                else:
+                    day_val = int(day)
                 self._viz_record(
                     n_selected=int(mask[:, 1:].sum().item()),
                     mean_fill=float(fill_levels[:, 1:].mean().item()),
-                    day=int(day.max().item()) if day is not None else -1,
+                    day=day_val,
                 )
                 return mask
 
