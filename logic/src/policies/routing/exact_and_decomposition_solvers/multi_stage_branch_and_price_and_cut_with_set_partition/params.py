@@ -144,7 +144,7 @@ class MSBPCSPParams:
 
     @classmethod
     def from_config(cls, config: Any) -> MSBPCSPParams:
-        """Create BPCParams from a configuration object or dictionary.
+        """Create MSBPCSPParams from a configuration object or dictionary.
 
         Performs explicit type casting for numeric fields to ensure compatibility
         with Hydra/YAML scientific notation which might be loaded as strings.
@@ -190,7 +190,7 @@ class MSBPCSPParams:
         return cls(**kwargs)
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert BPCParams to a dictionary for backend compatibility.
+        """Convert MSBPCSPParams to a dictionary for backend compatibility.
 
         Returns:
             Dict[str, Any]: Mapping of parameter names to values.

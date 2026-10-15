@@ -30,11 +30,9 @@ from logic.src.policies.helpers.solvers_and_matheuristics.branching.strategies i
 from logic.src.policies.helpers.solvers_and_matheuristics.common.node import BranchNode
 
 if TYPE_CHECKING:
+    from logic.src.configs.policies.bpc import BPCConfig
     from logic.src.policies.helpers.solvers_and_matheuristics.common.route import Route
     from logic.src.policies.helpers.solvers_and_matheuristics.vrpp_model import VRPPModel
-    from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price_and_cut.params import (
-        BPCParams,
-    )
 
 # The type alias will now use the globally unified BranchNode
 FrontierItem = Union[BranchNode, Tuple[float, int, BranchNode]]
@@ -81,7 +79,7 @@ class BranchAndBoundTree:
     def __init__(
         self,
         v_model: Optional[VRPPModel] = None,
-        params: Optional[BPCParams] = None,
+        params: Optional[BPCConfig] = None,
         # Legacy positional arguments kept for backward compatibility only.
         # If params is supplied these are ignored; a DeprecationWarning is emitted
         # when they differ from their defaults to surface accidental misuse.
@@ -104,7 +102,7 @@ class BranchAndBoundTree:
                 warnings.warn(
                     "BranchAndBoundTree: explicit 'max_nodes', 'strategy', and "
                     "'search_strategy' arguments are ignored when 'params' is supplied. "
-                    "Configure these via BPCParams instead.",
+                    "Configure these via BPCConfig instead.",
                     DeprecationWarning,
                     stacklevel=2,
                 )

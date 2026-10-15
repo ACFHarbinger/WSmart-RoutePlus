@@ -1,7 +1,7 @@
 {
     "n_ants": {
         "type": "int",
-        "default": 20
+        "default": 10
     },
     "alpha": {
         "type": "float",
@@ -13,7 +13,7 @@
     },
     "rho": {
         "type": "float",
-        "default": 0.1
+        "default": 0.5
     },
     "tau_0": {
         "type": "float",
@@ -45,7 +45,7 @@
     },
     "time_limit": {
         "type": "float",
-        "default": 30.0
+        "default": 60.0
     },
     "seed": {
         "type": "int",
@@ -94,7 +94,7 @@
             true,
             false
         ],
-        "default": false
+        "default": true
     },
     "packing": {
         "type": "object",

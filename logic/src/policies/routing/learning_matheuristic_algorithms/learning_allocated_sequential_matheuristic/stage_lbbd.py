@@ -279,15 +279,13 @@ def _solve_sub_bpc(
         Tuple of routes and profit.
     """
     try:
+        from logic.src.configs.policies.bpc import BPCConfig
         from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price_and_cut.bpc_engine import (
             run_bpc,
         )
-        from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price_and_cut.params import (
-            BPCParams,
-        )
 
         sub_wastes = {n: wastes.get(n, 0.0) for n in selected}
-        bpc_params = BPCParams(time_limit=time_limit, seed=seed, vrpp=True)
+        bpc_params = BPCConfig(time_limit=time_limit, seed=seed, vrpp=True)
         routes, profit = run_bpc(
             dist_matrix=dist,
             wastes=sub_wastes,

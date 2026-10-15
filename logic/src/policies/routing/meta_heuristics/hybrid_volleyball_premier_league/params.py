@@ -16,9 +16,8 @@ Example:
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
-from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic.params import (
-    HyperACOParams,
-)
+from logic.src.configs.policies.aco_hh import HyperHeuristicACOConfig
+from logic.src.policies.routing.base.base_routing_policy import _structured_load
 from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.params import (
     ALNSParams,
 )
@@ -73,7 +72,7 @@ class HVPLParams:
     profit_aware_operators: bool = False
 
     # Sub-algorithm Parameters
-    aco_params: Optional[HyperACOParams] = field(default_factory=lambda: None)
+    aco_params: Optional[HyperHeuristicACOConfig] = field(default_factory=lambda: None)
     alns_params: Optional[ALNSParams] = field(default_factory=lambda: None)
 
     def __post_init__(self):
@@ -86,7 +85,7 @@ class HVPLParams:
             None.
         """
         if self.aco_params is None:
-            self.aco_params = HyperACOParams(
+            self.aco_params = HyperHeuristicACOConfig(
                 n_ants=20,
                 alpha=1.0,
                 beta=2.0,
@@ -150,6 +149,6 @@ class HVPLParams:
             time_limit=getattr(config, "time_limit", 300.0),
             vrpp=getattr(config, "vrpp", True),
             profit_aware_operators=getattr(config, "profit_aware_operators", False),
-            aco_params=HyperACOParams.from_config(getattr(config, "aco", {})) if getattr(config, "aco", None) else None,
+            aco_params=_structured_load(HyperHeuristicACOConfig, getattr(config, "aco", {})) if getattr(config, "aco", None) else None,
             alns_params=ALNSParams.from_config(getattr(config, "alns", {})) if getattr(config, "alns", None) else None,
         )

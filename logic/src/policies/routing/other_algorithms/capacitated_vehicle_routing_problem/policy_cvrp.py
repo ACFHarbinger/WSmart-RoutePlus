@@ -15,13 +15,17 @@ Example:
 
 from __future__ import annotations
 
+from dataclasses import fields
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
 from logic.src.configs.policies import CVRPConfig
 from logic.src.enums import GlobalRegistry, PolicyTag
-from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
+from logic.src.policies.routing.base.base_routing_policy import (
+    BaseRoutingPolicy,
+    _structured_load,
+)
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
 if TYPE_CHECKING:
@@ -29,7 +33,6 @@ if TYPE_CHECKING:
     from logic.src.interfaces.context.search_context import SearchContext
 
 from .cvrp import find_routes, find_routes_ortools
-from .params import CVRPParams
 
 
 @GlobalRegistry.register(
@@ -166,15 +169,27 @@ class CVRPPolicy(BaseRoutingPolicy):
         capacity, revenue, cost_unit, values = self._load_area_params(area, waste_type, config)
         self._log_solver_params(values, kwargs)
 
-        # Initialize type-safe Params
-        params = CVRPParams.from_config(self._config or values)
+        # Typed config is the single source of truth for solver settings (P-10).
+        cfg = self._effective_config(values)
+        if isinstance(cfg, dict):
+            # Policy built without a typed config: settle the merged values
+            # onto the dataclass, mirroring ``_effective_config``'s contract
+            # (the raw values dict also carries area scalars such as Q/R/C).
+            known = {f.name for f in fields(CVRPConfig)}
+            filtered = {key: value for key, value in cfg.items() if key in known}
+            cfg = _structured_load(CVRPConfig, filtered)
+            for key in ("seed", "vrpp"):
+                if key in values:
+                    setattr(cfg, key, values[key])
 
         # Use cached route if available and no specific mandatory
         if cached is not None and len(cached) > 1 and not mandatory:
             tour = cached
         else:
-            seed = kwargs.get("seed") if kwargs.get("seed") is not None else params.seed
-            if params.engine == "ortools":
+            seed = kwargs.get("seed") if kwargs.get("seed") is not None else cfg.seed
+            seed = 42 if seed is None else seed
+            cfg.seed = seed
+            if cfg.engine == "ortools":
                 tour = find_routes_ortools(
                     distancesC,
                     bins.c,
@@ -182,10 +197,9 @@ class CVRPPolicy(BaseRoutingPolicy):
                     np.array(to_collect),
                     n_vehicles,
                     coords,
-                    time_limit=params.time_limit,
-                    seed=seed,
+                    cfg=cfg,
                 )
-            elif params.engine in ("pyvrp", "custom", "clarke_wright"):
+            elif cfg.engine in ("pyvrp", "custom", "clarke_wright"):
                 tour = find_routes(
                     distancesC,
                     bins.c,
@@ -193,12 +207,11 @@ class CVRPPolicy(BaseRoutingPolicy):
                     np.array(to_collect),
                     n_vehicles,
                     coords,
-                    time_limit=params.time_limit,
-                    seed=seed,
-                    engine=params.engine,
+                    engine=cfg.engine,
+                    cfg=cfg,
                 )
             else:
-                raise ValueError(f"Unknown CVRP engine: {params.engine!r}")
+                raise ValueError(f"Unknown CVRP engine: {cfg.engine!r}")
         # Ensure list format
         if hasattr(tour, "tolist"):
             tour = tour.tolist()

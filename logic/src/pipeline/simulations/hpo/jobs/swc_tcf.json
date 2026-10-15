@@ -9,7 +9,7 @@
     },
     "time_limit": {
         "type": "float",
-        "default": 600.0
+        "default": 60.0
     },
     "seed": {
         "type": "int",
@@ -27,7 +27,7 @@
         "choices": [
             "ortools"
         ],
-        "default": "ortools"
+        "default": "gurobi"
     },
     "packing": {
         "type": "object",

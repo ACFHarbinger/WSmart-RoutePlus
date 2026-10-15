@@ -12,7 +12,9 @@ from typing import Dict, List, Tuple
 import numpy as np
 from numpy.typing import NDArray
 
-from .params import MAX_ARC_DISTANCE_KM
+# Arcs longer than this are dropped from every SWC-TCF backend. Distance matrices
+# are in km (data/network/file.py loads them without rescaling).
+MAX_ARC_DISTANCE_KM = 6000.0
 
 
 @dataclass

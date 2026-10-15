@@ -17,6 +17,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Released routing configs: one source of truth (WP-04, `2026-10-15`)
+
+#### Changed
+
+- **Breaking:** BPC, SWC-TCF, ACO-HH and CVRP delete their `params.py` layer (P-10). Adapters and engines read the typed config dataclass (`BPCConfig`, `SWCTCFConfig`, `HyperHeuristicACOConfig`, `CVRPConfig`); `XParams.from_config(...)` and the `getattr(cfg, "field", default)` fallbacks are gone. `BaseRoutingPolicy._effective_config(values)` (new) materializes the per-call area overrides and the simulator seed onto the typed config, so the solver's view is one typed object. Engine entry points still accept a plain dict and coerce it with `_structured_load` for direct callers and tests.
+- **Breaking:** config defaults settled per field to the values that ran in the paper (P-10 discipline: the policy YAML wins).
+  - `BPCConfig`: `cutting_planes` `"rcc"` → `"all"`, `rc_tolerance` `1e-5` → `1e-6`, `profit_aware_operators` `False` → `True`, `max_cg_iterations` `50` → `150`, `max_cuts_per_iteration` `5` → `10`, `max_routes_per_pricing` `5` → `50`, `max_bb_nodes` `1000` → `2000`, `optimality_gap` `1e-4` → `0.005`, `early_termination_gap` `1e-3` → `0.01`, `lr_pre_pruning` `False` → `True`, `lr_max_subgradient_iters` `30` → `40`, `lr_op_time_limit` `3.0` → `5.0`, `lr_warm_start_cg` `False` → `True`, `ng_neighborhood_size` `8` → `12`, `cut_orthogonality_threshold` `0.8` → `0.7`.
+  - `SWCTCFConfig`: `framework` `"ortools"` → `"gurobi"`, `time_limit` `600.0` → `60.0`; gains the params-only fields `asymmetric` (`False`) and `no_solution_time_factor` (`3.0`).
+  - `HyperHeuristicACOConfig`: `n_ants` `20` → `10`, `rho` `0.1` → `0.5`, `time_limit` `30.0` → `60.0`, `profit_aware_operators` `False` → `True`; gains the params-only field `eta_decay` (`0.5`, pheromone visibility decay).
+  - `CVRPConfig`: `seed` `None` → `42` — the deleted `CVRPParams.from_config` upgraded a `None` config seed to `42` (`seed=42 if seed is None else seed`), so 42 is the value that actually ran; `time_limit`/`engine` already matched the YAML (`60.0`/`"ortools"`). The CVRP adapter also no longer bypasses the simulator's per-call values when a typed config exists (`self._config or values`), so an injected simulator seed now reaches the solver as intended; with no injected seed the settled default 42 preserves the paper runs.
+- **Breaking:** seeds for BPC / SWC-TCF / ACO-HH stay `None` by default (the deleted params defaults `42` never ran: the simulator injects its seed over the `None` config seed, and the adapters read the injected value). The simulator seeding contract is now the only seed mechanism.
+- **Breaking (P-52):** SWC-TCF `gurobi.py` no longer falls back to `SWCTCFParams.<field>` class attributes at solve time (11 sites) and `policy_aco_hh.py` no longer carries its 19 `values.get(..., literal)` definitions; all read the threaded config. `MAX_ARC_DISTANCE_KM` moved from the deleted SWC-TCF `params.py` into `_tcf_data.py` (sole consumer).
+- **Breaking (Q-8b, unreleased importers migrated in the same change):** EGH `stage_bpc.py` and LASM `stage_lbbd.py` construct `BPCConfig` instead of `BPCParams`; HVPL (`params.py`, `policy_hvpl.py`) constructs `HyperHeuristicACOConfig` and imports `OPERATOR_NAMES` from `hyper_operators`; the B&B tree helper annotates `BPCConfig`; MS-BPC-SP docstrings reference `MSBPCSPParams`. Tests that built the deleted classes now build the configs (`test_bpc_tree_params.py`, `test_swc_tcf_backends.py`, `test_swc_tcf_paper_model.py`, `test_wave3_hh.py`, `test_aco_hh_fixes.py`, `test_hvpl.py`, `test_cvrp_engines.py`); the params↔config parity assertions are pruned with the params half (P-06).
+
+#### Added
+
+- `tools/check_params_refs.py` (P-52 durable guard): bans references to the deleted `Params` symbols (`BPCParams`, `SWCTCFParams`, `HyperACOParams`, `CVRPParams`) anywhere in `logic/src` outside `configs/` and tests. WP-05/WP-06 extend the list until the last `params.py` is gone. Wired into the quality job of all four CI files.
+
 ### Parameter-usage audit and HPO job keys (`2026-10-15`)
 
 #### Added

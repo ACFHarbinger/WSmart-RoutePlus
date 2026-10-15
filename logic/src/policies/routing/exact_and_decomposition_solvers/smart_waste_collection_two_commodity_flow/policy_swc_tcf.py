@@ -20,7 +20,6 @@ from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolic
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
 from .dispatcher import run_swc_tcf_optimizer
-from .params import SWCTCFParams
 
 
 @GlobalRegistry.register(
@@ -117,11 +116,14 @@ class SWCTCFPolicy(BaseRoutingPolicy):
 
         binsids = list(range(1, n_nodes + 1))
 
-        # 2. Extract and sanitize parameters
-        params = SWCTCFParams.from_config(values)
-        seed = kwargs.get("seed") if kwargs.get("seed") is not None else getattr(self, "_seed", params.seed)
+        # 2. Materialize the typed runtime config (P-10): the config dataclass is
+        # the single source of truth for solver parameters; per-call overrides
+        # merged into ``values`` are folded back onto it by _effective_config.
+        cfg = self._effective_config(values)
+        seed = kwargs.get("seed") if kwargs.get("seed") is not None else getattr(self, "_seed", cfg.seed)
 
-        # Update values with the standardized ones from the adapter
+        # Update values with the standardized ones from the adapter. The dict is
+        # still needed downstream for the non-config runtime scalars (Q, R, C, V).
         values_to_pass = {**values, "Q": capacity, "R": revenue, "C": cost_unit}
 
         # 3. Invoke dispatcher
@@ -139,11 +141,12 @@ class SWCTCFPolicy(BaseRoutingPolicy):
             number_vehicles=(
                 int(nv) if (nv := kwargs.get("n_vehicles", kwargs.get("number_vehicles"))) and int(nv) > 0 else 0
             ),
-            time_limit=float(params.time_limit),  # int() turned sub-second budgets into "no limit"
-            framework=params.framework,
-            optimizer=params.engine,
+            time_limit=float(cfg.time_limit),  # int() turned sub-second budgets into "no limit"
+            framework=cfg.framework,
+            optimizer=cfg.engine,
             seed=int(seed) if seed is not None else 42,
             dual_values=kwargs.get("dual_values"),
+            cfg=cfg,
         )
 
         # 4. Normalize route to List[List[int]] format expected by _run_solver signature.
