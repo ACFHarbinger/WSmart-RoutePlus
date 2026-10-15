@@ -18,13 +18,6 @@ from typing import Any, Dict, Optional, cast
 from logic.src.interfaces import ITraversable
 
 from .base import VectorizedSelector
-from .combined import CombinedSelector
-from .last_minute import LastMinuteSelector
-from .lookahead import LookaheadSelector
-from .manager import ManagerSelector
-from .regular import RegularSelector
-from .revenue import RevenueSelector
-from .service_level import ServiceLevelSelector
 
 
 def create_selector_from_config(cfg: Any) -> Optional[VectorizedSelector]:
@@ -121,7 +114,10 @@ def _create_combined_selector(params: Dict[str, Any]) -> Optional[VectorizedSele
             selectors.append(sub_selector)
     if not selectors:
         return None
-    return CombinedSelector(selectors, logic=params.get("logic", "or"))
+    from logic.src.utils.registry import import_target
+
+    combined_cls = import_target("logic.src.policies.packing.vectorized.combined:CombinedSelector")
+    return combined_cls(selectors, logic=params.get("logic", "or"))
 
 
 def _create_manager_selector(params: Dict[str, Any]) -> VectorizedSelector:
@@ -139,7 +135,10 @@ def _create_manager_selector(params: Dict[str, Any]) -> VectorizedSelector:
         "history_length": params.get("history_length", 10),
         "critical_threshold": params.get("critical_threshold", 0.9),
     }
-    selector = ManagerSelector(
+    from logic.src.utils.registry import import_target
+
+    manager_cls = import_target("logic.src.policies.packing.vectorized.manager:ManagerSelector")
+    selector = manager_cls(
         manager_config=manager_config,
         threshold=params.get("threshold", 0.5),
         device=params.get("device", "cuda"),
@@ -181,7 +180,7 @@ def _get_strategy_params(strategy: str, params: Dict[str, Any]) -> Dict[str, Any
 
     mappings: Dict[str, Any] = {
         "last_minute": {"threshold": _get("threshold", 70.0)},  # percent
-        "regular": {"frequency": _get("frequency", 3)},
+        "regular": {"frequency": _get("frequency", _get("threshold", 3))},
         "lookahead": {"current_collection_day": _get("current_collection_day", 0)},
         "revenue": {
             "revenue_kg": _get("revenue_kg", 1.0),
@@ -212,16 +211,19 @@ def get_vectorized_selector(name: str, **kwargs: Any) -> VectorizedSelector:
         ValueError: If the selector name is unknown.
     """
     selectors = {
-        "last_minute": LastMinuteSelector,
-        "regular": RegularSelector,
-        "lookahead": LookaheadSelector,
-        "revenue": RevenueSelector,
-        "service_level": ServiceLevelSelector,
-        "manager": ManagerSelector,
+        "last_minute": "logic.src.policies.packing.vectorized.last_minute:LastMinuteSelector",
+        "regular": "logic.src.policies.packing.vectorized.regular:RegularSelector",
+        "lookahead": "logic.src.policies.packing.vectorized.lookahead:LookaheadSelector",
+        "revenue": "logic.src.policies.packing.vectorized.revenue:RevenueSelector",
+        "service_level": "logic.src.policies.packing.vectorized.service_level:ServiceLevelSelector",
+        "manager": "logic.src.policies.packing.vectorized.manager:ManagerSelector",
     }
 
-    if name.lower() not in selectors:
+    key = name.lower()
+    if key not in selectors:
         raise ValueError(f"Unknown selector: {name}. Available: {list(selectors.keys())}")
 
-    selector_cls = cast(Any, selectors[name.lower()])
+    from logic.src.utils.registry import import_target
+
+    selector_cls = cast(Any, import_target(selectors[key]))
     return cast(VectorizedSelector, selector_cls(**kwargs))

@@ -9,6 +9,7 @@ ENTRIES = {
     'combined': 'logic.src.policies.packing.combined:CombinedSelection',
     'cvar': 'logic.src.policies.packing.cvar:CVaRSelection',
     'deadline': 'logic.src.policies.packing.deadline:DeadlineDrivenSelection',
+    'eoq_last_minute': 'logic.src.policies.packing.eoq_last_minute:LastMinuteEOQSelection',
     'dispatcher_portfolio': 'logic.src.policies.packing.dispatcher_portfolio:PortfolioDispatcher',
     'dispatcher_thompson': 'logic.src.policies.packing.dispatcher_thompson:ThompsonDispatcher',
     'filter_and_fan': 'logic.src.policies.packing.filter_and_fan:FilterAndFanSelection',

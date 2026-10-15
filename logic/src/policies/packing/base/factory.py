@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 CONFIG_MAPPING = {
     "last_minute": "last_minute",
+    "eoq_last_minute": "eoq_last_minute",
     "regular": "regular",
     "service_level": "service_level",
     "revenue": "revenue",
