@@ -7,17 +7,65 @@
   "title": "Relatório Final",
   "subtitle": "(a elaborar pelo bolseiro e pelo Orientador)",
   "fields": [
-    {"label": "Nome", "value": "(nome do bolseiro)"},
-    {"label": "Documento de identificação", "value": "(nome do documento de identificação)", "extra_label": "nº", "extra_value": "(número do documento de identificação)"},
-    {"label": "Bolsa", "value": "(tipo de bolsa)"},
-    {"label": "Início da bolsa", "value": "(data de início da bolsa)"},
-    {"label": "Fim da bolsa", "value": "(data de fim da bolsa)"},
-    {"label": "Unidade/Projeto de Investigação", "value": "(nome da unidade de investigação ou projeto de investigação onde se desenvolveu a atividade de bolseiro)"},
-    {"label": "Orientador ou coordenador científico", "value": "(nome do orientador ou coordenador científico)"}
+    {"label": "Nome completo", "value": "Afonso Cruz Fernandes"},
+    {"label": "ID da bolsa", "value": "BI|2024/549"}
   ],
-  "description": [
-    "Descrição detalhada de toda a atividade desenvolvida pelo bolseiro."
-  ],
-  "signatures": ["O Bolseiro", "O Orientador"],
-  "place_date": "Lisboa, ____ de ______________ de ______"
+  "report_label": "Relatório",
+  "report": [
+    {
+      "heading": "1. Enquadramento",
+      "paragraphs": [
+        "A atividade desenvolvida no âmbito da bolsa de investigação do projeto WSmart Route+, realizada no INESC-ID (Instituto Superior Técnico, Universidade de Lisboa), centrou-se na otimização da recolha inteligente de resíduos. Contentores equipados com sensores eletrónicos permitem conhecer o nível de enchimento em tempo real, o que permite substituir rotas fixas por decisões baseadas nas necessidades efetivas de recolha. Em cada dia, o operador tem de decidir que contentores esvaziar e como encaminhar os veículos, equilibrando o custo de deslocação com o risco de transbordo. Como cada recolha altera o stock disponível nos dias seguintes, estas decisões têm de ser avaliadas num horizonte de vários dias.",
+        "O trabalho organizou-se em quatro linhas complementares: (i) o desenvolvimento do simulador WSmart Route+ e a colaboração com a empresa parceira do projeto; (ii) a investigação e implementação de métodos exatos e heurísticos; (iii) a investigação e desenvolvimento de novos modelos de aprendizagem automática; e (iv) a análise aprofundada dos métodos existentes, que deu origem a um artigo de revisão (survey) sobre otimização combinatória."
+      ]
+    },
+    {
+      "heading": "2. Simulador WSmart Route+ e colaboração com a empresa",
+      "paragraphs": [
+        "Foi concebido e desenvolvido o WSmart Route+, um simulador de código aberto em Python para comparar políticas de seleção (packing) e de encaminhamento (routing) em problemas de otimização combinatória, incluindo o problema multiperíodo de percurso lucrativo com capacidade (MCPTP), em que os resíduos recolhidos geram receita e a deslocação gera custo. A arquitetura é modular e separa a geração de resíduos, a seleção dos contentores a recolher, a construção das rotas e a melhoria das rotas. Assim, cada componente pode ser substituído ou recombinado sem alterar o ciclo de simulação. Todas as políticas recebem os mesmos depósitos de resíduos, e as suas decisões determinam os estados dos contentores, os transbordos e os resíduos perdidos nos dias seguintes.",
+        "O simulador foi aplicado a duas redes municipais portuguesas reais, Rio Maior (100 e 170 contentores) e Figueira da Foz (350 contentores), com as localizações observadas dos contentores e matrizes de distâncias rodoviárias. Foram modelados dois processos de procura: um empírico, construído a partir dos registos dos contentores, e um sintético (Gama-3). Para tratar os dados reais dos sensores, foi desenvolvido um pacote próprio de análise (wsmart_bin_analysis), que processa os registos de enchimento, simula o comportamento dos contentores e inclui previsão por modelos ARIMA.",
+        "Em colaboração com a empresa parceira do projeto, [nome da empresa], o trabalho incluiu [descrever: reuniões de acompanhamento, levantamento dos requisitos operacionais, receção e validação dos dados dos sensores e das redes de contentores, apresentação de resultados intermédios]. Para facilitar a utilização e a demonstração dos resultados, foi desenvolvida uma aplicação de interface gráfica (WSmart-Route Studio) para configurar simulações e visualizar resultados, rotas e indicadores.",
+        "Num estudo de 30 dias, o seletor por limiar de enchimento de 90% obteve a maior eficiência média de recolha (5,85 kg/km), mas com 29,5 transbordos em média, enquanto a seleção por nível de serviço a dois dias reduziu os transbordos para 4,6 com 3,48 kg/km. Entre os algoritmos de encaminhamento, o ACO-HH atingiu a maior eficiência média (5,27 kg/km) e o ALNS o menor número médio de transbordos (8,4). Foi também formulado um modelo exato de programação inteira mista para o caso simétrico do problema."
+      ]
+    },
+    {
+      "heading": "3. Métodos exatos e heurísticos",
+      "paragraphs": [
+        "Foi construída uma biblioteca alargada de métodos de encaminhamento com uma interface comum, de modo que todos recebem as mesmas decisões de seleção, os mesmos dados e os mesmos melhoradores de rotas. Os métodos exatos e de decomposição incluem branch-and-bound, branch-and-cut, branch-and-price e branch-and-price-and-cut (com uma variante multietapa com particionamento de conjuntos), uma formulação de fluxo de duas mercadorias resolvida com o Gurobi (SWC-TCF), programação por restrições (CP-SAT), decomposições de Benders (L-shaped inteira e baseada em lógica), progressive hedging, formulações em árvore de cenários e programação dinâmica estocástica.",
+        "Do lado heurístico, foram implementadas mais de quarenta meta-heurísticas, entre as quais ALNS, HGS, PSOMA, SANS e PG-CLNS, quinze matheurísticas, onze hiper-heurísticas (entre elas ACO-HH) e cerca de trinta estratégias de seleção dos contentores a recolher, que vão de regras de limiar e de nível de serviço a formulações de mochila, abordagens estocásticas e de antecipação (lookahead). Foram ainda desenvolvidos operadores de melhoria de rotas, como a pesquisa local clássica e o Fast-TSP, e critérios de aceitação modulares. A formulação exata do problema multiperíodo foi validada resolvendo-a integralmente em pequenas instâncias sintéticas com informação perfeita, e o branch-and-price-and-cut é verificado por testes que confirmam a solução ótima e os respetivos certificados."
+      ]
+    },
+    {
+      "heading": "4. Novos modelos de aprendizagem automática",
+      "paragraphs": [
+        "Foi desenvolvida uma pilha de treino de otimização combinatória neural baseada em PyTorch Lightning e TorchRL, com implementações de arquiteturas de referência e extensões próprias: o Attention Model e a sua versão temporal (Temporal Attention Model), Pointer Networks, MatNet, MDAM, modelos de mistura de especialistas, DACT, N2S, NeuOpt, DeepACO, GFACS, GLOP e PolyNet. Foram também desenvolvidas abordagens híbridas que combinam um construtor neural com refinamento heurístico, e variantes de heurísticas guiadas por aprendizagem por reforço (por exemplo, RL-ALNS).",
+        "O Attention Model foi adaptado ao problema diário de percurso lucrativo com capacidade e treinado nas redes reais de Rio Maior e da Figueira da Foz, para os dois processos de procura. O treino combina aprendizagem por imitação de um especialista heurístico com afinação posterior por gradiente de política (REINFORCE com baseline de rollout), em episódios de vários dias que transportam o estado dos contentores de um dia para o seguinte. Para tornar este treino viável à escala municipal, o especialista foi vetorizado sem alterar as rotas que produz, o que o tornou cerca de dezanove vezes mais rápido nas instâncias de 350 contentores. Foi também introduzida uma cache em disco das soluções do especialista. Os modelos treinados foram integrados no simulador como um algoritmo de encaminhamento igual aos restantes e avaliados nas mesmas condições."
+      ]
+    },
+    {
+      "heading": "5. Análise dos métodos existentes (survey)",
+      "paragraphs": [
+        "Em paralelo, foi preparado um artigo de revisão intitulado \"Combinatorial Optimization: A Survey of Problems, Constraints and Algorithms\". O artigo desenvolve um enquadramento comum para as principais famílias de problemas (seleção de recursos, corte e empacotamento, escalonamento e horários, grafos e desenho de redes, afetação e localização, encaminhamento e configuração lógica), sem perder as distinções matemáticas e computacionais entre elas. Tabelas de problemas interligadas registam os objetivos, as representações das decisões, a simetria e cada restrição em separado. Uma taxonomia ortogonal de algoritmos distingue garantias, topologia de pesquisa, mecanismo matemático e papel operacional, desde a programação dinâmica e branch-and-bound até às meta-heurísticas e aos métodos aprendidos, generativos, baseados em modelos de linguagem e quânticos. São também discutidos benchmarks, operadores transversais e critérios de avaliação reprodutível.",
+        "Esta análise orientou a escolha e a implementação dos métodos da biblioteca do simulador. Mostrou também a necessidade de comparar os métodos com protocolos explícitos, separando as garantias de otimalidade, os tempos de computação e as hipóteses de cada formulação."
+      ]
+    },
+    {
+      "heading": "6. Engenharia de software e reprodutibilidade",
+      "paragraphs": [
+        "O código foi organizado de forma a permitir experiências reprodutíveis: configuração declarativa com Hydra, sementes aleatórias controladas, registo de resultados por execução, geração automática das tabelas e figuras dos artigos a partir dos resultados arquivados, e um conjunto alargado de testes automáticos com integração contínua. Na fase final, foi planeado e coordenado um refactoring para a versão 1.0.0, com uma base comum de ambientes (ESPPRC), um registo único de componentes, configurações tipadas como fonte única dos parâmetros, um simulador modular e um processo de empacotamento que publica apenas os componentes testados no artigo. Foram também definidos testes de regressão que comparam o código reestruturado com a versão original."
+      ]
+    },
+    {
+      "heading": "7. Publicações e divulgação",
+      "paragraphs": [
+        "Artigo \"A Simulation Framework for the Multi-Period Capacitated Profitable Tour Problem in Smart Waste Collection\" (em preparação para submissão). Resumo \"A Simulation Framework for the Multi-Period Vehicle Routing Problem with Profits in Smart Waste Collection\", em coautoria com investigadores do INESC-ID e do CEGIST (H. Bonilla-Londoño, D. Jorge, M. Lopes, P. A. Santos e T. Ramos). Artigo de revisão \"Combinatorial Optimization: A Survey of Problems, Constraints and Algorithms\" (em preparação). O código-fonte do simulador é disponibilizado publicamente."
+      ]
+    },
+    {
+      "heading": "8. Conclusões e trabalho futuro",
+      "paragraphs": [
+        "A bolsa permitiu desenvolver uma plataforma de simulação e uma biblioteca de métodos que permitem comparar, em condições iguais e em redes reais, políticas de recolha baseadas em métodos exatos, heurísticos e de aprendizagem automática. O trabalho em curso inclui concluir a avaliação dos modelos neurais em todos os cenários (em particular, perceber por que razão o processo de procura empírico, com enchimentos esparsos, é mais difícil para estes modelos), executar os testes de regressão da versão 1.0.0 e submeter os artigos."
+      ]
+    }
+  ]
 }
