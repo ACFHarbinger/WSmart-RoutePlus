@@ -44,12 +44,12 @@ class BatchMixin:
         (which bins must be collected).
 
         Args:
-            input (dict): Batch of problem data with 'loc', 'waste', etc.
-            dist_matrix (torch.Tensor): Distance matrix (B x N x N) or (N x N)
-            hrl_manager (optional): HRL manager network for dispatch and mandatory decisions
-            waste_history (torch.Tensor, optional): Historical waste levels (B x N x T)
-            threshold (float): Gating probability threshold. Default: 0.5
-            mask_threshold (float): Packing probability threshold. Default: 0.5
+            input: Batch of problem data with 'loc', 'waste', etc.
+            dist_matrix: Distance matrix (B x N x N) or (N x N)
+            hrl_manager: HRL manager network for dispatch and mandatory decisions
+            waste_history: Historical waste levels (B x N x T)
+            threshold: Gating probability threshold. Default: 0.5
+            mask_threshold: Packing probability threshold. Default: 0.5
 
         Returns:
             Tuple[torch.Tensor, dict, dict]: Costs, result metrics, and attention data

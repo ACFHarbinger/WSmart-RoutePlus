@@ -7,8 +7,6 @@ Attributes:
     MatNet: The REINFORCE training wrapper.
     MatNetPolicy: The matrix-aware encoder-decoder policy.
 
-Example:
-    >>> from logic.src.models.core.matnet import MatNet
 """
 
 from .model import MatNet as MatNet

@@ -126,12 +126,12 @@ class BaseProblem:
         """Calculates tour length.
 
         Args:
-            dataset (Dict[str, Any]): Dataset containing node locations and optionally edges.
+            dataset: Dataset containing node locations and optionally edges.
                 Expected keys: 'locs' (Tensor[batch, num_nodes, 2]) or 'edges' (Tensor[batch, num_nodes, num_nodes]).
                 'depot' (Tensor[batch, 2]) is also supported.
-            pi (torch.Tensor): Tensor of tours to validate, shape (batch, sequence_length).
+            pi: Tensor of tours to validate, shape (batch, sequence_length).
                 Tours should include depot at start/end if applicable.
-            dist_matrix (Optional[torch.Tensor]): Optional precomputed distance matrix,
+            dist_matrix: Optional precomputed distance matrix,
                 shape (batch, num_nodes, num_nodes) or (num_nodes, num_nodes).
 
         Returns:
@@ -203,10 +203,10 @@ class BaseProblem:
         """Beam search bridge.
 
         Args:
-            input (Union[ITraversable, TensorDict]): Input data, can be ITraversable or TensorDict.
-            beam_size (int): Number of beams for beam search.
-            cost_weights (Union[torch.Tensor, List[float], float, Dict[str, float]]): Weights for cost calculation.
-            model (Optional[nn.Module]): Model to use for beam search.
+            input: Input data, can be ITraversable or TensorDict.
+            beam_size: Number of beams for beam search.
+            cost_weights: Weights for cost calculation.
+            model: Model to use for beam search.
             kwargs: Additional keyword arguments.
 
         Returns:
@@ -235,11 +235,11 @@ class BaseProblem:
         Bridge to RL4CO environments.
         Initializes a TensorDict from the input and returns a state wrapper.
         Args:
-            input_data (Any): Input data.
-            edges (Any): Edges data.
-            cost_weights (Any): Weights for cost calculation.
-            dist_matrix (Any): Distance matrix.
-            kwargs (Any): Additional keyword arguments.
+            input_data: Input data.
+            edges: Edges data.
+            cost_weights: Weights for cost calculation.
+            dist_matrix: Distance matrix.
+            kwargs: Additional keyword arguments.
 
         Returns:
             Any: State wrapper.
@@ -408,7 +408,7 @@ class BaseProblem:
         """Map legacy keys to environment keys.
 
         Args:
-            k (str): Key to map.
+            k: Key to map.
 
         Returns:
             str: Mapped key.
@@ -424,8 +424,8 @@ class BaseProblem:
         """Ensure tensor has correct batch dimension.
 
         Args:
-            v (torch.Tensor): Tensor to batch.
-            bs (int): Batch size.
+            v: Tensor to batch.
+            bs: Batch size.
 
         Returns:
             torch.Tensor: Tensor with correct batch dimension.
@@ -441,11 +441,11 @@ class BaseProblem:
         """Ensure all required keys are present in the TensorDict.
 
         Args:
-            td (TensorDict): TensorDict to check.
-            env_name (str): Environment name.
-            edges (Any): Edges data.
-            dist_matrix (Any): Distance matrix.
-            kwargs (Any): Additional keyword arguments.
+            td: TensorDict to check.
+            env_name: Environment name.
+            edges: Edges data.
+            dist_matrix: Distance matrix.
+            kwargs: Additional keyword arguments.
         """
         bs = td.batch_size[0]
         if "dist" not in td.keys() and dist_matrix is not None:

@@ -88,8 +88,6 @@ class HGSSolver:
                 unknown keys are filtered, ``lambda_param`` aliases
                 ``n_offspring``).
 
-        Returns:
-            None.
         """
         dist_matrix = problem.dist_matrix
         wastes = problem.wastes
@@ -196,8 +194,6 @@ class HGSSolver:
             cache: Distance cache to purge (modified in-place).
             inv: Inverse index mapping id(ind) -> set of cache keys (modified in-place).
 
-        Returns:
-            None.
         """
         ind_id = id(ind)
         for key in inv.pop(ind_id, ()):
@@ -232,8 +228,6 @@ class HGSSolver:
             pop_feasible: Feasible subpopulation (modified in-place).
             pop_infeasible: Infeasible subpopulation (modified in-place).
 
-        Returns:
-            None.
         """
         if ind.is_feasible:
             pop_feasible.append(ind)
@@ -305,8 +299,6 @@ class HGSSolver:
             cache: Per-subpopulation distance cache (modified in-place).
             inv: Inverse index for O(P) cache eviction (modified in-place).
 
-        Returns:
-            None.
         """
         if len(pop) < self.params.mu + self.params.n_offspring:
             return
@@ -469,8 +461,6 @@ class HGSSolver:
         Args:
             ind: Recently generated offspring (post-crossover and local search).
 
-        Returns:
-            None.
         """
         n = len(ind.giant_tour)
         visited = sum(len(r) for r in ind.routes)
@@ -508,8 +498,6 @@ class HGSSolver:
             pop_infeasible: Infeasible subpopulation.
             penalty_capacity: Current penalty coefficient.
 
-        Returns:
-            None.
         """
         self._insert_into_pop(child, pop_feasible, pop_infeasible)
 

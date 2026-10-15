@@ -120,15 +120,13 @@ class HPOSimulationHandler:
         """Initialize HPOSimulationHandler.
 
         Args:
-            cfg (Config): Root application configuration.
-            study_name (str): Name of the Optuna study.
-            storage_url (str): URL of the Optuna storage backend.
-            directions (List[str]): List of optimization directions.
-            metric_names (Optional[List[str]]): List of metric names.
-            max_budget (int): Maximum budget for the HPO process.
+            cfg: Root application configuration.
+            study_name: Name of the Optuna study.
+            storage_url: URL of the Optuna storage backend.
+            directions: List of optimization directions.
+            metric_names: List of metric names.
+            max_budget: Maximum budget for the HPO process.
 
-        Returns:
-            None
         """
         self.cfg = cfg
         self.study_name = study_name
@@ -165,10 +163,8 @@ class HPOSimulationHandler:
         """Ensure SQLite storage is ready.
 
         Args:
-            self (HPOSimulationHandler): HPOSimulationHandler instance.
+            self: HPOSimulationHandler instance.
 
-        Returns:
-            None
         """
         if self.storage_url.startswith("sqlite:///"):
             db_path = self.storage_url.replace("sqlite:///", "")
@@ -181,9 +177,9 @@ class HPOSimulationHandler:
         """Creates the Optuna objective closure.
 
         Args:
-            self (HPOSimulationHandler): HPOSimulationHandler instance.
-            lock (Any): Lock for synchronization.
-            data_size (int): Size of the data.
+            self: HPOSimulationHandler instance.
+            lock: Lock for synchronization.
+            data_size: Size of the data.
 
         Returns:
             Callable[[optuna.Trial], Union[float, List[float]]]: Optuna objective closure.
@@ -199,11 +195,9 @@ class HPOSimulationHandler:
         """Execute functional Analysis of Variance (fANOVA).
 
         Args:
-            self (HPOSimulationHandler): HPOSimulationHandler instance.
-            target_idx (int): Index of the target metric.
+            self: HPOSimulationHandler instance.
+            target_idx: Index of the target metric.
 
-        Returns:
-            None
         """
         completed = [t for t in self.study.trials if t.state == optuna.trial.TrialState.COMPLETE]
         if len(completed) < 30:
@@ -228,10 +222,8 @@ class HPOSimulationHandler:
         """Report the Pareto-optimal frontier.
 
         Args:
-            self (HPOSimulationHandler): HPOSimulationHandler instance.
+            self: HPOSimulationHandler instance.
 
-        Returns:
-            None
         """
         try:
             best_trials = self.study.best_trials
@@ -249,7 +241,7 @@ def _metric_direction(metric_name: str) -> str:
     """Return the Optuna direction string for a given metric name.
 
     Args:
-        metric_name (str): Metric identifier (e.g. 'profit', 'overflows').
+        metric_name: Metric identifier (e.g. 'profit', 'overflows').
 
     Returns:
         str: 'minimize' or 'maximize'.
@@ -261,8 +253,8 @@ def _extract_metric(log: Dict, metric_name: str) -> float:
     """Extract a scalar metric value from a simulation log dict.
 
     Args:
-        log (Dict): Output of sequential_simulations keyed by policy name.
-        metric_name (str): Metric to extract (must be in SIM_METRICS).
+        log: Output of sequential_simulations keyed by policy name.
+        metric_name: Metric to extract (must be in SIM_METRICS).
 
     Returns:
         float: Metric value, or -inf / +inf depending on direction when
@@ -309,10 +301,10 @@ def objective(  # noqa: C901
     auditability and study resumption safety.
 
     Args:
-        trial (optuna.Trial): The Optuna trial object for parameter sampling.
-        base_cfg (Config): The base configuration; cloned per trial.
-        data_size (int): Number of available bins for the selected area.
-        lock (Any): Multiprocessing lock for repository access.
+        trial: The Optuna trial object for parameter sampling.
+        base_cfg: The base configuration; cloned per trial.
+        data_size: Number of available bins for the selected area.
+        lock: Multiprocessing lock for repository access.
 
     Returns:
         Union[float, Tuple[float, ...]]: Metric value(s) for this trial.
@@ -476,14 +468,14 @@ def worker(
     entirely because each process runs its own Python interpreter.
 
     Args:
-        study_name (str): Name of the Optuna study to load.
-        storage_url (str): SQLAlchemy URL for the shared storage backend.
-        base_cfg_yaml (str): Serialised OmegaConf YAML of the base Config.
+        study_name: Name of the Optuna study to load.
+        storage_url: SQLAlchemy URL for the shared storage backend.
+        base_cfg_yaml: Serialised OmegaConf YAML of the base Config.
             Passed as a string so the Config can be reconstructed inside the
             forked process without pickling issues.
-        data_size (int): Number of available bins for the selected area.
-        n_trials (int): Number of trials this worker should contribute.
-        lock (Any): Shared multiprocessing lock for repository access.
+        data_size: Number of available bins for the selected area.
+        n_trials: Number of trials this worker should contribute.
+        lock: Shared multiprocessing lock for repository access.
     """
     # Silence per-worker Optuna INFO logs to avoid interleaved console noise.
     optuna.logging.set_verbosity(optuna.logging.WARNING)
@@ -542,7 +534,7 @@ def run_hpo_sim(cfg: Config) -> Union[float, List[float]]:
     ideal point; in single-objective mode, returns the best scalar value.
 
     Args:
-        cfg (Config): Root application configuration containing HPO settings.
+        cfg: Root application configuration containing HPO settings.
 
     Returns:
         Union[float, List[float]]: Best metric value (single-objective) or
@@ -734,8 +726,8 @@ def _select_pareto_representative(
     always means 'smaller L1 distance'.
 
     Args:
-        pareto_trials (List[optuna.trial.FrozenTrial]): Trials on the Pareto front.
-        directions (List[str]): Per-objective directions ('minimize'/'maximize').
+        pareto_trials: Trials on the Pareto front.
+        directions: Per-objective directions ('minimize'/'maximize').
 
     Returns:
         Optional[optuna.trial.FrozenTrial]: The representative trial, or None

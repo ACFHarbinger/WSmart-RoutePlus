@@ -10,8 +10,6 @@ Attributes:
     N2SEncoder: Sparse Transformer encoder with spatial neighborhood masking.
     N2SDecoder: Pairwise action decoder for move selection.
 
-Example:
-    >>> from logic.src.models.core.n2s import N2S
 """
 
 from .decoder import N2SDecoder as N2SDecoder

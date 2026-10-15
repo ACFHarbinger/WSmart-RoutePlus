@@ -40,9 +40,9 @@ class BinaryTournamentAcceptance(IAcceptanceCriterion):
         """Initialize the Binary Tournament criterion.
 
         Args:
-            p (float): The probability that the superior solution wins.
+            p: The probability that the superior solution wins.
                 Typically in [0.5, 1.0]. Defaults to 0.8.
-            seed (Optional[int]): Random seed. Defaults to None.
+            seed: Random seed. Defaults to None.
         """
         self.p = p
         self.rng = random.Random(seed)
@@ -51,7 +51,7 @@ class BinaryTournamentAcceptance(IAcceptanceCriterion):
         """Initialize the criterion state.
 
         Args:
-            initial_objective (ObjectiveValue): The initial solution's objective.
+            initial_objective: The initial solution's objective.
         """
         initial_objective = cast(float, initial_objective)
         pass
@@ -62,9 +62,9 @@ class BinaryTournamentAcceptance(IAcceptanceCriterion):
         """Perform a binary tournament between current and candidate solutions.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            kwargs: Additional context.
 
         Returns:
             Tuple[bool, AcceptanceMetrics]: A tuple containing:
@@ -98,10 +98,10 @@ class BinaryTournamentAcceptance(IAcceptanceCriterion):
         """No-op update step.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            accepted (bool): Whether the move was accepted.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            accepted: Whether the move was accepted.
+            kwargs: Additional context.
         """
         current_obj = cast(float, current_obj)
         candidate_obj = cast(float, candidate_obj)

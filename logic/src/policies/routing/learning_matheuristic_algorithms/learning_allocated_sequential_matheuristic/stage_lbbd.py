@@ -361,8 +361,6 @@ class _LBBDMaster:
             env: Gurobi environment.
             seed: Random seed.
 
-        Returns:
-            None
         """
         self.n_nodes = n_nodes
         self.wastes = wastes
@@ -433,8 +431,6 @@ class _LBBDMaster:
         Args:
             Y: Set of nodes.
 
-        Returns:
-            None
         """
         expr = quicksum(self.y[i] for i in Y)
         self.mdl.addConstr(expr <= len(Y) - 1, name=f"nogood_{self._cut_count}")
@@ -448,8 +444,6 @@ class _LBBDMaster:
             Y: Set of nodes.
             sub_cost: Subproblem cost.
 
-        Returns:
-            None
         """
         lhs = quicksum(self.y[i] for i in Y)
         self.mdl.addConstr(
@@ -467,8 +461,6 @@ class _LBBDMaster:
             sub_cost: Subproblem cost.
             primal_bound: Primal bound.
 
-        Returns:
-            None
         """
         gap = sub_cost - primal_bound
         if gap <= 1e-8:
@@ -488,8 +480,6 @@ class _LBBDMaster:
             Y: Set of nodes.
             sub_cost: Subproblem cost.
 
-        Returns:
-            None
         """
         # For any T ⊆ Y, cost(T) ≥ cost(Y) − Σ_{i∉T, i∈Y} R·w_i
         # Approximated as: θ ≥ sub_cost − Σ_{i∈Y} R·w_i · (1 − y_i)

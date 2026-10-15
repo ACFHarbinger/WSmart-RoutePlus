@@ -38,14 +38,14 @@ def local_search_reversed(
     Similar to local_search_2 but applies operators in a different order or variant.
 
     Args:
-        previous_solution (List[List[int]]): Solution to improve.
-        p_vehicle (float): Vehicle penalty.
-        p_load (float): Load penalty.
-        p_route_difference (float): Imbalance penalty.
-        p_shift (float): Shift penalty.
-        data (pd.DataFrame): Bin weights data.
-        distance_matrix (np.ndarray): Shortest path matrix.
-        values (Dict): Parameter dictionary.
+        previous_solution: Solution to improve.
+        p_vehicle: Vehicle penalty.
+        p_load: Load penalty.
+        p_route_difference: Imbalance penalty.
+        p_shift: Shift penalty.
+        data: Bin weights data.
+        distance_matrix: Shortest path matrix.
+        values: Parameter dictionary.
 
     Returns:
         List[List[int]]: Modified routing solution.

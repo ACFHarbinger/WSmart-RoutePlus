@@ -1,5 +1,10 @@
 # Simulation Environments & RL Physics
 
+> **Status (Q-22):** narrative guide. The API reference is generated into
+> `docs/api/` by `tools/gen_api_docs.py`; this file is not the source of
+> truth for signatures and module inventories.
+
+
 **Module**: `logic/src/envs`
 **Purpose**: Defines the mathematical "physics" of routing problems, governing state transitions, action validity, and reward signals.
 **Version**: 3.0

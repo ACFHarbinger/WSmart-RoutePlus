@@ -77,8 +77,6 @@ class _PoolHarvestingALNS(ALNSSolver):
             args: Positional arguments to pass to the parent constructor.
             kwargs: Keyword arguments to pass to the parent constructor.
 
-        Returns:
-            None
         """
         super().__init__(*args, **kwargs)
         self._harvest_pool = pool

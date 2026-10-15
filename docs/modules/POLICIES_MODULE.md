@@ -1,5 +1,10 @@
 # Routing Policies & Global Optimization
 
+> **Status (Q-22):** narrative guide. The API reference is generated into
+> `docs/api/` by `tools/gen_api_docs.py`; this file is not the source of
+> truth for signatures and module inventories.
+
+
 **Module**: `logic/src/policies`
 **Purpose**: Comprehensive collection of classical, metaheuristic, exact, and neural routing policies for Combinatorial Optimization.
 **Files**: 157 Python modules across 14 major components

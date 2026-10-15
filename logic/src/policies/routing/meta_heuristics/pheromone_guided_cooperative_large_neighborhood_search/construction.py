@@ -224,8 +224,6 @@ class SolutionConstructor:
             i: Current node.
             j: Next node.
 
-        Returns:
-            None
         """
         rho = self.params.rho
         current = self.pheromone.get(i, j)

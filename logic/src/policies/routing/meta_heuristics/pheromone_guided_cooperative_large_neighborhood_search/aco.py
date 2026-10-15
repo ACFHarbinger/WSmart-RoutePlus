@@ -256,8 +256,6 @@ class ACOSolver(PolicyVizMixin):
             best_routes: List of routes in the best solution.
             best_cost: Cost of the best solution.
 
-        Returns:
-            None
         """
         if not best_routes or best_cost <= 0:
             return

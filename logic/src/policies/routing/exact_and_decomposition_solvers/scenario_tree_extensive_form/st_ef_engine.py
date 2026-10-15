@@ -372,7 +372,7 @@ class ScenarioTreeExtensiveFormEngine:
         """Extracts the sequence of nodes for a specific tree node from the solver results.
 
         Args:
-            n_idx (int): The index of the tree node to extract the route from.
+            n_idx: The index of the tree node to extract the route from.
 
         Returns:
             List[int]: The ordered list of node IDs.
@@ -405,8 +405,8 @@ class ScenarioTreeExtensiveFormEngine:
         """Lazy subtour elimination (if MTZ is disabled).
 
         Args:
-            model (gp.Model): The Gurobi model.
-            where (int): The solver callback location.
+            model: The Gurobi model.
+            where: The solver callback location.
         """
         # This is a bit tricky to implement for multi-nodal layers quickly,
         # so for this framework we default to MTZ.
@@ -418,7 +418,7 @@ class ScenarioTreeExtensiveFormEngine:
         """Convert simulation ScenarioTree (recursive) to flat solver tree.
 
         Args:
-            tree (Any): The simulation scenario tree.
+            tree: The simulation scenario tree.
 
         Returns:
             Dict[int, Any]: A flat map of EngineNode objects.

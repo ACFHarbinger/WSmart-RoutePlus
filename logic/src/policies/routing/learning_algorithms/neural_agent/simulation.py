@@ -369,8 +369,6 @@ class SimulationMixin:
             input_for_model: Input for the neural policy.
             waste_history: Waste history for the neural policy.
 
-        Returns:
-            None
         """
         horizon = getattr(self.model, "temporal_horizon", 0)  # type: ignore[attr-defined]
         if horizon <= 0 or waste_history is None:

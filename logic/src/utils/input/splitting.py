@@ -25,9 +25,9 @@ def split_file(file_path, max_part_size, output_dir):
     Split a large CSV or Excel file into smaller chunks based on size.
 
     Args:
-        file_path (str): Path to the large file.
-        max_part_size (int): Maximum size of each chunk in bytes.
-        output_dir (str): Directory to save the chunked files.
+        file_path: Path to the large file.
+        max_part_size: Maximum size of each chunk in bytes.
+        output_dir: Directory to save the chunked files.
 
     Returns:
         list: List of paths to the chunked files.
@@ -82,9 +82,9 @@ def chunk_zip_content(zip_path, max_part_size, data_dir):
     Extract a ZIP archive and chunk files larger than max_part_size into multiple parts.
 
     Args:
-        zip_path (str): Path to the original ZIP archive.
-        max_part_size (int): Maximum size of each part in bytes.
-        data_dir (str): Directory to save the chunked files to.
+        zip_path: Path to the original ZIP archive.
+        max_part_size: Maximum size of each part in bytes.
+        data_dir: Directory to save the chunked files to.
 
     Returns:
         list: List of chunked file paths.
@@ -128,7 +128,7 @@ def reassemble_files(data_dir):
     Reassemble several files from their chunks.
 
     Args:
-        data_dir (str): Directory of the chunked files and where to save the reassembled files to.
+        data_dir: Directory of the chunked files and where to save the reassembled files to.
 
     Returns:
         list: List of reassembled file names.

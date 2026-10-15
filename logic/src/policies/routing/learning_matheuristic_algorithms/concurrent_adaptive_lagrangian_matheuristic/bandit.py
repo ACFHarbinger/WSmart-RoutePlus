@@ -103,8 +103,8 @@ class LinUCBBandit:
         """Initialize the LinUCB bandit coordinator.
 
         Args:
-            params (BanditParams): Configuration for features, lambda, and exploration.
-            rng (Optional[np.random.Generator]): Random generator for arm shuffling.
+            params: Configuration for features, lambda, and exploration.
+            rng: Random generator for arm shuffling.
         """
         self.params = params
         self.rng = rng or np.random.default_rng()
@@ -125,8 +125,6 @@ class LinUCBBandit:
 
         Iterates over all combinations of engines and cut strategies, creating a BanditArm for each.
 
-        Returns:
-            None
         """
         d = self.params.feature_dim
         lam = self.params.ridge_lambda
@@ -155,7 +153,7 @@ class LinUCBBandit:
         Select the best arm based on the UCB score.
 
         Args:
-            context (np.ndarray): Context vector.
+            context: Context vector.
 
         Returns:
             Tuple[int, str, str, float]: Tuple of (arm_index, engine, cut_strategy, ucb_score).
@@ -183,9 +181,9 @@ class LinUCBBandit:
         Update the bandit with the reward for the given arm and context.
 
         Args:
-            arm_index (int): Index of the arm to update.
-            context (np.ndarray): Context vector.
-            reward (float): Reward for the given arm and context.
+            arm_index: Index of the arm to update.
+            context: Context vector.
+            reward: Reward for the given arm and context.
         """
         arm = self._arms[arm_index]
         x = context
@@ -262,17 +260,17 @@ def build_context(
     If `feature_dim` is larger than 8 we pad with zeros; smaller, we truncate.
 
     Args:
-        outer_iter (int): Current outer iteration number.
-        max_outer (int): Maximum number of outer iterations.
-        primal_gap_frac (float): Fractional primal gap.
-        dual_progress_frac (float): Fractional dual progress.
-        iters_since_improvement (int): Number of iterations since improvement.
-        stagnation_patience (int): Patience for stagnation detection.
-        fraction_bins_selected (float): Fraction of bins selected.
-        fraction_periods_saturated (float): Fraction of periods saturated.
-        lambda_norm (float): L2 norm of Lagrangian multipliers.
-        lambda_norm_scale (float): Scale factor for L2 norm of Lagrangian multipliers.
-        feature_dim (int): Dimension of the feature vector.
+        outer_iter: Current outer iteration number.
+        max_outer: Maximum number of outer iterations.
+        primal_gap_frac: Fractional primal gap.
+        dual_progress_frac: Fractional dual progress.
+        iters_since_improvement: Number of iterations since improvement.
+        stagnation_patience: Patience for stagnation detection.
+        fraction_bins_selected: Fraction of bins selected.
+        fraction_periods_saturated: Fraction of periods saturated.
+        lambda_norm: L2 norm of Lagrangian multipliers.
+        lambda_norm_scale: Scale factor for L2 norm of Lagrangian multipliers.
+        feature_dim: Dimension of the feature vector.
 
     Returns:
         np.ndarray: Feature vector.

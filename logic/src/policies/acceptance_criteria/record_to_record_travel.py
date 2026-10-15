@@ -39,7 +39,7 @@ class RecordToRecordTravel(IAcceptanceCriterion):
         """Initialize the Record-to-Record Travel criterion.
 
         Args:
-            tolerance (float): The allowed percentage deviation from the global best
+            tolerance: The allowed percentage deviation from the global best
                 (e.g., 0.05 means solutions within 5% of the global best are accepted).
         """
         self.tolerance = tolerance
@@ -49,7 +49,7 @@ class RecordToRecordTravel(IAcceptanceCriterion):
         """Initialize the global best record.
 
         Args:
-            initial_objective (ObjectiveValue): The initial solution's objective.
+            initial_objective: The initial solution's objective.
         """
         initial_objective = cast(float, initial_objective)
         self.global_best = initial_objective
@@ -60,9 +60,9 @@ class RecordToRecordTravel(IAcceptanceCriterion):
         """Determine acceptance relative to the global best record.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            kwargs: Additional context.
 
         Returns:
             Tuple[bool, AcceptanceMetrics]: A tuple containing:
@@ -86,10 +86,10 @@ class RecordToRecordTravel(IAcceptanceCriterion):
         """Update the global best record if a superior solution was accepted.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            accepted (bool): Whether the move was accepted.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            accepted: Whether the move was accepted.
+            kwargs: Additional context.
         """
         current_obj = cast(float, current_obj)
         candidate_obj = cast(float, candidate_obj)

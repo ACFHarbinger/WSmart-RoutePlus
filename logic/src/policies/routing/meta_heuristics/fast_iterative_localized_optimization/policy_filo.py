@@ -35,8 +35,6 @@ class FILOPolicy(BaseRoutingPolicy):
         Args:
             config: FILOConfig dataclass, raw dict, or None.
 
-        Returns:
-            None.
         """
         super().__init__(config)
 

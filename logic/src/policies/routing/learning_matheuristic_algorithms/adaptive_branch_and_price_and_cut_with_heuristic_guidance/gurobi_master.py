@@ -96,8 +96,6 @@ class GurobiMasterProblem:
             output_flag: Set to True to enable Gurobi console output (useful
                 for debugging; suppressed by default).
 
-        Returns:
-            None
         """
         self.n_bins = n_bins
         self.horizon = horizon
@@ -132,8 +130,6 @@ class GurobiMasterProblem:
             time_limit: Maximum Gurobi solve time in seconds per master call.
             output_flag: Set to True to enable Gurobi console output.
 
-        Returns:
-            None
         """
         env = gp.Env(empty=True)
         env.setParam("OutputFlag", int(output_flag))
@@ -196,8 +192,6 @@ class GurobiMasterProblem:
                 ``"constant"``     – scalar RHS constant.
                 ``"coefficients"`` – {bin_id: linear coefficient of z[bin_id, d]}.
 
-        Returns:
-            None
         """
         d = cut["day"]
         constant = float(cut["constant"])
@@ -230,8 +224,6 @@ class GurobiMasterProblem:
         Args:
             cuts: List of cut dictionaries (same format as ``add_benders_cut``).
 
-        Returns:
-            None
         """
         for cut in cuts:
             d = cut["day"]
@@ -334,8 +326,6 @@ class GurobiMasterProblem:
         This releases the memory and other resources held by the Gurobi model.
         It is good practice to call this method when the master problem is no longer needed.
 
-        Returns:
-            None
         """
         with contextlib.suppress(Exception):
             self.model.dispose()

@@ -107,7 +107,7 @@ class KMeansGeographicSectorSelection(IPackingAlgorithm):
         partially-initialised environments.
 
         Args:
-            context (PackingContext): PackingContext providing coordinates, current_day,
+            context: PackingContext providing coordinates, current_day,
                 threshold (number of sectors), and optionally current_fill.
 
         Returns:

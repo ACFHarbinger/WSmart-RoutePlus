@@ -44,8 +44,8 @@ class OrOptRouteImprover(IRouteImprovement):
         """Apply Or-opt improvement to the tour.
 
         Args:
-            tour (List[int]): Initial tour sequence.
-            kwargs (Any): Search context, including:
+            tour: Initial tour sequence.
+            kwargs: Search context, including:
                 - distance_matrix (np.ndarray): The distance matrix.
                 - chain_len (int): Maximum length of the node chain to relocate.
                 - iterations (int): Maximum number of iterations.

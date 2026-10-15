@@ -39,7 +39,7 @@ class StepCountingHillClimbing(IAcceptanceCriterion):
         """Initialize the SCHC criterion.
 
         Args:
-            step_size (int): The number of iterations the bound remains static.
+            step_size: The number of iterations the bound remains static.
         """
         self.step_size = max(1, step_size)
         self.counter = 0
@@ -49,7 +49,7 @@ class StepCountingHillClimbing(IAcceptanceCriterion):
         """Initialize the criterion state.
 
         Args:
-            initial_objective (ObjectiveValue): The initial solution's objective.
+            initial_objective: The initial solution's objective.
         """
         initial_objective = cast(float, initial_objective)
         self.bound = initial_objective
@@ -61,9 +61,9 @@ class StepCountingHillClimbing(IAcceptanceCriterion):
         """Determine whether to accept based on the current frozen bound.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            kwargs: Additional context.
 
         Returns:
             Tuple[bool, AcceptanceMetrics]: A tuple containing:
@@ -85,10 +85,10 @@ class StepCountingHillClimbing(IAcceptanceCriterion):
         """Increment the counter and update the bound if step_size is reached.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            accepted (bool): Whether the move was accepted.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            accepted: Whether the move was accepted.
+            kwargs: Additional context.
         """
         current_obj = cast(float, current_obj)
         candidate_obj = cast(float, candidate_obj)

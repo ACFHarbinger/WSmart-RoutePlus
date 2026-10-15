@@ -51,8 +51,6 @@ class ScoreAIndicator:
     def __init__(self) -> None:
         """Initialize ScoreA tracking.
 
-        Returns:
-            None
         """
         self.scores: Dict[str, float] = {}
 
@@ -64,8 +62,6 @@ class ScoreAIndicator:
             operator: Name of the operator.
             accepted: True if the solution was accepted into ARCH.
 
-        Returns:
-            None
         """
         if operator not in self.scores:
             self.scores[operator] = 0.0
@@ -89,8 +85,6 @@ class ScoreAIndicator:
         Args:
             operator: Name of the operator.
 
-        Returns:
-            None
         """
         self.scores[operator] = 0.0
 
@@ -127,8 +121,6 @@ class ScoreBIndicator:
             revenue_improved: True if revenue > parent's revenue.
             cost_improved: True if cost < parent's cost.
 
-        Returns:
-            None
         """
         if operator not in self.scores:
             self.scores[operator] = 0.0
@@ -158,7 +150,5 @@ class ScoreBIndicator:
         Args:
             operator: Name of the operator.
 
-        Returns:
-            None
         """
         self.scores[operator] = 0.0

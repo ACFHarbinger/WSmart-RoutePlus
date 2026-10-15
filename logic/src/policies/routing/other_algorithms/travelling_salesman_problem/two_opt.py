@@ -22,10 +22,10 @@ def solve_tsp_2opt(dist_matrix: np.ndarray, nodes: List[int], depot: int = 0, ma
     Solve TSP via iterative 2-opt.
 
     Args:
-        dist_matrix (np.ndarray): Distance matrix.
-        nodes (List[int]): List of nodes to visit.
-        depot (int): Depot node.
-        max_iterations (int): Maximum number of iterations.
+        dist_matrix: Distance matrix.
+        nodes: List of nodes to visit.
+        depot: Depot node.
+        max_iterations: Maximum number of iterations.
 
     Returns:
         List[int]: Tour starting and ending at depot.

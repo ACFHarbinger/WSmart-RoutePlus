@@ -88,7 +88,7 @@ def _time_limit(seconds: float):
     """Wall-clock timeout context manager (POSIX only).
 
     Args:
-        seconds (float): Timeout duration in seconds.
+        seconds: Timeout duration in seconds.
 
     Yields:
         None: Context manager control.
@@ -139,17 +139,17 @@ class BranchAndPriceRouteImprover(IRouteImprovement):
         """Apply branch-and-price refinement to the tour.
 
         Args:
-            tour (List[int]): Initial tour represented as bin IDs (depot 0s as separators).
+            tour: Initial tour represented as bin IDs (depot 0s as separators).
             kwargs: Context containing:
-                distance_matrix (np.ndarray | torch.Tensor): Distance lookup.
-                wastes (Dict[int, float]): Mapping of bin IDs to waste amounts.
-                capacity (float): Maximum vehicle capacity.
-                cost_per_km (float): Unit distance cost.
-                revenue_kg (float): Unit waste revenue.
-                bp_time_limit (float): Time limit for the B&P solve.
-                mandatory_nodes (List[int]): List of required visitor IDs.
-                bp_max_iterations (int): Maximum pricing iterations.
-                bp_use_exact_pricing (bool): Whether to use the exact pricer.
+                distance_matrix: Distance lookup.
+                wastes: Mapping of bin IDs to waste amounts.
+                capacity: Maximum vehicle capacity.
+                cost_per_km: Unit distance cost.
+                revenue_kg: Unit waste revenue.
+                bp_time_limit: Time limit for the B&P solve.
+                mandatory_nodes: List of required visitor IDs.
+                bp_max_iterations: Maximum pricing iterations.
+                bp_use_exact_pricing: Whether to use the exact pricer.
 
         Returns:
             Tuple[List[int], ImprovementMetrics]: (refined_tour, metrics_summary).
@@ -268,13 +268,13 @@ class BranchAndPriceRouteImprover(IRouteImprovement):
         """Delegate to the in-house BranchAndPriceSolver.
 
         Args:
-            input_routes (List[List[int]]): Initial segmented routes.
-            dm (np.ndarray): Distance matrix.
-            wastes (Dict[int, float]): Bin waste amounts.
-            capacity (float): Vehicle capacity.
-            cost_per_km (float): Distance cost coefficient.
-            revenue_kg (float): Revenue coefficient.
-            mandatory_nodes (List[int]): List of nodes that must be visited.
+            input_routes: Initial segmented routes.
+            dm: Distance matrix.
+            wastes: Bin waste amounts.
+            capacity: Vehicle capacity.
+            cost_per_km: Distance cost coefficient.
+            revenue_kg: Revenue coefficient.
+            mandatory_nodes: List of nodes that must be visited.
             kwargs: Algorithmic parameters prefixed with 'bp_'.
 
         Returns:
@@ -428,13 +428,13 @@ class BranchAndPriceRouteImprover(IRouteImprovement):
         """Delegate to vrpy (secondary fallback path).
 
         Args:
-            input_routes (List[List[int]]): Initial segmented routes.
-            dm (np.ndarray): Distance matrix.
-            wastes (Dict[int, float]): Bin waste amounts.
-            capacity (float): Vehicle capacity.
-            cost_per_km (float): Distance cost coefficient.
-            revenue_kg (float): Revenue coefficient.
-            mandatory_nodes (List[int]): Required nodes.
+            input_routes: Initial segmented routes.
+            dm: Distance matrix.
+            wastes: Bin waste amounts.
+            capacity: Vehicle capacity.
+            cost_per_km: Distance cost coefficient.
+            revenue_kg: Revenue coefficient.
+            mandatory_nodes: Required nodes.
             kwargs: Forwarded context, including 'bp_time_limit' and 'bp_use_cspy'.
 
         Returns:
@@ -527,7 +527,7 @@ class BranchAndPriceRouteImprover(IRouteImprovement):
         """Tertiary fallback to pool-restricted set-partitioning.
 
         Args:
-            tour (List[int]): Current tour to be refined.
+            tour: Current tour to be refined.
             kwargs: Forwarded context for SetPartitioningRouteImprover.
 
         Returns:

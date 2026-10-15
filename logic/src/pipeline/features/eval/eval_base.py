@@ -29,10 +29,10 @@ class EvalBase(ABC):
         """Initialize Class.
 
         Args:
-            env (Any): Description of env.
-            progress (bool): Description of progress.
-            device (str | torch.device): Description of device.
-            kwargs (Any): Description of kwargs.
+            env: Description of env.
+            progress: Description of progress.
+            device: Description of device.
+            kwargs: Description of kwargs.
         """
         self.env = env
         self.progress = progress

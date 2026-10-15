@@ -52,7 +52,7 @@ class JointGreedyPolicy(BaseJointPolicy):
         Initialize the JGO policy.
 
         Args:
-            config (Optional[Union[JointGreedyConfig, Dict[str, Any]]]): Configuration source.
+            config: Configuration source.
         """
         super().__init__(config)
 
@@ -80,7 +80,7 @@ class JointGreedyPolicy(BaseJointPolicy):
         """Run multi-start randomized greedy construction.
 
         Args:
-            context (JointSelectionConstructionContext): The search and problem context.
+            context: The search and problem context.
 
         Returns:
             Tuple[List[int], List[List[int]], float, float]:
@@ -119,8 +119,8 @@ class JointGreedyPolicy(BaseJointPolicy):
         """One randomized greedy construction pass.
 
         Args:
-            context (JointSelectionConstructionContext): The problem data.
-            params (JointGreedyConfig): Solver configurations.
+            context: The problem data.
+            params: Solver configurations.
 
         Returns:
             Tuple[List[int], List[List[int]], float, float]:

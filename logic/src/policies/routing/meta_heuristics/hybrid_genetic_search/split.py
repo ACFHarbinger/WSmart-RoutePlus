@@ -78,8 +78,6 @@ class LinearSplit:
             max_vehicles: Maximum number of vehicles allowed (0 for unlimited).
             mandatory_nodes: List of local node indices that MUST be visited.
 
-        Returns:
-            None.
         """
         self.dist_matrix = np.array(dist_matrix)
         self.wastes = wastes

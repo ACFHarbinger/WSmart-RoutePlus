@@ -23,22 +23,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Codex review: release closure retains ancestor initializers and deferred runtime imports; multiline lazy maps are recognized. Builds reject populated/repository destinations instead of deleting them. Added isolated closure and destination tests.
 
 ### Release manifest and package build (`2026-10-15`)
+- Codex review: mirrored release-builder ancestor/deferred-import/lazy-map fixes and non-destructive destination checks with isolated tests.
+
+### WP-13 follow-ups (`2026-10-15`)
+
+- `logic/release.yaml`: `logic.cloud`, `logic.benchmark` and `logic.test` added to `excluded_packages`. The `sync_drive`/`benchmark`/`test_suite` CLI jobs reach them only through deferred imports (`drive_parser.py`, `parser_dispatch.py`, `jobs/ops_runner.py`), and the three packages live outside the staged tops (`src`/`configs`/`controllers`), so they can never ship with the package. Under the reviewed closure semantics (deferred imports are followed) the build fails staged verification through `test_cloud_sync.py`; under the previous semantics they were kept-but-unstaged, a silent defect — the release CLI's `test_suite`/`sync_drive`/`benchmark` jobs would have crashed at runtime. The exclusions declare them opt-out paths (unavailable in the release, matching the builder's documented deferred-import semantics); the curated release test files (P-06) are unaffected, and the staged `logic/test/__init__.py` ships as a package marker with the runner import stripped. Check/build/smoke green on the WP-13 tree under both closure semantics; the verified HEAD release-test selection is preserved.
+- `tools/trim_docstrings.py`: the walk now skips the pinned `wsmart_bin_analysis` submodule — its content belongs to its own repository and cannot ship through a superproject commit, so `--apply` would otherwise leave the submodule dirty on every run (the first pass had trimmed 14 of its files; those uncommitted trims were reverted from the worktree copy).
+
+### Docs and cleanup (`2026-10-15`, WP-13)
 
 #### Added
 
-- `logic/release.yaml`: the 1.0.0 release manifest, the single source of truth for the released package. It lists the released problems (PTP, CPTP, TCPTP, CVRP), the released registry keys per stage (owner ruling Q-1/Q-2), the infrastructure seeds whose import closure ships (simulator, features, REINFORCE + imitation trainers, AM-GAT, the four envs, the profitable-NN expert, vectorised packing, the CLI), and the excluded packages (both HPO stacks and `rl.meta`, Q-6/Q-12a). `wsmart_bin_analysis` is documented as pending its own package (RQ-grok-7): `bins/base.py` still imports `GridBase` from it, so excluding it today fails the build loudly.
-- `logic/package/build_release.py`: builds the package from `main` per the manifest (Q-10a). `--check` validates every manifest key against the generated registry manifests; `--build` stages a pruned copy (filtered registry manifests, released YAMLs only, collection-validated release test set, generated release pyproject and `docs/release.md` index) and verifies that no module-level import or manifest target escapes the tree; `--smoke` runs the torch-free classical smoke (released keys resolve and instantiate, unreleased keys do not, `torch` never enters `sys.modules`).
-- Release CI (`.github/workflows/package-and-build.yml` and its `.gitea`/`.forgejo` mirrors, `.gitlab-ci.yml`): manifest check, release build, staged-tree smoke, and a torch-free **installed-package** smoke (`pip install --no-deps` into a fresh venv without torch, Q-16a). The release artifact is uploaded.
+- `tools/trim_docstrings.py` (P-03): the mechanical trimmer for the generated docstring boilerplate — `Returns:`/`Yields:` sections that only document None, `Example:` sections that only `>>> import` the module, and `Args:` entries restating the signature's type hints (`name (Type): ...` becomes `name: ...`). One pass over `logic/src`: 333 files trimmed, 589 lines removed, zero parse failures, idempotent on rerun. `--check` is CI-able.
+- `tools/gen_api_docs.py` (Q-22): generates `docs/api/` — one deterministic markdown page per package (`configs`, `constants`, `data`, `enums`, `envs`, `interfaces`, `models`, `pipeline`, `policies`, `utils`, `controllers`, …) listing every public module with its docstring summary and public class/function inventory. The output is sorted, so a diff against the committed copy detects drift.
+- `docs/api/` (12 package pages + index): the generated API reference. The hand-written `docs/modules/*.md` keep their narrative but carry a banner marking them as not the source of truth (Q-22a: keep the hand-written guides short, keep `docs/moon/` internal).
 
 #### Changed
 
-- **Breaking:** `logic/pyproject.toml` base dependencies are torch-free; the training stack (torch, torchvision, torchrl, tensordict, torch-geometric, torch-scatter, torch-sparse, pytorch-lightning, wandb) moves to the `neural` extra: `pip install wsmart-route[neural]` (Q-16a). CI syncs `--all-extras`; local training environments use `uv sync --extra neural` (or `--all-extras`). `uv.lock` regenerated.
-- **Breaking (import-time only):** eager imports that pulled unreleased or out-of-scope code became lazy, with no API change (all names still resolve; they load on first access): `pipeline/rl/core/__init__.py` and `pipeline/rl/__init__.py` (RL algorithms and the meta stack), `policies/vector/__init__.py` (model policies and vectorised solvers), `models/core/__init__.py`, `models/subnets/{encoders,decoders,modules}/__init__.py` (P-25), `utils/model/loader.py` (encoder factories), `pipeline/rl/core/imitation.py` (expert policies load by config class name), `pipeline/features/train/model_factory/{builder,imitation}.py`, and `controllers/cli/drive_parser.py` (cloud import deferred). `pipeline/features/train/__init__.py` resolves `run_hpo` lazily, so importing the training package no longer requires the HPO stack.
-- The release build drops `from .hpo import run_hpo` from the staged `features/train/__init__.py` surface: HPO is not in 1.0.0 (Q-6), and accessing `run_hpo` in the released package raises `ModuleNotFoundError`.
+- **Breaking (doc rule, Q-7b):** both docstring checkers now enforce the relaxed rule instead of the batch-generated style. `check_docstrings.py`: public modules/classes/functions need a docstring; private helpers (leading underscore) and `__init__` (covered by the class docstring) need nothing. `check_google_style.py`: module `Attributes:`/`Example:` and class `Attributes:` sections are optional; an `Args:` section is optional and must not restate type hints; a `Returns:`/`Yields:` section that documents `None` is a defect. The remaining findings under the new rule are pre-existing content debt (127 public functions without docstrings, mostly `enums/registry.py`, `envs/tasks/espprc.py`, and the `wsmart_bin_analysis` submodule), not new regressions — recorded for the per-package review.
+- `logic/release.yaml` (WP-02 follow-up): the env seeds follow the WP-07 layout — `envs.routing.*` is gone; the released problems sit on `logic.src.envs.tasks.{ptp,cptp,tcptp,cvrp}` plus the `envs.tasks.espprc` base/generator (P-23, Q-3a), and `envs/generators/` is unreleased-only. `logic.controllers` seeds are the CLI's three modules. Pending notes: add `models.common.policy_contract` when WP-10 integrates (the P-24 contract), and activate the `wsmart_bin_analysis` exclusion when WP-08's `packages/` move lands. The builder also learned WP-03's `pk_*.yaml` packing-config names and the `packing/base/registry.py` rename; `--check`, `--build` (941 files, closure verified) and the torch-free `--smoke` all pass on the merged WP-07 chain.
+- `rl4co/` clone deleted from the repository root (Q-21): untracked reference material, 172 MB. WSmart-Route stays an independent fork; nothing in the tree referenced it.
 
 #### Removed
 
-- **Breaking:** the acronym-driven export flow is retired (Q-10a): `ci/packager.py`, `ci/analyze_deps.py`, `ci/export_config.json`, `ci/workflow_config.json`, `ci/export_profiles/` (the `minimal-ptp` patch no longer applied to `main`), `logic/package/prune_codebase.py`, the 16 `logic/package/remove_*.py` scripts, `apply_export_profile.py`, `make_export_profile.py`, `cleanup_helper.py`, and their two tests. The `algo-export*` branch trigger is gone from all CI mirrors. The export tag `export/minimal-20260926` and the `wsr-package` worktree remain for history; the integrator deletes them.
+- 589 docstring boilerplate lines across 333 files (the trimmer's first pass).
 
 #### Migration
 
@@ -105,6 +113,7 @@ Codex P-21/P-42 objectives and KPI primitives (`envs/tasks/common/objectives.py`
 - **P-24:** under teacher forcing the Attention Model returned `entropy` as the integer 0, and a batch already done at reset returned an integer `log_likelihood`; both are now `[batch]` zero tensors. The released checkpoints (Rio Maior 100 emp, Figueira da Foz 350 gamma3) give bitwise-identical greedy actions, rewards and log-likelihoods before and after this package.
 - **P-50 (batched expert):** the profitable nearest-neighbour expert (`policies/vector/profitable_nearest_neighbour.py`) solves the whole batch at once with NumPy instead of one instance at a time in Python. Its tours are identical to the original's: the nearest-neighbour tie-break, the first-improvement 2-opt order and the float32/float64 arithmetic are kept. Checked on 4,000 synthetic instances and on the Rio Maior 100/170 and Figueira da Foz 350 road matrices (emp and gamma3, 1, 3 and 7 days of waste), with no difference. Per instance, 170 gamma3 goes from 66 ms to 3.6 ms and 350 gamma3 from 280 ms to 15 ms. `test_profitable_nearest_neighbour_parity.py` keeps the original as the reference. The per-instance `_solve` and `_two_opt` methods are replaced by `solve(dms, wastes, revenue, cost)`; no migration is needed outside the expert.
 
+### Scripted migration of the unreleased policies (`2026-10-15`)
 ### Envs on the ESPPRC base (WP-07, `2026-10-15`)
 
 #### Added
@@ -231,6 +240,28 @@ Codex P-21/P-42 objectives and KPI primitives (`envs/tasks/common/objectives.py`
 #### Added
 
 - `logic/test/unit/policies/test_structured_policy_load.py` covers structured ALNS load and unknown-key failure.
+### Release manifest and package build (`2026-10-15`)
+
+#### Added
+
+- `logic/release.yaml`: the 1.0.0 release manifest, the single source of truth for the released package. It lists the released problems (PTP, CPTP, TCPTP, CVRP), the released registry keys per stage (owner ruling Q-1/Q-2), the infrastructure seeds whose import closure ships (simulator, features, REINFORCE + imitation trainers, AM-GAT, the four envs, the profitable-NN expert, vectorised packing, the CLI), and the excluded packages (both HPO stacks and `rl.meta`, Q-6/Q-12a). `wsmart_bin_analysis` is documented as pending its own package (RQ-grok-7): `bins/base.py` still imports `GridBase` from it, so excluding it today fails the build loudly.
+- `logic/package/build_release.py`: builds the package from `main` per the manifest (Q-10a). `--check` validates every manifest key against the generated registry manifests; `--build` stages a pruned copy (filtered registry manifests, released YAMLs only, collection-validated release test set, generated release pyproject and `docs/release.md` index) and verifies that no module-level import or manifest target escapes the tree; `--smoke` runs the torch-free classical smoke (released keys resolve and instantiate, unreleased keys do not, `torch` never enters `sys.modules`).
+- Release CI (`.github/workflows/package-and-build.yml` and its `.gitea`/`.forgejo` mirrors, `.gitlab-ci.yml`): manifest check, release build, staged-tree smoke, and a torch-free **installed-package** smoke (`pip install --no-deps` into a fresh venv without torch, Q-16a). The release artifact is uploaded.
+
+#### Changed
+
+- **Breaking:** `logic/pyproject.toml` base dependencies are torch-free; the training stack (torch, torchvision, torchrl, tensordict, torch-geometric, torch-scatter, torch-sparse, pytorch-lightning, wandb) moves to the `neural` extra: `pip install wsmart-route[neural]` (Q-16a). CI syncs `--all-extras`; local training environments use `uv sync --extra neural` (or `--all-extras`). `uv.lock` regenerated.
+- **Breaking (import-time only):** eager imports that pulled unreleased or out-of-scope code became lazy, with no API change (all names still resolve; they load on first access): `pipeline/rl/core/__init__.py` and `pipeline/rl/__init__.py` (RL algorithms and the meta stack), `policies/vector/__init__.py` (model policies and vectorised solvers), `models/core/__init__.py`, `models/subnets/{encoders,decoders,modules}/__init__.py` (P-25), `utils/model/loader.py` (encoder factories), `pipeline/rl/core/imitation.py` (expert policies load by config class name), `pipeline/features/train/model_factory/{builder,imitation}.py`, and `controllers/cli/drive_parser.py` (cloud import deferred). `pipeline/features/train/__init__.py` resolves `run_hpo` lazily, so importing the training package no longer requires the HPO stack.
+- The release build drops `from .hpo import run_hpo` from the staged `features/train/__init__.py` surface: HPO is not in 1.0.0 (Q-6), and accessing `run_hpo` in the released package raises `ModuleNotFoundError`.
+
+#### Removed
+
+- **Breaking:** the acronym-driven export flow is retired (Q-10a): `ci/packager.py`, `ci/analyze_deps.py`, `ci/export_config.json`, `ci/workflow_config.json`, `ci/export_profiles/` (the `minimal-ptp` patch no longer applied to `main`), `logic/package/prune_codebase.py`, the 16 `logic/package/remove_*.py` scripts, `apply_export_profile.py`, `make_export_profile.py`, `cleanup_helper.py`, and their two tests. The `algo-export*` branch trigger is gone from all CI mirrors. The export tag `export/minimal-20260926` and the `wsr-package` worktree remain for history; the integrator deletes them.
+
+#### Migration
+
+- Release scope questions go in `logic/release.yaml`, not in CI job inputs. Components are addressed by registry key; the BB/BC/BPC acronyms live only in the Studio app's display map (`app/src/gen/config/simulation_metadata.json`).
+- The release test set is written to `logic/test/release_tests.txt` (collection-validated) and `release_tests.excluded.txt` (excluded with reasons) inside the built tree. Running it as a CI gate becomes possible once the P-06 test pruning lands: some kept tests assert the dev tree's full registry, which the filtered release registry intentionally violates.
 
 ### Registry, lazy imports and facades (`2026-10-15`)
 

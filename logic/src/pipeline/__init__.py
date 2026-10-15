@@ -11,7 +11,4 @@ Attributes:
     rl: Sub-package for RL algorithms, baselines, and HPO.
     simulations: Sub-package for the simulation engine and state machine.
 
-Example:
-    >>> from logic.src.pipeline.features.eval import run_evaluate_model
-    >>> from logic.src.pipeline.simulations.simulator import Simulator
 """

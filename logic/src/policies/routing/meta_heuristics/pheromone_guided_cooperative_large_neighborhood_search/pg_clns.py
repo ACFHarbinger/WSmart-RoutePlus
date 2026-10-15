@@ -226,8 +226,6 @@ class PGCLNSSolver(PolicyVizMixin):
             routes: List of routes.
             cost: Total routing distance.
 
-        Returns:
-            None
         """
         if not routes or cost <= 0:
             return

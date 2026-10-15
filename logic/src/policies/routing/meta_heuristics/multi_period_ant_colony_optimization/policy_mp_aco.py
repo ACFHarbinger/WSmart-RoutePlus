@@ -56,8 +56,6 @@ class MultiPeriodACOPolicy(BaseMultiPeriodRoutingPolicy):
         Args:
             config: Optional configuration dictionary or Hydra config.
 
-        Returns:
-            None.
         """
         super().__init__(config)
         self.params = self._effective_config(config)
@@ -151,8 +149,6 @@ class MultiPeriodACOPolicy(BaseMultiPeriodRoutingPolicy):
             best_prof: The profit of the best plan.
             problem: The problem context.
 
-        Returns:
-            None.
         """
         # evaporation
         pheromones *= 1.0 - self.rho

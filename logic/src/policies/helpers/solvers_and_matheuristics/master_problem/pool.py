@@ -62,8 +62,6 @@ class GlobalCutPool:
         Args:
             None
 
-        Returns:
-            None
         """
         # RCC: maps node_set -> original rhs (2*ceil(demand/Q))
         self.rcc_cuts: Dict[FrozenSet[int], float] = {}
@@ -93,8 +91,6 @@ class GlobalCutPool:
             cut_type: Type of cut ("rcc", "sri", "sec_2.1", "edge_clique", "lci").
             data: Cut-specific data (node-sets, coefficients, etc.).
 
-        Returns:
-            None
         """
 
         if cut_type == "rcc":

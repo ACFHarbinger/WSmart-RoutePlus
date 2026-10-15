@@ -23,8 +23,8 @@ def torch_lexsort(keys: tuple[torch.Tensor, ...], dim: int = -1) -> torch.Tensor
     Falls back to Numpy for CPU tensors, uses CUDA optimization if available.
 
     Args:
-        keys (tuple/list of Tensor): Sequence of keys to sort by (primary key last).
-        dim (int, optional): Dimension along which to sort. Defaults to -1.
+        keys: Sequence of keys to sort by (primary key last).
+        dim: Dimension along which to sort. Defaults to -1.
 
     Returns:
         Tensor: Indices that sort the keys.
@@ -44,8 +44,8 @@ def _torch_lexsort_cuda(keys: tuple[torch.Tensor, ...], dim: int = -1) -> torch.
     https://github.com/pytorch/pytorch/blob/695fd981924bd805704ecb5ccd67de17c56d7308/aten/src/THC/generic/THCTensorSort.cu#L330
 
     Args:
-        keys (tuple/list of Tensor): Sequence of keys to sort by (primary key last).
-        dim (int, optional): Dimension along which to sort. Defaults to -1.
+        keys: Sequence of keys to sort by (primary key last).
+        dim: Dimension along which to sort. Defaults to -1.
 
     Returns:
         Tensor: Indices that sort the keys.

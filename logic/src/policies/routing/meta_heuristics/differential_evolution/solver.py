@@ -88,8 +88,6 @@ class DESolver:
             params: Algorithm-specific parameters (F, CR, pop_size).
             mandatory_nodes: Nodes that must be visited.
 
-        Returns:
-            None.
         """
         self.n_nodes = len(dist_matrix) - 1
         self.nodes = list(range(1, self.n_nodes + 1))

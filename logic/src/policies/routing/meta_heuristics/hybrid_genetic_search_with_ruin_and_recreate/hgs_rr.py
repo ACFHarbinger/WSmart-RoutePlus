@@ -79,8 +79,6 @@ class HGSRRSolver:
             params: HGS-RR parameters.
             mandatory_nodes: List of local node indices that MUST be visited.
 
-        Returns:
-            None.
         """
         self.d = dist_matrix
         self.wastes = wastes

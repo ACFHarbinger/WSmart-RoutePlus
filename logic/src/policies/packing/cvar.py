@@ -44,7 +44,7 @@ class CVaRSelection(IPackingAlgorithm):
         Select bins where tail overflow risk exceeds the threshold.
 
         Args:
-            context (PackingContext): The selection context.
+            context: The selection context.
 
         Returns:
             Tuple[List[int], SearchContext]: Selected bin IDs and search context.

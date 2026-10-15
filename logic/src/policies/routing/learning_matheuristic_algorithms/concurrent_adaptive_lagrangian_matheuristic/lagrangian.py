@@ -139,9 +139,9 @@ class LagrangianCoordinator:
         """Initializes the Lagrangian coordinator.
 
         Args:
-            state (LagrangianState): Shared state object.
-            tracker (DualBoundTracker): The dual bound tracking and update engine.
-            lag_params (LagrangianParams): Hyperparameters for the matheuristic.
+            state: Shared state object.
+            tracker: The dual bound tracking and update engine.
+            lag_params: Hyperparameters for the matheuristic.
         """
         self.state = state
         self.tracker = tracker

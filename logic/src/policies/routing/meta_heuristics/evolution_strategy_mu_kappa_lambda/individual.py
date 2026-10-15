@@ -44,8 +44,6 @@ class Individual:
             age: Starting age (default 1).
             mutation_strength: Initial mutation intensity (discrete σ).
 
-        Returns:
-            None.
         """
         self.routes = copy.deepcopy(routes)
         self.fitness = fitness

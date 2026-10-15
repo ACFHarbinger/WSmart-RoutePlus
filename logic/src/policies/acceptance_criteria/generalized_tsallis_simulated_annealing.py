@@ -66,15 +66,15 @@ class GeneralizedTsallisSA(IAcceptanceCriterion):
         """Initialize the Generalized Tsallis SA criterion.
 
         Args:
-            q (float): Non-extensivity parameter. Must be in (1, 3). Defaults to 1.5.
-            p0 (float): Target probability for accepting a 1-sigma worsening move at
+            q: Non-extensivity parameter. Must be in (1, 3). Defaults to 1.5.
+            p0: Target probability for accepting a 1-sigma worsening move at
                 T0. Defaults to 0.5.
-            window_size (int): Moving window size for sigma calculation.
+            window_size: Moving window size for sigma calculation.
                 Defaults to 100.
-            alpha (float): Cooling rate factor. Defaults to 0.95.
-            min_temp (float): Minimum allowable temperature. Defaults to 1e-6.
-            seed (Optional[int]): Random seed. Defaults to None.
-            maximization (bool): Whether the problem is maximization. Defaults to False.
+            alpha: Cooling rate factor. Defaults to 0.95.
+            min_temp: Minimum allowable temperature. Defaults to 1e-6.
+            seed: Random seed. Defaults to None.
+            maximization: Whether the problem is maximization. Defaults to False.
         """
         if not (1.0 < q < 3.0):
             raise ValueError("Parameter q must be in the range (1, 3) for Tsallis SA.")
@@ -95,7 +95,7 @@ class GeneralizedTsallisSA(IAcceptanceCriterion):
         """Initialize the criterion state.
 
         Args:
-            initial_objective (ObjectiveValue): The initial solution's objective.
+            initial_objective: The initial solution's objective.
         """
         initial_objective = cast(float, initial_objective)
         pass
@@ -104,7 +104,7 @@ class GeneralizedTsallisSA(IAcceptanceCriterion):
         """Update sigma estimation and determine T0 if necessary.
 
         Args:
-            delta (float): Difference in objective values.
+            delta: Difference in objective values.
         """
         self.deltas.append(abs(delta))
         if len(self.deltas) >= 5 and self.temp == 0.0:
@@ -122,9 +122,9 @@ class GeneralizedTsallisSA(IAcceptanceCriterion):
         """Determine acceptance based on heavy-tailed Tsallis probability.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            kwargs: Additional context.
 
         Returns:
             Tuple[bool, AcceptanceMetrics]: A tuple containing:
@@ -188,10 +188,10 @@ class GeneralizedTsallisSA(IAcceptanceCriterion):
         """Update stats and apply the cooling schedule.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            accepted (bool): Whether the move was accepted.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            accepted: Whether the move was accepted.
+            kwargs: Additional context.
         """
         current_obj = cast(float, current_obj)
         candidate_obj = cast(float, candidate_obj)

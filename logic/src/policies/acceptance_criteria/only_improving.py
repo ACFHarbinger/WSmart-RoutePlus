@@ -37,7 +37,7 @@ class OnlyImproving(IAcceptanceCriterion):
         """Initialize the criterion state.
 
         Args:
-            initial_objective (ObjectiveValue): The initial solution's objective.
+            initial_objective: The initial solution's objective.
         """
         initial_objective = cast(float, initial_objective)
         pass
@@ -48,9 +48,9 @@ class OnlyImproving(IAcceptanceCriterion):
         """Accept only if the candidate objective is strictly greater.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            kwargs: Additional context.
 
         Returns:
             Tuple[bool, AcceptanceMetrics]: A tuple containing:
@@ -66,10 +66,10 @@ class OnlyImproving(IAcceptanceCriterion):
         """No-op update step.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            accepted (bool): Whether the move was accepted.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            accepted: Whether the move was accepted.
+            kwargs: Additional context.
         """
         current_obj = cast(float, current_obj)
         candidate_obj = cast(float, candidate_obj)

@@ -63,8 +63,6 @@ class MASolver:
             params: Configuration objects containing hyper-parameters.
             mandatory_nodes: Indices of nodes that MUST be visited.
 
-        Returns:
-            None.
         """
         self.dist_matrix = dist_matrix
         self.wastes = wastes

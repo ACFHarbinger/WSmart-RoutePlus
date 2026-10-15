@@ -67,13 +67,13 @@ class SCASolver:
         Initialize the Sine Cosine Algorithm solver.
 
         Args:
-            dist_matrix (np.ndarray): Symmetric distance matrix.
-            wastes (Dict[int, float]): Mapping of bin IDs to waste quantities.
-            capacity (float): Maximum vehicle collection capacity.
-            R (float): Revenue per kg of waste.
-            C (float): Cost per kg traveled.
-            params (SCAConfig): Algorithm-specific parameters.
-            mandatory_nodes (Optional[List[int]]): Nodes that must be visited.
+            dist_matrix: Symmetric distance matrix.
+            wastes: Mapping of bin IDs to waste quantities.
+            capacity: Maximum vehicle collection capacity.
+            R: Revenue per kg of waste.
+            C: Cost per kg traveled.
+            params: Algorithm-specific parameters.
+            mandatory_nodes: Nodes that must be visited.
         """
         self.dist_matrix = dist_matrix
         self.wastes = wastes
@@ -187,7 +187,7 @@ class SCASolver:
         Decode a continuous position vector to a discrete routing solution.
 
         Args:
-            x (np.ndarray): Continuous position vector.
+            x: Continuous position vector.
 
         Returns:
             List[List[int]]: Decoded routing solution.
@@ -254,7 +254,7 @@ class SCASolver:
         """Net profit for a set of routes.
 
         Args:
-            routes (List[List[int]]): List of routes.
+            routes: List of routes.
 
         Returns:
             float: Net profit.
@@ -268,7 +268,7 @@ class SCASolver:
         """Total routing distance.
 
         Args:
-            routes (List[List[int]]): List of routes.
+            routes: List of routes.
 
         Returns:
             float: Total routing distance.

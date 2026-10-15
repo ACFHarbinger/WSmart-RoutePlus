@@ -78,16 +78,16 @@ class SetPartitioningPolishRouteImprover(IRouteImprovement):
         """Apply Set Partitioning polishing to the tour.
 
         Args:
-            tour (List[int]): Initial tour sequence.
+            tour: Initial tour sequence.
             kwargs: Context containing:
-                distance_matrix (np.ndarray | torch.Tensor): Distance lookup.
-                route_pool (List[List[int]]): List of candidate routes to select from.
-                sp_time_limit (float): Seconds for Gurobi solve (default 60.0).
-                wastes (Dict[int, float]): Bin mass dictionary.
-                capacity (float): Maximum vehicle capacity.
-                revenue_kg (float): Waste profit coefficient.
-                cost_per_km (float): Distance cost coefficient.
-                mandatory_nodes (List[int]): List of required visitor IDs.
+                distance_matrix: Distance lookup.
+                route_pool: List of candidate routes to select from.
+                sp_time_limit: Seconds for Gurobi solve (default 60.0).
+                wastes: Bin mass dictionary.
+                capacity: Maximum vehicle capacity.
+                revenue_kg: Waste profit coefficient.
+                cost_per_km: Distance cost coefficient.
+                mandatory_nodes: List of required visitor IDs.
 
         Returns:
             Tuple[List[int], ImprovementMetrics]: Refined tour and metrics.

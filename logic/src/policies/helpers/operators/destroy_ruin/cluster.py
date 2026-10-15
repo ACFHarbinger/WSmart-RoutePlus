@@ -165,11 +165,11 @@ def cluster_removal(  # noqa: C901
     4. Repeat step 3 until ``q`` nodes have been removed.
 
     Args:
-        routes (List[List[int]]): Current routes.
-        n_remove (int): Target number of nodes to remove.
-        dist_matrix (np.ndarray): Distance/cost matrix with depot at index 0.
-        nodes (List[int]): All node IDs (unused; retained for API compatibility).
-        rng (Optional[Random]): Random number generator.
+        routes: Current routes.
+        n_remove: Target number of nodes to remove.
+        dist_matrix: Distance/cost matrix with depot at index 0.
+        nodes: All node IDs (unused; retained for API compatibility).
+        rng: Random number generator.
 
     Returns:
         Tuple[List[List[int]], List[int]]: Partial routes and list of removed node IDs.
@@ -252,13 +252,13 @@ def cluster_profit_removal(
     unprofitability for the search to re-evaluate.
 
     Args:
-        routes (List[List[int]]): Current routes.
-        n_remove (int): Number of nodes to remove.
-        dist_matrix (np.ndarray): Distance matrix.
-        wastes (Dict[int, float]): Waste/profit values for each node.
-        R (float): Revenue per unit waste.
-        C (float): Cost per unit distance.
-        rng (Optional[Random]): Random number generator.
+        routes: Current routes.
+        n_remove: Number of nodes to remove.
+        dist_matrix: Distance matrix.
+        wastes: Waste/profit values for each node.
+        R: Revenue per unit waste.
+        C: Cost per unit distance.
+        rng: Random number generator.
 
     Returns:
         Tuple[List[List[int]], List[int]]: Partial routes and list of removed node IDs.

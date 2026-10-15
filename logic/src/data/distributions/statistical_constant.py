@@ -29,7 +29,7 @@ class Constant(BaseDistribution):
         """Initialize Class.
 
         Args:
-            value (Union[float, torch.Tensor]): Constant value to return.
+            value: Constant value to return.
         """
         self.value = value
 
@@ -38,7 +38,7 @@ class Constant(BaseDistribution):
 
         Args:
             size: Sampling shape (e.g., (batch_size, num_loc, components))
-            generator (Optional[torch.Generator], optional): Description of generator.
+            generator: Description of generator.
 
         Returns:
             torch.Tensor: Constant values

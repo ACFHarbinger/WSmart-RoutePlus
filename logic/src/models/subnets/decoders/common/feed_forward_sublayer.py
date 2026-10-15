@@ -88,8 +88,8 @@ class FeedForwardSubLayer(nn.Module):
         """Forward pass through feed-forward sublayer.
 
         Args:
-            h (torch.Tensor): Input tensor of shape (batch_size, seq_len, embed_dim).
-            mask (Optional[torch.Tensor]): Mask tensor (currently unused).
+            h: Input tensor of shape (batch_size, seq_len, embed_dim).
+            mask: Mask tensor (currently unused).
 
         Returns:
             torch.Tensor: Output tensor of shape (batch_size, seq_len, embed_dim).

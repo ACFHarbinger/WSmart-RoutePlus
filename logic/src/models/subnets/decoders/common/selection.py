@@ -34,12 +34,12 @@ def select_action(
     to visit based on the attention-derived probability distribution over nodes.
 
     Args:
-        probs (torch.Tensor): Probability distribution over actions/nodes.
+        probs: Probability distribution over actions/nodes.
             Shape: (batch_size, num_nodes) or (batch_size, num_actions).
-        mask (Optional[torch.Tensor]): Boolean mask indicating valid actions.
+        mask: Boolean mask indicating valid actions.
             Shape: (batch_size, num_nodes). True = valid, False = invalid.
-        strategy (str): Selection strategy: "greedy" or "sampling".
-        generator (Optional[torch.Generator]): Generator for reproducible sampling.
+        strategy: Selection strategy: "greedy" or "sampling".
+        generator: Generator for reproducible sampling.
 
     Returns:
         torch.Tensor: Selected action indices of shape (batch_size,).
@@ -73,10 +73,10 @@ def select_action_log_prob(
     instead of probabilities. Useful when working with log-softmax outputs.
 
     Args:
-        log_probs (torch.Tensor): Log-probability distribution over actions.
+        log_probs: Log-probability distribution over actions.
             Shape: (batch_size, num_nodes).
-        mask (Optional[torch.Tensor]): Boolean mask indicating valid actions.
-        strategy (str): Selection strategy: "greedy" or "sampling".
+        mask: Boolean mask indicating valid actions.
+        strategy: Selection strategy: "greedy" or "sampling".
 
     Returns:
         torch.Tensor: Selected action indices of shape (batch_size,).

@@ -39,7 +39,7 @@ def compute_eoq_thresholds(context: PackingContext) -> np.ndarray:
     when required parameters are missing or non-positive.
 
     Args:
-        context (PackingContext): The selection context containing bin data.
+        context: The selection context containing bin data.
 
     Returns:
         np.ndarray: Array of per-bin EOQ thresholds.
@@ -89,7 +89,7 @@ def resolve_trigger_threshold(context: PackingContext) -> np.ndarray:
     ratio 0.70.
 
     Args:
-        context (PackingContext): The selection context.
+        context: The selection context.
 
     Returns:
         np.ndarray: Boolean mask where True indicates a bin meets the trigger.

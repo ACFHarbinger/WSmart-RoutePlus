@@ -7,8 +7,6 @@ Attributes:
     NARGNN: REINFORCE training wrapper for heatmap models.
     NARGNNPolicy: Heatmap prediction and decoding policy.
 
-Example:
-    >>> from logic.src.models.core.nargnn import NARGNNPolicy
 """
 
 from .model import NARGNN as NARGNN

@@ -32,8 +32,8 @@ def create_points(data, bins_coordinates):
     Create a mapping of bin IDs to their coordinates.
 
     Args:
-        data (pd.DataFrame): Bin metadata containing '#bin'.
-        bins_coordinates (List[Tuple[float, float]]): List of coordinate pairs.
+        data: Bin metadata containing '#bin'.
+        bins_coordinates: List of coordinate pairs.
 
     Returns:
         Dict[int, Tuple[float, float]]: Mapping from bin ID to coordinates.
@@ -54,14 +54,12 @@ def _find_crossed_arcs(route, points, route_idx, cache):
     """Identify intersecting arcs within a route and store them in the cache.
 
     Args:
-        route (List[int]): The sequence of node IDs in the route.
-        points (List[List[float]]): Mapping from node ID to [lng, lat] coordinates.
-        route_idx (int): The index of the route being processed.
-        cache (Dict[int, List[List[List[int]]]]): A dictionary to store found
+        route: The sequence of node IDs in the route.
+        points: Mapping from node ID to [lng, lat] coordinates.
+        route_idx: The index of the route being processed.
+        cache: A dictionary to store found
             intersecting arc pairs for each route index.
 
-    Returns:
-        None
     """
     arc_pair = []
     arc1 = []
@@ -92,8 +90,8 @@ def _remove_invalid_crossings(crossings, points):
     """Filter out invalid crossings (depot-connected or sharing endpoints).
 
     Args:
-        crossings (List[List[List[int]]]): List of arc pairs that intersect.
-        points (List[List[float]]): Mapping from node ID to [lng, lat] coordinates.
+        crossings: List of arc pairs that intersect.
+        points: Mapping from node ID to [lng, lat] coordinates.
 
     Returns:
         List[List[List[int]]]: The filtered list of valid geometric crossings
@@ -146,15 +144,15 @@ def uncross_arcs_in_routes(
     Uses geometric LineString intersections to identify crossed arcs.
 
     Args:
-        previous_solution (List[List[int]]): Solution to improve.
-        p_vehicle (float): Vehicle penalty.
-        p_load (float): Load penalty.
-        p_route_difference (float): Difference penalty.
-        p_shift (float): Shift penalty.
-        data (pd.DataFrame): Bin weights data.
-        points (Dict): Bin coordinates.
-        distance_matrix (np.ndarray): Distance matrix.
-        values (Dict): Parameter dictionary.
+        previous_solution: Solution to improve.
+        p_vehicle: Vehicle penalty.
+        p_load: Load penalty.
+        p_route_difference: Difference penalty.
+        p_shift: Shift penalty.
+        data: Bin weights data.
+        points: Bin coordinates.
+        distance_matrix: Distance matrix.
+        values: Parameter dictionary.
 
     Returns:
         List[List[int]]: Improved routing solution.
@@ -233,9 +231,9 @@ def rearrange_part_route(
     Select a random portion of a route and reorder it using a greedy Nearest Neighbor heuristic.
 
     Args:
-        routes_list (List[List[int]]): Current routing solution.
-        distance_matrix (np.ndarray): Distance matrix.
-        rng (random.Random): Random number generator.
+        routes_list: Current routing solution.
+        distance_matrix: Distance matrix.
+        rng: Random number generator.
 
     Returns:
         List[List[int]]: Routing solution with partially reordered route.
@@ -290,8 +288,8 @@ def organize_route(bins, distance_matrix):
     Starts from the first bin (depot) and iteratively adds the closest unvisited bin.
 
     Args:
-        bins (List[int]): Set of bin IDs to sequence.
-        distance_matrix (np.ndarray): Distance matrix.
+        bins: Set of bin IDs to sequence.
+        distance_matrix: Distance matrix.
 
     Returns:
         List[int]: Sequenced route starting and ending at the depot.
@@ -332,9 +330,9 @@ def two_opt_uncross_arc(route, distance_matrix, id_to_index):
     Apply 2-opt local search to a single route to remove arc crossings.
 
     Args:
-        route (List[int]): Node sequence.
-        distance_matrix (np.ndarray): Distance matrix.
-        id_to_index (Dict[int, int]): Node ID to matrix index mapping.
+        route: Node sequence.
+        distance_matrix: Distance matrix.
+        id_to_index: Node ID to matrix index mapping.
 
     Returns:
         List[int]: Optimized route.
@@ -362,9 +360,9 @@ def uncross_arcs_in_sans_routes(routes, id_to_index, distance_matrix):
     Apply 2-opt uncrossing to all routes in a solution.
 
     Args:
-        routes (List[List[int]]): Solution to optimize.
-        id_to_index (Dict[int, int]): Node mapping.
-        distance_matrix (np.ndarray): Distance matrix.
+        routes: Solution to optimize.
+        id_to_index: Node mapping.
+        distance_matrix: Distance matrix.
 
     Returns:
         List[List[int]]: Improved solution.

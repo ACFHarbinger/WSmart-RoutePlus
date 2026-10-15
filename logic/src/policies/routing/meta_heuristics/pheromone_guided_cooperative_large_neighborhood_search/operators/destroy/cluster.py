@@ -31,11 +31,11 @@ def cluster_removal(
     Remove a cluster of nodes based on spatial proximity (Shaw Removal variant).
 
     Args:
-        routes (List[List[int]]): Current routes.
-        n_remove (int): Number of nodes to remove.
-        dist_matrix (np.ndarray): Distance matrix.
-        nodes (List[int]): List of all node IDs.
-        rng (Optional[Random]): Random number generator.
+        routes: Current routes.
+        n_remove: Number of nodes to remove.
+        dist_matrix: Distance matrix.
+        nodes: List of all node IDs.
+        rng: Random number generator.
 
     Returns:
         Tuple[List[List[int]], List[int]]: Partial routes and list of removed node IDs.

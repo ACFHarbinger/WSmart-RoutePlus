@@ -65,10 +65,8 @@ class IAcceptanceCriterion(ABC):
         Initialise the internal state of the criterion from the starting solution.
 
         Args:
-            initial_objective (ObjectiveValue): The objective value of the starting solution.
+            initial_objective: The objective value of the starting solution.
 
-        Returns:
-            None
         """
 
     @abstractmethod
@@ -85,9 +83,9 @@ class IAcceptanceCriterion(ABC):
         between steps is advanced exclusively in ``step()``.
 
         Args:
-            current_obj (ObjectiveValue): The objective value of the current incumbent.
-            candidate_obj (ObjectiveValue): The objective value of the proposed candidate.
-            kwargs (Any): Additional context (e.g. structural representations).
+            current_obj: The objective value of the current incumbent.
+            candidate_obj: The objective value of the proposed candidate.
+            kwargs: Additional context (e.g. structural representations).
 
         Returns:
             Tuple[bool, AcceptanceMetrics]:
@@ -109,13 +107,11 @@ class IAcceptanceCriterion(ABC):
         update memory buffers, adjust thresholds).
 
         Args:
-            current_obj (ObjectiveValue): The objective after the decision was applied.
-            candidate_obj (ObjectiveValue): The objective of the evaluated candidate.
-            accepted (bool): The boolean result of ``accept()``.
-            kwargs (Any): Additional context.
+            current_obj: The objective after the decision was applied.
+            candidate_obj: The objective of the evaluated candidate.
+            accepted: The boolean result of ``accept()``.
+            kwargs: Additional context.
 
-        Returns:
-            None
         """
 
     def get_state(self) -> Dict[str, Any]:

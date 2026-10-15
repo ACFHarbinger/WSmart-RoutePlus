@@ -70,8 +70,6 @@ class MuPlusLambdaESSolver:
             params: Configuration defining mu and lambda.
             mandatory_nodes: Nodes that must be included.
 
-        Returns:
-            None.
         """
         self.dist_matrix = dist_matrix
         self.wastes = wastes

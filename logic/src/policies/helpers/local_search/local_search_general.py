@@ -53,13 +53,13 @@ class GeneralLocalSearch(LocalSearch):
         """Initialize General Local Search.
 
         Args:
-            dist_matrix (np.ndarray): N x N distance matrix.
-            waste (Dict[int, float]): Dictionary of node waste demands.
-            capacity (float): Vehicle load capacity.
-            R (float): Reward factor for collected waste.
-            C (float): Cost factor for travel distance.
-            params (Any): Hyperparameters and configuration.
-            neighbors (Optional[Dict[int, List[int]]]): Precomputed granular neighbors. Defaults to None.
+            dist_matrix: N x N distance matrix.
+            waste: Dictionary of node waste demands.
+            capacity: Vehicle load capacity.
+            R: Reward factor for collected waste.
+            C: Cost factor for travel distance.
+            params: Hyperparameters and configuration.
+            neighbors: Precomputed granular neighbors. Defaults to None.
         """
         super().__init__(dist_matrix, waste, capacity, R, C, params, neighbors)
 
@@ -67,8 +67,8 @@ class GeneralLocalSearch(LocalSearch):
         """Apply local search operators to the solution.
 
         Args:
-            solution (List[List[int]]): List of routes.
-            target_neighborhood (Optional[str]): If provided, only applies the specified
+            solution: List of routes.
+            target_neighborhood: If provided, only applies the specified
                 neighborhood operator. Defaults to None.
 
         Returns:

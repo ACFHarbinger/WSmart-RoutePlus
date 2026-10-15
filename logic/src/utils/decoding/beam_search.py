@@ -102,8 +102,8 @@ def get_beam_search_results(beams: list[BatchBeam], final_state: Any) -> tuple:
     This involves backtracking through the beam parents to reconstruct the full path.
 
     Args:
-        beams (list): List of BatchBeam objects from each step.
-        final_state (State): The final state after decoding.
+        beams: List of BatchBeam objects from each step.
+        final_state: The final state after decoding.
 
     Returns:
         tuple: (score, solutions, cost, ids, batch_size)
@@ -138,10 +138,10 @@ def _beam_search(
     Internal beam search execution.
 
     Args:
-        state (State): Initial state.
-        beam_size (int): Width of the beam.
-        propose_expansions (callable, optional): Custom expansion logic.
-        keep_states (bool, optional): Whether to store all intermediate states.
+        state: Initial state.
+        beam_size: Width of the beam.
+        propose_expansions: Custom expansion logic.
+        keep_states: Whether to store all intermediate states.
 
     Returns:
         tuple: (beams, final_state)

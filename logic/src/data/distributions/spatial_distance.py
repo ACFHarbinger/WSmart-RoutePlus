@@ -29,7 +29,7 @@ class Distance(BaseDistribution):
         """Initialize Class.
 
         Args:
-            graph (Tuple[Any, Any]): (depot, loc) coordinates.
+            graph: (depot, loc) coordinates.
         """
         self.depot, self.loc = graph
 

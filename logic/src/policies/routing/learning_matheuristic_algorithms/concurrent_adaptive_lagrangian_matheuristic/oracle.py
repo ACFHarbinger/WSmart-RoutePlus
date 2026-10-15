@@ -108,14 +108,14 @@ class InsertionCostOracle:
         """Init docstring.
 
         Args:
-            n_bins (int): Number of optional bins (indices 1..N; index 0 is the depot).
-            horizon (int): Number of periods.
-            alpha (float): EMA smoothing factor in (0, 1].  Higher = more reactive.
+            n_bins: Number of optional bins (indices 1..N; index 0 is the depot).
+            horizon: Number of periods.
+            alpha: EMA smoothing factor in (0, 1].  Higher = more reactive.
                 Applied to improving updates.
-            quality_threshold (float): A new observation is fully accepted if RS tour cost <= incumbent * 1.0,
+            quality_threshold: A new observation is fully accepted if RS tour cost <= incumbent * 1.0,
                 partially accepted (at alpha/4) if RS tour cost <= incumbent * threshold,
                 rejected otherwise.  E.g. 1.05 = accept within 5% of incumbent.
-            default_delta (float): Initial Delta value before any observations.  Use a large-but-finite
+            default_delta: Initial Delta value before any observations.  Use a large-but-finite
                 number so the knapsack sees some cost penalty at startup.
         """
         self.n_bins = n_bins
@@ -149,7 +149,7 @@ class InsertionCostOracle:
         """Get the incumbent solution for a given period.
 
         Args:
-            period (int): Period to get the incumbent for.
+            period: Period to get the incumbent for.
 
         Returns:
             PeriodIncumbent: Incumbent solution for the given period.
@@ -250,9 +250,9 @@ class InsertionCostOracle:
         O(|tour|).  Returns 0.0 if tour is empty or has only the depot.
 
         Args:
-            dist_matrix (np.ndarray): Distance matrix.
-            tour (List[int]): Tour.
-            bin_id (int): Bin index.
+            dist_matrix: Distance matrix.
+            tour: Tour.
+            bin_id: Bin index.
 
         Returns:
             float: Cheapest insertion cost.
@@ -276,9 +276,9 @@ class InsertionCostOracle:
         """Vectorised batch variant of `cheapest_insertion_cost` over candidates.
 
         Args:
-            dist_matrix (np.ndarray): Distance matrix.
-            tour (List[int]): Tour.
-            candidates (List[int]): Candidate bin indices.
+            dist_matrix: Distance matrix.
+            tour: Tour.
+            candidates: Candidate bin indices.
 
         Returns:
             Dict[int, float]: Dictionary mapping bin indices to their cheapest insertion costs.

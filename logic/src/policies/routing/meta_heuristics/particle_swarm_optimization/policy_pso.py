@@ -39,8 +39,6 @@ class PSOPolicyAdapter(BaseMultiPeriodRoutingPolicy):
         Args:
             config: Configuration source.
 
-        Returns:
-            None.
         """
         super().__init__(config)
 

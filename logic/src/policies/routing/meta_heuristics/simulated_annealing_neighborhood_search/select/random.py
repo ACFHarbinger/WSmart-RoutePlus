@@ -41,10 +41,10 @@ def remove_bin(routes_list, removed_bins, bins_cannot_removed, rng):
     Remove a random bin from one of the routes and add it to the removed set.
 
     Args:
-        routes_list (List[List[int]]): Current routes.
-        removed_bins (List[int]): Global set of uncollected bins.
-        bins_cannot_removed (List[int]): Mandatory bins.
-        rng (random.Random): Random number generator.
+        routes_list: Current routes.
+        removed_bins: Global set of uncollected bins.
+        bins_cannot_removed: Mandatory bins.
+        rng: Random number generator.
 
     Returns:
         Tuple[List[List[int]], List[int]]: Updated solution and removed set.
@@ -78,9 +78,9 @@ def add_bin(routes_list, removed_bins, rng):
     Pick a random bin from the removed set and add it to a random route.
 
     Args:
-        routes_list (List[List[int]]): Current routes.
-        removed_bins (List[int]): Set of available removed bins.
-        rng (random.Random): Random number generator.
+        routes_list: Current routes.
+        removed_bins: Set of available removed bins.
+        rng: Random number generator.
 
     Returns:
         List[List[int]]: Mutated routing solution.
@@ -101,10 +101,10 @@ def remove_n_bins_random(routes_list, removed_bins, bins_cannot_removed, rng):
     Remove n random bins from the routing solution.
 
     Args:
-        routes_list (List[List[int]]): Current routes.
-        removed_bins (List[int]): Target set for removed bins.
-        bins_cannot_removed (List[int]): Mandatory bins.
-        rng (random.Random): Random number generator.
+        routes_list: Current routes.
+        removed_bins: Target set for removed bins.
+        bins_cannot_removed: Mandatory bins.
+        rng: Random number generator.
 
     Returns:
         List[List[int]]: Routing solution with fewer bins.
@@ -146,9 +146,9 @@ def add_n_bins_random(routes_list, removed_bins, rng):
     Add n random bins from the removed set to random routes.
 
     Args:
-        routes_list (List[List[int]]): Current routes.
-        removed_bins (List[int]): Set of removed bins.
-        rng (random.Random): Random number generator.
+        routes_list: Current routes.
+        removed_bins: Set of removed bins.
+        rng: Random number generator.
 
     Returns:
         Tuple[List[int], int]: List of added bins and the number n chosen.
@@ -174,9 +174,9 @@ def add_route_random(routes_list, distance_matrix, rng):
     Add a new route with a single bin chosen randomly from existing routes.
 
     Args:
-        routes_list (List[List[int]]): All routes.
-        distance_matrix (np.ndarray): For sequencing.
-        rng (random.Random): Random number generator.
+        routes_list: All routes.
+        distance_matrix: For sequencing.
+        rng: Random number generator.
 
     Returns:
         List[List[int]]: Updated set of routes.
@@ -211,10 +211,10 @@ def add_route_with_removed_bins_random(routes_list, removed_bins, distance_matri
     Create a new route using a random subset of removed bins.
 
     Args:
-        routes_list (List[List[int]]): Current routes.
-        removed_bins (List[int]): Pool of removed bins.
-        distance_matrix (np.ndarray): Distance matrix.
-        rng (random.Random): Random number generator.
+        routes_list: Current routes.
+        removed_bins: Pool of removed bins.
+        distance_matrix: Distance matrix.
+        rng: Random number generator.
 
     Returns:
         Tuple[int, List[int]]: Number of bins used and the list of bins used.

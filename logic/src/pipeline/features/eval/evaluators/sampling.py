@@ -37,10 +37,10 @@ class SamplingEval(EvalBase):
         """Initialize Class.
 
         Args:
-            env (Any): Description of env.
-            samples (int): Description of samples.
-            progress (bool): Description of progress.
-            kwargs (Any): Description of kwargs.
+            env: Description of env.
+            samples: Description of samples.
+            progress: Description of progress.
+            kwargs: Description of kwargs.
         """
         super().__init__(env, progress, **kwargs)
         # A width of 0 means "beam search off" in the eval config; sampling still needs one draw.
@@ -50,10 +50,10 @@ class SamplingEval(EvalBase):
         """call  .
 
         Args:
-            policy (Any): Description of policy.
-            data_loader (DataLoader): Description of data_loader.
-            return_results (bool): Description of return_results.
-            kwargs (Any): Description of kwargs.
+            policy: Description of policy.
+            data_loader: Description of data_loader.
+            return_results: Description of return_results.
+            kwargs: Description of kwargs.
 
         Returns:
             Any: Description of return value.

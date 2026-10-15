@@ -67,14 +67,14 @@ class TPKSPolicy(BaseRoutingPolicy):
         """Not used — execute() calls run_tpks_gurobi directly.
 
         Args:
-            sub_dist_matrix (np.ndarray): Distance matrix.
-            sub_wastes (Dict[int, float]): Wastes.
-            capacity (float): Capacity.
-            revenue (Optional[float]): Revenue.
-            cost_unit (float): Cost unit.
-            values (Optional[np.ndarray]): Values.
-            mandatory_nodes (List[int]): Mandatory nodes.
-            kwargs (dict): Keyword arguments containing problem parameters.
+            sub_dist_matrix: Distance matrix.
+            sub_wastes: Wastes.
+            capacity: Capacity.
+            revenue: Revenue.
+            cost_unit: Cost unit.
+            values: Values.
+            mandatory_nodes: Mandatory nodes.
+            kwargs: Keyword arguments containing problem parameters.
 
         Returns:
             Tuple[List[int], float, float]: (tour, cost, profit).

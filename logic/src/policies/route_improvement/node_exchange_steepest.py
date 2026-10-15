@@ -49,8 +49,8 @@ class NodeExchangeSteepestRouteImprover(IRouteImprovement):
         """Apply steepest node exchange improvement to the tour.
 
         Args:
-            tour (List[int]): The initial tour sequence.
-            kwargs (Any): Search context, including:
+            tour: The initial tour sequence.
+            kwargs: Search context, including:
                 - distance_matrix (np.ndarray): The distance matrix.
                 - wastes (Dict[int, float]): Bin waste demands.
                 - capacity (float): Vehicle capacity.

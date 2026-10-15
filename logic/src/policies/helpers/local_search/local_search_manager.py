@@ -102,13 +102,13 @@ class LocalSearchManager:
         Initialize the LocalSearchManager with problem data and configuration.
 
         Args:
-            dist_matrix (np.ndarray): Matrix of distances between nodes.
-            wastes (Dict[int, float]): Dictionary of wastes for each node.
-            capacity (float): Capacity of the vehicle.
-            R (float): Cost of travel per unit distance.
-            C (float): Cost of time per unit time.
-            improvement_threshold (float): Minimum improvement required to accept a move.
-            seed (Optional[int]): Seed for random number generator.
+            dist_matrix: Matrix of distances between nodes.
+            wastes: Dictionary of wastes for each node.
+            capacity: Capacity of the vehicle.
+            R: Cost of travel per unit distance.
+            C: Cost of time per unit time.
+            improvement_threshold: Minimum improvement required to accept a move.
+            seed: Seed for random number generator.
         """
         self.d = dist_matrix
         self.waste = wastes
@@ -130,8 +130,8 @@ class LocalSearchManager:
         """Get distance between node u and node v.
 
         Args:
-            u (int): Source node ID.
-            v (int): Destination node ID.
+            u: Source node ID.
+            v: Destination node ID.
 
         Returns:
             float: Distance from u to v.
@@ -143,7 +143,7 @@ class LocalSearchManager:
         Update the current working set of routes.
 
         Args:
-            routes (List[List[int]]): New set of routes to optimize.
+            routes: New set of routes to optimize.
         """
         self.routes = [r[:] for r in routes]
         self._invalidate_cache()
@@ -162,7 +162,7 @@ class LocalSearchManager:
         Calculate total waste load of a specific route.
 
         Args:
-            route (List[int]): The sequence of nodes in the route.
+            route: The sequence of nodes in the route.
 
         Returns:
             float: Sum of wastes for all nodes in the route.
@@ -174,7 +174,7 @@ class LocalSearchManager:
         Retrieve the waste load for a route, using a cache for efficiency.
 
         Args:
-            r_idx (int): Global index of the route.
+            r_idx: Global index of the route.
 
         Returns:
             float: Total waste load.
@@ -188,7 +188,7 @@ class LocalSearchManager:
         Synchronize the load cache and internal maps after route modifications.
 
         Args:
-            route_indices (set): Set of indices for routes that were changed.
+            route_indices: Set of indices for routes that were changed.
         """
         for r_idx in route_indices:
             if r_idx < len(self.routes):
@@ -207,7 +207,7 @@ class LocalSearchManager:
         Tries all possible OR-opt moves and applies the first improving one.
 
         Args:
-            chain_len (int, optional): Length of the chain to relocate. Defaults to 2.
+            chain_len: Length of the chain to relocate. Defaults to 2.
 
         Returns:
             bool: True if an improving move was found and applied, False otherwise.
@@ -235,7 +235,7 @@ class LocalSearchManager:
         Systematically tries cross-exchange moves between route pairs.
 
         Args:
-            max_seg_len (int, optional): Maximum length of segments to swap. Defaults to 2.
+            max_seg_len: Maximum length of segments to swap. Defaults to 2.
 
         Returns:
             bool: True if an improving move was found and applied, False otherwise.
@@ -261,7 +261,7 @@ class LocalSearchManager:
         Improved Cross-exchange: swap segments between routes with optional internal reversal.
 
         Args:
-            max_seg_len (int, optional): Maximum length of segments to swap. Defaults to 2.
+            max_seg_len: Maximum length of segments to swap. Defaults to 2.
 
         Returns:
             bool: True if an improving move was found and applied, False otherwise.
@@ -289,7 +289,7 @@ class LocalSearchManager:
         λ-interchange: generalized cross-exchange with segment lengths up to λ.
 
         Args:
-            lambda_max (int, optional): Maximum length of segments to swap. Defaults to 2.
+            lambda_max: Maximum length of segments to swap. Defaults to 2.
 
         Returns:
             bool: True if an improving move was found and applied, False otherwise.
@@ -301,7 +301,7 @@ class LocalSearchManager:
         Ejection chain: attempt to empty routes for fleet minimization.
 
         Args:
-            max_depth (int, optional): Maximum depth of the ejection chain. Defaults to 3.
+            max_depth: Maximum depth of the ejection chain. Defaults to 3.
 
         Returns:
             bool: True if an improving move was found and applied, False otherwise.
@@ -635,7 +635,7 @@ class LocalSearchManager:
         Relocate chain: move a chain of consecutive nodes to another position.
 
         Args:
-            max_chain_len (int, optional): Maximum length of the chain to relocate. Defaults to 3.
+            max_chain_len: Maximum length of the chain to relocate. Defaults to 3.
 
         Returns:
             bool: True if an improving move was found and applied, False otherwise.

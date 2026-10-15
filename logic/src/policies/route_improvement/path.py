@@ -36,13 +36,13 @@ class PathRouteImprover(IRouteImprovement):
         """Refine the tour by picking up convenient bins along the path.
 
         Args:
-            tour (List[int]): The current tour (list of bin IDs).
+            tour: The current tour (list of bin IDs).
             kwargs: Context containing:
-                bins (Any): Bin objects or metadata.
-                total_fill (np.ndarray): Array of bin fill levels.
-                paths_between_states (Dict[int, Dict[int, List[int]]]): Shortest paths between nodes.
-                vehicle_capacity (float): Maximum vehicle capacity.
-                max_capacity (float): Alias for vehicle_capacity.
+                bins: Bin objects or metadata.
+                total_fill: Array of bin fill levels.
+                paths_between_states: Shortest paths between nodes.
+                vehicle_capacity: Maximum vehicle capacity.
+                max_capacity: Alias for vehicle_capacity.
 
         Returns:
             Tuple[List[int], ImprovementMetrics]: Refined tour and metrics.

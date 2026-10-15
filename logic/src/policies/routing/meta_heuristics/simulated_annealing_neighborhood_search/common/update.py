@@ -60,8 +60,8 @@ def should_bin_be_collected(current_fill_level, accumulation_rate):
     Check if a bin's fill level will exceed MAX_CAPACITY_PERCENT% by the next day.
 
     Args:
-        current_fill_level (float): Current percentage full.
-        accumulation_rate (float): Daily fill rate.
+        current_fill_level: Current percentage full.
+        accumulation_rate: Daily fill rate.
 
     Returns:
         bool: True if overflow is predicted, None otherwise.
@@ -83,12 +83,12 @@ def add_bins_to_collect(
     collection day and add them to the must-collect list.
 
     Args:
-        binsids (List[int]): All relevant bin IDs.
-        next_collection_day (int): Target future day.
-        mandatory_bins (List[int]): Current set of mandatory collections.
-        current_fill_levels (Dict/np.ndarray): State.
-        accumulation_rates (Dict/np.ndarray): Growth rate.
-        current_collection_day (int): Today.
+        binsids: All relevant bin IDs.
+        next_collection_day: Target future day.
+        mandatory_bins: Current set of mandatory collections.
+        current_fill_levels: State.
+        accumulation_rates: Growth rate.
+        current_collection_day: Today.
 
     Returns:
         List[int]: Updated must-collect list.
@@ -109,9 +109,9 @@ def update_fill_levels_after_first_collection(binsids, mandatory_bins, current_f
     Simulate bin emptying after collection by resetting fill levels to zero.
 
     Args:
-        binsids (List[int]): All bins.
-        mandatory_bins (List[int]): Bins that were collected.
-        current_fill_levels (np.ndarray): State to update.
+        binsids: All bins.
+        mandatory_bins: Bins that were collected.
+        current_fill_levels: State to update.
 
     Returns:
         np.ndarray: Updated fill levels.
@@ -128,7 +128,7 @@ def initialize_lists_of_bins(binsids):
     Initialize a zeroed list for tracking next collection days.
 
     Args:
-        binsids (List[int]): Bins to track.
+        binsids: Bins to track.
 
     Returns:
         List[int]: Zero-initialized list.
@@ -144,10 +144,10 @@ def calculate_next_collection_days(mandatory_bins, current_fill_levels, accumula
     Calculate how many days remain until each mandatory bin overflows again.
 
     Args:
-        mandatory_bins (List[int]): Bins to analyze.
-        current_fill_levels (np.ndarray): Current state.
-        accumulation_rates (np.ndarray): Growth rates.
-        binsids (List[int]): Total bins.
+        mandatory_bins: Bins to analyze.
+        current_fill_levels: Current state.
+        accumulation_rates: Growth rates.
+        binsids: Total bins.
 
     Returns:
         List[int]: Days until next overflow per bin.
@@ -168,10 +168,10 @@ def get_next_collection_day(mandatory_bins, current_fill_levels, accumulation_ra
     Determine the minimum number of days until the first bin in the set overflows.
 
     Args:
-        mandatory_bins (List[int]): Target set.
-        current_fill_levels (np.ndarray): State.
-        accumulation_rates (np.ndarray): Daily rates.
-        binsids (List[int]): Bin IDs.
+        mandatory_bins: Target set.
+        current_fill_levels: State.
+        accumulation_rates: Daily rates.
+        binsids: Bin IDs.
 
     Returns:
         int: Minimum days to next overflow.

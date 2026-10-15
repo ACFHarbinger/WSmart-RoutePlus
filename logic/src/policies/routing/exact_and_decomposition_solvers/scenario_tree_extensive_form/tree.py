@@ -64,11 +64,11 @@ class ScenarioTree:
         """Initialize the scenario tree.
 
         Args:
-            num_days (int): Depth of the tree (stages).
-            num_realizations (int): Branching factor at each node.
-            customers (List[int]): List of customer indices for realization mapping.
-            mean_increment (float): Average demand increment per stage.
-            seed (Optional[int]): Random seed for scenario generation.
+            num_days: Depth of the tree (stages).
+            num_realizations: Branching factor at each node.
+            customers: List of customer indices for realization mapping.
+            mean_increment: Average demand increment per stage.
+            seed: Random seed for scenario generation.
         """
         self.num_days = num_days
         self.num_realizations = num_realizations
@@ -132,7 +132,7 @@ class ScenarioTree:
         """Return all nodes at a specific day.
 
         Args:
-            day (int): The depth/day index to query.
+            day: The depth/day index to query.
 
         Returns:
             List[ScenarioNode]: All nodes at the specified depth.

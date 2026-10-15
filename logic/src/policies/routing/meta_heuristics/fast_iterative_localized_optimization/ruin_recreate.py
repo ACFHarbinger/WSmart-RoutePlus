@@ -55,8 +55,6 @@ class RuinAndRecreate:
             rng: Random number generator.
             profit_aware_operators: Whether to use profit-aware operators.
 
-        Returns:
-            None.
         """
         self.d = dist_matrix
         self.waste = wastes

@@ -64,7 +64,7 @@ class NDSBRKGAPolicy(BaseJointPolicy):
         """Initialize NDSBRKGAPolicy.
 
         Args:
-            config (Optional[Union[NDSBRKGAConfig, Dict[str, Any]]]): Configuration source.
+            config: Configuration source.
         """
         super().__init__(config)
 
@@ -99,14 +99,14 @@ class NDSBRKGAPolicy(BaseJointPolicy):
         """Internal bridge for test compatibility.
 
         Args:
-            sub_dist_matrix (np.ndarray): Local distance matrix.
-            sub_wastes (Dict[int, float]): Waste demands per node.
-            capacity (float): Vehicle capacity.
-            revenue (float): Revenue per kg.
-            cost_unit (float): Cost per km.
-            values (Dict[str, Any]): Problem parameters.
-            mandatory_nodes (List[int]): Required node IDs.
-            kwargs (Any): Additional simulation context.
+            sub_dist_matrix: Local distance matrix.
+            sub_wastes: Waste demands per node.
+            capacity: Vehicle capacity.
+            revenue: Revenue per kg.
+            cost_unit: Cost per km.
+            values: Problem parameters.
+            mandatory_nodes: Required node IDs.
+            kwargs: Additional simulation context.
 
         Returns:
             Tuple[List[List[int]], float, float]:
@@ -146,7 +146,7 @@ class NDSBRKGAPolicy(BaseJointPolicy):
         """Run the NDS-BRKGA optimisation loop using inputs from the JointContext.
 
         Args:
-            context (JointSelectionConstructionContext): The search and problem context.
+            context: The search and problem context.
 
         Returns:
             Tuple[List[int], List[List[int]], float, float]:

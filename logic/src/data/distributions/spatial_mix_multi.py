@@ -3,8 +3,6 @@
 Attributes:
     MODULE_VAR (Type): Description of module level variable.
 
-Example:
-    >>> import spatial_mix_multi
 """
 
 from typing import Optional, Tuple
@@ -49,8 +47,8 @@ class MixMultiDistributions(BaseDistribution):
         """Sample.
 
         Args:
-            size (Tuple[int, ...]): Description of size.
-            generator (Optional[torch.Generator], optional): Description of generator.
+            size: Description of size.
+            generator: Description of generator.
 
         Returns:
             torch.Tensor: Sampled values.
@@ -80,8 +78,8 @@ class MixMultiDistributions(BaseDistribution):
         """Sample from multiple distributions.
 
         Args:
-            size (Tuple[int, ...]): Tuple of size (batch_size, num_loc, 2).
-            rng (Optional[np.random.Generator], optional): Random number generator.
+            size: Tuple of size (batch_size, num_loc, 2).
+            rng: Random number generator.
 
         Returns:
             np.ndarray: Sampled values.

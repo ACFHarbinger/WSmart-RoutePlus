@@ -28,8 +28,8 @@ class ThompsonBandit:
         """Initialise the bandit.
 
         Args:
-            names (List[str]): List of operator names to choose from.
-            seed (int): Random seed for reproducibility.
+            names: List of operator names to choose from.
+            seed: Random seed for reproducibility.
         """
         self.names = names
         self.rng = np.random.default_rng(seed)
@@ -51,8 +51,8 @@ class ThompsonBandit:
         """Update parameters based on success (1) or failure (0).
 
         Args:
-            name (str): Name of the operator to update.
-            success (int): Binary indicator of success (1) or failure (0).
+            name: Name of the operator to update.
+            success: Binary indicator of success (1) or failure (0).
         """
         if name in self.params:
             if success:
@@ -72,7 +72,7 @@ class ThompsonBandit:
         """Load external weights.
 
         Args:
-            weights (Dict[str, Tuple[float, float]]): Dictionary of weights to load.
+            weights: Dictionary of weights to load.
         """
         for name, (a, b) in weights.items():
             if name in self.params:

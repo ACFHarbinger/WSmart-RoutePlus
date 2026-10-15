@@ -637,8 +637,6 @@ class SeparationEngine:
             x_vals: Edge values.
             y_vals: Node visit values.
 
-        Returns:
-            None.
         """
 
         # Step 1: Edge Sorting

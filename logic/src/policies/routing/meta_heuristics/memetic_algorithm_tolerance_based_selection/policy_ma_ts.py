@@ -36,8 +36,6 @@ class MemeticAlgorithmToleranceBasedSelectionPolicy(BaseRoutingPolicy):
         Args:
             config: Optional configuration source.
 
-        Returns:
-            None.
         """
         super().__init__(config)
 

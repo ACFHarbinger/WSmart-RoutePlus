@@ -58,14 +58,14 @@ class MIPLNSRouteImprover(IRouteImprovement):
         """Apply MIP-based Large Neighborhood Search to the tour.
 
         Args:
-            tour (List[int]): Initial tour sequence.
+            tour: Initial tour sequence.
             kwargs: Context containing:
-                distance_matrix (np.ndarray | torch.Tensor): Distance lookup.
-                iterations (int): Number of LNS cycles (default 5).
-                ruin_fraction (float): Portion of nodes to remove (default 0.2).
-                seed (int): Random seed.
-                wastes (Dict[int, float]): Bin mass dictionary.
-                capacity (float): Maximum vehicle capacity.
+                distance_matrix: Distance lookup.
+                iterations: Number of LNS cycles (default 5).
+                ruin_fraction: Portion of nodes to remove (default 0.2).
+                seed: Random seed.
+                wastes: Bin mass dictionary.
+                capacity: Maximum vehicle capacity.
 
         Returns:
             Tuple[List[int], ImprovementMetrics]: Refined tour and metrics.

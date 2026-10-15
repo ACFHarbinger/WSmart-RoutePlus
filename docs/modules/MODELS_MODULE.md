@@ -1,5 +1,10 @@
 # Neural Architectures & Model Infrastructure
 
+> **Status (Q-22):** narrative guide. The API reference is generated into
+> `docs/api/` by `tools/gen_api_docs.py`; this file is not the source of
+> truth for signatures and module inventories.
+
+
 **Module**: `logic/src/models`
 **Purpose**: Comprehensive technical specification of the perception, reasoning, and construction engines of the WSmart-Route framework.
 **Version**: 3.0

@@ -8,8 +8,6 @@ Attributes:
     PolyNet: Training wrapper for multi-strategy learning.
     PolyNetPolicy: Behavior-conditioned construction policy.
 
-Example:
-    >>> from logic.src.models.core.polynet import PolyNet
 """
 
 from .model import PolyNet as PolyNet

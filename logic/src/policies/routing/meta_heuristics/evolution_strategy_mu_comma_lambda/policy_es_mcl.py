@@ -37,8 +37,6 @@ class MuCommaLambdaESPolicy(BaseRoutingPolicy):
         Args:
             config: Configuration object or dictionary.
 
-        Returns:
-            None.
         """
         super().__init__(config)
 

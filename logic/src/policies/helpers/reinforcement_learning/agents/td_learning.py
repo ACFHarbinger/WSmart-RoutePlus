@@ -145,8 +145,6 @@ class TDAgent(RLAgent, ABC):
     def decay_epsilon(self) -> None:
         """Apply multiplicative decay to the exploration rate.
 
-        Returns:
-            None.
         """
 
         self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
@@ -184,8 +182,6 @@ class TDAgent(RLAgent, ABC):
     def reset(self) -> None:
         """Reset the Q-table and exploration rate.
 
-        Returns:
-            None.
         """
 
         self.q_table = {}
@@ -207,8 +203,6 @@ class TDAgent(RLAgent, ABC):
             next_state: Resulting state after taking 'action'.
             done: Boolean flag indicating if the episode has terminated.
 
-        Returns:
-            None.
         """
 
         pass
@@ -238,8 +232,6 @@ class QLearningAgent(TDAgent):
             next_state: Resulting state.
             done: Termination flag.
 
-        Returns:
-            None.
         """
 
         # Global tracking
@@ -302,8 +294,6 @@ class SarsaAgent(TDAgent):
             done: Termination flag.
             next_action: The action selected to be taken in 'next_state'.
 
-        Returns:
-            None.
         """
 
         # Global tracking
@@ -362,8 +352,6 @@ class ExpectedSarsaAgent(TDAgent):
             next_state: Resulting state.
             done: Termination flag.
 
-        Returns:
-            None.
         """
 
         # Tracking

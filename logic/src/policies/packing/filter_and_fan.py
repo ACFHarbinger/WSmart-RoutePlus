@@ -57,8 +57,8 @@ class FilterAndFanSelection(IPackingAlgorithm):
     def __init__(self, filter_width: Optional[int] = None, fan_depth: Optional[int] = None) -> None:
         """
         Args:
-            filter_width (Optional[int]): Seed size; ``None`` uses ``context.ff_filter_width``.
-            fan_depth (Optional[int]): Add/remove passes; ``None`` uses ``context.ff_fan_depth``.
+            filter_width: Seed size; ``None`` uses ``context.ff_filter_width``.
+            fan_depth: Add/remove passes; ``None`` uses ``context.ff_fan_depth``.
         """
         self.filter_width = filter_width
         self.fan_depth = fan_depth
@@ -67,7 +67,7 @@ class FilterAndFanSelection(IPackingAlgorithm):
         """Select bins using the Filter-and-Fan procedure.
 
         Args:
-            context (PackingContext): PackingContext with fill levels, revenue, and cost data.
+            context: PackingContext with fill levels, revenue, and cost data.
 
         Returns:
             Tuple[List[int], SearchContext]: Selected bin IDs and search context.

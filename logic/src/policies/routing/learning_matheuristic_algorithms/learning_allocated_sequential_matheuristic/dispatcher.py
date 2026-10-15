@@ -54,8 +54,6 @@ _GLOBAL_RL: Optional[RLController] = None
 def reset_rl_controller() -> None:
     """Force re-initialisation of the global RL controller on the next call.
 
-    Returns:
-        None
     """
     global _GLOBAL_RL
     _GLOBAL_RL = None

@@ -485,8 +485,6 @@ class BaseRoutingPolicy(PolicyVizMixin, IRoutingAlgorithm):
             values: Merged solver configuration dict from ``_load_area_params``.
             context: Simulation day context kwargs.
 
-        Returns:
-            None.
         """
 
         if getattr(self, "_params_logged", False):

@@ -60,7 +60,7 @@ def _canonical(route: List[int]) -> Tuple[int, ...]:
     """Canonical form for symmetric-distance deduplication.
 
     Args:
-        route (List[int]): The route to canonicalize.
+        route: The route to canonicalize.
 
     Returns:
         Tuple[int, ...]: The canonical representation of the route.
@@ -91,8 +91,8 @@ class SetCoverRouteImprover(IRouteImprovement):
         """Apply Set Cover intensification to the tour.
 
         Args:
-            tour (List[int]): Initial tour sequence (list of bin IDs including depot 0s).
-            kwargs (Any): Search context, including:
+            tour: Initial tour sequence (list of bin IDs including depot 0s).
+            kwargs: Search context, including:
                 - distance_matrix (np.ndarray): The distance matrix.
                 - sp_n_perturbations (int): Number of LNS perturbations for pool.
                 - sp_include_dp (bool): Whether to include DP-optimized variants.
@@ -151,10 +151,8 @@ class SetCoverRouteImprover(IRouteImprovement):
                 """Adds a candidate route to the pool if it is unique.
 
                 Args:
-                    route (List[int]): The sequence of node IDs to potentially add.
+                    route: The sequence of node IDs to potentially add.
 
-                Returns:
-                    None
                 """
                 if not route:
                     return
@@ -259,13 +257,13 @@ class SetCoverRouteImprover(IRouteImprovement):
         """Builds and solves the Set Cover formulation using Gurobi.
 
         Args:
-            pool (List[List[int]]): Candidate routes.
-            dm (np.ndarray): Distance matrix.
-            wastes (dict): Bin waste demands.
-            cost_per_km (float): Distance cost.
-            revenue_kg (float): Waste revenue.
-            target_nodes (Set[int]): Nodes that must be covered.
-            time_limit (float): Gurobi time limit.
+            pool: Candidate routes.
+            dm: Distance matrix.
+            wastes: Bin waste demands.
+            cost_per_km: Distance cost.
+            revenue_kg: Waste revenue.
+            target_nodes: Nodes that must be covered.
+            time_limit: Gurobi time limit.
 
         Returns:
             List[List[int]]: Selected subset of routes.
@@ -305,8 +303,8 @@ class SetCoverRouteImprover(IRouteImprovement):
         where their removal yields the greatest distance reduction.
 
         Args:
-            routes (List[List[int]]): Selected routes with overlaps.
-            dm (np.ndarray): Distance matrix.
+            routes: Selected routes with overlaps.
+            dm: Distance matrix.
 
         Returns:
             List[List[int]]: Routes with overlaps resolved.

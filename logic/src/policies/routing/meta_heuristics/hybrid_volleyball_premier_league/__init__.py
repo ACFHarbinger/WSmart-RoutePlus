@@ -14,8 +14,6 @@ Attributes:
     HVPLPolicy: Policy adapter for HVPL.
     HVPLSolver: Core HVPL solver logic.
 
-Example:
-    >>> from logic.src.policies.routing.meta_heuristics.hybrid_volleyball_premier_league import HVPLSolver
 """
 
 from logic.src.configs.policies.hvpl import HVPLConfig

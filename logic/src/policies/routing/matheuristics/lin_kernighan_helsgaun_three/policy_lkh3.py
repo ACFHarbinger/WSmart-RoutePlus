@@ -133,13 +133,13 @@ class LKH3Policy(BaseRoutingPolicy):
 
 
         Args:
-            sub_dist_matrix (np.ndarray): Distance matrix for the sub-problem.
-            sub_wastes (Dict[int, float]): Dictionary of wastes for the sub-problem.
-            capacity (float): Capacity of the vehicles.
-            revenue (float): Revenue from the routes.
-            cost_unit (float): Cost per unit of distance.
-            values (Dict[str, Any]): Additional values for the sub-problem.
-            mandatory_nodes (List[int]): List of mandatory nodes for the sub-problem.
+            sub_dist_matrix: Distance matrix for the sub-problem.
+            sub_wastes: Dictionary of wastes for the sub-problem.
+            capacity: Capacity of the vehicles.
+            revenue: Revenue from the routes.
+            cost_unit: Cost per unit of distance.
+            values: Additional values for the sub-problem.
+            mandatory_nodes: List of mandatory nodes for the sub-problem.
             kwargs: Additional keyword arguments.
 
         Returns:

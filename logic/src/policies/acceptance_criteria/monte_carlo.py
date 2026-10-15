@@ -38,9 +38,9 @@ class MonteCarloAcceptance(IAcceptanceCriterion):
         """Initialize the Monte Carlo criterion.
 
         Args:
-            p (float): The probability of accepting a worsening move (0.0 to 1.0).
+            p: The probability of accepting a worsening move (0.0 to 1.0).
                 Defaults to 0.1.
-            seed (Optional[int]): Random seed. Defaults to None.
+            seed: Random seed. Defaults to None.
         """
         self.p = max(0.0, min(1.0, p))
         self.rng = random.Random(seed)
@@ -49,7 +49,7 @@ class MonteCarloAcceptance(IAcceptanceCriterion):
         """Initialize the criterion state.
 
         Args:
-            initial_objective (ObjectiveValue): The initial solution's objective.
+            initial_objective: The initial solution's objective.
         """
         initial_objective = cast(float, initial_objective)
         pass
@@ -60,9 +60,9 @@ class MonteCarloAcceptance(IAcceptanceCriterion):
         """Determine acceptance based on a roll against fixed probability p.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            kwargs: Additional context.
 
         Returns:
             Tuple[bool, AcceptanceMetrics]: A tuple containing:
@@ -89,10 +89,10 @@ class MonteCarloAcceptance(IAcceptanceCriterion):
         """No-op update step.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            accepted (bool): Whether the move was accepted.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            accepted: Whether the move was accepted.
+            kwargs: Additional context.
         """
         current_obj = cast(float, current_obj)
         candidate_obj = cast(float, candidate_obj)

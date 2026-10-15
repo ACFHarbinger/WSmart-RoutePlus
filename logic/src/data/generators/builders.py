@@ -74,12 +74,12 @@ class VRPInstanceBuilder:
 
         Args:
             data: Raw problem data dictionary or dataframe.
-            depot_idx (int): Index of the depot node.
-            vehicle_cap (float): Capacity of the vehicles.
+            depot_idx: Index of the depot node.
+            vehicle_cap: Capacity of the vehicles.
             customers: List of customer node indices.
-            dimension (int): Total number of nodes (including depot).
+            dimension: Total number of nodes (including depot).
             coords: Coordinate data (list or array).
-            device (str): Device for random number generation.
+            device: Device for random number generation.
         """
         self.data_dict = data
         self.depot_idx = depot_idx

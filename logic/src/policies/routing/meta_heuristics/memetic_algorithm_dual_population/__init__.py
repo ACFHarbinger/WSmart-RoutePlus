@@ -9,8 +9,6 @@ Attributes:
     MemeticAlgorithmDualPopulationPolicy: Policy adapter for MA-DP.
     MemeticAlgorithmDualPopulationSolver: Core solver logic for MA-DP.
 
-Example:
-    >>> from logic.src.policies.routing.meta_heuristics.memetic_algorithm_dual_population import MemeticAlgorithmDualPopulationPolicy
 """
 
 from logic.src.configs.policies.ma_dp import MemeticAlgorithmDualPopulationConfig

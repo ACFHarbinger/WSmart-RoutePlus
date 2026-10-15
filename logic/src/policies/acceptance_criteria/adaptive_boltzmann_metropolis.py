@@ -63,14 +63,14 @@ class AdaptiveBoltzmannMetropolis(IAcceptanceCriterion):
         """Initialize the ABM criterion.
 
         Args:
-            p0 (float): Initial target probability for accepting a 1-sigma move.
+            p0: Initial target probability for accepting a 1-sigma move.
                 Defaults to 0.5.
-            window_size (int): Size of the moving window for statistical tracking.
+            window_size: Size of the moving window for statistical tracking.
                 Defaults to 100.
-            alpha (float): Cooling rate factor (geometric cooling). Defaults to 0.95.
-            min_temp (float): Lower bound for temperature. Defaults to 1e-6.
-            seed (Optional[int]): Random seed. Defaults to None.
-            maximization (bool): Whether the problem is maximization. Defaults to True.
+            alpha: Cooling rate factor (geometric cooling). Defaults to 0.95.
+            min_temp: Lower bound for temperature. Defaults to 1e-6.
+            seed: Random seed. Defaults to None.
+            maximization: Whether the problem is maximization. Defaults to True.
         """
         self.p0 = p0
         self.window_size = window_size
@@ -88,7 +88,7 @@ class AdaptiveBoltzmannMetropolis(IAcceptanceCriterion):
         """Initialize the criterion state with the starting objective.
 
         Args:
-            initial_objective (ObjectiveValue): The initial solution's objective.
+            initial_objective: The initial solution's objective.
         """
         initial_objective = cast(float, initial_objective)
         pass

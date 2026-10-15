@@ -8,8 +8,6 @@ Attributes:
     MemeticAlgorithmIslandModelConfig: Configuration parameters for MAIM.
     MemeticAlgorithmIslandModelSolver: Core solver implementation for MAIM.
 
-Example:
-    >>> from logic.src.policies.routing.meta_heuristics.memetic_algorithm_island_model import MemeticAlgorithmIslandModelSolver
 """
 
 from logic.src.configs.policies.ma_im import MemeticAlgorithmIslandModelConfig

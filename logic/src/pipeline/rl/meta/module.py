@@ -52,10 +52,10 @@ class MetaRLModule(pl.LightningModule):
 
         Args:
             agent: The RL agent to wrap (inner loop).
-            strategy (str): The meta-learning strategy to use. Options: "rnn", "tdl", "hypernet".
-            meta_lr (float): Learning rate for the meta-learner.
-            history_length (int): Number of past steps to consider for the meta-learner.
-            hidden_size (int): Size of the hidden layer in the meta-learner.
+            strategy: The meta-learning strategy to use. Options: "rnn", "tdl", "hypernet".
+            meta_lr: Learning rate for the meta-learner.
+            history_length: Number of past steps to consider for the meta-learner.
+            hidden_size: Size of the hidden layer in the meta-learner.
             kwargs: Additional keyword arguments for the meta-learner.
         """
         super().__init__()
