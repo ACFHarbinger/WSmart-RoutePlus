@@ -34,6 +34,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 REPO = Path(__file__).resolve().parents[1]
+# Direct CLI execution puts tools/, rather than the repository, on sys.path.
+if str(REPO) not in sys.path:
+    sys.path.insert(0, str(REPO))
 LOGIC = REPO / "logic"
 JOBS_DIR = LOGIC / "src" / "pipeline" / "simulations" / "hpo" / "jobs"
 STAGE_MANIFESTS = [

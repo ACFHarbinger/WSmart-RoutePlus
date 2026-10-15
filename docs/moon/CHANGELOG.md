@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Cross-package review (`2026-10-15`)
+
+- Codex review: check_hpo_jobs.py adds the repository to sys.path for its documented direct CLI/CI invocation.
+
 ### Parameter-usage audit and HPO job keys (`2026-10-15`)
 
 #### Added
