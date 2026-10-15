@@ -1,12 +1,4 @@
 {
-    "model": {
-        "type": "object",
-        "default": "factory"
-    },
-    "reward": {
-        "type": "object",
-        "default": "factory"
-    },
     "packing": {
         "type": "object",
         "default": null
@@ -17,14 +9,6 @@
     },
     "seed": {
         "type": "int",
-        "default": null
-    },
-    "vrpp": {
-        "type": "categorical",
-        "choices": [
-            true,
-            false
-        ],
-        "default": true
+        "default": 42
     }
 }

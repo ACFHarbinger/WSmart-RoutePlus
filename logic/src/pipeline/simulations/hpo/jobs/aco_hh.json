@@ -57,7 +57,7 @@
     },
     "sequence_length": {
         "type": "int",
-        "default": 5
+        "default": null
     },
     "local_search": {
         "type": "categorical",
@@ -78,7 +78,7 @@
     "operators": {
         "type": "categorical",
         "choices": [],
-        "default": "factory"
+        "default": null
     },
     "vrpp": {
         "type": "categorical",
