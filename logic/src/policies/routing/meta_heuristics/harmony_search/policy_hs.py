@@ -17,7 +17,7 @@ from logic.src.configs.policies.hs import HSConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import HSParams
+from logic.src.configs.policies.hs import HSConfig
 from .solver import HSSolver
 
 
@@ -85,7 +85,7 @@ class HSPolicy(BaseRoutingPolicy):
         Returns:
             Tuple of (routes, profit, cost).
         """
-        params = HSParams(
+        params = HSConfig(
             hm_size=int(values.get("hm_size", 10)),
             HMCR=float(values.get("HMCR", 0.9)),
             PAR=float(values.get("PAR", 0.3)),

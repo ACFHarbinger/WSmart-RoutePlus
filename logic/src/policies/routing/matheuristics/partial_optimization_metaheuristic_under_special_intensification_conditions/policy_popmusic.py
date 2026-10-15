@@ -19,7 +19,7 @@ from logic.src.policies.routing.matheuristics.partial_optimization_metaheuristic
     run_popmusic,
 )
 
-from .params import POPMUSICParams
+from logic.src.configs.policies.popmusic import POPMUSICConfig
 
 
 @GlobalRegistry.register(
@@ -124,7 +124,7 @@ class POPMUSICPolicy(BaseRoutingPolicy):
 
         """
         # 1. Initialize parameters
-        params = POPMUSICParams.from_config(self.config)
+        params = POPMUSICConfig.from_config(self.config)
 
         # 2. Enforce deterministic behavior (override seed if provided in kwargs)
         seed = kwargs.get("seed", params.seed)

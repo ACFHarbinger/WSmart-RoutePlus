@@ -16,6 +16,7 @@ Example:
     >>> config.vrpp
     True
 """
+from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, List, Optional
@@ -44,3 +45,5 @@ class SCAConfig:
     vrpp: bool = True
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)
+    local_search_iterations: int = 500
+    profit_aware_operators: bool = False

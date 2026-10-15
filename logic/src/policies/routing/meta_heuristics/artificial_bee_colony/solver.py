@@ -40,10 +40,8 @@ from logic.src.policies.helpers.operators import (
     worst_removal,
 )
 from logic.src.policies.helpers.operators.solution_initialization.greedy_si import build_greedy_routes
-from logic.src.policies.routing.meta_heuristics.ant_colony_optimization_k_sparse.params import (
-    KSACOParams,
-)
-from logic.src.policies.routing.meta_heuristics.artificial_bee_colony.params import ABCParams
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
+from logic.src.configs.policies.abc import ABCConfig
 
 
 class ABCSolver:
@@ -71,7 +69,7 @@ class ABCSolver:
         capacity: float,
         R: float,
         C: float,
-        params: ABCParams,
+        params: ABCConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """
@@ -98,7 +96,7 @@ class ABCSolver:
         self.rng = random.Random(params.seed) if params.seed is not None else random.Random()
 
         # Initialize Local Search once to cache neighbor list
-        aco_params = KSACOParams(
+        aco_params = KSparseACOConfig(
             local_search_iterations=self.params.local_search_iterations,
             vrpp=self.params.vrpp,
             profit_aware_operators=self.params.profit_aware_operators,

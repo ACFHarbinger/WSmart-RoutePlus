@@ -12,23 +12,17 @@ from logic.src.policies.helpers.operators.solution_initialization import build_g
 from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_aco import (
     HyperHeuristicACO,
 )
-from logic.src.policies.routing.hyper_heuristics.genetic_programming_hyper_heuristic.params import GPHHParams
+from logic.src.configs.policies.gp_hh import GPHHConfig
 from logic.src.policies.routing.hyper_heuristics.genetic_programming_hyper_heuristic.solver import GPHHSolver
-from logic.src.policies.routing.hyper_heuristics.hidden_markov_model_great_deluge_hyper_heuristic.params import (
-    HMMGDHHParams,
-)
+from logic.src.configs.policies.hmm_gd_hh import HMMGDHHConfig
 from logic.src.policies.routing.hyper_heuristics.hidden_markov_model_great_deluge_hyper_heuristic.solver import (
     HMMGDHHSolver,
 )
-from logic.src.policies.routing.hyper_heuristics.sequence_based_selection_hyper_heuristic.params import (
-    SSHHParams,
-)
+from logic.src.configs.policies.ss_hh import SSHHConfig
 from logic.src.policies.routing.hyper_heuristics.sequence_based_selection_hyper_heuristic.solver import (
     SSHHSolver,
 )
-from logic.src.policies.routing.learning_heuristic_algorithms.reinforcement_learning_great_deluge_hyper_heuristic.params import (
-    RLGDHHParams,
-)
+from logic.src.configs.policies.rl_gd_hh import RLGDHHConfig
 from logic.src.policies.routing.learning_heuristic_algorithms.reinforcement_learning_great_deluge_hyper_heuristic.solver import (
     RLGDHHSolver,
 )
@@ -50,7 +44,7 @@ def sample_data():
 
 def test_gphh_solver(sample_data):
     dist, wastes, cap = sample_data
-    params = GPHHParams(gp_pop_size=2, max_gp_generations=1)
+    params = GPHHConfig(gp_pop_size=2, max_gp_generations=1)
     solver = GPHHSolver(dist, wastes, cap, R=10.0, C=1.0, params=params)
     routes, profit, cost = solver.solve()
     assert isinstance(routes, list)
@@ -58,8 +52,8 @@ def test_gphh_solver(sample_data):
 
 def test_sshh_solver(sample_data):
     dist, wastes, cap = sample_data
-    # Use the correct param name if different, checking SSHHParams
-    params = SSHHParams(max_iterations=5, time_limit=1.0)
+    # Use the correct param name if different, checking SSHHConfig
+    params = SSHHConfig(max_iterations=5, time_limit=1.0)
     solver = SSHHSolver(dist, wastes, cap, R=10.0, C=1.0, params=params)
     routes, profit, cost = solver.solve()
     assert isinstance(routes, list)
@@ -75,7 +69,7 @@ def test_hyper_aco_solver(sample_data):
 
 def test_rl_gd_hh_solver(sample_data):
     dist, wastes, cap = sample_data
-    params = RLGDHHParams(max_iterations=5, time_limit=1.0)
+    params = RLGDHHConfig(max_iterations=5, time_limit=1.0)
     solver = RLGDHHSolver(dist, wastes, cap, R=10.0, C=1.0, params=params)
     routes, profit, cost = solver.solve()
     assert isinstance(routes, list)
@@ -83,7 +77,7 @@ def test_rl_gd_hh_solver(sample_data):
 
 def test_hmm_gd_hh_solver(sample_data):
     dist, wastes, cap = sample_data
-    params = HMMGDHHParams(max_iterations=5, time_limit=1.0)
+    params = HMMGDHHConfig(max_iterations=5, time_limit=1.0)
     solver = HMMGDHHSolver(dist, wastes, cap, R=10.0, C=1.0, params=params)
     rng = random.Random(params.seed)
     heuristic_routes = build_greedy_routes(

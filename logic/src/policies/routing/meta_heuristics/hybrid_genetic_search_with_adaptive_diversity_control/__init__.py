@@ -3,7 +3,7 @@ Hybrid Genetic Search with Adaptive Diversity Control (HGS-ADC) matheuristic pac
 
 Attributes:
     PolicyHGSADC: The main policy class.
-    HGSADCParams: Parameters for HGS-ADC.
+    HGSADCConfig: Parameters for HGS-ADC.
     policy_hgs_adc: The policy module.
 
 Example:
@@ -12,7 +12,7 @@ Example:
 """
 
 from . import policy_hgs_adc as policy_hgs_adc
-from .params import HGSADCParams as HGSADCParams
+from logic.src.configs.policies.hgs_adc import HGSADCConfig as HGSADCConfig
 from .policy_hgs_adc import PolicyHGSADC as PolicyHGSADC
 
-__all__ = ["PolicyHGSADC", "HGSADCParams", "policy_hgs_adc"]
+__all__ = ["PolicyHGSADC", "HGSADCConfig", "policy_hgs_adc"]

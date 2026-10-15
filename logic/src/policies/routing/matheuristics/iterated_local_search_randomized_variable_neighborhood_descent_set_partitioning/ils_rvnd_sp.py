@@ -14,9 +14,9 @@ Attributes:
 Example:
     >>> import numpy as np
     >>> from logic.src.policies.routing.matheuristics.iterated_local_search_randomized_variable_neighborhood_descent_set_partitioning.ils_rvnd_sp import ILSRVNDSPSolver
-    >>> from logic.src.policies.routing.matheuristics.iterated_local_search_randomized_variable_neighborhood_descent_set_partitioning.params import ILSRVNDSPParams
+    >>> from logic.src.configs.policies.ils_rvnd_sp import ILSRVNDSPConfig
     >>> dm = np.zeros((3, 3))
-    >>> solver = ILSRVNDSPSolver(dm, {1: 0.5}, 10.0, 5.0, 1.0, ILSRVNDSPParams())
+    >>> solver = ILSRVNDSPSolver(dm, {1: 0.5}, 10.0, 5.0, 1.0, ILSRVNDSPConfig())
 """
 
 import copy
@@ -35,13 +35,11 @@ from logic.src.policies.helpers.local_search.local_search_general import (
 from logic.src.policies.helpers.operators import (
     build_greedy_routes,
 )
-from logic.src.policies.routing.matheuristics.iterated_local_search_randomized_variable_neighborhood_descent_set_partitioning.params import (
-    ILSRVNDSPParams,
-)
+from logic.src.configs.policies.ils_rvnd_sp import ILSRVNDSPConfig
 from logic.src.policies.routing.matheuristics.iterated_local_search_randomized_variable_neighborhood_descent_set_partitioning.rvnd import (
     RVND,
 )
-from logic.src.policies.routing.meta_heuristics.ant_colony_optimization_k_sparse.params import KSACOParams
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +71,7 @@ class ILSRVNDSPSolver:
         capacity: float,
         R: float,
         C: float,
-        params: ILSRVNDSPParams,
+        params: ILSRVNDSPConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """
@@ -111,7 +109,7 @@ class ILSRVNDSPSolver:
             capacity=self.capacity,
             R=self.R,
             C=self.C,
-            params=KSACOParams(
+            params=KSparseACOConfig(
                 local_search_iterations=self.params.local_search_iterations,
                 vrpp=self.params.vrpp,
                 profit_aware_operators=self.params.profit_aware_operators,

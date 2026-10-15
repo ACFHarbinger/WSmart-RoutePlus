@@ -20,7 +20,7 @@ from logic.src.policies.helpers.operators.recreate_repair.greedy import (
     greedy_profit_insertion,
 )
 
-from .params import PSOParams
+from logic.src.configs.policies.pso import PSOConfig
 
 
 class PSOSolver:
@@ -50,7 +50,7 @@ class PSOSolver:
         capacity: float,
         R: float,
         C: float,
-        params: PSOParams,
+        params: PSOConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """Initialize the PSO solver.

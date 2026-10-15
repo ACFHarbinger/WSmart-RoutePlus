@@ -14,9 +14,7 @@ from logic.src.policies.routing.exact_and_decomposition_solvers.integer_l_shaped
     InventoryMasterProblem,
     MasterProblem,
 )
-from logic.src.policies.routing.exact_and_decomposition_solvers.integer_l_shaped_benders_decomposition.params import (
-    ILSBDParams,
-)
+from logic.src.configs.policies.ils_bd import IntegerLShapedBendersConfig
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
@@ -57,7 +55,7 @@ def vrpp_instance():
 def test_master_problem_gurobi_missing():
     dist_matrix = np.zeros((2, 2))
     model = VRPPModel(n_nodes=2, cost_matrix=dist_matrix, wastes={}, capacity=100.0)
-    params = ILSBDParams()
+    params = IntegerLShapedBendersConfig()
 
     with (
         patch(
@@ -73,7 +71,7 @@ def test_master_problem_gurobi_missing():
 def test_master_problem_basic_flow(vrpp_instance):
     dist, wastes, cap = vrpp_instance
     model = VRPPModel(n_nodes=3, cost_matrix=dist, wastes=wastes, capacity=cap, num_vehicles=2)
-    params = ILSBDParams(verbose=True)
+    params = IntegerLShapedBendersConfig(verbose=True)
 
     master = MasterProblem(model, params)
 
@@ -105,7 +103,7 @@ def test_master_problem_basic_flow(vrpp_instance):
 def test_master_problem_solve_no_solution(vrpp_instance):
     dist, wastes, cap = vrpp_instance
     model = VRPPModel(n_nodes=3, cost_matrix=dist, wastes=wastes, capacity=cap, num_vehicles=2)
-    params = ILSBDParams(verbose=False)
+    params = IntegerLShapedBendersConfig(verbose=False)
 
     master = MasterProblem(model, params)
     master.build()
@@ -128,7 +126,7 @@ def test_master_problem_solve_no_solution(vrpp_instance):
 def test_lazy_constraint_callback_integer_cuts(vrpp_instance):
     dist, wastes, cap = vrpp_instance
     model = VRPPModel(n_nodes=3, cost_matrix=dist, wastes=wastes, capacity=cap, num_vehicles=2)
-    params = ILSBDParams(verbose=False)
+    params = IntegerLShapedBendersConfig(verbose=False)
 
     master = MasterProblem(model, params)
     master.build()
@@ -177,7 +175,7 @@ def test_lazy_constraint_callback_integer_cuts(vrpp_instance):
 def test_lazy_constraint_callback_fractional_cuts(vrpp_instance):
     dist, wastes, cap = vrpp_instance
     model = VRPPModel(n_nodes=3, cost_matrix=dist, wastes=wastes, capacity=cap, num_vehicles=2)
-    params = ILSBDParams(verbose=False)
+    params = IntegerLShapedBendersConfig(verbose=False)
 
     master = MasterProblem(model, params)
     master.build()
@@ -222,7 +220,7 @@ def test_lazy_constraint_callback_fractional_cuts(vrpp_instance):
 def test_lazy_constraint_callback_dispatcher(vrpp_instance):
     dist, wastes, cap = vrpp_instance
     model = VRPPModel(n_nodes=3, cost_matrix=dist, wastes=wastes, capacity=cap, num_vehicles=2)
-    params = ILSBDParams(verbose=False)
+    params = IntegerLShapedBendersConfig(verbose=False)
 
     master = MasterProblem(model, params)
     master.build()
@@ -244,7 +242,7 @@ def test_lazy_constraint_callback_dispatcher(vrpp_instance):
 def test_inventory_master_problem(vrpp_instance):
     dist, wastes, cap = vrpp_instance
     model = VRPPModel(n_nodes=3, cost_matrix=dist, wastes=wastes, capacity=cap, num_vehicles=2)
-    params = ILSBDParams(verbose=False)
+    params = IntegerLShapedBendersConfig(verbose=False)
 
     demand_matrix = np.array([[10.0, 20.0], [15.0, 25.0]])
     bin_capacities = np.array([100.0, 100.0])
@@ -287,7 +285,7 @@ def test_inventory_master_problem(vrpp_instance):
 def test_inventory_master_problem_no_solution(vrpp_instance):
     dist, wastes, cap = vrpp_instance
     model = VRPPModel(n_nodes=3, cost_matrix=dist, wastes=wastes, capacity=cap, num_vehicles=2)
-    params = ILSBDParams(verbose=False)
+    params = IntegerLShapedBendersConfig(verbose=False)
 
     inv_master = InventoryMasterProblem(model, params, horizon=2)
     inv_master.build()

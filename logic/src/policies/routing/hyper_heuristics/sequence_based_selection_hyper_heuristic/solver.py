@@ -60,7 +60,7 @@ from logic.src.policies.helpers.operators import (
 )
 from logic.src.policies.helpers.operators.solution_initialization.nearest_neighbor_si import build_nn_routes
 
-from .params import SSHHParams
+from logic.src.configs.policies.ss_hh import SSHHConfig
 
 
 @dataclass
@@ -116,7 +116,7 @@ class SSHHSolver:
         capacity: float,
         R: float,
         C: float,
-        params: SSHHParams,
+        params: SSHHConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """

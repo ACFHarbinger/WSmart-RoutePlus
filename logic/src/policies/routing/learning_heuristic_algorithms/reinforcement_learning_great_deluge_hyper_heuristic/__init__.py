@@ -12,7 +12,7 @@ The solver integrates:
 
 Attributes:
     RLGDHHSolver: Solver for VRPP using RL-GD-HH.
-    RLGDHHParams: Parameters for RL-GD-HH.
+    RLGDHHConfig: Parameters for RL-GD-HH.
     RLGDHHPolicy: Policy for RL-GD-HH.
 
 Example:
@@ -22,12 +22,12 @@ Example:
     >>> print(solution)
 """
 
-from .params import RLGDHHParams
+from logic.src.configs.policies.rl_gd_hh import RLGDHHConfig
 from .policy_rl_gd_hh import RLGDHHPolicy
 from .solver import RLGDHHSolver
 
 __all__ = [
     "RLGDHHSolver",
-    "RLGDHHParams",
+    "RLGDHHConfig",
     "RLGDHHPolicy",
 ]

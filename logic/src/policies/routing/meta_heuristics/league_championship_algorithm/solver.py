@@ -14,7 +14,7 @@ constrained VRPP variants such as helicopter offshore routing.
 
 Attributes:
     LCASolver (Type): Core solver class for the League Championship Algorithm.
-    LCAParams (Type): Parameter dataclass for the solver.
+    LCAConfig (Type): Parameter dataclass for the solver.
 
 Example:
     >>> solver = LCASolver(dist_matrix, wastes, capacity, R, C, params)
@@ -42,9 +42,9 @@ from logic.src.policies.helpers.operators import (
     worst_removal,
 )
 from logic.src.policies.helpers.operators.solution_initialization.greedy_si import build_greedy_routes
-from logic.src.policies.routing.meta_heuristics.ant_colony_optimization_k_sparse.params import KSACOParams
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
 
-from .params import LCAParams
+from logic.src.configs.policies.lca import LCAConfig
 
 
 class LCASolver:
@@ -57,7 +57,7 @@ class LCASolver:
         capacity (float): Maximum vehicle collection capacity.
         R (float): Revenue per kg of waste.
         C (float): Cost per km traveled.
-        params (LCAParams): Algorithm-specific parameters.
+        params (LCAConfig): Algorithm-specific parameters.
         mandatory_nodes (List[int]): Nodes that must be visited.
     """
 
@@ -68,7 +68,7 @@ class LCASolver:
         capacity: float,
         R: float,
         C: float,
-        params: LCAParams,
+        params: LCAConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """Initializes the League Championship Algorithm solver.
@@ -79,7 +79,7 @@ class LCASolver:
             capacity (float): Maximum vehicle collection capacity.
             R (float): Revenue per kg of waste.
             C (float): Cost per km traveled.
-            params (LCAParams): Algorithm-specific parameters (teams, iterations).
+            params (LCAConfig): Algorithm-specific parameters (teams, iterations).
             mandatory_nodes (Optional[List[int]]): Nodes that must be visited.
         """
         self.dist_matrix = dist_matrix
@@ -95,7 +95,7 @@ class LCASolver:
         self.random = random.Random(self.params.seed) if self.params.seed is not None else random.Random()
 
         # Pre-instantiate Local Search for reuse
-        aco_params = KSACOParams(
+        aco_params = KSparseACOConfig(
             local_search_iterations=self.params.local_search_iterations,
             vrpp=self.params.vrpp,
             profit_aware_operators=self.params.profit_aware_operators,

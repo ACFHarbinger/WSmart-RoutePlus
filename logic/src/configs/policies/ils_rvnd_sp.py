@@ -80,3 +80,4 @@ class ILSRVNDSPConfig(ABCConfig):
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)
     acceptance_criterion: AcceptanceConfig = field(default_factory=lambda: AcceptanceConfig(method="only_improving"))
+    max_vehicles: int = 0

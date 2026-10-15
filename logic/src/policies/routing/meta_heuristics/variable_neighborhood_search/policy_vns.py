@@ -23,7 +23,7 @@ from logic.src.configs.policies.vns import VNSConfig
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-from logic.src.policies.routing.meta_heuristics.variable_neighborhood_search.params import VNSParams
+from logic.src.configs.policies.vns import VNSConfig
 from logic.src.policies.routing.meta_heuristics.variable_neighborhood_search.solver import VNSSolver
 
 
@@ -46,7 +46,7 @@ class VNSPolicy(BaseRoutingPolicy):
 
     Attributes:
         solver (VNSSolver): Internal solver instance.
-        params (VNSParams): Algorithm parameters.
+        params (VNSConfig): Algorithm parameters.
     """
 
     def __init__(self, config: Optional[Union[VNSConfig, Dict[str, Any]]] = None):
@@ -126,7 +126,7 @@ class VNSPolicy(BaseRoutingPolicy):
                 - profit: Total calculated net profit (Total Revenue - Total Cost).
                 - cost: Total travel cost calculated by the solver.
         """
-        params = VNSParams(
+        params = VNSConfig(
             k_max=int(values.get("k_max", 5)),
             max_iterations=int(values.get("max_iterations", 200)),
             local_search_iterations=int(values.get("local_search_iterations", 500)),

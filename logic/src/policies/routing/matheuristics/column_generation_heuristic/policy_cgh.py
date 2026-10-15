@@ -20,7 +20,7 @@ from logic.src.interfaces.context.problem_context import ProblemContext
 from logic.src.interfaces.context.solution_context import SolutionContext
 from logic.src.policies.routing.base.base_multi_period_policy import BaseMultiPeriodRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-from logic.src.policies.routing.matheuristics.column_generation_heuristic.params import CGHParams
+from logic.src.configs.policies.cgh import CGHConfig
 from logic.src.utils.policy.routes import route_cost, route_profit
 from logic.src.utils.policy.wrappers import greedy_day_route, two_opt
 
@@ -55,7 +55,7 @@ class ColumnGenerationHeuristicPolicy(BaseMultiPeriodRoutingPolicy):
             config: Optional Hydra configuration.
         """
         super().__init__(config)
-        self.params = CGHParams.from_config(config)
+        self.params = self._effective_config(config)
         self.cg_iters = self.params.cg_iters
         self.routes_per_iter = self.params.routes_per_iter
         self.seed = self.params.seed

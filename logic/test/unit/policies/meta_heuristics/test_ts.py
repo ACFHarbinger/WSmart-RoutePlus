@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 from logic.src.configs.policies.ts import TSConfig
 from logic.src.policies.routing.meta_heuristics.tabu_search.policy_ts import TSPolicy
-from logic.src.policies.routing.meta_heuristics.tabu_search.solver import TSParams, TSSolver
+from logic.src.policies.routing.meta_heuristics.tabu_search.solver import TSConfig, TSSolver
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
@@ -17,7 +17,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 def test_ts_solver_instantiation():
     """Test that TSSolver can be instantiated without import errors."""
-    params = TSParams(
+    params = TSConfig(
         max_iterations=10,
         tabu_tenure=5,
         use_swap=True,

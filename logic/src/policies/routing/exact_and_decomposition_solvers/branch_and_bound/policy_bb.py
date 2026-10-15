@@ -23,7 +23,7 @@ from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolic
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
 from .dispatcher import run_bb_optimizer
-from .params import BBParams
+from logic.src.configs.policies.bb import BBConfig
 
 
 @GlobalRegistry.register(
@@ -133,8 +133,8 @@ class BranchAndBoundPolicy(BaseRoutingPolicy):
         # Convert local mandatory indices to a set for fast lookup in branching
         mandatory_indices = set(mandatory_nodes)
 
-        # Standardize configuration to BBParams
-        params = BBParams.from_config(values)
+        # Standardize configuration to BBConfig
+        params = self._effective_config(values)
 
         # Trigger core solver logic with formulation dispatch
         routes, solver_cost = run_bb_optimizer(

@@ -33,9 +33,7 @@ from logic.src.interfaces.context.problem_context import ProblemContext
 from logic.src.interfaces.context.solution_context import SolutionContext
 from logic.src.policies.routing.base.base_multi_period_policy import BaseMultiPeriodRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-from logic.src.policies.routing.hyper_heuristics.genetic_programming_multi_period_hyper_heuristic.params import (
-    GP_MP_HH_Params,
-)
+from logic.src.configs.policies.gp_mp_hh import GP_MP_HH_Config
 from logic.src.utils.policy.llh_pool import LLHPool
 from logic.src.utils.policy.routes import route_profit
 from logic.src.utils.policy.wrappers import greedy_day_route
@@ -72,7 +70,7 @@ class GPMPHHPolicy(BaseMultiPeriodRoutingPolicy):
     Registry key: ``"gp_mp_hh"``
 
     Attributes:
-        params (GP_MP_HH_Params): Parameters for the GP-MP-HH policy.
+        params (GP_MP_HH_Config): Parameters for the GP-MP-HH policy.
         pop_size (int): Population size.
         gens (int): Number of generations.
         prog_len (int): Program length.
@@ -88,7 +86,7 @@ class GPMPHHPolicy(BaseMultiPeriodRoutingPolicy):
             config (Any): Configuration for the solver.
         """
         super().__init__(config)
-        self.params = GP_MP_HH_Params.from_config(config)
+        self.params = self._effective_config(config)
         self.pop_size = self.params.pop_size
         self.gens = self.params.gens
         self.prog_len = self.params.prog_len

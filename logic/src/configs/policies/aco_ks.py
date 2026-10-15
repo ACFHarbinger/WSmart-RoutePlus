@@ -10,6 +10,7 @@ Example:
     >>> config.n_ants
     20
 """
+from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import List, Optional
@@ -63,3 +64,4 @@ class KSparseACOConfig:
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
     acceptance_criterion: AcceptanceConfig = AcceptanceConfig(method="oi")
+    profit_aware_operators: bool = False

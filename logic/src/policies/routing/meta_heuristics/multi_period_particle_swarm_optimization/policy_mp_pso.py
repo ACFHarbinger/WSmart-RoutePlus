@@ -21,9 +21,7 @@ from logic.src.interfaces.context.problem_context import ProblemContext
 from logic.src.interfaces.context.solution_context import SolutionContext
 from logic.src.policies.routing.base.base_multi_period_policy import BaseMultiPeriodRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-from logic.src.policies.routing.meta_heuristics.multi_period_particle_swarm_optimization.params import (
-    MP_PSO_Params,
-)
+from logic.src.configs.policies.mp_pso import MP_PSO_Config
 from logic.src.utils.policy.routes import (
     route_profit,
 )
@@ -66,7 +64,7 @@ class MultiPeriodPSOPolicy(BaseMultiPeriodRoutingPolicy):
             None.
         """
         super().__init__(config)
-        self.params = MP_PSO_Params.from_config(config)
+        self.params = self._effective_config(config)
         self.swarm_size = self.params.swarm_size
         self.iters = self.params.iters
         self.seed = self.params.seed

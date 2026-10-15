@@ -18,7 +18,7 @@ from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import GLSParams
+from logic.src.configs.policies.gls import GLSConfig
 from .solver import GLSSolver
 
 
@@ -93,7 +93,7 @@ class GLSPolicy(BaseRoutingPolicy):
         Returns:
             Tuple of (routes, profit, cost).
         """
-        params = GLSParams(
+        params = GLSConfig(
             lambda_param=float(values.get("lambda_param", 1.0)),
             alpha_param=float(values.get("alpha_param", 0.3)),
             penalty_cycles=int(values.get("penalty_cycles", 1000)),

@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from logic.src.interfaces.context.multi_day_context import MultiDayContext
 
 from .agent import NeuralAgent
-from .params import NeuralParams
+from logic.src.configs.policies.na import NeuralAgentConfig
 
 
 @GlobalRegistry.register(
@@ -71,7 +71,7 @@ class NeuralAgentPolicy(BaseRoutingPolicy):
     @classmethod
     def _config_class(cls) -> Optional[Type[Any]]:
         """Return the dataclass type for this policy's config."""
-        return NeuralParams
+        return NeuralAgentConfig
 
     def _get_config_key(self) -> str:
         """Return the config key for this policy."""
@@ -79,11 +79,11 @@ class NeuralAgentPolicy(BaseRoutingPolicy):
 
     @classmethod
     def _build_config(cls, raw_config: Dict[str, Any]) -> Any:
-        """Build NeuralParams, including the nested ``decoding:`` yaml block.
+        """Build NeuralAgentConfig, including the nested ``decoding:`` yaml block.
 
         ``BaseRoutingPolicy._build_config`` keeps only dataclass field names, so
         ``decoding.beam_width`` (yaml 5) was dropped and the adapter ran at the
-        dataclass default 1. ``NeuralParams.from_config`` already unpacks that
+        dataclass default 1. ``NeuralAgentConfig.from_config`` already unpacks that
         block (and the ``amgat:`` list wrapper).
         """
         from omegaconf import DictConfig, ListConfig
@@ -91,14 +91,14 @@ class NeuralAgentPolicy(BaseRoutingPolicy):
         config_key = "na"
         policy_section = raw_config.get(config_key) if hasattr(raw_config, "get") else None
         if policy_section is None:
-            valid_fields = {f.name for f in fields(NeuralParams)}
+            valid_fields = {f.name for f in fields(NeuralAgentConfig)}
             sections = [
                 v
                 for k, v in raw_config.items()
                 if k not in {"seed", "decoding", "model"} and k not in valid_fields and isinstance(v, (dict, list, DictConfig, ListConfig))
             ]
             policy_section = sections[0] if len(sections) == 1 else raw_config
-        params = NeuralParams.from_config(policy_section)
+        params = self._effective_config(policy_section)
         # Preserve the public flat dataclass form as well as nested YAML decoding.
         # Explicit nested settings retain precedence when both forms are present.
         if hasattr(policy_section, "get"):
@@ -194,11 +194,11 @@ class NeuralAgentPolicy(BaseRoutingPolicy):
                 - Optional[MultiDayContext]: Updated multi-period context.
         """
         # Typed params first so yaml decoding is captured even on an empty mandatory day.
-        if self._config is not None and isinstance(self._config, NeuralParams):
+        if self._config is not None and isinstance(self._config, NeuralAgentConfig):
             params = self._config
         else:
             values = kwargs.get("config", {}).get(self._get_config_key(), kwargs.get("config", {}))
-            params = NeuralParams.from_config(self._config or values)
+            params = NeuralAgentConfig.from_config(self._config or values)
         try:
             from logic.src.pipeline.simulations.actions.base import _record_live_params
 

@@ -10,7 +10,7 @@ Reference:
     routing problem."
 
 Attributes:
-    HVPLParams: Parameters for the HVPL solver.
+    HVPLConfig: Parameters for the HVPL solver.
     HVPLPolicy: Policy adapter for HVPL.
     HVPLSolver: Core HVPL solver logic.
 
@@ -18,8 +18,8 @@ Example:
     >>> from logic.src.policies.routing.meta_heuristics.hybrid_volleyball_premier_league import HVPLSolver
 """
 
-from .params import HVPLParams
+from logic.src.configs.policies.hvpl import HVPLConfig
 from .policy_hvpl import HVPLPolicy
 from .solver import HVPLSolver
 
-__all__ = ["HVPLParams", "HVPLSolver", "HVPLPolicy"]
+__all__ = ["HVPLConfig", "HVPLSolver", "HVPLPolicy"]

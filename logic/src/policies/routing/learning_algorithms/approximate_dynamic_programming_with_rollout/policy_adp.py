@@ -28,7 +28,7 @@ from logic.src.policies.routing.base.base_multi_period_policy import BaseMultiPe
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
 from .adp_engine import ADPRolloutEngine
-from .params import ADPRolloutParams
+from logic.src.configs.policies.adp import ADPRolloutConfig
 
 
 @GlobalRegistry.register(
@@ -112,7 +112,7 @@ class ADPRolloutPolicy(BaseMultiPeriodRoutingPolicy):
         if tree is None:
             raise ValueError("ADP requires a ScenarioTree in ProblemContext.")
 
-        params = ADPRolloutParams.from_config(asdict(self.config))  # type: ignore[arg-type]
+        params = ADPRolloutConfig.from_config(asdict(self.config))  # type: ignore[arg-type]
 
         engine = ADPRolloutEngine(
             dist_matrix=problem.distance_matrix,

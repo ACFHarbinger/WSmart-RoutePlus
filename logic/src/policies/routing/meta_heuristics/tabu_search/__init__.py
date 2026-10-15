@@ -1,7 +1,7 @@
 """Tabu Search (TS) module.
 
 Attributes:
-    TSParams: Parameter dataclass for the Tabu Search.
+    TSConfig: Parameter dataclass for the Tabu Search.
     TSPolicy: Policy class for Tabu Search.
     TSSolver: Main solver class for Tabu Search.
 
@@ -10,8 +10,8 @@ Example:
     >>> policy = TSPolicy()
 """
 
-from .params import TSParams
+from logic.src.configs.policies.ts import TSConfig
 from .policy_ts import TSPolicy
 from .solver import TSSolver
 
-__all__ = ["TSParams", "TSPolicy", "TSSolver"]
+__all__ = ["TSConfig", "TSPolicy", "TSSolver"]

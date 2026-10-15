@@ -80,7 +80,7 @@ Paper-to-Implementation Mapping (BHV2000)
     Implementation: ``SaturatedArcLCIEngine`` in cutting_planes.py.
 
 Table 2 – CG at Root Only
-    Set ``MSBPCSPParams.cg_at_root_only = True`` to replicate the Table 2
+    Set ``MSBPCSPConfig.cg_at_root_only = True`` to replicate the Table 2
     experiment: column generation is skipped at all non-root nodes; only
     the pool built at the root is sifted and the LP re-solved.
     Implementation: ``_column_generation_loop`` (``cg_at_root_only`` arg).
@@ -162,7 +162,7 @@ from logic.src.policies.helpers.solvers_and_matheuristics.lagrangian_relaxation.
 from logic.src.policies.helpers.solvers_and_matheuristics.vrpp_model import VRPPModel
 from logic.src.tracking.viz_mixin import PolicyStateRecorder
 
-from .params import MSBPCSPParams
+from logic.src.configs.policies.ms_bpc_sp import MSBPCSPConfig
 
 logger = logging.getLogger(__name__)
 
@@ -1050,7 +1050,7 @@ def run_ms_bpc_sp(  # noqa: C901
     capacity: float,
     R: float,
     C: float,
-    params: Optional[Union[MSBPCSPParams, Dict[str, Any]]] = None,
+    params: Optional[Union[MSBPCSPConfig, Dict[str, Any]]] = None,
     mandatory_indices: Optional[Set[int]] = None,
     vehicle_limit: Optional[int] = None,
     env: Optional[Any] = None,
@@ -1088,7 +1088,7 @@ def run_ms_bpc_sp(  # noqa: C901
         capacity (float): Vehicle capacity.
         R (float): Revenue per kg.
         C (float): Cost per km.
-        params (Optional[Union[MSBPCSPParams, Dict[str, Any]]]): Configuration parameters.
+        params (Optional[Union[MSBPCSPConfig, Dict[str, Any]]]): Configuration parameters.
         mandatory_indices (Optional[Set[int]]): Set of node indices that must be visited.
         vehicle_limit (Optional[int]): Fleet size limit.
         env (Optional[Any]): Gurobi environment (ignored, kept for compatibility).
@@ -1109,14 +1109,14 @@ def run_ms_bpc_sp(  # noqa: C901
     n_nodes = len(dist_matrix) - 1
     m_set = mandatory_indices if mandatory_indices is not None else set()
 
-    # Standardize params to MSBPCSPParams
+    # Standardize params to MSBPCSPConfig
     if params is None:
-        params = MSBPCSPParams()
+        params = MSBPCSPConfig()
     elif isinstance(params, dict):
-        params = MSBPCSPParams.from_config(params)
+        params = MSBPCSPConfig.from_config(params)
 
     # Configuration
-    # Extract parameters from MSBPCSPParams
+    # Extract parameters from MSBPCSPConfig
     max_cg_iter = params.max_cg_iterations
     max_cuts = params.max_cuts_per_iteration
     max_routes_per_pricing = params.max_routes_per_pricing

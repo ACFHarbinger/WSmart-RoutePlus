@@ -15,7 +15,7 @@ from logic.src.configs.policies.ts import TSConfig
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-from logic.src.policies.routing.meta_heuristics.tabu_search.params import TSParams
+from logic.src.configs.policies.ts import TSConfig
 from logic.src.policies.routing.meta_heuristics.tabu_search.solver import TSSolver
 
 
@@ -88,7 +88,7 @@ class TSPolicy(BaseRoutingPolicy):
         Returns:
             Tuple of (routes, profit, cost).
         """
-        params = TSParams(
+        params = TSConfig(
             # Short-term memory
             tabu_tenure=int(values.get("tabu_tenure", 7)),
             dynamic_tenure=bool(values.get("dynamic_tenure", True)),

@@ -1,7 +1,7 @@
 r"""(μ,λ) Evolution Strategy for VRPP.
 
 Attributes:
-    MuCommaLambdaESParams: Parameter dataclass for the strategy.
+    MuCommaLambdaESConfig: Parameter dataclass for the strategy.
     MuCommaLambdaESSolver: Core solver class for the strategy.
 
 Example:
@@ -9,7 +9,7 @@ Example:
     >>> solver = MuCommaLambdaESSolver(dist_matrix, wastes, capacity, R, C, params)
 """
 
-from .params import MuCommaLambdaESParams
+from logic.src.configs.policies.es_mcl import MuCommaLambdaESConfig
 from .solver import MuCommaLambdaESSolver
 
-__all__ = ["MuCommaLambdaESSolver", "MuCommaLambdaESParams"]
+__all__ = ["MuCommaLambdaESSolver", "MuCommaLambdaESConfig"]

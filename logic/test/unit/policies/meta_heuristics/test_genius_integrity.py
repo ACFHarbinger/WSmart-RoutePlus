@@ -4,7 +4,7 @@ Integration tests for GENIUS solver integrity.
 
 import numpy as np
 import pytest
-from logic.src.policies.routing.meta_heuristics.genius.params import GENIUSParams
+from logic.src.configs.policies.genius import GENIUSConfig
 from logic.src.policies.routing.meta_heuristics.genius.solver import GENIUSSolver
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -27,7 +27,7 @@ def test_genius_node_conservation():
     capacity = 25.0
     R = 100.0
     C = 1.0
-    params = GENIUSParams(
+    params = GENIUSConfig(
         n_iterations=5,
         neighborhood_size=5,
         random_us_sampling=False, # Use deterministic for reproducibility
@@ -58,7 +58,7 @@ def test_genius_mandatory_conservation():
     C = 1000.0 # High cost -> would prefer to drop nodes
 
     mandatory_nodes = [1, 2, 3]
-    params = GENIUSParams(
+    params = GENIUSConfig(
         n_iterations=5,
         neighborhood_size=5,
         random_us_sampling=False,

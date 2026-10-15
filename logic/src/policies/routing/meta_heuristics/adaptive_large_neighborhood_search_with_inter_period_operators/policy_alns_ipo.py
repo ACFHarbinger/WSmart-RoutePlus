@@ -22,7 +22,7 @@ from logic.src.policies.routing.base.base_multi_period_policy import BaseMultiPe
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
 from .alns_ipo import ALNSSolverIPO
-from .params import ALNSIPOParams
+from logic.src.configs.policies.alns_ipo import ALNSIPOConfig
 
 
 @RoutingAlgorithmRegistry.register("alns_ipo")
@@ -96,7 +96,7 @@ class ALNSInterPeriodOperatorsPolicy(BaseMultiPeriodRoutingPolicy):
         tree = problem.scenario_tree
 
         # Initialize type-safe Params
-        params = ALNSIPOParams.from_config(asdict(self.config))  # type: ignore[arg-type]
+        params = ALNSIPOConfig.from_config(asdict(self.config))  # type: ignore[arg-type]
 
         if params.acceptance_criterion is None:
             from logic.src.policies.acceptance_criteria.base.factory import (

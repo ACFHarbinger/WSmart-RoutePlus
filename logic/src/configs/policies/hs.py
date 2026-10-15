@@ -10,6 +10,7 @@ Example:
     >>> config.time_limit
     60.0
 """
+from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, List, Optional
@@ -43,3 +44,4 @@ class HSConfig:
     profit_aware_operators: bool = False
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)
+    BW: float = 0.05  # Bandwidth for continuous adjustment (or discrete neighbor range)

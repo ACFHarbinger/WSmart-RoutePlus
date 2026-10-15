@@ -23,7 +23,7 @@ from typing import Any, Dict, List, Optional, Set
 
 import numpy as np
 
-from .params import KSACOParams
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
 from .pheromones import SparsePheromoneTau
 
 
@@ -55,7 +55,7 @@ class SolutionConstructor:
         pheromone: SparsePheromoneTau,
         candidate_lists: Dict[int, List[int]],
         nodes: List[int],
-        params: KSACOParams,
+        params: KSparseACOConfig,
         tau_0: float,
         R: float = 0.0,
         C: float = 1.0,
@@ -70,7 +70,7 @@ class SolutionConstructor:
             pheromone (SparsePheromoneTau): Sparse pheromone matrix.
             candidate_lists (Dict[int, List[int]]): K-nearest neighbor lists.
             nodes (List[int]): List of all nodes (excluding depot).
-            params (KSACOParams): Algorithm-specific parameters.
+            params (KSparseACOConfig): Algorithm-specific parameters.
             tau_0 (float): Initial pheromone value.
             R (float): Revenue multiplier.
             C (float): Cost multiplier.

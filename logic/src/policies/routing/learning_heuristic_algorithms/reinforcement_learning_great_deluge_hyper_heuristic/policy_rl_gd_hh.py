@@ -29,7 +29,7 @@ from logic.src.policies.acceptance_criteria.great_deluge import GreatDelugeAccep
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import RLGDHHParams
+from logic.src.configs.policies.rl_gd_hh import RLGDHHConfig
 from .solver import RLGDHHSolver
 
 
@@ -143,8 +143,8 @@ class RLGDHHPolicy(BaseRoutingPolicy):
 
         gd_criterion = GreatDelugeAcceptance(target_fitness_multiplier=target_multiplier, max_iterations=max_iter)
 
-        # 2. Parameter Extraction (Mapping simulator values to RLGDHHParams)
-        params = RLGDHHParams(
+        # 2. Parameter Extraction (Mapping simulator values to RLGDHHConfig)
+        params = RLGDHHConfig(
             max_iterations=max_iter,
             time_limit=float(values.get("time_limit", 60.0)),
             reward_improvement=float(values.get("reward_improvement", 1.0)),

@@ -27,7 +27,7 @@ from logic.src.interfaces.context.problem_context import ProblemContext
 from logic.src.interfaces.context.solution_context import SolutionContext
 from logic.src.policies.routing.base.base_multi_period_policy import BaseMultiPeriodRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-from logic.src.policies.routing.hyper_heuristics.matheuristic_hyper_heuristic.params import MHHParams
+from logic.src.configs.policies.mhh import MHHConfig
 from logic.src.utils.policy.llh_pool import LLHPool
 from logic.src.utils.policy.routes import route_profit
 from logic.src.utils.policy.wrappers import greedy_day_route
@@ -80,7 +80,7 @@ class MHHPolicy(BaseMultiPeriodRoutingPolicy):
             config: Configuration parameters.
         """
         super().__init__(config)
-        self.params = MHHParams.from_config(config)
+        self.params = self._effective_config(config)
         self.iters = self.params.iters
         self.seed = self.params.seed
         self.rng = random.Random(self.seed)

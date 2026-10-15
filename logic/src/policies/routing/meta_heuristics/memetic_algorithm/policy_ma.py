@@ -18,7 +18,7 @@ from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import MAParams
+from logic.src.configs.policies.ma import MAConfig
 from .solver import MASolver
 
 
@@ -95,7 +95,7 @@ class MAPolicy(BaseRoutingPolicy):
             Tuple of (routes, profit, cost).
         """
         # 1. Parameter Extraction & Mapping (See params.py for conceptual mapping)
-        params = MAParams(
+        params = MAConfig(
             pop_size=int(values.get("pop_size", 30)),
             max_generations=int(values.get("max_generations", 100)),
             crossover_rate=float(values.get("crossover_rate", 0.8)),

@@ -21,9 +21,7 @@ from logic.src.policies.routing.exact_and_decomposition_solvers.multi_stage_bran
     _reset_master_constraints,
     run_ms_bpc_sp,
 )
-from logic.src.policies.routing.exact_and_decomposition_solvers.multi_stage_branch_and_price_and_cut_with_set_partition.params import (
-    MSBPCSPParams,
-)
+from logic.src.configs.policies.ms_bpc_sp import MSBPCSPConfig
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
@@ -61,7 +59,7 @@ def ms_bpc_instance():
 @_needs_license
 def test_ms_bpc_default(ms_bpc_instance):
     dist, wastes, cap, R, C = ms_bpc_instance
-    params = MSBPCSPParams(max_cg_iterations=5, max_bb_nodes=5)
+    params = MSBPCSPConfig(max_cg_iterations=5, max_bb_nodes=5)
     routes, cost = run_ms_bpc_sp(dist, wastes, cap, R, C, params=params)
     assert len(routes) >= 0
     assert isinstance(cost, float)
@@ -80,7 +78,7 @@ def test_ms_bpc_ryan_foster_invalid_cover():
 @_needs_license
 def test_ms_bpc_cg_at_root_only(ms_bpc_instance):
     dist, wastes, cap, R, C = ms_bpc_instance
-    params = MSBPCSPParams(max_cg_iterations=5, max_bb_nodes=5, cg_at_root_only=True)
+    params = MSBPCSPConfig(max_cg_iterations=5, max_bb_nodes=5, cg_at_root_only=True)
     routes, cost = run_ms_bpc_sp(dist, wastes, cap, R, C, params=params)
     assert len(routes) >= 0
 
@@ -196,7 +194,7 @@ def test_perform_strong_branching():
 def test_compute_lr_bound_at_node():
     dist_matrix = np.array([[0, 10, 15], [10, 0, 5], [15, 5, 0]])
     wastes = {1: 5.0, 2: 5.0}
-    params = MSBPCSPParams()
+    params = MSBPCSPConfig()
     ub, lam, visited = _compute_lr_bound_at_node(
         dist_matrix=dist_matrix,
         wastes=wastes,
@@ -295,7 +293,7 @@ def test_ms_bpc_sp_enforces_vehicle_limit_in_phase3_and_phase5():
     )
     wastes = {1: 6.0, 2: 6.0, 3: 6.0, 4: 6.0}
     capacity, R, C = 10.0, 10.0, 1.0
-    params = MSBPCSPParams(
+    params = MSBPCSPConfig(
         optimality_gap=1e-9,
         early_termination_gap=1e-9,
         exact_mode=True,
@@ -336,7 +334,7 @@ def test_ms_bpc_sp_empty_fleet_result_relaxes_to_unconstrained_when_it_fits():
     dist_matrix = np.sqrt(((coords[:, None, :] - coords[None, :, :]) ** 2).sum(-1))
     wastes = {i + 1: float(rng.uniform(3, 9)) for i in range(5)}
     capacity, R, C = 12.0, 3.0, 1.0
-    params = MSBPCSPParams(
+    params = MSBPCSPConfig(
         optimality_gap=1e-9,
         early_termination_gap=1e-9,
         exact_mode=True,

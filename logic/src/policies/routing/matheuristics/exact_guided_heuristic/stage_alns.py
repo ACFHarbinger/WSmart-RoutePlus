@@ -183,7 +183,7 @@ def run_alns_stage(
     """
     t0 = time.perf_counter()
 
-    # Patch time_limit into params (avoids mutating the shared ExactGuidedHeuristicParams)
+    # Patch time_limit into params (avoids mutating the shared ExactGuidedHeuristicConfig)
     patched_params = dataclasses.replace(params, time_limit=time_limit)
 
     # Convert VRPPRoute warm-start to plain node lists

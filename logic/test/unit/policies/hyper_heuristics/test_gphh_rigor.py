@@ -14,7 +14,7 @@ import random
 
 import numpy as np
 import pytest
-from logic.src.policies.routing.hyper_heuristics.genetic_programming_hyper_heuristic.params import GPHHParams
+from logic.src.configs.policies.gp_hh import GPHHConfig
 from logic.src.policies.routing.hyper_heuristics.genetic_programming_hyper_heuristic.solver import GPHHSolver
 from logic.src.policies.routing.hyper_heuristics.genetic_programming_hyper_heuristic.tree import (
     _TERMINALS,
@@ -64,8 +64,8 @@ def dist_5() -> np.ndarray:
 
 
 @pytest.fixture
-def small_params() -> GPHHParams:
-    return GPHHParams(
+def small_params() -> GPHHConfig:
+    return GPHHConfig(
         gp_pop_size=4, max_gp_generations=2, tree_depth=3,
         candidate_list_size=3, n_training_instances=2,
         training_sample_ratio=1.0, seed=42,
@@ -81,7 +81,7 @@ def small_solver(dist_3, small_params) -> GPHHSolver:
 @pytest.fixture
 def medium_solver(dist_5) -> GPHHSolver:
     wastes = {1: 15.0, 2: 25.0, 3: 10.0, 4: 30.0}
-    params = GPHHParams(
+    params = GPHHConfig(
         gp_pop_size=4, max_gp_generations=2, tree_depth=3,
         candidate_list_size=3, n_training_instances=2,
         training_sample_ratio=0.75, seed=42,
@@ -265,14 +265,14 @@ class TestDeepOperators:
 
     def test_parsimony_default(self):
         """Verify that parsimony_coefficient defaults to 0.001."""
-        params = GPHHParams()
+        params = GPHHConfig()
         assert params.parsimony_coefficient == 0.001
 
         # Test from_config
         class MockConfig:
             pass
         config = MockConfig()
-        params2 = GPHHParams.from_config(config)
+        params2 = GPHHConfig.from_config(config)
         assert params2.parsimony_coefficient == 0.001
 
     def test_depth_tracking(self):
@@ -320,7 +320,7 @@ class TestNoProfitabilityGate:
         # Node 1 has tiny waste → low profit, but a tree biased to node_profit=0
         # should still get scored and potentially inserted.
         wastes = {1: 0.001, 2: 100.0}  # Node 1 is nearly worthless
-        params = GPHHParams(seed=0, candidate_list_size=5, n_training_instances=1)
+        params = GPHHConfig(seed=0, candidate_list_size=5, n_training_instances=1)
         solver = GPHHSolver(dist_3, wastes, 200.0, R=1.0, C=1.0, params=params)
 
         # A tree that always scores identically (constant 0.0) should insert both
@@ -468,7 +468,7 @@ class TestSolverEndToEnd:
 
     def test_empty_instance(self):
         dist = np.array([[0]])
-        params = GPHHParams(seed=42)
+        params = GPHHConfig(seed=42)
         solver = GPHHSolver(dist, {}, 50.0, 1.0, 1.0, params)
         routes, profit, cost = solver.solve()
         assert routes == []

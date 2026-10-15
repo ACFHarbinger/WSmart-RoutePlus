@@ -309,7 +309,7 @@ class RLController:
     """Online LinUCB / offline PPO controller for stage-budget allocation.
 
     Attributes:
-        params:       LASMPipelineParams controlling RL behaviour.
+        params:       LASMPipelineConfig controlling RL behaviour.
         _arms:        Dict of arm_id → _LinUCBArm for each action dimension.
         _sw:          Sliding-window reward tracker.
         _call_count:  Number of decisions made so far.
@@ -318,10 +318,10 @@ class RLController:
     """
 
     def __init__(self, params: Any) -> None:
-        """Initialise the controller from LASMPipelineParams.
+        """Initialise the controller from LASMPipelineConfig.
 
         Args:
-            params: LASMPipelineParams instance.
+            params: LASMPipelineConfig instance.
         """
         self._params = params
         self._features = list(params.rl_state_features)

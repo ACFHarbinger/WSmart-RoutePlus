@@ -5,7 +5,7 @@ Genetic Algorithm (NDS-BRKGA) core components.
 
 Attributes:
     NDSBRKGAPolicy (Type[NDSBRKGAPolicy]): Main policy for joint packing and routing.
-    NDSBRKGAParams (Type[NDSBRKGAParams]): Hyperparameter configuration dataclass.
+    NDSBRKGAConfig (Type[NDSBRKGAConfig]): Hyperparameter configuration dataclass.
     Chromosome (Type[Chromosome]): Representation of a solution candidate.
     Population (Type[Population]): Manager for solution candidates and evolution.
     biased_crossover (Callable): Biased uniform crossover operator.
@@ -26,7 +26,7 @@ from .chromosome import Chromosome, compute_adaptive_thresholds
 from .crossover import biased_crossover
 from .nsga2 import crowding_distance, fast_non_dominated_sort, select_elite_nsga2
 from .objectives import compute_overflow_risk, evaluate_chromosome, evaluate_population
-from .params import NDSBRKGAParams
+from logic.src.configs.policies.nds_brkga import NDSBRKGAConfig
 from .policy_nds_brkga import NDSBRKGAPolicy
 from .population import Population
 
@@ -40,7 +40,7 @@ __all__ = [
     "compute_overflow_risk",
     "evaluate_chromosome",
     "evaluate_population",
-    "NDSBRKGAParams",
+    "NDSBRKGAConfig",
     "Population",
     "NDSBRKGAPolicy",
 ]

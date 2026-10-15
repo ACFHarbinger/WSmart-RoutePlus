@@ -35,6 +35,7 @@ Example:
     >>> config.vrpp
     True
 """
+from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, List, Optional
@@ -87,3 +88,4 @@ class VPLConfig:
     vrpp: bool = True
     packing: List[str] = field(default_factory=list)
     route_improvement: List[Any] = field(default_factory=list)
+    profit_aware_operators: bool = False

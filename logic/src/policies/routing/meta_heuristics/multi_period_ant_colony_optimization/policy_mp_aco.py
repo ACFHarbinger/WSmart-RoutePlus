@@ -21,9 +21,7 @@ from logic.src.interfaces.context.problem_context import ProblemContext
 from logic.src.interfaces.context.solution_context import SolutionContext
 from logic.src.policies.routing.base.base_multi_period_policy import BaseMultiPeriodRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-from logic.src.policies.routing.meta_heuristics.multi_period_ant_colony_optimization.params import (
-    MP_ACO_Params,
-)
+from logic.src.configs.policies.mp_aco import MP_ACO_Config
 from logic.src.utils.policy.routes import route_cost, route_profit
 
 
@@ -62,7 +60,7 @@ class MultiPeriodACOPolicy(BaseMultiPeriodRoutingPolicy):
             None.
         """
         super().__init__(config)
-        self.params = MP_ACO_Params.from_config(config)
+        self.params = self._effective_config(config)
         self.n_ants = self.params.n_ants
         self.iters = self.params.iters
         self.alpha = self.params.alpha

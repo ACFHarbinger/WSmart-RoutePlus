@@ -32,7 +32,7 @@ from logic.src.interfaces.context.search_context import SearchContext
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import RENSParams
+from logic.src.configs.policies.rens import RENSConfig
 from .solver import run_rens_gurobi
 
 
@@ -157,7 +157,7 @@ class RENSPolicy(BaseRoutingPolicy):
                 - Optional[MultiDayContext]: Updated multi-period context.
         """
         # 1. Initialize parameters
-        params = RENSParams.from_config(self.config)
+        params = RENSConfig.from_config(self.config)
 
         # 2. Extract environment parameters
         distance_matrix = kwargs["distance_matrix"]

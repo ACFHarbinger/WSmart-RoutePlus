@@ -18,7 +18,7 @@ from logic.src.configs.policies.ma_dp import MemeticAlgorithmDualPopulationConfi
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import MemeticAlgorithmDualPopulationParams
+from logic.src.configs.policies.ma_dp import MemeticAlgorithmDualPopulationConfig
 from .solver import MemeticAlgorithmDualPopulationSolver
 
 
@@ -112,7 +112,7 @@ class MemeticAlgorithmDualPopulationPolicy(BaseRoutingPolicy):
                 - profit: Total calculated net profit (Total Revenue - Total Cost).
                 - cost: Total travel cost calculated by the solver.
         """
-        params = MemeticAlgorithmDualPopulationParams(
+        params = MemeticAlgorithmDualPopulationConfig(
             population_size=values.get("population_size", 30),
             max_iterations=values.get("max_iterations", 200),
             diversity_injection_rate=values.get("diversity_injection_rate", 0.2),

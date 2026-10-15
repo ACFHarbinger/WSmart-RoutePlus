@@ -24,9 +24,7 @@ from logic.src.configs.policies.other import (
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-from logic.src.policies.routing.learning_heuristic_algorithms.reinforcement_learning_adaptive_large_neighborhood_search.params import (
-    RLALNSParams,
-)
+from logic.src.configs.policies.rl_alns import RLALNSConfig
 from logic.src.policies.routing.learning_heuristic_algorithms.reinforcement_learning_adaptive_large_neighborhood_search.solver import (
     RLALNSSolver,
 )
@@ -143,7 +141,7 @@ class RLALNSPolicy(BaseRoutingPolicy):
                 ),
             )
 
-        params = RLALNSParams(
+        params = RLALNSConfig(
             time_limit=values.get("time_limit", 60.0),
             max_iterations=values.get("max_iterations", 5000),
             start_temp=values.get("start_temp", 100.0),

@@ -18,7 +18,7 @@ from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import GAParams
+from logic.src.configs.policies.ga import GAConfig
 from .solver import GASolver
 
 
@@ -93,7 +93,7 @@ class GAPolicy(BaseRoutingPolicy):
         Returns:
             Tuple of (routes, profit, cost).
         """
-        params = GAParams(
+        params = GAConfig(
             pop_size=int(values.get("pop_size", 30)),
             max_generations=int(values.get("max_generations", 100)),
             crossover_rate=float(values.get("crossover_rate", 0.8)),

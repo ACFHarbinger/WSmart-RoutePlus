@@ -3,7 +3,7 @@
 Attributes:
     FASolver: Main solver class for DFA.
     FAPolicy: Policy class for DFA.
-    FAParams: Parameter dataclass for DFA.
+    FAConfig: Parameter dataclass for DFA.
 
 Example:
     >>> from logic.src.policies.routing.meta_heuristics.firefly_algorithm import FAPolicy

@@ -20,7 +20,7 @@ from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolic
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
 from .ms_bpc_sp_engine import run_ms_bpc_sp
-from .params import MSBPCSPParams
+from logic.src.configs.policies.ms_bpc_sp import MSBPCSPConfig
 
 
 @GlobalRegistry.register(
@@ -99,7 +99,7 @@ class MSBPCSPPolicy(BaseRoutingPolicy):
         mandatory_indices: Set[int] = set(mandatory_nodes)
 
         # Initialize standardized params object (Phase 1 refactoring)
-        params = MSBPCSPParams.from_config(values)
+        params = self._effective_config(values)
 
         # Extract vehicle limit from simulation context (sim.n_vehicles)
         n_vehicles = kwargs.get("n_vehicles")

@@ -20,7 +20,7 @@ from logic.src.configs.policies import DistancePSOConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import DistancePSOParams
+from logic.src.configs.policies.psoda import DistancePSOConfig
 from .solver import DistancePSOSolver
 
 
@@ -108,7 +108,7 @@ class DistancePSOPolicy(BaseRoutingPolicy):
                 - profit: Total calculated net profit (Total Revenue - Total Cost).
                 - cost: Total travel cost calculated by the solver.
         """
-        params = DistancePSOParams(
+        params = DistancePSOConfig(
             population_size=values.get("population_size", 20),
             max_iterations=values.get("max_iterations", 500),
             inertia_weight_start=values.get("inertia_weight_start", 0.9),

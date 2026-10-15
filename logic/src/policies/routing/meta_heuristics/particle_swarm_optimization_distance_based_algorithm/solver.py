@@ -39,8 +39,8 @@ Attributes:
 
 Example:
     >>> from logic.src.policies.routing.meta_heuristics.particle_swarm_optimization_distance_based_algorithm.solver import DistancePSOSolver
-    >>> from logic.src.policies.routing.meta_heuristics.particle_swarm_optimization_distance_based_algorithm.params import DistancePSOParams
-    >>> params = DistancePSOParams()
+    >>> from logic.src.configs.policies.psoda import DistancePSOConfig
+    >>> params = DistancePSOConfig()
     >>> solver = DistancePSOSolver(dist_matrix, wastes, capacity, R, C, params)
     >>> routes, profit, cost = solver.solve()
 """
@@ -55,9 +55,9 @@ import numpy as np
 from logic.src.policies.helpers.local_search.local_search_general import GeneralLocalSearch
 from logic.src.policies.helpers.operators import greedy_insertion, greedy_profit_insertion, random_removal
 from logic.src.policies.helpers.operators.solution_initialization.nearest_neighbor_si import build_nn_routes
-from logic.src.policies.routing.meta_heuristics.ant_colony_optimization_k_sparse.params import KSACOParams
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
 
-from .params import DistancePSOParams
+from logic.src.configs.policies.psoda import DistancePSOConfig
 
 
 class DistancePSOSolver:
@@ -87,7 +87,7 @@ class DistancePSOSolver:
         capacity: float,
         R: float,
         C: float,
-        params: DistancePSOParams,
+        params: DistancePSOConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """
@@ -119,7 +119,7 @@ class DistancePSOSolver:
         self.personal_best_fitness: List[float] = []  # f(pbest) for each particle
 
         # Initialize Local Search once for reuse
-        aco_params = KSACOParams(
+        aco_params = KSparseACOConfig(
             local_search_iterations=self.params.local_search_iterations,
             time_limit=self.params.time_limit,
             vrpp=self.params.vrpp,

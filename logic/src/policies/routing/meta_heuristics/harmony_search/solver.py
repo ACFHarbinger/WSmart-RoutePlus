@@ -19,10 +19,8 @@ import numpy as np
 
 from logic.src.policies.helpers.local_search.local_search_general import GeneralLocalSearch
 from logic.src.policies.helpers.operators import build_greedy_routes
-from logic.src.policies.routing.meta_heuristics.ant_colony_optimization_k_sparse.params import (
-    KSACOParams,
-)
-from logic.src.policies.routing.meta_heuristics.harmony_search.params import HSParams
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
+from logic.src.configs.policies.hs import HSConfig
 
 
 class HSSolver:
@@ -49,7 +47,7 @@ class HSSolver:
         capacity: float,
         R: float,
         C: float,
-        params: HSParams,
+        params: HSConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """
@@ -79,7 +77,7 @@ class HSSolver:
         self.random = random.Random(params.seed) if params.seed is not None else random.Random()
 
         # Pre-instantiate Local Search for reuse
-        aco_params = KSACOParams(
+        aco_params = KSparseACOConfig(
             local_search_iterations=self.params.local_search_iterations,
             vrpp=self.params.vrpp,
             profit_aware_operators=self.params.profit_aware_operators,

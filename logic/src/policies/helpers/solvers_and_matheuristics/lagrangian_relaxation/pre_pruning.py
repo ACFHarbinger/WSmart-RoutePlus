@@ -88,9 +88,9 @@ def compute_lr_bound_at_node(
     # not currently accept forced_out, so we filter wastes here.
     trimmed_wastes = {k: v for k, v in wastes.items() if k not in forced_out}
 
-    # Create a temporary BBParams-compatible object to call run_subgradient.
+    # Create a temporary BBConfig-compatible object to call run_subgradient.
     # run_subgradient accepts a params object with these specific fields; we
-    # use a SimpleNamespace to avoid a hard dependency on BBParams in bpc_engine.
+    # use a SimpleNamespace to avoid a hard dependency on BBConfig in bpc_engine.
     lr_params = SimpleNamespace(
         lr_lambda_init=params.lr_lambda_init,
         lr_max_subgradient_iters=params.lr_max_subgradient_iters,

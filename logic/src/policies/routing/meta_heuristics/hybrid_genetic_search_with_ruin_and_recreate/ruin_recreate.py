@@ -22,7 +22,7 @@ from logic.src.policies.helpers.operators import recreate_repair as repair_opera
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search import Individual
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.evolution import evaluate
 
-from .params import HGSRRParams
+from logic.src.configs.policies.hgs_rr import HGSRRConfig
 
 
 class AdaptiveOperatorManager:
@@ -234,7 +234,7 @@ class RuinRecreateOperator:
         capacity: float,
         revenue: float,
         cost_unit: float,
-        params: HGSRRParams,
+        params: HGSRRConfig,
         split_manager: Any,
     ):
         """Initialize the ruin-recreate operator.

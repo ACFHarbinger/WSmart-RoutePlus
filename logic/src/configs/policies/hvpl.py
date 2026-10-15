@@ -19,8 +19,10 @@ Example:
 from dataclasses import dataclass, field
 from typing import Any, List, Optional
 
+from logic.src.configs.policies.aco_hh import HyperHeuristicACOConfig
+from logic.src.configs.policies.alns import ALNSConfig
+
 from .aco_ks import KSparseACOConfig
-from .alns import ALNSConfig
 
 
 @dataclass
@@ -99,3 +101,5 @@ class HVPLConfig:
     profit_aware_operators: bool = False
     packing: List[str] = field(default_factory=list)
     route_improvement: List[Any] = field(default_factory=list)
+    aco_params: Optional[HyperHeuristicACOConfig] = field(default_factory=lambda: None)
+    alns_params: Optional[ALNSConfig] = field(default_factory=lambda: None)

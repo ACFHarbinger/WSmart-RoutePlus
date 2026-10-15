@@ -10,6 +10,7 @@ Example:
     >>> config.time_limit
     300.0
 """
+from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import List, Optional
@@ -56,3 +57,16 @@ class BPConfig:
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
     seed: Optional[int] = None
+    branching_strategy: str = "edge"
+    max_branch_nodes: int = 1000
+    use_exact_pricing: bool = False
+    use_ng_routes: bool = True
+    ng_neighborhood_size: int = 8
+    tree_search_strategy: str = "best_first"
+    vehicle_limit: Optional[int] = None
+    cleanup_frequency: int = 20
+    cleanup_threshold: float = -100.0
+    early_termination_gap: float = 1e-3
+    multiple_waste_types: bool = False
+    allow_heuristic_ryan_foster: bool = False
+    use_ryan_foster: bool = False

@@ -6,7 +6,7 @@ SISR is an iterated local search method that destroys routes by removing strings
 of nodes and repairs them using a greedy heuristic with blinks.
 
 Attributes:
-    SISRParams (class): Configuration parameters.
+    SISRConfig (class): Configuration parameters.
     SISRSolver (class): Main solver class.
 
 Example:
@@ -15,7 +15,7 @@ Example:
     >>> routes, cost, revenue = solver.solve()
 """
 
-from .params import SISRParams
+from logic.src.configs.policies.sisr import SISRConfig
 from .solver import SISRSolver
 
-__all__ = ["SISRParams", "SISRSolver"]
+__all__ = ["SISRConfig", "SISRSolver"]

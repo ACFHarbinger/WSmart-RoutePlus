@@ -2,7 +2,7 @@
 
 import numpy as np
 import pytest
-from logic.src.policies.routing.meta_heuristics.quantum_differential_evolution.params import QDEParams
+from logic.src.configs.policies.qde import QDEConfig
 from logic.src.policies.routing.meta_heuristics.quantum_differential_evolution.solver import QDESolver
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -22,7 +22,7 @@ def sample_data():
 
 def test_qde_solver_basic(sample_data):
     dist, wastes, cap = sample_data
-    params = QDEParams(max_iterations=10, pop_size=5, seed=42)
+    params = QDEConfig(max_iterations=10, pop_size=5, seed=42)
     solver = QDESolver(dist, wastes, cap, R=1.0, C=1.0, params=params)
 
     routes, profit, cost = solver.solve()
@@ -34,7 +34,7 @@ def test_qde_solver_basic(sample_data):
 
 def test_qde_rotation_gate(sample_data):
     dist, wastes, cap = sample_data
-    params = QDEParams(delta_theta=0.1, seed=42)
+    params = QDEConfig(delta_theta=0.1, seed=42)
     solver = QDESolver(dist, wastes, cap, R=1.0, C=1.0, params=params)
 
     # Test lookup table logic

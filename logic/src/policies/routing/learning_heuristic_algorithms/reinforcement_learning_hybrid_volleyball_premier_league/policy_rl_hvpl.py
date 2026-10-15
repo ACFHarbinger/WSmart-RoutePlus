@@ -28,13 +28,11 @@ from logic.src.configs.policies.rl_hvpl import RLHVPLConfig
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-from logic.src.policies.routing.learning_heuristic_algorithms.reinforcement_learning_hybrid_volleyball_premier_league.params import (
-    RLHVPLParams,
-)
+from logic.src.configs.policies.rl_hvpl import RLHVPLConfig
 from logic.src.policies.routing.learning_heuristic_algorithms.reinforcement_learning_hybrid_volleyball_premier_league.rl_hvpl import (
     RLHVPLSolver,
 )
-from logic.src.policies.routing.meta_heuristics.ant_colony_optimization_k_sparse.params import KSACOParams
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
 
 
 @GlobalRegistry.register(
@@ -132,7 +130,7 @@ class RLHVPLPolicy(BaseRoutingPolicy):
         profit_aware_operators = values.get("profit_aware_operators", False)
 
         # Extract sub-params for ACO and ALNS
-        aco_params = KSACOParams(
+        aco_params = KSparseACOConfig(
             n_ants=values.get("aco_n_ants", 10),
             k_sparse=values.get("aco_k_sparse", 10),
             alpha=values.get("aco_alpha", 1.0),
@@ -173,7 +171,7 @@ class RLHVPLPolicy(BaseRoutingPolicy):
             # Try to build RLConfig from dict if passed organically
             rl_config = RLConfig(**rl_config)
 
-        params = RLHVPLParams(
+        params = RLHVPLConfig(
             n_teams=values.get("n_teams", 10),
             max_iterations=values.get("max_iterations", 100),
             sub_rate=values.get("sub_rate", 0.2),

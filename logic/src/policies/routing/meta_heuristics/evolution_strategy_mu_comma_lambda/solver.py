@@ -32,12 +32,8 @@ from logic.src.policies.helpers.operators import (
     random_removal,
     shaw_profit_removal,
 )
-from logic.src.policies.routing.meta_heuristics.ant_colony_optimization_k_sparse.params import (
-    KSACOParams,
-)
-from logic.src.policies.routing.meta_heuristics.evolution_strategy_mu_comma_lambda.params import (
-    MuCommaLambdaESParams,
-)
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
+from logic.src.configs.policies.es_mcl import MuCommaLambdaESConfig
 
 
 class MuCommaLambdaESSolver:
@@ -64,7 +60,7 @@ class MuCommaLambdaESSolver:
         capacity: float,
         R: float,
         C: float,
-        params: MuCommaLambdaESParams,
+        params: MuCommaLambdaESConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         r"""
@@ -94,7 +90,7 @@ class MuCommaLambdaESSolver:
         self.rng = random.Random(params.seed) if params.seed is not None else random.Random()
 
         # Pre-instantiate local search for reuse to prevent instantiation overhead
-        aco_params = KSACOParams(
+        aco_params = KSparseACOConfig(
             local_search_iterations=self.params.local_search_iterations,
             vrpp=self.params.vrpp,
             profit_aware_operators=self.params.profit_aware_operators,
