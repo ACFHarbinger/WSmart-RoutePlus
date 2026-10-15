@@ -12,6 +12,7 @@ import random
 import numpy as np
 import pandas as pd
 import pytest
+from logic.src.configs.policies.hgs import HGSConfig
 from logic.src.policies.helpers.local_search import local_search_base
 
 # HGS and ALNS auxiliary imports
@@ -35,7 +36,6 @@ from logic.src.policies.helpers.operators.perturbation_shaking.sans.move import 
     move_n_route_random,
 )
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search import evolution, individual
-from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search import params as hgs_params
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search import split as split_module
 
 # Look-ahead auxiliary imports
@@ -424,7 +424,7 @@ class TestHGSAux:
 
     def test_hgs_local_search(self, sample_data):
         """Test local search optimization."""
-        params = hgs_params.HGSParams(time_limit=1.0)
+        params = HGSConfig(time_limit=1.0)
 
         # Create a concrete subclass for testing if LocalSearch is abstract
         class ConcreteLocalSearch(local_search_base.LocalSearch):

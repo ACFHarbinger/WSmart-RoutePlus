@@ -134,18 +134,16 @@ def _import_sp_stage() -> Optional[Callable[[Any, Any, Any, Any, Any, Any, Any, 
         return _fallback_sp
 
 
-def _import_alns_params() -> Optional[Type[Any]]:
+def _import_alns_config() -> Optional[Type[Any]]:
     """Import ALNS parameters with fallback.
 
     Returns:
         Optional[Type[Any]]: The ALNS parameters class.
     """
     try:
-        from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.params import (
-            ALNSParams,
-        )
+        from logic.src.configs.policies.alns import ALNSConfig
 
-        return ALNSParams
+        return ALNSConfig
     except ImportError:
         return None
 
@@ -308,14 +306,17 @@ def run_lasm_pipeline(
     # ── Stage 2: ALNS ─────────────────────────────────────────────────────
     logger.info("[LBBDPipeline] Stage 2 ALNS  budget=%.1fs", tau_alns)
     run_alns_stage = _import_alns_stage()
-    ALNSParams = _import_alns_params()
+    ALNSConfig = _import_alns_config()
 
-    if run_alns_stage is not None and ALNSParams is not None:
+    if run_alns_stage is not None and ALNSConfig is not None:
         alns_vals = p.as_alns_values_dict()
         alns_vals["time_limit"] = tau_alns
         # Apply RL operator multipliers to destroy-operator initial weights
         # (they will be further adapted by ALNS's internal roulette mechanism)
-        alns_params = ALNSParams.from_config(alns_vals)
+        import dataclasses
+
+        valid_keys = {f.name for f in dataclasses.fields(ALNSConfig)}
+        alns_params = ALNSConfig(**{k: v for k, v in alns_vals.items() if k in valid_keys})
 
         alns_routes, alns_profit = run_alns_stage(
             dist_matrix=dm_np,

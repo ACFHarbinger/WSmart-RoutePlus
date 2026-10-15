@@ -32,54 +32,39 @@ class HGSConfig:
         n_offspring: Generation size (number before survivor selection).
         nb_elite: Number of elite individuals to preserve.
         nb_close: Number of close individuals for diversity measurement.
-        nb_granular: Granular search parameter for local search.
         target_feasible: Target proportion of feasible solutions.
         n_iterations_no_improvement: Max iterations without improvement.
-        mutation_rate: Probability of applying local search to offspring.
         repair_probability: Probability of repairing infeasible offspring.
         crossover_rate: Probability of applying crossover.
-        local_search_iterations: Number of local search iterations.
-        use_cross_exchange: Whether to use cross exchange moves.
-        use_lambda_interchange: Whether to use lambda interchange moves.
-        lambda_max: Maximum lambda for lambda interchange moves.
-        use_ejection_chains: Whether to use ejection chain moves.
-        use_3opt: Whether to use 3-opt moves.
         max_vehicles: Maximum number of vehicles (0 for unlimited).
         initial_penalty_capacity: Initial penalty for capacity violations.
         penalty_increase: Multiplier for increasing penalty.
         penalty_decrease: Multiplier for decreasing penalty.
         engine: Solver engine to use ('custom', 'pyvrp').
         vrpp: Whether this is a VRPP problem.
+        profit_aware_operators: Whether to use profit-aware operators.
         packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
         acceptance_criterion: Acceptance criterion config for local search.
     """
 
     # Core HGS parameters (Vidal 2022)
-    time_limit: float = 0.0
-    restart_timer: float = 0.0
+    time_limit: float = 60.0
+    restart_timer: float = 60.0
     seed: Optional[int] = None
     mu: int = 25
     n_offspring: int = 40
     nb_elite: int = 4
     nb_close: int = 5
-    nb_granular: int = 20
     target_feasible: float = 0.2
     n_iterations_no_improvement: int = 20000
 
     # Genetic operators
-    mutation_rate: float = 1.0
     repair_probability: float = 0.5
     crossover_rate: float = 1.0
 
-    # Local search
-    local_search_iterations: int = 500
+    # Vehicle constraints
     max_vehicles: int = 0
-    use_cross_exchange: bool = False
-    use_lambda_interchange: bool = False
-    lambda_max: int = 0
-    use_ejection_chains: bool = False
-    use_3opt: bool = False
 
     # Penalty management
     initial_penalty_capacity: float = 1.0
@@ -89,7 +74,14 @@ class HGSConfig:
     # Engine configuration
     engine: str = "custom"
     vrpp: bool = True
-    profit_aware_operators: bool = False
+    profit_aware_operators: bool = True
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
     acceptance_criterion: AcceptanceConfig = AcceptanceConfig(method="oi", params=OnlyImprovingConfig())
+    lambda_param: Optional[int] = None
+
+    def __post_init__(self) -> None:
+        if self.lambda_param is not None and self.n_offspring == 40:
+            self.n_offspring = self.lambda_param
+        elif self.lambda_param is None:
+            self.lambda_param = self.n_offspring

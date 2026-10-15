@@ -1,11 +1,11 @@
 {
     "time_limit": {
         "type": "float",
-        "default": 0.0
+        "default": 60.0
     },
     "restart_timer": {
         "type": "float",
-        "default": 0.0
+        "default": 60.0
     },
     "seed": {
         "type": "int",
@@ -27,10 +27,6 @@
         "type": "int",
         "default": 5
     },
-    "nb_granular": {
-        "type": "int",
-        "default": 20
-    },
     "target_feasible": {
         "type": "float",
         "default": 0.2
@@ -38,10 +34,6 @@
     "n_iterations_no_improvement": {
         "type": "int",
         "default": 20000
-    },
-    "mutation_rate": {
-        "type": "float",
-        "default": 1.0
     },
     "repair_probability": {
         "type": "float",
@@ -51,49 +43,9 @@
         "type": "float",
         "default": 1.0
     },
-    "local_search_iterations": {
-        "type": "int",
-        "default": 500
-    },
     "max_vehicles": {
         "type": "int",
         "default": 0
-    },
-    "use_cross_exchange": {
-        "type": "categorical",
-        "choices": [
-            true,
-            false
-        ],
-        "default": false
-    },
-    "use_lambda_interchange": {
-        "type": "categorical",
-        "choices": [
-            true,
-            false
-        ],
-        "default": false
-    },
-    "lambda_max": {
-        "type": "int",
-        "default": 0
-    },
-    "use_ejection_chains": {
-        "type": "categorical",
-        "choices": [
-            true,
-            false
-        ],
-        "default": false
-    },
-    "use_3opt": {
-        "type": "categorical",
-        "choices": [
-            true,
-            false
-        ],
-        "default": false
     },
     "initial_penalty_capacity": {
         "type": "float",
@@ -128,7 +80,7 @@
             true,
             false
         ],
-        "default": false
+        "default": true
     },
     "packing": {
         "type": "object",

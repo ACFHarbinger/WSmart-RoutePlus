@@ -2,27 +2,36 @@
 
 from types import SimpleNamespace
 
+import numpy as np
 import pytest
-from logic.src.configs.policies.other.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
-from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.params import ALNSParams
-from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.params import HGSParams
+from logic.src.configs.policies.other.acceptance_criteria import (
+    AcceptanceConfig,
+    BoltzmannAcceptanceConfig,
+)
+from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns import (
+    ALNSSolver,
+)
+from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.hgs import (
+    HGSSolver,
+)
 
 
-@pytest.mark.parametrize("cls", [ALNSParams, HGSParams])
-def test_plain_mapping_honours_bmc_without_simulator(cls):
+@pytest.mark.parametrize("solver_cls", [ALNSSolver, HGSSolver])
+def test_plain_mapping_honours_bmc_without_simulator(solver_cls):
     raw = {
         "acceptance_criterion": {"method": "bmc", "params": {"initial_temp": 137.0, "alpha": 0.91, "seed": 7}},
         "time_limit": 3.5,
         "seed": 7,
     }
-    params = cls.from_config(raw)
-    assert params.time_limit == 3.5
-    assert params.acceptance_criterion.T == 137.0
-    assert params.acceptance_criterion.alpha == 0.91
+    dist = np.zeros((2, 2))
+    solver = solver_cls(dist, {1: 1.0}, capacity=10.0, R=1.0, C=1.0, params=raw)
+    assert solver.cfg.time_limit == 3.5
+    assert solver.acceptance_criterion.T == 137.0
+    assert solver.acceptance_criterion.alpha == 0.91
 
 
-@pytest.mark.parametrize("cls", [ALNSParams, HGSParams])
-def test_mapping_and_attribute_configs_have_parameter_parity(cls):
+@pytest.mark.parametrize("solver_cls", [ALNSSolver, HGSSolver])
+def test_mapping_and_attribute_configs_have_parameter_parity(solver_cls):
     acceptance = AcceptanceConfig(
         method="bmc", params=BoltzmannAcceptanceConfig(initial_temp=137.0, alpha=0.91, seed=7)
     )
@@ -35,13 +44,17 @@ def test_mapping_and_attribute_configs_have_parameter_parity(cls):
         "seed": 7,
         "acceptance_criterion": acceptance,
     }
-    mapping = cls.from_config(raw)
-    attrs = cls.from_config(SimpleNamespace(**raw))
-    assert mapping.time_limit == attrs.time_limit
-    assert mapping.seed == attrs.seed
-    assert mapping.acceptance_criterion.T == attrs.acceptance_criterion.T == 137.0
+    dist = np.zeros((2, 2))
+    s_mapping = solver_cls(dist, {1: 1.0}, capacity=10.0, R=1.0, C=1.0, params=raw)
+    s_attrs = solver_cls(dist, {1: 1.0}, capacity=10.0, R=1.0, C=1.0, params=SimpleNamespace(**raw))
+    assert s_mapping.cfg.time_limit == s_attrs.cfg.time_limit
+    assert s_mapping.cfg.seed == s_attrs.cfg.seed
+    assert s_mapping.acceptance_criterion.T == s_attrs.acceptance_criterion.T == 137.0
 
 
 def test_hgs_mapping_preserves_population_and_offspring_alias():
-    params = HGSParams.from_config({"mu": 7, "lambda_param": 11, "time_limit": 1.5})
-    assert (params.mu, params.n_offspring, params.time_limit) == (7, 11, 1.5)
+    dist = np.zeros((2, 2))
+    solver = HGSSolver(
+        dist, {1: 1.0}, capacity=10.0, R=1.0, C=1.0, params={"mu": 7, "lambda_param": 11, "time_limit": 1.5}
+    )
+    assert (solver.cfg.mu, solver.cfg.n_offspring, solver.cfg.time_limit) == (7, 11, 1.5)

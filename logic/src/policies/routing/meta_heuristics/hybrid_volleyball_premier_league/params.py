@@ -17,10 +17,8 @@ from dataclasses import dataclass, field
 from typing import Any, Optional
 
 from logic.src.configs.policies.aco_hh import HyperHeuristicACOConfig
+from logic.src.configs.policies.alns import ALNSConfig
 from logic.src.policies.routing.base.base_routing_policy import _structured_load
-from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.params import (
-    ALNSParams,
-)
 
 
 @dataclass
@@ -73,7 +71,7 @@ class HVPLParams:
 
     # Sub-algorithm Parameters
     aco_params: Optional[HyperHeuristicACOConfig] = field(default_factory=lambda: None)
-    alns_params: Optional[ALNSParams] = field(default_factory=lambda: None)
+    alns_params: Optional[ALNSConfig] = field(default_factory=lambda: None)
 
     def __post_init__(self):
         """Initialize sub-algorithm parameters with defaults if not provided.
@@ -104,12 +102,11 @@ class HVPLParams:
             self.aco_params.profit_aware_operators = self.profit_aware_operators
 
         if self.alns_params is None:
-            self.alns_params = ALNSParams(
+            self.alns_params = ALNSConfig(
                 max_iterations=100,
                 start_temp=100.0,
                 cooling_rate=0.995,
                 reaction_factor=0.1,
-                min_removal=4,
                 start_temp_control=0.05,
                 xi=0.4,
                 segment_size=10,
@@ -149,6 +146,10 @@ class HVPLParams:
             time_limit=getattr(config, "time_limit", 300.0),
             vrpp=getattr(config, "vrpp", True),
             profit_aware_operators=getattr(config, "profit_aware_operators", False),
-            aco_params=_structured_load(HyperHeuristicACOConfig, getattr(config, "aco", {})) if getattr(config, "aco", None) else None,
-            alns_params=ALNSParams.from_config(getattr(config, "alns", {})) if getattr(config, "alns", None) else None,
+            aco_params=_structured_load(HyperHeuristicACOConfig, getattr(config, "aco", {}))
+            if getattr(config, "aco", None)
+            else None,
+            alns_params=_structured_load(ALNSConfig, getattr(config, "alns", {}))
+            if getattr(config, "alns", None)
+            else None,
         )

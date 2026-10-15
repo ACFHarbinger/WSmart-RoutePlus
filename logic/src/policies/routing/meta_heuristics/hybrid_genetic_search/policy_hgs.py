@@ -165,13 +165,14 @@ class HGSPolicy(BaseRoutingPolicy):
             x_coords_proj = (x_coords - depot_lng) * cos_lat
             y_coords_proj = y_coords - depot_lat
 
+        cfg = self._effective_config(values)
         routes, profit, solver_cost = run_hgs(
             sub_dist_matrix,
             sub_wastes,
             capacity,
             revenue,
             cost_unit,
-            values,
+            cfg,
             mandatory_nodes=mandatory_nodes,
             x_coords=x_coords_proj,
             y_coords=y_coords_proj,

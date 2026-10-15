@@ -19,7 +19,6 @@ from logic.src.configs.policies.pg_clns import PGCLNSConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import PGCLNSParams
 from .pg_clns import PGCLNSSolver
 
 
@@ -90,9 +89,7 @@ class PGCLNSPolicy(BaseRoutingPolicy):
             Tuple[List[List[int]], float, float]: Optimized routes, total profit, and total cost.
         """
         seed = values.get("seed", 42)
-
-        # Hydrate parameters
-        params = PGCLNSParams.from_config(values)
+        cfg = self._effective_config(values)
 
         solver = PGCLNSSolver(
             sub_dist_matrix,
@@ -100,7 +97,7 @@ class PGCLNSPolicy(BaseRoutingPolicy):
             capacity,
             revenue,
             cost_unit,
-            params,
+            cfg,
             mandatory_nodes,
             seed=seed,
         )

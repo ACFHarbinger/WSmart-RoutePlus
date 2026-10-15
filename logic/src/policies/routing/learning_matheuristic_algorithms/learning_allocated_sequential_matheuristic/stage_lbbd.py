@@ -222,24 +222,20 @@ def _solve_sub_alns(
         Tuple of routes and profit.
     """
     try:
+        from logic.src.configs.policies.alns import ALNSConfig
         from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns import (
             ALNSSolver,
         )
-        from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.params import (
-            ALNSParams,
-        )
 
         sub_wastes = {n: wastes.get(n, 0.0) for n in selected}
-        params = ALNSParams.from_config(
-            {
-                "time_limit": time_limit,
-                "max_iterations": max(200, int(500 * time_limit)),
-                "seed": seed,
-                "vrpp": True,
-                "profit_aware_operators": True,
-            }
+        cfg = ALNSConfig(
+            time_limit=time_limit,
+            max_iterations=max(200, int(500 * time_limit)),
+            seed=seed,
+            vrpp=True,
+            profit_aware_operators=True,
         )
-        solver = ALNSSolver(dist, sub_wastes, capacity, R, C, params, mandatory_nodes=sorted(mandatory & selected))
+        solver = ALNSSolver(dist, sub_wastes, capacity, R, C, cfg, mandatory_nodes=sorted(mandatory & selected))
         routes, profit, _ = solver.solve()
         return routes, profit
     except Exception as exc:

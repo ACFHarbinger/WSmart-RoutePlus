@@ -24,8 +24,8 @@ Example:
 from dataclasses import dataclass, field
 from typing import Any, Optional, Tuple
 
+from logic.src.configs.policies.alns import ALNSConfig
 from logic.src.configs.policies.other import RLConfig
-from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.params import ALNSParams
 from logic.src.policies.routing.meta_heuristics.ant_colony_optimization_k_sparse.params import KSACOParams
 
 
@@ -50,7 +50,7 @@ class RLHVPLParams:
         profit_aware_operators (bool): Whether to use profit-aware operators.
         rl_config (RLConfig): RL configuration.
         aco_params (KSACOParams): ACO parameters.
-        alns_params (ALNSParams): ALNS parameters.
+        alns_params (ALNSConfig): ALNS parameters.
         pheromone_update_strategy (str): Pheromone update strategy.
         profit_weight (float): Weight for profit-based pheromone updates.
         elite_coaching_iterations (int): Number of elite coaching iterations.
@@ -107,13 +107,12 @@ class RLHVPLParams:
     )
 
     # ===== ALNS Parameters (with SARSA) =====
-    alns_params: ALNSParams = field(
-        default_factory=lambda: ALNSParams(
+    alns_params: ALNSConfig = field(
+        default_factory=lambda: ALNSConfig(
             max_iterations=200,
             start_temp=100.0,
             cooling_rate=0.97,
             reaction_factor=0.5,
-            min_removal=1,
             max_removal_pct=0.3,
             time_limit=20.0,
         )

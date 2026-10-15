@@ -65,7 +65,7 @@
             true,
             false
         ],
-        "default": false
+        "default": true
     },
     "seed": {
         "type": "int",

@@ -20,7 +20,8 @@ from typing import Dict, List, Optional, Set
 
 import numpy as np
 
-from .params import ACOParams
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
+
 from .pheromones import PheromoneTau
 
 
@@ -37,7 +38,7 @@ class SolutionConstructor:
         eta (np.ndarray): Heuristic information matrix (inverse of distances).
         candidate_lists (Dict[int, List[int]]): Precomputed candidate lists for each node.
         nodes (List[int]): List of all nodes (excluding depot).
-        params (ACOParams): ACO parameters.
+        params (KSparseACOConfig): ACO parameters.
         tau_0 (float): Initial pheromone value.
         R (float): Revenue multiplier.
         C (float): Cost multiplier.
@@ -54,7 +55,7 @@ class SolutionConstructor:
         eta: np.ndarray,
         candidate_lists: Dict[int, List[int]],
         nodes: List[int],
-        params: ACOParams,
+        params: KSparseACOConfig,
         tau_0: float,
         R: float = 0.0,
         C: float = 1.0,

@@ -31,14 +31,15 @@ Example:
 
 from __future__ import annotations
 
+import dataclasses
 import logging
 import time
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
+from logic.src.configs.policies.alns import ALNSConfig
 from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns import ALNSSolver
-from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.params import ALNSParams
 
 from .route_pool import RoutePool, VRPPRoute
 
@@ -148,7 +149,7 @@ def run_alns_stage(
     capacity: float,
     R: float,
     C: float,
-    params: ALNSParams,
+    params: ALNSConfig,
     mandatory_nodes: Optional[List[int]],
     time_limit: float,
     initial_routes: Optional[List[VRPPRoute]] = None,
@@ -167,7 +168,7 @@ def run_alns_stage(
         capacity:        Vehicle capacity Q.
         R:               Revenue per unit waste.
         C:               Cost per unit distance.
-        params:          ALNSParams controlling the search.
+        params:          ALNSConfig controlling the search.
         mandatory_nodes: Local indices of mandatory customers.
         time_limit:      Wall-clock budget in seconds (injected via params.time_limit
                          override so the existing time-limit logic still works).
@@ -183,31 +184,7 @@ def run_alns_stage(
     t0 = time.perf_counter()
 
     # Patch time_limit into params (avoids mutating the shared ExactGuidedHeuristicParams)
-    patched_params = ALNSParams(
-        time_limit=time_limit,
-        max_iterations=params.max_iterations,
-        start_temp=params.start_temp,
-        cooling_rate=params.cooling_rate,
-        reaction_factor=params.reaction_factor,
-        min_removal=params.min_removal,
-        start_temp_control=params.start_temp_control,
-        xi=params.xi,
-        segment_size=params.segment_size,
-        noise_factor=params.noise_factor,
-        worst_removal_randomness=params.worst_removal_randomness,
-        shaw_randomization=params.shaw_randomization,
-        max_removal_cap=params.max_removal_cap,
-        regret_pool=params.regret_pool,
-        sigma_1=params.sigma_1,
-        sigma_2=params.sigma_2,
-        sigma_3=params.sigma_3,
-        vrpp=params.vrpp,
-        profit_aware_operators=params.profit_aware_operators,
-        extended_operators=params.extended_operators,
-        seed=params.seed,
-        engine=params.engine,
-        acceptance_criterion=params.acceptance_criterion,
-    )
+    patched_params = dataclasses.replace(params, time_limit=time_limit)
 
     # Convert VRPPRoute warm-start to plain node lists
     init_node_routes: Optional[List[List[int]]] = None

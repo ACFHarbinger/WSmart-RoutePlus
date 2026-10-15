@@ -6,6 +6,7 @@ from unittest.mock import patch
 import numpy as np
 import pandas as pd
 import pytest
+from logic.src.configs.policies.sans import SANSConfig
 from logic.src.policies.routing.base import base_routing_policy
 from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search import dispatcher
 from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.common.revenue import (
@@ -13,9 +14,6 @@ from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood
 )
 from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.common.solution_initialization import (
     _get_bin_stock,
-)
-from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.params import (
-    SANSParams,
 )
 from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.policy_sans import (
     SANSPolicy,
@@ -26,7 +24,14 @@ class OriginalAdapter(SANSPolicy):
     """Execute body from dfb049e7e, using the SAME explicitly repaired dispatchers."""
 
     def execute(self, **kwargs):
-        params = SANSParams.from_config(self._config or kwargs.get("config", {}).get("sans", {}))
+        raw = self._config or kwargs.get("config", {}).get("sans", {})
+        if isinstance(raw, dict):
+            import dataclasses
+
+            valid_keys = {f.name for f in dataclasses.fields(SANSConfig)}
+            params = SANSConfig(**{k: v for k, v in raw.items() if k in valid_keys})
+        else:
+            params = raw
         if params.engine == "og":
             return dispatcher.execute_og(self, params=params, **kwargs)
         return dispatcher.execute_new(self, params=params, **kwargs)
@@ -145,17 +150,19 @@ def test_legacy_invalid_combination_reports_configuration_error(context):
 @pytest.mark.parametrize("path", [("sans", "og_a"), ("sans", "og_b"), ("lac", "a"), ("lac", "b")])
 def test_legacy_yaml_variants_carry_their_seven_numbers(path):
     """og_a/og_b (and the lac aliases) used to set preset names and a 'params' list nothing read."""
+    import dataclasses
     from pathlib import Path
 
-    from omegaconf import OmegaConf
+    from omegaconf import ListConfig, OmegaConf
 
     yaml_path = Path(__file__).resolve().parents[3] / "configs" / "policies" / "policy_sans.yaml"
     variant = OmegaConf.load(yaml_path)[path[0]][path[1]]
     assert "params" not in variant
-    params = SANSParams.from_config(variant)
+    valid_keys = {f.name for f in dataclasses.fields(SANSConfig)}
+    params = SANSConfig(**{k: v for k, v in variant.items() if k in valid_keys})
     assert params.engine == "og"
-    assert isinstance(params.combination, tuple) and len(params.combination) == 7
-    assert params.combination[1:] == (75.0, 0.7, 0.0, 0.095, 0.0, 0.0)
+    assert isinstance(params.combination, (tuple, list, ListConfig)) and len(params.combination) == 7
+    assert tuple(float(x) for x in params.combination[1:]) == (75.0, 0.7, 0.0, 0.095, 0.0, 0.0)
 
 
 def test_legacy_engine_runs_with_an_omegaconf_list_combination(context):
