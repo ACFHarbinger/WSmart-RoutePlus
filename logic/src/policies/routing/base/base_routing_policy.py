@@ -217,6 +217,35 @@ class BaseRoutingPolicy(PolicyVizMixin, IRoutingAlgorithm):
             return _structured_load(config_cls, _unwrap_engine_section(config))
         return config
 
+    def _effective_config(self, values: Dict[str, Any]) -> Any:
+        """Materialize runtime solver values into the typed config dataclass.
+
+        ``values`` (from ``_load_area_params``) is ``asdict(self._config)``
+        overlaid with per-call area overrides and the simulator seed. Filtering
+        it back onto the config fields gives the solver a single typed source of
+        truth (P-10): the solver reads ``cfg.field`` instead of rebuilding a
+        parallel params object with ``getattr`` fallbacks.
+
+        Args:
+            values: Merged solver configuration dict from ``_load_area_params``.
+
+        Returns:
+            A config dataclass instance of ``self._config_class()``, or the
+            original ``values`` dict when the policy has no typed config class.
+        """
+        config_cls = self._config_class()
+        if config_cls is None:
+            return values
+        known = {f.name for f in fields(config_cls)}
+        filtered = {key: value for key, value in values.items() if key in known}
+        cfg = _structured_load(config_cls, filtered)
+        # _structured_load drops _RUNTIME_KEYS (seed, vrpp, stage file-refs);
+        # the solver-facing ones are applied explicitly here.
+        for key in ("seed", "vrpp"):
+            if key in values:
+                setattr(cfg, key, values[key])
+        return cfg
+
     def _validate_mandatory(self, mandatory: Optional[List[int]]) -> Optional[Tuple[List[int], float, float]]:
         """
         Validate mandatory input. Returns early result if empty.

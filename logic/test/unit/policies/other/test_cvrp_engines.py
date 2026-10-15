@@ -10,9 +10,6 @@ from logic.src.policies.routing.other_algorithms.capacitated_vehicle_routing_pro
     find_routes,
     find_routes_ortools,
 )
-from logic.src.policies.routing.other_algorithms.capacitated_vehicle_routing_problem.params import (
-    CVRPParams,
-)
 from logic.src.policies.routing.other_algorithms.capacitated_vehicle_routing_problem.policy_cvrp import (
     CVRPPolicy,
 )
@@ -63,11 +60,11 @@ def test_engines_respect_capacity_and_visit_every_bin(instance, solve):
         assert sum(wastes[i - 1] for i in route) <= capacity
 
 
-def test_params_default_to_ortools_with_a_seed():
-    params = CVRPParams.from_config(CVRPConfig())
-    assert params.engine == "ortools"
-    assert params.seed == 42
-    assert CVRPParams.from_config({"engine": "pyvrp", "seed": None}).seed == 42
+def test_config_defaults_to_ortools_with_a_seed():
+    config = CVRPConfig()
+    assert config.engine == "ortools"
+    assert config.seed == 42
+    assert CVRPConfig(engine="pyvrp").engine == "pyvrp"
 
 
 @pytest.mark.parametrize(
@@ -79,7 +76,7 @@ def test_policy_dispatches_engine_and_uses_base_profit_units(engine, solver, eng
     bins = SimpleNamespace(c=np.array([50.0, 60.0]), n=2)
     dist = np.array([[0.0, 1.0, 2.0], [1.0, 0.0, 1.5], [2.0, 1.5, 0.0]])
     with patch(f"{MODULE}.{solver}", return_value=[0, 1, 2, 0]) as mocked, patch.object(
-        policy, "_load_area_params", return_value=(400.0, 2.0, 0.5, {})
+        policy, "_load_area_params", return_value=(400.0, 2.0, 0.5, {"engine": engine})
     ):
         tour, cost, profit, _, _ = policy.execute(mandatory=[1, 2], bins=bins, distance_matrix=dist, seed=7)
 
@@ -96,7 +93,8 @@ def test_policy_dispatches_engine_and_uses_base_profit_units(engine, solver, eng
 def test_policy_rejects_unknown_engine():
     policy = CVRPPolicy({"engine": "gurobi"})
     bins = SimpleNamespace(c=np.array([50.0]), n=1)
-    with patch.object(policy, "_load_area_params", return_value=(400.0, 1.0, 1.0, {})), pytest.raises(
+    values = {"engine": "gurobi"}
+    with patch.object(policy, "_load_area_params", return_value=(400.0, 1.0, 1.0, values)), pytest.raises(
         ValueError, match="Unknown CVRP engine"
     ):
         policy.execute(mandatory=[1], bins=bins, distance_matrix=np.zeros((2, 2)), seed=1)
