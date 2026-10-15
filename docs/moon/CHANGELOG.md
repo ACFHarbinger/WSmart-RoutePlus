@@ -42,6 +42,16 @@ WP-01 to WP-13 merged in report §12 order, each package with Codex's review edi
 - **Unreleased code.** WP-06 completion (the dropped Params methods, acceptance criteria built per solve) and CR-12's unreleased envs (OP, PDP, IRP, ThOP, ATSP, PCTSP, SPCTSP) are on `refactor/v1-review-fixes` for Codex review. 64 unit tests fail on this branch and 29 with `refactor/v1-review-fixes` on top, all predating integration: strict YAML keys of unreleased policies, WP-08 context and `expand_pool` follow-ups, and tests of the unreleased layer.
 - **Paper.** The simulation paper still `\input`s `Tables/results_constructors`; it is renamed to `results_routing` when the refactor merges into `main`, because the AM tables are generated with main's code until then.
 
+### Review fixes for the unreleased layer (`refactor/v1-review-fixes`, `2026-10-15`)
+
+For Codex review before it merges into the integration branch.
+
+#### Fixed
+
+- **WP-06 completion (Q-8b).** `tools/migrate_unreleased_params.py` merged each `params.py`'s fields into its config but not its methods. 81 configs lost `from_config`, `to_dict`, `__post_init__` (default acceptance criteria such as TS's aspiration and RL-GD-HH's great deluge, operator weights, validation) and derived properties, while 19 adapters still called `XConfig.from_config`. The methods are ported verbatim from the WP-05 tree (the migration's input), with `Params` names renamed and the removed `vrpp` flag (P-43) dropped. Twelve multi-period and hyper-heuristic adapters declare their config class, so `_effective_config` returns the typed config instead of a dict.
+- **Acceptance per solve (P-11).** `AcceptanceCriterionFactory.build` turns a criterion, an `AcceptanceConfig` or a mapping into a fresh criterion. GIHH, RL-GD-HH, ILS-RVND-SP, LB-VNS, ILS, TS and VNS use it instead of calling `setup()` on the config.
+- **Unreleased envs (CR-12).** OP regains its reach-and-return `max_length` budget and prize reward, and PDP its pickup-before-delivery precedence. IRP, ThOP, ATSP and PCTSP/SPCTSP regain their original generators and dynamics on their ESPPRC classes. Seeded rollouts of the pre-WP-07 `envs/routing/*.py` replay identically. PCTSP's reward accepts the single per-step action, which crashed the original. `test_unreleased_env_semantics.py`.
+
 ### Cross-package review (Codex, `2026-10-15`)
 
 - Codex review: root registry tag queries deduplicate class identity across child registries/aliases, and get_all preserves the union of child tags. Added a regression test.
