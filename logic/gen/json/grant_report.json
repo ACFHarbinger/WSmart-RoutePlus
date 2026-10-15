@@ -1,0 +1,23 @@
+{
+  "logo": "logic/gen/svg/Tecnico_ID_Principal_RBG-COR.svg",
+  "logo_height_cm": 2.2,
+  "font": "Calibri",
+  "label_font": "Calibri",
+  "font_size_pt": 11,
+  "title": "Relatório Final",
+  "subtitle": "(a elaborar pelo bolseiro e pelo Orientador)",
+  "fields": [
+    {"label": "Nome", "value": "(nome do bolseiro)"},
+    {"label": "Documento de identificação", "value": "(nome do documento de identificação)", "extra_label": "nº", "extra_value": "(número do documento de identificação)"},
+    {"label": "Bolsa", "value": "(tipo de bolsa)"},
+    {"label": "Início da bolsa", "value": "(data de início da bolsa)"},
+    {"label": "Fim da bolsa", "value": "(data de fim da bolsa)"},
+    {"label": "Unidade/Projeto de Investigação", "value": "(nome da unidade de investigação ou projeto de investigação onde se desenvolveu a atividade de bolseiro)"},
+    {"label": "Orientador ou coordenador científico", "value": "(nome do orientador ou coordenador científico)"}
+  ],
+  "description": [
+    "Descrição detalhada de toda a atividade desenvolvida pelo bolseiro."
+  ],
+  "signatures": ["O Bolseiro", "O Orientador"],
+  "place_date": "Lisboa, ____ de ______________ de ______"
+}
