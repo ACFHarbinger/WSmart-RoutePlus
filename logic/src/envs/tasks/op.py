@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional, Sequence, Union
 import torch
 from tensordict import TensorDict
 
+from logic.src.envs.base.ops import as_batch_nodes
 from logic.src.envs.tasks.base import BaseProblem
 from logic.src.envs.tasks.espprc import ESPPRCEnv, ESPPRCGenerator
 from logic.src.envs.tasks.spec import PROBLEMS, ProblemSpec
@@ -63,6 +64,48 @@ class OPEnv(ESPPRCEnv):
             device=device,
             **kwargs,
         )
+
+    # OP dynamics of the pre-WP-07 envs/routing/op.py (review CR-12): a customer is
+    # offered only if the tour can reach it and still return within ``max_length``,
+    # and the reward is the collected prize.
+
+    def _reset_instance(self, tensordict: TensorDict) -> TensorDict:
+        if "visited" in tensordict.keys():
+            return tensordict
+        prize = tensordict["prize"]
+        tensordict = super()._reset_instance(tensordict)
+        locs = tensordict["locs"]
+        if prize.shape[-1] == locs.shape[-2] - 1:
+            prize = torch.cat([torch.zeros_like(prize[..., :1]), prize], dim=-1)
+        tensordict["prize"] = prize
+        max_length = tensordict["max_length"]
+        if max_length.dim() > 1:
+            max_length = max_length.squeeze(-1)
+        # Budget left at each node once the return to the depot is reserved.
+        dist_to_depot = (locs[..., 0:1, :] - locs).norm(p=2, dim=-1)
+        tensordict["max_length"] = max_length.unsqueeze(-1) - dist_to_depot - 1e-6
+        tensordict["current_total_prize"] = torch.zeros(*tensordict.batch_size, device=tensordict.device)
+        return tensordict
+
+    def _step_instance(self, tensordict: TensorDict) -> TensorDict:
+        tensordict = super()._step_instance(tensordict)
+        action = as_batch_nodes(tensordict["action"])
+        prize_here = tensordict["prize"].gather(-1, action.unsqueeze(-1)).squeeze(-1)
+        tensordict["current_total_prize"] = tensordict["current_total_prize"] + prize_here
+        return tensordict
+
+    def _get_action_mask(self, tensordict: TensorDict) -> torch.Tensor:
+        current = tensordict["current_node"].squeeze(-1)
+        locs = tensordict["locs"]
+        current_loc = locs.gather(1, current[:, None, None].expand(-1, -1, 2)).squeeze(1)
+        dist_current_to_node = (locs - current_loc.unsqueeze(1)).norm(p=2, dim=-1)
+        exceeds_budget = tensordict["tour_length"].unsqueeze(-1) + dist_current_to_node > tensordict["max_length"]
+        mask = ~(tensordict["visited"] | exceeds_budget)
+        mask[..., 0] = True
+        return mask
+
+    def _get_reward(self, tensordict: TensorDict, actions: Optional[torch.Tensor] = None) -> torch.Tensor:
+        return tensordict["current_total_prize"]
 
 
 class OP(BaseProblem):
