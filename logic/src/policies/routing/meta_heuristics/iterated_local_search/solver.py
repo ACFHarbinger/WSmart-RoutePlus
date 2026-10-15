@@ -19,6 +19,7 @@ import numpy as np
 
 from logic.src.configs.policies.ils import ILSConfig
 from logic.src.envs.tasks.common.expand_pool import current_expand_pool
+from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
 from logic.src.policies.helpers.operators.search_heuristics.destroy_repair_llh import (
     build_greedy_initial_routes,
     llh_cluster_greedy,
@@ -111,7 +112,8 @@ class ILSSolver:
         best_profit = profit
 
         # Setup modular acceptance criterion
-        self.params.acceptance_criterion.setup(profit)
+        self.acceptance = AcceptanceCriterionFactory.build(self.params.acceptance_criterion)
+        self.acceptance.setup(profit)
 
         for restart in range(self.params.n_restarts):
             if self.params.time_limit > 0 and time.perf_counter() - start > self.params.time_limit:
@@ -145,7 +147,7 @@ class ILSSolver:
 
             # === Acceptance Phase (Transition between local optima) ===
             # Decide whether to move from incumbent 'routes' to 'inner_routes'
-            is_accepted, _ = self.params.acceptance_criterion.accept(
+            is_accepted, _ = self.acceptance.accept(
                 current_obj=profit,
                 candidate_obj=inner_profit,
                 iteration=restart,
@@ -160,7 +162,7 @@ class ILSSolver:
                     best_profit = profit
 
             # Step criterion
-            self.params.acceptance_criterion.step(
+            self.acceptance.step(
                 current_obj=profit,
                 candidate_obj=inner_profit,
                 accepted=is_accepted,

@@ -12,7 +12,7 @@ Example:
 """
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
@@ -44,3 +44,33 @@ class CGHConfig:
 
     packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "CGHConfig":
+        """Create CGHConfig from a configuration object or dictionary.
+
+        Args:
+            config: Configuration object or dict with CGH parameter attributes.
+
+        Returns:
+            "CGHConfig": Populated parameter dataclass.
+        """
+        from dataclasses import fields
+        if isinstance(config, dict):
+            return cls(**{k: v for k, v in config.items() if k in {f.name for f in fields(cls)}})
+
+        return cls(
+            cg_iters=getattr(config, "cg_iters", 10),
+            routes_per_iter=getattr(config, "routes_per_iter", 50),
+            seed=getattr(config, "seed", 42),
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert CGHConfig to a dictionary for backend compatibility.
+
+        Returns:
+            Dict[str, Any]: Mapping of parameter names to their values.
+        """
+        from dataclasses import fields
+        return {f.name: getattr(self, f.name) for f in fields(self)}

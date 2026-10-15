@@ -43,3 +43,26 @@ class LCAConfig:
     profit_aware_operators: bool = False
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "LCAConfig":
+        """Create parameters from a configuration object.
+
+        Args:
+            config: Configuration source (dataclass or object).
+
+        Returns:
+            LCAConfig: Initialized runtime parameters.
+        """
+        return cls(
+            n_teams=getattr(config, "n_teams", 10),
+            max_iterations=getattr(config, "max_iterations", 100),
+            tolerance_pct=getattr(config, "tolerance_pct", 0.05),
+            crossover_prob=getattr(config, "crossover_prob", 0.6),
+            n_removal=getattr(config, "n_removal", 2),
+            local_search_iterations=getattr(config, "local_search_iterations", 100),
+            time_limit=getattr(config, "time_limit", 60.0),
+            seed=getattr(config, "seed", None),
+            profit_aware_operators=getattr(config, "profit_aware_operators", False),
+        )

@@ -14,7 +14,7 @@ Example:
 """
 
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
@@ -76,3 +76,27 @@ class DEConfig:
     profit_aware_operators: bool = False
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "DEConfig":
+        """Build parameters from a configuration object.
+
+        Args:
+            config: Hydra configuration or dictionary.
+
+        Returns:
+            An instance of DEConfig.
+        """
+        return cls(
+            pop_size=getattr(config, "pop_size", None),
+            mutation_factor=getattr(config, "mutation_factor", 0.8),
+            crossover_rate=getattr(config, "crossover_rate", 0.9),
+            n_removal=getattr(config, "n_removal", 3),
+            max_iterations=getattr(config, "max_iterations", 500),
+            local_search_iterations=getattr(config, "local_search_iterations", 100),
+            evolution_strategy=getattr(config, "evolution_strategy", "lamarckian"),
+            time_limit=getattr(config, "time_limit", 60.0),
+            seed=getattr(config, "seed", None),
+            profit_aware_operators=getattr(config, "profit_aware_operators", False),
+        )

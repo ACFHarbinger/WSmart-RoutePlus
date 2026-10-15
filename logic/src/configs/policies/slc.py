@@ -52,3 +52,26 @@ class SLCConfig:
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)
     profit_aware_operators: bool = False
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "SLCConfig":
+        """Create parameters from a configuration object.
+
+        Args:
+            config: Configuration object.
+
+        Returns:
+            SLCConfig: Parameters for the SLC algorithm.
+        """
+        return cls(
+            n_teams=getattr(config, "n_teams", 5),
+            team_size=getattr(config, "team_size", 4),
+            max_iterations=getattr(config, "max_iterations", 50),
+            stagnation_limit=getattr(config, "stagnation_limit", 5),
+            n_removal=getattr(config, "n_removal", 1),
+            local_search_iterations=getattr(config, "local_search_iterations", 100),
+            time_limit=getattr(config, "time_limit", 60.0),
+            seed=getattr(config, "seed", None),
+            profit_aware_operators=getattr(config, "profit_aware_operators", False),
+        )

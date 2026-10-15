@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
+from logic.src.configs.policies.mp_sa import MP_SA_Config
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.problem_context import ProblemContext
@@ -55,6 +56,11 @@ class MultiPeriodSimulatedAnnealingPolicy(BaseMultiPeriodRoutingPolicy):
         rng: Random number generator.
     """
 
+    @classmethod
+    def _config_class(cls) -> Any:
+        """Return the typed config of this policy."""
+        return MP_SA_Config
+
     def __init__(self, config: Any = None):
         """Initializes the Multi-Period Simulated Annealing policy.
 
@@ -63,7 +69,7 @@ class MultiPeriodSimulatedAnnealingPolicy(BaseMultiPeriodRoutingPolicy):
 
         """
         super().__init__(config)
-        self.params = self._effective_config(config)
+        self.params = self._effective_config(config or {})
         self.max_iter = self.params.iters
         self.init_temp = self.params.init_temp
         self.cooling_rate = self.params.cooling_rate

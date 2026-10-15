@@ -27,6 +27,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
+from logic.src.configs.policies.gp_mp_hh import GP_MP_HH_Config
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.problem_context import ProblemContext
@@ -78,6 +79,11 @@ class GPMPHHPolicy(BaseMultiPeriodRoutingPolicy):
         llhs (List[LLHWrapper]): List of low-level heuristics.
     """
 
+    @classmethod
+    def _config_class(cls) -> Any:
+        """Return the typed config of this policy."""
+        return GP_MP_HH_Config
+
     def __init__(self, config: Any = None):
         """Initialize GPMPHHPolicy.
 
@@ -85,7 +91,7 @@ class GPMPHHPolicy(BaseMultiPeriodRoutingPolicy):
             config: Configuration for the solver.
         """
         super().__init__(config)
-        self.params = self._effective_config(config)
+        self.params = self._effective_config(config or {})
         self.pop_size = self.params.pop_size
         self.gens = self.params.gens
         self.prog_len = self.params.prog_len

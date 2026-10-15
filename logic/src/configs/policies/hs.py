@@ -43,3 +43,26 @@ class HSConfig:
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)
     BW: float = 0.05  # Bandwidth for continuous adjustment (or discrete neighbor range)
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "HSConfig":
+        """Build parameters from a configuration object.
+
+        Args:
+            config: Configuration source.
+
+        Returns:
+            Instantiated HSConfig.
+        """
+        return cls(
+            hm_size=getattr(config, "hm_size", 10),
+            HMCR=getattr(config, "HMCR", 0.95),
+            PAR=getattr(config, "PAR", 0.3),
+            BW=getattr(config, "BW", 0.05),
+            max_iterations=getattr(config, "max_iterations", 500),
+            local_search_iterations=getattr(config, "local_search_iterations", 100),
+            time_limit=getattr(config, "time_limit", 60.0),
+            seed=getattr(config, "seed", None),
+            profit_aware_operators=getattr(config, "profit_aware_operators", False),
+        )

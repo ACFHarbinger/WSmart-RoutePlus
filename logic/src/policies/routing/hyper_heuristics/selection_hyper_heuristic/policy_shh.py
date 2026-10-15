@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
+from logic.src.configs.policies.shh import SHHConfig
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.problem_context import ProblemContext
@@ -57,6 +58,11 @@ class SelectionHHPolicy(BaseMultiPeriodRoutingPolicy):
         llhs: Pool of low-level heuristics.
     """
 
+    @classmethod
+    def _config_class(cls) -> Any:
+        """Return the typed config of this policy."""
+        return SHHConfig
+
     def __init__(self, config: Any = None):
         """
         Initializes the Selection Hyper-Heuristic policy.
@@ -65,7 +71,7 @@ class SelectionHHPolicy(BaseMultiPeriodRoutingPolicy):
             config: Configuration parameters.
         """
         super().__init__(config)
-        self.params = self._effective_config(config)
+        self.params = self._effective_config(config or {})
         self.iters = self.params.iters
         self.history_len = self.params.history_len
         self.seed = self.params.seed

@@ -24,7 +24,7 @@ Example:
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from .alns import ALNSConfig
 from .hgs import HGSConfig
@@ -84,3 +84,41 @@ class POPMUSICConfig:
     profit_aware_operators: bool = False
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "POPMUSICConfig":
+        """Create POPMUSICConfig from a configuration object or dictionary.
+
+        Args:
+            config (Any): Configuration object.
+
+        Returns:
+            "POPMUSICConfig": Instance of POPMUSICConfig.
+        """
+        from dataclasses import fields
+        if isinstance(config, dict):
+            return cls(**{k: v for k, v in config.items() if k in {f.name for f in fields(cls)}})
+
+        return cls(
+            subproblem_size=getattr(config, "subproblem_size", 3),
+            max_iterations=getattr(config, "max_iterations", None),
+            base_solver=getattr(config, "base_solver", "fast_tsp"),
+            base_solver_config=getattr(config, "base_solver_config", None),
+            cluster_solver=getattr(config, "cluster_solver", "fast_tsp"),
+            cluster_solver_config=getattr(config, "cluster_solver_config", None),
+            initial_solver=getattr(config, "initial_solver", "pmedian"),
+            seed=getattr(config, "seed", 42),
+            profit_aware_operators=getattr(config, "profit_aware_operators", False),
+            k_prox=getattr(config, "k_prox", 10),
+            seed_strategy=getattr(config, "seed_strategy", "lifo"),
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert POPMUSICConfig to a dictionary.
+
+        Returns:
+            Dict[str, Any]: Dictionary containing POPMUSICConfig.
+        """
+        from dataclasses import fields
+        return {f.name: getattr(self, f.name) for f in fields(self)}

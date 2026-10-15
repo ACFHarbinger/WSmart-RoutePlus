@@ -64,3 +64,26 @@ class SSHHConfig:
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)
     profit_aware_operators: bool = False
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "SSHHConfig":
+        """
+        Create parameters from a configuration object.
+
+        Args:
+            config: Configuration object.
+
+        Returns:
+            SSHHConfig: Parameters for the SS-HH solver.
+        """
+        return cls(
+            max_iterations=getattr(config, "max_iterations", 500),
+            n_removal=getattr(config, "n_removal", 2),
+            n_llh=getattr(config, "n_llh", 5),
+            time_limit=getattr(config, "time_limit", 60.0),
+            threshold_infeasible=getattr(config, "threshold_infeasible", 0.001),
+            threshold_feasible_base=getattr(config, "threshold_feasible_base", 0.0001),
+            threshold_decay_rate=getattr(config, "threshold_decay_rate", 0.01),
+            profit_aware_operators=getattr(config, "profit_aware_operators", False),
+        )

@@ -14,7 +14,7 @@ Example:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 from logic.src.configs.envs.objective import ObjectiveConfig
 from logic.src.configs.models.model import ModelConfig
@@ -134,3 +134,13 @@ class NeuralAgentConfig:
             length_penalty_alpha=getattr(decoding, "length_penalty_alpha", 0.0) if decoding else 0.0,
             seed=getattr(config, "seed", 42),
         )
+
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert NeuralAgentConfig to a dictionary.
+
+        Returns:
+            Dict[str, Any]: Dictionary representation of NeuralAgentConfig.
+        """
+        from dataclasses import fields
+        return {f.name: getattr(self, f.name) for f in fields(self)}

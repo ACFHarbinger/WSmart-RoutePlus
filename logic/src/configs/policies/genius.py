@@ -46,3 +46,30 @@ class GENIUSConfig:
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)
     profit_aware_operators: bool = False
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "GENIUSConfig":
+        """
+        Build parameters from a configuration object.
+
+        Args:
+            config: Configuration object (dict or Hydra-style object).
+
+        Returns:
+            GENIUSConfig: Initialized parameter object.
+        """
+        import dataclasses
+        if isinstance(config, dict):
+            return cls(**{k: v for k, v in config.items() if k in {f.name for f in dataclasses.fields(cls)}})
+
+        return cls(
+            neighborhood_size=getattr(config, "neighborhood_size", 5),
+            unstring_type=getattr(config, "unstring_type", 1),
+            string_type=getattr(config, "string_type", 1),
+            n_iterations=getattr(config, "n_iterations", 1),
+            profit_aware_operators=getattr(config, "profit_aware_operators", False),
+            time_limit=getattr(config, "time_limit", 60.0),
+            random_us_sampling=getattr(config, "random_us_sampling", False),
+            seed=getattr(config, "seed", None),
+        )

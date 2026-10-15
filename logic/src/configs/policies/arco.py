@@ -12,7 +12,7 @@ Example:
 """
 
 from dataclasses import dataclass, field
-from typing import List
+from typing import Any, List
 
 
 @dataclass
@@ -50,3 +50,29 @@ class ARCOConfig:
     weight_floor: float = 0.01
     decay: float = 1.0
     seed: int = 42
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "ARCOConfig":
+        """Build parameters from a config object or dict.
+
+        Args:
+            config: Configuration object.
+
+        Returns:
+            "ARCOConfig": The parameters for the ARCO algorithm.
+        """
+        return cls(
+            routing_algorithms=getattr(
+                config, "routing_algorithms", getattr(config, "constructors", ["tsp", "alns"])
+            ),
+            time_limit=getattr(config, "time_limit", 120.0),
+            selection_strategy=getattr(config, "selection_strategy", "epsilon_greedy"),
+            epsilon=getattr(config, "epsilon", 0.15),
+            temperature=getattr(config, "temperature", 1.0),
+            alpha_ema=getattr(config, "alpha_ema", 0.15),
+            weight_init=getattr(config, "weight_init", 1.0),
+            weight_floor=getattr(config, "weight_floor", 0.01),
+            decay=getattr(config, "decay", 1.0),
+            seed=getattr(config, "seed", 42),
+        )

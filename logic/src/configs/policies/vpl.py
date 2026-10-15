@@ -85,3 +85,41 @@ class VPLConfig:
     packing: List[str] = field(default_factory=list)
     route_improvement: List[Any] = field(default_factory=list)
     profit_aware_operators: bool = False
+
+
+    def __post_init__(self):
+        """Validate parameter constraints.
+
+        Raises:
+            AssertionError: If parameters are invalid.
+        """
+        assert self.n_teams > 0, "n_teams must be positive"
+        assert 0 <= self.substitution_rate <= 1, "substitution_rate must be in [0, 1]"
+        assert self.elite_size >= 1, "elite_size must be at least 1"
+
+        # Validate coaching weights sum to 1.0
+        total_weight = self.coaching_weight_1 + self.coaching_weight_2 + self.coaching_weight_3
+        assert abs(total_weight - 1.0) < 1e-6, f"Coaching weights must sum to 1.0, got {total_weight}"
+
+    @classmethod
+    def from_config(cls, config: Any) -> "VPLConfig":
+        """Create parameters from a configuration object.
+
+        Args:
+            config: Configuration object or dictionary.
+
+        Returns:
+            VPLConfig: Parameter instance.
+        """
+        return cls(
+            n_teams=getattr(config, "n_teams", 30),
+            max_iterations=getattr(config, "max_iterations", 200),
+            substitution_rate=getattr(config, "substitution_rate", 0.2),
+            coaching_weight_1=getattr(config, "coaching_weight_1", 0.5),
+            coaching_weight_2=getattr(config, "coaching_weight_2", 0.3),
+            coaching_weight_3=getattr(config, "coaching_weight_3", 0.2),
+            elite_size=getattr(config, "elite_size", 3),
+            local_search_iterations=getattr(config, "local_search_iterations", 100),
+            time_limit=getattr(config, "time_limit", 300.0),
+            profit_aware_operators=getattr(config, "profit_aware_operators", False),
+        )

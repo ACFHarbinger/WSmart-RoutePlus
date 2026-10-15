@@ -12,7 +12,7 @@ Example:
 """
 
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from .other.acceptance_criteria import AcceptanceConfig, OnlyImprovingConfig
 from .other.packing import PackingConfig
@@ -61,3 +61,57 @@ class GIHHConfig:
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
     acceptance_criterion: AcceptanceConfig = AcceptanceConfig(method="only_improving", params=OnlyImprovingConfig())
+
+
+    def __post_init__(self) -> None:
+        """Ensure acceptance criterion is initialized even if not passed in config.
+
+        Returns:
+            None
+        """
+        if self.acceptance_criterion is None:
+            # Standard GIHH uses Improving-Only acceptance
+            from logic.src.policies.acceptance_criteria.base.factory import (
+                AcceptanceCriterionFactory,
+            )
+
+            self.acceptance_criterion = AcceptanceCriterionFactory.create(name="oi")
+
+    @classmethod
+    def from_config(cls, config: Any) -> "GIHHConfig":
+        """Create parameters from a configuration object.
+
+        Args:
+            config: Configuration object.
+
+        Returns:
+            GIHHConfig: Parameters for GIHH algorithm.
+        """
+        # Build parameters
+        params = cls(
+            time_limit=getattr(config, "time_limit", 60.0),
+            max_iterations=getattr(config, "max_iterations", 1000),
+            seed=getattr(config, "seed", None),
+            seg=getattr(config, "seg", 80),
+            alpha=getattr(config, "alpha", 0.5),
+            beta=getattr(config, "beta", 0.4),
+            gamma=getattr(config, "gamma", 0.1),
+            min_prob=getattr(config, "min_prob", 0.05),
+            nonimp_threshold=getattr(config, "nonimp_threshold", 150),
+            profit_aware_operators=getattr(config, "profit_aware_operators", False),
+        )
+
+        # Handle Acceptance Criterion Injection
+        from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
+
+        acceptance_cfg = getattr(config, "acceptance_criterion", None)
+        if acceptance_cfg:
+            params.acceptance_criterion = AcceptanceCriterionFactory.create(
+                name=acceptance_cfg.method,
+                config=acceptance_cfg.params,
+            )
+        else:
+            # Default to only_improving for standard GIHH
+            params.acceptance_criterion = AcceptanceCriterionFactory.create(name="oi")
+
+        return params

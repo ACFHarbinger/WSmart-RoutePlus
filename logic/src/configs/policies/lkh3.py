@@ -18,7 +18,7 @@ Example:
 """
 
 from dataclasses import dataclass, field
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -64,3 +64,49 @@ class LKH3Config:
 
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "LKH3Config":
+        """Create LKH3Config from a configuration object or dictionary.
+
+        Args:
+            config: Configuration object or dict with LKH-3 parameter attributes.
+
+        Returns:
+            "LKH3Config": Populated parameter dataclass.
+        """
+        from dataclasses import fields
+        if isinstance(config, dict):
+            return cls(**{k: v for k, v in config.items() if k in {f.name for f in fields(cls)}})
+
+        return cls(
+            runs=getattr(config, "runs", 10),
+            time_limit=getattr(config, "time_limit", 60.0),
+            max_trials=getattr(config, "max_trials", 1000),
+            popmusic_subpath_size=getattr(config, "popmusic_subpath_size", 50),
+            popmusic_trials=getattr(config, "popmusic_trials", 50),
+            popmusic_max_candidates=getattr(config, "popmusic_max_candidates", 5),
+            max_k_opt=getattr(config, "max_k_opt", 5),
+            use_ip_merging=getattr(config, "use_ip_merging", True),
+            max_pool_size=getattr(config, "max_pool_size", 5),
+            subgradient_iterations=getattr(config, "subgradient_iterations", 50),
+            profit_aware_operators=getattr(config, "profit_aware_operators", False),
+            alns_iterations=getattr(config, "alns_iterations", 100),
+            plateau_limit=getattr(config, "plateau_limit", 10),
+            deep_plateau_limit=getattr(config, "deep_plateau_limit", 30),
+            sa_max_trials=getattr(config, "sa_max_trials", 10000),
+            perturb_operator_weights=getattr(config, "perturb_operator_weights", [0.6, 0.4]),
+            seed=getattr(config, "seed", 42),
+            dynamic_topology_discovery=getattr(config, "dynamic_topology_discovery", False),
+            native_prize_collecting=getattr(config, "native_prize_collecting", False),
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert Params to a dictionary.
+
+        Returns:
+            Dict[str, Any]: Mapping of parameter names to their values.
+        """
+        from dataclasses import fields
+        return {f.name: getattr(self, f.name) for f in fields(self)}

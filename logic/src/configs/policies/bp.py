@@ -13,7 +13,7 @@ Example:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
@@ -70,3 +70,36 @@ class BPConfig:
     multiple_waste_types: bool = False
     allow_heuristic_ryan_foster: bool = False
     use_ryan_foster: bool = False
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "BPConfig":
+        """Create a BPConfig instance from a configuration object or dictionary.
+
+        Args:
+            config: A configuration object (Hydra/OmegaConf) or a raw dictionary.
+
+        Returns:
+            A BPConfig instance with values mapped from the config.
+        """
+        from dataclasses import fields
+        if isinstance(config, dict):
+            return cls(**{k: v for k, v in config.items() if k in {f.name for f in fields(cls)}})
+
+        return cls(
+            max_iterations=getattr(config, "max_iterations", 100),
+            max_routes_per_iteration=getattr(config, "max_routes_per_iteration", 10),
+            optimality_gap=getattr(config, "optimality_gap", 1e-4),
+            branching_strategy=getattr(config, "branching_strategy", "edge"),
+            max_branch_nodes=getattr(config, "max_branch_nodes", 1000),
+            use_exact_pricing=getattr(config, "use_exact_pricing", False),
+            use_ng_routes=getattr(config, "use_ng_routes", True),
+            ng_neighborhood_size=getattr(config, "ng_neighborhood_size", 8),
+            tree_search_strategy=getattr(config, "tree_search_strategy", "best_first"),
+            vehicle_limit=getattr(config, "vehicle_limit", None),
+            cleanup_frequency=getattr(config, "cleanup_frequency", 20),
+            cleanup_threshold=getattr(config, "cleanup_threshold", -100.0),
+            early_termination_gap=getattr(config, "early_termination_gap", 1e-3),
+            multiple_waste_types=getattr(config, "multiple_waste_types", False),
+            allow_heuristic_ryan_foster=getattr(config, "allow_heuristic_ryan_foster", False),
+        )

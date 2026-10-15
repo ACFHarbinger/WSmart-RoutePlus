@@ -14,7 +14,7 @@ Example:
 """
 
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from logic.src.configs.policies.other.acceptance_criteria import AcceptanceConfig
 
@@ -98,3 +98,61 @@ class LocalBranchingVNSConfig:
     packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None
     acceptance_criterion: AcceptanceConfig = field(default_factory=lambda: AcceptanceConfig(method="only_improving"))
+
+
+    def __post_init__(self):
+        """Ensure acceptance criterion is initialized even if not passed in config."""
+        from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
+        if self.acceptance_criterion is None:
+            # Standard VNS uses Improving-Only acceptance
+            self.acceptance_criterion = AcceptanceCriterionFactory.create(name="oi")
+
+    @classmethod
+    def from_config(cls, config: Any) -> "LocalBranchingVNSConfig":
+        """Create LocalBranchingVNSConfig from a configuration object or dictionary.
+
+        Args:
+            config (Any): Configuration object.
+
+        Returns:
+            "LocalBranchingVNSConfig": LBVNS parameters.
+        """
+        from dataclasses import fields
+
+        from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
+        if isinstance(config, dict):
+            params = cls(**{k: v for k, v in config.items() if k in {f.name for f in fields(cls)}})
+        else:
+            params = cls(
+                k_min=getattr(config, "k_min", 10),
+                k_max=getattr(config, "k_max", 30),
+                k_step=getattr(config, "k_step", 5),
+                time_limit=getattr(config, "time_limit", 300.0),
+                time_limit_per_lb=getattr(config, "time_limit_per_lb", 60.0),
+                max_lb_iterations=getattr(config, "max_lb_iterations", 5),
+                mip_gap=getattr(config, "mip_gap", 0.01),
+                seed=getattr(config, "seed", 42),
+            )
+
+        # Handle Acceptance Criterion Injection
+
+        acceptance_cfg = getattr(config, "acceptance_criterion", None)
+        if acceptance_cfg:
+            params.acceptance_criterion = AcceptanceCriterionFactory.create(
+                name=acceptance_cfg.method,
+                config=acceptance_cfg.params,
+            )
+        else:
+            # Default to only_improving for standard VNS
+            params.acceptance_criterion = AcceptanceCriterionFactory.create(name="oi")
+
+        return params
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert LocalBranchingVNSConfig to a dictionary for backend compatibility.
+
+        Returns:
+            Dict[str, Any]: Dictionary representation of LocalBranchingVNSConfig.
+        """
+        from dataclasses import fields
+        return {f.name: getattr(self, f.name) for f in fields(self)}

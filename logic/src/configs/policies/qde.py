@@ -46,3 +46,25 @@ class QDEConfig:
     delta_theta: float = 0.01 * 3.14159  # Rotation gate step size (e.g., 0.01*pi)
     local_search_iterations: int = 100
     profit_aware_operators: bool = False
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "QDEConfig":
+        """Create parameters from a configuration object.
+
+        Args:
+            config: Configuration object with QDE parameter attributes.
+
+        Returns:
+            QDEConfig: Populated parameter dataclass.
+        """
+        return cls(
+            pop_size=getattr(config, "pop_size", 20),
+            F=getattr(config, "F", 0.5),
+            CR=getattr(config, "CR", 0.9),
+            max_iterations=getattr(config, "max_iterations", 200),
+            time_limit=getattr(config, "time_limit", 60.0),
+            delta_theta=getattr(config, "delta_theta", 0.01 * 3.14159),
+            local_search_iterations=getattr(config, "local_search_iterations", 100),
+            profit_aware_operators=getattr(config, "profit_aware_operators", False),
+        )

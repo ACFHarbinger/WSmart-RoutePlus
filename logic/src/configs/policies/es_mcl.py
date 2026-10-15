@@ -16,7 +16,7 @@ Example:
 """
 
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
@@ -52,3 +52,29 @@ class MuCommaLambdaESConfig:
     seed: Optional[int] = None
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "MuCommaLambdaESConfig":
+        """Build parameters from a configuration object.
+
+        Args:
+            config: Configuration object or dictionary.
+
+        Returns:
+            "MuCommaLambdaESConfig" instance.
+        """
+        import dataclasses
+        if isinstance(config, dict):
+            return cls(**{k: v for k, v in config.items() if k in {f.name for f in dataclasses.fields(cls)}})
+
+        return cls(
+            mu=getattr(config, "mu", 15),
+            lambda_=getattr(config, "lambda_", 100),
+            n_removal=getattr(config, "n_removal", 3),
+            max_iterations=getattr(config, "max_iterations", 500),
+            local_search_iterations=getattr(config, "local_search_iterations", 100),
+            time_limit=getattr(config, "time_limit", 60.0),
+            seed=getattr(config, "seed", None),
+            profit_aware_operators=getattr(config, "profit_aware_operators", False),
+        )

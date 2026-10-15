@@ -12,7 +12,7 @@ Example:
 """
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
@@ -59,3 +59,34 @@ class RENSConfig:
     engine: str = "gurobi"
     packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "RENSConfig":
+        """Create RENSConfig from a configuration object or dictionary.
+
+        Args:
+            config: Configuration object.
+
+        Returns:
+            "RENSConfig": RENS parameters.
+        """
+        from dataclasses import fields
+        if isinstance(config, dict):
+            return cls(**{k: v for k, v in config.items() if k in {f.name for f in fields(cls)}})
+
+        return cls(
+            time_limit=getattr(config, "time_limit", 300.0),
+            lp_time_limit=getattr(config, "lp_time_limit", 60.0),
+            mip_gap=getattr(config, "mip_gap", 0.01),
+            seed=getattr(config, "seed", 42),
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert RENSConfig to a dictionary.
+
+        Returns:
+            Dict[str, Any]: RENS parameters as dictionary.
+        """
+        from dataclasses import fields
+        return {f.name: getattr(self, f.name) for f in fields(self)}

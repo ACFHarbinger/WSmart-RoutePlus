@@ -31,6 +31,7 @@ from typing import Dict, List, Optional
 import numpy as np
 
 from logic.src.configs.policies.gihh import GIHHConfig
+from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
 from logic.src.policies.helpers.local_search.local_search_manager import LocalSearchManager
 from logic.src.policies.helpers.operators import (
     apply_ges,
@@ -170,8 +171,8 @@ class GIHHSolver:
         self.global_best_profit_sol = copy.deepcopy(initial_sol)
 
         # Setup modular acceptance criterion
-        assert self.params.acceptance_criterion is not None
-        self.params.acceptance_criterion.setup(initial_sol.profit)
+        self.acceptance = AcceptanceCriterionFactory.build(self.params.acceptance_criterion)
+        self.acceptance.setup(initial_sol.profit)
 
         iteration = 1
         iterations_since_last_improvement = 0
@@ -206,8 +207,7 @@ class GIHHSolver:
             self.applied_times[selected_operator] += 1
 
             # Use modular criterion to decide acceptance
-            assert self.params.acceptance_criterion is not None
-            is_accepted, _ = self.params.acceptance_criterion.accept(
+            is_accepted, _ = self.acceptance.accept(
                 current_obj=current_sol.profit,
                 candidate_obj=candidate_sol.profit,
                 iteration=iteration,
@@ -225,8 +225,7 @@ class GIHHSolver:
                 iterations_since_last_improvement += 1
 
             # Step the criterion after move selection
-            assert self.params.acceptance_criterion is not None
-            self.params.acceptance_criterion.step(
+            self.acceptance.step(
                 current_obj=current_sol.profit,
                 candidate_obj=candidate_sol.profit,
                 accepted=is_accepted,

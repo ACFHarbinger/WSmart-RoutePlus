@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import gurobipy as gp
 import numpy as np
 
+from logic.src.configs.policies.cgh import CGHConfig
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.problem_context import ProblemContext
@@ -46,6 +47,11 @@ class ColumnGenerationHeuristicPolicy(BaseMultiPeriodRoutingPolicy):
         seed: Random seed for reproducibility.
     """
 
+    @classmethod
+    def _config_class(cls) -> Any:
+        """Return the typed config of this policy."""
+        return CGHConfig
+
     def __init__(self, config: Any = None):
         """
         Initializes the CGH policy.
@@ -54,7 +60,7 @@ class ColumnGenerationHeuristicPolicy(BaseMultiPeriodRoutingPolicy):
             config: Optional Hydra configuration.
         """
         super().__init__(config)
-        self.params = self._effective_config(config)
+        self.params = self._effective_config(config or {})
         self.cg_iters = self.params.cg_iters
         self.routes_per_iter = self.params.routes_per_iter
         self.seed = self.params.seed

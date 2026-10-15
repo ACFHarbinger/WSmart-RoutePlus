@@ -45,3 +45,27 @@ class HMMGDHHConfig:
     profit_aware_operators: bool = False
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "HMMGDHHConfig":
+        """
+        Create parameters from a configuration object.
+
+        Args:
+            config: Configuration object.
+
+        Returns:
+            HMMGDHHConfig: Instance of HMMGDHHConfig.
+        """
+        return cls(
+            max_iterations=getattr(config, "max_iterations", 500),
+            flood_margin=getattr(config, "flood_margin", 0.05),
+            rain_speed=getattr(config, "rain_speed", 0.001),
+            learning_rate=getattr(config, "learning_rate", 0.1),
+            n_removal=getattr(config, "n_removal", 2),
+            n_llh=getattr(config, "n_llh", 5),
+            local_search_iterations=getattr(config, "local_search_iterations", 100),
+            time_limit=getattr(config, "time_limit", 60.0),
+            profit_aware_operators=getattr(config, "profit_aware_operators", False),
+        )

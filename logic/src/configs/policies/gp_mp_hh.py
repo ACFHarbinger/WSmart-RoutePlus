@@ -12,7 +12,7 @@ Example:
 """
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
@@ -44,3 +44,34 @@ class GP_MP_HH_Config:
 
     packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "GP_MP_HH_Config":
+        """Create GP_MP_HH_Config from a configuration object or dictionary.
+
+        Args:
+            config (Any): Configuration for the solver.
+
+        Returns:
+            "GP_MP_HH_Config": Parameters for the GP-MP-HH policy.
+        """
+        from dataclasses import fields
+        if isinstance(config, dict):
+            return cls(**{k: v for k, v in config.items() if k in {f.name for f in fields(cls)}})
+
+        return cls(
+            pop_size=getattr(config, "pop_size", 10),
+            gens=getattr(config, "gens", 20),
+            prog_len=getattr(config, "prog_len", 5),
+            seed=getattr(config, "seed", 42),
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert GPM_PHH_Params to a dictionary for backend compatibility.
+
+        Returns:
+            dict: Dictionary representation of the parameters.
+        """
+        from dataclasses import fields
+        return {f.name: getattr(self, f.name) for f in fields(self)}

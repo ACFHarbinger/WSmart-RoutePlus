@@ -18,7 +18,7 @@ Example:
 """
 
 from dataclasses import dataclass, field
-from typing import List
+from typing import Any, List
 
 
 @dataclass
@@ -33,3 +33,22 @@ class SRCConfig:
     routing_algorithms: List[str] = field(default_factory=lambda: ["tsp", "alns"])
     time_limit: float = 60.0
     seed: int = 42
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "SRCConfig":
+        """Create parameters from a configuration object.
+
+        Args:
+            config: Configuration object.
+
+        Returns:
+            "SRCConfig": Configuration parameters for the Sequential Routing Algorithm.
+        """
+        return cls(
+            routing_algorithms=getattr(
+                config, "routing_algorithms", getattr(config, "constructors", ["tsp", "alns"])
+            ),
+            time_limit=getattr(config, "time_limit", 60.0),
+            seed=getattr(config, "seed", 42),
+        )

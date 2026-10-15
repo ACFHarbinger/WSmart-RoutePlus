@@ -12,7 +12,7 @@ Example:
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from .abc import ABCConfig
 
@@ -47,3 +47,28 @@ class KGLSConfig(ABCConfig):
 
     seed: Optional[int] = 42
     profit_aware_operators: bool = False
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "KGLSConfig":
+        """Build parameters from a configuration instance.
+
+        Args:
+            config: Configuration source (dataclass or object).
+
+        Returns:
+            KGLSConfig: Initialized runtime parameters.
+        """
+        seed = getattr(config, "seed", None)
+        profit_aware_operators = getattr(config, "profit_aware_operators", False)
+
+        return cls(
+            time_limit=getattr(config, "time_limit", 300.0),
+            num_perturbations=getattr(config, "num_perturbations", 10),
+            neighborhood_size=getattr(config, "neighborhood_size", 20),
+            moves=getattr(config, "moves", []),
+            penalization_cycle=getattr(config, "penalization_cycle", []),
+            local_search_iterations=getattr(config, "local_search_iterations", 100),
+            seed=seed,
+            profit_aware_operators=profit_aware_operators,
+        )

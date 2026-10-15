@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
+from logic.src.configs.policies.mp_aco import MP_ACO_Config
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.problem_context import ProblemContext
@@ -49,6 +50,11 @@ class MultiPeriodACOPolicy(BaseMultiPeriodRoutingPolicy):
         rng: Random number generator.
     """
 
+    @classmethod
+    def _config_class(cls) -> Any:
+        """Return the typed config of this policy."""
+        return MP_ACO_Config
+
     def __init__(self, config: Any = None):
         """Initializes the Multi-Period ACO policy.
 
@@ -57,7 +63,7 @@ class MultiPeriodACOPolicy(BaseMultiPeriodRoutingPolicy):
 
         """
         super().__init__(config)
-        self.params = self._effective_config(config)
+        self.params = self._effective_config(config or {})
         self.n_ants = self.params.n_ants
         self.iters = self.params.iters
         self.alpha = self.params.alpha

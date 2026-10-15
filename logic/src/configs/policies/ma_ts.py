@@ -16,7 +16,7 @@ Example:
 """
 
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
@@ -55,3 +55,43 @@ class MemeticAlgorithmToleranceBasedSelectionConfig:
     profit_aware_operators: bool = False
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "MemeticAlgorithmToleranceBasedSelectionConfig":
+        """Create parameters from a configuration object.
+
+        Args:
+            config: Configuration source (dataclass or object).
+
+        Returns:
+            MemeticAlgorithmToleranceBasedSelectionConfig: Initialized runtime parameters.
+        """
+        return cls(
+            population_size=getattr(config, "population_size", 10),
+            max_iterations=getattr(config, "max_iterations", 100),
+            tolerance_pct=getattr(config, "tolerance_pct", 0.05),
+            recombination_rate=getattr(config, "recombination_rate", 0.6),
+            perturbation_strength=getattr(config, "perturbation_strength", 2),
+            n_removal=getattr(config, "n_removal", 1),
+            local_search_iterations=getattr(config, "local_search_iterations", 100),
+            time_limit=getattr(config, "time_limit", 60.0),
+            profit_aware_operators=getattr(config, "profit_aware_operators", False),
+            seed=getattr(config, "seed", 42),
+        )
+
+    def __post_init__(self):
+        """Validate parameter constraints.
+
+        Args:
+            None.
+
+        Returns:
+            None.
+        """
+        assert self.population_size > 0, "population_size must be positive"
+        assert self.population_size % 2 == 0, "population_size must be even for pairwise matching"
+        assert 0 <= self.tolerance_pct <= 1, "tolerance_pct must be in [0, 1]"
+        assert 0 <= self.recombination_rate <= 1, "recombination_rate must be in [0, 1]"
+        assert self.perturbation_strength > 0, "perturbation_strength must be positive"
+        assert self.n_removal > 0, "n_removal must be positive"

@@ -13,7 +13,7 @@ Example:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from .other.acceptance_criteria import AcceptanceConfig
 from .other.packing import PackingConfig
@@ -64,3 +64,78 @@ class KSparseACOConfig:
     route_improvement: Optional[List[RouteImprovingConfig]] = None
     acceptance_criterion: AcceptanceConfig = AcceptanceConfig(method="oi")
     profit_aware_operators: bool = False
+
+
+    def __post_init__(self) -> None:
+        """Validate parameters after initialization."""
+        if not (0 < self.rho < 1):
+            raise ValueError(f"Evaporation rate rho must be in (0, 1), got {self.rho}")
+        if self.scale < 0:
+            raise ValueError(f"Scale parameter must be non-negative, got {self.scale}")
+
+    @classmethod
+    def from_config(cls, config: Union[KSparseACOConfig, Dict[str, Any]]) -> "KSparseACOConfig":
+        """Create KSparseACOConfig from an KSparseACOConfig dataclass or dict.
+
+        Performs explicit type casting for numeric fields to ensure consistency.
+
+        Args:
+            config: Configuration object or dictionary.
+
+        Returns:
+            "KSparseACOConfig" instance.
+        """
+        import dataclasses
+        if config is None:
+            return cls()
+
+        raw_data: Dict[str, Any] = {}
+        if isinstance(config, dict):
+            raw_data = config
+        else:
+            for f in dataclasses.fields(cls):
+                if hasattr(config, f.name):
+                    raw_data[f.name] = getattr(config, f.name)
+
+        kwargs: Dict[str, Any] = {}
+        for f in dataclasses.fields(cls):
+            if f.name == "acceptance_criterion":
+                continue
+            val = raw_data.get(f.name, getattr(cls, f.name, f.default))
+            if val is not None:
+                if f.type is float or f.type == "float":
+                    val = float(val)
+                elif f.type is int or f.type == "int":
+                    val = int(val)
+                elif f.type is bool or f.type == "bool":
+                    val = val.lower() in ("true", "1", "yes") if isinstance(val, str) else bool(val)
+            kwargs[f.name] = val
+
+        params = cls(**kwargs)
+
+        # Handle Acceptance Criterion Injection
+        from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
+
+        acceptance_cfg = (
+            raw_data.get("acceptance_criterion")
+            if isinstance(config, dict)
+            else getattr(config, "acceptance_criterion", None)
+        )
+        if acceptance_cfg:
+            # acceptance_cfg might be a dict or a Config object
+            if hasattr(acceptance_cfg, "method"):
+                name = acceptance_cfg.method
+                params_cfg = getattr(acceptance_cfg, "params", {})
+            else:
+                name = acceptance_cfg.get("method", "oi")
+                params_cfg = acceptance_cfg.get("params", {})
+
+            params.acceptance_criterion = AcceptanceCriterionFactory.create(
+                name=name,
+                config=params_cfg,
+            )
+        else:
+            # Default to oi (only improving) for standard ACO
+            params.acceptance_criterion = AcceptanceCriterionFactory.create(name="oi")
+
+        return params

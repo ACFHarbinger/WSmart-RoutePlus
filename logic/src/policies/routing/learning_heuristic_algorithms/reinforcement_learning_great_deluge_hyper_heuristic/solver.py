@@ -52,6 +52,7 @@ import numpy as np
 
 from logic.src.configs.policies.rl_gd_hh import RLGDHHConfig
 from logic.src.envs.tasks.common.expand_pool import current_expand_pool
+from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
 from logic.src.policies.helpers.operators import (
     build_grasp_routes,
     greedy_insertion,
@@ -150,7 +151,8 @@ class RLGDHHSolver:
         best_routes = copy.deepcopy(current_routes)
         best_profit = current_profit
 
-        self.params.acceptance_criterion.setup(current_profit)
+        self.acceptance = AcceptanceCriterionFactory.build(self.params.acceptance_criterion)
+        self.acceptance.setup(current_profit)
 
         for _iteration in range(self.params.max_iterations):
             time_elapsed = time.perf_counter() - start_time
@@ -164,7 +166,7 @@ class RLGDHHSolver:
             new_profit = self._evaluate(new_routes)
 
             # Pass critical timing data to the GD criterion
-            is_accepted, _ = self.params.acceptance_criterion.accept(
+            is_accepted, _ = self.acceptance.accept(
                 current_obj=current_profit,
                 candidate_obj=new_profit,
                 time_elapsed=time_elapsed,
@@ -184,7 +186,7 @@ class RLGDHHSolver:
                     best_profit = current_profit
 
             # Step logic is preserved for potential interface needs
-            self.params.acceptance_criterion.step(
+            self.acceptance.step(
                 current_obj=current_profit,
                 candidate_obj=new_profit,
                 accepted=is_accepted,

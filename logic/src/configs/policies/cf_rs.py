@@ -15,7 +15,7 @@ Example:
 """
 
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
@@ -100,3 +100,38 @@ class CFRSConfig:
 
     # Tour refinement strategies
     route_improvement: Optional[List[RouteImprovingConfig]] = None
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "CFRSConfig":
+        """Create CFRSConfig from a configuration object or dictionary.
+
+        Args:
+            config: Configuration object or dict with CF-RS parameter attributes.
+
+        Returns:
+            "CFRSConfig": Populated parameter dataclass.
+        """
+        from dataclasses import fields
+        if isinstance(config, dict):
+            return cls(**{k: v for k, v in config.items() if k in {f.name for f in fields(cls)}})
+
+        return cls(
+            num_clusters=getattr(config, "num_clusters", None),
+            assignment_method=getattr(config, "assignment_method", "angular"),
+            route_optimizer=getattr(config, "route_optimizer", "lkh"),
+            strict_fleet=getattr(config, "strict_fleet", True),
+            seed_criterion=getattr(config, "seed_criterion", "max_dist"),
+            mip_objective=getattr(config, "mip_objective", "distance"),
+            time_limit=getattr(config, "time_limit", 10.0),
+            seed=getattr(config, "seed", 42),
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert Params to a dictionary.
+
+        Returns:
+            Dict[str, Any]: Mapping of parameter names to their values.
+        """
+        from dataclasses import fields
+        return {f.name: getattr(self, f.name) for f in fields(self)}

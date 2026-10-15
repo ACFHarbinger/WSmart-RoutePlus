@@ -204,14 +204,10 @@ def run_lb_vns_gurobi(
     model.setParam("Seed", params.seed)
     model.setParam("MIPGap", params.mip_gap)
 
-    # Setup modular acceptance criterion (fallback if params not provided)
-    if params is not None and params.acceptance_criterion is not None:
-        acceptance_criterion = params.acceptance_criterion
-    else:
-        # Avoid circular import if needed, or use a default
-        from logic.src.policies.acceptance_criteria.only_improving import OnlyImproving
+    # Fresh acceptance criterion from the config (P-11); only-improving when unset.
+    from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
 
-        acceptance_criterion = OnlyImproving()
+    acceptance_criterion = AcceptanceCriterionFactory.build(params.acceptance_criterion)
 
     # 1. Setup mathematical formulation with DFJ lazy constraints (no MTZ)
     # This creates the variables x (edges) and y (nodes) and the base constraints.

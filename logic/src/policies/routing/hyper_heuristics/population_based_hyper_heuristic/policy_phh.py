@@ -21,6 +21,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
+from logic.src.configs.policies.phh import PHHConfig
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.problem_context import ProblemContext
@@ -78,6 +79,11 @@ class PHHPolicy(BaseMultiPeriodRoutingPolicy):
         rng: Random number generator.
     """
 
+    @classmethod
+    def _config_class(cls) -> Any:
+        """Return the typed config of this policy."""
+        return PHHConfig
+
     def __init__(self, config: Any = None):
         """
         Initialize PHHPolicy.
@@ -86,7 +92,7 @@ class PHHPolicy(BaseMultiPeriodRoutingPolicy):
             config: Configuration parameters.
         """
         super().__init__(config)
-        self.params = self._effective_config(config)
+        self.params = self._effective_config(config or {})
         self.pop_size = self.params.pop_size
         self.gens = self.params.gens
         self.seed = self.params.seed

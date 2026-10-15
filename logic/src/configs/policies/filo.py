@@ -13,6 +13,7 @@ Example:
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 from .abc import ABCConfig
 
@@ -62,3 +63,37 @@ class FILOConfig(ABCConfig):
     seed: int = 42
     profit_aware_operators: bool = False
     route_min_sa_temp: float = 1.0
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "FILOConfig":
+        """Create FILOConfig from a configuration object.
+
+        Args:
+            config: Configuration object or dictionary.
+
+        Returns:
+            "FILOConfig" instance.
+        """
+        import dataclasses
+        if isinstance(config, dict):
+            return cls(**{k: v for k, v in config.items() if k in {f.name for f in dataclasses.fields(cls)}})
+
+        return cls(
+            time_limit=getattr(config, "time_limit", 60.0),
+            max_iterations=getattr(config, "max_iterations", 50000),
+            initial_temperature_factor=getattr(config, "initial_temperature_factor", 10.0),
+            final_temperature_factor=getattr(config, "final_temperature_factor", 100.0),
+            omega_alpha=getattr(config, "omega_alpha", 0.5),
+            shaking_lb_intensity=getattr(config, "shaking_lb_intensity", 0.5),
+            shaking_ub_intensity=getattr(config, "shaking_ub_intensity", 1.5),
+            omega_base_multiplier=getattr(config, "omega_base_multiplier", 1.0),
+            delta_gamma=getattr(config, "delta_gamma", 0.25),
+            gamma_base=getattr(config, "gamma_base", 1.0),
+            gamma_lambda=getattr(config, "gamma_lambda", 2.0),
+            local_search_iterations=getattr(config, "local_search_iterations", 500),
+            n_cw=getattr(config, "n_cw", 100),
+            svc_size=getattr(config, "svc_size", 50),
+            seed=getattr(config, "seed", 42),
+            profit_aware_operators=getattr(config, "profit_aware_operators", False),
+        )

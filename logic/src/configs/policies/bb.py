@@ -15,7 +15,7 @@ Example:
 """
 
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
@@ -118,3 +118,31 @@ class BBConfig:
     # LR-UOP: B&B phase
     lr_branching_strategy: str = "max_waste"
     lr_max_bb_nodes: int = 5000
+
+
+    @classmethod
+    def from_config(cls, config: Dict[str, Any]) -> "BBConfig":
+        """Create a BBConfig instance from a raw configuration dictionary.
+
+        Args:
+            config: Dictionary containing parameter overrides.
+
+        Returns:
+            A BBConfig instance with values mapped from the config.
+        """
+        return cls(
+            time_limit=float(config.get("time_limit", 60.0)),
+            mip_gap=float(config.get("mip_gap", 0.01)),
+            seed=int(config.get("seed", 42)),
+            branching_strategy=str(config.get("branching_strategy", "strong")),
+            strong_branching_limit=int(config.get("strong_branching_limit", 5)),
+            formulation=str(config.get("formulation", "dfj")),
+            # LR-UOP parameters
+            lr_lambda_init=float(config.get("lr_lambda_init", 0.0)),
+            lr_max_subgradient_iters=int(config.get("lr_max_subgradient_iters", 100)),
+            lr_subgradient_theta=float(config.get("lr_subgradient_theta", 1.0)),
+            lr_subgradient_time_fraction=float(config.get("lr_subgradient_time_fraction", 0.4)),
+            lr_op_time_limit=float(config.get("lr_op_time_limit", 10.0)),
+            lr_branching_strategy=str(config.get("lr_branching_strategy", "max_waste")),
+            lr_max_bb_nodes=int(config.get("lr_max_bb_nodes", 5000)),
+        )
