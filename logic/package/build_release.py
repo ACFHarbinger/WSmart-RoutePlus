@@ -55,7 +55,7 @@ STAGES: Dict[str, Path] = {
 STAGED_TOPS = ("src", "configs", "controllers")
 
 ENTRY_RE = re.compile(r"^\s*'([A-Za-z0-9_-]+)':\s*'(logic\.[A-Za-z0-9_.:]+)'\s*,?\s*$")
-LAZY_LINE_RE = re.compile(r'^(\s*)"([A-Za-z_][A-Za-z0-9_]*)":\s*"(logic\.[A-Za-z0-9_.:]+)"\s*,?\s*$')
+LAZY_LINE_RE = re.compile(r'^(\s*)"([A-Za-z_][A-Za-z0-9_]*)":\s*"(logic\.[A-Za-z0-9_.:]+)"\s*,?\s*$', re.MULTILINE)
 LOGIC_MODULE_RE = re.compile(r"\blogic(?:\.[A-Za-z_][A-Za-z0-9_]*)+\b")
 DECLARE_RE = re.compile(r"\.declare\('([A-Za-z0-9_-]+)',\s*ENTRIES\['([A-Za-z0-9_-]+)']\)")
 
@@ -219,7 +219,7 @@ def compute_closure(manifest: dict) -> Tuple[Set[Path], List[str]]:  # noqa: C90
             if candidate not in kept_modules and not candidate.startswith(excluded):
                 queue.append(candidate)
             if candidate in kept_modules:
-                return
+                continue
 
     # name -> target module, harvested from _LAZY maps in package inits:
     # resolves "from <pkg> import <Name>" when the name lives in a submodule.
@@ -250,16 +250,14 @@ def compute_closure(manifest: dict) -> Tuple[Set[Path], List[str]]:  # noqa: C90
         # are part of the package's public surface. Deferred imports are the
         # runtime opt-in pattern: an excluded target is skipped with a note
         # (the code path is simply unavailable in the release).
-        pending: List[str] = sorted(imports.module_level)
-        deferred: Set[str] = set()
+        deferred: Set[str] = set(imports.deferred)
+        pending: List[str] = sorted(imports.module_level | deferred)
         if path.name == "__init__.py":
             for match in LAZY_LINE_RE.finditer(path.read_text()):
                 pkg_name, target = match.group(2), match.group(3).split(":")[0]
                 lazy_index.setdefault(root, {})[pkg_name] = target
                 pending.append(target)
                 surface.add(trimmed(target, REPO))
-            deferred = set(imports.deferred)
-            pending += sorted(deferred)
             surface.update(trimmed(dep, REPO) for dep in imports.deferred)
         for dep in pending:
             root_dep = trimmed(dep, REPO)
@@ -515,8 +513,10 @@ def run_check(manifest: dict) -> int:  # noqa: C901
 
 def run_build(manifest: dict, out: Path) -> int:  # noqa: C901
     out = out.resolve()
-    if out.exists():
-        shutil.rmtree(out)
+    if out in (REPO, LOGIC) or out in REPO.parents or LOGIC in out.parents:
+        raise ValueError("Release destination must not contain the repository or lie inside logic/")
+    if out.exists() and (not out.is_dir() or any(out.iterdir())):
+        raise ValueError("Release destination must be absent or empty; existing files are never deleted")
     kept, notes = compute_closure(manifest)
 
     # --- stage the copy -------------------------------------------------- #
