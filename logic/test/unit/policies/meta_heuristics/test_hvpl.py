@@ -1,26 +1,18 @@
-
-
 import numpy as np
 import pytest
 from logic.src.configs.policies import HyperHeuristicACOConfig
-from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.params import ALNSParams
+from logic.src.configs.policies.alns import ALNSConfig
 from logic.src.policies.routing.meta_heuristics.hybrid_volleyball_premier_league.params import HVPLParams
 from logic.src.policies.routing.meta_heuristics.hybrid_volleyball_premier_league.solver import HVPLSolver
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
-
-
-
 def test_hvpl_solver():
     # Setup simple problem: 3 bins + depot
-    dist_matrix = np.array([
-        [0.0, 10.0, 20.0, 10.0],
-        [10.0, 0.0, 10.0, 20.0],
-        [20.0, 10.0, 0.0, 10.0],
-        [10.0, 20.0, 10.0, 0.0]
-    ])
+    dist_matrix = np.array(
+        [[0.0, 10.0, 20.0, 10.0], [10.0, 0.0, 10.0, 20.0], [20.0, 10.0, 0.0, 10.0], [10.0, 20.0, 10.0, 0.0]]
+    )
     waste = {1: 10.0, 2: 10.0, 3: 10.0}
     capacity = 50.0
     R = 10.0
@@ -38,12 +30,11 @@ def test_hvpl_solver():
         time_limit=60.0,
         elitism_ratio=1.0,  # ALNS handles local search
     )
-    alns_params = ALNSParams(
+    alns_params = ALNSConfig(
         max_iterations=5,
         start_temp=100.0,
         cooling_rate=0.95,
         reaction_factor=0.1,
-        min_removal=1,
         xi=0.3,
         time_limit=60.0,
     )
@@ -72,6 +63,7 @@ def test_hvpl_solver():
         for node in route:
             visited.add(node)
     assert visited == {1, 2, 3}
+
 
 if __name__ == "__main__":
     test_hvpl_solver()

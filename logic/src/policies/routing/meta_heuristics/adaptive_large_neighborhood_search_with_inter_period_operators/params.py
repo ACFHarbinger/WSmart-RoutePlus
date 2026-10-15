@@ -10,18 +10,19 @@ Example:
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+import dataclasses
+from dataclasses import dataclass
 from typing import Any
 
-from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.params import ALNSParams
+from logic.src.configs.policies.alns import ALNSConfig
 
 
 @dataclass
-class ALNSIPOParams(ALNSParams):
+class ALNSIPOParams(ALNSConfig):
     """
     Configuration parameters for the ALNS-IPO solver.
 
-    Extends ALNSParams with multi-period stochastic routing parameters.
+    Extends ALNSConfig with multi-period stochastic routing parameters.
 
     Attributes:
         horizon: Planning horizon T (number of days).
@@ -53,27 +54,12 @@ class ALNSIPOParams(ALNSParams):
         Returns:
             ALNSIPOParams instance with values from config.
         """
-        # 1. Start with base ALNSParams initialization
-        # We reuse the base class logic to handle standard ALNS fields and Acceptance Criterion injection
-        base_params = super().from_config(config)
-        base_dict = asdict(base_params)
+        valid_keys = {f.name for f in dataclasses.fields(cls)}
+        if isinstance(config, dict):
+            return cls(**{k: v for k, v in config.items() if k in valid_keys})
 
-        # 2. Extract IPO-specific fields
-        ipo_fields = {
-            "horizon": getattr(config, "horizon", 7),
-            "stockout_penalty": getattr(config, "stockout_penalty", 500.0),
-            "forward_looking_depth": getattr(config, "forward_looking_depth", 3),
-            "inter_period_operators": getattr(config, "inter_period_operators", True),
-            "shift_direction": getattr(config, "shift_direction", "both"),
-            "inventory_lambda": getattr(config, "inventory_lambda", 1.0),
-            "inter_period_weight": getattr(config, "inter_period_weight", 1.0),
-            "stochastic_repair": getattr(config, "stochastic_repair", False),
-        }
-
-        # 3. Combine and instantiate
-        # Note: We manually inject the acceptance_criterion since asdict() might not handle it if it's not a field
-        # (though it is a field in ALNSParams)
-        final_params = cls(**{**base_dict, **ipo_fields})
-        final_params.acceptance_criterion = base_params.acceptance_criterion
-
-        return final_params
+        kwargs = {}
+        for k in valid_keys:
+            if hasattr(config, k):
+                kwargs[k] = getattr(config, k)
+        return cls(**kwargs)

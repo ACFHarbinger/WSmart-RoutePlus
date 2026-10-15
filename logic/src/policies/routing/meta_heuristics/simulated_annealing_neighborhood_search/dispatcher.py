@@ -15,8 +15,8 @@ Attributes:
 
 Example:
     >>> from logic.src.data.bins import Bins
-    >>> from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.params import SANSParams
-    >>> from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.sans_policy import SANSPolicy
+    >>> from logic.src.configs.policies.sans import SANSConfig
+    >>> from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.policy_sans import SANSPolicy
     >>> # Create dummy data
     >>> distance_matrix = np.array([[0, 1, 2], [1, 0, 3], [2, 3, 0]])
     >>> coords = {
@@ -27,7 +27,7 @@ Example:
     ...     4: (4, 4),
     ... }
     >>> bins = Bins(np.arange(5), np.ones(5), np.zeros(5))
-    >>> params = SANSParams()
+    >>> params = SANSConfig()
     >>> # Note: policy.execute() would be called in a real scenario
     >>> # For demonstration, we'll just show the function signature
     >>> # execute_new would return: (List[int], float, float, Optional[SearchContext], Optional[MultiDayContext])
@@ -40,7 +40,7 @@ Example:
 """
 
 import random
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -64,22 +64,27 @@ from logic.src.policies.routing.other_algorithms.travelling_salesman_problem.tsp
 if TYPE_CHECKING:
     from logic.src.interfaces.context.multi_day_context import MultiDayContext
 
-from .params import SANSParams
+from logic.src.configs.policies.sans import SANSConfig
 
 
 def execute_new(
-    policy: Any, params: SANSParams, **kwargs: Any
+    policy: Any, params: Union[SANSConfig, Dict[str, Any]], **kwargs: Any
 ) -> Tuple[List[int], float, float, Optional[SearchContext], Optional["MultiDayContext"]]:
     """Execute the improved simulated annealing engine.
 
     Args:
         policy: The SANSPolicy instance.
-        params: Type-safe SANS parameters.
+        params: SANSConfig dataclass or parameters dict.
         kwargs: Arguments passed to the policy's execute method.
 
     Returns:
         Tuple[List[int], float, float, Any, Any]: Tour, distance, profit, and metadata.
     """
+    if isinstance(params, dict):
+        import dataclasses
+
+        valid_keys = {f.name for f in dataclasses.fields(SANSConfig)}
+        params = SANSConfig(**{k: v for k, v in params.items() if k in valid_keys})
     mandatory = kwargs.get("mandatory", [])
     early_result = policy._validate_mandatory(mandatory)
     if early_result is not None:
@@ -162,18 +167,23 @@ def execute_new(
 
 
 def execute_og(
-    policy: Any, params: SANSParams, **kwargs: Any
+    policy: Any, params: Union[SANSConfig, Dict[str, Any]], **kwargs: Any
 ) -> Tuple[List[int], float, float, Optional[SearchContext], Optional["MultiDayContext"]]:
     """Execute the original LAC (look-ahead collection) engine.
 
     Args:
         policy: The SANSPolicy instance.
-        params: Type-safe SANS parameters.
+        params: SANSConfig dataclass or parameters dict.
         kwargs: Arguments passed to the policy's execute method.
 
     Returns:
         Tuple[List[int], float, Any]: Tour, distance, and metadata.
     """
+    if isinstance(params, dict):
+        import dataclasses
+
+        valid_keys = {f.name for f in dataclasses.fields(SANSConfig)}
+        params = SANSConfig(**{k: v for k, v in params.items() if k in valid_keys})
     mandatory = kwargs.get("mandatory", [])
     early_result = policy._validate_mandatory(mandatory)
     if early_result is not None:

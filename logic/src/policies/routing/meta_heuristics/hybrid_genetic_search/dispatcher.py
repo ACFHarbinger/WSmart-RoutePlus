@@ -10,12 +10,29 @@ Example:
     >>> routes, profit, cost = run_hgs(dist_matrix, wastes, capacity, R, C, values)
 """
 
+import dataclasses
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import numpy as np
+
+from logic.src.configs.policies.hgs import HGSConfig
+
 from .hgs import HGSSolver
-from .params import HGSParams
 from .pyvrp_wrapper import solve_pyvrp
 
 
-def run_hgs(dist_matrix, wastes, capacity, R, C, values, mandatory_nodes=None, x_coords=None, y_coords=None, *args):
+def run_hgs(
+    dist_matrix: np.ndarray,
+    wastes: Dict[int, float],
+    capacity: float,
+    R: float,
+    C: float,
+    values: Optional[Union[HGSConfig, Dict[str, Any]]] = None,
+    mandatory_nodes: Optional[List[int]] = None,
+    x_coords: Optional[np.ndarray] = None,
+    y_coords: Optional[np.ndarray] = None,
+    *args: Any,
+) -> Tuple[List[List[int]], float, float]:
     """
     Main HGS entry point with dispatching logic.
 
@@ -25,7 +42,7 @@ def run_hgs(dist_matrix, wastes, capacity, R, C, values, mandatory_nodes=None, x
         capacity: Vehicle capacity.
         R: Revenue multiplier.
         C: Cost multiplier.
-        values: Dictionary of parameters and config.
+        values: HGSConfig dataclass or dictionary of parameters and config.
         mandatory_nodes: List of local node indices that MUST be visited.
         x_coords: Optional x-coordinates.
         y_coords: Optional y_coords.
@@ -34,40 +51,20 @@ def run_hgs(dist_matrix, wastes, capacity, R, C, values, mandatory_nodes=None, x
     Returns:
         Tuple[List[List[int]], float, float]: Best routes, profit, and cost.
     """
-    # Create HGSParams using Vidal 2022 parameter names
-    params = HGSParams(
-        # Core HGS parameters (Vidal 2022)
-        time_limit=values.get("time_limit", 0.0),
-        mu=values.get("mu", 25),
-        n_offspring=values.get("n_offspring", values.get("lambda_param", 40)),
-        nb_elite=values.get("nb_elite", 4),
-        nb_close=values.get("nb_close", 5),
-        nb_granular=values.get("nb_granular", 20),
-        target_feasible=values.get("target_feasible", 0.2),
-        n_iterations_no_improvement=values.get("n_iterations_no_improvement", 20000),
-        # Genetic operators
-        mutation_rate=values.get("mutation_rate", 1.0),
-        repair_probability=values.get("repair_probability", 0.5),
-        crossover_rate=values.get("crossover_rate", 1.0),
-        # Local search
-        local_search_iterations=values.get("local_search_iterations", 500),
-        max_vehicles=values.get("max_vehicles", 0),
-        # Penalty management
-        initial_penalty_capacity=values.get("initial_penalty_capacity", 1.0),
-        penalty_increase=values.get("penalty_increase", 1.2),
-        penalty_decrease=values.get("penalty_decrease", 0.85),
-        vrpp=values.get("vrpp", True),
-        profit_aware_operators=values.get("profit_aware_operators", False),
-        use_cross_exchange=values.get("use_cross_exchange", False),
-        use_lambda_interchange=values.get("use_lambda_interchange", False),
-        lambda_max=values.get("lambda_max", 0),
-        use_ejection_chains=values.get("use_ejection_chains", False),
-        seed=values.get("seed", 42),
-        engine=values.get("engine", "custom"),
-        restart_timer=values.get("restart_timer", 0.0),
-    )
-    if params.engine == "pyvrp":
-        return solve_pyvrp(dist_matrix, wastes, capacity, R, C, values)
+    if isinstance(values, HGSConfig):
+        cfg = values
+    elif isinstance(values, dict):
+        valid_keys = {f.name for f in dataclasses.fields(HGSConfig)}
+        filtered = {k: v for k, v in values.items() if k in valid_keys}
+        cfg = HGSConfig(**filtered)
+    elif values is None:
+        cfg = HGSConfig()
+    else:
+        cfg = values
+
+    if getattr(cfg, "engine", "custom") == "pyvrp":
+        vals = values if isinstance(values, dict) else dataclasses.asdict(cfg)
+        return solve_pyvrp(dist_matrix, wastes, capacity, R, C, vals)
 
     if len(dist_matrix) <= 1:
         return [], 0.0, 0.0
@@ -84,5 +81,5 @@ def run_hgs(dist_matrix, wastes, capacity, R, C, values, mandatory_nodes=None, x
         else:
             return [], 0.0, 0.0
 
-    solver = HGSSolver(dist_matrix, wastes, capacity, R, C, params, mandatory_nodes, x_coords, y_coords)
+    solver = HGSSolver(dist_matrix, wastes, capacity, R, C, cfg, mandatory_nodes, x_coords, y_coords)
     return solver.solve()

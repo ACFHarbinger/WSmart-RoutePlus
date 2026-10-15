@@ -6,14 +6,13 @@ a single point of control for tuning and ablating its various components.
 
 Attributes:
     MACOParams: Parameters for Memetic Ant Colony Optimization.
-    ALNSParams: Parameters for Adaptive Large Neighborhood Search.
     HybridMemeticLargeNeighborhoodSearchParams: Top-level parameters composing all subsystems.
 
 Example:
     >>> params = HybridMemeticLargeNeighborhoodSearchParams(
     ...     population_size=50,
     ...     aco_params=MACOParams(n_ants=30),
-    ...     alns_params=ALNSParams(max_iterations=1000)
+    ...     alns_params=ALNSConfig(max_iterations=1000)
     ... )
 """
 
@@ -21,6 +20,8 @@ from __future__ import annotations
 
 from dataclasses import MISSING, dataclass, field, fields
 from typing import TYPE_CHECKING, Any, Dict, Optional, Type
+
+from logic.src.configs.policies.alns import ALNSConfig
 
 if TYPE_CHECKING:
     from logic.src.interfaces.acceptance_criterion import IAcceptanceCriterion
@@ -232,125 +233,6 @@ class MACOParams:
 
 
 # ---------------------------------------------------------------------------
-# ALNS (Adaptive Large Neighborhood Search)
-# ---------------------------------------------------------------------------
-
-
-@dataclass
-class ALNSParams:
-    """
-    Configuration parameters for the ALNS solver.
-
-    Attributes:
-        time_limit: Maximum runtime in seconds.
-        max_iterations: Maximum number of ALNS iterations.
-        start_temp: Initial temperature for simulated annealing (if > 0, dynamic calculation is disabled).
-        cooling_rate: Temperature decay factor per iteration.
-        reaction_factor: Learning rate for operator weight updates (r in Ropke & Pisinger 2005).
-        min_removal: Minimum number of nodes to remove.
-        max_removal_pct: Maximum percentage of nodes to remove.
-        segment_size: Number of iterations before updating operator weights.
-        noise_factor: Noise level for repair operators (eta in Ropke & Pisinger 2005).
-        worst_removal_randomness: Randomness parameter p >= 1 for worst removal (p=1 is deterministic).
-        start_temp_control: Controls initial temperature (0.05 = accept 5% worse with 0.5 probability).
-        xi: Fraction of total nodes for max removal cap.
-        sigma_1: Score for new global best solution.
-        sigma_2: Score for better solution (not global best, not visited before).
-        sigma_3: Score for accepted worse solution (not visited before).
-        vrpp: If True, allow expanding insertion pool beyond removed nodes.
-        profit_aware_operators: If True, use profit-aware insertion/removal operators.
-        extended_operators: If True, add string, cluster, and neighbor removal operators.
-        seed: Random seed for reproducibility.
-        engine: Engine to use for the solver.
-        acceptance_criterion: Acceptance criterion for solutions.
-    """
-
-    time_limit: float = 60.0
-    max_iterations: int = 5000
-    start_temp: float = 0.0
-    cooling_rate: float = 0.995
-    reaction_factor: float = 0.1
-    min_removal: int = 4
-    max_removal_pct: float = 0.3
-    segment_size: int = 100
-    noise_factor: float = 0.025
-    worst_removal_randomness: float = 3.0
-    shaw_randomization: float = 6.0
-    max_removal_cap: int = 100
-    start_temp_control: float = 0.05  # 'w' parameter: accept a 5% worse solution with 0.5 probability
-    xi: float = 0.4  # 'xi' parameter: fraction of total nodes for max removal cap
-    regret_pool: str = "regret234"
-    sigma_1: float = 33.0
-    sigma_2: float = 9.0
-    sigma_3: float = 13.0
-    vrpp: bool = True
-    profit_aware_operators: bool = False
-    extended_operators: bool = False
-    seed: Optional[int] = None
-    engine: str = "custom"
-    acceptance_criterion: Optional[IAcceptanceCriterion] = None
-
-    @classmethod
-    def from_config(cls, config: Any) -> ALNSParams:
-        """Create ALNSParams from an ALNSConfig dataclass or dict.
-
-        Args:
-            config: The configuration object.
-
-        Returns:
-            ALNSParams: The parameters for the ALNS algorithm.
-        """
-        if config is None:
-            return cls()
-
-        if isinstance(config, dict):
-            params = cls(**{k: v for k, v in config.items() if k in {f.name for f in fields(cls)}})
-        else:
-            params = cls(
-                time_limit=getattr(config, "time_limit", 60.0),
-                max_iterations=getattr(config, "max_iterations", 5000),
-                start_temp=getattr(config, "start_temp", 0.0),
-                cooling_rate=getattr(config, "cooling_rate", 0.995),
-                reaction_factor=getattr(config, "reaction_factor", 0.1),
-                min_removal=getattr(config, "min_removal", 4),
-                max_removal_pct=getattr(config, "max_removal_pct", 0.3),
-                segment_size=getattr(config, "segment_size", 100),
-                noise_factor=getattr(config, "noise_factor", 0.025),
-                worst_removal_randomness=getattr(config, "worst_removal_randomness", 3.0),
-                shaw_randomization=getattr(config, "shaw_randomization", 6.0),
-                max_removal_cap=getattr(config, "max_removal_cap", 100),
-                regret_pool=getattr(config, "regret_pool", "regret234"),
-                sigma_1=getattr(config, "sigma_1", 33.0),
-                sigma_2=getattr(config, "sigma_2", 9.0),
-                sigma_3=getattr(config, "sigma_3", 13.0),
-                vrpp=getattr(config, "vrpp", True),
-                profit_aware_operators=getattr(config, "profit_aware_operators", False),
-                extended_operators=getattr(config, "extended_operators", False),
-                seed=getattr(config, "seed", None),
-                engine=getattr(config, "engine", "custom"),
-            )
-
-        # Handle Acceptance Criterion Injection
-        from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
-
-        acceptance_cfg = getattr(config, "acceptance_criterion", None)
-        if acceptance_cfg:
-            params.acceptance_criterion = AcceptanceCriterionFactory.create(
-                name=acceptance_cfg.method,
-                config=acceptance_cfg.params,
-            )
-        else:
-            params.acceptance_criterion = AcceptanceCriterionFactory.create(
-                name="bmc",
-                initial_temp=params.start_temp,
-                alpha=params.cooling_rate,
-                seed=params.seed,
-            )
-
-        return params
-
-
-# ---------------------------------------------------------------------------
 # Top-level HMLNS Params
 # ---------------------------------------------------------------------------
 
@@ -396,7 +278,7 @@ class HybridMemeticLargeNeighborhoodSearchParams:
 
     # Sub-algorithm Parameters
     aco_params: MACOParams = field(default_factory=MACOParams)
-    alns_params: ALNSParams = field(default_factory=ALNSParams)
+    alns_params: ALNSConfig = field(default_factory=ALNSConfig)
 
     def __post_init__(self) -> None:
         """Forward global flags to sub-parameters."""
@@ -423,6 +305,8 @@ class HybridMemeticLargeNeighborhoodSearchParams:
         """
 
         def _hydrate(sub_cls: Type, sub_cfg: Any) -> Any:
+            if isinstance(sub_cfg, sub_cls):
+                return sub_cfg
             if hasattr(sub_cls, "from_config"):
                 return sub_cls.from_config(sub_cfg)
             kwargs: Dict[str, Any] = {}
@@ -446,7 +330,7 @@ class HybridMemeticLargeNeighborhoodSearchParams:
             if f.name == "aco_params":
                 top_kwargs[f.name] = _hydrate(MACOParams, sub_cfg)
             elif f.name == "alns_params":
-                top_kwargs[f.name] = _hydrate(ALNSParams, sub_cfg)
+                top_kwargs[f.name] = _hydrate(ALNSConfig, sub_cfg)
             else:
                 top_kwargs[f.name] = sub_cfg
 

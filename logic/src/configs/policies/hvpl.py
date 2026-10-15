@@ -89,7 +89,6 @@ class HVPLConfig:
             start_temp=100.0,
             cooling_rate=0.95,
             reaction_factor=0.1,
-            min_removal=1,
             xi=0.3,
             time_limit=60.0,
         )

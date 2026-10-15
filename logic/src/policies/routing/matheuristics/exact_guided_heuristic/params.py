@@ -91,7 +91,7 @@ class ExactGuidedHeuristicParams(ExactGuidedHeuristicConfig):
         """Build the ``values`` dict expected by the existing ALNS dispatcher.
 
         The ALNS dispatcher (``run_alns``) accepts a flat dict whose keys mirror
-        ``ALNSParams`` field names.  This method projects the pipeline params
+        ``ALNSConfig`` field names.  This method projects the pipeline params
         onto that dict so the existing ALNS code can be called without changes.
 
         Args:

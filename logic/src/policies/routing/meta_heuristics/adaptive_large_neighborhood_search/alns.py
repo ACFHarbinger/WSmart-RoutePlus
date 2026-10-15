@@ -62,11 +62,11 @@ Performance Optimizations:
 
 Usage for Ablation Studies:
 ============================
-Toggle `profit_aware_operators` in ALNSParams to compare:
+Toggle `profit_aware_operators` in ALNSConfig to compare:
 - Standard ALNS (False): cost-minimization operators
 - Profit-aware ALNS (True): revenue-cost maximization operators
 
-Toggle `extended_operators` in ALNSParams to compare:
+Toggle `extended_operators` in ALNSConfig to compare:
 - Core destroy set (False): random, worst, shaw  [3 operators]
 - Extended destroy set (True): + string, cluster, neighbor  [6 operators]
 
@@ -79,10 +79,11 @@ References:
 
 import random
 import time
-from typing import Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
 import numpy as np
 
+from logic.src.configs.policies.alns import ALNSConfig
 from logic.src.policies.helpers.operators import (
     build_greedy_routes,
     cluster_profit_removal,
@@ -109,7 +110,7 @@ from logic.src.policies.helpers.operators import (
 )
 from logic.src.tracking.viz_mixin import PolicyStateRecorder
 
-from .params import ALNSParams
+MIN_REMOVAL_LOWER_BOUND: int = 4
 
 
 class ALNSSolver:
@@ -164,7 +165,7 @@ class ALNSSolver:
         capacity: float,
         R: float,
         C: float,
-        params: ALNSParams,
+        params: Optional[Union[ALNSConfig, Dict[str, Any]]] = None,
         mandatory_nodes: Optional[List[int]] = None,
         recorder: Optional[PolicyStateRecorder] = None,
     ):
@@ -177,7 +178,7 @@ class ALNSSolver:
             capacity: Vehicle capacity.
             R: Revenue per unit collected.
             C: Cost per unit distance.
-            params: ALNS parameters.
+            params: ALNS configuration dataclass or dictionary.
             mandatory_nodes: Optional list of nodes that must be visited.
             recorder: Optional recorder for solver state.
         """
@@ -186,13 +187,27 @@ class ALNSSolver:
         self.capacity = capacity
         self.R = R
         self.C = C
-        self.params = params
+
+        if hasattr(params, "__dict__") and not isinstance(params, ALNSConfig):
+            params = vars(params)
+        if isinstance(params, dict):
+            import dataclasses
+
+            valid_keys = {f.name for f in dataclasses.fields(ALNSConfig)}
+            cfg = ALNSConfig(**{k: v for k, v in params.items() if k in valid_keys})
+        elif params is None:
+            cfg = ALNSConfig()
+        else:
+            cfg = params
+
+        self.cfg: ALNSConfig = cfg
+        self.params = cfg
         self.mandatory_nodes = mandatory_nodes
-        self.vrpp = getattr(params, "vrpp", True)
-        self.profit_aware_operators = getattr(params, "profit_aware_operators", False)
-        self.extended_operators = getattr(params, "extended_operators", False)
-        self.random = random.Random(params.seed) if params.seed is not None else random.Random()
-        self.np_random = np.random.default_rng(params.seed) if params.seed is not None else np.random.default_rng()
+        self.vrpp = getattr(cfg, "vrpp", True)
+        self.profit_aware_operators = getattr(cfg, "profit_aware_operators", False)
+        self.extended_operators = getattr(cfg, "extended_operators", False)
+        self.random = random.Random(cfg.seed) if cfg.seed is not None else random.Random()
+        self.np_random = np.random.default_rng(cfg.seed) if cfg.seed is not None else np.random.default_rng()
 
         # Pre-assign no-op to avoid getattr in the hot iteration loop.
         self._viz_record: Callable = recorder.record if recorder is not None else lambda **k: None
@@ -216,7 +231,7 @@ class ALNSSolver:
         # ------------------------------------------------------------------
         # Segment-based weight update (Ropke & Pisinger 2005, Section 3.4.4)
         # ------------------------------------------------------------------
-        self.segment_size = params.segment_size
+        self.segment_size = cfg.segment_size
         self.destroy_weights = [1.0] * len(self.destroy_ops)
         self.repair_weights = [1.0] * len(self.repair_ops)
         self.destroy_scores = [0.0] * len(self.destroy_ops)
@@ -225,25 +240,36 @@ class ALNSSolver:
         self.repair_counts = [0] * len(self.repair_ops)
 
         # Weight decay factor: (1 - r) where r is the reaction factor
-        self.weight_decay = 1.0 - params.reaction_factor
-        self.weight_learning_rate = params.reaction_factor
+        self.weight_decay = 1.0 - cfg.reaction_factor
+        self.weight_learning_rate = cfg.reaction_factor
 
         # Visited solutions tracking (Ropke & Pisinger 2005, Section 3.3)
         self.visited_solutions: Set[Tuple[int, ...]] = set()
 
-        # Acceptance Criterion Injection
-        self.acceptance_criterion = params.acceptance_criterion
-        if self.acceptance_criterion is None:
-            # Fallback (should not happen if from_config is used)
-            from logic.src.policies.acceptance_criteria.base.factory import (
-                AcceptanceCriterionFactory,
-            )
+        # Acceptance Criterion Injection - fresh per-solve instance (P-11)
+        from logic.src.policies.acceptance_criteria.base.factory import (
+            AcceptanceCriterionFactory,
+        )
 
+        acc_val = getattr(self.cfg, "acceptance_criterion", None)
+        if hasattr(acc_val, "accept"):
+            self.acceptance_criterion = acc_val
+        elif acc_val is not None and hasattr(acc_val, "method"):
+            self.acceptance_criterion = AcceptanceCriterionFactory.create(
+                name=acc_val.method,
+                config=acc_val.params,
+            )
+        elif isinstance(acc_val, dict) and "method" in acc_val:
+            self.acceptance_criterion = AcceptanceCriterionFactory.create(
+                name=acc_val["method"],
+                config=acc_val.get("params"),
+            )
+        else:
             self.acceptance_criterion = AcceptanceCriterionFactory.create(
                 name="bmc",
-                initial_temp=params.start_temp or 100.0,  # Unified fallback
-                alpha=params.cooling_rate,
-                seed=params.seed,
+                initial_temp=self.cfg.start_temp or 100.0,
+                alpha=self.cfg.cooling_rate,
+                seed=self.cfg.seed,
             )
 
     # ------------------------------------------------------------------
@@ -591,7 +617,7 @@ class ALNSSolver:
             n_remove = 0
         else:
             # Formal bounds per Ropke & Pisinger (2006) Section 4.3.1
-            lower_bound = min(current_n_nodes, 4)
+            lower_bound = min(current_n_nodes, MIN_REMOVAL_LOWER_BOUND)
             upper_bound = min(self.params.max_removal_cap, int(self.params.xi * self.n_nodes))
             upper_bound = max(lower_bound, upper_bound)
             n_remove = self.random.randint(lower_bound, upper_bound)

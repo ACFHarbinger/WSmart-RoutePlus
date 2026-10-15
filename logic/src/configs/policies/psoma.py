@@ -67,8 +67,10 @@ class PSOMAConfig:
     T0: float = 3.0
     lambda_cooling: float = 0.9
     time_limit: float = 60.0
+    sa_steps: int = 5000
+    seed_nearest_neighbour: bool = True
     vrpp: bool = True
-    profit_aware_operators: bool = False
+    profit_aware_operators: bool = True
     seed: Optional[int] = 42
     packing: Optional[List[PackingConfig]] = field(default_factory=list)
     route_improvement: Optional[List[RouteImprovingConfig]] = field(default_factory=list)

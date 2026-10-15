@@ -30,13 +30,20 @@ from typing import List, Tuple
 REPO = Path(__file__).resolve().parents[1]
 LOGIC_SRC = REPO / "logic" / "src"
 
-# Deleted params classes (WP-04). Extend per work package; see module docstring.
+# Deleted params classes (WP-04, WP-05). Extend per work package; see module docstring.
 BANNED_SYMBOLS = frozenset(
     {
         "BPCParams",
         "SWCTCFParams",
         "HyperACOParams",
         "CVRPParams",
+        "ALNSParams",
+        "HGSParams",
+        "PGCLNSParams",
+        "ACOParams",
+        "LNSParams",
+        "PSOMAParams",
+        "SANSParams",
     }
 )
 

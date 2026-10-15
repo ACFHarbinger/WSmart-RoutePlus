@@ -15,15 +15,15 @@ Example:
 """
 
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
 from logic.src.tracking.viz_mixin import PolicyVizMixin
 
 from .construction import SolutionConstructor
 from .local_search import ACOLocalSearch
-from .params import ACOParams
 from .pheromones import PheromoneTau
 
 
@@ -39,7 +39,7 @@ class ACOSolver(PolicyVizMixin):
         capacity (float): Maximum vehicle capacity.
         R (float): Revenue multiplier.
         C (float): Cost multiplier.
-        params (ACOParams): ACO hyperparameters.
+        params (KSparseACOConfig): ACO hyperparameters.
         mandatory_nodes (Optional[List[int]]): List of mandatory node indices.
         n_nodes (int): Number of nodes.
         nodes (List[int]): List of node indices.
@@ -58,7 +58,7 @@ class ACOSolver(PolicyVizMixin):
         capacity: float,
         R: float,
         C: float,
-        params: ACOParams,
+        params: Optional[Union[KSparseACOConfig, Dict[str, Any]]] = None,
         mandatory_nodes: Optional[List[int]] = None,
         seed: Optional[int] = None,
     ):
@@ -71,7 +71,7 @@ class ACOSolver(PolicyVizMixin):
             capacity: Maximum vehicle capacity.
             R: Revenue multiplier.
             C: Cost multiplier.
-            params: ACO hyperparameters.
+            params: KSparseACOConfig dataclass or dictionary of hyperparameters.
             mandatory_nodes: List of mandatory node indices.
             seed: Random seed for reproducibility.
         """
@@ -80,7 +80,19 @@ class ACOSolver(PolicyVizMixin):
         self.capacity = capacity
         self.R = R
         self.C = C
-        self.params = params
+
+        if isinstance(params, dict):
+            import dataclasses
+
+            valid_keys = {f.name for f in dataclasses.fields(KSparseACOConfig)}
+            cfg = KSparseACOConfig(**{k: v for k, v in params.items() if k in valid_keys})
+        elif params is None:
+            cfg = KSparseACOConfig()
+        else:
+            cfg = params
+
+        self.cfg: KSparseACOConfig = cfg
+        self.params = cfg
         self.mandatory_nodes = mandatory_nodes
 
         self.n_nodes = len(dist_matrix)

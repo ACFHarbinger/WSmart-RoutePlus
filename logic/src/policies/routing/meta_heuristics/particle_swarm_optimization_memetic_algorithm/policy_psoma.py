@@ -24,7 +24,6 @@ from logic.src.configs.policies.psoma import PSOMAConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import PSOMAParams
 from .solver import PSOMASolver
 
 
@@ -37,7 +36,7 @@ class PSOMAPolicy(BaseRoutingPolicy):
 
     Attributes:
         solver (PSOMASolver): Internal solver instance.
-        params (PSOMAParams): Algorithm parameters.
+        params (PSOMAConfig): Algorithm parameters.
     """
 
     def __init__(self, config: Optional[Union[PSOMAConfig, Dict[str, Any]]] = None):
@@ -114,7 +113,7 @@ class PSOMAPolicy(BaseRoutingPolicy):
                 - profit: Total calculated net profit (Total Revenue - Total Cost).
                 - cost: Total travel cost calculated by the solver.
         """
-        params = PSOMAParams.from_config(values)
+        cfg = self._effective_config(values)
 
         solver = PSOMASolver(
             sub_dist_matrix,
@@ -122,7 +121,7 @@ class PSOMAPolicy(BaseRoutingPolicy):
             capacity,
             revenue,
             cost_unit,
-            params,
+            cfg,
             mandatory_nodes,
         )
 

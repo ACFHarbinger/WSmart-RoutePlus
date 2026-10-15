@@ -4,11 +4,9 @@ from unittest.mock import patch
 
 import numpy as np
 import pytest
-from logic.src.policies.routing.meta_heuristics.pheromone_guided_cooperative_large_neighborhood_search.params import (
-    ACOParams,
-    LNSParams,
-    PGCLNSParams,
-)
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
+from logic.src.configs.policies.alns import ALNSConfig
+from logic.src.configs.policies.pg_clns import PGCLNSConfig
 from logic.src.policies.routing.meta_heuristics.pheromone_guided_cooperative_large_neighborhood_search.pg_clns import (
     PGCLNSSolver,
 )
@@ -21,12 +19,12 @@ def test_pg_clns_never_reads_cpu_time():
     pts = rng.random((7, 2))
     dist = np.linalg.norm(pts[:, None] - pts[None, :], axis=-1)
     wastes = {i: 10.0 for i in range(1, 7)}
-    params = PGCLNSParams(
+    params = PGCLNSConfig(
         population_size=2,
         max_iterations=2,
         time_limit=5.0,
-        aco=ACOParams(n_ants=2, max_iterations=2, local_search_iterations=2, time_limit=5.0),
-        lns=LNSParams(max_iterations=5, time_limit=5.0),
+        aco=KSparseACOConfig(n_ants=2, max_iterations=2, local_search_iterations=2, time_limit=5.0),
+        lns=ALNSConfig(max_iterations=5, time_limit=5.0),
     )
     solver = PGCLNSSolver(dist, wastes, capacity=100.0, R=1.0, C=1.0, params=params, seed=1)
     with patch("time.process_time", side_effect=AssertionError("PG-CLNS must use perf_counter")):

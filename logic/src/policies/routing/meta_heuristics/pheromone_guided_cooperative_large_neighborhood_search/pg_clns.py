@@ -18,15 +18,15 @@ Example:
 
 import copy
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
+from logic.src.configs.policies.pg_clns import PGCLNSConfig
 from logic.src.tracking.viz_mixin import PolicyVizMixin
 
 from .aco import ACOSolver
 from .lns import LNSSolver
-from .params import PGCLNSParams
 
 
 class PGCLNSSolver(PolicyVizMixin):
@@ -55,7 +55,7 @@ class PGCLNSSolver(PolicyVizMixin):
         capacity: float,
         R: float,
         C: float,
-        params: PGCLNSParams,
+        params: Optional[Union[PGCLNSConfig, Dict[str, Any]]] = None,
         mandatory_nodes: Optional[List[int]] = None,
         seed: Optional[int] = None,
     ):
@@ -68,7 +68,7 @@ class PGCLNSSolver(PolicyVizMixin):
             capacity: Vehicle capacity.
             R: Revenue per unit of waste.
             C: Cost per unit of distance.
-            params: PGCLNS parameters.
+            params: PGCLNS configuration dataclass or dictionary.
             mandatory_nodes: List of mandatory nodes.
             seed: Random seed.
         """
@@ -79,17 +79,33 @@ class PGCLNSSolver(PolicyVizMixin):
         self.capacity = capacity
         self.R = R
         self.C = C
-        self.params = params
+
+        if isinstance(params, dict):
+            import dataclasses
+
+            valid_keys = {f.name for f in dataclasses.fields(PGCLNSConfig)}
+            cfg = PGCLNSConfig(**{k: v for k, v in params.items() if k in valid_keys})
+        elif params is None:
+            cfg = PGCLNSConfig()
+        else:
+            cfg = params
+
+        self.cfg: PGCLNSConfig = cfg
+        self.params = cfg
         self.mandatory_nodes = mandatory_nodes
+
+        actual_seed = seed if seed is not None else getattr(cfg, "seed", None)
 
         # Initialize ACO components for constructor and pheromones
         # We reuse ACOSolver initialization logic
-        self.aco_internal = ACOSolver(dist_matrix, wastes, capacity, R, C, params.aco, mandatory_nodes, seed=seed)
+        self.aco_internal = ACOSolver(dist_matrix, wastes, capacity, R, C, cfg.aco, mandatory_nodes, seed=actual_seed)
         self.pheromone = self.aco_internal.pheromone
         self.constructor = self.aco_internal.constructor
 
         # Initialize LNS solver for the "Coaching" phase
-        self.coaching_solver = LNSSolver(dist_matrix, wastes, capacity, R, C, params.lns, mandatory_nodes, seed=seed)
+        self.coaching_solver = LNSSolver(
+            dist_matrix, wastes, capacity, R, C, cfg.lns, mandatory_nodes, seed=actual_seed
+        )
 
     def solve(self) -> Tuple[List[List[int]], float, float]:
         """

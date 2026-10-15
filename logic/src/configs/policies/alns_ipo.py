@@ -55,7 +55,7 @@ class ALNSIPOConfig:
         inter_period_weight: Initial weight for inter-period operators.
     """
 
-    # --- Standard ALNS parameters (mirrors ALNSParams) ---
+    # --- Standard ALNS parameters (mirrors ALNSConfig) ---
     time_limit: float = 60.0
     max_iterations: int = 5000
     start_temp: float = 0.0
