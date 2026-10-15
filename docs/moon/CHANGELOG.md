@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Changed
 - **Breaking:** 1.0.0 `last_minute` is fill-threshold only. `use_eoq_threshold` on a last-minute context is ignored; use `eoq_last_minute` for the EOQ path. Revenue and profit-per-km still read the flag.
 - Released packing `pack()` no longer imports the simulator (`_record_live_params`) or Torch. `vectorized/__init__.py` and `get_vectorized_selector` load adapters lazily.
+- **P-05:** `packing/vectorized/manager.py` no longer imports `models.meta.hrl_manager` at module level. `ManagerSelector` is dropped from the packing / vectorized public lazy maps; the factory still string-loads it for in-tree `strategy: manager`. Importing the released vectorized selectors does not load the HRL manager.
 
 #### Migration
 - Replace `strategy: last_minute` plus `use_eoq_threshold: true` with `strategy: eoq_last_minute`. Paper CF70/CF90 last-minute YAML is unchanged.

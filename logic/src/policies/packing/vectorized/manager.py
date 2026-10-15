@@ -18,9 +18,14 @@ from typing import Any, Dict, Optional
 
 import torch
 
-from logic.src.models.meta.hrl_manager import MandatoryManager
+from logic.src.utils.registry import import_target
 
 from .base import VectorizedSelector
+
+
+def _mandatory_manager_cls() -> Any:
+    """Load MandatoryManager only when a ManagerSelector is constructed."""
+    return import_target("logic.src.models.meta.hrl_manager:MandatoryManager")
 
 
 class ManagerSelector(VectorizedSelector):
@@ -38,7 +43,7 @@ class ManagerSelector(VectorizedSelector):
 
     def __init__(
         self,
-        manager: Optional[MandatoryManager] = None,
+        manager: Optional[Any] = None,
         manager_config: Optional[Dict[str, Any]] = None,
         threshold: float = 0.5,
         device: str = "cuda",
@@ -58,7 +63,7 @@ class ManagerSelector(VectorizedSelector):
             self.manager = manager
         else:
             config = manager_config or {}
-            self.manager = MandatoryManager(
+            self.manager = _mandatory_manager_cls()(
                 hidden_dim=config.get("hidden_dim", 128),
                 lstm_hidden=config.get("lstm_hidden", 64),
                 input_dim_dynamic=config.get("history_length", 10),
