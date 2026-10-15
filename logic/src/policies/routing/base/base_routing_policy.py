@@ -186,7 +186,11 @@ class BaseRoutingPolicy(PolicyVizMixin, IRoutingAlgorithm):
         if "seed" not in flat and "seed" in raw_config:
             flat["seed"] = raw_config["seed"]
 
-        return _structured_load(config_cls, flat), flat.get("seed")
+        cfg = _structured_load(config_cls, flat)
+        for key in ("seed", "vrpp"):
+            if key in flat and hasattr(cfg, key):
+                setattr(cfg, key, flat[key])
+        return cfg, flat.get("seed")
 
     def _get_config_key(self) -> str:
         """Return the config key for this policy (e.g., 'alns', 'bcp', 'hgs').

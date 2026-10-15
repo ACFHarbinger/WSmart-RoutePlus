@@ -15,10 +15,10 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 import numpy as np
 
 from logic.src.configs.policies import HGSALNSConfig
+from logic.src.configs.policies.alns import ALNSConfig
+from logic.src.configs.policies.hgs import HGSConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.params import ALNSParams
-from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.params import HGSParams
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search_with_adaptive_large_neighborhood_search.hgs_alns import (
     HGSALNSSolver,
 )
@@ -139,32 +139,29 @@ class HGSALNSPolicy(BaseRoutingPolicy):
         profit_aware_operators = values.get("profit_aware_operators", False)
 
         # Build Params from nested config
-        alns_params = ALNSParams(
+        alns_params = ALNSConfig(
             max_iterations=values.get("alns_iterations", 500),
             start_temp=values.get("alns_start_temp", 100.0),
             cooling_rate=values.get("alns_cooling_rate", 0.95),
             reaction_factor=values.get("alns_reaction_factor", 0.1),
-            min_removal=values.get("alns_min_removal", 1),
             max_removal_pct=values.get("alns_max_removal_pct", 0.2),
             time_limit=values.get("alns_time_limit", 60.0),
-            engine=values.get("alns_engine", "custom"),
             vrpp=vrpp,
             profit_aware_operators=profit_aware_operators,
             seed=seed,
         )
 
-        hgs_params = HGSParams(
+        hgs_params = HGSConfig(
             time_limit=values.get("hgs_time_limit", 60.0),
             mu=values.get("hgs_population_size", 50),
             nb_elite=values.get("hgs_elite_size", 5),
             mutation_rate=values.get("hgs_mutation_rate", 0.2),
             crossover_rate=values.get("hgs_crossover_rate", 0.7),
-            n_offspring=values.get("hgs_n_generations", 100),  # Mapping generations to offspring for this adapter
+            lambda_param=values.get("hgs_n_generations", 100),  # Mapping generations to offspring for this adapter
             n_iterations_no_improvement=values.get("hgs_no_improvement_threshold", 20),
             nb_granular=values.get("hgs_neighbor_list_size", 10),
             local_search_iterations=values.get("hgs_local_search_iterations", 500),
             max_vehicles=values.get("hgs_max_vehicles", 0),
-            engine=values.get("hgs_engine", "custom"),
             seed=seed,
             vrpp=vrpp,
             profit_aware_operators=profit_aware_operators,

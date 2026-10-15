@@ -102,13 +102,14 @@ class ALNSPolicy(BaseRoutingPolicy):
                 - profit: Total calculated net profit (Total Revenue - Total Cost).
                 - cost: Total travel cost calculated by the solver.
         """
+        cfg = self._effective_config(values)
         routes, profit, solver_cost = run_alns(
             sub_dist_matrix,
             sub_wastes,
             capacity,
             revenue,
             cost_unit,
-            values,
+            cfg,
             mandatory_nodes,
             recorder=self._viz,
         )

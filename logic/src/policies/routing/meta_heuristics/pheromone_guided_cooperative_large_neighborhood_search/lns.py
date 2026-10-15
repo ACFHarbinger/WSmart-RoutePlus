@@ -20,14 +20,14 @@ import copy
 import math
 import random
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
+from logic.src.configs.policies.alns import ALNSConfig
 from logic.src.tracking.viz_mixin import PolicyVizMixin
 
 from .operators import cluster_removal, greedy_insertion, random_removal, regret_2_insertion, worst_removal
-from .params import LNSParams
 
 
 class LNSSolver(PolicyVizMixin):
@@ -40,7 +40,7 @@ class LNSSolver(PolicyVizMixin):
         capacity (float): Maximum vehicle capacity.
         R (float): Revenue multiplier.
         C (float): Cost multiplier.
-        params (LNSParams): Detailed LNS parameters.
+        params (ALNSConfig): Detailed LNS parameters.
         mandatory_nodes (Optional[List[int]]): List of mandatory node indices.
         random (random.Random): Random number generator.
         destroy_ops (List[Callable]): List of destroy operators.
@@ -64,7 +64,7 @@ class LNSSolver(PolicyVizMixin):
         capacity: float,
         R: float,
         C: float,
-        params: LNSParams,
+        params: Optional[Union[ALNSConfig, Dict[str, Any]]] = None,
         mandatory_nodes: Optional[List[int]] = None,
         seed: Optional[int] = None,
     ):
@@ -77,7 +77,7 @@ class LNSSolver(PolicyVizMixin):
             capacity: Maximum vehicle capacity.
             R: Revenue multiplier.
             C: Cost multiplier.
-            params: Detailed LNS parameters.
+            params: Detailed ALNSConfig or dictionary of parameters.
             mandatory_nodes: List of mandatory node indices.
             seed: Random seed for reproducibility.
         """
@@ -86,7 +86,19 @@ class LNSSolver(PolicyVizMixin):
         self.capacity = capacity
         self.R = R
         self.C = C
-        self.params = params
+
+        if isinstance(params, dict):
+            import dataclasses
+
+            valid_keys = {f.name for f in dataclasses.fields(ALNSConfig)}
+            cfg = ALNSConfig(**{k: v for k, v in params.items() if k in valid_keys})
+        elif params is None:
+            cfg = ALNSConfig()
+        else:
+            cfg = params
+
+        self.cfg: ALNSConfig = cfg
+        self.params = cfg
         self.mandatory_nodes = mandatory_nodes
         self.random = random.Random(seed) if seed is not None else random.Random()
 
@@ -166,10 +178,9 @@ class LNSSolver(PolicyVizMixin):
         if current_n_nodes == 0:
             n_remove = 0
         else:
-            # Scale removal percentage but ensure a minimum of 2 nodes if available
-            # to allow meaningful resequencing.
             lower_bound = min(current_n_nodes, 2)
-            max_pct_remove = int(current_n_nodes * self.params.max_removal_pct)
+            max_pct = getattr(self.params, "max_removal_pct", getattr(self.params, "xi", 0.4))
+            max_pct_remove = int(current_n_nodes * max_pct)
             upper_bound = max(lower_bound + 1, max_pct_remove)
             upper_bound = min(upper_bound, current_n_nodes)
 

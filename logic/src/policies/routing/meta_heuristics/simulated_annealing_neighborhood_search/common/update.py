@@ -18,9 +18,8 @@ Attributes:
 Example:
     >>> import numpy as np
     >>> from logic.src.data.bins import Bins
-    >>> from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.params import SANSParams
-    >>> from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.sans_policy import SANSPolicy
-    >>> from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.dispatcher import Dispatcher
+    >>> from logic.src.configs.policies.sans import SANSConfig
+    >>> from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.policy_sans import SANSPolicy
     >>>
     >>> # Setup data (same as LAC)
     >>> bin_data = Bins.from_yaml("tests/data/bins.yaml")
@@ -28,7 +27,7 @@ Example:
     >>> customer_location = bin_coords[0]
     >>> bin_state = pd.DataFrame({"fill_level": [0] * len(bin_data.bins), "last_collection": pd.to_datetime(["2024-05-01"] * len(bin_data.bins))})
     >>> # Simulation parameters
-    >>> sim_params = SANSParams(
+    >>> sim_params = SANSConfig(
     ...     max_iterations=10,
     ...     num_sim_days=15,
     ...     initial_temp=100.0,

@@ -6,7 +6,7 @@ A low inertia weight (ω≈0.4) forces intensive local exploitation.
 
 Attributes:
     PSOMASolver (Type): Core solver class for PSOMA.
-    PSOMAParams (Type): Parameter dataclass for the solver.
+    PSOMAConfig (Type): Parameter dataclass for the solver.
 
 Example:
     >>> solver = PSOMASolver(dist_matrix, wastes, capacity, R, C, params)
@@ -20,13 +20,13 @@ Reference:
 import copy
 import random
 import time
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
+from logic.src.configs.policies.psoma import PSOMAConfig
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.split import LinearSplit
 
-from .params import PSOMAParams
 from .particle import PSOMAParticle
 
 
@@ -41,7 +41,7 @@ class PSOMASolver:
         capacity (float): Maximum vehicle collection capacity.
         R (float): Revenue per kg of waste.
         C (float): Cost per km traveled.
-        params (PSOMAParams): Algorithm-specific parameters.
+        params (PSOMAConfig): Algorithm-specific parameters.
         mandatory_nodes (Optional[List[int]]): Nodes that must be visited.
         n_nodes (int): Number of nodes (excluding depot).
         clients (List[int]): List of client IDs.
@@ -67,7 +67,7 @@ class PSOMASolver:
         capacity: float,
         R: float,
         C: float,
-        params: PSOMAParams,
+        params: Optional[Union[PSOMAConfig, Dict[str, Any]]] = None,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """Initializes the PSOMA solver.
@@ -78,7 +78,7 @@ class PSOMASolver:
             capacity (float): Maximum vehicle collection capacity.
             R (float): Revenue per kg of waste.
             C (float): Cost per km traveled.
-            params (PSOMAParams): Algorithm-specific parameters.
+            params: PSOMA configuration dataclass or dictionary.
             mandatory_nodes (Optional[List[int]]): Nodes that must be visited.
         """
 
@@ -87,13 +87,25 @@ class PSOMASolver:
         self.capacity = capacity
         self.R = R
         self.C = C
-        self.params = params
+
+        if isinstance(params, dict):
+            import dataclasses
+
+            valid_keys = {f.name for f in dataclasses.fields(PSOMAConfig)}
+            cfg = PSOMAConfig(**{k: v for k, v in params.items() if k in valid_keys})
+        elif params is None:
+            cfg = PSOMAConfig()
+        else:
+            cfg = params
+
+        self.cfg: PSOMAConfig = cfg
+        self.params = cfg
         self.mandatory_nodes = mandatory_nodes or []
         self.n_nodes = len(dist_matrix) - 1
         self.clients = list(range(1, self.n_nodes + 1))
-        self.random = random.Random(params.seed) if params.seed is not None else random.Random()
+        self.random = random.Random(cfg.seed) if cfg.seed is not None else random.Random()
         # One seeded numpy stream for every vector draw, so a run is repeatable outside the simulator's global reseed.
-        self.np_rng = np.random.default_rng(params.seed)
+        self.np_rng = np.random.default_rng(cfg.seed)
         self.split_solver = LinearSplit(
             dist_matrix=self.dist_matrix,
             wastes=self.wastes,
@@ -102,15 +114,38 @@ class PSOMASolver:
             C=self.C,
             max_vehicles=0,
             mandatory_nodes=self.mandatory_nodes,
-            vrpp=self.params.vrpp,
+            vrpp=self.cfg.vrpp,
         )
 
-        # Modular Acceptance Criterion
-        assert params.acceptance_criterion is not None, "Acceptance criterion must be provided."
-        self.acceptance_criterion = params.acceptance_criterion
+        # Fresh per-solve acceptance criterion instance (P-11)
+        from logic.src.policies.acceptance_criteria.base.factory import (
+            AcceptanceCriterionFactory,
+        )
+
+        acc_val = getattr(self.cfg, "acceptance_criterion", None)
+        if hasattr(acc_val, "accept"):
+            self.acceptance_criterion = acc_val
+        elif acc_val is not None and hasattr(acc_val, "method"):
+            self.acceptance_criterion = AcceptanceCriterionFactory.create(
+                name=acc_val.method,
+                config=acc_val.params,
+            )
+        elif isinstance(acc_val, dict) and "method" in acc_val:
+            self.acceptance_criterion = AcceptanceCriterionFactory.create(
+                name=acc_val["method"],
+                config=acc_val.get("params"),
+            )
+        else:
+            self.acceptance_criterion = AcceptanceCriterionFactory.create(
+                name="bmc",
+                initial_temp=self.cfg.T0,
+                alpha=self.cfg.lambda_cooling,
+                seed=self.cfg.seed,
+            )
+        self.params.acceptance_criterion = self.acceptance_criterion
 
         # Steps per SA search: capped so one search cannot consume the whole time budget.
-        self.metropolis_steps = max(1, min(self.n_nodes * (self.n_nodes - 1), params.sa_steps))
+        self.metropolis_steps = max(1, min(self.n_nodes * (self.n_nodes - 1), getattr(self.cfg, "sa_steps", 5000)))
         self._deadline = float("inf")
         self.operators = [self._swap, self._insert, self._inverse]
         self.probabilities = np.array([1 / 3, 1 / 3, 1 / 3])

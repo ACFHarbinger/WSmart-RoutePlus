@@ -5,7 +5,6 @@ alns:
     start_temp: 0
     cooling_rate: 0.995
     reaction_factor: 0.1
-    min_removal: 1
     start_temp_control: 0.05
     xi: 0.4
     extended_operators: false
