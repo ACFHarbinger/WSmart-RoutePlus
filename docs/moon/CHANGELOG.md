@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Cross-package review (`2026-10-15`)
+
+- Codex review: structured-load value errors propagate instead of bypassing validation; the HPO key-check CLI resolves repository imports when executed by filename.
+
 ### Scripted migration of the unreleased policies (`2026-10-15`)
 
 #### Changed
