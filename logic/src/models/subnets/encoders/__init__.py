@@ -24,24 +24,39 @@ Example:
     >>> encoder = MLPEncoder(embed_dim=128, n_layers=3)
 """
 
-from .common import (
-    EncoderFeedForwardSubLayer,
-    MultiHeadAttentionLayerBase,
-    TransformerEncoderBase,
-)
-from .deepaco import DeepACOEncoder
-from .gac import GraphAttConvEncoder
-from .gat import GraphAttentionEncoder
-from .gcn import GraphConvolutionEncoder
-from .gfacs import GFACSEncoder
-from .ggac import GatedGraphAttConvEncoder
-from .matnet import MatNetEncoder
-from .mdam import MDAMGraphAttentionEncoder
-from .mlp import MLPEncoder
-from .moe import MoEGraphAttentionEncoder
-from .nargnn import NARGNNEncoder, NARGNNNodeEncoder
-from .ptr import PointerEncoder
-from .tgc import TransGraphConvEncoder
+from typing import Any
+
+# Lazy re-exports (P-25): importing this package does not pull every encoder;
+# each name loads its module on first access.
+_LAZY = {
+    "DeepACOEncoder": "logic.src.models.subnets.encoders.deepaco:DeepACOEncoder",
+    "GFACSEncoder": "logic.src.models.subnets.encoders.gfacs:GFACSEncoder",
+    "GatedGraphAttConvEncoder": "logic.src.models.subnets.encoders.ggac:GatedGraphAttConvEncoder",
+    "GraphAttConvEncoder": "logic.src.models.subnets.encoders.gac:GraphAttConvEncoder",
+    "GraphAttentionEncoder": "logic.src.models.subnets.encoders.gat:GraphAttentionEncoder",
+    "GraphConvolutionEncoder": "logic.src.models.subnets.encoders.gcn:GraphConvolutionEncoder",
+    "MDAMGraphAttentionEncoder": "logic.src.models.subnets.encoders.mdam:MDAMGraphAttentionEncoder",
+    "MLPEncoder": "logic.src.models.subnets.encoders.mlp:MLPEncoder",
+    "MatNetEncoder": "logic.src.models.subnets.encoders.matnet:MatNetEncoder",
+    "MoEGraphAttentionEncoder": "logic.src.models.subnets.encoders.moe:MoEGraphAttentionEncoder",
+    "NARGNNEncoder": "logic.src.models.subnets.encoders.nargnn:NARGNNEncoder",
+    "NARGNNNodeEncoder": "logic.src.models.subnets.encoders.nargnn:NARGNNNodeEncoder",
+    "PointerEncoder": "logic.src.models.subnets.encoders.ptr:PointerEncoder",
+    "TransGraphConvEncoder": "logic.src.models.subnets.encoders.tgc:TransGraphConvEncoder",
+}
+
+
+def __getattr__(name: str) -> Any:
+    if name in _LAZY:
+        import importlib
+
+        module_name, _, attr = _LAZY[name].partition(":")
+        module = importlib.import_module(module_name)
+        obj = getattr(module, attr)
+        globals()[name] = obj
+        return obj
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 __all__ = [
     # Base classes and common components
