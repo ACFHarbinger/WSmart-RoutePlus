@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Cross-package review (`2026-10-15`)
+
+- Codex review: CVRP LoadResource consumes ESPPRC's depot-aligned waste vector, preserving customer-only demand input and avoiding mask dimension mismatch. Added a two-trip reset/capacity/completion test. Unreleased environment semantic migration remains blocked (see review report).
+
 ### Envs on the ESPPRC base (WP-07, `2026-10-15`)
 
 #### Added
