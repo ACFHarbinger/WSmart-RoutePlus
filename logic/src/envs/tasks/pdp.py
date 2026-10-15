@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional, Sequence, Union
 import torch
 from tensordict import TensorDict
 
+from logic.src.envs.base.ops import as_batch_nodes
 from logic.src.envs.tasks.base import BaseProblem
 from logic.src.envs.tasks.espprc import ESPPRCEnv, ESPPRCGenerator
 from logic.src.envs.tasks.spec import PROBLEMS, ProblemSpec
@@ -53,6 +54,47 @@ class PDPEnv(ESPPRCEnv):
             device=device,
             **kwargs,
         )
+
+    # PDP dynamics of the pre-WP-07 envs/routing/pdp.py (review CR-12): customers
+    # 1..k are pickups and k+1..2k their deliveries; a delivery opens only after
+    # its pickup, the depot is never an action, and the day ends when every
+    # customer is served. The reward is minus the closed tour length.
+
+    def _reset_instance(self, tensordict: TensorDict) -> TensorDict:
+        if "visited" in tensordict.keys():
+            return tensordict
+        tensordict = super()._reset_instance(tensordict)
+        bs, device = tensordict.batch_size, tensordict.device
+        num_loc = tensordict["locs"].shape[-2] - 1
+        k = num_loc // 2
+        tensordict["to_deliver"] = torch.cat(
+            [
+                torch.ones(*bs, k + 1, dtype=torch.bool, device=device),  # depot and pickups
+                torch.zeros(*bs, num_loc - k, dtype=torch.bool, device=device),  # deliveries, locked
+            ],
+            dim=-1,
+        )
+        available = torch.ones(*bs, num_loc + 1, dtype=torch.bool, device=device)
+        available[..., 0] = False
+        tensordict["available"] = available
+        return tensordict
+
+    def _step_instance(self, tensordict: TensorDict) -> TensorDict:
+        tensordict = super()._step_instance(tensordict)
+        action = as_batch_nodes(tensordict["action"])
+        num_loc = tensordict["locs"].shape[-2] - 1
+        k = num_loc // 2
+        tensordict["available"] = tensordict["available"].scatter(-1, action.unsqueeze(-1), False)
+        # Visiting pickup i unlocks delivery i + k.
+        unlocked = (action + k) % (num_loc + 1)
+        tensordict["to_deliver"] = tensordict["to_deliver"].scatter(-1, unlocked.unsqueeze(-1), True)
+        return tensordict
+
+    def _get_action_mask(self, tensordict: TensorDict) -> torch.Tensor:
+        return tensordict["available"] & tensordict["to_deliver"]
+
+    def _check_done(self, tensordict: TensorDict) -> torch.Tensor:
+        return ~tensordict["available"][..., 1:].any(dim=-1)
 
 
 class PDP(BaseProblem):
