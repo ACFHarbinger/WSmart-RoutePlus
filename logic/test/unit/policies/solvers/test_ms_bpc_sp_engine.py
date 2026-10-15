@@ -26,6 +26,9 @@ from logic.src.policies.helpers.solvers_and_matheuristics.pricing.smoothing impo
     detect_cycles,
     is_solution_integer,
 )
+from logic.src.policies.helpers.solvers_and_matheuristics.search.bpc_tree import (
+    search_bpc_tree,
+)
 from logic.src.policies.helpers.solvers_and_matheuristics.search.column_generation import (
     column_generation_loop,
 )
@@ -112,7 +115,10 @@ def test_is_solution_integer():
 
 
 def test_ms_engine_uses_the_shared_cg_loop():
-    """P-33: the engine must drive the shared core loop, not a private fork."""
+    """P-33: the engine must drive the shared tree + CG, not a private fork."""
+    assert ms_bpc_sp_engine.search_bpc_tree is search_bpc_tree, (
+        "the engine's B&B walk must resolve to the shared search_bpc_tree"
+    )
     assert ms_bpc_sp_engine._column_generation_loop is column_generation_loop, (
         "the engine's CG entry must resolve to the shared column_generation_loop"
     )
@@ -194,9 +200,7 @@ def test_ms_bpc_sp_enforces_vehicle_limit_in_phase3_and_phase5():
     expected_limited = _brute_force_optimum(dist_matrix.tolist(), wastes, capacity, R, C, 2)
     assert abs(profit_limited - expected_limited) <= 1e-6 * max(1.0, abs(expected_limited))
 
-    routes_unlimited, profit_unlimited, _ = run_ms_bpc_sp(
-        build_subproblem(dist_matrix, wastes, capacity, R, C), cfg
-    )
+    routes_unlimited, profit_unlimited, _ = run_ms_bpc_sp(build_subproblem(dist_matrix, wastes, capacity, R, C), cfg)
     expected_unlimited = _brute_force_optimum(dist_matrix.tolist(), wastes, capacity, R, C, None)
     assert len(routes_unlimited) == 4
     assert abs(profit_unlimited - expected_unlimited) <= 1e-6 * max(1.0, abs(expected_unlimited))
@@ -228,9 +232,7 @@ def test_ms_bpc_sp_empty_fleet_result_relaxes_to_unconstrained_when_it_fits():
         "enable_strong_branching_heuristic": False,
     }
 
-    routes, profit, _ = run_ms_bpc_sp(
-        build_subproblem(dist_matrix, wastes, capacity, R, C, n_vehicles=2), cfg
-    )
+    routes, profit, _ = run_ms_bpc_sp(build_subproblem(dist_matrix, wastes, capacity, R, C, n_vehicles=2), cfg)
     expected = _brute_force_optimum(dist_matrix.tolist(), wastes, capacity, R, C, 2)
     assert len(routes) <= 2, f"fleet limit violated: {len(routes)} routes"
     assert abs(profit - expected) <= 1e-6 * max(1.0, abs(expected)), (
@@ -278,11 +280,13 @@ def test_fleet_dual_integration_in_rcspp():
     """Verify fleet-limit dual enters pricing solver and penalizes routes."""
     from logic.src.policies.helpers.solvers_and_matheuristics import RCSPPSolver
 
-    dist_matrix = np.array([
-        [0.0, 5.0, 5.0],
-        [5.0, 0.0, 2.0],
-        [5.0, 2.0, 0.0],
-    ])
+    dist_matrix = np.array(
+        [
+            [0.0, 5.0, 5.0],
+            [5.0, 0.0, 2.0],
+            [5.0, 2.0, 0.0],
+        ]
+    )
     wastes = {1: 5.0, 2: 5.0}
     master = VRPPMasterProblem(
         n_nodes=2,
@@ -355,11 +359,13 @@ def test_master_solve_ip_time_limit_and_incumbent_recovery():
 @_needs_license
 def test_master_solve_ip_real_gurobi():
     """Verify solve_ip on a live Gurobi model with license."""
-    dist_matrix = np.array([
-        [0.0, 5.0, 5.0],
-        [5.0, 0.0, 2.0],
-        [5.0, 2.0, 0.0],
-    ])
+    dist_matrix = np.array(
+        [
+            [0.0, 5.0, 5.0],
+            [5.0, 0.0, 2.0],
+            [5.0, 2.0, 0.0],
+        ]
+    )
     wastes = {1: 5.0, 2: 5.0}
     master = VRPPMasterProblem(
         n_nodes=2,

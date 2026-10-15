@@ -32,6 +32,7 @@ Example:
     >>> search = BestFirstSearch()
 """
 
+from .bpc_tree import BPCSearchOptions, search_bpc_tree, total_travel_cost
 from .cutting_planes import (
     BasicFleetCoverEngine,
     CompositeCuttingPlaneEngine,
@@ -70,4 +71,7 @@ __all__ = [
     "DepthFirstSearch",
     "HybridSearchStrategy",
     "create_search_strategy",
+    "BPCSearchOptions",
+    "search_bpc_tree",
+    "total_travel_cost",
 ]
