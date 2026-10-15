@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from logic.src.configs.policies.alns import ALNSConfig
+from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.matheuristics.cluster_first_route_second.solver import run_cf_rs
 from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns import ALNSSolver
 
@@ -15,7 +16,7 @@ def test_alns_segment_logic():
     capacity = 15.0
     params = ALNSConfig(max_iterations=150, start_temp=100.0, regret_pool="regret2")  # > 1 segment
 
-    solver = ALNSSolver(dist, wastes, capacity, R=100.0, C=1.0, params=params)
+    solver = ALNSSolver(build_subproblem(dist, wastes, capacity, revenue=100.0, cost_unit=1.0), params)
 
     # Check initialization
     assert solver.segment_size == 100

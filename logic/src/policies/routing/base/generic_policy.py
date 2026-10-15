@@ -87,8 +87,12 @@ class GenericRoutingPolicy(BaseRoutingPolicy):
         )
 
     def _solve(self, problem: SubProblem, cfg: Any) -> Any:
-        """Run the declared solver. Override for engines needing extra inputs."""
-        solver = self._solver
+        """Run the declared solver. Override for engines needing extra inputs.
+
+        Accessed on the class (not the instance) so a plain function-valued
+        ``_solver`` is not bound as a method.
+        """
+        solver = type(self)._solver
         if isinstance(solver, type):
             return solver(problem, cfg).solve()
         return solver(problem, cfg)

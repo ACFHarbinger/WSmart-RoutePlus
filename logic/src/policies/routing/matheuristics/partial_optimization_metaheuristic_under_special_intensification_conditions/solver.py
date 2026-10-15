@@ -78,6 +78,7 @@ import pandas as pd
 
 from logic.src.configs.policies.alns import ALNSConfig
 from logic.src.configs.policies.hgs import HGSConfig
+from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns import ALNSSolver
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.hgs import HGSSolver
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.split import LinearSplit
@@ -1218,13 +1219,15 @@ def _optimize_with_hgs(
         params.time_limit = time_limit
 
     solver = HGSSolver(
-        dist_matrix=local_dist,
-        wastes=local_wastes,
-        capacity=capacity,
-        R=R,
-        C=C,
-        params=params,
-        mandatory_nodes=local_mandatory_idx,
+        build_subproblem(
+            dist_matrix=local_dist,
+            wastes=local_wastes,
+            capacity=capacity,
+            revenue=R,
+            cost_unit=C,
+            mandatory_nodes=local_mandatory_idx,
+        ),
+        params,
     )
     local_routes, profit, _ = solver.solve()
 
@@ -1299,13 +1302,15 @@ def _optimize_with_alns(
         params.time_limit = time_limit
 
     solver = ALNSSolver(
-        dist_matrix=local_dist,
-        wastes=local_wastes,
-        capacity=capacity,
-        R=R,
-        C=C,
-        params=params,
-        mandatory_nodes=local_mandatory_idx,
+        build_subproblem(
+            dist_matrix=local_dist,
+            wastes=local_wastes,
+            capacity=capacity,
+            revenue=R,
+            cost_unit=C,
+            mandatory_nodes=local_mandatory_idx,
+        ),
+        params,
     )
     local_routes, profit, _ = solver.solve()
 

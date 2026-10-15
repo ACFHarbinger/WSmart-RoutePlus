@@ -2,7 +2,9 @@
 
 import numpy as np
 import pytest
+from logic.src.configs.policies.swc_tcf import SWCTCFConfig
 from logic.src.policies import run_hgs
+from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.policy_swc_tcf import (
     run_swc_tcf_optimizer,
 )
@@ -23,13 +25,16 @@ class TestSWCTCFOptimizerContract:
     def test_swc_tcf_optimizer_basic_contract(self, base_vrpp_data, backend, check_license):
         data = base_vrpp_data
         routes, profit, cost = run_swc_tcf_optimizer(
-            bins=data["bins"],
-            distance_matrix=data["dist_matrix"],
-            values=data["values"],
-            binsids=data["binsids"],
-            mandatory_nodes=data["mandatory_nodes"],
-            optimizer=backend,
-            time_limit=5,
+            build_subproblem(
+                np.array(data["dist_matrix"]),
+                {i + 1: float(b) for i, b in enumerate(data["bins"])},
+                data["values"]["Q"],
+                data["values"]["R"],
+                data["values"]["C"],
+                mandatory_nodes=data["mandatory_nodes"],
+                values=data["values"],
+            ),
+            SWCTCFConfig(framework="ortools", engine=backend, time_limit=5),
         )
 
         # 1. Structure Check
@@ -57,13 +62,16 @@ class TestSWCTCFOptimizerContract:
         data["values"]["psi"] = 0.99
 
         routes, profit, cost = run_swc_tcf_optimizer(
-            bins=data["bins"],
-            distance_matrix=data["dist_matrix"],
-            values=data["values"],
-            binsids=data["binsids"],
-            mandatory_nodes=data["mandatory_nodes"],
-            optimizer=backend,
-            time_limit=5,
+            build_subproblem(
+                np.array(data["dist_matrix"]),
+                {i + 1: float(b) for i, b in enumerate(data["bins"])},
+                data["values"]["Q"],
+                data["values"]["R"],
+                data["values"]["C"],
+                mandatory_nodes=data["mandatory_nodes"],
+                values=data["values"],
+            ),
+            SWCTCFConfig(framework="ortools", engine=backend, time_limit=5),
         )
         # Should just return to depot [0] or [0, 0]
         assert set(routes) == {0}
@@ -122,13 +130,19 @@ class TestHGSSolverContract:
         # hgs expects wastes as dict
         wastes_dict = {i: data["bins"][i - 1] for i in range(1, 6)}
 
-        # run_hgs(dist_matrix, wastes, capacity, R, C, values, *args)
         values = data["values"]
         values["engine"] = engine
         values["time_limit"] = 2
 
         routes, profit, cost = run_hgs(
-            np.array(data["dist_matrix"]), wastes_dict, values["Q"], values["R"], values["C"], values
+            build_subproblem(
+                np.array(data["dist_matrix"]),
+                wastes_dict,
+                values["Q"],
+                values["R"],
+                values["C"],
+            ),
+            values,
         )
 
         assert isinstance(routes, list)

@@ -13,14 +13,15 @@ Example:
 """
 
 import math
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Type, Union
 
 import numpy as np
 
 from logic.src.configs.policies import HGSConfig
 from logic.src.enums import GlobalRegistry, PolicyTag
-from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
+from logic.src.policies.routing.base.generic_policy import GenericRoutingPolicy
+from logic.src.policies.routing.base.sub_problem import SubProblem
 
 from .dispatcher import run_hgs
 
@@ -35,7 +36,7 @@ from .dispatcher import run_hgs
     PolicyTag.PARALLELIZABLE,
 )
 @RoutingAlgorithmRegistry.register("hgs")
-class HGSPolicy(BaseRoutingPolicy):
+class HGSPolicy(GenericRoutingPolicy):
     """
     Hybrid Genetic Search (HGS) Policy - State-of-the-Art Evolutionary Routing.
 
@@ -67,6 +68,8 @@ class HGSPolicy(BaseRoutingPolicy):
         >>> policy = HGSPolicy(config)
     """
 
+    _solver = run_hgs
+
     def __init__(self, config: Optional[Union[HGSConfig, Dict[str, Any]]] = None):
         """Initialize HGS policy with optional config.
 
@@ -97,7 +100,7 @@ class HGSPolicy(BaseRoutingPolicy):
         """
         return "hgs"
 
-    def _run_solver(
+    def _make_subproblem(
         self,
         sub_dist_matrix: np.ndarray,
         sub_wastes: Dict[int, float],
@@ -106,75 +109,24 @@ class HGSPolicy(BaseRoutingPolicy):
         cost_unit: float,
         values: Dict[str, Any],
         mandatory_nodes: List[int],
-        x_coords: Optional[np.ndarray] = None,
-        y_coords: Optional[np.ndarray] = None,
-        **kwargs: Any,
-    ) -> Tuple[List[List[int]], float, float]:
+        kwargs: Dict[str, Any],
+    ) -> SubProblem:
+        """Assemble the sub-problem, projecting lat/lng to a local equirectangular plane.
+
+        The projection is required for correct polar sector angles in SWAP*
+        pruning: raw lat/lng cannot be used directly in atan2 — longitude
+        degrees are shorter than latitude degrees by a factor of cos(lat),
+        causing ~22% distortion at 39°N.
         """
-        Execute the Hybrid Genetic Search (HGS) metaheuristic solver logic.
-
-        HGS (specifically HGS-CVRP) is a state-of-the-art genetic algorithm for
-        vehicle routing. It combines:
-        - Advanced Genetic Operators: Ordered Crossover (OX) and large
-          neighborhood movements.
-        - Local Search: Intense refinement of offspring using localized local
-          search (SWAP*, 2-OPT).
-        - Diversity Management: Maintains a population of diverse and high-quality
-          solutions, biased towards individuals that contribute to
-          population diversity.
-        This policy projects coordinates to a local plane to ensure correct polar
-        sector angles during neighborhood pruning.
-
-        Args:
-            sub_dist_matrix (np.ndarray): Symmetric distance matrix for the current
-                sub-problem nodes.
-            sub_wastes (Dict[int, float]): Mapping of local node indices to their
-                current bin inventory levels.
-            capacity (float): Maximum vehicle collection capacity.
-            revenue (float): Revenue obtained per kilogram of waste collected.
-            cost_unit (float): Monetary cost incurred per kilometer traveled.
-            values (Dict[str, Any]): Merged configuration dictionary containing
-                HGS parameters (population_size, nb_elite, nb_granular).
-            mandatory_nodes (List[int]): Local indices of bins that MUST be
-                collected in this period.
-            x_coords (Optional[np.ndarray]): Longitude coordinates for sector pruning.
-            y_coords (Optional[np.ndarray]): Latitude coordinates for sector pruning.
-            kwargs: Additional context, including:
-                - search_context (Optional[SearchContext]): Context for tracking
-                  recursive solver statistics.
-                - multi_day_context (Optional[MultiDayContext]): Context for
-                  inter-day state propagation.
-
-        Returns:
-            Tuple[List[List[int]], float, float]: A 3-tuple containing:
-                - routes: Optimized collection routes (list-of-lists, local indices).
-                - profit: Total calculated net profit (Total Revenue - Total Cost).
-                - cost: Total travel cost calculated by the solver.
-        """
-        # Project lat/lng to a local equirectangular plane centred on the depot (index 0).
-        # This is required for correct polar sector angles in SWAP* pruning.
-        # Raw lat/lng cannot be used directly in atan2 — longitude degrees are shorter
-        # than latitude degrees by a factor of cos(lat), causing ~22% distortion at 39°N.
-        x_coords_proj: Optional[np.ndarray] = None
-        y_coords_proj: Optional[np.ndarray] = None
-
+        problem = super()._make_subproblem(
+            sub_dist_matrix, sub_wastes, capacity, revenue, cost_unit, values, mandatory_nodes, kwargs
+        )
+        x_coords = problem.x_coords
+        y_coords = problem.y_coords
         if x_coords is not None and y_coords is not None:
             depot_lat = float(y_coords[0])
             depot_lng = float(x_coords[0])
             cos_lat = math.cos(math.radians(depot_lat))
-            x_coords_proj = (x_coords - depot_lng) * cos_lat
-            y_coords_proj = y_coords - depot_lat
-
-        cfg = self._effective_config(values)
-        routes, profit, solver_cost = run_hgs(
-            sub_dist_matrix,
-            sub_wastes,
-            capacity,
-            revenue,
-            cost_unit,
-            cfg,
-            mandatory_nodes=mandatory_nodes,
-            x_coords=x_coords_proj,
-            y_coords=y_coords_proj,
-        )
-        return routes, profit, solver_cost
+            problem.x_coords = (x_coords - depot_lng) * cos_lat
+            problem.y_coords = y_coords - depot_lat
+        return problem

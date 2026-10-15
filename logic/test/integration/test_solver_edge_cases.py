@@ -2,7 +2,9 @@
 
 import numpy as np
 import pytest
+from logic.src.configs.policies.swc_tcf import SWCTCFConfig
 from logic.src.policies import run_hgs
+from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.policy_swc_tcf import (
     run_swc_tcf_optimizer,
 )
@@ -57,13 +59,15 @@ class TestSolverEdgeCases:
 
         try:
             routes, _, _ = run_swc_tcf_optimizer(
-                bins=data["bins"],
-                distance_matrix=data["dist_matrix"],
-                values=data["values"],
-                binsids=data["binsids"],
-                mandatory_nodes=[],
-                optimizer=backend,
-                time_limit=2,
+                build_subproblem(
+                    np.array(data["dist_matrix"]),
+                    {},
+                    data["values"]["Q"],
+                    data["values"]["R"],
+                    data["values"]["C"],
+                    values=data["values"],
+                ),
+                SWCTCFConfig(framework="ortools", engine=backend, time_limit=2),
             )
             assert routes == [0] or routes == [0, 0] or len(routes) == 0
         except Exception as e:
@@ -107,7 +111,10 @@ class TestSolverEdgeCases:
         elif backend == "hgs":
             try:
                 wastes_dict = {}
-                routes, _, _ = run_hgs(np.array(data["dist_matrix"]), wastes_dict, 100, 1.0, 1.0, data["values"])
+                routes, _, _ = run_hgs(
+                build_subproblem(np.array(data["dist_matrix"]), wastes_dict, 100, 1.0, 1.0),
+                data["values"],
+            )
                 assert not routes or routes == [0]
             except Exception as e:
                 pytest.fail(f"HGS crashed on N=0: {e}")
@@ -123,13 +130,16 @@ class TestSolverEdgeCases:
 
         try:
             routes, _, _ = run_swc_tcf_optimizer(
-                bins=data["bins"],
-                distance_matrix=data["dist_matrix"],
-                values=data["values"],
-                binsids=data["binsids"],
-                mandatory_nodes=[1],
-                optimizer=backend,
-                time_limit=2,
+                build_subproblem(
+                    np.array(data["dist_matrix"]),
+                    {1: 50.0},
+                    data["values"]["Q"],
+                    data["values"]["R"],
+                    data["values"]["C"],
+                    mandatory_nodes=[1],
+                    values=data["values"],
+                ),
+                SWCTCFConfig(framework="ortools", engine=backend, time_limit=2),
             )
             assert 1 in routes
         except Exception as e:
@@ -166,7 +176,10 @@ class TestSolverEdgeCases:
 
         elif backend == "hgs":
             wastes_dict = {1: 50}
-            routes, _, _ = run_hgs(np.array(data["dist_matrix"]), wastes_dict, 100, 1.0, 1.0, data["values"])
+            routes, _, _ = run_hgs(
+                build_subproblem(np.array(data["dist_matrix"]), wastes_dict, 100, 1.0, 1.0),
+                data["values"],
+            )
             flat = []
             if routes and isinstance(routes[0], list):
                 for r in routes:
@@ -180,19 +193,21 @@ class TestSolverEdgeCases:
     def test_exact_capacity(self, backend, check_license):
         """Test with waste exactly equal to capacity."""
         # 2 nodes, 50+50 = 100 capacity.
-        bins = np.array([50.0, 50.0])
         dist_matrix = [[0.0, 1.0, 1.0], [1.0, 0.0, 1.0], [1.0, 1.0, 0.0]]
         values = {"Q": 100.0, "R": 1, "B": 1, "C": 0.1, "V": 1, "Omega": 0, "delta": 0, "psi": 0}
 
         # Test Gurobi (most sensitive to constraints)
         routes, _, _ = run_swc_tcf_optimizer(
-            bins=bins,
-            distance_matrix=dist_matrix,
-            values={**values, "Q": 1000},
-            binsids=[1, 2],
-            mandatory_nodes=[1, 2],
-            optimizer="gurobi",
-            time_limit=10,
+            build_subproblem(
+                np.array(dist_matrix),
+                {1: 50.0, 2: 50.0},
+                1000,
+                1.0,
+                0.1,
+                mandatory_nodes=[1, 2],
+                values=values,
+            ),
+            SWCTCFConfig(framework="ortools", engine="gurobi", time_limit=10),
         )
         assert 1 in routes and 2 in routes
 

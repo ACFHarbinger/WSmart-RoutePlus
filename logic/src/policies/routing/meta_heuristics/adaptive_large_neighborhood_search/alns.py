@@ -2,13 +2,20 @@ r"""Adaptive Large Neighborhood Search (ALNS) for VRPP.
 
 This module implements ALNS following Ropke & Pisinger (2005) methodology,
 adapted for the Vehicle Routing Problem with Profits (VRPP) as a profit
-maximization problem.
+maximization problem. The solver builds on the shared
+:class:`~logic.src.policies.routing.meta_heuristics.large_neighborhood_search.engine.LNSBase`
+loop skeleton (WP-11 P-31); ALNS-specific semantics (segment-based weights,
+visited-solution tracking, shallow-copy policy, Ropke & Pisinger removal
+bounds, factory-built acceptance criterion) live in the hooks below.
 
 Attributes:
     ALNSSolver: Core ALNS implementation.
 
 Example:
+    >>> from logic.src.policies.routing.base.sub_problem import build_subproblem
     >>> from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns import ALNSSolver
+    >>> problem = build_subproblem(dist_matrix, wastes, 100.0, 1.5, 0.5)
+    >>> solver = ALNSSolver(problem, params)
 Key Implementation Features:
 ============================
 
@@ -78,7 +85,6 @@ References:
 """
 
 import random
-import time
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
 import numpy as np
@@ -108,25 +114,37 @@ from logic.src.policies.helpers.operators import (
     worst_profit_removal,
     worst_removal,
 )
+from logic.src.policies.routing.base.sub_problem import SubProblem
+from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.engine import (
+    MIN_REMOVAL_LOWER_BOUND,
+    LNSBase,
+    coerce_config,
+)
+from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.weight_updates import (
+    RopkePisingerSegments,
+)
 from logic.src.tracking.viz_mixin import PolicyStateRecorder
 
-MIN_REMOVAL_LOWER_BOUND: int = 4
+__all__ = ["ALNSSolver", "MIN_REMOVAL_LOWER_BOUND"]
 
 
-class ALNSSolver:
+class ALNSSolver(LNSBase):
     r"""Custom implementation of Adaptive Large Neighborhood Search for VRPP.
 
     Follows Ropke & Pisinger (2005) with segment-based weight updates,
     clean/noisy operator pairs (paper Configuration 15), and optional
-    extended destroy operator registry.
+    extended destroy operator registry. Built on the shared
+    :class:`LNSBase` loop skeleton.
 
     Attributes:
+        problem: The SubProblem this solver was built for.
         dist_matrix: Distance matrix between nodes.
         wastes: Dictionary mapping node indices to waste amounts.
         capacity: Vehicle capacity.
         R: Revenue per unit collected.
         C: Cost per unit distance.
         params: ALNS parameters.
+        cfg: ALNSConfig backing ``params``.
         mandatory_nodes: List of nodes that must be visited.
         vrpp: Whether to allow expanding insertion pool.
         profit_aware_operators: Whether to use profit-aware operators.
@@ -154,65 +172,50 @@ class ALNSSolver:
         acceptance_criterion: Logic for accepting candidate solutions.
 
     Example:
-        >>> solver = ALNSSolver(dist_matrix, wastes, 100.0, 1.5, 0.5, params)
+        >>> problem = build_subproblem(dist_matrix, wastes, 100.0, 1.5, 0.5)
+        >>> solver = ALNSSolver(problem, params)
         >>> best_routes, best_profit, best_cost = solver.solve()
     """
 
     def __init__(
         self,
-        dist_matrix: np.ndarray,
-        wastes: Dict[int, float],
-        capacity: float,
-        R: float,
-        C: float,
-        params: Optional[Union[ALNSConfig, Dict[str, Any]]] = None,
-        mandatory_nodes: Optional[List[int]] = None,
+        problem: SubProblem,
+        cfg: Optional[Union[ALNSConfig, Dict[str, Any]]] = None,
         recorder: Optional[PolicyStateRecorder] = None,
     ):
         """
         Initializes the ALNS solver.
 
         Args:
-            dist_matrix: Distance matrix between nodes.
-            wastes: Dictionary mapping node indices to waste amounts.
-            capacity: Vehicle capacity.
-            R: Revenue per unit collected.
-            C: Cost per unit distance.
-            params: ALNS configuration dataclass or dictionary.
-            mandatory_nodes: Optional list of nodes that must be visited.
-            recorder: Optional recorder for solver state.
+            problem: The routing sub-problem (distance matrix, wastes,
+                capacity, revenue, cost unit, mandatory nodes).
+            cfg: ALNS configuration dataclass, dictionary, or arbitrary object
+                (filtered leniently to ALNSConfig fields).
+            recorder: Optional recorder for solver state; falls back to
+                ``problem.recorder``.
         """
-        self.dist_matrix = dist_matrix
-        self.wastes = wastes
-        self.capacity = capacity
-        self.R = R
-        self.C = C
+        self.problem = problem
+        self.dist_matrix = problem.dist_matrix
+        self.wastes = problem.wastes
+        self.capacity = problem.capacity
+        self.R = problem.revenue
+        self.C = problem.cost_unit
 
-        if hasattr(params, "__dict__") and not isinstance(params, ALNSConfig):
-            params = vars(params)
-        if isinstance(params, dict):
-            import dataclasses
-
-            valid_keys = {f.name for f in dataclasses.fields(ALNSConfig)}
-            cfg = ALNSConfig(**{k: v for k, v in params.items() if k in valid_keys})
-        elif params is None:
-            cfg = ALNSConfig()
-        else:
-            cfg = params
-
-        self.cfg: ALNSConfig = cfg
-        self.params = cfg
-        self.mandatory_nodes = mandatory_nodes
-        self.vrpp = getattr(cfg, "vrpp", True)
-        self.profit_aware_operators = getattr(cfg, "profit_aware_operators", False)
-        self.extended_operators = getattr(cfg, "extended_operators", False)
-        self.random = random.Random(cfg.seed) if cfg.seed is not None else random.Random()
-        self.np_random = np.random.default_rng(cfg.seed) if cfg.seed is not None else np.random.default_rng()
+        config = coerce_config(cfg, ALNSConfig)
+        self.cfg: ALNSConfig = config
+        self.params = config
+        self.mandatory_nodes = problem.mandatory_nodes
+        self.vrpp = getattr(config, "vrpp", True)
+        self.profit_aware_operators = getattr(config, "profit_aware_operators", False)
+        self.extended_operators = getattr(config, "extended_operators", False)
+        self.random = random.Random(config.seed) if config.seed is not None else random.Random()
+        self.np_random = np.random.default_rng(config.seed) if config.seed is not None else np.random.default_rng()
 
         # Pre-assign no-op to avoid getattr in the hot iteration loop.
-        self._viz_record: Callable = recorder.record if recorder is not None else lambda **k: None
+        effective_recorder = recorder if recorder is not None else problem.recorder
+        self._viz_record: Callable = effective_recorder.record if effective_recorder is not None else lambda **k: None
 
-        self.n_nodes = len(dist_matrix) - 1
+        self.n_nodes = len(self.dist_matrix) - 1
         self.nodes = list(range(1, self.n_nodes + 1))
 
         # ------------------------------------------------------------------
@@ -231,17 +234,18 @@ class ALNSSolver:
         # ------------------------------------------------------------------
         # Segment-based weight update (Ropke & Pisinger 2005, Section 3.4.4)
         # ------------------------------------------------------------------
-        self.segment_size = cfg.segment_size
+        self.segment_size = config.segment_size
         self.destroy_weights = [1.0] * len(self.destroy_ops)
         self.repair_weights = [1.0] * len(self.repair_ops)
-        self.destroy_scores = [0.0] * len(self.destroy_ops)
-        self.repair_scores = [0.0] * len(self.repair_ops)
-        self.destroy_counts = [0] * len(self.destroy_ops)
-        self.repair_counts = [0] * len(self.repair_ops)
-
-        # Weight decay factor: (1 - r) where r is the reaction factor
-        self.weight_decay = 1.0 - cfg.reaction_factor
-        self.weight_learning_rate = cfg.reaction_factor
+        self._weights = RopkePisingerSegments(self.destroy_weights, self.repair_weights, config.reaction_factor)
+        # Alias the strategy accumulators so the historic attribute surface
+        # (destroy_scores/repair_scores/destroy_counts/repair_counts) is kept.
+        self.destroy_scores = self._weights.destroy_scores
+        self.repair_scores = self._weights.repair_scores
+        self.destroy_counts = self._weights.destroy_counts
+        self.repair_counts = self._weights.repair_counts
+        self.weight_decay = self._weights.weight_decay
+        self.weight_learning_rate = self._weights.weight_learning_rate
 
         # Visited solutions tracking (Ropke & Pisinger 2005, Section 3.3)
         self.visited_solutions: Set[Tuple[int, ...]] = set()
@@ -548,6 +552,194 @@ class ALNSSolver:
         return ops, names, noisy_flags
 
     # ------------------------------------------------------------------
+    # LNSBase semantic hooks (ALNS flavour)
+    # ------------------------------------------------------------------
+
+    def _removal_bounds(self, current_n_nodes: int) -> Tuple[int, int]:
+        """Formal bounds per Ropke & Pisinger (2006) Section 4.3.1.
+
+        Args:
+            current_n_nodes: Number of nodes in the current solution.
+
+        Returns:
+            Tuple of (lower_bound, upper_bound) for the removal count.
+        """
+        lower_bound = min(current_n_nodes, MIN_REMOVAL_LOWER_BOUND)
+        upper_bound = min(self.params.max_removal_cap, int(self.params.xi * self.n_nodes))
+        upper_bound = max(lower_bound, upper_bound)
+        return lower_bound, upper_bound
+
+    def _scoring(
+        self,
+        new_profit: float,
+        best_profit: float,
+        current_profit: float,
+        accepted: bool,
+        is_new: bool,
+    ) -> float:
+        """Ropke & Pisinger (2005, Section 3.4) scoring.
+
+        σ₁ — new global best (no "not visited" qualifier)
+        σ₂ — better than current, not visited before, accepted
+        σ₃ — worse than current, not visited before, accepted
+
+        Called before the best-solution bookkeeping, so ``best_profit`` is the
+        pre-update value.
+
+        Args:
+            new_profit: Profit of the candidate solution.
+            best_profit: Best profit found so far (pre-update).
+            current_profit: Profit of the current incumbent.
+            accepted: Whether the candidate was accepted.
+            is_new: Whether the candidate was not visited before.
+
+        Returns:
+            The score earned by this iteration's operators.
+        """
+        if new_profit > best_profit + 1e-6:
+            return self.params.sigma_1
+        if accepted and is_new:
+            return self.params.sigma_2 if new_profit > current_profit + 1e-6 else self.params.sigma_3
+        return 0.0
+
+    def _snapshot_routes(self, routes: List[List[int]]) -> List[List[int]]:
+        """Shallow copy via list comprehension (replaces deepcopy): ~10x faster.
+
+        Args:
+            routes: Routes to copy.
+
+        Returns:
+            The copied routes.
+        """
+        return [r[:] for r in routes]
+
+    def _hash_solution(self, routes: List[List[int]]) -> Tuple[Tuple[int, ...], ...]:
+        """Create a canonical hash of a solution for tracking visited states.
+
+        Args:
+            routes: List of routes to hash.
+
+        Returns:
+            Tuple representation of sorted routes for hashing.
+        """
+        sorted_routes = sorted([tuple(route) for route in routes if route])
+        return tuple(sorted_routes)
+
+    def _track_and_check_new(self, solution_hash: Tuple[Tuple[int, ...], ...]) -> bool:
+        """Check whether the hashed solution was visited before.
+
+        Args:
+            solution_hash: Output of ``_hash_solution``.
+
+        Returns:
+            True when the solution is not in the visited set.
+        """
+        return solution_hash not in self.visited_solutions
+
+    def _track_accepted(self, solution_hash: Tuple[Tuple[int, ...], ...]) -> None:
+        """Record an accepted solution in the visited set.
+
+        Args:
+            solution_hash: Output of ``_hash_solution``.
+        """
+        self.visited_solutions.add(solution_hash)
+
+    def _prepare_search(self, best_routes: List[List[int]], current_profit: float) -> None:
+        """Per-solve prologue: T_start calibration, visited reset, criterion setup.
+
+        Dynamic T_start calibration (Ropke & Pisinger 2006, Section 3.5):
+        non-positive initial profits used to skip calibration and leave T = 0,
+        i.e. pure hill-climbing; the fallback scale=1.0 fixes that.
+
+        Args:
+            best_routes: Best routes after initialization.
+            current_profit: Profit of the initial solution.
+        """
+        if self.params.start_temp == 0.0:
+            # Calibrate from |profit| (fallback 1.0)
+            scale = abs(current_profit) if abs(current_profit) > 1e-9 else 1.0
+            delta = self.params.start_temp_control * scale
+            t_start = delta / np.log(2.0)
+
+            # Inject dynamically calculated temperature into the acceptance criterion
+            if hasattr(self.acceptance_criterion, "set_temperature"):
+                self.acceptance_criterion.set_temperature(t_start)  # type: ignore[union-attr]
+
+        self.visited_solutions.clear()
+        self.visited_solutions.add(self._hash_solution(best_routes))
+
+        if self.acceptance_criterion is not None:
+            self.acceptance_criterion.setup(current_profit)
+
+    def _accept_move(
+        self,
+        current_profit: float,
+        new_profit: float,
+        best_profit: float,
+        iteration: int,
+    ) -> bool:
+        """Acceptance decision via the injected criterion (hill-climb when None).
+
+        Args:
+            current_profit: Profit of the current incumbent.
+            new_profit: Profit of the candidate solution.
+            best_profit: Best profit found so far.
+            iteration: Current iteration index.
+
+        Returns:
+            True if the candidate is accepted.
+        """
+        if self.acceptance_criterion is None:
+            return new_profit > current_profit + 1e-6
+        accept, _ = self.acceptance_criterion.accept(
+            current_obj=current_profit,
+            candidate_obj=new_profit,
+            f_best=best_profit,
+            iteration=iteration,
+            max_iterations=self.params.max_iterations,
+        )
+        return accept
+
+    def _extra_iteration_end(self, **kwargs: Any) -> None:
+        """Segment-end weight update and criterion cooling.
+
+        Args:
+            kwargs: Iteration context (iteration, current_profit, new_profit,
+                best_profit, accepted, ...).
+        """
+        iteration = kwargs["iteration"]
+        if (iteration + 1) % self.segment_size == 0:
+            self._end_segment()
+
+        if self.acceptance_criterion is not None:
+            self.acceptance_criterion.step(
+                current_obj=kwargs["current_profit"],
+                candidate_obj=kwargs["new_profit"],
+                accepted=kwargs["accepted"],
+                f_best=kwargs["best_profit"],
+                iteration=iteration,
+                max_iterations=self.params.max_iterations,
+            )
+
+    def _record_iteration(self, **kwargs: Any) -> None:
+        """Record one telemetry snapshot for the current iteration.
+
+        Args:
+            kwargs: Iteration context (iteration, d_idx, r_idx, best_profit,
+                current_profit, accepted, score).
+        """
+        self._viz_record(
+            iteration=kwargs["iteration"],
+            d_idx=kwargs["d_idx"],
+            r_idx=kwargs["r_idx"],
+            best_profit=kwargs["best_profit"],
+            current_profit=kwargs["current_profit"],
+            acceptance_state=self.acceptance_criterion.get_state() if self.acceptance_criterion else {},
+            accepted=int(kwargs["accepted"]),
+            score=kwargs["score"],
+        )
+
+    # ------------------------------------------------------------------
     # Core solver loop helpers
     # ------------------------------------------------------------------
 
@@ -564,74 +756,6 @@ class ALNSSolver:
         max_dist = self.dist_matrix.max()
         return self.random.uniform(-self.params.noise_factor, self.params.noise_factor) * max_dist
 
-    def _hash_solution(self, routes: List[List[int]]) -> Tuple[Tuple[int, ...], ...]:
-        """Create a canonical hash of a solution for tracking visited states.
-
-        Args:
-            routes: List of routes to hash.
-
-        Returns:
-            Tuple representation of sorted routes for hashing.
-        """
-        sorted_routes = sorted([tuple(route) for route in routes if route])
-        return tuple(sorted_routes)
-
-    def _initialize_solve(
-        self, initial_solution: Optional[List[List[int]]]
-    ) -> Tuple[List[List[int]], List[List[int]], float, float]:
-        """Initialize the solver state with an initial solution.
-
-        Args:
-            initial_solution: Optional starting solution.
-
-        Returns:
-            Tuple containing (current_routes, best_routes, best_profit, best_cost).
-        """
-        current_routes = initial_solution or self.build_initial_solution()
-        best_routes = [r[:] for r in current_routes]
-        best_cost = self.calculate_cost(best_routes)
-        best_rev = sum(self.wastes.get(node_idx, 0) * self.R for route in best_routes for node_idx in route)
-        best_profit = best_rev - best_cost
-        return current_routes, best_routes, best_profit, best_cost
-
-    def _select_and_apply_operators(self, current_routes: List[List[int]]) -> Tuple[List[List[int]], int, int]:
-        """Select and apply one destroy + one repair operator.
-
-        Repair operators are selected via roulette-wheel (Eq. 20). Clean and
-        noisy variants are independent slots — the adaptive mechanism decides
-        which is preferable rather than a fixed coin flip (paper Conf. 15).
-
-        Args:
-            current_routes: The current solution routes.
-
-        Returns:
-            Tuple containing (new_routes, destroy_idx, repair_idx).
-        """
-        d_idx = self.select_operator(self.destroy_weights)
-        r_idx = self.select_operator(self.repair_weights)
-        destroy_op = self.destroy_ops[d_idx]
-        repair_op = self.repair_ops[r_idx]
-
-        current_n_nodes = sum(len(route) for route in current_routes)
-        if current_n_nodes == 0:
-            n_remove = 0
-        else:
-            # Formal bounds per Ropke & Pisinger (2006) Section 4.3.1
-            lower_bound = min(current_n_nodes, MIN_REMOVAL_LOWER_BOUND)
-            upper_bound = min(self.params.max_removal_cap, int(self.params.xi * self.n_nodes))
-            upper_bound = max(lower_bound, upper_bound)
-            n_remove = self.random.randint(lower_bound, upper_bound)
-
-        # Noise value is only computed when a noisy repair slot was selected.
-        # The adaptive weight mechanism controls how often noisy slots are chosen.
-        noise_val = self._get_noise() if self.repair_noisy[r_idx] else 0.0
-
-        new_routes, removed = destroy_op([route[:] for route in current_routes], n_remove)
-        new_routes = repair_op(new_routes, removed, noise_val)
-        return new_routes, d_idx, r_idx
-
-    # Removed _accept_solution in favor of self.acceptance_criterion.accept()
-
     def _update_weights(self, d_idx: int, r_idx: int, score: float) -> None:
         """Update scores and usage counts for operators.
 
@@ -640,10 +764,7 @@ class ALNSSolver:
             r_idx: Index of the repair operator used.
             score: Score to add based on solution quality.
         """
-        self.destroy_scores[d_idx] += score
-        self.repair_scores[r_idx] += score
-        self.destroy_counts[d_idx] += 1
-        self.repair_counts[r_idx] += 1
+        self._weights.update(d_idx, r_idx, score)
 
     def _end_segment(self) -> None:
         """
@@ -656,171 +777,13 @@ class ALNSSolver:
             - π_i is the total score accumulated by operator i
             - θ_i is the number of times operator i was used
         """
-        for i in range(len(self.destroy_weights)):
-            if self.destroy_counts[i] > 0:
-                avg_score = self.destroy_scores[i] / self.destroy_counts[i]
-                self.destroy_weights[i] = (
-                    self.weight_decay * self.destroy_weights[i] + self.weight_learning_rate * avg_score
-                )
-            self.destroy_scores[i] = 0.0
-            self.destroy_counts[i] = 0
-
-        for i in range(len(self.repair_weights)):
-            if self.repair_counts[i] > 0:
-                avg_score = self.repair_scores[i] / self.repair_counts[i]
-                self.repair_weights[i] = (
-                    self.weight_decay * self.repair_weights[i] + self.weight_learning_rate * avg_score
-                )
-            self.repair_scores[i] = 0.0
-            self.repair_counts[i] = 0
+        self._weights.end_segment()
 
     # Removed _calculate_dynamic_start_temp in favor of criterion.setup()
 
     # ------------------------------------------------------------------
-    # Main solve loop
-    # ------------------------------------------------------------------
-
-    def solve(self, initial_solution: Optional[List[List[int]]] = None) -> Tuple[List[List[int]], float, float]:
-        """Solve the VRPP using Adaptive Large Neighborhood Search.
-
-        Args:
-            initial_solution: Optional starting solution. If None, uses greedy.
-
-        Returns:
-            Tuple of (best_routes, best_profit, best_cost).
-        """
-        start_time = time.perf_counter()
-        current_routes, best_routes, best_profit, best_cost = self._initialize_solve(initial_solution)
-        current_profit = best_profit
-
-        # Dynamic T_start calibration (Ropke & Pisinger 2006, Section 3.5)
-        if self.params.start_temp == 0.0:
-            # Calibrate from |profit| (fallback 1.0): non-positive initial profits
-            # used to skip calibration and leave T = 0, i.e. pure hill-climbing.
-            scale = abs(best_profit) if abs(best_profit) > 1e-9 else 1.0
-            delta = self.params.start_temp_control * scale
-            t_start = delta / np.log(2.0)
-
-            # Inject dynamically calculated temperature into the acceptance criterion
-            if hasattr(self.acceptance_criterion, "set_temperature"):
-                self.acceptance_criterion.set_temperature(t_start)  # type: ignore[union-attr]
-
-        self.visited_solutions.clear()
-        self.visited_solutions.add(self._hash_solution(best_routes))  # type: ignore[arg-type]
-
-        if self.acceptance_criterion is not None:
-            self.acceptance_criterion.setup(current_profit)
-
-        for _it in range(self.params.max_iterations):
-            if self.params.time_limit > 0 and time.perf_counter() - start_time > self.params.time_limit:
-                break
-
-            new_routes, d_idx, r_idx = self._select_and_apply_operators(current_routes)
-            new_cost = self.calculate_cost(new_routes)
-            new_rev = sum(self.wastes.get(node_idx, 0) * self.R for route in new_routes for node_idx in route)
-            new_profit = new_rev - new_cost
-
-            new_hash = self._hash_solution(new_routes)
-            is_new_solution = new_hash not in self.visited_solutions
-
-            if self.acceptance_criterion is None:
-                accept = new_profit > current_profit + 1e-6
-            else:
-                accept, _ = self.acceptance_criterion.accept(
-                    current_obj=current_profit,
-                    candidate_obj=new_profit,
-                    f_best=best_profit,
-                    iteration=_it,
-                    max_iterations=self.params.max_iterations,
-                )
-
-            # ------------------------------------------------------------------
-            # Scoring (Ropke & Pisinger 2005, Section 3.4):
-            #   σ₁ — new global best (no "not visited" qualifier)
-            #   σ₂ — better than current, not visited before, accepted
-            #   σ₃ — worse than current, not visited before, accepted
-            # ------------------------------------------------------------------
-            score = 0.0
-            if new_profit > best_profit + 1e-6:
-                best_routes = [r[:] for r in new_routes]
-                best_profit = new_profit
-                best_cost = new_cost
-                score = self.params.sigma_1
-            elif accept and is_new_solution:
-                score = self.params.sigma_2 if new_profit > current_profit + 1e-6 else self.params.sigma_3
-
-            if accept:
-                self.visited_solutions.add(new_hash)  # type: ignore[arg-type]
-                current_routes = new_routes
-                current_profit = new_profit
-
-            self._update_weights(d_idx, r_idx, score)
-            if (_it + 1) % self.segment_size == 0:
-                self._end_segment()
-
-            if self.acceptance_criterion is not None:
-                self.acceptance_criterion.step(
-                    current_obj=current_profit,
-                    candidate_obj=new_profit,
-                    accepted=accept,
-                    f_best=best_profit,
-                    iteration=_it,
-                    max_iterations=self.params.max_iterations,
-                )
-
-            self._viz_record(
-                iteration=_it,
-                d_idx=d_idx,
-                r_idx=r_idx,
-                best_profit=best_profit,
-                current_profit=current_profit,
-                acceptance_state=self.acceptance_criterion.get_state() if self.acceptance_criterion else {},
-                accepted=int(accept),
-                score=score,
-            )
-        return best_routes, best_profit, best_cost
-
-    # ------------------------------------------------------------------
     # Utility methods
     # ------------------------------------------------------------------
-
-    def select_operator(self, weights: List[float]) -> int:
-        """Roulette-wheel operator selection (Eq. 20).
-
-        Args:
-            weights: List of operator weights.
-
-        Returns:
-            Index of the selected operator.
-        """
-        total = sum(weights)
-        r = self.random.uniform(0, total)
-        curr = 0.0
-        for i, w in enumerate(weights):
-            curr += w
-            if curr >= r:
-                return i
-        return len(weights) - 1
-
-    def calculate_cost(self, routes: List[List[int]]) -> float:
-        """Calculates the total routing cost (distance) for the given routes.
-
-        Args:
-            routes: List of routes to evaluate.
-
-        Returns:
-            Total calculated routing cost.
-        """
-        total_dist = 0.0
-        for route in routes:
-            if not route:
-                continue
-            dist = self.dist_matrix[0][route[0]]
-            for i in range(len(route) - 1):
-                dist += self.dist_matrix[route[i]][route[i + 1]]
-            dist += self.dist_matrix[route[-1]][0]
-            total_dist += dist
-        return total_dist * self.C
 
     def build_initial_solution(self) -> List[List[int]]:
         """Build an initial solution using the greedy profit-aware heuristic.

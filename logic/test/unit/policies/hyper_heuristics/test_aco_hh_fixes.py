@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 from logic.src.configs.policies import HyperHeuristicACOConfig
 from logic.src.policies.helpers.operators.solution_initialization.greedy_si import build_greedy_routes
+from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_aco import (
     HyperHeuristicACO,
 )
@@ -28,9 +29,14 @@ def _instance(seed, n, cap, lo, hi, mandatory_all=False):
     return dist, wastes, cap, init, mandatory
 
 
+def _problem(inst):
+    dist, wastes, cap, _init, mandatory = inst
+    return build_subproblem(dist, wastes, cap, 1.0, 1.0, mandatory_nodes=mandatory)
+
+
 def _solve(params, inst):
     dist, wastes, cap, init, mandatory = inst
-    return HyperHeuristicACO(dist, wastes, cap, 1.0, 1.0, params, init, mandatory).solve()
+    return HyperHeuristicACO(_problem(inst), params, init).solve()
 
 
 def test_same_seed_same_plan():
@@ -58,19 +64,19 @@ def test_operator_pool_and_sequence_length_are_honoured():
     inst = _instance(0, 9, 60.0, 5, 40)
     dist, wastes, cap, init, mandatory = inst
     params = HyperHeuristicACOConfig(n_ants=2, max_iterations=1, seed=1, operators=["swap", "relocate"], sequence_length=3)
-    solver = HyperHeuristicACO(dist, wastes, cap, 1.0, 1.0, params, init, mandatory)
+    solver = HyperHeuristicACO(_problem(inst), params, init)
     assert solver.operator_names == ["swap", "relocate"]
     sequence, _end = solver._select_sequence(0)
     assert len(sequence) == 3 and set(sequence) <= {"swap", "relocate"}
 
-    default = HyperHeuristicACO(dist, wastes, cap, 1.0, 1.0, HyperHeuristicACOConfig(seed=1), init, mandatory)
+    default = HyperHeuristicACO(_problem(inst), HyperHeuristicACOConfig(seed=1), init)
     assert default.operator_names == OPERATOR_NAMES and default.sequence_length == len(OPERATOR_NAMES)
 
     with pytest.raises(ValueError):
         HyperHeuristicACO(
-            dist, wastes, cap, 1.0, 1.0,
+            _problem(inst),
             HyperHeuristicACOConfig(operators=["no_such_operator"]),
-            init, mandatory,
+            init,
         )
 
 
@@ -78,8 +84,8 @@ def test_first_hop_deposits_on_real_rows_only():
     """B-kimi-49: the first hop of an improving journey was deposited on the virtual row."""
     inst = _instance(0, 9, 60.0, 5, 40)
     params = HyperHeuristicACOConfig(n_ants=6, max_iterations=8, time_limit=30, seed=42, profit_aware_operators=True)
-    dist, wastes, cap, init, mandatory = inst
-    solver = HyperHeuristicACO(dist, wastes, cap, 1.0, 1.0, params, init, mandatory)
+    _dist, _wastes, _cap, init, _mandatory = inst
+    solver = HyperHeuristicACO(_problem(inst), params, init)
     solver.solve()
     virtual = solver.tau[solver.n_operators]
     assert np.allclose(virtual, virtual[0]), "only evaporation may touch the virtual row"

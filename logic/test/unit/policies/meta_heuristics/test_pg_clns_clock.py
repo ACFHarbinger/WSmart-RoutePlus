@@ -7,6 +7,7 @@ import pytest
 from logic.src.configs.policies.aco_ks import KSparseACOConfig
 from logic.src.configs.policies.alns import ALNSConfig
 from logic.src.configs.policies.pg_clns import PGCLNSConfig
+from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.meta_heuristics.pheromone_guided_cooperative_large_neighborhood_search.pg_clns import (
     PGCLNSSolver,
 )
@@ -26,7 +27,7 @@ def test_pg_clns_never_reads_cpu_time():
         aco=KSparseACOConfig(n_ants=2, max_iterations=2, local_search_iterations=2, time_limit=5.0),
         lns=ALNSConfig(max_iterations=5, time_limit=5.0),
     )
-    solver = PGCLNSSolver(dist, wastes, capacity=100.0, R=1.0, C=1.0, params=params, seed=1)
+    solver = PGCLNSSolver(build_subproblem(dist, wastes, 100.0, 1.0, 1.0), params, seed=1)
     with patch("time.process_time", side_effect=AssertionError("PG-CLNS must use perf_counter")):
         routes, profit, cost = solver.solve()
     assert isinstance(routes, list)

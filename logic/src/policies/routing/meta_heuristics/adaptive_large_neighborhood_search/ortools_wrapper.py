@@ -15,21 +15,26 @@ import numpy as np
 from google.protobuf.duration_pb2 import Duration
 from ortools.constraint_solver import pywrapcp, routing_enums_pb2
 
+from logic.src.policies.routing.base.sub_problem import SubProblem
 
-def run_alns_ortools(dist_matrix, wastes, capacity, R, C, values):
+
+def run_alns_ortools(problem: SubProblem, values):
     """Run ALNS using Google OR-Tools with Guided Local Search.
 
     Args:
-        dist_matrix: Distance matrix.
-        wastes: Bin wastes.
-        capacity: Vehicle capacity.
-        R: Revenue multiplier.
-        C: Cost multiplier.
+        problem: The routing sub-problem (distance matrix, wastes, capacity,
+            revenue, cost unit).
         values: Dictionary of parameters and config.
 
     Returns:
         Tuple[List[List[int]], float, float]: Best routes, profit, and cost.
     """
+    dist_matrix = problem.dist_matrix
+    wastes = problem.wastes
+    capacity = problem.capacity
+    R = problem.revenue
+    C = problem.cost_unit
+
     seed = values.get("seed", 42)
 
     # 1. Identify active nodes (Depot + keys in wastes)

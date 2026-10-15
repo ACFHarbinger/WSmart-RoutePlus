@@ -1,8 +1,14 @@
 """
 Large Neighborhood Search (LNS) policy module.
 
-This module provides the main entry points for the LNS metaheuristic,
-dispatching to specialized implementations based on configuration.
+This module provides the PG-CLNS coaching LNS. The solver builds on the
+shared :class:`~logic.src.policies.routing.meta_heuristics.large_neighborhood_search.engine.LNSBase`
+loop skeleton (WP-11 P-31) while keeping its OWN frozen operator copies from
+this package's ``operators/`` directory (owner ruling 2026-10-07: the PG-CLNS
+operators must not be swapped for the shared library). PG-CLNS-specific
+semantics (EMA weights, deep-copy policy, ``max_removal_pct``/``xi`` removal
+bounds, no visited set, 3/1 scoring, inline-SA acceptance) live in the hooks
+below.
 
 Reference:
     Pisinger, D., & Ropke, S. (2007). A general heuristic for vehicle routing problems.
@@ -12,107 +18,116 @@ Attributes:
     LNSSolver: Implementation of Large Neighborhood Search for VRP variants.
 
 Examples:
-    >>> solver = LNSSolver(dist_matrix, wastes, capacity, R, C, params)
-    >>> routes = solver.solve()
+    >>> from logic.src.policies.routing.base.sub_problem import build_subproblem
+    >>> problem = build_subproblem(dist_matrix, wastes, capacity, R, C)
+    >>> solver = LNSSolver(problem, params, seed=42)
+    >>> routes, profit, cost = solver.solve()
 """
 
 import copy
-import math
 import random
-import time
-from typing import Any, Dict, List, Optional, Tuple, Union
-
-import numpy as np
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from logic.src.configs.policies.alns import ALNSConfig
+from logic.src.policies.routing.base.sub_problem import SubProblem
+from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.acceptance import (
+    LegacySAAcceptance,
+)
+from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.engine import (
+    LNSBase,
+    coerce_config,
+)
+from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.weight_updates import (
+    EmaWeightUpdate,
+)
 from logic.src.tracking.viz_mixin import PolicyVizMixin
 
 from .operators import cluster_removal, greedy_insertion, random_removal, regret_2_insertion, worst_removal
 
 
-class LNSSolver(PolicyVizMixin):
+class LNSSolver(LNSBase, PolicyVizMixin):
     """
     Custom implementation of Large Neighborhood Search for VRP variants.
 
+    PG-CLNS keeps its own frozen operator copies and its pre-P-11 semantics:
+    per-iteration EMA weight update, deep-copy solution snapshots, no visited
+    set, and the legacy inline simulated-annealing acceptance packaged as
+    :class:`LegacySAAcceptance` (rebuilt per ``solve()`` so the temperature
+    trajectory resets).
+
     Attributes:
+        problem: The SubProblem this solver was built for.
         dist_matrix (np.ndarray): NxN distance matrix.
         wastes (Dict[int, float]): Dictionary of node wastes.
         capacity (float): Maximum vehicle capacity.
         R (float): Revenue multiplier.
         C (float): Cost multiplier.
         params (ALNSConfig): Detailed LNS parameters.
+        cfg (ALNSConfig): Configuration backing ``params``.
         mandatory_nodes (Optional[List[int]]): List of mandatory node indices.
         random (random.Random): Random number generator.
         destroy_ops (List[Callable]): List of destroy operators.
         repair_ops (List[Callable]): List of repair operators.
+        repair_noisy (List[bool]): Noisy-slot flags (all False for this engine).
         destroy_weights (List[float]): Weights for destroy operators.
         repair_weights (List[float]): Weights for repair operators.
-        best_routes (List[List[int]]): Best routes found so far.
-        best_cost (float): Cost of the best solution found so far.
-        best_profit (float): Profit of the best solution found so far.
-        current_routes (List[List[int]]): Current routes.
-        current_cost (float): Cost of the current solution.
-        current_profit (float): Profit of the current solution.
+        acceptance_criterion (LegacySAAcceptance): Fresh per-solve SA acceptance.
         n_nodes (int): Number of nodes.
         nodes (List[int]): List of nodes.
     """
 
     def __init__(
         self,
-        dist_matrix: np.ndarray,
-        wastes: Dict[int, float],
-        capacity: float,
-        R: float,
-        C: float,
-        params: Optional[Union[ALNSConfig, Dict[str, Any]]] = None,
-        mandatory_nodes: Optional[List[int]] = None,
+        problem: SubProblem,
+        cfg: Optional[Union[ALNSConfig, Dict[str, Any]]] = None,
         seed: Optional[int] = None,
     ):
         """
         Initialize the LNS solver.
 
         Args:
-            dist_matrix: NxN distance matrix.
-            wastes: Dictionary of node wastes.
-            capacity: Maximum vehicle capacity.
-            R: Revenue multiplier.
-            C: Cost multiplier.
-            params: Detailed ALNSConfig or dictionary of parameters.
-            mandatory_nodes: List of mandatory node indices.
-            seed: Random seed for reproducibility.
+            problem: The routing sub-problem (distance matrix, wastes,
+                capacity, revenue, cost unit, mandatory nodes).
+            cfg: Detailed ALNSConfig or dictionary of parameters (the nested
+                ``lns`` section of PGCLNSConfig).
+            seed: Random seed for reproducibility. Effective seed sequence:
+                explicit kwarg > ``cfg.seed`` > 42.
         """
-        self.dist_matrix = dist_matrix
-        self.wastes = wastes
-        self.capacity = capacity
-        self.R = R
-        self.C = C
+        self.problem = problem
+        self.dist_matrix = problem.dist_matrix
+        self.wastes = problem.wastes
+        self.capacity = problem.capacity
+        self.R = problem.revenue
+        self.C = problem.cost_unit
 
-        if isinstance(params, dict):
-            import dataclasses
+        config = coerce_config(cfg, ALNSConfig)
+        self.cfg: ALNSConfig = config
+        self.params = config
+        self.mandatory_nodes = problem.mandatory_nodes
 
-            valid_keys = {f.name for f in dataclasses.fields(ALNSConfig)}
-            cfg = ALNSConfig(**{k: v for k, v in params.items() if k in valid_keys})
-        elif params is None:
-            cfg = ALNSConfig()
+        if seed is not None:
+            actual_seed = seed
+        elif config.seed is not None:
+            actual_seed = config.seed
         else:
-            cfg = params
+            actual_seed = 42
+        self.random = random.Random(actual_seed)
 
-        self.cfg: ALNSConfig = cfg
-        self.params = cfg
-        self.mandatory_nodes = mandatory_nodes
-        self.random = random.Random(seed) if seed is not None else random.Random()
-
-        self.n_nodes = len(dist_matrix) - 1
+        self.n_nodes = len(self.dist_matrix) - 1
         self.nodes = list(range(1, self.n_nodes + 1))
 
-        # Operator registry
-        self.destroy_ops = [
+        # ------------------------------------------------------------------
+        # Operator registry — PG-CLNS keeps its OWN frozen operator copies
+        # (owner ruling 2026-10-07). The 2-arg operators get swallow-noise
+        # wrappers so they plug into the shared 3-arg repair slot shape.
+        # ------------------------------------------------------------------
+        self.destroy_ops: List[Callable] = [
             lambda r, n: random_removal(r, n, rng=self.random),
             lambda r, n: worst_removal(r, n, self.dist_matrix),
             lambda r, n: cluster_removal(r, n, self.dist_matrix, self.nodes, rng=self.random),
         ]
-        self.repair_ops = [
-            lambda r, n: greedy_insertion(
+        self.repair_ops: List[Callable] = [
+            lambda r, n, _noise=0.0: greedy_insertion(
                 r,
                 n,
                 self.dist_matrix,
@@ -122,7 +137,7 @@ class LNSSolver(PolicyVizMixin):
                 mandatory_nodes=self.mandatory_nodes,
                 cost_unit=self.C,
             ),
-            lambda r, n: regret_2_insertion(
+            lambda r, n, _noise=0.0: regret_2_insertion(
                 r,
                 n,
                 self.dist_matrix,
@@ -133,196 +148,139 @@ class LNSSolver(PolicyVizMixin):
                 cost_unit=self.C,
             ),
         ]
+        self.repair_noisy = [False] * len(self.repair_ops)
 
         self.destroy_weights = [1.0] * len(self.destroy_ops)
         self.repair_weights = [1.0] * len(self.repair_ops)
+        self._weights = EmaWeightUpdate(self.destroy_weights, self.repair_weights)
 
-    def _initialize_solve(
-        self, initial_solution: Optional[List[List[int]]]
-    ) -> Tuple[List[List[int]], List[List[int]], float, float]:
-        """Initialize the solution and metrics for the solve process.
+    # ------------------------------------------------------------------
+    # LNSBase semantic hooks (PG-CLNS flavour)
+    # ------------------------------------------------------------------
 
-        Args:
-            initial_solution: Optional starting solution. If None, a constructive heuristic is used.
-
-        Returns:
-            Tuple[List[List[int]], List[List[int]], float, float]: Current routes, best routes, best profit, and best cost.
-        """
-        current_routes = initial_solution or self.build_initial_solution()
-        best_routes = copy.deepcopy(current_routes)
-
-        # Calculate initial metrics
-        best_cost = self.calculate_cost(best_routes)
-        best_rev = sum(self.wastes.get(node_idx, 0) * self.R for route in best_routes for node_idx in route)
-        best_profit = best_rev - best_cost
-
-        return current_routes, best_routes, best_profit, best_cost
-
-    def _select_and_apply_operators(self, current_routes: List[List[int]]) -> Tuple[List[List[int]], int, int]:
-        """Select destroy/repair operators and generate a new solution.
+    def _removal_bounds(self, current_n_nodes: int) -> Tuple[int, int]:
+        """PG-CLNS removal bounds: ``max_removal_pct`` (falling back to ``xi``).
 
         Args:
-            current_routes: Current routes.
+            current_n_nodes: Number of nodes in the current solution.
 
         Returns:
-            Tuple[List[List[int]], int, int]: New routes, destroy operator index, repair operator index.
+            Tuple of (lower_bound, upper_bound) for the removal count.
         """
-        d_idx = self.select_operator(self.destroy_weights)
-        r_idx = self.select_operator(self.repair_weights)
+        lower_bound = min(current_n_nodes, 2)
+        max_pct = getattr(self.params, "max_removal_pct", getattr(self.params, "xi", 0.4))
+        max_pct_remove = int(current_n_nodes * max_pct)
+        upper_bound = max(lower_bound + 1, max_pct_remove)
+        upper_bound = min(upper_bound, current_n_nodes)
+        return lower_bound, upper_bound
 
-        destroy_op = self.destroy_ops[d_idx]
-        repair_op = self.repair_ops[r_idx]
+    def _scoring(
+        self,
+        new_profit: float,
+        best_profit: float,
+        current_profit: float,
+        accepted: bool,
+        is_new: bool,
+    ) -> float:
+        """PG-CLNS scoring: 3 on accepted new best, 1 on any other acceptance.
 
-        current_n_nodes = sum(len(route) for route in current_routes)
-
-        if current_n_nodes == 0:
-            n_remove = 0
-        else:
-            lower_bound = min(current_n_nodes, 2)
-            max_pct = getattr(self.params, "max_removal_pct", getattr(self.params, "xi", 0.4))
-            max_pct_remove = int(current_n_nodes * max_pct)
-            upper_bound = max(lower_bound + 1, max_pct_remove)
-            upper_bound = min(upper_bound, current_n_nodes)
-
-            n_remove = self.random.randint(lower_bound, upper_bound)
-        partial_routes, removed = destroy_op(copy.deepcopy(current_routes), n_remove)
-        new_routes = repair_op(partial_routes, removed)
-
-        return new_routes, d_idx, r_idx
-
-    def _accept_solution(self, current_profit: float, new_profit: float, T: float) -> bool:
-        """Determine whether to accept the new solution based on SA criteria.
+        (Improving candidates are always accepted by the SA rule, so a new best
+        can only occur on an accepted move — matching the legacy inline loop.)
 
         Args:
-            current_profit: Profit of the current solution.
-            new_profit: Profit of the new solution.
-            T: Temperature parameter.
+            new_profit: Profit of the candidate solution.
+            best_profit: Best profit found so far (pre-update).
+            current_profit: Profit of the current incumbent.
+            accepted: Whether the candidate was accepted.
+            is_new: Unused (PG-CLNS does not track visited solutions).
 
         Returns:
-            True if the new solution is accepted, False otherwise.
+            The score earned by this iteration's operators.
         """
-        delta = current_profit - new_profit
-        if delta < -1e-6:
-            return True
-        else:
-            prob = math.exp(-delta / T) if T > 0 else 0
-            return self.random.random() < prob
+        if not accepted:
+            return 0
+        if new_profit > best_profit + 1e-6:
+            return 3
+        return 1
 
-    def _update_weights(self, d_idx: int, r_idx: int, score: float) -> None:
-        """Update the weights of the used operators.
+    def _snapshot_routes(self, routes: List[List[int]]) -> List[List[int]]:
+        """Deep-copy snapshot (the pre-P-31 PG-CLNS copy policy).
 
         Args:
-            d_idx: Index of the destroy operator used.
-            r_idx: Index of the repair operator used.
-            score: Score of the repair operator (profit improvement).
+            routes: Routes to copy.
 
         Returns:
-            None
+            The copied routes.
         """
-        lambda_decay = 0.8
-        self.destroy_weights[d_idx] = lambda_decay * self.destroy_weights[d_idx] + (1 - lambda_decay) * max(0.1, score)
-        self.repair_weights[r_idx] = lambda_decay * self.repair_weights[r_idx] + (1 - lambda_decay) * max(0.1, score)
+        return copy.deepcopy(routes)
 
-    def solve(self, initial_solution: Optional[List[List[int]]] = None) -> Tuple[List[List[int]], float, float]:
-        """
-        Run the LNS algorithm.
+    def _prepare_search(self, best_routes: List[List[int]], current_profit: float) -> None:
+        """Build a fresh legacy-SA acceptance per solve (temperature resets).
 
         Args:
-            initial_solution: Optional starting solution. If None, a constructive heuristic is used.
-
-        Returns:
-            Tuple[List[List[int]], float, float]: Best routes, total profit, and total cost.
+            best_routes: Best routes after initialization (unused).
+            current_profit: Profit of the initial solution (unused).
         """
-        (
-            current_routes,
-            best_routes,
-            best_profit,
-            best_cost,
-        ) = self._initialize_solve(initial_solution)
-        current_profit = best_profit
+        self.acceptance_criterion = LegacySAAcceptance(
+            start_temp=self.params.start_temp,
+            cooling_rate=self.params.cooling_rate,
+            rng=self.random,
+        )
 
-        T = self.params.start_temp
-        start_time = time.perf_counter()
-        for _it in range(self.params.max_iterations):
-            if self.params.time_limit > 0 and time.perf_counter() - start_time > self.params.time_limit:
-                break
-
-            new_routes, d_idx, r_idx = self._select_and_apply_operators(current_routes)
-
-            # Calculate new metrics
-            new_cost = self.calculate_cost(new_routes)
-            new_rev = sum(self.wastes.get(node_idx, 0) * self.R for route in new_routes for node_idx in route)
-            new_profit = new_rev - new_cost
-
-            accept = self._accept_solution(current_profit, new_profit, T)
-            score = 0
-
-            if accept:
-                current_routes = new_routes
-                current_profit = new_profit
-                if new_profit > best_profit + 1e-6:
-                    best_routes = copy.deepcopy(new_routes)
-                    best_profit = new_profit
-                    best_cost = new_cost
-                    score = 3
-                else:
-                    score = 1
-
-            self._update_weights(d_idx, r_idx, score)
-            T *= self.params.cooling_rate
-
-            self._viz_record(
-                iteration=_it,
-                d_idx=d_idx,
-                r_idx=r_idx,
-                best_profit=best_profit,
-                current_profit=current_profit,
-                temperature=T,
-                accepted=int(accept),
-                score=score,
-            )
-
-        return best_routes, best_profit, best_cost
-
-    def select_operator(self, weights: List[float]) -> int:
-        """
-        Select an operator index based on their weights using roulette wheel selection.
+    def _accept_move(
+        self,
+        current_profit: float,
+        new_profit: float,
+        best_profit: float,
+        iteration: int,
+    ) -> bool:
+        """SA acceptance decision (draws from the solver's ``random`` stream).
 
         Args:
-            weights: List of operator weights.
+            current_profit: Profit of the current incumbent.
+            new_profit: Profit of the candidate solution.
+            best_profit: Best profit found so far (unused).
+            iteration: Current iteration index (unused).
 
         Returns:
-            int: Index of the selected operator.
+            True if the candidate is accepted.
         """
-        total = sum(weights)
-        r = self.random.uniform(0, total)
-        curr = 0.0
-        for i, w in enumerate(weights):
-            curr += w
-            if curr >= r:
-                return i
-        return len(weights) - 1
+        accepted, _ = self.acceptance_criterion.accept(current_obj=current_profit, candidate_obj=new_profit)
+        return accepted
 
-    def calculate_cost(self, routes: List[List[int]]) -> float:
-        """
-        Calculate the total routing cost for a set of routes.
+    def _extra_iteration_end(self, **kwargs: Any) -> None:
+        """Cool the legacy-SA temperature (``T *= cooling_rate``) once per iteration.
 
         Args:
-            routes: List of routes.
-
-        Returns:
-            float: Total distance * cost multiplier.
+            kwargs: Iteration context (current_profit, new_profit, accepted, ...).
         """
-        total_dist = 0
-        for route in routes:
-            if not route:
-                continue
-            dist = self.dist_matrix[0][route[0]]
-            for i in range(len(route) - 1):
-                dist += self.dist_matrix[route[i]][route[i + 1]]
-            dist += self.dist_matrix[route[-1]][0]
-            total_dist += dist
-        return total_dist * self.C
+        self.acceptance_criterion.step(
+            current_obj=kwargs["current_profit"],
+            candidate_obj=kwargs["new_profit"],
+            accepted=kwargs["accepted"],
+        )
+
+    def _record_iteration(self, **kwargs: Any) -> None:
+        """Record one telemetry snapshot for the current iteration.
+
+        Args:
+            kwargs: Iteration context (iteration, d_idx, r_idx, best_profit,
+                current_profit, accepted, score).
+        """
+        self._viz_record(
+            iteration=kwargs["iteration"],
+            d_idx=kwargs["d_idx"],
+            r_idx=kwargs["r_idx"],
+            best_profit=kwargs["best_profit"],
+            current_profit=kwargs["current_profit"],
+            temperature=self.acceptance_criterion.T,
+            accepted=int(kwargs["accepted"]),
+            score=kwargs["score"],
+        )
+
+    # ------------------------------------------------------------------
+    # Constructive heuristic (PG-CLNS keeps its own copy)
+    # ------------------------------------------------------------------
 
     def build_initial_solution(self) -> List[List[int]]:
         """

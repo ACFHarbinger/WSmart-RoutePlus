@@ -44,6 +44,7 @@ BANNED_SYMBOLS = frozenset(
         "LNSParams",
         "PSOMAParams",
         "SANSParams",
+        "MSBPCSPParams",
     }
 )
 

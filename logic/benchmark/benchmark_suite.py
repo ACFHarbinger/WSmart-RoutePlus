@@ -4,9 +4,11 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from logic.src.configs.policies.swc_tcf import SWCTCFConfig
 from logic.src.envs.tasks import PTP
 from logic.src.models import AttentionModel
 from logic.src.models.subnets.factories import AttentionComponentFactory
+from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.policy_swc_tcf import (
     run_swc_tcf_optimizer,
 )
@@ -73,21 +75,22 @@ def benchmark_solvers(seed=42):
     dist_matrix = np_rng.random((n_bins + 1, n_bins + 1)).tolist()
     bins = np_rng.random(n_bins) * 100
     values = {"Q": 100.0, "R": 1.0, "B": 1.0, "C": 0.1, "V": 1.0, "Omega": 0.1, "delta": 0.0, "psi": 0.8}
-    binsids = list(range(n_bins + 1))
     mandatory_nodes = [5, 10, 15]
 
     for backend in ["gurobi", "hexaly"]:
         start = time.time()
         try:
             run_swc_tcf_optimizer(
-                bins=bins,
-                distance_matrix=dist_matrix,
-                values=values,
-                binsids=binsids,
-                mandatory_nodes=mandatory_nodes,
-                optimizer=backend,
-                time_limit=10,
-                seed=seed,
+                build_subproblem(
+                    np.array(dist_matrix),
+                    {i + 1: float(b) for i, b in enumerate(bins)},
+                    100.0,
+                    1.0,
+                    0.1,
+                    mandatory_nodes=mandatory_nodes,
+                    values=values,
+                ),
+                SWCTCFConfig(framework="ortools", engine=backend, time_limit=10, seed=seed),
             )
             end = time.time()
             print(f"{backend:8s} | Solve Time: {end - start:7.4f} s")

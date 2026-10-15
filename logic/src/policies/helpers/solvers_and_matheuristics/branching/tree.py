@@ -31,6 +31,7 @@ from logic.src.policies.helpers.solvers_and_matheuristics.common.node import Bra
 
 if TYPE_CHECKING:
     from logic.src.configs.policies.bpc import BPCConfig
+    from logic.src.configs.policies.ms_bpc_sp import MSBPCSPConfig
     from logic.src.policies.helpers.solvers_and_matheuristics.common.route import Route
     from logic.src.policies.helpers.solvers_and_matheuristics.vrpp_model import VRPPModel
 
@@ -79,7 +80,7 @@ class BranchAndBoundTree:
     def __init__(
         self,
         v_model: Optional[VRPPModel] = None,
-        params: Optional[BPCConfig] = None,
+        params: Optional[Union[BPCConfig, MSBPCSPConfig]] = None,
         # Legacy positional arguments kept for backward compatibility only.
         # If params is supplied these are ignored; a DeprecationWarning is emitted
         # when they differ from their defaults to surface accidental misuse.
@@ -92,7 +93,9 @@ class BranchAndBoundTree:
 
         Args:
             v_model: The underlying VRPP or Master problem model.
-            params: Standardized B&B parameters.
+            params: Standardized B&B parameters (BPCConfig or MSBPCSPConfig;
+                only ``max_bb_nodes``, ``branching_strategy`` and
+                ``search_strategy`` are read).
             max_nodes: Maximum number of nodes to explore.
             strategy: Branching strategy ('divergence_spatial', 'edge', 'ryan_foster').
             search_strategy: Search strategy ('best_first', 'depth_first').
