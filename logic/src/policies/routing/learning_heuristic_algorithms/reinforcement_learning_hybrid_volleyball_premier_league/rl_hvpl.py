@@ -44,7 +44,7 @@ from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_h
     HyperHeuristicACO,
 )
 
-from .params import RLHVPLParams
+from logic.src.configs.policies.rl_hvpl import RLHVPLConfig
 
 
 class RLHVPLSolver:
@@ -64,7 +64,7 @@ class RLHVPLSolver:
         capacity: Vehicle capacity constraint.
         R: Revenue per unit waste collected.
         C: Cost per unit distance traveled.
-        params: RLHVPLParams configuration.
+        params: RLHVPLConfig configuration.
         mandatory_nodes: Nodes that must be visited (if any).
         aco_solver: Enhanced ACO with Q-Learning.
         pheromone: Pheromone matrix for ACO.
@@ -79,7 +79,7 @@ class RLHVPLSolver:
         capacity: float,
         R: float,
         C: float,
-        params: RLHVPLParams,
+        params: RLHVPLConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """
@@ -91,7 +91,7 @@ class RLHVPLSolver:
             capacity: Vehicle capacity constraint.
             R: Revenue per unit waste collected.
             C: Cost per unit distance traveled.
-            params: RLHVPLParams configuration.
+            params: RLHVPLConfig configuration.
             mandatory_nodes: Nodes that must be visited (if any).
         """
         self.dist_matrix = dist_matrix

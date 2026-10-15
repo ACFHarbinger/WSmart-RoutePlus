@@ -24,7 +24,7 @@ from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolic
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
 from .bc import BranchAndCutSolver
-from .params import BCParams
+from logic.src.configs.policies.bc import BCConfig
 
 
 @GlobalRegistry.register(
@@ -142,7 +142,7 @@ class BranchAndCutPolicy(BaseRoutingPolicy):
         )
 
         # Create solver with standardized configuration parameters
-        params = BCParams.from_config(values)
+        params = self._effective_config(values)
         if "profit_aware_operators" in kwargs:
             params.profit_aware_operators = kwargs["profit_aware_operators"]
         if "vrpp" in kwargs:

@@ -20,6 +20,7 @@ Example:
     >>> config.route_improvement
     []
 """
+from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, List, Optional
@@ -54,3 +55,4 @@ class SLCConfig:
     vrpp: bool = True
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)
+    profit_aware_operators: bool = False

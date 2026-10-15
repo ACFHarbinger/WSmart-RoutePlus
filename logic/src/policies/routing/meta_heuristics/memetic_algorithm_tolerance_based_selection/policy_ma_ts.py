@@ -16,7 +16,7 @@ from logic.src.configs.policies.ma_ts import MemeticAlgorithmToleranceBasedSelec
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import MemeticAlgorithmToleranceBasedSelectionParams
+from logic.src.configs.policies.ma_ts import MemeticAlgorithmToleranceBasedSelectionConfig
 from .solver import MemeticAlgorithmToleranceBasedSelectionSolver
 
 
@@ -110,7 +110,7 @@ class MemeticAlgorithmToleranceBasedSelectionPolicy(BaseRoutingPolicy):
                 - profit: Total calculated net profit (Total Revenue - Total Cost).
                 - cost: Total travel cost calculated by the solver.
         """
-        params = MemeticAlgorithmToleranceBasedSelectionParams(
+        params = MemeticAlgorithmToleranceBasedSelectionConfig(
             population_size=values.get("population_size", 10),
             max_iterations=values.get("max_iterations", 100),
             tolerance_pct=values.get("tolerance_pct", 0.05),

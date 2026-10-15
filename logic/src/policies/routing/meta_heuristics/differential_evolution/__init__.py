@@ -5,7 +5,7 @@ providing a robust population-based search strategy.
 
 Attributes:
     DESolver: Core solver class for Differential Evolution.
-    DEParams: Parameter configuration for DE.
+    DEConfig: Parameter configuration for DE.
     DEPolicy: Policy adapter for DE (imported in policy_de.py).
 
 Example:
@@ -14,7 +14,7 @@ Example:
     >>> routes, profit, cost = solver.solve()
 """
 
-from .params import DEParams
+from logic.src.configs.policies.de import DEConfig
 from .solver import DESolver
 
-__all__ = ["DEParams", "DESolver"]
+__all__ = ["DEConfig", "DESolver"]

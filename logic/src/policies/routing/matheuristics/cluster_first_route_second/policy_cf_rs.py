@@ -23,7 +23,7 @@ from logic.src.interfaces.context.search_context import SearchContext
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import CFRSParams
+from logic.src.configs.policies.cf_rs import CFRSConfig
 from .solver import run_cf_rs
 
 
@@ -141,7 +141,7 @@ class ClusterFirstRouteSecondPolicy(BaseRoutingPolicy):
                 - Optional[MultiDayContext]: Updated multi-period context.
         """
         # 1. Initialize type-safe Params
-        params = CFRSParams.from_config(self._config or kwargs.get("config", {}).get("cf_rs", {}))
+        params = CFRSConfig.from_config(self._config or kwargs.get("config", {}).get("cf_rs", {}))
 
         # 2. Extract state parameters
         distance_matrix = kwargs["distance_matrix"]

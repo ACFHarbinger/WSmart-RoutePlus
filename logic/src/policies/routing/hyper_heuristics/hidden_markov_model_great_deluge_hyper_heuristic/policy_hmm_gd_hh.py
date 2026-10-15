@@ -24,9 +24,7 @@ from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.policies.helpers.operators.solution_initialization.greedy_si import build_greedy_routes
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-from logic.src.policies.routing.hyper_heuristics.hidden_markov_model_great_deluge_hyper_heuristic.params import (
-    HMMGDHHParams,
-)
+from logic.src.configs.policies.hmm_gd_hh import HMMGDHHConfig
 from logic.src.policies.routing.hyper_heuristics.hidden_markov_model_great_deluge_hyper_heuristic.solver import (
     HMMGDHHSolver,
 )
@@ -128,7 +126,7 @@ class HMMGDHHPolicy(BaseRoutingPolicy):
                 - profit: Total calculated net profit (Total Revenue - Total Cost).
                 - cost: Total travel cost calculated by the solver.
         """
-        params = HMMGDHHParams(
+        params = HMMGDHHConfig(
             max_iterations=int(values.get("max_iterations", 500)),
             flood_margin=float(values.get("flood_margin", 0.05)),
             rain_speed=float(values.get("rain_speed", 0.001)),

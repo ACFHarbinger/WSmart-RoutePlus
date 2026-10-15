@@ -21,7 +21,7 @@ from logic.src.configs.policies.qde import QDEConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import QDEParams
+from logic.src.configs.policies.qde import QDEConfig
 from .solver import QDESolver
 
 
@@ -111,7 +111,7 @@ class QDEPolicy(BaseRoutingPolicy):
                 - profit: Total calculated net profit (Total Revenue - Total Cost).
                 - cost: Total travel cost calculated by the solver.
         """
-        params = QDEParams(
+        params = QDEConfig(
             pop_size=int(values.get("pop_size", 20)),
             F=float(values.get("F", 0.5)),
             CR=float(values.get("CR", 0.7)),

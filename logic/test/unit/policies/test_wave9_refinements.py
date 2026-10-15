@@ -5,11 +5,11 @@ Verification tests for Wave 9 refinements (GA, CFRS, HULK).
 import numpy as np
 import pandas as pd
 import pytest
-from logic.src.policies.routing.hyper_heuristics.hyper_heuristic_us_lk.hulk import HULKParams, HULKSolver
+from logic.src.policies.routing.hyper_heuristics.hyper_heuristic_us_lk.hulk import HULKConfig, HULKSolver
 from logic.src.policies.routing.matheuristics.cluster_first_route_second.solver import (
     fisher_jaikumar_clustering,
 )
-from logic.src.policies.routing.meta_heuristics.genetic_algorithm.solver import GAParams, GASolver
+from logic.src.policies.routing.meta_heuristics.genetic_algorithm.solver import GAConfig, GASolver
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
@@ -35,7 +35,7 @@ def mock_vrpp_data():
 
 def test_ga_local_search_integration(mock_vrpp_data):
     dist, wastes, cap, R, C = mock_vrpp_data
-    params = GAParams(max_generations=2, pop_size=5, seed=42)
+    params = GAConfig(max_generations=2, pop_size=5, seed=42)
     solver = GASolver(dist, wastes, cap, R, C, params)
 
     routes, profit, cost = solver.solve()
@@ -62,7 +62,7 @@ def test_cfrs_seed_selection():
 
 def test_hulk_reward_logic(mock_vrpp_data):
     dist, wastes, cap, R, C = mock_vrpp_data
-    params = HULKParams(max_iterations=5)
+    params = HULKConfig(max_iterations=5)
     solver = HULKSolver(dist, wastes, cap, R, C, params)
 
     # Check that reward parameters exist

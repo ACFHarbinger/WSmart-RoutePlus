@@ -22,7 +22,7 @@ from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolic
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
 from .hulk import HULKSolver
-from .params import HULKParams
+from logic.src.configs.policies.hulk import HULKConfig
 
 
 @GlobalRegistry.register(
@@ -116,7 +116,7 @@ class HULKPolicy(BaseRoutingPolicy):
                 - profit: Total calculated net profit (Total Revenue - Total Cost).
                 - cost: Total travel cost calculated by the solver.
         """
-        params = HULKParams(
+        params = HULKConfig(
             seed=values.get("seed", 42),
             max_iterations=int(values.get("max_iterations", 1000)),
             time_limit=float(values.get("time_limit", 300.0)),

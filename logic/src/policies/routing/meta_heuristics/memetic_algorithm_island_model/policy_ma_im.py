@@ -21,7 +21,7 @@ from logic.src.configs.policies.ma_im import MemeticAlgorithmIslandModelConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import MemeticAlgorithmIslandModelParams
+from logic.src.configs.policies.ma_im import MemeticAlgorithmIslandModelConfig
 from .solver import MemeticAlgorithmIslandModelSolver
 
 
@@ -32,7 +32,7 @@ class MemeticAlgorithmIslandModelPolicy(BaseRoutingPolicy):
 
     Attributes:
         solver (MemeticAlgorithmIslandModelSolver): Internal solver instance.
-        params (MemeticAlgorithmIslandModelParams): Algorithm parameters.
+        params (MemeticAlgorithmIslandModelConfig): Algorithm parameters.
     """
 
     def __init__(self, config: Optional[Union[MemeticAlgorithmIslandModelConfig, Dict[str, Any]]] = None):
@@ -114,7 +114,7 @@ class MemeticAlgorithmIslandModelPolicy(BaseRoutingPolicy):
                 - profit: Total calculated net profit (Total Revenue - Total Cost).
                 - cost: Total travel cost calculated by the solver.
         """
-        params = MemeticAlgorithmIslandModelParams(
+        params = MemeticAlgorithmIslandModelConfig(
             n_islands=values.get("n_islands", 5),
             island_size=values.get("island_size", 4),
             max_generations=values.get("max_generations", 50),

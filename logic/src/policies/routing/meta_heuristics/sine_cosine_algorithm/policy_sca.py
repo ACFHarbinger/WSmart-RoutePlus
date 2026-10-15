@@ -23,7 +23,7 @@ import numpy as np
 from logic.src.configs.policies.sca import SCAConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-from logic.src.policies.routing.meta_heuristics.sine_cosine_algorithm.params import SCAParams
+from logic.src.configs.policies.sca import SCAConfig
 from logic.src.policies.routing.meta_heuristics.sine_cosine_algorithm.solver import SCASolver
 
 
@@ -36,7 +36,7 @@ class SCAPolicy(BaseRoutingPolicy):
 
     Attributes:
         solver (SCASolver): Internal solver instance.
-        params (SCAParams): Algorithm parameters.
+        params (SCAConfig): Algorithm parameters.
     """
 
     def __init__(self, config: Optional[Union[SCAConfig, Dict[str, Any]]] = None):
@@ -111,7 +111,7 @@ class SCAPolicy(BaseRoutingPolicy):
                 - profit: Total calculated net profit (Total Revenue - Total Cost).
                 - cost: Total travel cost calculated by the solver.
         """
-        params = SCAParams(
+        params = SCAConfig(
             pop_size=int(values.get("pop_size", 20)),
             a_max=float(values.get("a_max", 2.0)),
             max_iterations=int(values.get("max_iterations", 200)),

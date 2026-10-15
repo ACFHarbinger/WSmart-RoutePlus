@@ -21,7 +21,7 @@ from logic.src.configs.policies.rts import RTSConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import RTSParams
+from logic.src.configs.policies.rts import RTSConfig
 from .solver import RTSSolver
 
 
@@ -31,7 +31,7 @@ class RTSPolicy(BaseRoutingPolicy):
 
     Attributes:
         solver (RTSSolver): Internal solver instance.
-        params (RTSParams): Algorithm parameters.
+        params (RTSConfig): Algorithm parameters.
     """
 
     def __init__(self, config: Optional[Union[RTSConfig, Dict[str, Any]]] = None):
@@ -109,7 +109,7 @@ class RTSPolicy(BaseRoutingPolicy):
                 - profit: Total calculated net profit (Total Revenue - Total Cost).
                 - cost: Total travel cost calculated by the solver.
         """
-        params = RTSParams(
+        params = RTSConfig(
             initial_tenure=int(values.get("initial_tenure", 7)),
             min_tenure=int(values.get("min_tenure", 3)),
             max_tenure=int(values.get("max_tenure", 20)),

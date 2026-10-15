@@ -1,3 +1,12 @@
+"""LnsMipConfig: configuration dataclass for the ``lns_mip`` policy.
+
+Moved from the policy's ``params.py`` by the WP-06 scripted migration(Q-8b): the config dataclass is the single source of truth (P-10).
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
 """
 Parameters for Large Neighborhood Search Mixed Integer Programming.
 
@@ -5,16 +14,14 @@ Attributes:
     LNSMIPParams: Dataclass holding LNS-MIP solver hyperparameters.
 
 Example:
-    >>> from logic.src.policies.routing.matheuristics.large_neighborhood_search_mixed_integer_programming.params import LNSMIPParams
+    >>> from logic.src.policies.routing.matheuristics.large_neighborhood_search_mixed_integer_programming.configs.policies.lns_mip import LnsMipConfig
     >>> params = LNSMIPParams(k_destroy=10, max_iterations=200)
 """
 
-from dataclasses import MISSING, dataclass, fields
-from typing import Any
 
 
 @dataclass
-class LNSMIPParams:
+class LnsMipConfig:
     """
     Parameters for the LNSMIP algorithm.
 
@@ -39,23 +46,3 @@ class LNSMIPParams:
     sa_temperature: float = 100.0
     sa_cooling: float = 0.97
     seed: int = 42
-
-    @classmethod
-    def from_config(cls, config: Any) -> "LNSMIPParams":
-        """
-        Creates an LNSMIPParams instance from a configuration object.
-
-        Args:
-            config: Configuration object containing parameters.
-
-        Returns:
-            An LNSMIPParams instance.
-        """
-        params = {}
-        for f in fields(cls):
-            val = getattr(config, f.name, f.default)
-            # Handle MISSING from dataclasses fields or OmegaConf
-            if str(val) == "MISSING" or val is MISSING:
-                continue
-            params[f.name] = val
-        return cls(**params)

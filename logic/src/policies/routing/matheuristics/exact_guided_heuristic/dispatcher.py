@@ -15,7 +15,7 @@ Example:
     >>> from dispatcher import run_pipeline
     >>> routes, profit, cost = run_pipeline(
     ...     bins, dist_matrix, env, values, binsids, mandatory,
-    ...     n_vehicles=2, params=ExactGuidedHeuristicParams(alpha=0.5, time_limit=120),
+    ...     n_vehicles=2, params=ExactGuidedHeuristicConfig(alpha=0.5, time_limit=120),
     ... )
 """
 
@@ -28,7 +28,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 import numpy as np
 from numpy.typing import NDArray
 
-from .params import ExactGuidedHeuristicParams
+from logic.src.configs.policies.egh import ExactGuidedHeuristicConfig
 from .route_pool import RoutePool
 from .stage_alns import run_alns_stage
 from .stage_bpc import run_bpc_stage
@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-def _build_alns_params(pipeline_params: ExactGuidedHeuristicParams, time_limit: float):
+def _build_alns_params(pipeline_params: ExactGuidedHeuristicConfig, time_limit: float):
     """Build an ALNSConfig object from the pipeline config.
 
     Args:
@@ -108,7 +108,7 @@ def run_pipeline(
     binsids: List[int],
     mandatory: List[int],
     n_vehicles: int = 1,
-    params: Optional[ExactGuidedHeuristicParams] = None,
+    params: Optional[ExactGuidedHeuristicConfig] = None,
     recorder=None,
 ) -> Tuple[List[int], float, float]:
     """Execute the four-stage pipeline and return the best VRPP solution.
@@ -128,7 +128,7 @@ def run_pipeline(
         binsids:     Global bin identifiers.
         mandatory:   Global IDs of bins that must be collected.
         n_vehicles:  Fleet size K.
-        params:      ExactGuidedHeuristicParams (defaults to ExactGuidedHeuristicParams() if None).
+        params:      ExactGuidedHeuristicConfig (defaults to ExactGuidedHeuristicConfig() if None).
         recorder:    Optional telemetry recorder.
 
     Returns:
@@ -138,7 +138,7 @@ def run_pipeline(
             profit      — net profit of the selected routes.
             total_cost  — total travel cost of the selected routes.
     """
-    p = params or ExactGuidedHeuristicParams()
+    p = params or ExactGuidedHeuristicConfig()
     tau_tcf, tau_alns, tau_bpc, tau_sp = p.stage_budgets()
     t_start = time.perf_counter()
 

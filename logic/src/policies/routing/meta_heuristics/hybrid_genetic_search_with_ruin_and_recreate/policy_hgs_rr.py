@@ -20,7 +20,7 @@ from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolic
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
 from .hgs_rr import HGSRRSolver
-from .params import HGSRRParams
+from logic.src.configs.policies.hgs_rr import HGSRRConfig
 
 
 @RoutingAlgorithmRegistry.register("hgs_rr")
@@ -131,7 +131,7 @@ class HGSRRPolicy(BaseRoutingPolicy):
                 - profit: Total calculated net profit (Total Revenue - Total Cost).
                 - cost: Total travel cost calculated by the solver.
         """
-        params = HGSRRParams(
+        params = HGSRRConfig(
             time_limit=values.get("time_limit", 10),
             population_size=values.get("population_size", 50),
             elite_size=values.get("elite_size", 10),

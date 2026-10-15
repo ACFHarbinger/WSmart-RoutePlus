@@ -22,7 +22,7 @@ from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import SSHHParams
+from logic.src.configs.policies.ss_hh import SSHHConfig
 from .solver import SSHHSolver
 
 
@@ -118,7 +118,7 @@ class SSHHPolicy(BaseRoutingPolicy):
                 - profit: Total calculated net profit (Total Revenue - Total Cost).
                 - cost: Total travel cost calculated by the solver.
         """
-        params = SSHHParams(
+        params = SSHHConfig(
             max_iterations=int(values.get("max_iterations", 500)),
             n_removal=int(values.get("n_removal", 2)),
             n_llh=int(values.get("n_llh", 5)),

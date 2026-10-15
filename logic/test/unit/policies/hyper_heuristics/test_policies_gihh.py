@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 from logic.src.policies.routing.base.factory import RoutingAlgorithmFactory
 from logic.src.policies.routing.hyper_heuristics.guided_indicators_hyper_heuristic import (
-    GIHHParams,
+    GIHHConfig,
     GIHHSolver,
 )
 
@@ -40,7 +40,7 @@ class TestGIHHPolicy:
     def test_gihh_basic_execution(self, simple_instance):
         """Test that GIHH executes without errors."""
         dist_matrix, wastes, capacity, R, C = simple_instance
-        params = GIHHParams(time_limit=1.0, max_iterations=5, seed=42)
+        params = GIHHConfig(time_limit=1.0, max_iterations=5, seed=42)
         solver = GIHHSolver(dist_matrix, wastes, capacity, R, C, params, None)
         arch = solver.solve()
         assert isinstance(arch, list)
@@ -57,7 +57,7 @@ class TestGIHHPolicy:
     def test_gihh_respects_capacity(self, simple_instance):
         """Test that GIHH respects capacity constraints."""
         dist_matrix, wastes, capacity, R, C = simple_instance
-        params = GIHHParams(time_limit=1.0, max_iterations=5, seed=42)
+        params = GIHHConfig(time_limit=1.0, max_iterations=5, seed=42)
         solver = GIHHSolver(dist_matrix, wastes, capacity, R, C, params, None)
         arch = solver.solve()
         assert isinstance(arch, list)
@@ -76,7 +76,7 @@ class TestGIHHPolicy:
         """Test that GIHH visits mandatory nodes."""
         dist_matrix, wastes, capacity, R, C = simple_instance
         mandatory_nodes = [1, 3]  # Local indices
-        params = GIHHParams(time_limit=1.0, max_iterations=5, seed=42)
+        params = GIHHConfig(time_limit=1.0, max_iterations=5, seed=42)
         solver = GIHHSolver(dist_matrix, wastes, capacity, R, C, params, mandatory_nodes)
         arch = solver.solve()
         assert isinstance(arch, list)
@@ -101,7 +101,7 @@ class TestGIHHPolicy:
         capacity = 1.0
         R = 10.0
         C = 1.0
-        params = GIHHParams(seed=42)
+        params = GIHHConfig(seed=42)
         solver = GIHHSolver(dist_matrix, wastes, capacity, R, C, params, None)
         arch = solver.solve()
         assert isinstance(arch, list)
@@ -125,7 +125,7 @@ class TestGIHHPolicy:
         capacity = 1.0
         R = 10.0
         C = 1.0
-        params = GIHHParams(seed=42)
+        params = GIHHConfig(seed=42)
         solver = GIHHSolver(dist_matrix, wastes, capacity, R, C, params, None)
         arch = solver.solve()
         assert isinstance(arch, list)
@@ -143,7 +143,7 @@ class TestGIHHPolicy:
     def test_gihh_indicator_weights(self, simple_instance):
         """Test GIHH with custom indicator weights."""
         dist_matrix, wastes, capacity, R, C = simple_instance
-        params = GIHHParams(time_limit=1.0, max_iterations=5, seg=80, alpha=0.5, beta=0.4, gamma=0.1, min_prob=0.05, seed=42)
+        params = GIHHConfig(time_limit=1.0, max_iterations=5, seg=80, alpha=0.5, beta=0.4, gamma=0.1, min_prob=0.05, seed=42)
         solver = GIHHSolver(dist_matrix, wastes, capacity, R, C, params, None)
         arch = solver.solve()
         assert isinstance(arch, list)

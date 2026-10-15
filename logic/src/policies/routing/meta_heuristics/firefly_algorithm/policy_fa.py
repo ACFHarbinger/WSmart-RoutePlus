@@ -20,7 +20,7 @@ from logic.src.configs.policies.fa import FAConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import FAParams
+from logic.src.configs.policies.fa import FAConfig
 from .solver import FASolver
 
 
@@ -88,7 +88,7 @@ class FAPolicy(BaseRoutingPolicy):
         Returns:
             Tuple of (routes, profit, cost).
         """
-        params = FAParams(
+        params = FAConfig(
             pop_size=int(values.get("pop_size", 20)),
             beta0=float(values.get("beta0", 1.0)),
             gamma=float(values.get("gamma", 0.1)),

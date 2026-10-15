@@ -9,19 +9,19 @@ in the Stochastic Multi-Period Capacitated Vehicle Routing Problem"
 Attributes:
 -----------
     RLALNSSolver: The main solver class.
-    RLALNSParams: The configuration class for the solver.
+    RLALNSConfig: The configuration class for the solver.
 
 Example:
 --------
     >>> from logic.src.policies.routing.learning_heuristic_algorithms import RLALNSSolver
-    >>> from logic.src.policies.routing.learning_heuristic_algorithms import RLALNSParams
-    >>> policy = RLALNSSolver(RLALNSParams())
+    >>> from logic.src.policies.routing.learning_heuristic_algorithms import RLALNSConfig
+    >>> policy = RLALNSSolver(RLALNSConfig())
     >>> routes, metrics = policy.run_day(env)
     >>> print(f"Best routes: {routes}")
     >>> print(f"Metrics: {metrics}")
 """
 
-from .params import RLALNSParams
+from logic.src.configs.policies.rl_alns import RLALNSConfig
 from .solver import RLALNSSolver
 
-__all__ = ["RLALNSSolver", "RLALNSParams"]
+__all__ = ["RLALNSSolver", "RLALNSConfig"]

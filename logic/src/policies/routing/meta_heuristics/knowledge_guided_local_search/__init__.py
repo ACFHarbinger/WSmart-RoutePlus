@@ -5,7 +5,7 @@ KGLS integrates machine learning predictions (knowledge base) with local search
 metaheuristics to bias search towards promising solution regions.
 
 Attributes:
-    KGLSParams: Configuration parameters for KGLS.
+    KGLSConfig: Configuration parameters for KGLS.
     KGLSSolver: Core KGLS solver logic.
     KGLSPolicy: Policy adapter for KGLS.
 
@@ -14,7 +14,7 @@ Example:
 """
 
 from .kgls import KGLSSolver
-from .params import KGLSParams
+from logic.src.configs.policies.kgls import KGLSConfig
 from .policy_kgls import KGLSPolicy
 
-__all__ = ["KGLSParams", "KGLSSolver", "KGLSPolicy"]
+__all__ = ["KGLSConfig", "KGLSSolver", "KGLSPolicy"]

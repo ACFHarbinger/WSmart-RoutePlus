@@ -21,7 +21,7 @@ from logic.src.configs.policies.lca import LCAConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import LCAParams
+from logic.src.configs.policies.lca import LCAConfig
 from .solver import LCASolver
 
 
@@ -118,7 +118,7 @@ class LCAPolicy(BaseRoutingPolicy):
                 - profit: Total calculated net profit (Total Revenue - Total Cost).
                 - cost: Total travel cost calculated by the solver.
         """
-        params = LCAParams(
+        params = LCAConfig(
             n_teams=int(values.get("n_teams", 10)),
             max_iterations=int(values.get("max_iterations", 100)),
             tolerance_pct=float(values.get("tolerance_pct", 0.05)),

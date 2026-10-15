@@ -18,7 +18,7 @@ from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import ILSParams
+from logic.src.configs.policies.ils import ILSConfig
 from .solver import ILSSolver
 
 
@@ -93,7 +93,7 @@ class ILSPolicy(BaseRoutingPolicy):
         Returns:
             Tuple of (routes, profit, cost).
         """
-        params = ILSParams(
+        params = ILSConfig(
             n_restarts=int(values.get("n_restarts", 30)),
             inner_iterations=int(values.get("inner_iterations", 20)),
             n_removal=int(values.get("n_removal", 2)),

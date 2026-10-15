@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 from logic.src.policies.routing.base.factory import RoutingAlgorithmFactory
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search_with_ruin_and_recreate import (
-    HGSRRParams,
+    HGSRRConfig,
     HGSRRSolver,
 )
 
@@ -40,7 +40,7 @@ class TestHGSRRPolicy:
     def test_hgs_rr_basic_execution(self, simple_instance):
         """Test that HGS-RR executes without errors."""
         dist_matrix, wastes, capacity, R, C = simple_instance
-        params = HGSRRParams(time_limit=1.0, population_size=10, n_iterations_no_improvement=20, mutation_rate=0.3, seed=42)
+        params = HGSRRConfig(time_limit=1.0, population_size=10, n_iterations_no_improvement=20, mutation_rate=0.3, seed=42)
         solver = HGSRRSolver(dist_matrix, wastes, capacity, R, C, params, None)
         routes, profit, cost = solver.solve()
 
@@ -51,7 +51,7 @@ class TestHGSRRPolicy:
     def test_hgs_rr_respects_capacity(self, simple_instance):
         """Test that HGS-RR respects capacity constraints."""
         dist_matrix, wastes, capacity, R, C = simple_instance
-        params = HGSRRParams(time_limit=1.0, population_size=10, n_iterations_no_improvement=20, mutation_rate=0.3, seed=42)
+        params = HGSRRConfig(time_limit=1.0, population_size=10, n_iterations_no_improvement=20, mutation_rate=0.3, seed=42)
         solver = HGSRRSolver(dist_matrix, wastes, capacity, R, C, params, None)
         routes, profit, cost = solver.solve()
 
@@ -64,7 +64,7 @@ class TestHGSRRPolicy:
         """Test that HGS-RR visits mandatory nodes."""
         dist_matrix, wastes, capacity, R, C = simple_instance
         mandatory_nodes = [1, 3]  # Local indices
-        params = HGSRRParams(time_limit=1.0, population_size=10, n_iterations_no_improvement=20, mutation_rate=0.3, seed=42)
+        params = HGSRRConfig(time_limit=1.0, population_size=10, n_iterations_no_improvement=20, mutation_rate=0.3, seed=42)
         solver = HGSRRSolver(dist_matrix, wastes, capacity, R, C, params, mandatory_nodes)
         routes, profit, cost = solver.solve()
 
@@ -83,7 +83,7 @@ class TestHGSRRPolicy:
         capacity = 1.0
         R = 10.0
         C = 1.0
-        params = HGSRRParams(seed=42)
+        params = HGSRRConfig(seed=42)
 
         solver = HGSRRSolver(dist_matrix, wastes, capacity, R, C, params, None)
         routes, profit, cost = solver.solve()
@@ -102,7 +102,7 @@ class TestHGSRRPolicy:
         capacity = 1.0
         R = 10.0
         C = 1.0
-        params = HGSRRParams(seed=42)
+        params = HGSRRConfig(seed=42)
         solver = HGSRRSolver(dist_matrix, wastes, capacity, R, C, params, None)
         routes, profit, cost = solver.solve()
 

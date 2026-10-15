@@ -68,9 +68,7 @@ from logic.src.policies.helpers.operators import (
 from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns import (
     ALNSSolver,
 )
-from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search_with_inter_period_operators.params import (
-    ALNSIPOParams,
-)
+from logic.src.configs.policies.alns_ipo import ALNSIPOConfig
 from logic.src.tracking.viz_mixin import PolicyStateRecorder
 
 
@@ -103,7 +101,7 @@ class ALNSSolverIPO(ALNSSolver):
         capacity: float,
         R: float,
         C: float,
-        params: ALNSIPOParams,
+        params: ALNSIPOConfig,
         mandatory_nodes: Optional[List[int]] = None,
         recorder: Optional[PolicyStateRecorder] = None,
     ) -> None:

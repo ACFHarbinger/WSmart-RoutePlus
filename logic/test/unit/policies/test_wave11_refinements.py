@@ -3,10 +3,10 @@
 import numpy as np
 import pytest
 from logic.src.policies.routing.hyper_heuristics.guided_indicators_hyper_heuristic.gihh import GIHHSolver
-from logic.src.policies.routing.hyper_heuristics.guided_indicators_hyper_heuristic.params import GIHHParams
-from logic.src.policies.routing.meta_heuristics.harmony_search.params import HSParams
+from logic.src.configs.policies.gihh import GIHHConfig
+from logic.src.configs.policies.hs import HSConfig
 from logic.src.policies.routing.meta_heuristics.harmony_search.solver import HSSolver
-from logic.src.policies.routing.meta_heuristics.sine_cosine_algorithm.params import SCAParams
+from logic.src.configs.policies.sca import SCAConfig
 from logic.src.policies.routing.meta_heuristics.sine_cosine_algorithm.solver import SCASolver
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -31,7 +31,7 @@ def tiny_vrpp():
 
 def test_hs_refinement(tiny_vrpp):
     dist, wastes, cap, R, C = tiny_vrpp
-    params = HSParams(max_iterations=10, hm_size=5, BW=0.1, seed=42)
+    params = HSConfig(max_iterations=10, hm_size=5, BW=0.1, seed=42)
     solver = HSSolver(dist, wastes, cap, R, C, params)
     routes, profit, cost = solver.solve()
     assert len(routes) > 0
@@ -39,7 +39,7 @@ def test_hs_refinement(tiny_vrpp):
 
 def test_sca_refinement(tiny_vrpp):
     dist, wastes, cap, R, C = tiny_vrpp
-    params = SCAParams(max_iterations=10, pop_size=5, seed=42)
+    params = SCAConfig(max_iterations=10, pop_size=5, seed=42)
     solver = SCASolver(dist, wastes, cap, R, C, params)
     routes, profit, cost = solver.solve()
     assert len(routes) > 0
@@ -47,7 +47,7 @@ def test_sca_refinement(tiny_vrpp):
 
 def test_gihh_refinement(tiny_vrpp):
     dist, wastes, cap, R, C = tiny_vrpp
-    params = GIHHParams(max_iterations=10, seed=42)
+    params = GIHHConfig(max_iterations=10, seed=42)
     solver = GIHHSolver(dist, wastes, cap, R, C, params)
     arch = solver.solve()
 

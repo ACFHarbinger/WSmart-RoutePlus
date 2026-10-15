@@ -32,7 +32,7 @@ from logic.src.policies.helpers.operators.solution_initialization.greedy_si impo
 
 from .adaptive_selection import AdaptiveOperatorSelector
 from .operators import HULKOperators
-from .params import HULKParams
+from logic.src.configs.policies.hulk import HULKConfig
 from .solution import Solution
 
 
@@ -66,7 +66,7 @@ class HULKSolver:
         capacity: float,
         R: float,
         C: float,
-        params: HULKParams,
+        params: HULKConfig,
         mandatory_nodes: Optional[List[int]] = None,
         evaluator=None,
     ):

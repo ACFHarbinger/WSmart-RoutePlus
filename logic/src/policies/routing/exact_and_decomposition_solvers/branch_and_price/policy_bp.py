@@ -34,7 +34,7 @@ from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolic
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
 from .bp import BranchAndPriceSolver
-from .params import BPParams
+from logic.src.configs.policies.bp import BPConfig
 
 
 @GlobalRegistry.register(
@@ -147,7 +147,7 @@ class BranchAndPricePolicy(BaseRoutingPolicy):
         capacity = float(profit_vars.get("bin_capacity", 100.0))
         mandatory = kwargs.get("mandatory", [])
 
-        params = BPParams.from_config(config_dict)
+        params = self._effective_config(config_dict)
 
         solver = BranchAndPriceSolver(
             n_nodes=len(dist_matrix) - 1,
@@ -223,7 +223,7 @@ class BranchAndPricePolicy(BaseRoutingPolicy):
         # ------------------------------------------------------------------
         # Build and run solver with standardized parameters
         # ------------------------------------------------------------------
-        params = BPParams.from_config(values)
+        params = self._effective_config(values)
 
         solver = BranchAndPriceSolver(
             n_nodes=n_nodes,

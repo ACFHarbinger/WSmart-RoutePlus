@@ -12,6 +12,7 @@ Example:
     >>> config.vrpp
     True
 """
+from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, Optional
@@ -39,3 +40,12 @@ class NeuralAgentConfig:
     route_improvement: Optional[Any] = None
     seed: Optional[int] = None
     vrpp: bool = True
+    waste_weight: float = 1.0
+    cost_weight: float = 1.0
+    overflow_penalty: float = 1.0
+    selector_name: Optional[str] = None
+    selector_threshold: float = 0.7
+    decoding_strategy: str = "greedy"
+    beam_width: int = 1
+    reward_weight: float = 0.0
+    length_penalty_alpha: float = 0.0

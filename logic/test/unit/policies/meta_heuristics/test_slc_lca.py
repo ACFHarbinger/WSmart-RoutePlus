@@ -2,9 +2,9 @@
 
 import numpy as np
 import pytest
-from logic.src.policies.routing.meta_heuristics.league_championship_algorithm.params import LCAParams
+from logic.src.configs.policies.lca import LCAConfig
 from logic.src.policies.routing.meta_heuristics.league_championship_algorithm.solver import LCASolver
-from logic.src.policies.routing.meta_heuristics.soccer_league_competition.params import SLCParams
+from logic.src.configs.policies.slc import SLCConfig
 from logic.src.policies.routing.meta_heuristics.soccer_league_competition.solver import SLCSolver
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -30,7 +30,7 @@ def small_vrpp_instance():
 
 def test_slc_solver_basic(small_vrpp_instance):
     dist_matrix, wastes, capacity, R, C = small_vrpp_instance
-    params = SLCParams(
+    params = SLCConfig(
         n_teams=2,
         team_size=2,
         max_iterations=5,
@@ -51,7 +51,7 @@ def test_slc_solver_basic(small_vrpp_instance):
 
 def test_slc_coaching_and_superstars(small_vrpp_instance):
     dist_matrix, wastes, capacity, R, C = small_vrpp_instance
-    params = SLCParams(
+    params = SLCConfig(
         n_teams=1,
         team_size=3,
         max_iterations=2,
@@ -67,7 +67,7 @@ def test_slc_coaching_and_superstars(small_vrpp_instance):
 
 def test_lca_solver_basic(small_vrpp_instance):
     dist_matrix, wastes, capacity, R, C = small_vrpp_instance
-    params = LCAParams(
+    params = LCAConfig(
         n_teams=4,
         max_iterations=5,
         n_removal=1,
@@ -87,7 +87,7 @@ def test_lca_solver_basic(small_vrpp_instance):
 
 def test_lca_winner_loser_update(small_vrpp_instance):
     dist_matrix, wastes, capacity, R, C = small_vrpp_instance
-    params = LCAParams(
+    params = LCAConfig(
         n_teams=2,
         max_iterations=2,
         n_removal=1,

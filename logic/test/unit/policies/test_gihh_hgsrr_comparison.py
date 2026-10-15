@@ -8,11 +8,11 @@ Hyper-Heuristic with Two Guidance Indicators (GIHH) policies.
 import numpy as np
 import pytest
 from logic.src.policies.routing.hyper_heuristics.guided_indicators_hyper_heuristic import (
-    GIHHParams,
+    GIHHConfig,
     GIHHSolver,
 )
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search_with_ruin_and_recreate import (
-    HGSRRParams,
+    HGSRRConfig,
     HGSRRSolver,
 )
 
@@ -43,7 +43,7 @@ class TestPolicyComparison:
         """Test that both policies produce feasible solutions."""
         dist_matrix, wastes, capacity, R, C = test_instance
 
-        params_hgs_rr = HGSRRParams(
+        params_hgs_rr = HGSRRConfig(
             time_limit=2.0,
             population_size=20,
             n_iterations_no_improvement=50,
@@ -52,7 +52,7 @@ class TestPolicyComparison:
             seed=42,
         )
 
-        params_gihh = GIHHParams(
+        params_gihh = GIHHConfig(
             time_limit=2.0,
             max_iterations=100,
             seed=42,

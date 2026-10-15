@@ -3,14 +3,14 @@ Variable Neighborhood Search (VNS) solver for VRPP.
 
 Attributes:
     VNSSolver: The main solver class.
-    VNSParams: Configuration parameters dataclass.
+    VNSConfig: Configuration parameters dataclass.
 
 Example:
     >>> solver = VNSSolver(dist_matrix, wastes, capacity, R, C, params)
     >>> routes, profit, cost = solver.solve()
 """
 
-from .params import VNSParams
+from logic.src.configs.policies.vns import VNSConfig
 from .solver import VNSSolver
 
-__all__ = ["VNSSolver", "VNSParams"]
+__all__ = ["VNSSolver", "VNSConfig"]

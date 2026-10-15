@@ -86,3 +86,4 @@ class ALNSIPOConfig:
     shift_direction: str = "both"
     inventory_lambda: float = 1.0
     inter_period_weight: float = 1.0
+    stochastic_repair: bool = False

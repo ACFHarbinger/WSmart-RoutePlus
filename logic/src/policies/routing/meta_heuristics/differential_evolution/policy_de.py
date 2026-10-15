@@ -18,7 +18,7 @@ from logic.src.configs.policies.de import DEConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import DEParams
+from logic.src.configs.policies.de import DEConfig
 from .solver import DESolver
 
 
@@ -108,7 +108,7 @@ class DEPolicyAdapter(BaseRoutingPolicy):
         Returns:
             Tuple containing (routes, profit, cost).
         """
-        params = DEParams(
+        params = DEConfig(
             pop_size=values.get("pop_size", 50),
             mutation_factor=values.get("mutation_factor", 0.8),
             crossover_rate=values.get("crossover_rate", 0.9),

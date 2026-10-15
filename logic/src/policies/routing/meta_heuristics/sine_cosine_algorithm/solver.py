@@ -9,7 +9,7 @@ decoded to a discrete routing solution via the Largest Rank Value (LRV) rule.
 
 Attributes:
     SCASolver (Type): Core solver class for Sine Cosine Algorithm.
-    SCAParams (Type): Parameter dataclass for the solver.
+    SCAConfig (Type): Parameter dataclass for the solver.
 
 Example:
     >>> solver = SCASolver(dist_matrix, wastes, capacity, R, C, params)
@@ -33,9 +33,9 @@ from logic.src.policies.helpers.operators.recreate_repair.greedy import (
     greedy_insertion,
     greedy_profit_insertion,
 )
-from logic.src.policies.routing.meta_heuristics.ant_colony_optimization_k_sparse.params import KSACOParams
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
 
-from .params import SCAParams
+from logic.src.configs.policies.sca import SCAConfig
 
 
 class SCASolver:
@@ -48,7 +48,7 @@ class SCASolver:
         capacity (float): Maximum vehicle collection capacity.
         R (float): Revenue per kg of waste.
         C (float): Cost per kg traveled.
-        params (SCAParams): Algorithm-specific parameters.
+        params (SCAConfig): Algorithm-specific parameters.
         mandatory_nodes (List[int]): Nodes that must be visited.
     """
 
@@ -59,7 +59,7 @@ class SCASolver:
         capacity: float,
         R: float,
         C: float,
-        params: SCAParams,
+        params: SCAConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """
@@ -71,7 +71,7 @@ class SCASolver:
             capacity (float): Maximum vehicle collection capacity.
             R (float): Revenue per kg of waste.
             C (float): Cost per kg traveled.
-            params (SCAParams): Algorithm-specific parameters.
+            params (SCAConfig): Algorithm-specific parameters.
             mandatory_nodes (Optional[List[int]]): Nodes that must be visited.
         """
         self.dist_matrix = dist_matrix
@@ -87,7 +87,7 @@ class SCASolver:
         self.np_rng = np.random.default_rng(params.seed) if params.seed is not None else np.random.default_rng()
 
         # Initialize Local Search for elite learning
-        aco_params = KSACOParams(
+        aco_params = KSparseACOConfig(
             local_search_iterations=self.params.local_search_iterations,
             vrpp=self.params.vrpp,
             profit_aware_operators=self.params.profit_aware_operators,

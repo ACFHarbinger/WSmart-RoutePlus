@@ -41,7 +41,7 @@ from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.lkh3 
     solve_lkh3_with_alns,
 )
 
-from .params import LKH3Params
+from logic.src.configs.policies.lkh3 import LKH3Config
 
 
 @GlobalRegistry.register(
@@ -151,7 +151,7 @@ class LKH3Policy(BaseRoutingPolicy):
         n_original = len(sub_dist_matrix)
 
         # --- Initialize type-safe Params ---
-        params = LKH3Params.from_config(self._config or values)
+        params = LKH3Config.from_config(self._config or values)
         seed = params.seed
         n_vehicles = int(values.get("n_vehicles", 3))  # Fleet size comes from simulation kwargs
 

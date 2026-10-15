@@ -25,9 +25,7 @@ from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.routing.matheuristics.local_branching_variable_neighborhood_search.lb_vns import (
     run_lb_vns_gurobi,
 )
-from logic.src.policies.routing.matheuristics.local_branching_variable_neighborhood_search.params import (
-    LBVNSParams,
-)
+from logic.src.configs.policies.lb_vns import LocalBranchingVNSConfig
 
 
 @GlobalRegistry.register(
@@ -154,7 +152,7 @@ class LocalBranchingVNSPolicy(BaseRoutingPolicy):
                 - Optional[MultiDayContext]: Updated multi-period context.
         """
         # 1. Initialize parameters
-        params = LBVNSParams.from_config(self.config)
+        params = LocalBranchingVNSConfig.from_config(self.config)
 
         # 2. Extract environment parameters
         distance_matrix = kwargs["distance_matrix"]

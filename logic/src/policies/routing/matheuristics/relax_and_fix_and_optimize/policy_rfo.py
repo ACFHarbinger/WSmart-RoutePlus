@@ -21,7 +21,7 @@ from logic.src.interfaces.context.problem_context import ProblemContext
 from logic.src.interfaces.context.solution_context import SolutionContext
 from logic.src.policies.routing.base.base_multi_period_policy import BaseMultiPeriodRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-from logic.src.policies.routing.matheuristics.relax_and_fix_and_optimize.params import RFOParams
+from logic.src.configs.policies.rfo import RFOConfig
 from logic.src.utils.policy.routes import route_cost, route_profit
 
 
@@ -73,7 +73,7 @@ class RelaxFixOptimizePolicy(BaseMultiPeriodRoutingPolicy):
             config: Optional Hydra configuration.
         """
         super().__init__(config)
-        self.params = RFOParams.from_config(config)
+        self.params = self._effective_config(config)
         self.window_size = self.params.window_size
         self.step_size = self.params.step_size
         self.mip_time = self.params.mip_time

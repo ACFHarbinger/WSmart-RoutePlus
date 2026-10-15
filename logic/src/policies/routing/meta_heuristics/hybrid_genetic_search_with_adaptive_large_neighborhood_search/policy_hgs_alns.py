@@ -22,9 +22,7 @@ from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search_with_adaptive_large_neighborhood_search.hgs_alns import (
     HGSALNSSolver,
 )
-from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search_with_adaptive_large_neighborhood_search.params import (
-    HGSALNSParams,
-)
+from logic.src.configs.policies.hgs_alns import HGSALNSConfig
 
 
 @RoutingAlgorithmRegistry.register("hgs_alns")
@@ -168,8 +166,8 @@ class HGSALNSPolicy(BaseRoutingPolicy):
             restart_timer=values.get("hgs_restart_timer", 0.0),
         )
 
-        # Create HGSALNSParams
-        params = HGSALNSParams(
+        # Create HGSALNSConfig
+        params = HGSALNSConfig(
             time_limit=values.get("time_limit", 60.0),
             hgs_params=hgs_params,
             alns_params=alns_params,

@@ -62,7 +62,7 @@ from logic.src.policies.helpers.operators import (
     string_removal,
 )
 
-from .params import RLGDHHParams
+from logic.src.configs.policies.rl_gd_hh import RLGDHHConfig
 
 
 class RLGDHHSolver:
@@ -94,7 +94,7 @@ class RLGDHHSolver:
         capacity: float,
         R: float,
         C: float,
-        params: RLGDHHParams,
+        params: RLGDHHConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """Initialize the RL-GD-HH solver.
@@ -105,7 +105,7 @@ class RLGDHHSolver:
             capacity (float): Capacity of each vehicle.
             R (float): Recycling rate.
             C (float): Cost of recycling.
-            params (RLGDHHParams): Parameters for RL-GD-HH.
+            params (RLGDHHConfig): Parameters for RL-GD-HH.
             mandatory_nodes (Optional[List[int]]): Mandatory nodes.
         """
         self.dist_matrix = dist_matrix

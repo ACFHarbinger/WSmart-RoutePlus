@@ -29,15 +29,11 @@ from logic.src.policies.helpers.operators import (
     greedy_profit_insertion,
     random_removal,
 )
-from logic.src.policies.routing.meta_heuristics.ant_colony_optimization_k_sparse.params import (
-    KSACOParams,
-)
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
 from logic.src.policies.routing.meta_heuristics.evolution_strategy_mu_kappa_lambda.individual import (
     Individual,
 )
-from logic.src.policies.routing.meta_heuristics.evolution_strategy_mu_kappa_lambda.params import (
-    MuKappaLambdaESParams,
-)
+from logic.src.configs.policies.es_mkl import MuKappaLambdaESConfig
 
 
 class MuKappaLambdaESSolver:
@@ -68,7 +64,7 @@ class MuKappaLambdaESSolver:
         capacity: float,
         R: float,
         C: float,
-        params: MuKappaLambdaESParams,
+        params: MuKappaLambdaESConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """
@@ -100,7 +96,7 @@ class MuKappaLambdaESSolver:
         self.np_rng = np.random.default_rng(params.seed) if params.seed is not None else np.random.default_rng()
 
         # Pre-instantiate local search for memetic refinement
-        aco_params = KSACOParams(
+        aco_params = KSparseACOConfig(
             local_search_iterations=self.params.local_search_iterations,
             vrpp=self.params.vrpp,
             profit_aware_operators=self.params.profit_aware_operators,

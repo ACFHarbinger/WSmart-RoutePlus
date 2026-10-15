@@ -8,7 +8,7 @@ by a three-term favourability score.
 
 Attributes:
     FASolver (Type): Core solver class for Firefly Algorithm.
-    FAParams (Type): Parameter dataclass for the solver.
+    FAConfig (Type): Parameter dataclass for the solver.
 
 Example:
     >>> solver = FASolver(dist_matrix, wastes, capacity, R, C, params)
@@ -36,10 +36,8 @@ from logic.src.policies.helpers.operators import (
     random_removal,
 )
 from logic.src.policies.helpers.operators.solution_initialization.greedy_si import build_greedy_routes
-from logic.src.policies.routing.meta_heuristics.ant_colony_optimization_k_sparse.params import (
-    KSACOParams,
-)
-from logic.src.policies.routing.meta_heuristics.firefly_algorithm.params import FAParams
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
+from logic.src.configs.policies.fa import FAConfig
 
 
 class FASolver:
@@ -66,7 +64,7 @@ class FASolver:
         capacity: float,
         R: float,
         C: float,
-        params: FAParams,
+        params: FAConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """Initializes the Discrete Firefly Algorithm solver.
@@ -96,7 +94,7 @@ class FASolver:
 
         # Pre-instantiate Local Search for reuse
         # Pre-instantiate Local Search for reuse
-        aco_params = KSACOParams(
+        aco_params = KSparseACOConfig(
             local_search_iterations=self.params.local_search_iterations,
             vrpp=self.params.vrpp,
             profit_aware_operators=self.params.profit_aware_operators,

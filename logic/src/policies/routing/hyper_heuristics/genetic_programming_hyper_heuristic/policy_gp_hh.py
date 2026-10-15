@@ -33,7 +33,7 @@ from logic.src.configs.policies.gp_hh import GPHHConfig
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-from logic.src.policies.routing.hyper_heuristics.genetic_programming_hyper_heuristic.params import GPHHParams
+from logic.src.configs.policies.gp_hh import GPHHConfig
 from logic.src.policies.routing.hyper_heuristics.genetic_programming_hyper_heuristic.solver import GPHHSolver
 
 # ---------------------------------------------------------------------------
@@ -186,7 +186,7 @@ class GPHHPolicy(BaseRoutingPolicy):
         n_envs = int(values.get("n_training_instances", 3))
         n_nodes = len(sub_dist_matrix) - 1
 
-        params = GPHHParams(
+        params = GPHHConfig(
             gp_pop_size=int(values.get("gp_pop_size", 20)),
             max_gp_generations=int(values.get("max_gp_generations", 30)),
             tree_depth=int(values.get("tree_depth", 3)),

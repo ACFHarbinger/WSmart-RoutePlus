@@ -14,6 +14,7 @@ Example:
     >>> config.vrpp
     True
 """
+from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, List, Optional
@@ -46,3 +47,6 @@ class QDEConfig:
     vrpp: bool = True
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)
+    delta_theta: float = 0.01 * 3.14159  # Rotation gate step size (e.g., 0.01*pi)
+    local_search_iterations: int = 100
+    profit_aware_operators: bool = False

@@ -41,7 +41,7 @@ from gurobipy import GRB, quicksum
 from logic.src.policies.helpers.solvers_and_matheuristics.common.node import Node
 from logic.src.tracking.viz_mixin import PolicyStateRecorder
 
-from .params import BBParams
+from logic.src.configs.policies.bb import BBConfig
 
 
 class BBSolver:
@@ -589,7 +589,7 @@ def run_bb_mtz(
     capacity: float,
     R: float,
     C: float,
-    params: Optional[BBParams] = None,
+    params: Optional[BBConfig] = None,
     mandatory_indices: Optional[Set[int]] = None,
     env: Optional[gp.Env] = None,
     recorder: Optional[PolicyStateRecorder] = None,
@@ -617,7 +617,7 @@ def run_bb_mtz(
         Tuple of (routes, objective_value).
     """
     if params is None:
-        params = BBParams()
+        params = BBConfig()
 
     solver = BBSolver(
         dist_matrix=dist_matrix,

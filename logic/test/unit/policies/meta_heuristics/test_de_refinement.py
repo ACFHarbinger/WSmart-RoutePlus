@@ -2,7 +2,7 @@
 
 import numpy as np
 import pytest
-from logic.src.policies.routing.meta_heuristics.differential_evolution.params import DEParams
+from logic.src.configs.policies.de import DEConfig
 from logic.src.policies.routing.meta_heuristics.differential_evolution.solver import DESolver
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -23,23 +23,23 @@ def instance_data():
 def test_dynamic_population_sizing(instance_data):
     dist_matrix, wastes, capacity = instance_data
     # n_nodes = 2. Dynamic NP should be max(10 * 2, 4) = 20.
-    params = DEParams(pop_size=None)
+    params = DEConfig(pop_size=None)
     solver = DESolver(dist_matrix, wastes, capacity, R=1.0, C=1.0, params=params)
     assert solver.pop_size == 20
 
     # Test explicit pop_size
-    params_explicit = DEParams(pop_size=15)
+    params_explicit = DEConfig(pop_size=15)
     solver_explicit = DESolver(dist_matrix, wastes, capacity, R=1.0, C=1.0, params=params_explicit)
     assert solver_explicit.pop_size == 15
 
     # Test minimum axiom enforcement
-    params_low = DEParams(pop_size=2)
+    params_low = DEConfig(pop_size=2)
     with pytest.raises(ValueError, match="Population size NP must be at least 4"):
         DESolver(dist_matrix, wastes, capacity, R=1.0, C=1.0, params=params_low)
 
 def test_bounce_back_boundary_handling(instance_data):
     dist_matrix, wastes, capacity = instance_data
-    params = DEParams(pop_size=4)
+    params = DEConfig(pop_size=4)
     solver = DESolver(dist_matrix, wastes, capacity, R=1.0, C=1.0, params=params)
 
     base_vector = np.array([0.5, -0.5])
@@ -61,7 +61,7 @@ def test_bounce_back_boundary_handling(instance_data):
 
 def test_exponential_crossover_logic(instance_data):
     dist_matrix, wastes, capacity = instance_data
-    params = DEParams(pop_size=4, crossover_rate=0.5)
+    params = DEConfig(pop_size=4, crossover_rate=0.5)
     solver = DESolver(dist_matrix, wastes, capacity, R=1.0, C=1.0, params=params)
 
     target = np.array([0.1, 0.2, 0.3, 0.4, 0.5])
@@ -93,7 +93,7 @@ def test_exponential_crossover_logic(instance_data):
 
 def test_mde_full_solve(instance_data):
     dist_matrix, wastes, capacity = instance_data
-    params = DEParams(pop_size=10, max_iterations=5, crossover_rate=0.8)
+    params = DEConfig(pop_size=10, max_iterations=5, crossover_rate=0.8)
     solver = DESolver(dist_matrix, wastes, capacity, R=1.0, C=1.0, params=params)
 
     routes, profit, cost = solver.solve()
@@ -104,7 +104,7 @@ def test_gaussian_initialization(instance_data):
     from logic.src.policies.helpers.operators.solution_initialization import build_greedy_routes
     dist_matrix, wastes, capacity = instance_data
     # Use NP=10 to have n_seeded=1 (10% of 10)
-    params = DEParams(pop_size=10, seed=42)
+    params = DEConfig(pop_size=10, seed=42)
     solver = DESolver(dist_matrix, wastes, capacity, R=1.0, C=1.0, params=params)
 
     # Capture the greedy vector that would be generated

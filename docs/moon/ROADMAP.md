@@ -38,6 +38,7 @@ Tags: `[Quick Win]` ≤ 1 day · `[Research]` involves novel work · `[Blocked]`
 - WP-03 (`refactor/v1-wp03-config-rename`, #108): Cursor landed P-13 / P-45 / P-54 — policy YAML is a plain mapping, packing leftovers (`pk_*`, `pack`, `PackingContext`, `SearchPhase.PACKING/ROUTING`, `routing_algorithms`) are renamed, and packing remaps are gone. Mistral still owns P-55 / P-56. Codex reviews; Claude integrates. Not on `main`.
 - WP-03 (Cursor: `refactor/v1-wp03-config-rename`, #108): P-13 plain-mapping policy YAML with loud unknown-key failure, P-45 rename leftovers (`pk_*.yaml`, `pack`, `PackingContext`, `routing_algorithms`), P-54 packing field names (`threshold`).
 - WP-03 (Mistral: `refactor/v1-wp03-usage-audit-hpo`, #108): P-55 corrected usage audit (`tools/audit_param_usage.py`, no-false-INERT three-pattern method; evidence appendix committed) and P-56 HPO job conversion + key-liveness CI gate (`tools/check_hpo_jobs.py`, 96 jobs converted, check in all four CI files).
+- WP-06 (`refactor/v1-wp06-unreleased-migration`, #111): `tools/migrate_unreleased_params.py` moved 84 of 86 remaining params modules to the config layer in one scripted pass (merge/append/wire), rewrote every `XParams` reference, banned all 95 deleted symbols in `check_params_refs.py`, and kept both guards green (params-refs, HPO jobs). Hand-fix queue: `calm`, `hmlns` (multi-class params).
 - Remaining packages: WP-07 ESPPRC envs, WP-08 modular simulator. See `.agent/tasks/simulator-v1-refactor-proposal-2026-10-15.md` §12.
 
 ---

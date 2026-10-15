@@ -22,9 +22,9 @@ from logic.src.policies.helpers.operators import (
     greedy_profit_insertion,
 )
 from logic.src.policies.helpers.operators.solution_initialization.nearest_neighbor_si import build_nn_routes
-from logic.src.policies.routing.meta_heuristics.ant_colony_optimization_k_sparse.params import KSACOParams
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
 
-from .params import MemeticAlgorithmDualPopulationParams
+from logic.src.configs.policies.ma_dp import MemeticAlgorithmDualPopulationConfig
 
 
 class MemeticAlgorithmDualPopulationSolver:
@@ -54,7 +54,7 @@ class MemeticAlgorithmDualPopulationSolver:
         capacity: float,
         R: float,
         C: float,
-        params: MemeticAlgorithmDualPopulationParams,
+        params: MemeticAlgorithmDualPopulationConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """Initialize MA-DP solver.
@@ -83,7 +83,7 @@ class MemeticAlgorithmDualPopulationSolver:
         self.random = random.Random(self.params.seed) if self.params.seed is not None else random.Random()
 
         # Initialize ACO Local Search for elite learning
-        aco_params = KSACOParams(
+        aco_params = KSparseACOConfig(
             local_search_iterations=self.params.local_search_iterations,
             vrpp=self.params.vrpp,
             profit_aware_operators=self.params.profit_aware_operators,

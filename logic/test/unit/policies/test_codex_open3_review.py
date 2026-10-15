@@ -38,12 +38,12 @@ def test_absolute_checkpoint_base_still_isolates_runs(tmp_path):
 
 
 def test_registry_scan_checks_fallback_even_when_dataclass_has_default(monkeypatch):
-    from logic.src.policies.routing.other_algorithms.adaptive_routing_algorithm_orchestrator.params import (
-        ARCOParams,
+    from logic.src.configs.policies.arco import (
+        ARCOConfig,
     )
     from logic.test.unit.policies.routing import test_registry_constructor_contract as contract
 
     monkeypatch.setattr(
-        ARCOParams, "from_config", classmethod(lambda cls, cfg: SimpleNamespace(constructors=["missing_test_name"]))
+        contract, "_load_policy_configs", lambda cfg: {"constructors": ["missing_test_name"]}
     )
     assert any("missing_test_name" in names for _, names in contract._params_pools())

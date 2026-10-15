@@ -18,7 +18,7 @@ import numpy as np
 from tqdm import tqdm
 
 from .cop_evaluator import COPEvaluator
-from .params import SDPParams
+from logic.src.configs.policies.esdp import ExactSDPConfig
 from .state_space import StateSpaceManager
 
 
@@ -26,7 +26,7 @@ class ExactSDPEngine:
     """Executes the backward induction for the exact SDP.
 
     Attributes:
-        params (SDPParams): Configuration parameters for the solver.
+        params (ExactSDPConfig): Configuration parameters for the solver.
         num_nodes (int): Total number of nodes in the problem.
         capacity (float): Vehicle capacity.
         state_space (StateSpaceManager): Manager for discrete state transitions.
@@ -35,7 +35,7 @@ class ExactSDPEngine:
         value_table (Dict[int, Dict[Tuple[int, ...], float]]): Day -> State -> Expected Value.
     """
 
-    def __init__(self, params: SDPParams, dist_matrix: np.ndarray, capacity: float):
+    def __init__(self, params: ExactSDPConfig, dist_matrix: np.ndarray, capacity: float):
         """
         Initializes the ESDP engine.
 

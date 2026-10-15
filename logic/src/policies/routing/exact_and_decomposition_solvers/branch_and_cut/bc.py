@@ -40,7 +40,7 @@ from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_cut.h
     farthest_insertion,
 )
 
-from .params import BCParams
+from logic.src.configs.policies.bc import BCConfig
 
 try:
     import gurobipy as gp
@@ -73,7 +73,7 @@ class BranchAndCutSolver:
 
     Attributes:
         model (VRPPModel): Problem definition and data.
-        params (BCParams): Solver configuration parameters.
+        params (BCConfig): Solver configuration parameters.
         scenarios (Optional[List[Dict[int, float]]]): SAA demand scenarios.
         separator (SeparationEngine): Logic for cut detection.
         stats (Dict[str, Any]): Internal solve statistics (cuts, nodes, etc.).
@@ -85,7 +85,7 @@ class BranchAndCutSolver:
     def __init__(
         self,
         model: VRPPModel,
-        params: Optional[BCParams] = None,
+        params: Optional[BCConfig] = None,
         scenarios: Optional[List[Dict[int, float]]] = None,
         **kwargs: Any,
     ):
@@ -103,7 +103,7 @@ class BranchAndCutSolver:
 
         if params is None:
             # Create a defaults-aware params object from explicit arguments or framework defaults
-            params = BCParams(
+            params = BCConfig(
                 time_limit=kwargs.get("time_limit", 300.0),
                 mip_gap=kwargs.get("mip_gap", 0.01),
                 max_cuts_per_round=kwargs.get("max_cuts_per_round", 50),

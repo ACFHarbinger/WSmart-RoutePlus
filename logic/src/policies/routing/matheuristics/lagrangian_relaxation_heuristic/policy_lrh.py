@@ -21,7 +21,7 @@ from logic.src.interfaces.context.problem_context import ProblemContext
 from logic.src.interfaces.context.solution_context import SolutionContext
 from logic.src.policies.routing.base.base_multi_period_policy import BaseMultiPeriodRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-from logic.src.policies.routing.matheuristics.lagrangian_relaxation_heuristic.params import LRHParams
+from logic.src.configs.policies.lrh import LRHConfig
 from logic.src.utils.policy.routes import (
     route_cost,
     route_profit,
@@ -62,7 +62,7 @@ class LagrangianRelaxationHeuristicPolicy(BaseMultiPeriodRoutingPolicy):
             config: Optional Hydra configuration.
         """
         super().__init__(config)
-        self.params = LRHParams.from_config(config)
+        self.params = self._effective_config(config)
         self.max_iter = self.params.max_iter
         self.step_size_initial = self.params.step_size
         self.halving_freq = self.params.halving_freq

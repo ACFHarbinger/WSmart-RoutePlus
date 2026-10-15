@@ -58,7 +58,7 @@ from logic.src.policies.helpers.solvers_and_matheuristics import (
 )
 from logic.src.policies.helpers.solvers_and_matheuristics.vrpp_model import VRPPModel
 
-from .params import ILSBDParams
+from logic.src.configs.policies.ils_bd import IntegerLShapedBendersConfig
 
 try:
     import gurobipy as gp
@@ -85,16 +85,16 @@ class MasterProblem:
 
     Attributes:
         model: VRPPModel encapsulating network structure, costs, and profits.
-        params: ILSBDParams configuration.
+        params: IntegerLShapedBendersConfig configuration.
         stats: Dict of accumulated solver statistics (cuts, nodes, time).
     """
 
-    def __init__(self, model: VRPPModel, params: ILSBDParams) -> None:
+    def __init__(self, model: VRPPModel, params: IntegerLShapedBendersConfig) -> None:
         """Initialise the master problem container.
 
         Args:
             model (VRPPModel): VRPPModel instance providing graph topology, costs, and profits.
-            params (ILSBDParams): ILSBDParams controlling all solver parameters.
+            params (IntegerLShapedBendersConfig): IntegerLShapedBendersConfig controlling all solver parameters.
 
         Raises:
             ImportError: If gurobipy is not installed or not licensed.
@@ -476,7 +476,7 @@ class InventoryMasterProblem(MasterProblem):
     def __init__(
         self,
         model: VRPPModel,
-        params: ILSBDParams,
+        params: IntegerLShapedBendersConfig,
         horizon: int = 7,
         demand_matrix: Optional[np.ndarray] = None,
         bin_capacities: Optional[np.ndarray] = None,
@@ -488,7 +488,7 @@ class InventoryMasterProblem(MasterProblem):
 
         Args:
             model: VRPPModel providing graph topology and costs.
-            params: ILSBDParams configuration.
+            params: IntegerLShapedBendersConfig configuration.
             horizon: Planning horizon T.
             demand_matrix: Expected demand increments, shape ``(T, N)``.
                            If None, defaults to zeros (no demand evolution).

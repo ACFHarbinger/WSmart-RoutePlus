@@ -20,7 +20,7 @@ from logic.src.configs.policies import KSparseACOConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import KSACOParams
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
 from .solver import KSparseACOSolver
 
 
@@ -102,7 +102,7 @@ class ACOPolicy(BaseRoutingPolicy):
             Tuple containing (routes, profit, cost).
         """
         # 1. Standardize Parameters
-        params = KSACOParams.from_config(self.config)
+        params = KSparseACOConfig.from_config(self.config)
 
         # 2. THE MEMORY GUILLOTINE
         # Explicitly delete the O(n^2) distance matrix and force garbage collection

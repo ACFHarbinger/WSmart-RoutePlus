@@ -27,7 +27,7 @@ from logic.src.interfaces.context.problem_context import ProblemContext
 from logic.src.interfaces.context.solution_context import SolutionContext
 from logic.src.policies.routing.base.base_multi_period_policy import BaseMultiPeriodRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-from logic.src.policies.routing.hyper_heuristics.population_based_hyper_heuristic.params import PHHParams
+from logic.src.configs.policies.phh import PHHConfig
 from logic.src.utils.policy.llh_pool import LLHPool
 from logic.src.utils.policy.routes import (
     route_profit,
@@ -87,7 +87,7 @@ class PHHPolicy(BaseMultiPeriodRoutingPolicy):
             config: Configuration parameters.
         """
         super().__init__(config)
-        self.params = PHHParams.from_config(config)
+        self.params = self._effective_config(config)
         self.pop_size = self.params.pop_size
         self.gens = self.params.gens
         self.seed = self.params.seed

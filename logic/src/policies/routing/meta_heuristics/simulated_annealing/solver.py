@@ -22,7 +22,7 @@ from logic.src.policies.helpers.operators import (
 )
 from logic.src.policies.helpers.operators.solution_initialization.greedy_si import build_greedy_routes
 
-from .params import SAParams
+from logic.src.configs.policies.sa import SAConfig
 
 
 class SASolver(LocalSearch):
@@ -42,7 +42,7 @@ class SASolver(LocalSearch):
         capacity: float,
         R: float,
         C: float,
-        params: SAParams,
+        params: SAConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """Initializes the Simulated Annealing solver.

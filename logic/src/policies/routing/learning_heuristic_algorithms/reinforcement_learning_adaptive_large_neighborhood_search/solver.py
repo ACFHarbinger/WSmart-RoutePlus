@@ -66,7 +66,7 @@ from logic.src.policies.helpers.reinforcement_learning.agents.td_learning import
 from logic.src.policies.helpers.reinforcement_learning.features.state import StateFeatureExtractor
 from logic.src.policies.helpers.reinforcement_learning.reward.shaping import AdaptiveRewardShaper, RewardShaper
 
-from .params import RLALNSParams
+from logic.src.configs.policies.rl_alns import RLALNSConfig
 
 
 class RLALNSSolver:
@@ -109,7 +109,7 @@ class RLALNSSolver:
         capacity: float,
         R: float,
         C: float,
-        params: RLALNSParams,
+        params: RLALNSConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """

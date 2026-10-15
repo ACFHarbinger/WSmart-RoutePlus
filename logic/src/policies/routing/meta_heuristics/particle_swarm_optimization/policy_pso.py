@@ -21,7 +21,7 @@ from logic.src.interfaces.context.solution_context import SolutionContext
 from logic.src.policies.routing.base.base_multi_period_policy import BaseMultiPeriodRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import PSOParams
+from logic.src.configs.policies.pso import PSOConfig
 from .solver import PSOSolver
 
 
@@ -77,7 +77,7 @@ class PSOPolicyAdapter(BaseMultiPeriodRoutingPolicy):
         """
         values = asdict(self.config) if self.config else {}
 
-        params = PSOParams(
+        params = PSOConfig(
             pop_size=values.get("pop_size", 30),
             inertia_weight_start=values.get("inertia_weight_start", 0.9),
             inertia_weight_end=values.get("inertia_weight_end", 0.4),

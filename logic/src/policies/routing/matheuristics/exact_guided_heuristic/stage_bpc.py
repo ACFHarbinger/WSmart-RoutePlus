@@ -9,7 +9,7 @@ Wraps the project's existing ``run_bpc`` engine so that the pipeline can:
 3. Return all routes produced by BPC into the shared RoutePool for the
    SP-merge stage.
 
-The BPC quality scales with ``alpha`` via two knobs exposed in ExactGuidedHeuristicParams:
+The BPC quality scales with ``alpha`` via two knobs exposed in ExactGuidedHeuristicConfig:
     ng_size     = ng_size_min + int(alpha * (ng_size_max − ng_size_min))
     max_bb_nodes = bb_min + int(alpha * (bb_max − bb_min))
 
@@ -37,7 +37,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
-from .params import ExactGuidedHeuristicParams
+from logic.src.configs.policies.egh import ExactGuidedHeuristicConfig
 from .route_pool import RoutePool, VRPPRoute
 
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ def run_bpc_stage(
     capacity: float,
     R: float,
     C: float,
-    pipeline_params: ExactGuidedHeuristicParams,
+    pipeline_params: ExactGuidedHeuristicConfig,
     mandatory_nodes: Optional[Set[int]],
     time_limit: float,
     incumbent: float = 0.0,
@@ -66,7 +66,7 @@ def run_bpc_stage(
         capacity:        Vehicle capacity Q.
         R:               Revenue per unit waste.
         C:               Cost per unit distance.
-        pipeline_params: ExactGuidedHeuristicParams carrying BPC configuration knobs.
+        pipeline_params: ExactGuidedHeuristicConfig carrying BPC configuration knobs.
         mandatory_nodes: Set of local indices that must be visited.
         time_limit:      Wall-clock budget in seconds.
         incumbent:       Best known profit from prior stages; used to seed

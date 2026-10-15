@@ -28,7 +28,7 @@ from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_operators import (
     OPERATOR_NAMES,
 )
-from logic.src.policies.routing.meta_heuristics.hybrid_volleyball_premier_league.params import HVPLParams
+from logic.src.configs.policies.hvpl import HVPLConfig
 from logic.src.policies.routing.meta_heuristics.hybrid_volleyball_premier_league.solver import HVPLSolver
 
 
@@ -202,7 +202,7 @@ class HVPLPolicy(BaseRoutingPolicy):
                 profit_aware_operators=profit_aware_operators,
             )
 
-        params = HVPLParams(
+        params = HVPLConfig(
             n_teams=values.get("n_teams", 30),
             max_iterations=values.get("max_iterations", 100),
             substitution_rate=values.get("substitution_rate", 0.2),

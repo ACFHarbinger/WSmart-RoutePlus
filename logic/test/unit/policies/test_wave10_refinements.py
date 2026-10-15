@@ -5,9 +5,9 @@ import pytest
 from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price_and_cut.bpc_engine import (
     run_bpc,
 )
-from logic.src.policies.routing.meta_heuristics.firefly_algorithm.params import FAParams
+from logic.src.configs.policies.fa import FAConfig
 from logic.src.policies.routing.meta_heuristics.firefly_algorithm.solver import FASolver
-from logic.src.policies.routing.meta_heuristics.quantum_differential_evolution.params import QDEParams
+from logic.src.configs.policies.qde import QDEConfig
 from logic.src.policies.routing.meta_heuristics.quantum_differential_evolution.solver import QDESolver
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -38,7 +38,7 @@ def test_bpc_native_execution(small_instance):
 
 def test_qde_rotation_gate_logic(small_instance):
     dist, wastes, cap, R, C = small_instance
-    params = QDEParams(max_iterations=2, pop_size=5)
+    params = QDEConfig(max_iterations=2, pop_size=5)
     solver = QDESolver(dist, wastes, cap, R, C, params)
 
     # Test worsening case xi=0, bi=1 -> should be +dt
@@ -51,7 +51,7 @@ def test_qde_rotation_gate_logic(small_instance):
 
 def test_fa_attractiveness_formula(small_instance):
     dist, wastes, cap, R, C = small_instance
-    params = FAParams(max_iterations=2, pop_size=2, gamma=1.0, beta0=1.0)
+    params = FAConfig(max_iterations=2, pop_size=2, gamma=1.0, beta0=1.0)
     solver = FASolver(dist, wastes, cap, R, C, params)
 
     # Dummy routes for distance 2

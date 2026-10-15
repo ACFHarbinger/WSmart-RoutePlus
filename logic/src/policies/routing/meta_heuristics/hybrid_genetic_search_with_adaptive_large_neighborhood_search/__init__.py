@@ -6,13 +6,13 @@ intensive local search optimization.
 
 Attributes:
     HGSALNSSolver: Core solver class.
-    HGSALNSParams: Configuration parameters.
+    HGSALNSConfig: Configuration parameters.
 
 Example:
     >>> from .hgs_alns import HGSALNSSolver
 """
 
 from .hgs_alns import HGSALNSSolver
-from .params import HGSALNSParams
+from logic.src.configs.policies.hgs_alns import HGSALNSConfig
 
-__all__ = ["HGSALNSSolver", "HGSALNSParams"]
+__all__ = ["HGSALNSSolver", "HGSALNSConfig"]
