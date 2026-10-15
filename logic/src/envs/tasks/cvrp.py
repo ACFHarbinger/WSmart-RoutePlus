@@ -109,7 +109,7 @@ class CVRPEnv(ESPPRCEnv):
         super().__init__(
             generator=generator,
             generator_params=generator_params,
-            resources=(LoadResource(limit_key="vehicle_capacity", demand_key="demand"),),
+            resources=(LoadResource(limit_key="vehicle_capacity", demand_key="waste"),),
             waste_weight=0.0,
             cost_weight=1.0,
             device=device,
@@ -248,7 +248,7 @@ class CVRP(BaseProblem):
 CVRP_SPEC = ProblemSpec(
     name="cvrp",
     objective=lambda distance_km, **kw: -float(distance_km),
-    constraints=(LoadResource(limit_key="vehicle_capacity", demand_key="demand"),),
+    constraints=(LoadResource(limit_key="vehicle_capacity", demand_key="waste"),),
     metrics=("cost", "reward", "length", "demand", "overflows"),
     env_target="logic.src.envs.tasks.cvrp:CVRPEnv",
     expand_pool=False,
