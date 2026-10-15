@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
+from logic.src.configs.policies.ils_bd import IntegerLShapedBendersConfig
 from logic.src.policies.helpers.solvers_and_matheuristics import (
     CapacityCut,
     PCSubtourEliminationCut,
@@ -14,7 +15,6 @@ from logic.src.policies.routing.exact_and_decomposition_solvers.integer_l_shaped
     InventoryMasterProblem,
     MasterProblem,
 )
-from logic.src.configs.policies.ils_bd import IntegerLShapedBendersConfig
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

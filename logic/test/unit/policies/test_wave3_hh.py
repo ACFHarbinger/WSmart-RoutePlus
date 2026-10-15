@@ -8,22 +8,22 @@ import random
 import numpy as np
 import pytest
 from logic.src.configs.policies import HyperHeuristicACOConfig
+from logic.src.configs.policies.gp_hh import GPHHConfig
+from logic.src.configs.policies.hmm_gd_hh import HMMGDHHConfig
+from logic.src.configs.policies.rl_gd_hh import RLGDHHConfig
+from logic.src.configs.policies.ss_hh import SSHHConfig
 from logic.src.policies.helpers.operators.solution_initialization import build_greedy_routes
 from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_aco import (
     HyperHeuristicACO,
 )
-from logic.src.configs.policies.gp_hh import GPHHConfig
 from logic.src.policies.routing.hyper_heuristics.genetic_programming_hyper_heuristic.solver import GPHHSolver
-from logic.src.configs.policies.hmm_gd_hh import HMMGDHHConfig
 from logic.src.policies.routing.hyper_heuristics.hidden_markov_model_great_deluge_hyper_heuristic.solver import (
     HMMGDHHSolver,
 )
-from logic.src.configs.policies.ss_hh import SSHHConfig
 from logic.src.policies.routing.hyper_heuristics.sequence_based_selection_hyper_heuristic.solver import (
     SSHHSolver,
 )
-from logic.src.configs.policies.rl_gd_hh import RLGDHHConfig
 from logic.src.policies.routing.learning_heuristic_algorithms.reinforcement_learning_great_deluge_hyper_heuristic.solver import (
     RLGDHHSolver,
 )

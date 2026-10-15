@@ -34,6 +34,7 @@ Example:
 
 from .joint_context import JointSelectionConstructionContext
 from .multi_day_context import MultiDayContext
+from .packing_context import PackingContext
 from .problem_context import ProblemContext
 from .search_context import (
     AcceptanceMetrics,
@@ -44,7 +45,6 @@ from .search_context import (
     SelectionMetrics,
     merge_context,
 )
-from .packing_context import PackingContext
 from .solution_context import SolutionContext
 
 __all__ = [

@@ -19,7 +19,6 @@ import numpy as np
 from logic.src.configs.policies.slc import SLCConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-from logic.src.configs.policies.slc import SLCConfig
 from logic.src.policies.routing.meta_heuristics.soccer_league_competition.solver import SLCSolver
 
 

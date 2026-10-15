@@ -2,7 +2,6 @@
 
 import numpy as np
 import pytest
-
 from logic.src.policies.helpers.operators.inter_route_local_search.k_opt_star import (
     _apply_tail_permutation,
     _extract_route_parts,

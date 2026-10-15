@@ -29,17 +29,17 @@ import gurobipy as gp
 import numpy as np
 from gurobipy import GRB
 
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
+from logic.src.configs.policies.ils_rvnd_sp import ILSRVNDSPConfig
 from logic.src.policies.helpers.local_search.local_search_general import (
     GeneralLocalSearch,
 )
 from logic.src.policies.helpers.operators import (
     build_greedy_routes,
 )
-from logic.src.configs.policies.ils_rvnd_sp import ILSRVNDSPConfig
 from logic.src.policies.routing.matheuristics.iterated_local_search_randomized_variable_neighborhood_descent_set_partitioning.rvnd import (
     RVND,
 )
-from logic.src.configs.policies.aco_ks import KSparseACOConfig
 
 logger = logging.getLogger(__name__)
 

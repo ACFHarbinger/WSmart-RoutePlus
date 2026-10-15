@@ -15,6 +15,7 @@ Example:
 """
 
 from logic.src.configs.policies.psoda import DistancePSOConfig
+
 from .solver import DistancePSOSolver
 
 __all__ = ["DistancePSOSolver", "DistancePSOConfig"]

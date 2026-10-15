@@ -11,6 +11,7 @@ Attributes:
 """
 
 from logic.src.configs.policies.ma_im import MemeticAlgorithmIslandModelConfig
+
 from .solver import MemeticAlgorithmIslandModelSolver
 
 __all__ = ["MemeticAlgorithmIslandModelSolver", "MemeticAlgorithmIslandModelConfig"]

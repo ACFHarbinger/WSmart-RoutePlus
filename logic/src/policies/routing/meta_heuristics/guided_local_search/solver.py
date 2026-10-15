@@ -29,6 +29,8 @@ from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
+from logic.src.configs.policies.gls import GLSConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators import (
     cluster_removal,
     greedy_insertion,
@@ -40,9 +42,6 @@ from logic.src.policies.helpers.operators import (
     worst_removal,
 )
 from logic.src.policies.helpers.operators.solution_initialization.nearest_neighbor_si import build_nn_routes
-
-from logic.src.configs.policies.gls import GLSConfig
-from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class GLSSolver:

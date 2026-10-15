@@ -7,6 +7,7 @@ Attributes:
 """
 
 from logic.src.configs.policies.es_mpl import MuPlusLambdaESConfig
+
 from .solver import MuPlusLambdaESSolver
 
 __all__ = ["MuPlusLambdaESSolver", "MuPlusLambdaESConfig"]

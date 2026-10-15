@@ -28,12 +28,12 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
+from logic.src.configs.policies.hulk import HULKConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators.solution_initialization.greedy_si import build_greedy_routes
 
 from .adaptive_selection import AdaptiveOperatorSelector
 from .operators import HULKOperators
-from logic.src.configs.policies.hulk import HULKConfig
-from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 from .solution import Solution
 
 

@@ -15,6 +15,6 @@ def load_problem(name: str) -> Type[Any]:
         "tcptp": TCPTP,
         "cvrp": CVRP,
     }
-    problem = mapping.get(name.lower(), None)
+    problem = mapping.get(name.lower())
     assert problem is not None, f"unsupported problem: {name}"
     return problem

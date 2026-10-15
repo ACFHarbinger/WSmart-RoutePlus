@@ -16,7 +16,6 @@ from logic.src.configs.policies.ma_ts import MemeticAlgorithmToleranceBasedSelec
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from logic.src.configs.policies.ma_ts import MemeticAlgorithmToleranceBasedSelectionConfig
 from .solver import MemeticAlgorithmToleranceBasedSelectionSolver
 
 

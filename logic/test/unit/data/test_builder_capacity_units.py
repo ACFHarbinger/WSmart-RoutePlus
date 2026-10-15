@@ -2,7 +2,6 @@
 
 import pytest
 import torch
-
 from logic.src.constants import MAX_WASTE
 from logic.src.data.generators.builders import VRPInstanceBuilder
 from logic.src.pipeline.simulations.repository import load_area_and_waste_type_params

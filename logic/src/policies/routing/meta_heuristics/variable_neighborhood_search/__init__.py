@@ -11,6 +11,7 @@ Example:
 """
 
 from logic.src.configs.policies.vns import VNSConfig
+
 from .solver import VNSSolver
 
 __all__ = ["VNSSolver", "VNSConfig"]

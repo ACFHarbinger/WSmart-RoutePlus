@@ -32,7 +32,6 @@ from logic.src.interfaces.context.search_context import SearchContext
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from logic.src.configs.policies.rens import RENSConfig
 from .solver import run_rens_gurobi
 
 

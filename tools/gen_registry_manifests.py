@@ -79,7 +79,7 @@ def write_manifest(path: Path, registry_import: str, registry_name: str, entries
     lines.append("}")
     lines.append("")
     lines.append("def load() -> None:")
-    lines.append(f"    for name, target in ENTRIES.items():")
+    lines.append("    for name, target in ENTRIES.items():")
     lines.append(f"        {registry_name}.declare(name, target)")
     if extra:
         lines.append(extra)

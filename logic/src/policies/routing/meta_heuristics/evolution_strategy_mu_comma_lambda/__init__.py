@@ -10,6 +10,7 @@ Example:
 """
 
 from logic.src.configs.policies.es_mcl import MuCommaLambdaESConfig
+
 from .solver import MuCommaLambdaESSolver
 
 __all__ = ["MuCommaLambdaESSolver", "MuCommaLambdaESConfig"]

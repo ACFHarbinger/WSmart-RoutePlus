@@ -23,7 +23,6 @@ import numpy as np
 from logic.src.configs.policies.sca import SCAConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-from logic.src.configs.policies.sca import SCAConfig
 from logic.src.policies.routing.meta_heuristics.sine_cosine_algorithm.solver import SCASolver
 
 

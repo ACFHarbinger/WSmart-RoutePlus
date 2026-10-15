@@ -27,7 +27,6 @@ from logic.src.interfaces.context.problem_context import ProblemContext
 from logic.src.interfaces.context.solution_context import SolutionContext
 from logic.src.policies.routing.base.base_multi_period_policy import BaseMultiPeriodRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-from logic.src.configs.policies.phh import PHHConfig
 from logic.src.utils.policy.llh_pool import LLHPool
 from logic.src.utils.policy.routes import (
     route_profit,

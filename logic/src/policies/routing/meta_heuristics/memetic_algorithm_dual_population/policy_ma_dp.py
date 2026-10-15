@@ -18,7 +18,6 @@ from logic.src.configs.policies.ma_dp import MemeticAlgorithmDualPopulationConfi
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from logic.src.configs.policies.ma_dp import MemeticAlgorithmDualPopulationConfig
 from .solver import MemeticAlgorithmDualPopulationSolver
 
 

@@ -15,6 +15,7 @@ Example:
 """
 
 from logic.src.configs.policies.arco import ARCOConfig as ARCOConfig
+
 from .policy_arco import AdaptiveRoutingAlgorithmOrchestrator as AdaptiveRoutingAlgorithmOrchestrator
 
 __all__ = ["AdaptiveRoutingAlgorithmOrchestrator", "ARCOConfig"]

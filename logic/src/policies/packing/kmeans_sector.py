@@ -31,7 +31,7 @@ import numpy as np
 from sklearn.cluster import KMeans
 
 from logic.src.enums import GlobalRegistry, PolicyTag
-from logic.src.interfaces.context import SearchContext, PackingContext
+from logic.src.interfaces.context import PackingContext, SearchContext
 from logic.src.interfaces.packing import IPackingAlgorithm
 from logic.src.policies.packing.base import PackingRegistry
 

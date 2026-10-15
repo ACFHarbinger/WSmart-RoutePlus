@@ -21,7 +21,6 @@ from logic.src.configs.policies.abc import ABCConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from logic.src.configs.policies.abc import ABCConfig
 from .solver import ABCSolver
 
 

@@ -22,11 +22,12 @@ Example:
     >>> policy = NDSBRKGAPolicy()
 """
 
+from logic.src.configs.policies.nds_brkga import NDSBRKGAConfig
+
 from .chromosome import Chromosome, compute_adaptive_thresholds
 from .crossover import biased_crossover
 from .nsga2 import crowding_distance, fast_non_dominated_sort, select_elite_nsga2
 from .objectives import compute_overflow_risk, evaluate_chromosome, evaluate_population
-from logic.src.configs.policies.nds_brkga import NDSBRKGAConfig
 from .policy_nds_brkga import NDSBRKGAPolicy
 from .population import Population
 

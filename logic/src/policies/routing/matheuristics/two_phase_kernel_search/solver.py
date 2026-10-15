@@ -15,6 +15,7 @@ from typing import Dict, List, Optional, Set, Tuple
 import gurobipy as gp
 import numpy as np
 
+from logic.src.configs.policies.tpks import TpksConfig
 from logic.src.policies.routing.matheuristics.adaptive_kernel_search.aks import (
     _assess_difficulty,
     _get_feasible,
@@ -29,8 +30,6 @@ from logic.src.policies.routing.matheuristics.kernel_search.solver import (
     _setup_ks_model,
 )
 from logic.src.tracking.viz_mixin import PolicyStateRecorder
-
-from logic.src.configs.policies.tpks import TpksConfig
 
 
 @dataclass

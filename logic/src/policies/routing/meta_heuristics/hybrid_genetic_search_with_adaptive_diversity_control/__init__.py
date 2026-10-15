@@ -11,8 +11,9 @@ Example:
     >>> policy = PolicyHGSADC(config)
 """
 
-from . import policy_hgs_adc as policy_hgs_adc
 from logic.src.configs.policies.hgs_adc import HGSADCConfig as HGSADCConfig
+
+from . import policy_hgs_adc as policy_hgs_adc
 from .policy_hgs_adc import PolicyHGSADC as PolicyHGSADC
 
 __all__ = ["PolicyHGSADC", "HGSADCConfig", "policy_hgs_adc"]

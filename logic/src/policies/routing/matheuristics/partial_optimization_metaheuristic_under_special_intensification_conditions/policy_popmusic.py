@@ -19,8 +19,6 @@ from logic.src.policies.routing.matheuristics.partial_optimization_metaheuristic
     run_popmusic,
 )
 
-from logic.src.configs.policies.popmusic import POPMUSICConfig
-
 
 @GlobalRegistry.register(
     PolicyTag.MATHEURISTIC,

@@ -2,13 +2,13 @@
 
 import numpy as np
 import pytest
+from logic.src.configs.policies.fa import FAConfig
+from logic.src.configs.policies.qde import QDEConfig
 from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price_and_cut.bpc_engine import (
     run_bpc,
 )
-from logic.src.configs.policies.fa import FAConfig
 from logic.src.policies.routing.meta_heuristics.firefly_algorithm.solver import FASolver
-from logic.src.configs.policies.qde import QDEConfig
 from logic.src.policies.routing.meta_heuristics.quantum_differential_evolution.solver import QDESolver
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

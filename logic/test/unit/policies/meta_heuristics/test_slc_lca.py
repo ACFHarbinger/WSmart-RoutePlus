@@ -3,8 +3,8 @@
 import numpy as np
 import pytest
 from logic.src.configs.policies.lca import LCAConfig
-from logic.src.policies.routing.meta_heuristics.league_championship_algorithm.solver import LCASolver
 from logic.src.configs.policies.slc import SLCConfig
+from logic.src.policies.routing.meta_heuristics.league_championship_algorithm.solver import LCASolver
 from logic.src.policies.routing.meta_heuristics.soccer_league_competition.solver import SLCSolver
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

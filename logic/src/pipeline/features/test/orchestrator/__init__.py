@@ -29,8 +29,8 @@ from omegaconf import OmegaConf
 
 import logic.src.constants as udef
 import logic.src.tracking as wst
-from logic.src.constants.paths import CONFIGS_DIR
 from logic.src.configs import Config
+from logic.src.constants.paths import CONFIGS_DIR
 from logic.src.pipeline.callbacks import PolicySummaryCallback
 
 # Local imports from modular components

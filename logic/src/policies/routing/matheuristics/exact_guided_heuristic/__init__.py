@@ -25,8 +25,9 @@ Policy registration (automatic on import)::
     policy = ExactGuidedHeuristicPolicy()
 """
 
-from .dispatcher import run_pipeline
 from logic.src.configs.policies.egh import ExactGuidedHeuristicConfig
+
+from .dispatcher import run_pipeline
 from .policy_egh import ExactGuidedHeuristicPolicy
 from .route_pool import RoutePool, VRPPRoute
 

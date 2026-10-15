@@ -11,8 +11,8 @@ from logic.src.configs.policies.other.packing import (
     FilterAndFanSelectionConfig,
     FPTASKnapsackSelectionConfig,
     FractionalKnapsackSelectionConfig,
-    PackingConfig,
     MIPKnapsackSelectionConfig,
+    PackingConfig,
     PortfolioDispatcherSelectionConfig,
     RevenueSelectionConfig,
 )

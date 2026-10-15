@@ -28,6 +28,8 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
+from logic.src.configs.policies.vns import VNSConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators.search_heuristics.destroy_repair_llh import (
     build_greedy_initial_routes,
     llh_cluster_greedy,
@@ -38,9 +40,6 @@ from logic.src.policies.helpers.operators.search_heuristics.destroy_repair_llh i
     routes_net_profit,
     routes_total_distance,
 )
-
-from logic.src.configs.policies.vns import VNSConfig
-from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class VNSSolver:

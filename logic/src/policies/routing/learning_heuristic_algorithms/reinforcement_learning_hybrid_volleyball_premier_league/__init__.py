@@ -25,6 +25,7 @@ Example:
 """
 
 from logic.src.configs.policies.rl_hvpl import RLHVPLConfig
+
 from .rl_hvpl import RLHVPLSolver
 
 __all__ = ["RLHVPLConfig", "RLHVPLSolver"]

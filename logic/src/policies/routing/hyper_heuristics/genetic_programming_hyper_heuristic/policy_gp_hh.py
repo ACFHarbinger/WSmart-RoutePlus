@@ -33,7 +33,6 @@ from logic.src.configs.policies.gp_hh import GPHHConfig
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-from logic.src.configs.policies.gp_hh import GPHHConfig
 from logic.src.policies.routing.hyper_heuristics.genetic_programming_hyper_heuristic.solver import GPHHSolver
 
 # ---------------------------------------------------------------------------

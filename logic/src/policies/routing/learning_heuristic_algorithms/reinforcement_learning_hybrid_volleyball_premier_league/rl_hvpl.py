@@ -37,6 +37,7 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
+from logic.src.configs.policies.rl_hvpl import RLHVPLConfig
 from logic.src.policies.helpers.reinforcement_learning.alns_sarsa import (
     ALNSSARSASolver,
 )
@@ -44,8 +45,6 @@ from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic import (
     HyperHeuristicACO,
 )
-
-from logic.src.configs.policies.rl_hvpl import RLHVPLConfig
 
 
 class RLHVPLSolver:

@@ -18,7 +18,6 @@ from logic.src.configs.policies.de import DEConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from logic.src.configs.policies.de import DEConfig
 from .solver import DESolver
 
 

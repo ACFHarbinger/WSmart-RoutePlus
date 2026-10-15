@@ -23,6 +23,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators.crossover_recombination import ordered_crossover
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search import Individual
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.evolution import (
@@ -30,7 +31,6 @@ from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.evolution 
     update_biased_fitness,
 )
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.split import LinearSplit
-from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 from .ruin_recreate import AdaptiveOperatorManager, RuinRecreateOperator
 

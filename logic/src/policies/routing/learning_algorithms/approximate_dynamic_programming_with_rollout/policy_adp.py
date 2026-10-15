@@ -19,7 +19,7 @@ Example:
 from dataclasses import asdict
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
-from logic.src.configs.policies import ADPRolloutConfig
+from logic.src.configs.policies.adp import ADPRolloutConfig
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.problem_context import ProblemContext
@@ -28,7 +28,6 @@ from logic.src.policies.routing.base.base_multi_period_policy import BaseMultiPe
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
 from .adp_engine import ADPRolloutEngine
-from logic.src.configs.policies.adp import ADPRolloutConfig
 
 
 @GlobalRegistry.register(

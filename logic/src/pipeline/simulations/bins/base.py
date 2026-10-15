@@ -38,8 +38,9 @@ try:
 except ImportError:
     get_active_run = None  # type: ignore[assignment]
 
-from logic.src.pipeline.simulations.bins.prediction import calculate_frequency_and_level, predict_days_to_overflow
 from packages.wsmart_bin_analysis import GridBase
+
+from logic.src.pipeline.simulations.bins.prediction import calculate_frequency_and_level, predict_days_to_overflow
 
 
 class Bins:

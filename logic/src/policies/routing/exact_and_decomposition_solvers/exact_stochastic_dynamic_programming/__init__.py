@@ -8,8 +8,9 @@ Attributes:
 
 """
 
-from .esdp_engine import ExactSDPEngine
 from logic.src.configs.policies.esdp import ExactSDPConfig
+
+from .esdp_engine import ExactSDPEngine
 
 __all__ = [
     "ExactSDPConfig",

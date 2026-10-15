@@ -18,6 +18,8 @@ import random
 
 import numpy as np
 import pytest
+from logic.src.configs.policies.ils import ILSConfig
+from logic.src.configs.policies.vns import VNSConfig
 from logic.src.policies.helpers.operators.destroy_ruin import (
     cluster_removal,
     random_removal,
@@ -40,9 +42,7 @@ from logic.src.policies.helpers.operators.search_heuristics.destroy_repair_llh i
     routes_net_profit,
     routes_total_distance,
 )
-from logic.src.configs.policies.ils import ILSConfig
 from logic.src.policies.routing.meta_heuristics.iterated_local_search.solver import ILSSolver
-from logic.src.configs.policies.vns import VNSConfig
 from logic.src.policies.routing.meta_heuristics.variable_neighborhood_search.solver import VNSSolver
 
 CAPACITY = 60.0

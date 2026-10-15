@@ -44,9 +44,9 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
+from logic.src.configs.policies.ils_bd import IntegerLShapedBendersConfig
 from logic.src.policies.helpers.solvers_and_matheuristics.vrpp_model import VRPPModel
 
-from logic.src.configs.policies.ils_bd import IntegerLShapedBendersConfig
 from .scenario import ScenarioGenerator
 from .subproblem import RecourseEvaluator
 

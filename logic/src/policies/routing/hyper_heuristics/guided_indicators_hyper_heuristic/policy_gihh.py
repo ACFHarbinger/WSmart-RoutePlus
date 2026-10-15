@@ -17,13 +17,12 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
-from logic.src.configs.policies import GIHHConfig
+from logic.src.configs.policies.gihh import GIHHConfig
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
 from .gihh import GIHHSolver
-from logic.src.configs.policies.gihh import GIHHConfig
 
 
 @GlobalRegistry.register(

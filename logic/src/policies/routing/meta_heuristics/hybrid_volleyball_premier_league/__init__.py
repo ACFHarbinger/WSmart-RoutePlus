@@ -17,6 +17,7 @@ Attributes:
 """
 
 from logic.src.configs.policies.hvpl import HVPLConfig
+
 from .policy_hvpl import HVPLPolicy
 from .solver import HVPLSolver
 

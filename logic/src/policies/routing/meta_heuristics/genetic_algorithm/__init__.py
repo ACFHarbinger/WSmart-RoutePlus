@@ -11,6 +11,7 @@ Example:
 """
 
 from logic.src.configs.policies.ga import GAConfig
+
 from .solver import GASolver
 
 __all__ = ["GASolver", "GAConfig"]

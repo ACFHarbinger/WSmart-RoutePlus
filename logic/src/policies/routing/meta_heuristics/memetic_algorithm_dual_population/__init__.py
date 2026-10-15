@@ -12,6 +12,7 @@ Attributes:
 """
 
 from logic.src.configs.policies.ma_dp import MemeticAlgorithmDualPopulationConfig
+
 from .policy_ma_dp import MemeticAlgorithmDualPopulationPolicy
 from .solver import MemeticAlgorithmDualPopulationSolver
 

@@ -19,7 +19,6 @@ import numpy as np
 from logic.src.configs.policies.nds_brkga import NDSBRKGAConfig
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.interfaces.context.joint_context import JointSelectionConstructionContext
-from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.packing_and_routing.base.base_joint_policy import BaseJointPolicy
 from logic.src.policies.packing_and_routing.base.registry import JointPolicyRegistry
 from logic.src.policies.packing_and_routing.non_dominated_sorting_biased_random_key_genetic_algorithm.chromosome import (
@@ -29,10 +28,11 @@ from logic.src.policies.packing_and_routing.non_dominated_sorting_biased_random_
     compute_overflow_risk,
     evaluate_population,
 )
-from logic.src.configs.policies.nds_brkga import NDSBRKGAConfig
 from logic.src.policies.packing_and_routing.non_dominated_sorting_biased_random_key_genetic_algorithm.population import (
     Population,
 )
+from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
+from logic.src.policies.routing.base.sub_problem import coerce_config
 
 
 @GlobalRegistry.register(
@@ -155,7 +155,7 @@ class NDSBRKGAPolicy(BaseJointPolicy):
                 - total_profit: Net profit (Revenue - Distance Cost).
                 - total_cost: Total routing cost.
         """
-        params = self._effective_config(asdict(self._config)) if self._config else NDSBRKGAConfig()
+        params = coerce_config(self._config, NDSBRKGAConfig)
         n_bins = len(context.current_fill)
         if n_bins == 0:
             return [], [], 0.0, 0.0

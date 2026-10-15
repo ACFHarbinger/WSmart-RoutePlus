@@ -22,6 +22,7 @@ Example:
 """
 
 from logic.src.configs.policies.rl_alns import RLALNSConfig
+
 from .solver import RLALNSSolver
 
 __all__ = ["RLALNSSolver", "RLALNSConfig"]

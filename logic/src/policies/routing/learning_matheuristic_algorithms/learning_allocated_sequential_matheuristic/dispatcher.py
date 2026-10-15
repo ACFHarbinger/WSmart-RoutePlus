@@ -36,9 +36,9 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Type
 import numpy as np
 from numpy.typing import NDArray
 
+from logic.src.configs.policies.lasm import LASMPipelineConfig
 from logic.src.policies.routing.matheuristics.exact_guided_heuristic.route_pool import RoutePool
 
-from logic.src.configs.policies.lasm import LASMPipelineConfig
 from .rl_controller import RLController
 from .stage_lbbd import run_lbbd_stage
 

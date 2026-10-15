@@ -11,6 +11,7 @@ Attributes:
 """
 
 from logic.src.configs.policies.lca import LCAConfig
+
 from .policy_lca import LCAPolicy
 
 __all__ = ["LCAConfig", "LCAPolicy"]

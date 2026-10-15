@@ -11,6 +11,7 @@ Example:
 """
 
 from logic.src.configs.policies.sa import SAConfig
+
 from .policy_sa import SAPolicy
 from .solver import SASolver
 

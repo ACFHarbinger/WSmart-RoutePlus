@@ -13,6 +13,7 @@ Example:
 """
 
 from logic.src.configs.policies.jsa import JointSAConfig
+
 from .policy_jsa import JointSAPolicy
 
 __all__ = ["JointSAConfig", "JointSAPolicy"]

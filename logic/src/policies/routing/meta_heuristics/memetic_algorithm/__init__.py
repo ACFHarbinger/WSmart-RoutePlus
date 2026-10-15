@@ -11,6 +11,7 @@ Example:
 """
 
 from logic.src.configs.policies.ma import MAConfig
+
 from .policy_ma import MAPolicy
 from .solver import MASolver
 

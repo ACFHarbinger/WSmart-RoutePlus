@@ -11,6 +11,7 @@ Example:
 """
 
 from logic.src.configs.policies.pso import PSOConfig
+
 from .policy_pso import PSOPolicyAdapter
 from .solver import PSOSolver
 

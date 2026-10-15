@@ -77,6 +77,7 @@ import pandas as pd
 
 from logic.src.configs.policies.alns import ALNSConfig
 from logic.src.configs.policies.hgs import HGSConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns import ALNSSolver
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.hgs import HGSSolver
@@ -85,7 +86,6 @@ from logic.src.policies.routing.other_algorithms.travelling_salesman_problem.tsp
     find_route,
     get_route_cost,
 )
-from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 from .state import POPMUSICState
 

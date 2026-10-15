@@ -28,6 +28,8 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
+from logic.src.configs.policies.bc import BCConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.solvers_and_matheuristics import (
     CapacityCut,
     PCSubtourEliminationCut,
@@ -39,9 +41,6 @@ from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_cut.h
     construct_nn_solution,
     farthest_insertion,
 )
-
-from logic.src.configs.policies.bc import BCConfig
-from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 try:
     import gurobipy as gp

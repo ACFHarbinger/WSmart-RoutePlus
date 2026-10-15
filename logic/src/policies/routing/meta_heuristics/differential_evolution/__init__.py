@@ -15,6 +15,7 @@ Example:
 """
 
 from logic.src.configs.policies.de import DEConfig
+
 from .solver import DESolver
 
 __all__ = ["DEConfig", "DESolver"]

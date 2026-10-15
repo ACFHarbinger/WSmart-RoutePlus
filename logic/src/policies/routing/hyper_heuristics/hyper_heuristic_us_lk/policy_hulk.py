@@ -22,7 +22,6 @@ from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolic
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
 from .hulk import HULKSolver
-from logic.src.configs.policies.hulk import HULKConfig
 
 
 @GlobalRegistry.register(

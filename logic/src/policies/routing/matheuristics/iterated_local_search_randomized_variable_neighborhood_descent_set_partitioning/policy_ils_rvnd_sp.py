@@ -16,14 +16,13 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
-from logic.src.configs.policies import ILSRVNDSPConfig
+from logic.src.configs.policies.ils_rvnd_sp import ILSRVNDSPConfig
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.routing.matheuristics.iterated_local_search_randomized_variable_neighborhood_descent_set_partitioning.ils_rvnd_sp import (
     ILSRVNDSPSolver,
 )
-from logic.src.configs.policies.ils_rvnd_sp import ILSRVNDSPConfig
 
 
 @GlobalRegistry.register(

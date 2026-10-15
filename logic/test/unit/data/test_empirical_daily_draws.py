@@ -3,7 +3,6 @@
 import pandas as pd
 import pytest
 import torch
-
 from logic.src.data.distributions import Empirical
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
