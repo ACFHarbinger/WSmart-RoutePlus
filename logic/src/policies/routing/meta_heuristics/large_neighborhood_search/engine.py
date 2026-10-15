@@ -19,8 +19,6 @@ Attributes:
     MIN_REMOVAL_LOWER_BOUND: Named lower bound for the classic ALNS removal count.
     coerce_config: Lenient engine-level config coercion.
 
-Example:
-    >>> from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.engine import LNSBase
 """
 
 import time

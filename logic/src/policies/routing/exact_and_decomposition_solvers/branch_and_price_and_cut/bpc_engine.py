@@ -182,9 +182,9 @@ def run_bpc(  # noqa: C901
         - Prune by bound
 
     Args:
-        problem (SubProblem): Routing sub-problem (distances, wastes, capacity,
+        problem: Routing sub-problem (distances, wastes, capacity,
             revenue, cost unit, mandatory nodes, fleet limit, environment).
-        cfg (Optional[Union[BPCConfig, Dict[str, Any]]]): Configuration. A raw
+        cfg: Configuration. A raw
             dict is coerced leniently into BPCConfig (WP-04 pattern).
 
     Returns:

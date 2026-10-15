@@ -30,7 +30,7 @@ class LookaheadSelection(IPackingAlgorithm):
         """Select bins from the lookahead seed-and-bundle rule.
 
         Args:
-            context (PackingContext): Fills, rates and current collection day.
+            context: Fills, rates and current collection day.
 
         Returns:
             Tuple[List[int], SearchContext]: 1-based IDs and a fresh search context.

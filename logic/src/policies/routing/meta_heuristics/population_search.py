@@ -88,8 +88,8 @@ class PopulationSearch(ABC):
         """Initializes the search with a sub-problem and its typed config.
 
         Args:
-            problem (SubProblem): Extracted routing sub-problem.
-            cfg (Any): Engine configuration; engines coerce it via
+            problem: Extracted routing sub-problem.
+            cfg: Engine configuration; engines coerce it via
                 :meth:`_coerce_config` before calling ``super().__init__``.
         """
         self.problem = problem
@@ -143,7 +143,7 @@ class PopulationSearch(ABC):
         """Fold the round's discoveries into the incumbent best.
 
         Args:
-            previous_best (float): Incumbent profit captured before this round.
+            previous_best: Incumbent profit captured before this round.
 
         Returns:
             bool: True when the incumbent improved during this round.

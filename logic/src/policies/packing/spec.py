@@ -30,7 +30,7 @@ def selected_ids(mask: NDArray[np.bool_]) -> List[int]:
     """Return 1-based customer IDs for a customer-level boolean mask.
 
     Args:
-        mask (NDArray[np.bool_]): Per-customer decision, length ``N``.
+        mask: Per-customer decision, length ``N``.
 
     Returns:
         List[int]: Selected bin IDs in index order.
@@ -45,8 +45,8 @@ def last_minute(fills: NDArray[np.floating], threshold: float) -> NDArray[np.boo
     last-minute is a separate unreleased key.
 
     Args:
-        fills (NDArray[np.floating]): Current fill levels, percent of capacity.
-        threshold (float): Inclusive trigger, same units as ``fills``.
+        fills: Current fill levels, percent of capacity.
+        threshold: Inclusive trigger, same units as ``fills``.
 
     Returns:
         NDArray[np.bool_]: Customer-level mask.
@@ -66,10 +66,10 @@ def regular(
     ``frequency`` means every day. Eligibility is ``fill >= min_fill``.
 
     Args:
-        fills (NDArray[np.floating]): Current fill levels, percent of capacity.
-        current_day (int): Simulation day (1-based in the paper runs).
-        frequency (float): Collection period in days (``context.threshold``).
-        min_fill (float): Minimum fill to include on a collection day.
+        fills: Current fill levels, percent of capacity.
+        current_day: Simulation day (1-based in the paper runs).
+        frequency: Collection period in days (``context.threshold``).
+        min_fill: Minimum fill to include on a collection day.
 
     Returns:
         NDArray[np.bool_]: Customer-level mask.
@@ -98,12 +98,12 @@ def service_level(
     statistics yield an empty mask.
 
     Args:
-        fills (NDArray[np.floating]): Current fill levels, percent.
-        rates (Optional[NDArray[np.floating]]): Daily accumulation, percent.
-        stds (Optional[NDArray[np.floating]]): Daily accumulation std, percent.
-        z (float): Confidence factor (``context.threshold``).
-        horizon_days (int): Projection length in days.
-        capacity (float): Overflow level in the same units as ``fills``.
+        fills: Current fill levels, percent.
+        rates: Daily accumulation, percent.
+        stds: Daily accumulation std, percent.
+        z: Confidence factor (``context.threshold``).
+        horizon_days: Projection length in days.
+        capacity: Overflow level in the same units as ``fills``.
 
     Returns:
         NDArray[np.bool_]: Customer-level mask.
@@ -135,10 +135,10 @@ def lookahead(
        ``fill + (anchor - today - 1) * rate >= capacity``.
 
     Args:
-        fills (NDArray[np.floating]): Current fill levels, percent.
-        rates (Optional[NDArray[np.floating]]): Daily accumulation, percent.
-        current_collection_day (float): Reference day for the horizon.
-        capacity (float): Overflow level in the same units as ``fills``.
+        fills: Current fill levels, percent.
+        rates: Daily accumulation, percent.
+        current_collection_day: Reference day for the horizon.
+        capacity: Overflow level in the same units as ``fills``.
 
     Returns:
         NDArray[np.bool_]: Customer-level mask.

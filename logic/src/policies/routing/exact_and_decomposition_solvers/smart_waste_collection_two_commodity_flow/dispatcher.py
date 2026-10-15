@@ -36,11 +36,11 @@ def run_swc_tcf_optimizer(
     matrix → list-of-lists, fleet limit, seed) live here now.
 
     Args:
-        problem (SubProblem): Routing sub-problem. ``wastes`` is the
+        problem: Routing sub-problem. ``wastes`` is the
             {local_idx: fill} mapping, ``dist_matrix`` the symmetric distance
             matrix, ``n_vehicles`` the fleet limit (0/None = unbounded) and
             ``dual_values`` optional pricing duals.
-        cfg (Optional[Union[SWCTCFConfig, Dict[str, Any]]]): Typed policy
+        cfg: Typed policy
             config (framework/engine/time_limit/seed); a raw dict is coerced
             leniently into SWCTCFConfig (WP-04 pattern).
 

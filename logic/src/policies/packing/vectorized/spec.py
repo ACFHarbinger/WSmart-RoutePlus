@@ -30,8 +30,8 @@ def last_minute(fill_levels: torch.Tensor, threshold: float) -> torch.Tensor:
     """Collect customers whose fill is at or above ``threshold`` percent.
 
     Args:
-        fill_levels (torch.Tensor): Current fills ``[B, N]`` as fractions.
-        threshold (float): Inclusive trigger in percent (70 means 0.70).
+        fill_levels: Current fills ``[B, N]`` as fractions.
+        threshold: Inclusive trigger in percent (70 means 0.70).
 
     Returns:
         torch.Tensor: Boolean mask ``[B, N]``; depot is False.
@@ -51,10 +51,10 @@ def regular(
     period collects every day. Eligibility is ``fill >= min_fill`` (fraction).
 
     Args:
-        fill_levels (torch.Tensor): Current fills ``[B, N]`` as fractions.
-        current_day (Optional[Union[torch.Tensor, int]]): Day index, scalar or ``[B]``.
-        frequency (float): Collection period in days.
-        min_fill (float): Minimum fill fraction on a collection day.
+        fill_levels: Current fills ``[B, N]`` as fractions.
+        current_day: Day index, scalar or ``[B]``.
+        frequency: Collection period in days.
+        min_fill: Minimum fill fraction on a collection day.
 
     Returns:
         torch.Tensor: Boolean mask ``[B, N]``; depot is False.
@@ -85,12 +85,12 @@ def service_level(
     """Collect bins whose worst-case linear projection reaches capacity.
 
     Args:
-        fill_levels (torch.Tensor): Current fills ``[B, N]`` as fractions.
-        rates (Optional[torch.Tensor]): Daily accumulation ``[B, N]``.
-        stds (Optional[torch.Tensor]): Daily accumulation std ``[B, N]``.
-        z (float): Confidence factor.
-        horizon_days (int): Projection length in days.
-        capacity (float): Overflow level in the same units as ``fill_levels``.
+        fill_levels: Current fills ``[B, N]`` as fractions.
+        rates: Daily accumulation ``[B, N]``.
+        stds: Daily accumulation std ``[B, N]``.
+        z: Confidence factor.
+        horizon_days: Projection length in days.
+        capacity: Overflow level in the same units as ``fill_levels``.
 
     Returns:
         torch.Tensor: Boolean mask ``[B, N]``; depot is False.
@@ -113,10 +113,10 @@ def lookahead(
     Same four steps as ``packing.spec.lookahead``, in fraction units.
 
     Args:
-        fill_levels (torch.Tensor): Current fills ``[B, N]`` as fractions.
-        rates (Optional[torch.Tensor]): Daily accumulation ``[B, N]``.
-        current_collection_day (Union[int, torch.Tensor]): Reference day.
-        capacity (float): Overflow level in the same units as ``fill_levels``.
+        fill_levels: Current fills ``[B, N]`` as fractions.
+        rates: Daily accumulation ``[B, N]``.
+        current_collection_day: Reference day.
+        capacity: Overflow level in the same units as ``fill_levels``.
 
     Returns:
         torch.Tensor: Boolean mask ``[B, N]``; depot is False.

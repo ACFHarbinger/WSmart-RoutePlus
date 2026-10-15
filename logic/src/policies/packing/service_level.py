@@ -30,7 +30,7 @@ class ServiceLevelSelection(IPackingAlgorithm):
         """Select bins statistically likely to overflow within the horizon.
 
         Args:
-            context (PackingContext): Fills, rates, stds, z (``threshold``), horizon.
+            context: Fills, rates, stds, z (``threshold``), horizon.
 
         Returns:
             Tuple[List[int], SearchContext]: 1-based IDs and a fresh search context.

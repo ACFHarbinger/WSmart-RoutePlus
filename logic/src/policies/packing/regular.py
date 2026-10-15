@@ -31,7 +31,7 @@ class RegularSelection(IPackingAlgorithm):
         """Select eligible bins if today is a scheduled collection day.
 
         Args:
-            context (PackingContext): Day, period (``threshold``) and fills.
+            context: Day, period (``threshold``) and fills.
 
         Returns:
             Tuple[List[int], SearchContext]: 1-based IDs and a fresh search context.
