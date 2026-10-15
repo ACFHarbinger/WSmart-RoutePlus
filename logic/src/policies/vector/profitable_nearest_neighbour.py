@@ -215,9 +215,15 @@ class ProfitableNearestNeighbourPolicy(torch.nn.Module):
         """
         device = td.device if td.device is not None else td["locs"].device
         dms, wastes, caps, revenue, cost = self.inputs(td, env)
+        actions = self.actions(self.solve(dms, wastes, revenue, cost), wastes, caps, device)
+        return {"actions": actions, "reward": self._replay_reward(td, env, actions)}
 
+    @staticmethod
+    def actions(tours: List[List[int]], wastes: np.ndarray, caps: np.ndarray, device: Any) -> torch.Tensor:
+        """Padded CPTP action sequences for ``tours``: a depot return whenever the load would
+        exceed capacity, then the day end (depot, depot); staying home is a single depot."""
         sequences = []
-        for b, tour in enumerate(self.solve(dms, wastes, revenue, cost)):
+        for b, tour in enumerate(tours):
             seq: List[int] = []
             load = 0.0
             for j in tour:
@@ -232,7 +238,7 @@ class ProfitableNearestNeighbourPolicy(torch.nn.Module):
         actions = torch.zeros(len(sequences), width, dtype=torch.long, device=device)
         for b, s in enumerate(sequences):
             actions[b, : len(s)] = torch.tensor(s, dtype=torch.long, device=device)
-        return {"actions": actions, "reward": self._replay_reward(td, env, actions)}
+        return actions
 
     @staticmethod
     def inputs(td: TensorDict, env: Optional[RL4COEnvBase]) -> tuple[np.ndarray, np.ndarray, np.ndarray, float, float]:

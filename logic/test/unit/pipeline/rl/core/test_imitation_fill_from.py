@@ -33,7 +33,7 @@ class _StubPolicy(torch.nn.Module):
         }
 
 
-def _module(fill_from: str) -> tuple[ImitationLearning, TensorDict]:
+def _module(fill_from: str, **kw: Any) -> tuple[ImitationLearning, TensorDict]:
     env = CPTPEnv(generator_params={"num_loc": 4}, check_env_specs=False, waste_weight=10.0, cost_weight=1.0)
     module = ImitationLearning(
         policy_config=ProfitableNNConfig(),
@@ -42,6 +42,7 @@ def _module(fill_from: str) -> tuple[ImitationLearning, TensorDict]:
         env=env,
         policy=_StubPolicy(),
         train_time=True,
+        **kw,
     )
     module.log = lambda *a, **k: None  # no trainer
     # Bins 1-3 sit together one unit from the depot and are worth a tour; bin 4 is far away.
@@ -89,3 +90,22 @@ def test_validation_decodes_the_model_in_either_mode() -> None:
 def test_unknown_fill_source_is_rejected() -> None:
     with pytest.raises(ValueError, match="fill_from"):
         _module("sampled")
+
+
+def test_precompute_fills_the_cache_and_trains_nothing(tmp_path) -> None:
+    module, batch = _module("expert", expert_cache=str(tmp_path), precompute=True)
+
+    out = module.shared_step(batch, 0, phase="train")
+    module.expert_policy.flush()
+
+    assert module.policy.calls == []
+    assert out["loss"] is None
+    assert set(module._epoch_actions[0].flatten().tolist()) == {0, 1, 2, 3}
+    assert len(list(tmp_path.glob("shard-*.pt"))) == 1
+
+
+def test_precompute_needs_the_expert_fill_and_a_cache(tmp_path) -> None:
+    with pytest.raises(ValueError, match="precompute"):
+        _module("model", expert_cache=str(tmp_path), precompute=True)
+    with pytest.raises(ValueError, match="precompute"):
+        _module("expert", precompute=True)
