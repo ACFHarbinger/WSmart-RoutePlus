@@ -30,6 +30,8 @@ from typing import List, Optional, Tuple
 
 REPO = Path(__file__).resolve().parents[1]
 SCOPE = REPO / "logic" / "src"
+# Pinned submodule: its content belongs to its own repository and must stay clean.
+SUBMODULE = SCOPE / "pipeline" / "simulations" / "wsmart_bin_analysis"
 
 SECTION_RE = re.compile(r"^\s*(Args|Returns|Yields|Raises|Example|Examples|Attributes)\s*:\s*$", re.IGNORECASE)
 IMPORT_EXAMPLE_RE = re.compile(r"^\s*>>>\s*(import|from)\s+[\w.]+")
@@ -151,6 +153,8 @@ def main() -> int:
     total_lines = 0
     for path in sorted(SCOPE.rglob("*.py")):
         if "__pycache__" in path.parts:
+            continue
+        if SUBMODULE in path.parents:
             continue
         new_text, removed = trim_file(path)
         if new_text is None:
