@@ -1,75 +1,33 @@
-"""
-Common configuration dataclasses for expert policies.
-
-This module provides centralized configurations for classical routing algorithms
-used as expert policies in imitation learning and hybrid RL approaches.
-
-Available Configurations
-------------------------
-- **HGSConfig**: Hybrid Genetic Search (HGS)
-- **ALNSConfig**: Adaptive Large Neighborhood Search (ALNS)
-- **ILSConfig**: Iterated Local Search (ILS)
-- **RLSConfig**: Random Local Search (RLS)
-- **ACOConfig**: Ant Colony Optimization (ACO)
-- **HGSALNSConfig**: HGS with ALNS Education (HGS-ALNS)
-
-Usage
------
-Import configurations for use in training pipelines:
-
-```python
-from logic.src.configs.common import HGSConfig, ALNSConfig, ILSConfig
-
-# Create expert policy config for imitation learning
-expert_config = HGSConfig(
-    time_limit=30.0,
-    population_size=25,
-    n_generations=50
-)
-```
-
-Integration with Training Pipeline
------------------------------------
-These configs are used in:
-1. **Imitation Learning**: logic/src/pipeline/rl/core/imitation.py
-   - Configures expert policy for demonstration generation
-2. **Adaptive Imitation**: logic/src/pipeline/rl/core/adaptive_imitation.py
-   - Switches between expert and learned policy
-3. **Route Improvement**: logic/src/pipeline/rl/features/route_improvement.py
-   - Refines neural solutions with classical algorithms
-
-Attributes:
-    ACOConfig: Configuration for ACO algorithm.
-    ALNSConfig: Configuration for ALNS algorithm.
-    HGSConfig: Configuration for HGS algorithm.
-    HGSALNSConfig: Configuration for HGSALNS algorithm.
-    HVPLConfig: Configuration for HVPL algorithm.
-    ILSConfig: Configuration for ILS algorithm.
-    ProfitableNNConfig: Configuration for the profitable nearest-neighbour expert.
-    RLSConfig: Configuration for RLS algorithm.
-
-Example:
-    None
-"""
+"""Vectorised (training-time) expert-policy configurations."""
 
 from .aco import ACOConfig
-from .alns import ALNSConfig
-from .hgs import HGSConfig
-from .hgs_alns import HGSALNSConfig
-from .hvpl import HVPLConfig
-from .ils import ILSConfig
+from .alns import VectorALNSConfig
+from .hgs import VectorHGSConfig
+from .hgs_alns import VectorHGSALNSConfig
+from .hvpl import VectorHVPLConfig
+from .ils import VectorILSConfig
 from .profitable_nn import ProfitableNNConfig
 from .rls import RLSConfig
 
+# Hydra _target_ names used by existing checkpoints.
+ALNSConfig = VectorALNSConfig
+HGSConfig = VectorHGSConfig
+ILSConfig = VectorILSConfig
+HGSALNSConfig = VectorHGSALNSConfig
+HVPLConfig = VectorHVPLConfig
+
 __all__ = [
-    # Main expert policies
-    "HGSConfig",
-    "HVPLConfig",
-    "ALNSConfig",
-    "ILSConfig",
+    "VectorHGSConfig",
+    "VectorHVPLConfig",
+    "VectorALNSConfig",
+    "VectorILSConfig",
     "RLSConfig",
     "ACOConfig",
-    "HGSALNSConfig",
+    "VectorHGSALNSConfig",
     "ProfitableNNConfig",
-    "RLSConfig",
+    "ALNSConfig",
+    "HGSConfig",
+    "ILSConfig",
+    "HGSALNSConfig",
+    "HVPLConfig",
 ]

@@ -12,7 +12,6 @@ Example:
 from typing import List, Optional, cast
 
 import numpy as np
-import torch
 
 
 def get_route_cost(distancesC, tour):
@@ -29,12 +28,11 @@ def get_route_cost(distancesC, tour):
     Returns:
         float: Total tour distance
     """
-    if isinstance(tour, torch.Tensor) and isinstance(distancesC, torch.Tensor):
+    if type(tour).__module__.startswith("torch") and type(distancesC).__module__.startswith("torch"):
         return distancesC[tour[:-1], tour[1:]].sum().cpu().numpy().item()
-    else:
-        distancesC2 = distancesC.copy() if isinstance(distancesC, np.ndarray) else np.array(distancesC)
-        tour2 = tour.copy() if isinstance(tour, np.ndarray) else np.array(tour)
-        return np.sum(distancesC2[tour2[:-1], tour2[1:]]).item()
+    distancesC2 = distancesC.copy() if isinstance(distancesC, np.ndarray) else np.array(distancesC)
+    tour2 = tour.copy() if isinstance(tour, np.ndarray) else np.array(tour)
+    return np.sum(distancesC2[tour2[:-1], tour2[1:]]).item()
 
 
 def _trip_time_matrix(

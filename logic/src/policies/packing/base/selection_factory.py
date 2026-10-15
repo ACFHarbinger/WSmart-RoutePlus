@@ -1,44 +1,16 @@
-"""
-Selection Factory Module.
+"""Factory for packing algorithms. Construction is ``PACKING.create``."""
 
-This module implements the Factory pattern for creating `PackingAlgorithm`
-instances. It allows creating strategies by name or from a configuration object.
-
-Attributes:
-    PackingFactory: Factory for strategy creation.
-    CONFIG_MAPPING: Mapping from strategy names to config attributes.
-
-Example:
-    >>> from logic.src.policies.mandatory.base.selection_factory import PackingFactory
-    >>> strategy = PackingFactory.create_strategy("regular", threshold=2)
-"""
-
-import inspect
 import logging
-from typing import Any, Optional, Type, cast
+from dataclasses import asdict
+from typing import Any
 
 from logic.src.interfaces.packing import IPackingAlgorithm
+from logic.src.utils.registry import PACKING
 
 from .selection_registry import PackingRegistry
 
 logger = logging.getLogger(__name__)
 
-
-def _instantiate(strategy_cls: Any, kwargs: dict, name: str) -> Any:
-    """Build a strategy from the settings it accepts.
-
-    ``None`` values mean "unset" and are never reported. A set value the class does
-    not accept is reported with a warning, not silently dropped.
-    """
-    set_values = {key: value for key, value in kwargs.items() if value is not None}
-    accepted = set(inspect.signature(strategy_cls.__init__).parameters) - {"self"}
-    dropped = sorted(set(set_values) - accepted)
-    if dropped:
-        logger.warning("Selection strategy %s does not accept %s; these settings are ignored", name, dropped)
-    return strategy_cls(**{key: value for key, value in set_values.items() if key in accepted})
-
-
-# Strategy to sub-config attribute mapping in PackingConfig
 CONFIG_MAPPING = {
     "last_minute": "last_minute",
     "regular": "regular",
@@ -78,118 +50,16 @@ CONFIG_MAPPING = {
 
 
 class PackingFactory:
-    """Factory for creating Packing algorithms.
-
-    Attributes:
-        None
-
-    Example:
-        >>> strategy = PackingFactory.create_strategy("regular", threshold=80)
-    """
+    """Create a packing algorithm by registry name."""
 
     @staticmethod
-    def create_strategy(name: str, **kwargs) -> IPackingAlgorithm:
-        """Create a packing algorithm by name.
-
-        Args:
-            name: Name of the strategy to create.
-            kwargs: Keyword arguments to pass to the strategy constructor.
-
-        Returns:
-            IPackingAlgorithm: The instantiated packing algorithm.
-        """
-        # Lazy imports to avoid circular dependencies and keep strategies separated
-        from logic.src.policies.packing.selection_bernoulli_random import BernoulliRandomSelection
-        from logic.src.policies.packing.selection_combined import CombinedSelection
-        from logic.src.policies.packing.selection_cvar import CVaRSelection
-        from logic.src.policies.packing.selection_deadline import DeadlineDrivenSelection
-        from logic.src.policies.packing.selection_dispatcher_portfolio import PortfolioDispatcher
-        from logic.src.policies.packing.selection_dispatcher_thompson import ThompsonDispatcher
-        from logic.src.policies.packing.selection_filter_and_fan import FilterAndFanSelection
-        from logic.src.policies.packing.selection_fptas_knapsack import FPTASKnapsackSelection
-        from logic.src.policies.packing.selection_fractional_knapsack import FractionalKnapsackSelection
-        from logic.src.policies.packing.selection_kmeans_sector import KMeansGeographicSectorSelection
-        from logic.src.policies.packing.selection_lagrangian import LagrangianSelection
-        from logic.src.policies.packing.selection_last_minute import LastMinuteSelection
-        from logic.src.policies.packing.selection_learned import LearnedSelection
-        from logic.src.policies.packing.selection_lookahead import LookaheadSelection
-        from logic.src.policies.packing.selection_mip_knapsack import MIPKnapsackSelection
-        from logic.src.policies.packing.selection_multi_day_prob import MultiDayOverflowSelection
-        from logic.src.policies.packing.selection_pareto import ParetoFrontSelection
-        from logic.src.policies.packing.selection_profit_per_km import ProfitPerKmSelection
-        from logic.src.policies.packing.selection_regular import RegularSelection
-        from logic.src.policies.packing.selection_revenue import RevenueThresholdSelection
-        from logic.src.policies.packing.selection_rollout import RolloutSelection
-        from logic.src.policies.packing.selection_savings import SavingsSelection
-        from logic.src.policies.packing.selection_service_level import ServiceLevelSelection
-        from logic.src.policies.packing.selection_set_cover import SetCoverSelection
-        from logic.src.policies.packing.selection_spatial_synergy import SpatialSynergySelection
-        from logic.src.policies.packing.selection_staggered_regular import StaggeredRegularSelection
-        from logic.src.policies.packing.selection_stochastic_regret import StochasticRegretSelection
-        from logic.src.policies.packing.selection_submodular_greedy import SubmodularGreedySelection
-        from logic.src.policies.packing.selection_supermodular_greedy import SupermodularGreedySelection
-        from logic.src.policies.packing.selection_wasserstein import WassersteinRobustSelection
-        from logic.src.policies.packing.selection_whittle import WhittleIndexSelection
-
-        default_map = {
-            "service_level": ServiceLevelSelection,
-            "regular": RegularSelection,
-            "lookahead": LookaheadSelection,
-            "last_minute": LastMinuteSelection,
-            "revenue": RevenueThresholdSelection,
-            "revenue_threshold": RevenueThresholdSelection,
-            "mip_knapsack": MIPKnapsackSelection,
-            "fractional_knapsack": FractionalKnapsackSelection,
-            "combined": CombinedSelection,
-            "deadline": DeadlineDrivenSelection,
-            "multi_day_prob": MultiDayOverflowSelection,
-            "pareto_front": ParetoFrontSelection,
-            "profit_per_km": ProfitPerKmSelection,
-            "spatial_synergy": SpatialSynergySelection,
-            "stochastic_regret": StochasticRegretSelection,
-            "lagrangian": LagrangianSelection,
-            "rollout": RolloutSelection,
-            "whittle": WhittleIndexSelection,
-            "cvar": CVaRSelection,
-            "savings": SavingsSelection,
-            "set_cover": SetCoverSelection,
-            "submodular_greedy": SubmodularGreedySelection,
-            "supermodular_greedy": SupermodularGreedySelection,
-            "greedy_routing_heuristic": SupermodularGreedySelection,
-            "learned": LearnedSelection,
-            "wasserstein_robust": WassersteinRobustSelection,
-            "dispatcher_thompson": ThompsonDispatcher,
-            "dispatcher_portfolio": PortfolioDispatcher,
-            "filter_and_fan": FilterAndFanSelection,
-            "bernoulli_random": BernoulliRandomSelection,
-            "kmeans_sector": KMeansGeographicSectorSelection,
-            "staggered_regular": StaggeredRegularSelection,
-            "fptas_knapsack": FPTASKnapsackSelection,
-        }
-
-        # Check explicit registry first
-        cls = PackingRegistry.get_strategy_class(name)
-        if cls:
-            return _instantiate(cls, kwargs, name)
-
-        # Check default map
-        cls_def = cast(Optional[Type[IPackingAlgorithm]], default_map.get(name.lower()))
-        if cls_def:
-            return _instantiate(cls_def, kwargs, name)
-
-        raise ValueError(f"Unknown selection strategy: {name}")
+    def create_strategy(name: str, **kwargs: Any) -> IPackingAlgorithm:
+        if PackingRegistry.get(name) is None:
+            raise ValueError(f"Unknown selection strategy: {name}")
+        return PACKING.create(name, **kwargs)
 
     @classmethod
     def create_from_config(cls, config: Any) -> IPackingAlgorithm:
-        """
-        Create a packing algorithm from a PackingConfig object.
-
-        Args:
-            config (Any): PackingConfig instance.
-
-        Returns:
-            IPackingAlgorithm: The instantiated packing algorithm.
-        """
         if config.strategy is None:
             raise ValueError("No strategy specified in PackingConfig")
 
@@ -199,16 +69,8 @@ class PackingFactory:
         attr_name = CONFIG_MAPPING.get(strategy_name)
         if attr_name and hasattr(config, attr_name):
             sub_config = getattr(config, attr_name)
-            # Convert dataclass to dict for kwargs
-            from dataclasses import asdict
-
-            # Check if sub_config is indeed a dataclass (it should be in structured config)
             if hasattr(sub_config, "__dataclass_fields__"):
                 sub_params = asdict(sub_config)
-                # Some strategies use 'threshold' as 'frequency' or 'confidence_factor'
-                # but we've standardized the sub-configs to use the correct names.
-                # However, the strategy __init__ might still expect 'threshold'.
-                # We'll map them here if necessary.
                 if strategy_name == "regular" and "frequency" in sub_params:
                     sub_params["threshold"] = sub_params.pop("frequency")
                 elif strategy_name == "service_level" and "confidence_factor" in sub_params:
@@ -219,14 +81,11 @@ class PackingFactory:
                     sub_params["threshold"] = sub_params.pop("n_sectors")
                 elif strategy_name == "staggered_regular" and "period" in sub_params:
                     sub_params["threshold"] = sub_params.pop("period")
-
                 params.update(sub_params)
             elif isinstance(sub_config, dict):
                 params.update(sub_config)
 
-        # Special handling for CombinedSelection which needs the list of configs
         if strategy_name == "combined" and "combined_strategies" not in params and "strategies" in params:
-            # If it's the new CombinedSelectionConfig, it uses 'strategies'
             params["combined_strategies"] = params.pop("strategies")
 
-        return cls.create_strategy(config.strategy, **params)
+        return PACKING.create(config.strategy, **params)

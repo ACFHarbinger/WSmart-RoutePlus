@@ -18,7 +18,7 @@ import torch
 from tensordict import TensorDict
 
 from logic.src.envs.generators.ptp import PTPGenerator
-from logic.src.envs.temporal import get_default_temporal_params
+from logic.src.constants.temporal import get_default_temporal_params
 
 
 class TCPTPGenerator(PTPGenerator):

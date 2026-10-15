@@ -1,120 +1,59 @@
-r"""Meta-heuristic routing policies.
+"""Meta-heuristic routing policies. Policy modules load on first access."""
 
-This package contains advanced iterative search algorithms including
-Evolutionary Strategies, Local Search meta-heuristics, and Swarm Intelligence
-approaches for solving the VRPP and its variants.
+from typing import Any
 
-Attributes:
-    adaptive_large_neighborhood_search: ALNS implementations.
-    ant_colony_optimization_k_sparse: ACO implementations.
-    artificial_bee_colony: ABC implementations.
-    differential_evolution: DE implementations.
-    evolution_strategy_mu_comma_lambda: ES (mu, lambda) implementations.
-    evolution_strategy_mu_kappa_lambda: ES (mu, kappa, lambda) implementations.
-    evolution_strategy_mu_plus_lambda: ES (mu + lambda) implementations.
-    fast_iterative_localized_optimization: FILO implementations.
-    firefly_algorithm: Firefly implementations.
-    genetic_algorithm: GA implementations.
-    genius: GENIUS implementations.
+from logic.src.utils.registry import lazy_getattr
 
-Example:
-    >>> from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search import policy_alns
-"""
+_LAZY = {
+    "policy_alns": "logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.policy_alns",
+    "policy_alns_ipo": "logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search_with_inter_period_operators.policy_alns_ipo",
+    "policy_aco_ks": "logic.src.policies.routing.meta_heuristics.ant_colony_optimization_k_sparse.policy_aco_ks",
+    "policy_abc": "logic.src.policies.routing.meta_heuristics.artificial_bee_colony.policy_abc",
+    "policy_de": "logic.src.policies.routing.meta_heuristics.differential_evolution.policy_de",
+    "policy_es_mcl": "logic.src.policies.routing.meta_heuristics.evolution_strategy_mu_comma_lambda.policy_es_mcl",
+    "policy_es_mkl": "logic.src.policies.routing.meta_heuristics.evolution_strategy_mu_kappa_lambda.policy_es_mkl",
+    "policy_es_mpl": "logic.src.policies.routing.meta_heuristics.evolution_strategy_mu_plus_lambda.policy_es_mpl",
+    "policy_filo": "logic.src.policies.routing.meta_heuristics.fast_iterative_localized_optimization.policy_filo",
+    "policy_fa": "logic.src.policies.routing.meta_heuristics.firefly_algorithm.policy_fa",
+    "policy_ga": "logic.src.policies.routing.meta_heuristics.genetic_algorithm.policy_ga",
+    "policy_genius": "logic.src.policies.routing.meta_heuristics.genius.policy_genius",
+    "policy_gls": "logic.src.policies.routing.meta_heuristics.guided_local_search.policy_gls",
+    "policy_hs": "logic.src.policies.routing.meta_heuristics.harmony_search.policy_hs",
+    "policy_hgs": "logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.policy_hgs",
+    "policy_hgs_adc": "logic.src.policies.routing.meta_heuristics.hybrid_genetic_search_with_adaptive_diversity_control.policy_hgs_adc",
+    "policy_hgs_alns": "logic.src.policies.routing.meta_heuristics.hybrid_genetic_search_with_adaptive_large_neighborhood_search.policy_hgs_alns",
+    "policy_hgs_rr": "logic.src.policies.routing.meta_heuristics.hybrid_genetic_search_with_ruin_and_recreate.policy_hgs_rr",
+    "policy_hmlns": "logic.src.policies.routing.meta_heuristics.hybrid_memetic_large_neighborhood_search.policy_hmlns",
+    "policy_hvpl": "logic.src.policies.routing.meta_heuristics.hybrid_volleyball_premier_league.policy_hvpl",
+    "policy_ils": "logic.src.policies.routing.meta_heuristics.iterated_local_search.policy_ils",
+    "policy_kgls": "logic.src.policies.routing.meta_heuristics.knowledge_guided_local_search.policy_kgls",
+    "policy_lca": "logic.src.policies.routing.meta_heuristics.league_championship_algorithm.policy_lca",
+    "policy_ma": "logic.src.policies.routing.meta_heuristics.memetic_algorithm.policy_ma",
+    "policy_ma_dp": "logic.src.policies.routing.meta_heuristics.memetic_algorithm_dual_population.policy_ma_dp",
+    "policy_ma_im": "logic.src.policies.routing.meta_heuristics.memetic_algorithm_island_model.policy_ma_im",
+    "policy_ma_ts": "logic.src.policies.routing.meta_heuristics.memetic_algorithm_tolerance_based_selection.policy_ma_ts",
+    "policy_mp_aco": "logic.src.policies.routing.meta_heuristics.multi_period_ant_colony_optimization.policy_mp_aco",
+    "policy_mp_ils": "logic.src.policies.routing.meta_heuristics.multi_period_iterated_local_search.policy_mp_ils",
+    "policy_mp_pso": "logic.src.policies.routing.meta_heuristics.multi_period_particle_swarm_optimization.policy_mp_pso",
+    "policy_mp_sa": "logic.src.policies.routing.meta_heuristics.multi_period_simulated_annealing.policy_mp_sa",
+    "policy_pso": "logic.src.policies.routing.meta_heuristics.particle_swarm_optimization.policy_pso",
+    "policy_psoda": "logic.src.policies.routing.meta_heuristics.particle_swarm_optimization_distance_based_algorithm.policy_psoda",
+    "policy_psoma": "logic.src.policies.routing.meta_heuristics.particle_swarm_optimization_memetic_algorithm.policy_psoma",
+    "policy_pg_clns": "logic.src.policies.routing.meta_heuristics.pheromone_guided_cooperative_large_neighborhood_search.policy_pg_clns",
+    "policy_qde": "logic.src.policies.routing.meta_heuristics.quantum_differential_evolution.policy_qde",
+    "policy_rts": "logic.src.policies.routing.meta_heuristics.reactive_tabu_search.policy_rts",
+    "policy_sa": "logic.src.policies.routing.meta_heuristics.simulated_annealing.policy_sa",
+    "policy_sans": "logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.policy_sans",
+    "policy_sca": "logic.src.policies.routing.meta_heuristics.sine_cosine_algorithm.policy_sca",
+    "policy_sisr": "logic.src.policies.routing.meta_heuristics.slack_induction_by_string_removal.policy_sisr",
+    "policy_slc": "logic.src.policies.routing.meta_heuristics.soccer_league_competition.policy_slc",
+    "policy_ts": "logic.src.policies.routing.meta_heuristics.tabu_search.policy_ts",
+    "policy_vns": "logic.src.policies.routing.meta_heuristics.variable_neighborhood_search.policy_vns",
+    "policy_vpl": "logic.src.policies.routing.meta_heuristics.volleyball_premier_league.policy_vpl",
+}
 
-from .adaptive_large_neighborhood_search import policy_alns as policy_alns
-from .adaptive_large_neighborhood_search_with_inter_period_operators import (
-    policy_alns_ipo as policy_alns_ipo,
-)
-from .ant_colony_optimization_k_sparse import policy_aco_ks as policy_aco_ks
-from .artificial_bee_colony import policy_abc as policy_abc
-from .differential_evolution import policy_de as policy_de
-from .evolution_strategy_mu_comma_lambda import policy_es_mcl as policy_es_mcl
-from .evolution_strategy_mu_kappa_lambda import policy_es_mkl as policy_es_mkl
-from .evolution_strategy_mu_plus_lambda import policy_es_mpl as policy_es_mpl
-from .fast_iterative_localized_optimization import policy_filo as policy_filo
-from .firefly_algorithm import policy_fa as policy_fa
-from .genetic_algorithm import policy_ga as policy_ga
-from .genius import policy_genius as policy_genius
-from .guided_local_search import policy_gls as policy_gls
-from .harmony_search import policy_hs as policy_hs
-from .hybrid_genetic_search import policy_hgs as policy_hgs
-from .hybrid_genetic_search_with_adaptive_diversity_control import policy_hgs_adc as policy_hgs_adc
-from .hybrid_genetic_search_with_adaptive_large_neighborhood_search import policy_hgs_alns as policy_hgs_alns
-from .hybrid_genetic_search_with_ruin_and_recreate import policy_hgs_rr as policy_hgs_rr
-from .hybrid_memetic_large_neighborhood_search import policy_hmlns as policy_hmlns
-from .hybrid_volleyball_premier_league import policy_hvpl as policy_hvpl
-from .iterated_local_search import policy_ils as policy_ils
-from .knowledge_guided_local_search import policy_kgls as policy_kgls
-from .league_championship_algorithm import policy_lca as policy_lca
-from .memetic_algorithm import policy_ma as policy_ma
-from .memetic_algorithm_dual_population import policy_ma_dp as policy_ma_dp
-from .memetic_algorithm_island_model import policy_ma_im as policy_ma_im
-from .memetic_algorithm_tolerance_based_selection import policy_ma_ts as policy_ma_ts
-from .multi_period_ant_colony_optimization import policy_mp_aco as policy_mp_aco
-from .multi_period_iterated_local_search import policy_mp_ils as policy_mp_ils
-from .multi_period_particle_swarm_optimization import policy_mp_pso as policy_mp_pso
-from .multi_period_simulated_annealing import policy_mp_sa as policy_mp_sa
-from .particle_swarm_optimization import policy_pso as policy_pso
-from .particle_swarm_optimization_distance_based_algorithm import policy_psoda as policy_psoda
-from .particle_swarm_optimization_memetic_algorithm import policy_psoma as policy_psoma
-from .pheromone_guided_cooperative_large_neighborhood_search import (
-    policy_pg_clns as policy_pg_clns,
-)
-from .quantum_differential_evolution import policy_qde as policy_qde
-from .reactive_tabu_search import policy_rts as policy_rts
-from .simulated_annealing import policy_sa as policy_sa
-from .simulated_annealing_neighborhood_search import policy_sans as policy_sans
-from .sine_cosine_algorithm import policy_sca as policy_sca
-from .slack_induction_by_string_removal import policy_sisr as policy_sisr
-from .soccer_league_competition import policy_slc as policy_slc
-from .tabu_search import policy_ts as policy_ts
-from .variable_neighborhood_search import policy_vns as policy_vns
-from .volleyball_premier_league import policy_vpl as policy_vpl
+__all__ = list(_LAZY)
 
-__all__ = [
-    "policy_alns",
-    "policy_alns_ipo",
-    "policy_aco_ks",
-    "policy_abc",
-    "policy_de",
-    "policy_es_mcl",
-    "policy_es_mkl",
-    "policy_es_mpl",
-    "policy_filo",
-    "policy_fa",
-    "policy_ga",
-    "policy_genius",
-    "policy_gls",
-    "policy_hs",
-    "policy_hgs",
-    "policy_hgs_alns",
-    "policy_hgs_rr",
-    "policy_hgs_adc",
-    "policy_hmlns",
-    "policy_hvpl",
-    "policy_ils",
-    "policy_kgls",
-    "policy_lca",
-    "policy_ma",
-    "policy_ma_dp",
-    "policy_ma_im",
-    "policy_ma_ts",
-    "policy_pso",
-    "policy_psoda",
-    "policy_psoma",
-    "policy_qde",
-    "policy_rts",
-    "policy_sa",
-    "policy_sans",
-    "policy_sca",
-    "policy_sisr",
-    "policy_slc",
-    "policy_ts",
-    "policy_vns",
-    "policy_vpl",
-    "policy_mp_aco",
-    "policy_mp_ils",
-    "policy_mp_pso",
-    "policy_mp_sa",
-    "policy_pg_clns",
-]
+
+def __getattr__(name: str) -> Any:
+    return lazy_getattr(globals(), _LAZY, name)

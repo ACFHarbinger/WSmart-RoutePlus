@@ -1,32 +1,29 @@
-"""Routing policies and sub-algorithms.
+"""Routing algorithms. Family packages load on first access."""
 
-This package contains various algorithms for constructing vehicle routes,
-ranging from classical heuristics to meta-heuristics and deep reinforcement
-learning models.
+from typing import Any
 
-Attributes:
-    None
+from logic.src.utils.registry import lazy_getattr
 
-Example:
-    None
-"""
+_LAZY = {
+    "exact_and_decomposition_solvers": "logic.src.policies.routing.exact_and_decomposition_solvers",
+    "hyper_heuristics": "logic.src.policies.routing.hyper_heuristics",
+    "learning_algorithms": "logic.src.policies.routing.learning_algorithms",
+    "learning_heuristic_algorithms": "logic.src.policies.routing.learning_heuristic_algorithms",
+    "learning_matheuristic_algorithms": "logic.src.policies.routing.learning_matheuristic_algorithms",
+    "matheuristics": "logic.src.policies.routing.matheuristics",
+    "meta_heuristics": "logic.src.policies.routing.meta_heuristics",
+    "other_algorithms": "logic.src.policies.routing.other_algorithms",
+}
 
-from . import exact_and_decomposition_solvers as exact_and_decomposition_solvers
-from . import hyper_heuristics as hyper_heuristics
-from . import learning_algorithms as learning_algorithms
-from . import learning_heuristic_algorithms as learning_heuristic_algorithms
-from . import learning_matheuristic_algorithms as learning_matheuristic_algorithms
-from . import matheuristics as matheuristics
-from . import meta_heuristics as meta_heuristics
-from . import other_algorithms as other_algorithms
+__all__ = list(_LAZY)
 
-__all__ = [
-    "exact_and_decomposition_solvers",
-    "hyper_heuristics",
-    "learning_algorithms",
-    "learning_heuristic_algorithms",
-    "learning_matheuristic_algorithms",
-    "matheuristics",
-    "meta_heuristics",
-    "other_algorithms",
-]
+
+def __getattr__(name: str) -> Any:
+    target = _LAZY.get(name)
+    if target is None:
+        raise AttributeError(f"module has no attribute {name!r}")
+    import importlib
+
+    module = importlib.import_module(target)
+    globals()[name] = module
+    return module

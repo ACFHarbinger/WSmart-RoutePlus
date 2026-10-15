@@ -15,10 +15,8 @@ import time
 from typing import Any, Callable, List, Tuple
 
 from logic.src.enums import GlobalRegistry, PolicyTag
-from logic.src.interfaces import IRouteImprovement
+from logic.src.interfaces.route_improvement import IRouteImprovement
 from logic.src.interfaces.context.search_context import ImprovementMetrics
-from logic.src.policies.helpers.operators.intensification_fixing import INTENSIFICATION_OPERATORS
-
 from .base import RouteImproverRegistry
 from .common.helpers import assemble_tour, split_tour, to_numpy
 
@@ -106,6 +104,8 @@ class ClassicalLocalSearchRouteImprover(IRouteImprovement):
         }
 
         op_key = Mapping.get(str(operator_name).lower())
+        from logic.src.policies.helpers.operators.intensification_fixing import INTENSIFICATION_OPERATORS
+
         if op_key and op_key in INTENSIFICATION_OPERATORS:
             op_fn = INTENSIFICATION_OPERATORS[op_key]
             try:

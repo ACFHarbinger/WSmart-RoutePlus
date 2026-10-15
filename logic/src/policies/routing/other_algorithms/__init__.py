@@ -1,25 +1,18 @@
-"""Miscellaneous routing algorithms and orchestrators.
+"""Miscellaneous routing algorithms. Implementations load on first access."""
 
-Contains general-purpose routing policies like SRC and ARCO that do not fit
-strictly into the meta-heuristic or learning-based categories.
+from typing import Any
 
-Attributes:
-    None
+from logic.src.utils.registry import lazy_getattr
 
-Example:
-    None
-"""
+_LAZY = {
+    "AdaptiveRoutingAlgorithmOrchestrator": "logic.src.policies.routing.other_algorithms.adaptive_routing_algorithm_orchestrator.policy_arco:AdaptiveRoutingAlgorithmOrchestrator",
+    "SequentialRoutingAlgorithm": "logic.src.policies.routing.other_algorithms.sequential_routing_algorithm.policy_src:SequentialRoutingAlgorithm",
+    "policy_cvrp": "logic.src.policies.routing.other_algorithms.capacitated_vehicle_routing_problem.policy_cvrp",
+    "policy_tsp": "logic.src.policies.routing.other_algorithms.travelling_salesman_problem.policy_tsp",
+}
 
-from .adaptive_routing_algorithm_orchestrator import (
-    AdaptiveRoutingAlgorithmOrchestrator as AdaptiveRoutingAlgorithmOrchestrator,
-)
-from .capacitated_vehicle_routing_problem import policy_cvrp as policy_cvrp
-from .sequential_routing_algorithm import SequentialRoutingAlgorithm as SequentialRoutingAlgorithm
-from .travelling_salesman_problem import policy_tsp as policy_tsp
+__all__ = list(_LAZY)
 
-__all__ = [
-    "policy_cvrp",
-    "policy_tsp",
-    "SequentialRoutingAlgorithm",
-    "AdaptiveRoutingAlgorithmOrchestrator",
-]
+
+def __getattr__(name: str) -> Any:
+    return lazy_getattr(globals(), _LAZY, name)

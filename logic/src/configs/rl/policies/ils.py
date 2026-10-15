@@ -33,7 +33,7 @@ from typing import Dict, Union
 
 
 @dataclass
-class ILSConfig:
+class VectorILSConfig:
     """Configuration for Iterated Local Search (ILS) expert policy.
 
     Attributes:
@@ -72,3 +72,6 @@ class ILSConfig:
             "random_swap": 0.2,
         }
     )
+
+
+ILSConfig = VectorILSConfig

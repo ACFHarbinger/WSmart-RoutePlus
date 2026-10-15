@@ -4,8 +4,8 @@ from unittest.mock import patch
 
 import pytest
 import torch
-from logic.src.envs import problems as problem_module
-from logic.src.envs.problems import CPTP, PTP
+from logic.src.envs import tasks as problem_module
+from logic.src.envs.tasks import CPTP, PTP
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
@@ -53,7 +53,7 @@ class TestVRPP:
         problem_module.REVENUE_KG = 0.1
         problem_module.BIN_CAPACITY = 100.0
 
-        with patch("logic.src.envs.problems.BaseProblem.make_state") as mock_init:
+        with patch("logic.src.envs.tasks.base.BaseProblem.make_state") as mock_init:
             PTP.make_state(input_data="mock_input", profit_vars={"cost_km": 1.0})
 
             args, kwargs = mock_init.call_args
@@ -213,7 +213,7 @@ class TestCPTP:
         problem_module.REVENUE_KG = 0.1
         problem_module.BIN_CAPACITY = 100.0
 
-        with patch("logic.src.envs.problems.BaseProblem.make_state") as mock_init:
+        with patch("logic.src.envs.tasks.base.BaseProblem.make_state") as mock_init:
             CPTP.make_state(input_data="mock")
             mock_init.assert_called_once()
 

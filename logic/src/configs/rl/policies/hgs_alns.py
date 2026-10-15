@@ -23,7 +23,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class HGSALNSConfig:
+class VectorHGSALNSConfig:
     """Configuration for Hybrid Genetic Search with ALNS Education (HGS-ALNS) expert policy.
 
     Attributes:
@@ -49,3 +49,6 @@ class HGSALNSConfig:
     vrpp: bool = True
     crossover_rate: float = 0.8
     engine: str = "custom"
+
+
+HGSALNSConfig = VectorHGSALNSConfig

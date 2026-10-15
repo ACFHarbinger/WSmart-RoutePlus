@@ -1,73 +1,36 @@
-"""
-Interfaces for WSmart-Route logic components.
-DEFINING PROTOCOLS TO DECOUPLE MODULES.
+"""Interfaces for WSmart-Route logic components. Names load on first access."""
 
-Attributes:
-    IAcceptanceCriterion: Interface for acceptance criteria
-    IBinContainer: Interface for bin containers
-    IDistanceMetric: Interface for distance metrics
-    IEnv: Interface for environments
-    IPackingAlgorithm: Interface for packing algorithms
-    IModel: Interface for models
-    IPolicy: Interface for policies
-    IRoutingAlgorithm: Interface for routing algorithms
-    IRouteImprovement: Interface for route improvements
-    ITensorDictLike: Interface for tensor dict like objects
-    ITraversable: Interface for traversable objects
+from typing import Any
 
-Example:
-    >>> from logic.src.interfaces import (
-        IAcceptanceCriterion,
-        IBinContainer,
-        IDistanceMetric,
-        IEnv,
-        IPackingAlgorithm,
-        IModel,
-        IPolicy,
-        IRoutingAlgorithm,
-        IRouteImprovement,
-        ITensorDictLike,
-        ITraversable,
-    )
-"""
+from logic.src.utils.registry import lazy_getattr
 
-from .acceptance_criterion import IAcceptanceCriterion
-from .bin_container import IBinContainer
-from .context import (
-    AcceptanceMetrics,
-    ConstructionMetrics,
-    ImprovementMetrics,
-    SearchContext,
-    SearchPhase,
-    SelectionMetrics,
-    merge_context,
-)
-from .env import IEnv
-from .packing import IPackingAlgorithm
-from .model import IModel
-from .policy import IPolicy
-from .routing_algorithm import IRoutingAlgorithm
-from .route_improvement import IRouteImprovement
-from .tensor_dict_like import ITensorDictLike
-from .traversable import ITraversable
+_LAZY = {
+    "IAcceptanceCriterion": "logic.src.interfaces.acceptance_criterion:IAcceptanceCriterion",
+    "IBinContainer": "logic.src.interfaces.bin_container:IBinContainer",
+    "IEnv": "logic.src.interfaces.env:IEnv",
+    "IPackingAlgorithm": "logic.src.interfaces.packing:IPackingAlgorithm",
+    "IModel": "logic.src.interfaces.model:IModel",
+    "IPolicy": "logic.src.interfaces.policy:IPolicy",
+    "IRoutingAlgorithm": "logic.src.interfaces.routing_algorithm:IRoutingAlgorithm",
+    "IRouteImprovement": "logic.src.interfaces.route_improvement:IRouteImprovement",
+    "ITensorDictLike": "logic.src.interfaces.tensor_dict_like:ITensorDictLike",
+    "ITraversable": "logic.src.interfaces.traversable:ITraversable",
+    "SearchContext": "logic.src.interfaces.context.search_context:SearchContext",
+    "SearchPhase": "logic.src.interfaces.context.search_context:SearchPhase",
+    "SelectionMetrics": "logic.src.interfaces.context.search_context:SelectionMetrics",
+    "ConstructionMetrics": "logic.src.interfaces.context.search_context:ConstructionMetrics",
+    "AcceptanceMetrics": "logic.src.interfaces.context.search_context:AcceptanceMetrics",
+    "ImprovementMetrics": "logic.src.interfaces.context.search_context:ImprovementMetrics",
+    "merge_context": "logic.src.interfaces.context.search_context:merge_context",
+    "SelectionContext": "logic.src.interfaces.context.selection_context:SelectionContext",
+    "JointSelectionConstructionContext": "logic.src.interfaces.context.joint_context:JointSelectionConstructionContext",
+    "MultiDayContext": "logic.src.interfaces.context.multi_day_context:MultiDayContext",
+    "ProblemContext": "logic.src.interfaces.context.problem_context:ProblemContext",
+    "SolutionContext": "logic.src.interfaces.context.solution_context:SolutionContext",
+}
 
-__all__ = [
-    "IAcceptanceCriterion",
-    "IRoutingAlgorithm",
-    "IEnv",
-    "IModel",
-    "IPackingAlgorithm",
-    "IPolicy",
-    "IRouteImprovement",
-    "ITensorDictLike",
-    "ITraversable",
-    "IBinContainer",
-    # Context / tracking types
-    "SearchContext",
-    "SearchPhase",
-    "SelectionMetrics",
-    "ConstructionMetrics",
-    "AcceptanceMetrics",
-    "ImprovementMetrics",
-    "merge_context",
-]
+__all__ = list(_LAZY)
+
+
+def __getattr__(name: str) -> Any:
+    return lazy_getattr(globals(), _LAZY, name)

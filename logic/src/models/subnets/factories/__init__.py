@@ -1,46 +1,26 @@
-"""Factory pattern for neural components (encoders, decoders).
+"""Neural component factories. Implementations load on first access."""
 
-Attributes:
-    NeuralComponentFactory: Abstract base class for all neural component factories.
-    AttentionComponentFactory: Factory for attention-based models.
-    GCNComponentFactory: Factory for GCN-based models.
-    GACComponentFactory: Factory for Graph Attention Convolution models.
-    TGCComponentFactory: Factory for Transformer Graph Convolution models.
-    GGACComponentFactory: Factory for Gated Graph Attention Convolution models.
-    MLPComponentFactory: Factory for MLP-based models.
-    MoEComponentFactory: Factory for Mixture of Experts models.
-    NARComponentFactory: Factory for Non-Autoregressive models.
-    MDAMComponentFactory: Factory for MDAM-based models.
-    GFACSComponentFactory: Factory for GFACS-based models.
+from typing import Any
 
-Example:
-    >>> from logic.src.models.subnets.factories import AttentionComponentFactory
-    >>> factory = AttentionComponentFactory()
-"""
+from logic.src.utils.registry import lazy_getattr
 
-from .attention import AttentionComponentFactory
-from .base import NeuralComponentFactory, _create_decoder_by_type
-from .gac import GACComponentFactory
-from .gcn import GCNComponentFactory
-from .gfacs import GFACSComponentFactory
-from .ggac import GGACComponentFactory
-from .mdam import MDAMComponentFactory
-from .mlp import MLPComponentFactory
-from .moe import MoEComponentFactory
-from .nar import NARComponentFactory
-from .tgc import TGCComponentFactory
+_LAZY = {
+    "NeuralComponentFactory": "logic.src.models.subnets.factories.base:NeuralComponentFactory",
+    "_create_decoder_by_type": "logic.src.models.subnets.factories.base:_create_decoder_by_type",
+    "AttentionComponentFactory": "logic.src.models.subnets.factories.attention:AttentionComponentFactory",
+    "GCNComponentFactory": "logic.src.models.subnets.factories.gcn:GCNComponentFactory",
+    "GACComponentFactory": "logic.src.models.subnets.factories.gac:GACComponentFactory",
+    "TGCComponentFactory": "logic.src.models.subnets.factories.tgc:TGCComponentFactory",
+    "GGACComponentFactory": "logic.src.models.subnets.factories.ggac:GGACComponentFactory",
+    "MLPComponentFactory": "logic.src.models.subnets.factories.mlp:MLPComponentFactory",
+    "MoEComponentFactory": "logic.src.models.subnets.factories.moe:MoEComponentFactory",
+    "NARComponentFactory": "logic.src.models.subnets.factories.nar:NARComponentFactory",
+    "MDAMComponentFactory": "logic.src.models.subnets.factories.mdam:MDAMComponentFactory",
+    "GFACSComponentFactory": "logic.src.models.subnets.factories.gfacs:GFACSComponentFactory",
+}
 
-__all__ = [
-    "NeuralComponentFactory",
-    "AttentionComponentFactory",
-    "GCNComponentFactory",
-    "GACComponentFactory",
-    "TGCComponentFactory",
-    "GGACComponentFactory",
-    "MLPComponentFactory",
-    "MoEComponentFactory",
-    "NARComponentFactory",
-    "MDAMComponentFactory",
-    "GFACSComponentFactory",
-    "_create_decoder_by_type",
-]
+__all__ = list(_LAZY)
+
+
+def __getattr__(name: str) -> Any:
+    return lazy_getattr(globals(), _LAZY, name)

@@ -25,12 +25,12 @@ from tensordict import TensorDict
 
 from logic.src.configs.rl.policies import (
     ACOConfig,
-    ALNSConfig,
-    HGSALNSConfig,
-    HGSConfig,
-    ILSConfig,
     ProfitableNNConfig,
     RLSConfig,
+    VectorALNSConfig,
+    VectorHGSALNSConfig,
+    VectorHGSConfig,
+    VectorILSConfig,
 )
 from logic.src.pipeline.rl.core.losses import (
     kl_divergence_loss,
@@ -170,11 +170,11 @@ class AdaptiveImitation(REINFORCE):
         """
         # Map config types to policy classes
         config_to_policy_map = {
-            HGSConfig: VectorizedHGS,
-            ALNSConfig: VectorizedALNS,
-            HGSALNSConfig: VectorizedHGSALNS,
+            VectorHGSConfig: VectorizedHGS,
+            VectorALNSConfig: VectorizedALNS,
+            VectorHGSALNSConfig: VectorizedHGSALNS,
             RLSConfig: RandomLocalSearchPolicy,
-            ILSConfig: IteratedLocalSearchPolicy,
+            VectorILSConfig: IteratedLocalSearchPolicy,
             ACOConfig: VectorizedACOPolicy,
             ProfitableNNConfig: ProfitableNearestNeighbourPolicy,
         }

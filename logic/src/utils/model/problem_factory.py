@@ -1,44 +1,20 @@
-"""
-Factory functions for loading problem classes.
-
-Attributes:
-    load_problem: Factory function to load a problem class by name.
-
-Example:
-    >>> from logic.src.utils.model.problem_factory import load_problem
-    >>> problem = load_problem("ptp")
-    >>> isinstance(problem, type)
-    True
-"""
+"""Factory functions for loading problem classes."""
 
 from __future__ import annotations
 
 from typing import Any, Type
 
-from logic.src.envs.problems import (
-    CPTP,
-    PTP,
-    TCPTP,
-)
+from logic.src.envs.tasks.cptp import CPTP
+from logic.src.envs.tasks.ptp import PTP
+from logic.src.envs.tasks.tcptp import TCPTP
 
 
 def load_problem(name: str) -> Type[Any]:
-    """
-    Factory function to load a problem class by name.
-
-    Args:
-        name: The problem name (e.g., 'ptp', 'cptp').
-
-    Returns:
-        The problem class.
-
-    Raises:
-        AssertionError: If problem name is unsupported.
-    """
+    """Load a problem class by name."""
     problem = {
         "ptp": PTP,
         "cptp": CPTP,
         "tcptp": TCPTP,
-    }.get(name)
-    assert problem is not None, "Currently unsupported problem: {}!".format(name)
+    }.get(name, None)
+    assert problem is not None, f"Problem {name} is not implemented"
     return problem

@@ -17,6 +17,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Registry, lazy imports and facades (`2026-10-15`)
+
+#### Changed
+
+- **Breaking:** one `Registry` (`logic/src/utils/registry.py`) replaces the five stage registries and the `GlobalRegistry` implementation. Name lookup, `create`, and tag queries (`query_intersection` / `query_union` / `query_difference` / `get_all`) live on the same type. Stage instances are `ROUTING`, `PACKING`, `IMPROVEMENT`, `ACCEPTANCE` and `JOINT`; `ALL` is their union. The old class names (`RoutingAlgorithmRegistry`, `PackingRegistry`, …) are aliases of those instances. `GlobalRegistry` is a thin wrapper over `ALL` so existing `@GlobalRegistry.register(...)` decorators still resolve.
+- **Breaking:** `Registry.create` is the only constructor. Factories look up a name and call `create`; they no longer keep their own class maps. Improver aliases (`cls`, `ftsp`, …) and packing name remaps live in the generated manifests / `CONFIG_MAPPING`.
+- **Breaking:** parent policy, model, env and interface packages no longer import their implementations eagerly. `from logic.src.policies.routing.meta_heuristics import policy_hgs` still works, but only that module is loaded. Registration is a generated `_manifest.py` of `module:Class` targets (`tools/gen_registry_manifests.py`), not an import of every adapter.
+- **Breaking:** `logic.src.envs.problems` is removed. Import problem classes from `logic.src.envs.tasks` (`PTP`, `CPTP`, `TCPTP`).
+- **Breaking:** RL expert configs in `logic.src.configs.rl.policies` are renamed to `VectorALNSConfig`, `VectorHGSConfig`, `VectorILSConfig`, `VectorHGSALNSConfig` and `VectorHVPLConfig`. The old names remain as aliases on the package and on each module so Hydra `_target_: logic.src.configs.rl.policies.HGSALNSConfig` checkpoints still load.
+- `logic.src.envs.temporal` moved to `logic.src.constants.temporal`. `get_default_temporal_params` is imported from there.
+
+#### Added
+
+- `logic/test/unit/utils/test_registry.py` covers name lookup, `create`, tag queries, Hydra aliases, and the torch-free classical import path.
+
 ### Packing and routing names (`2026-10-15`)
 
 #### Changed
