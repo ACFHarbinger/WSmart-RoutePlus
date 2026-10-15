@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Grant final-report generator (`2026-10-15`)
+
+#### Added
+
+- `logic/gen/gen_grant_report.py`: generates the grant holder's final report ("Relatório Final do Bolseiro e Orientador") as an editable `.docx`. It follows the university's "Modelo do Relatório Final" form: logo in the page header, centred title and subtitle, the labelled identification fields (name, ID document and number, grant type, start and end dates, research unit or project, supervisor), the activity description, and place, date and signature lines for the grant holder and the supervisor. The logo is the IST mark `logic/gen/svg/Tecnico_ID_Principal_RBG-COR.svg`, rasterised with Inkscape (ImageMagick as a fallback). The package is written as plain Office Open XML with the standard library, so there is no new Python dependency. Default output: `docs/private/reports/relatorio_final_bolseiro.docx`. The generator does not overwrite an existing report (which may hold your edits) without `--force`.
+- `logic/gen/json/grant_report.json`: the report's labels, placeholder values, fonts and logo. Fill the values there and regenerate, or edit the `.docx` directly.
+
 ### Packing and routing names (`2026-10-15`)
 
 #### Changed
