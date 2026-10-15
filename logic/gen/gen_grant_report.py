@@ -3,7 +3,7 @@ Generate the grant holder's final report (Relatório Final do Bolseiro e Orienta
 
 The layout follows the university's "Modelo do Relatório Final" form: the institution logo in the
 page header, a centred title and subtitle, the grant holder's full name and grant ID, and the
-research report (sections with a heading and paragraphs). The logo is the IST mark (``logic/gen/svg/Tecnico_ID_Principal_RBG-COR.svg``),
+research report (a list of paragraphs). The logo is the IST mark (``logic/gen/svg/Tecnico_ID_Principal_RBG-COR.svg``),
 rasterised with Inkscape (ImageMagick as a fallback).
 
 The document is written as plain Office Open XML with the standard library, so no extra Python
@@ -123,7 +123,7 @@ def logo_drawing(width_emu: int, height_emu: int) -> str:
 
 
 def build_document(cfg: Dict[str, Any]) -> str:
-    """The body: title, the labelled fields, and the research report with its sections."""
+    """The body: title, the labelled fields, and the research report paragraphs."""
     font, label_font, size = cfg["font"], cfg["label_font"], float(cfg["font_size_pt"])
     body: List[str] = [
         paragraph([run(cfg["title"], label_font, size + 3)], align="center", after_pt=4),
@@ -134,11 +134,8 @@ def build_document(cfg: Dict[str, Any]) -> str:
             paragraph([run(field["label"], label_font, size, bold=True), run(f": {field['value']}", font, size)])
         )
     body.append(paragraph([run(f"{cfg['report_label']}:", label_font, size, bold=True)], after_pt=6))
-    for section in cfg["report"]:
-        if section.get("heading"):
-            body.append(paragraph([run(section["heading"], label_font, size, bold=True)], align="left", after_pt=6))
-        for text in section["paragraphs"]:
-            body.append(paragraph([run(text, font, size)]))
+    for text in cfg["report"]:
+        body.append(paragraph([run(text, font, size)]))
     sect = (
         '<w:sectPr><w:headerReference w:type="default" r:id="rIdHeader"/>'
         '<w:pgSz w:w="11906" w:h="16838"/>'
