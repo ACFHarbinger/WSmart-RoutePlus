@@ -20,6 +20,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Cross-package review (`2026-10-15`)
 
 - Codex review: root registry tag queries deduplicate class identity across child registries/aliases, and get_all preserves the union of child tags. Added a regression test.
+- Codex review: release closure retains ancestor initializers and deferred runtime imports; multiline lazy maps are recognized. Builds reject populated/repository destinations instead of deleting them. Added isolated closure and destination tests.
+
+### Release manifest and package build (`2026-10-15`)
+
+#### Added
+
+- `logic/release.yaml`: the 1.0.0 release manifest, the single source of truth for the released package. It lists the released problems (PTP, CPTP, TCPTP, CVRP), the released registry keys per stage (owner ruling Q-1/Q-2), the infrastructure seeds whose import closure ships (simulator, features, REINFORCE + imitation trainers, AM-GAT, the four envs, the profitable-NN expert, vectorised packing, the CLI), and the excluded packages (both HPO stacks and `rl.meta`, Q-6/Q-12a). `wsmart_bin_analysis` is documented as pending its own package (RQ-grok-7): `bins/base.py` still imports `GridBase` from it, so excluding it today fails the build loudly.
+- `logic/package/build_release.py`: builds the package from `main` per the manifest (Q-10a). `--check` validates every manifest key against the generated registry manifests; `--build` stages a pruned copy (filtered registry manifests, released YAMLs only, collection-validated release test set, generated release pyproject and `docs/release.md` index) and verifies that no module-level import or manifest target escapes the tree; `--smoke` runs the torch-free classical smoke (released keys resolve and instantiate, unreleased keys do not, `torch` never enters `sys.modules`).
+- Release CI (`.github/workflows/package-and-build.yml` and its `.gitea`/`.forgejo` mirrors, `.gitlab-ci.yml`): manifest check, release build, staged-tree smoke, and a torch-free **installed-package** smoke (`pip install --no-deps` into a fresh venv without torch, Q-16a). The release artifact is uploaded.
+
+#### Changed
+
+- **Breaking:** `logic/pyproject.toml` base dependencies are torch-free; the training stack (torch, torchvision, torchrl, tensordict, torch-geometric, torch-scatter, torch-sparse, pytorch-lightning, wandb) moves to the `neural` extra: `pip install wsmart-route[neural]` (Q-16a). CI syncs `--all-extras`; local training environments use `uv sync --extra neural` (or `--all-extras`). `uv.lock` regenerated.
+- **Breaking (import-time only):** eager imports that pulled unreleased or out-of-scope code became lazy, with no API change (all names still resolve; they load on first access): `pipeline/rl/core/__init__.py` and `pipeline/rl/__init__.py` (RL algorithms and the meta stack), `policies/vector/__init__.py` (model policies and vectorised solvers), `models/core/__init__.py`, `models/subnets/{encoders,decoders,modules}/__init__.py` (P-25), `utils/model/loader.py` (encoder factories), `pipeline/rl/core/imitation.py` (expert policies load by config class name), `pipeline/features/train/model_factory/{builder,imitation}.py`, and `controllers/cli/drive_parser.py` (cloud import deferred). `pipeline/features/train/__init__.py` resolves `run_hpo` lazily, so importing the training package no longer requires the HPO stack.
+- The release build drops `from .hpo import run_hpo` from the staged `features/train/__init__.py` surface: HPO is not in 1.0.0 (Q-6), and accessing `run_hpo` in the released package raises `ModuleNotFoundError`.
+
+#### Removed
+
+- **Breaking:** the acronym-driven export flow is retired (Q-10a): `ci/packager.py`, `ci/analyze_deps.py`, `ci/export_config.json`, `ci/workflow_config.json`, `ci/export_profiles/` (the `minimal-ptp` patch no longer applied to `main`), `logic/package/prune_codebase.py`, the 16 `logic/package/remove_*.py` scripts, `apply_export_profile.py`, `make_export_profile.py`, `cleanup_helper.py`, and their two tests. The `algo-export*` branch trigger is gone from all CI mirrors. The export tag `export/minimal-20260926` and the `wsr-package` worktree remain for history; the integrator deletes them.
+
+#### Migration
+
+- Release scope questions go in `logic/release.yaml`, not in CI job inputs. Components are addressed by registry key; the BB/BC/BPC acronyms live only in the Studio app's display map (`app/src/gen/config/simulation_metadata.json`).
+- The release test set is written to `logic/test/release_tests.txt` (collection-validated) and `release_tests.excluded.txt` (excluded with reasons) inside the built tree. Running it as a CI gate becomes possible once the P-06 test pruning lands: some kept tests assert the dev tree's full registry, which the filtered release registry intentionally violates.
 
 ### Registry, lazy imports and facades (`2026-10-15`)
 
