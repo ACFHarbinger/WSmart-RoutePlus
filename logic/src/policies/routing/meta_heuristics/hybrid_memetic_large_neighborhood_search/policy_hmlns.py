@@ -119,7 +119,6 @@ class HybridMemeticLargeNeighborhoodSearchPolicy(BaseRoutingPolicy):
                 - cost: Total travel cost calculated by the solver.
         """
         seed = values.get("seed", 42)
-        vrpp = values.get("vrpp", True)
         profit_aware_operators = values.get("profit_aware_operators", False)
 
         # Get MACO config (nested or flattened)
@@ -139,7 +138,6 @@ class HybridMemeticLargeNeighborhoodSearchPolicy(BaseRoutingPolicy):
                 local_search_iterations=maco_config.get("local_search_iterations", 0),
                 elitist_weight=maco_config.get("elitist_weight", 1.0),
                 seed=seed,
-                vrpp=vrpp,
                 profit_aware_operators=profit_aware_operators,
             )
         else:
@@ -160,7 +158,6 @@ class HybridMemeticLargeNeighborhoodSearchPolicy(BaseRoutingPolicy):
                 local_search_iterations=values.get("aco_local_search_iterations", 0),
                 elitist_weight=values.get("aco_elitist_weight", 1.0),
                 seed=seed,
-                vrpp=vrpp,
                 profit_aware_operators=profit_aware_operators,
             )
 
@@ -176,7 +173,6 @@ class HybridMemeticLargeNeighborhoodSearchPolicy(BaseRoutingPolicy):
                 segment_size=alns_config.get("segment_size", 10),
                 time_limit=alns_config.get("time_limit", 60.0),
                 seed=seed,
-                vrpp=vrpp,
                 profit_aware_operators=profit_aware_operators,
             )
         else:
@@ -190,7 +186,6 @@ class HybridMemeticLargeNeighborhoodSearchPolicy(BaseRoutingPolicy):
                 segment_size=values.get("segment_size", 10),
                 time_limit=values.get("alns_time_limit", 60.0),
                 seed=seed,
-                vrpp=vrpp,
                 profit_aware_operators=profit_aware_operators,
             )
 
@@ -206,7 +201,6 @@ class HybridMemeticLargeNeighborhoodSearchPolicy(BaseRoutingPolicy):
             aco_params=aco_params,
             alns_params=alns_params,
             seed=seed,
-            vrpp=vrpp,
             profit_aware_operators=profit_aware_operators,
         )
 

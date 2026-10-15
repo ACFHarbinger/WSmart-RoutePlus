@@ -25,7 +25,6 @@ class BPCConfig:
     Attributes:
         time_limit: Maximum time in seconds for the solver.
         profit_aware_operators: Whether to use profit-aware operators.
-        vrpp: Whether to use VRPP.
         seed: Random seed for reproducibility.
         packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
@@ -71,7 +70,6 @@ class BPCConfig:
 
     time_limit: float = 60.0
     profit_aware_operators: bool = True
-    vrpp: bool = True
     seed: Optional[int] = None
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

@@ -9,7 +9,6 @@ vpl:
     elite_size: 3
     local_search_iterations: 100
     time_limit: 60.0
-    vrpp: true
     packing:
       other/pk_lookahead.yaml:
       - default

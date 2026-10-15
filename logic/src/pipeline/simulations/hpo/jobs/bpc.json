@@ -254,13 +254,6 @@
         ],
         "_comment": "Fixed: Wentges dual smoothing (exact_mode=False) is 2-5x faster in practice. Disabling it (exact_mode=True) is theoretically pure but CG convergence degrades severely within any finite time budget."
     },
-    "vrpp": {
-        "type": "categorical",
-        "choices": [
-            true
-        ],
-        "_comment": "Fixed: problem type flag, not a hyperparameter."
-    },
     "lr_lambda_init": {
         "type": "float",
         "low": 0.0,

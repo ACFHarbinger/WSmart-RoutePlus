@@ -114,7 +114,6 @@ class PSOMASolver:
             C=self.C,
             max_vehicles=0,
             mandatory_nodes=self.mandatory_nodes,
-            vrpp=self.cfg.vrpp,
         )
 
         # Fresh per-solve acceptance criterion instance (P-11)

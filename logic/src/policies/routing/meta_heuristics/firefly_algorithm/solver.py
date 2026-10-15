@@ -38,6 +38,7 @@ from logic.src.policies.helpers.operators import (
 from logic.src.policies.helpers.operators.solution_initialization.greedy_si import build_greedy_routes
 from logic.src.configs.policies.aco_ks import KSparseACOConfig
 from logic.src.configs.policies.fa import FAConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class FASolver:
@@ -96,7 +97,6 @@ class FASolver:
         # Pre-instantiate Local Search for reuse
         aco_params = KSparseACOConfig(
             local_search_iterations=self.params.local_search_iterations,
-            vrpp=self.params.vrpp,
             profit_aware_operators=self.params.profit_aware_operators,
             seed=self.params.seed,
         )
@@ -386,7 +386,7 @@ class FASolver:
         """
         try:
             n_rem = max(3, self.params.n_removal)
-            expand_pool = self.params.vrpp
+            expand_pool = current_expand_pool()
             partial, removed = random_removal(routes, n_rem, self.random)
             if self.params.profit_aware_operators:
                 repaired = greedy_profit_insertion(

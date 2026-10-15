@@ -27,6 +27,7 @@ class ProblemSpec:
             (e.g. "logic.src.envs.tasks.cptp:CPTPEnv").
         features: Optional feature specification for embedding projections.
         expand_pool: Whether unvisited candidate pools may expand dynamically (True for PTP/CPTP/TCPTP, False for CVRP).
+        per_trip_shift: Repair and validate each trip against the shift budget (TCPTP).
     """
 
     name: str
@@ -37,6 +38,7 @@ class ProblemSpec:
     env_target: str = ""
     features: Optional[Any] = None
     expand_pool: bool = True
+    per_trip_shift: bool = False
 
     def get_env_class(self) -> Type[Any]:
         """Lazily load the environment class for this problem."""
@@ -88,9 +90,13 @@ class ProblemRegistry:
 
 PROBLEMS = ProblemRegistry(
     {
+        "ptp": "logic.src.envs.tasks.common.released_specs:PTP_SPEC",
+        "cptp": "logic.src.envs.tasks.common.released_specs:CPTP_SPEC",
+        "tcptp": "logic.src.envs.tasks.common.released_specs:TCPTP_SPEC",
+        "cvrp": "logic.src.envs.tasks.common.released_specs:CVRP_SPEC",
         **{
             name: f"logic.src.envs.tasks.{name}:{name.upper()}_SPEC"
-            for name in ("ptp", "cptp", "tcptp", "cvrp", "tsp", "atsp", "op", "pctsp", "spctsp", "pdp", "irp")
+            for name in ("tsp", "atsp", "op", "pctsp", "spctsp", "pdp", "irp")
         },
         "thop": "logic.src.envs.tasks.thop:ThOP_SPEC",
     }

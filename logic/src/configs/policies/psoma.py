@@ -13,8 +13,6 @@ Example:
     200
     >>> config.seed
     42
-    >>> config.vrpp
-    True
     >>> config.profit_aware_operators
     False
 """
@@ -46,7 +44,6 @@ class PSOMAConfig:
         T0: Initial temperature for simulated annealing.
         lambda_cooling: Cooling rate for simulated annealing.
         time_limit: Wall-clock time limit in seconds.
-        vrpp: If True, solver operates in full VRPP mode.
         profit_aware_operators: Whether to use profit-aware operators.
         seed: Random seed for reproducibility.
         packing: Packing algorithm config list.
@@ -69,7 +66,6 @@ class PSOMAConfig:
     time_limit: float = 60.0
     sa_steps: int = 5000
     seed_nearest_neighbour: bool = True
-    vrpp: bool = True
     profit_aware_operators: bool = True
     seed: Optional[int] = 42
     packing: Optional[List[PackingConfig]] = field(default_factory=list)

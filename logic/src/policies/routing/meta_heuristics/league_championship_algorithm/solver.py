@@ -45,6 +45,7 @@ from logic.src.policies.helpers.operators.solution_initialization.greedy_si impo
 from logic.src.configs.policies.aco_ks import KSparseACOConfig
 
 from logic.src.configs.policies.lca import LCAConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class LCASolver:
@@ -97,7 +98,6 @@ class LCASolver:
         # Pre-instantiate Local Search for reuse
         aco_params = KSparseACOConfig(
             local_search_iterations=self.params.local_search_iterations,
-            vrpp=self.params.vrpp,
             profit_aware_operators=self.params.profit_aware_operators,
             seed=self.params.seed,
         )
@@ -225,7 +225,7 @@ class LCASolver:
         """
         n = max(3, self.params.n_removal)
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         try:
             if use_profit:
@@ -297,7 +297,7 @@ class LCASolver:
 
         child = copy.deepcopy(loser_routes)
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         # First remove some worst nodes to make room
         n_remove = min(len(new_nodes), max(1, self.params.n_removal))

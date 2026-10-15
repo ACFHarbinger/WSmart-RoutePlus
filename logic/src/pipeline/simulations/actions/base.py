@@ -391,7 +391,7 @@ def _attrify(obj: Any) -> Any:
 
 def _ensure_mutable_config(context: Dict[str, Any]) -> Any:
     """Convert Hydra DictConfig policy blobs to a mutable mapping the day can mutate."""
-    cfg = context.get("config", {})
+    cfg = context.get("config", {}) if isinstance(context, dict) else getattr(context, "config", {})
     if isinstance(cfg, _AttrDict):
         return cfg
     try:
@@ -403,28 +403,34 @@ def _ensure_mutable_config(context: Dict[str, Any]) -> Any:
             # Nested Hydra nodes stay DictConfig even when the top mapping is a dict.
             cfg = OmegaConf.to_container(OmegaConf.create(cfg), resolve=True)
         cfg = _attrify(cfg)
-        context["config"] = cfg
+        if isinstance(context, dict):
+            context["config"] = cfg
+        else:
+            context.config = cfg
     except Exception:
         pass
     return cfg
 
 
 def _pop_context_key(context: Any, key: str) -> Any:
-    """Pop a key from a dict or ``SimulationDayContext`` (Mapping without ``pop``)."""
+    """Clear a key on a dict or day context and return the previous value."""
     if isinstance(context, dict):
         return context.pop(key, None)
-    value = context.get(key) if hasattr(context, "get") else getattr(context, key, None)
+    value = getattr(context, key, None)
     with suppress(Exception):
-        context[key] = None
+        setattr(context, key, None)
     return value
 
 
 def _append_context_list(context: Any, key: str, item: Any) -> None:
     """Append to a list stored on a dict or day context (no ``setdefault``)."""
-    current = context.get(key) if hasattr(context, "get") else None
+    current = context.get(key) if isinstance(context, dict) else getattr(context, key, None)
     if not isinstance(current, list):
         current = []
-        context[key] = current
+        if isinstance(context, dict):
+            context[key] = current
+        else:
+            setattr(context, key, current)
     current.append(item)
 
 
@@ -472,14 +478,19 @@ def _constructor_from_policy_id(policy_id: str) -> str:
 
 def _set_live_capture_meta(context: Any) -> None:
     """Remember policy/variant/day for subsequent consumer JSONL records."""
-    policy_id = str(context.get("full_policy") or context.get("policy_name") or "")
+    def _field(name: str) -> Any:
+        if isinstance(context, dict):
+            return context.get(name)
+        return getattr(context, name, None)
+
+    policy_id = str(_field("full_policy") or _field("policy_name") or "")
     _LIVE_CAPTURE_META.set(
         {
             "policy": policy_id,
             "constructor": _constructor_from_policy_id(policy_id),
-            "display_name": str(context.get("display_name") or ""),
-            "day": context.get("day"),
-            "sample_id": context.get("sample_id"),
+            "display_name": str(_field("display_name") or ""),
+            "day": _field("day"),
+            "sample_id": _field("sample_id"),
         }
     )
 
@@ -510,6 +521,40 @@ def _record_live_params(kind: str, payload: Dict[str, Any]) -> None:
 
             fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
         handle.write(line)
+
+
+
+class _DictContext:
+    """Attribute view over a test dict. Writes go back to the original mapping."""
+
+    def __init__(self, data: Dict[str, Any]) -> None:
+        object.__setattr__(self, "_data", data)
+
+    def __getattr__(self, key: str) -> Any:
+        try:
+            return self._data[key]
+        except KeyError as exc:
+            raise AttributeError(key) from exc
+
+    def __setattr__(self, key: str, value: Any) -> None:
+        self._data[key] = value
+
+    def as_kwargs(self) -> Dict[str, Any]:
+        """Copy of the underlying mapping."""
+        return dict(self._data)
+
+
+def bind_context(context: Any) -> Any:
+    """Return a context that supports attribute access.
+
+    ``SimulationDayContext`` is returned as-is. A plain dict, which unit tests
+    still pass, is wrapped so assignments update that dict.
+    """
+    if isinstance(context, _DictContext) or type(context).__name__ == "SimulationDayContext":
+        return context
+    if isinstance(context, dict):
+        return _DictContext(context)
+    return context
 
 
 class SimulationAction(ABC):

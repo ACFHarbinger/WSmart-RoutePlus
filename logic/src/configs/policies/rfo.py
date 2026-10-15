@@ -15,8 +15,6 @@ Example:
     60.0
     >>> config.mip_gap
     0.01
-    >>> config.vrpp
-    True
     >>> config.packing
     None
     >>> config.route_improvement
@@ -44,7 +42,6 @@ class RFOConfig:
         step_size (int): Number of days to slide the window forward after each solve. Defaults to 2.
         mip_time (float): Time limit for each sub-MIP solve in seconds. Defaults to 60.0.
         mip_gap (float): Target optimality gap for sub-MIP solves. Defaults to 0.01.
-        vrpp (bool): Whether the problem is a VRP with Profits. Defaults to True.
         packing (Optional[PackingConfig]): Configuration for
             mandatory node selection policies.
         route_improvement (Optional[RouteImprovingConfig]): Optional configuration
@@ -55,7 +52,6 @@ class RFOConfig:
     step_size: int = 2
     mip_time: float = 60.0
     mip_gap: float = 0.01
-    vrpp: bool = True
 
     packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None

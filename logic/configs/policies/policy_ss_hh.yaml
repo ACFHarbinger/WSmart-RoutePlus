@@ -7,7 +7,6 @@ ss_hh:
     threshold_decay_rate: 0.01
     max_iterations: 500
     time_limit: 60.0
-    vrpp: true
     packing:
       other/pk_lookahead.yaml:
       - default

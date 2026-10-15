@@ -4,7 +4,6 @@ rens:
     lp_time_limit: 10.0
     mip_limit_nodes: 1000
     mip_gap: 0.05
-    vrpp: true
     engine: gurobi
     framework: ortools
     packing:

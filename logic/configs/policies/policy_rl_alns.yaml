@@ -6,7 +6,6 @@ rl_alns:
     cooling_rate: 0.995
     min_removal: 1
     max_removal_pct: 0.3
-    vrpp: true
     profit_aware_operators: false
     packing:
       other/pk_lookahead.yaml:

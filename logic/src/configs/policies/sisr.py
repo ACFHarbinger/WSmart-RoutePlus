@@ -11,8 +11,6 @@ Example:
     10.0
     >>> config.max_iterations
     1000
-    >>> config.vrpp
-    True
 """
 
 from dataclasses import dataclass
@@ -35,7 +33,6 @@ class SISRConfig:
         avg_string_len: Average length of strings to remove.
         blink_rate: Probability of 'blinking' during insertion.
         destroy_ratio: Fraction of solution to destroy per iteration.
-        vrpp: Whether this is a VRPP problem.
         packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
     """
@@ -49,7 +46,6 @@ class SISRConfig:
     avg_string_len: float = 3.0
     blink_rate: float = 0.01
     destroy_ratio: float = 0.2
-    vrpp: bool = True
     profit_aware_operators: bool = False
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

@@ -66,7 +66,6 @@ class LocalBranchingVNSConfig:
         seed (int): Global random seed for both the Shaking mechanism (random perturbation)
             and the underlying Gurobi solver, ensuring deterministic and reproducible results.
 
-        vrpp (bool): Whether the problem is a VRP with Profits.
 
         # Infrastructure Settings
         # -----------------------
@@ -92,7 +91,6 @@ class LocalBranchingVNSConfig:
     max_lb_iterations: int = 15
     mip_gap: float = 0.01
     seed: int = 42
-    vrpp: bool = True
 
     # Infrastructure
     engine: str = "gurobi"

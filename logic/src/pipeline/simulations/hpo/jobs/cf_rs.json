@@ -1,12 +1,4 @@
 {
-    "vrpp": {
-        "type": "categorical",
-        "choices": [
-            true,
-            false
-        ],
-        "default": true
-    },
     "seed": {
         "type": "int",
         "default": null

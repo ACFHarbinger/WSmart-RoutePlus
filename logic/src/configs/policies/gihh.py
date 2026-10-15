@@ -27,7 +27,6 @@ class GIHHConfig:
         time_limit: Maximum time in seconds for the solver.
         seed: Random seed for reproducibility.
         max_iterations: Maximum number of iterations.
-        vrpp: If True, enable VRPP mode (visit subset profitably).
 
         # Episodic Learning Parameters (Chen et al. 2018)
         seg: Segment size for episodic weight updates.
@@ -47,7 +46,6 @@ class GIHHConfig:
     time_limit: float = 60.0
     seed: Optional[int] = None
     max_iterations: int = 1000
-    vrpp: bool = True
     profit_aware_operators: bool = False
 
     # Episodic Learning Parameters

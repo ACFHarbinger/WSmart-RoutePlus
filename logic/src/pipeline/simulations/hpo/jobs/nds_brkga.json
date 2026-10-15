@@ -27,14 +27,6 @@
         "type": "int",
         "default": 42
     },
-    "vrpp": {
-        "type": "categorical",
-        "choices": [
-            true,
-            false
-        ],
-        "default": true
-    },
     "overflow_penalty": {
         "type": "float",
         "default": 10.0

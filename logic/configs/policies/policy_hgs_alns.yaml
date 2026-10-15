@@ -28,7 +28,6 @@ hgs_alns:
     alns_time_limit: 60
     alns_engine: custom
     profit_aware_operators: false
-    vrpp: true
     packing:
       other/pk_lookahead.yaml:
       - default

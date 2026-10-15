@@ -50,4 +50,3 @@ class ARCOConfig:
     weight_floor: float = 0.01
     decay: float = 1.0
     seed: int = 42
-    vrpp: bool = True

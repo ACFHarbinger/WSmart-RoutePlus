@@ -41,7 +41,6 @@ class ALNSIPOConfig:
         sigma_1: Score for new global best solution.
         sigma_2: Score for improving (but not best) solution.
         sigma_3: Score for accepted worse solution.
-        vrpp: If True, allow inserting nodes not in the removed pool.
         profit_aware_operators: Use profit-aware operator variants.
         extended_operators: Add string/cluster/neighbor operators.
         seed: Random seed for reproducibility.
@@ -72,7 +71,6 @@ class ALNSIPOConfig:
     sigma_1: float = 33.0
     sigma_2: float = 9.0
     sigma_3: float = 13.0
-    vrpp: bool = True
     profit_aware_operators: bool = False
     extended_operators: bool = False
     seed: Optional[int] = None

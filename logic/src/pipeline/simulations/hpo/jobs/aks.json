@@ -27,14 +27,6 @@
         "type": "int",
         "default": 42
     },
-    "vrpp": {
-        "type": "categorical",
-        "choices": [
-            true,
-            false
-        ],
-        "default": true
-    },
     "t_easy": {
         "type": "float",
         "default": 10.0

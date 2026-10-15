@@ -103,7 +103,6 @@ class GLSPolicy(BaseRoutingPolicy):
             fls_coupling_prob=float(values.get("fls_coupling_prob", 0.8)),
             time_limit=float(values.get("time_limit", 60.0)),
             seed=values.get("seed", 42),
-            vrpp=values.get("vrpp", True),
             profit_aware_operators=values.get("profit_aware_operators", False),
         )
 

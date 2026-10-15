@@ -13,7 +13,6 @@ from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_bound
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
-
 class MockBins:
     def __init__(self, n=3):
         self.n = n
@@ -41,7 +40,7 @@ def bb_test_data():
         "distance_matrix": dist_matrix.tolist(),
         "waste_type": "plastic",
         "area": "riomaior",
-        "config": {"bb": {"time_limit": 10, "vrpp": True}},
+        "config": {"bb": {"time_limit": 10}},
         "mandatory": [1],
     }
 

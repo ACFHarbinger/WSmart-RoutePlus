@@ -13,8 +13,6 @@ Example:
     20
     >>> config.seed
     42
-    >>> config.vrpp
-    True
     >>> config.packing
     None
     >>> config.route_improvement
@@ -40,7 +38,6 @@ class PHHConfig:
         pop_size (int): Size of the population. Defaults to 10.
         gens (int): Number of generations. Defaults to 20.
         seed (int): Random seed for reproducibility. Defaults to 42.
-        vrpp (bool): Whether the problem is a VRP with Profits. Defaults to True.
         packing (Optional[PackingConfig]): Configuration for
             mandatory node selection policies.
         route_improvement (Optional[RouteImprovingConfig]): Optional configuration
@@ -50,7 +47,6 @@ class PHHConfig:
     pop_size: int = 10
     gens: int = 20
     seed: int = 42
-    vrpp: bool = True
 
     packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None

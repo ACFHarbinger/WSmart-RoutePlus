@@ -49,6 +49,7 @@ from logic.src.policies.helpers.operators import (
     shaw_removal,
     string_removal,
 )
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +68,6 @@ class HyperOperatorContext:
         C: Cost multiplier.
         mandatory_nodes: Set of mandatory node indices.
         profit_aware_operators: Whether to use profit-aware heuristics.
-        vrpp: Whether to consider all unvisited nodes in insertion.
         route_loads: Cached loads for each route.
         node_map: Mapping of node to its route and position.
         neighbors: Pre-computed neighbors for each node.
@@ -86,7 +86,6 @@ class HyperOperatorContext:
         mandatory_nodes: Optional[List[int]] = None,
         rng: Optional[random.Random] = None,
         profit_aware_operators: bool = False,
-        vrpp: bool = True,
         use_cache: bool = False,
     ):
         """
@@ -102,7 +101,6 @@ class HyperOperatorContext:
             mandatory_nodes: List of mandatory node indices.
             rng: Random number generator.
             profit_aware_operators: Whether to use profit-aware heuristics.
-            vrpp: Whether to consider all unvisited nodes in insertion.
             use_cache: Whether to use the cache for operator applications.
         """
         self.routes = routes
@@ -113,7 +111,6 @@ class HyperOperatorContext:
         self.C = C
         self.mandatory_nodes = set(mandatory_nodes) if mandatory_nodes else set()
         self.profit_aware_operators = profit_aware_operators
-        self.vrpp = vrpp
         self.route_loads: List[float] = []
         self.node_map: Dict[int, Tuple[int, int]] = {}
         self.neighbors: Dict[int, List[int]] = {}
@@ -511,7 +508,7 @@ def apply_shaw_removal(ctx: HyperOperatorContext, n: Optional[int] = None) -> bo
                 R=ctx.R,
                 C=ctx.C,
                 mandatory_nodes=list(ctx.mandatory_nodes),
-                expand_pool=ctx.vrpp,
+                expand_pool=current_expand_pool(),
             )
         else:
             ctx.routes = greedy_insertion(
@@ -521,7 +518,7 @@ def apply_shaw_removal(ctx: HyperOperatorContext, n: Optional[int] = None) -> bo
                 ctx.waste,
                 ctx.Q,
                 mandatory_nodes=list(ctx.mandatory_nodes),
-                expand_pool=ctx.vrpp,
+                expand_pool=current_expand_pool(),
             )
         ctx._build_structures()
         return True
@@ -553,7 +550,7 @@ def apply_string_removal(ctx: HyperOperatorContext, n: Optional[int] = None) -> 
                 R=ctx.R,
                 C=ctx.C,
                 mandatory_nodes=list(ctx.mandatory_nodes),
-                expand_pool=ctx.vrpp,
+                expand_pool=current_expand_pool(),
             )
         else:
             ctx.routes = greedy_insertion(
@@ -563,7 +560,7 @@ def apply_string_removal(ctx: HyperOperatorContext, n: Optional[int] = None) -> 
                 ctx.waste,
                 ctx.Q,
                 mandatory_nodes=list(ctx.mandatory_nodes),
-                expand_pool=ctx.vrpp,
+                expand_pool=current_expand_pool(),
             )
         ctx._build_structures()
         return True
@@ -595,7 +592,7 @@ def apply_random_removal(ctx: HyperOperatorContext, n: Optional[int] = None) -> 
                 R=ctx.R,
                 C=ctx.C,
                 mandatory_nodes=list(ctx.mandatory_nodes),
-                expand_pool=ctx.vrpp,
+                expand_pool=current_expand_pool(),
             )
         else:
             ctx.routes = greedy_insertion(
@@ -605,7 +602,7 @@ def apply_random_removal(ctx: HyperOperatorContext, n: Optional[int] = None) -> 
                 ctx.waste,
                 ctx.Q,
                 mandatory_nodes=list(ctx.mandatory_nodes),
-                expand_pool=ctx.vrpp,
+                expand_pool=current_expand_pool(),
             )
         ctx._build_structures()
         return True

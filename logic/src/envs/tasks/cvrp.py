@@ -12,11 +12,11 @@ import torch
 from tensordict import TensorDict
 
 from logic.src.envs.tasks.base import BaseProblem
-from logic.src.envs.tasks.common.metrics import DEFAULT_METRICS
 from logic.src.envs.tasks.common.objectives import distance_objective
+from logic.src.envs.tasks.common.released_specs import CVRP_SPEC
 from logic.src.envs.tasks.espprc import ESPPRCEnv, ESPPRCGenerator, LoadResource
 from logic.src.envs.tasks.profitable_tour.common import calc_cumulative_trip_load, closed_tour_length
-from logic.src.envs.tasks.spec import PROBLEMS, ProblemSpec
+from logic.src.envs.tasks.spec import PROBLEMS
 
 CAPACITIES: Dict[int, float] = {
     10: 20.0,
@@ -242,14 +242,6 @@ class CVRP(BaseProblem):
         return evaluate_cvrp_tour(dataset, pi, dist_matrix=dist_matrix, capacity=capacity, **kwargs)
 
 
-CVRP_SPEC = ProblemSpec(
-    name="cvrp",
-    objective=distance_objective,
-    constraints=(LoadResource(limit_key="vehicle_capacity", demand_key="waste"),),
-    metrics=DEFAULT_METRICS,
-    env_target="logic.src.envs.tasks.cvrp:CVRPEnv",
-    expand_pool=False,
-)
 PROBLEMS.register(CVRP_SPEC)
 
 __all__ = ["CAPACITIES", "CVRPGenerator", "CVRPEnv", "CVRP", "evaluate_cvrp_tour", "CVRP_SPEC"]

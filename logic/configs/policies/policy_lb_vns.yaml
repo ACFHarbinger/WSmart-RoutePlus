@@ -7,7 +7,6 @@ lb_vns:
     max_lb_iterations: 15
     mip_gap: 0.01
     time_limit: 60.0
-    vrpp: true
     framework: ortools
     engine: gurobi
     packing:

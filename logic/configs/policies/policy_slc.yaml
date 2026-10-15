@@ -7,7 +7,6 @@ slc:
     max_iterations: 50
     time_limit: 60.0
     local_search_iterations: 500
-    vrpp: true
     packing:
       other/pk_lookahead.yaml:
       - default

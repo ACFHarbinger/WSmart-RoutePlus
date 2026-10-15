@@ -99,7 +99,6 @@ def run_bpc_stage(
         cutting_planes=pipeline_params.bpc_cutting_planes,
         branching_strategy=pipeline_params.bpc_branching_strategy,
         seed=pipeline_params.seed,
-        vrpp=True,
         profit_aware_operators=True,
     )
 

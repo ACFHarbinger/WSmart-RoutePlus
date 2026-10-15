@@ -21,6 +21,7 @@ import numpy as np
 from logic.src.policies.helpers.operators import greedy_insertion, greedy_profit_insertion
 
 from logic.src.configs.policies.ma import MAConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class MASolver:
@@ -320,7 +321,7 @@ class MASolver:
                     self.R,
                     self.C,
                     mandatory_nodes=self.mandatory_nodes,
-                    expand_pool=self.params.vrpp,
+                    expand_pool=current_expand_pool(),
                 )
             else:
                 child_routes = greedy_insertion(
@@ -330,7 +331,7 @@ class MASolver:
                     self.wastes,
                     self.capacity,
                     mandatory_nodes=self.mandatory_nodes,
-                    expand_pool=self.params.vrpp,
+                    expand_pool=current_expand_pool(),
                 )
         # Fallback to copy if construction fails for any reason.
         return child_routes if child_routes else copy.deepcopy(parent1)
@@ -369,7 +370,7 @@ class MASolver:
                     self.R,
                     self.C,
                     mandatory_nodes=self.mandatory_nodes,
-                    expand_pool=self.params.vrpp,
+                    expand_pool=current_expand_pool(),
                 )
             else:
                 mutated_routes = greedy_insertion(
@@ -379,7 +380,7 @@ class MASolver:
                     self.wastes,
                     self.capacity,
                     mandatory_nodes=self.mandatory_nodes,
-                    expand_pool=self.params.vrpp,
+                    expand_pool=current_expand_pool(),
                 )
         return mutated_routes
 
@@ -412,7 +413,7 @@ class MASolver:
                         self.R,
                         self.C,
                         mandatory_nodes=self.mandatory_nodes,
-                        expand_pool=self.params.vrpp,
+                        expand_pool=current_expand_pool(),
                     )
                 else:
                     initial_routes = greedy_insertion(
@@ -422,7 +423,7 @@ class MASolver:
                         self.wastes,
                         self.capacity,
                         mandatory_nodes=self.mandatory_nodes,
-                        expand_pool=self.params.vrpp,
+                        expand_pool=current_expand_pool(),
                     )
             # Ensure we always return at least individual node visits if greedy fails.
             starting_pop.append(initial_routes if initial_routes else [[n] for n in potential_nodes])

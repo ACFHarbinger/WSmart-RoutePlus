@@ -5,7 +5,6 @@ sa:
   nb_granular: 20
   time_limit: 60.0
   seed: 42
-  vrpp: true
   profit_aware_operators: false
   packing:
     other/pk_lookahead.yaml:

@@ -11,8 +11,6 @@ Example:
     20
     >>> config.max_iterations
     200
-    >>> config.vrpp
-    True
 """
 from __future__ import annotations
 
@@ -32,7 +30,6 @@ class QDEConfig:
         max_iterations: Maximum DE generations.
         time_limit: Wall-clock time limit in seconds.
         n_removal: Nodes removed per collapse-repair step.
-        vrpp: If True, solver operates in full VRPP mode (consider all bins).
         packing: Packing algorithm config list.
         route_improvement: Route improvement operation config list.
     """
@@ -44,7 +41,6 @@ class QDEConfig:
     time_limit: float = 60.0
     seed: Optional[int] = None
     n_removal: int = 2
-    vrpp: bool = True
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)
     delta_theta: float = 0.01 * 3.14159  # Rotation gate step size (e.g., 0.01*pi)

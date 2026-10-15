@@ -30,6 +30,7 @@ from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.evolution 
     update_biased_fitness,
 )
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.split import LinearSplit
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 from .ruin_recreate import AdaptiveOperatorManager, RuinRecreateOperator
 
@@ -95,7 +96,7 @@ class HGSRRSolver:
 
         # Split manager for evaluating giant tours
         self.split_manager = LinearSplit(
-            dist_matrix, wastes, capacity, R, C, params.max_vehicles, mandatory_nodes, params.vrpp
+            dist_matrix, wastes, capacity, R, C, params.max_vehicles, mandatory_nodes
         )
 
         # Ruin-and-recreate operator with adaptive selection
@@ -133,7 +134,7 @@ class HGSRRSolver:
         for _ in range(self.params.population_size):
             gt = self.nodes[:]
             self.random.shuffle(gt)
-            ind = Individual(gt, expand_pool=self.params.vrpp)
+            ind = Individual(gt, expand_pool=current_expand_pool())
             evaluate(ind, self.split_manager)
             population.append(ind)
 
@@ -159,7 +160,7 @@ class HGSRRSolver:
                 child = ordered_crossover(p1, p2, rng=self.random)
             else:
                 # If tours are too small, just copy one parent
-                child = Individual(p1.giant_tour[:], expand_pool=self.params.vrpp)
+                child = Individual(p1.giant_tour[:], expand_pool=current_expand_pool())
 
             # 3. Adaptive Ruin-and-Recreate (Mutation)
             if self.random.random() < self.params.mutation_rate:
@@ -179,7 +180,7 @@ class HGSRRSolver:
 
             # Re-evaluate child
             evaluate(child, self.split_manager)
-            child.expand_pool = self.params.vrpp
+            child.expand_pool = current_expand_pool()
             population.append(child)
 
             # Track improvements

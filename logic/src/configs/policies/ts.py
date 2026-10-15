@@ -11,8 +11,6 @@ Example:
     5000
     >>> config.time_limit
     60.0
-    >>> config.vrpp
-    True
     >>> config.packing
     []
     >>> config.route_improvement
@@ -55,7 +53,6 @@ class TSConfig:
         use_2opt: Whether to include 2-opt moves in the neighborhood.
         use_insertion: Whether to include insertion moves in the neighborhood.
         seed: Random seed for reproducibility.
-        vrpp: Whether the problem is a Vehicle Routing Problem with Profits.
         profit_aware_operators: Whether to use profit-aware considerations in neighborhood operators.
         packing: List of packing algorithms to apply.
         route_improvement: List of route improvement strategies to apply.
@@ -102,7 +99,6 @@ class TSConfig:
 
     # Standard fields
     seed: Optional[int] = None
-    vrpp: bool = True
     profit_aware_operators: bool = False
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)

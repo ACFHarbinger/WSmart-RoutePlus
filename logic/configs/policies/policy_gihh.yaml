@@ -2,7 +2,6 @@ gihh:
   custom:
     time_limit: 60.0
     max_iterations: 1000
-    vrpp: true
     nonimp_threshold: 150
     seg: 80
     alpha: 0.5

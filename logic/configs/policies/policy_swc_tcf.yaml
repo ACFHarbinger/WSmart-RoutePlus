@@ -8,7 +8,6 @@ swc_tcf:
       other/pk_last_minute.yaml:
       - last_minute_cf70
       - last_minute_cf90
-    vrpp: true
     time_limit: 60.0
     route_improvement:
       other/ri_cls.yaml:

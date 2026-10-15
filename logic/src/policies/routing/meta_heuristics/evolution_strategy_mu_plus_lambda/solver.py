@@ -28,6 +28,7 @@ from logic.src.policies.helpers.operators import (
 )
 from logic.src.configs.policies.aco_ks import KSparseACOConfig
 from logic.src.configs.policies.es_mpl import MuPlusLambdaESConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class MuPlusLambdaESSolver:
@@ -86,7 +87,6 @@ class MuPlusLambdaESSolver:
         # Pre-instantiate local search for reuse to prevent instantiation overhead
         aco_params = KSparseACOConfig(
             local_search_iterations=self.params.local_search_iterations,
-            vrpp=self.params.vrpp,
             profit_aware_operators=self.params.profit_aware_operators,
             seed=self.params.seed,
         )
@@ -197,7 +197,7 @@ class MuPlusLambdaESSolver:
 
         n_remove = max(3, self.params.n_removal)
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         p2_nodes = [node for route in parent2 for node in route]
         if not p2_nodes:

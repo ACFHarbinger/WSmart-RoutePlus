@@ -12,7 +12,6 @@ ils_bd:
     overflow_penalty: 100.0
     undervisit_penalty: 10.0
     collection_threshold: 70.0
-    vrpp: true
     max_cuts_per_round: 50
     enable_heuristic_rcc_separation: true
     enable_comb_cuts: false

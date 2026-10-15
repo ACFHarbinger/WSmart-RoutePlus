@@ -88,7 +88,6 @@ class PSOPolicyAdapter(BaseMultiPeriodRoutingPolicy):
             velocity_max=values.get("velocity_max", 0.5),
             max_iterations=values.get("max_iterations", 500),
             time_limit=values.get("time_limit", 60.0),
-            vrpp=values.get("vrpp", True),
             profit_aware_operators=values.get("profit_aware_operators", False),
             seed=values.get("seed", 42),
         )

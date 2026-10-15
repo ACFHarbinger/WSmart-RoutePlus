@@ -36,6 +36,7 @@ from logic.src.policies.helpers.operators.recreate_repair.greedy import (
 from logic.src.configs.policies.aco_ks import KSparseACOConfig
 
 from logic.src.configs.policies.sca import SCAConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class SCASolver:
@@ -89,7 +90,6 @@ class SCASolver:
         # Initialize Local Search for elite learning
         aco_params = KSparseACOConfig(
             local_search_iterations=self.params.local_search_iterations,
-            vrpp=self.params.vrpp,
             profit_aware_operators=self.params.profit_aware_operators,
             seed=self.params.seed,
         )
@@ -231,7 +231,7 @@ class SCASolver:
                 R=self.R,
                 C=self.C,
                 mandatory_nodes=self.mandatory_nodes,
-                expand_pool=self.params.vrpp,
+                expand_pool=current_expand_pool(),
             )
         else:
             routes = greedy_insertion(
@@ -241,7 +241,7 @@ class SCASolver:
                 self.wastes,
                 self.capacity,
                 mandatory_nodes=self.mandatory_nodes,
-                expand_pool=self.params.vrpp,
+                expand_pool=current_expand_pool(),
             )
 
         # Apply local search refinement

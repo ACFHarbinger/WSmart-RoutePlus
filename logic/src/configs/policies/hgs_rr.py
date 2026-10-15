@@ -35,7 +35,6 @@ class HGSRRConfig:
         survivor_threshold: Threshold for survivor selection.
         neighbor_list_size: Number of nearest neighbors to consider.
         max_vehicles: Maximum number of vehicles (0 for unlimited).
-        vrpp: If True, enable VRPP mode (visit subset profitably).
 
         # Ruin-and-Recreate specific parameters
         min_removal_pct: Minimum percentage of nodes to remove (0.0-1.0).
@@ -70,7 +69,6 @@ class HGSRRConfig:
     survivor_threshold: float = 2.0
     neighbor_list_size: int = 10
     max_vehicles: int = 0
-    vrpp: bool = True
     profit_aware_operators: bool = False
 
     # Ruin-and-Recreate parameters

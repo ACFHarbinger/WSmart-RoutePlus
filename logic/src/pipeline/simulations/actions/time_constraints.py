@@ -7,7 +7,7 @@ import numpy as np
 
 from logic.src.utils.routing.tours import get_multi_tour
 
-from .base import SimulationAction
+from .base import SimulationAction, bind_context
 
 logger = logging.getLogger(__name__)
 
@@ -22,31 +22,47 @@ class TimeConstraintAction(SimulationAction):
     kilometres are counted because collection recomputes km from the final tour.
     """
 
+    timed = False
+    reads = ("tour", "bins", "problem_spec", "vehicle_capacity", "distance_matrix")
+    writes = ("tour", "capacity_splits")
+    finalizes = ()
+    requires_final = ()
+
     def execute(self, context: Dict[str, Any]) -> None:
         """Repair the final route before collection mutates any bin contents."""
-        if str(context.get("problem", "")).lower() != "tcptp":
+
+        context = bind_context(context)
+        from logic.src.pipeline.simulations.problem_flags import per_trip_shift
+
+        if not per_trip_shift(context):
             self._split_over_capacity_trips(context)
             return
-        tour = context.get("tour")
-        context["tour"] = get_multi_tour(
+        tour = getattr(context, "tour", None)
+        context.tour = get_multi_tour(
             list(tour) if tour is not None else [],
-            context["bins"].c,
-            context["vehicle_capacity"],
-            context["distance_matrix"],
-            shift_hours=context.get("shift_hours", 7.0),
-            avg_speed_kmh=context.get("avg_speed_kmh", 35.0),
-            service_time_h=context.get("service_time_h", 0.025),
-            time_matrix=context.get("time_matrix"),
+            context.bins.c,
+            context.vehicle_capacity,
+            context.distance_matrix,
+            shift_hours=getattr(context, "shift_hours", 7.0),
+            avg_speed_kmh=getattr(context, "avg_speed_kmh", 35.0),
+            service_time_h=getattr(context, "service_time_h", 0.025),
+            time_matrix=getattr(context, "time_matrix", None),
         )
 
     @staticmethod
     def _split_over_capacity_trips(context: Dict[str, Any]) -> None:
         """Split every trip whose true load exceeds the vehicle capacity (non-TCPTP problems)."""
-        tour = context.get("tour")
-        capacity = context.get("vehicle_capacity")
-        bins = context.get("bins")
-        context["capacity_splits"] = 0
-        if not tour or capacity is None or bins is None or not np.isfinite(float(capacity)):
+        tour = getattr(context, "tour", None)
+        capacity = getattr(context, "vehicle_capacity", None)
+        bins = getattr(context, "bins", None)
+        context.capacity_splits = 0
+        if not tour or capacity is None or bins is None:
+            return
+        try:
+            capacity_ok = np.isfinite(float(capacity))
+        except (TypeError, ValueError):
+            return
+        if not capacity_ok:
             return
         tour = [int(n) for n in tour]
         if not any(n != 0 for n in tour):
@@ -55,12 +71,12 @@ class TimeConstraintAction(SimulationAction):
         framed = framed if framed[-1] == 0 else framed + [0]
         try:
             load = np.asarray(bins.real_c, dtype=float)
-            split = get_multi_tour(framed, load, float(capacity), context["distance_matrix"])
+            split = get_multi_tour(framed, load, float(capacity), context.distance_matrix)
         except (AttributeError, IndexError, TypeError, ValueError) as exc:  # never lose the day's route
             logger.warning("capacity split skipped: %s", exc)
             return
         added = split.count(0) - framed.count(0)
         if added > 0:
-            context["tour"] = split
-            context["capacity_splits"] = added
+            context.tour = split
+            context.capacity_splits = added
 

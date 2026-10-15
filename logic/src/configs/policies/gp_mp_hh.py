@@ -31,7 +31,6 @@ class GP_MP_HH_Config:
         gens (int): Number of generations. Defaults to 20.
         prog_len (int): Maximum length of a GP individual (program). Defaults to 5.
         seed (int): Random seed for reproducibility. Defaults to 42.
-        vrpp (bool): Whether the problem is a VRP with Profits. Defaults to True.
         packing (Optional[PackingConfig]): Configuration for
             mandatory node selection policies.
         route_improvement (Optional[RouteImprovingConfig]): Optional configuration
@@ -42,7 +41,6 @@ class GP_MP_HH_Config:
     gens: int = 20
     prog_len: int = 5
     seed: int = 42
-    vrpp: bool = True
 
     packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None

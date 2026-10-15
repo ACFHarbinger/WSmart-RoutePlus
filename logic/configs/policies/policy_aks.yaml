@@ -6,7 +6,6 @@ aks:
     time_limit: 60.0
     mip_limit_nodes: 10000
     mip_gap: 0.01
-    vrpp: true
     framework: ortools
     engine: gurobi
     packing:

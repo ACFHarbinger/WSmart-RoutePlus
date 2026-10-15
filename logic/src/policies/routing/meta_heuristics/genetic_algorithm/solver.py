@@ -38,6 +38,7 @@ from logic.src.policies.helpers.operators.solution_initialization.greedy_si impo
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.individual import Individual
 
 from logic.src.configs.policies.ga import GAConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class GASolver:
@@ -239,7 +240,7 @@ class GASolver:
 
         # Rebuild routes respecting capacity and profit-awareness
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         if use_profit:
             return greedy_profit_insertion(
@@ -277,7 +278,7 @@ class GASolver:
             return routes
 
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         partial, removed = random_removal(routes, 1, self.random)
         try:

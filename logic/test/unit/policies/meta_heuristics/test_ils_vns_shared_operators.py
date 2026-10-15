@@ -280,13 +280,13 @@ def test_solver_results_unchanged_after_refactor(solver_name, profit_aware, monk
     if solver_name == "ils":
         params = ILSConfig(
             n_restarts=40, inner_iterations=25, time_limit=0, seed=123,
-            vrpp=True, profit_aware_operators=profit_aware,
+             profit_aware_operators=profit_aware,
         )
         solver = ILSSolver(dist, wastes, CAPACITY, R_REVENUE, C_COST, params, MANDATORY)
     else:
         params = VNSConfig(
             k_max=5, max_iterations=60, local_search_iterations=30, time_limit=0, seed=123,
-            vrpp=True, profit_aware_operators=profit_aware,
+             profit_aware_operators=profit_aware,
         )
         solver = VNSSolver(dist, wastes, CAPACITY, R_REVENUE, C_COST, params, MANDATORY)
 

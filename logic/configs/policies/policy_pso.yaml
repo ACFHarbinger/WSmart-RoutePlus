@@ -10,7 +10,6 @@ pso:
     velocity_max: 0.5
     max_iterations: 500
     time_limit: 60.0
-    vrpp: true
     profit_aware_operators: false
     packing:
       other/pk_lookahead.yaml:

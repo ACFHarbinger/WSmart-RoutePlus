@@ -102,7 +102,6 @@ class MACOParams:
 
         max_iterations: Maximum number of iterations.
         time_limit: Maximum runtime in seconds.
-        vrpp: Whether to use VRPP mode.
         profit_aware_operators: Whether to use profit-aware operators.
         seed: Random seed.
         acceptance_criterion: Acceptance criterion for solutions.
@@ -142,7 +141,6 @@ class MACOParams:
     time_limit: float = 30.0
 
     # -- Problem / misc --
-    vrpp: bool = True
     profit_aware_operators: bool = False
     seed: Optional[int] = 42
     acceptance_criterion: Optional[IAcceptanceCriterion] = None
@@ -254,7 +252,6 @@ class HybridMemeticLargeNeighborhoodSearchParams:
         aco_init_iterations: ACO iterations for population seeding.
         time_limit: Wall-clock time limit in seconds.
         seed: Random seed for reproducibility.
-        vrpp: Whether to solve the VRP with profits.
         profit_aware_operators: Whether to use profit-aware heuristics.
         aco_params: MACO configuration.
         alns_params: ALNS configuration.
@@ -273,7 +270,6 @@ class HybridMemeticLargeNeighborhoodSearchParams:
     aco_init_iterations: int = 50
     time_limit: float = 300.0
     seed: Optional[int] = None
-    vrpp: bool = True
     profit_aware_operators: bool = False
 
     # Sub-algorithm Parameters
@@ -282,11 +278,9 @@ class HybridMemeticLargeNeighborhoodSearchParams:
 
     def __post_init__(self) -> None:
         """Forward global flags to sub-parameters."""
-        self.aco_params.vrpp = self.vrpp
         self.aco_params.profit_aware_operators = self.profit_aware_operators
         self.aco_params.seed = self.seed
 
-        self.alns_params.vrpp = self.vrpp
         self.alns_params.profit_aware_operators = self.profit_aware_operators
         self.alns_params.seed = self.seed
 

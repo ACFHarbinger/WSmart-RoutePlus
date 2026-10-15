@@ -9,8 +9,6 @@ Example:
     >>> config = MP_ACO_Config()
     >>> config.iters
     50
-    >>> config.vrpp
-    True
 """
 
 from dataclasses import dataclass
@@ -32,7 +30,6 @@ class MP_ACO_Config:
         beta (float): Influence of heuristic information on path selection. Defaults to 2.0.
         rho (float): Pheromone evaporation rate. Defaults to 0.1.
         seed (int): Random seed for reproducibility. Defaults to 42.
-        vrpp (bool): Whether the problem is a VRP with Profits. Defaults to True.
         packing (Optional[PackingConfig]): Configuration for
             mandatory node selection policies.
         route_improvement (Optional[RouteImprovingConfig]): Optional configuration
@@ -45,7 +42,6 @@ class MP_ACO_Config:
     beta: float = 2.0
     rho: float = 0.1
     seed: int = 42
-    vrpp: bool = True
 
     packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None

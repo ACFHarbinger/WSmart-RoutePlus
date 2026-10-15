@@ -11,8 +11,6 @@ Example:
     20
     >>> config.iters
     50
-    >>> config.vrpp
-    True
 """
 
 from dataclasses import dataclass
@@ -34,7 +32,6 @@ class MP_PSO_Config:
         c1 (float): Cognitive coefficient. Defaults to 2.0.
         c2 (float): Social coefficient. Defaults to 2.0.
         seed (int): Random seed for reproducibility. Defaults to 42.
-        vrpp (bool): Whether the problem is a VRP with Profits. Defaults to True.
         packing (Optional[PackingConfig]): Configuration for
             mandatory node selection policies.
         route_improvement (Optional[RouteImprovingConfig]): Optional configuration
@@ -47,7 +44,6 @@ class MP_PSO_Config:
     c1: float = 2.0
     c2: float = 2.0
     seed: int = 42
-    vrpp: bool = True
 
     packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None

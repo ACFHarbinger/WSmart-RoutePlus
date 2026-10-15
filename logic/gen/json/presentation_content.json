@@ -105,7 +105,7 @@
         "ACO-HH: Ant Colony Optimisation Hyper-Heuristic"
       ],
       "speaker_notes": [
-        "The simulator collects nine KPIs per run: (1) overflows — bins that exceeded capacity, a service failure; (2) number of bins collected — how many collection visits were performed; (3) kg collected — total waste removed; (4) km driven — total vehicle distance; (5) KG/KM — efficiency ratio, kg collected per km driven; (6) reinforcement-learning reward — the RL training/evaluation signal, computed uniformly for every policy so exact and heuristic methods stay comparable; (7) total profit — revenue from collected waste minus travel cost; (8) simulation run execution time — the wall-clock cost of running the policy; (9) number of days with a collection tour — out of the full horizon, how many days actually dispatched a vehicle.",
+        "The simulator collects physical KPIs per run: overflows (bins that exceeded capacity), bins collected, kilograms collected, kilometres driven, kg/km, profit in EUR (revenue minus travel cost), policy time, day wall time, days simulated, and collection days (days that dispatched a vehicle). The day log does not store an RL reward.",
         "Every algorithm, exact or heuristic, runs under the same simulator and the same scenarios — this is what makes the comparison fair: identical demand realisations, identical KPI definitions, identical vehicle constraints.",
         "The framework lets us ask: given the same packing algorithm and the same daily scenario, how does BPC compare to HGS or ACO-HH on overflow prevention and route efficiency?"
       ]

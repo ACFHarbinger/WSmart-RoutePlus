@@ -19,8 +19,6 @@ Example:
     'nearest_neighbor'
     >>> config.seed
     None
-    >>> config.vrpp
-    True
     >>> config.profit_aware_operators
     False
 """
@@ -64,7 +62,6 @@ class POPMUSICConfig:
         cluster_solver_config: Detailed configuration for the clustering solver.
         initial_solver: Solver used to generate the initial solution (e.g., 'nearest_neighbor').
         seed: Random seed for reproducibility.
-        vrpp: Whether this is a VRPP problem.
         packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
     """
@@ -84,7 +81,6 @@ class POPMUSICConfig:
     seed: Optional[int] = None
 
     # Infrastructure
-    vrpp: bool = True
     profit_aware_operators: bool = False
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

@@ -42,6 +42,7 @@ from logic.src.policies.helpers.operators import (
 from logic.src.policies.helpers.operators.solution_initialization.nearest_neighbor_si import build_nn_routes
 
 from logic.src.configs.policies.gls import GLSConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class GLSSolver:
@@ -327,7 +328,7 @@ class GLSSolver:
                 self.R,
                 self.C,
                 self.mandatory_nodes,
-                self.params.vrpp,
+                current_expand_pool(),
             )
         else:
             partial, removed = random_removal(routes, n, self.random)
@@ -338,7 +339,7 @@ class GLSSolver:
                 self.wastes,
                 self.capacity,
                 mandatory_nodes=self.mandatory_nodes,
-                expand_pool=self.params.vrpp,
+                expand_pool=current_expand_pool(),
             )
 
     def _llh1(self, routes: List[List[int]], n: int) -> List[List[int]]:
@@ -362,7 +363,7 @@ class GLSSolver:
                 self.R,
                 self.C,
                 self.mandatory_nodes,
-                self.params.vrpp,
+                current_expand_pool(),
             )
         else:
             partial, removed = worst_removal(routes, n, self.dist_matrix)
@@ -373,7 +374,7 @@ class GLSSolver:
                 self.wastes,
                 self.capacity,
                 mandatory_nodes=self.mandatory_nodes,
-                expand_pool=self.params.vrpp,
+                expand_pool=current_expand_pool(),
             )
 
     def _llh2(self, routes: List[List[int]], n: int) -> List[List[int]]:
@@ -397,7 +398,7 @@ class GLSSolver:
                 self.R,
                 self.C,
                 self.mandatory_nodes,
-                self.params.vrpp,
+                current_expand_pool(),
             )
         else:
             partial, removed = cluster_removal(routes, n, self.dist_matrix, self.nodes)
@@ -408,7 +409,7 @@ class GLSSolver:
                 self.wastes,
                 self.capacity,
                 mandatory_nodes=self.mandatory_nodes,
-                expand_pool=self.params.vrpp,
+                expand_pool=current_expand_pool(),
             )
 
     def _llh3(self, routes: List[List[int]], n: int) -> List[List[int]]:
@@ -432,7 +433,7 @@ class GLSSolver:
                 self.R,
                 self.C,
                 self.mandatory_nodes,
-                self.params.vrpp,
+                current_expand_pool(),
             )
         else:
             partial, removed = worst_removal(routes, n, self.dist_matrix)
@@ -443,7 +444,7 @@ class GLSSolver:
                 self.wastes,
                 self.capacity,
                 mandatory_nodes=self.mandatory_nodes,
-                expand_pool=self.params.vrpp,
+                expand_pool=current_expand_pool(),
             )
 
     def _llh4(self, routes: List[List[int]], n: int) -> List[List[int]]:
@@ -467,7 +468,7 @@ class GLSSolver:
                 self.R,
                 self.C,
                 self.mandatory_nodes,
-                self.params.vrpp,
+                current_expand_pool(),
             )
         else:
             partial, removed = random_removal(routes, n, self.random)
@@ -478,7 +479,7 @@ class GLSSolver:
                 self.wastes,
                 self.capacity,
                 mandatory_nodes=self.mandatory_nodes,
-                expand_pool=self.params.vrpp,
+                expand_pool=current_expand_pool(),
             )
 
     def _llh5(self, routes: List[List[int]], n: int) -> List[List[int]]:
@@ -503,7 +504,7 @@ class GLSSolver:
                 self.R,
                 self.C,
                 self.mandatory_nodes,
-                self.params.vrpp,
+                current_expand_pool(),
             )
         else:
             return greedy_insertion(
@@ -513,7 +514,7 @@ class GLSSolver:
                 self.wastes,
                 self.capacity,
                 mandatory_nodes=self.mandatory_nodes,
-                expand_pool=self.params.vrpp,
+                expand_pool=current_expand_pool(),
             )
 
     # ------------------------------------------------------------------

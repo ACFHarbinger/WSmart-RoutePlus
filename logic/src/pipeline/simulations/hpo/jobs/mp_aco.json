@@ -23,14 +23,6 @@
         "type": "int",
         "default": 42
     },
-    "vrpp": {
-        "type": "categorical",
-        "choices": [
-            true,
-            false
-        ],
-        "default": true
-    },
     "packing": {
         "type": "object",
         "default": null

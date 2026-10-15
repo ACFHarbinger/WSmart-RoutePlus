@@ -5,4 +5,3 @@ mp_pso:
   c1: 2.0
   c2: 2.0
   seed: 42
-  vrpp: true
