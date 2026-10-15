@@ -17,10 +17,21 @@ Example:
     >>> from logic.src.models.core import AttentionModel
 """
 
-from .attention_model import AttentionModel as AttentionModel
-from .matnet import MatNet as MatNet
+from typing import Any
+
+from logic.src.utils.registry import lazy_getattr
+
+# Public names load on first access, so importing the package loads none of them.
+_LAZY = {
+    "AttentionModel": "logic.src.models.core.attention_model:AttentionModel",
+    "MatNet": "logic.src.models.core.matnet:MatNet",
+}
 
 __all__ = [
     "AttentionModel",
     "MatNet",
 ]
+
+
+def __getattr__(name: str) -> Any:
+    return lazy_getattr(globals(), _LAZY, name)

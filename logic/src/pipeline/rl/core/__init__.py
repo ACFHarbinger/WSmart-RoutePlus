@@ -8,35 +8,40 @@ Example:
     None
 """
 
-from logic.src.pipeline.rl.common.base import RL4COLitModule
-from logic.src.pipeline.rl.common.baselines import (
-    BASELINE_REGISTRY,
-    Baseline,
-    CriticBaseline,
-    ExponentialBaseline,
-    MeanBaseline,
-    NoBaseline,
-    POMOBaseline,
-    RolloutBaseline,
-    SharedBaseline,
-    WarmupBaseline,
-    get_baseline,
-)
-from logic.src.pipeline.rl.core.a2c import A2C
-from logic.src.pipeline.rl.core.adaptive_imitation import AdaptiveImitation
-from logic.src.pipeline.rl.core.dr_grpo import DRGRPO
-from logic.src.pipeline.rl.core.gdpo import GDPO
-from logic.src.pipeline.rl.core.gspo import GSPO
-from logic.src.pipeline.rl.core.imitation import ImitationLearning
-from logic.src.pipeline.rl.core.mvmoe_am import MVMoE_AM
-from logic.src.pipeline.rl.core.mvmoe_pomo import MVMoE_POMO
-from logic.src.pipeline.rl.core.pomo import POMO
-from logic.src.pipeline.rl.core.ppo import PPO
-from logic.src.pipeline.rl.core.reinforce import REINFORCE
-from logic.src.pipeline.rl.core.sapo import SAPO
-from logic.src.pipeline.rl.core.symnco import SymNCO
-from logic.src.pipeline.rl.meta.hrl import HRLModule
-from logic.src.pipeline.rl.meta.module import MetaRLModule
+from typing import Any
+
+from logic.src.utils.registry import lazy_getattr
+
+# Public names load on first access, so importing the package loads none of them.
+_LAZY = {
+    "RL4COLitModule": "logic.src.pipeline.rl.common.base:RL4COLitModule",
+    "BASELINE_REGISTRY": "logic.src.pipeline.rl.common.baselines:BASELINE_REGISTRY",
+    "Baseline": "logic.src.pipeline.rl.common.baselines:Baseline",
+    "CriticBaseline": "logic.src.pipeline.rl.common.baselines:CriticBaseline",
+    "ExponentialBaseline": "logic.src.pipeline.rl.common.baselines:ExponentialBaseline",
+    "MeanBaseline": "logic.src.pipeline.rl.common.baselines:MeanBaseline",
+    "NoBaseline": "logic.src.pipeline.rl.common.baselines:NoBaseline",
+    "POMOBaseline": "logic.src.pipeline.rl.common.baselines:POMOBaseline",
+    "RolloutBaseline": "logic.src.pipeline.rl.common.baselines:RolloutBaseline",
+    "SharedBaseline": "logic.src.pipeline.rl.common.baselines:SharedBaseline",
+    "WarmupBaseline": "logic.src.pipeline.rl.common.baselines:WarmupBaseline",
+    "get_baseline": "logic.src.pipeline.rl.common.baselines:get_baseline",
+    "A2C": "logic.src.pipeline.rl.core.a2c:A2C",
+    "AdaptiveImitation": "logic.src.pipeline.rl.core.adaptive_imitation:AdaptiveImitation",
+    "DRGRPO": "logic.src.pipeline.rl.core.dr_grpo:DRGRPO",
+    "GDPO": "logic.src.pipeline.rl.core.gdpo:GDPO",
+    "GSPO": "logic.src.pipeline.rl.core.gspo:GSPO",
+    "ImitationLearning": "logic.src.pipeline.rl.core.imitation:ImitationLearning",
+    "MVMoE_AM": "logic.src.pipeline.rl.core.mvmoe_am:MVMoE_AM",
+    "MVMoE_POMO": "logic.src.pipeline.rl.core.mvmoe_pomo:MVMoE_POMO",
+    "POMO": "logic.src.pipeline.rl.core.pomo:POMO",
+    "PPO": "logic.src.pipeline.rl.core.ppo:PPO",
+    "REINFORCE": "logic.src.pipeline.rl.core.reinforce:REINFORCE",
+    "SAPO": "logic.src.pipeline.rl.core.sapo:SAPO",
+    "SymNCO": "logic.src.pipeline.rl.core.symnco:SymNCO",
+    "HRLModule": "logic.src.pipeline.rl.meta.hrl:HRLModule",
+    "MetaRLModule": "logic.src.pipeline.rl.meta.module:MetaRLModule",
+}
 
 __all__ = [
     "RL4COLitModule",
@@ -67,3 +72,7 @@ __all__ = [
     "MVMoE_POMO",
     "MVMoE_AM",
 ]
+
+
+def __getattr__(name: str) -> Any:
+    return lazy_getattr(globals(), _LAZY, name)

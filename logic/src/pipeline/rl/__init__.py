@@ -25,42 +25,31 @@ Example:
     >>> algorithm.train()
 """
 
-from logic.src.pipeline.rl.core import (
-    A2C,
-    DRGRPO,
-    GDPO,
-    GSPO,
-    POMO,
-    PPO,
-    REINFORCE,
-    SAPO,
-    AdaptiveImitation,
-    HRLModule,
-    ImitationLearning,
-    MetaRLModule,
-    MVMoE_AM,
-    MVMoE_POMO,
-    SymNCO,
-)
+from typing import Any
 
-# RL Algorithm Registry: maps CLI algorithm names to Lightning module classes
+from logic.src.utils.registry import import_target, lazy_getattr
+
+_CORE = "logic.src.pipeline.rl.core"
+# Algorithm name -> "module:class". Classes load on lookup, so importing this package loads
+# only the algorithm a run uses (the release ships REINFORCE and imitation, Q-12).
 RL_ALGORITHM_REGISTRY = {
-    "reinforce": REINFORCE,
-    "ppo": PPO,
-    "a2c": A2C,
-    "sapo": SAPO,
-    "gspo": GSPO,
-    "gdpo": GDPO,
-    "dr_grpo": DRGRPO,
-    "pomo": POMO,
-    "symnco": SymNCO,
-    "imitation": ImitationLearning,
-    "adaptive_imitation": AdaptiveImitation,
-    "hrl": HRLModule,
-    "meta_rl": MetaRLModule,
-    "mvmoe_pomo": MVMoE_POMO,
-    "mvmoe_am": MVMoE_AM,
+    "reinforce": f"{_CORE}.reinforce:REINFORCE",
+    "ppo": f"{_CORE}.ppo:PPO",
+    "a2c": f"{_CORE}.a2c:A2C",
+    "sapo": f"{_CORE}.sapo:SAPO",
+    "gspo": f"{_CORE}.gspo:GSPO",
+    "gdpo": f"{_CORE}.gdpo:GDPO",
+    "dr_grpo": f"{_CORE}.dr_grpo:DRGRPO",
+    "pomo": f"{_CORE}.pomo:POMO",
+    "symnco": f"{_CORE}.symnco:SymNCO",
+    "imitation": f"{_CORE}.imitation:ImitationLearning",
+    "adaptive_imitation": f"{_CORE}.adaptive_imitation:AdaptiveImitation",
+    "hrl": "logic.src.pipeline.rl.meta.hrl:HRLModule",
+    "meta_rl": "logic.src.pipeline.rl.meta.module:MetaRLModule",
+    "mvmoe_pomo": f"{_CORE}.mvmoe_pomo:MVMoE_POMO",
+    "mvmoe_am": f"{_CORE}.mvmoe_am:MVMoE_AM",
 }
+_LAZY = {target.rsplit(":", 1)[1]: target for target in RL_ALGORITHM_REGISTRY.values()}
 
 
 def get_rl_algorithm(name: str) -> type:
@@ -78,7 +67,7 @@ def get_rl_algorithm(name: str) -> type:
     """
     if name not in RL_ALGORITHM_REGISTRY:
         raise ValueError(f"Unknown RL algorithm: {name!r}. Available: {sorted(RL_ALGORITHM_REGISTRY.keys())}")
-    return RL_ALGORITHM_REGISTRY[name]
+    return import_target(RL_ALGORITHM_REGISTRY[name])
 
 
 __all__ = [
@@ -100,3 +89,7 @@ __all__ = [
     "RL_ALGORITHM_REGISTRY",
     "get_rl_algorithm",
 ]
+
+
+def __getattr__(name: str) -> Any:
+    return lazy_getattr(globals(), _LAZY, name)

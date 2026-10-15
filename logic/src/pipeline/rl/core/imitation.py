@@ -18,6 +18,7 @@ Example:
 
 from __future__ import annotations
 
+import importlib
 from dataclasses import asdict
 from typing import Any, Optional
 
@@ -41,14 +42,8 @@ from logic.src.pipeline.rl.core.losses import (
     reverse_kl_divergence_loss,
     weighted_nll_loss,
 )
-from logic.src.policies.vector.alns import VectorizedALNS
-from logic.src.policies.vector.ant_colony_system import VectorizedACOPolicy
 from logic.src.policies.vector.expert_cache import CachedExpert
-from logic.src.policies.vector.hgs import VectorizedHGS
-from logic.src.policies.vector.hgs_alns import VectorizedHGSALNS
-from logic.src.policies.vector.iterated_local_search import IteratedLocalSearchPolicy
 from logic.src.policies.vector.profitable_nearest_neighbour import ProfitableNearestNeighbourPolicy
-from logic.src.policies.vector.random_local_search import RandomLocalSearchPolicy
 from logic.src.utils.data.rl_utils import safe_td_copy
 
 
@@ -147,14 +142,15 @@ class ImitationLearning(RL4COLitModule):
         Returns:
             Initialized expert policy instance.
         """
-        # Map config types to policy classes
+        # Map config types to policy classes. Only the paper's expert is imported eagerly; the
+        # others load on use, so the released package (Q-12) does not need them.
         config_to_policy_map = {
-            VectorHGSConfig: VectorizedHGS,
-            VectorALNSConfig: VectorizedALNS,
-            VectorHGSALNSConfig: VectorizedHGSALNS,
-            RLSConfig: RandomLocalSearchPolicy,
-            VectorILSConfig: IteratedLocalSearchPolicy,
-            ACOConfig: VectorizedACOPolicy,
+            VectorHGSConfig: "logic.src.policies.vector.hgs:VectorizedHGS",
+            VectorALNSConfig: "logic.src.policies.vector.alns:VectorizedALNS",
+            VectorHGSALNSConfig: "logic.src.policies.vector.hgs_alns:VectorizedHGSALNS",
+            RLSConfig: "logic.src.policies.vector.random_local_search:RandomLocalSearchPolicy",
+            VectorILSConfig: "logic.src.policies.vector.iterated_local_search:IteratedLocalSearchPolicy",
+            ACOConfig: "logic.src.policies.vector.ant_colony_system:VectorizedACOPolicy",
             ProfitableNNConfig: ProfitableNearestNeighbourPolicy,
         }
 
@@ -165,6 +161,9 @@ class ImitationLearning(RL4COLitModule):
                 f"Unknown policy config type: {type(policy_config)}. "
                 f"Supported types: {list(config_to_policy_map.keys())}"
             )
+        if isinstance(policy_cls, str):
+            module, name = policy_cls.split(":")
+            policy_cls = getattr(importlib.import_module(module), name)
 
         # Convert config to dict and add env_name
         config_dict = asdict(policy_config)
