@@ -16,6 +16,8 @@ def _cfg(algorithm: str) -> SimpleNamespace:
         policy_config=ProfitableNNConfig(),
         loss_fn="nll",
         fill_from="expert",
+        expert_cache=None,
+        precompute=False,
         il_weight=1.0,
         il_decay=0.9,
         patience=3,
