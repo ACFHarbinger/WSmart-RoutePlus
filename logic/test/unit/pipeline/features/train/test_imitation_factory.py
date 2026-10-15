@@ -5,6 +5,7 @@ from types import SimpleNamespace
 import pytest
 import torch
 from logic.src.configs.rl.policies import ProfitableNNConfig
+from logic.src.pipeline.features.train.model_factory import adaptive_imitation as adaptive_factory
 from logic.src.pipeline.features.train.model_factory import imitation as factory
 from logic.src.pipeline.features.train.model_factory.builder import _load_initial_weights
 
@@ -35,12 +36,15 @@ def _cfg(algorithm: str) -> SimpleNamespace:
 
 
 @pytest.mark.parametrize(
-    ("algorithm", "create", "cls_name"),
-    [("imitation", factory._create_imitation, "ImitationLearning"), ("adaptive_imitation", factory._create_adaptive_imitation, "AdaptiveImitation")],
+    ("algorithm", "module", "create", "cls_name"),
+    [
+        ("imitation", factory, factory._create_imitation, "ImitationLearning"),
+        ("adaptive_imitation", adaptive_factory, adaptive_factory._create_adaptive_imitation, "AdaptiveImitation"),
+    ],
 )
-def test_factory_forwards_the_training_setup(monkeypatch, algorithm, create, cls_name) -> None:
+def test_factory_forwards_the_training_setup(monkeypatch, algorithm, module, create, cls_name) -> None:
     seen = {}
-    monkeypatch.setattr(factory, cls_name, lambda **kw: seen.update(kw) or kw)
+    monkeypatch.setattr(module, cls_name, lambda **kw: seen.update(kw) or kw)
     cfg = _cfg(algorithm)
     kw = {
         "env": "env",
