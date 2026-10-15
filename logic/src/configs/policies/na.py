@@ -58,8 +58,11 @@ class NeuralAgentConfig:
         """
         # 1. Check if the config is a wrapper dict with a single key pointing to the actual list
         if (isinstance(config, dict) or hasattr(config, "items")) and len(config) == 1:
-            val = list(config.values())[0]
+            key, val = next(iter(config.items()))
             if isinstance(val, (list, tuple)) or type(val).__name__ == "ListConfig":
+                config = val
+            elif key not in cls.__dataclass_fields__ and (isinstance(val, dict) or type(val).__name__ == "DictConfig"):
+                # Plain-mapping YAML (P-13): ``{amgat: {decoding: ..., ...}}``.
                 config = val
 
         # 2. Flatten the list into a single dict
