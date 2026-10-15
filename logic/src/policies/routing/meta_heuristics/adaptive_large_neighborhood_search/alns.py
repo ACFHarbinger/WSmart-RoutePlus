@@ -90,6 +90,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 import numpy as np
 
 from logic.src.configs.policies.alns import ALNSConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators import (
     build_greedy_routes,
     cluster_profit_removal,
@@ -124,7 +125,6 @@ from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.weight
     RopkePisingerSegments,
 )
 from logic.src.tracking.viz_mixin import PolicyStateRecorder
-from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 __all__ = ["ALNSSolver", "MIN_REMOVAL_LOWER_BOUND"]
 

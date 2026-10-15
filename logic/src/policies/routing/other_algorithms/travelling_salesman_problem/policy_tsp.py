@@ -18,12 +18,11 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
-from logic.src.configs.policies import TSPConfig
+from logic.src.configs.policies.tsp import TSPConfig
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from logic.src.configs.policies.tsp import TSPConfig
 from .tsp import find_route, get_multi_tour, get_route_cost
 
 

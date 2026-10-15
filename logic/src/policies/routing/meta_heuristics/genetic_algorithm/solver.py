@@ -26,6 +26,8 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
+from logic.src.configs.policies.ga import GAConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators.crossover_recombination import ordered_crossover
 from logic.src.policies.helpers.operators.destroy_ruin.random import random_removal
 from logic.src.policies.helpers.operators.recreate_repair.greedy import (
@@ -36,9 +38,6 @@ from logic.src.policies.helpers.operators.solution_initialization.greedy_si impo
     build_greedy_routes,
 )
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.individual import Individual
-
-from logic.src.configs.policies.ga import GAConfig
-from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class GASolver:

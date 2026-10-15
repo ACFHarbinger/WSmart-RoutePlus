@@ -50,6 +50,8 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
+from logic.src.configs.policies.rl_gd_hh import RLGDHHConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators import (
     build_grasp_routes,
     greedy_insertion,
@@ -61,9 +63,6 @@ from logic.src.policies.helpers.operators import (
     shaw_removal,
     string_removal,
 )
-
-from logic.src.configs.policies.rl_gd_hh import RLGDHHConfig
-from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class RLGDHHSolver:

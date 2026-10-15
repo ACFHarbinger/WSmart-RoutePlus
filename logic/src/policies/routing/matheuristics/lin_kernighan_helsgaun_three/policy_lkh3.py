@@ -31,6 +31,7 @@ import numpy as np
 
 from logic.src.configs.policies.lkh3 import LKH3Config
 from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.graph_augmentation import (
@@ -40,9 +41,6 @@ from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.lkh3 
     solve_lkh3,
     solve_lkh3_with_alns,
 )
-
-from logic.src.configs.policies.lkh3 import LKH3Config
-from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 @GlobalRegistry.register(

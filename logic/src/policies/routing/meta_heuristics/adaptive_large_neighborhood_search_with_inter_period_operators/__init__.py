@@ -10,8 +10,9 @@ Example:
     >>> policy = ALNSInterPeriodOperatorsPolicy()
 """
 
-from .alns_ipo import ALNSSolverIPO
 from logic.src.configs.policies.alns_ipo import ALNSIPOConfig
+
+from .alns_ipo import ALNSSolverIPO
 from .policy_alns_ipo import ALNSInterPeriodOperatorsPolicy
 
 __all__ = ["ALNSSolverIPO", "ALNSIPOConfig", "ALNSInterPeriodOperatorsPolicy"]

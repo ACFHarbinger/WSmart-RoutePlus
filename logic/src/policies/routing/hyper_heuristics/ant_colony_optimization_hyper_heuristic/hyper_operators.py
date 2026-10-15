@@ -32,6 +32,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators import (
     greedy_insertion,
     greedy_profit_insertion,
@@ -49,7 +50,6 @@ from logic.src.policies.helpers.operators import (
     shaw_removal,
     string_removal,
 )
-from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 logger = logging.getLogger(__name__)
 

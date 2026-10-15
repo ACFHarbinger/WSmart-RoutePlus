@@ -11,6 +11,7 @@ Example:
 """
 
 from logic.src.configs.policies.ils import ILSConfig
+
 from .policy_ils import ILSPolicy
 from .solver import ILSSolver
 

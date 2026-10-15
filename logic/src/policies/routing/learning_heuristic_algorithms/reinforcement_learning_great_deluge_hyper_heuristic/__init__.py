@@ -23,6 +23,7 @@ Example:
 """
 
 from logic.src.configs.policies.rl_gd_hh import RLGDHHConfig
+
 from .policy_rl_gd_hh import RLGDHHPolicy
 from .solver import RLGDHHSolver
 

@@ -2,11 +2,11 @@
 
 import numpy as np
 import pytest
+from logic.src.configs.policies.de import DEConfig
 from logic.src.policies.helpers.operators.generalized_insertion_and_deletion import (
     apply_type_i_us,
     apply_type_iii_us,
 )
-from logic.src.configs.policies.de import DEConfig
 from logic.src.policies.routing.meta_heuristics.differential_evolution.solver import DESolver
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

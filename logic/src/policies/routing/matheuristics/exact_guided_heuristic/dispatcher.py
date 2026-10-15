@@ -29,6 +29,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from logic.src.configs.policies.egh import ExactGuidedHeuristicConfig
+
 from .route_pool import RoutePool
 from .stage_alns import run_alns_stage
 from .stage_bpc import run_bpc_stage

@@ -48,10 +48,10 @@ logger = logging.getLogger(__name__)
 
 # Primary: in-house solver
 try:
+    from logic.src.configs.policies.bp import BPConfig
     from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price.bp import (
         BranchAndPriceSolver,
     )
-    from logic.src.configs.policies.bp import BPConfig
 
     _HAS_INHOUSE_BP = True
 except ImportError as e:

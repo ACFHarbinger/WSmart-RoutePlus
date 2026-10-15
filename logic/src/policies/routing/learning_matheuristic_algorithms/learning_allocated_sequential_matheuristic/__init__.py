@@ -23,8 +23,9 @@ Policy registration (automatic on import)::
     policy = LASMPipelinePolicy()
 """
 
-from .dispatcher import reset_rl_controller, run_lasm_pipeline
 from logic.src.configs.policies.lasm import LASMPipelineConfig
+
+from .dispatcher import reset_rl_controller, run_lasm_pipeline
 from .policy_lasm import LASMPolicy
 from .rl_controller import RLController
 

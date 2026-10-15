@@ -22,7 +22,6 @@ from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from logic.src.configs.policies.ss_hh import SSHHConfig
 from .solver import SSHHSolver
 
 

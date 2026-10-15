@@ -29,7 +29,6 @@ from logic.src.policies.acceptance_criteria.great_deluge import GreatDelugeAccep
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from logic.src.configs.policies.rl_gd_hh import RLGDHHConfig
 from .solver import RLGDHHSolver
 
 

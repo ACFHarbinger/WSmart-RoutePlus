@@ -24,13 +24,13 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
+from logic.src.configs.policies.kgls import KGLSConfig
 from logic.src.policies.helpers.local_search.local_search_general import GeneralLocalSearch
 from logic.src.policies.helpers.operators.solution_initialization.greedy_si import build_greedy_routes
-from logic.src.configs.policies.aco_ks import KSparseACOConfig
 from logic.src.policies.routing.meta_heuristics.knowledge_guided_local_search.cost_evaluator import (
     CostEvaluator,
 )
-from logic.src.configs.policies.kgls import KGLSConfig
 
 logger = logging.getLogger(__name__)
 

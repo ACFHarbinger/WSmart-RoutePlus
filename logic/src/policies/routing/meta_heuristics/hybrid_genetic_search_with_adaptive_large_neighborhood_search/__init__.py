@@ -10,7 +10,8 @@ Attributes:
 
 """
 
-from .hgs_alns import HGSALNSSolver
 from logic.src.configs.policies.hgs_alns import HGSALNSConfig
+
+from .hgs_alns import HGSALNSSolver
 
 __all__ = ["HGSALNSSolver", "HGSALNSConfig"]

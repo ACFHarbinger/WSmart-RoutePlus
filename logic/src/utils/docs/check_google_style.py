@@ -190,16 +190,6 @@ class GoogleStyleValidator(ast.NodeVisitor):
             node: The function node.
             sections: Parsed docstring sections.
         """
-        has_yield = False
-        has_return = False
-        for child in ast.walk(node):
-            if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)) and child is not node:
-                continue
-            if isinstance(child, (ast.Yield, ast.YieldFrom)):
-                has_yield = True
-            elif isinstance(child, ast.Return) and child.value is not None:
-                has_return = True
-
         # Q-7b: sections are optional; a Returns section that only documents
         # None is the defect (the trimmer removes them; this check keeps them
         # from coming back).

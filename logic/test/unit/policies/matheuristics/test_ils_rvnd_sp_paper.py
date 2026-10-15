@@ -4,11 +4,11 @@ from typing import List, Optional
 
 import numpy as np
 import pytest
+from logic.src.configs.policies.ils_rvnd_sp import ILSRVNDSPConfig
 from logic.src.policies.helpers.local_search.local_search_base import LocalSearch
 from logic.src.policies.routing.matheuristics.iterated_local_search_randomized_variable_neighborhood_descent_set_partitioning.ils_rvnd_sp import (
     ILSRVNDSPSolver,
 )
-from logic.src.configs.policies.ils_rvnd_sp import ILSRVNDSPConfig
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

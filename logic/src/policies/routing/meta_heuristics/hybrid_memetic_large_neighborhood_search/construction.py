@@ -23,10 +23,10 @@ from typing import Dict, List, Optional, Set
 
 import numpy as np
 
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
+
 from .params import MACOParams
 from .pheromones import SparsePheromoneTau
-
-from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class SolutionConstructor:

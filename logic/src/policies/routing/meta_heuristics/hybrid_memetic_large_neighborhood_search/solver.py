@@ -45,6 +45,7 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.local_search.local_search_general import GeneralLocalSearch
 from logic.src.policies.helpers.operators import (
     build_greedy_routes,
@@ -56,7 +57,7 @@ from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns import (
     ALNSSolver,
 )
-from logic.src.envs.tasks.common.expand_pool import current_expand_pool
+
 from .maco import (
     MemeticACOSolver,
 )

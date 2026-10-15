@@ -211,10 +211,8 @@ def find_routes_ortools(
     if cfg is not None:
         cfg = _load_cvrp_config(cfg)
         time_limit = cfg.time_limit
-        if cfg.seed is not None:
-            seed = cfg.seed
-        if cfg.solution_limit is not None:
-            solution_limit = cfg.solution_limit
+        seed = seed if cfg.seed is None else cfg.seed
+        solution_limit = solution_limit if cfg.solution_limit is None else cfg.solution_limit
     # Mapping: subset index -> original index
     subset_indices = [depot] + list(to_collect)
 

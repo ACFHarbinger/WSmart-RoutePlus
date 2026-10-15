@@ -14,6 +14,7 @@ Example:
 """
 
 from logic.src.configs.policies.rts import RTSConfig
+
 from .solver import RTSSolver
 
 __all__ = ["RTSSolver", "RTSConfig"]

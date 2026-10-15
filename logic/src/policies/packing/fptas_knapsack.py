@@ -106,7 +106,7 @@ from typing import Any, List, Optional, Tuple
 import numpy as np
 
 from logic.src.enums import GlobalRegistry, PolicyTag
-from logic.src.interfaces.context import SearchContext, PackingContext
+from logic.src.interfaces.context import PackingContext, SearchContext
 from logic.src.interfaces.packing import IPackingAlgorithm
 from logic.src.policies.packing.base import PackingRegistry
 

@@ -9,11 +9,11 @@ from pathlib import Path
 from typing import Any, Dict
 
 import pytest
+from logic.src.configs.policies.na import NeuralAgentConfig
 from logic.src.constants.paths import CONFIGS_DIR
 from logic.src.pipeline.simulations.actions.node_selection import PackingAction
 from logic.src.pipeline.simulations.actions.route_improvement import RouteImprovementAction
 from logic.src.policies.routing.base.factory import RoutingAlgorithmFactory
-from logic.src.configs.policies.na import NeuralAgentConfig
 from omegaconf import OmegaConf
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

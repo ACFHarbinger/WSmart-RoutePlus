@@ -50,6 +50,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 
+from logic.src.configs.policies.alns_ipo import ALNSIPOConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators import (
     build_greedy_routes,
     forward_looking_insertion,
@@ -68,9 +70,7 @@ from logic.src.policies.helpers.operators import (
 from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns import (
     ALNSSolver,
 )
-from logic.src.configs.policies.alns_ipo import ALNSIPOConfig
 from logic.src.tracking.viz_mixin import PolicyStateRecorder
-from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class ALNSSolverIPO(ALNSSolver):

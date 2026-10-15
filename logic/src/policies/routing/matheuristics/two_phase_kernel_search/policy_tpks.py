@@ -12,13 +12,13 @@ Example:
 
 from typing import List, Optional, Tuple, Type
 
+from logic.src.configs.policies.tpks import TpksConfig
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.search_context import SearchContext
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from logic.src.configs.policies.tpks import TpksConfig
 from .solver import run_tpks_gurobi
 
 

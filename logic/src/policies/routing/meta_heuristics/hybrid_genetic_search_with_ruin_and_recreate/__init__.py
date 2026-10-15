@@ -17,7 +17,8 @@ Example:
     >>> solver = HGSRRSolver(dist_matrix, wastes, capacity, R, C, params)
 """
 
-from .hgs_rr import HGSRRSolver
 from logic.src.configs.policies.hgs_rr import HGSRRConfig
+
+from .hgs_rr import HGSRRSolver
 
 __all__ = ["HGSRRSolver", "HGSRRConfig"]

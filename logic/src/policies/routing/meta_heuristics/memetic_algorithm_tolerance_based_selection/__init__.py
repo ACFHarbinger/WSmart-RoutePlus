@@ -11,6 +11,7 @@ Attributes:
 """
 
 from logic.src.configs.policies.ma_ts import MemeticAlgorithmToleranceBasedSelectionConfig
+
 from .solver import MemeticAlgorithmToleranceBasedSelectionSolver
 
 __all__ = ["MemeticAlgorithmToleranceBasedSelectionSolver", "MemeticAlgorithmToleranceBasedSelectionConfig"]

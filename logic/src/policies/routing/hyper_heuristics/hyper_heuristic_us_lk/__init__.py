@@ -27,8 +27,9 @@ Example:
 
 from typing import Any, List, Optional, Tuple
 
-from .hulk import HULKSolver
 from logic.src.configs.policies.hulk import HULKConfig
+
+from .hulk import HULKSolver
 
 __all__ = ["HULKSolver", "HULKConfig", "run_hulk"]
 

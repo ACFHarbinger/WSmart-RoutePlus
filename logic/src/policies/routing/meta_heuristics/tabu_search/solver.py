@@ -16,6 +16,8 @@ from typing import Any, DefaultDict, Deque, Dict, List, Optional, Sequence, Set,
 
 import numpy as np
 
+from logic.src.configs.policies.ts import TSConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators.destroy_ruin import (
     cluster_removal,
     random_removal,
@@ -32,9 +34,6 @@ from logic.src.policies.helpers.operators.recreate_repair import (
     regret_2_profit_insertion,
 )
 from logic.src.policies.helpers.operators.solution_initialization.greedy_si import build_greedy_routes
-
-from logic.src.configs.policies.ts import TSConfig
-from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class TSSolver:

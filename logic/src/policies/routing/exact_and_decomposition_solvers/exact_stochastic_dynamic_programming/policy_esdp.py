@@ -60,7 +60,6 @@ from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.routing.exact_and_decomposition_solvers.exact_stochastic_dynamic_programming.esdp_engine import (
     ExactSDPEngine,
 )
-from logic.src.configs.policies.esdp import ExactSDPConfig
 
 _SDP_CACHE: Dict[Tuple[int, int, int, float], ExactSDPEngine] = {}
 

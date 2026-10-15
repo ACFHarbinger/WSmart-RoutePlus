@@ -14,11 +14,10 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
-from logic.src.configs.policies import MuKappaLambdaESConfig
+from logic.src.configs.policies.es_mkl import MuKappaLambdaESConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from logic.src.configs.policies.es_mkl import MuKappaLambdaESConfig
 from .solver import MuKappaLambdaESSolver
 
 

@@ -20,11 +20,10 @@ import numpy as np
 from logic.src.configs.policies.jgo import JointGreedyConfig
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.interfaces.context.joint_context import JointSelectionConstructionContext
-from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.packing_and_routing.base.base_joint_policy import BaseJointPolicy
 from logic.src.policies.packing_and_routing.base.registry import JointPolicyRegistry
-
-from logic.src.configs.policies.jgo import JointGreedyConfig
+from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
+from logic.src.policies.routing.base.sub_problem import coerce_config
 
 
 @GlobalRegistry.register(
@@ -89,7 +88,7 @@ class JointGreedyPolicy(BaseJointPolicy):
                 - total_profit: Net profit (Revenue - Distance Cost).
                 - total_cost: Total routing cost.
         """
-        params = self._effective_config(asdict(self._config)) if self._config else JointGreedyConfig()
+        params = coerce_config(self._config, JointGreedyConfig)
 
         start_time = time.time()
         random.seed(params.seed)

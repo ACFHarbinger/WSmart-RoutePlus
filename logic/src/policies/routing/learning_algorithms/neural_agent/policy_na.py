@@ -29,8 +29,9 @@ from logic.src.utils.functions import move_to
 if TYPE_CHECKING:
     from logic.src.interfaces.context.multi_day_context import MultiDayContext
 
-from .agent import NeuralAgent
 from logic.src.configs.policies.na import NeuralAgentConfig
+
+from .agent import NeuralAgent
 
 
 @GlobalRegistry.register(
@@ -98,7 +99,7 @@ class NeuralAgentPolicy(BaseRoutingPolicy):
                 if k not in {"seed", "decoding", "model"} and k not in valid_fields and isinstance(v, (dict, list, DictConfig, ListConfig))
             ]
             policy_section = sections[0] if len(sections) == 1 else raw_config
-        params = self._effective_config(policy_section)
+        params = NeuralAgentConfig.from_config(policy_section)
         # Preserve the public flat dataclass form as well as nested YAML decoding.
         # Explicit nested settings retain precedence when both forms are present.
         if hasattr(policy_section, "get"):

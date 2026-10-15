@@ -2,11 +2,10 @@
 
 import numpy as np
 import pytest
-from scipy.integrate import quad
-from scipy.stats import norm
-
 from logic.src.interfaces.context.packing_context import PackingContext
 from logic.src.policies.packing.cvar import CVaRSelection
+from scipy.integrate import quad
+from scipy.stats import norm
 
 
 def _exact_cvar_of_overflow(m, s, alpha):

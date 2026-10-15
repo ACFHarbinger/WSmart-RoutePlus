@@ -25,7 +25,6 @@ from .alns_pricer import ALNSMultiPeriodPricer
 from .dive_and_price import DiveAndPricePrimalHeuristic
 from .fix_and_optimize import FixAndOptimizeRefiner
 from .ml_branching import MLBranchingStrategy
-from logic.src.configs.policies.abpc_hg import ABPCHGConfig
 from .progressive_hedging_cg import ProgressiveHedgingCGLoop
 from .scenario_branching import ScenarioConsistentBranching
 from .scenario_prize_engine import ScenarioPrizeEngine

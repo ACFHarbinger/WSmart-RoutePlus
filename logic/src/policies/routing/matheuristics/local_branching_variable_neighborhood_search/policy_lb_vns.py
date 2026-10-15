@@ -25,7 +25,6 @@ from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.routing.matheuristics.local_branching_variable_neighborhood_search.lb_vns import (
     run_lb_vns_gurobi,
 )
-from logic.src.configs.policies.lb_vns import LocalBranchingVNSConfig
 
 
 @GlobalRegistry.register(

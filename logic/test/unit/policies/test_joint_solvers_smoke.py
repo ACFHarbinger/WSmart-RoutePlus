@@ -12,8 +12,8 @@ import pytest
 # Set environment variable for protobuf compatibility
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
-from logic.src.policies.routing.base.factory import RoutingAlgorithmFactory
 from logic.src.policies.packing_and_routing.base.registry import JointPolicyRegistry
+from logic.src.policies.routing.base.factory import RoutingAlgorithmFactory
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

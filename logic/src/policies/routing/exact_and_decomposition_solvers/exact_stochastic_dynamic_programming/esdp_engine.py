@@ -17,8 +17,9 @@ from typing import Dict, FrozenSet, Tuple
 import numpy as np
 from tqdm import tqdm
 
-from .cop_evaluator import COPEvaluator
 from logic.src.configs.policies.esdp import ExactSDPConfig
+
+from .cop_evaluator import COPEvaluator
 from .state_space import StateSpaceManager
 
 

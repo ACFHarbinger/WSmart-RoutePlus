@@ -48,7 +48,7 @@ Example:
   6371
 """
 
-from typing import Dict, List
+from typing import List
 
 # Distance Matrix - Earth Radius Models
 # --------------------------------------

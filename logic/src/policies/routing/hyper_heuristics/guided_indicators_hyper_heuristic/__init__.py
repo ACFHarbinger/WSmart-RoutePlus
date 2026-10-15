@@ -23,7 +23,8 @@ Example:
     231.0
 """
 
-from .gihh import GIHHSolver
 from logic.src.configs.policies.gihh import GIHHConfig
+
+from .gihh import GIHHSolver
 
 __all__ = ["GIHHSolver", "GIHHConfig"]

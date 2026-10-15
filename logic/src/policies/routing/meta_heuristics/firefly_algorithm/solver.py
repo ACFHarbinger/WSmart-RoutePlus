@@ -29,6 +29,9 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
+from logic.src.configs.policies.fa import FAConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.local_search.local_search_general import GeneralLocalSearch
 from logic.src.policies.helpers.operators import (
     greedy_insertion,
@@ -36,9 +39,6 @@ from logic.src.policies.helpers.operators import (
     random_removal,
 )
 from logic.src.policies.helpers.operators.solution_initialization.greedy_si import build_greedy_routes
-from logic.src.configs.policies.aco_ks import KSparseACOConfig
-from logic.src.configs.policies.fa import FAConfig
-from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class FASolver:

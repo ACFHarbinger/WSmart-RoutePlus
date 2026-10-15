@@ -21,11 +21,10 @@ import numpy as np
 from logic.src.configs.policies.jsa import JointSAConfig
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.interfaces.context.joint_context import JointSelectionConstructionContext
-from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.packing_and_routing.base.base_joint_policy import BaseJointPolicy
 from logic.src.policies.packing_and_routing.base.registry import JointPolicyRegistry
-
-from logic.src.configs.policies.jsa import JointSAConfig
+from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
+from logic.src.policies.routing.base.sub_problem import coerce_config
 
 
 @GlobalRegistry.register(
@@ -96,7 +95,7 @@ class JointSAPolicy(BaseJointPolicy):
                 - profit: Best found net profit.
                 - cost: Routing cost of the best solution.
         """
-        params = self._effective_config(asdict(self._config)) if self._config else JointSAConfig()
+        params = coerce_config(self._config, JointSAConfig)
 
         start_time = time.time()
         random.seed(params.seed)

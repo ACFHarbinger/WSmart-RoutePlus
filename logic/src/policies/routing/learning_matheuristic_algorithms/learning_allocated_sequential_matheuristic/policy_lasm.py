@@ -37,13 +37,12 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
-from logic.src.configs.policies import LASMPipelineConfig
+from logic.src.configs.policies.lasm import LASMPipelineConfig
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
 from .dispatcher import run_lasm_pipeline
-from logic.src.configs.policies.lasm import LASMPipelineConfig
 
 
 @GlobalRegistry.register(

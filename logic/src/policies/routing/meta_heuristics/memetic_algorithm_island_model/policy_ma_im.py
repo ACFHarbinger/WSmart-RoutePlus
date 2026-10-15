@@ -21,7 +21,6 @@ from logic.src.configs.policies.ma_im import MemeticAlgorithmIslandModelConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from logic.src.configs.policies.ma_im import MemeticAlgorithmIslandModelConfig
 from .solver import MemeticAlgorithmIslandModelSolver
 
 

@@ -23,7 +23,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 import numpy as np
 import torch
 
-from logic.src.configs.policies import HNAPolicyConfig
+from logic.src.configs.policies.hna import HNAPolicyConfig
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.problem_context import ProblemContext
@@ -31,7 +31,6 @@ from logic.src.interfaces.context.solution_context import SolutionContext
 from logic.src.policies.helpers.operators import greedy_insertion
 from logic.src.policies.routing.base.base_multi_period_policy import BaseMultiPeriodRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-from logic.src.configs.policies.hna import HNAPolicyConfig
 
 
 @GlobalRegistry.register(

@@ -25,10 +25,10 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 from scipy.spatial.ckdtree import cKDTree
 
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
 from logic.src.policies.helpers.local_search.local_search_aco import ACOLocalSearch
 
 from .construction import SolutionConstructor
-from logic.src.configs.policies.aco_ks import KSparseACOConfig
 from .pheromones import SparsePheromoneTau
 
 

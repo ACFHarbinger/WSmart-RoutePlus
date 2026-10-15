@@ -13,6 +13,7 @@ Example:
 """
 
 from logic.src.configs.policies.jgo import JointGreedyConfig
+
 from .policy_jgo import JointGreedyPolicy
 
 __all__ = ["JointGreedyConfig", "JointGreedyPolicy"]

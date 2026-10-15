@@ -10,9 +10,8 @@ arguments triggered a DeprecationWarning on every run.
 import warnings
 
 import pytest
-
-from logic.src.policies.helpers.solvers_and_matheuristics.branching.tree import BranchAndBoundTree
 from logic.src.configs.policies import BPCConfig
+from logic.src.policies.helpers.solvers_and_matheuristics.branching.tree import BranchAndBoundTree
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

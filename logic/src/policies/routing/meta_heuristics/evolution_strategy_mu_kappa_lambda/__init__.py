@@ -19,6 +19,7 @@ Reference:
 """
 
 from logic.src.configs.policies.es_mkl import MuKappaLambdaESConfig
+
 from .solver import Individual, MuKappaLambdaESSolver
 
 __all__ = [

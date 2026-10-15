@@ -10,20 +10,17 @@ produce correct results for:
 """
 
 import random
-from typing import Dict, List
+from typing import Dict
 
 import numpy as np
 import pytest
-
 from logic.src.policies.helpers.operators.destroy_ruin.cluster import cluster_removal
 from logic.src.policies.helpers.operators.destroy_ruin.random import random_removal
 from logic.src.policies.helpers.operators.destroy_ruin.worst import worst_removal
 from logic.src.policies.helpers.operators.recreate_repair.greedy import (
-    greedy_insertion,
     greedy_profit_insertion,
 )
 from logic.src.policies.helpers.operators.recreate_repair.regret import (
-    regret_2_insertion,
     regret_2_profit_insertion,
 )
 

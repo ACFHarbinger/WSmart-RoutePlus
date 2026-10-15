@@ -17,6 +17,7 @@ Example:
 """
 
 from logic.src.configs.policies.vpl import VPLConfig
+
 from .policy_vpl import VPLPolicy
 from .solver import VPLSolver
 

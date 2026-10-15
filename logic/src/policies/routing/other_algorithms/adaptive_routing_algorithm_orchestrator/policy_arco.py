@@ -73,13 +73,12 @@ import numpy as np
 if TYPE_CHECKING:
     from logic.src.interfaces.context.search_context import SearchContext
 
+from logic.src.configs.policies.arco import ARCOConfig
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.interfaces.context.search_context import SearchContext
 from logic.src.interfaces.routing_algorithm import IRoutingAlgorithm
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-
-from logic.src.configs.policies.arco import ARCOConfig
 
 logger = logging.getLogger(__name__)
 

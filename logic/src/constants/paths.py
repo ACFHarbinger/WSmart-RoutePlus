@@ -44,6 +44,7 @@ import os
 import sys
 from pathlib import Path
 
+
 def _frozen_root() -> Path:
     """Project root for a PyInstaller build.
 

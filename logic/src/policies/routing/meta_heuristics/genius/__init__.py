@@ -28,6 +28,7 @@ Example:
 """
 
 from logic.src.configs.policies.genius import GENIUSConfig
+
 from .policy_genius import GENIUSPolicy
 from .solver import GENIUSSolver
 

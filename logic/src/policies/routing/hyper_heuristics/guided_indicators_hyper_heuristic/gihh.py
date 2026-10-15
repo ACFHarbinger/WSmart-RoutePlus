@@ -30,6 +30,7 @@ from typing import Dict, List, Optional
 
 import numpy as np
 
+from logic.src.configs.policies.gihh import GIHHConfig
 from logic.src.policies.helpers.local_search.local_search_manager import LocalSearchManager
 from logic.src.policies.helpers.operators import (
     apply_ges,
@@ -41,7 +42,6 @@ from logic.src.policies.routing.hyper_heuristics.guided_indicators_hyper_heurist
     ScoreAIndicator,
     ScoreBIndicator,
 )
-from logic.src.configs.policies.gihh import GIHHConfig
 from logic.src.policies.routing.hyper_heuristics.guided_indicators_hyper_heuristic.solution import Solution
 
 

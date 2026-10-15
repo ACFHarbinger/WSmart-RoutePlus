@@ -41,9 +41,8 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
-from logic.src.policies.helpers.operators import greedy_insertion
-
 from logic.src.configs.policies.adp import ADPRolloutConfig
+from logic.src.policies.helpers.operators import greedy_insertion
 
 
 class ADPRolloutEngine:

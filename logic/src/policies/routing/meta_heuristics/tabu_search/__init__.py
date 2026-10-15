@@ -11,6 +11,7 @@ Example:
 """
 
 from logic.src.configs.policies.ts import TSConfig
+
 from .policy_ts import TSPolicy
 from .solver import TSSolver
 

@@ -15,6 +15,7 @@ Example:
 """
 
 from logic.src.configs.policies.src import SRCConfig as SRCConfig
+
 from .policy_src import SequentialRoutingAlgorithm as SequentialRoutingAlgorithm
 
 __all__ = ["SequentialRoutingAlgorithm", "SRCConfig"]

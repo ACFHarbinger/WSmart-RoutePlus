@@ -24,9 +24,10 @@ from typing import Any, Dict, List, Set, Tuple
 
 import numpy as np
 
+from logic.src.configs.policies.ils_bd import IntegerLShapedBendersConfig
+
 from .ils_bd_engine import IntegerLShapedEngine
 from .master_problem import MasterProblem
-from logic.src.configs.policies.ils_bd import IntegerLShapedBendersConfig
 from .scenario import ScenarioGenerator
 from .subproblem import RecourseEvaluator
 

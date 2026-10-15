@@ -17,14 +17,13 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
-from logic.src.configs.policies import BCConfig
+from logic.src.configs.policies.bc import BCConfig
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.policies.helpers.solvers_and_matheuristics.vrpp_model import VRPPModel
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
 from .bc import BranchAndCutSolver
-from logic.src.configs.policies.bc import BCConfig
 
 
 @GlobalRegistry.register(

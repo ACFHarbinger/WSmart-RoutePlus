@@ -27,7 +27,6 @@ from logic.src.interfaces.context.search_context import SearchContext
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.routing.matheuristics.local_branching.lb import run_local_branching_gurobi
-from logic.src.configs.policies.lb import LocalBranchingConfig
 
 
 @GlobalRegistry.register(

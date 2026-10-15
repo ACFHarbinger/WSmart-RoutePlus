@@ -20,12 +20,12 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 import gurobipy as gp
 import numpy as np
 
+from logic.src.configs.policies.bb import BBConfig
 from logic.src.tracking.viz_mixin import PolicyStateRecorder
 
 from .dfj import run_bb_dfj
 from .lr_uop import run_bb_lr_uop
 from .mtz import run_bb_mtz
-from logic.src.configs.policies.bb import BBConfig
 
 
 def run_bb_optimizer(

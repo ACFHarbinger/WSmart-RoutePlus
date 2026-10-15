@@ -39,6 +39,7 @@ import numpy as np
 
 from logic.src.configs.policies.egh import ExactGuidedHeuristicConfig
 from logic.src.policies.routing.base.sub_problem import build_subproblem
+
 from .route_pool import RoutePool, VRPPRoute
 
 logger = logging.getLogger(__name__)

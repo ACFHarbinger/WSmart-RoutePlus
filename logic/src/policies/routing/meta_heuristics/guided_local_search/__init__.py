@@ -11,6 +11,7 @@ Example:
 """
 
 from logic.src.configs.policies.gls import GLSConfig
+
 from .solver import GLSSolver
 
 __all__ = ["GLSSolver", "GLSConfig"]

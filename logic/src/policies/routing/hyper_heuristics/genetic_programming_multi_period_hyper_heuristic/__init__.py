@@ -23,6 +23,7 @@ Example:
 """
 
 from logic.src.configs.policies.gp_mp_hh import GP_MP_HH_Config
+
 from .policy_gp_mp_hh import GPMPHHPolicy
 
 __all__ = ["GPMPHHPolicy", "GP_MP_HH_Config"]

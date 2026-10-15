@@ -26,8 +26,8 @@ Example:
 from typing import TYPE_CHECKING, List, Protocol, Tuple, runtime_checkable
 
 if TYPE_CHECKING:
-    from logic.src.interfaces.context.search_context import SearchContext
     from logic.src.interfaces.context.packing_context import PackingContext
+    from logic.src.interfaces.context.search_context import SearchContext
 
 
 @runtime_checkable

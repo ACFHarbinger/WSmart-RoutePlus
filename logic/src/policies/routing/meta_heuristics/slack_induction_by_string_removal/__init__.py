@@ -16,6 +16,7 @@ Example:
 """
 
 from logic.src.configs.policies.sisr import SISRConfig
+
 from .solver import SISRSolver
 
 __all__ = ["SISRConfig", "SISRSolver"]

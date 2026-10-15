@@ -26,6 +26,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union, cast
 
 import numpy as np
 
+from logic.src.configs.policies.bp import BPConfig
 from logic.src.policies.helpers.solvers_and_matheuristics import (
     AnyBranchingConstraint,
     BranchAndBoundTree,
@@ -35,7 +36,6 @@ from logic.src.policies.helpers.solvers_and_matheuristics import (
     VRPPMasterProblem,
 )
 
-from logic.src.configs.policies.bp import BPConfig
 from .pricing_subproblem import PricingSubproblem
 
 
