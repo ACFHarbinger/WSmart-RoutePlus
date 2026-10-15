@@ -37,12 +37,11 @@ Example:
     ...     def _vary_population(self) -> None: ...
 """
 
-import dataclasses
 import time
 from abc import ABC, abstractmethod
 from typing import Any, List, Tuple, Type
 
-from logic.src.policies.routing.base.sub_problem import SubProblem
+from logic.src.policies.routing.base.sub_problem import SubProblem, coerce_config
 
 __all__ = ["PopulationSearch"]
 
@@ -105,20 +104,11 @@ class PopulationSearch(ABC):
 
     @staticmethod
     def _coerce_config(cfg: Any, config_cls: Type) -> Any:
-        """Lenient engine-level config coercion: dataclass instances pass
-        through, mappings and plain objects are filtered onto the dataclass
-        fields (policy-level loads stay strict; engines stay lenient).
+        """Lenient engine-level config coercion.
+
+        Delegates to :func:`logic.src.policies.routing.base.sub_problem.coerce_config`.
         """
-        if cfg is None:
-            return config_cls()
-        if isinstance(cfg, config_cls):
-            return cfg
-        valid_keys = {f.name for f in dataclasses.fields(config_cls)}
-        if isinstance(cfg, dict):
-            return config_cls(**{k: v for k, v in cfg.items() if k in valid_keys})
-        if hasattr(cfg, "__dict__"):
-            return config_cls(**{k: v for k, v in vars(cfg).items() if k in valid_keys})
-        return cfg
+        return coerce_config(cfg, config_cls)
 
     # ------------------------------------------------------------------
     # Template hooks

@@ -13,11 +13,12 @@ take the same ``(problem, cfg)`` pair, so adapters, stages, benchmarks and
 tests all speak one vocabulary.
 """
 
-from typing import Any, Dict, List, NamedTuple, Optional, Protocol, runtime_checkable
+import dataclasses
+from typing import Any, Dict, List, NamedTuple, Optional, Protocol, Type, runtime_checkable
 
 import numpy as np
 
-__all__ = ["SubProblem", "SolveResult", "Solver", "build_subproblem"]
+__all__ = ["SubProblem", "SolveResult", "Solver", "build_subproblem", "coerce_config"]
 
 
 class SolveResult(NamedTuple):
@@ -148,3 +149,30 @@ def build_subproblem(
         mandatory_nodes=mandatory_nodes,
         **filtered,
     )
+
+
+def coerce_config(cfg: Any, config_cls: Type) -> Any:
+    """Lenient engine-level config coercion.
+
+    Mirrors the legacy routing constructor contracts: dataclass instances pass
+    through, dicts and arbitrary objects are filtered onto the dataclass fields,
+    and None yields the dataclass defaults. Engines tolerate; adapters load strictly.
+
+    Args:
+        cfg: Target configuration dataclass instance, dict, arbitrary object, or None.
+        config_cls: The target configuration dataclass.
+
+    Returns:
+        An instance of ``config_cls``.
+    """
+    if cfg is None:
+        return config_cls()
+    if isinstance(cfg, config_cls):
+        return cfg
+    valid_keys = {f.name for f in dataclasses.fields(config_cls)}
+    if isinstance(cfg, dict):
+        return config_cls(**{k: v for k, v in cfg.items() if k in valid_keys})
+    if hasattr(cfg, "__dict__"):
+        return config_cls(**{k: v for k, v in vars(cfg).items() if k in valid_keys})
+    return cfg
+

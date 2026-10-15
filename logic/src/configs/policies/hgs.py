@@ -40,6 +40,7 @@ class HGSConfig:
         initial_penalty_capacity: Initial penalty for capacity violations.
         penalty_increase: Multiplier for increasing penalty.
         penalty_decrease: Multiplier for decreasing penalty.
+        local_search_iterations: Number of local search iterations.
         engine: Solver engine to use ('custom', 'pyvrp').
         vrpp: Whether this is a VRPP problem.
         profit_aware_operators: Whether to use profit-aware operators.
@@ -70,6 +71,9 @@ class HGSConfig:
     initial_penalty_capacity: float = 1.0
     penalty_increase: float = 1.2
     penalty_decrease: float = 0.85
+
+    # Local search
+    local_search_iterations: int = 500
 
     # Engine configuration
     engine: str = "custom"

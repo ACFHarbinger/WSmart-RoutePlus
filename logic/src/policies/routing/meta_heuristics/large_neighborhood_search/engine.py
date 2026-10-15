@@ -23,37 +23,15 @@ Example:
     >>> from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.engine import LNSBase
 """
 
-import dataclasses
 import time
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from logic.src.policies.helpers.operators import build_greedy_routes
+from logic.src.policies.routing.base.sub_problem import coerce_config
+
+__all__ = ["LNSBase", "MIN_REMOVAL_LOWER_BOUND", "coerce_config"]
 
 MIN_REMOVAL_LOWER_BOUND: int = 4
-
-
-def coerce_config(cfg: Any, config_cls: Type) -> Any:
-    """Lenient engine-level config coercion.
-
-    Mirrors the legacy ALNS constructor: dataclass instances pass through,
-    dicts and arbitrary objects are filtered to the dataclass fields, and
-    None yields the dataclass defaults. Engines tolerate; adapters load strictly.
-
-    Args:
-        cfg: ALNSConfig-compatible dataclass, dict, arbitrary object, or None.
-        config_cls: The target configuration dataclass.
-
-    Returns:
-        An instance of ``config_cls``.
-    """
-    if cfg is None:
-        return config_cls()
-    if hasattr(cfg, "__dict__") and not isinstance(cfg, config_cls):
-        cfg = vars(cfg)
-    if isinstance(cfg, dict):
-        valid_keys = {f.name for f in dataclasses.fields(config_cls)}
-        return config_cls(**{k: v for k, v in cfg.items() if k in valid_keys})
-    return cfg
 
 
 class LNSBase:
