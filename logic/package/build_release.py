@@ -253,11 +253,12 @@ def compute_closure(manifest: dict) -> Tuple[Set[Path], List[str]]:  # noqa: C90
         deferred: Set[str] = set(imports.deferred)
         pending: List[str] = sorted(imports.module_level | deferred)
         if path.name == "__init__.py":
+            # A lazy map is indexed, not followed: a target ships only when a kept
+            # module imports its name (below). Following every entry would ship
+            # every architecture and algorithm behind the facades (Q-12).
             for match in LAZY_LINE_RE.finditer(path.read_text()):
                 pkg_name, target = match.group(2), match.group(3).split(":")[0]
                 lazy_index.setdefault(root, {})[pkg_name] = target
-                pending.append(target)
-                surface.add(trimmed(target, REPO))
             surface.update(trimmed(dep, REPO) for dep in imports.deferred)
         for dep in pending:
             root_dep = trimmed(dep, REPO)
@@ -271,6 +272,7 @@ def compute_closure(manifest: dict) -> Tuple[Set[Path], List[str]]:  # noqa: C90
                 if "." not in name:
                     target = lazy_index.get(root_dep, {}).get(name)
                     if target and target not in kept_modules:
+                        surface.add(trimmed(target, REPO))
                         queue.append(target)
             if root_dep.startswith(excluded):
                 if path.name != "__init__.py" and dep not in deferred:
@@ -301,6 +303,9 @@ def compute_closure(manifest: dict) -> Tuple[Set[Path], List[str]]:  # noqa: C90
     return files, notes
 
 
+FROM_IMPORT_RE = re.compile(r"^\s*from (logic(?:\.\w+)+) import \(?([\w ,\n]+)\)?", re.M)
+
+
 def release_tests(manifest: dict, kept: Set[Path]) -> Tuple[List[Path], List[Path]]:
     """Split logic/test files into release tests and pruned tests (P-06)."""
     release: List[Path] = []
@@ -308,10 +313,16 @@ def release_tests(manifest: dict, kept: Set[Path]) -> Tuple[List[Path], List[Pat
     kept_modules = {file_to_module(f, REPO) for f in kept}
     for path in sorted((LOGIC / "test").rglob("*.py")):
         modules = set()
-        for match in LOGIC_MODULE_RE.finditer(path.read_text()):
+        text = path.read_text()
+        for match in LOGIC_MODULE_RE.finditer(text):
             root = trimmed(match.group(0), REPO)
             if root:
                 modules.add(root)
+        # ``from <pkg> import <submodule>`` names a module the regex above sees as <pkg>.
+        for match in FROM_IMPORT_RE.finditer(text):
+            for name in re.findall(r"\w+", match.group(2)):
+                if module_to_file(f"{match.group(1)}.{name}", REPO) is not None:
+                    modules.add(f"{match.group(1)}.{name}")
         if modules <= kept_modules:
             release.append(path)
         else:
@@ -539,6 +550,22 @@ def run_build(manifest: dict, out: Path) -> int:  # noqa: C901
     # it degrades to a namespace package and loses to any other installed copy.
     shutil.copy2(LOGIC / "__init__.py", out / "logic" / "__init__.py")
 
+    # --- the bin-analysis package (RQ-grok-7 a): runtime modules only ------ #
+    bin_analysis = REPO / "packages" / "wsmart_bin_analysis"
+    if not (bin_analysis / "__init__.py").is_file():
+        raise SystemExit(f"{bin_analysis} is empty: run git submodule update --init packages/wsmart_bin_analysis")
+    for path in [
+        bin_analysis / "__init__.py",
+        *sorted((bin_analysis / "export").rglob("*.py")),
+        *sorted((bin_analysis / "python").rglob("*.py")),
+    ]:
+        if "__pycache__" in path.parts or "notebooks" in path.parts:
+            continue
+        dest = out / "packages" / "wsmart_bin_analysis" / path.relative_to(bin_analysis)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(path, dest)
+    (out / "packages" / "__init__.py").write_text('"""Vendored companion packages of the release."""\n')
+
     # --- registry manifests: released keys only -------------------------- #
     for stage, stage_path in STAGES.items():
         rel = stage_path.relative_to(LOGIC)
@@ -662,6 +689,9 @@ def write_release_pyproject(manifest: dict, out: Path) -> None:
         lines.append(f'description = "{project["description"]}"')
     if project.get("requires-python"):
         lines.append(f'requires-python = "{project["requires-python"]}"')
+    # The vendored bin-analysis package plots with matplotlib on import.
+    if not any(dep.split(">")[0].split("=")[0].strip() == "matplotlib" for dep in deps):
+        deps = [*deps, "matplotlib>=3.9.4"]
     lines.append("dependencies = [")
     lines += [f'    "{dep}",' for dep in deps]
     lines.append("]")
@@ -673,7 +703,7 @@ def write_release_pyproject(manifest: dict, out: Path) -> None:
         "]",
         "",
         "[tool.setuptools.packages.find]",
-        'include = ["logic*"]',
+        'include = ["logic*", "packages*"]',
         "",
     ]
     (out / "pyproject.toml").write_text("\n".join(lines) + "\n")
@@ -746,6 +776,20 @@ IMPROVEMENT.create("fast_tsp")
 
 assert "torch" not in sys.modules, "torch was imported on the classical path"
 print("smoke OK: classical components resolve without torch")
+
+# The released routing algorithms, the simulator and its bin data import from the
+# built tree. They still reach torch through base_routing_policy -> simulations.repository
+# and the day-loop states (Q-16a is open), so this runs after the torch-free checks.
+from logic.src.policies.routing.base.registry import RoutingAlgorithmRegistry  # noqa: F401
+from logic.src.utils.registry import ROUTING
+
+for key in ("swc_tcf", "bpc", "alns", "sans", "hgs", "psoma", "aco_hh", "pg_clns", "cvrp", "na"):
+    assert ROUTING.get(key) is not None, f"released routing key {key} does not resolve"
+assert ROUTING.get("hgs_alns") is None, "unreleased routing key resolves"
+import logic.src.pipeline.simulations.simulator  # noqa: F401
+from packages.wsmart_bin_analysis import GridBase  # noqa: F401
+
+print("smoke OK: released routing keys and the simulator import from the release tree")
 """
 
 

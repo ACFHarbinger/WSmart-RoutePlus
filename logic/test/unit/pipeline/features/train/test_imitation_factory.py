@@ -5,10 +5,7 @@ from types import SimpleNamespace
 import pytest
 import torch
 from logic.src.configs.rl.policies import ProfitableNNConfig
-from logic.src.pipeline.features.train.model_factory import adaptive_imitation as adaptive_factory
-from logic.src.pipeline.features.train.model_factory import imitation as factory
 from logic.src.pipeline.features.train.model_factory.builder import _load_initial_weights
-from logic.src.pipeline.rl.core import imitation as imitation_module
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
@@ -36,15 +33,32 @@ def _cfg(algorithm: str) -> SimpleNamespace:
     )
 
 
+_FACTORY = "logic.src.pipeline.features.train.model_factory"
+
+
 @pytest.mark.parametrize(
-    ("algorithm", "module", "create", "cls_name"),
+    ("algorithm", "module_name", "create_target", "cls_name"),
     [
         # The imitation factory imports its module on call, so the class is patched at its source.
-        ("imitation", imitation_module, factory._create_imitation, "ImitationLearning"),
-        ("adaptive_imitation", adaptive_factory, adaptive_factory._create_adaptive_imitation, "AdaptiveImitation"),
+        (
+            "imitation",
+            "logic.src.pipeline.rl.core.imitation",
+            f"{_FACTORY}.imitation:_create_imitation",
+            "ImitationLearning",
+        ),
+        # Adaptive imitation is not released (Q-12); the release skips this case.
+        (
+            "adaptive_imitation",
+            f"{_FACTORY}.adaptive_imitation",
+            f"{_FACTORY}.adaptive_imitation:_create_adaptive_imitation",
+            "AdaptiveImitation",
+        ),
     ],
 )
-def test_factory_forwards_the_training_setup(monkeypatch, algorithm, module, create, cls_name) -> None:
+def test_factory_forwards_the_training_setup(monkeypatch, algorithm, module_name, create_target, cls_name) -> None:
+    module = pytest.importorskip(module_name)
+    create_module, _, create_name = create_target.partition(":")
+    create = getattr(pytest.importorskip(create_module), create_name)
     seen = {}
     monkeypatch.setattr(module, cls_name, lambda **kw: seen.update(kw) or kw)
     cfg = _cfg(algorithm)

@@ -67,6 +67,7 @@ infrastructure:
   - logic.src.pipeline.features.eval
   - logic.src.pipeline.rl.core.reinforce
   - logic.src.pipeline.rl.core.imitation
+  - logic.src.pipeline.features.train.model_factory.imitation   # reached through the factory registry's string target
   - logic.src.models.core.attention_model
   - logic.src.policies.vector.profitable_nearest_neighbour   # imitation expert (Q-4a)
   - logic.src.policies.packing.vectorized                    # vectorised packing (Q-4a)
@@ -75,9 +76,7 @@ infrastructure:
   - logic.src.envs.tasks.cptp
   - logic.src.envs.tasks.tcptp
   - logic.src.envs.tasks.cvrp
-  # Pending WP-10 at integration: add logic.src.models.common.policy_contract
-  # (the P-24 policy forward/output contract) as a seed; it exists on the WP-10
-  # branch, not on this chain.
+  - logic.src.models.common.policy_contract   # the P-24 forward/output contract and its check
   - logic.controllers.cli               # the CLI: main.py's parsers (Q-11b)
   - logic.controllers.hydra_dispatch
   - logic.controllers.parser_dispatch
@@ -90,18 +89,20 @@ excluded_packages:
   - logic.cloud                                      # `sync_drive` CLI job defer-imports it (drive_parser/parser_dispatch); cloud sync is out of scope (Q-1/Q-2)
   - logic.benchmark                                  # `benchmark` CLI job defer-imports it (jobs/ops_runner.py); out of scope
   - logic.test                                       # `test_suite` CLI job runner (jobs/ops_runner.py); the release ships the curated test files (P-06), not the runner
-  # Pending WP-08 (uncommitted on its branch): wsmart_bin_analysis moves to
-  # packages/wsmart_bin_analysis (import packages.wsmart_bin_analysis), after
-  # which bins/base.py's GridBase import goes and this exclusion activates
-  # (RQ-grok-7). The builder fails loudly on any kept file that module-level
-  # imports an excluded package, so the guard flips itself at integration.
 
 # Notes:
+# - `packages/wsmart_bin_analysis` (RQ-grok-7 a, moved by WP-08) ships vendored: the
+#   builder copies its runtime modules (`__init__.py`, `export/`, `python/`) and the
+#   release pyproject adds matplotlib, which it imports on load.
+# - Q-16a is open: the released routing adapters (through base_routing_policy ->
+#   simulations.repository) and the day-loop states still import torch. The smoke
+#   asserts torch-freedom for the registries and their packing, improver and
+#   acceptance components only.
 # - `logic/src/configs/` ships whole: the config dataclasses of every family are
 #   declarative data, eagerly imported by `configs/__init__`, and carry no
 #   runnable code. Pruning them is WP-04/05/06 config consolidation work.
-# - The released package installs without PyTorch (Q-16a); the neural stack is
-#   the `wsmart-route[neural]` extra in `logic/pyproject.toml`.
-# - `logic/configs/policies/policy_<key>.yaml` and `other/ms_<key>.yaml` ship
-#   only for the released keys above. `ms_eoq_last_minute.yaml` is excluded
+# - The neural stack is the `wsmart-route[neural]` extra in `logic/pyproject.toml`.
+#   Until Q-16a lands, running the simulator needs that extra too.
+# - `logic/configs/policies/policy_<key>.yaml` and `other/pk_<key>.yaml` ship
+#   only for the released keys above. `pk_eoq_last_minute.yaml` is excluded
 #   (RQ-cursor-3: 1.0.0 last-minute is fill-threshold only).
