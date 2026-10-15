@@ -13,14 +13,14 @@ Bibliography:
 
 Attributes:
     SSHHPolicy: Adapter for the SS-HH solver.
-    SSHHParams: Configuration parameters for the SS-HH solver.
+    SSHHConfig: Configuration parameters for the SS-HH solver.
     SSHHSolver: Implements the Sequence-based Selection Hyper-Heuristic.
 
 Example:
     >>> from logic.src.policies.routing.hyper_heuristics import SSHHPolicy
     >>> params = SSHHPolicy()
     >>> print(params)
-    SSHHParams(
+    SSHHConfig(
         max_iterations=500,
         n_removal=2,
         n_llh=5,

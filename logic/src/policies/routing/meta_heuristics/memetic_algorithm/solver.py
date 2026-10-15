@@ -20,7 +20,7 @@ import numpy as np
 
 from logic.src.policies.helpers.operators import greedy_insertion, greedy_profit_insertion
 
-from .params import MAParams
+from logic.src.configs.policies.ma import MAConfig
 
 
 class MASolver:
@@ -47,7 +47,7 @@ class MASolver:
         capacity: float,
         R: float,
         C: float,
-        params: MAParams,
+        params: MAConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """

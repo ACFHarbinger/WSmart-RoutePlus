@@ -8,9 +8,7 @@ from logic.src.policies.helpers.local_search.local_search_base import LocalSearc
 from logic.src.policies.routing.matheuristics.iterated_local_search_randomized_variable_neighborhood_descent_set_partitioning.ils_rvnd_sp import (
     ILSRVNDSPSolver,
 )
-from logic.src.policies.routing.matheuristics.iterated_local_search_randomized_variable_neighborhood_descent_set_partitioning.params import (
-    ILSRVNDSPParams,
-)
+from logic.src.configs.policies.ils_rvnd_sp import ILSRVNDSPConfig
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
@@ -48,7 +46,7 @@ class MockLocalSearch(LocalSearch):
 
 @pytest.fixture
 def sample_params():
-    return ILSRVNDSPParams(
+    return ILSRVNDSPConfig(
         time_limit=10,
         seed=42,
         vrpp=True
@@ -68,7 +66,7 @@ def test_perturb_paper():
     """Verify that _perturb uses random moves and maintains node set."""
     dist_matrix = np.zeros((10, 10))
     wastes = {i: 1. for i in range(1, 10)}
-    params = ILSRVNDSPParams(time_limit=10, seed=42)
+    params = ILSRVNDSPConfig(time_limit=10, seed=42)
     solver = ILSRVNDSPSolver(dist_matrix, wastes, 100, 100, 1, params)
 
     initial_routes = [[1, 2, 3], [4, 5, 6]]
@@ -89,7 +87,7 @@ def test_ils_acceptance_strict():
     # but we can verify the logic in run_ils_rvnd via code inspection or tiny solver run.
     dist_matrix = np.zeros((5, 5))
     wastes = {i: 1. for i in range(1, 5)}
-    params = ILSRVNDSPParams(time_limit=10, MaxIter_a=1, MaxIter_b=1, MaxIterILS_b=1, seed=42)
+    params = ILSRVNDSPConfig(time_limit=10, MaxIter_a=1, MaxIter_b=1, MaxIterILS_b=1, seed=42)
     solver = ILSRVNDSPSolver(dist_matrix, wastes, 100, 100, 1, params)
 
     # Mock RVND to return same or worse profit

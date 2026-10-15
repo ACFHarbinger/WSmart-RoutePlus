@@ -61,7 +61,7 @@ from logic.src.policies.routing.base.base_multi_period_policy import BaseMultiPe
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
 from .ils_bd_engine import IntegerLShapedEngine
-from .params import ILSBDParams
+from logic.src.configs.policies.ils_bd import IntegerLShapedBendersConfig
 
 
 @GlobalRegistry.register(
@@ -187,7 +187,7 @@ class IntegerLShapedPolicy(BaseMultiPeriodRoutingPolicy):
         )
 
         # Merge config
-        params = ILSBDParams.from_config(asdict(self.config))
+        params = self._effective_config(asdict(self.config))
 
         # Invoke Multi-Period Engine
         engine = IntegerLShapedEngine(model=vrpp_model, params=params)

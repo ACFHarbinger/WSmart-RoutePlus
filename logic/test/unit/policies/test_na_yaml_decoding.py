@@ -13,9 +13,7 @@ from logic.src.constants.paths import CONFIGS_DIR
 from logic.src.pipeline.simulations.actions.node_selection import PackingAction
 from logic.src.pipeline.simulations.actions.route_improvement import RouteImprovementAction
 from logic.src.policies.routing.base.factory import RoutingAlgorithmFactory
-from logic.src.policies.routing.learning_algorithms.neural_agent.params import (
-    NeuralParams,
-)
+from logic.src.configs.policies.na import NeuralAgentConfig
 from omegaconf import OmegaConf
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -36,7 +34,7 @@ def _adapter_from_yaml() -> Any:
 def test_from_config_reads_yaml_beam_width() -> None:
     """from_config already unpacked decoding; the adapter used not to call it."""
     cfg = _na_yaml()
-    params = NeuralParams.from_config(OmegaConf.to_container(cfg.na, resolve=True))
+    params = NeuralAgentConfig.from_config(OmegaConf.to_container(cfg.na, resolve=True))
     assert params.decoding_strategy == "greedy"
     assert params.beam_width == 5
     assert params.reward_weight == pytest.approx(0.0)

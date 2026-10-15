@@ -25,7 +25,7 @@ from logic.src.tracking.viz_mixin import PolicyStateRecorder
 from .dfj import run_bb_dfj
 from .lr_uop import run_bb_lr_uop
 from .mtz import run_bb_mtz
-from .params import BBParams
+from logic.src.configs.policies.bb import BBConfig
 
 
 def run_bb_optimizer(
@@ -34,7 +34,7 @@ def run_bb_optimizer(
     capacity: float,
     R: float,
     C: float,
-    params: Optional[BBParams] = None,
+    params: Optional[BBConfig] = None,
     mandatory_indices: Optional[Set[int]] = None,
     env: Optional[gp.Env] = None,
     recorder: Optional[PolicyStateRecorder] = None,
@@ -102,7 +102,7 @@ def run_bb_optimizer(
         ... )
     """
     if params is None:
-        params = BBParams()
+        params = BBConfig()
 
     formulation = params.formulation
 

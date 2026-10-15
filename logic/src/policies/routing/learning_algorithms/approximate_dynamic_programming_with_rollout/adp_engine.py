@@ -43,7 +43,7 @@ import numpy as np
 
 from logic.src.policies.helpers.operators import greedy_insertion
 
-from .params import ADPRolloutParams
+from logic.src.configs.policies.adp import ADPRolloutConfig
 
 
 class ADPRolloutEngine:
@@ -71,7 +71,7 @@ class ADPRolloutEngine:
         capacity: float,
         R: float,
         C: float,
-        params: ADPRolloutParams,
+        params: ADPRolloutConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ) -> None:
         """Initialise the ADP rollout engine.

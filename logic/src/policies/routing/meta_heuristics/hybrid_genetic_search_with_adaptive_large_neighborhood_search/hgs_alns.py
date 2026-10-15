@@ -28,9 +28,7 @@ from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.evolution 
     update_biased_fitness,
 )
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.hgs import HGSSolver
-from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search_with_adaptive_large_neighborhood_search.params import (
-    HGSALNSParams,
-)
+from logic.src.configs.policies.hgs_alns import HGSALNSConfig
 
 
 class HGSALNSSolver(HGSSolver):
@@ -49,7 +47,7 @@ class HGSALNSSolver(HGSSolver):
         capacity: float,
         R: float,
         C: float,
-        params: HGSALNSParams,
+        params: HGSALNSConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """
@@ -61,7 +59,7 @@ class HGSALNSSolver(HGSSolver):
             capacity: Maximum vehicle capacity.
             R: Revenue multiplier.
             C: Cost multiplier.
-            params: HGSALNSParams containing HGS and ALNS configurations.
+            params: HGSALNSConfig containing HGS and ALNS configurations.
             mandatory_nodes: Optional list of mandatory node indices.
 
         Returns:

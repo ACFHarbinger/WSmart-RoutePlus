@@ -28,7 +28,7 @@ from scipy.spatial.ckdtree import cKDTree
 from logic.src.policies.helpers.local_search.local_search_aco import ACOLocalSearch
 
 from .construction import SolutionConstructor
-from .params import KSACOParams
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
 from .pheromones import SparsePheromoneTau
 
 
@@ -66,7 +66,7 @@ class KSparseACOSolver:
         capacity: float,
         R: float,
         C: float,
-        params: KSACOParams,
+        params: KSparseACOConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """Initializes the K-Sparse Ant Colony Optimization solver.
@@ -77,7 +77,7 @@ class KSparseACOSolver:
             capacity (float): Maximum vehicle collection capacity.
             R (float): Revenue multiplier for waste collected.
             C (float): Cost multiplier for distance traveled.
-            params (KSACOParams): Algorithm-specific hyperparameters.
+            params (KSparseACOConfig): Algorithm-specific hyperparameters.
             mandatory_nodes (Optional[List[int]]): Nodes that must be visited.
         """
         self.node_coords = np.array(node_coords)

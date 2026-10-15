@@ -9,15 +9,15 @@ Reference:
 Attributes:
     VPLSolver: The VPL solver class.
     VPLPolicy: The VPL policy class.
-    VPLParams: The VPL parameters class.
+    VPLConfig: The VPL parameters class.
 
 Example:
     >>> solver = VPLSolver(params)
     >>> routes = solver.solve(dist, capacity, demand, nodes)
 """
 
-from .params import VPLParams
+from logic.src.configs.policies.vpl import VPLConfig
 from .policy_vpl import VPLPolicy
 from .solver import VPLSolver
 
-__all__ = ["VPLParams", "VPLSolver", "VPLPolicy"]
+__all__ = ["VPLConfig", "VPLSolver", "VPLPolicy"]

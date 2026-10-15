@@ -15,8 +15,8 @@ Attributes:
 
 Example:
     >>> from logic.src.policies.routing.meta_heuristics.quantum_differential_evolution.solver import QDESolver
-    >>> from logic.src.policies.routing.meta_heuristics.quantum_differential_evolution.params import QDEParams
-    >>> params = QDEParams()
+    >>> from logic.src.configs.policies.qde import QDEConfig
+    >>> params = QDEConfig()
     >>> solver = QDESolver(dist_matrix, wastes, capacity, R, C, params)
     >>> routes, profit, cost = solver.solve()
 """
@@ -33,12 +33,8 @@ from logic.src.policies.helpers.operators.recreate_repair.greedy import (
     greedy_insertion,
     greedy_profit_insertion,
 )
-from logic.src.policies.routing.meta_heuristics.ant_colony_optimization_k_sparse.params import (
-    KSACOParams,
-)
-from logic.src.policies.routing.meta_heuristics.quantum_differential_evolution.params import (
-    QDEParams,
-)
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
+from logic.src.configs.policies.qde import QDEConfig
 
 
 class QDESolver:
@@ -62,7 +58,7 @@ class QDESolver:
         capacity: float,
         R: float,
         C: float,
-        params: QDEParams,
+        params: QDEConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """
@@ -90,7 +86,7 @@ class QDESolver:
         self.np_rng = np.random.default_rng(params.seed) if params.seed is not None else np.random.default_rng()
 
         # Initialize Local Search for post-collapse refinement
-        aco_params = KSACOParams(
+        aco_params = KSparseACOConfig(
             local_search_iterations=self.params.local_search_iterations,
             time_limit=self.params.time_limit,
             vrpp=self.params.vrpp,

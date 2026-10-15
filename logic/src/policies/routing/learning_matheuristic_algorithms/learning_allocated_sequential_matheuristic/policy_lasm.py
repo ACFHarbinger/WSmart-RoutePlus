@@ -43,7 +43,7 @@ from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolic
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
 from .dispatcher import run_lasm_pipeline
-from .params import LASMPipelineParams
+from logic.src.configs.policies.lasm import LASMPipelineConfig
 
 
 @GlobalRegistry.register(
@@ -129,9 +129,9 @@ class LASMPolicy(BaseRoutingPolicy):
             "V": values.get("V", 1),
         }
 
-        p = LASMPipelineParams.from_config(values)
+        p = self._effective_config(values)
         if "time_limit" in values and values["time_limit"] > 0:
-            p = LASMPipelineParams.from_config({**values})
+            p = LASMPipelineConfig.from_config({**values})
 
         n_vehicles: int = kwargs.get("n_vehicles") or 1
         env = kwargs.get("model_env")

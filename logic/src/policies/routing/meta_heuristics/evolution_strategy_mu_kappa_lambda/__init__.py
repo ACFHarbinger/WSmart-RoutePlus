@@ -5,7 +5,7 @@ This module implements the classical (μ,κ,λ)-ES where selection occurs from
 
 Attributes:
     MuKappaLambdaESSolver: Main solver class.
-    MuKappaLambdaESParams: Configuration parameters.
+    MuKappaLambdaESConfig: Configuration parameters.
     Individual: Data structure for ES individuals with age tracking.
 
 Example:
@@ -18,11 +18,11 @@ Reference:
     In: Handbook of Natural Computing (pages 1-31).
 """
 
-from .params import MuKappaLambdaESParams
+from logic.src.configs.policies.es_mkl import MuKappaLambdaESConfig
 from .solver import Individual, MuKappaLambdaESSolver
 
 __all__ = [
     "MuKappaLambdaESSolver",
-    "MuKappaLambdaESParams",
+    "MuKappaLambdaESConfig",
     "Individual",
 ]

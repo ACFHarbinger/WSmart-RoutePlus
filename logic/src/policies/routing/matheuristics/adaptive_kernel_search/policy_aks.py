@@ -19,7 +19,7 @@ from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolic
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
 from .aks import run_adaptive_kernel_search_gurobi
-from .params import AKSParams
+from logic.src.configs.policies.aks import AdaptiveKernelSearchConfig
 
 
 @GlobalRegistry.register(
@@ -154,7 +154,7 @@ class AdaptiveKernelSearchPolicy(BaseRoutingPolicy):
                 - Optional[MultiDayContext]: Updated multi-period context.
         """
         # 1. Initialize parameters
-        params = AKSParams.from_config(self.config)
+        params = AdaptiveKernelSearchConfig.from_config(self.config)
 
         # 2. Extract environment parameters
         distance_matrix = kwargs["distance_matrix"]

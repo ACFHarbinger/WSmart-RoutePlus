@@ -26,11 +26,11 @@ import numpy as np
 
 from logic.src.policies.helpers.local_search.local_search_general import GeneralLocalSearch
 from logic.src.policies.helpers.operators.solution_initialization.greedy_si import build_greedy_routes
-from logic.src.policies.routing.meta_heuristics.ant_colony_optimization_k_sparse.params import KSACOParams
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
 from logic.src.policies.routing.meta_heuristics.knowledge_guided_local_search.cost_evaluator import (
     CostEvaluator,
 )
-from logic.src.policies.routing.meta_heuristics.knowledge_guided_local_search.params import KGLSParams
+from logic.src.configs.policies.kgls import KGLSConfig
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +64,7 @@ class KGLSSolver:
         capacity: float,
         R: float,
         C: float,
-        params: KGLSParams,
+        params: KGLSConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """Initialize the KGLS solver.
@@ -104,7 +104,7 @@ class KGLSSolver:
             capacity=self.capacity,
             R=self.R,
             C=self.C,
-            params=KSACOParams(
+            params=KSparseACOConfig(
                 local_search_iterations=self.params.local_search_iterations,
                 vrpp=self.params.vrpp,
                 profit_aware_operators=self.params.profit_aware_operators,

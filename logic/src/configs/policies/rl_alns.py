@@ -14,11 +14,14 @@ Example:
     >>> config.profit_aware_operators
     False
 """
+from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Optional
+
+from logic.src.configs.policies.other import RLConfig
 
 from .alns import ALNSConfig
-from .other import RLConfig
 
 
 @dataclass
@@ -33,3 +36,10 @@ class RLALNSConfig(ALNSConfig):
     rl_config: RLConfig = field(default_factory=RLConfig)
     vrpp: bool = True
     profit_aware_operators: bool = False
+    time_limit: float = 60.0
+    max_iterations: int = 5000
+    start_temp: float = 100.0
+    cooling_rate: float = 0.995
+    min_removal: int = 1
+    max_removal_pct: float = 0.3
+    seed: Optional[int] = None

@@ -48,9 +48,7 @@ from logic.src.policies.packing_and_routing.non_dominated_sorting_biased_random_
 from logic.src.policies.packing_and_routing.non_dominated_sorting_biased_random_key_genetic_algorithm.objectives import (
     evaluate_population,
 )
-from logic.src.policies.packing_and_routing.non_dominated_sorting_biased_random_key_genetic_algorithm.params import (
-    NDSBRKGAParams,
-)
+from logic.src.configs.policies.nds_brkga import NDSBRKGAConfig
 
 # ---------------------------------------------------------------------------
 # Seeding helpers
@@ -156,7 +154,7 @@ def _build_seed_chromosomes(
     max_fill: float,
     overflow_penalty_frac: float,
     scenario_tree: Optional[object],
-    params: NDSBRKGAParams,
+    params: NDSBRKGAConfig,
     rng: np.random.Generator,
 ) -> List[Chromosome]:
     """Generate a batch of seeded chromosomes using domain-specific solvers.
@@ -291,7 +289,7 @@ class Population:
         max_fill: float,
         overflow_penalty_frac: float,
         scenario_tree: Optional[object],
-        params: NDSBRKGAParams,
+        params: NDSBRKGAConfig,
         mandatory_override: Optional[List[int]] = None,
     ) -> "Population":
         """

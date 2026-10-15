@@ -80,7 +80,7 @@ from logic.src.policies.helpers.solvers_and_matheuristics.lagrangian_relaxation.
 )
 from logic.src.tracking.viz_mixin import PolicyStateRecorder
 
-from .params import BBParams
+from logic.src.configs.policies.bb import BBConfig
 
 # ---------------------------------------------------------------------------
 # B&B Node
@@ -159,7 +159,7 @@ def run_bb_lr_uop(
     capacity: float,
     R: float,
     C: float,
-    params: Optional[BBParams] = None,
+    params: Optional[BBConfig] = None,
     mandatory_indices: Optional[Set[int]] = None,
     env: Any = None,
     recorder: Optional[PolicyStateRecorder] = None,
@@ -178,7 +178,7 @@ def run_bb_lr_uop(
         capacity:         Vehicle capacity Q.
         R:                Revenue coefficient (r_w).
         C:                Distance cost coefficient (c_km).
-        params:           BBParams instance; LR-specific fields are prefixed lr_.
+        params:           BBConfig instance; LR-specific fields are prefixed lr_.
         mandatory_indices:  Customers that MUST appear in every feasible solution.
         env:              Optional shared Gurobi environment.
         recorder:         Optional telemetry recorder.
@@ -190,7 +190,7 @@ def run_bb_lr_uop(
             objective  – Best feasible objective (revenue - travel cost) found.
     """
     if params is None:
-        params = BBParams()
+        params = BBConfig()
 
     mandatory = mandatory_indices or set()
     start_time = time.perf_counter()

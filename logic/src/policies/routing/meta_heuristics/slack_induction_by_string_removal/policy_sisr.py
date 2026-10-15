@@ -20,7 +20,7 @@ from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import SISRParams
+from logic.src.configs.policies.sisr import SISRConfig
 from .solver import SISRSolver
 
 
@@ -117,7 +117,7 @@ class SISRPolicy(BaseRoutingPolicy):
                 - profit: Total calculated net profit (Total Revenue - Total Cost).
                 - cost: Total travel cost calculated by the solver.
         """
-        params = SISRParams(
+        params = SISRConfig(
             time_limit=values.get("time_limit", 10.0),
             max_iterations=values.get("max_iterations", 1000),
             start_temp=values.get("start_temp", 100.0),

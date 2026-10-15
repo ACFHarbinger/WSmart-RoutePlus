@@ -7,9 +7,7 @@ import pytest
 from logic.src.policies.routing.exact_and_decomposition_solvers.multi_stage_branch_and_price_and_cut_with_set_partition import (
     ms_bpc_sp_engine as engine,
 )
-from logic.src.policies.routing.exact_and_decomposition_solvers.multi_stage_branch_and_price_and_cut_with_set_partition.params import (
-    MSBPCSPParams,
-)
+from logic.src.configs.policies.ms_bpc_sp import MSBPCSPConfig
 
 
 @pytest.mark.parametrize("fleet,expired", [(2, True), (None, False)])
@@ -21,7 +19,7 @@ def test_empty_result_does_not_restart_expired_or_unlimited_solve(monkeypatch, f
     original = engine.run_ms_bpc_sp
     retry = Mock(return_value=([], 0.0))
     monkeypatch.setattr(engine, "run_ms_bpc_sp", retry)
-    params = MSBPCSPParams(time_limit=1.0, max_bb_nodes=0)
+    params = MSBPCSPConfig(time_limit=1.0, max_bb_nodes=0)
     matrix = np.array([[0.0, 1.0, 1.0], [1.0, 0.0, 2.0], [1.0, 2.0, 0.0]])
     routes, value = original(matrix, {1: 1.0, 2: 1.0}, 10.0, 0.0, 1.0, params=params, vehicle_limit=fleet)
     assert routes == []
@@ -37,7 +35,7 @@ def test_retry_receives_only_remaining_budget(monkeypatch):
     monkeypatch.setattr(engine, "_select_nodes_knapsack", Mock(return_value={1}))
     retry = Mock(return_value=([], 0.0))
     monkeypatch.setattr(engine, "run_ms_bpc_sp", retry)
-    params = MSBPCSPParams(time_limit=1.0, max_bb_nodes=0)
+    params = MSBPCSPConfig(time_limit=1.0, max_bb_nodes=0)
     matrix = np.array([[0.0, 1.0, 1.0], [1.0, 0.0, 2.0], [1.0, 2.0, 0.0]])
     original(matrix, {1: 1.0, 2: 1.0}, 10.0, 0.0, 1.0, params=params, vehicle_limit=2)
     assert retry.call_count == 1

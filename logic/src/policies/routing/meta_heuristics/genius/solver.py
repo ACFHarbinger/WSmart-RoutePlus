@@ -14,7 +14,7 @@ Attributes:
     GENIUSSolver: The main solver class for the GENIUS meta-heuristic.
 
 Example:
-    >>> params = GENIUSParams()
+    >>> params = GENIUSConfig()
     >>> solver = GENIUSSolver(dist_matrix, wastes, capacity, R, C, params)
     >>> routes, profit, cost = solver.solve()
 """
@@ -35,7 +35,7 @@ from logic.src.policies.helpers.operators.generalized_insertion_and_deletion.uns
 )
 from logic.src.policies.helpers.operators.recreate_repair.geni import geni_insertion, geni_profit_insertion
 
-from .params import GENIUSParams
+from logic.src.configs.policies.genius import GENIUSConfig
 
 
 class GENIUSSolver:
@@ -50,7 +50,7 @@ class GENIUSSolver:
         capacity (float): Vehicle capacity constraint.
         R (float): Revenue multiplier.
         C (float): Cost multiplier.
-        params (GENIUSParams): GENIUS algorithm parameters.
+        params (GENIUSConfig): GENIUS algorithm parameters.
         mandatory_nodes (List[int]): List of nodes that must be visited.
         n_nodes (int): Total number of nodes (excluding depot).
         nodes (List[int]): List of node IDs [1, ..., n_nodes].
@@ -67,7 +67,7 @@ class GENIUSSolver:
         capacity: float,
         R: float,
         C: float,
-        params: GENIUSParams,
+        params: GENIUSConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """

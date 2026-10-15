@@ -44,7 +44,7 @@ from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolic
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
 from .dispatcher import run_pipeline
-from .params import ExactGuidedHeuristicParams
+from logic.src.configs.policies.egh import ExactGuidedHeuristicConfig
 
 
 @GlobalRegistry.register(
@@ -110,7 +110,7 @@ class ExactGuidedHeuristicPolicy(BaseRoutingPolicy):
         """Execute the four-stage pipeline.
 
         The ``values`` dict is the merged YAML configuration already flattened
-        by ``BaseRoutingPolicy``.  ``ExactGuidedHeuristicParams.from_config`` tolerates
+        by ``BaseRoutingPolicy``.  ``ExactGuidedHeuristicConfig.from_config`` tolerates
         extra keys, so no pre-filtering is needed.
 
         Args:
@@ -152,10 +152,10 @@ class ExactGuidedHeuristicPolicy(BaseRoutingPolicy):
         }
 
         # Pipeline-specific parameters from the merged config
-        p = ExactGuidedHeuristicParams.from_config(values)
+        p = self._effective_config(values)
         # Inject time_limit from values if present (BaseRoutingPolicy sets it)
         if "time_limit" in values and values["time_limit"] > 0:
-            p = ExactGuidedHeuristicParams.from_config({**values.get("pipeline", {}), **values})
+            p = ExactGuidedHeuristicConfig.from_config({**values.get("pipeline", {}), **values})
 
         n_vehicles: int = kwargs.get("n_vehicles") or 1
         env = kwargs.get("model_env")

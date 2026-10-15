@@ -11,7 +11,7 @@ Each outer iteration consists of two phases:
 
 Attributes:
     VNSSolver (Type): Core solver class for the Variable Neighborhood Search.
-    VNSParams (Type): Parameter dataclass for the solver.
+    VNSConfig (Type): Parameter dataclass for the solver.
 
 Example:
     >>> solver = VNSSolver(dist_matrix, wastes, capacity, R, C, params)
@@ -39,7 +39,7 @@ from logic.src.policies.helpers.operators.search_heuristics.destroy_repair_llh i
     routes_total_distance,
 )
 
-from .params import VNSParams
+from logic.src.configs.policies.vns import VNSConfig
 
 
 class VNSSolver:
@@ -52,7 +52,7 @@ class VNSSolver:
         capacity (float): Maximum vehicle collection capacity.
         R (float): Revenue per kg of waste.
         C (float): Cost per km traveled.
-        params (VNSParams): Algorithm-specific parameters.
+        params (VNSConfig): Algorithm-specific parameters.
         mandatory_nodes (List[int]): Nodes that must be visited.
     """
 
@@ -63,7 +63,7 @@ class VNSSolver:
         capacity: float,
         R: float,
         C: float,
-        params: VNSParams,
+        params: VNSConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """Initializes the Variable Neighborhood Search solver.
@@ -74,7 +74,7 @@ class VNSSolver:
             capacity (float): Maximum vehicle collection capacity.
             R (float): Revenue per kg of waste.
             C (float): Cost per km traveled.
-            params (VNSParams): Algorithm-specific parameters.
+            params (VNSConfig): Algorithm-specific parameters.
             mandatory_nodes (Optional[List[int]]): Nodes that must be visited.
         """
         self.dist_matrix = dist_matrix

@@ -30,7 +30,7 @@ from logic.src.policies.routing.matheuristics.kernel_search.solver import (
 )
 from logic.src.tracking.viz_mixin import PolicyStateRecorder
 
-from .params import TPKSParams
+from logic.src.configs.policies.tpks import TpksConfig
 
 
 @dataclass
@@ -66,7 +66,7 @@ def _run_phase1(  # noqa: C901
     R: float,
     C: float,
     mandatory_nodes: List[int],
-    params: TPKSParams,
+    params: TpksConfig,
     phase1_time: float,
 ) -> _PhaseIStats:
     """
@@ -107,7 +107,7 @@ def _run_phase1(  # noqa: C901
         R (float): R.
         C (float): C.
         mandatory_nodes (List[int]): Mandatory nodes.
-        params (TPKSParams): Parameters.
+        params (TpksConfig): Parameters.
         phase1_time (float): Phase 1 time limit.
 
     Returns:
@@ -216,7 +216,7 @@ def _build_phase2_kernel(
     x: Dict,
     y: Dict,
     stats: _PhaseIStats,
-    params: TPKSParams,
+    params: TpksConfig,
 ) -> Tuple[List[gp.Var], List[gp.Var]]:
     """
     Phase II: Re-rank all variables using Phase I statistics.
@@ -232,7 +232,7 @@ def _build_phase2_kernel(
         x (Dict): Dictionary of variables.
         y (Dict): Dictionary of variables.
         stats (_PhaseIStats): Statistics from Phase I.
-        params (TPKSParams): Parameters.
+        params (TpksConfig): Parameters.
 
     Returns:
         (phase2_kernel_vars, phase2_remaining_vars)
@@ -272,7 +272,7 @@ def run_tpks_gurobi(
     R: float,
     C: float,
     mandatory_nodes: List[int],
-    params: Optional[TPKSParams] = None,
+    params: Optional[TpksConfig] = None,
     env: Optional[gp.Env] = None,
     recorder: Optional[PolicyStateRecorder] = None,
 ) -> Tuple[List[int], float, float]:
@@ -286,7 +286,7 @@ def run_tpks_gurobi(
         R (float): R.
         C (float): C.
         mandatory_nodes (List[int]): Mandatory nodes.
-        params (TPKSParams): Parameters.
+        params (TpksConfig): Parameters.
         env (Optional[gp.Env]): Gurobi environment.
         recorder (Optional[PolicyStateRecorder]): Policy state recorder.
 
@@ -294,7 +294,7 @@ def run_tpks_gurobi(
         (tour, obj_val, routing_cost) — same contract as run_kernel_search_gurobi.
     """
     if params is None:
-        params = TPKSParams()
+        params = TpksConfig()
 
     model = gp.Model("TPKS_VRPP", env=env) if env else gp.Model("TPKS_VRPP")
     model.setParam("OutputFlag", 0)

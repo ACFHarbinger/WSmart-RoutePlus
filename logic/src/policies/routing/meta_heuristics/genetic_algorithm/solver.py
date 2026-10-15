@@ -7,7 +7,7 @@ best individual across generations.
 
 Attributes:
     GASolver (Type): Core solver class for the Genetic Algorithm.
-    GAParams (Type): Parameter dataclass for the solver.
+    GAConfig (Type): Parameter dataclass for the solver.
 
 Example:
     >>> solver = GASolver(dist_matrix, wastes, capacity, R, C, params)
@@ -37,7 +37,7 @@ from logic.src.policies.helpers.operators.solution_initialization.greedy_si impo
 )
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.individual import Individual
 
-from .params import GAParams
+from logic.src.configs.policies.ga import GAConfig
 
 
 class GASolver:
@@ -63,7 +63,7 @@ class GASolver:
         capacity: float,
         R: float,
         C: float,
-        params: GAParams,
+        params: GAConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """

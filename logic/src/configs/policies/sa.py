@@ -24,6 +24,7 @@ Example:
     >>> config.profit_aware_operators
     False
 """
+from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import List, Optional
@@ -69,3 +70,10 @@ class SAConfig:
     acceptance_criterion: AcceptanceConfig = AcceptanceConfig(
         method="bmc", params=BoltzmannAcceptanceConfig(initial_temp=100.0, alpha=0.95)
     )
+    target_acceptances_per_node: int = 10
+    max_attempts_multiplier: int = 100
+    frozen_streak_limit: int = 3
+    auto_calibrate_temperature: bool = True
+    target_initial_acceptance: float = 0.80
+    calibration_samples: int = 200
+    n_restarts: int = 1

@@ -19,7 +19,7 @@ import numpy as np
 from logic.src.configs.policies.slc import SLCConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-from logic.src.policies.routing.meta_heuristics.soccer_league_competition.params import SLCParams
+from logic.src.configs.policies.slc import SLCConfig
 from logic.src.policies.routing.meta_heuristics.soccer_league_competition.solver import SLCSolver
 
 
@@ -110,7 +110,7 @@ class SLCPolicy(BaseRoutingPolicy):
                 - profit: Total calculated net profit (Total Revenue - Total Cost).
                 - cost: Total travel cost calculated by the solver.
         """
-        params = SLCParams(
+        params = SLCConfig(
             n_teams=int(values.get("n_teams", 5)),
             team_size=int(values.get("team_size", 4)),
             max_iterations=int(values.get("max_iterations", 50)),

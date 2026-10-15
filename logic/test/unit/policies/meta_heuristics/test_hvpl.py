@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from logic.src.configs.policies import HyperHeuristicACOConfig
 from logic.src.configs.policies.alns import ALNSConfig
-from logic.src.policies.routing.meta_heuristics.hybrid_volleyball_premier_league.params import HVPLParams
+from logic.src.configs.policies.hvpl import HVPLConfig
 from logic.src.policies.routing.meta_heuristics.hybrid_volleyball_premier_league.solver import HVPLSolver
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -38,7 +38,7 @@ def test_hvpl_solver():
         xi=0.3,
         time_limit=60.0,
     )
-    params = HVPLParams(
+    params = HVPLConfig(
         n_teams=3,
         max_iterations=2,
         substitution_rate=0.3,

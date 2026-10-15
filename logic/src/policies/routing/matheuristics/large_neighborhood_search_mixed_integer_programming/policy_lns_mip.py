@@ -17,6 +17,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import gurobipy as gp
 import numpy as np
 
+from logic.src.configs.policies.lns_mip import LnsMipConfig
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.problem_context import ProblemContext
@@ -30,8 +31,6 @@ from logic.src.policies.routing.matheuristics.kernel_search.solver import (
 )
 from logic.src.utils.policy.routes import route_cost, route_profit
 from logic.src.utils.policy.wrappers import greedy_day_route
-
-from .params import LNSMIPParams
 
 
 @GlobalRegistry.register(
@@ -60,8 +59,13 @@ class LNSMIPPolicy(BaseMultiPeriodRoutingPolicy):
             config: Optional Hydra configuration.
         """
         super().__init__(config)
-        self.params = LNSMIPParams.from_config(config or {})
+        self.params = self._effective_config(config or {})
         self.rng = random.Random(self.params.seed)
+
+    @classmethod
+    def _config_class(cls):
+        """Return the configuration class for LNS-MIP."""
+        return LnsMipConfig
 
     def _evaluate_plan(self, plan: List[List[List[int]]], problem: ProblemContext) -> float:
         """Evaluate expected multi-day profit deterministically (using mean increments).

@@ -3,14 +3,14 @@
 Attributes:
     GASolver: Main solver class for the Genetic Algorithm.
     GAPolicy: Policy class for the Genetic Algorithm.
-    GAParams: Parameter dataclass for the Genetic Algorithm.
+    GAConfig: Parameter dataclass for the Genetic Algorithm.
 
 Example:
     >>> from logic.src.policies.routing.meta_heuristics.genetic_algorithm import GAPolicy
     >>> policy = GAPolicy()
 """
 
-from .params import GAParams
+from logic.src.configs.policies.ga import GAConfig
 from .solver import GASolver
 
-__all__ = ["GASolver", "GAParams"]
+__all__ = ["GASolver", "GAConfig"]

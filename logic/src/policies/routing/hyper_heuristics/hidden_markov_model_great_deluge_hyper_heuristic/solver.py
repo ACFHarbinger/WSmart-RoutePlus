@@ -32,7 +32,7 @@ Attributes:
     HMMGDHHSolver: Solves VRPP using Hidden Markov Model + Great Deluge.
 
 Example:
-    >>> from logic.src.policies.routing.hyper_heuristics.hidden_markov_model_great_deluge_hyper_heuristic import HMMGDHHSolver, HMMGDHHParams, run_hmmgd_hh
+    >>> from logic.src.policies.routing.hyper_heuristics.hidden_markov_model_great_deluge_hyper_heuristic import HMMGDHHSolver, HMMGDHHConfig, run_hmmgd_hh
     >>> solver = HMMGDHHSolver(dist_matrix, wastes, capacity, R, C, params)
     >>> best_solution, best_profit, best_cost = solver.solve()
     >>> print(best_solution, best_profit, best_cost)
@@ -60,7 +60,7 @@ from logic.src.policies.helpers.operators import (
 )
 from logic.src.policies.helpers.operators.solution_initialization.nearest_neighbor_si import build_nn_routes
 
-from .params import HMMGDHHParams
+from logic.src.configs.policies.hmm_gd_hh import HMMGDHHConfig
 
 # Discrete Observation Alphabet (Onsem et al. 2014, Section 5.1)
 _OBS_IMPROVE = 0  # ΔProfit > 0
@@ -102,7 +102,7 @@ class HMMGDHHSolver:
         capacity (float): Vehicle capacity.
         R (float): Revenue parameter.
         C (float): Cost parameter.
-        params (HMMGDHHParams): HMM-GD-HH parameters.
+        params (HMMGDHHConfig): HMM-GD-HH parameters.
         mandatory_nodes (Optional[List[int]]): Optional list of mandatory nodes.
         n_nodes (int): Number of nodes.
         n_llh (int): Number of Low-Level Heuristics.
@@ -129,7 +129,7 @@ class HMMGDHHSolver:
         capacity: float,
         R: float,
         C: float,
-        params: HMMGDHHParams,
+        params: HMMGDHHConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """

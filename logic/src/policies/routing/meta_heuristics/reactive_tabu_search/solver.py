@@ -9,7 +9,7 @@ non-cycling periods, tenure contracts for intensive exploitation.
 
 Attributes:
     RTSSolver (Type): Core solver class for RTS.
-    RTSParams (Type): Parameter dataclass for the solver.
+    RTSConfig (Type): Parameter dataclass for the solver.
 
 Example:
     >>> solver = RTSSolver(dist_matrix, wastes, capacity, R, C, params)
@@ -42,7 +42,7 @@ from logic.src.policies.helpers.operators import (
 )
 from logic.src.policies.helpers.operators.solution_initialization.nearest_neighbor_si import build_nn_routes
 
-from .params import RTSParams
+from logic.src.configs.policies.rts import RTSConfig
 
 
 class RTSSolver:
@@ -55,7 +55,7 @@ class RTSSolver:
         capacity (float): Maximum vehicle collection capacity.
         R (float): Revenue per kg of waste.
         C (float): Cost per km traveled.
-        params (RTSParams): Algorithm-specific parameters.
+        params (RTSConfig): Algorithm-specific parameters.
         mandatory_nodes (List[int]): Nodes that must be visited.
     """
 
@@ -66,7 +66,7 @@ class RTSSolver:
         capacity: float,
         R: float,
         C: float,
-        params: RTSParams,
+        params: RTSConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """Initializes the Reactive Tabu Search solver.
@@ -77,7 +77,7 @@ class RTSSolver:
             capacity (float): Maximum vehicle collection capacity.
             R (float): Revenue per kg of waste.
             C (float): Cost per km traveled.
-            params (RTSParams): Algorithm-specific parameters.
+            params (RTSConfig): Algorithm-specific parameters.
             mandatory_nodes (Optional[List[int]]): Nodes that must be visited.
         """
         self.dist_matrix = dist_matrix

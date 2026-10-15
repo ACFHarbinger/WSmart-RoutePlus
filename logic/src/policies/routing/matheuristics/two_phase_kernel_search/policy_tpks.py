@@ -18,7 +18,7 @@ from logic.src.interfaces.context.search_context import SearchContext
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import TPKSParams
+from logic.src.configs.policies.tpks import TpksConfig
 from .solver import run_tpks_gurobi
 
 
@@ -53,7 +53,7 @@ class TPKSPolicy(BaseRoutingPolicy):
         Returns:
             Type: Configuration class.
         """
-        return None  # or a dedicated TPKSConfig dataclass if needed
+        return TpksConfig  # or a dedicated TPKSConfig dataclass if needed
 
     def _get_config_key(self) -> str:
         """Return configuration key.
@@ -91,7 +91,7 @@ class TPKSPolicy(BaseRoutingPolicy):
         Returns:
             A tuple of (tour, cost, profit, search_context, multi_day_context).
         """
-        params = TPKSParams.from_config(self.config)
+        params = TpksConfig.from_config(self.config)
 
         tour, obj_val, cost = run_tpks_gurobi(
             dist_matrix=kwargs["distance_matrix"],

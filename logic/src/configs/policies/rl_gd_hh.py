@@ -24,6 +24,7 @@ Example:
     >>> config.vrpp
     True
 """
+from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, List, Optional
@@ -93,3 +94,4 @@ class RLGDHHConfig:
             params={"quality_lb": 0.0},
         )
     )
+    profit_aware_operators: bool = False

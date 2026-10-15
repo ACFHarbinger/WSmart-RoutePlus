@@ -9,13 +9,13 @@ A middle-ground metaheuristic combining:
 This bridges HVPL (basic) and RL-AHVPL (advanced with HGS/CMAB/GLS).
 
 Attributes:
-    RLHVPLParams (RLHVPLParams): RL-HVPL parameters class.
+    RLHVPLConfig (RLHVPLConfig): RL-HVPL parameters class.
     RLHVPLSolver (RLHVPLSolver): RL-HVPL solver class.
 
 Example:
     >>> from logic.src.policies.routing.learning_heuristic_algorithms
     ...     .reinforcement_learning_hybrid_volleyball_premier_league import (
-    ...         RLHVPLParams, RLHVPLSolver
+    ...         RLHVPLConfig, RLHVPLSolver
     ...     )
     >>> solver = RLHVPLSolver(dist_matrix, wastes, capacity, R, C, params)
     >>> routes, profit, cost = solver.solve()
@@ -24,7 +24,7 @@ Example:
     >>> print(cost)
 """
 
-from .params import RLHVPLParams
+from logic.src.configs.policies.rl_hvpl import RLHVPLConfig
 from .rl_hvpl import RLHVPLSolver
 
-__all__ = ["RLHVPLParams", "RLHVPLSolver"]
+__all__ = ["RLHVPLConfig", "RLHVPLSolver"]

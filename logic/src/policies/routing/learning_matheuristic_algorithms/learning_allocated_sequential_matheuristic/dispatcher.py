@@ -22,7 +22,7 @@ Example:
     >>> routes, profit, cost = run_lasm_pipeline(
     ...     bins, dist_matrix, env, values, binsids, mandatory,
     ...     n_vehicles=2,
-    ...     params=LASMPipelineParams(alpha=0.5, time_limit=120),
+    ...     params=LASMPipelineConfig(alpha=0.5, time_limit=120),
     ... )
 """
 
@@ -38,7 +38,7 @@ from numpy.typing import NDArray
 
 from logic.src.policies.routing.matheuristics.exact_guided_heuristic.route_pool import RoutePool
 
-from .params import LASMPipelineParams
+from logic.src.configs.policies.lasm import LASMPipelineConfig
 from .rl_controller import RLController
 from .stage_lbbd import run_lbbd_stage
 
@@ -61,7 +61,7 @@ def reset_rl_controller() -> None:
     _GLOBAL_RL = None
 
 
-def _get_rl_controller(params: LASMPipelineParams) -> RLController:
+def _get_rl_controller(params: LASMPipelineConfig) -> RLController:
     """Get the global RL controller (singleton).
 
     Args:
@@ -195,7 +195,7 @@ def run_lasm_pipeline(
     binsids: List[int],
     mandatory: List[int],
     n_vehicles: int = 1,
-    params: Optional[LASMPipelineParams] = None,
+    params: Optional[LASMPipelineConfig] = None,
     recorder: Any = None,
 ) -> Tuple[List[int], float, float]:
     """Execute the LBBD → ALNS → BPC → RL → SP pipeline.
@@ -208,7 +208,7 @@ def run_lasm_pipeline(
         binsids:     Global bin identifiers.
         mandatory:   Global IDs of bins that MUST be collected.
         n_vehicles:  Fleet size K.
-        params:      LASMPipelineParams (defaults to LASMPipelineParams()).
+        params:      LASMPipelineConfig (defaults to LASMPipelineConfig()).
         recorder:    Optional telemetry recorder.
 
     Returns:
@@ -217,7 +217,7 @@ def run_lasm_pipeline(
             profit     — net profit of the selected routes.
             total_cost — total travel cost.
     """
-    p = params or LASMPipelineParams()
+    p = params or LASMPipelineConfig()
     t_start = time.perf_counter()
 
     n_bins = len(bins)
@@ -342,7 +342,7 @@ def run_lasm_pipeline(
     if run_bpc_stage is not None and not p.skip_bpc and tau_bpc > 5.0:
         logger.info("[LBBDPipeline] Stage 3 BPC   budget=%.1fs", tau_bpc)
 
-        # Build a minimal ExactGuidedHeuristicParams-compatible object for the shared stage
+        # Build a minimal ExactGuidedHeuristicConfig-compatible object for the shared stage
         @_dc
         class _BPCProxy:
             bpc_ng_size_min: int = p.bpc_ng_size_min

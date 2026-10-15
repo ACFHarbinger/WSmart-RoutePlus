@@ -28,7 +28,7 @@ from logic.src.policies.helpers.operators.search_heuristics.destroy_repair_llh i
     routes_total_distance,
 )
 
-from .params import ILSParams
+from logic.src.configs.policies.ils import ILSConfig
 
 
 class ILSSolver:
@@ -54,7 +54,7 @@ class ILSSolver:
         capacity: float,
         R: float,
         C: float,
-        params: ILSParams,
+        params: ILSConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """

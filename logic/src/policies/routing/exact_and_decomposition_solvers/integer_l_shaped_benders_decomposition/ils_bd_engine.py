@@ -46,7 +46,7 @@ import numpy as np
 
 from logic.src.policies.helpers.solvers_and_matheuristics.vrpp_model import VRPPModel
 
-from .params import ILSBDParams
+from logic.src.configs.policies.ils_bd import IntegerLShapedBendersConfig
 from .scenario import ScenarioGenerator
 from .subproblem import RecourseEvaluator
 
@@ -71,24 +71,24 @@ class IntegerLShapedEngine:
 
         from logic.src.policies.helpers.solvers_and_matheuristics.vrpp_model import VRPPModel
         from logic.src.policies.routing.exact_and_decomposition_solvers.integer_l_shaped_benders_decomposition.ils_bd_engine import IntegerLShapedEngine
-        from logic.src.policies.routing.exact_and_decomposition_solvers.integer_l_shaped_benders_decomposition.params import ILSBDParams
+        from logic.src.configs.policies.ils_bd import IntegerLShapedBendersConfig
 
         model = VRPPModel(n_nodes=..., cost_matrix=..., wastes=..., ...)
-        engine = IntegerLShapedEngine(model, ILSBDParams())
+        engine = IntegerLShapedEngine(model, IntegerLShapedBendersConfig())
         routes, y_hat, profit, stats = engine.solve(tree)
 
     Attributes:
         model (VRPPModel): VRPPModel instance providing graph topology, costs, and profits.
-        params (ILSBDParams): ILSBDParams controlling all solver parameters.
+        params (IntegerLShapedBendersConfig): IntegerLShapedBendersConfig controlling all solver parameters.
         stats (Dict[str, Any]): Diagnostic dict populated during ``solve()``.
     """
 
-    def __init__(self, model: VRPPModel, params: ILSBDParams) -> None:
+    def __init__(self, model: VRPPModel, params: IntegerLShapedBendersConfig) -> None:
         """Initialise the engine.
 
         Args:
             model (VRPPModel): VRPPModel instance (network structure, costs, fill levels).
-            params (ILSBDParams): ILSBDParams configuring Benders iterations, scenarios, penalties.
+            params (IntegerLShapedBendersConfig): IntegerLShapedBendersConfig configuring Benders iterations, scenarios, penalties.
         """
         self.model = model
         self.params = params

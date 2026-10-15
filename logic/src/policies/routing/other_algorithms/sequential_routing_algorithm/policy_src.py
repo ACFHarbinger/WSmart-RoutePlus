@@ -3,11 +3,11 @@ SRC (Sequential Routing Algorithm) — Meta-Constructor for Routing.
 
 Attributes:
     SequentialRoutingAlgorithm: Sequential Routing Algorithm (SRC).
-    SRCParams: Parameters for the Sequential Routing Algorithm (SRC).
+    SRCConfig: Parameters for the Sequential Routing Algorithm (SRC).
 
 Example:
-    >>> from logic.src.policies.routing.other_algorithms.sequential_routing_algorithm import SequentialRoutingAlgorithm, SRCParams
-    >>> params = SRCParams()
+    >>> from logic.src.policies.routing.other_algorithms.sequential_routing_algorithm import SequentialRoutingAlgorithm, SRCConfig
+    >>> params = SRCConfig()
     >>> src = SequentialRoutingAlgorithm(config=params)
     >>> src.execute(mandatory=[1, 2, 3], bins=bins_object, distance_matrix=distance_matrix)
 """
@@ -28,7 +28,7 @@ from logic.src.interfaces.routing_algorithm import IRoutingAlgorithm
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import SRCParams
+from logic.src.configs.policies.src import SRCConfig
 
 logger = logging.getLogger(__name__)
 
@@ -83,9 +83,9 @@ class SequentialRoutingAlgorithm(BaseRoutingPolicy):
 
         # Load params
         if self.config is not None:
-            self.params = SRCParams.from_config(self.config)
+            self.params = SRCConfig.from_config(self.config)
         else:
-            self.params = SRCParams(routing_algorithms=["tsp", "alns"])
+            self.params = SRCConfig(routing_algorithms=["tsp", "alns"])
 
     @classmethod
     def _config_class(cls):

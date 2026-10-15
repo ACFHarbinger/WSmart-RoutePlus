@@ -2,9 +2,9 @@
 
 import numpy as np
 import pytest
-from logic.src.policies.routing.meta_heuristics.harmony_search.params import HSParams
+from logic.src.configs.policies.hs import HSConfig
 from logic.src.policies.routing.meta_heuristics.harmony_search.solver import HSSolver
-from logic.src.policies.routing.meta_heuristics.sine_cosine_algorithm.params import SCAParams
+from logic.src.configs.policies.sca import SCAConfig
 from logic.src.policies.routing.meta_heuristics.sine_cosine_algorithm.solver import SCASolver
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -30,7 +30,7 @@ def small_vrpp_instance():
 
 def test_hs_solver_basic(small_vrpp_instance):
     dist_matrix, wastes, capacity, R, C = small_vrpp_instance
-    params = HSParams(
+    params = HSConfig(
         hm_size=5,
         HMCR=0.9,
         PAR=0.3,
@@ -51,7 +51,7 @@ def test_hs_solver_basic(small_vrpp_instance):
 
 def test_sca_solver_basic(small_vrpp_instance):
     dist_matrix, wastes, capacity, R, C = small_vrpp_instance
-    params = SCAParams(
+    params = SCAConfig(
         pop_size=5,
         a_max=2.0,
         max_iterations=10,
@@ -71,7 +71,7 @@ def test_sca_solver_basic(small_vrpp_instance):
 def test_hs_pitch_adjustment_logic(small_vrpp_instance):
     dist_matrix, wastes, capacity, R, C = small_vrpp_instance
     # High PAR to trigger pitch adjustment
-    params = HSParams(
+    params = HSConfig(
         hm_size=2,
         HMCR=1.0,
         PAR=1.0,
@@ -87,7 +87,7 @@ def test_hs_pitch_adjustment_logic(small_vrpp_instance):
 
 def test_sca_oscillation_bounds(small_vrpp_instance):
     dist_matrix, wastes, capacity, R, C = small_vrpp_instance
-    params = SCAParams(
+    params = SCAConfig(
         pop_size=2,
         a_max=2.0,
         max_iterations=2,

@@ -27,9 +27,7 @@ import numpy as np
 from logic.src.policies.helpers.local_search.local_search_filo import (
     FILOLocalSearch,
 )
-from logic.src.policies.routing.meta_heuristics.fast_iterative_localized_optimization.params import (
-    FILOParams,
-)
+from logic.src.configs.policies.filo import FILOConfig
 from logic.src.policies.routing.meta_heuristics.fast_iterative_localized_optimization.ruin_recreate import (
     RuinAndRecreate,
 )
@@ -66,7 +64,7 @@ class FILOSolver:
         capacity: float,
         R: float,
         C: float,
-        params: FILOParams,
+        params: FILOConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """Initializes the Fast Iterative Localized Optimization solver.

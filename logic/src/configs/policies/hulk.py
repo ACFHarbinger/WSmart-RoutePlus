@@ -101,6 +101,11 @@ class HULKConfig:
     # Weight learning
     weight_learning_rate: float = 0.1
     weight_decay: float = 0.95
+    score_best: float = 20.0
+    score_improvement: float = 10.0
+    score_accept: float = 5.0
+    score_reject: float = 0.5
+    operator_weights: dict = field(default_factory=dict)
 
 
 def register_configs():

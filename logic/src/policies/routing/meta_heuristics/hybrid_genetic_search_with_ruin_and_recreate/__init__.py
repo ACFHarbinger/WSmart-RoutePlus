@@ -10,7 +10,7 @@ Reference:
 
 Attributes:
     HGSRRSolver: High-performance hybrid evolutionary solver.
-    HGSRRParams: Configuration parameters for the HGS-RR solver.
+    HGSRRConfig: Configuration parameters for the HGS-RR solver.
 
 Example:
     >>> from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search_with_ruin_and_recreate import HGSRRSolver
@@ -18,6 +18,6 @@ Example:
 """
 
 from .hgs_rr import HGSRRSolver
-from .params import HGSRRParams
+from logic.src.configs.policies.hgs_rr import HGSRRConfig
 
-__all__ = ["HGSRRSolver", "HGSRRParams"]
+__all__ = ["HGSRRSolver", "HGSRRConfig"]

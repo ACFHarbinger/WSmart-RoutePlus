@@ -23,7 +23,7 @@ import numpy as np
 from logic.src.configs.policies.vpl import VPLConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-from logic.src.policies.routing.meta_heuristics.volleyball_premier_league.params import VPLParams
+from logic.src.configs.policies.vpl import VPLConfig
 from logic.src.policies.routing.meta_heuristics.volleyball_premier_league.solver import VPLSolver
 
 
@@ -116,7 +116,7 @@ class VPLPolicy(BaseRoutingPolicy):
                 - profit: Total calculated net profit (Total Revenue - Total Cost).
                 - cost: Total travel cost calculated by the solver.
         """
-        params = VPLParams(
+        params = VPLConfig(
             n_teams=values.get("n_teams", 30),
             max_iterations=values.get("max_iterations", 200),
             substitution_rate=values.get("substitution_rate", 0.2),

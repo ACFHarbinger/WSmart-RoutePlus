@@ -40,9 +40,9 @@ from logic.src.policies.helpers.operators.search_heuristics.destroy_repair_llh i
     routes_net_profit,
     routes_total_distance,
 )
-from logic.src.policies.routing.meta_heuristics.iterated_local_search.params import ILSParams
+from logic.src.configs.policies.ils import ILSConfig
 from logic.src.policies.routing.meta_heuristics.iterated_local_search.solver import ILSSolver
-from logic.src.policies.routing.meta_heuristics.variable_neighborhood_search.params import VNSParams
+from logic.src.configs.policies.vns import VNSConfig
 from logic.src.policies.routing.meta_heuristics.variable_neighborhood_search.solver import VNSSolver
 
 CAPACITY = 60.0
@@ -278,13 +278,13 @@ def test_solver_results_unchanged_after_refactor(solver_name, profit_aware, monk
     monkeypatch.setattr(np.random, "default_rng", lambda seed=None: real_default_rng(PATCH_SEED))
 
     if solver_name == "ils":
-        params = ILSParams(
+        params = ILSConfig(
             n_restarts=40, inner_iterations=25, time_limit=0, seed=123,
             vrpp=True, profit_aware_operators=profit_aware,
         )
         solver = ILSSolver(dist, wastes, CAPACITY, R_REVENUE, C_COST, params, MANDATORY)
     else:
-        params = VNSParams(
+        params = VNSConfig(
             k_max=5, max_iterations=60, local_search_iterations=30, time_limit=0, seed=123,
             vrpp=True, profit_aware_operators=profit_aware,
         )

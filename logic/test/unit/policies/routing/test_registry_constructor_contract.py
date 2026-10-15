@@ -30,7 +30,7 @@ This test generalises the check to the whole registry, not just ``test_sim``:
    collects nothing — the ``src`` lesson).
 
 Before the round-3 fixes this failed on ``arco`` (TypeError from the
-classmethod) and on the ``"nn"`` pool names in ``ARCOParams``, ``ARCOConfig``
+classmethod) and on the ``"nn"`` pool names in ``ARCOConfig``, ``ARCOConfig``
 and ``policy_arco.yaml``. Before the round-5 entry, contract 3 failed on
 ``arco`` (no ``test_sim`` entry).
 """

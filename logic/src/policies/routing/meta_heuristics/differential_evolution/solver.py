@@ -32,13 +32,11 @@ import numpy as np
 
 from logic.src.policies.helpers.local_search.local_search_general import GeneralLocalSearch
 from logic.src.policies.helpers.operators.solution_initialization.greedy_si import build_greedy_routes
-from logic.src.policies.routing.meta_heuristics.ant_colony_optimization_k_sparse.params import (
-    KSACOParams,
-)
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
 from logic.src.policies.routing.meta_heuristics.differential_evolution.evolution_strategy import (
     create_evolution_strategy,
 )
-from logic.src.policies.routing.meta_heuristics.differential_evolution.params import DEParams
+from logic.src.configs.policies.de import DEConfig
 
 
 class DESolver:
@@ -76,7 +74,7 @@ class DESolver:
         capacity: float,
         R: float,
         C: float,
-        params: DEParams,
+        params: DEConfig,
         mandatory_nodes: Optional[List[int]] = None,
     ):
         """Initializes the Memetic Differential Evolution solver.
@@ -137,7 +135,7 @@ class DESolver:
         # accordingly to preserve correctness under this polarity shift.
 
         # Pre-instantiate local search for reuse
-        aco_params = KSACOParams(
+        aco_params = KSparseACOConfig(
             local_search_iterations=self.params.local_search_iterations,
             vrpp=self.params.vrpp,
             profit_aware_operators=self.params.profit_aware_operators,

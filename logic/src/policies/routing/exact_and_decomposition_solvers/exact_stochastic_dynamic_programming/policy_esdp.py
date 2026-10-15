@@ -60,9 +60,7 @@ from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.routing.exact_and_decomposition_solvers.exact_stochastic_dynamic_programming.esdp_engine import (
     ExactSDPEngine,
 )
-from logic.src.policies.routing.exact_and_decomposition_solvers.exact_stochastic_dynamic_programming.params import (
-    SDPParams,
-)
+from logic.src.configs.policies.esdp import ExactSDPConfig
 
 _SDP_CACHE: Dict[Tuple[int, int, int, float], ExactSDPEngine] = {}
 
@@ -128,7 +126,7 @@ class ExactSDPPolicy(BaseMultiPeriodRoutingPolicy):
                 - stats: Engine statistics, state tuples, and optimal subset info.
         """
         cfg_dict = asdict(self.config) if self.config else {}
-        params = SDPParams.from_config(cfg_dict)
+        params = self._effective_config(cfg_dict)
         sub_dist_matrix = problem.distance_matrix
         sub_wastes = problem.wastes
         mandatory_nodes = problem.mandatory

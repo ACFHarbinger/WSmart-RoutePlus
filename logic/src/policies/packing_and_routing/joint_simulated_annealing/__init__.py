@@ -4,7 +4,7 @@ Implements a joint packing and routing policy using a Simulated
 Annealing metaheuristic to find high-profit routes.
 
 Attributes:
-    JointSAParams (Type[JointSAParams]): Hyperparameters for the annealing process.
+    JointSAConfig (Type[JointSAConfig]): Hyperparameters for the annealing process.
     JointSAPolicy (Type[JointSAPolicy]): The joint simulated annealing policy.
 
 Example:
@@ -12,7 +12,7 @@ Example:
     >>> policy = JointSAPolicy()
 """
 
-from .params import JointSAParams
+from logic.src.configs.policies.jsa import JointSAConfig
 from .policy_jsa import JointSAPolicy
 
-__all__ = ["JointSAParams", "JointSAPolicy"]
+__all__ = ["JointSAConfig", "JointSAPolicy"]

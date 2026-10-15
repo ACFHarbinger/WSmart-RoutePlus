@@ -4,7 +4,7 @@ Implements a joint mandatory-packing and routing algorithm
 based on greedy orienteering heuristics.
 
 Attributes:
-    JointGreedyParams (Type[JointGreedyParams]): Configuration for the greedy policy.
+    JointGreedyConfig (Type[JointGreedyConfig]): Configuration for the greedy policy.
     JointGreedyPolicy (Type[JointGreedyPolicy]): The joint greedy policy implementation.
 
 Example:
@@ -12,7 +12,7 @@ Example:
     >>> policy = JointGreedyPolicy()
 """
 
-from .params import JointGreedyParams
+from logic.src.configs.policies.jgo import JointGreedyConfig
 from .policy_jgo import JointGreedyPolicy
 
-__all__ = ["JointGreedyParams", "JointGreedyPolicy"]
+__all__ = ["JointGreedyConfig", "JointGreedyPolicy"]

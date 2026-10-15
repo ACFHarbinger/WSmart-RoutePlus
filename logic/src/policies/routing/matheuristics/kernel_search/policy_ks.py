@@ -24,7 +24,7 @@ from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolic
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.routing.matheuristics.kernel_search.solver import run_kernel_search_gurobi
 
-from .params import KSParams
+from logic.src.configs.policies.ks import KernelSearchConfig
 
 
 @GlobalRegistry.register(
@@ -156,7 +156,7 @@ class KernelSearchPolicy(BaseRoutingPolicy):
                 - Optional[MultiDayContext]: Updated multi-period context.
         """
         # 1. Initialize parameters
-        params = KSParams.from_config(self.config)
+        params = KernelSearchConfig.from_config(self.config)
 
         # 2. Extract environment parameters from the simulation state
         distance_matrix = kwargs["distance_matrix"]

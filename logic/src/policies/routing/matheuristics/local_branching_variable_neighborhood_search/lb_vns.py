@@ -62,9 +62,7 @@ from logic.src.policies.routing.matheuristics.kernel_search.solver import (
 from logic.src.policies.routing.matheuristics.local_branching.lb import (
     _add_local_branching_constraint,
 )
-from logic.src.policies.routing.matheuristics.local_branching_variable_neighborhood_search.params import (
-    LBVNSParams,
-)
+from logic.src.configs.policies.lb_vns import LocalBranchingVNSConfig
 
 
 def _shake_solution_gurobi(
@@ -162,7 +160,7 @@ def run_lb_vns_gurobi(
     mip_gap: float = 0.01,
     seed: int = 42,
     env: Optional[gp.Env] = None,
-    params: Optional[LBVNSParams] = None,
+    params: Optional[LocalBranchingVNSConfig] = None,
 ) -> Tuple[List[int], float, float]:
     """
     Solve the Vehicle Routing Problem with Profits (VRPP) using LB-VNS.
@@ -187,7 +185,7 @@ def run_lb_vns_gurobi(
         mip_gap (float): Optimality gap for sub-problem termination.
         seed (int): Global seed for randomization.
         env (Optional[gp.Env]): Shared Gurobi environment to reduce startup overhead.
-        params (Optional[LBVNSParams]): LB-VNS parameters.
+        params (Optional[LocalBranchingVNSConfig]): LB-VNS parameters.
 
     Returns:
         Tuple[List[int], float, float]:
@@ -201,7 +199,7 @@ def run_lb_vns_gurobi(
     model.setParam("LogToConsole", 0)
     # (blank line)
     # Initialize params if not provided
-    params = params or LBVNSParams()
+    params = params or LocalBranchingVNSConfig()
     # (blank line)
     model.setParam("Seed", params.seed)
     model.setParam("MIPGap", params.mip_gap)

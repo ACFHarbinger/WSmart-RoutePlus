@@ -25,7 +25,7 @@ from .alns_pricer import ALNSMultiPeriodPricer
 from .dive_and_price import DiveAndPricePrimalHeuristic
 from .fix_and_optimize import FixAndOptimizeRefiner
 from .ml_branching import MLBranchingStrategy
-from .params import ABPCHGParams
+from logic.src.configs.policies.abpc_hg import ABPCHGConfig
 from .progressive_hedging_cg import ProgressiveHedgingCGLoop
 from .scenario_branching import ScenarioConsistentBranching
 from .scenario_prize_engine import ScenarioPrizeEngine
@@ -108,7 +108,7 @@ class ABPCHGPolicy(BaseMultiPeriodRoutingPolicy):
 
     Configuration
     -------------
-    All tunable parameters are collected in ``ABPCHGParams``.  The full list
+    All tunable parameters are collected in ``ABPCHGConfig``.  The full list
     with documentation and calibration guidance is available there.  A minimal
     config need only specify ``gamma``; all other fields fall back to defaults.
 
@@ -124,7 +124,7 @@ class ABPCHGPolicy(BaseMultiPeriodRoutingPolicy):
 
     Attributes:
     ----------
-    params : ABPCHGParams
+    params : ABPCHGConfig
         Fully resolved configuration instance built from the supplied config.
     gamma : float
         Convenience alias for ``params.gamma``.
@@ -140,7 +140,7 @@ class ABPCHGPolicy(BaseMultiPeriodRoutingPolicy):
             config: Configuration for the policy.
         """
         super().__init__(config)
-        self.params: ABPCHGParams = ABPCHGParams.from_config(config) if config is not None else ABPCHGParams()
+        self.params: ABPCHGConfig = self._effective_config(config) if config is not None else ABPCHGConfig()
         self.gamma: float = self.params.gamma
         # Externally injectable trained GNN model for MLBranchingStrategy.
         # Set to a loaded model before solving to activate learned branching.
@@ -360,7 +360,7 @@ class ABPCHGPolicy(BaseMultiPeriodRoutingPolicy):
                     Number of Benders iterations executed (upper bound;
                     may be fewer if convergence was achieved early).
                 ``"params"``
-                    The ``ABPCHGParams`` instance used for this solve,
+                    The ``ABPCHGConfig`` instance used for this solve,
                     enabling reproducibility and experiment logging.
 
         Raises:
