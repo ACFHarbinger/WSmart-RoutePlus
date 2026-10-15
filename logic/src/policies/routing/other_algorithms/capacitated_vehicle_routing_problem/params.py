@@ -14,7 +14,7 @@ Example:
 from __future__ import annotations
 
 from dataclasses import dataclass, fields
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 
 @dataclass
@@ -26,11 +26,15 @@ class CVRPParams:
         engine: Optimization engine to use ('ortools', 'pyvrp' or 'clarke_wright').
         time_limit: Time limit for the solver in seconds.
         seed: Random seed for reproducibility.
+        solution_limit: Deterministic OR-Tools budget (WP-12 gate-(a)): stop
+            after this many solutions with a single search worker and no wall
+            clock. None (default) keeps the time_limit behaviour unchanged.
     """
 
     engine: str = "ortools"
     time_limit: float = 2.0
     seed: int = 42
+    solution_limit: Optional[int] = None
 
     @classmethod
     def from_config(cls, config: Any) -> CVRPParams:
@@ -51,6 +55,7 @@ class CVRPParams:
             engine=getattr(config, "engine", "ortools"),
             time_limit=getattr(config, "time_limit", 2.0),
             seed=42 if seed is None else seed,
+            solution_limit=getattr(config, "solution_limit", None),
         )
 
     def to_dict(self) -> Dict[str, Any]:
