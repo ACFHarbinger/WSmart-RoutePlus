@@ -1,0 +1,233 @@
+"""Paired comparison primitives for the Q-14 regression gates (WP-12, #117).
+
+All functions here are pure (JSON-like inputs only): they never touch the
+simulator, the filesystem, or the clock, so they are unit-testable without
+any heavy run. Heavy execution lives in ``run_gate.py``.
+
+Conventions (owner rulings Q-14, RQ-codex-2, RQ-codex-3, RQ-kimi-1):
+
+* Gate (a) compares routes, states and KPIs bit for bit, excluding timing
+  and run metadata (``EXCLUDED_KEYS``).
+* Gate (b) compares ``kgkm`` and ``overflows`` against frozen tolerances.
+  A result outside the tolerances in *either* direction needs review.
+* Across samples, ``kgkm`` stays the per-sample ratio of sums with an
+  equal-weight mean/std (RQ-codex-3); pooling across samples is out of scope.
+* The BPC cell may use certificate equivalence (incumbent objective and
+  certified bound within 1e-6) instead of bit identity (RQ-kimi-1).
+"""
+
+from __future__ import annotations
+
+import math
+from typing import Any, Dict, List, NamedTuple, Optional, Tuple
+
+# Exclude measured compute/wall time, but retain physical shift hours (time_spent).
+EXCLUDED_KEYS = frozenset(
+    {
+        "time",
+        "day_wall_time",
+        "execution_time",
+        "timestamp",
+        "run_id",
+        "hostname",
+        "pid",
+        "seed",  # recorded config echo, not a result
+    }
+)
+
+# Owner ruling RQ-kimi-1: certificate equivalence tolerance.
+CERT_TOL = 1e-6
+
+
+class Diff(NamedTuple):
+    """One non-excluded difference between two result trees."""
+
+    path: str
+    expected: Any
+    actual: Any
+
+
+class Verdict(NamedTuple):
+    """Outcome of a tolerance or certificate comparison."""
+
+    passed: bool
+    detail: str
+
+
+def strip_excluded(obj: Any) -> Any:
+    """Return a copy of ``obj`` with every ``EXCLUDED_KEYS`` entry removed."""
+    if isinstance(obj, dict):
+        return {k: strip_excluded(v) for k, v in obj.items() if k not in EXCLUDED_KEYS}
+    if isinstance(obj, (list, tuple)):
+        return [strip_excluded(v) for v in obj]
+    return obj
+
+
+def _values_equal(expected: Any, actual: Any) -> bool:
+    """Bit-for-bit equality with NaN == NaN (missing sensor data)."""
+    if isinstance(expected, float) and isinstance(actual, float) and math.isnan(expected) and math.isnan(actual):
+        return True
+    return type(expected) is type(actual) and expected == actual
+
+
+def _iter_diffs(expected: Any, actual: Any, path: str) -> List[Diff]:
+    diffs: List[Diff] = []
+    if isinstance(expected, dict) and isinstance(actual, dict):
+        for key in expected:
+            if key not in actual:
+                diffs.append(Diff(f"{path}.{key}", expected[key], "<missing>"))
+            else:
+                diffs.extend(_iter_diffs(expected[key], actual[key], f"{path}.{key}"))
+        for key in actual:
+            if key not in expected:
+                diffs.append(Diff(f"{path}.{key}", "<missing>", actual[key]))
+    elif isinstance(expected, list) and isinstance(actual, list):
+        if len(expected) != len(actual):
+            diffs.append(Diff(f"{path}.<len>", len(expected), len(actual)))
+        for i, (e, a) in enumerate(zip(expected, actual, strict=False)):
+            diffs.extend(_iter_diffs(e, a, f"{path}[{i}]"))
+    elif not _values_equal(expected, actual):
+        diffs.append(Diff(path, expected, actual))
+    return diffs
+
+
+def compare_exact(baseline: Dict[str, Any], candidate: Dict[str, Any]) -> List[Diff]:
+    """Bit-for-bit compare of two per-policy log trees, timing excluded.
+
+    Args:
+        baseline: Reference ``log_<policy>_*N.json`` content (samples + daily).
+        candidate: Same structure from the candidate run.
+
+    Returns:
+        Diffs with paths; empty means the gate passes.
+    """
+    return _iter_diffs(strip_excluded(baseline), strip_excluded(candidate), "$")
+
+
+def extract_cell_kpis(sample_metrics: Dict[str, Any]) -> Tuple[float, float]:
+    """Return ``(kgkm, overflows)`` from a samples-section metric dict."""
+    return float(sample_metrics["kg/km"] if "kg/km" in sample_metrics else sample_metrics["kgkm"]), float(
+        sample_metrics["overflows"]
+    )
+
+
+def compare_tolerance(
+    baseline_kgkm: float,
+    baseline_overflows: float,
+    candidate_kgkm: float,
+    candidate_overflows: float,
+    tol_kgkm: float,
+    tol_overflows: float,
+) -> Verdict:
+    """Gate-(b) check: absolute deltas within the frozen tolerances.
+
+    Either direction outside tolerance fails (better results need review too,
+    per RQ-codex-2).
+    """
+    values = (baseline_kgkm, baseline_overflows, candidate_kgkm, candidate_overflows, tol_kgkm, tol_overflows)
+    if not all(math.isfinite(v) for v in values) or tol_kgkm < 0 or tol_overflows < 0:
+        return Verdict(False, "metrics and nonnegative tolerances must be finite")
+    d_kgkm = abs(candidate_kgkm - baseline_kgkm)
+    d_over = abs(candidate_overflows - baseline_overflows)
+    passed = d_kgkm <= tol_kgkm and d_over <= tol_overflows
+    return Verdict(
+        passed,
+        f"|d_kgkm|={d_kgkm:.6g} (tol {tol_kgkm:.6g}), |d_overflows|={d_over:.6g} (tol {tol_overflows:.6g})",
+    )
+
+
+def compare_certificates(
+    baseline_incumbent: float,
+    baseline_bound: float,
+    candidate_incumbent: float,
+    candidate_bound: float,
+    tol: float = CERT_TOL,
+) -> Verdict:
+    """RQ-kimi-1 certificate equivalence for the exact-solver cell.
+
+    Passes when incumbent objectives agree within ``tol`` and both bounds are
+    valid certificates (bound >= incumbent on a maximisation objective).
+    """
+    if (
+        not all(
+            math.isfinite(v) for v in (baseline_incumbent, baseline_bound, candidate_incumbent, candidate_bound, tol)
+        )
+        or tol < 0
+    ):
+        return Verdict(False, "incumbents, certified bounds and nonnegative tolerance must be finite")
+    d_inc = abs(candidate_incumbent - baseline_incumbent)
+    d_bound = abs(candidate_bound - baseline_bound)
+    valid_base = baseline_bound + tol >= baseline_incumbent
+    valid_cand = candidate_bound + tol >= candidate_incumbent
+    passed = d_inc <= tol and d_bound <= tol and valid_base and valid_cand
+    return Verdict(
+        passed,
+        f"|d_incumbent|={d_inc:.3g}, |d_bound|={d_bound:.3g} (tol {tol:.3g}), base_bound_valid={valid_base}, cand_bound_valid={valid_cand}",
+    )
+
+
+def freeze_tolerances(repeats: List[Dict[str, float]]) -> Dict[str, float]:
+    """Derive frozen tolerances from repeated unchanged-code runs (RQ-codex-2).
+
+    Args:
+        repeats: One ``{"kgkm": .., "overflows": ..}`` dict per repeat run of
+            the same cell on the unchanged baseline code.
+
+    Returns:
+        ``{"tol_kgkm": max pairwise |Δ|, "tol_overflows": max pairwise |Δ|}``.
+        Calibrated on the unchanged code only, frozen before any refactor
+        result is seen.
+    """
+    if len(repeats) < 2:
+        raise ValueError("At least two unchanged-code repeats are required")
+    if not all(math.isfinite(float(row[key])) for row in repeats for key in ("kgkm", "overflows")):
+        raise ValueError("Calibration metrics must be finite")
+    tol_kgkm = 0.0
+    tol_over = 0.0
+    for i in range(len(repeats)):
+        for j in range(i + 1, len(repeats)):
+            tol_kgkm = max(tol_kgkm, abs(repeats[i]["kgkm"] - repeats[j]["kgkm"]))
+            tol_over = max(tol_over, abs(repeats[i]["overflows"] - repeats[j]["overflows"]))
+    return {"tol_kgkm": tol_kgkm, "tol_overflows": tol_over}
+
+
+def check_repeats_identical(repeats: List[Dict[str, Any]]) -> List[Diff]:
+    """Prove the gate-(a) config is deterministic: repeats must match exactly.
+
+    Returns the diffs of every repeat against the first; non-empty means the
+    cell's "timing off" config is not actually deterministic and the cell
+    must use certificate/tolerance mode instead of bit identity.
+    """
+    diffs: List[Diff] = []
+    for n, rep in enumerate(repeats[1:], start=2):
+        for d in compare_exact(repeats[0], rep):
+            diffs.append(Diff(f"repeat{n}:{d.path}", d.expected, d.actual))
+    return diffs
+
+
+def load_tolerances(path: str) -> Dict[str, Any]:
+    """Load a frozen tolerances file written by ``run_gate.py calibrate``."""
+    import json
+
+    with open(path) as f:
+        return json.load(f)
+
+
+def gate_b_verdict(
+    archived_row: Dict[str, Any],
+    candidate_row: Dict[str, Any],
+    tolerances: Dict[str, float],
+    candidate_label: Optional[str] = None,
+) -> Verdict:
+    """One-cell gate-(b) verdict from summary rows plus frozen tolerances."""
+    label = f"[{candidate_label}] " if candidate_label else ""
+    try:
+        verdict = compare_tolerance(
+            *extract_cell_kpis(archived_row),
+            *extract_cell_kpis(candidate_row),
+            float(tolerances["tol_kgkm"]),
+            float(tolerances["tol_overflows"]),
+        )
+    except (KeyError, ValueError, TypeError) as e:
+        return Verdict(False, f"{label}missing key in summary row: {e}")
+    return Verdict(verdict.passed, f"{label}{verdict.detail}")
