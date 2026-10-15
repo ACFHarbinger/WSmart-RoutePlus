@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Cross-package review (`2026-10-15`)
+
+- Codex review: invalid user values no longer bypass structured validation through the dataclass fallback; fallback is restricted to schema construction. Added type-validation regression tests.
+
 ### Config format and leftover names (`2026-10-15`)
 
 #### Changed
