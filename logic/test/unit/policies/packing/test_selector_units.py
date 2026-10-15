@@ -13,8 +13,8 @@ pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 def test_typed_service_level_config_carries_the_horizon():
     """The typed path used to drop horizon_days, so the action fell back to 3 days."""
-    assert asdict(ServiceLevelSelectionConfig(confidence_factor=0.84))["horizon_days"] == 1
-    assert asdict(ServiceLevelSelectionConfig(confidence_factor=0.84, horizon_days=2))["horizon_days"] == 2
+    assert asdict(ServiceLevelSelectionConfig(threshold=0.84))["horizon_days"] == 1
+    assert asdict(ServiceLevelSelectionConfig(threshold=0.84, horizon_days=2))["horizon_days"] == 2
 
 
 def test_last_minute_threshold_is_inclusive_percent():

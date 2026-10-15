@@ -46,13 +46,21 @@ def test_parent_tag_union():
 
 
 def test_packing_registry_declares_without_vectorized():
-    from logic.src.policies.packing import PackingFactory, PackingRegistry
+    script = dedent(
+        """
+        import sys
+        from logic.src.policies.packing import PackingFactory, PackingRegistry
 
-    assert PackingRegistry.get("last_minute") is not None
-    assert PackingRegistry.get("revenue_threshold") is PackingRegistry.get("revenue")
-    strategy = PackingFactory.create_strategy("last_minute")
-    assert strategy is not None
-    assert not any(name.startswith("logic.src.policies.packing.vectorized") for name in sys.modules)
+        assert PackingRegistry.get("last_minute") is not None
+        assert PackingRegistry.get("revenue_threshold") is PackingRegistry.get("revenue")
+        strategy = PackingFactory.create_strategy("last_minute")
+        assert strategy is not None
+        leaked = [name for name in sys.modules if name.startswith("logic.src.policies.packing.vectorized")]
+        assert not leaked, leaked
+        """
+    )
+    result = subprocess.run([sys.executable, "-c", script], check=False, capture_output=True, text=True)
+    assert result.returncode == 0, result.stdout + result.stderr
 
 
 def test_released_acceptance_and_improver_create():
@@ -113,6 +121,9 @@ def test_released_classical_imports_do_not_load_torch():
         import logic.src.models as models
 
         PackingFactory.create_strategy("last_minute")
+        PackingFactory.create_strategy("regular")
+        PackingFactory.create_strategy("service_level")
+        PackingFactory.create_strategy("lookahead")
         AcceptanceCriterionFactory.create("bmc", initial_temp=1000.0, alpha=0.995)
         AcceptanceCriterionFactory.create("oi")
         RouteImproverFactory.create("cls")

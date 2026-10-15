@@ -8,9 +8,11 @@ import torch
 from logic.src.interfaces.context.packing_context import PackingContext
 from logic.src.policies.packing.last_minute import LastMinuteSelection
 from logic.src.policies.packing.lookahead import LookaheadSelection
+from logic.src.policies.packing.regular import RegularSelection
 from logic.src.policies.packing.service_level import ServiceLevelSelection
 from logic.src.policies.packing.vectorized.last_minute import LastMinuteSelector
 from logic.src.policies.packing.vectorized.lookahead import LookaheadSelector
+from logic.src.policies.packing.vectorized.regular import RegularSelector
 from logic.src.policies.packing.vectorized.service_level import ServiceLevelSelector
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -107,6 +109,30 @@ def test_lookahead_seed_and_bundle_match():
     assert set(scalar_ids) == {1, 2, 3}
     assert set(_ids_from_mask(mask)) == set(scalar_ids)
     assert mask[0, 0].item() is False
+
+
+def test_regular_scalar_ids_match_vectorized_mask():
+    fills = [10.0, 0.0, 40.0]
+    frequency = 3
+    ctx = _scalar_context(fills, threshold=float(frequency), current_collection_day=0)
+    ctx.current_day = 4
+    scalar_ids, _ = RegularSelection().pack(ctx)
+    mask = RegularSelector(frequency=frequency).select(
+        _percent_to_vector(fills),
+        current_day=4,
+    )
+    assert scalar_ids == [1, 2, 3]
+    assert _ids_from_mask(mask) == scalar_ids
+    assert mask[0, 0].item() is False
+
+    ctx.current_day = 5
+    skip_ids, _ = RegularSelection().pack(ctx)
+    skip_mask = RegularSelector(frequency=frequency).select(
+        _percent_to_vector(fills),
+        current_day=5,
+    )
+    assert skip_ids == []
+    assert _ids_from_mask(skip_mask) == []
 
 
 def test_lookahead_empty_seed_is_empty_on_both_sides():
