@@ -30,8 +30,8 @@ class Beta(BaseDistribution):
         """Initialize Class.
 
         Args:
-            alpha (Union[float, torch.Tensor]): Alpha (shape) parameter.
-            beta (Union[float, torch.Tensor]): Beta (scale) parameter.
+            alpha: Alpha (shape) parameter.
+            beta: Beta (scale) parameter.
         """
         self.alpha = alpha
         self.beta = beta
@@ -41,7 +41,7 @@ class Beta(BaseDistribution):
 
         Args:
             size: Sampling shape (e.g., (batch_size, num_loc, components))
-            generator (Optional[torch.Generator], optional): Description of generator.
+            generator: Description of generator.
 
         Returns:
             torch.Tensor: Sampled values

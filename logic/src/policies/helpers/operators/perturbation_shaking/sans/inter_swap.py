@@ -27,8 +27,8 @@ def swap_2_routes(routes_list: List[List[int]], rng: Random) -> None:
     from a different route.
 
     Args:
-        routes_list (List[List[int]]): Current routing solution.
-        rng (Random): Random number generator.
+        routes_list: Current routing solution.
+        rng: Random number generator.
 
     Returns:
         List[List[int]]: Mutated routing solution.
@@ -52,9 +52,9 @@ def swap_n_2_routes_random(routes_list: List[List[int]], rng: Random, n: Optiona
     Inter-route perturbation: Swap n random bins between two different routes.
 
     Args:
-        routes_list (List[List[int]]): Current routing solution.
-        rng (Random): Random number generator.
-        n (int, optional): Number of bins to swap.
+        routes_list: Current routing solution.
+        rng: Random number generator.
+        n: Number of bins to swap.
 
     Returns:
         int: The number of bins swapped (chosen_n).
@@ -84,9 +84,9 @@ def swap_n_2_routes_consecutive(routes_list: List[List[int]], rng: Random, n: Op
     between two different routes.
 
     Args:
-        routes_list (List[List[int]]): Current routing solution.
-        rng (Random): Random number generator.
-        n (int, optional): Number of consecutive nodes to swap.
+        routes_list: Current routing solution.
+        rng: Random number generator.
+        n: Number of consecutive nodes to swap.
 
     Returns:
         int: The number of consecutive nodes swapped (chosen_n).

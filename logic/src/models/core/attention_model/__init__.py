@@ -9,8 +9,6 @@ Attributes:
     DeepDecoderPolicy: Version with a multi-layer attention decoder.
     SymNCOPolicy: Invariant policy with a projection head.
 
-Example:
-    >>> from logic.src.models.core.attention_model import AttentionModel
 """
 
 from .deep_decoder_policy import DeepDecoderPolicy as DeepDecoderPolicy

@@ -17,7 +17,7 @@ def _extract_working_route(route: List[int]) -> Tuple[int, bool, List[int], int]
     Extracts working route characteristics to handle open/closed route representations.
 
     Args:
-        route (List[int]): The tour as a list of node IDs.
+        route: The tour as a list of node IDs.
 
     Returns:
         Tuple[int, bool, List[int], int]: (n, is_closed, work_route, n_work)

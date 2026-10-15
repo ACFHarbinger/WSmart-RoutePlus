@@ -56,12 +56,12 @@ def setup_model(
         """load model.
 
         Args:
-            general_path (str): Description of general_path.
-            model_name (str): Description of model_name.
-            device (torch.device): Description of device.
-            temperature (float): Description of temperature.
-            strategy (str): Description of strategy.
-            lock (threading.Lock): Description of lock.
+            general_path: Description of general_path.
+            model_name: Description of model_name.
+            device: Description of device.
+            temperature: Description of temperature.
+            strategy: Description of strategy.
+            lock: Description of lock.
 
         Returns:
             Tuple[nn.Module, Dict[str, Any]]: Description of return value.

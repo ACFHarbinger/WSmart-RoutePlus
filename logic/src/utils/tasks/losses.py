@@ -27,9 +27,9 @@ def problem_symmetricity_loss(reward: torch.Tensor, log_likelihood: torch.Tensor
     Consistency loss across problem augmentations.
 
     Args:
-        reward (torch.Tensor): Reward tensor.
-        log_likelihood (torch.Tensor): Log-likelihood tensor.
-        dim (int): Dimension to calculate the loss over.
+        reward: Reward tensor.
+        log_likelihood: Log-likelihood tensor.
+        dim: Dimension to calculate the loss over.
 
     Returns:
         torch.Tensor: Consistency loss.
@@ -46,9 +46,9 @@ def solution_symmetricity_loss(reward: torch.Tensor, log_likelihood: torch.Tenso
     Consistency loss across solution starts.
 
     Args:
-        reward (torch.Tensor): Reward tensor.
-        log_likelihood (torch.Tensor): Log-likelihood tensor.
-        dim (int): Dimension to calculate the loss over.
+        reward: Reward tensor.
+        log_likelihood: Log-likelihood tensor.
+        dim: Dimension to calculate the loss over.
 
     Returns:
         torch.Tensor: Consistency loss.
@@ -65,8 +65,8 @@ def invariance_loss(proj_embed: torch.Tensor, num_augment: int) -> torch.Tensor:
     Loss for invariant representation across augmentations.
 
     Args:
-        proj_embed (torch.Tensor): Projected embedding tensor.
-        num_augment (int): Number of augmentations.
+        proj_embed: Projected embedding tensor.
+        num_augment: Number of augmentations.
 
     Returns:
         torch.Tensor: Invariance loss.

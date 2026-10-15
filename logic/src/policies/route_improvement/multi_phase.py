@@ -42,12 +42,12 @@ class MultiPhaseRouteImprover(IRouteImprovement):
         """Run multi-phase refinement on the tour.
 
         Args:
-            tour (List[int]): Initial tour sequence.
+            tour: Initial tour sequence.
             kwargs: Context containing:
-                phases (List[str]): List of improver names to run in order.
-                distance_matrix (np.ndarray | torch.Tensor): Distance lookup.
-                wastes (Dict[int, float]): Bin waste mass mapping.
-                capacity (float): Maximum vehicle capacity.
+                phases: List of improver names to run in order.
+                distance_matrix: Distance lookup.
+                wastes: Bin waste mass mapping.
+                capacity: Maximum vehicle capacity.
 
         Returns:
             Tuple[List[int], ImprovementMetrics]: Refined tour and multi-phase metrics.

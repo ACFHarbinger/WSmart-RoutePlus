@@ -58,8 +58,8 @@ class FILOLocalSearch(LocalSearch):
         """Initialize FILO Local Search.
 
         Args:
-            args (Any): Variable length argument list.
-            kwargs (Any): Arbitrary keyword arguments.
+            args: Variable length argument list.
+            kwargs: Arbitrary keyword arguments.
         """
         super().__init__(*args, **kwargs)
         self._node_gamma: Dict[int, float] = {}
@@ -88,7 +88,7 @@ class FILOLocalSearch(LocalSearch):
         """Rebuild position indices for a single route.  Cost: O(|route|).
 
         Args:
-            ri (int): Index of the route to rebuild.
+            ri: Index of the route to rebuild.
         """
         for pi, node in enumerate(self.routes[ri]):
             self.node_to_route_pos[node] = (ri, pi)
@@ -97,7 +97,7 @@ class FILOLocalSearch(LocalSearch):
         """O(1) lookup for node position via inverse mapping.
 
         Args:
-            u (int): Node ID to find.
+            u: Node ID to find.
 
         Returns:
             Tuple[int, int]: (route_idx, position_idx) of the node, or (-1, -1) if not found.
@@ -112,11 +112,11 @@ class FILOLocalSearch(LocalSearch):
         """Cost delta for moving *u* from route *ri* to position *pj* in *rj*.
 
         Args:
-            u (int): Node to move.
-            ri (int): Current route index.
-            pi (int): Current position index in route ri.
-            rj (int): Target route index.
-            pj (int): Target position index in route rj.
+            u: Node to move.
+            ri: Current route index.
+            pi: Current position index in route ri.
+            rj: Target route index.
+            pj: Target position index in route rj.
 
         Returns:
             float: Cost delta (gain) of the relocate move.
@@ -135,12 +135,12 @@ class FILOLocalSearch(LocalSearch):
         """Cost delta for swapping nodes *u* and *v*.
 
         Args:
-            u (int): First node to swap.
-            ri (int): Route index of first node.
-            pi (int): Position index of first node.
-            v (int): Second node to swap.
-            rj (int): Route index of second node.
-            pj (int): Position index of second node.
+            u: First node to swap.
+            ri: Route index of first node.
+            pi: Position index of first node.
+            v: Second node to swap.
+            rj: Route index of second node.
+            pj: Position index of second node.
 
         Returns:
             float: Cost delta (gain) of the swap move.
@@ -172,9 +172,9 @@ class FILOLocalSearch(LocalSearch):
         """Cost delta for reversing segment ``routes[ri][pi..pj]``.
 
         Args:
-            ri (int): Route index.
-            pi (int): Start position index of the segment.
-            pj (int): End position index of the segment.
+            ri: Route index.
+            pi: Start position index of the segment.
+            pj: End position index of the segment.
 
         Returns:
             float: Cost delta (gain) of the 2-opt move.
@@ -192,10 +192,10 @@ class FILOLocalSearch(LocalSearch):
         """Cost delta for swapping tails ``routes[ri][pi:]`` <-> ``routes[rj][pj:]``.
 
         Args:
-            ri (int): First route index.
-            pi (int): Start position of tail in first route.
-            rj (int): Second route index.
-            pj (int): Start position of tail in second route.
+            ri: First route index.
+            pi: Start position of tail in first route.
+            rj: Second route index.
+            pj: Start position of tail in second route.
 
         Returns:
             float: Cost delta (gain) of the tails swap.
@@ -212,8 +212,8 @@ class FILOLocalSearch(LocalSearch):
         """Cost delta for splitting route *ri* at position *pi*.
 
         Args:
-            ri (int): Route index.
-            pi (int): Position index to split the route at.
+            ri: Route index.
+            pi: Position index to split the route at.
 
         Returns:
             float: Cost delta (gain) of the split move.
@@ -233,7 +233,7 @@ class FILOLocalSearch(LocalSearch):
         """Return neighbors of *u* filtered by gamma sparsification.
 
         Args:
-            u (int): Node ID to get neighbors for.
+            u: Node ID to get neighbors for.
 
         Returns:
             List[int]: Filtered list of neighbors.
@@ -249,7 +249,7 @@ class FILOLocalSearch(LocalSearch):
         """Exhaustively search for the best relocate move in the SVC kernel.
 
         Args:
-            active_nodes (Set[int]): Set of active node IDs to search.
+            active_nodes: Set of active node IDs to search.
 
         Returns:
             bool: True if a move was made, False otherwise.
@@ -288,7 +288,7 @@ class FILOLocalSearch(LocalSearch):
         """Exhaustively search for the best swap move in the SVC kernel.
 
         Args:
-            active_nodes (Set[int]): Set of active node IDs to search.
+            active_nodes: Set of active node IDs to search.
 
         Returns:
             bool: True if a move was made, False otherwise.
@@ -331,7 +331,7 @@ class FILOLocalSearch(LocalSearch):
         """Exhaustively search for the best 2-opt move in the SVC kernel.
 
         Args:
-            active_nodes (Set[int]): Set of active node IDs to search.
+            active_nodes: Set of active node IDs to search.
 
         Returns:
             bool: True if a move was made, False otherwise.
@@ -362,7 +362,7 @@ class FILOLocalSearch(LocalSearch):
         """Exhaustively search for the best tails (2-opt*) move in the SVC kernel.
 
         Args:
-            active_nodes (Set[int]): Set of active node IDs to search.
+            active_nodes: Set of active node IDs to search.
 
         Returns:
             bool: True if a move was made, False otherwise.
@@ -402,7 +402,7 @@ class FILOLocalSearch(LocalSearch):
         """Exhaustively search for the best split move in the SVC kernel.
 
         Args:
-            active_nodes (Set[int]): Set of active node IDs to search.
+            active_nodes: Set of active node IDs to search.
 
         Returns:
             bool: True if a move was made, False otherwise.
@@ -443,7 +443,7 @@ class FILOLocalSearch(LocalSearch):
         """Attempt a recursive ejection chain from an SVC vertex.
 
         Args:
-            active_nodes (Set[int]): Set of active node IDs to search.
+            active_nodes: Set of active node IDs to search.
 
         Returns:
             bool: True if a move was made, False otherwise.
@@ -467,11 +467,11 @@ class FILOLocalSearch(LocalSearch):
         """Recursively eject node *u* from route *ri*, displacing others.
 
         Args:
-            u (int): Node ID to eject.
-            ri (int): Route index of the node.
-            pi (int): Position index of the node.
-            depth (int): Remaining depth of the recursion.
-            visited (Set[int]): Set of visited nodes to prevent cycles.
+            u: Node ID to eject.
+            ri: Route index of the node.
+            pi: Position index of the node.
+            depth: Remaining depth of the recursion.
+            visited: Set of visited nodes to prevent cycles.
 
         Returns:
             bool: True if a move was made, False otherwise.
@@ -555,9 +555,9 @@ class FILOLocalSearch(LocalSearch):
         """Try to place displaced node *v* via direct insertion or cascade.
 
         Args:
-            v (int): Node ID to place.
-            depth (int): Remaining depth of the recursion.
-            visited (Set[int]): Set of visited nodes to prevent cycles.
+            v: Node ID to place.
+            depth: Remaining depth of the recursion.
+            visited: Set of visited nodes to prevent cycles.
 
         Returns:
             bool: True if a move was made, False otherwise.

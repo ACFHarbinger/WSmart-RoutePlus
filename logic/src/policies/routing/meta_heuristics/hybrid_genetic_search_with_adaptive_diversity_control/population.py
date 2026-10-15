@@ -35,8 +35,6 @@ class Population:
             target_size: Desired number of individuals in each sub-population.
             nb_close: Number of closest neighbors to consider for diversity.
 
-        Returns:
-            None.
         """
         self.feas: List[Individual] = []
         self.inf: List[Individual] = []
@@ -50,8 +48,6 @@ class Population:
         Args:
             ind: The individual to add.
 
-        Returns:
-            None.
         """
         if ind.is_feasible:
             self.feas.append(ind)
@@ -68,8 +64,6 @@ class Population:
             subpop: The subpopulation to update.
             T: Number of days.
 
-        Returns:
-            None.
         """
         pop_size = len(subpop)
         if pop_size <= 1:
@@ -174,8 +168,6 @@ class Population:
         Args:
             T: Number of days.
 
-        Returns:
-            None.
         """
         self.feas = self.rank_and_survive(self.feas, T)
         self.inf = self.rank_and_survive(self.inf, T)

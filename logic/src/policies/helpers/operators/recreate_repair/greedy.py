@@ -249,8 +249,8 @@ def greedy_profit_insertion(  # noqa: C901
         """Find best insertion position (profit) for a node in an existing route.
 
         Args:
-            node_id (int): ID of the node to insert.
-            r_idx (int): Index of the target route.
+            node_id: ID of the node to insert.
+            r_idx: Index of the target route.
 
         Returns:
             Tuple[float, int]: (Best insertion profit, best position index).
@@ -288,7 +288,7 @@ def greedy_profit_insertion(  # noqa: C901
         """Calculate speculative seeding profit for a new route.
 
         Args:
-            node_id (int): ID of the node to insert.
+            node_id: ID of the node to insert.
 
         Returns:
             float: Speculative seeding profit.

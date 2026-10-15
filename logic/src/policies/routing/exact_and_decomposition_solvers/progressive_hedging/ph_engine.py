@@ -62,7 +62,7 @@ class ProgressiveHedgingEngine:
         """Initialise the PH engine.
 
         Args:
-            config (PHConfig): Progressive Hedging configuration.
+            config: Progressive Hedging configuration.
         """
         self.config = config
         self.sub_solver_name = config.sub_solver
@@ -79,7 +79,7 @@ class ProgressiveHedgingEngine:
         """Ensures that routes are represented as a list of lists (tours).
 
         Args:
-            routes (Union[List[int], List[List[int]]]): Input routes (flat or nested).
+            routes: Input routes (flat or nested).
 
         Returns:
             List[List[int]]: Nested list of tours.
@@ -111,14 +111,14 @@ class ProgressiveHedgingEngine:
         """Run the Multi-Period Progressive Hedging iterative algorithm.
 
         Args:
-            sub_dist_matrix (np.ndarray): Localised N×N distance matrix.
-            scenario_tree (Any): A ScenarioTree object (providing S paths/branches).
-            capacity (float): Vehicle capacity.
-            revenue (float): Revenue per unit of waste.
-            cost_unit (float): Travel cost per distance unit.
-            mandatory_nodes (List[int]): Nodes that must be visited on Day 0.
-            current_wastes (Optional[Dict[int, float]]): Current waste levels.
-            kwargs (Any): Additional parameters for sub-solvers.
+            sub_dist_matrix: Localised N×N distance matrix.
+            scenario_tree: A ScenarioTree object (providing S paths/branches).
+            capacity: Vehicle capacity.
+            revenue: Revenue per unit of waste.
+            cost_unit: Travel cost per distance unit.
+            mandatory_nodes: Nodes that must be visited on Day 0.
+            current_wastes: Current waste levels.
+            kwargs: Additional parameters for sub-solvers.
 
         Returns:
             Tuple[List[List[List[int]]], float, Dict[str, Any]]: A tuple containing:

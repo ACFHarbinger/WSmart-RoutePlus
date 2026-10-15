@@ -49,7 +49,7 @@ class MultiDayContext:
         Initialize a fresh multi-day context.
 
         Args:
-            day_index (int): The initial day index.
+            day_index: The initial day index.
 
         Returns:
             MultiDayContext: A new MultiDayContext instance.
@@ -61,7 +61,7 @@ class MultiDayContext:
         Return a new MultiDayContext with updated fields.
 
         Args:
-            patch (Any): Additional fields to update.
+            patch: Additional fields to update.
 
         Returns:
             MultiDayContext: A new MultiDayContext instance with updated fields.

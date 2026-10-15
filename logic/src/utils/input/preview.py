@@ -35,12 +35,12 @@ def preview_changes(
     Preview what changes will be made without actually modifying files.
 
     Args:
-        root_directory (str): Root directory.
-        output_key (str, optional): Key that would be modified.
-        filename_pattern (str, optional): File pattern.
-        process_func (callable, optional): Processing function.
-        update_val (numeric, optional): Update value.
-        input_keys (tuple, optional): (key1, key2).
+        root_directory: Root directory.
+        output_key: Key that would be modified.
+        filename_pattern: File pattern.
+        process_func: Processing function.
+        update_val: Update value.
+        input_keys: (key1, key2).
     """
     assert process_func is not None, "Argument process_func must be provided"
 
@@ -113,11 +113,11 @@ def preview_file_changes(
     Preview changes for a single file without modifying it.
 
     Args:
-        file_path (str): Path to the file.
-        output_key (str, optional): Key to preview.
-        process_func (callable, optional): Processing function.
-        update_val (numeric, optional): Update value.
-        input_keys (tuple, optional): (key1, key2).
+        file_path: Path to the file.
+        output_key: Key to preview.
+        process_func: Processing function.
+        update_val: Update value.
+        input_keys: (key1, key2).
     """
     assert process_func is not None, "Argument process_func must be provided"
 
@@ -191,11 +191,11 @@ def preview_pattern_files_statistics(
     Preview changes for pattern files statistics operation without modifying files.
 
     Args:
-        root_directory (str): Search root.
-        filename_pattern (str, optional): Input file pattern.
-        output_filename (str, optional): Output filename.
-        output_key (str, optional): Key to read.
-        process_func (callable, optional): Processing function.
+        root_directory: Search root.
+        filename_pattern: Input file pattern.
+        output_filename: Output filename.
+        output_key: Key to read.
+        process_func: Processing function.
     """
     assert process_func is not None, "Argument process_func must be provided"
 
@@ -259,10 +259,10 @@ def preview_file_statistics(
     Preview changes for a single file statistics operation without modifying it.
 
     Args:
-        file_path (str): Path to the file.
-        output_filename (str, optional): Output filename. Defaults to "output.json".
-        output_key (str, optional): Key to read. Defaults to "km".
-        process_func (callable, optional): Processing function. Defaults to None.
+        file_path: Path to the file.
+        output_filename: Output filename. Defaults to "output.json".
+        output_key: Key to read. Defaults to "km".
+        process_func: Processing function. Defaults to None.
 
     Returns:
         bool: True if any modifications would be made, False otherwise.

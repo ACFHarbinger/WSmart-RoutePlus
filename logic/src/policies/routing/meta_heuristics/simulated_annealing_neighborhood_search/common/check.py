@@ -30,12 +30,12 @@ def check_bins_overflowing_feasibility(data, routes_list, number_of_bins, perc_b
      the tolerance threshold.
 
     Args:
-        data (pd.DataFrame): Bin data containing 'Stock' and 'Accum_Rate'.
-        routes_list (List[List[int]]): Current routing solution.
-        number_of_bins (int): Total number of bins in the area.
-        perc_bins_can_overflow (float): Threshold (delta) for allowed overflow.
-        E (float): Bin volume.
-        B (float): Bin density.
+        data: Bin data containing 'Stock' and 'Accum_Rate'.
+        routes_list: Current routing solution.
+        number_of_bins: Total number of bins in the area.
+        perc_bins_can_overflow: Threshold (delta) for allowed overflow.
+        E: Bin volume.
+        B: Bin density.
 
     Returns:
         str: 'pass' if feasible, 'fail' otherwise.
@@ -66,9 +66,9 @@ def check_solution_admissibility(routes_list, removed_bins, number_of_bins):
     Verify if all bins are accounted for in the routes or removed set.
 
     Args:
-        routes_list (List[List[int]]): Current routing solution.
-        removed_bins (List[int]): Set of bins not collected.
-        number_of_bins (int): Total number of collectable bins.
+        routes_list: Current routing solution.
+        removed_bins: Set of bins not collected.
+        number_of_bins: Total number of collectable bins.
 
     Returns:
         bool: True if the solution is consistent, False otherwise.

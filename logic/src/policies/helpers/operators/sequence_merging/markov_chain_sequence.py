@@ -90,8 +90,6 @@ class MarkovSequenceState:
         Args:
             None
 
-        Returns:
-            None
         """
         row_sums = self.T.sum(axis=1, keepdims=True)
         row_sums = np.where(row_sums == 0, 1.0, row_sums)

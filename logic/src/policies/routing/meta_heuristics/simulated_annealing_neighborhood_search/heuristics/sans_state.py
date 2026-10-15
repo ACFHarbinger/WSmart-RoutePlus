@@ -46,16 +46,16 @@ def compute_profit(
     Profit = Revenue - Cost - Penalty
 
     Args:
-        solution (List[List[int]]): The current routing solution.
-        distance_matrix (List[List[float]]): The distance matrix.
-        id_to_index (Dict[int, int]): A mapping from bin IDs to their indices.
-        data (Dict[str, Any]): The data containing bin information.
-        vehicle_capacity (float): The capacity of the vehicle.
-        R (float): The revenue per unit of weight.
-        V (float): The volume of a unit of weight.
-        density (float): The density of the bins.
-        mandatory_bins (Optional[Set[int]]): A set of mandatory bins.
-        stocks (Optional[Dict[int, float]]): A dictionary mapping bin IDs to their stock.
+        solution: The current routing solution.
+        distance_matrix: The distance matrix.
+        id_to_index: A mapping from bin IDs to their indices.
+        data: The data containing bin information.
+        vehicle_capacity: The capacity of the vehicle.
+        R: The revenue per unit of weight.
+        V: The volume of a unit of weight.
+        density: The density of the bins.
+        mandatory_bins: A set of mandatory bins.
+        stocks: A dictionary mapping bin IDs to their stock.
 
     Returns:
         Tuple[float, float, float, float]: The profit, cost, revenue, and real kg.

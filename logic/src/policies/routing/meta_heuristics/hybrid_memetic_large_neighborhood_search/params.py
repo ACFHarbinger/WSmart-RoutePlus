@@ -148,9 +148,6 @@ class MACOParams:
     def __post_init__(self) -> None:
         """Validate parameters.
 
-        Returns:
-            None
-
         Raises:
             ValueError: If any parameter is invalid.
         """

@@ -1,8 +1,10 @@
 """
-Docstring Compliance Checker.
+Docstring Compliance Checker (P-03, owner ruling Q-7b).
 
-Traverses Python files, parses them with the `ast` module, and reports
-modules, classes, and functions that are missing docstrings.
+Enforces the relaxed docstring rule: public modules, classes and functions
+carry a docstring. Private helpers (a leading underscore) need nothing, and
+``__init__`` is covered by its class docstring. Google-style section
+completeness is NOT enforced here — see check_google_style.py.
 
 Output is a Rich table grouped by file, with line numbers and a short
 description of each violation.
@@ -54,7 +56,7 @@ def check_path(path: str) -> List[dict]:
     """Check a single .py file and return a list of violation dicts.
 
     Args:
-        path (str): Absolute or relative path to the Python file.
+        path: Absolute or relative path to the Python file.
 
     Returns:
         List[dict]: Each dict has keys ``path``, ``line``, ``type``, ``name``, ``description``.
@@ -89,7 +91,8 @@ def check_path(path: str) -> List[dict]:
     for node in ast.walk(tree):
         if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
             continue
-        if node.name.startswith("_") and not node.name.startswith("__"):
+        # Q-7b: private helpers (leading underscore) need no docstring.
+        if node.name.startswith("_"):
             continue
         if not ast.get_docstring(node):
             kind = "Class" if isinstance(node, ast.ClassDef) else "Function"
@@ -102,7 +105,7 @@ def check_docstrings_recursive(directory: str) -> List[dict]:
     """Recursively collect violations from all .py files under *directory*.
 
     Args:
-        directory (str): Root directory to walk.
+        directory: Root directory to walk.
 
     Returns:
         List[dict]: Aggregated violation list from all files.
@@ -118,7 +121,7 @@ def display_results(violations: List[dict]) -> None:
     """Render the violation report as a Rich table grouped by file.
 
     Args:
-        violations (List[dict]): Violation dicts produced by :func:`check_path`.
+        violations: Violation dicts produced by :func:`check_path`.
     """
     if not violations:
         console.print(

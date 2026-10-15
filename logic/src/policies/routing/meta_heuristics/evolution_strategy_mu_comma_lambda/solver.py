@@ -76,8 +76,6 @@ class MuCommaLambdaESSolver:
             params: Configuration defining mu and lambda.
             mandatory_nodes: List of node IDs that must be included.
 
-        Returns:
-            None.
         """
         self.dist_matrix = dist_matrix
         self.wastes = wastes

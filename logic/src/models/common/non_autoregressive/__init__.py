@@ -8,8 +8,6 @@ Attributes:
     NonAutoregressiveDecoder: Abstract foundation for construction from heatmaps.
     NonAutoregressivePolicy: Standard non-autoregressive policy implementation.
 
-Example:
-    >>> from logic.src.models.common.non_autoregressive import NonAutoregressivePolicy
 """
 
 from .decoder import NonAutoregressiveDecoder as NonAutoregressiveDecoder

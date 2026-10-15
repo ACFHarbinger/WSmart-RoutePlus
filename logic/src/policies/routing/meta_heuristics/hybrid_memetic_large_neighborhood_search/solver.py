@@ -108,8 +108,6 @@ class HybridMemeticLargeNeighborhoodSearchSolver:
             params: HMLNS algorithm parameters.
             mandatory_nodes: List of nodes that must be visited.
 
-        Returns:
-            None.
         """
         self.dist_matrix = dist_matrix
         self.wastes = wastes
@@ -547,8 +545,6 @@ class HybridMemeticLargeNeighborhoodSearchSolver:
             routes: Best routing solution.
             cost: Total cost of best solution.
 
-        Returns:
-            None.
         """
         if not routes or cost <= 0:
             return

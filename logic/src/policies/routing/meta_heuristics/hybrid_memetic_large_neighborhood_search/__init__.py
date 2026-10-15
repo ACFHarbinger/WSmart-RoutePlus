@@ -8,8 +8,6 @@ Attributes:
     HybridMemeticLargeNeighborhoodSearchParams: Parameters for HMLNS solver.
     HybridMemeticLargeNeighborhoodSearchSolver: Core HMLNS solver logic.
 
-Example:
-    >>> from logic.src.policies.routing.meta_heuristics.hybrid_memetic_large_neighborhood_search import HybridMemeticLargeNeighborhoodSearchSolver
 """
 
 from .params import HybridMemeticLargeNeighborhoodSearchParams, MACOParams

@@ -7,8 +7,6 @@ problems with temporal constraints.
 Attributes:
     MultiPeriodSimulatedAnnealingPolicy: Policy class for the MP-SA approach.
 
-Example:
-    >>> from logic.src.policies.routing.meta_heuristics.multi_period_simulated_annealing import MultiPeriodSimulatedAnnealingPolicy
 """
 
 from .policy_mp_sa import MultiPeriodSimulatedAnnealingPolicy

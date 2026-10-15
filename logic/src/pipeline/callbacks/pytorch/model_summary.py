@@ -51,8 +51,6 @@ class ModelSummaryCallback(Callback):
         Args:
             model: The LightningModule whose architecture will be summarised.
 
-        Returns:
-            None
         """
         console = Console()
         table = Table(

@@ -42,14 +42,14 @@ def _best_insertion_cost(
     Lower is better (more profitable insertion).
 
     Args:
-        node (int): Node ID to insert.
-        routes (List[List[int]]): Current routes.
-        loads (List[float]): Current route loads.
-        dist_matrix (np.ndarray): Distance matrix.
-        wastes (Dict[int, float]): Node wastes.
-        capacity (float): Vehicle capacity.
-        R (float): Revenue multiplier.
-        C (float): Cost multiplier.
+        node: Node ID to insert.
+        routes: Current routes.
+        loads: Current route loads.
+        dist_matrix: Distance matrix.
+        wastes: Node wastes.
+        capacity: Vehicle capacity.
+        R: Revenue multiplier.
+        C: Cost multiplier.
 
     Returns:
         Tuple[float, int, int]: (best_delta_cost, route_idx, position).
@@ -103,14 +103,14 @@ def build_regret_routes(
     Insert the node with the highest regret first.
 
     Args:
-        dist_matrix (np.ndarray): (N+1)x(N+1) distance matrix.
-        wastes (Dict[int, float]): {node_id → fill level}.
-        capacity (float): Vehicle capacity Q.
-        R (float): Revenue per unit waste.
-        C (float): Cost per unit distance.
-        mandatory_nodes (Optional[List[int]]): Nodes that must be visited.
-        regret_k (int): Number of alternatives to compare (k=2 is standard).
-        rng (Optional[random.Random]): Random generator (used for tie-breaking).
+        dist_matrix: (N+1)x(N+1) distance matrix.
+        wastes: {node_id → fill level}.
+        capacity: Vehicle capacity Q.
+        R: Revenue per unit waste.
+        C: Cost per unit distance.
+        mandatory_nodes: Nodes that must be visited.
+        regret_k: Number of alternatives to compare (k=2 is standard).
+        rng: Random generator (used for tie-breaking).
 
     Returns:
         List[List[int]]: List of routes (depot excluded).

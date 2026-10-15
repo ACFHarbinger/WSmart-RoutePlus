@@ -48,11 +48,11 @@ class SparsePheromoneTau:
         """Initializes the sparse pheromone structure with scale-based pruning.
 
         Args:
-            n_nodes (int): Total number of nodes (including depot).
-            tau_0 (float): Initial pheromone value (becomes initial default_value).
-            scale (float): Precision parameter for pruning edge values.
-            tau_min (float): Minimum pheromone bound (MMAS lower limit).
-            tau_max (float): Maximum pheromone bound (MMAS upper limit).
+            n_nodes: Total number of nodes (including depot).
+            tau_0: Initial pheromone value (becomes initial default_value).
+            scale: Precision parameter for pruning edge values.
+            tau_min: Minimum pheromone bound (MMAS lower limit).
+            tau_max: Maximum pheromone bound (MMAS upper limit).
         """
         self.n_nodes = n_nodes
         self.scale = scale
@@ -93,8 +93,6 @@ class SparsePheromoneTau:
             j: Destination node index.
             delta: Amount of pheromone to deposit.
 
-        Returns:
-            None.
         """
         current = self.get(i, j)
         self._pheromone[i][j] = current + delta
@@ -111,8 +109,6 @@ class SparsePheromoneTau:
         Args:
             rho: Evaporation rate (0 < rho < 1).
 
-        Returns:
-            None.
         """
         # Step 1: Evaporate the default value and strictly coerce into [tau_min, tau_max]
         self.default_value = max(self.tau_min, min(self.tau_max, self.default_value * (1 - rho)))

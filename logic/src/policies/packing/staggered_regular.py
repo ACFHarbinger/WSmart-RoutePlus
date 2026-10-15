@@ -55,7 +55,7 @@ class StaggeredRegularSelection(IPackingAlgorithm):
         """Return bin IDs whose phase offset matches today's slot in the period.
 
         Args:
-            context (PackingContext): The selection context providing current_day,
+            context: The selection context providing current_day,
                 current_fill, and threshold (frequency).
 
         Returns:

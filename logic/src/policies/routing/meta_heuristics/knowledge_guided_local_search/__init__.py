@@ -9,8 +9,6 @@ Attributes:
     KGLSSolver: Core KGLS solver logic.
     KGLSPolicy: Policy adapter for KGLS.
 
-Example:
-    >>> from logic.src.policies.routing.meta_heuristics.knowledge_guided_local_search import KGLSSolver
 """
 
 from .kgls import KGLSSolver

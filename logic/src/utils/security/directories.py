@@ -42,9 +42,9 @@ def encrypt_directory(
     Encrypt all files in a directory recursively.
 
     Args:
-        key (bytes): The encryption key.
-        input_dir (Union[str, os.PathLike]): Directory to encrypt.
-        output_dir (Union[str, os.PathLike], optional): Output directory. Defaults to input_dir.
+        key: The encryption key.
+        input_dir: Directory to encrypt.
+        output_dir: Output directory. Defaults to input_dir.
 
     Returns:
         list: List of encrypted data bytes for each file.
@@ -103,9 +103,9 @@ def decrypt_directory(
     Decrypt all .enc files in a directory recursively.
 
     Args:
-        key (bytes): The encryption key.
-        input_dir (Union[str, os.PathLike]): Directory to decrypt.
-        output_dir (Union[str, os.PathLike], optional): Output directory. Defaults to input_dir.
+        key: The encryption key.
+        input_dir: Directory to decrypt.
+        output_dir: Output directory. Defaults to input_dir.
 
     Returns:
         list: Decrypted strings for valid UTF-8 payloads, otherwise bytes.
@@ -171,9 +171,9 @@ def encrypt_zip_directory(
     Zip a directory and then encrypt the resulting zip file.
 
     Args:
-        key (bytes): The encryption key.
-        input_dir (Union[str, os.PathLike]): Directory to zip and encrypt.
-        output_enczip (Union[str, os.PathLike], optional): Output path for the encrypted zip.
+        key: The encryption key.
+        input_dir: Directory to zip and encrypt.
+        output_enczip: Output path for the encrypted zip.
 
     Returns:
         bytes: The encrypted zip data.
@@ -212,9 +212,9 @@ def decrypt_zip(
     Decrypt a zip file and extract its contents.
 
     Args:
-        key (bytes): The encryption key.
-        input_enczip (Union[str, os.PathLike]): Path to the encrypted zip file.
-        output_dir (Union[str, os.PathLike], optional): Directory to extract to.
+        key: The encryption key.
+        input_enczip: Path to the encrypted zip file.
+        output_dir: Directory to extract to.
 
     Returns:
         Union[str, bytes]: Decrypted ZIP payload (string if valid UTF-8, otherwise bytes).

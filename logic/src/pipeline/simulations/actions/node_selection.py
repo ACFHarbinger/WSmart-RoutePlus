@@ -65,8 +65,6 @@ class PackingAction(SimulationAction):
         Args:
             context: Shared dictionary containing simulation state.
 
-        Returns:
-            None
         """
 
         context = bind_context(context)

@@ -240,8 +240,8 @@ class WeightContextualBandit(WeightAdjustmentStrategy):
         """generate weight configs.
 
         Args:
-            initial_weights (Any): Description of initial_weights.
-            num_configs (Any): Description of num_configs.
+            initial_weights: Description of initial_weights.
+            num_configs: Description of num_configs.
 
         Returns:
             Any: Description of return value.
@@ -261,7 +261,7 @@ class WeightContextualBandit(WeightAdjustmentStrategy):
         """context to key.
 
         Args:
-            context (Dict[str, Any]): Description of context.
+            context: Description of context.
 
         Returns:
             Any: Description of return value.
@@ -273,7 +273,7 @@ class WeightContextualBandit(WeightAdjustmentStrategy):
         """select ucb.
 
         Args:
-            context_key (Any): Description of context_key.
+            context_key: Description of context_key.
 
         Returns:
             Any: Description of return value.
@@ -293,7 +293,7 @@ class WeightContextualBandit(WeightAdjustmentStrategy):
         """select thompson sampling.
 
         Args:
-            context_key (Any): Description of context_key.
+            context_key: Description of context_key.
 
         Returns:
             Any: Description of return value.
@@ -305,7 +305,7 @@ class WeightContextualBandit(WeightAdjustmentStrategy):
         """select epsilon greedy.
 
         Args:
-            context_key (Any): Description of context_key.
+            context_key: Description of context_key.
 
         Returns:
             Any: Description of return value.

@@ -73,13 +73,13 @@ class RTSSolver:
         """Initializes the Reactive Tabu Search solver.
 
         Args:
-            dist_matrix (np.ndarray): Symmetric distance matrix.
-            wastes (Dict[int, float]): Mapping of bin IDs to waste quantities.
-            capacity (float): Maximum vehicle collection capacity.
-            R (float): Revenue per kg of waste.
-            C (float): Cost per km traveled.
-            params (RTSConfig): Algorithm-specific parameters.
-            mandatory_nodes (Optional[List[int]]): Nodes that must be visited.
+            dist_matrix: Symmetric distance matrix.
+            wastes: Mapping of bin IDs to waste quantities.
+            capacity: Maximum vehicle collection capacity.
+            R: Revenue per kg of waste.
+            C: Cost per km traveled.
+            params: Algorithm-specific parameters.
+            mandatory_nodes: Nodes that must be visited.
         """
         self.dist_matrix = dist_matrix
         self.wastes = wastes
@@ -242,8 +242,8 @@ class RTSSolver:
         to insert them back.
 
         Args:
-            routes (List[List[int]]): The routes to evaluate.
-            n (int): The number of nodes to remove.
+            routes: The routes to evaluate.
+            n: The number of nodes to remove.
 
         Returns:
             List[List[int]]: The routes evaluated.
@@ -280,8 +280,8 @@ class RTSSolver:
         to insert them back.
 
         Args:
-            routes (List[List[int]]): The routes to evaluate.
-            n (int): The number of nodes to remove.
+            routes: The routes to evaluate.
+            n: The number of nodes to remove.
 
         Returns:
             List[List[int]]: The routes evaluated.
@@ -318,8 +318,8 @@ class RTSSolver:
         to insert them back.
 
         Args:
-            routes (List[List[int]]): The routes to evaluate.
-            n (int): The number of nodes to remove.
+            routes: The routes to evaluate.
+            n: The number of nodes to remove.
 
         Returns:
             List[List[int]]: The routes evaluated.
@@ -356,8 +356,8 @@ class RTSSolver:
         to insert them back.
 
         Args:
-            routes (List[List[int]]): The routes to evaluate.
-            n (int): The number of nodes to remove.
+            routes: The routes to evaluate.
+            n: The number of nodes to remove.
 
         Returns:
             List[List[int]]: The routes evaluated.
@@ -394,8 +394,8 @@ class RTSSolver:
         to insert them back.
 
         Args:
-            routes (List[List[int]]): The routes to evaluate.
-            n (int): The number of nodes to remove.
+            routes: The routes to evaluate.
+            n: The number of nodes to remove.
 
         Returns:
             List[List[int]]: The routes evaluated.
@@ -431,8 +431,8 @@ class RTSSolver:
         to insert them back.
 
         Args:
-            routes (List[List[int]]): The routes to evaluate.
-            n (int): The number of nodes to remove.
+            routes: The routes to evaluate.
+            n: The number of nodes to remove.
 
         Returns:
             List[List[int]]: The routes evaluated.
@@ -471,8 +471,8 @@ class RTSSolver:
         to insert them back.
 
         Args:
-            routes (List[List[int]]): The routes to evaluate.
-            n (int): The number of nodes to remove.
+            routes: The routes to evaluate.
+            n: The number of nodes to remove.
 
         Returns:
             List[List[int]]: The routes evaluated.
@@ -509,7 +509,7 @@ class RTSSolver:
         """Compute a hash of the route configuration for cycle detection.
 
         Args:
-            routes (List[List[int]]): The routes to hash.
+            routes: The routes to hash.
 
         Returns:
             int: The hash of the routes.
@@ -520,7 +520,7 @@ class RTSSolver:
         """Build an initial solution using the nearest neighbor heuristic.
 
         Args:
-            routes (List[List[int]]): The routes to evaluate.
+            routes: The routes to evaluate.
 
         Returns:
             List[List[int]]: The routes evaluated.
@@ -540,7 +540,7 @@ class RTSSolver:
         """Compute the total profit of the routes.
 
         Args:
-            routes (List[List[int]]): The routes to evaluate.
+            routes: The routes to evaluate.
 
         Returns:
             float: The total profit of the routes.
@@ -554,7 +554,7 @@ class RTSSolver:
         """Compute the total cost of the routes.
 
         Args:
-            routes (List[List[int]]): The routes to evaluate.
+            routes: The routes to evaluate.
 
         Returns:
             float: The total cost of the routes.

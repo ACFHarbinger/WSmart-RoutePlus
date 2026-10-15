@@ -94,7 +94,7 @@ class COPEvaluator:
         """Return pre-computed TSP cost for the selected node subset.
 
         Args:
-            subset (FrozenSet[int]): Set of node indices.
+            subset: Set of node indices.
 
         Returns:
             float: Pre-computed TSP cost.
@@ -107,9 +107,9 @@ class COPEvaluator:
         Since we operate in discretized fill levels, actual_weight approx = (level / (L-1)).
 
         Args:
-            discrete_state (Tuple[int, ...]): Current discrete state tuple.
-            capacity (float): Vehicle capacity.
-            L (int): Number of discrete fill levels per bin.
+            discrete_state: Current discrete state tuple.
+            capacity: Vehicle capacity.
+            L: Number of discrete fill levels per bin.
 
         Returns:
             List[FrozenSet[int]]: List of feasible visit subsets.

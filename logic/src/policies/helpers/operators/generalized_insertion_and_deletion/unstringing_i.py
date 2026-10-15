@@ -31,10 +31,10 @@ def apply_type_i_us(route: List[int], i: int, j: int, k: int) -> List[int]:
     Reverses sub-tours (V_{i+1}...V_k) and (V_{k+1}...V_j).
 
     Args:
-        route (List[int]): The tour as a list of node IDs.
-        i (int): Index of node to remove.
-        j (int): Index of node V_j such that the arc (V_j, V_{j+1}) is broken.
-        k (int): Index of node V_k such that the arc (V_k, V_{k+1}) is broken.
+        route: The tour as a list of node IDs.
+        i: Index of node to remove.
+        j: Index of node V_j such that the arc (V_j, V_{j+1}) is broken.
+        k: Index of node V_k such that the arc (V_k, V_{k+1}) is broken.
 
     Returns:
         List[int]: New route with V_i removed and segments reconnected.
@@ -108,14 +108,14 @@ def apply_type_i_us_profit(
     Apply Type I Unstringing move and return profit delta.
 
     Args:
-        route (List[int]): The tour as a list of node IDs.
-        i (int): Index of node V_i to remove.
-        j (int): Index of node V_j.
-        k (int): Index of node V_k.
-        dist_matrix (np.ndarray): Distance matrix.
-        wastes (Dict[int, float]): Waste levels.
-        R (float): Revenue multiplier.
-        C (float): Cost multiplier.
+        route: The tour as a list of node IDs.
+        i: Index of node V_i to remove.
+        j: Index of node V_j.
+        k: Index of node V_k.
+        dist_matrix: Distance matrix.
+        wastes: Waste levels.
+        R: Revenue multiplier.
+        C: Cost multiplier.
 
     Returns:
         Tuple[List[int], float]: (new_route, delta_profit)

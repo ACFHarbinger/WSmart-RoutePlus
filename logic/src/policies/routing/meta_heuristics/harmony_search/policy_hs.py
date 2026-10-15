@@ -35,8 +35,6 @@ class HSPolicy(BaseRoutingPolicy):
         Args:
             config: Optional configuration dictionary.
 
-        Returns:
-            None.
         """
         super().__init__(config)
 

@@ -63,7 +63,7 @@ class StateSpaceManager:
         mean_increment is roughly continuous [0, 1]. In discrete units, it is expected_shift = mean_increment * (L-1).
 
         Args:
-            mean_increment (float): The daily fill rate increment.
+            mean_increment: The daily fill rate increment.
         """
         expected_shift = mean_increment * (self.L - 1)
         # simplistic Poisson-like logic or simply distributing mass
@@ -102,8 +102,8 @@ class StateSpaceManager:
         So bin index in state tuple is (node_idx - 1).
 
         Args:
-            state (Tuple[int, ...]): The current discrete state.
-            action_set (Union[frozenset, set]): Set of node indices to visit.
+            state: The current discrete state.
+            action_set: Set of node indices to visit.
 
         Returns:
             List[Tuple[Tuple[int, ...], float]]: List of (next_state, probability).
@@ -134,7 +134,7 @@ class StateSpaceManager:
         """Map discrete state tuple back to dictionary of continuous variables.
 
         Args:
-            state (Tuple[int, ...]): Discrete state tuple.
+            state: Discrete state tuple.
 
         Returns:
             Dict[int, float]: Mapping of node index to continuous fill fraction.
@@ -145,7 +145,7 @@ class StateSpaceManager:
         """Map continuous dictionary to discrete state tuple.
 
         Args:
-            fractions (Dict[int, float]): Mapping of node index to continuous fill fraction.
+            fractions: Mapping of node index to continuous fill fraction.
 
         Returns:
             Tuple[int, ...]: Discrete state tuple.

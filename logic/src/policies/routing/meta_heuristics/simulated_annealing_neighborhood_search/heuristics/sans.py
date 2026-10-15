@@ -181,29 +181,29 @@ def improved_simulated_annealing(  # noqa: C901
     """Refine routing solutions using a multi-neighborhood Simulated Annealing algorithm.
 
     Args:
-        routes (List[List[int]]): Initial routes to optimize.
-        distance_matrix (np.ndarray): Symmetric distance matrix.
-        time_limit (float): Maximum allowed runtime in seconds.
-        id_to_index (Dict[int, int]): Mapping of node IDs to matrix indices.
-        data (pd.DataFrame): Dataframe containing bin metadata (ID, Stock).
-        vehicle_capacity (float): Maximum vehicle collection capacity.
-        T_init (float): Initial temperature for annealing.
-        T_min (float): Minimum temperature to stop annealing.
-        alpha (float): Cooling rate (T = T * alpha).
-        iterations_per_T (int): Number of neighbor moves at each temperature step.
-        R (float): Revenue per kg of waste.
-        V (float): Bin volume.
-        density (float): Waste density.
-        C (float): Cost per km traveled.
-        mandatory_bins (Optional[Set[int]]): Bins that must be collected.
-        removed_bins (Optional[Set[int]]): Bins initially not in any route.
-        verbose (bool): Whether to print debug information.
-        perc_bins_can_overflow (float): Allowed overflow percentage.
-        volume (float): Bin volume (redundant with V).
-        density_val (float): Waste density (redundant with density).
-        max_vehicles (Optional[int]): Maximum number of vehicles allowed.
-        recorder (Optional[PolicyStateRecorder]): Telemetry recorder.
-        rng (Optional[random.Random]): Random number generator.
+        routes: Initial routes to optimize.
+        distance_matrix: Symmetric distance matrix.
+        time_limit: Maximum allowed runtime in seconds.
+        id_to_index: Mapping of node IDs to matrix indices.
+        data: Dataframe containing bin metadata (ID, Stock).
+        vehicle_capacity: Maximum vehicle collection capacity.
+        T_init: Initial temperature for annealing.
+        T_min: Minimum temperature to stop annealing.
+        alpha: Cooling rate (T = T * alpha).
+        iterations_per_T: Number of neighbor moves at each temperature step.
+        R: Revenue per kg of waste.
+        V: Bin volume.
+        density: Waste density.
+        C: Cost per km traveled.
+        mandatory_bins: Bins that must be collected.
+        removed_bins: Bins initially not in any route.
+        verbose: Whether to print debug information.
+        perc_bins_can_overflow: Allowed overflow percentage.
+        volume: Bin volume (redundant with V).
+        density_val: Waste density (redundant with density).
+        max_vehicles: Maximum number of vehicles allowed.
+        recorder: Telemetry recorder.
+        rng: Random number generator.
 
     Returns:
         Tuple: (best_solution, best_profit, last_distance, last_weight, last_receita).

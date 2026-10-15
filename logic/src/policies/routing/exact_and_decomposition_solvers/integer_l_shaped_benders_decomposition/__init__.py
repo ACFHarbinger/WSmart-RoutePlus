@@ -18,8 +18,6 @@ Attributes:
     IntegerLShapedBendersConfig (class): Configuration dataclass.
     run_ils_bd (func): Canonical solver entry point.
 
-Example:
-    >>> from logic.src.policies.routing.exact_and_decomposition_solvers.integer_l_shaped_benders_decomposition import run_ils_bd
 """
 
 from typing import Any, Dict, List, Set, Tuple

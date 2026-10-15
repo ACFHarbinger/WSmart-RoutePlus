@@ -34,8 +34,8 @@ class RoutingSubproblem:
         """Initializes the LBBD subproblem solver.
 
         Args:
-            distance_matrix (np.ndarray): Distance matrix.
-            timeout_seconds (float): Timeout in seconds.
+            distance_matrix: Distance matrix.
+            timeout_seconds: Timeout in seconds.
         """
         self.distance_matrix = distance_matrix
         self.timeout_seconds = timeout_seconds
@@ -44,7 +44,7 @@ class RoutingSubproblem:
         """Solves TSP for a given subset of nodes (including depot 0).
 
         Args:
-            assigned_nodes (List[int]): List of node indices to visit (0 must be included).
+            assigned_nodes: List of node indices to visit (0 must be included).
 
         Returns:
             Tuple[bool, float, List[int]]: A tuple containing:

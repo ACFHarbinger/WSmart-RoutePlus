@@ -474,7 +474,7 @@ class VRPPMasterProblem(VRPPMasterProblemConstraintsMixin, VRPPMasterProblemSupp
         This must inject the variable into both the base constraints AND any active cuts.
 
         Args:
-            route (Route): Route whose λ variable is being added.
+            route: Route whose λ variable is being added.
         """
         if self.model is None:
             return

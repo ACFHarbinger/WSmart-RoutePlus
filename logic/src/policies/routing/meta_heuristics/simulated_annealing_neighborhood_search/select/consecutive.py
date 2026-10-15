@@ -38,10 +38,10 @@ def _extract_valid_segment(
     """Attempt to find a valid segment of length chosen_n to remove.
 
     Args:
-        chosen_route (list[int]): Route from which to remove bins.
-        chosen_n (int): Number of bins to remove.
-        bins_cannot_removed (list[int]): Bins that cannot be removed.
-        rng (random.Random): Random number generator.
+        chosen_route: Route from which to remove bins.
+        chosen_n: Number of bins to remove.
+        bins_cannot_removed: Bins that cannot be removed.
+        rng: Random number generator.
 
     Returns:
         list[int]: Valid segment of length chosen_n to remove.
@@ -74,10 +74,10 @@ def remove_n_bins_consecutive(routes_list, removed_bins, bins_cannot_removed, rn
     Remove n consecutive bins from a route.
 
     Args:
-        routes_list (List[List[int]]): Current routes.
-        removed_bins (List[int]): Target set.
-        bins_cannot_removed (List[int]): Mandatory nodes.
-        rng (random.Random): Random number generator.
+        routes_list: Current routes.
+        removed_bins: Target set.
+        bins_cannot_removed: Mandatory nodes.
+        rng: Random number generator.
 
     Returns:
         List[List[int]]: Mutated routing solution.
@@ -138,9 +138,9 @@ def add_n_bins_consecutive(routes_list, removed_bins, rng):
     Add n consecutive bins from the removed set (treated as list) to a random route.
 
     Args:
-        routes_list (List[List[int]]): Current routes.
-        removed_bins (List[int]): Set/List of removed bins.
-        rng (random.Random): Random number generator.
+        routes_list: Current routes.
+        removed_bins: Set/List of removed bins.
+        rng: Random number generator.
 
     Returns:
         Tuple[List[int], int]: List of added bins and the number n chosen.
@@ -167,9 +167,9 @@ def add_route_consecutive(routes_list, distance_matrix, rng):
     Create a new route by extracting a consecutive segment from an existing route.
 
     Args:
-        routes_list (List[List[int]]): Current routes.
-        distance_matrix (np.ndarray): Distance matrix for route organization.
-        rng (random.Random): Random number generator.
+        routes_list: Current routes.
+        distance_matrix: Distance matrix for route organization.
+        rng: Random number generator.
 
     Returns:
         int: The number of bins moved to the new route.
@@ -214,10 +214,10 @@ def add_route_with_removed_bins_consecutive(routes_list, removed_bins, distance_
     Create a new route using a consecutive sequence of removed bins.
 
     Args:
-        routes_list (List[List[int]]): Current routes.
-        removed_bins (List[int]): Pool of removed bins.
-        distance_matrix (np.ndarray): Distance matrix.
-        rng (random.Random): Random number generator.
+        routes_list: Current routes.
+        removed_bins: Pool of removed bins.
+        distance_matrix: Distance matrix.
+        rng: Random number generator.
 
     Returns:
         Tuple[int, List[int]]: Number of bins used and the list of bins used.

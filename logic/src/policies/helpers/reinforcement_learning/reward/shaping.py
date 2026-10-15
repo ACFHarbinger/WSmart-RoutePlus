@@ -74,12 +74,12 @@ class RewardShaper:
         4. Rejection -> rejected_reward
 
         Args:
-            new_profit (float): Total profit of the newly generated solution.
-            prev_profit (float): Total profit of the solution before the current step.
-            best_profit (float): Maximum profit found so far in the search.
-            accepted (bool): Boolean indicating if the move was accepted by the policy.
-            stagnation_count (int): Number of iterations since the last global best improvement.
-            improvement_threshold (float): Minimum epsilon for considering a change an 'improvement'.
+            new_profit: Total profit of the newly generated solution.
+            prev_profit: Total profit of the solution before the current step.
+            best_profit: Maximum profit found so far in the search.
+            accepted: Boolean indicating if the move was accepted by the policy.
+            stagnation_count: Number of iterations since the last global best improvement.
+            improvement_threshold: Minimum epsilon for considering a change an 'improvement'.
 
         Returns:
             float: The calculated float reward for the RL agent.
@@ -116,11 +116,11 @@ class RewardShaper:
         Inverts the logic of compute_reward since lower cost is better.
 
         Args:
-            new_cost (float): Cost of the new solution.
-            current_cost (float): Cost of the current solution.
-            best_cost (float): Minimum cost found so far.
-            accepted (bool): Acceptance flag.
-            stagnation_count (int): Stagnation duration.
+            new_cost: Cost of the new solution.
+            current_cost: Cost of the current solution.
+            best_cost: Minimum cost found so far.
+            accepted: Acceptance flag.
+            stagnation_count: Stagnation duration.
 
         Returns:
             float: Shaped reward value.
@@ -186,10 +186,8 @@ class AdaptiveRewardShaper(RewardShaper):
         and boosts improvement rewards late in the search for exploitation.
 
         Args:
-            progress (float): Search completion progress in [0.0, 1.0].
+            progress: Search completion progress in [0.0, 1.0].
 
-        Returns:
-            None.
         """
 
         # Higher exploration early, higher exploitation late

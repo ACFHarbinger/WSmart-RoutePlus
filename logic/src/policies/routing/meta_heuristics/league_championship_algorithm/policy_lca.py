@@ -42,8 +42,6 @@ class LCAPolicy(BaseRoutingPolicy):
         Args:
             config: Configuration source for the League Championship Algorithm.
 
-        Returns:
-            None.
         """
         super().__init__(config)
 

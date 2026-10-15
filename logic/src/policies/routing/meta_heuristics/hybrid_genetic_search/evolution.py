@@ -100,8 +100,6 @@ def update_biased_fitness(
              distances are registered in the index so _evict_cache can purge them
              in O(P) instead of O(P²).
 
-    Returns:
-        None.
     """
     if not population:
         return
@@ -172,8 +170,6 @@ def evaluate(ind: Individual, split_manager: LinearSplit, penalty_capacity: floa
         split_manager: Split algorithm manager.
         penalty_capacity: Penalty coefficient for capacity violations.
 
-    Returns:
-        None.
     """
     # 1. Isolate the active sequence
     if ind.routes:

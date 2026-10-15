@@ -97,16 +97,16 @@ class LocalSearch(ABC):
         """Initialize Local Search base class.
 
         Args:
-            dist_matrix (np.ndarray): N x N distance matrix.
-            waste (Dict[int, float]): Dictionary of node waste demands.
-            capacity (float): Vehicle load capacity.
-            R (float): Reward factor for collected waste.
-            C (float): Cost factor for travel distance.
-            params (Any): Hyperparameters and configuration.
-            neighbors (Optional[Dict[int, List[int]]]): Precomputed granular neighbors. Defaults to None.
-            penalty_capacity (float): Initial capacity violation penalty weight. Defaults to 1.0.
-            acceptance_criterion (Optional[IAcceptanceCriterion]): Custom acceptance strategy. Defaults to None.
-            node_coords (np.ndarray): (N, 2) array of node coordinates.
+            dist_matrix: N x N distance matrix.
+            waste: Dictionary of node waste demands.
+            capacity: Vehicle load capacity.
+            R: Reward factor for collected waste.
+            C: Cost factor for travel distance.
+            params: Hyperparameters and configuration.
+            neighbors: Precomputed granular neighbors. Defaults to None.
+            penalty_capacity: Initial capacity violation penalty weight. Defaults to 1.0.
+            acceptance_criterion: Custom acceptance strategy. Defaults to None.
+            node_coords: (N, 2) array of node coordinates.
         """
         # Store matrix only if provided (O(n^2) memory)
         self.d = np.array(dist_matrix) if dist_matrix is not None else None
@@ -170,8 +170,8 @@ class LocalSearch(ABC):
         values to avoid intractable matrix sizes.
 
         Args:
-            i (int): The index of the first node.
-            j (int): The index of the second node.
+            i: The index of the first node.
+            j: The index of the second node.
 
         Returns:
             float: The distance between the two nodes.
@@ -186,7 +186,7 @@ class LocalSearch(ABC):
         """Modified to use get_dist abstraction.
 
         Args:
-            route_idx (Optional[int]): The index of the route to compute the top insertions for.
+            route_idx: The index of the route to compute the top insertions for.
                                      If None, computes for all routes.
         """
         routed = set(self.node_map.keys())  # O(1) set lookup below
@@ -216,7 +216,7 @@ class LocalSearch(ABC):
         """Calculate total cost of all routes.
 
         Args:
-            routes (List[List[int]]): List of routes, where each route is a list of node IDs.
+            routes: List of routes, where each route is a list of node IDs.
 
         Returns:
             float: Total distance traveled across all routes, including returns to depot.
@@ -236,7 +236,7 @@ class LocalSearch(ABC):
         """Optimize the given solution.
 
         Args:
-            solution (Any): The initial solution to optimize.
+            solution: The initial solution to optimize.
 
         Returns:
             Any: The optimized solution.
@@ -315,7 +315,7 @@ class LocalSearch(ABC):
         """Calculate total load of a route.
 
         Args:
-            r (List[int]): The sequence of node IDs in the route.
+            r: The sequence of node IDs in the route.
 
         Returns:
             float: Sum of waste for all nodes in the route.
@@ -326,7 +326,7 @@ class LocalSearch(ABC):
         """Check if the operator should be tried based on target_neighborhood filter.
 
         Args:
-            op_name (str): Name of the operator (e.g., 'relocate', 'swap').
+            op_name: Name of the operator (e.g., 'relocate', 'swap').
 
         Returns:
             bool: True if the operator should be executed, False otherwise.
@@ -341,7 +341,7 @@ class LocalSearch(ABC):
         Uses caching to avoid redundant calculations.
 
         Args:
-            route_idx (int): Index of the route in `self.routes`.
+            route_idx: Index of the route in `self.routes`.
 
         Returns:
             Optional[Tuple[float, float]]: (min_angle, max_angle) in radians,
@@ -376,9 +376,9 @@ class LocalSearch(ABC):
         Consult the registered acceptance criterion to decide if a move should be applied.
 
         Args:
-            current_obj (float): Objective value of the current solution.
-            candidate_obj (float): Objective value of the proposed solution.
-            kwargs (Any): Additional context for the acceptance decision.
+            current_obj: Objective value of the current solution.
+            candidate_obj: Objective value of the proposed solution.
+            kwargs: Additional context for the acceptance decision.
 
         Returns:
             bool: True if the move should be accepted, False otherwise.
@@ -393,10 +393,10 @@ class LocalSearch(ABC):
         Perform internal state updates (e.g., cooling, counting) after a move decision.
 
         Args:
-            current_obj (float): Objective value before the move attempt.
-            candidate_obj (float): Objective value after the move attempt.
-            accepted (bool): Whether the move was actually accepted and applied.
-            kwargs (Any): Additional context for the step update.
+            current_obj: Objective value before the move attempt.
+            candidate_obj: Objective value after the move attempt.
+            accepted: Whether the move was actually accepted and applied.
+            kwargs: Additional context for the step update.
         """
         if self.acceptance_criterion is not None:
             self.acceptance_criterion.step(
@@ -407,8 +407,8 @@ class LocalSearch(ABC):
         """Return True if two polar sectors overlap, handling the ±π wraparound.
 
         Args:
-            s1 (Optional[Tuple[float, float]]): First polar sector.
-            s2 (Optional[Tuple[float, float]]): Second polar sector.
+            s1: First polar sector.
+            s2: Second polar sector.
 
         Returns:
             bool: True if the sectors overlap (including circular wraparound).
@@ -431,8 +431,8 @@ class LocalSearch(ABC):
         Returns True if any improving move was applied.
 
         Args:
-            u (int): First node ID.
-            v (int): Second node ID.
+            u: First node ID.
+            v: Second node ID.
 
         Returns:
             bool: True if any move was successfully applied.
@@ -477,12 +477,12 @@ class LocalSearch(ABC):
         """Process moves between different routes.
 
         Args:
-            u (int): Node from the first route.
-            v (int): Node from the second route.
-            r_u (int): Index of the first route.
-            p_u (int): Position of node `u` in `r_u`.
-            r_v (int): Index of the second route.
-            p_v (int): Position of node `v` in `r_v`.
+            u: Node from the first route.
+            v: Node from the second route.
+            r_u: Index of the first route.
+            p_u: Position of node `u` in `r_u`.
+            r_v: Index of the second route.
+            p_v: Position of node `v` in `r_v`.
 
         Returns:
             bool: True if an improving inter-route move was applied.
@@ -518,12 +518,12 @@ class LocalSearch(ABC):
         """Process moves within the same route.
 
         Args:
-            u (int): First node ID.
-            v (int): Second node ID.
-            r_u (int): Index of the route containing both nodes.
-            p_u (int): Position of node `u`.
-            r_v (int): Position of node `v`.
-            p_v (int): Alias for `p_v` (redundant but kept for API consistency).
+            u: First node ID.
+            v: Second node ID.
+            r_u: Index of the route containing both nodes.
+            p_u: Position of node `u`.
+            r_v: Position of node `v`.
+            p_v: Alias for `p_v` (redundant but kept for API consistency).
 
         Returns:
             bool: True if an improving intra-route move was applied.
@@ -582,7 +582,7 @@ class LocalSearch(ABC):
         """Get cached total load of a route.
 
         Args:
-            ri (int): Route index.
+            ri: Route index.
 
         Returns:
             float: Cached total load of the route.
@@ -593,12 +593,12 @@ class LocalSearch(ABC):
         """Relocate a node to a new position.
 
         Args:
-            u (int): Node ID to relocate.
-            v (int): Target neighbor node ID.
-            r_u (int): Current route index of `u`.
-            p_u (int): Current position of `u`.
-            r_v (int): Target route index.
-            p_v (int): Target position (usually after `v`).
+            u: Node ID to relocate.
+            v: Target neighbor node ID.
+            r_u: Current route index of `u`.
+            p_u: Current position of `u`.
+            r_v: Target route index.
+            p_v: Target position (usually after `v`).
 
         Returns:
             bool: True if the relocate move was accepted.
@@ -609,12 +609,12 @@ class LocalSearch(ABC):
         """Swap two nodes.
 
         Args:
-            u (int): First node ID.
-            v (int): Second node ID.
-            r_u (int): Route index of `u`.
-            p_u (int): Position of `u`.
-            r_v (int): Route index of `v`.
-            p_v (int): Position of `v`.
+            u: First node ID.
+            v: Second node ID.
+            r_u: Route index of `u`.
+            p_u: Position of `u`.
+            r_v: Route index of `v`.
+            p_v: Position of `v`.
 
         Returns:
             bool: True if the swap move was accepted.
@@ -625,12 +625,12 @@ class LocalSearch(ABC):
         """Apply SWAP* operator (best insertion swap).
 
         Args:
-            u (int): First node ID.
-            v (int): Second node ID.
-            r_u (int): Route index of `u`.
-            p_u (int): Position of `u`.
-            r_v (int): Route index of `v`.
-            p_v (int): Position of `v`.
+            u: First node ID.
+            v: Second node ID.
+            r_u: Route index of `u`.
+            p_u: Position of `u`.
+            r_v: Route index of `v`.
+            p_v: Position of `v`.
 
         Returns:
             bool: True if the SWAP* move was accepted.
@@ -641,13 +641,13 @@ class LocalSearch(ABC):
         """Apply intra-route 3-opt move.
 
         Args:
-            u (int): First node ID.
-            v (int): Second node ID.
-            r_u (int): Route index.
-            p_u (int): First position.
-            r_v (int): Route index (same as `r_u`).
-            p_v (int): Second position.
-            rng (random.Random): Random number generator for tie-breaking.
+            u: First node ID.
+            v: Second node ID.
+            r_u: Route index.
+            p_u: First position.
+            r_v: Route index (same as `r_u`).
+            p_v: Second position.
+            rng: Random number generator for tie-breaking.
 
         Returns:
             bool: True if the 3-opt move was accepted.
@@ -658,12 +658,12 @@ class LocalSearch(ABC):
         """Apply inter-route 2-opt* move.
 
         Args:
-            u (int): First node ID.
-            v (int): Second node ID.
-            r_u (int): First route index.
-            p_u (int): First position.
-            r_v (int): Second route index.
-            p_v (int): Second position.
+            u: First node ID.
+            v: Second node ID.
+            r_u: First route index.
+            p_u: First position.
+            r_v: Second route index.
+            p_v: Second position.
 
         Returns:
             bool: True if the 2-opt* move was accepted.
@@ -674,12 +674,12 @@ class LocalSearch(ABC):
         """Apply intra-route 2-opt move.
 
         Args:
-            u (int): First node ID.
-            v (int): Second node ID.
-            r_u (int): Route index.
-            p_u (int): First position.
-            r_v (int): Route index (same as `r_u`).
-            p_v (int): Second position.
+            u: First node ID.
+            v: Second node ID.
+            r_u: Route index.
+            p_u: First position.
+            r_v: Route index (same as `r_u`).
+            p_v: Second position.
 
         Returns:
             bool: True if the intra-route 2-opt move was accepted.
@@ -690,9 +690,9 @@ class LocalSearch(ABC):
         """Apply Or-opt move.
 
         Args:
-            r_idx (int): Route index.
-            pos (int): Starting position.
-            chain_len (int): Length of the chain to relocate.
+            r_idx: Route index.
+            pos: Starting position.
+            chain_len: Length of the chain to relocate.
 
         Returns:
             bool: True if the Or-opt move was accepted.
@@ -703,12 +703,12 @@ class LocalSearch(ABC):
         """Apply Cross move.
 
         Args:
-            u (int): First node ID.
-            v (int): Second node ID.
-            r_u (int): First route index.
-            p_u (int): First position.
-            r_v (int): Second route index.
-            p_v (int): Second position.
+            u: First node ID.
+            v: Second node ID.
+            r_u: First route index.
+            p_u: First position.
+            r_v: Second route index.
+            p_v: Second position.
 
         Returns:
             bool: True if the Cross move was accepted.
@@ -719,10 +719,10 @@ class LocalSearch(ABC):
         """Apply Shift(2,0) move (relocate two nodes).
 
         Args:
-            r_u (int): Source route index.
-            p_u (int): Starting position of the 2-node chain.
-            r_v (int): Target route index.
-            p_v (int): Target insertion position.
+            r_u: Source route index.
+            p_u: Starting position of the 2-node chain.
+            r_v: Target route index.
+            p_v: Target insertion position.
 
         Returns:
             bool: True if the Shift(2,0) move was accepted.
@@ -733,10 +733,10 @@ class LocalSearch(ABC):
         """Apply Swap(2,1) move (swap 2 nodes with 1 node).
 
         Args:
-            r_u (int): First route index.
-            p_u (int): Starting position of the 2-node chain.
-            r_v (int): Second route index.
-            p_v (int): Position of the single node.
+            r_u: First route index.
+            p_u: Starting position of the 2-node chain.
+            r_v: Second route index.
+            p_v: Position of the single node.
 
         Returns:
             bool: True if the Swap(2,1) move was accepted.
@@ -747,10 +747,10 @@ class LocalSearch(ABC):
         """Apply Swap(2,2) move (swap two pairs of nodes).
 
         Args:
-            r_u (int): First route index.
-            p_u (int): Starting position of the first 2-node chain.
-            r_v (int): Second route index.
-            p_v (int): Starting position of the second 2-node chain.
+            r_u: First route index.
+            p_u: Starting position of the first 2-node chain.
+            r_v: Second route index.
+            p_v: Starting position of the second 2-node chain.
 
         Returns:
             bool: True if the Swap(2,2) move was accepted.
@@ -761,10 +761,10 @@ class LocalSearch(ABC):
         """Apply Cross-Exchange operator.
 
         Args:
-            r_u (int): First route index.
-            p_u (int): First position.
-            r_v (int): Second route index.
-            p_v (int): Second position.
+            r_u: First route index.
+            p_u: First position.
+            r_v: Second route index.
+            p_v: Second position.
 
         Returns:
             bool: True if the Cross-Exchange move was accepted.
@@ -775,10 +775,10 @@ class LocalSearch(ABC):
         """Apply Improved Cross-Exchange operator.
 
         Args:
-            r_u (int): First route index.
-            p_u (int): First position.
-            r_v (int): Second route index.
-            p_v (int): Second position.
+            r_u: First route index.
+            p_u: First position.
+            r_v: Second route index.
+            p_v: Second position.
 
         Returns:
             bool: True if the Improved Cross-Exchange move was accepted.
@@ -789,8 +789,8 @@ class LocalSearch(ABC):
         """Apply Lambda-Interchange operator.
 
         Args:
-            r_u (int): First route index.
-            r_v (int): Second route index.
+            r_u: First route index.
+            r_v: Second route index.
 
         Returns:
             bool: True if the Lambda-Interchange move was accepted.
@@ -801,10 +801,10 @@ class LocalSearch(ABC):
         """Apply Cyclic Transfer move (3-route exchange).
 
         Args:
-            r_u (int): First route index.
-            p_u (int): First position.
-            r_v (int): Second route index.
-            p_v (int): Second position.
+            r_u: First route index.
+            p_u: First position.
+            r_v: Second route index.
+            p_v: Second position.
 
         Returns:
             bool: True if the Cyclic Transfer move was accepted.
@@ -822,10 +822,10 @@ class LocalSearch(ABC):
         """Try applying various Exchange Chain operators.
 
         Args:
-            r_u (int): First route index.
-            p_u (int): First position.
-            r_v (int): Second route index.
-            p_v (int): Second position.
+            r_u: First route index.
+            p_u: First position.
+            r_v: Second route index.
+            p_v: Second position.
 
         Returns:
             bool: True if any Exchange Chain move was accepted.
@@ -838,7 +838,7 @@ class LocalSearch(ABC):
         """Docstring.
 
         Args:
-            r_u (int): Starting route index for the ejection chain.
+            r_u: Starting route index for the ejection chain.
 
         Returns:
             bool: True if the Ejection Chain move was accepted.
@@ -849,11 +849,11 @@ class LocalSearch(ABC):
         """Docstring.
 
         Args:
-            u (int): Starting node ID for the chain.
-            r_u (int): Source route index.
-            p_u (int): Starting position in `r_u`.
-            r_v (int): Target route index.
-            p_v (int): Target position in `r_v`.
+            u: Starting node ID for the chain.
+            r_u: Source route index.
+            p_u: Starting position in `r_u`.
+            r_v: Target route index.
+            p_v: Target position in `r_v`.
 
         Returns:
             bool: True if the Relocate Chain move was accepted.
@@ -866,9 +866,9 @@ class LocalSearch(ABC):
         """Apply 3-Permutation move.
 
         Args:
-            u (int): Node ID to permute.
-            r_u (int): Route index.
-            p_u (int): Position of node `u`.
+            u: Node ID to permute.
+            r_u: Route index.
+            p_u: Position of node `u`.
 
         Returns:
             bool: True if the 3-Permutation move was accepted.
@@ -884,9 +884,9 @@ class LocalSearch(ABC):
         Uses penalized search: considers both profit gain and capacity penalties.
 
         Args:
-            node (int): Unvisited node to potentially insert.
-            route_idx (int): Route to insert into.
-            _hint_pos (int): Position hint (unused).
+            node: Unvisited node to potentially insert.
+            route_idx: Route to insert into.
+            _hint_pos: Position hint (unused).
 
         Returns:
             bool: True if insertion improves penalized profit.
@@ -949,9 +949,9 @@ class LocalSearch(ABC):
         Uses penalized search: considers both profit loss and capacity penalty reduction.
 
         Args:
-            node (int): Routed node to potentially drop.
-            route_idx (int): Route to drop from.
-            pos (int): Position of the node in the route.
+            node: Routed node to potentially drop.
+            route_idx: Route to drop from.
+            pos: Position of the node in the route.
 
         Returns:
             bool: True if dropping improves penalized profit.

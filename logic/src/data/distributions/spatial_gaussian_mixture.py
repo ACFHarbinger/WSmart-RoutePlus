@@ -29,8 +29,8 @@ class GaussianMixture(BaseDistribution):
         """Initialize Class.
 
         Args:
-            num_modes (int): Description of num_modes.
-            cdist (int): Description of cdist.
+            num_modes: Description of num_modes.
+            cdist: Description of cdist.
         """
         self.num_modes = num_modes
         self.cdist = cdist
@@ -39,8 +39,8 @@ class GaussianMixture(BaseDistribution):
         """Sample.
 
         Args:
-            size (Tuple[int, ...]): Description of size.
-            generator (Optional[torch.Generator], optional): Description of generator.
+            size: Description of size.
+            generator: Description of generator.
 
         Returns:
             torch.Tensor: Sampled values.
@@ -94,8 +94,8 @@ class GaussianMixture(BaseDistribution):
         """generate gaussian mixture.
 
         Args:
-            num_loc (int): Description of num_loc.
-            generator (Optional[torch.Generator], optional): Description of generator.
+            num_loc: Description of num_loc.
+            generator: Description of generator.
 
         Returns:
             Any: Description of return value.
@@ -127,9 +127,9 @@ class GaussianMixture(BaseDistribution):
         """generate gaussian.
 
         Args:
-            batch_size (int): Description of batch_size.
-            num_loc (int): Description of num_loc.
-            generator (Optional[torch.Generator], optional): Description of generator.
+            batch_size: Description of batch_size.
+            num_loc: Description of num_loc.
+            generator: Description of generator.
 
         Returns:
             Any: Description of return value.
@@ -152,8 +152,8 @@ class GaussianMixture(BaseDistribution):
         """Generate a mixture of Gaussian distributions.
 
         Args:
-            num_loc (int): Number of locations.
-            rng (np.random.Generator): Random number generator.
+            num_loc: Number of locations.
+            rng: Random number generator.
 
         Returns:
             np.ndarray: Sampled values.
@@ -183,9 +183,9 @@ class GaussianMixture(BaseDistribution):
         """Generate a single Gaussian distribution.
 
         Args:
-            batch_size (int): Batch size.
-            num_loc (int): Number of locations.
-            rng (np.random.Generator): Random number generator.
+            batch_size: Batch size.
+            num_loc: Number of locations.
+            rng: Random number generator.
 
         Returns:
             np.ndarray: Sampled values.
@@ -213,7 +213,7 @@ class GaussianMixture(BaseDistribution):
         """global min max scaling.
 
         Args:
-            coords (Union[np.ndarray, torch.Tensor]): Description of coords.
+            coords: Description of coords.
 
         Returns:
             Any: Description of return value.
@@ -233,7 +233,7 @@ class GaussianMixture(BaseDistribution):
         """batch normalize and center.
 
         Args:
-            coords (Union[np.ndarray, torch.Tensor]): Description of coords.
+            coords: Description of coords.
 
         Returns:
             Any: Description of return value.

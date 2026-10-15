@@ -21,8 +21,8 @@ def swap_1_route(routes_list: List[List[int]], rng: Random) -> None:
     Intra-route perturbation: Swap two random bins within the same route.
 
     Args:
-        routes_list (List[List[int]]): Current routing solution.
-        rng (Random): Random number generator.
+        routes_list: Current routing solution.
+        rng: Random number generator.
 
     Returns:
         List[List[int]]: Mutated routing solution.
@@ -41,9 +41,9 @@ def swap_n_route_random(routes_list: List[List[int]], rng: Random, n: Optional[i
     Intra-route perturbation: Swap n pairs of random bins within their routes.
 
     Args:
-        routes_list (List[List[int]]): Current routing solution.
-        rng (Random): Random number generator.
-        n (int, optional): Number of pairs to swap.
+        routes_list: Current routing solution.
+        rng: Random number generator.
+        n: Number of pairs to swap.
 
     Returns:
         int: The number of pairs swapped (chosen_n).
@@ -70,9 +70,9 @@ def swap_n_route_consecutive(routes_list: List[List[int]], rng: Random, n: Optio
     within the same route.
 
     Args:
-        routes_list (List[List[int]]): Current routing solution.
-        rng (Random): Random number generator.
-        n (int, optional): Number of consecutive nodes to swap.
+        routes_list: Current routing solution.
+        rng: Random number generator.
+        n: Number of consecutive nodes to swap.
 
     Returns:
         int: The number of consecutive nodes swapped (chosen_n).
@@ -90,8 +90,8 @@ def swap_n_route_consecutive(routes_list: List[List[int]], rng: Random, n: Optio
             Identify two non-overlapping segments of length n_size in the route.
 
             Args:
-                route (List[int]): The route to search.
-                n_size (int): Length of segments to find.
+                route: The route to search.
+                n_size: Length of segments to find.
 
             Returns:
                 Tuple[int, int] | None: Start indices of the two segments, or None if not found.

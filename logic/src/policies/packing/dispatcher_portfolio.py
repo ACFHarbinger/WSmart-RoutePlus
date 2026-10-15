@@ -42,8 +42,8 @@ class PortfolioDispatcher(IPackingAlgorithm):
     ) -> None:
         """
         Args:
-            dispatcher_mode (Optional[str]): 'union' or 'intersection'; ``None`` uses ``context.dispatcher_mode``.
-            dispatcher_candidate_strategies (Optional[List[str]]): Candidate names; ``None`` uses the context.
+            dispatcher_mode: 'union' or 'intersection'; ``None`` uses ``context.dispatcher_mode``.
+            dispatcher_candidate_strategies: Candidate names; ``None`` uses the context.
         """
         self.dispatcher_mode = dispatcher_mode
         self.dispatcher_candidate_strategies = dispatcher_candidate_strategies
@@ -53,7 +53,7 @@ class PortfolioDispatcher(IPackingAlgorithm):
         Run multiple strategies and aggregate via union or intersection.
 
         Args:
-            context (PackingContext): PackingContext with portfolio configuration.
+            context: PackingContext with portfolio configuration.
 
         Returns:
             Tuple[List[int], SearchContext]: Selected bin IDs and search context.

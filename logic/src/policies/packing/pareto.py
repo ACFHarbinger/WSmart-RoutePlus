@@ -51,7 +51,7 @@ class ParetoFrontSelection(IPackingAlgorithm):
         and routing efficiency (distance to depot).
 
         Args:
-            context (PackingContext): The selection context.
+            context: The selection context.
 
         Returns:
             Tuple[List[int], SearchContext]: Selected bin IDs (1-based) and search context.

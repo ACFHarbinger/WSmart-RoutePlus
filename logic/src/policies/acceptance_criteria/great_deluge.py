@@ -41,9 +41,9 @@ class GreatDelugeAcceptance(IAcceptanceCriterion):
         """Initialize the Great Deluge criterion.
 
         Args:
-            target_fitness_multiplier (float): The expected relative improvement
+            target_fitness_multiplier: The expected relative improvement
                 (e.g., 1.1 implies a 10% expected improvement over the initial solution).
-            max_iterations (int): The total budget of iterations to reach the target.
+            max_iterations: The total budget of iterations to reach the target.
         """
         self.target_multiplier = target_fitness_multiplier
         self.max_iterations = max_iterations
@@ -54,7 +54,7 @@ class GreatDelugeAcceptance(IAcceptanceCriterion):
         """Initialize the criterion state.
 
         Args:
-            initial_objective (ObjectiveValue): The initial solution's objective.
+            initial_objective: The initial solution's objective.
         """
         initial_objective = cast(float, initial_objective)
         self.water_level = initial_objective
@@ -72,9 +72,9 @@ class GreatDelugeAcceptance(IAcceptanceCriterion):
         """Determine whether to accept based on the current water level.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            kwargs: Additional context.
 
         Returns:
             Tuple[bool, AcceptanceMetrics]: A tuple containing:
@@ -95,10 +95,10 @@ class GreatDelugeAcceptance(IAcceptanceCriterion):
         """Increment the water level by the rain speed.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            accepted (bool): Whether the move was accepted.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            accepted: Whether the move was accepted.
+            kwargs: Additional context.
         """
         current_obj = cast(float, current_obj)
         candidate_obj = cast(float, candidate_obj)

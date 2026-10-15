@@ -525,8 +525,6 @@ class Bins:
         Args:
             option: The predefined configuration index (0-3).
 
-        Returns:
-            None.
         """
 
         def __set_param(param):

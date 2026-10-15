@@ -60,17 +60,17 @@ class AdaptiveLargeNeighborhoodSearchRouteImprover(IRouteImprovement):
         """Apply ALNS to the tour.
 
         Args:
-            tour (List[int]): Initial tour sequence.
+            tour: Initial tour sequence.
             kwargs: Context containing:
-                distance_matrix (np.ndarray | torch.Tensor): The distance matrix lookup.
-                alns_iterations (int): Number of ALNS iterations (default 200).
-                ruin_fraction (float): Fraction of nodes to ruin (default 0.2).
-                alns_bandit_warm_start_path (str): Path to pre-trained weights.
-                wastes (Dict[int, float]): Node waste demands.
-                capacity (float): Vehicle capacity.
-                cost_per_km (float): Distance cost.
-                revenue_kg (float): Waste revenue.
-                seed (int): Random seed.
+                distance_matrix: The distance matrix lookup.
+                alns_iterations: Number of ALNS iterations (default 200).
+                ruin_fraction: Fraction of nodes to ruin (default 0.2).
+                alns_bandit_warm_start_path: Path to pre-trained weights.
+                wastes: Node waste demands.
+                capacity: Vehicle capacity.
+                cost_per_km: Distance cost.
+                revenue_kg: Waste revenue.
+                seed: Random seed.
 
         Returns:
             Tuple[List[int], ImprovementMetrics]: Improved tour and metadata.

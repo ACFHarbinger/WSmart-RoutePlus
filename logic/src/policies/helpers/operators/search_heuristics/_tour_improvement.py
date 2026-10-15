@@ -174,14 +174,14 @@ def _try_2opt_move(
     :func:`move_kopt_intra` (k=2) via :func:`_apply_kopt_via_operator`.
 
     Args:
-        curr_tour (List[int]): Current closed tour.
-        i (int): Position of t1 in the open route.
-        t1 (int): First endpoint of the edge being considered for removal.
-        t2 (int): Second endpoint of the edge being considered for removal.
-        candidates (Dict[int, List[int]]): α-nearest-neighbour lists.
-        distance_matrix (np.ndarray): Cost matrix.
-        rng (Random): Random number generator.
-        pos_map (Dict[int, int]): $O(1)$ position map for tour index lookups.
+        curr_tour: Current closed tour.
+        i: Position of t1 in the open route.
+        t1: First endpoint of the edge being considered for removal.
+        t2: Second endpoint of the edge being considered for removal.
+        candidates: α-nearest-neighbour lists.
+        distance_matrix: Cost matrix.
+        rng: Random number generator.
+        pos_map: $O(1)$ position map for tour index lookups.
 
     Returns:
         Tuple[Optional[List[int]], float, bool, int]: (new_tour, cost, improved, j)
@@ -237,15 +237,15 @@ def _try_3opt_move(
     with the 2-opt phase.
 
     Args:
-        curr_tour (List[int]): Current closed tour.
-        i (int): Break-point position of the first cut.
-        j (int): Break-point position of the second cut.
-        t1 (int): First endpoint of first edge.
-        t2 (int): Second endpoint of first edge.
-        t3 (int): First endpoint of second edge.
-        t4 (int): Second endpoint of second edge.
-        distance_matrix (np.ndarray): Cost matrix.
-        rng (Random): Random number generator (unused, kept for API compatibility).
+        curr_tour: Current closed tour.
+        i: Break-point position of the first cut.
+        j: Break-point position of the second cut.
+        t1: First endpoint of first edge.
+        t2: Second endpoint of first edge.
+        t3: First endpoint of second edge.
+        t4: Second endpoint of second edge.
+        distance_matrix: Cost matrix.
+        rng: Random number generator (unused, kept for API compatibility).
 
     Returns:
         Tuple[Optional[List[int]], float, bool]: (new_tour, cost, improved).
@@ -321,18 +321,18 @@ def _try_4opt_move(
     the operator disconnect.
 
     Args:
-        curr_tour (List[int]): Current closed tour.
-        i (int): Break-point position of the first cut.
-        j (int): Break-point position of the second cut.
-        k (int): Break-point position of the third cut.
-        t1 (int): First endpoint of first edge.
-        t2 (int): Second endpoint of first edge.
-        t3 (int): First endpoint of second edge.
-        t4 (int): Second endpoint of second edge.
-        t5 (int): First endpoint of third edge.
-        t6 (int): Second endpoint of third edge.
-        distance_matrix (np.ndarray): Cost matrix.
-        rng (Random): Random number generator.
+        curr_tour: Current closed tour.
+        i: Break-point position of the first cut.
+        j: Break-point position of the second cut.
+        k: Break-point position of the third cut.
+        t1: First endpoint of first edge.
+        t2: Second endpoint of first edge.
+        t3: First endpoint of second edge.
+        t4: Second endpoint of second edge.
+        t5: First endpoint of third edge.
+        t6: Second endpoint of third edge.
+        distance_matrix: Cost matrix.
+        rng: Random number generator.
 
     Returns:
         Tuple[Optional[List[int]], float, bool]: (new_tour, cost, improved).
@@ -411,21 +411,21 @@ def _try_5opt_move(
     operator disconnect.
 
     Args:
-        curr_tour (List[int]): Current closed tour.
-        i (int): Break-point position of the first cut.
-        j (int): Break-point position of the second cut.
-        k (int): Break-point position of the third cut.
-        l (int): Break-point position of the fourth cut.
-        t1 (int): First endpoint of first edge.
-        t2 (int): Second endpoint of first edge.
-        t3 (int): First endpoint of second edge.
-        t4 (int): Second endpoint of second edge.
-        t5 (int): First endpoint of third edge.
-        t6 (int): Second endpoint of third edge.
-        t7 (int): First endpoint of fourth edge.
-        t8 (int): Second endpoint of fourth edge.
-        distance_matrix (np.ndarray): Cost matrix.
-        rng (Random): Random number generator.
+        curr_tour: Current closed tour.
+        i: Break-point position of the first cut.
+        j: Break-point position of the second cut.
+        k: Break-point position of the third cut.
+        l: Break-point position of the fourth cut.
+        t1: First endpoint of first edge.
+        t2: Second endpoint of first edge.
+        t3: First endpoint of second edge.
+        t4: Second endpoint of second edge.
+        t5: First endpoint of third edge.
+        t6: Second endpoint of third edge.
+        t7: First endpoint of fourth edge.
+        t8: Second endpoint of fourth edge.
+        distance_matrix: Cost matrix.
+        rng: Random number generator.
 
     Returns:
         Tuple[Optional[List[int]], float, bool]: (new_tour, cost, improved).

@@ -75,13 +75,13 @@ class LCASolver:
         """Initializes the League Championship Algorithm solver.
 
         Args:
-            dist_matrix (np.ndarray): Symmetric distance matrix.
-            wastes (Dict[int, float]): Mapping of bin IDs to waste quantities.
-            capacity (float): Maximum vehicle collection capacity.
-            R (float): Revenue per kg of waste.
-            C (float): Cost per km traveled.
-            params (LCAConfig): Algorithm-specific parameters (teams, iterations).
-            mandatory_nodes (Optional[List[int]]): Nodes that must be visited.
+            dist_matrix: Symmetric distance matrix.
+            wastes: Mapping of bin IDs to waste quantities.
+            capacity: Maximum vehicle collection capacity.
+            R: Revenue per kg of waste.
+            C: Cost per km traveled.
+            params: Algorithm-specific parameters (teams, iterations).
+            mandatory_nodes: Nodes that must be visited.
         """
         self.dist_matrix = dist_matrix
         self.wastes = wastes

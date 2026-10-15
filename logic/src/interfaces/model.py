@@ -40,8 +40,8 @@ class IModel(Protocol):
         """Forward.
 
         Args:
-            td (TensorDict): Description of td.
-            kwargs (Any): Description of kwargs.
+            td: Description of td.
+            kwargs: Description of kwargs.
 
         Returns:
             Any: Description of return value.
@@ -52,7 +52,7 @@ class IModel(Protocol):
         """To.
 
         Args:
-            device (torch.device): Description of device.
+            device: Description of device.
 
         Returns:
             IModel: Description of return value.

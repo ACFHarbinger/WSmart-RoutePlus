@@ -30,10 +30,10 @@ def apply_type_iii_us(route: List[int], i: int, j: int, k: int) -> List[int]:
     Reconnects sequence: V_{i-1} -> V_k...V_{j+1} -> V_j...V_{i+1} -> V_{k+1}...
 
     Args:
-        route (List[int]): The tour as a list of node IDs.
-        i (int): Index of node V_i to remove.
-        j (int): Index of node V_j (neighbor of V_{i+1}).
-        k (int): Index of node V_k (neighbor of V_{i-1}), where k > j relative to i.
+        route: The tour as a list of node IDs.
+        i: Index of node V_i to remove.
+        j: Index of node V_j (neighbor of V_{i+1}).
+        k: Index of node V_k (neighbor of V_{i-1}), where k > j relative to i.
 
     Returns:
         List[int]: The modified tour.
@@ -96,14 +96,14 @@ def apply_type_iii_us_profit(
     Apply Type III Unstringing and return profit delta.
 
     Args:
-        route (List[int]): The tour as a list of node IDs.
-        i (int): Index of node V_i.
-        j (int): Index of node V_j.
-        k (int): Index of node V_k.
-        dist_matrix (np.ndarray): Distance matrix.
-        wastes (Dict[int, float]): Waste levels.
-        R (float): Revenue multiplier.
-        C (float): Cost multiplier.
+        route: The tour as a list of node IDs.
+        i: Index of node V_i.
+        j: Index of node V_j.
+        k: Index of node V_k.
+        dist_matrix: Distance matrix.
+        wastes: Waste levels.
+        R: Revenue multiplier.
+        C: Cost multiplier.
 
     Returns:
         Tuple[List[int], float]: (new_route, delta_profit)

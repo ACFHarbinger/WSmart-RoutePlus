@@ -430,8 +430,8 @@ class VRPPMasterProblemConstraintsMixin:
         """Counts how many times a route crosses the boundary δ(S).
 
         Args:
-            route (Route): The route to check.
-            node_set (FrozenSet[int]): The node set S.
+            route: The route to check.
+            node_set: The node set S.
 
         Returns:
             int: Number of times the route enters/leaves S.

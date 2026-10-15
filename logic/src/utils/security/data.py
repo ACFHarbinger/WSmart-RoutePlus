@@ -29,7 +29,7 @@ def encode_data(data: Any) -> bytes:
     Encodes various data types into bytes for encryption.
 
     Args:
-        data (Any): Data to encode (str, int, float, bytes, list, dict, etc.).
+        data: Data to encode (str, int, float, bytes, list, dict, etc.).
 
     Returns:
         bytes: Encoded byte representation.
@@ -75,9 +75,9 @@ def encrypt_file_data(
     Encrypt a file or data object using Fernet symmetric encryption.
 
     Args:
-        key (bytes): The encryption key.
-        input (Union[str, os.PathLike, Any]): Path to file OR data object to encrypt.
-        output_file (Union[str, os.PathLike], optional): Path to save encrypted data.
+        key: The encryption key.
+        input: Path to file OR data object to encrypt.
+        output_file: Path to save encrypted data.
 
     Returns:
         bytes: The encrypted data.
@@ -104,9 +104,9 @@ def decrypt_file_data(
     Decrypt a file or data bytes using Fernet symmetric encryption.
 
     Args:
-        key (bytes): The encryption key.
-        input (Union[str, os.PathLike, Any]): Path to encrypted file OR encrypted bytes.
-        output_file (Union[str, os.PathLike], optional): Path to save decrypted content.
+        key: The encryption key.
+        input: Path to encrypted file OR encrypted bytes.
+        output_file: Path to save decrypted content.
 
     Returns:
         Union[str, bytes]: The decrypted data. Returns a string if the decrypted bytes

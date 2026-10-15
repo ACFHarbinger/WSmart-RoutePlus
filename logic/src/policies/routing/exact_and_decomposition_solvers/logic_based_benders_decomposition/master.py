@@ -47,8 +47,8 @@ class LBBDMasterProblem:
         """Initialize the LBBD Master Problem.
 
         Args:
-            config (LBBDConfig): Configuration parameters for LBBD.
-            num_customers (int): Number of customers (bins) in the problem.
+            config: Configuration parameters for LBBD.
+            num_customers: Number of customers (bins) in the problem.
         """
         self.config = config
         self.num_customers = num_customers
@@ -70,8 +70,8 @@ class LBBDMasterProblem:
         """Builds the allocation model using the ScenarioTree.
 
         Args:
-            tree (ScenarioTree): Scenario tree providing predicted wastes.
-            stochastic_master (bool): If True, build an Extensive Form (EF) model.
+            tree: Scenario tree providing predicted wastes.
+            stochastic_master: If True, build an Extensive Form (EF) model.
                                      If False, build an Expected Value (EV) model.
         """
         if not GUROBI_AVAILABLE:
@@ -102,8 +102,8 @@ class LBBDMasterProblem:
         """Build the Expected Value (EV) version of the master problem.
 
         Args:
-            tree (ScenarioTree): The scenario tree.
-            horizon (int): Planning horizon in days.
+            tree: The scenario tree.
+            horizon: Planning horizon in days.
 
         Returns:
             Any: The Gurobi expression for the expected profit.
@@ -153,8 +153,8 @@ class LBBDMasterProblem:
         """Build the Extensive Form (EF) version of the master problem.
 
         Args:
-            tree (ScenarioTree): The scenario tree.
-            horizon (int): Planning horizon in days.
+            tree: The scenario tree.
+            horizon: Planning horizon in days.
 
         Returns:
             Any: The Gurobi expression for the expected profit.
@@ -166,7 +166,7 @@ class LBBDMasterProblem:
             """Recursively collect all nodes in the scenario tree into node_map.
 
             Args:
-                n (ScenarioTreeNode): The current node to collect.
+                n: The current node to collect.
             """
             node_map.append(n)
             for c in n.children:
@@ -200,8 +200,8 @@ class LBBDMasterProblem:
                 """Find the parent of target node starting from curr.
 
                 Args:
-                    curr (ScenarioTreeNode): Current node being checked.
-                    target (ScenarioTreeNode): Target node whose parent is sought.
+                    curr: Current node being checked.
+                    target: Target node whose parent is sought.
                 """
                 nonlocal parent
                 for c in curr.children:
@@ -241,8 +241,8 @@ class LBBDMasterProblem:
         """Adds a cut preventing this set of nodes from being assigned together on this day.
 
         Args:
-            day (int): The day for which the cut is added.
-            assigned_nodes (List[int]): The list of nodes assigned to this day.
+            day: The day for which the cut is added.
+            assigned_nodes: The list of nodes assigned to this day.
         """
         subset = [i for i in assigned_nodes if i != 0]
         if not subset:
@@ -261,9 +261,9 @@ class LBBDMasterProblem:
         This is a standard LBBD optimality cut for routing.
 
         Args:
-            day (int): The day for which the cut is added.
-            assigned_nodes (List[int]): The list of nodes assigned to this day.
-            distance (float): The optimal distance for the subproblem.
+            day: The day for which the cut is added.
+            assigned_nodes: The list of nodes assigned to this day.
+            distance: The optimal distance for the subproblem.
         """
         subset = [i for i in assigned_nodes if i != 0]
         others = [i for i in self.customers if i not in subset]

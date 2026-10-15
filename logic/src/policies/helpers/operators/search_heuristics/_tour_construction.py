@@ -236,11 +236,11 @@ def _2opt_gain(
     A positive gain means the 2-opt move strictly reduces tour length.
 
     Args:
-        t1 (int): First node of first edge.
-        t2 (int): Second node of first edge.
-        t3 (int): First node of second edge.
-        t4 (int): Second node of second edge.
-        d (np.ndarray): Distance matrix.
+        t1: First node of first edge.
+        t2: Second node of first edge.
+        t3: First node of second edge.
+        t4: Second node of second edge.
+        d: Distance matrix.
 
     Returns:
         float: Calculated gain.
@@ -269,13 +269,13 @@ def _3opt_gains(
     Gain > 0 means an improving move for that case.
 
     Args:
-        t1 (int): First node of first edge.
-        t2 (int): Second node of first edge.
-        t3 (int): First node of second edge.
-        t4 (int): Second node of second edge.
-        t5 (int): First node of third edge.
-        t6 (int): Second node of third edge.
-        d (np.ndarray): Distance matrix.
+        t1: First node of first edge.
+        t2: Second node of first edge.
+        t3: First node of second edge.
+        t4: Second node of second edge.
+        t5: First node of third edge.
+        t6: Second node of third edge.
+        d: Distance matrix.
 
     Returns:
         List[float]: Gains for cases 0-6.
@@ -318,15 +318,15 @@ def _4opt_gains(
     Returns a list of three gain values (indices 0–2).
 
     Args:
-        t1 (int): First node of first edge.
-        t2 (int): Second node of first edge.
-        t3 (int): First node of second edge.
-        t4 (int): Second node of second edge.
-        t5 (int): First node of third edge.
-        t6 (int): Second node of third edge.
-        t7 (int): First node of fourth edge.
-        t8 (int): Second node of fourth edge.
-        d (np.ndarray): Distance matrix.
+        t1: First node of first edge.
+        t2: Second node of first edge.
+        t3: First node of second edge.
+        t4: Second node of second edge.
+        t5: First node of third edge.
+        t6: Second node of third edge.
+        t7: First node of fourth edge.
+        t8: Second node of fourth edge.
+        d: Distance matrix.
 
     Returns:
         List[float]: Gains for cases 0-2.
@@ -363,17 +363,17 @@ def _5opt_gains(
     Returns a list of five gain values (indices 0–4).
 
     Args:
-        t1 (int): First node of first edge.
-        t2 (int): Second node of first edge.
-        t3 (int): First node of second edge.
-        t4 (int): Second node of second edge.
-        t5 (int): First node of third edge.
-        t6 (int): Second node of third edge.
-        t7 (int): First node of fourth edge.
-        t8 (int): Second node of fourth edge.
-        t9 (int): First node of fifth edge.
-        t10 (int): Second node of fifth edge.
-        d (np.ndarray): Distance matrix.
+        t1: First node of first edge.
+        t2: Second node of first edge.
+        t3: First node of second edge.
+        t4: Second node of second edge.
+        t5: First node of third edge.
+        t6: Second node of third edge.
+        t7: First node of fourth edge.
+        t8: Second node of fourth edge.
+        t9: First node of fifth edge.
+        t10: Second node of fifth edge.
+        d: Distance matrix.
 
     Returns:
         List[float]: Gains for cases 0-4.

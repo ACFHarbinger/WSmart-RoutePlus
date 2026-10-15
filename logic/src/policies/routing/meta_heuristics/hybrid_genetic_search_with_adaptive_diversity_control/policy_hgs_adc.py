@@ -85,8 +85,6 @@ class PolicyHGSADC(BaseMultiPeriodRoutingPolicy):
         Args:
             config: Configuration source for the algorithm.
 
-        Returns:
-            None.
         """
         super().__init__(config)
 
@@ -275,8 +273,6 @@ class PolicyHGSADC(BaseMultiPeriodRoutingPolicy):
             n_vehicles: Number of vehicles available.
             T: Planning horizon.
 
-        Returns:
-            None.
         """
         loads = compute_daily_loads(ind.patterns, base_wastes, daily_increments, T)
         tot_cost = 0.0

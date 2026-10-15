@@ -78,8 +78,6 @@ class FILOSolver:
             params: Algorithm-specific parameters.
             mandatory_nodes: Nodes that must be visited.
 
-        Returns:
-            None.
         """
         self.d = dist_matrix
         self.waste = wastes
@@ -148,8 +146,6 @@ class FILOSolver:
             improved: Whether the current solution improved.
             ruined_and_recreated: List of nodes affected by shaking.
 
-        Returns:
-            None.
         """
         if is_new_best:
             for i in ruined_and_recreated:
@@ -179,8 +175,6 @@ class FILOSolver:
             delta_profit: Profit change in the last iteration.
             ruined_and_recreated: List of nodes affected by shaking.
 
-        Returns:
-            None.
         """
         n_visited = sum(len(r) for r in routes)
         n_routes = len(routes)
@@ -208,8 +202,6 @@ class FILOSolver:
         Args:
             nodes: Nodes to add or move to end in cache.
 
-        Returns:
-            None.
         """
         for node in nodes:
             if node in self.svc_cache:

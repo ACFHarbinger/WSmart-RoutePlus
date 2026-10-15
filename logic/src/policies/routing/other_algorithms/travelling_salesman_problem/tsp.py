@@ -94,8 +94,8 @@ def get_path_cost(G, p):
     Calculate path cost in a NetworkX graph.
 
     Args:
-        G (networkx.Graph): Graph with edge weights
-        p (List[int]): Path as sequence of node IDs
+        G: Graph with edge weights
+        p: Path as sequence of node IDs
 
     Returns:
         float: Total path cost (sum of edge weights)
@@ -122,11 +122,11 @@ def get_partial_tour(
     Reduce a tour to fit within vehicle capacity by removing bins with minimal waste.
 
     Args:
-        tour (List[int]): Current tour.
-        bins (np.ndarray): Waste amounts for each bin.
-        max_capacity (float): Vehicle capacity limit.
-        distance_matrix (np.ndarray): Distance matrix.
-        cost (float): Current routing cost.
+        tour: Current tour.
+        bins: Waste amounts for each bin.
+        max_capacity: Vehicle capacity limit.
+        distance_matrix: Distance matrix.
+        cost: Current routing cost.
 
     Returns:
         Tuple[np.ndarray, float]: (Reduced tour, updated cost).
@@ -148,7 +148,7 @@ def dist_matrix_from_graph(G: nx.Graph) -> Tuple[np.ndarray, List[List[List[int]
     Compute all-pairs shortest path distances and paths from a NetworkX graph.
 
     Args:
-        G (nx.Graph): Input graph with nodes 0..N-1 and weighted edges.
+        G: Input graph with nodes 0..N-1 and weighted edges.
 
     Returns:
         Tuple[np.ndarray, List[List[List[int]]]]: (Distance matrix, Path matrix).

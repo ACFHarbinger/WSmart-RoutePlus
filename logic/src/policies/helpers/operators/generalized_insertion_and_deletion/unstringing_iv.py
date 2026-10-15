@@ -43,11 +43,11 @@ def apply_type_iv_us(route: List[int], i: int, j: int, k: int, l: int) -> List[i
     S_B_rev = (V_{l-1}...V_j)    [Reverse of V_j...V_{l-1}]
 
     Args:
-        route (List[int]): The tour.
-        i (int): Index of V_i.
-        j (int): Index of node V_j.
-        k (int): Index of node V_k.
-        l (int): Index of node V_l.
+        route: The tour.
+        i: Index of V_i.
+        j: Index of node V_j.
+        k: Index of node V_k.
+        l: Index of node V_l.
 
     Returns:
         List[int]: Modified tour.
@@ -110,15 +110,15 @@ def apply_type_iv_us_profit(
     Apply Type IV Unstringing and return profit delta.
 
     Args:
-        route (List[int]): The tour.
-        i (int): Index of V_i.
-        j (int): Index of node V_j.
-        k (int): Index of node V_k.
-        l (int): Index of node V_l.
-        dist_matrix (np.ndarray): Distance matrix.
-        wastes (Dict[int, float]): Waste levels.
-        R (float): Revenue multiplier.
-        C (float): Cost multiplier.
+        route: The tour.
+        i: Index of V_i.
+        j: Index of node V_j.
+        k: Index of node V_k.
+        l: Index of node V_l.
+        dist_matrix: Distance matrix.
+        wastes: Waste levels.
+        R: Revenue multiplier.
+        C: Cost multiplier.
 
     Returns:
         Tuple[List[int], float]: (new_route, delta_profit)

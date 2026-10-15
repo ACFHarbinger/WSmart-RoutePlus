@@ -46,14 +46,14 @@ class FastTSPRouteImprover(IRouteImprovement):
         """Apply fast TSP reoptimization to each route in the tour.
 
         Args:
-            tour (List[int]): Initial tour sequence.
+            tour: Initial tour sequence.
             kwargs: Context containing:
-                distance_matrix (np.ndarray | torch.Tensor): Distance lookup.
-                time_limit (float): Maximum time for TSP solve per segment (default 2.0).
-                seed (int): Accepted but unused: fast-tsp has no seed, and trips above 20 bins
+                distance_matrix: Distance lookup.
+                time_limit: Maximum time for TSP solve per segment (default 2.0).
+                seed: Accepted but unused: fast-tsp has no seed, and trips above 20 bins
                     (time-budgeted local search) are not repeatable; up to 20 bins it is exact (Held-Karp).
-                wastes (Dict[int, float]): Bin mass dictionary.
-                capacity (float): Vehicle capacity.
+                wastes: Bin mass dictionary.
+                capacity: Vehicle capacity.
 
         Returns:
             Tuple[List[int], ImprovementMetrics]: Refined tour and metrics.

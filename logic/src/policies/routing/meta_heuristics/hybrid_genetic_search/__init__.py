@@ -6,8 +6,6 @@ Attributes:
     Individual: Class representing an individual in the population.
     HGSSolver: Main solver class for HGS.
 
-Example:
-    >>> from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search import HGSSolver
 """
 
 from .dispatcher import run_hgs

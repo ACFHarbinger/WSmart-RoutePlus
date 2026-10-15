@@ -7,8 +7,6 @@ Attributes:
     TemporalAttentionModel: Base AM variant with history-aware node encoding.
     TemporalAMPolicy: RL4CO-compatible wrapper with proactive state estimation.
 
-Example:
-    >>> from logic.src.models.core.temporal_attention_model import TemporalAttentionModel
 """
 
 from .model import TemporalAttentionModel as TemporalAttentionModel

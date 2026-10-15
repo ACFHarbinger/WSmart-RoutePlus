@@ -45,7 +45,7 @@ class BaseJointPolicy(PolicyVizMixin, IRoutingAlgorithm):
         """Initialize policy with optional config.
 
         Args:
-            config (Optional[Any], optional): Configuration parameters. Defaults to None.
+            config: Configuration parameters. Defaults to None.
         """
         self._config = config
         self._seed = getattr(config, "seed", 42) if config is not None else 42
@@ -90,7 +90,7 @@ class BaseJointPolicy(PolicyVizMixin, IRoutingAlgorithm):
         """Solve mandatory-packing and routing jointly.
 
         Args:
-            context (JointSelectionConstructionContext): The search and problem context.
+            context: The search and problem context.
 
         Returns:
             Tuple[List[int], List[List[int]], float, float]:
@@ -111,7 +111,7 @@ class BaseJointPolicy(PolicyVizMixin, IRoutingAlgorithm):
         """Simulation-engine entry point. Extracts context and calls solve_joint.
 
         Args:
-            kwargs (Any): Simulation context and parameters.
+            kwargs: Simulation context and parameters.
 
         Returns:
             Tuple[List[int], float, float, Optional[SearchContext], Optional[Any]]:
@@ -219,8 +219,8 @@ class BaseJointPolicy(PolicyVizMixin, IRoutingAlgorithm):
         """Build distance sub-matrix and wastes dict.
 
         Args:
-            selected_bins (List[int]): IDs of selected bins.
-            context (JointSelectionConstructionContext): Context containing problem data.
+            selected_bins: IDs of selected bins.
+            context: Context containing problem data.
 
         Returns:
             Tuple[np.ndarray, Dict[int, float], List[int]]:
@@ -246,8 +246,8 @@ class BaseJointPolicy(PolicyVizMixin, IRoutingAlgorithm):
         """Convert local-index routes to a flat global-ID tour.
 
         Args:
-            routes (List[List[int]]): Routes as node indices.
-            subset_indices (List[int]): Local to global ID mapping.
+            routes: Routes as node indices.
+            subset_indices: Local to global ID mapping.
 
         Returns:
             List[int]: Flat global-ID tour including depots.

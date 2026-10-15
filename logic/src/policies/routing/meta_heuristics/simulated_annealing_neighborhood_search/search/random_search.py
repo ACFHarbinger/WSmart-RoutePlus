@@ -62,12 +62,12 @@ def local_search(  # noqa: C901
     Randomly selects move and swap operators to explore the neighborhood.
 
     Args:
-        routes_list (List[List[int]]): Current routing solution.
-        removed_bins (List[int]): Set of bins not currently collected.
-        distance_matrix (np.ndarray): Distance matrix.
-        bins_cannot_removed (List[int]): Bins that must remain in the routes.
-        rng (random.Random): Random number generator.
-        np_rng (np.random.Generator): Numpy random number generator.
+        routes_list: Current routing solution.
+        removed_bins: Set of bins not currently collected.
+        distance_matrix: Distance matrix.
+        bins_cannot_removed: Bins that must remain in the routes.
+        rng: Random number generator.
+        np_rng: Numpy random number generator.
 
     Returns:
         List[List[int]]: Mutated routing solution.

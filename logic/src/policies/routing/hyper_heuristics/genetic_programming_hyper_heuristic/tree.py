@@ -54,8 +54,8 @@ def protected_div(a: float, b: float) -> float:
     """Protected division: returns 1.0 if denominator is near-zero.
 
     Args:
-        a (float): Numerator.
-        b (float): Denominator.
+        a: Numerator.
+        b: Denominator.
 
     Returns:
         float: Result of the division.
@@ -78,7 +78,7 @@ class ConstantNode:
         """Initialize the constant node with a random value.
 
         Args:
-            val (float): Fixed random scalar value.
+            val: Fixed random scalar value.
         """
         self.val = val
 
@@ -141,7 +141,7 @@ class TerminalNode:
         """Initialize the terminal node for a specific context feature.
 
         Args:
-            feature (str): Name of the feature to extract.
+            feature: Name of the feature to extract.
         """
         self.feature = feature
 
@@ -209,9 +209,9 @@ class FunctionNode:
         """Initialize the function node with an operation and two subtrees.
 
         Args:
-            fn (str): Name of the arithmetic operation (ADD, SUB, etc.).
-            left (GPNode): Left child subtree.
-            right (GPNode): Right child subtree.
+            fn: Name of the arithmetic operation (ADD, SUB, etc.).
+            left: Left child subtree.
+            right: Right child subtree.
         """
         self.fn = fn
         self.left = left
@@ -363,8 +363,8 @@ def _get_subtree(parent: "FunctionNode", side: str) -> GPNode:
     """Return the child subtree at the given side.
 
     Args:
-        parent (FunctionNode): Parent node.
-        side (str): Side of the child (left or right).
+        parent: Parent node.
+        side: Side of the child (left or right).
 
     Returns:
         GPNode: Child subtree.
@@ -376,9 +376,9 @@ def _set_subtree(parent: "FunctionNode", side: str, subtree: GPNode) -> None:
     """Replace the child subtree at the given side in-place.
 
     Args:
-        parent (FunctionNode): Parent node.
-        side (str): Side of the child (left or right).
-        subtree (GPNode): Subtree to replace.
+        parent: Parent node.
+        side: Side of the child (left or right).
+        subtree: Subtree to replace.
     """
     if side == "left":
         parent.left = subtree
@@ -557,7 +557,7 @@ def compile_tree(tree: GPNode) -> str:
     to create a fast lambda function for O(1) candidate evaluation.
 
     Args:
-        tree (GPNode): Root node of the GP tree.
+        tree: Root node of the GP tree.
 
     Returns:
         str: Python expression string.
@@ -575,7 +575,7 @@ def to_callable(tree: GPNode) -> Callable:
     expression that bypasses dictionary lookups and recursion overhead.
 
     Args:
-        tree (GPNode): Root node of the GP tree.
+        tree: Root node of the GP tree.
 
     Returns:
         Callable: Compiled lambda function.

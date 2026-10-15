@@ -42,9 +42,9 @@ class Gamma(BaseDistribution):
         and per-node heterogeneous parameters are loaded from ``GAMMA_PRESETS``.
 
         Args:
-            alpha (Union[float, torch.Tensor]): Shape parameter (ignored if ``option`` is set).
-            theta (Union[float, torch.Tensor]): Scale parameter (ignored if ``option`` is set).
-            option (Optional[int]): Preset index (0-3) for per-node heterogeneous params.
+            alpha: Shape parameter (ignored if ``option`` is set).
+            theta: Scale parameter (ignored if ``option`` is set).
+            option: Preset index (0-3) for per-node heterogeneous params.
         """
         self.option = option
         self.alpha = alpha
@@ -73,7 +73,7 @@ class Gamma(BaseDistribution):
 
         Args:
             size: Sampling shape (e.g., (batch_size, num_loc))
-            generator (Optional[torch.Generator], optional): Description of generator.
+            generator: Description of generator.
 
         Returns:
             torch.Tensor: Sampled values

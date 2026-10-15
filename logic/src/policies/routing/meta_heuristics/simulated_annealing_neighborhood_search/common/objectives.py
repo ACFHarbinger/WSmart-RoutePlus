@@ -48,14 +48,14 @@ def compute_profit(
     Calculate the total objective value (Profit - Penalties).
 
     Args:
-        routes_list (List[List[int]]): Current routing solution.
-        p_vehicle (float): Vehicle penalty coefficient.
-        p_load (float): Load penalty coefficient.
-        p_route_difference (float): Imbalance penalty coefficient.
-        p_shift (float): Shift penalty coefficient.
-        data (pd.DataFrame): Bin data.
-        distance_matrix (np.ndarray): Distance matrix.
-        values (Dict): Parameter dictionary containing keys like E, B, R, C,
+        routes_list: Current routing solution.
+        p_vehicle: Vehicle penalty coefficient.
+        p_load: Load penalty coefficient.
+        p_route_difference: Imbalance penalty coefficient.
+        p_shift: Shift penalty coefficient.
+        data: Bin data.
+        distance_matrix: Distance matrix.
+        values: Parameter dictionary containing keys like E, B, R, C,
             vehicle_capacity, and shift_duration.
 
     Returns:
@@ -94,11 +94,11 @@ def compute_real_profit(routes_list, p_vehicle, data, distance_matrix, values):
     excluding soft constraints.
 
     Args:
-        routes_list (List[List[int]]): Current routing solution.
-        p_vehicle (float): Vehicle penalty.
-        data (pd.DataFrame): Bin data.
-        distance_matrix (np.ndarray): Distance matrix.
-        values (Dict): Parameter dictionary.
+        routes_list: Current routing solution.
+        p_vehicle: Vehicle penalty.
+        data: Bin data.
+        distance_matrix: Distance matrix.
+        values: Parameter dictionary.
 
     Returns:
         float: Physical profit.
@@ -119,14 +119,14 @@ def compute_total_profit(routes, distance_matrix, id_to_index, data, R, V, densi
     - Cost: sum of distances multiplied by cost per km (default = 1.0 €/km)
 
     Args:
-        routes (List[List[int]]): Current routing solution.
-        distance_matrix (np.ndarray): Distance matrix.
-        id_to_index (Dict): Mapping of bin IDs to their indices.
-        data (pd.DataFrame): Bin data.
-        R (float): Revenue per kg.
-        V (float): Bin volume.
-        density (float): Bin density.
-        cost_per_km (float, optional): Cost per km. Defaults to 1.0.
+        routes: Current routing solution.
+        distance_matrix: Distance matrix.
+        id_to_index: Mapping of bin IDs to their indices.
+        data: Bin data.
+        R: Revenue per kg.
+        V: Bin volume.
+        density: Bin density.
+        cost_per_km: Cost per km. Defaults to 1.0.
 
     Returns:
         float: Total calculated profit.

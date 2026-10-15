@@ -43,14 +43,14 @@ def build_grasp_routes(
     Select uniformly from the RCL.
 
     Args:
-        dist_matrix (np.ndarray): (N+1)x(N+1) distance matrix.
-        wastes (Dict[int, float]): {node_id → fill level}.
-        capacity (float): Vehicle capacity Q.
-        R (float): Revenue per unit waste.
-        C (float): Cost per unit distance.
-        mandatory_nodes (Optional[List[int]]): Nodes that must be visited.
-        alpha (float): RCL greediness: 0.0 = fully greedy, 1.0 = fully random.
-        rng (Optional[random.Random]): Random generator.
+        dist_matrix: (N+1)x(N+1) distance matrix.
+        wastes: {node_id → fill level}.
+        capacity: Vehicle capacity Q.
+        R: Revenue per unit waste.
+        C: Cost per unit distance.
+        mandatory_nodes: Nodes that must be visited.
+        alpha: RCL greediness: 0.0 = fully greedy, 1.0 = fully random.
+        rng: Random generator.
 
     Returns:
         List[List[int]]: List of routes (depot excluded).

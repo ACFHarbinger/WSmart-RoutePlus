@@ -49,15 +49,15 @@ def insert_bins(
     Continues until no more profitable insertions are found.
 
     Args:
-        routes_list (List[List[int]]): Initial routes.
-        removed_bins (List[int]): Available bins.
-        p_vehicle (float): Vehicle penalty.
-        p_load (float): Load penalty.
-        p_route_difference (float): Difference penalty.
-        p_shift (float): Shift penalty.
-        data (pd.DataFrame): Weights context.
-        distance_matrix (np.ndarray): Distance data.
-        values (Dict): Constants.
+        routes_list: Initial routes.
+        removed_bins: Available bins.
+        p_vehicle: Vehicle penalty.
+        p_load: Load penalty.
+        p_route_difference: Difference penalty.
+        p_shift: Shift penalty.
+        data: Weights context.
+        distance_matrix: Distance data.
+        values: Constants.
 
     Returns:
         List[List[int]]: Optimized routing solution.
@@ -127,16 +127,16 @@ def remove_bins_end(
     Greedily remove bins from the current routes if it increases total profit.
 
     Args:
-        routes_list (List[List[int]]): Initial routes.
-        removed_bins (List[int]): Target set for dropped bins.
-        p_vehicle (float): Vehicle penalty.
-        p_load (float): Load penalty.
-        p_route_difference (float): Difference penalty.
-        p_shift (float): Shift penalty.
-        data (pd.DataFrame): Bin metrics.
-        bins_cannot_removed (List[int]): Mandatory bins.
-        distance_matrix (np.ndarray): Metric matrix.
-        values (Dict): Constants.
+        routes_list: Initial routes.
+        removed_bins: Target set for dropped bins.
+        p_vehicle: Vehicle penalty.
+        p_load: Load penalty.
+        p_route_difference: Difference penalty.
+        p_shift: Shift penalty.
+        data: Bin metrics.
+        bins_cannot_removed: Mandatory bins.
+        distance_matrix: Metric matrix.
+        values: Constants.
 
     Returns:
         List[List[int]]: Optimized routing solution.

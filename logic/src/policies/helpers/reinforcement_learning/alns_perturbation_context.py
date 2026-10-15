@@ -39,10 +39,10 @@ class ALNSPerturbationContext:
         Initialize the perturbation context.
 
         Args:
-            routes (List[List[int]]): Current solution routes.
-            dist_matrix (np.ndarray): NxN distance matrix.
-            wastes (Dict[int, float]): Dictionary of node waste demands.
-            capacity (float): Maximum vehicle capacity.
+            routes: Current solution routes.
+            dist_matrix: NxN distance matrix.
+            wastes: Dictionary of node waste demands.
+            capacity: Maximum vehicle capacity.
         """
         self.routes = copy.deepcopy(routes)
         self.dist_matrix = dist_matrix
@@ -63,7 +63,7 @@ class ALNSPerturbationContext:
         Rebuild internal maps after modifications.
 
         Args:
-            changed_routes (set): Indices of routes that were modified (for efficiency).
+            changed_routes: Indices of routes that were modified (for efficiency).
         """
         self._build_structures()
 
@@ -72,7 +72,7 @@ class ALNSPerturbationContext:
         Calculate total waste load of a specific route.
 
         Args:
-            ri (int): Index of the route.
+            ri: Index of the route.
 
         Returns:
             float: Sum of waste for all nodes in the route.

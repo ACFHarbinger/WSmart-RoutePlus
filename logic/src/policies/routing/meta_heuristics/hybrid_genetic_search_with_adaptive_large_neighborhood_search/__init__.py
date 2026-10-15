@@ -8,8 +8,6 @@ Attributes:
     HGSALNSSolver: Core solver class.
     HGSALNSConfig: Configuration parameters.
 
-Example:
-    >>> from .hgs_alns import HGSALNSSolver
 """
 
 from .hgs_alns import HGSALNSSolver

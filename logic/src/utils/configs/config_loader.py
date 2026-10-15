@@ -32,7 +32,7 @@ def load_yaml_config(config_path: str) -> dict[str, Any]:
     Loads a YAML configuration file.
 
     Args:
-        config_path (str): Path to the YAML file.
+        config_path: Path to the YAML file.
 
     Returns:
         dict[str, Any]: The configuration dictionary.
@@ -52,7 +52,7 @@ def load_xml_config(config_path: str) -> dict[str, Any]:
     Loads an XML configuration file and converts it to a dictionary.
 
     Args:
-        config_path (str): Path to the XML file.
+        config_path: Path to the XML file.
 
     Returns:
         dict[str, Any]: The configuration dictionary.
@@ -112,7 +112,7 @@ def load_config(config_path: str) -> dict[str, Any]:
     Loads a YAML or XML configuration file based on extension.
 
     Args:
-        config_path (str): Path to the configuration file.
+        config_path: Path to the configuration file.
 
     Returns:
         dict[str, Any]: The configuration dictionary.

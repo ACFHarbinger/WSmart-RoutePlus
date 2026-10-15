@@ -30,8 +30,8 @@ class Uniform(BaseDistribution):
         """Initialize Class.
 
         Args:
-            low (int): Minimum value for randint.
-            high (int): Maximum value for randint.
+            low: Minimum value for randint.
+            high: Maximum value for randint.
         """
         self.low = low
         self.high = high
@@ -41,7 +41,7 @@ class Uniform(BaseDistribution):
 
         Args:
             size: Sampling shape (e.g., (batch_size, num_loc, components))
-            generator (Optional[torch.Generator], optional): Description of generator.
+            generator: Description of generator.
 
         Returns:
             torch.Tensor: Sampled values in range [0.01, 1.0].

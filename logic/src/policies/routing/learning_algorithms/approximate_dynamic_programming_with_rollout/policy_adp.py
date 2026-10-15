@@ -66,10 +66,8 @@ class ADPRolloutPolicy(BaseMultiPeriodRoutingPolicy):
         """Initialise the ADP Rollout policy adapter.
 
         Args:
-            config (Optional[Union[ADPRolloutConfig, Dict[str, Any]]]): Configuration for the ADP Rollout policy.
+            config: Configuration for the ADP Rollout policy.
 
-        Returns:
-            None
         """
         super().__init__(config)
 

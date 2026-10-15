@@ -27,7 +27,7 @@ def get_adapter(env_name: str) -> type:
     """Retrieves the appropriate adapter class for a given environment.
 
     Args:
-        env_name (str): Name of the environment (e.g., 'tsp', 'cvrp').
+        env_name: Name of the environment (e.g., 'tsp', 'cvrp').
 
     Returns:
         type: The SubproblemAdapter subclass for the environment.

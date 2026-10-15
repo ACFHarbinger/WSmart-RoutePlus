@@ -58,8 +58,6 @@ class HGSALNSPolicy(BaseRoutingPolicy):
         Args:
             config: HGSALNSConfig dataclass, raw dict from YAML, or None.
 
-        Returns:
-            None.
         """
         super().__init__(config)
 

@@ -40,7 +40,7 @@ class ABCPolicy(BaseRoutingPolicy):
         """Initializes the ABC policy.
 
         Args:
-            config (Optional[Union[ABCConfig, Dict[str, Any]]]): Configuration
+            config: Configuration
                 source for the Artificial Bee Colony.
         """
         super().__init__(config)

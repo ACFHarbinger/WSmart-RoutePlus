@@ -3,8 +3,6 @@
 Attributes:
     MODULE_VAR (Type): Description of module level variable.
 
-Example:
-    >>> import __init__
 """
 
 import contextlib

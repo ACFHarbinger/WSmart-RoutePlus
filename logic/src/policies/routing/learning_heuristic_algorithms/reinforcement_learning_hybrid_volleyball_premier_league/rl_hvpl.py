@@ -300,8 +300,6 @@ class RLHVPLSolver:
             profit: Profit of the best solution.
             cost: Cost of the best solution.
 
-        Returns:
-            None
         """
         if not routes:
             return

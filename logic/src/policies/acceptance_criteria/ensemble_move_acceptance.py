@@ -42,8 +42,8 @@ class EnsembleAcceptance(IAcceptanceCriterion):
         """Initialize the Ensemble criterion.
 
         Args:
-            criteria (List[IAcceptanceCriterion]): The instantiated sub-criteria.
-            rule (str): The aggregation logic ('G-AND', 'G-OR', 'G-VOT').
+            criteria: The instantiated sub-criteria.
+            rule: The aggregation logic ('G-AND', 'G-OR', 'G-VOT').
                 Defaults to 'G-VOT'.
 
         Raises:
@@ -58,7 +58,7 @@ class EnsembleAcceptance(IAcceptanceCriterion):
         """Initialize all sub-criteria in the ensemble.
 
         Args:
-            initial_objective (ObjectiveValue): The initial solution's objective.
+            initial_objective: The initial solution's objective.
         """
         initial_objective = cast(float, initial_objective)
         for crit in self.criteria:
@@ -70,9 +70,9 @@ class EnsembleAcceptance(IAcceptanceCriterion):
         """Aggregate acceptance decisions from all sub-criteria.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            kwargs: Additional context.
 
         Returns:
             Tuple[bool, AcceptanceMetrics]: A tuple containing:
@@ -105,10 +105,10 @@ class EnsembleAcceptance(IAcceptanceCriterion):
         """Advance the internal states of all sub-criteria.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            accepted (bool): Whether the move was accepted.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            accepted: Whether the move was accepted.
+            kwargs: Additional context.
         """
         current_obj = cast(float, current_obj)
         candidate_obj = cast(float, candidate_obj)

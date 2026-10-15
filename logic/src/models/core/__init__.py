@@ -13,8 +13,6 @@ Attributes:
     MoE: Mixture-of-experts adaptive routing model.
     N2S: Neural neighborhood search for solution refinement.
 
-Example:
-    >>> from logic.src.models.core import AttentionModel
 """
 
 from typing import Any

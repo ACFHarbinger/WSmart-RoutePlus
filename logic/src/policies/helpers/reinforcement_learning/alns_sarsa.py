@@ -751,7 +751,7 @@ class ALNSSARSASolver:
         stagnation, and diversity).
 
         Args:
-            initial_solution (Optional[List[List[int]]]): Starting solution.
+            initial_solution: Starting solution.
 
         Returns:
             Tuple[List[List[int]], float, float]: (best_routes, best_profit, best_cost).

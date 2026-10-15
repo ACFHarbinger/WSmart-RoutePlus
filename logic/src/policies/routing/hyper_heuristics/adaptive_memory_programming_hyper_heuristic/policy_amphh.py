@@ -77,7 +77,7 @@ class AMPHHPolicy(BaseMultiPeriodRoutingPolicy):
         Initialize the Adaptive Memory Programming Hyper-Heuristic (AMPHH) solver.
 
         Args:
-            config (Any): Configuration for the policy.
+            config: Configuration for the policy.
         """
         super().__init__(config)
         self.params = self._effective_config(config)
@@ -93,8 +93,8 @@ class AMPHHPolicy(BaseMultiPeriodRoutingPolicy):
         """Evaluate the total profit of a multi-period plan.
 
         Args:
-            plan (List[List[List[int]]]): Multi-period plan.
-            problem (ProblemContext): Problem context.
+            plan: Multi-period plan.
+            problem: Problem context.
 
         Returns:
             float: Total profit of the plan.
@@ -111,11 +111,9 @@ class AMPHHPolicy(BaseMultiPeriodRoutingPolicy):
         """Update the adaptive memory with a new solution.
 
         Args:
-            prof (float): Profit of the solution.
-            plan (List[List[List[int]]]): Multi-period plan.
+            prof: Profit of the solution.
+            plan: Multi-period plan.
 
-        Returns:
-            None
         """
         self.memory.append((prof, copy.deepcopy(plan)))
         self.memory.sort(key=lambda x: x[0], reverse=True)

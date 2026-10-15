@@ -22,9 +22,9 @@ def compute_transportation_cost(routes_list, distance_route_vector, C):
     Calculate the total transportation cost based on distance and cost coefficient.
 
     Args:
-        routes_list (List[List[int]]): Current routing solution.
-        distance_route_vector (List[float]): Distances per route.
-        C (float): Cost per distance unit.
+        routes_list: Current routing solution.
+        distance_route_vector: Distances per route.
+        C: Cost per distance unit.
 
     Returns:
         float: Total transportation cost.
@@ -39,8 +39,8 @@ def compute_vehicle_use_penalty(routes_list, p_vehicle):
     Calculate the penalty for the number of vehicles (routes) used.
 
     Args:
-        routes_list (List[List[int]]): Current routing solution.
-        p_vehicle (float): Penalty coefficient per vehicle.
+        routes_list: Current routing solution.
+        p_vehicle: Penalty coefficient per vehicle.
 
     Returns:
         float: Total vehicle penalty.
@@ -55,9 +55,9 @@ def compute_route_time_difference_penalty(routes_list, p_route_difference, dista
     Calculate penalty for workload imbalance between routes.
 
     Args:
-        routes_list (List[List[int]]): Current routing solution.
-        p_route_difference (float): Penalty coefficient for time difference.
-        distance_route_vector (List[float]): Distances per route.
+        routes_list: Current routing solution.
+        p_route_difference: Penalty coefficient for time difference.
+        distance_route_vector: Distances per route.
 
     Returns:
         float: Calculated imbalance penalty.
@@ -79,11 +79,11 @@ def compute_shift_excess_penalty(routes_list, p_shift, distance_matrix, distance
     Calculate penalty for routes exceeding the shift duration.
 
     Args:
-        routes_list (List[List[int]]): Current routing solution.
-        p_shift (float): Penalty coefficient for overtime.
-        distance_matrix (np.ndarray): Distance matrix.
-        distance_route_vector (List[float]): Distances per route.
-        shift_duration (float): Maximum allowed shift time (minutes).
+        routes_list: Current routing solution.
+        p_shift: Penalty coefficient for overtime.
+        distance_matrix: Distance matrix.
+        distance_route_vector: Distances per route.
+        shift_duration: Maximum allowed shift time (minutes).
 
     Returns:
         float: Total shift balance penalty.
@@ -109,10 +109,10 @@ def compute_load_excess_penalty(routes_list, p_load, data, vehicle_capacity):
     Calculate penalty for vehicles exceeding their capacity limit.
 
     Args:
-        routes_list (List[List[int]]): Current routing solution.
-        p_load (float): Penalty coefficient for excess load.
-        data (pd.DataFrame): Bin weights data.
-        vehicle_capacity (float): Max vehicle capacity.
+        routes_list: Current routing solution.
+        p_load: Penalty coefficient for excess load.
+        data: Bin weights data.
+        vehicle_capacity: Max vehicle capacity.
 
     Returns:
         float: Total load penalty.

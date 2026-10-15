@@ -59,12 +59,12 @@ def _add_local_branching_constraint(
     and B1 is the set of binary variables that are 1 in the incumbent.
 
     Args:
-        model (gp.Model): The Gurobi model.
-        x (Dict[Tuple[int, int], gp.Var]): Edge variables.
-        y (Dict[int, gp.Var]): Node selection variables.
-        incumbent_x (Dict[Tuple[int, int], float]): Incumbent edge values.
-        incumbent_y (Dict[int, float]): Incumbent node values.
-        k (int): Neighborhood size.
+        model: The Gurobi model.
+        x: Edge variables.
+        y: Node selection variables.
+        incumbent_x: Incumbent edge values.
+        incumbent_y: Incumbent node values.
+        k: Neighborhood size.
 
     Returns:
         gp.Constr: Local branching constraint.
@@ -113,21 +113,21 @@ def run_local_branching_gurobi(
     Solve VRPP using Local Branching (LB).
 
     Args:
-        dist_matrix (np.ndarray): Symmetric distance matrix for all nodes.
-        wastes (Dict[int, float]): Waste collected at each customer node.
-        capacity (float): Capacity of each vehicle.
-        R (float): Revenue per unit of waste.
-        C (float): Cost per unit of distance.
-        mandatory_nodes (List[int]): Nodes that must be visited.
-        k (int): Initial neighborhood size for local branching.
-        max_iterations (int): Maximum number of iterations.
-        time_limit (float): Total time limit for the algorithm.
-        time_limit_per_iteration (float): Time limit for each iteration.
-        mip_limit_nodes (int): Node limit for the MIP solver.
-        mip_gap (float): Gap tolerance for the MIP solver.
-        seed (int): Random seed for reproducibility.
-        env (Optional[gp.Env]): Gurobi environment.
-        recorder (Optional[PolicyStateRecorder]): Recorder for logging policy state.
+        dist_matrix: Symmetric distance matrix for all nodes.
+        wastes: Waste collected at each customer node.
+        capacity: Capacity of each vehicle.
+        R: Revenue per unit of waste.
+        C: Cost per unit of distance.
+        mandatory_nodes: Nodes that must be visited.
+        k: Initial neighborhood size for local branching.
+        max_iterations: Maximum number of iterations.
+        time_limit: Total time limit for the algorithm.
+        time_limit_per_iteration: Time limit for each iteration.
+        mip_limit_nodes: Node limit for the MIP solver.
+        mip_gap: Gap tolerance for the MIP solver.
+        seed: Random seed for reproducibility.
+        env: Gurobi environment.
+        recorder: Recorder for logging policy state.
 
     Returns:
         Tuple[List[int], float, float]: Tuple of (best_tour, best_cost, best_revenue).

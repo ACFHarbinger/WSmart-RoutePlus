@@ -79,7 +79,7 @@ class DocstringInjector:
         """Initialize Class.
 
         Args:
-            filepath (str): Description of filepath.
+            filepath: Description of filepath.
         """
         self.filepath = filepath
         self.lines = Path(filepath).read_text(encoding="utf-8").splitlines()
@@ -90,7 +90,7 @@ class DocstringInjector:
         """Returns the indentation string of a specific line.
 
         Args:
-            lineno (int): Line number.
+            lineno: Line number.
 
         Returns:
             str: Indentation string.
@@ -104,8 +104,8 @@ class DocstringInjector:
         """Formats the Args section with type hints.
 
         Args:
-            args (List[ast.arg]): List of arguments.
-            base_indent (str): Base indentation string.
+            args: List of arguments.
+            base_indent: Base indentation string.
 
         Returns:
             str: Formatted Args section.
@@ -131,8 +131,8 @@ class DocstringInjector:
         """Generates the appropriate docstring based on node type and content.
 
         Args:
-            node (Any): Node to generate docstring for.
-            context (str, optional): Context of the node. Defaults to "".
+            node: Node to generate docstring for.
+            context: Context of the node. Defaults to "".
 
         Returns:
             str: Generated docstring.
@@ -187,7 +187,7 @@ class DocstringInjector:
         """Finds the correct line index to insert the docstring.
 
         Args:
-            node (Any): Node to find insertion line for.
+            node: Node to find insertion line for.
 
         Returns:
             int: Line index to insert docstring.
@@ -207,7 +207,7 @@ class DocstringInjector:
         """Internal helper to queue docstrings based on node types.
 
         Args:
-            tree (Any): Tree to queue docstrings for.
+            tree: Tree to queue docstrings for.
         """
         if not ast.get_docstring(tree):
             doc = self.generate_docstring(tree)
@@ -226,8 +226,6 @@ class DocstringInjector:
     def scan_and_queue(self):
         """Scans the file and queues missing docstrings for insertion.
 
-        Returns:
-            None
         """
         try:
             tree = ast.parse("\n".join(self.lines))
@@ -242,8 +240,6 @@ class DocstringInjector:
     def apply(self):
         """Applies the queued modifications to the source lines.
 
-        Returns:
-            None
         """
         for idx, doc, indent in self.modifications:
             # Format lines with indentation
@@ -253,8 +249,6 @@ class DocstringInjector:
     def save(self):
         """Save.
 
-        Returns:
-            None
         """
         Path(self.filepath).write_text("\n".join(self.lines), encoding="utf-8")
 

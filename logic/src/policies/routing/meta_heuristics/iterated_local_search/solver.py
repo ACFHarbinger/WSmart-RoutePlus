@@ -70,8 +70,6 @@ class ILSSolver:
             params: ILS parameters.
             mandatory_nodes: Optional list of nodes that must be visited.
 
-        Returns:
-            None.
         """
         self.dist_matrix = dist_matrix
         self.wastes = wastes

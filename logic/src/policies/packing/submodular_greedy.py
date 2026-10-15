@@ -55,7 +55,7 @@ class SubmodularGreedySelection(IPackingAlgorithm):
         """Greedily maximize the coverage objective using lazy evaluations.
 
         Args:
-            context (PackingContext): The selection context providing current_fill and distance_matrix.
+            context: The selection context providing current_fill and distance_matrix.
 
         Returns:
             Tuple[List[int], SearchContext]: Selected bin IDs (1-based) and search context.

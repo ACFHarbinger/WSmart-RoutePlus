@@ -45,7 +45,7 @@ class GFACSComponentFactory(NeuralComponentFactory):
         """Create ACO Decoder.
 
         Args:
-            decoder_type (str): Type of decoder instance to create. Defaults to 'aco'.
+            decoder_type: Type of decoder instance to create. Defaults to 'aco'.
             kwargs: Architecture-specific configuration passed to ACODecoder.
 
         Returns:

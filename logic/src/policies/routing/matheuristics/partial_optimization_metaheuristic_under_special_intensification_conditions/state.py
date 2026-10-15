@@ -155,8 +155,6 @@ class POPMUSICState:
         Args:
             slot: Slot index to reclaim.
 
-        Returns:
-            None
         """
         self.active.discard(slot)
         self.singleton_slots.discard(slot)
@@ -171,8 +169,6 @@ class POPMUSICState:
             slot: Slot index.
             centroid: New centroid for the given slot.
 
-        Returns:
-            None
         """
         self.coords[slot] = centroid
 

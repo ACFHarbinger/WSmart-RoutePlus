@@ -6,8 +6,4 @@ Attributes:
     losses: Consistency and symmetry losses for NCO.
     dummy_problem: Dummy problem wrapper for legacy component initialization.
 
-Example:
-    >>> import simulation_utils
-    >>> import losses
-    >>> import dummy_problem
 """
