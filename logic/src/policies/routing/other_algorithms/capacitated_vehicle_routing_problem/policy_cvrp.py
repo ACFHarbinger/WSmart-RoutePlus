@@ -184,6 +184,7 @@ class CVRPPolicy(BaseRoutingPolicy):
                     coords,
                     time_limit=params.time_limit,
                     seed=seed,
+                    solution_limit=params.solution_limit,
                 )
             elif params.engine in ("pyvrp", "custom", "clarke_wright"):
                 tour = find_routes(

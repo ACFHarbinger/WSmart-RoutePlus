@@ -29,6 +29,8 @@ class CVRPConfig:
         engine: Solver engine to use ('ortools', 'gurobi').
         packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
+        solution_limit: Deterministic OR-Tools budget (WP-12 gate-(a)).
+            None (default) keeps the time_limit behaviour unchanged.
     """
 
     cache: bool = False
@@ -37,3 +39,4 @@ class CVRPConfig:
     seed: Optional[int] = None
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
+    solution_limit: Optional[int] = None

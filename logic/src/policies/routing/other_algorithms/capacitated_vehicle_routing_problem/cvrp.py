@@ -152,6 +152,7 @@ def find_routes_ortools(
     time_limit=2,
     seed=42,
     recorder: Optional[PolicyStateRecorder] = None,
+    solution_limit: Optional[int] = None,
 ):
     """
     Solve multi-vehicle VRP using Google OR-Tools.
@@ -170,6 +171,9 @@ def find_routes_ortools(
         time_limit: Time limit for solving.
         seed: Random seed.
         recorder: Policy state recorder.
+        solution_limit: Deterministic budget (WP-12 gate-(a)): stop after
+            this many solutions with a single search worker and no wall
+            clock. None (default) keeps the time_limit behaviour unchanged.
 
     Returns:
         List[int]: Flattened tour with depot separators
@@ -223,9 +227,15 @@ def find_routes_ortools(
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
     search_parameters.first_solution_strategy = routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
     search_parameters.local_search_metaheuristic = routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
-    duration = Duration()
-    duration.FromSeconds(int(time_limit))
-    search_parameters.time_limit.CopyFrom(duration)
+    if solution_limit is not None:
+        # Deterministic budget for the Q-14(a) gate: no wall clock, one
+        # worker (recent OR-Tools defaults are parallel and nondeterministic).
+        search_parameters.solution_limit = int(solution_limit)
+        search_parameters.num_search_workers = 1
+    else:
+        duration = Duration()
+        duration.FromSeconds(int(time_limit))
+        search_parameters.time_limit.CopyFrom(duration)
     routing.solver().ReSeed(seed)
 
     solution = routing.SolveWithParameters(search_parameters)
