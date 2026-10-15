@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price_and_cut.bpc_engine import (
     run_bpc,
 )
@@ -32,9 +33,9 @@ def small_instance():
 def test_bpc_native_execution(small_instance):
     dist, wastes, cap, R, C = small_instance
     values = {"max_cg_iterations": 10, "max_cuts_per_iteration": 2, "time_limit": 300.0}
-    routes, cost = run_bpc(dist, wastes, cap, R, C, values)
+    routes, profit, cost = run_bpc(build_subproblem(dist, wastes, cap, R, C), values)
     assert len(routes) > 0
-    assert cost > 0
+    assert profit > 0
 
 def test_qde_rotation_gate_logic(small_instance):
     dist, wastes, cap, R, C = small_instance

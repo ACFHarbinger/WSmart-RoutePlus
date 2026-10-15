@@ -52,7 +52,7 @@ from logic.src.policies.helpers.operators import (
     greedy_profit_insertion,
     random_removal,
 )
-
+from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns import (
     ALNSSolver,
 )
@@ -135,13 +135,15 @@ class HybridMemeticLargeNeighborhoodSearchSolver:
 
         # Initialize ALNS solver for coaching phase
         self.alns_solver = ALNSSolver(
-            dist_matrix=dist_matrix,
-            wastes=wastes,
-            capacity=capacity,
-            R=R,
-            C=C,
-            params=params.alns_params,  # type: ignore[arg-type]
-            mandatory_nodes=mandatory_nodes,
+            build_subproblem(
+                dist_matrix=dist_matrix,
+                wastes=wastes,
+                capacity=capacity,
+                revenue=R,
+                cost_unit=C,
+                mandatory_nodes=mandatory_nodes,
+            ),
+            params.alns_params,  # type: ignore[arg-type]
         )
 
         # Initialize Local Search

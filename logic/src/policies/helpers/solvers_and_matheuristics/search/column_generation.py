@@ -70,6 +70,8 @@ def column_generation_loop(  # noqa: C901
     cg_at_root_only: bool = False,
     branching_strategy: str = "divergence",
     rcspp_timeout: float = 30.0,
+    *,
+    strict_certification: bool = False,
 ) -> Tuple[float, Dict[int, float], Optional[Any], bool]:
     """Run the Column Generation and Cutting Plane loop at a B&B node.
 
@@ -83,6 +85,21 @@ def column_generation_loop(  # noqa: C901
     already in the pool (sifted from the global pool at the root).  This
     replicates the "CG at root only" experiment from Table 2 of Barnhart,
     Hane, and Vance (2000), which trades bound quality for solve speed.
+
+    ``strict_certification`` (keyword-only, default ``False``) selects the
+    stricter node-certification semantics used by the MS-BPC-SP engine. The
+    default path is byte-for-byte the released BPC behaviour. Under
+    ``strict_certification=True``:
+
+    a. Phase-I Farkas step — when Farkas pricing returns no columns without
+       certifying exhaustion (or after a pricer timeout), the node is left
+       incomplete (``timed_out=True``, loop breaks) instead of raising.
+    b. Normal pricing — ``added == 0`` only counts as converged when pricing
+       certified exhaustion; otherwise the node is left incomplete. The
+       heuristic→exact confirmation re-run is skipped in this mode.
+    c. ``cg_at_root_only`` at depth > 0 leaves the node incomplete (a
+       restricted descendant LP carries no full-pricing certificate).
+    d. An iteration-capped, unconverged loop leaves the node incomplete.
 
     Args:
         master (VRPPMasterProblem): Master problem instance.
@@ -106,6 +123,7 @@ def column_generation_loop(  # noqa: C901
         cg_at_root_only (bool): If True, skips pricing at descendant nodes.
         branching_strategy (str): Active branching rule name.
         rcspp_timeout (float): Timeout for the RCSPP solver.
+        strict_certification (bool): Stricter MS node-certification semantics.
 
     Returns:
         Tuple[float, Dict[int, float], Optional[Any], bool]:
@@ -249,12 +267,13 @@ def column_generation_loop(  # noqa: C901
                         _rem_t = min(_rem_t, 5.0)  # hard cap: no single RCSPP call exceeds 5s
                     else:
                         _rem_t = 5.0
-                    added, _ = solve_farkas_pricing_step(
+                    added, farkas_exhausted = solve_farkas_pricing_step(
                         master,
                         pricing_solver,
                         branching_constraints,  # type: ignore[arg-type]
                         timeout=_rem_t,
                         farkas_duals=farkas,
+                        strict_certification=strict_certification,
                     )
                     # If the pricer timed out, it cannot certify that no improving
                     # column exists. Track consecutive timeouts and bail out of CG
@@ -272,6 +291,11 @@ def column_generation_loop(  # noqa: C901
                     else:
                         consecutive_pricing_timeouts = 0
                     if added == 0:
+                        if strict_certification and not farkas_exhausted:
+                            # Unexhausted (or timed-out) Farkas pricing cannot prove
+                            # infeasibility — leave the node incomplete rather than raise.
+                            timed_out = True
+                            break
                         raise RuntimeError("LP infeasible at B&B node - Farkas pricing failed to find columns")
                     _inner_iter += 1
                     continue
@@ -301,7 +325,11 @@ def column_generation_loop(  # noqa: C901
             # The global column pool (built during root CG) is already sifted above;
             # no new columns are generated, so we converge immediately.
             if cg_at_root_only and node_depth > 0:
-                converged = True
+                if strict_certification:
+                    # A restricted descendant LP has no full pricing certificate.
+                    timed_out = True
+                else:
+                    converged = True
                 break
 
             _elapsed = time.perf_counter() - start_time
@@ -320,6 +348,7 @@ def column_generation_loop(  # noqa: C901
                 rc_tolerance=rc_tolerance,
                 timeout=_rem_t,
                 exact_mode=exact_mode,
+                strict_certification=strict_certification,
             )
             # Consecutive RCSPP timeout detection.
             # A timed-out pricer returns partial results — it cannot certify
@@ -338,7 +367,7 @@ def column_generation_loop(  # noqa: C901
             else:
                 consecutive_pricing_timeouts = 0
 
-            if added == 0 and not exact_mode:
+            if added == 0 and not exact_mode and not strict_certification:
                 # Heuristic pricing (truncated neighbourhoods) cannot prove that no
                 # improving column exists; confirm with one exact pass before converging.
                 added, pricing_exhausted = solve_pricing_step(
@@ -351,6 +380,16 @@ def column_generation_loop(  # noqa: C901
                     timeout=_rem_t,
                     exact_mode=True,
                 )
+
+            if added == 0 and strict_certification and not pricing_exhausted:
+                logger.warning(
+                    f"CG incomplete at depth {node_depth}: 0 columns added but pricing was not exhausted "
+                    f"(status={getattr(pricing_solver, 'pricing_status', None)}, "
+                    f"timed_out={getattr(pricing_solver, '_timed_out', False)}, "
+                    f"last_max_rc={getattr(pricing_solver, 'last_max_rc', None):.4f})."
+                )
+                timed_out = True
+                break
 
             if added == 0:
                 # Task 1b: Check for fractional cycles in ng-relaxation if CG has converged
@@ -489,6 +528,9 @@ def column_generation_loop(  # noqa: C901
             f"CG+Cut loop hit max_cg_iterations={max_cg_iterations} without full convergence.",
             stacklevel=3,
         )
+        if strict_certification:
+            # An iteration-capped loop carries no convergence certificate.
+            timed_out = True
 
     final_basis = master.save_basis()
     return obj_val, route_vals, final_basis, timed_out

@@ -54,11 +54,13 @@ def test_bpc_custom_engine(sample_data):
     dist, wastes, cap = sample_data
     # Wrap in a tiny trial config
     values = {"time_limit": 10, "max_cg_iterations": 2}
+    from logic.src.policies.routing.base.sub_problem import build_subproblem
     from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price_and_cut.bpc_engine import (
         run_bpc,
     )
 
-    routes, cost = run_bpc(dist, wastes, cap, R=1.0, C=1.0, values=values)
+    routes, profit, cost = run_bpc(build_subproblem(dist, wastes, cap, 1.0, 1.0), values)
 
     assert isinstance(routes, list)
+    assert profit >= 0
     assert cost >= 0

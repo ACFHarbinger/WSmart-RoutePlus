@@ -38,6 +38,7 @@ from typing import Dict, List, Optional, Set, Tuple
 import numpy as np
 
 from logic.src.configs.policies.egh import ExactGuidedHeuristicConfig
+from logic.src.policies.routing.base.sub_problem import build_subproblem
 from .route_pool import RoutePool, VRPPRoute
 
 logger = logging.getLogger(__name__)
@@ -103,17 +104,19 @@ def run_bpc_stage(
     )
 
     try:
-        node_routes, obj = run_bpc(
-            dist_matrix=dist_matrix,
-            wastes=wastes,
-            capacity=capacity,
-            R=R,
-            C=C,
-            params=bpc_params,
-            mandatory_indices=mandatory_nodes or set(),
-            vehicle_limit=vehicle_limit,
-            env=env,
-            recorder=recorder,
+        node_routes, obj, _cost = run_bpc(
+            build_subproblem(
+                dist_matrix=dist_matrix,
+                wastes=wastes,
+                capacity=capacity,
+                revenue=R,
+                cost_unit=C,
+                mandatory_nodes=sorted(mandatory_nodes) if mandatory_nodes else [],
+                n_vehicles=vehicle_limit,
+                env=env,
+                recorder=recorder,
+            ),
+            bpc_params,
         )
     except Exception as exc:
         logger.warning("[BPC] Solver error — stage skipped: %s", exc)

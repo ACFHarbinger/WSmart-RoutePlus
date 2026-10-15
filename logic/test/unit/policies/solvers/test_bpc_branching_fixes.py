@@ -109,12 +109,12 @@ def test_bpc_policy_adapter_profit_alignment():
     sub_dist = np.array([[0, 10], [10, 0]])
     sub_wastes = {1: 100.0}
 
-    # run_bpc returns (routes, solver_cost) where solver_cost is actually profit
+    # run_bpc returns (routes, profit, cost) with cost = C * total distance
     mock_routes = [[1]]
-    mock_profit = 90.0 # 100 revenue - 10 cost
+    mock_profit = 90.0  # 100 revenue - 10 cost
 
-    with patch("logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price_and_cut.policy_bpc.run_bpc") as mock_run:
-        mock_run.return_value = (mock_routes, mock_profit)
+    with patch.object(BPCPolicy, "_solver") as mock_run:
+        mock_run.return_value = (mock_routes, mock_profit, 20.0)
 
         routes, profit, solver_cost = policy._run_solver(
             sub_dist_matrix=sub_dist,
@@ -123,10 +123,10 @@ def test_bpc_policy_adapter_profit_alignment():
             revenue=1.0,
             cost_unit=1.0,
             values={},
-            mandatory_nodes=[]
+            mandatory_nodes=[],
         )
 
         assert routes == mock_routes
         assert profit == mock_profit
-        # solver_cost (raw distance) should be 10 + 10 = 20
+        # solver_cost (raw distance, C=1.0) should be 10 + 10 = 20
         assert solver_cost == 20.0

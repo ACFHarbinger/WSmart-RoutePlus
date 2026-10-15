@@ -10,8 +10,10 @@ Attributes:
 
 
 Example:
+    >>> from logic.src.policies.routing.base.sub_problem import build_subproblem
     >>> from logic.src.policies.routing.meta_heuristics.pheromone_guided_cooperative_large_neighborhood_search.pg_clns import PGCLNSSolver
-    >>> solver = PGCLNSSolver(dist_matrix, wastes, capacity, R, C, params)
+    >>> problem = build_subproblem(dist_matrix, wastes, capacity, R, C)
+    >>> solver = PGCLNSSolver(problem, params, seed=42)
     >>> routes, profit, cost = solver.solve()
     >>> print(routes, profit, cost)
 """
@@ -20,9 +22,9 @@ import copy
 import time
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-import numpy as np
-
 from logic.src.configs.policies.pg_clns import PGCLNSConfig
+from logic.src.policies.routing.base.sub_problem import SubProblem
+from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.engine import coerce_config
 from logic.src.tracking.viz_mixin import PolicyVizMixin
 
 from .aco import ACOSolver
@@ -34,12 +36,14 @@ class PGCLNSSolver(PolicyVizMixin):
     Pheromone-Guided Cooperative Large Neighborhood Search solver for VRP variants
 
     Attributes:
+        problem: The SubProblem this solver was built for.
         dist_matrix: Distance matrix.
         wastes: Dictionary of wastes.
         capacity: Vehicle capacity.
         R: Revenue per unit of waste.
         C: Cost per unit of distance.
         params: PGCLNS parameters.
+        cfg: PGCLNSConfig backing ``params``.
         mandatory_nodes: List of mandatory nodes.
         seed: Random seed.
         aco_internal: Internal ACO solver.
@@ -50,62 +54,61 @@ class PGCLNSSolver(PolicyVizMixin):
 
     def __init__(
         self,
-        dist_matrix: np.ndarray,
-        wastes: Dict[int, float],
-        capacity: float,
-        R: float,
-        C: float,
-        params: Optional[Union[PGCLNSConfig, Dict[str, Any]]] = None,
-        mandatory_nodes: Optional[List[int]] = None,
+        problem: SubProblem,
+        cfg: Optional[Union[PGCLNSConfig, Dict[str, Any]]] = None,
         seed: Optional[int] = None,
     ):
         """
         Initialize the solver.
 
         Args:
-            dist_matrix: Distance matrix.
-            wastes: Dictionary of wastes.
-            capacity: Vehicle capacity.
-            R: Revenue per unit of waste.
-            C: Cost per unit of distance.
-            params: PGCLNS configuration dataclass or dictionary.
-            mandatory_nodes: List of mandatory nodes.
-            seed: Random seed.
+            problem: The routing sub-problem (distance matrix, wastes,
+                capacity, revenue, cost unit, mandatory nodes).
+            cfg: PG-CLNS configuration dataclass or dictionary (the nested
+                ``lns`` section is forwarded to the coaching LNS).
+            seed: Random seed. Effective seed sequence: explicit kwarg >
+                ``cfg.seed`` > 42 (the adapter's ``values.get("seed", 42)``
+                handling moved into the solver).
         """
         super().__init__()
 
-        self.dist_matrix = dist_matrix
-        self.wastes = wastes
-        self.capacity = capacity
-        self.R = R
-        self.C = C
+        self.problem = problem
+        self.dist_matrix = problem.dist_matrix
+        self.wastes = problem.wastes
+        self.capacity = problem.capacity
+        self.R = problem.revenue
+        self.C = problem.cost_unit
 
-        if isinstance(params, dict):
-            import dataclasses
+        config = coerce_config(cfg, PGCLNSConfig)
 
-            valid_keys = {f.name for f in dataclasses.fields(PGCLNSConfig)}
-            cfg = PGCLNSConfig(**{k: v for k, v in params.items() if k in valid_keys})
-        elif params is None:
-            cfg = PGCLNSConfig()
+        self.cfg: PGCLNSConfig = config
+        self.params = config
+        self.mandatory_nodes = problem.mandatory_nodes
+
+        if seed is not None:
+            actual_seed = seed
+        elif config.seed is not None:
+            actual_seed = config.seed
         else:
-            cfg = params
-
-        self.cfg: PGCLNSConfig = cfg
-        self.params = cfg
-        self.mandatory_nodes = mandatory_nodes
-
-        actual_seed = seed if seed is not None else getattr(cfg, "seed", None)
+            actual_seed = 42
 
         # Initialize ACO components for constructor and pheromones
         # We reuse ACOSolver initialization logic
-        self.aco_internal = ACOSolver(dist_matrix, wastes, capacity, R, C, cfg.aco, mandatory_nodes, seed=actual_seed)
+        self.aco_internal = ACOSolver(
+            self.dist_matrix,
+            self.wastes,
+            self.capacity,
+            self.R,
+            self.C,
+            config.aco,
+            self.mandatory_nodes,
+            seed=actual_seed,
+        )
         self.pheromone = self.aco_internal.pheromone
         self.constructor = self.aco_internal.constructor
 
         # Initialize LNS solver for the "Coaching" phase
-        self.coaching_solver = LNSSolver(
-            dist_matrix, wastes, capacity, R, C, cfg.lns, mandatory_nodes, seed=actual_seed
-        )
+        self.coaching_solver = LNSSolver(problem, config.lns, seed=actual_seed)
 
     def solve(self) -> Tuple[List[List[int]], float, float]:
         """

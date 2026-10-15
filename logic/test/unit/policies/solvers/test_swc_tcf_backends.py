@@ -5,7 +5,9 @@ from typing import Any, Dict, Optional
 
 import numpy as np
 import pytest
+from logic.src.configs.policies.swc_tcf import SWCTCFConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
+from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow import (
     policy_swc_tcf,
 )
@@ -208,16 +210,11 @@ def test_policy_splits_depot_delimited_flat_route(monkeypatch):
     """B-kimi-58: the adapter splits a depot-delimited flat list into routes."""
     captured: Dict[str, Any] = {}
 
-    def fake_optimizer(*, bins, distance_matrix, values, binsids, mandatory_nodes, number_vehicles, **kw):
-        captured["number_vehicles"] = number_vehicles
+    def fake_optimizer(problem, cfg):
+        captured["number_vehicles"] = problem.n_vehicles
         return [0, 11, 12, 0, 13, 0], 5.0, 2.0
 
-    monkeypatch.setattr(policy_swc_tcf, "run_swc_tcf_optimizer", fake_optimizer)
-
-    class _Params:
-        time_limit = 60.0
-        framework = "gurobi"
-        engine = "gurobi"
+    monkeypatch.setattr(policy_swc_tcf.SWCTCFPolicy, "_solver", fake_optimizer)
 
     policy = policy_swc_tcf.SWCTCFPolicy.__new__(policy_swc_tcf.SWCTCFPolicy)
     sub_dist = np.zeros((4, 4))
@@ -229,7 +226,6 @@ def test_policy_splits_depot_delimited_flat_route(monkeypatch):
         cost_unit=1.0,
         values={},
         mandatory_nodes=[],
-        params=_Params(),
         n_vehicles=0,
     )
     assert routes == [[11, 12], [13]]
@@ -286,22 +282,22 @@ def test_route_extraction_parity_across_backends(capsys):
     coords = rng.uniform(0, 10, size=(9, 2))
     dist = np.sqrt(((coords[:, None, :] - coords[None, :, :]) ** 2).sum(-1)).tolist()
     bins = np.array([10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0])
-    values = {"Omega": 0.1, "psi": 1, "Q": 250.0, "R": 1.0, "B": 1.0, "C": 1.0, "V": 1.0}
 
     results = {}
     for framework, optimizer in [("gurobi", "gurobi"), ("ortools", "SCIP"), ("pyomo", "gurobi")]:
         with capsys.disabled():
             route, profit, _ = run_swc_tcf_optimizer(
-                bins=bins,
-                distance_matrix=dist,
-                values=values,
-                binsids=list(range(1, 9)),
-                mandatory_nodes=[2, 5],
-                number_vehicles=0,
-                time_limit=30,
-                framework=framework,
-                optimizer=optimizer,
-                seed=42,
+                build_subproblem(
+                    np.array(dist),
+                    {i + 1: float(b) for i, b in enumerate(bins)},
+                    250.0,
+                    1.0,
+                    1.0,
+                    mandatory_nodes=[2, 5],
+                    n_vehicles=0,
+                    values={"Omega": 0.1, "psi": 1, "B": 1.0, "V": 1.0},
+                ),
+                SWCTCFConfig(framework=framework, engine=optimizer, time_limit=30, seed=42),
             )
         results[framework] = (route, profit)
 

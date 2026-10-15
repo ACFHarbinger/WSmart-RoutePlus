@@ -90,25 +90,24 @@ def test_policy_factory_standardized():
 
 @pytest.mark.unit
 def test_bcp_engine_override(mock_engine_data):
-    with patch("logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price_and_cut.policy_bpc.run_bpc") as mock_run:
-        mock_run.return_value = ([[1, 0]], 10.0)
+    with patch.object(BPCPolicy, "_solver") as mock_run:
+        mock_run.return_value = ([[1, 0]], 10.0, 5.0)
 
         policy = RoutingAlgorithmFactory.get_adapter("bpc")
         assert isinstance(policy, BPCPolicy)
         policy.execute(**mock_engine_data)
 
-        # Verify run_bpc was called
+        # Verify run_bpc was called through the generic adapter
         assert mock_run.called
-        args, kwargs = mock_run.call_args
-        # kwargs['env'] should be present
-        assert "env" in kwargs
+        problem = mock_run.call_args.args[0]
+        assert problem.env is not None, "simulator env must reach the engine via the SubProblem"
 
 @pytest.mark.unit
 def test_swc_tcf_engine_override(mocker, mock_engine_data):
     mocker.patch("logic.src.pipeline.simulations.repository.load_area_and_waste_type_params",
                  return_value=(4000, 0.16, 21.0, 1.0, 2.5))
 
-    with patch("logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.policy_swc_tcf.run_swc_tcf_optimizer") as mock_opt:
+    with patch.object(SWCTCFPolicy, "_solver") as mock_opt:
         mock_opt.return_value = ([0, 1, 0], 10.0, 5.0)
 
         policy = RoutingAlgorithmFactory.get_adapter("swc_tcf")
@@ -116,10 +115,11 @@ def test_swc_tcf_engine_override(mocker, mock_engine_data):
         policy.execute(**mock_engine_data)
 
         assert mock_opt.called
+        assert mock_opt.call_args.args[0].n_vehicles == 2
 
 @pytest.mark.unit
 def test_hgs_engine_override(mock_engine_data):
-    with patch("logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.policy_hgs.run_hgs") as mock_run:
+    with patch.object(HGSPolicy, "_solver") as mock_run:
         mock_run.return_value = ([[1, 0]], 10.0, 5.0)
 
         policy = RoutingAlgorithmFactory.get_adapter("hgs")
@@ -130,7 +130,7 @@ def test_hgs_engine_override(mock_engine_data):
 
 @pytest.mark.unit
 def test_alns_engine_override(mock_engine_data):
-    with patch("logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.policy_alns.run_alns") as mock_run:
+    with patch.object(ALNSPolicy, "_solver") as mock_run:
         mock_run.return_value = ([[1, 0]], 10.0, 5.0)
 
         # Set specific engine in config
@@ -141,12 +141,9 @@ def test_alns_engine_override(mock_engine_data):
         policy.execute(**mock_engine_data)
 
         assert mock_run.called
-        # Verify it received the engine to run_alns
-        args, _ = mock_run.call_args
-        # run_alns(dist_matrix, wastes, max_capacity, R, C, values, ...)
-        # values is the 6th arg (index 5)
-        values_arg = args[5]
-        assert values_arg["engine"] == "ortools"
+        # The generic adapter passes the typed config as the second argument.
+        cfg_arg = mock_run.call_args.args[1]
+        assert cfg_arg.engine == "ortools"
 
 def test_sans_execution(mock_engine_data):
     # Patch improved_simulated_annealing in its home module (or where it's used)

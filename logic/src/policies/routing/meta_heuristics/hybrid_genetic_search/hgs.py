@@ -21,12 +21,11 @@ import random
 import time
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-import numpy as np
-
 from logic.src.configs.policies.hgs import HGSConfig
 from logic.src.policies.helpers.local_search.local_search_hgs import HGSLocalSearch
 from logic.src.policies.helpers.operators.crossover_recombination import route_profit_gpx_crossover
 from logic.src.envs.tasks.common.expand_pool import current_expand_pool
+from logic.src.policies.routing.base.sub_problem import SubProblem
 
 from .evolution import _extract_edges, evaluate, update_biased_fitness
 from .individual import Individual
@@ -70,38 +69,39 @@ class HGSSolver:
         ls (HGSLocalSearch): Local search engine.
 
     Example:
-        >>> solver = HGSSolver(dist_matrix, wastes, capacity, R, C, params)
+        >>> solver = HGSSolver(problem, params)
     """
 
     def __init__(
         self,
-        dist_matrix: np.ndarray,
-        wastes: Dict[int, float],
-        capacity: float,
-        R: float,
-        C: float,
-        params: Optional[Union[HGSConfig, Dict[str, Any]]] = None,
-        mandatory_nodes: Optional[List[int]] = None,
-        x_coords: Optional[np.ndarray] = None,
-        y_coords: Optional[np.ndarray] = None,
+        problem: SubProblem,
+        cfg: Optional[Union[HGSConfig, Dict[str, Any]]] = None,
     ):
         """
         Initialize the HGS solver.
 
         Args:
-            dist_matrix: NxN distance matrix (index 0 = depot).
-            wastes: Dictionary of node wastes (demands).
-            capacity: Maximum vehicle capacity.
-            R: Revenue multiplier (profit per unit of waste collected).
-            C: Cost multiplier (cost per unit distance).
-            params: HGS configuration dataclass or dictionary.
-            mandatory_nodes: Local node indices that MUST be visited.
-            x_coords: Optional x-coordinates for SWAP* polar sector pruning.
-            y_coords: Optional y-coordinates for SWAP* polar sector pruning.
+            problem: The routing sub-problem (distance matrix, wastes,
+                capacity, revenue, cost unit, mandatory nodes, optional
+                x/y coordinates for SWAP* polar sector pruning).
+            cfg: HGS configuration dataclass or dictionary (coerced leniently:
+                unknown keys are filtered, ``lambda_param`` aliases
+                ``n_offspring``).
 
         Returns:
             None.
         """
+        dist_matrix = problem.dist_matrix
+        wastes = problem.wastes
+        capacity = problem.capacity
+        R = problem.revenue
+        C = problem.cost_unit
+        mandatory_nodes = problem.mandatory_nodes
+        x_coords = problem.x_coords
+        y_coords = problem.y_coords
+        params = cfg
+
+        self.problem = problem
         self.d = dist_matrix
         self.wastes = wastes
         self.Q = capacity

@@ -5,6 +5,7 @@ import random
 import numpy as np
 import pytest
 from logic.src.configs.policies.psoma import PSOMAConfig
+from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.meta_heuristics.particle_swarm_optimization_memetic_algorithm.solver import (
     PSOMASolver,
 )
@@ -25,7 +26,8 @@ def _run(seed, global_seed):
     np.random.seed(global_seed)
     dist, wastes = _instance()
     params = PSOMAConfig(pop_size=4, max_iterations=3, L=2, time_limit=10.0, seed=seed)
-    routes, profit, _cost = PSOMASolver(dist, wastes, capacity=80.0, R=1.0, C=0.5, params=params).solve()
+    problem = build_subproblem(dist, wastes, 80.0, 1.0, 0.5)
+    routes, profit, _cost = PSOMASolver(problem, params).solve()
     return routes, profit
 
 

@@ -11,7 +11,7 @@ Example:
 """
 
 import copy
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, cast
 
 import numpy as np
 from alns import ALNS
@@ -19,7 +19,7 @@ from alns.accept import SimulatedAnnealing
 from alns.select import RouletteWheel
 from alns.stop import MaxRuntime
 
-from logic.src.tracking.viz_mixin import PolicyStateRecorder
+from logic.src.policies.routing.base.sub_problem import SubProblem
 
 
 class ALNSState:
@@ -260,21 +260,24 @@ def alns_pkg_greedy_insertion(state: ALNSState, rng: np.random.Generator, **kwar
     return new_state
 
 
-def run_alns_package(dist_matrix, wastes, capacity, R, C, values, recorder: Optional[PolicyStateRecorder] = None):
+def run_alns_package(problem: SubProblem, values: Dict[str, Any]) -> Any:
     """Execute the ALNS algorithm using the external `alns` package.
 
     Args:
-        dist_matrix: NxN distance matrix.
-        wastes: Dictionary of node wastes.
-        capacity: Maximum vehicle capacity.
-        R: Revenue multiplier.
-        C: Cost multiplier.
+        problem: The routing sub-problem (distance matrix, wastes, capacity,
+            revenue, cost unit, optional recorder).
         values: Configuration parameters including `time_limit`.
-        recorder: Optional recorder for solver state.
 
     Returns:
         Tuple[List[List[int]], float, float]: Best routes, total profit, and total distance cost.
     """
+    dist_matrix = problem.dist_matrix
+    wastes = problem.wastes
+    capacity = problem.capacity
+    R = problem.revenue
+    C = problem.cost_unit
+    recorder = problem.recorder
+
     n_nodes = len(dist_matrix) - 1
     nodes = list(range(1, n_nodes + 1))
 

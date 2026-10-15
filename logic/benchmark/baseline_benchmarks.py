@@ -11,6 +11,8 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from logic.src.configs.policies.swc_tcf import SWCTCFConfig
+from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow import (
     run_swc_tcf_optimizer,
 )
@@ -105,7 +107,6 @@ def benchmark_vrpp_solvers(num_nodes: int = 20, time_limit: int = 2, seed: int =
     np_rng = np.random.default_rng(seed)
     bins = np_rng.random(num_nodes) * 100
     dist_mat = np_rng.random((num_nodes + 1, num_nodes + 1)).tolist()
-    binsids = list(range(num_nodes + 1))
     mandatory_nodes = list(range(1, num_nodes // 5))  # 20% critical
 
     params = {
@@ -119,14 +120,17 @@ def benchmark_vrpp_solvers(num_nodes: int = 20, time_limit: int = 2, seed: int =
         try:
             start = time.time()
             tour, profit, cost = run_swc_tcf_optimizer(
-                bins=bins,
-                distance_matrix=dist_mat,
-                values=params,
-                binsids=binsids,
-                mandatory_nodes=mandatory_nodes,
-                number_vehicles=1,
-                time_limit=time_limit,
-                optimizer=solver
+                build_subproblem(
+                    np.array(dist_mat),
+                    {i + 1: float(b) for i, b in enumerate(bins)},
+                    100.0,
+                    1.0,
+                    1.0,
+                    mandatory_nodes=mandatory_nodes,
+                    n_vehicles=1,
+                    values=params,
+                ),
+                SWCTCFConfig(framework="ortools", engine=solver, time_limit=time_limit),
             )
             elapsed = time.time() - start
             results[solver] = {

@@ -105,6 +105,7 @@ def test_psoma_from_config_consumes_injected_bmc_not_dataclass_t0() -> None:
         BoltzmannAcceptanceConfig,
     )
     from logic.src.configs.policies.psoma import PSOMAConfig
+    from logic.src.policies.routing.base.sub_problem import build_subproblem
     from logic.src.policies.routing.meta_heuristics.particle_swarm_optimization_memetic_algorithm.solver import (
         PSOMASolver,
     )
@@ -123,7 +124,7 @@ def test_psoma_from_config_consumes_injected_bmc_not_dataclass_t0() -> None:
         ),
     )
     dist = np.zeros((2, 2))
-    solver = PSOMASolver(dist, {1: 1.0}, capacity=10.0, R=1.0, C=1.0, params=cfg)
+    solver = PSOMASolver(build_subproblem(dist, {1: 1.0}, 10.0, 1.0, 1.0), cfg)
     criterion = solver.acceptance_criterion
     assert criterion is not None
     assert float(criterion.T) == pytest.approx(100.0)
@@ -137,6 +138,7 @@ def test_alns_from_config_consumes_injected_bmc_on_attrdict() -> None:
         AcceptanceConfig,
         BoltzmannAcceptanceConfig,
     )
+    from logic.src.policies.routing.base.sub_problem import build_subproblem
     from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns import (
         ALNSSolver,
     )
@@ -154,7 +156,7 @@ def test_alns_from_config_consumes_injected_bmc_on_attrdict() -> None:
         acceptance_criterion=injected,
     )
     dist = np.zeros((2, 2))
-    solver = ALNSSolver(dist, {1: 1.0}, capacity=10.0, R=1.0, C=1.0, params=cfg)
+    solver = ALNSSolver(build_subproblem(dist, {1: 1.0}, 10.0, 1.0, 1.0), cfg)
     criterion = solver.acceptance_criterion
     assert criterion is not None
     assert float(criterion.T) == pytest.approx(100.0)
@@ -165,13 +167,14 @@ def test_hgs_from_config_consumes_injected_oi() -> None:
     from logic.src.configs.policies.hgs import HGSConfig
     from logic.src.configs.policies.other.acceptance_criteria import AcceptanceConfig, OnlyImprovingConfig
     from logic.src.policies.acceptance_criteria.only_improving import OnlyImproving
+    from logic.src.policies.routing.base.sub_problem import build_subproblem
     from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.hgs import HGSSolver
 
     cfg = HGSConfig(
         acceptance_criterion=AcceptanceConfig(method="oi", params=OnlyImprovingConfig()),
     )
     dist = np.zeros((2, 2))
-    solver = HGSSolver(dist, {1: 1.0}, capacity=10.0, R=1.0, C=1.0, params=cfg)
+    solver = HGSSolver(build_subproblem(dist, {1: 1.0}, 10.0, 1.0, 1.0), cfg)
     assert isinstance(solver.acceptance_criterion, OnlyImproving)
 
 

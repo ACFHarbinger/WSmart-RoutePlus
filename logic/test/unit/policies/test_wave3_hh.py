@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 from logic.src.configs.policies import HyperHeuristicACOConfig
 from logic.src.policies.helpers.operators.solution_initialization import build_greedy_routes
+from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_aco import (
     HyperHeuristicACO,
 )
@@ -62,7 +63,7 @@ def test_sshh_solver(sample_data):
 def test_hyper_aco_solver(sample_data):
     dist, wastes, cap = sample_data
     params = HyperHeuristicACOConfig(max_iterations=2, n_ants=2)
-    solver = HyperHeuristicACO(dist, wastes, cap, R=10.0, C=1.0, params=params)
+    solver = HyperHeuristicACO(build_subproblem(dist, wastes, cap, 10.0, 1.0), params)
     routes, profit, cost = solver.solve()
     assert isinstance(routes, list)
     assert profit >= -1e9 # Allow negative if cost is high

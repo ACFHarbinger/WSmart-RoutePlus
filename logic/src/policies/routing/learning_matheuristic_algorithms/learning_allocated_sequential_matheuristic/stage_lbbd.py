@@ -63,6 +63,7 @@ import gurobipy as gp
 import numpy as np
 from gurobipy import GRB, quicksum
 
+from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.matheuristics.exact_guided_heuristic.route_pool import RoutePool, VRPPRoute
 
 logger = logging.getLogger(__name__)
@@ -234,7 +235,17 @@ def _solve_sub_alns(
             seed=seed,
             profit_aware_operators=True,
         )
-        solver = ALNSSolver(dist, sub_wastes, capacity, R, C, cfg, mandatory_nodes=sorted(mandatory & selected))
+        solver = ALNSSolver(
+            build_subproblem(
+                dist_matrix=dist,
+                wastes=sub_wastes,
+                capacity=capacity,
+                revenue=R,
+                cost_unit=C,
+                mandatory_nodes=sorted(mandatory & selected),
+            ),
+            cfg,
+        )
         routes, profit, _ = solver.solve()
         return routes, profit
     except Exception as exc:
@@ -281,16 +292,18 @@ def _solve_sub_bpc(
 
         sub_wastes = {n: wastes.get(n, 0.0) for n in selected}
         bpc_params = BPCConfig(time_limit=time_limit, seed=seed)
-        routes, profit = run_bpc(
-            dist_matrix=dist,
-            wastes=sub_wastes,
-            capacity=capacity,
-            R=R,
-            C=C,
-            params=bpc_params,
-            mandatory_indices=mandatory & selected,
-            vehicle_limit=vehicle_limit,
-            env=env,
+        routes, profit, _cost = run_bpc(
+            build_subproblem(
+                dist_matrix=dist,
+                wastes=sub_wastes,
+                capacity=capacity,
+                revenue=R,
+                cost_unit=C,
+                mandatory_nodes=sorted(mandatory & selected),
+                n_vehicles=vehicle_limit,
+                env=env,
+            ),
+            bpc_params,
         )
         return routes, profit
     except Exception as exc:
