@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Cross-package review (`2026-10-15`)
+
+- Codex review: root registry tag queries deduplicate class identity across child registries/aliases, and get_all preserves the union of child tags. Added a regression test.
+
 ### Registry, lazy imports and facades (`2026-10-15`)
 
 #### Changed

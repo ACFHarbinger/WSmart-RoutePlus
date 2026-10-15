@@ -5,7 +5,6 @@ import sys
 from textwrap import dedent
 
 import pytest
-
 from logic.src.utils.registry import Registry
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -134,3 +133,20 @@ def test_released_classical_imports_do_not_load_torch():
     )
     result = subprocess.run([sys.executable, "-c", script], check=False, capture_output=True, text=True)
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_root_queries_deduplicate_child_objects_and_aliases():
+    root = Registry("root")
+    left = Registry("left", parent=root)
+    right = Registry("right", parent=root)
+
+    class Item:
+        pass
+
+    left.register("one", tags=("shared", "left"))(Item)
+    left.register("alias", tags=("shared", "left"))(Item)
+    right.register("two", tags=("shared", "right"))(Item)
+    assert root.query_intersection("shared") == [Item]
+    assert root.query_union("left", "right") == [Item]
+    assert root.query_difference(["shared"], ["absent"]) == [Item]
+    assert root.get_all()[Item] == {"shared", "left", "right"}
