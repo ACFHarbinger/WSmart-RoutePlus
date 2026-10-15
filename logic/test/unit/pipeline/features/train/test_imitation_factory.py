@@ -8,6 +8,7 @@ from logic.src.configs.rl.policies import ProfitableNNConfig
 from logic.src.pipeline.features.train.model_factory import adaptive_imitation as adaptive_factory
 from logic.src.pipeline.features.train.model_factory import imitation as factory
 from logic.src.pipeline.features.train.model_factory.builder import _load_initial_weights
+from logic.src.pipeline.rl.core import imitation as imitation_module
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
@@ -38,7 +39,8 @@ def _cfg(algorithm: str) -> SimpleNamespace:
 @pytest.mark.parametrize(
     ("algorithm", "module", "create", "cls_name"),
     [
-        ("imitation", factory, factory._create_imitation, "ImitationLearning"),
+        # The imitation factory imports its module on call, so the class is patched at its source.
+        ("imitation", imitation_module, factory._create_imitation, "ImitationLearning"),
         ("adaptive_imitation", adaptive_factory, adaptive_factory._create_adaptive_imitation, "AdaptiveImitation"),
     ],
 )

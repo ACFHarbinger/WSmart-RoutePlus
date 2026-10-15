@@ -37,8 +37,8 @@ class CleanClass:
         """A clean method.
 
         Args:
-            param1 (int): The first parameter.
-            kwarg1 (str): Keyword argument.
+            param1: The first parameter.
+            kwarg1: Keyword argument.
 
         Returns:
             int: The return code.
@@ -73,13 +73,15 @@ class DirtyClass:
         """Just a single line docstring."""
         return x
 
-    def missing_yields(self):
+    def restates_types(self, x: int) -> None:
         """Docstring.
 
         Args:
-            self: The instance.
+            x (int): Restates the hint.
+
+        Returns:
+            None
         """
-        yield 1
 '''
     f = tmp_path / "dirty.py"
     f.write_text(content, encoding="utf-8")
@@ -106,14 +108,13 @@ def test_dirty_module_violations(dirty_module):
     violations = analyze_file(dirty_module)
     messages = [v["message"] for v in violations]
 
-    # Verify expected violations
-    assert any("Module docstring missing 'Attributes' section" in m for m in messages)
-    assert any("Module docstring missing 'Example' section" in m for m in messages)
+    # Q-7b rule: public docstrings are required, sections are optional, Args must not restate
+    # type hints and a Returns section that documents None is a defect.
     assert any("Missing class docstring" in m for m in messages)
     assert any("Missing function docstring" in m for m in messages)
-    assert any("Missing 'Args' section" in m for m in messages)
-    assert any("Function returns data but missing 'Returns' section" in m for m in messages)
-    assert any("Function yields data but missing 'Yields' section" in m for m in messages)
+    assert any("Args entry 'x' restates its type hint" in m for m in messages)
+    assert any("'Returns:' section documents None" in m for m in messages)
+    assert not any("Attributes" in m or "Example" in m for m in messages)
 
 
 @pytest.mark.unit
