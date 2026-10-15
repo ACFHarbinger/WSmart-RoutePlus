@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
+from logic.src.configs.policies.mp_pso import MP_PSO_Config
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.problem_context import ProblemContext
@@ -53,6 +54,11 @@ class MultiPeriodPSOPolicy(BaseMultiPeriodRoutingPolicy):
         rng: Random number generator.
     """
 
+    @classmethod
+    def _config_class(cls) -> Any:
+        """Return the typed config of this policy."""
+        return MP_PSO_Config
+
     def __init__(self, config: Any = None):
         """Initializes the Multi-Period PSO policy.
 
@@ -61,7 +67,7 @@ class MultiPeriodPSOPolicy(BaseMultiPeriodRoutingPolicy):
 
         """
         super().__init__(config)
-        self.params = self._effective_config(config)
+        self.params = self._effective_config(config or {})
         self.swarm_size = self.params.swarm_size
         self.iters = self.params.iters
         self.seed = self.params.seed

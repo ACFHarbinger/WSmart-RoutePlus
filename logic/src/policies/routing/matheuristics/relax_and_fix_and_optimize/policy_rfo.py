@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import gurobipy as gp
 
+from logic.src.configs.policies.rfo import RFOConfig
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.problem_context import ProblemContext
@@ -64,6 +65,11 @@ class RelaxFixOptimizePolicy(BaseMultiPeriodRoutingPolicy):
         None
     """
 
+    @classmethod
+    def _config_class(cls) -> Any:
+        """Return the typed config of this policy."""
+        return RFOConfig
+
     def __init__(self, config: Any = None):
         """
         Initializes the RFO policy.
@@ -72,7 +78,7 @@ class RelaxFixOptimizePolicy(BaseMultiPeriodRoutingPolicy):
             config: Optional Hydra configuration.
         """
         super().__init__(config)
-        self.params = self._effective_config(config)
+        self.params = self._effective_config(config or {})
         self.window_size = self.params.window_size
         self.step_size = self.params.step_size
         self.mip_time = self.params.mip_time

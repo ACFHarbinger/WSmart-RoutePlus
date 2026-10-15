@@ -41,3 +41,25 @@ class ABCConfig:
     profit_aware_operators: bool = False
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "ABCConfig":
+        """Create parameters from a configuration object.
+
+        Args:
+            config: Configuration object (Hydra config or DictConfig).
+
+        Returns:
+            An instance of ABCConfig.
+        """
+        return cls(
+            n_sources=max(1, getattr(config, "n_sources", 20)),
+            limit=max(1, getattr(config, "limit", 10)),
+            max_iterations=max(1, getattr(config, "max_iterations", 200)),
+            n_removal=max(1, getattr(config, "n_removal", 1)),
+            local_search_iterations=max(0, getattr(config, "local_search_iterations", 100)),
+            time_limit=getattr(config, "time_limit", 60.0),
+            seed=getattr(config, "seed", None),
+            profit_aware_operators=getattr(config, "profit_aware_operators", False),
+        )

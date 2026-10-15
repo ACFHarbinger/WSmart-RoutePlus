@@ -12,7 +12,7 @@ Example:
 """
 
 from dataclasses import dataclass, field
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from logic.src.configs.policies.alns import ALNSConfig
 from logic.src.configs.policies.hgs import HGSConfig
@@ -65,3 +65,56 @@ class HGSALNSConfig:
             max_removal_pct=0.3,
         )
     )
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "HGSALNSConfig":
+        """Create HGSALNSConfig from a configuration object.
+
+        Args:
+            config: Configuration source for parameters.
+
+        Returns:
+            HGSALNSConfig: The initialized parameters object.
+        """
+        import dataclasses
+        hgs_source = getattr(config, "hgs", config)
+        alns_source = getattr(config, "alns", config)
+        if isinstance(hgs_source, HGSConfig):
+            hgs_params = hgs_source
+        elif isinstance(hgs_source, dict):
+            valid_keys = {f.name for f in dataclasses.fields(HGSConfig)}
+            hgs_params = HGSConfig(**{k: v for k, v in hgs_source.items() if k in valid_keys})
+        else:
+            hgs_params = HGSConfig()
+
+        if isinstance(alns_source, ALNSConfig):
+            alns_params = alns_source
+        elif isinstance(alns_source, dict):
+            valid_keys = {f.name for f in dataclasses.fields(ALNSConfig)}
+            alns_params = ALNSConfig(**{k: v for k, v in alns_source.items() if k in valid_keys})
+        else:
+            alns_params = ALNSConfig()
+
+        return cls(
+            time_limit=getattr(config, "time_limit", 60.0),
+            seed=getattr(config, "seed", None),
+            profit_aware_operators=getattr(config, "profit_aware_operators", False),
+            hgs_params=hgs_params,
+            alns_params=alns_params,
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert Params to a dictionary.
+
+        Args:
+            None.
+
+        Returns:
+            Dict[str, Any]: Dictionary representation of parameters.
+        """
+        return {
+            "time_limit": self.time_limit,
+            "seed": self.seed,
+            "profit_aware_operators": self.profit_aware_operators,
+        }

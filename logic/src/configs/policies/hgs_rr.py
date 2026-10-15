@@ -12,7 +12,7 @@ Example:
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
@@ -105,3 +105,48 @@ class HGSRRConfig:
 
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "HGSRRConfig":
+        """Create parameters from a configuration object.
+
+        Args:
+            config: Configuration object (Hydra config or dataclass).
+
+        Returns:
+            HGSRRConfig: Initialized parameters.
+        """
+        return cls(
+            time_limit=getattr(config, "time_limit", 10.0),
+            population_size=getattr(config, "population_size", 50),
+            elite_size=getattr(config, "elite_size", 10),
+            mutation_rate=getattr(config, "mutation_rate", 0.3),
+            n_iterations_no_improvement=getattr(config, "n_iterations_no_improvement", 20000),
+            no_improvement_threshold=getattr(config, "no_improvement_threshold", 20),
+            survivor_threshold=getattr(config, "survivor_threshold", 2.0),
+            max_vehicles=getattr(config, "max_vehicles", 0),
+            crossover_rate=getattr(config, "crossover_rate", 0.7),
+            neighbor_list_size=getattr(config, "neighbor_list_size", 10),
+            min_removal_pct=getattr(config, "min_removal_pct", 0.1),
+            max_removal_pct=getattr(config, "max_removal_pct", 0.4),
+            noise_factor=getattr(config, "noise_factor", 0.015),
+            reaction_factor=getattr(config, "reaction_factor", 0.1),
+            decay_parameter=getattr(config, "decay_parameter", 0.95),
+            destroy_operators=getattr(
+                config,
+                "destroy_operators",
+                ["random_removal", "worst_removal", "cluster_removal", "shaw_removal", "string_removal"],
+            ),
+            repair_operators=getattr(
+                config,
+                "repair_operators",
+                ["greedy_insertion", "regret_2_insertion", "regret_k_insertion", "greedy_insertion_with_blinks"],
+            ),
+            operator_decay_rate=getattr(config, "operator_decay_rate", 0.95),
+            score_sigma_1=getattr(config, "score_sigma_1", 33.0),
+            score_sigma_2=getattr(config, "score_sigma_2", 9.0),
+            score_sigma_3=getattr(config, "score_sigma_3", 3.0),
+            seed=getattr(config, "seed", None),
+            profit_aware_operators=getattr(config, "profit_aware_operators", False),
+        )

@@ -14,7 +14,7 @@ Example:
 """
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
@@ -59,3 +59,37 @@ class LocalBranchingConfig:
     framework: str = "ortools"
     packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "LocalBranchingConfig":
+        """Create LocalBranchingConfig from a configuration object or dictionary.
+
+        Args:
+            config (Any): Configuration object or dictionary.
+
+        Returns:
+            "LocalBranchingConfig": Configuration parameters for the Local Branching (LB) policy.
+        """
+        from dataclasses import fields
+        if isinstance(config, dict):
+            return cls(**{k: v for k, v in config.items() if k in {f.name for f in fields(cls)}})
+
+        return cls(
+            k=getattr(config, "k", 10),
+            max_iterations=getattr(config, "max_iterations", 100),
+            time_limit=getattr(config, "time_limit", 60.0),
+            time_limit_per_iteration=getattr(config, "time_limit_per_iteration", 10.0),
+            node_limit_per_iteration=getattr(config, "node_limit_per_iteration", 1000),
+            mip_gap=getattr(config, "mip_gap", 0.01),
+            seed=getattr(config, "seed", 42),
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert Params to a dictionary.
+
+        Returns:
+            Dict[str, Any]: Dictionary of LocalBranchingConfig.
+        """
+        from dataclasses import fields
+        return {f.name: getattr(self, f.name) for f in fields(self)}

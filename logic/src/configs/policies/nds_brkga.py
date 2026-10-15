@@ -78,3 +78,36 @@ class NDSBRKGAConfig:
     # Hydra compatibility placeholders
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)
+
+
+    @classmethod
+    def from_config(cls, config: object) -> "NDSBRKGAConfig":
+        """Construct from a configuration object (dataclass or dict-like).
+
+        Args:
+            config (object): Any object with attribute or dict-key access.
+
+        Returns:
+            NDSBRKGAConfig: Populated parameter instance.
+        """
+
+        def _get(attr: str, default):  # type: ignore[no-untyped-def]
+            if isinstance(config, dict):
+                return config.get(attr, default)
+            return getattr(config, attr, default)
+
+        return cls(
+            pop_size=int(_get("pop_size", 60)),
+            n_elite=int(_get("n_elite", 15)),
+            n_mutants=int(_get("n_mutants", 10)),
+            bias_elite=float(_get("bias_elite", 0.70)),
+            max_generations=int(_get("max_generations", 200)),
+            time_limit=float(_get("time_limit", 90.0)),
+            seed=_get("seed", 42),
+            overflow_penalty=float(_get("overflow_penalty", 10.0)),
+            seed_selection_strategy=str(_get("seed_selection_strategy", "fractional_knapsack")),
+            seed_routing_strategy=str(_get("seed_routing_strategy", "greedy")),
+            n_seed_solutions=int(_get("n_seed_solutions", 5)),
+            selection_threshold_min=float(_get("selection_threshold_min", 0.10)),
+            selection_threshold_max=float(_get("selection_threshold_max", 0.90)),
+        )

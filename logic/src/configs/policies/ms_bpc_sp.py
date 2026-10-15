@@ -12,7 +12,7 @@ Example:
 """
 
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
@@ -99,3 +99,62 @@ class MSBPCSPConfig:
     lr_op_time_limit: float = 3.0
     lr_pre_pruning_depth_limit: int = -1
     lr_warm_start_cg: bool = False
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "MSBPCSPConfig":
+        """Create MSBPCSPConfig from a configuration object or dictionary.
+
+        Performs explicit type casting for numeric fields to ensure compatibility
+        with Hydra/YAML scientific notation which might be loaded as strings.
+
+        Args:
+            config: Configuration source (dict or Hydra config).
+
+        Returns:
+            "MSBPCSPConfig": Initialized parameter object.
+        """
+        from dataclasses import MISSING, fields
+        from typing import Dict
+        if config is None:
+            return cls()
+
+        raw_data: Dict[str, Any] = {}
+        if isinstance(config, dict):
+            raw_data = config
+        else:
+            # Handle Hydra DictConfig or other object types
+            for f in fields(cls):
+                if hasattr(config, f.name):
+                    raw_data[f.name] = getattr(config, f.name)
+
+        kwargs: Dict[str, Any] = {}
+        for f in fields(cls):
+            val = raw_data.get(f.name, f.default)
+            if val is MISSING:
+                if f.default_factory is not MISSING:  # type: ignore[comparison-overlap]
+                    val = f.default_factory()  # type: ignore[misc]
+                else:
+                    continue
+
+            # Explicit type casting
+            if val is not None:
+                if f.type is float or f.type == "float":
+                    val = float(val)
+                elif f.type is int or f.type == "int":
+                    val = int(val)
+                elif f.type is bool or f.type == "bool":
+                    val = val.lower() in ("true", "1", "yes") if isinstance(val, str) else bool(val)
+
+            kwargs[f.name] = val
+
+        return cls(**kwargs)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert MSBPCSPConfig to a dictionary for backend compatibility.
+
+        Returns:
+            Dict[str, Any]: Mapping of parameter names to values.
+        """
+        from dataclasses import fields
+        return {f.name: getattr(self, f.name) for f in fields(self)}

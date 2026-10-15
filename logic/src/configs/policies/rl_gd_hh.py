@@ -91,3 +91,65 @@ class RLGDHHConfig:
         )
     )
     profit_aware_operators: bool = False
+
+
+    def __post_init__(self):
+        """Ensure acceptance criterion is initialized even if not passed in config.
+
+        Returns:
+            None
+        """
+        from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
+        if self.acceptance_criterion is None:
+            from logic.src.policies.acceptance_criteria.base.factory import (
+                AcceptanceCriterionFactory,
+            )
+
+            self.acceptance_criterion = AcceptanceCriterionFactory.create(
+                name="gd",
+                target_fitness_multiplier=0.0,  # quality_lb=0 per paper
+                max_iterations=self.max_iterations,
+            )
+
+    @classmethod
+    def from_config(cls, config: Any) -> "RLGDHHConfig":
+        """Create parameters from a configuration object.
+
+        Args:
+            config (Any): Configuration object.
+
+        Returns:
+            RLGDHHConfig: Parameters for RL-GD-HH.
+        """
+        from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
+        # Build parameters
+        params = cls(
+            max_iterations=getattr(config, "max_iterations", 5000),
+            time_limit=getattr(config, "time_limit", 60.0),
+            reward_improvement=getattr(config, "reward_improvement", 1.0),
+            penalty_worsening=getattr(config, "penalty_worsening", 1.0),
+            punishment_type=getattr(config, "punishment_type", "RL1"),
+            utility_upper_bound=getattr(config, "utility_upper_bound", 40.0),
+            min_utility=getattr(config, "min_utility", 0.0),
+            initial_utility=getattr(config, "initial_utility", 30.0),
+            quality_lb=getattr(config, "quality_lb", 0.0),
+            profit_aware_operators=getattr(config, "profit_aware_operators", False),
+        )
+
+        # Handle Acceptance Criterion Injection
+
+        acceptance_cfg = getattr(config, "acceptance_criterion", None)
+        if acceptance_cfg:
+            params.acceptance_criterion = AcceptanceCriterionFactory.create(
+                name=acceptance_cfg.method,
+                config=acceptance_cfg.params,
+            )
+        else:
+            # Default to great_deluge (gd) as it's the core of RL-GD-HH
+            params.acceptance_criterion = AcceptanceCriterionFactory.create(
+                name="gd",
+                initial_level=params.quality_lb,  # quality_lb serves as the floor target
+                decay_rate=0.01,
+            )
+
+        return params

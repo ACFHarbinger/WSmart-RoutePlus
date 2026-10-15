@@ -31,6 +31,7 @@ from gurobipy import GRB
 
 from logic.src.configs.policies.aco_ks import KSparseACOConfig
 from logic.src.configs.policies.ils_rvnd_sp import ILSRVNDSPConfig
+from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
 from logic.src.policies.helpers.local_search.local_search_general import (
     GeneralLocalSearch,
 )
@@ -358,7 +359,8 @@ class ILSRVNDSPSolver:
         current_profit = best_profit
 
         # Setup modular acceptance criterion
-        self.params.acceptance_criterion.setup(best_profit)
+        self.acceptance = AcceptanceCriterionFactory.build(self.params.acceptance_criterion)
+        self.acceptance.setup(best_profit)
 
         self._add_to_pool(best_routes, target_pool)
 
@@ -383,7 +385,7 @@ class ILSRVNDSPSolver:
 
                 # ILS Acceptance Criterion:
                 # Delegate decision (improve only, SA, GD, etc. based on injection)
-                is_accepted, _ = self.params.acceptance_criterion.accept(
+                is_accepted, _ = self.acceptance.accept(
                     current_obj=current_profit,
                     candidate_obj=ls_profit,
                     iteration=iteration * max_ils_iterations + ils_idx,
@@ -400,7 +402,7 @@ class ILSRVNDSPSolver:
                     best_profit = ls_profit
 
                 # Step criterion
-                self.params.acceptance_criterion.step(
+                self.acceptance.step(
                     current_obj=current_profit,
                     candidate_obj=ls_profit,
                     accepted=is_accepted,

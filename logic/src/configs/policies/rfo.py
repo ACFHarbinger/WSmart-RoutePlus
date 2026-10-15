@@ -22,7 +22,7 @@ Example:
 """
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
@@ -55,3 +55,34 @@ class RFOConfig:
 
     packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "RFOConfig":
+        """Create RFOConfig from a configuration object or dictionary.
+
+        Args:
+            config: Configuration object.
+
+        Returns:
+            "RFOConfig": RFO parameters.
+        """
+        from dataclasses import fields
+        if isinstance(config, dict):
+            return cls(**{k: v for k, v in config.items() if k in {f.name for f in fields(cls)}})
+
+        return cls(
+            window_size=getattr(config, "window_size", 3),
+            step_size=getattr(config, "step_size", 2),
+            mip_time=getattr(config, "mip_time", 60.0),
+            mip_gap=getattr(config, "mip_gap", 0.01),
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert RFOConfig to a dictionary for backend compatibility.
+
+        Returns:
+            Dict[str, Any]: RFO parameters as dictionary.
+        """
+        from dataclasses import fields
+        return {f.name: getattr(self, f.name) for f in fields(self)}

@@ -41,3 +41,32 @@ class JointGreedyConfig:
     # Hydra compatibility placeholders
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "JointGreedyConfig":
+        """Build params from a config dataclass or dictionary.
+
+        Args:
+            config (Any): Configuration source (dict, Hydra config, etc.).
+
+        Returns:
+            JointGreedyConfig: The initialized parameters.
+        """
+        if config is None:
+            return cls()
+
+        kwargs = {}
+        # Handle both dicts and dataclasses (Hydra/OmegaConf)
+        if hasattr(config, "__dict__"):
+            source = config.__dict__
+        elif hasattr(config, "items"):
+            source = config
+        else:
+            return cls()
+
+        for name in cls.__dataclass_fields__:
+            if name in source and source[name] is not None:
+                kwargs[name] = source[name]
+
+        return cls(**kwargs)

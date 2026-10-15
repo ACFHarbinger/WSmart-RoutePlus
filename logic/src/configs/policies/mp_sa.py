@@ -18,7 +18,7 @@ Example:
 """
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
@@ -47,3 +47,37 @@ class MP_SA_Config:
 
     packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "MP_SA_Config":
+        """Create MP_SA_Config from a configuration object or dictionary.
+
+        Args:
+            config: The configuration object or dictionary.
+
+        Returns:
+            "MP_SA_Config": The instantiated parameters.
+        """
+        from dataclasses import fields
+        if isinstance(config, dict):
+            return cls(**{k: v for k, v in config.items() if k in {f.name for f in fields(cls)}})
+
+        return cls(
+            iters=getattr(config, "iters", getattr(config, "max_iter", 500)),
+            init_temp=getattr(config, "init_temp", 100.0),
+            cooling_rate=getattr(config, "cooling_rate", 0.95),
+            seed=getattr(config, "seed", 42),
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert MP_SA_Config to a dictionary for backend compatibility.
+
+        Args:
+            None.
+
+        Returns:
+            Dict[str, Any]: A dictionary of parameter names and values.
+        """
+        from dataclasses import fields
+        return {f.name: getattr(self, f.name) for f in fields(self)}

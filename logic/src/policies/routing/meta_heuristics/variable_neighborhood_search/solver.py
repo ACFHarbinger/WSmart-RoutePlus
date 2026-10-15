@@ -30,6 +30,7 @@ import numpy as np
 
 from logic.src.configs.policies.vns import VNSConfig
 from logic.src.envs.tasks.common.expand_pool import current_expand_pool
+from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
 from logic.src.policies.helpers.operators.search_heuristics.destroy_repair_llh import (
     build_greedy_initial_routes,
     llh_cluster_greedy,
@@ -131,7 +132,8 @@ class VNSSolver:
         best_profit = profit
 
         # Setup modular acceptance criterion
-        self.params.acceptance_criterion.setup(profit)
+        self.acceptance = AcceptanceCriterionFactory.build(self.params.acceptance_criterion)
+        self.acceptance.setup(profit)
 
         for iteration in range(self.params.max_iterations):
             if self.params.time_limit > 0 and time.perf_counter() - start > self.params.time_limit:
@@ -153,7 +155,7 @@ class VNSSolver:
                 ls_routes, ls_profit = self._local_search(shaken, start)
 
                 # === Move or not (Modular acceptance criterion) ===
-                is_accepted, _ = self.params.acceptance_criterion.accept(
+                is_accepted, _ = self.acceptance.accept(
                     current_obj=profit,
                     candidate_obj=ls_profit,
                     iteration=iteration,
@@ -171,7 +173,7 @@ class VNSSolver:
                     k += 1  # Advance to next neighborhood on rejection
 
                 # Step the criterion after transition decision
-                self.params.acceptance_criterion.step(
+                self.acceptance.step(
                     current_obj=profit,
                     candidate_obj=ls_profit,
                     accepted=is_accepted,

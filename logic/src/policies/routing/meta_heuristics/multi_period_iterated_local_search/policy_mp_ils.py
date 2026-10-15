@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
+from logic.src.configs.policies.mp_ils import MP_ILS_Config
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.problem_context import ProblemContext
@@ -56,6 +57,11 @@ class MultiPeriodILSPolicy(BaseMultiPeriodRoutingPolicy):
         rng: Random number generator.
     """
 
+    @classmethod
+    def _config_class(cls) -> Any:
+        """Return the typed config of this policy."""
+        return MP_ILS_Config
+
     def __init__(self, config: Any = None):
         """Initializes the Multi-Period ILS policy.
 
@@ -64,7 +70,7 @@ class MultiPeriodILSPolicy(BaseMultiPeriodRoutingPolicy):
 
         """
         super().__init__(config)
-        self.params = self._effective_config(config)
+        self.params = self._effective_config(config or {})
         self.max_iter = self.params.iters
         self.perturb_size = self.params.perturb_size
         self.seed = self.params.seed

@@ -15,7 +15,7 @@ Example:
 """
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
@@ -73,3 +73,37 @@ class KernelSearchConfig:
     framework: str = "ortools"
     packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "KernelSearchConfig":
+        """Create KernelSearchConfig from a configuration object or dictionary.
+
+        Args:
+            config: Configuration object or dict with KS parameter attributes.
+
+        Returns:
+            "KernelSearchConfig": Populated parameter dataclass.
+        """
+        from dataclasses import fields
+        if isinstance(config, dict):
+            return cls(**{k: v for k, v in config.items() if k in {f.name for f in fields(cls)}})
+
+        return cls(
+            initial_kernel_size=getattr(config, "initial_kernel_size", 50),
+            bucket_size=getattr(config, "bucket_size", 20),
+            max_buckets=getattr(config, "max_buckets", 15),
+            time_limit=getattr(config, "time_limit", 300.0),
+            mip_limit_nodes=getattr(config, "mip_limit_nodes", 10000),
+            mip_gap=getattr(config, "mip_gap", 0.01),
+            seed=getattr(config, "seed", 42),
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert KernelSearchConfig to a dictionary for backend compatibility.
+
+        Returns:
+            Dict[str, Any]: Mapping of parameter names to their values.
+        """
+        from dataclasses import fields
+        return {f.name: getattr(self, f.name) for f in fields(self)}

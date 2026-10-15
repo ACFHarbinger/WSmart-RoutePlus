@@ -54,3 +54,43 @@ class RTSConfig:
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)
     acceptance_criterion: AcceptanceConfig = AcceptanceConfig(method="ac", params=AspirationConfig())
+
+
+    @classmethod
+    def from_config(cls, config: "RTSConfig") -> "RTSConfig":
+        """Create RTSConfig from a Hydra configuration object.
+
+        Args:
+            config (RTSConfig): The configuration object.
+
+        Returns:
+            RTSConfig: An instance of RTSConfig populated from the config.
+        """
+        params = cls(
+            initial_tenure=getattr(config, "initial_tenure", 7),
+            min_tenure=getattr(config, "min_tenure", 3),
+            max_tenure=getattr(config, "max_tenure", 20),
+            tenure_increase=getattr(config, "tenure_increase", 1.5),
+            tenure_decrease=getattr(config, "tenure_decrease", 0.9),
+            max_iterations=getattr(config, "max_iterations", 500),
+            n_removal=getattr(config, "n_removal", 2),
+            n_llh=getattr(config, "n_llh", 5),
+            time_limit=getattr(config, "time_limit", 60.0),
+            seed=getattr(config, "seed", None),
+            profit_aware_operators=getattr(config, "profit_aware_operators", False),
+        )
+
+        # Handle Acceptance Criterion Injection (Aspiration folding)
+        from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
+
+        acceptance_cfg = getattr(config, "acceptance_criterion", None)
+        if acceptance_cfg:
+            params.acceptance_criterion = AcceptanceCriterionFactory.create(
+                name=acceptance_cfg.method,
+                config=acceptance_cfg.params,
+            )
+        else:
+            # Default to aspiration for standard RTS
+            params.acceptance_criterion = AcceptanceCriterionFactory.create(name="ac")
+
+        return params

@@ -14,7 +14,7 @@ Example:
 """
 
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
@@ -51,3 +51,26 @@ class MemeticAlgorithmIslandModelConfig:
     profit_aware_operators: bool = False
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "MemeticAlgorithmIslandModelConfig":
+        """Create parameters from a configuration object.
+
+        Args:
+            config: Configuration source (dataclass or object).
+
+        Returns:
+            MemeticAlgorithmIslandModelConfig: Initialized runtime parameters.
+        """
+        return cls(
+            n_islands=getattr(config, "n_islands", 5),
+            island_size=getattr(config, "island_size", 4),
+            max_generations=getattr(config, "max_generations", 50),
+            stagnation_limit=getattr(config, "stagnation_limit", 5),
+            n_removal=getattr(config, "n_removal", 1),
+            local_search_iterations=getattr(config, "local_search_iterations", 100),
+            time_limit=getattr(config, "time_limit", 60.0),
+            profit_aware_operators=getattr(config, "profit_aware_operators", False),
+            seed=getattr(config, "seed", 42),
+        )

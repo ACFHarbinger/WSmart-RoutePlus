@@ -14,7 +14,7 @@ Example:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Optional
 
 
 @dataclass
@@ -85,3 +85,25 @@ class ALNSIPOConfig:
     inventory_lambda: float = 1.0
     inter_period_weight: float = 1.0
     stochastic_repair: bool = False
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "ALNSIPOConfig":
+        """Create ALNSIPOConfig from an ALNSIPOConfig dataclass or dict.
+
+        Args:
+            config: ALNSIPOConfig dataclass or dict with solver parameters.
+
+        Returns:
+            "ALNSIPOConfig" instance with values from config.
+        """
+        import dataclasses
+        valid_keys = {f.name for f in dataclasses.fields(cls)}
+        if isinstance(config, dict):
+            return cls(**{k: v for k, v in config.items() if k in valid_keys})
+
+        kwargs = {}
+        for k in valid_keys:
+            if hasattr(config, k):
+                kwargs[k] = getattr(config, k)
+        return cls(**kwargs)

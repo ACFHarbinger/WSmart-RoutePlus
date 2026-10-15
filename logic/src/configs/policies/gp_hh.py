@@ -46,3 +46,26 @@ class GPHHConfig:
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)
     candidate_list_size: int = 10
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "GPHHConfig":
+        """Create parameters from a configuration object.
+
+        Args:
+            config: Configuration object.
+
+        Returns:
+            GPHHConfig: Configuration parameters.
+        """
+        return cls(
+            gp_pop_size=getattr(config, "gp_pop_size", 20),
+            max_gp_generations=getattr(config, "max_gp_generations", 30),
+            tree_depth=getattr(config, "tree_depth", 3),
+            tournament_size=getattr(config, "tournament_size", 3),
+            time_limit=getattr(config, "time_limit", 60.0),
+            parsimony_coefficient=getattr(config, "parsimony_coefficient", 0.001),
+            candidate_list_size=getattr(config, "candidate_list_size", 10),
+            n_training_instances=getattr(config, "n_training_instances", 3),
+            training_sample_ratio=getattr(config, "training_sample_ratio", 0.5),
+        )

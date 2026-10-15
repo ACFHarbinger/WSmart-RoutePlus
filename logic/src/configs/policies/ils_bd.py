@@ -12,7 +12,7 @@ Example:
 """
 
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
@@ -83,3 +83,37 @@ class IntegerLShapedBendersConfig:
     framework: str = "ortools"
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "IntegerLShapedBendersConfig":
+        """Create IntegerLShapedBendersConfig from a configuration object or dictionary.
+
+        Args:
+            config: Dict or object with named attributes corresponding to fields.
+
+        Returns:
+            Typed IntegerLShapedBendersConfig instance with defaults for missing fields.
+        """
+        from dataclasses import MISSING, fields
+        from typing import Dict
+        if isinstance(config, dict):
+            valid_keys = {f.name for f in fields(cls)}
+            return cls(**{k: v for k, v in config.items() if k in valid_keys})
+
+        kwargs: Dict[str, Any] = {}
+        for f in fields(cls):
+            if f.default is not MISSING:
+                kwargs[f.name] = getattr(config, f.name, f.default)
+            elif f.default_factory is not MISSING:  # type: ignore[misc]
+                kwargs[f.name] = getattr(config, f.name, f.default_factory())  # type: ignore[misc]
+        return cls(**kwargs)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert IntegerLShapedBendersConfig to a plain dictionary.
+
+        Returns:
+            Dict mapping field name to field value.
+        """
+        from dataclasses import fields
+        return {f.name: getattr(self, f.name) for f in fields(self)}

@@ -18,6 +18,7 @@ import numpy as np
 
 from logic.src.configs.policies.ts import TSConfig
 from logic.src.envs.tasks.common.expand_pool import current_expand_pool
+from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
 from logic.src.policies.helpers.operators.destroy_ruin import (
     cluster_removal,
     random_removal,
@@ -148,7 +149,8 @@ class TSSolver:
         best_profit = profit
 
         # Setup modular acceptance criterion
-        self.params.acceptance_criterion.setup(profit)
+        self.acceptance = AcceptanceCriterionFactory.build(self.params.acceptance_criterion)
+        self.acceptance.setup(profit)
 
         # Add initial solution to elite pool
         self._update_elite_pool(routes, profit)
@@ -198,7 +200,7 @@ class TSSolver:
                 # Determine if this specific move was accepted (using the same logic as selection)
                 # Note: selection already filtered by acceptance, but we need the flag for step()
                 is_tabu = self._is_tabu(best_move_desc) if best_move_desc else False
-                is_accepted, _ = self.params.acceptance_criterion.accept(
+                is_accepted, _ = self.acceptance.accept(
                     current_obj=current_profit,
                     candidate_obj=best_candidate_profit,
                     is_tabu=is_tabu,
@@ -227,7 +229,7 @@ class TSSolver:
                     self.iterations_since_improvement += 1
 
                 # Step criterion
-                self.params.acceptance_criterion.step(
+                self.acceptance.step(
                     current_obj=current_profit,
                     candidate_obj=best_candidate_profit,
                     accepted=is_accepted,
@@ -277,7 +279,7 @@ class TSSolver:
 
             # Accept if not tabu or if aspiration criteria met
             # Delegate decision to injected criterion
-            is_accepted, _ = self.params.acceptance_criterion.accept(
+            is_accepted, _ = self.acceptance.accept(
                 current_obj=current_profit,
                 candidate_obj=candidate_profit,
                 is_tabu=is_tabu,

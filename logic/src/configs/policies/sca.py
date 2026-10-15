@@ -43,3 +43,28 @@ class SCAConfig:
     route_improvement: Optional[List[Any]] = field(default_factory=list)
     local_search_iterations: int = 500
     profit_aware_operators: bool = False
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "SCAConfig":
+        """Create SCAConfig from a configuration object.
+
+        Args:
+            config: Configuration object or dictionary.
+
+        Returns:
+            "SCAConfig" instance with values from config.
+        """
+        import dataclasses
+        if isinstance(config, dict):
+            return cls(**{k: v for k, v in config.items() if k in {f.name for f in dataclasses.fields(cls)}})
+
+        return cls(
+            pop_size=getattr(config, "pop_size", 20),
+            a_max=getattr(config, "a_max", 2.0),
+            max_iterations=getattr(config, "max_iterations", 200),
+            local_search_iterations=getattr(config, "local_search_iterations", 500),
+            time_limit=getattr(config, "time_limit", 60.0),
+            profit_aware_operators=getattr(config, "profit_aware_operators", False),
+            seed=getattr(config, "seed", None),
+        )

@@ -14,7 +14,7 @@ Example:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Optional
 
 
 @dataclass
@@ -52,3 +52,30 @@ class ADPRolloutConfig:
     time_limit: float = 60.0
     seed: Optional[int] = None
     verbose: bool = False
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "ADPRolloutConfig":
+        """Create from an ADPRolloutConfig dataclass or dict.
+
+        Args:
+            config: ``ADPRolloutConfig`` dataclass or dict.
+
+        Returns:
+            ``ADPRolloutConfig`` instance.
+        """
+        import dataclasses
+        if isinstance(config, dict):
+            return cls(**{k: v for k, v in config.items() if k in {f.name for f in dataclasses.fields(cls)}})
+        return cls(
+            look_ahead_days=getattr(config, "look_ahead_days", 3),
+            n_scenarios=getattr(config, "n_scenarios", 10),
+            fill_threshold=getattr(config, "fill_threshold", 60.0),
+            candidate_strategy=getattr(config, "candidate_strategy", "threshold"),
+            max_candidate_sets=getattr(config, "max_candidate_sets", 20),
+            top_k=getattr(config, "top_k", 10),
+            stockout_penalty=getattr(config, "stockout_penalty", 500.0),
+            time_limit=getattr(config, "time_limit", 60.0),
+            seed=getattr(config, "seed", None),
+            verbose=getattr(config, "verbose", False),
+        )

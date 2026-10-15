@@ -12,7 +12,7 @@ Example:
 """
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
@@ -45,3 +45,39 @@ class MP_ACO_Config:
 
     packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None
+
+
+    @classmethod
+    def from_config(cls, config: Any) -> "MP_ACO_Config":
+        """Create MP_ACO_Config from a configuration object or dictionary.
+
+        Args:
+            config: The configuration object or dictionary.
+
+        Returns:
+            "MP_ACO_Config": The instantiated parameters.
+        """
+        from dataclasses import fields
+        if isinstance(config, dict):
+            return cls(**{k: v for k, v in config.items() if k in {f.name for f in fields(cls)}})
+
+        return cls(
+            n_ants=getattr(config, "n_ants", 10),
+            iters=getattr(config, "iters", 50),
+            alpha=getattr(config, "alpha", 1.0),
+            beta=getattr(config, "beta", 2.0),
+            rho=getattr(config, "rho", 0.1),
+            seed=getattr(config, "seed", 42),
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert MP_ACO_Config to a dictionary for backend compatibility.
+
+        Args:
+            None.
+
+        Returns:
+            Dict[str, Any]: A dictionary of parameter names and values.
+        """
+        from dataclasses import fields
+        return {f.name: getattr(self, f.name) for f in fields(self)}
