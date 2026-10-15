@@ -1,9 +1,9 @@
-"""Policies module for WSmart-Route.
+"""Vectorised (GPU) policies and short-name model registry.
 
-This package contains all neural, classical, and heuristic policy
-implementations for combinatorial optimization. It provides a centralized
-registry and factory functions for looking up and instantiating policies
-via short CLI identifiers.
+This package re-exports model policies and the vectorised solvers lazily
+(owner ruling Q-4a: importing one expert or model must not pull the whole
+neural stack), and provides ``get_policy``/``get_policy_class`` for the
+short CLI identifiers.
 
 Attributes:
     get_policy: Function to instantiate a policy by its identifier.
@@ -21,41 +21,49 @@ from typing import Any, Dict, Tuple
 
 from torch import nn
 
-from logic.src.models.common import (
-    ConstructivePolicy,
-    ImprovementPolicy,
-    NonAutoregressivePolicy,
-)
-from logic.src.models.core.attention_model.deep_decoder_policy import (
-    DeepDecoderPolicy,
-)
-from logic.src.models.core.attention_model.policy import AttentionModelPolicy
-from logic.src.models.core.attention_model.symnco_policy import SymNCOPolicy
-from logic.src.models.core.dact.policy import DACTPolicy
-from logic.src.models.core.deepaco.policy import DeepACOPolicy
-from logic.src.models.core.gfacs.policy import GFACSPolicy
-from logic.src.models.core.glop.policy import GLOPPolicy
-from logic.src.models.core.hybrid_attention_model.hybrid_neural_heuristic_policy import (
-    NeuralHeuristicHybrid,
-)
-from logic.src.models.core.hybrid_attention_model.hybrid_two_step_policy import (
-    HybridTwoStagePolicy,
-)
-from logic.src.models.core.mdam.policy import MDAMPolicy
-from logic.src.models.core.moe.policy import MoEPolicy
-from logic.src.models.core.n2s.policy import N2SPolicy
-from logic.src.models.core.nargnn.policy import NARGNNPolicy
-from logic.src.models.core.neuopt.policy import NeuOptPolicy
-from logic.src.models.core.pointer_network.policy import PointerNetworkPolicy
-from logic.src.models.core.polynet.policy import PolyNetPolicy
-from logic.src.models.core.temporal_attention_model.policy import TemporalAMPolicy
-
-from .alns import VectorizedALNS
-from .ant_colony_system import VectorizedACOPolicy
-from .hgs import VectorizedHGS
-from .hgs_alns import VectorizedHGSALNS
-from .hybrid_volleyball_premier_league import VectorizedHVPL
-from .iterated_local_search import IteratedLocalSearchPolicy
+# Lazy name -> "module:attribute" re-exports. Accessed via module __getattr__.
+_LAZY: Dict[str, str] = {
+    "ConstructivePolicy": "logic.src.models.common:ConstructivePolicy",
+    "ImprovementPolicy": "logic.src.models.common:ImprovementPolicy",
+    "NonAutoregressivePolicy": "logic.src.models.common:NonAutoregressivePolicy",
+    "AttentionModelPolicy": "logic.src.models.core.attention_model.policy:AttentionModelPolicy",
+    "DeepDecoderPolicy": (
+        "logic.src.models.core.attention_model.deep_decoder_policy:DeepDecoderPolicy"
+    ),
+    "SymNCOPolicy": "logic.src.models.core.attention_model.symnco_policy:SymNCOPolicy",
+    "DACTPolicy": "logic.src.models.core.dact.policy:DACTPolicy",
+    "DeepACOPolicy": "logic.src.models.core.deepaco.policy:DeepACOPolicy",
+    "GFACSPolicy": "logic.src.models.core.gfacs.policy:GFACSPolicy",
+    "GLOPPolicy": "logic.src.models.core.glop.policy:GLOPPolicy",
+    "MDAMPolicy": "logic.src.models.core.mdam.policy:MDAMPolicy",
+    "MoEPolicy": "logic.src.models.core.moe.policy:MoEPolicy",
+    "N2SPolicy": "logic.src.models.core.n2s.policy:N2SPolicy",
+    "NARGNNPolicy": "logic.src.models.core.nargnn.policy:NARGNNPolicy",
+    "NeuOptPolicy": "logic.src.models.core.neuopt.policy:NeuOptPolicy",
+    "PointerNetworkPolicy": "logic.src.models.core.pointer_network.policy:PointerNetworkPolicy",
+    "PolyNetPolicy": "logic.src.models.core.polynet.policy:PolyNetPolicy",
+    "TemporalAMPolicy": (
+        "logic.src.models.core.temporal_attention_model.policy:TemporalAMPolicy"
+    ),
+    "NeuralHeuristicHybrid": (
+        "logic.src.models.core.hybrid_attention_model.hybrid_neural_heuristic_policy"
+        ":NeuralHeuristicHybrid"
+    ),
+    "HybridTwoStagePolicy": (
+        "logic.src.models.core.hybrid_attention_model.hybrid_two_step_policy"
+        ":HybridTwoStagePolicy"
+    ),
+    "VectorizedALNS": "logic.src.policies.vector.alns:VectorizedALNS",
+    "VectorizedACOPolicy": "logic.src.policies.vector.ant_colony_system:VectorizedACOPolicy",
+    "VectorizedHGS": "logic.src.policies.vector.hgs:VectorizedHGS",
+    "VectorizedHGSALNS": "logic.src.policies.vector.hgs_alns:VectorizedHGSALNS",
+    "VectorizedHVPL": (
+        "logic.src.policies.vector.hybrid_volleyball_premier_league:VectorizedHVPL"
+    ),
+    "IteratedLocalSearchPolicy": (
+        "logic.src.policies.vector.iterated_local_search:IteratedLocalSearchPolicy"
+    ),
+}
 
 # Short-name registry: CLI model name -> (module_path, class_name)
 # This enables ``get_policy("am")`` without importing everything eagerly.
@@ -159,3 +167,13 @@ __all__ = [
     "NeuralHeuristicHybrid",
     "HybridTwoStagePolicy",
 ]
+
+
+def __getattr__(name: str) -> Any:
+    if name in _LAZY:
+        module_name, _, attr = _LAZY[name].partition(":")
+        module = importlib.import_module(module_name)
+        obj = getattr(module, attr)
+        globals()[name] = obj
+        return obj
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

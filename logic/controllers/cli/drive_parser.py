@@ -15,8 +15,6 @@ from __future__ import annotations
 
 import argparse
 
-from logic.cloud.remote import DEFAULT_REMOTE, TARGETS
-
 
 def add_drive_sync_args(parser: argparse.ArgumentParser) -> None:
     """Register ``sync_drive`` arguments on *parser*.
@@ -24,6 +22,9 @@ def add_drive_sync_args(parser: argparse.ArgumentParser) -> None:
     Args:
         parser: An :class:`argparse.ArgumentParser` (or sub-parser) to populate.
     """
+    # Deferred so the release package can omit the cloud tooling (Q-8).
+    from logic.cloud.remote import DEFAULT_REMOTE, TARGETS
+
     parser.add_argument(
         "--direction",
         required=True,

@@ -8,6 +8,10 @@ Example:
     None
 """
 
+# Algorithms load lazily (P-25 / Q-12a): importing REINFORCE or ImitationLearning
+# must not pull every RL algorithm or the meta stack.
+from typing import Any
+
 from logic.src.pipeline.rl.common.base import RL4COLitModule
 from logic.src.pipeline.rl.common.baselines import (
     BASELINE_REGISTRY,
@@ -22,21 +26,37 @@ from logic.src.pipeline.rl.common.baselines import (
     WarmupBaseline,
     get_baseline,
 )
-from logic.src.pipeline.rl.core.a2c import A2C
-from logic.src.pipeline.rl.core.adaptive_imitation import AdaptiveImitation
-from logic.src.pipeline.rl.core.dr_grpo import DRGRPO
-from logic.src.pipeline.rl.core.gdpo import GDPO
-from logic.src.pipeline.rl.core.gspo import GSPO
-from logic.src.pipeline.rl.core.imitation import ImitationLearning
-from logic.src.pipeline.rl.core.mvmoe_am import MVMoE_AM
-from logic.src.pipeline.rl.core.mvmoe_pomo import MVMoE_POMO
-from logic.src.pipeline.rl.core.pomo import POMO
-from logic.src.pipeline.rl.core.ppo import PPO
-from logic.src.pipeline.rl.core.reinforce import REINFORCE
-from logic.src.pipeline.rl.core.sapo import SAPO
-from logic.src.pipeline.rl.core.symnco import SymNCO
-from logic.src.pipeline.rl.meta.hrl import HRLModule
-from logic.src.pipeline.rl.meta.module import MetaRLModule
+
+_LAZY = {
+    "A2C": "logic.src.pipeline.rl.core.a2c:A2C",
+    "AdaptiveImitation": "logic.src.pipeline.rl.core.adaptive_imitation:AdaptiveImitation",
+    "DRGRPO": "logic.src.pipeline.rl.core.dr_grpo:DRGRPO",
+    "GDPO": "logic.src.pipeline.rl.core.gdpo:GDPO",
+    "GSPO": "logic.src.pipeline.rl.core.gspo:GSPO",
+    "ImitationLearning": "logic.src.pipeline.rl.core.imitation:ImitationLearning",
+    "MVMoE_AM": "logic.src.pipeline.rl.core.mvmoe_am:MVMoE_AM",
+    "MVMoE_POMO": "logic.src.pipeline.rl.core.mvmoe_pomo:MVMoE_POMO",
+    "POMO": "logic.src.pipeline.rl.core.pomo:POMO",
+    "PPO": "logic.src.pipeline.rl.core.ppo:PPO",
+    "REINFORCE": "logic.src.pipeline.rl.core.reinforce:REINFORCE",
+    "SAPO": "logic.src.pipeline.rl.core.sapo:SAPO",
+    "SymNCO": "logic.src.pipeline.rl.core.symnco:SymNCO",
+    "HRLModule": "logic.src.pipeline.rl.meta.hrl:HRLModule",
+    "MetaRLModule": "logic.src.pipeline.rl.meta.module:MetaRLModule",
+}
+
+
+def __getattr__(name: str) -> Any:
+    if name in _LAZY:
+        import importlib
+
+        module_name, _, attr = _LAZY[name].partition(":")
+        module = importlib.import_module(module_name)
+        obj = getattr(module, attr)
+        globals()[name] = obj
+        return obj
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 __all__ = [
     "RL4COLitModule",
