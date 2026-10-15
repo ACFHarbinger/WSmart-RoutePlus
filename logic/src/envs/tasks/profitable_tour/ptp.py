@@ -144,6 +144,8 @@ class PTPEnv(ESPPRCEnv):
     node_dim: int = 4
     explicit_stop: bool = False
     require_all_customers: bool = False
+    # PTP never offers an empty bin unless it is mandatory (the pre-WP-07 envs/routing/ptp.py).
+    mask_empty_bins: bool = True
 
     def __init__(
         self,
