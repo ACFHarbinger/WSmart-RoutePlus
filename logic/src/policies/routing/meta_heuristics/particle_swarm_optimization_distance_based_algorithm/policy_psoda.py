@@ -122,7 +122,6 @@ class DistancePSOPolicy(BaseRoutingPolicy):
             alpha_profit=values.get("alpha_profit", 1.0),
             beta_will=values.get("beta_will", 0.5),
             gamma_cost=values.get("gamma_cost", 0.3),
-            vrpp=values.get("vrpp", False),
             profit_aware_operators=values.get("profit_aware_operators", True),
             seed=values.get("seed", 42),
         )

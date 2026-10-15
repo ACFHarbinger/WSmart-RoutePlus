@@ -97,7 +97,7 @@ quality-checks:
     - if: '$CI_PIPELINE_SOURCE == "web"'
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
-    GIT_SUBMODULE_PATHS: logic/src/pipeline/simulations/wsmart_bin_analysis
+    GIT_SUBMODULE_PATHS: packages/wsmart_bin_analysis
     GIT_DEPTH: "1"
   hooks:
     pre_get_sources_script:

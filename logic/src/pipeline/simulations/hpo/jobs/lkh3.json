@@ -71,14 +71,6 @@
         "type": "float",
         "default": 60.0
     },
-    "vrpp": {
-        "type": "categorical",
-        "choices": [
-            true,
-            false
-        ],
-        "default": true
-    },
     "dynamic_topology_discovery": {
         "type": "categorical",
         "choices": [

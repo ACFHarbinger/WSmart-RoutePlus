@@ -153,7 +153,6 @@ class RLGDHHPolicy(BaseRoutingPolicy):
             utility_upper_bound=float(values.get("utility_upper_bound", 40.0)),
             min_utility=float(values.get("min_utility", 0.0)),
             initial_utility=float(values.get("initial_utility", 30.0)),
-            vrpp=values.get("vrpp", True),
             profit_aware_operators=values.get("profit_aware_operators", False),
             seed=values.get("seed", 42),
             acceptance_criterion=gd_criterion,  # Inject the properly configured GD instance

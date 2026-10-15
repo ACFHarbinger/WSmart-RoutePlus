@@ -32,8 +32,6 @@ Example:
     300.0
     >>> config.seed
     None
-    >>> config.vrpp
-    True
 """
 from __future__ import annotations
 
@@ -61,7 +59,6 @@ class VPLConfig:
         local_search_iterations: Number of iterations to run local search at each neighborhood level.
         time_limit: Maximum time in seconds to run the search.
         seed: Random seed for reproducibility.
-        vrpp: Whether the problem is a Vehicle Routing Problem with Profits.
         packing: List of packing algorithms to apply.
         route_improvement: List of route improvement strategies to apply.
     """
@@ -85,7 +82,6 @@ class VPLConfig:
     seed: Optional[int] = None
 
     # Common policy fields
-    vrpp: bool = True
     packing: List[str] = field(default_factory=list)
     route_improvement: List[Any] = field(default_factory=list)
     profit_aware_operators: bool = False

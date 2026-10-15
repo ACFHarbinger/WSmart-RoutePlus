@@ -3,4 +3,3 @@ rfo:
   step_size: 2
   mip_time: 60.0
   mip_gap: 0.01
-  vrpp: true

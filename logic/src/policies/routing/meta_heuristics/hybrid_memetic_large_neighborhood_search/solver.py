@@ -56,6 +56,7 @@ from logic.src.policies.helpers.operators import (
 from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns import (
     ALNSSolver,
 )
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 from .maco import (
     MemeticACOSolver,
 )
@@ -410,7 +411,7 @@ class HybridMemeticLargeNeighborhoodSearchSolver:
                     self.R,
                     self.C,
                     mandatory_nodes=self.mandatory_nodes,
-                    expand_pool=self.params.vrpp,
+                    expand_pool=current_expand_pool(),
                 )
             else:
                 return greedy_insertion(
@@ -420,7 +421,7 @@ class HybridMemeticLargeNeighborhoodSearchSolver:
                     self.wastes,
                     self.capacity,
                     mandatory_nodes=self.mandatory_nodes,
-                    expand_pool=self.params.vrpp,
+                    expand_pool=current_expand_pool(),
                 )
         except Exception:
             return copy.deepcopy(parent1)
@@ -448,7 +449,7 @@ class HybridMemeticLargeNeighborhoodSearchSolver:
                     self.R,
                     self.C,
                     mandatory_nodes=self.mandatory_nodes,
-                    expand_pool=self.params.vrpp,
+                    expand_pool=current_expand_pool(),
                 )
             else:
                 return greedy_insertion(
@@ -458,7 +459,7 @@ class HybridMemeticLargeNeighborhoodSearchSolver:
                     self.wastes,
                     self.capacity,
                     mandatory_nodes=self.mandatory_nodes,
-                    expand_pool=self.params.vrpp,
+                    expand_pool=current_expand_pool(),
                 )
         except Exception:
             return copy.deepcopy(routes)

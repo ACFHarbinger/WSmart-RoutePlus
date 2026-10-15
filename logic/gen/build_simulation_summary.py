@@ -103,10 +103,12 @@ def parse_log(log: pathlib.Path) -> Optional[Dict[str, object]]:
         "kg_lost": mean["kg_lost"],
         "km": mean["km"],
         "kgkm": mean["kg/km"],
-        "reward": mean["reward"],
+        # Day logs no longer store reward (Q-5). Unconverted archives still do.
+        "reward": mean.get("reward", ""),
         "profit": mean["profit"],
         "time": mean["time"],
-        "days": mean["days"],
+        # collection_days is the old "days with a tour" column.
+        "days": mean["collection_days"] if "collection_days" in mean else mean["days"],
     }
 
 

@@ -126,7 +126,6 @@ class RLHVPLPolicy(BaseRoutingPolicy):
                 - cost: Total travel cost calculated by the solver.
         """
         seed = values.get("seed", 42)
-        vrpp = values.get("vrpp", True)
         profit_aware_operators = values.get("profit_aware_operators", False)
 
         # Extract sub-params for ACO and ALNS
@@ -145,7 +144,6 @@ class RLHVPLPolicy(BaseRoutingPolicy):
             local_search=values.get("aco_local_search", True),
             local_search_iterations=values.get("aco_local_search_iterations", 50),
             elitist_weight=values.get("aco_elitist_weight", 1.0),
-            vrpp=vrpp,
             profit_aware_operators=profit_aware_operators,
             seed=seed,
         )
@@ -157,7 +155,6 @@ class RLHVPLPolicy(BaseRoutingPolicy):
             reaction_factor=values.get("alns_reaction_factor", 0.5),
             max_removal_pct=values.get("alns_max_removal_pct", 0.3),
             time_limit=values.get("alns_time_limit", 60.0),
-            vrpp=vrpp,
             profit_aware_operators=profit_aware_operators,
             seed=seed,
         )
@@ -185,7 +182,6 @@ class RLHVPLPolicy(BaseRoutingPolicy):
             regular_coaching_iterations=values.get("regular_coaching_iterations", 100),
             elite_size=values.get("elite_size", 3),
             seed=seed,
-            vrpp=vrpp,
             profit_aware_operators=profit_aware_operators,
         )
 

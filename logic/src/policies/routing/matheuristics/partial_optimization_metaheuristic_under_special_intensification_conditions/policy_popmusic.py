@@ -96,7 +96,6 @@ class POPMUSICPolicy(BaseRoutingPolicy):
         local optimality is achieved across all potential centroids.
 
 
-
         Args:
             sub_dist_matrix (np.ndarray): Symmetric distance matrix for the current
                 sub-problem nodes.
@@ -147,7 +146,6 @@ class POPMUSICPolicy(BaseRoutingPolicy):
             capacity=capacity,
             R=revenue,
             C=cost_unit,
-            vrpp=params.vrpp,
             profit_aware_operators=params.profit_aware_operators,
             k_prox=params.k_prox,
             seed_strategy=params.seed_strategy,

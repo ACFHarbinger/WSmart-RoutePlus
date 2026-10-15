@@ -15,11 +15,10 @@ Example:
 import contextlib
 import math
 import os
-from typing import List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas
-import torch
 
 from logic.src.constants import MAX_CAPACITY_PERCENT, ROOT_DIR
 from logic.src.data.datasets import (
@@ -40,7 +39,7 @@ except ImportError:
     get_active_run = None  # type: ignore[assignment]
 
 from logic.src.pipeline.simulations.bins.prediction import calculate_frequency_and_level, predict_days_to_overflow
-from logic.src.pipeline.simulations.wsmart_bin_analysis import GridBase
+from packages.wsmart_bin_analysis import GridBase
 
 
 class Bins:
@@ -289,20 +288,23 @@ class Bins:
         """
         return isinstance(self.waste_dataset, GenerativeDataset)
 
-    def get_fill_history(self, device: Optional[torch.device] = None) -> Union[np.ndarray, torch.Tensor]:
+    def get_fill_history(self, device: Optional[Any] = None) -> Any:
         """Retrieves history of daily fill increments.
 
         Args:
-            device: Optional torch device to move the tensor to.
+            device: Optional torch device to move the tensor to. NumPy is returned
+                when no device is requested, so the classical path does not import torch.
 
         Returns:
             Numpy array or Torch tensor of fill history.
         """
         if device is not None:
+            import torch
+
             return torch.tensor(np.array(self.history), dtype=torch.float, device=device) / 100.0
         return np.array(self.history)
 
-    def get_level_history(self, device: Optional[torch.device] = None) -> Union[np.ndarray, torch.Tensor]:
+    def get_level_history(self, device: Optional[Any] = None) -> Any:
         """Retrieves history of daily absolute fill levels.
 
         Args:
@@ -312,6 +314,8 @@ class Bins:
             Numpy array or Torch tensor of level history.
         """
         if device is not None:
+            import torch
+
             return torch.tensor(np.array(self.level_history), dtype=torch.float, device=device) / 100.0
         return np.array(self.level_history)
 

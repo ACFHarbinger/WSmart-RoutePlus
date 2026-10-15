@@ -1,4 +1,3 @@
 mhh:
   iters: 10
   seed: 42
-  vrpp: true

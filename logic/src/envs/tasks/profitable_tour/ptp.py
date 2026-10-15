@@ -11,13 +11,10 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 import numpy as np
 import torch
 from logic.src.envs.tasks.base import BaseProblem
-from logic.src.envs.tasks.common.metrics import DEFAULT_METRICS
+from logic.src.envs.tasks.common.released_specs import PTP_SPEC
 from logic.src.envs.tasks.espprc import ESPPRCEnv, ESPPRCGenerator
-from logic.src.envs.tasks.profitable_tour.common import (
-    evaluate_profitable_tour,
-    profit_objective,
-)
-from logic.src.envs.tasks.spec import PROBLEMS, ProblemSpec
+from logic.src.envs.tasks.profitable_tour.common import evaluate_profitable_tour
+from logic.src.envs.tasks.spec import PROBLEMS
 from tensordict import TensorDict
 
 
@@ -192,15 +189,6 @@ class PTP(BaseProblem):
         return evaluate_profitable_tour(dataset, pi, dist_matrix=dist_matrix, cw_dict=cw_dict, **kwargs)
 
 
-# Register PTP in PROBLEMS registry
-PTP_SPEC = ProblemSpec(
-    name="ptp",
-    objective=profit_objective,
-    constraints=(),
-    metrics=DEFAULT_METRICS,
-    env_target="logic.src.envs.tasks.profitable_tour.ptp:PTPEnv",
-    expand_pool=True,
-)
 PROBLEMS.register(PTP_SPEC)
 
 __all__ = ["PTPGenerator", "PTPEnv", "PTP", "PTP_SPEC"]

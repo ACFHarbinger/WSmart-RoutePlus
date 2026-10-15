@@ -9,8 +9,6 @@ Example:
     >>> config = MHHConfig()
     >>> config.iters
     10
-    >>> config.vrpp
-    True
 """
 
 from dataclasses import dataclass
@@ -31,7 +29,6 @@ class MHHConfig:
     Attributes:
         iters (int): Number of iterations. Defaults to 10.
         seed (int): Random seed for reproducibility. Defaults to 42.
-        vrpp (bool): Whether the problem is a VRP with Profits. Defaults to True.
         packing (Optional[PackingConfig]): Configuration for
             mandatory node selection policies.
         route_improvement (Optional[RouteImprovingConfig]): Optional configuration
@@ -40,7 +37,6 @@ class MHHConfig:
 
     iters: int = 10
     seed: int = 42
-    vrpp: bool = True
 
     packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None

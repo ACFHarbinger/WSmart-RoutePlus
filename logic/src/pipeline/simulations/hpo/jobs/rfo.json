@@ -15,14 +15,6 @@
         "type": "float",
         "default": 0.01
     },
-    "vrpp": {
-        "type": "categorical",
-        "choices": [
-            true,
-            false
-        ],
-        "default": true
-    },
     "packing": {
         "type": "object",
         "default": null

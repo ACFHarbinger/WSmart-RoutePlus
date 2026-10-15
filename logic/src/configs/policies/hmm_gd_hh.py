@@ -29,7 +29,6 @@ class HMMGDHHConfig:
         n_llh: LLH pool size (fixed at 5).
         local_search_iterations: Number of local search iterations.
         time_limit: Wall-clock time limit in seconds.
-        vrpp: If True, solver operates in full VRPP mode.
         packing: Packing algorithm config list.
         route_improvement: Route improvement operation config list.
     """
@@ -43,7 +42,6 @@ class HMMGDHHConfig:
     local_search_iterations: int = 500
     time_limit: float = 60.0
     seed: Optional[int] = None
-    vrpp: bool = True
     profit_aware_operators: bool = False
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)

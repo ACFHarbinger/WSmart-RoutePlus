@@ -197,7 +197,6 @@ class GPHHPolicy(BaseRoutingPolicy):
             n_training_instances=n_envs,
             training_sample_ratio=float(values.get("training_sample_ratio", 0.5)),
             seed=seed,
-            vrpp=values.get("vrpp", True),
         )
 
         # Generate synthetic training environments with diverse spatial topologies

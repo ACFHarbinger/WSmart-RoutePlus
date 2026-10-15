@@ -48,6 +48,7 @@ from logic.src.policies.helpers.operators.solution_initialization.nearest_neighb
 )
 from logic.src.configs.policies.aco_ks import KSparseACOConfig
 from logic.src.configs.policies.slc import SLCConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class SLCSolver:
@@ -101,7 +102,6 @@ class SLCSolver:
         # Pre-instantiate Local Search for reuse
         aco_params = KSparseACOConfig(
             local_search_iterations=self.params.local_search_iterations,
-            vrpp=self.params.vrpp,
             profit_aware_operators=self.params.profit_aware_operators,
             seed=self.params.seed,
         )
@@ -323,7 +323,7 @@ class SLCSolver:
         """
         n = max(3, self.params.n_removal)
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         try:
             if use_profit:

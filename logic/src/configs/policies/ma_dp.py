@@ -31,7 +31,6 @@ class MemeticAlgorithmDualPopulationConfig:
         local_search_iterations (int): Number of local search iterations.
         time_limit (float): Time limit in seconds.
         seed (Optional[int]): Random seed.
-        vrpp (bool): Whether the problem is a VRRP.
         profit_aware_operators (bool): Whether to use profit-aware operators.
         packing (List[str]): Mandatory customer/request selection strategy.
         route_improvement (List[Any]): Route improvement strategies.
@@ -50,7 +49,6 @@ class MemeticAlgorithmDualPopulationConfig:
     seed: Optional[int] = None
 
     # Common policy fields
-    vrpp: bool = True
     profit_aware_operators: bool = False
     packing: List[str] = field(default_factory=list)
     route_improvement: List[Any] = field(default_factory=list)

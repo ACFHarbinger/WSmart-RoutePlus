@@ -56,8 +56,7 @@ Example:
     >>>     R=3.0, C=1.0,
     >>>     K=1,
     >>>     seed=42,
-    >>>     vrpp=True
-    >>> )
+>>> )
     >>> routes, profit = solver.run_popmusic()
     >>> routes
     [[0, 1, 2, 0]]
@@ -85,6 +84,7 @@ from logic.src.policies.routing.other_algorithms.travelling_salesman_problem.tsp
     find_route,
     get_route_cost,
 )
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 from .state import POPMUSICState
 
@@ -571,7 +571,6 @@ def run_popmusic(  # noqa: C901
     capacity: float = 1.0e9,
     R: float = 1.0,
     C: float = 0.0,
-    vrpp: bool = True,
     profit_aware_operators: bool = False,
     k_prox: int = 10,
     seed_strategy: str = "lifo",
@@ -609,7 +608,6 @@ def run_popmusic(  # noqa: C901
         capacity: Vehicle capacity.
         R: Revenue per unit waste collected.
         C: Monetary cost per unit distance travelled.
-        vrpp: If True, nodes may be left unvisited (VRPP mode). Unvisited
             nodes are represented as singleton parts (Issue 3).
         profit_aware_operators: If True, uses profit-biased d_assign metric
             during p-median initialization (Issue 1).
@@ -729,7 +727,7 @@ def run_popmusic(  # noqa: C901
     assigned_nodes: Set[int] = {n for r in init_routes for n in r if n != 0}
     all_customers: Set[int] = {int(i) for i in coords.index if i != 0}
 
-    if vrpp:
+    if current_expand_pool():
         for unode in all_customers - assigned_nodes:
             singleton_slot = state.insert_singleton(unode)
             # Insert singleton into G: connect to k nearest active route slots
@@ -807,7 +805,6 @@ def run_popmusic(  # noqa: C901
             neighborhood_indices=subproblem_slots,  # kept for HGS/ALNS compat
             mandatory=mandatory,
             seed=seed,
-            vrpp=vrpp,
             profit_aware_operators=profit_aware_operators,
         )
 
@@ -865,7 +862,7 @@ def run_popmusic(  # noqa: C901
                     active_in_stack.discard(sl)
 
             # Handle nodes that became unvisited (VRPP, Issue 3)
-            if vrpp:
+            if current_expand_pool():
                 nodes_in_new = {n for nr in new_routes for n in nr if n != 0}
                 newly_unvisited = set(subproblem_nodes) - nodes_in_new
                 for unode in newly_unvisited:
@@ -1017,7 +1014,6 @@ def _optimize_subproblem(
     neighborhood_indices: List[int],
     mandatory: List[int],
     seed: int,
-    vrpp: bool = True,
     profit_aware_operators: bool = False,
 ) -> Tuple[List[List[int]], float]:
     """
@@ -1040,7 +1036,6 @@ def _optimize_subproblem(
             HGS/ALNS vehicle count hinting).
         mandatory: Global mandatory node indices.
         seed: Random seed.
-        vrpp: VRPP mode flag.
         profit_aware_operators: Profit-aware operator flag.
 
     Returns:
@@ -1066,7 +1061,6 @@ def _optimize_subproblem(
             actual_config,
             1.0,
             seed,
-            vrpp,
         )
     elif base_solver == "hgs":
         return _optimize_with_hgs(
@@ -1080,7 +1074,6 @@ def _optimize_subproblem(
             actual_config,
             1.0,
             seed,
-            vrpp,
             profit_aware_operators,
             subproblem_nodes,
         )
@@ -1095,7 +1088,6 @@ def _optimize_subproblem(
             actual_config,
             1.0,
             seed,
-            vrpp,
             profit_aware_operators,
             subproblem_nodes,
         )
@@ -1113,7 +1105,6 @@ def _optimize_with_fast_tsp(
     config: Optional[Any],
     time_limit: float,
     seed: int,
-    vrpp: bool = False,
 ) -> Tuple[List[List[int]], float]:
     """Optimize subproblem using FastTSP + LinearSplit.
 
@@ -1127,7 +1118,6 @@ def _optimize_with_fast_tsp(
         config: FastTSP configuration.
         time_limit: Time limit.
         seed: Random seed.
-        vrpp: VRPP mode flag.
 
     Returns:
         Tuple of (new_routes, new_profit).
@@ -1147,7 +1137,6 @@ def _optimize_with_fast_tsp(
         capacity=capacity,
         R=R,
         C=C,
-        vrpp=vrpp,
     )
     return splitter.split(giant_tour)
 
@@ -1163,7 +1152,6 @@ def _optimize_with_hgs(
     config: Optional[Any],
     time_limit: float,
     seed: int,
-    vrpp: bool = True,
     profit_aware_operators: bool = False,
     subproblem_nodes: Optional[List[int]] = None,
 ) -> Tuple[List[List[int]], float]:
@@ -1180,7 +1168,6 @@ def _optimize_with_hgs(
         config: HGS configuration.
         time_limit: Time limit.
         seed: Random seed.
-        vrpp: VRPP mode flag.
         profit_aware_operators: Profit-aware operator flag.
         subproblem_nodes: Subproblem nodes.
 
@@ -1207,7 +1194,6 @@ def _optimize_with_hgs(
         params = HGSConfig(
             max_vehicles=max(1, len(neighborhood_indices)),
             time_limit=time_limit,
-            vrpp=vrpp,
             profit_aware_operators=profit_aware_operators,
             seed=seed,
         )
@@ -1244,7 +1230,6 @@ def _optimize_with_alns(
     config: Optional[Any],
     time_limit: float,
     seed: int,
-    vrpp: bool = True,
     profit_aware_operators: bool = False,
     subproblem_nodes: Optional[List[int]] = None,
 ) -> Tuple[List[List[int]], float]:
@@ -1260,7 +1245,6 @@ def _optimize_with_alns(
         config: ALNS configuration.
         time_limit: Time limit.
         seed: Random seed.
-        vrpp: VRPP mode flag.
         profit_aware_operators: Profit-aware operator flag.
         subproblem_nodes: Subproblem nodes.
 
@@ -1288,12 +1272,11 @@ def _optimize_with_alns(
             params = ALNSConfig(
                 max_iterations=1000,
                 time_limit=time_limit,
-                vrpp=vrpp,
                 profit_aware_operators=profit_aware_operators,
                 seed=seed,
             )
     else:
-        params = ALNSConfig(max_iterations=1000, time_limit=time_limit, vrpp=vrpp)
+        params = ALNSConfig(max_iterations=1000, time_limit=time_limit)
 
     if params.time_limit < 0:
         params.time_limit = time_limit

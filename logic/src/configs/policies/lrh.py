@@ -35,7 +35,6 @@ class LRHConfig:
         halving_freq (int): Frequency (iterations) at which to halve the step size.
             Defaults to 10.
         seed (int): Random seed for reproducibility. Defaults to 42.
-        vrpp (bool): Whether the problem is a VRP with Profits. Defaults to True.
         packing (Optional[PackingConfig]): Configuration for
             mandatory node selection policies.
         route_improvement (Optional[RouteImprovingConfig]): Optional configuration
@@ -46,7 +45,6 @@ class LRHConfig:
     step_size: float = 2.0
     halving_freq: int = 10
     seed: int = 42
-    vrpp: bool = True
 
     packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None

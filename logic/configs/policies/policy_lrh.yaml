@@ -3,4 +3,3 @@ lrh:
   step_size: 2.0
   halving_freq: 10
   seed: 42
-  vrpp: true

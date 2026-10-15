@@ -20,7 +20,7 @@ from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
 import logic.src.constants as udef
-from logic.src.constants import METRICS, SIM_METRICS
+from logic.src.constants import SIM_METRICS
 from logic.src.pipeline.callbacks import SimulationDisplayCallback
 
 
@@ -84,10 +84,13 @@ def process_display_updates(
         policy_days_done[pol] += day
         policy_sample_counts[pol] += 1
 
-        for k in METRICS:
-            if k in metrics:
+        for k in SIM_METRICS:
+            if isinstance(metrics, dict) and k in metrics:
                 policy_sample_metrics[pol][k].append(metrics[k])
-        policy_sample_metrics[pol]["days"].append(day)
+        if isinstance(metrics, dict) and "days_simulated" not in metrics and "days" in metrics:
+            policy_sample_metrics[pol]["days_simulated"].append(metrics["days"])
+        elif isinstance(metrics, dict) and "days_simulated" not in metrics:
+            policy_sample_metrics[pol]["days_simulated"].append(day)
 
         if (pol, sid) not in last_reported_days or last_reported_days[(pol, sid)] < day:
             delta = data.get("daily_delta", metrics)
@@ -99,8 +102,13 @@ def process_display_updates(
         for res in results:
             policy_sample_counts[pol] += 1
             policy_days_done[pol] += display.total_days  # full simulation days
-            for i, k in enumerate(SIM_METRICS):
-                policy_sample_metrics[pol][k].append(res[i])
+            if isinstance(res, dict):
+                for k in SIM_METRICS:
+                    if k in res and isinstance(res[k], (int, float)):
+                        policy_sample_metrics[pol][k].append(res[k])
+            else:
+                for i, k in enumerate(SIM_METRICS):
+                    policy_sample_metrics[pol][k].append(res[i])
 
     # 3. Calculate averages and update display
     elapsed_total = time.time() - loop_tic

@@ -35,14 +35,6 @@
         ],
         "default": false
     },
-    "vrpp": {
-        "type": "categorical",
-        "choices": [
-            true,
-            false
-        ],
-        "default": false
-    },
     "use_saa": {
         "type": "categorical",
         "choices": [

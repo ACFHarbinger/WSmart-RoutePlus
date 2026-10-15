@@ -26,6 +26,8 @@ import numpy as np
 from .params import MACOParams
 from .pheromones import SparsePheromoneTau
 
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
+
 
 class SolutionConstructor:
     """Constructs a single solution (route set) for an ant.
@@ -152,7 +154,7 @@ class SolutionConstructor:
             True if at least one node is profitable, False otherwise.
         """
         # In CVRP (not VRPP), all nodes are considered "profitable" to visit until exhausted
-        if not self.params.vrpp:
+        if not current_expand_pool():
             return True
 
         for j in sorted(unvisited):
@@ -176,7 +178,7 @@ class SolutionConstructor:
             List of feasible node indices.
         """
         feasible = []
-        use_profit_check = self.params.vrpp and self.params.profit_aware_operators
+        use_profit_check = current_expand_pool() and self.params.profit_aware_operators
 
         for j in sorted(unvisited):
             if load + self.wastes.get(j, 0) <= self.capacity:

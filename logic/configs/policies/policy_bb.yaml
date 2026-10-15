@@ -4,7 +4,6 @@ bb:
   mip_gap: 0.01
   branching_strategy: strong
   strong_branching_limit: 5
-  vrpp: true
   packing:
     other/pk_lookahead.yaml:
     - default

@@ -762,7 +762,8 @@ def display_simulation_summary_table(  # noqa: C901
         ("Dist", "km"),
         ("Eff", "kg/km"),
         ("Over", "overflows"),
-        ("Days", "days"),
+        ("Days", "days_simulated"),
+        ("ColDays", "collection_days"),
         ("Time", "time"),
     ]
     if has_time_spent:
@@ -776,7 +777,10 @@ def display_simulation_summary_table(  # noqa: C901
         row = [pol]
         for _, key in display_metrics:
             if isinstance(stats, dict):
-                val = stats.get(key, 0.0)
+                if key == "days_simulated" and "days_simulated" not in stats and "days" in stats:
+                    val = stats.get("days", 0.0)
+                else:
+                    val = stats.get(key, 0.0)
             elif isinstance(stats, (list, tuple)):
                 try:
                     idx = udef.SIM_METRICS.index(key)
@@ -794,9 +798,9 @@ def display_simulation_summary_table(  # noqa: C901
                 row.append(f"{val:,.1f}km")
             elif key == "kg/km":
                 row.append(f"{val:.2f}")
-            elif key in ["overflows", "ncol", "days"]:
+            elif key in ["overflows", "ncol", "days", "days_simulated", "collection_days"]:
                 color = "red" if key == "overflows" and val > 0 else "white"
-                if key == "days":
+                if key in ("days", "days_simulated", "collection_days"):
                     color = "cyan"
                 row.append(f"[{color}]{int(val)}[/]")
             elif key == "time":

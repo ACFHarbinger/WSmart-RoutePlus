@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 
-from .base import SimulationAction
+from .base import SimulationAction, bind_context
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +74,21 @@ class CollectAction(SimulationAction):
         None
     """
 
+    timed = False
+    reads = ("tour", "bins", "distance_matrix")
+    writes = (
+        "tour",
+        "cost",
+        "collected",
+        "total_collected",
+        "ncol",
+        "profit",
+        "time_spent",
+        "metrics_phase",
+    )
+    finalizes = ("profit", "cost")
+    requires_final = ()
+
     def execute(self, context: Dict[str, Any]) -> None:
         """
         Execute waste collection based on the generated tour.
@@ -81,29 +96,31 @@ class CollectAction(SimulationAction):
         Args:
             context: Shared dictionary containing simulation state.
         """
+
+        context = bind_context(context)
         from logic.src.utils.routing.tours import (
             get_route_cost,
         )
 
-        bins = context["bins"]
-        tour = list(context["tour"])
+        bins = context.bins
+        tour = list(context.tour)
         if not tour or tour[0] != 0:
             tour.insert(0, 0)
         if tour[-1] != 0 or len(tour) == 1:
             tour.append(0)
-        context["tour"] = tour
+        context.tour = tour
 
         # 1. METRIC CONSISTENCY: Always re-calculate KM from the final tour
         # This combines packing, construction, and any route improvements.
         # We use the raw distance matrix from the context (guaranteed to be KM).
-        dist_matrix = context["distance_matrix"]
+        dist_matrix = context.distance_matrix
         raw_km = get_route_cost(dist_matrix, tour)
 
         # 3. Calculate operational time spent (travel time + per-bin service time)
-        avg_speed_kmh = float(context.get("avg_speed_kmh", 35.0))
-        service_time_h = float(context.get("service_time_h", 1.5 / 60.0))
-        shift_hours = float(context.get("shift_hours", 7.0))
-        time_matrix = context.get("time_matrix")
+        avg_speed_kmh = float(getattr(context, "avg_speed_kmh", 35.0))
+        service_time_h = float(getattr(context, "service_time_h", 1.5 / 60.0))
+        shift_hours = float(getattr(context, "shift_hours", 7.0))
+        time_matrix = getattr(context, "time_matrix", None)
         if time_matrix is None:
             if not np.isfinite(avg_speed_kmh) or avg_speed_kmh <= 0:
                 raise ValueError("avg_speed_kmh must be finite and positive")
@@ -113,9 +130,11 @@ class CollectAction(SimulationAction):
         service_time_total_h = sum(node != 0 for node in tour) * service_time_h
         time_spent_h = driving_time_h + service_time_total_h
 
-        # 4. If problem is TCPTP, validate per-trip constraints (capacity + shift duration)
-        problem = str(context.get("problem", "ptp") or "ptp").lower()
-        if problem == "tcptp" and tour and len(tour) > 2:
+        # TCPTP validates each trip against the shift. Other problems keep the tour.
+        from logic.src.pipeline.simulations.problem_flags import per_trip_shift
+
+        shift_checked = per_trip_shift(context)
+        if shift_checked and tour and len(tour) > 2:
             cur_trip_time = 0.0
             cur_load = 0.0
             cur_trip_bins = 0
@@ -128,29 +147,29 @@ class CollectAction(SimulationAction):
                         raise AssertionError(
                             f"TCPTP violation: trip duration {trip_time:.4f}h exceeds shift budget {shift_hours:.4f}h"
                         )
-                    if cur_load > context.get("vehicle_capacity", float("inf")) + 1e-6:
+                    if cur_load > getattr(context, "vehicle_capacity", float("inf")) + 1e-6:
                         raise AssertionError("TCPTP violation: trip exceeds vehicle capacity")
                     cur_trip_time = 0.0
                     cur_load = 0.0
                     cur_trip_bins = 0
                 else:
                     cur_trip_bins += 1
-                    if "vehicle_capacity" in context:
+                    if getattr(context, "vehicle_capacity", None) is not None:
                         cur_load += float(bins.c[node - 1])
                 prev_node = node
 
         # Per-trip payload telemetry, for every problem type. TCPTP rejects violations above;
         # for the PTP variants the simulator still executes the tour, so record and warn.
-        capacity_pct = float(context.get("vehicle_capacity", float("inf")) or float("inf"))
+        capacity_pct = float(getattr(context, "vehicle_capacity", float("inf")) or float("inf"))
         try:
             loads_pct, loads_kg, violations = capacity_report(tour, bins, capacity_pct)
         except (AttributeError, IndexError, TypeError, ValueError) as exc:  # telemetry must never stop a collection
             logger.debug("trip-load telemetry unavailable: %s", exc)
             loads_pct, loads_kg, violations = [], [], 0
-        context["trip_loads_pct"] = loads_pct
-        context["trip_loads_kg"] = loads_kg
-        context["capacity_violations"] = violations
-        if violations and problem != "tcptp":
+        context.trip_loads_pct = loads_pct
+        context.trip_loads_kg = loads_kg
+        context.capacity_violations = violations
+        if violations and not shift_checked:
             logger.warning(
                 "%d trip(s) exceed the vehicle capacity (%.1f %% of a bin): loads %s",
                 violations,
@@ -162,9 +181,10 @@ class CollectAction(SimulationAction):
         collected, total_collected, ncol, profit = bins.collect(tour, raw_km)
 
         # 5. Update context with definitive source-of-truth metrics for LogAction
-        context["cost"] = raw_km
-        context["collected"] = collected
-        context["total_collected"] = total_collected
-        context["ncol"] = ncol
-        context["profit"] = profit
-        context["time_spent"] = time_spent_h
+        context.cost = raw_km
+        context.collected = collected
+        context.total_collected = total_collected
+        context.ncol = ncol
+        context.profit = profit
+        context.time_spent = time_spent_h
+        context.metrics_phase = "final"

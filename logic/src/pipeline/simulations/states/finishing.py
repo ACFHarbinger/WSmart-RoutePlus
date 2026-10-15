@@ -52,7 +52,7 @@ class FinishingState(SimState):
         None
     """
 
-    def handle(self, ctx: SimulationContext) -> None:
+    def handle(self, ctx: SimulationContext) -> None:  # noqa: C901
         """
         Finalizes simulation, computes aggregate metrics, and saves logs.
 
@@ -67,19 +67,9 @@ class FinishingState(SimState):
         # Sample "time" = total policy time (selection + construction + improvement)
         # summed over the days, not the wall clock of the whole day loop (DS-15).
         policy_time = float(np.sum(ctx.daily_log.get("time", []))) if ctx.daily_log else 0.0
-
-        lg = [
-            np.sum(ctx.bins.inoverflow),
-            np.sum(ctx.bins.collected),
-            np.sum(ctx.bins.ncollections),
-            np.sum(ctx.bins.lost),
-            ctx.bins.travel,
-            (np.sum(ctx.bins.collected) / ctx.bins.travel if ctx.bins.travel > 0 else 0.0),
-            np.sum(ctx.bins.collected) - np.sum(ctx.bins.inoverflow) - ctx.bins.travel,
-            ctx.bins.profit,
-            policy_time,
-            ctx.bins.ndays,
-        ]
+        wall_time = float(np.sum(ctx.daily_log.get("day_wall_time", []))) if ctx.daily_log else 0.0
+        collected = float(np.sum(ctx.bins.collected))
+        travel = float(ctx.bins.travel)
 
         log_path = os.path.join(
             ctx.results_dir,
@@ -87,29 +77,58 @@ class FinishingState(SimState):
         )
         print(ctx.results_dir)
 
-        sample_metrics = dict(zip(SIM_METRICS, lg, strict=False))
+        sample_metrics = {
+            "overflows": float(np.sum(ctx.bins.inoverflow)),
+            "kg": collected,
+            "ncol": float(np.sum(ctx.bins.ncollections)),
+            "kg_lost": float(np.sum(ctx.bins.lost)),
+            "km": travel,
+            "kg/km": (collected / travel) if travel > 0 else 0.0,
+            "profit": float(ctx.bins.profit),
+            "time": policy_time,
+            "day_wall_time": wall_time,
+            "days_simulated": float(graph.n_days),
+            "collection_days": float(ctx.bins.ndays),
+        }
         assert ctx.daily_log is not None
         if "time_spent" in ctx.daily_log and ctx.daily_log["time_spent"]:
             sample_metrics["time_spent"] = float(np.sum(ctx.daily_log["time_spent"]))
+        daily_kg = ctx.daily_log.get("kg") if ctx.daily_log else None
+        if daily_kg:
+            from logic.src.envs.tasks.common.metrics import METRICS as KPI
+
+            records = []
+            for index in range(len(daily_kg)):
+                record = {}
+                for key in list(SIM_METRICS) + ["time_spent"]:
+                    column = ctx.daily_log.get(key)
+                    if isinstance(column, list) and index < len(column):
+                        record[key] = column[index]
+                records.append(record)
+            names = [key for key in SIM_METRICS if key in records[0]]
+            if any("time_spent" in record for record in records):
+                names.append("time_spent")
+            sample_metrics = KPI.aggregate_days(records, names)
 
         daily_dict = {k: list(v) for k, v in ctx.daily_log.items()}
 
         update_policy_log_section(log_path, "samples", sample_metrics, sample_id=ctx.sample_id, lock=ctx.lock)
         update_policy_log_section(log_path, "daily", daily_dict, sample_id=ctx.sample_id, lock=ctx.lock)
 
-        save_matrix_to_excel(
-            ctx.bins.get_fill_history(),
-            ctx.results_dir,
-            sim.seed,
-            sim.data_distribution,
-            ctx.pol_name,
-            ctx.sample_id,
-        )
+        if getattr(sim, "export_fill_matrix", False):
+            save_matrix_to_excel(
+                ctx.bins.get_fill_history(),
+                ctx.results_dir,
+                sim.seed,
+                sim.data_distribution,
+                ctx.pol_name,
+                ctx.sample_id,
+            )
 
         # Log the fill-history export as a "save" dataset event
         with contextlib.suppress(Exception):
             run = get_active_run()  # pyrefly: ignore [not-callable]
-            if run is not None:
+            if run is not None and getattr(sim, "export_fill_matrix", False):
                 excel_path = os.path.join(
                     ctx.results_dir,
                     "fill_history",
@@ -135,14 +154,19 @@ class FinishingState(SimState):
         if ctx.checkpoint:
             ctx.checkpoint.clear()
 
-        ctx.result = {ctx.pol_name: lg, "success": True}
+        ctx.result = {
+            ctx.pol_name: sample_metrics,
+            "success": True,
+            "status": "completed",
+            "sample_id": ctx.sample_id,
+        }
 
         # Detailed per-policy result table (aggregate + daily)
         if ctx.daily_log is not None:
             display_per_policy_simulation_summary(
                 ctx.pol_name,
                 ctx.sample_id,
-                lg,
+                sample_metrics,
                 ctx.daily_log,
                 lock=ctx.lock,
             )
@@ -155,7 +179,7 @@ class FinishingState(SimState):
         if shared_metrics is not None and lock is not None:
             with lock:
                 # Store result with a unique key per policy and sample
-                shared_metrics[f"res_{ctx.pol_name}_{ctx.sample_id}"] = lg
+                shared_metrics[f"res_{ctx.pol_name}_{ctx.sample_id}"] = dict(sample_metrics)
                 finished = shared_metrics.get("finished_tasks", 0) + 1
                 shared_metrics["finished_tasks"] = finished
 
@@ -176,8 +200,11 @@ class FinishingState(SimState):
                                 pol_results.append(shared_metrics[res_key])
 
                         if pol_results:
-                            # Compute mean across samples for each metric
-                            mean_metrics = [float(np.mean(m)) for m in zip(*pol_results, strict=False)]
+                            from logic.src.pipeline.simulations.aggregation import summary_pair
+
+                            mean_metrics, _std_metrics, summary = summary_pair(pol_results)
+                            mean_metrics["n_failed"] = float(summary.n_failed)
+                            mean_metrics["n_success"] = float(summary.n_success)
                             all_aggregated_results[p_name] = mean_metrics
 
                     if all_aggregated_results:
@@ -190,7 +217,7 @@ class FinishingState(SimState):
         if get_sim_tracker is not None:
             sim_tracker = get_sim_tracker(ctx.pol_name, ctx.sample_id)
             if sim_tracker is not None:
-                sim_tracker.log_final(SIM_METRICS, lg)
+                sim_tracker.log_final(list(sample_metrics.keys()), [sample_metrics[key] for key in sample_metrics])
 
         ctx.transition_to(None)
 

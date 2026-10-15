@@ -269,10 +269,9 @@ def test_typed_path_flattens_engine_nested_overrides(monkeypatch):
         lambda area, wt: (100.0, 0.5, 1.0, 1.0, 1.0),
     )
     policy = _TypedPolicy(config=_FakeConfig())
-    raw_cfg = {"typed_fake": {"gurobi": {"time_limit": 7.0, "vrpp": False}, "seed": 123}}
+    raw_cfg = {"typed_fake": {"gurobi": {"time_limit": 7.0}, "seed": 123}}
     capacity, revenue, cost_unit, values = policy._load_area_params("rio", "plastic", raw_cfg)
     assert values["time_limit"] == 7.0, "engine-nested override was dropped by the typed path"
-    assert values["vrpp"] is False
     assert values["seed"] == 123
     assert capacity == 100.0
 

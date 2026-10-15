@@ -17,14 +17,13 @@ import time
 from typing import Any, Dict
 
 import numpy as np
-import torch
 from omegaconf import DictConfig, OmegaConf
 
 from logic.src.pipeline.simulations.day_context import resolve_solver_status
 from logic.src.pipeline.simulations.solver_status import current_solver_status, reset_solver_status
 from logic.src.policies.routing.base import RoutingAlgorithmFactory, RoutingAlgorithmRegistry
 
-from .base import SimulationAction, _as_policy_mapping
+from .base import SimulationAction, _as_policy_mapping, bind_context
 
 
 class RoutingAction(SimulationAction):
@@ -35,6 +34,12 @@ class RoutingAction(SimulationAction):
         None
     """
 
+    timed = True
+    reads = ("bins", "config", "distance_matrix")
+    writes = ("tour", "cost", "solver_status", "extra_output", "metrics_phase")
+    finalizes = ()
+    requires_final = ()
+
     def execute(self, context: Dict[str, Any]) -> None:  # noqa: C901
         """
         Execute the selected routing policy.
@@ -42,37 +47,44 @@ class RoutingAction(SimulationAction):
         Args:
             context: Shared dictionary containing simulation state.
         """
+
+        context = bind_context(context)
         # Ensure all adapters are imported so the registry is fully populated
         RoutingAlgorithmFactory.ensure_registered()
 
         # 1. GET FULL POLICY NAME (for identification)
-        full_policy = str(context.get("full_policy") or "")
+        full_policy = str(getattr(context, "full_policy", None) or "")
 
         # 2. IDENTIFY ROUTING ENGINE FROM CONFIG
-        raw_cfg = context.get("config", {})
+        raw_cfg = getattr(context, "config", {})
 
         # 2b. INJECT SIMULATION SEED INTO POLICY CONFIG
         # CRITICAL: Use policy-specific seed for RNG isolation
         # If policy_seed is available (set by run_day), use it; otherwise fallback to base seed
-        policy_seed = context.get("policy_seed")
+        policy_seed = getattr(context, "policy_seed", None)
         if policy_seed is not None:
             seed = policy_seed
         else:
             # Fallback to base simulation seed
-            sim_cfg = getattr(context.get("cfg"), "sim", None)
+            sim_cfg = getattr(getattr(context, "cfg", None), "sim", None)
             seed = getattr(sim_cfg, "seed", 42) if sim_cfg else 42
 
         # Convert to a standard dict to ensure mutability
         if isinstance(raw_cfg, DictConfig):
             raw_cfg = OmegaConf.to_container(raw_cfg, resolve=True)
-            context["config"] = raw_cfg
+            context.config = raw_cfg
 
         raw_cfg["seed"] = seed
 
         # RE-SEED GLOBAL STATE BEFORE EXECUTION
         random.seed(seed)
         np.random.seed(seed)
-        torch.manual_seed(seed)
+        try:
+            import torch
+        except ImportError:
+            torch = None  # type: ignore[assignment]
+        if torch is not None:
+            torch.manual_seed(seed)
 
         flat_cfg = _as_policy_mapping(raw_cfg)
 
@@ -113,14 +125,17 @@ class RoutingAction(SimulationAction):
         # A status noted on a previous day must not be copied onto this one.
         reset_solver_status()
 
-        # If no nodes to collect, skip policy and return to depot
-        # VRPP policies (vrpp: true) let the solver decide which nodes to visit — don't skip them
-        mandatory = context.get("mandatory", [])
-        if not mandatory and not bool(flat_cfg.get("vrpp", False)):
-            context["tour"] = [0, 0]
-            context["cost"] = 0.0
-            context["extra_output"] = None
-            context["solver_status"] = "skipped"
+        # An empty mandatory set skips the solver only when the problem does not
+        # let the solver choose optional visits. That flag comes from ProblemSpec.
+        from logic.src.envs.tasks.common.expand_pool import current_expand_pool
+
+        mandatory = getattr(context, "mandatory", [])
+        if not mandatory and not current_expand_pool(default=True):
+            context.tour = [0, 0]
+            context.cost = 0.0
+            context.extra_output = None
+            context.solver_status = "skipped"
+            context.metrics_phase = "preliminary"
             return
 
         try:
@@ -128,8 +143,8 @@ class RoutingAction(SimulationAction):
 
             # --- MULTI-PERIOD ENHANCEMENTS ---
             # 1. Initialize or Retrieve MultiDayContext
-            day_idx = context.get("day", 0)
-            multi_day_context = context.get("multi_day_context")
+            day_idx = getattr(context, "day", 0)
+            multi_day_context = getattr(context, "multi_day_context", None)
             if multi_day_context is None:
                 try:
                     from logic.src.interfaces.context.multi_day_context import MultiDayContext
@@ -141,9 +156,9 @@ class RoutingAction(SimulationAction):
             # 2. Generate Scenario Tree unless the adapter opts out.
             # Default is to build. Live multi-period policies read the tree, and
             # none of the retained adapters set uses_scenario_tree to False.
-            context["multi_day_context"] = multi_day_context
+            context.multi_day_context = multi_day_context
             if getattr(adapter, "uses_scenario_tree", True) is False:
-                context["scenario_tree"] = None
+                context.scenario_tree = None
             else:
                 from logic.src.pipeline.simulations.bins.prediction import ScenarioGenerator
 
@@ -152,7 +167,7 @@ class RoutingAction(SimulationAction):
                 generator = ScenarioGenerator(method=method, horizon=horizon, seed=seed)
 
                 # Generate tree using bin stats and truth (if method is oracle)
-                bins_state = context.get("bins")
+                bins_state = getattr(context, "bins", None)
                 if bins_state is not None:
                     n = len(bins_state.c)
                     bin_stats = {
@@ -161,27 +176,27 @@ class RoutingAction(SimulationAction):
                     }
                 else:
                     bin_stats = {"means": np.zeros(0), "stds": np.zeros(0)}
-                truth_generator = context.get("truth_generator")  # For Perfect Oracle mode
+                truth_generator = getattr(context, "truth_generator", None)  # For Perfect Oracle mode
 
                 scenario_tree = generator.generate(
                     current_wastes=bins_state.c if bins_state is not None else np.zeros(0),
                     bin_stats=bin_stats,
                     truth_generator=truth_generator,
                 )
-                context["scenario_tree"] = scenario_tree
+                context.scenario_tree = scenario_tree
 
             start_time = time.perf_counter()
             # 3. Unpack adapter results: tour represents global bin IDs
             from logic.src.tracking.logging.modules.policy_viz_emit import PolicyVizStreamSession
 
-            viz_policy = str(context.get("display_name") or context.get("policy_name") or full_policy)
-            viz_sample = int(context.get("sample_id", 0))
-            viz_day = int(context.get("day", 0))
-            viz_log = context.get("realtime_log_path")
-            viz_lock = context.get("lock")
+            viz_policy = str(getattr(context, "display_name", None) or getattr(context, "policy_name", None) or full_policy)
+            viz_sample = int(getattr(context, "sample_id", 0))
+            viz_day = int(getattr(context, "day", 0))
+            viz_log = getattr(context, "realtime_log_path", None)
+            viz_lock = getattr(context, "lock", None)
 
             with PolicyVizStreamSession(adapter, viz_policy, viz_sample, viz_day, viz_log, viz_lock):
-                results = adapter.execute(**context)
+                results = adapter.execute(**context.as_kwargs())
             tour, _, _, extra_output, updated_multi_day = results
             elapsed_time = time.perf_counter() - start_time
 
@@ -193,24 +208,25 @@ class RoutingAction(SimulationAction):
                 get_route_cost,
             )
 
-            raw_km = get_route_cost(context["distance_matrix"], tour)
+            raw_km = get_route_cost(context.distance_matrix, tour)
 
-            context["tour"] = tour
-            context["cost"] = raw_km
-            context["extra_output"] = extra_output
-            context["time"] = elapsed_time  # construction only; run_day replaces it with the full policy time
-            context["solver_status"] = resolve_solver_status(current_solver_status(), tour)
+            context.tour = tour
+            context.cost = raw_km
+            context.extra_output = extra_output
+            context.time = elapsed_time  # construction only; run_day replaces it with the full policy time
+            context.solver_status = resolve_solver_status(current_solver_status(), tour)
+            context.metrics_phase = "preliminary"
             # Preserve updated multi-day state for the next simulation day
-            context["multi_day_context"] = updated_multi_day
+            context.multi_day_context = updated_multi_day
 
             # Legacy caching for regular selection
             if "regular" in full_policy:
-                context["cached"] = extra_output
+                context.cached = extra_output
 
         except Exception as e:
-            context["solver_status"] = resolve_solver_status(current_solver_status(), context.get("tour"), e)
-            if context.get("tour") is None:
-                context["tour"] = [0, 0]
+            context.solver_status = resolve_solver_status(current_solver_status(), getattr(context, "tour", None), e)
+            if getattr(context, "tour", None) is None:
+                context.tour = [0, 0]
             if isinstance(e, ValueError):
                 raise ValueError(f"Failed to load policy adapter for '{solver_key}': {e}") from e
             raise

@@ -28,7 +28,6 @@ class JointGreedyConfig:
         distance_weight (float): Weight for distance.
         seed (Optional[int]): Seed for random number generator.
         time_limit (float): Time limit in seconds.
-        vrpp (bool): Whether the problem is a VRRP.
         packing (Optional[List[Any]]): Mandatory customers/requests.
         route_improvement (Optional[List[Any]]): Route improvement strategies.
     """
@@ -40,6 +39,5 @@ class JointGreedyConfig:
     time_limit: float = 30.0
 
     # Hydra compatibility placeholders
-    vrpp: bool = True
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)

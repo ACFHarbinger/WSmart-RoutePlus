@@ -25,9 +25,10 @@ from logic.src.interfaces.routing_algorithm import IRoutingAlgorithm
 from logic.src.pipeline.simulations.repository import load_area_and_waste_type_params
 from logic.src.tracking.core.run import get_active_run
 from logic.src.tracking.viz_mixin import PolicyVizMixin
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 _STAGE_KEYS = frozenset({"packing", "route_improvement", "acceptance_criteria", "acceptance_criterion"})
-_RUNTIME_KEYS = _STAGE_KEYS | {"seed", "vrpp"}
+_RUNTIME_KEYS = _STAGE_KEYS | {"seed"}
 _ENGINE_KEYS = ("gurobi", "ortools", "custom")
 
 
@@ -71,12 +72,13 @@ def _structured_load(config_cls: Type, mapping: Dict[str, Any]) -> Any:
     filtered = {key: value for key, value in core.items() if key in known}
     try:
         schema = OmegaConf.structured(config_cls)
-        OmegaConf.set_struct(schema, True)
-        merged = OmegaConf.merge(schema, OmegaConf.create(filtered))
-        return OmegaConf.to_object(merged)
     except Exception:
-        # Some configs use typing.Literal / nested types OmegaConf cannot schema.
+        # Some declarations use types OmegaConf cannot schema. Only schema
+        # construction may fall back; invalid user values must never bypass validation.
         return config_cls(**filtered)
+    OmegaConf.set_struct(schema, True)
+    merged = OmegaConf.merge(schema, OmegaConf.create(filtered))
+    return OmegaConf.to_object(merged)
 
 
 class BaseRoutingPolicy(PolicyVizMixin, IRoutingAlgorithm):
@@ -186,7 +188,7 @@ class BaseRoutingPolicy(PolicyVizMixin, IRoutingAlgorithm):
             flat["seed"] = raw_config["seed"]
 
         cfg = _structured_load(config_cls, flat)
-        for key in ("seed", "vrpp"):
+        for key in ("seed",):
             if key in flat and hasattr(cfg, key):
                 setattr(cfg, key, flat[key])
         return cfg, flat.get("seed")
@@ -242,9 +244,9 @@ class BaseRoutingPolicy(PolicyVizMixin, IRoutingAlgorithm):
         known = {f.name for f in fields(config_cls)}
         filtered = {key: value for key, value in values.items() if key in known}
         cfg = _structured_load(config_cls, filtered)
-        # _structured_load drops _RUNTIME_KEYS (seed, vrpp, stage file-refs);
+        # _structured_load drops _RUNTIME_KEYS (seed, stage file-refs);
         # the solver-facing ones are applied explicitly here.
-        for key in ("seed", "vrpp"):
+        for key in ("seed",):
             if key in values:
                 setattr(cfg, key, values[key])
         return cfg
@@ -568,7 +570,7 @@ class BaseRoutingPolicy(PolicyVizMixin, IRoutingAlgorithm):
             mandatory,
             distance_matrix,
             bins,
-            use_all_bins=bool(values.get("vrpp", True)),
+            use_all_bins=current_expand_pool(),
         )
 
         # Build coordinate arrays aligned to the sub-problem node indices.

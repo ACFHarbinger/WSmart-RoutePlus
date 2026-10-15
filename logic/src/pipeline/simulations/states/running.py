@@ -97,12 +97,30 @@ class RunningState(SimState):
             ctx.transition_to(FinishingState())
         except CheckpointError as e:
             ctx.result = dict(e.error_result)
+            ctx.result["success"] = False
+            ctx.result["status"] = "failed"
+            ctx.result["exception_type"] = ctx.result.get("error_type") or type(e.__cause__ or e).__name__
+            ctx.result["failed_day"] = ctx.result.get("day")
             status_rows = (ctx.daily_log or {}).get("solver_status") or []
             mandatory_rows = (ctx.daily_log or {}).get("mandatory_nodes") or []
             if status_rows:
                 ctx.result["solver_status"] = status_rows[-1]
             if mandatory_rows:
                 ctx.result["mandatory_nodes"] = mandatory_rows[-1]
+            kg_rows = (ctx.daily_log or {}).get("kg") or []
+            if kg_rows:
+                from logic.src.constants import SIM_METRICS
+                from logic.src.envs.tasks.common.metrics import METRICS as KPI
+
+                records = []
+                for index in range(len(kg_rows)):
+                    record = {}
+                    for key in SIM_METRICS:
+                        column = ctx.daily_log.get(key)
+                        if isinstance(column, list) and index < len(column):
+                            record[key] = column[index]
+                    records.append(record)
+                ctx.result["metrics"] = KPI.aggregate_days(records, [key for key in SIM_METRICS if key in records[0]])
             if ctx.result:
                 final_simulation_summary(ctx.result, ctx.pol_name, graph.n_samples)
             ctx.transition_to(None)
@@ -226,6 +244,7 @@ class RunningState(SimState):
             lock=cast(Optional[Lock], ctx.lock),
             hrl_manager=ctx.hrl_manager,
             config=current_policy_config,
+            day_pipeline=getattr(sim, "day_pipeline", None),
             cost_weight=sim.policy_configs.get("cost_weight", 1.0),
             waste_weight=sim.policy_configs.get("waste_weight", 1.0),
             overflow_penalty=sim.policy_configs.get("overflow_penalty", 1.0),

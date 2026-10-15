@@ -15,8 +15,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import logic.src.constants as udef
 from logic.src.configs import Config
-from logic.src.tracking.logging.log_utils import output_stats
 from logic.src.pipeline.simulations.day_context import policy_result_key
+from logic.src.tracking.logging.log_utils import output_stats
 
 try:
     from logic.src.tracking.core.run import get_active_run
@@ -36,13 +36,21 @@ def _log_sim_metrics(log: Dict[str, Any], log_std: Optional[Dict[str, Any]] = No
         return
     for pol_name_k, metrics in log.items():
         metrics_obj: object = metrics
-        if isinstance(metrics_obj, (list, tuple)):
+        if isinstance(metrics_obj, dict):
+            for metric_name, val in metrics_obj.items():
+                if isinstance(val, (int, float)):
+                    run.log_metric(f"sim/{pol_name_k}/{metric_name}", float(val))
+        elif isinstance(metrics_obj, (list, tuple)):
             for metric_name, val in zip(udef.SIM_METRICS, metrics_obj, strict=False):
                 run.log_metric(f"sim/{pol_name_k}/{metric_name}", float(val))
     if log_std is not None:
         for pol_name_k, std_metrics in log_std.items():
             std_metrics_obj: object = std_metrics
-            if isinstance(std_metrics_obj, (list, tuple)):
+            if isinstance(std_metrics_obj, dict):
+                for metric_name, val in std_metrics_obj.items():
+                    if isinstance(val, (int, float)):
+                        run.log_metric(f"sim/{pol_name_k}/{metric_name}_std", float(val))
+            elif isinstance(std_metrics_obj, (list, tuple)):
                 for metric_name, val in zip(udef.SIM_METRICS, std_metrics_obj, strict=False):
                     run.log_metric(f"sim/{pol_name_k}/{metric_name}_std", float(val))
 
@@ -91,16 +99,25 @@ def aggregate_final_results(log_tmp: Any, cfg: Config, lock: Any) -> Tuple[Dict[
             for key, val in log_tmp.items():
                 log_full[key].extend(list(val))
 
+            from logic.src.pipeline.simulations.aggregation import summary_pair
+
             for pol_name in policy_names:
                 # A policy with no successful sample is omitted. An all-zero mean
                 # would be written as if the policy had run (DS-18).
-                if not log_full[pol_name]:
+                rows = log_full[pol_name]
+                if not rows:
                     continue
-                log[pol_name] = [statistics.mean(v) for v in zip(*log_full[pol_name], strict=False)]
-                log_std[pol_name] = [
-                    statistics.stdev(v) if len(log_full[pol_name]) > 1 else 0.0
-                    for v in zip(*log_full[pol_name], strict=False)
-                ]
+                if all(isinstance(item, (list, tuple)) for item in rows):
+                    log[pol_name] = [statistics.mean(column) for column in zip(*rows, strict=False)]
+                    log_std[pol_name] = [
+                        statistics.stdev(column) if len(rows) > 1 else 0.0 for column in zip(*rows, strict=False)
+                    ]
+                    continue
+                mean_metrics, std_metrics, summary = summary_pair(rows)
+                mean_metrics["n_failed"] = float(summary.n_failed)
+                mean_metrics["n_success"] = float(summary.n_success)
+                log[pol_name] = mean_metrics
+                log_std[pol_name] = std_metrics
 
             _log_sim_metrics(log, log_std)
             return log, log_std

@@ -101,7 +101,6 @@ class FILOSolver:
             C=self.C,
             rng=self.rng,
             profit_aware_operators=self.params.profit_aware_operators,
-            vrpp=self.params.vrpp,
         )
 
         self.local_search = FILOLocalSearch(

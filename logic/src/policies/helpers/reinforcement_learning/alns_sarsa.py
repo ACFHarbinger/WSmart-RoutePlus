@@ -81,6 +81,7 @@ from logic.src.policies.helpers.operators.recreate_repair import (
 from logic.src.policies.helpers.reinforcement_learning.agents.td_learning import SarsaAgent
 from logic.src.policies.helpers.reinforcement_learning.features.state import StateFeatureExtractor
 from logic.src.utils.functions import safe_exp
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 from .alns_perturbation_context import ALNSPerturbationContext
 
@@ -145,7 +146,7 @@ class ALNSSARSASolver:
         self.evaluator = evaluator
         self.epsilon_decay_step = rl_params.sarsa_epsilon_decay_step
         self.mandatory_nodes = mandatory_nodes or []
-        self.expand_pool = getattr(rl_params, "vrpp", False)
+        self.expand_pool = current_expand_pool()
         self.profit_aware_operators = getattr(rl_params, "profit_aware_operators", False)
         self.improvement_thresholds = rl_params.sarsa_improvement_thresholds
         self.random = random.Random(params.seed) if params.seed is not None else random.Random()

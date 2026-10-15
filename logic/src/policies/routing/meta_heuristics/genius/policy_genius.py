@@ -124,7 +124,6 @@ class GENIUSPolicy(BaseRoutingPolicy):
             string_type=int(values.get("string_type", 1)),
             n_iterations=int(values.get("n_iterations", 1)),
             random_us_sampling=bool(values.get("random_us_sampling", False)),
-            vrpp=bool(values.get("vrpp", False)),
             profit_aware_operators=bool(values.get("profit_aware_operators", False)),
             time_limit=float(values.get("time_limit", 60.0)),
             seed=values.get("seed", 42),

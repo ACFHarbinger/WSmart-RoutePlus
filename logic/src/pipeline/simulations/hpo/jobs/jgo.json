@@ -19,14 +19,6 @@
         "type": "float",
         "default": 30.0
     },
-    "vrpp": {
-        "type": "categorical",
-        "choices": [
-            true,
-            false
-        ],
-        "default": true
-    },
     "packing": {
         "type": "object",
         "default": "factory"

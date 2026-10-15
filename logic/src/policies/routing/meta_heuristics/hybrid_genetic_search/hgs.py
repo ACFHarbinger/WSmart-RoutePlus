@@ -26,6 +26,7 @@ import numpy as np
 from logic.src.configs.policies.hgs import HGSConfig
 from logic.src.policies.helpers.local_search.local_search_hgs import HGSLocalSearch
 from logic.src.policies.helpers.operators.crossover_recombination import route_profit_gpx_crossover
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 from .evolution import _extract_edges, evaluate, update_biased_fitness
 from .individual import Individual
@@ -131,7 +132,7 @@ class HGSSolver:
         self.nodes = list(range(1, self.n_nodes + 1))
 
         self.split_manager = LinearSplit(
-            dist_matrix, wastes, capacity, R, C, cfg.max_vehicles, mandatory_nodes, vrpp=cfg.vrpp
+            dist_matrix, wastes, capacity, R, C, cfg.max_vehicles, mandatory_nodes
         )
         self.ls = HGSLocalSearch(dist_matrix, wastes, capacity, R, C, mandatory_nodes, cfg)
         if x_coords is not None and y_coords is not None:
@@ -513,7 +514,7 @@ class HGSSolver:
         self._insert_into_pop(child, pop_feasible, pop_infeasible)
 
         # VRPP: record coverage and margin instead of binary feasibility
-        if self.params.vrpp:
+        if current_expand_pool():
             self._record_offspring_signals(child)
         else:
             self._offspring_feasibility.append(child.is_feasible)
@@ -522,7 +523,7 @@ class HGSSolver:
         # In VRPP, Split always produces feasible routes, so child.is_feasible
         # is always True and this block would never trigger anyway — but the
         # explicit guard makes the intent clear.
-        if not self.params.vrpp and not child.is_feasible and self.random.random() < self.params.repair_probability:
+        if not current_expand_pool() and not child.is_feasible and self.random.random() < self.params.repair_probability:
             repaired = Individual(child.giant_tour[:], expand_pool=child.expand_pool)
             evaluate(repaired, self.split_manager, penalty_capacity * 10.0)
             repaired = self.ls.optimize(repaired)
@@ -554,7 +555,7 @@ class HGSSolver:
         Returns:
             float: Updated penalty coefficient.
         """
-        if not self.params.vrpp:
+        if not current_expand_pool():
             if not self._offspring_feasibility:
                 return current_penalty
 

@@ -15,8 +15,6 @@ Example:
     500
     >>> config.seed
     None
-    >>> config.vrpp
-    True
     >>> config.packing
     None
     >>> config.route_improvement
@@ -74,7 +72,6 @@ class PSOConfig:
     time_limit: float = 60.0
 
     # Infrastructure
-    vrpp: bool = True
     profit_aware_operators: bool = False
     seed: Optional[int] = None
     packing: Optional[List[PackingConfig]] = None

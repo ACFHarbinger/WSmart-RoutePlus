@@ -13,8 +13,6 @@ Example:
     60.0
     >>> config.max_iterations
     100
-    >>> config.vrpp
-    True
     >>> config.profit_aware_operators
     False
 """
@@ -48,7 +46,6 @@ class RLHVPLConfig:
         aco: Configuration for ACO initialization.
         alns: Configuration for ALNS local search.
         rl_config: Configuration for the RL policy.
-        vrpp: Whether to use VRPP.
         seed: Random seed.
         profit_aware_operators: Whether to use profit-aware operators.
         packing: List of mandatory nodes.
@@ -74,7 +71,6 @@ class RLHVPLConfig:
     rl_config: RLConfig = field(default_factory=RLConfig)
 
     # Common policy fields
-    vrpp: bool = True
     seed: Optional[int] = None
     profit_aware_operators: bool = False
     packing: List[str] = field(default_factory=list)

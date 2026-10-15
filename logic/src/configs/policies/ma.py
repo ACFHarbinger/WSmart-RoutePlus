@@ -50,7 +50,6 @@ class MAConfig:
         n_removal: Perturbation magnitude for mutation.
         time_limit: Max execution time in seconds.
         seed: Randomness seed for reproducibility.
-        vrpp: Flag indicating if the full profits-based problem is active.
         packing: List of strategies for mandatory node selection.
         route_improvement: Optional solvers applied after the MA search.
     """
@@ -73,7 +72,6 @@ class MAConfig:
     seed: Optional[int] = None
 
     # Simulator Compatibility Flags
-    vrpp: bool = True
     profit_aware_operators: bool = False
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)

@@ -3,4 +3,3 @@ gp_mp_hh:
   gens: 20
   prog_len: 5
   seed: 42
-  vrpp: true

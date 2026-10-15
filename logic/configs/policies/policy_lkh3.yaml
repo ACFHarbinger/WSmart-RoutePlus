@@ -19,7 +19,6 @@ lkh3:
     - 0.4
     time_limit: 60
     profit_aware_operators: true
-    vrpp: true
     packing:
       other/pk_lookahead.yaml:
       - default

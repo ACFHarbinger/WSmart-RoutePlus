@@ -33,4 +33,3 @@ class SRCConfig:
     routing_algorithms: List[str] = field(default_factory=lambda: ["tsp", "alns"])
     time_limit: float = 60.0
     seed: int = 42
-    vrpp: bool = True

@@ -13,7 +13,6 @@ from logic.src.configs.policies.ils_rvnd_sp import ILSRVNDSPConfig
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
-
 class MockLocalSearch(LocalSearch):
     def __init__(self, routes, dist_matrix, capacity, C=1.0):
         self.routes = [list(r) for r in routes]
@@ -49,7 +48,6 @@ def sample_params():
     return ILSRVNDSPConfig(
         time_limit=10,
         seed=42,
-        vrpp=True
     )
 
 

@@ -4,7 +4,6 @@ sca:
     a_max: 2.0
     max_iterations: 200
     time_limit: 60.0
-    vrpp: true
     packing:
       other/pk_lookahead.yaml:
       - default

@@ -70,7 +70,6 @@ popmusic:
         use_ejection_chains: false
     initial_solver: pmedian
     profit_aware_operators: false
-    vrpp: true
     packing:
       other/pk_lookahead.yaml:
       - default

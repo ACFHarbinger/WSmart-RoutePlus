@@ -97,7 +97,6 @@ class HVPLConfig:
     )
 
     # Common policy fields
-    vrpp: bool = True
     profit_aware_operators: bool = False
     packing: List[str] = field(default_factory=list)
     route_improvement: List[Any] = field(default_factory=list)

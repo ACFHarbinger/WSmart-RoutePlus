@@ -60,7 +60,6 @@ class KSparseACOConfig:
     local_search: bool = True
     local_search_iterations: int = 500
     elitist_weight: float = 1.0
-    vrpp: bool = True
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
     acceptance_criterion: AcceptanceConfig = AcceptanceConfig(method="oi")

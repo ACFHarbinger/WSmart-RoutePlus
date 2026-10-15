@@ -21,8 +21,6 @@ Example:
     60.0
     >>> config.seed
     None
-    >>> config.vrpp
-    True
     >>> config.profit_aware_operators
     False
     >>> config.packing
@@ -51,7 +49,6 @@ class VNSConfig:
         n_llh: Number of local search operators to apply in each iteration.
         time_limit: Maximum time in seconds to run the search.
         seed: Random seed for reproducibility.
-        vrpp: Whether the problem is a Vehicle Routing Problem with Profits.
         profit_aware_operators: Whether to use profit-aware considerations in neighborhood operators.
         packing: List of packing algorithms to apply.
         route_improvement: List of route improvement strategies to apply.
@@ -65,7 +62,6 @@ class VNSConfig:
     n_llh: int = 5
     time_limit: float = 60.0
     seed: Optional[int] = None
-    vrpp: bool = True
     profit_aware_operators: bool = False
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)

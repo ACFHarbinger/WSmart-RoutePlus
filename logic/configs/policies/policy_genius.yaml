@@ -6,7 +6,6 @@ genius:
     n_iterations: 1
     random_us_sampling: false
     time_limit: 60.0
-    vrpp: true
     packing:
       other/pk_lookahead.yaml:
       - default

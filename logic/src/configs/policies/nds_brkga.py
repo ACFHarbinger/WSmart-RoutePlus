@@ -44,7 +44,6 @@ class NDSBRKGAConfig:
         max_generations: Maximum number of evolutionary generations.
         time_limit: Wall-clock time limit in seconds.
         seed: Random seed for reproducibility.
-        vrpp: If ``True``, optional bins can be included for additional profit.
         overflow_penalty: Weight applied to the overflow-cost objective.
         seed_selection_strategy: Name of the packing algorithm used
             to generate seeded initial chromosomes.
@@ -67,7 +66,6 @@ class NDSBRKGAConfig:
     max_generations: int = 200
     time_limit: float = 90.0
     seed: Optional[int] = 42
-    vrpp: bool = True
     overflow_penalty: float = 10.0
 
     seed_selection_strategy: str = "fractional_knapsack"

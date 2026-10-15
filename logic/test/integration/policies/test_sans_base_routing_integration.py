@@ -52,7 +52,6 @@ def context(monkeypatch):
         seed=7,
         config={
             "sans": dict(
-                vrpp=False,
                 shift_hours=8.0,
                 avg_speed_kmh=35.0,
                 service_time_h=0.0,
@@ -98,7 +97,7 @@ def test_legacy_units_overrides_data_and_all_routes(context, raw_revenue):
 @pytest.mark.parametrize("vrpp", [False, True])
 @pytest.mark.parametrize("seed", [7, 42])
 def test_actual_engines_match_original_adapter(context, engine, vrpp, seed):
-    context["config"]["sans"].update(engine=engine, vrpp=vrpp)
+    context["config"]["sans"].update(engine=engine)
     context["seed"] = seed
     old = OriginalAdapter().execute(**context)
     new = SANSPolicy().execute(**context)

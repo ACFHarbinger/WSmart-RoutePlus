@@ -9,14 +9,11 @@ from __future__ import annotations
 from typing import Any, Dict, Optional, Union
 
 import torch
-from logic.src.envs.tasks.common.metrics import DEFAULT_METRICS
+from logic.src.envs.tasks.common.released_specs import CPTP_SPEC
 from logic.src.envs.tasks.espprc import LoadResource
-from logic.src.envs.tasks.profitable_tour.common import (
-    evaluate_profitable_tour,
-    profit_objective,
-)
+from logic.src.envs.tasks.profitable_tour.common import evaluate_profitable_tour
 from logic.src.envs.tasks.profitable_tour.ptp import PTP, PTPEnv, PTPGenerator
-from logic.src.envs.tasks.spec import PROBLEMS, ProblemSpec
+from logic.src.envs.tasks.spec import PROBLEMS
 
 
 class CPTPGenerator(PTPGenerator):
@@ -92,14 +89,6 @@ class CPTP(PTP):
         )
 
 
-CPTP_SPEC = ProblemSpec(
-    name="cptp",
-    objective=profit_objective,
-    constraints=(LoadResource(),),
-    metrics=DEFAULT_METRICS,
-    env_target="logic.src.envs.tasks.profitable_tour.cptp:CPTPEnv",
-    expand_pool=True,
-)
 PROBLEMS.register(CPTP_SPEC)
 
 __all__ = ["CPTPGenerator", "CPTPEnv", "CPTP", "CPTP_SPEC"]

@@ -29,6 +29,7 @@ from logic.src.policies.helpers.operators.solution_initialization.nearest_neighb
 from logic.src.configs.policies.aco_ks import KSparseACOConfig
 
 from logic.src.configs.policies.ma_ts import MemeticAlgorithmToleranceBasedSelectionConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class MemeticAlgorithmToleranceBasedSelectionSolver:
@@ -92,7 +93,6 @@ class MemeticAlgorithmToleranceBasedSelectionSolver:
         aco_params = KSparseACOConfig(
             local_search_iterations=self.params.local_search_iterations,
             time_limit=self.params.time_limit,
-            vrpp=self.params.vrpp,
             profit_aware_operators=self.params.profit_aware_operators,
             seed=self.params.seed,
         )
@@ -241,7 +241,7 @@ class MemeticAlgorithmToleranceBasedSelectionSolver:
                     R=self.R,
                     C=self.C,
                     mandatory_nodes=self.mandatory_nodes,
-                    expand_pool=self.params.vrpp,
+                    expand_pool=current_expand_pool(),
                 )
             else:
                 repaired = greedy_insertion(
@@ -251,7 +251,7 @@ class MemeticAlgorithmToleranceBasedSelectionSolver:
                     wastes=self.wastes,
                     capacity=self.capacity,
                     mandatory_nodes=self.mandatory_nodes,
-                    expand_pool=self.params.vrpp,
+                    expand_pool=current_expand_pool(),
                 )
             return self.ls.optimize(repaired)
         except Exception:
@@ -304,7 +304,7 @@ class MemeticAlgorithmToleranceBasedSelectionSolver:
                         self.R,
                         self.C,
                         mandatory_nodes=self.mandatory_nodes,
-                        expand_pool=self.params.vrpp,
+                        expand_pool=current_expand_pool(),
                     )
                 else:
                     child = greedy_insertion(
@@ -314,7 +314,7 @@ class MemeticAlgorithmToleranceBasedSelectionSolver:
                         self.wastes,
                         self.capacity,
                         mandatory_nodes=self.mandatory_nodes,
-                        expand_pool=self.params.vrpp,
+                        expand_pool=current_expand_pool(),
                     )
 
         # Apply comprehensive local search (reusing instance)

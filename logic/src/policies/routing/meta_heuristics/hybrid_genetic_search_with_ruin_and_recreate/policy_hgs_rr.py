@@ -161,7 +161,6 @@ class HGSRRPolicy(BaseRoutingPolicy):
             score_sigma_2=values.get("score_sigma_2", 9.0),
             score_sigma_3=values.get("score_sigma_3", 3.0),
             seed=values.get("seed"),
-            vrpp=values.get("vrpp", True),
             profit_aware_operators=values.get("profit_aware_operators", False),
         )
 
