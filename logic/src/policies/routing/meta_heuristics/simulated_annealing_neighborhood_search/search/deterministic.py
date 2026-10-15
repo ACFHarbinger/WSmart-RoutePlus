@@ -44,19 +44,19 @@ def _evaluate_move(
     """Evaluate moving a bin to a new position.
 
     Args:
-        routes_list (List[List[int]]): Current routing solution.
-        idx_route (int): Index of the route to move the bin to.
-        position (int): Position to move the bin to.
-        bin_to_move (int): Bin to move.
-        previous_solution (List[List[int]]): Previous routing solution.
-        previous_profit (float): Previous profit.
-        p_vehicle (float): Penalty for using an extra vehicle.
-        p_load (float): Penalty for exceeding vehicle load capacity.
-        p_route_difference (float): Penalty for route length differences.
-        p_shift (float): Penalty for route time differences.
-        data (dict): Input data containing bin information.
-        distance_matrix (np.ndarray): All-pairs shortest path distances.
-        values (np.ndarray): Vehicle capacity.
+        routes_list: Current routing solution.
+        idx_route: Index of the route to move the bin to.
+        position: Position to move the bin to.
+        bin_to_move: Bin to move.
+        previous_solution: Previous routing solution.
+        previous_profit: Previous profit.
+        p_vehicle: Penalty for using an extra vehicle.
+        p_load: Penalty for exceeding vehicle load capacity.
+        p_route_difference: Penalty for route length differences.
+        p_shift: Penalty for route time differences.
+        data: Input data containing bin information.
+        distance_matrix: All-pairs shortest path distances.
+        values: Vehicle capacity.
 
     Returns:
         Tuple[float, bool]: New profit and whether the move improved the solution.
@@ -117,14 +117,14 @@ def local_search_2(
     Apply a deterministic set of local search operators to improve a solution.
 
     Args:
-        previous_solution (List[List[int]]): Current routing solution.
-        p_vehicle (float): Penalty for using an extra vehicle.
-        p_load (float): Penalty for exceeding vehicle load capacity.
-        p_route_difference (float): Penalty for route length differences.
-        p_shift (float): Penalty for route time differences.
-        data (dict): Input data containing bin information.
-        distance_matrix (np.ndarray): All-pairs shortest path distances.
-        values (np.ndarray): Vehicle capacity.
+        previous_solution: Current routing solution.
+        p_vehicle: Penalty for using an extra vehicle.
+        p_load: Penalty for exceeding vehicle load capacity.
+        p_route_difference: Penalty for route length differences.
+        p_shift: Penalty for route time differences.
+        data: Input data containing bin information.
+        distance_matrix: All-pairs shortest path distances.
+        values: Vehicle capacity.
 
     Returns:
         Tuple[List[List[int]], float, float]: Optimized routing solution, its profit, and real profit.

@@ -60,7 +60,7 @@ class ExactSDPEngine:
         """Calculate overflow penalties for the current state.
 
         Args:
-            state (Tuple[int, ...]): Discrete state tuple.
+            state: Discrete state tuple.
 
         Returns:
             float: Calculated overflow penalty.
@@ -74,9 +74,9 @@ class ExactSDPEngine:
         """Evaluate the Q-value of a state-action pair.
 
         Args:
-            state (Tuple[int, ...]): Current discrete state.
-            action (FrozenSet[int]): Set of node indices to visit.
-            next_val_table (Dict[Tuple[int, ...], float]): Value table for the next day.
+            state: Current discrete state.
+            action: Set of node indices to visit.
+            next_val_table: Value table for the next day.
 
         Returns:
             float: Expected long-term value (Q-value).
@@ -106,7 +106,7 @@ class ExactSDPEngine:
         """Calculate the total overflow penalty for the current state.
 
         Args:
-            state (Tuple[int, ...]): Discrete state tuple.
+            state: Discrete state tuple.
 
         Returns:
             float: Total overflow penalty.
@@ -157,8 +157,8 @@ class ExactSDPEngine:
         """Return the optimal subset of nodes to visit.
 
         Args:
-            day (int): The current planning day.
-            state (Tuple[int, ...]): The current discrete state.
+            day: The current planning day.
+            state: The current discrete state.
 
         Returns:
             FrozenSet[int]: The optimal set of node indices to visit.

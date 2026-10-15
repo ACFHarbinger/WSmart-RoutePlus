@@ -45,11 +45,11 @@ class AugmentationEval(EvalBase):
         """Initialize Class.
 
         Args:
-            env (Any): Description of env.
-            num_augment (int): Description of num_augment.
-            augment_fn (str): Description of augment_fn.
-            progress (bool): Description of progress.
-            kwargs (Any): Description of kwargs.
+            env: Description of env.
+            num_augment: Description of num_augment.
+            augment_fn: Description of augment_fn.
+            progress: Description of progress.
+            kwargs: Description of kwargs.
         """
         super().__init__(env, progress, **kwargs)
         self.samples = num_augment
@@ -59,10 +59,10 @@ class AugmentationEval(EvalBase):
         """call  .
 
         Args:
-            policy (Any): Description of policy.
-            data_loader (DataLoader): Description of data_loader.
-            return_results (bool): Description of return_results.
-            kwargs (Any): Description of kwargs.
+            policy: Description of policy.
+            data_loader: Description of data_loader.
+            return_results: Description of return_results.
+            kwargs: Description of kwargs.
 
         Returns:
             Any: Description of return value.

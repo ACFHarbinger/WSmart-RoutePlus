@@ -54,15 +54,15 @@ class SimulatedAnnealingRouteImprover(IRouteImprovement):
         """Apply Simulated Annealing to the tour.
 
         Args:
-            tour (List[int]): Initial tour sequence (list of bin IDs including depot 0s).
+            tour: Initial tour sequence (list of bin IDs including depot 0s).
             kwargs: Search context, including:
-                distance_matrix (np.ndarray | torch.Tensor): The distance matrix lookup.
-                sa_iterations (int): Total number of iterations to perform (default 5000).
-                sa_t_init (float): Initial temperature (default 10.0).
-                sa_cooling (float): Cooling rate (alpha, default 0.999).
-                seed (int): Random seed.
-                wastes (Dict[int, float]): Bin waste demands.
-                capacity (float): Maximum vehicle capacity.
+                distance_matrix: The distance matrix lookup.
+                sa_iterations: Total number of iterations to perform (default 5000).
+                sa_t_init: Initial temperature (default 10.0).
+                sa_cooling: Cooling rate (alpha, default 0.999).
+                seed: Random seed.
+                wastes: Bin waste demands.
+                capacity: Maximum vehicle capacity.
 
         Returns:
             Tuple[List[int], ImprovementMetrics]: Refined tour and performance metrics.
@@ -161,11 +161,11 @@ class SimulatedAnnealingRouteImprover(IRouteImprovement):
         """Pick and apply a random move (intra-route or inter-route).
 
         Args:
-            routes (List[List[int]]): Current set of routes.
-            dm (np.ndarray): Distance matrix for cost delta calculation.
-            rng (np.random.Generator): Random number generator.
-            wastes (Dict[int, float]): Bin demands for capacity checking.
-            capacity (float): Maximum vehicle capacity.
+            routes: Current set of routes.
+            dm: Distance matrix for cost delta calculation.
+            rng: Random number generator.
+            wastes: Bin demands for capacity checking.
+            capacity: Maximum vehicle capacity.
 
         Returns:
             Tuple[Optional[List[List[int]]], float]: (new_routes, cost_delta) or (None, 0.0) if rejected.

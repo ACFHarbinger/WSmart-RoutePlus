@@ -130,7 +130,7 @@ class MasterProblemSupport(Protocol):
         """Constructs the initial Gurobi model for the RMP.
 
         Args:
-            initial_routes (Optional[List[Route]]): Optional list of starting routes.
+            initial_routes: Optional list of starting routes.
         """
         ...
 
@@ -173,7 +173,7 @@ class MasterProblemSupport(Protocol):
         """Adds a new route (column) to the RMP.
 
         Args:
-            route (Route): The route to add.
+            route: The route to add.
         """
         ...
 
@@ -198,7 +198,7 @@ class MasterProblemSupport(Protocol):
         """Removes columns with high reduced costs to keep the RMP compact.
 
         Args:
-            tolerance (float): Reduced cost threshold for deletion.
+            tolerance: Reduced cost threshold for deletion.
 
         Returns:
             int: Number of columns purged.
@@ -225,7 +225,7 @@ class MasterProblemSupport(Protocol):
         """Calculates edge usage frequencies (x_ij) from fractional route values.
 
         Args:
-            only_elementary (bool): Whether to only consider elementary routes.
+            only_elementary: Whether to only consider elementary routes.
 
         Returns:
             Dict[Tuple[int, int], float]: Mapping of (u, v) edge to usage value.
@@ -245,8 +245,8 @@ class MasterProblemSupport(Protocol):
         """Restores the RMP basis from saved status arrays.
 
         Args:
-            vbasis (List[int]): Variable basis statuses.
-            cbasis (List[int]): Constraint basis statuses.
+            vbasis: Variable basis statuses.
+            cbasis: Constraint basis statuses.
         """
         ...
 
@@ -265,14 +265,14 @@ class MasterProblemSupport(Protocol):
         """Scan the global pool for profitable columns under current duals and branching.
 
         Args:
-            node_duals (Dict[int, float]): Base duals from coverage and vehicle limits.
-            rcc_duals (Dict[FrozenSet[int], float]): Current Root-Capacity Cut duals.
-            sri_duals (Dict[FrozenSet[int], float]): Current Subset-Row Inequality duals.
-            edge_clique_duals (Dict[Tuple[int, int], float]): Current Edge Clique cut duals.
-            lci_duals (Optional[Dict[FrozenSet[int], float]]): Current Lifted Cover Inequality duals.
-            lci_node_alphas (Optional[Dict[FrozenSet[int], Dict[int, float]]]): Node lifting coefficients.
-            branching_constraints (Optional[List[AnyBranchingConstraint]]): Active branching constraints.
-            rc_tolerance (float): Threshold to prevent injection of insignificant columns.
+            node_duals: Base duals from coverage and vehicle limits.
+            rcc_duals: Current Root-Capacity Cut duals.
+            sri_duals: Current Subset-Row Inequality duals.
+            edge_clique_duals: Current Edge Clique cut duals.
+            lci_duals: Current Lifted Cover Inequality duals.
+            lci_node_alphas: Node lifting coefficients.
+            branching_constraints: Active branching constraints.
+            rc_tolerance: Threshold to prevent injection of insignificant columns.
 
         Returns:
             int: Number of routes re-activated and added to the RMP.
@@ -283,8 +283,8 @@ class MasterProblemSupport(Protocol):
         """Calculates the reduced cost of a route using current dual values.
 
         Args:
-            route (Route): The route to evaluate.
-            dual_values (Dict[str, Any]): Dictionary of dual components.
+            route: The route to evaluate.
+            dual_values: Dictionary of dual components.
 
         Returns:
             float: The calculated reduced cost.
@@ -295,7 +295,7 @@ class MasterProblemSupport(Protocol):
         """Switch between Phase 1 (Feasibility) and Phase 2 (Optimality).
 
         Args:
-            phase (int): 1 for Feasibility, 2 for Optimality.
+            phase: 1 for Feasibility, 2 for Optimality.
         """
         ...
 
@@ -303,7 +303,7 @@ class MasterProblemSupport(Protocol):
         """Prune mathematically equivalent routes from the global column pool.
 
         Args:
-            tol (float): Numerical tolerance for profit comparison.
+            tol: Numerical tolerance for profit comparison.
 
         Returns:
             int: Number of redundant routes removed.
@@ -313,8 +313,8 @@ class MasterProblemSupport(Protocol):
         """Adds a capacity cut specifically for set packing formulations.
 
         Args:
-            node_list (List[int]): Nodes in the cut set.
-            rhs (float): Right-hand side.
+            node_list: Nodes in the cut set.
+            rhs: Right-hand side.
 
         Returns:
             bool: True if the cut was successfully added.
@@ -448,8 +448,8 @@ class VRPPMasterProblemSupportMixin:
         (RCC, SRI, Edge Clique, LCI).
 
         Args:
-            route (Route): The route to evaluate.
-            dual_values (Dict[str, Any]): Dictionary of dual components.
+            route: The route to evaluate.
+            dual_values: Dictionary of dual components.
 
         Returns:
             float: The calculated reduced cost.

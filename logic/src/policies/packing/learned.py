@@ -60,10 +60,8 @@ class LearnedSelection(IPackingAlgorithm):
         """Lazy load the model from the specified path.
 
         Args:
-            path (str): Path to the model file.
+            path: Path to the model file.
 
-        Returns:
-            None
         """
         if not os.path.exists(path):
             raise RuntimeError(f"LearnedSelection: Model file not found at {path}")
@@ -87,7 +85,7 @@ class LearnedSelection(IPackingAlgorithm):
         probability.
 
         Args:
-            context (PackingContext): PackingContext with all bin properties.
+            context: PackingContext with all bin properties.
 
         Returns:
             Tuple[List[int], SearchContext]: Selected bin IDs (1-based) and search context.

@@ -290,8 +290,6 @@ class NeuralAgentPolicy(BaseRoutingPolicy):
             context: Context for neural execution.
             cost_weights: Cost weights for the neural policy.
 
-        Returns:
-            None
         """
         if self._params_logged:
             return

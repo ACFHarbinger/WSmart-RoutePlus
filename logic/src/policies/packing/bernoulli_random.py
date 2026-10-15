@@ -55,8 +55,8 @@ class BernoulliRandomSelection(IPackingAlgorithm):
     def __init__(self, p: Optional[float] = None, min_fill: float = 0.0) -> None:
         """
         Args:
-            p (Optional[float]): Selection probability in [0, 1]; ``None`` uses ``context.threshold``.
-            min_fill (float): Minimum fill ratio for a bin to be eligible for the trial.
+            p: Selection probability in [0, 1]; ``None`` uses ``context.threshold``.
+            min_fill: Minimum fill ratio for a bin to be eligible for the trial.
         """
         self.p = None if p is None else float(min(max(p, 0.0), 1.0))
         self.min_fill = float(min_fill)
@@ -73,7 +73,7 @@ class BernoulliRandomSelection(IPackingAlgorithm):
         fill levels are strictly excluded from the stochastic process.
 
         Args:
-            context (PackingContext): The selection context.
+            context: The selection context.
 
         Returns:
             Tuple[List[int], SearchContext]: Selected bin IDs and search context.

@@ -38,8 +38,6 @@ class CostEvaluator:
         Args:
             dist_matrix: NxN array representing edge distances. First index is depot (0).
 
-        Returns:
-            None.
         """
         self.dist_matrix = dist_matrix
         self.penalized_dist_matrix = np.copy(dist_matrix)
@@ -80,8 +78,6 @@ class CostEvaluator:
         Args:
             None.
 
-        Returns:
-            None.
         """
         self.penalization_enabled = True
 
@@ -91,8 +87,6 @@ class CostEvaluator:
         Args:
             None.
 
-        Returns:
-            None.
         """
         self.penalization_enabled = False
 
@@ -102,8 +96,6 @@ class CostEvaluator:
         Args:
             None.
 
-        Returns:
-            None.
         """
         self.edge_penalties.clear()
         self.penalized_dist_matrix = np.copy(self.dist_matrix)

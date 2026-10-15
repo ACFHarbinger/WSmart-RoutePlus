@@ -67,15 +67,13 @@ class ThompsonDispatcher(IPackingAlgorithm):
         """Update the posterior based on an observed reward.
 
         Args:
-            strategy_name (str): Name of the strategy that was used.
-            reward (float): Real-valued reward (e.g., negative cost).
-            baseline (Optional[float]): Optional baseline to binarize reward (success if reward > baseline).
-            success_prob (Optional[float]): Optional direct probability of success [0, 1]. If provided,
+            strategy_name: Name of the strategy that was used.
+            reward: Real-valued reward (e.g., negative cost).
+            baseline: Optional baseline to binarize reward (success if reward > baseline).
+            success_prob: Optional direct probability of success [0, 1]. If provided,
                                             reward/baseline are ignored.
-            state_path (Optional[str]): Optional path to persist the updated state.
+            state_path: Optional path to persist the updated state.
 
-        Returns:
-            None
         """
         with cls._lock:
             # Load state
@@ -104,7 +102,7 @@ class ThompsonDispatcher(IPackingAlgorithm):
         """Internal load within lock.
 
         Args:
-            path (Optional[str]): Path to the state file.
+            path: Path to the state file.
 
         Returns:
             Dict[str, Tuple[float, float]]: The loaded state mapping.
@@ -123,8 +121,8 @@ class ThompsonDispatcher(IPackingAlgorithm):
         """Internal save within lock.
 
         Args:
-            state (Dict[str, Tuple[float, float]]): The state mapping to save.
-            path (Optional[str]): Path to the state file.
+            state: The state mapping to save.
+            path: Path to the state file.
         """
         cls._shared_state = state
         if path:
@@ -141,7 +139,7 @@ class ThompsonDispatcher(IPackingAlgorithm):
         """Sample a strategy via Thompson Sampling and dispatch the call.
 
         Args:
-            context (PackingContext): The selection context.
+            context: The selection context.
 
         Returns:
             Tuple[List[int], SearchContext]: Selected bin IDs and search context.

@@ -94,8 +94,8 @@ class HULKOperators:
         """Applies Unstringing Type I removal operator.
 
         Args:
-            solution (Solution): The current solution.
-            n_remove (int): Number of nodes to remove.
+            solution: The current solution.
+            n_remove: Number of nodes to remove.
 
         Returns:
             Tuple[Solution, List[int]]: The partial solution and the removed nodes.
@@ -106,8 +106,8 @@ class HULKOperators:
         """Applies Unstringing Type II removal operator.
 
         Args:
-            solution (Solution): The current solution.
-            n_remove (int): Number of nodes to remove.
+            solution: The current solution.
+            n_remove: Number of nodes to remove.
 
         Returns:
             Tuple[Solution, List[int]]: The partial solution and the removed nodes.
@@ -118,8 +118,8 @@ class HULKOperators:
         """Applies Unstringing Type III removal operator.
 
         Args:
-            solution (Solution): The current solution.
-            n_remove (int): Number of nodes to remove.
+            solution: The current solution.
+            n_remove: Number of nodes to remove.
 
         Returns:
             Tuple[Solution, List[int]]: The partial solution and the removed nodes.
@@ -130,8 +130,8 @@ class HULKOperators:
         """Applies Unstringing Type IV removal operator.
 
         Args:
-            solution (Solution): The current solution.
-            n_remove (int): Number of nodes to remove.
+            solution: The current solution.
+            n_remove: Number of nodes to remove.
 
         Returns:
             Tuple[Solution, List[int]]: The partial solution and the removed nodes.
@@ -142,8 +142,8 @@ class HULKOperators:
         """Applies Shaw removal operator.
 
         Args:
-            solution (Solution): The current solution.
-            n_remove (int): Number of nodes to remove.
+            solution: The current solution.
+            n_remove: Number of nodes to remove.
 
         Returns:
             Tuple[Solution, List[int]]: The partial solution and the removed nodes.
@@ -159,8 +159,8 @@ class HULKOperators:
         """Applies String removal operator.
 
         Args:
-            solution (Solution): The current solution.
-            n_remove (int): Number of nodes to remove.
+            solution: The current solution.
+            n_remove: Number of nodes to remove.
 
         Returns:
             Tuple[Solution, List[int]]: The partial solution and the removed nodes.

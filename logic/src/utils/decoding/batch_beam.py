@@ -57,7 +57,7 @@ class BatchBeam(NamedTuple):
         Allows indexing/slicing of the beam state.
 
         Args:
-            key (Any): Key to index/slice the beam state.
+            key: Key to index/slice the beam state.
 
         Returns:
             BatchBeam: Beam with indexed/sliced state.
@@ -77,7 +77,7 @@ class BatchBeam(NamedTuple):
         Initializes the beam with the starting state.
 
         Args:
-            state (Any): Initial state.
+            state: Initial state.
 
         Returns:
             BatchBeam: Initialized beam.
@@ -111,9 +111,9 @@ class BatchBeam(NamedTuple):
         Expands the beam with chosen actions.
 
         Args:
-            parent (torch.Tensor): Parent indices.
-            action (torch.Tensor): Action indices.
-            score (torch.Tensor, optional): Scores for the new beams. Defaults to None.
+            parent: Parent indices.
+            action: Action indices.
+            score: Scores for the new beams. Defaults to None.
 
         Returns:
             BatchBeam: Expanded beam.
@@ -130,7 +130,7 @@ class BatchBeam(NamedTuple):
         Selects the top-k beam candidates per batch.
 
         Args:
-            k (int): Number of top candidates to select.
+            k: Number of top candidates to select.
 
         Returns:
             BatchBeam: Beam with top-k candidates.
@@ -161,7 +161,7 @@ class BatchBeam(NamedTuple):
         Moves beam data to the specified device.
 
         Args:
-            device (torch.device): Device to move data to.
+            device: Device to move data to.
 
         Returns:
             BatchBeam: Beam with data on the specified device.

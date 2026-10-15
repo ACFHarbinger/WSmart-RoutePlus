@@ -231,8 +231,6 @@ def _update_removed_bins(
         bs_rnd: Set of bins to add.
         bs_con: Set of bins to add.
 
-    Returns:
-        None
     """
     if proc == "Drop bin" and b_rem is not None:
         removed.remove(b_rem)
@@ -284,8 +282,6 @@ def _rollback_removed_bins(
         bs_rnd: Set of bins to add.
         bs_con: Set of bins to add.
 
-    Returns:
-        None
     """
     # Note: In the original code, some logic was slightly inconsistent or redundant.
     # We follow the original route_search.py logic closely.

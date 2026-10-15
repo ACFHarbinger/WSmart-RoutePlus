@@ -157,8 +157,6 @@ class ALNSSolverIPO(ALNSSolver):
     def _append_inter_period_destroy_ops(self) -> None:
         """Append ShiftVisitRemoval, PatternRemoval, and new horizon operators to the destroy registry.
 
-        Returns:
-            None.
         """
         direction = self.shift_direction
 
@@ -205,8 +203,6 @@ class ALNSSolverIPO(ALNSSolver):
     def _append_inter_period_repair_ops(self) -> None:
         """Append Horizon insertion operators to the repair registry.
 
-        Returns:
-            None.
         """
 
         def _greedy_h(r: Any, rem: Any, _noise: float = 0.0) -> Any:

@@ -57,13 +57,13 @@ class NonLinearGreatDeluge(IAcceptanceCriterion):
         """Initialize the NLGD criterion.
 
         Args:
-            t_max (int): Total iteration budget.
-            initial_tolerance (float): Factor for Level_0 relative to initial
+            t_max: Total iteration budget.
+            initial_tolerance: Factor for Level_0 relative to initial
                 objective. Defaults to 0.1.
-            gap_epsilon (float): Tolerance gap from f_best to prevent stagnation.
+            gap_epsilon: Tolerance gap from f_best to prevent stagnation.
                 Defaults to 0.01.
-            beta (float): Decay factor (convexity). Defaults to 5.0.
-            maximization (bool): Whether the problem is maximization. Defaults to False.
+            beta: Decay factor (convexity). Defaults to 5.0.
+            maximization: Whether the problem is maximization. Defaults to False.
         """
         self.t_max = t_max
         self.initial_tolerance = initial_tolerance
@@ -80,7 +80,7 @@ class NonLinearGreatDeluge(IAcceptanceCriterion):
         """Initialize the criterion state.
 
         Args:
-            initial_objective (ObjectiveValue): The initial solution's objective.
+            initial_objective: The initial solution's objective.
         """
         initial_objective = cast(float, initial_objective)
         if self.maximization:
@@ -96,7 +96,7 @@ class NonLinearGreatDeluge(IAcceptanceCriterion):
         """Retrieve the best objective found so far.
 
         Args:
-            kwargs (Any): Should contain 'f_best' if external tracking is used.
+            kwargs: Should contain 'f_best' if external tracking is used.
 
         Returns:
             float: The best objective value.
@@ -114,9 +114,9 @@ class NonLinearGreatDeluge(IAcceptanceCriterion):
 
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            kwargs: Additional context.
 
         Returns:
             Tuple[bool, AcceptanceMetrics]: A tuple containing:
@@ -156,10 +156,10 @@ class NonLinearGreatDeluge(IAcceptanceCriterion):
         """Update the iteration counter and re-calculate the water level.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            accepted (bool): Whether the move was accepted.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            accepted: Whether the move was accepted.
+            kwargs: Additional context.
         """
         current_obj = cast(float, current_obj)
         candidate_obj = cast(float, candidate_obj)

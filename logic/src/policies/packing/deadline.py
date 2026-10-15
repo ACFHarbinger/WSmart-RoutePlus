@@ -40,7 +40,7 @@ class DeadlineDrivenSelection(IPackingAlgorithm):
         """Selects bins that will reach maximum capacity within the lookahead horizon.
 
         Args:
-            context (PackingContext): Selection context containing current fill levels,
+            context: Selection context containing current fill levels,
                                         accumulation rates, and horizon thresholds.
 
         Returns:

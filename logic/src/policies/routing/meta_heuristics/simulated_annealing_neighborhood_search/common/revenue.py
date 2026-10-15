@@ -16,11 +16,11 @@ def compute_waste_collection_revenue(routes_list, data, E, B, R):
     Calculate the total revenue from waste collected in the current routes.
 
     Args:
-        routes_list (List[List[int]]): Current routing solution.
-        data (pd.DataFrame): Bin data (Stock and Accum_Rate).
-        E (float): Bin volume.
-        B (float): Bin density.
-        R (float): Revenue per kg.
+        routes_list: Current routing solution.
+        data: Bin data (Stock and Accum_Rate).
+        E: Bin volume.
+        B: Bin density.
+        R: Revenue per kg.
 
     Returns:
         float: Total collection revenue.

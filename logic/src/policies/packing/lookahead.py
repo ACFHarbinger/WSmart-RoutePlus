@@ -42,8 +42,8 @@ class LookaheadSelection(IPackingAlgorithm):
         """Check if bin overflows today.
 
         Args:
-            current_fill_level (float): Current fill level.
-            accumulation_rate (float): Accumulation rate.
+            current_fill_level: Current fill level.
+            accumulation_rate: Accumulation rate.
 
         Returns:
             bool: True if bin overflows today.
@@ -73,7 +73,7 @@ class LookaheadSelection(IPackingAlgorithm):
         """Initialize list for next collection days.
 
         Args:
-            n_bins (int): Number of bins.
+            n_bins: Number of bins.
 
         Returns:
             List[int]: List of zeros.
@@ -198,7 +198,7 @@ class LookaheadSelection(IPackingAlgorithm):
         overflows to bundle collections optimally.
 
         Args:
-            context (PackingContext): The selection context.
+            context: The selection context.
 
         Returns:
             Tuple[List[int], SearchContext]: Selected bin IDs (1-based) and search context.

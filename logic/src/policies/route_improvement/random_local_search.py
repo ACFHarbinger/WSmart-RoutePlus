@@ -50,8 +50,8 @@ class RandomLocalSearchRouteImprover(IRouteImprovement):
         """Apply random local search operators stochastically.
 
         Args:
-            tour (List[int]): The initial tour sequence to refine (includes depot 0s).
-            kwargs (Any): Search context, including:
+            tour: The initial tour sequence to refine (includes depot 0s).
+            kwargs: Search context, including:
                 - distance_matrix (np.ndarray): The distance matrix.
                 - iterations (int): Total number of random moves to attempt.
                 - params (Dict[str, float]): Probabilities for different operators.

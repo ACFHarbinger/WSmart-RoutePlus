@@ -125,8 +125,6 @@ class RegretPreprocessor:
             n_bins: Number of bins.
             horizon: Horizon.
 
-        Returns:
-            None
         """
         self.params = params
         self.n_bins = n_bins
@@ -226,8 +224,6 @@ class RegretPreprocessor:
         Args:
             primal_improved: Whether the primal objective improved in the last iteration.
 
-        Returns:
-            None
         """
         if primal_improved:
             self._iters_since_improvement = 0
@@ -245,8 +241,6 @@ class RegretPreprocessor:
         Args:
             phase: Phase to force ("soft" or "hard").
 
-        Returns:
-            None
         """
         assert phase in ("soft", "hard")
         self._phase = phase

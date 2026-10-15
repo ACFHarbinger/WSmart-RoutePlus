@@ -64,17 +64,17 @@ class SolutionConstructor:
         """Initializes the Solution Constructor for ACO ants.
 
         Args:
-            node_coords (np.ndarray): Array of node coordinates.
-            wastes (Dict[int, float]): Mapping of bin IDs to waste quantities.
-            capacity (float): Maximum vehicle collection capacity.
-            pheromone (SparsePheromoneTau): Sparse pheromone matrix.
-            candidate_lists (Dict[int, List[int]]): K-nearest neighbor lists.
-            nodes (List[int]): List of all nodes (excluding depot).
-            params (KSparseACOConfig): Algorithm-specific parameters.
-            tau_0 (float): Initial pheromone value.
-            R (float): Revenue multiplier.
-            C (float): Cost multiplier.
-            mandatory_nodes (Optional[List[int]]): Nodes that must be visited.
+            node_coords: Array of node coordinates.
+            wastes: Mapping of bin IDs to waste quantities.
+            capacity: Maximum vehicle collection capacity.
+            pheromone: Sparse pheromone matrix.
+            candidate_lists: K-nearest neighbor lists.
+            nodes: List of all nodes (excluding depot).
+            params: Algorithm-specific parameters.
+            tau_0: Initial pheromone value.
+            R: Revenue multiplier.
+            C: Cost multiplier.
+            mandatory_nodes: Nodes that must be visited.
         """
         self.node_coords = node_coords
         self.wastes = wastes
@@ -145,8 +145,6 @@ class SolutionConstructor:
             unvisited: Set of nodes to potentially clean up.
             mandatory_unvisited: Set of mandatory nodes to clean up.
 
-        Returns:
-            None.
         """
         still_constructible = False
         for j in list(unvisited):

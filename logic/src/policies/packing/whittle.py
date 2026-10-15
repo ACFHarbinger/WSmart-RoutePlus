@@ -51,7 +51,7 @@ class WhittleIndexSelection(IPackingAlgorithm):
         """Rank bins by Whittle index and select top candidates.
 
         Args:
-            context (PackingContext): The selection context providing current_fill,
+            context: The selection context providing current_fill,
                 accumulation_rates, and whittle parameters.
 
         Returns:

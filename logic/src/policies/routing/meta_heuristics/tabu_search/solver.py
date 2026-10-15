@@ -260,9 +260,9 @@ class TSSolver:
         Select best accepted candidate based on modular criterion (non-tabu or aspirated).
 
         Args:
-            candidates (Sequence[Tuple[List[List[int]], Tuple[str, Any]]]): Candidates to evaluate.
-            current_profit (float): Current profit.
-            best_profit (float): Best profit found so far.
+            candidates: Candidates to evaluate.
+            current_profit: Current profit.
+            best_profit: Best profit found so far.
 
         Returns:
             Tuple[Optional[List[List[int]]], float, Optional[Tuple[str, Any]]]: Best candidate, best candidate profit, and best move descriptor.
@@ -315,7 +315,7 @@ class TSSolver:
         """Check if a move is currently tabu.
 
         Args:
-            move_desc (Tuple[str, Any]): Description of the move.
+            move_desc: Description of the move.
 
         Returns:
             bool: True if the move is tabu, False otherwise.
@@ -330,7 +330,7 @@ class TSSolver:
         """Add a move to the tabu list with appropriate tenure.
 
         Args:
-            move_desc (Tuple[str, Any]): Description of the move.
+            move_desc: Description of the move.
         """
         move_type, move_attrs = move_desc
 
@@ -379,7 +379,7 @@ class TSSolver:
         """Update node frequency counters.
 
         Args:
-            routes (List[List[int]]): Routes to update frequencies for.
+            routes: Routes to update frequencies for.
         """
         for route in routes:
             for node in route:
@@ -389,7 +389,7 @@ class TSSolver:
         """Update move frequency counters.
 
         Args:
-            move_desc (Tuple[str, Any]): Description of the move.
+            move_desc: Description of the move.
         """
         self.move_frequency[move_desc] += 1
 
@@ -400,7 +400,7 @@ class TSSolver:
         Frequently used moves receive higher penalties.
 
         Args:
-            move_desc (Tuple[str, Any]): Description of the move.
+            move_desc: Description of the move.
 
         Returns:
             float: Penalty value.
@@ -417,8 +417,8 @@ class TSSolver:
         Update pool of elite (high-quality) solutions.
 
         Args:
-            routes (List[List[int]]): Routes to evaluate.
-            profit (float): Profit of the routes.
+            routes: Routes to evaluate.
+            profit: Profit of the routes.
         """
         # Add to elite pool
         self.elite_solutions.append((copy.deepcopy(routes), profit))
@@ -436,7 +436,7 @@ class TSSolver:
         This encourages exploitation of promising regions.
 
         Args:
-            best_routes (List[List[int]]): Best routes found so far.
+            best_routes: Best routes found so far.
 
         Returns:
             List[List[int]]: Intensified routes.
@@ -473,7 +473,7 @@ class TSSolver:
         Uses frequency-based penalties to favor rarely visited nodes.
 
         Args:
-            current_routes (List[List[int]]): Current routes to perturb.
+            current_routes: Current routes to perturb.
 
         Returns:
             List[List[int]]: Perturbed routes.
@@ -580,8 +580,8 @@ class TSSolver:
         This explores trajectories between high-quality solutions.
 
         Args:
-            routes1 (List[List[int]]): First set of routes.
-            routes2 (List[List[int]]): Second set of routes.
+            routes1: First set of routes.
+            routes2: Second set of routes.
 
         Returns:
             List[List[int]]: New routes formed by blending node selections.
@@ -633,7 +633,7 @@ class TSSolver:
         Generate candidate neighborhood moves.
 
         Args:
-            routes (List[List[int]]): Routes to evaluate.
+            routes: Routes to evaluate.
 
         Returns:
             List[Tuple[List[List[int]], Tuple[str, Any]]]: List of new routes and move descriptors.
@@ -678,8 +678,8 @@ class TSSolver:
         Generate swap-based neighborhood moves.
 
         Args:
-            routes (List[List[int]]): Routes to evaluate.
-            max_new (int): Maximum number of new routes to generate.
+            routes: Routes to evaluate.
+            max_new: Maximum number of new routes to generate.
 
         Returns:
             List[Tuple[List[List[int]], Tuple[str, Any]]]: List of new routes and move descriptors.
@@ -735,8 +735,8 @@ class TSSolver:
         Generate relocate-based neighborhood moves.
 
         Args:
-            routes (List[List[int]]): Routes to evaluate.
-            max_new (int): Maximum number of new routes to generate.
+            routes: Routes to evaluate.
+            max_new: Maximum number of new routes to generate.
 
         Returns:
             List[Tuple[List[List[int]], Tuple[str, Any]]]: List of new routes and move descriptors.
@@ -800,8 +800,8 @@ class TSSolver:
         Generate 2-opt neighborhood moves.
 
         Args:
-            routes (List[List[int]]): Routes to evaluate.
-            max_new (int): Maximum number of new routes to generate.
+            routes: Routes to evaluate.
+            max_new: Maximum number of new routes to generate.
 
         Returns:
             List[Tuple[List[List[int]], Tuple[str, Any]]]: List of new routes and move descriptors.
@@ -841,8 +841,8 @@ class TSSolver:
         Random-greedy local search operator.
 
         Args:
-            routes (List[List[int]]): Routes to evaluate.
-            n (int): Number of nodes to remove.
+            routes: Routes to evaluate.
+            n: Number of nodes to remove.
 
         Returns:
             List[List[int]]: Improved routes.
@@ -878,8 +878,8 @@ class TSSolver:
         Worst-regret (regret-2) local search operator.
 
         Args:
-            routes (List[List[int]]): Routes to evaluate.
-            n (int): Number of nodes to remove.
+            routes: Routes to evaluate.
+            n: Number of nodes to remove.
 
         Returns:
             List[List[int]]: Improved routes.
@@ -914,8 +914,8 @@ class TSSolver:
         Cluster-greedy local search operator.
 
         Args:
-            routes (List[List[int]]): Routes to evaluate.
-            n (int): Number of nodes to remove.
+            routes: Routes to evaluate.
+            n: Number of nodes to remove.
 
         Returns:
             List[List[int]]: Improved routes.
@@ -951,8 +951,8 @@ class TSSolver:
         Worst-greedy local search operator.
 
         Args:
-            routes (List[List[int]]): Routes to evaluate.
-            n (int): Number of nodes to remove.
+            routes: Routes to evaluate.
+            n: Number of nodes to remove.
 
         Returns:
             List[List[int]]: Improved routes.
@@ -987,8 +987,8 @@ class TSSolver:
         Random regret (regret-2) local search operator.
 
         Args:
-            routes (List[List[int]]): Routes to evaluate.
-            n (int): Number of nodes to remove.
+            routes: Routes to evaluate.
+            n: Number of nodes to remove.
 
         Returns:
             List[List[int]]: Improved routes.
@@ -1045,7 +1045,7 @@ class TSSolver:
         Evaluate solution profit (revenue - cost).
 
         Args:
-            routes (List[List[int]]): Routes to evaluate.
+            routes: Routes to evaluate.
 
         Returns:
             float: Solution profit.
@@ -1060,7 +1060,7 @@ class TSSolver:
         Compute total routing cost.
 
         Args:
-            routes (List[List[int]]): Routes to evaluate.
+            routes: Routes to evaluate.
 
         Returns:
             float: Total routing cost.
@@ -1102,8 +1102,6 @@ class TSLSAdapter:
             capacity: Maximum vehicle collection capacity.
             cost_unit: Cost per km traveled.
 
-        Returns:
-            None.
         """
         self.routes = routes
         self.d = dist_matrix
@@ -1132,8 +1130,6 @@ class TSLSAdapter:
         Args:
             affected_indices: Indices of routes to update.
 
-        Returns:
-            None.
         """
         for r_idx in affected_indices:
             if r_idx in self._load_cache:
@@ -1143,7 +1139,7 @@ class TSLSAdapter:
         """Calculate the load of a route.
 
         Args:
-            r (List[int]): Route.
+            r: Route.
 
         Returns:
             float: Load of the route.

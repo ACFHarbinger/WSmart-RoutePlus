@@ -51,17 +51,17 @@ class RegretKInsertionRouteImprover(IRouteImprovement):
         """Apply Regret-K insertion to reconcile omitted bins.
 
         Args:
-            tour (List[int]): Initial tour sequence.
+            tour: Initial tour sequence.
             kwargs: Context containing:
-                distance_matrix (np.ndarray | torch.Tensor): Distance lookup.
-                regret_k (int): Regret depth (default 2).
-                regret_noise (float): Random noise factor for insertion (default 0.0).
-                cost_per_km (float): Distance cost coefficient.
-                revenue_kg (float): Waste revenue coefficient.
-                wastes (Dict[int, float]): Bin waste mass mapping.
-                capacity (float): Maximum vehicle capacity.
-                n_bins (int): Total number of bins available.
-                mandatory_nodes (List[int]): Required nodes.
+                distance_matrix: Distance lookup.
+                regret_k: Regret depth (default 2).
+                regret_noise: Random noise factor for insertion (default 0.0).
+                cost_per_km: Distance cost coefficient.
+                revenue_kg: Waste revenue coefficient.
+                wastes: Bin waste mass mapping.
+                capacity: Maximum vehicle capacity.
+                n_bins: Total number of bins available.
+                mandatory_nodes: Required nodes.
 
         Returns:
             Tuple[List[int], ImprovementMetrics]: Refined tour and metrics.

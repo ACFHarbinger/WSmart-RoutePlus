@@ -6,8 +6,6 @@ to use the `alns` package as a solver backend for the routing problem.
 Attributes:
     ALNSState: State representation for the `alns` package.
 
-Example:
-    >>> from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns_package import run_alns_package
 """
 
 import copy

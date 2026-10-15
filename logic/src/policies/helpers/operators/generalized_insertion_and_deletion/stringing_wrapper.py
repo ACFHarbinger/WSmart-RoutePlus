@@ -46,8 +46,8 @@ def _evaluate_routes(routes: List[List[int]], dist_matrix: np.ndarray) -> float:
     Evaluate total route cost.
 
     Args:
-        routes (List[List[int]]): List of routes.
-        dist_matrix (np.ndarray): Distance matrix.
+        routes: List of routes.
+        dist_matrix: Distance matrix.
 
     Returns:
         float: Total negative cost.
@@ -81,17 +81,17 @@ def _apply_stringing_op(
     Helper to apply stringing operation and get new route and immediate profit val.
 
     Args:
-        route (List[int]): Current route.
-        node (int): Node to insert.
-        string_type (int): Stringing type (1-4).
-        params (Tuple): Parameters for the move.
-        dist_matrix (np.ndarray): Distance matrix.
-        wastes (Dict[int, float]): Node wastes.
-        capacity (float): Vehicle capacity.
-        R (float): Revenue multiplier.
-        C (float): Cost multiplier.
-        profit_mode (bool): Whether to use profit-based moves.
-        current_load (float): Current route load.
+        route: Current route.
+        node: Node to insert.
+        string_type: Stringing type (1-4).
+        params: Parameters for the move.
+        dist_matrix: Distance matrix.
+        wastes: Node wastes.
+        capacity: Vehicle capacity.
+        R: Revenue multiplier.
+        C: Cost multiplier.
+        profit_mode: Whether to use profit-based moves.
+        current_load: Current route load.
 
     Returns:
         Tuple[List[int], float]: (new_route, delta_profit).
@@ -142,18 +142,18 @@ def _try_string_insertion(
     Try inserting a node using the specified stringing operator, returning the best result.
 
     Args:
-        routes (List[List[int]]): Current routes.
-        node (int): Node to insert.
-        r_idx (int): Route index.
-        string_type (int): Stringing type.
-        dist_matrix (np.ndarray): Distance matrix.
-        wastes (Dict[int, float]): Node wastes.
-        capacity (float): Vehicle capacity.
-        R (float): Revenue multiplier.
-        C (float): Cost multiplier.
-        rng (random.Random): Random generator.
-        current_load (float): Current route load.
-        profit_mode (bool): Whether to use profit-based moves.
+        routes: Current routes.
+        node: Node to insert.
+        r_idx: Route index.
+        string_type: Stringing type.
+        dist_matrix: Distance matrix.
+        wastes: Node wastes.
+        capacity: Vehicle capacity.
+        R: Revenue multiplier.
+        C: Cost multiplier.
+        rng: Random generator.
+        current_load: Current route load.
+        profit_mode: Whether to use profit-based moves.
 
     Returns:
         Optional[Tuple[List[List[int]], float]]: (best_routes, best_value) if successful.
@@ -234,18 +234,18 @@ def _try_string_insertion_deterministic(  # noqa: C901
     Try inserting a node using deterministic p-neighborhood search (bidirectional).
 
     Args:
-        routes (List[List[int]]): Current routes.
-        node (int): Node to insert.
-        r_idx (int): Route index.
-        string_type (int): Stringing type.
-        dist_matrix (np.ndarray): Distance matrix.
-        wastes (Dict[int, float]): Node wastes.
-        capacity (float): Vehicle capacity.
-        R (float): Revenue multiplier.
-        C (float): Cost multiplier.
-        current_load (float): Current route load.
-        neighborhood_size (int): Size of p-neighborhood.
-        profit_mode (bool): Whether to use profit-based moves.
+        routes: Current routes.
+        node: Node to insert.
+        r_idx: Route index.
+        string_type: Stringing type.
+        dist_matrix: Distance matrix.
+        wastes: Node wastes.
+        capacity: Vehicle capacity.
+        R: Revenue multiplier.
+        C: Cost multiplier.
+        current_load: Current route load.
+        neighborhood_size: Size of p-neighborhood.
+        profit_mode: Whether to use profit-based moves.
 
     Returns:
         Optional[Tuple[List[List[int]], float]]: (best_routes, best_value) if successful.
@@ -364,21 +364,21 @@ def stringing_insertion_wrapper(  # noqa: C901
     Core stringing insertion logic with conditional search mode.
 
     Args:
-        routes (List[List[int]]): Current solution.
-        removed_nodes (List[int]): Nodes to insert.
-        string_type (int): Stringing operator type (1-4).
-        dist_matrix (np.ndarray): Distance matrix.
-        wastes (Dict[int, float]): Node wastes.
-        capacity (float): Vehicle capacity.
-        R (float): Revenue per unit.
-        C (float): Cost per unit distance.
-        mandatory_nodes (Optional[List[int]]): Mandatory nodes.
-        rng (Optional[random.Random]): Random generator.
-        profit_mode (bool): Use profit logic.
-        expand_pool (bool): Whether to expand insertion pool to all unassigned nodes.
-        use_alns_fallback (bool): Use greedy fallback if stringing fails.
-        random_us_sampling (bool): If True, use random sampling; if False, use deterministic p-neighborhoods.
-        neighborhood_size (int): Size of p-neighborhood (for deterministic mode).
+        routes: Current solution.
+        removed_nodes: Nodes to insert.
+        string_type: Stringing operator type (1-4).
+        dist_matrix: Distance matrix.
+        wastes: Node wastes.
+        capacity: Vehicle capacity.
+        R: Revenue per unit.
+        C: Cost per unit distance.
+        mandatory_nodes: Mandatory nodes.
+        rng: Random generator.
+        profit_mode: Use profit logic.
+        expand_pool: Whether to expand insertion pool to all unassigned nodes.
+        use_alns_fallback: Use greedy fallback if stringing fails.
+        random_us_sampling: If True, use random sampling; if False, use deterministic p-neighborhoods.
+        neighborhood_size: Size of p-neighborhood (for deterministic mode).
 
     Returns:
         List[List[int]]: Repaired solution.
@@ -553,18 +553,18 @@ def stringing_insertion(
     Standard CVRP Stringing Repair.
 
     Args:
-        routes (List[List[int]]): Current routes.
-        removed_nodes (List[int]): Nodes to insert.
-        string_type (int): Stringing type.
-        dist_matrix (np.ndarray): Distance matrix.
-        wastes (Dict[int, float]): Node wastes.
-        capacity (float): Vehicle capacity.
-        mandatory_nodes (Optional[List[int]]): Mandatory nodes.
-        rng (Optional[random.Random]): Random generator.
-        expand_pool (bool): Expand pool flag.
-        use_alns_fallback (bool): Greedy fallback flag.
-        random_us_sampling (bool): Sampling mode flag.
-        neighborhood_size (int): Neighborhood size.
+        routes: Current routes.
+        removed_nodes: Nodes to insert.
+        string_type: Stringing type.
+        dist_matrix: Distance matrix.
+        wastes: Node wastes.
+        capacity: Vehicle capacity.
+        mandatory_nodes: Mandatory nodes.
+        rng: Random generator.
+        expand_pool: Expand pool flag.
+        use_alns_fallback: Greedy fallback flag.
+        random_us_sampling: Sampling mode flag.
+        neighborhood_size: Neighborhood size.
 
     Returns:
         List[List[int]]: Repaired routes.
@@ -606,20 +606,20 @@ def stringing_profit_insertion(
     VRPP Cost-Aware Stringing Repair.
 
     Args:
-        routes (List[List[int]]): Current routes.
-        removed_nodes (List[int]): Nodes to insert.
-        string_type (int): Stringing type.
-        dist_matrix (np.ndarray): Distance matrix.
-        wastes (Dict[int, float]): Node wastes.
-        capacity (float): Vehicle capacity.
-        R (float): Revenue multiplier.
-        C (float): Cost multiplier.
-        mandatory_nodes (Optional[List[int]]): Mandatory nodes.
-        rng (Optional[random.Random]): Random generator.
-        expand_pool (bool): Expand pool flag.
-        use_alns_fallback (bool): Greedy fallback flag.
-        random_us_sampling (bool): Sampling mode flag.
-        neighborhood_size (int): Neighborhood size.
+        routes: Current routes.
+        removed_nodes: Nodes to insert.
+        string_type: Stringing type.
+        dist_matrix: Distance matrix.
+        wastes: Node wastes.
+        capacity: Vehicle capacity.
+        R: Revenue multiplier.
+        C: Cost multiplier.
+        mandatory_nodes: Mandatory nodes.
+        rng: Random generator.
+        expand_pool: Expand pool flag.
+        use_alns_fallback: Greedy fallback flag.
+        random_us_sampling: Sampling mode flag.
+        neighborhood_size: Neighborhood size.
 
     Returns:
         List[List[int]]: Repaired routes.

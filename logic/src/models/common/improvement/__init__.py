@@ -8,8 +8,6 @@ Attributes:
     ImprovementDecoder: Foundation for predicting improvement moves.
     ImprovementPolicy: Standard iterative refinement policy implementation.
 
-Example:
-    >>> from logic.src.models.common.improvement import ImprovementPolicy
 """
 
 from .decoder import ImprovementDecoder as ImprovementDecoder

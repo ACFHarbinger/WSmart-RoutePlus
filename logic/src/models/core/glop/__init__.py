@@ -8,8 +8,6 @@ Attributes:
     GLOP: Unified training wrapper.
     GLOPPolicy: Hierarchical node partitioning policy.
 
-Example:
-    >>> from logic.src.models.core.glop import GLOP
 """
 
 from .model import GLOP as GLOP

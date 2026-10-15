@@ -94,13 +94,13 @@ class GIHHSolver:
         """Initialize GIHHSolver.
 
         Args:
-            dist_matrix (np.ndarray): Distance matrix.
-            wastes (Dict[int, float]): Dictionary of waste for each node.
-            capacity (float): Capacity of the vehicle.
-            R (float): Revenue per unit distance.
-            C (float): Cost per unit distance.
-            params (GIHHConfig): Parameters for the GIHH solver.
-            mandatory_nodes (Optional[List[int]]): List of mandatory nodes.
+            dist_matrix: Distance matrix.
+            wastes: Dictionary of waste for each node.
+            capacity: Capacity of the vehicle.
+            R: Revenue per unit distance.
+            C: Cost per unit distance.
+            params: Parameters for the GIHH solver.
+            mandatory_nodes: List of mandatory nodes.
         """
         self.dist_matrix = dist_matrix
         self.wastes = wastes
@@ -274,8 +274,8 @@ class GIHHSolver:
         """Apply the specific paper LLHs using WSmart-Route operator parity.
 
         Args:
-            current (Solution): Current solution.
-            operator (str): Name of the operator.
+            current: Current solution.
+            operator: Name of the operator.
 
         Returns:
             Solution: Solution after applying the operator.
@@ -316,7 +316,7 @@ class GIHHSolver:
         Returns True if candidate is non-dominated by any solution in ARCH.
 
         Args:
-            candidate (Solution): Solution to be added to the archive.
+            candidate: Solution to be added to the archive.
 
         Returns:
             bool: True if candidate is non-dominated by any solution in ARCH.
@@ -363,8 +363,6 @@ class GIHHSolver:
         Args:
             None
 
-        Returns:
-            None
         """
         # Phase 1: Quality Reward update
         for op in self.operators:
@@ -408,7 +406,7 @@ class GIHHSolver:
         """Calculates total distance (km).
 
         Args:
-            routes (List[List[int]]): List of routes.
+            routes: List of routes.
 
         Returns:
             float: Total distance.

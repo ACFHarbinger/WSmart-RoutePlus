@@ -44,7 +44,7 @@ class GGACComponentFactory(NeuralComponentFactory):
         """Create decoder based on decoder_type.
 
         Args:
-            decoder_type (str): Type of decoder instance to create. Defaults to 'attention'.
+            decoder_type: Type of decoder instance to create. Defaults to 'attention'.
             kwargs: Architecture-specific configuration passed to the decoder.
 
         Returns:

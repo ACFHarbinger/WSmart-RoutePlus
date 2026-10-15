@@ -51,7 +51,7 @@ class WassersteinRobustSelection(IPackingAlgorithm):
         """Select bins based on the worst-case expected overflow volume.
 
         Args:
-            context (PackingContext): The selection context providing current_fill,
+            context: The selection context providing current_fill,
                 accumulation_rates, and wasserstein parameters.
 
         Returns:

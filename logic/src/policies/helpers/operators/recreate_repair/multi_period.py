@@ -326,8 +326,8 @@ def _get_scenarios_from_ef(tree: Any, node: int, t: int, H: int) -> List[List[fl
         """Depth-first search to traverse the explicit form scenario tree.
 
         Args:
-            curr_node (Any): Current node being visited.
-            current_path (List[float]): Cumulative realization values for the node.
+            curr_node: Current node being visited.
+            current_path: Cumulative realization values for the node.
         """
         if len(current_path) == H:
             all_sequences.append(current_path)
@@ -368,8 +368,8 @@ def _get_scenarios_from_prediction(tree: Any, node: int, t: int, H: int) -> List
         """Recursively finds all nodes at a target depth (day).
 
         Args:
-            curr (ScenarioTreeNode): Current traversal node.
-            target_d (int): Target day to collect nodes from.
+            curr: Current traversal node.
+            target_d: Target day to collect nodes from.
         """
         if curr.day == target_d:
             start_nodes_p.append(curr)
@@ -385,8 +385,8 @@ def _get_scenarios_from_prediction(tree: Any, node: int, t: int, H: int) -> List
         """Depth-first search to traverse the prediction-based scenario tree.
 
         Args:
-            curr (ScenarioTreeNode): Current traversal node.
-            current_path (List[float]): Cumulative waste levels along the path.
+            curr: Current traversal node.
+            current_path: Cumulative waste levels along the path.
         """
         if len(current_path) == H:
             all_sequences_p.append(current_path)

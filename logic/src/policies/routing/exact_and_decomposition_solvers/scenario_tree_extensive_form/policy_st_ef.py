@@ -159,14 +159,14 @@ class ScenarioTreeExtensiveFormPolicy(BaseMultiPeriodRoutingPolicy):
         """Legacy fallback.
 
         Args:
-            sub_dist_matrix (np.ndarray): Local distance matrix.
-            sub_wastes (Dict[int, float]): Local fill levels.
-            capacity (float): Vehicle capacity.
-            revenue (float): Unit revenue.
-            cost_unit (float): Unit travel cost.
-            values (Dict[str, Any]): Additional state values.
-            mandatory_nodes (Optional[List[int]]): Local mandatory node indices.
-            kwargs (Any): Additional keyword arguments.
+            sub_dist_matrix: Local distance matrix.
+            sub_wastes: Local fill levels.
+            capacity: Vehicle capacity.
+            revenue: Unit revenue.
+            cost_unit: Unit travel cost.
+            values: Additional state values.
+            mandatory_nodes: Local mandatory node indices.
+            kwargs: Additional keyword arguments.
 
         Returns:
             Tuple[List[List[int]], float, float]: Empty results.

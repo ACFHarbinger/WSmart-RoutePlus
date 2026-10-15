@@ -47,7 +47,7 @@ class MultiDayOverflowSelection(IPackingAlgorithm):
         horizon of K days. Assumes daily waste generation is i.i.d Gaussian.
 
         Args:
-            context (PackingContext): The selection context.
+            context: The selection context.
 
         Returns:
             Tuple[List[int], SearchContext]: Selected bin IDs (1-based) and search context.

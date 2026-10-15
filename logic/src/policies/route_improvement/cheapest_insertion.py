@@ -51,15 +51,15 @@ class CheapestInsertionRouteImprover(IRouteImprovement):
         """Apply cheapest insertion augmentation to the tour.
 
         Args:
-            tour (List[int]): Initial tour sequence.
+            tour: Initial tour sequence.
             kwargs: Context containing:
-                distance_matrix (np.ndarray | torch.Tensor): Distance lookup.
-                wastes (Dict[int, float]): Bin waste mass mapping.
-                capacity (float): Maximum vehicle capacity.
-                cost_per_km (float): Distance cost coefficient.
-                revenue_kg (float): Waste revenue coefficient.
-                n_bins (int): Total number of bins available.
-                mandatory_nodes (List[int]): Required nodes.
+                distance_matrix: Distance lookup.
+                wastes: Bin waste mass mapping.
+                capacity: Maximum vehicle capacity.
+                cost_per_km: Distance cost coefficient.
+                revenue_kg: Waste revenue coefficient.
+                n_bins: Total number of bins available.
+                mandatory_nodes: Required nodes.
 
         Returns:
             Tuple[List[int], ImprovementMetrics]: Refined tour and metrics.

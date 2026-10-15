@@ -31,9 +31,9 @@ def _set_param(config, param_name, param_value=None):
     """set param.
 
     Args:
-    config (Any): Description of config.
-    param_name (Any): Description of param_name.
-    param_value (Any): Description of param_value.
+    config: Description of config.
+    param_name: Description of param_name.
+    param_value: Description of param_value.
 
     Returns:
         Any: Description of return value.
@@ -56,11 +56,11 @@ def generate_key(
     Generate a key from a password using PBKDF2HMAC.
 
     Args:
-        salt_size (int, optional): Size of the random salt. Defaults to 16.
-        key_length (int, optional): Length of derived key. Defaults to 32.
-        hash_iterations (int, optional): Number of hash iterations. Defaults to 100,000.
-        symkey_name (str, optional): Name to save key parameters to file (assets/keys/).
-        env_filename (str, optional): Environment file to read/write config. Defaults to ".env".
+        salt_size: Size of the random salt. Defaults to 16.
+        key_length: Length of derived key. Defaults to 32.
+        hash_iterations: Number of hash iterations. Defaults to 100,000.
+        symkey_name: Name to save key parameters to file (assets/keys/).
+        env_filename: Environment file to read/write config. Defaults to ".env".
 
     Returns:
         tuple: (key, salt) bytes.
@@ -110,8 +110,8 @@ def load_key(symkey_name: Optional[str] = None, env_filename: str = ".env") -> b
     Loads a symmetric key from environment or file parameters.
 
     Args:
-        symkey_name (str, optional): Name of the key to load parameters from.
-        env_filename (str, optional): Environment file name. Defaults to ".env".
+        symkey_name: Name of the key to load parameters from.
+        env_filename: Environment file name. Defaults to ".env".
 
     Returns:
         bytes: The derived encryption key.

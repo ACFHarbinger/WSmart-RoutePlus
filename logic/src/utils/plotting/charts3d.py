@@ -54,29 +54,29 @@ def plot_3dchart(
     A typical value is ``lambda ax, x, y, z, **kw: ax.plot(x, y, z, **kw)``.
 
     Args:
-        output_dest (str): File path to save the plot.
-        graph_log (np.ndarray): Array of shape ``(n_policies, n_points, 3)``
+        output_dest: File path to save the plot.
+        graph_log: Array of shape ``(n_policies, n_points, 3)``
             where the last dimension encodes ``[x, y, z]`` per point. When
             ``x_values`` is provided the first column is ignored for x.
-        plot_func (callable): Axes-aware plotting callable with signature
+        plot_func: Axes-aware plotting callable with signature
             ``(ax, x, y, z, **kwargs)``.
-        policies (list): Policy names used for the legend; must align with the
+        policies: Policy names used for the legend; must align with the
             first axis of ``graph_log``.
-        x_label (str, optional): Label for the x-axis.
-        y_label (str, optional): Label for the y-axis.
-        z_label (str, optional): Label for the z-axis.
-        title (str, optional): Chart title.
-        fsave (bool, optional): Whether to save the figure to ``output_dest``.
+        x_label: Label for the x-axis.
+        y_label: Label for the y-axis.
+        z_label: Label for the z-axis.
+        title: Chart title.
+        fsave: Whether to save the figure to ``output_dest``.
             Defaults to True.
-        scale (str, optional): Axis scale applied to x and y (``'linear'`` or
+        scale: Axis scale applied to x and y (``'linear'`` or
             ``'log'``). ``Axes3D`` does not expose ``set_zscale``; the z-axis
             is always rendered on a linear scale. Defaults to ``"linear"``.
-        x_values (list or ndarray, optional): Explicit x-coordinates shared
+        x_values: Explicit x-coordinates shared
             across all policies. When supplied the first column of each
             ``graph_log[i]`` slice is ignored.
-        linestyles (list, optional): Cycle of matplotlib linestyle strings.
-        markers (list, optional): Cycle of matplotlib marker strings.
-        annotate (bool, optional): Whether to mark the terminal point of each
+        linestyles: Cycle of matplotlib linestyle strings.
+        markers: Cycle of matplotlib marker strings.
+        annotate: Whether to mark the terminal point of each
             series with a hollow circle. Defaults to True.
     """
     fig = plt.figure(figsize=(10, 8), dpi=200)

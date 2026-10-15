@@ -18,8 +18,8 @@ def _categorize_bins_by_zone(bins, bins_coordinates):
     Group bins into zones based on longitude.
 
     Args:
-        bins (List[int]): The bins to categorize.
-        bins_coordinates (List): The coordinates of the bins.
+        bins: The bins to categorize.
+        bins_coordinates: The coordinates of the bins.
 
     Returns:
         Dict[int, List[int]]: The bins categorized by zone.
@@ -52,10 +52,10 @@ def _get_bin_stock(data, bin_id, E, B):
     Get the stock of a bin.
 
     Args:
-        data (pd.DataFrame): Bin weights and metadata.
-        bin_id (int): The bin ID.
-        E (float): Bin volume.
-        B (float): Bin density.
+        data: Bin weights and metadata.
+        bin_id: The bin ID.
+        E: Bin volume.
+        B: Bin density.
 
     Returns:
         float: The stock of the bin.
@@ -71,11 +71,11 @@ def _find_closest_valid_bin(current_bin, potential_bins_in_zone, available_bins,
     Find the closest bin in the zone that is available and valid.
 
     Args:
-        current_bin (int): The current bin.
-        potential_bins_in_zone (List[int]): The potential bins in the zone.
-        available_bins (Set[int]): The available bins.
-        current_route (List[int]): The current route.
-        distance_matrix (np.ndarray): The distance matrix.
+        current_bin: The current bin.
+        potential_bins_in_zone: The potential bins in the zone.
+        available_bins: The available bins.
+        current_route: The current route.
+        distance_matrix: The distance matrix.
 
     Returns:
         int: The closest valid bin.
@@ -102,14 +102,14 @@ def find_initial_solution(  # noqa: C901
     Processes overflow predictions and builds routes using a construction heuristic.
 
     Args:
-        data (pd.DataFrame): Bin weights and metadata.
-        bins_coordinates (List): Lat/Lon pairs (DataFrame in original context).
-        distance_matrix (np.ndarray): Shortest path distances.
-        number_of_bins (int): Scale of the problem.
-        vehicle_capacity (float): Max tanker capacity.
-        E (float): Bin volume.
-        B (float): Bin density.
-        rng (Random): Random number generator.
+        data: Bin weights and metadata.
+        bins_coordinates: Lat/Lon pairs (DataFrame in original context).
+        distance_matrix: Shortest path distances.
+        number_of_bins: Scale of the problem.
+        vehicle_capacity: Max tanker capacity.
+        E: Bin volume.
+        B: Bin density.
+        rng: Random number generator.
 
     Returns:
         List[List[int]]: Constructed routes.
@@ -208,11 +208,11 @@ def compute_initial_solution(data, bins_coordinates, distance_matrix, vehicle_ca
     Simplified initial solution builder for SANS policy.
 
     Args:
-        data (pd.DataFrame): Bin metadata.
-        bins_coordinates (List): Coordinates.
-        distance_matrix (np.ndarray): Distances.
-        vehicle_capacity (float): Tanker capacity.
-        id_to_index (Dict): Mapping.
+        data: Bin metadata.
+        bins_coordinates: Coordinates.
+        distance_matrix: Distances.
+        vehicle_capacity: Tanker capacity.
+        id_to_index: Mapping.
 
     Returns:
         Tuple: (initial_routes, removed_bins).

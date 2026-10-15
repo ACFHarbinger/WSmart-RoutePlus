@@ -50,8 +50,8 @@ def print_execution_info(task_count: int, n_cores: int) -> None:
     Print information about parallel execution configuration.
 
     Args:
-        task_count (int): Number of tasks.
-        n_cores (int): Number of CPU cores.
+        task_count: Number of tasks.
+        n_cores: Number of CPU cores.
     """
     if n_cores > 1:
         print(f"\n[INFO] Launching {task_count} WSmart Route simulations on {n_cores} CPU cores...")

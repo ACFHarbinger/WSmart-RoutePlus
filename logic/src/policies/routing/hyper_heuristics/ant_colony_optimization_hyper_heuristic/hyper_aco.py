@@ -841,8 +841,6 @@ class HyperHeuristicACO:
             j: Destination node index (0 = depot).
             delta: Amount of pheromone to add.
 
-        Returns:
-            None.
         """
         self.pheromone.deposit_edge(i, j, delta)
 
@@ -934,8 +932,6 @@ class HyperHeuristicACO:
         Args:
             ant_results: Per-ant results ``(routes, start_obj, final_obj, sequence, ant_idx, start_idx)``.
 
-        Returns:
-            None
         """
         for _routes, start_obj_ant, final_obj_ant, sequence, _ant_idx, journey_start in ant_results:
             journey_improvement = start_obj_ant - final_obj_ant
@@ -1008,16 +1004,12 @@ class HyperHeuristicACO:
         Evaporation is applied before deposit each iteration (equivalent since
         each outer iteration corresponds to exactly one complete journey).
 
-        Returns:
-            None
         """
         self.tau *= 1 - self.cfg.rho
 
     def evaporate_all(self) -> None:
         """Evaporate node-level pheromones.
 
-        Returns:
-            None
         """
         self._evaporate_pheromones()
         self.pheromone.evaporate_all(self.cfg.rho)

@@ -80,11 +80,11 @@ class DualBoundTracker(ABC):
         """Submit a per-period subgradient.
 
         Args:
-            period (int): Period index.
-            lambdas (np.ndarray): Multipliers at which the subgradient was evaluated.
-            subgrad (np.ndarray): Subgradient for this period (== x^K - x^R column t).
-            lagrangian_value_contrib (float): The period's contribution to the Lagrangian objective at `lambdas`.
-            tour_quality_ratio (float): RS tour cost / period incumbent cost.  1.0 = new incumbent.
+            period: Period index.
+            lambdas: Multipliers at which the subgradient was evaluated.
+            subgrad: Subgradient for this period (== x^K - x^R column t).
+            lagrangian_value_contrib: The period's contribution to the Lagrangian objective at `lambdas`.
+            tour_quality_ratio: RS tour cost / period incumbent cost.  1.0 = new incumbent.
                 Used to gate EMA updates.
 
         Returns:
@@ -106,8 +106,8 @@ class DualBoundTracker(ABC):
         """Return (new_lambdas, effective_stepsize).
 
         Args:
-            current_lambdas (np.ndarray): Current multipliers.
-            aggregate_subgrad (np.ndarray): Aggregate subgradient.
+            current_lambdas: Current multipliers.
+            aggregate_subgrad: Aggregate subgradient.
 
         Returns:
             Tuple[np.ndarray, float]: New lambda vector and step size.
@@ -150,10 +150,10 @@ class EMADualBoundTracker(DualBoundTracker):
         """Initializes the EMA dual bound tracker.
 
         Args:
-            dual_params (DualBoundParams): Parameters for the tracker.
-            lag_params (LagrangianParams): Lagrangian-specific parameters.
-            n_bins (int): Number of customer bins.
-            horizon (int): Planning horizon.
+            dual_params: Parameters for the tracker.
+            lag_params: Lagrangian-specific parameters.
+            n_bins: Number of customer bins.
+            horizon: Planning horizon.
         """
         self.params = dual_params
         self.lag_params = lag_params
@@ -184,11 +184,11 @@ class EMADualBoundTracker(DualBoundTracker):
         """Submits a per-period subgradient for EMA aggregation.
 
         Args:
-            period (int): Period index.
-            lambdas (np.ndarray): Multipliers at which subgradient was evaluated.
-            subgrad (np.ndarray): Per-period subgradient.
-            lagrangian_value_contrib (float): Period's contribution to Lagrangian objective.
-            tour_quality_ratio (float): Ratio of RS tour cost to period incumbent.
+            period: Period index.
+            lambdas: Multipliers at which subgradient was evaluated.
+            subgrad: Per-period subgradient.
+            lagrangian_value_contrib: Period's contribution to Lagrangian objective.
+            tour_quality_ratio: Ratio of RS tour cost to period incumbent.
 
         Returns:
             bool: True if the submission was accepted (gated by quality ratio).
@@ -227,8 +227,8 @@ class EMADualBoundTracker(DualBoundTracker):
         usually override by calling :meth:`polyak_step` directly.
 
         Args:
-            current_lambdas (np.ndarray): Current multipliers.
-            aggregate_subgrad (np.ndarray): Aggregate subgradient.
+            current_lambdas: Current multipliers.
+            aggregate_subgrad: Aggregate subgradient.
 
         Returns:
             Tuple[np.ndarray, float]: New lambda vector and step size.
@@ -256,10 +256,10 @@ class EMADualBoundTracker(DualBoundTracker):
         """Explicit Polyak step using a caller-supplied UB (best primal).
 
         Args:
-            current_lambdas (np.ndarray): Current multipliers.
-            aggregate_subgrad (np.ndarray): Aggregate subgradient.
-            upper_bound (float): Upper bound (best primal).
-            mu (Optional[float]): Polyak step parameter (default: lag_params.polyak_mu_default).
+            current_lambdas: Current multipliers.
+            aggregate_subgrad: Aggregate subgradient.
+            upper_bound: Upper bound (best primal).
+            mu: Polyak step parameter (default: lag_params.polyak_mu_default).
 
         Returns:
             Tuple[np.ndarray, float]: New lambda vector and step size.
@@ -348,10 +348,10 @@ class ProximalBundleDualBoundTracker(DualBoundTracker):
         """Initializes the proximal bundle tracker.
 
         Args:
-            dual_params (DualBoundParams): Parameters for the tracker.
-            lag_params (LagrangianParams): Lagrangian-specific parameters.
-            n_bins (int): Number of customer bins.
-            horizon (int): Planning horizon.
+            dual_params: Parameters for the tracker.
+            lag_params: Lagrangian-specific parameters.
+            n_bins: Number of customer bins.
+            horizon: Planning horizon.
         """
         self.params = dual_params
         self.lag_params = lag_params
@@ -385,11 +385,11 @@ class ProximalBundleDualBoundTracker(DualBoundTracker):
         be a new best.
 
         Args:
-            period (int): Period index.
-            lambdas (np.ndarray): Lambda values.
-            subgrad (np.ndarray): Subgradient.
-            lagrangian_value_contrib (float): Lagrangian value contribution.
-            tour_quality_ratio (float): Tour quality ratio.
+            period: Period index.
+            lambdas: Lambda values.
+            subgrad: Subgradient.
+            lagrangian_value_contrib: Lagrangian value contribution.
+            tour_quality_ratio: Tour quality ratio.
 
         Returns:
             bool: Always True, as every RS return is accepted as valid evidence.
@@ -420,8 +420,8 @@ class ProximalBundleDualBoundTracker(DualBoundTracker):
         Decides whether this is a serious step or a null step.
 
         Args:
-            lambdas (np.ndarray): Multipliers at which the iteration was completed.
-            full_lagrangian_value (float): Total Lagrangian value across all periods.
+            lambdas: Multipliers at which the iteration was completed.
+            full_lagrangian_value: Total Lagrangian value across all periods.
 
         Returns:
             bool: True if a serious step was taken, False if a null step.
@@ -458,8 +458,8 @@ class ProximalBundleDualBoundTracker(DualBoundTracker):
         Polyak-like step on the aggregate subgradient.
 
         Args:
-            current_lambdas (np.ndarray): Current multipliers.
-            aggregate_subgrad (np.ndarray): Aggregate subgradient.
+            current_lambdas: Current multipliers.
+            aggregate_subgrad: Aggregate subgradient.
 
         Returns:
             Tuple[np.ndarray, float]: New lambda vector and step norm.
@@ -535,10 +535,10 @@ def build_dual_bound_tracker(
     """Factory function to build the requested DualBoundTracker strategy.
 
     Args:
-        dual_params (DualBoundParams): Parameters specifying the strategy.
-        lag_params (LagrangianParams): Lagrangian parameters.
-        n_bins (int): Number of customer bins.
-        horizon (int): Planning horizon.
+        dual_params: Parameters specifying the strategy.
+        lag_params: Lagrangian parameters.
+        n_bins: Number of customer bins.
+        horizon: Planning horizon.
 
     Returns:
         DualBoundTracker: The instantiated tracker.

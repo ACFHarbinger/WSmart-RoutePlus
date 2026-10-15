@@ -32,12 +32,12 @@ def apply_type_i_s(route: List[int], x: int, i: int, j: int, k: int, current_loa
     Reverses sub-tours (V_{i+1}...V_j) and (V_{j+1}...V_k).
 
     Args:
-        route (List[int]): The tour as a list of node IDs.
-        x (int): Node ID to insert (V_x).
-        i (int): Index of node V_i (before insertion point).
-        j (int): Index of node V_j (after insertion point).
-        k (int): Index of node V_k (reconnection point).
-        current_load (float): Pre-calculated current weight of the route.
+        route: The tour as a list of node IDs.
+        x: Node ID to insert (V_x).
+        i: Index of node V_i (before insertion point).
+        j: Index of node V_j (after insertion point).
+        k: Index of node V_k (reconnection point).
+        current_load: Pre-calculated current weight of the route.
 
     Returns:
         List[int]: New route with V_x inserted and segments reconnected.
@@ -115,17 +115,17 @@ def apply_type_i_s_profit(
     Apply Type I Stringing and return profit delta.
 
     Args:
-        route (List[int]): The tour as a list of node IDs.
-        x (int): Node ID to insert.
-        i (int): Index of node V_i.
-        j (int): Index of node V_j.
-        k (int): Index of node V_k.
-        dist_matrix (np.ndarray): Distance matrix.
-        wastes (Dict[int, float]): Waste levels.
-        current_load (float): Pre-calculated current weight of the route.
-        capacity (float): Vehicle capacity (to check feasibility).
-        R (float): Revenue multiplier.
-        C (float): Cost multiplier.
+        route: The tour as a list of node IDs.
+        x: Node ID to insert.
+        i: Index of node V_i.
+        j: Index of node V_j.
+        k: Index of node V_k.
+        dist_matrix: Distance matrix.
+        wastes: Waste levels.
+        current_load: Pre-calculated current weight of the route.
+        capacity: Vehicle capacity (to check feasibility).
+        R: Revenue multiplier.
+        C: Cost multiplier.
 
     Returns:
         Tuple[List[int], float]: (new_route, delta_profit)

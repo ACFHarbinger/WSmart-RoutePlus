@@ -60,7 +60,7 @@ class KernelSearchPolicy(BaseRoutingPolicy):
         Initialize the Kernel Search policy with a specific configuration.
 
         Args:
-            config (Optional[Dict[str, Any]]): A dictionary-like configuration object,
+            config: A dictionary-like configuration object,
                 typically provided by Hydra. If None, default settings are used.
         """
         super().__init__(config)

@@ -4,8 +4,6 @@ Individual Representation for the HGS-ADC MPVRP solver.
 Attributes:
     Individual: Solution representation for HGS-ADC.
 
-Example:
-    >>> from .individual import Individual
 """
 
 from dataclasses import dataclass, field
@@ -74,8 +72,6 @@ class Individual:
             day_t: Day index.
             active: Whether node should be active.
 
-        Returns:
-            None.
         """
         if active:
             self.patterns[node] |= 1 << day_t

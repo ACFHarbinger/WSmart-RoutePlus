@@ -71,7 +71,7 @@ class LocalBranchingPolicy(BaseRoutingPolicy):
         Initialize the Local Branching policy with a specific configuration.
 
         Args:
-            config (Optional[Dict[str, Any]]): A dictionary-like configuration object.
+            config: A dictionary-like configuration object.
         """
         super().__init__(config)
 

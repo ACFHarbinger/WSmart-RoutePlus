@@ -10,9 +10,6 @@ Attributes:
     IRouteImprovement: Interface for all routing route improvers
     ImprovementMetrics: Metrics for route improvement
 
-Example:
-    >>> from logic.src.interfaces.route_improvement import IRouteImprovement
-    >>> from logic.src.interfaces.context.search_context import ImprovementMetrics
 """
 
 from abc import ABC, abstractmethod

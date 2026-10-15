@@ -27,8 +27,8 @@ def _compute_savings(eligible: List[int], dist_matrix: np.ndarray) -> List[Tuple
     Compute and sort all positive savings pairs.
 
     Args:
-        eligible (List[int]): List of eligible nodes.
-        dist_matrix (np.ndarray): Distance matrix.
+        eligible: List of eligible nodes.
+        dist_matrix: Distance matrix.
 
     Returns:
         List[Tuple[float, int, int]]: Sorted list of (saving, node_i, node_j).
@@ -56,13 +56,13 @@ def _try_merge(
     Attempt to merge routes containing i and j.
 
     Args:
-        s (float): Savings value.
-        i (int): First node.
-        j (int): Second node.
-        route_of (Dict[int, List[int]]): Node to route mapping.
-        route_key (Dict[int, int]): Node to route identifier mapping.
-        load_of (Dict[int, float]): Route identifier to load mapping.
-        capacity (float): Vehicle capacity.
+        s: Savings value.
+        i: First node.
+        j: Second node.
+        route_of: Node to route mapping.
+        route_key: Node to route identifier mapping.
+        load_of: Route identifier to load mapping.
+        capacity: Vehicle capacity.
 
     Returns:
         bool: True if merged, False otherwise.
@@ -109,12 +109,12 @@ def build_savings_routes(
     Build routes using the Clarke-Wright Savings Algorithm.
 
     Args:
-        dist_matrix (np.ndarray): (N+1)x(N+1) distance matrix.
-        wastes (Dict[int, float]): {node_id → fill level}.
-        capacity (float): Vehicle capacity Q.
-        R (float): Revenue per unit waste.
-        C (float): Cost per unit distance.
-        mandatory_nodes (Optional[List[int]]): Nodes that must be visited.
+        dist_matrix: (N+1)x(N+1) distance matrix.
+        wastes: {node_id → fill level}.
+        capacity: Vehicle capacity Q.
+        R: Revenue per unit waste.
+        C: Cost per unit distance.
+        mandatory_nodes: Nodes that must be visited.
 
     Returns:
         List[List[int]]: List of routes (depot excluded).

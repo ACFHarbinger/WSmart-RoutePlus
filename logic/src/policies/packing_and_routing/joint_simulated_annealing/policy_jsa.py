@@ -59,7 +59,7 @@ class JointSAPolicy(BaseJointPolicy):
         """Initialize JointSAPolicy.
 
         Args:
-            config (Optional[Union[JointSAConfig, Dict[str, Any]]]): Configuration source.
+            config: Configuration source.
         """
         super().__init__(config)
 
@@ -87,7 +87,7 @@ class JointSAPolicy(BaseJointPolicy):
         """Execute SA loop to find near-optimal selection and routing.
 
         Args:
-            context (JointSelectionConstructionContext): The problem data and environment.
+            context: The problem data and environment.
 
         Returns:
             Tuple[List[int], List[List[int]], float, float]:
@@ -156,7 +156,7 @@ class JointSAPolicy(BaseJointPolicy):
         """Generate high-fill seed selection.
 
         Args:
-            context (JointSelectionConstructionContext): Problem state.
+            context: Problem state.
 
         Returns:
             List[int]: IDs of bins with >80% fill level.
@@ -169,8 +169,8 @@ class JointSAPolicy(BaseJointPolicy):
         """Compute greedy insertion routes for a fixed selection.
 
         Args:
-            selected_bins (List[int]): Subset of bins to serve.
-            context (JointSelectionConstructionContext): Environmental data.
+            selected_bins: Subset of bins to serve.
+            context: Environmental data.
 
         Returns:
             List[List[int]]: Routes as local node indices.
@@ -227,10 +227,10 @@ class JointSAPolicy(BaseJointPolicy):
         """Calculate state score (Profit minus Overflow Penalties).
 
         Args:
-            selected_bins (List[int]): Current selection IDs.
-            routes (List[List[int]]): Current routes (local indices).
-            context (JointSelectionConstructionContext): Problem state.
-            params (JointSAConfig): Configuration weights.
+            selected_bins: Current selection IDs.
+            routes: Current routes (local indices).
+            context: Problem state.
+            params: Configuration weights.
 
         Returns:
             Tuple[float, float, float]:
@@ -271,9 +271,9 @@ class JointSAPolicy(BaseJointPolicy):
         """Estimate penalty for unserved at-risk bins.
 
         Args:
-            selected_bins (List[int]): Served bin IDs.
-            context (JointSelectionConstructionContext): Environmental data.
-            params (JointSAConfig): Penalty coefficients.
+            selected_bins: Served bin IDs.
+            context: Environmental data.
+            params: Penalty coefficients.
 
         Returns:
             float: Total aggregated penalty.
@@ -299,10 +299,10 @@ class JointSAPolicy(BaseJointPolicy):
         """Apply a stochastic move to generate a neighboring solution.
 
         Args:
-            current_selection (List[int]): Current selection mask.
-            current_routes (List[List[int]]): Current routing plan.
-            context (JointSelectionConstructionContext): Environmental state.
-            params (JointSAConfig): Movement probabilities.
+            current_selection: Current selection mask.
+            current_routes: Current routing plan.
+            context: Environmental state.
+            params: Movement probabilities.
 
         Returns:
             Tuple[List[int], List[List[int]]]: The neighboring selection and routing.

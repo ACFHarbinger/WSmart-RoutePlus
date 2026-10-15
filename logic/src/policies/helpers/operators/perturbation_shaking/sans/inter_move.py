@@ -27,8 +27,8 @@ def move_2_routes(routes_list: List[List[int]], rng: Random) -> None:
     Inter-route perturbation: Move one bin from one route to another.
 
     Args:
-        routes_list (List[List[int]]): Current routing solution.
-        rng (Random): Random number generator.
+        routes_list: Current routing solution.
+        rng: Random number generator.
     """
     if len(routes_list) < 2:
         return
@@ -62,9 +62,9 @@ def move_n_2_routes_random(routes_list: List[List[int]], rng: Random, n: Optiona
     Inter-route perturbation: Move n random bins from one route to another.
 
     Args:
-        routes_list (List[List[int]]): Current routing solution.
-        rng (Random): Random number generator.
-        n (int, optional): Number of bins to move.
+        routes_list: Current routing solution.
+        rng: Random number generator.
+        n: Number of bins to move.
 
     Returns:
         int: The number of bins moved (chosen_n).
@@ -108,9 +108,9 @@ def move_n_2_routes_consecutive(routes_list: List[List[int]], rng: Random, n: Op
     to another.
 
     Args:
-        routes_list (List[List[int]]): Current routing solution.
-        rng (Random): Random number generator.
-        n (int, optional): Number of consecutive nodes to move.
+        routes_list: Current routing solution.
+        rng: Random number generator.
+        n: Number of consecutive nodes to move.
 
     Returns:
         int: The number of nodes moved (chosen_n).

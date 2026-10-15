@@ -3,8 +3,6 @@
 Attributes:
     MODULE_VAR (Type): Description of module level variable.
 
-Example:
-    >>> import ppo
 """
 
 from typing import Any, Dict
@@ -27,11 +25,11 @@ def _create_ppo_family(algo_name: str, cfg: Config, policy, env, kw: Dict[str, A
     """create ppo family.
 
     Args:
-    algo_name (str): Description of algo_name.
-    cfg (Config): Description of cfg.
-    policy (Any): Description of policy.
-    env (Any): Description of env.
-    kw (Dict[str, Any]): Description of kw.
+    algo_name: Description of algo_name.
+    cfg: Description of cfg.
+    policy: Description of policy.
+    env: Description of env.
+    kw: Description of kw.
 
     Returns:
         Any: Description of return value.
@@ -45,10 +43,10 @@ def _create_gdpo(cfg: Config, policy, env, kw: Dict[str, Any]) -> pl.LightningMo
     """create gdpo.
 
     Args:
-    cfg (Config): Description of cfg.
-    policy (Any): Description of policy.
-    env (Any): Description of env.
-    kw (Dict[str, Any]): Description of kw.
+    cfg: Description of cfg.
+    policy: Description of policy.
+    env: Description of env.
+    kw: Description of kw.
 
     Returns:
         Any: Description of return value.

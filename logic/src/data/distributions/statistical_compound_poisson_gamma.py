@@ -39,9 +39,9 @@ class CompoundPoissonGamma(BaseDistribution):
         random variables, where N is Poisson distributed.
 
         Args:
-            lam (Union[float, torch.Tensor]): Poisson rate parameter (expected number of events).
-            alpha (Union[float, torch.Tensor]): Gamma shape parameter for each event.
-            theta (Union[float, torch.Tensor]): Gamma scale parameter for each event.
+            lam: Poisson rate parameter (expected number of events).
+            alpha: Gamma shape parameter for each event.
+            theta: Gamma scale parameter for each event.
         """
         super().__init__()
         self.lam = lam
@@ -53,7 +53,7 @@ class CompoundPoissonGamma(BaseDistribution):
 
         Args:
             size: Sampling shape (e.g., (batch_size, num_loc))
-            generator (Optional[torch.Generator], optional): Optional torch.Generator for reproducibility.
+            generator: Optional torch.Generator for reproducibility.
 
         Returns:
             torch.Tensor: Sampled values

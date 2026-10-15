@@ -36,9 +36,9 @@ class MoEComponentFactory(NeuralComponentFactory):
         Initialize the MoE Component Factory.
 
         Args:
-            num_experts (int): Number of experts in the mixture. Defaults to 4.
-            k (int): Number of experts to select per token. Defaults to 2.
-            noisy_gating (bool): Whether to add noise to the gating mechanism. Defaults to True.
+            num_experts: Number of experts in the mixture. Defaults to 4.
+            k: Number of experts to select per token. Defaults to 2.
+            noisy_gating: Whether to add noise to the gating mechanism. Defaults to True.
         """
         self.num_experts = num_experts
         self.k = k
@@ -64,7 +64,7 @@ class MoEComponentFactory(NeuralComponentFactory):
         """Create decoder based on decoder_type.
 
         Args:
-            decoder_type (str): Type of decoder instance to create. Defaults to 'attention'.
+            decoder_type: Type of decoder instance to create. Defaults to 'attention'.
             kwargs: Architecture-specific configuration passed to the decoder.
 
         Returns:

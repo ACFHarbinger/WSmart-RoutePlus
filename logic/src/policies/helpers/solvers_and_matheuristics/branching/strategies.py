@@ -641,8 +641,8 @@ class FleetSizeBranching:
         """Checks if the total fleet usage (sum of lambdas) is fractional.
 
         Args:
-            route_values (Dict[int, float]): Current LP solution {route_index: λ_k}.
-            tol (float): Integrality tolerance.
+            route_values: Current LP solution {route_index: λ_k}.
+            tol: Integrality tolerance.
 
         Returns:
             Optional[float]: Total fleet usage if fractional, else None.
@@ -701,10 +701,10 @@ class NodeVisitationBranching:
         """Finds an optional node with fractional visitation.
 
         Args:
-            routes (List[Route]): Column pool.
-            route_values (Dict[int, float]): Current LP solution {route_index: λ_k}.
-            optional_nodes (Set[int]): Indices of optional customers.
-            tol (float): Integrality tolerance.
+            routes: Column pool.
+            route_values: Current LP solution {route_index: λ_k}.
+            optional_nodes: Indices of optional customers.
+            tol: Integrality tolerance.
 
         Returns:
             Optional[Tuple[int, float]]: (node_index, visitation_value) if fractional, else None.

@@ -107,10 +107,10 @@ def _compute_overflow_risk(
     - ``overflow_penalty_frac * bin_mass_i`` = occurrence penalty in kg.
 
     Args:
-        current_fill (np.ndarray): Current fill levels as percentages.
-        bin_mass (np.ndarray): Full capacity in kg for each bin.
-        scenario_tree (Optional[Any]): Optional ``ScenarioTree``.
-        overflow_penalty_frac (float): Penalty fraction of bin capacity.
+        current_fill: Current fill levels as percentages.
+        bin_mass: Full capacity in kg for each bin.
+        scenario_tree: Optional ``ScenarioTree``.
+        overflow_penalty_frac: Penalty fraction of bin capacity.
 
     Returns:
         np.ndarray: Per-bin overflow risk score (shape ``(n_bins,)``).
@@ -205,7 +205,7 @@ class MIPKnapsackSelection(IPackingAlgorithm):
         Solve the overflow-minimising 0/1 multiple-knapsack MIP.
 
         Args:
-            context (PackingContext): The selection context.
+            context: The selection context.
 
         Returns:
             Tuple[List[int], SearchContext]: Selected bin IDs and search context.

@@ -42,20 +42,20 @@ def plot_linechart(  # noqa: C901
     Plots a generic line chart, optionally handling multiple policies and Pareto fronts.
 
     Args:
-        output_dest (str): File path to save the plot.
-        graph_log (np.ndarray): Data to plot.
-        plot_func (callable): The pyplot plotting function (e.g., plt.plot, plt.scatter).
-        policies (list): List of policy names for the legend.
-        x_label (str, optional): Label for x-axis.
-        y_label (str, optional): Label for y-axis.
-        title (str, optional): Chart title.
-        fsave (bool, optional): Whether to save figure to file. Defaults to True.
-        scale (str, optional): Axis scale ('linear', 'log'). Defaults to "linear".
-        x_values (list, optional): Custom x-values.
-        linestyles (list, optional): List of linestyles.
-        markers (list, optional): List of markers.
-        annotate (bool, optional): Whether to annotate points. Defaults to True.
-        pareto_front (bool, optional): Whether to calculate and overlay Pareto front. Defaults to False.
+        output_dest: File path to save the plot.
+        graph_log: Data to plot.
+        plot_func: The pyplot plotting function (e.g., plt.plot, plt.scatter).
+        policies: List of policy names for the legend.
+        x_label: Label for x-axis.
+        y_label: Label for y-axis.
+        title: Chart title.
+        fsave: Whether to save figure to file. Defaults to True.
+        scale: Axis scale ('linear', 'log'). Defaults to "linear".
+        x_values: Custom x-values.
+        linestyles: List of linestyles.
+        markers: List of markers.
+        annotate: Whether to annotate points. Defaults to True.
+        pareto_front: Whether to calculate and overlay Pareto front. Defaults to False.
 
     Returns:
         list or None: Pareto dominants if pareto_front is True, else None.

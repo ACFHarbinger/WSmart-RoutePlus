@@ -100,13 +100,13 @@ class RLGDHHSolver:
         """Initialize the RL-GD-HH solver.
 
         Args:
-            dist_matrix (np.ndarray): Distance matrix.
-            wastes (Dict[int, float]): Waste at each node.
-            capacity (float): Capacity of each vehicle.
-            R (float): Recycling rate.
-            C (float): Cost of recycling.
-            params (RLGDHHConfig): Parameters for RL-GD-HH.
-            mandatory_nodes (Optional[List[int]]): Mandatory nodes.
+            dist_matrix: Distance matrix.
+            wastes: Waste at each node.
+            capacity: Capacity of each vehicle.
+            R: Recycling rate.
+            C: Cost of recycling.
+            params: Parameters for RL-GD-HH.
+            mandatory_nodes: Mandatory nodes.
         """
         self.dist_matrix = dist_matrix
         self.wastes = wastes
@@ -211,7 +211,7 @@ class RLGDHHSolver:
         """Additive reward: u ← min(UB, u + reward). (All RL variants share this.)
 
         Args:
-            u (float): Current utility.
+            u: Current utility.
 
         Returns:
             float: New utility.
@@ -229,7 +229,7 @@ class RLGDHHSolver:
         RL3 (Section 3.2): u ← floor(sqrt(u))           [root]
 
         Args:
-            u (float): Current utility.
+            u: Current utility.
 
         Returns:
             float: New utility.
@@ -254,7 +254,7 @@ class RLGDHHSolver:
         """H1: Single-node relocation (1-0 exchange) — ruin-and-recreate variant.
 
         Args:
-            routes (List[List[int]]): Current routes.
+            routes: Current routes.
 
         Returns:
             List[List[int]]: New routes.
@@ -300,7 +300,7 @@ class RLGDHHSolver:
         """H2: Shaw removal + regret-2 insertion.
 
         Args:
-            routes (List[List[int]]): Current routes.
+            routes: Current routes.
 
         Returns:
             List[List[int]]: New routes.
@@ -339,7 +339,7 @@ class RLGDHHSolver:
         """H3: String removal + greedy insertion.
 
         Args:
-            routes (List[List[int]]): Current routes.
+            routes: Current routes.
 
         Returns:
             List[List[int]]: New routes.
@@ -378,7 +378,7 @@ class RLGDHHSolver:
         """H4: Random removal + regret-2 insertion.
 
         Args:
-            routes (List[List[int]]): Current routes.
+            routes: Current routes.
 
         Returns:
             List[List[int]]: New routes.
@@ -444,7 +444,7 @@ class RLGDHHSolver:
         """Calculates fitness F(g) as Net Profit ($).
 
         Args:
-            routes (List[List[int]]): Routes.
+            routes: Routes.
 
         Returns:
             float: Net profit.
@@ -458,7 +458,7 @@ class RLGDHHSolver:
         """Calculates distance-based travel cost (km).
 
         Args:
-            routes (List[List[int]]): Routes.
+            routes: Routes.
 
         Returns:
             float: Travel cost.

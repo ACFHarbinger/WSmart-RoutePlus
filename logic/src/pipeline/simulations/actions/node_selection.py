@@ -58,8 +58,6 @@ class PackingAction(SimulationAction):
         Args:
             context: Shared dictionary containing simulation state.
 
-        Returns:
-            None
         """
         _set_live_capture_meta(context)
         raw_cfg = _ensure_mutable_config(context)

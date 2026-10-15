@@ -84,8 +84,6 @@ class Individual:
             expand_pool: If True (VRPP mode), repair operators consider all unvisited nodes.
                         If False (CVRP mode), repair operators only consider removed nodes.
 
-        Returns:
-            None.
         """
         self.giant_tour = giant_tour
         self._routes: List[List[int]] = []
@@ -131,8 +129,6 @@ class Individual:
         Args:
             value: List of routes to set.
 
-        Returns:
-            None.
         """
         self._routes = value
         self._visited_cache = None
@@ -189,8 +185,6 @@ class Individual:
         Args:
             expected_nodes: Optional set of expected node IDs.
 
-        Returns:
-            None.
         """
         tour_set = set(self.giant_tour)
         assert len(tour_set) == len(self.giant_tour), (

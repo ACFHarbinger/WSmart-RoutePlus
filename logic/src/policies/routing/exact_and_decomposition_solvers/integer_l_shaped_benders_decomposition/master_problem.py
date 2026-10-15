@@ -93,8 +93,8 @@ class MasterProblem:
         """Initialise the master problem container.
 
         Args:
-            model (VRPPModel): VRPPModel instance providing graph topology, costs, and profits.
-            params (IntegerLShapedBendersConfig): IntegerLShapedBendersConfig controlling all solver parameters.
+            model: VRPPModel instance providing graph topology, costs, and profits.
+            params: IntegerLShapedBendersConfig controlling all solver parameters.
 
         Raises:
             ImportError: If gurobipy is not installed or not licensed.

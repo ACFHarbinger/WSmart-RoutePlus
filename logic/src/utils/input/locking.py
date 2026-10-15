@@ -21,10 +21,10 @@ def read_output(json_path, policies, data_distribution, lock=None):
     Reads a JSON file and extracts specific policy values into a transposed list.
 
     Args:
-        json_path (str): Path to the JSON file.
-        policies (list): List of policy keys to extract.
-        data_distribution (str): String of data distribution to extract.
-        lock (threading.Lock, optional): Thread lock for safe access.
+        json_path: Path to the JSON file.
+        policies: List of policy keys to extract.
+        data_distribution: String of data distribution to extract.
+        lock: Thread lock for safe access.
 
     Returns:
         list: Transposed list of values for the specified policies.

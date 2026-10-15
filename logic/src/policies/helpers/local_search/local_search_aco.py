@@ -53,13 +53,13 @@ class ACOLocalSearch(LocalSearch):
         """Initialize ACO Local Search.
 
         Args:
-            node_coords (np.ndarray): (N, 2) array of node coordinates.
-            waste (Dict[int, float]): Dictionary of node waste demands.
-            capacity (float): Vehicle load capacity.
-            R (float): Reward factor for collected waste.
-            C (float): Cost factor for travel distance.
-            params (Any): Hyperparameters and configuration.
-            neighbors (Optional[Dict[int, List[int]]]): Precomputed granular neighbors. Defaults to None.
+            node_coords: (N, 2) array of node coordinates.
+            waste: Dictionary of node waste demands.
+            capacity: Vehicle load capacity.
+            R: Reward factor for collected waste.
+            C: Cost factor for travel distance.
+            params: Hyperparameters and configuration.
+            neighbors: Precomputed granular neighbors. Defaults to None.
         """
         super().__init__(None, waste, capacity, R, C, params, neighbors=neighbors, node_coords=node_coords)
 
@@ -67,8 +67,8 @@ class ACOLocalSearch(LocalSearch):
         """On-demand exact distance calculation to replace matrix lookups.
 
         Args:
-            i (int): First node index.
-            j (int): Second node index.
+            i: First node index.
+            j: Second node index.
 
         Returns:
             float: Distance between node i and node j.
@@ -79,7 +79,7 @@ class ACOLocalSearch(LocalSearch):
         """Calculate the cost of a route.
 
         Args:
-            route (List[int]): Route to calculate the cost of.
+            route: Route to calculate the cost of.
 
         Returns:
             float: Cost of the route.
@@ -96,8 +96,8 @@ class ACOLocalSearch(LocalSearch):
         """Apply local search operators to the solution.
 
         Args:
-            solution (List[List[int]]): List of routes.
-            target_neighborhood (Optional[str]): If provided, only applies the specified
+            solution: List of routes.
+            target_neighborhood: If provided, only applies the specified
                 neighborhood operator. Defaults to None.
 
         Returns:

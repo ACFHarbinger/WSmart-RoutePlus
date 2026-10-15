@@ -46,8 +46,8 @@ def _evaluate_routes(routes: List[List[int]], dist_matrix: np.ndarray) -> float:
     Evaluate total route cost (negative for maximization).
 
     Args:
-        routes (List[List[int]]): Current routes.
-        dist_matrix (np.ndarray): Distance matrix.
+        routes: Current routes.
+        dist_matrix: Distance matrix.
 
     Returns:
         float: Total negative cost.
@@ -78,14 +78,14 @@ def _apply_unstring_op(
     Helper to apply unstringing operation and get new route and immediate profit val.
 
     Args:
-        route (List[int]): Current route.
-        unstring_type (int): Unstringing type (1-4).
-        params (Tuple): Parameters for the move.
-        dist_matrix (np.ndarray): Distance matrix.
-        wastes (Dict[int, float]): Node wastes.
-        R (float): Revenue multiplier.
-        C (float): Cost multiplier.
-        profit_mode (bool): Whether to use profit-based moves.
+        route: Current route.
+        unstring_type: Unstringing type (1-4).
+        params: Parameters for the move.
+        dist_matrix: Distance matrix.
+        wastes: Node wastes.
+        R: Revenue multiplier.
+        C: Cost multiplier.
+        profit_mode: Whether to use profit-based moves.
 
     Returns:
         Tuple[List[int], float]: (new_route, delta_profit).
@@ -124,16 +124,16 @@ def _try_unstring_removal(
     Try removing a node using the specified unstringing operator (bidirectional).
 
     Args:
-        routes (List[List[int]]): Current solution.
-        r_idx (int): Route index.
-        n_idx (int): Node index in route.
-        unstring_type (int): Unstringing type.
-        dist_matrix (np.ndarray): Distance matrix.
-        wastes (Dict[int, float]): Node wastes.
-        R (float): Revenue multiplier.
-        C (float): Cost multiplier.
-        rng (random.Random): Random generator.
-        profit_mode (bool): Profit mode flag.
+        routes: Current solution.
+        r_idx: Route index.
+        n_idx: Node index in route.
+        unstring_type: Unstringing type.
+        dist_matrix: Distance matrix.
+        wastes: Node wastes.
+        R: Revenue multiplier.
+        C: Cost multiplier.
+        rng: Random generator.
+        profit_mode: Profit mode flag.
 
     Returns:
         Optional[Tuple[List[List[int]], float]]: (best_routes, best_value) if successful.
@@ -214,16 +214,16 @@ def _try_unstring_removal_deterministic(  # noqa: C901
     Try removing a node using deterministic p-neighborhood search (bidirectional).
 
     Args:
-        routes (List[List[int]]): Current solution.
-        r_idx (int): Route index.
-        n_idx (int): Node index in route.
-        unstring_type (int): Unstringing type.
-        dist_matrix (np.ndarray): Distance matrix.
-        wastes (Dict[int, float]): Node wastes.
-        R (float): Revenue multiplier.
-        C (float): Cost multiplier.
-        neighborhood_size (int): P-neighborhood size.
-        profit_mode (bool): Profit mode flag.
+        routes: Current solution.
+        r_idx: Route index.
+        n_idx: Node index in route.
+        unstring_type: Unstringing type.
+        dist_matrix: Distance matrix.
+        wastes: Node wastes.
+        R: Revenue multiplier.
+        C: Cost multiplier.
+        neighborhood_size: P-neighborhood size.
+        profit_mode: Profit mode flag.
 
     Returns:
         Optional[Tuple[List[List[int]], float]]: (best_routes, best_value) if successful.
@@ -317,19 +317,19 @@ def unstringing_removal_wrapper(  # noqa: C901
     Core unstringing removal logic with conditional search mode.
 
     Args:
-        routes (List[List[int]]): Current solution.
-        n_remove (int): Number of nodes to remove.
-        unstring_type (int): Unstringing operator type (1-4).
-        dist_matrix (np.ndarray): Distance matrix.
-        wastes (Dict[int, float]): Node wastes.
-        R (float): Revenue per unit.
-        C (float): Cost per unit distance.
-        rng (Optional[random.Random]): Random generator.
-        profit_mode (bool): Use profit logic.
-        target_node (Optional[int]): If provided, only try removing this specific node.
-        use_alns_fallback (bool): Use worst removal if unstringing fails.
-        random_us_sampling (bool): If True, use random sampling; if False, use deterministic p-neighborhoods.
-        neighborhood_size (int): Size of p-neighborhood (for deterministic mode).
+        routes: Current solution.
+        n_remove: Number of nodes to remove.
+        unstring_type: Unstringing operator type (1-4).
+        dist_matrix: Distance matrix.
+        wastes: Node wastes.
+        R: Revenue per unit.
+        C: Cost per unit distance.
+        rng: Random generator.
+        profit_mode: Use profit logic.
+        target_node: If provided, only try removing this specific node.
+        use_alns_fallback: Use worst removal if unstringing fails.
+        random_us_sampling: If True, use random sampling; if False, use deterministic p-neighborhoods.
+        neighborhood_size: Size of p-neighborhood (for deterministic mode).
 
     Returns:
         Tuple[List[List[int]], List[int]]: (repaired_solution, removed_nodes).
@@ -429,15 +429,15 @@ def unstringing_removal(
     Standard CVRP Unstringing Removal.
 
     Args:
-        routes (List[List[int]]): Current routes.
-        n_remove (int): Number of nodes to remove.
-        unstring_type (int): Unstringing type.
-        dist_matrix (np.ndarray): Distance matrix.
-        rng (Optional[random.Random]): Random generator.
-        target_node (Optional[int]): Target node.
-        use_alns_fallback (bool): Fallback flag.
-        random_us_sampling (bool): Sampling mode flag.
-        neighborhood_size (int): Neighborhood size.
+        routes: Current routes.
+        n_remove: Number of nodes to remove.
+        unstring_type: Unstringing type.
+        dist_matrix: Distance matrix.
+        rng: Random generator.
+        target_node: Target node.
+        use_alns_fallback: Fallback flag.
+        random_us_sampling: Sampling mode flag.
+        neighborhood_size: Neighborhood size.
 
     Returns:
         Tuple[List[List[int]], List[int]]: (new_routes, removed_nodes).
@@ -475,18 +475,18 @@ def unstringing_profit_removal(
     VRPP Cost-Aware Unstringing Removal.
 
     Args:
-        routes (List[List[int]]): Current routes.
-        n_remove (int): Number of nodes to remove.
-        unstring_type (int): Unstringing type.
-        dist_matrix (np.ndarray): Distance matrix.
-        wastes (Dict[int, float]): Node wastes.
-        R (float): Revenue multiplier.
-        C (float): Cost multiplier.
-        rng (Optional[random.Random]): Random generator.
-        target_node (Optional[int]): Target node.
-        use_alns_fallback (bool): Fallback flag.
-        random_us_sampling (bool): Sampling mode flag.
-        neighborhood_size (int): Neighborhood size.
+        routes: Current routes.
+        n_remove: Number of nodes to remove.
+        unstring_type: Unstringing type.
+        dist_matrix: Distance matrix.
+        wastes: Node wastes.
+        R: Revenue multiplier.
+        C: Cost multiplier.
+        rng: Random generator.
+        target_node: Target node.
+        use_alns_fallback: Fallback flag.
+        random_us_sampling: Sampling mode flag.
+        neighborhood_size: Neighborhood size.
 
     Returns:
         Tuple[List[List[int]], List[int]]: (new_routes, removed_nodes).

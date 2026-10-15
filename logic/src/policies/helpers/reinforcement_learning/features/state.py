@@ -41,9 +41,9 @@ class StateFeatureExtractor:
         """Initialize the state feature extractor with custom binning thresholds.
 
         Args:
-            progress_thresholds (Optional[Tuple[float, float]]): Thresholds for search progress bins.
-            stagnation_thresholds (Optional[Tuple[int, int]]): Thresholds for stagnation count bins.
-            diversity_thresholds (Optional[Tuple[float, float]]): Thresholds for diversity metric bins.
+            progress_thresholds: Thresholds for search progress bins.
+            stagnation_thresholds: Thresholds for stagnation count bins.
+            diversity_thresholds: Thresholds for diversity metric bins.
         """
         self.progress_thresholds = progress_thresholds or (0.33, 0.67)
         self.stagnation_thresholds = stagnation_thresholds or (10, 30)
@@ -159,7 +159,7 @@ class StateFeatureExtractor:
         """Converts a discretized state tuple into a flat scalar index.
 
         Args:
-            state_tuple (Tuple[int, int, int]): Tuple of (phase, stagnation, diversity).
+            state_tuple: Tuple of (phase, stagnation, diversity).
 
         Returns:
             int: Unique index representing the combined state.

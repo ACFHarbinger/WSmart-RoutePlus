@@ -107,9 +107,6 @@ class HierarchicalNeuralAgentPolicy(BaseMultiPeriodRoutingPolicy):
 
         The module is loaded lazily, only when needed.
 
-        Returns:
-            None
-
         Raises:
             Exception: If the module cannot be loaded.
         """

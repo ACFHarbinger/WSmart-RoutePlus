@@ -36,8 +36,8 @@ def _dfj_callback(model, where):
     """DFJ subtour elimination callback for Gurobi's built-in B&B.
 
     Args:
-        model (gp.Model): The Gurobi model being optimized.
-        where (int): Callback location code.
+        model: The Gurobi model being optimized.
+        where: Callback location code.
     """
     if where == GRB.Callback.MIPSOL:
         x_vars = model._x_vars

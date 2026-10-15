@@ -190,8 +190,6 @@ class TemporalBendersCoordinator:
         Args:
             cut: The cut to add to the pool.
 
-        Returns:
-            None
         """
         self._cut_pool.append(cut)
         if len(self._cut_pool) > self.cut_pool_max:
@@ -209,7 +207,7 @@ class TemporalBendersCoordinator:
             kwargs: Forwarded to per-scenario subproblem solvers.
 
             Required kwargs:
-                dist_matrix (np.ndarray): Distance matrix, shape (n_bins+1, n_bins+1),
+                dist_matrix: Distance matrix, shape (n_bins+1, n_bins+1),
                     depot at index 0.  If not provided, raises ``ValueError``.
 
             Optional kwargs:

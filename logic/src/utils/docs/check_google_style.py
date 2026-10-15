@@ -101,7 +101,7 @@ class GoogleStyleValidator(ast.NodeVisitor):
         """Initialise the validator for *filepath*.
 
         Args:
-            filepath (str): Path to the Python source file.
+            filepath: Path to the Python source file.
         """
         self.filepath = filepath
         self.violations: List[dict] = []
@@ -111,8 +111,8 @@ class GoogleStyleValidator(ast.NodeVisitor):
         """Record a violation against *node* with the given *message*.
 
         Args:
-            node (ast.AST): The AST node where the violation was found.
-            message (str): Human-readable description of the violation.
+            node: The AST node where the violation was found.
+            message: Human-readable description of the violation.
         """
         self.violations.append(
             {
@@ -127,7 +127,7 @@ class GoogleStyleValidator(ast.NodeVisitor):
         """Extract named sections from a Google-style *docstring*.
 
         Args:
-            docstring (str): Raw docstring text.
+            docstring: Raw docstring text.
 
         Returns:
             Dict[str, str]: Mapping from normalised section name to its body.
@@ -152,8 +152,8 @@ class GoogleStyleValidator(ast.NodeVisitor):
         """Verify that every non-self parameter is documented in the Args section.
 
         Args:
-            node (Union[ast.FunctionDef, ast.AsyncFunctionDef]): The function node.
-            sections (Dict[str, str]): Parsed docstring sections.
+            node: The function node.
+            sections: Parsed docstring sections.
         """
         params = (
             [a.arg for a in node.args.args if a.arg not in ("self", "cls")]
@@ -164,14 +164,22 @@ class GoogleStyleValidator(ast.NodeVisitor):
         if not params:
             return
 
+        # Q-7b: an Args section is optional; when absent, nothing to check.
         if "Args" not in sections:
-            self._add(node, f"Missing 'Args' section — expected: {', '.join(params)}")
             return
 
         body = sections["Args"]
-        missing = [p for p in params if not re.search(rf"^\s*{re.escape(p)}\s*(\(|:)", body, re.MULTILINE)]
-        if missing:
-            self._add(node, f"Undocumented argument(s): {', '.join(missing)}")
+        # Q-7b: documented-but-undocumented is fine; the one real defect is an
+        # entry whose value only restates the signature's type hint.
+        for param in params:
+            for line in body.splitlines():
+                entry = line.strip()
+                if not entry.startswith(param):
+                    continue
+                after = entry[len(param) :].lstrip()
+                if after.startswith("("):  # "name (Type): restated hint"
+                    self._add(node, f"Args entry {param!r} restates its type hint; drop the '(Type)'")
+                    break
 
     def _check_returns_yields(
         self, node: Union[ast.FunctionDef, ast.AsyncFunctionDef], sections: Dict[str, str]
@@ -179,8 +187,8 @@ class GoogleStyleValidator(ast.NodeVisitor):
         """Check that Returns/Yields sections are present when the function uses them.
 
         Args:
-            node (Union[ast.FunctionDef, ast.AsyncFunctionDef]): The function node.
-            sections (Dict[str, str]): Parsed docstring sections.
+            node: The function node.
+            sections: Parsed docstring sections.
         """
         has_yield = False
         has_return = False
@@ -192,10 +200,13 @@ class GoogleStyleValidator(ast.NodeVisitor):
             elif isinstance(child, ast.Return) and child.value is not None:
                 has_return = True
 
-        if has_yield and "Yields" not in sections:
-            self._add(node, "Function yields data but missing 'Yields' section")
-        if has_return and node.name != "__init__" and "Returns" not in sections:
-            self._add(node, "Function returns data but missing 'Returns' section")
+        # Q-7b: sections are optional; a Returns section that only documents
+        # None is the defect (the trimmer removes them; this check keeps them
+        # from coming back).
+        for section_name in ("Returns", "Yields"):
+            body = sections.get(section_name, "").strip()
+            if body.lower().rstrip(".") in ("none", "nothing"):
+                self._add(node, f"'{section_name}:' section documents None; remove it")
 
     # ------------------------------------------------------------------
     # Visitor methods
@@ -205,34 +216,27 @@ class GoogleStyleValidator(ast.NodeVisitor):
         """Check module-level docstring for required sections.
 
         Args:
-            node (ast.Module): The module AST node.
+            node: The module AST node.
         """
         docstring = ast.get_docstring(node)
         if not docstring:
             self._add(node, "Missing module-level docstring")
-        else:
-            sections = self._parse_sections(docstring)
-            if "Attributes" not in sections:
-                self._add(node, "Module docstring missing 'Attributes' section")
-            if "Example" not in sections:
-                self._add(node, "Module docstring missing 'Example' section")
+        # Q-7b: module Attributes/Example sections are optional (an Example
+        # must run when present; the trimmer removes import-only examples).
         self.generic_visit(node)
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
         """Check class docstring for required sections.
 
         Args:
-            node (ast.ClassDef): The class AST node.
+            node: The class AST node.
         """
         prev = self.current_class
         self.current_class = node.name
         docstring = ast.get_docstring(node)
         if not docstring:
             self._add(node, "Missing class docstring")
-        else:
-            sections = self._parse_sections(docstring)
-            if "Attributes" not in sections:
-                self._add(node, "Class docstring missing 'Attributes' section")
+        # Q-7b: class Attributes sections are optional.
         self.generic_visit(node)
         self.current_class = prev
 
@@ -240,7 +244,7 @@ class GoogleStyleValidator(ast.NodeVisitor):
         """Delegate to the shared function validator.
 
         Args:
-            node (ast.FunctionDef): The function AST node.
+            node: The function AST node.
         """
         self._validate_function(node)
 
@@ -248,16 +252,19 @@ class GoogleStyleValidator(ast.NodeVisitor):
         """Delegate to the shared function validator.
 
         Args:
-            node (ast.AsyncFunctionDef): The async function AST node.
+            node: The async function AST node.
         """
         self._validate_function(node)
 
     def _validate_function(self, node: "Union[ast.FunctionDef, ast.AsyncFunctionDef]") -> None:
-        """Core function validation: docstring presence, Args, Returns/Yields.
+        """Validate a function docstring against the relaxed rule (Q-7b).
 
         Args:
-            node (Union[ast.FunctionDef, ast.AsyncFunctionDef]): The function or async-function AST node.
+            node: The function or async-function AST node.
         """
+        # Q-7b: private helpers need no docstring and no sections.
+        if node.name.startswith("_") and not node.name.startswith("__"):
+            return
         docstring = ast.get_docstring(node)
         if not docstring:
             self._add(node, "Missing function docstring")
@@ -271,7 +278,7 @@ def analyze_file(filepath: str) -> List[dict]:
     """Parse *filepath* and return all Google-style violations found.
 
     Args:
-        filepath (str): Path to the Python source file.
+        filepath: Path to the Python source file.
 
     Returns:
         List[dict]: Violations with keys ``line``, ``context``, ``name``, ``message``.
@@ -297,7 +304,7 @@ def display_report(all_violations: List[dict]) -> None:
     majority of the available terminal width.
 
     Args:
-        all_violations (List[dict]): Violations with an injected ``filepath`` key.
+        all_violations: Violations with an injected ``filepath`` key.
     """
     if not all_violations:
         console.print(

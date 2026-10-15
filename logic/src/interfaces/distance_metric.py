@@ -34,8 +34,8 @@ class IDistanceMetric(ABC):
         Computes the structural distance between two solutions.
 
         Args:
-            current (Any): The current solution representation (e.g., list of routes).
-            candidate (Any): The candidate solution representation.
+            current: The current solution representation (e.g., list of routes).
+            candidate: The candidate solution representation.
 
         Returns:
             float: The scalar structural distance.

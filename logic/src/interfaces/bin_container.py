@@ -66,8 +66,6 @@ class IBinContainer(Protocol):
         Args:
             visited: Binary tensor (batch, n_bins) indicating collected bins
 
-        Returns:
-            None
         """
         ...
 

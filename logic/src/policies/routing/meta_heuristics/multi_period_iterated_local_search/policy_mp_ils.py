@@ -63,8 +63,6 @@ class MultiPeriodILSPolicy(BaseMultiPeriodRoutingPolicy):
         Args:
             config: Optional configuration dictionary or Hydra config.
 
-        Returns:
-            None.
         """
         super().__init__(config)
         self.params = self._effective_config(config)

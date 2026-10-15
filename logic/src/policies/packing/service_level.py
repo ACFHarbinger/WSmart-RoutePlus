@@ -43,7 +43,7 @@ class ServiceLevelSelection(IPackingAlgorithm):
         """Select bins that are statistically likely to overflow within the horizon.
 
         Args:
-            context (PackingContext): The selection context providing current_fill,
+            context: The selection context providing current_fill,
                 accumulation_rates, and std_deviations.
 
         Returns:

@@ -80,8 +80,8 @@ def validate_search_space(space: Dict[str, Any], policy_name: str) -> List[str]:
       - categorical parameters must have a non-empty ``choices`` list.
 
     Args:
-        space (Dict[str, Any]): Mapping of parameter names to spec dicts.
-        policy_name (str): Used only for contextual error messages.
+        space: Mapping of parameter names to spec dicts.
+        policy_name: Used only for contextual error messages.
 
     Returns:
         List[str]: List of human-readable error strings; empty if space is valid.
@@ -135,7 +135,7 @@ def load_all_search_spaces(directory: Optional[str] = None) -> Dict[str, Dict[st
     loading so that partially-configured files can still be used during development.
 
     Args:
-        directory (Optional[str]): Path to the directory containing JSON files.
+        directory: Path to the directory containing JSON files.
             Defaults to :data:`JOBS_DIR` if not supplied.
 
     Returns:
@@ -199,9 +199,9 @@ def get_component_search_space(
       - 'job'         -> '' (relative to policy config root)
 
     Args:
-        component_type (str): One of 'filter', 'interceptor', 'rule', 'job'.
-        name (str): Name of the component (e.g., 'boltzmann', 'alns').
-        raise_on_invalid (bool): Whether to validate the space before returning.
+        component_type: One of 'filter', 'interceptor', 'rule', 'job'.
+        name: Name of the component (e.g., 'boltzmann', 'alns').
+        raise_on_invalid: Whether to validate the space before returning.
 
     Returns:
         Dict[str, Dict[str, Any]]: Mapping of prefixed config paths to HPO specs.
@@ -262,10 +262,10 @@ def compose_search_space(
     """Compose a full search space from multiple components.
 
     Args:
-        job (str, optional): Name of the main policy (from jobs/).
-        filter (str, optional): Name of the selection strategy (from filters/).
-        interceptor (str, optional): Name of the improver (from interceptors/).
-        rule (str, optional): Name of the acceptance rule (from rules/).
+        job: Name of the main policy (from jobs/).
+        filter: Name of the selection strategy (from filters/).
+        interceptor: Name of the improver (from interceptors/).
+        rule: Name of the acceptance rule (from rules/).
 
     Returns:
         Dict[str, Dict[str, Any]]: Combined search space with appropriate prefixes.
@@ -300,8 +300,8 @@ def get_search_space(policy_name: str, raise_on_invalid: bool = True) -> Dict[st
     """Retrieve and validate the search space for a specific policy.
 
     Args:
-        policy_name (str): Name of the policy (e.g., 'alns', 'hgs').
-        raise_on_invalid (bool): When True (default), raises a ValueError if the
+        policy_name: Name of the policy (e.g., 'alns', 'hgs').
+        raise_on_invalid: When True (default), raises a ValueError if the
             search space contains invalid parameter specifications.  Set to False
             to allow partial/template spaces during development.
 
@@ -342,7 +342,7 @@ def _extract_params_from_config(config_class: Any) -> Dict[str, Any]:
     catches un-edited templates.
 
     Args:
-        config_class (Any): A dataclass (not an instance) to introspect.
+        config_class: A dataclass (not an instance) to introspect.
 
     Returns:
         Dict[str, Any]: Mapping of field names to template HPO spec dicts.

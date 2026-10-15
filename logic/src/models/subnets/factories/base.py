@@ -64,8 +64,8 @@ class NeuralComponentFactory(ABC):
         """Create an encoder instance.
 
         Args:
-            norm_config (Optional[NormalizationConfig]): Normalization settings. Defaults to None.
-            activation_config (Optional[ActivationConfig]): Activation settings. Defaults to None.
+            norm_config: Normalization settings. Defaults to None.
+            activation_config: Activation settings. Defaults to None.
             kwargs: Architecture-specific configuration.
 
         Returns:
@@ -84,9 +84,9 @@ class NeuralComponentFactory(ABC):
         """Create a decoder instance based on decoder_type.
 
         Args:
-            decoder_type (str): Type of decoder ('attention', 'deep', 'pointer'). Defaults to 'attention'.
-            norm_config (Optional[NormalizationConfig]): Normalization settings. Defaults to None.
-            activation_config (Optional[ActivationConfig]): Activation settings. Defaults to None.
+            decoder_type: Type of decoder ('attention', 'deep', 'pointer'). Defaults to 'attention'.
+            norm_config: Normalization settings. Defaults to None.
+            activation_config: Activation settings. Defaults to None.
             kwargs: Architecture-specific configuration.
 
         Returns:

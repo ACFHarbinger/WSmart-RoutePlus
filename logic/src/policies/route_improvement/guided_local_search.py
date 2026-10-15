@@ -45,19 +45,19 @@ class GuidedLocalSearchRouteImprover(IRouteImprovement):
         """Apply Guided Local Search to the tour.
 
         Args:
-            tour (List[int]): Initial tour sequence.
+            tour: Initial tour sequence.
             kwargs: Context containing:
-                distance_matrix (np.ndarray | torch.Tensor): Distance lookup.
-                gls_iterations (int): Number of GLS meta-iterations (default 20).
-                gls_inner_iterations (int): Local search move limit per iteration (default 50).
-                gls_lambda_factor (float): Penalty scaling weight.
+                distance_matrix: Distance lookup.
+                gls_iterations: Number of GLS meta-iterations (default 20).
+                gls_inner_iterations: Local search move limit per iteration (default 50).
+                gls_lambda_factor: Penalty scaling weight.
                 gls_penalty_decay: Penalty decay factor.
-                gls_base_operator (str): Operator to use (default "or_opt").
-                seed (int): Random seed.
-                wastes (Dict[int, float]): Bin mass dictionary.
-                capacity (float): Maximum vehicle capacity.
-                R (float): Revenue coefficient.
-                C (float): Cost coefficient.
+                gls_base_operator: Operator to use (default "or_opt").
+                seed: Random seed.
+                wastes: Bin mass dictionary.
+                capacity: Maximum vehicle capacity.
+                R: Revenue coefficient.
+                C: Cost coefficient.
 
         Returns:
             Tuple[List[int], ImprovementMetrics]: Refined tour and metrics.
@@ -147,8 +147,8 @@ class GuidedLocalSearchRouteImprover(IRouteImprovement):
         """Map operator name to LocalSearchManager method.
 
         Args:
-            manager (LocalSearchManager): The local search manager instance.
-            name (str): Name of the operator to retrieve.
+            manager: The local search manager instance.
+            name: Name of the operator to retrieve.
 
         Returns:
             Callable: The operator method from the manager.
@@ -172,9 +172,9 @@ class GuidedLocalSearchRouteImprover(IRouteImprovement):
         """Identify maximum utility edge and increment penalty.
 
         Args:
-            routes (List[List[int]]): Current routes.
-            dm (np.ndarray): Distance matrix.
-            penalty (np.ndarray): Penalty matrix to update.
+            routes: Current routes.
+            dm: Distance matrix.
+            penalty: Penalty matrix to update.
         """
         max_utility = -1.0
         max_edge = None

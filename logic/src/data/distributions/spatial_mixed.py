@@ -3,8 +3,6 @@
 Attributes:
     MODULE_VAR (Type): Description of module level variable.
 
-Example:
-    >>> import spatial_mixed
 """
 
 from typing import Optional, Tuple
@@ -29,7 +27,7 @@ class Mixed(BaseDistribution):
         """Initialize Class.
 
         Args:
-            n_cluster_mix (int): Description of n_cluster_mix.
+            n_cluster_mix: Description of n_cluster_mix.
         """
         self.n_cluster_mix = n_cluster_mix
         self.lower, self.upper = 0.2, 0.8
@@ -39,8 +37,8 @@ class Mixed(BaseDistribution):
         """Sample.
 
         Args:
-            size (Tuple[int, ...]): Description of size.
-            generator (Optional[torch.Generator], optional): Description of generator.
+            size: Description of size.
+            generator: Description of generator.
 
         Returns:
             torch.Tensor: Sampled values.
@@ -89,8 +87,8 @@ class Mixed(BaseDistribution):
         """Sample from 50% uniform + 50% Gaussian clusters.
 
         Args:
-            size (Tuple[int, ...]): Tuple of size (batch_size, num_loc, 2).
-            rng (Optional[np.random.Generator], optional): Random number generator.
+            size: Tuple of size (batch_size, num_loc, 2).
+            rng: Random number generator.
 
         Returns:
             np.ndarray: Sampled values.

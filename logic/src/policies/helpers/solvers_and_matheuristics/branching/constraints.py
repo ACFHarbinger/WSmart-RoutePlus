@@ -74,7 +74,7 @@ class EdgeBranchingConstraint:
         """Checks whether arc (u, v) appears consecutively in the full path.
 
         Args:
-            nodes (List[int]): Internal customer nodes of the route.
+            nodes: Internal customer nodes of the route.
 
         Returns:
             bool: True if the arc exists in the sequence.
@@ -173,8 +173,8 @@ class FleetSizeBranchingConstraint:
         """Initializes a fleet size branching constraint.
 
         Args:
-            limit (int): Fleet size limit K.
-            is_upper (bool): True for ≤ limit (floor), False for ≥ limit (ceil).
+            limit: Fleet size limit K.
+            is_upper: True for ≤ limit (floor), False for ≥ limit (ceil).
         """
         self.limit = limit
         self.is_upper = is_upper
@@ -213,8 +213,8 @@ class NodeVisitationBranchingConstraint:
         """Initializes a node visitation branching constraint.
 
         Args:
-            node (int): Index of the optional customer node.
-            forced (bool): True to force visitation (v_i = 1), False to forbid it (v_i = 0).
+            node: Index of the optional customer node.
+            forced: True to force visitation (v_i = 1), False to forbid it (v_i = 0).
         """
         self.node = node
         self.forced = forced

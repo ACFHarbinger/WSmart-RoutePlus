@@ -47,17 +47,17 @@ class GatedRecurrentUnitFillPredictor(nn.Module):
         """Initializes the GRF Predictor.
 
         Args:
-            input_dim (int): Input dimension size. Defaults to 1.
-            hidden_dim (int): Hidden state dimension. Defaults to 64.
-            num_layers (int): Number of GRU layers. Defaults to 2.
-            dropout (float): Dropout probability. Defaults to 0.1.
-            activation (str): Activation function for predictor MLP. Defaults to 'relu'.
-            af_param (float): Activation parameter. Defaults to 1.0.
-            threshold (float): Activation threshold. Defaults to 6.0.
-            replacement_value (float): Replacement value. Defaults to 6.0.
-            n_params (int): Number of parameters. Defaults to 3.
-            uniform_range (Optional[List[float]]): Range for uniform distribution. Defaults to None.
-            bidirectional (bool): Whether GRU is bidirectional. Defaults to False.
+            input_dim: Input dimension size. Defaults to 1.
+            hidden_dim: Hidden state dimension. Defaults to 64.
+            num_layers: Number of GRU layers. Defaults to 2.
+            dropout: Dropout probability. Defaults to 0.1.
+            activation: Activation function for predictor MLP. Defaults to 'relu'.
+            af_param: Activation parameter. Defaults to 1.0.
+            threshold: Activation threshold. Defaults to 6.0.
+            replacement_value: Replacement value. Defaults to 6.0.
+            n_params: Number of parameters. Defaults to 3.
+            uniform_range: Range for uniform distribution. Defaults to None.
+            bidirectional: Whether GRU is bidirectional. Defaults to False.
         """
         if uniform_range is None:
             uniform_range = [0.125, 1 / 3]
@@ -93,7 +93,7 @@ class GatedRecurrentUnitFillPredictor(nn.Module):
         """Forward pass to predict next fill level.
 
         Args:
-            fill_history (torch.Tensor): Sequence of historical fill levels of shape (batch, seq, feat).
+            fill_history: Sequence of historical fill levels of shape (batch, seq, feat).
 
         Returns:
             torch.Tensor: Predicted next fill level of shape (batch, 1).
@@ -107,8 +107,8 @@ class GatedRecurrentUnitFillPredictor(nn.Module):
         """Initializes the hidden state.
 
         Args:
-            batch_size (int): Size of the input batch.
-            device (torch.device): Device to place the hidden state on.
+            batch_size: Size of the input batch.
+            device: Device to place the hidden state on.
 
         Returns:
             torch.Tensor: Initial hidden state of shape (num_layers * num_directions, batch_size, hidden_dim).

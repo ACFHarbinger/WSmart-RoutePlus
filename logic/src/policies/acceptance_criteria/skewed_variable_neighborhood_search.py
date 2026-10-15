@@ -47,9 +47,9 @@ class SkewedVNSAcceptance(IAcceptanceCriterion):
         """Initialize the Skewed VNS criterion.
 
         Args:
-            alpha (float): Scaling factor for structural distance.
-            metric (IDistanceMetric): Metric for computing structural distance rho.
-            maximization (bool): Whether the problem is maximization.
+            alpha: Scaling factor for structural distance.
+            metric: Metric for computing structural distance rho.
+            maximization: Whether the problem is maximization.
                 Defaults to True.
         """
         self.alpha = alpha
@@ -60,7 +60,7 @@ class SkewedVNSAcceptance(IAcceptanceCriterion):
         """Initialize the criterion state.
 
         Args:
-            initial_objective (ObjectiveValue): The initial solution's objective.
+            initial_objective: The initial solution's objective.
         """
         initial_objective = cast(float, initial_objective)
         pass
@@ -71,9 +71,9 @@ class SkewedVNSAcceptance(IAcceptanceCriterion):
         """Determine acceptance based on objective and structural distance.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            kwargs: Additional context.
 
         Returns:
             Tuple[bool, AcceptanceMetrics]: A tuple containing:
@@ -110,10 +110,10 @@ class SkewedVNSAcceptance(IAcceptanceCriterion):
         """No-op update step.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            accepted (bool): Whether the move was accepted.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            accepted: Whether the move was accepted.
+            kwargs: Additional context.
         """
         current_obj = cast(float, current_obj)
 

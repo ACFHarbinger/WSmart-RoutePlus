@@ -542,17 +542,17 @@ def _run_gurobi_optimizer(  # noqa: C901
     """Solve one day of the Smart Waste Collection Routing model.
 
     Args:
-        bins (NDArray[np.float64]): Bin fill levels in percent (depot excluded).
-        distance_matrix (List[List[float]]): Distance matrix between nodes (km).
-        env (Optional[gp.Env]): Gurobi environment.
-        values (Dict[str, Any]): Problem parameters (Q, R, C, V runtime scalars).
-        binsids (List[int]): Global identifiers for bins.
-        mandatory (List[int]): IDs of bins that must be collected.
-        number_vehicles (int): Maximum number of vehicles; non-positive means unbounded.
-        time_limit (int): Solver time limit in seconds.
-        seed (int): Random seed for reproducibility.
-        dual_values (Optional[Dict[int, float]]): Dual values for pricing subproblems.
-        cfg (Optional[Union[SWCTCFConfig, Dict[str, Any]]]): Typed policy config (P-10:
+        bins: Bin fill levels in percent (depot excluded).
+        distance_matrix: Distance matrix between nodes (km).
+        env: Gurobi environment.
+        values: Problem parameters (Q, R, C, V runtime scalars).
+        binsids: Global identifiers for bins.
+        mandatory: IDs of bins that must be collected.
+        number_vehicles: Maximum number of vehicles; non-positive means unbounded.
+        time_limit: Solver time limit in seconds.
+        seed: Random seed for reproducibility.
+        dual_values: Dual values for pricing subproblems.
+        cfg: Typed policy config (P-10:
             the single source of truth for the solver switches). Direct callers that
             predate the typed config may omit it and pass the switches in ``values``;
             they are folded into the config before reading.

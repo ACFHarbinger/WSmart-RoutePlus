@@ -43,7 +43,7 @@ class SpatialSynergySelection(IPackingAlgorithm):
         """Select critical bins and their valid spatial synergies.
 
         Args:
-            context (PackingContext): The selection context providing current_fill and distance_matrix.
+            context: The selection context providing current_fill and distance_matrix.
 
         Returns:
             Tuple[List[int], SearchContext]: Selected bin IDs (1-based) and search context.

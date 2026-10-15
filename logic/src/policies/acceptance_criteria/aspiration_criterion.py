@@ -42,7 +42,7 @@ class AspirationCriterion(IAcceptanceCriterion):
         """Initialize the global best with the starting objective.
 
         Args:
-            initial_objective (ObjectiveValue): The initial solution's objective.
+            initial_objective: The initial solution's objective.
         """
         initial_objective = cast(float, initial_objective)
         self.global_best = initial_objective

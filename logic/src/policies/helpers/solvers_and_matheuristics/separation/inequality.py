@@ -38,8 +38,8 @@ class Inequality:
         """Initialize the base inequality.
 
         Args:
-            inequality_type (str): Identifier for the cut type (e.g., 'SEC', 'COMB').
-            degree_of_violation (float): How much the LP solution violates this cut.
+            inequality_type: Identifier for the cut type (e.g., 'SEC', 'COMB').
+            degree_of_violation: How much the LP solution violates this cut.
         """
         self.type = inequality_type
         self.violation = degree_of_violation
@@ -84,11 +84,11 @@ class PCSubtourEliminationCut(Inequality):
         """Initialize a Subtour Elimination Cut.
 
         Args:
-            node_set (Set[int]): The set of nodes forming the subtour.
-            violation (float): The degree of LP violation.
-            facet_form (str): The specific mathematical form of the facet.
-            node_i (int): First endpoint node (if applicable).
-            node_j (int): Second endpoint node (if applicable).
+            node_set: The set of nodes forming the subtour.
+            violation: The degree of LP violation.
+            facet_form: The specific mathematical form of the facet.
+            node_i: First endpoint node (if applicable).
+            node_j: Second endpoint node (if applicable).
         """
         super().__init__("SEC", violation)
         self.node_set = node_set
@@ -119,10 +119,10 @@ class CapacityCut(Inequality):
         """Initialize a Capacity Cut.
 
         Args:
-            node_set (Set[int]): The set of nodes in the component.
-            total_demand (float): Sum of demands for the node set.
-            capacity (float): Vehicle capacity.
-            violation (float): The degree of LP violation.
+            node_set: The set of nodes in the component.
+            total_demand: Sum of demands for the node set.
+            capacity: Vehicle capacity.
+            violation: The degree of LP violation.
         """
         super().__init__("CAPACITY", violation)
         self.node_set = node_set
@@ -151,9 +151,9 @@ class CombInequality(Inequality):
         """Initialize a Comb Inequality.
 
         Args:
-            handle (Set[int]): The handle set of the comb.
-            teeth (List[Set[int]]): The list of tooth sets.
-            violation (float): The degree of LP violation.
+            handle: The handle set of the comb.
+            teeth: The list of tooth sets.
+            violation: The degree of LP violation.
         """
         super().__init__("COMB", violation)
         self.handle = handle

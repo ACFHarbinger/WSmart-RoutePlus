@@ -41,8 +41,6 @@ class VectorizedSelector(PolicyVizMixin, ABC):
         Args:
             kwargs: Class creation arguments passed to super.
 
-        Returns:
-            None.
         """
         super().__init_subclass__(**kwargs)
         if "select" in cls.__dict__:

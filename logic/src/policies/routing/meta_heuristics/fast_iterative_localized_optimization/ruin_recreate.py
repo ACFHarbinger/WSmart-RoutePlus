@@ -56,8 +56,6 @@ class RuinAndRecreate:
             profit_aware_operators: Whether to use profit-aware operators.
             vrpp: Whether solving VRP with Profits.
 
-        Returns:
-            None.
         """
         self.d = dist_matrix
         self.waste = wastes

@@ -137,11 +137,11 @@ def _compute_overflow_risk(
     deterministic current-fill proxy when no tree is provided.
 
     Args:
-        current_fill (np.ndarray): Current fill levels as percentages (shape ``(n_bins,)``).
-        bin_mass (np.ndarray): Full waste capacity in kg for each bin.
-        scenario_tree (Optional[Any]): Optional ``ScenarioTree`` from the prediction module.
+        current_fill: Current fill levels as percentages (shape ``(n_bins,)``).
+        bin_mass: Full waste capacity in kg for each bin.
+        scenario_tree: Optional ``ScenarioTree`` from the prediction module.
             Must expose ``get_scenarios_at_day(day)`` and ``horizon``.
-        overflow_penalty_frac (float): Occurrence penalty as a fraction of full bin
+        overflow_penalty_frac: Occurrence penalty as a fraction of full bin
             capacity added per unit of overflow probability.
 
     Returns:
@@ -216,10 +216,10 @@ def _fptas_01_knapsack(
     induction on the DP layers.
 
     Args:
-        values (np.ndarray): Non-negative per-item values (shape ``(n,)``).
-        weights (np.ndarray): Non-negative per-item weights (shape ``(n,)``).
-        capacity (float): Knapsack weight capacity (scalar).
-        epsilon (float): Approximation parameter ε ∈ (0, 1).
+        values: Non-negative per-item values (shape ``(n,)``).
+        weights: Non-negative per-item weights (shape ``(n,)``).
+        capacity: Knapsack weight capacity (scalar).
+        epsilon: Approximation parameter ε ∈ (0, 1).
 
     Returns:
         np.ndarray: Boolean mask of length ``n`` — True for each selected item.
@@ -401,7 +401,7 @@ class FPTASKnapsackSelection(IPackingAlgorithm):
         dominates (1/2-approximation fallback).
 
         Args:
-            context (PackingContext): The selection context.
+            context: The selection context.
 
         Returns:
             Tuple[List[int], SearchContext]: Selected bin IDs and search context.

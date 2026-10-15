@@ -80,8 +80,6 @@ class BlockTimer:
         prefix: Metric key prefix.  The value is logged as
             ``{prefix}/{name}_sec``.
 
-        Returns:
-            None
         """
         self.name = name
         self.log_metric = log_metric
@@ -119,8 +117,6 @@ class BlockTimer:
         Forward the elapsed time to the active WSTracker run (silent no-op
         when no run is active or an error occurs).
 
-        Returns:
-            None
         """
         with contextlib.suppress(Exception):
             run = get_active_run()
@@ -143,8 +139,6 @@ class BlockTimer:
         Args:
             _args: Arguments passed to the exit method.
 
-        Returns:
-            None
         """
         self.stop()
 
@@ -232,8 +226,6 @@ class MultiStepTimer:
         """
         Commit the current phase's time to the internal storage.
 
-        Returns:
-            None
         """
         if self._phase_start is None or self._current_phase is None:
             return
@@ -283,8 +275,6 @@ class MultiStepTimer:
             prefix: Metric key prefix.
             step: Metric step dimension forwarded to ``Run.log_metrics``.
 
-        Returns:
-            None
         """
         with contextlib.suppress(Exception):
             run = get_active_run()
@@ -373,7 +363,7 @@ def profile_function(
         """Internal decorator that wraps the target function to add profiling.
 
         Args:
-            fn (Callable): The function to be timed and logged.
+            fn: The function to be timed and logged.
 
         Returns:
             Callable: The decorated function with timing logic injected.

@@ -40,8 +40,8 @@ class AttentionComponentFactory(NeuralComponentFactory):
         """Create Graph Attention Encoder.
 
         Args:
-            norm_config (Optional[NormalizationConfig]): Normalization settings. Defaults to None.
-            activation_config (Optional[ActivationConfig]): Activation settings. Defaults to None.
+            norm_config: Normalization settings. Defaults to None.
+            activation_config: Activation settings. Defaults to None.
             kwargs: Architecture-specific configuration passed to GraphAttentionEncoder.
 
         Returns:
@@ -63,9 +63,9 @@ class AttentionComponentFactory(NeuralComponentFactory):
         """Create decoder based on decoder_type.
 
         Args:
-            decoder_type (str): Type of decoder instance to create. Defaults to 'attention'.
-            norm_config (Optional[NormalizationConfig]): Normalization settings. Defaults to None.
-            activation_config (Optional[ActivationConfig]): Activation settings. Defaults to None.
+            decoder_type: Type of decoder instance to create. Defaults to 'attention'.
+            norm_config: Normalization settings. Defaults to None.
+            activation_config: Activation settings. Defaults to None.
             kwargs: Architecture-specific configuration passed to the decoder.
 
         Returns:

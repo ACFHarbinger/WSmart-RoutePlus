@@ -172,7 +172,7 @@ class CALMPolicy(BaseMultiPeriodRoutingPolicy):
         Initialize the CALM policy.
 
         Args:
-            config (Any): The configuration for the policy.
+            config: The configuration for the policy.
         """
         super().__init__(config)
         self.params = CALMParams.from_config(self.config) if config else CALMParams()
@@ -216,8 +216,8 @@ class CALMPolicy(BaseMultiPeriodRoutingPolicy):
         Run the multi-period solver.
 
         Args:
-            problem (ProblemContext): The problem context.
-            multi_day_ctx (Optional[MultiDayContext]): The multi-day context.
+            problem: The problem context.
+            multi_day_ctx: The multi-day context.
 
         Returns:
             Tuple[SolutionContext, List[List[List[int]]], Dict[str, Any]]: The solution context, routing results, and metadata.
@@ -332,7 +332,7 @@ class CALMPolicy(BaseMultiPeriodRoutingPolicy):
         Initialize the internal state of the policy.
 
         Args:
-            problem (ProblemContext): The problem context.
+            problem: The problem context.
 
         Returns:
             _RunState: The internal state of the policy.
@@ -417,10 +417,10 @@ class CALMPolicy(BaseMultiPeriodRoutingPolicy):
         Solve the selection layer.
 
         Args:
-            state (_RunState): The internal state of the policy.
-            problem (ProblemContext): The problem context.
-            engine (str): The engine.
-            plan (RegretPlan): The regret plan.
+            state: The internal state of the policy.
+            problem: The problem context.
+            engine: The engine.
+            plan: The regret plan.
 
         Returns:
             List[SelectionResult]: The selection results.
@@ -485,9 +485,9 @@ class CALMPolicy(BaseMultiPeriodRoutingPolicy):
         Solve the routing layer.
 
         Args:
-            state (_RunState): The internal state of the policy.
-            problem (ProblemContext): The problem context.
-            selection_results (List[SelectionResult]): The selection results.
+            state: The internal state of the policy.
+            problem: The problem context.
+            selection_results: The selection results.
 
         Returns:
             List[RoutingResult]: The routing results.
@@ -541,10 +541,10 @@ class CALMPolicy(BaseMultiPeriodRoutingPolicy):
         """Return per-period {bin: penalty} dicts.
 
         Args:
-            strategy (str): The cut generation strategy.
-            selection_results (List[SelectionResult]): The selection results.
-            state (_RunState): The internal state of the policy.
-            problem (ProblemContext): The problem context.
+            strategy: The cut generation strategy.
+            selection_results: The selection results.
+            state: The internal state of the policy.
+            problem: The problem context.
 
         Returns:
             Dict[int, Dict[int, float]]: The per-period {bin: penalty} dicts.
@@ -587,8 +587,8 @@ class CALMPolicy(BaseMultiPeriodRoutingPolicy):
         minus stockout penalty for any bin that overflows before being visited.
 
         Args:
-            state (_RunState): The internal state of the policy.
-            problem (ProblemContext): The problem context.
+            state: The internal state of the policy.
+            problem: The problem context.
 
         Returns:
             Tuple[float, bool]: The primal value and whether it's an improvement.
@@ -627,8 +627,8 @@ class CALMPolicy(BaseMultiPeriodRoutingPolicy):
         period's best-known selection, add the overflow amount to the penalty.
 
         Args:
-            state (_RunState): The internal state of the policy.
-            problem (ProblemContext): The problem context.
+            state: The internal state of the policy.
+            problem: The problem context.
 
         Returns:
             float: The stockout penalty.
@@ -653,7 +653,7 @@ class CALMPolicy(BaseMultiPeriodRoutingPolicy):
         Determine whether to stop the algorithm.
 
         Args:
-            state (_RunState): The internal state of the policy.
+            state: The internal state of the policy.
 
         Returns:
             bool: True if the algorithm should stop, False otherwise.
@@ -686,9 +686,9 @@ class CALMPolicy(BaseMultiPeriodRoutingPolicy):
         Assemble the full selection matrix x_K.
 
         Args:
-            selection_results (List[SelectionResult]): The selection results.
-            n_bins (int): The number of bins.
-            horizon (int): The horizon.
+            selection_results: The selection results.
+            n_bins: The number of bins.
+            horizon: The horizon.
 
         Returns:
             np.ndarray: The selection matrix.
@@ -715,8 +715,8 @@ class CALMPolicy(BaseMultiPeriodRoutingPolicy):
         just sum.
 
         Args:
-            selection_results (List[SelectionResult]): The selection results.
-            routing_results (List[RoutingResult]): The routing results.
+            selection_results: The selection results.
+            routing_results: The routing results.
 
         Returns:
             float: The full Lagrangian value.
@@ -730,8 +730,8 @@ class CALMPolicy(BaseMultiPeriodRoutingPolicy):
         Build the context for the neural network.
 
         Args:
-            state (_RunState): The internal state of the policy.
-            problem (ProblemContext): The problem context.
+            state: The internal state of the policy.
+            problem: The problem context.
 
         Returns:
             np.ndarray: The context for the neural network.
@@ -796,13 +796,13 @@ class CALMPolicy(BaseMultiPeriodRoutingPolicy):
         Log the current iteration.
 
         Args:
-            state (_RunState): The internal state of the policy.
-            arm_idx (int): The index of the arm.
-            engine (str): The engine.
-            cut_strategy (str): The cut strategy.
-            primal (float): The primal value.
-            lagrangian (float): The Lagrangian value.
-            coord_stats (Dict[str, float]): The coordinator statistics.
+            state: The internal state of the policy.
+            arm_idx: The index of the arm.
+            engine: The engine.
+            cut_strategy: The cut strategy.
+            primal: The primal value.
+            lagrangian: The Lagrangian value.
+            coord_stats: The coordinator statistics.
         """
         dual = state.coordinator.current_dual_bound()
         msg = (
@@ -828,8 +828,8 @@ class CALMPolicy(BaseMultiPeriodRoutingPolicy):
             (today's SolutionContext, full_plan, telemetry)
 
         Args:
-            state (_RunState): The internal state of the policy.
-            problem (ProblemContext): The problem context.
+            state: The internal state of the policy.
+            problem: The problem context.
 
         Returns:
             Tuple[SolutionContext, List[List[List[int]]], Dict[str, Any]]: The solution context, full plan, and telemetry.

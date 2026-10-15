@@ -10,8 +10,6 @@ Attributes:
     NeuOptEncoder: Deep Transformer node-feature representation encoder.
     NeuOptDecoder: Pairwise action decoder for move selection.
 
-Example:
-    >>> from logic.src.models.core.neuopt import NeuOpt
 """
 
 from .decoder import NeuOptDecoder as NeuOptDecoder

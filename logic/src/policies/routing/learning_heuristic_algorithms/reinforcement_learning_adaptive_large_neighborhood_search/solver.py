@@ -469,9 +469,9 @@ class RLALNSSolver:
         Execute a destroy-repair iteration using selected operators.
 
         Args:
-            routes (List[List[int]]): Current solution routes.
-            d_idx (int): Index of the destroy operator to use.
-            r_idx (int): Index of the repair operator to use.
+            routes: Current solution routes.
+            d_idx: Index of the destroy operator to use.
+            r_idx: Index of the repair operator to use.
 
         Returns:
             List[List[int]]: The newly generated candidate solution.
@@ -504,7 +504,7 @@ class RLALNSSolver:
         Map a single flat action index back to its component (destroy, repair) indices.
 
         Args:
-            action (int): Flat action index in range [0, n_actions).
+            action: Flat action index in range [0, n_actions).
 
         Returns:
             Tuple[int, int]: (destroy_operator_index, repair_operator_index).
@@ -519,7 +519,7 @@ class RLALNSSolver:
         Calculate the total routing cost for a set of routes.
 
         Args:
-            routes (List[List[int]]): The routes to evaluate.
+            routes: The routes to evaluate.
 
         Returns:
             float: Total distance covered by all routes.

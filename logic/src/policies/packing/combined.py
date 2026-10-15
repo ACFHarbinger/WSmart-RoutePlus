@@ -63,7 +63,7 @@ class CombinedSelection(IPackingAlgorithm):
         logical operator.
 
         Args:
-            context (PackingContext): The selection context.
+            context: The selection context.
 
         Returns:
             Tuple[List[int], SearchContext]: Selected bin IDs (1-based) and search context.
@@ -111,8 +111,8 @@ class CombinedSelection(IPackingAlgorithm):
         """Create a shallow copy of context with updated parameters.
 
         Args:
-            context (PackingContext): The original selection context.
-            params (Dict[str, Any]): Parameters to update in the context.
+            context: The original selection context.
+            params: Parameters to update in the context.
 
         Returns:
             PackingContext: The updated selection context.

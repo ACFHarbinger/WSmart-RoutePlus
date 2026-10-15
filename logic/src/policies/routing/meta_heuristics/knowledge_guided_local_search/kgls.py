@@ -79,8 +79,6 @@ class KGLSSolver:
             params: Parameters for the algorithm.
             mandatory_nodes: List of mandatory nodes.
 
-        Returns:
-            None.
         """
         self.dist_matrix = dist_matrix
         self.locations = locations

@@ -1,5 +1,10 @@
 # Data Management, Generation & Transformation
 
+> **Status (Q-22):** narrative guide. The API reference is generated into
+> `docs/api/` by `tools/gen_api_docs.py`; this file is not the source of
+> truth for signatures and module inventories.
+
+
 **Module**: `logic/src/data`
 **Purpose**: Comprehensive technical specification of the WSmart-Route data lifecycle—from procedural generation to high-performance dataset management.
 **Version**: 3.0

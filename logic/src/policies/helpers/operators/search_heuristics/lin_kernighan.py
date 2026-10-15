@@ -489,17 +489,17 @@ def solve_lk(
     nearest-neighbour candidate lists.
 
     Args:
-        distance_matrix (np.ndarray): (n × n) symmetric cost matrix.
-        initial_tour (Optional[List[int]]): Optional starting tour (closed).
+        distance_matrix: (n × n) symmetric cost matrix.
+        initial_tour: Optional starting tour (closed).
             Nearest-neighbour is used when not provided.
-        max_iterations (int): Maximum ILS perturbation restarts.
-        max_depth (int): Maximum sequential search depth (2–5). Higher values
+        max_iterations: Maximum ILS perturbation restarts.
+        max_depth: Maximum sequential search depth (2–5). Higher values
             find better solutions but scale as O(n · k^{depth-1}).
-        n_candidates (int): α-nearest-neighbour candidate list size per node.
-        recorder (Optional[PolicyStateRecorder]): Optional recorder for telemetry.
-        np_rng (Optional[np.random.Generator]): NumPy Generator (seeded from
+        n_candidates: α-nearest-neighbour candidate list size per node.
+        recorder: Optional recorder for telemetry.
+        np_rng: NumPy Generator (seeded from
             ``seed`` if not provided).
-        seed (Optional[int]): Alternative seed (overridden by ``np_rng`` if given).
+        seed: Alternative seed (overridden by ``np_rng`` if given).
 
     Returns:
         Tuple[List[int], float]: (best_tour, best_cost) — closed node sequence and

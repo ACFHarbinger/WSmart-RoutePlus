@@ -33,11 +33,11 @@ class RecourseEvaluator:
         r"""Compute Q̄(ŷ) and Benders optimality cut coefficients over T days.
 
         Args:
-            y_hat (Dict[int, float]): Current master problem visit decisions {node_idx: value}.
-            scenarios (List[List[np.ndarray]]): List of scenario paths. Each path is a list of [node_fill_array] for T days.
-            overflow_penalty (float): Cost per %-fill unit of overflow.
-            undervisit_penalty (float): Cost of wasted trip Day 0.
-            collection_threshold (float): Trigger level.
+            y_hat: Current master problem visit decisions {node_idx: value}.
+            scenarios: List of scenario paths. Each path is a list of [node_fill_array] for T days.
+            overflow_penalty: Cost per %-fill unit of overflow.
+            undervisit_penalty: Cost of wasted trip Day 0.
+            collection_threshold: Trigger level.
 
         Returns:
             Tuple[float, float, Dict[int, float]]: A tuple containing:

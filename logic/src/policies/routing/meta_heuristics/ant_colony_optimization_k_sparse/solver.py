@@ -72,13 +72,13 @@ class KSparseACOSolver:
         """Initializes the K-Sparse Ant Colony Optimization solver.
 
         Args:
-            node_coords (np.ndarray): Node coordinates.
-            wastes (Dict[int, float]): Mapping of bin IDs to waste quantities.
-            capacity (float): Maximum vehicle collection capacity.
-            R (float): Revenue multiplier for waste collected.
-            C (float): Cost multiplier for distance traveled.
-            params (KSparseACOConfig): Algorithm-specific hyperparameters.
-            mandatory_nodes (Optional[List[int]]): Nodes that must be visited.
+            node_coords: Node coordinates.
+            wastes: Mapping of bin IDs to waste quantities.
+            capacity: Maximum vehicle collection capacity.
+            R: Revenue multiplier for waste collected.
+            C: Cost multiplier for distance traveled.
+            params: Algorithm-specific hyperparameters.
+            mandatory_nodes: Nodes that must be visited.
         """
         self.node_coords = np.array(node_coords)
         self.wastes = wastes

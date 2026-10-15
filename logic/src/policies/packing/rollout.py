@@ -50,7 +50,7 @@ class RolloutSelection(IPackingAlgorithm):
         "deferring to tomorrow" using a one-step rollout algorithm.
 
         Args:
-            context (PackingContext): The selection context.
+            context: The selection context.
 
         Returns:
             Tuple[List[int], SearchContext]: Selected bin IDs (1-based) and search context.
@@ -157,17 +157,17 @@ class RolloutSelection(IPackingAlgorithm):
             "collect today" and "defer indefinitely" (both zeros if costs=0).
 
         Args:
-            idx (int): Bin index.
-            collect_today (bool): Whether to collect today.
-            context (PackingContext): The selection context.
-            base_policy (IPackingAlgorithm): The base policy to use.
-            horizon (int): Rollout horizon.
-            n_scenarios (int): Number of scenarios.
-            bin_cap (float): Bin capacity in kg.
-            revenue_kg (float): Revenue per kg.
-            round_trip_cost (np.ndarray): Round trip cost for each bin.
-            max_fill (float): Maximum fill percentage.
-            target_sigma (float): Standard deviation of accumulation.
+            idx: Bin index.
+            collect_today: Whether to collect today.
+            context: The selection context.
+            base_policy: The base policy to use.
+            horizon: Rollout horizon.
+            n_scenarios: Number of scenarios.
+            bin_cap: Bin capacity in kg.
+            revenue_kg: Revenue per kg.
+            round_trip_cost: Round trip cost for each bin.
+            max_fill: Maximum fill percentage.
+            target_sigma: Standard deviation of accumulation.
 
         Returns:
             float: Expected reward.

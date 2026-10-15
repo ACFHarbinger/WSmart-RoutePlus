@@ -1,5 +1,10 @@
 # Global Constants, Registries & Configuration Keys
 
+> **Status (Q-22):** narrative guide. The API reference is generated into
+> `docs/api/` by `tools/gen_api_docs.py`; this file is not the source of
+> truth for signatures and module inventories.
+
+
 **Module**: `logic/src/constants`
 **Purpose**: Centralized technical specification of global constants, mapping registries, and configuration keys used throughout WSmart-Route.
 **Version**: 3.0

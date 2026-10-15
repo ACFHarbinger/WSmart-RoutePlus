@@ -43,7 +43,7 @@ class SetCoverSelection(IPackingAlgorithm):
         """Select hub bins to cover all critical bins within service_radius.
 
         Args:
-            context (PackingContext): The selection context providing current_fill and distance_matrix.
+            context: The selection context providing current_fill and distance_matrix.
 
         Returns:
             Tuple[List[int], SearchContext]: Selected bin IDs (1-based) and search context.

@@ -83,7 +83,7 @@ class GPMPHHPolicy(BaseMultiPeriodRoutingPolicy):
         """Initialize GPMPHHPolicy.
 
         Args:
-            config (Any): Configuration for the solver.
+            config: Configuration for the solver.
         """
         super().__init__(config)
         self.params = self._effective_config(config)
@@ -98,8 +98,8 @@ class GPMPHHPolicy(BaseMultiPeriodRoutingPolicy):
         """Evaluate the fitness of a given plan.
 
         Args:
-            plan (List[List[List[int]]]): The plan to evaluate.
-            problem (ProblemContext): The problem context.
+            plan: The plan to evaluate.
+            problem: The problem context.
 
         Returns:
             float: The fitness of the given plan.

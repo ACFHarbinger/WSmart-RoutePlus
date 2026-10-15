@@ -95,19 +95,19 @@ class RCSPPSolver:
         """Initialize the RCSPP solver for the pricing subproblem.
 
         Args:
-            n_nodes (int): Number of customer nodes (excluding depot).
-            cost_matrix (np.ndarray): Distance/cost matrix between all nodes.
-            wastes (Dict[int, float]): Mapping of node IDs to waste amounts.
-            capacity (float): Maximum vehicle capacity.
-            revenue_per_kg (float): Revenue earned per unit of waste collected.
-            cost_per_km (float): Cost incurred per unit of distance traveled.
-            mandatory_nodes (Optional[Set[int]]): Nodes that MUST be visited if possible.
-            use_ng_routes (bool): Whether to use ng-route relaxation.
-            ng_neighborhood_size (int): Size of ng-neighborhood for each node.
-            ng_neighborhoods (Optional[Dict[int, Set[int]]]): Precomputed ng-neighborhoods.
-            node_prizes (Optional[Dict[int, float]]): Alternative profit per node (replaces waste * R).
-            timeout (float): Maximum time allowed for solving in seconds.
-            max_labels (int): Limit on generated labels to prevent explosion.
+            n_nodes: Number of customer nodes (excluding depot).
+            cost_matrix: Distance/cost matrix between all nodes.
+            wastes: Mapping of node IDs to waste amounts.
+            capacity: Maximum vehicle capacity.
+            revenue_per_kg: Revenue earned per unit of waste collected.
+            cost_per_km: Cost incurred per unit of distance traveled.
+            mandatory_nodes: Nodes that MUST be visited if possible.
+            use_ng_routes: Whether to use ng-route relaxation.
+            ng_neighborhood_size: Size of ng-neighborhood for each node.
+            ng_neighborhoods: Precomputed ng-neighborhoods.
+            node_prizes: Alternative profit per node (replaces waste * R).
+            timeout: Maximum time allowed for solving in seconds.
+            max_labels: Limit on generated labels to prevent explosion.
         """
         self.n_nodes = n_nodes
         self.cost_matrix = cost_matrix
@@ -219,7 +219,7 @@ class RCSPPSolver:
         """Expands ng-neighborhoods to break detected cycles.
 
         Args:
-            cycles (List[Tuple[int, ...]]): List of node cycles detected in fractional solutions.
+            cycles: List of node cycles detected in fractional solutions.
 
         Returns:
             int: Total number of neighbor relations added.
@@ -252,17 +252,17 @@ class RCSPPSolver:
         """Solve the RCSPP subproblem to find columns with positive reduced cost.
 
         Args:
-            dual_values (Union[Dict[int, float], Dict[str, Any]]): Master problem duals.
-            max_routes (int): Maximum number of profitable routes to return.
-            branching_constraints (Optional[List[AnyBranchingConstraint]]): Active branching rules.
-            capacity_cut_duals (Optional[Dict[FrozenSet[int], float]]): Duals for capacity cuts.
-            sri_cut_duals (Optional[Dict[FrozenSet[int], float]]): Duals for SRI cuts.
-            edge_clique_cut_duals (Optional[Dict[Tuple[int, int], float]]): Duals for edge clique cuts.
-            forced_nodes (Optional[Set[int]]): Nodes required by branching.
-            rf_conflicts (Optional[Dict[int, Set[int]]]): Ryan-Foster branching conflicts.
-            is_farkas (bool): If True, solve Farkas pricing for feasibility.
-            exact_mode (bool): If True, disables neighborhood pruning.
-            timeout (Optional[float]): Optional override for solver timeout.
+            dual_values: Master problem duals.
+            max_routes: Maximum number of profitable routes to return.
+            branching_constraints: Active branching rules.
+            capacity_cut_duals: Duals for capacity cuts.
+            sri_cut_duals: Duals for SRI cuts.
+            edge_clique_cut_duals: Duals for edge clique cuts.
+            forced_nodes: Nodes required by branching.
+            rf_conflicts: Ryan-Foster branching conflicts.
+            is_farkas: If True, solve Farkas pricing for feasibility.
+            exact_mode: If True, disables neighborhood pruning.
+            timeout: Optional override for solver timeout.
 
         Returns:
             List[Route]: List of identified profitable routes.

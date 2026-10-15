@@ -43,11 +43,11 @@ def apply_type_ii_us(route: List[int], i: int, j: int, k: int, l: int) -> List[i
     Inserts arcs: (V_{i-1}, V_k), (V_{i+1}, V_j), (V_{k+1}, V_l), (V_{j+1}, V_{l+1})
 
     Args:
-        route (List[int]): The tour.
-        i (int): Index of V_i.
-        j (int): Index of neighbor node j.
-        k (int): Index of neighbor node k.
-        l (int): Index of neighbor node l.
+        route: The tour.
+        i: Index of V_i.
+        j: Index of neighbor node j.
+        k: Index of neighbor node k.
+        l: Index of neighbor node l.
 
     Returns:
         List[int]: Modified tour.
@@ -110,15 +110,15 @@ def apply_type_ii_us_profit(
     Apply Type II Unstringing and return profit delta.
 
     Args:
-        route (List[int]): The tour.
-        i (int): Index of V_i.
-        j (int): Index of neighbor node j.
-        k (int): Index of neighbor node k.
-        l (int): Index of neighbor node l.
-        dist_matrix (np.ndarray): Distance matrix.
-        wastes (Dict[int, float]): Waste levels.
-        R (float): Revenue multiplier.
-        C (float): Cost multiplier.
+        route: The tour.
+        i: Index of V_i.
+        j: Index of neighbor node j.
+        k: Index of neighbor node k.
+        l: Index of neighbor node l.
+        dist_matrix: Distance matrix.
+        wastes: Waste levels.
+        R: Revenue multiplier.
+        C: Cost multiplier.
 
     Returns:
         Tuple[List[int], float]: (new_route, delta_profit)

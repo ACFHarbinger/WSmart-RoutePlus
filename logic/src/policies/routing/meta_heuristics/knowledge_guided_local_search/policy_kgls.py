@@ -40,8 +40,6 @@ class KGLSPolicy(BaseRoutingPolicy):
         Args:
             config: KGLSConfig dataclass, raw dict from YAML, or None.
 
-        Returns:
-            None.
         """
         super().__init__(config)
 

@@ -6,8 +6,6 @@ Attributes:
     run_alns_ortools: OR-Tools based ALNS implementation.
     run_alns_package: Package-based ALNS implementation.
 
-Example:
-    >>> from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search import ALNSSolver
 """
 
 from .alns import ALNSSolver

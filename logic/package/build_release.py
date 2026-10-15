@@ -493,8 +493,8 @@ def run_check(manifest: dict) -> int:  # noqa: C901
         if not (LOGIC / "configs" / "policies" / f"policy_{key}.yaml").is_file():
             problems.append(f"routing key {key!r}: no configs/policies/policy_{key}.yaml")
     for key in packing:
-        if not (LOGIC / "configs" / "policies" / "other" / f"ms_{key}.yaml").is_file():
-            problems.append(f"packing key {key!r}: no configs/policies/other/ms_{key}.yaml")
+        if not (LOGIC / "configs" / "policies" / "other" / f"pk_{key}.yaml").is_file():
+            problems.append(f"packing key {key!r}: no configs/policies/other/pk_{key}.yaml")
     for stage, keys in manifest["stages"].items():
         for key in keys:
             target = stage_entries[stage].get(key, "")
@@ -555,7 +555,7 @@ def run_build(manifest: dict, out: Path) -> int:  # noqa: C901
     other_dir = out / "logic" / "configs" / "policies" / "other"
     if other_dir.is_dir():
         for yaml_path in sorted(other_dir.glob("*.yaml")):
-            if yaml_path.stem.removeprefix("ms_") not in packing:
+            if yaml_path.stem.removeprefix("pk_") not in packing:
                 yaml_path.unlink()
 
     # --- tests: release CI set only (P-06) ------------------------------- #
@@ -718,7 +718,7 @@ import sys
 sys.path.insert(0, sys.argv[1])
 assert "torch" not in sys.modules
 
-from logic.src.policies.packing.base.selection_registry import PackingRegistry  # noqa: F401
+from logic.src.policies.packing.base.registry import PackingRegistry  # noqa: F401
 from logic.src.policies.route_improvement.base.registry import RouteImproverRegistry  # noqa: F401
 from logic.src.policies.acceptance_criteria.base.registry import AcceptanceCriterionRegistry  # noqa: F401
 from logic.src.utils.registry import ACCEPTANCE, IMPROVEMENT, PACKING

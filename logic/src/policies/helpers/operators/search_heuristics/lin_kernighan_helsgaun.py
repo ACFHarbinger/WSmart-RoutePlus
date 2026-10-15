@@ -569,12 +569,12 @@ def run_subgradient(
     7. Halve μ if no improvement for ``patience`` consecutive iterations.
 
     Args:
-        distance_matrix (np.ndarray): (n x n) symmetric raw distance matrix.
-        max_iter (int): Maximum subgradient iterations.
-        mu_init (float): Initial step-size multiplier (μ₀ in Helsgaun 2000).
-        patience (int): Iterations without improvement before halving μ.
-        root (int): 1-tree root node (typically 0).
-        verbose (bool): Print per-iteration diagnostics.
+        distance_matrix: (n x n) symmetric raw distance matrix.
+        max_iter: Maximum subgradient iterations.
+        mu_init: Initial step-size multiplier (μ₀ in Helsgaun 2000).
+        patience: Iterations without improvement before halving μ.
+        root: 1-tree root node (typically 0).
+        verbose: Print per-iteration diagnostics.
 
     Returns:
         Tuple[np.ndarray, float, np.ndarray]: (pi, best_W, penalized_dm)
@@ -671,18 +671,18 @@ def solve_lkh1(
         d. Otherwise: apply double-bridge perturbation.
 
     Args:
-        distance_matrix (np.ndarray): (n x n) symmetric raw cost matrix.
-        initial_tour (Optional[List[int]]): Optional starting closed tour.
-        max_iterations (int): ILS restart budget.
-        max_k (int): Maximum k-opt depth (2–5).
-        n_candidates (int): Candidate list size per node.
-        sg_max_iter (int): Maximum subgradient iterations.
-        sg_mu_init (float): Initial Polyak step multiplier.
-        sg_patience (int): Patience for μ halving.
-        pool_size (int): Elite tour pool size (for merge recombination).
-        recorder (Optional[PolicyStateRecorder]): Optional telemetry recorder.
-        np_rng (Optional[np.random.Generator]): NumPy Generator.
-        seed (Optional[int]): Alternative seed.
+        distance_matrix: (n x n) symmetric raw cost matrix.
+        initial_tour: Optional starting closed tour.
+        max_iterations: ILS restart budget.
+        max_k: Maximum k-opt depth (2–5).
+        n_candidates: Candidate list size per node.
+        sg_max_iter: Maximum subgradient iterations.
+        sg_mu_init: Initial Polyak step multiplier.
+        sg_patience: Patience for μ halving.
+        pool_size: Elite tour pool size (for merge recombination).
+        recorder: Optional telemetry recorder.
+        np_rng: NumPy Generator.
+        seed: Alternative seed.
 
     Returns:
         Tuple[List[int], float, float]: (best_tour, best_cost, hk_lower_bound)
@@ -805,13 +805,13 @@ def solve_lkh(
     interface of the existing ``lin_kernighan_helsgaun.solve_lkh``.
 
     Args:
-        distance_matrix (np.ndarray): (n x n) symmetric cost matrix.
-        initial_tour (Optional[List[int]]): Optional starting tour (closed).
-        max_iterations (int): Maximum LKH-1 iterations.
-        max_k (int): Maximum k-opt move size (2 to 5).
-        recorder (Optional[PolicyStateRecorder]): Optional telemetry recorder.
-        np_rng (Optional[np.random.Generator]): NumPy Generator.
-        seed (Optional[int]): Alternative seed.
+        distance_matrix: (n x n) symmetric cost matrix.
+        initial_tour: Optional starting tour (closed).
+        max_iterations: Maximum LKH-1 iterations.
+        max_k: Maximum k-opt move size (2 to 5).
+        recorder: Optional telemetry recorder.
+        np_rng: NumPy Generator.
+        seed: Alternative seed.
 
     Returns:
         Tuple[List[int], float]: (best_tour, best_cost) without the Held-Karp bound.
