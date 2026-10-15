@@ -58,13 +58,14 @@ def _create_imitation(cfg: Config, policy, env, kw: Dict[str, Any]) -> pl.Lightn
 
     # Forward the full keyword set, as REINFORCE receives it: the base module reads the
     # training setup (cfg, train_time, batch sizes, curriculum) from it.
-    module_kw = {k: v for k, v in kw.items() if k not in ("policy_config", "seed", "device", "loss_fn")}
+    module_kw = {k: v for k, v in kw.items() if k not in ("policy_config", "seed", "device", "loss_fn", "fill_from")}
     return ImitationLearning(
         policy_config=policy_config,
         env_name=getattr(env_cfg, "name", "ptp") if env_cfg else "ptp",
         loss_fn=cfg.rl.imitation.loss_fn,
         seed=cfg.seed,
         device=cfg.device,
+        fill_from=cfg.rl.imitation.fill_from,
         **module_kw,
     )
 

@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Neural training stack (WP-10, `2026-10-15`)
 
+#### Added
+- **Q-23 (`rl.imitation.fill_from`):** chooses whose routes empty the bins between time-training days during imitation. `model` (default) keeps the model's sampled rollout, as in the paper models; nothing changes for existing runs. `expert` uses the expert's tours and skips the model's sampled decode in training (P-50 item 1): the step returns the expert's solve, the loss reuses it, and `train/reward`, the rollout metrics and the rollout's `train/log_likelihood`/`entropy` are not logged (`train/expert_reward` and the teacher-forced `train/log_likelihood` are). The skipped decode no longer draws random numbers, so an `expert` run's sampling stream differs from a `model` run's. Validation and test still decode the model. The training step's rollout is now the overridable `StepMixin._rollout(td, env, phase)`.
+
 #### Changed
 - **P-50 (batched expert):** the profitable nearest-neighbour expert (`policies/vector/profitable_nearest_neighbour.py`) solves the whole batch at once with NumPy instead of one instance at a time in Python. Its tours are identical to the original's: the nearest-neighbour tie-break, the first-improvement 2-opt order and the float32/float64 arithmetic are kept. Checked on 4,000 synthetic instances and on the Rio Maior 100/170 and Figueira da Foz 350 road matrices (emp and gamma3, 1, 3 and 7 days of waste), with no difference. Per instance, 170 gamma3 goes from 66 ms to 3.6 ms and 350 gamma3 from 280 ms to 15 ms. `test_profitable_nearest_neighbour_parity.py` keeps the original as the reference. The per-instance `_solve` and `_two_opt` methods are replaced by `solve(dms, wastes, revenue, cost)`; no migration is needed outside the expert.
 
