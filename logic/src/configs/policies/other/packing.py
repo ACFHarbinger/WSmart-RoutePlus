@@ -67,10 +67,10 @@ class RegularSelectionConfig:
     """Configuration for periodic collection on scheduled days.
 
     Attributes:
-        frequency: Frequency of regular selection.
+        threshold: Collection period in days (every N days).
     """
 
-    frequency: int = 3
+    threshold: int = 3
 
 
 @dataclass
@@ -78,11 +78,11 @@ class ServiceLevelSelectionConfig:
     """Configuration for statistical overflow prediction.
 
     Attributes:
-        confidence_factor: Confidence factor for statistical overflow prediction.
-        horizon_days: Days projected ahead (1 = SL1, 2 = SL2 in ``ms_service_level.yaml``).
+        threshold: Confidence factor for statistical overflow prediction.
+        horizon_days: Days projected ahead (1 = SL1, 2 = SL2 in ``pk_service_level.yaml``).
     """
 
-    confidence_factor: float = 1.0
+    threshold: float = 1.0
     horizon_days: int = 1
 
 
@@ -193,11 +193,11 @@ class CombinedSelectionConfig:
     """Configuration for combining multiple strategies with OR/AND logic.
 
     Attributes:
-        strategies: List of strategies to combine.
+        combined_strategies: List of strategies to combine.
         logic: Logic to combine the strategies (or/and).
     """
 
-    strategies: Optional[List[Dict[str, Any]]] = None
+    combined_strategies: Optional[List[Dict[str, Any]]] = None
     logic: str = "or"
 
 
@@ -353,11 +353,11 @@ class LearnedSelectionConfig:
 
     Attributes:
         learned_model_path: Path to the learned model.
-        learned_threshold: Threshold for learned selection.
+        threshold: Threshold for learned selection.
     """
 
     learned_model_path: Optional[str] = None
-    learned_threshold: float = 0.5
+    threshold: float = 0.5
 
 
 @dataclass
@@ -408,10 +408,10 @@ class KMeansSectorSelectionConfig:
     """Configuration for geographic sector-based selection.
 
     Attributes:
-        n_sectors: Number of sectors for clustering.
+        threshold: Number of sectors for clustering.
     """
 
-    n_sectors: int = 5
+    threshold: int = 5
 
 
 @dataclass
@@ -419,10 +419,10 @@ class StaggeredRegularSelectionConfig:
     """Configuration for phased-staggered periodic selection.
 
     Attributes:
-        period: Period for staggered selection.
+        threshold: Period for staggered selection.
     """
 
-    period: int = 1
+    threshold: int = 1
 
 
 @dataclass

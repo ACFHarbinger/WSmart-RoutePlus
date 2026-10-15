@@ -1,31 +1,19 @@
-# =============================================================================
-# route improvement: Branch-and-Price (Consolidated)
-# =============================================================================
-# PURPOSE:
-#   Solve set-partitioning formulation via exact branch-and-price.
-#   Uses in-house solver with ng-route pricing and CPLEX/Gurobi/vrpy fallback.
-# =============================================================================
-
 default:
   methods:
-    - "branch_and_price"
-
-  # Consolidated solver parameters
+  - branch_and_price
   bp_max_iterations: 100
   bp_max_routes_per_iteration: 10
   bp_optimality_gap: 0.0001
-  bp_branching_strategy: "edge"
+  bp_branching_strategy: edge
   bp_max_branch_nodes: 1000
   bp_use_exact_pricing: true
   bp_use_ng_routes: true
   bp_ng_neighborhood_size: 8
-  bp_tree_search_strategy: "best_first"
+  bp_tree_search_strategy: best_first
   bp_cleanup_frequency: 20
   bp_cleanup_threshold: -100.0
   bp_early_termination_gap: 0.001
   bp_allow_heuristic_ryan_foster: false
-
-  # Global constraints
   bp_time_limit: 120.0
   bp_use_cspy: true
   cost_per_km: 0.5

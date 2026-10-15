@@ -190,7 +190,7 @@ class BaseJointPolicy(PolicyVizMixin, IRoutingAlgorithm):
         if search_ctx is not None:
             out_ctx: Optional[SearchContext] = merge_context(
                 search_ctx,
-                phase=SearchPhase.CONSTRUCTION,
+                phase=SearchPhase.ROUTING,
                 selection_metrics=sel_patch,
                 construction_metrics=con_patch,
             )
@@ -201,7 +201,7 @@ class BaseJointPolicy(PolicyVizMixin, IRoutingAlgorithm):
             )
             out_ctx = merge_context(
                 out_ctx,
-                phase=SearchPhase.CONSTRUCTION,
+                phase=SearchPhase.ROUTING,
                 construction_metrics=con_patch,
             )
 

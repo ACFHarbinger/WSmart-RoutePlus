@@ -1,0 +1,4 @@
+default:
+  strategy: filter_and_fan
+  filter_width: 0
+  fan_depth: 3

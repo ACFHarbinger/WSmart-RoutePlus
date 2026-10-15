@@ -163,7 +163,7 @@ def _clean(name: Any) -> str:  # noqa: C901
         return _clean(name.strategy)
 
     if hasattr(name, "get") or isinstance(name, Mapping):
-        # Handle new dict format: {"other/ms_last_minute.yaml": "cf70"}
+        # Handle new dict format: {"other/pk_last_minute.yaml": "cf70"}
         if len(name) == 1:
             key, val = next(iter(name.items()))
             key_str = str(key)

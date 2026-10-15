@@ -1,185 +1,39 @@
-# Policy Configuration
-
-# =============================================================================
-# HVPL (Hybrid Volleyball Premier League) Policy Configuration
-# =============================================================================
-# PURPOSE:
-#   Advanced hybrid metaheuristic integrating three optimization paradigms:
-#   ACO (intelligent initialization), VPL + HGS (population evolution with
-#   genetic operators), and ALNS (deep local search refinement). Addresses
-#   the original VPL's convergence issues through dynamic genetic operators.
-#
-# ALGORITHM:
-#   Phase 1: ACO Initialization (50 iterations)
-#     - Pheromone-guided construction for diverse high-quality population
-#     - Builds both active and passive team reserves
-#
-#   Phase 2: VPL + HGS Evolution (100 iterations)
-#     - Tournament selection (k=3) from active teams
-#     - Order-crossover (OX) for route combination (80% rate)
-#     - Destroy-repair mutation (10% rate)
-#     - Elitist selection preserving top solutions
-#     - Substitution from passive teams (20% rate)
-#
-#   Phase 3: ALNS Coaching (Refinement)
-#     - Adaptive destroy-repair operators
-#     - Simulated annealing acceptance
-#     - Deep local search refinement
-#
-#   Pheromone Update: Global best reinforces ACO guidance
-#
-# KEY FEATURES:
-#   - ACO provides intelligent diverse initialization (not random)
-#   - HGS genetic operators replace deterministic VPL coaching
-#   - ALNS provides intensive local refinement
-#   - Pheromone feedback loop connects all three phases
-#   - Dual population (active + passive) for diversity reservoir
-#
-# TYPICAL USE CASES:
-#   - Large challenging instances (100-300 nodes)
-#   - Production routing with 300s+ time budget
-#   - When maximum solution quality is required
-#   - State-of-the-art benchmarking
-#
-# PERFORMANCE EXPECTATIONS:
-#   - Superior to original VPL due to HGS diversity management
-#   - Better exploration than pure ALNS due to ACO + population
-#   - Deeper exploitation than pure ACO due to ALNS coaching
-#   - Best results with 300-600s time budget
-#
-# REFERENCE:
-#   Sun, S., Ma, L., Liu, Y., & Wang, L. (2023). "Volleyball premier league
-#   algorithm with ACO and ALNS for simultaneous pickup–delivery location
-#   routing problem."
-# =============================================================================
-
 hvpl:
   custom:
-    # ---------------------------------------------------------------------
-    # VPL Population Parameters
-    # ---------------------------------------------------------------------
-    - n_teams: 10
-    # Number of active teams (plus N passive reserves)
-    # Range: 10-50 (10 = fast, 30 = balanced, 50 = thorough)
-
-    - max_iterations: 50
-    # Number of VPL evolution cycles
-    # Range: 50-200 (50 = quick, 100 = balanced, 200 = deep)
-
-    - substitution_rate: 0.2
-    # Fraction of weakest teams replaced per iteration
-    # Range: 0.1-0.5 (0.2 = balanced)
-
-    # ---------------------------------------------------------------------
-    # HGS Evolution Parameters
-    # ---------------------------------------------------------------------
-    - crossover_rate: 0.8
-    # Probability of OX crossover per generation
-    # Range: 0.5-1.0 (0.8 = balanced)
-
-    - mutation_rate: 0.1
-    # Probability of mutation after crossover
-    # Range: 0.05-0.3 (0.1 = light)
-
-    - elite_size: 3
-    # Number of elite teams preserved
-    # Range: 1-10 (3 = minimum)
-
-    # ---------------------------------------------------------------------
-    # Integration Parameters
-    # ---------------------------------------------------------------------
-    - aco_init_iterations: 50
-    # ACO iterations for Phase 1 initialization
-    # Range: 20-100 (50 = balanced)
-
-    # ---------------------------------------------------------------------
-    # Global Parameters
-    # ---------------------------------------------------------------------
-    - time_limit: 60.0
-    # Maximum wall-clock seconds
-    # Range: 60-600 (300s = production)
-
-    # ---------------------------------------------------------------------
-    # ACO Nested Configuration (Initialization)
-    # ---------------------------------------------------------------------
-    - aco:
-        n_ants: 10
-        # Number of ants for construction (Range: 10-50)
-
-        k_sparse: 10
-        # Nearest neighbors in sparse graph (Range: 5-20)
-
-        alpha: 1.0
-        # Pheromone weight (Range: 0.5-2.0)
-
-        beta: 2.0
-        # Heuristic weight (Range: 1.0-5.0)
-
-        rho: 0.1
-        # Evaporation rate (Range: 0.05-0.3)
-
-        q0: 0.9
-        # Exploitation probability (Range: 0.7-0.95)
-
-        tau_0: 1.0
-        # Initial pheromone (Range: 0.01-1.0)
-
-        tau_min: 0.001
-        # Minimum pheromone (Range: 0.0001-0.01)
-
-        tau_max: 10.0
-        # Maximum pheromone (Range: 1.0-100.0)
-
-        max_iterations: 1
-        # ACO iterations per construction (Range: 1-5)
-
-        local_search: False
-        # Local search in ACO (ALNS handles local search)
-
-        local_search_iterations: 0
-        # Local search iterations (Range: 0-500)
-
-        elitist_weight: 1.0
-        # Elitist ant weight (Range: 0.5-2.0)
-
-        time_limit: 30.0
-        # ACO time limit in seconds (Range: 30-300)
-
-    # ---------------------------------------------------------------------
-    # ALNS Nested Configuration (Coaching)
-    # ---------------------------------------------------------------------
-    - alns:
-        max_iterations: 100
-        # Number of destroy-repair cycles (Range: 50-500)
-
-        start_temp: 100.0
-        # Initial SA temperature (Range: 50-500)
-
-        cooling_rate: 0.95
-        # Temperature decay per iteration (Range: 0.90-0.99)
-
-        reaction_factor: 0.5
-        # Weight update reaction factor (Range: 0.05-0.3)
-
-        min_removal: 1
-        # Minimum nodes removed (Range: 1-10)
-
-        max_removal_pct: 0.2
-        # Maximum removal fraction (Range: 0.1-0.4)
-
-        time_limit: 60.0
-        # ALNS time limit in seconds (Range: 30-300)
-
-    # ---------------------------------------------------------------------
-    # Infrastructure Settings
-    # ---------------------------------------------------------------------
-    # VRPP Settings
-    - profit_aware_operators: true
-    - vrpp: true
-
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-    # Node selection strategy
-
-    - route_improvement: []
-    # route improvement (empty = use HVPL output directly)
-# =============================================================================
+    n_teams: 10
+    max_iterations: 50
+    substitution_rate: 0.2
+    crossover_rate: 0.8
+    mutation_rate: 0.1
+    elite_size: 3
+    aco_init_iterations: 50
+    time_limit: 60.0
+    aco:
+      n_ants: 10
+      k_sparse: 10
+      alpha: 1.0
+      beta: 2.0
+      rho: 0.1
+      q0: 0.9
+      tau_0: 1.0
+      tau_min: 0.001
+      tau_max: 10.0
+      max_iterations: 1
+      local_search: false
+      local_search_iterations: 0
+      elitist_weight: 1.0
+      time_limit: 30.0
+    alns:
+      max_iterations: 100
+      start_temp: 100.0
+      cooling_rate: 0.95
+      reaction_factor: 0.5
+      min_removal: 1
+      max_removal_pct: 0.2
+      time_limit: 60.0
+    profit_aware_operators: true
+    vrpp: true
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    route_improvement: []

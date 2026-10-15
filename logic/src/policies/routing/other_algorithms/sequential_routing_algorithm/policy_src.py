@@ -85,7 +85,7 @@ class SequentialRoutingAlgorithm(BaseRoutingPolicy):
         if self.config is not None:
             self.params = SRCParams.from_config(self.config)
         else:
-            self.params = SRCParams(constructors=["tsp", "alns"])
+            self.params = SRCParams(routing_algorithms=["tsp", "alns"])
 
     @classmethod
     def _config_class(cls):
@@ -114,7 +114,7 @@ class SequentialRoutingAlgorithm(BaseRoutingPolicy):
         from logic.src.policies.routing.base.factory import RoutingAlgorithmFactory
 
         # resolve names from params
-        constructor_names = self.params.constructors
+        constructor_names = self.params.routing_algorithms
 
         self.constructors = [RoutingAlgorithmFactory.get_adapter(name) for name in constructor_names]
         self._initialized = True

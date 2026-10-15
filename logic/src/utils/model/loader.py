@@ -357,11 +357,11 @@ def _load_hyperparameters(path: str) -> Dict[str, Any]:
         dict: Dictionary of hyperparameters.
     """
     config_yaml_path = os.path.join(path, "config.yaml")
-    hparams_yaml_path = os.path.join(path, "hparams.yaml")
+    hparapk_yaml_path = os.path.join(path, "hparams.yaml")
     args_json_path = os.path.join(path, "args.json")
 
-    if os.path.exists(config_yaml_path) or os.path.exists(hparams_yaml_path):
-        yaml_path = config_yaml_path if os.path.exists(config_yaml_path) else hparams_yaml_path
+    if os.path.exists(config_yaml_path) or os.path.exists(hparapk_yaml_path):
+        yaml_path = config_yaml_path if os.path.exists(config_yaml_path) else hparapk_yaml_path
         cfg = OmegaConf.load(yaml_path)
 
         if "train" in cfg and "model" not in cfg:

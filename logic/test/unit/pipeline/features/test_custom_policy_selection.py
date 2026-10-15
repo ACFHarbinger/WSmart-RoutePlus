@@ -9,13 +9,13 @@ yaml's own last-minute variants, so that selection could not be expressed.
 import pytest
 from logic.src.configs import Config
 from logic.src.pipeline.features.test.config import expand_policy_configs
-from logic.src.pipeline.simulations.actions.base import _flatten_config
+from logic.src.pipeline.simulations.actions.base import _as_policy_mapping
 from logic.src.pipeline.simulations.day_context import find_policy_keys
 from omegaconf import OmegaConf
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
-_LOOKAHEAD = {"other/ms_lookahead.yaml": "lookahead"}
+_LOOKAHEAD = {"other/pk_lookahead.yaml": "lookahead"}
 
 
 def _expand(policies):
@@ -30,7 +30,7 @@ def _selections(cfg):
     """Selection values the day loop will run, one per stored policy."""
     found = []
     for stored in cfg.sim.config_path.values():
-        flat = _flatten_config(stored)
+        flat = _as_policy_mapping(stored)
         found.append(flat.get("packing", find_policy_keys(stored).get("packing")))
     return found
 
@@ -41,12 +41,12 @@ def test_custom_dict_lookahead_is_not_replaced_by_the_yaml_variant():
         [
             {
                 "alns": {
-                    "custom": [
-                        {"time_limit": 2.0},
-                        {"engine": "custom"},
-                        {"packing": _LOOKAHEAD},
-                        {"route_improvement": {"other/ri_cls.yaml": "default"}},
-                    ]
+                    "custom": {
+                        "time_limit": 2.0,
+                        "engine": "custom",
+                        "packing": _LOOKAHEAD,
+                        "route_improvement": {"other/ri_cls.yaml": "default"},
+                    }
                 }
             }
         ]

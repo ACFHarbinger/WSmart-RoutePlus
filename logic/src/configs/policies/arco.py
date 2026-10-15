@@ -40,7 +40,7 @@ class ARCOConfig:
         seed: Random seed for reproducible exploration.
     """
 
-    constructors: List[str] = field(default_factory=lambda: ["tsp", "alns"])
+    routing_algorithms: List[str] = field(default_factory=lambda: ["tsp", "alns"])
     time_limit: float = 120.0
     selection_strategy: str = "epsilon_greedy"
     epsilon: float = 0.15
@@ -50,3 +50,4 @@ class ARCOConfig:
     weight_floor: float = 0.01
     decay: float = 1.0
     seed: int = 42
+    vrpp: bool = True

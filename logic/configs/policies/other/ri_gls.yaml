@@ -1,9 +1,6 @@
-# route improvement: Guided Local Search (GLS)
-
 default:
   methods:
-    - "guided_local_search"
-
+  - guided_local_search
   guided_local_search:
     gls_iterations: 20
     gls_inner_iterations: 50

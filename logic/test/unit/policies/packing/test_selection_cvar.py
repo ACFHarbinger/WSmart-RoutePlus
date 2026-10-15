@@ -5,8 +5,8 @@ import pytest
 from scipy.integrate import quad
 from scipy.stats import norm
 
-from logic.src.interfaces.context.selection_context import SelectionContext
-from logic.src.policies.packing.selection_cvar import CVaRSelection
+from logic.src.interfaces.context.packing_context import PackingContext
+from logic.src.policies.packing.cvar import CVaRSelection
 
 
 def _exact_cvar_of_overflow(m, s, alpha):
@@ -33,7 +33,7 @@ def test_selection_threshold_matches_exact_cvar(surplus_mean, sigma, alpha):
     exact = _exact_cvar_of_overflow(surplus_mean, sigma, alpha)
 
     def selected(threshold):
-        ctx = SelectionContext(
+        ctx = PackingContext(
             bin_ids=np.array([1], dtype="int32"),
             current_fill=current_fill,
             threshold=threshold,
@@ -47,7 +47,7 @@ def test_selection_threshold_matches_exact_cvar(surplus_mean, sigma, alpha):
             std_deviations=np.array([sigma]),
             cvar_alpha=alpha,
         )
-        bins, _ = CVaRSelection().select_bins(ctx)
+        bins, _ = CVaRSelection().pack(ctx)
         return bool(bins)
 
     assert selected(exact * 0.999)

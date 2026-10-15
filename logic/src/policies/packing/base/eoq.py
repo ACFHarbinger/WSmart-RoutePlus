@@ -26,10 +26,10 @@ from __future__ import annotations
 
 import numpy as np
 
-from logic.src.interfaces.context import SelectionContext
+from logic.src.interfaces.context import PackingContext
 
 
-def compute_eoq_thresholds(context: SelectionContext) -> np.ndarray:
+def compute_eoq_thresholds(context: PackingContext) -> np.ndarray:
     """Return per-bin EOQ-derived fill-level triggers in absolute fill units.
 
     The returned triggers are scaled by context.max_fill to match the units
@@ -39,7 +39,7 @@ def compute_eoq_thresholds(context: SelectionContext) -> np.ndarray:
     when required parameters are missing or non-positive.
 
     Args:
-        context (SelectionContext): The selection context containing bin data.
+        context (PackingContext): The selection context containing bin data.
 
     Returns:
         np.ndarray: Array of per-bin EOQ thresholds.
@@ -77,7 +77,7 @@ def compute_eoq_thresholds(context: SelectionContext) -> np.ndarray:
     return tau
 
 
-def resolve_trigger_threshold(context: SelectionContext) -> np.ndarray:
+def resolve_trigger_threshold(context: PackingContext) -> np.ndarray:
     """Return a boolean mask of bins whose fill meets the effective trigger.
 
     If ``context.use_eoq_threshold`` is True, the per-bin EOQ threshold is
@@ -87,7 +87,7 @@ def resolve_trigger_threshold(context: SelectionContext) -> np.ndarray:
     ratio 0.70.
 
     Args:
-        context (SelectionContext): The selection context.
+        context (PackingContext): The selection context.
 
     Returns:
         np.ndarray: Boolean mask where True indicates a bin meets the trigger.

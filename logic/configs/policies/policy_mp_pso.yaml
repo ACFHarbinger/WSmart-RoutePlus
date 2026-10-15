@@ -1,24 +1,8 @@
-# Multi-Period Particle Swarm Optimization (MP-PSO) Policy Configuration
-# Swarm-based optimization for multi-period routing.
-
 mp_pso:
-  # Number of particles in the swarm.
   particles: 20
-
-  # Number of iterations.
   iters: 50
-
-  # Inertia weight.
   w: 0.8
-
-  # Cognitive coefficient.
   c1: 2.0
-
-  # Social coefficient.
   c2: 2.0
-
-  # Random seed for reproducibility.
   seed: 42
-
-  # Whether to use VRP with Profits objectives.
   vrpp: true

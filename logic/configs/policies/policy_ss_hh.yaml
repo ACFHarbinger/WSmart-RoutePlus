@@ -1,93 +1,14 @@
-# Policy Configuration
-
-# =============================================================================
-# SS-HH (Sequence-based Selection Hyper-Heuristic) Policy Configuration
-# =============================================================================
-# PURPOSE:
-#   Paper-faithful implementation of Algorithm 1 from Ahmed Kheiri (2014):
-#   "Heuristic Sequence Selection for Inventory Routing Problem".
-#   Reference: bibliography/Sequence-based_Selection_Hyper-Heuristic.pdf
-#
-# CORE MECHANISM:
-#   Builds *sequences* of LLHs before applying them.  Two matrices drive
-#   the selection:
-#
-#   - TMatrix[h_prev][h_cur]: transition scores between LLHs.
-#     Roulette-wheel selection via Eq. 2 of the paper.
-#   - ASMatrix[h_cur][AS]: acceptance-strategy scores.
-#     AS=0 extends the running sequence; AS=1 triggers application.
-#
-#   All matrix entries are initialised to 1 (raw counts) and incremented
-#   by Δ_norm (normalised relative improvement) when a sequence produces
-#   a new global best solution.
-#
-# LLH POOL (5 operators, indices 0-4):
-#   L0: random_removal  + greedy_insertion
-#   L1: worst_removal   + regret_2_insertion
-#   L2: cluster_removal + greedy_insertion
-#   L3: worst_removal   + greedy_insertion
-#   L4: random_removal  + regret_2_insertion
-#
-# MOVE ACCEPTANCE (Eq. 4):
-#   A candidate is accepted if:
-#     1. new_profit ≥ candidate_profit, OR
-#     2. new_profit > best_profit - T * |best_profit|
-#   where T = threshold_feasible_base + threshold_decay_rate * (1 - t/t_limit)
-#
-# TYPICAL USE CASES:
-#   - Benchmarking sequence-based hyper-heuristics on VRPP
-#   - Problems where LLH ordering/composition matters
-#   - Comparison with HMM-GD-HH (per-state selection) vs SS-HH (LLH sequences)
-# =============================================================================
-
 ss_hh:
   custom:
-    # -------------------------------------------------------------------------
-    # Sequence Selection Parameters
-    # -------------------------------------------------------------------------
-    - n_llh: 5
-    # Number of LLHs in the operator pool (fixed — do not change)
-    # Pool: [random+greedy, worst+regret2, cluster+greedy, worst+greedy, random+regret2]
-
-    - n_removal: 2
-    # Nodes removed per LLH destroy step
-    # Range: 1-5 (1 = micro perturbation, 3 = moderate shake)
-
-    # -------------------------------------------------------------------------
-    # Threshold Acceptance (Eq. 4)
-    # -------------------------------------------------------------------------
-    - threshold_infeasible: 0.001
-    # Acceptance threshold T when best solution is infeasible
-    # Not typically active in VRPP (all solutions are feasible)
-
-    - threshold_feasible_base: 0.0001
-    # Base acceptance threshold T for feasible solutions
-    # T = threshold_feasible_base + threshold_decay_rate * (1 - t/t_limit)
-
-    - threshold_decay_rate: 0.01
-    # Time-decay coefficient for the feasible threshold
-    # Higher → more permissive early, tighter near time limit
-
-    # -------------------------------------------------------------------------
-    # Runtime Control
-    # -------------------------------------------------------------------------
-    - max_iterations: 500
-    # Total main-loop steps (each step either extends or applies a sequence)
-    # Range: 100-2000 (200 = quick, 500 = production, 1000 = benchmark)
-
-    - time_limit: 60.0
-    # Maximum wall-clock seconds
-    # Range: 10-300 (30s = quick, 60s = production, 120s = benchmark)
-
-    # -------------------------------------------------------------------------
-    # Infrastructure Settings
-    # -------------------------------------------------------------------------
-    # VRPP Settings
-    - vrpp: true
-
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-    # Node selection strategy for waste collection problems
-
-    - route_improvement: []
-    # Empty = use SS-HH output directly
-# =============================================================================
+    n_llh: 5
+    n_removal: 2
+    threshold_infeasible: 0.001
+    threshold_feasible_base: 0.0001
+    threshold_decay_rate: 0.01
+    max_iterations: 500
+    time_limit: 60.0
+    vrpp: true
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    route_improvement: []

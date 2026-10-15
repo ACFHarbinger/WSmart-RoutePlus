@@ -1,5 +1,3 @@
-# @package _global_
-
 cp_sat:
   target: logic.src.policies.cp_sat.policy_cp_sat.CPSATPolicy
   params:

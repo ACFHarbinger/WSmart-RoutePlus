@@ -1,9 +1,6 @@
-# route improvement: Profitable Detour
-
 default:
   methods:
-    - "profitable_detour"
-
+  - profitable_detour
   insertion:
     detour_epsilon: 0.2
     cost_per_km: 0.5

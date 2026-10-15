@@ -3,18 +3,17 @@ lasm:
   alpha: 0.5
   time_limit: 120.0
   seed: 42
-
-  # LBBD
   lbbd_max_iterations: 20
   lbbd_master_time_frac: 0.15
-  lbbd_sub_solver: "alns"
-  lbbd_cut_families: ["nogood", "optimality", "pareto"]
+  lbbd_sub_solver: alns
+  lbbd_cut_families:
+  - nogood
+  - optimality
+  - pareto
   lbbd_pareto_eps: 1e-4
-  lbbd_sub_time_frac: 0.70
+  lbbd_sub_time_frac: 0.7
   lbbd_min_cover_ratio: 1.0
   lbbd_use_warm_cuts: false
-
-  # ALNS
   alns_max_iterations: 0
   alns_segment_size: 100
   alns_reaction_factor: 0.1
@@ -28,46 +27,42 @@ lasm:
   alns_noise_factor: 0.025
   alns_worst_removal_randomness: 3.0
   alns_shaw_randomization: 6.0
-  alns_regret_pool: "regret234"
+  alns_regret_pool: regret234
   alns_extended_operators: false
   alns_profit_aware_operators: true
   alns_vrpp: true
-  alns_engine: "custom"
-
-  # BPC
+  alns_engine: custom
   bpc_ng_size_min: 8
   bpc_ng_size_max: 16
   bpc_max_bb_nodes_min: 200
   bpc_max_bb_nodes_max: 1000
-  bpc_cutting_planes: "rcc"
-  bpc_branching_strategy: "divergence"
+  bpc_cutting_planes: rcc
+  bpc_branching_strategy: divergence
   skip_bpc: false
-
-  # RL controller
-  rl_mode: "online"
+  rl_mode: online
   rl_policy_path: null
   rl_exploration: 1.0
   rl_window: 20
   rl_min_samples: 5
-  rl_reward_shaping: "efficiency"
+  rl_reward_shaping: efficiency
   rl_state_features:
-    - "n_nodes"
-    - "fill_mean"
-    - "fill_std"
-    - "mandatory_ratio"
-    - "lp_gap"
-    - "pool_size"
-    - "time_remaining"
-    - "alpha"
-  rl_action_space: "budgets"
+  - n_nodes
+  - fill_mean
+  - fill_std
+  - mandatory_ratio
+  - lp_gap
+  - pool_size
+  - time_remaining
+  - alpha
+  rl_action_space: budgets
   rl_discount: 0.99
-
-  # SP merge
   sp_pool_cap: 50000
   sp_mip_gap: 1e-4
-
-  # Simulator wiring (same as the other routing algorithms; without these the
-  # simulator has no mandatory set and never routes this policy)
   vrpp: true
-  packing: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
-  route_improvement: { "other/ri_cls.yaml": ["default"] }
+  packing:
+    other/pk_last_minute.yaml:
+    - last_minute_cf70
+    - last_minute_cf90
+  route_improvement:
+    other/ri_cls.yaml:
+    - default

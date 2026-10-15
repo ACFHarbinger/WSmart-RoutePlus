@@ -14,7 +14,7 @@ Example:
     >>> strategy = factory.get_strategy("some_strategy")
 """
 
-from .selection_factory import PackingFactory
-from .selection_registry import PackingRegistry
+from .factory import PackingFactory
+from .registry import PackingRegistry
 
 __all__ = ["PackingFactory", "PackingRegistry"]

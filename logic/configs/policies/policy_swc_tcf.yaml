@@ -1,119 +1,15 @@
-# Policy Configuration
-
-# =============================================================================
-# SWC-TCF (Smart Waste Collection - Two-Commodity Flow) Exact Solver Configuration
-# =============================================================================
-# PURPOSE:
-#   Exact optimization for SWC-TCF using Gurobi MIP solver. Finds provably
-#   optimal solutions for profit-maximization routing where visiting nodes
-#   yields rewards but incurs travel costs. Guarantees optimality for small
-#   instances (≤50 nodes).
-#
-# PROBLEM FORMULATION:
-#   Maximize: Σ(profit[i] * visit[i]) - Σ(cost[i,j] * travel[i,j])
-#   Subject to:
-#     - Vehicle capacity constraints
-#     - Route continuity (each node visited once)
-#     - Depot start/end requirements
-#
-# ALGORITHM:
-#   1. Formulate SWC-TCF as Mixed-Integer Program (MIP)
-#   2. Solve via Gurobi's branch-and-cut (exact method)
-#   3. Return optimal subset of nodes to visit + routes
-#
-# TYPICAL USE CASES:
-#   - Small SWC-TCF instances (20-50 nodes) requiring optimal solutions
-#   - Benchmark baseline for neural/metaheuristic comparison
-#   - Profit-driven waste collection (collect only if profitable)
-#
-# PERFORMANCE EXPECTATIONS:
-#   - 20 nodes: Optimal in <30 seconds
-#   - 50 nodes: Optimal in 1-10 minutes (highly variable)
-#   - 100+ nodes: May timeout after 10 minutes (use HGS instead)
-#
-# NOTE:
-#   Requires valid Gurobi license. Free academic licenses available at
-#   https://www.gurobi.com/academia/academic-program-and-licenses/
-# =============================================================================
-
 swc_tcf:
   gurobi:
-    # ---------------------------------------------------------------------
-    # Objective and forcing parameters (see gurobi.py / ortools_wrapper.py)
-    # ---------------------------------------------------------------------
-    # Maximize  R * sum_i fill_i * g_i  -  C * sum_ij d_ij * x_ij  -  Omega * k
-    #   fill_i in percent, R in EUR per percent point and C in EUR per km (both
-    #   set by the routing adapter), k = number of vehicles used.
-    - Omega: 0.1
-    # Fixed cost per vehicle (route) used, in EUR.
-
-    - psi: 1
-    # Fill fraction at or above which a bin is forced into the plan (g_i = 1),
-    # in addition to the mandatory bins. psi=1 forces only bins at 100 %.
-    # If forcing makes the model infeasible (e.g. more forced waste than the
-    # fleet can carry), the solver retries once without forcing and logs it.
-
-    # ---------------------------------------------------------------------
-    # Solver Backend
-    # ---------------------------------------------------------------------
-    - engine: "gurobi"
-    # Execution backend: logic/src/policies/smart_waste_collection_two_commodity_flow/gurobi.py
-    # Requires: gurobipy Python package + valid Gurobi license
-
-    - framework: "gurobi"
-    # Execution framework: logic/src/policies/smart_waste_collection_two_commodity_flow/ortools.py
-    # Requires: ortools Python package
-
-    # ---------------------------------------------------------------------
-    # Node Selection Strategy
-    # ---------------------------------------------------------------------
-    - packing: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
-    # VRPP Settings
-    - vrpp: true
-    # Multiple selection strategies (union of both):
-    #   1. ms_lookahead.yaml: Bins predicted to overflow soon
-    #   2. ms_service_level.yaml: Statistical service level ≥84%
-    #
-    # Mandatory bins are forced into the plan (g_i = 1).
-
-    # ---------------------------------------------------------------------
-    # Runtime Control
-    # ---------------------------------------------------------------------
-    - time_limit: 60.0
-    # Maximum wall-clock seconds before termination
-    # Range: 60-3600 (60s = quick, 600s = thorough, 3600s = deep search)
-    # Gurobi returns best solution found if time limit reached
-    # Note: 600s (10 min) allows solving most 50-node instances to optimality
-
-    # ---------------------------------------------------------------------
-    # route improvement
-    # ---------------------------------------------------------------------
-    - route_improvement: { "other/ri_cls.yaml": ["default"] }
-    # No route improvement needed for exact solutions
-    # Empty = use Gurobi output directly (already optimal)
-
-    # ---------------------------------------------------------------------
-    # Gurobi Solver Parameters (Implicit)
-    # ---------------------------------------------------------------------
-    # Advanced Gurobi settings configured in:
-    #   logic/src/policies/smart_waste_collection_two_commodity_flow/gurobi.py
-    #
-    # Key implicit settings:
-    #   - MIPGap: 0.01 (stop if within 1% of optimal)
-    #   - MIPFocus: 1 (prioritize finding feasible solutions quickly)
-    #   - Presolve: Aggressive (reduce problem size before solving)
-    #   - Cuts: Automatic (let Gurobi decide cutting plane strategy)
-    #   - Threads: -1 (use all available CPU cores)
-    #   - LogToConsole: 0 (suppress Gurobi output)
-    #
-    # To override: Modify logic/src/policies/smart_waste_collection_two_commodity_flow/gurobi.py
-
-    # ---------------------------------------------------------------------
-    # MIP Formulation (two-commodity flow)
-    # ---------------------------------------------------------------------
-    # Variables: x_ij (arc used), g_i (bin visited), f_ij / h_ij (load / free
-    # capacity on arc ij), k (vehicles). Arcs longer than 6000 km are dropped.
-    # Constraints: f_ij + h_ij = Q x_ij; per-bin flow balances of f and h equal
-    # fill_i * g_i; depot balances; one in- and one out-arc per visited bin;
-    # k depot departures and returns, k <= number of vehicles; forced bins g_i = 1.
-# =============================================================================
+    Omega: 0.1
+    psi: 1
+    engine: gurobi
+    framework: gurobi
+    packing:
+      other/pk_last_minute.yaml:
+      - last_minute_cf70
+      - last_minute_cf90
+    vrpp: true
+    time_limit: 60.0
+    route_improvement:
+      other/ri_cls.yaml:
+      - default

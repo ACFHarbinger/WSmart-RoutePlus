@@ -1,0 +1,5 @@
+default:
+  strategy: fptas_knapsack
+  epsilon: 0.1
+  alpha: 0.5
+  overflow_penalty_frac: 1.0

@@ -5,10 +5,10 @@ from typing import List, Optional
 import numpy as np
 import pytest
 import torch
-from logic.src.interfaces.context.selection_context import SelectionContext
-from logic.src.policies.packing.selection_last_minute import LastMinuteSelection
-from logic.src.policies.packing.selection_lookahead import LookaheadSelection
-from logic.src.policies.packing.selection_service_level import ServiceLevelSelection
+from logic.src.interfaces.context.packing_context import PackingContext
+from logic.src.policies.packing.last_minute import LastMinuteSelection
+from logic.src.policies.packing.lookahead import LookaheadSelection
+from logic.src.policies.packing.service_level import ServiceLevelSelection
 from logic.src.policies.packing.vectorized.last_minute import LastMinuteSelector
 from logic.src.policies.packing.vectorized.lookahead import LookaheadSelector
 from logic.src.policies.packing.vectorized.service_level import ServiceLevelSelector
@@ -33,9 +33,9 @@ def _scalar_context(
     stds: Optional[List[float]] = None,
     horizon_days: int = 1,
     current_collection_day: int = 0,
-) -> SelectionContext:
+) -> PackingContext:
     n = len(fills)
-    return SelectionContext(
+    return PackingContext(
         bin_ids=np.arange(n),
         current_fill=np.array(fills, dtype=np.float64),
         accumulation_rates=None if rates is None else np.array(rates, dtype=np.float64),
@@ -49,7 +49,7 @@ def _scalar_context(
 def test_last_minute_scalar_ids_match_vectorized_mask():
     fills = [50.0, 70.0, 95.0]
     threshold = 70.0
-    scalar_ids, _ = LastMinuteSelection().select_bins(_scalar_context(fills, threshold=threshold))
+    scalar_ids, _ = LastMinuteSelection().pack(_scalar_context(fills, threshold=threshold))
     mask = LastMinuteSelector(threshold=threshold).select(_percent_to_vector(fills))
     assert scalar_ids == [2, 3]
     assert _ids_from_mask(mask) == scalar_ids
@@ -63,7 +63,7 @@ def test_service_level_scalar_ids_match_vectorized_mask():
     z = 0.84
     horizon = 1
     ctx = _scalar_context(fills, threshold=z, rates=rates, stds=stds, horizon_days=horizon)
-    scalar_ids, _ = ServiceLevelSelection().select_bins(ctx)
+    scalar_ids, _ = ServiceLevelSelection().pack(ctx)
     mask = ServiceLevelSelector(confidence_factor=z, horizon_days=horizon).select(
         _percent_to_vector(fills),
         accumulation_rates=_percent_to_vector(rates),
@@ -82,7 +82,7 @@ def test_service_level_horizon_two_matches_when_both_are_set():
     stds = [0.0, 0.0]
     z = 0.84
     ctx = _scalar_context(fills, threshold=z, rates=rates, stds=stds, horizon_days=2)
-    scalar_ids, _ = ServiceLevelSelection().select_bins(ctx)
+    scalar_ids, _ = ServiceLevelSelection().pack(ctx)
     mask = ServiceLevelSelector(confidence_factor=z, horizon_days=2).select(
         _percent_to_vector(fills),
         accumulation_rates=_percent_to_vector(rates),
@@ -98,7 +98,7 @@ def test_lookahead_seed_and_bundle_match():
     fills = [80.0, 40.0, 95.0]
     rates = [25.0, 20.0, 10.0]
     ctx = _scalar_context(fills, rates=rates, current_collection_day=0)
-    scalar_ids, _ = LookaheadSelection().select_bins(ctx)
+    scalar_ids, _ = LookaheadSelection().pack(ctx)
     mask = LookaheadSelector(current_collection_day=0).select(
         _percent_to_vector(fills),
         accumulation_rates=_percent_to_vector(rates),
@@ -113,7 +113,7 @@ def test_lookahead_empty_seed_is_empty_on_both_sides():
     fills = [10.0, 20.0]
     rates = [5.0, 8.0]
     ctx = _scalar_context(fills, rates=rates)
-    scalar_ids, _ = LookaheadSelection().select_bins(ctx)
+    scalar_ids, _ = LookaheadSelection().pack(ctx)
     mask = LookaheadSelector().select(
         _percent_to_vector(fills),
         accumulation_rates=_percent_to_vector(rates),

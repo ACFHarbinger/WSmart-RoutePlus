@@ -1,0 +1,4 @@
+default:
+  strategy: fractional_knapsack
+  n_vehicles: 1
+  cost_per_km: 1.0

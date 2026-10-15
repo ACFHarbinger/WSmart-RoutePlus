@@ -240,9 +240,9 @@ logic/src/policies/
 ├── other/                                   # Auxiliary Components
 │   ├── packing/                             # packing (6 strategies)
 │   │   ├── base/                            # Selection framework
-│   │   │   ├── selection_context.py         # Context object
-│   │   │   ├── selection_factory.py         # Factory
-│   │   │   └── selection_registry.py        # Registry
+│   │   │   ├── packing_context.py         # Context object
+│   │   │   ├── factory.py         # Factory
+│   │   │   └── registry.py        # Registry
 │   │   ├── selection_last_minute.py         # Threshold-based selection
 │   │   ├── selection_regular.py             # Fixed-frequency selection
 │   │   ├── selection_lookahead.py           # Predictive selection
@@ -3049,16 +3049,16 @@ new_routes, delta_cost = lambda_interchange(
 
 ### 9.1 Selection Framework
 
-#### SelectionContext
+#### PackingContext
 
-**File**: `base/selection_context.py`
+**File**: `base/packing_context.py`
 
 Context object for selection decisions.
 
 ```python
-from logic.src.policies.helpers import SelectionContext
+from logic.src.policies.helpers import PackingContext
 
-context = SelectionContext(
+context = PackingContext(
     bins=bins_state,
     distance_matrix=dist_matrix,
     area="riomaior",
@@ -3070,7 +3070,7 @@ context = SelectionContext(
 
 #### PackingFactory
 
-**File**: `base/selection_factory.py`
+**File**: `base/factory.py`
 
 Factory for creating selectors.
 
@@ -3445,7 +3445,7 @@ from logic.src.policies import create_policy
 from logic.src.policies.helpers import (
     PackingFactory,
     RouteImproverFactory,
-    SelectionContext
+    PackingContext
 )
 
 # 1. Create mandatory selector
@@ -3465,7 +3465,7 @@ policy = create_policy("hgs")
 post_processor = RouteImproverFactory.create_processor("fast_tsp")
 
 # 4. Execute simulation day
-context = SelectionContext(
+context = PackingContext(
     bins=bins_state,
     distance_matrix=dist_matrix,
     area="riomaior",
@@ -3816,7 +3816,7 @@ from logic.src.policies.operators import (
 # packing
 from logic.src.policies.helpers import (
     PackingFactory, PackingRegistry,
-    SelectionContext
+    PackingContext
 )
 
 # route improvement

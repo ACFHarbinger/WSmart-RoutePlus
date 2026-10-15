@@ -1,80 +1,16 @@
-# =============================================================================
-# LOCAL BRANCHING WITH VARIABLE NEIGHBORHOOD SEARCH (LB-VNS)
-# =============================================================================
-#
-# MISSION:
-#   LB-VNS (Hansen et al., 2006) is a high-performance matheuristic designed
-#   to solve complex MILP problems by combining the global exploration power
-#   of Variable Neighborhood Search (VNS) with the local intensification
-#   rigor of Local Branching (LB).
-#
-# HOW IT WORKS:
-#   1. SHAKING: The algorithm perturbs the current solution to a random point
-#      in a neighborhood of radius 'k' (Hamming distance).
-#   2. LOCAL SEARCH: It then uses a restricted MILP (Local Branching) to
-#      find the best possible improvement within a radius 'k_ls' from that point.
-#   3. NEIGHBORHOOD CHANGE: If an improvement is found, it resets k = k_min.
-#      Otherwise, it expands the search to k = k + k_step.
-#
-# TUNING GUIDE:
-#   - Use smaller k_min (10-15) for fast convergence in stable landscapes.
-#   - Increase k_max and k_step if the solver consistently gets stuck in local optima.
-#   - time_limit_per_lb should be ~10% of total time_limit for balanced search.
-# =============================================================================
-
 lb_vns:
   custom:
-    # ---------------------------------------------------------------------
-    # VNS Neighborhood Sequence Control
-    # ---------------------------------------------------------------------
-    - k_min: 10
-    # The starting Hamming distance for the VNS loop.
-    # Smaller values yield faster local intensification early on.
-
-    - k_max: 60
-    # The maximum permitted Hamming distance for shaking/exploration.
-    # Higher values allow deeper diversification but increase sub-MIP complexity.
-
-    - k_step: 10
-    # The increment for k when no improvement is found in the current neighborhood.
-    # Low values (e.g., 2-5) provide a finer search; higher values (10+) speed up exploration.
-
-    # ---------------------------------------------------------------------
-    # Inner Solver Intensity (Local Branching Phase)
-    # ---------------------------------------------------------------------
-    - time_limit_per_lb: 30.0
-    # Hard limit (in seconds) for each individual Local Branching sub-problem.
-    # Essential to prevent the solver from stalling on a single neighborhood.
-
-    - max_lb_iterations: 15
-    # Iteration cap for the internal Local Branching improvement loop.
-    # Each iteration solves a restricted MILP to move within the local neighborhood.
-
-    - mip_gap: 0.01
-    # Relative optimality tolerance (1%) for sub-problem termination.
-
-    # ---------------------------------------------------------------------
-    # Global Runtime & Reproducibility
-    # ---------------------------------------------------------------------
-    - time_limit: 60.0
-    # Overall time budget for the entire LB-VNS procedure.
-
-    # ---------------------------------------------------------------------
-    # Infrastructure & Pipeline
-    # ---------------------------------------------------------------------
-    # VRPP Settings
-    - vrpp: true
-
-    - framework: "ortools"
-      # Execution framework: logic/src/policies/smart_waste_collection_two_commodity_flow/ortools.py
-      # Requires: ortools Python package
-
-    - engine: "gurobi"
-      # Specifies the use of the project's gurobi Local Branching with Variable Neighborhood Search engine.
-
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-    # Selection logic for mandatory nodes.
-
-    - route_improvement: []
-    # Optional refinement step (e.g., local search) applied after completion.
-# =============================================================================
+    k_min: 10
+    k_max: 60
+    k_step: 10
+    time_limit_per_lb: 30.0
+    max_lb_iterations: 15
+    mip_gap: 0.01
+    time_limit: 60.0
+    vrpp: true
+    framework: ortools
+    engine: gurobi
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    route_improvement: []

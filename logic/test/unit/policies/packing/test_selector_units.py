@@ -5,8 +5,8 @@ from dataclasses import asdict
 import numpy as np
 import pytest
 from logic.src.configs.policies.other.packing import ServiceLevelSelectionConfig
-from logic.src.interfaces.context.selection_context import SelectionContext
-from logic.src.policies.packing.selection_last_minute import LastMinuteSelection
+from logic.src.interfaces.context.packing_context import PackingContext
+from logic.src.policies.packing.last_minute import LastMinuteSelection
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
@@ -19,6 +19,6 @@ def test_typed_service_level_config_carries_the_horizon():
 
 def test_last_minute_threshold_is_inclusive_percent():
     """A threshold of 70 selects bins at 70 % or more (the paper's CF = 0.70)."""
-    ctx = SelectionContext(bin_ids=np.arange(3), current_fill=np.array([50.0, 70.0, 90.0]), threshold=70.0)
-    selected, _ = LastMinuteSelection().select_bins(ctx)
+    ctx = PackingContext(bin_ids=np.arange(3), current_fill=np.array([50.0, 70.0, 90.0]), threshold=70.0)
+    selected, _ = LastMinuteSelection().pack(ctx)
     assert selected == [2, 3]

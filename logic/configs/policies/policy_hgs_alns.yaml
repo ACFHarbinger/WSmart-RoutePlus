@@ -1,164 +1,35 @@
-# Policy Configuration
-
-# =============================================================================
-# HGS-ALNS Hybrid Policy Configuration
-# =============================================================================
-# PURPOSE:
-#   Combines Hybrid Genetic Search (HGS) with Adaptive Large Neighborhood
-#   Search (ALNS) for enhanced solution quality. HGS provides global search;
-#   ALNS refines elite solutions via destroy-repair operators.
-#
-# ALGORITHM:
-#   1. Run HGS to build initial population
-#   2. "Educate" elite solutions using ALNS (destroy-repair iterations)
-#   3. Re-insert improved solutions into HGS population
-#   4. Continue HGS evolution with enhanced individuals
-#
-# MOTIVATION:
-#   HGS excels at exploring solution space but can plateau at local optima.
-#   ALNS provides complementary diversification via adaptive operators.
-#
-# TYPICAL USE CASES:
-#   - Challenging instances where pure HGS struggles (tight capacity, time windows)
-#   - Benchmarking: Aim for best-known solutions with extended runtime
-#   - Production: When extra compute budget (60s → 120s) is acceptable
-#
-# PERFORMANCE EXPECTATIONS:
-#   - Often 0.5-1.5% better than pure HGS, at 50-100% higher runtime
-#   - Diminishing returns beyond alns_education_iterations: 100
-# =============================================================================
-
 hgs_alns:
   custom:
-    # ---------------------------------------------------------------------
-    # Runtime Control
-    # ---------------------------------------------------------------------
-    - time_limit: 60
-      # Maximum wall-clock seconds for full HGS-ALNS pipeline
-      # Range: 60-600 (60s = production, 300s = thorough, 600s = benchmark)
-      # Note: Shared between HGS phase and ALNS education phase
-
-    # ---------------------------------------------------------------------
-    # HGS Parameters (Vidal 2022 - Dual Subpopulations)
-    # ---------------------------------------------------------------------
-    - hgs_time_limit: 60
-      # Maximum wall-clock seconds for the full algorithm
-      # Range: 30-300 (60s = production, 120s = thorough)
-
-    - hgs_mu: 25
-      # Minimum population size per subpopulation (feasible/infeasible)
-      # Range: 10-50 (Vidal 2022 default: 25)
-
-    - hgs_lambda_param: 40
-      # Generation size - number of individuals before survivor selection
-      # Range: 20-80 (Vidal 2022 default: 40)
-
-    - hgs_nb_elite: 4
-      # Number of elite solutions preserved across generations
-      # Range: 2-10 (Vidal 2022 default: 4)
-
-    - hgs_nb_close: 5
-      # Number of close individuals for diversity measurement
-      # Range: 3-10 (Vidal 2022 default: 5)
-
-    - hgs_nb_granular: 20
-      # Granular search parameter for local search
-      # Range: 10-40 (Vidal 2022 default: 20)
-
-    - hgs_target_feasible: 0.2
-      # Target proportion of feasible solutions (20%)
-      # Range: 0.1-0.3 (Vidal 2022 default: 0.2)
-
-    - hgs_n_iterations_no_improvement: 20000
-      # Maximum iterations without improvement before stopping
-      # Range: 5000-20000 (Vidal 2022 default: 20000)
-      # For HGS-ALNS hybrid, use lower values (e.g., 5000)
-
-    - hgs_mutation_rate: 1.0
-      # Probability of applying local search (education) to offspring
-      # Vidal 2022 default: 1.0 (always educate)
-
-    - hgs_repair_probability: 0.5
-      # Probability of repairing infeasible offspring
-      # Vidal 2022 default: 0.5 (50%)
-
-    - hgs_crossover_rate: 1.0
-      # Probability of applying crossover
-      # Vidal 2022 default: 1.0 (always apply)
-
-    - hgs_max_vehicles: 0
-      # Maximum vehicles allowed (0 = unlimited)
-
-    - hgs_local_search_iterations: 100
-      # Number of local search iterations per generation
-      # Range: 50-200 (Vidal 2022 default: 100)
-
-    - hgs_initial_penalty_capacity: 1.0
-      # Initial penalty coefficient for capacity violations
-      # Range: 0.1-10.0 (Vidal 2022 default: 1.0)
-
-    - hgs_penalty_increase: 1.2
-      # Multiplier for increasing penalty
-      # Range: 1.1-1.5 (Vidal 2022 default: 1.2)
-
-    - hgs_penalty_decrease: 0.85
-      # Multiplier for decreasing penalty
-      # Range: 0.5-0.95 (Vidal 2022 default: 0.85)
-
-    - hgs_engine: "custom"
-      # Execution backend: logic/src/policies/hybrid_genetic_search.py
-      # Automatically coordinates HGS and ALNS phases
-
-    - hgs_restart_timer: 60
-
-    # ---------------------------------------------------------------------
-    # ALNS Parameters (Coaching & Deep Local Search)
-    # ---------------------------------------------------------------------
-    - alns_iterations: 100
-      # Number of destroy-repair cycles per coaching session
-      # Range: 50-500 (50 = light, 100 = balanced, 500 = deep)
-
-    - alns_start_temp: 100.0
-      # Initial simulated annealing temperature
-      # Range: 50-500
-
-    - alns_cooling_rate: 0.95
-      # Temperature decay per iteration
-      # Range: 0.90-0.99
-
-    - alns_reaction_factor: 0.1
-      # Reaction factor for simulated annealing
-      # Range: 0.05-0.3
-
-    - alns_min_removal: 1
-      # Minimum number of nodes to remove in destroy phase
-      # Range: 1-10
-
-    - alns_max_removal_pct: 0.2
-      # Maximum fraction of nodes to remove in destroy phase
-      # Range: 0.1-0.4
-
-    - alns_time_limit: 60
-      # Maximum wall-clock seconds for the full algorithm
-      # Range: 30-300 (60s = production, 120s = thorough)
-
-    - alns_engine: "custom"
-      # Execution backend: logic/src/policies/adaptive_large_neighborhood_search.py
-      # Automatically coordinates HGS and ALNS phases
-
-    # ---------------------------------------------------------------------
-    # Infrastructure Settings
-    # ---------------------------------------------------------------------
-    # VRPP Settings
-    - profit_aware_operators: false
-    - vrpp: true
-
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-      # Node selection strategy for waste collection problems
-      # Options: ms_lookahead.yaml, ms_last_minute_*.yaml, ms_regular.yaml
-      # See: docs/MUST_GO_STRATEGIES.md
-
-    - route_improvement: []
-      # HGS+ALNS local search is comprehensive; no further refinement needed
-      # Empty = use hybrid output directly
-# =============================================================================
+    time_limit: 60
+    hgs_time_limit: 60
+    hgs_mu: 25
+    hgs_lambda_param: 40
+    hgs_nb_elite: 4
+    hgs_nb_close: 5
+    hgs_nb_granular: 20
+    hgs_target_feasible: 0.2
+    hgs_n_iterations_no_improvement: 20000
+    hgs_mutation_rate: 1.0
+    hgs_repair_probability: 0.5
+    hgs_crossover_rate: 1.0
+    hgs_max_vehicles: 0
+    hgs_local_search_iterations: 100
+    hgs_initial_penalty_capacity: 1.0
+    hgs_penalty_increase: 1.2
+    hgs_penalty_decrease: 0.85
+    hgs_engine: custom
+    hgs_restart_timer: 60
+    alns_iterations: 100
+    alns_start_temp: 100.0
+    alns_cooling_rate: 0.95
+    alns_reaction_factor: 0.1
+    alns_min_removal: 1
+    alns_max_removal_pct: 0.2
+    alns_time_limit: 60
+    alns_engine: custom
+    profit_aware_operators: false
+    vrpp: true
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    route_improvement: []

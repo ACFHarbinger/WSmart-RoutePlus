@@ -1,0 +1,3 @@
+lookahead:
+  strategy: lookahead
+  current_collection_day: 0

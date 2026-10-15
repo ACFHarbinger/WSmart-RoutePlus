@@ -1,123 +1,16 @@
-# GIHH Policy Configuration
-
-# =============================================================================
-# GIHH (Guided Indicators Hyper-Heuristic) Policy Configuration
-# =============================================================================
-# PURPOSE:
-#   Adaptive hyper-heuristic that selects low-level operators using two
-#   guidance indicators: Improvement Rate Indicator (IRI) and Time-Based
-#   Indicator (TBI). Balances exploitation and exploration through learned
-#   operator selection.
-#
-# ALGORITHM:
-#   1. Maintain operator performance scores via IRI (improvement rate) and
-#      TBI (time since last use)
-#   2. Select operators using epsilon-greedy strategy with weighted indicators
-#   3. Apply move operators (intra/inter-route improvements)
-#   4. Apply perturbation operators when stuck in local optima
-#   5. Update indicator weights adaptively based on search progress
-#
-# PERFORMANCE:
-#   Excels on dynamic routing problems and scenarios requiring operator
-#   adaptation. Particularly effective when problem characteristics vary
-#   across instances or over time.
-#
-# REFERENCE:
-#   Adaptive operator selection using guidance indicators for VRP optimization.
-#   Combines ideas from adaptive large neighborhood search with hyper-heuristics.
-#
-# TYPICAL USE CASES:
-#   - Dynamic routing with changing traffic patterns
-#   - Multi-objective optimization (profit vs. cost)
-#   - Scenarios requiring algorithm portfolio management
-#   - Research on adaptive operator selection
-# =============================================================================
-
 gihh:
   custom:
-    # ---------------------------------------------------------------------
-    # Runtime Control
-    # ---------------------------------------------------------------------
-    - time_limit: 60.0
-      # Maximum wall-clock seconds for optimization
-      # Range: 30-600 (30s = quick, 300s = thorough, 600s = benchmark)
-      # Recommendation: 60s for production (CONSERVATIVE)
-
-    - max_iterations: 1000
-      # Maximum number of iterations to run
-      # Range: 500-5000
-      # Recommendation: 1000 for stable optimization (CONSERVATIVE)
-
-    - vrpp: true
-      # Enable VRPP mode (visit subset profitably)
-      # true = only visit nodes where profit > cost
-      # false = visit all nodes (CVRP mode)
-
-    # ---------------------------------------------------------------------
-    # Stopping Criteria (Chen et al. 2018)
-    # ---------------------------------------------------------------------
-    - nonimp_threshold: 150
-      # Maximum iterations without improvement (NONIMP) before stopping.
-      # Recommendation: 150 (as per paper)
-
-    # ---------------------------------------------------------------------
-    # Episodic Weight Updates (Chen et al. 2018)
-    # ---------------------------------------------------------------------
-    - seg: 80
-      # Segment size for episodic updates
-      # Recommendation: 80 (as per paper)
-
-    - alpha: 0.5
-      # Weight momentum factor
-      # Range: 0.0-1.0
-      # Recommendation: 0.5
-
-    - beta: 0.4
-      # Quality reward (ScoreA) emphasis
-      # Range: 0.0-1.0
-      # Recommendation: 0.4
-
-    - gamma: 0.1
-      # Directional reward (ScoreB) deviation penalty multiplier
-      # Range: 0.0-1.0
-      # Recommendation: 0.1
-
-    - min_prob: 0.05
-      # Minimum Roulette selection probability per heuristic
-      # Range: 0.01-0.10
-      # Recommendation: 0.05 (ensure exploration)
-
-    # ---------------------------------------------------------------------
-    # Infrastructure Settings
-    # ---------------------------------------------------------------------
-    # VRPP Settings
-    - profit_aware_operators: false
-    - vrpp: true
-
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-      # Node selection strategy for waste collection problems
-      # Options: ms_lookahead.yaml, ms_last_minute_*.yaml, ms_regular.yaml
-      # See: docs/MUST_GO_STRATEGIES.md
-
-    - route_improvement: []
-      # Optional route improvement operations
-      # Empty = use GIHH output directly
-      # Options: ["ri_two_opt.yaml", "ri_relocate.yaml"]
-
-# =============================================================================
-# PARAMETER TUNING RECOMMENDATIONS
-# =============================================================================
-# For faster convergence (time_limit < 30s):
-#   - iri_weight: 0.7, tbi_weight: 0.3 (exploit more)
-#   - epsilon: 0.1, epsilon_decay: 0.99 (faster annealing)
-#
-# For better solution quality (time_limit > 120s):
-#   - iri_weight: 0.5, tbi_weight: 0.5 (balanced)
-#   - epsilon: 0.3, epsilon_decay: 0.998 (longer exploration)
-#   - restarts: 3 (multi-start diversification)
-#
-# For dynamic/uncertain environments:
-#   - learning_rate: 0.2 (faster adaptation)
-#   - memory_size: 30 (shorter memory for non-stationary)
-#   - min_epsilon: 0.05 (maintain exploration)
-# =============================================================================
+    time_limit: 60.0
+    max_iterations: 1000
+    vrpp: true
+    nonimp_threshold: 150
+    seg: 80
+    alpha: 0.5
+    beta: 0.4
+    gamma: 0.1
+    min_prob: 0.05
+    profit_aware_operators: false
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    route_improvement: []

@@ -64,7 +64,7 @@ def test_na_adapter_honours_omegaconf_amgat_section() -> None:
 
 
 def test_na_yaml_lookahead_list_variant_loads_day_zero() -> None:
-    parsed = PackingAction()._parse_strategy_item({"other/ms_lookahead.yaml": ["default"]})
+    parsed = PackingAction()._parse_strategy_item({"other/pk_lookahead.yaml": ["default"]})
     assert parsed[0]["name"] == "lookahead"
     assert parsed[0]["params"].get("current_collection_day") == 0
 

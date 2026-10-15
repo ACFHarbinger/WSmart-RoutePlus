@@ -1,6 +1,3 @@
-# Extensive Form policy: Solves a multi-day scenario tree MILP
-# This policy builds a deterministic equivalent of the stochastic problem.
-# Performance is exponential in num_days and num_realizations.
 st_ef:
   _target_: logic.src.policies.routing.exact_and_decomposition_solvers.scenario_tree_extensive_form.policy_st_ef.ScenarioTreeExtensiveFormPolicy
   num_days: 2

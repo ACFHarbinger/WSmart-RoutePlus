@@ -1,88 +1,29 @@
-# ALNS with Inter-Period Operators (ALNS-IPO) Policy Configuration
-# Reference: Coelho, L. C., Cordeau, J.-F., & Laporte, G. (2012).
-# "The inventory-routing problem with transshipment." C&OR, 39(11), 2537-2548.
-
 alns_ipo:
-  # --- Standard ALNS parameters ---
-
-  # Maximum solver runtime in seconds.
   time_limit: 120.0
-
-  # Maximum number of ALNS iterations.
   max_iterations: 5000
-
-  # Initial simulated annealing temperature (0 = dynamic Boltzmann calculation).
   start_temp: 0.0
-
-  # Temperature cooling rate per iteration.
   cooling_rate: 0.995
-
-  # Operator weight learning rate r (Ropke & Pisinger, 2005).
   reaction_factor: 0.1
-
-  # Minimum number of nodes to remove per destroy step.
   min_removal: 4
-
-  # Maximum fraction of nodes to remove.
   max_removal_pct: 0.3
-
-  # Hard upper cap on removal count.
   max_removal_cap: 100
-
-  # Iterations per operator-weight update segment.
   segment_size: 100
-
-  # Noise level for repair operators.
   noise_factor: 0.025
-
-  # Randomness in worst removal (p >= 1; p=1 is deterministic).
   worst_removal_randomness: 3.0
-
-  # Shaw removal randomisation factor.
   shaw_randomization: 6.0
-
-  # Regret insertion pool: "regret2", "regret234", or "regretAll".
-  regret_pool: "regret234"
-
-  # Reward scores for ALNS operator weight updates.
-  sigma_1: 33.0  # New global best
-  sigma_2: 9.0   # Improving (but not best, not visited)
-  sigma_3: 13.0  # Accepted worse solution
-
-  # Allow expanding insertion pool beyond removed nodes (VRPP mode).
+  regret_pool: regret234
+  sigma_1: 33.0
+  sigma_2: 9.0
+  sigma_3: 13.0
   vrpp: true
-
-  # Use profit-aware operator variants (ablation control).
   profit_aware_operators: false
-
-  # Add string/cluster/neighbor operators (increases operator diversity).
   extended_operators: false
-
-  # Random seed for reproducibility.
   seed: 42
-
-  # Engine backend: "custom" (default).
-  engine: "custom"
-
-  # --- Multi-period extensions ---
-
-  # Planning horizon T (number of days).
+  engine: custom
   horizon: 7
-
-  # Penalty per unit of bin overflow.
   stockout_penalty: 500.0
-
-  # Lookahead depth H for ForwardLookingInsertion evaluation.
   forward_looking_depth: 3
-
-  # Enable inter-period destroy operators (ShiftVisitRemoval, PatternRemoval).
   inter_period_operators: true
-
-  # Direction for ShiftVisitRemoval: "both", "forward", or "backward".
-  shift_direction: "both"
-
-  # Weight on inventory term in ForwardLookingInsertion (λ).
+  shift_direction: both
   inventory_lambda: 1.0
-
-  # Initial roulette wheel weight for inter-period operators.
   inter_period_weight: 1.0

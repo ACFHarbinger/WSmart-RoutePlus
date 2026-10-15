@@ -1,117 +1,26 @@
-# Policy Configuration
-
-# =============================================================================
-# LKH-3 (Lin-Kernighan-Helsgaun 3) Policy Configuration
-# =============================================================================
-# PURPOSE:
-#   Advanced local-search metaheuristic for TSP and CVRP, based on the
-#   LKH-3 framework (Helsgaun 2017). Uses k-opt moves (k=2..5) with
-#   alpha-measure candidate sets, double-bridge perturbation, and tour-pool
-#   merging for multi-start iterated local search.
-#
-# ALGORITHM:
-#   1. Alpha-measure candidate sets via minimum spanning tree sensitivity
-#   2. Sequential k-opt local search (k = 2..5) with don't-look bits
-#   3. Double-bridge kick for perturbation (ILS)
-#   4. POPMUSIC candidate generation for large instances (N > 1000)
-#   5. IP-based tour merging for elite solution recombination
-#   6. Lexicographic penalty (P, C) for constraint handling
-#
-# TYPICAL USE CASES:
-#   - Medium instances (50-500 nodes) as primary solver
-#   - route improvement refinement of existing tours
-#   - Benchmarking against constructive neural methods
-#
-# REFERENCE:
-#   Helsgaun, K. (2017). An extension of the LKH-TSP solver for constrained
-#   traveling salesman and vehicle routing problems.
-# =============================================================================
-
 lkh3:
   custom:
-    # ---------------------------------------------------------------------
-    # Runtime Control
-    # ---------------------------------------------------------------------
-    - runs: 10
-      # Number of independent multi-start runs
-      # Range: 1-50 (more runs = better coverage, slower)
-      # Recommendation: 10 for production, 1 for quick testing
-
-    - max_trials: 1000
-      # Maximum local-search iterations per run
-      # Range: 100-10000
-
-    # ---------------------------------------------------------------------
-    # POPMUSIC Settings
-    # ---------------------------------------------------------------------
-    - popmusic_subpath_size: 50
-      # Sub-path size r for POPMUSIC candidate generation (N > 1000)
-      # Range: 20-200
-
-    - popmusic_trials: 50
-      # Number of POPMUSIC decomposition runs
-      # Range: 10-100
-
-    - popmusic_max_candidates: 5
-      # Maximum number of candidates to consider for each node
-      # Range: 2-10
-
-    # ---------------------------------------------------------------------
-    # LKH-3 Extensions
-    # ---------------------------------------------------------------------
-    - max_k_opt: 5
-      # Maximum k for k-opt moves
-      # Range: 2-5 (2 = fast/weak, 5 = slow/strong)
-      # 5 is full LKH-3; use 3 for large instances
-
-    - use_ip_merging: true
-      # Use IP-based tour merging for elite recombination
-      # false = greedy shared-edge merging (faster, weaker)
-
-    - max_pool_size: 5
-      # Maximum number of tours to keep in the pool for merging
-      # Range: 2-20
-
-    - subgradient_iterations: 50
-      # Number of iterations for Lagrangian subgradient optimization
-      # Range: 10-100
-
-    - dynamic_topology_discovery: false
-      # Whether to perform dynamic topology discovery
-      # Range: true/false
-
-    - native_prize_collecting: false
-      # Whether to use native prize collecting
-      # Range: true/false
-
-    # ---------------------------------------------------------------------
-    # Adaptive Large Neighborhood Search (ALNS) Settings
-    # ---------------------------------------------------------------------
-    - alns_iterations: 100
-      # Number of ALNS iterations
-      # Range: 10-1000
-
-    - plateau_limit: 10
-      # Number of iterations without improvement before triggering deep plateau
-      # Range: 5-50
-
-    - deep_plateau_limit: 30
-      # Number of iterations without improvement before triggering deep plateau
-      # Range: 10-100
-
-    - perturb_operator_weights: [0.6, 0.4]
-      # Weights for perturbation operators (double_bridge, random_swap)
-      # Range: [0.0, 1.0] sum to 1.0
-
-    # ---------------------------------------------------------------------
-    # Infrastructure Settings
-    # ---------------------------------------------------------------------
-    - time_limit: 60
-
-    # VRPP Settings
-    - profit_aware_operators: true
-    - vrpp: true
-
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-    - route_improvement: []
-# =============================================================================
+    runs: 10
+    max_trials: 1000
+    popmusic_subpath_size: 50
+    popmusic_trials: 50
+    popmusic_max_candidates: 5
+    max_k_opt: 5
+    use_ip_merging: true
+    max_pool_size: 5
+    subgradient_iterations: 50
+    dynamic_topology_discovery: false
+    native_prize_collecting: false
+    alns_iterations: 100
+    plateau_limit: 10
+    deep_plateau_limit: 30
+    perturb_operator_weights:
+    - 0.6
+    - 0.4
+    time_limit: 60
+    profit_aware_operators: true
+    vrpp: true
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    route_improvement: []

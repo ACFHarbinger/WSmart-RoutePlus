@@ -1,15 +1,5 @@
-# Population Hyper-Heuristic (PHH) Policy Configuration
-# Population-based evolution of multi-period plans.
-
 phh:
-  # Size of the population.
   pop_size: 10
-
-  # Number of generations.
   gens: 20
-
-  # Random seed for reproducibility.
   seed: 42
-
-  # Whether to use VRP with Profits objectives.
   vrpp: true

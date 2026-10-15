@@ -1,14 +1,5 @@
-# =============================================================================
-# route improvement: Set-Partitioning Polish
-# =============================================================================
-# PURPOSE:
-#   Solve set-partitioning IP exactly over an externally-provided route pool.
-# =============================================================================
-
 default:
   methods:
-    - "set_partitioning_polish"
-
+  - set_partitioning_polish
   sp_time_limit: 60.0
   seed: 42
-  # Note: route_pool must be provided via kwargs at runtime.

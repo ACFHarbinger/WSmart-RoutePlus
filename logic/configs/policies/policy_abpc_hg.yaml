@@ -13,7 +13,7 @@ abpc_hg:
   dive_penalty_M: 10000.0
   fo_tabu_length: 10
   fo_max_unfix: 5
-  fo_strategy: "overflow_urgency"
+  fo_strategy: overflow_urgency
   fo_max_iterations: 20
   ml_reliability_c: 1.0
   ml_pseudocost_ema_alpha: 0.5

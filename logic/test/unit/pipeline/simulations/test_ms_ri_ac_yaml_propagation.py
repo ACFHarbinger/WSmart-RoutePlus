@@ -21,21 +21,21 @@ pytestmark = [pytest.mark.unit, pytest.mark.fast]
 def test_last_minute_list_variant_loads_yaml_threshold() -> None:
     """``{ms_last_minute.yaml: [last_minute_cf70]}`` must not be treated as a strategy name."""
     action = PackingAction()
-    parsed = action._parse_strategy_item({"other/ms_last_minute.yaml": ["last_minute_cf70"]})
+    parsed = action._parse_strategy_item({"other/pk_last_minute.yaml": ["last_minute_cf70"]})
     assert parsed, "expected at least one strategy"
     assert parsed[0]["name"] == "last_minute"
     assert parsed[0]["params"].get("threshold") == 70
 
 
 def test_last_minute_omegaconf_listconfig_variant_loads_yaml_threshold() -> None:
-    item = OmegaConf.create({"other/ms_last_minute.yaml": ["last_minute_cf90"]})
+    item = OmegaConf.create({"other/pk_last_minute.yaml": ["last_minute_cf90"]})
     parsed = PackingAction()._parse_strategy_item(item)
     assert parsed[0]["name"] == "last_minute"
     assert parsed[0]["params"].get("threshold") == 90
 
 
 def test_lookahead_default_list_variant_reads_yaml_day() -> None:
-    parsed = PackingAction()._parse_strategy_item({"other/ms_lookahead.yaml": ["default"]})
+    parsed = PackingAction()._parse_strategy_item({"other/pk_lookahead.yaml": ["default"]})
     assert parsed[0]["name"] == "lookahead"
     assert parsed[0]["params"].get("current_collection_day") == 0
 
@@ -318,7 +318,7 @@ def test_expanded_paper_policies_match_ms_ri_ac_yaml() -> None:
     from logic.src.constants.paths import CONFIGS_DIR
     from logic.src.pipeline.features.test.config import expand_policy_configs
     from logic.src.pipeline.simulations.actions.base import (
-        _flatten_config,
+        _as_policy_mapping,
         _inject_acceptance_into_config,
         _live_ac_payload,
         _load_policy_yaml_section,
@@ -371,7 +371,7 @@ def test_expanded_paper_policies_match_ms_ri_ac_yaml() -> None:
             assert live_ac["params"]["seed"] == bmc_yaml["seed"]
         if live_ac and live_ac.get("method") == "oi":
             saw_oi = True
-        ri_val = _flatten_config(cfg_copy).get("route_improvement")
+        ri_val = _as_policy_mapping(cfg_copy).get("route_improvement")
         if ri_val:
             saw_cls = True
             assert cls_yaml["ls_operator"] == "2opt"
@@ -397,7 +397,7 @@ def test_live_test_sim_captures_ms_ri_ac(tmp_path, monkeypatch) -> None:
         "engine": "custom",
         "time_limit": 2.0,
         "max_iterations": 20,
-        "packing": {"other/ms_last_minute.yaml": "last_minute_cf70"},
+        "packing": {"other/pk_last_minute.yaml": "last_minute_cf70"},
         "route_improvement": {"other/ri_cls.yaml": "default"},
         "acceptance_criteria": {"other/ac_bmc.yaml": "bmc"},
     }

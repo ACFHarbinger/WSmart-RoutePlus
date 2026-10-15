@@ -1,18 +1,6 @@
-# Relax-and-Fix-and-Optimize (RFO) Policy Configuration
-# Horizon decomposition into integer and relaxed windows.
-
 rfo:
-  # Size of the rolling integer window.
   window_size: 3
-
-  # Number of days to slide the window forward after each solve.
   step_size: 2
-
-  # Time limit for each sub-MIP solve in seconds.
   mip_time: 60.0
-
-  # Target optimality gap for sub-MIP solves.
   mip_gap: 0.01
-
-  # Whether to use VRP with Profits objectives.
   vrpp: true

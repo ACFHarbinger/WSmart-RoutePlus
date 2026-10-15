@@ -1,0 +1,4 @@
+revenue:
+  strategy: revenue
+  revenue_kg: 1.0
+  revenue_threshold: 0.0

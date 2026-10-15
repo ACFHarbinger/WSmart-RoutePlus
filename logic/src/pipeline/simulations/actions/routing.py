@@ -24,7 +24,7 @@ from logic.src.pipeline.simulations.day_context import resolve_solver_status
 from logic.src.pipeline.simulations.solver_status import current_solver_status, reset_solver_status
 from logic.src.policies.routing.base import RoutingAlgorithmFactory, RoutingAlgorithmRegistry
 
-from .base import SimulationAction, _flatten_config
+from .base import SimulationAction, _as_policy_mapping
 
 
 class RoutingAction(SimulationAction):
@@ -74,7 +74,7 @@ class RoutingAction(SimulationAction):
         np.random.seed(seed)
         torch.manual_seed(seed)
 
-        flat_cfg = _flatten_config(raw_cfg)
+        flat_cfg = _as_policy_mapping(raw_cfg)
 
         # Explicit engine/solver from config
         solver_key = flat_cfg.get("policy.type") or flat_cfg.get("policy.solver") or flat_cfg.get("policy.engine")
