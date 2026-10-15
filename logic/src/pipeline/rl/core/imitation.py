@@ -77,6 +77,7 @@ class ImitationLearning(RL4COLitModule):
         loss_fn: str = "nll",
         seed: int = 42,
         device: str = "cpu",
+        fill_from: str = "model",
         **kwargs,
     ):
         """
@@ -88,8 +89,13 @@ class ImitationLearning(RL4COLitModule):
             loss_fn: Loss function to use ('nll', 'weighted_nll', 'kl', 'reverse_kl', 'js').
             seed: Random seed for reproducibility.
             device: Device to run the policy on.
+            fill_from: Whose routes empty the bins between time-training days: "model" (the
+                model's sampled rollout, which trained the paper models) or "expert" (the
+                expert's tours; the model rollout is then skipped).
             kwargs: Additional arguments to pass to the parent class.
         """
+        if fill_from not in ("model", "expert"):
+            raise ValueError(f"fill_from must be 'model' or 'expert', not {fill_from!r}")
         # Baseline is not used in IL, but we keep the structure
         kwargs["baseline"] = "none"
 
@@ -112,6 +118,7 @@ class ImitationLearning(RL4COLitModule):
         }
         self.loss_fn_name = loss_fn
         self.loss_fn = self._loss_map.get(loss_fn, nll_loss)
+        self.fill_from = fill_from
 
     def _create_expert_policy(self, policy_config: Any, env_name: str, seed: int, device: str) -> Any:
         """Create expert policy from configuration.
@@ -153,6 +160,35 @@ class ImitationLearning(RL4COLitModule):
         # Create and return the policy
         return policy_cls(**config_dict)
 
+    def _rollout(self, td: TensorDict, env: Any, phase: str) -> dict:
+        """Skip the model rollout in training when the expert's routes empty the bins.
+
+        With ``fill_from="expert"`` the training step returns the expert's solve, marked with
+        ``source="expert"``: its actions drive time training and the loss reuses it. The
+        model's sampled decode, which only fed logging and the fill update, is not run, so the
+        sampling random numbers it drew are no longer drawn.
+
+        Args:
+            td: Reset environment state.
+            env: Environment to decode in.
+            phase: One of "train", "val", "test".
+
+        Returns:
+            Policy or expert output.
+        """
+        if phase != "train" or self.fill_from != "expert":
+            return super()._rollout(td, env, phase)
+        out = dict(self._expert_solve(td))
+        out["source"] = "expert"
+        return out
+
+    def _expert_solve(self, td: TensorDict) -> dict:
+        """Expert actions and reward for the reset state ``td``."""
+        if self.expert_policy is None:
+            raise ValueError("expert_policy must be provided for ImitationLearning.")
+        with torch.no_grad():
+            return self.expert_policy(td, self.env)
+
     def calculate_loss(
         self,
         td: TensorDict,
@@ -178,13 +214,9 @@ class ImitationLearning(RL4COLitModule):
             if isinstance(out.get(key), torch.Tensor):
                 out[key] = out[key].detach()
 
-        # 1. Generate Expert Solutions
-        if self.expert_policy is None:
-            raise ValueError("expert_policy must be provided for ImitationLearning.")
-
-        with torch.no_grad():
-            expert_out = self.expert_policy(td, self.env)
-            expert_actions = expert_out["actions"]
+        # 1. Generate Expert Solutions (already done by the step when fill_from="expert")
+        expert_out = out if out.get("source") == "expert" else self._expert_solve(td)
+        expert_actions = expert_out["actions"]
 
         # 2. Clone state and reset to ensure clean state for teacher forcing
         td_clone = safe_td_copy(td)

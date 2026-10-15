@@ -243,11 +243,9 @@ class StepMixin:
         # ---------------------------------------------------------------------
 
         # Run policy
-        out = self.policy(
-            td,
-            _env,
-            strategy="sampling" if phase == "train" else "greedy",
-        )
+        out = self._rollout(td, _env, phase)
+        # Imitation in fill_from=expert mode returns the expert's solve instead of a model rollout.
+        model_rollout = out.get("source") != "expert"
 
         # Get updated td from rollout (if available)
         final_td = out.get("td", td)
@@ -256,7 +254,7 @@ class StepMixin:
         # Anti-pattern guard: we log R_base to {phase}/reward (unchanged) so
         # that learning curves are not artificially inflated.  The shaped
         # reward is only used inside calculate_loss (for advantage computation).
-        if _pbrs is not None and phase == "train":
+        if _pbrs is not None and phase == "train" and model_rollout:
             base_reward = out["reward"].detach().clone()
             shaped_reward, shaping_reward = _pbrs.apply(out["reward"], final_td)
             # Store decomposed signals in the output dict for downstream logging
@@ -287,8 +285,15 @@ class StepMixin:
         # to keep the metric comparable with non-PBRS runs and prevent leakage
         # of the shaping signal into evaluation dashboards.
         reward_for_log = out.get("reward_base", out["reward"]) if phase == "train" else out["reward"]
-        reward_mean = reward_for_log.mean()
         batch_size = reward_for_log.shape[0]
+        if not model_rollout:
+            # The expert's reward is logged by the loss as train/expert_reward; there is no model
+            # rollout to report. Its actions still drive time training below.
+            self.last_out = out
+            if phase == "train" and getattr(self, "train_time", False):
+                self._epoch_actions.append(out["actions"].detach().cpu())  # type: ignore[attr-defined]
+            return out
+        reward_mean = reward_for_log.mean()
         self.log(  # type: ignore
             f"{phase}/reward",
             reward_mean,
@@ -343,6 +348,20 @@ class StepMixin:
             self._epoch_actions.append(out["actions"].detach().cpu())  # type: ignore[attr-defined]
 
         return out
+
+    def _rollout(self, td: TensorDict, env: Any, phase: str) -> dict:
+        """Decode the policy: sampled in training, greedy in validation and test.
+
+        Args:
+            td: Reset environment state.
+            env: Environment to decode in.
+            phase: One of "train", "val", "test".
+
+        Returns:
+            Policy output with ``reward`` and ``actions``, optionally ``td``,
+            ``log_likelihood`` and ``entropy``.
+        """
+        return self.policy(td, env, strategy="sampling" if phase == "train" else "greedy")
 
     def training_step(self, *args: Any, **kwargs: Any) -> torch.Tensor:
         """

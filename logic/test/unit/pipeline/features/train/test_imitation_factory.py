@@ -15,6 +15,7 @@ def _cfg(algorithm: str) -> SimpleNamespace:
     rl_algo = SimpleNamespace(
         policy_config=ProfitableNNConfig(),
         loss_fn="nll",
+        fill_from="expert",
         il_weight=1.0,
         il_decay=0.9,
         patience=3,
@@ -58,6 +59,8 @@ def test_factory_forwards_the_training_setup(monkeypatch, algorithm, create, cls
     assert isinstance(seen["policy_config"], ProfitableNNConfig)
     assert seen["seed"] == 7
     assert seen["loss_fn"] == "nll"
+    # Adaptive imitation always decodes the model; only pure imitation has the fill switch.
+    assert seen.get("fill_from") == ("expert" if algorithm == "imitation" else None)
 
 
 def test_initial_weights_load_from_a_final_weights_file(tmp_path) -> None:

@@ -37,7 +37,11 @@ class ImitationConfig:
         policy_config: Configuration for the expert policy to imitate.
                       Can be any of: HGSConfig, ALNSConfig, ILSConfig, RLSConfig, ACOConfig, HGSALNSConfig.
         loss_fn: Loss function to use ('nll' for negative log-likelihood, 'mse' for mean squared error).
+        fill_from: Whose routes empty the bins between time-training days: 'model' (the model's
+                   sampled rollout; trained the paper models) or 'expert' (the expert's tours;
+                   the model rollout is skipped).
     """
 
     policy_config: Any = None
     loss_fn: str = "nll"
+    fill_from: str = "model"

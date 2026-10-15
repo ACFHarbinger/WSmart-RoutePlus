@@ -194,6 +194,10 @@ rl:
     # Override params: rl.imitation.policy_config.time_limit=60.0
     # policy_config is populated by defaults list (see top of file)
     loss_fn: "nll" # Loss function. Options: nll, weighted_nll, kl, reverse_kl, js
+    # Whose routes empty the bins between time-training days. Options:
+    # - "model": the model's sampled rollout (trained the paper models)
+    # - "expert": the expert's tours; the model rollout is skipped
+    fill_from: "model"
 
   # Adaptive Imitation Learning (IL → RL)
   adaptive_imitation:
