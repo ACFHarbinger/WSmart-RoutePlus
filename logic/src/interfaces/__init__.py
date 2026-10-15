@@ -22,7 +22,7 @@ _LAZY = {
     "AcceptanceMetrics": "logic.src.interfaces.context.search_context:AcceptanceMetrics",
     "ImprovementMetrics": "logic.src.interfaces.context.search_context:ImprovementMetrics",
     "merge_context": "logic.src.interfaces.context.search_context:merge_context",
-    "SelectionContext": "logic.src.interfaces.context.selection_context:SelectionContext",
+    "PackingContext": "logic.src.interfaces.context.packing_context:PackingContext",
     "JointSelectionConstructionContext": "logic.src.interfaces.context.joint_context:JointSelectionConstructionContext",
     "MultiDayContext": "logic.src.interfaces.context.multi_day_context:MultiDayContext",
     "ProblemContext": "logic.src.interfaces.context.problem_context:ProblemContext",

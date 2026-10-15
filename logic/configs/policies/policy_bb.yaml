@@ -1,111 +1,19 @@
-# Branch-and-Bound (BB) Policy Configuration
-# Reference: Land, A. H., & Doig, A. G. (1960). "An Automatic Method of Solving Discrete Programming Problems."
-
-# The BB solver provides an exact solution to the Vehicle Routing Problem with Profits (VRPP)
-# and the Capacitated Waste Collection VRP (CWC VRP). It works by systematically
-# enumerating candidate solutions via a state-space search (represented as a tree)
-# and using LP relaxations to "prune" non-optimal sub-trees.
-
 bb:
-  # Mathematical formulation for subtour elimination.
-  # - "dfj": Dantzig-Fulkerson-Johnson formulation with lazy subtour elimination.
-  #   Delegates B&B to Gurobi's highly optimized internal engine.
-  #   Best for: Large instances (50+ nodes), when Gurobi license available.
-  #   Performance: Leverages Gurobi's advanced heuristics and cut generation.
-  #
-  # - "mtz": Miller-Tucker-Zemlin compact formulation with load variables.
-  #   Custom B&B implementation with configurable branching strategies.
-  #   Best for: Small-medium instances (< 50 nodes), research experiments.
-  #   Performance: Full control over branching, but slower for large instances.
-  #
-  # Recommendation: Use "dfj" for production, "mtz" for experimentation.
-  formulation: "dfj"
-
-  # Maximum time in seconds for the solver to search for the optimal solution.
-  # Note: BB can be computationally expensive (exponential complexity);
-  # set a reasonable limit for large instances.
+  formulation: dfj
   time_limit: 60.0
-
-  # Relative MIP optimality gap (0.0 to 1.0).
-  # The solver stops when the gap between the best known lower bound (from relaxations)
-  # and the incumbent integer solution is within this percentage.
-  # 0.01 means stop within 1% of optimality.
   mip_gap: 0.01
-
-  # Variable selection strategy for branching on fractional variables.
-  # NOTE: Only applies when formulation="mtz". Ignored for "dfj".
-  #
-  # - "strong": True strong branching - evaluates each candidate via LP solve.
-  #   Most accurate but computationally expensive. Best overall performance.
-  #
-  # - "most_fractional": Select the variable with value closest to 0.5.
-  #   Fast heuristic, usually leads to more balanced trees.
-  #
-  # - "least_fractional": Select variable closest to 0 or 1.
-  #   Quick convergence but may explore more nodes.
-  branching_strategy: "strong"
-
-  # Maximum number of candidate variables to evaluate during strong branching.
-  # NOTE: Only applies when branching_strategy="strong" and formulation="mtz".
-  # Higher values = better branching decisions but slower per-node evaluation.
-  # Recommended: 3-10 for balanced performance.
+  branching_strategy: strong
   strong_branching_limit: 5
-
-  # Whether to enable VRPP mode (Vehicle Routing Problem with Profits).
-  # - true: The solver considers all bins and selects the most profitable ones to visit.
-  # - false: The solver only visits nodes specified in 'packing'.
   vrpp: true
-
-  # List of packing algorithm configuration files.
-  # These strategies define which nodes MUST be visited regardless of profit.
-  # Example:
-  # packing:
-  #   - name: "fill_level"
-  #     threshold: 90.0
-  packing: {"other/ms_lookahead.yaml": ["default"]}
-
-  # List of route improvement operations to apply after the search.
-  # Example:
-  # route_improvement:
-  #   - name: "two_opt"
+  packing:
+    other/pk_lookahead.yaml:
+    - default
   route_improvement: []
-
-  # Random seed passed to the underlying Gurobi engine for deterministic results.
-  # If null (default), Gurobi uses its own internal seed.
   seed: null
-
-  # --- Lagrangian Relaxation (LR-UOP) Specific Settings ---
-  # These only apply when formulation="lr_uop".
-  # Reference: Fisher, M. L. (1981). "The Lagrangian Relaxation Method for Solving Integer Programming Problems."
-
-  # Initial Lagrange multiplier λ₀ ≥ 0 for Phase 1.
-  # Represents the 'shadow price' of the capacity constraint.
   lr_lambda_init: 0.0
-
-  # Maximum number of iterations for the Polyak subgradient optimization.
-  # Phase 1 terminates when this limit is reached or when the gradient vanishes.
   lr_max_subgradient_iters: 100
-
-  # Step-size multiplier θ ∈ (0, 2] in the Polyak rule α_k = θ·(L(λ_k) - LB_k) / ‖g_k‖².
-  # Higher values (near 2.0) are more aggressive; lower values (near 0.1) are more conservative.
   lr_subgradient_theta: 1.0
-
-  # Fraction of the total time_limit (0.0 to 1.0) devoted to Phase 1 (subgradient search).
-  # The remainder (1 - fraction) is used for the Branch-and-Bound search in Phase 2.
   lr_subgradient_time_fraction: 0.4
-
-  # Time limit in seconds for each call to the inner uncapacitated Orienteering Problem (OP) solver.
-  # The OP subproblem is solved repeatedly during both Phase 1 and Phase 2.
   lr_op_time_limit: 10.0
-
-  # Customer selection rule for Branch-and-Bound (B&B) branching decisions in Phase 2.
-  # - "max_waste": Branch on the free OP-selected customer with the highest waste load.
-  #   Most effective at reducing capacity violations early.
-  #
-  # - "min_profit": Branch on the free customer with the smallest Lagrangian profit.
-  #   Tries to prune branches with low potential value first.
-  lr_branching_strategy: "max_waste"
-
-  # Maximum number of B&B nodes to explore in Phase 2 as a safety backstop.
-  # Prevents infinite loops or excessive memory usage in extremely difficult instances.
+  lr_branching_strategy: max_waste
   lr_max_bb_nodes: 5000

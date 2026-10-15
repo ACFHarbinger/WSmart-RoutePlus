@@ -1,18 +1,6 @@
-# Lagrangian Relaxation Heuristic (LRH) Policy Configuration
-# Dual relaxation via subgradient optimization.
-
 lrh:
-  # Maximum number of subgradient iterations.
   max_iter: 50
-
-  # Initial step size for subgradient method.
   step_size: 2.0
-
-  # Frequency (iterations) at which to halve the step size.
   halving_freq: 10
-
-  # Random seed for reproducibility.
   seed: 42
-
-  # Whether to use VRP with Profits objectives.
   vrpp: true

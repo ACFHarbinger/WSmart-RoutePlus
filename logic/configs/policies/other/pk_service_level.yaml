@@ -1,0 +1,8 @@
+service_level1:
+  strategy: service_level
+  horizon_days: 1
+  threshold: 0.84
+service_level2:
+  strategy: service_level
+  horizon_days: 2
+  threshold: 0.84

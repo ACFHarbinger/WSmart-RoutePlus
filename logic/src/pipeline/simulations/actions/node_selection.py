@@ -23,7 +23,7 @@ from logic.src.constants import MAX_CAPACITY_PERCENT, ROOT_DIR  # noqa: F401  (R
 from logic.src.constants.paths import CONFIGS_DIR
 from logic.src.interfaces import IBinContainer, ITraversable
 from logic.src.interfaces.context.search_context import SearchContext
-from logic.src.policies.packing import PackingFactory, SelectionContext
+from logic.src.policies.packing import PackingFactory, PackingContext
 from logic.src.utils.configs.config_loader import load_config
 
 from .base import (
@@ -32,7 +32,7 @@ from .base import (
     _as_plain_dict,
     _ensure_mutable_config,
     _file_yaml_pairs,
-    _flatten_config,
+    _as_policy_mapping,
     _inject_acceptance_into_config,
     _is_mapping,
     _is_non_string_sequence,
@@ -114,11 +114,11 @@ class PackingAction(SimulationAction):
                 if s_name is None:
                     continue
 
-                # Extract sub-config parameters for SelectionContext
+                # Extract sub-config parameters for PackingContext
                 s_params = m_config.params.copy()
 
                 # Find the sub-config attribute name
-                from logic.src.policies.packing.base.selection_factory import CONFIG_MAPPING
+                from logic.src.policies.packing.base.factory import CONFIG_MAPPING
 
                 attr_name = CONFIG_MAPPING.get(s_name.lower())
                 if attr_name and hasattr(m_config, attr_name):
@@ -138,26 +138,12 @@ class PackingAction(SimulationAction):
             _append_context_list(context, "_live_ms", live_ms)
             _record_live_params("packing", live_ms)
 
-            # 2. Extract threshold and frequency parameters
+            # 2. Extract the (already remapped) threshold
             thresh = None
             if hasattr(s_params, "get"):
                 thresh = (
                     s_params.get("threshold")
                     if s_params.get("threshold") is not None
-                    else s_params.get("period")
-                    if s_params.get("period") is not None
-                    else s_params.get("n_sectors")
-                    if s_params.get("n_sectors") is not None
-                    else s_params.get("n_points")
-                    if s_params.get("n_points") is not None
-                    else s_params.get("frequency")
-                    if s_params.get("frequency") is not None
-                    else s_params.get("confidence_factor")
-                    if s_params.get("confidence_factor") is not None
-                    # Fallback for learned strategy
-                    else s_params.get("learned_threshold")
-                    if s_params.get("learned_threshold") is not None
-                    # Fallback to context/global thresh if not in strategy params
                     else context.get("threshold")
                 )
 
@@ -178,7 +164,7 @@ class PackingAction(SimulationAction):
                 v = _params.get(key) if hasattr(_params, "get") else None
                 return int(v) if v is not None else default
 
-            sel_ctx = SelectionContext(
+            sel_ctx = PackingContext(
                 bin_ids=np.arange(0, n_bins, dtype="int32"),
                 current_fill=np.array(current_fill) if current_fill is not None else np.array([]),
                 accumulation_rates=accumulation_rates,
@@ -235,14 +221,14 @@ class PackingAction(SimulationAction):
                 # Use structured config
                 m_config = strat_info["config"]
                 strategy = PackingFactory.create_from_config(m_config)
-                res, sub_ctx = strategy.select_bins(sel_ctx)
+                res, sub_ctx = strategy.pack(sel_ctx)
                 # s_name is already normalized above
             elif s_name == "select_all":
                 res = (sel_ctx.bin_ids + 1).tolist()
                 sub_ctx = SearchContext.initialize(selection_metrics={"strategy": "select_all"})
             else:
                 strategy = PackingFactory.create_strategy(str(s_name), **cast(Dict[str, Any], s_params))
-                res, sub_ctx = strategy.select_bins(sel_ctx)
+                res, sub_ctx = strategy.pack(sel_ctx)
 
             # Ensure list
             if hasattr(res, "tolist"):
@@ -271,7 +257,7 @@ class PackingAction(SimulationAction):
         """
         strategies: List[Dict[str, Any]] = []
         raw_cfg = context.get("config", {})
-        flat_cfg = _flatten_config(raw_cfg)
+        flat_cfg = _as_policy_mapping(raw_cfg)
         config_mandatory = flat_cfg.get("packing")
 
         if isinstance(config_mandatory, PackingConfig):

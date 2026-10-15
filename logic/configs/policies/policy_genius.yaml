@@ -1,27 +1,13 @@
-# Policy Configuration
-# =============================================================================
-# GENIUS (GENI + US) Policy Configuration
-# =============================================================================
-# PURPOSE:
-#   Combines GENI (Generalized Insertion) with US (Unstringing and Stringing)
-#   post-optimization for high-quality TSP/VRP solutions.
-#
-# REFERENCE:
-#   Gendreau, M., Hertz, A., & Laporte, G. (1992).
-#   "New Insertion and Postoptimization Procedures for the Traveling Salesman Problem"
-#   Operations Research, 40(6), 1086-1094.
-# =============================================================================
-
 genius:
   custom:
-    - neighborhood_size: 5 # p-neighborhood size for GENI insertion
-    - unstring_type: 1 # Unstringing operator type (1-4)
-    - string_type: 1 # Stringing operator type (1-4)
-    - n_iterations: 1 # Number of complete GENIUS iterations
-    - random_us_sampling: false # Whether to use random sampling (True) or deterministic
-    - time_limit: 60.0 # Wall-clock time limit in seconds
-    # VRPP Settings
-    - vrpp: true
-
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-    - route_improvement: []
+    neighborhood_size: 5
+    unstring_type: 1
+    string_type: 1
+    n_iterations: 1
+    random_us_sampling: false
+    time_limit: 60.0
+    vrpp: true
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    route_improvement: []

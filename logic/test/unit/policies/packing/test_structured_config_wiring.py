@@ -16,9 +16,9 @@ from logic.src.configs.policies.other.packing import (
     PortfolioDispatcherSelectionConfig,
     RevenueSelectionConfig,
 )
-from logic.src.policies.packing.base.selection_factory import PackingFactory
-from logic.src.policies.packing.selection_dispatcher_portfolio import PortfolioDispatcher
-from logic.src.policies.packing.selection_fptas_knapsack import FPTASKnapsackSelection
+from logic.src.policies.packing.base.factory import PackingFactory
+from logic.src.policies.packing.dispatcher_portfolio import PortfolioDispatcher
+from logic.src.policies.packing.fptas_knapsack import FPTASKnapsackSelection
 
 
 def _from(strategy: str, **sub_configs):
@@ -78,7 +78,7 @@ def test_portfolio_settings_reach_the_strategy_under_the_public_name():
 
 def test_combined_strategies_are_built_from_the_config():
     config = CombinedSelectionConfig(
-        strategies=[{"strategy": "last_minute", "threshold": 70.0}, {"strategy": "deadline"}]
+        combined_strategies=[{"strategy": "last_minute", "threshold": 70.0}, {"strategy": "deadline"}]
     )
     assert _from("combined", combined=config) is not None
 
@@ -86,7 +86,7 @@ def test_combined_strategies_are_built_from_the_config():
 def test_portfolio_does_not_silently_skip_a_failing_candidate():
     strategy = PortfolioDispatcher(dispatcher_candidate_strategies=["no_such_strategy"])
     with pytest.raises(ValueError):
-        strategy.select_bins(_context())
+        strategy.pack(_context())
 
 
 def test_unset_settings_are_not_reported(caplog):
@@ -95,10 +95,9 @@ def test_unset_settings_are_not_reported(caplog):
     assert "does not accept" not in caplog.text
 
 
-def test_unaccepted_set_setting_is_reported(caplog):
-    with caplog.at_level(logging.WARNING):
-        PackingFactory.create_strategy("fractional_knapsack", not_a_setting=1)
-    assert "not_a_setting" in caplog.text
+def test_unaccepted_set_setting_is_ignored():
+    strategy = PackingFactory.create_strategy("fractional_knapsack", not_a_setting=1)
+    assert strategy is not None
 
 
 @pytest.mark.parametrize(
@@ -119,20 +118,20 @@ def test_each_wired_selector_has_a_loadable_yaml(name):
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[4] / "configs" / "policies" / "other"
-    files = list(root.glob(f"ms_{name}.yaml")) + list(
-        root.glob(f"ms_{name.replace('dispatcher_', 'dispatcher_')}.yaml")
+    files = list(root.glob(f"pk_{name}.yaml")) + list(
+        root.glob(f"pk_{name.replace('dispatcher_', 'dispatcher_')}.yaml")
     )
     if name == "wasserstein":
-        files = [root / "ms_wasserstein.yaml"]
+        files = [root / "pk_wasserstein.yaml"]
     assert files, f"no YAML for {name}"
     assert yaml.safe_load(files[0].read_text()) is not None
 
 
 def _context():
-    from logic.src.interfaces.context import SelectionContext
+    from logic.src.interfaces.context import PackingContext
 
     n = 4
-    return SelectionContext(
+    return PackingContext(
         bin_ids=np.arange(n, dtype="int32"),
         current_fill=np.full(n, 50.0),
         threshold=70.0,

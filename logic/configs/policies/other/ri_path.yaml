@@ -1,41 +1,4 @@
-# =============================================================================
-# route improvement: Path-Based Opportunistic Collection
-# =============================================================================
-# PURPOSE:
-#   Expands routes by including bins that lie on shortest paths between
-#   consecutive stops, provided vehicle capacity constraints are satisfied.
-#
-# ALGORITHM:
-#   1. For each consecutive pair of stops (u, v) in the tour:
-#      a. Retrieve shortest path from u to v using precomputed paths
-#      b. For each node on the path:
-#         - Check if node is not already selected
-#         - Check if adding node's waste keeps load ≤ capacity
-#         - If both conditions true, insert node into route
-#   2. Return expanded tour with opportunistic pickups
-#
-# USE CASES:
-#   - Waste collection scenarios with real road networks
-#   - Opportunistic collection to reduce future overflow risk
-#   - Maximizing collection efficiency when capacity permits
-#
-# PERFORMANCE:
-#   - Very fast: O(n × path_length) per route
-#   - Improvement: Variable (0-10% depending on network topology)
-#   - Best results on dense urban networks with many intermediate bins
-#
-# REQUIREMENTS:
-#   - Precomputed shortest paths between all state pairs
-#   - Current fill levels for all bins
-#   - Vehicle capacity constraint
-#
-# PARAMETERS:
-#   - vehicle_capacity: 100.0 (maximum vehicle load in kg)
-#     Typical range: 50.0-200.0 depending on vehicle type
-# =============================================================================
-
 path:
   methods:
-    - "path"
-
+  - path
   vehicle_capacity: 100.0

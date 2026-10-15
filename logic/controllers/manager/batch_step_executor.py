@@ -283,9 +283,9 @@ def _step_delete_path(args: Dict[str, Any], job: BatchJob) -> None:
 
 
 _MS_CONFIGS: Dict[str, Any] = {
-    "lookahead":     {"other/ms_lookahead.yaml": ["lookahead"]},
-    "last_minute":   {"other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"]},
-    "service_level": {"other/ms_service_level.yaml": ["service_level1", "service_level2"]},
+    "lookahead":     {"other/pk_lookahead.yaml": ["lookahead"]},
+    "last_minute":   {"other/pk_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"]},
+    "service_level": {"other/pk_service_level.yaml": ["service_level1", "service_level2"]},
 }
 
 _RI_CONFIGS: Dict[str, Any] = {

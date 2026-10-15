@@ -1,0 +1,5 @@
+default:
+  strategy: spatial_synergy
+  critical_threshold: 0.9
+  synergy_threshold: 0.6
+  radius: 10.0

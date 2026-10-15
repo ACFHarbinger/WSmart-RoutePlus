@@ -1,0 +1,4 @@
+default:
+  strategy: learned
+  learned_model_path: assets/models/packing_imitator.pkl
+  threshold: 0.5

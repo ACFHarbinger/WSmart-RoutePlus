@@ -1,64 +1,16 @@
-# Policy Configuration
-# =============================================================================
-# MA (Memetic Algorithm) Policy Configuration
-# =============================================================================
-# PURPOSE:
-#   Hybrid evolutionary algorithm implementation strictly following the framework
-#   defined by Moscato, Cotta, & Mendes (2004) in "Memetic Algorithms".
-#
-#   Synthesizes the global exploratory power of Genetic Algorithms (recombination/mutation)
-#   with the intensive local exploitation of hill-climbing operators (Local-Improvers).
-#
-# REFERENCE:
-#   bibliography/Memetic_Algorithms.pdf
-#
-# ALGORITHMIC MAPPING (Code -> Paper):
-#   - pop_size: The constant size |pop| of the solution pool (Fig 3.1).
-#   - Generations: The number of generational update cycles (Fig 3.1).
-#   - Local Search: Probability of applying intensive Fig 3.3 refinement.
-# =============================================================================
-
 ma:
   custom:
-    # --- Population & Iterations ---
-    - pop_size: 50
-      # Number of parallel solutions to evolve.
-      # Higher values (50-200) increase diversity; lower values (20-50) speed up runtime.
-
-    - max_generations: 500
-      # Total evolutionary cycles performed.
-      # Range: 100 (quick debug) to 2000+ (production benchmarks).
-
-    # --- Evolutionary Pipeline Rates (Fig 3.2) ---
-    - crossover_rate: 0.8
-      # Probability of parental information exchange. Typically 0.7 - 0.9.
-
-    - mutation_rate: 0.1
-      # Probability of random structural perturbation. Low (0.01-0.1) prevents chaos.
-
-    - local_search_rate: 1.0
-      # Defining MA feature: Probability of intensive 2-opt refinement on EVERY child.
-      # Usually 1.0 for true Memetic behavior.
-
-    # --- Selection & Operators ---
-    - tournament_size: 3
-      # Size of groups for fitness competition. 3-5 is typical for robust selection.
-
-    - n_removal: 2
-      # Magnitude of the mutation perturbation (number of nodes to relocate).
-
-    # --- Runtime Control ---
-    - time_limit: 60.0
-      # Hard wall-clock limit in seconds. Search exits once reached.
-
-    # --- Simulation Infrastructure ---
-    # VRPP Settings
-    - profit_aware_operators: false
-    - vrpp: true
-
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-      # Selection strategy for waste collection (Mandatory node identification).
-
-    - route_improvement: []
-      # Additional solvers to run on the MA output (e.g. local_search, tabu).
-# =============================================================================
+    pop_size: 50
+    max_generations: 500
+    crossover_rate: 0.8
+    mutation_rate: 0.1
+    local_search_rate: 1.0
+    tournament_size: 3
+    n_removal: 2
+    time_limit: 60.0
+    profit_aware_operators: false
+    vrpp: true
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    route_improvement: []

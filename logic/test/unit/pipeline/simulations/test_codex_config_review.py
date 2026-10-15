@@ -10,7 +10,7 @@ from omegaconf import OmegaConf
 
 
 def test_hydra_mapping_keeps_selected_service_level():
-    cfg = OmegaConf.create({"packing": {"other/ms_service_level.yaml": "service_level2"}})
+    cfg = OmegaConf.create({"packing": {"other/pk_service_level.yaml": "service_level2"}})
     parsed = PackingAction()._gather_strategies({"config": cfg})
     assert len(parsed) == 1
     assert parsed[0]["name"] == "service_level"
@@ -82,7 +82,7 @@ def test_packing_does_not_call_setdefault_on_day_context() -> None:
     bins.n = 2
     ctx = _DayContextLike(
         bins=bins,
-        config={"packing": {"other/ms_last_minute.yaml": "last_minute_cf70"}},
+        config={"packing": {"other/pk_last_minute.yaml": "last_minute_cf70"}},
         day=0,
         max_capacity=100.0,
         threshold=None,

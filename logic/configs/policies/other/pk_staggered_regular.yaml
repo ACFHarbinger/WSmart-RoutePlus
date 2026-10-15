@@ -1,0 +1,3 @@
+p3:
+  strategy: staggered_regular
+  threshold: 3

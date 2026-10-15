@@ -1,133 +1,25 @@
-# Policy Configuration
-
-# =============================================================================
-# ILS-BD (Integer L-Shaped Benders Decomposition) Exact Solver Configuration
-# =============================================================================
-# PURPOSE:
-#   Exact optimization for the Stochastic Inventory Routing Problem (SIRP)
-#   using the Integer L-Shaped method (Benders decomposition).
-#   Handles routing decisions (Stage 1) and evaluates stochastic recourse
-#   scenarios (Stage 2) to generate optimality cuts.
-#
-# ALGORITHM:
-#   1. Master Problem (MP): Determines routing (x) and visit (y) decisions.
-#      Includes a surrogate θ for expected recourse cost.
-#   2. Subproblem (SP): Evaluates x/y against SAA scenarios.
-#   3. Optimality Cuts: If actual recourse exceeds θ, add combinatorial
-#      Benders cuts: θ ≥ e + d·y.
-#   4. Branch-and-Cut: Solves MP with SEC and Benders cuts iteratively.
-#
-# BACKEND:
-#   Uses Gurobi optimizer for the Master Problem with lazy constraint
-#   callbacks for SEC/RCC separation.
-#
-# TYPICAL USE CASES:
-#   - Stochastic waste collection with uncertain bin fill levels.
-#   - Problems requiring exact accounting for future overflow penalties.
-#   - Benchmark for stochastic reinforcement learning models.
-#
-# PERFORMANCE EXPECTATIONS:
-#   - Small instances (<30 nodes): Converges in <60 seconds.
-#   - Medium instances (50 nodes): 2-10 minutes depending on scenario count.
-#   - Scenario count (n_scenarios) significantly impacts SP evaluation time.
-#
-# WARNING:
-#   Requires Gurobi license.
-# =============================================================================
-
 ils_bd:
   gurobi:
-    # ---------------------------------------------------------------------
-    # Infrastructure Settings
-    # ---------------------------------------------------------------------
-    - time_limit: 120
-      # Maximum wall-clock seconds for the overall Benders solve.
-
-    - mip_gap: 0.01
-      # Relative MIP gap for each Gurobi master problem solve.
-
-    - verbose: false
-      # Enable Gurobi solver output and per-iteration Benders logging.
-
-    # ---------------------------------------------------------------------
-    # Stochastic (SAA) Settings
-    # ---------------------------------------------------------------------
-    - n_scenarios: 20
-      # Number of SAA discrete scenarios for recourse approximation.
-
-    - seed: 42
-      # Random seed for reproducible scenario generation.
-
-    - fill_rate_cv: 0.3
-      # Coefficient of variation for SAA Gamma scenario generation.
-      # Higher values = more uncertainty in bin fill levels.
-
-    # ---------------------------------------------------------------------
-    # Benders Decomposition Parameters
-    # ---------------------------------------------------------------------
-    - max_benders_iterations: 50
-      # Maximum outer Benders (L-shaped) iterations.
-
-    - benders_gap: 0.0001
-      # Convergence tolerance for the outer Benders loop.
-
-    - theta_lower_bound: 0.0
-      # Initial lower bound on the surrogate variable θ.
-
-    # ---------------------------------------------------------------------
-    # Recourse Penalty Parameters
-    # ---------------------------------------------------------------------
-    - overflow_penalty: 100.0
-      # Penalty per %-fill unit that overflows an unvisited bin
-      # above the collection threshold (€/%-fill).
-
-    - undervisit_penalty: 10.0
-      # Penalty per %-fill unit below the collection threshold
-      # for visited bins — cost of a wasted trip (€/%-fill).
-
-    - collection_threshold: 70.0
-      # Fill level % at which overflow/undervisit penalties are triggered.
-
-    # ---------------------------------------------------------------------
-    # Routing Constraints & Cutting Planes
-    # ---------------------------------------------------------------------
-    - vrpp: true
-      # Whether to formulate as VRPP (customer nodes may be skipped).
-
-    - max_cuts_per_round: 50
-      # Maximum SECs / RCCs added per Gurobi callback.
-
-    - enable_heuristic_rcc_separation: true
-      # Enable heuristic Rounded Capacity Cut (RCC) separation.
-
-    - enable_comb_cuts: false
-      # Enable heuristic comb inequality separation.
-
-    # ---------------------------------------------------------------------
-    # Solver Backend
-    # ---------------------------------------------------------------------
-    - engine: "gurobi"
-      # Execution backend: logic/src/policies/smart_waste_collection_two_commodity_flow/gurobi.py
-      # Requires: gurobipy Python package + valid Gurobi license
-
-    - framework: "ortools"
-      # Execution framework: logic/src/policies/smart_waste_collection_two_commodity_flow/ortools.py
-      # Requires: ortools Python package
-
-    # ---------------------------------------------------------------------
-    # packing algorithm
-    # ---------------------------------------------------------------------
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-      # Selection strategy for mandatory visits.
-
-    # ---------------------------------------------------------------------
-    # route improvement
-    # ---------------------------------------------------------------------
-    - route_improvement: []
-      # No route improvement needed for exact solutions.
-
-    # ---------------------------------------------------------------------
-    # Warm-Start Heuristics
-    # ---------------------------------------------------------------------
-    - profit_aware_operators: false
-      # Whether to use profit-aware insertion heuristics for warm-starts.
+    time_limit: 120
+    mip_gap: 0.01
+    verbose: false
+    n_scenarios: 20
+    seed: 42
+    fill_rate_cv: 0.3
+    max_benders_iterations: 50
+    benders_gap: 0.0001
+    theta_lower_bound: 0.0
+    overflow_penalty: 100.0
+    undervisit_penalty: 10.0
+    collection_threshold: 70.0
+    vrpp: true
+    max_cuts_per_round: 50
+    enable_heuristic_rcc_separation: true
+    enable_comb_cuts: false
+    engine: gurobi
+    framework: ortools
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    route_improvement: []
+    profit_aware_operators: false

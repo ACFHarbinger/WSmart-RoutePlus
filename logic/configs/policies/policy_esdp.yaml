@@ -1,22 +1,10 @@
-# Exact Stochastic Dynamic Programming (SDP) Policy Configuration
-# This policy solves the SCWCVRP exactly via backward induction.
-# NOTE: It is extremely sensitive to cursor dimensionality and max_nodes should not exceed 10.
-
-# ==========================================
-# EXACT SDP CONFIGURATION (ExactSDPConfig)
-# ==========================================
 esdp:
-  # General limits
-  time_limit: 3600.0 # Max processing time (seconds)
-  max_nodes: 8 # Hard limit on number of nodes to avert memory overflow
-  num_days: 5 # Total days (stages) for Backward Induction
-
-  # State Space Discretization
-  discrete_levels: 5 # Number of fill states {0, 0.25, 0.5, 0.75, 1.0}
-  max_fill_rate: 0.3 # Expected daily proportional fill increment across all bins
-
-  # Objective Weights
-  discount_factor: 0.99 # Temporal discount (gamma)
-  waste_weight: 10.0 # Reward multiplier per unit collected
-  cost_weight: 1.0 # Penalty multiplier per distance unit travelled
-  overflow_penalty: 100.0 # Intense stage penalty per bin at maximum fill level
+  time_limit: 3600.0
+  max_nodes: 8
+  num_days: 5
+  discrete_levels: 5
+  max_fill_rate: 0.3
+  discount_factor: 0.99
+  waste_weight: 10.0
+  cost_weight: 1.0
+  overflow_penalty: 100.0

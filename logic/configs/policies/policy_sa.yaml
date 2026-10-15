@@ -1,65 +1,16 @@
-# =============================================================================
-# SA (Simulated Annealing) Policy Configuration
-# =============================================================================
-# PURPOSE:
-#   A strict, modernized Simulated Annealing meta-heuristic for VRPP.
-#   Evaluates candidate neighborhood structures utilizing the stochastic
-#   Metropolis acceptance criterion to escape local optima.
-#
-# EVOLUTION:
-#   This replaces the legacy `sans` and `lac` configurations. It removes
-#   ambiguous integer arrays in favor of explicit thermodynamic parameters
-#   (initial_temperature, cooling_rate) mapped directly
-#   to the SAConfig dataclass.
-# =============================================================================
-
 sa:
-  # ---------------------------------------------------------------------------
-  # Thermodynamic Schedule Parameters
-  # ---------------------------------------------------------------------------
-  # Starting temperature T_0. Must be high enough to ensure an initial
-  # acceptance probability of approx 0.8 for worsening moves.
-  # (Replaces legacy T_init / param index 1)
   initial_temperature: 100.0
-
-  # Geometric cooling coefficient alpha in (0, 1). T_{k+1} = alpha * T_k.
-  # (Replaces legacy alpha / param index 2)
   cooling_rate: 0.95
-
-  # Termination temperature threshold T_{min}.
-  # (Replaces legacy T_min)
   min_temperature: 0.01
-
-
-  # Number of neighborhood search granular moves to try at each
-  # temperature step.
   nb_granular: 20
-
-  # ---------------------------------------------------------------------------
-  # System & Environment Parameters
-  # ---------------------------------------------------------------------------
-  # Absolute wall-clock time limit in seconds.
   time_limit: 60.0
-
-  # Random seed for stochastic reproducibility.
   seed: 42
-
-  # ---------------------------------------------------------------------------
-  # Domain-Specific Routing Flags
-  # ---------------------------------------------------------------------------
-  # Flag to enable globally unassigned pool expansion for Vehicle Routing with Profits.
   vrpp: true
-
-  # Flag to explicitly bias ruin/recreate operators toward high-revenue nodes.
   profit_aware_operators: false
-
-  # ---------------------------------------------------------------------------
-  # Modular Sub-Policies
-  # ---------------------------------------------------------------------------
-  # List of mandatory collection filters executed prior to meta-heuristic search.
   packing:
-    - {"other/ms_lookahead.yaml": ["default"]}
-  # List of route improvement refinement operations.
+    other/pk_lookahead.yaml:
+    - default
   route_improvement: []
-
-  acceptance_criteria: {"other/ac_bmc.yaml": ["bmc"]}
+  acceptance_criteria:
+    other/ac_bmc.yaml:
+    - bmc

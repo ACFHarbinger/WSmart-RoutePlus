@@ -1,0 +1,4 @@
+h2:
+  strategy: deadline
+  horizon_days: 2
+  threshold: 2.0

@@ -49,70 +49,64 @@ def _find_key(d: Any, target_key: str) -> Any:
     return None
 
 
-_EXPANDED_KEYS = ("packing", "route_improvement", "acceptance_criteria", "acceptance_criterion")
+_STAGE_KEYS = ("packing", "policy", "route_improvement", "acceptance_criterion", "acceptance_criteria")
+_ENGINE_KEYS = ("custom", "ortools", "gurobi", "params")
 
 
-def _flatten_config(cfg: Any) -> dict:  # noqa: C901
-    """
-    Helper to flatten nested configuration structures (e.g. hgs.custom -> list of dicts).
-    Args:
-        cfg: The configuration object to flatten.
-
-    Returns:
-        A flattened dictionary of the configuration.
-    """
+def _to_plain_mapping(cfg: Any) -> Dict[str, Any]:
+    """Convert a policy section to a builtin mapping. List-of-maps YAML is rejected."""
     if not cfg:
         return {}
+    try:
+        from omegaconf import OmegaConf
 
-    curr = cfg
-
-    # Use a type guard to help Pyright/Pyrefly
-    while isinstance(curr, Mapping) and len(curr) == 1:
-        # Safer key extraction
-        key = next(iter(curr.keys()))
-
-        if key in ["packing", "policy", "route_improvement", "acceptance_criterion", "acceptance_criteria"]:
-            break
-        curr = curr[key]
-
-    # Handle list of dicts (including OmegaConf ListConfig)
-    if isinstance(curr, (list, tuple)) or (not isinstance(curr, (str, dict, Mapping)) and hasattr(curr, "__iter__")):
-        merged: Dict[str, Any] = {}
-        for item in curr:
-            if isinstance(item, Mapping):
-                merged.update(item)  # No need to cast to dict() if it's already a Mapping
-        return merged
-
-    # Handle dict/Mapping
-    if isinstance(curr, Mapping):
-        flat = dict(curr)
-        # Iterate over all keys and flatten if value is a list of dicts
-        for _k, v in list(flat.items()):
-            if isinstance(v, (list, tuple)) or (not isinstance(v, (str, Mapping)) and hasattr(v, "__iter__")):
-                primitive_list = []
-                for item in v:
-                    if hasattr(item, "items"):
-                        for sub_k, sub_v in dict(item).items():
-                            # Keep the variant-specific selection/improvement/acceptance entries that
-                            # the policy expander already resolved at the top level; nested 'custom'
-                            # blocks still carry the unexpanded {file: [all variants]} form.
-                            if sub_k in _EXPANDED_KEYS and sub_k in flat:
-                                continue
-                            flat[sub_k] = sub_v
-                    else:
-                        primitive_list.append(item)
-                if primitive_list:
-                    flat[_k] = primitive_list
-
-        for target in ["packing", "route_improvement", "acceptance_criterion", "acceptance_criteria"]:
-            if target not in flat:
-                val = _find_key(curr, target)
-                if val is not None:
-                    flat[target] = val
-
-        return flat
-
+        if OmegaConf.is_config(cfg):
+            cfg = OmegaConf.to_container(cfg, resolve=True)
+    except Exception:
+        pass
+    if isinstance(cfg, list):
+        raise TypeError("policy YAML must be a mapping after P-13; run tools/convert_policy_yaml.py")
+    if isinstance(cfg, Mapping):
+        return dict(cfg)
     return {}
+
+
+def _as_policy_mapping(cfg: Any) -> dict:
+    """Unwrap a policy-name or engine wrapper and return the parameter mapping.
+
+    After P-13 the YAML is already a mapping (``alns.custom.time_limit``), not a
+    list of single-key maps. Stage keys (packing / route improvement /
+    acceptance) stay as file-refs or nested mappings.
+    """
+    curr = _to_plain_mapping(cfg)
+    if not curr:
+        return {}
+
+    while len(curr) == 1:
+        key = next(iter(curr))
+        if key in _STAGE_KEYS:
+            break
+        inner = curr[key]
+        if isinstance(inner, Mapping):
+            curr = dict(inner)
+            continue
+        if isinstance(inner, list):
+            raise TypeError("policy YAML must be a mapping after P-13; run tools/convert_policy_yaml.py")
+        break
+
+    out = dict(curr)
+    for engine in _ENGINE_KEYS:
+        inner = out.get(engine)
+        if isinstance(inner, Mapping):
+            for key, value in dict(inner).items():
+                if key not in out or key == engine:
+                    out[key] = value
+    for target in _STAGE_KEYS:
+        if target not in out:
+            val = _find_key(curr, target)
+            if val is not None:
+                out[target] = val
+    return out
 
 
 def _is_mapping(obj: Any) -> bool:

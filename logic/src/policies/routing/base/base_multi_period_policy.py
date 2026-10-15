@@ -233,7 +233,7 @@ class BaseMultiPeriodRoutingPolicy(BaseRoutingPolicy):
         # Merge telemetry into the ledger
         from logic.src.interfaces.context.search_context import SearchPhase, merge_context
 
-        search_ctx = merge_context(search_ctx, phase=SearchPhase.CONSTRUCTION, construction_metrics=solver_metadata)
+        search_ctx = merge_context(search_ctx, phase=SearchPhase.ROUTING, construction_metrics=solver_metadata)
 
         # 4. Update MultiDayContext with full plan snapshot
         if multi_day_ctx is not None:

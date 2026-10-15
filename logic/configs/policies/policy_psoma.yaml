@@ -1,123 +1,27 @@
-# Policy Configuration
-
-# =============================================================================
-# PSOMA (Particle Swarm Optimization Memetic Algorithm) Policy Configuration
-# =============================================================================
-# PURPOSE:
-#   Continuous PSO with Ranked-Order-Value (ROV) mapping and Linear Split.
-#   Particles evolve in a continuous [x_min, x_max] space, which is mapped to
-#   a permutation (giant tour) via the ROV rule. This giant tour is then
-#   decoded into feasible routes using the optimal Linear Split algorithm.
-#
-# ALGORITHM:
-#   1. Initialize pop_size particles with random continuous positions X and
-#      velocities V in D-dimensional space (D = number of customers).
-#   2. Velocity Update:
-#      V = omega*V + c1*rand*(pbest - X) + c2*rand*(gbest - X)
-#      (Limited by [v_min, v_max])
-#   3. Position Update: X = X + V (Clamped to [x_min, x_max])
-#   4. Phenotype Mapping:
-#      - ROV Rule: Sort customer indices by their values in X to get a giant tour.
-#      - Linear Split: Partition giant tour into optimal routes based on capacity.
-#   5. Intensification:
-#      Simulated Annealing (SA) search on the giant tour using the 2-Opt
-#      neighborhood to refine the permutation before splitting.
-#   6. Update pbest / gbest; repeat until time_limit.
-#
-# KEY FEATURE:
-#   Hybridizing continuous swarm dynamics with discrete local search via
-#   ROV mapping provides a flexible balance between global exploration and
-#   rigorous intensification in the permutation space.
-#
-# TYPICAL USE CASES:
-#   - Large VRP instances where continuous exploration is efficient.
-#   - Scenarios requiring high-quality solutions via SA refinement.
-#
-# PERFORMANCE EXPECTATIONS:
-#   - Significantly better convergence than discrete swap-based PSO.
-#   - SA local search provides high-quality intensification.
-#   - Scales well with number of customers due to Linear Split's efficiency.
-# =============================================================================
-
 psoma:
-  # -------------------------------------------------------------------------
-  # Swarm Parameters
-  # -------------------------------------------------------------------------
-  pop_size:
-    20
-    # Number of particles (continuous solutions) in the swarm
-    # Range: 10-50 (10 = fast, 20 = balanced, 50 = diverse but slower)
-
-  # -------------------------------------------------------------------------
-  # PSO Velocity & Position Coefficients
-  # -------------------------------------------------------------------------
-  omega:
-    1.0
-    # Inertia weight — controls momentum of particles
-    # Range: 0.4-1.2 (1.0 = balanced)
-
-  c1:
-    2.0
-    # Cognitive acceleration — pull toward particle's personal best
-    # Range: 0.5-2.5 (higher → stronger individual memory influence)
-
-  c2:
-    2.0
-    # Social acceleration — pull toward global best
-    # Range: 0.5-2.5 (higher → stronger global best influence)
-
+  pop_size: 20
+  omega: 1.0
+  c1: 2.0
+  c2: 2.0
   x_min: 0.0
-  x_max:
-    4.0
-    # Bounds for continuous position vector
-
+  x_max: 4.0
   v_min: -4.0
-  v_max:
-    4.0
-    # Bounds for continuous velocity vector
-
-  # -------------------------------------------------------------------------
-  # Intensification (Simulated Annealing)
-  # -------------------------------------------------------------------------
-  L:
-    30
-    # If gbest keeps fixed at consecutive L steps, then output the best solution
-    # Range: 10-100 (higher → deeper intensification)
-
-  T0:
-    3.0
-    # Initial temperature for Simulated Annealing
-    # Range: 0.5-10.0
-
-  lambda_cooling:
-    0.9
-    # Cooling rate (alpha) for temperature reduction
-    # Range: 0.8-0.999 (higher → slower cooling, more intensive)
-
-  acceptance_criteria: { "other/ac_bmc.yaml": ["bmc"] }
-
-  # -------------------------------------------------------------------------
-  # Runtime Control
-  # -------------------------------------------------------------------------
-  max_iterations:
-    200
-    # Maximum PSO iterations
-    # Range: 50-500 (100 = quick, 200 = production, 500 = benchmark)
-
-  time_limit:
-    60.0
-    # Maximum wall-clock seconds
-    # Range: 10-300 (30s = quick, 60s = production, 120s = benchmark)
-
-  # -------------------------------------------------------------------------
-  # Infrastructure Settings
-  # -------------------------------------------------------------------------
+  v_max: 4.0
+  L: 30
+  T0: 3.0
+  lambda_cooling: 0.9
+  acceptance_criteria:
+    other/ac_bmc.yaml:
+    - bmc
+  max_iterations: 200
+  time_limit: 60.0
   seed: 42
   profit_aware_operators: true
   vrpp: true
-
-  packing: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
-  # Node selection strategy for waste collection problems
-
-  route_improvement: { "other/ri_cls.yaml": ["default"] }
-# =============================================================================
+  packing:
+    other/pk_last_minute.yaml:
+    - last_minute_cf70
+    - last_minute_cf90
+  route_improvement:
+    other/ri_cls.yaml:
+    - default

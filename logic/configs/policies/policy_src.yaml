@@ -1,53 +1,10 @@
-# Policy Configuration
-
-# =============================================================================
-# SRC (Sequential Routing Algorithm) Meta-Solver Configuration
-# =============================================================================
-# PURPOSE:
-#   Orchestrates a sequence of routing solvers, where each solver uses the
-#   output of the previous ones to refine the solution.
-#
-# ALGORITHM:
-#   1. Runs solvers in the specified 'constructors' order.
-#   2. Threads intermediate tours and search context between calls.
-#   3. Aborts sequence if 'time_limit' is exceeded between calls.
-#
-# PERFORMANCE:
-#   - Variable: Depends on the complexity of the underlying solvers.
-#
-# TYPICAL USE CASES:
-#   - Progressive refinement: Simple constructive -> Meta-heuristic -> Exact.
-#   - Collaborative solvers: Neural selection -> Classical optimization.
-# =============================================================================
-
 src:
-  # ---------------------------------------------------------------------
-  # Solver Sequence
-  # ---------------------------------------------------------------------
-  - constructors: ["tsp", "alns"]
-  # Registry names of routing algorithms to apply in order.
-  # Default: ["tsp", "alns"]
-
-  # ---------------------------------------------------------------------
-  # Runtime Control
-  # ---------------------------------------------------------------------
-  - time_limit: 60
-  # Maximum wall-clock seconds for the entire sequence.
-  # If exceeded between solver calls, SRC returns result of last solver.
-
-  # ---------------------------------------------------------------------
-  # Node Selection Strategy
-  # ---------------------------------------------------------------------
-  - vrpp: true
-  # Profit-aware routing mode (Vehicle Routing Problem with Profits).
-
-  - packing: {"other/ms_lookahead.yaml": ["default"]}
-  # Node selection strategy for waste collection problems.
-  # Without one, every day's mandatory set is empty and SRC collects nothing.
-
-  # ---------------------------------------------------------------------
-  # Determinism
-  # ---------------------------------------------------------------------
-  - seed: 42
-  # Global seed for the sequential wrapper logic.
-# =============================================================================
+  routing_algorithms:
+  - tsp
+  - alns
+  time_limit: 60
+  vrpp: true
+  packing:
+    other/pk_lookahead.yaml:
+    - default
+  seed: 42

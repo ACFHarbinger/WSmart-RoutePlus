@@ -1,87 +1,37 @@
-# Policy Configuration
-
-# =============================================================================
-# PG-CLNS (Pheromone-Guided Cooperative Large Neighborhood Search)
-# =============================================================================
-# PURPOSE:
-#   A hybrid metaheuristic that combines the constructive power of Ant Colony
-#   Optimization (ACO) with the local improvement capabilities of Large
-#   Neighborhood Search (LNS) within a cooperative population-based framework.
-#
-# ALGORITHM:
-#   1. Initialization: ACO generates an initial population of solutions.
-#   2. Cooperative Phase:
-#      - Coaching: Each solution in the population is improved using LNS.
-#      - Guidance: Pheromones are updated based on the best-performing solution.
-#      - Substitution: Weakest solutions are replaced by new ACO-guided constructions.
-#
-# KEY FEATURES:
-#   - Pheromone guidance provides global coordination across the population.
-#   - LNS ensures high-quality local exploitation.
-#   - Cooperative dynamics maintain diversity and prevent premature convergence.
-#
-# REFERENCE:
-#   Inspired by the Hybrid Volleyball Premier League (HVPL) framework.
-# =============================================================================
-
 pg_clns:
   custom:
-    # ---------------------------------------------------------------------
-    # Population Parameters
-    # ---------------------------------------------------------------------
-    - population_size: 10
-      # Number of solutions maintained in the population.
-      # Range: 5-50 (10 = fast, 30 = thorough)
-
-    - max_iterations: 50
-      # Number of cooperative search iterations.
-      # Range: 20-200
-
-    - replacement_rate: 0.2
-      # Fraction of the population replaced in each iteration.
-      # Range: 0.1-0.5
-
-    # ---------------------------------------------------------------------
-    # Global Parameters
-    # ---------------------------------------------------------------------
-    - time_limit: 60.0
-      # Maximum wall-clock seconds for the entire search.
-
-    # ---------------------------------------------------------------------
-    # ACO Nested Configuration (Initialization & Guidance)
-    # ---------------------------------------------------------------------
-    - aco:
-        n_ants: 10
-        k_sparse: 10
-        alpha: 1.0
-        beta: 2.0
-        rho: 0.1
-        q0: 0.9
-        tau_0: 1.0
-        tau_min: 0.001
-        tau_max: 10.0
-        max_iterations: 1
-        time_limit: 30.0
-        local_search: false
-        elitist_weight: 1.0
-
-    # ---------------------------------------------------------------------
-    # LNS Nested Configuration (Improvement)
-    # ---------------------------------------------------------------------
-    - lns:
-        max_iterations: 100
-        start_temp: 100.0
-        cooling_rate: 0.95
-        reaction_factor: 0.5
-        min_removal: 1
-        xi: 0.2
-        time_limit: 30.0
-
-    # ---------------------------------------------------------------------
-    # Infrastructure Settings
-    # ---------------------------------------------------------------------
-    - profit_aware_operators: true
-    - vrpp: true
-    - packing: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
-    - route_improvement: { "other/ri_cls.yaml": ["default"] }
-# =============================================================================
+    population_size: 10
+    max_iterations: 50
+    replacement_rate: 0.2
+    time_limit: 60.0
+    aco:
+      n_ants: 10
+      k_sparse: 10
+      alpha: 1.0
+      beta: 2.0
+      rho: 0.1
+      q0: 0.9
+      tau_0: 1.0
+      tau_min: 0.001
+      tau_max: 10.0
+      max_iterations: 1
+      time_limit: 30.0
+      local_search: false
+      elitist_weight: 1.0
+    lns:
+      max_iterations: 100
+      start_temp: 100.0
+      cooling_rate: 0.95
+      reaction_factor: 0.5
+      min_removal: 1
+      xi: 0.2
+      time_limit: 30.0
+    profit_aware_operators: true
+    vrpp: true
+    packing:
+      other/pk_last_minute.yaml:
+      - last_minute_cf70
+      - last_minute_cf90
+    route_improvement:
+      other/ri_cls.yaml:
+      - default

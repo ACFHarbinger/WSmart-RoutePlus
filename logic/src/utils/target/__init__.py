@@ -7,7 +7,7 @@ Quick start::
     # Switch all standard routing algorithms to service-level packing
     update_packing(
         constructors=["aco_hh", "alns", "bpc", "hgs"],
-        ms_yaml="ms_service_level",
+        pk_yaml="pk_service_level",
         keys=["service_level1", "service_level2"],
     )
 
@@ -21,7 +21,7 @@ Quick start::
     # Dry-run to preview
     update_packing(
         constructors=["sans"],
-        ms_yaml="ms_last_minute",
+        pk_yaml="pk_last_minute",
         keys=["last_minute_cf70", "last_minute_cf90"],
         dry_run=True,
     )
@@ -34,14 +34,14 @@ CLI usage::
 Attributes:
     update_packing: Batch-update packing in policy YAML files.
     update_route_improvement: Batch-update route_improvement in policy YAML files.
-    list_available_ms_strategies: List available packing algorithm file stems.
+    list_available_packing_strategies: List available packing algorithm file stems.
     list_available_ri_improvers: List available route-improver file stems.
     list_strategy_keys: List top-level keys defined in a strategy file.
     list_improver_keys: List top-level keys defined in an improver file.
 """
 
 from .policy_link_updater import (
-    list_available_ms_strategies,
+    list_available_packing_strategies,
     list_strategy_keys,
     update_packing,
 )
@@ -54,7 +54,7 @@ from .policy_link_updater import (
 __all__ = [
     "update_packing",
     "update_route_improvement",
-    "list_available_ms_strategies",
+    "list_available_packing_strategies",
     "list_available_ri_improvers",
     "list_strategy_keys",
     "list_improver_keys",

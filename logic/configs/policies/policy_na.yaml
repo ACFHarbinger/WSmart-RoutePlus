@@ -1,108 +1,13 @@
-# Policy Configuration
-
-# =============================================================================
-# Neural Network Policy Configuration
-# =============================================================================
-# PURPOSE:
-#   Inference-only policy using pre-trained attention-based models (AM, TAM)
-#   for constructive routing. Enables comparison between neural and classical
-#   solvers on real-world waste collection scenarios.
-#
-# ALGORITHM:
-#   1. Load trained model weights from checkpoint
-#   2. Encode problem instance (bin locations, fill levels, distances)
-#   3. Autoregressively decode route via masked attention
-#   4. Return tour (greedy or sampled)
-#
-# MODELS SUPPORTED:
-#   - AM (Attention Model): Standard encoder-decoder with MHA
-#   - AMGAT (AM + Graph Attention): Enhanced with GAT encoder
-#   - TAM (Temporal AM): Multi-day awareness with GRF predictor
-#   - DDAM (Deep Decoder AM): Deeper decoder for complex problems
-#
-# TYPICAL USE CASES:
-#   - Deploy trained models in simulation (test_sim)
-#   - Benchmark neural vs classical policies (HGS, ALNS, Gurobi)
-#   - Real-time routing (<1s inference) for production systems
-#
-# PERFORMANCE EXPECTATIONS:
-#   - Inference time: <1 second for 100-node instance (GPU)
-#   - Solution quality: Typically 5-15% worse than HGS/Gurobi
-#   - Advantage: Consistent fast runtime (no worst-case timeouts)
-# =============================================================================
-
 na:
   amgat:
-    # ---------------------------------------------------------------------
-    # Model Checkpoint
-    # ---------------------------------------------------------------------
-    - model_path: "model_weights/vrpp100_riomaior_plastic/emp/amgat0"
-      # Path to trained model directory containing:
-      #   - args.json: Model architecture and training hyperparameters (sidecar written by training)
-      #   - epoch-<N>.pt: Weights of the final model; the newest epoch-*.pt is loaded
-      #   - config.yaml: Full Hydra config of the training run, when available
-      #
-      # Directory structure example:
-      #   amgat/
-      #   ├── args.json
-      #   ├── config.yaml
-      #   └── epoch-31.pt
-      #
-      # Model was trained on:
-      #   - Problem: CWCVRP (Capacitated Waste Collection VRP)
-      #   - Instance size: 100 nodes
-      #   - Geographic area: Rio Maior, Portugal
-      #   - Waste type: Plastic recycling
-      #   - Objective weight (gamma): 1.0 (balanced cost/overflow)
-
-    # ---------------------------------------------------------------------
-    # Decoding Strategy
-    # ---------------------------------------------------------------------
-    # Configures how the neural model selects nodes during routing:
-    #   - greedy: Select highest-probability node (fast, deterministic)
-    #   - sampling: Sample from distribution (stochastic, diverse)
-    #   - beam_search: Explore top-k partial solutions (highest quality)
-    #
-    # Note: Beam search requires significant additional memory and compute.
-    # ---------------------------------------------------------------------
-    - decoding:
-        strategy: "greedy"
-        beam_width: 5
-        reward_weight: 0.0
-        length_penalty_alpha: 0.0
-
-    # Node Selection Strategy
-    # ---------------------------------------------------------------------
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-      # Pre-filter nodes before neural model inference
-      # Options: ms_lookahead.yaml (predict overflow), ms_last_minute_*.yaml
-      # See: docs/MUST_GO_STRATEGIES.md
-      #
-      # Flow: packing selector → neural model → route
-      # Example: If 100 bins but only 30 exceed threshold → model sees 30 nodes
-
-    # VRPP Settings
-    - vrpp: true
-
-    # ---------------------------------------------------------------------
-    # route improvement
-    # ---------------------------------------------------------------------
-    - route_improvement: []
-      # Optional local search refinement after neural construction
-      # Empty = use raw neural output
-      # Options: ["2opt_intra", "relocate"] (typically 2-5% improvement)
-      #
-      # Recommendation: Empty for speed, ["2opt_intra"] for quality
-
-    # ---------------------------------------------------------------------
-    # Model Loading (Automatic)
-    # ---------------------------------------------------------------------
-    # The simulator automatically:
-    #   1. Reads model_path/args.json to determine architecture
-    #   2. Instantiates model (AM, TAM, etc.) with correct dimensions
-    #   3. Loads the newest epoch-*.pt weights (args.json holds the hyperparameters)
-    #   4. Moves model to GPU (if available)
-    #   5. Sets model.eval() mode (disables dropout/batchnorm training behavior)
-    #
-    # No manual configuration required beyond model_path.
-# =============================================================================
+    model_path: model_weights/vrpp100_riomaior_plastic/emp/amgat0
+    decoding:
+      strategy: greedy
+      beam_width: 5
+      reward_weight: 0.0
+      length_penalty_alpha: 0.0
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    vrpp: true
+    route_improvement: []

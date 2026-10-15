@@ -37,7 +37,7 @@ class ARCOParams:
         seed: Random seed for reproducible exploration.
     """
 
-    constructors: List[str] = field(default_factory=lambda: ["tsp", "alns"])
+    routing_algorithms: List[str] = field(default_factory=lambda: ["tsp", "alns"])
     time_limit: float = 120.0
     selection_strategy: str = "epsilon_greedy"
     epsilon: float = 0.15
@@ -59,7 +59,9 @@ class ARCOParams:
             ARCOParams: The parameters for the ARCO algorithm.
         """
         return cls(
-            constructors=getattr(config, "constructors", ["tsp", "alns"]),
+            routing_algorithms=getattr(
+                config, "routing_algorithms", getattr(config, "constructors", ["tsp", "alns"])
+            ),
             time_limit=getattr(config, "time_limit", 120.0),
             selection_strategy=getattr(config, "selection_strategy", "epsilon_greedy"),
             epsilon=getattr(config, "epsilon", 0.15),

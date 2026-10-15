@@ -1,15 +1,5 @@
-# Column Generation Heuristic (CGH) Policy Configuration
-# Uses a master problem with heuristic column generation.
-
 cgh:
-  # Number of column generation iterations.
   cg_iters: 10
-
-  # Number of heuristic routes to generate per iteration.
   routes_per_iter: 50
-
-  # Random seed for reproducibility.
   seed: 42
-
-  # Whether to use VRP with Profits objectives.
   vrpp: true

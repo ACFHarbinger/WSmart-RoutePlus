@@ -1,66 +1,16 @@
-# Policy Configuration
-# =============================================================================
-# RL-GD-HH (Reinforcement Learning Great Deluge Hyper-Heuristic)
-# =============================================================================
-# REFERENCE:
-#   Ozcan, E., Misir, M., Ochoa, G., & Burke, E. K. (2010).
-#   "A Reinforcement Learning – Great-Deluge Hyper-heuristic for
-#   Examination Timetabling."
-#
-# ALGORITHMIC SUMMARY:
-#   A hyper-heuristic that uses Reinforcement Learning (RL) to select low-level
-#   heuristics dynamically from a pool, and a Great Deluge algorithm to determine
-#   move acceptance via a time-dependent DECLINING linear threshold (water level).
-#
-# GREAT DELUGE (Ozcan et al. 2010, Fig 2, Step 18):
-#   level(t) = quality_lb + (f0 - quality_lb) × (1 - t / T)
-#   Level starts at f0, declines linearly to quality_lb over totalTime.
-#   A solution is accepted iff its quality >= level (maximisation form).
-#
-# RL ADAPTATION (Section 3.2):
-#   Strict improvement  →  reward:  u ← min(UB, u + 1)
-#   Neutral or worsening → punish:  u ← max(0,  u − 1)  [RL1]
-#   (RL2: halve; RL3: root)  Paper (p.10) explicitly penalises neutral moves.
-# =============================================================================
-
 rl_gd_hh:
   custom:
-    # --- Search Control ---
-    # Total search steps allowed per problem instance.
-    - max_iterations: 10000
-
-    # Computational time limit in seconds (guard only; T for GD is max_iterations).
-    - time_limit: 60.0
-
-    # --- Reinforcement Learning (RL1 Adaptation, Section 3.2) ---
-    # Additive reward when a LLH strictly improves the solution (Step 14).
-    - reward_improvement: 1.0
-
-    # Penalty magnitude for worsening OR neutral moves (Step 17).
-    # Paper (p. 10): neutral moves receive the same negative adaptation as worsening.
-    - penalty_worsening: 1.0
-
-    # Punishment variant: "RL1" (subtract), "RL2" (halve), "RL3" (root).
-    - punishment_type: "RL1"
-
-    # Maximum utility score (maxUtilityValue = 40, Table 1 best).
-    - utility_upper_bound: 40.0
-
-    # Minimum utility score — ensures heuristics remain selectable.
-    - min_utility: 0.0
-
-    # Initial utility = 0.75 × maxUtilityValue = 30 (paper p. 16).
-    - initial_utility: 30.0
-
-    # --- Great Deluge ---
-    # qualityLB: floor of the declining boundary (= 0 for all paper instances).
-    - quality_lb: 0.0
-
-    # --- Meta Configuration ---
-    - vrpp: true
-
-    # Selection algorithm for mandatory bin visited nodes.
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-
-    # Optional route improvement passes.
-    - route_improvement: []
+    max_iterations: 10000
+    time_limit: 60.0
+    reward_improvement: 1.0
+    penalty_worsening: 1.0
+    punishment_type: RL1
+    utility_upper_bound: 40.0
+    min_utility: 0.0
+    initial_utility: 30.0
+    quality_lb: 0.0
+    vrpp: true
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    route_improvement: []

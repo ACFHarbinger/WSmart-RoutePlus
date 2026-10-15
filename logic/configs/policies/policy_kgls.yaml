@@ -1,22 +1,20 @@
-# @package _global_
 kgls:
   time_limit: 60.0
   local_search_iterations: 100
   num_perturbations: 3
   neighborhood_size: 20
   moves:
-    - relocate
-    - swap
-    - two_opt
-    - cross_exchange
+  - relocate
+  - swap
+  - two_opt
+  - cross_exchange
   penalization_cycle:
-    - width
-    - length
-    - width_length
-  packing: {"other/ms_lookahead.yaml": ["default"]}
-
-  # VRPP Settings
+  - width
+  - length
+  - width_length
+  packing:
+    other/pk_lookahead.yaml:
+    - default
   vrpp: true
   profit_aware_operators: false
-
   route_improvement: []

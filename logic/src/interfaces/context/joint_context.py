@@ -6,7 +6,7 @@ data-container that carries all inputs required by algorithms that solve
 mandatory-bin selection **and** routing simultaneously within
 a single optimisation loop (e.g., NDS-BRKGA).
 
-It mirrors the scalar fields of :class:`SelectionContext` (for the bin-level
+It mirrors the scalar fields of :class:`PackingContext` (for the bin-level
 packing sub-problem) and augments them with routing fields (distance matrix,
 revenue, cost) so that the joint solver can evaluate both objectives without
 switching between two separate context objects.
@@ -81,7 +81,7 @@ class JointSelectionConstructionContext:
     cost_per_km: float
 
     # ------------------------------------------------------------------
-    # Optional enrichment (mirrors SelectionContext)
+    # Optional enrichment (mirrors PackingContext)
     # ------------------------------------------------------------------
     accumulation_rates: Optional[NDArray[np.float64]] = None
     std_deviations: Optional[NDArray[np.float64]] = None

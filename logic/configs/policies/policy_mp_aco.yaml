@@ -1,24 +1,8 @@
-# Multi-Period Ant Colony Optimization (MP-ACO) Policy Configuration
-# Ant-based swarm intelligence for multi-period routing.
-
 mp_aco:
-  # Number of ants in the colony.
   ants: 10
-
-  # Number of iterations.
   iters: 50
-
-  # Influence of pheromone.
   alpha: 1.0
-
-  # Influence of heuristic information.
   beta: 2.0
-
-  # Evaporation rate.
   rho: 0.1
-
-  # Random seed for reproducibility.
   seed: 42
-
-  # Whether to use VRP with Profits objectives.
   vrpp: true

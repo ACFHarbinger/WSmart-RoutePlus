@@ -70,13 +70,13 @@ class SearchPhase(str, Enum):
     """Marks which pipeline phase last wrote to the ``SearchContext``.
 
     Attributes:
-        SELECTION: Selection phase
-        CONSTRUCTION: Construction phase
+        PACKING: Packing phase
+        ROUTING: Routing phase
         IMPROVEMENT: Improvement phase
     """
 
-    SELECTION = "selection"
-    CONSTRUCTION = "construction"
+    PACKING = "packing"
+    ROUTING = "routing"
     IMPROVEMENT = "improvement"
 
 
@@ -150,7 +150,7 @@ class SearchContext:
         metadata: Catch-all for run-level annotations (e.g. day index, seed).
     """
 
-    phase: SearchPhase = SearchPhase.SELECTION
+    phase: SearchPhase = SearchPhase.PACKING
     selection_metrics: SelectionMetrics = field(default_factory=dict)
     construction_metrics: ConstructionMetrics = field(default_factory=dict)
     acceptance_trace: List[AcceptanceMetrics] = field(default_factory=list)
@@ -174,7 +174,7 @@ class SearchContext:
             A new ``SearchContext`` in the ``SELECTION`` phase.
         """
         return cls(
-            phase=SearchPhase.SELECTION,
+            phase=SearchPhase.PACKING,
             selection_metrics=selection_metrics or {},
             construction_metrics={},
             acceptance_trace=[],

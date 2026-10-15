@@ -1,74 +1,13 @@
-# Policy Configuration Override for RENS Matheuristic
-# =============================================================================
-# RELAXATION ENFORCED NEIGHBORHOOD SEARCH (RENS)
-# =============================================================================
-#
-# MISSION:
-#   RENS is a mathematical optimization start heuristic designed to find
-#   high-quality feasible solutions for Mixed-Integer Programming (MIP) models
-#   by exploring the "neighborhood" of the LP relaxation solution.
-#
-# HOW IT WORKS:
-#   1. LP PHASE: Solves the linear relaxation (binary variables -> [0,1]).
-#   2. FIXING PHASE: Identifies all variables that are naturally integer
-#      in the LP solution and fixes them at those values (0 or 1).
-#   3. MIP PHASE: Solves a restricted sub-MIP on the remaining variables.
-#
-# ADVANTAGES:
-#   - Extremely effective at finding initial feasible routes for VRPP.
-#   - Leverages the power of Gurobi while significantly reducing search space.
-#
-# REFERENCE:
-#   Berthold, T. (2009). "Rens - The relaxation enforced neighborhood search".
-#   ZIB-Report 09-11.
-# =============================================================================
-
 rens:
   custom:
-    # ---------------------------------------------------------------------
-    # Time Management
-    # ---------------------------------------------------------------------
-    - time_limit: 60.0
-    # Maximum wall-clock time (seconds) allowed for the entire matheuristic.
-    # If the sub-MIP is complex, it will return the best solution found
-    # within this limit.
-
-    - lp_time_limit: 10.0
-    # Maximum time (seconds) for the initial LP relaxation solve.
-    # Usually very fast for VRPP, but limited here for safety on large graphs.
-
-    # ---------------------------------------------------------------------
-    # Sub-MIP Precision & Depth
-    # ---------------------------------------------------------------------
-    - mip_limit_nodes: 1000
-    # Limit on the number of branch-and-bound nodes for the sub-MIP phase.
-    # Low values prioritize speed; higher values allow deeper exploration.
-
-    - mip_gap: 0.05
-    # Relative optimality gap tolerance for the sub-MIP.
-    # 0.05 (5%) is a good balance for a "start heuristic" to avoid stall.
-
-    # ---------------------------------------------------------------------
-    # Structural Integration
-    # ---------------------------------------------------------------------
-    # VRPP Settings
-    - vrpp: true
-
-    # ---------------------------------------------------------------------
-    # Solver Backend
-    # ---------------------------------------------------------------------
-    - engine: "gurobi"
-    # Execution backend: logic/src/policies/smart_waste_collection_two_commodity_flow/gurobi.py
-    # Requires: gurobipy Python package + valid Gurobi license
-
-    - framework: "ortools"
-    # Execution framework: logic/src/policies/smart_waste_collection_two_commodity_flow/ortools.py
-    # Requires: ortools Python package
-
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-    # Selection strategy for nodes that MUST be visited (e.g., overflow risk).
-    # Composes with the RENS solver to ensure these nodes are collected.
-
-    - route_improvement: []
-    # Optional local search or cleanup settings applied after RENS.
-# =============================================================================
+    time_limit: 60.0
+    lp_time_limit: 10.0
+    mip_limit_nodes: 1000
+    mip_gap: 0.05
+    vrpp: true
+    engine: gurobi
+    framework: ortools
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    route_improvement: []

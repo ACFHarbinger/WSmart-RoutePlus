@@ -29,7 +29,7 @@ from .base import (
     SimulationAction,
     _as_plain_dict,
     _file_yaml_pairs,
-    _flatten_config,
+    _as_policy_mapping,
     _is_mapping,
     _load_policy_yaml_section,
     _pop_context_key,
@@ -76,7 +76,7 @@ class RouteImprovementAction(SimulationAction):
             A list of RouteImprovingConfig objects.
         """
         raw_cfg = context.get("config", {})
-        flat_cfg = _flatten_config(raw_cfg)
+        flat_cfg = _as_policy_mapping(raw_cfg)
         pp_list = flat_cfg.get("route_improvement") or context.get("route_improvement")
 
         if isinstance(pp_list, RouteImprovingConfig):

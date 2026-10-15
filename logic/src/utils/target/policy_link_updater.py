@@ -5,8 +5,8 @@ One parameterised implementation of the batch updater that rewrites the
 YAML files for one or more routing algorithms. The two public sides keep
 their historical names:
 
-- ``update_packing`` / ``list_available_ms_strategies`` /
-  ``list_strategy_keys`` (files prefixed ``ms_``);
+- ``update_packing`` / ``list_available_packing_strategies`` /
+  ``list_strategy_keys`` (files prefixed ``pk_``);
 - ``update_route_improvement`` / ``list_available_ri_improvers`` /
   ``list_improver_keys`` (files prefixed ``ri_``).
 
@@ -19,7 +19,7 @@ Quick start::
 
     update_packing(
         constructors=["aco_hh", "alns", "bpc"],
-        ms_yaml="ms_service_level",
+        pk_yaml="pk_service_level",
         keys=["service_level1", "service_level2"],
     )
 
@@ -45,7 +45,7 @@ def _resolve_stem(yaml_arg: str) -> str:
 
     Args:
         yaml_arg: e.g. ``"ms_service_level"``, ``"ms_service_level.yaml"``,
-            or ``"other/ms_service_level.yaml"``.
+            or ``"other/pk_service_level.yaml"``.
 
     Returns:
         Bare stem, e.g. ``"ms_service_level"``.
@@ -163,22 +163,22 @@ def _update(
     return modified
 
 
-# --- packing (files prefixed ``ms_``) ----------------------------
+# --- packing (files prefixed ``pk_``) ----------------------------
 
 
-def list_available_ms_strategies(configs_dir: str = _DEFAULT_CONFIGS_DIR) -> List[str]:
+def list_available_packing_strategies(configs_dir: str = _DEFAULT_CONFIGS_DIR) -> List[str]:
     """Return the sorted stems of the available packing files."""
-    return _list_available(configs_dir, "ms_")
+    return _list_available(configs_dir, "pk_")
 
 
-def list_strategy_keys(ms_yaml: str, configs_dir: str = _DEFAULT_CONFIGS_DIR) -> List[str]:
-    """Return the top-level keys defined in *ms_yaml*."""
-    return _list_keys(_resolve_stem(ms_yaml), configs_dir)
+def list_strategy_keys(pk_yaml: str, configs_dir: str = _DEFAULT_CONFIGS_DIR) -> List[str]:
+    """Return the top-level keys defined in *pk_yaml*."""
+    return _list_keys(_resolve_stem(pk_yaml), configs_dir)
 
 
 def update_packing(
     constructors: List[str],
-    ms_yaml: str,
+    pk_yaml: str,
     keys: List[str],
     configs_dir: str = _DEFAULT_CONFIGS_DIR,
     dry_run: bool = False,
@@ -187,9 +187,9 @@ def update_packing(
     """Update ``packing`` in the policy YAML files of *routing algorithms*."""
     return _update(
         field_label="packing",
-        file_prefix="ms_",
+        file_prefix="pk_",
         constructors=constructors,
-        yaml_stem_arg=ms_yaml,
+        yaml_stem_arg=pk_yaml,
         keys=keys,
         configs_dir=configs_dir,
         dry_run=dry_run,

@@ -129,7 +129,7 @@
     "n_bins": "Bins in the instance ($N$)",
     "pair_index": "Matched configuration ({pairs} pairs, sorted)"
   },
-  "constructor_labels": {
+  "routing_labels": {
     "ACO_HH": "ACO-HH"
   },
   "policy_space": {

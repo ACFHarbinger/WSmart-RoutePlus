@@ -1,177 +1,90 @@
-# Policy Configuration
-
-# =============================================================================
-# SANS (Simulated Annealing Neighborhood Search) Policy Configuration
-# =============================================================================
-# PURPOSE:
-#   Simulated annealing-based routing with adaptive neighborhood operators.
-#   Balances intensification (local search) with diversification (random jumps).
-#   Historically, the primary WSmart+ solver before HGS/ALNS integration.
-#
-# EVOLUTION:
-#   - Original: LAC (Look-Ahead Collection) engine with hardcoded params
-#   - Current: Improved SA with configurable temperature schedule
-#
-# TYPICAL USE CASES:
-#   - Legacy comparison: Reproduce results from early WSmart+ papers
-#   - Simulated annealing benchmarks
-#   - Baseline for new metaheuristic development
-#
-# RECOMMENDATION:
-#   For production, prefer HGS (better quality) or ALNS (more robust).
-#   Use SANS primarily for research continuity and SA experimentation.
-# =============================================================================
-
 sans:
-  # ===========================================================================
-  # NEW ENGINE: Improved Simulated Annealing (Default)
-  # ===========================================================================
-  # Modern SA implementation with transparent parameters and adaptive cooling.
-  # Recommended for new experiments and production use.
-  # ===========================================================================
   new:
-    engine:
-      new
-      # Execution backend: logic/src/policies/simulated_annealing.py (refactored)
-
-    # -------------------------------------------------------------------------
-    # Runtime Control
-    # -------------------------------------------------------------------------
-    time_limit:
-      60
-      # Maximum wall-clock seconds
-      # Range: 10-600 (60s = production, 300s = thorough)
-
-    # -------------------------------------------------------------------------
-    # Constraint Handling
-    # -------------------------------------------------------------------------
-    perc_bins_can_overflow:
-      0
-      # Percentage of bins allowed to overflow in feasible solutions
-      # Range: 0.0-0.1 (0 = strict feasibility, 0.1 = allow 10% overflow)
-      # Recommendation: 0 for production, 0.05 for research flexibility
-
-    # -------------------------------------------------------------------------
-    # Temperature Schedule (Geometric Cooling)
-    # -------------------------------------------------------------------------
-    T_min:
-      0.01
-      # Minimum temperature (termination criterion)
-      # Range: 0.001-0.1 (lower = longer runtime, higher = earlier stop)
-
-    T_init:
-      75
-      # Initial temperature T_0
-      # Range: 10-200 (higher = accept worse moves early, more exploration)
-      # Rule of thumb: T_init ≈ 10% of average solution cost delta
-
-    iterations_per_T:
-      5000
-      # Number of neighbor evaluations per temperature level
-      # Range: 1000-10000 (higher = more thorough at each temp)
-
-    alpha:
-      0.95
-      # Cooling rate: T_new = alpha * T_old
-      # Range: 0.8-0.99 (0.8 = fast cooling, 0.99 = slow cooling)
-      # Standard SA uses 0.90-0.95
-
-    # Acceptance probability: P(accept worse) = exp(-Δcost / T)
-    # Early: T=75, Δcost=10 → P ≈ 0.88 (accept most worse moves)
-    # Late: T=0.01, Δcost=10 → P ≈ 0.00 (reject all worse moves)
-
-    # -------------------------------------------------------------------------
-    # Neighborhood Operators (Implicit)
-    # -------------------------------------------------------------------------
-    # Operators applied at each iteration (logic/src/policies/simulated_annealing.py):
-    #   - Swap: Exchange two nodes
-    #   - Relocate: Move node to different position
-    #   - 2-opt: Reverse segment within route
-    #   - Cross: Inter-route edge exchange
-    #
-    # Selection: Random uniform choice per iteration
-
-    # -------------------------------------------------------------------------
-    # Infrastructure Settings
-    # -------------------------------------------------------------------------
-    packing: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
-    # VRPP Settings
+    engine: new
+    time_limit: 60
+    perc_bins_can_overflow: 0
+    T_min: 0.01
+    T_init: 75
+    iterations_per_T: 5000
+    alpha: 0.95
+    packing:
+      other/pk_last_minute.yaml:
+      - last_minute_cf70
+      - last_minute_cf90
     vrpp: true
-
-    route_improvement: { "other/ri_cls.yaml": ["default"] }
-
-  # ===========================================================================
-  # ORIGINAL ENGINE: LAC (Look-Ahead Collection) - Variant A
-  # ===========================================================================
-  # Legacy implementation from WSmart+ v1.0. Kept for reproducibility of
-  # published results. Uses opaque numeric parameter array.
-  # ===========================================================================
+    route_improvement:
+      other/ri_cls.yaml:
+      - default
   og_a:
     engine: og
-    # Execution backend: logic/src/policies/look_ahead_collection.py (legacy)
-
-    combination: [500, 75, 0.7, 0, 0.095, 0, 0]
-    # The seven numbers the legacy solver reads, by position (heuristics/anneal.py):
-    #   0 iterations, 1 initial temperature, 2 cooling factor, 3 vehicle penalty,
-    #   4 load penalty, 5 route-difference penalty, 6 shift penalty.
-    # WARNING: Do not modify unless reproducing exact published results.
-
+    combination:
+    - 500
+    - 75
+    - 0.7
+    - 0
+    - 0.095
+    - 0
+    - 0
     time_limit: 60
-    # Maximum wall-clock seconds
-
-    packing: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
-    # VRPP Settings
+    packing:
+      other/pk_last_minute.yaml:
+      - last_minute_cf70
+      - last_minute_cf90
     vrpp: true
-
-    route_improvement: { "other/ri_cls.yaml": ["default"] }
-    # No route improvement
-
-  # ===========================================================================
-  # ORIGINAL ENGINE: LAC (Look-Ahead Collection) - Variant B
-  # ===========================================================================
-  # Same as og_a but with different parameter tuning for larger instances.
-  # ===========================================================================
+    route_improvement:
+      other/ri_cls.yaml:
+      - default
   og_b:
     engine: og
-    # Execution backend: logic/src/policies/look_ahead_collection.py (legacy)
-
-    combination: [2000, 75, 0.7, 0, 0.095, 0, 0]
-    # Same positions as og_a; only the iteration count (position 0) differs.
-
+    combination:
+    - 2000
+    - 75
+    - 0.7
+    - 0
+    - 0.095
+    - 0
+    - 0
     time_limit: 60
-    # Maximum wall-clock seconds
-
-    packing: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
-    # VRPP Settings
+    packing:
+      other/pk_last_minute.yaml:
+      - last_minute_cf70
+      - last_minute_cf90
     vrpp: true
-
-    route_improvement: { "other/ri_cls.yaml": ["default"] }
-    # No route improvement
-
-# =============================================================================
-# BACKWARD COMPATIBILITY ALIASES
-# =============================================================================
-# For scripts using old naming convention: policy=lac.a or policy=lac.b
-# These map to the original LAC engine (og_a, og_b).
-# =============================================================================
+    route_improvement:
+      other/ri_cls.yaml:
+      - default
 lac:
   a:
     engine: og
-    combination: [500, 75, 0.7, 0, 0.095, 0, 0]
+    combination:
+    - 500
+    - 75
+    - 0.7
+    - 0
+    - 0.095
+    - 0
+    - 0
     time_limit: 60
-    packing: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
-    # VRPP Settings
+    packing:
+      other/pk_last_minute.yaml:
+      - last_minute_cf70
+      - last_minute_cf90
     vrpp: true
-
     route_improvement: []
-
   b:
     engine: og
-    combination: [2000, 75, 0.7, 0, 0.095, 0, 0]
+    combination:
+    - 2000
+    - 75
+    - 0.7
+    - 0
+    - 0.095
+    - 0
+    - 0
     time_limit: 60
-    packing: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
-    # VRPP Settings
+    packing:
+      other/pk_last_minute.yaml:
+      - last_minute_cf70
+      - last_minute_cf90
     vrpp: true
-
     route_improvement: []
-# =============================================================================

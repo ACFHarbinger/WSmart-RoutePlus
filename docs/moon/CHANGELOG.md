@@ -17,6 +17,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Config format and leftover names (`2026-10-15`)
+
+#### Changed
+
+- **Breaking:** policy YAML is a plain mapping (`alns.custom.time_limit`), not a list of single-key maps. `tools/convert_policy_yaml.py` converted the 96 `policy_*.yaml` files, the `other/*.yaml` packing/improver/acceptance files, and the SRC/ARCO HPO job keys. Unknown solver keys fail at `OmegaConf.structured` load (`_structured_load` in `base_routing_policy.py`). Stage file-refs (`packing`, `route_improvement`, `acceptance_criteria`) stay as `{other/pk_*.yaml: [variant, …]}` until a later inlining pass. `_flatten_raw_config` and `_flatten_config` are gone; the day loop unwraps engine wrappers with `_as_policy_mapping`.
+- **Breaking:** packing leftovers from the packing/routing rename. `ms_*.yaml` is `pk_*.yaml`; `packing/selection_*.py` is `packing/<name>.py`; `selection_factory.py` / `selection_registry.py` are `factory.py` / `registry.py`; `IPackingAlgorithm.select_bins` is `pack`; `SelectionContext` is `PackingContext`; `SearchPhase.SELECTION/CONSTRUCTION` are `PACKING/ROUTING` (string values too); SRC/ARCO `constructors` is `routing_algorithms`; `list_available_ms_strategies` is `list_available_packing_strategies`; paper table identifiers `constructor_labels` / `CONSTRUCTOR_SPEC` / `table_constructors` / `results_constructors.tex` are `routing_*`.
+- **Breaking:** packing YAML and dataclasses use `threshold` (and `combined_strategies`) instead of `frequency` / `confidence_factor` / `learned_threshold` / `n_sectors` / `period` / `strategies`. The packing factory no longer remaps those names.
+
+#### Added
+
+- `logic/test/unit/policies/test_structured_policy_load.py` covers structured ALNS load and unknown-key failure.
+
 ### Registry, lazy imports and facades (`2026-10-15`)
 
 #### Changed
@@ -811,7 +823,7 @@ Remaining §H scope: document spec + override patch layer, native OMML equations
 - **Presentation feedback fixes, round 6** (`archive/gen`; deck now 20 slides, figures + deck + speaker script regenerated):
   - removed the KPI-bar-charts slide (former slide 13); the underlying `kpi_combined.png` generator is unchanged and still feeds the markdown report
   - Pareto front (slide 12) restyled: fronts are keyed by **region only** (not distribution) so RM-100/RM-170/FFZ-350 draw with the same darker colour + linestyle (solid purple / dashed bronze / dotted slate) in both the Empirical and Gamma-3 panels — previously a global scenario index gave the same region a different colour per distribution; the point palette (LA/LM/SL colours) is untouched and the front colours are deliberately distinct from it; legend collapses from 6 scenario entries to 3 region entries
-  - **Look-Ahead selection**: read `logic/src/policies/mandatory_selection/selection_lookahead.py` and replaced slide 7's 2-line LA equation with the full 6-step derivation (flag $\mathcal{M}_0$ → check empty → simulate collection → compute next collection day $nc$ → check $nc\leq t$ → bundle bins overflowing before $nc$), matched 1:1 to `select_bins`; added a new native flowchart diagram (`lookahead_flow.png`, ports the reference flowchart) illustrating the same 6 phases with the branch/loop structure
+  - **Look-Ahead selection**: read `logic/src/policies/mandatory_selection/selection_lookahead.py` and replaced slide 7's 2-line LA equation with the full 6-step derivation (flag $\mathcal{M}_0$ → check empty → simulate collection → compute next collection day $nc$ → check $nc\leq t$ → bundle bins overflowing before $nc$), matched 1:1 to `pack`; added a new native flowchart diagram (`lookahead_flow.png`, ports the reference flowchart) illustrating the same 6 phases with the branch/loop structure
   - **equations are now images, not OOXML**: replaced the pandoc→OMML `<m:oMath>` embedding (blank/uneditable in LibreOffice and the PowerPoint web app) with `render_equation_image`/`render_glossary_image` — transparent PNGs rendered via matplotlib mathtext (no LaTeX install needed), sized so points map 1:1 to the embedded picture; the VRPP (slide 3) and mandatory-selection (slide 7) equations both switched
   - added a **variable glossary** textbox below both equation slides (`render_glossary_image`, word-wrapped per-column, dynamically sized to its wrapped content so rows never overlap) explaining every symbol (e.g. $nc$, $\delta_{i,d}$, $\tau$, $\mathcal{A}_d$)
   - **speaker script regenerated to match the new deck** (`--speaker-script`, 20 slide scripts): slide 4's KPI list expanded from 5 to all 9 simulator metrics (overflows, bins collected, kg, km, kg/km, RL reward, profit, run execution time, days with a collection tour); Exact Methods (8) / Meta-/Hyper-Heuristics (9) / Route Improvers (10) scripts compressed to 2–3 terse bullets each; slide 12's script updated to describe the new region-styled fronts instead of the old per-scenario colouring

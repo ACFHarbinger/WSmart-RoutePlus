@@ -1,95 +1,36 @@
-# Policy Configuration
-
-# =============================================================================
-# HMLNS (Hybrid Memetic Large Neighborhood Search)
-# =============================================================================
-# PURPOSE:
-#   A high-performance hybrid metaheuristic that combines Ant Colony
-#   Optimization (ACO), Genetic Algorithm (GA), and Adaptive Large
-#   Neighborhood Search (ALNS) into a unified memetic framework.
-#
-# ALGORITHM:
-#   1. MACO Initialization: Generates a high-quality initial population.
-#   2. Genetic Algorithm (GA) Core: Evolves the population through
-#      selection, crossover, and mutation.
-#   3. ALNS Education: Refines offspring and elite solutions using adaptive
-#      local search operators.
-#
-# KEY FEATURES:
-#   - Replaces the earlier HVPL strategy with a more robust framework.
-#   - Multi-phase optimization: construction, evolution, and intensification.
-#   - Pheromone guidance integrated with population-based diversity.
-# =============================================================================
-
 hmlns:
   custom:
-    # ---------------------------------------------------------------------
-    # Population Parameters
-    # ---------------------------------------------------------------------
-    - population_size: 10
-      # Number of chromosomes in the active population.
-      # Range: 10-100
-
-    - max_generations: 50
-      # Total number of evolutionary generations.
-      # Range: 20-200
-
-    - substitution_rate: 0.2
-      # Fraction of population replaced by reserve pool.
-      # Range: 0.0-0.5
-
-    - crossover_rate: 0.8
-      # Probability of recombining two parents.
-      # Range: 0.5-1.0
-
-    - mutation_rate: 0.1
-      # Probability of local perturbation.
-      # Range: 0.01-0.2
-
-    - elitism_count: 3
-      # Number of best solutions to preserve across generations.
-      # Range: 1-10
-
-    # ---------------------------------------------------------------------
-    # Phase-specific Parameters
-    # ---------------------------------------------------------------------
-    - aco_init_iterations: 50
-      # ACO iterations for population seeding.
-      # Range: 10-100
-
-    - time_limit: 60.0
-      # Maximum wall-clock seconds for the entire search.
-
-    # ---------------------------------------------------------------------
-    # Sub-algorithm Parameters (Nested)
-    # ---------------------------------------------------------------------
-    - maco:
-        n_ants: 10
-        k_sparse: 10
-        alpha: 1.0
-        beta: 2.0
-        rho: 0.1
-        scale: 5.0
-        update_schedule: "auto"
-        stagnation_limit: 25
-        max_iterations: 100
-        time_limit: 20.0
-
-    - alns:
-        max_iterations: 100
-        start_temp: 100.0
-        cooling_rate: 0.95
-        reaction_factor: 0.5
-        min_removal: 1
-        max_removal_pct: 0.2
-        segment_size: 10
-        time_limit: 60.0
-
-    # ---------------------------------------------------------------------
-    # Infrastructure Settings
-    # ---------------------------------------------------------------------
-    - profit_aware_operators: true
-    - vrpp: true
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-    - route_improvement: []
-# =============================================================================
+    population_size: 10
+    max_generations: 50
+    substitution_rate: 0.2
+    crossover_rate: 0.8
+    mutation_rate: 0.1
+    elitism_count: 3
+    aco_init_iterations: 50
+    time_limit: 60.0
+    maco:
+      n_ants: 10
+      k_sparse: 10
+      alpha: 1.0
+      beta: 2.0
+      rho: 0.1
+      scale: 5.0
+      update_schedule: auto
+      stagnation_limit: 25
+      max_iterations: 100
+      time_limit: 20.0
+    alns:
+      max_iterations: 100
+      start_temp: 100.0
+      cooling_rate: 0.95
+      reaction_factor: 0.5
+      min_removal: 1
+      max_removal_pct: 0.2
+      segment_size: 10
+      time_limit: 60.0
+    profit_aware_operators: true
+    vrpp: true
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    route_improvement: []

@@ -33,7 +33,8 @@ Tags: `[Quick Win]` ≤ 1 day · `[Research]` involves novel work · `[Blocked]`
 ## Simulator 1.0.0 refactor — 2026-10-15
 
 - WP-01 (`refactor/v1-wp01-registry-lazy-facades`, #106): one `Registry` with name lookup and tag queries, lazy parent packages and generated manifests, `envs/problems.py` removed, RL expert configs renamed to `Vector*`, temporal defaults moved to `constants/temporal.py`. Codex reviews; Claude integrates. Not on `main`.
-- Remaining packages: WP-02 manifest, WP-03 config/rename leftovers, WP-07 ESPPRC envs, WP-08 modular simulator. See `.agent/tasks/simulator-v1-refactor-proposal-2026-10-15.md` §12.
+- WP-03 (`refactor/v1-wp03-config-rename`, #108): Cursor landed P-13 / P-45 / P-54 — policy YAML is a plain mapping, packing leftovers (`pk_*`, `pack`, `PackingContext`, `SearchPhase.PACKING/ROUTING`, `routing_algorithms`) are renamed, and packing remaps are gone. Mistral still owns P-55 / P-56. Codex reviews; Claude integrates. Not on `main`.
+- Remaining packages: WP-02 manifest, WP-07 ESPPRC envs, WP-08 modular simulator. See `.agent/tasks/simulator-v1-refactor-proposal-2026-10-15.md` §12.
 
 ---
 

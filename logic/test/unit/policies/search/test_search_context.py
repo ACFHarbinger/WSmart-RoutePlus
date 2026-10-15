@@ -32,7 +32,7 @@ def test_merge_construction():
     ctx = SearchContext.initialize(selection_metrics={"strategy": "Sel"})
     cons_metrics: ConstructionMetrics = {"algorithm": "Exact", "n_mandatory": 5, "profit": 100.0}
 
-    new_ctx = merge_context(ctx, phase=SearchPhase.CONSTRUCTION, construction_metrics=cons_metrics)
+    new_ctx = merge_context(ctx, phase=SearchPhase.ROUTING, construction_metrics=cons_metrics)
 
     # Original should be untouched (immutable)
     assert ctx.construction_metrics == {}
@@ -65,7 +65,7 @@ def test_full_flow():
     ctx = SearchContext.initialize({"strategy": "Learned"})
 
     # 2. Construction
-    ctx = merge_context(ctx, phase=SearchPhase.CONSTRUCTION, construction_metrics={"algorithm": "AM", "profit": 50.0})
+    ctx = merge_context(ctx, phase=SearchPhase.ROUTING, construction_metrics={"algorithm": "AM", "profit": 50.0})
 
     # 3. Improvement
     ctx = merge_context(ctx, phase=SearchPhase.IMPROVEMENT, improvement_metrics={"algorithm": "LS", "best_delta": -5.0})

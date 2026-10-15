@@ -33,7 +33,7 @@ from logic.src.data.processor import (
     setup_basedata,
     setup_dist_path_tup,
 )
-from logic.src.pipeline.simulations.actions.base import _flatten_config
+from logic.src.pipeline.simulations.actions.base import _as_policy_mapping
 from logic.src.pipeline.simulations.bins import Bins
 from logic.src.pipeline.simulations.checkpoints import SimulationCheckpoint
 from logic.src.pipeline.simulations.repository import load_area_and_waste_type_params, load_temporal_params
@@ -217,7 +217,7 @@ class InitializingState(SimState):
                     if "na" in neural_cfg:
                         # Flatten specific neural sub-configs if they are lists
                         for pol_key, pol_val in neural_cfg["na"].items():
-                            ctx.config[pol_key] = _flatten_config(pol_val)
+                            ctx.config[pol_key] = _as_policy_mapping(pol_val)
                     else:
                         ctx.config.update(neural_cfg)
                 print(f"\n[INFO] Loaded configuration from {neural_cfg_path}")
@@ -294,7 +294,7 @@ class InitializingState(SimState):
 
         if should_load_neural and (is_neural_arch or model_name == ""):
             # Flatten policy config in case it's a list-based structured config
-            flat_pol_cfg = _flatten_config(ctx.pol_cfg)
+            flat_pol_cfg = _as_policy_mapping(ctx.pol_cfg)
 
             # Extract decoding parameters from policy config
             decoding = flat_pol_cfg.get("decoding") or {}

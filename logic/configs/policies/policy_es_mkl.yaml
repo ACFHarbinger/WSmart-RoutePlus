@@ -1,142 +1,26 @@
-# (μ,κ,λ) Evolution Strategy Policy Configuration with Age-Based Selection
-
-# =============================================================================
-# (μ,κ,λ) Evolution Strategy Policy Configuration
-# =============================================================================
-# PURPOSE:
-#   Classical evolution strategy with age-based selection mechanism. Parents
-#   exceeding age κ are automatically excluded from selection, preventing
-#   long-term stagnation and promoting population turnover.
-#
-# ALGORITHM:
-#   1. Initialize population of μ parents (base age = 1)
-#   2. For each generation:
-#       a. Generate λ offspring via recombination and mutation
-#          - Recombination: Independent uniform random sampling with replacement
-#       b. Evaluate all offspring
-#       c. Select μ best from:
-#          - Parents with age ≤ κ (eligible parents)
-#          - All λ offspring
-#       d. Increment age of surviving parents; offspring enter at age 1
-#   3. Return best solution found
-#
-# KEY DIFFERENCE FROM (μ,λ)-ES:
-#   Age control (κ) replaces random restart mechanism. Parents automatically
-#   expire after κ generations, ensuring continuous population renewal.
-#
-# PERFORMANCE:
-#   More systematic exploration than (μ,λ)-ES with random restart. Age limit
-#   κ balances exploitation (high κ) vs exploration (low κ).
-#
-# REFERENCE:
-#   Emmerich, M., Shir, O. M., & Wang, H. (2015). Evolution Strategies.
-#   In: Handbook of Natural Computing (pages 1-31).
-# =============================================================================
-
 es_mkl:
   custom:
-    # ---------------------------------------------------------------------
-    # Population Parameters (μ,κ,λ)
-    # ---------------------------------------------------------------------
-    - mu: 15
-      # Number of parent solutions (μ parameter)
-      # Recommendation: 15 for balanced search (paper default)
-
-    - kappa: 7
-      # Maximum age in generations (κ parameter)
-      # Recommendation: 7 (standard practice, prevents stagnation)
-      # Base age: 1. Selection Eligibility: age <= kappa.
-
-    - lambda_: 100
-      # Number of offspring per generation (λ parameter)
-      # Recommendation: 100 (standard large population ratio λ ≈ 7μ)
-
-    - rho: 15
-      # Number of parents participating in recombination (ρ parameter)
-      # Setting ρ = μ (15) enables global recombination (averaging all parents)
-      # Sampling is performed independently with replacement
-
-    # ---------------------------------------------------------------------
-    # Learning Rate Parameters
-    # ---------------------------------------------------------------------
-    - tau_local: 0.7071
-      # Local learning rate (τ_local = 1/√2n)
-      # Controls adaptation of individual solution components
-
-    - tau_global: 0.3536
-      # Global learning rate (τ_global = 1/(2√2n))
-      # Controls adaptation of strategy parameters
-
-    # ---------------------------------------------------------------------
-    # Recombination
-    # ---------------------------------------------------------------------
-    - recombination_type: "intermediate"
-      # Type of recombination operator
-      # "intermediate": Average components of ρ parents.
-      # "discrete": Randomly select components from ρ parents.
-
-    - initial_sigma: 1.0
-      # Initial mutation strength (standard deviation)
-      # Recommendation: 1.0 (standard starting point)
-
-    - min_sigma: 1e-10
-      # Minimum mutation strength (stopping criterion)
-      # Prevents premature convergence
-
-    - max_sigma: 10.0
-      # Maximum mutation strength (exploration limit)
-      # Prevents overly disruptive mutations
-
-    # ---------------------------------------------------------------------
-    # Decision Variables
-    # ---------------------------------------------------------------------
-    - bounds_min: -5.0
-      # Lower bound for decision variables
-      # Recommendation: -5.0 (standard starting point)
-
-    - bounds_max: 5.0
-      # Upper bound for decision variables
-      # Recommendation: 5.0 (standard starting point)
-
-    # ---------------------------------------------------------------------
-    # Mutation Parameters (Routing-Specific)
-    # ---------------------------------------------------------------------
-    - n_removal: 3
-      # Destroy-repair mutation strength (number of nodes removed)
-      # Analogous to mutation step-size σ in continuous ES
-
-    # ---------------------------------------------------------------------
-    # Local Search Parameters
-    # ---------------------------------------------------------------------
-    - local_search_iterations: 100
-      # Number of local search improvement steps per offspring
-      # Memetic refinement applied post-variation.
-
-    # ---------------------------------------------------------------------
-    # Runtime Control
-    # ---------------------------------------------------------------------
-    - max_iterations: 500
-      # Maximum number of evolution cycles (generations)
-
-    - time_limit: 60.0
-      # Maximum wall-clock seconds for optimization
-
-    # ---------------------------------------------------------------------
-    # Infrastructure Settings
-    # ---------------------------------------------------------------------
-    # VRPP Settings
-    - profit_aware_operators: false
-    - vrpp: true
-
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-    - route_improvement: ["2opt_intra", "relocate"]
-
-# =============================================================================
-# ALGORITHM STRUCTURE
-# =============================================================================
-# $P_{t+1} = Select(Mutate(Recombine(P_t)), \lambda)$
-#
-# Population Turnover:
-#   Age control κ ensures a predictable turnover rate, balancing the
-#   non-elitist (μ,λ) and elitist (μ+λ) strategies
-# =============================================================================
+    mu: 15
+    kappa: 7
+    lambda_: 100
+    rho: 15
+    tau_local: 0.7071
+    tau_global: 0.3536
+    recombination_type: intermediate
+    initial_sigma: 1.0
+    min_sigma: 1e-10
+    max_sigma: 10.0
+    bounds_min: -5.0
+    bounds_max: 5.0
+    n_removal: 3
+    local_search_iterations: 100
+    max_iterations: 500
+    time_limit: 60.0
+    profit_aware_operators: false
+    vrpp: true
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    route_improvement:
+    - 2opt_intra
+    - relocate
