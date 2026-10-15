@@ -17,6 +17,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Cross-package review (`2026-10-15`)
+
+- Codex cross-package review: propagated the CVRP depot-aligned resource-key correction and two-trip regression test into this integration copy.
+
+### Shared objective and KPI contracts (P-21/P-42, `2026-10-15`)
+
+- Added backend-neutral `profit_objective`, `distance_objective`, and injected `Economics`; scalar/NumPy/Torch callers retain batch shape and tensor gradients. ESPPRC reward and profitable-tour/CVRP evaluation use the shared objectives.
+- Added Torch-free KPI definitions and `DayOutcome`, day-to-sample aggregation and equal-weight successful-sample summaries. Ratios use per-sample sums; failed samples are excluded and counted. Zero-distance ratio compatibility includes a count of defined ratios. Policy seconds, day wall seconds and physical shift hours stay distinct; simulated and collection days have separate keys.
+- Made task exports lazy so importing the shared objective/KPI modules does not require neural dependencies. Released problem specs select canonical simulation metric names; RL reward diagnostics remain separate.
+- Fixed WP-07 road-tour evaluation to count every directed depot return/departure and close open paths once; profitable and CVRP evaluators share this calculation. Added regression cases for asymmetric multitrip, open, padded, single-action and empty paths.
+- Simulator/result-writer adoption remains in the separately owned WP-08 package; solver internal search scores are not rewritten by this change.
+
 ### Envs on the ESPPRC base (WP-07, `2026-10-15`)
 
 #### Added

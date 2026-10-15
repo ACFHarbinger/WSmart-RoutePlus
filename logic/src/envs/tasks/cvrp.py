@@ -12,8 +12,10 @@ import torch
 from tensordict import TensorDict
 
 from logic.src.envs.tasks.base import BaseProblem
+from logic.src.envs.tasks.common.metrics import DEFAULT_METRICS
+from logic.src.envs.tasks.common.objectives import distance_objective
 from logic.src.envs.tasks.espprc import ESPPRCEnv, ESPPRCGenerator, LoadResource
-from logic.src.envs.tasks.profitable_tour.common import calc_cumulative_trip_load
+from logic.src.envs.tasks.profitable_tour.common import calc_cumulative_trip_load, closed_tour_length
 from logic.src.envs.tasks.spec import PROBLEMS, ProblemSpec
 
 CAPACITIES: Dict[int, float] = {
@@ -68,13 +70,16 @@ class CVRPGenerator(ESPPRCGenerator):
         bs = list(batch_size) if isinstance(batch_size, (list, tuple)) else [batch_size]
 
         # Generate integer demands in [min_demand, max_demand] normalized by capacity
-        demands = torch.randint(
-            self.min_demand,
-            self.max_demand + 1,
-            size=(*bs, self.num_loc),
-            device=self.device,
-            dtype=torch.float32,
-        ) / self.capacity
+        demands = (
+            torch.randint(
+                self.min_demand,
+                self.max_demand + 1,
+                size=(*bs, self.num_loc),
+                device=self.device,
+                dtype=torch.float32,
+            )
+            / self.capacity
+        )
 
         td["demand"] = demands
         td["vehicle_capacity"] = torch.ones((*bs,), device=self.device, dtype=torch.float32)
@@ -109,7 +114,7 @@ class CVRPEnv(ESPPRCEnv):
         super().__init__(
             generator=generator,
             generator_params=generator_params,
-            resources=(LoadResource(limit_key="vehicle_capacity", demand_key="demand"),),
+            resources=(LoadResource(limit_key="vehicle_capacity", demand_key="waste"),),
             waste_weight=0.0,
             cost_weight=1.0,
             device=device,
@@ -131,7 +136,7 @@ def evaluate_cvrp_tour(
     bs, seq_len = pi.shape
     device = pi.device
 
-    if seq_len <= 1:
+    if seq_len == 0:
         z = torch.zeros(bs, device=device)
         return {
             "cost": z,
@@ -162,23 +167,9 @@ def evaluate_cvrp_tour(
     else:
         full_locs = None
 
-    if dist_matrix is not None and isinstance(dist_matrix, torch.Tensor):
-        dm = dist_matrix
-        if dm.dim() == 2:
-            dm = dm.unsqueeze(0).expand(bs, -1, -1)
-        src_vertices, dst_vertices = pi[:, :-1], pi[:, 1:]
-        dst_mask = dst_vertices != 0
-        pair_mask = (src_vertices != 0) & dst_mask
-        dists = dm[torch.arange(bs, device=device).unsqueeze(-1), src_vertices, dst_vertices] * pair_mask.float()
-        last_dst = torch.max(
-            dst_mask * torch.arange(dst_vertices.size(1), device=device),
-            dim=1,
-        ).indices
-        length = (
-            dm[torch.arange(bs, device=device), dst_vertices[torch.arange(bs, device=device), last_dst], 0]
-            + dists.sum(dim=1)
-            + dm[torch.arange(bs, device=device), 0, pi[:, 0]]
-        )
+    dm_input = dist_matrix if dist_matrix is not None else dataset.get("dist_matrix", dataset.get("dm"))
+    if dm_input is not None and isinstance(dm_input, torch.Tensor):
+        length = closed_tour_length(dm_input, pi)
     elif full_locs is not None:
         coords = full_locs.gather(1, pi.unsqueeze(-1).expand(*pi.shape, full_locs.size(-1)))
         depot_coord = full_locs[:, 0:1, :]
@@ -196,7 +187,13 @@ def evaluate_cvrp_tour(
     if raw_demand is not None:
         if raw_demand.dim() == 1:
             raw_demand = raw_demand.unsqueeze(0).expand(bs, -1)
-        num_loc = full_locs.size(1) if full_locs is not None else raw_demand.size(1)
+        num_loc = (
+            full_locs.size(1)
+            if full_locs is not None
+            else dm_input.size(-1)
+            if dm_input is not None
+            else raw_demand.size(1)
+        )
         if raw_demand.size(1) == num_loc - 1:
             full_demand = torch.cat([torch.zeros(bs, 1, device=device), raw_demand], dim=-1)
         else:
@@ -219,7 +216,7 @@ def evaluate_cvrp_tour(
 
     return {
         "cost": length,
-        "reward": -length,
+        "reward": distance_objective(length),
         "length": length,
         "demand": total_demand,
         "overflows": overflows,
@@ -247,9 +244,9 @@ class CVRP(BaseProblem):
 
 CVRP_SPEC = ProblemSpec(
     name="cvrp",
-    objective=lambda distance_km, **kw: -float(distance_km),
-    constraints=(LoadResource(limit_key="vehicle_capacity", demand_key="demand"),),
-    metrics=("cost", "reward", "length", "demand", "overflows"),
+    objective=distance_objective,
+    constraints=(LoadResource(limit_key="vehicle_capacity", demand_key="waste"),),
+    metrics=DEFAULT_METRICS,
     env_target="logic.src.envs.tasks.cvrp:CVRPEnv",
     expand_pool=False,
 )
