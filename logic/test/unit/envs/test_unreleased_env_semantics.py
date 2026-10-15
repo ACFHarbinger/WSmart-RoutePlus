@@ -1,6 +1,6 @@
 """The unreleased envs keep their pre-WP-07 dynamics on the ESPPRC base (review CR-12, Q-8b).
 
-OP and PDP use the reproductions from the review; IRP, ThOP and ATSP run on their original
+OP and PDP use the reproductions from the review; IRP, ThOP, ATSP, PCTSP and SPCTSP run on their original
 generators. Seeded rollouts of every env were also replayed step by step against
 ``envs/routing/*.py`` at a5eb27eec (masks, done flags, rewards) when this landed.
 """
@@ -62,7 +62,7 @@ def test_pdp_delivery_opens_only_after_its_pickup():
     assert env.get_reward(td, td["tour"]).item() == pytest.approx(-4.0)
 
 
-@pytest.mark.parametrize("name", ["irp", "thop", "atsp"])
+@pytest.mark.parametrize("name", ["irp", "thop", "atsp", "pctsp", "spctsp"])
 def test_rollout_on_the_original_generator(name):
     torch.manual_seed(0)
     env = get_env(name, generator_params={"num_loc": 6})
