@@ -243,6 +243,12 @@ class AttentionModelPolicy(AutoregressivePolicy):
             actions_tensor = torch.zeros((td.batch_size[0], 0), device=td.device, dtype=torch.long)
 
         reward = env.get_reward(td, actions_tensor)
+        # Teacher forcing draws no entropy, and a batch done at reset takes no step: both stay
+        # [batch] tensors (policy_contract).
+        log_likelihood, entropy = (
+            v if isinstance(v, torch.Tensor) else torch.zeros(td.batch_size[0], device=td.device)
+            for v in (log_likelihood, entropy)
+        )
 
         out = {
             "reward": reward,
