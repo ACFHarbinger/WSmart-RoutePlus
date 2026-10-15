@@ -17,24 +17,28 @@ from __future__ import annotations
 
 import os
 import re
-from typing import Any, Dict, Optional, Tuple, Type, cast
+from typing import Any, Dict, Optional, Tuple, cast
 
 from omegaconf import OmegaConf
 from torch import nn
 
 from logic.src.configs.models.activation_function import ActivationConfig
 from logic.src.configs.models.normalization import NormalizationConfig
-from logic.src.models.subnets.factories.attention import AttentionComponentFactory
-from logic.src.models.subnets.factories.base import NeuralComponentFactory
-from logic.src.models.subnets.factories.gac import GACComponentFactory
-from logic.src.models.subnets.factories.gcn import GCNComponentFactory
-from logic.src.models.subnets.factories.ggac import GGACComponentFactory
-from logic.src.models.subnets.factories.mlp import MLPComponentFactory
-from logic.src.models.subnets.factories.tgc import TGCComponentFactory
 
 from .checkpoint_utils import torch_load_cpu
 from .config_utils import load_args
 from .problem_factory import load_problem
+
+# Encoder factories load lazily: loading a GAT model must not import every
+# encoder family (P-25).
+_FACTORY_TARGETS = {
+    "gat": ("logic.src.models.subnets.factories.attention", "AttentionComponentFactory"),
+    "gac": ("logic.src.models.subnets.factories.gac", "GACComponentFactory"),
+    "tgc": ("logic.src.models.subnets.factories.tgc", "TGCComponentFactory"),
+    "ggac": ("logic.src.models.subnets.factories.ggac", "GGACComponentFactory"),
+    "mlp": ("logic.src.models.subnets.factories.mlp", "MLPComponentFactory"),
+    "gcn": ("logic.src.models.subnets.factories.gcn", "GCNComponentFactory"),
+}
 
 _UNUSED_LEGACY_KEYS = (
     "context_embedder.project_step_context.",
@@ -76,22 +80,15 @@ def load_model(path: str, epoch: Optional[int] = None) -> Tuple[nn.Module, Dict[
 
     problem = load_problem(args["problem"])
 
-    # Map encoder name to Factory Class
-    factory_class = {
-        "gat": AttentionComponentFactory,
-        "gac": GACComponentFactory,
-        "tgc": TGCComponentFactory,
-        "ggac": GGACComponentFactory,
-        "mlp": MLPComponentFactory,
-        "gcn": GCNComponentFactory,
-    }.get(args.get("encoder", "gat"))
+    # Map encoder name to Factory Class (loaded lazily, see _FACTORY_TARGETS)
+    import importlib
 
-    # Fallback/Check
-    if factory_class is None:
-        raise ValueError(f"Unknown encoder type: {args.get('encoder', 'gat')}")
-
-    factory_type = cast(Type[NeuralComponentFactory], factory_class)
-    component_factory = factory_type()
+    encoder_name = args.get("encoder", "gat")
+    try:
+        module_name, attr = _FACTORY_TARGETS[encoder_name]
+    except KeyError:
+        raise ValueError(f"Unknown encoder type: {encoder_name}") from None
+    component_factory = getattr(importlib.import_module(module_name), attr)()
 
     decoder_type = args.get("decoder_type", "glimpse")
 

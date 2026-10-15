@@ -9,14 +9,13 @@
 #                                            has no mirror equivalent; the
 #                                            built html is kept as an artifact)
 #   .github/workflows/sync-to-public.yml  -> job sync-to-public (manual)
-#   .github/workflows/package-and-build.yml -> job export (algo-export* branches
-#                                            or a manual web pipeline with
-#                                            EXPORT_* variables)
+#   .github/workflows/package-and-build.yml -> jobs release-check, release-build
+#                                            (manifest-driven; the algo-export
+#                                            flow is retired, Q-10a)
 #
 # Differences against GitHub Actions, by design:
-#   * `workflow_dispatch` inputs do not exist on GitLab; the export job reads
-#     the same parameters from CI/CD variables of the same names (see the
-#     `export` job's `variables`).
+#   * The release jobs have no inputs; the manifest (logic/release.yaml) is
+#     the single source of truth.
 #   * The Codecov upload and the GitHub Pages deploy are GitHub-only; the
 #     coverage report and the built docs are exposed as artifacts instead.
 #   * Submodules: `GIT_SUBMODULE_STRATEGY` is off by default because the
@@ -30,14 +29,12 @@
 
 workflow:
   rules:
-    # Admit export pushes before evaluating job-level rules.
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH =~ /^algo-export/'
     # push to main / merge request / manual web pipeline (= workflow_dispatch)
     - if: '$CI_COMMIT_BRANCH == "main"'
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_PIPELINE_SOURCE == "web"'
 
-stages: [quality, test, docs, deploy, export]
+stages: [quality, test, docs, deploy, release]
 
 default:
   # Full (non-slim) image: `make` is required by the docs job.
@@ -190,119 +187,78 @@ sync-to-public:
     - git push public HEAD:refs/heads/main --force
 
 # =============================================================================
-# .github/workflows/package-and-build.yml — algorithm export.
-# Push-to-branch trigger: any branch matching /algo-export.*/. Manual trigger:
-# a web pipeline (Run pipeline) with the EXPORT_* variables below; the branch
-# pipeline reads ci/workflow_config.json, exactly like the GitHub job.
-# resource_group is the concurrency group of the workflow.
+# .github/workflows/package-and-build.yml — manifest-driven release build
+# (WP-02, Q-10a). The algo-export branch/patch flow is retired; the package is
+# built from this branch by logic/release.yaml.
 # =============================================================================
-export:
-  stage: export
+
+release-check:
+  stage: release
   rules:
-    - if: '$CI_COMMIT_BRANCH =~ /^algo-export/'
-    - if: '$CI_PIPELINE_SOURCE == "web" && $EXPORT_TRIGGER == "true"'
-      when: manual
-  resource_group: algo-export
-  timeout: 60m
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+  timeout: 15m
   variables:
     GIT_SUBMODULE_STRATEGY: "none"
-    # Manual-pipeline inputs (the workflow_dispatch inputs on GitHub).
-    EXPORT_TRIGGER: "false"
-    CONSTRUCTORS: ""
-    SELECTORS: ""
-    IMPROVEMENT: ""
-    ACCEPTANCE: ""
-    JOINT: ""
-    MODELS: ""
-    RL_ALGORITHMS: ""
-    IMITATION_POLICIES: ""
-    DROP_FEATURES: ""
-    ENVS: ""
-    SIM_DATASETS: ""
-    DISTRIBUTIONS: ""
-    NETWORK: ""
-    SKIP_BUILD: "false"
-    DRY_RUN: "false"
   script:
-    - apt-get update -qq && apt-get install -y --no-install-recommends tree jq zip upx-ucl
     - *setup_uv
     - uv sync --all-packages --frozen --python "3.11"
-    - uv run python -m pip install pyinstaller --quiet
-    - git config user.name "gitlab-ci[bot]"
-    - git config user.email "gitlab-ci[bot]@users.noreply.gitlab.com"
-    # Validate the export config, as the GitHub job does.
+    - uv run python logic/package/build_release.py --check
+
+release-build:
+  stage: release
+  needs: [release-check]
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
+  resource_group: release-build
+  timeout: 40m
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none"
+  script:
+    - *setup_uv
+    - uv sync --all-packages --frozen --python "3.11"
+    - uv run python logic/package/build_release.py --build release/
+    - uv run python logic/package/build_release.py --smoke release/
+    # NOTE: running the release test set becomes a gate once the P-06 test
+    # pruning lands (kept tests may assert the dev tree's full registry).
+    # Torch-free installed-package smoke test (Q-16a).
     - |
-      if [ ! -f ci/export_config.json ]; then
-        echo "ERROR: ci/export_config.json not found." >&2
-        exit 1
-      fi
-      echo "ci/export_config.json found. Known categories:"
-      jq -r '.categories | keys[]' ci/export_config.json
-    # Branch pushes read ci/workflow_config.json; manual pipelines use the
-    # EXPORT_* variables above (same names and semantics as the inputs).
-    - |
-      if [[ "$CI_PIPELINE_SOURCE" == "push" && "$CI_COMMIT_BRANCH" =~ ^algo-export ]]; then
-        CONFIG=ci/workflow_config.json
-        if [ ! -f "$CONFIG" ]; then
-          echo "ERROR: $CONFIG not found on this branch." >&2
-          exit 1
-        fi
-        echo "Reading parameters from $CONFIG"
-        CONSTRUCTORS=$(jq -r '.constructors // ""' "$CONFIG")
-        SELECTORS=$(jq -r '.selectors // ""' "$CONFIG")
-        IMPROVEMENT=$(jq -r '.improvement // ""' "$CONFIG")
-        ACCEPTANCE=$(jq -r '.acceptance // ""' "$CONFIG")
-        JOINT=$(jq -r '.joint // ""' "$CONFIG")
-        MODELS=$(jq -r '.models // ""' "$CONFIG")
-        RL_ALGORITHMS=$(jq -r '.rl_algorithms // ""' "$CONFIG")
-        IMITATION_POLICIES=$(jq -r '.imitation_policies // ""' "$CONFIG")
-        DROP_FEATURES=$(jq -r '.drop_features // ""' "$CONFIG")
-        ENVS=$(jq -r '.envs // ""' "$CONFIG")
-        SIM_DATASETS=$(jq -r '.sim_datasets // ""' "$CONFIG")
-        DISTRIBUTIONS=$(jq -r '.distributions // ""' "$CONFIG")
-        NETWORK=$(jq -r '.network // ""' "$CONFIG")
-        SKIP_BUILD=$(jq -r '.skip_build // false' "$CONFIG")
-        DRY_RUN=$(jq -r '.dry_run // false' "$CONFIG")
-      else
-        echo "Reading parameters from the pipeline variables"
-      fi
-    # Build packager arguments (same flags as the GitHub job).
-    - |
-      ARGS=()
-      add_arg() {
-        flag="$1"; value="$2"
-        if [ -n "$value" ]; then ARGS+=("$flag" "$value"); fi
-      }
-      add_arg --constructors "$CONSTRUCTORS"
-      add_arg --selectors "$SELECTORS"
-      add_arg --improvement "$IMPROVEMENT"
-      add_arg --acceptance "$ACCEPTANCE"
-      add_arg --joint "$JOINT"
-      add_arg --models "$MODELS"
-      add_arg --rl-algorithms "$RL_ALGORITHMS"
-      add_arg --imitation-policies "$IMITATION_POLICIES"
-      add_arg --drop-features "$DROP_FEATURES"
-      add_arg --envs "$ENVS"
-      add_arg --sim-datasets "$SIM_DATASETS"
-      add_arg --distributions "$DISTRIBUTIONS"
-      add_arg --network "$NETWORK"
-      if [ "$SKIP_BUILD" = "true" ]; then ARGS+=(--skip-build); fi
-      if [ "$DRY_RUN" = "true" ]; then ARGS+=(--dry-run); fi
-      # In CI the codebase is already pruned; skip branch/commit work.
-      ARGS+=(--no-commit --output-dir dist/exports)
-      uv run python ci/packager.py "${ARGS[@]}"
-    # Locate the produced archive (newest wins, like the GitHub job).
-    - |
-      ARCHIVE=$(find dist/exports -name "wsmart_route_export_*.zip" -printf '%T@ %p\n' | sort -n | tail -1 | cut -d' ' -f2-)
-      if [ -z "$ARCHIVE" ]; then
-        echo "ERROR: No export archive found in dist/exports/." >&2
-        ls -la dist/exports/ || true
-        exit 1
-      fi
-      echo "Found archive: $ARCHIVE"
+      uv venv /tmp/relvenv --python "3.11"
+      /tmp/relvenv/bin/python -m pip install --quiet --no-deps release/
+      /tmp/relvenv/bin/python -m pip install --quiet \
+        numpy pandas scipy pyyaml hydra-core hydra-colorlog omegaconf loguru \
+        rich tqdm networkx scikit-learn python-dotenv joblib cryptography \
+        requests openpyxl protobuf
+      /tmp/relvenv/bin/python - <<'PY'
+      import sys
+
+      assert "torch" not in sys.modules
+      from logic.src.policies.packing.base.selection_registry import PackingRegistry  # noqa: F401
+      from logic.src.utils.registry import ACCEPTANCE, IMPROVEMENT, PACKING
+
+      for key in ("last_minute", "service_level", "lookahead", "regular"):
+          assert PACKING.get(key) is not None, key
+      assert IMPROVEMENT.get("classical_local_search") is not None
+      assert IMPROVEMENT.get("fast_tsp") is not None
+      assert ACCEPTANCE.get("bmc") is not None
+      assert ACCEPTANCE.get("oi") is not None
+      assert PACKING.get("revenue_threshold") is None, "unreleased key resolves"
+
+      PACKING.create("last_minute")
+      PACKING.create("regular")
+      ACCEPTANCE.create("bmc", initial_temp=100.0, alpha=0.995)
+      ACCEPTANCE.create("oi")
+      IMPROVEMENT.create("classical_local_search")
+      IMPROVEMENT.create("fast_tsp")
+
+      assert "torch" not in sys.modules, "torch was imported on the classical path"
+      print("torch-free installed-package smoke OK")
+      PY
   artifacts:
     when: always
     paths:
-      - dist/exports/wsmart_route_export_*.zip
-      - retained_logic_files.txt
+      - release/
     expire_in: 30 days

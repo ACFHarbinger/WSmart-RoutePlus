@@ -38,6 +38,8 @@ Tags: `[Quick Win]` ≤ 1 day · `[Research]` involves novel work · `[Blocked]`
 - WP-03 (Mistral: `refactor/v1-wp03-usage-audit-hpo`, #108): P-55 corrected usage audit (`tools/audit_param_usage.py`, no-false-INERT three-pattern method; evidence appendix committed) and P-56 HPO job conversion + key-liveness CI gate (`tools/check_hpo_jobs.py`, 96 jobs converted, check in all four CI files).
 - WP-06 (`refactor/v1-wp06-unreleased-migration`, #111): `tools/migrate_unreleased_params.py` moved 84 of 86 remaining params modules to the config layer in one scripted pass (merge/append/wire), rewrote every `XParams` reference, banned all 95 deleted symbols in `check_params_refs.py`, and kept both guards green (params-refs, HPO jobs). Hand-fix queue: `calm`, `hmlns` (multi-class params).
 - Remaining packages: WP-07 ESPPRC envs, WP-08 modular simulator. See `.agent/tasks/simulator-v1-refactor-proposal-2026-10-15.md` §12.
+- WP-02 (`refactor/v1-wp02-release-manifest`, #107): `logic/release.yaml` is the single source of truth; `logic/package/build_release.py` builds the package from `main` (check / build / torch-free smoke), the release pyproject installs without torch (`wsmart-route[neural]` carries the training stack), and the acronym-driven export flow (`ci/packager.py`, `export_config.json`, `prune_codebase.py` + the 16 `remove_*.py` scripts, the `minimal-ptp` patch) is retired. P-25 lazy-fication extended to the RL core, vector facade, models/subnets re-export inits, the model loader and the imitation/builder expert maps. Not on `main`.
+- Remaining packages: WP-03 config/rename leftovers, WP-07 ESPPRC envs, WP-08 modular simulator. See `.agent/tasks/simulator-v1-refactor-proposal-2026-10-15.md` §12.
 
 ---
 
