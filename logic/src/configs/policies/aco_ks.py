@@ -55,6 +55,7 @@ class KSparseACOConfig:
     time_limit: float = 30.0
     seed: Optional[int] = None
     k_sparse: int = 15
+    q0: float = 0.9
     local_search: bool = True
     local_search_iterations: int = 500
     elitist_weight: float = 1.0

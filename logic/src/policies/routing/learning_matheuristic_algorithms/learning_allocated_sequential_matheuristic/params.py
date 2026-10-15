@@ -139,7 +139,7 @@ class LASMPipelineParams(LASMPipelineConfig):
         return self.bpc_max_bb_nodes_min + int(a * (self.bpc_max_bb_nodes_max - self.bpc_max_bb_nodes_min))
 
     def as_alns_values_dict(self) -> Dict[str, Any]:
-        """Build the flat dict expected by the existing ALNSParams.from_config.
+        """Build the flat dict for ALNSConfig.
 
         Returns:
             Dict[str, Any]: The dictionary representation of the ALNS parameters.

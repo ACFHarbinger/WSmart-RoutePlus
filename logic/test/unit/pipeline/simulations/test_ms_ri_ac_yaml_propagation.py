@@ -57,10 +57,10 @@ def test_bmc_yaml_is_injected_as_typed_acceptance_criterion() -> None:
         "bins": bins,
         "config": {
             "psoma": {
-                "custom": [
-                    {"acceptance_criteria": {"other/ac_bmc.yaml": ["bmc"]}},
-                    {"packing": []},
-                ]
+                "custom": {
+                    "acceptance_criteria": {"other/ac_bmc.yaml": ["bmc"]},
+                    "packing": {},
+                }
             }
         },
         "day": 0,
@@ -99,27 +99,19 @@ def test_oi_yaml_is_injected_as_only_improving() -> None:
 
 
 def test_psoma_from_config_consumes_injected_bmc_not_dataclass_t0() -> None:
-    """PSOMA ``from_config`` must instantiate BMC from ``acceptance_criterion``, not T0=3."""
-    from types import SimpleNamespace
-
+    """PSOMA solver must instantiate BMC from ``acceptance_criterion``, not T0=3."""
     from logic.src.configs.policies.other.acceptance_criteria import (
         AcceptanceConfig,
         BoltzmannAcceptanceConfig,
     )
-    from logic.src.policies.routing.meta_heuristics.particle_swarm_optimization_memetic_algorithm.params import (  # noqa: E501
-        PSOMAParams,
+    from logic.src.configs.policies.psoma import PSOMAConfig
+    from logic.src.policies.routing.meta_heuristics.particle_swarm_optimization_memetic_algorithm.solver import (
+        PSOMASolver,
     )
 
-    cfg = SimpleNamespace(
+    cfg = PSOMAConfig(
         pop_size=20,
-        omega=1.0,
-        c1=2.0,
-        c2=2.0,
         max_iterations=5,
-        x_min=0.0,
-        x_max=4.0,
-        v_min=-4.0,
-        v_max=4.0,
         L=30,
         T0=3.0,
         lambda_cooling=0.9,
@@ -131,8 +123,9 @@ def test_psoma_from_config_consumes_injected_bmc_not_dataclass_t0() -> None:
             params=BoltzmannAcceptanceConfig(initial_temp=100.0, alpha=0.995, seed=42),
         ),
     )
-    params = PSOMAParams.from_config(cfg)
-    criterion = params.acceptance_criterion
+    dist = np.zeros((2, 2))
+    solver = PSOMASolver(dist, {1: 1.0}, capacity=10.0, R=1.0, C=1.0, params=cfg)
+    criterion = solver.acceptance_criterion
     assert criterion is not None
     assert float(criterion.T) == pytest.approx(100.0)
     assert float(criterion.alpha) == pytest.approx(0.995)
@@ -140,49 +133,47 @@ def test_psoma_from_config_consumes_injected_bmc_not_dataclass_t0() -> None:
 
 def test_alns_from_config_consumes_injected_bmc_on_attrdict() -> None:
     """Attribute mappings and plain mappings both preserve injected BMC."""
+    from logic.src.configs.policies.alns import ALNSConfig
     from logic.src.configs.policies.other.acceptance_criteria import (
         AcceptanceConfig,
         BoltzmannAcceptanceConfig,
     )
-    from logic.src.pipeline.simulations.actions.base import _attrify
-    from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.params import (
-        ALNSParams,
+    from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns import (
+        ALNSSolver,
     )
 
     injected = AcceptanceConfig(
         method="bmc",
         params=BoltzmannAcceptanceConfig(initial_temp=100.0, alpha=0.995, seed=42),
     )
-    raw = {
-        "time_limit": 2.0,
-        "max_iterations": 20,
-        "start_temp": 0.0,
-        "cooling_rate": 0.995,
-        "reaction_factor": 0.1,
-        "acceptance_criterion": injected,
-    }
-    wrapped = ALNSParams.from_config(_attrify(raw))
-    criterion = wrapped.acceptance_criterion
+    cfg = ALNSConfig(
+        time_limit=2.0,
+        max_iterations=20,
+        start_temp=0.0,
+        cooling_rate=0.995,
+        reaction_factor=0.1,
+        acceptance_criterion=injected,
+    )
+    dist = np.zeros((2, 2))
+    solver = ALNSSolver(dist, {1: 1.0}, capacity=10.0, R=1.0, C=1.0, params=cfg)
+    criterion = solver.acceptance_criterion
     assert criterion is not None
     assert float(criterion.T) == pytest.approx(100.0)
     assert float(criterion.alpha) == pytest.approx(0.995)
 
-    patched = ALNSParams.from_config(raw)
-    assert float(patched.acceptance_criterion.T) == pytest.approx(100.0)
-
 
 def test_hgs_from_config_consumes_injected_oi() -> None:
-    from types import SimpleNamespace
-
+    from logic.src.configs.policies.hgs import HGSConfig
     from logic.src.configs.policies.other.acceptance_criteria import AcceptanceConfig, OnlyImprovingConfig
     from logic.src.policies.acceptance_criteria.only_improving import OnlyImproving
-    from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.params import HGSParams
+    from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.hgs import HGSSolver
 
-    cfg = SimpleNamespace(
+    cfg = HGSConfig(
         acceptance_criterion=AcceptanceConfig(method="oi", params=OnlyImprovingConfig()),
     )
-    params = HGSParams.from_config(cfg)
-    assert isinstance(params.acceptance_criterion, OnlyImproving)
+    dist = np.zeros((2, 2))
+    solver = HGSSolver(dist, {1: 1.0}, capacity=10.0, R=1.0, C=1.0, params=cfg)
+    assert isinstance(solver.acceptance_criterion, OnlyImproving)
 
 
 def test_cls_2opt_runs_only_two_opt_intra() -> None:

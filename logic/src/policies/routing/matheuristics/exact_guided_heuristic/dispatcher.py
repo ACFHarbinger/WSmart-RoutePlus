@@ -44,22 +44,23 @@ logger = logging.getLogger(__name__)
 
 
 def _build_alns_params(pipeline_params: ExactGuidedHeuristicParams, time_limit: float):
-    """Build an ALNSParams object from the pipeline config.
+    """Build an ALNSConfig object from the pipeline config.
 
     Args:
         pipeline_params: Source pipeline parameters.
         time_limit:      Stage-specific time budget (injected here).
 
     Returns:
-        ALNSParams instance ready for the ALNS stage.
+        ALNSConfig instance ready for the ALNS stage.
     """
-    from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.params import (
-        ALNSParams,
-    )
+    import dataclasses
+
+    from logic.src.configs.policies.alns import ALNSConfig
 
     values_dict = pipeline_params.as_alns_values_dict()
     values_dict["time_limit"] = time_limit
-    return ALNSParams.from_config(values_dict)
+    valid_keys = {f.name for f in dataclasses.fields(ALNSConfig)}
+    return ALNSConfig(**{k: v for k, v in values_dict.items() if k in valid_keys})
 
 
 def _mandatory_local_set(

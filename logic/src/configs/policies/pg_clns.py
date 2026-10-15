@@ -69,7 +69,6 @@ class PGCLNSConfig:
             start_temp=100.0,
             cooling_rate=0.95,
             reaction_factor=0.5,
-            min_removal=1,
             xi=0.2,  # Using xi to represent max_removal_pct
             time_limit=30.0,
         )

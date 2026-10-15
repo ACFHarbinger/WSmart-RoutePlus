@@ -22,8 +22,8 @@ import numpy as np
 from .local_search_base import LocalSearch
 
 if TYPE_CHECKING:
+    from logic.src.configs.policies.hgs import HGSConfig
     from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.individual import Individual
-    from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.params import HGSParams
 
 
 class HGSLocalSearch(LocalSearch):
@@ -42,7 +42,7 @@ class HGSLocalSearch(LocalSearch):
         R: float,
         C: float,
         mandatory_nodes: Optional[List[int]],
-        params: "HGSParams",
+        params: "HGSConfig",
     ):
         """
         Initialize HGS Local Search.

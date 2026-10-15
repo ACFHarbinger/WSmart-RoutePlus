@@ -27,8 +27,6 @@ from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood
     execute_og,
 )
 
-from .params import SANSParams
-
 
 @RoutingAlgorithmRegistry.register("sans")
 @RoutingAlgorithmRegistry.register("lac")  # Backward compatibility alias
@@ -136,7 +134,7 @@ class SANSPolicy(BaseRoutingPolicy):
                 Tuple of (routes, profit, cost).
         """
         # Determine engine and parameters
-        params = SANSParams.from_config(self._config or kwargs.get("config", {}).get("sans", {}))
+        cfg = self._effective_config(values)
 
         # Extract original data from kwargs
         bins = kwargs.get("bins")
@@ -153,13 +151,13 @@ class SANSPolicy(BaseRoutingPolicy):
         # Preserve caller data and tracking/context fields used by dispatchers.
         dispatcher_kwargs = dict(kwargs)
         dispatcher_kwargs["mandatory"] = mandatory_nodes
-        dispatcher_kwargs.setdefault("seed", params.seed)
+        dispatcher_kwargs.setdefault("seed", cfg.seed)
 
         # Call the appropriate engine
-        if params.engine == "og":
-            tour, cost, profit, _, _ = execute_og(self, params=params, **dispatcher_kwargs)
+        if cfg.engine == "og":
+            tour, cost, profit, _, _ = execute_og(self, params=cfg, **dispatcher_kwargs)
         else:
-            tour, cost, profit, _, _ = execute_new(self, params=params, **dispatcher_kwargs)
+            tour, cost, profit, _, _ = execute_new(self, params=cfg, **dispatcher_kwargs)
 
         # Convert tour (flat list) to routes (list of lists)
         # Tour format: [0, node1, node2, ..., 0, node3, node4, ..., 0]

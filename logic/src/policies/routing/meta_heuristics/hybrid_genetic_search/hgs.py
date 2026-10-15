@@ -19,16 +19,16 @@ Example:
 
 import random
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
+from logic.src.configs.policies.hgs import HGSConfig
 from logic.src.policies.helpers.local_search.local_search_hgs import HGSLocalSearch
 from logic.src.policies.helpers.operators.crossover_recombination import route_profit_gpx_crossover
 
 from .evolution import _extract_edges, evaluate, update_biased_fitness
 from .individual import Individual
-from .params import HGSParams
 from .split import LinearSplit
 
 # Penalty-adaptation constants
@@ -60,7 +60,7 @@ class HGSSolver:
         Q (float): Maximum vehicle capacity.
         R (float): Revenue multiplier.
         C (float): Cost multiplier.
-        params (HGSParams): Detailed HGS parameters.
+        params (HGSConfig): Detailed HGS parameters.
         mandatory_nodes (Optional[List[int]]): List of nodes that must be visited.
         random (random.Random): Seeded random number generator.
         n_nodes (int): Number of customer nodes (excluding depot).
@@ -79,7 +79,7 @@ class HGSSolver:
         capacity: float,
         R: float,
         C: float,
-        params: HGSParams,
+        params: Optional[Union[HGSConfig, Dict[str, Any]]] = None,
         mandatory_nodes: Optional[List[int]] = None,
         x_coords: Optional[np.ndarray] = None,
         y_coords: Optional[np.ndarray] = None,
@@ -93,7 +93,7 @@ class HGSSolver:
             capacity: Maximum vehicle capacity.
             R: Revenue multiplier (profit per unit of waste collected).
             C: Cost multiplier (cost per unit distance).
-            params: HGS configuration parameters.
+            params: HGS configuration dataclass or dictionary.
             mandatory_nodes: Local node indices that MUST be visited.
             x_coords: Optional x-coordinates for SWAP* polar sector pruning.
             y_coords: Optional y-coordinates for SWAP* polar sector pruning.
@@ -106,20 +106,59 @@ class HGSSolver:
         self.Q = capacity
         self.R = R
         self.C = C
-        self.params = params
+
+        if hasattr(params, "__dict__") and not isinstance(params, HGSConfig):
+            params = vars(params)
+        if isinstance(params, dict):
+            import dataclasses
+
+            p = dict(params)
+            if "lambda_param" in p and "n_offspring" not in p:
+                p["n_offspring"] = p["lambda_param"]
+            valid_keys = {f.name for f in dataclasses.fields(HGSConfig)}
+            cfg = HGSConfig(**{k: v for k, v in p.items() if k in valid_keys})
+        elif params is None:
+            cfg = HGSConfig()
+        else:
+            cfg = params
+
+        self.cfg: HGSConfig = cfg
+        self.params = cfg
         self.mandatory_nodes = mandatory_nodes
-        self.random = random.Random(params.seed) if params.seed is not None else random.Random()
+        self.random = random.Random(cfg.seed) if cfg.seed is not None else random.Random()
 
         self.n_nodes = len(dist_matrix) - 1
         self.nodes = list(range(1, self.n_nodes + 1))
 
         self.split_manager = LinearSplit(
-            dist_matrix, wastes, capacity, R, C, params.max_vehicles, mandatory_nodes, vrpp=params.vrpp
+            dist_matrix, wastes, capacity, R, C, cfg.max_vehicles, mandatory_nodes, vrpp=cfg.vrpp
         )
-        self.ls = HGSLocalSearch(dist_matrix, wastes, capacity, R, C, mandatory_nodes, params)
+        self.ls = HGSLocalSearch(dist_matrix, wastes, capacity, R, C, mandatory_nodes, cfg)
         if x_coords is not None and y_coords is not None:
             self.ls.x_coords = x_coords
             self.ls.y_coords = y_coords
+
+        # Modular Acceptance Criterion - fresh per-solve instance (P-11)
+        from logic.src.policies.acceptance_criteria.base.factory import (
+            AcceptanceCriterionFactory,
+        )
+
+        acc_val = getattr(self.cfg, "acceptance_criterion", None)
+        if hasattr(acc_val, "accept"):
+            self.acceptance_criterion = acc_val
+        elif acc_val is not None and hasattr(acc_val, "method"):
+            self.acceptance_criterion = AcceptanceCriterionFactory.create(
+                name=acc_val.method,
+                config=acc_val.params,
+            )
+        elif isinstance(acc_val, dict) and "method" in acc_val:
+            self.acceptance_criterion = AcceptanceCriterionFactory.create(
+                name=acc_val["method"],
+                config=acc_val.get("params"),
+            )
+        else:
+            self.acceptance_criterion = AcceptanceCriterionFactory.create(name="oi")
+        self.params.acceptance_criterion = self.acceptance_criterion
 
         # Per-subpopulation diversity distance caches, keyed by (id(ind_a), id(ind_b)).
         # Maintained across iterations; entries are evicted precisely when an individual
@@ -612,8 +651,8 @@ class HGSSolver:
         self._offspring_feasibility = []
         self._offspring_coverage = []
         self._offspring_margin = []
-        if self.params.acceptance_criterion is not None:
-            self.params.acceptance_criterion.setup(0.0)
+        if self.acceptance_criterion is not None:
+            self.acceptance_criterion.setup(0.0)
 
         pop_feasible, pop_infeasible = self._initialize_population(penalty_capacity)
 
@@ -674,8 +713,8 @@ class HGSSolver:
             if it % 100 == 0:
                 penalty_capacity = self._adjust_penalties(penalty_capacity)
 
-            if self.params.acceptance_criterion is not None:
-                self.params.acceptance_criterion.step(
+            if self.acceptance_criterion is not None:
+                self.acceptance_criterion.step(
                     current_obj=best_profit_so_far,
                     candidate_obj=child.profit_score if child.is_feasible else -float("inf"),
                     accepted=child.is_feasible and child.profit_score > best_profit_so_far,

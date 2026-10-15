@@ -14,10 +14,8 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 
+from logic.src.configs.policies.psoma import PSOMAConfig
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.split import LinearSplit
-from logic.src.policies.routing.meta_heuristics.particle_swarm_optimization_memetic_algorithm.params import (
-    PSOMAParams,
-)
 
 
 class PSOMAParticle:
@@ -40,7 +38,7 @@ class PSOMAParticle:
     def __init__(
         self,
         clients: List[int],
-        params: PSOMAParams,
+        params: PSOMAConfig,
         split_solver: LinearSplit,
         rng: Optional[np.random.Generator] = None,
     ):

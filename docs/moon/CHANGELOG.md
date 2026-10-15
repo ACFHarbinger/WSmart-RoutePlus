@@ -46,6 +46,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The release test set is written to `logic/test/release_tests.txt` (collection-validated) and `release_tests.excluded.txt` (excluded with reasons) inside the built tree. Running it as a CI gate becomes possible once the P-06 test pruning lands: some kept tests assert the dev tree's full registry, which the filtered release registry intentionally violates.
 - Codex review: invalid user values no longer bypass structured validation through the dataclass fallback; fallback is restricted to schema construction. Added type-validation regression tests.
 - Codex review: check_hpo_jobs.py adds the repository to sys.path for its documented direct CLI/CI invocation.
+### Released routing configs: ALNS family and HGS (WP-05, `2026-10-15`)
+
+#### Changed
+
+- **Breaking:** ALNS, HGS, PG-CLNS, PSOMA and SANS delete their `params.py` layer (P-10). Solvers, adapters and dispatchers read the typed config dataclasses (`ALNSConfig`, `HGSConfig`, `PGCLNSConfig`, `PSOMAConfig`, `SANSConfig`); `XParams.from_config(...)` and the `getattr(cfg, "field", default)` fallbacks are gone.
+- **Breaking:** Config dataclasses settled per field to paper run values (YAML-wins):
+  - `ALNSConfig`: dropped inert `min_removal` (paper literal 4 promoted to `MIN_REMOVAL_LOWER_BOUND` constant in `alns.py`), set `profit_aware_operators=True`, added operator fields (`start_temp_control`, `xi`, `segment_size`, `noise_factor`, `worst_removal_randomness`, `shaw_randomization`, `max_removal_cap`, `regret_pool`, `sigma_1`, `sigma_2`, `sigma_3`).
+  - `HGSConfig`: set `time_limit=60.0`, `restart_timer=60.0`, `profit_aware_operators=True`, deleted 8 dead fields (`nb_granular`, `mutation_rate`, `local_search_iterations`, `use_cross_exchange`, `use_lambda_interchange`, `lambda_max`, `use_ejection_chains`, `use_3opt`), added `lambda_param` alias to `n_offspring`.
+  - `KSparseACOConfig`: added `q0: float = 0.9` for PG-CLNS / ACO variant parity.
+  - `PSOMAConfig`: set `profit_aware_operators=True`, added `sa_steps: int = 5000` and `seed_nearest_neighbour: bool = True`.
+  - `SANSConfig`: added `V: float = 0.0`, `shift_duration: float = 28800.0`, `vrpp: bool = True`.
+  - `PGCLNSConfig`: dropped `min_removal` from default nested `lns` factory.
+- **Breaking:** Fresh per-solve acceptance criteria instances decoupled from declarative configs (P-11); solvers construct `self.acceptance_criterion` via `AcceptanceCriterionFactory` at runtime.
+- **Breaking (Q-8b, unreleased consumers migrated in the same change):**
+  - Matheuristics: `exact_guided_heuristic/` (`dispatcher.py`, `stage_alns.py`, `params.py`), `learning_allocated_sequential_matheuristic/` (`dispatcher.py`, `stage_lbbd.py`, `params.py`), `partial_optimization_metaheuristic_under_special_intensification_conditions/` (`solver.py`).
+  - Metaheuristics: `hybrid_genetic_search_with_adaptive_large_neighborhood_search/` (`params.py`, `policy_hgs_alns.py`), `hybrid_memetic_large_neighborhood_search/` (`params.py`, `policy_hmlns.py`), `hybrid_volleyball_premier_league/` (`params.py`, `policy_hvpl.py`), `adaptive_large_neighborhood_search_with_inter_period_operators/` (`params.py`).
+  - Learning heuristics: `reinforcement_learning_hybrid_volleyball_premier_league/` (`params.py`, `policy_rl_hvpl.py`).
+- **Tests (P-06):** Pruned `*Params` references from tests (`test_alns_start_temperature.py`, `test_pg_clns_clock.py`, `test_psoma_time_budget.py`, `test_psoma_seeding.py`, `test_policies_aux.py`, `test_ms_ri_ac_yaml_propagation.py`, `test_parameter_loader_independence.py`, `test_sans_base_routing_integration.py`).
+
+#### Added
+
+- `tools/check_params_refs.py`: extended `BANNED_SYMBOLS` to include `ALNSParams`, `HGSParams`, `PGCLNSParams`, `ACOParams`, `LNSParams`, `PSOMAParams`, `SANSParams`.
+
 ### Released routing configs: one source of truth (WP-04, `2026-10-15`)
 
 #### Changed

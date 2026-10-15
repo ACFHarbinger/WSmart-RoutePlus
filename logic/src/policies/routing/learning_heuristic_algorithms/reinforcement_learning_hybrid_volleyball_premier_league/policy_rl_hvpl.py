@@ -22,6 +22,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
+from logic.src.configs.policies.alns import ALNSConfig
 from logic.src.configs.policies.other import RLConfig
 from logic.src.configs.policies.rl_hvpl import RLHVPLConfig
 from logic.src.enums import GlobalRegistry, PolicyTag
@@ -33,7 +34,6 @@ from logic.src.policies.routing.learning_heuristic_algorithms.reinforcement_lear
 from logic.src.policies.routing.learning_heuristic_algorithms.reinforcement_learning_hybrid_volleyball_premier_league.rl_hvpl import (
     RLHVPLSolver,
 )
-from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.params import ALNSParams
 from logic.src.policies.routing.meta_heuristics.ant_colony_optimization_k_sparse.params import KSACOParams
 
 
@@ -152,12 +152,11 @@ class RLHVPLPolicy(BaseRoutingPolicy):
             seed=seed,
         )
 
-        alns_params = ALNSParams(
+        alns_params = ALNSConfig(
             max_iterations=values.get("alns_iterations", 200),
             start_temp=values.get("alns_start_temp", 100.0),
             cooling_rate=values.get("alns_cooling_rate", 0.97),
             reaction_factor=values.get("alns_reaction_factor", 0.5),
-            min_removal=values.get("alns_min_removal", 1),
             max_removal_pct=values.get("alns_max_removal_pct", 0.3),
             time_limit=values.get("alns_time_limit", 60.0),
             vrpp=vrpp,

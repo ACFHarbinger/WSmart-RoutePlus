@@ -67,7 +67,7 @@ Example:
 
 from __future__ import annotations
 
-import inspect
+import dataclasses
 import warnings
 from collections import deque
 from random import Random
@@ -79,9 +79,7 @@ import pandas as pd
 from logic.src.configs.policies.alns import ALNSConfig
 from logic.src.configs.policies.hgs import HGSConfig
 from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns import ALNSSolver
-from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.params import ALNSParams
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.hgs import HGSSolver
-from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.params import HGSParams
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.split import LinearSplit
 from logic.src.policies.routing.other_algorithms.travelling_salesman_problem.tsp import (
     find_route,
@@ -1201,12 +1199,12 @@ def _optimize_with_hgs(
     local_mandatory_idx = [node_to_local[n] for n in local_mandatory]
 
     if isinstance(config, HGSConfig):
-        params = HGSParams.from_config(config)
+        params = dataclasses.replace(config)
     elif isinstance(config, dict):
-        valid_keys = set(inspect.signature(HGSParams).parameters.keys())
-        params = HGSParams(**{k: v for k, v in config.items() if k in valid_keys})
+        valid_keys = {f.name for f in dataclasses.fields(HGSConfig)}
+        params = HGSConfig(**{k: v for k, v in config.items() if k in valid_keys})
     else:
-        params = HGSParams(
+        params = HGSConfig(
             max_vehicles=max(1, len(neighborhood_indices)),
             time_limit=time_limit,
             vrpp=vrpp,
@@ -1282,12 +1280,12 @@ def _optimize_with_alns(
 
     if config:
         if isinstance(config, ALNSConfig):
-            params = ALNSParams.from_config(config)
+            params = dataclasses.replace(config)
         elif isinstance(config, dict):
-            valid_keys = set(inspect.signature(ALNSParams).parameters.keys())
-            params = ALNSParams(**{k: v for k, v in config.items() if k in valid_keys})
+            valid_keys = {f.name for f in dataclasses.fields(ALNSConfig)}
+            params = ALNSConfig(**{k: v for k, v in config.items() if k in valid_keys})
         else:
-            params = ALNSParams(
+            params = ALNSConfig(
                 max_iterations=1000,
                 time_limit=time_limit,
                 vrpp=vrpp,
@@ -1295,7 +1293,7 @@ def _optimize_with_alns(
                 seed=seed,
             )
     else:
-        params = ALNSParams(max_iterations=1000, time_limit=time_limit, vrpp=vrpp)
+        params = ALNSConfig(max_iterations=1000, time_limit=time_limit, vrpp=vrpp)
 
     if params.time_limit < 0:
         params.time_limit = time_limit

@@ -29,9 +29,17 @@ class ALNSConfig:
         start_temp: Initial temperature for simulated annealing acceptance.
         cooling_rate: Rate at which temperature decreases each iteration.
         reaction_factor: Weight update reaction factor for operator scores.
-        min_removal: Minimum number of nodes to remove per destroy operation.
         start_temp_control: 'w' parameter: accept a 5% worse solution with 0.5 probability
         xi: 'xi' parameter: fraction of total nodes for max removal cap
+        segment_size: Iterations before updating operator weights.
+        noise_factor: Noise level for repair operators.
+        worst_removal_randomness: Randomness parameter p >= 1 for worst removal.
+        shaw_randomization: Shaw removal randomization factor.
+        max_removal_cap: Hard upper cap on removal count.
+        regret_pool: Regret operator pool size.
+        sigma_1: Score for new global best solution.
+        sigma_2: Score for improving solution.
+        sigma_3: Score for accepted worse solution.
         engine: Solver engine to use ('custom', 'alns').
         packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
@@ -44,12 +52,20 @@ class ALNSConfig:
     start_temp: float = 0.0  # 0 = Ropke & Pisinger calibration from the initial profit
     cooling_rate: float = 0.995
     reaction_factor: float = 0.1
-    min_removal: int = 1
     start_temp_control: float = 0.05
     xi: float = 0.4
+    segment_size: int = 100
+    noise_factor: float = 0.025
+    worst_removal_randomness: float = 3.0
+    shaw_randomization: float = 6.0
+    max_removal_cap: int = 100
+    regret_pool: str = "regret234"
+    sigma_1: float = 33.0
+    sigma_2: float = 9.0
+    sigma_3: float = 13.0
     engine: str = "custom"
     vrpp: bool = True
-    profit_aware_operators: bool = False
+    profit_aware_operators: bool = True
     extended_operators: bool = False
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

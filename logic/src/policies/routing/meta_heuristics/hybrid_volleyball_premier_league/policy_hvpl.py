@@ -21,13 +21,13 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 import numpy as np
 
 from logic.src.configs.policies.aco_hh import HyperHeuristicACOConfig
+from logic.src.configs.policies.alns import ALNSConfig
 from logic.src.configs.policies.hvpl import HVPLConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_operators import (
     OPERATOR_NAMES,
 )
-from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.params import ALNSParams
 from logic.src.policies.routing.meta_heuristics.hybrid_volleyball_premier_league.params import HVPLParams
 from logic.src.policies.routing.meta_heuristics.hybrid_volleyball_premier_league.solver import HVPLSolver
 
@@ -173,12 +173,11 @@ class HVPLPolicy(BaseRoutingPolicy):
         # Get ALNS config (nested or flattened)
         alns_config = values.get("alns", {})
         if isinstance(alns_config, dict):
-            alns_params = ALNSParams(
+            alns_params = ALNSConfig(
                 max_iterations=alns_config.get("max_iterations", 500),
                 start_temp=alns_config.get("start_temp", 100.0),
                 cooling_rate=alns_config.get("cooling_rate", 0.95),
                 reaction_factor=alns_config.get("reaction_factor", 0.1),
-                min_removal=alns_config.get("min_removal", 1),
                 time_limit=alns_config.get("time_limit", 60.0),
                 start_temp_control=alns_config.get("start_temp_control", 100.0),
                 xi=alns_config.get("xi", 1.0),
@@ -189,12 +188,11 @@ class HVPLPolicy(BaseRoutingPolicy):
             )
         else:
             # Fallback to flattened parameters for backward compatibility
-            alns_params = ALNSParams(
+            alns_params = ALNSConfig(
                 max_iterations=values.get("alns_iterations", 500),
                 start_temp=values.get("alns_start_temp", 100.0),
                 cooling_rate=values.get("alns_cooling_rate", 0.95),
                 reaction_factor=values.get("alns_reaction_factor", 0.1),
-                min_removal=values.get("alns_min_removal", 1),
                 start_temp_control=values.get("alns_start_temp_control", 100.0),
                 xi=values.get("alns_xi", 1.0),
                 segment_size=values.get("alns_segment_size", 10),

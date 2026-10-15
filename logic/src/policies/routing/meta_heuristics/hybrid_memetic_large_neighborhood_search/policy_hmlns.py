@@ -16,10 +16,11 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 import numpy as np
 
 from logic.src.configs.policies import HybridMemeticLargeNeighborhoodSearchConfig
+from logic.src.configs.policies.alns import ALNSConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
-from .params import ALNSParams, HybridMemeticLargeNeighborhoodSearchParams, MACOParams
+from .params import HybridMemeticLargeNeighborhoodSearchParams, MACOParams
 from .solver import HybridMemeticLargeNeighborhoodSearchSolver
 
 
@@ -166,12 +167,11 @@ class HybridMemeticLargeNeighborhoodSearchPolicy(BaseRoutingPolicy):
         # Get ALNS config (nested or flattened)
         alns_config = values.get("alns", {})
         if isinstance(alns_config, dict):
-            alns_params = ALNSParams(
+            alns_params = ALNSConfig(
                 max_iterations=alns_config.get("max_iterations", 500),
                 start_temp=alns_config.get("start_temp", 100.0),
                 cooling_rate=alns_config.get("cooling_rate", 0.95),
                 reaction_factor=alns_config.get("reaction_factor", 0.1),
-                min_removal=alns_config.get("min_removal", 1),
                 max_removal_pct=alns_config.get("max_removal_pct", 0.2),
                 segment_size=alns_config.get("segment_size", 10),
                 time_limit=alns_config.get("time_limit", 60.0),
@@ -181,12 +181,11 @@ class HybridMemeticLargeNeighborhoodSearchPolicy(BaseRoutingPolicy):
             )
         else:
             # Fallback to flattened parameters for backward compatibility
-            alns_params = ALNSParams(
+            alns_params = ALNSConfig(
                 max_iterations=values.get("alns_iterations", 500),
                 start_temp=values.get("alns_start_temp", 100.0),
                 cooling_rate=values.get("alns_cooling_rate", 0.95),
                 reaction_factor=values.get("alns_reaction_factor", 0.1),
-                min_removal=values.get("alns_min_removal", 1),
                 max_removal_pct=values.get("alns_max_removal_pct", 0.2),
                 segment_size=values.get("segment_size", 10),
                 time_limit=values.get("alns_time_limit", 60.0),

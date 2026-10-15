@@ -12,12 +12,11 @@ Example:
     >>> from logic.src.policies.routing.meta_heuristics.hybrid_memetic_large_neighborhood_search import HybridMemeticLargeNeighborhoodSearchSolver
 """
 
-from .params import ALNSParams, HybridMemeticLargeNeighborhoodSearchParams, MACOParams
+from .params import HybridMemeticLargeNeighborhoodSearchParams, MACOParams
 from .solver import HybridMemeticLargeNeighborhoodSearchSolver
 
 __all__ = [
     "HybridMemeticLargeNeighborhoodSearchSolver",
     "HybridMemeticLargeNeighborhoodSearchParams",
     "MACOParams",
-    "ALNSParams",
 ]
