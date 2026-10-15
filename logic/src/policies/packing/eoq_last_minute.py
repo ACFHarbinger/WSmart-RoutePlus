@@ -35,7 +35,7 @@ class LastMinuteEOQSelection(IPackingAlgorithm):
         Falls back to ``context.threshold`` when EOQ parameters are missing.
 
         Args:
-            context (PackingContext): Fills and EOQ cost parameters.
+            context: Fills and EOQ cost parameters.
 
         Returns:
             Tuple[List[int], SearchContext]: 1-based IDs and a fresh search context.

@@ -30,7 +30,7 @@ class LastMinuteSelection(IPackingAlgorithm):
         """Select bins that meet the fill threshold.
 
         Args:
-            context (PackingContext): Fill levels and threshold.
+            context: Fill levels and threshold.
 
         Returns:
             Tuple[List[int], SearchContext]: 1-based IDs and a fresh search context.

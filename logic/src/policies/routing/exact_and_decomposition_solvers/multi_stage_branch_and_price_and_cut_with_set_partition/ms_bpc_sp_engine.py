@@ -361,13 +361,13 @@ def run_ms_bpc_sp(  # noqa: C901
         - Prune by bound
 
     Args:
-        problem (SubProblem): Routing sub-problem (distances, wastes, capacity,
+        problem: Routing sub-problem (distances, wastes, capacity,
             revenue, cost unit, mandatory nodes, fleet limit, environment).
-        cfg (Optional[Union[MSBPCSPConfig, Dict[str, Any]]]): Configuration. A
+        cfg: Configuration. A
             raw dict is coerced leniently into MSBPCSPConfig (WP-04 pattern).
-        _presel_retry (bool): Internal — set on the empty-result re-solve pass
+        _presel_retry: Internal — set on the empty-result re-solve pass
             (relaxed knapsack budget). Not part of the public contract.
-        _keep_all_nodes (bool): Internal — set on the relaxation re-solve pass
+        _keep_all_nodes: Internal — set on the relaxation re-solve pass
             (no node pre-selection). Not part of the public contract.
 
     Returns:

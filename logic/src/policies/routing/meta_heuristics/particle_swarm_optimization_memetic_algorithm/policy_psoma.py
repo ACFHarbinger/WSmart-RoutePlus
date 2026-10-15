@@ -53,7 +53,7 @@ class PSOMAPolicy(GenericRoutingPolicy):
         """Initializes the PSOMA policy.
 
         Args:
-            config (Optional[Union[PSOMAConfig, Dict[str, Any]]]): Configuration
+            config: Configuration
                 source for the Particle Swarm Optimization Memetic Algorithm.
         """
         super().__init__(config)

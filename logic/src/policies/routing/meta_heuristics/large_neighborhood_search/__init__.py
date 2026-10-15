@@ -12,8 +12,6 @@ Attributes:
     EmaWeightUpdate: Per-iteration exponential moving-average weight update (PG-CLNS).
     LegacySAAcceptance: Pre-P-11 inline simulated-annealing acceptance (PG-CLNS).
 
-Example:
-    >>> from logic.src.policies.routing.meta_heuristics.large_neighborhood_search import LNSBase
 """
 
 from .acceptance import LegacySAAcceptance

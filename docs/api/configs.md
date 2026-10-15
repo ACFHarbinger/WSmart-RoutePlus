@@ -532,6 +532,7 @@ Configuration for various acceptance criteria used in local search and metaheuri
 Packing Config module.
 
 - **class `LastMinuteSelectionConfig`** — Configuration for threshold-based last-minute selection.
+- **class `EOQLastMinuteSelectionConfig`** — Configuration for unreleased EOQ last-minute (excluded from 1.0.0).
 - **class `RegularSelectionConfig`** — Configuration for periodic collection on scheduled days.
 - **class `ServiceLevelSelectionConfig`** — Configuration for statistical overflow prediction.
 - **class `RevenueSelectionConfig`** — Configuration for revenue-based selection.

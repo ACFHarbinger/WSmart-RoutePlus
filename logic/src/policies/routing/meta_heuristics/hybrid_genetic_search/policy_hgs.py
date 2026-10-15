@@ -76,8 +76,6 @@ class HGSPolicy(GenericRoutingPolicy):
         Args:
             config: HGSConfig dataclass, raw dict from YAML, or None.
 
-        Returns:
-            None.
         """
         super().__init__(config)
 
