@@ -2,15 +2,15 @@
 Generate the grant holder's final report (Relatório Final do Bolseiro e Orientador) as an editable .docx.
 
 The layout follows the university's "Modelo do Relatório Final" form: the institution logo in the
-page header, a centred title and subtitle, the labelled identification fields, and the description
-of the activity. The logo is the IST mark (``logic/gen/svg/Tecnico_ID_Principal_RBG-COR.svg``),
+page header, a centred title and subtitle, the grant holder's full name and grant ID, and the
+research report (sections with a heading and paragraphs). The logo is the IST mark (``logic/gen/svg/Tecnico_ID_Principal_RBG-COR.svg``),
 rasterised with Inkscape (ImageMagick as a fallback).
 
 The document is written as plain Office Open XML with the standard library, so no extra Python
 dependency is needed. Word and LibreOffice open it for editing.
 
 Non-Python content lives in sibling directories, as with the other generators:
-  json/grant_report.json   labels, placeholder values, fonts and the logo path
+  json/grant_report.json   labels, field values, the report text, fonts and the logo path
 
 Idempotent: will not overwrite an existing report unless --force is passed (the report is meant to
 be edited after generation).
@@ -123,31 +123,22 @@ def logo_drawing(width_emu: int, height_emu: int) -> str:
 
 
 def build_document(cfg: Dict[str, Any]) -> str:
-    """The body: title, labelled fields, activity description, optional signatures."""
+    """The body: title, the labelled fields, and the research report with its sections."""
     font, label_font, size = cfg["font"], cfg["label_font"], float(cfg["font_size_pt"])
     body: List[str] = [
         paragraph([run(cfg["title"], label_font, size + 3)], align="center", after_pt=4),
         paragraph([run(cfg["subtitle"], label_font, size - 2, bold=True)], align="center", after_pt=24),
     ]
     for field in cfg["fields"]:
-        runs = [run(field["label"], label_font, size, bold=True), run(f": {field['value']}", font, size)]
-        if field.get("extra_label"):
-            runs += [
-                run(", ", font, size),
-                run(field["extra_label"], label_font, size, bold=True),
-                run(f" {field['extra_value']}", font, size),
-            ]
-        body.append(paragraph(runs))
-    body.append(paragraph([], after_pt=12))
-    for text in cfg.get("description", []):
-        body.append(paragraph([run(text, font, size)]))
-    if cfg.get("signatures"):
-        body.append(paragraph([], after_pt=18))
-        if cfg.get("place_date"):
-            body.append(paragraph([run(cfg["place_date"], font, size)], align="left", after_pt=24))
-        for who in cfg["signatures"]:
-            body.append(paragraph([run(who, label_font, size, bold=True)], align="left", after_pt=24))
-            body.append(paragraph([run("_" * 45, font, size)], align="left", after_pt=12))
+        body.append(
+            paragraph([run(field["label"], label_font, size, bold=True), run(f": {field['value']}", font, size)])
+        )
+    body.append(paragraph([run(f"{cfg['report_label']}:", label_font, size, bold=True)], after_pt=6))
+    for section in cfg["report"]:
+        if section.get("heading"):
+            body.append(paragraph([run(section["heading"], label_font, size, bold=True)], align="left", after_pt=6))
+        for text in section["paragraphs"]:
+            body.append(paragraph([run(text, font, size)]))
     sect = (
         '<w:sectPr><w:headerReference w:type="default" r:id="rIdHeader"/>'
         '<w:pgSz w:w="11906" w:h="16838"/>'
