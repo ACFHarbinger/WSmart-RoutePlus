@@ -20,19 +20,6 @@ from logic.src.envs import get_env
 from logic.src.interfaces import IEnv, ITraversable
 from logic.src.pipeline.features.base import deep_sanitize, flatten_config_dict, remap_legacy_keys
 from logic.src.pipeline.rl import REINFORCE, MetaRLModule
-from logic.src.policies.vector import (
-    AttentionModelPolicy,
-    DeepDecoderPolicy,
-    HybridTwoStagePolicy,
-    MoEPolicy,
-    NeuralHeuristicHybrid,
-    PointerNetworkPolicy,
-    SymNCOPolicy,
-    TemporalAMPolicy,
-    VectorizedALNS,
-    VectorizedHGS,
-    VectorizedHGSALNS,
-)
 from logic.src.policies.packing.vectorized.factory import create_selector_from_config
 from logic.src.tracking.logging.pylogger import get_pylogger
 
@@ -235,6 +222,20 @@ def _init_policy(cfg: Config, env: Any):
     """
     env_cfg, _, model_cfg = _resolve_configs(cfg)
 
+    from logic.src.policies.vector import (
+        AttentionModelPolicy,
+        DeepDecoderPolicy,
+        HybridTwoStagePolicy,
+        MoEPolicy,
+        NeuralHeuristicHybrid,
+        PointerNetworkPolicy,
+        SymNCOPolicy,
+        TemporalAMPolicy,
+        VectorizedALNS,
+        VectorizedHGS,
+        VectorizedHGSALNS,
+    )
+
     policy_map = {
         "am": AttentionModelPolicy,
         "moe": MoEPolicy,
@@ -315,6 +316,8 @@ def _init_hybrid_policy(cfg: Config):
     neural_policy = cast("AutoregressivePolicy", create_model(cast(Config, neural_cfg)).policy)
 
     # 2. Heuristic refinement policy
+    from logic.src.policies.vector import NeuralHeuristicHybrid, VectorizedALNS, VectorizedHGS
+
     ref_strategy = getattr(cfg.rl, "refinement_strategy", "alns")
     ref_time = getattr(cfg.rl, "refinement_time_limit", 5.0)
     ref_iters = getattr(cfg.rl, "refinement_iterations", 500)
