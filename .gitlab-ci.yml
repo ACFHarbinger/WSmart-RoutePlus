@@ -74,6 +74,8 @@ quality-checks:
     - *setup_uv
     - uv sync --all-packages --all-extras --all-groups --python "$PY_VERSION"
     - uv run pre-commit run --all-files
+    # HPO job key-liveness check (P-56)
+    - uv run python tools/check_hpo_jobs.py --check
     - uv run ruff check . --fix
     # Visibility first, mirroring continue-on-error on GitHub.
     - uv run pip-audit || true

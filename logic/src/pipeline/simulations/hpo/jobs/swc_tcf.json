@@ -3,10 +3,6 @@
         "type": "float",
         "default": 0.1
     },
-    "delta": {
-        "type": "float",
-        "default": 0.0
-    },
     "psi": {
         "type": "float",
         "default": 1.0
