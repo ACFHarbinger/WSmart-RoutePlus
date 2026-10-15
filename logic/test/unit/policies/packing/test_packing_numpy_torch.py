@@ -98,3 +98,44 @@ def test_released_packing_pack_does_not_import_torch():
     )
     result = subprocess.run([sys.executable, "-c", script], check=False, capture_output=True, text=True)
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_released_vectorized_path_does_not_import_hrl_manager():
+    """P-05: unreleased HRL stays out of the released packing import graph."""
+    script = dedent(
+        """
+        import ast
+        import sys
+        from pathlib import Path
+
+        from logic.src.policies.packing import vectorized as vec_pkg
+        from logic.src.policies.packing.vectorized.factory import (
+            create_selector_from_config,
+            get_vectorized_selector,
+        )
+        from logic.src.policies.packing.vectorized.last_minute import LastMinuteSelector
+        from logic.src.policies.packing.vectorized.lookahead import LookaheadSelector
+        from logic.src.policies.packing.vectorized.regular import RegularSelector
+        from logic.src.policies.packing.vectorized.service_level import ServiceLevelSelector
+        import logic.src.policies.packing.vectorized.manager as manager_mod
+
+        for name in ("last_minute", "regular", "service_level", "lookahead"):
+            get_vectorized_selector(name)
+        create_selector_from_config({"strategy": "last_minute", "threshold": 70.0})
+        assert LastMinuteSelector and RegularSelector and LookaheadSelector and ServiceLevelSelector
+        leaked = [name for name in sys.modules if "hrl_manager" in name]
+        assert not leaked, leaked
+        assert "ManagerSelector" not in vec_pkg.__all__
+        src = Path(manager_mod.__file__).read_text()
+        tree = ast.parse(src)
+        imported = [
+            alias.name
+            for node in ast.walk(tree)
+            if isinstance(node, ast.ImportFrom) and node.module and "hrl_manager" in node.module
+            for alias in node.names
+        ]
+        assert not imported, imported
+        """
+    )
+    result = subprocess.run([sys.executable, "-c", script], check=False, capture_output=True, text=True)
+    assert result.returncode == 0, result.stdout + result.stderr

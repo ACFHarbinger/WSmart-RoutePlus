@@ -16,7 +16,6 @@ _LAZY = {
     "RevenueSelector": "logic.src.policies.packing.vectorized:RevenueSelector",
     "ServiceLevelSelector": "logic.src.policies.packing.vectorized:ServiceLevelSelector",
     "CombinedSelector": "logic.src.policies.packing.vectorized:CombinedSelector",
-    "ManagerSelector": "logic.src.policies.packing.vectorized:ManagerSelector",
     "get_vectorized_selector": "logic.src.policies.packing.vectorized:get_vectorized_selector",
     "create_selector_from_config": "logic.src.policies.packing.vectorized:create_selector_from_config",
     "CombinedSelection": "logic.src.policies.packing.combined:CombinedSelection",
