@@ -20,7 +20,7 @@
     },
     "seed": {
         "type": "int",
-        "default": null
+        "default": 42
     },
     "packing": {
         "type": "object",

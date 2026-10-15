@@ -2,9 +2,7 @@
 
 import numpy as np
 import pytest
-from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic.params import (
-    HyperACOParams,
-)
+from logic.src.configs.policies import HyperHeuristicACOConfig
 from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.params import ALNSParams
 from logic.src.policies.routing.meta_heuristics.hybrid_volleyball_premier_league.params import HVPLParams
 from logic.src.policies.routing.meta_heuristics.hybrid_volleyball_premier_league.solver import HVPLSolver
@@ -29,7 +27,7 @@ def test_hvpl_solver():
     C = 1.0
 
     # Use very small params for fast test
-    aco_params = HyperACOParams(
+    aco_params = HyperHeuristicACOConfig(
         n_ants=2,
         alpha=1.0,
         beta=2.0,

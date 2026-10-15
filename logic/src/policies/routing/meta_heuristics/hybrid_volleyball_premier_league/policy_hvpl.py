@@ -20,12 +20,12 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
+from logic.src.configs.policies.aco_hh import HyperHeuristicACOConfig
 from logic.src.configs.policies.hvpl import HVPLConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
-from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic.params import (
+from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_operators import (
     OPERATOR_NAMES,
-    HyperACOParams,
 )
 from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.params import ALNSParams
 from logic.src.policies.routing.meta_heuristics.hybrid_volleyball_premier_league.params import HVPLParams
@@ -129,7 +129,7 @@ class HVPLPolicy(BaseRoutingPolicy):
         # Get ACO config (nested or flattened)
         aco_config = values.get("aco", {})
         if isinstance(aco_config, dict):
-            aco_params = HyperACOParams(
+            aco_params = HyperHeuristicACOConfig(
                 n_ants=aco_config.get("n_ants", 10),
                 alpha=aco_config.get("alpha", 1.0),
                 beta=aco_config.get("beta", 2.0),
@@ -150,7 +150,7 @@ class HVPLPolicy(BaseRoutingPolicy):
             )
         else:
             # Fallback to flattened parameters for backward compatibility
-            aco_params = HyperACOParams(
+            aco_params = HyperHeuristicACOConfig(
                 n_ants=values.get("n_ants", 10),
                 alpha=values.get("alpha", 1.0),
                 beta=values.get("beta", 2.0),

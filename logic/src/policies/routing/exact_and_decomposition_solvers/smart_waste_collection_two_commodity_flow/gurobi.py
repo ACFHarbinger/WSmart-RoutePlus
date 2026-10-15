@@ -30,18 +30,31 @@ Example:
 from __future__ import annotations
 
 import math
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from dataclasses import fields
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import gurobipy as gp
 import numpy as np
 from gurobipy import GRB, quicksum
 from numpy.typing import NDArray
 
+from logic.src.configs.policies import SWCTCFConfig
 from logic.src.constants.routing import HEURISTICS_RATIO, MIP_GAP, NODEFILE_START_GB
+from logic.src.policies.routing.base.base_routing_policy import _structured_load, _unwrap_engine_section
 
 from ._route_extraction import extract_depot_delimited_route
 from ._tcf_data import TCFData, build_tcf_data
-from .params import SWCTCFParams
+
+_CONFIG_FIELDS = {f.name for f in fields(SWCTCFConfig)}
+
+
+def _config_from_values(values: Dict[str, Any]) -> SWCTCFConfig:
+    """Fold the solver switches a caller placed in ``values`` into the typed config.
+
+    ``values`` also carries the non-config runtime scalars (Q, R, C, B, V, ...),
+    which are filtered out before the strict structured load.
+    """
+    return _structured_load(SWCTCFConfig, {key: value for key, value in values.items() if key in _CONFIG_FIELDS})
 
 
 def _clarke_wright_trips(d: TCFData, distance_matrix: List[List[float]], visit: List[int]) -> Optional[List[List[int]]]:
@@ -473,31 +486,39 @@ def _build_directed(  # noqa: C901
     return _Built(x, g, k_var, forced, set_starts, extract_route)
 
 
-def _options(values: Dict[str, Any]) -> Dict[str, Any]:
-    """Read and validate the optional, off-by-default model switches."""
-    formulation = str(values.get("formulation", SWCTCFParams.formulation)).strip().lower()
+def _options(cfg: Union[SWCTCFConfig, Dict[str, Any]]) -> Dict[str, Any]:
+    """Read and validate the optional, off-by-default model switches.
+
+    Args:
+        cfg: Typed SWCTCFConfig, or a raw dict (flat values mapping or an
+            engine-wrapped config section), standardized before reading.
+
+    Returns:
+        Dict[str, Any]: Validated model switches keyed as the builders expect.
+    """
+    if isinstance(cfg, dict):
+        cfg = _structured_load(SWCTCFConfig, _unwrap_engine_section(cfg))
+    formulation = str(cfg.formulation).strip().lower()
     if formulation not in ("paper", "directed"):
         raise ValueError("formulation must be 'paper' or 'directed'")
-    depot_inflow = str(values.get("depot_inflow", SWCTCFParams.depot_inflow)).strip().lower()
+    depot_inflow = str(cfg.depot_inflow).strip().lower()
     if depot_inflow not in ("equal", "le"):
         raise ValueError("depot_inflow must be 'equal' (eq. 15) or 'le' (notebook)")
-    cutoff = _optional_float(values.get("max_arc_distance_km", SWCTCFParams.max_arc_distance_km))
+    cutoff = _optional_float(cfg.max_arc_distance_km)
     if cutoff is not None and not (math.isfinite(cutoff) and cutoff > 0):
         raise ValueError("max_arc_distance_km must be positive and finite, or null")
-    no_solution_factor = float(values.get("no_solution_time_factor", SWCTCFParams.no_solution_time_factor))
+    no_solution_factor = float(cfg.no_solution_time_factor)
     if not (math.isfinite(no_solution_factor) and no_solution_factor >= 1):
         raise ValueError("no_solution_time_factor must be a finite number at least 1")
     return {
         "formulation": formulation,
         "depot_inflow": depot_inflow,
         "max_arc_distance_km": cutoff,
-        "solver_tuning": _flag(values.get("solver_tuning", SWCTCFParams.solver_tuning)),
-        "relax_forced_on_infeasible": _flag(
-            values.get("relax_forced_on_infeasible", SWCTCFParams.relax_forced_on_infeasible)
-        ),
-        "link_depot_arcs": _flag(values.get("link_depot_arcs", SWCTCFParams.link_depot_arcs)),
-        "warm_start": _flag(values.get("warm_start", SWCTCFParams.warm_start)),
-        "asymmetric": _flag(values.get("asymmetric", SWCTCFParams.asymmetric)),
+        "solver_tuning": _flag(cfg.solver_tuning),
+        "relax_forced_on_infeasible": _flag(cfg.relax_forced_on_infeasible),
+        "link_depot_arcs": _flag(cfg.link_depot_arcs),
+        "warm_start": _flag(cfg.warm_start),
+        "asymmetric": _flag(cfg.asymmetric),
         "no_solution_time_factor": no_solution_factor,
     }
 
@@ -516,6 +537,7 @@ def _run_gurobi_optimizer(  # noqa: C901
     default_feastol: bool = False,
     allow_escalation: bool = True,
     retry: bool = False,
+    cfg: Optional[Union[SWCTCFConfig, Dict[str, Any]]] = None,
 ) -> Tuple[List[int], float, float]:
     """Solve one day of the Smart Waste Collection Routing model.
 
@@ -523,14 +545,17 @@ def _run_gurobi_optimizer(  # noqa: C901
         bins (NDArray[np.float64]): Bin fill levels in percent (depot excluded).
         distance_matrix (List[List[float]]): Distance matrix between nodes (km).
         env (Optional[gp.Env]): Gurobi environment.
-        values (Dict[str, Any]): Problem parameters (Omega, psi, Q, R, C, ...) and the
-            optional switches described in the module docstring.
+        values (Dict[str, Any]): Problem parameters (Q, R, C, V runtime scalars).
         binsids (List[int]): Global identifiers for bins.
         mandatory (List[int]): IDs of bins that must be collected.
         number_vehicles (int): Maximum number of vehicles; non-positive means unbounded.
         time_limit (int): Solver time limit in seconds.
         seed (int): Random seed for reproducibility.
         dual_values (Optional[Dict[int, float]]): Dual values for pricing subproblems.
+        cfg (Optional[Union[SWCTCFConfig, Dict[str, Any]]]): Typed policy config (P-10:
+            the single source of truth for the solver switches). Direct callers that
+            predate the typed config may omit it and pass the switches in ``values``;
+            they are folded into the config before reading.
 
     Returns:
         Tuple[List[int], float, float]: A tuple containing:
@@ -538,15 +563,21 @@ def _run_gurobi_optimizer(  # noqa: C901
             - profit: The total profit of the solution.
             - cost: The total travel cost of the solution.
     """
+    # Standardize cfg to SWCTCFConfig (P-10: the typed config is the only parameter layer).
+    if cfg is None:
+        cfg = _config_from_values(values)
+    elif isinstance(cfg, dict):
+        cfg = _structured_load(SWCTCFConfig, _unwrap_engine_section(cfg))
+
     # Validate before allocating a native model. sim.cpu_cores controls worker
     # processes, not Gurobi's per-solve thread count.
-    threads = float(values.get("gurobi_threads", SWCTCFParams.gurobi_threads))
-    memory_gb = float(values.get("gurobi_soft_mem_limit_gb", SWCTCFParams.gurobi_soft_mem_limit_gb))
+    threads = float(cfg.gurobi_threads)
+    memory_gb = float(cfg.gurobi_soft_mem_limit_gb)
     if not math.isfinite(threads) or threads < 1 or not threads.is_integer():
         raise ValueError("gurobi_threads must be a positive integer")
     if not math.isfinite(memory_gb) or memory_gb <= 0:
         raise ValueError("gurobi_soft_mem_limit_gb must be positive and finite")
-    options = _options(values)
+    options = _options(cfg)
 
     # Shared preparation (identical across all three backends).
     d = build_tcf_data(bins, distance_matrix, values, binsids, mandatory, number_vehicles)
@@ -622,6 +653,7 @@ def _run_gurobi_optimizer(  # noqa: C901
                 default_feastol=True,
                 allow_escalation=False,
                 retry=True,
+                cfg=cfg,
             )
         if mdl.Status in (GRB.INFEASIBLE, GRB.INF_OR_UNBD) and built.forced and options["relax_forced_on_infeasible"]:
             # Forcing every mandatory / over-psi bin can exceed the fleet's capacity.
@@ -656,6 +688,7 @@ def _run_gurobi_optimizer(  # noqa: C901
                 default_feastol=True,
                 allow_escalation=False,
                 retry=True,
+                cfg=cfg,
             )
         if mdl.SolCount == 0:
             best = max(starts, key=lambda t: _plan_objective(d, distance_matrix, t)[0]) if starts else None

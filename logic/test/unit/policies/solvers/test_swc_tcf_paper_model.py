@@ -7,9 +7,6 @@ from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_coll
     _options,
     _run_gurobi_optimizer,
 )
-from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.params import (
-    SWCTCFParams,
-)
 
 pytestmark = [pytest.mark.unit]
 
@@ -49,15 +46,14 @@ def _trips(route):
 
 
 def test_defaults_are_the_original_algorithm():
-    params, config = SWCTCFParams(), SWCTCFConfig()
-    for source in (params, config):
-        assert source.formulation == "paper"
-        assert source.depot_inflow == "equal"
-        assert source.solver_tuning is False
-        assert source.relax_forced_on_infeasible is False
-        assert source.link_depot_arcs is False
-        assert source.max_arc_distance_km is None
-        assert source.warm_start is False
+    config = SWCTCFConfig()
+    assert config.formulation == "paper"
+    assert config.depot_inflow == "equal"
+    assert config.solver_tuning is False
+    assert config.relax_forced_on_infeasible is False
+    assert config.link_depot_arcs is False
+    assert config.max_arc_distance_km is None
+    assert config.warm_start is False
     assert _options({})["formulation"] == "paper"
 
 

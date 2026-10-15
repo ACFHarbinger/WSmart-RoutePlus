@@ -80,7 +80,7 @@ Paper-to-Implementation Mapping (BHV2000)
     Implementation: ``SaturatedArcLCIEngine`` in cutting_planes.py.
 
 Table 2 – CG at Root Only
-    Set ``BPCParams.cg_at_root_only = True`` to replicate the Table 2
+    Set ``BPCConfig.cg_at_root_only = True`` to replicate the Table 2
     experiment: column generation is skipped at all non-root nodes; only
     the pool built at the root is sifted and the LP re-solved.
     Implementation: ``_column_generation_loop`` (``cg_at_root_only`` arg).
@@ -127,6 +127,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union
 import gurobipy as gp
 import numpy as np
 
+from logic.src.configs.policies.bpc import BPCConfig
 from logic.src.policies.helpers.operators.recreate_repair.greedy import greedy_insertion, greedy_profit_insertion
 from logic.src.policies.helpers.solvers_and_matheuristics.branching import BranchAndBoundTree
 from logic.src.policies.helpers.solvers_and_matheuristics.branching.pruning import (
@@ -160,9 +161,8 @@ from logic.src.policies.helpers.solvers_and_matheuristics.search.cutting_planes 
 )
 from logic.src.policies.helpers.solvers_and_matheuristics.separation import SeparationEngine
 from logic.src.policies.helpers.solvers_and_matheuristics.vrpp_model import VRPPModel
+from logic.src.policies.routing.base.base_routing_policy import _structured_load, _unwrap_engine_section
 from logic.src.tracking.viz_mixin import PolicyStateRecorder
-
-from .params import BPCParams
 
 logger = logging.getLogger(__name__)
 
@@ -180,7 +180,7 @@ def run_bpc(  # noqa: C901
     capacity: float,
     R: float,
     C: float,
-    params: Optional[Union[BPCParams, Dict[str, Any]]] = None,
+    cfg: Optional[Union[BPCConfig, Dict[str, Any]]] = None,
     mandatory_indices: Optional[Set[int]] = None,
     vehicle_limit: Optional[int] = None,
     env: Optional[Any] = None,
@@ -216,7 +216,7 @@ def run_bpc(  # noqa: C901
         capacity (float): Vehicle capacity.
         R (float): Revenue per kg.
         C (float): Cost per km.
-        params (Optional[Union[BPCParams, Dict[str, Any]]]): Configuration parameters.
+        cfg (Optional[Union[BPCConfig, Dict[str, Any]]]): Configuration parameters.
         mandatory_indices (Optional[Set[int]]): Set of node indices that must be visited.
         vehicle_limit (Optional[int]): Fleet size limit.
         env (Optional[Any]): Gurobi environment (ignored, kept for compatibility).
@@ -237,27 +237,27 @@ def run_bpc(  # noqa: C901
     n_nodes = len(dist_matrix) - 1
     m_set = mandatory_indices if mandatory_indices is not None else set()
 
-    # Standardize params to BPCParams
-    if params is None:
-        params = BPCParams()
-    elif isinstance(params, dict):
-        params = BPCParams.from_config(params)
+    # Standardize cfg to BPCConfig (P-10: the typed config is the only parameter layer)
+    if cfg is None:
+        cfg = BPCConfig()
+    elif isinstance(cfg, dict):
+        cfg = _structured_load(BPCConfig, _unwrap_engine_section(cfg))
 
     # Configuration
-    # Extract parameters from BPCParams
-    max_cg_iter = params.max_cg_iterations
-    max_cuts = params.max_cuts_per_iteration
-    max_routes_per_pricing = params.max_routes_per_pricing
-    max_bb_nodes = params.max_bb_nodes
-    time_limit = params.time_limit
-    cutting_planes_name = params.cutting_planes
-    branching_strategy_name = params.branching_strategy
+    # Extract parameters from the typed config
+    max_cg_iter = cfg.max_cg_iterations
+    max_cuts = cfg.max_cuts_per_iteration
+    max_routes_per_pricing = cfg.max_routes_per_pricing
+    max_bb_nodes = cfg.max_bb_nodes
+    time_limit = cfg.time_limit
+    cutting_planes_name = cfg.cutting_planes
+    branching_strategy_name = cfg.branching_strategy
 
     # Numerical Safety Warning
-    if params.rc_tolerance > params.optimality_gap:
+    if cfg.rc_tolerance > cfg.optimality_gap:
         warnings.warn(
-            f"Optimality Risk: rc_tolerance ({params.rc_tolerance}) is coarser than "
-            f"optimality_gap ({params.optimality_gap}). BPC may terminate prematurely "
+            f"Optimality Risk: rc_tolerance ({cfg.rc_tolerance}) is coarser than "
+            f"optimality_gap ({cfg.optimality_gap}). BPC may terminate prematurely "
             f"with a sub-optimal solution.",
             stacklevel=2,
         )
@@ -288,7 +288,7 @@ def run_bpc(  # noqa: C901
 
     # 2. Initial Columns — mandatory-only greedy warm-start on reduced instance
     mandatory_list = sorted(list(red_mandatory))
-    if params.profit_aware_operators:
+    if cfg.profit_aware_operators:
         initial_routes_nodes = greedy_profit_insertion(
             [],
             mandatory_list,
@@ -319,11 +319,11 @@ def run_bpc(  # noqa: C901
         capacity,
         R,
         C,
-        use_ng_routes=params.use_ng_routes,
-        ng_neighborhood_size=min(params.ng_neighborhood_size, k_nodes - 1),
+        use_ng_routes=cfg.use_ng_routes,
+        ng_neighborhood_size=min(cfg.ng_neighborhood_size, k_nodes - 1),
         node_prizes=kwargs.get("node_prizes"),
-        timeout=params.rcspp_timeout,
-        max_labels=params.rcspp_max_labels,
+        timeout=cfg.rcspp_timeout,
+        max_labels=cfg.rcspp_max_labels,
     )
 
     for r_nodes in initial_routes_nodes:
@@ -334,7 +334,7 @@ def run_bpc(  # noqa: C901
     # are non-zero from the start, guiding the RCSPP toward optional nodes.
     all_local_nodes = list(range(1, k_nodes + 1))
     optional_local = [n for n in all_local_nodes if n not in red_mandatory]
-    if optional_local and params.profit_aware_operators:
+    if optional_local and cfg.profit_aware_operators:
         try:
             opt_seed_routes = greedy_profit_insertion(
                 # Copies: the operator inserts into these lists in place, and the
@@ -385,13 +385,13 @@ def run_bpc(  # noqa: C901
     )
     sep_engine = SeparationEngine(
         model=v_model,
-        enable_heuristic_rcc_separation=params.enable_heuristic_rcc_separation,
-        enable_comb_cuts=params.enable_comb_cuts,
+        enable_heuristic_rcc_separation=cfg.enable_heuristic_rcc_separation,
+        enable_comb_cuts=cfg.enable_comb_cuts,
     )
 
     # 4. Initialize Branch-and-Bound Tree with search strategy
     bb_tree = BranchAndBoundTree(
-        v_model=v_model, params=params
+        v_model=v_model, params=cfg
     )
 
     # 5. Initialize cutting engine
@@ -400,7 +400,7 @@ def run_bpc(  # noqa: C901
         v_model,
         sep_engine,
         dist_matrix=red_dist,
-        route_budget=getattr(params, "route_budget", float("inf")),
+        route_budget=cfg.route_budget,
     )
 
     # ── Tier 1 + selection-routing duality supplemental cut engines ──────
@@ -451,7 +451,7 @@ def run_bpc(  # noqa: C901
 
         # Run Column Generation at this node with corrected sequencing
         # ---------------------------------------------------------------
-        # Lagrangian Pre-Pruning (optional, params.lr_pre_pruning)
+        # Lagrangian Pre-Pruning (optional, cfg.lr_pre_pruning)
         # ---------------------------------------------------------------
         # Run a fast subgradient pass before expensive column generation.
         # If the Lagrangian bound is dominated by the current incumbent,
@@ -461,10 +461,10 @@ def run_bpc(  # noqa: C901
         # bounds one route. It is scaled by the fleet size below and skipped for an
         # unlimited fleet, where no finite multiple is valid.
         if (
-            params.lr_pre_pruning
+            cfg.lr_pre_pruning
             and master.vehicle_limit is not None
             and bb_tree.best_integer_solution is not None
-            and (params.lr_pre_pruning_depth_limit < 0 or current_node.depth <= params.lr_pre_pruning_depth_limit)
+            and (cfg.lr_pre_pruning_depth_limit < 0 or current_node.depth <= cfg.lr_pre_pruning_depth_limit)
         ):
             # Build forced sets from branching constraints accumulated at this node.
             _lr_forced_in, _lr_forced_out = _extract_forced_sets_from_constraints(current_node.constraints)
@@ -475,7 +475,7 @@ def run_bpc(  # noqa: C901
             _remaining = time_limit - (time.perf_counter() - start_time) if time_limit > 0 else 300.0
             _lr_budget = min(
                 _remaining * 0.05,  # at most 5% of remaining wall time
-                params.lr_op_time_limit * params.lr_max_subgradient_iters,
+                cfg.lr_op_time_limit * cfg.lr_max_subgradient_iters,
             )
 
             if _lr_budget > 0.5:  # skip if < 0.5 s available
@@ -487,14 +487,14 @@ def run_bpc(  # noqa: C901
                     C=C,
                     mandatory=_lr_forced_in,
                     forced_out=_lr_forced_out,
-                    params=params,
+                    params=cfg,
                     time_budget=_lr_budget,
                     env=env,
                     recorder=recorder,
                 )
 
                 _lr_ub = _lr_ub * master.vehicle_limit
-                _gap_threshold = bb_tree.best_integer_solution * (1.0 + params.optimality_gap)
+                _gap_threshold = bb_tree.best_integer_solution * (1.0 + cfg.optimality_gap)
 
                 if _lr_ub <= _gap_threshold:
                     # LR bound is dominated — prune without CG.
@@ -525,7 +525,7 @@ def run_bpc(  # noqa: C901
                     )
 
                 # LR did not prune. Optionally seed a warm-start column into the pool.
-                if params.lr_warm_start_cg and _lr_op_visited:
+                if cfg.lr_warm_start_cg and _lr_op_visited:
                     _seed_nodes = sorted(_lr_op_visited - _lr_forced_out)
                     if _seed_nodes:
                         try:
@@ -534,7 +534,7 @@ def run_bpc(  # noqa: C901
                                 _seed_route,
                                 master.get_reduced_cost_coefficients(),
                             )
-                            if _seed_rc > params.rc_tolerance:
+                            if _seed_rc > cfg.rc_tolerance:
                                 master.add_route(_seed_route)
                                 logger.debug(
                                     f"[LR Warm-Start] Seeded column from UOP at λ*={_lam_star:.4f}, "
@@ -578,19 +578,19 @@ def run_bpc(  # noqa: C901
                     start_time=_node_start,
                     max_routes_per_pricing=max_routes_per_pricing,
                     vehicle_limit=master.vehicle_limit,
-                    optimality_gap=params.optimality_gap,
-                    early_termination_gap=params.early_termination_gap,
+                    optimality_gap=cfg.optimality_gap,
+                    early_termination_gap=cfg.early_termination_gap,
                     parent_basis=current_node.parent.lp_basis if current_node.parent else None,
                     incumbent_value=bb_tree.best_integer_solution
                     if bb_tree.best_integer_solution is not None
                     else -float("inf"),
                     node_depth=current_node.depth,
-                    rc_tolerance=params.rc_tolerance,
-                    cut_orthogonality_threshold=params.cut_orthogonality_threshold,
-                    exact_mode=params.exact_mode,
-                    cg_at_root_only=params.cg_at_root_only,
+                    rc_tolerance=cfg.rc_tolerance,
+                    cut_orthogonality_threshold=cfg.cut_orthogonality_threshold,
+                    exact_mode=cfg.exact_mode,
+                    cg_at_root_only=cfg.cg_at_root_only,
                     branching_strategy=branching_strategy_name,
-                    rcspp_timeout=params.rcspp_timeout,
+                    rcspp_timeout=cfg.rcspp_timeout,
                 )
             finally:
                 # Restore ng-neighborhoods so sibling nodes are unaffected by this
@@ -647,8 +647,8 @@ def run_bpc(  # noqa: C901
             )
             global_gap = (global_upper_bound - bb_tree.best_integer_solution) / denom
 
-            if global_gap <= params.optimality_gap:
-                logger.info(f"Global optimality gap reached: {global_gap:.6f} <= {params.optimality_gap}")
+            if global_gap <= cfg.optimality_gap:
+                logger.info(f"Global optimality gap reached: {global_gap:.6f} <= {cfg.optimality_gap}")
                 break
 
             # Reduced Cost Edge Fixing (Globally valid at every node)
@@ -680,20 +680,20 @@ def run_bpc(  # noqa: C901
             continue
 
         # Solution is fractional - branch
-        if getattr(params, "enable_column_pool_deduplication", False):
+        if cfg.enable_column_pool_deduplication:
             purged = master.deduplicate_column_pool()
             if purged > 0:
                 logger.info(f"Deduplicated {purged} equivalent routes from column pool.")
 
         strong_candidate = None
-        if getattr(params, "enable_strong_branching_heuristic", False):
+        if cfg.enable_strong_branching_heuristic:
             candidates = bb_tree.find_strong_branching_candidates(master.routes, route_values, max_candidates=5)
             if candidates:
                 strong_candidate = _perform_strong_branching(
                     master=master,
                     candidates=candidates,
                     current_node=current_node,
-                    strong_branching_size=getattr(params, "strong_branching_size", 5),
+                    strong_branching_size=cfg.strong_branching_size,
                 )
 
         # ── Hierarchical node-visitation branching (Boussier et al. 2007) ────
@@ -701,7 +701,7 @@ def run_bpc(  # noqa: C901
         # the profit-selection × routing duality.
         _y_branch_result = None
         optional_nodes = {i for i in range(1, k_nodes + 1) if i not in red_mandatory}
-        if optional_nodes and getattr(params, "enable_node_visitation_branching", True):
+        if optional_nodes and cfg.enable_node_visitation_branching:
             from logic.src.policies.helpers.solvers_and_matheuristics.branching.strategies import (
                 HierarchicalStrongBranching,
             )
@@ -710,9 +710,9 @@ def run_bpc(  # noqa: C901
                 routes=master.routes,
                 route_values=route_values,
                 optional_nodes=optional_nodes,
-                master=master if getattr(params, "enable_strong_branching_heuristic", False) else None,
-                phase1_size=getattr(params, "strong_branching_size", 5),
-                phase2_size=max(2, getattr(params, "strong_branching_size", 5) // 2),
+                master=master if cfg.enable_strong_branching_heuristic else None,
+                phase1_size=cfg.strong_branching_size,
+                phase2_size=max(2, cfg.strong_branching_size // 2),
             )
             if _y_branch_result is not None:
                 _y_node, _y_val = _y_branch_result
@@ -768,7 +768,7 @@ def run_bpc(  # noqa: C901
 
         left_child, right_child = children
         use_paper_ordering = (
-            getattr(params, "prefer_shorter_path_dfs", True)
+            cfg.prefer_shorter_path_dfs
             and branching_strategy_name == "divergence"
             and bb_tree.search_strategy not in ("best_first", "best-first")
         )

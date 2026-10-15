@@ -269,12 +269,7 @@ def test_typed_path_flattens_engine_nested_overrides(monkeypatch):
         lambda area, wt: (100.0, 0.5, 1.0, 1.0, 1.0),
     )
     policy = _TypedPolicy(config=_FakeConfig())
-    raw_cfg = {
-        "typed_fake": [
-            {"gurobi": [{"time_limit": 7.0}, {"vrpp": False}]},
-            {"seed": 123},
-        ]
-    }
+    raw_cfg = {"typed_fake": {"gurobi": {"time_limit": 7.0, "vrpp": False}, "seed": 123}}
     capacity, revenue, cost_unit, values = policy._load_area_params("rio", "plastic", raw_cfg)
     assert values["time_limit"] == 7.0, "engine-nested override was dropped by the typed path"
     assert values["vrpp"] is False
@@ -478,11 +473,6 @@ def test_warm_start_is_off_by_default():
     from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow import (
         gurobi as gurobi_mod,
     )
-    from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.params import (
-        SWCTCFParams,
-    )
-
-    assert SWCTCFParams().warm_start is False
     assert SWCTCFConfig().warm_start is False
     bins, dist, mandatory, values = _forced_instance()
     values = {k: v for k, v in values.items() if k != "warm_start"}

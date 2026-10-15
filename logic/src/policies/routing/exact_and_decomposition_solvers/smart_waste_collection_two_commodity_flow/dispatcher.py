@@ -14,10 +14,12 @@ Example:
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 from numpy.typing import NDArray
+
+from logic.src.configs.policies import SWCTCFConfig
 
 from .gurobi import _run_gurobi_optimizer
 
@@ -34,13 +36,14 @@ def run_swc_tcf_optimizer(
     optimizer: str = "gurobi",
     seed: int = 42,
     dual_values: Optional[Dict[int, float]] = None,
+    cfg: Optional[Union[SWCTCFConfig, Dict[str, Any]]] = None,
 ):
     """Solve SWC-TCF using either Google OR-Tools or Pyomo wrappers.
 
     Args:
         bins (NDArray[np.float64]): Array of bin fill levels.
         distance_matrix (List[List[float]]): Distance matrix between nodes.
-        values (Dict[str, float]): Problem parameters (Q, R, B, C, V, Omega, etc.).
+        values (Dict[str, float]): Problem parameters (Q, R, B, C, V runtime scalars).
         binsids (List[int]): Global identifiers for bins.
         mandatory_nodes (List[int]): IDs of bins that must be collected.
         number_vehicles (int): Number of available vehicles.
@@ -49,6 +52,9 @@ def run_swc_tcf_optimizer(
         optimizer (str): Backend solver ('gurobi', 'scip', 'highs').
         seed (int): Random seed for reproducibility.
         dual_values (Optional[Dict[int, float]]): Dual values for pricing.
+        cfg (Optional[Union[SWCTCFConfig, Dict[str, Any]]]): Typed policy config,
+            forwarded to the native Gurobi engine (the only backend reading solver
+            switches); its dict form is standardized there.
 
     Returns:
         Tuple[List[int], float, float]: (route, profit, cost)
@@ -88,6 +94,7 @@ def run_swc_tcf_optimizer(
                 time_limit=time_limit,
                 seed=seed,
                 dual_values=dual_values,
+                cfg=cfg,
             )
         return result
 
@@ -133,6 +140,7 @@ def run_swc_tcf_optimizer(
             time_limit=time_limit,
             seed=seed,
             dual_values=dual_values,
+            cfg=cfg,
         )
 
     else:

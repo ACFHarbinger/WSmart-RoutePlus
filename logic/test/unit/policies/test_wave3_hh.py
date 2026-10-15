@@ -7,12 +7,10 @@ import random
 
 import numpy as np
 import pytest
+from logic.src.configs.policies import HyperHeuristicACOConfig
 from logic.src.policies.helpers.operators.solution_initialization import build_greedy_routes
 from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_aco import (
     HyperHeuristicACO,
-)
-from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic.params import (
-    HyperACOParams,
 )
 from logic.src.policies.routing.hyper_heuristics.genetic_programming_hyper_heuristic.params import GPHHParams
 from logic.src.policies.routing.hyper_heuristics.genetic_programming_hyper_heuristic.solver import GPHHSolver
@@ -69,7 +67,7 @@ def test_sshh_solver(sample_data):
 
 def test_hyper_aco_solver(sample_data):
     dist, wastes, cap = sample_data
-    params = HyperACOParams(max_iterations=2, n_ants=2)
+    params = HyperHeuristicACOConfig(max_iterations=2, n_ants=2)
     solver = HyperHeuristicACO(dist, wastes, cap, R=10.0, C=1.0, params=params)
     routes, profit, cost = solver.solve()
     assert isinstance(routes, list)
