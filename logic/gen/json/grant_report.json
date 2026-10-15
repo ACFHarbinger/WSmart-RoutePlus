@@ -4,12 +4,17 @@
   "font": "Calibri",
   "label_font": "Calibri",
   "font_size_pt": 11,
+  "line_spacing": 1.25,
   "title": "Relatório de Actividades do Bolseiro",
   "subtitle": "",
   "fields": [
     {
+      "label": "Período",
+      "value": "Setembro de 2025 a Setembro de 2026"
+    },
+    {
       "label": "Nome completo",
-      "value": "Afonso Cruz Fernandes"
+      "value": "Afonso Cruz Bandeira Fernandes"
     },
     {
       "label": "ID da bolsa",
@@ -18,9 +23,13 @@
   ],
   "report_label": "Relatório",
   "report": [
-    "O trabalho, realizado no INESC-ID (Instituto Superior Técnico) no âmbito do projeto WSmart Route+, centrou-se na recolha inteligente de resíduos com contentores equipados com sensores: decidir, dia a dia, que contentores esvaziar e como encaminhar os veículos num horizonte de vários dias.",
-    "Desenvolvi o WSmart Route+, um simulador modular de código aberto que separa a geração de resíduos, a seleção de contentores e a construção e melhoria de rotas, aplicando-o às redes municipais reais de Rio Maior e da Figueira da Foz, com dados de sensores. Este trabalho foi feito em colaboração com a empresa parceira do projeto, [nome da empresa], [descrever a colaboração]. Implementei no simulador uma biblioteca de métodos exatos (branch-and-price-and-cut, fluxo de duas mercadorias com Gurobi, decomposições de Benders) e heurísticos (ALNS, HGS, ACO-HH, entre outros), bem como estratégias de seleção de contentores.",
-    "Na vertente de aprendizagem automática, desenvolvi uma pilha de treino de otimização combinatória neural e adaptei o Attention Model ao problema diário de percurso lucrativo com capacidade. O modelo é treinado nas redes reais por imitação de um especialista heurístico, que vetorizei e tornei cerca de dezanove vezes mais rápido, seguida de afinação por gradiente de política, e é avaliado no simulador nas mesmas condições que os métodos clássicos.",
-    "Analisei ainda os métodos existentes num artigo de revisão, \"Combinatorial Optimization: A Survey of Problems, Constraints and Algorithms\". Os resultados deram origem ao artigo \"A Simulation Framework for the Multi-Period Capacitated Profitable Tour Problem in Smart Waste Collection\" e a um resumo em coautoria com o CEGIST, em preparação para submissão."
-  ]
+    "O trabalho, realizado no INESC-ID (Instituto Superior Técnico), foi desenvolvido no âmbito do projeto WSmart Route+ em parceria com parceiros industriais como a Evox Technologies, e centrou-se na recolha inteligente de resíduos em contentores equipados com sensores: decidir, dia a dia, quais contentores colectar e quais as rotas que os veículos efetuam durante um largo horizonte temporal.",
+    "Durante este projecto, desenvolvi um simulador modular que separa a geração de resíduos, a seleção de contentores e a construção e melhoria de rotas, aplicando-o às redes municipais reais de Rio Maior e da Figueira da Foz, com dados reais sensores. Implementei no simulador uma biblioteca de métodos exatos (branch-and-price-and-cut, decomposições de Benders, etc.) e heurísticos (adaptive large neighborhood search, hybrid genetic search, entre outros), bem como estratégias de seleção de contentores.",
+    "Na vertente de aprendizagem automática, desenvolvi uma framework de treino de modelos de Neural Combinatorial Optimization e adaptei o Attention Model ao Profitable Tour Problem. O modelo é treinado nas redes reais por imitação de um especialista heurístico, seguida de afinação por aprendizagem por reforço, e é avaliado no simulador nas mesmas condições que os métodos clássicos. Estou a combinar o trabalho anterior com desenvolvimentos na arquitetura dos modelos e a explorar combinar modelos de aprendizagem com métodos clássicos, em preparação para um paper sobre métodos de aprendizagem profunda para resolver problemas de otimização.",
+    "Analisei também os métodos existentes para um artigo de revisão sobre Combinatorial Optimization, publiquei e apresentei em conferência um abstract - e tenho outro artigo em preparação para submissão - em coautoria com o CEGIST."
+  ],
+  "signature": {
+    "label": "O Bolseiro",
+    "name": "Afonso Cruz Bandeira Fernandes"
+  }
 }

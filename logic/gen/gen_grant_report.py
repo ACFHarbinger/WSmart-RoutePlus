@@ -2,8 +2,8 @@
 Generate the grant holder's grant renewal report (Relatório de Actividades do Bolseiro) as an editable .docx.
 
 The layout follows the university's "Modelo do Relatório de Actividades do Bolseiro" form: the institution logo in the
-page header, a centred title and subtitle, the grant holder's full name and grant ID, and the
-research report (a list of paragraphs). The logo is the IST mark (``logic/gen/svg/Tecnico_ID_Principal_RBG-COR.svg``),
+page header, a centred title and subtitle, the period, the grant holder's full name and grant ID, the
+research report (a list of paragraphs) and a signature block. The logo is the IST mark (``logic/gen/svg/Tecnico_ID_Principal_RBG-COR.svg``),
 rasterised with Inkscape (ImageMagick as a fallback).
 
 The document is written as plain Office Open XML with the standard library, so no extra Python
@@ -123,19 +123,30 @@ def logo_drawing(width_emu: int, height_emu: int) -> str:
 
 
 def build_document(cfg: Dict[str, Any]) -> str:
-    """The body: title, the labelled fields, and the research report paragraphs."""
+    """The body: title, the labelled fields, the research report paragraphs and the signature block."""
     font, label_font, size = cfg["font"], cfg["label_font"], float(cfg["font_size_pt"])
+    subtitle = cfg.get("subtitle")
     body: List[str] = [
-        paragraph([run(cfg["title"], label_font, size + 3)], align="center", after_pt=4),
-        paragraph([run(cfg["subtitle"], label_font, size - 2, bold=True)], align="center", after_pt=24),
+        paragraph([run(cfg["title"], label_font, size + 3)], align="center", after_pt=4 if subtitle else 24)
     ]
+    if subtitle:
+        body.append(paragraph([run(subtitle, label_font, size - 2, bold=True)], align="center", after_pt=24))
     for field in cfg["fields"]:
         body.append(
-            paragraph([run(field["label"], label_font, size, bold=True), run(f": {field['value']}", font, size)])
+            paragraph(
+                [run(field["label"], label_font, size, bold=True), run(f": {field['value']}", font, size)], after_pt=6
+            )
         )
     body.append(paragraph([run(f"{cfg['report_label']}:", label_font, size, bold=True)], after_pt=6))
+    line = round(240 * float(cfg.get("line_spacing", 1.5)))
     for text in cfg["report"]:
-        body.append(paragraph([run(text, font, size)]))
+        body.append(paragraph([run(text, font, size)], after_pt=8, line=line))
+    sig = cfg.get("signature")
+    if sig:
+        # Signature block: label, room to sign above a rule, and the printed name under it.
+        body.append(paragraph([run(sig["label"], label_font, size, bold=True)], align="center", after_pt=36, line=240))
+        body.append(paragraph([run("_" * 40, font, size)], align="center", after_pt=0, line=240))
+        body.append(paragraph([run(f"({sig['name']})", font, size)], align="center", after_pt=0, line=240))
     sect = (
         '<w:sectPr><w:headerReference w:type="default" r:id="rIdHeader"/>'
         '<w:pgSz w:w="11906" w:h="16838"/>'
