@@ -4,8 +4,8 @@
   "font": "Calibri",
   "label_font": "Calibri",
   "font_size_pt": 11,
-  "title": "Relatório Final",
-  "subtitle": "(a elaborar pelo bolseiro e pelo Orientador)",
+  "title": "Relatório de Actividades do Bolseiro",
+  "subtitle": "",
   "fields": [
     {
       "label": "Nome completo",
