@@ -5,8 +5,8 @@ import json
 import pytest
 import torch
 from logic.src.configs.models import ActivationConfig, NormalizationConfig
-from logic.src.envs.routing.cptp import CPTPEnv
-from logic.src.envs.routing.ptp import PTPEnv
+from logic.src.envs.tasks.profitable_tour.cptp import CPTPEnv
+from logic.src.envs.tasks.profitable_tour.ptp import PTPEnv
 from logic.src.models.core.attention_model.policy import AttentionModelPolicy
 from logic.src.utils.model.loader import load_model
 from tensordict import TensorDict

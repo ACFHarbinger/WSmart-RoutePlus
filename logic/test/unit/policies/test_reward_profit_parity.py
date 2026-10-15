@@ -84,7 +84,7 @@ def test_simulator_collect_and_policy_scaled_profit_agree(tmp_path: Any) -> None
 
 
 def test_training_get_costs_is_the_legacy_unit_proxy() -> None:
-    """PTP.get_costs uses COST_KM=REVENUE_KG=1.0 on fraction waste, not €/kg."""
+    """PTP.evaluate_tour uses COST_KM=REVENUE_KG=1.0 on fraction waste, not €/kg."""
     assert COST_KM == 1.0
     assert REVENUE_KG == 1.0
     dataset = {
@@ -95,7 +95,8 @@ def test_training_get_costs_is_the_legacy_unit_proxy() -> None:
         "revenue_kg": REVENUE_KG,
     }
     pi = torch.tensor([[0, 1, 0]])
-    neg_profit, cost_dict, _ = PTP.get_costs(dataset, pi, cw_dict=None)
+    cost_dict = PTP.evaluate_tour(dataset, pi, cw_dict=None)
+    neg_profit = cost_dict["cost"]
     assert cost_dict["waste"].item() == pytest.approx(1.0)
     assert cost_dict["length"].item() == pytest.approx(2.0)
     assert neg_profit.item() == pytest.approx(1.0)
@@ -111,7 +112,7 @@ def test_training_proxy_does_not_equal_bins_collect_on_the_same_numbers(tmp_path
         "cost_km": COST_KM,
         "revenue_kg": REVENUE_KG,
     }
-    training_neg = PTP.get_costs(dataset, torch.tensor([[0, 1, 0]]), cw_dict=None)[0].item()
+    training_neg = PTP.evaluate_tour(dataset, torch.tensor([[0, 1, 0]]), cw_dict=None)["cost"].item()
 
     bins = _plastic_bins(tmp_path, n=1)
     bins.real_c[:] = 100.0

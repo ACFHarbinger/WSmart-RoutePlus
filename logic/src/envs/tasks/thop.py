@@ -1,178 +1,141 @@
-"""
-ThOP problem definition for offline evaluation.
-
-Evaluates a complete ThOP solution given as a sequence of actions:
-  0       → depot return (terminates the tour)
-  1 … m   → pick item k (1-indexed)
-
-The evaluation simulates the speed-degraded travel and returns the total
-profit together with feasibility metrics (time used, weight used).
-
-Attributes:
-    ThOP: Thief Orienteering Problem (ThOP) definition.
-
-Example:
-    >>> import torch
-    >>> from logic.src.envs.tasks.thop import ThOP
-    >>> dataset = {
-    ...     "locs": torch.tensor([[[0.0, 0.0], [1.0, 0.0]]]),
-    ...     "item_weights": torch.tensor([[0.0, 1.0]]),
-    ...     "item_profits": torch.tensor([[0.0, 10.0]]),
-    ...     "item_city": torch.tensor([[0.0, 1.0]]),
-    ...     "capacity": torch.tensor([1.0]),
-    ...     "max_time": torch.tensor([10.0]),
-    ...     "v_max": torch.tensor([1.0]),
-    ...     "v_min": torch.tensor([0.1]),
-    ...     "depot": torch.tensor([0.0]),
-    ... }
-    >>> pi = torch.tensor([[[0, 1, 0]]])
-    >>> length, cost_dict, _ = ThOP.get_costs(dataset, pi)
-    >>> print(length)
-    tensor([-2.0])
-"""
+"""Thief Orienteering Problem (ThOP) task and environment on ESPPRC base."""
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Sequence, Union
 
 import torch
+from tensordict import TensorDict
 
 from logic.src.envs.tasks.base import BaseProblem
+from logic.src.envs.tasks.espprc import ESPPRCEnv, ESPPRCGenerator
+from logic.src.envs.tasks.spec import PROBLEMS, ProblemSpec
+
+
+class ThOPGenerator(ESPPRCGenerator):
+    """Generator for ThOP instances."""
+
+    def __init__(
+        self,
+        num_loc: int = 50,
+        num_items: int = 100,
+        device: Union[str, torch.device] = "cpu",
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(num_loc=num_loc, device=device, **kwargs)
+        self.num_items = num_items
+
+    def _generate(self, batch_size: Union[int, Sequence[int]]) -> TensorDict:
+        td = super()._generate(batch_size)
+        bs = list(batch_size) if isinstance(batch_size, (list, tuple)) else [batch_size]
+        td["item_weights"] = torch.rand((*bs, self.num_items), device=self.device)
+        td["item_profits"] = torch.rand((*bs, self.num_items), device=self.device)
+        td["item_city"] = torch.randint(1, self.num_loc + 1, size=(*bs, self.num_items), device=self.device)
+        td["capacity"] = torch.ones((*bs,), device=self.device) * 10.0
+        td["max_time"] = torch.ones((*bs,), device=self.device) * 20.0
+        td["v_max"] = torch.ones((*bs,), device=self.device)
+        td["v_min"] = torch.ones((*bs,), device=self.device) * 0.1
+        return td
+
+
+class ThOPEnv(ESPPRCEnv):
+    """Thief Orienteering Problem Environment on ESPPRC base."""
+
+    NAME: str = "thop"
+    name: str = "thop"
+    node_dim: int = 4
+
+    def __init__(
+        self,
+        generator: Optional[ThOPGenerator] = None,
+        generator_params: Optional[dict] = None,
+        device: Union[str, torch.device] = "cpu",
+        **kwargs: Any,
+    ) -> None:
+        generator_params = generator_params or kwargs
+        if generator is None:
+            generator = ThOPGenerator(**generator_params, device=device)
+        super().__init__(generator=generator, generator_params=generator_params, device=device, **kwargs)
 
 
 class ThOP(BaseProblem):
-    """
-    Thief Orienteering Problem (ThOP).
-
-    Combines route profit maximisation (Orienteering Problem) with item
-    selection under a knapsack capacity constraint.  Travel speed decreases
-    linearly with the current carried weight:
-
-        v(w) = v_max - (w / W) * (v_max - v_min)
-
-    so heavier loads consume more of the time budget per kilometre.
-
-    Objective: maximise total item profit subject to
-      * total travel time ≤ T_max (time budget), and
-      * total carried weight ≤ W (knapsack capacity).
-
-    Attributes:
-        NAME: Environment name identifier.
-    """
+    """Thief Orienteering Problem (ThOP) task definition."""
 
     NAME = "thop"
 
     @staticmethod
-    def get_costs(
+    def evaluate_tour(
         dataset: Dict[str, Any],
         pi: torch.Tensor,
-        cw_dict: Optional[Dict[str, Any]],
         dist_matrix: Optional[torch.Tensor] = None,
-    ) -> Tuple[torch.Tensor, Dict[str, Any], None]:
-        """
-        Evaluate a ThOP solution.
-
-        Args:
-            dataset: Problem instance TensorDict (or dict) with keys:
-                ``locs`` ``[B, n+1, 2]``, ``item_weights`` ``[B, m]``,
-                ``item_profits`` ``[B, m]``, ``item_city`` ``[B, m]``
-                (1-based), ``capacity`` ``[B]``, ``max_time`` ``[B]``,
-                ``v_max`` ``[B]``, ``v_min`` ``[B]``.
-            pi: Action sequence ``[B, T]`` where 0 = depot and 1…m are
-                1-indexed item picks.  The tour ends at the first 0 after
-                step > 0, or at the last element if no explicit return.
-            cw_dict: Optional weight overrides (currently unused; kept for
-                interface parity with other tasks).
-            dist_matrix: Ignored – ThOP uses Euclidean distances from
-                ``locs``.
-
-        Returns:
-            ``(-total_profit, info_dict, None)`` where ``info_dict`` has:
-            ``profit``, ``time_used``, ``weight_used``, ``time_feasible``,
-            ``weight_feasible``, ``feasible``, ``total``.
-        """
-        if pi.dim() == 1:
-            pi = pi.unsqueeze(0)
+        **kwargs: Any,
+    ) -> Dict[str, torch.Tensor]:
+        """Evaluate a ThOP solution."""
+        if pi.size(-1) <= 1:
+            z = torch.zeros(pi.size(0), device=pi.device)
+            return {"cost": z, "reward": z, "profit": z, "length": z, "time": z, "valid": torch.ones_like(z, dtype=torch.bool), "total": z}
 
         B, T = pi.shape
         device = pi.device
+        locs = dataset["locs"]
+        item_w = dataset["item_weights"]
+        item_p = dataset["item_profits"]
+        item_c = dataset["item_city"]
+        W = dataset["capacity"]
+        T_max = dataset["max_time"]
+        v_max = dataset["v_max"]
+        v_min = dataset["v_min"]
 
-        locs = dataset["locs"]  # [B, n+1, 2]
-        item_weights = dataset["item_weights"]  # [B, m]
-        item_profits = dataset["item_profits"]  # [B, m]
-        item_city = dataset["item_city"]  # [B, m]  (1-based)
-        capacity = dataset["capacity"]  # [B]
-        max_time = dataset["max_time"]  # [B]
-        v_max = dataset["v_max"]  # [B]
-        v_min = dataset["v_min"]  # [B]
+        total_profit = torch.zeros(B, device=device)
+        cur_weight = torch.zeros(B, device=device)
+        cur_time = torch.zeros(B, device=device)
+        cur_city = torch.zeros(B, dtype=torch.long, device=device)
+        total_dist = torch.zeros(B, device=device)
 
-        # Running state
-        current_city = torch.zeros(B, dtype=torch.long, device=device)  # depot
-        current_weight = torch.zeros(B, dtype=torch.float32, device=device)
-        current_time = torch.zeros(B, dtype=torch.float32, device=device)
-        total_profit = torch.zeros(B, dtype=torch.float32, device=device)
-        done = torch.zeros(B, dtype=torch.bool, device=device)
+        for step in range(T):
+            action = pi[:, step]
+            is_depot = action == 0
+            is_item = ~is_depot
+            if is_item.any():
+                item_idx = (action - 1).clamp(min=0)
+                city = item_c.gather(1, item_idx.unsqueeze(1)).squeeze(1)
+                dist_step = (locs[torch.arange(B, device=device), city] - locs[torch.arange(B, device=device), cur_city]).norm(dim=-1)
+                v = v_max - (cur_weight / W) * (v_max - v_min)
+                v = v.clamp(min=1e-5)
+                cur_time = cur_time + torch.where(is_item, dist_step / v, torch.zeros_like(v))
+                total_dist = total_dist + torch.where(is_item, dist_step, torch.zeros_like(dist_step))
+                p = item_p.gather(1, item_idx.unsqueeze(1)).squeeze(1)
+                w = item_w.gather(1, item_idx.unsqueeze(1)).squeeze(1)
+                total_profit = total_profit + torch.where(is_item, p, torch.zeros_like(p))
+                cur_weight = cur_weight + torch.where(is_item, w, torch.zeros_like(w))
+                cur_city = torch.where(is_item, city, cur_city)
 
-        for t in range(T):
-            action = pi[:, t]  # [B]
-            still_active = ~done  # [B]
+        return_dist = (locs[torch.arange(B, device=device), 0] - locs[torch.arange(B, device=device), cur_city]).norm(dim=-1)
+        v = (v_max - (cur_weight / W) * (v_max - v_min)).clamp(min=1e-5)
+        cur_time = cur_time + return_dist / v
+        total_dist = total_dist + return_dist
 
-            at_depot = action == 0  # [B]
-            item_idx = (action - 1).clamp(min=0)  # [B]  (0-indexed)
-
-            # Target city
-            target_city_item = item_city.gather(-1, item_idx.unsqueeze(-1)).squeeze(-1)  # [B]
-            target_city = torch.where(at_depot, torch.zeros_like(target_city_item), target_city_item)
-
-            # Distance
-            curr_loc = locs.gather(1, current_city[:, None, None].expand(B, 1, 2)).squeeze(1)
-            tgt_loc = locs.gather(1, target_city[:, None, None].expand(B, 1, 2)).squeeze(1)
-            dist = (tgt_loc - curr_loc).norm(p=2, dim=-1)  # [B]
-
-            # Speed at current weight (before pickup)
-            speed = (v_max - (current_weight / capacity.clamp(min=1e-8)) * (v_max - v_min)).clamp(min=1e-8)
-            time_cost = dist / speed  # [B]
-
-            # Accumulate time and update position for active instances
-            current_time = torch.where(still_active, current_time + time_cost, current_time)
-            current_city = torch.where(still_active, target_city, current_city)
-
-            # Collect item profit and weight (only for item actions, not depot)
-            item_w_here = item_weights.gather(-1, item_idx.unsqueeze(-1)).squeeze(-1)  # [B]
-            item_p_here = item_profits.gather(-1, item_idx.unsqueeze(-1)).squeeze(-1)  # [B]
-
-            picking = still_active & ~at_depot
-            current_weight = torch.where(picking, current_weight + item_w_here, current_weight)
-            total_profit = torch.where(picking, total_profit + item_p_here, total_profit)
-
-            # Mark done when returning to depot (action=0, t>0)
-            done = done | (still_active & at_depot & (t > 0))
-
-        # Force return-to-depot for sequences that never explicitly returned
-        not_returned = ~done
-        if not_returned.any():
-            curr_loc = locs.gather(1, current_city[:, None, None].expand(B, 1, 2)).squeeze(1)
-            depot_loc = locs[:, 0, :]
-            dist_home = (depot_loc - curr_loc).norm(p=2, dim=-1)
-            speed = (v_max - (current_weight / capacity.clamp(min=1e-8)) * (v_max - v_min)).clamp(min=1e-8)
-            time_home = dist_home / speed
-            current_time = torch.where(not_returned, current_time + time_home, current_time)
-
-        # Feasibility checks
-        time_feasible = current_time <= max_time + 1e-6  # [B]
-        weight_feasible = current_weight <= capacity + 1e-6  # [B]
-        feasible = time_feasible & weight_feasible
-
-        # Negative profit as cost (consistent with minimisation convention)
+        valid = (cur_time <= T_max + 1e-4) & (cur_weight <= W + 1e-4)
         neg_profit = -total_profit
-
-        info: Dict[str, Any] = {
+        return {
+            "cost": neg_profit,
+            "reward": total_profit,
             "profit": total_profit,
-            "time_used": current_time,
-            "weight_used": current_weight,
-            "time_feasible": time_feasible,
-            "weight_feasible": weight_feasible,
-            "feasible": feasible,
+            "length": total_dist,
+            "time": cur_time,
+            "valid": valid,
             "total": neg_profit,
         }
-        return (neg_profit, info, None)
+
+
+ThOP_SPEC = ProblemSpec(
+    name="thop",
+    objective=lambda profit, **kw: float(profit),
+    constraints=(),
+    metrics=("cost", "reward", "profit", "length", "time"),
+    env_target="logic.src.envs.tasks.thop:ThOPEnv",
+    expand_pool=True,
+)
+PROBLEMS.register(ThOP_SPEC)
+
+__all__ = ["ThOPGenerator", "ThOPEnv", "ThOP", "ThOP_SPEC"]

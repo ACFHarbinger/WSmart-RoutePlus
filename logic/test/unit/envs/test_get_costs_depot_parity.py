@@ -9,16 +9,15 @@ Addresses Issue #61 design item:
 
 import pytest
 import torch
-from logic.src.envs.routing.ptp import PTPEnv
 from logic.src.envs.tasks.base import BaseProblem
-from logic.src.envs.tasks.cptp import CPTP
-from logic.src.envs.tasks.ptp import PTP
+from logic.src.envs.tasks.profitable_tour.cptp import CPTP
+from logic.src.envs.tasks.profitable_tour.ptp import PTP, PTPEnv
 
 
 @pytest.mark.unit
 @pytest.mark.fast
 def test_ptp_get_costs_width_n_vs_n1_parity() -> None:
-    """PTP.get_costs must produce identical cost dict and profit for width N and N+1."""
+    """PTP.evaluate_tour must produce identical cost dict and profit for width N and N+1."""
     depot = torch.tensor([[0.0, 0.0]])
     locs_N = torch.tensor([[[1.0, 0.0], [2.0, 0.0], [3.0, 0.0], [4.0, 0.0]]])
     waste_N = torch.tensor([[10.0, 20.0, 30.0, 40.0]])
@@ -44,8 +43,10 @@ def test_ptp_get_costs_width_n_vs_n1_parity() -> None:
         "revenue_kg": 1.0,
     }
 
-    neg_profit_N, c_dict_N, _ = PTP.get_costs(dataset_N, pi, cw_dict=None)
-    neg_profit_N1, c_dict_N1, _ = PTP.get_costs(dataset_N1, pi, cw_dict=None)
+    c_dict_N = PTP.evaluate_tour(dataset_N, pi, cw_dict=None)
+    c_dict_N1 = PTP.evaluate_tour(dataset_N1, pi, cw_dict=None)
+    neg_profit_N = c_dict_N["cost"]
+    neg_profit_N1 = c_dict_N1["cost"]
 
     # Waste: customer 1 (10) + customer 3 (30) = 40.0
     assert torch.allclose(c_dict_N["waste"], torch.tensor([40.0]))
@@ -74,12 +75,12 @@ def test_ptp_get_costs_no_customer_shift_on_reset_tensordict() -> None:
 
     # Tour visiting specifically customer 1: must collect exactly 10.0 (not depot 0.0)
     pi_c1 = torch.tensor([[0, 1, 0]])
-    _, c_dict_c1, _ = PTP.get_costs(td_reset, pi_c1, cw_dict=None)
+    c_dict_c1 = PTP.evaluate_tour(td_reset, pi_c1, cw_dict=None)
     assert c_dict_c1["waste"].item() == pytest.approx(10.0)
 
     # Tour visiting specifically customer 5 (last customer): must collect 50.0 (not customer 4's 40.0)
     pi_c5 = torch.tensor([[0, 5, 0]])
-    _, c_dict_c5, _ = PTP.get_costs(td_reset, pi_c5, cw_dict=None)
+    c_dict_c5 = PTP.evaluate_tour(td_reset, pi_c5, cw_dict=None)
     assert c_dict_c5["waste"].item() == pytest.approx(50.0)
 
 
@@ -100,18 +101,18 @@ def test_ptp_get_costs_batched_parity() -> None:
 
     pi = torch.tensor([[0, 1, 2, 4, 0]] * B)
 
-    c_N = PTP.get_costs(dataset_N, pi, cw_dict=None)
-    c_N1 = PTP.get_costs(dataset_N1, pi, cw_dict=None)
+    c_N = PTP.evaluate_tour(dataset_N, pi, cw_dict=None)
+    c_N1 = PTP.evaluate_tour(dataset_N1, pi, cw_dict=None)
 
-    assert torch.allclose(c_N[0], c_N1[0])
-    assert torch.allclose(c_N[1]["waste"], c_N1[1]["waste"])
-    assert torch.allclose(c_N[1]["length"], c_N1[1]["length"])
+    assert torch.allclose(c_N["cost"], c_N1["cost"])
+    assert torch.allclose(c_N["waste"], c_N1["waste"])
+    assert torch.allclose(c_N["length"], c_N1["length"])
 
 
 @pytest.mark.unit
 @pytest.mark.fast
 def test_cptp_get_costs_width_n_vs_n1_parity() -> None:
-    """CPTP.get_costs must produce identical cost dict and trip capacity check on both shapes."""
+    """CPTP.evaluate_tour must produce identical cost dict and trip capacity check on both shapes."""
     depot = torch.zeros(1, 2)
     locs_N = torch.tensor([[[1.0, 0.0], [2.0, 0.0]]])
     waste_N = torch.tensor([[20.0, 30.0]])
@@ -135,10 +136,10 @@ def test_cptp_get_costs_width_n_vs_n1_parity() -> None:
 
     pi = torch.tensor([[0, 1, 2, 0]])
 
-    cost_N, c_dict_N, _ = CPTP.get_costs(dataset_N, pi, cw_dict=None)
-    cost_N1, c_dict_N1, _ = CPTP.get_costs(dataset_N1, pi, cw_dict=None)
+    c_dict_N = CPTP.evaluate_tour(dataset_N, pi, cw_dict=None)
+    c_dict_N1 = CPTP.evaluate_tour(dataset_N1, pi, cw_dict=None)
 
-    assert torch.allclose(cost_N, cost_N1)
+    assert torch.allclose(c_dict_N["cost"], c_dict_N1["cost"])
     assert torch.allclose(c_dict_N["waste"], c_dict_N1["waste"])
     assert torch.allclose(c_dict_N["length"], c_dict_N1["length"])
 
@@ -222,8 +223,8 @@ def test_evaluator_parity_width_n_vs_n1() -> None:
 
     seq = torch.tensor([[0, 1, 2, 0]])
 
-    _, c_dict_N, _ = PTP.get_costs(instance_N, seq, None)
-    _, c_dict_N1, _ = PTP.get_costs(instance_N1, seq, None)
+    c_dict_N = PTP.evaluate_tour(instance_N, seq, None)
+    c_dict_N1 = PTP.evaluate_tour(instance_N1, seq, None)
 
     # Parity check across all metrics produced for evaluation results
     assert c_dict_N["length"].item() == pytest.approx(c_dict_N1["length"].item())

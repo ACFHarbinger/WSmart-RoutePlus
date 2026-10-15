@@ -20,6 +20,7 @@ from typing import Any, Dict, Optional, Tuple, Union
 import torch
 from tensordict import TensorDict
 
+from logic.src.configs.models.activation_function import ActivationConfig
 from logic.src.configs.models.normalization import NormalizationConfig
 from logic.src.data.processor.transforms import batchify
 from logic.src.envs.base.base import RL4COEnvBase
@@ -80,12 +81,23 @@ class AttentionModelPolicy(AutoregressivePolicy):
         else:
             norm_config = None
 
+        if "activation_config" in kwargs:
+            activation_config = kwargs.pop("activation_config")
+        elif "activation" in kwargs or "activation_function" in kwargs:
+            act_name = kwargs.pop("activation_function", kwargs.pop("activation", "relu"))
+            activation_config = ActivationConfig(name=act_name)
+        else:
+            activation_config = ActivationConfig(
+                name="relu", param=0.0, threshold=0.0, replacement_value=0.0, n_params=1
+            )
+
         self.encoder = GraphAttentionEncoder(
             n_heads=n_heads,
             embed_dim=embed_dim,
             feed_forward_hidden=hidden_dim,
             n_layers=n_encode_layers,
             norm_config=norm_config,
+            activation_config=activation_config,
             **kwargs,
         )
 

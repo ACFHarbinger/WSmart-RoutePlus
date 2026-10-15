@@ -32,8 +32,8 @@ from .context import (
 from .dynamic import DynamicEmbedding
 from .edges import (
     EDGE_EMBEDDING_REGISTRY,
-    EdgeEmbedding,
     CPTPEdgeEmbedding,
+    EdgeEmbedding,
     NoEdgeEmbedding,
     TSPEdgeEmbedding,
     get_edge_embedding,
@@ -46,8 +46,8 @@ from .positional import (
 )
 from .state import (
     STATE_EMBEDDING_REGISTRY,
-    EnvState,
     CPTPState,
+    EnvState,
     PTPState,
 )
 from .static import StaticEmbedding

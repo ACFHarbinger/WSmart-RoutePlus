@@ -119,7 +119,19 @@ class BatchMixin:
             raise ValueError("Model output does not contain 'actions' or 'pi'")
 
         # Calculate ucost (unweighted cost)
-        ucost, cost_dict, _ = self.problem.get_costs(input, pi, cw_dict=None)  # type: ignore[attr-defined]
+        if hasattr(self.problem, "evaluate_tour"):
+            outcome = self.problem.evaluate_tour(input, pi, cw_dict=None)  # type: ignore[attr-defined]
+            if isinstance(outcome, dict):
+                ucost = outcome["cost"]
+                cost_dict = outcome
+            elif isinstance(outcome, tuple):
+                ucost = outcome[0]
+                cost_dict = outcome[1] if len(outcome) > 1 and isinstance(outcome[1], dict) else {}
+            else:
+                ucost = outcome
+                cost_dict = {}
+        else:
+            ucost, cost_dict, _ = self.problem.get_costs(input, pi, cw_dict=None)  # type: ignore[attr-defined]
 
         src_vertices, dst_vertices = pi[:, :-1], pi[:, 1:]
         dst_mask = dst_vertices != 0
