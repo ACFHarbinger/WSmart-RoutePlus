@@ -286,11 +286,13 @@ class LocalSearch(ABC):
         self._active_nodes = active_nodes
 
         improved = True
-        it = 0
         pairs = [(u, v) for u in self.neighbors for v in self.neighbors[u]]  # Build the full candidate pair list
+        it = 0
         t_start = time.perf_counter()
-        while improved and it < self.params.local_search_iterations:
-            if self.params.time_limit > 0 and time.perf_counter() - t_start > self.params.time_limit:
+        max_ls_iters = getattr(self.params, "local_search_iterations", 500)
+        time_limit = getattr(self.params, "time_limit", 0.0)
+        while improved and it < max_ls_iters:
+            if time_limit > 0 and time.perf_counter() - t_start > time_limit:
                 break
 
             improved = False

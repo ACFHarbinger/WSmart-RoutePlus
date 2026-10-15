@@ -16,6 +16,7 @@ _LAZY = {
     "Solver": "logic.src.policies.routing.base.sub_problem:Solver",
     "SubProblem": "logic.src.policies.routing.base.sub_problem:SubProblem",
     "build_subproblem": "logic.src.policies.routing.base.sub_problem:build_subproblem",
+    "coerce_config": "logic.src.policies.routing.base.sub_problem:coerce_config",
 }
 
 __all__ = [
@@ -29,6 +30,7 @@ __all__ = [
     "Solver",
     "SubProblem",
     "build_subproblem",
+    "coerce_config",
 ]
 
 
