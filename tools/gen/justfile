@@ -1,7 +1,6 @@
-# WSmart+ Route — Gen: document generators (grant report, paper, slide deck, analyses)
+# WSmart+ Route — Gen: the logic/gen generators (grant report, paper, simulation summary, distance matrix)
 #
-# The Python generators live in logic/gen/; the deck and the simulation analysis use the
-# Studio's headless runner (app/scripts/gen-headless.ts), which needs `just app::install` once.
+# The Studio's own generators (deck, analysis) run from inside the app.
 
 set unstable := true
 set working-directory := '../..'
@@ -26,22 +25,6 @@ paper-pdf:
 
 # Tables, figures and both PDFs
 paper force="false": (paper-tables force) paper-pdf
-
-# ── Slide deck and analysis (Studio headless runner) ─────────────────────────
-
-# Runner flags: --html --pdf --speaker-script --excel --force, --results-table 30d|90d|all|none,
-# --out <pptx>, --figures-dir <dir>
-# Presentation deck (PPTX), e.g. `just gen::deck --pdf --speaker-script --force`
-deck *flags:
-    cd app && npx vite-node --config scripts/headless/vite.config.ts scripts/gen-headless.ts -- --deck {{ flags }}
-
-# Simulation analysis (figures, markdown, interactive HTML); e.g. `just gen::analysis --force`
-analysis *flags:
-    cd app && npx vite-node --config scripts/headless/vite.config.ts scripts/gen-headless.ts -- --report {{ flags }}
-
-# Analysis, then the deck with every export (HTML, PDF, speaker script, XLSX)
-deck-all *flags:
-    cd app && npx vite-node --config scripts/headless/vite.config.ts scripts/gen-headless.ts -- --html --pdf --speaker-script --excel {{ flags }}
 
 # ── Data summaries ───────────────────────────────────────────────────────────
 
