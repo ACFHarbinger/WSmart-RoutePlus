@@ -69,11 +69,8 @@ def test_na_yaml_lookahead_list_variant_loads_day_zero() -> None:
 
 def test_na_yaml_route_improvement_is_empty() -> None:
     cfg = _na_yaml()
-    amgat = OmegaConf.to_container(cfg.na.amgat, resolve=True)
-    merged: Dict[str, Any] = {}
-    for item in amgat:
-        if isinstance(item, dict):
-            merged.update(item)
+    # Plain-mapping YAML (P-13): the variant is one mapping, not a list of one-key items.
+    merged: Dict[str, Any] = OmegaConf.to_container(cfg.na.amgat, resolve=True)
     assert merged.get("route_improvement") == []
     action = RouteImprovementAction()
     configs = action._get_route_improvement_configs({"config": {"na": merged}})
