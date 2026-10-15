@@ -71,12 +71,13 @@ def _structured_load(config_cls: Type, mapping: Dict[str, Any]) -> Any:
     filtered = {key: value for key, value in core.items() if key in known}
     try:
         schema = OmegaConf.structured(config_cls)
-        OmegaConf.set_struct(schema, True)
-        merged = OmegaConf.merge(schema, OmegaConf.create(filtered))
-        return OmegaConf.to_object(merged)
     except Exception:
-        # Some configs use typing.Literal / nested types OmegaConf cannot schema.
+        # Some declarations use types OmegaConf cannot schema. Only schema
+        # construction may fall back; invalid user values must never bypass validation.
         return config_cls(**filtered)
+    OmegaConf.set_struct(schema, True)
+    merged = OmegaConf.merge(schema, OmegaConf.create(filtered))
+    return OmegaConf.to_object(merged)
 
 
 class BaseRoutingPolicy(PolicyVizMixin, IRoutingAlgorithm):
