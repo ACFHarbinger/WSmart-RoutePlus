@@ -278,3 +278,11 @@ def test_chain_gate_reads_shared_checkout_log_from_a_worktree(monkeypatch, tmp_p
     monkeypatch.setattr(run_gate, "CHAIN_LOG", ".agent/cache/train-logs/chain.log")
     monkeypatch.setattr(run_gate.subprocess, "run", lambda *a, **kw: subprocess.CompletedProcess(a, 0, str(common)))
     assert run_gate.chain_done()
+
+
+def test_sans_cell_has_a_real_work_budget():
+    # SANS stops at once on time_limit 0 (no > 0 guard); its schedule bounds the work instead.
+    entry = cell_policy_entry("SANS")["sans"]
+    assert entry["time_limit"] > 1e6 and entry["iterations_per_T"] == 200
+    capped = cell_policy_entry("SANS", time_capped=True)["sans"]
+    assert capped["time_limit"] == 60.0 and "iterations_per_T" not in capped

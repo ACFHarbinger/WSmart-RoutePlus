@@ -15,7 +15,7 @@ Heavy subcommands refuse to run until ``.agent/cache/train-logs/chain.log``
 shows ``sim chain done`` and take ``~/.cache/wsr-review/heavy.lock``
 (non-blocking; one heavy job at a time). ``calibrate`` additionally refuses
 unless the code tree equals the ``BASELINE_COMMIT`` (issue: tolerances are
-calibrated on the unchanged code ``a5eb27eec``).
+calibrated on ``a5eb27eec`` plus only the default-off CVRP solution_limit knob).
 """
 
 from __future__ import annotations

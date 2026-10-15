@@ -46,8 +46,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict, List
 
-# Unchanged-code baseline the tolerances are calibrated on (issue #117).
-BASELINE_COMMIT = "a5eb27eec"
+# Baseline the tolerances are calibrated on (issue #117, review CR-13): the
+# unchanged code a5eb27eec plus only the default-off CVRP solution_limit knob,
+# branch gates/baseline-a5eb27eec-cvrp-knob. a5eb27eec itself has no
+# deterministic CVRP budget.
+BASELINE_COMMIT = "d82170cf0"
 
 # Gate-(a) shared simulation axes (Hydra dotlist values).
 GATE_A_SIM: Dict[str, Any] = {
@@ -75,7 +78,10 @@ GATE_A_CELLS: List[Dict[str, Any]] = [
         "compare_mode": "certificate_fallback",
     },
     {"constructor": "ALNS", "policy": "alns", "overrides": {"time_limit": 0}},
-    {"constructor": "SANS", "policy": "sans", "overrides": {"time_limit": 0}},
+    # SANS has no time_limit > 0 guard: 0 stops the search at once (review CR-13).
+    # Its temperature schedule bounds the work instead: T_init -> T_min at
+    # iterations_per_T moves per step, with no wall clock in play.
+    {"constructor": "SANS", "policy": "sans", "overrides": {"time_limit": 1e9, "iterations_per_T": 200}},
     {
         "constructor": "HGS",
         "policy": "hgs",
@@ -136,6 +142,8 @@ def cell_policy_entry(constructor: str, model_path: str = "", time_capped: bool 
         overrides["packing"] = {"other/pk_last_minute.yaml": ["last_minute_cf70"]}
     if time_capped and cell["policy"] != "na":
         overrides["time_limit"] = 60.0
+        if cell["policy"] == "sans":
+            overrides.pop("iterations_per_T", None)  # the paper's schedule under the paper's clock
         if cell["policy"] == "cvrp":
             overrides["solution_limit"] = None
     if overrides.get("model_path") == "CHAIN_CHECKPOINT_PLACEHOLDER":
