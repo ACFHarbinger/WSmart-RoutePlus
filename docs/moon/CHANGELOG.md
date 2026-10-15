@@ -73,6 +73,19 @@ Codex P-21/P-42 objectives and KPI primitives (`envs/tasks/common/objectives.py`
 #### Removed
 
 - Per-policy `vrpp` bool. Solvers read `current_expand_pool()`. `alns_vrpp` is a different field and remains.
+### Packing: NumPy definition and Torch adapter (WP-09, `2026-10-15`)
+
+#### Added
+- **P-37 / RQ-codex-1:** one shared definition per released packing rule in `logic/src/policies/packing/spec.py` (NumPy, percent units). Classical wrappers (`last_minute`, `regular`, `service_level`, `lookahead`) call that spec. Batched Torch adapters live in `packing/vectorized/spec.py` (`[B, N]`, depot at 0, fraction units) and are used by the neural selectors. Parity tests keep the two backends in agreement, including Regular.
+- **RQ-cursor-3:** unreleased `eoq_last_minute` (`LastMinuteEOQSelection`) keeps the Harris EOQ trigger in `main`. `pk_eoq_last_minute.yaml` now names that key.
+
+#### Changed
+- **Breaking:** 1.0.0 `last_minute` is fill-threshold only. `use_eoq_threshold` on a last-minute context is ignored; use `eoq_last_minute` for the EOQ path. Revenue and profit-per-km still read the flag.
+- Released packing `pack()` no longer imports the simulator (`_record_live_params`) or Torch. `vectorized/__init__.py` and `get_vectorized_selector` load adapters lazily.
+- **P-05:** `packing/vectorized/manager.py` no longer imports `models.meta.hrl_manager` at module level. `ManagerSelector` is dropped from the packing / vectorized public lazy maps; the factory still string-loads it for in-tree `strategy: manager`. Importing the released vectorized selectors does not load the HRL manager.
+
+#### Migration
+- Replace `strategy: last_minute` plus `use_eoq_threshold: true` with `strategy: eoq_last_minute`. Paper CF70/CF90 last-minute YAML is unchanged.
 
 ### Envs on the ESPPRC base (WP-07, `2026-10-15`)
 

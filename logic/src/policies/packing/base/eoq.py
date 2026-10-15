@@ -81,7 +81,9 @@ def resolve_trigger_threshold(context: PackingContext) -> np.ndarray:
     """Return a boolean mask of bins whose fill meets the effective trigger.
 
     If ``context.use_eoq_threshold`` is True, the per-bin EOQ threshold is
-    used; otherwise a uniform ``context.threshold`` is applied. The comparison
+    used; otherwise a uniform ``context.threshold`` is applied. Released
+    last-minute no longer calls this helper (RQ-cursor-3); unreleased
+    ``eoq_last_minute``, revenue and profit-per-km still do. The comparison
     is ``fill >= threshold`` in absolute units (percent of capacity, like
     ``context.current_fill`` and the EOQ thresholds); a threshold of 70 is the
     ratio 0.70.

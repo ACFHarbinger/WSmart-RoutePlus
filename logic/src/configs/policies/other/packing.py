@@ -54,12 +54,34 @@ from typing import Any, Dict, List, Optional
 class LastMinuteSelectionConfig:
     """Configuration for threshold-based last-minute selection.
 
+    1.0.0 last-minute is fill-threshold only (RQ-cursor-3). EOQ last-minute
+    is the unreleased ``eoq_last_minute`` key.
+
     Attributes:
         threshold: Fill level in percent (0-100) at or above which a bin is mandatory
             (one unit for the simulator and the vectorized selector).
     """
 
     threshold: float = 70.0
+
+
+@dataclass
+class EOQLastMinuteSelectionConfig:
+    """Configuration for unreleased EOQ last-minute (excluded from 1.0.0).
+
+    Attributes:
+        threshold: Fallback fill trigger when EOQ parameters are missing.
+        holding_cost_per_kg_day: Holding cost ``h`` in the Harris EOQ formula.
+        ordering_cost_per_visit: Ordering cost ``S`` per dispatch.
+        bin_volume: Bin volume used to recover mass capacity.
+        bin_density: Waste density used to recover mass capacity.
+    """
+
+    threshold: float = 90.0
+    holding_cost_per_kg_day: float = 0.02
+    ordering_cost_per_visit: float = 50.0
+    bin_volume: float = 2.5
+    bin_density: float = 400.0
 
 
 @dataclass
@@ -488,6 +510,7 @@ class PackingConfig:
     Attributes:
         strategy: Primary packing algorithm name.
         last_minute: Params for LastMinuteSelection.
+        eoq_last_minute: Params for unreleased LastMinuteEOQSelection.
         regular: Params for RegularSelection.
         service_level: Params for ServiceLevelSelection.
         revenue: Params for RevenueSelection.
@@ -519,6 +542,7 @@ class PackingConfig:
 
     # Strategy-specific sub-configs
     last_minute: LastMinuteSelectionConfig = field(default_factory=LastMinuteSelectionConfig)
+    eoq_last_minute: EOQLastMinuteSelectionConfig = field(default_factory=EOQLastMinuteSelectionConfig)
     regular: RegularSelectionConfig = field(default_factory=RegularSelectionConfig)
     service_level: ServiceLevelSelectionConfig = field(default_factory=ServiceLevelSelectionConfig)
     revenue: RevenueSelectionConfig = field(default_factory=RevenueSelectionConfig)
