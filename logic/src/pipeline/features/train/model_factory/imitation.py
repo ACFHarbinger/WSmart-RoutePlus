@@ -19,8 +19,6 @@ from hydra.utils import instantiate
 
 from logic.src.configs import Config
 from logic.src.models.common.critic_network.policy import create_critic_from_actor
-from logic.src.pipeline.rl.core.adaptive_imitation import AdaptiveImitation
-from logic.src.pipeline.rl.core.imitation import ImitationLearning
 
 
 def _resolve_configs(cfg: Any):
@@ -59,6 +57,8 @@ def _create_imitation(cfg: Config, policy, env, kw: Dict[str, Any]) -> pl.Lightn
     # Forward the full keyword set, as REINFORCE receives it: the base module reads the
     # training setup (cfg, train_time, batch sizes, curriculum) from it.
     module_kw = {k: v for k, v in kw.items() if k not in ("policy_config", "seed", "device", "loss_fn")}
+    from logic.src.pipeline.rl.core.imitation import ImitationLearning
+
     return ImitationLearning(
         policy_config=policy_config,
         env_name=getattr(env_cfg, "name", "ptp") if env_cfg else "ptp",
@@ -94,6 +94,8 @@ def _create_adaptive_imitation(cfg: Config, policy, env, kw: Dict[str, Any]) -> 
 
     il_keys = ("policy_config", "il_weight", "il_decay", "patience", "threshold", "decay_step", "epsilon", "loss_fn", "seed")
     module_kw = {k: v for k, v in kw.items() if k not in il_keys}
+    from logic.src.pipeline.rl.core.adaptive_imitation import AdaptiveImitation
+
     return AdaptiveImitation(
         policy_config=policy_config,
         env_name=getattr(env_cfg, "name", "ptp") if env_cfg else "ptp",

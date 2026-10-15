@@ -25,60 +25,37 @@ Example:
     >>> algorithm.train()
 """
 
-from logic.src.pipeline.rl.core import (
-    A2C,
-    DRGRPO,
-    GDPO,
-    GSPO,
-    POMO,
-    PPO,
-    REINFORCE,
-    SAPO,
-    AdaptiveImitation,
-    HRLModule,
-    ImitationLearning,
-    MetaRLModule,
-    MVMoE_AM,
-    MVMoE_POMO,
-    SymNCO,
-)
+# Names resolve lazily through rl.core (P-25): importing this package does
+# not load every RL algorithm.
+from typing import Any
 
-# RL Algorithm Registry: maps CLI algorithm names to Lightning module classes
-RL_ALGORITHM_REGISTRY = {
-    "reinforce": REINFORCE,
-    "ppo": PPO,
-    "a2c": A2C,
-    "sapo": SAPO,
-    "gspo": GSPO,
-    "gdpo": GDPO,
-    "dr_grpo": DRGRPO,
-    "pomo": POMO,
-    "symnco": SymNCO,
-    "imitation": ImitationLearning,
-    "adaptive_imitation": AdaptiveImitation,
-    "hrl": HRLModule,
-    "meta_rl": MetaRLModule,
-    "mvmoe_pomo": MVMoE_POMO,
-    "mvmoe_am": MVMoE_AM,
-}
+_LAZY_CORE = [
+    "A2C",
+    "DRGRPO",
+    "GDPO",
+    "GSPO",
+    "POMO",
+    "PPO",
+    "REINFORCE",
+    "SAPO",
+    "AdaptiveImitation",
+    "HRLModule",
+    "ImitationLearning",
+    "MetaRLModule",
+    "MVMoE_AM",
+    "MVMoE_POMO",
+    "SymNCO",
+]
 
 
-def get_rl_algorithm(name: str) -> type:
-    """
-    Look up an RL algorithm class by its short name.
+def __getattr__(name: str) -> Any:
+    if name in _LAZY_CORE:
+        from logic.src.pipeline.rl import core
 
-    Args:
-        name: Algorithm name (e.g. "reinforce", "ppo", "pomo").
-
-    Returns:
-        The Lightning module class (not instantiated).
-
-    Raises:
-        ValueError: If the name is not found in the registry.
-    """
-    if name not in RL_ALGORITHM_REGISTRY:
-        raise ValueError(f"Unknown RL algorithm: {name!r}. Available: {sorted(RL_ALGORITHM_REGISTRY.keys())}")
-    return RL_ALGORITHM_REGISTRY[name]
+        obj = getattr(core, name)
+        globals()[name] = obj
+        return obj
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 __all__ = [

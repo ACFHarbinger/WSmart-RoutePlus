@@ -24,36 +24,37 @@ Example:
     >>> mha = MultiHeadAttention(embed_dim=128, n_heads=8)
 """
 
-from .activation_function import ActivationFunction as ActivationFunction
-from .cross_attention import (
-    MultiHeadCrossAttention as MultiHeadCrossAttention,
-)
-from .dynamic_hyper_connection import (
-    DynamicHyperConnection as DynamicHyperConnection,
-)
-from .efficient_graph_convolution import (
-    EfficientGraphConvolution as EfficientGraphConvolution,
-)
-from .feed_forward import FeedForward as FeedForward
-from .flash_attention import (
-    MultiHeadFlashAttention as MultiHeadFlashAttention,
-)
-from .gated_graph_convolution import GatedGraphConvolution as GatedGraphConvolution
-from .graph_convolution import GraphConvolution as GraphConvolution
-from .matnet_attention import MixedScoreMHA as MixedScoreMHA
-from .mdam_attention import (
-    MultiHeadAttentionMDAM as MultiHeadAttentionMDAM,
-)
-from .mpnn_encoder import MPNNEncoder as MPNNEncoder
-from .mpnn_layer import MessagePassingLayer as MessagePassingLayer
-from .multi_head_attention import MultiHeadAttention as MultiHeadAttention
-from .normalization import Normalization as Normalization
-from .pointer_attn_moe import PointerAttnMoE
-from .polynet_attention import PolyNetAttention as PolyNetAttention
-from .skip_connection import SkipConnection as SkipConnection
-from .static_hyper_connection import (
-    StaticHyperConnection as StaticHyperConnection,
-)
+from typing import Any
+
+# Lazy re-exports (P-25): importing this package does not pull every encoder;
+# each name loads its module on first access.
+_LAZY = {
+    "ActivationFunction": "logic.src.models.subnets.modules.activation_function:ActivationFunction",
+    "FeedForward": "logic.src.models.subnets.modules.feed_forward:FeedForward",
+    "GatedGraphConvolution": "logic.src.models.subnets.modules.gated_graph_convolution:GatedGraphConvolution",
+    "GraphConvolution": "logic.src.models.subnets.modules.graph_convolution:GraphConvolution",
+    "MPNNEncoder": "logic.src.models.subnets.modules.mpnn_encoder:MPNNEncoder",
+    "MessagePassingLayer": "logic.src.models.subnets.modules.mpnn_layer:MessagePassingLayer",
+    "MixedScoreMHA": "logic.src.models.subnets.modules.matnet_attention:MixedScoreMHA",
+    "MultiHeadAttention": "logic.src.models.subnets.modules.multi_head_attention:MultiHeadAttention",
+    "Normalization": "logic.src.models.subnets.modules.normalization:Normalization",
+    "PointerAttnMoE": "logic.src.models.subnets.modules.pointer_attn_moe:PointerAttnMoE",
+    "PolyNetAttention": "logic.src.models.subnets.modules.polynet_attention:PolyNetAttention",
+    "SkipConnection": "logic.src.models.subnets.modules.skip_connection:SkipConnection",
+}
+
+
+def __getattr__(name: str) -> Any:
+    if name in _LAZY:
+        import importlib
+
+        module_name, _, attr = _LAZY[name].partition(":")
+        module = importlib.import_module(module_name)
+        obj = getattr(module, attr)
+        globals()[name] = obj
+        return obj
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 __all__ = [
     "ActivationFunction",

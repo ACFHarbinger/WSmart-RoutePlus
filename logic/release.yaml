@@ -1,0 +1,104 @@
+# WSmart-Route 1.0.0 release manifest — the single source of truth for the
+# released package. Everything here is built by `logic/package/build_release.py`
+# from `main` (owner ruling Q-10a); unreleased components stay in `main` and are
+# excluded from the package (Q-8/Q-8b).
+#
+# Keys are registry keys — the entries of `logic/src/policies/**/_manifest.py`
+# — not the BB/BC/BPC acronyms of the retired `ci/export_config.json` flow.
+#
+# Scope (owner ruling Q-1/Q-2): only the components tested in the paper
+# simulations. Problems: PTP, CPTP, TCPTP and CVRP.
+
+version: "1.0.0"
+
+# Problems released. These are `envs/tasks/<name>.py` problem names.
+problems:
+  - ptp
+  - cptp
+  - tcptp
+  - cvrp
+
+# Registry keys released per stage. The stage names match the generated
+# registry manifests (`logic/src/policies/<stage>/_manifest.py`).
+stages:
+  routing:
+    - swc_tcf
+    - bpc
+    - alns
+    - sans
+    - hgs
+    - psoma
+    - aco_hh
+    - pg_clns
+    - na            # Attention Model neural agent
+    - cvrp          # OR-Tools static reference
+  packing:
+    - last_minute
+    - service_level
+    - lookahead
+    - regular
+  route_improvement:
+    - classical_local_search   # released as `cls`
+    - fast_tsp
+  acceptance:
+    - bmc
+    - oi
+
+# Infrastructure seeds: modules that ship although they are not stage
+# components. The build keeps the transitive import closure of the seeds plus
+# the released policy modules; every other module under `logic/` is pruned from
+# the package (and stays in `main`).
+#
+# - the simulator day loop (Q-11b),
+# - the test/train/eval features (the eval task loads and runs the AM, Q-12a),
+# - the paper's training stack: REINFORCE with rollout baseline and imitation
+#   (Q-12a); the vectorised profitable-NN expert and vectorised packing are
+#   pulled in by the imitation trainer (Q-4a),
+# - the Attention Model with the GAT encoder (Q-12a),
+# - the released problems' environments, legacy tasks and generators (Q-2),
+# - the CLI (Q-11b).
+infrastructure:
+  - logic.src.pipeline.simulations
+  - logic.src.pipeline.features.test
+  - logic.src.pipeline.features.train
+  - logic.src.pipeline.features.eval
+  - logic.src.pipeline.rl.core.reinforce
+  - logic.src.pipeline.rl.core.imitation
+  - logic.src.models.core.attention_model
+  - logic.src.policies.vector.profitable_nearest_neighbour   # imitation expert (Q-4a)
+  - logic.src.policies.packing.vectorized                    # vectorised packing (Q-4a)
+  - logic.src.envs.routing.ptp
+  - logic.src.envs.routing.cptp
+  - logic.src.envs.routing.tcptp
+  - logic.src.envs.routing.cvrp
+  - logic.src.envs.tasks.ptp
+  - logic.src.envs.tasks.cptp
+  - logic.src.envs.tasks.tcptp
+  - logic.src.envs.tasks.cvrp
+  - logic.src.envs.generators.ptp
+  - logic.src.envs.generators.tcptp
+  - logic.src.envs.generators.cvrp
+  - logic.controllers.cli               # the CLI: main.py's parsers (Q-11b)
+  - logic.controllers.hydra_dispatch
+  - logic.controllers.parser_dispatch
+
+# Packages excluded from the release even though a seed pulls them in.
+excluded_packages:
+  - logic.src.pipeline.simulations.hpo               # Q-6: HPO stays out of 1.0.0
+  - logic.src.pipeline.rl.hpo                        # Q-6
+  - logic.src.pipeline.rl.meta                       # not in the paper's stack (Q-12a)
+  # Pending (activate when the import disappears): wsmart_bin_analysis moves to
+  # its own package (RQ-grok-7), but bins/base.py:43 still imports GridBase from
+  # it at module level, so excluding it today fails the build loudly. The
+  # builder raises on any kept file that module-level imports an excluded
+  # package — that guard flips this exclusion on as part of WP-08.
+
+# Notes:
+# - `logic/src/configs/` ships whole: the config dataclasses of every family are
+#   declarative data, eagerly imported by `configs/__init__`, and carry no
+#   runnable code. Pruning them is WP-04/05/06 config consolidation work.
+# - The released package installs without PyTorch (Q-16a); the neural stack is
+#   the `wsmart-route[neural]` extra in `logic/pyproject.toml`.
+# - `logic/configs/policies/policy_<key>.yaml` and `other/ms_<key>.yaml` ship
+#   only for the released keys above. `ms_eoq_last_minute.yaml` is excluded
+#   (RQ-cursor-3: 1.0.0 last-minute is fill-threshold only).
