@@ -43,6 +43,9 @@ jobs:
       - name: Complexity Check (McCabe)
         run: uv run ruff check . --fix
 
+      - name: HPO job key-liveness check (P-56)
+        run: uv run python tools/check_hpo_jobs.py --check
+
       - name: Security Scan
         # Continue on error since vulnerabilities might be present; goal is visibility first
         continue-on-error: true

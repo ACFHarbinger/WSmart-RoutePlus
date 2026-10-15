@@ -43,10 +43,6 @@
         "type": "float",
         "default": 0.1
     },
-    "time_limit_stage_1": {
-        "type": "float",
-        "default": 0.2
-    },
     "engine": {
         "type": "categorical",
         "choices": [

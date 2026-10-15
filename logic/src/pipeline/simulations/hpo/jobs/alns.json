@@ -13,7 +13,7 @@
     },
     "start_temp": {
         "type": "float",
-        "default": 100.0
+        "default": 0.0
     },
     "cooling_rate": {
         "type": "float",

@@ -15,14 +15,6 @@
         ],
         "default": true
     },
-    "use_exact_separation": {
-        "type": "categorical",
-        "choices": [
-            true,
-            false
-        ],
-        "default": false
-    },
     "max_cuts_per_round": {
         "type": "int",
         "default": 50

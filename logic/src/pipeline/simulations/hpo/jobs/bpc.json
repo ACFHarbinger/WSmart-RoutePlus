@@ -23,13 +23,6 @@
         "step": 1,
         "_comment": "Cuts added per separation round. Too few = loose LP; too many = dense master. 5-10 is the empirical sweet spot for VRPP."
     },
-    "max_cut_iterations": {
-        "type": "int",
-        "low": 3,
-        "high": 15,
-        "step": 1,
-        "_comment": "Separation rounds per CG convergence. More rounds tighten the LP but delay return to pricing. Combined with max_cuts_per_iteration."
-    },
     "ng_neighborhood_size": {
         "type": "int",
         "low": 4,
@@ -253,20 +246,6 @@
             false
         ],
         "_comment": "Fixed: comb separation is O(n^3) per round \u2014 ~5s per call at 100 nodes. Min-Cut and Triangle Clique provide better gap closure per second for VRPP."
-    },
-    "use_spatial_partitioning": {
-        "type": "categorical",
-        "choices": [
-            false
-        ],
-        "_comment": "Fixed: the flow-sorted median split is already well-balanced. Coordinate-based partitioning adds overhead without measurable benefit on tested instances."
-    },
-    "enable_hybrid_search": {
-        "type": "categorical",
-        "choices": [
-            false
-        ],
-        "_comment": "Fixed: pure DFS is superior to hybrid DFS/BFS when cg_at_root_only=False because basis reuse requires visiting child nodes immediately after their parent."
     },
     "exact_mode": {
         "type": "categorical",

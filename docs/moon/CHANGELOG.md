@@ -45,6 +45,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Release scope questions go in `logic/release.yaml`, not in CI job inputs. Components are addressed by registry key; the BB/BC/BPC acronyms live only in the Studio app's display map (`app/src/gen/config/simulation_metadata.json`).
 - The release test set is written to `logic/test/release_tests.txt` (collection-validated) and `release_tests.excluded.txt` (excluded with reasons) inside the built tree. Running it as a CI gate becomes possible once the P-06 test pruning lands: some kept tests assert the dev tree's full registry, which the filtered release registry intentionally violates.
 - Codex review: invalid user values no longer bypass structured validation through the dataclass fallback; fallback is restricted to schema construction. Added type-validation regression tests.
+- Codex review: check_hpo_jobs.py adds the repository to sys.path for its documented direct CLI/CI invocation.
+
+### Parameter-usage audit and HPO job keys (`2026-10-15`)
+
+#### Added
+
+- `tools/audit_param_usage.py` (P-55): the corrected three-pattern usage audit — attribute reads, dict-key reads and params.py-internal wiring, over the policy directory first and the whole tree second, for params-only AND shared params/config fields. Verdicts: USED / USED-WIDE / INTERNAL-ONLY / INERT, plus a "solver attr read" column so plumbing-only fields (constructed by a dispatcher, never read by the solver — the released-HGS class) are visible at a glance. No false INERT by construction: the wide scope is searched before any INERT verdict. Generated evidence: `.agent/tasks/simulator-v1-refactor-proposal-2026-10-15-appendix-usage.md` (94 classes, 1,131 fields, 13 INERT, 37 released-set plumbing-only fields). This audit gates the P-10 pass: nothing it marks USED / USED-WIDE / INTERNAL-ONLY may be deleted; INERT fields are deleted with the engine literal promoted to a named constant (owner ruling RQ-mistral-1).
+- `tools/check_hpo_jobs.py` (P-56): `--check` requires every HPO job key to resolve to a live field of its policy's config dataclass (or a pipeline-owned section) and every job default to equal the config default; `--convert` rewrites the jobs (file renames, key renames, stale-key drops, default alignment). Wired into the quality job of all four CI files (`.github`/`.gitea`/`.forgejo` `ci.yml`, `.gitlab-ci.yml`). The check turns every future config rename or field removal into a loud CI failure instead of a silently dropped tuning key (the `policy_aco_hh.yaml` precedent).
+
+#### Changed
+
+- **Breaking (HPO jobs):** the 96 simulator HPO job JSONs are converted against the live configs (owner ruling RQ-mistral-2): `adp.json` → `adp_rollout.json` (the job file name is the policy key); stale keys with no live config field are removed (`aks.time_limit_stage_1`, `bc.use_exact_separation`, `bpc.max_cut_iterations`/`use_spatial_partitioning`/`enable_hybrid_search`, `na.model`/`reward`/`vrpp`, `swc_tcf.delta`); job defaults aligned with the config defaults (`alns.start_temp` 100.0 → 0.0, the calibrated default that ran in the paper; `aco_hh.sequence_length`/`operators` → null; `na.seed` → 42). Both HPO stacks remain out of the 1.0.0 release (Q-6); the jobs stay loadable in `main`.
 
 ### Config format and leftover names (`2026-10-15`)
 
