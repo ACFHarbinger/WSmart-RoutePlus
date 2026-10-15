@@ -231,7 +231,7 @@ def find_routes_ortools(
         # Deterministic budget for the Q-14(a) gate: no wall clock, one
         # worker (recent OR-Tools defaults are parallel and nondeterministic).
         search_parameters.solution_limit = int(solution_limit)
-        search_parameters.num_search_workers = 1
+        search_parameters.sat_parameters.num_search_workers = 1
     else:
         duration = Duration()
         duration.FromSeconds(int(time_limit))

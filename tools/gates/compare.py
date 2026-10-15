@@ -21,12 +21,11 @@ from __future__ import annotations
 import math
 from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 
-# Keys that must never fail a gate-(a) comparison. ``time``/``time_spent`` are
-# policy/wall seconds (DS-15); the rest is run metadata, not behaviour.
+# Exclude measured compute/wall time, but retain physical shift hours (time_spent).
 EXCLUDED_KEYS = frozenset(
     {
         "time",
-        "time_spent",
+        "day_wall_time",
         "execution_time",
         "timestamp",
         "run_id",
@@ -107,7 +106,9 @@ def compare_exact(baseline: Dict[str, Any], candidate: Dict[str, Any]) -> List[D
 
 def extract_cell_kpis(sample_metrics: Dict[str, Any]) -> Tuple[float, float]:
     """Return ``(kgkm, overflows)`` from a samples-section metric dict."""
-    return float(sample_metrics["kgkm"]), float(sample_metrics["overflows"])
+    return float(sample_metrics["kg/km"] if "kg/km" in sample_metrics else sample_metrics["kgkm"]), float(
+        sample_metrics["overflows"]
+    )
 
 
 def compare_tolerance(
@@ -123,6 +124,9 @@ def compare_tolerance(
     Either direction outside tolerance fails (better results need review too,
     per RQ-codex-2).
     """
+    values = (baseline_kgkm, baseline_overflows, candidate_kgkm, candidate_overflows, tol_kgkm, tol_overflows)
+    if not all(math.isfinite(v) for v in values) or tol_kgkm < 0 or tol_overflows < 0:
+        return Verdict(False, "metrics and nonnegative tolerances must be finite")
     d_kgkm = abs(candidate_kgkm - baseline_kgkm)
     d_over = abs(candidate_overflows - baseline_overflows)
     passed = d_kgkm <= tol_kgkm and d_over <= tol_overflows
@@ -144,13 +148,21 @@ def compare_certificates(
     Passes when incumbent objectives agree within ``tol`` and both bounds are
     valid certificates (bound >= incumbent on a maximisation objective).
     """
+    if (
+        not all(
+            math.isfinite(v) for v in (baseline_incumbent, baseline_bound, candidate_incumbent, candidate_bound, tol)
+        )
+        or tol < 0
+    ):
+        return Verdict(False, "incumbents, certified bounds and nonnegative tolerance must be finite")
     d_inc = abs(candidate_incumbent - baseline_incumbent)
+    d_bound = abs(candidate_bound - baseline_bound)
     valid_base = baseline_bound + tol >= baseline_incumbent
     valid_cand = candidate_bound + tol >= candidate_incumbent
-    passed = d_inc <= tol and valid_base and valid_cand
+    passed = d_inc <= tol and d_bound <= tol and valid_base and valid_cand
     return Verdict(
         passed,
-        f"|d_incumbent|={d_inc:.3g} (tol {tol:.3g}), base_bound_valid={valid_base}, cand_bound_valid={valid_cand}",
+        f"|d_incumbent|={d_inc:.3g}, |d_bound|={d_bound:.3g} (tol {tol:.3g}), base_bound_valid={valid_base}, cand_bound_valid={valid_cand}",
     )
 
 
@@ -166,6 +178,10 @@ def freeze_tolerances(repeats: List[Dict[str, float]]) -> Dict[str, float]:
         Calibrated on the unchanged code only, frozen before any refactor
         result is seen.
     """
+    if len(repeats) < 2:
+        raise ValueError("At least two unchanged-code repeats are required")
+    if not all(math.isfinite(float(row[key])) for row in repeats for key in ("kgkm", "overflows")):
+        raise ValueError("Calibration metrics must be finite")
     tol_kgkm = 0.0
     tol_over = 0.0
     for i in range(len(repeats)):
@@ -207,13 +223,11 @@ def gate_b_verdict(
     label = f"[{candidate_label}] " if candidate_label else ""
     try:
         verdict = compare_tolerance(
-            float(archived_row["kgkm"]),
-            float(archived_row["overflows"]),
-            float(candidate_row["kgkm"]),
-            float(candidate_row["overflows"]),
+            *extract_cell_kpis(archived_row),
+            *extract_cell_kpis(candidate_row),
             float(tolerances["tol_kgkm"]),
             float(tolerances["tol_overflows"]),
         )
-    except KeyError as e:
+    except (KeyError, ValueError, TypeError) as e:
         return Verdict(False, f"{label}missing key in summary row: {e}")
     return Verdict(verdict.passed, f"{label}{verdict.detail}")

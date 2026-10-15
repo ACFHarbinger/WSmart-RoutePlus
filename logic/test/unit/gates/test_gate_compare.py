@@ -157,3 +157,120 @@ def test_gate_cells_cover_released_routing():
     assert get_cell("bpc")["compare_mode"] == "certificate_fallback"
     assert get_cell("cvrp")["overrides"] == {"solution_limit": 1000}
     assert get_cell("hgs")["overrides"] == {"time_limit": 0, "restart_timer": 0}
+
+
+def test_certificates_require_equal_finite_bounds():
+    assert not compare_certificates(100, 100, 100, 101).passed
+    assert not compare_certificates(100, math.inf, 100, math.inf).passed
+    assert not compare_tolerance(1, 0, 1, 0, math.inf, 0).passed
+
+
+def test_physical_time_is_checked_while_wall_time_is_excluded():
+    assert compare_exact({"time_spent": 1}, {"time_spent": 2})
+    assert not compare_exact({"day_wall_time": 1}, {"day_wall_time": 2})
+
+
+def test_canonical_log_kpi_key_and_time_capped_overrides():
+    assert extract_cell_kpis({"kg/km": 4, "overflows": 2}) == (4, 2)
+    entry = cell_policy_entry("CVRP", time_capped=True)["cvrp"]
+    assert entry["time_limit"] == 60 and entry["solution_limit"] is None
+    assert cell_policy_entry("ALNS", time_capped=True)["alns"]["time_limit"] == 60
+
+
+def test_calibration_rejects_insufficient_or_nonfinite_evidence():
+    with pytest.raises(ValueError):
+        freeze_tolerances([])
+    with pytest.raises(ValueError):
+        freeze_tolerances([{"kgkm": math.nan, "overflows": 0}] * 2)
+
+
+def test_gate_a_cannot_pass_empty_sweeps(tmp_path):
+    from argparse import Namespace
+
+    from tools.gates.run_gate import cmd_gate_a
+
+    with pytest.raises(SystemExit, match="FAILED"):
+        cmd_gate_a(Namespace(baseline=str(tmp_path), candidate=str(tmp_path)))
+
+
+def test_missing_bound_is_not_fabricated():
+    from tools.gates.run_gate import _bound
+
+    with pytest.raises(KeyError):
+        _bound({"samples": {"s0": {"profit": 10}}})
+
+
+def test_log_lookup_finds_nested_lowercase_policy_and_rejects_duplicates(tmp_path):
+    import json
+
+    from tools.gates.run_gate import _load_policy_log
+
+    nested = tmp_path / "5days" / "riomaior100" / "emp"
+    nested.mkdir(parents=True)
+    path = nested / "log_last_minute_cf70_alns_custom_cls_1N.json"
+    path.write_text(json.dumps(_log([0, 1, 0])))
+    assert _load_policy_log(str(tmp_path), "ALNS")["samples"]
+    (nested / "log_other_alns_custom_1N.json").write_text(path.read_text())
+    with pytest.raises(ValueError, match="found 2"):
+        _load_policy_log(str(tmp_path), "ALNS")
+
+
+def test_heavy_lock_is_retained(monkeypatch, tmp_path):
+    import fcntl
+
+    from tools.gates import run_gate
+
+    monkeypatch.setattr(run_gate, "HEAVY_LOCK", str(tmp_path / "heavy.lock"))
+    monkeypatch.setattr(run_gate, "_HEAVY_LOCK_HANDLE", None)
+    monkeypatch.setattr(run_gate, "chain_done", lambda: True)
+    run_gate.require_heavy()  # no heavy execution; only exercise lock lifetime
+    try:
+        with open(run_gate.HEAVY_LOCK, "a") as other, pytest.raises(BlockingIOError):
+            fcntl.flock(other, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    finally:
+        run_gate._HEAVY_LOCK_HANDLE.close()
+
+
+def test_gate_b_rejects_empty_candidates(tmp_path):
+    import json
+    from argparse import Namespace
+
+    from tools.gates.cells import BASELINE_COMMIT
+    from tools.gates.run_gate import cmd_gate_b
+
+    archive = tmp_path / "archive.csv"
+    candidate = tmp_path / "candidate.csv"
+    frozen = tmp_path / "frozen.json"
+    archive.write_text("constructor,city,N,kgkm,overflows\nALNS,Rio Maior,100,4,0\n")
+    candidate.write_text("constructor,city,N,kgkm,overflows\n")
+    frozen.write_text(json.dumps({"baseline_commit": BASELINE_COMMIT, "cells": {}}))
+    with pytest.raises(SystemExit, match="incomplete sweep"):
+        cmd_gate_b(Namespace(archived=str(archive), candidate=str(candidate), tolerances=str(frozen)))
+
+
+def test_failed_samples_cannot_pass_as_identical_artifacts(tmp_path):
+    import json
+
+    from tools.gates.run_gate import _load_policy_log
+
+    path = tmp_path / "log_alns_1N.json"
+    log = _log([0])
+    log["samples"]["s0"]["status"] = "failed"
+    path.write_text(json.dumps(log))
+    with pytest.raises(ValueError, match="Failed samples"):
+        _load_policy_log(str(tmp_path), "ALNS")
+
+
+def test_chain_gate_reads_shared_checkout_log_from_a_worktree(monkeypatch, tmp_path):
+    import subprocess
+
+    from tools.gates import run_gate
+
+    common = tmp_path / "shared" / ".git"
+    common.mkdir(parents=True)
+    log = common.parent / ".agent/cache/train-logs/chain.log"
+    log.parent.mkdir(parents=True)
+    log.write_text("sim chain done\n")
+    monkeypatch.setattr(run_gate, "CHAIN_LOG", ".agent/cache/train-logs/chain.log")
+    monkeypatch.setattr(run_gate.subprocess, "run", lambda *a, **kw: subprocess.CompletedProcess(a, 0, str(common)))
+    assert run_gate.chain_done()
