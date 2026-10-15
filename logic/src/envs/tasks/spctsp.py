@@ -2,25 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Sequence, Union
+from typing import Any, Dict, Optional, Union
 
 import torch
-from tensordict import TensorDict
 
 from logic.src.envs.tasks.pctsp import PCTSP, PCTSPEnv, PCTSPGenerator
 from logic.src.envs.tasks.spec import PROBLEMS, ProblemSpec
 
-
-class SPCTSPGenerator(PCTSPGenerator):
-    """Generator for SPCTSP instances."""
-
-    def _generate(self, batch_size: Union[int, Sequence[int]]) -> TensorDict:
-        td = super()._generate(batch_size)
-        bs = list(batch_size) if isinstance(batch_size, (list, tuple)) else [batch_size]
-        stochastic_prize = td["deterministic_prize"] * (0.8 + 0.4 * torch.rand((*bs, self.num_loc), device=self.device))
-        td["stochastic_prize"] = stochastic_prize
-        td["real_prize"] = stochastic_prize
-        return td
+# SPCTSP draws on the PCTSP generator, whose instances carry the stochastic prize.
+SPCTSPGenerator = PCTSPGenerator
 
 
 class SPCTSPEnv(PCTSPEnv):
@@ -28,6 +18,8 @@ class SPCTSPEnv(PCTSPEnv):
 
     NAME: str = "spctsp"
     name: str = "spctsp"
+    # The prize received is the stochastic one (the pre-WP-07 envs/routing/spctsp.py).
+    _stochastic: bool = True
 
     def __init__(
         self,
