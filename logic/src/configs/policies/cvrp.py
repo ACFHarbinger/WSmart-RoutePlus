@@ -32,6 +32,8 @@ class CVRPConfig:
             declares the policy-YAML key so config validation accepts it.
         packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
+        solution_limit: Deterministic OR-Tools budget (WP-12 gate-(a)).
+            None (default) keeps the time_limit behaviour unchanged.
     """
 
     cache: bool = False
@@ -41,3 +43,4 @@ class CVRPConfig:
     n_vehicles: int = 0
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
+    solution_limit: Optional[int] = None

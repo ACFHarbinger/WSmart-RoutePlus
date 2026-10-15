@@ -67,6 +67,32 @@ def test_config_defaults_to_ortools_with_a_seed():
     assert CVRPConfig(engine="pyvrp").engine == "pyvrp"
 
 
+def test_solution_limit_is_none_by_default_and_flows_from_config():
+    # WP-12 deterministic CVRP budget for gate-(a). None preserves the
+    # time_limit path; a value switches OR-Tools to solution counting.
+    assert CVRPConfig().solution_limit is None
+    dist = np.array([[0, 10, 15, 20], [10, 0, 35, 25], [15, 35, 0, 30], [20, 25, 30, 0]])
+    wastes = np.array([40.0, 50.0, 60.0])
+    kw = dict(max_caps=400.0, to_collect=np.arange(1, 4), n_vehicles=0)
+    # Through the typed config, as the policy passes it: repeatable without a wall clock.
+    runs = [find_routes_ortools(dist, wastes, cfg={"solution_limit": 200, "seed": 7}, **kw) for _ in range(2)]
+    assert runs[0] == runs[1]
+    assert sorted(n for n in runs[0] if n != 0) == [1, 2, 3]
+
+
+def test_ortools_solution_limit_is_deterministic():
+    # Gate-(a) needs the same tour on repeated runs: fixed seed plus a
+    # solution count (no wall clock, single worker) must be repeatable.
+    dist = np.array([[0, 10, 15, 20], [10, 0, 35, 25], [15, 35, 0, 30], [20, 25, 30, 0]])
+    wastes = np.array([40.0, 50.0, 60.0])
+    kw = dict(max_caps=400.0, to_collect=np.arange(1, 4), n_vehicles=0, seed=7, solution_limit=200)
+    first = find_routes_ortools(dist, wastes, **kw)
+    second = find_routes_ortools(dist, wastes, **kw)
+    assert first == second
+    assert first[0] == 0 and first[-1] == 0
+    assert sorted(n for n in first if n != 0) == [1, 2, 3]
+
+
 @pytest.mark.parametrize(
     ("engine", "solver", "engine_kwarg"),
     [("ortools", "find_routes_ortools", None), ("pyvrp", "find_routes", "pyvrp"), ("clarke_wright", "find_routes", "clarke_wright")],

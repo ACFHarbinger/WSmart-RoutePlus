@@ -246,6 +246,19 @@ Codex P-21/P-42 objectives and KPI primitives (`envs/tasks/common/objectives.py`
 #### Added
 
 - `logic/test/unit/utils/test_registry.py` covers name lookup, `create`, tag queries, Hydra aliases, and the torch-free classical import path.
+- Codex review: gates fail on incomplete/ambiguous sweeps and absent/unequal/non-finite certificates; retain physical time comparisons and the heavy lock. Calibration uses separate time-capped repeats; logs use canonical keys and recursive lowercase policy lookup. Fixed OR-Tools SAT worker parameter nesting. Heavy gates remain unrun.
+
+### Regression gates harness, WP-12 #117 (`2026-10-15`)
+
+#### Added
+
+- Q-14 gate harness in `tools/gates/`: `cells.py` (10 gate-(a) cells — each released routing algorithm x last-minute_cf70 x CLS on Rio Maior 100 over 5 days, with per-solver timing-off overrides), `compare.py` (bit-for-bit compare excluding timing/metadata, tolerance and RQ-kimi-1 certificate verdicts, RQ-codex-2 tolerance freezing), `run_gate.py` (`overrides` dry print plus heavy-gated `calibrate`, `gate-a`, `gate-b`, refusing to run before `sim chain done` and on anything but the unchanged baseline code for calibration).
+- Deterministic CVRP budget for gate-(a): optional `solution_limit` on `find_routes_ortools` (single search worker, no wall clock; `None` default preserves the `time_limit` path), threaded through `CVRPPolicy` from `CVRPParams.solution_limit` / `CVRPConfig.solution_limit`. Behaviour-preserving: defaults keep current behaviour. Note for WP-04 integration: `CVRPConfig` on the WP-04 branch needs the same one-line field.
+- Durable tests: `logic/test/unit/gates/test_gate_compare.py` (15 tests, pass) plus `solution_limit` plumbing/determinism tests in `test_cvrp_engines.py` (added, not run in the worktree: the empty `wsmart_bin_analysis` submodule breaks the `logic.src.policies` import chain there; they run where the submodule exists).
+
+#### Changed
+
+- Nothing behavioural. Heavy calibration and gate runs wait for `sim chain done` (Q-15); tolerances are frozen from unchanged-code repeats before any behaviour-preserving package merges.
 
 ### Packing and routing names (`2026-10-15`)
 
