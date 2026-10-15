@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Cross-package review (`2026-10-15`)
+
+- Codex review: gates fail on incomplete/ambiguous sweeps and absent/unequal/non-finite certificates; retain physical time comparisons and the heavy lock. Calibration uses separate time-capped repeats; logs use canonical keys and recursive lowercase policy lookup. Fixed OR-Tools SAT worker parameter nesting. Heavy gates remain unrun.
+
 ### Regression gates harness, WP-12 #117 (`2026-10-15`)
 
 #### Added

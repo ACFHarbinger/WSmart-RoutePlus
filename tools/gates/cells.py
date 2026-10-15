@@ -43,6 +43,7 @@ Per-solver notes:
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any, Dict, List
 
 # Unchanged-code baseline the tolerances are calibrated on (issue #117).
@@ -114,7 +115,7 @@ def get_cell(constructor: str) -> Dict[str, Any]:
     raise KeyError(f"Unknown gate-(a) constructor: {constructor!r}")
 
 
-def cell_policy_entry(constructor: str, model_path: str = "") -> Dict[str, Any]:
+def cell_policy_entry(constructor: str, model_path: str = "", time_capped: bool = False) -> Dict[str, Any]:
     """Build one ``sim.policies`` entry for a gate-(a) cell.
 
     Args:
@@ -131,6 +132,12 @@ def cell_policy_entry(constructor: str, model_path: str = "") -> Dict[str, Any]:
         "route_improvement": GATE_A_IMPROVER,
     }
     overrides.update(cell.get("overrides", {}))
+    if (Path(__file__).resolve().parents[2] / "logic/configs/policies/other/pk_last_minute.yaml").exists():
+        overrides["packing"] = {"other/pk_last_minute.yaml": ["last_minute_cf70"]}
+    if time_capped and cell["policy"] != "na":
+        overrides["time_limit"] = 60.0
+        if cell["policy"] == "cvrp":
+            overrides["solution_limit"] = None
     if overrides.get("model_path") == "CHAIN_CHECKPOINT_PLACEHOLDER":
         if not model_path:
             raise ValueError("AM cell needs --model-path (chain checkpoint).")

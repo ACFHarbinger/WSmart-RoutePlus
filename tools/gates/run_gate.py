@@ -23,9 +23,11 @@ from __future__ import annotations
 import argparse
 import fcntl
 import json
+import math
 import os
 import subprocess
 import sys
+from pathlib import Path
 from typing import Any, Dict, List
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -48,24 +50,61 @@ from tools.gates.compare import (  # noqa: E402
 
 CHAIN_LOG = ".agent/cache/train-logs/chain.log"
 HEAVY_LOCK = os.path.expanduser("~/.cache/wsr-review/heavy.lock")
+_HEAVY_LOCK_HANDLE = None
 
 
 def chain_done() -> bool:
     """Return True once the AM/sim chain has finished (Q-15 gate)."""
-    if not os.path.exists(CHAIN_LOG):
+    log = Path(CHAIN_LOG)
+    if not log.is_absolute():
+        common = subprocess.run(
+            ["git", "rev-parse", "--git-common-dir"],
+            capture_output=True,
+            text=True,
+        )
+        if common.returncode == 0 and common.stdout.strip():
+            log = Path(common.stdout.strip()).resolve().parent / CHAIN_LOG
+    if not log.is_file():
         return False
-    with open(CHAIN_LOG) as f:
+    with log.open() as f:
         return any("sim chain done" in line for line in f)
 
 
 def code_matches_baseline() -> bool:
     """Return True when code paths equal the calibration baseline commit."""
     out = subprocess.run(
-        ["git", "diff", "--stat", BASELINE_COMMIT, "HEAD", "--", "logic", "tools", "main.py"],
+        [
+            "git",
+            "diff",
+            "--stat",
+            BASELINE_COMMIT,
+            "--",
+            "logic/src",
+            "logic/controllers",
+            "logic/configs",
+            "assets/configs",
+            "main.py",
+        ],
         capture_output=True,
         text=True,
     )
-    return out.returncode == 0 and out.stdout.strip() == ""
+    untracked = subprocess.run(
+        [
+            "git",
+            "ls-files",
+            "--others",
+            "--exclude-standard",
+            "--",
+            "logic/src",
+            "logic/controllers",
+            "logic/configs",
+            "assets/configs",
+            "main.py",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    return out.returncode == 0 and not out.stdout.strip() and untracked.returncode == 0 and not untracked.stdout.strip()
 
 
 def take_heavy_lock():
@@ -84,9 +123,11 @@ def take_heavy_lock():
 
 def require_heavy() -> None:
     """Enforce the Q-15/heavy-lock preconditions for any heavy run."""
+    global _HEAVY_LOCK_HANDLE
     if not chain_done():
         raise SystemExit(f"Refusing heavy run: {CHAIN_LOG!r} shows no 'sim chain done'.")
-    take_heavy_lock()  # held for the process lifetime
+    if _HEAVY_LOCK_HANDLE is None or _HEAVY_LOCK_HANDLE.closed:
+        _HEAVY_LOCK_HANDLE = take_heavy_lock()
 
 
 def _hydra_value(value: Any) -> str:
@@ -98,7 +139,7 @@ def _hydra_value(value: Any) -> str:
     return json.dumps(value)
 
 
-def cell_dotlist(constructor: str, model_path: str = "") -> List[str]:
+def cell_dotlist(constructor: str, model_path: str = "", time_capped: bool = False) -> List[str]:
     """Build the full Hydra args for one gate-(a) cell (dry, no run).
 
     One ``sim.policies`` entry carries the per-solver overrides; the
@@ -108,7 +149,7 @@ def cell_dotlist(constructor: str, model_path: str = "") -> List[str]:
     """
     import json
 
-    entry = cell_policy_entry(constructor, model_path=model_path)
+    entry = cell_policy_entry(constructor, model_path=model_path, time_capped=time_capped)
     dotlist = [f"{k}={_hydra_value(v)}" for k, v in GATE_A_SIM.items()]
     dotlist.append(f"sim.policies={json.dumps([entry])}")
     return dotlist
@@ -116,12 +157,24 @@ def cell_dotlist(constructor: str, model_path: str = "") -> List[str]:
 
 def run_test_sim(dotlist: List[str], run_name: str) -> str:
     """Run one test_sim cell under ``nice``; return the results directory."""
-    cmd = ["nice", "-n", "15", sys.executable, "main.py", "test_sim", f"sim.run_name={run_name}"] + dotlist
+    results_root = os.path.abspath(os.path.join(".agent", "cache", "gates", run_name))
+    if os.path.exists(results_root):
+        raise SystemExit(f"Refusing to reuse gate results directory: {results_root}")
+    cmd = [
+        "nice",
+        "-n",
+        "15",
+        sys.executable,
+        "main.py",
+        "test_sim",
+        f"sim.output_dir={results_root}",
+        f"sim.run_name={run_name}",
+    ] + dotlist
     print("+", " ".join(cmd), flush=True)
     proc = subprocess.run(cmd)
     if proc.returncode != 0:
         raise SystemExit(f"test_sim failed for run {run_name} (exit {proc.returncode}).")
-    return os.path.join("outputs", "simulations", run_name)
+    return results_root
 
 
 def cmd_overrides(args: argparse.Namespace) -> None:
@@ -139,7 +192,11 @@ def cmd_calibrate(args: argparse.Namespace) -> None:
             "tolerances must be calibrated on the unchanged code."
         )
     frozen: Dict[str, Any] = {"baseline_commit": BASELINE_COMMIT, "cells": {}}
-    repeats = args.repeats or CALIBRATION_REPEATS
+    repeats = CALIBRATION_REPEATS if args.repeats is None else args.repeats
+    if repeats < 2:
+        raise SystemExit("Calibration needs at least two repeats")
+    if os.path.exists(args.out):
+        raise SystemExit("Frozen tolerances already exist; choose a fresh output path")
     for cell in GATE_A_CELLS:
         name = cell["constructor"]
         if name == "AM" and not args.model_path:
@@ -157,10 +214,18 @@ def cmd_calibrate(args: argparse.Namespace) -> None:
         mode = cell.get("compare_mode", "exact")
         if diffs and mode != "certificate_fallback":
             raise SystemExit(f"Cell {name}: {len(diffs)} repeat diffs; config is not deterministic.")
+        timed_logs = []
+        for n in range(1, repeats + 1):
+            results = run_test_sim(
+                cell_dotlist(name, model_path=args.model_path or "", time_capped=True),
+                f"gateB-cal-{name.lower()}-r{n}",
+            )
+            timed_logs.append(_load_policy_log(results, name))
         frozen["cells"][name] = {
             "mode": "certificate" if diffs else "exact",
             "repeat_diffs": len(diffs),
-            **freeze_tolerances([_log_kpis(log) for log in logs]),
+            "time_limit_seconds": 60.0,
+            **freeze_tolerances([_log_kpis(log) for log in timed_logs]),
         }
         print(f"cell {name}: mode={frozen['cells'][name]['mode']} diffs={len(diffs)}", flush=True)
     with open(args.out, "w") as f:
@@ -170,23 +235,24 @@ def cmd_calibrate(args: argparse.Namespace) -> None:
 
 def cmd_gate_a(args: argparse.Namespace) -> None:
     """Bit-for-bit paired compare of two finished gate-(a) sweeps."""
-    import glob
-
     failures = 0
     for cell in GATE_A_CELLS:
         name = cell["constructor"]
-        base_logs = glob.glob(os.path.join(args.baseline, f"log_*{name}*N.json"))
-        cand_logs = glob.glob(os.path.join(args.candidate, f"log_*{name}*N.json"))
-        if not base_logs or not cand_logs:
-            print(f"cell {name}: MISSING log pair (skipped with reason)")
+        try:
+            base = _load_policy_log(args.baseline, name)
+            cand = _load_policy_log(args.candidate, name)
+        except (SystemExit, ValueError) as exc:
+            print(f"cell {name}: {exc}")
+            failures += 1
             continue
-        with open(base_logs[0]) as f:
-            base = json.load(f)
-        with open(cand_logs[0]) as f:
-            cand = json.load(f)
         diffs = compare_exact(base, cand)
         if diffs and cell.get("compare_mode") == "certificate_fallback":
-            verdict = compare_certificates(_incumbent(base), _bound(base), _incumbent(cand), _bound(cand), CERT_TOL)
+            try:
+                verdict = compare_certificates(_incumbent(base), _bound(base), _incumbent(cand), _bound(cand), CERT_TOL)
+            except (KeyError, ValueError, TypeError) as exc:
+                print(f"cell {name}: certificate evidence missing or invalid: {exc}")
+                failures += 1
+                continue
             print(f"cell {name}: {len(diffs)} bit diffs; certificate gate: {verdict}")
             failures += 0 if verdict.passed else 1
         else:
@@ -202,51 +268,117 @@ def cmd_gate_b(args: argparse.Namespace) -> None:
     import csv
 
     with open(args.tolerances) as f:
-        tolerances = json.load(f)["cells"]
+        frozen = json.load(f)
+    if frozen.get("baseline_commit") != BASELINE_COMMIT:
+        raise SystemExit("Frozen tolerances do not identify the required baseline")
+    tolerances = frozen["cells"]
     with open(args.archived, newline="") as f:
-        archived = {(r["constructor"], r["city"], r["N"]): r for r in csv.DictReader(f)}
+        archived_reader = csv.DictReader(f)
+        archive_fields = set(archived_reader.fieldnames or ())
+        archive_rows = list(archived_reader)
     with open(args.candidate, newline="") as f:
-        failures = 0
-        for row in csv.DictReader(f):
-            key = (row["constructor"], row["city"], row["N"])
-            if key not in archived:
-                print(f"row {key}: no archived counterpart (skipped with reason)")
-                continue
-            tol = tolerances.get(row["constructor"], {})
-            verdict = gate_b_verdict(archived[key], row, tol, row["constructor"])
-            print(f"row {key}: {'PASS' if verdict.passed else 'REVIEW'}: {verdict.detail}")
-            failures += 0 if verdict.passed else 1
+        candidate_reader = csv.DictReader(f)
+        candidate_fields = set(candidate_reader.fieldnames or ())
+        candidate_rows = list(candidate_reader)
+    axes = (
+        "constructor",
+        "city",
+        "N",
+        "dist",
+        "improver",
+        "strategy",
+        "cf",
+        "sl_var",
+        "acceptance",
+        "days_simulated",
+        "seed",
+        "sample_id",
+    )
+    selected_axes = [key for key in axes if key in archive_fields or key in candidate_fields]
+    required = set(selected_axes) | {"constructor", "city", "N"}
+    if not required <= archive_fields or not required <= candidate_fields:
+        raise SystemExit("Archive and candidate must expose the same complete pairing axes")
+
+    def index_rows(rows):
+        indexed = {}
+        for row in rows:
+            key = tuple(row[name] for name in selected_axes)
+            if key in indexed:
+                raise SystemExit(f"Duplicate comparison cell: {key}")
+            indexed[key] = row
+        return indexed
+
+    archived = index_rows(archive_rows)
+    candidate = index_rows(candidate_rows)
+    if not archived or archived.keys() != candidate.keys():
+        raise SystemExit("Missing or unmatched required cells; no gate can pass an incomplete sweep")
+    failures = 0
+    for key, row in candidate.items():
+        normalized = row["constructor"].replace("-", "_").upper()
+        tolerance_keys = [name for name in tolerances if name.replace("-", "_").upper() == normalized]
+        if len(tolerance_keys) != 1:
+            raise SystemExit(f"No unique frozen tolerance for {row['constructor']}")
+        tol = tolerances[tolerance_keys[0]]
+        if tol.get("time_limit_seconds") != 60.0:
+            raise SystemExit("Gate-(b) requires tolerances calibrated under time-capped runs")
+        if row.get("status", "completed") != "completed" or float(row.get("n_failed", 0)) != 0:
+            raise SystemExit(f"Failed candidate samples in {key}")
+        verdict = gate_b_verdict(archived[key], row, tol, row["constructor"])
+        print(f"row {key}: {'PASS' if verdict.passed else 'REVIEW'}: {verdict.detail}")
+        failures += 0 if verdict.passed else 1
     if failures:
         raise SystemExit(f"gate-(b) needs review in {failures} row(s).")
     print("gate-(b) PASSED.")
 
 
 def _load_policy_log(results_dir: str, constructor: str) -> Dict[str, Any]:
-    import glob
+    from tools.gates.cells import get_cell
 
-    matches = glob.glob(os.path.join(results_dir, f"log_*{constructor}*N.json"))
-    if not matches:
-        raise SystemExit(f"No policy log for {constructor} in {results_dir}.")
-    with open(matches[0]) as f:
-        return json.load(f)
+    token = get_cell(constructor)["policy"].lower()
+    matches = [
+        path for path in Path(results_dir).rglob("log_*N.json") if f"_{token}_" in path.name.lower().replace("-", "_")
+    ]
+    if len(matches) != 1:
+        raise ValueError(f"Expected one log for {constructor} in {results_dir}, found {len(matches)}")
+    with matches[0].open() as f:
+        log = json.load(f)
+    if not isinstance(log, dict) or not log.get("samples"):
+        raise ValueError(f"Empty or malformed samples for {constructor}")
+    _log_kpis(log)  # failed/non-finite samples cannot pass even if both logs match
+    return log
 
 
 def _log_kpis(log: Dict[str, Any]) -> Dict[str, float]:
+    from tools.gates.compare import extract_cell_kpis
+
     samples = log.get("samples", {})
-    first = next(iter(samples.values())) if isinstance(samples, dict) and samples else samples
-    return {"kgkm": float(first["kgkm"]), "overflows": float(first["overflows"])}
+    if not isinstance(samples, dict) or not samples:
+        raise ValueError("Gate requires nonempty per-sample results")
+    if any(row.get("status", "completed") != "completed" for row in samples.values()):
+        raise ValueError("Failed samples cannot pass a regression gate")
+    values = [extract_cell_kpis(row) for row in samples.values()]
+    if not all(math.isfinite(value) for pair in values for value in pair):
+        raise ValueError("Gate KPIs must be finite")
+    return {"kgkm": sum(v[0] for v in values) / len(values), "overflows": sum(v[1] for v in values) / len(values)}
+
+
+def _single_sample(log: Dict[str, Any]) -> Dict[str, Any]:
+    samples = log.get("samples", {})
+    if not isinstance(samples, dict) or len(samples) != 1:
+        raise ValueError("Certificate fallback needs one explicitly paired sample")
+    sample = next(iter(samples.values()))
+    if sample.get("status", "completed") != "completed":
+        raise ValueError("Failed sample has no acceptable certificate")
+    return sample
 
 
 def _incumbent(log: Dict[str, Any]) -> float:
-    samples = log.get("samples", {})
-    first = next(iter(samples.values())) if isinstance(samples, dict) and samples else samples
-    return float(first["profit"])
+    return float(_single_sample(log)["profit"])
 
 
 def _bound(log: Dict[str, Any]) -> float:
-    samples = log.get("samples", {})
-    first = next(iter(samples.values())) if isinstance(samples, dict) and samples else samples
-    return float(first.get("bound", first["profit"]))
+    # A missing certificate is NOT a proof that bound equals incumbent.
+    return float(_single_sample(log)["bound"])
 
 
 def main(argv: List[str]) -> None:
