@@ -27,6 +27,9 @@ class CVRPConfig:
         time_limit: Maximum time in seconds for the solver.
         seed: Random seed for reproducibility.
         engine: Solver engine to use ('ortools', 'gurobi').
+        n_vehicles: Number of vehicles (0 = unlimited fleet). The fleet size
+            actually used comes from the simulation context; this field only
+            declares the policy-YAML key so config validation accepts it.
         packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
     """
@@ -34,6 +37,7 @@ class CVRPConfig:
     cache: bool = False
     time_limit: float = 60.0
     engine: str = "ortools"
-    seed: Optional[int] = None
+    seed: Optional[int] = 42
+    n_vehicles: int = 0
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

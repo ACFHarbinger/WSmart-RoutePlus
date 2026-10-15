@@ -8,7 +8,7 @@ Example:
     >>> from configs.policies.aco_hh import HyperHeuristicACOConfig
     >>> config = HyperHeuristicACOConfig()
     >>> config.n_ants
-    20
+    10
 """
 
 from dataclasses import dataclass
@@ -27,6 +27,7 @@ class HyperHeuristicACOConfig:
         alpha: Pheromone importance factor.
         beta: Heuristic (distance) importance factor.
         rho: Pheromone evaporation rate.
+        eta_decay: Pheromone visibility decay factor.
         tau_0: Initial pheromone level.
         Q: Pheromone floor constant added to every improving-journey deposit.
         lambda_val: Base for the visibility exponential when use_dynamic_lambda=False.
@@ -47,17 +48,18 @@ class HyperHeuristicACOConfig:
         route_improvement: List of route improvement operations to apply.
     """
 
-    n_ants: int = 20
+    n_ants: int = 10
     alpha: float = 1.0
     beta: float = 2.0
-    rho: float = 0.1
+    rho: float = 0.5
+    eta_decay: float = 0.5
     tau_0: float = 1.0
     Q: float = 1.0
     lambda_val: float = 1.0001
     use_dynamic_lambda: bool = True
     max_iterations: int = 50
     elitism_ratio: float = 0.5
-    time_limit: float = 30.0
+    time_limit: float = 60.0
     seed: Optional[int] = None
     stagnation_limit: int = 10
     sequence_length: Optional[int] = None
@@ -67,6 +69,6 @@ class HyperHeuristicACOConfig:
     operators: Optional[List[str]] = None
     time_weighted_visibility: bool = False
     vrpp: bool = True
-    profit_aware_operators: bool = False
+    profit_aware_operators: bool = True
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

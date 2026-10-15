@@ -83,17 +83,15 @@ def run_bpc_stage(
                           failure/timeout).
     """
     try:
+        from logic.src.configs.policies.bpc import BPCConfig
         from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price_and_cut.bpc_engine import (
             run_bpc,
-        )
-        from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price_and_cut.params import (
-            BPCParams,
         )
     except ImportError as exc:
         logger.warning("[BPC] Import failed — stage skipped: %s", exc)
         return [], incumbent
 
-    bpc_params = BPCParams(
+    bpc_params = BPCConfig(
         time_limit=time_limit,
         use_ng_routes=True,
         ng_neighborhood_size=pipeline_params.bpc_ng_size(),

@@ -22,8 +22,6 @@ from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price
     run_bpc,
 )
 
-from .params import BPCParams
-
 
 @GlobalRegistry.register(
     PolicyTag.EXACT,
@@ -100,8 +98,9 @@ class BPCPolicy(BaseRoutingPolicy):
         # Convert local mandatory indices to a set of mandatory nodes for the solver
         mandatory_indices: Set[int] = set(mandatory_nodes)
 
-        # Initialize standardized params object (Phase 1 refactoring)
-        params = BPCParams.from_config(values)
+        # Initialize standardized config object (Phase 1 refactoring, P-10):
+        # the typed config is the single source of truth for solver settings.
+        cfg = self._effective_config(values)
 
         # Extract vehicle limit from simulation context (sim.n_vehicles)
         n_vehicles = kwargs.get("n_vehicles")
@@ -120,7 +119,7 @@ class BPCPolicy(BaseRoutingPolicy):
             capacity,
             revenue,
             cost_unit,
-            params,
+            cfg,
             mandatory_indices=mandatory_indices,
             vehicle_limit=vehicle_limit,
             env=kwargs.get("model_env"),

@@ -27,7 +27,7 @@ Reference:
     with Heuristic Search for Routing Problems", 2023.
 """
 
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pyvrp
@@ -35,9 +35,27 @@ from google.protobuf.duration_pb2 import Duration
 from ortools.constraint_solver import pywrapcp, routing_enums_pb2
 from pyvrp.stop import MaxRuntime
 
+from logic.src.configs.policies import CVRPConfig
 from logic.src.constants.routing import SCALE
+from logic.src.policies.routing.base.base_routing_policy import _structured_load, _unwrap_engine_section
 from logic.src.tracking.viz_mixin import PolicyStateRecorder
 from logic.src.utils.routing.clark_wright import clarke_wright_solve
+
+
+def _load_cvrp_config(cfg: Optional[Union[CVRPConfig, Dict[str, Any]]]) -> CVRPConfig:
+    """Standardize engine config input to the typed ``CVRPConfig`` (P-10).
+
+    Args:
+        cfg: ``CVRPConfig`` instance, raw mapping, or None.
+
+    Returns:
+        CVRPConfig: Typed configuration.
+    """
+    if cfg is None:
+        return CVRPConfig()
+    if isinstance(cfg, dict):
+        return _structured_load(CVRPConfig, _unwrap_engine_section(cfg))
+    return cfg
 
 
 def find_routes(
@@ -51,6 +69,7 @@ def find_routes(
     time_limit=2.0,
     seed=42,
     engine="pyvrp",  # Added engine param
+    cfg: Optional[Union[CVRPConfig, Dict[str, Any]]] = None,
     recorder: Optional[PolicyStateRecorder] = None,
 ):
     """Solve CVRP using PyVRP or OR-Tools.
@@ -66,11 +85,19 @@ def find_routes(
         time_limit: Time limit for solving.
         seed: Random seed.
         engine: Solver engine to use (pyvrp or ortools).
+        cfg: Typed CVRPConfig (or raw dict); when given, its ``time_limit``
+            and ``seed`` override the keyword defaults.
         recorder: Policy state recorder.
 
     Returns:
         List[int]: Flattened tour with depot separators. Format: [0, route1..., 0, route2..., 0]
     """
+    if cfg is not None:
+        cfg = _load_cvrp_config(cfg)
+        time_limit = cfg.time_limit
+        if cfg.seed is not None:
+            seed = cfg.seed
+
     if engine in ("custom", "clarke_wright"):
         # Mapper for wastes dict
         to_collect = [int(i) for i in to_collect]
@@ -151,6 +178,7 @@ def find_routes_ortools(
     depot=0,
     time_limit=2,
     seed=42,
+    cfg: Optional[Union[CVRPConfig, Dict[str, Any]]] = None,
     recorder: Optional[PolicyStateRecorder] = None,
 ):
     """
@@ -169,11 +197,18 @@ def find_routes_ortools(
         depot: Depot node.
         time_limit: Time limit for solving.
         seed: Random seed.
+        cfg: Typed CVRPConfig (or raw dict); when given, its ``time_limit``
+            and ``seed`` override the keyword defaults.
         recorder: Policy state recorder.
 
     Returns:
         List[int]: Flattened tour with depot separators
     """
+    if cfg is not None:
+        cfg = _load_cvrp_config(cfg)
+        time_limit = cfg.time_limit
+        if cfg.seed is not None:
+            seed = cfg.seed
     # Mapping: subset index -> original index
     subset_indices = [depot] + list(to_collect)
 

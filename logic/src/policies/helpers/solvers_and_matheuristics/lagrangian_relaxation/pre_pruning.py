@@ -67,7 +67,7 @@ def compute_lr_bound_at_node(
         C:            Distance cost coefficient.
         mandatory:      Customers forced in by branching (forced_in for the UOP).
         forced_out:   Customers forced out by branching (excluded from UOP).
-        params:       BPCParams carrying the lr_* fields.
+        params:       BPCConfig carrying the lr_* fields.
         time_budget:  Wall-clock seconds available for the subgradient phase.
         env:          Optional shared Gurobi environment.
         recorder:     Optional telemetry recorder.

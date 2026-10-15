@@ -1,4 +1,4 @@
-"""Regression tests for B-kimi-34: BranchAndBoundTree must read the real BPCParams fields.
+"""Regression tests for B-kimi-34: BranchAndBoundTree must read the real BPCConfig fields.
 
 Before the fix, the tree read non-existent aliases (``max_branch_nodes``,
 ``tree_search_strategy``) via ``getattr`` fallbacks, so a params-only caller
@@ -12,21 +12,17 @@ import warnings
 import pytest
 
 from logic.src.policies.helpers.solvers_and_matheuristics.branching.tree import BranchAndBoundTree
-from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price_and_cut.params import (
-    BPCParams,
-)
+from logic.src.configs.policies import BPCConfig
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 def test_tree_reads_real_params_fields() -> None:
     """A params-only construction must honour search_strategy and max_bb_nodes."""
-    params = BPCParams.from_config(
-        {
-            "search_strategy": "depth_first",
-            "branching_strategy": "divergence",
-            "max_bb_nodes": 7,
-        }
+    params = BPCConfig(
+        search_strategy="depth_first",
+        branching_strategy="divergence",
+        max_bb_nodes=7,
     )
     with warnings.catch_warnings():
         warnings.simplefilter("error")  # any DeprecationWarning fails the test

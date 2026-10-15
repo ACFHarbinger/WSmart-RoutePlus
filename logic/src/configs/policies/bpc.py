@@ -52,8 +52,6 @@ class BPCConfig:
             descendant nodes, no new columns are generated (use the pool built at
             root).  Replicates the "CG at root only" experiment in Table 2 of
             Barnhart, Hane, and Vance (2000).  Trades solution quality for speed.
-        use_swc_tcf_heuristic_pricing: Whether to use SWC-TCF as a fast heuristic pricer.
-        use_swc_tcf_primal_heuristic: Whether to use SWC-TCF as a primal heuristic at nodes.
         rcspp_timeout: Safety cap for single pricer call (seconds).
         rcspp_max_labels: Safety cap to prevent OOM in RCSPP.
         lr_pre_pruning: Whether to enable pre-pruning using the Lagrangian Relaxation (LR) heuristic.
@@ -72,38 +70,38 @@ class BPCConfig:
     """
 
     time_limit: float = 60.0
-    profit_aware_operators: bool = False
+    profit_aware_operators: bool = True
     vrpp: bool = True
     seed: Optional[int] = None
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
     search_strategy: str = "depth_first"
-    cutting_planes: str = "rcc"
+    cutting_planes: str = "all"
     branching_strategy: str = "divergence"
-    max_cg_iterations: int = 50
-    max_cuts_per_iteration: int = 5
-    max_routes_per_pricing: int = 5
-    max_bb_nodes: int = 1000
-    optimality_gap: float = 1e-4
-    early_termination_gap: float = 1e-3
+    max_cg_iterations: int = 150
+    max_cuts_per_iteration: int = 10
+    max_routes_per_pricing: int = 50
+    max_bb_nodes: int = 2000
+    optimality_gap: float = 0.005
+    early_termination_gap: float = 0.01
     use_ng_routes: bool = True
-    ng_neighborhood_size: int = 8
+    ng_neighborhood_size: int = 12
     enable_heuristic_rcc_separation: bool = True
     enable_comb_cuts: bool = False
-    cut_orthogonality_threshold: float = 0.8
-    enable_strong_branching_heuristic: bool = False  # see policy_bpc.yaml
+    cut_orthogonality_threshold: float = 0.7
+    enable_strong_branching_heuristic: bool = False
     enable_column_pool_deduplication: bool = True
-    rc_tolerance: float = 1e-5
+    rc_tolerance: float = 1e-6
     exact_mode: bool = False
     strong_branching_size: int = 5
     cg_at_root_only: bool = False
-    lr_pre_pruning: bool = False
+    lr_pre_pruning: bool = True
     lr_lambda_init: float = 0.0
-    lr_max_subgradient_iters: int = 30
+    lr_max_subgradient_iters: int = 40
     lr_subgradient_theta: float = 1.0
-    lr_op_time_limit: float = 3.0
+    lr_op_time_limit: float = 5.0
     lr_pre_pruning_depth_limit: int = -1
-    lr_warm_start_cg: bool = False
+    lr_warm_start_cg: bool = True
     rcspp_timeout: float = 30.0  # Safety cap for single pricer call
     rcspp_max_labels: int = 1000000  # Safety cap to prevent OOM
     prefer_shorter_path_dfs: bool = True

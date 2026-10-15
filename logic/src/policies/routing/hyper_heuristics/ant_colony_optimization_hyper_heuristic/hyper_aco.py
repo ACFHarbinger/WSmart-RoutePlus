@@ -28,7 +28,7 @@ Attributes:
 
 Example:
     >>> from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic import HyperHeuristicACO
-    >>> solver = HyperHeuristicACO(dist_matrix, wastes, capacity, R, C, params)
+    >>> solver = HyperHeuristicACO(dist_matrix, wastes, capacity, R, C, cfg)
     >>> best_solution = solver.solve(initial_solution)
 """
 
@@ -36,10 +36,11 @@ import copy
 import math
 import random
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
+from logic.src.configs.policies.aco_hh import HyperHeuristicACOConfig
 from logic.src.policies.helpers.operators import (
     bb_insertion,
     bb_profit_insertion,
@@ -64,12 +65,12 @@ from logic.src.policies.helpers.operators import (
     savings_insertion,
     savings_profit_insertion,
 )
+from logic.src.policies.routing.base.base_routing_policy import _structured_load, _unwrap_engine_section
 
 from .hyper_operators import (
     HYPER_OPERATORS,
     HyperOperatorContext,
 )
-from .params import HyperACOParams
 
 
 def _elitism_sync_count(n_ants: int, elitism_ratio: float) -> int:
@@ -90,7 +91,7 @@ class HyperHeuristicACO:
         capacity: Vehicle capacity.
         R: Revenue multiplier.
         C: Cost multiplier.
-        params: Hyper-heuristics parameters.
+        cfg: Hyper-heuristics parameters.
         initial_solution: Initial routes.
         mandatory_nodes: Mandatory nodes.
         random: Random number generator.
@@ -117,7 +118,7 @@ class HyperHeuristicACO:
         capacity: float,
         R: float,
         C: float,
-        params: Optional[HyperACOParams] = None,
+        params: Optional[Union[HyperHeuristicACOConfig, Dict[str, Any]]] = None,
         initial_solution: Optional[List[List[int]]] = None,
         mandatory_nodes: Optional[List[int]] = None,
     ):
@@ -130,7 +131,7 @@ class HyperHeuristicACO:
             capacity: Vehicle capacity.
             R: Revenue multiplier.
             C: Cost multiplier.
-            params: Hyper-heuristics parameters object.
+            params: HyperHeuristicACOConfig dataclass or raw parameter mapping.
             initial_solution: Optional starting routes.
             mandatory_nodes: List of mandatory node indices.
         """
@@ -139,20 +140,42 @@ class HyperHeuristicACO:
         self.capacity = capacity
         self.R = R
         self.C = C
-        self.params = params or HyperACOParams()
+        # Standardize to HyperHeuristicACOConfig (P-10: the typed config is the
+        # only parameter layer). The parameter name stays ``params`` because
+        # external callers (e.g. HVPL) pass it by keyword.
+        if params is None:
+            params = HyperHeuristicACOConfig()
+        elif isinstance(params, dict):
+            params = _structured_load(HyperHeuristicACOConfig, _unwrap_engine_section(params))
+        self.cfg = params
+        # Value validation that lived in the deleted params layer's __post_init__
+        # (P-10): the typed config stays declarative, so the solver enforces it.
+        cfg = self.cfg
+        if not (0 < cfg.rho < 1):
+            raise ValueError(f"Evaporation rate rho must be in (0, 1), got {cfg.rho}")
+        if cfg.Q < 0:
+            raise ValueError(f"Pheromone floor constant Q must be >= 0, got {cfg.Q}")
+        if not (0 < cfg.elitism_ratio <= 1):
+            raise ValueError(f"elitism_ratio must be in (0, 1], got {cfg.elitism_ratio}")
+        if cfg.operators is not None:
+            unknown = [op for op in cfg.operators if op not in HYPER_OPERATORS]
+            if unknown or not cfg.operators:
+                raise ValueError(
+                    f"operators must be a non-empty subset of {list(HYPER_OPERATORS)}; unknown: {unknown}"
+                )
+        if cfg.sequence_length is not None and cfg.sequence_length < 1:
+            raise ValueError(f"sequence_length must be >= 1, got {cfg.sequence_length}")
         self.initial_solution = initial_solution or []
         self.mandatory_nodes = mandatory_nodes
-        self.random = random.Random(self.params.seed) if self.params.seed is not None else random.Random()
-        self.np_rng = (
-            np.random.default_rng(self.params.seed) if self.params.seed is not None else np.random.default_rng()
-        )
+        self.random = random.Random(self.cfg.seed) if self.cfg.seed is not None else random.Random()
+        self.np_rng = np.random.default_rng(self.cfg.seed) if self.cfg.seed is not None else np.random.default_rng()
 
-        self.operator_names = list(self.params.operators) if self.params.operators else list(HYPER_OPERATORS.keys())
+        self.operator_names = list(self.cfg.operators) if self.cfg.operators else list(HYPER_OPERATORS.keys())
         self.n_operators = len(self.operator_names)
         self.op_to_idx = {name: i for i, name in enumerate(self.operator_names)}
 
         # Journey length defaults to n (number of heuristics/vertices), per Chen et al. (2007) §III.B
-        self.sequence_length = self.params.sequence_length or self.n_operators
+        self.sequence_length = self.cfg.sequence_length or self.n_operators
 
         # tau[i][j]: pheromone on directed edge i→j.
         # Row n_operators is a virtual "no prior position" row — only used on the very
@@ -160,7 +183,7 @@ class HyperHeuristicACO:
         # After uniform placement (Bug #2 fix) the real rows [0..n_operators-1] are
         # seeded immediately by the initial operator application, so this row is
         # primarily a safety fallback.
-        self.tau = np.full((self.n_operators + 1, self.n_operators), self.params.tau_0)
+        self.tau = np.full((self.n_operators + 1, self.n_operators), self.cfg.tau_0)
 
         # eta[i][j]: per-edge visibility (heuristic information).
         # Initialised to 1 per paper: "For each vertex j: set ηj = 1".
@@ -190,10 +213,10 @@ class HyperHeuristicACO:
         n_nodes = len(dist_matrix)  # includes depot (index 0)
         self.pheromone = SparsePheromoneTau(
             n_nodes=n_nodes,
-            tau_0=self.params.tau_0,
+            tau_0=self.cfg.tau_0,
             scale=5.0,
-            tau_min=self.params.tau_0 / 100.0,
-            tau_max=self.params.tau_0 * 10.0,
+            tau_min=self.cfg.tau_0 / 100.0,
+            tau_max=self.cfg.tau_0 * 10.0,
         )
         self.initial_pv = self.initial_best_cost / 100.0 if self.initial_best_cost > 0 else 10.0
         self.pv = self.initial_pv
@@ -221,13 +244,13 @@ class HyperHeuristicACO:
         best_routes = [r for r in copy.deepcopy(self.initial_solution) if r]
         best_objective = self._calculate_routing_cost(best_routes) if self._is_feasible(best_routes) else math.inf
 
-        ant_solutions = [copy.deepcopy(self.initial_solution) for _ in range(self.params.n_ants)]
+        ant_solutions = [copy.deepcopy(self.initial_solution) for _ in range(self.cfg.n_ants)]
 
         # ----------------------------------------------------------------
         # Bug #2 fix: uniform ant placement on real operator vertices.
         # Paper: "Put m ants uniformly on the n vertices."
         # ----------------------------------------------------------------
-        ant_positions: List[int] = [i % self.n_operators for i in range(self.params.n_ants)]
+        ant_positions: List[int] = [i % self.n_operators for i in range(self.cfg.n_ants)]
 
         # ----------------------------------------------------------------
         # Bug #2 fix (cont.): apply starting operator before main loop.
@@ -235,7 +258,7 @@ class HyperHeuristicACO:
         #         current location to Sk."
         # ----------------------------------------------------------------
         effective_capacity = float("inf") if self.pv < self.initial_pv else self.capacity
-        for ant_idx in range(self.params.n_ants):
+        for ant_idx in range(self.cfg.n_ants):
             start_op_name = self.operator_names[ant_positions[ant_idx]]
             op_func = HYPER_OPERATORS.get(start_op_name)
             if op_func:
@@ -246,14 +269,14 @@ class HyperHeuristicACO:
         stagnation_counter = 0
         start_time = time.perf_counter()
 
-        for _it in range(self.params.max_iterations):
-            if self.params.time_limit > 0 and time.perf_counter() - start_time > self.params.time_limit:
+        for _it in range(self.cfg.max_iterations):
+            if self.cfg.time_limit > 0 and time.perf_counter() - start_time > self.cfg.time_limit:
                 break
 
             total_eta_updates = np.zeros_like(self.eta)
             ant_results: List[Tuple[List[List[int]], float, float, List[str], int, int]] = []
 
-            for ant_idx in range(self.params.n_ants):
+            for ant_idx in range(self.cfg.n_ants):
                 start_obj = self._evaluate_objective(ant_solutions[ant_idx])
                 journey_start = ant_positions[ant_idx]
                 # Bug #2 fix: pass each ant's current position into build_solution
@@ -279,10 +302,10 @@ class HyperHeuristicACO:
                 # elitism_ratio < 1.0 → hedged elitism (VRPP diversity option).
                 # Paper: "For all ants: Sk = Sb"
                 # ----------------------------------------------------------------
-                sync_count = _elitism_sync_count(self.params.n_ants, self.params.elitism_ratio)
+                sync_count = _elitism_sync_count(self.cfg.n_ants, self.cfg.elitism_ratio)
 
                 for rank, (routes, _, _, _, ant_idx, _) in enumerate(ant_results):
-                    if rank >= self.params.n_ants - sync_count:
+                    if rank >= self.cfg.n_ants - sync_count:
                         ant_solutions[ant_idx] = copy.deepcopy(best_routes)
                     else:
                         ant_solutions[ant_idx] = routes
@@ -296,7 +319,7 @@ class HyperHeuristicACO:
                 self.pv = self.initial_pv
             else:
                 stagnation_counter += 1
-                if stagnation_counter >= self.params.stagnation_limit:
+                if stagnation_counter >= self.cfg.stagnation_limit:
                     self.pv /= 2.0
 
             # Pure AS pheromone evaporation
@@ -309,7 +332,7 @@ class HyperHeuristicACO:
             self._deposit_pheromones(ant_results)
 
             # Visibility integration
-            self.eta = (self.params.eta_decay * self.eta) + total_eta_updates
+            self.eta = (self.cfg.eta_decay * self.eta) + total_eta_updates
 
         if math.isinf(best_objective):
             # No feasible plan was ever seen (the starting solution was already infeasible):
@@ -338,7 +361,7 @@ class HyperHeuristicACO:
            (pure exploration — equivalent to flat tau_0 pheromone, matching MMAS
            semantics).  All nodes are treated as the unvisited pool and inserted
            into an initially-empty route list by the selected heuristic.  When
-           ``params.profit_aware_operators`` is enabled the profit-maximising
+           ``cfg.profit_aware_operators`` is enabled the profit-maximising
            variant of each heuristic is used; otherwise the cost-minimising
            variant is used.  The available bootstrap operators are:
 
@@ -416,7 +439,7 @@ class HyperHeuristicACO:
         equal probability (pure exploration) and applies it to an empty route
         list with ``nodes`` as the unvisited pool.
 
-        When ``params.profit_aware_operators`` is ``True``, the profit-aware
+        When ``cfg.profit_aware_operators`` is ``True``, the profit-aware
         variant of the chosen operator is used; otherwise the cost-minimising
         variant is used.
 
@@ -427,7 +450,7 @@ class HyperHeuristicACO:
         Returns:
             List of routes produced by the selected bootstrap heuristic.
         """
-        if self.params.profit_aware_operators:
+        if self.cfg.profit_aware_operators:
             return self._bootstrap_profit(nodes, effective_mandatory)
         return self._bootstrap_standard(nodes, effective_mandatory)
 
@@ -774,7 +797,7 @@ class HyperHeuristicACO:
                 # Paper: λ=1.0001 as base of exponential (λ^{I_kj}).
                 # VRPP extension: exp(I/Z) with running EMA normaliser Z.
                 # ----------------------------------------------------------------
-                if self.params.use_dynamic_lambda:
+                if self.cfg.use_dynamic_lambda:
                     # Scale-invariant extension: update EMA of |improvement|
                     abs_imp = abs(improvement)
                     if abs_imp > 1e-6:
@@ -786,12 +809,12 @@ class HyperHeuristicACO:
                     # Paper-faithful: λ = 1.0001 as exponential base.
                     # λ^I is positive for any real I, converging to 0 for large
                     # negative I (rare operators still get a tiny signal).
-                    lam = self.params.lambda_val**improvement
+                    lam = self.cfg.lambda_val**improvement
 
                 self.edge_count[prev_op_idx][next_op_idx] += 1
                 safe_count = max(self.edge_count[prev_op_idx][next_op_idx], 1)
 
-                if self.params.time_weighted_visibility:
+                if self.cfg.time_weighted_visibility:
                     eta_updates[prev_op_idx][next_op_idx] += lam / ((execution_time + stability_constant) * safe_count)
                 else:
                     eta_updates[prev_op_idx][next_op_idx] += lam / safe_count
@@ -849,8 +872,8 @@ class HyperHeuristicACO:
             C=self.C,
             mandatory_nodes=self.mandatory_nodes,
             rng=self.random,
-            profit_aware_operators=self.params.profit_aware_operators,
-            vrpp=self.params.vrpp,
+            profit_aware_operators=self.cfg.profit_aware_operators,
+            vrpp=self.cfg.vrpp,
             use_cache=use_cache,
         )
 
@@ -875,7 +898,7 @@ class HyperHeuristicACO:
         current_op_idx = start_op_idx
 
         for _ in range(self.sequence_length):
-            numerator = (self.tau[current_op_idx] ** self.params.alpha) * (self.eta[current_op_idx] ** self.params.beta)
+            numerator = (self.tau[current_op_idx] ** self.cfg.alpha) * (self.eta[current_op_idx] ** self.cfg.beta)
             denom = np.sum(numerator)
             probs = numerator / denom if denom > 1e-12 else np.ones(self.n_operators) / self.n_operators
             next_op_idx = self.np_rng.choice(self.n_operators, p=probs)
@@ -917,7 +940,7 @@ class HyperHeuristicACO:
         for _routes, start_obj_ant, final_obj_ant, sequence, _ant_idx, journey_start in ant_results:
             journey_improvement = start_obj_ant - final_obj_ant
             if journey_improvement > 0:
-                delta_tau = self.params.Q + journey_improvement / len(sequence)
+                delta_tau = self.cfg.Q + journey_improvement / len(sequence)
                 prev_op_idx = journey_start
                 for op_name in sequence:
                     next_op_idx = self.op_to_idx[op_name]
@@ -988,7 +1011,7 @@ class HyperHeuristicACO:
         Returns:
             None
         """
-        self.tau *= 1 - self.params.rho
+        self.tau *= 1 - self.cfg.rho
 
     def evaporate_all(self) -> None:
         """Evaporate node-level pheromones.
@@ -997,4 +1020,4 @@ class HyperHeuristicACO:
             None
         """
         self._evaporate_pheromones()
-        self.pheromone.evaporate_all(self.params.rho)
+        self.pheromone.evaporate_all(self.cfg.rho)
