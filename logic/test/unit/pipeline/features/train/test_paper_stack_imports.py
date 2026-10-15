@@ -16,6 +16,7 @@ import sys
 import logic.src.pipeline.features.train, logic.src.pipeline.features.eval
 from logic.src.pipeline.features.train.model_factory.registry import get_algorithm_factory
 get_algorithm_factory("imitation")
+import logic.src.pipeline.rl.core.imitation  # what the imitation factory imports when it runs
 print("\\n".join(sorted(m for m in sys.modules if m.startswith("logic.src."))))
 """
 
