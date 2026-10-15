@@ -10,6 +10,7 @@ from typing import Any, Dict, Optional, Tuple, Union
 
 import torch
 from logic.src.constants.temporal import get_default_temporal_params
+from logic.src.envs.tasks.common.metrics import DEFAULT_METRICS
 from logic.src.envs.tasks.espprc import LoadResource, ShiftTimeResource
 from logic.src.envs.tasks.profitable_tour.common import (
     evaluate_profitable_tour,
@@ -118,7 +119,7 @@ TCPTP_SPEC = ProblemSpec(
     name="tcptp",
     objective=profit_objective,
     constraints=(LoadResource(), ShiftTimeResource()),
-    metrics=("cost", "reward", "length", "waste", "overflows", "time"),
+    metrics=DEFAULT_METRICS + ("time_spent",),
     env_target="logic.src.envs.tasks.profitable_tour.tcptp:TCPTPEnv",
     expand_pool=True,
 )

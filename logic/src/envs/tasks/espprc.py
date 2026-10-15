@@ -17,6 +17,7 @@ from tensordict import TensorDict, TensorDictBase
 from logic.src.envs.base.base import RL4COEnvBase
 from logic.src.envs.base.ops import OpsMixin, as_batch_nodes
 from logic.src.envs.generators.base import Generator
+from logic.src.envs.tasks.common.objectives import distance_objective, profit_objective
 
 
 class Resource(ABC):
@@ -75,7 +76,9 @@ class LoadResource(Resource):
         if isinstance(state, (TensorDict, TensorDictBase)):
             bs = state.batch_size[0] if len(state.batch_size) > 0 else 1
             device = state.device
-            cap = state.get(self.limit_key, state.get("capacity", state.get("vehicle_capacity", state.get("max_waste", 100.0))))
+            cap = state.get(
+                self.limit_key, state.get("capacity", state.get("vehicle_capacity", state.get("max_waste", 100.0)))
+            )
             cap_t = torch.as_tensor(cap, dtype=torch.float32, device=device).reshape(-1)
             if cap_t.size(0) != bs:
                 cap_t = cap_t.expand(bs)
@@ -223,11 +226,15 @@ class ShiftTimeResource(Resource):
 
     def exceeds_limit(self, state: Any) -> Any:
         if isinstance(state, (TensorDict, TensorDictBase)):
-            current = as_batch_nodes(state.get("current_node", torch.zeros(state.batch_size[0], 1, dtype=torch.long, device=state.device)))
+            current = as_batch_nodes(
+                state.get("current_node", torch.zeros(state.batch_size[0], 1, dtype=torch.long, device=state.device))
+            )
             locs = state["locs"]
             time_matrix = state.get("time_matrix", None)
             if time_matrix is not None:
-                time_curr_to_node = time_matrix.gather(1, current[:, None, None].expand(-1, -1, time_matrix.size(-1))).squeeze(1)
+                time_curr_to_node = time_matrix.gather(
+                    1, current[:, None, None].expand(-1, -1, time_matrix.size(-1))
+                ).squeeze(1)
                 time_node_to_depot = time_matrix[:, :, 0]
             else:
                 dm = state.get("dm", None)
@@ -239,11 +246,15 @@ class ShiftTimeResource(Resource):
                     dist_curr_to_node = dm.gather(1, current[:, None, None].expand(-1, -1, dm.size(-1))).squeeze(1)
                     dist_node_to_depot = dm[:, :, 0]
 
-                avg_speed = state.get("avg_speed_kmh", torch.full((locs.size(0),), self.default_avg_speed_kmh, device=locs.device)).unsqueeze(-1)
+                avg_speed = state.get(
+                    "avg_speed_kmh", torch.full((locs.size(0),), self.default_avg_speed_kmh, device=locs.device)
+                ).unsqueeze(-1)
                 time_curr_to_node = dist_curr_to_node / avg_speed
                 time_node_to_depot = dist_node_to_depot / avg_speed
 
-            service_time = state.get("service_time_h", torch.full((locs.size(0),), self.default_service_time_h, device=locs.device)).unsqueeze(-1)
+            service_time = state.get(
+                "service_time_h", torch.full((locs.size(0),), self.default_service_time_h, device=locs.device)
+            ).unsqueeze(-1)
             service_at_nodes = service_time.expand(-1, locs.size(1)).clone()
             service_at_nodes[:, 0] = 0.0
 
@@ -569,13 +580,13 @@ class ESPPRCEnv(RL4COEnvBase):
         total_cost = cost + return_dist * not_at_depot
 
         if self.require_all_customers:
-            return -total_cost
+            return distance_objective(total_cost)
 
         waste = tensordict.get("collected_waste", torch.zeros_like(total_cost))
         tensordict["reward_waste"] = waste
         tensordict["reward_cost"] = -total_cost
 
-        return self.waste_weight * waste - self.cost_weight * total_cost
+        return profit_objective(waste, total_cost, revenue_kg=self.waste_weight, cost_km=self.cost_weight)
 
 
 __all__ = [

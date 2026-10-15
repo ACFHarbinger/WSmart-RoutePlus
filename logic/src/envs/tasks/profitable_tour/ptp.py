@@ -11,6 +11,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 import numpy as np
 import torch
 from logic.src.envs.tasks.base import BaseProblem
+from logic.src.envs.tasks.common.metrics import DEFAULT_METRICS
 from logic.src.envs.tasks.espprc import ESPPRCEnv, ESPPRCGenerator
 from logic.src.envs.tasks.profitable_tour.common import (
     evaluate_profitable_tour,
@@ -102,8 +103,13 @@ class PTPGenerator(ESPPRCGenerator):
 
                 import numpy as np
                 from logic.src.data.generators.waste import generate_waste
+
                 bs = math.prod(batch_size) if batch_size else 1
-                depot = self._generate_depot(batch_size).view(bs, 2) if hasattr(self, "_generate_depot") else torch.zeros(bs, 2, device=self.device)
+                depot = (
+                    self._generate_depot(batch_size).view(bs, 2)
+                    if hasattr(self, "_generate_depot")
+                    else torch.zeros(bs, 2, device=self.device)
+                )
                 coords = (depot, self._generate_locations(batch_size, self.num_loc).view(bs, self.num_loc, 2))
                 waste = generate_waste(
                     self.num_loc,
@@ -191,7 +197,7 @@ PTP_SPEC = ProblemSpec(
     name="ptp",
     objective=profit_objective,
     constraints=(),
-    metrics=("cost", "reward", "length", "waste"),
+    metrics=DEFAULT_METRICS,
     env_target="logic.src.envs.tasks.profitable_tour.ptp:PTPEnv",
     expand_pool=True,
 )
