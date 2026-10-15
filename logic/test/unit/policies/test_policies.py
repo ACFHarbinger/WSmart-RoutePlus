@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 from logic.src.policies import run_hgs
 from logic.src.policies.routing.base import RoutingAlgorithmRegistry
+from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price_and_cut.policy_bpc import (
     BPCPolicy,
 )
@@ -69,7 +70,8 @@ class TestPolicyAdapters:
 
     @pytest.mark.unit
     def test_alns_adapter(self, mock_policy_data):
-        with patch("logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.policy_alns.run_alns") as mock_run:
+
+        with patch.object(ALNSPolicy, "_solver") as mock_run:
             mock_run.return_value = ([[1]], 10.0, 5.0)
             policy = cast(Callable, RoutingAlgorithmRegistry.get("alns"))()
             assert isinstance(policy, ALNSPolicy)
@@ -79,8 +81,9 @@ class TestPolicyAdapters:
 
     @pytest.mark.unit
     def test_bpc_adapter(self, mock_policy_data):
-        with patch("logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price_and_cut.policy_bpc.run_bpc") as mock_run:
-            mock_run.return_value = ([[1]], 10.0)
+
+        with patch.object(BPCPolicy, "_solver") as mock_run:
+            mock_run.return_value = ([[1]], 10.0, 5.0)
             policy = cast(Callable, RoutingAlgorithmRegistry.get("bpc"))()
             assert isinstance(policy, BPCPolicy)
             tour, cost, extra, *_ = policy.execute(policy="bpc_1.0", **mock_policy_data)
@@ -100,7 +103,7 @@ class TestPolicyAdapters:
 
     @pytest.mark.unit
     def test_hgs_adapter(self, mock_policy_data):
-        with patch("logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.policy_hgs.run_hgs") as mock_run:
+        with patch.object(HGSPolicy, "_solver") as mock_run:
             mock_run.return_value = ([[1]], 10.0, 5.0)
             policy = cast(Callable, RoutingAlgorithmRegistry.get("hgs"))()
             assert isinstance(policy, HGSPolicy)
@@ -127,15 +130,10 @@ class TestAdvancedSolverEngines:
             local_to_global,
             vrpp_tour_global,
         ) = hgs_inputs
-        values = {"hgs_engine": "custom", "time_limit": 5, "n_iterations_no_improvement": 10}
+        values = {"time_limit": 5, "n_iterations_no_improvement": 10}
         routes, fitness, cost = run_hgs(
-            dist_matrix,
-            waste,
-            capacity,
-            R,
-            C,
+            build_subproblem(dist_matrix, waste, capacity, R, C, mandatory_nodes=list(global_mandatory)),
             values,
-            global_mandatory,
         )
         assert isinstance(routes, list)
         assert len(routes) > 0

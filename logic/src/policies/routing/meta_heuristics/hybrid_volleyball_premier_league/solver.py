@@ -37,6 +37,7 @@ from logic.src.policies.helpers.operators import (
     random_removal,
 )
 from logic.src.policies.helpers.operators.solution_initialization.greedy_si import build_greedy_routes
+from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_aco import (
     HyperHeuristicACO,
 )
@@ -109,24 +110,28 @@ class HVPLSolver:
 
         # Initialize ACO solver for population initialization
         self.aco_solver = HyperHeuristicACO(
-            dist_matrix=dist_matrix,
-            wastes=wastes,
-            capacity=capacity,
-            R=R,
-            C=C,
-            params=params.aco_params,
-            mandatory_nodes=mandatory_nodes,
+            build_subproblem(
+                dist_matrix=dist_matrix,
+                wastes=wastes,
+                capacity=capacity,
+                revenue=R,
+                cost_unit=C,
+                mandatory_nodes=mandatory_nodes or [],
+            ),
+            params.aco_params,
         )
 
         # Initialize ALNS solver for coaching phase
         self.alns_solver = ALNSSolver(
-            dist_matrix=dist_matrix,
-            wastes=wastes,
-            capacity=capacity,
-            R=R,
-            C=C,
-            params=params.alns_params,
-            mandatory_nodes=mandatory_nodes,
+            build_subproblem(
+                dist_matrix=dist_matrix,
+                wastes=wastes,
+                capacity=capacity,
+                revenue=R,
+                cost_unit=C,
+                mandatory_nodes=mandatory_nodes,
+            ),
+            params.alns_params,
         )
 
     # ------------------------------------------------------------------

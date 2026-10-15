@@ -9,6 +9,7 @@ from logic.src.policies.helpers.solvers_and_matheuristics.search.cutting_planes 
     KnapsackCoverEngine,
     create_cutting_plane_engine,
 )
+from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price_and_cut.bpc_engine import (
     run_bpc,
 )
@@ -30,20 +31,10 @@ def bpc_instance():
 def test_bpc_default_branching_strategy(bpc_instance):
     dist, wastes, cap, R, C = bpc_instance
     values = {"max_cg_iterations": 10}
-    result = run_bpc(dist, wastes, cap, R, C, params=values)
-
-    if isinstance(result, tuple):
-        routes, cost = result
-    elif hasattr(result, "nodes"):
-        routes = [result.nodes]
-        cost = result.profit
-    else:
-        # Final fallback for unexpected types
-        routes = []
-        cost = 0.0
+    routes, profit, _cost = run_bpc(build_subproblem(dist, wastes, cap, R, C), values)
 
     assert len(routes) > 0
-    assert cost > 0
+    assert profit > 0
 
 
 def test_knapsack_cover_separation():
@@ -81,14 +72,7 @@ def test_create_engine_factory():
 def test_bpc_exact_convergence_log(bpc_instance, caplog):
     dist, wastes, cap, R, C = bpc_instance
     values = {"max_cg_iterations": 20, "branching_strategy": "divergence"}
-    result = run_bpc(dist, wastes, cap, R, C, params=values)
-
-    if isinstance(result, tuple):
-        routes, cost = result
-    elif hasattr(result, "nodes"):
-        pass
-    else:
-        pass
+    run_bpc(build_subproblem(dist, wastes, cap, R, C), values)
 
     # The 3-node instance converges in a single CG pass, so z_UB/RMP iteration
     # logs may not fire.  The Phase II switch confirms column generation ran.

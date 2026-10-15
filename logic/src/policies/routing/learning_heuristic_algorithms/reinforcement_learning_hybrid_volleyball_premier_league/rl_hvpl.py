@@ -40,6 +40,7 @@ import numpy as np
 from logic.src.policies.helpers.reinforcement_learning.alns_sarsa import (
     ALNSSARSASolver,
 )
+from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic import (
     HyperHeuristicACO,
 )
@@ -104,13 +105,15 @@ class RLHVPLSolver:
 
         # Initialize enhanced ACO with Q-Learning
         self.aco_solver = HyperHeuristicACO(
-            dist_matrix=dist_matrix,
-            wastes=wastes,
-            capacity=capacity,
-            R=R,
-            C=C,
-            params=params.aco_params,
-            mandatory_nodes=mandatory_nodes,
+            build_subproblem(
+                dist_matrix=dist_matrix,
+                wastes=wastes,
+                capacity=capacity,
+                revenue=R,
+                cost_unit=C,
+                mandatory_nodes=mandatory_nodes or [],
+            ),
+            params.aco_params,
         )
         self.pheromone = self.aco_solver.pheromone
 

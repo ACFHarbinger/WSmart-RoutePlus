@@ -36,7 +36,7 @@ import copy
 import math
 import random
 import time
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import numpy as np
 
@@ -66,6 +66,8 @@ from logic.src.policies.helpers.operators import (
     savings_profit_insertion,
 )
 from logic.src.policies.routing.base.base_routing_policy import _structured_load, _unwrap_engine_section
+from logic.src.policies.routing.base.sub_problem import SolveResult, SubProblem
+from logic.src.policies.routing.hyper_heuristics.hyper_heuristic_base import HyperHeuristicSearch
 
 from .hyper_operators import (
     HYPER_OPERATORS,
@@ -73,12 +75,32 @@ from .hyper_operators import (
 )
 
 
+class _MoveTelemetry(NamedTuple):
+    """Per-ant telemetry flowing from ``_apply_move`` to the loop's bookkeeping."""
+
+    journey_start: int
+    sequence: List[str]
+    eta_updates: np.ndarray
+    end_op_idx: int
+    start_obj: float
+    final_obj: float
+
+
 def _elitism_sync_count(n_ants: int, elitism_ratio: float) -> int:
     """Number of ants synced to the global best on improvement (ceil, per the flowchart)."""
     return max(1, math.ceil(n_ants * elitism_ratio))
 
 
-class HyperHeuristicACO:
+class HyperHeuristicACO(HyperHeuristicSearch):
+    """Ant Colony Optimization hyper-heuristic (Chen et al. 2007) on the shared
+    route-level HH template (P-35).
+
+    The search state that must persist across ``solve()`` calls (operator
+    pheromones ``tau``, visibility ``eta``, traversal counts, strategic
+    oscillation pressure ``pv``) is built in ``__init__``; ``solve()`` resets
+    only the per-run incumbent/candidate state, so external consumers (HVPL,
+    RL-HVPL) can keep coaching with one instance.
+    """
     """
     Pure Ant System (AS) Hyper-Heuristic ACO solver.
 
@@ -113,28 +135,28 @@ class HyperHeuristicACO:
 
     def __init__(
         self,
-        dist_matrix: np.ndarray,
-        wastes: Dict[int, float],
-        capacity: float,
-        R: float,
-        C: float,
-        params: Optional[Union[HyperHeuristicACOConfig, Dict[str, Any]]] = None,
+        problem: SubProblem,
+        cfg: Optional[Union[HyperHeuristicACOConfig, Dict[str, Any]]] = None,
         initial_solution: Optional[List[List[int]]] = None,
-        mandatory_nodes: Optional[List[int]] = None,
     ):
         """
         Initialize HyperHeuristicACO.
 
         Args:
-            dist_matrix: Distance matrix between nodes.
-            wastes: Dictionary mapping node indices to wastes.
-            capacity: Vehicle capacity.
-            R: Revenue multiplier.
-            C: Cost multiplier.
-            params: HyperHeuristicACOConfig dataclass or raw parameter mapping.
+            problem: The routing sub-problem (distances, wastes, capacity,
+                revenue, cost unit, mandatory nodes).
+            cfg: HyperHeuristicACOConfig dataclass or raw parameter mapping.
             initial_solution: Optional starting routes.
-            mandatory_nodes: List of mandatory node indices.
         """
+        dist_matrix = problem.dist_matrix
+        wastes = problem.wastes
+        capacity = problem.capacity
+        R = problem.revenue
+        C = problem.cost_unit
+        params = cfg
+        mandatory_nodes = problem.mandatory_nodes
+
+        self.problem = problem
         self.dist_matrix = dist_matrix
         self.wastes = wastes
         self.capacity = capacity
@@ -226,31 +248,24 @@ class HyperHeuristicACO:
         self.Z_alpha = 0.1  # EMA smoothing factor
 
     # ------------------------------------------------------------------
-    # Public API
+    # HyperHeuristicSearch hooks (P-35)
     # ------------------------------------------------------------------
 
-    def solve(self) -> Tuple[List[List[int]], float, float]:
-        """
-        Solve the problem using the Ant Colony Optimization algorithm.
-
-        Returns:
-            Tuple[List[List[int]], float, float]:
-                - Best routes
-                - Collected revenue - cost
-                - Final cost
-        """
+    def _seed_incumbent(self) -> Tuple[List[List[int]], float]:
         # The incumbent is tracked at the real capacity: strategic oscillation may let ants
         # explore over-capacity plans, but only a feasible plan can become the returned best.
         best_routes = [r for r in copy.deepcopy(self.initial_solution) if r]
         best_objective = self._calculate_routing_cost(best_routes) if self._is_feasible(best_routes) else math.inf
+        return best_routes, best_objective
 
+    def _initial_candidates(self) -> List[List[List[int]]]:
         ant_solutions = [copy.deepcopy(self.initial_solution) for _ in range(self.cfg.n_ants)]
 
         # ----------------------------------------------------------------
         # Bug #2 fix: uniform ant placement on real operator vertices.
         # Paper: "Put m ants uniformly on the n vertices."
         # ----------------------------------------------------------------
-        ant_positions: List[int] = [i % self.n_operators for i in range(self.cfg.n_ants)]
+        self._ant_positions: List[int] = [i % self.n_operators for i in range(self.cfg.n_ants)]
 
         # ----------------------------------------------------------------
         # Bug #2 fix (cont.): apply starting operator before main loop.
@@ -259,81 +274,111 @@ class HyperHeuristicACO:
         # ----------------------------------------------------------------
         effective_capacity = float("inf") if self.pv < self.initial_pv else self.capacity
         for ant_idx in range(self.cfg.n_ants):
-            start_op_name = self.operator_names[ant_positions[ant_idx]]
+            start_op_name = self.operator_names[self._ant_positions[ant_idx]]
             op_func = HYPER_OPERATORS.get(start_op_name)
             if op_func:
                 ctx = self._make_context(ant_solutions[ant_idx], effective_capacity)
                 op_func(ctx)
                 ant_solutions[ant_idx] = ctx.routes
+        return ant_solutions
 
-        stagnation_counter = 0
-        start_time = time.perf_counter()
+    def _n_candidates(self) -> int:
+        return self.cfg.n_ants
 
-        for _it in range(self.cfg.max_iterations):
-            if self.cfg.time_limit > 0 and time.perf_counter() - start_time > self.cfg.time_limit:
-                break
+    def _select_move(self, candidate: List[List[int]], k: int) -> int:
+        # The move is the ant's persistent operator-graph vertex; the actual
+        # sequence construction happens inside ``build_solution``.
+        return self._ant_positions[k]
 
-            total_eta_updates = np.zeros_like(self.eta)
-            ant_results: List[Tuple[List[List[int]], float, float, List[str], int, int]] = []
+    def _apply_move(
+        self, candidate: List[List[int]], move: int, k: int
+    ) -> Tuple[List[List[int]], "_MoveTelemetry"]:
+        start_obj = self._evaluate_objective(candidate)
+        routes, sequence, eta_updates, end_op_idx = self.build_solution(candidate, move)
+        final_obj = self._evaluate_objective(routes)
+        self._ant_positions[k] = end_op_idx  # persistent across journeys
+        telemetry = _MoveTelemetry(
+            journey_start=move,
+            sequence=sequence,
+            eta_updates=eta_updates,
+            end_op_idx=end_op_idx,
+            start_obj=start_obj,
+            final_obj=final_obj,
+        )
+        return routes, telemetry
 
-            for ant_idx in range(self.cfg.n_ants):
-                start_obj = self._evaluate_objective(ant_solutions[ant_idx])
-                journey_start = ant_positions[ant_idx]
-                # Bug #2 fix: pass each ant's current position into build_solution
-                routes, sequence, eta_updates, end_op_idx = self.build_solution(ant_solutions[ant_idx], journey_start)
-                final_obj = self._evaluate_objective(routes)
+    def _record(
+        self, candidate: List[List[int]], k: int, telemetry: "_MoveTelemetry"
+    ) -> Tuple[List[List[int]], float, float, List[str], int, int]:
+        return (candidate, telemetry.start_obj, telemetry.final_obj, telemetry.sequence, k, telemetry.journey_start)
 
-                # Update ant position for next iteration (persistent across journeys)
-                ant_positions[ant_idx] = end_op_idx
+    def _rank(
+        self, results: List[Tuple[List[List[int]], float, float, List[str], int, int]]
+    ) -> List[Tuple[List[List[int]], float, float, List[str], int, int]]:
+        # Minimisation ordering; the sort also ranks ants for elitism.
+        return sorted(results, key=lambda x: x[2])
 
-                total_eta_updates += eta_updates
-                ant_solutions[ant_idx] = routes
-                ant_results.append((routes, start_obj, final_obj, sequence, ant_idx, journey_start))
-
-            # Evaluate iteration results (minimisation); the sort also ranks ants for elitism.
-            ant_results.sort(key=lambda x: x[2])
-            best_routes, best_objective, global_best_improved = self._update_incumbent(
-                ant_results, best_routes, best_objective
-            )
-            if global_best_improved:
-                # ----------------------------------------------------------------
-                # Bug #4 context: elitism_ratio=1.0 (paper default) → all ants
-                # sync to global best (exact paper behaviour).
-                # elitism_ratio < 1.0 → hedged elitism (VRPP diversity option).
-                # Paper: "For all ants: Sk = Sb"
-                # ----------------------------------------------------------------
-                sync_count = _elitism_sync_count(self.cfg.n_ants, self.cfg.elitism_ratio)
-
-                for rank, (routes, _, _, _, ant_idx, _) in enumerate(ant_results):
-                    if rank >= self.cfg.n_ants - sync_count:
-                        ant_solutions[ant_idx] = copy.deepcopy(best_routes)
-                    else:
-                        ant_solutions[ant_idx] = routes
-            else:
-                for routes, _, _, _, ant_idx, _ in ant_results:
-                    ant_solutions[ant_idx] = routes
-
-            # Strategic Oscillation management (per paper §III.B)
-            if global_best_improved:
-                stagnation_counter = 0
-                self.pv = self.initial_pv
-            else:
-                stagnation_counter += 1
-                if stagnation_counter >= self.cfg.stagnation_limit:
-                    self.pv /= 2.0
-
-            # Pure AS pheromone evaporation
-            self._evaporate_pheromones()
-
+    def _post_iteration(
+        self,
+        results: List[Tuple[List[List[int]], float, float, List[str], int, int]],
+        improved: bool,
+        candidates: List[List[List[int]]],
+        best_routes: List[List[int]],
+    ) -> List[List[List[int]]]:
+        if improved:
             # ----------------------------------------------------------------
-            # Bug #1 fix: pheromone deposit includes Q constant.
-            # Paper: Δτ^k_ij = Q + I_k / L_k  when I_k > 0.
+            # Bug #4 context: elitism_ratio=1.0 (paper default) → all ants
+            # sync to global best (exact paper behaviour).
+            # elitism_ratio < 1.0 → hedged elitism (VRPP diversity option).
+            # Paper: "For all ants: Sk = Sb"
             # ----------------------------------------------------------------
-            self._deposit_pheromones(ant_results)
+            sync_count = _elitism_sync_count(self.cfg.n_ants, self.cfg.elitism_ratio)
+            for rank, (routes, _, _, _, ant_idx, _) in enumerate(results):
+                if rank >= self.cfg.n_ants - sync_count:
+                    candidates[ant_idx] = copy.deepcopy(best_routes)
+                else:
+                    candidates[ant_idx] = routes
+        else:
+            for routes, _, _, _, ant_idx, _ in results:
+                candidates[ant_idx] = routes
+        return candidates
 
-            # Visibility integration
-            self.eta = (self.cfg.eta_decay * self.eta) + total_eta_updates
+    def _track_stagnation(self, improved: bool, stagnation: int) -> int:
+        # Strategic Oscillation management (per paper §III.B)
+        if improved:
+            self.pv = self.initial_pv
+            return 0
+        stagnation += 1
+        if stagnation >= self.cfg.stagnation_limit:
+            self.pv /= 2.0
+        return stagnation
 
+    def _fresh_learning(self) -> np.ndarray:
+        return np.zeros_like(self.eta)
+
+    def _accumulate_learning(self, learning: np.ndarray, telemetry: "_MoveTelemetry") -> np.ndarray:
+        return learning + telemetry.eta_updates
+
+    def _update_selection_state(
+        self, results: List[Tuple[List[List[int]], float, float, List[str], int, int]], learning: np.ndarray
+    ) -> None:
+        # Pure AS pheromone evaporation
+        self._evaporate_pheromones()
+        # ----------------------------------------------------------------
+        # Bug #1 fix: pheromone deposit includes Q constant.
+        # Paper: Δτ^k_ij = Q + I_k / L_k  when I_k > 0.
+        # ----------------------------------------------------------------
+        self._deposit_pheromones(results)
+        # Visibility integration
+        self.eta = (self.cfg.eta_decay * self.eta) + learning
+
+    def _max_iterations(self) -> int:
+        return self.cfg.max_iterations
+
+    def _timed_out(self, start_time: float) -> bool:
+        return self.cfg.time_limit > 0 and time.perf_counter() - start_time > self.cfg.time_limit
+
+    def _result(self, best_routes: List[List[int]], best_objective: float) -> SolveResult:
         if math.isinf(best_objective):
             # No feasible plan was ever seen (the starting solution was already infeasible):
             # return the starting solution rather than an over-capacity ant plan.
@@ -343,7 +388,7 @@ class HyperHeuristicACO:
         collected_rev = sum(self.wastes.get(n, 0) * self.R for r in best_routes for n in r)
         final_cost = best_cost / self.C if self.C > 0 else best_cost
 
-        return best_routes, collected_rev - best_cost, final_cost
+        return SolveResult(best_routes, collected_rev - best_cost, final_cost)
 
     def construct(
         self,

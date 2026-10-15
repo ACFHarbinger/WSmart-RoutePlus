@@ -14,51 +14,57 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 import numpy as np
-from numpy.typing import NDArray
 
 from logic.src.configs.policies import SWCTCFConfig
+from logic.src.policies.routing.base.base_routing_policy import _structured_load, _unwrap_engine_section
+from logic.src.policies.routing.base.sub_problem import SubProblem
 
 from .gurobi import _run_gurobi_optimizer
 
 
 def run_swc_tcf_optimizer(
-    bins: NDArray[np.float64],
-    distance_matrix: List[List[float]],
-    values: Dict[str, float],
-    binsids: List[int],
-    mandatory_nodes: List[int],
-    number_vehicles: int = 1,
-    time_limit: int = 60,
-    framework: str = "ortools",
-    optimizer: str = "gurobi",
-    seed: int = 42,
-    dual_values: Optional[Dict[int, float]] = None,
+    problem: SubProblem,
     cfg: Optional[Union[SWCTCFConfig, Dict[str, Any]]] = None,
 ):
     """Solve SWC-TCF using either Google OR-Tools or Pyomo wrappers.
 
+    P-30: takes the consolidated sub-problem value object plus the typed
+    config; the adapter-side input conversions (wastes dict → amounts array,
+    matrix → list-of-lists, fleet limit, seed) live here now.
+
     Args:
-        bins (NDArray[np.float64]): Array of bin fill levels.
-        distance_matrix (List[List[float]]): Distance matrix between nodes.
-        values (Dict[str, float]): Problem parameters (Q, R, B, C, V runtime scalars).
-        binsids (List[int]): Global identifiers for bins.
-        mandatory_nodes (List[int]): IDs of bins that must be collected.
-        number_vehicles (int): Number of available vehicles.
-        time_limit (int): Solver time limit in seconds.
-        framework (str): Optimization framework ('ortools', 'pyomo', or 'native').
-        optimizer (str): Backend solver ('gurobi', 'scip', 'highs').
-        seed (int): Random seed for reproducibility.
-        dual_values (Optional[Dict[int, float]]): Dual values for pricing.
-        cfg (Optional[Union[SWCTCFConfig, Dict[str, Any]]]): Typed policy config,
-            forwarded to the native Gurobi engine (the only backend reading solver
-            switches); its dict form is standardized there.
+        problem (SubProblem): Routing sub-problem. ``wastes`` is the
+            {local_idx: fill} mapping, ``dist_matrix`` the symmetric distance
+            matrix, ``n_vehicles`` the fleet limit (0/None = unbounded) and
+            ``dual_values`` optional pricing duals.
+        cfg (Optional[Union[SWCTCFConfig, Dict[str, Any]]]): Typed policy
+            config (framework/engine/time_limit/seed); a raw dict is coerced
+            leniently into SWCTCFConfig (WP-04 pattern).
 
     Returns:
-        Tuple[List[int], float, float]: (route, profit, cost)
+        Tuple[List[int], float, float]: (flat depot-delimited route, profit, cost)
     """
+    config = cfg if isinstance(cfg, SWCTCFConfig) else _structured_load(SWCTCFConfig, _unwrap_engine_section(cfg))
+
+    # Adapter-side conversions, moved here from the policy (P-30).
+    n_nodes = len(problem.wastes)
+    amounts = np.zeros(n_nodes)
+    for i, fill in problem.wastes.items():
+        amounts[i - 1] = fill  # Solver uses 1-based binsids internally for depot mapping
+    binsids = list(range(1, n_nodes + 1))
+    distance_matrix = problem.dist_matrix.tolist()
+    values = {**dict(problem.values or {}), "Q": problem.capacity, "R": problem.revenue, "C": problem.cost_unit}
+    mandatory_nodes = problem.mandatory_nodes
+    number_vehicles = int(problem.n_vehicles) if problem.n_vehicles and int(problem.n_vehicles) > 0 else 0
+    time_limit = float(config.time_limit)  # int() turned sub-second budgets into "no limit"
+    framework = config.framework
+    optimizer = config.engine
+    seed = int(config.seed) if config.seed is not None else 42
+    dual_values = problem.dual_values
+
     # Map solver names to the exact casing required by the respective frameworks
     if framework == "ortools":
         # OR-Tools requires uppercase identifiers (e.g., 'GUROBI', 'SCIP', 'HIGHS')
@@ -70,7 +76,7 @@ def run_swc_tcf_optimizer(
 
 
         result = _run_ortools_tcf_optimizer(
-            bins=bins,
+            bins=amounts,
             distance_matrix=distance_matrix,
             values=values,
             binsids=binsids,
@@ -84,7 +90,7 @@ def run_swc_tcf_optimizer(
         # Fallback to native Gurobi if OR-Tools wrapper failed (likely due to missing linkage/license)
         if ortools_backend == "GUROBI" and result[0] == [0, 0] and result[1] == 0.0:
             return _run_gurobi_optimizer(
-                bins=bins,
+                bins=amounts,
                 distance_matrix=distance_matrix,
                 env=None,
                 values={k: float(v) if isinstance(v, (int, float)) else v for k, v in values.items()},
@@ -107,7 +113,7 @@ def run_swc_tcf_optimizer(
 
 
         return _run_pyomo_tcf_optimizer(
-            bins=bins,
+            bins=amounts,
             distance_matrix=distance_matrix,
             values=values,
             binsids=binsids,
@@ -123,7 +129,7 @@ def run_swc_tcf_optimizer(
         # Direct Gurobi delegation (bypass OR-Tools/Pyomo abstractions)
         # Note: This requires gurobipy to be installed and license available.
         return _run_gurobi_optimizer(
-            bins=bins,
+            bins=amounts,
             distance_matrix=distance_matrix,
             env=None,  # Use default environment
             values={
