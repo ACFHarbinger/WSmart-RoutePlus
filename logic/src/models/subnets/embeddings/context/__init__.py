@@ -17,8 +17,8 @@ from __future__ import annotations
 from typing import Any, Dict
 
 from .base import ContextEmbedder
-from .generic import GenericContextEmbedder
 from .cptp import CPTPContextEmbedder
+from .generic import GenericContextEmbedder
 from .ptp import PTPContextEmbedder
 
 CONTEXT_EMBEDDING_REGISTRY: Dict[str, Any] = {

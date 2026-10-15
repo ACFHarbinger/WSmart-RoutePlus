@@ -35,6 +35,7 @@ def am_setup(mocker):
     """Fixture for AttentionModel"""
     mock_problem = mocker.MagicMock()
     mock_problem.NAME = "ptp"
+    mock_problem.evaluate_tour.return_value = {"cost": torch.zeros(1), "reward": torch.zeros(1), "length": torch.zeros(1), "waste": torch.zeros(1), "overflows": torch.zeros(1)}
     mock_problem.get_costs.return_value = (torch.zeros(1), {}, None)
 
     mock_encoder = mocker.MagicMock()
@@ -101,6 +102,7 @@ def tam_setup(mocker):
     """Fixture for TemporalAttentionModel"""
     mock_problem = mocker.MagicMock()
     mock_problem.NAME = "ptp"  # To trigger temporal features
+    mock_problem.evaluate_tour.return_value = {"cost": torch.zeros(1), "reward": torch.zeros(1), "length": torch.zeros(1), "waste": torch.zeros(1), "overflows": torch.zeros(1)}
     mock_problem.get_costs.return_value = (torch.zeros(1), {}, None)
 
     mock_encoder = mocker.MagicMock()
@@ -241,6 +243,7 @@ def mock_ppo_deps(mocker):
 
     mock_problem = MagicMock()
     mock_problem.NAME = "cptp"
+    mock_problem.evaluate_tour.return_value = {"cost": torch.tensor([1.0, 1.0]), "reward": torch.tensor([1.0, 1.0]), "length": torch.tensor([1.0, 1.0]), "waste": torch.tensor([1.0, 1.0]), "overflows": torch.tensor([0.0, 0.0])}
     mock_problem.get_costs.return_value = (torch.tensor([1.0, 1.0]), {}, None)
 
     dataset_list = [

@@ -122,7 +122,16 @@ class PointerNetwork(nn.Module):
         _log_p, pi = self._inner(embedded_inputs, eval_tours)
 
         # 2. Score construction
-        cost, mask = self.problem.get_costs(inputs, pi)
+        res = self.problem.evaluate_tour(inputs, pi)
+        if isinstance(res, dict):
+            cost = res["cost"]
+            mask = res.get("mask", None)
+        elif isinstance(res, tuple):
+            cost = res[0]
+            mask = res[1] if len(res) > 1 else None
+        else:
+            cost = res
+            mask = None
 
         # 3. Log likelihood calculation for training
         ll = self._calc_log_likelihood(_log_p, pi, mask)

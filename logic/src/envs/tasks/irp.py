@@ -1,99 +1,91 @@
-"""
-IRP problem definition for offline evaluation.
-
-Attributes:
-    IRP: Inventory Routing Problem (IRP) definition.
-
-Example:
-    >>> import torch
-    >>> from logic.src.envs.tasks.irp import IRP
-    >>> dataset = {
-    ...     "locs": torch.tensor([[[0.0, 0.0], [1.0, 0.0]]]),
-    ...     "demand": torch.tensor([[0.0, 1.0]]),
-    ...     "holding_cost": torch.tensor([[0.0, 1.0]]),
-    ...     "stockout": torch.tensor([[0.0, 1.0]]),
-    ...     "routing_cost": torch.tensor([2.0]),
-    ...     "depot": torch.tensor([0.0]),
-    ... }
-    >>> pi = torch.tensor([[[0, 1, 0]]])
-    >>> length, cost_dict, _ = IRP.get_costs(dataset, pi)
-    >>> print(length)
-    tensor([4.0])
-"""
+"""Inventory Routing Problem (IRP) task and environment on ESPPRC base."""
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Sequence, Union
 
 import torch
+from tensordict import TensorDict
 
 from logic.src.envs.tasks.base import BaseProblem
+from logic.src.envs.tasks.espprc import ESPPRCEnv, ESPPRCGenerator
+from logic.src.envs.tasks.spec import PROBLEMS, ProblemSpec
+
+
+class IRPGenerator(ESPPRCGenerator):
+    """Generator for IRP instances."""
+
+    def __init__(self, num_loc: int = 50, num_periods: int = 3, device: Union[str, torch.device] = "cpu", **kwargs: Any) -> None:
+        super().__init__(num_loc=num_loc, device=device, **kwargs)
+        self.num_periods = num_periods
+
+    def _generate(self, batch_size: Union[int, Sequence[int]]) -> TensorDict:
+        td = super()._generate(batch_size)
+        bs = list(batch_size) if isinstance(batch_size, (list, tuple)) else [batch_size]
+        td["demand"] = torch.rand((*bs, self.num_periods, self.num_loc), device=self.device)
+        td["holding_cost"] = torch.rand((*bs, self.num_loc), device=self.device)
+        td["capacity"] = torch.ones((*bs,), device=self.device)
+        return td
+
+
+class IRPEnv(ESPPRCEnv):
+    """Inventory Routing Problem Environment on ESPPRC base."""
+
+    NAME: str = "irp"
+    name: str = "irp"
+    node_dim: int = 4
+
+    def __init__(
+        self,
+        generator: Optional[IRPGenerator] = None,
+        generator_params: Optional[dict] = None,
+        device: Union[str, torch.device] = "cpu",
+        **kwargs: Any,
+    ) -> None:
+        generator_params = generator_params or kwargs
+        if generator is None:
+            generator = IRPGenerator(**generator_params, device=device)
+        super().__init__(generator=generator, generator_params=generator_params, device=device, **kwargs)
 
 
 class IRP(BaseProblem):
-    """
-    Inventory Routing Problem (IRP).
-
-    Offline cost computation for multi-period IRP solutions.
-    The cost is the sum of routing distance plus holding costs minus any
-    stockout penalty savings, evaluated from a completed IRPEnv episode state.
-
-    Attributes:
-        NAME: Environment name identifier.
-    """
+    """Inventory Routing Problem (IRP) task definition."""
 
     NAME = "irp"
 
     @staticmethod
-    def get_costs(
+    def evaluate_tour(
         dataset: Dict[str, Any],
         pi: torch.Tensor,
-        cw_dict: Optional[Dict[str, float]],
         dist_matrix: Optional[torch.Tensor] = None,
-    ):
-        """
-        Compute IRP costs from a completed episode state dict.
-
-        For multi-period IRP, ``dataset`` is expected to be the terminal
-        TensorDict produced by IRPEnv (containing ``routing_cost``,
-        ``holding_cost``, and ``stockout`` fields set by ``_get_reward``).
-        If those fields are absent the method falls back to computing the
-        routing component from ``pi`` alone (holding cost is then ignored).
-
-        Args:
-            dataset: Terminal TensorDict or dict with episode data.
-            pi: Tour tensor [batch, steps] (unused when pre-computed costs present).
-            cw_dict: Optional weight dict with keys ``"routing"``, ``"holding"``,
-                     ``"stockout"`` (defaults to 1.0 each).
-            dist_matrix: Unused (IRP uses Euclidean distance within the env).
-
-        Returns:
-            Tuple of (total_cost, cost_dict, None).
-        """
-        routing_w = 1.0 if cw_dict is None else cw_dict.get("routing", 1.0)
-        holding_w = 1.0 if cw_dict is None else cw_dict.get("holding", 1.0)
-        stockout_w = 1.0 if cw_dict is None else cw_dict.get("stockout", 10.0)
-
-        # Prefer pre-computed decomposed costs stored by IRPEnv._get_reward
-        if "routing_cost" in dataset and "holding_cost" in dataset and "stockout" in dataset:
-            routing = dataset["routing_cost"]
-            holding = dataset["holding_cost"]
-            stockout = dataset["stockout"]
+        **kwargs: Any,
+    ) -> Dict[str, torch.Tensor]:
+        """Compute IRP costs and outcomes."""
+        routing_cost = dataset.get("routing_cost")
+        if routing_cost is not None and isinstance(routing_cost, torch.Tensor):
+            holding_cost = dataset.get("holding_cost", torch.zeros_like(routing_cost))
+            stockout = dataset.get("stockout", torch.zeros_like(routing_cost))
+            cost = routing_cost + holding_cost - stockout
         else:
-            # Fallback: compute routing cost from tour, ignore inventory costs
-            routing = IRP.get_tour_length(dataset, pi, dist_matrix)
-            holding = torch.zeros_like(routing)
-            stockout = torch.zeros_like(routing)
+            length = IRP.get_tour_length(dataset, pi, dist_matrix)
+            cost = length
+        return {
+            "cost": cost,
+            "reward": -cost,
+            "length": cost,
+            "valid": torch.ones_like(cost, dtype=torch.bool),
+            "total": cost,
+        }
 
-        total = routing_w * routing + holding_w * holding + stockout_w * stockout
 
-        return (
-            total,
-            {
-                "routing_cost": routing,
-                "holding_cost": holding,
-                "stockout": stockout,
-                "total": total,
-            },
-            None,
-        )
+IRP_SPEC = ProblemSpec(
+    name="irp",
+    objective=lambda cost, **kw: -float(cost),
+    constraints=(),
+    metrics=("cost", "reward", "length"),
+    env_target="logic.src.envs.tasks.irp:IRPEnv",
+    expand_pool=False,
+)
+PROBLEMS.register(IRP_SPEC)
+
+__all__ = ["IRPGenerator", "IRPEnv", "IRP", "IRP_SPEC"]

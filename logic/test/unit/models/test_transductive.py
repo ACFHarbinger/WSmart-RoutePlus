@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 import pytest
 import torch
 import torch.nn as nn
-from logic.src.envs.routing.ptp import PTPEnv
+from logic.src.envs.tasks.profitable_tour.ptp import PTPEnv
 from logic.src.models.common.transductive.active_search import ActiveSearch
 from logic.src.models.common.transductive.eas import EAS
 from logic.src.models.common.transductive.eas_embeddings import EASEmb

@@ -4,7 +4,7 @@ import os
 import shutil
 
 import pytest
-from logic.src.envs.routing.ptp import PTPEnv
+from logic.src.envs.tasks.ptp import PTPEnv
 from logic.src.models.common.critic_network.policy import CriticNetwork as CriticNetworkPolicy
 from logic.src.models.core.attention_model.policy import AttentionModelPolicy
 from logic.src.models.subnets.factories.attention import AttentionComponentFactory

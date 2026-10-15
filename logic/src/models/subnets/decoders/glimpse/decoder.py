@@ -260,9 +260,19 @@ class GlimpseDecoder(nn.Module):
         # Calculate cost
         cost = None
         final_td = None
-        if hasattr(self.problem, "get_costs"):
+        if hasattr(self.problem, "evaluate_tour"):
+            out_eval = self.problem.evaluate_tour(nodes, pi)
+            if isinstance(out_eval, dict):
+                cost = out_eval.get("cost")
+                final_td = out_eval.get("td")
+            elif isinstance(out_eval, tuple):
+                cost = out_eval[0]
+                if len(out_eval) > 2:
+                    final_td = out_eval[2]
+            else:
+                cost = out_eval
+        elif hasattr(self.problem, "get_costs"):
             out_cost = self.problem.get_costs(nodes, pi, None)
-            # Handle tuple return (cost, mask, td)
             if isinstance(out_cost, tuple):
                 cost = out_cost[0]
                 if len(out_cost) > 2:
