@@ -34,6 +34,7 @@ from logic.src.policies.helpers.operators.recreate_repair import (
 from logic.src.policies.helpers.operators.solution_initialization.greedy_si import build_greedy_routes
 
 from logic.src.configs.policies.ts import TSConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class TSSolver:
@@ -513,7 +514,7 @@ class TSSolver:
                     self.R,
                     self.C,
                     mandatory_nodes=self.mandatory_nodes,
-                    expand_pool=self.params.vrpp,
+                    expand_pool=current_expand_pool(),
                 )
             else:
                 new_routes = greedy_insertion(
@@ -523,7 +524,7 @@ class TSSolver:
                     self.wastes,
                     self.capacity,
                     mandatory_nodes=self.mandatory_nodes,
-                    expand_pool=self.params.vrpp,
+                    expand_pool=current_expand_pool(),
                 )
 
         return new_routes
@@ -611,7 +612,7 @@ class TSSolver:
                 self.R,
                 self.C,
                 mandatory_nodes=self.mandatory_nodes,
-                expand_pool=self.params.vrpp,
+                expand_pool=current_expand_pool(),
             )
         else:
             return greedy_insertion(
@@ -621,7 +622,7 @@ class TSSolver:
                 self.wastes,
                 self.capacity,
                 mandatory_nodes=self.mandatory_nodes,
-                expand_pool=self.params.vrpp,
+                expand_pool=current_expand_pool(),
             )
 
     # ========================================================================
@@ -859,7 +860,7 @@ class TSSolver:
                 self.R,
                 self.C,
                 mandatory_nodes=self.mandatory_nodes,
-                expand_pool=self.params.vrpp,
+                expand_pool=current_expand_pool(),
             )
         else:
             partial, removed = random_removal(routes, n, rng=self.random)
@@ -870,7 +871,7 @@ class TSSolver:
                 self.wastes,
                 self.capacity,
                 mandatory_nodes=self.mandatory_nodes,
-                expand_pool=self.params.vrpp,
+                expand_pool=current_expand_pool(),
             )
 
     def _llh_worst_regret(self, routes: List[List[int]], n: int) -> List[List[int]]:
@@ -895,7 +896,7 @@ class TSSolver:
                 self.R,
                 self.C,
                 self.mandatory_nodes,
-                self.params.vrpp,
+                current_expand_pool(),
             )
         else:
             partial, removed = worst_removal(routes, n, self.dist_matrix)
@@ -906,7 +907,7 @@ class TSSolver:
                 self.wastes,
                 self.capacity,
                 mandatory_nodes=self.mandatory_nodes,
-                expand_pool=self.params.vrpp,
+                expand_pool=current_expand_pool(),
             )
 
     def _llh_cluster_greedy(self, routes: List[List[int]], n: int) -> List[List[int]]:
@@ -932,7 +933,7 @@ class TSSolver:
                 self.R,
                 self.C,
                 mandatory_nodes=self.mandatory_nodes,
-                expand_pool=self.params.vrpp,
+                expand_pool=current_expand_pool(),
             )
         else:
             partial, removed = cluster_removal(routes, n, self.dist_matrix, self.nodes, rng=self.random)
@@ -943,7 +944,7 @@ class TSSolver:
                 self.wastes,
                 self.capacity,
                 mandatory_nodes=self.mandatory_nodes,
-                expand_pool=self.params.vrpp,
+                expand_pool=current_expand_pool(),
             )
 
     def _llh_worst_greedy(self, routes: List[List[int]], n: int) -> List[List[int]]:
@@ -968,7 +969,7 @@ class TSSolver:
                 self.R,
                 self.C,
                 mandatory_nodes=self.mandatory_nodes,
-                expand_pool=self.params.vrpp,
+                expand_pool=current_expand_pool(),
             )
         else:
             partial, removed = worst_removal(routes, n, self.dist_matrix)
@@ -979,7 +980,7 @@ class TSSolver:
                 self.wastes,
                 self.capacity,
                 mandatory_nodes=self.mandatory_nodes,
-                expand_pool=self.params.vrpp,
+                expand_pool=current_expand_pool(),
             )
 
     def _llh_random_regret(self, routes: List[List[int]], n: int) -> List[List[int]]:
@@ -1005,7 +1006,7 @@ class TSSolver:
                 self.R,
                 self.C,
                 mandatory_nodes=self.mandatory_nodes,
-                expand_pool=self.params.vrpp,
+                expand_pool=current_expand_pool(),
             )
         else:
             partial, removed = random_removal(routes, n, rng=self.random)
@@ -1016,7 +1017,7 @@ class TSSolver:
                 self.wastes,
                 self.capacity,
                 mandatory_nodes=self.mandatory_nodes,
-                expand_pool=self.params.vrpp,
+                expand_pool=current_expand_pool(),
             )
 
     # ========================================================================

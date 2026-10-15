@@ -15,6 +15,8 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
+
 
 class RuinAndRecreate:
     """Operator that applies localized Ruin & Recreate (shaking) to a solution.
@@ -29,7 +31,6 @@ class RuinAndRecreate:
         C: Cost per km traveled.
         rng: Random number generator.
         profit_aware_operators: Whether to use profit-aware operators.
-        vrpp: Whether solving VRP with Profits.
         neighbors: Pre-computed list of neighbors for each node.
     """
 
@@ -42,7 +43,6 @@ class RuinAndRecreate:
         C: float,
         rng: np.random.Generator,
         profit_aware_operators: bool = False,
-        vrpp: bool = True,
     ):
         """Initialize RuinAndRecreate operator.
 
@@ -54,7 +54,6 @@ class RuinAndRecreate:
             C: Cost per km traveled.
             rng: Random number generator.
             profit_aware_operators: Whether to use profit-aware operators.
-            vrpp: Whether solving VRP with Profits.
 
         Returns:
             None.
@@ -66,7 +65,6 @@ class RuinAndRecreate:
         self.C = C
         self.rng = rng
         self.profit_aware_operators = profit_aware_operators
-        self.vrpp = vrpp
 
         # Pre-compute neighbors list
         self.neighbors: List[List[int]] = []
@@ -163,7 +161,7 @@ class RuinAndRecreate:
 
         # --- 2. RECREATE PHASE ---
         visited = {n for r in working_routes for n in r}
-        if self.vrpp:
+        if current_expand_pool():
             reinsertion_pool_set = set(removed_customers)
             for node in removed_customers:
                 for neighbor in self.neighbors[node][:15]:

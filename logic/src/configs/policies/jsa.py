@@ -30,7 +30,6 @@ class JointSAConfig:
         overflow_penalty (float): Penalty for overflow.
         seed (Optional[int]): Random seed for reproducibility.
         time_limit (float): Time limit in seconds.
-        vrpp (bool): Whether the problem is a VRRP.
         packing (Optional[List[Any]]): Mandatory customers/requests selection.
         route_improvement (Optional[List[Any]]): Route improvement strategies.
     """
@@ -46,6 +45,5 @@ class JointSAConfig:
     time_limit: float = 60.0
 
     # Hydra compatibility placeholders
-    vrpp: bool = True
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)

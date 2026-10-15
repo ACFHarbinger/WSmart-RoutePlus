@@ -11,7 +11,7 @@ Example:
 
 from typing import Any, Dict
 
-from .base import SimulationAction
+from .base import SimulationAction, bind_context
 
 
 class FillAction(SimulationAction):
@@ -25,6 +25,12 @@ class FillAction(SimulationAction):
         None
     """
 
+    timed = False
+    reads = ("bins", "day")
+    writes = ("new_overflows", "fill", "total_fill", "sum_lost", "overflows")
+    finalizes = ()
+    requires_final = ()
+
     def execute(self, context: Dict[str, Any]) -> None:
         """
         Execute daily bin filling.
@@ -32,15 +38,17 @@ class FillAction(SimulationAction):
         Args:
             context: Shared dictionary containing simulation state.
         """
-        bins = context["bins"]
-        day = context["day"]
+
+        context = bind_context(context)
+        bins = context.bins
+        day = context.day
 
         new_overflows, fill, total_fill, sum_lost = bins.load_filling(day)
-        context["new_overflows"] = new_overflows
-        context["fill"] = fill
-        context["total_fill"] = total_fill
-        context["sum_lost"] = sum_lost
+        context.new_overflows = new_overflows
+        context.fill = fill
+        context.total_fill = total_fill
+        context.sum_lost = sum_lost
 
         # Accumulate overflows in context (if needed by subsequent steps or final return)
         if "overflows" in context:
-            context["overflows"] += new_overflows
+            context.overflows += new_overflows

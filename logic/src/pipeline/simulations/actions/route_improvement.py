@@ -21,20 +21,21 @@ from logic.src.configs import RouteImprovingConfig
 from logic.src.constants import ROOT_DIR  # noqa: F401  (ROOT_DIR: test patch point)
 from logic.src.constants.paths import CONFIGS_DIR
 from logic.src.interfaces import ITraversable
-from logic.src.policies.routing.other_algorithms.travelling_salesman_problem.tsp import get_route_cost
 from logic.src.policies.route_improvement import RouteImproverFactory
+from logic.src.policies.routing.other_algorithms.travelling_salesman_problem.tsp import get_route_cost
 from logic.src.utils.configs.config_loader import load_config
 
 from .base import (
     SimulationAction,
     _as_plain_dict,
-    _file_yaml_pairs,
     _as_policy_mapping,
+    _file_yaml_pairs,
     _is_mapping,
     _load_policy_yaml_section,
     _pop_context_key,
     _record_live_params,
     _set_live_capture_meta,
+    bind_context,
 )
 
 
@@ -46,6 +47,12 @@ class RouteImprovementAction(SimulationAction):
         None
     """
 
+    timed = True
+    reads = ("tour", "config")
+    writes = ("tour", "cost")
+    finalizes = ()
+    requires_final = ()
+
     def execute(self, context: Dict[str, Any]) -> None:
         """
         Refine the generated collection tour.
@@ -53,11 +60,13 @@ class RouteImprovementAction(SimulationAction):
         Args:
             context: Shared dictionary containing simulation state.
         """
+
+        context = bind_context(context)
         _set_live_capture_meta(context)
         pp_configs = self._get_route_improvement_configs(context)
         if not pp_configs:
             _record_live_params("consumer_ri", {"entries": []})
-        tour = context.get("tour")
+        tour = getattr(context, "tour", None)
         if not tour or len(tour) <= 2:
             return
 
@@ -75,9 +84,9 @@ class RouteImprovementAction(SimulationAction):
         Returns:
             A list of RouteImprovingConfig objects.
         """
-        raw_cfg = context.get("config", {})
+        raw_cfg = getattr(context, "config", {})
         flat_cfg = _as_policy_mapping(raw_cfg)
-        pp_list = flat_cfg.get("route_improvement") or context.get("route_improvement")
+        pp_list = flat_cfg.get("route_improvement") or getattr(context, "route_improvement", None)
 
         if isinstance(pp_list, RouteImprovingConfig):
             return [pp_list]
@@ -141,9 +150,9 @@ class RouteImprovementAction(SimulationAction):
                 if "methods" in cfg:
                     processors = []
                     ri_params = {k: v for k, v in cfg.items() if k != "methods"}
-                    context["_ri_yaml_params"] = ri_params
+                    context._ri_yaml_params = ri_params
                     live_ri = {"methods": list(cfg["methods"]), **ri_params}
-                    context["_live_ri"] = live_ri
+                    context._live_ri = live_ri
                     _record_live_params("route_improvement", live_ri)
                     for method in cfg["methods"]:
                         try:
@@ -159,7 +168,7 @@ class RouteImprovementAction(SimulationAction):
                 for k, v in cfg.items():
                     pp_name = k
                     if _is_mapping(v):
-                        context["_ri_yaml_params"] = _as_plain_dict(v)
+                        context._ri_yaml_params = _as_plain_dict(v)
             except (OSError, ValueError) as e:
                 logger.warning(f"Error loading route_improvement config {file_key}: {e}")
                 return []
@@ -193,9 +202,9 @@ class RouteImprovementAction(SimulationAction):
                         if "methods" in cfg:
                             processors = []
                             ri_params = {k: v for k, v in cfg.items() if k != "methods"}
-                            context["_ri_yaml_params"] = ri_params
+                            context._ri_yaml_params = ri_params
                             live_ri = {"methods": list(cfg["methods"]), **ri_params}
-                            context["_live_ri"] = live_ri
+                            context._live_ri = live_ri
                             _record_live_params("route_improvement", live_ri)
                             for method in cfg["methods"]:
                                 try:
@@ -213,7 +222,7 @@ class RouteImprovementAction(SimulationAction):
                             v_obj: object = v
                             if isinstance(v_obj, ITraversable):
                                 for _k, _v in v_obj.items():
-                                    context[_k] = _v
+                                    setattr(context, _k, _v)
                     except (OSError, ValueError) as e:
                         logger.warning(f"Error loading route_improvement config {file_key}: {e}")
                         return []
@@ -233,9 +242,9 @@ class RouteImprovementAction(SimulationAction):
                 if "methods" in cfg:
                     processors = []
                     ri_params = {k: v for k, v in cfg.items() if k != "methods"}
-                    context["_ri_yaml_params"] = ri_params
+                    context._ri_yaml_params = ri_params
                     live_ri = {"methods": list(cfg["methods"]), **ri_params}
-                    context["_live_ri"] = live_ri
+                    context._live_ri = live_ri
                     _record_live_params("route_improvement", live_ri)
                     for method in cfg["methods"]:
                         try:
@@ -254,7 +263,7 @@ class RouteImprovementAction(SimulationAction):
                     v_obj: object = v
                     if isinstance(v_obj, ITraversable):
                         for _k, _v in v_obj.items():
-                            context[_k] = _v
+                            setattr(context, _k, _v)
             except (OSError, ValueError) as e:
                 logger.warning(f"Error loading route_improvement config {item}: {e}")
                 return []
@@ -277,38 +286,38 @@ class RouteImprovementAction(SimulationAction):
             processors: A list of processors to apply.
             context: Shared dictionary containing simulation state.
         """
-        tour = context.get("tour")
+        tour = getattr(context, "tour", None)
         for processor in processors:
             try:
-                pf_params = {k: v for k, v in context.items() if k not in ("tour", "_ri_yaml_params")}
-                ri_yaml = context.get("_ri_yaml_params") or {}
+                pf_params = {k: v for k, v in context.as_kwargs().items() if k not in ("tour", "_ri_yaml_params")}
+                ri_yaml = getattr(context, "_ri_yaml_params", None) or {}
                 pf_params.update(ri_yaml)
                 from logic.src.tracking.logging.modules.policy_viz_emit import PolicyVizStreamSession
 
-                viz_policy = str(context.get("display_name") or context.get("policy_name") or "unknown")
+                viz_policy = str(getattr(context, "display_name", None) or getattr(context, "policy_name", None) or "unknown")
                 with PolicyVizStreamSession(
                     processor,
                     viz_policy,
-                    int(context.get("sample_id", 0)),
-                    int(context.get("day", 0)),
-                    context.get("realtime_log_path"),
-                    context.get("lock"),
+                    int(getattr(context, "sample_id", 0)),
+                    int(getattr(context, "day", 0)),
+                    getattr(context, "realtime_log_path", None),
+                    getattr(context, "lock", None),
                 ):
                     refined_tour, metrics = processor.process(tour, **pf_params)
                 if refined_tour != tour:
-                    dist_matrix = context.get("distance_matrix")
+                    dist_matrix = getattr(context, "distance_matrix", None)
                     new_cost = get_route_cost(dist_matrix, refined_tour)
 
                     tour = refined_tour
-                    context["tour"] = refined_tour
-                    context["cost"] = new_cost
+                    context.tour = refined_tour
+                    context.cost = new_cost
 
                     # Merge into the ledger if active in the simulation context
-                    incoming_ctx = context.get("search_context")
+                    incoming_ctx = getattr(context, "search_context", None)
                     if incoming_ctx is not None:
                         from logic.src.interfaces.context.search_context import SearchPhase, merge_context
 
-                        context["search_context"] = merge_context(
+                        context.search_context = merge_context(
                             incoming_ctx,
                             phase=SearchPhase.IMPROVEMENT,
                             improvement_metrics=metrics,

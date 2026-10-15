@@ -27,7 +27,6 @@ class GAConfig:
         tournament_size (int): Size of the tournament selection.
         n_removal (int): Number of routes to remove.
         time_limit (float): Time limit in seconds.
-        vrpp (bool): Whether the problem is a VRRP.
         profit_aware_operators (bool): Whether to use profit-aware operators.
         seed (Optional[int]): Seed for the random number generator.
         packing (Optional[List[PackingConfig]]): Packing configurations.
@@ -42,7 +41,6 @@ class GAConfig:
     n_removal: int = 2
     time_limit: float = 60.0
     seed: Optional[int] = None
-    vrpp: bool = True
     profit_aware_operators: bool = False
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)

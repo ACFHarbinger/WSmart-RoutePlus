@@ -178,7 +178,7 @@ class CVRPPolicy(BaseRoutingPolicy):
             known = {f.name for f in fields(CVRPConfig)}
             filtered = {key: value for key, value in cfg.items() if key in known}
             cfg = _structured_load(CVRPConfig, filtered)
-            for key in ("seed", "vrpp"):
+            for key in ("seed",):
                 if key in values:
                     setattr(cfg, key, values[key])
 

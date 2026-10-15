@@ -19,6 +19,8 @@ from typing import Any, Deque, Dict, List, Optional, Tuple
 
 import numpy as np
 
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
+
 
 class LinearSplit:
     """
@@ -49,7 +51,6 @@ class LinearSplit:
         C (float): Cost multiplier.
         max_vehicles (int): Maximum number of vehicles allowed.
         mandatory_nodes (Set[int]): Set of nodes that MUST be visited.
-        vrpp (bool): True if skipping nodes is allowed.
 
     Example:
         >>> split_manager = LinearSplit(dist_matrix, wastes, capacity, R, C)
@@ -64,7 +65,6 @@ class LinearSplit:
         C: float,
         max_vehicles: int = 0,
         mandatory_nodes: Optional[List[int]] = None,
-        vrpp: bool = True,
     ):
         """
         Initialize the LinearSplit solver.
@@ -77,7 +77,6 @@ class LinearSplit:
             C: Cost multiplier.
             max_vehicles: Maximum number of vehicles allowed (0 for unlimited).
             mandatory_nodes: List of local node indices that MUST be visited.
-            vrpp: Whether skipping nodes is allowed (VRPP mode).
 
         Returns:
             None.
@@ -89,7 +88,6 @@ class LinearSplit:
         self.C = C
         self.max_vehicles = max_vehicles
         self.mandatory_nodes = set(mandatory_nodes) if mandatory_nodes else set()
-        self.vrpp = vrpp
 
     def split(self, giant_tour: List[int]) -> Tuple[List[List[int]], float]:
         """
@@ -257,7 +255,7 @@ class LinearSplit:
 
             # 2. Skip transition (only if VRPP and NOT mandatory)
             node = nodes[i - 1]
-            if self.vrpp and node not in self.mandatory_nodes and V[i - 1] > V[i]:
+            if current_expand_pool() and node not in self.mandatory_nodes and V[i - 1] > V[i]:
                 V[i] = V[i - 1]
                 P[i] = -2  # Marker for skip
 
@@ -306,7 +304,7 @@ class LinearSplit:
         # nodes 1..j are all optional; without this every plan had to include node 1.
         V_prev = [-float("inf")] * (n + 1)
         V_prev[0] = 0.0
-        if self.vrpp:
+        if current_expand_pool():
             for j in range(1, n + 1):
                 if nodes[j - 1] in self.mandatory_nodes:
                     break
@@ -344,7 +342,7 @@ class LinearSplit:
 
                 # 2. Skip transition (only if VRPP and NOT mandatory)
                 node = nodes[i - 1]
-                if self.vrpp and node not in self.mandatory_nodes and V_curr[i - 1] > V_curr[i]:
+                if current_expand_pool() and node not in self.mandatory_nodes and V_curr[i - 1] > V_curr[i]:
                     V_curr[i] = V_curr[i - 1]
                     P[k][i] = -2  # Marker for skip
 
@@ -400,7 +398,7 @@ class LinearSplit:
         while curr > 0:
             if k == 0:
                 # Remaining positions precede the first route: they must be optional.
-                if self.vrpp and all(nodes[i] not in self.mandatory_nodes for i in range(curr)):
+                if current_expand_pool() and all(nodes[i] not in self.mandatory_nodes for i in range(curr)):
                     curr = 0
                     break
                 return [], -float("inf")
@@ -465,7 +463,6 @@ def split_algorithm(
     C: float,
     values: Dict[str, Any],
     mandatory_nodes: Optional[List[int]] = None,
-    vrpp: bool = False,
 ):
     """
     Convenience wrapper for the LinearSplit algorithm.
@@ -479,10 +476,9 @@ def split_algorithm(
         C: Cost multiplier.
         values: Configuration parameters including `max_vehicles`.
         mandatory_nodes: List of mandatory node indices.
-        vrpp: Whether the problem is a Vehicle Routing Problem with Profits.
 
     Returns:
         Tuple[List[List[int]], float]: Decoded routes and total profit.
     """
-    s = LinearSplit(dist_matrix, wastes, capacity, R, C, values.get("max_vehicles", 0), mandatory_nodes, vrpp)
+    s = LinearSplit(dist_matrix, wastes, capacity, R, C, values.get("max_vehicles", 0), mandatory_nodes)
     return s.split(giant_tour)

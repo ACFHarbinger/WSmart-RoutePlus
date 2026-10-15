@@ -10,9 +10,6 @@ from logic.src.policies.routing.meta_heuristics.genius.solver import GENIUSSolve
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
-
-
-
 def test_genius_node_conservation():
     """Verify that nodes are not lost during GENIUS US iterations."""
     dist_matrix = np.array([
@@ -32,7 +29,6 @@ def test_genius_node_conservation():
         neighborhood_size=5,
         random_us_sampling=False, # Use deterministic for reproducibility
         profit_aware_operators=True,
-        vrpp=True
     )
 
     solver = GENIUSSolver(dist_matrix, wastes, capacity, R, C, params)
@@ -63,7 +59,6 @@ def test_genius_mandatory_conservation():
         neighborhood_size=5,
         random_us_sampling=False,
         profit_aware_operators=True,
-        vrpp=True
     )
 
     solver = GENIUSSolver(dist_matrix, wastes, capacity, R, C, params, mandatory_nodes=mandatory_nodes)

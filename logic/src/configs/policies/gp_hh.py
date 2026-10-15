@@ -30,7 +30,6 @@ class GPHHConfig:
         parsimony_coefficient: Weight for tree-size penalty (0.0 = none).
         n_training_instances: Sub-instances for fitness averaging.
         training_sample_ratio: Fraction of nodes sampled per training instance.
-        vrpp: If True, solver operates in full VRPP mode (optional nodes).
         packing: Packing algorithm config list.
         route_improvement: Route improvement operation config list.
     """
@@ -44,7 +43,6 @@ class GPHHConfig:
     n_training_instances: int = 3
     training_sample_ratio: float = 0.5
     seed: Optional[int] = None
-    vrpp: bool = True
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)
     candidate_list_size: int = 10

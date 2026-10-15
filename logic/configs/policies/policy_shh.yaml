@@ -2,4 +2,3 @@ shh:
   iters: 200
   history_len: 10
   seed: 42
-  vrpp: true

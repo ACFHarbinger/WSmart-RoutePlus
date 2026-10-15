@@ -50,7 +50,6 @@ class KernelSearchConfig:
             Defaults to 0.01 (1%).
         seed (int): Random seed for Gurobi's internal heuristics and algorithmic
             variations to ensure deterministic behavior. Defaults to 42.
-        vrpp (bool): Whether the problem is a VRP with Profits.
         engine (str): Identifier for the optimization engine. Use "gurobi" to
             invoke the project's native Gurobi-based KS solver.
         framework (str): Identifier for the optimization framework. Options
@@ -68,7 +67,6 @@ class KernelSearchConfig:
     mip_limit_nodes: int = 5000
     mip_gap: float = 0.01
     seed: int = 42
-    vrpp: bool = True
 
     # Infrastructure
     engine: str = "gurobi"

@@ -9,7 +9,6 @@ alns:
     xi: 0.4
     extended_operators: false
     profit_aware_operators: true
-    vrpp: true
     engine: custom
     packing:
       other/pk_last_minute.yaml:

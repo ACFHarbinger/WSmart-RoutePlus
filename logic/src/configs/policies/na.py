@@ -9,8 +9,6 @@ Example:
     >>> config = NeuralAgentConfig()
     >>> config.seed
     None
-    >>> config.vrpp
-    True
 """
 from __future__ import annotations
 
@@ -31,7 +29,6 @@ class NeuralAgentConfig:
         packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
         seed: Random seed for reproducibility.
-        vrpp: Whether the problem is a VRP with Profits.
     """
 
     model: ModelConfig = field(default_factory=ModelConfig)
@@ -39,7 +36,6 @@ class NeuralAgentConfig:
     packing: Optional[Any] = None
     route_improvement: Optional[Any] = None
     seed: Optional[int] = None
-    vrpp: bool = True
     waste_weight: float = 1.0
     cost_weight: float = 1.0
     overflow_penalty: float = 1.0

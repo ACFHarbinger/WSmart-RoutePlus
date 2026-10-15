@@ -3,7 +3,6 @@ src:
   - tsp
   - alns
   time_limit: 60
-  vrpp: true
   packing:
     other/pk_lookahead.yaml:
     - default

@@ -36,7 +36,6 @@ class ILSRVNDSPConfig(ABCConfig):
         MaxIterILS_b (int): Maximum iterations for ILS in phase b.
         TDev_a (float): Temperature deviation for phase a.
         TDev_b (float): Temperature deviation for phase b.
-        vrpp (bool): Whether the problem is a VRRP.
         profit_aware_operators (bool): Whether to use profit-aware operators.
         time_limit (float): Time limit for the algorithm.
         seed (Optional[int]): Seed for the random number generator.
@@ -68,7 +67,6 @@ class ILSRVNDSPConfig(ABCConfig):
     TDev_b: float = 0.005
 
     # Global parameters
-    vrpp: bool = True
     profit_aware_operators: bool = False
     time_limit: float = 120.0
     seed: Optional[int] = None

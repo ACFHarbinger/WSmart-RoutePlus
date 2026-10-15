@@ -35,14 +35,6 @@
         "type": "int",
         "default": null
     },
-    "vrpp": {
-        "type": "categorical",
-        "choices": [
-            true,
-            false
-        ],
-        "default": true
-    },
     "packing": {
         "type": "object",
         "default": "factory"

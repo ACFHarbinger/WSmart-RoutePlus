@@ -2,4 +2,3 @@ cgh:
   cg_iters: 10
   routes_per_iter: 50
   seed: 42
-  vrpp: true

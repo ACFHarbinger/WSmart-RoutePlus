@@ -109,6 +109,7 @@ from logic.src.policies.helpers.operators import (
     worst_removal,
 )
 from logic.src.tracking.viz_mixin import PolicyStateRecorder
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 MIN_REMOVAL_LOWER_BOUND: int = 4
 
@@ -128,7 +129,6 @@ class ALNSSolver:
         C: Cost per unit distance.
         params: ALNS parameters.
         mandatory_nodes: List of nodes that must be visited.
-        vrpp: Whether to allow expanding insertion pool.
         profit_aware_operators: Whether to use profit-aware operators.
         extended_operators: Whether to use extended destroy set.
         random: Random number generator for selection.
@@ -203,7 +203,6 @@ class ALNSSolver:
         self.cfg: ALNSConfig = cfg
         self.params = cfg
         self.mandatory_nodes = mandatory_nodes
-        self.vrpp = getattr(cfg, "vrpp", True)
         self.profit_aware_operators = getattr(cfg, "profit_aware_operators", False)
         self.extended_operators = getattr(cfg, "extended_operators", False)
         self.random = random.Random(cfg.seed) if cfg.seed is not None else random.Random()
@@ -442,7 +441,7 @@ class ALNSSolver:
             wastes=self.wastes,
             capacity=self.capacity,
             mandatory_nodes=self.mandatory_nodes,
-            expand_pool=self.vrpp,
+            expand_pool=current_expand_pool(),
         )
         profit_kw: Dict = dict(**common_kw, R=self.R, C=self.C)
 

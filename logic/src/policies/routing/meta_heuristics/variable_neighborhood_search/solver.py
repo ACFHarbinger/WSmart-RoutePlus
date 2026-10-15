@@ -40,6 +40,7 @@ from logic.src.policies.helpers.operators.search_heuristics.destroy_repair_llh i
 )
 
 from logic.src.configs.policies.vns import VNSConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class VNSSolver:
@@ -203,7 +204,7 @@ class VNSSolver:
             List[List[int]]: List of routes.
         """
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         return llh_random_greedy(
             routes,
@@ -231,7 +232,7 @@ class VNSSolver:
             List[List[int]]: List of routes.
         """
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         return llh_random_greedy(
             routes,
@@ -259,7 +260,7 @@ class VNSSolver:
             List[List[int]]: List of routes.
         """
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         return llh_worst_regret_2(
             routes,
@@ -287,7 +288,7 @@ class VNSSolver:
             List[List[int]]: List of routes.
         """
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         return llh_cluster_greedy(
             routes,
@@ -316,7 +317,7 @@ class VNSSolver:
             List[List[int]]: List of routes.
         """
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         return llh_random_regret_2(
             routes,
@@ -388,7 +389,7 @@ class VNSSolver:
             List[List[int]]: List of routes.
         """
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         return llh_random_greedy(
             routes,
@@ -416,7 +417,7 @@ class VNSSolver:
             List[List[int]]: List of routes.
         """
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         return llh_worst_regret_2(
             routes,
@@ -444,7 +445,7 @@ class VNSSolver:
             List[List[int]]: List of routes.
         """
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         return llh_cluster_greedy(
             routes,
@@ -473,7 +474,7 @@ class VNSSolver:
             List[List[int]]: List of routes.
         """
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         return llh_worst_greedy(
             routes,
@@ -501,7 +502,7 @@ class VNSSolver:
             List[List[int]]: List of routes.
         """
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         return llh_random_regret_2(
             routes,

@@ -9,8 +9,6 @@ Example:
     >>> config = RENSConfig()
     >>> config.time_limit
     60.0
-    >>> config.vrpp
-    True
 """
 
 from dataclasses import dataclass
@@ -42,7 +40,6 @@ class RENSConfig:
             primal solution quickly.
         seed (int): Random seed for the underlying Gurobi solver to ensure
             deterministic and reproducible results.
-        vrpp (bool): Whether the problem is a VRP with Profits.
         framework: Optimization framework to use ('ortools' or 'pyomo').
         engine: Optimization engine to use ('gurobi', 'scip', 'highs', or 'cplex').
         packing (Optional[PackingConfig]): Composition handle
@@ -56,7 +53,6 @@ class RENSConfig:
     mip_limit_nodes: int = 1000
     mip_gap: float = 0.01
     seed: int = 42
-    vrpp: bool = True
 
     # Infrastructure
     framework: str = "ortools"

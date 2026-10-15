@@ -145,8 +145,6 @@ class BranchAndCutPolicy(BaseRoutingPolicy):
         params = self._effective_config(values)
         if "profit_aware_operators" in kwargs:
             params.profit_aware_operators = kwargs["profit_aware_operators"]
-        if "vrpp" in kwargs:
-            params.vrpp = kwargs["vrpp"]
 
         solver = BranchAndCutSolver(
             model=model,

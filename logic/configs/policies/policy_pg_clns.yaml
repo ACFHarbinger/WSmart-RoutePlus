@@ -27,7 +27,6 @@ pg_clns:
       xi: 0.2
       time_limit: 30.0
     profit_aware_operators: true
-    vrpp: true
     packing:
       other/pk_last_minute.yaml:
       - last_minute_cf70

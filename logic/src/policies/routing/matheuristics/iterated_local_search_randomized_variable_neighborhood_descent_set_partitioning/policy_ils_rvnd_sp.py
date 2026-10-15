@@ -134,7 +134,6 @@ class ILSRVNDSPPolicy(BaseRoutingPolicy):
             max_vehicles=int(values.get("max_vehicles", 9999)),
             time_limit=float(values.get("time_limit", 300.0)),
             seed=int(values.get("seed", 42)),
-            vrpp=bool(values.get("vrpp", True)),
             profit_aware_operators=bool(values.get("profit_aware_operators", False)),
             local_search_iterations=int(values.get("local_search_iterations", 500)),
         )

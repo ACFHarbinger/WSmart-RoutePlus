@@ -15,7 +15,6 @@ alns_ipo:
   sigma_1: 33.0
   sigma_2: 9.0
   sigma_3: 13.0
-  vrpp: true
   profit_aware_operators: false
   extended_operators: false
   seed: 42

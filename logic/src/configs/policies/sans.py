@@ -67,6 +67,5 @@ class SANSConfig:
     combination: Optional[List[float]] = None
     V: float = 0.0
     shift_duration: float = 28800.0  # 8 hours
-    vrpp: bool = True
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

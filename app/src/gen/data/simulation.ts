@@ -151,7 +151,7 @@ export async function parseOutputDir(root: string): Promise<SimRow[]> {
         reward: mean.reward ?? 0,
         profit: mean.profit ?? 0,
         time: mean.time ?? 0,
-        days: mean.days ?? 0,
+        days: mean.collection_days ?? mean.days ?? 0,
       })
     );
   }

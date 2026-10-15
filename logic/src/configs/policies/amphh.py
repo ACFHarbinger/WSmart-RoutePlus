@@ -30,7 +30,6 @@ class AMPHHConfig:
         mem_size (int): Size of the adaptive memory. Defaults to 10.
         iters (int): Number of iterations. Defaults to 50.
         seed (int): Random seed for reproducibility. Defaults to 42.
-        vrpp (bool): Whether the problem is a VRP with Profits. Defaults to True.
         packing (Optional[PackingConfig]): Configuration for
             mandatory node selection policies.
         route_improvement (Optional[RouteImprovingConfig]): Optional configuration
@@ -40,7 +39,6 @@ class AMPHHConfig:
     mem_size: int = 10
     iters: int = 50
     seed: int = 42
-    vrpp: bool = True
 
     packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None

@@ -9,5 +9,4 @@ na:
     packing:
       other/pk_lookahead.yaml:
       - default
-    vrpp: true
     route_improvement: []

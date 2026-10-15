@@ -15,7 +15,6 @@ hulk:
   min_destroy_size: 2
   max_destroy_pct: 0.3
   profit_aware_operators: false
-  vrpp: true
   local_search_iterations: 10
   local_search_operators:
   - 2-opt

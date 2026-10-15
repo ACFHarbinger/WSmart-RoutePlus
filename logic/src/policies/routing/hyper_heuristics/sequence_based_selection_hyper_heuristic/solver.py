@@ -61,6 +61,7 @@ from logic.src.policies.helpers.operators import (
 from logic.src.policies.helpers.operators.solution_initialization.nearest_neighbor_si import build_nn_routes
 
 from logic.src.configs.policies.ss_hh import SSHHConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 @dataclass
@@ -343,7 +344,7 @@ class SSHHSolver:
             List[List[int]]: List of routes after applying the heuristic.
         """
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         p, r = random_removal(routes, n, self.random)
         if use_profit:
@@ -372,7 +373,7 @@ class SSHHSolver:
             List[List[int]]: List of routes after applying the heuristic.
         """
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         if use_profit:
             p, r = worst_profit_removal(routes, n, self.dist_matrix, self.wastes, self.R, self.C)
@@ -402,7 +403,7 @@ class SSHHSolver:
             List[List[int]]: List of routes after applying the heuristic.
         """
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         p, r = cluster_removal(routes, n, self.dist_matrix, self.nodes)
         if use_profit:
@@ -431,7 +432,7 @@ class SSHHSolver:
             List[List[int]]: List of routes after applying the heuristic.
         """
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         if use_profit:
             p, r = worst_profit_removal(routes, n, self.dist_matrix, self.wastes, self.R, self.C)
@@ -461,7 +462,7 @@ class SSHHSolver:
             List[List[int]]: List of routes after applying the heuristic.
         """
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
         p, r = random_removal(routes, n, self.random)
         if use_profit:
             return regret_2_profit_insertion(
@@ -489,7 +490,7 @@ class SSHHSolver:
             List[List[int]]: List of routes after applying the heuristic.
         """
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         if use_profit:
             p, r = shaw_profit_removal(routes, n, self.dist_matrix, self.wastes, self.R, self.C)
@@ -520,7 +521,7 @@ class SSHHSolver:
             List[List[int]]: List of routes after applying the heuristic.
         """
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         p, r = string_removal(routes, n, self.dist_matrix, rng=self.random)
         if use_profit:

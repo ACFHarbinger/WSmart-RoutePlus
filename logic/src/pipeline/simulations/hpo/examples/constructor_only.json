@@ -20,13 +20,5 @@
       "alns"
     ],
     "description": "Categorical parameter with string choices."
-  },
-  "vrpp": {
-    "type": "categorical",
-    "choices": [
-      true,
-      false
-    ],
-    "description": "Categorical parameter with boolean choices."
   }
 }

@@ -79,24 +79,23 @@ EARTH_WMP_RADIUS: int = 6378137  # meters (equatorial radius, WGS84 datum)
 # - kg_lost: kilograms (float, waste lost due to overflows)
 # - km: kilometers (float, total distance traveled)
 # - kg/km: kg per km (float, collection efficiency ratio)
-# - cost: currency units (float, operational cost = fuel + time)
-# - profit: currency units (float, revenue - cost)
+# - profit: currency units (float, revenue - cost). Day logs do not store reward.
 METRICS: List[str] = [
-    "overflows",  # Constraint violations (minimize to 0)
-    "kg",  # Waste collected (maximize, subject to no overflows)
+    "overflows",  # Bin overflows (minimize to 0). Not a route-feasibility violation.
+    "kg",  # Waste collected (maximize)
     "ncol",  # Collection count (minimize for efficiency)
-    "kg_lost",  # Overflow penalty (minimize to 0)
+    "kg_lost",  # Waste lost above bin capacity (minimize to 0)
     "km",  # Distance traveled (minimize)
-    "kg/km",  # Efficiency ratio (maximize)
-    "reward",  # Reward function (maximize)
-    "profit",  # Net profit (maximize, primary objective)
-    "time",  # Policy time in s: packing + routing + route improvement, summed over days (minimize)
+    "kg/km",  # Ratio of summed kg to summed km
+    "profit",  # Net profit in EUR (maximize, primary objective)
+    "time",  # Policy time in s: packing + routing + route improvement (minimize)
+    "day_wall_time",  # Whole run_day wall time in s (minimize)
+    "days_simulated",  # Days the sample attempted
+    "collection_days",  # Days with a non-empty executed tour
 ]
 
-# Extended simulation metrics (add temporal metadata)
-# Additional fields:
-# - days: integer (simulation duration, e.g., 31 for monthly simulation)
-SIM_METRICS: List[str] = METRICS + ["days"]
+# Sample columns. ``time_spent`` is TCPTP-only and is not in this default list.
+SIM_METRICS: List[str] = list(METRICS)
 
 # Daily log metrics (add mandatory nodes selected before tour)
 # Additional fields:

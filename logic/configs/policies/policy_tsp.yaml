@@ -4,6 +4,5 @@ tsp:
     packing:
       other/pk_last_minute.yaml:
       - cf70
-    vrpp: true
     time_limit: 60
     route_improvement: []

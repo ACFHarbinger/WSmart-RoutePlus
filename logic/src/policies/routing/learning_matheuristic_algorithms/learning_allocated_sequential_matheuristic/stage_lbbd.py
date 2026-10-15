@@ -232,7 +232,6 @@ def _solve_sub_alns(
             time_limit=time_limit,
             max_iterations=max(200, int(500 * time_limit)),
             seed=seed,
-            vrpp=True,
             profit_aware_operators=True,
         )
         solver = ALNSSolver(dist, sub_wastes, capacity, R, C, cfg, mandatory_nodes=sorted(mandatory & selected))
@@ -281,7 +280,7 @@ def _solve_sub_bpc(
         )
 
         sub_wastes = {n: wastes.get(n, 0.0) for n in selected}
-        bpc_params = BPCConfig(time_limit=time_limit, seed=seed, vrpp=True)
+        bpc_params = BPCConfig(time_limit=time_limit, seed=seed)
         routes, profit = run_bpc(
             dist_matrix=dist,
             wastes=sub_wastes,

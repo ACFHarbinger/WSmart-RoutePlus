@@ -7,7 +7,6 @@ abc:
     time_limit: 60.0
     local_search_iterations: 100
     profit_aware_operators: false
-    vrpp: true
     packing:
       other/pk_lookahead.yaml:
       - default

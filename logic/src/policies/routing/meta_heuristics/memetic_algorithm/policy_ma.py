@@ -104,7 +104,6 @@ class MAPolicy(BaseRoutingPolicy):
             tournament_size=int(values.get("tournament_size", 3)),
             n_removal=int(values.get("n_removal", 2)),
             time_limit=float(values.get("time_limit", 60.0)),
-            vrpp=values.get("vrpp", True),
             profit_aware_operators=values.get("profit_aware_operators", False),
             seed=values.get("seed", 42),
         )

@@ -35,7 +35,6 @@ class HybridMemeticLargeNeighborhoodSearchConfig:
         elitism_count (int): Number of elite individuals.
         aco_init_iterations (int): Number of ACO initialization iterations.
         time_limit (float): Time limit in seconds.
-        vrpp (bool): Whether the problem is a VRRP.
         profit_aware_operators (bool): Whether to use profit-aware operators.
         seed (Optional[int]): Seed for the random number generator.
         alns (dict): ALNS parameters.
@@ -52,7 +51,6 @@ class HybridMemeticLargeNeighborhoodSearchConfig:
     elitism_count: int = 3
     aco_init_iterations: int = 50
     time_limit: float = 300.0
-    vrpp: bool = True
     profit_aware_operators: bool = False
     seed: Optional[int] = None
     alns: dict = field(default_factory=dict)

@@ -9,7 +9,6 @@ rl_hvpl:
   pheromone_update_strategy: profit
   profit_weight: 1.0
   profit_aware_operators: false
-  vrpp: true
   aco:
     n_ants: 10
     k_sparse: 10

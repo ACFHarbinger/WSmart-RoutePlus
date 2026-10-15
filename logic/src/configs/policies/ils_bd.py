@@ -30,7 +30,6 @@ class IntegerLShapedBendersConfig:
         master_time_limit: Time limit for each master problem solve (seconds).
         n_scenarios: Number of SAA discrete scenarios for recourse approximation.
         seed: Random seed for reproducible scenario generation.
-        vrpp: Whether to formulate as VRPP (customer nodes may be skipped).
         profit_aware_operators: Whether to use profit-aware warm-start heuristics.
         max_benders_iterations: Maximum outer Benders (L-shaped) iterations.
         benders_gap: Convergence tolerance for the outer Benders loop.
@@ -62,7 +61,6 @@ class IntegerLShapedBendersConfig:
     master_time_limit: float = 60.0
     n_scenarios: int = 20
     seed: Optional[int] = 42
-    vrpp: bool = True
     profit_aware_operators: bool = False
     max_benders_iterations: int = 50
     benders_gap: float = 1e-4

@@ -15,7 +15,6 @@ aco_hh:
     use_dynamic_lambda: true
     operators: null
     profit_aware_operators: true
-    vrpp: true
     packing:
       other/pk_last_minute.yaml:
       - last_minute_cf70

@@ -108,7 +108,6 @@ class ABCPolicy(BaseRoutingPolicy):
             local_search_iterations=int(values.get("local_search_iterations", 500)),
             time_limit=float(values.get("time_limit", 60.0)),
             seed=values.get("seed", 42),
-            vrpp=values.get("vrpp", True),
             profit_aware_operators=values.get("profit_aware_operators", False),
         )
 

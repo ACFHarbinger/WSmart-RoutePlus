@@ -118,7 +118,6 @@ class DEPolicyAdapter(BaseRoutingPolicy):
             evolution_strategy=values.get("evolution_strategy", "lamarckian"),
             time_limit=values.get("time_limit", 60.0),
             seed=values.get("seed", 42),
-            vrpp=values.get("vrpp", True),
             profit_aware_operators=values.get("profit_aware_operators", False),
         )
 

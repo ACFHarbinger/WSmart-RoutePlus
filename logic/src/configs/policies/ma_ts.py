@@ -38,7 +38,6 @@ class MemeticAlgorithmToleranceBasedSelectionConfig:
         local_search_iterations (int): Number of local search iterations per individual.
         time_limit (float): Time limit in seconds.
         seed (Optional[int]): Random seed.
-        vrpp (bool): Whether the problem is a VRRP.
         profit_aware_operators (bool): Whether to use profit-aware operators.
         packing (Optional[List[PackingConfig]]): Mandatory customers/requests selection strategies.
         route_improvement (Optional[List[RouteImprovingConfig]]): Route improvement strategies.
@@ -53,7 +52,6 @@ class MemeticAlgorithmToleranceBasedSelectionConfig:
     local_search_iterations: int = 500
     time_limit: float = 60.0
     seed: Optional[int] = None
-    vrpp: bool = True
     profit_aware_operators: bool = False
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

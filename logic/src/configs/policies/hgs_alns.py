@@ -30,7 +30,6 @@ class HGSALNSConfig:
     """
 
     # HGS-ALNS specific parameters
-    vrpp: bool = True
     profit_aware_operators: bool = False
 
     # Nested component configs

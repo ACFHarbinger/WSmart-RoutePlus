@@ -9,7 +9,6 @@ from logic.src.policies.routing.meta_heuristics.hybrid_volleyball_premier_league
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
-
 def test_subset_dimensions():
     # Use HVPLPolicy to test BaseRoutingPolicy methods
     policy = HVPLPolicy()
@@ -52,7 +51,6 @@ def test_hvpl_respects_subset():
         "hvpl": {
             "max_iterations": 1,
             "n_teams": 1,
-            "vrpp": False
         }
     }
 

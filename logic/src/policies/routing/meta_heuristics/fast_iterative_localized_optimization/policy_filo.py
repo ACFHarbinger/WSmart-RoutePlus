@@ -103,7 +103,6 @@ class FILOPolicy(BaseRoutingPolicy):
             n_cw=int(values.get("n_cw", 100)),
             svc_size=int(values.get("svc_size", 50)),
             seed=values.get("seed", 42),
-            vrpp=values.get("vrpp", True),
             profit_aware_operators=values.get("profit_aware_operators", False),
         )
 

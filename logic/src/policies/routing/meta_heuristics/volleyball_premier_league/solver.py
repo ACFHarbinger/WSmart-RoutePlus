@@ -41,6 +41,7 @@ from logic.src.policies.helpers.operators import (
 from logic.src.policies.helpers.operators.solution_initialization.nearest_neighbor_si import build_nn_routes
 from logic.src.configs.policies.aco_ks import KSparseACOConfig
 from logic.src.configs.policies.vpl import VPLConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class VPLSolver:
@@ -101,7 +102,6 @@ class VPLSolver:
         # Initialize ACO Local Search for elite learning
         aco_params = KSparseACOConfig(
             local_search_iterations=self.params.local_search_iterations,
-            vrpp=self.params.vrpp,
             profit_aware_operators=self.params.profit_aware_operators,
             seed=self.params.seed,
         )
@@ -287,7 +287,7 @@ class VPLSolver:
                                 self.R,
                                 self.C,
                                 mandatory_nodes=self.mandatory_nodes,
-                                expand_pool=self.params.vrpp,
+                                expand_pool=current_expand_pool(),
                             )
                         else:
                             new_team = greedy_insertion(
@@ -297,7 +297,7 @@ class VPLSolver:
                                 self.wastes,
                                 self.capacity,
                                 mandatory_nodes=self.mandatory_nodes,
-                                expand_pool=self.params.vrpp,
+                                expand_pool=current_expand_pool(),
                             )
                     except Exception:
                         # If reconstruction fails, keep original team
@@ -418,7 +418,7 @@ class VPLSolver:
                     self.R,
                     self.C,
                     mandatory_nodes=self.mandatory_nodes,
-                    expand_pool=self.params.vrpp,
+                    expand_pool=current_expand_pool(),
                 )
             else:
                 new_routes = greedy_insertion(
@@ -428,7 +428,7 @@ class VPLSolver:
                     self.wastes,
                     self.capacity,
                     mandatory_nodes=self.mandatory_nodes,
-                    expand_pool=self.params.vrpp,
+                    expand_pool=current_expand_pool(),
                 )
 
             # Apply local search refinement (reusing instance)

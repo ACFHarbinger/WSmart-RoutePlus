@@ -27,14 +27,6 @@
         "type": "object",
         "default": "factory"
     },
-    "vrpp": {
-        "type": "categorical",
-        "choices": [
-            true,
-            false
-        ],
-        "default": true
-    },
     "profit_aware_operators": {
         "type": "categorical",
         "choices": [

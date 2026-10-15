@@ -63,6 +63,7 @@ from logic.src.policies.helpers.operators import (
 )
 
 from logic.src.configs.policies.rl_gd_hh import RLGDHHConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class RLGDHHSolver:
@@ -270,7 +271,7 @@ class RLGDHHSolver:
         node = new_routes[ridx].pop(n_idx)
 
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         if use_profit:
             new_routes = greedy_profit_insertion(
@@ -308,7 +309,7 @@ class RLGDHHSolver:
         routes = copy.deepcopy(routes)
         n = max(1, min(len(self.nodes) // 4, 10))
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         if use_profit:
             partial, removed = shaw_profit_removal(routes, n, self.dist_matrix, self.wastes, self.R, self.C)
@@ -347,7 +348,7 @@ class RLGDHHSolver:
         routes = copy.deepcopy(routes)
         n = max(1, min(len(self.nodes) // 4, 10))
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         partial, removed = string_removal(routes, n, self.dist_matrix, rng=self.random)
 
@@ -386,7 +387,7 @@ class RLGDHHSolver:
         routes = copy.deepcopy(routes)
         n = max(1, min(len(self.nodes) // 5, 5))
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         partial, removed = random_removal(routes, n, rng=self.random)
         if use_profit:

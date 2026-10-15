@@ -67,6 +67,7 @@ from logic.src.policies.helpers.reinforcement_learning.features.state import Sta
 from logic.src.policies.helpers.reinforcement_learning.reward.shaping import AdaptiveRewardShaper, RewardShaper
 
 from logic.src.configs.policies.rl_alns import RLALNSConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class RLALNSSolver:
@@ -178,7 +179,7 @@ class RLALNSSolver:
         Provides a mapping for action indices to operator combinations.
         """
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         if use_profit:
             self.destroy_ops = [

@@ -29,6 +29,7 @@ from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.evolution 
 )
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.hgs import HGSSolver
 from logic.src.configs.policies.hgs_alns import HGSALNSConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class HGSALNSSolver(HGSSolver):
@@ -89,7 +90,7 @@ class HGSALNSSolver(HGSSolver):
         for _ in range(self.hgs_alns_params.hgs_params.mu):
             gt = self.nodes[:]
             self.random.shuffle(gt)
-            ind = Individual(gt, expand_pool=self.params.vrpp)
+            ind = Individual(gt, expand_pool=current_expand_pool())
             evaluate(ind, self.split_manager)
             population.append(ind)
 
@@ -144,7 +145,7 @@ class HGSALNSSolver(HGSSolver):
                     evaluate(child, self.split_manager)
             else:
                 evaluate(child, self.split_manager)
-            child.expand_pool = self.params.vrpp
+            child.expand_pool = current_expand_pool()
             population.append(child)
 
             if child.profit_score > best_profit_so_far:

@@ -148,7 +148,6 @@ class RLALNSPolicy(BaseRoutingPolicy):
             cooling_rate=values.get("cooling_rate", 0.995),
             min_removal=values.get("min_removal", 1),
             max_removal_pct=values.get("max_removal_pct", 0.3),
-            vrpp=values.get("vrpp", True),
             profit_aware_operators=values.get("profit_aware_operators", False),
             seed=seed,
             rl_config=rl_config,

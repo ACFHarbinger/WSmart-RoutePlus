@@ -8,7 +8,6 @@ sisr:
     avg_string_len: 4.0
     blink_rate: 0.02
     destroy_ratio: 0.25
-    vrpp: true
     packing:
       other/pk_lookahead.yaml:
       - default

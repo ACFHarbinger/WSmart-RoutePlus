@@ -117,7 +117,6 @@ class SCAPolicy(BaseRoutingPolicy):
             max_iterations=int(values.get("max_iterations", 200)),
             local_search_iterations=int(values.get("local_search_iterations", 500)),
             time_limit=float(values.get("time_limit", 60.0)),
-            vrpp=values.get("vrpp", True),
             profit_aware_operators=values.get("profit_aware_operators", False),
             seed=values.get("seed", 42),
         )

@@ -11,8 +11,6 @@ Example:
     200
     >>> config.history_len
     10
-    >>> config.vrpp
-    True
     >>> config.packing
     None
     >>> config.route_improvement
@@ -39,7 +37,6 @@ class SHHConfig:
         iters (int): Number of iterations. Defaults to 200.
         history_len (int): Length of the Late Acceptance history. Defaults to 10.
         seed (int): Random seed for reproducibility. Defaults to 42.
-        vrpp (bool): Whether the problem is a VRP with Profits. Defaults to True.
         packing (Optional[PackingConfig]): Configuration for
             mandatory node selection policies.
         route_improvement (Optional[RouteImprovingConfig]): Optional configuration
@@ -49,7 +46,6 @@ class SHHConfig:
     iters: int = 200
     history_len: int = 10
     seed: int = 42
-    vrpp: bool = True
 
     packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None

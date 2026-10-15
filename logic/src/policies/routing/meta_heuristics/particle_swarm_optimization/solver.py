@@ -21,6 +21,7 @@ from logic.src.policies.helpers.operators.recreate_repair.greedy import (
 )
 
 from logic.src.configs.policies.pso import PSOConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class PSOSolver:
@@ -215,7 +216,7 @@ class PSOSolver:
             return []
 
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
         if use_profit:
             return greedy_profit_insertion(
                 [],

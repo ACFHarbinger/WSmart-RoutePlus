@@ -94,6 +94,9 @@ class SimConfig:
     noise_variance: float = 0.0
     cache_regular: bool = True
     no_cuda: bool = False
+    export_fill_matrix: bool = False
+    pool_start_method: Optional[str] = None
+    day_pipeline: Optional[List[str]] = None
     server_run: bool = False
     env_file: str = "vars.env"
     gplic_file: Optional[str] = None

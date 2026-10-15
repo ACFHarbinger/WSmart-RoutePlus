@@ -28,8 +28,7 @@ Example:
         threshold_infeasible=0.001,
         threshold_feasible_base=0.0001,
         threshold_decay_rate=0.01,
-        vrpp=True,
-        profit_aware_operators=False,
+profit_aware_operators=False,
         seed=None,
     )
 """

@@ -111,7 +111,6 @@ class ILSRVNDSPSolver:
             C=self.C,
             params=KSparseACOConfig(
                 local_search_iterations=self.params.local_search_iterations,
-                vrpp=self.params.vrpp,
                 profit_aware_operators=self.params.profit_aware_operators,
                 seed=self.params.seed,
             ),

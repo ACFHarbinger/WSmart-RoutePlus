@@ -20,6 +20,5 @@ filo:
   packing:
     other/pk_lookahead.yaml:
     - default
-  vrpp: true
   profit_aware_operators: false
   route_improvement: []

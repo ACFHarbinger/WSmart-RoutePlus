@@ -11,7 +11,6 @@ arco:
   weight_init: 1.0
   weight_floor: 0.01
   decay: 1.0
-  vrpp: true
   packing:
     other/pk_lookahead.yaml:
     - default

@@ -1,7 +1,6 @@
 rl_ahvpl:
   custom:
     profit_aware_operators: false
-    vrpp: true
     n_teams: 10
     max_iterations: 1000
     sub_rate: 0.2

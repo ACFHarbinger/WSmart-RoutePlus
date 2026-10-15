@@ -32,7 +32,6 @@ class CGHConfig:
         routes_per_iter (int): Number of heuristic routes to generate in each
             column generation iteration. Defaults to 50.
         seed (int): Random seed for reproducibility. Defaults to 42.
-        vrpp (bool): Whether the problem is a VRP with Profits. Defaults to True.
         packing (Optional[PackingConfig]): Configuration for
             mandatory node selection policies.
         route_improvement (Optional[RouteImprovingConfig]): Optional configuration
@@ -42,7 +41,6 @@ class CGHConfig:
     cg_iters: int = 10
     routes_per_iter: int = 50
     seed: int = 42
-    vrpp: bool = True
 
     packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None

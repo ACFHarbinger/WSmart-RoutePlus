@@ -119,7 +119,6 @@ class MemeticAlgorithmToleranceBasedSelectionPolicy(BaseRoutingPolicy):
             n_removal=values.get("n_removal", 1),
             local_search_iterations=values.get("local_search_iterations", 500),
             time_limit=values.get("time_limit", 60.0),
-            vrpp=values.get("vrpp", True),
             profit_aware_operators=values.get("profit_aware_operators", False),
             seed=values.get("seed", 42),
         )

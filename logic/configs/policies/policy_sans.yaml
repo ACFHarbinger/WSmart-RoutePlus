@@ -11,7 +11,6 @@ sans:
       other/pk_last_minute.yaml:
       - last_minute_cf70
       - last_minute_cf90
-    vrpp: true
     route_improvement:
       other/ri_cls.yaml:
       - default
@@ -30,7 +29,6 @@ sans:
       other/pk_last_minute.yaml:
       - last_minute_cf70
       - last_minute_cf90
-    vrpp: true
     route_improvement:
       other/ri_cls.yaml:
       - default
@@ -49,7 +47,6 @@ sans:
       other/pk_last_minute.yaml:
       - last_minute_cf70
       - last_minute_cf90
-    vrpp: true
     route_improvement:
       other/ri_cls.yaml:
       - default
@@ -69,7 +66,6 @@ lac:
       other/pk_last_minute.yaml:
       - last_minute_cf70
       - last_minute_cf90
-    vrpp: true
     route_improvement: []
   b:
     engine: og
@@ -86,5 +82,4 @@ lac:
       other/pk_last_minute.yaml:
       - last_minute_cf70
       - last_minute_cf90
-    vrpp: true
     route_improvement: []

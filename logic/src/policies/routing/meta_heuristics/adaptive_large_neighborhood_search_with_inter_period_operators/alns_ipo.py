@@ -70,6 +70,7 @@ from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_sear
 )
 from logic.src.configs.policies.alns_ipo import ALNSIPOConfig
 from logic.src.tracking.viz_mixin import PolicyStateRecorder
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class ALNSSolverIPO(ALNSSolver):
@@ -479,7 +480,7 @@ class ALNSSolverIPO(ALNSSolver):
             wastes=self.wastes,
             capacity=self.capacity,
             mandatory_nodes=self.mandatory_nodes,
-            expand_pool=self.vrpp,
+            expand_pool=current_expand_pool(),
         )
         if self.profit_aware_operators:
             repaired = greedy_profit_insertion(new_routes, removed, R=self.R, C=self.C, **common_kw)

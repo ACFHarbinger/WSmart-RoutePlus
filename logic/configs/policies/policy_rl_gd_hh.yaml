@@ -9,7 +9,6 @@ rl_gd_hh:
     min_utility: 0.0
     initial_utility: 30.0
     quality_lb: 0.0
-    vrpp: true
     packing:
       other/pk_lookahead.yaml:
       - default

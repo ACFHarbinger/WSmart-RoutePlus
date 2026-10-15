@@ -34,6 +34,7 @@ from logic.src.policies.routing.meta_heuristics.evolution_strategy_mu_kappa_lamb
     Individual,
 )
 from logic.src.configs.policies.es_mkl import MuKappaLambdaESConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class MuKappaLambdaESSolver:
@@ -98,7 +99,6 @@ class MuKappaLambdaESSolver:
         # Pre-instantiate local search for memetic refinement
         aco_params = KSparseACOConfig(
             local_search_iterations=self.params.local_search_iterations,
-            vrpp=self.params.vrpp,
             profit_aware_operators=self.params.profit_aware_operators,
             seed=self.params.seed,
         )
@@ -238,7 +238,7 @@ class MuKappaLambdaESSolver:
             A new offspring individual with age 1.
         """
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         if self.params.recombination_type == "intermediate":
             # Intermediate Recombination: merge all nodes and reconstruct
@@ -303,7 +303,7 @@ class MuKappaLambdaESSolver:
         """
         mutant = individual.copy()
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         # Step 1: Self-Adapt Strategy Parameter (Eq. 5)
         n_global = self.np_rng.standard_normal()

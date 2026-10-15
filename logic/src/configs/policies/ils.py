@@ -30,7 +30,6 @@ class ILSConfig:
         perturbation_strength (float): Strength of perturbation (0-1).
         time_limit (float): Time limit in seconds.
         seed (Optional[int]): Random seed for reproducibility.
-        vrpp (bool): Whether the problem is a VRRP.
         profit_aware_operators (bool): Use profit-aware operators.
         packing (Optional[List[Any]]): Mandatory customers/requests selection.
         route_improvement (Optional[List[Any]]): Route improvement strategies.
@@ -45,7 +44,6 @@ class ILSConfig:
     perturbation_strength: float = 0.15
     time_limit: float = 60.0
     seed: Optional[int] = None
-    vrpp: bool = True
     profit_aware_operators: bool = False
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)

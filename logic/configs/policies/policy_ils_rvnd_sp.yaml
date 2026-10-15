@@ -15,7 +15,6 @@ ils_rvnd_sp:
   max_vehicles: 0
   time_limit: 300.0
   local_search_iterations: 500
-  vrpp: true
   profit_aware_operators: false
   engine: gurobi
   framework: ortools

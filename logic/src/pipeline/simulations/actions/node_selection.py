@@ -23,16 +23,16 @@ from logic.src.constants import MAX_CAPACITY_PERCENT, ROOT_DIR  # noqa: F401  (R
 from logic.src.constants.paths import CONFIGS_DIR
 from logic.src.interfaces import IBinContainer, ITraversable
 from logic.src.interfaces.context.search_context import SearchContext
-from logic.src.policies.packing import PackingFactory, PackingContext
+from logic.src.policies.packing import PackingContext, PackingFactory
 from logic.src.utils.configs.config_loader import load_config
 
 from .base import (
     SimulationAction,
     _append_context_list,
     _as_plain_dict,
+    _as_policy_mapping,
     _ensure_mutable_config,
     _file_yaml_pairs,
-    _as_policy_mapping,
     _inject_acceptance_into_config,
     _is_mapping,
     _is_non_string_sequence,
@@ -40,6 +40,7 @@ from .base import (
     _load_policy_yaml_section,
     _record_live_params,
     _set_live_capture_meta,
+    bind_context,
 )
 
 
@@ -51,9 +52,15 @@ class PackingAction(SimulationAction):
         None
     """
 
+    timed = True
+    reads = ("bins", "day", "config")
+    writes = ("mandatory",)
+    finalizes = ()
+    requires_final = ()
+
     def execute(self, context: Dict[str, Any]) -> None:  # noqa: C901
         """
-        Execute packing algorithms and update context['mandatory'].
+        Execute packing algorithms and update context.mandatory.
 
         Args:
             context: Shared dictionary containing simulation state.
@@ -61,17 +68,19 @@ class PackingAction(SimulationAction):
         Returns:
             None
         """
+
+        context = bind_context(context)
         _set_live_capture_meta(context)
         raw_cfg = _ensure_mutable_config(context)
         live_ac = _inject_acceptance_into_config(raw_cfg)
         if live_ac is not None:
             ac_payload = _live_ac_payload(live_ac)
-            context["_live_ac"] = ac_payload
+            context._live_ac = ac_payload
             _record_live_params("acceptance_criteria", ac_payload)
 
         # Early exit if neural network explicitly predicts selection
         model_name = ""
-        pol_cfg = context.get("config", {})
+        pol_cfg = getattr(context, "config", {})
         if isinstance(pol_cfg, dict) and "model" in pol_cfg:
             model_name = pol_cfg["model"].get("name", "").lower()
         if "ptr" in model_name or "trans" in model_name:
@@ -81,14 +90,14 @@ class PackingAction(SimulationAction):
         strategies = self._gather_strategies(context)
         if not strategies:
             # Check if there is a 'cached' tour and no strategies
-            if context.get("cached"):
-                context["mandatory"] = []
+            if getattr(context, "cached", None):
+                context.mandatory = []
             # If no strategies and not cached, then no mandatory bins
-            context["mandatory"] = []
+            context.mandatory = []
             return
 
         # 2. Execute all strategies and union results
-        bins = context["bins"]
+        bins = context.bins
         # Use IBinContainer protocol for unified bin access
         if isinstance(bins, IBinContainer):
             current_fill = bins.get("c")
@@ -144,11 +153,11 @@ class PackingAction(SimulationAction):
                 thresh = (
                     s_params.get("threshold")
                     if s_params.get("threshold") is not None
-                    else context.get("threshold")
+                    else getattr(context, "threshold", None)
                 )
 
             if thresh is None:
-                thresh = context.get("threshold")
+                thresh = getattr(context, "threshold", None)
 
             # Basic sanitization
             final_thresh = float(thresh) if thresh is not None else 0.0
@@ -169,15 +178,15 @@ class PackingAction(SimulationAction):
                 current_fill=np.array(current_fill) if current_fill is not None else np.array([]),
                 accumulation_rates=accumulation_rates,
                 std_deviations=std_deviations,
-                current_day=context.get("day", 0),
+                current_day=getattr(context, "day", 0),
                 threshold=final_thresh,
-                next_collection_day=context.get("next_collection_day"),
-                distance_matrix=context.get("distance_matrix"),
-                paths_between_states=context.get("paths_between_states"),
-                vehicle_capacity=context.get("max_capacity", 100.0),
-                revenue_kg=context.get("revenue_kg", 1.0),
-                bin_density=context.get("bin_density", 1.0),
-                bin_volume=context.get("bin_volume", 2.5),
+                next_collection_day=getattr(context, "next_collection_day", None),
+                distance_matrix=getattr(context, "distance_matrix", None),
+                paths_between_states=getattr(context, "paths_between_states", None),
+                vehicle_capacity=getattr(context, "max_capacity", 100.0),
+                revenue_kg=getattr(context, "revenue_kg", 1.0),
+                bin_density=getattr(context, "bin_density", 1.0),
+                bin_volume=getattr(context, "bin_volume", 2.5),
                 max_fill=MAX_CAPACITY_PERCENT,
                 # New fields for advanced strategies
                 horizon_days=_pi("horizon_days", 3),
@@ -212,7 +221,7 @@ class PackingAction(SimulationAction):
                 wasserstein_radius=_pf("wasserstein_radius", 0.1),
                 wasserstein_p=_pi("wasserstein_p", 1),
                 overflow_penalty_frac=_pf("overflow_penalty_frac", 1.0),
-                coordinates=bins.get("coords") if isinstance(bins, IBinContainer) else context.get("coordinates"),
+                coordinates=bins.get("coords") if isinstance(bins, IBinContainer) else getattr(context, "coordinates", None),
                 current_collection_day=_pi("current_collection_day", 0),
                 seed=s_params.get("seed") if hasattr(s_params, "get") else None,
             )
@@ -238,13 +247,13 @@ class PackingAction(SimulationAction):
 
             # Update SearchContext in simulation context
             if "search_context" not in context:
-                context["search_context"] = sub_ctx
+                context.search_context = sub_ctx
             else:
-                context["search_context"] = context["search_context"].merge(sub_ctx)
+                context.search_context = context.search_context.merge(sub_ctx)
 
             final_mandatory.update(res)
 
-        context["mandatory"] = sorted(list(final_mandatory))
+        context.mandatory = sorted(list(final_mandatory))
 
     def _gather_strategies(self, context: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Gather all strategies from configuration.
@@ -256,7 +265,7 @@ class PackingAction(SimulationAction):
             A list of dictionaries representing resolved strategies.
         """
         strategies: List[Dict[str, Any]] = []
-        raw_cfg = context.get("config", {})
+        raw_cfg = getattr(context, "config", {})
         flat_cfg = _as_policy_mapping(raw_cfg)
         config_mandatory = flat_cfg.get("packing")
 

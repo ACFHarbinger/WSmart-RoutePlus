@@ -11,12 +11,10 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 import numpy as np
 import torch
 from logic.src.envs.tasks.base import BaseProblem
+from logic.src.envs.tasks.common.released_specs import PTP_SPEC
 from logic.src.envs.tasks.espprc import ESPPRCEnv, ESPPRCGenerator
-from logic.src.envs.tasks.profitable_tour.common import (
-    evaluate_profitable_tour,
-    profit_objective,
-)
-from logic.src.envs.tasks.spec import PROBLEMS, ProblemSpec
+from logic.src.envs.tasks.profitable_tour.common import evaluate_profitable_tour
+from logic.src.envs.tasks.spec import PROBLEMS
 from tensordict import TensorDict
 
 
@@ -102,8 +100,13 @@ class PTPGenerator(ESPPRCGenerator):
 
                 import numpy as np
                 from logic.src.data.generators.waste import generate_waste
+
                 bs = math.prod(batch_size) if batch_size else 1
-                depot = self._generate_depot(batch_size).view(bs, 2) if hasattr(self, "_generate_depot") else torch.zeros(bs, 2, device=self.device)
+                depot = (
+                    self._generate_depot(batch_size).view(bs, 2)
+                    if hasattr(self, "_generate_depot")
+                    else torch.zeros(bs, 2, device=self.device)
+                )
                 coords = (depot, self._generate_locations(batch_size, self.num_loc).view(bs, self.num_loc, 2))
                 waste = generate_waste(
                     self.num_loc,
@@ -186,15 +189,6 @@ class PTP(BaseProblem):
         return evaluate_profitable_tour(dataset, pi, dist_matrix=dist_matrix, cw_dict=cw_dict, **kwargs)
 
 
-# Register PTP in PROBLEMS registry
-PTP_SPEC = ProblemSpec(
-    name="ptp",
-    objective=profit_objective,
-    constraints=(),
-    metrics=("cost", "reward", "length", "waste"),
-    env_target="logic.src.envs.tasks.profitable_tour.ptp:PTPEnv",
-    expand_pool=True,
-)
 PROBLEMS.register(PTP_SPEC)
 
 __all__ = ["PTPGenerator", "PTPEnv", "PTP", "PTP_SPEC"]

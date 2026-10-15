@@ -29,7 +29,6 @@ class KGLSConfig(ABCConfig):
         moves (List[str]): List of moves to apply.
         penalization_cycle (List[str]): Cycle of penalization criteria.
         seed (Optional[int]): Random seed for reproducibility.
-        vrpp (bool): Whether the problem is a VRRP.
         profit_aware_operators (bool): Whether to use profit-aware operators.
         packing (Optional[List[Any]]): Mandatory customers/requests selection.
         route_improvement (Optional[List[Any]]): Route improvement strategies.
@@ -47,5 +46,4 @@ class KGLSConfig(ABCConfig):
     penalization_cycle: List[str] = field(default_factory=lambda: ["width", "length", "width_length"])
 
     seed: Optional[int] = 42
-    vrpp: bool = True
     profit_aware_operators: bool = False

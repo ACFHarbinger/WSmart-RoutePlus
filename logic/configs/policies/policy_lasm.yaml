@@ -58,7 +58,6 @@ lasm:
   rl_discount: 0.99
   sp_pool_cap: 50000
   sp_mip_gap: 1e-4
-  vrpp: true
   packing:
     other/pk_last_minute.yaml:
     - last_minute_cf70

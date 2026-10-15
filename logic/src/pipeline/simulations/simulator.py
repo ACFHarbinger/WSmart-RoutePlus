@@ -47,11 +47,14 @@ import time
 import traceback
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
 
+if TYPE_CHECKING:
+    import torch
+
 import numpy as np
-import torch
 from omegaconf import DictConfig
 
 from logic.src.constants import ROOT_DIR, SIM_METRICS
+from logic.src.pipeline.simulations.day_context import policy_result_key
 from logic.src.pipeline.simulations.repository import set_repository_from_path
 from logic.src.tracking.logging.log_utils import (
     display_simulation_summary_table,
@@ -59,7 +62,6 @@ from logic.src.tracking.logging.log_utils import (
     update_policy_log_section,
 )
 from logic.src.tracking.logging.logger_writer import setup_logger_redirection
-from logic.src.pipeline.simulations.day_context import policy_result_key
 
 try:
     import logic.src.tracking as wst
@@ -122,7 +124,12 @@ def init_single_sim_worker(
         seed = cfg.sim.seed
         random.seed(seed)
         np.random.seed(seed)
-        torch.manual_seed(seed)
+        try:
+            import torch
+        except ImportError:
+            torch = None
+        if torch is not None:
+            torch.manual_seed(seed)
 
     # Initialize simulation repository in the worker process
     if cfg is not None:
@@ -394,6 +401,32 @@ class ProgressUpdater:
             )
 
 
+def _failed_sample(
+    err: Any,
+    pol_name: str,
+    sample_id: Any,
+    error: str,
+    traceback_text: str = "",
+) -> Dict[str, Any]:
+    """Keep partial KPIs on a failed sample so aggregates can count ``n_failed``."""
+    payload = err if isinstance(err, dict) else {}
+    entry: Dict[str, Any] = {
+        "policy": payload.get("policy", pol_name),
+        "sample": sample_id,
+        "sample_id": payload.get("sample_id", sample_id),
+        "error": payload.get("error", error),
+        "traceback": payload.get("traceback", traceback_text),
+        "status": "failed",
+        "error_type": payload.get("error_type") or payload.get("exception_type"),
+        "exception_type": payload.get("exception_type") or payload.get("error_type"),
+        "day": payload.get("failed_day", payload.get("day")),
+    }
+    metrics = payload.get("metrics")
+    if isinstance(metrics, dict):
+        entry["metrics"] = dict(metrics)
+    return entry
+
+
 def sequential_simulations(  # noqa: C901
     cfg: Config,
     device: torch.device,
@@ -499,13 +532,7 @@ def sequential_simulations(  # noqa: C901
                 else:
                     err = result_dict if isinstance(result_dict, dict) else {}
                     failed_log.append(
-                        {
-                            "policy": err.get("policy", pol_name),
-                            "sample": sample_id,
-                            "sample_id": sample_id,
-                            "error": err.get("error", "simulation failed"),
-                            "traceback": err.get("traceback", ""),
-                        }
+                        _failed_sample(err, pol_name, sample_id, err.get("error", "simulation failed"), err.get("traceback", ""))
                     )
 
                 # Final update for this sample
@@ -518,13 +545,13 @@ def sequential_simulations(  # noqa: C901
             except CheckpointError as checkpoint_error:
                 err = checkpoint_error.error_result if isinstance(checkpoint_error.error_result, dict) else {}
                 failed_log.append(
-                    {
-                        "policy": err.get("policy", pol_name),
-                        "sample": sample_id,
-                        "sample_id": sample_id,
-                        "error": err.get("error", str(checkpoint_error)),
-                        "traceback": err.get("traceback", ""),
-                    }
+                    _failed_sample(
+                        err,
+                        pol_name,
+                        sample_id,
+                        err.get("error", str(checkpoint_error)),
+                        err.get("traceback", ""),
+                    )
                 )
             except BaseException as e:
                 # If it's an Optuna pruning signal, re-raise it immediately
@@ -542,15 +569,7 @@ def sequential_simulations(  # noqa: C901
                 traceback.print_exc(file=sys.stderr)
 
                 # Append to failed_log so test suites and callers know it failed
-                failed_log.append(
-                    {
-                        "policy": pol_name,
-                        "sample": sample_id,
-                        "sample_id": sample_id,
-                        "error": str(e),
-                        "traceback": traceback.format_exc(),
-                    }
-                )
+                failed_log.append(_failed_sample({}, pol_name, sample_id, str(e), traceback.format_exc()))
 
                 # Also print a pointer to the log file on the REAL stderr
                 if hasattr(sys.stderr, "filename"):
@@ -576,25 +595,54 @@ def sequential_simulations(  # noqa: C901
                     log.update(res_log)
                 if res_std and log_std is not None:
                     log_std.update(res_std)
-            elif pol_name in log_full and log_full[pol_name]:
-                log[pol_name] = [*map(statistics.mean, zip(*log_full[pol_name], strict=False))]
-                if len(log_full[pol_name]) > 1:
+            else:
+                from logic.src.pipeline.simulations.aggregation import summary_pair
+
+                failed_payloads = []
+                for item in failed_log:
+                    if item.get("policy") != pol_name:
+                        continue
+                    partial = dict(item.get("metrics") or {})
+                    partial["status"] = "failed"
+                    partial["sample_id"] = str(item.get("sample_id", item.get("sample")))
+                    partial["failed_day"] = item.get("day")
+                    partial["exception_type"] = item.get("error_type") or item.get("exception_type")
+                    failed_payloads.append(partial)
+                payloads = list(log_full.get(pol_name, [])) + failed_payloads
+                if payloads and all(isinstance(item, (list, tuple)) for item in payloads):
+                    log[pol_name] = [statistics.mean(column) for column in zip(*payloads, strict=False)]
                     if log_std is not None:
-                        log_std[pol_name] = [*map(statistics.stdev, zip(*log_full[pol_name], strict=False))]
-                elif log_std is not None:
-                    log_std[pol_name] = [0.0] * len(log[pol_name])
+                        log_std[pol_name] = [
+                            statistics.stdev(column) if len(payloads) > 1 else 0.0
+                            for column in zip(*payloads, strict=False)
+                        ]
+                elif payloads:
+                    mean_metrics, std_metrics, summary = summary_pair(payloads)
+                    mean_metrics["n_failed"] = float(summary.n_failed)
+                    mean_metrics["n_success"] = float(summary.n_success)
+                    log[pol_name] = mean_metrics
+                    if log_std is not None:
+                        log_std[pol_name] = std_metrics
 
     with contextlib.suppress(Exception):
         run = get_active_run() if get_active_run is not None else None
         if run is not None:
             run.log_metric("sim/n_failed_runs", float(len(failed_log)))
             for pol_name_k, metrics in log.items():
-                if isinstance(metrics, (list, tuple)):
+                if isinstance(metrics, dict):
+                    for metric_name, val in metrics.items():
+                        if isinstance(val, (int, float)):
+                            run.log_metric(f"sim/{pol_name_k}/{metric_name}", float(val))
+                elif isinstance(metrics, (list, tuple)):
                     for metric_name, val in zip(SIM_METRICS, metrics, strict=False):
                         run.log_metric(f"sim/{pol_name_k}/{metric_name}", float(val))
                 if log_std is not None and pol_name_k in log_std:
                     std_metrics = log_std[pol_name_k]
-                    if isinstance(std_metrics, (list, tuple)):
+                    if isinstance(std_metrics, dict):
+                        for metric_name, val in std_metrics.items():
+                            if isinstance(val, (int, float)):
+                                run.log_metric(f"sim/{pol_name_k}/{metric_name}_std", float(val))
+                    elif isinstance(std_metrics, (list, tuple)):
                         for metric_name, val in zip(SIM_METRICS, std_metrics, strict=False):
                             run.log_metric(f"sim/{pol_name_k}/{metric_name}_std", float(val))
 

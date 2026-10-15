@@ -14,7 +14,6 @@ hgs:
     penalty_increase: 1.2
     penalty_decrease: 0.85
     profit_aware_operators: true
-    vrpp: true
     engine: custom
     packing:
       other/pk_last_minute.yaml:

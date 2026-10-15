@@ -37,7 +37,6 @@ class LocalBranchingConfig:
         node_limit_per_iteration (int): Branch-and-bound node limit per sub-MIP.
         mip_gap (float): Targeted relative optimality gap for sub-problems.
         seed (int): Random seed for reproducibility.
-        vrpp (bool): Whether the problem is a VRP with Profits.
 
         # Infrastructure
         engine (str): Solver engine to use ('gurobi', 'scip', 'highs', or 'cplex').
@@ -54,7 +53,6 @@ class LocalBranchingConfig:
     node_limit_per_iteration: int = 5000
     mip_gap: float = 0.01
     seed: int = 42
-    vrpp: bool = True
 
     # Infrastructure
     engine: str = "gurobi"

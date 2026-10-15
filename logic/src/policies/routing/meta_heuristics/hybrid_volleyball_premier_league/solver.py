@@ -44,6 +44,7 @@ from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_sear
     ALNSSolver,
 )
 from logic.src.configs.policies.hvpl import HVPLConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class HVPLSolver:
@@ -386,7 +387,7 @@ class HVPLSolver:
                     R=self.R,
                     C=self.C,
                     mandatory_nodes=self.mandatory_nodes,
-                    expand_pool=self.params.vrpp,
+                    expand_pool=current_expand_pool(),
                 )
             else:
                 return greedy_insertion(
@@ -396,7 +397,7 @@ class HVPLSolver:
                     wastes=self.wastes,
                     capacity=self.capacity,
                     mandatory_nodes=self.mandatory_nodes,
-                    expand_pool=self.params.vrpp,
+                    expand_pool=current_expand_pool(),
                 )
         except Exception:
             return copy.deepcopy(parent1)
@@ -423,7 +424,7 @@ class HVPLSolver:
                     R=self.R,
                     C=self.C,
                     mandatory_nodes=self.mandatory_nodes,
-                    expand_pool=self.params.vrpp,
+                    expand_pool=current_expand_pool(),
                 )
             else:
                 return greedy_insertion(
@@ -433,7 +434,7 @@ class HVPLSolver:
                     wastes=self.wastes,
                     capacity=self.capacity,
                     mandatory_nodes=self.mandatory_nodes,
-                    expand_pool=self.params.vrpp,
+                    expand_pool=current_expand_pool(),
                 )
         except Exception:
             return copy.deepcopy(routes)
