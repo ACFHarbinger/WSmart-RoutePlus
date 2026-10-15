@@ -17,165 +17,124 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Cross-package review (`2026-10-15`)
+### Integration of the 1.0.0 refactor (`refactor/v1-integration`, `2026-10-15`)
 
-- Codex review: root registry tag queries deduplicate class identity across child registries/aliases, and get_all preserves the union of child tags. Added a regression test.
-- Codex review: release closure retains ancestor initializers and deferred runtime imports; multiline lazy maps are recognized. Builds reject populated/repository destinations instead of deleting them. Added isolated closure and destination tests.
+WP-01 to WP-13 merged in report §12 order, each package with Codex's review edits committed on its branch first (WP-08 and P-21/P-42 were wholly uncommitted; WP-08 is stacked on P-21/P-42). Not merged into `main` (Q-15).
 
-### Release manifest and package build (`2026-10-15`)
-- Codex review: mirrored release-builder ancestor/deferred-import/lazy-map fixes and non-destructive destination checks with isolated tests.
+#### Fixed
 
-### WP-13 follow-ups (`2026-10-15`)
-
-- `logic/release.yaml`: `logic.cloud`, `logic.benchmark` and `logic.test` added to `excluded_packages`. The `sync_drive`/`benchmark`/`test_suite` CLI jobs reach them only through deferred imports (`drive_parser.py`, `parser_dispatch.py`, `jobs/ops_runner.py`), and the three packages live outside the staged tops (`src`/`configs`/`controllers`), so they can never ship with the package. Under the reviewed closure semantics (deferred imports are followed) the build fails staged verification through `test_cloud_sync.py`; under the previous semantics they were kept-but-unstaged, a silent defect — the release CLI's `test_suite`/`sync_drive`/`benchmark` jobs would have crashed at runtime. The exclusions declare them opt-out paths (unavailable in the release, matching the builder's documented deferred-import semantics); the curated release test files (P-06) are unaffected, and the staged `logic/test/__init__.py` ships as a package marker with the runner import stripped. Check/build/smoke green on the WP-13 tree under both closure semantics; the verified HEAD release-test selection is preserved.
-- `tools/trim_docstrings.py`: the walk now skips the pinned `wsmart_bin_analysis` submodule — its content belongs to its own repository and cannot ship through a superproject commit, so `--apply` would otherwise leave the submodule dirty on every run (the first pass had trimmed 14 of its files; those uncommitted trims were reverted from the worktree copy).
-
-### Docs and cleanup (`2026-10-15`, WP-13)
-
-#### Added
-
-- `tools/trim_docstrings.py` (P-03): the mechanical trimmer for the generated docstring boilerplate — `Returns:`/`Yields:` sections that only document None, `Example:` sections that only `>>> import` the module, and `Args:` entries restating the signature's type hints (`name (Type): ...` becomes `name: ...`). One pass over `logic/src`: 333 files trimmed, 589 lines removed, zero parse failures, idempotent on rerun. `--check` is CI-able.
-- `tools/gen_api_docs.py` (Q-22): generates `docs/api/` — one deterministic markdown page per package (`configs`, `constants`, `data`, `enums`, `envs`, `interfaces`, `models`, `pipeline`, `policies`, `utils`, `controllers`, …) listing every public module with its docstring summary and public class/function inventory. The output is sorted, so a diff against the committed copy detects drift.
-- `docs/api/` (12 package pages + index): the generated API reference. The hand-written `docs/modules/*.md` keep their narrative but carry a banner marking them as not the source of truth (Q-22a: keep the hand-written guides short, keep `docs/moon/` internal).
+- **Merges.** WP-02 and WP-10 both made the training facades lazy; the superset lazy maps are kept, with WP-02's expert map in `rl/core/imitation.py`. WP-11 was built on WP-05, not WP-06: its MS-BPC-SP engine keeps the WP-06 `MSBPCSPConfig`, and its `vrpp` reads follow WP-08's `current_expand_pool()` (P-43). WP-12's CVRP `solution_limit` moves from the deleted `CVRPParams` onto `CVRPConfig`. WP-13's docstring trim keeps the integrated code on conflict, and the trimmer and API generator are re-run on the merged tree.
+- **WP-06 leftovers on the released path.** `NeuralAgentConfig.from_config` was dropped while the neural agent still called it, and it read neither the plain-mapping YAML (P-13) nor a direct `decoding` mapping, so `policy_na.yaml`'s `beam_width: 5` became 1. The JGO/JSA/NDS-BRKGA joint policies called a method their base lacks. Duplicate and unused imports from the scripted migration are removed.
+- **Released envs (CR-12).** PTP masks empty bins again unless they are mandatory, and TCPTP ends a day only when no customer is reachable on a fresh trip; WP-07 had made both inherit ESPPRC defaults (selectable empty bins; one trip per day). 42 seeded rollouts of the pre-WP-07 PTP/CPTP/TCPTP/CVRP envs at `a5eb27eec` now replay identically (18 differed). `test_released_env_semantics.py`.
+- **Release build (CR-15).** The closure indexes lazy maps instead of following every entry, so the release ships the paper stack only (`models/core`: `attention_model`; `rl/core`: `reinforce`, `imitation`, `losses`; 1,850 → 1,222 files). The imitation factory is a seed, `packages/wsmart_bin_analysis` ships vendored with matplotlib as a dependency, and the P-24 `policy_contract` is a seed. Test selection follows `from <pkg> import <submodule>`. The smoke now also resolves every released routing key and imports the simulator from the built tree. `--check`, `--build` and `--smoke` pass.
+- **Regression gates (CR-13).** SANS has no `time_limit > 0` guard, so the gate's `time_limit: 0` stopped it at once; its cell now runs with no clock and `iterations_per_T: 200`, and keeps the paper schedule in the time-capped repetitions. Calibration runs on `d82170cf0` (branch `gates/baseline-a5eb27eec-cvrp-knob`): `a5eb27eec` plus only the default-off CVRP knob, with the harness. The guard still refuses any other code.
+- **Tests.** The export-profile script tests WP-02 retired are removed; tests follow the Q-7b docstring rule, the lazy imitation import and the `pk_*` packing files.
 
 #### Changed
 
-- **Breaking (doc rule, Q-7b):** both docstring checkers now enforce the relaxed rule instead of the batch-generated style. `check_docstrings.py`: public modules/classes/functions need a docstring; private helpers (leading underscore) and `__init__` (covered by the class docstring) need nothing. `check_google_style.py`: module `Attributes:`/`Example:` and class `Attributes:` sections are optional; an `Args:` section is optional and must not restate type hints; a `Returns:`/`Yields:` section that documents `None` is a defect. The remaining findings under the new rule are pre-existing content debt (127 public functions without docstrings, mostly `enums/registry.py`, `envs/tasks/espprc.py`, and the `wsmart_bin_analysis` submodule), not new regressions — recorded for the per-package review.
-- `logic/release.yaml` (WP-02 follow-up): the env seeds follow the WP-07 layout — `envs.routing.*` is gone; the released problems sit on `logic.src.envs.tasks.{ptp,cptp,tcptp,cvrp}` plus the `envs.tasks.espprc` base/generator (P-23, Q-3a), and `envs/generators/` is unreleased-only. `logic.controllers` seeds are the CLI's three modules. Pending notes: add `models.common.policy_contract` when WP-10 integrates (the P-24 contract), and activate the `wsmart_bin_analysis` exclusion when WP-08's `packages/` move lands. The builder also learned WP-03's `pk_*.yaml` packing-config names and the `packing/base/registry.py` rename; `--check`, `--build` (941 files, closure verified) and the torch-free `--smoke` all pass on the merged WP-07 chain.
-- `rl4co/` clone deleted from the repository root (Q-21): untracked reference material, 172 MB. WSmart-Route stays an independent fork; nothing in the tree referenced it.
+- **P-51 (owner amendment, CR-16).** The precompute switch (`rl.imitation.precompute`) and the state-keyed expert cache are the delivered interface. There is no `gen_data expert` command or `.td` `expert_actions` field: the cache key is the exact training state, so precomputed and live solves cannot disagree.
 
-#### Removed
+#### Open
 
-- 589 docstring boilerplate lines across 333 files (the trimmer's first pass).
+- **CR-14 (P-11 for ALNS).** `ALNSConfig` still carries `start_temp`, `cooling_rate` and `start_temp_control`. In ALNS they only switch the Ropke & Pisinger calibration, but PG-CLNS reads `start_temp` and `cooling_rate` live through WP-11's `LegacySAAcceptance`, which draws from the solver's own random stream. Moving them needs a PG-CLNS LNS config, a BMC `start_temp_control` applied in `setup()`, and YAML/HPO migration, and bit-identity has to be shown by the Q-14 gates, which wait for `sim chain done`.
+- **Q-16a.** The released routing adapters (through `base_routing_policy` → `simulations.repository`) and the day-loop states still import torch: 28 modules on the simulator path import the torch stack at module level. The release installs without torch, but running the simulator needs the `neural` extra.
+- **CR-13.** Per-instance/day BPC certificates for RQ-kimi-1 need solver instrumentation in both trees. No heavy gate or calibration has run.
+- **Unreleased code.** WP-06 completion (the dropped Params methods, acceptance criteria built per solve) and CR-12's unreleased envs (OP, PDP, IRP, ThOP, ATSP, PCTSP, SPCTSP) are on `refactor/v1-review-fixes` for Codex review. 64 unit tests fail on this branch and 29 with `refactor/v1-review-fixes` on top, all predating integration: strict YAML keys of unreleased policies, WP-08 context and `expand_pool` follow-ups, and tests of the unreleased layer.
+- **Paper.** The simulation paper still `\input`s `Tables/results_constructors`; it is renamed to `results_routing` when the refactor merges into `main`, because the AM tables are generated with main's code until then.
 
-#### Migration
+### Cross-package review (Codex, `2026-10-15`)
 
-- Release scope questions go in `logic/release.yaml`, not in CI job inputs. Components are addressed by registry key; the BB/BC/BPC acronyms live only in the Studio app's display map (`app/src/gen/config/simulation_metadata.json`).
-- The release test set is written to `logic/test/release_tests.txt` (collection-validated) and `release_tests.excluded.txt` (excluded with reasons) inside the built tree. Running it as a CI gate becomes possible once the P-06 test pruning lands: some kept tests assert the dev tree's full registry, which the filtered release registry intentionally violates.
+- Codex review: root registry tag queries deduplicate class identity across child registries/aliases, and get_all preserves the union of child tags. Added a regression test.
+- Codex review: release closure retains ancestor initializers and deferred runtime imports; multiline lazy maps are recognized. Builds reject populated/repository destinations instead of deleting them. Added isolated closure and destination tests.
 - Codex review: invalid user values no longer bypass structured validation through the dataclass fallback; fallback is restricted to schema construction. Added type-validation regression tests.
 - Codex review: check_hpo_jobs.py adds the repository to sys.path for its documented direct CLI/CI invocation.
 - Codex review: structured-load value errors propagate instead of bypassing validation; the HPO key-check CLI resolves repository imports when executed by filename.
 - Codex review: CVRP LoadResource consumes ESPPRC's depot-aligned waste vector, preserving customer-only demand input and avoiding mask dimension mismatch. Added a two-trip reset/capacity/completion test. Unreleased environment semantic migration remains blocked (see review report).
 - Codex review: improvement precedes repair/collection; pipeline validation happens before RNG mutation and receives sim.day_pipeline. Archive conversion distinguishes daily, sample and std horizons and rejects overlapping trees. Propagated CVRP depot-aligned resources and structured-value validation fixes.
-
-### Modular simulator (WP-08, `2026-10-15`)
-
-Codex P-21/P-42 objectives and KPI primitives (`envs/tasks/common/objectives.py`, `metrics.py`) are on this branch and are what the day loop calls. They were not part of the WP-07 tip.
-
-#### Added
-
-- Day pipeline is a validated dependency graph (`logic/src/pipeline/simulations/pipeline.py`). Each action declares `timed`, `reads`, and `writes`. Fill precedes packing, routing precedes improvement and collection, and collection publishes final `profit` and `cost` before logging.
-- Shared fill seed `(seed + sample_id * 1_000_003 + day) % 2**31`. Policy RNG does not reseed `bins.rng`.
-- `ProblemSpec.per_trip_shift` (TCPTP only) and `expand_pool`. Released specs load from `released_specs.py` without importing the neural task module. `run_day` publishes `expand_pool` on a `ContextVar`.
-- `tools/convert_sim_outputs.py` maps archived `days` to `collection_days`, stamps `days_simulated` from the run config, and drops `reward`. It was not run on the archives.
-- `sim.export_fill_matrix` (default off), `sim.pool_start_method` (`forkserver` is Linux opt-in; default stays `spawn`), and `sim.day_pipeline`.
-
-#### Changed
-
-- **Breaking:** day logs drop `reward` and the ambiguous `days` key. Records carry `days_simulated` and `collection_days`. `profit` stays in EUR. RL `reward` tensors are unchanged.
-- `get_daily_results` writes a `DayOutcome` for the executed plan. Failed samples keep partial KPIs and stay out of means (`n_failed`). An all-failed cell stores `None` estimates.
-- `SimulationDayContext` is no longer a `Mapping`. Dict callers go through `bind_context`.
-- Classical bin history and the simulator worker seed import PyTorch only when a tensor device or a neural seed is needed. Pandas stays required.
-- `wsmart_bin_analysis` moved to `packages/wsmart_bin_analysis` (import `packages.wsmart_bin_analysis`). `packages/__init__.py` stays absent because `packages/*` is gitignored. GitLab `GIT_SUBMODULE_PATHS` follows the new path. WP-02 owns the release manifest.
-
-#### Removed
-
-- Per-policy `vrpp` bool. Solvers read `current_expand_pool()`. `alns_vrpp` is a different field and remains.
-### Packing: NumPy definition and Torch adapter (WP-09, `2026-10-15`)
-
-#### Added
-- **P-37 / RQ-codex-1:** one shared definition per released packing rule in `logic/src/policies/packing/spec.py` (NumPy, percent units). Classical wrappers (`last_minute`, `regular`, `service_level`, `lookahead`) call that spec. Batched Torch adapters live in `packing/vectorized/spec.py` (`[B, N]`, depot at 0, fraction units) and are used by the neural selectors. Parity tests keep the two backends in agreement, including Regular.
-- **RQ-cursor-3:** unreleased `eoq_last_minute` (`LastMinuteEOQSelection`) keeps the Harris EOQ trigger in `main`. `pk_eoq_last_minute.yaml` now names that key.
-
-#### Changed
-- **Breaking:** 1.0.0 `last_minute` is fill-threshold only. `use_eoq_threshold` on a last-minute context is ignored; use `eoq_last_minute` for the EOQ path. Revenue and profit-per-km still read the flag.
-- Released packing `pack()` no longer imports the simulator (`_record_live_params`) or Torch. `vectorized/__init__.py` and `get_vectorized_selector` load adapters lazily.
-- **P-05:** `packing/vectorized/manager.py` no longer imports `models.meta.hrl_manager` at module level. `ManagerSelector` is dropped from the packing / vectorized public lazy maps; the factory still string-loads it for in-tree `strategy: manager`. Importing the released vectorized selectors does not load the HRL manager.
-
-#### Migration
-- Replace `strategy: last_minute` plus `use_eoq_threshold: true` with `strategy: eoq_last_minute`. Paper CF70/CF90 last-minute YAML is unchanged.
-### Neural training stack (WP-10, `2026-10-15`)
-
-#### Added
-- **Q-23 (`rl.imitation.fill_from`):** chooses whose routes empty the bins between time-training days during imitation. `model` (default) keeps the model's sampled rollout, as in the paper models; nothing changes for existing runs. `expert` uses the expert's tours and skips the model's sampled decode in training (P-50 item 1): the step returns the expert's solve, the loss reuses it, and `train/reward`, the rollout metrics and the rollout's `train/log_likelihood`/`entropy` are not logged (`train/expert_reward` and the teacher-forced `train/log_likelihood` are). The skipped decode no longer draws random numbers, so an `expert` run's sampling stream differs from a `model` run's. Validation and test still decode the model. The training step's rollout is now the overridable `StepMixin._rollout(td, env, phase)`.
-- **P-51 (expert solve cache):** `rl.imitation.expert_cache: <dir>` keeps the profitable nearest-neighbour expert's tours on disk (`policies/vector/expert_cache.py`, shards `shard-*.pt`, written at the end of each training day). A record's key hashes everything the tour depends on: the distance matrix, the waste of every node, the capacity, the revenue and cost weights, `two_opt_passes` and the expert version. A state that differs in any of them is solved again, so a record is never reused for another state. Only tours are stored; the actions and the reward are rebuilt from the current state on every use, so `weighted_nll` gets the same reward as without the cache. With `fill_from: expert` a rerun or a resumed run reuses every solve of the days it already trained.
-- **P-51 (offline expert solves):** `rl.imitation.precompute: true` (with `fill_from: expert` and `expert_cache`) only fills the cache: the training run solves every state with the expert and advances the bins with the expert's tours, but skips the model's training passes. A later training run with the same dataset and settings finds every solve. This replaces the `gen_data expert` command and the `.td` `expert_actions` field proposed in the report, because the cache is keyed by the states that training itself produces (Codex's P-51 correction).
-
-- **P-24 (policy forward contract):** `models/common/policy_contract.py` writes down the forward contract that the released Attention Model, the imitation expert and their consumers (training step, imitation loss, simulator neural agent) already share: `policy(td, env, strategy="sampling"|"greedy", actions=None)` returning a dict with `reward` `[batch]`, `actions` `[batch, steps]` (long, depot-padded), `log_likelihood` `[batch]` (with gradient in training and teacher forcing) and optional `entropy` and `td`. `check_policy_output` validates an output; `test_policy_contract.py` checks the AM in sampling, greedy and teacher-forced mode (teacher forcing reproduces the sampled log-likelihood) and the expert with and without the cache. The calling convention and the dict container are unchanged; the report's `decode_type` default is not adopted (Codex's P-24 correction).
-
-#### Changed
-- **Q-12 (paper stack only in the import closure):** importing the training and evaluation features now loads only the Attention Model, REINFORCE, imitation and its expert. Before, it loaded every model family in `models/core` (DACT, GLOP, MatNet, MoE, N2S and others), every RL algorithm, `rl.meta`, `rl.hpo` and the vectorised HGS/ALNS/ACO experts. The release build keeps the import closure of its seeds, so these would have shipped (777 loaded `logic.src` modules before, 621 after). `test_paper_stack_imports.py` pins this. Changes:
-  - `policies/vector/__init__.py`, `models/core/__init__.py`, `pipeline/rl/__init__.py` and `pipeline/rl/core/__init__.py` are lazy facades (WP-01's `lazy_getattr`). `from <package> import Name` works as before.
-  - The training builder's model map, hybrid policy and `MetaRLModule` load on use, and the algorithm factories load by name: `model_factory.registry.get_algorithm_factory(name)`.
-  - `features.train.run_hpo` loads on use.
-  - The imitation trainer imports only the profitable nearest-neighbour expert eagerly; the other experts load when configured.
-  - **Migration:** `RL_ALGORITHM_REGISTRY` and `model_factory.registry._ALGO_REGISTRY` values are now `"module:attribute"` strings; use `get_rl_algorithm(name)` / `get_algorithm_factory(name)` to get the class or factory. `_create_adaptive_imitation` moved to `model_factory/adaptive_imitation.py`.
-- **P-24:** under teacher forcing the Attention Model returned `entropy` as the integer 0, and a batch already done at reset returned an integer `log_likelihood`; both are now `[batch]` zero tensors. The released checkpoints (Rio Maior 100 emp, Figueira da Foz 350 gamma3) give bitwise-identical greedy actions, rewards and log-likelihoods before and after this package.
-- **P-50 (batched expert):** the profitable nearest-neighbour expert (`policies/vector/profitable_nearest_neighbour.py`) solves the whole batch at once with NumPy instead of one instance at a time in Python. Its tours are identical to the original's: the nearest-neighbour tie-break, the first-improvement 2-opt order and the float32/float64 arithmetic are kept. Checked on 4,000 synthetic instances and on the Rio Maior 100/170 and Figueira da Foz 350 road matrices (emp and gamma3, 1, 3 and 7 days of waste), with no difference. Per instance, 170 gamma3 goes from 66 ms to 3.6 ms and 350 gamma3 from 280 ms to 15 ms. `test_profitable_nearest_neighbour_parity.py` keeps the original as the reference. The per-instance `_solve` and `_two_opt` methods are replaced by `solve(dms, wastes, revenue, cost)`; no migration is needed outside the expert.
-
-### Scripted migration of the unreleased policies (`2026-10-15`)
-### Envs on the ESPPRC base (WP-07, `2026-10-15`)
-
-#### Added
-- **P-23 (Canonical ESPPRC Base & Declarative Resources):** `ESPPRCEnv` in `logic/src/envs/tasks/espprc.py` implementing forward-only routing dynamics, elementarity tracking, and declarative `Resource` hierarchy (`Resource`, `LoadResource`, `ShiftTimeResource`, `ESPPRCGenerator`).
-  - Strict batched PyTorch tensor support `[B, ...]` without per-instance loops (RQ-gemini-1).
-  - Pure NumPy support for classical heuristic solvers (RQ-codex-1).
-  - Explicit customer-count and depot-placement schema support (`[B, 1, 2]` depot + `[B, N, 2]` locs or `[B, N+1, 2]` prepended depot) with road-distance cache.
-- **P-21 (Unified Economic Objective):** `ProblemSpec` in `logic/src/envs/tasks/spec.py` and `evaluate_profitable_tour` in `logic/src/envs/tasks/profitable_tour/common.py` providing unified economic objective calculations (EUR), cleanly separating route evaluation/feasibility and physical units.
-- **P-44 / Q-3 (Problem Family Hierarchy):** Problem subpackages (`profitable_tour/` containing `ptp`, `cptp`, `tcptp`), self-contained problem generators in task files, and shared `ESPPRCGenerator`.
-
-#### Changed
-- **P-20 (Unified Route Evaluator):** Replaced legacy `get_costs` across all 6 live neural caller sites (`pointer_network/model.py`, `gat/decoder.py`, `glimpse/decoder.py`, `eval/engine.py`, `epoch.py`, `neural_agent/batch.py`) with `evaluate_tour`, returning standardized outcome dictionaries (`cost`, `reward`, `length`, `waste`, `overflows`, `valid`, `total`, and optional `time`).
-- **P-22 (Embedding Deduplication & Checkpoint Parity):** `CPTPInitEmbedding` subclasses `PTPInitEmbedding`, and `CPTPContextEmbedder` subclasses `PTPContextEmbedder`. Retains 100% bitwise `state_dict` key compatibility and exact greedy action parity with released AM checkpoints.
-- **All 12 Problem Tasks Sit on ESPPRC:**
-  - Released: `PTP`, `CPTP`, `TCPTP`, `CVRP`
-  - Unreleased: `TSP`, `ATSP`, `OP`, `PCTSP`, `SPCTSP`, `PDP`, `IRP`, `ThOP`
-
-#### Removed
-- **P-20 (Clean Break):** Deleted legacy `logic/src/envs/routing/` completely (13 legacy files removed).
-
-### Scripted migration of the unreleased policies (`2026-10-15`)
-
-#### Changed
-
-- **Breaking:** the unreleased policies read the typed config dataclass; their `params.py` layer is deleted (Q-8b, WP-06). `tools/migrate_unreleased_params.py` migrated 84 of the 86 remaining params modules in one scripted pass:
-  - **Groups A/B/D** (a wired config exists): params-only fields are appended to the config dataclass with their params defaults (shared-field defaults are kept as the config's; the value that runs is the YAML's), and every `XParams` reference is rewritten to the config class.
-  - **Group C** (no config anywhere): the params dataclass moved to `logic/src/configs/policies/<key>.py` as `<Key>Config` with `from_config` dropped (new: `LnsMipConfig`, `TpksConfig`).
-  - **Group C-unwired** (a config existed but the adapter returned `None`): params-only fields merged into the existing config and the adapter wired — `sa`, `na`, the `mp_*` multi-period family, the hyper-heuristics, `cgh`, `lrh`, `rfo`, `hgs_adc`, `rl_alns` now have typed configs their HPO jobs validate against.
-  - Adapter `XParams.from_config(values)` calls become `self._effective_config(values)` (the base filters and structured-loads the same values, with the simulator seed).
-- **Breaking:** two config files gained deferred imports instead of import-time cycles: `configs/policies/{ils_rvnd_sp,rl_gd_hh}.py` import the acceptance factory inside `__post_init__` (P-11 relocation is still pending for them). `configs/policies/rl_hvpl.py` references `KSparseACOConfig` from `aco_ks` instead of the deleted `KSACOParams`.
-- Two params modules remain as the hand-fix queue (Q-8b decision point): `calm` (six nested dataclasses) and `hmlns` (`MACOParams` + `HybridMemeticLargeNeighborhoodSearchParams`); their references still resolve.
-
-#### Removed
-
-- 84 `params.py` modules under `logic/src/policies/` (−9.7k lines gross). `tools/check_params_refs.py` bans all 95 deleted `*Params` symbols (WP-04/05/06); with `calm` and `hmlns` still to migrate, the final ban is on any `*Params` symbol once they land.
-
-#### Migration
-
-- HPO jobs (P-56 gate): `na.seed` default aligned to the config's `None` (the simulator injects the seed); `sa.iterations_per_temp` dropped — a stale key the config-less SA path never validated, now loud because SA is wired. All 96 jobs check green.
-- Cross-params imports (`KSACOParams` in `rl_hvpl`, the aco-ks operator config in eight solvers) now import from `logic.src.configs.policies.*`.
 - Codex review: propagated the structured-loader correction so invalid user values cannot bypass OmegaConf validation. Focused BPC/MS-BPC-SP regression selection passes.
+- Codex review: gates fail on incomplete/ambiguous sweeps and absent/unequal/non-finite certificates; retain physical time comparisons and the heavy lock. Calibration uses separate time-capped repeats; logs use canonical keys and recursive lowercase policy lookup. Fixed OR-Tools SAT worker parameter nesting. Heavy gates remain unrun.
+- Codex review: mirrored release-builder ancestor/deferred-import/lazy-map fixes and non-destructive destination checks with isolated tests.
+- Codex review: propagated the CVRP depot-aligned resource-key correction and two-trip regression test into the P-21/P-42 copy.
 
-### Solver consolidation: one engine contract per solver family (WP-11, `2026-10-15`)
+### Registry, lazy imports and facades (`2026-10-15`)
 
 #### Changed
 
-- **Breaking (P-30):** Routing solvers take one value object — `solver(problem: SubProblem, cfg)`. The positional 7-argument constructors are gone; `run_*` dispatchers (`run_alns`, `run_hgs`, `run_bpc`, `run_swc_tcf_optimizer`, `run_ms_bpc_sp`) take the same `(problem, cfg)` pair and return the `(routes, profit, cost)` triple (`SolveResult` NamedTuple, unpacking-compatible). Released adapters are `GenericRoutingPolicy` subclasses declaring `_solver` + `_config_class()` only (PSOMA, PG-CLNS, ALNS, HGS, BPC, SWC-TCF, MS-BPC-SP, ACO-HH); adapters with genuinely different behaviour (SANS dispatcher contract, CVRP engine dispatch, the neural NA adapter) stay explicit. The 58 cookie-cutter unreleased adapters are deliberately not converted (released-set-first ruling, RQ-claude-3 pattern); they keep working on `BaseRoutingPolicy` unchanged.
-- **Breaking (P-31):** One LNS engine for the released ALNS and the PG-CLNS LNS: new `meta_heuristics/large_neighborhood_search/` package (`LNSBase` loop, `RopkePisingerSegments` and `EmaWeightUpdate` weight strategies, `LegacySAAcceptance` for the pre-P-11 SA trajectory). PG-CLNS keeps its own frozen operator copies (owner ruling 2026-10-07); `ALNSSolver`'s surface (constructor, mutable `destroy_ops`/`repair_ops`, overridable `_update_weights`, `solve(initial_solution=...)`) is preserved for its unreleased consumers.
-- **Breaking (P-33):** MS-BPC-SP re-platformed onto BPC plus a set-partitioning stage per RQ-kimi-2. Both engines drive one B&B walk (`search_bpc_tree` in `helpers/solvers_and_matheuristics/search/bpc_tree.py`) and the shared `column_generation_loop`. MS keeps knapsack pre-selection, index remap, Phase 3 regret-2, Phase 5 set-partitioning, and the empty-result retries; its certificates stay on `MSBPCSPConfig` plus `BPCSearchOptions(strict_certification=True, require_elementary=True, incomplete_node_ip=True)` — `MSBPCSPConfig` is not coerced into `BPCConfig`. `MSBPCSPParams`/`params.py` deleted. The shared CG core gained `strict_certification` (MS node-certification: unexhausted Farkas/pricing leaves the node incomplete). Strong integrality (`require_elementary=True`) lives in `smoothing.is_solution_integer` and is used by MS; released BPC stays on the default weak check.
-- **Breaking (P-34):** `PopulationSearch` template (`meta_heuristics/population_search.py`: initialise / vary / educate / replace / track-best / two-level stopping hooks) with the released PSOMA ported onto it; HGS/GA/PSO fit the hooks and are deferred.
-- **Breaking (P-35):** `HyperHeuristicSearch` route-level HH template (`hyper_heuristics/hyper_heuristic_base.py`: select-move / apply-move / accept / rank / incumbent / post-iteration / selection-state hooks) with the released ACO-HH ported onto it. Public surface preserved: `pheromone` + `deposit_edge`/`evaporate_all` (HVPL, RL-HVPL), `construct`, `tau`, `operator_names`, `sequence_length`, `_select_sequence`, `_elitism_sync_count`; dual RNG streams and their consumption order unchanged (determinism tests green); learning state persists across `solve()` calls.
-- **Breaking (Q-8b, unreleased consumers migrated in the same change):** `hybrid_memetic_large_neighborhood_search`, `hybrid_volleyball_premier_league`, `hybrid_genetic_search_with_adaptive_large_neighborhood_search` (HGS-ALNS), `partial_optimization_metaheuristic_under_special_intensification_conditions` (POMSIC), `learning_allocated_sequential_matheuristic` (LASM `stage_lbbd`), `exact_guided_heuristic` (`stage_alns`, `stage_bpc`), `reinforcement_learning_hybrid_volleyball_premier_league` (RL-HVPL), and `logic/benchmark/{benchmark_suite,baseline_benchmarks}.py`.
-- **Consolidation (coerce_config):** Canonical `coerce_config` lives in `routing/base/sub_problem.py` and is exported through `routing/base`; `large_neighborhood_search/engine.py` re-exports it and `PopulationSearch._coerce_config` delegates to it, eliminating duplication across meta-heuristic engine bases.
-- **Fix (HGS local search iterations):** Restored `local_search_iterations: int = 500` to `HGSConfig` with defensive `getattr(self.params, "local_search_iterations", 500)` in `LocalSearch._optimize_internal`, resolving the `TestHGSSolverContract::test_hgs_contract[custom]` contract failure.
-- **Tests (P-06):** engine/dispatcher constructions across the policy tests moved to `build_subproblem(...)`; the fork-locking MS mock tests re-aimed at the shared loop's `strict_certification` mode; unit tests of the deleted fork's private helpers (`_reset_master_constraints`, `_apply_branching_to_master`, `_perform_strong_branching`, `_compute_lr_bound_at_node`) pruned with the fork — the full-engine brute-force tests cover the same mechanics; adapter patch points moved to the `GenericRoutingPolicy._solver` class attribute.
+- **Breaking:** one `Registry` (`logic/src/utils/registry.py`) replaces the five stage registries and the `GlobalRegistry` implementation. Name lookup, `create`, and tag queries (`query_intersection` / `query_union` / `query_difference` / `get_all`) live on the same type. Stage instances are `ROUTING`, `PACKING`, `IMPROVEMENT`, `ACCEPTANCE` and `JOINT`; `ALL` is their union. The old class names (`RoutingAlgorithmRegistry`, `PackingRegistry`, …) are aliases of those instances. `GlobalRegistry` is a thin wrapper over `ALL` so existing `@GlobalRegistry.register(...)` decorators still resolve.
+- **Breaking:** `Registry.create` is the only constructor. Factories look up a name and call `create`; they no longer keep their own class maps. Improver aliases (`cls`, `ftsp`, …) and packing name remaps live in the generated manifests / `CONFIG_MAPPING`.
+- **Breaking:** parent policy, model, env and interface packages no longer import their implementations eagerly. `from logic.src.policies.routing.meta_heuristics import policy_hgs` still works, but only that module is loaded. Registration is a generated `_manifest.py` of `module:Class` targets (`tools/gen_registry_manifests.py`), not an import of every adapter.
+- **Breaking:** `logic.src.envs.problems` is removed. Import problem classes from `logic.src.envs.tasks` (`PTP`, `CPTP`, `TCPTP`).
+- **Breaking:** RL expert configs in `logic.src.configs.rl.policies` are renamed to `VectorALNSConfig`, `VectorHGSConfig`, `VectorILSConfig`, `VectorHGSALNSConfig` and `VectorHVPLConfig`. The old names remain as aliases on the package and on each module so Hydra `_target_: logic.src.configs.rl.policies.HGSALNSConfig` checkpoints still load.
+- `logic.src.envs.temporal` moved to `logic.src.constants.temporal`. `get_default_temporal_params` is imported from there.
 
 #### Added
 
-- `routing/base/sub_problem.py`: `SubProblem` value object, `SolveResult` NamedTuple, `Solver` protocol, `build_subproblem(...)` helper, `coerce_config(...)` helper.
-- `routing/base/generic_policy.py`: `GenericRoutingPolicy` — one generic adapter doing effective-config + sub-problem assembly + solve + finalize behind `_make_subproblem`/`_solve`/`_finalize` hooks.
-- `logic/test/unit/policies/solvers/test_bpc_exactness_gate.py`: the RQ-kimi-1 exact-solver gate — incumbent equals the brute-force optimum within 1e-6 and a valid certificate (logged z_UB at/above the incumbent, or exact optimum agreement on trivially-converged instances) for both `run_bpc` and `run_ms_bpc_sp` on small fixtures.
-- `tools/check_params_refs.py` ban list extended with `MSBPCSPParams`.
+- `logic/test/unit/utils/test_registry.py` covers name lookup, `create`, tag queries, Hydra aliases, and the torch-free classical import path.
+
+### Release manifest and package build (`2026-10-15`)
+
+#### Added
+
+- `logic/release.yaml`: the 1.0.0 release manifest, the single source of truth for the released package. It lists the released problems (PTP, CPTP, TCPTP, CVRP), the released registry keys per stage (owner ruling Q-1/Q-2), the infrastructure seeds whose import closure ships (simulator, features, REINFORCE + imitation trainers, AM-GAT, the four envs, the profitable-NN expert, vectorised packing, the CLI), and the excluded packages (both HPO stacks and `rl.meta`, Q-6/Q-12a). `wsmart_bin_analysis` is documented as pending its own package (RQ-grok-7): `bins/base.py` still imports `GridBase` from it, so excluding it today fails the build loudly.
+- `logic/package/build_release.py`: builds the package from `main` per the manifest (Q-10a). `--check` validates every manifest key against the generated registry manifests; `--build` stages a pruned copy (filtered registry manifests, released YAMLs only, collection-validated release test set, generated release pyproject and `docs/release.md` index) and verifies that no module-level import or manifest target escapes the tree; `--smoke` runs the torch-free classical smoke (released keys resolve and instantiate, unreleased keys do not, `torch` never enters `sys.modules`).
+- Release CI (`.github/workflows/package-and-build.yml` and its `.gitea`/`.forgejo` mirrors, `.gitlab-ci.yml`): manifest check, release build, staged-tree smoke, and a torch-free **installed-package** smoke (`pip install --no-deps` into a fresh venv without torch, Q-16a). The release artifact is uploaded.
+
+#### Changed
+
+- **Breaking:** `logic/pyproject.toml` base dependencies are torch-free; the training stack (torch, torchvision, torchrl, tensordict, torch-geometric, torch-scatter, torch-sparse, pytorch-lightning, wandb) moves to the `neural` extra: `pip install wsmart-route[neural]` (Q-16a). CI syncs `--all-extras`; local training environments use `uv sync --extra neural` (or `--all-extras`). `uv.lock` regenerated.
+- **Breaking (import-time only):** eager imports that pulled unreleased or out-of-scope code became lazy, with no API change (all names still resolve; they load on first access): `pipeline/rl/core/__init__.py` and `pipeline/rl/__init__.py` (RL algorithms and the meta stack), `policies/vector/__init__.py` (model policies and vectorised solvers), `models/core/__init__.py`, `models/subnets/{encoders,decoders,modules}/__init__.py` (P-25), `utils/model/loader.py` (encoder factories), `pipeline/rl/core/imitation.py` (expert policies load by config class name), `pipeline/features/train/model_factory/{builder,imitation}.py`, and `controllers/cli/drive_parser.py` (cloud import deferred). `pipeline/features/train/__init__.py` resolves `run_hpo` lazily, so importing the training package no longer requires the HPO stack.
+- The release build drops `from .hpo import run_hpo` from the staged `features/train/__init__.py` surface: HPO is not in 1.0.0 (Q-6), and accessing `run_hpo` in the released package raises `ModuleNotFoundError`.
+
+#### Removed
+
+- **Breaking:** the acronym-driven export flow is retired (Q-10a): `ci/packager.py`, `ci/analyze_deps.py`, `ci/export_config.json`, `ci/workflow_config.json`, `ci/export_profiles/` (the `minimal-ptp` patch no longer applied to `main`), `logic/package/prune_codebase.py`, the 16 `logic/package/remove_*.py` scripts, `apply_export_profile.py`, `make_export_profile.py`, `cleanup_helper.py`, and their two tests. The `algo-export*` branch trigger is gone from all CI mirrors. The export tag `export/minimal-20260926` and the `wsr-package` worktree remain for history; the integrator deletes them.
+
+#### Migration
+
+- Release scope questions go in `logic/release.yaml`, not in CI job inputs. Components are addressed by registry key; the BB/BC/BPC acronyms live only in the Studio app's display map (`app/src/gen/config/simulation_metadata.json`).
+- The release test set is written to `logic/test/release_tests.txt` (collection-validated) and `release_tests.excluded.txt` (excluded with reasons) inside the built tree. Running it as a CI gate becomes possible once the P-06 test pruning lands: some kept tests assert the dev tree's full registry, which the filtered release registry intentionally violates.
+
+### Config format and leftover names (`2026-10-15`)
+
+#### Changed
+
+- **Breaking:** policy YAML is a plain mapping (`alns.custom.time_limit`), not a list of single-key maps. `tools/convert_policy_yaml.py` converted the 96 `policy_*.yaml` files, the `other/*.yaml` packing/improver/acceptance files, and the SRC/ARCO HPO job keys. Unknown solver keys fail at `OmegaConf.structured` load (`_structured_load` in `base_routing_policy.py`). Stage file-refs (`packing`, `route_improvement`, `acceptance_criteria`) stay as `{other/pk_*.yaml: [variant, …]}` until a later inlining pass. `_flatten_raw_config` and `_flatten_config` are gone; the day loop unwraps engine wrappers with `_as_policy_mapping`.
+- **Breaking:** packing leftovers from the packing/routing rename. `ms_*.yaml` is `pk_*.yaml`; `packing/selection_*.py` is `packing/<name>.py`; `selection_factory.py` / `selection_registry.py` are `factory.py` / `registry.py`; `IPackingAlgorithm.select_bins` is `pack`; `SelectionContext` is `PackingContext`; `SearchPhase.SELECTION/CONSTRUCTION` are `PACKING/ROUTING` (string values too); SRC/ARCO `constructors` is `routing_algorithms`; `list_available_ms_strategies` is `list_available_packing_strategies`; paper table identifiers `constructor_labels` / `CONSTRUCTOR_SPEC` / `table_constructors` / `results_constructors.tex` are `routing_*`.
+- **Breaking:** packing YAML and dataclasses use `threshold` (and `combined_strategies`) instead of `frequency` / `confidence_factor` / `learned_threshold` / `n_sectors` / `period` / `strategies`. The packing factory no longer remaps those names.
+
+#### Added
+
+- `logic/test/unit/policies/test_structured_policy_load.py` covers structured ALNS load and unknown-key failure.
+
+  - **Look-Ahead selection**: read `logic/src/policies/mandatory_selection/selection_lookahead.py` and replaced slide 7's 2-line LA equation with the full 6-step derivation (flag $\mathcal{M}_0$ → check empty → simulate collection → compute next collection day $nc$ → check $nc\leq t$ → bundle bins overflowing before $nc$), matched 1:1 to `pack`; added a new native flowchart diagram (`lookahead_flow.png`, ports the reference flowchart) illustrating the same 6 phases with the branch/loop structure
+### Parameter-usage audit and HPO job keys (`2026-10-15`)
+
+#### Added
+
+- `tools/audit_param_usage.py` (P-55): the corrected three-pattern usage audit — attribute reads, dict-key reads and params.py-internal wiring, over the policy directory first and the whole tree second, for params-only AND shared params/config fields. Verdicts: USED / USED-WIDE / INTERNAL-ONLY / INERT, plus a "solver attr read" column so plumbing-only fields (constructed by a dispatcher, never read by the solver — the released-HGS class) are visible at a glance. No false INERT by construction: the wide scope is searched before any INERT verdict. Generated evidence: `.agent/tasks/simulator-v1-refactor-proposal-2026-10-15-appendix-usage.md` (94 classes, 1,131 fields, 13 INERT, 37 released-set plumbing-only fields). This audit gates the P-10 pass: nothing it marks USED / USED-WIDE / INTERNAL-ONLY may be deleted; INERT fields are deleted with the engine literal promoted to a named constant (owner ruling RQ-mistral-1).
+- `tools/check_hpo_jobs.py` (P-56): `--check` requires every HPO job key to resolve to a live field of its policy's config dataclass (or a pipeline-owned section) and every job default to equal the config default; `--convert` rewrites the jobs (file renames, key renames, stale-key drops, default alignment). Wired into the quality job of all four CI files (`.github`/`.gitea`/`.forgejo` `ci.yml`, `.gitlab-ci.yml`). The check turns every future config rename or field removal into a loud CI failure instead of a silently dropped tuning key (the `policy_aco_hh.yaml` precedent).
+
+#### Changed
+
+- **Breaking (HPO jobs):** the 96 simulator HPO job JSONs are converted against the live configs (owner ruling RQ-mistral-2): `adp.json` → `adp_rollout.json` (the job file name is the policy key); stale keys with no live config field are removed (`aks.time_limit_stage_1`, `bc.use_exact_separation`, `bpc.max_cut_iterations`/`use_spatial_partitioning`/`enable_hybrid_search`, `na.model`/`reward`/`vrpp`, `swc_tcf.delta`); job defaults aligned with the config defaults (`alns.start_temp` 100.0 → 0.0, the calibrated default that ran in the paper; `aco_hh.sequence_length`/`operators` → null; `na.seed` → 42). Both HPO stacks remain out of the 1.0.0 release (Q-6); the jobs stay loadable in `main`.
+
+### Released routing configs: one source of truth (WP-04, `2026-10-15`)
+
+#### Changed
+
+- **Breaking:** BPC, SWC-TCF, ACO-HH and CVRP delete their `params.py` layer (P-10). Adapters and engines read the typed config dataclass (`BPCConfig`, `SWCTCFConfig`, `HyperHeuristicACOConfig`, `CVRPConfig`); `XParams.from_config(...)` and the `getattr(cfg, "field", default)` fallbacks are gone. `BaseRoutingPolicy._effective_config(values)` (new) materializes the per-call area overrides and the simulator seed onto the typed config, so the solver's view is one typed object. Engine entry points still accept a plain dict and coerce it with `_structured_load` for direct callers and tests.
+- **Breaking:** config defaults settled per field to the values that ran in the paper (P-10 discipline: the policy YAML wins).
+  - `BPCConfig`: `cutting_planes` `"rcc"` → `"all"`, `rc_tolerance` `1e-5` → `1e-6`, `profit_aware_operators` `False` → `True`, `max_cg_iterations` `50` → `150`, `max_cuts_per_iteration` `5` → `10`, `max_routes_per_pricing` `5` → `50`, `max_bb_nodes` `1000` → `2000`, `optimality_gap` `1e-4` → `0.005`, `early_termination_gap` `1e-3` → `0.01`, `lr_pre_pruning` `False` → `True`, `lr_max_subgradient_iters` `30` → `40`, `lr_op_time_limit` `3.0` → `5.0`, `lr_warm_start_cg` `False` → `True`, `ng_neighborhood_size` `8` → `12`, `cut_orthogonality_threshold` `0.8` → `0.7`.
+  - `SWCTCFConfig`: `framework` `"ortools"` → `"gurobi"`, `time_limit` `600.0` → `60.0`; gains the params-only fields `asymmetric` (`False`) and `no_solution_time_factor` (`3.0`).
+  - `HyperHeuristicACOConfig`: `n_ants` `20` → `10`, `rho` `0.1` → `0.5`, `time_limit` `30.0` → `60.0`, `profit_aware_operators` `False` → `True`; gains the params-only field `eta_decay` (`0.5`, pheromone visibility decay).
+  - `CVRPConfig`: `seed` `None` → `42` — the deleted `CVRPParams.from_config` upgraded a `None` config seed to `42` (`seed=42 if seed is None else seed`), so 42 is the value that actually ran; `time_limit`/`engine` already matched the YAML (`60.0`/`"ortools"`). The CVRP adapter also no longer bypasses the simulator's per-call values when a typed config exists (`self._config or values`), so an injected simulator seed now reaches the solver as intended; with no injected seed the settled default 42 preserves the paper runs.
+- **Breaking:** seeds for BPC / SWC-TCF / ACO-HH stay `None` by default (the deleted params defaults `42` never ran: the simulator injects its seed over the `None` config seed, and the adapters read the injected value). The simulator seeding contract is now the only seed mechanism.
+- **Breaking (P-52):** SWC-TCF `gurobi.py` no longer falls back to `SWCTCFParams.<field>` class attributes at solve time (11 sites) and `policy_aco_hh.py` no longer carries its 19 `values.get(..., literal)` definitions; all read the threaded config. `MAX_ARC_DISTANCE_KM` moved from the deleted SWC-TCF `params.py` into `_tcf_data.py` (sole consumer).
+- **Breaking (Q-8b, unreleased importers migrated in the same change):** EGH `stage_bpc.py` and LASM `stage_lbbd.py` construct `BPCConfig` instead of `BPCParams`; HVPL (`params.py`, `policy_hvpl.py`) constructs `HyperHeuristicACOConfig` and imports `OPERATOR_NAMES` from `hyper_operators`; the B&B tree helper annotates `BPCConfig`; MS-BPC-SP docstrings reference `MSBPCSPParams`. Tests that built the deleted classes now build the configs (`test_bpc_tree_params.py`, `test_swc_tcf_backends.py`, `test_swc_tcf_paper_model.py`, `test_wave3_hh.py`, `test_aco_hh_fixes.py`, `test_hvpl.py`, `test_cvrp_engines.py`); the params↔config parity assertions are pruned with the params half (P-06).
+
+#### Added
+
+- `tools/check_params_refs.py` (P-52 durable guard): bans references to the deleted `Params` symbols (`BPCParams`, `SWCTCFParams`, `HyperACOParams`, `CVRPParams`) anywhere in `logic/src` outside `configs/` and tests. WP-05/WP-06 extend the list until the last `params.py` is gone. Wired into the quality job of all four CI files.
 
 ### Released routing configs: ALNS family and HGS (WP-05, `2026-10-15`)
 
@@ -200,85 +159,136 @@ Codex P-21/P-42 objectives and KPI primitives (`envs/tasks/common/objectives.py`
 
 - `tools/check_params_refs.py`: extended `BANNED_SYMBOLS` to include `ALNSParams`, `HGSParams`, `PGCLNSParams`, `ACOParams`, `LNSParams`, `PSOMAParams`, `SANSParams`.
 
-### Released routing configs: one source of truth (WP-04, `2026-10-15`)
+### Scripted migration of the unreleased policies (`2026-10-15`)
 
 #### Changed
 
-- **Breaking:** BPC, SWC-TCF, ACO-HH and CVRP delete their `params.py` layer (P-10). Adapters and engines read the typed config dataclass (`BPCConfig`, `SWCTCFConfig`, `HyperHeuristicACOConfig`, `CVRPConfig`); `XParams.from_config(...)` and the `getattr(cfg, "field", default)` fallbacks are gone. `BaseRoutingPolicy._effective_config(values)` (new) materializes the per-call area overrides and the simulator seed onto the typed config, so the solver's view is one typed object. Engine entry points still accept a plain dict and coerce it with `_structured_load` for direct callers and tests.
-- **Breaking:** config defaults settled per field to the values that ran in the paper (P-10 discipline: the policy YAML wins).
-  - `BPCConfig`: `cutting_planes` `"rcc"` → `"all"`, `rc_tolerance` `1e-5` → `1e-6`, `profit_aware_operators` `False` → `True`, `max_cg_iterations` `50` → `150`, `max_cuts_per_iteration` `5` → `10`, `max_routes_per_pricing` `5` → `50`, `max_bb_nodes` `1000` → `2000`, `optimality_gap` `1e-4` → `0.005`, `early_termination_gap` `1e-3` → `0.01`, `lr_pre_pruning` `False` → `True`, `lr_max_subgradient_iters` `30` → `40`, `lr_op_time_limit` `3.0` → `5.0`, `lr_warm_start_cg` `False` → `True`, `ng_neighborhood_size` `8` → `12`, `cut_orthogonality_threshold` `0.8` → `0.7`.
-  - `SWCTCFConfig`: `framework` `"ortools"` → `"gurobi"`, `time_limit` `600.0` → `60.0`; gains the params-only fields `asymmetric` (`False`) and `no_solution_time_factor` (`3.0`).
-  - `HyperHeuristicACOConfig`: `n_ants` `20` → `10`, `rho` `0.1` → `0.5`, `time_limit` `30.0` → `60.0`, `profit_aware_operators` `False` → `True`; gains the params-only field `eta_decay` (`0.5`, pheromone visibility decay).
-  - `CVRPConfig`: `seed` `None` → `42` — the deleted `CVRPParams.from_config` upgraded a `None` config seed to `42` (`seed=42 if seed is None else seed`), so 42 is the value that actually ran; `time_limit`/`engine` already matched the YAML (`60.0`/`"ortools"`). The CVRP adapter also no longer bypasses the simulator's per-call values when a typed config exists (`self._config or values`), so an injected simulator seed now reaches the solver as intended; with no injected seed the settled default 42 preserves the paper runs.
-- **Breaking:** seeds for BPC / SWC-TCF / ACO-HH stay `None` by default (the deleted params defaults `42` never ran: the simulator injects its seed over the `None` config seed, and the adapters read the injected value). The simulator seeding contract is now the only seed mechanism.
-- **Breaking (P-52):** SWC-TCF `gurobi.py` no longer falls back to `SWCTCFParams.<field>` class attributes at solve time (11 sites) and `policy_aco_hh.py` no longer carries its 19 `values.get(..., literal)` definitions; all read the threaded config. `MAX_ARC_DISTANCE_KM` moved from the deleted SWC-TCF `params.py` into `_tcf_data.py` (sole consumer).
-- **Breaking (Q-8b, unreleased importers migrated in the same change):** EGH `stage_bpc.py` and LASM `stage_lbbd.py` construct `BPCConfig` instead of `BPCParams`; HVPL (`params.py`, `policy_hvpl.py`) constructs `HyperHeuristicACOConfig` and imports `OPERATOR_NAMES` from `hyper_operators`; the B&B tree helper annotates `BPCConfig`; MS-BPC-SP docstrings reference `MSBPCSPParams`. Tests that built the deleted classes now build the configs (`test_bpc_tree_params.py`, `test_swc_tcf_backends.py`, `test_swc_tcf_paper_model.py`, `test_wave3_hh.py`, `test_aco_hh_fixes.py`, `test_hvpl.py`, `test_cvrp_engines.py`); the params↔config parity assertions are pruned with the params half (P-06).
-
-#### Added
-
-- `tools/check_params_refs.py` (P-52 durable guard): bans references to the deleted `Params` symbols (`BPCParams`, `SWCTCFParams`, `HyperACOParams`, `CVRPParams`) anywhere in `logic/src` outside `configs/` and tests. WP-05/WP-06 extend the list until the last `params.py` is gone. Wired into the quality job of all four CI files.
-
-### Parameter-usage audit and HPO job keys (`2026-10-15`)
-
-#### Added
-
-- `tools/audit_param_usage.py` (P-55): the corrected three-pattern usage audit — attribute reads, dict-key reads and params.py-internal wiring, over the policy directory first and the whole tree second, for params-only AND shared params/config fields. Verdicts: USED / USED-WIDE / INTERNAL-ONLY / INERT, plus a "solver attr read" column so plumbing-only fields (constructed by a dispatcher, never read by the solver — the released-HGS class) are visible at a glance. No false INERT by construction: the wide scope is searched before any INERT verdict. Generated evidence: `.agent/tasks/simulator-v1-refactor-proposal-2026-10-15-appendix-usage.md` (94 classes, 1,131 fields, 13 INERT, 37 released-set plumbing-only fields). This audit gates the P-10 pass: nothing it marks USED / USED-WIDE / INTERNAL-ONLY may be deleted; INERT fields are deleted with the engine literal promoted to a named constant (owner ruling RQ-mistral-1).
-- `tools/check_hpo_jobs.py` (P-56): `--check` requires every HPO job key to resolve to a live field of its policy's config dataclass (or a pipeline-owned section) and every job default to equal the config default; `--convert` rewrites the jobs (file renames, key renames, stale-key drops, default alignment). Wired into the quality job of all four CI files (`.github`/`.gitea`/`.forgejo` `ci.yml`, `.gitlab-ci.yml`). The check turns every future config rename or field removal into a loud CI failure instead of a silently dropped tuning key (the `policy_aco_hh.yaml` precedent).
-
-#### Changed
-
-- **Breaking (HPO jobs):** the 96 simulator HPO job JSONs are converted against the live configs (owner ruling RQ-mistral-2): `adp.json` → `adp_rollout.json` (the job file name is the policy key); stale keys with no live config field are removed (`aks.time_limit_stage_1`, `bc.use_exact_separation`, `bpc.max_cut_iterations`/`use_spatial_partitioning`/`enable_hybrid_search`, `na.model`/`reward`/`vrpp`, `swc_tcf.delta`); job defaults aligned with the config defaults (`alns.start_temp` 100.0 → 0.0, the calibrated default that ran in the paper; `aco_hh.sequence_length`/`operators` → null; `na.seed` → 42). Both HPO stacks remain out of the 1.0.0 release (Q-6); the jobs stay loadable in `main`.
-
-### Config format and leftover names (`2026-10-15`)
-
-#### Changed
-
-- **Breaking:** policy YAML is a plain mapping (`alns.custom.time_limit`), not a list of single-key maps. `tools/convert_policy_yaml.py` converted the 96 `policy_*.yaml` files, the `other/*.yaml` packing/improver/acceptance files, and the SRC/ARCO HPO job keys. Unknown solver keys fail at `OmegaConf.structured` load (`_structured_load` in `base_routing_policy.py`). Stage file-refs (`packing`, `route_improvement`, `acceptance_criteria`) stay as `{other/pk_*.yaml: [variant, …]}` until a later inlining pass. `_flatten_raw_config` and `_flatten_config` are gone; the day loop unwraps engine wrappers with `_as_policy_mapping`.
-- **Breaking:** packing leftovers from the packing/routing rename. `ms_*.yaml` is `pk_*.yaml`; `packing/selection_*.py` is `packing/<name>.py`; `selection_factory.py` / `selection_registry.py` are `factory.py` / `registry.py`; `IPackingAlgorithm.select_bins` is `pack`; `SelectionContext` is `PackingContext`; `SearchPhase.SELECTION/CONSTRUCTION` are `PACKING/ROUTING` (string values too); SRC/ARCO `constructors` is `routing_algorithms`; `list_available_ms_strategies` is `list_available_packing_strategies`; paper table identifiers `constructor_labels` / `CONSTRUCTOR_SPEC` / `table_constructors` / `results_constructors.tex` are `routing_*`.
-- **Breaking:** packing YAML and dataclasses use `threshold` (and `combined_strategies`) instead of `frequency` / `confidence_factor` / `learned_threshold` / `n_sectors` / `period` / `strategies`. The packing factory no longer remaps those names.
-
-#### Added
-
-- `logic/test/unit/policies/test_structured_policy_load.py` covers structured ALNS load and unknown-key failure.
-### Release manifest and package build (`2026-10-15`)
-
-#### Added
-
-- `logic/release.yaml`: the 1.0.0 release manifest, the single source of truth for the released package. It lists the released problems (PTP, CPTP, TCPTP, CVRP), the released registry keys per stage (owner ruling Q-1/Q-2), the infrastructure seeds whose import closure ships (simulator, features, REINFORCE + imitation trainers, AM-GAT, the four envs, the profitable-NN expert, vectorised packing, the CLI), and the excluded packages (both HPO stacks and `rl.meta`, Q-6/Q-12a). `wsmart_bin_analysis` is documented as pending its own package (RQ-grok-7): `bins/base.py` still imports `GridBase` from it, so excluding it today fails the build loudly.
-- `logic/package/build_release.py`: builds the package from `main` per the manifest (Q-10a). `--check` validates every manifest key against the generated registry manifests; `--build` stages a pruned copy (filtered registry manifests, released YAMLs only, collection-validated release test set, generated release pyproject and `docs/release.md` index) and verifies that no module-level import or manifest target escapes the tree; `--smoke` runs the torch-free classical smoke (released keys resolve and instantiate, unreleased keys do not, `torch` never enters `sys.modules`).
-- Release CI (`.github/workflows/package-and-build.yml` and its `.gitea`/`.forgejo` mirrors, `.gitlab-ci.yml`): manifest check, release build, staged-tree smoke, and a torch-free **installed-package** smoke (`pip install --no-deps` into a fresh venv without torch, Q-16a). The release artifact is uploaded.
-
-#### Changed
-
-- **Breaking:** `logic/pyproject.toml` base dependencies are torch-free; the training stack (torch, torchvision, torchrl, tensordict, torch-geometric, torch-scatter, torch-sparse, pytorch-lightning, wandb) moves to the `neural` extra: `pip install wsmart-route[neural]` (Q-16a). CI syncs `--all-extras`; local training environments use `uv sync --extra neural` (or `--all-extras`). `uv.lock` regenerated.
-- **Breaking (import-time only):** eager imports that pulled unreleased or out-of-scope code became lazy, with no API change (all names still resolve; they load on first access): `pipeline/rl/core/__init__.py` and `pipeline/rl/__init__.py` (RL algorithms and the meta stack), `policies/vector/__init__.py` (model policies and vectorised solvers), `models/core/__init__.py`, `models/subnets/{encoders,decoders,modules}/__init__.py` (P-25), `utils/model/loader.py` (encoder factories), `pipeline/rl/core/imitation.py` (expert policies load by config class name), `pipeline/features/train/model_factory/{builder,imitation}.py`, and `controllers/cli/drive_parser.py` (cloud import deferred). `pipeline/features/train/__init__.py` resolves `run_hpo` lazily, so importing the training package no longer requires the HPO stack.
-- The release build drops `from .hpo import run_hpo` from the staged `features/train/__init__.py` surface: HPO is not in 1.0.0 (Q-6), and accessing `run_hpo` in the released package raises `ModuleNotFoundError`.
+- **Breaking:** the unreleased policies read the typed config dataclass; their `params.py` layer is deleted (Q-8b, WP-06). `tools/migrate_unreleased_params.py` migrated 84 of the 86 remaining params modules in one scripted pass:
+  - **Groups A/B/D** (a wired config exists): params-only fields are appended to the config dataclass with their params defaults (shared-field defaults are kept as the config's; the value that runs is the YAML's), and every `XParams` reference is rewritten to the config class.
+  - **Group C** (no config anywhere): the params dataclass moved to `logic/src/configs/policies/<key>.py` as `<Key>Config` with `from_config` dropped (new: `LnsMipConfig`, `TpksConfig`).
+  - **Group C-unwired** (a config existed but the adapter returned `None`): params-only fields merged into the existing config and the adapter wired — `sa`, `na`, the `mp_*` multi-period family, the hyper-heuristics, `cgh`, `lrh`, `rfo`, `hgs_adc`, `rl_alns` now have typed configs their HPO jobs validate against.
+  - Adapter `XParams.from_config(values)` calls become `self._effective_config(values)` (the base filters and structured-loads the same values, with the simulator seed).
+- **Breaking:** two config files gained deferred imports instead of import-time cycles: `configs/policies/{ils_rvnd_sp,rl_gd_hh}.py` import the acceptance factory inside `__post_init__` (P-11 relocation is still pending for them). `configs/policies/rl_hvpl.py` references `KSparseACOConfig` from `aco_ks` instead of the deleted `KSACOParams`.
+- Two params modules remain as the hand-fix queue (Q-8b decision point): `calm` (six nested dataclasses) and `hmlns` (`MACOParams` + `HybridMemeticLargeNeighborhoodSearchParams`); their references still resolve.
 
 #### Removed
 
-- **Breaking:** the acronym-driven export flow is retired (Q-10a): `ci/packager.py`, `ci/analyze_deps.py`, `ci/export_config.json`, `ci/workflow_config.json`, `ci/export_profiles/` (the `minimal-ptp` patch no longer applied to `main`), `logic/package/prune_codebase.py`, the 16 `logic/package/remove_*.py` scripts, `apply_export_profile.py`, `make_export_profile.py`, `cleanup_helper.py`, and their two tests. The `algo-export*` branch trigger is gone from all CI mirrors. The export tag `export/minimal-20260926` and the `wsr-package` worktree remain for history; the integrator deletes them.
+- 84 `params.py` modules under `logic/src/policies/` (−9.7k lines gross). `tools/check_params_refs.py` bans all 95 deleted `*Params` symbols (WP-04/05/06); with `calm` and `hmlns` still to migrate, the final ban is on any `*Params` symbol once they land.
 
 #### Migration
 
-- Release scope questions go in `logic/release.yaml`, not in CI job inputs. Components are addressed by registry key; the BB/BC/BPC acronyms live only in the Studio app's display map (`app/src/gen/config/simulation_metadata.json`).
-- The release test set is written to `logic/test/release_tests.txt` (collection-validated) and `release_tests.excluded.txt` (excluded with reasons) inside the built tree. Running it as a CI gate becomes possible once the P-06 test pruning lands: some kept tests assert the dev tree's full registry, which the filtered release registry intentionally violates.
+- HPO jobs (P-56 gate): `na.seed` default aligned to the config's `None` (the simulator injects the seed); `sa.iterations_per_temp` dropped — a stale key the config-less SA path never validated, now loud because SA is wired. All 96 jobs check green.
+- Cross-params imports (`KSACOParams` in `rl_hvpl`, the aco-ks operator config in eight solvers) now import from `logic.src.configs.policies.*`.
 
-### Registry, lazy imports and facades (`2026-10-15`)
+### Envs on the ESPPRC base (WP-07, `2026-10-15`)
+
+#### Added
+- **P-23 (Canonical ESPPRC Base & Declarative Resources):** `ESPPRCEnv` in `logic/src/envs/tasks/espprc.py` implementing forward-only routing dynamics, elementarity tracking, and declarative `Resource` hierarchy (`Resource`, `LoadResource`, `ShiftTimeResource`, `ESPPRCGenerator`).
+  - Strict batched PyTorch tensor support `[B, ...]` without per-instance loops (RQ-gemini-1).
+  - Pure NumPy support for classical heuristic solvers (RQ-codex-1).
+  - Explicit customer-count and depot-placement schema support (`[B, 1, 2]` depot + `[B, N, 2]` locs or `[B, N+1, 2]` prepended depot) with road-distance cache.
+- **P-21 (Unified Economic Objective):** `ProblemSpec` in `logic/src/envs/tasks/spec.py` and `evaluate_profitable_tour` in `logic/src/envs/tasks/profitable_tour/common.py` providing unified economic objective calculations (EUR), cleanly separating route evaluation/feasibility and physical units.
+- **P-44 / Q-3 (Problem Family Hierarchy):** Problem subpackages (`profitable_tour/` containing `ptp`, `cptp`, `tcptp`), self-contained problem generators in task files, and shared `ESPPRCGenerator`.
 
 #### Changed
+- **P-20 (Unified Route Evaluator):** Replaced legacy `get_costs` across all 6 live neural caller sites (`pointer_network/model.py`, `gat/decoder.py`, `glimpse/decoder.py`, `eval/engine.py`, `epoch.py`, `neural_agent/batch.py`) with `evaluate_tour`, returning standardized outcome dictionaries (`cost`, `reward`, `length`, `waste`, `overflows`, `valid`, `total`, and optional `time`).
+- **P-22 (Embedding Deduplication & Checkpoint Parity):** `CPTPInitEmbedding` subclasses `PTPInitEmbedding`, and `CPTPContextEmbedder` subclasses `PTPContextEmbedder`. Retains 100% bitwise `state_dict` key compatibility and exact greedy action parity with released AM checkpoints.
+- **All 12 Problem Tasks Sit on ESPPRC:**
+  - Released: `PTP`, `CPTP`, `TCPTP`, `CVRP`
+  - Unreleased: `TSP`, `ATSP`, `OP`, `PCTSP`, `SPCTSP`, `PDP`, `IRP`, `ThOP`
 
-- **Breaking:** one `Registry` (`logic/src/utils/registry.py`) replaces the five stage registries and the `GlobalRegistry` implementation. Name lookup, `create`, and tag queries (`query_intersection` / `query_union` / `query_difference` / `get_all`) live on the same type. Stage instances are `ROUTING`, `PACKING`, `IMPROVEMENT`, `ACCEPTANCE` and `JOINT`; `ALL` is their union. The old class names (`RoutingAlgorithmRegistry`, `PackingRegistry`, …) are aliases of those instances. `GlobalRegistry` is a thin wrapper over `ALL` so existing `@GlobalRegistry.register(...)` decorators still resolve.
-- **Breaking:** `Registry.create` is the only constructor. Factories look up a name and call `create`; they no longer keep their own class maps. Improver aliases (`cls`, `ftsp`, …) and packing name remaps live in the generated manifests / `CONFIG_MAPPING`.
-- **Breaking:** parent policy, model, env and interface packages no longer import their implementations eagerly. `from logic.src.policies.routing.meta_heuristics import policy_hgs` still works, but only that module is loaded. Registration is a generated `_manifest.py` of `module:Class` targets (`tools/gen_registry_manifests.py`), not an import of every adapter.
-- **Breaking:** `logic.src.envs.problems` is removed. Import problem classes from `logic.src.envs.tasks` (`PTP`, `CPTP`, `TCPTP`).
-- **Breaking:** RL expert configs in `logic.src.configs.rl.policies` are renamed to `VectorALNSConfig`, `VectorHGSConfig`, `VectorILSConfig`, `VectorHGSALNSConfig` and `VectorHVPLConfig`. The old names remain as aliases on the package and on each module so Hydra `_target_: logic.src.configs.rl.policies.HGSALNSConfig` checkpoints still load.
-- `logic.src.envs.temporal` moved to `logic.src.constants.temporal`. `get_default_temporal_params` is imported from there.
+#### Removed
+- **P-20 (Clean Break):** Deleted legacy `logic/src/envs/routing/` completely (13 legacy files removed).
+
+### Shared objective and KPI contracts (P-21/P-42, `2026-10-15`)
+
+- Added backend-neutral `profit_objective`, `distance_objective`, and injected `Economics`; scalar/NumPy/Torch callers retain batch shape and tensor gradients. ESPPRC reward and profitable-tour/CVRP evaluation use the shared objectives.
+- Added Torch-free KPI definitions and `DayOutcome`, day-to-sample aggregation and equal-weight successful-sample summaries. Ratios use per-sample sums; failed samples are excluded and counted. Zero-distance ratio compatibility includes a count of defined ratios. Policy seconds, day wall seconds and physical shift hours stay distinct; simulated and collection days have separate keys.
+- Made task exports lazy so importing the shared objective/KPI modules does not require neural dependencies. Released problem specs select canonical simulation metric names; RL reward diagnostics remain separate.
+- Fixed WP-07 road-tour evaluation to count every directed depot return/departure and close open paths once; profitable and CVRP evaluators share this calculation. Added regression cases for asymmetric multitrip, open, padded, single-action and empty paths.
+- Simulator/result-writer adoption remains in the separately owned WP-08 package; solver internal search scores are not rewritten by this change.
+
+### Modular simulator (WP-08, `2026-10-15`)
+Codex P-21/P-42 objectives and KPI primitives (`envs/tasks/common/objectives.py`, `metrics.py`) are on this branch and are what the day loop calls. They were not part of the WP-07 tip.
 
 #### Added
 
-- `logic/test/unit/utils/test_registry.py` covers name lookup, `create`, tag queries, Hydra aliases, and the torch-free classical import path.
-- Codex review: gates fail on incomplete/ambiguous sweeps and absent/unequal/non-finite certificates; retain physical time comparisons and the heavy lock. Calibration uses separate time-capped repeats; logs use canonical keys and recursive lowercase policy lookup. Fixed OR-Tools SAT worker parameter nesting. Heavy gates remain unrun.
+- Day pipeline is a validated dependency graph (`logic/src/pipeline/simulations/pipeline.py`). Each action declares `timed`, `reads`, and `writes`. Fill precedes packing, routing precedes improvement and collection, and collection publishes final `profit` and `cost` before logging.
+- Shared fill seed `(seed + sample_id * 1_000_003 + day) % 2**31`. Policy RNG does not reseed `bins.rng`.
+- `ProblemSpec.per_trip_shift` (TCPTP only) and `expand_pool`. Released specs load from `released_specs.py` without importing the neural task module. `run_day` publishes `expand_pool` on a `ContextVar`.
+- `tools/convert_sim_outputs.py` maps archived `days` to `collection_days`, stamps `days_simulated` from the run config, and drops `reward`. It was not run on the archives.
+- `sim.export_fill_matrix` (default off), `sim.pool_start_method` (`forkserver` is Linux opt-in; default stays `spawn`), and `sim.day_pipeline`.
 
+#### Changed
+
+- **Breaking:** day logs drop `reward` and the ambiguous `days` key. Records carry `days_simulated` and `collection_days`. `profit` stays in EUR. RL `reward` tensors are unchanged.
+- `get_daily_results` writes a `DayOutcome` for the executed plan. Failed samples keep partial KPIs and stay out of means (`n_failed`). An all-failed cell stores `None` estimates.
+- `SimulationDayContext` is no longer a `Mapping`. Dict callers go through `bind_context`.
+- Classical bin history and the simulator worker seed import PyTorch only when a tensor device or a neural seed is needed. Pandas stays required.
+- `wsmart_bin_analysis` moved to `packages/wsmart_bin_analysis` (import `packages.wsmart_bin_analysis`). `packages/__init__.py` stays absent because `packages/*` is gitignored. GitLab `GIT_SUBMODULE_PATHS` follows the new path. WP-02 owns the release manifest.
+
+#### Removed
+
+- Per-policy `vrpp` bool. Solvers read `current_expand_pool()`. `alns_vrpp` is a different field and remains.
+
+### Packing: NumPy definition and Torch adapter (WP-09, `2026-10-15`)
+
+#### Added
+- **P-37 / RQ-codex-1:** one shared definition per released packing rule in `logic/src/policies/packing/spec.py` (NumPy, percent units). Classical wrappers (`last_minute`, `regular`, `service_level`, `lookahead`) call that spec. Batched Torch adapters live in `packing/vectorized/spec.py` (`[B, N]`, depot at 0, fraction units) and are used by the neural selectors. Parity tests keep the two backends in agreement, including Regular.
+- **RQ-cursor-3:** unreleased `eoq_last_minute` (`LastMinuteEOQSelection`) keeps the Harris EOQ trigger in `main`. `pk_eoq_last_minute.yaml` now names that key.
+
+#### Changed
+- **Breaking:** 1.0.0 `last_minute` is fill-threshold only. `use_eoq_threshold` on a last-minute context is ignored; use `eoq_last_minute` for the EOQ path. Revenue and profit-per-km still read the flag.
+- Released packing `pack()` no longer imports the simulator (`_record_live_params`) or Torch. `vectorized/__init__.py` and `get_vectorized_selector` load adapters lazily.
+
+#### Migration
+- Replace `strategy: last_minute` plus `use_eoq_threshold: true` with `strategy: eoq_last_minute`. Paper CF70/CF90 last-minute YAML is unchanged.
+
+- **P-05:** `packing/vectorized/manager.py` no longer imports `models.meta.hrl_manager` at module level. `ManagerSelector` is dropped from the packing / vectorized public lazy maps; the factory still string-loads it for in-tree `strategy: manager`. Importing the released vectorized selectors does not load the HRL manager.
+
+### Neural training stack (WP-10, `2026-10-15`)
+
+#### Changed
+- **P-50 (batched expert):** the profitable nearest-neighbour expert (`policies/vector/profitable_nearest_neighbour.py`) solves the whole batch at once with NumPy instead of one instance at a time in Python. Its tours are identical to the original's: the nearest-neighbour tie-break, the first-improvement 2-opt order and the float32/float64 arithmetic are kept. Checked on 4,000 synthetic instances and on the Rio Maior 100/170 and Figueira da Foz 350 road matrices (emp and gamma3, 1, 3 and 7 days of waste), with no difference. Per instance, 170 gamma3 goes from 66 ms to 3.6 ms and 350 gamma3 from 280 ms to 15 ms. `test_profitable_nearest_neighbour_parity.py` keeps the original as the reference. The per-instance `_solve` and `_two_opt` methods are replaced by `solve(dms, wastes, revenue, cost)`; no migration is needed outside the expert.
+
+#### Added
+- **Q-23 (`rl.imitation.fill_from`):** chooses whose routes empty the bins between time-training days during imitation. `model` (default) keeps the model's sampled rollout, as in the paper models; nothing changes for existing runs. `expert` uses the expert's tours and skips the model's sampled decode in training (P-50 item 1): the step returns the expert's solve, the loss reuses it, and `train/reward`, the rollout metrics and the rollout's `train/log_likelihood`/`entropy` are not logged (`train/expert_reward` and the teacher-forced `train/log_likelihood` are). The skipped decode no longer draws random numbers, so an `expert` run's sampling stream differs from a `model` run's. Validation and test still decode the model. The training step's rollout is now the overridable `StepMixin._rollout(td, env, phase)`.
+
+- **P-51 (expert solve cache):** `rl.imitation.expert_cache: <dir>` keeps the profitable nearest-neighbour expert's tours on disk (`policies/vector/expert_cache.py`, shards `shard-*.pt`, written at the end of each training day). A record's key hashes everything the tour depends on: the distance matrix, the waste of every node, the capacity, the revenue and cost weights, `two_opt_passes` and the expert version. A state that differs in any of them is solved again, so a record is never reused for another state. Only tours are stored; the actions and the reward are rebuilt from the current state on every use, so `weighted_nll` gets the same reward as without the cache. With `fill_from: expert` a rerun or a resumed run reuses every solve of the days it already trained.
+- **P-51 (offline expert solves):** `rl.imitation.precompute: true` (with `fill_from: expert` and `expert_cache`) only fills the cache: the training run solves every state with the expert and advances the bins with the expert's tours, but skips the model's training passes. A later training run with the same dataset and settings finds every solve. This replaces the `gen_data expert` command and the `.td` `expert_actions` field proposed in the report, because the cache is keyed by the states that training itself produces (Codex's P-51 correction).
+- **P-24 (policy forward contract):** `models/common/policy_contract.py` writes down the forward contract that the released Attention Model, the imitation expert and their consumers (training step, imitation loss, simulator neural agent) already share: `policy(td, env, strategy="sampling"|"greedy", actions=None)` returning a dict with `reward` `[batch]`, `actions` `[batch, steps]` (long, depot-padded), `log_likelihood` `[batch]` (with gradient in training and teacher forcing) and optional `entropy` and `td`. `check_policy_output` validates an output; `test_policy_contract.py` checks the AM in sampling, greedy and teacher-forced mode (teacher forcing reproduces the sampled log-likelihood) and the expert with and without the cache. The calling convention and the dict container are unchanged; the report's `decode_type` default is not adopted (Codex's P-24 correction).
+
+- **P-24:** under teacher forcing the Attention Model returned `entropy` as the integer 0, and a batch already done at reset returned an integer `log_likelihood`; both are now `[batch]` zero tensors. The released checkpoints (Rio Maior 100 emp, Figueira da Foz 350 gamma3) give bitwise-identical greedy actions, rewards and log-likelihoods before and after this package.
+- **Q-12 (paper stack only in the import closure):** importing the training and evaluation features now loads only the Attention Model, REINFORCE, imitation and its expert. Before, it loaded every model family in `models/core` (DACT, GLOP, MatNet, MoE, N2S and others), every RL algorithm, `rl.meta`, `rl.hpo` and the vectorised HGS/ALNS/ACO experts. The release build keeps the import closure of its seeds, so these would have shipped (777 loaded `logic.src` modules before, 621 after). `test_paper_stack_imports.py` pins this. Changes:
+  - `policies/vector/__init__.py`, `models/core/__init__.py`, `pipeline/rl/__init__.py` and `pipeline/rl/core/__init__.py` are lazy facades (WP-01's `lazy_getattr`). `from <package> import Name` works as before.
+  - The training builder's model map, hybrid policy and `MetaRLModule` load on use, and the algorithm factories load by name: `model_factory.registry.get_algorithm_factory(name)`.
+  - `features.train.run_hpo` loads on use.
+  - The imitation trainer imports only the profitable nearest-neighbour expert eagerly; the other experts load when configured.
+  - **Migration:** `RL_ALGORITHM_REGISTRY` and `model_factory.registry._ALGO_REGISTRY` values are now `"module:attribute"` strings; use `get_rl_algorithm(name)` / `get_algorithm_factory(name)` to get the class or factory. `_create_adaptive_imitation` moved to `model_factory/adaptive_imitation.py`.
+
+### Solver consolidation: one engine contract per solver family (WP-11, `2026-10-15`)
+
+#### Changed
+
+- **Breaking (P-30):** Routing solvers take one value object — `solver(problem: SubProblem, cfg)`. The positional 7-argument constructors are gone; `run_*` dispatchers (`run_alns`, `run_hgs`, `run_bpc`, `run_swc_tcf_optimizer`, `run_ms_bpc_sp`) take the same `(problem, cfg)` pair and return the `(routes, profit, cost)` triple (`SolveResult` NamedTuple, unpacking-compatible). Released adapters are `GenericRoutingPolicy` subclasses declaring `_solver` + `_config_class()` only (PSOMA, PG-CLNS, ALNS, HGS, BPC, SWC-TCF, MS-BPC-SP, ACO-HH); adapters with genuinely different behaviour (SANS dispatcher contract, CVRP engine dispatch, the neural NA adapter) stay explicit. The 58 cookie-cutter unreleased adapters are deliberately not converted (released-set-first ruling, RQ-claude-3 pattern); they keep working on `BaseRoutingPolicy` unchanged.
+- **Breaking (P-31):** One LNS engine for the released ALNS and the PG-CLNS LNS: new `meta_heuristics/large_neighborhood_search/` package (`LNSBase` loop, `RopkePisingerSegments` and `EmaWeightUpdate` weight strategies, `LegacySAAcceptance` for the pre-P-11 SA trajectory). PG-CLNS keeps its own frozen operator copies (owner ruling 2026-10-07); `ALNSSolver`'s surface (constructor, mutable `destroy_ops`/`repair_ops`, overridable `_update_weights`, `solve(initial_solution=...)`) is preserved for its unreleased consumers.
+- **Breaking (P-33):** MS-BPC-SP re-platformed onto the shared column-generation core per RQ-kimi-2: its private CG loop and pricing/cycle helper twins (~1,050 of 2,008 lines) are deleted in favour of `column_generation_loop(..., strict_certification=True)`; `MSBPCSPParams`/`params.py` deleted — `MSBPCSPConfig` (settled to its policy YAML, which matches the values that ran) is the single source of truth; the shared core gained the `strict_certification` flag (MS node-certification semantics: unexhausted Farkas/pricing and skipped descendant pricing leave the node incomplete instead of accepting an uncertified bound; default path byte-stable). Also in the shared helpers: the `rf_conflicts` sign corrected to `not together` (latent — never fed the label-correcting algorithm) and the strong integrality audit (`require_elementary=True`: elementarity + node-usage set-partitioning check) ported into `smoothing.is_solution_integer`, used by MS-BPC-SP. Released BPC stays byte-stable on the default (weak) check; adopting the strong check for BPC is a deferred exactness upgrade pending owner sign-off.
+- **Breaking (P-34):** `PopulationSearch` template (`meta_heuristics/population_search.py`: initialise / vary / educate / replace / track-best / two-level stopping hooks) with the released PSOMA ported onto it; HGS/GA/PSO fit the hooks and are deferred.
+- **Breaking (P-35):** `HyperHeuristicSearch` route-level HH template (`hyper_heuristics/hyper_heuristic_base.py`: select-move / apply-move / accept / rank / incumbent / post-iteration / selection-state hooks) with the released ACO-HH ported onto it. Public surface preserved: `pheromone` + `deposit_edge`/`evaporate_all` (HVPL, RL-HVPL), `construct`, `tau`, `operator_names`, `sequence_length`, `_select_sequence`, `_elitism_sync_count`; dual RNG streams and their consumption order unchanged (determinism tests green); learning state persists across `solve()` calls.
+- **Breaking (Q-8b, unreleased consumers migrated in the same change):** `hybrid_memetic_large_neighborhood_search`, `hybrid_volleyball_premier_league`, `hybrid_genetic_search_with_adaptive_large_neighborhood_search` (HGS-ALNS), `partial_optimization_metaheuristic_under_special_intensification_conditions` (POMSIC), `learning_allocated_sequential_matheuristic` (LASM `stage_lbbd`), `exact_guided_heuristic` (`stage_alns`, `stage_bpc`), `reinforcement_learning_hybrid_volleyball_premier_league` (RL-HVPL), and `logic/benchmark/{benchmark_suite,baseline_benchmarks}.py`.
+- **Tests (P-06):** engine/dispatcher constructions across the policy tests moved to `build_subproblem(...)`; the fork-locking MS mock tests re-aimed at the shared loop's `strict_certification` mode; unit tests of the deleted fork's private helpers (`_reset_master_constraints`, `_apply_branching_to_master`, `_perform_strong_branching`, `_compute_lr_bound_at_node`) pruned with the fork — the full-engine brute-force tests cover the same mechanics; adapter patch points moved to the `GenericRoutingPolicy._solver` class attribute.
+
+#### Added
+
+- `routing/base/sub_problem.py`: `SubProblem` value object, `SolveResult` NamedTuple, `Solver` protocol, `build_subproblem(...)` helper.
+- `routing/base/generic_policy.py`: `GenericRoutingPolicy` — one generic adapter doing effective-config + sub-problem assembly + solve + finalize behind `_make_subproblem`/`_solve`/`_finalize` hooks.
+- `logic/test/unit/policies/solvers/test_bpc_exactness_gate.py`: the RQ-kimi-1 exact-solver gate — incumbent equals the brute-force optimum within 1e-6 and a valid certificate (logged z_UB at/above the incumbent, or exact optimum agreement on trivially-converged instances) for both `run_bpc` and `run_ms_bpc_sp` on small fixtures.
+- `tools/check_params_refs.py` ban list extended with `MSBPCSPParams`.
+
+- **Consolidation (coerce_config):** Canonical `coerce_config` lives in `routing/base/sub_problem.py` and is exported through `routing/base`; `large_neighborhood_search/engine.py` re-exports it and `PopulationSearch._coerce_config` delegates to it, eliminating duplication across meta-heuristic engine bases.
+- **Fix (HGS local search iterations):** Restored `local_search_iterations: int = 500` to `HGSConfig` with defensive `getattr(self.params, "local_search_iterations", 500)` in `LocalSearch._optimize_internal`, resolving the `TestHGSSolverContract::test_hgs_contract[custom]` contract failure.
+- `routing/base/sub_problem.py`: `SubProblem` value object, `SolveResult` NamedTuple, `Solver` protocol, `build_subproblem(...)` helper, `coerce_config(...)` helper.
+- **Breaking (P-33):** MS-BPC-SP re-platformed onto BPC plus a set-partitioning stage per RQ-kimi-2. Both engines drive one B&B walk (`search_bpc_tree` in `helpers/solvers_and_matheuristics/search/bpc_tree.py`) and the shared `column_generation_loop`. MS keeps knapsack pre-selection, index remap, Phase 3 regret-2, Phase 5 set-partitioning, and the empty-result retries; its certificates stay on `MSBPCSPConfig` plus `BPCSearchOptions(strict_certification=True, require_elementary=True, incomplete_node_ip=True)` — `MSBPCSPConfig` is not coerced into `BPCConfig`. `MSBPCSPParams`/`params.py` deleted. The shared CG core gained `strict_certification` (MS node-certification: unexhausted Farkas/pricing leaves the node incomplete). Strong integrality (`require_elementary=True`) lives in `smoothing.is_solution_integer` and is used by MS; released BPC stays on the default weak check.
 ### Regression gates harness, WP-12 #117 (`2026-10-15`)
 
 #### Added
@@ -290,6 +300,29 @@ Codex P-21/P-42 objectives and KPI primitives (`envs/tasks/common/objectives.py`
 #### Changed
 
 - Nothing behavioural. Heavy calibration and gate runs wait for `sim chain done` (Q-15); tolerances are frozen from unchanged-code repeats before any behaviour-preserving package merges.
+
+### Docs and cleanup (`2026-10-15`, WP-13)
+
+#### Added
+
+- `tools/trim_docstrings.py` (P-03): the mechanical trimmer for the generated docstring boilerplate — `Returns:`/`Yields:` sections that only document None, `Example:` sections that only `>>> import` the module, and `Args:` entries restating the signature's type hints (`name (Type): ...` becomes `name: ...`). One pass over `logic/src`: 333 files trimmed, 589 lines removed, zero parse failures, idempotent on rerun. `--check` is CI-able.
+- `tools/gen_api_docs.py` (Q-22): generates `docs/api/` — one deterministic markdown page per package (`configs`, `constants`, `data`, `enums`, `envs`, `interfaces`, `models`, `pipeline`, `policies`, `utils`, `controllers`, …) listing every public module with its docstring summary and public class/function inventory. The output is sorted, so a diff against the committed copy detects drift.
+- `docs/api/` (12 package pages + index): the generated API reference. The hand-written `docs/modules/*.md` keep their narrative but carry a banner marking them as not the source of truth (Q-22a: keep the hand-written guides short, keep `docs/moon/` internal).
+
+#### Changed
+
+- **Breaking (doc rule, Q-7b):** both docstring checkers now enforce the relaxed rule instead of the batch-generated style. `check_docstrings.py`: public modules/classes/functions need a docstring; private helpers (leading underscore) and `__init__` (covered by the class docstring) need nothing. `check_google_style.py`: module `Attributes:`/`Example:` and class `Attributes:` sections are optional; an `Args:` section is optional and must not restate type hints; a `Returns:`/`Yields:` section that documents `None` is a defect. The remaining findings under the new rule are pre-existing content debt (127 public functions without docstrings, mostly `enums/registry.py`, `envs/tasks/espprc.py`, and the `wsmart_bin_analysis` submodule), not new regressions — recorded for the per-package review.
+- `logic/release.yaml` (WP-02 follow-up): the env seeds follow the WP-07 layout — `envs.routing.*` is gone; the released problems sit on `logic.src.envs.tasks.{ptp,cptp,tcptp,cvrp}` plus the `envs.tasks.espprc` base/generator (P-23, Q-3a), and `envs/generators/` is unreleased-only. `logic.controllers` seeds are the CLI's three modules. Pending notes: add `models.common.policy_contract` when WP-10 integrates (the P-24 contract), and activate the `wsmart_bin_analysis` exclusion when WP-08's `packages/` move lands. The builder also learned WP-03's `pk_*.yaml` packing-config names and the `packing/base/registry.py` rename; `--check`, `--build` (941 files, closure verified) and the torch-free `--smoke` all pass on the merged WP-07 chain.
+- `rl4co/` clone deleted from the repository root (Q-21): untracked reference material, 172 MB. WSmart-Route stays an independent fork; nothing in the tree referenced it.
+
+#### Removed
+
+- 589 docstring boilerplate lines across 333 files (the trimmer's first pass).
+
+### WP-13 follow-ups (`2026-10-15`)
+
+- `logic/release.yaml`: `logic.cloud`, `logic.benchmark` and `logic.test` added to `excluded_packages`. The `sync_drive`/`benchmark`/`test_suite` CLI jobs reach them only through deferred imports (`drive_parser.py`, `parser_dispatch.py`, `jobs/ops_runner.py`), and the three packages live outside the staged tops (`src`/`configs`/`controllers`), so they can never ship with the package. Under the reviewed closure semantics (deferred imports are followed) the build fails staged verification through `test_cloud_sync.py`; under the previous semantics they were kept-but-unstaged, a silent defect — the release CLI's `test_suite`/`sync_drive`/`benchmark` jobs would have crashed at runtime. The exclusions declare them opt-out paths (unavailable in the release, matching the builder's documented deferred-import semantics); the curated release test files (P-06) are unaffected, and the staged `logic/test/__init__.py` ships as a package marker with the runner import stripped. Check/build/smoke green on the WP-13 tree under both closure semantics; the verified HEAD release-test selection is preserved.
+- `tools/trim_docstrings.py`: the walk now skips the pinned `wsmart_bin_analysis` submodule — its content belongs to its own repository and cannot ship through a superproject commit, so `--apply` would otherwise leave the submodule dirty on every run (the first pass had trimmed 14 of its files; those uncommitted trims were reverted from the worktree copy).
 
 ### Packing and routing names (`2026-10-15`)
 
@@ -1070,7 +1103,7 @@ Remaining §H scope: document spec + override patch layer, native OMML equations
 - **Presentation feedback fixes, round 6** (`archive/gen`; deck now 20 slides, figures + deck + speaker script regenerated):
   - removed the KPI-bar-charts slide (former slide 13); the underlying `kpi_combined.png` generator is unchanged and still feeds the markdown report
   - Pareto front (slide 12) restyled: fronts are keyed by **region only** (not distribution) so RM-100/RM-170/FFZ-350 draw with the same darker colour + linestyle (solid purple / dashed bronze / dotted slate) in both the Empirical and Gamma-3 panels — previously a global scenario index gave the same region a different colour per distribution; the point palette (LA/LM/SL colours) is untouched and the front colours are deliberately distinct from it; legend collapses from 6 scenario entries to 3 region entries
-  - **Look-Ahead selection**: read `logic/src/policies/mandatory_selection/selection_lookahead.py` and replaced slide 7's 2-line LA equation with the full 6-step derivation (flag $\mathcal{M}_0$ → check empty → simulate collection → compute next collection day $nc$ → check $nc\leq t$ → bundle bins overflowing before $nc$), matched 1:1 to `pack`; added a new native flowchart diagram (`lookahead_flow.png`, ports the reference flowchart) illustrating the same 6 phases with the branch/loop structure
+  - **Look-Ahead selection**: read `logic/src/policies/mandatory_selection/selection_lookahead.py` and replaced slide 7's 2-line LA equation with the full 6-step derivation (flag $\mathcal{M}_0$ → check empty → simulate collection → compute next collection day $nc$ → check $nc\leq t$ → bundle bins overflowing before $nc$), matched 1:1 to `select_bins`; added a new native flowchart diagram (`lookahead_flow.png`, ports the reference flowchart) illustrating the same 6 phases with the branch/loop structure
   - **equations are now images, not OOXML**: replaced the pandoc→OMML `<m:oMath>` embedding (blank/uneditable in LibreOffice and the PowerPoint web app) with `render_equation_image`/`render_glossary_image` — transparent PNGs rendered via matplotlib mathtext (no LaTeX install needed), sized so points map 1:1 to the embedded picture; the VRPP (slide 3) and mandatory-selection (slide 7) equations both switched
   - added a **variable glossary** textbox below both equation slides (`render_glossary_image`, word-wrapped per-column, dynamically sized to its wrapped content so rows never overlap) explaining every symbol (e.g. $nc$, $\delta_{i,d}$, $\tau$, $\mathcal{A}_d$)
   - **speaker script regenerated to match the new deck** (`--speaker-script`, 20 slide scripts): slide 4's KPI list expanded from 5 to all 9 simulator metrics (overflows, bins collected, kg, km, kg/km, RL reward, profit, run execution time, days with a collection tour); Exact Methods (8) / Meta-/Hyper-Heuristics (9) / Route Improvers (10) scripts compressed to 2–3 terse bullets each; slide 12's script updated to describe the new region-styled fronts instead of the old per-scenario colouring
