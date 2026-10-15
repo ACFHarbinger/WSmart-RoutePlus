@@ -1,111 +1,16 @@
-# Policy Configuration
-
-# =============================================================================
-# VPL (Volleyball Premier League) Policy Configuration
-# =============================================================================
-# PURPOSE:
-#   Population-based metaheuristic inspired by professional volleyball season
-#   dynamics with hierarchical dual-population structure. The original VPL
-#   algorithm featuring active/passive team management, coaching-based learning,
-#   and diversity injection through substitution.
-#
-# ALGORITHM:
-#   1. Team Formation: Initialize 2N teams (N active + N passive)
-#   2. Competition: Rank active teams by fitness (league table)
-#   3. Substitution: Inject diversity from passive teams into weak active teams
-#   4. Coaching & Learning: Weaker teams learn from top 3 performers (weighted)
-#   5. Local Search: ACO-based refinement after learning
-#
-# KEY FEATURES:
-#   - Dual population structure (2N teams total for diversity reservoir)
-#   - Top 3 teams serve as "coaches" with weighted influence (0.5, 0.3, 0.2)
-#   - Passive teams act as fresh reserves for diversity injection
-#   - Deterministic coaching creates rapid convergence to good solutions
-#   - Elitism preserves top performers across iterations
-#
-# TYPICAL USE CASES:
-#   - Medium instances (50-100 nodes)
-#   - Moderate time budgets (120-300s)
-#   - When simple population-based method is preferred
-#   - Baseline comparison for hybrid variants (HVPL, AHVPL)
-#
-# PERFORMANCE EXPECTATIONS:
-#   - Fast convergence in early iterations
-#   - Good solution quality with proper parameter tuning
-#   - May plateau without hybrid enhancements (ACO, ALNS, HGS)
-#   - Best with substitution_rate 0.2-0.3 for diversity maintenance
-#
-# REFERENCE:
-#   Moghdani, R., & Salimifard, K. (2018). "Volleyball Premier League
-#   Algorithm." Applied Soft Computing, 64, 161-185.
-#   DOI: https://doi.org/10.1016/j.asoc.2017.11.043
-# =============================================================================
-
 vpl:
   custom:
-    # ---------------------------------------------------------------------
-    # VPL Population Parameters
-    # ---------------------------------------------------------------------
-    - n_teams: 10
-    # Number of active teams (total population = 2 * n_teams)
-    # Range: 10-50 (10 = fast, 30 = balanced, 50 = thorough)
-    # Total teams = 2N (N active + N passive reserves)
-
-    - max_iterations: 50
-    # Number of VPL seasons (main loop iterations)
-    # Range: 50-500 (50 = quick, 200 = balanced, 500 = deep)
-
-    - substitution_rate: 0.2
-    # Probability of diversity injection from passive teams
-    # Range: 0.1-0.5 (0.1 = conservative, 0.3 = aggressive)
-    # Higher values → better diversity but more disruption
-
-    # ---------------------------------------------------------------------
-    # Coaching and Learning Parameters
-    # ---------------------------------------------------------------------
-    - coaching_weight_1: 0.5
-    # Learning weight for best team (1st place)
-    # Range: 0.3-0.7 (0.5 = standard)
-    # Constraint: w1 + w2 + w3 = 1.0
-
-    - coaching_weight_2: 0.3
-    # Learning weight for 2nd best team
-    # Range: 0.2-0.4 (0.3 = standard)
-
-    - coaching_weight_3: 0.2
-    # Learning weight for 3rd best team
-    # Range: 0.1-0.3 (0.2 = standard)
-
-    - elite_size: 3
-    # Number of elite teams preserved (immune to substitution)
-    # Range: 3-10 (3 = minimum for coaching, 5-10 = stronger elitism)
-
-    # ---------------------------------------------------------------------
-    # Local Search Parameters
-    # ---------------------------------------------------------------------
-    - local_search_iterations: 100
-    # Number of ACO local search iterations per team
-    # Range: 50-500 (50 = light, 100 = balanced, 500 = deep)
-
-    # ---------------------------------------------------------------------
-    # Global Parameters
-    # ---------------------------------------------------------------------
-    - time_limit: 60.0
-    # Maximum wall-clock seconds for the algorithm
-    # Range: 60-600 (60s = quick, 300s = production, 600s = benchmark)
-
-    # ---------------------------------------------------------------------
-    # Infrastructure Settings
-    # ---------------------------------------------------------------------
-    # VRPP Settings
-    - vrpp: true
-
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-    # Node selection strategy for waste collection problems
-    # Options: ms_lookahead.yaml, ms_last_minute_*.yaml, ms_regular.yaml
-
-    - route_improvement: []
-    # Optional route improvement refinement
-    # Empty = use VPL output directly
-    # Options: ["ri_two_opt.yaml", "ri_relocate.yaml"] for extra refinement
-# =============================================================================
+    n_teams: 10
+    max_iterations: 50
+    substitution_rate: 0.2
+    coaching_weight_1: 0.5
+    coaching_weight_2: 0.3
+    coaching_weight_3: 0.2
+    elite_size: 3
+    local_search_iterations: 100
+    time_limit: 60.0
+    vrpp: true
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    route_improvement: []

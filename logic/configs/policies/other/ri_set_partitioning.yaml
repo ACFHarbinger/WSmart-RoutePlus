@@ -1,14 +1,6 @@
-# =============================================================================
-# route improvement: Set-Partitioning (Pool-Restricted)
-# =============================================================================
-# PURPOSE:
-#   Construct route pool via perturbations and solve IP exactly.
-# =============================================================================
-
 default:
   methods:
-    - "set_partitioning"
-
+  - set_partitioning
   sp_n_perturbations: 20
   sp_include_dp: true
   sp_time_limit: 60.0

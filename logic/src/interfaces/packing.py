@@ -12,14 +12,14 @@ Attributes:
 Example:
     >>> from logic.src.interfaces.packing import IPackingAlgorithm
     >>> class MyPackingAlgorithm(IPackingAlgorithm):
-    ...     def select_bins(
+    ...     def pack(
     ...         self,
-    ...         context: "SelectionContext",
+    ...         context: "PackingContext",
     ...     ) -> Tuple[List[int], "SearchContext"]:
     ...         return [], None
     ...
     >>> packing_algorithm = MyPackingAlgorithm()
-    >>> packing_algorithm.select_bins(SelectionContext())
+    >>> packing_algorithm.pack(PackingContext())
     ([], None)
 """
 
@@ -27,7 +27,7 @@ from typing import TYPE_CHECKING, List, Protocol, Tuple, runtime_checkable
 
 if TYPE_CHECKING:
     from logic.src.interfaces.context.search_context import SearchContext
-    from logic.src.interfaces.context.selection_context import SelectionContext
+    from logic.src.interfaces.context.packing_context import PackingContext
 
 
 @runtime_checkable
@@ -42,15 +42,15 @@ class IPackingAlgorithm(Protocol):
         None: No attributes
     """
 
-    def select_bins(
+    def pack(
         self,
-        context: "SelectionContext",
+        context: "PackingContext",
     ) -> Tuple[List[int], "SearchContext"]:
         """
         Determine which bins must be collected and create a phase-1 ledger.
 
         Args:
-            context: ``SelectionContext`` containing all bin-level inputs
+            context: ``PackingContext`` containing all bin-level inputs
                 needed to evaluate the strategy.
 
         Returns:

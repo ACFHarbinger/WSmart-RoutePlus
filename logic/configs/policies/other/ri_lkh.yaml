@@ -1,41 +1,5 @@
-# =============================================================================
-# route improvement: Lin-Kernighan-Helsgaun (LKH)
-# =============================================================================
-# PURPOSE:
-#   Advanced local search using Lin-Kernighan-Helsgaun algorithm for TSP refinement.
-#   Applies sophisticated k-opt moves with strategic double-bridge kicks.
-#
-# ALGORITHM:
-#   1. For each route:
-#      a. Convert route to closed TSP instance [0, ...nodes..., 0]
-#      b. Apply LKH heuristic:
-#         - Sequential 2-opt and 3-opt moves
-#         - Double-bridge kicks to escape local optima
-#         - Adaptive candidate set pruning
-#      c. Replace original route with LKH-optimized sequence
-#   2. Return refined solution
-#
-# USE CASES:
-#   - High-quality refinement when computational budget allows
-#   - Benchmark for evaluating neural model quality
-#   - Critical applications requiring near-optimal solutions
-#
-# PERFORMANCE:
-#   - Slower than 2-opt but significantly better quality
-#   - Improvement: 5-15% over greedy construction
-#   - Runtime: O(n² × iterations) but with intelligent pruning
-#   - Scales well to 100-300 node instances
-#
-# PARAMETERS:
-#   - max_iterations: 1000 (LKH iterations per route)
-#     Range: 100-10000 (100 = quick, 1000 = thorough, 10000 = exhaustive)
-#   - time_limit: 30.0 (soft timeout in seconds per route)
-#   - seed: 42 (random seed for double-bridge kicks)
-# =============================================================================
-
 default:
   methods:
-    - "lkh"
-
+  - lkh
   max_iterations: 1000
   time_limit: 30.0

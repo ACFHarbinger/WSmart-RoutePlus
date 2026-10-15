@@ -1,74 +1,14 @@
-# (μ,λ) Evolution Strategy Policy Configuration
-
-# =============================================================================
-# (μ,λ) Evolution Strategy Policy Configuration
-# =============================================================================
-# PURPOSE:
-#   Strictly generational evolution strategy. Maintains μ parents and selects
-#   the best μ from λ offspring to form the next generation.
-#
-# ALGORITHM:
-#   1. Recombination: Parents are sampled to create an offspring pool of size λ.
-#   2. Mutation: Offspring undergo destroy-repair and local search optimization.
-#   3. Selection: Deterministic truncation selection. Top μ offspring are kept.
-#   4. Memoryless Transition: The previous parent population is discarded.
-#
-# REFERENCE:
-#   Beyer, H. G., & Schwefel, H. P. (2002). "Evolution strategies–A comprehensive
-#   introduction." Natural Computing, 1(1), 3-52.
-# =============================================================================
-
 es_mcl:
   custom:
-    # ---------------------------------------------------------------------
-    # Population Parameters (μ,λ)
-    # ---------------------------------------------------------------------
-    - mu: 15
-      # Parent population size (μ)
-      # Range: 5-30
-      # Recommendation: 15 for robust collective hillclimbing.
-
-    - lambda_: 100
-      # Offspring population size (λ)
-      # Range: 50-200
-      # Recommendation: 100 to ensure high selection pressure.
-
-    # ---------------------------------------------------------------------
-    # Variation (Mutation) Parameters
-    # ---------------------------------------------------------------------
-    - n_removal: 3
-      # Perturbation strength (number of nodes removed during mutation)
-      # Range: 1-10
-      # Recommendation: 3-5 for VRPP.
-
-    # ---------------------------------------------------------------------
-    # Strategy & Runtime Control
-    # ---------------------------------------------------------------------
-    - local_search_iterations: 100
-      # Exploitation intensity per offspring individual.
-
-    - max_iterations: 500
-      # Maximum number of generations (generational loop).
-
-    - time_limit: 60.0
-      # Maximum wall-clock seconds for optimization.
-
-    # ---------------------------------------------------------------------
-    # Infrastructure Settings
-    # ---------------------------------------------------------------------
-    # VRPP Settings
-    - profit_aware_operators: false
-    - vrpp: true
-
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-    - route_improvement: []
-
-# =============================================================================
-# ALGORITHM STRUCTURE (Canonical ES)
-# =============================================================================
-# $P_{t+1} = Select(Mutate(Recombine(P_t)), \lambda)$
-#
-# Complexity:
-#   - Space: O((\mu + \lambda) \times n)
-#   - Time: O(Iterations \times \lambda \times n^2)
-# =============================================================================
+    mu: 15
+    lambda_: 100
+    n_removal: 3
+    local_search_iterations: 100
+    max_iterations: 500
+    time_limit: 60.0
+    profit_aware_operators: false
+    vrpp: true
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    route_improvement: []

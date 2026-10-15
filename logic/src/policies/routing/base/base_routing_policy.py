@@ -6,7 +6,7 @@ functionality like parameter loading, subset matrix creation, and tour mapping.
 
 Attributes:
     BaseRoutingPolicy: Base class for all routing policies.
-    _flatten_raw_config: Helper to flatten nested config structures.
+    _structured_load: Load a policy mapping into a typed config dataclass.
 
 Example:
     >>> from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
@@ -26,36 +26,58 @@ from logic.src.pipeline.simulations.repository import load_area_and_waste_type_p
 from logic.src.tracking.core.run import get_active_run
 from logic.src.tracking.viz_mixin import PolicyVizMixin
 
+_STAGE_KEYS = frozenset({"packing", "route_improvement", "acceptance_criteria", "acceptance_criterion"})
+_RUNTIME_KEYS = _STAGE_KEYS | {"seed", "vrpp"}
+_ENGINE_KEYS = ("gurobi", "ortools", "custom")
 
-def _flatten_raw_config(source: Any) -> Dict[str, Any]:
-    """Flatten nested config structures (Hydra custom lists, engine dicts) into a flat dict.
 
-    Handles patterns like:
-        {"custom": [{"time_limit": 60}, {"start_temp": 100}]}
-        {"ortools": [{"time_limit": 60}]}
+def _unwrap_engine_section(source: Any) -> Dict[str, Any]:
+    """Unwrap a policy-name or engine wrapper into a plain parameter mapping."""
+    if isinstance(source, (ListConfig, list)):
+        raise TypeError("policy YAML must be a mapping after P-13; run tools/convert_policy_yaml.py")
+    if isinstance(source, (DictConfig, ListConfig)) or OmegaConf.is_config(source):
+        source = OmegaConf.to_container(source, resolve=True)
+    if not isinstance(source, dict):
+        return {}
+    section = dict(source)
+    while len(section) == 1:
+        key = next(iter(section))
+        if key in _STAGE_KEYS or key in _ENGINE_KEYS:
+            break
+        inner = section[key]
+        if isinstance(inner, dict):
+            section = inner
+            continue
+        if isinstance(inner, list):
+            raise TypeError("policy YAML must be a mapping after P-13; run tools/convert_policy_yaml.py")
+        break
+    for engine in _ENGINE_KEYS:
+        inner = section.get(engine)
+        if isinstance(inner, dict):
+            merged = {key: value for key, value in section.items() if key != engine}
+            merged.update(inner)
+            section = merged
+            break
+    return section
 
-    Args:
-        source: Source configuration (list, dict, or OmegaConf object).
 
-    Returns:
-        Flattened dictionary of configuration parameters.
-    """
-
-    result: Dict[str, Any] = {}
-    # The simulator hands sections over as OmegaConf nodes; a ListConfig 'custom' list is not a
-    # ``list`` and used to be dropped, leaving the policy on its dataclass defaults.
-    if isinstance(source, (list, ListConfig)):
-        for item in source:
-            result.update(_flatten_raw_config(item))
-    elif hasattr(source, "items"):
-        for k, v in source.items():
-            if k in ("gurobi", "ortools", "custom", "params") and isinstance(v, (dict, list, DictConfig, ListConfig)):
-                result.update(_flatten_raw_config(v))
-            elif isinstance(v, (DictConfig, ListConfig)):
-                result[k] = OmegaConf.to_container(v, resolve=True)
-            else:
-                result[k] = v
-    return result
+def _structured_load(config_cls: Type, mapping: Dict[str, Any]) -> Any:
+    """Load ``mapping`` into ``config_cls``; unknown keys fail."""
+    core = {key: value for key, value in mapping.items() if key not in _RUNTIME_KEYS}
+    known = {item.name for item in fields(config_cls)}
+    unknown = sorted(set(core) - known)
+    if unknown:
+        raise ValueError(f"unknown or invalid keys for {config_cls.__name__}: {unknown}")
+    filtered = {key: value for key, value in core.items() if key in known}
+    try:
+        schema = OmegaConf.structured(config_cls)
+    except Exception:
+        # Some declarations use types OmegaConf cannot schema. Only schema
+        # construction may fall back; invalid user values must never bypass validation.
+        return config_cls(**filtered)
+    OmegaConf.set_struct(schema, True)
+    merged = OmegaConf.merge(schema, OmegaConf.create(filtered))
+    return OmegaConf.to_object(merged)
 
 
 class BaseRoutingPolicy(PolicyVizMixin, IRoutingAlgorithm):
@@ -158,19 +180,13 @@ class BaseRoutingPolicy(PolicyVizMixin, IRoutingAlgorithm):
             ]
             policy_section = sections[0] if len(sections) == 1 else raw_config
 
-        # Flatten nested structures (custom lists, engine dicts)
-        flat = _flatten_raw_config(policy_section)
+        flat = _unwrap_engine_section(policy_section)
 
         # Ensure seed from the root config reaches flat if missing
         if "seed" not in flat and "seed" in raw_config:
             flat["seed"] = raw_config["seed"]
 
-        # Filter to only fields the dataclass accepts
-        # Explicitly allow 'seed' even if not in the dataclass
-        valid_fields.add("seed")
-        filtered = {k: v for k, v in flat.items() if k in valid_fields}
-
-        return config_cls(**{k: v for k, v in filtered.items() if k != "seed"}), filtered.get("seed")
+        return _structured_load(config_cls, flat), flat.get("seed")
 
     def _get_config_key(self) -> str:
         """Return the config key for this policy (e.g., 'alns', 'bcp', 'hgs').
@@ -198,11 +214,7 @@ class BaseRoutingPolicy(PolicyVizMixin, IRoutingAlgorithm):
         if isinstance(config, config_cls):
             return config
         if isinstance(config, dict):
-            # Flatten and filter
-            flat = _flatten_raw_config(config)
-            valid_fields = {f.name for f in fields(config_cls)}
-            filtered = {k: v for k, v in flat.items() if k in valid_fields}
-            return config_cls(**filtered)
+            return _structured_load(config_cls, _unwrap_engine_section(config))
         return config
 
     def _validate_mandatory(self, mandatory: Optional[List[int]]) -> Optional[Tuple[List[int], float, float]]:
@@ -245,8 +257,10 @@ class BaseRoutingPolicy(PolicyVizMixin, IRoutingAlgorithm):
             # Typed config takes priority, then overlay any runtime overrides
             config_key = self._get_config_key()
             runtime_overrides = config.get(config_key, config)  # Handle case where config IS the policy section
-            if hasattr(runtime_overrides, "items") or isinstance(runtime_overrides, list):
-                runtime_overrides = _flatten_raw_config(runtime_overrides)
+            if hasattr(runtime_overrides, "items"):
+                runtime_overrides = _unwrap_engine_section(runtime_overrides)
+            elif isinstance(runtime_overrides, list):
+                raise TypeError("policy YAML must be a mapping after P-13; run tools/convert_policy_yaml.py")
             else:
                 runtime_overrides = {}
             policy_config = {**asdict(self._config), **runtime_overrides}
@@ -256,11 +270,12 @@ class BaseRoutingPolicy(PolicyVizMixin, IRoutingAlgorithm):
             # Legacy path: extract from raw config dict
             config_key = self._get_config_key()
             policy_section = config.get(config_key, config)
-            policy_config = (
-                _flatten_raw_config(policy_section)
-                if hasattr(policy_section, "items") or isinstance(policy_section, list)
-                else {}
-            )
+            if hasattr(policy_section, "items"):
+                policy_config = _unwrap_engine_section(policy_section)
+            elif isinstance(policy_section, list):
+                raise TypeError("policy YAML must be a mapping after P-13; run tools/convert_policy_yaml.py")
+            else:
+                policy_config = {}
             # Ensure seed from context also makes it into legacy path if missing
             if policy_config.get("seed") is None and config.get("seed") is not None:
                 policy_config["seed"] = config["seed"]
@@ -600,7 +615,7 @@ class BaseRoutingPolicy(PolicyVizMixin, IRoutingAlgorithm):
 
             out_ctx: Optional[SearchContext] = merge_context(
                 incoming_ctx,
-                phase=SearchPhase.CONSTRUCTION,
+                phase=SearchPhase.ROUTING,
                 construction_metrics=construction_patch,
             )
         else:

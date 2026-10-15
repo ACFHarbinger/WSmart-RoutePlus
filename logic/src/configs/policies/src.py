@@ -9,7 +9,7 @@ Attributes:
 Example:
     >>> from configs.policies.src import SRCConfig
     >>> config = SRCConfig()
-    >>> config.constructors
+    >>> config.routing_algorithms
     ['tsp', 'alns']
     >>> config.time_limit
     60.0
@@ -30,6 +30,7 @@ class SRCConfig:
         time_limit: Maximum wall-clock time (seconds) for the entire sequence.
     """
 
-    constructors: List[str] = field(default_factory=lambda: ["tsp", "alns"])
+    routing_algorithms: List[str] = field(default_factory=lambda: ["tsp", "alns"])
     time_limit: float = 60.0
     seed: int = 42
+    vrpp: bool = True

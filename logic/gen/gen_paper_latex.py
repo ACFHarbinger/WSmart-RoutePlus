@@ -300,7 +300,7 @@ def paired_horizon_frame(clean: pd.DataFrame) -> pd.DataFrame:
 
 def display_name(raw: str, cfg: dict) -> str:
     """Map a CSV routing algorithm key to the name the paper uses (ACO_HH -> ACO-HH)."""
-    return cfg.get("constructor_labels", {}).get(raw, raw)
+    return cfg.get("routing_labels", {}).get(raw, raw)
 
 
 def tex_escape(s: object) -> str:
@@ -375,7 +375,7 @@ def build_rows(frame: pd.DataFrame, spec: list[tuple[str, str, int, str]]) -> li
 #: out of ~96 moved Service-Level's mean overflow count from 9.3 to 1.4, so the
 #: means here are genuinely fragile to individual scenarios and a median-based
 #: reading is the honest companion, not a footnote.
-CONSTRUCTOR_SPEC = [
+ROUTING_SPEC = [
     ("n", "size", 0, "none"),
     ("kgkm", "mean", 2, "max"),
     ("kgkm", "median", 2, "max"),
@@ -386,9 +386,9 @@ CONSTRUCTOR_SPEC = [
     ("time", "mean", 0, "min"),
 ]
 
-STRATEGY_SPEC = CONSTRUCTOR_SPEC
+STRATEGY_SPEC = ROUTING_SPEC
 
-#: Header cells matching CONSTRUCTOR_SPEC/STRATEGY_SPEC's seven columns: the two
+#: Header cells matching ROUTING_SPEC/STRATEGY_SPEC's seven columns: the two
 #: headline metrics span a mean/median pair under one centered label, with the
 #: mean/median distinction carried by a second header row rather than by a
 #: literal "med." column label competing with the numbers for space.
@@ -396,10 +396,10 @@ METRIC_GROUP_HEADERS = [mc("Runs"), mc("kg/km", 2), mc("Overflows", 2), mc("km")
 METRIC_GROUP_SUBHEADERS = ["", "mean", "median", "mean", "median", "", "mean", ""]
 
 
-def table_constructors(clean: pd.DataFrame, horizon: int, cfg: dict) -> str:
+def table_routing(clean: pd.DataFrame, horizon: int, cfg: dict) -> str:
     """Per-constructor means and medians over the balanced grid at one horizon."""
     sub = balance_marginal(clean[clean.horizon == horizon], "constructor")
-    agg = aggregate(sub, "constructor", CONSTRUCTOR_SPEC)
+    agg = aggregate(sub, "constructor", ROUTING_SPEC)
     agg = agg.sort_values(("kgkm", "mean"), ascending=False)
     counts = sub.groupby("constructor").size()
     agg.index = [display_name(c, cfg) for c in agg.index]
@@ -411,9 +411,9 @@ def table_constructors(clean: pd.DataFrame, horizon: int, cfg: dict) -> str:
         first_header=cfg["headers"]["constructor"],
         headers=METRIC_GROUP_HEADERS,
         subheaders=METRIC_GROUP_SUBHEADERS,
-        column_spec="l" + "r" * len(CONSTRUCTOR_SPEC),
+        column_spec="l" + "r" * len(ROUTING_SPEC),
         size=r"\footnotesize",
-        rows=build_rows(agg, CONSTRUCTOR_SPEC),
+        rows=build_rows(agg, ROUTING_SPEC),
         note=cfg["notes"]["constructors"].format(runs_per=int(counts.min())),
     )
 
@@ -1285,7 +1285,7 @@ def main() -> None:
     if not args.figures_only:
         args.tables_dir.mkdir(parents=True, exist_ok=True)
         print(f"Writing LaTeX tables to {args.tables_dir}:")
-        write(args.tables_dir / "results_constructors.tex", table_constructors(clean, horizon, cfg), args.force)
+        write(args.tables_dir / "results_routing.tex", table_routing(clean, horizon, cfg), args.force)
         write(args.tables_dir / "results_strategies.tex", table_strategies(clean, horizon, cfg), args.force)
         write(args.tables_dir / "results_improvers.tex", table_improvers(clean, horizon, cfg), args.force)
         write(args.tables_dir / "results_horizon.tex", table_horizon(paired, cfg), args.force)

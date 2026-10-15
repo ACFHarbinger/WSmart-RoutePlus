@@ -1,9 +1,6 @@
-# route improvement: Or-opt
-
 default:
   methods:
-    - "or_opt"
-
+  - or_opt
   or_opt:
     chain_len: 2
     iterations: 500

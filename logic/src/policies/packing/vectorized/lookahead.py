@@ -39,7 +39,7 @@ class LookaheadSelector(VectorizedSelector):
 
     Selects bins that overflow today *and* any additional bins that would
     overflow before the next expected collection opportunity, mirroring the
-    logic in ``LookaheadSelection.select_bins``.
+    logic in ``LookaheadSelection.pack``.
 
     Attributes:
         current_collection_day: Default reference day for lookahead simulation.

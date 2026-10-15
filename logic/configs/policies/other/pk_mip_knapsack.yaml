@@ -1,0 +1,3 @@
+default:
+  strategy: mip_knapsack
+  overflow_penalty_frac: 1.0

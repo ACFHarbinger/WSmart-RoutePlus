@@ -1,8 +1,8 @@
 hgs_adc:
   custom:
-    - pop_size: 25
-    - mu: 25
-    - nb_close: 4
-    - generations: 50
-    - n_vehicles: 0
-    - engine: "custom"
+    pop_size: 25
+    mu: 25
+    nb_close: 4
+    generations: 50
+    n_vehicles: 0
+    engine: custom

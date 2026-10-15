@@ -187,7 +187,7 @@ class AdaptiveRoutingAlgorithmOrchestrator(BaseRoutingPolicy):
 
         from logic.src.policies.routing.base.factory import RoutingAlgorithmFactory
 
-        names: List[str] = self.params.constructors
+        names: List[str] = self.params.routing_algorithms
         self.constructors = [RoutingAlgorithmFactory.get_adapter(name) for name in names]
         self._constructor_names = list(names)
         self._n = len(names)

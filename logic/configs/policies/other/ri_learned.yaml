@@ -1,21 +1,10 @@
-# =============================================================================
-# route improvement: Learned GNN Move-Search
-# =============================================================================
-# PURPOSE:
-#   Use a pre-trained GNN to score candidate 2-opt moves.
-# =============================================================================
-
 default:
   methods:
-    - "learned"
-
-  # Learned post-processor parameters
-  learned_weights_path: null  # defaults to model_weights/learned_postprocessor.pt
+  - learned
+  learned_weights_path: null
   learned_max_iter: 100
   learned_min_improvement: 0.0001
   learned_neighborhood_size: 20
-
-  # Problem parameters
   cost_per_km: 0.5
   revenue_kg: 1.0
   seed: 42

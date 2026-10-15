@@ -1,8 +1,4 @@
-# @package rl
-# Fast Iterative Localized Optimization (FILO) Configuration
-
 type: python
-
 filo:
   time_limit: 60.0
   max_iterations: 50000
@@ -21,9 +17,9 @@ filo:
   n_cw: 100
   local_search_iterations: 500
   seed: 42
-  packing: {"other/ms_lookahead.yaml": ["default"]}
-  # VRPP Settings
+  packing:
+    other/pk_lookahead.yaml:
+    - default
   vrpp: true
   profit_aware_operators: false
-
   route_improvement: []

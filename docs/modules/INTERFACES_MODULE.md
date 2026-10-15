@@ -418,7 +418,7 @@ from typing import Protocol, List
 from dataclasses import dataclass
 
 @dataclass
-class SelectionContext:
+class PackingContext:
     """Context for packing."""
     fill_rates: List[float]
     days_since_last_collection: List[int]
@@ -429,7 +429,7 @@ class SelectionContext:
 class IPackingAlgorithm(Protocol):
     """Protocol for packing algorithms."""
 
-    def select_bins(self, context: SelectionContext) -> List[int]:
+    def pack(self, context: PackingContext) -> List[int]:
         """
         Determine mandatory nodes for collection.
 
@@ -445,14 +445,14 @@ class IPackingAlgorithm(Protocol):
 ### Usage Example
 
 ```python
-from logic.src.interfaces import IPackingAlgorithm, SelectionContext
+from logic.src.interfaces import IPackingAlgorithm, PackingContext
 from logic.src.policies.helpers.packing import LastMinuteSelection
 
 # Selection strategy implements IPackingAlgorithm
 selector: IPackingAlgorithm = LastMinuteSelection(threshold=0.9)
 
 # Create context
-context = SelectionContext(
+context = PackingContext(
     fill_rates=[0.5, 0.95, 0.7, 0.88, 0.3],
     days_since_last_collection=[2, 5, 3, 4, 1],
     revenue=[10.0, 15.0, 12.0, 14.0, 8.0],
@@ -461,7 +461,7 @@ context = SelectionContext(
 )
 
 # Select mandatory bins
-packing_bins = selector.select_bins(context)
+packing_bins = selector.pack(context)
 # Result: [1, 3] (bins with fill_rate >= 0.9)
 ```
 
@@ -625,8 +625,8 @@ def run_routing_pipeline(
     state = env.reset(batch_size=1)
 
     # 2. Select mandatory bins
-    context = create_selection_context(state)
-    packing_bins = selector.select_bins(context)
+    context = create_packing_context(state)
+    packing_bins = selector.pack(context)
 
     # 3. Solve routing problem
     tour, cost, metadata = policy.run(
@@ -871,7 +871,7 @@ from logic.src.interfaces import (
 )
 
 # Context classes
-from logic.src.interfaces.packing import SelectionContext
+from logic.src.interfaces.packing import PackingContext
 ```
 
 ### Interface Summary
@@ -882,7 +882,7 @@ from logic.src.interfaces.packing import SelectionContext
 | `IModel`           | Neural network standardization | `forward`, `to`, `train`, `eval` |
 | `IPolicy`          | Solver standardization         | `run`                            |
 | `IPolicyAdapter`   | Bridge neural/classical        | `get_policy`, `get_model`        |
-| `IPackingAlgorithm` | Pre-selection strategy         | `select_bins`                    |
+| `IPackingAlgorithm` | Pre-selection strategy         | `pack`                    |
 | `Iroute improvement`  | Tour refinement                | `process`                        |
 | `ITraversable`     | Configuration standardization  | `get`, `items`, `keys`           |
 | `ITensorDictLike`  | Tensor storage standardization | `batch_size`, `device`, `get`    |

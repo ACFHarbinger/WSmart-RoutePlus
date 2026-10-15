@@ -1,4 +1,3 @@
-# @package _global_
 ils_rvnd_sp:
   max_restarts: 10
   max_iter_ils: 50
@@ -18,7 +17,9 @@ ils_rvnd_sp:
   local_search_iterations: 500
   vrpp: true
   profit_aware_operators: false
-  engine: "gurobi"
-  framework: "ortools"
-  packing: {"other/ms_lookahead.yaml": ["default"]}
+  engine: gurobi
+  framework: ortools
+  packing:
+    other/pk_lookahead.yaml:
+    - default
   route_improvement: []

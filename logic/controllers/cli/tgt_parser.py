@@ -42,7 +42,7 @@ import argparse
 import sys
 
 from logic.src.utils.target.policy_link_updater import (
-    list_available_ms_strategies,
+    list_available_packing_strategies,
     list_available_ri_improvers,
     list_improver_keys,
     list_strategy_keys,
@@ -179,7 +179,7 @@ def _run_ms_from_namespace(args: argparse.Namespace) -> int:
         Exit code (0 = success, 1 = error or nothing matched).
     """
     if getattr(args, "list_strategies", False):
-        strategies = list_available_ms_strategies()
+        strategies = list_available_packing_strategies()
         print("Available packing algorithms:")
         for s in strategies:
             print(f"  {s}")
@@ -210,7 +210,7 @@ def _run_ms_from_namespace(args: argparse.Namespace) -> int:
     try:
         modified = update_packing(
             constructors=args.constructors,
-            ms_yaml=args.file,
+            pk_yaml=args.file,
             keys=args.keys,
             dry_run=args.dry_run,
             verbose=not args.quiet,

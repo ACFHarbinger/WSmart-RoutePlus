@@ -1,8 +1,6 @@
-# route improvement: Adaptive LNS (ALNS)
-
 alns:
   methods:
-    - "adaptive_large_neighborhood_search"
+  - adaptive_large_neighborhood_search
   alns_iterations: 200
   ruin_fraction: 0.2
   alns_bandit_warm_start_path: null

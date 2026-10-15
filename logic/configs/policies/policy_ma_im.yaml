@@ -1,61 +1,15 @@
-# Memetic Island Model Genetic Algorithm (GA-MIM) Policy Configuration
-
-# =============================================================================
-# Memetic Algorithm Island Model (MA-IM) Policy Configuration
-# =============================================================================
-# PURPOSE:
-#   Population-based metaheuristic using an Island Model topology.
-#   Replaces metaphor-based SLC.
-# =============================================================================
-
 ma_im:
   custom:
-    # -------------------------------------------------------------------------
-    # Island Topology
-    # -------------------------------------------------------------------------
-    - n_islands: 5
-      # Number of islands (sub-populations)
-      # Analogous to n_teams in SLC.
-
-    - island_size: 4
-      # Individuals per island
-      # Analogous to team_size in SLC.
-
-    - n_removal: 1
-      # Nodes removed per perturbation step
-      # Range: 1-4
-
-    # -------------------------------------------------------------------------
-    # Stagnation Management
-    # -------------------------------------------------------------------------
-    - stagnation_limit: 5
-      # Generations without island-level improvement before regeneration
-      # Range: 3-20
-
-    # -------------------------------------------------------------------------
-    # Runtime Control
-    # -------------------------------------------------------------------------
-    - max_generations: 50
-      # Maximum evolution cycles
-      # Range: 20-200
-
-    - time_limit: 60.0
-      # Maximum wall-clock seconds
-      # Range: 10-300
-
-    - local_search_iterations: 500
-      # Number of local search iterations per individual refinement
-      # Range: 10-500
-
-    # -------------------------------------------------------------------------
-    # Infrastructure Settings
-    # -------------------------------------------------------------------------
-    # VRPP Settings
-    - profit_aware_operators: false
-    - vrpp: true
-
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-      # Node selection strategy for waste collection problems
-
-    - route_improvement: []
-      # Intra-island local search and inter-island recombination are comprehensive
+    n_islands: 5
+    island_size: 4
+    n_removal: 1
+    stagnation_limit: 5
+    max_generations: 50
+    time_limit: 60.0
+    local_search_iterations: 500
+    profit_aware_operators: false
+    vrpp: true
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    route_improvement: []

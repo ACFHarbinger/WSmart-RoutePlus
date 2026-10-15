@@ -44,7 +44,7 @@ def test_sans_legacy_variant_entry_name_selects_the_og_engine(variant):
 
 
 def test_flat_config_with_a_dict_field_is_not_mistaken_for_a_section():
-    flat = {"engine": "og", "time_limit": 5, "packing": {"other/ms_last_minute.yaml": ["x"]}}
+    flat = {"engine": "og", "time_limit": 5, "packing": {"other/pk_last_minute.yaml": ["x"]}}
     config = RoutingAlgorithmFactory.get_adapter("sans", config=flat)._config
     assert (config.engine, config.time_limit) == ("og", 5)
 

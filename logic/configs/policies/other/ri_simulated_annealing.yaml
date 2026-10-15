@@ -1,9 +1,6 @@
-# route improvement: Simulated Annealing (SA)
-
 default:
   methods:
-    - "simulated_annealing"
-
+  - simulated_annealing
   simulated_annealing:
     sa_iterations: 2000
     sa_t_init: 1.0

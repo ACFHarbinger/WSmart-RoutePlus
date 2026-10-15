@@ -1,14 +1,6 @@
-# =============================================================================
-# route improvement: Fix-and-Optimize
-# =============================================================================
-# PURPOSE:
-#   Select worst routes and solve them exactly via Gurobi sub-MIP.
-# =============================================================================
-
 default:
   methods:
-    - "fix_and_optimize"
-
-  fo_free_fraction: 0.30
+  - fix_and_optimize
+  fo_free_fraction: 0.3
   fo_time_limit: 30.0
   seed: 42

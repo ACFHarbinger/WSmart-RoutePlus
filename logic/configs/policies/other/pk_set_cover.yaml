@@ -1,0 +1,4 @@
+default:
+  strategy: set_cover
+  service_radius: 5.0
+  critical_threshold: 0.9

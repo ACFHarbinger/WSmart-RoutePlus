@@ -1,0 +1,3 @@
+p50:
+  strategy: bernoulli_random
+  p: 0.5

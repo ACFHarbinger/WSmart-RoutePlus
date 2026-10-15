@@ -1,9 +1,6 @@
-# route improvement: Cross-exchange
-
 default:
   methods:
-    - "cross_exchange"
-
+  - cross_exchange
   cross_exchange:
     cross_exchange_max_segment_len: 3
     iterations: 500

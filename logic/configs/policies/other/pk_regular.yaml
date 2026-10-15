@@ -1,0 +1,9 @@
+regular_lvl3:
+  strategy: regular
+  threshold: 3
+regular_lvl4:
+  strategy: regular
+  threshold: 4
+regular_lvl5:
+  strategy: regular
+  threshold: 5

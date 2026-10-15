@@ -24,7 +24,7 @@ from rich.table import Table
 from logic.src.configs import Config, PackingConfig
 from logic.src.constants import CONFIGS_DIR
 from logic.src.interfaces import ITraversable
-from logic.src.pipeline.simulations.actions.base import _flatten_config
+from logic.src.pipeline.simulations.actions.base import _as_policy_mapping
 from logic.src.tracking.logging.logger_writer import LoggerWriter
 from logic.src.utils.configs.config_loader import load_config
 
@@ -111,7 +111,7 @@ class PolicySummaryCallback:
         solver_key = None
 
         # 1. Try to find engine in 'policy' sub-config
-        flat_cfg = _flatten_config(raw_cfg)
+        flat_cfg = _as_policy_mapping(raw_cfg)
         policy_cfg = flat_cfg.get("policy", {})
         if isinstance(policy_cfg, ITraversable):
             solver_key = policy_cfg.get("type") or policy_cfg.get("solver") or policy_cfg.get("engine")
@@ -138,7 +138,7 @@ class PolicySummaryCallback:
             The selection strategy.
         """
         raw_cfg = config
-        flat_cfg = _flatten_config(raw_cfg)
+        flat_cfg = _as_policy_mapping(raw_cfg)
         config_mandatory = flat_cfg.get("packing")
 
         strategies = []
@@ -179,7 +179,7 @@ class PolicySummaryCallback:
 
         elif isinstance(item_obj, ITraversable):
             # Plain Python dicts also satisfy ITraversable (runtime_checkable Protocol).
-            # Check for file-path dict format FIRST: {"other/ms_*.yaml": variant}
+            # Check for file-path dict format FIRST: {"other/pk_*.yaml": variant}
             if len(item_obj) == 1:
                 first_key = str(next(iter(item_obj.keys())))
                 if first_key.endswith(".yaml") or first_key.endswith(".xml"):
@@ -227,9 +227,9 @@ class PolicySummaryCallback:
 
         elif isinstance(item_obj, str):
             name = item_obj
-            # Strip 'other/ms_', 'other/ri_' and '.yaml'
-            if name.startswith("other/ms_"):
-                name = name[len("other/ms_") :]
+            # Strip 'other/pk_', 'other/ri_' and '.yaml'
+            if name.startswith("other/pk_"):
+                name = name[len("other/pk_") :]
             if name.startswith("other/ri_"):
                 name = name[len("other/ri_") :]
             if name.endswith(".yaml"):
@@ -303,7 +303,7 @@ class PolicySummaryCallback:
             Route improvement steps.
         """
         raw_cfg = config
-        flat_cfg = _flatten_config(raw_cfg)
+        flat_cfg = _as_policy_mapping(raw_cfg)
         pp = flat_cfg.get("route_improvement")
 
         if not pp:
@@ -395,7 +395,7 @@ class PolicySummaryCallback:
             The acceptance criterion method.
         """
         raw_cfg = config
-        flat_cfg = _flatten_config(raw_cfg)
+        flat_cfg = _as_policy_mapping(raw_cfg)
 
         # Try both keys, prefer acceptance_criteria
         ac = flat_cfg.get("acceptance_criteria") or flat_cfg.get("acceptance_criterion")

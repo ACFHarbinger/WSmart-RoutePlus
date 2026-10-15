@@ -1,198 +1,21 @@
-# Particle Swarm Optimization with Velocity Momentum Policy Configuration
-
-# =============================================================================
-# PSO with Velocity Momentum Policy Configuration
-# =============================================================================
-# PURPOSE:
-#   **TRUE PARTICLE SWARM OPTIMIZATION** with inertia-weighted velocity updates.
-#   This implementation includes ALL PSO components (Kennedy & Eberhart 1995):
-#   - Velocity vectors with momentum
-#   - Personal best (pbest) tracking per particle
-#   - Global best (gbest) for the swarm
-#   - Cognitive and social acceleration coefficients
-#   - Linearly decreasing inertia weight
-#
-# ALGORITHM (Kennedy & Eberhart 1995; Ai & Kachitvichyanukul 2009):
-#   1. Initialize swarm with random positions and velocities
-#   2. For each iteration:
-#      a. For each particle i:
-#         - Update velocity: v(t+1) = w*v(t) + c₁*r₁*(pbest - x) + c₂*r₂*(gbest - x)
-#         - Update position: x(t+1) = x(t) + v(t+1)
-#         - Evaluate fitness f(x(t+1))
-#         - Update personal best if f(x(t+1)) > f(pbest_i)
-#      b. Update global best from all personal bests
-#      c. Decrease inertia weight w linearly
-#
-# WHY THIS MATTERS:
-#   The "Firefly Algorithm" was a **deceptive relabeling** of PSO that stripped
-#   out velocity momentum terms. This implementation restores proper PSO with:
-#   - Velocity carries momentum from previous iterations (inertia term)
-#   - Particles remember their own best (cognitive term)
-#   - Particles learn from swarm best (social term)
-#
-# PERFORMANCE:
-#   Superior exploration-exploitation balance vs. non-momentum variants.
-#   Linearly decreasing inertia: high w early (exploration) → low w late (exploitation).
-#   Proven effective for VRPSPD (Ai & Kachitvichyanukul 2009).
-#
-# REFERENCES:
-#   Kennedy, J., & Eberhart, R. (1995). "Particle swarm optimization."
-#   Proceedings of ICNN'95 - International Conference on Neural Networks.
-#
-#   Ai, T. J., & Kachitvichyanukul, V. (2009). "A particle swarm optimization
-#   for the vehicle routing problem with simultaneous pickup and delivery."
-#   Computers & Operations Research, 36(6), 1693-1702.
-#
-# TYPICAL USE CASES:
-#   - Medium to large routing instances (50-200+ nodes)
-#   - Problems requiring global optimization
-#   - Benchmarking against metaheuristics
-# =============================================================================
-
 psoda:
   custom:
-    # ---------------------------------------------------------------------
-    # Swarm Parameters
-    # ---------------------------------------------------------------------
-    - population_size: 20
-      # Number of particles in swarm
-      # Range: 10-50
-      # Recommendation: 20 for balanced exploration/exploitation
-
-    # ---------------------------------------------------------------------
-    # PSO Velocity Momentum Parameters (Kennedy & Eberhart 1995)
-    # ---------------------------------------------------------------------
-    - inertia_weight_start: 0.9
-      # Initial inertia weight w(0) for exploration phase
-      # Range: 0.7-1.0
-      # Recommendation: 0.9 (standard PSO value)
-      # High inertia early → particles explore freely
-
-    - inertia_weight_end: 0.4
-      # Final inertia weight w(T) for exploitation phase
-      # Range: 0.2-0.5
-      # Recommendation: 0.4 (standard PSO value)
-      # Low inertia late → particles converge to best solutions
-
-    - cognitive_coef: 2.0
-      # Cognitive acceleration coefficient c₁ (personal best attraction)
-      # Range: 1.0-3.0
-      # Recommendation: 2.0 (standard PSO value, Ai & Kachitvichyanukul 2009)
-      # Controls how much particle trusts its own experience
-
-    - social_coef: 2.0
-      # Social acceleration coefficient c₂ (global best attraction)
-      # Range: 1.0-3.0
-      # Recommendation: 2.0 (standard PSO value, Ai & Kachitvichyanukul 2009)
-      # Controls how much particle follows swarm's best
-
-    # ---------------------------------------------------------------------
-    # Discrete Adaptation Parameters (Ai & Kachitvichyanukul 2009)
-    # ---------------------------------------------------------------------
-    - n_removal: 3
-      # Number of nodes in velocity-based perturbation
-      # Range: 1-10
-      # Recommendation: 3 for moderate perturbation strength
-
-    - velocity_to_mutation_rate: 0.1
-      # Scaling factor: velocity magnitude → mutation probability
-      # Range: 0.05-0.3
-      # Recommendation: 0.1 for balanced discrete adaptation
-      # Higher values = more aggressive position updates
-
-    # ---------------------------------------------------------------------
-    # Local Search Parameters
-    # ---------------------------------------------------------------------
-    - local_search_iterations: 100
-      # Number of local search improvement steps
-      # Range: 50-200
-      # Recommendation: 100 for balanced improvement
-
-    # ---------------------------------------------------------------------
-    # Guided Insertion Scoring Weights
-    # ---------------------------------------------------------------------
-    - alpha_profit: 1.0
-      # Weight for profit term in node insertion scoring
-      # Range: 0.0-2.0
-      # Recommendation: 1.0 (standard weight)
-
-    - beta_will: 0.5
-      # Weight for willingness (fill level) term
-      # Range: 0.0-2.0
-      # Recommendation: 0.5 for moderate influence
-
-    - gamma_cost: 0.3
-      # Weight for insertion cost penalty
-      # Range: 0.0-2.0
-      # Recommendation: 0.3 for cost consideration
-
-    # ---------------------------------------------------------------------
-    # Runtime Control
-    # ---------------------------------------------------------------------
-    - max_iterations: 500
-      # Maximum number of PSO iterations
-      # Range: 100-1000
-      # Recommendation: 500 for production
-
-    - time_limit: 60.0
-      # Maximum wall-clock seconds for optimization
-      # Range: 10-600 (0 = unlimited)
-      # Recommendation: 60s for production
-
-    # ---------------------------------------------------------------------
-    # Infrastructure Settings
-    # ---------------------------------------------------------------------
-    # VRPP Settings
-    - profit_aware_operators: false
-    - vrpp: true
-
-    - packing: {"other/ms_lookahead.yaml": ["default"]}
-      # Node selection strategy for waste collection problems
-      # Options: ms_lookahead.yaml, ms_last_minute_*.yaml, ms_regular.yaml
-      # See: docs/MUST_GO_STRATEGIES.md
-
-    - route_improvement: []
-      # Route refinement heuristics applied after optimization
-      # Empty list = use raw output
-      # Options: ["2opt_intra", "relocate", "swap"]
-
-# =============================================================================
-# MATHEMATICAL FOUNDATION
-# =============================================================================
-# PSO Velocity Update Equation (Kennedy & Eberhart 1995):
-#   v(t+1) = w*v(t) + c₁*r₁*(pbest - x(t)) + c₂*r₂*(gbest - x(t))
-#
-#   where:
-#     w      = inertia weight (linearly decreasing)
-#     v(t)   = current velocity
-#     c₁     = cognitive_coef (personal best attraction)
-#     c₂     = social_coef (global best attraction)
-#     r₁, r₂ = random numbers ∈ [0,1]
-#     pbest  = particle's personal best position
-#     gbest  = swarm's global best position
-#     x(t)   = current particle position
-#
-# PSO Position Update:
-#   x(t+1) = x(t) + v(t+1)
-#
-# Inertia Weight Decay (Shi & Eberhart 1998):
-#   w(t) = w_start - (w_start - w_end) × (t / T_max)
-#
-# Discrete Space Adaptation (Ai & Kachitvichyanukul 2009):
-#   - Velocity = set of nodes to add/remove
-#   - Inertia term: probabilistically preserve previous velocity nodes
-#   - Cognitive term: nodes in pbest but not in current position
-#   - Social term: nodes in gbest but not in current position
-#   - Position update: destroy-repair with velocity-guided node insertion
-#
-# Complexity:
-#   - Space: O(pop_size × n) for swarm + velocities + personal bests
-#   - Time per iteration: O(pop_size × n²) for velocity updates + insertions
-#
-# Key Differences from "Firefly Algorithm":
-#   ✓ Maintains velocity vectors with momentum (inertia term)
-#   ✓ Tracks personal best for each particle (cognitive learning)
-#   ✓ Uses linearly decreasing inertia weight (dynamic exploration)
-#   ✗ No pairwise distance-based attraction (O(N²) → O(N))
-#   ✗ No exponential decay functions
-# =============================================================================
+    population_size: 20
+    inertia_weight_start: 0.9
+    inertia_weight_end: 0.4
+    cognitive_coef: 2.0
+    social_coef: 2.0
+    n_removal: 3
+    velocity_to_mutation_rate: 0.1
+    local_search_iterations: 100
+    alpha_profit: 1.0
+    beta_will: 0.5
+    gamma_cost: 0.3
+    max_iterations: 500
+    time_limit: 60.0
+    profit_aware_operators: false
+    vrpp: true
+    packing:
+      other/pk_lookahead.yaml:
+      - default
+    route_improvement: []

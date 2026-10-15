@@ -1,78 +1,39 @@
-# Policy Configuration
-
-# =============================================================================
-# Exact Guided Heuristic (EGH) Policy Configuration
-# =============================================================================
-# PURPOSE:
-#   A high-performance matheuristic that combines TCF (Time-Constrained Forward),
-#   ALNS, BPC (Branch-and-Price-and-Cut), and SP-merge. Controlled by a
-#   single 'alpha' dial to balance solution quality and runtime.
-#
-# ALGORITHM:
-#   1. TCF: Quick initial solution construction.
-#   2. ALNS: Large neighborhood search to improve TCF solution.
-#   3. BPC: Exact optimization on a restricted neighborhood.
-#   4. SP-merge: Set Partitioning MIP to merge best routes found.
-#
-# PARAMETERS:
-#   - alpha: Quality/speed dial [0.0, 1.0]. 0.0=Fastest, 1.0=Highest quality.
-# =============================================================================
-
 egh:
-  # ---------------------------------------------------------------------
-  # Core Control
-  # ---------------------------------------------------------------------
-  - alpha: 0.5
-    # Quality/speed dial. Default 0.5.
-  - time_limit: 120.0
-    # Total wall-clock budget in seconds.
-  - seed: null
-    # Global RNG seed.
-
-  # ---------------------------------------------------------------------
-  # ALNS Stage
-  # ---------------------------------------------------------------------
-  - alns_max_iterations: 0
-    # 0 = derive from alpha.
-  - alns_segment_size: 100
-  - alns_reaction_factor: 0.1
-  - alns_cooling_rate: 0.995
-  - alns_start_temp_control: 0.05
-  - alns_sigma_1: 33.0
-  - alns_sigma_2: 9.0
-  - alns_sigma_3: 13.0
-  - alns_xi: 0.4
-  - alns_min_removal: 4
-  - alns_noise_factor: 0.025
-  - alns_worst_removal_randomness: 3.0
-  - alns_shaw_randomization: 6.0
-  - alns_regret_pool: "regret234"
-  - alns_extended_operators: false
-  - alns_profit_aware_operators: true
-  - alns_vrpp: true
-  - alns_engine: "custom"
-
-  # ---------------------------------------------------------------------
-  # BPC Stage
-  # ---------------------------------------------------------------------
-  - bpc_ng_size_min: 8
-  - bpc_ng_size_max: 16
-  - bpc_max_bb_nodes_min: 200
-  - bpc_max_bb_nodes_max: 1000
-  - bpc_cutting_planes: "rcc"
-  - bpc_branching_strategy: "divergence"
-  - skip_bpc: false
-
-  # ---------------------------------------------------------------------
-  # SP-Merge Stage
-  # ---------------------------------------------------------------------
-  - sp_pool_cap: 50000
-  - sp_mip_gap: 0.0001
-
-  # ---------------------------------------------------------------------
-  # Simulator wiring (same as the other routing algorithms; without these the
-  # simulator has no mandatory set and never routes this policy)
-  # ---------------------------------------------------------------------
-  - vrpp: true
-  - packing: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
-  - route_improvement: { "other/ri_cls.yaml": ["default"] }
+  alpha: 0.5
+  time_limit: 120.0
+  seed: null
+  alns_max_iterations: 0
+  alns_segment_size: 100
+  alns_reaction_factor: 0.1
+  alns_cooling_rate: 0.995
+  alns_start_temp_control: 0.05
+  alns_sigma_1: 33.0
+  alns_sigma_2: 9.0
+  alns_sigma_3: 13.0
+  alns_xi: 0.4
+  alns_min_removal: 4
+  alns_noise_factor: 0.025
+  alns_worst_removal_randomness: 3.0
+  alns_shaw_randomization: 6.0
+  alns_regret_pool: regret234
+  alns_extended_operators: false
+  alns_profit_aware_operators: true
+  alns_vrpp: true
+  alns_engine: custom
+  bpc_ng_size_min: 8
+  bpc_ng_size_max: 16
+  bpc_max_bb_nodes_min: 200
+  bpc_max_bb_nodes_max: 1000
+  bpc_cutting_planes: rcc
+  bpc_branching_strategy: divergence
+  skip_bpc: false
+  sp_pool_cap: 50000
+  sp_mip_gap: 0.0001
+  vrpp: true
+  packing:
+    other/pk_last_minute.yaml:
+    - last_minute_cf70
+    - last_minute_cf90
+  route_improvement:
+    other/ri_cls.yaml:
+    - default

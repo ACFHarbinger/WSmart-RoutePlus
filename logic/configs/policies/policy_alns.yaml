@@ -1,114 +1,24 @@
-# Policy Configuration
-
-# =============================================================================
-# ALNS (Adaptive Large Neighborhood Search) Policy Configuration
-# =============================================================================
-# PURPOSE:
-#   Metaheuristic routing policy using destroy-repair operators with adaptive
-#   weights. Best for medium-to-large instances (50-200 nodes) where exact
-#   solvers are too slow but high-quality solutions are required.
-#
-# ALGORITHM:
-#   Iteratively destroys part of current solution and repairs it using
-#   different operators. Operator selection probabilities are adapted based
-#   on recent performance using simulated annealing acceptance criterion.
-#
-# TYPICAL USE CASES:
-#   - Production routing when 60s time budget is acceptable
-#   - Benchmark comparison against neural policies
-#   - Instances where Gurobi times out (>100 nodes)
-#
-# PERFORMANCE EXPECTATIONS:
-#   - 50 nodes: Near-optimal (gap <2%), ~10s runtime
-#   - 100 nodes: Good solutions (gap ~5%), ~30s runtime
-#   - 200 nodes: Acceptable (gap ~10%), ~60s runtime
-# =============================================================================
-
 alns:
   custom:
-    # ---------------------------------------------------------------------
-    # Runtime Control
-    # ---------------------------------------------------------------------
-    - time_limit: 60.0
-      # Maximum wall-clock seconds for optimization
-      # Range: 10-600 (10s = quick test, 600s = deep search)
-      # Recommendation: 60s for production, 300s for benchmarking
-
-    - max_iterations: 5000
-      # Maximum destroy-repair cycles before termination
-      # Range: 1000-10000
-      # Note: Usually time_limit is reached first; this prevents infinite loops
-
-    # ---------------------------------------------------------------------
-    # Simulated Annealing Parameters
-    # ---------------------------------------------------------------------
-    - start_temp: 0
-      # Initial acceptance temperature T_0. 0 = calibrate from the starting solution with the
-      # Ropke & Pisinger (2006) rule T_0 = start_temp_control * |initial profit| / ln 2 (owner decision,
-      # 2026-09-27). A positive value fixes T_0 instead; every archived run before 2026-09-27 used 100.
-
-    - cooling_rate: 0.995
-      # Geometric cooling factor: T_new = cooling_rate * T_old
-      # Range: 0.90-0.9999 (0.95 = fast cooling, 0.999 = slow cooling)
-      # Recommendation: 0.995 for 60s budget, 0.998 for 300s budget
-
-    - reaction_factor: 0.1
-      # Adaptive weight learning rate for operator selection
-      # Range: 0.01-0.5 (0.01 = slow adaptation, 0.5 = reactive)
-      # Controls how quickly operator probabilities change based on performance
-
-    # ---------------------------------------------------------------------
-    # Destroy-Repair Operators
-    # ---------------------------------------------------------------------
-    - min_removal: 1
-      # Minimum number of nodes to remove in destroy phase
-      # Prevents degenerate moves; typically set to 1
-
-    - start_temp_control: 0.05
-      # 'w' parameter of the Ropke & Pisinger (2006) start-temperature rule: T_0 = w * |initial profit| / ln 2,
-      # i.e. a w-fraction worse solution is accepted with probability 0.5.
-      # Only active when start_temp: 0 (the default since 2026-09-27). With the archived start_temp: 100
-      # it had no effect: T_0 = 100 on a profit scale of about 15 EUR accepted worsening moves of a few
-      # euros with probability close to 1.
-      # Range: 0.01-0.2 (0.01 = conservative, 0.2 = aggressive)
-
-    - xi: 0.4
-      # 'xi' parameter: fraction of total nodes for max removal cap
-      # Range: 0.2-0.6 (0.2 = small perturbations, 0.6 = radical changes)
-      # Example: 0.4 on 100-node instance → remove up to 40 nodes
-
-    - extended_operators: false
-      # If True, add string, cluster, and neighbor removal operators
-      # to the destroy pool in addition to random/worst/shaw
-
-    # Destroy operators used (automatically selected):
-    #   - Random Removal: Remove k random nodes
-    #   - Worst Removal: Remove nodes with highest cost contribution
-    #   - Shaw Removal: Remove similar nodes (geographic/waste proximity)
-    #   - String Removal: Remove consecutive route segments
-    #
-    # Repair operators used (automatically selected):
-    #   - Greedy Insertion: Insert at position with lowest cost increase
-    #   - Regret-2: Insert nodes that are hardest to place later
-    #   - Regret-3: More sophisticated regret calculation
-    # ---------------------------------------------------------------------
-    # Infrastructure Settings
-    # ---------------------------------------------------------------------
-    # VRPP Settings
-    - profit_aware_operators: true
-    - vrpp: true
-
-    - engine: "custom"
-      # Execution backend: logic/src/policies/adaptive_large_neighborhood_search.py
-
-    - packing: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
-      # Node selection strategy for waste collection problems
-      # Options: ms_lookahead.yaml, ms_last_minute.yaml, ms_regular.yaml
-      # See: docs/MUST_GO_STRATEGIES.md
-
-    - route_improvement: { "other/ri_cls.yaml": ["default"] }
-    - acceptance_criteria: { "other/ac_bmc.yaml": ["bmc"] }
-      # Route refinement heuristics applied after ALNS (e.g., 2-opt, relocate)
-      # Empty list = use raw ALNS output
-      # Options: ["2opt_intra", "relocate", "swap"]
-# =============================================================================
+    time_limit: 60.0
+    max_iterations: 5000
+    start_temp: 0
+    cooling_rate: 0.995
+    reaction_factor: 0.1
+    min_removal: 1
+    start_temp_control: 0.05
+    xi: 0.4
+    extended_operators: false
+    profit_aware_operators: true
+    vrpp: true
+    engine: custom
+    packing:
+      other/pk_last_minute.yaml:
+      - last_minute_cf70
+      - last_minute_cf90
+    route_improvement:
+      other/ri_cls.yaml:
+      - default
+    acceptance_criteria:
+      other/ac_bmc.yaml:
+      - bmc

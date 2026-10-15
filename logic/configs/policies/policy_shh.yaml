@@ -1,15 +1,5 @@
-# Selection Hyper-Heuristic (SHH) Policy Configuration
-# Adaptive LLH selection with Late Acceptance.
-
 shh:
-  # Number of iterations.
   iters: 200
-
-  # Length of the Late Acceptance history.
   history_len: 10
-
-  # Random seed for reproducibility.
   seed: 42
-
-  # Whether to use VRP with Profits objectives.
   vrpp: true

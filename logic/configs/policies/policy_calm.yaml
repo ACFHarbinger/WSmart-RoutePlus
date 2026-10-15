@@ -4,14 +4,12 @@ calm:
   seed: 42
   verbose: false
   stockout_penalty: 500.0
-
   lookahead:
     horizon: 7
-    scenario_method: "stochastic"
-    scenario_distribution: "gamma"
+    scenario_method: stochastic
+    scenario_distribution: gamma
     n_scenarios: 8
     capacity_cap: 100.0
-
   lagrangian:
     max_outer_iterations: 12
     stagnation_patience: 3
@@ -24,9 +22,8 @@ calm:
     lambda_max: 100.0
     gamma_init: 1.0
     gamma_decay: 0.85
-
   dual_bound:
-    strategy: "ema"
+    strategy: ema
     ema_alpha: 0.3
     ema_quality_threshold: 1.05
     bundle_size: 50
@@ -34,7 +31,6 @@ calm:
     bundle_descent_threshold: 0.1
     bundle_weight_increase: 2.0
     bundle_weight_decrease: 0.5
-
   bandit:
     enabled: true
     alpha: 1.0
@@ -42,12 +38,10 @@ calm:
     feature_dim: 8
     reward_scale: 1.0
     reward_clip: 10.0
-
   regret:
     enabled: true
     soft_bias_coefficient: 0.5
     escalation_patience: 2
-    hard_fix_top_fraction: 0.10
+    hard_fix_top_fraction: 0.1
     hard_fix_max_periods: 2
-
   tpks: {}

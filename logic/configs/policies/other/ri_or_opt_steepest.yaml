@@ -1,14 +1,9 @@
-# =============================================================================
-# route improvement: Steepest Or-opt
-# =============================================================================
-# PURPOSE:
-#   Perform chain relocations (lengths 1, 2, 3) until a local minimum is reached.
-# =============================================================================
-
 default:
   methods:
-    - "or_opt_steepest"
-
-  chain_lengths: [1, 2, 3]
+  - or_opt_steepest
+  chain_lengths:
+  - 1
+  - 2
+  - 3
   max_iter: 500
   seed: 42

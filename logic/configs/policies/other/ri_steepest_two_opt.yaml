@@ -1,13 +1,5 @@
-# =============================================================================
-# route improvement: Steepest 2-opt
-# =============================================================================
-# PURPOSE:
-#   Drive each route to a strict intra-route 2-opt local minimum.
-# =============================================================================
-
 default:
   methods:
-    - "steepest_two_opt"
-
+  - steepest_two_opt
   max_iter: 500
   seed: 42

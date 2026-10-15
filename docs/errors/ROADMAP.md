@@ -130,7 +130,7 @@ Base `606f79690`. Silent-default class outside routing algorithms:
 
 5. **Consumer-level capture.** `AcceptanceCriterionFactory.create` records
    the kwargs constructors actually pass (BMC instance T/α), last-minute
-   records `SelectionContext.threshold`, lookahead records
+   records `PackingContext.threshold`, lookahead records
    `current_collection_day`, and CLS `process()` records the operator /
    iterations / time_limit it consumes. Live `main.py test_sim` must show
    BMC 100/0.995, last-minute 70/90, CLS 2opt/1000/30 — not action-hook

@@ -58,7 +58,7 @@ _REGISTERED = sorted(RoutingAlgorithmRegistry.list_routing_algorithms())
 
 def _is_dataclass_with_constructors(obj: Any) -> bool:
     """True for a dataclass type declaring a ``constructors`` pool field."""
-    return isinstance(obj, type) and is_dataclass(obj) and "constructors" in [f.name for f in fields(obj)]
+    return isinstance(obj, type) and is_dataclass(obj) and "routing_algorithms" in [f.name for f in fields(obj)]
 
 
 def _params_pools() -> List[Tuple[str, List[str]]]:
@@ -82,10 +82,10 @@ def _params_pools() -> List[Tuple[str, List[str]]]:
             except TypeError:
                 pass  # Required-field dataclasses are covered through from_config below.
             else:
-                pools.append((f"{obj.__name__} default", list(instance.constructors)))
+                pools.append((f"{obj.__name__} default", list(instance.routing_algorithms)))
             if callable(getattr(obj, "from_config", None)):
                 fallback = obj.from_config(SimpleNamespace())
-                pools.append((f"{obj.__name__} from_config fallback", list(fallback.constructors)))
+                pools.append((f"{obj.__name__} from_config fallback", list(fallback.routing_algorithms)))
     return pools
 
 
@@ -99,7 +99,7 @@ def _config_pools() -> List[Tuple[str, List[str]]]:
         for obj in vars(module).values():
             if not _is_dataclass_with_constructors(obj):
                 continue
-            pools.append((f"{obj.__name__} default", list(obj().constructors)))
+            pools.append((f"{obj.__name__} default", list(obj().routing_algorithms)))
     return pools
 
 
@@ -109,7 +109,7 @@ def _yaml_pools() -> List[Tuple[str, List[str]]]:
     def walk(node: Any, source: str, path: List[str]) -> Iterator[Tuple[str, List[str]]]:
         if isinstance(node, dict):
             for key, value in node.items():
-                if key == "constructors" and isinstance(value, list):
+                if key == "routing_algorithms" and isinstance(value, list):
                     yield (f"{source} {'.'.join(path + [str(key)])}", [str(v) for v in value])
                 yield from walk(value, source, path + [str(key)])
         elif isinstance(node, list):
@@ -170,10 +170,16 @@ def _orchestrators() -> Dict[str, Tuple[str, Dict[str, Any]]]:
         if not isinstance(data, dict):
             continue
         for key, section in data.items():
-            if key not in registered or not isinstance(section, list):
+            if key not in registered:
                 continue
-            merged = {k: v for item in section if isinstance(item, dict) for k, v in item.items()}
-            if isinstance(merged.get("constructors"), list):
+            if isinstance(section, list):
+                merged = {k: v for item in section if isinstance(item, dict) for k, v in item.items()}
+            elif isinstance(section, dict):
+                inner = section.get("custom") or section.get("ortools") or section.get("gurobi") or section
+                merged = dict(inner) if isinstance(inner, dict) else {}
+            else:
+                continue
+            if isinstance(merged.get("routing_algorithms"), list):
                 found[key] = (str(yaml_file.relative_to(_REPO_ROOT)), merged)
     assert found, "no orchestrator (constructor-pool) policy yamls found"
     return found

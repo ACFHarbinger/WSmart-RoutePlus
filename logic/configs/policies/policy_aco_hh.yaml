@@ -1,139 +1,25 @@
-# Policy Configuration
-
-# =============================================================================
-# HH-ACO (Hyper-Heuristic Ant Colony Optimization) Configuration
-# =============================================================================
-# PURPOSE:
-#   Meta-level ACO that learns sequences of local search operators rather
-#   than direct routes. Pheromones guide selection of improvement heuristics,
-#   adapting operator choice to problem structure.
-#
-# ALGORITHM:
-#   1. Initialize pheromone matrix for operator transitions
-#   2. Each ant constructs operator sequence (e.g., [swap, 2opt, relocate])
-#   3. Apply sequence to current solution, measure improvement
-#   4. Update pheromones based on solution quality delta
-#   5. Repeat until convergence or time limit
-#
-# KEY DIFFERENCE vs Traditional ACO:
-#   - Traditional ACO: Pheromones on edges (node → node transitions)
-#   - HH-ACO: Pheromones on operators (swap → 2opt transitions)
-#
-# TYPICAL USE CASES:
-#   - Benchmarking novel hyper-heuristic approaches
-#   - Academic research on adaptive operator selection
-#   - Problems where operator synergies matter (VRPTW, multi-objective)
-#
-# NOTE:
-#   Generally slower than HGS/ALNS for same time budget, but can discover
-#   effective operator sequences for new problem variants.
-# =============================================================================
-
 aco_hh:
   custom:
-    # ---------------------------------------------------------------------
-    # Colony Parameters
-    # ---------------------------------------------------------------------
-    - n_ants: 10
-      # Number of ants (parallel operator sequences) per iteration
-      # Range: 5-50 (5 = fast/unstable, 20 = balanced, 50 = thorough/slow)
-      # Recommendation: 10 for 30s budget, 20 for 120s budget
-
-    # ---------------------------------------------------------------------
-    # Pheromone Influence
-    # ---------------------------------------------------------------------
-    - alpha: 1.0
-      # Pheromone importance weight
-      # Range: 0.5-5.0 (higher = stronger pheromone influence)
-      # alpha=1.0, beta=2.0 → heuristic slightly favored over pheromone
-
-    - beta: 2.0
-      # Heuristic information importance (operator historical performance)
-      # Range: 0.5-5.0 (higher = greedier operator selection)
-
-    # ---------------------------------------------------------------------
-    # Pheromone Update
-    # ---------------------------------------------------------------------
-    - rho: 0.5
-      # Evaporation rate: τ_new = (1 - ρ) * τ_old + Δτ
-      # Range: 0.01-0.5 (0.01 = slow decay, 0.5 = fast decay)
-      # Lower ρ → more memory of historical good sequences
-
-    - tau_0: 1.0
-      # Initial pheromone level on all operator transitions
-      # Range: 0.1-10.0 (affects exploration early on)
-
-    - stagnation_limit: 10
-      # Number of iterations without improvement before pheromone update
-      # Range: 5-50 (5 = fast/unstable, 20 = balanced, 50 = thorough/slow)
-      # Recommendation: 10 for 30s budget, 20 for 120s budget
-
-    # ---------------------------------------------------------------------
-    # Execution Control
-    # ---------------------------------------------------------------------
-    - max_iterations: 50
-      # Maximum ACO cycles (each cycle = n_ants sequences evaluated)
-      # Range: 10-200 (10 = quick test, 100 = thorough)
-
-    - elitism_ratio: 0.5
-      # Fraction of the swarm teleported to the global best
-      # Range: 0.0-1.0 (0.0 = pure exploration, 1.0 = full elitism)
-      # Recommendation: 0.5 for 30s budget, 0.2 for 120s budget
-
-    - time_limit: 60.0
-      # Maximum wall-clock seconds
-      # Range: 10-300 (30s = production, 120s = benchmark)
-      # Usually reached before max_iterations
-
-    # ---------------------------------------------------------------------
-    # Operator Sequence Construction
-    # ---------------------------------------------------------------------
-    - sequence_length: null
-      # Operators per journey. null = one per operator in the pool (Chen et al. 2007, journey length n).
-      # Before 2026-09-27 this key was ignored and every run used null; the old value 5 never took effect.
-
-    - Q: 1.0
-      # Before 2026-09-27 this key was not forwarded and every run used 1.0; the old value 0.9 never took effect.
-      # Pheromone floor constant added to every improving-journey deposit.
-
-    - lambda_val: 1.0001
-      # Base for the visibility exponential when use_dynamic_lambda=False.
-
-    - use_dynamic_lambda: True
-      # If True (default), replace λ^I with exp(I / Z) where Z is
-      # a running EMA of |improvement|. This achieves scale invariance across
-      # problem sizes and is the recommended setting for the VRPP. Set to False for
-      # strict paper fidelity (λ = 1.0001 as base).
-
-    # ---------------------------------------------------------------------
-    # Local Search Operators Pool
-    # ---------------------------------------------------------------------
-    - operators: null
-      # null = every registered hyper-operator (all 11), which is what every run used before 2026-09-27,
-      # when this key was ignored. Give a subset to restrict the pool, e.g. ["swap", "2opt_intra", "relocate"].
-      # Available improvement heuristics for sequence construction
-      # Options:
-      #   - swap: Exchange two nodes between routes
-      #   - 2opt_intra: Reverse segment within single route
-      #   - relocate: Move node to different position/route
-      #   - swap_star: Multi-node swap variant
-      #   - perturb: Random perturbation for diversification
-      #
-      # Add/remove operators to customize search behavior
-
-    # ---------------------------------------------------------------------
-    # Infrastructure Settings
-    # ---------------------------------------------------------------------
-    # VRPP Settings
-    - profit_aware_operators: true
-    - vrpp: true
-
-    - packing: { "other/ms_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }
-      # Node selection strategy for waste collection problems
-      # Options: ms_lookahead.yaml, ms_last_minute.yaml, ms_regular.yaml
-      # See: docs/MUST_GO_STRATEGIES.md
-
-    - route_improvement: { "other/ri_cls.yaml": ["default"] }
-      # Operator sequences already apply local search; no further refinement
-      # Empty = use HH-ACO output directly
-# =============================================================================
+    n_ants: 10
+    alpha: 1.0
+    beta: 2.0
+    rho: 0.5
+    tau_0: 1.0
+    stagnation_limit: 10
+    max_iterations: 50
+    elitism_ratio: 0.5
+    time_limit: 60.0
+    sequence_length: null
+    Q: 1.0
+    lambda_val: 1.0001
+    use_dynamic_lambda: true
+    operators: null
+    profit_aware_operators: true
+    vrpp: true
+    packing:
+      other/pk_last_minute.yaml:
+      - last_minute_cf70
+      - last_minute_cf90
+    route_improvement:
+      other/ri_cls.yaml:
+      - default
