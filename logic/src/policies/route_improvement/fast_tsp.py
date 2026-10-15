@@ -18,9 +18,6 @@ import numpy as np
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.interfaces.context.search_context import ImprovementMetrics
 from logic.src.interfaces.route_improvement import IRouteImprovement
-from logic.src.policies.routing.other_algorithms.travelling_salesman_problem.tsp import (
-    find_route,
-)
 
 from .base import RouteImproverRegistry
 from .common.helpers import assemble_tour, split_tour, to_numpy
@@ -67,6 +64,10 @@ class FastTSPRouteImprover(IRouteImprovement):
         routes = split_tour(tour)
         if not routes:
             return tour, {"algorithm": "FastTSPRouteImprover"}
+
+        from logic.src.policies.routing.other_algorithms.travelling_salesman_problem.tsp import (
+            find_route,
+        )
 
         refined_routes = []
         for trip in routes:

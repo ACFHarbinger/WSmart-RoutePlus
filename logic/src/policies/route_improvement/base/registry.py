@@ -1,74 +1,10 @@
-"""
-Route Improvement Registry Module.
+"""Route-improvement registry alias for the shared ``IMPROVEMENT`` instance."""
 
-This module provides a registry for route improvement operators. It allows
-registering and retrieving route improvers by name.
+from logic.src.policies.route_improvement._manifest import load as _load_manifest
+from logic.src.utils.registry import IMPROVEMENT
 
-Attributes:
-    RouteImproverRegistry (class): The registry class.
+_load_manifest()
 
-Example:
-    >>> from logic.src.policies.helpers.route_improvement.base.registry import RouteImproverRegistry
-    >>> RouteImproverRegistry.register("my_processor", MyProcessorClass)
-    >>> cls = RouteImproverRegistry.get_route_improver_class("my_processor")
-"""
+RouteImproverRegistry = IMPROVEMENT
 
-from typing import Callable, Dict, Optional, Type
-
-from logic.src.interfaces.route_improvement import IRouteImprovement
-
-
-class RouteImproverRegistry:
-    """Registry for routing route improvement strategies.
-
-    Attributes:
-        _strategies (Dict[str, Type[IRouteImprovement]]): Internal mapping of names to improver classes.
-    """
-
-    _strategies: Dict[str, Type[IRouteImprovement]] = {}
-
-    @classmethod
-    def register(cls, name: str) -> Callable:
-        """Decorator to register a route improver.
-
-        Args:
-            name (str): Unique identifier to register the class under.
-
-        Returns:
-            Callable: A decorator function that registers the class.
-        """
-
-        def wrapper(processor_cls: Type[IRouteImprovement]):
-            """Wrapper for registering the processor class.
-
-            Args:
-                processor_cls (Type[IRouteImprovement]): The route improver class to register.
-
-            Returns:
-                Type[IRouteImprovement]: The registered class.
-            """
-            cls._strategies[name.lower()] = processor_cls
-            return processor_cls
-
-        return wrapper
-
-    @classmethod
-    def get_route_improver_class(cls, name: str) -> Optional[Type[IRouteImprovement]]:
-        """Retrieve a route improver by name.
-
-        Args:
-            name (str): The name of the registered improver.
-
-        Returns:
-            Optional[Type[IRouteImprovement]]: The improver class if found, else None.
-        """
-        return cls._strategies.get(name.lower())
-
-    @classmethod
-    def list_improvers(cls) -> list:
-        """List all registered improver names.
-
-        Returns:
-            list: A list of registered improver names.
-        """
-        return list(cls._strategies.keys())
+__all__ = ["RouteImproverRegistry"]

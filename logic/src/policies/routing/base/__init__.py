@@ -1,27 +1,17 @@
-"""
-Routing Algorithm Base Package.
+"""Routing algorithm base package. Heavy bases load on first access."""
 
-This package provides adapter implementations for various routing
-optimization policies (HGS, ALNS, VRPP, etc.) and a factory pattern
-for dynamic routing algorithm instantiation.
+from typing import Any
 
-Attributes:
-    BaseRoutingPolicy: Template base class for all routing policies.
-    BaseMultiPeriodRoutingPolicy: Base class for multi-period (T-day) routing.
-    IRoutingAlgorithm: Interface defining the routing contract.
-    RoutingAlgorithmFactory: Factory for instantiating registered routing algorithms.
-    RoutingAlgorithmRegistry: Registry for dynamic routing algorithm lookup.
+from logic.src.utils.registry import lazy_getattr
 
-Example:
-    >>> from logic.src.policies.routing.base import RoutingAlgorithmFactory
-    >>> adapter = RoutingAlgorithmFactory.get_adapter("hgs")
-    >>> tour, cost, profit, _, _ = adapter.execute(mandatory=[1, 2, 3], ...)
+from .factory import RoutingAlgorithmFactory
+from .registry import RoutingAlgorithmRegistry
 
-"""
-
-from .base_multi_period_policy import BaseMultiPeriodRoutingPolicy
-from .base_routing_policy import BaseRoutingPolicy
-from .factory import IRoutingAlgorithm, RoutingAlgorithmFactory, RoutingAlgorithmRegistry
+_LAZY = {
+    "BaseRoutingPolicy": "logic.src.policies.routing.base.base_routing_policy:BaseRoutingPolicy",
+    "BaseMultiPeriodRoutingPolicy": "logic.src.policies.routing.base.base_multi_period_policy:BaseMultiPeriodRoutingPolicy",
+    "IRoutingAlgorithm": "logic.src.interfaces.routing_algorithm:IRoutingAlgorithm",
+}
 
 __all__ = [
     "BaseRoutingPolicy",
@@ -30,3 +20,7 @@ __all__ = [
     "RoutingAlgorithmFactory",
     "RoutingAlgorithmRegistry",
 ]
+
+
+def __getattr__(name: str) -> Any:
+    return lazy_getattr(globals(), _LAZY, name)

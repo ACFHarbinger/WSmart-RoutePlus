@@ -1,85 +1,48 @@
-"""
-Routing route improvement sub-package.
+"""Route improvement. Public names load on first access."""
 
-Attributes:
-    IRouteImprovement: Interface for route improvement algorithms.
-    RouteImproverRegistry: Registry for route improver classes.
-    RouteImproverFactory: Factory for creating route improver instances.
-    AdaptiveEnsembleRouteImprover: Orchestrator for multiple improvement strategies.
+from typing import Any
 
-Example:
-    >>> from logic.src.policies.route_improvement import RouteImproverFactory
-    >>> factory = RouteImproverFactory()
-    >>> improver = factory.create("adaptive_ensemble")
-"""
+from logic.src.utils.registry import lazy_getattr
 
-from logic.src.interfaces import IRouteImprovement
-
-from .adaptive_ensemble import AdaptiveEnsembleRouteImprover
-from .adaptive_large_neighborhood_search import AdaptiveLargeNeighborhoodSearchRouteImprover
 from .base.factory import RouteImproverFactory
 from .base.registry import RouteImproverRegistry
-from .branch_and_price import BranchAndPriceRouteImprover
-from .cheapest_insertion import CheapestInsertionRouteImprover
-from .cross_exchange import CrossExchangeRouteImprover
-from .dp_route_reopt import DPRouteReoptRouteImprover
-from .fast_tsp import FastTSPRouteImprover
-from .fix_and_optimize import FixAndOptimizeRouteImprover
-from .guided_local_search import GuidedLocalSearchRouteImprover
-from .learned import LearnedRouteImprover
-from .lk import LinKernighanRouteImprover
-from .lkh import LinKernighanHelsgaunRouteImprover
-from .lkh2 import LinKernighanHelsgaunTwoRouteImprover
-from .local_search import ClassicalLocalSearchRouteImprover
-from .mip_lns import MIPLNSRouteImprover
-from .multi_phase import MultiPhaseRouteImprover
-from .neural_selector import NeuralSelectorRouteImprover
-from .node_exchange_steepest import NodeExchangeSteepestRouteImprover
-from .or_opt import OrOptRouteImprover
-from .or_opt_steepest import OrOptSteepestRouteImprover
-from .path import PathRouteImprover
-from .profitable_detour import ProfitableDetourRouteImprover
-from .random_local_search import RandomLocalSearchRouteImprover
-from .regret_k_insertion import RegretKInsertionRouteImprover
-from .ruin_recreate import RuinRecreateRouteImprover
-from .set_covering import SetCoverRouteImprover
-from .set_partitioning import SetPartitioningRouteImprover
-from .set_partitioning_polish import SetPartitioningPolishRouteImprover
-from .simulated_annealing import SimulatedAnnealingRouteImprover
-from .steepest_two_opt import SteepestTwoOptRouteImprover
 
-__all__ = [
-    "IRouteImprovement",
-    "RouteImproverRegistry",
-    "RouteImproverFactory",
-    "AdaptiveEnsembleRouteImprover",
-    "AdaptiveLargeNeighborhoodSearchRouteImprover",
-    "BranchAndPriceRouteImprover",
-    "CheapestInsertionRouteImprover",
-    "CrossExchangeRouteImprover",
-    "DPRouteReoptRouteImprover",
-    "FastTSPRouteImprover",
-    "FixAndOptimizeRouteImprover",
-    "GuidedLocalSearchRouteImprover",
-    "LearnedRouteImprover",
-    "LinKernighanRouteImprover",
-    "LinKernighanHelsgaunRouteImprover",
-    "LinKernighanHelsgaunTwoRouteImprover",
-    "ClassicalLocalSearchRouteImprover",
-    "MIPLNSRouteImprover",
-    "MultiPhaseRouteImprover",
-    "NeuralSelectorRouteImprover",
-    "NodeExchangeSteepestRouteImprover",
-    "OrOptRouteImprover",
-    "OrOptSteepestRouteImprover",
-    "PathRouteImprover",
-    "ProfitableDetourRouteImprover",
-    "RandomLocalSearchRouteImprover",
-    "RegretKInsertionRouteImprover",
-    "RuinRecreateRouteImprover",
-    "SimulatedAnnealingRouteImprover",
-    "SteepestTwoOptRouteImprover",
-    "SetCoverRouteImprover",
-    "SetPartitioningRouteImprover",
-    "SetPartitioningPolishRouteImprover",
-]
+_LAZY = {
+    "IRouteImprovement": "logic.src.interfaces.route_improvement:IRouteImprovement",
+    "AdaptiveEnsembleRouteImprover": "logic.src.policies.route_improvement.adaptive_ensemble:AdaptiveEnsembleRouteImprover",
+    "AdaptiveLargeNeighborhoodSearchRouteImprover": "logic.src.policies.route_improvement.adaptive_large_neighborhood_search:AdaptiveLargeNeighborhoodSearchRouteImprover",
+    "BranchAndPriceRouteImprover": "logic.src.policies.route_improvement.branch_and_price:BranchAndPriceRouteImprover",
+    "CheapestInsertionRouteImprover": "logic.src.policies.route_improvement.cheapest_insertion:CheapestInsertionRouteImprover",
+    "CrossExchangeRouteImprover": "logic.src.policies.route_improvement.cross_exchange:CrossExchangeRouteImprover",
+    "DPRouteReoptRouteImprover": "logic.src.policies.route_improvement.dp_route_reopt:DPRouteReoptRouteImprover",
+    "FastTSPRouteImprover": "logic.src.policies.route_improvement.fast_tsp:FastTSPRouteImprover",
+    "FixAndOptimizeRouteImprover": "logic.src.policies.route_improvement.fix_and_optimize:FixAndOptimizeRouteImprover",
+    "GuidedLocalSearchRouteImprover": "logic.src.policies.route_improvement.guided_local_search:GuidedLocalSearchRouteImprover",
+    "LearnedRouteImprover": "logic.src.policies.route_improvement.learned:LearnedRouteImprover",
+    "LinKernighanRouteImprover": "logic.src.policies.route_improvement.lk:LinKernighanRouteImprover",
+    "LinKernighanHelsgaunRouteImprover": "logic.src.policies.route_improvement.lkh:LinKernighanHelsgaunRouteImprover",
+    "LinKernighanHelsgaunTwoRouteImprover": "logic.src.policies.route_improvement.lkh2:LinKernighanHelsgaunTwoRouteImprover",
+    "ClassicalLocalSearchRouteImprover": "logic.src.policies.route_improvement.local_search:ClassicalLocalSearchRouteImprover",
+    "MIPLNSRouteImprover": "logic.src.policies.route_improvement.mip_lns:MIPLNSRouteImprover",
+    "MultiPhaseRouteImprover": "logic.src.policies.route_improvement.multi_phase:MultiPhaseRouteImprover",
+    "NeuralSelectorRouteImprover": "logic.src.policies.route_improvement.neural_selector:NeuralSelectorRouteImprover",
+    "NodeExchangeSteepestRouteImprover": "logic.src.policies.route_improvement.node_exchange_steepest:NodeExchangeSteepestRouteImprover",
+    "OrOptRouteImprover": "logic.src.policies.route_improvement.or_opt:OrOptRouteImprover",
+    "OrOptSteepestRouteImprover": "logic.src.policies.route_improvement.or_opt_steepest:OrOptSteepestRouteImprover",
+    "PathRouteImprover": "logic.src.policies.route_improvement.path:PathRouteImprover",
+    "ProfitableDetourRouteImprover": "logic.src.policies.route_improvement.profitable_detour:ProfitableDetourRouteImprover",
+    "RandomLocalSearchRouteImprover": "logic.src.policies.route_improvement.random_local_search:RandomLocalSearchRouteImprover",
+    "RegretKInsertionRouteImprover": "logic.src.policies.route_improvement.regret_k_insertion:RegretKInsertionRouteImprover",
+    "RuinRecreateRouteImprover": "logic.src.policies.route_improvement.ruin_recreate:RuinRecreateRouteImprover",
+    "SimulatedAnnealingRouteImprover": "logic.src.policies.route_improvement.simulated_annealing:SimulatedAnnealingRouteImprover",
+    "SteepestTwoOptRouteImprover": "logic.src.policies.route_improvement.steepest_two_opt:SteepestTwoOptRouteImprover",
+    "SetCoverRouteImprover": "logic.src.policies.route_improvement.set_covering:SetCoverRouteImprover",
+    "SetPartitioningRouteImprover": "logic.src.policies.route_improvement.set_partitioning:SetPartitioningRouteImprover",
+    "SetPartitioningPolishRouteImprover": "logic.src.policies.route_improvement.set_partitioning_polish:SetPartitioningPolishRouteImprover",
+}
+
+__all__ = ["RouteImproverRegistry", "RouteImproverFactory", *list(_LAZY)]
+
+
+def __getattr__(name: str) -> Any:
+    return lazy_getattr(globals(), _LAZY, name)

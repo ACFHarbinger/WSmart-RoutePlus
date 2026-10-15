@@ -23,7 +23,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class ALNSConfig:
+class VectorALNSConfig:
     """Configuration for Adaptive Large Neighborhood Search (ALNS) expert policy.
 
     Attributes:
@@ -46,3 +46,6 @@ class ALNSConfig:
     reaction_factor: float = 0.1
     min_removal: int = 1
     max_removal_pct: float = 0.3
+
+
+ALNSConfig = VectorALNSConfig

@@ -7,8 +7,8 @@ import pytest
 import torch
 import torch.nn as nn
 from logic.src.data.datasets import BaselineDataset
-from logic.src.envs import problems as problem_module
-from logic.src.envs.problems import CPTP
+from logic.src.envs import tasks as problem_module
+from logic.src.envs.tasks import CPTP
 from logic.src.models.core.attention_model import AttentionModel
 from logic.src.models.core.moe import MoEAttentionModel, MoETemporalAttentionModel
 from logic.src.models.subnets.encoders.moe.encoder import MoEGraphAttentionEncoder

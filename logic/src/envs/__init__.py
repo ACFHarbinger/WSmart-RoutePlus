@@ -1,91 +1,76 @@
-"""
-Environment module for WSmart-Route.
+"""Environments. Concrete envs load when ``get_env`` is called."""
 
-This module provides RL4CO-style environment abstractions for
-combinatorial optimization problems.
+from typing import Any, Dict
 
-Attributes:
-    ENV_REGISTRY: Registry of all environments.
-    get_env: Factory function to get environment by name.
+from logic.src.utils.registry import import_target
 
-Example:
-    >>> env = get_env("ptp", num_loc=25, seed=42)
-    >>> env
-    <logic.src.envs.routing.ptp.PTPEnv object at 0x...>
-"""
-
-from logic.src.envs.base.base import RL4COEnvBase
-from logic.src.envs.base.improvement import ImprovementEnvBase
-from logic.src.envs.generators import (
-    GENERATOR_REGISTRY,
-    ATSPGenerator,
-    CVRPGenerator,
-    Generator,
-    IRPGenerator,
-    OPGenerator,
-    PCTSPGenerator,
-    PDPGenerator,
-    PTPGenerator,
-    get_generator,
-)
-from logic.src.envs.routing.atsp import ATSPEnv
-from logic.src.envs.routing.cvrp import CVRPEnv
-from logic.src.envs.routing.irp import IRPEnv
-from logic.src.envs.routing.cptp import CPTPEnv
-from logic.src.envs.routing.op import OPEnv
-from logic.src.envs.routing.pctsp import PCTSPEnv
-from logic.src.envs.routing.pdp import PDPEnv
-from logic.src.envs.routing.ptp import PTPEnv
-from logic.src.envs.routing.spctsp import SPCTSPEnv
-from logic.src.envs.routing.tcptp import TCPTPEnv
-from logic.src.envs.routing.tsp import TSPEnv
-from logic.src.envs.tsp_kopt import TSPkoptEnv
-
-# Environment registry
-ENV_REGISTRY = {
-    "ptp": PTPEnv,
-    "cptp": CPTPEnv,
-    "tcptp": TCPTPEnv,
-    "tsp": TSPEnv,
-    "tsp_kopt": TSPkoptEnv,
-    "irp": IRPEnv,
-    "atsp": ATSPEnv,
-    "cvrp": CVRPEnv,
-    "op": OPEnv,
-    "pctsp": PCTSPEnv,
-    "spctsp": SPCTSPEnv,
-    "pdp": PDPEnv,
+ENV_TARGETS: Dict[str, str] = {
+    "ptp": "logic.src.envs.routing.ptp:PTPEnv",
+    "cptp": "logic.src.envs.routing.cptp:CPTPEnv",
+    "tcptp": "logic.src.envs.routing.tcptp:TCPTPEnv",
+    "tsp": "logic.src.envs.routing.tsp:TSPEnv",
+    "tsp_kopt": "logic.src.envs.tsp_kopt:TSPkoptEnv",
+    "irp": "logic.src.envs.routing.irp:IRPEnv",
+    "atsp": "logic.src.envs.routing.atsp:ATSPEnv",
+    "cvrp": "logic.src.envs.routing.cvrp:CVRPEnv",
+    "op": "logic.src.envs.routing.op:OPEnv",
+    "pctsp": "logic.src.envs.routing.pctsp:PCTSPEnv",
+    "spctsp": "logic.src.envs.routing.spctsp:SPCTSPEnv",
+    "pdp": "logic.src.envs.routing.pdp:PDPEnv",
 }
 
-
-def get_env(name: str, **kwargs) -> RL4COEnvBase:
-    """
-    Factory function to get environment by name.
+# Kept for callers that inspect keys. Values are resolved on get_env.
+ENV_REGISTRY = ENV_TARGETS
 
 
+def get_env(name: str, **kwargs: Any) -> Any:
+    """Build an environment by name, importing only that env module."""
+    key = name.lower()
+    if key not in ENV_TARGETS:
+        raise ValueError(f"Unknown environment: {name}. Available: {list(ENV_TARGETS.keys())}")
+    env_cls = import_target(ENV_TARGETS[key])
+    return env_cls(**kwargs)
 
-    Args:
-        name: Description of name.
-        kwargs: Description of kwargs.
 
-    Returns:
-        Initialized environment instance.
-
-    Raises:
-        ValueError: If environment name is not recognized.
-
-    """
-    name = name.lower()
-    if name not in ENV_REGISTRY:
-        raise ValueError(f"Unknown environment: {name}. Available: {list(ENV_REGISTRY.keys())}")
-    return ENV_REGISTRY[name](**kwargs)
+def __getattr__(name: str) -> Any:
+    mapping = {
+        "RL4COEnvBase": "logic.src.envs.base.base:RL4COEnvBase",
+        "ImprovementEnvBase": "logic.src.envs.base.improvement:ImprovementEnvBase",
+        "GENERATOR_REGISTRY": "logic.src.envs.generators:GENERATOR_REGISTRY",
+        "ATSPGenerator": "logic.src.envs.generators:ATSPGenerator",
+        "CVRPGenerator": "logic.src.envs.generators:CVRPGenerator",
+        "Generator": "logic.src.envs.generators:Generator",
+        "IRPGenerator": "logic.src.envs.generators:IRPGenerator",
+        "OPGenerator": "logic.src.envs.generators:OPGenerator",
+        "PCTSPGenerator": "logic.src.envs.generators:PCTSPGenerator",
+        "PDPGenerator": "logic.src.envs.generators:PDPGenerator",
+        "PTPGenerator": "logic.src.envs.generators:PTPGenerator",
+        "get_generator": "logic.src.envs.generators:get_generator",
+        "PTPEnv": "logic.src.envs.routing.ptp:PTPEnv",
+        "CPTPEnv": "logic.src.envs.routing.cptp:CPTPEnv",
+        "TCPTPEnv": "logic.src.envs.routing.tcptp:TCPTPEnv",
+        "TSPEnv": "logic.src.envs.routing.tsp:TSPEnv",
+        "TSPkoptEnv": "logic.src.envs.tsp_kopt:TSPkoptEnv",
+        "IRPEnv": "logic.src.envs.routing.irp:IRPEnv",
+        "ATSPEnv": "logic.src.envs.routing.atsp:ATSPEnv",
+        "CVRPEnv": "logic.src.envs.routing.cvrp:CVRPEnv",
+        "OPEnv": "logic.src.envs.routing.op:OPEnv",
+        "PCTSPEnv": "logic.src.envs.routing.pctsp:PCTSPEnv",
+        "SPCTSPEnv": "logic.src.envs.routing.spctsp:SPCTSPEnv",
+        "PDPEnv": "logic.src.envs.routing.pdp:PDPEnv",
+    }
+    if name not in mapping:
+        raise AttributeError(f"module has no attribute {name!r}")
+    obj = import_target(mapping[name])
+    globals()[name] = obj
+    return obj
 
 
 __all__ = [
-    # Base classes
+    "ENV_REGISTRY",
+    "get_env",
     "RL4COEnvBase",
     "ImprovementEnvBase",
-    # Generators
     "Generator",
     "PTPGenerator",
     "IRPGenerator",
@@ -96,7 +81,6 @@ __all__ = [
     "PDPGenerator",
     "get_generator",
     "GENERATOR_REGISTRY",
-    # Environments
     "PTPEnv",
     "CPTPEnv",
     "TCPTPEnv",
@@ -109,7 +93,4 @@ __all__ = [
     "PCTSPEnv",
     "SPCTSPEnv",
     "PDPEnv",
-    # Registry
-    "ENV_REGISTRY",
-    "get_env",
 ]

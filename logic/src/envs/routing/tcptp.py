@@ -35,7 +35,7 @@ from tensordict import TensorDict
 from logic.src.envs.base.ops import OpsMixin
 from logic.src.envs.generators.tcptp import TCPTPGenerator
 from logic.src.envs.routing.cptp import CPTPEnv
-from logic.src.envs.temporal import get_default_temporal_params
+from logic.src.constants.temporal import get_default_temporal_params
 
 
 class TCPTPEnv(CPTPEnv):

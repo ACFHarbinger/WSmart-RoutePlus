@@ -21,16 +21,18 @@ from typing import Any, Union
 
 from logic.src.configs.rl.policies import (
     ACOConfig,
-    ALNSConfig,
-    HGSALNSConfig,
-    HGSConfig,
-    ILSConfig,
     ProfitableNNConfig,
     RLSConfig,
+    VectorALNSConfig,
+    VectorHGSALNSConfig,
+    VectorHGSConfig,
+    VectorILSConfig,
 )
 
 # Type alias for expert policy configurations
-ExpertPolicyConfig = Union[HGSConfig, ALNSConfig, ILSConfig, RLSConfig, ACOConfig, HGSALNSConfig, ProfitableNNConfig]
+ExpertPolicyConfig = Union[
+    VectorHGSConfig, VectorALNSConfig, VectorILSConfig, RLSConfig, ACOConfig, VectorHGSALNSConfig, ProfitableNNConfig
+]
 
 
 @dataclass

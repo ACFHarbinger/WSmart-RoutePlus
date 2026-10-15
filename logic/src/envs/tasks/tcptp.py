@@ -16,7 +16,7 @@ from typing import Any, Dict, Optional, Tuple
 import torch
 
 from logic.src.envs.tasks.cptp import CPTP
-from logic.src.envs.temporal import get_default_temporal_params
+from logic.src.constants.temporal import get_default_temporal_params
 
 
 class TCPTP(CPTP):

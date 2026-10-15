@@ -23,7 +23,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class HGSConfig:
+class VectorHGSConfig:
     """Configuration for Hybrid Genetic Search (HGS) expert policy.
     Based on Vidal et al. (2022) - "Hybrid genetic search for the CVRP".
 
@@ -71,3 +71,6 @@ class HGSConfig:
     initial_penalty_capacity: float = 1.0
     penalty_increase: float = 1.2
     penalty_decrease: float = 0.85
+
+
+HGSConfig = VectorHGSConfig

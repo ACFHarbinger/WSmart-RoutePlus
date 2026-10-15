@@ -18,7 +18,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class HVPLConfig:
+class VectorHVPLConfig:
     """Configuration for Hybrid Volleyball Premier League (HVPL) expert policy.
 
     Attributes:
@@ -34,3 +34,6 @@ class HVPLConfig:
     n_teams: int = 10
     sub_rate: float = 0.2
     aco_iterations: int = 1
+
+
+HVPLConfig = VectorHVPLConfig
