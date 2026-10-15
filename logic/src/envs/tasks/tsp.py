@@ -1,71 +1,66 @@
-"""
-TSP problem definition for offline evaluation.
-
-Attributes:
-    TSP: Traveling Salesman Problem (TSP) definition.
-
-Example:
-    >>> import torch
-    >>> from logic.src.envs.tasks.tsp import TSP
-    >>> dataset = {
-    ...     "locs": torch.tensor([[[0.0, 0.0], [1.0, 0.0]]]),
-    ...     "depot": torch.tensor([0.0]),
-    ... }
-    >>> pi = torch.tensor([[[0, 1, 0]]])
-    >>> length, cost_dict, _ = TSP.get_costs(dataset, pi)
-    >>> print(length)
-    tensor([2.0])
-"""
+"""Traveling Salesman Problem (TSP) task, environment, and generator."""
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Union
 
 import torch
 
 from logic.src.envs.tasks.base import BaseProblem
+from logic.src.envs.tasks.espprc import ESPPRCEnv, ESPPRCGenerator
+from logic.src.envs.tasks.spec import PROBLEMS, ProblemSpec
+
+
+class TSPGenerator(ESPPRCGenerator):
+    """Generator for TSP instances."""
+    pass
+
+
+class TSPEnv(ESPPRCEnv):
+    """Traveling Salesman Problem Environment on the ESPPRC base."""
+
+    NAME: str = "tsp"
+    name: str = "tsp"
+    node_dim: int = 2
+    require_all_customers: bool = True
+
+    def __init__(
+        self,
+        generator: Optional[TSPGenerator] = None,
+        generator_params: Optional[dict] = None,
+        device: Union[str, torch.device] = "cpu",
+        **kwargs: Any,
+    ) -> None:
+        generator_params = generator_params or kwargs
+        if generator is None:
+            generator = TSPGenerator(**generator_params, device=device)
+        super().__init__(
+            generator=generator,
+            generator_params=generator_params,
+            resources=(),
+            waste_weight=0.0,
+            cost_weight=1.0,
+            device=device,
+            **kwargs,
+        )
 
 
 class TSP(BaseProblem):
-    """
-    Traveling Salesman Problem (TSP).
-
-    Objective: Minimise total tour length (visit every node exactly once,
-    return to start).  No depot — the tour is a Hamiltonian cycle over all
-    nodes.
-
-    Cost computation supports both Euclidean (``locs`` key) and
-    pre-computed distance matrix inputs.
-
-    Attributes:
-        NAME: Environment name identifier.
-    """
+    """Traveling Salesman Problem (TSP) task definition."""
 
     NAME = "tsp"
 
     @staticmethod
-    def get_costs(
+    def evaluate_tour(
         dataset: Dict[str, Any],
         pi: torch.Tensor,
-        cw_dict: Optional[Dict[str, Any]],
         dist_matrix: Optional[torch.Tensor] = None,
-    ) -> Tuple[torch.Tensor, Dict[str, Any], None]:
-        """
-        Compute TSP tour cost.
-
-        Args:
-            dataset: Problem data containing ``locs`` or ``cost_matrix``.
-            pi: Tour indices of shape ``(batch, num_nodes)``.
-            cw_dict: Unused for TSP; kept for interface compatibility.
-            dist_matrix: Optional pre-computed distance matrix ``(B, N, N)``
-                or ``(N, N)``.
-
-        Returns:
-            Tuple of ``(tour_length, {"length": tour_length, "total": tour_length}, None)``.
-        """
+        **kwargs: Any,
+    ) -> Dict[str, torch.Tensor]:
+        """Compute TSP tour cost and outcomes."""
         if pi.size(-1) <= 1:
             z = torch.zeros(pi.size(0), device=pi.device)
-            return (z, {"length": z, "total": z}, None)
+            return {"cost": z, "reward": z, "length": z, "valid": torch.ones_like(z, dtype=torch.bool), "total": z}
 
         if dist_matrix is not None and isinstance(dist_matrix, torch.Tensor):
             length = TSP._cost_from_matrix(pi, dist_matrix)
@@ -74,42 +69,40 @@ class TSP(BaseProblem):
         else:
             length = TSP._cost_from_locs(pi, dataset["locs"])
 
-        return (length, {"length": length, "total": length}, None)
+        return {
+            "cost": length,
+            "reward": -length,
+            "length": length,
+            "valid": torch.ones_like(length, dtype=torch.bool),
+            "total": length,
+        }
 
     @staticmethod
     def _cost_from_locs(pi: torch.Tensor, locs: torch.Tensor) -> torch.Tensor:
-        """Compute Euclidean tour length including the closing edge.
-
-        Args:
-            pi: Description of pi.
-            locs: Description of locs.
-
-        Returns:
-            Updated TensorDict or tensor containing the result.
-        """
-        # pi: (B, N), locs: (B, N, 2)
         visited = locs.gather(1, pi.unsqueeze(-1).expand(*pi.shape, locs.shape[-1]))
-        # Closing edge: last node → first node
         closed = torch.cat([visited, visited[:, :1]], dim=1)
         return (closed[:, 1:] - closed[:, :-1]).norm(dim=-1).sum(dim=-1)
 
     @staticmethod
     def _cost_from_matrix(pi: torch.Tensor, mat: torch.Tensor) -> torch.Tensor:
-        """Compute tour length from a (possibly asymmetric) cost matrix.
-
-        Args:
-            pi: Description of pi.
-            mat: Description of mat.
-
-        Returns:
-            Updated TensorDict or tensor containing the result.
-        """
         B, N = pi.shape
         if mat.dim() == 2:
             mat = mat.unsqueeze(0).expand(B, -1, -1)
-        # Closed tour: append first node to close the cycle
         pi_closed = torch.cat([pi, pi[:, :1]], dim=1)
-        src = pi_closed[:, :-1]  # (B, N)
-        dst = pi_closed[:, 1:]  # (B, N)
+        src = pi_closed[:, :-1]
+        dst = pi_closed[:, 1:]
         batch_idx = torch.arange(B, device=pi.device).unsqueeze(1).expand(B, N)
         return mat[batch_idx, src, dst].sum(dim=-1)
+
+
+TSP_SPEC = ProblemSpec(
+    name="tsp",
+    objective=lambda distance_km, **kw: -float(distance_km),
+    constraints=(),
+    metrics=("cost", "reward", "length"),
+    env_target="logic.src.envs.tasks.tsp:TSPEnv",
+    expand_pool=False,
+)
+PROBLEMS.register(TSP_SPEC)
+
+__all__ = ["TSPGenerator", "TSPEnv", "TSP", "TSP_SPEC"]

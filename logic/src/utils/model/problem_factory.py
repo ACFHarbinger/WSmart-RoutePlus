@@ -4,17 +4,17 @@ from __future__ import annotations
 
 from typing import Any, Type
 
-from logic.src.envs.tasks.cptp import CPTP
-from logic.src.envs.tasks.ptp import PTP
-from logic.src.envs.tasks.tcptp import TCPTP
+from logic.src.envs.tasks import CPTP, CVRP, PTP, TCPTP
 
 
 def load_problem(name: str) -> Type[Any]:
     """Load a problem class by name."""
-    problem = {
+    mapping = {
         "ptp": PTP,
         "cptp": CPTP,
         "tcptp": TCPTP,
-    }.get(name, None)
-    assert problem is not None, f"Problem {name} is not implemented"
+        "cvrp": CVRP,
+    }
+    problem = mapping.get(name.lower(), None)
+    assert problem is not None, f"unsupported problem: {name}"
     return problem

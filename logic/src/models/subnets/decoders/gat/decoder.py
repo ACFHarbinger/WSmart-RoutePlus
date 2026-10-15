@@ -246,9 +246,9 @@ class DeepGATDecoder(nn.Module):
         pi = torch.stack(sequences, 1)
 
         cost = None
-        if hasattr(self, "problem") and hasattr(cast(Any, self.problem), "get_costs"):
-            out_cost = cast(Any, self.problem).get_costs(nodes, pi, None)
-            cost = out_cost[0] if isinstance(out_cost, tuple) else out_cost
+        if hasattr(self, "problem") and hasattr(cast(Any, self.problem), "evaluate_tour"):
+            out_eval = cast(Any, self.problem).evaluate_tour(nodes, pi)
+            cost = out_eval["cost"] if isinstance(out_eval, dict) else (out_eval[0] if isinstance(out_eval, tuple) else out_eval)
 
         return _log_p, pi, cost, None
 

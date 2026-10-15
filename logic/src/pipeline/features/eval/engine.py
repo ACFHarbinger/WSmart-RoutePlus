@@ -297,9 +297,11 @@ def _eval_dataset(
             else:
                 batch_i = cast(torch.Tensor, instance).unsqueeze(0).to(device)
 
-            _, c_dict, _ = model.problem.get_costs(
-                batch_i, seq_tensor, None, batch_i.get("dist_matrix") if isinstance(batch_i, dict) else None
-            )
+            dm_input = batch_i.get("dist_matrix") if isinstance(batch_i, dict) else None
+            if hasattr(model.problem, "evaluate_tour"):
+                c_dict = model.problem.evaluate_tour(batch_i, seq_tensor, dist_matrix=dm_input)
+            else:
+                _, c_dict, _ = model.problem.get_costs(batch_i, seq_tensor, None, dm_input)
         else:
             c_dict = {
                 "length": torch.tensor(0.0),

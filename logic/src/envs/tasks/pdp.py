@@ -1,68 +1,95 @@
-"""
-PDP problem definition for offline evaluation.
-
-Attributes:
-    PDP: Pickup and Delivery Problem (PDP) definition.
-
-Example:
-    >>> import torch
-    >>> from logic.src.envs.tasks.pdp import PDP
-    >>> dataset = {
-    ...     "locs": torch.tensor([[[0.0, 0.0], [1.0, 0.0], [0.0, 1.0]]]),
-    ...     "demand": torch.tensor([[0.0, 1.0, 1.0]]),
-    ...     "vehicle_capacity": torch.tensor([2.0]),
-    ...     "depot": torch.tensor([0.0]),
-    ... }
-    >>> pi = torch.tensor([[[0, 1, 2, 0]]])
-    >>> length, cost_dict, _ = PDP.get_costs(dataset, pi)
-    >>> print(length)
-    tensor([2.8284])
-"""
+"""Pickup and Delivery Problem (PDP) task and environment on ESPPRC base."""
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Sequence, Union
 
 import torch
+from tensordict import TensorDict
 
 from logic.src.envs.tasks.base import BaseProblem
+from logic.src.envs.tasks.espprc import ESPPRCEnv, ESPPRCGenerator
+from logic.src.envs.tasks.spec import PROBLEMS, ProblemSpec
+
+
+class PDPGenerator(ESPPRCGenerator):
+    """Generator for Pickup and Delivery Problem (PDP) instances."""
+
+    def __init__(self, num_loc: int = 50, device: Union[str, torch.device] = "cpu", **kwargs: Any) -> None:
+        super().__init__(num_loc=num_loc, device=device, **kwargs)
+
+    def _generate(self, batch_size: Union[int, Sequence[int]]) -> TensorDict:
+        td = super()._generate(batch_size)
+        bs = list(batch_size) if isinstance(batch_size, (list, tuple)) else [batch_size]
+        capacity = 1.0
+        td["capacity"] = torch.full((*bs,), capacity, device=self.device)
+        return td
+
+
+class PDPEnv(ESPPRCEnv):
+    """Pickup and Delivery Problem Environment on ESPPRC base."""
+
+    NAME: str = "pdp"
+    name: str = "pdp"
+    node_dim: int = 3
+    require_all_customers: bool = True
+
+    def __init__(
+        self,
+        generator: Optional[PDPGenerator] = None,
+        generator_params: Optional[dict] = None,
+        device: Union[str, torch.device] = "cpu",
+        **kwargs: Any,
+    ) -> None:
+        generator_params = generator_params or kwargs
+        if generator is None:
+            generator = PDPGenerator(**generator_params, device=device)
+        super().__init__(
+            generator=generator,
+            generator_params=generator_params,
+            resources=(),
+            waste_weight=0.0,
+            cost_weight=1.0,
+            device=device,
+            **kwargs,
+        )
 
 
 class PDP(BaseProblem):
-    """
-    Pickup and Delivery Problem (PDP).
-
-    Cost = total tour length (depot implicitly added at start and end).
-
-    Attributes:
-        NAME: Environment name identifier.
-    """
+    """Pickup and Delivery Problem (PDP) task definition."""
 
     NAME = "pdp"
 
     @staticmethod
-    def get_costs(
+    def evaluate_tour(
         dataset: Dict[str, Any],
         pi: torch.Tensor,
-        cw_dict: Optional[Dict[str, float]],
         dist_matrix: Optional[torch.Tensor] = None,
-    ):
-        """
-        Compute PDP tour length.
-
-        Args:
-            dataset: Dict with ``locs`` [B, N+1, 2] (depot at index 0)
-                     and ``depot`` [B, 2].
-            pi: Tour tensor [B, N] (customer nodes only; no depot entries).
-            cw_dict: Unused.
-            dist_matrix: Optional.
-
-        Returns:
-            Tuple of (tour_length, cost_dict, None).
-        """
+        **kwargs: Any,
+    ) -> Dict[str, torch.Tensor]:
+        """Compute PDP tour length and outcomes."""
         if pi.size(-1) <= 1:
             z = torch.zeros(pi.size(0), device=pi.device)
-            return z, {"length": z, "total": z}, None
+            return {"cost": z, "reward": z, "length": z, "valid": torch.ones_like(z, dtype=torch.bool), "total": z}
 
         length = PDP.get_tour_length(dataset, pi, dist_matrix)
-        return length, {"length": length, "total": length}, None
+        return {
+            "cost": length,
+            "reward": -length,
+            "length": length,
+            "valid": torch.ones_like(length, dtype=torch.bool),
+            "total": length,
+        }
+
+
+PDP_SPEC = ProblemSpec(
+    name="pdp",
+    objective=lambda distance_km, **kw: -float(distance_km),
+    constraints=(),
+    metrics=("cost", "reward", "length"),
+    env_target="logic.src.envs.tasks.pdp:PDPEnv",
+    expand_pool=False,
+)
+PROBLEMS.register(PDP_SPEC)
+
+__all__ = ["PDPGenerator", "PDPEnv", "PDP", "PDP_SPEC"]

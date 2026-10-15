@@ -15,7 +15,7 @@ Example:
 """
 
 from abc import abstractmethod
-from typing import Any, Optional, cast
+from typing import Any, Dict, Optional, cast
 
 import torch
 from tensordict import TensorDictBase
@@ -229,39 +229,40 @@ class OpsMixin:
 
         return TensorDictStateWrapper(tensordict, self.name, self)  # type: ignore[attr-defined]
 
-    def get_costs(
+    def evaluate_tour(
         self,
         tensordict: TensorDictBase,
         pi: torch.Tensor,
         cost_weights: Optional[torch.Tensor] = None,
         dist_matrix: Optional[torch.Tensor] = None,
-    ) -> Any:
-        """
-        Compute costs for a sequence of actions.
-        This provides the API expected by the AttentionModel.
+    ) -> Dict[str, Any]:
+        """Compute tour outcomes and metrics for a sequence of actions.
 
         Args:
-            tensordict: TensorDict containing the state.
-            pi: TensorDict containing the actions.
+            tensordict: TensorDict containing the problem state.
+            pi: Tensor containing the tour action sequence [B, L].
             cost_weights: Optional tensor of cost weights.
-            dist_matrix: Optional tensor of distance matrix.
+            dist_matrix: Optional distance matrix.
 
         Returns:
-            Updated TensorDict or tensor containing the result.
+            Dict[str, Any]: Outcomes dict with keys 'cost', 'reward', 'length', etc.
         """
-        # Reset and follow pi
         curr_td = self.reset(tensordict)
         for i in range(pi.size(1)):
             curr_td["action"] = pi[:, i]
-            # Use tensordict instead of td in step call result
             result = self.step(curr_td)
             curr_td = result["next"]
 
         reward = self.get_reward(curr_td, pi)
-
-        # Return negative reward as cost (AttentionModel expects minimizing cost)
-        # We also return the final td so metrics can be extracted
-        return -reward, {"total": -reward}, curr_td
+        cost = -reward
+        return {
+            "cost": cost,
+            "reward": reward,
+            "length": curr_td.get("tour_length", torch.zeros_like(reward)),
+            "waste": curr_td.get("collected_waste", torch.zeros_like(reward)),
+            "total": cost,
+            "state": curr_td,
+        }
 
     def _step_instance(self, tensordict: TensorDictBase) -> TensorDictBase:
         """

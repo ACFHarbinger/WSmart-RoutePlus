@@ -19,28 +19,25 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 import torch
 from torch import nn
 
 from logic.src.constants.models import CPTP_STEP_CONTEXT_OFFSET, NODE_DIM
 
-from .base import ContextEmbedder
+from .ptp import PTPContextEmbedder
 
 
-class CPTPContextEmbedder(ContextEmbedder):
+class CPTPContextEmbedder(PTPContextEmbedder):
     """Context embedder for Capacitated Profitable Tour Problem (CPTP).
 
-    Extends the pure-PTP context with a vehicle remaining-capacity scalar,
+    Extends PTPContextEmbedder with a vehicle remaining-capacity scalar,
     giving the decoder three dynamic signals per decoding step:
 
     1. **Unvisited waste sum** — total profit still available on the map.
     2. **Mean distance to unvisited profitable nodes** — spatial cost signal.
     3. **Remaining capacity** — hard constraint signal.
-
-    This combination lets the policy learn: "is there still enough space and
-    enough nearby profit to justify continuing the route?"
 
     Attributes:
         init_embed (nn.Linear): Projection for non-depot customer features.
@@ -57,74 +54,17 @@ class CPTPContextEmbedder(ContextEmbedder):
             temporal_horizon: Size of temporal feature window (if any).
         """
         super().__init__(embed_dim, node_dim, temporal_horizon)
-        input_dim = node_dim
-        if temporal_horizon > 0:
-            input_dim += temporal_horizon
-
-        self.init_embed = nn.Linear(input_dim, embed_dim)
-        self.init_embed_depot = nn.Linear(2, embed_dim)
-
-        # Step context projection: embed_dim + CPTP_STEP_CONTEXT_OFFSET → embed_dim
+        # Override project_step_context for CPTP's step_context_dim (embed_dim + 3)
         self.project_step_context = nn.Linear(self.step_context_dim, embed_dim)
 
-    def init_node_embeddings(self, nodes: Dict[str, Any], temporal_features: bool = True) -> torch.Tensor:
-        """Initializes node embeddings from locations and problem-specific features.
-
-        Delegates to the same logic used by ``PTPContextEmbedder``: projects
-        ``[locs, waste]`` per customer node and the depot separately.
-
-        Args:
-            nodes: Input dictionary containing ``locs``, ``waste``, ``depot``.
-            temporal_features: Whether to include temporal features if horizon > 0.
+    @property
+    def step_context_dim(self) -> int:
+        """Gets the dimensionality of the fused CPTP step context.
 
         Returns:
-            torch.Tensor: Initial node embeddings including the depot.
+            int: ``embed_dim + CPTP_STEP_CONTEXT_OFFSET`` (= embed_dim + 3).
         """
-        locs = nodes.get("locs") if "locs" in nodes.keys() else nodes.get("loc")
-        if locs is None:
-            return torch.zeros(
-                1,
-                1,
-                self.embed_dim,
-                device=nodes.device if hasattr(nodes, "device") else None,
-            )
-
-        waste = nodes.get("waste")
-        if waste is None:
-            waste = torch.zeros(locs.shape[0], locs.shape[1], 1, device=locs.device) if self.node_dim > 2 else None
-
-        node_features: list[torch.Tensor] = [locs]
-        if waste is not None:
-            if waste.dim() == 2:
-                waste = waste.unsqueeze(-1)
-            node_features.append(waste)
-
-        if self.temporal_horizon > 0 and temporal_features:
-            temp_feat = nodes.get("temporal_features")
-            if temp_feat is not None:
-                node_features.append(temp_feat)
-            else:
-                node_features.append(torch.zeros(locs.size(0), locs.size(1), self.temporal_horizon, device=locs.device))
-
-        node_features_tensor = torch.cat(node_features, -1)
-
-        depot = nodes["depot"]
-        waste_raw = nodes.get("waste")
-        is_concatenated = waste_raw is not None and (
-            locs.size(1) == waste_raw.size(1) + 1
-            or (locs.size(1) == waste_raw.size(1) and torch.allclose(locs[..., 0, :], depot, atol=1e-4))
-        )
-
-        if is_concatenated:
-            return self.init_embed(node_features_tensor)  # type: ignore[misc]
-
-        return torch.cat(
-            (
-                self.init_embed_depot(depot)[:, None, :],
-                self.init_embed(node_features_tensor),  # type: ignore[misc]
-            ),
-            dim=1,
-        )
+        return self.embed_dim + CPTP_STEP_CONTEXT_OFFSET
 
     def _step_context(self, embeddings: torch.Tensor, state: Any) -> torch.Tensor:
         """Extracts current CPTP step context.
@@ -134,21 +74,6 @@ class CPTPContextEmbedder(ContextEmbedder):
         2. Sum of waste on unvisited nodes (remaining profit signal).
         3. Mean Euclidean distance to unvisited profitable nodes (travel cost signal).
         4. Remaining vehicle capacity (hard constraint signal).
-
-        Tensor shapes:
-            current_node_embed  : [B, 1, embed_dim]
-            unvisited_waste_sum : [B, 1, 1]
-            mean_dist_unvisited : [B, 1, 1]
-            remaining_capacity  : [B, 1, 1]
-            combined            : [B, 1, embed_dim + 3]  → [B, 1, embed_dim]
-
-        TensorDict keys consumed:
-            ``waste``               : [B, N]    — waste per node (depot = 0)
-            ``visited``             : [B, N]    — visit flags
-            ``locs``                : [B, N, 2] — Euclidean coordinates
-            ``remaining_capacity``  : [B]       — residual vehicle capacity
-            ``current_load``        : [B]       — alternative capacity key
-            ``current_node``        : [B] or [B, 1]
 
         Args:
             embeddings: Current node embeddings, shape (batch, num_nodes, embed_dim).
@@ -162,6 +87,9 @@ class CPTPContextEmbedder(ContextEmbedder):
 
         if current_node.dim() > 1:
             current_node = current_node.squeeze(-1)  # [B]
+
+        if embeddings.size(0) == 1 and batch_size > 1:
+            embeddings = embeddings.expand(batch_size, -1, -1)
 
         # 1. Current node embedding [B, 1, embed_dim]
         current_node_embed = embeddings.gather(
@@ -216,11 +144,5 @@ class CPTPContextEmbedder(ContextEmbedder):
         combined = torch.cat([current_node_embed, unvisited_waste_mean, mean_dist_unvisited, remaining_cap], dim=-1)
         return self.project_step_context(combined)
 
-    @property
-    def step_context_dim(self) -> int:
-        """Gets the dimensionality of the fused CPTP step context.
 
-        Returns:
-            int: ``embed_dim + CPTP_STEP_CONTEXT_OFFSET`` (= embed_dim + 3).
-        """
-        return self.embed_dim + CPTP_STEP_CONTEXT_OFFSET
+__all__ = ["CPTPContextEmbedder"]

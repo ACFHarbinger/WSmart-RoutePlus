@@ -144,11 +144,18 @@ def _add_costs_metrics(metrics: Dict[str, float], out: Dict, batch: TensorDict, 
         batch: The input batch.
         env: The environment instance.
     """
-    if hasattr(env, "get_costs") and "actions" in out:
+    if hasattr(env, "evaluate_tour") and "actions" in out:
+        costs = env.evaluate_tour(batch, out["actions"])
+        if isinstance(costs, dict):
+            for key, val in costs.items():
+                if isinstance(val, torch.Tensor):
+                    metrics[f"val/{key}"] = val.float().mean().item()
+    elif hasattr(env, "get_costs") and "actions" in out:
         costs = env.get_costs(batch, out["actions"])
-        for key, val in costs.items():
-            if isinstance(val, torch.Tensor):
-                metrics[f"val/{key}"] = val.float().mean().item()
+        if isinstance(costs, dict):
+            for key, val in costs.items():
+                if isinstance(val, torch.Tensor):
+                    metrics[f"val/{key}"] = val.float().mean().item()
 
 
 def _add_efficiency_metric(metrics: Dict[str, float]) -> None:

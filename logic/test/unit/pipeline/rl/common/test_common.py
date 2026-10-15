@@ -40,7 +40,8 @@ class TestFeatures:
     def test_compute_validation_metrics(self, mocker):
         """Test validation metric aggregation."""
         env = mocker.MagicMock()
-        # Mock env.get_costs
+        # Mock env.evaluate_tour
+        env.evaluate_tour.return_value = {"waste": torch.tensor([10.0, 20.0]), "dist": torch.tensor([2.0, 4.0])}
         env.get_costs.return_value = {"waste": torch.tensor([10.0, 20.0]), "dist": torch.tensor([2.0, 4.0])}
         env.get_num_overflows.return_value = torch.tensor([1.0, 0.0])
 

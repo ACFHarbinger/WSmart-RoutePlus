@@ -17,7 +17,7 @@ from typing import Any, Dict
 
 import pytest
 import torch
-from logic.src.envs.routing.ptp import PTPEnv
+from logic.src.envs.tasks.profitable_tour.ptp import PTPEnv
 from logic.src.models.core.attention_model import AttentionModel, AttentionModelPolicy
 from logic.src.models.core.moe import MoEAttentionModel
 from logic.src.models.core.temporal_attention_model import TemporalAttentionModel
@@ -204,6 +204,7 @@ def test_m_gemini_01_loader_roundtrip(tmp_path: Path):
     assert isinstance(loaded_model, AttentionModel)
 
     # Verify parity between loaded model and original policy
+    policy.eval()
     env = PTPEnv(num_loc=5)
     td = env.reset(batch_size=[2])
     with torch.no_grad():
