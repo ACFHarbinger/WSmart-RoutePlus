@@ -7,8 +7,10 @@ Attributes:
     PSOMAPolicy: Policy adapter for PSOMA.
 
 Example:
+    >>> from logic.src.policies.routing.base.sub_problem import build_subproblem
     >>> from logic.src.policies.routing.meta_heuristics.particle_swarm_optimization_memetic_algorithm import PSOMASolver
-    >>> solver = PSOMASolver(dist_matrix, wastes, capacity, R, C)
+    >>> problem = build_subproblem(dist_matrix, wastes, capacity, R, C)
+    >>> solver = PSOMASolver(problem)
     >>> routes, profit, cost = solver.solve()
 """
 

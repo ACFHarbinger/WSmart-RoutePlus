@@ -6,8 +6,8 @@ agnostic BaseRoutingPolicy interface.
 
 Attributes:
     PSOMAConfig (Type): Configuration schema for the PSOMA solver.
-    BaseRoutingPolicy (Type): Abstract base for routing policies.
-    RoutingAlgorithmRegistry (Type): Global registry for routing algorithms.
+    PSOMAPolicy (Type): Policy adapter for the PSOMA solver.
+    GenericRoutingPolicy (Type): Declarative adapter base (WP-11 P-30).
 
 Example:
     >>> from logic.src.configs.policies.psoma import PSOMAConfig
@@ -16,28 +16,38 @@ Example:
     >>> routes = policy.solve(problem)
 """
 
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
-
-import numpy as np
+from typing import Any, Dict, Optional, Type, Union
 
 from logic.src.configs.policies.psoma import PSOMAConfig
-from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
+from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
+from logic.src.policies.routing.base.generic_policy import GenericRoutingPolicy
 
 from .solver import PSOMASolver
 
 
-@RoutingAlgorithmRegistry.register("psoma")
-class PSOMAPolicy(BaseRoutingPolicy):
+@GlobalRegistry.register(
+    PolicyTag.META_HEURISTIC,
+    PolicyTag.POPULATION_BASED,
+    PolicyTag.SWARM_INTELLIGENCE,
+    PolicyTag.MEMETIC_SEARCH,
+    PolicyTag.ROUTING,
+    PolicyTag.PROFIT_AWARE,
+)
+@RoutingAlgorithmRegistry.register("psoma", config=PSOMAConfig)
+class PSOMAPolicy(GenericRoutingPolicy):
     """
     PSOMA policy class.
 
     Visits bins using Particle Swarm Optimization with a memetic local-search step.
+    The generic adapter materializes the effective PSOMAConfig, builds the
+    SubProblem and runs the declared ``PSOMASolver`` engine.
 
     Attributes:
-        solver (PSOMASolver): Internal solver instance.
-        params (PSOMAConfig): Algorithm parameters.
+        _solver (PSOMASolver): Engine instantiated and solved by the generic path.
     """
+
+    _solver = PSOMASolver
 
     def __init__(self, config: Optional[Union[PSOMAConfig, Dict[str, Any]]] = None):
         """Initializes the PSOMA policy.
@@ -64,65 +74,3 @@ class PSOMAPolicy(BaseRoutingPolicy):
             str: The registry key 'psoma'.
         """
         return "psoma"
-
-    def _run_solver(
-        self,
-        sub_dist_matrix: np.ndarray,
-        sub_wastes: Dict[int, float],
-        capacity: float,
-        revenue: float,
-        cost_unit: float,
-        values: Dict[str, Any],
-        mandatory_nodes: List[int],
-        **kwargs: Any,
-    ) -> Tuple[List[List[int]], float, float]:
-        """
-        Execute the Particle Swarm Optimization Memetic Algorithm (PSOMA)
-        solver logic.
-
-        PSOMA is a hybrid metaheuristic that combines the collective intelligence
-        of Particle Swarm Optimization (PSO) with the individual refinement
-        capabilities of a Memetic Algorithm. While the swarm particles explore
-        the global profit surface through velocity-driven movements (cognitive
-        and social attraction), individual particles are periodically refined
-        using local search operators. This "education" step ensures that
-        particles converge onto meaningful local optima, effectively bridging
-        long-range exploration with rigorous intensification.
-
-        Args:
-            sub_dist_matrix (np.ndarray): Symmetric distance matrix for the current
-                sub-problem nodes.
-            sub_wastes (Dict[int, float]): Mapping of local node indices to their
-                current bin inventory levels.
-            capacity (float): Maximum vehicle collection capacity.
-            revenue (float): Revenue obtained per kilogram of waste collected.
-            cost_unit (float): Monetary cost incurred per kilometer traveled.
-            values (Dict[str, Any]): Merged configuration dictionary containing
-                PSOMA parameters (pop_size, omega, c1, c2, local_search_freq).
-            mandatory_nodes (List[int]): Local indices of bins that MUST be
-                collected in this period.
-            kwargs (Any): Additional context, including:
-                - search_context (Optional[SearchContext]): Context for tracking
-                  recursive solver statistics.
-                - multi_day_context (Optional[MultiDayContext]): Context for
-                  inter-day state propagation.
-
-        Returns:
-            Tuple[List[List[int]], float, float]: A 3-tuple containing:
-                - routes: Optimized collection routes (list-of-lists, local indices).
-                - profit: Total calculated net profit (Total Revenue - Total Cost).
-                - cost: Total travel cost calculated by the solver.
-        """
-        cfg = self._effective_config(values)
-
-        solver = PSOMASolver(
-            sub_dist_matrix,
-            sub_wastes,
-            capacity,
-            revenue,
-            cost_unit,
-            cfg,
-            mandatory_nodes,
-        )
-
-        return solver.solve()

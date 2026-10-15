@@ -9,6 +9,8 @@ Attributes:
 apply_reduced_cost_edge_fixing — LP-bound edge fixing on the master.
 detect_cycles                 — Find repeated vertices in a route.
 is_solution_integer           — Test integrality of a master LP solution.
+                                Weak check by default; opt-in elementary +
+                                set-partitioning (MS-BPC-SP) audit available.
 solve_pricing_step            — Phase II positive-RC column generation.
 solve_farkas_pricing_step     — Phase I Farkas column generation.
 separate_cuts                 — Trigger cut separation on the master.
@@ -64,6 +66,7 @@ def is_solution_integer(
     routes: List[Route],
     route_values: Dict[int, float],
     tol: float = 1e-6,
+    require_elementary: bool = False,
 ) -> bool:
     """Return True when every non-zero λ_k is within *tol* of an integer.
 
@@ -71,11 +74,48 @@ def is_solution_integer(
         routes:       Column pool.
         route_values: LP solution {route_index: λ_k}.
         tol:          Integrality tolerance.
+        require_elementary: Opt-in strict audit (MS-BPC-SP semantics): besides
+            integrality, every selected route (λ_k > 0.5) must be elementary
+            (no repeated nodes) and the selected columns must form a valid
+            node partition — no customer covered by more than one route.
 
     Returns:
         True iff the LP solution is integer-feasible.
     """
-    return all(abs(val - round(val)) <= tol for idx, val in route_values.items())
+    if not require_elementary:
+        return all(abs(val - round(val)) <= tol for idx, val in route_values.items())
+
+    # Strict audit (ported from the former MS-BPC-SP engine fork): integrality
+    # with clamping, per-route elementarity, then a node-usage consistency
+    # check enforcing the set-partitioning semantics in node space.
+    for idx, val in route_values.items():
+        # Clamp all values to [0, 1] before testing to guard against slight
+        # numerical drift in Set Covering/Partitioning LP solutions.
+        clamped = max(0.0, min(1.0, val))
+        if abs(clamped - round(clamped)) > tol:
+            return False
+
+        # Enforce elementarity in integer solutions. A numerically integer
+        # λ_k = 1.0 on a cyclic ng-route is NOT a valid integer solution for
+        # the original VRPP — it triggers further branching / ng-expansion.
+        if clamped > 0.5:
+            route = routes[idx]
+            if len(set(route.nodes)) != len(route.nodes):
+                return False
+
+    # Global LP/IP consistency check. A numerically binary solution in
+    # lambda-space (λ ∈ {0,1}) must also respect the Set Partitioning
+    # semantics in node-space (Σ a_ik λ_k = 1 for all visited i): no node may
+    # be covered by more than one selected column.
+    node_usage: Dict[int, int] = {}
+    for idx, val in route_values.items():
+        if val > 0.5:
+            for node in routes[idx].nodes:
+                node_usage[node] = node_usage.get(node, 0) + 1
+                if node_usage[node] > 1:
+                    return False
+
+    return True
 
 
 # ---------------------------------------------------------------------------
@@ -127,6 +167,7 @@ def solve_farkas_pricing_step(
     max_routes: int = 5,
     timeout: Optional[float] = None,
     farkas_duals: Optional[Dict[str, Any]] = None,
+    strict_certification: bool = False,
 ) -> Tuple[int, bool]:
     """Generate columns that restore LP feasibility (Phase I / Farkas pricing).
 
@@ -139,6 +180,11 @@ def solve_farkas_pricing_step(
         branching_constraints: Active branching constraints.
         max_routes:            Maximum columns to add per call.
         timeout:               Per-call wall-clock limit.
+        farkas_duals:          Farkas certificate override (defaults to the
+                               master's ``farkas_duals`` attribute).
+        strict_certification:  Return a solver-certified exhaustion flag
+                               (MS-BPC-SP semantics) instead of the add-based
+                               heuristic one.
 
     Returns:
         (n_added, pricing_exhausted)
@@ -150,6 +196,7 @@ def solve_farkas_pricing_step(
         NodeVisitationBranchingConstraint,
         RyanFosterBranchingConstraint,
     )
+    from logic.src.policies.helpers.solvers_and_matheuristics.pricing.solver import PricingStatus
 
     _FARKAS_TOL: float = 1e-6
 
@@ -167,7 +214,13 @@ def solve_farkas_pricing_step(
         for bc in branching_constraints:
             if isinstance(bc, NodeVisitationBranchingConstraint) and bc.forced:
                 forced_nodes.add(bc.node)
-            elif isinstance(bc, RyanFosterBranchingConstraint) and bc.together:
+            elif isinstance(bc, RyanFosterBranchingConstraint) and not bc.together:
+                # Ryan-Foster "separate" branches imply separation conflicts
+                # (per branching/constraints.py docs and the RCSPP preprocessing
+                # of branching constraints in pricing/solver.py). NOTE: latent
+                # today — the kwarg is stored on the solver (pricing/solver.py)
+                # but never fed into the label-correcting algorithm, so this
+                # sign fix changes no active behaviour.
                 rf_conflicts.setdefault(bc.node_r, set()).add(bc.node_s)
                 rf_conflicts.setdefault(bc.node_s, set()).add(bc.node_r)
             elif isinstance(bc, EdgeBranchingConstraint) and not bc.must_use:
@@ -204,6 +257,18 @@ def solve_farkas_pricing_step(
             added += 1
             exhausted = False
 
+    if strict_certification:
+        # Explicit certification: only an exhaustive solve with no timeout and
+        # last_max_rc <= _FARKAS_TOL can certify exhaustion.
+        pricer_status = getattr(pricing_solver, "pricing_status", PricingStatus.PARTIAL)
+        pricer_timed_out = getattr(pricing_solver, "_timed_out", False)
+        last_max_rc = getattr(pricing_solver, "last_max_rc", -float("inf"))
+        exhausted = (
+            pricer_status == PricingStatus.EXHAUSTIVE
+            and not pricer_timed_out
+            and last_max_rc <= _FARKAS_TOL
+        )
+
     return added, exhausted
 
 
@@ -221,6 +286,7 @@ def solve_pricing_step(
     rc_tolerance: float = 1e-5,
     timeout: Optional[float] = None,
     exact_mode: bool = False,
+    strict_certification: bool = False,
 ) -> Tuple[int, bool]:
     """Generate profitable columns for Phase II column generation.
 
@@ -236,17 +302,23 @@ def solve_pricing_step(
         rc_tolerance:          Minimum reduced cost to accept a column.
         timeout:               Per-call wall-clock limit.
         exact_mode:            Forwarded to the RCSPP (disables neighbourhood truncation).
+        strict_certification:  Compute a solver-certified exhaustion flag
+                               (MS-BPC-SP semantics) instead of the weak
+                               ``last_max_rc <= optimality_gap`` heuristic.
 
     Returns:
         (n_added, pricing_exhausted)
             n_added           — number of columns added.
-            pricing_exhausted — True when max reduced cost ≤ optimality_gap.
+            pricing_exhausted — True when max reduced cost ≤ optimality_gap
+                                (weak) or when the solver certified exhaustion
+                                (strict).
     """
     from logic.src.policies.helpers.solvers_and_matheuristics.branching.constraints import (
         EdgeBranchingConstraint,
         NodeVisitationBranchingConstraint,
         RyanFosterBranchingConstraint,
     )
+    from logic.src.policies.helpers.solvers_and_matheuristics.pricing.solver import PricingStatus
 
     dual_info = master.get_reduced_cost_coefficients()
     node_duals: Dict[int, float] = dual_info.get("node_duals", {})
@@ -262,7 +334,13 @@ def solve_pricing_step(
             if isinstance(bc, NodeVisitationBranchingConstraint) and bc.forced:
                 forced_nodes.add(bc.node)
             elif isinstance(bc, RyanFosterBranchingConstraint):
-                if bc.together:
+                if not bc.together:
+                    # Ryan-Foster "separate" branches imply separation conflicts
+                    # (per branching/constraints.py docs and the RCSPP
+                    # preprocessing of branching constraints in pricing/solver.py).
+                    # NOTE: latent today — the kwarg is stored on the solver
+                    # (pricing/solver.py) but never fed into the label-correcting
+                    # algorithm, so this sign fix changes no active behaviour.
                     rf_conflicts.setdefault(bc.node_r, set()).add(bc.node_s)
                     rf_conflicts.setdefault(bc.node_s, set()).add(bc.node_r)
             elif isinstance(bc, EdgeBranchingConstraint):
@@ -299,7 +377,20 @@ def solve_pricing_step(
             if master.add_route(route):
                 added += 1
 
-    pricing_exhausted = getattr(pricing_solver, "last_max_rc", 0.0) <= optimality_gap
+    if strict_certification:
+        # Explicit pricing certification: only an EXHAUSTIVE solve that didn't
+        # time out with maximum reduced cost <= rc_tolerance can certify
+        # exhaustion (MS-BPC-SP semantics).
+        pricer_status = getattr(pricing_solver, "pricing_status", PricingStatus.PARTIAL)
+        pricer_timed_out = getattr(pricing_solver, "_timed_out", False)
+        last_max_rc = getattr(pricing_solver, "last_max_rc", -float("inf"))
+        pricing_exhausted = (
+            pricer_status == PricingStatus.EXHAUSTIVE
+            and not pricer_timed_out
+            and last_max_rc <= rc_tolerance
+        )
+    else:
+        pricing_exhausted = getattr(pricing_solver, "last_max_rc", 0.0) <= optimality_gap
     return added, pricing_exhausted
 
 

@@ -4,10 +4,11 @@ from unittest.mock import MagicMock, Mock
 
 import numpy as np
 import pytest
+from logic.src.configs.policies.ms_bpc_sp import MSBPCSPConfig
+from logic.src.policies.routing.base.sub_problem import SolveResult, build_subproblem
 from logic.src.policies.routing.exact_and_decomposition_solvers.multi_stage_branch_and_price_and_cut_with_set_partition import (
     ms_bpc_sp_engine as engine,
 )
-from logic.src.configs.policies.ms_bpc_sp import MSBPCSPConfig
 
 
 @pytest.mark.parametrize("fleet,expired", [(2, True), (None, False)])
@@ -17,14 +18,17 @@ def test_empty_result_does_not_restart_expired_or_unlimited_solve(monkeypatch, f
     monkeypatch.setattr(engine.time, "perf_counter", lambda: next(ticks))
     monkeypatch.setattr(engine, "_select_nodes_knapsack", Mock(return_value={1}))
     original = engine.run_ms_bpc_sp
-    retry = Mock(return_value=([], 0.0))
+    retry = Mock(return_value=SolveResult([], 0.0, 0.0))
     monkeypatch.setattr(engine, "run_ms_bpc_sp", retry)
-    params = MSBPCSPConfig(time_limit=1.0, max_bb_nodes=0)
+    cfg = MSBPCSPConfig(time_limit=1.0, max_bb_nodes=0)
     matrix = np.array([[0.0, 1.0, 1.0], [1.0, 0.0, 2.0], [1.0, 2.0, 0.0]])
-    routes, value = original(matrix, {1: 1.0, 2: 1.0}, 10.0, 0.0, 1.0, params=params, vehicle_limit=fleet)
+    routes, _profit, _cost = original(
+        build_subproblem(matrix, {1: 1.0, 2: 1.0}, 10.0, 0.0, 1.0, n_vehicles=fleet),
+        cfg,
+    )
     assert routes == []
     retry.assert_not_called()
-    assert params.time_limit == 1.0
+    assert cfg.time_limit == 1.0
 
 
 def test_retry_receives_only_remaining_budget(monkeypatch):
@@ -33,11 +37,11 @@ def test_retry_receives_only_remaining_budget(monkeypatch):
     monkeypatch.setattr(engine.time, "perf_counter", lambda: next(ticks))
     monkeypatch.setattr(engine, "VRPPMasterProblem", MagicMock())
     monkeypatch.setattr(engine, "_select_nodes_knapsack", Mock(return_value={1}))
-    retry = Mock(return_value=([], 0.0))
+    retry = Mock(return_value=SolveResult([], 0.0, 0.0))
     monkeypatch.setattr(engine, "run_ms_bpc_sp", retry)
-    params = MSBPCSPConfig(time_limit=1.0, max_bb_nodes=0)
+    cfg = MSBPCSPConfig(time_limit=1.0, max_bb_nodes=0)
     matrix = np.array([[0.0, 1.0, 1.0], [1.0, 0.0, 2.0], [1.0, 2.0, 0.0]])
-    original(matrix, {1: 1.0, 2: 1.0}, 10.0, 0.0, 1.0, params=params, vehicle_limit=2)
+    original(build_subproblem(matrix, {1: 1.0, 2: 1.0}, 10.0, 0.0, 1.0, n_vehicles=2), cfg)
     assert retry.call_count == 1
-    assert retry.call_args.kwargs["params"].time_limit == pytest.approx(0.75)
-    assert params.time_limit == 1.0
+    assert retry.call_args.kwargs["cfg"].time_limit == pytest.approx(0.75)
+    assert cfg.time_limit == 1.0

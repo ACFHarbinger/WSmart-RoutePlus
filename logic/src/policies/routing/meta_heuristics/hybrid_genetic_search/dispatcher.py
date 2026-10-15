@@ -7,79 +7,68 @@ Attributes:
     run_hgs: Main entry point for running HGS.
 
 Example:
-    >>> routes, profit, cost = run_hgs(dist_matrix, wastes, capacity, R, C, values)
+    >>> routes, profit, cost = run_hgs(problem, values)
 """
 
 import dataclasses
-from typing import Any, Dict, List, Optional, Tuple, Union
-
-import numpy as np
+from typing import Any, Dict, Optional, Union
 
 from logic.src.configs.policies.hgs import HGSConfig
+from logic.src.policies.routing.base.sub_problem import SolveResult, SubProblem
 
 from .hgs import HGSSolver
 from .pyvrp_wrapper import solve_pyvrp
 
 
 def run_hgs(
-    dist_matrix: np.ndarray,
-    wastes: Dict[int, float],
-    capacity: float,
-    R: float,
-    C: float,
-    values: Optional[Union[HGSConfig, Dict[str, Any]]] = None,
-    mandatory_nodes: Optional[List[int]] = None,
-    x_coords: Optional[np.ndarray] = None,
-    y_coords: Optional[np.ndarray] = None,
-    *args: Any,
-) -> Tuple[List[List[int]], float, float]:
+    problem: SubProblem,
+    cfg: Optional[Union[HGSConfig, Dict[str, Any]]] = None,
+) -> SolveResult:
     """
     Main HGS entry point with dispatching logic.
 
+    P-30: takes the consolidated sub-problem value object plus the typed
+    config; coordinates come from ``problem.x_coords``/``problem.y_coords``.
+
     Args:
-        dist_matrix: Distance matrix.
-        wastes: Bin wastes.
-        capacity: Vehicle capacity.
-        R: Revenue multiplier.
-        C: Cost multiplier.
-        values: HGSConfig dataclass or dictionary of parameters and config.
-        mandatory_nodes: List of local node indices that MUST be visited.
-        x_coords: Optional x-coordinates.
-        y_coords: Optional y_coords.
-        args: Additional positional arguments (ignored).
+        problem: The routing sub-problem (distances, wastes, capacity,
+            revenue, cost unit, mandatory nodes, optional coordinates).
+        cfg: HGSConfig dataclass or dictionary of parameters and config.
 
     Returns:
-        Tuple[List[List[int]], float, float]: Best routes, profit, and cost.
+        SolveResult: Best routes, profit, and cost.
     """
-    if isinstance(values, HGSConfig):
-        cfg = values
-    elif isinstance(values, dict):
+    if isinstance(cfg, HGSConfig):
+        config = cfg
+    elif isinstance(cfg, dict):
         valid_keys = {f.name for f in dataclasses.fields(HGSConfig)}
-        filtered = {k: v for k, v in values.items() if k in valid_keys}
-        cfg = HGSConfig(**filtered)
-    elif values is None:
-        cfg = HGSConfig()
+        filtered = {k: v for k, v in cfg.items() if k in valid_keys}
+        config = HGSConfig(**filtered)
+    elif cfg is None:
+        config = HGSConfig()
     else:
-        cfg = values
+        config = cfg
 
-    if getattr(cfg, "engine", "custom") == "pyvrp":
-        vals = values if isinstance(values, dict) else dataclasses.asdict(cfg)
-        return solve_pyvrp(dist_matrix, wastes, capacity, R, C, vals)
+    dist_matrix = problem.dist_matrix
+
+    if getattr(config, "engine", "custom") == "pyvrp":
+        vals = cfg if isinstance(cfg, dict) else dataclasses.asdict(config)
+        return solve_pyvrp(dist_matrix, problem.wastes, problem.capacity, problem.revenue, problem.cost_unit, vals)
 
     if len(dist_matrix) <= 1:
-        return [], 0.0, 0.0
+        return SolveResult([], 0.0, 0.0)
 
     if len(dist_matrix) == 2:
-        d = wastes.get(1, 0)
-        if d <= capacity:
+        d = problem.wastes.get(1, 0)
+        if d <= problem.capacity:
             # Fix 5: Calculate simple profit = revenue - cost
             cost = dist_matrix[0][1] + dist_matrix[1][0]
-            revenue = d * R
-            total_cost = C * cost
+            revenue = d * problem.revenue
+            total_cost = problem.cost_unit * cost
             profit = revenue - total_cost
-            return [[1]], profit, total_cost
+            return SolveResult([[1]], profit, total_cost)
         else:
-            return [], 0.0, 0.0
+            return SolveResult([], 0.0, 0.0)
 
-    solver = HGSSolver(dist_matrix, wastes, capacity, R, C, cfg, mandatory_nodes, x_coords, y_coords)
+    solver = HGSSolver(problem, config)
     return solver.solve()

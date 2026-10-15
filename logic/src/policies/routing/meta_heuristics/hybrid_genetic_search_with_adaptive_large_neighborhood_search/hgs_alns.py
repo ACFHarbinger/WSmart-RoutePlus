@@ -19,6 +19,7 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 
 from logic.src.policies.helpers.operators.crossover_recombination import ordered_crossover
+from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns import (
     ALNSSolver,
 )
@@ -67,12 +68,32 @@ class HGSALNSSolver(HGSSolver):
             None.
         """
         # Initialize parent HGSSolver with HGS params
-        super().__init__(dist_matrix, wastes, capacity, R, C, params.hgs_params, mandatory_nodes)
+        super().__init__(
+            build_subproblem(
+                dist_matrix=dist_matrix,
+                wastes=wastes,
+                capacity=capacity,
+                revenue=R,
+                cost_unit=C,
+                mandatory_nodes=mandatory_nodes or [],
+            ),
+            params.hgs_params,
+        )
 
         self.hgs_alns_params = params
 
         # Initialize ALNS solver for education phase
-        self.alns_solver = ALNSSolver(dist_matrix, wastes, capacity, R, C, params.alns_params)
+        self.alns_solver = ALNSSolver(
+            build_subproblem(
+                dist_matrix=dist_matrix,
+                wastes=wastes,
+                capacity=capacity,
+                revenue=R,
+                cost_unit=C,
+                mandatory_nodes=mandatory_nodes or [],
+            ),
+            params.alns_params,
+        )
 
     def solve(self) -> Tuple[List[List[int]], float, float]:
         """

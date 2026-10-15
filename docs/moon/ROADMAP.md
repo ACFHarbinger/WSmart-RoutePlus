@@ -42,6 +42,8 @@ Tags: `[Quick Win]` ≤ 1 day · `[Research]` involves novel work · `[Blocked]`
 - WP-07 (`refactor/v1-wp07-espprc-envs`, #112): Gemini landed ESPPRC envs, unified `evaluate_tour`, and embedding checkpoint parity. Codex reviews; Claude integrates. Not on `main`.
 - WP-09 (`refactor/v1-wp09-packing-numpy-torch`, #114): Cursor landed P-37 / RQ-codex-1 (NumPy spec + batched Torch adapters + parity), RQ-cursor-3 (EOQ last-minute split out of 1.0.0), and the P-05 follow-up that keeps `vectorized/manager.py` from pulling the unreleased HRL manager into the release. Stacked on WP-07 because WP-08 is not landed; day-loop torch-free remains WP-08. Codex reviews; Claude integrates. Not on `main`.
 - Remaining packages: WP-08 modular simulator, then WP-10/WP-11/WP-13. See `.agent/tasks/simulator-v1-refactor-proposal-2026-10-15.md` §12.
+- Remaining packages: WP-07 ESPPRC envs, WP-08 modular simulator. See `.agent/tasks/simulator-v1-refactor-proposal-2026-10-15.md` §12.
+- WP-11 (`refactor/v1-wp11-solver-consolidation`, #116): one engine contract per solver family. Cursor finished Kimi's P-33 leftover — both BPC engines share `search_bpc_tree`; MS-BPC-SP is knapsack + that walk + Phase 3/5 set partitioning. P-30/P-31/P-34/P-35 already on the branch. Q-14 still waits for `sim chain done`. Codex reviews; Claude integrates. Not on `main`.
 
 ---
 
