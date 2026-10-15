@@ -38,8 +38,6 @@ class FAPolicy(BaseRoutingPolicy):
         Args:
             config: Configuration source for the Discrete Firefly Algorithm.
 
-        Returns:
-            None.
         """
         super().__init__(config)
 

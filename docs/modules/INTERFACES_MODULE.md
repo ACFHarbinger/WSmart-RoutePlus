@@ -1,5 +1,10 @@
 # Abstract Protocols & System Interfaces
 
+> **Status (Q-22):** narrative guide. The API reference is generated into
+> `docs/api/` by `tools/gen_api_docs.py`; this file is not the source of
+> truth for signatures and module inventories.
+
+
 **Module**: `logic/src/interfaces`
 **Purpose**: Comprehensive technical specification of abstract protocols and interfaces ensuring modularity, decoupling, and type safety.
 **Version**: 3.0

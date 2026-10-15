@@ -12,16 +12,6 @@ Attributes:
     encrypt_zip_directory: Zip a directory and then encrypt the resulting zip file.
     decrypt_zip: Decrypt a zip file and extract its contents.
 
-Example:
-    >>> import generate_key
-    >>> import load_key
-    >>> import encode_data
-    >>> import encrypt_file_data
-    >>> import decrypt_file_data
-    >>> import encrypt_directory
-    >>> import decrypt_directory
-    >>> import encrypt_zip_directory
-    >>> import decrypt_zip
 """
 
 from .data import decrypt_file_data, encode_data, encrypt_file_data

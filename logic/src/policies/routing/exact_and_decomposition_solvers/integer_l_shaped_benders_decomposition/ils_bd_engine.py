@@ -87,8 +87,8 @@ class IntegerLShapedEngine:
         """Initialise the engine.
 
         Args:
-            model (VRPPModel): VRPPModel instance (network structure, costs, fill levels).
-            params (IntegerLShapedBendersConfig): IntegerLShapedBendersConfig configuring Benders iterations, scenarios, penalties.
+            model: VRPPModel instance (network structure, costs, fill levels).
+            params: IntegerLShapedBendersConfig configuring Benders iterations, scenarios, penalties.
         """
         self.model = model
         self.params = params
@@ -115,10 +115,10 @@ class IntegerLShapedEngine:
         """Run the (standard or Multi-Period) Integer L-Shaped Benders decomposition.
 
         Args:
-            tree (ScenarioTree): A ScenarioTree object.
-            demand_matrix (Optional[np.ndarray]): Optional mean demand increments per day per node.
-            bin_capacities (Optional[np.ndarray]): Optional bin capacities per node.
-            initial_inventory (Optional[np.ndarray]): Optional initial fill levels per node.
+            tree: A ScenarioTree object.
+            demand_matrix: Optional mean demand increments per day per node.
+            bin_capacities: Optional bin capacities per node.
+            initial_inventory: Optional initial fill levels per node.
 
         Returns:
             Tuple[List[List[int]], Dict[int, float], float, Dict[str, Any]]: A tuple containing:
@@ -299,8 +299,8 @@ class IntegerLShapedEngine:
         BaseRoutingPolicy (``profit = revenue − travel_cost``).
 
         Args:
-            routes (List[List[int]]): Customer-only route lists from the master problem.
-            y_hat (Dict[int, float]): Binary visit decisions {node_idx: 0.0/1.0}.
+            routes: Customer-only route lists from the master problem.
+            y_hat: Binary visit decisions {node_idx: 0.0/1.0}.
 
         Returns:
             float: Net profit in the problem's monetary units.

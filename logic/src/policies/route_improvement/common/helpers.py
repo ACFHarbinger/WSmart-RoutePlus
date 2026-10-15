@@ -31,8 +31,8 @@ def resolve_mandatory_nodes(
         3. config["mandatory_nodes"] — config file default
 
     Args:
-        kwargs (Dict[str, Any]): Keyword arguments passed to the process method.
-        config (Dict[str, Any]): Internal configuration dictionary of the improver.
+        kwargs: Keyword arguments passed to the process method.
+        config: Internal configuration dictionary of the improver.
 
     Returns:
         Optional[List[int]]: List of mandatory node IDs, or None if not found.
@@ -50,9 +50,9 @@ def upgrade_repair_op_to_profit(repair_op: str, revenue_kg: float, cost_per_km: 
     """Return the profit-aware variant of a repair operator.
 
     Args:
-        repair_op (str): Name of the repair operator.
-        revenue_kg (float): Revenue per kg of waste.
-        cost_per_km (float): Cost per km of distance.
+        repair_op: Name of the repair operator.
+        revenue_kg: Revenue per kg of waste.
+        cost_per_km: Cost per km of distance.
 
     Returns:
         str: The updated operator name with "_profit" suffix if applicable.
@@ -66,7 +66,7 @@ def to_numpy(distance_matrix: Any) -> np.ndarray:
     """Safely convert distance matrix to numpy array, handling Torch tensors.
 
     Args:
-        distance_matrix (Any): Input distance matrix (array, tensor, or list).
+        distance_matrix: Input distance matrix (array, tensor, or list).
 
     Returns:
         np.ndarray: The distance matrix as a numpy array.
@@ -82,7 +82,7 @@ def split_tour(tour: Sequence[int]) -> List[List[int]]:
     """Split a multi-trip tour separated by depot 0s into per-trip lists.
 
     Args:
-        tour (Sequence[int]): A sequence of node IDs representing a tour.
+        tour: A sequence of node IDs representing a tour.
 
     Returns:
         List[List[int]]: A list of routes, where each route is a list of node IDs.
@@ -105,7 +105,7 @@ def assemble_tour(routes: Sequence[Sequence[int]]) -> List[int]:
     """Reassemble per-trip routes into a depot-separated tour.
 
     Args:
-        routes (Sequence[Sequence[int]]): Sequence of routes to assemble.
+        routes: Sequence of routes to assemble.
 
     Returns:
         List[int]: A single tour starting and ending with the depot (0).
@@ -122,8 +122,8 @@ def route_distance(route: Sequence[int], dm: np.ndarray) -> float:
     """Length of a single route, including depot-out and depot-return legs.
 
     Args:
-        route (Sequence[int]): Sequence of node IDs in the route.
-        dm (np.ndarray): Distance matrix.
+        route: Sequence of node IDs in the route.
+        dm: Distance matrix.
 
     Returns:
         float: The total distance of the route.
@@ -140,8 +140,8 @@ def tour_distance(routes: Iterable[Sequence[int]], dm: np.ndarray) -> float:
     """Total distance over all routes.
 
     Args:
-        routes (Iterable[Sequence[int]]): Collection of routes.
-        dm (np.ndarray): Distance matrix.
+        routes: Collection of routes.
+        dm: Distance matrix.
 
     Returns:
         float: Total distance of all routes combined.
@@ -153,8 +153,8 @@ def route_load(route: Sequence[int], wastes: Dict[int, float]) -> float:
     """Sum of waste masses for a single route.
 
     Args:
-        route (Sequence[int]): Sequence of node IDs in the route.
-        wastes (Dict[int, float]): Dictionary mapping node IDs to their waste mass.
+        route: Sequence of node IDs in the route.
+        wastes: Dictionary mapping node IDs to their waste mass.
 
     Returns:
         float: Total load of the route.

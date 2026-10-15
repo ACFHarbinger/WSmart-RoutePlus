@@ -62,7 +62,7 @@ def _canonical(route: List[int]) -> Tuple[int, ...]:
     """Canonical form for symmetric-distance deduplication.
 
     Args:
-        route (List[int]): The route sequence to canonicalize.
+        route: The route sequence to canonicalize.
 
     Returns:
         Tuple[int, ...]: The canonical representation of the route.
@@ -97,8 +97,8 @@ class SetPartitioningRouteImprover(IRouteImprovement):
         """Apply Set Partitioning intensification to the tour.
 
         Args:
-            tour (List[int]): Initial tour sequence (list of bin IDs including depot 0s).
-            kwargs (Any): Search context, including:
+            tour: Initial tour sequence (list of bin IDs including depot 0s).
+            kwargs: Search context, including:
                 - distance_matrix (np.ndarray): The distance matrix.
                 - sp_n_perturbations (int): Number of LNS perturbations for pool.
                 - sp_include_dp (bool): Whether to include DP-optimized variants.
@@ -157,10 +157,8 @@ class SetPartitioningRouteImprover(IRouteImprovement):
                 """Adds a candidate route to the pool if it is unique.
 
                 Args:
-                    route (List[int]): The sequence of node IDs to potentially add.
+                    route: The sequence of node IDs to potentially add.
 
-                Returns:
-                    None
                 """
                 if not route:
                     return

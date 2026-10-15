@@ -78,8 +78,6 @@ class GASolver:
             params: GA parameters.
             mandatory_nodes: Optional list of nodes that must be visited.
 
-        Returns:
-            None.
         """
         self.dist_matrix = dist_matrix
         self.wastes = wastes

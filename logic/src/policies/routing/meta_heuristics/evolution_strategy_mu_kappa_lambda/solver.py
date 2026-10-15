@@ -79,8 +79,6 @@ class MuKappaLambdaESSolver:
             params: Configuration for (μ,κ,λ) parameters.
             mandatory_nodes: Nodes that must be included.
 
-        Returns:
-            None.
         """
         self.dist_matrix = dist_matrix
         self.wastes = wastes
@@ -388,8 +386,6 @@ class MuKappaLambdaESSolver:
         Args:
             population: Current population to select the best from.
 
-        Returns:
-            None.
         """
         current_best = max(population, key=lambda ind: ind.fitness)
         if self.best_individual is None or current_best.fitness > self.best_individual.fitness:

@@ -78,8 +78,6 @@ class PheromoneTau:
             j: Destination node.
             value: Pheromone value to set.
 
-        Returns:
-            None
         """
         value = max(self.tau_min, min(self.tau_max, value))
 
@@ -117,8 +115,6 @@ class PheromoneTau:
         Args:
             rho: Evaporation rate.
 
-        Returns:
-            None
         """
         for i in self._pheromone:
             for j in list(self._pheromone[i].keys()):

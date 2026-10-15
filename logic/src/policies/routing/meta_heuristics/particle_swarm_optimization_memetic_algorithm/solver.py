@@ -73,13 +73,13 @@ class PSOMASolver:
         """Initializes the PSOMA solver.
 
         Args:
-            dist_matrix (np.ndarray): Symmetric distance matrix.
-            wastes (Dict[int, float]): Mapping of bin IDs to waste quantities.
-            capacity (float): Maximum vehicle collection capacity.
-            R (float): Revenue per kg of waste.
-            C (float): Cost per km traveled.
+            dist_matrix: Symmetric distance matrix.
+            wastes: Mapping of bin IDs to waste quantities.
+            capacity: Maximum vehicle collection capacity.
+            R: Revenue per kg of waste.
+            C: Cost per km traveled.
             params: PSOMA configuration dataclass or dictionary.
-            mandatory_nodes (Optional[List[int]]): Nodes that must be visited.
+            mandatory_nodes: Nodes that must be visited.
         """
 
         self.dist_matrix = dist_matrix
@@ -304,11 +304,11 @@ class PSOMASolver:
         """Updates the global best solution.
 
         Args:
-            X (np.ndarray): Global best position.
-            giant_tour (np.ndarray): Global best tour.
-            mapping (np.ndarray): Global best mapping.
-            routes (List[List[int]]): Global best routes.
-            profit (float): Global best profit.
+            X: Global best position.
+            giant_tour: Global best tour.
+            mapping: Global best mapping.
+            routes: Global best routes.
+            profit: Global best profit.
         """
         self.gbest_X = np.copy(X)
         self.gbest_giant_tour = np.copy(giant_tour)
@@ -320,7 +320,7 @@ class PSOMASolver:
         """Calculates the total travel cost for a given set of routes.
 
         Args:
-            routes (List[List[int]]): The routing solution to evaluate.
+            routes: The routing solution to evaluate.
 
         Returns:
             float: The total travel cost.
@@ -342,8 +342,6 @@ class PSOMASolver:
         based on the improvement they bring to the current best solution. The rewards are updated
         to reflect the effectiveness of each operator.
 
-        Returns:
-            None
         """
         for i, op in enumerate(self.operators):
             if self._out_of_time():
@@ -360,8 +358,6 @@ class PSOMASolver:
         applied to the global best solution, and the rewards are updated based on the
         improvement achieved.
 
-        Returns:
-            None
         """
         op_idx = int(self.np_rng.choice(3, p=self.probabilities))
         op = self.operators[op_idx]
@@ -382,7 +378,7 @@ class PSOMASolver:
         """Performs simulated annealing search starting from the global best solution.
 
         Args:
-            operator (Callable): The operator to apply to the current solution.
+            operator: The operator to apply to the current solution.
 
         Returns:
             Tuple[float, np.ndarray, np.ndarray, List[List[int]]]: A tuple containing:
@@ -432,8 +428,6 @@ class PSOMASolver:
     def _update_probabilities(self) -> None:
         """Updates the probabilities for operator selection based on rewards.
 
-        Returns:
-            None
         """
         epsilon = 0.05  # 5% minimum probability for any operator
 
@@ -453,9 +447,9 @@ class PSOMASolver:
         Performs swap mutation on the tour and position vector.
 
         Args:
-            tour (np.ndarray): The tour to perform swap mutation on.
-            X (np.ndarray): The position vector to perform swap mutation on.
-            mapping (np.ndarray): The mapping vector to perform swap mutation on.
+            tour: The tour to perform swap mutation on.
+            X: The position vector to perform swap mutation on.
+            mapping: The mapping vector to perform swap mutation on.
 
         Returns:
             Tuple[np.ndarray, np.ndarray, np.ndarray, float]: A tuple containing:
@@ -513,9 +507,9 @@ class PSOMASolver:
         Performs insert mutation on the tour and position vector.
 
         Args:
-            tour (np.ndarray): The tour to perform insert mutation on.
-            X (np.ndarray): The position vector to perform insert mutation on.
-            mapping (np.ndarray): The mapping vector to perform insert mutation on.
+            tour: The tour to perform insert mutation on.
+            X: The position vector to perform insert mutation on.
+            mapping: The mapping vector to perform insert mutation on.
 
         Returns:
             Tuple[np.ndarray, np.ndarray, np.ndarray, float]: A tuple containing:
@@ -576,9 +570,9 @@ class PSOMASolver:
         Performs inverse mutation on the tour and position vector.
 
         Args:
-            tour (np.ndarray): The tour to perform inverse mutation on.
-            X (np.ndarray): The position vector to perform inverse mutation on.
-            mapping (np.ndarray): The mapping vector to perform inverse mutation on.
+            tour: The tour to perform inverse mutation on.
+            X: The position vector to perform inverse mutation on.
+            mapping: The mapping vector to perform inverse mutation on.
 
         Returns:
             Tuple[np.ndarray, np.ndarray, np.ndarray, float]: A tuple containing:

@@ -57,8 +57,6 @@ class AdaptiveOperatorManager:
             reaction_factor: Rate of weight updates (0.0-1.0).
             decay_parameter: Exponential decay rate for weights (0.0-1.0).
 
-        Returns:
-            None.
         """
         self.reaction_factor = reaction_factor
         self.decay_parameter = decay_parameter
@@ -104,8 +102,6 @@ class AdaptiveOperatorManager:
             repair_op: Name of the repair operator used.
             score: Performance score (higher is better).
 
-        Returns:
-            None.
         """
         self.destroy_scores[destroy_op] += score
         self.repair_scores[repair_op] += score
@@ -123,8 +119,6 @@ class AdaptiveOperatorManager:
         Args:
             None.
 
-        Returns:
-            None.
         """
         for op in self.destroy_weights:
             if self.destroy_counts[op] > 0:
@@ -150,8 +144,6 @@ class AdaptiveOperatorManager:
         Args:
             None.
 
-        Returns:
-            None.
         """
         pass
 
@@ -248,8 +240,6 @@ class RuinRecreateOperator:
             params: HGSRR parameters.
             split_manager: Split algorithm manager for evaluating giant tours.
 
-        Returns:
-            None.
         """
         self.dist_matrix = dist_matrix
         self.wastes = wastes

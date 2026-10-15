@@ -46,9 +46,9 @@ class DemonAlgorithm(IAcceptanceCriterion):
         """Initialize the Demon Algorithm.
 
         Args:
-            warm_up_steps (int): Number of initial moves used to estimate initial
+            warm_up_steps: Number of initial moves used to estimate initial
                 demon credit. Defaults to 5.
-            maximization (bool): Whether the problem is maximization. Defaults to False.
+            maximization: Whether the problem is maximization. Defaults to False.
         """
         self.warm_up_steps = warm_up_steps
         self.maximization = maximization
@@ -61,7 +61,7 @@ class DemonAlgorithm(IAcceptanceCriterion):
         """Initialize the criterion state.
 
         Args:
-            initial_objective (ObjectiveValue): The initial solution's objective.
+            initial_objective: The initial solution's objective.
         """
         initial_objective = cast(float, initial_objective)
         pass
@@ -72,9 +72,9 @@ class DemonAlgorithm(IAcceptanceCriterion):
         """Determine whether to accept based on current demon credit.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            kwargs: Additional context.
 
         Returns:
             Tuple[bool, AcceptanceMetrics]: A tuple containing:
@@ -123,10 +123,10 @@ class DemonAlgorithm(IAcceptanceCriterion):
         """Update the demon credit based on the transition result.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            accepted (bool): Whether the move was accepted.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            accepted: Whether the move was accepted.
+            kwargs: Additional context.
         """
         current_obj = cast(float, current_obj)
         candidate_obj = cast(float, candidate_obj)

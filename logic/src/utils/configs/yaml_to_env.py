@@ -135,8 +135,6 @@ def main() -> None:
     Args:
         None
 
-    Returns:
-        None
     """
     if len(sys.argv) < 2:
         print("Usage: python yaml_to_env.py <config1.yaml> [<config2.yaml> ...]", file=sys.stderr)

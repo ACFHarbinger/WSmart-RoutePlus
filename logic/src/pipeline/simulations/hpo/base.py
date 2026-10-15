@@ -37,8 +37,8 @@ class PolicyHPOBase(ABC):
         """Initialize PolicyHPO.
 
         Args:
-            cfg (Config): Root application configuration.
-            search_space (Optional[Dict[str, Any]]): Search space for this policy.
+            cfg: Root application configuration.
+            search_space: Search space for this policy.
         """
         self.cfg = cfg
         self.search_space = search_space or {}
@@ -51,7 +51,7 @@ class PolicyHPOBase(ABC):
         """Run a full simulation trial.
 
         Args:
-            cfg (Config): Config object with sampled parameters already applied.
+            cfg: Config object with sampled parameters already applied.
 
         Returns:
             Union[float, List[float]]: Metric value(s).
@@ -65,8 +65,8 @@ class PolicyHPOBase(ABC):
         By default, this simply runs the full simulation and yields the final result.
 
         Args:
-            cfg (Config): Config with sampled parameters.
-            max_steps (int): Maximum resource budget.
+            cfg: Config with sampled parameters.
+            max_steps: Maximum resource budget.
 
         Yields:
             Union[float, List[float]]: Intermediate metrics.
@@ -77,7 +77,7 @@ class PolicyHPOBase(ABC):
         """Suggest all parameters in the search space for a trial.
 
         Args:
-            trial (optuna.Trial): The Optuna trial object.
+            trial: The Optuna trial object.
 
         Returns:
             Dict[str, Any]: Mapping of (possibly dot-separated) config paths to values.
@@ -91,8 +91,8 @@ class PolicyHPOBase(ABC):
         (e.g., 'sim.full_policies.0.alns.max_iterations').
 
         Args:
-            cfg (Config): Config object to mutate with new parameters.
-            params (Dict[str, Any]): Dictionary mapping dot-separated paths to values.
+            cfg: Config object to mutate with new parameters.
+            params: Dictionary mapping dot-separated paths to values.
 
         Raises:
             AttributeError: If a segment of the config path cannot be resolved.
@@ -134,9 +134,9 @@ class PolicyHPOBase(ABC):
         misconfigured JSON files are caught immediately rather than mid-trial.
 
         Args:
-            space (Dict[str, Any]): The search space dict mapping parameter names
+            space: The search space dict mapping parameter names
                 to their specification dicts.
-            policy_name (str): Policy name used in error messages for context.
+            policy_name: Policy name used in error messages for context.
 
         Raises:
             ValueError: If any parameter specification is missing required keys
@@ -180,12 +180,12 @@ class PolicyHPOBase(ABC):
         afterward, so callers always receive the original type.
 
         Args:
-            trial (optuna.Trial): Optuna trial object for parameter sampling.
-            name (str): Short name of the parameter as registered with Optuna.
+            trial: Optuna trial object for parameter sampling.
+            name: Short name of the parameter as registered with Optuna.
                 This must be consistent across all calls for the same parameter
                 so that Optuna's internal bookkeeping and study resumption work
                 correctly.
-            spec (Dict[str, Any]): Specification dictionary with keys:
+            spec: Specification dictionary with keys:
                 - type (str): 'float', 'int', or 'categorical'.
                 - low (numeric): Lower bound (float/int only).
                 - high (numeric): Upper bound (float/int only).
@@ -235,15 +235,15 @@ class PolicyHPOBase(ABC):
         """Construct the Optuna sampler corresponding to the configured method.
 
         Args:
-            method (str): Sampler identifier. Supported values:
+            method: Sampler identifier. Supported values:
                 - 'tpe'      – Tree-structured Parzen Estimator (default).
                 - 'random'   – Uniform random search.
                 - 'grid'     – Exhaustive grid search (requires finite, bounded space).
                 - 'cmaes'    – CMA-ES (best for continuous, correlated ALNS-style spaces).
                 - 'nsgaii'   – NSGA-II (required for multi-objective studies).
                 - 'botorch'  – Bayesian optimisation with GP surrogate (expensive trials).
-            seed (int): Random seed for reproducibility.
-            search_space (Optional[Dict[str, Any]]): Full search space spec; required
+            seed: Random seed for reproducibility.
+            search_space: Full search space spec; required
                 when method='grid' to enumerate the grid.
 
         Returns:
@@ -305,7 +305,7 @@ def _build_grid_from_search_space(search_space: Dict[str, Any]) -> Dict[str, Lis
     enumerated and will raise a ValueError.
 
     Args:
-        search_space (Dict[str, Any]): Search space specification.
+        search_space: Search space specification.
 
     Returns:
         Dict[str, List[Any]]: Grid mapping parameter names to candidate lists.

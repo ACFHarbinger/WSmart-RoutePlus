@@ -39,8 +39,8 @@ class OperatorSelectionPolicy(nn.Module):
         """Initialise the operator selection policy.
 
         Args:
-            state_dim (int): Dimension of the input state vector.
-            n_operators (int): Number of available operators (output dimension).
+            state_dim: Dimension of the input state vector.
+            n_operators: Number of available operators (output dimension).
         """
         super().__init__()
         self.net = nn.Sequential(
@@ -51,7 +51,7 @@ class OperatorSelectionPolicy(nn.Module):
         """Forward pass to compute operator probabilities.
 
         Args:
-            state (torch.Tensor): The input state vector.
+            state: The input state vector.
 
         Returns:
             torch.Tensor: Probability distribution over operators.
@@ -84,7 +84,7 @@ class NeuralSelectorRouteImprover(IRouteImprovement):
         """Initialise the neural selector.
 
         Args:
-            config (Optional[Dict[str, Any]]): Configuration dictionary.
+            config: Configuration dictionary.
         """
         super().__init__(config=config or {})
         self.operators = ["steepest_two_opt", "cross_exchange", "or_opt", "ruin_recreate"]
@@ -98,11 +98,11 @@ class NeuralSelectorRouteImprover(IRouteImprovement):
         """Constructs a dimensionless state vector.
 
         Args:
-            current_cost (float): Cost of the current tour.
-            best_cost (float): Best cost found so far.
-            iteration (int): Current iteration number.
-            max_iter (int): Maximum number of iterations.
-            stagnation (int): Number of iterations without improvement.
+            current_cost: Cost of the current tour.
+            best_cost: Best cost found so far.
+            iteration: Current iteration number.
+            max_iter: Maximum number of iterations.
+            stagnation: Number of iterations without improvement.
 
         Returns:
             torch.Tensor: Dimensionsless state vector [gap, progress, stagnation, bias].
@@ -115,8 +115,8 @@ class NeuralSelectorRouteImprover(IRouteImprovement):
         """Apply neural operator selection to improve the tour.
 
         Args:
-            tour (List[int]): The initial tour sequence.
-            kwargs (Any): Search context, including 'distance_matrix'.
+            tour: The initial tour sequence.
+            kwargs: Search context, including 'distance_matrix'.
 
         Returns:
             Tuple[List[int], ImprovementMetrics]: Improved tour and metadata.

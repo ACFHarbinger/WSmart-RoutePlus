@@ -40,7 +40,7 @@ class LateAcceptance(IAcceptanceCriterion):
         """Initialize the LAHC criterion.
 
         Args:
-            queue_size (int): The length of the historical memory queue (L).
+            queue_size: The length of the historical memory queue (L).
         """
         self.L = max(1, queue_size)
         self.history: List[float] = []
@@ -50,7 +50,7 @@ class LateAcceptance(IAcceptanceCriterion):
         """Initialize the historical memory with the starting objective.
 
         Args:
-            initial_objective (ObjectiveValue): The initial solution's objective.
+            initial_objective: The initial solution's objective.
         """
         initial_objective = cast(float, initial_objective)
         # Populate the entire circular array with the starting objective
@@ -63,9 +63,9 @@ class LateAcceptance(IAcceptanceCriterion):
         """Determine whether to accept based on current and historical costs.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            kwargs: Additional context.
 
         Returns:
             Tuple[bool, AcceptanceMetrics]: A tuple containing:
@@ -87,10 +87,10 @@ class LateAcceptance(IAcceptanceCriterion):
         """Update the history queue with the cost of the accepted solution.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            accepted (bool): Whether the move was accepted.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            accepted: Whether the move was accepted.
+            kwargs: Additional context.
         """
         current_obj = cast(float, current_obj)
         candidate_obj = cast(float, candidate_obj)

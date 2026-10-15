@@ -84,8 +84,6 @@ class GLSSolver:
             params: GLS parameters.
             mandatory_nodes: Optional list of nodes that must be visited.
 
-        Returns:
-            None.
         """
         self.dist_matrix = dist_matrix
         self.wastes = wastes
@@ -241,8 +239,6 @@ class GLSSolver:
         Args:
             routes: Current local optimum routes.
 
-        Returns:
-            None.
         """
         edges = self._get_edges(routes)
         if not edges:

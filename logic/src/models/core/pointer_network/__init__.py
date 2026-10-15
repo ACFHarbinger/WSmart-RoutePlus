@@ -7,8 +7,6 @@ Attributes:
     PointerNetwork: Standalone LSTM-based pointer architecture.
     PointerNetworkPolicy: Policy adapter for standard training loops.
 
-Example:
-    >>> from logic.src.models.core.pointer_network import PointerNetworkPolicy
 """
 
 from .model import PointerNetwork as PointerNetwork

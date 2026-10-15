@@ -280,10 +280,10 @@ class SSHHSolver:
         so we always use the feasible formula.
 
         Args:
-            new_profit (float): Profit of the new solution.
-            candidate_profit (float): Profit of the candidate solution.
-            best_profit (float): Profit of the best solution.
-            elapsed (float): Elapsed time.
+            new_profit: Profit of the new solution.
+            candidate_profit: Profit of the candidate solution.
+            best_profit: Profit of the best solution.
+            elapsed: Elapsed time.
 
         Returns:
             bool: Whether the new solution is accepted.
@@ -311,7 +311,7 @@ class SSHHSolver:
         P(j) = scores[j] / Σ_k scores[k]   (Eq. 2 for TMatrix, Eq. 3 for ASMatrix)
 
         Args:
-            scores (np.ndarray): Array of raw scores.
+            scores: Array of raw scores.
 
         Returns:
             int: Selected index.
@@ -336,8 +336,8 @@ class SSHHSolver:
         L0: random_removal + greedy_insertion.
 
         Args:
-            routes (List[List[int]]): List of routes.
-            n (int): Number of nodes.
+            routes: List of routes.
+            n: Number of nodes.
 
         Returns:
             List[List[int]]: List of routes after applying the heuristic.
@@ -365,8 +365,8 @@ class SSHHSolver:
         L1: worst_removal + regret_2_insertion.
 
         Args:
-            routes (List[List[int]]): List of routes.
-            n (int): Number of nodes.
+            routes: List of routes.
+            n: Number of nodes.
 
         Returns:
             List[List[int]]: List of routes after applying the heuristic.
@@ -395,8 +395,8 @@ class SSHHSolver:
         L2: cluster_removal + greedy_insertion.
 
         Args:
-            routes (List[List[int]]): List of routes.
-            n (int): Number of nodes.
+            routes: List of routes.
+            n: Number of nodes.
 
         Returns:
             List[List[int]]: List of routes after applying the heuristic.
@@ -424,8 +424,8 @@ class SSHHSolver:
         L3: worst_removal + greedy_insertion.
 
         Args:
-            routes (List[List[int]]): List of routes.
-            n (int): Number of nodes.
+            routes: List of routes.
+            n: Number of nodes.
 
         Returns:
             List[List[int]]: List of routes after applying the heuristic.
@@ -454,8 +454,8 @@ class SSHHSolver:
         L4: random_removal + regret_2_insertion.
 
         Args:
-            routes (List[List[int]]): List of routes.
-            n (int): Number of nodes.
+            routes: List of routes.
+            n: Number of nodes.
 
         Returns:
             List[List[int]]: List of routes after applying the heuristic.
@@ -482,8 +482,8 @@ class SSHHSolver:
         L5: shaw_removal + greedy_insertion.
 
         Args:
-            routes (List[List[int]]): List of routes.
-            n (int): Number of nodes.
+            routes: List of routes.
+            n: Number of nodes.
 
         Returns:
             List[List[int]]: List of routes after applying the heuristic.
@@ -513,8 +513,8 @@ class SSHHSolver:
         L6: string_removal + regret_2_insertion.
 
         Args:
-            routes (List[List[int]]): List of routes.
-            n (int): Number of nodes.
+            routes: List of routes.
+            n: Number of nodes.
 
         Returns:
             List[List[int]]: List of routes after applying the heuristic.
@@ -563,7 +563,7 @@ class SSHHSolver:
         Calculate net profit for a set of routes.
 
         Args:
-            routes (List[List[int]]): List of routes.
+            routes: List of routes.
 
         Returns:
             float: Net profit.
@@ -578,7 +578,7 @@ class SSHHSolver:
         Calculate total routing distance.
 
         Args:
-            routes (List[List[int]]): List of routes.
+            routes: List of routes.
 
         Returns:
             float: Total routing distance.

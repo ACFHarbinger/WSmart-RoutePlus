@@ -63,7 +63,7 @@ def reset_master_constraints(master: VRPPMasterProblem) -> None:
     """Resets vehicle limits and node senses to their base problem state.
 
     Args:
-        master (VRPPMasterProblem): The master problem instance to reset.
+        master: The master problem instance to reset.
     """
     if master.model is None:
         return
@@ -95,8 +95,8 @@ def apply_route_level_branching_filters(master: VRPPMasterProblem, bc: AnyBranch
     """Applies route-level feasibility filters based on branching constraints.
 
     Args:
-        master (VRPPMasterProblem): The master problem instance.
-        bc (AnyBranchingConstraint): The branching constraint to apply.
+        master: The master problem instance.
+        bc: The branching constraint to apply.
     """
     for route, var in zip(master.routes, master.lambda_vars, strict=False):
         if var.UB > 0.5 and not bc.is_route_feasible(route):
@@ -256,10 +256,10 @@ def perform_strong_branching(  # noqa: C901
     generation subproblems at children, only the sifted master problem.
 
     Args:
-        master (VRPPMasterProblem): The master problem instance.
-        candidates (List[Tuple]): List of branching candidates.
-        current_node (Optional[BranchNode]): Current B&B node.
-        strong_branching_size (int): Number of candidates to evaluate.
+        master: The master problem instance.
+        candidates: List of branching candidates.
+        current_node: Current B&B node.
+        strong_branching_size: Number of candidates to evaluate.
 
     Returns:
         Optional[Tuple]: The best candidate selected by lookahead evaluation.

@@ -17,6 +17,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Docs and cleanup (`2026-10-15`, WP-13)
+
+#### Added
+
+- `tools/trim_docstrings.py` (P-03): the mechanical trimmer for the generated docstring boilerplate — `Returns:`/`Yields:` sections that only document None, `Example:` sections that only `>>> import` the module, and `Args:` entries restating the signature's type hints (`name (Type): ...` becomes `name: ...`). One pass over `logic/src`: 333 files trimmed, 589 lines removed, zero parse failures, idempotent on rerun. `--check` is CI-able.
+- `tools/gen_api_docs.py` (Q-22): generates `docs/api/` — one deterministic markdown page per package (`configs`, `constants`, `data`, `enums`, `envs`, `interfaces`, `models`, `pipeline`, `policies`, `utils`, `controllers`, …) listing every public module with its docstring summary and public class/function inventory. The output is sorted, so a diff against the committed copy detects drift.
+- `docs/api/` (12 package pages + index): the generated API reference. The hand-written `docs/modules/*.md` keep their narrative but carry a banner marking them as not the source of truth (Q-22a: keep the hand-written guides short, keep `docs/moon/` internal).
+
+#### Changed
+
+- **Breaking (doc rule, Q-7b):** both docstring checkers now enforce the relaxed rule instead of the batch-generated style. `check_docstrings.py`: public modules/classes/functions need a docstring; private helpers (leading underscore) and `__init__` (covered by the class docstring) need nothing. `check_google_style.py`: module `Attributes:`/`Example:` and class `Attributes:` sections are optional; an `Args:` section is optional and must not restate type hints; a `Returns:`/`Yields:` section that documents `None` is a defect. The remaining findings under the new rule are pre-existing content debt (127 public functions without docstrings, mostly `enums/registry.py`, `envs/tasks/espprc.py`, and the `wsmart_bin_analysis` submodule), not new regressions — recorded for the per-package review.
+- `logic/release.yaml` (WP-02 follow-up): the env seeds follow the WP-07 layout — `envs.routing.*` is gone; the released problems sit on `logic.src.envs.tasks.{ptp,cptp,tcptp,cvrp}` plus the `envs.tasks.espprc` base/generator (P-23, Q-3a), and `envs/generators/` is unreleased-only. `logic.controllers` seeds are the CLI's three modules. Pending notes: add `models.common.policy_contract` when WP-10 integrates (the P-24 contract), and activate the `wsmart_bin_analysis` exclusion when WP-08's `packages/` move lands. The builder also learned WP-03's `pk_*.yaml` packing-config names and the `packing/base/registry.py` rename; `--check`, `--build` (941 files, closure verified) and the torch-free `--smoke` all pass on the merged WP-07 chain.
+- `rl4co/` clone deleted from the repository root (Q-21): untracked reference material, 172 MB. WSmart-Route stays an independent fork; nothing in the tree referenced it.
+
+#### Removed
+
+- 589 docstring boilerplate lines across 333 files (the trimmer's first pass).
+
+### Scripted migration of the unreleased policies (`2026-10-15`)
 ### Envs on the ESPPRC base (WP-07, `2026-10-15`)
 
 #### Added

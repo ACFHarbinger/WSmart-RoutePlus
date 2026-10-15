@@ -47,9 +47,9 @@ class EpsilonDominanceCriterion(IAcceptanceCriterion):
         """Initialize the Epsilon-Dominance criterion.
 
         Args:
-            epsilon (Union[float, Sequence[float]]): The discretization step size
+            epsilon: The discretization step size
                 for each objective. Can be a scalar for all objectives or a sequence.
-            maximization (bool): Whether to maximize the objectives. Defaults to True.
+            maximization: Whether to maximize the objectives. Defaults to True.
         """
         self.epsilon = epsilon
         self.maximization = maximization
@@ -60,7 +60,7 @@ class EpsilonDominanceCriterion(IAcceptanceCriterion):
         """Initialize the criterion state.
 
         Args:
-            initial_objective (ObjectiveValue): The initial solution's objective.
+            initial_objective: The initial solution's objective.
         """
         # Multi-objective handling usually passes a tuple as current_obj/candidate_obj
         # IAcceptanceCriterion interface signature uses 'float' for type-hinting compatibility,
@@ -71,7 +71,7 @@ class EpsilonDominanceCriterion(IAcceptanceCriterion):
         """Calculate the epsilon-box coordinates for an objective vector.
 
         Args:
-            objs (Sequence[float]): Vector of objective values.
+            objs: Vector of objective values.
 
         Returns:
             Tuple[int, ...]: Grid coordinates of the epsilon-box.
@@ -92,8 +92,8 @@ class EpsilonDominanceCriterion(IAcceptanceCriterion):
         """Determine if box_a dominates box_b.
 
         Args:
-            box_a (Tuple[int, ...]): Grid coordinates of the first box.
-            box_b (Tuple[int, ...]): Grid coordinates of the second box.
+            box_a: Grid coordinates of the first box.
+            box_b: Grid coordinates of the second box.
 
         Returns:
             bool: True if box_a dominates box_b.
@@ -115,9 +115,9 @@ class EpsilonDominanceCriterion(IAcceptanceCriterion):
         """Determine whether to accept based on epsilon-dominance.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            kwargs: Additional context.
 
         Returns:
             Tuple[bool, AcceptanceMetrics]: A tuple containing:
@@ -142,10 +142,10 @@ class EpsilonDominanceCriterion(IAcceptanceCriterion):
         """Update the archive if the candidate was accepted.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            accepted (bool): Whether the move was accepted.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            accepted: Whether the move was accepted.
+            kwargs: Additional context.
         """
         if not accepted:
             return

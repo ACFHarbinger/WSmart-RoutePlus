@@ -83,8 +83,6 @@ class ProfilingReport:
         """
         Load records from the CSV file.
 
-        Returns:
-            None
         """
         if not os.path.exists(self.csv_path):
             return
@@ -341,8 +339,6 @@ class ProfilingReport:
             top_n: Number of top functions / modules to include.
             step: Metric step dimension.
 
-        Returns:
-            None
         """
         with contextlib.suppress(Exception):
             run = get_active_run()

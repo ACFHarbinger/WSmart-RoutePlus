@@ -131,7 +131,7 @@ class AdaptiveRoutingAlgorithmOrchestrator(BaseRoutingPolicy):
         """Initializes the ARCO orchestrator.
 
         Args:
-            config (Any, optional): Configuration dictionary or Hydra config object.
+            config: Configuration dictionary or Hydra config object.
                 If None, default ARCOConfig are used.
         """
         super().__init__(config)

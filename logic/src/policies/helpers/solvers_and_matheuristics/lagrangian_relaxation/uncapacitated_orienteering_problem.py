@@ -49,8 +49,6 @@ def _op_dfj_callback(model: gp.Model, where: int) -> None:
         model: Gurobi model instance.
         where: Callback location code.
 
-    Returns:
-        None.
     """
 
     if where != GRB.Callback.MIPSOL:

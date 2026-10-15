@@ -40,8 +40,8 @@ class OldBachelorAcceptance(IAcceptanceCriterion):
         """Initialize the Old Bachelor criterion.
 
         Args:
-            contraction (float): Amount to reduce the threshold upon an accepted move.
-            dilation (float): Base amount to increase the threshold upon a
+            contraction: Amount to reduce the threshold upon an accepted move.
+            dilation: Base amount to increase the threshold upon a
                 rejected move.
         """
         self.contraction = contraction
@@ -53,7 +53,7 @@ class OldBachelorAcceptance(IAcceptanceCriterion):
         """Initialize the threshold and age.
 
         Args:
-            initial_objective (ObjectiveValue): The initial solution's objective.
+            initial_objective: The initial solution's objective.
         """
         initial_objective = cast(float, initial_objective)
         self.threshold = 0.0  # Start with strict greedy behavior
@@ -65,9 +65,9 @@ class OldBachelorAcceptance(IAcceptanceCriterion):
         """Determine acceptance based on the dynamic threshold.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            kwargs: Additional context.
 
         Returns:
             Tuple[bool, AcceptanceMetrics]: A tuple containing:
@@ -91,10 +91,10 @@ class OldBachelorAcceptance(IAcceptanceCriterion):
         """Update the threshold and age based on acceptance result.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            accepted (bool): Whether the move was accepted.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            accepted: Whether the move was accepted.
+            kwargs: Additional context.
         """
         current_obj = cast(float, current_obj)
         candidate_obj = cast(float, candidate_obj)

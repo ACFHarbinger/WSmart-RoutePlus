@@ -43,8 +43,6 @@ class GAPolicy(BaseRoutingPolicy):
         Args:
             config: Configuration source for the Genetic Algorithm.
 
-        Returns:
-            None.
         """
         super().__init__(config)
 

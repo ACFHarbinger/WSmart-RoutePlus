@@ -332,7 +332,7 @@ class SubsetRowCutEngine(CuttingPlaneEngine):
         """Initializes the Subset-Row Cut separation engine.
 
         Args:
-            v_model (VRPPModel): VRPP model for node indexing and route tracking.
+            v_model: VRPP model for node indexing and route tracking.
         """
         self.v_model = v_model
 
@@ -679,8 +679,8 @@ class KnapsackCoverEngine(CuttingPlaneEngine):
         """Initializes the Knapsack Cover separation engine.
 
         Args:
-            v_model (VRPPModel): VRPP model for node and fleet data.
-            sep_engine (SeparationEngine): Shared separation utilities.
+            v_model: VRPP model for node and fleet data.
+            sep_engine: Shared separation utilities.
         """
         self.v_model = v_model
         self.sep_engine = sep_engine
@@ -753,7 +753,7 @@ class CompositeCuttingPlaneEngine(CuttingPlaneEngine):
         """Initializes the composite engine with a list of sub-engines.
 
         Args:
-            engines (List[CuttingPlaneEngine]): Sub-engines to run.
+            engines: Sub-engines to run.
         """
         self._engines = engines
 
@@ -807,8 +807,8 @@ class BasicFleetCoverEngine(CuttingPlaneEngine):
         """Initializes the Basic Fleet Cover engine.
 
         Args:
-            v_model (VRPPModel): VRPP model for fleet limits.
-            epsilon (float): Violation threshold for cut generation.
+            v_model: VRPP model for fleet limits.
+            epsilon: Violation threshold for cut generation.
         """
         self.v_model = v_model
         self.epsilon = epsilon
@@ -931,8 +931,8 @@ class PhysicalCapacityLCIEngine(CuttingPlaneEngine):
         """Initializes the node-visit LCI engine.
 
         Args:
-            v_model (VRPPModel): VRPP model for node demands.
-            epsilon (float): Violation threshold for cut generation.
+            v_model: VRPP model for node demands.
+            epsilon: Violation threshold for cut generation.
         """
         self.v_model = v_model
         self.epsilon = epsilon
@@ -1015,9 +1015,9 @@ class PhysicalCapacityLCIEngine(CuttingPlaneEngine):
                 """Exact lifting function α_j = max p s.t. w_j + Σ_{top p} ≥ Q.
 
                 Args:
-                    wj (float): Weight of the node being lifted.
-                    _ps (List[float]): Prefix sums of cover weights.
-                    _cover_len (int): Number of nodes in the cover.
+                    wj: Weight of the node being lifted.
+                    _ps: Prefix sums of cover weights.
+                    _cover_len: Number of nodes in the cover.
 
                 Returns:
                     float: The computed lifting coefficient.
@@ -1109,8 +1109,8 @@ class SaturatedArcLCIEngine(CuttingPlaneEngine):
         """Initializes the saturated-arc LCI engine.
 
         Args:
-            v_model (VRPPModel): VRPP model for problem data.
-            epsilon (float): Violation threshold for cut generation.
+            v_model: VRPP model for problem data.
+            epsilon: Violation threshold for cut generation.
         """
         self.v_model = v_model
         self.epsilon = epsilon

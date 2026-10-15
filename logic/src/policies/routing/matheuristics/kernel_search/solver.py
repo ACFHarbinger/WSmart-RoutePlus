@@ -170,14 +170,14 @@ def _setup_ks_model(
         reasonable time limits, while DFJ scales effectively to n = 100-200.
 
     Args:
-        model (gp.Model): The Gurobi model instance.
-        dist_matrix (np.ndarray): Cost matrix between all nodes (0 is depot).
-        wastes (Dict[int, float]): Waste level at each node.
-        capacity (float): Capacity of the vehicle.
-        R (float): Revenue multiplier for collected waste.
-        C (float): Cost multiplier for distance traveled.
-        mandatory_nodes (List[int]): Nodes that MUST have their `y` variable set to 1.
-        use_binary_vars (bool): If True, create BINARY variables directly. If False (default),
+        model: The Gurobi model instance.
+        dist_matrix: Cost matrix between all nodes (0 is depot).
+        wastes: Waste level at each node.
+        capacity: Capacity of the vehicle.
+        R: Revenue multiplier for collected waste.
+        C: Cost multiplier for distance traveled.
+        mandatory_nodes: Nodes that MUST have their `y` variable set to 1.
+        use_binary_vars: If True, create BINARY variables directly. If False (default),
             create CONTINUOUS variables for LP relaxation (Kernel Search workflow).
 
     Returns:

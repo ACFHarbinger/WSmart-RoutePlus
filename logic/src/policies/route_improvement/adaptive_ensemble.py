@@ -48,13 +48,13 @@ class AdaptiveEnsembleRouteImprover(IRouteImprovement):
         """Execute the adaptive ensemble improvement process.
 
         Args:
-            tour (List[int]): The initial tour to improve.
+            tour: The initial tour to improve.
             kwargs: Additional search context, including:
-                distance_matrix (np.ndarray | torch.Tensor): The distance matrix lookup.
-                phases (List[str]): Algorithms to include in the ensemble.
-                iterations (int): Total number of selection iterations (default 50).
-                reaction_factor (float): EMA update factor for algorithm weights (default 0.1).
-                seed (int): Random seed.
+                distance_matrix: The distance matrix lookup.
+                phases: Algorithms to include in the ensemble.
+                iterations: Total number of selection iterations (default 50).
+                reaction_factor: EMA update factor for algorithm weights (default 0.1).
+                seed: Random seed.
 
         Returns:
             Tuple[List[int], ImprovementMetrics]: Improved tour and performance metadata.

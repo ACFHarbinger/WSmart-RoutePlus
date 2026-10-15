@@ -141,8 +141,8 @@ def regret_k_insertion(  # noqa: C901
         """Calculates the best insertion cost and position for a node in a specific route.
 
         Args:
-            node_id (int): ID of the node to insert.
-            r_idx (int): Index of the target route.
+            node_id: ID of the node to insert.
+            r_idx: Index of the target route.
 
         Returns:
             Tuple[float, int]: (Best insertion cost, best position index).
@@ -451,8 +451,8 @@ def regret_k_profit_insertion(  # noqa: C901
         """Calculates the best insertion profit and position for a node in a specific route.
 
         Args:
-            node_id (int): ID of the node to insert.
-            r_idx (int): Index of the target route.
+            node_id: ID of the node to insert.
+            r_idx: Index of the target route.
 
         Returns:
             Tuple[float, int]: (Best insertion profit, best position index).
@@ -488,7 +488,7 @@ def regret_k_profit_insertion(  # noqa: C901
         """Calculates the profit of starting a new route with the given node.
 
         Args:
-            node_id (int): ID of the node to insert.
+            node_id: ID of the node to insert.
 
         Returns:
             float: Profit of the new route.

@@ -9,8 +9,6 @@ Attributes:
     MoETemporalAttentionModel: Time-varying model with expert encoder.
     MoEPolicy: Routing policy using MoE encoding.
 
-Example:
-    >>> from logic.src.models.core.moe import MoEPolicy
 """
 
 from .moe_attention_model import MoEAttentionModel as MoEAttentionModel

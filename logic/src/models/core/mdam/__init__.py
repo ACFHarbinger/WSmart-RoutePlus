@@ -8,8 +8,6 @@ Attributes:
     MDAMPolicy: Multi-path construction policy.
     mdam_rollout: Best-of-all rollout logic for baseline calculation.
 
-Example:
-    >>> from logic.src.models.core.mdam import MDAM
 """
 
 from .model import MDAM as MDAM

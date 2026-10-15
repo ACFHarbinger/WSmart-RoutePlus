@@ -176,8 +176,6 @@ class ExecutionProfiler:
             event: Event to profile.
             arg: Argument to profile.
 
-        Returns:
-            None
         """
         if not self.active:
             return
@@ -207,8 +205,6 @@ class ExecutionProfiler:
         Args:
             frame: Frame to process.
 
-        Returns:
-            None
         """
         frame_id = id(frame)
         stack = self._local.call_stack
@@ -240,8 +236,6 @@ class ExecutionProfiler:
         """
         Write buffered entries to disk.  Caller must hold ``self._lock``.
 
-        Returns:
-            None
         """
         if not self._write_buffer:
             return
@@ -256,8 +250,6 @@ class ExecutionProfiler:
         """
         Flush the write buffer to disk (thread-safe).
 
-        Returns:
-            None
         """
         with self._lock:
             self._flush_locked()
@@ -270,8 +262,6 @@ class ExecutionProfiler:
         """
         Activate the profiler and install the global hook.
 
-        Returns:
-            None
         """
         if not self.active:
             self.active = True
@@ -285,8 +275,6 @@ class ExecutionProfiler:
         """
         Deactivate the profiler, flush the write buffer, and remove hooks.
 
-        Returns:
-            None
         """
         if self.active:
             self.active = False
@@ -344,8 +332,6 @@ def start_global_profiling(log_dir: str = "logs", buffer_size: int = _BUFFER_SIZ
             absolute).
         buffer_size: Number of log lines buffered before flushing to disk.
 
-    Returns:
-        None
     """
     global _profiler_instance
     if _profiler_instance is None:
@@ -364,8 +350,6 @@ def stop_global_profiling(log_artifact: bool = True, print_report: bool = True) 
         print_report: When ``True`` (default), print a summary report to
             the terminal showing aggregate statistics.
 
-    Returns:
-        None
     """
     global _profiler_instance
     if _profiler_instance is not None:

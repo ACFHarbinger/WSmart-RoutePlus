@@ -178,8 +178,6 @@ class _LinUCBArm:
             d: Dimension.
             lam: Regularisation term.
 
-        Returns:
-            None
         """
         self.A_diag = np.ones(d) * lam
         self.b = np.zeros(d)
@@ -215,8 +213,6 @@ class _LinUCBArm:
             x: Feature vector.
             reward: Reward value.
 
-        Returns:
-            None
         """
         self.A_diag += x**2
         self.b += reward * x
@@ -264,8 +260,6 @@ class _SlidingWindowStats:
             n_arms: Number of arms.
             window: Window length.
 
-        Returns:
-            None
         """
         self._n = n_arms
         self._win = window
@@ -278,8 +272,6 @@ class _SlidingWindowStats:
             arm: Arm index.
             reward: Reward to add.
 
-        Returns:
-            None
         """
         self._buf[arm].append((time.perf_counter(), reward))
         if self._win > 0:

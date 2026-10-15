@@ -129,8 +129,6 @@ class HyperOperatorContext:
     def _build_structures(self) -> None:
         """Build node map, route loads, and neighbor lists.
 
-        Returns:
-            None
         """
         self.node_map.clear()
         self.route_loads = []
@@ -162,7 +160,7 @@ class HyperOperatorContext:
         """Calculate load of a route.
 
         Args:
-            r (List[int]): Route.
+            r: Route.
 
         Returns:
             float: Load of the route.
@@ -173,7 +171,7 @@ class HyperOperatorContext:
         """Get cached load of a route.
 
         Args:
-            ri (int): Route index.
+            ri: Route index.
 
         Returns:
             float: Cached load of the route.
@@ -184,8 +182,8 @@ class HyperOperatorContext:
         """Abstraction to fetch distance from matrix or calculate on-demand.
 
         Args:
-            i (int): First node index.
-            j (int): Second node index.
+            i: First node index.
+            j: Second node index.
 
         Returns:
             float: Distance between node i and node j.
@@ -196,7 +194,7 @@ class HyperOperatorContext:
         """Update node map and route loads.
 
         Args:
-            affected_indices (set): Set of affected route indices.
+            affected_indices: Set of affected route indices.
         """
         for ri in sorted(affected_indices):
             if ri < len(self.routes):
@@ -256,8 +254,8 @@ def apply_2opt_intra(ctx: HyperOperatorContext, max_attempts: int = 50) -> bool:
     """Apply 2-opt intra-route move to a random route segment.
 
     Args:
-        ctx (HyperOperatorContext): Context containing problem data and structures.
-        max_attempts (int): Maximum number of attempts. Defaults to 50.
+        ctx: Context containing problem data and structures.
+        max_attempts: Maximum number of attempts. Defaults to 50.
 
     Returns:
         bool: True if an improving move was made, False otherwise.
@@ -290,8 +288,8 @@ def apply_3opt_intra(ctx: HyperOperatorContext, max_attempts: int = 50) -> bool:
     """Apply 3-opt intra-route move to a random route segment.
 
     Args:
-        ctx (HyperOperatorContext): Context containing problem data and structures.
-        max_attempts (int): Maximum number of attempts. Defaults to 50.
+        ctx: Context containing problem data and structures.
+        max_attempts: Maximum number of attempts. Defaults to 50.
 
     Returns:
         bool: True if an improving move was made, False otherwise.
@@ -324,8 +322,8 @@ def apply_2opt_star(ctx: HyperOperatorContext, max_attempts: int = 50) -> bool:
     """Apply 2-opt* inter-route move.
 
     Args:
-        ctx (HyperOperatorContext): Context containing problem data and structures.
-        max_attempts (int): Maximum number of attempts. Defaults to 50.
+        ctx: Context containing problem data and structures.
+        max_attempts: Maximum number of attempts. Defaults to 50.
 
     Returns:
         bool: True if an improving move was made, False otherwise.
@@ -358,8 +356,8 @@ def apply_swap(ctx: HyperOperatorContext, max_attempts: int = 50) -> bool:
     """Apply swap move between two nodes.
 
     Args:
-        ctx (HyperOperatorContext): Context containing problem data and structures.
-        max_attempts (int): Maximum number of attempts. Defaults to 50.
+        ctx: Context containing problem data and structures.
+        max_attempts: Maximum number of attempts. Defaults to 50.
 
     Returns:
         bool: True if an improving move was made, False otherwise.
@@ -392,8 +390,8 @@ def apply_swap_star(ctx: HyperOperatorContext, max_attempts: int = 50) -> bool:
     """Apply SWAP* inter-route move.
 
     Args:
-        ctx (HyperOperatorContext): Context containing problem data and structures.
-        max_attempts (int): Maximum number of attempts. Defaults to 50.
+        ctx: Context containing problem data and structures.
+        max_attempts: Maximum number of attempts. Defaults to 50.
 
     Returns:
         bool: True if an improving move was made, False otherwise.
@@ -426,8 +424,8 @@ def apply_relocate(ctx: HyperOperatorContext, max_attempts: int = 50) -> bool:
     """Apply relocate move.
 
     Args:
-        ctx (HyperOperatorContext): Context containing problem data and structures.
-        max_attempts (int): Maximum number of attempts. Defaults to 50.
+        ctx: Context containing problem data and structures.
+        max_attempts: Maximum number of attempts. Defaults to 50.
 
     Returns:
         bool: True if an improving move was made, False otherwise.
@@ -460,8 +458,8 @@ def apply_perturb(ctx: HyperOperatorContext, k: int = 3) -> bool:
     """Wrapper for perturbation operator.
 
     Args:
-        ctx (HyperOperatorContext): Context containing problem data and structures.
-        k (int): Number of nodes to perturb. Defaults to 3.
+        ctx: Context containing problem data and structures.
+        k: Number of nodes to perturb. Defaults to 3.
 
     Returns:
         bool: True if an improving move was made, False otherwise.
@@ -473,8 +471,8 @@ def apply_kick(ctx: HyperOperatorContext, destroy_ratio: float = 0.2) -> bool:
     """Wrapper for kick operator.
 
     Args:
-        ctx (HyperOperatorContext): Context containing problem data and structures.
-        destroy_ratio (float): Ratio of nodes to remove. Defaults to 0.2.
+        ctx: Context containing problem data and structures.
+        destroy_ratio: Ratio of nodes to remove. Defaults to 0.2.
 
     Returns:
         bool: True if an improving move was made, False otherwise.
@@ -488,8 +486,8 @@ def apply_shaw_removal(ctx: HyperOperatorContext, n: Optional[int] = None) -> bo
     """Wrapper for shaw removal followed by greedy insertion.
 
     Args:
-        ctx (HyperOperatorContext): Context containing problem data and structures.
-        n (Optional[int]): Number of nodes to remove. Defaults to max(1, len(ctx.node_map) // 5).
+        ctx: Context containing problem data and structures.
+        n: Number of nodes to remove. Defaults to max(1, len(ctx.node_map) // 5).
 
     Returns:
         bool: True if an improving move was made, False otherwise.
@@ -534,8 +532,8 @@ def apply_string_removal(ctx: HyperOperatorContext, n: Optional[int] = None) -> 
     """Wrapper for string removal followed by greedy insertion.
 
     Args:
-        ctx (HyperOperatorContext): Context containing problem data and structures.
-        n (Optional[int]): Number of nodes to remove. Defaults to max(1, len(ctx.node_map) // 5).
+        ctx: Context containing problem data and structures.
+        n: Number of nodes to remove. Defaults to max(1, len(ctx.node_map) // 5).
 
     Returns:
         bool: True if an improving move was made, False otherwise.
@@ -576,8 +574,8 @@ def apply_random_removal(ctx: HyperOperatorContext, n: Optional[int] = None) -> 
     """Wrapper for random removal followed by greedy insertion.
 
     Args:
-        ctx (HyperOperatorContext): Context containing problem data and structures.
-        n (Optional[int]): Number of nodes to remove. Defaults to max(1, len(ctx.node_map) // 5).
+        ctx: Context containing problem data and structures.
+        n: Number of nodes to remove. Defaults to max(1, len(ctx.node_map) // 5).
 
     Returns:
         bool: True if an improving move was made, False otherwise.

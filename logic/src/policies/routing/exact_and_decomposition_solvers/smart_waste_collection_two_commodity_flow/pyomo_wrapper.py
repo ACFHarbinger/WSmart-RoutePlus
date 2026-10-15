@@ -36,16 +36,16 @@ def _run_pyomo_tcf_optimizer(  # noqa: C901
     """Builds and solves the SWC-TCF using Pyomo.
 
     Args:
-        bins (NDArray[np.float64]): Array of bin fill levels.
-        distance_matrix (List[List[float]]): Distance matrix between nodes.
-        values (Dict[str, float]): Problem parameters (Omega, psi, Q, R, C; percent fill units).
-        binsids (List[int]): Global identifiers for bins.
-        mandatory_nodes (List[int]): IDs of bins that must be collected.
-        number_vehicles (int): Maximum number of vehicles.
-        time_limit (int): Solver time limit in seconds.
-        solver_id (str): Pyomo solver backend ID ('scip', 'gurobi', etc.).
-        seed (int): Random seed for reproducibility.
-        dual_values (Optional[Dict[int, float]]): Dual values for pricing subproblems.
+        bins: Array of bin fill levels.
+        distance_matrix: Distance matrix between nodes.
+        values: Problem parameters (Omega, psi, Q, R, C; percent fill units).
+        binsids: Global identifiers for bins.
+        mandatory_nodes: IDs of bins that must be collected.
+        number_vehicles: Maximum number of vehicles.
+        time_limit: Solver time limit in seconds.
+        solver_id: Pyomo solver backend ID ('scip', 'gurobi', etc.).
+        seed: Random seed for reproducibility.
+        dual_values: Dual values for pricing subproblems.
 
     Returns:
         Tuple[List[int], float, float]: (route, profit, cost)
@@ -81,9 +81,9 @@ def _run_pyomo_tcf_optimizer(  # noqa: C901
         """Ensures the total flow (waste + empty) matches vehicle capacity if used.
 
         Args:
-            m (pyo.ConcreteModel): The Pyomo model instance.
-            i (int): Tail node index.
-            j (int): Head node index.
+            m: The Pyomo model instance.
+            i: Tail node index.
+            j: Head node index.
 
         Returns:
             pyo.Expression: Equality constraint expression.
@@ -96,8 +96,8 @@ def _run_pyomo_tcf_optimizer(  # noqa: C901
         """Conservation rule for the waste commodity (commodity 1).
 
         Args:
-            m (pyo.ConcreteModel): The Pyomo model instance.
-            i (int): Node index.
+            m: The Pyomo model instance.
+            i: Node index.
 
         Returns:
             pyo.Expression: Conservation constraint expression.
@@ -112,8 +112,8 @@ def _run_pyomo_tcf_optimizer(  # noqa: C901
         """Conservation rule for the empty space commodity (commodity 2).
 
         Args:
-            m (pyo.ConcreteModel): The Pyomo model instance.
-            i (int): Node index.
+            m: The Pyomo model instance.
+            i: Node index.
 
         Returns:
             pyo.Expression: Conservation constraint expression.
@@ -145,8 +145,8 @@ def _run_pyomo_tcf_optimizer(  # noqa: C901
         """Ensures that if a node is collected, it has exactly one incoming arc.
 
         Args:
-            m (pyo.ConcreteModel): The Pyomo model instance.
-            j (int): Node index.
+            m: The Pyomo model instance.
+            j: Node index.
 
         Returns:
             pyo.Expression: Degree constraint expression.
@@ -159,8 +159,8 @@ def _run_pyomo_tcf_optimizer(  # noqa: C901
         """Ensures that if a node is collected, it has exactly one outgoing arc.
 
         Args:
-            m (pyo.ConcreteModel): The Pyomo model instance.
-            j (int): Node index.
+            m: The Pyomo model instance.
+            j: Node index.
 
         Returns:
             pyo.Expression: Degree constraint expression.
@@ -180,7 +180,7 @@ def _run_pyomo_tcf_optimizer(  # noqa: C901
         """Calculates the objective value (profit - routing cost - vehicle cost).
 
         Args:
-            m (pyo.ConcreteModel): The Pyomo model instance.
+            m: The Pyomo model instance.
 
         Returns:
             pyo.Expression: Maximization objective expression.

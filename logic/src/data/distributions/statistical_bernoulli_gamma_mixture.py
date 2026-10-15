@@ -40,9 +40,9 @@ class BernoulliGammaMixture(BaseDistribution):
         and when it occurs, its magnitude is drawn from a Gamma distribution.
 
         Args:
-            p (Union[float, torch.Tensor]): Probability of a non-zero (Gamma-distributed) event.
-            alpha (Union[float, torch.Tensor]): Gamma shape parameter.
-            theta (Union[float, torch.Tensor]): Gamma scale parameter.
+            p: Probability of a non-zero (Gamma-distributed) event.
+            alpha: Gamma shape parameter.
+            theta: Gamma scale parameter.
         """
         super().__init__()
         self.p = p
@@ -54,7 +54,7 @@ class BernoulliGammaMixture(BaseDistribution):
 
         Args:
             size: Sampling shape (e.g., (batch_size, num_loc))
-            generator (Optional[torch.Generator], optional): Optional torch.Generator for reproducibility.
+            generator: Optional torch.Generator for reproducibility.
 
         Returns:
             torch.Tensor: Sampled values

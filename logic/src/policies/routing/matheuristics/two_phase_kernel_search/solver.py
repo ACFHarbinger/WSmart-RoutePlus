@@ -98,17 +98,17 @@ def _run_phase1(  # noqa: C901
        Continue recording frequency statistics.
 
     Args:
-        model (gp.Model): The Gurobi model.
-        x (Dict): Dictionary of variables.
-        y (Dict): Dictionary of variables.
-        dist_matrix (np.ndarray): Distance matrix.
-        wastes (Dict[int, float]): Wastes.
-        capacity (float): Capacity.
-        R (float): R.
-        C (float): C.
-        mandatory_nodes (List[int]): Mandatory nodes.
-        params (TpksConfig): Parameters.
-        phase1_time (float): Phase 1 time limit.
+        model: The Gurobi model.
+        x: Dictionary of variables.
+        y: Dictionary of variables.
+        dist_matrix: Distance matrix.
+        wastes: Wastes.
+        capacity: Capacity.
+        R: R.
+        C: C.
+        mandatory_nodes: Mandatory nodes.
+        params: Parameters.
+        phase1_time: Phase 1 time limit.
 
     Returns:
         _PhaseIStats populated with frequency/contribution data and the
@@ -229,10 +229,10 @@ def _build_phase2_kernel(
     form the Phase II kernel. The remainder are sorted into buckets.
 
     Args:
-        x (Dict): Dictionary of variables.
-        y (Dict): Dictionary of variables.
-        stats (_PhaseIStats): Statistics from Phase I.
-        params (TpksConfig): Parameters.
+        x: Dictionary of variables.
+        y: Dictionary of variables.
+        stats: Statistics from Phase I.
+        params: Parameters.
 
     Returns:
         (phase2_kernel_vars, phase2_remaining_vars)
@@ -280,15 +280,15 @@ def run_tpks_gurobi(
     Solve VRPP using Two-Phase Kernel Search (TPKS).
 
     Args:
-        dist_matrix (np.ndarray): Distance matrix.
-        wastes (Dict[int, float]): Wastes.
-        capacity (float): Capacity.
-        R (float): R.
-        C (float): C.
-        mandatory_nodes (List[int]): Mandatory nodes.
-        params (TpksConfig): Parameters.
-        env (Optional[gp.Env]): Gurobi environment.
-        recorder (Optional[PolicyStateRecorder]): Policy state recorder.
+        dist_matrix: Distance matrix.
+        wastes: Wastes.
+        capacity: Capacity.
+        R: R.
+        C: C.
+        mandatory_nodes: Mandatory nodes.
+        params: Parameters.
+        env: Gurobi environment.
+        recorder: Policy state recorder.
 
     Returns:
         (tour, obj_val, routing_cost) — same contract as run_kernel_search_gurobi.

@@ -44,9 +44,9 @@ class BoltzmannAcceptance(IAcceptanceCriterion):
         """Initialize the Boltzmann criterion.
 
         Args:
-            initial_temp (float): The starting temperature parameter.
-            alpha (float): The geometric cooling rate (typically 0.90 - 0.995).
-            seed (Optional[int]): Random seed. Defaults to 42.
+            initial_temp: The starting temperature parameter.
+            alpha: The geometric cooling rate (typically 0.90 - 0.995).
+            seed: Random seed. Defaults to 42.
         """
         self.T = initial_temp
         self.alpha = alpha
@@ -56,7 +56,7 @@ class BoltzmannAcceptance(IAcceptanceCriterion):
         """Initialize the criterion state.
 
         Args:
-            initial_objective (ObjectiveValue): The initial solution's objective.
+            initial_objective: The initial solution's objective.
         """
         initial_objective = cast(float, initial_objective)
         pass
@@ -74,7 +74,7 @@ class BoltzmannAcceptance(IAcceptanceCriterion):
         """Set the current temperature parameter.
 
         Args:
-            value (float): The new temperature value.
+            value: The new temperature value.
         """
         self.T = value
 
@@ -84,9 +84,9 @@ class BoltzmannAcceptance(IAcceptanceCriterion):
         """Determine whether to accept a transition based on current temperature.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            kwargs: Additional context.
 
         Returns:
             Tuple[bool, AcceptanceMetrics]: A tuple containing:
@@ -112,10 +112,10 @@ class BoltzmannAcceptance(IAcceptanceCriterion):
         """Apply geometric cooling to the temperature.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            accepted (bool): Whether the move was accepted.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            accepted: Whether the move was accepted.
+            kwargs: Additional context.
         """
         current_obj = cast(float, current_obj)
         candidate_obj = cast(float, candidate_obj)

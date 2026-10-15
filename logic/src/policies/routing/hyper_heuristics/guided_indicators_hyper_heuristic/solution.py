@@ -69,8 +69,6 @@ class Solution:
     def evaluate(self) -> None:
         """Evaluate the solution and update profit, cost, and revenue.
 
-        Returns:
-            None
         """
         total_distance = 0.0
         total_waste = 0.0

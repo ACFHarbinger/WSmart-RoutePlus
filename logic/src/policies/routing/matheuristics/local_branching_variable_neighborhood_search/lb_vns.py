@@ -176,16 +176,16 @@ def run_lb_vns_gurobi(
 
 
     Args:
-        dist_matrix (np.ndarray): Symmetric distance matrix between all nodes.
-        wastes (Dict[int, float]): Dictionary mapping node indices to profits.
-        capacity (float): Maximum vehicle load.
-        R (float): Revenue multiplier for node collection.
-        C (float): Cost multiplier for distance traveled.
-        mandatory_nodes (List[int]): Nodes that MUST be included in the tour.
-        mip_gap (float): Optimality gap for sub-problem termination.
-        seed (int): Global seed for randomization.
-        env (Optional[gp.Env]): Shared Gurobi environment to reduce startup overhead.
-        params (Optional[LocalBranchingVNSConfig]): LB-VNS parameters.
+        dist_matrix: Symmetric distance matrix between all nodes.
+        wastes: Dictionary mapping node indices to profits.
+        capacity: Maximum vehicle load.
+        R: Revenue multiplier for node collection.
+        C: Cost multiplier for distance traveled.
+        mandatory_nodes: Nodes that MUST be included in the tour.
+        mip_gap: Optimality gap for sub-problem termination.
+        seed: Global seed for randomization.
+        env: Shared Gurobi environment to reduce startup overhead.
+        params: LB-VNS parameters.
 
     Returns:
         Tuple[List[int], float, float]:

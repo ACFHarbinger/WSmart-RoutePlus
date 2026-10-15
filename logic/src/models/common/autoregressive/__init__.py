@@ -10,8 +10,6 @@ Attributes:
     AutoregressivePolicy: Standard constructive policy implementation.
     ConstructivePolicy: General constructive method interface.
 
-Example:
-    >>> from logic.src.models.common.autoregressive import AutoregressivePolicy
 """
 
 from .constructive import ConstructivePolicy as ConstructivePolicy

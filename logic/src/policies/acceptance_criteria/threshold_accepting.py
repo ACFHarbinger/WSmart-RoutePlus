@@ -38,9 +38,9 @@ class ThresholdAccepting(IAcceptanceCriterion):
         """Initialize the Threshold Accepting criterion.
 
         Args:
-            initial_threshold (float): The starting absolute tolerance for
+            initial_threshold: The starting absolute tolerance for
                 deterioration.
-            max_iterations (int): The budget used to calculate linear decay.
+            max_iterations: The budget used to calculate linear decay.
         """
         self.threshold = initial_threshold
         self.decay_rate = initial_threshold / max_iterations if max_iterations > 0 else 0.0
@@ -49,7 +49,7 @@ class ThresholdAccepting(IAcceptanceCriterion):
         """Initialize the criterion state.
 
         Args:
-            initial_objective (ObjectiveValue): The initial solution's objective.
+            initial_objective: The initial solution's objective.
         """
         initial_objective = cast(float, initial_objective)
         pass
@@ -60,9 +60,9 @@ class ThresholdAccepting(IAcceptanceCriterion):
         """Determine acceptance based on the current decaying threshold.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            kwargs: Additional context.
 
         Returns:
             Tuple[bool, AcceptanceMetrics]: A tuple containing:
@@ -81,10 +81,10 @@ class ThresholdAccepting(IAcceptanceCriterion):
         """Apply linear decay to the threshold.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            accepted (bool): Whether the move was accepted.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            accepted: Whether the move was accepted.
+            kwargs: Additional context.
         """
         current_obj = cast(float, current_obj)
         candidate_obj = cast(float, candidate_obj)

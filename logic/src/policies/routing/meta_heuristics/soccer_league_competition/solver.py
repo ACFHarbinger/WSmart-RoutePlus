@@ -79,13 +79,13 @@ class SLCSolver:
         """Initializes the Soccer League Competition solver.
 
         Args:
-            dist_matrix (np.ndarray): Symmetric distance matrix.
-            wastes (Dict[int, float]): Mapping of bin IDs to waste quantities.
-            capacity (float): Maximum vehicle collection capacity.
-            R (float): Revenue per kg of waste.
-            C (float): Cost per km traveled.
-            params (SLCConfig): Algorithm-specific parameters (teams, size).
-            mandatory_nodes (Optional[List[int]]): Nodes that must be visited.
+            dist_matrix: Symmetric distance matrix.
+            wastes: Mapping of bin IDs to waste quantities.
+            capacity: Maximum vehicle collection capacity.
+            R: Revenue per kg of waste.
+            C: Cost per km traveled.
+            params: Algorithm-specific parameters (teams, size).
+            mandatory_nodes: Nodes that must be visited.
         """
         self.dist_matrix = dist_matrix
         self.wastes = wastes
@@ -210,8 +210,6 @@ class SLCSolver:
         Args:
             teams: List of teams.
 
-        Returns:
-            None.
         """
         all_players = [p for team in teams for p in team]
         all_players.sort(key=lambda x: x[1], reverse=True)
@@ -228,8 +226,6 @@ class SLCSolver:
             team_a: First team.
             team_b: Second team.
 
-        Returns:
-            None.
         """
         fit_a = sum(p for _, p in team_a)
         fit_b = sum(p for _, p in team_b)

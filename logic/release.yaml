@@ -55,7 +55,10 @@ stages:
 #   (Q-12a); the vectorised profitable-NN expert and vectorised packing are
 #   pulled in by the imitation trainer (Q-4a),
 # - the Attention Model with the GAT encoder (Q-12a),
-# - the released problems' environments, legacy tasks and generators (Q-2),
+# - the released problems' environments on the ESPPRC base (Q-2): env,
+#   generator and cost functions live in envs/tasks/<p>.py since the WP-07
+#   merge (P-20, Q-3a); envs/routing/ is gone, and envs/generators/ serves
+#   the unreleased problems only,
 # - the CLI (Q-11b).
 infrastructure:
   - logic.src.pipeline.simulations
@@ -67,17 +70,14 @@ infrastructure:
   - logic.src.models.core.attention_model
   - logic.src.policies.vector.profitable_nearest_neighbour   # imitation expert (Q-4a)
   - logic.src.policies.packing.vectorized                    # vectorised packing (Q-4a)
-  - logic.src.envs.routing.ptp
-  - logic.src.envs.routing.cptp
-  - logic.src.envs.routing.tcptp
-  - logic.src.envs.routing.cvrp
+  - logic.src.envs.tasks.espprc   # ESPPRC base + shared generator (P-23, Q-3a)
   - logic.src.envs.tasks.ptp
   - logic.src.envs.tasks.cptp
   - logic.src.envs.tasks.tcptp
   - logic.src.envs.tasks.cvrp
-  - logic.src.envs.generators.ptp
-  - logic.src.envs.generators.tcptp
-  - logic.src.envs.generators.cvrp
+  # Pending WP-10 at integration: add logic.src.models.common.policy_contract
+  # (the P-24 policy forward/output contract) as a seed; it exists on the WP-10
+  # branch, not on this chain.
   - logic.controllers.cli               # the CLI: main.py's parsers (Q-11b)
   - logic.controllers.hydra_dispatch
   - logic.controllers.parser_dispatch
@@ -87,11 +87,11 @@ excluded_packages:
   - logic.src.pipeline.simulations.hpo               # Q-6: HPO stays out of 1.0.0
   - logic.src.pipeline.rl.hpo                        # Q-6
   - logic.src.pipeline.rl.meta                       # not in the paper's stack (Q-12a)
-  # Pending (activate when the import disappears): wsmart_bin_analysis moves to
-  # its own package (RQ-grok-7), but bins/base.py:43 still imports GridBase from
-  # it at module level, so excluding it today fails the build loudly. The
-  # builder raises on any kept file that module-level imports an excluded
-  # package — that guard flips this exclusion on as part of WP-08.
+  # Pending WP-08 (uncommitted on its branch): wsmart_bin_analysis moves to
+  # packages/wsmart_bin_analysis (import packages.wsmart_bin_analysis), after
+  # which bins/base.py's GridBase import goes and this exclusion activates
+  # (RQ-grok-7). The builder fails loudly on any kept file that module-level
+  # imports an excluded package, so the guard flips itself at integration.
 
 # Notes:
 # - `logic/src/configs/` ships whole: the config dataclasses of every family are

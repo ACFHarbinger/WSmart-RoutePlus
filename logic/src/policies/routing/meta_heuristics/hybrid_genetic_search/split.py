@@ -79,8 +79,6 @@ class LinearSplit:
             mandatory_nodes: List of local node indices that MUST be visited.
             vrpp: Whether skipping nodes is allowed (VRPP mode).
 
-        Returns:
-            None.
         """
         self.dist_matrix = np.array(dist_matrix)
         self.wastes = wastes

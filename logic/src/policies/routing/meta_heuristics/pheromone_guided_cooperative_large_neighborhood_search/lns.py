@@ -216,8 +216,6 @@ class LNSSolver(PolicyVizMixin):
             r_idx: Index of the repair operator used.
             score: Score of the repair operator (profit improvement).
 
-        Returns:
-            None
         """
         lambda_decay = 0.8
         self.destroy_weights[d_idx] = lambda_decay * self.destroy_weights[d_idx] + (1 - lambda_decay) * max(0.1, score)

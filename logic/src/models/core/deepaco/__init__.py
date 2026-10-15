@@ -7,8 +7,6 @@ Attributes:
     DeepACO: Primary training wrapper for neural ACO.
     DeepACOPolicy: The encoder-decoder policy for ant construction.
 
-Example:
-    >>> from logic.src.models.core.deepaco import DeepACO
 """
 
 from .model import DeepACO as DeepACO

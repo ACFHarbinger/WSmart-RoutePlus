@@ -22,8 +22,8 @@ def get_route_cost(distancesC, tour):
     Supports both NumPy arrays and PyTorch tensors.
 
     Args:
-        distancesC (np.ndarray or torch.Tensor): Distance matrix
-        tour (list or np.ndarray or torch.Tensor): Sequence of node IDs
+        distancesC: Distance matrix
+        tour: Sequence of node IDs
 
     Returns:
         float: Total tour distance

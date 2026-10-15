@@ -67,13 +67,13 @@ class MultiHeadAttentionLayerBase(nn.Module):
         """Initialize the MultiHeadAttentionLayerBase.
 
         Args:
-            n_heads (int): Number of attention heads.
-            embed_dim (int): Embedding dimension (must be divisible by n_heads).
-            feed_forward_hidden (int): Hidden dimension for feed-forward network.
-            norm_config (Optional[NormalizationConfig]): Normalization configuration. Defaults to None.
-            activation_config (Optional[ActivationConfig]): Activation configuration. Defaults to None.
-            connection_type (str): Type of connection: "skip", "dense", or "hyper". Defaults to "skip".
-            expansion_rate (int): Expansion factor for hyper-connections. Defaults to 4.
+            n_heads: Number of attention heads.
+            embed_dim: Embedding dimension (must be divisible by n_heads).
+            feed_forward_hidden: Hidden dimension for feed-forward network.
+            norm_config: Normalization configuration. Defaults to None.
+            activation_config: Activation configuration. Defaults to None.
+            connection_type: Type of connection: "skip", "dense", or "hyper". Defaults to "skip".
+            expansion_rate: Expansion factor for hyper-connections. Defaults to 4.
             kwargs: Additional keyword arguments.
         """
         super(MultiHeadAttentionLayerBase, self).__init__()
@@ -136,11 +136,11 @@ class MultiHeadAttentionLayerBase(nn.Module):
         (e.g., MoEFeedForward, ConvolutionalFFN).
 
         Args:
-            embed_dim (int): Embedding dimension.
-            feed_forward_hidden (int): Hidden dimension for feed-forward network.
-            activation_config (ActivationConfig): Activation function configuration.
-            connection_type (str): Type of connection wrapper.
-            expansion_rate (int): Expansion factor for hyper-connections.
+            embed_dim: Embedding dimension.
+            feed_forward_hidden: Hidden dimension for feed-forward network.
+            activation_config: Activation function configuration.
+            connection_type: Type of connection wrapper.
+            expansion_rate: Expansion factor for hyper-connections.
 
         Returns:
             nn.Module: Feed-forward module wrapped with connection.
@@ -160,9 +160,9 @@ class MultiHeadAttentionLayerBase(nn.Module):
         """Forward pass through the attention layer.
 
         Args:
-            h (torch.Tensor): Input tensor of shape (batch, seq_len, embed_dim)
+            h: Input tensor of shape (batch, seq_len, embed_dim)
                 or (batch, seq_len, embed_dim, n) for hyper-connections.
-            mask (Optional[torch.Tensor]): Attention mask of shape (batch, seq_len)
+            mask: Attention mask of shape (batch, seq_len)
                 or (batch, seq_len, seq_len). Defaults to None.
 
         Returns:
@@ -190,8 +190,8 @@ class MultiHeadAttentionLayerBase(nn.Module):
         then permute back.
 
         Args:
-            h (torch.Tensor): Input tensor (3D or 4D).
-            norm_layer (nn.Module): Normalization layer to apply.
+            h: Input tensor (3D or 4D).
+            norm_layer: Normalization layer to apply.
 
         Returns:
             torch.Tensor: Normalized tensor with the same shape as input.

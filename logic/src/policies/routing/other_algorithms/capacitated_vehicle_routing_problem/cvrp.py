@@ -313,12 +313,12 @@ def get_solution_costs(
     Extract routes and costs from the OR-Tools solution.
 
     Args:
-        wastes (List[int]): Node wastes.
-        n_vehicles (int): Number of vehicles.
-        manager (pywrapcp.RoutingIndexManager): Routing manager.
-        routing (pywrapcp.RoutingModel): Routing model.
-        solution (pywrapcp.Assignment): Solver solution.
-        distancesC (List[List[int]]): Distance matrix.
+        wastes: Node wastes.
+        n_vehicles: Number of vehicles.
+        manager: Routing manager.
+        routing: Routing model.
+        solution: Solver solution.
+        distancesC: Distance matrix.
 
     Returns:
         Tuple[List[List[int]], List[int], List[int], List[int]]:

@@ -77,7 +77,7 @@ class PSOMAParticle:
         Ranked-Order-Value mapping. Maps the continuous vector to a permutation.
 
         Args:
-            X (np.ndarray): Continuous position vector.
+            X: Continuous position vector.
 
         Returns:
             Tuple[np.ndarray, np.ndarray]: A tuple containing:

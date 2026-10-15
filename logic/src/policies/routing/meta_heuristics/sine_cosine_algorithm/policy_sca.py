@@ -43,7 +43,7 @@ class SCAPolicy(BaseRoutingPolicy):
         """Initializes the SCA policy.
 
         Args:
-            config (Optional[Union[SCAConfig, Dict[str, Any]]]): Configuration
+            config: Configuration
                 source for the Sine Cosine Algorithm.
         """
         super().__init__(config)
@@ -88,18 +88,18 @@ class SCAPolicy(BaseRoutingPolicy):
         amplitude ensures convergence towards the global optimum.
 
         Args:
-            sub_dist_matrix (np.ndarray): Symmetric distance matrix for the current
+            sub_dist_matrix: Symmetric distance matrix for the current
                 sub-problem nodes.
-            sub_wastes (Dict[int, float]): Mapping of local node indices to their
+            sub_wastes: Mapping of local node indices to their
                 current bin inventory levels.
-            capacity (float): Maximum vehicle collection capacity.
-            revenue (float): Revenue obtained per kilogram of waste collected.
-            cost_unit (float): Monetary cost incurred per kilometer traveled.
-            values (Dict[str, Any]): Merged configuration dictionary containing
+            capacity: Maximum vehicle collection capacity.
+            revenue: Revenue obtained per kilogram of waste collected.
+            cost_unit: Monetary cost incurred per kilometer traveled.
+            values: Merged configuration dictionary containing
                 SCA parameters (pop_size, a_max, max_iterations).
-            mandatory_nodes (List[int]): Local indices of bins that MUST be
+            mandatory_nodes: Local indices of bins that MUST be
                 collected in this period.
-            kwargs (Any): Additional context, including:
+            kwargs: Additional context, including:
                 - search_context (Optional[SearchContext]): Context for tracking
                   recursive solver statistics.
                 - multi_day_context (Optional[MultiDayContext]): Context for

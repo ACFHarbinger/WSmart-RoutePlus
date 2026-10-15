@@ -63,7 +63,7 @@ class IPolicy(Protocol):
         """call  .
 
         Args:
-            args (Any): Description of args.
-            kwargs (Any): Description of kwargs.
+            args: Description of args.
+            kwargs: Description of kwargs.
         """
         ...

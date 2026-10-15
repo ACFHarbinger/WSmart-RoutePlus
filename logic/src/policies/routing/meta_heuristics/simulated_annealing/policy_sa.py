@@ -41,8 +41,6 @@ class SAPolicy(BaseRoutingPolicy):
         Args:
             config: Configuration source.
 
-        Returns:
-            None.
         """
         super().__init__(config)
 

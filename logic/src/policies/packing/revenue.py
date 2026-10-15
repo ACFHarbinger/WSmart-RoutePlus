@@ -41,8 +41,8 @@ class RevenueThresholdSelection(IPackingAlgorithm):
     def __init__(self, revenue_kg: Optional[float] = None, revenue_threshold: Optional[float] = None) -> None:
         """
         Args:
-            revenue_kg (Optional[float]): Revenue per kilogram; ``None`` uses ``context.revenue_kg``.
-            revenue_threshold (Optional[float]): Selection threshold; ``None`` uses ``context.threshold``.
+            revenue_kg: Revenue per kilogram; ``None`` uses ``context.revenue_kg``.
+            revenue_threshold: Selection threshold; ``None`` uses ``context.threshold``.
         """
         self.revenue_kg = revenue_kg
         self.revenue_threshold = revenue_threshold
@@ -51,7 +51,7 @@ class RevenueThresholdSelection(IPackingAlgorithm):
         """Select bins where expected revenue exceeds the threshold.
 
         Args:
-            context (PackingContext): PackingContext with revenue parameters and threshold.
+            context: PackingContext with revenue parameters and threshold.
 
         Returns:
             Tuple[List[int], SearchContext]: Selected bin IDs (1-based) and search context.

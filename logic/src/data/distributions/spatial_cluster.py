@@ -31,7 +31,7 @@ class Cluster(BaseDistribution):
         """Initialize Class.
 
         Args:
-            n_cluster (int): Description of n_cluster.
+            n_cluster: Description of n_cluster.
         """
         self.n_cluster = n_cluster
         self.lower, self.upper = 0.2, 0.8
@@ -41,8 +41,8 @@ class Cluster(BaseDistribution):
         """Sample clustered locations.
 
         Args:
-            size (Tuple[int, ...]): Description of size.
-            generator (Optional[torch.Generator], optional): Description of generator.
+            size: Description of size.
+            generator: Description of generator.
 
         Returns:
             torch.Tensor: Sampled values.

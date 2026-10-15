@@ -174,8 +174,6 @@ class AdaptiveOperatorSelector:
         Args:
             operator: Name of applied operator.
 
-        Returns:
-            None
         """
         scores = list(self.scores[operator])
         if not scores:
@@ -229,8 +227,6 @@ class AdaptiveOperatorSelector:
     def reset_statistics(self) -> None:
         """Reset all operator statistics.
 
-        Returns:
-            None
         """
         for op in self.operators:
             self.scores[op].clear()

@@ -63,20 +63,20 @@ def apply_lns(  # noqa: C901
     When `q` or `ruin_fraction` is provided, the default formula is overridden.
 
     Args:
-        routes (List[List[int]]): Current routes.
-        dist_matrix (np.ndarray): Distance matrix.
-        wastes (np.ndarray): Node wastes.
-        capacity (float): Vehicle capacity.
-        R (float): Revenue multiplier.
-        C (float): Cost multiplier.
-        rng (random.Random): Random number generator.
-        q (Optional[int]): Specific number of nodes to remove.
-        ruin_fraction (Optional[float]): Fraction of total nodes to remove.
-        destroy_op (str): Name of the destroy operator.
-        repair_op (str): Name of the repair operator.
-        repair_k (int): Number of neighbors to consider for regret operators.
-        mandatory_nodes (Optional[List[int]]): Nodes that MUST be in the solution.
-        kwargs (Any): Additional parameters for specific operators (e.g., p for worst).
+        routes: Current routes.
+        dist_matrix: Distance matrix.
+        wastes: Node wastes.
+        capacity: Vehicle capacity.
+        R: Revenue multiplier.
+        C: Cost multiplier.
+        rng: Random number generator.
+        q: Specific number of nodes to remove.
+        ruin_fraction: Fraction of total nodes to remove.
+        destroy_op: Name of the destroy operator.
+        repair_op: Name of the repair operator.
+        repair_k: Number of neighbors to consider for regret operators.
+        mandatory_nodes: Nodes that MUST be in the solution.
+        kwargs: Additional parameters for specific operators (e.g., p for worst).
 
     Returns:
         List[List[int]]: Modified routes.

@@ -47,17 +47,17 @@ def find_solutions(
     Find high-quality routing solutions using a randomized local search procedure.
 
     Args:
-        data (pd.DataFrame): Bin and weight context.
-        bins_coordinates (List): Locations.
-        distance_matrix (np.ndarray): distances.
-        chosen_combination (Tuple): Parameter set (vehicle penalty, load penalty, etc).
-        mandatory_bins (List[int]): Nodes that must be visited.
-        values (Dict): Global constants.
-        n_bins (int): Problem size.
-        points (Dict): Coordinates map.
-        time_limit (float): Max execution time.
-        rng (random.Random): Random number generator.
-        np_rng (np.random.Generator): Numpy random number generator.
+        data: Bin and weight context.
+        bins_coordinates: Locations.
+        distance_matrix: distances.
+        chosen_combination: Parameter set (vehicle penalty, load penalty, etc).
+        mandatory_bins: Nodes that must be visited.
+        values: Global constants.
+        n_bins: Problem size.
+        points: Coordinates map.
+        time_limit: Max execution time.
+        rng: Random number generator.
+        np_rng: Numpy random number generator.
 
     Returns:
         List[List[int]]: Optimized routing solution.

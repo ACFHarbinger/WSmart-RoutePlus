@@ -6,8 +6,6 @@ Attributes:
     ExactSDPEngine (class): Core solver engine for ESDP.
     ExactSDPConfig (class): Parameters for the ESDP solver.
 
-Example:
-    >>> from logic.src.policies.routing.exact_and_decomposition_solvers.exact_stochastic_dynamic_programming import ExactSDPEngine
 """
 
 from .esdp_engine import ExactSDPEngine

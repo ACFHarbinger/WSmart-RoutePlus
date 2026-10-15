@@ -41,8 +41,6 @@ class MemeticAlgorithmIslandModelPolicy(BaseRoutingPolicy):
         Args:
             config: Configuration source for the Memetic Algorithm Island Model.
 
-        Returns:
-            None.
         """
         super().__init__(config)
 

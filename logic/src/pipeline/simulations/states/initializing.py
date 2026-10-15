@@ -121,8 +121,6 @@ class InitializingState(SimState):
         Args:
             ctx: The simulation context object.
 
-        Returns:
-            None
         """
 
         def _safe_get(obj: Any, path: str, default: Any = None) -> Any:
@@ -162,8 +160,6 @@ class InitializingState(SimState):
         Args:
             ctx: The simulation context object.
 
-        Returns:
-            None
         """
         ctx.config = {}
 

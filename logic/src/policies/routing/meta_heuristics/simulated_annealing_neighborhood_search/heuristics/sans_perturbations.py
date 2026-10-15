@@ -204,14 +204,14 @@ def add_n_bins_random(
     Add n random bins from the removed pool back into routes.
 
     Args:
-        routes_list (List[List[int]]): Current routes.
-        removed_bins (set): Set of removed bins to update.
-        stocks (dict): Dictionary of bin stocks.
-        vehicle_capacity (float): Vehicle capacity.
-        id_to_index (dict): Mapping from bin IDs to their indices.
+        routes_list: Current routes.
+        removed_bins: Set of removed bins to update.
+        stocks: Dictionary of bin stocks.
+        vehicle_capacity: Vehicle capacity.
+        id_to_index: Mapping from bin IDs to their indices.
         distance_matrix: Distance matrix.
-        rng (Random): Random number generator.
-        n (int, optional): Number of bins to add.
+        rng: Random number generator.
+        n: Number of bins to add.
 
     Returns:
         Mutated solution.
@@ -239,11 +239,11 @@ def add_route_with_removed_bins_random(
     Create a new route from random bins in the removed pool.
 
     Args:
-        routes_list (List[List[int]]): Current routes.
-        removed_bins (set): Set of removed bins to update.
-        stocks (dict): Dictionary of bin stocks.
-        vehicle_capacity (float): Vehicle capacity.
-        rng (Random): Random number generator.
+        routes_list: Current routes.
+        removed_bins: Set of removed bins to update.
+        stocks: Dictionary of bin stocks.
+        vehicle_capacity: Vehicle capacity.
+        rng: Random number generator.
 
     Returns:
         Mutated solution.
@@ -277,9 +277,9 @@ def move_n_route_consecutive(routes_list: list, rng: Random, n: int = 2) -> list
     Move a sequence of consecutive bins from one route to another.
 
     Args:
-        routes_list (List[List[int]]): Current routes.
-        rng (Random): Random number generator.
-        n (int, optional): Number of bins to move.
+        routes_list: Current routes.
+        rng: Random number generator.
+        n: Number of bins to move.
 
     Returns:
         Mutated solution.
@@ -312,9 +312,9 @@ def swap_n_route_consecutive(routes_list: list, rng: Random, n: int = 2) -> list
     Swap consecutive segments between two routes.
 
     Args:
-        routes_list (List[List[int]]): Current routes.
-        rng (Random): Random number generator.
-        n (int, optional): Number of bins to swap.
+        routes_list: Current routes.
+        rng: Random number generator.
+        n: Number of bins to swap.
 
     Returns:
         Mutated solution.

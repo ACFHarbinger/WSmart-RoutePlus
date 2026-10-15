@@ -62,8 +62,6 @@ class HGSALNSSolver(HGSSolver):
             params: HGSALNSConfig containing HGS and ALNS configurations.
             mandatory_nodes: Optional list of mandatory node indices.
 
-        Returns:
-            None.
         """
         # Initialize parent HGSSolver with HGS params
         super().__init__(dist_matrix, wastes, capacity, R, C, params.hgs_params, mandatory_nodes)

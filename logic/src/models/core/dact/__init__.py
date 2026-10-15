@@ -10,8 +10,6 @@ Attributes:
     DACTEncoder: Dual aspect Transformer encoder.
     DACTDecoder: Pairwise move prediction decoder.
 
-Example:
-    >>> from logic.src.models.core.dact import DACT
 """
 
 from .decoder import DACTDecoder as DACTDecoder

@@ -33,10 +33,10 @@ class GreedyEval(EvalBase):
         """call  .
 
         Args:
-            policy (Any): Description of policy.
-            data_loader (DataLoader): Description of data_loader.
-            return_results (bool): Description of return_results.
-            kwargs (Any): Description of kwargs.
+            policy: Description of policy.
+            data_loader: Description of data_loader.
+            return_results: Description of return_results.
+            kwargs: Description of kwargs.
 
         Returns:
             Any: Description of return value.

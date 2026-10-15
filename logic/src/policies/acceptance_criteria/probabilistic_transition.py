@@ -42,9 +42,9 @@ class ProbabilisticTransitionAcceptance(IAcceptanceCriterion):
         """Initialize the Probabilistic Transition criterion.
 
         Args:
-            alpha (float): Scaling factor governing how aggressively higher
+            alpha: Scaling factor governing how aggressively higher
                 objectives are preferred. Defaults to 1.0.
-            seed (Optional[int]): Random seed. Defaults to None.
+            seed: Random seed. Defaults to None.
         """
         self.alpha = alpha
         self.rng = random.Random(seed)
@@ -53,7 +53,7 @@ class ProbabilisticTransitionAcceptance(IAcceptanceCriterion):
         """Initialize the criterion state.
 
         Args:
-            initial_objective (ObjectiveValue): The initial solution's objective.
+            initial_objective: The initial solution's objective.
         """
         initial_objective = cast(float, initial_objective)
         pass
@@ -64,9 +64,9 @@ class ProbabilisticTransitionAcceptance(IAcceptanceCriterion):
         """Determine acceptance based on relative weighted fitness.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            kwargs: Additional context.
 
         Returns:
             Tuple[bool, AcceptanceMetrics]: A tuple containing:
@@ -93,10 +93,10 @@ class ProbabilisticTransitionAcceptance(IAcceptanceCriterion):
         """No-op update step.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            accepted (bool): Whether the move was accepted.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            accepted: Whether the move was accepted.
+            kwargs: Additional context.
         """
         current_obj = cast(float, current_obj)
         candidate_obj = cast(float, candidate_obj)

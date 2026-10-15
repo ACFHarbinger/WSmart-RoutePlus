@@ -32,12 +32,12 @@ def apply_type_iii_s(route: List[int], x: int, i: int, j: int, k: int, current_l
     Reverses sub-tours (V_i...V_{j-1}) and (V_k...V_{i-1}).
 
     Args:
-        route (List[int]): The tour as a list of node IDs.
-        x (int): Node ID to insert (V_x).
-        i (int): Index of node V_i (start of first reversal).
-        j (int): Index of node V_j (end of first reversal + 1).
-        k (int): Index of node V_k (start of second reversal).
-        current_load (float): Pre-calculated current weight of the route.
+        route: The tour as a list of node IDs.
+        x: Node ID to insert (V_x).
+        i: Index of node V_i (start of first reversal).
+        j: Index of node V_j (end of first reversal + 1).
+        k: Index of node V_k (start of second reversal).
+        current_load: Pre-calculated current weight of the route.
 
     Returns:
         List[int]: New route with V_x inserted and segments reversed.
@@ -112,17 +112,17 @@ def apply_type_iii_s_profit(
     Apply Type III Stringing and return profit delta.
 
     Args:
-        route (List[int]): The tour as a list of node IDs.
-        x (int): Node ID to insert (V_x).
-        i (int): Index of node V_i.
-        j (int): Index of node V_j.
-        k (int): Index of node V_k.
-        dist_matrix (np.ndarray): Distance matrix.
-        wastes (Dict[int, float]): Waste levels.
-        current_load (float): Pre-calculated current weight of the route.
-        capacity (float): Vehicle capacity.
-        R (float): Revenue multiplier.
-        C (float): Cost multiplier.
+        route: The tour as a list of node IDs.
+        x: Node ID to insert (V_x).
+        i: Index of node V_i.
+        j: Index of node V_j.
+        k: Index of node V_k.
+        dist_matrix: Distance matrix.
+        wastes: Waste levels.
+        current_load: Pre-calculated current weight of the route.
+        capacity: Vehicle capacity.
+        R: Revenue multiplier.
+        C: Cost multiplier.
 
     Returns:
         Tuple[List[int], float]: (new_route, delta_profit)

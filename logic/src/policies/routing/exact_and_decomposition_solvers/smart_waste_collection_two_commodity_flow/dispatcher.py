@@ -41,18 +41,18 @@ def run_swc_tcf_optimizer(
     """Solve SWC-TCF using either Google OR-Tools or Pyomo wrappers.
 
     Args:
-        bins (NDArray[np.float64]): Array of bin fill levels.
-        distance_matrix (List[List[float]]): Distance matrix between nodes.
-        values (Dict[str, float]): Problem parameters (Q, R, B, C, V runtime scalars).
-        binsids (List[int]): Global identifiers for bins.
-        mandatory_nodes (List[int]): IDs of bins that must be collected.
-        number_vehicles (int): Number of available vehicles.
-        time_limit (int): Solver time limit in seconds.
-        framework (str): Optimization framework ('ortools', 'pyomo', or 'native').
-        optimizer (str): Backend solver ('gurobi', 'scip', 'highs').
-        seed (int): Random seed for reproducibility.
-        dual_values (Optional[Dict[int, float]]): Dual values for pricing.
-        cfg (Optional[Union[SWCTCFConfig, Dict[str, Any]]]): Typed policy config,
+        bins: Array of bin fill levels.
+        distance_matrix: Distance matrix between nodes.
+        values: Problem parameters (Q, R, B, C, V runtime scalars).
+        binsids: Global identifiers for bins.
+        mandatory_nodes: IDs of bins that must be collected.
+        number_vehicles: Number of available vehicles.
+        time_limit: Solver time limit in seconds.
+        framework: Optimization framework ('ortools', 'pyomo', or 'native').
+        optimizer: Backend solver ('gurobi', 'scip', 'highs').
+        seed: Random seed for reproducibility.
+        dual_values: Dual values for pricing.
+        cfg: Typed policy config,
             forwarded to the native Gurobi engine (the only backend reading solver
             switches); its dict form is standardized there.
 

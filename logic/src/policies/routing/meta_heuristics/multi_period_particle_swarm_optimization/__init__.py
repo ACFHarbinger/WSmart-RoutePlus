@@ -7,8 +7,6 @@ problems with temporal constraints.
 Attributes:
     MultiPeriodPSOPolicy: Policy class for the MP-PSO approach.
 
-Example:
-    >>> from logic.src.policies.routing.meta_heuristics.multi_period_particle_swarm_optimization import MultiPeriodPSOPolicy
 """
 
 from .policy_mp_pso import MultiPeriodPSOPolicy

@@ -78,8 +78,6 @@ class FASolver:
             params: Algorithm-specific parameters (beta0, gamma).
             mandatory_nodes: Nodes that must be visited.
 
-        Returns:
-            None.
         """
         self.dist_matrix = dist_matrix
         self.wastes = wastes

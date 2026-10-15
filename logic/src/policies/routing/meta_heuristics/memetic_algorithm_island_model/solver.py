@@ -69,8 +69,6 @@ class MemeticAlgorithmIslandModelSolver:
             params: MA-IM parameters.
             mandatory_nodes: Optional list of nodes that must be visited.
 
-        Returns:
-            None.
         """
         self.dist_matrix = dist_matrix
         self.wastes = wastes

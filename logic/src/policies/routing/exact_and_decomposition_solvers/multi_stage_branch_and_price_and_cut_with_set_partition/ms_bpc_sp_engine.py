@@ -217,26 +217,26 @@ def _column_generation_loop(  # noqa: C901
     Hane, and Vance (2000), which trades bound quality for solve speed.
 
     Args:
-        master (VRPPMasterProblem): Master problem instance.
-        pricing_solver (RCSPPSolver): RCSPP pricing solver.
-        cut_engine (CuttingPlaneEngine): Cutting plane separation engine.
-        branching_constraints (Optional[List[AnyBranchingConstraint]]): Active constraints.
-        max_cg_iterations (int): Maximum number of iterations per node.
-        max_cuts (int): Maximum number of cuts per iteration.
-        time_limit (Optional[float]): Time budget in seconds.
-        start_time (float): Start timestamp of the overall solve.
-        max_routes_per_pricing (int): Maximum number of columns to return.
-        vehicle_limit (Optional[int]): Fleet size limit.
-        optimality_gap (float): Target optimality gap.
-        early_termination_gap (float): Heuristic stopping threshold.
-        parent_basis (Optional[Any]): Gurobi basis from parent node.
-        incumbent_value (float): Best known integer solution value.
-        node_depth (int): Current B&B tree depth.
-        rc_tolerance (float): Minimum reduced cost for column acceptance.
-        cut_orthogonality_threshold (float): Minimum cut independence.
-        cg_at_root_only (bool): If True, skips pricing at descendant nodes.
-        branching_strategy (str): Active branching rule name.
-        rcspp_timeout (float): Timeout for the RCSPP solver.
+        master: Master problem instance.
+        pricing_solver: RCSPP pricing solver.
+        cut_engine: Cutting plane separation engine.
+        branching_constraints: Active constraints.
+        max_cg_iterations: Maximum number of iterations per node.
+        max_cuts: Maximum number of cuts per iteration.
+        time_limit: Time budget in seconds.
+        start_time: Start timestamp of the overall solve.
+        max_routes_per_pricing: Maximum number of columns to return.
+        vehicle_limit: Fleet size limit.
+        optimality_gap: Target optimality gap.
+        early_termination_gap: Heuristic stopping threshold.
+        parent_basis: Gurobi basis from parent node.
+        incumbent_value: Best known integer solution value.
+        node_depth: Current B&B tree depth.
+        rc_tolerance: Minimum reduced cost for column acceptance.
+        cut_orthogonality_threshold: Minimum cut independence.
+        cg_at_root_only: If True, skips pricing at descendant nodes.
+        branching_strategy: Active branching rule name.
+        rcspp_timeout: Timeout for the RCSPP solver.
 
     Returns:
         Tuple[float, Dict[int, float], Optional[Any], bool]:
@@ -635,13 +635,13 @@ def _solve_farkas_pricing_step(
     mandatory coverage basis.
 
     Args:
-        master (VRPPMasterProblem): The master problem instance.
-        pricing_solver (RCSPPSolver): The RCSPP solver for pricing.
-        branching_constraints (List[AnyBranchingConstraint]): Active branching constraints.
-        farkas_duals (Any): Dual values from the Farkas ray.
-        max_routes (int): Maximum number of routes to return.
-        timeout (Optional[float]): Time limit for the pricing step.
-        exact_mode (bool): Whether exact pricing is enforced.
+        master: The master problem instance.
+        pricing_solver: The RCSPP solver for pricing.
+        branching_constraints: Active branching constraints.
+        farkas_duals: Dual values from the Farkas ray.
+        max_routes: Maximum number of routes to return.
+        timeout: Time limit for the pricing step.
+        exact_mode: Whether exact pricing is enforced.
 
     Returns:
         Tuple[int, bool]: (Number of routes added, whether pricing was exhausted).
@@ -712,12 +712,12 @@ def _separate_cuts(
     engine (RCC, fleet_cover, etc.) configured by the user.
 
     Args:
-        master (VRPPMasterProblem): Master problem instance.
-        cut_engine (CuttingPlaneEngine): Cutting plane separation engine.
-        max_cuts (int): Maximum number of cuts to add.
-        iteration (int): Current B&B node iteration index.
-        node_depth (int): Current B&B tree depth.
-        cut_orthogonality_threshold (float): Minimum cosine distance between cut vectors.
+        master: Master problem instance.
+        cut_engine: Cutting plane separation engine.
+        max_cuts: Maximum number of cuts to add.
+        iteration: Current B&B node iteration index.
+        node_depth: Current B&B tree depth.
+        cut_orthogonality_threshold: Minimum cosine distance between cut vectors.
 
     Returns:
         int: Number of cuts added.
@@ -747,14 +747,14 @@ def _solve_pricing_step(
     Dual Smoothing (Wentges 1997)—to identify routes with positive reduced cost.
 
     Args:
-        master (VRPPMasterProblem): Master problem instance.
-        pricing_solver (RCSPPSolver): RCSPP solver for pricing.
-        branching_constraints (Optional[List[AnyBranchingConstraint]]): Active branching constraints.
-        max_routes (int): Maximum number of routes to return.
-        optimality_gap (float): Target optimality gap.
-        rc_tolerance (float): Minimum reduced cost to accept a column.
-        timeout (Optional[float]): Time limit for the pricing step.
-        exact_mode (bool): Whether exact pricing is enforced.
+        master: Master problem instance.
+        pricing_solver: RCSPP solver for pricing.
+        branching_constraints: Active branching constraints.
+        max_routes: Maximum number of routes to return.
+        optimality_gap: Target optimality gap.
+        rc_tolerance: Minimum reduced cost to accept a column.
+        timeout: Time limit for the pricing step.
+        exact_mode: Whether exact pricing is enforced.
 
     Returns:
         Tuple[int, bool]: (Number of columns added, whether pricing was exhausted).
@@ -1083,17 +1083,17 @@ def run_ms_bpc_sp(  # noqa: C901
         - Prune by bound
 
     Args:
-        dist_matrix (np.ndarray): Distance matrix (n_nodes+1 x n_nodes+1).
-        wastes (Dict[int, float]): Waste volumes for each node.
-        capacity (float): Vehicle capacity.
-        R (float): Revenue per kg.
-        C (float): Cost per km.
-        params (Optional[Union[MSBPCSPConfig, Dict[str, Any]]]): Configuration parameters.
-        mandatory_indices (Optional[Set[int]]): Set of node indices that must be visited.
-        vehicle_limit (Optional[int]): Fleet size limit.
-        env (Optional[Any]): Gurobi environment (ignored, kept for compatibility).
-        node_coords (Optional[np.ndarray]): Optional node coordinates for visualization.
-        recorder (Optional[PolicyStateRecorder]): Optional state recorder for tracking.
+        dist_matrix: Distance matrix (n_nodes+1 x n_nodes+1).
+        wastes: Waste volumes for each node.
+        capacity: Vehicle capacity.
+        R: Revenue per kg.
+        C: Cost per km.
+        params: Configuration parameters.
+        mandatory_indices: Set of node indices that must be visited.
+        vehicle_limit: Fleet size limit.
+        env: Gurobi environment (ignored, kept for compatibility).
+        node_coords: Optional node coordinates for visualization.
+        recorder: Optional state recorder for tracking.
         kwargs: Additional keyword arguments.
 
     Returns:

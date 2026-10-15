@@ -57,8 +57,6 @@ class HGSRRPolicy(BaseRoutingPolicy):
         Args:
             config: HGSRRConfig dataclass, raw dict from YAML, or None.
 
-        Returns:
-            None.
         """
         super().__init__(config)
 

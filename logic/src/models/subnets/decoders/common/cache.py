@@ -58,7 +58,7 @@ class AttentionDecoderCache:
         All tensor fields are sliced along the batch dimension (dimension 0).
 
         Args:
-            key (Union[int, slice, torch.Tensor]): Index, slice, or mask for selection.
+            key: Index, slice, or mask for selection.
 
         Returns:
             AttentionDecoderCache: New cache instance with sliced tensors.
@@ -96,6 +96,6 @@ class AttentionDecoderCache:
         """Setter for context_node_projected (backwards compatibility).
 
         Args:
-            value (Optional[torch.Tensor]): New graph context tensor.
+            value: New graph context tensor.
         """
         self.graph_context = value

@@ -183,8 +183,6 @@ def plot_loss_landscape(
         resolution: Grid resolution of the landscape. Defaults to 10.
         span: Range of perturbation along the random directions. Defaults to 1.0.
 
-    Returns:
-        None
     """
     from logic.src.policies.vector.local_search import vectorized_two_opt
 

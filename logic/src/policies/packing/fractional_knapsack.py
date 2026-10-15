@@ -95,10 +95,10 @@ class FractionalKnapsackSelection(IPackingAlgorithm):
         depot at index 0 so bin ``i`` corresponds to matrix index ``i+1``.
 
         Args:
-            candidates (np.ndarray): 0-based global bin indices.
-            packed (List[int]): Indices of bins already packed.
-            dm (np.ndarray): Full distance matrix.
-            dist_depot (np.ndarray): Distance from depot to each bin.
+            candidates: 0-based global bin indices.
+            packed: Indices of bins already packed.
+            dm: Full distance matrix.
+            dist_depot: Distance from depot to each bin.
 
         Returns:
             np.ndarray: Marginal insertion distance for each candidate.
@@ -127,13 +127,13 @@ class FractionalKnapsackSelection(IPackingAlgorithm):
         """Greedily fill a single vehicle, mutating ``eligible`` in place.
 
         Args:
-            eligible (Set[int]): Set of eligible bin indices.
-            revenue (np.ndarray): Per-bin revenue.
-            mass (np.ndarray): Per-bin mass.
-            dm (np.ndarray): Distance matrix.
-            dist_depot (np.ndarray): Distance from depot to each bin.
-            cost_per_km (float): Cost per kilometer.
-            capacity (float): Vehicle capacity.
+            eligible: Set of eligible bin indices.
+            revenue: Per-bin revenue.
+            mass: Per-bin mass.
+            dm: Distance matrix.
+            dist_depot: Distance from depot to each bin.
+            cost_per_km: Cost per kilometer.
+            capacity: Vehicle capacity.
 
         Returns:
             List[int]: Indices of packed bins.
@@ -173,8 +173,8 @@ class FractionalKnapsackSelection(IPackingAlgorithm):
     def __init__(self, n_vehicles: Optional[int] = None, cost_per_km: Optional[float] = None) -> None:
         """
         Args:
-            n_vehicles (Optional[int]): Fleet size; ``None`` uses ``context.n_vehicles``.
-            cost_per_km (Optional[float]): Cost per kilometre; ``None`` uses ``context.cost_per_km``.
+            n_vehicles: Fleet size; ``None`` uses ``context.n_vehicles``.
+            cost_per_km: Cost per kilometre; ``None`` uses ``context.cost_per_km``.
         """
         self.n_vehicles = n_vehicles
         self.cost_per_km = cost_per_km
@@ -187,7 +187,7 @@ class FractionalKnapsackSelection(IPackingAlgorithm):
         means the number of knapsacks is unbounded.
 
         Args:
-            context (PackingContext): The selection context.
+            context: The selection context.
 
         Returns:
             Tuple[List[int], SearchContext]: Selected bin IDs and search context.

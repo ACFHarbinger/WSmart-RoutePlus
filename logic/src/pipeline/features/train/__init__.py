@@ -6,8 +6,6 @@ Attributes:
     run_hpo: Run a hyper-parameter optimisation job (loaded lazily; the HPO
         stack is excluded from the 1.0.0 release package, owner ruling Q-6).
 
-Example:
-    >>> from logic.src.pipeline.features.train import run_training
 """
 
 from typing import Any

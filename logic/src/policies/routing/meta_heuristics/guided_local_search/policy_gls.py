@@ -43,8 +43,6 @@ class GLSPolicy(BaseRoutingPolicy):
         Args:
             config: Configuration source for the Guided Local Search.
 
-        Returns:
-            None.
         """
         super().__init__(config)
 

@@ -90,7 +90,7 @@ class BestFirstSearch(NodeSelectionStrategy):
             """Key function for best-first selection based on LP bound.
 
             Args:
-                i (int): Index in the open nodes list.
+                i: Index in the open nodes list.
 
             Returns:
                 float: The LP bound of the node, or -inf if None.
@@ -189,7 +189,7 @@ class HybridSearchStrategy(NodeSelectionStrategy):
             """Key function for best-first selection based on LP bound.
 
             Args:
-                i (int): Index in the open nodes list.
+                i: Index in the open nodes list.
 
             Returns:
                 float: The LP bound of the node, or -inf if None.

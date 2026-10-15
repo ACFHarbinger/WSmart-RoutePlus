@@ -68,8 +68,6 @@ class MemeticAlgorithmDualPopulationSolver:
             params: MA-DP algorithm parameters.
             mandatory_nodes: List of nodes that must be visited.
 
-        Returns:
-            None.
         """
         self.dist_matrix = dist_matrix
         self.wastes = wastes

@@ -211,17 +211,17 @@ def run_bpc(  # noqa: C901
         - Prune by bound
 
     Args:
-        dist_matrix (np.ndarray): Distance matrix (n_nodes+1 x n_nodes+1).
-        wastes (Dict[int, float]): Waste volumes for each node.
-        capacity (float): Vehicle capacity.
-        R (float): Revenue per kg.
-        C (float): Cost per km.
-        cfg (Optional[Union[BPCConfig, Dict[str, Any]]]): Configuration parameters.
-        mandatory_indices (Optional[Set[int]]): Set of node indices that must be visited.
-        vehicle_limit (Optional[int]): Fleet size limit.
-        env (Optional[Any]): Gurobi environment (ignored, kept for compatibility).
-        node_coords (Optional[np.ndarray]): Optional node coordinates for visualization.
-        recorder (Optional[PolicyStateRecorder]): Optional state recorder for tracking.
+        dist_matrix: Distance matrix (n_nodes+1 x n_nodes+1).
+        wastes: Waste volumes for each node.
+        capacity: Vehicle capacity.
+        R: Revenue per kg.
+        C: Cost per km.
+        cfg: Configuration parameters.
+        mandatory_indices: Set of node indices that must be visited.
+        vehicle_limit: Fleet size limit.
+        env: Gurobi environment (ignored, kept for compatibility).
+        node_coords: Optional node coordinates for visualization.
+        recorder: Optional state recorder for tracking.
         kwargs: Additional keyword arguments.
 
     Returns:

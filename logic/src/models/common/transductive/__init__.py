@@ -10,8 +10,6 @@ Attributes:
     EASEmb: EAS variant targeting state embeddings.
     EASLay: EAS variant targeting architectural layers.
 
-Example:
-    >>> from logic.src.models.common.transductive import ActiveSearch
 """
 
 from .active_search import ActiveSearch as ActiveSearch

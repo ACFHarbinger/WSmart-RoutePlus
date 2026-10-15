@@ -8,8 +8,6 @@ Attributes:
     AttentionModel: The standard graph attention-based policy.
     MatNet: The matrix-based encoder-decoder model.
 
-Example:
-    >>> from logic.src.models.core import AttentionModel
 """
 
 from typing import Any

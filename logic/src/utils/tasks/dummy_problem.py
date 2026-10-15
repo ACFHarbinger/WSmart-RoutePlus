@@ -23,6 +23,6 @@ class DummyProblem:
         Initialize DummyProblem.
 
         Args:
-            name (str): Name of the problem.
+            name: Name of the problem.
         """
         self.NAME = name

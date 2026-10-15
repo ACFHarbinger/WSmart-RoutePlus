@@ -8,8 +8,6 @@ Attributes:
     LCAConfig: Configuration parameters for LCA.
     LCAPolicy: Policy adapter for LCA.
 
-Example:
-    >>> from logic.src.policies.routing.meta_heuristics.league_championship_algorithm import LCAPolicy
 """
 
 from logic.src.configs.policies.lca import LCAConfig

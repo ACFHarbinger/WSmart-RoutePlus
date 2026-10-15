@@ -57,12 +57,12 @@ class EMCQAcceptance(IAcceptanceCriterion):
         """Initialize the EMC-Q criterion.
 
         Args:
-            p (float): Baseline acceptance probability. Defaults to 0.05.
-            p_boost (float): Boosted probability. Defaults to 0.5.
-            q_threshold (Union[int, Callable]): The rejection counter threshold Q.
+            p: Baseline acceptance probability. Defaults to 0.05.
+            p_boost: Boosted probability. Defaults to 0.5.
+            q_threshold: The rejection counter threshold Q.
                 Defaults to 100.
-            seed (Optional[int]): Random seed. Defaults to None.
-            maximization (bool): Whether the problem is maximization. Defaults to False.
+            seed: Random seed. Defaults to None.
+            maximization: Whether the problem is maximization. Defaults to False.
         """
         self.p = p
         self.p_boost = p_boost
@@ -76,7 +76,7 @@ class EMCQAcceptance(IAcceptanceCriterion):
         """Initialize the rejection counter.
 
         Args:
-            initial_objective (ObjectiveValue): The initial solution's objective.
+            initial_objective: The initial solution's objective.
         """
         initial_objective = cast(float, initial_objective)
         self.rejection_counter = 0
@@ -97,9 +97,9 @@ class EMCQAcceptance(IAcceptanceCriterion):
         """Determine whether to accept based on the counter-boosted probability.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            kwargs: Additional context.
 
         Returns:
             Tuple[bool, AcceptanceMetrics]: A tuple containing:
@@ -142,10 +142,10 @@ class EMCQAcceptance(IAcceptanceCriterion):
         """Update the rejection counter.
 
         Args:
-            current_obj (ObjectiveValue): Objective of the current solution.
-            candidate_obj (ObjectiveValue): Objective of the candidate solution.
-            accepted (bool): Whether the move was accepted.
-            kwargs (Any): Additional context.
+            current_obj: Objective of the current solution.
+            candidate_obj: Objective of the candidate solution.
+            accepted: Whether the move was accepted.
+            kwargs: Additional context.
         """
         current_obj = cast(float, current_obj)
         candidate_obj = cast(float, candidate_obj)

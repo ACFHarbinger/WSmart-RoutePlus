@@ -35,10 +35,10 @@ class MultiStartEval(EvalBase):
         """Initialize Class.
 
         Args:
-            env (Any): Description of env.
-            num_starts (Optional[int]): Description of num_starts.
-            progress (bool): Description of progress.
-            kwargs (Any): Description of kwargs.
+            env: Description of env.
+            num_starts: Description of num_starts.
+            progress: Description of progress.
+            kwargs: Description of kwargs.
         """
         super().__init__(env, progress, **kwargs)
         self.num_starts = num_starts
@@ -47,9 +47,9 @@ class MultiStartEval(EvalBase):
         """call  .
 
         Args:
-            policy (Any): Description of policy.
-            data_loader (DataLoader): Description of data_loader.
-            kwargs (Any): Description of kwargs.
+            policy: Description of policy.
+            data_loader: Description of data_loader.
+            kwargs: Description of kwargs.
 
         Returns:
             Any: Description of return value.

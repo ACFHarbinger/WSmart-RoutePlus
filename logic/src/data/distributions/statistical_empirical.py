@@ -80,7 +80,7 @@ class Empirical(BaseDistribution):
 
         Args:
             size: Sampling shape. First dimension is assumed to be batch size.
-            generator (Optional[torch.Generator], optional): Description of generator.
+            generator: Description of generator.
 
         Returns:
             torch.Tensor: Sampled values

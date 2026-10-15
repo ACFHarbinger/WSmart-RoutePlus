@@ -97,8 +97,6 @@ class RoutePool:
     def __init__(self) -> None:
         """Initialize the route pool.
 
-        Returns:
-            None
         """
         self._lock: threading.Lock = threading.Lock()
         self._pool: Dict[FrozenSet[int], VRPPRoute] = {}
@@ -144,8 +142,6 @@ class RoutePool:
         Args:
             capacity: Vehicle capacity Q.
 
-        Returns:
-            None
         """
         with self._lock:
             self._pool = {k: r for k, r in self._pool.items() if r.load <= capacity + 1e-6}

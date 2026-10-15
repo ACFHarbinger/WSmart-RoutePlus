@@ -3,8 +3,6 @@
 Attributes:
     MODULE_VAR (Type): Description of module level variable.
 
-Example:
-    >>> import constructive
 """
 
 from typing import Any, Dict, cast
@@ -22,10 +20,10 @@ def _create_pomo(cfg: Config, policy, env, kw: Dict[str, Any]) -> pl.LightningMo
     """create pomo.
 
     Args:
-    cfg (Config): Description of cfg.
-    policy (Any): Description of policy.
-    env (Any): Description of env.
-    kw (Dict[str, Any]): Description of kw.
+    cfg: Description of cfg.
+    policy: Description of policy.
+    env: Description of env.
+    kw: Description of kw.
 
     Returns:
         Any: Description of return value.
@@ -51,10 +49,10 @@ def _create_symnco(cfg: Config, policy, env, kw: Dict[str, Any]) -> pl.Lightning
     """create symnco.
 
     Args:
-    cfg (Config): Description of cfg.
-    policy (Any): Description of policy.
-    env (Any): Description of env.
-    kw (Dict[str, Any]): Description of kw.
+    cfg: Description of cfg.
+    policy: Description of policy.
+    env: Description of env.
+    kw: Description of kw.
 
     Returns:
         Any: Description of return value.

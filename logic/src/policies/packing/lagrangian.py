@@ -44,7 +44,7 @@ class LagrangianSelection(IPackingAlgorithm):
         """Select bins based on positive Lagrangian reduced cost.
 
         Args:
-            context (PackingContext): PackingContext with bin properties and economic parameters.
+            context: PackingContext with bin properties and economic parameters.
 
         Returns:
             Tuple[List[int], SearchContext]: Selected bin IDs (1-based) and search context.

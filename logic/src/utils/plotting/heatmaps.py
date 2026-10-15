@@ -82,8 +82,6 @@ def plot_logit_lens(model, x_batch, output_file, epoch=0):
         output_file: File path where the heatmap image will be saved.
         epoch: Current training epoch index.
 
-    Returns:
-        None
     """
     print("Computing Logit Lens...")
     model.eval()

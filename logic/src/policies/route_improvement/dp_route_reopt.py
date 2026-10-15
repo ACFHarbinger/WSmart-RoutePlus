@@ -50,14 +50,14 @@ class DPRouteReoptRouteImprover(IRouteImprovement):
         """Apply Held-Karp reoptimization to each route in the tour.
 
         Args:
-            tour (List[int]): Initial tour sequence.
+            tour: Initial tour sequence.
             kwargs: Context containing:
-                distance_matrix (np.ndarray | torch.Tensor): Distance lookup.
-                dp_max_nodes (int): Maximum nodes per route for DP (default 20).
-                wastes (Dict[int, float]): Bin mass dictionary.
-                capacity (float): Maximum vehicle capacity.
-                revenue_kg (float): Waste profit coefficient.
-                cost_per_km (float): Distance cost coefficient.
+                distance_matrix: Distance lookup.
+                dp_max_nodes: Maximum nodes per route for DP (default 20).
+                wastes: Bin mass dictionary.
+                capacity: Maximum vehicle capacity.
+                revenue_kg: Waste profit coefficient.
+                cost_per_km: Distance cost coefficient.
 
         Returns:
             Tuple[List[int], ImprovementMetrics]: Refined tour and metrics.

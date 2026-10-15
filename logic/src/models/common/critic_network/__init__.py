@@ -8,8 +8,6 @@ Attributes:
     LegacyCriticNetwork: Backward-compatible critic implementation.
     create_critic_from_actor: Factory to initialize shared-backbone critics.
 
-Example:
-    >>> from logic.src.models.common.critic_network import CriticNetwork
 """
 
 from .model import LegacyCriticNetwork as LegacyCriticNetwork
