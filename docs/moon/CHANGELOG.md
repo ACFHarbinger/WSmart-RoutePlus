@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Cross-package review (`2026-10-15`)
+
+- Codex review: release closure retains ancestor initializers and deferred runtime imports; multiline lazy maps are recognized. Builds reject populated/repository destinations instead of deleting them. Added isolated closure and destination tests.
+
 ### Release manifest and package build (`2026-10-15`)
 
 #### Added
