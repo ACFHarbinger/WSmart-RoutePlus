@@ -17,6 +17,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Cross-package review (`2026-10-15`)
+
+- Codex review: mirrored release-builder ancestor/deferred-import/lazy-map fixes and non-destructive destination checks with isolated tests.
+
+### WP-13 follow-ups (`2026-10-15`)
+
+- `logic/release.yaml`: `logic.cloud`, `logic.benchmark` and `logic.test` added to `excluded_packages`. The `sync_drive`/`benchmark`/`test_suite` CLI jobs reach them only through deferred imports (`drive_parser.py`, `parser_dispatch.py`, `jobs/ops_runner.py`), and the three packages live outside the staged tops (`src`/`configs`/`controllers`), so they can never ship with the package. Under the reviewed closure semantics (deferred imports are followed) the build fails staged verification through `test_cloud_sync.py`; under the previous semantics they were kept-but-unstaged, a silent defect — the release CLI's `test_suite`/`sync_drive`/`benchmark` jobs would have crashed at runtime. The exclusions declare them opt-out paths (unavailable in the release, matching the builder's documented deferred-import semantics); the curated release test files (P-06) are unaffected, and the staged `logic/test/__init__.py` ships as a package marker with the runner import stripped. Check/build/smoke green on the WP-13 tree under both closure semantics; the verified HEAD release-test selection is preserved.
+- `tools/trim_docstrings.py`: the walk now skips the pinned `wsmart_bin_analysis` submodule — its content belongs to its own repository and cannot ship through a superproject commit, so `--apply` would otherwise leave the submodule dirty on every run (the first pass had trimmed 14 of its files; those uncommitted trims were reverted from the worktree copy).
+
 ### Docs and cleanup (`2026-10-15`, WP-13)
 
 #### Added
