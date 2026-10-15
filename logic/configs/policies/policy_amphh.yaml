@@ -2,4 +2,3 @@ amphh:
   mem_size: 10
   iters: 50
   seed: 42
-  vrpp: true

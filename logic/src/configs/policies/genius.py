@@ -32,7 +32,6 @@ class GENIUSConfig:
         random_us_sampling (bool): Whether to use random US sampling.
         time_limit (float): Time limit in seconds.
         seed (Optional[int]): Seed for the random number generator.
-        vrpp (bool): Whether the problem is a VRRP.
         packing (Optional[List[PackingConfig]]): Packing configurations.
         route_improvement (Optional[List[RouteImprovingConfig]]): Route improvement configurations.
     """
@@ -44,7 +43,6 @@ class GENIUSConfig:
     random_us_sampling: bool = False
     time_limit: float = 60.0
     seed: Optional[int] = None
-    vrpp: bool = True
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)
     profit_aware_operators: bool = False

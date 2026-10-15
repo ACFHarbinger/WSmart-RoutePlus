@@ -33,6 +33,7 @@ from logic.src.policies.helpers.operators.solution_initialization.greedy_si impo
 from .adaptive_selection import AdaptiveOperatorSelector
 from .operators import HULKOperators
 from logic.src.configs.policies.hulk import HULKConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 from .solution import Solution
 
 
@@ -104,7 +105,7 @@ class HULKSolver:
             C,
             mandatory_nodes,
             params.seed,
-            expand_pool=getattr(self.params, "vrpp", False),
+            expand_pool=current_expand_pool(),
             profit_aware_operators=getattr(self.params, "profit_aware_operators", False),
         )
 

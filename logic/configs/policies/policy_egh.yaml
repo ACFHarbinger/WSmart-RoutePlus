@@ -29,7 +29,6 @@ egh:
   skip_bpc: false
   sp_pool_cap: 50000
   sp_mip_gap: 0.0001
-  vrpp: true
   packing:
     other/pk_last_minute.yaml:
     - last_minute_cf70

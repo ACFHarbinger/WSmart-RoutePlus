@@ -6,7 +6,6 @@ qde:
     CR: 0.7
     max_iterations: 200
     time_limit: 60.0
-    vrpp: true
     profit_aware_operators: true
     packing:
       other/pk_lookahead.yaml:

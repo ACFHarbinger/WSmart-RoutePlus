@@ -122,7 +122,6 @@ class HULKPolicy(BaseRoutingPolicy):
             time_limit=float(values.get("time_limit", 300.0)),
             restarts=int(values.get("restarts", 3)),
             restart_threshold=int(values.get("restart_threshold", 100)),
-            vrpp=bool(values.get("vrpp", True)),
             profit_aware_operators=bool(values.get("profit_aware_operators", False)),
             epsilon=float(values.get("epsilon", 0.3)),
             epsilon_decay=float(values.get("epsilon_decay", 0.995)),

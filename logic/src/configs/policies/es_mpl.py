@@ -50,7 +50,6 @@ class MuPlusLambdaESConfig:
         local_search_iterations (int): Intensity of local optimization
             applied to each candidate offspring.
 
-        vrpp (bool): Whether the problem is a VRP with Profits.
 
         time_limit (float): Maximum wall-clock duration for the search process
             in seconds.
@@ -70,7 +69,6 @@ class MuPlusLambdaESConfig:
     max_iterations: int = 500
     local_search_iterations: int = 100
     time_limit: float = 60.0
-    vrpp: bool = True
     profit_aware_operators: bool = False
     seed: Optional[int] = None
     packing: Optional[List[PackingConfig]] = None

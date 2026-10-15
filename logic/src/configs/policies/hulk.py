@@ -27,7 +27,6 @@ class HULKConfig:
         time_limit (float): Time limit in seconds.
         restarts (int): Number of restarts.
         restart_threshold (int): Threshold for restarting.
-        vrpp (bool): Whether the problem is a VRRP.
         profit_aware_operators (bool): Whether to use profit-aware operators.
         epsilon (float): Epsilon parameter for operator selection.
         epsilon_decay (float): Decay rate for epsilon.
@@ -58,7 +57,6 @@ class HULKConfig:
     time_limit: float = 300.0
     restarts: int = 3
     restart_threshold: int = 100
-    vrpp: bool = True
     profit_aware_operators: bool = False
 
     # Operator selection

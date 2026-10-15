@@ -36,6 +36,7 @@ from logic.src.policies.helpers.operators.solution_initialization.greedy_si impo
 )
 
 from logic.src.configs.policies.sisr import SISRConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class SISRSolver:
@@ -135,7 +136,7 @@ class SISRSolver:
                     blink_rate=self.params.blink_rate,
                     mandatory_nodes=self.mandatory_nodes,
                     rng=self.random,
-                    expand_pool=self.params.vrpp,
+                    expand_pool=current_expand_pool(),
                 )
             else:
                 new_routes = greedy_insertion_with_blinks(
@@ -147,7 +148,7 @@ class SISRSolver:
                     blink_rate=self.params.blink_rate,
                     mandatory_nodes=self.mandatory_nodes,
                     rng=self.random,
-                    expand_pool=self.params.vrpp,
+                    expand_pool=current_expand_pool(),
                 )
 
             # Calculate profit instead of cost for maximizing

@@ -44,7 +44,6 @@ class MuKappaLambdaESConfig:
         local_search_iterations (int): Number of local search iterations.
         max_iterations (int): Maximum number of iterations.
         time_limit (float): Time limit in seconds.
-        vrpp (bool): Whether the problem is a VRRP.
         profit_aware_operators (bool): Whether to use profit-aware operators.
         seed (Optional[int]): Seed for the random number generator.
         packing (Optional[List[PackingConfig]]): Packing configurations.
@@ -85,7 +84,6 @@ class MuKappaLambdaESConfig:
     time_limit: float = 60.0
 
     # Infrastructure
-    vrpp: bool = True
     profit_aware_operators: bool = False
     seed: Optional[int] = None
     packing: Optional[List[PackingConfig]] = None

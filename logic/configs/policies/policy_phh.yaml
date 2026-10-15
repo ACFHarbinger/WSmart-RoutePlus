@@ -2,4 +2,3 @@ phh:
   pop_size: 10
   gens: 20
   seed: 42
-  vrpp: true

@@ -66,7 +66,6 @@ class BBConfig:
         strong_branching_limit (int): Maximum number of candidate variables to
             evaluate during strong branching. Only applies when branching_strategy='strong'.
             Defaults to 5.
-        vrpp (bool): If True, enables the Vehicle Routing Problem with Profits
             mode, where all bins are candidates for collection based on profitability.
             Defaults to True.
         seed (Optional[int]): Random seed passed to the underlying Gurobi engine
@@ -103,7 +102,6 @@ class BBConfig:
     mip_gap: float = 0.01
     branching_strategy: str = "strong"
     strong_branching_limit: int = 5
-    vrpp: bool = True
     seed: Optional[int] = None
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

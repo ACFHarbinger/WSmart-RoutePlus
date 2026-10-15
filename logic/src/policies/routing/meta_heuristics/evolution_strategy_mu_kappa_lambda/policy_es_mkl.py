@@ -114,7 +114,6 @@ class MuKappaLambdaESPolicy(BaseRoutingPolicy):
             stagnation_limit=values.get("stagnation_limit", 10),
             local_search_iterations=values.get("local_search_iterations", 100),
             seed=values.get("seed", 42),
-            vrpp=values.get("vrpp", True),
             profit_aware_operators=values.get("profit_aware_operators", False),
         )
 

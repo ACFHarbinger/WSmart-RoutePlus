@@ -11,28 +11,21 @@ from typing import Any, Dict, Optional
 import torch
 from logic.src.constants.tasks import COST_KM, REVENUE_KG
 from logic.src.constants.temporal import get_default_temporal_params
+from logic.src.envs.tasks.common.objectives import profit_objective
 
 
-def profit_objective(
-    collected_kg: float,
-    distance_km: float,
-    overflows: float = 0.0,
-    revenue_kg: float = REVENUE_KG,
-    cost_km: float = COST_KM,
-) -> float:
-    """Canonical economic objective in EUR for profitable routing problems.
+def closed_tour_length(dm: torch.Tensor, pi: torch.Tensor) -> torch.Tensor:
+    """Sum directed road legs, closing open paths exactly once at the depot.
 
-    Args:
-        collected_kg: Total waste collected in kilograms.
-        distance_km: Total distance traversed in kilometers.
-        overflows: Optional count or excess volume of constraint violations.
-        revenue_kg: Unit revenue per kilogram collected (€/kg).
-        cost_km: Unit vehicle travel cost per kilometer (€/km).
-
-    Returns:
-        float: Net economic profit in EUR.
+    ``pi`` is [B, L]; ``dm`` is [N, N] or [B, N, N] with depot at 0 and
+    zero diagonal. Intermediate depot returns are ordinary directed legs.
     """
-    return float(collected_kg * revenue_kg - distance_km * cost_km)
+    if dm.dim() == 2:
+        dm = dm.unsqueeze(0).expand(pi.shape[0], -1, -1)
+    if pi.shape[1] == 0:
+        return dm.new_zeros(pi.shape[0])
+    batch = torch.arange(pi.shape[0], device=pi.device)
+    return dm[batch[:, None], pi[:, :-1], pi[:, 1:]].sum(dim=-1) + dm[batch, 0, pi[:, 0]] + dm[batch, pi[:, -1], 0]
 
 
 def calc_cumulative_trip_load(waste_seq: torch.Tensor, pi: torch.Tensor) -> torch.Tensor:
@@ -137,30 +130,7 @@ def evaluate_profitable_tour(  # noqa: C901
     # Calculate tour length
     dm_input = dist_matrix if dist_matrix is not None else dataset.get("dist_matrix", dataset.get("dm"))
     if dm_input is not None and isinstance(dm_input, torch.Tensor):
-        dm = dm_input
-        if dm.dim() == 2:
-            dm = dm.unsqueeze(0).expand(bs, -1, -1)
-        if seq_len == 1:
-            first_node = pi[:, 0]
-            not_depot = (first_node != 0).float()
-            length = (
-                dm[torch.arange(bs, device=device), 0, first_node]
-                + dm[torch.arange(bs, device=device), first_node, 0]
-            ) * not_depot
-        else:
-            src_vertices, dst_vertices = pi[:, :-1], pi[:, 1:]
-            dst_mask = dst_vertices != 0
-            pair_mask = (src_vertices != 0) & dst_mask
-            dists = dm[torch.arange(bs, device=device).unsqueeze(-1), src_vertices, dst_vertices] * pair_mask.float()
-            last_dst = torch.max(
-                dst_mask * torch.arange(dst_vertices.size(1), device=device),
-                dim=1,
-            ).indices
-            length = (
-                dm[torch.arange(bs, device=device), dst_vertices[torch.arange(bs, device=device), last_dst], 0]
-                + dists.sum(dim=1)
-                + dm[torch.arange(bs, device=device), 0, pi[:, 0]]
-            )
+        length = closed_tour_length(dm_input, pi)
     elif full_locs is not None:
         coords = full_locs.gather(1, pi.unsqueeze(-1).expand(*pi.shape, full_locs.size(-1)))
         depot_coord = full_locs[:, 0:1, :]
@@ -179,7 +149,13 @@ def evaluate_profitable_tour(  # noqa: C901
             raw_waste = raw_waste.unsqueeze(0).expand(bs, -1)
         elif raw_waste.dim() == 3:
             raw_waste = raw_waste[:, 0, :]
-        num_loc = full_locs.size(1) if full_locs is not None else raw_waste.size(1)
+        num_loc = (
+            full_locs.size(1)
+            if full_locs is not None
+            else dm_input.size(-1)
+            if dm_input is not None
+            else raw_waste.size(1)
+        )
         if raw_waste.size(1) == num_loc - 1:
             full_waste = torch.cat([torch.zeros(bs, 1, device=device), raw_waste], dim=-1)
         else:
@@ -243,7 +219,11 @@ def evaluate_profitable_tour(  # noqa: C901
             for i in range(seq_len):
                 node = int(pi[b, i].item())
                 if travel_matrix is not None:
-                    leg_t = travel_matrix[b, prev_node, node].item() if travel_matrix.dim() == 3 else travel_matrix[prev_node, node].item()
+                    leg_t = (
+                        travel_matrix[b, prev_node, node].item()
+                        if travel_matrix.dim() == 3
+                        else travel_matrix[prev_node, node].item()
+                    )
                 elif dm_mat is not None:
                     leg_t = dm_mat[b, prev_node, node].item() / speed_t[b].item()
                 elif full_locs is not None:
@@ -278,7 +258,11 @@ def evaluate_profitable_tour(  # noqa: C901
             # Final return to depot if not at depot
             if pi[b, -1].item() != 0:
                 if travel_matrix is not None:
-                    final_leg = travel_matrix[b, prev_node, 0].item() if travel_matrix.dim() == 3 else travel_matrix[prev_node, 0].item()
+                    final_leg = (
+                        travel_matrix[b, prev_node, 0].item()
+                        if travel_matrix.dim() == 3
+                        else travel_matrix[prev_node, 0].item()
+                    )
                 elif dm_mat is not None:
                     final_leg = dm_mat[b, prev_node, 0].item() / speed_t[b].item()
                 elif full_locs is not None:
@@ -299,11 +283,13 @@ def evaluate_profitable_tour(  # noqa: C901
     cost_km = dataset.get("cost_km", COST_KM)
     revenue_kg = dataset.get("revenue_kg", REVENUE_KG)
 
-    profit = waste * revenue_kg - length * cost_km
+    profit = profit_objective(waste, length, revenue_kg=revenue_kg, cost_km=cost_km)
     if cw_dict is not None:
-        profit = (
-            cw_dict.get("waste", 1.0) * waste * revenue_kg
-            - cw_dict.get("length", 1.0) * length * cost_km
+        profit = profit_objective(
+            cw_dict.get("waste", 1.0) * waste,
+            cw_dict.get("length", 1.0) * length,
+            revenue_kg=revenue_kg,
+            cost_km=cost_km,
         )
     neg_profit = -profit
 

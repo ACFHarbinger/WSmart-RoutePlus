@@ -64,7 +64,6 @@ class ALNSConfig:
     sigma_2: float = 9.0
     sigma_3: float = 13.0
     engine: str = "custom"
-    vrpp: bool = True
     profit_aware_operators: bool = True
     extended_operators: bool = False
     packing: Optional[List[PackingConfig]] = None

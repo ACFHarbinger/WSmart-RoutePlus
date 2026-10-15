@@ -119,7 +119,6 @@ class GIHHPolicy(BaseRoutingPolicy):
             time_limit=float(values.get("time_limit", 60.0)),
             max_iterations=int(values.get("max_iterations", 1000)),
             seed=values.get("seed", 42),
-            vrpp=values.get("vrpp", True),
             profit_aware_operators=values.get("profit_aware_operators", False),
             seg=values.get("seg", 80),
             alpha=values.get("alpha", 0.5),

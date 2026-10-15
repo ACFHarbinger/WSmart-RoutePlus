@@ -42,6 +42,7 @@ from logic.src.policies.helpers.operators import (
 from logic.src.policies.helpers.operators.solution_initialization.greedy_si import build_greedy_routes
 from logic.src.configs.policies.aco_ks import KSparseACOConfig
 from logic.src.configs.policies.abc import ABCConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class ABCSolver:
@@ -98,7 +99,6 @@ class ABCSolver:
         # Initialize Local Search once to cache neighbor list
         aco_params = KSparseACOConfig(
             local_search_iterations=self.params.local_search_iterations,
-            vrpp=self.params.vrpp,
             profit_aware_operators=self.params.profit_aware_operators,
             seed=params.seed,
         )
@@ -248,7 +248,7 @@ class ABCSolver:
 
         n = max(3, self.params.n_removal)
         use_profit = self.params.profit_aware_operators
-        expand_pool = self.params.vrpp
+        expand_pool = current_expand_pool()
 
         peer_nodes = [node for route in peer for node in route]
         if not peer_nodes:

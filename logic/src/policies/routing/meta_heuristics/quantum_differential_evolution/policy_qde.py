@@ -119,7 +119,6 @@ class QDEPolicy(BaseRoutingPolicy):
             time_limit=float(values.get("time_limit", 60.0)),
             delta_theta=float(values.get("delta_theta", 0.01 * 3.14159)),
             local_search_iterations=int(values.get("local_search_iterations", 100)),
-            vrpp=values.get("vrpp", True),
             profit_aware_operators=values.get("profit_aware_operators", False),
             seed=values.get("seed", 42),
         )

@@ -133,7 +133,6 @@ class HGSALNSPolicy(BaseRoutingPolicy):
                 - cost: Total travel cost calculated by the solver.
         """
         seed = values.get("seed", 42)
-        vrpp = values.get("vrpp", True)
         profit_aware_operators = values.get("profit_aware_operators", False)
 
         # Build Params from nested config
@@ -144,7 +143,6 @@ class HGSALNSPolicy(BaseRoutingPolicy):
             reaction_factor=values.get("alns_reaction_factor", 0.1),
             max_removal_pct=values.get("alns_max_removal_pct", 0.2),
             time_limit=values.get("alns_time_limit", 60.0),
-            vrpp=vrpp,
             profit_aware_operators=profit_aware_operators,
             seed=seed,
         )
@@ -161,7 +159,6 @@ class HGSALNSPolicy(BaseRoutingPolicy):
             local_search_iterations=values.get("hgs_local_search_iterations", 500),
             max_vehicles=values.get("hgs_max_vehicles", 0),
             seed=seed,
-            vrpp=vrpp,
             profit_aware_operators=profit_aware_operators,
             restart_timer=values.get("hgs_restart_timer", 0.0),
         )
@@ -172,7 +169,6 @@ class HGSALNSPolicy(BaseRoutingPolicy):
             hgs_params=hgs_params,
             alns_params=alns_params,
             seed=seed,
-            vrpp=vrpp,
             profit_aware_operators=profit_aware_operators,
         )
 

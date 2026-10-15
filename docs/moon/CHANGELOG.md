@@ -48,6 +48,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Codex review: check_hpo_jobs.py adds the repository to sys.path for its documented direct CLI/CI invocation.
 - Codex review: structured-load value errors propagate instead of bypassing validation; the HPO key-check CLI resolves repository imports when executed by filename.
 - Codex review: CVRP LoadResource consumes ESPPRC's depot-aligned waste vector, preserving customer-only demand input and avoiding mask dimension mismatch. Added a two-trip reset/capacity/completion test. Unreleased environment semantic migration remains blocked (see review report).
+- Codex review: improvement precedes repair/collection; pipeline validation happens before RNG mutation and receives sim.day_pipeline. Archive conversion distinguishes daily, sample and std horizons and rejects overlapping trees. Propagated CVRP depot-aligned resources and structured-value validation fixes.
+
+### Modular simulator (WP-08, `2026-10-15`)
+
+Codex P-21/P-42 objectives and KPI primitives (`envs/tasks/common/objectives.py`, `metrics.py`) are on this branch and are what the day loop calls. They were not part of the WP-07 tip.
+
+#### Added
+
+- Day pipeline is a validated dependency graph (`logic/src/pipeline/simulations/pipeline.py`). Each action declares `timed`, `reads`, and `writes`. Fill precedes packing, routing precedes improvement and collection, and collection publishes final `profit` and `cost` before logging.
+- Shared fill seed `(seed + sample_id * 1_000_003 + day) % 2**31`. Policy RNG does not reseed `bins.rng`.
+- `ProblemSpec.per_trip_shift` (TCPTP only) and `expand_pool`. Released specs load from `released_specs.py` without importing the neural task module. `run_day` publishes `expand_pool` on a `ContextVar`.
+- `tools/convert_sim_outputs.py` maps archived `days` to `collection_days`, stamps `days_simulated` from the run config, and drops `reward`. It was not run on the archives.
+- `sim.export_fill_matrix` (default off), `sim.pool_start_method` (`forkserver` is Linux opt-in; default stays `spawn`), and `sim.day_pipeline`.
+
+#### Changed
+
+- **Breaking:** day logs drop `reward` and the ambiguous `days` key. Records carry `days_simulated` and `collection_days`. `profit` stays in EUR. RL `reward` tensors are unchanged.
+- `get_daily_results` writes a `DayOutcome` for the executed plan. Failed samples keep partial KPIs and stay out of means (`n_failed`). An all-failed cell stores `None` estimates.
+- `SimulationDayContext` is no longer a `Mapping`. Dict callers go through `bind_context`.
+- Classical bin history and the simulator worker seed import PyTorch only when a tensor device or a neural seed is needed. Pandas stays required.
+- `wsmart_bin_analysis` moved to `packages/wsmart_bin_analysis` (import `packages.wsmart_bin_analysis`). `packages/__init__.py` stays absent because `packages/*` is gitignored. GitLab `GIT_SUBMODULE_PATHS` follows the new path. WP-02 owns the release manifest.
+
+#### Removed
+
+- Per-policy `vrpp` bool. Solvers read `current_expand_pool()`. `alns_vrpp` is a different field and remains.
 
 ### Envs on the ESPPRC base (WP-07, `2026-10-15`)
 

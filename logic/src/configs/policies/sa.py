@@ -19,8 +19,6 @@ Example:
     60.0
     >>> config.seed
     42
-    >>> config.vrpp
-    True
     >>> config.profit_aware_operators
     False
 """
@@ -50,7 +48,6 @@ class SAConfig:
             temperature step.
         time_limit (float): Absolute wall-clock time limit in seconds.
         seed (Optional[int]): Random seed for stochastic reproducibility.
-        vrpp (bool): Flag to enable pool expansion for Vehicle Routing with Profits.
         profit_aware_operators (bool): Flag to bias ruin/recreate toward high-revenue nodes.
         packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
@@ -63,7 +60,6 @@ class SAConfig:
     nb_granular: int = 20
     time_limit: float = 60.0
     seed: Optional[int] = 42
-    vrpp: bool = True
     profit_aware_operators: bool = False
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

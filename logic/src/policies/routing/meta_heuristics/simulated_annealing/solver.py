@@ -23,6 +23,7 @@ from logic.src.policies.helpers.operators import (
 from logic.src.policies.helpers.operators.solution_initialization.greedy_si import build_greedy_routes
 
 from logic.src.configs.policies.sa import SAConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class SASolver(LocalSearch):
@@ -213,7 +214,7 @@ class SASolver(LocalSearch):
                     self.R,
                     self.C,
                     mandatory_nodes=self.mandatory_nodes,
-                    expand_pool=self.params.vrpp,
+                    expand_pool=current_expand_pool(),
                 )
             else:
                 new_sol = greedy_insertion(
@@ -223,7 +224,7 @@ class SASolver(LocalSearch):
                     self.waste,
                     self.Q,
                     mandatory_nodes=self.mandatory_nodes,
-                    expand_pool=self.params.vrpp,
+                    expand_pool=current_expand_pool(),
                 )
             return op, new_sol, self._evaluate(new_sol) - self._evaluate(current_routes)
 

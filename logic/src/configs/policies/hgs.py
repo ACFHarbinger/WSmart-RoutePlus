@@ -41,7 +41,6 @@ class HGSConfig:
         penalty_increase: Multiplier for increasing penalty.
         penalty_decrease: Multiplier for decreasing penalty.
         engine: Solver engine to use ('custom', 'pyvrp').
-        vrpp: Whether this is a VRPP problem.
         profit_aware_operators: Whether to use profit-aware operators.
         packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
@@ -73,7 +72,6 @@ class HGSConfig:
 
     # Engine configuration
     engine: str = "custom"
-    vrpp: bool = True
     profit_aware_operators: bool = True
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

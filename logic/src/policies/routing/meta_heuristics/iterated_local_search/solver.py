@@ -29,6 +29,7 @@ from logic.src.policies.helpers.operators.search_heuristics.destroy_repair_llh i
 )
 
 from logic.src.configs.policies.ils import ILSConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class ILSSolver:
@@ -212,7 +213,7 @@ class ILSSolver:
             self.R,
             self.C,
             mandatory_nodes=self.mandatory_nodes,
-            expand_pool=self.params.vrpp,
+            expand_pool=current_expand_pool(),
             profit_aware=self.params.profit_aware_operators,
             rng=self.random,
         )
@@ -240,7 +241,7 @@ class ILSSolver:
             self.R,
             self.C,
             mandatory_nodes=self.mandatory_nodes,
-            expand_pool=self.params.vrpp,
+            expand_pool=current_expand_pool(),
             profit_aware=self.params.profit_aware_operators,
             rng=self.random,
         )
@@ -264,7 +265,7 @@ class ILSSolver:
             self.R,
             self.C,
             mandatory_nodes=self.mandatory_nodes,
-            expand_pool=self.params.vrpp,
+            expand_pool=current_expand_pool(),
             profit_aware=self.params.profit_aware_operators,
             rng=self.random,
         )
@@ -288,7 +289,7 @@ class ILSSolver:
             self.R,
             self.C,
             mandatory_nodes=self.mandatory_nodes,
-            expand_pool=self.params.vrpp,
+            expand_pool=current_expand_pool(),
             profit_aware=self.params.profit_aware_operators,
             rng=self.random,
             nodes=self.nodes,
@@ -313,7 +314,7 @@ class ILSSolver:
             self.R,
             self.C,
             mandatory_nodes=self.mandatory_nodes,
-            expand_pool=self.params.vrpp,
+            expand_pool=current_expand_pool(),
             profit_aware=self.params.profit_aware_operators,
             rng=self.random,
         )
@@ -337,7 +338,7 @@ class ILSSolver:
             self.R,
             self.C,
             mandatory_nodes=self.mandatory_nodes,
-            expand_pool=self.params.vrpp,
+            expand_pool=current_expand_pool(),
             profit_aware=self.params.profit_aware_operators,
             rng=self.random,
         )

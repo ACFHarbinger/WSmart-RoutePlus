@@ -25,7 +25,6 @@ ts:
     use_2opt: true
     use_insertion: true
     profit_aware_operators: false
-    vrpp: true
     packing:
       other/pk_lookahead.yaml:
       - default

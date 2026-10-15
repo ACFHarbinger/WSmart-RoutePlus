@@ -46,7 +46,6 @@ class BCConfig:
             Recommended: True for n ≤ 75, False for n > 75.
             Note: Automatically disabled for instances with n > 75 regardless of setting.
         profit_aware_operators: Whether to use profit-aware operators.
-        vrpp: Whether to use VRPP expand pool.
         packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
         seed: Random seed for reproducibility.
@@ -60,7 +59,6 @@ class BCConfig:
     max_cuts_per_round: int = 50
     enable_fractional_capacity_cuts: bool = True
     profit_aware_operators: bool = False
-    vrpp: bool = False
     use_saa: bool = False
     num_scenarios: int = 10
     packing: Optional[List[PackingConfig]] = None

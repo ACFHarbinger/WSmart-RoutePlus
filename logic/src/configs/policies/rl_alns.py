@@ -9,8 +9,6 @@ Example:
     >>> config = RLALNSConfig()
     >>> config.max_iterations
     1000
-    >>> config.vrpp
-    True
     >>> config.profit_aware_operators
     False
 """
@@ -30,11 +28,9 @@ class RLALNSConfig(ALNSConfig):
 
     Attributes:
         rl_config: Centralized Reinforcement Learning configuration.
-        vrpp: Whether the problem is a VRP with Profits.
     """
 
     rl_config: RLConfig = field(default_factory=RLConfig)
-    vrpp: bool = True
     profit_aware_operators: bool = False
     time_limit: float = 60.0
     max_iterations: int = 5000

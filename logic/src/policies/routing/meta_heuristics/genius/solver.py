@@ -36,6 +36,7 @@ from logic.src.policies.helpers.operators.generalized_insertion_and_deletion.uns
 from logic.src.policies.helpers.operators.recreate_repair.geni import geni_insertion, geni_profit_insertion
 
 from logic.src.configs.policies.genius import GENIUSConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class GENIUSSolver:
@@ -293,7 +294,7 @@ class GENIUSSolver:
                 neighborhood_size=self.params.neighborhood_size,
                 mandatory_nodes=self.mandatory_nodes,
                 rng=self.random,
-                expand_pool=self.params.vrpp,
+                expand_pool=current_expand_pool(),
                 use_deterministic_p_neighborhood=use_deterministic,
             )
         else:
@@ -306,7 +307,7 @@ class GENIUSSolver:
                 neighborhood_size=self.params.neighborhood_size,
                 mandatory_nodes=self.mandatory_nodes,
                 rng=self.random,
-                expand_pool=self.params.vrpp,
+                expand_pool=current_expand_pool(),
                 use_deterministic_p_neighborhood=use_deterministic,
             )
 

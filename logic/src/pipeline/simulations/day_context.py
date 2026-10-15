@@ -16,417 +16,31 @@ Example:
 
 from __future__ import annotations
 
-import functools
-import os
-import random
-import re
 import time
-import zlib
-from collections.abc import Mapping
 from dataclasses import dataclass, fields
 from multiprocessing.synchronize import Lock
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Tuple, Union, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 if TYPE_CHECKING:
     from logic.src.pipeline.simulations.bins import Bins
 
 import numpy as np
 import pandas as pd
-import torch
 
-from logic.src.constants import DAY_METRICS
+from logic.src.pipeline.simulations.naming import (  # noqa: F401
+    build_naming_config,
+    find_policy_keys,
+    get_canonical_policy_name,
+    get_full_policy_name,
+    policy_result_key,
+    resolve_policy_display_name,
+    to_slug,
+)
 from logic.src.pipeline.simulations.solver_status import current_solver_status, reset_solver_status
 
 
-@functools.lru_cache(maxsize=1)
-def _registered_constructor_keys() -> Tuple[str, ...]:
-    """Return every routing-algorithm key, taken from ``logic/configs/policies/policy_<key>.yaml``.
-
-    The file names are used instead of the live ``RoutingAlgorithmRegistry`` because the registry
-    only holds the adapters imported so far (SWC-TCF, for one, is imported lazily), which would
-    make the seed depend on import order.
-    """
-    from logic.src.constants.paths import CONFIGS_DIR
-
-    policies_dir = os.path.join(CONFIGS_DIR, "policies")
-    try:
-        names = os.listdir(policies_dir)
-    except OSError:  # pragma: no cover - frozen builds without configs fall back to the token heuristic
-        return ()
-    return tuple(
-        sorted(n[len("policy_") : -len(".yaml")] for n in names if n.startswith("policy_") and n.endswith(".yaml"))
-    )
-
-
-# Tokens that name a selector or an improvement stage, not a routing algorithm.
-_STRUCTURAL_NAME_TOKENS = frozenset({"ms", "ri", "none", "custom", "new", "og"})
-
-
-def _matching_constructor(parts: List[str]) -> Optional[str]:
-    """Longest registered routing algorithm key inside an expanded policy id.
-
-    ``alns`` and ``hgs`` are routing algorithms, so they are not skipped. Selection
-    tokens such as ``regular`` are not routing algorithm keys and do not win.
-
-    Args:
-        parts: Underscore tokens of the policy id.
-
-    Returns:
-        The routing algorithm key, or None when the registry has no match.
-    """
-    keys = set(_registered_constructor_keys())
-    for width in range(len(parts), 0, -1):
-        for start in range(len(parts) - width + 1):
-            candidate = "_".join(parts[start : start + width])
-            if candidate in keys and candidate not in _STRUCTURAL_NAME_TOKENS:
-                return candidate
-    return None
-
-
-def get_canonical_policy_name(policy_name: str, known_keys: Optional[Iterable[str]] = None) -> str:
-    """
-    Get the routing-algorithm key of a policy slug, used for RNG seeding.
-
-    The seed must depend on the routing algorithm only, so that the same routing algorithm
-    under different selectors or thresholds draws the same random stream, and
-    different routing algorithms under the same selector do not. The routing algorithm is the
-    leftmost-longest run of slug tokens that is a registered routing algorithm key.
-
-    Args:
-        policy_name: Full policy slug (e.g., 'last_minute_cf70_aco_hh_custom_cls').
-        known_keys: Routing algorithm keys to match; defaults to the ``policy_<key>.yaml`` names.
-
-    Returns:
-        The routing algorithm key (e.g., 'aco_hh'). If no key matches, the slug with any
-        leading selection tokens removed is returned.
-
-    Examples:
-        >>> get_canonical_policy_name('last_minute_cf70_aco_hh_custom_cls', ['aco_hh', 'alns'])
-        'aco_hh'
-        >>> get_canonical_policy_name('lookahead_ma_ts_custom_gamma3', ['ma', 'ma_ts'])
-        'ma_ts'
-    """
-    parts = policy_name.lower().split("_")
-    keys = set(known_keys) if known_keys is not None else set(_registered_constructor_keys())
-    for width in range(len(parts), 0, -1):
-        for start in range(len(parts) - width + 1):
-            candidate = "_".join(parts[start : start + width])
-            if candidate in keys:
-                return candidate
-
-    selection_tokens = {"lookahead", "policy", "regular", "last", "minute", "lastminute", "revenue", "service"}
-    rest = [p for p in parts if p not in selection_tokens and not p.startswith(("cf", "level"))]
-    return "_".join(rest) if rest else policy_name.lower()
-
-
-def _clean(name: Any) -> str:  # noqa: C901
-    """Clean a policy/strategy name for display."""
-    if name is None:
-        return "None"
-
-    # Handle lists/sequences (including OmegaConf ListConfig and nested lists)
-    # Recursively unwrap until we find a string or a dict/config
-    if not isinstance(name, str) and hasattr(name, "__iter__") and not hasattr(name, "items"):
-        try:
-            name_list = list(name)
-            if len(name_list) > 0:
-                # Try each item until we find something valid
-                for item in name_list:
-                    cleaned = _clean(item)
-                    if cleaned != "None":
-                        return cleaned
-            return "None"
-        except Exception:
-            return "None"
-
-    # Handle string names/paths
-    if isinstance(name, str):
-        if name.lower() in ["none", "null", "false", "[]", "none.yaml"]:
-            return "None"
-
-        # If it's a full path, get the basename
-        base = os.path.basename(name)
-        # Remove common prefixes and extensions
-        for p in ["ms_", "ri_", "ac_", "policy_", ".yaml", ".xml", ".json"]:
-            base = base.replace(p, "")
-
-        # Clean up any remaining directory parts if basename failed (e.g. windows paths)
-        if "/" in base:
-            base = base.split("/")[-1]
-        if "\\" in base:
-            base = base.split("\\")[-1]
-
-        return base.replace("_", " ").title()
-
-    # Handle structured config objects (Dataclasses, Dicts, DictConfigs)
-    if hasattr(name, "strategy"):
-        return _clean(name.strategy)
-
-    if hasattr(name, "get") or isinstance(name, Mapping):
-        # Handle new dict format: {"other/pk_last_minute.yaml": "cf70"}
-        if len(name) == 1:
-            key, val = next(iter(name.items()))
-            key_str = str(key)
-            if key_str.endswith(".yaml") or key_str.endswith(".xml"):
-                raw_v = val
-                if hasattr(val, "__iter__") and not isinstance(val, str):
-                    try:
-                        v_list = list(val)
-                        raw_v = v_list[0] if v_list else ""
-                    except Exception:
-                        pass
-                variant = str(raw_v) if raw_v is not None else ""
-                if variant and variant != "default":
-                    return variant.replace("_", " ").title()
-                base = os.path.basename(key_str)
-                for p in ["ms_", "ri_", "ac_", "policy_", ".yaml", ".xml", ".json"]:
-                    base = base.replace(p, "")
-                return base.replace("_", " ").title()
-
-        # Check exhaustive list of common keys for strategies
-        for k in ["strategy", "type", "name", "id", "model", "method"]:
-            val = name.get(k) if hasattr(name, "get") else name.get(k, None)
-            if val:
-                cleaned = _clean(val)
-                if cleaned != "None":
-                    return cleaned
-        return "Custom"
-
-    return "None"
-
-
-# Recursive helper to find naming keys in potentially nested/listed configs
-def find_policy_keys(obj: Any) -> Dict[str, Any]:
-    """
-    Recursively find packing and route_improvement keys in a config.
-    Searches for synonyms and handles deep nesting.
-
-    Args:
-        obj: The configuration object (dict, list, DictConfig, etc.)
-
-    Returns:
-        Dictionary containing the found keys.
-    """
-    found = {}
-
-    # Synonyms for metadata keys
-    MS_KEYS = {"packing", "ms", "node_selection", "selection_strategy"}
-    RI_KEYS = {"route_improvement", "ri", "improvement_strategy", "local_search"}
-    AC_KEYS = {"acceptance_criteria", "acceptance_criterion", "ac"}
-
-    # Handle Mapping (dict, DictConfig)
-    if isinstance(obj, Mapping) or hasattr(obj, "items"):
-        # 1. Check current level for direct matches or synonyms
-        for key, value in obj.items():
-            if key in MS_KEYS:
-                if value is not None and str(value).lower() not in ["none", "null", "false", "[]"]:
-                    found["packing"] = value
-            elif key in RI_KEYS and value is not None and str(value).lower() not in ["none", "null", "false", "[]"]:
-                found["route_improvement"] = value
-            elif key in AC_KEYS and value is not None and str(value).lower() not in ["none", "null", "false", "[]"]:
-                found["acceptance_criteria"] = value
-
-        # 2. Recurse into all values to find deeper configurations
-        # We process values in order, so deeper values will overwrite shallower ones
-        for v in obj.values():
-            if v is not None and not isinstance(v, (str, int, float, bool)):
-                inner = find_policy_keys(v)
-                if inner:
-                    found.update(inner)
-
-    # Handle sequences (list, ListConfig)
-    elif hasattr(obj, "__iter__") and not isinstance(obj, str):
-        for item in obj:
-            if item is not None and not isinstance(item, (str, int, float, bool)):
-                inner = find_policy_keys(item)
-                if inner:
-                    found.update(inner)
-
-    return found
-
-
-def build_naming_config(pol_cfg: Any, global_sim_cfg: Any) -> Dict[str, Any]:
-    """
-    Build a configuration dictionary specifically for naming resolution.
-    It combines keys found in the policy config with global simulation defaults.
-
-    Args:
-        pol_cfg: The policy-specific configuration.
-        global_sim_cfg: The global simulation configuration (ctx.cfg.sim).
-
-    Returns:
-        A dictionary with 'packing' and 'route_improvement' keys.
-    """
-    # 1. Extract keys from policy config (recursive)
-    extracted = find_policy_keys(pol_cfg)
-
-    # 2. Fallback to global simulation defaults if keys are missing or None
-    for key in ["packing", "route_improvement", "acceptance_criteria"]:
-        if not extracted.get(key) and hasattr(global_sim_cfg, key):
-            val = getattr(global_sim_cfg, key)
-            if val:
-                extracted[key] = val
-
-    return extracted
-
-
-def resolve_policy_display_name(policy: Any, sim_cfg: Any) -> Tuple[str, str]:
-    """Resolves the original policy ID and its full descriptive display name.
-
-    Args:
-        policy: The policy configuration (string or dict).
-        sim_cfg: The simulation configuration.
-
-    Returns:
-        Tuple of (pol_id_orig, display_name)
-    """
-    from logic.src.utils.configs.config_loader import load_config
-    from logic.src.utils.infrastructure.setup_sims import deep_sanitize, get_pol_name
-
-    pol_id_orig = get_pol_name(policy)
-    sanitized_policy = deep_sanitize(policy)
-    pol_cfg = {}
-
-    if isinstance(sanitized_policy, str):
-        config_paths = deep_sanitize(sim_cfg.config_path) if hasattr(sim_cfg, "config_path") else {}
-        if config_paths is None:
-            config_paths = {}
-        if pol_id_orig in config_paths:
-            loaded_cfg = deep_sanitize(config_paths[pol_id_orig])
-            if isinstance(loaded_cfg, dict):
-                pol_cfg = loaded_cfg
-            elif isinstance(loaded_cfg, str) and os.path.exists(loaded_cfg):
-                try:
-                    pol_cfg = load_config(loaded_cfg)
-                except Exception:
-                    pol_cfg = {}
-    elif isinstance(sanitized_policy, dict) and len(sanitized_policy) == 1 and pol_id_orig in sanitized_policy:
-        pol_cfg = sanitized_policy[pol_id_orig]
-    elif isinstance(sanitized_policy, dict):
-        pol_cfg = sanitized_policy
-
-    sanitized_pol_cfg = deep_sanitize(pol_cfg)
-    naming_cfg = build_naming_config(sanitized_pol_cfg, sim_cfg)
-    display_name = get_full_policy_name(pol_id_orig, naming_cfg)
-
-    return pol_id_orig, display_name
-
-
-def policy_result_key(policy: Any, sim: Any) -> str:
-    """Key a policy's results are stored and looked up under.
-
-    This is the slug of the display name, the same string used for ``ctx.pol_name``,
-    the ``log_<key>_<N>N.json`` file name and the realtime jsonl. The expander id
-    (``get_pol_name``) differs from it (e.g. ``..._emp`` vs ``..._none``) and must not
-    be used for lookups.
-
-    Args:
-        policy: Entry of ``sim.full_policies``.
-        sim: Simulation config.
-
-    Returns:
-        The result key.
-    """
-    return to_slug(resolve_policy_display_name(policy, sim)[1])
-
-
-def to_slug(name: str) -> str:
-    """Converts a display name to a safe slug string for IDs and filenames.
-
-    Strips parenthetical distribution tags (e.g. " (Gamma3)", " (Emp)") so
-    they appear in human-readable output but never reach the log filename.
-    Replaces ' + ' with '_', removes remaining '()' chars, and lowercases.
-
-    Args:
-        name: The display name to convert.
-
-    Returns:
-        The slug string.
-    """
-    # Strip " (Gamma3)"-style parenthetical suffixes before building the slug
-    name = re.sub(r"\s*\([^)]*\)", "", name)
-    return name.replace(" + ", "_").replace(" ", "_").replace("(", "").replace(")", "").lower()
-
-
-def get_full_policy_name(pol_name: str, config: Dict[str, Any]) -> str:
-    """
-    Construct a descriptive policy name including packing and route improvement.
-
-    This reflects the entire construction and improvement stack.
-
-    Args:
-        pol_name: Base policy name (the routing algorithm).
-        config: The naming configuration dictionary.
-
-    Returns:
-        A formatted name string (e.g., 'Lookahead + AM + None').
-    """
-
-    # 1. Extract Packing
-    ms = config.get("packing")
-    ms_name = _clean(ms)
-
-    # 2. Extract Routing (Base Policy)
-    # Strip common prefixes/suffixes
-    base_id = pol_name.lower().replace("policy_", "")
-
-    # Remove distribution suffix and anything after it
-    for suffix in ["_emp", "_gamma"]:
-        if suffix in base_id:
-            base_id = base_id.split(suffix)[0]
-
-    if "_" in base_id:
-        # If it looks expanded (e.g., 'ms_regular_alns_ri_none'), try to extract the middle
-        parts = base_id.split("_")
-        if "ms" in parts or "ri" in parts:
-            matched = _matching_constructor(parts)
-            if matched is not None:
-                base_id = matched
-            else:
-                for part in parts:
-                    if part not in _STRUCTURAL_NAME_TOKENS:
-                        base_id = part
-                        break
-
-    # 3. Extract Route Improvement
-    ri = config.get("route_improvement")
-    ri_name = _clean(ri)
-
-    # Remove redundant packing name from base_id to prevent duplication
-    ms_slug = ms_name.lower().replace(" ", "_")
-    if ms_slug != "none" and ms_slug in base_id:
-        base_id = base_id.replace(f"_{ms_slug}", "").replace(f"{ms_slug}_", "").replace(ms_slug, "")
-
-    # 4. Extract Acceptance Criteria
-    ac = config.get("acceptance_criteria")
-    ac_name = _clean(ac)
-
-    # Remove redundant route improvement name from base_id to prevent duplication
-    ri_slug = ri_name.lower()
-    if ri_slug != "none" and ri_slug in base_id:
-        base_id = base_id.replace(f"_{ri_slug}", "").replace(f"{ri_slug}_", "").replace(ri_slug, "")
-
-    # Remove redundant acceptance criteria name from base_id to prevent duplication
-    ac_slug = ac_name.lower()
-    if ac_slug != "none" and ac_slug in base_id:
-        base_id = base_id.replace(f"_{ac_slug}", "").replace(f"{ac_slug}_", "").replace(ac_slug, "")
-
-    # Extract distribution suffix for display only (most specific first)
-    dist_tag = ""
-    for suffix in ["_gamma3", "_gamma2", "_gamma1", "_gamma", "_emp"]:
-        if suffix in pol_name.lower():
-            dist_tag = f" ({suffix.lstrip('_').capitalize()})"
-            break
-
-    base_name = base_id.upper()
-    if ac_name.lower() != "none":
-        return f"{ms_name} + {base_name} + {ac_name} + {ri_name}{dist_tag}"
-    else:
-        return f"{ms_name} + {base_name} + {ri_name}{dist_tag}"
-
-
 @dataclass
-class SimulationDayContext(Mapping):
+class SimulationDayContext:
     """
     Context object encapsulating the state of a simulation day.
 
@@ -495,7 +109,7 @@ class SimulationDayContext(Mapping):
     distpath_tup: Tuple[Any, ...] = (None, None, None, None)
     distancesC: Optional[np.ndarray] = None
     paths_between_states: Optional[Dict[Tuple[int, int], List[int]]] = None
-    dm_tensor: Optional[torch.Tensor] = None
+    dm_tensor: Any = None
     sample_id: int = 0
     overflows: int = 0
     day: int = 0
@@ -507,7 +121,7 @@ class SimulationDayContext(Mapping):
     waste_type: str = ""
     current_collection_day: int = 0
     cached: Optional[List[int]] = None
-    device: Optional[torch.device] = None
+    device: Any = None
     lock: Optional[Lock] = None
     hrl_manager: Any = None
     config: Optional[Dict[str, Any]] = None
@@ -545,6 +159,19 @@ class SimulationDayContext(Mapping):
     time_spent: float = 0.0
     solver_status: str = ""
 
+    capacity_splits: int = 0
+    multi_day_context: Any = None
+    scenario_tree: Any = None
+    trip_loads_pct: Any = None
+    trip_loads_kg: Any = None
+    capacity_violations: int = 0
+    search_context: Any = None
+    truth_generator: Any = None
+    metrics_phase: str = "unset"
+    day_wall_time: float = 0.0
+    day_pipeline: Optional[List[str]] = None
+    problem_spec: Any = None
+
     @property
     def field_names(self):
         """Returns the names of all fields in the dataclass.
@@ -554,80 +181,28 @@ class SimulationDayContext(Mapping):
         """
         return [f.name for f in fields(self)]
 
+    def as_kwargs(self) -> Dict[str, Any]:
+        """Field values for ``adapter.execute``, including attributes set during the day."""
+        data = {item.name: getattr(self, item.name) for item in fields(self)}
+        data.update(self.__dict__)
+        return data
+
     def __post_init__(self):
         """Initialize any derived or default state if needed."""
         if self.config is None:
             self.config = {}
 
-    def __getitem__(self, key: str) -> Any:
-        """Dictionary-like access to context fields.
-
-        Args:
-            key: The key to access.
-
-        Returns:
-            The value associated with the key.
-        """
-        return getattr(self, key)
-
-    def __setitem__(self, key: str, value: Any) -> None:
-        """Allow setting context fields via dictionary syntax.
-
-        Args:
-            key: The name of the field to set.
-            value: The value to assign to the field.
-        """
-        setattr(self, key, value)
-
-    def get(self, key: str, default: Any = None) -> Any:
-        """Safely get a value from the context with an optional default.
-
-        Args:
-            key: The name of the field to retrieve.
-            default: The default value to return if the field does not exist.
-
-        Returns:
-            The value of the specified field or the default.
-        """
-        return getattr(self, key, default)
-
-    def __iter__(self):
-        """Return an iterator over field names to support Mapping interface.
-
-        Returns:
-            Iterator over the field names.
-        """
-        return iter((f.name for f in fields(self)))
-
-    def __len__(self):
-        """Return the number of fields to support Mapping interface.
-
-        Returns:
-            Number of fields in the dataclass.
-        """
-        return len(fields(self))
-
-    def __contains__(self, key: object) -> bool:
-        """Check if a field exists in the context.
-
-        Args:
-            key: The name of the field to check.
-
-        Returns:
-            True if the field exists, False otherwise.
-        """
-        if not isinstance(key, str):
-            return False
-        return hasattr(self, key)
-
 
 def set_daily_waste(
     model_data: Dict[str, Any],
     waste: np.ndarray,
-    device: torch.device,
+    device: Any,
     fill: Optional[np.ndarray] = None,
 ) -> Dict[str, Any]:
-    """Updates neural model input with current bin waste levels.
+    """Update neural model input with current bin waste levels.
+
+    PyTorch is imported here so the classical day loop can import this module
+    without a neural stack. Callers that pass a device already have tensors.
 
     Args:
         model_data: Dictionary of model input tensors.
@@ -638,6 +213,8 @@ def set_daily_waste(
     Returns:
         Updated model_data dictionary moved to the target device.
     """
+    import torch
+
     waste_tensor = torch.as_tensor(waste, dtype=torch.float32).unsqueeze(0).div(100.0)
     if device.type == "cuda":
         waste_tensor = waste_tensor.pin_memory()
@@ -684,40 +261,46 @@ def resolve_solver_status(
 def record_aborted_day(context: Any, error: BaseException) -> Dict[str, Any]:
     """Write one daily record before a routing algorithm exception leaves the day.
 
-    The sample still fails. The record keeps the mandatory set and the solver
-    status so an empty or aborted day is not a blank log line.
+    The sample still fails. The record keeps the mandatory set, the day index,
+    and the exception type so an aborted day is not a blank log line.
 
     Args:
-        context: The day context, used as a mapping.
+        context: The day context.
         error: The exception that aborted the day.
 
     Returns:
-        The daily record stored on ``context["daily_log"]``.
+        The daily record stored on ``context.daily_log``.
     """
+    from logic.src.pipeline.simulations.actions.base import bind_context
+
+    context = bind_context(context)
     status = resolve_solver_status(
-        context.get("solver_status") or current_solver_status(),
-        context.get("tour"),
+        getattr(context, "solver_status", None) or current_solver_status(),
+        getattr(context, "tour", None),
         error,
     )
-    context["solver_status"] = status
-    coordinates = context.get("coords")
+    context.solver_status = status
+    coordinates = getattr(context, "coords", None)
     if coordinates is None:
         coordinates = pd.DataFrame({"ID": []})
     dlog = get_daily_results(
-        total_collected=float(context.get("total_collected") or 0.0),
-        ncol=int(context.get("ncol") or 0),
-        cost=float(context.get("cost") or 0.0),
-        tour=list(context.get("tour") or [0]),
-        day=int(context.get("day") or 0),
-        new_overflows=int(context.get("new_overflows") or 0),
-        sum_lost=float(context.get("sum_lost") or 0.0),
+        total_collected=float(getattr(context, "total_collected", 0.0) or 0.0),
+        ncol=int(getattr(context, "ncol", 0) or 0),
+        cost=float(getattr(context, "cost", 0.0) or 0.0),
+        tour=list(getattr(context, "tour", None) or [0]),
+        day=int(getattr(context, "day", 0) or 0),
+        new_overflows=int(getattr(context, "new_overflows", 0) or 0),
+        sum_lost=float(getattr(context, "sum_lost", 0.0) or 0.0),
         coordinates=coordinates,
-        profit=float(context.get("profit") or 0.0),
-        time=float(context.get("time") or 0.0),
-        mandatory_nodes=context.get("mandatory"),
+        profit=float(getattr(context, "profit", 0.0) or 0.0),
+        time=float(getattr(context, "time", 0.0) or 0.0),
+        mandatory_nodes=getattr(context, "mandatory", None),
         solver_status=status,
+        day_wall_time=float(getattr(context, "day_wall_time", 0.0) or 0.0),
     )
-    context["daily_log"] = dlog
+    dlog["status"] = "failed"
+    dlog["exception_type"] = type(error).__name__
+    context.daily_log = dlog
     return dlog
 
 
@@ -735,35 +318,64 @@ def get_daily_results(
     mandatory_nodes: Optional[List[int]] = None,
     time_spent: Optional[float] = None,
     solver_status: Optional[str] = None,
+    day_wall_time: float = 0.0,
+    collection_day: Optional[bool] = None,
+    economics: Any = None,
 ) -> Dict[str, Any]:
-    """Formats raw simulation outputs into structured daily log dictionary.
+    """Format one executed day.
+
+    ``profit`` is the caller's value when ``economics`` is omitted, which is
+    what the existing unit tests pass. When rates are passed, profit comes from
+    ``DayOutcome``. An empty tour (depot only) records zero collection. There
+    is no ``reward`` key and no ambiguous ``days`` key.
 
     Args:
-        total_collected: Total weight of waste collected (kg).
-        ncol: Number of bins collected.
-        cost: Total distance traveled (km).
-        tour: List of node indices in the collection route.
-        day: Current simulation day index.
-        new_overflows: Number of new overflows occurred.
-        sum_lost: Amount of waste lost due to overflows (kg).
-        coordinates: DataFrame containing bin metadata and coordinates.
-        profit: Total profit from collected waste.
-        time: Execution time of the routing policy (s).
-        mandatory_nodes: Optional list of bin indices selected as mandatory
-            before routing (iloc-based). Resolved to real IDs.
-        time_spent: Optional total shift time spent on route and services (h).
-        solver_status: Backend status for this day. An empty tour keeps it.
+        total_collected: Waste collected on the executed plan (kg).
+        ncol: Bins collected.
+        cost: Distance of the executed plan (km).
+        tour: Node sequence. Length at most 2 is an empty tour.
+        day: Simulation day index.
+        new_overflows: Bin-days that reached capacity before routing.
+        sum_lost: Waste lost above bin capacity (kg).
+        coordinates: Bin table whose ``ID`` column maps node indices.
+        profit: Profit already computed by collection, used when economics is omitted.
+        time: Policy compute seconds (packing + routing + improvement).
+        mandatory_nodes: iloc indices selected before routing.
+        time_spent: Physical shift hours. Omitted from the record when None.
+        solver_status: Backend status. An empty tour keeps it.
+        day_wall_time: Wall seconds for the whole day, including this record.
+        collection_day: Overrides the empty-tour test when the caller already knows.
+        economics: Optional ``Economics`` rates. When set, profit is recomputed.
 
     Returns:
-        Dictionary containing formatted daily metrics and the route.
+        Daily record with canonical KPI keys, the tour, and the mandatory set.
     """
-    dlog: Dict[str, Any] = {key: 0 for key in DAY_METRICS}
+    from logic.src.envs.tasks.common.metrics import DayOutcome
+    from logic.src.envs.tasks.common.objectives import Economics
+
+    empty = not tour or len(tour) <= 2
+    collected_kg = 0.0 if empty else float(total_collected)
+    distance_km = 0.0 if empty else float(cost)
+    collection_count = 0 if empty else int(ncol)
+    is_collection = (not empty) if collection_day is None else bool(collection_day)
+    outcome = DayOutcome(
+        collected_kg=collected_kg,
+        distance_km=distance_km,
+        overflows=int(new_overflows),
+        collection_count=collection_count,
+        lost_kg=float(sum_lost),
+        policy_time_s=float(time),
+        day_wall_time_s=float(day_wall_time),
+        time_spent_h=None if time_spent is None else float(time_spent),
+        collection_day=is_collection,
+    )
+    if economics is not None and not empty:
+        dlog: Dict[str, Any] = outcome.metrics(economics)
+    else:
+        dlog = outcome.metrics(Economics(revenue_kg=0.0, cost_km=0.0))
+        dlog["profit"] = 0.0 if empty else float(profit)
+    dlog["kg/km"] = (dlog["kg"] / dlog["km"]) if dlog["km"] > 0 else 0.0
     dlog["day"] = day
-    dlog["overflows"] = new_overflows
-    dlog["kg_lost"] = sum_lost
-    dlog["time"] = time
-    if time_spent is not None:
-        dlog["time_spent"] = float(time_spent)
     mandatory_ids: List[int] = []
     for idx in mandatory_nodes or []:
         try:
@@ -771,107 +383,90 @@ def get_daily_results(
         except (IndexError, KeyError, TypeError, ValueError):
             mandatory_ids.append(idx)
     dlog["mandatory_nodes"] = mandatory_ids
-    # Kept on the empty-tour branch below. The stored logger used to drop the
-    # mandatory set whenever the tour had length at most two.
     dlog["solver_status"] = resolve_solver_status(solver_status, tour)
-
     if tour and len(tour) > 2:
-        reward = total_collected - new_overflows - cost
-        dlog["kg"] = total_collected
-        dlog["ncol"] = ncol
-        dlog["km"] = cost
-        dlog["kg/km"] = total_collected / cost if cost > 0 else 0
-        dlog["reward"] = reward
-        dlog["profit"] = profit
         coordinate_ids = coordinates["ID"].tolist()
-        # Preserve trip boundaries so saved tours reproduce capacity/time checks.
         dlog["tour"] = [0 if node == 0 else coordinate_ids[node] for node in tour]
     else:
-        dlog["kg"] = 0
-        dlog["ncol"] = 0
-        dlog["km"] = 0
-        dlog["kg/km"] = 0
-        dlog["reward"] = -new_overflows
-        dlog["profit"] = 0
         dlog["tour"] = [0]
     return dlog
 
 
 def run_day(context: SimulationDayContext) -> SimulationDayContext:
-    """
-    Orchestrates a single simulation day using the Command Pattern.
+    """Run one validated day.
+
+    Waste noise uses a seed shared by every policy. Policy RNG stays
+    policy-specific and does not reseed the bins. ``time`` sums the actions
+    marked ``timed``. ``day_wall_time`` is the whole call.
+
     Args:
         context: The simulation context for the day.
 
     Returns:
-        The updated context after executing all daily actions.
+        The same context after the pipeline.
     """
-    # Clear the preceding day before filling/selection can fail.
+    from logic.src.envs.tasks.common.expand_pool import reset_expand_pool, set_expand_pool
+    from logic.src.envs.tasks.common.released_specs import released_spec
+    from logic.src.pipeline.simulations.pipeline import resolve_pipeline
+    from logic.src.pipeline.simulations.rng import apply_shared_bin_rng, policy_seed, seed_policy_rng, shared_env_seed
+
+    # Validate the selected pipeline before reseeding or mutating simulation state.
+    configured = context.day_pipeline
+    if configured is None and hasattr(context.config, "get"):
+        configured = context.config.get("day_pipeline")
+    classes = resolve_pipeline(configured)
+    commands = [cls() for cls in classes]
+    log_actions = [cmd for cmd in commands if cmd.writes and "daily_log" in cmd.writes]
+
     reset_solver_status()
     context.solver_status = ""
+    context.metrics_phase = "unset"
 
-    # Compute policy-specific seed for RNG isolation
+    sample_id = getattr(context, "sample_id", 0)
+    try:
+        sample_id = int(sample_id)
+    except (TypeError, ValueError):
+        sample_id = 0
+    env_seed = shared_env_seed(context.seed, sample_id, context.day)
+    apply_shared_bin_rng(context.bins, env_seed)
     canonical_name = get_canonical_policy_name(context.policy_name)
-    name_hash = zlib.adler32(canonical_name.encode()) & 0xFFFFFFFF
-    policy_seed = (context.seed + name_hash + context.day) % (2**31)
-    context.policy_seed = policy_seed  # Store for later use
+    context.policy_seed = policy_seed(context.seed, canonical_name, context.day)
+    seed_policy_rng(context.policy_seed)
 
-    # Set policy-specific RNG state (isolates this policy from others)
-    random.seed(policy_seed)
-    np.random.seed(policy_seed)
-    torch.manual_seed(policy_seed)
+    spec = getattr(context, "problem_spec", None)
+    raw_problem = getattr(context, "problem", "ptp")
+    problem_name = raw_problem if isinstance(raw_problem, str) and raw_problem else "ptp"
+    if spec is None or type(spec).__name__ == "MagicMock":
+        spec = released_spec(problem_name)
+    if spec is None:
+        from logic.src.envs.tasks.spec import PROBLEMS
 
-    # CRITICAL: Reset Bins RNG to policy-specific state
-    # This ensures bin fill predictions are identical for equivalent algorithms
-    # regardless of execution order
-    if context.bins is not None:
-        # Reset the Bins RNG using policy-specific seed + day + sample_id
-        # This gives each (policy, day, sample) tuple its own isolated bin predictions
-        bins_seed = (policy_seed + context.day + context.sample_id) % (2**31)
-        context.bins.rng = np.random.default_rng(bins_seed)
+        spec = PROBLEMS.get(problem_name)
+    context.problem_spec = spec
+    token = set_expand_pool(bool(spec.expand_pool))
 
-    from logic.src.pipeline.simulations.actions import (
-        CollectAction,
-        FillAction,
-        LogAction,
-        PackingAction,
-        RoutingAction,
-        RouteImprovementAction,
-    )
-    from logic.src.pipeline.simulations.actions.time_constraints import TimeConstraintAction
-
-    commands = [
-        FillAction(),
-        PackingAction(),
-        RoutingAction(),
-        RouteImprovementAction(),
-        TimeConstraintAction(),
-        CollectAction(),
-        LogAction(),
-    ]
-
-    # The day's "time" is the full policy: packing + routing
-    # + route improvement (owner ruling DS-15). Simulator work (filling, collection,
-    # logging) is excluded; the sample time is the sum of these daily times.
-    # (Marked by position rather than isinstance so the actions can be mocked.)
-    policy_steps = {1, 2, 3}  # Packing, Routing, RouteImprovement
-    log_step = len(commands) - 1  # LogAction
+    wall_start = time.perf_counter()
     policy_time = 0.0
-    for step, command in enumerate(commands):
-        if step == log_step:
-            context["time"] = policy_time
-            if not context.get("solver_status"):
-                context["solver_status"] = resolve_solver_status(current_solver_status(), context.get("tour"))
-        start = time.perf_counter()
-        try:
-            command.execute(cast(Dict[str, Any], context))
-        except Exception as exc:
-            # Log the day, then let the sample fail. An infeasible routing algorithm
-            # must not erase the mandatory set that was selected this morning.
-            if step != log_step and context.daily_log is None:
-                record_aborted_day(context, exc)
-            raise
-        if step in policy_steps:
-            policy_time += time.perf_counter() - start
-
+    try:
+        for command in commands:
+            if command in log_actions:
+                context.time = policy_time
+                context.day_wall_time = time.perf_counter() - wall_start
+                if not context.solver_status:
+                    context.solver_status = resolve_solver_status(current_solver_status(), context.tour)
+            start = time.perf_counter()
+            try:
+                command.execute(context)
+            except Exception as exc:
+                context.day_wall_time = time.perf_counter() - wall_start
+                if command not in log_actions and context.daily_log is None:
+                    record_aborted_day(context, exc)
+                raise
+            if getattr(command, "timed", False):
+                policy_time += time.perf_counter() - start
+    finally:
+        context.day_wall_time = time.perf_counter() - wall_start
+        if isinstance(context.daily_log, dict):
+            context.daily_log["day_wall_time"] = context.day_wall_time
+        reset_expand_pool(token)
     return context

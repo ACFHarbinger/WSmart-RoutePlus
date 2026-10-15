@@ -29,7 +29,6 @@ class GLSConfig:
         fls_coupling_prob (float): Probability of coupling FLS.
         time_limit (float): Time limit in seconds.
         seed (Optional[int]): Seed for the random number generator.
-        vrpp (bool): Whether the problem is a VRRP.
         profit_aware_operators (bool): Whether to use profit-aware operators.
         packing (Optional[List[PackingConfig]]): Packing configurations.
         route_improvement (Optional[List[RouteImprovingConfig]]): Route improvement configurations.
@@ -44,7 +43,6 @@ class GLSConfig:
     fls_coupling_prob: float = 0.8
     time_limit: float = 60.0
     seed: Optional[int] = None
-    vrpp: bool = True
     profit_aware_operators: bool = False
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)

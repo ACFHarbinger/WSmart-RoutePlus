@@ -5,11 +5,11 @@ from unittest.mock import MagicMock
 import numpy as np
 import pandas as pd
 import pytest
-from logic.src.pipeline.simulations.wsmart_bin_analysis.export.container import TAG
-from logic.src.pipeline.simulations.wsmart_bin_analysis.export.extract import (
+from packages.wsmart_bin_analysis.export.container import TAG
+from packages.wsmart_bin_analysis.export.extract import (
     pre_process_data,
 )
-from logic.src.pipeline.simulations.wsmart_bin_analysis.export.transform import (
+from packages.wsmart_bin_analysis.export.transform import (
     filter_containers,
     get_overall_sensors_statistics,
     pre_process_container_metrics,

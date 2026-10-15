@@ -68,7 +68,6 @@ class HyperHeuristicACOConfig:
     elitist_weight: float = 1.0
     operators: Optional[List[str]] = None
     time_weighted_visibility: bool = False
-    vrpp: bool = True
     profit_aware_operators: bool = True
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

@@ -1,7 +1,6 @@
 hgs_rr:
   custom:
     time_limit: 60.0
-    vrpp: true
     max_vehicles: 0
     population_size: 50
     elite_size: 10

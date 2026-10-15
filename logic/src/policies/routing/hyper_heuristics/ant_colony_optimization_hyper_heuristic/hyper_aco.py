@@ -873,7 +873,6 @@ class HyperHeuristicACO:
             mandatory_nodes=self.mandatory_nodes,
             rng=self.random,
             profit_aware_operators=self.cfg.profit_aware_operators,
-            vrpp=self.cfg.vrpp,
             use_cache=use_cache,
         )
 

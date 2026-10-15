@@ -11,6 +11,5 @@ bc:
       - default
     route_improvement: []
     profit_aware_operators: false
-    vrpp: true
     use_saa: false
     num_scenarios: 10

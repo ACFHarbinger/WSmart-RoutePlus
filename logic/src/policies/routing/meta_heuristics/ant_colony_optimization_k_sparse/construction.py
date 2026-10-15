@@ -24,6 +24,7 @@ from typing import Any, Dict, List, Optional, Set
 import numpy as np
 
 from logic.src.configs.policies.aco_ks import KSparseACOConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 from .pheromones import SparsePheromoneTau
 
 
@@ -181,7 +182,7 @@ class SolutionConstructor:
         Returns:
             bool: True if there are profitable nodes, False otherwise.
         """
-        if not self.params.vrpp:
+        if not current_expand_pool():
             return True
 
         for j in sorted(unvisited):
@@ -206,7 +207,7 @@ class SolutionConstructor:
             List of feasible nodes.
         """
         feasible = []
-        use_profit_check = self.params.vrpp and self.params.profit_aware_operators
+        use_profit_check = current_expand_pool() and self.params.profit_aware_operators
         for j in sorted(unvisited):
             if load + self.wastes.get(j, 0) <= self.capacity:
                 if j in mandatory_unvisited:

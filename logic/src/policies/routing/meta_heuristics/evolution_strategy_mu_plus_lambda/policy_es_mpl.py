@@ -96,7 +96,6 @@ class MuPlusLambdaESPolicy(BaseRoutingPolicy):
             local_search_iterations=values.get("local_search_iterations", 100),
             time_limit=values.get("time_limit", 60.0),
             seed=values.get("seed", 42),
-            vrpp=values.get("vrpp", True),
             profit_aware_operators=values.get("profit_aware_operators", False),
         )
 

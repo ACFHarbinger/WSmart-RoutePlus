@@ -5,4 +5,3 @@ mp_aco:
   beta: 2.0
   rho: 0.1
   seed: 42
-  vrpp: true

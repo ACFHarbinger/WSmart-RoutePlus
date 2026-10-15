@@ -23,6 +23,7 @@ from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search import Ind
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.evolution import evaluate
 
 from logic.src.configs.policies.hgs_rr import HGSRRConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 class AdaptiveOperatorManager:
@@ -441,7 +442,7 @@ class RuinRecreateOperator:
 
             # Map specific parameters based on operator type
             kwargs["mandatory_nodes"] = list(self.split_manager.mandatory_nodes)
-            kwargs["expand_pool"] = getattr(self.params, "vrpp", True)
+            kwargs["expand_pool"] = current_expand_pool()
             if getattr(self.params, "profit_aware_operators", False) and operator_name != "regret_k_insertion":
                 kwargs["R"] = self.revenue
                 kwargs["C"] = self.cost_unit

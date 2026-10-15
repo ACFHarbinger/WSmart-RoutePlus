@@ -13,8 +13,6 @@ Example:
     3
     >>> config.seed
     42
-    >>> config.vrpp
-    True
 """
 
 from dataclasses import dataclass
@@ -33,7 +31,6 @@ class MP_ILS_Config:
         iters (int): Number of iterations. Defaults to 50.
         perturb_size (int): Number of nodes to remove during perturbation. Defaults to 3.
         seed (int): Random seed for reproducibility. Defaults to 42.
-        vrpp (bool): Whether the problem is a VRP with Profits. Defaults to True.
         packing (Optional[PackingConfig]): Configuration for
             mandatory node selection policies.
         route_improvement (Optional[RouteImprovingConfig]): Optional configuration
@@ -43,7 +40,6 @@ class MP_ILS_Config:
     iters: int = 50
     perturb_size: int = 3
     seed: int = 42
-    vrpp: bool = True
 
     packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None

@@ -10,14 +10,12 @@ from typing import Any, Dict, Optional, Tuple, Union
 
 import torch
 from logic.src.constants.temporal import get_default_temporal_params
+from logic.src.envs.tasks.common.released_specs import TCPTP_SPEC
 from logic.src.envs.tasks.espprc import LoadResource, ShiftTimeResource
-from logic.src.envs.tasks.profitable_tour.common import (
-    evaluate_profitable_tour,
-    profit_objective,
-)
+from logic.src.envs.tasks.profitable_tour.common import evaluate_profitable_tour
 from logic.src.envs.tasks.profitable_tour.cptp import CPTP, CPTPEnv
 from logic.src.envs.tasks.profitable_tour.ptp import PTPGenerator
-from logic.src.envs.tasks.spec import PROBLEMS, ProblemSpec
+from logic.src.envs.tasks.spec import PROBLEMS
 from tensordict import TensorDict
 
 
@@ -114,14 +112,6 @@ class TCPTP(CPTP):
         )
 
 
-TCPTP_SPEC = ProblemSpec(
-    name="tcptp",
-    objective=profit_objective,
-    constraints=(LoadResource(), ShiftTimeResource()),
-    metrics=("cost", "reward", "length", "waste", "overflows", "time"),
-    env_target="logic.src.envs.tasks.profitable_tour.tcptp:TCPTPEnv",
-    expand_pool=True,
-)
 PROBLEMS.register(TCPTP_SPEC)
 
 __all__ = ["TCPTPGenerator", "TCPTPEnv", "TCPTP", "TCPTP_SPEC"]

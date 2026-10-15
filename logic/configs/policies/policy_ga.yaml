@@ -8,7 +8,6 @@ ga:
     n_removal: 3
     time_limit: 60.0
     profit_aware_operators: false
-    vrpp: true
     packing:
       other/pk_lookahead.yaml:
       - default

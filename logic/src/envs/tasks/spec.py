@@ -27,16 +27,18 @@ class ProblemSpec:
             (e.g. "logic.src.envs.tasks.cptp:CPTPEnv").
         features: Optional feature specification for embedding projections.
         expand_pool: Whether unvisited candidate pools may expand dynamically (True for PTP/CPTP/TCPTP, False for CVRP).
+        per_trip_shift: Repair and validate each trip against the shift budget (TCPTP).
     """
 
     name: str
-    objective: Callable[..., float]
+    objective: Callable[..., Any]
     constraints: Tuple[Any, ...] = ()
     repair: Optional[Callable[[Any, Any], Any]] = None
     metrics: Tuple[str, ...] = ()
     env_target: str = ""
     features: Optional[Any] = None
     expand_pool: bool = True
+    per_trip_shift: bool = False
 
     def get_env_class(self) -> Type[Any]:
         """Lazily load the environment class for this problem."""
@@ -53,8 +55,9 @@ class ProblemSpec:
 class ProblemRegistry:
     """Registry mapping problem names to ProblemSpec instances."""
 
-    def __init__(self) -> None:
+    def __init__(self, targets: Optional[Dict[str, str]] = None) -> None:
         self._specs: Dict[str, ProblemSpec] = {}
+        self._targets = dict(targets or {})
 
     def register(self, spec: ProblemSpec) -> None:
         """Register a problem specification."""
@@ -63,28 +66,40 @@ class ProblemRegistry:
     def get(self, name: str) -> ProblemSpec:
         """Retrieve a problem specification by name."""
         key = name.lower()
+        if key not in self._specs and key in self._targets:
+            self.register(import_target(self._targets[key]))
         if key not in self._specs:
-            raise ValueError(
-                f"Unknown problem specification: {name!r}. Available: {list(self._specs.keys())}"
-            )
+            raise ValueError(f"Unknown problem specification: {name!r}. Available: {list(self._specs.keys())}")
         return self._specs[key]
 
     def __contains__(self, name: str) -> bool:
-        return name.lower() in self._specs
+        return name.lower() in self._specs or name.lower() in self._targets
 
     def __getitem__(self, name: str) -> ProblemSpec:
         return self.get(name)
 
     def keys(self) -> list[str]:
-        return list(self._specs.keys())
+        return list(dict.fromkeys((*self._targets, *self._specs)))
 
     def values(self) -> list[ProblemSpec]:
-        return list(self._specs.values())
+        return [self.get(name) for name in self.keys()]
 
     def items(self) -> list[tuple[str, ProblemSpec]]:
-        return list(self._specs.items())
+        return [(name, self.get(name)) for name in self.keys()]
 
 
-PROBLEMS = ProblemRegistry()
+PROBLEMS = ProblemRegistry(
+    {
+        "ptp": "logic.src.envs.tasks.common.released_specs:PTP_SPEC",
+        "cptp": "logic.src.envs.tasks.common.released_specs:CPTP_SPEC",
+        "tcptp": "logic.src.envs.tasks.common.released_specs:TCPTP_SPEC",
+        "cvrp": "logic.src.envs.tasks.common.released_specs:CVRP_SPEC",
+        **{
+            name: f"logic.src.envs.tasks.{name}:{name.upper()}_SPEC"
+            for name in ("tsp", "atsp", "op", "pctsp", "spctsp", "pdp", "irp")
+        },
+        "thop": "logic.src.envs.tasks.thop:ThOP_SPEC",
+    }
+)
 
 __all__ = ["ProblemSpec", "PROBLEMS", "ProblemRegistry"]

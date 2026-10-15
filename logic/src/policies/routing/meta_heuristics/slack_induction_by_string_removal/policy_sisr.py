@@ -126,7 +126,6 @@ class SISRPolicy(BaseRoutingPolicy):
             avg_string_len=values.get("avg_string_len", 3.0),
             blink_rate=values.get("blink_rate", 0.01),
             destroy_ratio=values.get("destroy_ratio", 0.2),
-            vrpp=values.get("vrpp", True),
             profit_aware_operators=values.get("profit_aware_operators", False),
             seed=values.get("seed", 42),
         )

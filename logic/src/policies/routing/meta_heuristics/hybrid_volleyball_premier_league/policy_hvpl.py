@@ -123,7 +123,6 @@ class HVPLPolicy(BaseRoutingPolicy):
                 - cost: Total travel cost calculated by the solver.
         """
         seed = values.get("seed", 42)
-        vrpp = values.get("vrpp", True)
         profit_aware_operators = values.get("profit_aware_operators", False)
 
         # Get ACO config (nested or flattened)
@@ -145,7 +144,6 @@ class HVPLPolicy(BaseRoutingPolicy):
                 stagnation_limit=aco_config.get("stagnation_limit", 10),
                 operators=aco_config.get("operators", OPERATOR_NAMES.copy()),
                 seed=seed,
-                vrpp=vrpp,
                 profit_aware_operators=profit_aware_operators,
             )
         else:
@@ -166,7 +164,6 @@ class HVPLPolicy(BaseRoutingPolicy):
                 stagnation_limit=values.get("stagnation_limit", 10),
                 operators=values.get("operators", OPERATOR_NAMES.copy()),
                 seed=seed,
-                vrpp=vrpp,
                 profit_aware_operators=profit_aware_operators,
             )
 
@@ -183,7 +180,6 @@ class HVPLPolicy(BaseRoutingPolicy):
                 xi=alns_config.get("xi", 1.0),
                 segment_size=alns_config.get("segment_size", 10),
                 seed=seed,
-                vrpp=vrpp,
                 profit_aware_operators=profit_aware_operators,
             )
         else:
@@ -198,7 +194,6 @@ class HVPLPolicy(BaseRoutingPolicy):
                 segment_size=values.get("alns_segment_size", 10),
                 time_limit=values.get("alns_time_limit", 60.0),
                 seed=seed,
-                vrpp=vrpp,
                 profit_aware_operators=profit_aware_operators,
             )
 
@@ -214,7 +209,6 @@ class HVPLPolicy(BaseRoutingPolicy):
             aco_params=aco_params,
             alns_params=alns_params,
             seed=seed,
-            vrpp=vrpp,
             profit_aware_operators=profit_aware_operators,
         )
 

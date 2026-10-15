@@ -21,8 +21,6 @@ Example:
     5000
     >>> config.time_limit
     60.0
-    >>> config.vrpp
-    True
 """
 from __future__ import annotations
 
@@ -51,7 +49,6 @@ class RLGDHHConfig:
         min_utility: Minimum utility.
         initial_utility: Initial utility.
         quality_lb: Lower bound for quality.
-        vrpp: Whether to use VRPP.
         packing: List of mandatory nodes.
         route_improvement: List of route improvements.
         acceptance_criterion: Acceptance criterion configuration.
@@ -83,7 +80,6 @@ class RLGDHHConfig:
     quality_lb: float = 0.0
 
     # --- Problem Flags ---
-    vrpp: bool = True
 
     # --- Infrastructure Hooks ---
     packing: Optional[List[Any]] = field(default_factory=list)

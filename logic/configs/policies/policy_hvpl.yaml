@@ -32,7 +32,6 @@ hvpl:
       max_removal_pct: 0.2
       time_limit: 60.0
     profit_aware_operators: true
-    vrpp: true
     packing:
       other/pk_lookahead.yaml:
       - default

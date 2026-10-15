@@ -31,14 +31,6 @@
         "type": "float",
         "default": 300.0
     },
-    "vrpp": {
-        "type": "categorical",
-        "choices": [
-            true,
-            false
-        ],
-        "default": true
-    },
     "profit_aware_operators": {
         "type": "categorical",
         "choices": [

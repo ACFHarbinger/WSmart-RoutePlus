@@ -16,8 +16,6 @@ Example:
     500
     >>> config.time_limit
     60.0
-    >>> config.vrpp
-    True
 """
 
 from dataclasses import dataclass
@@ -71,7 +69,6 @@ class DistancePSOConfig:
     gamma_cost: float = 0.3
 
     # Infrastructure
-    vrpp: bool = True
     profit_aware_operators: bool = False
     seed: Optional[int] = None
     packing: Optional[List[PackingConfig]] = None

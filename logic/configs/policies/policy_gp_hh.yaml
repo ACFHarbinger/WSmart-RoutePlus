@@ -8,7 +8,6 @@ gp_hh:
     n_training_instances: 3
     training_sample_ratio: 0.5
     time_limit: 60.0
-    vrpp: true
     packing:
       other/pk_lookahead.yaml:
       - default

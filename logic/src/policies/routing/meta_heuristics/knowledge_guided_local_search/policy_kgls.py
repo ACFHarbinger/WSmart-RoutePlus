@@ -121,7 +121,6 @@ class KGLSPolicy(BaseRoutingPolicy):
             moves=values.get("moves", ["relocate", "swap", "two_opt", "cross_exchange"]),
             penalization_cycle=values.get("penalization_cycle", ["width", "length", "width_length"]),
             local_search_iterations=int(values.get("local_search_iterations", 100)),
-            vrpp=values.get("vrpp", True),
             profit_aware_operators=values.get("profit_aware_operators", False),
             seed=values.get("seed", 42),
         )

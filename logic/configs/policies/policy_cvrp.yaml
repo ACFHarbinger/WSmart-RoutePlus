@@ -3,7 +3,6 @@ cvrp:
     engine: ortools
     n_vehicles: 0
     cache: false
-    vrpp: true
     packing:
       other/pk_regular.yaml:
       - regular_lvl3

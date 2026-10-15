@@ -41,6 +41,7 @@ from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_cut.h
 )
 
 from logic.src.configs.policies.bc import BCConfig
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 try:
     import gurobipy as gp
@@ -110,7 +111,6 @@ class BranchAndCutSolver:
                 use_heuristics=kwargs.get("use_heuristics", True),
                 verbose=kwargs.get("verbose", False),
                 profit_aware_operators=kwargs.get("profit_aware_operators", False),
-                vrpp=kwargs.get("vrpp", False),
                 enable_fractional_capacity_cuts=kwargs.get("enable_fractional_capacity_cuts", True),
             )
 
@@ -222,7 +222,7 @@ class BranchAndCutSolver:
             tour_farthest, profit_farthest = farthest_insertion(
                 self.model,
                 profit_aware_operators=self.params.profit_aware_operators,
-                expand_pool=self.params.vrpp,
+                expand_pool=current_expand_pool(),
             )
             if profit_farthest > best_profit:
                 best_profit, best_tour = profit_farthest, tour_farthest

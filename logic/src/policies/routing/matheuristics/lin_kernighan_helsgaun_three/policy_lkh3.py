@@ -42,6 +42,7 @@ from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.lkh3 
 )
 
 from logic.src.configs.policies.lkh3 import LKH3Config
+from logic.src.envs.tasks.common.expand_pool import current_expand_pool
 
 
 @GlobalRegistry.register(
@@ -131,7 +132,6 @@ class LKH3Policy(BaseRoutingPolicy):
         intensification within the LKH framework.
 
 
-
         Args:
             sub_dist_matrix (np.ndarray): Distance matrix for the sub-problem.
             sub_wastes (Dict[int, float]): Dictionary of wastes for the sub-problem.
@@ -161,7 +161,7 @@ class LKH3Policy(BaseRoutingPolicy):
         # If native prize-collecting is enabled, we skip standard CVRP augmentation
         # as the solver will perform Jonker-Volgenant ATSP transformation internally.
         # Select LKH-3 variant (with or without Adaptive Large Neighborhood Search)
-        policy_function = solve_lkh3_with_alns if params.vrpp or params.native_prize_collecting else solve_lkh3
+        policy_function = solve_lkh3_with_alns if current_expand_pool() or params.native_prize_collecting else solve_lkh3
 
         # Type-safe demand representation
         waste_arr: Optional[np.ndarray] = None

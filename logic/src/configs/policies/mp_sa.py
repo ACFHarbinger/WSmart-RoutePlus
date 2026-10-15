@@ -15,8 +15,6 @@ Example:
     0.95
     >>> config.seed
     42
-    >>> config.vrpp
-    True
 """
 
 from dataclasses import dataclass
@@ -36,7 +34,6 @@ class MP_SA_Config:
         init_temp (float): Initial temperature. Defaults to 100.0.
         cooling_rate (float): Cooling rate. Defaults to 0.95.
         seed (int): Random seed for reproducibility. Defaults to 42.
-        vrpp (bool): Whether the problem is a VRP with Profits. Defaults to True.
         packing (Optional[PackingConfig]): Configuration for
             mandatory node selection policies.
         route_improvement (Optional[RouteImprovingConfig]): Optional configuration
@@ -47,7 +44,6 @@ class MP_SA_Config:
     init_temp: float = 100.0
     cooling_rate: float = 0.95
     seed: int = 42
-    vrpp: bool = True
 
     packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None

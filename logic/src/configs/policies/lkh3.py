@@ -34,7 +34,6 @@ class LKH3Config:
         use_ip_merging: If True, use IP-based tour merging; else greedy.
         time_limit: Wall-clock time limit in seconds.
         seed: Random seed for reproducibility.
-        vrpp: If True, solver operates in full VRPP mode.
         dynamic_topology_discovery: If True, solver performs dynamic topology discovery.
         sa_max_trials: Maximum number of trials for Simulated Annealing.
         deep_plateau_limit: Number of iterations without improvement before triggering deep search.
@@ -59,7 +58,6 @@ class LKH3Config:
     sa_max_trials: int = 10000
     perturb_operator_weights: List[float] = field(default_factory=lambda: [0.6, 0.4])
     time_limit: float = 60.0
-    vrpp: bool = True
     dynamic_topology_discovery: bool = False
     native_prize_collecting: bool = False
     seed: Optional[int] = None

@@ -40,7 +40,6 @@ class FILOConfig(ABCConfig):
         n_cw: Number of nearest neighbors for Clarke-Wright savings.
         local_search_iterations: Maximum local search iterations per call.
         seed: Random seed for reproducibility.
-        vrpp: Whether this is a VRPP problem.
         profit_aware_operators: Whether to use profit-aware destroy/repair operators.
     """
 
@@ -61,6 +60,5 @@ class FILOConfig(ABCConfig):
     n_cw: int = 100
     local_search_iterations: int = 500
     seed: int = 42
-    vrpp: bool = True
     profit_aware_operators: bool = False
     route_min_sa_temp: float = 1.0

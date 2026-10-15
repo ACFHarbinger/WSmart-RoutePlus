@@ -116,7 +116,6 @@ def test_psoma_from_config_consumes_injected_bmc_not_dataclass_t0() -> None:
         T0=3.0,
         lambda_cooling=0.9,
         time_limit=2.0,
-        vrpp=True,
         seed=42,
         acceptance_criterion=AcceptanceConfig(
             method="bmc",

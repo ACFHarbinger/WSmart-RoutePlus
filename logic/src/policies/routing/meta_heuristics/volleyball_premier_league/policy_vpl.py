@@ -126,7 +126,6 @@ class VPLPolicy(BaseRoutingPolicy):
             elite_size=values.get("elite_size", 3),
             local_search_iterations=values.get("local_search_iterations", 500),
             time_limit=values.get("time_limit", 300.0),
-            vrpp=values.get("vrpp", True),
             profit_aware_operators=values.get("profit_aware_operators", False),
             seed=values.get("seed", 42),
         )

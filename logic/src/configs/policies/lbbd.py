@@ -37,7 +37,6 @@ class LBBDConfig:
         use_nogood_cuts (bool): Whether to use Nogood cuts for feasibility.
         use_optimality_cuts (bool): Whether to use logic-based optimality cuts for travel cost.
         seed (Optional[int]): Seed for random number generator.
-        vrpp (bool): Whether the problem is a VRRP.
         profit_aware_operators (bool): Whether to use profit-aware operators.
         packing (Optional[List[Any]]): Mandatory customers/requests selection.
         route_improvement (Optional[List[Any]]): Route improvement strategies.
