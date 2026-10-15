@@ -227,17 +227,15 @@ class Registry:
         for spec in self._iter_specs():
             if self._matches(spec, query.issubset, expected_type):
                 results.append(spec.resolve())
-        return results
+        return list({id(obj): obj for obj in results}.values())
 
-    def query_union(
-        self, *tags: Any, expected_type: Optional[Type[Any]] = None
-    ) -> Union[List[Any], List[Type[Any]]]:
+    def query_union(self, *tags: Any, expected_type: Optional[Type[Any]] = None) -> Union[List[Any], List[Type[Any]]]:
         query = set(tags)
         results: List[Any] = []
         for spec in self._iter_specs():
             if self._matches(spec, lambda obj_tags: not query.isdisjoint(obj_tags), expected_type):
                 results.append(spec.resolve())
-        return results
+        return list({id(obj): obj for obj in results}.values())
 
     def query_difference(
         self,
@@ -255,14 +253,14 @@ class Registry:
                 expected_type,
             ):
                 results.append(spec.resolve())
-        return results
+        return list({id(obj): obj for obj in results}.values())
 
     def get_all(self) -> Dict[Any, Set[Any]]:
         result: Dict[Any, Set[Any]] = {}
         for spec in self._iter_specs():
             if spec.obj is not None or spec.target is not None:
                 obj = spec.resolve()
-                result[obj] = set(spec.tags)
+                result.setdefault(obj, set()).update(spec.tags)
         return result
 
     # Compatibility names used by the old stage registries and a few tests.
