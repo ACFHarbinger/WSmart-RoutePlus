@@ -47,6 +47,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Codex review: invalid user values no longer bypass structured validation through the dataclass fallback; fallback is restricted to schema construction. Added type-validation regression tests.
 - Codex review: check_hpo_jobs.py adds the repository to sys.path for its documented direct CLI/CI invocation.
 - Codex review: structured-load value errors propagate instead of bypassing validation; the HPO key-check CLI resolves repository imports when executed by filename.
+- Codex review: CVRP LoadResource consumes ESPPRC's depot-aligned waste vector, preserving customer-only demand input and avoiding mask dimension mismatch. Added a two-trip reset/capacity/completion test. Unreleased environment semantic migration remains blocked (see review report).
+
+### Envs on the ESPPRC base (WP-07, `2026-10-15`)
+
+#### Added
+- **P-23 (Canonical ESPPRC Base & Declarative Resources):** `ESPPRCEnv` in `logic/src/envs/tasks/espprc.py` implementing forward-only routing dynamics, elementarity tracking, and declarative `Resource` hierarchy (`Resource`, `LoadResource`, `ShiftTimeResource`, `ESPPRCGenerator`).
+  - Strict batched PyTorch tensor support `[B, ...]` without per-instance loops (RQ-gemini-1).
+  - Pure NumPy support for classical heuristic solvers (RQ-codex-1).
+  - Explicit customer-count and depot-placement schema support (`[B, 1, 2]` depot + `[B, N, 2]` locs or `[B, N+1, 2]` prepended depot) with road-distance cache.
+- **P-21 (Unified Economic Objective):** `ProblemSpec` in `logic/src/envs/tasks/spec.py` and `evaluate_profitable_tour` in `logic/src/envs/tasks/profitable_tour/common.py` providing unified economic objective calculations (EUR), cleanly separating route evaluation/feasibility and physical units.
+- **P-44 / Q-3 (Problem Family Hierarchy):** Problem subpackages (`profitable_tour/` containing `ptp`, `cptp`, `tcptp`), self-contained problem generators in task files, and shared `ESPPRCGenerator`.
+
+#### Changed
+- **P-20 (Unified Route Evaluator):** Replaced legacy `get_costs` across all 6 live neural caller sites (`pointer_network/model.py`, `gat/decoder.py`, `glimpse/decoder.py`, `eval/engine.py`, `epoch.py`, `neural_agent/batch.py`) with `evaluate_tour`, returning standardized outcome dictionaries (`cost`, `reward`, `length`, `waste`, `overflows`, `valid`, `total`, and optional `time`).
+- **P-22 (Embedding Deduplication & Checkpoint Parity):** `CPTPInitEmbedding` subclasses `PTPInitEmbedding`, and `CPTPContextEmbedder` subclasses `PTPContextEmbedder`. Retains 100% bitwise `state_dict` key compatibility and exact greedy action parity with released AM checkpoints.
+- **All 12 Problem Tasks Sit on ESPPRC:**
+  - Released: `PTP`, `CPTP`, `TCPTP`, `CVRP`
+  - Unreleased: `TSP`, `ATSP`, `OP`, `PCTSP`, `SPCTSP`, `PDP`, `IRP`, `ThOP`
+
+#### Removed
+- **P-20 (Clean Break):** Deleted legacy `logic/src/envs/routing/` completely (13 legacy files removed).
 
 ### Scripted migration of the unreleased policies (`2026-10-15`)
 

@@ -2,9 +2,7 @@
 
 import pytest
 import torch
-from logic.src.envs.generators.tcptp import TCPTPGenerator
-from logic.src.envs.routing.tcptp import TCPTPEnv
-from logic.src.envs.tasks.tcptp import TCPTP
+from logic.src.envs.tasks.profitable_tour.tcptp import TCPTP, TCPTPEnv, TCPTPGenerator
 from tensordict import TensorDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -29,30 +27,30 @@ class TestCTOPCosts:
     def test_time_matrix_overrides_distance_and_includes_return(self, tour):
         data = _dataset(shift_hours=1.0)
         data["time_matrix"] = torch.tensor([[[0.0, 0.2], [0.7, 0.0]]])
-        _, costs, _ = TCPTP.get_costs(data, torch.tensor(tour), None)
+        costs = TCPTP.evaluate_tour(data, torch.tensor(tour), None, check_feasibility=True)
         assert costs["time"].item() == pytest.approx(0.9)
         data["time_matrix"][0, 1, 0] = 0.9
         with pytest.raises(AssertionError, match="trip time"):
-            TCPTP.get_costs(data, torch.tensor(tour), None)
+            TCPTP.evaluate_tour(data, torch.tensor(tour), None, check_feasibility=True)
 
     def test_final_depot_return_is_time_feasible(self):
         """A route that cannot return before shift end is rejected."""
         data = _dataset()
         data["locs"] = torch.tensor([[[0.6, 0.0]]])
         with pytest.raises(AssertionError, match="trip time"):
-            TCPTP.get_costs(data, torch.tensor([[1, 0]]), None)
+            TCPTP.evaluate_tour(data, torch.tensor([[1, 0]]), None, check_feasibility=True)
 
     def test_road_distance_matrix_governs_time_feasibility(self):
         """Time validation follows supplied road legs rather than coordinates."""
         dist_matrix = torch.tensor([[[0.0, 2.0], [2.0, 0.0]]])
         with pytest.raises(AssertionError, match="trip time"):
-            TCPTP.get_costs(_dataset(shift_hours=3.0), torch.tensor([[1, 0]]), None, dist_matrix)
+            TCPTP.evaluate_tour(_dataset(shift_hours=3.0), torch.tensor([[1, 0]]), dist_matrix=dist_matrix, check_feasibility=True)
 
     def test_one_microhour_tolerance_is_accepted(self):
         """The documented 1e-6 feasibility tolerance remains inclusive."""
         data = _dataset()
         data["locs"] = torch.tensor([[[0.5000005, 0.0]]])
-        _, costs, _ = TCPTP.get_costs(data, torch.tensor([[1, 0]]), None)
+        costs = TCPTP.evaluate_tour(data, torch.tensor([[1, 0]]), None, check_feasibility=True)
         assert costs["time"].item() == pytest.approx(1.000001, abs=1e-6)
 
 
@@ -106,7 +104,7 @@ class TestCTOPEnvironment:
         environment -- _reset_instance fell back to
         get_default_temporal_params() regardless of what was requested.
         """
-        from logic.src.envs.routing import get_env
+        from logic.src.envs import get_env
 
         env = get_env("tcptp", num_loc=5, shift_hours=3.5, avg_speed_kmh=40.0)
         assert isinstance(env.generator, TCPTPGenerator)

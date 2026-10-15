@@ -54,7 +54,7 @@ class TestAttentionModelStructure:
         model.decoder._calc_log_likelihood.return_value = (torch.tensor(0.0), torch.tensor(0.0))
 
         # Mock problem cost calculation
-        # get_costs(input, pi, ...) -> (cost, cost_dict, mask)
+        mock_problem.evaluate_tour.return_value = {"cost": torch.tensor([10.0]), "reward": torch.tensor([-10.0]), "length": torch.tensor([10.0])}
         mock_problem.get_costs.return_value = (torch.tensor([10.0]), {}, None)
 
         # Fake input

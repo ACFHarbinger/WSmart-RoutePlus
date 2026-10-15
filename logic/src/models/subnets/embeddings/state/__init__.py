@@ -16,8 +16,8 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from .env import EnvState
 from .cptp import CPTPState
+from .env import EnvState
 from .ptp import PTPState
 
 STATE_EMBEDDING_REGISTRY: Dict[str, Any] = {

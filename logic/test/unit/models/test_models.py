@@ -107,6 +107,12 @@ class TestAttentionModel:
         # So mocks on decoder might be irrelevant if model.forward is mocked.
         # But lines 43-46 set mocks on _inner which are now useless.
         # I'll update them anyway for correctness.
+        model.problem.evaluate_tour.return_value = {
+            "cost": torch.zeros(2),
+            "overflows": torch.zeros(2),
+            "waste": torch.zeros(2),
+            "length": torch.zeros(2),
+        }
         model.problem.get_costs.return_value = (
             torch.zeros(2),
             {"overflows": torch.zeros(2), "waste": torch.zeros(2)},

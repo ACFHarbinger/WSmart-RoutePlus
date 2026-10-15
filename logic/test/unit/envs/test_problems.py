@@ -30,7 +30,8 @@ class TestVRPP:
         }
         pi = torch.tensor([[1, 2]])  # (1, 2)
 
-        neg_profit, c_dict, _ = PTP.get_costs(dataset, pi, cw_dict=None)
+        c_dict = PTP.evaluate_tour(dataset, pi, cw_dict=None)
+        neg_profit = c_dict["cost"]
 
         # Length calculation:
         # 0->1: sqrt(1^2) = 1.0
@@ -237,11 +238,12 @@ class TestCPTP:
         # Scenario 1: Visit 1 -> 2 directly (Total 120) -> Should Fail Assertion
         pi_fail = torch.tensor([[1, 2]])
         with pytest.raises(AssertionError, match="Used more than capacity"):
-            CPTP.get_costs(dataset, pi_fail, cw_dict=None)
+            CPTP.evaluate_tour(dataset, pi_fail, cw_dict=None, check_feasibility=True)
 
         # Scenario 2: Visit 1 -> 0 (Depot) -> 2 (Total 60 reset 60)
         pi_route = torch.tensor([[1, 0, 2]])
-        cost, c_dict, _ = CPTP.get_costs(dataset, pi_route, cw_dict=None)
+        c_dict = CPTP.evaluate_tour(dataset, pi_route, cw_dict=None, check_feasibility=True)
+        cost = c_dict["cost"]
 
         # Check Profit
         # Length:
@@ -251,7 +253,7 @@ class TestCPTP:
         # 2->0 (2.0)
         # Total Length = 6.0
         # collected waste is waste at 1 and 2. Depot implies reset capacity not "collection of negative waste".
-        # get_costs logic sums gathered waste. gather([1, 0, 2]) -> [60, 0, 60]. Sum = 120.
+        # evaluate_tour logic sums gathered waste. gather([1, 0, 2]) -> [60, 0, 60]. Sum = 120.
         # Profit = 120 - 6 = 114. Negative Profit = -114.
         assert torch.allclose(cost, torch.tensor([-114.0]))
 
@@ -266,7 +268,8 @@ class TestCPTP:
             "waste": torch.tensor([[60.0, 60.0]] * 2),
             "capacity": torch.tensor(100.0),
         }
-        cost, _, _ = CPTP.get_costs(dataset, torch.tensor([[1, 0, 2], [2, 0, 1]]), cw_dict=None)
+        c_dict = CPTP.evaluate_tour(dataset, torch.tensor([[1, 0, 2], [2, 0, 1]]), cw_dict=None, check_feasibility=True)
+        cost = c_dict["cost"]
         assert cost.shape == (2,)
         with pytest.raises(AssertionError, match="Used more than capacity"):
-            CPTP.get_costs(dataset, torch.tensor([[1, 0, 2], [1, 2, 0]]), cw_dict=None)
+            CPTP.evaluate_tour(dataset, torch.tensor([[1, 0, 2], [1, 2, 0]]), cw_dict=None, check_feasibility=True)

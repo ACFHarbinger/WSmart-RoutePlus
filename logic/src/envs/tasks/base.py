@@ -92,6 +92,32 @@ class BaseProblem:
         return torch.cat((waste.new_zeros(*waste.shape[:-1], 1), waste), dim=-1)
 
     @staticmethod
+    def evaluate_tour(
+        dataset: Dict[str, Any],
+        pi: torch.Tensor,
+        dist_matrix: Optional[torch.Tensor] = None,
+        **kwargs: Any,
+    ) -> Dict[str, torch.Tensor]:
+        """Calculates tour physical outcomes and costs.
+
+        Args:
+            dataset: Dataset containing node locations and features.
+            pi: Tour tensor [batch, seq_len].
+            dist_matrix: Optional precomputed distance matrix.
+
+        Returns:
+            Dict[str, torch.Tensor]: Dict with 'cost', 'reward', 'length', 'valid', etc.
+        """
+        length = BaseProblem.get_tour_length(dataset, pi, dist_matrix)
+        return {
+            "cost": length,
+            "reward": -length,
+            "length": length,
+            "valid": torch.ones_like(length, dtype=torch.bool),
+            "total": length,
+        }
+
+    @staticmethod
     def get_tour_length(
         dataset: Dict[str, Any],
         pi: torch.Tensor,
