@@ -67,14 +67,18 @@ class RoutingAction(SimulationAction):
             raw_cfg = OmegaConf.to_container(raw_cfg, resolve=True)
             context["config"] = raw_cfg
 
+        # Resolve the policy wrapper before runtime metadata makes it a
+        # multi-key mapping. Otherwise a mapping-form variant hides vrpp=True
+        # and optional collection days are incorrectly reported as skipped.
+        flat_cfg = _flatten_config(raw_cfg)
+        flat_cfg["seed"] = seed
+        raw_cfg = dict(raw_cfg)
         raw_cfg["seed"] = seed
 
         # RE-SEED GLOBAL STATE BEFORE EXECUTION
         random.seed(seed)
         np.random.seed(seed)
         torch.manual_seed(seed)
-
-        flat_cfg = _flatten_config(raw_cfg)
 
         # Explicit engine/solver from config
         solver_key = flat_cfg.get("policy.type") or flat_cfg.get("policy.solver") or flat_cfg.get("policy.engine")
