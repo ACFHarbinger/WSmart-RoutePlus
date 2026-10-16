@@ -30,30 +30,24 @@ Example:
     ... )
 """
 
-from .loader import (
-    check_extension,
-    collate_fn,
-    load_dataset,
-    load_focus_coords,
-    load_grid_base,
-    load_simulation_dataset,
-    load_td_dataset,
-    save_dataset,
-    save_simulation_dataset,
-    save_td_dataset,
-)
-from .td_state_wrapper import TensorDictStateWrapper
+from logic.src.utils.registry import lazy_getattr
 
-__all__ = [
-    "check_extension",
-    "save_dataset",
-    "save_simulation_dataset",
-    "save_td_dataset",
-    "load_td_dataset",
-    "load_dataset",
-    "load_simulation_dataset",
-    "collate_fn",
-    "load_focus_coords",
-    "load_grid_base",
-    "TensorDictStateWrapper",
-]
+_LAZY = {
+    "check_extension": "logic.src.utils.data.loader:check_extension",
+    "collate_fn": "logic.src.utils.data.loader:collate_fn",
+    "load_dataset": "logic.src.utils.data.loader:load_dataset",
+    "load_focus_coords": "logic.src.utils.data.loader:load_focus_coords",
+    "load_grid_base": "logic.src.utils.data.loader:load_grid_base",
+    "load_simulation_dataset": "logic.src.utils.data.loader:load_simulation_dataset",
+    "load_td_dataset": "logic.src.utils.data.loader:load_td_dataset",
+    "save_dataset": "logic.src.utils.data.loader:save_dataset",
+    "save_simulation_dataset": "logic.src.utils.data.loader:save_simulation_dataset",
+    "save_td_dataset": "logic.src.utils.data.loader:save_td_dataset",
+    "TensorDictStateWrapper": "logic.src.utils.data.td_state_wrapper:TensorDictStateWrapper",
+}
+
+__all__ = list(_LAZY)
+
+
+def __getattr__(name):
+    return lazy_getattr(globals(), _LAZY, name)

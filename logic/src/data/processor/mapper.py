@@ -13,13 +13,20 @@ Example:
     mapper.process_raw_data(bin_samples, coords_sample, depot_sample)
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import torch
+
+
 import json
 import os
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, cast
 
 import numpy as np
 import pandas as pd
-import torch
 
 from logic.src.constants import MAX_WASTE
 
@@ -203,6 +210,8 @@ class SimulationDataMapper:
         Returns:
             Dictionary of model data.
         """
+        import torch
+
         depot, loc = format_coordinates(coordinates, method)
         model_data = {
             "locs": torch.as_tensor(loc, dtype=torch.float32),
@@ -242,6 +251,8 @@ class SimulationDataMapper:
         Returns:
             Edge indices and adjacency matrix.
         """
+        import torch
+
         if not (0 < edge_threshold < 1):
             return None
 
@@ -319,6 +330,8 @@ class SimulationDataMapper:
         Returns:
             Tuple of (model data, edges and distance matrix, profit variables).
         """
+        import torch
+
         problem_size = len(dist_matrix) - 1
 
         # 1. Prepare Model Data

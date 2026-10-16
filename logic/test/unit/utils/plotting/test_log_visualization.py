@@ -12,7 +12,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.fast]
 class TestLogVisualization:
     """Class for log visualization tests."""
 
-    @patch("logic.src.tracking.logging.structured_logging.wandb")
+    @patch("wandb.log")
     @patch("logic.src.utils.plotting.log_visualization.wandb")
     @patch("logic.src.utils.plotting.log_visualization.plt")
     def test_plot_training_logs(self, mock_plt, mock_wandb, mock_struct_wandb):

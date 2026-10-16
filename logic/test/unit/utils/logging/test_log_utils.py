@@ -1,5 +1,3 @@
-
-
 from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
@@ -20,13 +18,10 @@ from omegaconf import OmegaConf
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
-
-
-
 class TestLogUtils:
     """Class for log_utils tests."""
 
-    @patch("logic.src.tracking.logging.modules.metrics.wandb")
+    @patch("wandb.log")
     def test_log_epoch(self, mock_wandb):
         """Test log_epoch with mocked wandb."""
         opts = OmegaConf.create({"rl": {"wandb_mode": "online"}, "train_time": False})
@@ -34,27 +29,31 @@ class TestLogUtils:
         loss_keys = ["loss"]
         epoch_loss = {"loss": [torch.tensor([1.0]), torch.tensor([2.0])]}
         log_epoch(x_tup, loss_keys, epoch_loss, opts)
-        assert mock_wandb.log.called
+        assert mock_wandb.called
 
-    @patch("logic.src.tracking.logging.structured_logging.wandb")
+    @patch("wandb.log")
     @patch("logic.src.tracking.logging.structured_logging.plt")
     def test_log_training(self, mock_plt, mock_wandb):
         """Test log_training with mocked components."""
-        opts = OmegaConf.create({
-            "train": {
-                "checkpoints_dir": "checkpoints",
-                "save_dir": "checkpoints/run1",
-                "log_dir": "logs",
-                "train_time": False
-            },
-            "rl": {"wandb_mode": "online"}
-        })
+        opts = OmegaConf.create(
+            {
+                "train": {
+                    "checkpoints_dir": "checkpoints",
+                    "save_dir": "checkpoints/run1",
+                    "log_dir": "logs",
+                    "train_time": False,
+                },
+                "rl": {"wandb_mode": "online"},
+            }
+        )
         columns = pd.MultiIndex.from_tuples([("loss", "mean"), ("loss", "std"), ("loss", "max"), ("loss", "min")])
         table_df = pd.DataFrame([[1.0, 0.1, 1.2, 0.8]], columns=columns)
         loss_keys = ["loss"]
         with patch("os.makedirs"), patch("pandas.DataFrame.to_parquet"):
-            loss_keys, xname, x_values, swapped_df, output_dir, wandb_mode = log_training(loss_keys, table_df, opts, False)
-        assert mock_wandb.log.called
+            loss_keys, xname, x_values, swapped_df, output_dir, wandb_mode = log_training(
+                loss_keys, table_df, opts, False
+            )
+        assert mock_wandb.called
 
     @patch("logic.src.tracking.logging.modules.storage.os.path.isfile")
     @patch("logic.src.tracking.logging.modules.storage.read_json")
@@ -86,7 +85,7 @@ class TestLogUtils:
             assert res is not None
             assert mock_dump.called
 
-    @patch("logic.src.tracking.logging.modules.metrics.wandb")
+    @patch("wandb.log")
     def test_log_values(self, mock_wandb):
         """Test log_values function."""
         cost = torch.tensor([10.0])
@@ -104,15 +103,15 @@ class TestLogUtils:
             "baseline_loss": torch.tensor([0.2]),
         }
         tb_logger = MagicMock()
-        opts = OmegaConf.create({
-            "rl": {"wandb_mode": "online", "no_tensorboard": False},
-            "train": {
-                "train_time": False
-            },
-            "baseline": "critic"
-        })
+        opts = OmegaConf.create(
+            {
+                "rl": {"wandb_mode": "online", "no_tensorboard": False},
+                "train": {"train_time": False},
+                "baseline": "critic",
+            }
+        )
         log_values(cost, cast(Any, grad_norms), epoch, batch_id, step, l_dict, tb_logger, opts)
-        assert mock_wandb.log.called
+        assert mock_wandb.called
         assert tb_logger.add_scalar.called
 
     @patch("logic.src.tracking.logging.modules.analysis.os.path.isfile", return_value=True)
@@ -129,8 +128,18 @@ class TestLogUtils:
         # Invoke via compose_dirpath: (home_dir, ndays, nbins, output_dir, area,
         #   waste_type, data_distribution, run_name) then wrapped-fn kwargs
         mean, std = output_stats(  # type: ignore
-            "home", 1, 50, "out", "area", "paper", "gamma", "run1",
-            nsamples=2, policies=["policy1"], keys=["cost"], print_output=False,
+            "home",
+            1,
+            50,
+            "out",
+            "area",
+            "paper",
+            "gamma",
+            "run1",
+            nsamples=2,
+            policies=["policy1"],
+            keys=["cost"],
+            print_output=False,
         )
         assert isinstance(mean, dict)
         assert isinstance(std, dict)
@@ -144,8 +153,17 @@ class TestLogUtils:
         mock_read.return_value = {"samples": {"0": {"cost": 10.0}, "1": {"cost": 20.0}}}
         # Invoke via compose_dirpath: list nbins → list of dir_paths
         res = runs_per_policy(  # type: ignore
-            "home", 1, [50], "out", "area", "paper", "gamma", "run1",
-            nsamples=[2], policies=["policy1"], print_output=True,
+            "home",
+            1,
+            [50],
+            "out",
+            "area",
+            "paper",
+            "gamma",
+            "run1",
+            nsamples=[2],
+            policies=["policy1"],
+            print_output=True,
         )
         assert isinstance(res, list)
         assert len(res) == 1

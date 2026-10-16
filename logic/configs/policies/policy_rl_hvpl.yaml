@@ -24,12 +24,14 @@ rl_hvpl:
     elitist_weight: 1.0
   alns:
     max_iterations: 200
-    start_temp: 100.0
-    cooling_rate: 0.97
     reaction_factor: 0.5
-    min_removal: 1
-    max_removal_pct: 0.3
-    perturb_k: 3
+    acceptance_criterion:
+      method: bmc
+      params:
+        initial_temp: 100.0
+        alpha: 0.97
+        start_temp_control: 0.05
+    xi: 0.3
   rl_config:
     td_learning:
       alpha: 0.1

@@ -100,6 +100,9 @@ def _config_pools() -> List[Tuple[str, List[str]]]:
             if not _is_dataclass_with_constructors(obj):
                 continue
             pools.append((f"{obj.__name__} default", list(obj().routing_algorithms)))
+            if callable(getattr(obj, "from_config", None)):
+                fallback = obj.from_config(SimpleNamespace())
+                pools.append((f"{obj.__name__} from_config fallback", list(fallback.routing_algorithms)))
     return pools
 
 
@@ -224,6 +227,5 @@ def test_orchestrator_yaml_sets_a_packing(key: str):
     the orchestrator collects nothing (the ``src`` lesson)."""
     yaml_file, merged = _orchestrators()[key]
     assert merged.get("packing"), (
-        f"{yaml_file} defines an orchestrator but sets no packing; "
-        f"{key} would collect 0 kg in every simulated day."
+        f"{yaml_file} defines an orchestrator but sets no packing; {key} would collect 0 kg in every simulated day."
     )

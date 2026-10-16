@@ -4,8 +4,9 @@ The value lives in a :class:`contextvars.ContextVar` so a worker process keeps
 its own status and a later day cannot inherit the previous day's code.
 """
 
+import math
 from contextvars import ContextVar
-from typing import Optional
+from typing import Any, Dict, Optional
 
 # Gurobi model status codes (gurobipy.GRB). Names are stored so the logger
 # does not need a solver license to decode a recorded day.
@@ -43,6 +44,7 @@ _solver_status: ContextVar[Optional[str]] = ContextVar("wsmart_solver_status", d
 def reset_solver_status() -> None:
     """Clear the status before a day so a previous day cannot leak forward."""
     _solver_status.set(None)
+    reset_solver_certificate()
 
 
 def note_solver_status(status: Optional[str], append: bool = False) -> None:
@@ -90,3 +92,37 @@ def format_backend_status(backend: str, code: object) -> str:
     if isinstance(name, str) and name:
         return f"{backend}:{name}"
     return f"{backend}:{code}"
+
+
+_solver_certificate: ContextVar[Optional[Dict[str, Any]]] = ContextVar("wsmart_solver_certificate", default=None)
+_solver_instance: ContextVar[Optional[str]] = ContextVar("wsmart_solver_instance", default=None)
+
+
+def reset_solver_certificate(instance: Optional[str] = None) -> None:
+    """Clear proof metadata before each independent construction."""
+    _solver_certificate.set(None)
+    _solver_instance.set(instance)
+
+
+def note_root_bound(bound: float) -> None:
+    """Record a root CG upper bound only after certified pricing exhaustion."""
+    if not math.isfinite(bound):
+        return
+    old = _solver_certificate.get()
+    best = min(bound, old["bound"]) if old else bound
+    _solver_certificate.set({"bound": best, "source": "root_cg_exhausted", "instance": _solver_instance.get()})
+
+
+def note_solver_incumbent(incumbent: float) -> None:
+    """Pair a returned constructor incumbent with the recorded root proof."""
+    proof = _solver_certificate.get()
+    if proof is not None and math.isfinite(incumbent) and proof["bound"] >= incumbent - 1e-6:
+        _solver_certificate.set(dict(proof, incumbent=float(incumbent)))
+    else:
+        _solver_certificate.set(None)
+
+
+def current_solver_certificate() -> Optional[Dict[str, Any]]:
+    """Return this construction's proof; incomplete pricing produces no certificate."""
+    proof = _solver_certificate.get()
+    return dict(proof) if proof is not None and "incumbent" in proof else None

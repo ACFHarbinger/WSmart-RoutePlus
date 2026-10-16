@@ -14,7 +14,7 @@ Example:
     True, {'accepted': True, 'delta': 5.0, 'water_level': 100.0, 'rain_speed': 0.01}
 """
 
-from typing import Any, Dict, Tuple, cast
+from typing import Any, Dict, Optional, Tuple, cast
 
 from logic.src.interfaces.acceptance_criterion import IAcceptanceCriterion, ObjectiveValue
 from logic.src.interfaces.context.search_context import AcceptanceMetrics
@@ -37,14 +37,23 @@ class GreatDelugeAcceptance(IAcceptanceCriterion):
         rain_speed (float): Increment added to the water level at each step.
     """
 
-    def __init__(self, target_fitness_multiplier: float, max_iterations: int):
+    def __init__(
+        self,
+        target_fitness_multiplier: Optional[float] = None,
+        max_iterations: int = 1000,
+        target_objective: Optional[float] = None,
+    ):
         """Initialize the Great Deluge criterion.
 
         Args:
             target_fitness_multiplier: The expected relative improvement
                 (e.g., 1.1 implies a 10% expected improvement over the initial solution).
             max_iterations: The total budget of iterations to reach the target.
+            target_objective: Absolute terminal boundary, instead of a relative multiplier.
         """
+        if (target_fitness_multiplier is None) == (target_objective is None):
+            raise ValueError("Specify exactly one of target_fitness_multiplier and target_objective")
+        self.target_objective = target_objective
         self.target_multiplier = target_fitness_multiplier
         self.max_iterations = max_iterations
         self.water_level = 0.0
@@ -58,7 +67,11 @@ class GreatDelugeAcceptance(IAcceptanceCriterion):
         """
         initial_objective = cast(float, initial_objective)
         self.water_level = initial_objective
-        target_objective = initial_objective * self.target_multiplier
+        target_objective = (
+            self.target_objective
+            if self.target_objective is not None
+            else initial_objective * cast(float, self.target_multiplier)
+        )
 
         # Calculate exactly how much the water should rise per step
         if self.max_iterations > 0:

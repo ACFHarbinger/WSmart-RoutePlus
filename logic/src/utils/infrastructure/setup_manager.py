@@ -10,11 +10,15 @@ Example:
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import torch
+    from torch import nn
+
+
 import os
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
-
-import torch
-from torch import nn
 
 if TYPE_CHECKING:
     from logic.src.models import MandatoryManager
@@ -144,6 +148,7 @@ def setup_hrl_manager(
     Returns:
         The initialized manager model, or None if not applicable.
     """
+
     if configs is None:
         configs = {}
 

@@ -14,7 +14,7 @@ Example:
 """
 
 from abc import abstractmethod
-from dataclasses import asdict, fields, is_dataclass
+from dataclasses import asdict, fields, is_dataclass, replace
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
@@ -70,15 +70,31 @@ def _structured_load(config_cls: Type, mapping: Dict[str, Any]) -> Any:
     if unknown:
         raise ValueError(f"unknown or invalid keys for {config_cls.__name__}: {unknown}")
     filtered = {key: value for key, value in core.items() if key in known}
+
+    def with_acceptance(config):
+        if "acceptance_criterion" in known and "acceptance_criterion" in mapping:
+            from logic.src.configs.policies.other.acceptance_criteria import AcceptanceConfig
+
+            spec = mapping["acceptance_criterion"]
+            if isinstance(spec, (dict, DictConfig)):
+                spec = AcceptanceConfig(method=spec.get("method", "oi"), params=spec.get("params", {}))
+            return replace(config, acceptance_criterion=spec)
+        return config
+
     try:
         schema = OmegaConf.structured(config_cls)
     except Exception:
         # Some declarations use types OmegaConf cannot schema. Only schema
         # construction may fall back; invalid user values must never bypass validation.
-        return config_cls(**filtered)
+        return with_acceptance(config_cls(**filtered))
     OmegaConf.set_struct(schema, True)
+    for item in fields(config_cls):
+        node = schema.get(item.name)
+        annotation = str(item.type)
+        if isinstance(node, DictConfig) and (annotation == "<class 'dict'>" or annotation.startswith("typing.Dict")):
+            OmegaConf.set_struct(node, False)
     merged = OmegaConf.merge(schema, OmegaConf.create(filtered))
-    return OmegaConf.to_object(merged)
+    return with_acceptance(OmegaConf.to_object(merged))
 
 
 class BaseRoutingPolicy(PolicyVizMixin, IRoutingAlgorithm):

@@ -1,13 +1,11 @@
 cp_sat:
-  target: logic.src.policies.cp_sat.policy_cp_sat.CPSATPolicy
-  params:
-    num_days: 3
-    time_limit: 300.0
-    search_workers: 8
-    mip_gap: 0.01
-    scaling_factor: 1000
-    waste_weight: 1.0
-    cost_weight: 1.0
-    overflow_penalty: 10.0
-    mean_increment: 0.2
-    seed: 42
+  num_days: 3
+  time_limit: 300.0
+  search_workers: 8
+  mip_gap: 0.01
+  scaling_factor: 1000
+  waste_weight: 1.0
+  cost_weight: 1.0
+  overflow_penalty: 10.0
+  mean_increment: 0.2
+  seed: 42

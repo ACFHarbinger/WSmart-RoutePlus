@@ -90,6 +90,11 @@ class LogAction(SimulationAction):
             economics=economics,
         )
 
+        from logic.src.pipeline.simulations.solver_status import current_solver_certificate
+
+        proof = current_solver_certificate()
+        dlog["solver_certificate"] = proof
+
         failure_summary = FailureAnalyzer().analyze(
             new_overflows=new_overflows,
             sum_lost=sum_lost,
@@ -194,14 +199,5 @@ class LogAction(SimulationAction):
         if sim_tracker is not None:
             sim_tracker.log_day(
                 day,
-                {
-                    "reward": dlog["reward"],
-                    "profit": profit,
-                    "ncol": ncol,
-                    "kg": total_collected,
-                    "overflows": new_overflows,
-                    "km": km,
-                    "kg_lost": sum_lost,
-                    "time": time,
-                },
+                {key: dlog[key] for key in ("profit", "ncol", "kg", "overflows", "km", "kg_lost", "time")},
             )

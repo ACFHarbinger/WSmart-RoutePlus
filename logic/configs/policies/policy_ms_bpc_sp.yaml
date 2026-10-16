@@ -40,7 +40,3 @@ ms_bpc_sp:
     early_termination_gap: 0.001
     exact_mode: false
     enable_node_visitation_branching: true
-    enable_dssr: true
-    dssr_max_iters: 8
-    enable_reduced_cost_arc_fixing: true
-    route_budget: .inf

@@ -17,6 +17,9 @@ dependencies = [
     "tqdm>=4.67.1",
     "networkx>=3.2.1",
     "scikit-learn>=1.6.1",
+    "shapely>=2.0.7",
+    "jinja2>=3.1.6",
+    "matplotlib>=3.9.4",
     "pyyaml>=6.0.2",
     "python-dotenv>=1.1.1",
     "joblib>=1.5.1",
@@ -75,7 +78,6 @@ gpu = [
 geo = [
     "osmnx>=2.0.6",
     "pyproj>=3.6.1",
-    "shapely>=2.0.7",
     "geopandas>=1.0.1",
     "geopy>=2.4.1",
     "googlemaps>=4.10.0",
@@ -92,7 +94,6 @@ solvers = [
     "pyomo>=6.9.5",
 ]
 viz = [
-    "matplotlib>=3.9.4",
     "seaborn>=0.13.2",
     "plotly>=6.3.0",
 ]
@@ -130,9 +131,7 @@ docs = [
     "sphinx-uml>=0.4.0",
     "sphinxcontrib-mermaid>=1.2.3",
 ]
-web = [
-    "jinja2>=3.1.6",
-]
+web = []  # Jinja is required by the classical day-log popup renderer.
 
 # Note: project.optional-dependencies.docs is for users building docs.
 # The 'docs' below is redundant or can be removed if moved to project.optional-dependencies.

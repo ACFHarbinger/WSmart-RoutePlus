@@ -12,10 +12,10 @@ Example:
 
 import ast
 import dataclasses
+import sys
 from typing import Any
 
 import numpy as np
-import torch
 from omegaconf import DictConfig, ListConfig, OmegaConf
 
 from logic.src.configs.envs.graph import GraphConfig
@@ -47,7 +47,8 @@ def deep_sanitize(val: Any) -> Any:
         return val.tolist()
 
     # Handle PyTorch Tensors
-    if isinstance(val, torch.Tensor):
+    torch = sys.modules.get("torch")
+    if torch is not None and isinstance(val, torch.Tensor):
         if val.numel() == 1:
             return val.item()
         return val.detach().cpu().numpy().tolist()

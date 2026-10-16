@@ -17,34 +17,20 @@ from logic.src.pipeline.simulations.repository import (
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
-
 def test_simulation_day_context_mapping():
     """Test SimulationDayContext dataclass and Mapping interface."""
-    ctx = SimulationDayContext(
-        graph_size=10,
-        full_policy="test_policy",
-        day=5
-    )
+    ctx = SimulationDayContext(graph_size=10, full_policy="test_policy", day=5)
 
     # Access via attributes
     assert ctx.graph_size == 10
 
-    # Access via __getitem__ (Mapping)
-    assert ctx["full_policy"] == "test_policy"
-    assert ctx["day"] == 5
-
-    # Test __setitem__
-    ctx["cost"] = 15.0
+    assert ctx.full_policy == "test_policy"
+    assert ctx.day == 5
+    ctx.cost = 15.0
     assert ctx.cost == 15.0
+    assert not hasattr(ctx, "__getitem__")
+    assert not hasattr(ctx, "get")
 
-    # Test get()
-    assert ctx.get("graph_size") == 10
-    assert ctx.get("missing", "default") == "default"
-
-    # Test Mapping properties
-    assert "graph_size" in ctx
-    assert len(ctx) > 30 # many fields
-    assert "graph_size" in list(iter(ctx))
 
 def test_file_system_repository_init(tmp_path):
     """Test repository initialization and path resolution."""
@@ -53,6 +39,7 @@ def test_file_system_repository_init(tmp_path):
     assert repo.default_data_dir == expected_dir
     assert repo._get_data_dir() == expected_dir
     assert repo._get_data_dir("override") == "override"
+
 
 def test_get_indices_from_file(tmp_path):
     """Test loading indices from an existing JSON file."""
@@ -66,6 +53,7 @@ def test_get_indices_from_file(tmp_path):
 
     loaded = repo.get_indices("test.json", n_samples=2, n_nodes=2, data_size=10)
     assert loaded == indices
+
 
 @patch("pandas.Series.sample")
 def test_get_indices_generate(mock_sample, tmp_path):
@@ -83,6 +71,7 @@ def test_get_indices_generate(mock_sample, tmp_path):
     file_path = os.path.join(repo.default_data_dir, "bins_selection", "new.json")
     assert os.path.exists(file_path)
 
+
 @patch("pandas.read_csv")
 def test_get_depot(mock_read_csv, tmp_path):
     """Test loading depot coordinates."""
@@ -90,11 +79,7 @@ def test_get_depot(mock_read_csv, tmp_path):
 
     # Mock Facilities.csv content
     # Rio Maior sigla is CTEASO
-    df = pd.DataFrame({
-        "Sigla": ["CTEASO", "CITVRSU"],
-        "Lat": [39.0, 40.0],
-        "Lng": [-8.0, -9.0]
-    })
+    df = pd.DataFrame({"Sigla": ["CTEASO", "CITVRSU"], "Lat": [39.0, 40.0], "Lng": [-8.0, -9.0]})
     mock_read_csv.return_value = df
 
     # Rio Maior (RM)
@@ -103,19 +88,16 @@ def test_get_depot(mock_read_csv, tmp_path):
     assert depot.iloc[0]["ID"] == 0
     assert "Stock" in depot.columns
 
+
 @patch("pandas.read_excel")
 @patch("pandas.read_csv")
 def test_get_simulator_data_mixrmbac(mock_read_csv, mock_read_excel, tmp_path):
     """Test loading simulator data for Mix RM/BAC (Excel branch)."""
     repo = FileSystemRepository(str(tmp_path))
 
-    df = pd.DataFrame({
-        "ID": [1, 2],
-        "Lat": [39.1, 39.2],
-        "Lng": [-8.1, -8.2],
-        "Stock": [0.1, 0.2],
-        "Accum_Rate": [0.3, 0.4]
-    })
+    df = pd.DataFrame(
+        {"ID": [1, 2], "Lat": [39.1, 39.2], "Lng": [-8.1, -8.2], "Stock": [0.1, 0.2], "Accum_Rate": [0.3, 0.4]}
+    )
     mock_read_excel.return_value = df
 
     stats, coords = repo.get_simulator_data(20, area="mixrmbac")
@@ -123,25 +105,24 @@ def test_get_simulator_data_mixrmbac(mock_read_csv, mock_read_excel, tmp_path):
     assert len(stats) == 2
     assert "Stock" in stats.columns
 
+
 @patch("pandas.read_csv")
 def test_get_simulator_data_riomaior(mock_read_csv, tmp_path):
     """Test loading simulator data for Rio Maior."""
     repo = FileSystemRepository(str(tmp_path))
 
     # Mock waste stats
-    waste_df = pd.DataFrame({
-        "Date": ["2024-01-01", "2024-01-02"],
-        "101": [50.0, 60.0],
-        "102": [10.0, 20.0]
-    })
+    waste_df = pd.DataFrame({"Date": ["2024-01-01", "2024-01-02"], "101": [50.0, 60.0], "102": [10.0, 20.0]})
 
     # Mock coordinates
-    coords_df = pd.DataFrame({
-        "ID": [101, 102],
-        "Lat": [39.1, 39.2],
-        "Lng": [-8.1, -8.2],
-        "Tipo de Residuos": ["Indiferenciados", "Indiferenciados"]
-    })
+    coords_df = pd.DataFrame(
+        {
+            "ID": [101, 102],
+            "Lat": [39.1, 39.2],
+            "Lng": [-8.1, -8.2],
+            "Tipo de Residuos": ["Indiferenciados", "Indiferenciados"],
+        }
+    )
 
     # read_csv will be called twice: once for waste, once for coords
     mock_read_csv.side_effect = [waste_df, coords_df]
@@ -152,6 +133,7 @@ def test_get_simulator_data_riomaior(mock_read_csv, tmp_path):
     assert len(coords) == 2
     assert stats.iloc[0]["ID"] == 101
 
+
 @patch("pandas.read_csv")
 def test_get_simulator_data_figueira(mock_read_csv, tmp_path):
     """Test loading simulator data for Figueira da Foz."""
@@ -159,13 +141,14 @@ def test_get_simulator_data_figueira(mock_read_csv, tmp_path):
 
     # Mock data for Figueira
     mock_read_csv.side_effect = [
-        pd.DataFrame({"Date": ["2024-01-01"], "1": [0.5]}), # waste
-        pd.DataFrame({"ID": [1], "Lat": [40.0], "Lng": [-8.0], "Tipo de Residuos": ["Indiferenciados"]}) # coords
+        pd.DataFrame({"Date": ["2024-01-01"], "1": [0.5]}),  # waste
+        pd.DataFrame({"ID": [1], "Lat": [40.0], "Lng": [-8.0], "Tipo de Residuos": ["Indiferenciados"]}),  # coords
     ]
 
     stats, coords = repo.get_simulator_data(1, area="figueiradafoz")
     assert len(stats) == 1
     assert coords.iloc[0]["ID"] == 1
+
 
 @patch("pandas.read_excel")
 @patch("pandas.read_csv")
@@ -178,13 +161,14 @@ def test_get_simulator_data_both(mock_read_csv, mock_read_excel, tmp_path):
     mock_read_excel.return_value = pd.DataFrame({"ID": [1], "Stock": [0], "Accum_Rate": [0]})
 
     mock_read_csv.side_effect = [
-        pd.DataFrame({"Date": ["2024-01-01"], "101": [0]}), # wsba_data
-        pd.DataFrame({"ID225": [1], "ID317": [101], "Lat": [39], "Lng": [-8]}) # intersection.csv
+        pd.DataFrame({"Date": ["2024-01-01"], "101": [0]}),  # wsba_data
+        pd.DataFrame({"ID225": [1], "ID317": [101], "Lat": [39], "Lng": [-8]}),  # intersection.csv
     ]
 
     stats, coords = repo.get_simulator_data(57, area="both")
     assert len(stats) == 1
     assert coords.iloc[0]["ID"] == 1
+
 
 def test_wrapper_functions(mocker):
     """Test top-level wrapper functions call the repository."""

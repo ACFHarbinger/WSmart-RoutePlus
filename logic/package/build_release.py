@@ -54,10 +54,10 @@ STAGES: Dict[str, Path] = {
 # docs, gen, package, validation) is development tooling and stays out (Q-11b).
 STAGED_TOPS = ("src", "configs", "controllers")
 
-ENTRY_RE = re.compile(r"^\s*'([A-Za-z0-9_-]+)':\s*'(logic\.[A-Za-z0-9_.:]+)'\s*,?\s*$")
+ENTRY_RE = re.compile(r"""^\s*['"]([A-Za-z0-9_-]+)['"]:\s*['"](logic\.[A-Za-z0-9_.:]+)['"]\s*,?\s*$""")
 LAZY_LINE_RE = re.compile(r'^(\s*)"([A-Za-z_][A-Za-z0-9_]*)":\s*"(logic\.[A-Za-z0-9_.:]+)"\s*,?\s*$', re.MULTILINE)
 LOGIC_MODULE_RE = re.compile(r"\blogic(?:\.[A-Za-z_][A-Za-z0-9_]*)+\b")
-DECLARE_RE = re.compile(r"\.declare\('([A-Za-z0-9_-]+)',\s*ENTRIES\['([A-Za-z0-9_-]+)']\)")
+DECLARE_RE = re.compile(r"""\.declare\(['"]([A-Za-z0-9_-]+)['"],\s*ENTRIES\[['"]([A-Za-z0-9_-]+)['"]]\)""")
 
 
 # --------------------------------------------------------------------------- #
@@ -76,6 +76,26 @@ def load_manifest() -> dict:
             raise SystemExit(f"release.yaml: missing required section {section!r}")
     manifest.setdefault("excluded_packages", [])
     return manifest
+
+
+def lazy_targets(path: Path) -> Dict[str, str]:
+    """Read literal lazy re-export maps independently of quote style or line wrapping."""
+    for node in ast.parse(path.read_text()).body:
+        targets = (
+            node.targets if isinstance(node, ast.Assign) else [node.target] if isinstance(node, ast.AnnAssign) else []
+        )
+        if any(isinstance(target, ast.Name) and target.id == "_LAZY" for target in targets):
+            try:
+                value = ast.literal_eval(node.value)
+            except (ValueError, TypeError):
+                continue
+            if isinstance(value, dict):
+                return {
+                    key: item.split(":")[0]
+                    for key, item in value.items()
+                    if isinstance(key, str) and isinstance(item, str)
+                }
+    return {}
 
 
 def parse_registry_manifest(path: Path) -> Dict[str, str]:
@@ -256,9 +276,7 @@ def compute_closure(manifest: dict) -> Tuple[Set[Path], List[str]]:  # noqa: C90
             # A lazy map is indexed, not followed: a target ships only when a kept
             # module imports its name (below). Following every entry would ship
             # every architecture and algorithm behind the facades (Q-12).
-            for match in LAZY_LINE_RE.finditer(path.read_text()):
-                pkg_name, target = match.group(2), match.group(3).split(":")[0]
-                lazy_index.setdefault(root, {})[pkg_name] = target
+            lazy_index[root] = lazy_targets(path)
             surface.update(trimmed(dep, REPO) for dep in imports.deferred)
         for dep in pending:
             root_dep = trimmed(dep, REPO)
@@ -270,6 +288,9 @@ def compute_closure(manifest: dict) -> Tuple[Set[Path], List[str]]:  # noqa: C90
             if module_to_file(dep, REPO) is None and dep != root_dep:
                 name = dep[len(root_dep) + 1 :]
                 if "." not in name:
+                    if root_dep not in lazy_index:
+                        package_path = module_to_file(root_dep, REPO)
+                        lazy_index[root_dep] = lazy_targets(package_path) if package_path is not None else {}
                     target = lazy_index.get(root_dep, {}).get(name)
                     if target and target not in kept_modules:
                         surface.add(trimmed(target, REPO))
@@ -367,24 +388,41 @@ def filter_manifest_file(path: Path, released: Set[str]) -> List[str]:
 
 
 def filter_lazy_map(path: Path, staged_modules: Set[str], out: Path) -> List[str]:
-    """Drop _LAZY entries whose target module is pruned."""
-    dropped: List[str] = []
-    lines = path.read_text().splitlines(keepends=True)
-    kept_lines: List[str] = []
-    for line in lines:
-        lazy = LAZY_LINE_RE.match(line.rstrip("\n"))
-        if lazy:
-            target = lazy.group(3).split(":")[0]
-            if module_to_file(target, REPO) is not None:
-                ok = target in staged_modules
-            else:
-                ok = trimmed(target, out) in staged_modules
-            if not ok:
-                dropped.append(f"{path.relative_to(out)}: lazy {lazy.group(2)} -> {target}")
+    """Drop pruned lazy targets regardless of quoting or wrapping in the source map."""
+    source = path.read_text()
+    for node in ast.parse(source).body:
+        targets = (
+            node.targets if isinstance(node, ast.Assign) else [node.target] if isinstance(node, ast.AnnAssign) else []
+        )
+        if not any(isinstance(target, ast.Name) and target.id == "_LAZY" for target in targets):
+            continue
+        try:
+            mapping = ast.literal_eval(node.value)
+        except (ValueError, TypeError):
+            continue
+        if not isinstance(mapping, dict):
+            continue
+        kept = {}
+        dropped = []
+        for key, value in mapping.items():
+            if not isinstance(value, str):
+                kept[key] = value
                 continue
-        kept_lines.append(line)
-    path.write_text("".join(kept_lines))
-    return dropped
+            target = value.split(":")[0]
+            present = (
+                target in staged_modules
+                if module_to_file(target, REPO) is not None
+                else trimmed(target, out) in staged_modules
+            )
+            if present or not target.startswith("logic."):
+                kept[key] = value
+            else:
+                dropped.append(f"{path.relative_to(out)}: lazy {key} -> {target}")
+        lines = source.splitlines(keepends=True)
+        lines[node.lineno - 1 : node.end_lineno] = ["_LAZY = " + repr(kept) + "\n"]
+        path.write_text("".join(lines))
+        return dropped
+    return []
 
 
 def drop_pruned_init_imports(path: Path, staged_modules: Set[str], out: Path) -> List[str]:
@@ -673,6 +711,14 @@ def write_release_pyproject(manifest: dict, out: Path) -> None:
     neural = project.get("optional-dependencies", {}).get("neural", [])
     if not neural:
         raise SystemExit("logic/pyproject.toml: [project.optional-dependencies].neural is missing")
+    extras = {"neural": neural}
+    source_extras = project.get("optional-dependencies", {})
+    for group, names in manifest.get("dependency_extras", {}).items():
+        available = {re.split(r"[<>=!~ ;\[]", dep, maxsplit=1)[0]: dep for dep in source_extras.get(group, [])}
+        missing = set(names) - set(available)
+        if missing:
+            raise ValueError(f"Release dependency extra {group}: unknown names {sorted(missing)}")
+        extras[group] = [available[name] for name in names]
     lines = [
         "# Generated by logic/package/build_release.py from logic/release.yaml and",
         "# logic/pyproject.toml. Do not edit; regenerate the release instead.",
@@ -689,23 +735,14 @@ def write_release_pyproject(manifest: dict, out: Path) -> None:
         lines.append(f'description = "{project["description"]}"')
     if project.get("requires-python"):
         lines.append(f'requires-python = "{project["requires-python"]}"')
-    # The vendored bin-analysis package plots with matplotlib on import.
-    if not any(dep.split(">")[0].split("=")[0].strip() == "matplotlib" for dep in deps):
-        deps = [*deps, "matplotlib>=3.9.4"]
     lines.append("dependencies = [")
     lines += [f'    "{dep}",' for dep in deps]
     lines.append("]")
-    lines += [
-        "",
-        "[project.optional-dependencies]",
-        "neural = [",
-        *[f'    "{dep}",' for dep in neural],
-        "]",
-        "",
-        "[tool.setuptools.packages.find]",
-        'include = ["logic*", "packages*"]',
-        "",
-    ]
+    lines += ["", "[project.optional-dependencies]"]
+    for group, requirements in extras.items():
+        lines += [f"{group} = [", *[f'    "{dep}",' for dep in requirements], "]"]
+    lines += ["", "[tool.setuptools.packages.find]", 'include = ["logic*", "packages*"]', ""]
+    lines += ["[tool.setuptools.package-data]", 'logic = ["release.yaml", "configs/**/*.yaml", "src/tracking/logging/modules/popup.html"]', ""]
     (out / "pyproject.toml").write_text("\n".join(lines) + "\n")
 
 
@@ -744,7 +781,14 @@ def write_docs_index(manifest: dict, out: Path) -> None:
 
 SMOKE_SCRIPT = r"""
 import sys
+import importlib.abc
 
+class NoNeural(importlib.abc.MetaPathFinder):
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname.split(".")[0] in {"torch", "tensordict", "torchrl", "lightning", "pytorch_lightning", "wandb"}:
+            raise ImportError("neural extra unavailable during classical smoke: " + fullname)
+
+sys.meta_path.insert(0, NoNeural())
 sys.path.insert(0, sys.argv[1])
 assert "torch" not in sys.modules
 
@@ -777,19 +821,20 @@ IMPROVEMENT.create("fast_tsp")
 assert "torch" not in sys.modules, "torch was imported on the classical path"
 print("smoke OK: classical components resolve without torch")
 
-# The released routing algorithms, the simulator and its bin data import from the
-# built tree. They still reach torch through base_routing_policy -> simulations.repository
-# and the day-loop states (Q-16a is open), so this runs after the torch-free checks.
+# Resolve every classical routing adapter and the simulator with neural imports blocked.
+# NA remains declared, and is resolved only when the neural extra is requested.
 from logic.src.policies.routing.base.registry import RoutingAlgorithmRegistry  # noqa: F401
 from logic.src.utils.registry import ROUTING
 
-for key in ("swc_tcf", "bpc", "alns", "sans", "hgs", "psoma", "aco_hh", "pg_clns", "cvrp", "na"):
+for key in ("swc_tcf", "bpc", "alns", "sans", "hgs", "psoma", "aco_hh", "pg_clns", "cvrp"):
     assert ROUTING.get(key) is not None, f"released routing key {key} does not resolve"
+assert "na" in ROUTING.names(), "released neural policy is not declared"
 assert ROUTING.get("hgs_alns") is None, "unreleased routing key resolves"
 import logic.src.pipeline.simulations.simulator  # noqa: F401
 from packages.wsmart_bin_analysis import GridBase  # noqa: F401
 
-print("smoke OK: released routing keys and the simulator import from the release tree")
+assert "torch" not in sys.modules
+print("smoke OK: classical routing keys and simulator import without the neural extra")
 """
 
 

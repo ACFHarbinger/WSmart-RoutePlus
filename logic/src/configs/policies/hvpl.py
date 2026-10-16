@@ -21,6 +21,7 @@ from typing import Any, List, Optional
 
 from logic.src.configs.policies.aco_hh import HyperHeuristicACOConfig
 from logic.src.configs.policies.alns import ALNSConfig
+from logic.src.configs.policies.other.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
 
 from .aco_ks import KSparseACOConfig
 
@@ -88,8 +89,9 @@ class HVPLConfig:
     alns: ALNSConfig = field(
         default_factory=lambda: ALNSConfig(
             max_iterations=100,
-            start_temp=100.0,
-            cooling_rate=0.95,
+            acceptance_criterion=AcceptanceConfig(
+                method="bmc", params=BoltzmannAcceptanceConfig(initial_temp=100.0, alpha=0.95, start_temp_control=0.05)
+            ),
             reaction_factor=0.1,
             xi=0.3,
             time_limit=60.0,
@@ -102,7 +104,6 @@ class HVPLConfig:
     route_improvement: List[Any] = field(default_factory=list)
     aco_params: Optional[HyperHeuristicACOConfig] = field(default_factory=lambda: None)
     alns_params: Optional[ALNSConfig] = field(default_factory=lambda: None)
-
 
     def __post_init__(self):
         """Initialize sub-algorithm parameters with defaults if not provided.
@@ -133,10 +134,11 @@ class HVPLConfig:
         if self.alns_params is None:
             self.alns_params = ALNSConfig(
                 max_iterations=100,
-                start_temp=100.0,
-                cooling_rate=0.995,
+                acceptance_criterion=AcceptanceConfig(
+                    method="bmc",
+                    params=BoltzmannAcceptanceConfig(initial_temp=100.0, alpha=0.995, start_temp_control=0.05),
+                ),
                 reaction_factor=0.1,
-                start_temp_control=0.05,
                 xi=0.4,
                 segment_size=10,
                 time_limit=60.0,
@@ -163,6 +165,7 @@ class HVPLConfig:
             HVPLConfig: Initialized parameter object.
         """
         from logic.src.policies.routing.base.base_routing_policy import _structured_load
+
         return cls(
             n_teams=getattr(config, "n_teams", 30),
             max_iterations=getattr(config, "max_iterations", 100),

@@ -11,7 +11,7 @@ import contextlib
 import os
 from typing import TYPE_CHECKING, Optional, Union
 
-import torch
+import numpy as np
 
 from logic.src.constants import DATASET_EXTENSIONS, ROOT_DIR
 
@@ -232,8 +232,8 @@ def load_simulator_data(data_dir, number_of_bins, area="Rio Maior", waste_type=N
                     "source_line": 113,
                 },
             )
-            stock_tensor = torch.as_tensor(data["Stock"].values, dtype=torch.float32)
-            rate_tensor = torch.as_tensor(data["Accum_Rate"].values, dtype=torch.float32)
+            stock_tensor = np.asarray(data["Stock"].values, dtype=np.float32)
+            rate_tensor = np.asarray(data["Accum_Rate"].values, dtype=np.float32)
             RuntimeDataTracker(run).on_load(
                 {"stock": stock_tensor, "accum_rate": rate_tensor},
                 shape=stock_tensor.shape,

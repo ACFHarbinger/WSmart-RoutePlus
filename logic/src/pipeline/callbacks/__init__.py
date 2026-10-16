@@ -17,26 +17,23 @@ Example:
     >>> callbacks = [TrainingDisplayCallback(metric_keys="train/reward"), SpeedMonitor()]
 """
 
-from .pytorch.attention_heatmaps import AttentionHeatmapCallback
-from .pytorch.gpu_memory_monitor import GPUMemoryMonitor
-from .pytorch.hpo_health import HpoHealthMetricsCallback
-from .pytorch.model_summary import ModelSummaryCallback
-from .pytorch.reptile import ReptileCallback
-from .pytorch.speed_monitor import SpeedMonitor
-from .pytorch.training_display import TrainingDisplayCallback
-from .pytorch.training_health import TrainingHealthCallback
-from .simulation.policy_summary import PolicySummaryCallback
-from .simulation.simulation_display import SimulationDisplayCallback
+from logic.src.utils.registry import lazy_getattr
 
-__all__ = [
-    "AttentionHeatmapCallback",
-    "GPUMemoryMonitor",
-    "TrainingDisplayCallback",
-    "HpoHealthMetricsCallback",
-    "TrainingHealthCallback",
-    "ReptileCallback",
-    "SpeedMonitor",
-    "ModelSummaryCallback",
-    "SimulationDisplayCallback",
-    "PolicySummaryCallback",
-]
+_LAZY = {
+    "AttentionHeatmapCallback": "logic.src.pipeline.callbacks.pytorch.attention_heatmaps:AttentionHeatmapCallback",
+    "GPUMemoryMonitor": "logic.src.pipeline.callbacks.pytorch.gpu_memory_monitor:GPUMemoryMonitor",
+    "HpoHealthMetricsCallback": "logic.src.pipeline.callbacks.pytorch.hpo_health:HpoHealthMetricsCallback",
+    "ModelSummaryCallback": "logic.src.pipeline.callbacks.pytorch.model_summary:ModelSummaryCallback",
+    "ReptileCallback": "logic.src.pipeline.callbacks.pytorch.reptile:ReptileCallback",
+    "SpeedMonitor": "logic.src.pipeline.callbacks.pytorch.speed_monitor:SpeedMonitor",
+    "TrainingDisplayCallback": "logic.src.pipeline.callbacks.pytorch.training_display:TrainingDisplayCallback",
+    "TrainingHealthCallback": "logic.src.pipeline.callbacks.pytorch.training_health:TrainingHealthCallback",
+    "PolicySummaryCallback": "logic.src.pipeline.callbacks.simulation.policy_summary:PolicySummaryCallback",
+    "SimulationDisplayCallback": "logic.src.pipeline.callbacks.simulation.simulation_display:SimulationDisplayCallback",
+}
+
+__all__ = list(_LAZY)
+
+
+def __getattr__(name):
+    return lazy_getattr(globals(), _LAZY, name)

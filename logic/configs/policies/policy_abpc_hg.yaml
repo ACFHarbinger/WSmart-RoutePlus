@@ -1,5 +1,4 @@
 abpc_hg:
-  _target_: logic.src.policies.routing.learning_matheuristic_algorithms.adaptive_branch_and_price_and_cut_with_heuristic_guidance.policy_abpc_hg.ABPCHGPolicy
   gamma: 0.95
   seed: 1234
   overflow_penalty: 2.0

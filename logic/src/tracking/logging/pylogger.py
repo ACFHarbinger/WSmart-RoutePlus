@@ -18,11 +18,29 @@ Example:
 from __future__ import annotations
 
 import logging
-from typing import Optional
-
-from lightning.fabric.utilities.rank_zero import rank_zero_only
+import os
+import sys
+from functools import wraps
+from typing import Any, Callable, Optional
 
 from logic.src.tracking.logging.structured_logging import get_structured_logger as _get_structured
+
+
+def rank_zero_only(fn: Callable[..., Any]) -> Callable[..., Any]:
+    """Defer to an active Lightning rank, or the distributed process environment."""
+
+    @wraps(fn)
+    def wrapped(*args, **kwargs):
+        module = sys.modules.get("lightning.fabric.utilities.rank_zero")
+        decorator = getattr(module, "rank_zero_only", None)
+        rank = getattr(decorator, "rank", None)
+        if rank is None:
+            rank = int(os.environ.get("RANK", os.environ.get("LOCAL_RANK", os.environ.get("SLURM_PROCID", 0))))
+        if rank == 0:
+            return fn(*args, **kwargs)
+        return None
+
+    return wrapped
 
 
 def get_pylogger(name: str = __name__, log_file: Optional[str] = None) -> logging.Logger:

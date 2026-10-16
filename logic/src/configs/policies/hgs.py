@@ -73,6 +73,8 @@ class HGSConfig:
 
     # Local search
     local_search_iterations: int = 500
+    nb_granular: int = 20  # Used by the HGS-ALNS composite.
+    mutation_rate: float = 1.0  # Used by the HGS-ALNS composite.
 
     # Engine configuration
     engine: str = "custom"

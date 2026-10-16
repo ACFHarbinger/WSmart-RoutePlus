@@ -28,7 +28,7 @@ Example:
 """
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Optional
 
 
 @dataclass
@@ -77,6 +77,7 @@ class BoltzmannAcceptanceConfig:
     initial_temp: float = 100.0
     alpha: float = 0.95
     seed: int = 42
+    start_temp_control: Optional[float] = None
 
 
 @dataclass
@@ -199,14 +200,14 @@ class GreatDelugeConfig:
     """Configuration for Great Deluge.
 
     Attributes:
-        initial_level: Initial level for the great deluge.
-        decay_rate: Decay rate for the level.
-        maximization: Whether the problem is a maximization problem.
+        target_fitness_multiplier: Relative terminal boundary, or None for an absolute target.
+        max_iterations: Iterations to reach the target boundary.
+        target_objective: Absolute terminal boundary, mutually exclusive with the multiplier.
     """
 
-    initial_level: float = 100.0
-    decay_rate: float = 0.01
-    maximization: bool = True
+    target_fitness_multiplier: Optional[float] = 1.1
+    max_iterations: int = 1000
+    target_objective: Optional[float] = None
 
 
 @dataclass

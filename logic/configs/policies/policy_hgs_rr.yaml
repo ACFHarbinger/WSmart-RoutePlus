@@ -31,7 +31,6 @@ hgs_rr:
     score_sigma_2: 9.0
     score_sigma_3: 3.0
     profit_aware_operators: false
-    engine: custom
     packing:
       other/pk_lookahead.yaml:
       - default

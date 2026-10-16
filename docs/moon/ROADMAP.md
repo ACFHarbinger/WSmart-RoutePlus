@@ -13,6 +13,13 @@ Tags: `[Quick Win]` ≤ 1 day · `[Research]` involves novel work · `[Blocked]`
 
 ## Anchor Index
 
+Integration review, 2026-10-16: corrected gate YAML materialization and the
+baseline optional-routing dispatch amendment are documented in
+[`tools/gates/BASELINE.md`](../../tools/gates/BASELINE.md). The source-hashed
+reference guard, dispatch regression and 2,124-test unit suite pass. Q-14
+calibration, all paired cells and the archived time-capped comparisons are
+still merge prerequisites; unit success does not replace those gates.
+
 > Each section below now lives in its own file under [`docs/moon/roadmaps/`](roadmaps/), split out on 2026-08-27 so themes can be updated independently. This file keeps the index and the Cross-Cutting Themes table.
 
 | Section                                                              | Topic                                                                  |

@@ -18,6 +18,7 @@ Conventions (owner rulings Q-14, RQ-codex-2, RQ-codex-3, RQ-kimi-1):
 
 from __future__ import annotations
 
+import copy
 import math
 from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 
@@ -28,6 +29,7 @@ EXCLUDED_KEYS = frozenset(
         "day_wall_time",
         "execution_time",
         "timestamp",
+        "solver_certificate",  # Proof metadata is compared explicitly in certificate fallback.
         "run_id",
         "hostname",
         "pid",
@@ -231,3 +233,101 @@ def gate_b_verdict(
     except (KeyError, ValueError, TypeError) as e:
         return Verdict(False, f"{label}missing key in summary row: {e}")
     return Verdict(verdict.passed, f"{label}{verdict.detail}")
+
+
+def compare_daily_certificates(baseline: Dict[str, Any], candidate: Dict[str, Any]) -> Verdict:
+    """Compare every explicitly paired sample/day proof; never aggregate bounds."""
+    left = baseline.get("daily")
+    right = candidate.get("daily")
+    samples = baseline.get("samples", {})
+    if not isinstance(left, dict) or not isinstance(right, dict) or not samples:
+        return Verdict(False, "Missing per-sample daily certificate evidence")
+    if set(left) != set(right) or set(left) != set(samples) or set(samples) != set(candidate.get("samples", {})):
+        return Verdict(False, "Sample keys differ between results and daily proofs")
+    for sample in sorted(left):
+        base, cand = left[sample], right[sample]
+        days = base.get("day")
+        if not isinstance(days, list) or not days or days != cand.get("day") or len(set(days)) != len(days):
+            return Verdict(False, f"Missing, duplicate or unpaired days for sample {sample}")
+        proofs = base.get("solver_certificate")
+        other = cand.get("solver_certificate")
+        if (
+            not isinstance(proofs, list)
+            or not isinstance(other, list)
+            or len(proofs) != len(days)
+            or len(other) != len(days)
+        ):
+            return Verdict(False, f"Incomplete daily proofs for sample {sample}")
+        for day, a, b in zip(days, proofs, other):  # noqa: B905 - lengths validated above; Python 3.9
+            if not isinstance(a, dict) or not isinstance(b, dict):
+                return Verdict(False, f"Uncertified sample {sample}, day {day}")
+            if not a.get("instance") or a.get("instance") != b.get("instance"):
+                return Verdict(False, f"Construction inputs differ for sample {sample}, day {day}")
+            try:
+                verdict = compare_certificates(
+                    float(a["incumbent"]), float(a["bound"]), float(b["incumbent"]), float(b["bound"]), CERT_TOL
+                )
+            except (KeyError, TypeError, ValueError):
+                return Verdict(False, f"Malformed proof for sample {sample}, day {day}")
+            if not verdict.passed:
+                return Verdict(False, f"Sample {sample}, day {day}: {verdict.detail}")
+    return Verdict(True, "Every sample/day incumbent and certified bound agrees")
+
+
+_FLOAT_KPIS = {"overflows", "kg", "ncol", "kg_lost", "km", "kg/km", "profit",
+               "time_spent", "days_simulated", "collection_days"}
+
+
+def _canonical_quantities(row: Dict[str, Any]) -> None:
+    for key in _FLOAT_KPIS & row.keys():
+        value = row[key]
+        row[key] = [float(item) for item in value] if isinstance(value, list) else float(value)
+
+
+def _canonical_legacy_metrics(row: Dict[str, Any]) -> None:
+    row.pop("reward", None)
+    if "days" in row:
+        old = row.pop("days")
+        if "collection_days" in row and old != row["collection_days"]:
+            raise ValueError("Conflicting legacy days and collection_days")
+        row["collection_days"] = old
+    _canonical_quantities(row)
+
+
+def canonical_gate_log(log: Dict[str, Any]) -> Dict[str, Any]:
+    """Translate only approved P-21/P-42 wire-schema changes on an archived log.
+
+    Retired reward is removed; days is explicitly collection_days. Horizon days
+    come from the paired day column. Physical scalar KPIs use the new float
+    representation. Routes, statuses, states and numeric values are not relaxed.
+    """
+    result = copy.deepcopy(log)
+    daily = result.get("daily")
+    if not isinstance(daily, dict):
+        return result
+    horizons = {}
+    for sample, row in daily.items():
+        days = row.get("day", [])
+        if not isinstance(days, list) or not days:
+            continue
+        horizons[sample] = len(days)
+        row.pop("reward", None)
+        row.setdefault("days_simulated", [1.0] * len(days))
+        if "collection_days" not in row and isinstance(row.get("ncol"), list):
+            row["collection_days"] = [float(value > 0) for value in row["ncol"]]
+        _canonical_quantities(row)
+    for sample, row in result.get("samples", {}).items():
+        if sample in horizons:
+            row.setdefault("days_simulated", float(horizons[sample]))
+        _canonical_legacy_metrics(row)
+    for section in ("mean", "std"):
+        row = result.get(section)
+        if not isinstance(row, dict):
+            continue
+        if horizons:
+            values = list(horizons.values())
+            mean = sum(values) / len(values)
+            row.setdefault("days_simulated", mean if section == "mean" else
+                           math.sqrt(sum((value - mean)**2 for value in values) / len(values)))
+        _canonical_legacy_metrics(row)
+    return result

@@ -1,7 +1,7 @@
 mp_aco:
-  ants: 10
   iters: 50
   alpha: 1.0
   beta: 2.0
   rho: 0.1
   seed: 42
+  n_ants: 10

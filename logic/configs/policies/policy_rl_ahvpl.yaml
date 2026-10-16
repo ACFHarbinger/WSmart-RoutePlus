@@ -51,11 +51,15 @@ rl_ahvpl:
       elitist_weight: 1.0
     alns:
       max_iterations: 500
-      start_temp: 100.0
-      cooling_rate: 0.95
       reaction_factor: 0.1
       min_removal: 1
       max_removal_pct: 0.2
+      acceptance_criterion:
+        method: bmc
+        params:
+          initial_temp: 100.0
+          alpha: 0.95
+          start_temp_control: 0.05
     hgs:
       mu: 50
       nb_elite: 5

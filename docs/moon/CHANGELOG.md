@@ -17,6 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Integration reconciliation (Codex, 2026-10-16; uncommitted review fixes)
+
+- Reconciled RL-GD-HH's `gd` name and absolute target parameters; preserved legacy config translation. Acceptance prototypes are isolated per solve. ALNS uses a nested calibrated BMC schedule; PG-CLNS retains its separate legacy schedule and solver RNG.
+- Corrected config/YAML drift, context action access and active tracking after removal of `reward`. Restored classical imports without torch and completed release wheel dependencies and YAML package data. A fresh base-plus-solvers installation passes the blocked-neural smoke.
+- Gate overrides now use Hydra syntax and materialize each target checkout's full YAML. Partial bodies had selected different defaults. BPC daily proof records pair an actual incumbent and exhausted-root bound with a problem fingerprint; missing proof cannot pass the fallback.
+- Prepared an explicit baseline-only adapter correction: adding the runtime seed no longer hides `vrpp: true` or mutates the reusable policy wrapper. The harness requires its exact source hash over `d82170cf0` and records that amendment in frozen evidence. See `tools/gates/BASELINE.md` and the adjacent patch; no optimization loops are amended.
+- Verification: fixture-enabled unit suite 2,124 passed, 4 skipped, 79 deselected; updated gate selection 47 passed; baseline dispatch regression 4 passed; HPO 96/96 and banned-Params guard pass. Full Q-14 calibration and paired/archived gates remain required before merge.
+
 ### Integration of the 1.0.0 refactor (`refactor/v1-integration`, `2026-10-15`)
 
 WP-01 to WP-13 merged in report §12 order, each package with Codex's review edits committed on its branch first (WP-08 and P-21/P-42 were wholly uncommitted; WP-08 is stacked on P-21/P-42). Not merged into `main` (Q-15).

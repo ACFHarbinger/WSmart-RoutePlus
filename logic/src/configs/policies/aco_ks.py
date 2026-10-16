@@ -10,6 +10,7 @@ Example:
     >>> config.n_ants
     20
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -48,7 +49,7 @@ class KSparseACOConfig:
     alpha: float = 1.0
     beta: float = 2.0
     rho: float = 0.1
-    tau_0: float = 1.0
+    tau_0: Optional[float] = 1.0
     tau_min: float = 0.01
     tau_max: float = 10.0
     max_iterations: int = 50
@@ -64,7 +65,6 @@ class KSparseACOConfig:
     route_improvement: Optional[List[RouteImprovingConfig]] = None
     acceptance_criterion: AcceptanceConfig = AcceptanceConfig(method="oi")
     profit_aware_operators: bool = False
-
 
     def __post_init__(self) -> None:
         """Validate parameters after initialization."""
@@ -86,6 +86,7 @@ class KSparseACOConfig:
             "KSparseACOConfig" instance.
         """
         import dataclasses
+
         if config is None:
             return cls()
 

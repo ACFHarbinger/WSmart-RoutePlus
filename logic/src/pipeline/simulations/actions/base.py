@@ -266,6 +266,7 @@ def _make_acceptance_config(method: str, params: Any) -> Any:
                 initial_temp=float(p.get("initial_temp", 100.0)),
                 alpha=float(p.get("alpha", 0.995)),
                 seed=int(p.get("seed", 42)),
+                start_temp_control=float(p["start_temp_control"]) if p.get("start_temp_control") is not None else None,
             ),
         )
     if method_l in ("oi", "only_improving"):
@@ -478,6 +479,7 @@ def _constructor_from_policy_id(policy_id: str) -> str:
 
 def _set_live_capture_meta(context: Any) -> None:
     """Remember policy/variant/day for subsequent consumer JSONL records."""
+
     def _field(name: str) -> Any:
         if isinstance(context, dict):
             return context.get(name)
@@ -521,7 +523,6 @@ def _record_live_params(kind: str, payload: Dict[str, Any]) -> None:
 
             fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
         handle.write(line)
-
 
 
 class _DictContext:

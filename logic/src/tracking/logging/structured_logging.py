@@ -22,7 +22,6 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt  # noqa: F401
 import pandas as pd
-import wandb
 from omegaconf import DictConfig
 
 from logic.src.configs import Config
@@ -147,6 +146,8 @@ def log_training(
     swapped_df: pd.DataFrame = table_df.swaplevel(axis=1)
     swapped_df.columns = ["_".join(col).strip() for col in swapped_df.columns]
     if wandb_mode != "disabled":
+        import wandb
+
         wandb_table: Any = wandb.Table(dataframe=swapped_df)
         wandb.log({"training_table": wandb_table})
 

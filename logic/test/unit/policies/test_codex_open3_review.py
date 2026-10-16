@@ -3,7 +3,6 @@
 The two MS-BPC-SP pricing tests of the original review file are left out: that amendment is on hold (#90).
 """
 
-
 import pytest
 from logic.src.pipeline.simulations.checkpoints.persistence import SimulationCheckpoint
 from logic.src.policies.routing.learning_algorithms.neural_agent.policy_na import NeuralAgentPolicy
@@ -37,9 +36,14 @@ def test_absolute_checkpoint_base_still_isolates_runs(tmp_path):
 
 
 def test_registry_scan_checks_fallback_even_when_dataclass_has_default(monkeypatch):
+    from types import SimpleNamespace
+
+    from logic.src.configs.policies.arco import ARCOConfig
     from logic.test.unit.policies.routing import test_registry_constructor_contract as contract
 
     monkeypatch.setattr(
-        contract, "_load_policy_configs", lambda cfg: {"constructors": ["missing_test_name"]}
+        ARCOConfig,
+        "from_config",
+        classmethod(lambda cls, cfg: SimpleNamespace(routing_algorithms=["missing_test_name"])),
     )
-    assert any("missing_test_name" in names for _, names in contract._params_pools())
+    assert any("missing_test_name" in names for _, names in contract._config_pools())

@@ -53,12 +53,11 @@ def test_random_removal_matches_the_previous_pg_clns_implementation(seed):
 def test_hmlns_calibrates_through_the_canonical_alns_even_with_negative_profit():
     """The removed HMLNS ALNS copy skipped calibration when profit <= 0 and kept T = 100."""
     params = HybridMemeticLargeNeighborhoodSearchParams()
-    params.alns_params.start_temp = 0.0
     params.alns_params.max_iterations = 0
-    criterion = BoltzmannAcceptance(initial_temp=100.0, alpha=0.995, seed=0)
+    criterion = BoltzmannAcceptance(initial_temp=0.0, alpha=0.995, seed=0, start_temp_control=0.05)
     params.alns_params.acceptance_criterion = criterion
     d = np.array([[0, 5, 5], [5, 0, 1], [5, 1, 0]], dtype=float)
     solver = HybridMemeticLargeNeighborhoodSearchSolver(d, {1: 1.0, 2: 1.0}, 100.0, R=1.0, C=1.0, params=params)
     _routes, profit, _cost = solver.alns_solver.solve(initial_solution=[[1, 2]])
     assert profit < 0
-    assert pytest.approx(params.alns_params.start_temp_control * abs(profit) / math.log(2.0)) == criterion.T
+    assert pytest.approx(0.05 * abs(profit) / math.log(2.0)) == solver.alns_solver.acceptance_criterion.T

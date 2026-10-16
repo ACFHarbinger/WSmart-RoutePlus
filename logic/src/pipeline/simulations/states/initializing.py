@@ -22,7 +22,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 
 import numpy as np
-import torch
 from loguru import logger
 
 from logic.src.constants import DAY_METRICS, ROOT_DIR  # noqa: F401  (ROOT_DIR: test patch point)
@@ -52,10 +51,10 @@ if TYPE_CHECKING:
     from logic.src.pipeline.simulations.states.base.base import SimulationContext
 
 
-
 def routed_bin_ids(coords: Any) -> List[Any]:
     """Bin IDs of the routed graph in node order (row 0 of ``coords`` is the depot)."""
     return coords["ID"].iloc[1:].tolist()
+
 
 class InitializingState(SimState):
     """State handles the initialization of simulation data (graph, models, etc.).
@@ -74,7 +73,10 @@ class InitializingState(SimState):
         seed = ctx.cfg.sim.seed
         random.seed(seed)
         np.random.seed(seed)
-        torch.manual_seed(seed)
+        if getattr(ctx, "device", None) is not None:
+            import torch
+
+            torch.manual_seed(seed)
 
         sim = ctx.cfg.sim
         graph = get_graph_config(sim)
@@ -395,6 +397,7 @@ class InitializingState(SimState):
             sim.data_distribution,
             ctx.indices,
             save_updated_dm=_save_dm,
+            tensor_backend=ctx.device is not None,
         )
 
         model_name = ""

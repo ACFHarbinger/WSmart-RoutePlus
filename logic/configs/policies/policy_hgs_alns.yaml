@@ -1,34 +1,38 @@
 hgs_alns:
   custom:
     time_limit: 60
-    hgs_time_limit: 60
-    hgs_mu: 25
-    hgs_lambda_param: 40
-    hgs_nb_elite: 4
-    hgs_nb_close: 5
-    hgs_nb_granular: 20
-    hgs_target_feasible: 0.2
-    hgs_n_iterations_no_improvement: 20000
-    hgs_mutation_rate: 1.0
-    hgs_repair_probability: 0.5
-    hgs_crossover_rate: 1.0
-    hgs_max_vehicles: 0
-    hgs_local_search_iterations: 100
-    hgs_initial_penalty_capacity: 1.0
-    hgs_penalty_increase: 1.2
-    hgs_penalty_decrease: 0.85
-    hgs_engine: custom
-    hgs_restart_timer: 60
-    alns_iterations: 100
-    alns_start_temp: 100.0
-    alns_cooling_rate: 0.95
-    alns_reaction_factor: 0.1
-    alns_min_removal: 1
-    alns_max_removal_pct: 0.2
-    alns_time_limit: 60
-    alns_engine: custom
     profit_aware_operators: false
     packing:
       other/pk_lookahead.yaml:
       - default
     route_improvement: []
+    hgs:
+      time_limit: 60
+      mu: 25
+      lambda_param: 40
+      nb_elite: 4
+      nb_close: 5
+      nb_granular: 20
+      target_feasible: 0.2
+      n_iterations_no_improvement: 20000
+      mutation_rate: 1.0
+      repair_probability: 0.5
+      crossover_rate: 1.0
+      max_vehicles: 0
+      local_search_iterations: 100
+      initial_penalty_capacity: 1.0
+      penalty_increase: 1.2
+      penalty_decrease: 0.85
+      engine: custom
+      restart_timer: 60
+    alns:
+      reaction_factor: 0.1
+      time_limit: 60
+      engine: custom
+      max_iterations: 100
+      xi: 0.2
+      acceptance_criterion:
+        method: bmc
+        params:
+          initial_temp: 100.0
+          alpha: 0.95

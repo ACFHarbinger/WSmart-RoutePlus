@@ -25,7 +25,6 @@ import random
 from typing import Any, Dict, List, Optional
 
 import numpy as np
-import torch
 
 import logic.src.constants as udef
 import logic.src.tracking as wst
@@ -80,7 +79,6 @@ def run_simulator_test(cfg: Config, sinks: Optional[List[Any]] = None) -> None:
 
     random.seed(sim.seed)
     np.random.seed(sim.seed)
-    torch.manual_seed(sim.seed)
 
     data_size = _resolve_data_size(cfg)
 
@@ -94,12 +92,20 @@ def run_simulator_test(cfg: Config, sinks: Optional[List[Any]] = None) -> None:
     expand_policy_configs(cfg)
     _ensure_directories(cfg)
 
-    # Determine device: respect sim.no_cuda and cfg.device overrides
-    use_cuda = torch.cuda.is_available() and not getattr(sim, "no_cuda", False)
-    if getattr(cfg, "device", None) == "cpu":
-        use_cuda = False
+    # Classical policies use NumPy. Only neural policies need a torch device.
+    neural_tokens = {"na", "am", "amgat", "tam", "ddam", "ptr", "transgcn"}
+    neural = any(
+        neural_tokens.intersection(str(name).lower().replace("-", "_").split("_")) for name in sim.full_policies
+    )
+    device = None
+    if neural:
+        import torch
 
-    device = torch.device("cpu" if not use_cuda else f"cuda:{torch.cuda.device_count() - 1}")
+        torch.manual_seed(sim.seed)
+        use_cuda = torch.cuda.is_available() and not getattr(sim, "no_cuda", False)
+        if getattr(cfg, "device", None) == "cpu":
+            use_cuda = False
+        device = torch.device("cpu" if not use_cuda else f"cuda:{torch.cuda.device_count() - 1}")
 
     # --- Centralised experiment tracking ---
     experiment_name = f"sim-{sim.graph.area}-{sim.graph.num_loc}bins-{sim.graph.n_days}days"

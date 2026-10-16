@@ -18,9 +18,16 @@ from __future__ import annotations
 
 import contextlib
 import itertools
+import sys
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Tuple, cast
 
-import torch
+import numpy as np
+
+
+def _is_array(value: Any) -> bool:
+    torch = sys.modules.get("torch")
+    return isinstance(value, np.ndarray) or (torch is not None and isinstance(value, torch.Tensor))
+
 
 if TYPE_CHECKING:
     from logic.src.tracking.core.run import Run
@@ -197,38 +204,38 @@ class RuntimeDataTracker:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _extract_fields(self, data: Any) -> Dict[str, torch.Tensor]:
+    def _extract_fields(self, data: Any) -> Dict[str, Any]:
         """Unwraps data into a mapping of field names to torch tensors.
 
         Args:
             data: The payload to extract tensors from.
 
         Returns:
-            Dict[str, torch.Tensor]: Mapping of name to tensor.
+            Dict[str, Any]: Mapping of name to tensor.
         """
-        if hasattr(data, "data"):
+        if not _is_array(data) and hasattr(data, "data"):
             data = data.data
 
-        if isinstance(data, torch.Tensor):
+        if _is_array(data):
             return {"data": data}
 
         if isinstance(data, dict):
-            return {k: v for k, v in list(data.items())[: self._max_fields] if isinstance(v, torch.Tensor)}
+            return {k: v for k, v in list(data.items())[: self._max_fields] if _is_array(v)}
 
         # TensorDict-like (tensordict library or similar mapping)
         if hasattr(data, "keys") and callable(data.keys):
-            result: Dict[str, torch.Tensor] = {}
+            result: Dict[str, Any] = {}
             for k in itertools.islice(cast(Iterable[Any], data.keys()), self._max_fields):
                 with contextlib.suppress(Exception):
                     v = data[k]
-                    if isinstance(v, torch.Tensor):
+                    if _is_array(v):
                         result[k] = v
             return result
 
         return {}
 
     @staticmethod
-    def _compute_stats(fields: Dict[str, torch.Tensor]) -> Dict[str, Dict[str, Any]]:
+    def _compute_stats(fields: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
         """Computes descriptive statistics for a dictionary of tensors.
 
         Args:
@@ -239,6 +246,18 @@ class RuntimeDataTracker:
         """
         stats: Dict[str, Dict[str, Any]] = {}
         for name, tensor in fields.items():
+            if isinstance(tensor, np.ndarray):
+                t = tensor.astype(np.float32, copy=False)
+                entry = {"shape": list(t.shape), "numel": t.size}
+                if t.size:
+                    entry.update(
+                        mean=round(float(t.mean()), 6),
+                        std=round(float(t.std(ddof=1)), 6) if t.size > 1 else 0.0,
+                        min=round(float(t.min()), 6),
+                        max=round(float(t.max()), 6),
+                    )
+                stats[name] = entry
+                continue
             t = tensor.float().detach()
             shape: List[int] = [d for d in t.shape]
             try:

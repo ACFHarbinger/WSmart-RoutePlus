@@ -14,8 +14,6 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
-from logic.src.configs.policies.alns import ALNSConfig
-from logic.src.configs.policies.hgs import HGSConfig
 from logic.src.configs.policies.hgs_alns import HGSALNSConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
@@ -132,42 +130,10 @@ class HGSALNSPolicy(BaseRoutingPolicy):
         seed = values.get("seed", 42)
         profit_aware_operators = values.get("profit_aware_operators", False)
 
-        # Build Params from nested config
-        alns_params = ALNSConfig(
-            max_iterations=values.get("alns_iterations", 500),
-            start_temp=values.get("alns_start_temp", 100.0),
-            cooling_rate=values.get("alns_cooling_rate", 0.95),
-            reaction_factor=values.get("alns_reaction_factor", 0.1),
-            max_removal_pct=values.get("alns_max_removal_pct", 0.2),
-            time_limit=values.get("alns_time_limit", 60.0),
-            profit_aware_operators=profit_aware_operators,
-            seed=seed,
-        )
-
-        hgs_params = HGSConfig(
-            time_limit=values.get("hgs_time_limit", 60.0),
-            mu=values.get("hgs_population_size", 50),
-            nb_elite=values.get("hgs_elite_size", 5),
-            mutation_rate=values.get("hgs_mutation_rate", 0.2),
-            crossover_rate=values.get("hgs_crossover_rate", 0.7),
-            lambda_param=values.get("hgs_n_generations", 100),  # Mapping generations to offspring for this adapter
-            n_iterations_no_improvement=values.get("hgs_no_improvement_threshold", 20),
-            nb_granular=values.get("hgs_neighbor_list_size", 10),
-            local_search_iterations=values.get("hgs_local_search_iterations", 500),
-            max_vehicles=values.get("hgs_max_vehicles", 0),
-            seed=seed,
-            profit_aware_operators=profit_aware_operators,
-            restart_timer=values.get("hgs_restart_timer", 0.0),
-        )
-
-        # Create HGSALNSConfig
-        params = HGSALNSConfig(
-            time_limit=values.get("time_limit", 60.0),
-            hgs_params=hgs_params,
-            alns_params=alns_params,
-            seed=seed,
-            profit_aware_operators=profit_aware_operators,
-        )
+        params = HGSALNSConfig.from_config(values)
+        for component in (params.hgs, params.alns):
+            component.seed = seed
+            component.profit_aware_operators = profit_aware_operators
 
         solver = HGSALNSSolver(
             dist_matrix=sub_dist_matrix,

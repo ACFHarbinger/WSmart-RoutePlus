@@ -219,7 +219,9 @@ class PackingAction(SimulationAction):
                 wasserstein_radius=_pf("wasserstein_radius", 0.1),
                 wasserstein_p=_pi("wasserstein_p", 1),
                 overflow_penalty_frac=_pf("overflow_penalty_frac", 1.0),
-                coordinates=bins.get("coords") if isinstance(bins, IBinContainer) else getattr(context, "coordinates", None),
+                coordinates=bins.get("coords")
+                if isinstance(bins, IBinContainer)
+                else getattr(context, "coordinates", None),
                 current_collection_day=_pi("current_collection_day", 0),
                 seed=s_params.get("seed") if hasattr(s_params, "get") else None,
             )
@@ -244,7 +246,7 @@ class PackingAction(SimulationAction):
                 res = list(res)
 
             # Update SearchContext in simulation context
-            if "search_context" not in context:
+            if getattr(context, "search_context", None) is None:
                 context.search_context = sub_ctx
             else:
                 context.search_context = context.search_context.merge(sub_ctx)
@@ -263,6 +265,7 @@ class PackingAction(SimulationAction):
             A list of dictionaries representing resolved strategies.
         """
         strategies: List[Dict[str, Any]] = []
+        context = bind_context(context)
         raw_cfg = getattr(context, "config", {})
         flat_cfg = _as_policy_mapping(raw_cfg)
         config_mandatory = flat_cfg.get("packing")

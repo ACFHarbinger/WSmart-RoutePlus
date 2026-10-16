@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from logic.src.configs.policies.alns import ALNSConfig
+from logic.src.configs.policies.other.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
 from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.matheuristics.cluster_first_route_second.solver import run_cf_rs
 from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns import ALNSSolver
@@ -14,7 +15,13 @@ def test_alns_segment_logic():
     dist = np.array([[0, 10, 10], [10, 0, 5], [10, 5, 0]])
     wastes = {1: 10.0, 2: 10.0}
     capacity = 15.0
-    params = ALNSConfig(max_iterations=150, start_temp=100.0, regret_pool="regret2")  # > 1 segment
+    params = ALNSConfig(
+        max_iterations=150,
+        acceptance_criterion=AcceptanceConfig(
+            method="bmc", params=BoltzmannAcceptanceConfig(initial_temp=100.0, alpha=0.995, start_temp_control=0.05)
+        ),
+        regret_pool="regret2",
+    )  # > 1 segment
 
     solver = ALNSSolver(build_subproblem(dist, wastes, capacity, revenue=100.0, cost_unit=1.0), params)
 

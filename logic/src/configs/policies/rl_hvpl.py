@@ -23,6 +23,7 @@ from typing import Any, List, Optional, Tuple
 from logic.src.configs.policies.aco_ks import KSparseACOConfig
 from logic.src.configs.policies.alns import ALNSConfig
 from logic.src.configs.policies.other import RLConfig
+from logic.src.configs.policies.other.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
 
 
 @dataclass
@@ -96,14 +97,14 @@ class RLHVPLConfig:
     alns_params: ALNSConfig = field(
         default_factory=lambda: ALNSConfig(
             max_iterations=200,
-            start_temp=100.0,
-            cooling_rate=0.97,
+            acceptance_criterion=AcceptanceConfig(
+                method="bmc", params=BoltzmannAcceptanceConfig(initial_temp=100.0, alpha=0.97, start_temp_control=0.05)
+            ),
             reaction_factor=0.5,
-            max_removal_pct=0.3,
+            xi=0.3,
             time_limit=20.0,
         )
     )
-
 
     def __post_init__(self) -> None:
         """Sync flags across sub-parameters.

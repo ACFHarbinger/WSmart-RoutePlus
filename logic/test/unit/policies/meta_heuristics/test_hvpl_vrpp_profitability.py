@@ -1,5 +1,3 @@
-
-
 import numpy as np
 import pytest
 from logic.src.policies.routing.meta_heuristics.hybrid_volleyball_premier_league.policy_hvpl import (
@@ -15,7 +13,7 @@ def test_subset_dimensions():
 
     # 10 bins total
     dist_matrix = np.random.rand(11, 11)
-    bins_mock = type('obj', (object,), {'c': np.array([50.0] * 10)})
+    bins_mock = type("obj", (object,), {"c": np.array([50.0] * 10)})
     mandatory = [1, 3, 5]
 
     # 1. Test use_all_bins=False (Restore Default behavior)
@@ -39,6 +37,7 @@ def test_subset_dimensions():
     assert mandatory_all == [1, 3, 5], f"Mandatory global IDs should be [1, 3, 5], got {mandatory_all}"
     assert indices_all == list(range(11))
 
+
 def test_hvpl_respects_subset():
     # Verify that HVPLPolicy.execute uses the subset logic
     # We will check if the default configuration results in a tour restricted to mandatory
@@ -55,15 +54,17 @@ def test_hvpl_respects_subset():
     }
 
     policy = HVPLPolicy(config=config)
-    bins_mock = type('obj', (object,), {'c': np.array([50.0]*10)})
+    bins_mock = type("obj", (object,), {"c": np.array([50.0] * 10)})
 
-    tour, cost, profit, *_ = policy.execute(
-        area="Rio Maior",
-        waste_type="plastic",
-        bins=bins_mock,
-        distance_matrix=dist_matrix,
-        mandatory=mandatory
-    )
+    from logic.src.envs.tasks.common.expand_pool import reset_expand_pool, set_expand_pool
+
+    token = set_expand_pool(False)
+    try:
+        tour, cost, profit, *_ = policy.execute(
+            area="Rio Maior", waste_type="plastic", bins=bins_mock, distance_matrix=dist_matrix, mandatory=mandatory
+        )
+    finally:
+        reset_expand_pool(token)
 
     visited = set(tour)
     visited.discard(0)

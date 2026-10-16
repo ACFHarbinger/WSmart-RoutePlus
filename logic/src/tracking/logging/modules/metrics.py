@@ -15,10 +15,16 @@ Example:
     >>> metrics.log_values(cost, norms, epoch, batch_id, step, l_dict, tb, cfg)
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import torch
+
+
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-import torch
-import wandb
 from omegaconf import DictConfig
 
 import logic.src.constants as udef
@@ -47,6 +53,8 @@ def log_values(
         tb_logger: TensorBoard SummaryWriter instance.
         cfg: Root Hydra configuration.
     """
+    import wandb
+
     avg_cost: float = cost.mean().item()
     norms, norms_clipped = grad_norms
     train = cfg.train
@@ -114,6 +122,9 @@ def log_epoch(
         epoch_loss: Map of keys to lists of per-step loss tensors.
         cfg: Root Hydra configuration.
     """
+    import torch
+    import wandb
+
     wandb_mode: str = getattr(cfg.rl, "wandb_mode", "disabled")
 
     log_str: str = f"Finished {x_tup[0]} {x_tup[1]} log:"
@@ -141,6 +152,8 @@ def get_loss_stats(epoch_loss: Dict[str, List[torch.Tensor]]) -> List[float]:
     Returns:
         List[float]: Flattened list of [mean, std, min, max] for each key.
     """
+    import torch
+
     loss_stats: List[float] = []
     for key in epoch_loss:
         loss_tensor: torch.Tensor = torch.cat(epoch_loss[key]).float()

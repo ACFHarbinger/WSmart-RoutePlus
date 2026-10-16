@@ -14,14 +14,15 @@ Subcommands (all read-only except the heavy runners):
 Heavy subcommands refuse to run until ``.agent/cache/train-logs/chain.log``
 shows ``sim chain done`` and take ``~/.cache/wsr-review/heavy.lock``
 (non-blocking; one heavy job at a time). ``calibrate`` additionally refuses
-unless the code tree equals the ``BASELINE_COMMIT`` (issue: tolerances are
-calibrated on ``a5eb27eec`` plus only the default-off CVRP solution_limit knob).
+unless the code tree equals ``BASELINE_COMMIT`` plus the exact source-hashed
+optional-routing adapter amendment (see ``tools/gates/BASELINE.md``).
 """
 
 from __future__ import annotations
 
 import argparse
 import fcntl
+import hashlib
 import json
 import math
 import os
@@ -33,6 +34,7 @@ from typing import Any, Dict, List
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from tools.gates.cells import (  # noqa: E402
+    BASELINE_AMENDMENTS,
     BASELINE_COMMIT,
     CALIBRATION_REPEATS,
     GATE_A_CELLS,
@@ -40,9 +42,9 @@ from tools.gates.cells import (  # noqa: E402
     cell_policy_entry,
 )
 from tools.gates.compare import (  # noqa: E402
-    CERT_TOL,
+    canonical_gate_log,
     check_repeats_identical,
-    compare_certificates,
+    compare_daily_certificates,
     compare_exact,
     freeze_tolerances,
     gate_b_verdict,
@@ -71,12 +73,12 @@ def chain_done() -> bool:
 
 
 def code_matches_baseline() -> bool:
-    """Return True when code paths equal the calibration baseline commit."""
+    """Match the named reference plus only the exact pinned adapter amendment."""
     out = subprocess.run(
         [
             "git",
             "diff",
-            "--stat",
+            "--name-only",
             BASELINE_COMMIT,
             "--",
             "logic/src",
@@ -104,7 +106,14 @@ def code_matches_baseline() -> bool:
         capture_output=True,
         text=True,
     )
-    return out.returncode == 0 and not out.stdout.strip() and untracked.returncode == 0 and not untracked.stdout.strip()
+    if out.returncode or untracked.returncode or untracked.stdout.strip():
+        return False
+    if set(out.stdout.splitlines()) != set(BASELINE_AMENDMENTS):
+        return False
+    return all(
+        Path(path).is_file() and hashlib.sha256(Path(path).read_bytes()).hexdigest() == digest
+        for path, digest in BASELINE_AMENDMENTS.items()
+    )
 
 
 def take_heavy_lock():
@@ -134,8 +143,10 @@ def _hydra_value(value: Any) -> str:
     """Render a value for a Hydra dotlist override (no shell involved)."""
     import json
 
-    if isinstance(value, str):
-        return value
+    if isinstance(value, dict):
+        return "{" + ",".join(f"{key}:{_hydra_value(item)}" for key, item in value.items()) + "}"
+    if isinstance(value, (list, tuple)):
+        return "[" + ",".join(_hydra_value(item) for item in value) + "]"
     return json.dumps(value)
 
 
@@ -147,11 +158,9 @@ def cell_dotlist(constructor: str, model_path: str = "", time_capped: bool = Fal
     YAML variant, so list-form and mapping-form YAMLs need no per-file
     index addressing here.
     """
-    import json
-
     entry = cell_policy_entry(constructor, model_path=model_path, time_capped=time_capped)
     dotlist = [f"{k}={_hydra_value(v)}" for k, v in GATE_A_SIM.items()]
-    dotlist.append(f"sim.policies={json.dumps([entry])}")
+    dotlist.append(f"sim.policies={_hydra_value([entry])}")
     return dotlist
 
 
@@ -165,6 +174,7 @@ def run_test_sim(dotlist: List[str], run_name: str) -> str:
         "-n",
         "15",
         sys.executable,
+        str(Path(__file__).with_name("capture.py").resolve()),
         "main.py",
         "test_sim",
         f"sim.output_dir={results_root}",
@@ -184,14 +194,19 @@ def cmd_overrides(args: argparse.Namespace) -> None:
 
 
 def cmd_calibrate(args: argparse.Namespace) -> None:
-    """RQ-codex-2: repeats on unchanged code, determinism proof, frozen file."""
+    """RQ-codex-2: repeats on the pinned reference, determinism proof, frozen file."""
     require_heavy()
     if not code_matches_baseline():
         raise SystemExit(
-            f"Refusing calibration: code tree differs from {BASELINE_COMMIT}; "
-            "tolerances must be calibrated on the unchanged code."
+            f"Refusing calibration: code tree differs from {BASELINE_COMMIT} plus its pinned adapter amendment; "
+            "no other baseline source changes are permitted."
         )
-    frozen: Dict[str, Any] = {"baseline_commit": BASELINE_COMMIT, "cells": {}}
+    frozen: Dict[str, Any] = {
+        "baseline_commit": BASELINE_COMMIT,
+        "baseline_amendments": BASELINE_AMENDMENTS,
+        "simulation_axes": dict(GATE_A_SIM),
+        "cells": {},
+    }
     repeats = CALIBRATION_REPEATS if args.repeats is None else args.repeats
     if repeats < 2:
         raise SystemExit("Calibration needs at least two repeats")
@@ -214,6 +229,11 @@ def cmd_calibrate(args: argparse.Namespace) -> None:
         mode = cell.get("compare_mode", "exact")
         if diffs and mode != "certificate_fallback":
             raise SystemExit(f"Cell {name}: {len(diffs)} repeat diffs; config is not deterministic.")
+        if diffs and mode == "certificate_fallback":
+            for other in logs[1:]:
+                verdict = compare_daily_certificates(logs[0], other)
+                if not verdict.passed:
+                    raise SystemExit(f"Cell {name}: uncertified calibration repeat: {verdict.detail}")
         timed_logs = []
         for n in range(1, repeats + 1):
             results = run_test_sim(
@@ -248,7 +268,7 @@ def cmd_gate_a(args: argparse.Namespace) -> None:
         diffs = compare_exact(base, cand)
         if diffs and cell.get("compare_mode") == "certificate_fallback":
             try:
-                verdict = compare_certificates(_incumbent(base), _bound(base), _incumbent(cand), _bound(cand), CERT_TOL)
+                verdict = compare_daily_certificates(base, cand)
             except (KeyError, ValueError, TypeError) as exc:
                 print(f"cell {name}: certificate evidence missing or invalid: {exc}")
                 failures += 1
@@ -271,6 +291,8 @@ def cmd_gate_b(args: argparse.Namespace) -> None:
         frozen = json.load(f)
     if frozen.get("baseline_commit") != BASELINE_COMMIT:
         raise SystemExit("Frozen tolerances do not identify the required baseline")
+    if frozen.get("baseline_amendments") != BASELINE_AMENDMENTS:
+        raise SystemExit("Frozen tolerances do not identify the required baseline adapter amendment")
     tolerances = frozen["cells"]
     with open(args.archived, newline="") as f:
         archived_reader = csv.DictReader(f)
@@ -345,7 +367,7 @@ def _load_policy_log(results_dir: str, constructor: str) -> Dict[str, Any]:
     if not isinstance(log, dict) or not log.get("samples"):
         raise ValueError(f"Empty or malformed samples for {constructor}")
     _log_kpis(log)  # failed/non-finite samples cannot pass even if both logs match
-    return log
+    return canonical_gate_log(log)
 
 
 def _log_kpis(log: Dict[str, Any]) -> Dict[str, float]:
@@ -392,6 +414,9 @@ def main(argv: List[str]) -> None:
     p_cal.add_argument("--out", required=True)
     p_cal.add_argument("--repeats", type=int, default=None)
     p_cal.add_argument("--model-path", default="")
+    p_cal.add_argument("--dataset", help="Explicit frozen dataset path for both paired checkouts")
+    p_cal.add_argument("--data-dir", help="Read-only simulator data directory shared by both checkouts")
+    p_cal.add_argument("--distance-matrix", help="Explicit frozen road distance matrix CSV")
     p_a = sub.add_parser("gate-a", help="Paired bit-for-bit compare of two sweeps.")
     p_a.add_argument("--baseline", required=True)
     p_a.add_argument("--candidate", required=True)
@@ -400,6 +425,18 @@ def main(argv: List[str]) -> None:
     p_b.add_argument("--candidate", required=True)
     p_b.add_argument("--tolerances", required=True)
     args = parser.parse_args(argv)
+    if getattr(args, "dataset", None):
+        dataset = Path(args.dataset).resolve()
+        if not dataset.is_file():
+            raise SystemExit(f"Gate dataset does not exist: {dataset}")
+        GATE_A_SIM["sim.graph.load_dataset"] = str(dataset)
+    if getattr(args, "data_dir", None):
+        GATE_A_SIM["sim.data_dir"] = str(Path(args.data_dir).resolve())
+    if getattr(args, "distance_matrix", None):
+        matrix = Path(args.distance_matrix).resolve()
+        if not matrix.is_file():
+            raise SystemExit(f"Gate distance matrix does not exist: {matrix}")
+        GATE_A_SIM["sim.graph.dm_filepath"] = str(matrix)
     {"overrides": cmd_overrides, "calibrate": cmd_calibrate, "gate-a": cmd_gate_a, "gate-b": cmd_gate_b}[args.cmd](args)
 
 

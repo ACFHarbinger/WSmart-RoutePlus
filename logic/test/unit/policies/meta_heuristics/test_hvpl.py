@@ -3,6 +3,7 @@ import pytest
 from logic.src.configs.policies import HyperHeuristicACOConfig
 from logic.src.configs.policies.alns import ALNSConfig
 from logic.src.configs.policies.hvpl import HVPLConfig
+from logic.src.configs.policies.other.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
 from logic.src.policies.routing.meta_heuristics.hybrid_volleyball_premier_league.solver import HVPLSolver
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -32,8 +33,9 @@ def test_hvpl_solver():
     )
     alns_params = ALNSConfig(
         max_iterations=5,
-        start_temp=100.0,
-        cooling_rate=0.95,
+        acceptance_criterion=AcceptanceConfig(
+            method="bmc", params=BoltzmannAcceptanceConfig(initial_temp=100.0, alpha=0.95, start_temp_control=0.05)
+        ),
         reaction_factor=0.1,
         xi=0.3,
         time_limit=60.0,

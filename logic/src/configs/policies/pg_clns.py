@@ -15,7 +15,23 @@ from dataclasses import dataclass, field
 from typing import Any, List, Optional
 
 from .aco_ks import KSparseACOConfig
-from .alns import ALNSConfig
+from .other.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
+
+
+@dataclass
+class PGCLNSLNSConfig:
+    """Coaching LNS configuration, preserving PG-CLNS's shared RNG stream."""
+
+    max_iterations: int = 100
+    time_limit: float = 30.0
+    seed: Optional[int] = None
+    reaction_factor: float = 0.5
+    xi: float = 0.2
+    acceptance_criterion: AcceptanceConfig = field(
+        default_factory=lambda: AcceptanceConfig(
+            method="bmc", params=BoltzmannAcceptanceConfig(initial_temp=100.0, alpha=0.95)
+        )
+    )
 
 
 @dataclass
@@ -62,16 +78,7 @@ class PGCLNSConfig:
             elitist_weight=1.0,
         )
     )
-    lns: ALNSConfig = field(
-        default_factory=lambda: ALNSConfig(
-            max_iterations=100,
-            start_temp=100.0,
-            cooling_rate=0.95,
-            reaction_factor=0.5,
-            xi=0.2,  # Using xi to represent max_removal_pct
-            time_limit=30.0,
-        )
-    )
+    lns: PGCLNSLNSConfig = field(default_factory=PGCLNSLNSConfig)
 
     # Common policy fields
     profit_aware_operators: bool = True
