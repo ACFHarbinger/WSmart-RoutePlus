@@ -17,6 +17,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 1.0.0 refactor merged into `main` (`2026-10-16`)
+
+#### Changed
+
+- `main` now holds the 1.0.0 refactor: `refactor/v1-integration` (WP-01 to WP-13) plus Codex's review fixes (`refactor/v1-review-fixes`, including its corrected Q-14 harness), merged with `main`'s paper and AM work.
+  - Merge conflicts: the paper generator keeps the AM, static-reference and exclusion handling under the refactor's routing names (`table_routing`, `ROUTING_SPEC`, `routing_labels`). The routing table is now `Tables/results_routing.tex` (paper submodule `f6a2fcd`).
+  - The `wsmart_bin_analysis` submodule now lives in `packages/`.
+- Three unit tests were updated to the refactored simulator and structured configs: the checkpoint-error result fields, the opt-in fill-matrix export, and HGS/ALNS `engine` defaults. The full unit suite gives 2,203 passed, 4 skipped and 1 failed.
+  - The failure is the slow integration test `test_live_test_sim_captures_ms_ri_ac`. It fails the same way on the pre-merge `main`, so the merge didn't cause it.
+
+#### Open
+
+- Q-14: the ALNS replay matches on every tour, status and physical KPI. The strict comparison still fails on one-ULP kg and kg/km differences and on the candidate-only `mean.n_failed`/`mean.n_success` keys.
+
 ### Attention Model results in the simulation paper (`2026-10-16`)
 
 #### Added
