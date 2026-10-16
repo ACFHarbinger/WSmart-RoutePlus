@@ -141,6 +141,18 @@ STAGE_KEYS = {
 #: The columns that identify one policy configuration across horizons.
 CONFIG_KEYS = ["city", "N", "dist", "improver", "strategy", "cf", "sl_var", "acceptance", "constructor"]
 
+#: The learned routing algorithm's ``constructor`` key. Its runs are reported in their own
+#: block under each classical table and never enter the classical aggregates or cell medians.
+LEARNED_KEY = "AM"
+
+#: The static reference's ``constructor`` key: fixed Regular-k schedules (``strategy``) with the
+#: CVRP routing algorithm and no improver. Outside the factorial design, so outside every
+#: classical aggregate and the exclusion rule; reported as its own block of the routing table.
+STATIC_KEY = "CVRP"
+
+#: The summary vintage the paper reads: the 2026-10-13 classical rows plus the Attention Model's.
+DEFAULT_SUMMARY_DIR = REPO_ROOT / "docs/private/global/simulation/rerun-2026-10-16"
+
 
 # --------------------------------------------------------------------------- #
 # Loading
@@ -273,6 +285,32 @@ def balance_marginal(df: pd.DataFrame, stage: str) -> pd.DataFrame:
     return df[keep].copy()
 
 
+def learned_runs(learned: pd.DataFrame, classical: pd.DataFrame, degenerate: pd.DataFrame) -> pd.DataFrame:
+    """
+    The learned routing algorithm's runs, put through the classical exclusion rule.
+
+    Its runs sit outside the classical cell medians, so its shortfall is measured
+    against the median of the classical runs in the same cell. It loses every
+    cell the classical data loses, so that its blocks cover the same scenario
+    cells as the tables above them, and any run of its own that falls more than
+    ``SHORTFALL_THRESHOLD`` short is dropped and reported.
+    """
+    if learned.empty:
+        return learned
+    median = classical.groupby(CELL_KEYS, dropna=False)["kg"].median().rename("cell_median")
+    learned = learned.join(median, on=CELL_KEYS)
+    learned["shortfall"] = 1.0 - learned["kg"] / learned["cell_median"]
+    short = learned[learned["shortfall"] > SHORTFALL_THRESHOLD]
+    for _, r in short.iterrows():
+        print(
+            f"  Excluded {r.constructor} {r.horizon:>3}d {r.city} N={r.N} {r.dist} "
+            f"{r.strategy}{r.cf}{r.sl_var:<4} {r.improver}: {r.shortfall:.0%} below the classical cell median"
+        )
+    kept = drop_affected_cells(learned.drop(index=short.index), degenerate)
+    print(f"  {len(kept)} of {len(learned)} {LEARNED_KEY} runs retained")
+    return kept.drop(columns=["cell_median"])
+
+
 def paired_horizon_frame(clean: pd.DataFrame) -> pd.DataFrame:
     """
     Configurations observed at both horizons, as one row per configuration.
@@ -396,46 +434,102 @@ METRIC_GROUP_HEADERS = [mc("Runs"), mc("kg/km", 2), mc("Overflows", 2), mc("km")
 METRIC_GROUP_SUBHEADERS = ["", "mean", "median", "mean", "median", "", "mean", ""]
 
 
-def table_routing(clean: pd.DataFrame, horizon: int, cfg: dict) -> str:
+def unmarked(spec: list[tuple[str, str, int, str]]) -> list[tuple[str, str, int, str]]:
+    """The same spec with best-marking off: the learned block is not ranked against the classical rows."""
+    return [(col, how, dec, "none") for col, how, dec, _ in spec]
+
+
+def text_for(cfg: dict, section: str, key: str, learned: pd.DataFrame) -> str:
+    """The ``*_am`` variant of a caption or note when the learned routing algorithm has runs."""
+    texts = cfg[section]
+    return texts.get(f"{key}_am", texts[key]) if not learned.empty else texts[key]
+
+
+def pending_blocks(cfg: dict, table: str) -> list[dict]:
+    """Placeholder blocks for results not in the summary CSVs yet, one TODO per cell."""
+    blocks = []
+    for block in cfg.get("pending_blocks", {}).get(table, []):
+        rows = [{"label": label, "cells": ["TODO"] * block["columns"]} for label in block["rows"]]
+        blocks.append({"title": block["title"], "rows": rows})
+    return blocks
+
+
+def table_routing(
+    clean: pd.DataFrame, horizon: int, cfg: dict, learned: pd.DataFrame, static: pd.DataFrame, excluded: bool
+) -> str:
     """Per-constructor means and medians over the balanced grid at one horizon."""
     sub = balance_marginal(clean[clean.horizon == horizon], "constructor")
     agg = aggregate(sub, "constructor", ROUTING_SPEC)
     agg = agg.sort_values(("kgkm", "mean"), ascending=False)
     counts = sub.groupby("constructor").size()
     agg.index = [display_name(c, cfg) for c in agg.index]
+    lsub = learned[learned.horizon == horizon] if not learned.empty else learned
+    blocks = []
+    if not lsub.empty:
+        lagg = aggregate(lsub, "constructor", ROUTING_SPEC)
+        lagg.index = [display_name(c, cfg) for c in lagg.index]
+        blocks.append({"title": "", "rows": build_rows(lagg, unmarked(ROUTING_SPEC))})
+    ssub = static[static.horizon == horizon] if not static.empty else static
+    if not ssub.empty:
+        sagg = aggregate(ssub, "strategy", ROUTING_SPEC)
+        blocks.append({"title": cfg["block_titles"]["static"], "rows": build_rows(sagg, unmarked(ROUTING_SPEC))})
+    else:
+        blocks += pending_blocks(cfg, "constructors")
+    fields = {
+        "horizon": horizon,
+        "runs": len(sub),
+        "runs_per": int(counts.min()),
+        "learned_runs": len(lsub),
+        "after_exclusion": " after whole-cell exclusion" if excluded else "",
+        "static_runs": int(ssub.groupby("strategy").size().min()) if not ssub.empty else "TODO",
+    }
     return render_template(
         "paper_results_table.tex.j2",
         tabcolsep=2,
         label=f"tab:constructors{horizon}",
-        caption=cfg["captions"]["constructors"].format(horizon=horizon, runs=len(sub)),
+        caption=text_for(cfg, "captions", "constructors", lsub).format(**fields),
         first_header=cfg["headers"]["constructor"],
         headers=METRIC_GROUP_HEADERS,
         subheaders=METRIC_GROUP_SUBHEADERS,
         column_spec="l" + "r" * len(ROUTING_SPEC),
+        ncols=1 + len(ROUTING_SPEC),
         size=r"\footnotesize",
         rows=build_rows(agg, ROUTING_SPEC),
-        note=cfg["notes"]["constructors"].format(runs_per=int(counts.min())),
+        blocks=blocks,
+        note=text_for(cfg, "notes", "constructors", lsub).format(**fields),
     )
 
 
-def table_strategies(clean: pd.DataFrame, horizon: int, cfg: dict) -> str:
-    """Per-strategy-variant means: the efficiency/service trade-off, in one table."""
-    sub = balance_marginal(clean[clean.horizon == horizon], "variant").copy()
+def strategy_frame(frame: pd.DataFrame, horizon: int, cfg: dict) -> pd.DataFrame:
+    """Per-variant aggregates over the slices every variant shares, in the configured order."""
+    sub = balance_marginal(frame[frame.horizon == horizon], "variant").copy()
     sub["variant"] = sub.strategy + sub.cf + sub.sl_var
     order = [v for v in cfg["variant_order"] if v in set(sub.variant)]
     agg = aggregate(sub, "variant", STRATEGY_SPEC).reindex(order)
     agg.index = [cfg["variant_labels"].get(v, v) for v in agg.index]
+    return agg
+
+
+def table_strategies(clean: pd.DataFrame, horizon: int, cfg: dict, learned: pd.DataFrame) -> str:
+    """Per-strategy-variant means: the efficiency/service trade-off, in one table."""
+    agg = strategy_frame(clean, horizon, cfg)
+    blocks = []
+    if not learned.empty:
+        lagg = strategy_frame(learned, horizon, cfg)
+        blocks.append({"title": cfg["block_titles"]["learned"], "rows": build_rows(lagg, unmarked(STRATEGY_SPEC))})
     return render_template(
         "paper_results_table.tex.j2",
         tabcolsep=2,
         label=f"tab:strategies{horizon}",
-        caption=cfg["captions"]["strategies"].format(horizon=horizon),
+        caption=text_for(cfg, "captions", "strategies", learned).format(horizon=horizon),
         first_header=cfg["headers"]["strategy"],
         headers=METRIC_GROUP_HEADERS,
         subheaders=METRIC_GROUP_SUBHEADERS,
         column_spec="l" + "r" * len(STRATEGY_SPEC),
+        ncols=1 + len(STRATEGY_SPEC),
         size=r"\footnotesize",
         rows=build_rows(agg, STRATEGY_SPEC),
+        blocks=blocks,
         note=cfg["notes"]["strategies"],
     )
 
@@ -455,8 +549,8 @@ def improver_pairs(clean: pd.DataFrame, horizon: int) -> pd.DataFrame:
     return wide.dropna()
 
 
-def table_improvers(clean: pd.DataFrame, horizon: int, cfg: dict) -> str:
-    pairs = improver_pairs(clean, horizon)
+def improver_rows(pairs: pd.DataFrame, cfg: dict) -> list[dict]:
+    """One row per metric: CLS and Fast-TSP means, the mean delta, wins and ties."""
     rows = []
     for metric, decimals, better in cfg["improver_metrics"]:
         cls, ftsp = pairs[(metric, "CLS")], pairs[(metric, "FTSP")]
@@ -477,23 +571,33 @@ def table_improvers(clean: pd.DataFrame, horizon: int, cfg: dict) -> str:
                 ],
             }
         )
+    return rows
+
+
+def table_improvers(clean: pd.DataFrame, horizon: int, cfg: dict, learned: pd.DataFrame) -> str:
+    pairs = improver_pairs(clean, horizon)
+    blocks = []
+    if not learned.empty:
+        lpairs = improver_pairs(learned, horizon)
+        title = cfg["block_titles"]["learned_pairs"].format(pairs=len(lpairs))
+        blocks.append({"title": title, "rows": improver_rows(lpairs, cfg)})
     return render_template(
         "paper_results_table.tex.j2",
         tabcolsep=2,
         label=f"tab:improvers{horizon}",
-        caption=cfg["captions"]["improvers"].format(horizon=horizon, pairs=len(pairs)),
+        caption=text_for(cfg, "captions", "improvers", learned).format(horizon=horizon, pairs=len(pairs)),
         first_header=cfg["headers"]["metric"],
         headers=mc_list(cfg["headers"]["improver"]),
         column_spec="lrrrrr",
-        rows=rows,
+        ncols=6,
+        rows=improver_rows(pairs, cfg),
+        blocks=blocks,
         note=cfg["notes"]["improvers"],
     )
 
 
-def table_horizon(paired: pd.DataFrame, cfg: dict) -> str:
-    """Paired 30d-vs-90d comparison, per routing algorithm, on matched configurations."""
-    if paired.empty:
-        return ""
+def horizon_rows(paired: pd.DataFrame, cfg: dict) -> list[dict]:
+    """One row per routing algorithm: pair count and 30d/90d means of the paired metrics."""
     rows = []
     for constructor, grp in paired.groupby("constructor"):
         rows.append(
@@ -510,58 +614,87 @@ def table_horizon(paired: pd.DataFrame, cfg: dict) -> str:
                 ],
             }
         )
+    return rows
+
+
+def table_horizon(paired: pd.DataFrame, cfg: dict, learned_paired: pd.DataFrame, n90: int) -> str:
+    """Paired 30d-vs-90d comparison, per routing algorithm, on matched configurations."""
+    if paired.empty:
+        return ""
+    blocks = []
+    if not learned_paired.empty:
+        blocks.append({"title": "", "rows": horizon_rows(learned_paired, cfg)})
     return render_template(
         "paper_results_table.tex.j2",
         tabcolsep=2,
         label="tab:horizon",
-        caption=cfg["captions"]["horizon"].format(pairs=len(paired)),
+        caption=text_for(cfg, "captions", "horizon", learned_paired).format(pairs=len(paired)),
         first_header=cfg["headers"]["constructor"],
         headers=mc_list(cfg["headers"]["horizon"]),
         column_spec="lrrrrrrr",
+        ncols=8,
         size=r"\footnotesize",
-        rows=rows,
-        note=cfg["notes"]["horizon"],
+        rows=horizon_rows(paired, cfg),
+        blocks=blocks,
+        note=cfg["notes"]["horizon"].format(pairs=len(paired), n90=n90),
     )
 
 
-def table_scenarios(clean: pd.DataFrame, horizon: int, cfg: dict) -> str:
-    """Distribution and network marginals over like-for-like policy slices."""
-    metrics = [
-        ("n", "size", 0, "none"),
-        ("kgkm", "mean", 2, "none"),
-        ("overflows", "mean", 1, "none"),
-        ("km", "mean", 0, "none"),
-        ("kg_lost", "mean", 1, "none"),
-        ("time", "mean", 0, "none"),
-    ]
-    primary = clean[clean.horizon == horizon]
+SCENARIO_METRICS = [
+    ("n", "size", 0, "none"),
+    ("kgkm", "mean", 2, "none"),
+    ("overflows", "mean", 1, "none"),
+    ("km", "mean", 0, "none"),
+    ("kg_lost", "mean", 1, "none"),
+    ("time", "mean", 0, "none"),
+]
+
+SCENARIO_ORDER = [
+    "Demand: Empirical",
+    "Demand: Gamma-3",
+    "Rio Maior ($N=100$)",
+    "Rio Maior ($N=170$)",
+    "Figueira da Foz ($N=350$)",
+]
+
+
+def scenario_frame(frame: pd.DataFrame, horizon: int) -> tuple[pd.DataFrame, int, int]:
+    """Demand-process and network aggregates, each over the slices all its levels share.
+
+    Also returns the number of shared policy slices behind each block (runs per level).
+    """
+    primary = frame[frame.horizon == horizon]
     dist = balance_marginal(primary, "dist").copy()
     dist["level"] = dist["dist"].map(lambda value: f"Demand: {value}")
     network = balance_marginal(primary, "network").copy()
     network["level"] = network.apply(
         lambda row: f"{row.city} ($N={row.N}$)", axis=1
     )
-    frame = pd.concat([dist, network], ignore_index=True)
-    agg = aggregate(frame, "level", metrics)
-    order = [
-        "Demand: Empirical",
-        "Demand: Gamma-3",
-        "Rio Maior ($N=100$)",
-        "Rio Maior ($N=170$)",
-        "Figueira da Foz ($N=350$)",
-    ]
-    agg = agg.reindex(order)
+    both = pd.concat([dist, network], ignore_index=True)
+    slices = (len(dist) // max(dist["dist"].nunique(), 1), len(network) // max(network["level"].nunique(), 1))
+    return aggregate(both, "level", SCENARIO_METRICS).reindex(SCENARIO_ORDER), *slices
+
+
+def table_scenarios(clean: pd.DataFrame, horizon: int, cfg: dict, learned: pd.DataFrame) -> str:
+    """Distribution and network marginals over like-for-like policy slices."""
+    agg, dist_slices, network_slices = scenario_frame(clean, horizon)
+    blocks = []
+    if not learned.empty:
+        lagg, _, _ = scenario_frame(learned, horizon)
+        blocks.append({"title": cfg["block_titles"]["learned"], "rows": build_rows(lagg, SCENARIO_METRICS)})
     return render_template(
         "paper_results_table.tex.j2",
         tabcolsep=2,
         label="tab:scenarios30",
-        caption=cfg["captions"]["scenarios"].format(horizon=horizon),
+        caption=text_for(cfg, "captions", "scenarios", learned).format(horizon=horizon),
         first_header=cfg["headers"]["scenario_factor"],
         headers=mc_list(cfg["headers"]["scenario_metrics"]),
-        column_spec="l" + "r" * len(metrics),
+        column_spec="l" + "r" * len(SCENARIO_METRICS),
+        ncols=1 + len(SCENARIO_METRICS),
         size=r"\footnotesize",
-        rows=build_rows(agg, metrics),
-        note=cfg["notes"]["scenarios"],
+        rows=build_rows(agg, SCENARIO_METRICS),
+        blocks=blocks,
+        note=cfg["notes"]["scenarios"].format(dist_slices=dist_slices, network_slices=network_slices),
     )
 
 
@@ -1127,26 +1260,6 @@ def fig_scale(clean: pd.DataFrame, horizon: int, out: Path, colors: dict, cfg: d
     savefig(fig, out / f"runtime_scaling_{horizon}d.png")
 
 
-def _recover_increments(fills: np.ndarray) -> np.ndarray:
-    """Recover the policy-independent daily waste increment per bin.
-
-    The fill-history spreadsheet records the *realised* level after each day's
-    collection, but the waste arriving each day is fixed by the demand
-    realisation (the simulator re-seeds waste per policy-and-day, so every
-    policy faces the identical increments). A drop between consecutive days
-    marks a collection (reset to zero), so the next day's level is exactly that
-    day's increment; otherwise the increment is the level rise.
-    """
-    inc = np.zeros_like(fills)
-    inc[:, 0] = fills[:, 0]
-    inc[:, 1:] = np.where(
-        fills[:, 1:] >= fills[:, :-1],
-        fills[:, 1:] - fills[:, :-1],
-        fills[:, 1:],
-    )
-    return inc
-
-
 def _simulate_last_minute(increments: np.ndarray, tau: float, capacity: float) -> np.ndarray:
     """Re-simulate the Last-Minute rule and return per-bin, per-day fill levels."""
     n_bins, n_days = increments.shape
@@ -1167,26 +1280,19 @@ def fig_fill_trajectory(out_dir: Path) -> None:
     The static aggregates show an ordered trade-off between efficiency and
     overflow, but not *why*. This figure shows the Last-Minute mechanism for three bins'
     fill levels over the 30-day horizon under the two Last-Minute thresholds,
-    CF70 and CF90, re-simulated from the recovered daily increments. CF70
+    CF70 and CF90, re-simulated from the scenario's daily deposits. CF70
     collects earlier and more often, holding the bin below the threshold; CF90
     defers collection until the bin is nearly full, hauling more per visit but
     occasionally overflowing. That is the trade-off, at the level of a single
     bin, before any aggregation.
     """
-    import openpyxl
-
-    candidate = (
-        REPO_ROOT / "assets/output/30days/riomaior100_plastic/gamma3/lm_ftsp/fill_history"
-    )
-    xlsx = sorted(candidate.glob("*.xlsx"))[0] if candidate.is_dir() else None
-    if xlsx is None:
-        print("  Skipped fill-trajectory figure (no fill_history found).")
+    # The scenario's daily deposits, in % of bin capacity, as (bins, days). They are the
+    # same for every policy; the simulator's fill_history workbooks hold this same matrix.
+    dataset = REPO_ROOT / "data/simulator/datasets/riomaior100_gamma3_wsr30_N1_seed42.npz"
+    if not dataset.exists():
+        print(f"  Skipped fill-trajectory figure (missing {dataset.name}).")
         return
-
-    wb = openpyxl.load_workbook(xlsx, read_only=True, data_only=True)
-    ws = wb[wb.sheetnames[0]]
-    fills = np.array([[float(c) for c in row] for row in ws.iter_rows(values_only=True)])
-    increments = _recover_increments(fills)
+    increments = np.load(dataset)["waste"][0].T.astype(float)
     capacity = 100.0
 
     levels_70 = _simulate_last_minute(increments, 70.0, capacity)
@@ -1227,8 +1333,8 @@ def fig_fill_trajectory(out_dir: Path) -> None:
 def parse_horizons(values: list[str] | None) -> dict[int, Path]:
     if not values:
         return {
-            30: REPO_ROOT / "docs/private/global/simulation/simulation_summary.csv",
-            90: REPO_ROOT / "docs/private/global/simulation/simulation_summary_90d.csv",
+            30: DEFAULT_SUMMARY_DIR / "simulation_summary.csv",
+            90: DEFAULT_SUMMARY_DIR / "simulation_summary_90d.csv",
         }
     out = {}
     for item in values:
@@ -1275,22 +1381,33 @@ def main() -> None:
     raw = load_horizons(parse_horizons(args.horizon))
 
     print("Checking data integrity:")
+    learned_raw = raw[raw.constructor == LEARNED_KEY]
+    static = raw[raw.constructor == STATIC_KEY]
+    raw = raw[~raw.constructor.isin([LEARNED_KEY, STATIC_KEY])]
     clean, degenerate = split_degenerate(raw)
     clean = drop_affected_cells(clean, degenerate)
     paired = paired_horizon_frame(clean)
     print(f"  {len(clean)} runs retained; {len(paired)} configurations present at both horizons")
+    learned = learned_runs(learned_raw, raw, degenerate)
+    learned_paired = paired_horizon_frame(learned) if not learned.empty else learned
 
     horizon = args.primary_horizon
 
     if not args.figures_only:
         args.tables_dir.mkdir(parents=True, exist_ok=True)
         print(f"Writing LaTeX tables to {args.tables_dir}:")
-        write(args.tables_dir / "results_routing.tex", table_routing(clean, horizon, cfg), args.force)
-        write(args.tables_dir / "results_strategies.tex", table_strategies(clean, horizon, cfg), args.force)
-        write(args.tables_dir / "results_improvers.tex", table_improvers(clean, horizon, cfg), args.force)
-        write(args.tables_dir / "results_horizon.tex", table_horizon(paired, cfg), args.force)
-        write(args.tables_dir / "results_scenarios.tex", table_scenarios(clean, horizon, cfg), args.force)
-        write(args.tables_dir / "results_excluded.tex", table_excluded(degenerate, cfg), args.force)
+        write(args.tables_dir / "results_routing.tex", table_routing(clean, horizon, cfg, learned, static, not degenerate.empty), args.force)
+        write(args.tables_dir / "results_strategies.tex", table_strategies(clean, horizon, cfg, learned), args.force)
+        write(args.tables_dir / "results_improvers.tex", table_improvers(clean, horizon, cfg, learned), args.force)
+        write(args.tables_dir / "results_horizon.tex", table_horizon(paired, cfg, learned_paired, int((raw.horizon == 90).sum())), args.force)
+        write(args.tables_dir / "results_scenarios.tex", table_scenarios(clean, horizon, cfg, learned), args.force)
+        excluded = table_excluded(degenerate, cfg)
+        if excluded:
+            write(args.tables_dir / "results_excluded.tex", excluded, args.force)
+        elif (args.tables_dir / "results_excluded.tex").exists() and args.force:
+            # No run is excluded: a table left from an earlier vintage would contradict the paper.
+            (args.tables_dir / "results_excluded.tex").unlink()
+            print("  Removed: results_excluded.tex (no degenerate runs)")
 
     if not args.tables_only:
         args.figures_dir.mkdir(parents=True, exist_ok=True)

@@ -25,6 +25,7 @@ help:
     @printf "  \033[0;32mbenchmark\033[0m        - benchmark, mutation-test, mutation-report\n"
     @printf "  \033[0;32mscript\033[0m           - run-train, run-eval, run-gen-data, run-meta, run-hpo, run-sim\n"
     @printf "  \033[0;32mexport\033[0m           - algo-export\n"
+    @printf "  \033[0;32mgen\033[0m              - grant-report, paper, paper-tables, paper-pdf, sim-summary, dist-matrix\n"
     @printf "  \033[0;32mdatabase\033[0m         - db-inspect, db-clean, db-compact, db-prune, db-export, db-stats\n"
     @printf "  \033[0;32mhelper\033[0m           - help, run, commit\n"
     @printf "\n"

@@ -57,6 +57,8 @@ CONSTRUCTORS = [
     ("psoma_bmc", "PSOMA", "bmc"),
     ("sans_new", "SANS", "new"),
     ("aco_hh_custom", "ACO_HH", "custom"),
+    # The Attention Model decodes greedily; gen_paper_latex.py keeps it out of the classical aggregates.
+    ("na_amgat", "AM", "greedy"),
 ]
 
 
@@ -67,6 +69,13 @@ def parse_log(log: pathlib.Path) -> Optional[Dict[str, object]]:
     if area_key not in AREAS or dist_dir not in DISTS:
         return None
     city, n = AREAS[area_key]
+    if ms_dir == "static_cvrp":
+        # The static reference: a fixed Regular-k schedule with the CVRP routing algorithm, no improver.
+        static = re.fullmatch(r"log_regular_lvl(\d+)_cvrp_\w+_1N\.json", log.name)
+        if static is None:
+            return None
+        keys = {"strategy": f"Regular-{static.group(1)}", "improver": "None", "acceptance": "", "constructor": "CVRP"}
+        return {"city": city, "N": n, "dist": DISTS[dist_dir], "cf": "", "sl_var": "", **keys, **metrics(log)}
     improver = "CLS" if ms_dir.endswith("_cls") else "FTSP"
 
     stem = re.sub(r"_1N\.json$", "", log.name[len("log_") :])
@@ -86,7 +95,6 @@ def parse_log(log: pathlib.Path) -> Optional[Dict[str, object]]:
         return None  # regular_* and other non-tested configurations
     _, constructor, acceptance = matches[0]
 
-    mean = json.loads(log.read_text())["mean"]
     return {
         "city": city,
         "N": n,
@@ -97,6 +105,14 @@ def parse_log(log: pathlib.Path) -> Optional[Dict[str, object]]:
         "sl_var": sl_var,
         "acceptance": acceptance,
         "constructor": constructor,
+        **metrics(log),
+    }
+
+
+def metrics(log: pathlib.Path) -> Dict[str, object]:
+    """The summary metrics of one per-run log, from its ``mean`` block."""
+    mean = json.loads(log.read_text())["mean"]
+    return {
         "overflows": mean["overflows"],
         "kg": mean["kg"],
         "ncol": mean["ncol"],

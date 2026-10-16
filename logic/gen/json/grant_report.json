@@ -1,0 +1,35 @@
+{
+  "logo": "logic/gen/svg/Tecnico_ID_Principal_RBG-COR.svg",
+  "logo_height_cm": 2.2,
+  "font": "Calibri",
+  "label_font": "Calibri",
+  "font_size_pt": 11,
+  "line_spacing": 1.25,
+  "title": "Relatório de Actividades do Bolseiro",
+  "subtitle": "",
+  "fields": [
+    {
+      "label": "Período",
+      "value": "Setembro de 2025 a Setembro de 2026"
+    },
+    {
+      "label": "Nome completo",
+      "value": "Afonso Cruz Bandeira Fernandes"
+    },
+    {
+      "label": "ID da bolsa",
+      "value": "2025.06860.BDANA"
+    }
+  ],
+  "report_label": "Relatório",
+  "report": [
+    "O trabalho, realizado no INESC-ID (Instituto Superior Técnico), foi desenvolvido no âmbito do projeto WSmart Route+ em parceria com parceiros industriais como a Evox Technologies, e centrou-se na recolha inteligente de resíduos em contentores equipados com sensores: decidir, dia a dia, quais contentores colectar e quais as rotas que os veículos efetuam durante um largo horizonte temporal.",
+    "Durante este projecto, desenvolvi um simulador modular que separa a geração de resíduos, a seleção de contentores e a construção e melhoria de rotas, aplicando-o às redes municipais reais de Rio Maior e da Figueira da Foz, com dados reais sensores. Implementei no simulador uma biblioteca de métodos exatos (branch-and-price-and-cut, decomposições de Benders, etc.) e heurísticos (adaptive large neighborhood search, hybrid genetic search, entre outros), bem como estratégias de seleção de contentores.",
+    "Na vertente de aprendizagem automática, desenvolvi uma framework de treino de modelos de Neural Combinatorial Optimization e adaptei o Attention Model ao Profitable Tour Problem. O modelo é treinado nas redes reais por imitação de um especialista heurístico, seguida de afinação por aprendizagem por reforço, e é avaliado no simulador nas mesmas condições que os métodos clássicos. Estou a combinar o trabalho anterior com desenvolvimentos na arquitetura dos modelos e a explorar combinar modelos de aprendizagem com métodos clássicos, em preparação para um paper sobre métodos de aprendizagem profunda para resolver problemas de otimização.",
+    "Analisei também os métodos existentes para um artigo de revisão sobre Combinatorial Optimization, publiquei e apresentei em conferência um abstract - e tenho outro artigo em preparação para submissão - em coautoria com o CEGIST."
+  ],
+  "signature": {
+    "label": "O Bolseiro",
+    "name": "Afonso Cruz Bandeira Fernandes"
+  }
+}
