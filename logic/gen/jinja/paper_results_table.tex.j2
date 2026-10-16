@@ -10,7 +10,8 @@
 % for a mean/median pair sharing one label), rows[] of {label, cells[]}, an
 % optional subheaders[] second header row (one entry per physical metric
 % column, filled only under span-2 groups), and an optional note rendered as
-% a table footnote.
+% a table footnote. Optional blocks[] of {title, rows[]} follow the body, each
+% after a \midrule and under an optional italic title spanning all ncols.
 \begin{table}[htbp]
 \centering
 \caption{<< caption >>}\label{<< label >>}
@@ -26,7 +27,10 @@
 <% if subheaders %><% for s in subheaders %> & << s >><% endfor %> \\
 <% endif %>\midrule
 <% for row in rows %><< row.label >><% for cell in row.cells %> & << cell >><% endfor %> \\
-<% endfor %>\bottomrule
+<% endfor %><% for block in blocks | default([]) %>\midrule
+<% if block.title %>\multicolumn{<< ncols >>}{@{}l}{\emph{<< block.title >>}} \\
+<% endif %><% for row in block.rows %><< row.label >><% for cell in row.cells %> & << cell >><% endfor %> \\
+<% endfor %><% endfor %>\bottomrule
 \end{tabular}
 <% if note %>
 \vspace{0.4em}

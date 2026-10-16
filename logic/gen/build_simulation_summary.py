@@ -57,6 +57,8 @@ CONSTRUCTORS = [
     ("psoma_bmc", "PSOMA", "bmc"),
     ("sans_new", "SANS", "new"),
     ("aco_hh_custom", "ACO_HH", "custom"),
+    # The Attention Model decodes greedily; gen_paper_latex.py keeps it out of the classical aggregates.
+    ("na_amgat", "AM", "greedy"),
 ]
 
 
