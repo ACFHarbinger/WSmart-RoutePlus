@@ -78,7 +78,6 @@ def run_training(cfg: Any) -> float:
     Returns:
         Scalar result value (loss, reward, or HPO best metric).
     """
-    from logic.src.pipeline.features.train import run_hpo
     from logic.src.pipeline.features.train import run_training as _train
 
     if cfg.tracking.verbose:
@@ -89,6 +88,9 @@ def run_training(cfg: Any) -> float:
         )
 
     if cfg.hpo.n_trials > 0:
+        # Imported here: HPO is not part of the 1.0.0 release, which prunes run_hpo.
+        from logic.src.pipeline.features.train import run_hpo
+
         return run_hpo(cfg)
     return _train(cfg)
 
