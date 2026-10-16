@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Relative `sim.output_dir` split one run across two folders.** The run context, `compose_dirpath` and the analysis scanner wrote and read under `assets/<output_dir>`, while the summary writer used `<output_dir>`. A relative output folder therefore crashed at the end of every run; the paper runs used absolute paths. All four now resolve against the repository root.
 - **Python 3.11+ import error.** Five config dataclasses (`HGSConfig`, `RTSConfig`, `KSparseACOConfig`, `GIHHConfig`, `SAConfig`) used an `AcceptanceConfig(...)` instance as a field default; they now use `default_factory`.
 - **Last-minute settings capture (#61).** The `consumer_last_minute` live-parameter record, dropped by WP-09, is restored. It is looked up through `sys.modules`, so packing stays torch-free.
+- **AM packing variant.** `policy_na.yaml` asked for a `default` variant that `pk_lookahead.yaml` does not define, so its results were logged as `pk_lookahead_lookahead_na_amgat_none` rather than `lookahead_na_amgat_none`, which the summary builder skips. It now uses the `lookahead` variant; every released policy's variant references were checked.
 - **Defaults.** The AM policy's default `model_path` now points to the paper model (`cptp100_riomaior_plastic/emp/amgat0-il-rl`), and the imitation expert defaults to `profitable_nn`, the paper's expert.
 
 #### Changed

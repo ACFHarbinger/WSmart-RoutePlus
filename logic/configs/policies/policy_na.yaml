@@ -8,5 +8,5 @@ na:
       length_penalty_alpha: 0.0
     packing:
       other/pk_lookahead.yaml:
-      - default
+      - lookahead
     route_improvement: []
