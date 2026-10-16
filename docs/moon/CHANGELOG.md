@@ -17,6 +17,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Attention Model results in the simulation paper (`2026-10-16`)
+
+#### Added
+
+- The Attention Model's results in the simulation paper (submodule `a963a7f`). The AM row of the routing table, and its blocks under the packing, improver, horizon and scenario tables, are generated from data. The AM sentences in the abstract, results, discussion and conclusion are filled in.
+- `docs/private/global/simulation/rerun-2026-10-16/`: the summary vintage the paper now reads, built from `outputs/simulations`. It adds the AM rows (60 per horizon) and PSOMA's rerun rows; its README lists the differences from `rerun-2026-10-13`.
+- `logic/gen/build_simulation_summary.py`: the AM (`na_amgat`, labelled `AM`) is now a summarised routing algorithm.
+- `logic/gen/gen_paper_latex.py`:
+  - keeps AM runs out of the classical aggregates and cell medians;
+  - puts the AM through the same exclusion rule, measured against the classical cell median;
+  - renders the AM as a separate block under each table (`learned_runs`, template `blocks`);
+  - keeps the static-reference placeholder rows (`pending_blocks` in the config) until those results are summarised.
+
+#### Changed
+
+- **PSOMA's rerun replaces its earlier runs in the paper.** That rerun followed the budget and seed-particle fixes `244b7479e` and `e97180567`. The earlier Figueira da Foz Empirical runs fell 25–44% short and removed that cell for every algorithm; the rerun runs do not. So all 480 classical 30-day runs and all 174 horizon pairs are now retained, and every classical number in the results text is updated.
+  - Finding change: the packing range of mean efficiency (2.38 kg/km) is now about twice the routing range (1.12). The text no longer says the two ranges are similar.
+- **Figueira da Foz 350 Empirical AM model retrained.** The new model used four times the training instances, imitation over all 31 days, and fine-tuning on days 17–31. Its 20 cells were re-simulated. The paper's methodology and parameter appendix state the recipe.
+- `gen_paper_latex.py` now reads `rerun-2026-10-16` by default; it used to read the September summaries. The constructor, horizon and scenario table notes now compute their counts instead of hard-coding them. The default figures directory is now `Images/Generated`, the one the paper uses.
+
 ### Grant renewal-report generator (`2026-10-15`)
 
 #### Added
