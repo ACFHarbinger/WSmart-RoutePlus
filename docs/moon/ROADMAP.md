@@ -30,6 +30,19 @@ Tags: `[Quick Win]` ≤ 1 day · `[Research]` involves novel work · `[Blocked]`
 
 ---
 
+## Simulator 1.0.0 Architecture Review — 2026-10-15
+
+- Architectural review of the Simulator 1.0.0 refactor proposal (`.agent/tasks/simulator-v1-refactor-proposal-2026-10-15.md`, draft 8).
+- Envs & Neural Stack review completed by Gemini:
+  - Base environment consolidation on batched ESPPRC (`P-23`) with vectorized resource transitions.
+  - Complete elimination of legacy unvectorized `BaseProblem.get_costs` across 6 neural caller sites (`P-20`).
+  - Unified node and dynamic feature embedding module (`P-22`).
+  - Standardized policy forward contract and lazy subnet loading (`P-24`, `P-25`).
+  - Offline precomputed expert dataset generation (`P-51`) to maximize imitation training throughput.
+- Reviewer questions `RQ-gemini-1` to `RQ-gemini-4` submitted for owner sign-off.
+
+---
+
 ## Combinatorial Optimization survey — 2026-10-13
 
 - Round-2 proposals by Codex, Cursor, Kimi, and Gemini are recorded in `.agent/cache/co-survey-round2-shared-2026-10-13.md`, adhering to the owner's field-wide scope, INFORMS format, and exclusion of simulator experiments.

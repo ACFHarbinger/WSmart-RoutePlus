@@ -25,6 +25,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `logic/gen/json/grant_report.json`: the period (Setembro de 2025 a Setembro de 2026), the full name, the grant ID (2025.06860.BDANA), the signature and a one-page Portuguese research report for the WSmart Route+ work at INESC-ID: the simulator and the work with the partner company, exact and heuristic methods, the neural models, the survey and the papers.
 - `tools/gen/justfile`, imported in the root justfile as `gen` and listed in `just help`: `grant-report` (regenerates the report, overwriting it), `paper-tables`, `paper-pdf` and `paper`, `sim-summary` and `dist-matrix`, all running the `logic/gen` scripts (the Studio's deck and analysis generators run from inside the app).
 
+### Simulator 1.0.0 Refactor Proposal Review (`2026-10-15`)
+
+#### Added
+
+- Architectural analysis and proposal additions for Simulator 1.0.0 refactor (`.agent/tasks/simulator-v1-refactor-proposal-2026-10-15.md`, draft 8):
+  - `P-20`: Identified 6 live call sites invoking legacy unvectorized `BaseProblem.get_costs`; recommended immediate clean break removal.
+  - `P-22`: Proposed unified `NodeEmbeddingModule(static_dim, dynamic_dim, embed_dim)` with lazy input projection.
+  - `P-23`: Formulated vectorized tensor execution contract for `Resource` abstractions (`Capacity`, `TimeWindow`, `Pickups`, `Battery`) under `ESPPRCEnv`.
+  - `P-24`: Proposed standard neural policy output contract (`{"actions": Tensor, "log_likelihood": Tensor, "reward": Optional[Tensor]}`).
+  - `P-25`: Proposed lazy subnet and policy factory registry to avoid eager heavyweight PyG imports.
+  - `P-51`: Proposed unified offline expert trajectory cache format (`.td`) for deterministic multi-day imitation (`fill_from: expert`).
+  - Submitted round-1 reviewer questions `RQ-gemini-1` through `RQ-gemini-4`.
+
 ### Packing and routing names (`2026-10-15`)
 
 #### Changed
