@@ -66,7 +66,7 @@ def test_compose_dirpath():
 
     # Single nbins — no data_distribution or run_name
     res, extra_val = cast(Any, mock_fun)("home", 30, 50, "out", "area", "paper", extra="hello")
-    assert os.path.join("home", "assets", "out", "30days", "area50_paper") in res
+    assert os.path.join("home", "out", "30days", "area50_paper") in res
     assert extra_val == "hello"
 
     # Single nbins — with data_distribution and run_name

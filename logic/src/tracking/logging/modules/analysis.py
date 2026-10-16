@@ -376,7 +376,7 @@ def load_log_dict(  # noqa: C901
 ) -> ResultsDB:
     """Walk all simulation output directories and return a queryable ResultsDB.
 
-    Recursively scans ``{home_dir}/assets/{output_dir}/`` for files matching
+    Recursively scans ``{home_dir}/{output_dir}/`` for files matching
     ``log_*_<N>N.json`` (realtime JSONL files are skipped).  Each file is
     parsed into a record containing:
 
@@ -391,7 +391,7 @@ def load_log_dict(  # noqa: C901
 
     The expected path structure is::
 
-        {home_dir}/assets/{output_dir}/
+        {home_dir}/{output_dir}/
           {n_days}days/
             {area}{n_bins}_{waste_type}/
               {data_distribution}/
@@ -411,8 +411,8 @@ def load_log_dict(  # noqa: C901
         )
 
     Args:
-        home_dir: Project root (where ``assets/`` lives).
-        output_dir: Sub-directory under ``assets/`` holding the results tree.
+        home_dir: Project root.
+        output_dir: Results tree, relative to ``home_dir`` (or absolute).
         mandatory_prefixes: Override the default ``_MANDATORY_PREFIXES`` list
             used by slug parsing.  Pass ``None`` to keep the built-in defaults.
         routing_algorithms: Override the default ``_ROUTING_ALGORITHMS`` list.
@@ -445,7 +445,7 @@ def load_log_dict(  # noqa: C901
     """
     import glob as _glob
 
-    base_dir = os.path.join(home_dir, "assets", output_dir)
+    base_dir = os.path.join(home_dir, output_dir)
     records: List[Dict[str, Any]] = []
 
     for fpath in sorted(_glob.glob(os.path.join(base_dir, "**", "log_*N.json"), recursive=True)):

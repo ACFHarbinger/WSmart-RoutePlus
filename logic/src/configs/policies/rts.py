@@ -53,8 +53,9 @@ class RTSConfig:
     profit_aware_operators: bool = False
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)
-    acceptance_criterion: AcceptanceConfig = AcceptanceConfig(method="ac", params=AspirationConfig())
-
+    acceptance_criterion: AcceptanceConfig = field(
+        default_factory=lambda: AcceptanceConfig(method="ac", params=AspirationConfig())
+    )
 
     @classmethod
     def from_config(cls, config: "RTSConfig") -> "RTSConfig":

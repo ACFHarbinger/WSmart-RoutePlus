@@ -7,6 +7,8 @@ Attributes:
     LastMinuteSelection: Threshold-based reactive packing algorithm.
 """
 
+import sys
+from contextlib import suppress
 from typing import List, Tuple
 
 from logic.src.enums import GlobalRegistry, PolicyTag
@@ -35,5 +37,11 @@ class LastMinuteSelection(IPackingAlgorithm):
         Returns:
             Tuple[List[int], SearchContext]: 1-based IDs and a fresh search context.
         """
+        # Record the threshold that reached the consumer (#61). Looked up, not imported, so the
+        # released packing path stays torch-free; a no-op outside the simulator's capture.
+        recorder = sys.modules.get("logic.src.pipeline.simulations.actions.base")
+        if recorder is not None:
+            with suppress(Exception):
+                recorder._record_live_params("consumer_last_minute", {"threshold": float(context.threshold)})
         mask = last_minute_rule(context.current_fill, context.threshold)
         return selected_ids(mask), SearchContext.initialize(selection_metrics={"strategy": "LastMinuteSelection"})

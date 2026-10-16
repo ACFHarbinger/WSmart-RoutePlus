@@ -4,7 +4,7 @@
 #   bash scripts/linux/setup.sh
 #
 # 1. installs uv if it is missing;
-# 2. unpacks the code archive (code.zip or wsmart_route_source.zip) when logic/ is not there yet;
+# 2. unpacks the code archive (code.zip or wsmart_route_source.zip) when logic/ is not there yet (the 1.0.0 release's pyproject.toml sits at the root);
 # 3. creates the virtual environment (.venv), or updates it if it already exists;
 # 4. unpacks data.zip into data/;
 # 5. makes the Linux executable runnable.
@@ -37,15 +37,15 @@ echo "[setup] $(uv --version)"
 # unzip <archive> <folder the archive's content belongs in, . for the package root>
 unpack() { uv run --no-project --quiet python -c "import sys,zipfile,pathlib;r=pathlib.Path(sys.argv[1]);s=sys.argv[3].strip('.');z=zipfile.ZipFile(r/sys.argv[2]);n=[x for x in z.namelist() if not x.startswith('__MACOSX/')];t=r if (not s or all(x.startswith(s+'/') for x in n)) else r/s;t.mkdir(parents=True,exist_ok=True);z.extractall(t,n);print('[setup]',sys.argv[2],'unpacked:',len(n),'entries ->',t)" "$ROOT" "$1" "$2"; }
 
-if [ ! -f logic/pyproject.toml ]; then
+if [ ! -f logic/__init__.py ]; then
   for archive in code.zip wsmart_route_source.zip; do
     if [ -f "$archive" ]; then unpack "$archive" .; break; fi
   done
-  [ -f logic/pyproject.toml ] || { echo "[setup] logic/ is missing and no code archive was found" >&2; exit 1; }
+  [ -f logic/__init__.py ] || { echo "[setup] logic/ is missing and no code archive was found" >&2; exit 1; }
 fi
 
 # Creates .venv on the first run and brings it up to date afterwards.
-uv sync --package wsmart-route --extra solvers --no-dev
+uv sync --extra solvers --extra neural --no-dev
 
 if [ -f data.zip ]; then
   unpack data.zip data

@@ -3,7 +3,7 @@
 #   powershell -ExecutionPolicy Bypass -File scripts\windows\setup.ps1
 #
 # 1. installs uv if it is missing;
-# 2. unpacks the code archive (code.zip or wsmart_route_source.zip) when logic\ is not there yet;
+# 2. unpacks the code archive (code.zip or wsmart_route_source.zip) when logic\ is not there yet (the 1.0.0 release's pyproject.toml sits at the root);
 # 3. creates the virtual environment (.venv), or updates it if it already exists
 #    (with an NVIDIA GPU it also installs the CUDA build of torch);
 # 4. unpacks data.zip into data\.
@@ -40,15 +40,15 @@ function Expand-PackageArchive {
     Invoke-Checked "unpacking $Archive" { uv run --no-project --quiet python -c $pyx $root $Archive $Folder }
 }
 
-if (-not (Test-Path "logic\pyproject.toml")) {
+if (-not (Test-Path "logic\__init__.py")) {
     foreach ($archive in "code.zip", "wsmart_route_source.zip") {
         if (Test-Path $archive) { Expand-PackageArchive $archive "."; break }
     }
-    if (-not (Test-Path "logic\pyproject.toml")) { throw "[setup] logic\ is missing and no code archive was found" }
+    if (-not (Test-Path "logic\__init__.py")) { throw "[setup] logic\ is missing and no code archive was found" }
 }
 
 # Creates .venv on the first run and brings it up to date afterwards.
-Invoke-Checked "uv sync" { uv sync --package wsmart-route --extra solvers --no-dev }
+Invoke-Checked "uv sync" { uv sync --extra solvers --extra neural --no-dev }
 
 # On Windows the default torch wheel is CPU-only: with an NVIDIA GPU, switch to the CUDA build.
 if (Get-Command nvidia-smi -ErrorAction SilentlyContinue) {

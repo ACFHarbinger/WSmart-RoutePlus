@@ -2,7 +2,6 @@
 
 from unittest.mock import MagicMock, patch
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 import torch
@@ -70,10 +69,9 @@ def test_discrete_cmap():
     assert cmap.N == 5
 
 
-@patch("logic.src.utils.plotting.routes.plt.cm.get_cmap", side_effect=plt.cm.get_cmap)
 @patch("logic.src.utils.plotting.routes.plt.figure")
 @patch("logic.src.utils.plotting.routes.PatchCollection")
-def test_plot_vehicle_routes(mock_pc, mock_fig, mock_get_cmap):
+def test_plot_vehicle_routes(mock_pc, mock_fig):
     """Test VRP route visualization."""
     data = {
         "depot": torch.tensor([0.5, 0.5]),

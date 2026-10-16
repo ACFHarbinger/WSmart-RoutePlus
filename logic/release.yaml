@@ -109,6 +109,9 @@ excluded_packages:
 
 # Dependency names selected from logic/pyproject.toml's solver extra; version
 # requirements remain there. These are the backends of the released paper stack.
+# A name is looked up in any logic/pyproject.toml extra; `core` entries join the base
+# dependencies. Entries with a version are taken as written. The additions below are
+# imported by shipped modules (found by importing every release module in a clean venv).
 dependency_extras:
   solvers:
     - gurobipy
@@ -116,3 +119,12 @@ dependency_extras:
     - pyvrp
     - alns
     - fast-tsp
+    - pyomo                  # SWC-TCF's Pyomo wrapper
+  core:
+    - plotext                # the simulator's terminal display callback
+    - seaborn                # tracking/logging visualisation
+  neural:
+    - lightning>=2.6.1       # PyTorch callbacks (main gets it only indirectly)
+    - tensorboard>=2.20.0    # plotting utilities (main gets it only indirectly)
+    - loss-landscapes        # plotting utilities (logic.src.utils.plotting)
+    - plotly                 # plotting utilities (logic.src.utils.plotting)

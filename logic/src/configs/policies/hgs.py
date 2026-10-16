@@ -11,7 +11,7 @@ Example:
     60.0
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Optional
 
 from .other.acceptance_criteria import AcceptanceConfig, OnlyImprovingConfig
@@ -81,7 +81,9 @@ class HGSConfig:
     profit_aware_operators: bool = True
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
-    acceptance_criterion: AcceptanceConfig = AcceptanceConfig(method="oi", params=OnlyImprovingConfig())
+    acceptance_criterion: AcceptanceConfig = field(
+        default_factory=lambda: AcceptanceConfig(method="oi", params=OnlyImprovingConfig())
+    )
     lambda_param: Optional[int] = None
 
     def __post_init__(self) -> None:
