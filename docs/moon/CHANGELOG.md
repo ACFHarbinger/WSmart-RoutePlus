@@ -31,8 +31,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - keeps the static-reference placeholder rows (`pending_blocks` in the config) until those results are summarised.
   - removes a stale `results_excluded.tex` when no run is excluded (with `--force`).
 
+- **Static reference in the paper.** The summary builder reads the `static_cvrp` runs (`constructor` = `CVRP`, `strategy` = `Regular-3/4/5`, `improver` = `None`). The generator reports them as their own block under the routing table, outside every classical aggregate. The paper's static-reference text is filled in, and no TODOs remain.
+- **Fill-trajectory figure regenerated.** It now reads the scenario's deposits from the demand dataset. The old code looked for fill histories under the removed `assets/output`, and those workbooks hold the deposits rather than fill levels, so it always skipped. The paper's claim that LM-CF70 never lets a bin approach capacity is corrected.
+
 #### Changed
 
+- **Paper runtime description.** The paper now describes runtime as what this simulator records: each run's policy time (packing, routing and improvement summed over days, without simulator work). It previously called it archived elapsed time including overhead. The same change applies to the table notes and the scaling-figure caption.
 - **PSOMA's rerun replaces its earlier runs in the paper.** That rerun followed the budget and seed-particle fixes `244b7479e` and `e97180567`. The earlier Figueira da Foz Empirical runs fell 25–44% short and removed that cell for every algorithm; the rerun runs do not. So all 480 classical 30-day runs and all 174 horizon pairs are now retained, and every classical number in the results text is updated.
   - Finding change: the packing range of mean efficiency (2.38 kg/km) is now wider than the routing range (1.12). The text no longer says the two ranges are similar.
 - **Figueira da Foz 350 Empirical AM model retrained.** The new model used four times the training instances, imitation over all 31 days, and fine-tuning on days 17–31. Its 20 cells were re-simulated. The paper's methodology and parameter appendix state the recipe.

@@ -113,13 +113,13 @@
     "scenarios_am": "Demand-process and network marginals at the {horizon}-day horizon, each restricted to policy slices shared by every level of the factor being compared; the lower block covers the Attention Model alone."
   },
   "notes": {
-    "constructors": "Each routing algorithm contributes {runs_per} runs{after_exclusion}. Objectives, internal service constraints and effective search budgets differ. Efficiency averages run-level ratios of total kg to total km. Lost (kg) is mean cumulative discarded mass; time is archived sample elapsed time.",
-    "strategies": "LM-CF70/LM-CF90 use 70\\%/90\\% fill thresholds; SL1/SL2 use one-/two-day projections. All five variants share the retained slices. Lost (kg) is mean cumulative discarded mass; time retains the archived clock.",
+    "constructors": "Each routing algorithm contributes {runs_per} runs{after_exclusion}. Objectives, internal service constraints and effective search budgets differ. Efficiency averages run-level ratios of total kg to total km. Lost (kg) is mean cumulative discarded mass; time is policy time per run (packing, routing and improvement).",
+    "strategies": "LM-CF70/LM-CF90 use 70\\%/90\\% fill thresholds; SL1/SL2 use one-/two-day projections. All five variants share the retained slices. Lost (kg) is mean cumulative discarded mass; time is policy time per run.",
     "improvers": "Pairs match routing algorithm, packing algorithm, network and intended demand replay, but not upstream plans. Deltas and win counts are descriptive, not isolated improver effects. Ties are separate; loss is cumulative mass per run.",
     "horizon": "The non-factorial 90-day selection rule is unknown. {pairs} of the {n90} classical 90-day configurations have a retained 30-day counterpart. ALNS is absent at 90 days. These pairs neither rank routing algorithms at 90 days nor estimate a population horizon effect.",
-    "scenarios": "Demand rows use {dist_slices} shared policy slices; network rows use {network_slices}. Network size and city are confounded. Lost (kg) is mean cumulative discarded mass; time is archived sample elapsed time.",
+    "scenarios": "Demand rows use {dist_slices} shared policy slices; network rows use {network_slices}. Network size and city are confounded. Lost (kg) is mean cumulative discarded mass; time is policy time per run (packing, routing and improvement).",
     "excluded": "$D$ denotes horizon; FF 350 is Figueira da Foz. The threshold is a collected-mass shortfall greater than {threshold}\\% from the cell median. All three 30-day logs contain 30 records; the 90-day raw log is unavailable. Anomalous tonnage does not establish a crash or truncated logging.",
-    "constructors_am": "Each classical routing algorithm contributes {runs_per} runs{after_exclusion}; the AM contributes {learned_runs}. The static-reference rows use TODO runs per schedule and are outside the factorial design. Objectives, internal service constraints and effective search budgets differ. Efficiency averages run-level ratios of total kg to total km. Lost (kg) is mean cumulative discarded mass; time is archived sample elapsed time."
+    "constructors_am": "Each classical routing algorithm contributes {runs_per} runs{after_exclusion}; the AM contributes {learned_runs}. The static-reference rows use {static_runs} runs per schedule and are outside the factorial design. Objectives, internal service constraints and effective search budgets differ. Efficiency averages run-level ratios of total kg to total km. Lost (kg) is mean cumulative discarded mass; time is policy time per run (packing, routing and improvement)."
   },
   "figure_titles": {
     "pareto": "Efficiency against service failures ({horizon}-day horizon)",
@@ -208,7 +208,8 @@
   },
   "block_titles": {
     "learned": "Attention Model only",
-    "learned_pairs": "Attention Model only, {pairs} matched pairs"
+    "learned_pairs": "Attention Model only, {pairs} matched pairs",
+    "static": "Static reference: Regular-$k$ packing, CVRP routing algorithm, no improver"
   },
   "pending_blocks": {
     "constructors": [
