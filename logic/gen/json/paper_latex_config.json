@@ -2,7 +2,7 @@
   "paths": {
     "paper_dir": "assets/papers/Simulation-Framework-for-the-MPVRP-with-Profits-in-Smart-Waste-Collection",
     "tables_subdir": "Tables",
-    "figures_subdir": "Images/Results/Generated"
+    "figures_subdir": "Images/Generated"
   },
   "variant_order": [
     "LMCF90",
@@ -105,15 +105,21 @@
     "improvers": "Classical Local Search against Fast-TSP at the {horizon}-day horizon over {pairs} matched-demand configuration pairs.",
     "horizon": "The {pairs} selected configurations retained at both horizons, paired against themselves.",
     "scenarios": "Demand-process and network marginals at the {horizon}-day horizon, each restricted to policy slices shared by every level of the factor being compared.",
-    "excluded": "Anomalous low-tonnage runs triggering whole-cell exclusion (three at 30 days, one at 90 days)."
+    "excluded": "Anomalous low-tonnage runs triggering whole-cell exclusion (three at 30 days, one at 90 days).",
+    "constructors_am": "Recorded routing algorithm configurations at {horizon} days ({runs} retained classical runs, {learned_runs} Attention Model runs), with the static reference below the classical and learned routing algorithms. Column extrema in bold are descriptive, not significance tests.",
+    "strategies_am": "Packing variants at {horizon} days on shared policy slices, over the classical routing algorithms and, below the rule, for the Attention Model alone.",
+    "improvers_am": "Classical Local Search against Fast-TSP at the {horizon}-day horizon over {pairs} matched-demand configuration pairs of classical routing algorithms and, below the rule, over the Attention Model's pairs.",
+    "horizon_am": "The {pairs} selected classical configurations retained at both horizons, and the Attention Model configurations, paired against themselves.",
+    "scenarios_am": "Demand-process and network marginals at the {horizon}-day horizon, each restricted to policy slices shared by every level of the factor being compared; the lower block covers the Attention Model alone."
   },
   "notes": {
-    "constructors": "Each routing algorithm contributes {runs_per} runs after whole-cell exclusion. Objectives, internal service constraints and effective search budgets differ. Efficiency averages run-level ratios of total kg to total km. Lost (kg) is mean cumulative discarded mass; time is archived sample elapsed time.",
-    "strategies": "LM-CF70/LM-CF90 use 70\\%/90\\% fill thresholds; SL1/SL2 use one-/two-day projections. All five variants share the retained slices. Lost (kg) is mean cumulative discarded mass; time retains the archived clock.",
+    "constructors": "Each routing algorithm contributes {runs_per} runs{after_exclusion}. Objectives, internal service constraints and effective search budgets differ. Efficiency averages run-level ratios of total kg to total km. Lost (kg) is mean cumulative discarded mass; time is policy time per run (packing, routing and improvement).",
+    "strategies": "LM-CF70/LM-CF90 use 70\\%/90\\% fill thresholds; SL1/SL2 use one-/two-day projections. All five variants share the retained slices. Lost (kg) is mean cumulative discarded mass; time is policy time per run.",
     "improvers": "Pairs match routing algorithm, packing algorithm, network and intended demand replay, but not upstream plans. Deltas and win counts are descriptive, not isolated improver effects. Ties are separate; loss is cumulative mass per run.",
-    "horizon": "The non-factorial 90-day selection rule is unknown. Filtering removes three 90-day rows and six further unmatched rows: $174-3-6=165$. ALNS is absent at 90 days. These pairs neither rank routing algorithms at 90 days nor estimate a population horizon effect.",
-    "scenarios": "Demand rows use 216 shared policy slices; network rows use 136. Network size and city are confounded. Lost (kg) is mean cumulative discarded mass; time is archived sample elapsed time.",
-    "excluded": "$D$ denotes horizon; FF 350 is Figueira da Foz. The threshold is a collected-mass shortfall greater than {threshold}\\% from the cell median. All three 30-day logs contain 30 records; the 90-day raw log is unavailable. Anomalous tonnage does not establish a crash or truncated logging."
+    "horizon": "The non-factorial 90-day selection rule is unknown. {pairs} of the {n90} classical 90-day configurations have a retained 30-day counterpart. ALNS is absent at 90 days. These pairs neither rank routing algorithms at 90 days nor estimate a population horizon effect.",
+    "scenarios": "Demand rows use {dist_slices} shared policy slices; network rows use {network_slices}. Network size and city are confounded. Lost (kg) is mean cumulative discarded mass; time is policy time per run (packing, routing and improvement).",
+    "excluded": "$D$ denotes horizon; FF 350 is Figueira da Foz. The threshold is a collected-mass shortfall greater than {threshold}\\% from the cell median. All three 30-day logs contain 30 records; the 90-day raw log is unavailable. Anomalous tonnage does not establish a crash or truncated logging.",
+    "constructors_am": "Each classical routing algorithm contributes {runs_per} runs{after_exclusion}; the AM contributes {learned_runs}. The static-reference rows use {static_runs} runs per schedule and are outside the factorial design. Objectives, internal service constraints and effective search budgets differ. Efficiency averages run-level ratios of total kg to total km. Lost (kg) is mean cumulative discarded mass; time is policy time per run (packing, routing and improvement)."
   },
   "figure_titles": {
     "pareto": "Efficiency against service failures ({horizon}-day horizon)",
@@ -130,7 +136,8 @@
     "pair_index": "Matched configuration ({pairs} pairs, sorted)"
   },
   "routing_labels": {
-    "ACO_HH": "ACO-HH"
+    "ACO_HH": "ACO-HH",
+    "AM": "AM"
   },
   "policy_space": {
     "benchmark_counts": {
@@ -196,6 +203,24 @@
         "dm": "osm_distmat.csv",
         "map_artifact": "figueiradafoz350_selected_map.png",
         "color": "#00a859"
+      }
+    ]
+  },
+  "block_titles": {
+    "learned": "Attention Model only",
+    "learned_pairs": "Attention Model only, {pairs} matched pairs",
+    "static": "Static reference: Regular-$k$ packing, CVRP routing algorithm, no improver"
+  },
+  "pending_blocks": {
+    "constructors": [
+      {
+        "title": "Static reference: Regular-$k$ packing, CVRP routing algorithm, no improver",
+        "rows": [
+          "Regular-3",
+          "Regular-4",
+          "Regular-5"
+        ],
+        "columns": 8
       }
     ]
   }

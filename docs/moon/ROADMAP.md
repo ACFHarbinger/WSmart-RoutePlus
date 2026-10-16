@@ -55,6 +55,16 @@ still merge prerequisites; unit success does not replace those gates.
 - Remaining: Claude's WP-13 close-out and integration of WP-08/09/10/11/12 in §12 order.
 - WP-02 (`refactor/v1-wp02-release-manifest`, #107): `logic/release.yaml` is the single source of truth; `logic/package/build_release.py` builds the package from `main` (check / build / torch-free smoke), the release pyproject installs without torch (`wsmart-route[neural]` carries the training stack), and the acronym-driven export flow (`ci/packager.py`, `export_config.json`, `prune_codebase.py` + the 16 `remove_*.py` scripts, the `minimal-ptp` patch) is retired. P-25 lazy-fication extended to the RL core, vector facade, models/subnets re-export inits, the model loader and the imitation/builder expert maps. Not on `main`.
 - Remaining packages: WP-03 config/rename leftovers, WP-07 ESPPRC envs, WP-08 modular simulator. See `.agent/tasks/simulator-v1-refactor-proposal-2026-10-15.md` §12.
+## Simulator 1.0.0 Architecture Review — 2026-10-15
+
+- Architectural review of the Simulator 1.0.0 refactor proposal (`.agent/tasks/simulator-v1-refactor-proposal-2026-10-15.md`, draft 8).
+- Envs & Neural Stack review completed by Gemini:
+  - Base environment consolidation on batched ESPPRC (`P-23`) with vectorized resource transitions.
+  - Complete elimination of legacy unvectorized `BaseProblem.get_costs` across 6 neural caller sites (`P-20`).
+  - Unified node and dynamic feature embedding module (`P-22`).
+  - Standardized policy forward contract and lazy subnet loading (`P-24`, `P-25`).
+  - Offline precomputed expert dataset generation (`P-51`) to maximize imitation training throughput.
+- Reviewer questions `RQ-gemini-1` to `RQ-gemini-4` submitted for owner sign-off.
 
 ---
 

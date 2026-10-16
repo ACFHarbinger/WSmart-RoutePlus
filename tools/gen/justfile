@@ -1,0 +1,38 @@
+# WSmart+ Route — Gen: the logic/gen generators (grant report, paper, simulation summary, distance matrix)
+#
+# The Studio's own generators (deck, analysis) run from inside the app.
+
+set unstable := true
+set working-directory := '../..'
+
+# ── Grant report ─────────────────────────────────────────────────────────────
+
+# Content in logic/gen/json/grant_report.json; flags go to the script, e.g. --out <docx>
+# Grant renewal report (.docx, IST logo), overwriting the last one
+grant-report *args:
+    uv run python logic/gen/gen_grant_report.py --force {{ args }}
+
+# ── Paper ────────────────────────────────────────────────────────────────────
+
+# Regenerate the simulation paper's tables and figures (writes into the paper submodule); `just gen::paper-tables true` overwrites
+paper-tables force="false":
+    uv run python logic/gen/gen_paper_latex.py {{ if force == "true" { "--force" } else { "" } }}
+
+# Compile the simulation paper and the survey PDFs
+paper-pdf:
+    cd assets/papers/Simulation-Framework-for-the-MPVRP-with-Profits-in-Smart-Waste-Collection && latexmk -pdf -shell-escape -interaction=nonstopmode paper.tex
+    cd assets/papers/A-Comprehensive-Combinatorial-Optimization-Algorithms-Analysis && latexmk -pdf -shell-escape -interaction=nonstopmode main.tex
+
+# Tables, figures and both PDFs
+paper force="false": (paper-tables force) paper-pdf
+
+# ── Data summaries ───────────────────────────────────────────────────────────
+
+# Summary CSVs of the simulation outputs, e.g. `just gen::sim-summary assets/output/summary`
+sim-summary out_dir root="outputs/simulations":
+    uv run python logic/gen/build_simulation_summary.py "{{ out_dir }}" --root "{{ root }}"
+
+# Distance matrix for an area (written to data/simulator/distance_matrix/),
+# e.g. `just gen::dist-matrix figueiradafoz plastic gmaps "gmaps_distmat_plastic[figueiradafoz].csv"`
+dist-matrix area waste_type method dm_filepath:
+    uv run python logic/gen/gen_dist_matrix.py --area "{{ area }}" --waste-type "{{ waste_type }}" --method "{{ method }}" --dm-filepath "{{ dm_filepath }}"

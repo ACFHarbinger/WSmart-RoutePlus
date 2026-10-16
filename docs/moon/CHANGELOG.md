@@ -17,6 +17,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Attention Model results in the simulation paper (`2026-10-16`)
+
+#### Added
+
+- The Attention Model's results in the simulation paper (submodule `a963a7f`). The AM row of the routing table, and its blocks under the packing, improver, horizon and scenario tables, are generated from data. The AM sentences in the abstract, results, discussion and conclusion are filled in.
+- `docs/private/global/simulation/rerun-2026-10-16/`: the summary vintage the paper now reads, built from `outputs/simulations`. It adds the AM rows (60 per horizon) and PSOMA's rerun rows; its README lists the differences from `rerun-2026-10-13`.
+- `logic/gen/build_simulation_summary.py`: the AM (`na_amgat`, labelled `AM`) is now a summarised routing algorithm.
+- `logic/gen/gen_paper_latex.py`:
+  - keeps AM runs out of the classical aggregates and cell medians;
+  - puts the AM through the same exclusion rule, measured against the classical cell median;
+  - renders the AM as a separate block under each table (`learned_runs`, template `blocks`);
+  - keeps the static-reference placeholder rows (`pending_blocks` in the config) until those results are summarised.
+  - removes a stale `results_excluded.tex` when no run is excluded (with `--force`).
+
+- **Static reference in the paper.** The summary builder reads the `static_cvrp` runs (`constructor` = `CVRP`, `strategy` = `Regular-3/4/5`, `improver` = `None`). The generator reports them as their own block under the routing table, outside every classical aggregate. The paper's static-reference text is filled in, and no TODOs remain.
+- **Fill-trajectory figure regenerated.** It now reads the scenario's deposits from the demand dataset. The old code looked for fill histories under the removed `assets/output`, and those workbooks hold the deposits rather than fill levels, so it always skipped. The paper's claim that LM-CF70 never lets a bin approach capacity is corrected.
+
+#### Changed
+
+- **Paper runtime description.** The paper now describes runtime as what this simulator records: each run's policy time (packing, routing and improvement summed over days, without simulator work). It previously called it archived elapsed time including overhead. The same change applies to the table notes and the scaling-figure caption.
+- **PSOMA's rerun replaces its earlier runs in the paper.** That rerun followed the budget and seed-particle fixes `244b7479e` and `e97180567`. The earlier Figueira da Foz Empirical runs fell 25–44% short and removed that cell for every algorithm; the rerun runs do not. So all 480 classical 30-day runs and all 174 horizon pairs are now retained, and every classical number in the results text is updated.
+  - Finding change: the packing range of mean efficiency (2.38 kg/km) is now wider than the routing range (1.12). The text no longer says the two ranges are similar.
+- **Figueira da Foz 350 Empirical AM model retrained.** The new model used four times the training instances, imitation over all 31 days, and fine-tuning on days 17–31. Its 20 cells were re-simulated. The paper's methodology and parameter appendix state the recipe.
+- `gen_paper_latex.py` now reads `rerun-2026-10-16` by default; it used to read the September summaries. The constructor, horizon and scenario table notes now compute their counts instead of hard-coding them. The default figures directory is now `Images/Generated`, the one the paper uses.
+
+### Grant renewal-report generator (`2026-10-15`)
+
+#### Added
+
+- `logic/gen/gen_grant_report.py`: generates the grant holder's renewal report ("Relatório de Actividades do Bolseiro") as an editable `.docx`, with the IST logo (`logic/gen/svg/Tecnico_ID_Principal_RBG-COR.svg`, rasterised with Inkscape or ImageMagick) in the page header, a centred title (and an optional subtitle), the period, the grant holder's full name and grant ID, the research report (a list of paragraphs, with `line_spacing` set in the JSON) and a signature block (label, a line to sign on, and the printed name). The package is written as plain Office Open XML with the standard library, so there is no new Python dependency. Default output: `docs/private/reports/relatorio_renovacao_bolsa.docx`. The generator does not overwrite an existing report (which may hold your edits) without `--force`.
+- `logic/gen/json/grant_report.json`: the period (Setembro de 2025 a Setembro de 2026), the full name, the grant ID (2025.06860.BDANA), the signature and a one-page Portuguese research report for the WSmart Route+ work at INESC-ID: the simulator and the work with the partner company, exact and heuristic methods, the neural models, the survey and the papers.
+- `tools/gen/justfile`, imported in the root justfile as `gen` and listed in `just help`: `grant-report` (regenerates the report, overwriting it), `paper-tables`, `paper-pdf` and `paper`, `sim-summary` and `dist-matrix`, all running the `logic/gen` scripts (the Studio's deck and analysis generators run from inside the app).
+
+### Simulator 1.0.0 Refactor Proposal Review (`2026-10-15`)
+
+#### Added
+
+- Architectural analysis and proposal additions for Simulator 1.0.0 refactor (`.agent/tasks/simulator-v1-refactor-proposal-2026-10-15.md`, draft 8):
+  - `P-20`: Identified 6 live call sites invoking legacy unvectorized `BaseProblem.get_costs`; recommended immediate clean break removal.
+  - `P-22`: Proposed unified `NodeEmbeddingModule(static_dim, dynamic_dim, embed_dim)` with lazy input projection.
+  - `P-23`: Formulated vectorized tensor execution contract for `Resource` abstractions (`Capacity`, `TimeWindow`, `Pickups`, `Battery`) under `ESPPRCEnv`.
+  - `P-24`: Proposed standard neural policy output contract (`{"actions": Tensor, "log_likelihood": Tensor, "reward": Optional[Tensor]}`).
+  - `P-25`: Proposed lazy subnet and policy factory registry to avoid eager heavyweight PyG imports.
+  - `P-51`: Proposed unified offline expert trajectory cache format (`.td`) for deterministic multi-day imitation (`fill_from: expert`).
+  - Submitted round-1 reviewer questions `RQ-gemini-1` through `RQ-gemini-4`.
 ### Integration reconciliation (Codex, 2026-10-16; uncommitted review fixes)
 
 - Reconciled RL-GD-HH's `gd` name and absolute target parameters; preserved legacy config translation. Acceptance prototypes are isolated per solve. ALNS uses a nested calibrated BMC schedule; PG-CLNS retains its separate legacy schedule and solver RNG.
