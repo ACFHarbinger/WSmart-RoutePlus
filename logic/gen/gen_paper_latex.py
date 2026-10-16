@@ -1416,7 +1416,13 @@ def main() -> None:
         write(args.tables_dir / "results_improvers.tex", table_improvers(clean, horizon, cfg, learned), args.force)
         write(args.tables_dir / "results_horizon.tex", table_horizon(paired, cfg, learned_paired, int((raw.horizon == 90).sum())), args.force)
         write(args.tables_dir / "results_scenarios.tex", table_scenarios(clean, horizon, cfg, learned), args.force)
-        write(args.tables_dir / "results_excluded.tex", table_excluded(degenerate, cfg), args.force)
+        excluded = table_excluded(degenerate, cfg)
+        if excluded:
+            write(args.tables_dir / "results_excluded.tex", excluded, args.force)
+        elif (args.tables_dir / "results_excluded.tex").exists() and args.force:
+            # No run is excluded: a table left from an earlier vintage would contradict the paper.
+            (args.tables_dir / "results_excluded.tex").unlink()
+            print("  Removed: results_excluded.tex (no degenerate runs)")
 
     if not args.tables_only:
         args.figures_dir.mkdir(parents=True, exist_ok=True)
