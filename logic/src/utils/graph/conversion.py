@@ -14,10 +14,17 @@ Example:
     sort_by_pairs(graph_size, edge_idx)
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import torch
+
+
 from typing import Union
 
 import numpy as np
-import torch
 
 
 def adj_to_idx(adj_matrix: np.ndarray, negative: bool = True) -> np.ndarray:
@@ -51,7 +58,7 @@ def idx_to_adj(edge_idx: Union[torch.Tensor, np.ndarray], negative: bool = False
     num_nodes = int(edge_idx.max().item() + 1)
     adj_matrix = np.full((num_nodes, num_nodes), fill_values[0])
     # Handle both tensor and numpy array indexing
-    if isinstance(edge_idx, torch.Tensor):
+    if not isinstance(edge_idx, np.ndarray):
         src, dst = edge_idx[0].cpu().numpy(), edge_idx[1].cpu().numpy()
     else:
         src, dst = edge_idx[0], edge_idx[1]
@@ -96,6 +103,8 @@ def sort_by_pairs(graph_size: int, edge_idx: torch.Tensor) -> torch.Tensor:
     Returns:
         Tensor: Sorted edge indices.
     """
+    import torch
+
     assert len(edge_idx.size()) == 2, (
         f"edge_idx must be a 2D tensor, got shape {edge_idx.size()} with {len(edge_idx.size())} dimensions"
     )

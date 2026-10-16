@@ -20,12 +20,14 @@ pg_clns:
       elitist_weight: 1.0
     lns:
       max_iterations: 100
-      start_temp: 100.0
-      cooling_rate: 0.95
       reaction_factor: 0.5
-      min_removal: 1
       xi: 0.2
       time_limit: 30.0
+      acceptance_criterion:
+        method: bmc
+        params:
+          initial_temp: 100.0
+          alpha: 0.95
     profit_aware_operators: true
     packing:
       other/pk_last_minute.yaml:

@@ -25,12 +25,15 @@ hvpl:
       time_limit: 30.0
     alns:
       max_iterations: 100
-      start_temp: 100.0
-      cooling_rate: 0.95
       reaction_factor: 0.5
-      min_removal: 1
-      max_removal_pct: 0.2
       time_limit: 60.0
+      acceptance_criterion:
+        method: bmc
+        params:
+          initial_temp: 100.0
+          alpha: 0.95
+          start_temp_control: 0.05
+      xi: 0.2
     profit_aware_operators: true
     packing:
       other/pk_lookahead.yaml:

@@ -43,11 +43,13 @@ def rng():
 
 @pytest.fixture
 def dist_3() -> np.ndarray:
-    return np.array([
-        [0.0, 10.0, 20.0],
-        [10.0, 0.0, 15.0],
-        [20.0, 15.0, 0.0],
-    ])
+    return np.array(
+        [
+            [0.0, 10.0, 20.0],
+            [10.0, 0.0, 15.0],
+            [20.0, 15.0, 0.0],
+        ]
+    )
 
 
 @pytest.fixture
@@ -66,9 +68,13 @@ def dist_5() -> np.ndarray:
 @pytest.fixture
 def small_params() -> GPHHConfig:
     return GPHHConfig(
-        gp_pop_size=4, max_gp_generations=2, tree_depth=3,
-        candidate_list_size=3, n_training_instances=2,
-        training_sample_ratio=1.0, seed=42,
+        gp_pop_size=4,
+        max_gp_generations=2,
+        tree_depth=3,
+        candidate_list_size=3,
+        n_training_instances=2,
+        training_sample_ratio=1.0,
+        seed=42,
     )
 
 
@@ -82,9 +88,13 @@ def small_solver(dist_3, small_params) -> GPHHSolver:
 def medium_solver(dist_5) -> GPHHSolver:
     wastes = {1: 15.0, 2: 25.0, 3: 10.0, 4: 30.0}
     params = GPHHConfig(
-        gp_pop_size=4, max_gp_generations=2, tree_depth=3,
-        candidate_list_size=3, n_training_instances=2,
-        training_sample_ratio=0.75, seed=42,
+        gp_pop_size=4,
+        max_gp_generations=2,
+        tree_depth=3,
+        candidate_list_size=3,
+        n_training_instances=2,
+        training_sample_ratio=0.75,
+        seed=42,
     )
     return GPHHSolver(dist_5, wastes, 60.0, R=2.0, C=0.5, params=params)
 
@@ -105,9 +115,11 @@ class TestDeepOperators:
     def test_collect_mutable_points_counts(self, rng):
         """A tree with k FunctionNodes yields exactly 2k + 1 mutable points (including root)."""
         # Build a known 2-FunctionNode tree: ADD(SUB(T,T), T)
-        t = FunctionNode("ADD",
-                         FunctionNode("SUB", TerminalNode("node_profit"), TerminalNode("insertion_cost")),
-                         TerminalNode("remaining_capacity"))
+        t = FunctionNode(
+            "ADD",
+            FunctionNode("SUB", TerminalNode("node_profit"), TerminalNode("insertion_cost")),
+            TerminalNode("remaining_capacity"),
+        )
         pts = _collect_mutable_points(t)
         # 2 FunctionNodes -> 4 child slots + 1 root = 5 points
         assert len(pts) == 5
@@ -129,12 +141,16 @@ class TestDeepOperators:
         """After many crossover operations some must produce offspring that differ
         from both parents at depth >= 2. Uses asymmetric ctx so any subtree swap
         produces a detectably different evaluation result."""
-        t1 = FunctionNode("ADD",
-                          FunctionNode("MUL", TerminalNode("node_profit"), TerminalNode("insertion_cost")),
-                          TerminalNode("remaining_capacity"))
-        t2 = FunctionNode("SUB",
-                          FunctionNode("DIV", TerminalNode("distance_to_route"), TerminalNode("node_profit")),
-                          TerminalNode("insertion_cost"))
+        t1 = FunctionNode(
+            "ADD",
+            FunctionNode("MUL", TerminalNode("node_profit"), TerminalNode("insertion_cost")),
+            TerminalNode("remaining_capacity"),
+        )
+        t2 = FunctionNode(
+            "SUB",
+            FunctionNode("DIV", TerminalNode("distance_to_route"), TerminalNode("node_profit")),
+            TerminalNode("insertion_cost"),
+        )
 
         # Asymmetric: each terminal maps to a distinct prime value
         ctx = {
@@ -154,14 +170,13 @@ class TestDeepOperators:
                 break
         assert changed, "Crossover never produced a different offspring after 50 trials"
 
-
     def test_mutation_can_modify_deep_nodes(self, rng):
         """Mutation must be able to change nodes deeper than level 1."""
         # Build a known tree with a distinctive deep node
         deep_leaf = TerminalNode("distance_to_route")  # Distinctive terminal
-        t = FunctionNode("ADD",
-                         FunctionNode("MUL", deep_leaf, TerminalNode("node_profit")),
-                         TerminalNode("remaining_capacity"))
+        t = FunctionNode(
+            "ADD", FunctionNode("MUL", deep_leaf, TerminalNode("node_profit")), TerminalNode("remaining_capacity")
+        )
 
         ctx = {k: 2.0 for k in _TERMINALS}
         orig_score = t.evaluate(ctx)
@@ -198,16 +213,13 @@ class TestDeepOperators:
 
     def test_compile_tree_equivalence(self):
         """Verify that compiled lambda produces identical results to evaluate()."""
-        t = FunctionNode("ADD",
-                         FunctionNode("MUL", TerminalNode("node_profit"), TerminalNode("insertion_cost")),
-                         FunctionNode("DIV", TerminalNode("distance_to_route"), TerminalNode("remaining_capacity")))
+        t = FunctionNode(
+            "ADD",
+            FunctionNode("MUL", TerminalNode("node_profit"), TerminalNode("insertion_cost")),
+            FunctionNode("DIV", TerminalNode("distance_to_route"), TerminalNode("remaining_capacity")),
+        )
 
-        ctx = {
-            "node_profit": 10.5,
-            "distance_to_route": 2.0,
-            "insertion_cost": 1.5,
-            "remaining_capacity": 50.0
-        }
+        ctx = {"node_profit": 10.5, "distance_to_route": 2.0, "insertion_cost": 1.5, "remaining_capacity": 50.0}
 
         expected = t.evaluate(ctx)
 
@@ -217,7 +229,7 @@ class TestDeepOperators:
             node_profit=ctx["node_profit"],
             distance_to_route=ctx["distance_to_route"],
             insertion_cost=ctx["insertion_cost"],
-            remaining_capacity=ctx["remaining_capacity"]
+            remaining_capacity=ctx["remaining_capacity"],
         )
 
         assert abs(actual - expected) < 1e-9
@@ -264,16 +276,17 @@ class TestDeepOperators:
         assert perturbed, "ERC was never perturbed after 50 mutations"
 
     def test_parsimony_default(self):
-        """Verify that parsimony_coefficient defaults to 0.001."""
+        """Verify that parsimony_coefficient defaults to 0.0."""
         params = GPHHConfig()
-        assert params.parsimony_coefficient == 0.001
+        assert params.parsimony_coefficient == 0.0
 
         # Test from_config
         class MockConfig:
             pass
+
         config = MockConfig()
         params2 = GPHHConfig.from_config(config)
-        assert params2.parsimony_coefficient == 0.001
+        assert params2.parsimony_coefficient == 0.0
 
     def test_depth_tracking(self):
         """Verify depth() calculation for terminals and nested trees."""
@@ -287,9 +300,7 @@ class TestDeepOperators:
     def test_crossover_enforces_depth_limit(self, rng):
         """Crossover must reject offspring that exceed max_depth."""
         # Parent 1: depth 3
-        p1 = FunctionNode("ADD",
-                          FunctionNode("MUL", TerminalNode("a"), TerminalNode("b")),
-                          TerminalNode("c"))
+        p1 = FunctionNode("ADD", FunctionNode("MUL", TerminalNode("a"), TerminalNode("b")), TerminalNode("c"))
         # Parent 2: depth 2
         p2 = FunctionNode("SUB", TerminalNode("d"), TerminalNode("e"))
 
@@ -326,9 +337,7 @@ class TestNoProfitabilityGate:
         # A tree that always scores identically (constant 0.0) should insert both
         # nodes because neither is gated out — the GP decides.
         const_tree = TerminalNode("remaining_capacity")  # always non-zero
-        routes = solver._construct_solution(
-            const_tree, solver.nodes, wastes, set(), dist_3, solver._knn
-        )
+        routes = solver._construct_solution(const_tree, solver.nodes, wastes, set(), dist_3, solver._knn)
         visited = {n for r in routes for n in r}
         # Both nodes should be reachable for scoring (no pre-filter)
         assert len(visited) >= 1  # At minimum the profitable node 2 is visited
@@ -354,8 +363,7 @@ class TestTrainingEnvs:
         env1 = self._make_env(1)
         env2 = self._make_env(2)
         wastes = {1: 10.0, 2: 20.0}
-        solver = GPHHSolver(dist_3, wastes, 50.0, 1.0, 1.0,
-                            small_params, training_environments=[env1, env2])
+        solver = GPHHSolver(dist_3, wastes, 50.0, 1.0, 1.0, small_params, training_environments=[env1, env2])
         resolved = solver._resolve_training()
         assert len(resolved) == 2
         # The resolved matrices are the external ones, not the test instance
@@ -374,8 +382,7 @@ class TestTrainingEnvs:
         # Build training env matching dist_3 (2 customers, 3×3 matrix)
         env1 = (dist_3.copy(), {1: 8.0, 2: 12.0}, [])
         wastes = {1: 10.0, 2: 20.0}
-        solver = GPHHSolver(dist_3, wastes, 50.0, 1.0, 1.0,
-                            small_params, training_environments=[env1])
+        solver = GPHHSolver(dist_3, wastes, 50.0, 1.0, 1.0, small_params, training_environments=[env1])
         tree = _random_tree(2, solver.rng)
         resolved = solver._resolve_training()
         fitness = solver._evaluate_tree(tree, resolved)
@@ -426,16 +433,12 @@ class TestKNNCandidateList:
 
 class TestTerminalSync:
     def test_terminals_in_context(self, small_solver, dist_3):
-        ctx = small_solver._build_insertion_context(
-            10.0, [1], 2, 5.0, dist_3, 30.0
-        )
+        ctx = small_solver._build_insertion_context(10.0, [1], 2, 5.0, dist_3, 30.0)
         for t in _TERMINALS:
             assert t in ctx
 
     def test_context_keys_match_terminals(self, small_solver, dist_3):
-        ctx = small_solver._build_insertion_context(
-            10.0, [1], 2, 5.0, dist_3, 30.0
-        )
+        ctx = small_solver._build_insertion_context(10.0, [1], 2, 5.0, dist_3, 30.0)
         assert set(ctx.keys()) == set(_TERMINALS)
 
     def test_terminal_count(self):

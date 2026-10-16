@@ -8130,8 +8130,10 @@ dependencies = [
     { name = "cryptography" },
     { name = "hydra-colorlog" },
     { name = "hydra-core" },
+    { name = "jinja2" },
     { name = "joblib" },
     { name = "loguru" },
+    { name = "matplotlib" },
     { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "numpy" },
@@ -8147,6 +8149,7 @@ dependencies = [
     { name = "scikit-learn", version = "1.8.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "shapely" },
     { name = "tqdm" },
 ]
 
@@ -8182,7 +8185,6 @@ geo = [
     { name = "osmnx", version = "2.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "pyproj", version = "3.7.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "pyproj", version = "3.7.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "shapely" },
 ]
 gpu = [
     { name = "nvidia-ml-py" },
@@ -8228,12 +8230,8 @@ tracking = [
     { name = "zenml", extra = ["server"] },
 ]
 viz = [
-    { name = "matplotlib" },
     { name = "plotly" },
     { name = "seaborn" },
-]
-web = [
-    { name = "jinja2" },
 ]
 
 [package.dev-dependencies]
@@ -8274,12 +8272,12 @@ requires-dist = [
     { name = "hexaly", marker = "extra == 'solvers'", specifier = ">=14.0.20251008", index = "https://pip.hexaly.com/" },
     { name = "hydra-colorlog", specifier = ">=1.2.0" },
     { name = "hydra-core", specifier = ">=1.3.0" },
-    { name = "jinja2", marker = "extra == 'web'", specifier = ">=3.1.6" },
+    { name = "jinja2", specifier = ">=3.1.6" },
     { name = "joblib", specifier = ">=1.5.1" },
     { name = "litlogger", marker = "extra == 'tracking'", specifier = ">=0.1.0" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "loss-landscapes", marker = "extra == 'analysis'", specifier = ">=3.0.6" },
-    { name = "matplotlib", marker = "extra == 'viz'", specifier = ">=3.9.4" },
+    { name = "matplotlib", specifier = ">=3.9.4" },
     { name = "mlflow", marker = "extra == 'tracking'", specifier = ">=2.10.0" },
     { name = "myst-nb", marker = "extra == 'docs'", specifier = ">=1.3.0" },
     { name = "networkx", specifier = ">=3.2.1" },
@@ -8311,7 +8309,7 @@ requires-dist = [
     { name = "scikit-learn", specifier = ">=1.6.1" },
     { name = "scipy", specifier = ">=1.13.1" },
     { name = "seaborn", marker = "extra == 'viz'", specifier = ">=0.13.2" },
-    { name = "shapely", marker = "extra == 'geo'", specifier = ">=2.0.7" },
+    { name = "shapely", specifier = ">=2.0.7" },
     { name = "sphinx", marker = "extra == 'docs'", specifier = ">=7.4.7" },
     { name = "sphinx-autodoc2", marker = "extra == 'docs'", specifier = ">=0.5.0" },
     { name = "sphinx-book-theme", marker = "extra == 'docs'", specifier = ">=1.1.4" },

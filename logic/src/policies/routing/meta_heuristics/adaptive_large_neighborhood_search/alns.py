@@ -254,26 +254,7 @@ class ALNSSolver(LNSBase):
             AcceptanceCriterionFactory,
         )
 
-        acc_val = getattr(self.cfg, "acceptance_criterion", None)
-        if hasattr(acc_val, "accept"):
-            self.acceptance_criterion = acc_val
-        elif acc_val is not None and hasattr(acc_val, "method"):
-            self.acceptance_criterion = AcceptanceCriterionFactory.create(
-                name=acc_val.method,
-                config=acc_val.params,
-            )
-        elif isinstance(acc_val, dict) and "method" in acc_val:
-            self.acceptance_criterion = AcceptanceCriterionFactory.create(
-                name=acc_val["method"],
-                config=acc_val.get("params"),
-            )
-        else:
-            self.acceptance_criterion = AcceptanceCriterionFactory.create(
-                name="bmc",
-                initial_temp=self.cfg.start_temp or 100.0,
-                alpha=self.cfg.cooling_rate,
-                seed=self.cfg.seed,
-            )
+        self.acceptance_criterion = AcceptanceCriterionFactory.build(self.cfg.acceptance_criterion)
 
     # ------------------------------------------------------------------
     # Operator registry builders
@@ -654,15 +635,9 @@ class ALNSSolver(LNSBase):
             best_routes: Best routes after initialization.
             current_profit: Profit of the initial solution.
         """
-        if self.params.start_temp == 0.0:
-            # Calibrate from |profit| (fallback 1.0)
-            scale = abs(current_profit) if abs(current_profit) > 1e-9 else 1.0
-            delta = self.params.start_temp_control * scale
-            t_start = delta / np.log(2.0)
+        from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
 
-            # Inject dynamically calculated temperature into the acceptance criterion
-            if hasattr(self.acceptance_criterion, "set_temperature"):
-                self.acceptance_criterion.set_temperature(t_start)  # type: ignore[union-attr]
+        self.acceptance_criterion = AcceptanceCriterionFactory.build(self.cfg.acceptance_criterion)
 
         self.visited_solutions.clear()
         self.visited_solutions.add(self._hash_solution(best_routes))

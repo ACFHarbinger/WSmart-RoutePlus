@@ -15,7 +15,6 @@ import tempfile
 
 import numpy as np
 import pandas as pd
-import torch
 
 from logic.src.constants import ROOT_DIR
 from logic.src.data.network import compute_distance_matrix
@@ -122,6 +121,7 @@ def setup_dist_path_tup(
     distribution=None,
     focus_idx=None,
     save_updated_dm=None,
+    tensor_backend=True,
 ):
     """Compute distance matrix, edge structure and shortest paths.
 
@@ -171,7 +171,11 @@ def setup_dist_path_tup(
         )
         print(f"[INFO] Saved {area} graph distance matrix ({size + 1} nodes) to: {save_path}")
     paths = get_paths_between_states(size + 1, shortest_paths)
-    dm_tensor = torch.from_numpy(dist_matrix_edges / 100.0)
+    dm_tensor = dist_matrix_edges / 100.0
+    if tensor_backend:
+        import torch
+
+        dm_tensor = torch.from_numpy(dm_tensor)
     distC = np.round(dist_matrix_edges * 10).astype("int32")
 
     with contextlib.suppress(Exception):

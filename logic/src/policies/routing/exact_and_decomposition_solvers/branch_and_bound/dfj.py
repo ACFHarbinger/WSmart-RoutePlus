@@ -100,7 +100,7 @@ def _setup_bb_model(
     model.setParam("LogToConsole", 0)
     model.setParam("TimeLimit", time_limit)
     model.setParam("MIPGap", mip_gap)
-    model.setParam("Seed", seed)
+    model.setParam("Seed", 42 if seed is None else seed)
     model.Params.LazyConstraints = 1
 
     # Decision variables (BINARY)

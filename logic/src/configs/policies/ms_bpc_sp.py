@@ -67,6 +67,7 @@ class MSBPCSPConfig:
     seed: Optional[int] = None
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
+    enable_node_visitation_branching: bool = True
     search_strategy: str = "depth_first"
     cutting_planes: str = "saturated_arc_lci"
     branching_strategy: str = "divergence"
@@ -100,7 +101,6 @@ class MSBPCSPConfig:
     lr_pre_pruning_depth_limit: int = -1
     lr_warm_start_cg: bool = False
 
-
     @classmethod
     def from_config(cls, config: Any) -> "MSBPCSPConfig":
         """Create MSBPCSPConfig from a configuration object or dictionary.
@@ -116,6 +116,7 @@ class MSBPCSPConfig:
         """
         from dataclasses import MISSING, fields
         from typing import Dict
+
         if config is None:
             return cls()
 
@@ -157,4 +158,5 @@ class MSBPCSPConfig:
             Dict[str, Any]: Mapping of parameter names to values.
         """
         from dataclasses import fields
+
         return {f.name: getattr(self, f.name) for f in fields(self)}

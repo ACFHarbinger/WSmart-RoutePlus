@@ -26,10 +26,7 @@ class ALNSConfig:
     Attributes:
         time_limit: Maximum time in seconds for the solver.
         max_iterations: Maximum number of ALNS iterations.
-        start_temp: Initial temperature for simulated annealing acceptance.
-        cooling_rate: Rate at which temperature decreases each iteration.
         reaction_factor: Weight update reaction factor for operator scores.
-        start_temp_control: 'w' parameter: accept a 5% worse solution with 0.5 probability
         xi: 'xi' parameter: fraction of total nodes for max removal cap
         segment_size: Iterations before updating operator weights.
         noise_factor: Noise level for repair operators.
@@ -49,10 +46,7 @@ class ALNSConfig:
     time_limit: float = 60.0
     seed: Optional[int] = None
     max_iterations: int = 5000
-    start_temp: float = 0.0  # 0 = Ropke & Pisinger calibration from the initial profit
-    cooling_rate: float = 0.995
     reaction_factor: float = 0.1
-    start_temp_control: float = 0.05
     xi: float = 0.4
     segment_size: int = 100
     noise_factor: float = 0.025
@@ -70,6 +64,6 @@ class ALNSConfig:
     route_improvement: Optional[List[RouteImprovingConfig]] = None
     acceptance_criterion: AcceptanceConfig = field(
         default_factory=lambda: AcceptanceConfig(
-            method="bmc", params=BoltzmannAcceptanceConfig(initial_temp=100.0, alpha=0.995)
+            method="bmc", params=BoltzmannAcceptanceConfig(initial_temp=0.0, alpha=0.995, start_temp_control=0.05)
         )
     )

@@ -52,6 +52,14 @@ from typing import Any, Dict, List
 # deterministic CVRP budget.
 BASELINE_COMMIT = "d82170cf0"
 
+# Explicit reference amendment requested on 2026-10-16: flatten the policy
+# before injecting the runtime seed, without mutating its reusable config.
+# No optimization loop changes are permitted. Pin the entire amended file,
+# not a permissive exclusion from the calibration source guard.
+BASELINE_AMENDMENTS = {
+    "logic/src/pipeline/simulations/actions/routing.py": "a3d5ce4deef238d01a21bd7c2c6a41ecc8ed235427c0cea4e3400c43708f527d",
+}
+
 # Gate-(a) shared simulation axes (Hydra dotlist values).
 GATE_A_SIM: Dict[str, Any] = {
     "sim.graph.area": "riomaior",
@@ -133,12 +141,36 @@ def cell_policy_entry(constructor: str, model_path: str = "", time_capped: bool 
         ``{policy: merged_overrides}`` ready for the ``sim.policies`` list.
     """
     cell = get_cell(constructor)
-    overrides: Dict[str, Any] = {
-        "packing": GATE_A_PACKING,
-        "route_improvement": GATE_A_IMPROVER,
-    }
+    # Explicitly materialize the target checkout's YAML. A partial custom entry
+    # otherwise falls back to dataclass defaults, which changed during P-10.
+    import yaml
+
+    path = Path.cwd() / f"logic/configs/policies/policy_{cell['policy']}.yaml"
+    if not path.is_file():
+        raise ValueError(f"Missing gate policy YAML: {path}")
+    source = yaml.safe_load(path.read_text())[cell["policy"]]
+    variant = {"swc_tcf": "gurobi", "cvrp": "ortools", "sans": "new", "na": "amgat"}.get(cell["policy"], "custom")
+    source = source.get(variant, source) if isinstance(source, dict) else source
+
+    def flatten(node):
+        if isinstance(node, list):
+            result = {}
+            for part in node:
+                if not isinstance(part, dict):
+                    raise ValueError(f"Invalid legacy policy YAML entry in {path}")
+                result.update(part)
+            return result
+        return dict(node)
+
+    overrides: Dict[str, Any] = flatten(source)
+    overrides.update(
+        {
+            "packing": GATE_A_PACKING,
+            "route_improvement": GATE_A_IMPROVER,
+        }
+    )
     overrides.update(cell.get("overrides", {}))
-    if (Path(__file__).resolve().parents[2] / "logic/configs/policies/other/pk_last_minute.yaml").exists():
+    if (Path.cwd() / "logic/configs/policies/other/pk_last_minute.yaml").exists():
         overrides["packing"] = {"other/pk_last_minute.yaml": ["last_minute_cf70"]}
     if time_capped and cell["policy"] != "na":
         overrides["time_limit"] = 60.0

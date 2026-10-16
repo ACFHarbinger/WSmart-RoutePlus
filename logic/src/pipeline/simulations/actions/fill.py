@@ -50,5 +50,5 @@ class FillAction(SimulationAction):
         context.sum_lost = sum_lost
 
         # Accumulate overflows in context (if needed by subsequent steps or final return)
-        if "overflows" in context:
+        if hasattr(context, "overflows"):
             context.overflows += new_overflows

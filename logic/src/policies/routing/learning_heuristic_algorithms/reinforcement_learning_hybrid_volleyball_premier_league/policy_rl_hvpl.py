@@ -25,6 +25,7 @@ import numpy as np
 from logic.src.configs.policies.aco_ks import KSparseACOConfig
 from logic.src.configs.policies.alns import ALNSConfig
 from logic.src.configs.policies.other import RLConfig
+from logic.src.configs.policies.other.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
 from logic.src.configs.policies.rl_hvpl import RLHVPLConfig
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
@@ -149,8 +150,14 @@ class RLHVPLPolicy(BaseRoutingPolicy):
 
         alns_params = ALNSConfig(
             max_iterations=values.get("alns_iterations", 200),
-            start_temp=values.get("alns_start_temp", 100.0),
-            cooling_rate=values.get("alns_cooling_rate", 0.97),
+            acceptance_criterion=AcceptanceConfig(
+                method="bmc",
+                params=BoltzmannAcceptanceConfig(
+                    initial_temp=values.get("alns_start_temp", 100.0),
+                    alpha=values.get("alns_cooling_rate", 0.97),
+                    start_temp_control=0.05,
+                ),
+            ),
             reaction_factor=values.get("alns_reaction_factor", 0.5),
             max_removal_pct=values.get("alns_max_removal_pct", 0.3),
             time_limit=values.get("alns_time_limit", 60.0),

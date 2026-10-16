@@ -451,15 +451,15 @@ def column_generation_loop(  # noqa: C901
         # If we compute it while positive-RC columns may still exist (e.g., the batch
         # was capped by max_routes_per_pricing), last_max_rc underestimates the true
         # max RC, producing an UB that is tighter than valid and can prune optimal nodes.
-        if (
-            converged
-            and pricing_exhausted
-            and not timed_out
-            and hasattr(pricing_solver, "last_max_rc")
-        ):
+        if converged and pricing_exhausted and not timed_out and hasattr(pricing_solver, "last_max_rc"):
             max_rc = getattr(pricing_solver, "last_max_rc", -float("inf"))
             effective_fleet = fleet_size if fleet_size > 0 else master.n_nodes
             lagrangian_ub = obj_val + (effective_fleet * max(0.0, max_rc))
+
+            if node_depth == 0:
+                from logic.src.pipeline.simulations.solver_status import note_root_bound
+
+                note_root_bound(float(lagrangian_ub))
 
             logger.info(f"CG Iter {_iteration}: RMP={obj_val:.4f}, max_rc={max_rc:.6f}, z_UB={lagrangian_ub:.4f}")
 

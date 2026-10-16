@@ -1,5 +1,4 @@
 lbbd:
-  _target_: logic.src.policies.logic_based_benders_decomposition.policy_lbbd.LBBDPolicy
   num_days: 3
   stochastic_master: false
   mean_increment: 0.2

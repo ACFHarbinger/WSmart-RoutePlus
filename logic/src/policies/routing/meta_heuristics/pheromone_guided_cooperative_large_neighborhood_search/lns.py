@@ -28,7 +28,7 @@ import copy
 import random
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-from logic.src.configs.policies.alns import ALNSConfig
+from logic.src.configs.policies.pg_clns import PGCLNSLNSConfig
 from logic.src.policies.routing.base.sub_problem import SubProblem
 from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.acceptance import (
     LegacySAAcceptance,
@@ -62,8 +62,8 @@ class LNSSolver(LNSBase, PolicyVizMixin):
         capacity (float): Maximum vehicle capacity.
         R (float): Revenue multiplier.
         C (float): Cost multiplier.
-        params (ALNSConfig): Detailed LNS parameters.
-        cfg (ALNSConfig): Configuration backing ``params``.
+        params (PGCLNSLNSConfig): Detailed LNS parameters.
+        cfg (PGCLNSLNSConfig): Configuration backing ``params``.
         mandatory_nodes (Optional[List[int]]): List of mandatory node indices.
         random (random.Random): Random number generator.
         destroy_ops (List[Callable]): List of destroy operators.
@@ -79,7 +79,7 @@ class LNSSolver(LNSBase, PolicyVizMixin):
     def __init__(
         self,
         problem: SubProblem,
-        cfg: Optional[Union[ALNSConfig, Dict[str, Any]]] = None,
+        cfg: Optional[Union[PGCLNSLNSConfig, Dict[str, Any]]] = None,
         seed: Optional[int] = None,
     ):
         """
@@ -88,7 +88,7 @@ class LNSSolver(LNSBase, PolicyVizMixin):
         Args:
             problem: The routing sub-problem (distance matrix, wastes,
                 capacity, revenue, cost unit, mandatory nodes).
-            cfg: Detailed ALNSConfig or dictionary of parameters (the nested
+            cfg: Detailed PGCLNSLNSConfig or dictionary of parameters (the nested
                 ``lns`` section of PGCLNSConfig).
             seed: Random seed for reproducibility. Effective seed sequence:
                 explicit kwarg > ``cfg.seed`` > 42.
@@ -100,8 +100,8 @@ class LNSSolver(LNSBase, PolicyVizMixin):
         self.R = problem.revenue
         self.C = problem.cost_unit
 
-        config = coerce_config(cfg, ALNSConfig)
-        self.cfg: ALNSConfig = config
+        config = coerce_config(cfg, PGCLNSLNSConfig)
+        self.cfg: PGCLNSLNSConfig = config
         self.params = config
         self.mandatory_nodes = problem.mandatory_nodes
 
@@ -221,9 +221,15 @@ class LNSSolver(LNSBase, PolicyVizMixin):
             best_routes: Best routes after initialization (unused).
             current_profit: Profit of the initial solution (unused).
         """
+        spec = self.params.acceptance_criterion
+        method = spec.get("method") if isinstance(spec, dict) else spec.method
+        if method != "bmc":
+            raise ValueError("PG-CLNS coaching requires bmc acceptance with the solver RNG")
+        params = spec.get("params", {}) if isinstance(spec, dict) else spec.params
+        read = params.get if isinstance(params, dict) else lambda key: getattr(params, key)
         self.acceptance_criterion = LegacySAAcceptance(
-            start_temp=self.params.start_temp,
-            cooling_rate=self.params.cooling_rate,
+            start_temp=read("initial_temp"),
+            cooling_rate=read("alpha"),
             rng=self.random,
         )
 

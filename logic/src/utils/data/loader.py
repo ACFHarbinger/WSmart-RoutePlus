@@ -19,6 +19,12 @@ Example:
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from tensordict import TensorDict
+
+
 import contextlib
 import json
 import os
@@ -27,9 +33,6 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-import torch
-import torch.utils.data
-from tensordict import TensorDict
 
 # --- Function Definitions (Top-level for circular import safety) ---
 
@@ -45,6 +48,8 @@ def collate_fn(batch: List[Dict[str, Any]]) -> Dict[str, Any]:
     Returns:
         Collated batch.
     """
+    import torch.utils.data
+
     batch = [{key: val for key, val in sample.items() if val is not None} for sample in batch if sample is not None]
 
     # Empty lists can break collate
@@ -154,6 +159,8 @@ def save_td_dataset(td: TensorDict, filename: str) -> None:
         td: The TensorDict to save.
         filename: Target filename.
     """
+    import torch.utils.data
+
     filedir = os.path.split(filename)[0]
     if filedir and not os.path.isdir(filedir):
         os.makedirs(filedir, exist_ok=True)
@@ -172,6 +179,8 @@ def load_td_dataset(filename: str, device: str = "cpu") -> TensorDict:
     Returns:
         The loaded TensorDict.
     """
+    import torch.utils.data
+
     return torch.load(check_extension(filename, ".td"), map_location=device, weights_only=False)
 
 

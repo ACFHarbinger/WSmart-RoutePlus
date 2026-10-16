@@ -10,6 +10,7 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
+from logic.src.configs.policies.other.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
 from logic.src.pipeline.simulations.actions.node_selection import PackingAction
 from logic.src.pipeline.simulations.actions.route_improvement import RouteImprovementAction
 from logic.src.policies.route_improvement.local_search import ClassicalLocalSearchRouteImprover
@@ -100,10 +101,6 @@ def test_oi_yaml_is_injected_as_only_improving() -> None:
 
 def test_psoma_from_config_consumes_injected_bmc_not_dataclass_t0() -> None:
     """PSOMA solver must instantiate BMC from ``acceptance_criterion``, not T0=3."""
-    from logic.src.configs.policies.other.acceptance_criteria import (
-        AcceptanceConfig,
-        BoltzmannAcceptanceConfig,
-    )
     from logic.src.configs.policies.psoma import PSOMAConfig
     from logic.src.policies.routing.base.sub_problem import build_subproblem
     from logic.src.policies.routing.meta_heuristics.particle_swarm_optimization_memetic_algorithm.solver import (
@@ -134,10 +131,6 @@ def test_psoma_from_config_consumes_injected_bmc_not_dataclass_t0() -> None:
 def test_alns_from_config_consumes_injected_bmc_on_attrdict() -> None:
     """Attribute mappings and plain mappings both preserve injected BMC."""
     from logic.src.configs.policies.alns import ALNSConfig
-    from logic.src.configs.policies.other.acceptance_criteria import (
-        AcceptanceConfig,
-        BoltzmannAcceptanceConfig,
-    )
     from logic.src.policies.routing.base.sub_problem import build_subproblem
     from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns import (
         ALNSSolver,
@@ -150,8 +143,6 @@ def test_alns_from_config_consumes_injected_bmc_on_attrdict() -> None:
     cfg = ALNSConfig(
         time_limit=2.0,
         max_iterations=20,
-        start_temp=0.0,
-        cooling_rate=0.995,
         reaction_factor=0.1,
         acceptance_criterion=injected,
     )
@@ -165,7 +156,7 @@ def test_alns_from_config_consumes_injected_bmc_on_attrdict() -> None:
 
 def test_hgs_from_config_consumes_injected_oi() -> None:
     from logic.src.configs.policies.hgs import HGSConfig
-    from logic.src.configs.policies.other.acceptance_criteria import AcceptanceConfig, OnlyImprovingConfig
+    from logic.src.configs.policies.other.acceptance_criteria import OnlyImprovingConfig
     from logic.src.policies.acceptance_criteria.only_improving import OnlyImproving
     from logic.src.policies.routing.base.sub_problem import build_subproblem
     from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.hgs import HGSSolver
@@ -312,6 +303,8 @@ def test_expanded_paper_policies_match_ms_ri_ac_yaml() -> None:
     from logic.src.pipeline.features.test.config import expand_policy_configs
     from logic.src.pipeline.simulations.actions.base import (
         _as_policy_mapping,
+        _file_yaml_pairs,
+        _find_key,
         _inject_acceptance_into_config,
         _live_ac_payload,
         _load_policy_yaml_section,
@@ -357,11 +350,18 @@ def test_expanded_paper_policies_match_ms_ri_ac_yaml() -> None:
                 raise AssertionError(f"unexpected strategy {item['name']}")
         ac = _inject_acceptance_into_config(cfg_copy)
         live_ac = _live_ac_payload(ac) if ac else None
-        if live_ac and live_ac.get("method") == "bmc":
+        if live_ac and live_ac.get("method") == "bmc" and _find_key(cfg_copy, "acceptance_criteria") is not None:
             saw_bmc = True
-            assert live_ac["params"]["initial_temp"] == pytest.approx(bmc_yaml["initial_temp"])
-            assert live_ac["params"]["alpha"] == pytest.approx(bmc_yaml["alpha"])
-            assert live_ac["params"]["seed"] == bmc_yaml["seed"]
+            selection = _find_key(cfg_copy, "acceptance_criteria")
+            selected = (
+                [pair for item in selection for pair in _file_yaml_pairs(item)]
+                if isinstance(selection, list)
+                else _file_yaml_pairs(selection)
+            )
+            expected = _load_policy_yaml_section(*selected[0])["params"] if selected else bmc_yaml
+            assert live_ac["params"]["initial_temp"] == pytest.approx(expected["initial_temp"])
+            assert live_ac["params"]["alpha"] == pytest.approx(expected["alpha"])
+            assert live_ac["params"]["seed"] == expected["seed"]
         if live_ac and live_ac.get("method") == "oi":
             saw_oi = True
         ri_val = _as_policy_mapping(cfg_copy).get("route_improvement")

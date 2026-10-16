@@ -25,13 +25,11 @@ from typing import Dict, Optional
 
 from logic.src.constants import ROOT_DIR
 
-from . import hooks, logging, profiling
 from .core import tracker as _tracker_mod
 from .core.run import Run, get_active_run
 from .core.tracker import Tracker, get_tracker
 from .integrations.data import RuntimeDataTracker
 from .integrations.filesystem import FilesystemTracker
-from .integrations.lightning import TrackingCallback
 from .integrations.mlflow_bridge import MLflowBridge
 from .integrations.simulation import SimulationRunTracker, get_sim_tracker
 from .integrations.zenml_bridge import ZenMLBridge
@@ -129,3 +127,18 @@ def init_worker(
         return run
     except Exception:  # noqa: BLE001
         return None
+
+
+def __getattr__(name):
+    from logic.src.utils.registry import lazy_getattr
+
+    return lazy_getattr(
+        globals(),
+        {
+            "hooks": "logic.src.tracking.hooks",
+            "logging": "logic.src.tracking.logging",
+            "profiling": "logic.src.tracking.profiling",
+            "TrackingCallback": "logic.src.tracking.integrations.lightning:TrackingCallback",
+        },
+        name,
+    )

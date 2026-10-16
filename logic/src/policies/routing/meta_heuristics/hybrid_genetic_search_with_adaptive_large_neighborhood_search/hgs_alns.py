@@ -75,7 +75,7 @@ class HGSALNSSolver(HGSSolver):
                 cost_unit=C,
                 mandatory_nodes=mandatory_nodes or [],
             ),
-            params.hgs_params,
+            params.hgs,
         )
 
         self.hgs_alns_params = params
@@ -90,7 +90,7 @@ class HGSALNSSolver(HGSSolver):
                 cost_unit=C,
                 mandatory_nodes=mandatory_nodes or [],
             ),
-            params.alns_params,
+            params.alns,
         )
 
     def solve(self) -> Tuple[List[List[int]], float, float]:
@@ -106,7 +106,7 @@ class HGSALNSSolver(HGSSolver):
         population: List[Individual] = []
 
         # 1. Initial Population
-        for _ in range(self.hgs_alns_params.hgs_params.mu):
+        for _ in range(self.hgs_alns_params.hgs.mu):
             gt = self.nodes[:]
             self.random.shuffle(gt)
             ind = Individual(gt, expand_pool=current_expand_pool())
@@ -115,15 +115,15 @@ class HGSALNSSolver(HGSSolver):
 
         update_biased_fitness(
             population,
-            self.hgs_alns_params.hgs_params.nb_elite,
-            self.hgs_alns_params.hgs_params.nb_granular,
+            self.hgs_alns_params.hgs.nb_elite,
+            self.hgs_alns_params.hgs.nb_granular,
         )
 
         start_time = time.perf_counter()
         it = 0
         last_improvement_it = 0
         best_profit_so_far = max(ind.profit_score for ind in population)
-        while last_improvement_it < self.hgs_alns_params.hgs_params.n_iterations_no_improvement:
+        while last_improvement_it < self.hgs_alns_params.hgs.n_iterations_no_improvement:
             if (
                 self.hgs_alns_params.time_limit > 0
                 and time.perf_counter() - start_time >= self.hgs_alns_params.time_limit
@@ -135,7 +135,7 @@ class HGSALNSSolver(HGSSolver):
             child = ordered_crossover(p1, p2)
 
             # 3. Hybrid Education (Mutation with ALNS)
-            if self.random.random() < self.hgs_alns_params.hgs_params.mutation_rate:
+            if self.random.random() < self.hgs_alns_params.hgs.mutation_rate:
                 # Need to have routes assigned before ALNS
                 evaluate(child, self.split_manager)
                 if child.routes:
@@ -182,19 +182,19 @@ class HGSALNSSolver(HGSSolver):
             )
 
             # 4. Survivor Selection
-            if len(population) > self.hgs_alns_params.hgs_params.mu * 2:
+            if len(population) > self.hgs_alns_params.hgs.mu * 2:
                 update_biased_fitness(
                     population,
-                    self.hgs_alns_params.hgs_params.nb_elite,
-                    self.hgs_alns_params.hgs_params.nb_granular,
+                    self.hgs_alns_params.hgs.nb_elite,
+                    self.hgs_alns_params.hgs.nb_granular,
                 )
                 population.sort(key=lambda x: x.fitness)
-                population = population[: self.hgs_alns_params.hgs_params.mu]
+                population = population[: self.hgs_alns_params.hgs.mu]
 
         update_biased_fitness(
             population,
-            self.hgs_alns_params.hgs_params.nb_elite,
-            self.hgs_alns_params.hgs_params.nb_granular,
+            self.hgs_alns_params.hgs.nb_elite,
+            self.hgs_alns_params.hgs.nb_granular,
         )
         best_ind = min(population, key=lambda x: -x.profit_score)
 

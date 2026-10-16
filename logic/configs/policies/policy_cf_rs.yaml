@@ -2,7 +2,6 @@ cf_rs:
   custom:
     num_clusters: 0
     time_limit: 2.0
-    engine: custom
     packing:
       other/pk_lookahead.yaml:
       - default

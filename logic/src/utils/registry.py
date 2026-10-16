@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import importlib
 import inspect
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass, field
 from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Type, TypeVar, Union
 
@@ -43,7 +44,7 @@ def lazy_getattr(module_globals: Dict[str, Any], mapping: Dict[str, str], name: 
 def _as_params(cfg: Any) -> Dict[str, Any]:
     if cfg is None:
         return {}
-    if isinstance(cfg, dict):
+    if isinstance(cfg, Mapping):
         return dict(cfg)
     if hasattr(cfg, "__dataclass_fields__"):
         return asdict(cfg)
@@ -54,6 +55,8 @@ def _as_params(cfg: Any) -> Dict[str, Any]:
 
 def instantiate(cls: Type[T], cfg: Any = None, **kwargs: Any) -> T:
     """Build ``cls`` from a config object and/or kwargs, ignoring unknown fields."""
+    if cls.__init__ is object.__init__ or getattr(cls.__init__, "__module__", None) == "typing":
+        return cls()
     params = _as_params(cfg)
     params.update(kwargs)
     signature = inspect.signature(cls.__init__)

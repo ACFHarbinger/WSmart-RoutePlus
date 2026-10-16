@@ -18,17 +18,19 @@ Example:
     >>> fs_tracker = integrations.FilesystemTracker(run)
 """
 
-from .data import RuntimeDataTracker
-from .filesystem import FilesystemTracker
-from .lightning import TrackingCallback
-from .simulation import SimulationRunTracker, get_sim_tracker
-from .zenml_bridge import ZenMLBridge
+from logic.src.utils.registry import lazy_getattr
 
-__all__ = [
-    "TrackingCallback",
-    "SimulationRunTracker",
-    "get_sim_tracker",
-    "RuntimeDataTracker",
-    "FilesystemTracker",
-    "ZenMLBridge",
-]
+_LAZY = {
+    "RuntimeDataTracker": "logic.src.tracking.integrations.data:RuntimeDataTracker",
+    "FilesystemTracker": "logic.src.tracking.integrations.filesystem:FilesystemTracker",
+    "TrackingCallback": "logic.src.tracking.integrations.lightning:TrackingCallback",
+    "SimulationRunTracker": "logic.src.tracking.integrations.simulation:SimulationRunTracker",
+    "get_sim_tracker": "logic.src.tracking.integrations.simulation:get_sim_tracker",
+    "ZenMLBridge": "logic.src.tracking.integrations.zenml_bridge:ZenMLBridge",
+}
+
+__all__ = list(_LAZY)
+
+
+def __getattr__(name):
+    return lazy_getattr(globals(), _LAZY, name)

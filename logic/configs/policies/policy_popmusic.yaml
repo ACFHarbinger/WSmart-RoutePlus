@@ -6,16 +6,17 @@ popmusic:
     max_iterations: 100
     base_solver: alns
     base_solver_config:
-      fast_tsp:
-        time_limit: 1.0
       alns:
         time_limit: 1.0
         max_iterations: 1000
-        start_temp: 100
-        cooling_rate: 0.995
         reaction_factor: 0.1
-        min_removal: 1
-        max_removal_pct: 0.3
+        xi: 0.3
+        acceptance_criterion:
+          method: bmc
+          params:
+            initial_temp: 100
+            alpha: 0.995
+            start_temp_control: 0.05
       hgs:
         time_limit: 1.0
         mu: 25
@@ -32,22 +33,21 @@ popmusic:
         initial_penalty_capacity: 1.0
         penalty_increase: 1.2
         penalty_decrease: 0.85
-        use_cross_exchange: false
-        use_lambda_interchange: false
-        lambda_max: 2
-        use_ejection_chains: false
+      tsp:
+        time_limit: 1.0
     cluster_solver: fast_tsp
     cluster_solver_config:
-      fast_tsp:
-        time_limit: 0.1
       alns:
         time_limit: 1.0
         max_iterations: 1000
-        start_temp: 100
-        cooling_rate: 0.995
         reaction_factor: 0.1
-        min_removal: 1
-        max_removal_pct: 0.3
+        xi: 0.3
+        acceptance_criterion:
+          method: bmc
+          params:
+            initial_temp: 100
+            alpha: 0.995
+            start_temp_control: 0.05
       hgs:
         time_limit: 1.0
         mu: 25
@@ -64,10 +64,8 @@ popmusic:
         initial_penalty_capacity: 1.0
         penalty_increase: 1.2
         penalty_decrease: 0.85
-        use_cross_exchange: false
-        use_lambda_interchange: false
-        lambda_max: 2
-        use_ejection_chains: false
+      tsp:
+        time_limit: 0.1
     initial_solver: pmedian
     profit_aware_operators: false
     packing:

@@ -23,7 +23,6 @@ import pandas
 from logic.src.constants import MAX_CAPACITY_PERCENT, ROOT_DIR
 from logic.src.data.datasets import (
     GenerativeDataset,
-    HtmlSimulationDataset,
     NumpyDictDataset,
     NumpyPickleDataset,
     PandasCsvDataset,
@@ -173,6 +172,8 @@ class Bins:
             elif waste_file.endswith(".csv"):
                 self.waste_dataset = PandasCsvDataset.load(path, area=area, waste_type=waste_type)
             elif waste_file.endswith(".html") or waste_file.endswith(".htm"):
+                from logic.src.data.datasets import HtmlSimulationDataset
+
                 self.waste_dataset = HtmlSimulationDataset.load(path, area=area, waste_type=waste_type, n_days=n_days)
             else:
                 self.waste_dataset = NumpyDictDataset.load(path, area=area, waste_type=waste_type)

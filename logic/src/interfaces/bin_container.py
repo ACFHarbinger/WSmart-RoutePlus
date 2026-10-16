@@ -13,9 +13,12 @@ Example:
     ...     return bins.fill_levels > threshold
 """
 
-from typing import Any, Optional, Protocol, runtime_checkable
+from __future__ import annotations
 
-import torch
+from typing import TYPE_CHECKING, Any, Optional, Protocol, runtime_checkable
+
+if TYPE_CHECKING:
+    import torch
 
 
 @runtime_checkable

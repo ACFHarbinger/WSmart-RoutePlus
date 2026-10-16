@@ -119,22 +119,13 @@ def test_cell_policy_entry_pins_packing_improver_and_timing():
     renamed = (Path(__file__).resolve().parents[4] / "logic/configs/policies/other/pk_last_minute.yaml").exists()
     packing = {f"other/{'pk' if renamed else 'ms'}_last_minute.yaml": ["last_minute_cf70"]}
     entry = cell_policy_entry("ALNS")
-    assert entry == {
-        "alns": {
-            "packing": packing,
-            "route_improvement": {"other/ri_cls.yaml": ["default"]},
-            "time_limit": 0,
-        }
-    }
-    hgs = cell_policy_entry("HGS")
-    assert hgs["hgs"]["restart_timer"] == 0
-    assert cell_policy_entry("CVRP") == {
-        "cvrp": {
-            "packing": packing,
-            "route_improvement": {"other/ri_cls.yaml": ["default"]},
-            "solution_limit": 1000,
-        }
-    }
+    assert entry["alns"]["packing"] == packing
+    assert entry["alns"]["route_improvement"] == {"other/ri_cls.yaml": ["default"]}
+    assert entry["alns"]["time_limit"] == 0
+    assert entry["alns"]["max_iterations"] == 5000
+    assert entry["alns"]["profit_aware_operators"] is True
+    assert cell_policy_entry("HGS")["hgs"]["restart_timer"] == 0
+    assert cell_policy_entry("CVRP")["cvrp"]["solution_limit"] == 1000
 
 
 def test_cell_policy_entry_am_needs_checkpoint():
@@ -239,7 +230,7 @@ def test_gate_b_rejects_empty_candidates(tmp_path):
     import json
     from argparse import Namespace
 
-    from tools.gates.cells import BASELINE_COMMIT
+    from tools.gates.cells import BASELINE_AMENDMENTS, BASELINE_COMMIT
     from tools.gates.run_gate import cmd_gate_b
 
     archive = tmp_path / "archive.csv"
@@ -247,7 +238,9 @@ def test_gate_b_rejects_empty_candidates(tmp_path):
     frozen = tmp_path / "frozen.json"
     archive.write_text("constructor,city,N,kgkm,overflows\nALNS,Rio Maior,100,4,0\n")
     candidate.write_text("constructor,city,N,kgkm,overflows\n")
-    frozen.write_text(json.dumps({"baseline_commit": BASELINE_COMMIT, "cells": {}}))
+    frozen.write_text(
+        json.dumps({"baseline_commit": BASELINE_COMMIT, "baseline_amendments": BASELINE_AMENDMENTS, "cells": {}})
+    )
     with pytest.raises(SystemExit, match="incomplete sweep"):
         cmd_gate_b(Namespace(archived=str(archive), candidate=str(candidate), tolerances=str(frozen)))
 
@@ -286,3 +279,36 @@ def test_sans_cell_has_a_real_work_budget():
     assert entry["time_limit"] > 1e6 and entry["iterations_per_T"] == 200
     capped = cell_policy_entry("SANS", time_capped=True)["sans"]
     assert capped["time_limit"] == 60.0 and "iterations_per_T" not in capped
+
+
+def test_legacy_schema_normalization_preserves_physical_differences():
+    from tools.gates.compare import canonical_gate_log
+
+    legacy = {
+        "samples": {"0": {"kg": 4.0, "profit": 2.0, "days": 1, "reward": 100.0}},
+        "daily": {"0": {"day": [1, 2], "kg": [0, 4.0], "ncol": [0, 1], "tour": [[0], [0, 1, 0]], "reward": [0, 100.0]}},
+    }
+    current = {
+        "samples": {"0": {"kg": 4.0, "profit": 2.0, "collection_days": 1.0, "days_simulated": 2.0}},
+        "daily": {
+            "0": {
+                "day": [1, 2],
+                "kg": [0.0, 4.0],
+                "ncol": [0.0, 1.0],
+                "tour": [[0], [0, 1, 0]],
+                "collection_days": [0.0, 1.0],
+                "days_simulated": [1.0, 1.0],
+            }
+        },
+    }
+    assert compare_exact(canonical_gate_log(legacy), canonical_gate_log(current)) == []
+    current["daily"]["0"]["kg"][1] += 0.001
+    assert compare_exact(canonical_gate_log(legacy), canonical_gate_log(current))
+    assert "reward" in legacy["samples"]["0"]
+
+
+def test_schema_normalization_rejects_conflicting_legacy_day_counts():
+    from tools.gates.compare import canonical_gate_log
+
+    with pytest.raises(ValueError, match="Conflicting"):
+        canonical_gate_log({"daily": {"0": {"day": [1]}}, "samples": {"0": {"days": 1, "collection_days": 2}}})

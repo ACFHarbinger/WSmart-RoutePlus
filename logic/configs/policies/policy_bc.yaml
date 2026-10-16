@@ -3,7 +3,6 @@ bc:
     time_limit: 60
     mip_gap: 0.0
     use_heuristics: true
-    use_exact_separation: false
     max_cuts_per_round: 50
     enable_fractional_capacity_cuts: true
     packing:

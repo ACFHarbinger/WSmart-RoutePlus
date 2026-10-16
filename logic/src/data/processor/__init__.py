@@ -25,35 +25,28 @@ Example:
     {'Lng': [0, 1], 'Lat': [0, 1]}
 """
 
-from .dataframes import (
-    convert_to_dict,
-    create_dataframe_from_matrix,
-    get_df_types,
-    process_indices,
-    sample_df,
-    save_matrix_to_excel,
-    setup_df,
-    sort_dataframe,
-)
-from .formatting import format_coordinates
-from .mapper import SimulationDataMapper
-from .processing import process_coordinates, process_data, process_model_data
-from .setup import setup_basedata, setup_dist_path_tup
+from logic.src.utils.registry import lazy_getattr
 
-__all__ = [
-    "SimulationDataMapper",
-    "format_coordinates",
-    "sort_dataframe",
-    "get_df_types",
-    "setup_df",
-    "sample_df",
-    "process_indices",
-    "process_data",
-    "process_coordinates",
-    "process_model_data",
-    "create_dataframe_from_matrix",
-    "convert_to_dict",
-    "save_matrix_to_excel",
-    "setup_basedata",
-    "setup_dist_path_tup",
-]
+_LAZY = {
+    "convert_to_dict": "logic.src.data.processor.dataframes:convert_to_dict",
+    "create_dataframe_from_matrix": "logic.src.data.processor.dataframes:create_dataframe_from_matrix",
+    "get_df_types": "logic.src.data.processor.dataframes:get_df_types",
+    "process_indices": "logic.src.data.processor.dataframes:process_indices",
+    "sample_df": "logic.src.data.processor.dataframes:sample_df",
+    "save_matrix_to_excel": "logic.src.data.processor.dataframes:save_matrix_to_excel",
+    "setup_df": "logic.src.data.processor.dataframes:setup_df",
+    "sort_dataframe": "logic.src.data.processor.dataframes:sort_dataframe",
+    "format_coordinates": "logic.src.data.processor.formatting:format_coordinates",
+    "SimulationDataMapper": "logic.src.data.processor.mapper:SimulationDataMapper",
+    "process_coordinates": "logic.src.data.processor.processing:process_coordinates",
+    "process_data": "logic.src.data.processor.processing:process_data",
+    "process_model_data": "logic.src.data.processor.processing:process_model_data",
+    "setup_basedata": "logic.src.data.processor.setup:setup_basedata",
+    "setup_dist_path_tup": "logic.src.data.processor.setup:setup_dist_path_tup",
+}
+
+__all__ = list(_LAZY)
+
+
+def __getattr__(name):
+    return lazy_getattr(globals(), _LAZY, name)

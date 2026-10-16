@@ -40,7 +40,9 @@ class BoltzmannAcceptance(IAcceptanceCriterion):
         rng (random.Random): Random number generator.
     """
 
-    def __init__(self, initial_temp: float, alpha: float, seed: Optional[int] = 42):
+    def __init__(
+        self, initial_temp: float, alpha: float, seed: Optional[int] = 42, start_temp_control: Optional[float] = None
+    ):
         """Initialize the Boltzmann criterion.
 
         Args:
@@ -48,8 +50,11 @@ class BoltzmannAcceptance(IAcceptanceCriterion):
             alpha: The geometric cooling rate (typically 0.90 - 0.995).
             seed: Random seed. Defaults to 42.
         """
+        self.initial_temp = initial_temp
+        self.start_temp_control = start_temp_control
         self.T = initial_temp
         self.alpha = alpha
+        self.seed = seed
         self.rng = random.Random(seed)
 
     def setup(self, initial_objective: ObjectiveValue) -> None:
@@ -58,8 +63,10 @@ class BoltzmannAcceptance(IAcceptanceCriterion):
         Args:
             initial_objective: The initial solution's objective.
         """
-        initial_objective = cast(float, initial_objective)
-        pass
+        if self.initial_temp == 0.0 and self.start_temp_control is not None:
+            magnitude = abs(cast(float, initial_objective))
+            scale = magnitude if magnitude > 1e-9 else 1.0
+            self.T = self.start_temp_control * scale / math.log(2.0)
 
     @property
     def get_temperature(self) -> float:

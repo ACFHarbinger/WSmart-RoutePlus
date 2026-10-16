@@ -17,6 +17,7 @@ import numpy as np
 
 from logic.src.configs.policies import HybridMemeticLargeNeighborhoodSearchConfig
 from logic.src.configs.policies.alns import ALNSConfig
+from logic.src.configs.policies.other.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
@@ -164,8 +165,14 @@ class HybridMemeticLargeNeighborhoodSearchPolicy(BaseRoutingPolicy):
         if isinstance(alns_config, dict):
             alns_params = ALNSConfig(
                 max_iterations=alns_config.get("max_iterations", 500),
-                start_temp=alns_config.get("start_temp", 100.0),
-                cooling_rate=alns_config.get("cooling_rate", 0.95),
+                acceptance_criterion=AcceptanceConfig(
+                    method="bmc",
+                    params=BoltzmannAcceptanceConfig(
+                        initial_temp=alns_config.get("start_temp", 100.0),
+                        alpha=alns_config.get("cooling_rate", 0.95),
+                        start_temp_control=0.05,
+                    ),
+                ),
                 reaction_factor=alns_config.get("reaction_factor", 0.1),
                 max_removal_pct=alns_config.get("max_removal_pct", 0.2),
                 segment_size=alns_config.get("segment_size", 10),
@@ -177,8 +184,14 @@ class HybridMemeticLargeNeighborhoodSearchPolicy(BaseRoutingPolicy):
             # Fallback to flattened parameters for backward compatibility
             alns_params = ALNSConfig(
                 max_iterations=values.get("alns_iterations", 500),
-                start_temp=values.get("alns_start_temp", 100.0),
-                cooling_rate=values.get("alns_cooling_rate", 0.95),
+                acceptance_criterion=AcceptanceConfig(
+                    method="bmc",
+                    params=BoltzmannAcceptanceConfig(
+                        initial_temp=values.get("alns_start_temp", 100.0),
+                        alpha=values.get("alns_cooling_rate", 0.95),
+                        start_temp_control=0.05,
+                    ),
+                ),
                 reaction_factor=values.get("alns_reaction_factor", 0.1),
                 max_removal_pct=values.get("alns_max_removal_pct", 0.2),
                 segment_size=values.get("segment_size", 10),

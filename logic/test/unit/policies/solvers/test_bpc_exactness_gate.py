@@ -114,9 +114,7 @@ def test_bpc_matches_brute_force_with_valid_certificate(caplog):
         CANONICAL["dist"].tolist(), CANONICAL["wastes"], CANONICAL["capacity"], CANONICAL["R"], CANONICAL["C"]
     )
     routes, profit, _cost = run_bpc(
-        build_subproblem(
-            CANONICAL["dist"], CANONICAL["wastes"], CANONICAL["capacity"], CANONICAL["R"], CANONICAL["C"]
-        ),
+        build_subproblem(CANONICAL["dist"], CANONICAL["wastes"], CANONICAL["capacity"], CANONICAL["R"], CANONICAL["C"]),
         {"max_cg_iterations": 50, "max_bb_nodes": 200, "optimality_gap": 1e-9},
     )
     assert routes, "BPC returned no routes on the canonical instance"
@@ -124,6 +122,13 @@ def test_bpc_matches_brute_force_with_valid_certificate(caplog):
         f"BPC incumbent {profit} != brute-force optimum {optimum}"
     )
     _certified_bound(caplog, profit, optimum)
+    from logic.src.pipeline.simulations.solver_status import current_solver_certificate
+
+    proof = current_solver_certificate()
+    assert proof is not None
+    assert proof["incumbent"] == profit
+    assert proof["bound"] >= optimum - 1e-6
+    assert proof["source"] == "root_cg_exhausted"
 
 
 @_needs_license
@@ -133,9 +138,7 @@ def test_ms_bpc_sp_matches_brute_force_with_valid_certificate(caplog):
         CANONICAL["dist"].tolist(), CANONICAL["wastes"], CANONICAL["capacity"], CANONICAL["R"], CANONICAL["C"]
     )
     routes, profit, _cost = run_ms_bpc_sp(
-        build_subproblem(
-            CANONICAL["dist"], CANONICAL["wastes"], CANONICAL["capacity"], CANONICAL["R"], CANONICAL["C"]
-        ),
+        build_subproblem(CANONICAL["dist"], CANONICAL["wastes"], CANONICAL["capacity"], CANONICAL["R"], CANONICAL["C"]),
         {"max_cg_iterations": 50, "max_bb_nodes": 200, "optimality_gap": 1e-9},
     )
     assert routes, "MS-BPC-SP returned no routes on the canonical instance"

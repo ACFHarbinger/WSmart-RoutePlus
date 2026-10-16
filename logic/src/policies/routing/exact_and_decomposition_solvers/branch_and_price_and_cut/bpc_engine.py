@@ -200,6 +200,8 @@ def run_bpc(  # noqa: C901
         >>> problem = build_subproblem(dist_matrix, wastes, capacity=10, revenue=1, cost_unit=1)
         >>> result = run_bpc(problem)  # SolveResult(routes, profit, cost)
     """
+    from logic.src.pipeline.simulations.solver_status import note_solver_incumbent, reset_solver_certificate
+
     start_time = time.perf_counter()
 
     # Standardize cfg to BPCConfig (P-10: the typed config is the only parameter layer)
@@ -220,6 +222,9 @@ def run_bpc(  # noqa: C901
     # to the caller) rather than silently treated as unlimited.
     n_vehicles = problem.n_vehicles
     vehicle_limit = None if n_vehicles is None else int(n_vehicles) if int(n_vehicles) > 0 else None
+    from logic.src.utils.routing.problem_fingerprint import problem_fingerprint
+
+    reset_solver_certificate(problem_fingerprint(dist_matrix, wastes, capacity, R, C, mandatory_indices, vehicle_limit))
     env = problem.env
     recorder = problem.recorder
     n_nodes = len(dist_matrix) - 1
@@ -436,6 +441,7 @@ def run_bpc(  # noqa: C901
                 fallback_routes, fallback_profit = [list(r.nodes) for r in ip_routes], float(ip_obj)
         except Exception as exc:  # the greedy plan is still valid
             logger.warning(f"Restricted-master IP fallback failed: {exc}")
+        note_solver_incumbent(fallback_profit)
         return SolveResult(
             routes=fallback_routes,
             profit=fallback_profit,
@@ -461,6 +467,7 @@ def run_bpc(  # noqa: C901
             n_routes=len(final_routes),
         )
 
+    note_solver_incumbent(final_cost)
     return SolveResult(
         routes=final_routes,
         profit=final_cost,

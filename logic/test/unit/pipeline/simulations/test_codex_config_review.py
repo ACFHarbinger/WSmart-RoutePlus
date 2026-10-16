@@ -99,3 +99,15 @@ def test_constructor_id_from_expanded_policy_name() -> None:
     assert _constructor_from_policy_id("lookahead_ms_bpc_sp_custom_emp") == "ms_bpc_sp"
     assert _constructor_from_policy_id("last_minute_cf90_swc_tcf_gurobi_cls_emp") == "swc_tcf"
     assert _constructor_from_policy_id("lookahead_na_amgat_emp") == "na"
+
+
+def test_calibrated_acceptance_yaml_keeps_its_calibration_control():
+    import math
+
+    from logic.src.pipeline.simulations.actions.base import _acceptance_config_from_entry
+    from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
+
+    spec = _acceptance_config_from_entry({"other/ac_bmc.yaml": "bmc_calibrated"})
+    criterion = AcceptanceCriterionFactory.build(spec)
+    criterion.setup(20.0)
+    assert 0.05 * 20.0 / math.log(2.0) == criterion.T

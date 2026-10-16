@@ -29,54 +29,28 @@ Example:
     ...     break
 """
 
-from typing import Any
+from logic.src.utils.registry import lazy_getattr
 
-# Import from utils.data.td_utils, not from a local td_utils
-from logic.src.utils.data.td_utils import td_kwargs, tensordict_collate_fn
+_LAZY = {
+    "td_kwargs": "logic.src.utils.data.td_utils:td_kwargs",
+    "tensordict_collate_fn": "logic.src.utils.data.td_utils:tensordict_collate_fn",
+    "BaselineDataset": "logic.src.data.datasets.pytorch.baseline_dataset:BaselineDataset",
+    "ExtraKeyDataset": "logic.src.data.datasets.pytorch.extra_key_dataset:ExtraKeyDataset",
+    "TensorDictDatasetFastGeneration": "logic.src.data.datasets.pytorch.fast_gen_dataset:TensorDictDatasetFastGeneration",
+    "FastTdDataset": "logic.src.data.datasets.pytorch.fast_td_dataset:FastTdDataset",
+    "GeneratorDataset": "logic.src.data.datasets.pytorch.generator_dataset:GeneratorDataset",
+    "TensorDictDataset": "logic.src.data.datasets.pytorch.td_dataset:TensorDictDataset",
+    "GenerativeDataset": "logic.src.data.datasets.simulation.gen_dataset:GenerativeDataset",
+    "NumpyPickleDataset": "logic.src.data.datasets.simulation.np_pkl_dataset:NumpyPickleDataset",
+    "NumpyDictDataset": "logic.src.data.datasets.simulation.npz_dataset:NumpyDictDataset",
+    "PandasCsvDataset": "logic.src.data.datasets.simulation.pd_csv_dataset:PandasCsvDataset",
+    "PandasExcelDataset": "logic.src.data.datasets.simulation.pd_xlsx_dataset:PandasExcelDataset",
+    "SimulationDataset": "logic.src.data.datasets.simulation.sim_dataset:SimulationDataset",
+    "HtmlSimulationDataset": "logic.src.data.datasets.web.html_sim_dataset:HtmlSimulationDataset",
+}
 
-from .pytorch.baseline_dataset import BaselineDataset
-from .pytorch.extra_key_dataset import ExtraKeyDataset
-from .pytorch.fast_gen_dataset import TensorDictDatasetFastGeneration
-from .pytorch.fast_td_dataset import FastTdDataset
-from .pytorch.generator_dataset import GeneratorDataset
-from .pytorch.td_dataset import TensorDictDataset
-from .simulation.gen_dataset import GenerativeDataset
-from .simulation.np_pkl_dataset import NumpyPickleDataset
-from .simulation.npz_dataset import NumpyDictDataset
-from .simulation.pd_csv_dataset import PandasCsvDataset
-from .simulation.pd_xlsx_dataset import PandasExcelDataset
-from .simulation.sim_dataset import SimulationDataset
-
-__all__ = [
-    "td_kwargs",
-    "tensordict_collate_fn",
-    # PyTorch datasets
-    "BaselineDataset",
-    "ExtraKeyDataset",
-    "TensorDictDatasetFastGeneration",
-    "FastTdDataset",
-    "GeneratorDataset",
-    "TensorDictDataset",
-    # Simulation datasets
-    "SimulationDataset",
-    "NumpyDictDataset",
-    "NumpyPickleDataset",
-    "PandasExcelDataset",
-    "PandasCsvDataset",
-    "HtmlSimulationDataset",
-    "GenerativeDataset",
-]
+__all__ = list(_LAZY)
 
 
-def __getattr__(name: str) -> Any:
-    """Load the dashboard HTML dataset only when it is requested.
-
-    ``HtmlSimulationDataset`` pulls in the optional beautifulsoup4 crawler.
-    Importing it at module level made ``Bins`` and the pytest plugin chain
-    fail in environments that never parse dashboards.
-    """
-    if name == "HtmlSimulationDataset":
-        from .web.html_sim_dataset import HtmlSimulationDataset
-
-        return HtmlSimulationDataset
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+def __getattr__(name):
+    return lazy_getattr(globals(), _LAZY, name)

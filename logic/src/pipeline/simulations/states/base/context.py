@@ -21,7 +21,6 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Un
 
 import numpy as np
 import pandas as pd
-import torch
 from omegaconf import DictConfig
 
 from logic.src.constants import (
@@ -32,6 +31,8 @@ from logic.src.pipeline.simulations.states.initializing import InitializingState
 from logic.src.tracking.logging.pylogger import get_pylogger
 
 if TYPE_CHECKING:
+    import torch
+
     from logic.src.configs import Config
     from logic.src.pipeline.simulations.checkpoints import SimulationCheckpoint
 

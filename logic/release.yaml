@@ -102,7 +102,17 @@ excluded_packages:
 #   declarative data, eagerly imported by `configs/__init__`, and carry no
 #   runnable code. Pruning them is WP-04/05/06 config consolidation work.
 # - The neural stack is the `wsmart-route[neural]` extra in `logic/pyproject.toml`.
-#   Until Q-16a lands, running the simulator needs that extra too.
+#   Classical routing and simulator imports do not require the neural extra.
 # - `logic/configs/policies/policy_<key>.yaml` and `other/pk_<key>.yaml` ship
 #   only for the released keys above. `pk_eoq_last_minute.yaml` is excluded
 #   (RQ-cursor-3: 1.0.0 last-minute is fill-threshold only).
+
+# Dependency names selected from logic/pyproject.toml's solver extra; version
+# requirements remain there. These are the backends of the released paper stack.
+dependency_extras:
+  solvers:
+    - gurobipy
+    - ortools
+    - pyvrp
+    - alns
+    - fast-tsp
