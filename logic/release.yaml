@@ -71,6 +71,11 @@ infrastructure:
   - logic.src.models.core.attention_model
   - logic.src.policies.vector.profitable_nearest_neighbour   # imitation expert (Q-4a)
   - logic.src.policies.packing.vectorized                    # vectorised packing (Q-4a)
+  - logic.src.policies.packing.vectorized.lookahead       # released strategy, loaded by string target in vectorized/factory.py
+  - logic.src.policies.packing.vectorized.last_minute     # released strategy, loaded by string target in vectorized/factory.py
+  - logic.src.policies.packing.vectorized.service_level   # released strategy, loaded by string target in vectorized/factory.py
+  - logic.src.policies.packing.vectorized.regular         # released strategy, loaded by string target in vectorized/factory.py
+  - logic.src.policies.packing.vectorized.spec            # shared rules of the vectorised selectors
   - logic.src.envs.tasks.espprc   # ESPPRC base + shared generator (P-23, Q-3a)
   - logic.src.envs.tasks.ptp
   - logic.src.envs.tasks.cptp
@@ -121,7 +126,7 @@ dependency_extras:
     - fast-tsp
     - pyomo                  # SWC-TCF's Pyomo wrapper
   core:
-    - plotext                # the simulator's terminal display callback
+    - plotext>=5.3.2,<6      # the terminal display callbacks (6.x removed plt.clf)
     - seaborn                # tracking/logging visualisation
   neural:
     - lightning>=2.6.1       # PyTorch callbacks (main gets it only indirectly)

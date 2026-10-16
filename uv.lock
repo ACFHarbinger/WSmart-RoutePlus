@@ -8292,7 +8292,7 @@ requires-dist = [
     { name = "ortools", marker = "extra == 'solvers'", specifier = ">=9.4.1874" },
     { name = "osmnx", marker = "extra == 'geo'", specifier = ">=2.0.6" },
     { name = "pandas", specifier = ">=2.1.4" },
-    { name = "plotext", marker = "extra == 'analysis'", specifier = ">=5.3.2" },
+    { name = "plotext", marker = "extra == 'analysis'", specifier = ">=5.3.2,<6" },
     { name = "plotly", marker = "extra == 'viz'", specifier = ">=6.3.0" },
     { name = "protobuf", specifier = "==7.35.1" },
     { name = "pyarrow", marker = "extra == 'tracking'", specifier = ">=16.1.0" },
