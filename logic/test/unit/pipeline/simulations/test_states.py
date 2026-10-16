@@ -289,7 +289,8 @@ class TestRunningState:
         ctx.transition_to(state)
         state.handle(ctx)
 
-        assert ctx.result == error_res
+        # The running state adds the failure's status, type and day to the checkpoint's result.
+        assert ctx.result == {**error_res, "status": "failed", "exception_type": "CheckpointError", "failed_day": None}
         assert ctx.current_state is None
 
 
@@ -307,9 +308,10 @@ class TestFinishingState:
         ctx.bins.profit = 50.0
         ctx.bins.ndays = 2
         ctx.bins.get_fill_history.return_value = []
-        ctx.daily_log = MagicMock()
-        ctx.daily_log.values.return_value = []
+        # A real (empty) daily log: a MagicMock answers .get("kg") with a truthy mock of length 0.
+        ctx.daily_log = {}
         ctx.tic = 0.0
+        ctx.cfg.sim.export_fill_matrix = True  # the fill-matrix workbook is opt-in
 
         state = FinishingState()
         ctx.transition_to(state)

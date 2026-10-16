@@ -65,8 +65,9 @@ def mock_engine_data():
         "coords": coords,
         "config": {
             "bpc": {"bcp_engine": "ortools"},
-            "hgs": {"engine": None},
-            "alns": {"engine": None},
+            # No engine key: the structured configs reject None for their str engine field.
+            "hgs": {},
+            "alns": {},
             "swc_tcf": {},
             "n_encode_layers": 3,
             "n_encode_sublayers": 1,
