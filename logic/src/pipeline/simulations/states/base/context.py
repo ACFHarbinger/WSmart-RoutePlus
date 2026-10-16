@@ -129,9 +129,10 @@ class SimulationContext:
 
         sim = cfg.sim
         self.data_dir = os.path.join(ROOT_DIR, "data", "simulator")
+        # Relative to the repository root, as the simulator's summary writer resolves it
+        # (outputs/simulations since 2026-10-13); an absolute output_dir is used as given.
         self.results_dir = os.path.join(
             ROOT_DIR,
-            "assets",
             sim.output_dir,
             f"{sim.graph.n_days}days",
             f"{sim.graph.area}{sim.graph.num_loc}_{sim.graph.waste_type}",

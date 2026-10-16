@@ -2,10 +2,11 @@
 
 from unittest.mock import MagicMock, patch
 
-import optuna
 import pytest
-import torch
-from logic.src.pipeline.callbacks.pytorch.hpo_health import (
+
+optuna = pytest.importorskip("optuna")  # HPO is not in the 1.0.0 release environment
+import torch  # noqa: E402 (after the optuna skip)
+from logic.src.pipeline.callbacks.pytorch.hpo_health import (  # noqa: E402
     HpoHealthMetricsCallback,
     apply_dehb_health_penalty,
 )

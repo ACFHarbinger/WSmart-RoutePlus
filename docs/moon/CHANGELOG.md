@@ -17,6 +17,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 1.0.0 release package: build fixes found by running the release (`2026-10-17`)
+
+#### Fixed
+
+- **Default policy YAML crashed every simulation.** The routing base took a flat config's `acceptance_criteria` list for the policy section and raised "policy YAML must be a mapping after P-13" on day 1 (`base_routing_policy.py`). Stage keys are no longer section candidates.
+- **PG-CLNS adapter failed to load.** The simulator's `_AttrDict` sub-configs reached `OmegaConf.create`, which rejects dict subclasses. `_structured_load` now converts them to plain containers first.
+- **Relative `sim.output_dir` split one run across two folders.** The run context, `compose_dirpath` and the analysis scanner wrote and read under `assets/<output_dir>`, while the summary writer used `<output_dir>`. A relative output folder therefore crashed at the end of every run; the paper runs used absolute paths. All four now resolve against the repository root.
+- **Python 3.11+ import error.** Five config dataclasses (`HGSConfig`, `RTSConfig`, `KSparseACOConfig`, `GIHHConfig`, `SAConfig`) used an `AcceptanceConfig(...)` instance as a field default; they now use `default_factory`.
+- **Last-minute settings capture (#61).** The `consumer_last_minute` live-parameter record, dropped by WP-09, is restored. It is looked up through `sys.modules`, so packing stays torch-free.
+- **Defaults.** The AM policy's default `model_path` now points to the paper model (`cptp100_riomaior_plastic/emp/amgat0-il-rl`), and the imitation expert defaults to `profitable_nn`, the paper's expert.
+
+#### Changed
+
+- `logic/package/build_release.py`:
+  - ships `__main__.py`;
+  - drops the task YAMLs' defaults for unreleased policies (Hydra could not compose `test_sim` otherwise);
+  - keeps every `configs/policies/other` file a shipped policy references, plus the `ac_*`/`ri_*` files of released keys;
+  - carries the PyG index into the release `pyproject.toml`;
+  - lets `release.yaml` add requirements to the core dependencies or to any extra.
+- `release.yaml` adds the packages the shipped code imports but the release did not declare: `plotext` and `seaborn` (core), `pyomo` (solvers), `lightning`, `tensorboard`, `loss-landscapes` and `plotly` (neural).
+- The setup scripts (`desktop/*/setup_package.*`) target the 1.0.0 layout: a root `pyproject.toml`, and `uv sync --extra solvers --extra neural`.
+- `ci/simulator_release.spec` builds the release executable. Unlike the minimal spec, it bundles OR-Tools, PyVRP, Fast-TSP and matplotlib.
+- Tests updated: output paths, a removed `get_cmap` patch, and the HPO health test skipping without optuna. The unit suite gives 2,204 passed, 4 skipped, with no deselection. Every one of the ten released routing algorithms completes a 3-day simulation from the built release in its own Python 3.12 environment.
+
+#### Open
+
+- The release's curated test set (`logic/test/release_tests.txt`) does not run from the built tree: its `conftest.py` is pruned (it registers fixture plugins of unreleased modules), and other tests use unreleased acceptance criteria or HPO. The delivered package ships without `logic/test`, as the previous one did.
+
 ### 1.0.0 refactor merged into `main` (`2026-10-16`)
 
 #### Changed

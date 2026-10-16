@@ -93,8 +93,17 @@ def _structured_load(config_cls: Type, mapping: Dict[str, Any]) -> Any:
         annotation = str(item.type)
         if isinstance(node, DictConfig) and (annotation == "<class 'dict'>" or annotation.startswith("typing.Dict")):
             OmegaConf.set_struct(node, False)
-    merged = OmegaConf.merge(schema, OmegaConf.create(filtered))
+    merged = OmegaConf.merge(schema, OmegaConf.create(_plain(filtered)))
     return with_acceptance(OmegaConf.to_object(merged))
+
+
+def _plain(value: Any) -> Any:
+    """Plain dicts and lists: OmegaConf rejects dict subclasses such as the simulator's _AttrDict."""
+    if isinstance(value, dict):
+        return {key: _plain(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_plain(item) for item in value]
+    return value
 
 
 class BaseRoutingPolicy(PolicyVizMixin, IRoutingAlgorithm):
@@ -193,7 +202,8 @@ class BaseRoutingPolicy(PolicyVizMixin, IRoutingAlgorithm):
             sections = [
                 v
                 for k, v in raw_config.items()
-                if k != "seed" and k not in valid_fields and isinstance(v, (dict, list, DictConfig, ListConfig))
+                # Stage keys (e.g. a flat config's `acceptance_criteria` list) are not policy sections.
+                if k not in _RUNTIME_KEYS and k not in valid_fields and isinstance(v, (dict, list, DictConfig, ListConfig))
             ]
             policy_section = sections[0] if len(sections) == 1 else raw_config
 

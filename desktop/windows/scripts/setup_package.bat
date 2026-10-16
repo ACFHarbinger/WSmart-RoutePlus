@@ -4,7 +4,7 @@ rem
 rem   scripts\windows\setup.bat
 rem
 rem 1. installs uv if it is missing;
-rem 2. unpacks the code archive (code.zip or wsmart_route_source.zip) when logic\ is not there yet;
+rem 2. unpacks the code archive (code.zip or wsmart_route_source.zip) when logic\ is not there yet (the 1.0.0 release's pyproject.toml sits at the root);
 rem 3. creates the virtual environment (.venv), or updates it if it already exists
 rem    (with an NVIDIA GPU it also installs the CUDA build of torch);
 rem 4. unpacks data.zip into data\.
@@ -35,17 +35,17 @@ if errorlevel 1 goto :fail
 
 set "PYX=import sys,zipfile,pathlib;r=pathlib.Path(sys.argv[1]);s=sys.argv[3].strip('.');z=zipfile.ZipFile(r/sys.argv[2]);n=[x for x in z.namelist() if not x.startswith('__MACOSX/')];t=r if (not s or all(x.startswith(s+'/') for x in n)) else r/s;t.mkdir(parents=True,exist_ok=True);z.extractall(t,n);print('[setup]',sys.argv[2],'unpacked:',len(n),'entries ->',t)"
 
-if not exist "logic\pyproject.toml" (
+if not exist "logic\__init__.py" (
     if exist "code.zip" (
         uv run --no-project --quiet python -c "%PYX%" "%CD%" code.zip .
     ) else if exist "wsmart_route_source.zip" (
         uv run --no-project --quiet python -c "%PYX%" "%CD%" wsmart_route_source.zip .
     )
-    if not exist "logic\pyproject.toml" (echo [setup] logic\ is missing and no code archive was found & goto :fail)
+    if not exist "logic\__init__.py" (echo [setup] logic\ is missing and no code archive was found & goto :fail)
 )
 
 rem Creates .venv on the first run and brings it up to date afterwards.
-uv sync --package wsmart-route --extra solvers --no-dev
+uv sync --extra solvers --extra neural --no-dev
 if errorlevel 1 goto :fail
 
 rem On Windows the default torch wheel is CPU-only: with an NVIDIA GPU, switch to the CUDA build.

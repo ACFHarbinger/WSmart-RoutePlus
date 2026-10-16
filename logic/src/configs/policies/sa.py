@@ -22,9 +22,10 @@ Example:
     >>> config.profit_aware_operators
     False
 """
+
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, List, Optional
 
 from .other.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
@@ -63,8 +64,10 @@ class SAConfig:
     profit_aware_operators: bool = False
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
-    acceptance_criterion: AcceptanceConfig = AcceptanceConfig(
-        method="bmc", params=BoltzmannAcceptanceConfig(initial_temp=100.0, alpha=0.95)
+    acceptance_criterion: AcceptanceConfig = field(
+        default_factory=lambda: AcceptanceConfig(
+            method="bmc", params=BoltzmannAcceptanceConfig(initial_temp=100.0, alpha=0.95)
+        )
     )
     target_acceptances_per_node: int = 10
     max_attempts_multiplier: int = 100
@@ -73,7 +76,6 @@ class SAConfig:
     target_initial_acceptance: float = 0.80
     calibration_samples: int = 200
     n_restarts: int = 1
-
 
     @classmethod
     def from_config(cls, config: Any) -> "SAConfig":
@@ -86,6 +88,7 @@ class SAConfig:
             Instantiated SAConfig.
         """
         from dataclasses import fields
+
         # Get base params
         if isinstance(config, dict):
             params = cls(**{k: v for k, v in config.items() if k in {f.name for f in fields(cls)}})

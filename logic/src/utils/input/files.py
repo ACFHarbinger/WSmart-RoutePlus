@@ -150,7 +150,7 @@ def compose_dirpath(fun: T) -> T:
 
     The full path produced is::
 
-        <home_dir>/assets/<output_dir>/<ndays>days/<area><nbins>_<waste_type>[/<data_distribution>][/<run_name>]
+        <home_dir>/<output_dir>/<ndays>days/<area><nbins>_<waste_type>[/<data_distribution>][/<run_name>]
 
     The ``data_distribution`` and ``run_name`` components are appended only when
     they are non-empty strings.
@@ -181,7 +181,7 @@ def compose_dirpath(fun: T) -> T:
             home_dir: Home directory.
             ndays: Number of days.
             nbins: Number of bins (int or list of ints).
-            output_dir: Output directory name (relative to assets/).
+            output_dir: Output directory, relative to the repository root (or absolute).
             area: Geographic area identifier.
             waste_type: Waste type suffix for directory naming. Defaults to "".
             data_distribution: Data distribution sub-directory (e.g. ``"gamma3"``). Defaults to "".
@@ -194,7 +194,7 @@ def compose_dirpath(fun: T) -> T:
         """
 
         def _build(gs: Union[int, str]) -> str:
-            base = os.path.join(home_dir, "assets", output_dir, f"{ndays}days", f"{area}{gs}_{waste_type}")
+            base = os.path.join(home_dir, output_dir, f"{ndays}days", f"{area}{gs}_{waste_type}")
             extras = [d for d in (data_distribution, run_name) if d]
             return os.path.join(base, *extras) if extras else base
 
