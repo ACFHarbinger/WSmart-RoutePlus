@@ -145,6 +145,11 @@ CONFIG_KEYS = ["city", "N", "dist", "improver", "strategy", "cf", "sl_var", "acc
 #: block under each classical table and never enter the classical aggregates or cell medians.
 LEARNED_KEY = "AM"
 
+#: The static reference's ``constructor`` key: fixed Regular-k schedules (``strategy``) with the
+#: CVRP routing algorithm and no improver. Outside the factorial design, so outside every
+#: classical aggregate and the exclusion rule; reported as its own block of the routing table.
+STATIC_KEY = "CVRP"
+
 #: The summary vintage the paper reads: the 2026-10-13 classical rows plus the Attention Model's.
 DEFAULT_SUMMARY_DIR = REPO_ROOT / "docs/private/global/simulation/rerun-2026-10-16"
 
@@ -450,7 +455,7 @@ def pending_blocks(cfg: dict, table: str) -> list[dict]:
 
 
 def table_constructors(
-    clean: pd.DataFrame, horizon: int, cfg: dict, learned: pd.DataFrame, excluded: bool
+    clean: pd.DataFrame, horizon: int, cfg: dict, learned: pd.DataFrame, static: pd.DataFrame, excluded: bool
 ) -> str:
     """Per-constructor means and medians over the balanced grid at one horizon."""
     sub = balance_marginal(clean[clean.horizon == horizon], "constructor")
@@ -464,13 +469,19 @@ def table_constructors(
         lagg = aggregate(lsub, "constructor", CONSTRUCTOR_SPEC)
         lagg.index = [display_name(c, cfg) for c in lagg.index]
         blocks.append({"title": "", "rows": build_rows(lagg, unmarked(CONSTRUCTOR_SPEC))})
-    blocks += pending_blocks(cfg, "constructors")
+    ssub = static[static.horizon == horizon] if not static.empty else static
+    if not ssub.empty:
+        sagg = aggregate(ssub, "strategy", CONSTRUCTOR_SPEC)
+        blocks.append({"title": cfg["block_titles"]["static"], "rows": build_rows(sagg, unmarked(CONSTRUCTOR_SPEC))})
+    else:
+        blocks += pending_blocks(cfg, "constructors")
     fields = {
         "horizon": horizon,
         "runs": len(sub),
         "runs_per": int(counts.min()),
         "learned_runs": len(lsub),
         "after_exclusion": " after whole-cell exclusion" if excluded else "",
+        "static_runs": int(ssub.groupby("strategy").size().min()) if not ssub.empty else "TODO",
     }
     return render_template(
         "paper_results_table.tex.j2",
@@ -1249,26 +1260,6 @@ def fig_scale(clean: pd.DataFrame, horizon: int, out: Path, colors: dict, cfg: d
     savefig(fig, out / f"runtime_scaling_{horizon}d.png")
 
 
-def _recover_increments(fills: np.ndarray) -> np.ndarray:
-    """Recover the policy-independent daily waste increment per bin.
-
-    The fill-history spreadsheet records the *realised* level after each day's
-    collection, but the waste arriving each day is fixed by the demand
-    realisation (the simulator re-seeds waste per policy-and-day, so every
-    policy faces the identical increments). A drop between consecutive days
-    marks a collection (reset to zero), so the next day's level is exactly that
-    day's increment; otherwise the increment is the level rise.
-    """
-    inc = np.zeros_like(fills)
-    inc[:, 0] = fills[:, 0]
-    inc[:, 1:] = np.where(
-        fills[:, 1:] >= fills[:, :-1],
-        fills[:, 1:] - fills[:, :-1],
-        fills[:, 1:],
-    )
-    return inc
-
-
 def _simulate_last_minute(increments: np.ndarray, tau: float, capacity: float) -> np.ndarray:
     """Re-simulate the Last-Minute rule and return per-bin, per-day fill levels."""
     n_bins, n_days = increments.shape
@@ -1289,26 +1280,19 @@ def fig_fill_trajectory(out_dir: Path) -> None:
     The static aggregates show an ordered trade-off between efficiency and
     overflow, but not *why*. This figure shows the Last-Minute mechanism for three bins'
     fill levels over the 30-day horizon under the two Last-Minute thresholds,
-    CF70 and CF90, re-simulated from the recovered daily increments. CF70
+    CF70 and CF90, re-simulated from the scenario's daily deposits. CF70
     collects earlier and more often, holding the bin below the threshold; CF90
     defers collection until the bin is nearly full, hauling more per visit but
     occasionally overflowing. That is the trade-off, at the level of a single
     bin, before any aggregation.
     """
-    import openpyxl
-
-    candidate = (
-        REPO_ROOT / "assets/output/30days/riomaior100_plastic/gamma3/lm_ftsp/fill_history"
-    )
-    xlsx = sorted(candidate.glob("*.xlsx"))[0] if candidate.is_dir() else None
-    if xlsx is None:
-        print("  Skipped fill-trajectory figure (no fill_history found).")
+    # The scenario's daily deposits, in % of bin capacity, as (bins, days). They are the
+    # same for every policy; the simulator's fill_history workbooks hold this same matrix.
+    dataset = REPO_ROOT / "data/simulator/datasets/riomaior100_gamma3_wsr30_N1_seed42.npz"
+    if not dataset.exists():
+        print(f"  Skipped fill-trajectory figure (missing {dataset.name}).")
         return
-
-    wb = openpyxl.load_workbook(xlsx, read_only=True, data_only=True)
-    ws = wb[wb.sheetnames[0]]
-    fills = np.array([[float(c) for c in row] for row in ws.iter_rows(values_only=True)])
-    increments = _recover_increments(fills)
+    increments = np.load(dataset)["waste"][0].T.astype(float)
     capacity = 100.0
 
     levels_70 = _simulate_last_minute(increments, 70.0, capacity)
@@ -1398,7 +1382,8 @@ def main() -> None:
 
     print("Checking data integrity:")
     learned_raw = raw[raw.constructor == LEARNED_KEY]
-    raw = raw[raw.constructor != LEARNED_KEY]
+    static = raw[raw.constructor == STATIC_KEY]
+    raw = raw[~raw.constructor.isin([LEARNED_KEY, STATIC_KEY])]
     clean, degenerate = split_degenerate(raw)
     clean = drop_affected_cells(clean, degenerate)
     paired = paired_horizon_frame(clean)
@@ -1411,7 +1396,7 @@ def main() -> None:
     if not args.figures_only:
         args.tables_dir.mkdir(parents=True, exist_ok=True)
         print(f"Writing LaTeX tables to {args.tables_dir}:")
-        write(args.tables_dir / "results_constructors.tex", table_constructors(clean, horizon, cfg, learned, not degenerate.empty), args.force)
+        write(args.tables_dir / "results_constructors.tex", table_constructors(clean, horizon, cfg, learned, static, not degenerate.empty), args.force)
         write(args.tables_dir / "results_strategies.tex", table_strategies(clean, horizon, cfg, learned), args.force)
         write(args.tables_dir / "results_improvers.tex", table_improvers(clean, horizon, cfg, learned), args.force)
         write(args.tables_dir / "results_horizon.tex", table_horizon(paired, cfg, learned_paired, int((raw.horizon == 90).sum())), args.force)
