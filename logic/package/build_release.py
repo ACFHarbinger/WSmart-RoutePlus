@@ -649,6 +649,13 @@ def run_build(manifest: dict, out: Path) -> int:  # noqa: C901
         )
         notes.append(f"{len(collect_failures)} test files excluded by collection validation")
 
+    # --- excluded packages: drop the data files their pruned code read ----- #
+    for excluded in manifest["excluded_packages"]:
+        folder = out / Path(*excluded.split("."))
+        if folder.is_dir() and not any(folder.rglob("*.py")):
+            shutil.rmtree(folder)
+            notes.append(f"{excluded}: removed its data files (no code ships)")
+
     # --- task defaults: drop the policy groups that do not ship ------------ #
     for task_yaml in sorted((out / "logic" / "configs" / "tasks").glob("*.yaml")):
         dropped = prune_policy_defaults(task_yaml, out / "logic" / "configs" / "policies")
@@ -762,7 +769,7 @@ def write_release_pyproject(manifest: dict, out: Path) -> None:
     lines += ["", "[tool.setuptools.packages.find]", 'include = ["logic*", "packages*"]', ""]
     lines += [
         "[tool.setuptools.package-data]",
-        'logic = ["release.yaml", "configs/**/*.yaml", "src/tracking/logging/modules/popup.html"]',
+        'logic = ["release.yaml", "configs/**/*.yaml", "src/py.typed", "src/**/*.html", "src/**/*.json", "src/**/*.sql"]',
         "",
     ]
     lines += release_uv_indexes(base, deps + [dep for group in extras.values() for dep in group])

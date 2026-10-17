@@ -32,6 +32,8 @@ sys.path.insert(0, ROOT)  # make `logic` importable for collect_submodules
 # Policies, models and configs are resolved through string-keyed registries and
 # Hydra _target_ strings, so collect every logic module explicitly.
 hiddenimports = collect_submodules("logic") + collect_submodules("packages")
+# SciPy's vendored array-API layer imports its namespaces dynamically (e.g. ...numpy.fft).
+hiddenimports += collect_submodules("scipy._external")
 for pkg in ("hydra", "omegaconf", "tensordict", "torchrl", "pytorch_lightning", "lightning_fabric"):
     hiddenimports += collect_submodules(pkg)
 hiddenimports += ["shapely.geometry", "openpyxl", "jinja2"]
@@ -50,6 +52,9 @@ datas = [
     (os.path.join(ROOT, "logic/configs"), "logic/configs"),
     (os.path.join(ROOT, "logic/release.yaml"), "logic"),
     (os.path.join(ROOT, "logic/src/tracking/logging/modules/popup.html"), "logic/src/tracking/logging/modules"),
+    (os.path.join(ROOT, "logic/src/tracking/core/schema.sql"), "logic/src/tracking/core"),
+    (os.path.join(ROOT, "logic/src/tracking/core/queries.json"), "logic/src/tracking/core"),
+    (os.path.join(ROOT, "logic/src/tracking/database/sql"), "logic/src/tracking/database/sql"),
 ]
 datas += _solver_datas
 # Hydra ships its own config files; Lightning reads version files at import.
@@ -94,7 +99,13 @@ a = Analysis(
     optimize=0,
     # Lightning reads its version only if __version__.py exists on disk next to
     # __init__; keep these packages' sources on disk as well as in the archive.
-    module_collection_mode={"pytorch_lightning": "pyz+py", "lightning_fabric": "pyz+py"},
+    # torch_geometric compiles TorchScript at import (needs its .py sources); lightning inspects source too.
+    module_collection_mode={
+        "pytorch_lightning": "pyz+py",
+        "lightning_fabric": "pyz+py",
+        "lightning": "pyz+py",
+        "torch_geometric": "pyz+py",
+    },
 )
 
 pyz = PYZ(a.pure)

@@ -41,7 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `release.yaml` adds the packages the shipped code imports but the release did not declare: `plotext` and `seaborn` (core), `pyomo` (solvers), `lightning`, `tensorboard`, `loss-landscapes` and `plotly` (neural).
 - The setup scripts (`desktop/*/setup_package.*`) target the 1.0.0 layout: a root `pyproject.toml`, and `uv sync --extra solvers --extra neural`.
 - `ci/build_windows_exe.sh` reads the 1.0.0 root `pyproject.toml` (core, `solvers` and `neural`; without torch-scatter/torch-sparse, which have no Windows wheels, and Pyomo).
-- `ci/simulator_release.spec` builds the release executable. Unlike the minimal spec, it bundles OR-Tools, PyVRP, Fast-TSP and matplotlib.
+- The release's package-data now covers the data files the shipped code reads (`src/**/*.sql`, `*.json`, `*.html`, `py.typed`); before, only `popup.html` was installed and a non-editable install lacked the tracking queries. The builder also drops the data files of excluded packages (the simulation-HPO rules and jobs).
+- `ci/simulator_release.spec` builds the release executable. Unlike the minimal spec, it bundles OR-Tools, PyVRP, Fast-TSP and matplotlib, the tracking SQL/JSON files, SciPy's dynamically imported `scipy._external` modules, and the sources of `torch_geometric` and `lightning`, which TorchScript and `inspect` read at import.
 - Tests updated: output paths, a removed `get_cmap` patch, and the HPO health test skipping without optuna. The unit suite gives 2,204 passed, 4 skipped, with no deselection. Every one of the ten released routing algorithms completes a 3-day simulation from the built release in its own Python 3.12 environment.
 
 #### Open
