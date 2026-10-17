@@ -30,12 +30,21 @@ cd "$PKG"
 py -m pip install --upgrade pip
 py -m pip install "torch==$TORCH" --index-url "https://download.pytorch.org/whl/$CUDA_TAG"
 # Only the dependencies are installed: PyInstaller reads logic/ straight from the package folder.
+# The 1.0.0 release keeps its dependencies in the root pyproject.toml (extras: solvers, neural); the
+# older exports kept them in logic/pyproject.toml (solvers only). torch-scatter/torch-sparse have no
+# Windows wheels for this torch and PyG runs without them; Pyomo is excluded from the executable.
 python3 - > build_requirements.txt <<'PYEOF'
-import re
-text = open("logic/pyproject.toml").read()
-deps = re.search(r"^dependencies = \[(.*?)^\]", text, re.S | re.M).group(1)
-solvers = re.search(r"^solvers = \[(.*?)^\]", text, re.S | re.M).group(1)
-print("\n".join(re.findall(r'"([^"]+)"', deps + solvers)))
+import os, re
+path = "logic/pyproject.toml" if os.path.exists("logic/pyproject.toml") else "pyproject.toml"
+text = open(path).read()
+blocks = [re.search(r"^dependencies = \[(.*?)^\]", text, re.S | re.M).group(1)]
+for extra in ("solvers", "neural"):
+    match = re.search(rf"^{extra} = \[(.*?)^\]", text, re.S | re.M)
+    if match:
+        blocks.append(match.group(1))
+skip = ("torch-scatter", "torch-sparse", "torch_scatter", "torch_sparse", "pyomo")
+reqs = [r for r in re.findall(r'"([^"]+)"', "".join(blocks)) if not r.startswith(skip)]
+print("\n".join(reqs))
 PYEOF
 py -m pip install -r build_requirements.txt pyinstaller==6.19.0
 # Stop before the long build if the CUDA build is not the one installed.
