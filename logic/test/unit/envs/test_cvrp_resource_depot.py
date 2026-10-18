@@ -1,7 +1,7 @@
 """CVRP uses the routing base's depot-aligned load vector across every trip."""
 
 import torch
-from logic.src.envs.tasks.cvrp import CVRPEnv
+from logic.src.envs.cvrp import CVRPEnv
 from tensordict import TensorDict
 
 

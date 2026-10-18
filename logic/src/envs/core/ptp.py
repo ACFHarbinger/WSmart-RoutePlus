@@ -9,9 +9,10 @@ from __future__ import annotations
 from typing import Any, Dict, Optional
 
 import torch
+
 from logic.src.constants.tasks import COST_KM, REVENUE_KG
 from logic.src.constants.temporal import get_default_temporal_params
-from logic.src.envs.tasks.common.objectives import profit_objective
+from logic.src.envs.common.objectives import profit_objective
 
 
 def closed_tour_length(dm: torch.Tensor, pi: torch.Tensor) -> torch.Tensor:
@@ -143,7 +144,6 @@ def evaluate_profitable_tour(  # noqa: C901
     else:
         length = torch.zeros(bs, device=device)
 
-    
     if raw_waste is not None:
         if raw_waste.dim() == 1:
             raw_waste = raw_waste.unsqueeze(0).expand(bs, -1)

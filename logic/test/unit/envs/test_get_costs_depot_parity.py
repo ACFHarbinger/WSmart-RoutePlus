@@ -9,9 +9,9 @@ Addresses Issue #61 design item:
 
 import pytest
 import torch
-from logic.src.envs.tasks.base import BaseProblem
-from logic.src.envs.tasks.cptp import CPTP
-from logic.src.envs.tasks.ptp import PTP, PTPEnv
+from logic.src.envs.base.problem import BaseProblem
+from logic.src.envs.cptp import CPTP
+from logic.src.envs.ptp import PTP, PTPEnv
 
 
 @pytest.mark.unit

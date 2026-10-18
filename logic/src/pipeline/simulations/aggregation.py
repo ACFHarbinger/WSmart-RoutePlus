@@ -6,7 +6,7 @@ all-failed cell has no numeric estimate.
 
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
-from logic.src.envs.tasks.common.metrics import (
+from logic.src.envs.common.metrics import (
     DEFAULT_METRICS,
     METRICS,
     MetricSummary,

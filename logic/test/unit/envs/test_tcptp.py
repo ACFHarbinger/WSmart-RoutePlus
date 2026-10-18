@@ -2,7 +2,7 @@
 
 import pytest
 import torch
-from logic.src.envs.tasks.tcptp import TCPTP, TCPTPEnv, TCPTPGenerator
+from logic.src.envs.tcptp import TCPTP, TCPTPEnv, TCPTPGenerator
 from tensordict import TensorDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

@@ -28,7 +28,7 @@ from typing import Any, Deque, Dict, List, Optional, Tuple, cast
 import numpy as np
 
 from logic.src.configs.policies.rts import RTSConfig
-from logic.src.envs.tasks.common.expand_pool import current_expand_pool
+from logic.src.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators import (
     cluster_removal,
     greedy_insertion,

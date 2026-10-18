@@ -1,4 +1,7 @@
-"""Traveling Salesman Problem (TSP) task, environment, and generator."""
+"""Traveling Salesman Problem (TSP) task, environment, and generator.
+
+The module also holds ``TSPGenerator``, the problem's instance generator.
+"""
 
 from __future__ import annotations
 
@@ -6,10 +9,18 @@ from typing import Any, Dict, Optional, Union
 
 import torch
 
+from logic.src.envs.base.generator import RoutingGenerator
+from logic.src.envs.base.problem import BaseProblem
 from logic.src.envs.base.routing import RoutingEnv
-from logic.src.envs.generators.tsp import TSPGenerator
-from logic.src.envs.tasks.base import BaseProblem
-from logic.src.envs.tasks.spec import PROBLEMS, ProblemSpec
+from logic.src.envs.spec import PROBLEMS, ProblemSpec
+
+
+class TSPGenerator(RoutingGenerator):
+    """
+    Generator for Traveling Salesman Problem (TSP) instances: customer locations and a depot.
+
+    The tour starts and ends at the depot, which ``TSPEnv`` prepends as node 0.
+    """
 
 
 class TSPEnv(RoutingEnv):
@@ -96,7 +107,7 @@ TSP_SPEC = ProblemSpec(
     objective=lambda distance_km, **kw: -float(distance_km),
     constraints=(),
     metrics=("cost", "reward", "length"),
-    env_target="logic.src.envs.tasks.tsp:TSPEnv",
+    env_target="logic.src.envs.tsp:TSPEnv",
     expand_pool=False,
 )
 PROBLEMS.register(TSP_SPEC)

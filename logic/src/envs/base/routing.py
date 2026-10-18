@@ -6,7 +6,7 @@ builds elementary routes from the depot under declarative resource constraints
 step, masking and reward logic.
 
 Attributes:
-    RoutingGenerator: Re-exported from :mod:`logic.src.envs.generators.base`.
+    RoutingGenerator: Re-exported from :mod:`logic.src.envs.base.generator`.
     RoutingEnv: Shared routing environment.
 
 Example:
@@ -21,10 +21,10 @@ import torch
 from tensordict import TensorDict, TensorDictBase
 
 from logic.src.envs.base.base import RL4COEnvBase
+from logic.src.envs.base.generator import Generator, RoutingGenerator
 from logic.src.envs.base.ops import OpsMixin, as_batch_nodes
 from logic.src.envs.base.resources import Resource
-from logic.src.envs.generators.base import Generator, RoutingGenerator
-from logic.src.envs.tasks.common.objectives import distance_objective, profit_objective
+from logic.src.envs.common.objectives import distance_objective, profit_objective
 
 
 class RoutingEnv(RL4COEnvBase):

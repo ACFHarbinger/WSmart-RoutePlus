@@ -134,8 +134,8 @@ def run_check(manifest: dict) -> int:  # noqa: C901
             if key not in stage_entries[stage]:
                 problems.append(f"stage {stage}: key {key!r} is not registered in _manifest.py")
     for problem_name in manifest["problems"]:
-        if not (LOGIC / "src" / "envs" / "tasks" / f"{problem_name}.py").is_file():
-            problems.append(f"problem {problem_name!r}: no envs/tasks/{problem_name}.py")
+        if not (LOGIC / "src" / "envs" / f"{problem_name}.py").is_file():
+            problems.append(f"problem {problem_name!r}: no envs/{problem_name}.py")
     for seed in manifest["infrastructure"]:
         if module_to_file(seed, REPO) is None:
             problems.append(f"infrastructure seed {seed!r} does not resolve to a file")

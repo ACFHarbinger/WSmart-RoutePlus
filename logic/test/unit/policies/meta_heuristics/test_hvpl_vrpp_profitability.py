@@ -56,7 +56,7 @@ def test_hvpl_respects_subset():
     policy = HVPLPolicy(config=config)
     bins_mock = type("obj", (object,), {"c": np.array([50.0] * 10)})
 
-    from logic.src.envs.tasks.common.expand_pool import reset_expand_pool, set_expand_pool
+    from logic.src.envs.common.expand_pool import reset_expand_pool, set_expand_pool
 
     token = set_expand_pool(False)
     try:

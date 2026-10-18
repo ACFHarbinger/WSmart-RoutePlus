@@ -23,7 +23,7 @@ from typing import Any, Deque, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from logic.src.envs.tasks.common.expand_pool import current_expand_pool
+from logic.src.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators import build_greedy_routes
 from logic.src.policies.helpers.operators.destroy_ruin import (
     cluster_removal as cluster_removal_op,

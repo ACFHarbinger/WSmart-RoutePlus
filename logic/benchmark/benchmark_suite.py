@@ -5,7 +5,7 @@ import torch
 from tensordict import TensorDict
 
 from logic.src.configs.policies.swc_tcf import SWCTCFConfig
-from logic.src.envs.tasks import PTP
+from logic.src.envs import PTP
 from logic.src.models import AttentionModel
 from logic.src.models.subnets.factories import AttentionComponentFactory
 from logic.src.policies.routing.base.sub_problem import build_subproblem

@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 import numpy as np
 from omegaconf import DictConfig, ListConfig, OmegaConf
 
-from logic.src.envs.tasks.common.expand_pool import current_expand_pool
+from logic.src.envs.common.expand_pool import current_expand_pool
 from logic.src.interfaces.context.search_context import ConstructionMetrics, SearchContext, merge_context
 from logic.src.interfaces.routing_algorithm import IRoutingAlgorithm
 from logic.src.pipeline.simulations.repository import load_area_and_waste_type_params

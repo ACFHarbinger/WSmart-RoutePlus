@@ -1,27 +1,91 @@
-"""Environments. Concrete envs load when ``get_env`` is called."""
+"""Environments, instance generators and problem tasks.
 
+Each problem lives in one module, ``logic/src/envs/<problem>.py``, holding its
+instance generator, environment and task class. The shared machinery is in
+``envs/base/`` (environment bases, ``Generator``/``RoutingGenerator``,
+``BaseProblem``, resources), ``envs/common/`` (torch-free objectives, KPIs and
+released specs), ``envs/core/`` and ``envs/spec.py`` (``ProblemSpec`` registry).
+
+Nothing is imported eagerly: names resolve on first access, and ``get_env`` /
+``get_generator`` import only the module of the requested problem, so importing
+shared objectives or KPIs requires no neural extra.
+
+Attributes:
+    ENV_TARGETS: Environment name -> lazy import target.
+    GENERATOR_TARGETS: Generator name -> lazy import target.
+    GENERATOR_REGISTRY: Read-only mapping name -> generator class, imported on access.
+    get_env: Build an environment by name.
+    get_generator: Build an instance generator by name.
+
+Example:
+    >>> from logic.src.envs import get_env, get_generator
+    >>> env = get_env("cptp", num_loc=20)
+    >>> td = get_generator("ptp", num_loc=20)(batch_size=4)
+"""
+
+from collections.abc import Iterator, Mapping
 from typing import Any, Dict
 
-from logic.src.utils.registry import import_target
+from logic.src.utils.registry import import_target, lazy_getattr
+
+_PROBLEMS = ("ptp", "cptp", "tcptp", "cvrp", "tsp", "atsp", "op", "pctsp", "spctsp", "pdp", "irp", "thop")
+_CLASS_PREFIX = {name: name.upper() for name in _PROBLEMS} | {"thop": "ThOP"}
 
 ENV_TARGETS: Dict[str, str] = {
-    "ptp": "logic.src.envs.tasks.ptp:PTPEnv",
-    "cptp": "logic.src.envs.tasks.cptp:CPTPEnv",
-    "tcptp": "logic.src.envs.tasks.tcptp:TCPTPEnv",
-    "tsp": "logic.src.envs.tasks.tsp:TSPEnv",
+    **{name: f"logic.src.envs.{name}:{_CLASS_PREFIX[name]}Env" for name in _PROBLEMS},
     "tsp_kopt": "logic.src.envs.tsp_kopt:TSPkoptEnv",
-    "irp": "logic.src.envs.tasks.irp:IRPEnv",
-    "atsp": "logic.src.envs.tasks.atsp:ATSPEnv",
-    "cvrp": "logic.src.envs.tasks.cvrp:CVRPEnv",
-    "op": "logic.src.envs.tasks.op:OPEnv",
-    "pctsp": "logic.src.envs.tasks.pctsp:PCTSPEnv",
-    "spctsp": "logic.src.envs.tasks.spctsp:SPCTSPEnv",
-    "pdp": "logic.src.envs.tasks.pdp:PDPEnv",
-    "thop": "logic.src.envs.tasks.thop:ThOPEnv",
 }
 
 # Kept for callers that inspect keys. Values are resolved on get_env.
 ENV_REGISTRY = ENV_TARGETS
+
+GENERATOR_TARGETS: Dict[str, str] = {
+    **{name: f"logic.src.envs.{name}:{_CLASS_PREFIX[name]}Generator" for name in _PROBLEMS if name != "spctsp"},
+    "spctsp": "logic.src.envs.pctsp:PCTSPGenerator",  # SPCTSP reuses the PCTSP generator
+}
+
+_TARGETS: Dict[str, str] = {
+    "BIN_CAPACITY": "logic.src.constants.tasks:BIN_CAPACITY",
+    "COST_KM": "logic.src.constants.tasks:COST_KM",
+    "REVENUE_KG": "logic.src.constants.tasks:REVENUE_KG",
+    "VEHICLE_CAPACITY": "logic.src.constants.tasks:VEHICLE_CAPACITY",
+    "RL4COEnvBase": "logic.src.envs.base.base:RL4COEnvBase",
+    "ImprovementEnvBase": "logic.src.envs.base.improvement:ImprovementEnvBase",
+    "RoutingEnv": "logic.src.envs.base.routing:RoutingEnv",
+    "Resource": "logic.src.envs.base.resources:Resource",
+    "LoadResource": "logic.src.envs.base.resources:LoadResource",
+    "ShiftTimeResource": "logic.src.envs.base.resources:ShiftTimeResource",
+    "Generator": "logic.src.envs.base.generator:Generator",
+    "RoutingGenerator": "logic.src.envs.base.generator:RoutingGenerator",
+    "BaseProblem": "logic.src.envs.base.problem:BaseProblem",
+    "ProblemSpec": "logic.src.envs.spec:ProblemSpec",
+    "ProblemRegistry": "logic.src.envs.spec:ProblemRegistry",
+    "PROBLEMS": "logic.src.envs.spec:PROBLEMS",
+    "TSPkoptEnv": "logic.src.envs.tsp_kopt:TSPkoptEnv",
+    "SPCTSPGenerator": "logic.src.envs.spctsp:SPCTSPGenerator",
+    **{f"{_CLASS_PREFIX[n]}Env": f"logic.src.envs.{n}:{_CLASS_PREFIX[n]}Env" for n in _PROBLEMS},
+    **{_CLASS_PREFIX[n]: f"logic.src.envs.{n}:{_CLASS_PREFIX[n]}" for n in _PROBLEMS},
+    **{f"{_CLASS_PREFIX[n]}Generator": GENERATOR_TARGETS[n] for n in _PROBLEMS if n != "spctsp"},
+}
+
+
+class _LazyRegistry(Mapping):
+    """A name -> class mapping that imports a class only when it is looked up."""
+
+    def __init__(self, targets: Dict[str, str]) -> None:
+        self._targets = targets
+
+    def __getitem__(self, name: str) -> Any:
+        return import_target(self._targets[name])
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._targets)
+
+    def __len__(self) -> int:
+        return len(self._targets)
+
+
+GENERATOR_REGISTRY: Mapping = _LazyRegistry(GENERATOR_TARGETS)
 
 
 def get_env(name: str, **kwargs: Any) -> Any:
@@ -29,91 +93,30 @@ def get_env(name: str, **kwargs: Any) -> Any:
     key = name.lower()
     if key not in ENV_TARGETS:
         raise ValueError(f"Unknown environment: {name}. Available: {list(ENV_TARGETS.keys())}")
-    env_cls = import_target(ENV_TARGETS[key])
-    return env_cls(**kwargs)
+    return import_target(ENV_TARGETS[key])(**kwargs)
+
+
+def get_generator(name: str, **kwargs: Any) -> Any:
+    """Build an instance generator by name (e.g. "ptp", "cptp", "tsp", "irp", "atsp", "cvrp").
+
+    Raises:
+        ValueError: If the generator name is not found.
+    """
+    if name not in GENERATOR_TARGETS:
+        raise ValueError(f"Unknown generator: {name}. Available: {list(GENERATOR_TARGETS.keys())}")
+    return GENERATOR_REGISTRY[name](**kwargs)
 
 
 def __getattr__(name: str) -> Any:
-    mapping = {
-        "RL4COEnvBase": "logic.src.envs.base.base:RL4COEnvBase",
-        "ImprovementEnvBase": "logic.src.envs.base.improvement:ImprovementEnvBase",
-        "RoutingEnv": "logic.src.envs.base.routing:RoutingEnv",
-        "Resource": "logic.src.envs.base.resources:Resource",
-        "LoadResource": "logic.src.envs.base.resources:LoadResource",
-        "ShiftTimeResource": "logic.src.envs.base.resources:ShiftTimeResource",
-        "RoutingGenerator": "logic.src.envs.generators.base:RoutingGenerator",
-        "Generator": "logic.src.envs.generators.base:Generator",
-        "PTPGenerator": "logic.src.envs.generators.ptp:PTPGenerator",
-        "CPTPGenerator": "logic.src.envs.generators.cptp:CPTPGenerator",
-        "TCPTPGenerator": "logic.src.envs.generators.tcptp:TCPTPGenerator",
-        "CVRPGenerator": "logic.src.envs.generators.cvrp:CVRPGenerator",
-        "TSPGenerator": "logic.src.envs.generators.tsp:TSPGenerator",
-        "ATSPGenerator": "logic.src.envs.generators.atsp:ATSPGenerator",
-        "IRPGenerator": "logic.src.envs.generators.irp:IRPGenerator",
-        "OPGenerator": "logic.src.envs.generators.op:OPGenerator",
-        "PCTSPGenerator": "logic.src.envs.generators.pctsp:PCTSPGenerator",
-        "SPCTSPGenerator": "logic.src.envs.tasks.spctsp:SPCTSPGenerator",
-        "PDPGenerator": "logic.src.envs.generators.pdp:PDPGenerator",
-        "ThOPGenerator": "logic.src.envs.generators.thop:ThOPGenerator",
-        "PTPEnv": "logic.src.envs.tasks.ptp:PTPEnv",
-        "CPTPEnv": "logic.src.envs.tasks.cptp:CPTPEnv",
-        "TCPTPEnv": "logic.src.envs.tasks.tcptp:TCPTPEnv",
-        "TSPEnv": "logic.src.envs.tasks.tsp:TSPEnv",
-        "TSPkoptEnv": "logic.src.envs.tsp_kopt:TSPkoptEnv",
-        "IRPEnv": "logic.src.envs.tasks.irp:IRPEnv",
-        "ATSPEnv": "logic.src.envs.tasks.atsp:ATSPEnv",
-        "CVRPEnv": "logic.src.envs.tasks.cvrp:CVRPEnv",
-        "OPEnv": "logic.src.envs.tasks.op:OPEnv",
-        "PCTSPEnv": "logic.src.envs.tasks.pctsp:PCTSPEnv",
-        "SPCTSPEnv": "logic.src.envs.tasks.spctsp:SPCTSPEnv",
-        "PDPEnv": "logic.src.envs.tasks.pdp:PDPEnv",
-        "ThOPEnv": "logic.src.envs.tasks.thop:ThOPEnv",
-        "ProblemSpec": "logic.src.envs.tasks.spec:ProblemSpec",
-        "PROBLEMS": "logic.src.envs.tasks.spec:PROBLEMS",
-    }
-    if name not in mapping:
-        raise AttributeError(f"module has no attribute {name!r}")
-    obj = import_target(mapping[name])
-    globals()[name] = obj
-    return obj
+    return lazy_getattr(globals(), _TARGETS, name)
 
 
 __all__ = [
     "ENV_REGISTRY",
+    "ENV_TARGETS",
+    "GENERATOR_REGISTRY",
+    "GENERATOR_TARGETS",
     "get_env",
-    "RL4COEnvBase",
-    "ImprovementEnvBase",
-    "RoutingEnv",
-    "Resource",
-    "LoadResource",
-    "ShiftTimeResource",
-    "Generator",
-    "RoutingGenerator",
-    "PTPGenerator",
-    "CPTPGenerator",
-    "TCPTPGenerator",
-    "CVRPGenerator",
-    "TSPGenerator",
-    "ATSPGenerator",
-    "IRPGenerator",
-    "OPGenerator",
-    "PCTSPGenerator",
-    "SPCTSPGenerator",
-    "PDPGenerator",
-    "ThOPGenerator",
-    "PTPEnv",
-    "CPTPEnv",
-    "TCPTPEnv",
-    "TSPEnv",
-    "TSPkoptEnv",
-    "IRPEnv",
-    "ATSPEnv",
-    "CVRPEnv",
-    "OPEnv",
-    "PCTSPEnv",
-    "SPCTSPEnv",
-    "PDPEnv",
-    "ThOPEnv",
-    "ProblemSpec",
-    "PROBLEMS",
+    "get_generator",
+    *_TARGETS,
 ]

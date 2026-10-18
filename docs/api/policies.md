@@ -608,6 +608,8 @@ Cross-exchange operator for intra-route local search.
 
 k-opt Intra-Route Operator Module.
 
+- `reversal_delta()` — Cost change of driving ``segment``'s interior arcs in the opposite direction.
+- `directed_two_opt_route()` — Best-improvement 2-opt of one route with exact directed move costs.
 - `two_opt_route()` — Apply 2-opt to a single route (iterative, first-improvement).
 - `three_opt_route()` — Apply 3-opt to a single route (iterative, first-improvement).
 - `move_2opt_intra()` — 2-opt intra-route operator: reverse a segment within a route.

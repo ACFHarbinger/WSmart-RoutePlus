@@ -6,8 +6,8 @@ from typing import Any, Dict, Optional, Union
 
 import torch
 
-from logic.src.envs.tasks.pctsp import PCTSP, PCTSPEnv, PCTSPGenerator
-from logic.src.envs.tasks.spec import PROBLEMS, ProblemSpec
+from logic.src.envs.pctsp import PCTSP, PCTSPEnv, PCTSPGenerator
+from logic.src.envs.spec import PROBLEMS, ProblemSpec
 
 # SPCTSP draws on the PCTSP generator, whose instances carry the stochastic prize.
 SPCTSPGenerator = PCTSPGenerator
@@ -54,7 +54,7 @@ SPCTSP_SPEC = ProblemSpec(
     objective=lambda neg_reward, **kw: -float(neg_reward),
     constraints=(),
     metrics=("cost", "reward", "saved_penalty", "length"),
-    env_target="logic.src.envs.tasks.spctsp:SPCTSPEnv",
+    env_target="logic.src.envs.spctsp:SPCTSPEnv",
     expand_pool=True,
 )
 PROBLEMS.register(SPCTSP_SPEC)

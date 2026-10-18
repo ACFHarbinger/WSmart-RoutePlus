@@ -2,7 +2,7 @@
 
 import pytest
 import torch
-from logic.src.envs.generators import (
+from logic.src.envs import (
     GENERATOR_REGISTRY,
     PTPGenerator,
     TSPGenerator,

@@ -6,7 +6,7 @@ Attributes:
     RoutingGenerator: Depot-and-customers generator shared by the routing problems.
 
 Example:
-    >>> from src.envs.generators import get_generator
+    >>> from src.envs import get_generator
     >>> generator = get_generator("ptp", num_loc=20)
     >>> problem = generator.generate()
     >>> problem

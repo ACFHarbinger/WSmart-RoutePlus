@@ -158,7 +158,7 @@ def test_repeated_setup_keeps_pool_identity(promote):
 
 
 def test_real_ptp_pool_and_greedy_rollout():
-    from logic.src.envs.tasks.ptp import PTPEnv
+    from logic.src.envs.ptp import PTPEnv
     from logic.src.models.core.attention_model.policy import AttentionModelPolicy
 
     env = PTPEnv(num_loc=5, batch_size=2, device="cpu")
