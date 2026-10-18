@@ -420,6 +420,10 @@ class SweepLocalSearch(LocalSearch):
     def two_opt_intra(self) -> bool:
         """2-opt intra-route: reverse segments within routes.
 
+        Position -1 stands for the depot, so segments that start at the route's
+        first bin (including the whole route) can be reversed too; on directed
+        distances that changes the cost.
+
         Args:
             None
 
@@ -428,11 +432,11 @@ class SweepLocalSearch(LocalSearch):
         """
         for r_u in range(len(self.routes)):
             route = self.routes[r_u]
-            if len(route) < 3:
+            if len(route) < 2:
                 continue
 
-            for p_u in range(len(route) - 1):
-                u = route[p_u]
+            for p_u in range(-1, len(route) - 1):
+                u = route[p_u] if p_u >= 0 else 0
                 for p_v in range(p_u + 2, len(route)):
                     v = route[p_v]
                     if move_2opt_intra(self, u, v, r_u, p_u, r_u, p_v):

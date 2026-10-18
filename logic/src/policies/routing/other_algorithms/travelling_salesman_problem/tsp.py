@@ -36,6 +36,7 @@ import numpy as np
 from networkx.algorithms.shortest_paths.weighted import dijkstra_path
 
 from logic.src.constants.routing import SCALE
+from logic.src.policies.helpers.operators.intra_route_local_search.k_opt import directed_two_opt_route
 from logic.src.utils.routing.tours import get_multi_tour, get_route_cost  # noqa: F401  (re-exported)
 
 from .two_opt import solve_tsp_2opt
@@ -61,7 +62,9 @@ def find_route(C, to_collect, time_limit=2.0, seed=42, engine="fast_tsp"):
 
     Returns:
         List[int]: Tour starting and ending at depot. Format: [0, node1, node2, ..., 0].
-        If fast_tsp fails, the input order ``[0, *to_collect, 0]`` is returned unchanged.
+        The fast_tsp order is driven in its cheaper direction on ``C`` and polished by a
+        directed 2-opt, since fast_tsp treats ``C`` as symmetric. If fast_tsp fails, the
+        input order ``[0, *to_collect, 0]`` is returned unchanged.
     """
     if engine == "custom":
         return solve_tsp_2opt(C, list(to_collect), depot=0)
@@ -79,14 +82,21 @@ def find_route(C, to_collect, time_limit=2.0, seed=42, engine="fast_tsp"):
         return to_collect_tmp + [0]
     zero_index = tour.index(0)
     tour = tour[zero_index:] + tour[:zero_index]
-    # cost = fast_tsp.compute_cost(tour, tmpC)
-    tour2 = []
-    for ii in range(0, len(tour) - 1):
-        current_node = to_collect_tmp[tour[ii]]
-        next_node = to_collect_tmp[tour[ii + 1]]
-        tour2.append(current_node)
-    tour2.extend([next_node, 0])
-    return tour2
+    bins = [to_collect_tmp[i] for i in tour[1:]]
+    # fast-tsp prices its tours as if distances were symmetric: for up to 20 nodes it
+    # returns the optimum of the transposed matrix, and its local search ignores the
+    # direction of reversed segments. Drive the cheaper direction on the true matrix,
+    # then polish with a 2-opt that prices every reversal with the directed costs.
+    if _directed_length(C, bins[::-1]) < _directed_length(C, bins):
+        bins = bins[::-1]
+    bins = directed_two_opt_route(bins, C)
+    return [0, *bins, 0]
+
+
+def _directed_length(C, bins):
+    """Length of the depot-to-depot route through ``bins`` on the directed matrix ``C``."""
+    path = [0, *bins, 0]
+    return float(sum(C[a, b] for a, b in zip(path, path[1:], strict=False)))
 
 
 def get_path_cost(G, p):
