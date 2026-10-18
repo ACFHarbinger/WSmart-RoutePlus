@@ -7,16 +7,11 @@ destroy and repair heuristics (add/remove bins) and multi-node relocations
 
 Attributes:
     remove_bins_from_route: Remove random bins from a single route.
-    move_n_route_random: Move n random bins from one route to another.
-    swap_n_route_random: Swap n random bins between two distinct routes.
     remove_n_bins_random: Remove n random bins from routes and add them to the removed pool.
     add_n_bins_random: Add n random bins from the removed pool back into routes.
     add_route_with_removed_bins_random: Create a new route from random bins in the removed pool.
-    move_n_route_consecutive: Move a sequence of consecutive bins from one route to another.
-    swap_n_route_consecutive: Swap a sequence of consecutive bins between two distinct routes.
     remove_n_bins_consecutive: Remove a sequence of consecutive bins from routes and add them to the removed pool.
     add_n_bins_consecutive: Add a sequence of consecutive bins from the removed pool back into routes.
-    add_route_with_removed_bins_consecutive: Create a new route from a sequence of consecutive bins in the removed pool.
 
 Example:
     >>> import random
@@ -36,16 +31,11 @@ from .sans_neighborhoods import insert_bin_in_route
 
 __all__ = [
     "remove_bins_from_route",
-    "move_n_route_random",
-    "swap_n_route_random",
     "remove_n_bins_random",
     "add_n_bins_random",
     "add_route_with_removed_bins_random",
-    "move_n_route_consecutive",
-    "swap_n_route_consecutive",
     "remove_n_bins_consecutive",
     "add_n_bins_consecutive",
-    "add_route_with_removed_bins_consecutive",
 ]
 
 
@@ -79,78 +69,6 @@ def remove_bins_from_route(routes_list: list, bins_cannot_removed: set, rng: Ran
 
     indices_to_remove = set(rng.sample(valid_indices, num_to_remove))
     new_routes[r_idx] = [n for i, n in enumerate(route) if i not in indices_to_remove]
-    return new_routes
-
-
-def move_n_route_random(routes_list: list, rng: Random, n: int = 2) -> list:
-    """
-    Move n random bins from one route to another.
-
-    Args:
-        routes_list: Current routing solution.
-        rng: Random number generator.
-        n: Number of nodes to move.
-
-    Returns:
-        Mutated routing solution.
-    """
-    new_routes = copy.deepcopy(routes_list)
-    non_empty = [r for r in new_routes if len(r) > 2]
-    if not non_empty:
-        return new_routes
-
-    donor_route = rng.choice(non_empty)
-    if len(donor_route) < n + 2:
-        return new_routes
-
-    nodes_to_move = rng.sample(donor_route[1:-1], n)
-    # Filter donor route
-    donor_idx = new_routes.index(donor_route)
-    new_routes[donor_idx] = [x for x in donor_route if x not in nodes_to_move]
-
-    # Receptor route
-    receptor_route = rng.choice([r for r in new_routes if len(r) >= 2])
-    receptor_idx = new_routes.index(receptor_route)
-    insert_pos = rng.randint(1, max(1, len(receptor_route) - 1))
-
-    # Insert nodes (in order)
-    new_routes[receptor_idx] = receptor_route[:insert_pos] + nodes_to_move + receptor_route[insert_pos:]
-    return new_routes
-
-
-def swap_n_route_random(routes_list: list, rng: Random, n: int = 2) -> list:
-    """
-    Swap n random bins between two distinct routes.
-
-    Args:
-        routes_list: Current routing solution.
-        rng: Random number generator.
-        n: Number of nodes to swap.
-
-    Returns:
-        Mutated routing solution.
-    """
-    if len(routes_list) < 2:
-        return copy.deepcopy(routes_list)
-
-    new_routes = copy.deepcopy(routes_list)
-    r1_idx, r2_idx = rng.sample(range(len(new_routes)), 2)
-    route1, route2 = new_routes[r1_idx], new_routes[r2_idx]
-
-    if len(route1) < n + 2 or len(route2) < n + 2:
-        return new_routes
-
-    nodes1 = rng.sample(route1[1:-1], n)
-    nodes2 = rng.sample(route2[1:-1], n)
-
-    # Perform swap
-    new_routes[r1_idx] = [x for x in route1 if x not in nodes1] + nodes2
-    new_routes[r2_idx] = [x for x in route2 if x not in nodes2] + nodes1
-
-    # Keep depots (this implementation is a bit rough, let's fix it by maintaining depots)
-    new_routes[r1_idx] = [0] + [x for x in new_routes[r1_idx] if x != 0] + [0]
-    new_routes[r2_idx] = [0] + [x for x in new_routes[r2_idx] if x != 0] + [0]
-
     return new_routes
 
 
@@ -272,75 +190,6 @@ def add_route_with_removed_bins_random(
     return new_routes
 
 
-def move_n_route_consecutive(routes_list: list, rng: Random, n: int = 2) -> list:
-    """
-    Move a sequence of consecutive bins from one route to another.
-
-    Args:
-        routes_list: Current routes.
-        rng: Random number generator.
-        n: Number of bins to move.
-
-    Returns:
-        Mutated solution.
-    """
-    new_routes = copy.deepcopy(routes_list)
-    non_empty = [r for r in new_routes if len(r) >= n + 2]
-    if not non_empty:
-        return new_routes
-
-    donor_route = rng.choice(non_empty)
-    donor_idx = new_routes.index(donor_route)
-    start_idx = rng.randint(1, len(donor_route) - n - 1)
-    segment = donor_route[start_idx : start_idx + n]
-
-    # Remove from donor
-    new_donor = donor_route[:start_idx] + donor_route[start_idx + n :]
-    new_routes[donor_idx] = new_donor
-
-    # Receptor
-    receptor_route = rng.choice(new_routes)
-    receptor_idx = new_routes.index(receptor_route)
-    insert_pos = rng.randint(1, max(1, len(receptor_route) - 1))
-    new_routes[receptor_idx] = receptor_route[:insert_pos] + segment + receptor_route[insert_pos:]
-
-    return new_routes
-
-
-def swap_n_route_consecutive(routes_list: list, rng: Random, n: int = 2) -> list:
-    """
-    Swap consecutive segments between two routes.
-
-    Args:
-        routes_list: Current routes.
-        rng: Random number generator.
-        n: Number of bins to swap.
-
-    Returns:
-        Mutated solution.
-    """
-    if len(routes_list) < 2:
-        return copy.deepcopy(routes_list)
-
-    new_routes = copy.deepcopy(routes_list)
-    r1_idx, r2_idx = rng.sample(range(len(new_routes)), 2)
-    route1, route2 = new_routes[r1_idx], new_routes[r2_idx]
-
-    if len(route1) < n + 2 or len(route2) < n + 2:
-        return new_routes
-
-    s1 = rng.randint(1, len(route1) - n - 1)
-    s2 = rng.randint(1, len(route2) - n - 1)
-
-    seg1 = route1[s1 : s1 + n]
-    seg2 = route2[s2 : s2 + n]
-
-    new_routes[r1_idx] = route1[:s1] + seg2 + route1[s1 + n :]
-    new_routes[r2_idx] = route2[:s2] + seg1 + route2[s2 + n :]
-
-    return new_routes
-
-
 def remove_n_bins_consecutive(
     routes_list: list, removed_bins: set, bins_cannot_removed: set, rng: Random, n: int = 2
 ) -> list:
@@ -425,23 +274,3 @@ def add_n_bins_consecutive(
             removed_bins.discard(b)
 
     return new_routes
-
-
-def add_route_with_removed_bins_consecutive(
-    routes_list: list, removed_bins: set, stocks: dict, vehicle_capacity: float, rng: Random
-) -> list:
-    """
-    Alias for random version as 'consecutive' doesn't strictly apply to a sequence
-    created from a pool, but we maintain the interface.
-
-    Args:
-        routes_list: Current routes.
-        removed_bins: Set of removed bins to update.
-        stocks: Dictionary of bin stocks.
-        vehicle_capacity: Vehicle capacity.
-        rng: Random number generator.
-
-    Returns:
-        Mutated solution.
-    """
-    return add_route_with_removed_bins_random(routes_list, removed_bins, stocks, vehicle_capacity, rng)

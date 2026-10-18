@@ -18,27 +18,27 @@ from typing import Any, Dict, List, Set
 
 import numpy as np
 
-from .sans_neighborhoods import (
-    cross_exchange,
-    get_2opt_neighbors,
-    insert_bin_in_route,
+from logic.src.policies.helpers.operators.evolutionary_mutation.random_2opt import get_2opt_neighbors
+from logic.src.policies.helpers.operators.perturbation_shaking.sans import (
+    exchange_n_bins_random,
+    exchange_route_tails,
     move_between_routes,
-    mutate_route_by_swapping_bins,
     or_opt_move,
     relocate_within_route,
+    swap_n_2_routes_consecutive,
+    swap_n_route_random,
+    transfer_n_bins_consecutive,
+    transfer_n_bins_random,
 )
+
+from .sans_neighborhoods import insert_bin_in_route
 from .sans_perturbations import (
     add_n_bins_consecutive,
     add_n_bins_random,
-    add_route_with_removed_bins_consecutive,
     add_route_with_removed_bins_random,
-    move_n_route_consecutive,
-    move_n_route_random,
     remove_bins_from_route,
     remove_n_bins_consecutive,
     remove_n_bins_random,
-    swap_n_route_consecutive,
-    swap_n_route_random,
 )
 
 
@@ -88,7 +88,7 @@ def _handle_move(
 
 
 def _handle_swap(solution, rng):
-    """Apply swap operator.
+    """Apply swap operator: swap one or two random pairs of bins within a random route.
 
     Args:
         solution: The solution to apply the operator to.
@@ -97,8 +97,21 @@ def _handle_swap(solution, rng):
     Returns:
         The solution after applying the operator.
     """
-    r = rng.choice(range(len(solution)))
-    solution[r] = mutate_route_by_swapping_bins(solution[r], rng, num_bins=rng.choice([1, 2]))
+    swap_n_route_random(solution, rng, n_choices=(1, 2), min_route_len=4)
+    return solution
+
+
+def _handle_swap_n_consecutive(solution: List[List[int]], rng: Random) -> List[List[int]]:
+    """Swap two segments of 2-5 bins, strictly between the depots, between two random routes.
+
+    Args:
+        solution: The solution to apply the operator to.
+        rng: Random number generator.
+
+    Returns:
+        The solution after applying the operator.
+    """
+    swap_n_2_routes_consecutive(solution, rng, n=rng.randint(2, 5), segment_may_cover_end_depot=False)
     return solution
 
 
@@ -180,10 +193,10 @@ def apply_operator(
         "move": lambda sol: _handle_move(sol, data, vehicle_capacity, id_to_index, rng),
         "swap": lambda sol: _handle_swap(sol, rng),
         "remove": lambda sol: remove_bins_from_route(sol, mandatory_bins, rng, num_bins=1),
-        "move_n_random": lambda sol: move_n_route_random(sol, rng, n=rng.randint(2, 5)),
-        "move_n_consec": lambda sol: move_n_route_consecutive(sol, rng, n=rng.randint(2, 5)),
-        "swap_n_random": lambda sol: swap_n_route_random(sol, rng, n=rng.randint(2, 5)),
-        "swap_n_consec": lambda sol: swap_n_route_consecutive(sol, rng, n=rng.randint(2, 5)),
+        "move_n_random": lambda sol: transfer_n_bins_random(sol, rng, n=rng.randint(2, 5)),
+        "move_n_consec": lambda sol: transfer_n_bins_consecutive(sol, rng, n=rng.randint(2, 5)),
+        "swap_n_random": lambda sol: exchange_n_bins_random(sol, rng, n=rng.randint(2, 5)),
+        "swap_n_consec": lambda sol: _handle_swap_n_consecutive(sol, rng),
         "remove_n_bins": lambda sol: remove_n_bins_random(
             sol, candidate_removed_bins, mandatory_bins, rng, n=rng.randint(2, 5)
         ),
@@ -199,13 +212,13 @@ def apply_operator(
         "add_route_removed": lambda sol: add_route_with_removed_bins_random(
             sol, candidate_removed_bins, stocks, vehicle_capacity, rng
         ),
-        "add_route_removed_consec": lambda sol: add_route_with_removed_bins_consecutive(
+        "add_route_removed_consec": lambda sol: add_route_with_removed_bins_random(
             sol, candidate_removed_bins, stocks, vehicle_capacity, rng
         ),
         "relocate": lambda sol: (
             sol.__setitem__(idx := rng.choice(range(len(sol))), relocate_within_route(sol[idx], rng)) or sol
         ),
-        "cross": lambda sol: cross_exchange(sol, rng),
+        "cross": lambda sol: exchange_route_tails(sol, rng),
         "or-opt": lambda sol: sol.__setitem__(idx := rng.choice(range(len(sol))), or_opt_move(sol[idx], rng)) or sol,
         "insert": lambda sol: _handle_insert(
             sol, data, stocks, vehicle_capacity, id_to_index, distance_matrix, candidate_removed_bins, rng

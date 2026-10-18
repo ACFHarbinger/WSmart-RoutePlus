@@ -15,12 +15,9 @@ Examples:
     >>> print(points)
 """
 
-import random
 import time
 from copy import deepcopy
-from typing import List
 
-import numpy as np
 from shapely.geometry import LineString
 
 from .distance import compute_sans_route_cost
@@ -222,106 +219,6 @@ def uncross_arcs_in_routes(
     )
     uncross_profit = compute_real_profit(solution_after_uncross, p_vehicle, data, distance_matrix, values)
     return solution_after_uncross, profit_after_uncross, uncross_profit
-
-
-def rearrange_part_route(
-    routes_list: List[List[int]], distance_matrix: np.ndarray, rng: random.Random
-) -> List[List[int]]:
-    """
-    Select a random portion of a route and reorder it using a greedy Nearest Neighbor heuristic.
-
-    Args:
-        routes_list: Current routing solution.
-        distance_matrix: Distance matrix.
-        rng: Random number generator.
-
-    Returns:
-        List[List[int]]: Routing solution with partially reordered route.
-    """
-    if not routes_list:
-        return [[0]]
-
-    chosen_route: List[int] = rng.sample(routes_list, 1)[0]
-    length_chosen_route = len(chosen_route)
-
-    if length_chosen_route < 4:
-        return [[0]]
-
-    possible_percent = [0.1, 0.2, 0.3, 0.4]
-    chosen_n = rng.sample(possible_percent, 1)[0]
-    chosen_n_percent = int(chosen_n * length_chosen_route)
-
-    if chosen_n_percent < 2:
-        return [[0]]
-
-    bins = []
-
-    max_start_index = length_chosen_route - 1 - chosen_n_percent
-    if max_start_index < 1:
-        return [[0]]
-
-    start_index = rng.randint(1, max_start_index)
-    segment = chosen_route[start_index : start_index + chosen_n_percent]
-
-    # Remove segment from route
-    bins = segment
-    del chosen_route[start_index : start_index + chosen_n_percent]
-
-    # Reorder bins using NN
-    sorted_route_full = organize_route(bins, distance_matrix)
-    # Remove depots (starts 0, ends 0)
-    sorted_segment = sorted_route_full[1:-1]
-
-    # Insert back at the same position
-    for i, bin_id in enumerate(sorted_segment):
-        chosen_route.insert(start_index + i, bin_id)
-
-    routes_list[routes_list.index(chosen_route)] = chosen_route
-    return routes_list
-
-
-# Function to generate a route using the nearest neighbor (starting from the left)
-def organize_route(bins, distance_matrix):
-    """
-    Construct a route from a set of bins using the Nearest Neighbor heuristic.
-
-    Starts from the first bin (depot) and iteratively adds the closest unvisited bin.
-
-    Args:
-        bins: Set of bin IDs to sequence.
-        distance_matrix: Distance matrix.
-
-    Returns:
-        List[int]: Sequenced route starting and ending at the depot.
-    """
-    depot = 0
-    route = []
-    distances = []
-    bins_sequence = []
-
-    # Choose depot to initialize the route
-    bin_chosen = depot
-    route.append(bin_chosen)
-
-    # Previous_bin is the bin previously added in the route
-    previous_bin = bin_chosen
-    while len(bins) != 0:
-        for i in bins:
-            dist = distance_matrix[previous_bin][i]
-            distances.append(dist)
-            bins_sequence.append(i)
-
-        min_distance = min(distances)
-        distance_index = distances.index(min_distance)
-        bin_chosen = bins_sequence[distance_index]
-        route.append(bin_chosen)
-        previous_bin = bin_chosen
-
-        bins.remove(previous_bin)
-        distances = []
-        bins_sequence = []
-    route.append(depot)
-    return route
 
 
 # Lookahead sans policy functions

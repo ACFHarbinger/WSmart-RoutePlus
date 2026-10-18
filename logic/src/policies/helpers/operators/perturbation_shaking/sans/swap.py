@@ -13,21 +13,21 @@ Example:
 """
 
 from .inter_swap import (
-    swap_2_routes,
+    exchange_n_bins_random,
+    exchange_route_tails,
     swap_n_2_routes_consecutive,
     swap_n_2_routes_random,
 )
 from .intra_swap import (
-    swap_1_route,
     swap_n_route_consecutive,
     swap_n_route_random,
 )
 
 __all__ = [
-    "swap_1_route",
-    "swap_2_routes",
     "swap_n_route_random",
     "swap_n_route_consecutive",
     "swap_n_2_routes_random",
     "swap_n_2_routes_consecutive",
+    "exchange_n_bins_random",
+    "exchange_route_tails",
 ]

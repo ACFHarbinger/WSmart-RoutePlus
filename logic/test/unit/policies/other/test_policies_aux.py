@@ -20,16 +20,12 @@ from logic.src.policies.helpers.operators import destroy_ruin as destroy_operato
 from logic.src.policies.helpers.operators import recreate_repair as repair_operators
 from logic.src.policies.helpers.operators.crossover_recombination import ordered_crossover
 from logic.src.policies.helpers.operators.perturbation_shaking.sans import (
-    swap_1_route,
-    swap_2_routes,
     swap_n_2_routes_consecutive,
     swap_n_2_routes_random,
     swap_n_route_consecutive,
     swap_n_route_random,
 )
 from logic.src.policies.helpers.operators.perturbation_shaking.sans.move import (
-    move_1_route,
-    move_2_routes,
     move_n_2_routes_consecutive,
     move_n_2_routes_random,
     move_n_route_consecutive,
@@ -171,12 +167,12 @@ class TestLookAheadMove:
 
     def test_move_1_route(self, sample_routes, rng):
         """Test single route move operation."""
-        move_1_route(sample_routes, rng)
+        move_n_route_random(sample_routes, rng, n=1)
         assert len(sample_routes) >= 1
 
     def test_move_2_routes(self, sample_routes, rng):
         """Test two-route move operation."""
-        move_2_routes(sample_routes, rng)
+        move_n_2_routes_random(sample_routes, rng, n=1)
         assert len(sample_routes) >= 1
 
     def test_move_n_route_random(self, sample_routes, rng):
@@ -217,12 +213,12 @@ class TestLookAheadSwap:
 
     def test_swap_1_route(self, sample_routes, rng):
         """Test single route swap operation."""
-        swap_1_route(sample_routes, rng)
+        swap_n_route_random(sample_routes, rng, n=1)
         assert len(sample_routes) >= 1
 
     def test_swap_2_routes(self, sample_routes, rng):
         """Test two-route swap operation."""
-        swap_2_routes(sample_routes, rng)
+        swap_n_2_routes_random(sample_routes, rng, n=1)
         assert len(sample_routes) >= 1
 
     def test_swap_n_route_random(self, sample_routes, rng):

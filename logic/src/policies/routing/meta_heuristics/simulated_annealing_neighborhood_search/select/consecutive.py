@@ -27,9 +27,7 @@ Example:
 
 import random
 
-from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.common.routes import (
-    organize_route,
-)
+from logic.src.policies.helpers.operators.solution_initialization.nearest_neighbor_si import organize_route
 
 
 def _extract_valid_segment(

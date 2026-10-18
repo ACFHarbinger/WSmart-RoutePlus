@@ -20,7 +20,9 @@ References:
     Bell System Technical Journal, 44(10), 2245–2269.
 
 Attributes:
-    None
+    random_2opt_mutation: Reverse a random segment of a random route (cost variant).
+    random_2opt_mutation_profit: Profit variant of ``random_2opt_mutation``.
+    get_2opt_neighbors: Every 2-opt reversal of a depot-terminated route, depots fixed.
 
 Example:
     >>> from logic.src.policies.helpers.operators.evolutionary_mutation.random_2opt import (
@@ -111,3 +113,25 @@ def random_2opt_mutation_profit(
         List[List[int]]: Mutated solution.
     """
     return random_2opt_mutation(routes, distance_matrix, capacity, wastes, n_moves=n_moves, rng=rng)
+
+
+def get_2opt_neighbors(route: list) -> list:
+    """
+    Generate 2-opt neighbors for a route.
+
+    Args:
+        route: Proposed node sequence.
+
+    Returns:
+        Candidate neighboring routes.
+    """
+    neighbors = []
+    n = len(route)
+    if n <= 4:
+        return [route[:]]
+
+    for i in range(1, n - 2):
+        for j in range(i + 1, n - 1):
+            new_route = route[:i] + route[i : j + 1][::-1] + route[j + 1 :]
+            neighbors.append(new_route)
+    return neighbors

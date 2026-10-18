@@ -3,19 +3,17 @@ SANS operator parity tests.
 
 These tests verify that the SANS perturbation operators work correctly.
 SANS operators are perturbation operators for simulated annealing (random exploration),
-not local search operators (improvement). They modify routes in-place and return None.
+not local search operators (improvement). They modify routes in-place; the n-move and n-swap operators return n.
 """
 
 import random
 
 import pytest
 from logic.src.policies.helpers.operators.perturbation_shaking.sans.intra_move import (
-    move_1_route,
     move_n_route_consecutive,
     move_n_route_random,
 )
 from logic.src.policies.helpers.operators.perturbation_shaking.sans.intra_swap import (
-    swap_1_route,
     swap_n_route_consecutive,
     swap_n_route_random,
 )
@@ -39,7 +37,7 @@ class TestIntraSwapOperators:
         rng = random.Random(42)
         routes_before = [r.copy() for r in sample_routes]
 
-        swap_1_route(sample_routes, rng)
+        swap_n_route_random(sample_routes, rng, n=1)
 
         # At least one route should be modified
         assert sample_routes != routes_before
@@ -56,7 +54,7 @@ class TestIntraSwapOperators:
         # Run multiple times to check depot preservation
         for _ in range(10):
             routes_copy = [r.copy() for r in sample_routes]
-            swap_1_route(routes_copy, rng)
+            swap_n_route_random(routes_copy, rng, n=1)
 
             # First and last elements should still be 0 (depot)
             for route in routes_copy:
@@ -96,7 +94,7 @@ class TestIntraMoveOperators:
         rng = random.Random(42)
         routes_before = [r.copy() for r in sample_routes]
 
-        move_1_route(sample_routes, rng)
+        move_n_route_random(sample_routes, rng, n=1)
 
         # At least one route should be modified
         assert sample_routes != routes_before
@@ -113,7 +111,7 @@ class TestIntraMoveOperators:
         # Run multiple times to check depot preservation
         for _ in range(10):
             routes_copy = [r.copy() for r in sample_routes]
-            move_1_route(routes_copy, rng)
+            move_n_route_random(routes_copy, rng, n=1)
 
             # First and last elements should still be 0 (depot)
             for route in routes_copy:
@@ -156,8 +154,8 @@ class TestOperatorDeterminism:
         rng1 = random.Random(42)
         rng2 = random.Random(42)
 
-        swap_1_route(routes1, rng1)
-        swap_1_route(routes2, rng2)
+        swap_n_route_random(routes1, rng1, n=1)
+        swap_n_route_random(routes2, rng2, n=1)
 
         assert routes1 == routes2
 
@@ -169,8 +167,8 @@ class TestOperatorDeterminism:
         rng1 = random.Random(42)
         rng2 = random.Random(42)
 
-        move_1_route(routes1, rng1)
-        move_1_route(routes2, rng2)
+        move_n_route_random(routes1, rng1, n=1)
+        move_n_route_random(routes2, rng2, n=1)
 
         assert routes1 == routes2
 
@@ -184,8 +182,8 @@ class TestEdgeCases:
         routes = []
 
         # Should not crash
-        swap_1_route(routes, rng)
-        move_1_route(routes, rng)
+        swap_n_route_random(routes, rng, n=1)
+        move_n_route_random(routes, rng, n=1)
 
         assert routes == []
 
@@ -195,8 +193,8 @@ class TestEdgeCases:
         routes = [[0, 0]]  # Only depot
 
         # Should not crash
-        swap_1_route(routes, rng)
-        move_1_route(routes, rng)
+        swap_n_route_random(routes, rng, n=1)
+        move_n_route_random(routes, rng, n=1)
 
         # Route should be unchanged (no bins to swap/move)
         assert routes == [[0, 0]]
@@ -209,7 +207,7 @@ class TestEdgeCases:
         routes_before = [r.copy() for r in routes]
 
         # Should not crash
-        swap_1_route(routes, rng)
+        swap_n_route_random(routes, rng, n=1)
 
         # Route may or may not change (depends on implementation)
         # But should not crash and should preserve structure

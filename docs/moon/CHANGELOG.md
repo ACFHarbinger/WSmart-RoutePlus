@@ -17,6 +17,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### SANS operators moved to `helpers/operators` (`2026-10-18`)
+
+The neighbourhood and perturbation operators of `simulated_annealing_neighborhood_search` now live under `logic/src/policies/helpers/operators`. Operators that did the same thing are merged. Every SANS and LAC call site keeps its exact behaviour, including the random numbers it draws: a characterization run of all 62 operator call forms over 150 seeds matched the previous outputs and generator states. The SA engines, their dispatch tables (`heuristics/sans_operators.py`, `search/random_search.py`), the objectives and the refinement drivers stay in the SANS package.
+
+#### Changed
+
+- **Random moves and swaps** (`perturbation_shaking/sans/`):
+  - Merged: `move_1_route`, `swap_1_route`, `move_2_routes` and `swap_2_routes` were the n = 1 cases of `move_n_route_random`, `swap_n_route_random`, `move_n_2_routes_random` and `swap_n_2_routes_random`. They are deleted; callers pass `n=1`.
+  - Merged: the new engine's `mutate_route_by_swapping_bins` into `swap_n_route_random`. It gains `n_choices` and `min_route_len`.
+  - Merged: the new engine's consecutive segment swap into `swap_n_2_routes_consecutive`. The new flag `segment_may_cover_end_depot` is True for LAC, whose segment can carry a route's closing depot, and False for the new engine.
+  - Moved from `heuristics/sans_neighborhoods.py`:
+    - `relocate_within_route` and `or_opt_move` to `intra_move.py`;
+    - `move_between_routes` to `inter_move.py`;
+    - `cross_exchange` to `inter_swap.py`, renamed `exchange_route_tails`.
+  - Moved from `heuristics/sans_perturbations.py`, renamed so they no longer share names with the different intra-route operators:
+    - `move_n_route_random` → `transfer_n_bins_random`;
+    - `move_n_route_consecutive` → `transfer_n_bins_consecutive`;
+    - `swap_n_route_random` → `exchange_n_bins_random`.
+  - Moved from `common/routes.py`: `rearrange_part_route`, to `intra_move.py`.
+- **Moved to other families:**
+  - `get_2opt_neighbors` → `evolutionary_mutation/random_2opt.py`;
+  - `organize_route` → `solution_initialization/nearest_neighbor_si.py`.
+- **Removed:**
+  - `get_neighbors`, which nothing called;
+  - `add_route_with_removed_bins_consecutive` of the new engine, which only called the random version.
+
 ### ACO-HH no longer drops mandatory bins (`2026-10-18`)
 
 #### Fixed
