@@ -492,8 +492,9 @@ app/coverage/
 /dist/
 /build/
 
-# The data directory is local and never tracked
+# The data directory and telemetry DB are local and never tracked
 /data
+assets/telemetry.db
 
 # Agentic files and directories to ignore
 .claude
