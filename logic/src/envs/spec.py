@@ -24,7 +24,7 @@ class ProblemSpec:
         repair: Optional repair operator for invalid/overweight tours.
         metrics: Tuple of reported KPI metric names.
         env_target: Lazy import target string for the RL environment class
-            (e.g. "logic.src.envs.tasks.cptp:CPTPEnv").
+            (e.g. "logic.src.envs.cptp:CPTPEnv").
         features: Optional feature specification for embedding projections.
         expand_pool: Whether unvisited candidate pools may expand dynamically (True for PTP/CPTP/TCPTP, False for CVRP).
         per_trip_shift: Repair and validate each trip against the shift budget (TCPTP).
@@ -90,15 +90,15 @@ class ProblemRegistry:
 
 PROBLEMS = ProblemRegistry(
     {
-        "ptp": "logic.src.envs.tasks.common.released_specs:PTP_SPEC",
-        "cptp": "logic.src.envs.tasks.common.released_specs:CPTP_SPEC",
-        "tcptp": "logic.src.envs.tasks.common.released_specs:TCPTP_SPEC",
-        "cvrp": "logic.src.envs.tasks.common.released_specs:CVRP_SPEC",
+        "ptp": "logic.src.envs.common.released_specs:PTP_SPEC",
+        "cptp": "logic.src.envs.common.released_specs:CPTP_SPEC",
+        "tcptp": "logic.src.envs.common.released_specs:TCPTP_SPEC",
+        "cvrp": "logic.src.envs.common.released_specs:CVRP_SPEC",
         **{
-            name: f"logic.src.envs.tasks.{name}:{name.upper()}_SPEC"
+            name: f"logic.src.envs.{name}:{name.upper()}_SPEC"
             for name in ("tsp", "atsp", "op", "pctsp", "spctsp", "pdp", "irp")
         },
-        "thop": "logic.src.envs.tasks.thop:ThOP_SPEC",
+        "thop": "logic.src.envs.thop:ThOP_SPEC",
     }
 )
 

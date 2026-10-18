@@ -1,26 +1,26 @@
-"""
-PTP problem generator.
+"""Profitable Tour Problem (PTP) environment, generator, and task specification.
 
-Attributes:
-    PTPGenerator: Profitable Tour Problem instances (also the base of the CPTP and TCPTP generators).
+In PTP, the agent routes a vehicle from a depot to collect prizes / waste from an optional
+subset of customer nodes, maximizing collected profit minus travel distance cost.
 
-Example:
-    >>> from logic.src.envs.generators import PTPGenerator
-    >>> td = PTPGenerator(num_loc=50)(batch_size=4)
-    >>> td["locs"].shape, td["depot"].shape, td["waste"].shape
-    (torch.Size([4, 50, 2]), torch.Size([4, 2]), torch.Size([4, 50]))
+The module also holds ``PTPGenerator``, the problem's instance generator.
 """
 
 from __future__ import annotations
 
 import math
-from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
 from tensordict import TensorDict
 
-from .base import RoutingGenerator
+from logic.src.envs.base.generator import RoutingGenerator
+from logic.src.envs.base.problem import BaseProblem
+from logic.src.envs.base.routing import RoutingEnv
+from logic.src.envs.common.released_specs import PTP_SPEC
+from logic.src.envs.core.ptp import evaluate_profitable_tour
+from logic.src.envs.spec import PROBLEMS
 
 
 class PTPGenerator(RoutingGenerator):
@@ -203,4 +203,65 @@ class PTPGenerator(RoutingGenerator):
         return waste.to(self.device).view(*batch_size, self.num_loc)
 
 
-__all__ = ["PTPGenerator"]
+class PTPEnv(RoutingEnv):
+    """Profitable Tour Problem Environment.
+
+    Selects an optimal subset of profitable nodes to visit on the routing base
+    without resource constraints.
+    """
+
+    NAME: str = "ptp"
+    name: str = "ptp"
+    node_dim: int = 4
+    explicit_stop: bool = False
+    require_all_customers: bool = False
+    # PTP never offers an empty bin unless it is mandatory (the pre-WP-07 envs/routing/ptp.py).
+    mask_empty_bins: bool = True
+
+    def __init__(
+        self,
+        generator: Optional[PTPGenerator] = None,
+        generator_params: Optional[dict] = None,
+        waste_weight: float = 1.0,
+        cost_weight: float = 1.0,
+        revenue_kg: Optional[float] = None,
+        cost_km: Optional[float] = None,
+        device: Union[str, torch.device] = "cpu",
+        **kwargs: Any,
+    ) -> None:
+        generator_params = generator_params or kwargs
+        if generator is None:
+            generator = PTPGenerator(**generator_params, device=device)
+        super().__init__(
+            generator=generator,
+            generator_params=generator_params,
+            resources=(),
+            waste_weight=waste_weight,
+            cost_weight=cost_weight,
+            revenue_kg=revenue_kg,
+            cost_km=cost_km,
+            device=device,
+            **kwargs,
+        )
+
+
+class PTP(BaseProblem):
+    """Profitable Tour Problem (PTP) task definition."""
+
+    NAME: str = "ptp"
+
+    @staticmethod
+    def evaluate_tour(
+        dataset: Dict[str, Any],
+        pi: torch.Tensor,
+        dist_matrix: Optional[torch.Tensor] = None,
+        cw_dict: Optional[Dict[str, float]] = None,
+        **kwargs: Any,
+    ) -> Dict[str, torch.Tensor]:
+        """Evaluate a completed PTP tour sequence."""
+        return evaluate_profitable_tour(dataset, pi, dist_matrix=dist_matrix, cw_dict=cw_dict, **kwargs)
+
+
+PROBLEMS.register(PTP_SPEC)
+
+__all__ = ["PTPGenerator", "PTPEnv", "PTP", "PTP_SPEC"]

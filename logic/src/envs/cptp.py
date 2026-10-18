@@ -2,6 +2,8 @@
 
 In CPTP, the vehicle has finite capacity per trip. Visiting the depot unloads the vehicle
 and resets trip capacity. Selecting the depot while already at the depot terminates the day.
+
+The module also holds ``CPTPGenerator``, the problem's instance generator.
 """
 
 from __future__ import annotations
@@ -11,11 +13,18 @@ from typing import Any, Dict, Optional, Union
 import torch
 
 from logic.src.envs.base.resources import LoadResource
-from logic.src.envs.generators.cptp import CPTPGenerator
-from logic.src.envs.tasks.common.released_specs import CPTP_SPEC
-from logic.src.envs.tasks.core.ptp import evaluate_profitable_tour
-from logic.src.envs.tasks.ptp import PTP, PTPEnv
-from logic.src.envs.tasks.spec import PROBLEMS
+from logic.src.envs.common.released_specs import CPTP_SPEC
+from logic.src.envs.core.ptp import evaluate_profitable_tour
+from logic.src.envs.ptp import PTP, PTPEnv, PTPGenerator
+from logic.src.envs.spec import PROBLEMS
+
+
+class CPTPGenerator(PTPGenerator):
+    """Generator for Capacitated Profitable Tour Problem (CPTP) instances.
+
+    The instance layout is PTP's; the capacity it carries (``capacity``) binds per trip
+    in ``CPTPEnv``.
+    """
 
 
 class CPTPEnv(PTPEnv):

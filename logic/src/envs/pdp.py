@@ -1,17 +1,79 @@
-"""Pickup and Delivery Problem (PDP) task and environment on the routing base."""
+"""Pickup and Delivery Problem (PDP) task and environment on the routing base.
+
+The module also holds ``PDPGenerator``, the problem's instance generator.
+"""
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Union
+from typing import Any, Callable, Dict, Optional, Union
 
 import torch
 from tensordict import TensorDict
 
+from logic.src.envs.base.generator import RoutingGenerator
 from logic.src.envs.base.ops import as_batch_nodes
+from logic.src.envs.base.problem import BaseProblem
 from logic.src.envs.base.routing import RoutingEnv
-from logic.src.envs.generators.pdp import PDPGenerator
-from logic.src.envs.tasks.base import BaseProblem
-from logic.src.envs.tasks.spec import PROBLEMS, ProblemSpec
+from logic.src.envs.spec import PROBLEMS, ProblemSpec
+
+
+class PDPGenerator(RoutingGenerator):
+    """
+    Generator for the Pickup and Delivery Problem (PDP).
+
+    Produces instances with:
+    - locs     : [*B, num_loc, 2]  — pickup and delivery coordinates
+    - depot    : [*B, 2]           — depot coordinate
+    - capacity : [*B]              — vehicle capacity (1.0)
+
+    Node layout (after depot prepend in the environment):
+      [0] = depot
+      [1  …  num_loc/2]        = pickup nodes
+      [num_loc/2+1  …  num_loc] = delivery nodes
+
+    Each pickup node i has a paired delivery at i + num_loc/2.
+    Note: ``num_loc`` must be even.  If odd, it is incremented by 1.
+    """
+
+    def __init__(
+        self,
+        num_loc: int = 50,
+        min_loc: float = 0.0,
+        max_loc: float = 1.0,
+        loc_distribution: Union[str, Callable] = "uniform",
+        depot_type: str = "random",
+        device: Union[str, torch.device] = "cpu",
+        **kwargs: Any,
+    ) -> None:
+        """
+        Initialise PDPGenerator.
+
+        Args:
+            num_loc: Number of customer locations (excl. depot, must be even).
+            min_loc: Lower bound for node coordinates.
+            max_loc: Upper bound for node coordinates.
+            loc_distribution: Spatial distribution.
+            depot_type: Depot placement ("random", "center", "corner").
+            device: Target device.
+            kwargs: Forwarded to the RoutingGenerator base (``dm_filepath``, ``rng``, ...).
+        """
+        if num_loc % 2 != 0:
+            num_loc += 1  # PDP requires even number of customer nodes
+        super().__init__(
+            num_loc=num_loc,
+            min_loc=min_loc,
+            max_loc=max_loc,
+            loc_distribution=loc_distribution,
+            depot_type=depot_type,
+            device=device,
+            **kwargs,
+        )
+
+    def _generate(self, batch_size: Union[int, tuple[int, ...]]) -> TensorDict:
+        """Generate a batch of PDP instances: ``locs``, ``depot`` and ``capacity``."""
+        td = super()._generate(batch_size)
+        td["capacity"] = torch.full(tuple(td.batch_size), 1.0, device=self.device)
+        return td
 
 
 class PDPEnv(RoutingEnv):
@@ -116,7 +178,7 @@ PDP_SPEC = ProblemSpec(
     objective=lambda distance_km, **kw: -float(distance_km),
     constraints=(),
     metrics=("cost", "reward", "length"),
-    env_target="logic.src.envs.tasks.pdp:PDPEnv",
+    env_target="logic.src.envs.pdp:PDPEnv",
     expand_pool=False,
 )
 PROBLEMS.register(PDP_SPEC)

@@ -2,7 +2,7 @@
 
 import pytest
 import torch
-from logic.src.envs.tasks.cptp import CPTPEnv
+from logic.src.envs.cptp import CPTPEnv
 from logic.src.models.common.policy_contract import check_policy_output
 from logic.src.models.core.attention_model import AttentionModel
 from logic.src.policies.vector.expert_cache import CachedExpert

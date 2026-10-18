@@ -350,8 +350,8 @@ def get_daily_results(
     Returns:
         Daily record with canonical KPI keys, the tour, and the mandatory set.
     """
-    from logic.src.envs.tasks.common.metrics import DayOutcome
-    from logic.src.envs.tasks.common.objectives import Economics
+    from logic.src.envs.common.metrics import DayOutcome
+    from logic.src.envs.common.objectives import Economics
 
     empty = not tour or len(tour) <= 2
     collected_kg = 0.0 if empty else float(total_collected)
@@ -405,8 +405,8 @@ def run_day(context: SimulationDayContext) -> SimulationDayContext:
     Returns:
         The same context after the pipeline.
     """
-    from logic.src.envs.tasks.common.expand_pool import reset_expand_pool, set_expand_pool
-    from logic.src.envs.tasks.common.released_specs import released_spec
+    from logic.src.envs.common.expand_pool import reset_expand_pool, set_expand_pool
+    from logic.src.envs.common.released_specs import released_spec
     from logic.src.pipeline.simulations.pipeline import resolve_pipeline
     from logic.src.pipeline.simulations.rng import apply_shared_bin_rng, policy_seed, seed_policy_rng, shared_env_seed
 
@@ -439,7 +439,7 @@ def run_day(context: SimulationDayContext) -> SimulationDayContext:
     if spec is None or type(spec).__name__ == "MagicMock":
         spec = released_spec(problem_name)
     if spec is None:
-        from logic.src.envs.tasks.spec import PROBLEMS
+        from logic.src.envs.spec import PROBLEMS
 
         spec = PROBLEMS.get(problem_name)
     context.problem_spec = spec

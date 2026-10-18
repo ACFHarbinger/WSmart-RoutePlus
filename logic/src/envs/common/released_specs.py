@@ -6,29 +6,29 @@ Importing this module does not import PyTorch or a neural environment.
 
 from typing import Optional
 
-from logic.src.envs.tasks.common.metrics import DEFAULT_METRICS
-from logic.src.envs.tasks.common.objectives import distance_objective, profit_objective
-from logic.src.envs.tasks.spec import ProblemSpec
+from logic.src.envs.common.metrics import DEFAULT_METRICS
+from logic.src.envs.common.objectives import distance_objective, profit_objective
+from logic.src.envs.spec import ProblemSpec
 
 PTP_SPEC = ProblemSpec(
     name="ptp",
     objective=profit_objective,
     metrics=DEFAULT_METRICS,
-    env_target="logic.src.envs.tasks.ptp:PTPEnv",
+    env_target="logic.src.envs.ptp:PTPEnv",
     expand_pool=True,
 )
 CPTP_SPEC = ProblemSpec(
     name="cptp",
     objective=profit_objective,
     metrics=DEFAULT_METRICS,
-    env_target="logic.src.envs.tasks.cptp:CPTPEnv",
+    env_target="logic.src.envs.cptp:CPTPEnv",
     expand_pool=True,
 )
 TCPTP_SPEC = ProblemSpec(
     name="tcptp",
     objective=profit_objective,
     metrics=DEFAULT_METRICS + ("time_spent",),
-    env_target="logic.src.envs.tasks.tcptp:TCPTPEnv",
+    env_target="logic.src.envs.tcptp:TCPTPEnv",
     expand_pool=True,
     per_trip_shift=True,
 )
@@ -36,7 +36,7 @@ CVRP_SPEC = ProblemSpec(
     name="cvrp",
     objective=distance_objective,
     metrics=DEFAULT_METRICS,
-    env_target="logic.src.envs.tasks.cvrp:CVRPEnv",
+    env_target="logic.src.envs.cvrp:CVRPEnv",
     expand_pool=False,
 )
 

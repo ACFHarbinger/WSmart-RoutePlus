@@ -10,7 +10,7 @@ Example:
 import copy
 from typing import Any, List, Tuple
 
-from logic.src.envs.tasks.common.expand_pool import current_expand_pool
+from logic.src.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators.recreate_repair import (
     greedy_insertion,
     greedy_profit_insertion,

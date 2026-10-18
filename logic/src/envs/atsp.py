@@ -1,4 +1,7 @@
-"""Asymmetric Traveling Salesman Problem (ATSP) task and environment."""
+"""Asymmetric Traveling Salesman Problem (ATSP) task and environment.
+
+The module also holds ``ATSPGenerator``, the problem's instance generator.
+"""
 
 from __future__ import annotations
 
@@ -7,11 +10,87 @@ from typing import Any, Dict, Optional, Union
 import torch
 from tensordict import TensorDict, TensorDictBase
 
+from logic.src.envs.base.generator import Generator
 from logic.src.envs.base.ops import OpsMixin
+from logic.src.envs.base.problem import BaseProblem
 from logic.src.envs.base.routing import RoutingEnv
-from logic.src.envs.generators.atsp import ATSPGenerator
-from logic.src.envs.tasks.base import BaseProblem
-from logic.src.envs.tasks.spec import PROBLEMS, ProblemSpec
+from logic.src.envs.spec import PROBLEMS, ProblemSpec
+
+
+class ATSPGenerator(Generator):
+    """
+    Generator for the Asymmetric Traveling Salesman Problem (ATSP).
+
+    Produces random asymmetric distance matrices of shape
+    [*B, num_loc, num_loc] with zero diagonal.  When ``tmat_class=True``
+    (default) the triangle inequality is enforced via iterative relaxation.
+
+    Instance layout
+    ---------------
+    - cost_matrix : [*B, num_loc, num_loc] — asymmetric pairwise distances
+
+    Attributes:
+        num_loc (int): Number of locations in the problem.
+        min_dist (float): Minimum distance between locations.
+        max_dist (float): Maximum distance between locations.
+        tmat_class (bool): Whether to enforce triangle inequality.
+        device (Union[str, torch.device]): Device to use for computation.
+        rng (Optional[Any]): Random number generator.
+        generator (Optional[torch.Generator]): PyTorch generator for reproducibility.
+        kwargs: Additional keyword arguments.
+    """
+
+    def __init__(
+        self,
+        num_loc: int = 10,
+        min_dist: float = 0.0,
+        max_dist: float = 1.0,
+        tmat_class: bool = True,
+        device: Union[str, torch.device] = "cpu",
+        rng: Optional[Any] = None,
+        generator: Optional[torch.Generator] = None,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Initialise ATSPGenerator.
+
+        Args:
+            num_loc: Number of nodes (no depot in ATSP).
+            min_dist: Lower bound for distance values.
+            max_dist: Upper bound for distance values.
+            tmat_class: Enforce triangle inequality (True = TMAT class).
+            device: Target device for generated tensors.
+            rng: Optional numpy RNG (forwarded to base).
+            generator: Optional torch RNG.
+            kwargs: Forwarded to Generator base.
+        """
+        super().__init__(num_loc=num_loc, device=device, rng=rng, generator=generator, **kwargs)
+        self.min_dist = min_dist
+        self.max_dist = max_dist
+        self.tmat_class = tmat_class
+
+    def _generate(self, batch_size: tuple[int, ...]) -> TensorDict:
+        """Generate a batch of ATSP distance matrices.
+
+        Args:
+            batch_size: Batch size tuple.
+
+        Returns:
+            TensorDict with cost_matrix.
+        """
+        dms = (
+            torch.rand(*batch_size, self.num_loc, self.num_loc, device=self.device, generator=self.generator)
+            * (self.max_dist - self.min_dist)
+            + self.min_dist
+        )
+        # Zero diagonal (self-travel cost)
+        idx = torch.arange(self.num_loc, device=self.device)
+        dms[..., idx, idx] = 0.0
+        # Enforce triangle inequality
+        if self.tmat_class:
+            for i in range(self.num_loc):
+                dms = torch.minimum(dms, dms[..., :, [i]] + dms[..., [i], :])
+        return TensorDict({"cost_matrix": dms}, batch_size=batch_size, device=self.device)
 
 
 class ATSPEnv(RoutingEnv):
@@ -221,7 +300,7 @@ ATSP_SPEC = ProblemSpec(
     objective=lambda distance_km, **kw: -float(distance_km),
     constraints=(),
     metrics=("cost", "reward", "length"),
-    env_target="logic.src.envs.tasks.atsp:ATSPEnv",
+    env_target="logic.src.envs.atsp:ATSPEnv",
     expand_pool=False,
 )
 PROBLEMS.register(ATSP_SPEC)

@@ -2,7 +2,7 @@
 
 import pytest
 import torch
-from logic.src.envs.tasks.base import BaseProblem
+from logic.src.envs.base.problem import BaseProblem
 
 
 def test_zero_first_customer_without_schema_stays_customer():

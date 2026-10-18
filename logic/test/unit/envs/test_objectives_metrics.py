@@ -7,7 +7,7 @@ import sys
 
 import numpy as np
 import pytest
-from logic.src.envs.tasks.common.metrics import (
+from logic.src.envs.common.metrics import (
     DEFAULT_METRICS,
     METRICS,
     DayOutcome,
@@ -16,7 +16,7 @@ from logic.src.envs.tasks.common.metrics import (
     SampleResult,
     summarize_samples,
 )
-from logic.src.envs.tasks.common.objectives import Economics, distance_objective, profit_objective
+from logic.src.envs.common.objectives import Economics, distance_objective, profit_objective
 
 
 def test_shared_modules_import_without_neural_dependencies():
@@ -28,9 +28,9 @@ class NoNeural(importlib.abc.MetaPathFinder):
         if fullname.split('.')[0] in {'torch', 'torchrl', 'tensordict', 'torch_geometric'}:
             raise ImportError('neural dependency requested: ' + fullname)
 sys.meta_path.insert(0, NoNeural())
-from logic.src.envs.tasks.common.metrics import METRICS
-from logic.src.envs.tasks.common.objectives import profit_objective
-from logic.src.envs.tasks.spec import PROBLEMS
+from logic.src.envs.common.metrics import METRICS
+from logic.src.envs.common.objectives import profit_objective
+from logic.src.envs.spec import PROBLEMS
 assert 'tcptp' in PROBLEMS
 assert profit_objective(10, 2, revenue_kg=3, cost_km=4) == 22
 assert 'reward' not in METRICS
@@ -117,7 +117,7 @@ def test_unknown_missing_nonfinite_and_duplicate_records_fail_loudly():
 
 def test_asymmetric_multitrip_tour_evaluation_counts_every_depot_leg():
     import torch
-    from logic.src.envs.tasks.core.ptp import evaluate_profitable_tour
+    from logic.src.envs.core.ptp import evaluate_profitable_tour
 
     dm = torch.tensor([[0.0, 1.0, 2.0], [3.0, 0.0, 4.0], [6.0, 5.0, 0.0]], dtype=torch.float64)
     data = {
@@ -138,8 +138,8 @@ def test_asymmetric_multitrip_tour_evaluation_counts_every_depot_leg():
 )
 def test_shared_road_length_handles_open_padded_and_empty_paths(actions, expected):
     import torch
-    from logic.src.envs.tasks.cvrp import evaluate_cvrp_tour
-    from logic.src.envs.tasks.core.ptp import closed_tour_length
+    from logic.src.envs.core.ptp import closed_tour_length
+    from logic.src.envs.cvrp import evaluate_cvrp_tour
 
     dm = torch.tensor([[0.0, 1.0, 2.0], [3.0, 0.0, 4.0], [6.0, 5.0, 0.0]])
     pi = torch.tensor([actions], dtype=torch.long)
@@ -152,7 +152,7 @@ def test_shared_road_length_handles_open_padded_and_empty_paths(actions, expecte
 
 def test_problem_specs_keep_tensor_objectives_and_canonical_kpis():
     import torch
-    from logic.src.envs.tasks.spec import PROBLEMS, ProblemRegistry
+    from logic.src.envs.spec import PROBLEMS, ProblemRegistry
 
     assert not ProblemRegistry().keys()
     for name in ("ptp", "cptp", "tcptp", "cvrp"):

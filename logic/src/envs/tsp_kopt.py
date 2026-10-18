@@ -8,7 +8,7 @@ Attributes:
     TSPkoptEnv: Class definition of TSP Environment for improvement-based methods.
 
 Example:
-    >>> from logic.src.envs.generators import TSPGenerator
+    >>> from logic.src.envs import TSPGenerator
     >>> generator = TSPGenerator(num_nodes=10, generator_params={"num_nodes": 10})
     >>> env = TSPkoptEnv(generator)
 """
@@ -20,8 +20,8 @@ from typing import Optional, Union
 import torch
 from tensordict import TensorDict
 
+from logic.src.envs import TSPGenerator
 from logic.src.envs.base.improvement import ImprovementEnvBase
-from logic.src.envs.generators import TSPGenerator
 
 
 class TSPkoptEnv(ImprovementEnvBase):
@@ -136,7 +136,9 @@ class TSPkoptEnv(ImprovementEnvBase):
         solution = td["solution"]
 
         if action.ndim != 2 or action.shape != (solution.size(0), 2):
-            raise ValueError("TSPkoptEnv supports exactly two action columns; basis sequences require a separate executor")
+            raise ValueError(
+                "TSPkoptEnv supports exactly two action columns; basis sequences require a separate executor"
+            )
         if action.is_floating_point() or action.is_complex() or action.dtype == torch.bool:
             raise ValueError("2-opt actions must contain integer node IDs or positions")
         i, j = action[:, 0], action[:, 1]

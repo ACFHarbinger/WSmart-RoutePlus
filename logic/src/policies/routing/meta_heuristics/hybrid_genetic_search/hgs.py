@@ -22,7 +22,7 @@ import time
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from logic.src.configs.policies.hgs import HGSConfig
-from logic.src.envs.tasks.common.expand_pool import current_expand_pool
+from logic.src.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.local_search.local_search_hgs import HGSLocalSearch
 from logic.src.policies.helpers.operators.crossover_recombination import route_profit_gpx_crossover
 from logic.src.policies.routing.base.sub_problem import SubProblem

@@ -17,6 +17,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### `envs/tasks` and `envs/generators` folded into `envs` (`2026-10-18`)
+
+#### Changed
+
+- **One module per problem: `logic/src/envs/<problem>.py`** (`ptp`, `cptp`, `tcptp`, `cvrp`, `tsp`, `atsp`, `op`, `pctsp`, `spctsp`, `pdp`, `irp`, `thop`). Each holds its instance generator, environment and task class; the generators of `envs/generators/` were merged into these modules.
+- **Shared code:**
+  - `envs/tasks/base.py` (`BaseProblem`) → `envs/base/problem.py`.
+  - `envs/generators/base.py` (`Generator`, `RoutingGenerator`) → `envs/base/generator.py`.
+  - `envs/tasks/common/`, `envs/tasks/core/` and `envs/tasks/spec.py` → `envs/common/`, `envs/core/` and `envs/spec.py`.
+- **`envs/tasks/` and `envs/generators/` are deleted.** `logic.src.envs` now serves everything both packages exported, lazily: the env, generator and task classes, `get_env`, and `get_generator`. `GENERATOR_REGISTRY` is now a mapping that imports a class on lookup.
+- **Updated to match:**
+  - every import and patch target in `logic/`;
+  - `logic/release.yaml` and the release check in `build_release.py`;
+  - `docs/modules/ENVS_MODULE.md` and `docs/api`.
+
 ### Route improvers price moves with directed distances (`2026-10-18`)
 
 #### Fixed

@@ -19,9 +19,9 @@ The `envs` module implements the core Reinforcement Learning environments for th
 This document serves as a comprehensive technical guide for the following components:
 
 1.  **Base Architecture** (`logic/src/envs/base`)
-2.  **Data Generators** (`logic/src/envs/generators`)
+2.  **Data Generators** (in each problem module, `logic/src/envs/<problem>.py`; bases in `logic/src/envs/base/generator.py`)
 3.  **Environment Implementations** (Root `logic/src/envs/*.py`)
-4.  **Task Wrappers** (`logic/src/envs/tasks`)
+4.  **Task Wrappers** (in each problem module, `logic/src/envs/<problem>.py`; `BaseProblem` in `logic/src/envs/base/problem.py`)
 
 ---
 
@@ -139,7 +139,7 @@ Any concrete environment inheriting from `RL4COEnvBase` **MUST** implement:
 
 ## 3. Procedural Data Generators
 
-**Module**: `logic/src/envs/generators`
+**Module**: `logic/src/envs/<problem>.py` (generators), `logic/src/envs/base/generator.py` (bases)
 
 This submodule implements the **dynamic instance generation** system. Instead of iterating over a fixed dataset, these classes procedurally generate new problem instances on the fly, allowing for infinite training data and robust generalization.
 
@@ -236,7 +236,7 @@ A global dictionary mapping string keys to generator classes.
 The standard way to instantiate generators.
 
 ```python
-from logic.src.envs.generators import get_generator
+from logic.src.envs import get_generator
 
 # Create a generator for 50-node WCVRP instances on GPU
 gen = get_generator("wcvrp", num_loc=50, device="cuda", fill_distribution="gamma")
@@ -373,7 +373,7 @@ Subclasses that mix constraints.
 
 ## 5. Task Wrappers
 
-**Module**: `logic/src/envs/tasks`
+**Module**: `logic/src/envs/<problem>.py` (tasks), `logic/src/envs/base/problem.py` (`BaseProblem`)
 
 This submodule defines **static problem definitions** and **cost evaluators**. Unlike the dynamic environment classes, these "Task" classes are largely stateless utility collections used to validate full solutions and compute standardized benchmarks.
 
@@ -461,7 +461,7 @@ Defines the evaluation metrics for multi-day scenarios.
 
 ## ⚠️ Distinction from `logic.src.envs`
 
-| Component    | `logic/src/envs/*.py`                                  | `logic/src/envs/tasks/*.py`                          |
+| Component    | `logic/src/envs/*.py`                                  | `logic/src/envs/*.py`                          |
 | :----------- | :----------------------------------------------------- | :--------------------------------------------------- |
 | **Purpose**  | **RL Environment** (State machine, transitions, masks) | **Problem Definition** (Cost evaluation, validation) |
 | **State**    | Dynamic `TensorDict` (updates every step)              | Static `TensorDict` (dataset) + Complete Tour        |
