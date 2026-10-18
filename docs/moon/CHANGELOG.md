@@ -41,6 +41,8 @@ The neighbourhood and perturbation operators of `simulated_annealing_neighborhoo
   - Moved: `select/greedy.py::insert_bins` to `recreate_repair/bin_pool.py`, and `remove_bins_end` to `destroy_ruin/bin_pool.py`.
   - Merged: `common/routes.py::two_opt_uncross_arc`, a first-improvement 2-opt, into `intra_route_local_search/k_opt.py::two_opt_route`. That function gains `max_iter=None` (run until no reversal improves) and `tol`; SANS passes `max_iter=None, tol=0.0`. The routes are the same on the 150 characterization cases and on 400 cases built with co-located bins to force ties.
   - Moved: `common/solution_initialization.py` to `solution_initialization/zone_si.py`.
+- **Regression test:** `logic/test/unit/policies/test_sans_operator_parity.py` pins every SANS and LAC call form, and the two refinement drivers, to hashes taken from the pre-refactor tree. Each hash covers the operator's result and the generator's next draw.
+- **Docs:** `docs/api/policies.md` regenerated, and the SANS tree in `docs/modules/POLICIES_MODULE.md` updated.
 - **Moved to other families:**
   - `get_2opt_neighbors` → `evolutionary_mutation/random_2opt.py`;
   - `organize_route` → `solution_initialization/nearest_neighbor_si.py`.
