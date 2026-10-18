@@ -4,3 +4,6 @@
 [submodule "logic/submodules/cptp"]
 	path = logic/submodules/cptp
 	url = https://github.com/spoorendonk/cptp.git
+[submodule "logic/submodules/HGS-CVRP"]
+	path = logic/submodules/HGS-CVRP
+	url = https://github.com/ACFHarbinger/HGS-CVRP.git
