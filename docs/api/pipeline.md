@@ -919,6 +919,10 @@ Per-day solver status published by a routing algorithm and read by the day logge
 - `note_solver_status()` — Record the status string for the day that is being solved.
 - `current_solver_status()` — Return the status noted for the current context, if any.
 - `format_backend_status()` — Turn a backend status code into a stable ``backend:NAME`` string.
+- `reset_solver_certificate()` — Clear proof metadata before each independent construction.
+- `note_root_bound()` — Record a root CG upper bound only after certified pricing exhaustion.
+- `note_solver_incumbent()` — Pair a returned constructor incumbent with the recorded root proof.
+- `current_solver_certificate()` — Return this construction's proof; incomplete pricing produces no certificate.
 
 ### `logic.src.pipeline.simulations.states.__init__`
 

@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 from logic.package import build_release as builder
+from logic.package import release_closure as closure
 
 
 def test_build_refuses_existing_user_files_before_computing_closure(tmp_path, monkeypatch):
@@ -38,9 +39,9 @@ def test_closure_keeps_parent_initializers_and_deferred_runtime_imports(tmp_path
         path = tmp_path / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(source)
-    monkeypatch.setattr(builder, "REPO", tmp_path)
-    monkeypatch.setattr(builder, "LOGIC", tmp_path / "logic")
-    monkeypatch.setattr(builder, "STAGES", {})
+    monkeypatch.setattr(closure, "REPO", tmp_path)
+    monkeypatch.setattr(closure, "LOGIC", tmp_path / "logic")
+    monkeypatch.setattr(closure, "STAGES", {})
     kept, _ = builder.compute_closure(
         {"infrastructure": ["logic.src.feature.entry"], "stages": {}, "excluded_packages": []}
     )
@@ -104,9 +105,9 @@ def test_lazy_closure_does_not_depend_on_queue_order(tmp_path, monkeypatch):
         path = tmp_path / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text)
-    monkeypatch.setattr(builder, "REPO", tmp_path)
-    monkeypatch.setattr(builder, "LOGIC", tmp_path / "logic")
-    monkeypatch.setattr(builder, "STAGES", {})
+    monkeypatch.setattr(closure, "REPO", tmp_path)
+    monkeypatch.setattr(closure, "LOGIC", tmp_path / "logic")
+    monkeypatch.setattr(closure, "STAGES", {})
     kept, _ = builder.compute_closure({"stages": {}, "infrastructure": ["logic.src.entry"], "excluded_packages": []})
     assert tmp_path / "logic/src/facade/impl.py" in kept
 
@@ -120,7 +121,7 @@ def test_multiline_lazy_map_pruning_is_format_independent(tmp_path, monkeypatch)
     path.write_text(
         '_LAZY = {\n"Keep": ("logic.src.facade.keep:Keep"),\n"Drop": (\n"logic.src.facade.drop:Drop"\n),\n}\n'
     )
-    monkeypatch.setattr(builder, "REPO", tmp_path)
+    monkeypatch.setattr(closure, "REPO", tmp_path)
     dropped = builder.filter_lazy_map(path, {"logic.src.facade.keep"}, tmp_path)
     assert dropped
     assert builder.lazy_targets(path) == {"Keep": "logic.src.facade.keep"}

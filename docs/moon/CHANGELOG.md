@@ -17,6 +17,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Modules over 500 code lines split (`2026-10-18`)
+
+#### Changed
+
+- **Every `logic/` file is now under 500 code lines** (`logic/validation/count_loc.py`, Code column; it was 15 files). Behaviour is unchanged; the old module paths keep re-exporting what callers import.
+  - `search/cutting_planes.py` → `cut_engine_base.py`, `cuts_capacity.py`, `cuts_subset_row.py`, `cuts_fleet_cover.py` (the factory and composite stay).
+  - `pricing/solver.py` → `labeling.py` (`RCSPPLabelingMixin`) and `pricing_types.py`.
+  - Single-class solvers get mixins in sibling modules: ACO-HH `bootstrap.py`; ALNS-SARSA `alns_sarsa_operators.py`; tabu search `moves.py`, `memory.py`, `ls_adapter.py`; branch-and-cut `cut_callbacks.py`, `lagrangian_bound.py`; LKH-3 ALNS `alns_operators.py`, `alns_routing.py`.
+  - Function modules: POPMUSIC `pmedian.py`, `subproblem.py`; LKH-3 `lkh3_alns_entry.py`; SWC-TCF `formulations.py`; MS-BPC-SP `node_selection.py`; results tables `tracking/logging/modules/summary_display.py`.
+  - `logic/gen/gen_paper_latex.py` → `paper_data.py`, `paper_figures.py`, `paper_diagrams.py`, `paper_networks.py`. Its tables and figures are byte-identical to before.
+  - `logic/package/build_release.py` → `release_closure.py`, `release_staging.py`, `release_files.py`.
+  - `test_validation_checkers.py` → plus `test_validation_graph_checkers.py`, `test_validation_code_checkers.py`.
+- The two tests that patched a moved name now patch its new module (`formulations.quicksum`, `release_closure.REPO`/`LOGIC`/`STAGES`).
+- `docs/api` regenerated.
+
 ### ESPPRC env module removed (`2026-10-18`)
 
 #### Changed
