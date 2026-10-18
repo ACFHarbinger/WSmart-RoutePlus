@@ -17,6 +17,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### ACO-HH no longer drops mandatory bins (`2026-10-18`)
+
+#### Fixed
+
+- **The profit-aware kick dropped mandatory nodes.** `kick_profit` reinserted removed nodes only when their insertion was profitable, so an unprofitable mandatory bin stayed unvisited. ACO-HH scores plans by routing cost alone, so it kept the shorter plan. On random 40-node instances with 15 mandatory bins, ACO-HH with its default operators missed 60 mandatory visits over 10 seeds, 41 of them with `kick` alone.
+  - `_profit_reinsertion` now always reinserts mandatory nodes: at their most profitable feasible position, or else on a new route.
+  - `perturb` and `perturb_profit` no longer swap a mandatory node out for an unvisited one.
+  - `HyperHeuristicACO._is_feasible` rejects any plan that misses a mandatory node, so such a plan can never become the incumbent.
+
 ### `envs/tasks` and `envs/generators` folded into `envs` (`2026-10-18`)
 
 #### Changed

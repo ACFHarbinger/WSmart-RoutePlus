@@ -174,11 +174,16 @@ def kick_profit(
 def _profit_reinsertion(ctx: Any, nodes: List[int]) -> None:
     """Helper for profit-driven reinsertion of nodes.
 
+    Unprofitable optional nodes stay unvisited; mandatory nodes are always
+    reinserted, at their most profitable feasible position or on a new route.
+
     Args:
         ctx: Context object.
         nodes: List of node IDs to reinsert.
     """
+    mandatory = getattr(ctx, "mandatory_nodes", None) or set()
     for node in nodes:
+        is_mandatory = node in mandatory
         best_profit = -float("inf")
         best_ri = -1
         best_pos = -1
@@ -202,17 +207,17 @@ def _profit_reinsertion(ctx: Any, nodes: List[int]) -> None:
                     best_ri = ri
                     best_pos = pos
 
-        if best_ri >= 0 and best_profit > -1e-4:
+        if best_ri >= 0 and (best_profit > -1e-4 or is_mandatory):
             ctx.routes[best_ri].insert(best_pos, node)
             ctx._update_map({best_ri})
         else:
             # Check if starting a new route is profitable
             cost_new = ctx.d[0, node] + ctx.d[node, 0]
             profit_new = revenue - (cost_new * ctx.C)
-            if profit_new > -1e-4:
+            if profit_new > -1e-4 or is_mandatory:
                 ctx.routes.append([node])
                 ctx._build_structures()
-            # Else: node remains unvisited
+            # Else: an optional node remains unvisited
 
     ctx._build_structures()
     return
