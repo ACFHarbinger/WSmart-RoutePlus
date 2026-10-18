@@ -15,24 +15,16 @@ import random
 
 import numpy as np
 
-from logic.src.policies.helpers.operators.perturbation_shaking.sans.move import (
-    move_1_route,
-    move_2_routes,
+from logic.src.policies.helpers.operators.perturbation_shaking.sans import (
     move_n_2_routes_consecutive,
     move_n_2_routes_random,
     move_n_route_consecutive,
     move_n_route_random,
-)
-from logic.src.policies.helpers.operators.perturbation_shaking.sans.swap import (
-    swap_1_route,
-    swap_2_routes,
+    rearrange_part_route,
     swap_n_2_routes_consecutive,
     swap_n_2_routes_random,
     swap_n_route_consecutive,
     swap_n_route_random,
-)
-from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.common.routes import (
-    rearrange_part_route,
 )
 from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.select import (
     add_bin,
@@ -116,13 +108,13 @@ def local_search(  # noqa: C901
         if "n" not in chosen_procedure:
             # simple move/swap
             if chosen_procedure == "Move 1 route":
-                move_1_route(routes_list, rng)
+                move_n_route_random(routes_list, rng, n=1)
             elif chosen_procedure == "Swap 1 route":
-                swap_1_route(routes_list, rng)
+                swap_n_route_random(routes_list, rng, n=1)
             elif chosen_procedure == "Move 2 routes":
-                move_2_routes(routes_list, rng)
+                move_n_2_routes_random(routes_list, rng, n=1)
             elif chosen_procedure == "Swap 2 routes":
-                swap_2_routes(routes_list, rng)
+                swap_n_2_routes_random(routes_list, rng, n=1)
         else:
             # n move/swap
             if chosen_procedure == "Move n 1 route random":

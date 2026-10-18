@@ -2,7 +2,8 @@
 Common initialization heuristic for building geographically compact routes.
 
 Attributes:
-    None
+    build_nn_routes: Build capacity-feasible routes by nearest-neighbour extension.
+    organize_route: Sequence a set of bins into one depot-terminated route by nearest neighbour.
 
 Example:
     >>> from logic.src.policies.helpers.operators.solution_initialization.nearest_neighbor_si import build_nn_routes
@@ -101,3 +102,47 @@ def build_nn_routes(
     if prune_unprofitable:
         routes = prune_unprofitable_routes(routes, dist_matrix, wastes, R, C, mandatory_set)
     return routes
+
+
+# Function to generate a route using the nearest neighbor (starting from the left)
+def organize_route(bins, distance_matrix):
+    """
+    Construct a route from a set of bins using the Nearest Neighbor heuristic.
+
+    Starts from the first bin (depot) and iteratively adds the closest unvisited bin.
+
+    Args:
+        bins: Set of bin IDs to sequence.
+        distance_matrix: Distance matrix.
+
+    Returns:
+        List[int]: Sequenced route starting and ending at the depot.
+    """
+    depot = 0
+    route = []
+    distances = []
+    bins_sequence = []
+
+    # Choose depot to initialize the route
+    bin_chosen = depot
+    route.append(bin_chosen)
+
+    # Previous_bin is the bin previously added in the route
+    previous_bin = bin_chosen
+    while len(bins) != 0:
+        for i in bins:
+            dist = distance_matrix[previous_bin][i]
+            distances.append(dist)
+            bins_sequence.append(i)
+
+        min_distance = min(distances)
+        distance_index = distances.index(min_distance)
+        bin_chosen = bins_sequence[distance_index]
+        route.append(bin_chosen)
+        previous_bin = bin_chosen
+
+        bins.remove(previous_bin)
+        distances = []
+        bins_sequence = []
+    route.append(depot)
+    return route

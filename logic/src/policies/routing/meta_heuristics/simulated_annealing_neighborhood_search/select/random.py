@@ -30,9 +30,7 @@ Example:
     add_route_with_removed_bins_random(routes_list, removed_bins, distance_matrix, rng)
 """
 
-from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.common.routes import (
-    organize_route,
-)
+from logic.src.policies.helpers.operators.solution_initialization.nearest_neighbor_si import organize_route
 
 
 # Function to remove one bin from one route (Drop one bin from one random chosen route)

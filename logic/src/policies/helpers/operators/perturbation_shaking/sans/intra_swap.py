@@ -1,49 +1,40 @@
 """
-Intra-route swap operators for the Look-Ahead policy.
+Intra-route swap operators.
 
 This module provides functions to perform intra-route swaps, such as swapping
-two random bins or swapping sequences of bins within the same route.
+random pairs of bins or swapping sequences of bins within the same route.
+Routes are depot-terminated (``[0, ..., 0]``).
 
 Attributes:
-    None
+    swap_n_route_random: Swap n random pairs of bins within one route (n=1 swaps one pair).
+    swap_n_route_consecutive: Swap two non-overlapping segments of n bins within one route.
 
 Example:
-    >>> from logic.src.policies.helpers.operators.perturbation_shaking.sans.intra_swap import swap_1_route
-    >>> swap_1_route(routes)
+    >>> from logic.src.policies.helpers.operators.perturbation_shaking.sans.intra_swap import swap_n_route_random
+    >>> swap_n_route_random(routes, rng, n=1)
 """
 
 from random import Random
-from typing import List, Optional
+from typing import List, Optional, Sequence
 
 
-def swap_1_route(routes_list: List[List[int]], rng: Random) -> None:
+def swap_n_route_random(
+    routes_list: List[List[int]],
+    rng: Random,
+    n: Optional[int] = None,
+    n_choices: Sequence[int] = (2, 3, 4, 5),
+    min_route_len: Optional[int] = None,
+) -> Optional[int]:
     """
-    Intra-route perturbation: Swap two random bins within the same route.
+    Intra-route perturbation: Swap n pairs of random bins within one random route.
 
     Args:
-        routes_list: Current routing solution.
+        routes_list: Current routing solution (depot-terminated routes), mutated in place.
         rng: Random number generator.
-
-    Returns:
-        List[List[int]]: Mutated routing solution.
-    """
-    if len(routes_list) > 0:
-        chosen_route = rng.sample(routes_list, 1)[0]
-        if len(chosen_route) > 3:
-            bins_to_swap = rng.sample(chosen_route[1 : len(chosen_route) - 1], 2)
-            pos1 = chosen_route.index(bins_to_swap[0])
-            pos2 = chosen_route.index(bins_to_swap[1])
-            chosen_route[pos1], chosen_route[pos2] = chosen_route[pos2], chosen_route[pos1]
-
-
-def swap_n_route_random(routes_list: List[List[int]], rng: Random, n: Optional[int] = None) -> Optional[int]:
-    """
-    Intra-route perturbation: Swap n pairs of random bins within their routes.
-
-    Args:
-        routes_list: Current routing solution.
-        rng: Random number generator.
-        n: Number of pairs to swap.
+        n: Number of pairs to swap; drawn from ``n_choices`` when None.
+        n_choices: Candidate values of n.
+        min_route_len: Shortest route (depots included) that is mutated; defaults to n + 3,
+            so the route keeps more bins than pairs swapped. 4 swaps in any route with two bins.
 
     Returns:
         int: The number of pairs swapped (chosen_n).
@@ -52,15 +43,13 @@ def swap_n_route_random(routes_list: List[List[int]], rng: Random, n: Optional[i
         return None
 
     chosen_route = rng.sample(routes_list, 1)[0]
-    chosen_n = n if n is not None else rng.sample([2, 3, 4, 5], 1)[0]
-
-    if len(chosen_route) > chosen_n + 2:
+    chosen_n = n if n is not None else rng.sample(list(n_choices), 1)[0]
+    if len(chosen_route) >= (min_route_len if min_route_len is not None else chosen_n + 3):
         for _ in range(chosen_n):
             bins_to_swap = rng.sample(chosen_route[1 : len(chosen_route) - 1], 2)
             pos1 = chosen_route.index(bins_to_swap[0])
             pos2 = chosen_route.index(bins_to_swap[1])
             chosen_route[pos1], chosen_route[pos2] = chosen_route[pos2], chosen_route[pos1]
-
     return chosen_n
 
 
