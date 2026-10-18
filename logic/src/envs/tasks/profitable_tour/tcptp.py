@@ -10,8 +10,8 @@ from typing import Any, Dict, Optional, Tuple, Union
 
 import torch
 from logic.src.constants.temporal import get_default_temporal_params
+from logic.src.envs.base.resources import LoadResource, ShiftTimeResource
 from logic.src.envs.tasks.common.released_specs import TCPTP_SPEC
-from logic.src.envs.tasks.espprc import LoadResource, ShiftTimeResource
 from logic.src.envs.tasks.profitable_tour.common import evaluate_profitable_tour
 from logic.src.envs.tasks.profitable_tour.cptp import CPTP, CPTPEnv
 from logic.src.envs.tasks.profitable_tour.ptp import PTPGenerator

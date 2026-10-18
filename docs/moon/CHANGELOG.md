@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### ESPPRC env module removed (`2026-10-18`)
+
+#### Changed
+
+- **`logic/src/envs/tasks/espprc.py` is deleted.** Its shared machinery moved to `logic/src/envs/base/`: `resources.py` (`Resource`, `LoadResource`, `ShiftTimeResource`) and `routing.py` (`RoutingEnv`, `RoutingGenerator`, formerly `ESPPRCEnv`/`ESPPRCGenerator`). Every env (PTP, CPTP, TCPTP, CVRP and the unreleased ones) now subclasses `RoutingEnv`; the `espprc` entry of the env registry is gone. The release manifest seeds the two new modules. The trained models do not record env module paths, so they load unchanged.
+
 ### BPC greedy warm-start switch (`2026-10-18`)
 
 #### Added

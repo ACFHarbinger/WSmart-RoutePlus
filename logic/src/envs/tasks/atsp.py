@@ -8,13 +8,13 @@ import torch
 from tensordict import TensorDict, TensorDictBase
 
 from logic.src.envs.base.ops import OpsMixin
+from logic.src.envs.base.routing import RoutingEnv
 from logic.src.envs.generators.atsp import ATSPGenerator
 from logic.src.envs.tasks.base import BaseProblem
-from logic.src.envs.tasks.espprc import ESPPRCEnv
 from logic.src.envs.tasks.spec import PROBLEMS, ProblemSpec
 
 
-class ATSPEnv(ESPPRCEnv):
+class ATSPEnv(RoutingEnv):
     """Asymmetric Traveling Salesman Problem Environment."""
 
     NAME: str = "atsp"

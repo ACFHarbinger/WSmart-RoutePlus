@@ -11,10 +11,11 @@ from typing import Any, Callable, Dict, Optional, Sequence, Union
 import torch
 from tensordict import TensorDict
 
+from logic.src.envs.base.resources import LoadResource
+from logic.src.envs.base.routing import RoutingEnv, RoutingGenerator
 from logic.src.envs.tasks.base import BaseProblem
 from logic.src.envs.tasks.common.objectives import distance_objective
 from logic.src.envs.tasks.common.released_specs import CVRP_SPEC
-from logic.src.envs.tasks.espprc import ESPPRCEnv, ESPPRCGenerator, LoadResource
 from logic.src.envs.tasks.profitable_tour.common import calc_cumulative_trip_load, closed_tour_length
 from logic.src.envs.tasks.spec import PROBLEMS
 
@@ -36,7 +37,7 @@ CAPACITIES: Dict[int, float] = {
 }
 
 
-class CVRPGenerator(ESPPRCGenerator):
+class CVRPGenerator(RoutingGenerator):
     """Generator for Capacitated Vehicle Routing Problem (CVRP) instances."""
 
     def __init__(
@@ -87,8 +88,8 @@ class CVRPGenerator(ESPPRCGenerator):
         return td
 
 
-class CVRPEnv(ESPPRCEnv):
-    """Capacitated Vehicle Routing Problem Environment on the ESPPRC base.
+class CVRPEnv(RoutingEnv):
+    """Capacitated Vehicle Routing Problem Environment on the routing base.
 
     Attributes:
         NAME: "cvrp"

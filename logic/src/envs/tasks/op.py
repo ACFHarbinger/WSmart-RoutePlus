@@ -1,4 +1,4 @@
-"""Orienteering Problem (OP) task and environment on ESPPRC base."""
+"""Orienteering Problem (OP) task and environment on the routing base."""
 
 from __future__ import annotations
 
@@ -8,12 +8,12 @@ import torch
 from tensordict import TensorDict
 
 from logic.src.envs.base.ops import as_batch_nodes
+from logic.src.envs.base.routing import RoutingEnv, RoutingGenerator
 from logic.src.envs.tasks.base import BaseProblem
-from logic.src.envs.tasks.espprc import ESPPRCEnv, ESPPRCGenerator
 from logic.src.envs.tasks.spec import PROBLEMS, ProblemSpec
 
 
-class OPGenerator(ESPPRCGenerator):
+class OPGenerator(RoutingGenerator):
     """Generator for Orienteering Problem (OP) instances."""
 
     def __init__(
@@ -37,8 +37,8 @@ class OPGenerator(ESPPRCGenerator):
         return td
 
 
-class OPEnv(ESPPRCEnv):
-    """Orienteering Problem Environment on ESPPRC base."""
+class OPEnv(RoutingEnv):
+    """Orienteering Problem Environment on the routing base."""
 
     NAME: str = "op"
     name: str = "op"
@@ -123,7 +123,14 @@ class OP(BaseProblem):
         """Compute OP prize, length, and outcomes."""
         if pi.size(-1) <= 1:
             z = torch.zeros(pi.size(0), device=pi.device)
-            return {"cost": z, "reward": z, "prize": z, "length": z, "valid": torch.ones_like(z, dtype=torch.bool), "total": z}
+            return {
+                "cost": z,
+                "reward": z,
+                "prize": z,
+                "length": z,
+                "valid": torch.ones_like(z, dtype=torch.bool),
+                "total": z,
+            }
 
         prize_all = dataset.get("prize", torch.zeros(pi.size(0), pi.size(1), device=pi.device))
         if prize_all.shape[-1] == pi.shape[-1] - 1:

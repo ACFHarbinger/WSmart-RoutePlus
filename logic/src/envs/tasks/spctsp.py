@@ -1,4 +1,4 @@
-"""Stochastic Prize-Collecting TSP (SPCTSP) task and environment on ESPPRC base."""
+"""Stochastic Prize-Collecting TSP (SPCTSP) task and environment on the routing base."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ SPCTSPGenerator = PCTSPGenerator
 
 
 class SPCTSPEnv(PCTSPEnv):
-    """Stochastic Prize-Collecting TSP Environment on ESPPRC base."""
+    """Stochastic Prize-Collecting TSP Environment on the routing base."""
 
     NAME: str = "spctsp"
     name: str = "spctsp"

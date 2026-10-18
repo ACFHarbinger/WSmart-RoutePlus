@@ -6,18 +6,19 @@ from typing import Any, Dict, Optional, Union
 
 import torch
 
+from logic.src.envs.base.routing import RoutingEnv, RoutingGenerator
 from logic.src.envs.tasks.base import BaseProblem
-from logic.src.envs.tasks.espprc import ESPPRCEnv, ESPPRCGenerator
 from logic.src.envs.tasks.spec import PROBLEMS, ProblemSpec
 
 
-class TSPGenerator(ESPPRCGenerator):
+class TSPGenerator(RoutingGenerator):
     """Generator for TSP instances."""
+
     pass
 
 
-class TSPEnv(ESPPRCEnv):
-    """Traveling Salesman Problem Environment on the ESPPRC base."""
+class TSPEnv(RoutingEnv):
+    """Traveling Salesman Problem Environment on the routing base."""
 
     NAME: str = "tsp"
     name: str = "tsp"

@@ -1,4 +1,4 @@
-"""Prize-Collecting Traveling Salesman Problem (PCTSP) task and environment on ESPPRC base."""
+"""Prize-Collecting Traveling Salesman Problem (PCTSP) task and environment on the routing base."""
 
 from __future__ import annotations
 
@@ -8,14 +8,14 @@ import torch
 from tensordict import TensorDict, TensorDictBase
 
 from logic.src.envs.base.ops import OpsMixin
+from logic.src.envs.base.routing import RoutingEnv
 from logic.src.envs.generators.pctsp import PCTSPGenerator
 from logic.src.envs.tasks.base import BaseProblem
-from logic.src.envs.tasks.espprc import ESPPRCEnv
 from logic.src.envs.tasks.spec import PROBLEMS, ProblemSpec
 
 
-class PCTSPEnv(ESPPRCEnv):
-    """Prize-Collecting TSP Environment on ESPPRC base."""
+class PCTSPEnv(RoutingEnv):
+    """Prize-Collecting TSP Environment on the routing base."""
 
     NAME: str = "pctsp"
     name: str = "pctsp"
@@ -241,7 +241,14 @@ class PCTSP(BaseProblem):
         """Compute PCTSP objective and outcomes."""
         if pi.size(-1) <= 1:
             pen = dataset["penalty"].sum(-1) if "penalty" in dataset else torch.zeros(pi.size(0), device=pi.device)
-            return {"cost": pen, "reward": -pen, "saved_penalty": torch.zeros_like(pen), "length": torch.zeros_like(pen), "valid": torch.ones_like(pen, dtype=torch.bool), "total": pen}
+            return {
+                "cost": pen,
+                "reward": -pen,
+                "saved_penalty": torch.zeros_like(pen),
+                "length": torch.zeros_like(pen),
+                "valid": torch.ones_like(pen, dtype=torch.bool),
+                "total": pen,
+            }
 
         penalty = dataset.get("penalty", torch.zeros(pi.size(0), pi.size(1), device=pi.device))
         if penalty.shape[-1] == pi.max().item():
