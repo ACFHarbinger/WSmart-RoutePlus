@@ -74,16 +74,19 @@ class CPTPPricingSolver(RCSPPSolver):
 
     Attributes:
         threads: Threads the CPTP solver may use per call.
+        options: Extra cptp solver options passed to every solve.
         symmetric: Whether the distance matrix is symmetric (exact pricing).
         stats: Counter of CPTP calls, their outcomes and labelling fallbacks by reason.
         is_known_column: Predicate on a node tuple: already a master column. The engine
             sets it once the master exists.
     """
 
-    def __init__(self, *args: Any, threads: int = 1, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, threads: int = 1, options: Optional[Dict[str, Any]] = None, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._cptp = _import_cptp()
         self.threads = max(1, int(threads))
+        # Extra cptp solver options (name -> value), e.g. labeling_max_queue_pops.
+        self.options = {str(k): str(v).lower() if isinstance(v, bool) else str(v) for k, v in (options or {}).items()}
         d = np.asarray(self.cost_matrix, dtype=float)[: self.n_nodes + 1, : self.n_nodes + 1]
         self.symmetric = bool(np.allclose(d, d.T, rtol=1e-9, atol=1e-9))
         iu = np.triu_indices(self.n_nodes + 1, 1)
@@ -199,16 +202,15 @@ class CPTPPricingSolver(RCSPPSolver):
 
         budget = max(0.05, float(getattr(self, "_current_timeout", self.timeout) or self.timeout))
         t0 = time.perf_counter()
-        result = self._cptp.solve(
-            num_nodes=n + 1,
-            edges=self._edges[keep],
-            edge_costs=costs[keep],
-            profits=profits,
-            demands=self._demands,
-            capacity=float(self.capacity),
-            time_limit=budget,
-            num_threads=self.threads,
+        model = self._cptp.Model()
+        model.set_graph(
+            n + 1, np.ascontiguousarray(self._edges[keep], dtype=np.int32), np.ascontiguousarray(costs[keep])
         )
+        model.set_depot(0)
+        model.set_profits(np.ascontiguousarray(profits))
+        model.add_capacity_resource(np.ascontiguousarray(self._demands), float(self.capacity))
+        options = {"output_flag": "false", **self.options, "time_limit": f"{budget:.3f}", "threads": str(self.threads)}
+        result = model.solve(list(options.items()))
         self.stats["cptp_calls"] += 1
         self.stats["cptp_seconds"] += time.perf_counter() - t0
         optimal = bool(result.is_optimal())

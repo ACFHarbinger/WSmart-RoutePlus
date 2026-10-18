@@ -11,8 +11,8 @@ Example:
     60.0
 """
 
-from dataclasses import dataclass
-from typing import List, Optional
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
 
 from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
@@ -30,6 +30,9 @@ class BPCConfig:
         pricing_engine: Pricing solver: 'labelling' (ng-route RCSPP labelling) or 'cptp' (the CPTP
             branch-and-cut of the logic/submodules/cptp submodule; see bpc engines.py for the cut families it keeps).
         cptp_threads: Threads per CPTP pricing call (pricing_engine='cptp').
+        cptp_options: Extra cptp solver options. The default caps its capacity-aware labelling at
+            100,000 queue pops: at 1,000,000 (cptp's default) that preprocessing ignores the time
+            limit and took about 35 s at 350 nodes.
         seed: Random seed for reproducibility.
         packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
@@ -78,6 +81,7 @@ class BPCConfig:
     greedy_warm_start: bool = True
     pricing_engine: str = "labelling"
     cptp_threads: int = 1
+    cptp_options: Dict[str, Any] = field(default_factory=lambda: {"labeling_max_queue_pops": 100000})
     seed: Optional[int] = None
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

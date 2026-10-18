@@ -63,7 +63,17 @@ def make_pricing_solver(
     if _engine_name(cfg) == "cptp":
         from logic.src.policies.helpers.solvers_and_matheuristics.pricing.cptp_pricer import CPTPPricingSolver
 
-        return CPTPPricingSolver(k_nodes, dist, wastes, capacity, R, C, threads=cfg.cptp_threads, **kwargs)
+        return CPTPPricingSolver(
+            k_nodes,
+            dist,
+            wastes,
+            capacity,
+            R,
+            C,
+            threads=cfg.cptp_threads,
+            options=dict(cfg.cptp_options or {}),
+            **kwargs,
+        )
     return RCSPPSolver(k_nodes, dist, wastes, capacity, R, C, **kwargs)
 
 
