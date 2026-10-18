@@ -94,7 +94,8 @@ solvers = [
     "pyomo>=6.9.5",
 ]
 # CPTP branch-and-cut pricer of the BPC (pricing_engine: cptp): the
-# logic/submodules/cptp submodule, built from source (CMake, C++23 compiler).
+# logic/submodules/BPC-CPTP submodule (ACFHarbinger fork of spoorendonk/cptp),
+# built from source (CMake, C++23 compiler).
 cptp = ["cptp"]
 viz = [
     "seaborn>=0.13.2",
@@ -142,7 +143,7 @@ web = []  # Jinja is required by the classical day-log popup renderer.
 # Optional dependencies are now in [project.optional-dependencies]
 
 [tool.uv.sources]
-cptp = { path = "submodules/cptp" }
+cptp = { path = "submodules/BPC-CPTP" }
 hexaly = { index = "hexaly_package" }
 torch_scatter = { index = "pyg" }
 torch_sparse = { index = "pyg" }

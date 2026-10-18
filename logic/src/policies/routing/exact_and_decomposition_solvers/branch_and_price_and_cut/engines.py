@@ -2,7 +2,7 @@
 
 ``labelling`` (default) prices with the ng-route labelling RCSPP and separates
 every requested cut family plus the limited-memory rank-1 cuts. ``cptp`` prices
-with the CPTP branch-and-cut of the ``logic/submodules/cptp`` submodule
+with the CPTP branch-and-cut of the ``logic/submodules/BPC-CPTP`` submodule
 (:mod:`...pricing.cptp_pricer`). It keeps only the cut families whose duals that
 pricer can express: rounded capacity (with its SECs), knapsack cover, edge
 clique, fleet cover and node-based physical-capacity LCIs. Subset-row, rank-1,

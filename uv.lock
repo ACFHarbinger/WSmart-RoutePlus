@@ -1098,7 +1098,7 @@ toml = [
 [[package]]
 name = "cptp"
 version = "0.1.0"
-source = { directory = "logic/submodules/cptp" }
+source = { directory = "logic/submodules/BPC-CPTP" }
 dependencies = [
     { name = "numpy" },
 ]
@@ -8276,7 +8276,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "alns", marker = "extra == 'solvers'", specifier = ">=7.0.0" },
-    { name = "cptp", marker = "extra == 'cptp'", directory = "logic/submodules/cptp" },
+    { name = "cptp", marker = "extra == 'cptp'", directory = "logic/submodules/BPC-CPTP" },
     { name = "cryptography", specifier = ">=45.0.6" },
     { name = "dehb", marker = "extra == 'hpo'", specifier = ">=0.1.2" },
     { name = "fast-tsp", marker = "extra == 'solvers'", specifier = ">=0.1.4" },

@@ -5,7 +5,7 @@ one tour from the depot, within the vehicle capacity, that maximises collected
 reduced profit minus travel cost. This engine solves it with the open
 branch-and-cut of Spoorendonk (2026, arXiv:2607.04497), which re-implements
 Jepsen et al. (2014, Discrete Optimization 14:78-96) on HiGHS; the solver is
-the ``logic/submodules/cptp`` submodule, imported as the ``cptp`` package.
+the ``logic/submodules/BPC-CPTP`` submodule, imported as the ``cptp`` package.
 
 The master's duals map onto the CPTP data as follows:
 
@@ -63,8 +63,8 @@ def _import_cptp() -> Any:
         import cptp
     except ImportError as exc:  # pragma: no cover - depends on the optional build
         raise ImportError(
-            "pricing_engine='cptp' needs the cptp package: build it from the logic/submodules/cptp "
-            "submodule (uv pip install logic/submodules/cptp)."
+            "pricing_engine='cptp' needs the cptp package: build it from the logic/submodules/BPC-CPTP "
+            "submodule (uv pip install logic/submodules/BPC-CPTP)."
         ) from exc
     return cptp
 

@@ -28,7 +28,8 @@ class BPCConfig:
         greedy_warm_start: Whether to seed the master's column pool with greedy-insertion
             routes (profit-aware when ``profit_aware_operators``); False starts it empty.
         pricing_engine: Pricing solver: 'labelling' (ng-route RCSPP labelling) or 'cptp' (the CPTP
-            branch-and-cut of the logic/submodules/cptp submodule; see bpc engines.py for the cut families it keeps).
+            branch-and-cut of the logic/submodules/BPC-CPTP submodule; see bpc engines.py for the cut
+            families it keeps).
         cptp_threads: Threads per CPTP pricing call (pricing_engine='cptp').
         cptp_options: Extra cptp solver options. The default caps its capacity-aware labelling at
             100,000 queue pops: at 1,000,000 (cptp's default) that preprocessing ignores the time

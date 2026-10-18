@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### BPC-CPTP fork replaces the cptp submodule (`2026-10-18`)
+
+#### Changed
+
+- **`logic/submodules/cptp` → `logic/submodules/BPC-CPTP`**, now tracking the fork https://github.com/ACFHarbinger/BPC-CPTP.git in place of https://github.com/spoorendonk/cptp.git. It is pinned at the same commit (`de21477`), so the pricer's code is unchanged and the package is still imported as `cptp`. `logic/pyproject.toml` (`[tool.uv.sources]`), `uv.lock` and the docstrings and messages that name the path are updated. Install it with `uv pip install logic/submodules/BPC-CPTP`.
+
 ### BPC: CPTP branch-and-cut pricing engine (`2026-10-18`)
 
 #### Added
