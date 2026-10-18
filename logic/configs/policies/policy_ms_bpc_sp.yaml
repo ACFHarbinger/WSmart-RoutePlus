@@ -1,6 +1,7 @@
 ms_bpc_sp:
   custom:
     profit_aware_operators: false
+    greedy_warm_start: true
     seed: null
     packing:
       other/pk_lookahead.yaml:
