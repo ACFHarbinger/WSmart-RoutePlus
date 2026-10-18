@@ -1,7 +1,7 @@
 """Rebuild the simulation summary CSVs (archive schema) from the per-run logs under assets/output.
 
 Usage:
-    python logic/gen/build_simulation_summary.py OUT_DIR [--root assets/output]
+    python logic/gen/build_simulation_summary.py OUT_DIR [--root outputs/simulations] [--override ROOT ...]
 
 Writes ``simulation_summary.csv`` (30-day) and ``simulation_summary_90d.csv`` (90-day) into
 OUT_DIR. Each row is one policy configuration in one scenario cell, taken from the ``mean``
@@ -139,13 +139,39 @@ def collect(root: pathlib.Path) -> Dict[str, List[Dict[str, object]]]:
     return rows
 
 
+#: A configuration within a scenario cell: every column except the metrics.
+KEY_COLS = ["city", "N", "dist", "improver", "strategy", "cf", "sl_var", "constructor"]
+
+
+def override_rows(
+    base: Dict[str, List[Dict[str, object]]], new: Dict[str, List[Dict[str, object]]]
+) -> Dict[str, List[Dict[str, object]]]:
+    """``base`` with each row replaced by the ``new`` row of the same configuration, in place."""
+    out: Dict[str, List[Dict[str, object]]] = {}
+    for horizon, rows in base.items():
+        by_key = {tuple(r[c] for c in KEY_COLS): r for r in new.get(horizon, [])}
+        replaced = [by_key.pop(tuple(r[c] for c in KEY_COLS), r) for r in rows]
+        out[horizon] = replaced + list(by_key.values())  # configurations the base lacks
+    return out
+
+
 def main(argv: Optional[List[str]] = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("out_dir", type=pathlib.Path, help="Folder for the two summary CSVs.")
     parser.add_argument("--root", type=pathlib.Path, default=pathlib.Path("outputs/simulations"))
+    parser.add_argument(
+        "--override",
+        type=pathlib.Path,
+        action="append",
+        default=[],
+        help="Another output root whose rows replace the --root rows of the same configuration "
+        "(e.g. a rerun of one routing algorithm). Repeatable; later roots win.",
+    )
     args = parser.parse_args(argv)
 
     rows = collect(args.root)
+    for root in args.override:
+        rows = override_rows(rows, collect(root))
     args.out_dir.mkdir(parents=True, exist_ok=True)
     outputs: List[Tuple[pathlib.Path, int]] = []
     for key, name in (("30", "simulation_summary.csv"), ("90", "simulation_summary_90d.csv")):

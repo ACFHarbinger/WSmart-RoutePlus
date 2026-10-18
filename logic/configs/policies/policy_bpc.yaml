@@ -4,6 +4,8 @@ bpc:
     greedy_warm_start: true
     pricing_engine: labelling
     cptp_threads: 1
+    cptp_options:
+      labeling_max_queue_pops: 100000
     packing:
       other/pk_last_minute.yaml:
       - last_minute_cf70
