@@ -17,11 +17,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### One local search implementation (`2026-10-18`)
+
+#### Changed
+
+- **`local_search_manager.py` is deleted; `LocalSearch` (`local_search_base.py`) is the single local search state.** The manager duplicated the base's state and caches (routes, loads, distance access) in a standalone class. Its named first-improvement sweeps (`relocate`, `swap`, `two_opt_intra`, `or_opt`, `two_opt_star`, `swap_star`, `cross_exchange_op`, ..., `lns`, `ges`, `lkh_refinement`) now live in `SweepLocalSearch(LocalSearch)` (`local_search_sweeps.py`, exported by the package).
+  - It takes the manager's constructor arguments, plus `mandatory_nodes` and `penalty_capacity`, and adds `optimize()`: descend with a list of sweeps until none improves.
+  - It builds no granular neighbour lists, so moves do not maintain the top-insertion cache.
+  - Its callers switch from `LocalSearchManager` to it: the classical, random, Or-opt, cross-exchange and guided local search improvers, HGS-ADC and GIHH.
+  - **Same moves as before.** On seeded random instances, every sweep applies the same sequence of moves as the manager did (checked for all 21 operators), except `swap_star` and `relocate` (both fixed below).
+
+#### Fixed
+
+- **`swap_star` raised `AttributeError`** under the manager, which had no `top_insertions`, whenever two non-empty routes existed. The improvers that wrap their loop in `try` (classical local search with `ls_operator: all`, random local search) then returned the tour unimproved. HGS-ADC's intra-day education step raised whenever a day had two or more routes. It now runs. The paper's improvers (`ls_operator: 2opt` and fast TSP) never called it.
+- **The `relocate` sweep cycled.** It also tried relocating a node after itself. `move_relocate` priced that as a gain, but applying it swaps the node with its successor, a longer tour, which the next sweep undid. A descent then alternated between the two tours until its iteration cap. `move_relocate` now rejects `v == u`. `LocalSearch`'s own neighbour loop never pairs a node with itself, so it is unaffected. `relocate` was in the classical improver's `all` suite, random local search and guided local search, not in the paper's improvers.
+
 ### Studio startup crash on empty plugin config (`2026-10-18`)
 
 #### Fixed
 
 - **WSmart-Route Studio exited on launch** (`just studio` / `tauri dev`) with `PluginInitialization("notification", "invalid type: map, expected unit")`. `app/src-tauri/tauri.conf.json` had `"notification": {}` (and the same empty object for `dialog` and `store`). Those plugins deserialize their config as unit (`null` / omitted), not a map; they are already registered in `lib.rs`. The empty keys are removed. `shell` and `updater` keep the config they actually read.
+
 
 ### One generator class per problem (`2026-10-18`)
 

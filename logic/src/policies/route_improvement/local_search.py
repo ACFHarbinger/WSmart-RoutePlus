@@ -120,9 +120,9 @@ class ClassicalLocalSearchRouteImprover(IRouteImprovement):
                 return tour, {"algorithm": "ClassicalLocalSearchRouteImprover"}
 
         # Case 2: Requested local-search operator(s)
-        from logic.src.policies.helpers.local_search.local_search_manager import LocalSearchManager
+        from logic.src.policies.helpers.local_search.local_search_sweeps import SweepLocalSearch
 
-        manager = LocalSearchManager(
+        ls = SweepLocalSearch(
             dist_matrix=dist_matrix,
             wastes=wastes,
             capacity=capacity,
@@ -131,9 +131,9 @@ class ClassicalLocalSearchRouteImprover(IRouteImprovement):
             improvement_threshold=1e-6,
             seed=seed,
         )
-        manager.set_routes(routes)
+        ls.set_routes(routes)
 
-        operators = _cls_operator_callables(manager, str(operator_name))
+        operators = _cls_operator_callables(ls, str(operator_name))
         deadline = None
         if time_limit is not None:
             try:
@@ -152,7 +152,7 @@ class ClassicalLocalSearchRouteImprover(IRouteImprovement):
                         break  # restart search from simplest operator
                 if not improved:
                     break  # local optimum with respect to all operators reached
-            return assemble_tour(manager.get_routes()), {
+            return assemble_tour(ls.get_routes()), {
                 "algorithm": "ClassicalLocalSearchRouteImprover",
                 "ls_operator": str(operator_name),
                 "iterations": max_iter,
@@ -162,51 +162,51 @@ class ClassicalLocalSearchRouteImprover(IRouteImprovement):
             return tour, {"algorithm": "ClassicalLocalSearchRouteImprover"}
 
 
-def _cls_operator_callables(manager: Any, operator_name: str) -> List[Callable[[], bool]]:
-    """Map yaml ``ls_operator`` names onto LocalSearchManager methods.
+def _cls_operator_callables(ls: Any, operator_name: str) -> List[Callable[[], bool]]:
+    """Map yaml ``ls_operator`` names onto SweepLocalSearch methods.
 
     ``2opt`` (ri_cls.yaml) is intra-route 2-opt only. ``all`` / ``multi`` keep the
     previous sequential suite for callers that want it.
 
     Args:
-        manager: LocalSearchManager instance.
+        ls: SweepLocalSearch instance.
         operator_name: Operator name from yaml or kwargs.
 
     Returns:
         Ordered list of zero-argument callables that return True on improvement.
     """
     suite: List[Callable[[], bool]] = [
-        manager.relocate,
-        manager.swap,
-        manager.two_opt_intra,
-        lambda: manager.or_opt(chain_len=2),
-        lambda: manager.or_opt(chain_len=3),
-        manager.two_opt_star,
-        manager.swap_star,
-        manager.three_opt_intra,
-        manager.four_opt_intra,
+        ls.relocate,
+        ls.swap,
+        ls.two_opt_intra,
+        lambda: ls.or_opt(chain_len=2),
+        lambda: ls.or_opt(chain_len=3),
+        ls.two_opt_star,
+        ls.swap_star,
+        ls.three_opt_intra,
+        ls.four_opt_intra,
     ]
     key = operator_name.lower().replace("-", "_")
     if key in ("all", "multi", "sequential", "classical_local_search", "cls", "local_search"):
         return suite
     aliases = {
-        "2opt": manager.two_opt_intra,
-        "two_opt": manager.two_opt_intra,
-        "two_opt_intra": manager.two_opt_intra,
-        "3opt": manager.three_opt_intra,
-        "three_opt": manager.three_opt_intra,
-        "three_opt_intra": manager.three_opt_intra,
-        "4opt": manager.four_opt_intra,
-        "four_opt": manager.four_opt_intra,
-        "four_opt_intra": manager.four_opt_intra,
-        "relocate": manager.relocate,
-        "swap": manager.swap,
-        "or_opt": lambda: manager.or_opt(chain_len=2),
-        "or_opt_2": lambda: manager.or_opt(chain_len=2),
-        "or_opt_3": lambda: manager.or_opt(chain_len=3),
-        "two_opt_star": manager.two_opt_star,
-        "2opt_star": manager.two_opt_star,
-        "swap_star": manager.swap_star,
+        "2opt": ls.two_opt_intra,
+        "two_opt": ls.two_opt_intra,
+        "two_opt_intra": ls.two_opt_intra,
+        "3opt": ls.three_opt_intra,
+        "three_opt": ls.three_opt_intra,
+        "three_opt_intra": ls.three_opt_intra,
+        "4opt": ls.four_opt_intra,
+        "four_opt": ls.four_opt_intra,
+        "four_opt_intra": ls.four_opt_intra,
+        "relocate": ls.relocate,
+        "swap": ls.swap,
+        "or_opt": lambda: ls.or_opt(chain_len=2),
+        "or_opt_2": lambda: ls.or_opt(chain_len=2),
+        "or_opt_3": lambda: ls.or_opt(chain_len=3),
+        "two_opt_star": ls.two_opt_star,
+        "2opt_star": ls.two_opt_star,
+        "swap_star": ls.swap_star,
     }
     chosen = aliases.get(key)
     if chosen is None:

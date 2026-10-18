@@ -32,7 +32,7 @@ import numpy as np
 
 from logic.src.configs.policies.gihh import GIHHConfig
 from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
-from logic.src.policies.helpers.local_search.local_search_manager import LocalSearchManager
+from logic.src.policies.helpers.local_search.local_search_sweeps import SweepLocalSearch
 from logic.src.policies.helpers.operators import (
     apply_ges,
     apply_intra_route_cross_exchange,
@@ -282,7 +282,7 @@ class GIHHSolver:
         candidate = current.copy()
 
         if operator in ["inter_route_2opt_star", "inter_route_cross_exchange"]:
-            ls = LocalSearchManager(
+            ls = SweepLocalSearch(
                 self.dist_matrix,
                 self.wastes,
                 self.capacity,

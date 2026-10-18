@@ -189,7 +189,7 @@ def test_cls_2opt_runs_only_two_opt_intra() -> None:
 
         return _fn
 
-    with patch("logic.src.policies.helpers.local_search.local_search_manager.LocalSearchManager") as mock_cls:
+    with patch("logic.src.policies.helpers.local_search.local_search_sweeps.SweepLocalSearch") as mock_cls:
         manager = MagicMock()
         mock_cls.return_value = manager
         manager.relocate.side_effect = _track("relocate")

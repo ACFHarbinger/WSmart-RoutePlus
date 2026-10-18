@@ -19,7 +19,7 @@ import numpy as np
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.interfaces import IRouteImprovement
 from logic.src.interfaces.context.search_context import ImprovementMetrics
-from logic.src.policies.helpers.local_search.local_search_manager import LocalSearchManager
+from logic.src.policies.helpers.local_search.local_search_sweeps import SweepLocalSearch
 
 from .base import RouteImproverRegistry
 from .common.helpers import assemble_tour, split_tour, to_numpy
@@ -102,8 +102,8 @@ class RandomLocalSearchRouteImprover(IRouteImprovement):
         if not routes:
             return tour, {"algorithm": "RandomLocalSearchRouteImprover"}
 
-        # Initialize LocalSearchManager
-        manager = LocalSearchManager(
+        # Initialize SweepLocalSearch
+        ls = SweepLocalSearch(
             dist_matrix=dist_matrix,
             wastes=wastes,
             capacity=capacity,
@@ -112,19 +112,19 @@ class RandomLocalSearchRouteImprover(IRouteImprovement):
             improvement_threshold=1e-6,
             seed=seed,
         )
-        manager.set_routes(routes)
+        ls.set_routes(routes)
 
-        # Map probabilistic keys to manager methods
+        # Map probabilistic keys to ls methods
         op_map: dict[str, Callable[[], Any]] = {
-            "two_opt": manager.two_opt_intra,
-            "swap": manager.swap,
-            "relocate": manager.relocate,
-            "two_opt_star": manager.two_opt_star,
-            "swap_star": manager.swap_star,
-            "three_opt": manager.three_opt_intra,
-            "or_opt": lambda: manager.or_opt(chain_len=2),
-            "relocate_chain": lambda: manager.relocate_chain_op(max_chain_len=3),
-            "cross_exchange": manager.cross_exchange_op,
+            "two_opt": ls.two_opt_intra,
+            "swap": ls.swap,
+            "relocate": ls.relocate,
+            "two_opt_star": ls.two_opt_star,
+            "swap_star": ls.swap_star,
+            "three_opt": ls.three_opt_intra,
+            "or_opt": lambda: ls.or_opt(chain_len=2),
+            "relocate_chain": lambda: ls.relocate_chain_op(max_chain_len=3),
+            "cross_exchange": ls.cross_exchange_op,
         }
 
         active_ops = [op for op in op_probs.keys() if op in op_map]
@@ -140,9 +140,9 @@ class RandomLocalSearchRouteImprover(IRouteImprovement):
             for _ in range(n_iterations):
                 op_name = rng.choice(active_ops, p=probs)
                 op_func = op_map[op_name]
-                op_func()  # Apply the operator (manager handles success internally)
+                op_func()  # Apply the operator (ls handles success internally)
 
             # Re-assemble tour
-            return assemble_tour(manager.get_routes()), {"algorithm": "RandomLocalSearchRouteImprover"}
+            return assemble_tour(ls.get_routes()), {"algorithm": "RandomLocalSearchRouteImprover"}
         except Exception:
             return tour, {"algorithm": "RandomLocalSearchRouteImprover"}

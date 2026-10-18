@@ -120,7 +120,9 @@ def move_relocate(ls, u: int, v: int, r_u: int, p_u: int, r_v: int, p_v: int, ex
     Returns:
         bool: True if the relocation was applied (improving), False otherwise.
     """
-    if r_u == r_v and (p_u == p_v + 1):
+    # u already follows v, or u is v (relocating after itself is a disguised swap
+    # with its successor that the delta below misprices).
+    if r_u == r_v and (p_u == p_v + 1 or p_u == p_v):
         return False
     dem_u = ls.waste.get(u, 0)
 

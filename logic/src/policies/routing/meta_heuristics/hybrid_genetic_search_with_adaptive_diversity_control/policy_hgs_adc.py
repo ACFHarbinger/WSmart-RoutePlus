@@ -4,7 +4,7 @@ Hybrid Genetic Search with Adaptive Diversity Control (HGS-ADC) for MPVRP.
 Attributes:
     Population: Management class for HGS sub-populations.
     Individual: Solution representation for HGS-ADC.
-    LocalSearchManager: Orchestrator for descent heuristics.
+    SweepLocalSearch: Orchestrator for descent heuristics.
 
 Example:
     >>> policy = PolicyHGSADC(config)
@@ -20,7 +20,7 @@ from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.problem_context import ProblemContext
 from logic.src.interfaces.context.solution_context import SolutionContext
-from logic.src.policies.helpers.local_search.local_search_manager import LocalSearchManager
+from logic.src.policies.helpers.local_search.local_search_sweeps import SweepLocalSearch
 from logic.src.policies.helpers.operators.crossover_recombination.pattern_and_itinerary_crossover import (
     pattern_itinerary_crossover,
 )
@@ -324,10 +324,10 @@ class PolicyHGSADC(BaseMultiPeriodRoutingPolicy):
                 continue
 
             load_array = loads[t]
-            # Build waste dict for LocalSearchManager
+            # Build waste dict for SweepLocalSearch
             wastes = {i: float(load_array[i]) for i in range(len(load_array))}
 
-            ls = LocalSearchManager(
+            ls = SweepLocalSearch(
                 dist_matrix=dist, wastes=wastes, capacity=capacity, R=0.0, C=1.0, improvement_threshold=1e-4
             )
             ls.penalty_capacity = 100.0  # type: ignore
