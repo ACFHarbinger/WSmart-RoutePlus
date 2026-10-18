@@ -30,7 +30,7 @@ from .common.helpers import assemble_tour, split_tour, to_numpy
 class OrOptRouteImprover(IRouteImprovement):
     """Or-opt route improver that relocates chains of nodes.
 
-    Wraps LocalSearchManager.or_opt.
+    Wraps SweepLocalSearch.or_opt.
 
     Attributes:
         config (Dict[str, Any]): Configuration parameters.
@@ -79,13 +79,13 @@ class OrOptRouteImprover(IRouteImprovement):
             return tour, {"algorithm": "OrOptRouteImprover"}
 
         try:
-            from logic.src.policies.helpers.local_search.local_search_manager import LocalSearchManager
+            from logic.src.policies.helpers.local_search.local_search_sweeps import SweepLocalSearch
 
             routes = split_tour(tour)
             if not routes:
                 return tour, {"algorithm": "OrOptRouteImprover"}
 
-            manager = LocalSearchManager(
+            ls = SweepLocalSearch(
                 dist_matrix=dm,
                 wastes=wastes,
                 capacity=capacity,
@@ -94,13 +94,13 @@ class OrOptRouteImprover(IRouteImprovement):
                 improvement_threshold=1e-6,
                 seed=seed,
             )
-            manager.set_routes(routes)
+            ls.set_routes(routes)
 
             for _ in range(iterations):
-                if not manager.or_opt(chain_len=chain_len):
+                if not ls.or_opt(chain_len=chain_len):
                     break
 
-            return assemble_tour(manager.get_routes()), {"algorithm": "OrOptRouteImprover"}
+            return assemble_tour(ls.get_routes()), {"algorithm": "OrOptRouteImprover"}
 
         except Exception:
             # Fallback to original tour on any unexpected error

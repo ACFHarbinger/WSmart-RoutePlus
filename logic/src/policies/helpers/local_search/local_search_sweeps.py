@@ -21,20 +21,24 @@ Local Search Operators:
     Heuristics:
         - Lin-Kernighan-Helsgaun (LKH) for TSP sub-problems
 
+Each operator method sweeps every position of the current routes and applies
+the first improving move (first improvement); callers chain the methods into
+their own descent.
+
 Attributes:
-    LocalSearchManager: Manages local search operators for ACO route improvement.
+    SweepLocalSearch: The operator sweeps on the :class:`LocalSearch` state.
 
 Example:
-    >>> from logic.src.policies.helpers.local_search.local_search_manager import LocalSearchManager
-    >>> manager = LocalSearchManager(dist_matrix, wastes, capacity, R, C, improvement_threshold, seed)
-    >>> manager.set_routes(routes)
-    >>> manager.or_opt()
+    >>> from logic.src.policies.helpers.local_search import SweepLocalSearch
+    >>> ls = SweepLocalSearch(dist_matrix, wastes, capacity, R, C, seed=42)
+    >>> ls.set_routes(routes)
+    >>> ls.or_opt()
     True
-    >>> manager.get_routes()
-    [[0, 1, 2], [3, 4, 5]]
+    >>> ls.get_routes()
+    [[1, 2], [3, 4, 5]]
 """
 
-import random
+from types import SimpleNamespace
 from typing import Dict, List, Optional
 
 import numpy as np
@@ -66,26 +70,22 @@ from logic.src.policies.helpers.operators.intra_route_local_search import (
 # Import operators from their respective modules
 from logic.src.policies.helpers.operators.search_heuristics import apply_ges, apply_lns, solve_lkh
 
+from .local_search_base import LocalSearch
 
-class LocalSearchManager:
+
+class SweepLocalSearch(LocalSearch):
     """
-    Manages local search operators for ACO route improvement.
+    Local search driven by named operator sweeps over the current routes.
 
-    This class provides a unified interface to all local search operators
-    from the operators module, compatible with Q-Learning operator selection.
+    Shares the :class:`LocalSearch` state (routes, loads, node map, penalties)
+    and atomic operators; instead of the granular neighbour loop of
+    ``LocalSearch._optimize_internal`` each public method enumerates every
+    position for one operator, so callers pick and order the operators.
 
     Attributes:
-        d (np.ndarray): Matrix of distances between nodes.
-        waste (Dict[int, float]): Dictionary of wastes for each node.
-        Q (float): Capacity of the vehicle.
-        R (float): Cost of travel per unit distance.
-        C (float): Cost of time per unit time.
-        improvement_threshold (float): Minimum improvement required to accept a move.
-        seed (Optional[int]): Seed for random number generator.
-        rng (np.random.Generator): Random number generator.
-        random_std (random.Random): Random number generator.
-        routes (List[List[int]]): List of routes.
-        _load_cache (Dict[int, float]): Cache of waste loads for each route.
+        improvement_threshold (float): Minimum improvement a caller requires.
+        seed (Optional[int]): Seed of ``random`` and ``rng``.
+        rng (np.random.Generator): Random number generator (LKH refinement).
     """
 
     def __init__(
@@ -95,48 +95,66 @@ class LocalSearchManager:
         capacity: float,
         R: float,
         C: float,
-        improvement_threshold: float,
+        improvement_threshold: float = 1e-6,
         seed: Optional[int] = None,
+        mandatory_nodes: Optional[List[int]] = None,
+        penalty_capacity: float = 1.0,
     ):
         """
-        Initialize the LocalSearchManager with problem data and configuration.
+        Initialize the sweeps with problem data and configuration.
 
         Args:
             dist_matrix: Matrix of distances between nodes.
             wastes: Dictionary of wastes for each node.
             capacity: Capacity of the vehicle.
-            R: Cost of travel per unit distance.
-            C: Cost of time per unit time.
+            R: Revenue per unit of waste.
+            C: Cost per unit of distance.
             improvement_threshold: Minimum improvement required to accept a move.
-            seed: Seed for random number generator.
+            seed: Seed for the random number generators.
+            mandatory_nodes: Nodes the drop operator never removes.
+            penalty_capacity: Capacity-violation penalty weight of the penalised operators.
         """
-        self.d = dist_matrix
-        self.waste = wastes
-        self.Q = capacity
-        self.R = R
-        self.C = C
+        # The sweeps enumerate positions themselves: no granular neighbour lists,
+        # hence no top-insertion cache upkeep on each move.
+        super().__init__(
+            dist_matrix,
+            wastes,
+            capacity,
+            R,
+            C,
+            params=SimpleNamespace(seed=seed),
+            mandatory_nodes=mandatory_nodes,
+            neighbors={},
+            penalty_capacity=penalty_capacity,
+        )
         self.improvement_threshold = improvement_threshold
         self.seed = seed
         self.rng = np.random.default_rng(seed)
-        self.random_std = random.Random(seed)
 
-        # Routes interface for operators
-        self.routes: List[List[int]] = []
+    def optimize(
+        self, solution: List[List[int]], operators: Optional[List[str]] = None, max_iterations: int = 1000
+    ) -> List[List[int]]:
+        """
+        Descend with the named sweeps until none improves.
 
-        # Load cache for efficiency
-        self._load_cache: Dict[int, float] = {}
-
-    def get_dist(self, u: int, v: int) -> float:
-        """Get distance between node u and node v.
+        After each improving move the descent restarts from the first operator.
 
         Args:
-            u: Source node ID.
-            v: Destination node ID.
+            solution: Routes to improve.
+            operators: Method names to apply, in order. Defaults to relocate, swap,
+                2-opt, or-opt, 2-opt* and SWAP*.
+            max_iterations: Cap on improving moves.
 
         Returns:
-            float: Distance from u to v.
+            List[List[int]]: The improved routes.
         """
-        return float(self.d[u, v])
+        names = operators or ["relocate", "swap", "two_opt_intra", "or_opt", "two_opt_star", "swap_star"]
+        moves = [getattr(self, name) for name in names]
+        self.set_routes(solution)
+        for _ in range(max_iterations):
+            if not any(move() for move in moves):
+                break
+        return self.get_routes()
 
     def set_routes(self, routes: List[List[int]]) -> None:
         """
@@ -146,7 +164,10 @@ class LocalSearchManager:
             routes: New set of routes to optimize.
         """
         self.routes = [r[:] for r in routes]
-        self._invalidate_cache()
+        self.route_loads = [self._calc_load_fresh(r) for r in self.routes]
+        self.node_map = {node: (ri, pi) for ri, r in enumerate(self.routes) for pi, node in enumerate(r)}
+        self.route_sectors.clear()
+        self.top_insertions.clear()
 
     def get_routes(self) -> List[List[int]]:
         """
@@ -156,47 +177,6 @@ class LocalSearchManager:
             List[List[int]]: Deep copy of the current routes.
         """
         return [r[:] for r in self.routes]
-
-    def _calc_load_fresh(self, route: List[int]) -> float:
-        """
-        Calculate total waste load of a specific route.
-
-        Args:
-            route: The sequence of nodes in the route.
-
-        Returns:
-            float: Sum of wastes for all nodes in the route.
-        """
-        return sum(self.waste.get(n, 0) for n in route)
-
-    def _get_load_cached(self, r_idx: int) -> float:
-        """
-        Retrieve the waste load for a route, using a cache for efficiency.
-
-        Args:
-            r_idx: Global index of the route.
-
-        Returns:
-            float: Total waste load.
-        """
-        if r_idx not in self._load_cache:
-            self._load_cache[r_idx] = self._calc_load_fresh(self.routes[r_idx])
-        return self._load_cache[r_idx]
-
-    def _update_map(self, route_indices: set) -> None:
-        """
-        Synchronize the load cache and internal maps after route modifications.
-
-        Args:
-            route_indices: Set of indices for routes that were changed.
-        """
-        for r_idx in route_indices:
-            if r_idx < len(self.routes):
-                self._load_cache[r_idx] = self._calc_load_fresh(self.routes[r_idx])
-
-    def _invalidate_cache(self) -> None:
-        """Clear the entire load cache."""
-        self._load_cache.clear()
 
     # ===== Exchange Operators =====
 
@@ -477,7 +457,7 @@ class LocalSearchManager:
                 u = route[p_u]
                 for p_v in range(p_u + 2, len(route)):
                     v = route[p_v]
-                    if move_3opt_intra(self, u, v, r_u, p_u, r_u, p_v, self.random_std):
+                    if move_3opt_intra(self, u, v, r_u, p_u, r_u, p_v, self.random):
                         return True
         return False
 
@@ -499,7 +479,7 @@ class LocalSearchManager:
                 u = route[p_u]
                 for p_v in range(p_u + 2, len(route)):
                     v = route[p_v]
-                    if move_kopt_intra(self, u, v, r_u, p_u, r_u, p_v, k=4, rng=self.random_std):
+                    if move_kopt_intra(self, u, v, r_u, p_u, r_u, p_v, k=4, rng=self.random):
                         return True
         return False
 
@@ -697,7 +677,7 @@ class LocalSearchManager:
             bool: True if an improving move was found and applied, False otherwise.
         """
         old_routes = self.get_routes()
-        new_routes = apply_lns(old_routes, self.d, self.waste, self.Q, self.R, self.C, self.random_std)
+        new_routes = apply_lns(old_routes, self.d, self.waste, self.Q, self.R, self.C, self.random)
         if new_routes != old_routes:
             self.set_routes(new_routes)
             return True
@@ -714,7 +694,7 @@ class LocalSearchManager:
             bool: True if an improving move was found and applied, False otherwise.
         """
         old_routes = self.get_routes()
-        new_routes = apply_ges(old_routes, self.d, self.waste, self.Q, self.random_std)
+        new_routes = apply_ges(old_routes, self.d, self.waste, self.Q, self.random)
         if new_routes != old_routes:
             self.set_routes(new_routes)
             return True
@@ -758,3 +738,6 @@ class LocalSearchManager:
                 improved = True
 
         return improved
+
+
+__all__ = ["SweepLocalSearch"]

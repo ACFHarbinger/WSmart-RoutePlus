@@ -30,7 +30,7 @@ from .common.helpers import assemble_tour, split_tour, to_numpy
 class CrossExchangeRouteImprover(IRouteImprovement):
     """Cross-exchange route improver that swaps segments between different routes.
 
-    Wraps LocalSearchManager.cross_exchange_op.
+    Wraps SweepLocalSearch.cross_exchange_op.
 
     Attributes:
         config (Dict[str, Any]): Configuration parameters.
@@ -80,14 +80,14 @@ class CrossExchangeRouteImprover(IRouteImprovement):
             return tour, {"algorithm": "CrossExchangeRouteImprover"}
 
         try:
-            from logic.src.policies.helpers.local_search.local_search_manager import LocalSearchManager
+            from logic.src.policies.helpers.local_search.local_search_sweeps import SweepLocalSearch
 
             routes = split_tour(tour)
             if len(routes) < 2:
                 # Cross-exchange requires at least two routes
                 return tour, {"algorithm": "CrossExchangeRouteImprover"}
 
-            manager = LocalSearchManager(
+            ls = SweepLocalSearch(
                 dist_matrix=dm,
                 wastes=wastes,
                 capacity=capacity,
@@ -96,13 +96,13 @@ class CrossExchangeRouteImprover(IRouteImprovement):
                 improvement_threshold=1e-6,
                 seed=seed,
             )
-            manager.set_routes(routes)
+            ls.set_routes(routes)
 
             for _ in range(iterations):
-                if not manager.cross_exchange_op(max_seg_len=max_seg_len):
+                if not ls.cross_exchange_op(max_seg_len=max_seg_len):
                     break
 
-            return assemble_tour(manager.get_routes()), {"algorithm": "CrossExchangeRouteImprover"}
+            return assemble_tour(ls.get_routes()), {"algorithm": "CrossExchangeRouteImprover"}
 
         except Exception:
             # Fallback to original tour on any unexpected error

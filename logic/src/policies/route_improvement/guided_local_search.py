@@ -87,7 +87,7 @@ class GuidedLocalSearchRouteImprover(IRouteImprovement):
             return tour, {"algorithm": "GuidedLocalSearchRouteImprover"}
 
         try:
-            from logic.src.policies.helpers.local_search.local_search_manager import LocalSearchManager
+            from logic.src.policies.helpers.local_search.local_search_sweeps import SweepLocalSearch
 
             routes = split_tour(tour)
             if not routes:
@@ -106,7 +106,7 @@ class GuidedLocalSearchRouteImprover(IRouteImprovement):
                 dm_aug = dm + lambda_factor * penalty
 
                 # 2. Run base operator on augmented matrix
-                manager = LocalSearchManager(
+                ls = SweepLocalSearch(
                     dist_matrix=dm_aug,
                     wastes=wastes,
                     capacity=capacity,
@@ -115,16 +115,16 @@ class GuidedLocalSearchRouteImprover(IRouteImprovement):
                     improvement_threshold=1e-6,
                     seed=seed,
                 )
-                manager.set_routes(current_routes)
+                ls.set_routes(current_routes)
 
                 # Get operator method
-                op_meth = self._get_operator_method(manager, base_op_name)
+                op_meth = self._get_operator_method(ls, base_op_name)
                 if op_meth:
                     for _ in range(inner_iterations):
                         if not op_meth():
                             break
 
-                current_routes = manager.get_routes()
+                current_routes = ls.get_routes()
                 current_cost = tour_distance(current_routes, dm)
 
                 if current_cost < best_cost - 1e-6:
@@ -143,30 +143,30 @@ class GuidedLocalSearchRouteImprover(IRouteImprovement):
         except Exception:
             return tour, {"algorithm": "GuidedLocalSearchRouteImprover"}
 
-    def _get_operator_method(self, manager: Any, name: str):
-        """Map operator name to LocalSearchManager method.
+    def _get_operator_method(self, ls: Any, name: str):
+        """Map operator name to SweepLocalSearch method.
 
         Args:
-            manager: The local search manager instance.
+            ls: The local search ls instance.
             name: Name of the operator to retrieve.
 
         Returns:
-            Callable: The operator method from the manager.
+            Callable: The operator method from the ls.
         """
         name = name.lower()
         if name in ["or_opt", "relocate_chain"]:
-            return manager.or_opt
+            return ls.or_opt
         elif name in ["cross_exchange", "cross"]:
-            return manager.cross_exchange_op
+            return ls.cross_exchange_op
         elif name in ["2opt", "two_opt"]:
-            return manager.two_opt_intra
+            return ls.two_opt_intra
         elif name in ["swap"]:
-            return manager.swap
+            return ls.swap
         elif name in ["relocate"]:
-            return manager.relocate
+            return ls.relocate
         elif name in ["3opt", "three_opt"]:
-            return manager.three_opt_intra
-        return manager.or_opt
+            return ls.three_opt_intra
+        return ls.or_opt
 
     def _update_penalties(self, routes: List[List[int]], dm: np.ndarray, penalty: np.ndarray):
         """Identify maximum utility edge and increment penalty.
