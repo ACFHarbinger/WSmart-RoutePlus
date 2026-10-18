@@ -4,10 +4,7 @@ Route manipulation utilities for SANS.
 Attributes:
     create_points: Create a mapping of bin IDs to their coordinates.
     uncross_arcs_in_routes: Improve routes by uncrossing arcs while maintaining profit constraints.
-    rearrange_part_route: Select a random portion of a route and reorder it using a greedy Nearest Neighbor heuristic.
-    organize_route: Group bins into zones based on longitude.
-    two_opt_uncross_arc: Apply a 2-opt swap to uncross arcs in a route.
-    uncross_arcs_in_sans_routes: Identify and remove invalid crossings (depot-connected or sharing endpoints).
+    uncross_arcs_in_sans_routes: Apply first-improvement 2-opt (``two_opt_route``) to every route.
 
 Examples:
     >>> from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.common.routes import create_points
@@ -20,7 +17,8 @@ from copy import deepcopy
 
 from shapely.geometry import LineString
 
-from .distance import compute_sans_route_cost
+from logic.src.policies.helpers.operators.intra_route_local_search.k_opt import two_opt_route
+
 from .objectives import compute_profit, compute_real_profit
 
 
@@ -221,52 +219,24 @@ def uncross_arcs_in_routes(
     return solution_after_uncross, profit_after_uncross, uncross_profit
 
 
-# Lookahead sans policy functions
-def two_opt_uncross_arc(route, distance_matrix, id_to_index):
-    """
-    Apply 2-opt local search to a single route to remove arc crossings.
-
-    Args:
-        route: Node sequence.
-        distance_matrix: Distance matrix.
-        id_to_index: Node ID to matrix index mapping.
-
-    Returns:
-        List[int]: Optimized route.
-    """
-    best = route
-    improved = True
-    while improved:
-        improved = False
-        best_distance = compute_sans_route_cost(best, distance_matrix, id_to_index)
-        for i in range(1, len(best) - 2):
-            for j in range(i + 1, len(best) - 1):
-                new_route = best[:i] + best[i : j + 1][::-1] + best[j + 1 :]
-                new_distance = compute_sans_route_cost(new_route, distance_matrix, id_to_index)
-                if new_distance < best_distance:
-                    best = new_route
-                    improved = True
-                    break
-            if improved:
-                break
-    return best
-
-
 def uncross_arcs_in_sans_routes(routes, id_to_index, distance_matrix):
     """
-    Apply 2-opt uncrossing to all routes in a solution.
+    Apply first-improvement 2-opt, until no reversal shortens the route, to every route of a solution.
 
     Args:
-        routes: Solution to optimize.
-        id_to_index: Node mapping.
+        routes: Solution to optimize (depot-terminated routes of node IDs).
+        id_to_index: Node ID to matrix index mapping.
         distance_matrix: Distance matrix.
 
     Returns:
         List[List[int]]: Improved solution.
     """
+    index_to_id = {index: node for node, index in id_to_index.items()}
     cleaned_routes = [[int(x) for x in route] for route in routes]
-    new_routes = [
-        (two_opt_uncross_arc(route, distance_matrix, id_to_index) if len(route) > 3 else route)
-        for route in cleaned_routes
-    ]
+    new_routes = []
+    for route in cleaned_routes:
+        if len(route) > 3:
+            inner = two_opt_route([id_to_index[x] for x in route[1:-1]], distance_matrix, max_iter=None, tol=0.0)
+            route = [route[0], *(index_to_id[x] for x in inner), route[-1]]
+        new_routes.append(route)
     return new_routes

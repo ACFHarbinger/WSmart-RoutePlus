@@ -36,6 +36,11 @@ The neighbourhood and perturbation operators of `simulated_annealing_neighborhoo
     - `move_n_route_consecutive` → `transfer_n_bins_consecutive`;
     - `swap_n_route_random` → `exchange_n_bins_random`.
   - Moved from `common/routes.py`: `rearrange_part_route`, to `intra_move.py`.
+- **Objective-driven passes** now take the objective as two callables, `profit_fn` and `real_profit_fn`, so `helpers/operators` does not import SANS objectives. `refinement/` builds them from the penalised and real profit.
+  - Merged: `search/deterministic.py::local_search_2` and `search/reversed.py::local_search_reversed`, which differed only in scan order, into `improvement_descent/relocate_descent.py::relocate_descent(..., reverse=False)`.
+  - Moved: `select/greedy.py::insert_bins` to `recreate_repair/bin_pool.py`, and `remove_bins_end` to `destroy_ruin/bin_pool.py`.
+  - Merged: `common/routes.py::two_opt_uncross_arc`, a first-improvement 2-opt, into `intra_route_local_search/k_opt.py::two_opt_route`. That function gains `max_iter=None` (run until no reversal improves) and `tol`; SANS passes `max_iter=None, tol=0.0`. The routes are the same on the 150 characterization cases and on 400 cases built with co-located bins to force ties.
+  - Moved: `common/solution_initialization.py` to `solution_initialization/zone_si.py`.
 - **Moved to other families:**
   - `get_2opt_neighbors` → `evolutionary_mutation/random_2opt.py`;
   - `organize_route` → `solution_initialization/nearest_neighbor_si.py`.
@@ -50,7 +55,7 @@ The neighbourhood and perturbation operators of `simulated_annealing_neighborhoo
     - `add_route_with_removed_bins_random` → `add_route_from_pool_capacitated`.
   - Moved: LAC's route splits `add_route_random` and `add_route_consecutive` to `perturbation_shaking/sans/inter_move.py`.
 - **Removed:**
-  - `heuristics/sans_neighborhoods.py`, `heuristics/sans_perturbations.py`, `select/random.py` and `select/consecutive.py`, now empty;
+  - `heuristics/sans_neighborhoods.py`, `heuristics/sans_perturbations.py`, `select/` and `search/deterministic.py` / `search/reversed.py`, now empty;
   - `get_neighbors`, which nothing called;
   - `add_route_with_removed_bins_consecutive` of the new engine, which only called the random version.
 

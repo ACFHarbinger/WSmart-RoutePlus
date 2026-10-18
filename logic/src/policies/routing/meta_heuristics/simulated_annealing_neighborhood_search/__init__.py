@@ -12,10 +12,11 @@ Example:
     None
 """
 
-from .common.routes import create_points as create_points
-from .common.solution_initialization import (
+from logic.src.policies.helpers.operators.solution_initialization.zone_si import (
     compute_initial_solution as compute_initial_solution,
 )
+
+from .common.routes import create_points as create_points
 from .common.update import (
     add_bins_to_collect as add_bins_to_collect,
 )

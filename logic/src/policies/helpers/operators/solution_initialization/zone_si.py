@@ -7,7 +7,7 @@ Attributes:
     compute_initial_solution (Function): Simplified initial solution builder for SANS policy.
 
 Example:
-    >>> from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.common.solution_initialization import find_initial_solution
+    >>> from logic.src.policies.helpers.operators.solution_initialization.zone_si import find_initial_solution
     >>> routes = find_initial_solution()
     >>> print(routes)
 """

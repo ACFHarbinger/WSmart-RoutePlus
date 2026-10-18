@@ -39,7 +39,7 @@ from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood
     check_bins_overflowing_feasibility,
     check_solution_admissibility,
 )
-from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.common.solution_initialization import (
+from logic.src.policies.helpers.operators.solution_initialization.zone_si import (
     compute_initial_solution,
     find_initial_solution,
 )

@@ -12,7 +12,7 @@ from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood
 from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.common.revenue import (
     compute_waste_collection_revenue,
 )
-from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.common.solution_initialization import (
+from logic.src.policies.helpers.operators.solution_initialization.zone_si import (
     _get_bin_stock,
 )
 from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.policy_sans import (
