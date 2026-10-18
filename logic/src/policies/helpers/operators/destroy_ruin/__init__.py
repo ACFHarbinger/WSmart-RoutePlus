@@ -22,6 +22,13 @@ Example:
 """
 
 # Unstringing/Stringing imports removed to avoid circularity with ..unstringing_stringing
+from .bin_pool import (
+    remove_bins_from_route,
+    remove_n_bins_across_routes,
+    remove_n_bins_consecutive,
+    remove_n_bins_random,
+    remove_segment_without_mandatory,
+)
 from .branch_and_bound import bb_profit_removal, bb_removal
 from .cluster import cluster_profit_removal, cluster_removal
 from .guided import penalized_removal
@@ -73,4 +80,10 @@ __all__ = [
     "worst_profit_horizon_removal",
     "shaw_horizon_removal",
     "urgency_aware_removal",
+    # Bin-pool perturbations of depot-terminated routes (LAC / SANS annealers)
+    "remove_n_bins_random",
+    "remove_n_bins_consecutive",
+    "remove_bins_from_route",
+    "remove_n_bins_across_routes",
+    "remove_segment_without_mandatory",
 ]

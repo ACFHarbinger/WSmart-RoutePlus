@@ -46,13 +46,11 @@ from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood
 from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.heuristics.sans import (
     improved_simulated_annealing,
 )
-from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.select import (
-    add_bin,
+from logic.src.policies.helpers.operators.destroy_ruin.bin_pool import remove_n_bins_random
+from logic.src.policies.helpers.operators.perturbation_shaking.sans.inter_move import add_route_random
+from logic.src.policies.helpers.operators.recreate_repair.bin_pool import (
     add_n_bins_random,
-    add_route_random,
     add_route_with_removed_bins_random,
-    remove_bin,
-    remove_n_bins_random,
 )
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -103,14 +101,18 @@ class TestLookAheadSelect:
         """Test bin removal from routes."""
         removed_bins = []
         cannot_remove = []
-        bin_rem = remove_bin(sample_routes, removed_bins, cannot_remove, rng)
+        removed, _ = remove_n_bins_random(
+            sample_routes, removed_bins, cannot_remove, rng, n=1, require_spare_bin=False, max_resamples=None
+        )
+        bin_rem = removed[0] if removed else None
         assert bin_rem is not None or len(sample_routes) == 0
 
     def test_add_bin(self, rng):
         """Test bin addition to routes."""
         removed_bins = [7]
         routes = [[0, 1, 2, 0]]
-        bin_add = add_bin(routes, removed_bins, rng)
+        added, _ = add_n_bins_random(routes, removed_bins, rng, n=1)
+        bin_add = added[0] if added else None
         assert bin_add == 7 or bin_add is None
 
     def test_remove_n_bins_random(self, rng):

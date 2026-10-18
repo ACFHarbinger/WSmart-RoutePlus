@@ -15,6 +15,8 @@ Attributes:
     move_between_routes: Every capacity-feasible single-bin move between two routes.
     transfer_n_bins_random: Copy with n random bins of one route inserted as a block into any route.
     transfer_n_bins_consecutive: Copy with n consecutive bins of one route inserted into any route.
+    add_route_random: Move a random share of one route's bins to a new nearest-neighbour route.
+    add_route_consecutive: Move a consecutive share of one route's bins to a new nearest-neighbour route.
     swap_n_route_random: Swap n random pairs of bins within one route (n=1 swaps one pair).
     swap_n_route_consecutive: Swap two segments of n bins within one route.
     swap_n_2_routes_random: Swap n random bins between two routes (n=1 swaps one pair).
@@ -30,6 +32,8 @@ Example:
 """
 
 from .move import (
+    add_route_consecutive,
+    add_route_random,
     move_between_routes,
     move_n_2_routes_consecutive,
     move_n_2_routes_random,
@@ -61,6 +65,8 @@ __all__ = [
     "move_between_routes",
     "transfer_n_bins_random",
     "transfer_n_bins_consecutive",
+    "add_route_random",
+    "add_route_consecutive",
     "swap_n_route_random",
     "swap_n_route_consecutive",
     "swap_n_2_routes_random",

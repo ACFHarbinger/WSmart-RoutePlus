@@ -11,6 +11,8 @@ Attributes:
     move_between_routes: List every capacity-feasible single-bin move between two routes.
     transfer_n_bins_random: Copy of the solution with n random bins of one route inserted as a block into any route.
     transfer_n_bins_consecutive: Copy of the solution with n consecutive bins of one route inserted into any route.
+    add_route_random: Move a random share of one route's bins to a new nearest-neighbour route.
+    add_route_consecutive: Move a consecutive share of one route's bins to a new nearest-neighbour route.
 
 Example:
     >>> from logic.src.policies.helpers.operators.perturbation_shaking.sans.inter_move import move_n_2_routes_random
@@ -23,12 +25,16 @@ import copy
 from random import Random
 from typing import List, Optional
 
+from logic.src.policies.helpers.operators.solution_initialization.nearest_neighbor_si import organize_route
+
 __all__ = [
     "move_n_2_routes_random",
     "move_n_2_routes_consecutive",
     "move_between_routes",
     "transfer_n_bins_random",
     "transfer_n_bins_consecutive",
+    "add_route_random",
+    "add_route_consecutive",
 ]
 
 
@@ -237,3 +243,87 @@ def transfer_n_bins_consecutive(routes_list: list, rng: Random, n: int = 2) -> l
     new_routes[receptor_idx] = receptor_route[:insert_pos] + segment + receptor_route[insert_pos:]
 
     return new_routes
+
+
+# Add one route random
+def add_route_random(routes_list, distance_matrix, rng):
+    """
+    Add a new route with a single bin chosen randomly from existing routes.
+
+    Args:
+        routes_list: All routes.
+        distance_matrix: For sequencing.
+        rng: Random number generator.
+
+    Returns:
+        List[List[int]]: Updated set of routes.
+    """
+    if len(routes_list) > 0:
+        chosen_route = rng.sample(routes_list, 1)[0]
+    else:
+        return routes_list
+
+    length_chosen_route = len(chosen_route)
+    possible_percent = [0.3, 0.4, 0.5, 0.6]
+    chosen_n = rng.sample(possible_percent, 1)[0]
+    chosen_n_percent = int(chosen_n * length_chosen_route)
+    bins = []
+    for _s in range(0, chosen_n_percent):
+        chosen_bin = rng.sample(chosen_route[1 : len(chosen_route) - 1], 1)[0]
+        chosen_route.remove(chosen_bin)
+        bins.append(chosen_bin)
+
+    route = organize_route(bins, distance_matrix)
+    routes_list.append(route)
+    if len(chosen_route) == 2:
+        chosen_route = []
+
+    routes_list = list(filter(None, routes_list))
+    return chosen_n
+
+
+# Add one route consecutive
+def add_route_consecutive(routes_list, distance_matrix, rng):
+    """
+    Create a new route by extracting a consecutive segment from an existing route.
+
+    Args:
+        routes_list: Current routes.
+        distance_matrix: Distance matrix for route organization.
+        rng: Random number generator.
+
+    Returns:
+        int: The number of bins moved to the new route.
+    """
+    if len(routes_list) > 0:
+        chosen_route = rng.sample(routes_list, 1)[0]
+    else:
+        return 0
+
+    length_chosen_route = len(chosen_route)
+    possible_percent = [0.3, 0.4, 0.5, 0.6]
+    chosen_n = rng.sample(possible_percent, 1)[0]
+    chosen_n_percent = int(chosen_n * length_chosen_route)
+    bins = []
+
+    position_chosen_bin = 0
+    for s in range(0, chosen_n_percent):
+        if s == 0:
+            chosen_bin = rng.sample(chosen_route[1 : len(chosen_route) - chosen_n_percent], 1)[0]
+            position_chosen_bin = chosen_route.index(chosen_bin)
+        else:
+            chosen_bin = chosen_route[position_chosen_bin + s]
+
+        bins.append(chosen_bin)
+
+    chosen_bins = bins.copy()
+    route = organize_route(bins, distance_matrix)
+    routes_list.append(route)
+    for u in chosen_bins:
+        chosen_route.remove(u)
+
+    if len(chosen_route) == 2:
+        chosen_route = []
+
+    routes_list = list(filter(None, routes_list))
+    return chosen_n

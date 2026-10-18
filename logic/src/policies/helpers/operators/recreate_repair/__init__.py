@@ -15,6 +15,16 @@ Example:
     >>> routes = bb_insertion(routes, removed, dist_matrix, wastes, capacity)
 """
 
+from .bin_pool import (
+    add_n_bins_consecutive,
+    add_n_bins_random,
+    add_route_from_pool_capacitated,
+    add_route_with_removed_bins_consecutive,
+    add_route_with_removed_bins_random,
+    insert_bin_in_route,
+    insert_n_bins_block,
+    insert_n_bins_cheapest,
+)
 from .branch_and_bound import bb_insertion, bb_profit_insertion
 from .deep import deep_insertion, deep_profit_insertion
 from .farthest import farthest_insertion, farthest_profit_insertion
@@ -66,4 +76,22 @@ __all__ = [
     "greedy_horizon_insertion",
     "regret_k_temporal_insertion",
     "stochastic_aware_insertion",
+    # Random reinsertion from a pool of removed bins (LAC, SANS)
+    "add_n_bins_random",
+    "add_n_bins_consecutive",
+    "add_route_with_removed_bins_random",
+    "add_route_with_removed_bins_consecutive",
+    "insert_bin_in_route",
+    "insert_n_bins_cheapest",
+    "insert_n_bins_block",
+    "add_route_from_pool_capacitated",
+    # Bin-pool perturbations of depot-terminated routes (LAC / SANS annealers)
+    "add_n_bins_random",
+    "add_n_bins_consecutive",
+    "add_route_with_removed_bins_random",
+    "add_route_with_removed_bins_consecutive",
+    "insert_bin_in_route",
+    "insert_n_bins_cheapest",
+    "insert_n_bins_block",
+    "add_route_from_pool_capacitated",
 ]

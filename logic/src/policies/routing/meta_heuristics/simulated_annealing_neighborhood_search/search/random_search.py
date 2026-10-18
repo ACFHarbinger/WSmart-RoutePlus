@@ -15,7 +15,10 @@ import random
 
 import numpy as np
 
+from logic.src.policies.helpers.operators.destroy_ruin.bin_pool import remove_n_bins_consecutive, remove_n_bins_random
 from logic.src.policies.helpers.operators.perturbation_shaking.sans import (
+    add_route_consecutive,
+    add_route_random,
     move_n_2_routes_consecutive,
     move_n_2_routes_random,
     move_n_route_consecutive,
@@ -26,17 +29,11 @@ from logic.src.policies.helpers.operators.perturbation_shaking.sans import (
     swap_n_route_consecutive,
     swap_n_route_random,
 )
-from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.select import (
-    add_bin,
+from logic.src.policies.helpers.operators.recreate_repair.bin_pool import (
     add_n_bins_consecutive,
     add_n_bins_random,
-    add_route_consecutive,
-    add_route_random,
     add_route_with_removed_bins_consecutive,
     add_route_with_removed_bins_random,
-    remove_bin,
-    remove_n_bins_consecutive,
-    remove_n_bins_random,
 )
 
 
@@ -165,9 +162,20 @@ def local_search(  # noqa: C901
                 chosen_n = add_route_consecutive(routes_list, distance_matrix, rng)
 
     elif chosen_procedure == "Drop bin":
-        bin_to_remove = remove_bin(routes_list, removed_bins, bins_cannot_removed, rng)
+        removed, _ = remove_n_bins_random(
+            routes_list,
+            removed_bins,
+            bins_cannot_removed,
+            rng,
+            n=1,
+            require_spare_bin=False,
+            max_resamples=None,
+            prune_chosen_empty_route=True,
+        )
+        bin_to_remove = removed[0] if removed else None
     elif chosen_procedure == "Add bin":
-        bin_to_add = add_bin(routes_list, removed_bins, rng)
+        added, _ = add_n_bins_random(routes_list, removed_bins, rng, n=1)
+        bin_to_add = added[0] if added else None
     elif chosen_procedure == "Rearrange part of 1 route":
         chosen_n = rearrange_part_route(routes_list, distance_matrix, rng)
     return (
