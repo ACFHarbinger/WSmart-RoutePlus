@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Studio startup crash on empty plugin config (`2026-10-18`)
+
+#### Fixed
+
+- **WSmart-Route Studio exited on launch** (`just studio` / `tauri dev`) with `PluginInitialization("notification", "invalid type: map, expected unit")`. `app/src-tauri/tauri.conf.json` had `"notification": {}` (and the same empty object for `dialog` and `store`). Those plugins deserialize their config as unit (`null` / omitted), not a map; they are already registered in `lib.rs`. The empty keys are removed. `shell` and `updater` keep the config they actually read.
+
 ### One generator class per problem (`2026-10-18`)
 
 #### Changed
