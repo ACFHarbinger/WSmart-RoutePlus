@@ -129,3 +129,45 @@ def test_operator_wrappers_swallow_data_errors_only():
             ops.apply_random_removal(ctx)
     finally:
         ops.random_removal = real_random_removal
+
+
+@pytest.mark.parametrize("operators", [None, ["kick"]])
+def test_mandatory_nodes_are_never_dropped(operators):
+    """The profit-aware kick left unprofitable mandatory nodes unvisited, and the cost-only objective kept the plan."""
+    rng = np.random.default_rng(3)
+    coords = rng.uniform(0, 20, size=(31, 2))
+    dist = np.sqrt(((coords[:, None, :] - coords[None, :, :]) ** 2).sum(-1))
+    wastes = {i: float(rng.uniform(0, 30)) for i in range(1, 31)}
+    mandatory = list(range(1, 31, 2))
+    cap = sum(wastes.values()) / 4
+    init = build_greedy_routes(
+        dist_matrix=dist, wastes=wastes, capacity=cap, R=0.58, C=1.0, mandatory_nodes=mandatory, rng=random.Random(3)
+    )
+    params = HyperHeuristicACOConfig(
+        n_ants=6, max_iterations=10, time_limit=20, seed=3, profit_aware_operators=True, operators=operators
+    )
+    problem = build_subproblem(dist, wastes, cap, 0.58, 1.0, mandatory_nodes=mandatory)
+    routes = HyperHeuristicACO(problem, params, init).solve().routes
+    assert set(mandatory) <= {n for r in routes for n in r}
+
+
+def test_profit_kick_and_perturb_keep_mandatory_nodes():
+    from logic.src.policies.helpers.operators.perturbation_shaking import kick_profit, perturb_profit
+    from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_operators import (
+        HyperOperatorContext,
+    )
+
+    rng = np.random.default_rng(5)
+    dist = rng.uniform(5, 15, size=(11, 11))
+    np.fill_diagonal(dist, 0.0)
+    wastes = {i: 0.01 for i in range(1, 11)}  # every node is unprofitable
+    for op in (kick_profit, perturb_profit):
+        ctx = HyperOperatorContext(
+            [[1, 2, 3], [4, 5]], dist, wastes, 100.0, 1.0, 1.0, mandatory_nodes=[1, 2, 3, 4, 5], rng=random.Random(5)
+        )
+        for _ in range(20):
+            if op is kick_profit:
+                op(ctx, destroy_ratio=0.6, rng=ctx.rng)
+            else:
+                op(ctx, k=5, prob_unvisited=1.0, rng=ctx.rng)
+        assert {1, 2, 3, 4, 5} <= {n for r in ctx.routes for n in r}

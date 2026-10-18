@@ -48,14 +48,18 @@ def perturb(
         n_nodes = max(ctx.waste.keys()) if ctx.waste else 0
 
     visited = set(ctx.node_map.keys())
+    mandatory = getattr(ctx, "mandatory_nodes", None) or set()
     unvisited = sorted(list(set(range(1, n_nodes + 1)) - visited))
 
     performed = False
     for _ in range(k):
         # Decide whether to swap between visited or visited-unvisited
         if unvisited and rng.random() < prob_unvisited:
-            # Swap a visited node with an unvisited one
-            u = rng.choice(list(visited))
+            # Swap a visited node with an unvisited one; mandatory nodes are never swapped out
+            optional = [n for n in visited if n not in mandatory]
+            if not optional:
+                continue
+            u = rng.choice(optional)
             v = rng.choice(unvisited)
 
             u_loc = ctx.node_map.get(u)
@@ -142,14 +146,18 @@ def perturb_profit(
         n_nodes = max(ctx.waste.keys()) if ctx.waste else 0
 
     visited = set(ctx.node_map.keys())
+    mandatory = getattr(ctx, "mandatory_nodes", None) or set()
     unvisited = sorted(list(set(range(1, n_nodes + 1)) - visited))
 
     performed = False
     for _ in range(k):
         # Decide whether to swap between visited or visited-unvisited
         if unvisited and rng.random() < prob_unvisited:
-            # Swap a visited node with an unvisited one
-            u = rng.choice(list(visited))
+            # Swap a visited node with an unvisited one; mandatory nodes are never swapped out
+            optional = [n for n in visited if n not in mandatory]
+            if not optional:
+                continue
+            u = rng.choice(optional)
             v = rng.choice(unvisited)
 
             u_loc = ctx.node_map.get(u)

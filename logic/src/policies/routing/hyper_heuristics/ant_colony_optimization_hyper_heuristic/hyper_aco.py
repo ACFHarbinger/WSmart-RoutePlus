@@ -231,7 +231,8 @@ class HyperHeuristicACO(ACOBootstrapMixin, HyperHeuristicSearch):
 
     def _seed_incumbent(self) -> Tuple[List[List[int]], float]:
         # The incumbent is tracked at the real capacity: strategic oscillation may let ants
-        # explore over-capacity plans, but only a feasible plan can become the returned best.
+        # explore over-capacity plans, but only a feasible plan (all mandatory nodes visited,
+        # no route over capacity) can become the returned best.
         best_routes = [r for r in copy.deepcopy(self.initial_solution) if r]
         best_objective = self._calculate_routing_cost(best_routes) if self._is_feasible(best_routes) else math.inf
         return best_routes, best_objective
@@ -670,14 +671,16 @@ class HyperHeuristicACO(ACOBootstrapMixin, HyperHeuristicSearch):
         return best_routes, best_objective, False
 
     def _is_feasible(self, routes: List[List[int]]) -> bool:
-        """Return True if every route respects the real vehicle capacity.
+        """Return True if the plan visits every mandatory node and every route respects the real capacity.
 
         Args:
             routes: Routes.
 
         Returns:
-            bool: True when no route's load exceeds ``self.capacity``.
+            bool: True when no mandatory node is missing and no route's load exceeds ``self.capacity``.
         """
+        if self.mandatory_nodes and not set(self.mandatory_nodes) <= {n for r in routes for n in r}:
+            return False
         return all(sum(self.wastes.get(n, 0) for n in r) <= self.capacity + 1e-9 for r in routes)
 
     def _evaluate_objective(self, routes: List[List[int]]) -> float:
