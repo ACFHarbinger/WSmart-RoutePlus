@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### SANS operators moved to `helpers/operators` (`2026-10-18`)
 
-The neighbourhood and perturbation operators of `simulated_annealing_neighborhood_search` now live under `logic/src/policies/helpers/operators`. Operators that did the same thing are merged. Every SANS and LAC call site keeps its exact behaviour, including the random numbers it draws: a characterization run of all 62 operator call forms over 150 seeds matched the previous outputs and generator states. The SA engines, their dispatch tables (`heuristics/sans_operators.py`, `search/random_search.py`), the objectives and the refinement drivers stay in the SANS package.
+The neighbourhood and perturbation operators of `simulated_annealing_neighborhood_search` now live under `logic/src/policies/helpers/operators`. Operators that did the same thing are merged. Every SANS and LAC call site keeps its exact behaviour, including the random numbers it draws: a characterization run of all 61 operator call forms over 150 seeds matched the previous outputs and generator states. The SA engines, their dispatch tables (`heuristics/sans_operators.py`, `search/random_search.py`), the objectives and the refinement drivers stay in the SANS package.
 
 #### Changed
 
@@ -39,7 +39,18 @@ The neighbourhood and perturbation operators of `simulated_annealing_neighborhoo
 - **Moved to other families:**
   - `get_2opt_neighbors` → `evolutionary_mutation/random_2opt.py`;
   - `organize_route` → `solution_initialization/nearest_neighbor_si.py`.
+- **Bin-pool removal and reinsertion** (`destroy_ruin/bin_pool.py`, `recreate_repair/bin_pool.py`). These replace `select/random.py`, `select/consecutive.py` and `heuristics/sans_perturbations.py`, and take `insert_bin_in_route` from `heuristics/sans_neighborhoods.py`.
+  - Merged: LAC's `remove_bin` into `remove_n_bins_random`, which gains `n`, `require_spare_bin`, `max_resamples` and `prune_chosen_empty_route`. LAC calls it with `n=1`, the guard, the unbounded redraw and the empty-route pruning that `remove_bin` had.
+  - Merged: LAC's `add_bin` into `add_n_bins_random(n=1)`.
+  - Renamed: the new engine's pool operators, which differ from LAC's (they return copies and check capacity):
+    - `remove_n_bins_random` → `remove_n_bins_across_routes`;
+    - `remove_n_bins_consecutive` → `remove_segment_without_mandatory`;
+    - `add_n_bins_random` → `insert_n_bins_cheapest`;
+    - `add_n_bins_consecutive` → `insert_n_bins_block`;
+    - `add_route_with_removed_bins_random` → `add_route_from_pool_capacitated`.
+  - Moved: LAC's route splits `add_route_random` and `add_route_consecutive` to `perturbation_shaking/sans/inter_move.py`.
 - **Removed:**
+  - `heuristics/sans_neighborhoods.py`, `heuristics/sans_perturbations.py`, `select/random.py` and `select/consecutive.py`, now empty;
   - `get_neighbors`, which nothing called;
   - `add_route_with_removed_bins_consecutive` of the new engine, which only called the random version.
 

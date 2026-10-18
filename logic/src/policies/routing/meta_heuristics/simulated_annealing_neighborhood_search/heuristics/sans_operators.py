@@ -18,6 +18,11 @@ from typing import Any, Dict, List, Set
 
 import numpy as np
 
+from logic.src.policies.helpers.operators.destroy_ruin.bin_pool import (
+    remove_bins_from_route,
+    remove_n_bins_across_routes,
+    remove_segment_without_mandatory,
+)
 from logic.src.policies.helpers.operators.evolutionary_mutation.random_2opt import get_2opt_neighbors
 from logic.src.policies.helpers.operators.perturbation_shaking.sans import (
     exchange_n_bins_random,
@@ -30,15 +35,11 @@ from logic.src.policies.helpers.operators.perturbation_shaking.sans import (
     transfer_n_bins_consecutive,
     transfer_n_bins_random,
 )
-
-from .sans_neighborhoods import insert_bin_in_route
-from .sans_perturbations import (
-    add_n_bins_consecutive,
-    add_n_bins_random,
-    add_route_with_removed_bins_random,
-    remove_bins_from_route,
-    remove_n_bins_consecutive,
-    remove_n_bins_random,
+from logic.src.policies.helpers.operators.recreate_repair.bin_pool import (
+    add_route_from_pool_capacitated,
+    insert_bin_in_route,
+    insert_n_bins_block,
+    insert_n_bins_cheapest,
 )
 
 
@@ -197,22 +198,22 @@ def apply_operator(
         "move_n_consec": lambda sol: transfer_n_bins_consecutive(sol, rng, n=rng.randint(2, 5)),
         "swap_n_random": lambda sol: exchange_n_bins_random(sol, rng, n=rng.randint(2, 5)),
         "swap_n_consec": lambda sol: _handle_swap_n_consecutive(sol, rng),
-        "remove_n_bins": lambda sol: remove_n_bins_random(
+        "remove_n_bins": lambda sol: remove_n_bins_across_routes(
             sol, candidate_removed_bins, mandatory_bins, rng, n=rng.randint(2, 5)
         ),
-        "remove_n_bins_consec": lambda sol: remove_n_bins_consecutive(
+        "remove_n_bins_consec": lambda sol: remove_segment_without_mandatory(
             sol, candidate_removed_bins, mandatory_bins, rng, n=rng.randint(2, 5)
         ),
-        "add_n_bins": lambda sol: add_n_bins_random(
+        "add_n_bins": lambda sol: insert_n_bins_cheapest(
             sol, candidate_removed_bins, stocks, vehicle_capacity, id_to_index, distance_matrix, rng, n=2
         ),
-        "add_n_bins_consec": lambda sol: add_n_bins_consecutive(
+        "add_n_bins_consec": lambda sol: insert_n_bins_block(
             sol, candidate_removed_bins, stocks, vehicle_capacity, id_to_index, distance_matrix, rng, n=2
         ),
-        "add_route_removed": lambda sol: add_route_with_removed_bins_random(
+        "add_route_removed": lambda sol: add_route_from_pool_capacitated(
             sol, candidate_removed_bins, stocks, vehicle_capacity, rng
         ),
-        "add_route_removed_consec": lambda sol: add_route_with_removed_bins_random(
+        "add_route_removed_consec": lambda sol: add_route_from_pool_capacitated(
             sol, candidate_removed_bins, stocks, vehicle_capacity, rng
         ),
         "relocate": lambda sol: (

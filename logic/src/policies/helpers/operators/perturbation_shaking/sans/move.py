@@ -14,6 +14,8 @@ Example:
 
 # Re-exporting from modularized move operators
 from .inter_move import (
+    add_route_consecutive,
+    add_route_random,
     move_between_routes,
     move_n_2_routes_consecutive,
     move_n_2_routes_random,
@@ -39,4 +41,6 @@ __all__ = [
     "move_between_routes",
     "transfer_n_bins_random",
     "transfer_n_bins_consecutive",
+    "add_route_random",
+    "add_route_consecutive",
 ]
