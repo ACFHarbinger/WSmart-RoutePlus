@@ -200,7 +200,11 @@ def run_bpc(  # noqa: C901
         >>> problem = build_subproblem(dist_matrix, wastes, capacity=10, revenue=1, cost_unit=1)
         >>> result = run_bpc(problem)  # SolveResult(routes, profit, cost)
     """
-    from logic.src.pipeline.simulations.solver_status import note_solver_incumbent, reset_solver_certificate
+    from logic.src.pipeline.simulations.solver_status import (
+        note_solver_incumbent,
+        note_solver_status,
+        reset_solver_certificate,
+    )
 
     start_time = time.perf_counter()
 
@@ -359,14 +363,18 @@ def run_bpc(  # noqa: C901
         # bin is mandatory, which reported a 0 km / 0 kg day.)
         fallback_routes = [list(r) for r in initial_routes_nodes]
         fallback_profit = sum(pricing_solver._compute_route_details(r).profit for r in fallback_routes)
+        source = "greedy"
         try:
             _apply_branching_to_master(master, [], branching_strategy_name)
             master.model.Params.TimeLimit = max(1.0, min(10.0, 0.1 * time_limit if time_limit > 0 else 10.0))
             ip_obj, ip_routes = master.solve_ip()
             if ip_routes and ip_obj > fallback_profit + 1e-9:
                 fallback_routes, fallback_profit = [list(r.nodes) for r in ip_routes], float(ip_obj)
+                source = "rmp_ip"
         except Exception as exc:  # the greedy plan is still valid
             logger.warning(f"Restricted-master IP fallback failed: {exc}")
+        # The day log records the fallback, so its frequency is countable.
+        note_solver_status(f"bpc:fallback_{source}")
         note_solver_incumbent(fallback_profit)
         return SolveResult(
             routes=fallback_routes,

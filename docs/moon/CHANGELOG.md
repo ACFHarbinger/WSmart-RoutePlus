@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Asymmetric matrices.** These are priced on `(d + dᵀ)/2`; each route is oriented on the true costs and its reduced cost recomputed exactly. Pricing is exact on symmetric matrices only.
   - **Extra columns.** Each CPTP tour also yields its drop-one-bin neighbours that keep a positive reduced cost: CPTP returns one tour per call, while the labelling returns up to `max_routes`.
   - **Timeouts.** Only a CPTP solve with no tour counts as a pricing timeout.
+  - **Fallback days are recorded.** When no integer node is reached, BPC publishes `bpc:fallback_greedy` or `bpc:fallback_rmp_ip` as the day's `solver_status`, so the frequency of its fallback plan is countable from the day logs (for either pricing engine).
+  - **`build_simulation_summary.py --override ROOT`** replaces the rows of the same configurations with those built from another output root, such as a one-algorithm rerun.
   - **`cptp_options`** passes cptp solver options. The default caps its capacity-aware labelling at 100,000 queue pops: at cptp's default of 1,000,000 that preprocessing ignores the time limit, and it took about 35 s of a 49 s call at 350 nodes.
   - **Logging.** The engine logs its call, outcome and fallback counts per solve.
 
