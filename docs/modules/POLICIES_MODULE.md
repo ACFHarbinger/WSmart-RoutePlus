@@ -188,16 +188,14 @@ logic/src/policies/
 │   ├── heuristics/
 │   │   ├── sans.py                          # Main SANS algorithm
 │   │   ├── sans_state.py                    # State management
-│   │   ├── sans_opt.py                      # Optimization logic
-│   │   ├── sans_operators.py                # Operator application
-│   │   ├── sans_neighborhoods.py            # Neighborhood structures
-│   │   ├── sans_perturbations.py            # Perturbation mechanisms
-│   │   └── anneal.py                        # Annealing schedule
-│   ├── operators/                           # SANS-specific operators
-│   ├── select/                              # Node selection strategies
-│   ├── search/                              # Search strategies
+│   │   ├── sans_operators.py                # Dispatch table of the new engine
+│   │   └── anneal.py                        # LAC annealing loop
+│   ├── search/random_search.py              # Dispatch table of LAC's random moves
 │   ├── refinement/                          # Solution refinement
-│   └── common/                              # Utilities (routes, distance, etc.)
+│   └── common/                              # Utilities (routes, distance, objectives)
+│   # Moves and heuristics live in helpers/operators: perturbation_shaking/sans,
+│   # destroy_ruin/bin_pool.py, recreate_repair/bin_pool.py,
+│   # improvement_descent/relocate_descent.py, solution_initialization/zone_si.py
 │
 ├── slack_induction_by_string_removal/       # SISR Implementation
 │   ├── sisr.py                              # Main SISR algorithm
