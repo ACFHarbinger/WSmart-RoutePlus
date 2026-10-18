@@ -106,16 +106,17 @@ def evaluate_profitable_tour(  # noqa: C901
             "time": z,
         }
 
-    # Extract locations and depot
+    # Extract locations, depot, and waste
     locs = dataset.get("locs") if "locs" in dataset else dataset.get("loc")
     depot = dataset.get("depot")
+    raw_waste = dataset.get("waste")
 
     # Determine full coordinate layout (with depot at index 0)
     if locs is not None:
         if locs.dim() == 2:
             locs = locs.unsqueeze(0).expand(bs, -1, -1)
         if depot is not None and (
-            locs.size(1) == dataset.get("waste", locs).size(-1)
+            (raw_waste is not None and locs.size(1) == raw_waste.size(-1))
             and not torch.allclose(locs[:, 0, :], depot if depot.dim() == 2 else depot.unsqueeze(0), atol=1e-4)
         ):
             depot_2d = depot.unsqueeze(1) if depot.dim() == 2 else depot.unsqueeze(0).unsqueeze(1)
@@ -142,8 +143,7 @@ def evaluate_profitable_tour(  # noqa: C901
     else:
         length = torch.zeros(bs, device=device)
 
-    # Extract waste
-    raw_waste = dataset.get("waste")
+    
     if raw_waste is not None:
         if raw_waste.dim() == 1:
             raw_waste = raw_waste.unsqueeze(0).expand(bs, -1)
