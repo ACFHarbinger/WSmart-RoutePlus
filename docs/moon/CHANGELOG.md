@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Fallback to labelling.** A call falls back when it holds something CPTP cannot express (Farkas pricing, must-use arcs, Ryan-Foster branches, subset-row, rank-1, multistar or arc-LCI duals), when the tour has no orientation avoiding the node's forbidden arcs, or when the tour is already a master column (a column at its upper bound keeps a positive reduced cost, and CPTP returns one tour per call).
   - **Cut families.** Only those the pricer can express are separated: rounded capacity, knapsack cover, edge clique, fleet cover and node-based physical LCIs (`branch_and_price_and_cut/engines.py`).
   - **Asymmetric matrices.** These are priced on `(d + dᵀ)/2`; each route is oriented on the true costs and its reduced cost recomputed exactly. Pricing is exact on symmetric matrices only.
+  - **Extra columns.** Each CPTP tour also yields its drop-one-bin neighbours that keep a positive reduced cost: CPTP returns one tour per call, while the labelling returns up to `max_routes`.
+  - **Timeouts.** Only a CPTP solve with no tour counts as a pricing timeout.
   - **Logging.** The engine logs its call, outcome and fallback counts per solve.
 
 ### Modules over 500 code lines split (`2026-10-18`)

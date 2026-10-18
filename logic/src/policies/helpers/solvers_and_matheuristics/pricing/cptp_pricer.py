@@ -212,8 +212,10 @@ class CPTPPricingSolver(RCSPPSolver):
         self.stats["cptp_calls"] += 1
         self.stats["cptp_seconds"] += time.perf_counter() - t0
         optimal = bool(result.is_optimal())
-        self._timed_out = not optimal
         self.stats["cptp_optimal" if optimal else "cptp_not_optimal"] += 1
+        # Only a solve without a tour counts as a pricing timeout; a non-optimal tour
+        # is still a column, and pricing_status records that it is not certified.
+        self._timed_out = not result.has_solution()
         if not result.has_solution():
             self.pricing_status = PricingStatus.TIMED_OUT
             self.last_max_rc = float("inf")
@@ -234,7 +236,37 @@ class CPTPPricingSolver(RCSPPSolver):
             self.pricing_status = PricingStatus.TIMED_OUT if not optimal else PricingStatus.HEURISTIC
             bound_rc = -float(result.bound) - self.vehicle_dual if self.symmetric else float(route.reduced_cost)
             self.last_max_rc = max(float(route.reduced_cost), bound_rc)  # type: ignore[arg-type]
-        return [route] if route.reduced_cost > 0 else []  # type: ignore[operator]
+        if route.reduced_cost <= 0:  # type: ignore[operator]
+            return []
+        return [route] + self._drop_one_variants(route, forbidden_arcs, rcc_duals, edge_clique_duals, lci_cover_items)
+
+    def _drop_one_variants(
+        self,
+        route: Route,
+        forbidden_arcs: FrozenSet[Tuple[int, int]],
+        rcc_duals: Dict[FrozenSet[int], float],
+        edge_clique_duals: Dict[Tuple[int, int], float],
+        lci_cover_items: List[_LCICoverItem],
+    ) -> List[Route]:
+        """Columns from the CPTP tour with one bin removed that keep a positive reduced cost.
+
+        CPTP yields one tour per call while the labelling yields up to ``max_routes``;
+        these neighbours give the restricted master comparable choice.
+        """
+        out: List[Route] = []
+        for k in range(len(route.nodes)):
+            seq = route.nodes[:k] + route.nodes[k + 1 :]
+            if not seq or self.is_known_column(tuple(seq)):
+                continue
+            path = [0] + seq + [0]
+            if any((a, b) in forbidden_arcs for a, b in zip(path, path[1:], strict=False)):
+                continue
+            variant = self._compute_route_details(seq)
+            variant.reduced_cost = self._reduced_cost(variant, rcc_duals, edge_clique_duals, lci_cover_items)
+            if variant.reduced_cost > 0:
+                out.append(variant)
+        self.stats["cptp_drop_one_columns"] += len(out)
+        return out
 
     def _oriented_route(
         self,
