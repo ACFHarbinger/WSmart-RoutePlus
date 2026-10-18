@@ -27,6 +27,9 @@ class BPCConfig:
         profit_aware_operators: Whether to use profit-aware operators.
         greedy_warm_start: Whether to seed the master's column pool with greedy-insertion
             routes (profit-aware when ``profit_aware_operators``); False starts it empty.
+        pricing_engine: Pricing solver: 'labelling' (ng-route RCSPP labelling) or 'cptp' (the CPTP
+            branch-and-cut of the logic/submodules/cptp submodule; see bpc engines.py for the cut families it keeps).
+        cptp_threads: Threads per CPTP pricing call (pricing_engine='cptp').
         seed: Random seed for reproducibility.
         packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
@@ -73,6 +76,8 @@ class BPCConfig:
     time_limit: float = 60.0
     profit_aware_operators: bool = True
     greedy_warm_start: bool = True
+    pricing_engine: str = "labelling"
+    cptp_threads: int = 1
     seed: Optional[int] = None
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

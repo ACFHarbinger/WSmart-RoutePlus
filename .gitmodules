@@ -1,3 +1,6 @@
 [submodule "logic/src/pipeline/simulations/wsmart_bin_analysis"]
 	path = packages/wsmart_bin_analysis
 	url = https://github.com/ACFHarbinger/wsmart_bin_analysis.git
+[submodule "logic/submodules/cptp"]
+	path = logic/submodules/cptp
+	url = https://github.com/spoorendonk/cptp.git

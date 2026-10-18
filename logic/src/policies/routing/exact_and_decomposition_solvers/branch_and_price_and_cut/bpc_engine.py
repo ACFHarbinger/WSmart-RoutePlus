@@ -136,7 +136,6 @@ from logic.src.policies.helpers.solvers_and_matheuristics.branching.pruning impo
 )
 from logic.src.policies.helpers.solvers_and_matheuristics.master_problem import VRPPMasterProblem
 from logic.src.policies.helpers.solvers_and_matheuristics.master_problem.warm_start import greedy_warm_start_columns
-from logic.src.policies.helpers.solvers_and_matheuristics.pricing import RCSPPSolver
 from logic.src.policies.helpers.solvers_and_matheuristics.search.bpc_tree import (
     BPCSearchOptions,
     search_bpc_tree,
@@ -144,13 +143,14 @@ from logic.src.policies.helpers.solvers_and_matheuristics.search.bpc_tree import
 from logic.src.policies.helpers.solvers_and_matheuristics.search.bpc_tree import (
     total_travel_cost as _total_travel_cost,
 )
-from logic.src.policies.helpers.solvers_and_matheuristics.search.cutting_planes import (
-    create_cutting_plane_engine,
-)
 from logic.src.policies.helpers.solvers_and_matheuristics.separation import SeparationEngine
 from logic.src.policies.helpers.solvers_and_matheuristics.vrpp_model import VRPPModel
 from logic.src.policies.routing.base.base_routing_policy import _structured_load, _unwrap_engine_section
 from logic.src.policies.routing.base.sub_problem import SolveResult, SubProblem
+from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price_and_cut.engines import (
+    make_cut_engine,
+    make_pricing_solver,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -234,7 +234,6 @@ def run_bpc(  # noqa: C901
     # Extract parameters from the typed config
     max_bb_nodes = cfg.max_bb_nodes
     time_limit = cfg.time_limit
-    cutting_planes_name = cfg.cutting_planes
     branching_strategy_name = cfg.branching_strategy
 
     # Numerical Safety Warning
@@ -270,18 +269,7 @@ def run_bpc(  # noqa: C901
         master.strict_set_partitioning = True
         logger.info("Enforcing strict Set Partitioning (SP) for Ryan-Foster branching.")
 
-    pricing_solver = RCSPPSolver(
-        k_nodes,
-        red_dist,
-        red_wastes,
-        capacity,
-        R,
-        C,
-        use_ng_routes=cfg.use_ng_routes,
-        ng_neighborhood_size=min(cfg.ng_neighborhood_size, k_nodes - 1),
-        timeout=cfg.rcspp_timeout,
-        max_labels=cfg.rcspp_max_labels,
-    )
+    pricing_solver = make_pricing_solver(cfg, k_nodes, red_dist, red_wastes, capacity, R, C)
 
     # 2. Initial Columns — greedy-insertion warm start on the reduced instance
     mandatory_list = sorted(red_mandatory)
@@ -300,6 +288,8 @@ def run_bpc(  # noqa: C901
     )
 
     master.build_model(initial_columns)
+    if hasattr(pricing_solver, "is_known_column"):
+        pricing_solver.is_known_column = lambda sig: sig in master._route_signatures
     master.column_deletion_enabled = True
 
     # 2.1 Initialize 2-Phase Method
@@ -330,30 +320,8 @@ def run_bpc(  # noqa: C901
     # 4. Initialize Branch-and-Bound Tree with search strategy
     bb_tree = BranchAndBoundTree(v_model=v_model, params=cfg)
 
-    # 5. Initialize cutting engine
-    cut_engine = create_cutting_plane_engine(
-        cutting_planes_name,
-        v_model,
-        sep_engine,
-        dist_matrix=red_dist,
-        route_budget=cfg.route_budget,
-    )
-
-    # ── Tier 1 + selection-routing duality supplemental cut engines ──────
-    # These are always active regardless of cutting_planes_name, since they
-    # specifically address the VRPP profit-selection × routing duality.
-    from logic.src.policies.helpers.solvers_and_matheuristics.search.cutting_planes import (
-        CompositeCuttingPlaneEngine,
-        LimitedMemoryRank1CutEngine,
-    )
-
-    _supplemental_engines = [
-        LimitedMemoryRank1CutEngine(v_model, max_subset_size=5),
-    ]
-    # Wrap primary + supplemental engines together unless already "all"
-    if cutting_planes_name not in ("all", "composite"):
-        cut_engine = CompositeCuttingPlaneEngine([cut_engine] + _supplemental_engines)
-    # If already "all", supplemental engines are already included
+    # 5. Initialize cutting engine (the CPTP pricer keeps only the families it can price)
+    cut_engine = make_cut_engine(cfg, v_model, sep_engine, red_dist)
     logger.info(f"BPC Solver started: full instance, {k_nodes} nodes, max BB nodes: {max_bb_nodes}")
 
     # 6. Shared B&B walk (P-33). Setup above stays BPC-specific (full instance,
@@ -378,6 +346,9 @@ def run_bpc(  # noqa: C901
         k_nodes=k_nodes,
         options=BPCSearchOptions(),
     )
+
+    if getattr(pricing_solver, "stats", None):
+        logger.info(f"[BPC] CPTP pricing stats: {dict(pricing_solver.stats)}")
 
     # 6. Extract best integer solution
     if bb_tree.best_integer_node is None:
