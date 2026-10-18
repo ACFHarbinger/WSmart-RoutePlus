@@ -9,8 +9,8 @@ from __future__ import annotations
 from typing import Any, Dict, Optional, Union
 
 import torch
+from logic.src.envs.base.resources import LoadResource
 from logic.src.envs.tasks.common.released_specs import CPTP_SPEC
-from logic.src.envs.tasks.espprc import LoadResource
 from logic.src.envs.tasks.profitable_tour.common import evaluate_profitable_tour
 from logic.src.envs.tasks.profitable_tour.ptp import PTP, PTPEnv, PTPGenerator
 from logic.src.envs.tasks.spec import PROBLEMS
@@ -60,7 +60,7 @@ class CPTPEnv(PTPEnv):
             device=device,
             **kwargs,
         )
-        # Register LoadResource on the ESPPRC base
+        # Register LoadResource on the routing base
         self.resources = (LoadResource(),)
 
 

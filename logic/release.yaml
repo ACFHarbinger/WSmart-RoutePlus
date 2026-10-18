@@ -55,7 +55,7 @@ stages:
 #   (Q-12a); the vectorised profitable-NN expert and vectorised packing are
 #   pulled in by the imitation trainer (Q-4a),
 # - the Attention Model with the GAT encoder (Q-12a),
-# - the released problems' environments on the ESPPRC base (Q-2): env,
+# - the released problems' environments on the routing base (Q-2): env,
 #   generator and cost functions live in envs/tasks/<p>.py since the WP-07
 #   merge (P-20, Q-3a); envs/routing/ is gone, and envs/generators/ serves
 #   the unreleased problems only,
@@ -76,7 +76,8 @@ infrastructure:
   - logic.src.policies.packing.vectorized.service_level   # released strategy, loaded by string target in vectorized/factory.py
   - logic.src.policies.packing.vectorized.regular         # released strategy, loaded by string target in vectorized/factory.py
   - logic.src.policies.packing.vectorized.spec            # shared rules of the vectorised selectors
-  - logic.src.envs.tasks.espprc   # ESPPRC base + shared generator (P-23, Q-3a)
+  - logic.src.envs.base.routing     # shared routing base env + generator (P-23, Q-3a)
+  - logic.src.envs.base.resources   # load and shift-time resource constraints
   - logic.src.envs.tasks.ptp
   - logic.src.envs.tasks.cptp
   - logic.src.envs.tasks.tcptp

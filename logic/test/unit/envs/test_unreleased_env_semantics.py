@@ -1,4 +1,4 @@
-"""The unreleased envs keep their pre-WP-07 dynamics on the ESPPRC base (review CR-12, Q-8b).
+"""The unreleased envs keep their pre-WP-07 dynamics on the routing base (review CR-12, Q-8b).
 
 OP and PDP use the reproductions from the review; IRP, ThOP, ATSP, PCTSP and SPCTSP run on their original
 generators. Seeded rollouts of every env were also replayed step by step against

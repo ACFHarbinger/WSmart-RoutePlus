@@ -1,4 +1,4 @@
-"""Inventory Routing Problem (IRP) task and environment on ESPPRC base."""
+"""Inventory Routing Problem (IRP) task and environment on the routing base."""
 
 from __future__ import annotations
 
@@ -8,14 +8,14 @@ import torch
 from tensordict import TensorDict, TensorDictBase
 
 from logic.src.envs.base.ops import OpsMixin
+from logic.src.envs.base.routing import RoutingEnv
 from logic.src.envs.generators.irp import IRPGenerator
 from logic.src.envs.tasks.base import BaseProblem
-from logic.src.envs.tasks.espprc import ESPPRCEnv
 from logic.src.envs.tasks.spec import PROBLEMS, ProblemSpec
 
 
-class IRPEnv(ESPPRCEnv):
-    """Inventory Routing Problem Environment on ESPPRC base."""
+class IRPEnv(RoutingEnv):
+    """Inventory Routing Problem Environment on the routing base."""
 
     NAME: str = "irp"
     name: str = "irp"

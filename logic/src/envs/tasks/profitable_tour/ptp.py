@@ -10,15 +10,15 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
+from logic.src.envs.base.routing import RoutingEnv, RoutingGenerator
 from logic.src.envs.tasks.base import BaseProblem
 from logic.src.envs.tasks.common.released_specs import PTP_SPEC
-from logic.src.envs.tasks.espprc import ESPPRCEnv, ESPPRCGenerator
 from logic.src.envs.tasks.profitable_tour.common import evaluate_profitable_tour
 from logic.src.envs.tasks.spec import PROBLEMS
 from tensordict import TensorDict
 
 
-class PTPGenerator(ESPPRCGenerator):
+class PTPGenerator(RoutingGenerator):
     """Generator for Profitable Tour Problem (PTP) instances.
 
     Generates customer locations, depot coordinates, and waste / profit quantities.
@@ -132,10 +132,10 @@ class PTPGenerator(ESPPRCGenerator):
         return torch.empty(size, device=self.device).uniform_(self.min_waste, self.max_waste)
 
 
-class PTPEnv(ESPPRCEnv):
+class PTPEnv(RoutingEnv):
     """Profitable Tour Problem Environment.
 
-    Selects an optimal subset of profitable nodes to visit on an ESPPRC base
+    Selects an optimal subset of profitable nodes to visit on the routing base
     without resource constraints.
     """
 

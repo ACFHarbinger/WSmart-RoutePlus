@@ -1,4 +1,4 @@
-"""Thief Orienteering Problem (ThOP) task and environment on ESPPRC base."""
+"""Thief Orienteering Problem (ThOP) task and environment on the routing base."""
 
 from __future__ import annotations
 
@@ -8,14 +8,14 @@ import torch
 from tensordict import TensorDict, TensorDictBase
 
 from logic.src.envs.base.ops import OpsMixin
+from logic.src.envs.base.routing import RoutingEnv
 from logic.src.envs.generators.thop import ThOPGenerator
 from logic.src.envs.tasks.base import BaseProblem
-from logic.src.envs.tasks.espprc import ESPPRCEnv
 from logic.src.envs.tasks.spec import PROBLEMS, ProblemSpec
 
 
-class ThOPEnv(ESPPRCEnv):
-    """Thief Orienteering Problem Environment on ESPPRC base."""
+class ThOPEnv(RoutingEnv):
+    """Thief Orienteering Problem Environment on the routing base."""
 
     NAME: str = "thop"
     name: str = "thop"
@@ -288,7 +288,15 @@ class ThOP(BaseProblem):
         """Evaluate a ThOP solution."""
         if pi.size(-1) <= 1:
             z = torch.zeros(pi.size(0), device=pi.device)
-            return {"cost": z, "reward": z, "profit": z, "length": z, "time": z, "valid": torch.ones_like(z, dtype=torch.bool), "total": z}
+            return {
+                "cost": z,
+                "reward": z,
+                "profit": z,
+                "length": z,
+                "time": z,
+                "valid": torch.ones_like(z, dtype=torch.bool),
+                "total": z,
+            }
 
         B, T = pi.shape
         device = pi.device
@@ -314,7 +322,9 @@ class ThOP(BaseProblem):
             if is_item.any():
                 item_idx = (action - 1).clamp(min=0)
                 city = item_c.gather(1, item_idx.unsqueeze(1)).squeeze(1)
-                dist_step = (locs[torch.arange(B, device=device), city] - locs[torch.arange(B, device=device), cur_city]).norm(dim=-1)
+                dist_step = (
+                    locs[torch.arange(B, device=device), city] - locs[torch.arange(B, device=device), cur_city]
+                ).norm(dim=-1)
                 v = v_max - (cur_weight / W) * (v_max - v_min)
                 v = v.clamp(min=1e-5)
                 cur_time = cur_time + torch.where(is_item, dist_step / v, torch.zeros_like(v))
@@ -325,7 +335,9 @@ class ThOP(BaseProblem):
                 cur_weight = cur_weight + torch.where(is_item, w, torch.zeros_like(w))
                 cur_city = torch.where(is_item, city, cur_city)
 
-        return_dist = (locs[torch.arange(B, device=device), 0] - locs[torch.arange(B, device=device), cur_city]).norm(dim=-1)
+        return_dist = (locs[torch.arange(B, device=device), 0] - locs[torch.arange(B, device=device), cur_city]).norm(
+            dim=-1
+        )
         v = (v_max - (cur_weight / W) * (v_max - v_min)).clamp(min=1e-5)
         cur_time = cur_time + return_dist / v
         total_dist = total_dist + return_dist

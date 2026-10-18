@@ -1,4 +1,4 @@
-"""Pickup and Delivery Problem (PDP) task and environment on ESPPRC base."""
+"""Pickup and Delivery Problem (PDP) task and environment on the routing base."""
 
 from __future__ import annotations
 
@@ -8,12 +8,12 @@ import torch
 from tensordict import TensorDict
 
 from logic.src.envs.base.ops import as_batch_nodes
+from logic.src.envs.base.routing import RoutingEnv, RoutingGenerator
 from logic.src.envs.tasks.base import BaseProblem
-from logic.src.envs.tasks.espprc import ESPPRCEnv, ESPPRCGenerator
 from logic.src.envs.tasks.spec import PROBLEMS, ProblemSpec
 
 
-class PDPGenerator(ESPPRCGenerator):
+class PDPGenerator(RoutingGenerator):
     """Generator for Pickup and Delivery Problem (PDP) instances."""
 
     def __init__(self, num_loc: int = 50, device: Union[str, torch.device] = "cpu", **kwargs: Any) -> None:
@@ -27,8 +27,8 @@ class PDPGenerator(ESPPRCGenerator):
         return td
 
 
-class PDPEnv(ESPPRCEnv):
-    """Pickup and Delivery Problem Environment on ESPPRC base."""
+class PDPEnv(RoutingEnv):
+    """Pickup and Delivery Problem Environment on the routing base."""
 
     NAME: str = "pdp"
     name: str = "pdp"
