@@ -138,7 +138,6 @@ from gurobipy import GRB
 
 from logic.src.configs.policies.ms_bpc_sp import MSBPCSPConfig
 from logic.src.constants import MAX_CAPACITY_PERCENT
-from logic.src.policies.helpers.operators.recreate_repair.greedy import greedy_insertion, greedy_profit_insertion
 from logic.src.policies.helpers.solvers_and_matheuristics import (
     BranchAndBoundTree,
     RCSPPSolver,
@@ -152,6 +151,7 @@ from logic.src.policies.helpers.solvers_and_matheuristics.branching.pruning impo
 from logic.src.policies.helpers.solvers_and_matheuristics.branching.pruning import (
     reset_master_constraints as _reset_master_constraints,  # noqa: F401  (re-exported for tests)
 )
+from logic.src.policies.helpers.solvers_and_matheuristics.master_problem.warm_start import greedy_warm_start_columns
 from logic.src.policies.helpers.solvers_and_matheuristics.pricing.smoothing import (
     detect_cycles as _detect_cycles,  # noqa: F401  (re-exported for tests)
 )
@@ -492,32 +492,6 @@ def run_ms_bpc_sp(  # noqa: C901
         master.strict_set_partitioning = True
         logger.info("Enforcing strict Set Partitioning (SP) for Ryan-Foster branching.")
 
-    # 2. Initial Columns — mandatory-only greedy warm-start on reduced instance
-    mandatory_list = sorted(list(red_mandatory))
-    if params.profit_aware_operators:
-        initial_routes_nodes = greedy_profit_insertion(
-            [],
-            mandatory_list,
-            red_dist,
-            red_wastes,
-            capacity,
-            R=R,
-            C=C,
-            mandatory_nodes=mandatory_list,
-            expand_pool=False,
-        )
-    else:
-        initial_routes_nodes = greedy_insertion(
-            [],
-            mandatory_list,
-            red_dist,
-            red_wastes,
-            capacity,
-            mandatory_nodes=mandatory_list,
-            expand_pool=False,
-        )
-
-    initial_columns = []
     pricing_solver = RCSPPSolver(
         k_nodes,
         red_dist,
@@ -531,38 +505,21 @@ def run_ms_bpc_sp(  # noqa: C901
         max_labels=params.rcspp_max_labels,
     )
 
-    for r_nodes in initial_routes_nodes:
-        route_obj = pricing_solver._compute_route_details(r_nodes)
-        initial_columns.append(route_obj)
-
-    # Seed with greedy optional-node routes so LP duals for optional nodes
-    # are non-zero from the start, guiding the RCSPP toward optional nodes.
-    all_local_nodes = list(range(1, k_nodes + 1))
-    optional_local = [n for n in all_local_nodes if n not in red_mandatory]
-    if optional_local and params.profit_aware_operators:
-        try:
-            opt_seed_routes = greedy_profit_insertion(
-                [r for r in initial_routes_nodes],  # start from mandatory routes
-                optional_local,
-                red_dist,
-                red_wastes,
-                capacity,
-                R=R,
-                C=C,
-                mandatory_nodes=mandatory_list,
-                expand_pool=True,
-            )
-            for r_nodes in opt_seed_routes:
-                if tuple(r_nodes) not in {tuple(r) for r in initial_routes_nodes}:
-                    route_obj = pricing_solver._compute_route_details(r_nodes)
-                    if route_obj.profit > 0:
-                        initial_columns.append(route_obj)
-            logger.info(
-                f"[Warm-start] Added {len(opt_seed_routes) - len(initial_routes_nodes)} "
-                f"optional-node seed routes to initial column pool."
-            )
-        except Exception as _e:
-            logger.debug(f"[Warm-start] Optional seeding failed: {_e}")
+    # 2. Initial Columns — greedy-insertion warm start on the reduced instance
+    mandatory_list = sorted(red_mandatory)
+    optional_local = [n for n in range(1, k_nodes + 1) if n not in red_mandatory]
+    initial_routes_nodes, initial_columns = greedy_warm_start_columns(
+        pricing_solver,
+        mandatory_list,
+        optional_local,
+        red_dist,
+        red_wastes,
+        capacity,
+        R,
+        C,
+        enabled=params.greedy_warm_start,
+        profit_aware=params.profit_aware_operators,
+    )
 
     master.build_model(initial_columns)
     master.column_deletion_enabled = True

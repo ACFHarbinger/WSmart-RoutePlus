@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### BPC greedy warm-start switch (`2026-10-18`)
+
+#### Added
+
+- **`greedy_warm_start`** (BPC and MS-BPC-SP, default `true`). Off, the restricted master starts with an empty column pool: no greedy mandatory-bin routes and no optional-bin seed routes, and column generation (Phase I Farkas pricing while mandatory bins are uncovered) builds the whole pool. `profit_aware_operators` still picks the greedy variant when the switch is on. Both engines now share `master_problem/warm_start.py`, which also gives MS-BPC-SP the copy fix BPC already had: the optional seeding no longer mutates the mandatory columns' node lists in place.
+
 ### 1.0.0 release package: build fixes found by running the release (`2026-10-17`)
 
 #### Fixed

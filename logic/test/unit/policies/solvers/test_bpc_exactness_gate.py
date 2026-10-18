@@ -178,3 +178,22 @@ def test_ms_bpc_sp_fleet_limited_matches_brute_force_with_valid_certificate(capl
         f"MS-BPC-SP incumbent {profit} != brute-force optimum {optimum}"
     )
     _certified_bound(caplog, profit, optimum)
+
+
+@_needs_license
+@pytest.mark.parametrize("engine", [run_bpc, run_ms_bpc_sp])
+def test_engines_without_greedy_warm_start(engine, caplog):
+    """With ``greedy_warm_start`` off the master starts empty; the engines still
+    reach the brute-force optimum and cover every mandatory bin."""
+    caplog.set_level("INFO")
+    c = CANONICAL
+    optimum = _brute_force_optimum(c["dist"].tolist(), c["wastes"], c["capacity"], c["R"], c["C"])
+    cfg = {"max_cg_iterations": 50, "max_bb_nodes": 200, "optimality_gap": 1e-9, "greedy_warm_start": False}
+    _routes, profit, _cost = engine(build_subproblem(c["dist"], c["wastes"], c["capacity"], c["R"], c["C"]), cfg)
+    assert "Greedy insertion off" in caplog.text
+    assert abs(profit - optimum) <= 1e-6 * max(1.0, abs(optimum))
+
+    routes, _profit, _cost = engine(
+        build_subproblem(c["dist"], c["wastes"], c["capacity"], c["R"], c["C"], mandatory_nodes=[3]), cfg
+    )
+    assert any(3 in r for r in routes), "the mandatory bin is not collected"

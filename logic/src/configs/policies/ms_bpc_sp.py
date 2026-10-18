@@ -25,6 +25,8 @@ class MSBPCSPConfig:
     Attributes:
         time_limit: Maximum wall-clock time in seconds for the solver.
         profit_aware_operators: Enable VRPP profit logic in subproblems.
+        greedy_warm_start: Whether to seed the master's column pool with greedy-insertion
+            routes (profit-aware when ``profit_aware_operators``); False starts it empty.
         seed: Random seed for reproducibility.
         packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
@@ -64,6 +66,7 @@ class MSBPCSPConfig:
 
     time_limit: float = 60.0
     profit_aware_operators: bool = False
+    greedy_warm_start: bool = True
     seed: Optional[int] = None
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

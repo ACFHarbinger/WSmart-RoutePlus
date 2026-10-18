@@ -1,6 +1,7 @@
 bpc:
   custom:
     profit_aware_operators: true
+    greedy_warm_start: true
     packing:
       other/pk_last_minute.yaml:
       - last_minute_cf70
