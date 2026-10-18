@@ -1,0 +1,10 @@
+---
+description: Keep manuscript edits and paper submodule pointer commits on main
+alwaysApply: true
+---
+
+# Paper branches
+
+- Make all paper changes on the paper submodule's `main` branch, in its existing WSmart-Route checkout.
+- Record paper submodule pointer updates directly on WSmart-Route's `main`; do not create a paper review branch.
+- Do not push unless the user explicitly asks. Commit only authorized paper-related files and preserve unrelated working changes.
