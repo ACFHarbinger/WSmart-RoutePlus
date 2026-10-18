@@ -12,8 +12,13 @@ Provides the unified ``move_kopt_intra`` function and convenience wrappers:
 Higher values of *k* systematically enumerate all permutations and
 orientations of the middle segments and apply the best improving move.
 
+Every move is priced with the directed distances: reversing a segment also
+changes the cost of its interior arcs when the matrix is asymmetric
+(:func:`reversal_delta`), which a symmetric delta of the exchanged edges misses.
+
 Attributes:
-    None
+    reversal_delta: Cost change of driving a segment in the opposite direction.
+    directed_two_opt_route: Best-improvement 2-opt with exact directed costs.
 
 Example:
     >>> from logic.src.policies.helpers.operators.intra_route.k_opt import move_kopt_intra
@@ -23,11 +28,90 @@ Example:
     >>> improved_route = two_opt_route(route, dist_matrix)
 """
 
+import contextlib
 import itertools
 from random import Random
 from typing import Any, List, Optional, Tuple
 
 import numpy as np
+
+
+def reversal_delta(dist: Any, segment: List[int], symmetric: Optional[bool] = None) -> float:
+    """Cost change of driving ``segment``'s interior arcs in the opposite direction.
+
+    Zero for a symmetric matrix or a segment of fewer than two nodes.
+
+    Args:
+        dist: Distance matrix (array-like, indexable by ``[i, j]``) or a
+            ``LocalSearch`` with ``d`` (or only ``get_dist``, assumed symmetric).
+        segment: Consecutive route nodes, in their current order.
+        symmetric: Known symmetry of the matrix; when None it is checked (and
+            cached on a ``LocalSearch``).
+
+    Returns:
+        float: ``sum(d[b, a]) - sum(d[a, b])`` over the consecutive pairs ``(a, b)``.
+    """
+    if len(segment) < 2:
+        return 0.0
+    owner = dist if hasattr(dist, "get_dist") else None
+    matrix = getattr(owner, "d", None) if owner is not None else dist
+    if matrix is None:
+        return 0.0
+    try:
+        matrix = np.asarray(matrix, dtype=float)
+    except (TypeError, ValueError):
+        return 0.0
+    if matrix.ndim != 2:
+        return 0.0
+    if symmetric is None and owner is not None:
+        symmetric = getattr(owner, "_d_symmetric", None)
+    if symmetric is None:
+        symmetric = bool(np.allclose(matrix, matrix.T))
+        if owner is not None:
+            with contextlib.suppress(AttributeError):
+                owner._d_symmetric = symmetric
+    if symmetric:
+        return 0.0
+    seg = np.asarray(segment)
+    return float(matrix[seg[1:], seg[:-1]].sum() - matrix[seg[:-1], seg[1:]].sum())
+
+
+def directed_two_opt_route(route: List[int], dist_matrix: np.ndarray, max_moves: int = 10_000) -> List[int]:
+    """Best-improvement 2-opt of one route with exact directed move costs.
+
+    Every segment reversal, including those touching the depot, is priced with
+    the arcs it removes, the arcs it adds and its interior driven backwards.
+
+    Args:
+        route: Ordered bins, depot excluded.
+        dist_matrix: Directed distance matrix (index 0 = depot).
+        max_moves: Cap on applied reversals.
+
+    Returns:
+        List[int]: The improved route, depot excluded.
+    """
+    full = np.array([0, *route, 0])
+    n = len(full)
+    if n < 4:
+        return list(route)
+    d = np.asarray(dist_matrix, dtype=float)
+    i_idx, j_idx = np.triu_indices(n - 1, 1)
+    keep = (i_idx >= 1) & (j_idx <= n - 2)
+    i_idx, j_idx = i_idx[keep], j_idx[keep]
+    for _ in range(max_moves):
+        fwd, bwd = d[full[:-1], full[1:]], d[full[1:], full[:-1]]
+        pf = np.concatenate([[0.0], np.cumsum(fwd)])
+        pb = np.concatenate([[0.0], np.cumsum(bwd)])
+        # Reversing full[i..j]: arcs (i-1, i) and (j, j+1) change, the interior runs backwards.
+        old = fwd[i_idx - 1] + fwd[j_idx] + (pf[j_idx] - pf[i_idx])
+        new = d[full[i_idx - 1], full[j_idx]] + d[full[i_idx], full[j_idx + 1]] + (pb[j_idx] - pb[i_idx])
+        delta = new - old
+        k = int(np.argmin(delta))
+        if delta[k] >= -1e-9:
+            break
+        i, j = i_idx[k], j_idx[k]
+        full[i : j + 1] = full[i : j + 1][::-1].copy()
+    return [int(x) for x in full[1:-1]]
 
 
 def two_opt_route(
@@ -54,6 +138,7 @@ def two_opt_route(
     route = list(route)
     full = [0] + route + [0]
     n = len(full)
+    symmetric = bool(np.allclose(dist_matrix, np.transpose(dist_matrix)))
 
     for _ in range(max_iter):
         improved = False
@@ -67,6 +152,7 @@ def two_opt_route(
                     + dist_matrix[full[i], full[j + 1]]
                     - dist_matrix[full[i - 1], full[i]]
                     - dist_matrix[full[j], full[j + 1]]
+                    + reversal_delta(dist_matrix, full[i : j + 1], symmetric)
                 )
                 if delta < -1e-9:
                     full[i : j + 1] = full[i : j + 1][::-1]
@@ -288,6 +374,7 @@ def _apply_2opt(ls, u: int, v: int, r_u: int, p_u: int, p_v: int, exclude_depot:
     v_next = route[p_v + 1] if p_v < len(route) - 1 else 0
 
     delta = -ls.get_dist(u, u_next) - ls.get_dist(v, v_next) + ls.get_dist(u, v) + ls.get_dist(u_next, v_next)
+    delta += reversal_delta(ls, route[p_u + 1 : p_v + 1])
 
     if delta * ls.C < -1e-4:
         segment = route[p_u + 1 : p_v + 1]
@@ -349,7 +436,9 @@ def _apply_3opt(
         g6 = d_base - (ls.get_dist(A, D) + ls.get_dist(E, C) + ls.get_dist(B, F))
         g7 = d_base - (ls.get_dist(A, E) + ls.get_dist(D, B) + ls.get_dist(C, F))
 
-        gains = [g4, g5, g6, g7]
+        s2, s3 = route[i + 1 : j + 1], route[j + 1 : k + 1]
+        r2, r3 = reversal_delta(ls, s2), reversal_delta(ls, s3)
+        gains = [g4 - r2 - r3, g5, g6 - r2, g7 - r3]
         best_g = max(gains)
         if best_g * ls.C > 1e-4:
             case = gains.index(best_g)
@@ -513,6 +602,7 @@ def _find_best_config(
                 reordered.append(seg[::-1] if reversals[idx] else seg)
 
             new_cost = _connection_cost(ls, head, reordered, tail, exclude_depot)
+            new_cost += sum(reversal_delta(ls, middle[s]) for s, r in zip(perm, reversals, strict=True) if r)
             gain = original_cost - new_cost
 
             if gain > best_gain:
@@ -556,8 +646,8 @@ def _connection_cost(
     """
     Compute the total cost of edges connecting consecutive segments.
 
-    Only counts the *k* edges that a k-opt move breaks/reconnects,
-    not internal segment costs (which stay constant).
+    Only counts the *k* edges that a k-opt move breaks/reconnects; the interior
+    cost of a reversed segment is added by the caller (:func:`reversal_delta`).
 
     Args:
         ls: LocalSearch instance.

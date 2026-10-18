@@ -17,6 +17,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Route improvers price moves with directed distances (`2026-10-18`)
+
+#### Fixed
+
+- **Fast-TSP drove small trips backwards.** fast-tsp 0.1.5 treats its matrix as symmetric. For tours of up to 20 nodes it returns the optimum of the *transposed* matrix, and the wrapper (`travelling_salesman_problem/tsp.py::find_route`) drove that order forward. On the paper's 30-day outputs, the reverse of a Fast-TSP trip of up to 19 bins was shorter in 93% of trips.
+  - `find_route` now drives the cheaper direction on the true matrix, then polishes the route with `directed_two_opt_route`.
+  - It also no longer fails on an empty bin list.
+- **2-opt, 3-opt and k-opt ignored the direction of reversed segments.** `k_opt.py` priced a reversal by its exchanged edges only. On an asymmetric matrix an "improving" move could lengthen the route.
+  - The new `reversal_delta` adds the cost of driving the reversed interior backwards. It is zero, and skipped, for symmetric matrices; the symmetry check is cached on the `LocalSearch`.
+  - Applied in `_apply_2opt`, `_apply_3opt`, the k-opt configuration search and `two_opt_route`.
+- **The CLS 2-opt sweep never broke the first depot edge**, so it could not reverse a route's leading segment or a whole route. `SweepLocalSearch.two_opt_intra` now starts from the depot.
+- Every `LocalSearch` that uses these operators (HGS, ILS, FILO, SA and the improvers) now evaluates them correctly on road matrices. Results on asymmetric instances change. The archived paper outputs were produced before this fix.
+
+#### Added
+
+- `directed_two_opt_route`: best-improvement 2-opt with exact directed move costs.
+- `test_directed_route_moves.py`: every applied move must shorten the directed route; `find_route` must drive a directed ring forward.
+
 ### One local search implementation (`2026-10-18`)
 
 #### Changed
