@@ -6,86 +6,18 @@ whenever capacity is exhausted. The objective is to minimise total distance.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Optional, Sequence, Union
+from typing import Any, Dict, Optional, Union
 
 import torch
-from tensordict import TensorDict
 
 from logic.src.envs.base.resources import LoadResource
-from logic.src.envs.base.routing import RoutingEnv, RoutingGenerator
+from logic.src.envs.base.routing import RoutingEnv
+from logic.src.envs.generators.cvrp import CAPACITIES, CVRPGenerator
 from logic.src.envs.tasks.base import BaseProblem
 from logic.src.envs.tasks.common.objectives import distance_objective
 from logic.src.envs.tasks.common.released_specs import CVRP_SPEC
-from logic.src.envs.tasks.profitable_tour.common import calc_cumulative_trip_load, closed_tour_length
+from logic.src.envs.tasks.core.ptp import calc_cumulative_trip_load, closed_tour_length
 from logic.src.envs.tasks.spec import PROBLEMS
-
-CAPACITIES: Dict[int, float] = {
-    10: 20.0,
-    15: 25.0,
-    20: 30.0,
-    30: 33.0,
-    40: 37.0,
-    50: 40.0,
-    60: 43.0,
-    75: 45.0,
-    100: 50.0,
-    125: 55.0,
-    150: 60.0,
-    200: 70.0,
-    500: 100.0,
-    1000: 150.0,
-}
-
-
-class CVRPGenerator(RoutingGenerator):
-    """Generator for Capacitated Vehicle Routing Problem (CVRP) instances."""
-
-    def __init__(
-        self,
-        num_loc: int = 50,
-        min_loc: float = 0.0,
-        max_loc: float = 1.0,
-        loc_distribution: Union[str, Callable] = "uniform",
-        min_demand: int = 1,
-        max_demand: int = 9,
-        capacity: Optional[float] = None,
-        device: Union[str, torch.device] = "cpu",
-        dm_filepath: Optional[str] = None,
-        **kwargs: Any,
-    ) -> None:
-        super().__init__(
-            num_loc=num_loc,
-            min_loc=min_loc,
-            max_loc=max_loc,
-            loc_distribution=loc_distribution,
-            device=device,
-            dm_filepath=dm_filepath,
-            **kwargs,
-        )
-        self.min_demand = min_demand
-        self.max_demand = max_demand
-        self.capacity = capacity if capacity is not None else CAPACITIES.get(num_loc, 50.0)
-
-    def _generate(self, batch_size: Union[int, Sequence[int]]) -> TensorDict:
-        td = super()._generate(batch_size)
-        bs = list(batch_size) if isinstance(batch_size, (list, tuple)) else [batch_size]
-
-        # Generate integer demands in [min_demand, max_demand] normalized by capacity
-        demands = (
-            torch.randint(
-                self.min_demand,
-                self.max_demand + 1,
-                size=(*bs, self.num_loc),
-                device=self.device,
-                dtype=torch.float32,
-            )
-            / self.capacity
-        )
-
-        td["demand"] = demands
-        td["vehicle_capacity"] = torch.ones((*bs,), device=self.device, dtype=torch.float32)
-        td["capacity"] = td["vehicle_capacity"]
-        return td
 
 
 class CVRPEnv(RoutingEnv):

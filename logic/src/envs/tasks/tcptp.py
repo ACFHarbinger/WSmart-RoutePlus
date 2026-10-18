@@ -6,43 +6,17 @@ and working shift time budget (driving time + customer service time).
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Union
 
 import torch
-from logic.src.constants.temporal import get_default_temporal_params
+from tensordict import TensorDict
+
 from logic.src.envs.base.resources import LoadResource, ShiftTimeResource
+from logic.src.envs.generators.tcptp import TCPTPGenerator
 from logic.src.envs.tasks.common.released_specs import TCPTP_SPEC
 from logic.src.envs.tasks.core.ptp import evaluate_profitable_tour
 from logic.src.envs.tasks.cptp import CPTP, CPTPEnv
-from logic.src.envs.tasks.ptp import PTPGenerator
 from logic.src.envs.tasks.spec import PROBLEMS
-from tensordict import TensorDict
-
-
-class TCPTPGenerator(PTPGenerator):
-    """Generator for TCPTP instances including temporal resource parameters."""
-
-    def __init__(
-        self,
-        *args: Any,
-        shift_hours: Optional[float] = None,
-        avg_speed_kmh: Optional[float] = None,
-        service_time_h: Optional[float] = None,
-        **kwargs: Any,
-    ) -> None:
-        super().__init__(*args, **kwargs)
-        default_shift, default_speed, default_service = get_default_temporal_params()
-        self.shift_hours = shift_hours if shift_hours is not None else default_shift
-        self.avg_speed_kmh = avg_speed_kmh if avg_speed_kmh is not None else default_speed
-        self.service_time_h = service_time_h if service_time_h is not None else default_service
-
-    def _generate(self, batch_size: Union[int, Tuple[int, ...]]) -> TensorDict:
-        td = super()._generate(batch_size)
-        bs = list(batch_size) if isinstance(batch_size, (list, tuple)) else [batch_size]
-        td["shift_hours"] = torch.full((*bs,), self.shift_hours, device=self.device)
-        td["avg_speed_kmh"] = torch.full((*bs,), self.avg_speed_kmh, device=self.device)
-        td["service_time_h"] = torch.full((*bs,), self.service_time_h, device=self.device)
-        return td
 
 
 class TCPTPEnv(CPTPEnv):

@@ -1,5 +1,7 @@
 """
-Problem instance generators sub-package.
+Problem instance generators sub-package: the one generator class of each problem.
+
+The environments in :mod:`logic.src.envs.tasks` build their instances with these.
 
 Attributes:
     GENERATOR_REGISTRY (dict[str, type[Generator]]): Registry of available generators.
@@ -16,7 +18,8 @@ Examples:
 from typing import Any
 
 from .atsp import ATSPGenerator
-from .base import Generator
+from .base import Generator, RoutingGenerator
+from .cptp import CPTPGenerator
 from .cvrp import CVRPGenerator
 from .irp import IRPGenerator
 from .op import OPGenerator
@@ -30,7 +33,7 @@ from .tsp import TSPGenerator
 # Registry of available generators
 GENERATOR_REGISTRY: dict[str, type[Generator]] = {
     "ptp": PTPGenerator,
-    "cptp": PTPGenerator,  # Same generator, different env handles capacity
+    "cptp": CPTPGenerator,
     "tcptp": TCPTPGenerator,
     "tsp": TSPGenerator,
     "irp": IRPGenerator,
@@ -68,7 +71,9 @@ def get_generator(name: str, **kwargs: Any) -> Generator:
 
 __all__ = [
     "Generator",
+    "RoutingGenerator",
     "PTPGenerator",
+    "CPTPGenerator",
     "TSPGenerator",
     "IRPGenerator",
     "ATSPGenerator",

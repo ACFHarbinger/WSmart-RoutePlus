@@ -17,7 +17,7 @@ from typing import Any, Dict
 
 import pytest
 import torch
-from logic.src.envs.tasks.profitable_tour.ptp import PTPEnv
+from logic.src.envs.tasks.ptp import PTPEnv
 from logic.src.models.core.attention_model import AttentionModel, AttentionModelPolicy
 from logic.src.models.core.moe import MoEAttentionModel
 from logic.src.models.core.temporal_attention_model import TemporalAttentionModel

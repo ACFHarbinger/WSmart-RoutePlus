@@ -7,12 +7,12 @@ Attributes:
 Example:
     >>> from logic.src.envs.generators import TCPTPGenerator
     >>> generator = TCPTPGenerator(num_loc=50)
-    >>> instance = generator.generate()
+    >>> instance = generator(batch_size=2)
 """
 
 from __future__ import annotations
 
-from typing import Union
+from typing import Sequence, Union
 
 import torch
 from tensordict import TensorDict
@@ -62,7 +62,7 @@ class TCPTPGenerator(PTPGenerator):
         self.avg_speed_kmh = avg_speed_kmh if avg_speed_kmh is not None else default_avg_speed_kmh
         self.service_time_h = service_time_h if service_time_h is not None else default_service_time_h
 
-    def _generate(self, batch_size: tuple[int, ...]) -> TensorDict:
+    def _generate(self, batch_size: Union[int, Sequence[int]]) -> TensorDict:
         """Generate TCPTP instances: PTP fields plus temporal resource fields.
 
         Args:
@@ -76,7 +76,8 @@ class TCPTPGenerator(PTPGenerator):
                 service_time_h: [*B] — per-bin service time (h)
         """
         td = super()._generate(batch_size)
-        td["shift_hours"] = torch.full((*batch_size,), self.shift_hours, device=self.device)
-        td["avg_speed_kmh"] = torch.full((*batch_size,), self.avg_speed_kmh, device=self.device)
-        td["service_time_h"] = torch.full((*batch_size,), self.service_time_h, device=self.device)
+        bs = tuple(td.batch_size)
+        td["shift_hours"] = torch.full(bs, self.shift_hours, device=self.device)
+        td["avg_speed_kmh"] = torch.full(bs, self.avg_speed_kmh, device=self.device)
+        td["service_time_h"] = torch.full(bs, self.service_time_h, device=self.device)
         return td

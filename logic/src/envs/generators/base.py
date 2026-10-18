@@ -3,6 +3,7 @@ Base generator class for problem instances.
 
 Attributes:
     Generator: Abstract base class for problem instance generators.
+    RoutingGenerator: Depot-and-customers generator shared by the routing problems.
 
 Example:
     >>> from src.envs.generators import get_generator
@@ -20,7 +21,7 @@ Example:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Optional, Sequence, Union
 
 import numpy as np
 import torch
@@ -123,6 +124,8 @@ class Generator(ABC):
             kwargs["data_dir"] = self.data_dir
         if hasattr(self, "indices"):
             kwargs["indices"] = self.indices
+        if getattr(self, "dm_filepath", None):
+            kwargs["dm_filepath"] = self.dm_filepath
 
         # For PTP:
         if hasattr(self, "min_waste"):
@@ -135,7 +138,6 @@ class Generator(ABC):
                     "depot_type": self.depot_type,  # type: ignore[attr-defined]
                 }
             )
-
 
         # For IRP:
         if hasattr(self, "num_periods"):
@@ -348,3 +350,54 @@ class Generator(ABC):
 
         locs = locs + offsets
         return torch.clamp(locs, self.min_loc, self.max_loc)
+
+
+class RoutingGenerator(Generator):
+    """Shared generator of the routing problems: customer locations, a depot, optional road distances.
+
+    Attributes:
+        depot_type: Depot placement: "random" (drawn like a customer location),
+            "center" or "corner" (``min_loc`` in both coordinates).
+        dm_filepath: Road distance matrix file, passed through to the environment.
+    """
+
+    def __init__(
+        self,
+        num_loc: int = 50,
+        min_loc: float = 0.0,
+        max_loc: float = 1.0,
+        loc_distribution: Union[str, Callable] = "uniform",
+        depot_type: str = "random",
+        device: Union[str, torch.device] = "cpu",
+        dm_filepath: Optional[str] = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(
+            num_loc=num_loc,
+            min_loc=min_loc,
+            max_loc=max_loc,
+            loc_distribution=loc_distribution,
+            device=device,
+            **kwargs,
+        )
+        self.depot_type = depot_type
+        self.dm_filepath = dm_filepath
+
+    def _generate(self, batch_size: Sequence[int]) -> TensorDict:
+        bs = tuple(batch_size) if isinstance(batch_size, (list, tuple)) else (batch_size,)
+        locs = self._generate_locations(bs, self.num_loc)
+        depot = self._generate_depot(bs)
+        td = TensorDict({"locs": locs, "depot": depot}, batch_size=list(bs), device=self.device)
+        if self.dm_filepath:
+            td["dm_filepath"] = self.dm_filepath
+        return td
+
+    def _generate_depot(self, batch_size: tuple[int, ...]) -> torch.Tensor:
+        """Depot coordinates ``[*B, 2]`` for ``depot_type``."""
+        if self.depot_type == "random":
+            return self._generate_locations(batch_size, 1).squeeze(-2)
+        if self.depot_type == "center":
+            return torch.full((*batch_size, 2), (self.max_loc + self.min_loc) / 2, device=self.device)
+        if self.depot_type == "corner":
+            return torch.full((*batch_size, 2), self.min_loc, device=self.device)
+        raise ValueError(f"Unknown depot type: {self.depot_type}")

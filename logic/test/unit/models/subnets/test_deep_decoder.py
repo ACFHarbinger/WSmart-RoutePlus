@@ -76,7 +76,7 @@ def test_deep_decoder_policy_forward():
     """Verify DeepDecoderPolicy forward pass using inherited AttentionModelPolicy loop (M-gemini-02)."""
     from unittest.mock import patch
 
-    from logic.src.envs.tasks.profitable_tour.ptp import PTPEnv
+    from logic.src.envs.tasks.ptp import PTPEnv
     from logic.src.models.core.attention_model.deep_decoder_policy import DeepDecoderPolicy
 
     with patch("logic.src.utils.data.loader.load_grid_base", side_effect=FileNotFoundError):

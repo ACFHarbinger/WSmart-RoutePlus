@@ -2,7 +2,7 @@
 
 import pytest
 import torch
-from logic.src.envs.tasks.profitable_tour.tcptp import TCPTP, TCPTPEnv, TCPTPGenerator
+from logic.src.envs.tasks.tcptp import TCPTP, TCPTPEnv, TCPTPGenerator
 from tensordict import TensorDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -44,7 +44,9 @@ class TestCTOPCosts:
         """Time validation follows supplied road legs rather than coordinates."""
         dist_matrix = torch.tensor([[[0.0, 2.0], [2.0, 0.0]]])
         with pytest.raises(AssertionError, match="trip time"):
-            TCPTP.evaluate_tour(_dataset(shift_hours=3.0), torch.tensor([[1, 0]]), dist_matrix=dist_matrix, check_feasibility=True)
+            TCPTP.evaluate_tour(
+                _dataset(shift_hours=3.0), torch.tensor([[1, 0]]), dist_matrix=dist_matrix, check_feasibility=True
+            )
 
     def test_one_microhour_tolerance_is_accepted(self):
         """The documented 1e-6 feasibility tolerance remains inclusive."""

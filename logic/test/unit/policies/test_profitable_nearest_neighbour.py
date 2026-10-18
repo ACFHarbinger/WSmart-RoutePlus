@@ -2,7 +2,7 @@
 
 import pytest
 import torch
-from logic.src.envs.tasks.profitable_tour.cptp import CPTPEnv
+from logic.src.envs.tasks.cptp import CPTPEnv
 from logic.src.policies.vector.profitable_nearest_neighbour import ProfitableNearestNeighbourPolicy
 from tensordict import TensorDict
 

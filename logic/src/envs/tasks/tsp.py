@@ -6,15 +6,10 @@ from typing import Any, Dict, Optional, Union
 
 import torch
 
-from logic.src.envs.base.routing import RoutingEnv, RoutingGenerator
+from logic.src.envs.base.routing import RoutingEnv
+from logic.src.envs.generators.tsp import TSPGenerator
 from logic.src.envs.tasks.base import BaseProblem
 from logic.src.envs.tasks.spec import PROBLEMS, ProblemSpec
-
-
-class TSPGenerator(RoutingGenerator):
-    """Generator for TSP instances."""
-
-    pass
 
 
 class TSPEnv(RoutingEnv):

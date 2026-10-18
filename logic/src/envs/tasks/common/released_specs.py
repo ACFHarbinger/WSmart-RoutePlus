@@ -14,21 +14,21 @@ PTP_SPEC = ProblemSpec(
     name="ptp",
     objective=profit_objective,
     metrics=DEFAULT_METRICS,
-    env_target="logic.src.envs.tasks.profitable_tour.ptp:PTPEnv",
+    env_target="logic.src.envs.tasks.ptp:PTPEnv",
     expand_pool=True,
 )
 CPTP_SPEC = ProblemSpec(
     name="cptp",
     objective=profit_objective,
     metrics=DEFAULT_METRICS,
-    env_target="logic.src.envs.tasks.profitable_tour.cptp:CPTPEnv",
+    env_target="logic.src.envs.tasks.cptp:CPTPEnv",
     expand_pool=True,
 )
 TCPTP_SPEC = ProblemSpec(
     name="tcptp",
     objective=profit_objective,
     metrics=DEFAULT_METRICS + ("time_spent",),
-    env_target="logic.src.envs.tasks.profitable_tour.tcptp:TCPTPEnv",
+    env_target="logic.src.envs.tasks.tcptp:TCPTPEnv",
     expand_pool=True,
     per_trip_shift=True,
 )

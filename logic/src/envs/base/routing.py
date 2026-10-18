@@ -6,7 +6,7 @@ builds elementary routes from the depot under declarative resource constraints
 step, masking and reward logic.
 
 Attributes:
-    RoutingGenerator: Customer and depot locations, optional road distances.
+    RoutingGenerator: Re-exported from :mod:`logic.src.envs.generators.base`.
     RoutingEnv: Shared routing environment.
 
 Example:
@@ -15,7 +15,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Callable, Optional, Sequence, Tuple, Union
+from typing import Any, Optional, Sequence, Tuple, Union
 
 import torch
 from tensordict import TensorDict, TensorDictBase
@@ -23,55 +23,8 @@ from tensordict import TensorDict, TensorDictBase
 from logic.src.envs.base.base import RL4COEnvBase
 from logic.src.envs.base.ops import OpsMixin, as_batch_nodes
 from logic.src.envs.base.resources import Resource
-from logic.src.envs.generators.base import Generator
+from logic.src.envs.generators.base import Generator, RoutingGenerator
 from logic.src.envs.tasks.common.objectives import distance_objective, profit_objective
-
-
-class RoutingGenerator(Generator):
-    """Shared generator of the routing environments.
-
-    Produces customer locations, depot coordinates, and optional road distances.
-    """
-
-    def __init__(
-        self,
-        num_loc: int = 50,
-        min_loc: float = 0.0,
-        max_loc: float = 1.0,
-        loc_distribution: Union[str, Callable] = "uniform",
-        device: Union[str, torch.device] = "cpu",
-        dm_filepath: Optional[str] = None,
-        **kwargs: Any,
-    ) -> None:
-        super().__init__(
-            num_loc=num_loc,
-            min_loc=min_loc,
-            max_loc=max_loc,
-            loc_distribution=loc_distribution,
-            device=device,
-            **kwargs,
-        )
-        self.dm_filepath = dm_filepath
-
-    def _generate(self, batch_size: Sequence[int]) -> TensorDict:
-        bs = list(batch_size) if isinstance(batch_size, (list, tuple)) else [batch_size]
-
-        # Generate customer locations
-        locs = self._generate_locations(tuple(bs), self.num_loc)
-        # Generate depot coordinate
-        depot = self._generate_locations(tuple(bs), 1).squeeze(-2)
-
-        td = TensorDict(
-            {
-                "locs": locs,
-                "depot": depot,
-            },
-            batch_size=bs,
-            device=self.device,
-        )
-        if self.dm_filepath:
-            td["dm_filepath"] = self.dm_filepath
-        return td
 
 
 class RoutingEnv(RL4COEnvBase):
