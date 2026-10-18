@@ -605,6 +605,7 @@ Route improvement configuration module.
 
 PG-CLNS (Pheromone-Guided Cooperative Large Neighborhood Search) configuration.
 
+- **class `PGCLNSLNSConfig`** — Coaching LNS configuration, preserving PG-CLNS's shared RNG stream.
 - **class `PGCLNSConfig`** — Configuration for Pheromone-Guided Cooperative Large Neighborhood Search (PG-CLNS) policy.
 
 ### `logic.src.configs.policies.ph`

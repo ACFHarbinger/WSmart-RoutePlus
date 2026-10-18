@@ -30,34 +30,57 @@ BB/BC/BPC acronyms; the Studio app keeps its own display-name map.
 from __future__ import annotations
 
 import argparse
-import ast
-import re
 import shutil
 import subprocess
 import sys
-from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import List
 
-REPO = Path(__file__).resolve().parents[2]
-LOGIC = REPO / "logic"
+if not __package__:
+    # Script-style invocation: python logic/package/build_release.py
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-STAGES: Dict[str, Path] = {
-    "routing": LOGIC / "src" / "policies" / "routing" / "_manifest.py",
-    "packing": LOGIC / "src" / "policies" / "packing" / "_manifest.py",
-    "route_improvement": LOGIC / "src" / "policies" / "route_improvement" / "_manifest.py",
-    "acceptance": LOGIC / "src" / "policies" / "acceptance_criteria" / "_manifest.py",
-    "packing_and_routing": LOGIC / "src" / "policies" / "packing_and_routing" / "_manifest.py",
-}
+from logic.package.release_closure import (
+    ENTRY_RE,
+    FROM_IMPORT_RE,
+    LAZY_LINE_RE,
+    LOGIC,
+    LOGIC_MODULE_RE,
+    REPO,
+    STAGES,
+    Imports,
+    _is_deferred,
+    _package_of,
+    compute_closure,
+    file_to_module,
+    imports_of,
+    lazy_targets,
+    module_to_file,
+    parse_registry_manifest,
+    release_tests,
+    trimmed,
+)
+from logic.package.release_files import (
+    OTHER_REF_RE,
+    POLICY_DEFAULT_RE,
+    prune_policy_defaults,
+    release_uv_indexes,
+    released_stage_configs,
+    write_docs_index,
+    write_release_pyproject,
+)
+from logic.package.release_staging import (
+    DECLARE_RE,
+    drop_pruned_init_imports,
+    filter_lazy_map,
+    filter_manifest_file,
+    validate_release_tests,
+    verify_staged,
+)
 
 # logic/ subtrees that ship in the release. Anything else (benchmark, cloud,
 # docs, gen, package, validation) is development tooling and stays out (Q-11b).
 STAGED_TOPS = ("src", "configs", "controllers")
-
-ENTRY_RE = re.compile(r"""^\s*['"]([A-Za-z0-9_-]+)['"]:\s*['"](logic\.[A-Za-z0-9_.:]+)['"]\s*,?\s*$""")
-LAZY_LINE_RE = re.compile(r'^(\s*)"([A-Za-z_][A-Za-z0-9_]*)":\s*"(logic\.[A-Za-z0-9_.:]+)"\s*,?\s*$', re.MULTILINE)
-LOGIC_MODULE_RE = re.compile(r"\blogic(?:\.[A-Za-z_][A-Za-z0-9_]*)+\b")
-DECLARE_RE = re.compile(r"""\.declare\(['"]([A-Za-z0-9_-]+)['"],\s*ENTRIES\[['"]([A-Za-z0-9_-]+)['"]]\)""")
 
 
 # --------------------------------------------------------------------------- #
@@ -78,76 +101,9 @@ def load_manifest() -> dict:
     return manifest
 
 
-def lazy_targets(path: Path) -> Dict[str, str]:
-    """Read literal lazy re-export maps independently of quote style or line wrapping."""
-    for node in ast.parse(path.read_text()).body:
-        targets = (
-            node.targets if isinstance(node, ast.Assign) else [node.target] if isinstance(node, ast.AnnAssign) else []
-        )
-        if any(isinstance(target, ast.Name) and target.id == "_LAZY" for target in targets):
-            try:
-                value = ast.literal_eval(node.value)
-            except (ValueError, TypeError):
-                continue
-            if isinstance(value, dict):
-                return {
-                    key: item.split(":")[0]
-                    for key, item in value.items()
-                    if isinstance(key, str) and isinstance(item, str)
-                }
-    return {}
-
-
-def parse_registry_manifest(path: Path) -> Dict[str, str]:
-    """Return {registry key: 'module:Class'} from a generated ``_manifest.py``."""
-    entries: Dict[str, str] = {}
-    in_entries = False
-    for line in path.read_text().splitlines():
-        if line.startswith("ENTRIES"):
-            in_entries = True
-            continue
-        if in_entries:
-            if line.startswith("}"):
-                in_entries = False
-                continue
-            match = ENTRY_RE.match(line)
-            if match:
-                entries[match.group(1)] = match.group(2)
-    return entries
-
-
 # --------------------------------------------------------------------------- #
 # Module/file mapping (works for the repo tree or a staged build tree)        #
 # --------------------------------------------------------------------------- #
-
-
-def module_to_file(module: str, root: Path) -> Optional[Path]:
-    """Map a dotted module under ``<root>/logic`` to its file, or None."""
-    candidate = root.joinpath(*module.split("."))
-    if candidate.with_suffix(".py").is_file():
-        return candidate.with_suffix(".py")
-    if (candidate / "__init__.py").is_file():
-        return candidate / "__init__.py"
-    return None
-
-
-def file_to_module(path: Path, root: Path) -> str:
-    rel = path.relative_to(root).with_suffix("")
-    parts = list(rel.parts)
-    if parts[-1] == "__init__":
-        parts = parts[:-1]
-    return ".".join(parts)
-
-
-def trimmed(module: str, root: Path) -> str:
-    """Longest prefix of ``module`` that maps to a file under ``root``."""
-    parts = module.split(".")
-    while parts:
-        candidate = ".".join(parts)
-        if module_to_file(candidate, root) is not None:
-            return candidate
-        parts = parts[:-1]
-    return ""
 
 
 # --------------------------------------------------------------------------- #
@@ -155,200 +111,9 @@ def trimmed(module: str, root: Path) -> str:
 # --------------------------------------------------------------------------- #
 
 
-@dataclass
-class Imports:
-    module_level: Set[str] = field(default_factory=set)
-    deferred: Set[str] = field(default_factory=set)
-
-
-def _package_of(path: Path, root: Path) -> List[str]:
-    """Dotted package path containing ``path`` (the module's own name stripped)."""
-    parts = list(path.relative_to(root).with_suffix("").parts)
-    parts = parts[:-1]  # works for both module files and __init__.py
-    return parts
-
-
-def imports_of(path: Path, root: Path) -> Imports:
-    """Collect logic.* imports of a file, split by module level vs deferred."""
-    result = Imports()
-    tree = ast.parse(path.read_text())
-    pkg = _package_of(path, root)
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            names = [alias.name for alias in node.names]
-        elif isinstance(node, ast.ImportFrom):
-            if node.level == 0:
-                base = (node.module or "").split(".")
-                names = [".".join(base + [alias.name]) for alias in node.names]
-                if node.module:
-                    names.append(node.module)
-            else:
-                up = pkg[: len(pkg) - (node.level - 1)]
-                base = up + ([node.module] if node.module else [])
-                names = [".".join(base + [alias.name]) for alias in node.names]
-                names.append(".".join(base))
-        else:
-            continue
-        for name in names:
-            if not name.startswith("logic"):
-                continue
-            name = name.rstrip(".")
-            if name and _is_deferred(tree, node):
-                result.deferred.add(name)
-            else:
-                result.module_level.add(name)
-    return result
-
-
-def _is_deferred(tree: ast.Module, target: ast.AST) -> bool:
-    for node in ast.walk(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            for inner in ast.walk(node):
-                if inner is target:
-                    return True
-    return False
-
-
 # --------------------------------------------------------------------------- #
 # Closure computation                                                         #
 # --------------------------------------------------------------------------- #
-
-
-def compute_closure(manifest: dict) -> Tuple[Set[Path], List[str]]:  # noqa: C901
-    """Keep the module-level import closure of the seeds minus exclusions."""
-    excluded = tuple(manifest["excluded_packages"])
-    stage_entries = {stage: parse_registry_manifest(path) for stage, path in STAGES.items()}
-    seeds: Set[str] = set(manifest["infrastructure"])
-    for stage, keys in manifest["stages"].items():
-        for key in keys:
-            target = stage_entries[stage].get(key)
-            if target is None:
-                raise SystemExit(f"release.yaml: stage {stage!r} key {key!r} is not registered")
-            seeds.add(target.split(":")[0])
-
-    kept_modules: Set[str] = set()
-    notes: List[str] = []
-
-    def enqueue(module: str) -> None:
-        """Add a module and all its ancestor packages to the work queue."""
-        parts = module.split(".")
-        for depth in range(len(parts), 0, -1):
-            candidate = ".".join(parts[:depth])
-            if module_to_file(candidate, REPO) is None:
-                continue
-            if candidate not in kept_modules and not candidate.startswith(excluded):
-                queue.append(candidate)
-            if candidate in kept_modules:
-                continue
-
-    # name -> target module, harvested from _LAZY maps in package inits:
-    # resolves "from <pkg> import <Name>" when the name lives in a submodule.
-    lazy_index: Dict[str, Dict[str, str]] = {}
-    # Modules discovered through a package's public surface (lazy map or
-    # deferred re-export). If such a module's chain hard-imports an excluded
-    # package, the module is unreleasable and is dropped from the closure:
-    # the code path is simply unavailable in the release (Q-6/Q-8).
-    surface: Set[str] = set()
-
-    queue: List[str] = list(seeds)
-    while queue:
-        module = queue.pop()
-        root = trimmed(module, REPO)
-        if not root or root in kept_modules:
-            continue
-        if root.startswith(excluded):
-            continue
-        kept_modules.add(root)
-        # The module's ancestor packages ship too (skeleton), and their eager
-        # imports are part of the closure.
-        enqueue(root)
-        path = module_to_file(root, REPO)
-        if path is None:  # pragma: no cover - trimmed() guarantees a file
-            continue
-        imports = imports_of(path, REPO)
-        # Package re-export maps and deferred imports of kept __init__ files
-        # are part of the package's public surface. Deferred imports are the
-        # runtime opt-in pattern: an excluded target is skipped with a note
-        # (the code path is simply unavailable in the release).
-        deferred: Set[str] = set(imports.deferred)
-        pending: List[str] = sorted(imports.module_level | deferred)
-        if path.name == "__init__.py":
-            # A lazy map is indexed, not followed: a target ships only when a kept
-            # module imports its name (below). Following every entry would ship
-            # every architecture and algorithm behind the facades (Q-12).
-            lazy_index[root] = lazy_targets(path)
-            surface.update(trimmed(dep, REPO) for dep in imports.deferred)
-        for dep in pending:
-            root_dep = trimmed(dep, REPO)
-            if not root_dep:
-                notes.append(f"unresolved module-level import in {root}: {dep}")
-                continue
-            # "from <pkg> import <Name>" where Name is served by the
-            # package's lazy map: enqueue the real target module.
-            if module_to_file(dep, REPO) is None and dep != root_dep:
-                name = dep[len(root_dep) + 1 :]
-                if "." not in name:
-                    if root_dep not in lazy_index:
-                        package_path = module_to_file(root_dep, REPO)
-                        lazy_index[root_dep] = lazy_targets(package_path) if package_path is not None else {}
-                    target = lazy_index.get(root_dep, {}).get(name)
-                    if target and target not in kept_modules:
-                        surface.add(trimmed(target, REPO))
-                        queue.append(target)
-            if root_dep.startswith(excluded):
-                if path.name != "__init__.py" and dep not in deferred:
-                    if root in surface:
-                        kept_modules.discard(root)
-                        notes.append(
-                            f"surface module {root} dropped: its chain module-level "
-                            f"imports excluded {root_dep} (path unavailable in the release)"
-                        )
-                        break
-                    raise SystemExit(
-                        f"kept file {path} imports excluded package {root_dep!r} at module "
-                        "level; move the import into a function, or extend the manifest"
-                    )
-                notes.append(f"excluded {root_dep} stays out of the release ({path.name})")
-                continue
-            if root_dep not in kept_modules:
-                queue.append(root_dep)
-
-    files: Set[Path] = set()
-    for module in kept_modules:
-        path = module_to_file(module, REPO)
-        if path is not None:
-            files.add(path)
-    # The _manifest.py files always ship (filtered to released keys).
-    for stage_path in STAGES.values():
-        files.add(stage_path)
-    return files, notes
-
-
-FROM_IMPORT_RE = re.compile(r"^\s*from (logic(?:\.\w+)+) import \(?([\w ,\n]+)\)?", re.M)
-
-
-def release_tests(manifest: dict, kept: Set[Path]) -> Tuple[List[Path], List[Path]]:
-    """Split logic/test files into release tests and pruned tests (P-06)."""
-    release: List[Path] = []
-    pruned: List[Path] = []
-    kept_modules = {file_to_module(f, REPO) for f in kept}
-    for path in sorted((LOGIC / "test").rglob("*.py")):
-        modules = set()
-        text = path.read_text()
-        for match in LOGIC_MODULE_RE.finditer(text):
-            root = trimmed(match.group(0), REPO)
-            if root:
-                modules.add(root)
-        # ``from <pkg> import <submodule>`` names a module the regex above sees as <pkg>.
-        for match in FROM_IMPORT_RE.finditer(text):
-            for name in re.findall(r"\w+", match.group(2)):
-                if module_to_file(f"{match.group(1)}.{name}", REPO) is not None:
-                    modules.add(f"{match.group(1)}.{name}")
-        if modules <= kept_modules:
-            release.append(path)
-        else:
-            pruned.append(path)
-    return release, pruned
 
 
 # --------------------------------------------------------------------------- #
@@ -356,166 +121,9 @@ def release_tests(manifest: dict, kept: Set[Path]) -> Tuple[List[Path], List[Pat
 # --------------------------------------------------------------------------- #
 
 
-def filter_manifest_file(path: Path, released: Set[str]) -> List[str]:
-    """Keep only released entries in a staged registry manifest."""
-    dropped: List[str] = []
-    lines = path.read_text().splitlines(keepends=True)
-    out: List[str] = []
-    in_entries = False
-    for line in lines:
-        if line.startswith("ENTRIES"):
-            in_entries = True
-            out.append(line)
-            continue
-        if in_entries and line.startswith("}"):
-            in_entries = False
-            out.append(line)
-            continue
-        if in_entries:
-            match = ENTRY_RE.match(line.rstrip("\n"))
-            if match and match.group(1) not in released:
-                dropped.append(f"{path.name}: key {match.group(1)}")
-                continue
-            out.append(line)
-            continue
-        declare = DECLARE_RE.search(line)
-        if declare and declare.group(2) not in released:
-            dropped.append(f"{path.name}: declare {declare.group(1)}")
-            continue
-        out.append(line)
-    path.write_text("".join(out))
-    return dropped
-
-
-def filter_lazy_map(path: Path, staged_modules: Set[str], out: Path) -> List[str]:
-    """Drop pruned lazy targets regardless of quoting or wrapping in the source map."""
-    source = path.read_text()
-    for node in ast.parse(source).body:
-        targets = (
-            node.targets if isinstance(node, ast.Assign) else [node.target] if isinstance(node, ast.AnnAssign) else []
-        )
-        if not any(isinstance(target, ast.Name) and target.id == "_LAZY" for target in targets):
-            continue
-        try:
-            mapping = ast.literal_eval(node.value)
-        except (ValueError, TypeError):
-            continue
-        if not isinstance(mapping, dict):
-            continue
-        kept = {}
-        dropped = []
-        for key, value in mapping.items():
-            if not isinstance(value, str):
-                kept[key] = value
-                continue
-            target = value.split(":")[0]
-            present = (
-                target in staged_modules
-                if module_to_file(target, REPO) is not None
-                else trimmed(target, out) in staged_modules
-            )
-            if present or not target.startswith("logic."):
-                kept[key] = value
-            else:
-                dropped.append(f"{path.relative_to(out)}: lazy {key} -> {target}")
-        lines = source.splitlines(keepends=True)
-        lines[node.lineno - 1 : node.end_lineno] = ["_LAZY = " + repr(kept) + "\n"]
-        path.write_text("".join(lines))
-        return dropped
-    return []
-
-
-def drop_pruned_init_imports(path: Path, staged_modules: Set[str], out: Path) -> List[str]:
-    """In a staged __init__.py, remove module-level imports of pruned modules."""
-    dropped: List[str] = []
-    root = out
-    tree = ast.parse(path.read_text())
-    remove_spans: List[Tuple[int, int]] = []
-    for node in tree.body:
-        if isinstance(node, ast.Import):
-            targets = [alias.name for alias in node.names]
-        elif isinstance(node, ast.ImportFrom):
-            if node.level == 0:
-                base = (node.module or "").split(".")
-                targets = [".".join(base + [alias.name]) for alias in node.names]
-                if node.module:
-                    targets.append(node.module)
-            else:
-                pkg = _package_of(path, root)
-                up = pkg[: len(pkg) - (node.level - 1)]
-                base = up + ([node.module] if node.module else [])
-                targets = [".".join(base + [alias.name]) for alias in node.names]
-                targets.append(".".join(base))
-        else:
-            continue
-        for target in targets:
-            if not target.startswith("logic"):
-                continue
-            # A target that maps to a dev file (submodule import) must exist
-            # staged under its full name; anything else resolves by prefix.
-            if module_to_file(target, REPO) is not None:
-                resolved = target if target in staged_modules else ""
-            else:
-                resolved = trimmed(target, out)
-            if resolved not in staged_modules:
-                remove_spans.append((node.lineno, node.end_lineno))
-                dropped.append(f"{path.relative_to(out)}: import {target}")
-                break
-    if remove_spans:
-        lines = path.read_text().splitlines(keepends=True)
-        for start, end in sorted(remove_spans, reverse=True):
-            del lines[start - 1 : end]
-        path.write_text("".join(lines))
-    return dropped
-
-
 # --------------------------------------------------------------------------- #
 # Check / build / smoke                                                        #
 # --------------------------------------------------------------------------- #
-
-
-def validate_release_tests(out: Path, staged_tests: List[Path]) -> Tuple[List[Path], List[str]]:
-    """Keep only release tests that collect cleanly against the staged tree.
-
-    The static selection (imports inside the closure) cannot see dynamically
-    constructed imports, so the staged copy is authoritative: pytest collects
-    the staged test files and the ones that fail are excluded from the release
-    set (with their paths recorded). Falls back to the static selection when
-    pytest is unavailable.
-    """
-    if not staged_tests:
-        return [], []
-    import os
-
-    rel_paths = [str(path.relative_to(out)) for path in staged_tests]
-    env = dict(os.environ, PYTHONPATH=str(out))
-    try:
-        result = subprocess.run(
-            [
-                sys.executable,
-                "-m",
-                "pytest",
-                "-q",
-                "--collect-only",
-                "--continue-on-collection-errors",
-                *rel_paths,
-            ],
-            cwd=out,
-            env=env,
-            capture_output=True,
-            text=True,
-            timeout=600,
-        )
-    except subprocess.TimeoutExpired:
-        return staged_tests, []
-    failed = sorted(
-        line.removeprefix("ERROR ").strip()
-        for line in result.stdout.splitlines()
-        if line.startswith("ERROR ") and line.strip().endswith(".py")
-    )
-    failed_set = set(failed)
-    kept = [path for path in staged_tests if str(path.relative_to(out)) not in failed_set]
-    return kept, failed
 
 
 def run_check(manifest: dict) -> int:  # noqa: C901
@@ -691,198 +299,6 @@ def run_build(manifest: dict, out: Path) -> int:  # noqa: C901
     return 0
 
 
-def verify_staged(out: Path, staged_modules: Set[str]) -> List[str]:
-    """Every module-level import and manifest target must stay inside the tree."""
-    errors: List[str] = []
-    for path in (out / "logic").rglob("*.py"):
-        imports = imports_of(path, out)
-        for dep in sorted(imports.module_level):
-            root = trimmed(dep, out)
-            if root and root not in staged_modules:
-                errors.append(f"{path.relative_to(out)}: module-level import {dep} escapes the tree")
-            if module_to_file(dep, REPO) is not None and dep not in staged_modules:
-                errors.append(f"{path.relative_to(out)}: module-level import {dep} targets a pruned submodule")
-        for dep in sorted(imports.deferred):
-            root = trimmed(dep, out)
-            if root and root not in staged_modules:
-                errors.append(
-                    f"{path.relative_to(out)}: deferred import {dep} of a pruned module "
-                    "(code path unavailable in the release)"
-                )
-    for staged_manifest in (out / "logic").rglob("_manifest.py"):
-        for key, target in parse_registry_manifest(staged_manifest).items():
-            if trimmed(target.split(":")[0], out) not in staged_modules:
-                errors.append(f"{staged_manifest.name}: key {key!r} target {target} escapes the tree")
-    return errors
-
-
-def write_release_pyproject(manifest: dict, out: Path) -> None:
-    """Generate the installable release pyproject from logic/pyproject.toml."""
-    try:  # Python 3.11+
-        import tomllib as toml_reader
-    except ModuleNotFoundError:  # Python 3.10
-        import tomli as toml_reader
-
-    base = toml_reader.loads((LOGIC / "pyproject.toml").read_text())
-    project = base.get("project", {})
-    deps = project.get("dependencies", [])
-    neural = project.get("optional-dependencies", {}).get("neural", [])
-    if not neural:
-        raise SystemExit("logic/pyproject.toml: [project.optional-dependencies].neural is missing")
-    extras = {"neural": list(neural)}
-    deps = list(deps)
-    source_extras = project.get("optional-dependencies", {})
-    # A name resolves to its requirement in any of logic/pyproject.toml's extras; an entry
-    # with a version specifier is taken as written (for packages main only gets indirectly).
-    available = {re.split(r"[<>=!~ ;\[]", dep, maxsplit=1)[0]: dep for group in source_extras.values() for dep in group}
-    for group, names in manifest.get("dependency_extras", {}).items():
-        missing = [name for name in names if name not in available and not re.search(r"[<>=!~]", name)]
-        if missing:
-            raise ValueError(f"Release dependency extra {group}: unknown names {sorted(missing)}")
-        requirements = [available.get(name, name) for name in names]
-        if group == "core":  # shipped code imports these on its default paths
-            deps += [dep for dep in requirements if dep not in deps]
-        else:
-            extras[group] = extras.get(group, []) + [dep for dep in requirements if dep not in extras.get(group, [])]
-    lines = [
-        "# Generated by logic/package/build_release.py from logic/release.yaml and",
-        "# logic/pyproject.toml. Do not edit; regenerate the release instead.",
-        "",
-        "[build-system]",
-        'requires = ["setuptools>=68"]',
-        'build-backend = "setuptools.build_meta"',
-        "",
-        "[project]",
-        f'name = "{project.get("name", "wsmart-route")}"',
-        f'version = "{manifest["version"]}"',
-    ]
-    if project.get("description"):
-        lines.append(f'description = "{project["description"]}"')
-    if project.get("requires-python"):
-        lines.append(f'requires-python = "{project["requires-python"]}"')
-    lines.append("dependencies = [")
-    lines += [f'    "{dep}",' for dep in deps]
-    lines.append("]")
-    lines += ["", "[project.optional-dependencies]"]
-    for group, requirements in extras.items():
-        lines += [f"{group} = [", *[f'    "{dep}",' for dep in requirements], "]"]
-    lines += ["", "[tool.setuptools.packages.find]", 'include = ["logic*", "packages*"]', ""]
-    lines += [
-        "[tool.setuptools.package-data]",
-        'logic = ["release.yaml", "configs/**/*.yaml", "src/py.typed", "src/**/*.html", "src/**/*.json", "src/**/*.sql"]',
-        "",
-    ]
-    lines += release_uv_indexes(base, deps + [dep for group in extras.values() for dep in group])
-    (out / "pyproject.toml").write_text("\n".join(lines) + "\n")
-
-
-OTHER_REF_RE = re.compile(r"other/([A-Za-z0-9_]+\.yaml)")
-
-
-def released_stage_configs(manifest: dict, policies_dir: Path) -> Set[str]:
-    """The ``configs/policies/other`` files the release needs.
-
-    Packing (``pk_<key>``) and acceptance (``ac_<key>``) files of released keys; improver
-    files (``ri_*``) whose every method is a released improver; and every file a shipped
-    ``policy_*.yaml`` references (its packing, improver and acceptance variants).
-    """
-    import yaml
-
-    stages = manifest["stages"]
-    keep = {f"pk_{key}.yaml" for key in stages.get("packing", ())}
-    keep |= {f"ac_{key}.yaml" for key in stages.get("acceptance", ())}
-    improvers = set(stages.get("route_improvement", ()))
-    for ri_path in (policies_dir / "other").glob("ri_*.yaml"):
-        variants = yaml.safe_load(ri_path.read_text()) or {}
-        methods = {m for v in variants.values() if isinstance(v, dict) for m in v.get("methods", [])}
-        if methods and methods <= improvers:
-            keep.add(ri_path.name)
-    for policy_yaml in policies_dir.glob("policy_*.yaml"):
-        keep |= set(OTHER_REF_RE.findall(policy_yaml.read_text()))
-    if "pk_eoq_last_minute.yaml" in keep:  # RQ-cursor-3: 1.0.0 last-minute is fill-threshold only
-        keep.discard("pk_eoq_last_minute.yaml")
-    return keep
-
-
-POLICY_DEFAULT_RE = re.compile(r"^\s*-\s*/policies@p\.[A-Za-z0-9_]+:\s*(policy_[A-Za-z0-9_]+)\s*$")
-
-
-def prune_policy_defaults(task_yaml: Path, policies_dir: Path) -> int:
-    """Remove ``- /policies@p.<key>: policy_<key>`` defaults whose YAML was pruned.
-
-    Hydra fails to compose a task whose defaults list names a missing config, and
-    the task YAMLs list every policy in main.
-    """
-    kept, dropped = [], 0
-    for line in task_yaml.read_text().splitlines(keepends=True):
-        match = POLICY_DEFAULT_RE.match(line)
-        if match and not (policies_dir / f"{match.group(1)}.yaml").exists():
-            dropped += 1
-            continue
-        kept.append(line)
-    if dropped:
-        task_yaml.write_text("".join(kept))
-    return dropped
-
-
-def release_uv_indexes(base: dict, requirements: List[str]) -> List[str]:
-    """The uv sources and indexes of logic/pyproject.toml that the shipped requirements use.
-
-    Without them uv resolves torch-scatter/torch-sparse from PyPI, which has
-    only source distributions that need torch at build time.
-    """
-
-    def norm(name: str) -> str:
-        return re.sub(r"[-_.]+", "-", name).lower()
-
-    shipped = {norm(re.split(r"[<>=!~ ;\[]", dep, maxsplit=1)[0]) for dep in requirements}
-    uv = base.get("tool", {}).get("uv", {})
-    sources = {name: src for name, src in uv.get("sources", {}).items() if norm(name) in shipped and "index" in src}
-    if not sources:
-        return []
-    used = {src["index"] for src in sources.values()}
-    lines = ["[tool.uv.sources]", *[f'{name} = {{ index = "{src["index"]}" }}' for name, src in sources.items()], ""]
-    for index in uv.get("index", []):
-        if index.get("name") in used:
-            lines.append("[[tool.uv.index]]")
-            lines += [f'{key} = "{value}"' for key, value in index.items()]
-            lines.append("")
-    return lines
-
-
-def write_docs_index(manifest: dict, out: Path) -> None:
-    """Generate the release docs index from the manifest (P-05: docs driver)."""
-    stage_entries = {stage: parse_registry_manifest(path) for stage, path in STAGES.items()}
-    lines = [
-        "<!-- Generated by logic/package/build_release.py from logic/release.yaml. -->",
-        f"# WSmart-Route {manifest['version']} release contents",
-        "",
-        "Problems: " + ", ".join(f"`{p}`" for p in manifest["problems"]) + ".",
-        "",
-        "| Stage | Registry key | Module |",
-        "|---|---|---|",
-    ]
-    for stage, keys in manifest["stages"].items():
-        for key in keys:
-            target = stage_entries[stage].get(key, "")
-            module = target.split(":")[0].replace("logic.src.policies.", "")
-            lines.append(f"| {stage} | `{key}` | `{module}` |")
-    lines += [
-        "",
-        "## Infrastructure",
-        "",
-        *[f"- `{seed}`" for seed in manifest["infrastructure"]],
-        "",
-        "The package installs without PyTorch; install `wsmart-route[neural]` for the "
-        "training stack (Q-16a). Unreleased components stay in the development tree "
-        "and are excluded from this package (Q-8).",
-        "",
-    ]
-    docs_dir = out / "docs"
-    docs_dir.mkdir(exist_ok=True)
-    (docs_dir / "release.md").write_text("\n".join(lines))
-
-
 SMOKE_SCRIPT = r"""
 import sys
 import importlib.abc
@@ -978,3 +394,43 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
+__all__ = [
+    "load_manifest",
+    "filter_manifest_file",
+    "filter_lazy_map",
+    "drop_pruned_init_imports",
+    "validate_release_tests",
+    "run_check",
+    "run_build",
+    "verify_staged",
+    "write_release_pyproject",
+    "released_stage_configs",
+    "prune_policy_defaults",
+    "release_uv_indexes",
+    "write_docs_index",
+    "run_smoke",
+    "main",
+    "REPO",
+    "LOGIC",
+    "STAGES",
+    "ENTRY_RE",
+    "LAZY_LINE_RE",
+    "LOGIC_MODULE_RE",
+    "lazy_targets",
+    "parse_registry_manifest",
+    "module_to_file",
+    "file_to_module",
+    "trimmed",
+    "Imports",
+    "_package_of",
+    "imports_of",
+    "_is_deferred",
+    "compute_closure",
+    "FROM_IMPORT_RE",
+    "release_tests",
+    "DECLARE_RE",
+    "OTHER_REF_RE",
+    "POLICY_DEFAULT_RE",
+]

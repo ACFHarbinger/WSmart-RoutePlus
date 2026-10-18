@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 from logic.src.pipeline.simulations.solver_status import current_solver_status, reset_solver_status
 from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow import (
+    formulations,
     gurobi,
 )
 
@@ -37,7 +38,7 @@ def model(monkeypatch):
     result.addVars.side_effect = lambda keys, **kw: {k: Expr() for k in keys}
     result.addVar.return_value = Expr()
     monkeypatch.setattr(gurobi.gp, "Model", lambda *a, **kw: result)
-    monkeypatch.setattr(gurobi, "quicksum", lambda terms: sum(terms, Expr()))
+    monkeypatch.setattr(formulations, "quicksum", lambda terms: sum(terms, Expr()))
     reset_solver_status()
     return result
 
