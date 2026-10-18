@@ -2,29 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Sequence, Union
+from typing import Any, Dict, Optional, Union
 
 import torch
 from tensordict import TensorDict
 
 from logic.src.envs.base.ops import as_batch_nodes
-from logic.src.envs.base.routing import RoutingEnv, RoutingGenerator
+from logic.src.envs.base.routing import RoutingEnv
+from logic.src.envs.generators.pdp import PDPGenerator
 from logic.src.envs.tasks.base import BaseProblem
 from logic.src.envs.tasks.spec import PROBLEMS, ProblemSpec
-
-
-class PDPGenerator(RoutingGenerator):
-    """Generator for Pickup and Delivery Problem (PDP) instances."""
-
-    def __init__(self, num_loc: int = 50, device: Union[str, torch.device] = "cpu", **kwargs: Any) -> None:
-        super().__init__(num_loc=num_loc, device=device, **kwargs)
-
-    def _generate(self, batch_size: Union[int, Sequence[int]]) -> TensorDict:
-        td = super()._generate(batch_size)
-        bs = list(batch_size) if isinstance(batch_size, (list, tuple)) else [batch_size]
-        capacity = 1.0
-        td["capacity"] = torch.full((*bs,), capacity, device=self.device)
-        return td
 
 
 class PDPEnv(RoutingEnv):

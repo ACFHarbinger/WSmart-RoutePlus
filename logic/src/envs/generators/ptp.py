@@ -2,62 +2,48 @@
 PTP problem generator.
 
 Attributes:
-    PTPGenerator: PTPGenerator class.
+    PTPGenerator: Profitable Tour Problem instances (also the base of the CPTP and TCPTP generators).
 
 Example:
     >>> from logic.src.envs.generators import PTPGenerator
-    >>> generator = PTPGenerator(num_loc=50)
-    >>> instance = generator.generate()
-    >>> instance
-    TensorDict(
-        {
-            'locs': TensorDict(
-                # ... customer locations (shape: [*B, 50, 2]) ...
-            ),
-            'depot': TensorDict(
-                # ... depot location (shape: [*B, 2]) ...
-            ),
-            'waste': TensorDict(
-                # ... waste at each location (shape: [*B, 50]) ...
-            )
-        }
-    )
+    >>> td = PTPGenerator(num_loc=50)(batch_size=4)
+    >>> td["locs"].shape, td["depot"].shape, td["waste"].shape
+    (torch.Size([4, 50, 2]), torch.Size([4, 2]), torch.Size([4, 50]))
 """
 
 from __future__ import annotations
 
 import math
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
 from tensordict import TensorDict
 
-from .base import Generator
+from .base import RoutingGenerator
 
 
-class PTPGenerator(Generator):
+class PTPGenerator(RoutingGenerator):
     """
     Generator for Profitable Tour Problem (PTP) instances.
 
     Generates instances with:
     - Depot location
     - Customer locations
-    - Waste at each location
-    - Waste values for visiting each location
-    - Vehicle capacity
-    - Maximum route length
+    - Waste at each location (sampled from the area's bins when a grid is available)
+    - Vehicle capacity (``capacity`` and ``max_waste``)
 
     Attributes:
-        num_loc: Number of customer locations.
-        min_loc: Lower bound for node coordinates.
-        max_loc: Upper bound for node coordinates.
-        loc_distribution: Spatial distribution strategy.
-        min_waste: Minimum waste value.
-        max_waste: Maximum waste value.
-        waste_distribution: Waste value distribution strategy.
-        capacity: Vehicle capacity.
-        depot_type: Depot placement strategy.
+        min_waste: Minimum waste value (uniform and normal waste distributions).
+        max_waste: Maximum waste value (uniform and normal waste distributions).
+        waste_distribution: Waste distribution: "uniform" or "normal" (drawn here), any other
+            name of :func:`logic.src.data.generators.waste.generate_waste` (e.g. "gamma1",
+            "dist"), or the empirical bins of ``area`` when its grid loads.
+        capacity: Vehicle capacity in bin fills.
+        area: Geographic area of the empirical grid.
+        data_dir: Directory of the grid data.
+        indices: Bin indices of the empirical grid.
+        grid: The loaded grid, or None.
     """
 
     def __init__(
@@ -70,12 +56,12 @@ class PTPGenerator(Generator):
         max_waste: float = 1.0,
         waste_distribution: str = "uniform",
         capacity: Optional[float] = None,
-        depot_type: str = "corner",
+        depot_type: str = "random",
         device: Union[str, torch.device] = "cpu",
         area: Optional[str] = None,
         data_dir: Optional[str] = None,
-        indices: Optional[list[int]] = None,
-        generator: Optional[np.random.Generator] = None,
+        indices: Optional[List[int]] = None,
+        dm_filepath: Optional[str] = None,
         **kwargs: Any,
     ) -> None:
         """
@@ -88,25 +74,33 @@ class PTPGenerator(Generator):
             loc_distribution: Distribution for location generation.
             min_waste: Minimum waste value.
             max_waste: Maximum waste value.
-            waste_distribution: Distribution for waste generation.
+            waste_distribution: Distribution for waste generation; ``data_distribution`` in
+                ``kwargs`` overrides it.
             capacity: Vehicle capacity in bin fills. When omitted it is the simulator's
                 capacity for the area and waste type (percent of a full bin, divided by 100),
                 or 1.0 when those are not known.
-            depot_type: Depot placement ("center", "corner", "random").
+            depot_type: Depot placement ("random", "center", "corner").
             device: Device to place tensors on.
             area: Area for grid generation.
             data_dir: Directory for grid data.
             indices: Indices for grid generation.
-            generator: Generator for random number generation.
-            kwargs: Additional keyword arguments.
+            dm_filepath: Road distance matrix file.
+            kwargs: Additional keyword arguments (``waste_type``, ``data_distribution``, ...).
         """
-        super().__init__(num_loc, min_loc, max_loc, loc_distribution, device, generator, **kwargs)
-
+        super().__init__(
+            num_loc=num_loc,
+            min_loc=min_loc,
+            max_loc=max_loc,
+            loc_distribution=loc_distribution,
+            depot_type=depot_type,
+            device=device,
+            dm_filepath=dm_filepath,
+            **kwargs,
+        )
         self.min_waste = min_waste
         self.max_waste = max_waste
         self.waste_distribution = kwargs.get("data_distribution", waste_distribution)
         self.capacity = capacity if capacity is not None else self._simulator_capacity(area, kwargs.get("waste_type"))
-        self.depot_type = depot_type
         self.data_dir = data_dir
         self.area = area
         self.indices = indices if indices is not None else list(range(0, num_loc))
@@ -115,7 +109,7 @@ class PTPGenerator(Generator):
             from logic.src.utils.data.loader import load_grid_base
 
             self.grid = load_grid_base(self.indices, self.area, self.data_dir)
-        except FileNotFoundError:
+        except (FileNotFoundError, ImportError):
             pass
 
     @staticmethod
@@ -140,7 +134,7 @@ class PTPGenerator(Generator):
         except (AssertionError, ImportError, KeyError, TypeError, ValueError):
             return 1.0
 
-    def _generate(self, batch_size: tuple[int, ...]) -> TensorDict:
+    def _generate(self, batch_size: Union[int, Sequence[int]]) -> TensorDict:
         """Generate PTP instances.
 
         Args:
@@ -154,65 +148,47 @@ class PTPGenerator(Generator):
                 capacity: [*B]               — vehicle capacity
                 max_waste: [*B]             — max waste per vehicle
         """
-        # Generate locations
-        locs = self._generate_locations(batch_size)
+        td = super()._generate(batch_size)
+        bs = tuple(td.batch_size)
+        td["waste"] = self._generate_fill_levels(bs, td["locs"], td["depot"])
+        td["capacity"] = torch.full(bs, self.capacity, device=self.device)
+        td["max_waste"] = torch.full(bs, self.capacity, device=self.device)
+        return td
 
-        # Generate depot
-        depot = self._generate_depot(batch_size)
-
-        # Generate waste
-        waste = self._generate_fill_levels(batch_size)
-
-        # Compute max_waste per instance (for normalization)
-        max_waste = torch.full((*batch_size,), self.capacity, device=self.device)
-        return TensorDict(
-            {
-                "locs": locs,
-                "depot": depot,
-                "waste": waste,
-                "capacity": torch.full((*batch_size,), self.capacity, device=self.device),
-                "max_waste": max_waste,
-            },
-            batch_size=batch_size,
-            device=self.device,
-        )
-
-    def _generate_depot(self, batch_size: tuple[int, ...]) -> torch.Tensor:
-        """Generate depot location based on depot_type.
+    def _generate_fill_levels(
+        self, batch_size: Tuple[int, ...], locs: torch.Tensor, depot: torch.Tensor
+    ) -> torch.Tensor:
+        """Waste values ``[*B, num_loc]`` for the instance coordinates.
 
         Args:
             batch_size: Batch size.
+            locs: Customer locations ``[*B, num_loc, 2]``.
+            depot: Depot location ``[*B, 2]``.
 
         Returns:
-            TensorDict with depot location (shape: [*B, 2]).
+            Waste values.
         """
-        if self.depot_type == "center":
-            center = (self.max_loc + self.min_loc) / 2
-            return torch.full((*batch_size, 2), center, device=self.device)
-        elif self.depot_type == "corner":
-            return torch.full((*batch_size, 2), self.min_loc, device=self.device)
-        elif self.depot_type == "random":
-            return self._uniform_locations(batch_size, 1).squeeze(-2)
-        else:
-            raise ValueError(f"Unknown depot type: {self.depot_type}")
+        size = (*batch_size, self.num_loc)
+        drawn_here = self.waste_distribution in ("uniform", "normal")
+        if self.grid is not None or not drawn_here:
+            try:
+                return self._sample_waste(batch_size, locs, depot)
+            except Exception:
+                # The empirical grid is best effort: fall back to the parametric draw.
+                if self.grid is None:
+                    raise
+        if self.waste_distribution == "normal":
+            mean = (self.min_waste + self.max_waste) / 2
+            std = (self.max_waste - self.min_waste) / 6
+            return (torch.randn(size, device=self.device) * std + mean).clamp(self.min_waste, self.max_waste)
+        return torch.empty(size, device=self.device).uniform_(self.min_waste, self.max_waste)
 
-    def _generate_fill_levels(self, batch_size: tuple[int, ...]) -> torch.Tensor:
-        """Generate waste values.
-
-        Args:
-            batch_size: Batch size.
-
-        Returns:
-            TensorDict with waste values (shape: [*B, num_loc]).
-        """
-        # Use common utility for consistency
+    def _sample_waste(self, batch_size: Tuple[int, ...], locs: torch.Tensor, depot: torch.Tensor) -> torch.Tensor:
+        """Waste from :func:`generate_waste` (empirical grid or a named distribution)."""
         from logic.src.data.generators.waste import generate_waste
 
         bs = math.prod(batch_size) if batch_size else 1
-        coords = (
-            self._generate_depot(batch_size).view(bs, 2),
-            self._generate_locations(batch_size).view(bs, self.num_loc, 2),
-        )
+        coords = (depot.reshape(bs, 2), locs.reshape(bs, self.num_loc, 2))
         waste = generate_waste(
             self.num_loc,
             self.waste_distribution,
@@ -225,3 +201,6 @@ class PTPGenerator(Generator):
         if isinstance(waste, np.ndarray):
             waste = torch.from_numpy(waste).float()
         return waste.to(self.device).view(*batch_size, self.num_loc)
+
+
+__all__ = ["PTPGenerator"]

@@ -3,6 +3,7 @@
 import pytest
 import torch
 from logic.src.envs.generators import (
+    GENERATOR_REGISTRY,
     PTPGenerator,
     TSPGenerator,
     get_generator,
@@ -115,3 +116,25 @@ def test_get_generator():
 
     with pytest.raises(ValueError, match="Unknown generator"):
         get_generator("invalid_env")
+
+
+@pytest.mark.parametrize("name", sorted(GENERATOR_REGISTRY))
+def test_env_builds_instances_with_the_registry_generator(name):
+    """One generator class per problem: the env and ``get_generator`` agree."""
+    from logic.src.envs import get_env
+
+    env = get_env(name, num_loc=10)
+    assert type(env.generator) is GENERATOR_REGISTRY[name]
+
+
+@pytest.mark.parametrize("name", ["ptp", "cvrp", "op", "pdp", "tsp"])
+def test_routing_generators_honour_depot_type(name):
+    td = get_generator(name, num_loc=10, depot_type="center")(2)
+    assert torch.all(td["depot"] == 0.5)
+
+
+@pytest.mark.parametrize("prize_type", ["uniform", "dist", "unif", "const"])
+def test_op_prize_types(prize_type):
+    td = get_generator("op", num_loc=10, prize_type=prize_type)(3)
+    assert td["prize"].shape == (3, 10)
+    assert torch.all((td["prize"] > 0) | (prize_type == "uniform"))

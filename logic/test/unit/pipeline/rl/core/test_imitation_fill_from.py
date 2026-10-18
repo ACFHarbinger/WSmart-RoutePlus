@@ -5,7 +5,7 @@ from typing import Any, List, Optional
 import pytest
 import torch
 from logic.src.configs.rl.policies import ProfitableNNConfig
-from logic.src.envs.tasks.profitable_tour.cptp import CPTPEnv
+from logic.src.envs.tasks.cptp import CPTPEnv
 from logic.src.pipeline.rl.core.imitation import ImitationLearning
 from tensordict import TensorDict
 

@@ -10,8 +10,8 @@ Addresses Issue #61 design item:
 import pytest
 import torch
 from logic.src.envs.tasks.base import BaseProblem
-from logic.src.envs.tasks.profitable_tour.cptp import CPTP
-from logic.src.envs.tasks.profitable_tour.ptp import PTP, PTPEnv
+from logic.src.envs.tasks.cptp import CPTP
+from logic.src.envs.tasks.ptp import PTP, PTPEnv
 
 
 @pytest.mark.unit

@@ -17,6 +17,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### One generator class per problem (`2026-10-18`)
+
+#### Changed
+
+- **The instance generators live only in `logic/src/envs/generators/`.** `envs/tasks/` held a second `PTPGenerator`, `CPTPGenerator`, `TCPTPGenerator`, `CVRPGenerator`, `OPGenerator`, `PDPGenerator` and `TSPGenerator`, used by the environments, while `get_generator`/`GENERATOR_REGISTRY` returned the `envs/generators/` classes of the same names. Each pair is now one class in `envs/generators/<problem>.py`. The task modules import it (as `atsp`, `irp`, `pctsp` and `thop` already did) and keep re-exporting the name.
+  - **Defaults reproduce what the environments generated.** With default arguments and the same torch seed, every merged generator returns bit-identical instances to the old env generator (checked for all seven).
+  - **What the `envs/generators/` copies added is kept as options:** `depot_type` (now applied; it was stored but ignored by the env's PTP generator), CVRP `vehicle_capacity`, OP `prize_type` (`"dist"`, `"unif"`, `"const"`, plus the env's continuous `"uniform"` default) and `max_length=None` for the size table, and an even `num_loc` for PDP. The env-side additions are kept too: `dm_filepath` (road distances) and the `capacity`/`max_waste` fields.
+  - **Defaults that changed for `get_generator` callers**, which used to get the `envs/generators/` defaults: PTP `depot_type` `"random"` (was `"corner"`); CVRP `num_loc` 50 and `max_demand` 9 (were 20 and 10); OP `prize_type="uniform"` and `max_length=2.0` (were `"dist"` and the table); TSP draws the depot after the customers.
+  - **PTP waste:** a non-uniform `waste_distribution` (e.g. `gamma1`, `dist`) without an empirical grid is now drawn from that distribution. The env generator used to fall back to uniform silently. Distance-dependent waste is computed on the instance's own coordinates instead of a fresh, unrelated draw.
+  - `RoutingGenerator` moved to `envs/generators/base.py` (re-exported by `envs/base/routing.py`) and gained `depot_type`. `CPTPGenerator` is new in `envs/generators/cptp.py`, and the registry's `"cptp"` entry is that class instead of `PTPGenerator`. `Generator.to()` keeps `dm_filepath`.
+- `docs/api` regenerated.
+
+#### Fixed
+
+- **Paths left by the move of `envs/tasks/profitable_tour/` into `envs/tasks/`:**
+  - The PTP, CPTP and TCPTP `env_target`s in `released_specs.py` (`PROBLEMS["ptp"].get_env()` raised `ImportError`).
+  - The lazy `envs.tasks` exports.
+  - The `closed_tour_length` import of `tasks/cvrp.py`.
+  - Fifteen test modules.
+
 ### BPC-CPTP fork replaces the cptp submodule (`2026-10-18`)
 
 #### Changed

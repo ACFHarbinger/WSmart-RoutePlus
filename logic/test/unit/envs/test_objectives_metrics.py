@@ -117,7 +117,7 @@ def test_unknown_missing_nonfinite_and_duplicate_records_fail_loudly():
 
 def test_asymmetric_multitrip_tour_evaluation_counts_every_depot_leg():
     import torch
-    from logic.src.envs.tasks.profitable_tour.common import evaluate_profitable_tour
+    from logic.src.envs.tasks.core.ptp import evaluate_profitable_tour
 
     dm = torch.tensor([[0.0, 1.0, 2.0], [3.0, 0.0, 4.0], [6.0, 5.0, 0.0]], dtype=torch.float64)
     data = {
@@ -139,7 +139,7 @@ def test_asymmetric_multitrip_tour_evaluation_counts_every_depot_leg():
 def test_shared_road_length_handles_open_padded_and_empty_paths(actions, expected):
     import torch
     from logic.src.envs.tasks.cvrp import evaluate_cvrp_tour
-    from logic.src.envs.tasks.profitable_tour.common import closed_tour_length
+    from logic.src.envs.tasks.core.ptp import closed_tour_length
 
     dm = torch.tensor([[0.0, 1.0, 2.0], [3.0, 0.0, 4.0], [6.0, 5.0, 0.0]])
     pi = torch.tensor([actions], dtype=torch.long)

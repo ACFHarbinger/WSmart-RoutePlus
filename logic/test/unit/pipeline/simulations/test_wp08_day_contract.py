@@ -142,7 +142,7 @@ def test_invalid_pipeline_does_not_change_rng_or_expand_pool(monkeypatch):
 
 
 def test_neural_import_does_not_replace_classical_spec():
-    from logic.src.envs.tasks.profitable_tour.tcptp import TCPTP_SPEC
+    from logic.src.envs.tasks.tcptp import TCPTP_SPEC
     from logic.src.envs.tasks.spec import PROBLEMS
 
     assert PROBLEMS.get("tcptp") is TCPTP_SPEC

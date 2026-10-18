@@ -2,39 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Sequence, Union
+from typing import Any, Dict, Optional, Union
 
 import torch
 from tensordict import TensorDict
 
 from logic.src.envs.base.ops import as_batch_nodes
-from logic.src.envs.base.routing import RoutingEnv, RoutingGenerator
+from logic.src.envs.base.routing import RoutingEnv
+from logic.src.envs.generators.op import OPGenerator
 from logic.src.envs.tasks.base import BaseProblem
 from logic.src.envs.tasks.spec import PROBLEMS, ProblemSpec
-
-
-class OPGenerator(RoutingGenerator):
-    """Generator for Orienteering Problem (OP) instances."""
-
-    def __init__(
-        self,
-        num_loc: int = 50,
-        min_loc: float = 0.0,
-        max_loc: float = 1.0,
-        max_length: float = 2.0,
-        device: Union[str, torch.device] = "cpu",
-        **kwargs: Any,
-    ) -> None:
-        super().__init__(num_loc=num_loc, min_loc=min_loc, max_loc=max_loc, device=device, **kwargs)
-        self.max_length = max_length
-
-    def _generate(self, batch_size: Union[int, Sequence[int]]) -> TensorDict:
-        td = super()._generate(batch_size)
-        bs = list(batch_size) if isinstance(batch_size, (list, tuple)) else [batch_size]
-        prize = torch.rand((*bs, self.num_loc), device=self.device)
-        td["prize"] = prize
-        td["max_length"] = torch.full((*bs,), self.max_length, device=self.device)
-        return td
 
 
 class OPEnv(RoutingEnv):
