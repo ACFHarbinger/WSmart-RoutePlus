@@ -321,3 +321,49 @@ def add_route_from_pool_capacitated(
         new_routes.append(new_route)
 
     return new_routes
+
+
+def insert_bins(routes_list, removed_bins, profit_fn, real_profit_fn):
+    """
+    Greedily insert bins from the removed list wherever the objective improves.
+
+    Each removed bin is tried after every stop of every route, keeping each insertion that
+    raises ``profit_fn``; bins that end up in a route leave ``removed_bins``.
+
+    Args:
+        routes_list: Initial routes (depot-terminated).
+        removed_bins: Removed bins, reduced in place.
+        profit_fn: Objective to maximise, such as the penalised profit.
+        real_profit_fn: Objective reported for the result, such as the unpenalised profit.
+
+    Returns:
+        Tuple[List[List[int]], float, float, List[int]]: Solution, its ``profit_fn``, its
+        ``real_profit_fn`` and the remaining removed bins.
+    """
+    inserted_bins = []
+    previous_solution = copy.deepcopy(routes_list)
+    previous_profit = profit_fn(previous_solution)
+    for _it, a in enumerate(removed_bins):
+        for it1, i in enumerate(previous_solution):
+            i = routes_list[it1]
+            for it2, _j in enumerate(i[0 : len(i) - 1]):
+                i = routes_list[it1]
+                for b in routes_list:
+                    if a in b:
+                        b.remove(a)
+                position = it2 + 1
+                i.insert(position, a)
+                new_profit = profit_fn(routes_list)
+                if new_profit > previous_profit:
+                    previous_solution = copy.deepcopy(routes_list)
+                    previous_profit = new_profit
+                else:
+                    routes_list = copy.deepcopy(previous_solution)
+    for c in removed_bins:
+        for m in previous_solution:
+            if c in m:
+                inserted_bins.append(c)
+    for ins in inserted_bins:
+        removed_bins.remove(ins)
+    previous_real_profit = real_profit_fn(previous_solution)
+    return previous_solution, previous_profit, previous_real_profit, removed_bins

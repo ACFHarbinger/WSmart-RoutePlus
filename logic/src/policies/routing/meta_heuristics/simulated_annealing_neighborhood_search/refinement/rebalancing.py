@@ -17,9 +17,11 @@ from typing import Dict, List, Tuple
 import numpy as np
 import pandas as pd
 
-from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.select import (
-    insert_bins,
-    remove_bins_end,
+from logic.src.policies.helpers.operators.destroy_ruin.bin_pool import remove_bins_end
+from logic.src.policies.helpers.operators.recreate_repair.bin_pool import insert_bins
+from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.common.objectives import (
+    compute_profit,
+    compute_real_profit,
 )
 
 
@@ -55,6 +57,13 @@ def rebalance_solution(
     Returns:
         Tuple of (balanced_solution, final_profit, final_removed_bins).
     """
+
+    def profit_fn(routes):
+        return compute_profit(routes, p_vehicle, p_load, p_route_difference, p_shift, data, distance_matrix, values)
+
+    def real_profit_fn(routes):
+        return compute_real_profit(routes, p_vehicle, data, distance_matrix, values)
+
     current_sol = solution
     current_removed = removed_bins
     final_profit = 0.0
@@ -62,29 +71,12 @@ def rebalance_solution(
     for _ in range(iterations):
         # 1. Remove Bins from ends/bad positions
         current_sol, _, _, current_removed = remove_bins_end(
-            current_sol,
-            current_removed,
-            p_vehicle,
-            p_load,
-            p_route_difference,
-            p_shift,
-            data,
-            mandatory_bins,
-            distance_matrix,
-            values,
+            current_sol, current_removed, mandatory_bins, profit_fn, real_profit_fn
         )
 
         # 2. Re-insert potentially better combinations
         current_sol, _, final_profit, current_removed = insert_bins(
-            current_sol,
-            current_removed,
-            p_vehicle,
-            p_load,
-            p_route_difference,
-            p_shift,
-            data,
-            distance_matrix,
-            values,
+            current_sol, current_removed, profit_fn, real_profit_fn
         )
 
     return current_sol, final_profit, current_removed

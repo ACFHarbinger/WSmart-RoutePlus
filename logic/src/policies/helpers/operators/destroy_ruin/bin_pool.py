@@ -287,3 +287,37 @@ def remove_segment_without_mandatory(
             break
 
     return new_routes
+
+
+def remove_bins_end(routes_list, removed_bins, bins_cannot_removed, profit_fn, real_profit_fn):
+    """
+    Greedily drop non-mandatory bins wherever the objective improves.
+
+    Args:
+        routes_list: Initial routes (depot-terminated).
+        removed_bins: Removed bins, extended in place.
+        bins_cannot_removed: Mandatory bins.
+        profit_fn: Objective to maximise, such as the penalised profit.
+        real_profit_fn: Objective reported for the result, such as the unpenalised profit.
+
+    Returns:
+        Tuple[List[List[int]], float, float, List[int]]: Solution, its ``profit_fn``, its
+        ``real_profit_fn`` and the removed bins.
+    """
+    previous_solution = copy.deepcopy(routes_list)
+    previous_profit = profit_fn(previous_solution)
+    for it, i in enumerate(previous_solution):
+        i = routes_list[it]
+        for j in i[1 : len(i) - 1]:
+            i = routes_list[it]
+            if j not in bins_cannot_removed:
+                i.remove(j)
+            new_profit = profit_fn(routes_list)
+            if new_profit > previous_profit:
+                previous_solution = copy.deepcopy(routes_list)
+                previous_profit = new_profit
+                removed_bins.append(j)
+            else:
+                routes_list = copy.deepcopy(previous_solution)
+    previous_real_profit = real_profit_fn(previous_solution)
+    return previous_solution, previous_profit, previous_real_profit, removed_bins

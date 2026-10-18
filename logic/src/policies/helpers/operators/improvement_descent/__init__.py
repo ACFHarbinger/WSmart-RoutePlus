@@ -50,6 +50,7 @@ Example:
 
 from .node_exchange_steepest import node_exchange_steepest, node_exchange_steepest_profit
 from .or_opt_steepest import or_opt_steepest, or_opt_steepest_profit
+from .relocate_descent import relocate_descent
 from .steepest_two_opt import two_opt_steepest, two_opt_steepest_profit
 
 # ---------------------------------------------------------------------------
@@ -77,4 +78,5 @@ __all__ = [
     "or_opt_steepest_profit",
     "node_exchange_steepest",
     "node_exchange_steepest_profit",
+    "relocate_descent",
 ]

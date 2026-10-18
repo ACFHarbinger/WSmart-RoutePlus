@@ -117,8 +117,9 @@ def directed_two_opt_route(route: List[int], dist_matrix: np.ndarray, max_moves:
 def two_opt_route(
     route: List[int],
     dist_matrix: np.ndarray,
-    max_iter: int = 200,
+    max_iter: Optional[int] = 200,
     exclude_depot: bool = False,
+    tol: float = 1e-9,
 ) -> List[int]:
     """
     Apply 2-opt to a single route (iterative, first-improvement).
@@ -126,8 +127,9 @@ def two_opt_route(
     Args:
         route:         Ordered node list, depot excluded.
         dist_matrix:   Full distance matrix (index 0 = depot).
-        max_iter:      Maximum improvement passes.
+        max_iter:      Maximum improvement passes; None runs until no reversal improves.
         exclude_depot: If True, skips edges connected to node 0.
+        tol:           A reversal is applied when it shortens the route by more than ``tol``.
 
     Returns:
         Improved route (depot excluded).
@@ -140,7 +142,7 @@ def two_opt_route(
     n = len(full)
     symmetric = bool(np.allclose(dist_matrix, np.transpose(dist_matrix)))
 
-    for _ in range(max_iter):
+    for _ in itertools.count() if max_iter is None else range(max_iter):
         improved = False
         for i in range(1, n - 2):
             for j in range(i + 1, n - 1):
@@ -154,7 +156,7 @@ def two_opt_route(
                     - dist_matrix[full[j], full[j + 1]]
                     + reversal_delta(dist_matrix, full[i : j + 1], symmetric)
                 )
-                if delta < -1e-9:
+                if delta < -tol:
                     full[i : j + 1] = full[i : j + 1][::-1]
                     improved = True
                     break

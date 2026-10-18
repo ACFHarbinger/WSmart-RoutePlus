@@ -47,14 +47,14 @@ import pandas as pd
 
 from logic.src.data.processor import convert_to_dict
 from logic.src.interfaces.context.search_context import SearchContext
+from logic.src.policies.helpers.operators.solution_initialization.zone_si import (
+    compute_initial_solution,
+)
 from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search import (
     improved_simulated_annealing,
 )
 from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.common.routes import (
     create_points,
-)
-from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.common.solution_initialization import (
-    compute_initial_solution,
 )
 from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.refinement.route_search import (
     find_solutions,

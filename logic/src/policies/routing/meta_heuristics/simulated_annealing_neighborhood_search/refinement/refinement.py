@@ -17,14 +17,13 @@ from typing import Dict, List, Tuple
 import numpy as np
 import pandas as pd
 
+from logic.src.policies.helpers.operators.improvement_descent.relocate_descent import relocate_descent
+from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.common.objectives import (
+    compute_profit,
+    compute_real_profit,
+)
 from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.common.routes import (
     uncross_arcs_in_routes,
-)
-from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.search.deterministic import (
-    local_search_2,
-)
-from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.search.reversed import (
-    local_search_reversed,
 )
 
 
@@ -58,6 +57,13 @@ def refine_solution(
     Returns:
         Tuple of (refined_solution, final_profit).
     """
+
+    def profit_fn(routes):
+        return compute_profit(routes, p_vehicle, p_load, p_route_difference, p_shift, data, distance_matrix, values)
+
+    def real_profit_fn(routes):
+        return compute_real_profit(routes, p_vehicle, data, distance_matrix, values)
+
     current_sol = solution
     final_profit = 0.0
 
@@ -74,16 +80,7 @@ def refine_solution(
             distance_matrix,
             values,
         )
-        current_sol, final_profit, _ = local_search_2(
-            current_sol,
-            p_vehicle,
-            p_load,
-            p_route_difference,
-            p_shift,
-            data,
-            distance_matrix,
-            values,
-        )
+        current_sol, final_profit, _ = relocate_descent(current_sol, profit_fn, real_profit_fn, distance_matrix)
 
         # 2. Backward/Reversed Pass
         current_sol, _, _ = uncross_arcs_in_routes(
@@ -97,15 +94,8 @@ def refine_solution(
             distance_matrix,
             values,
         )
-        current_sol, final_profit, _ = local_search_reversed(
-            current_sol,
-            p_vehicle,
-            p_load,
-            p_route_difference,
-            p_shift,
-            data,
-            distance_matrix,
-            values,
+        current_sol, final_profit, _ = relocate_descent(
+            current_sol, profit_fn, real_profit_fn, distance_matrix, reverse=True
         )
 
     return current_sol, final_profit

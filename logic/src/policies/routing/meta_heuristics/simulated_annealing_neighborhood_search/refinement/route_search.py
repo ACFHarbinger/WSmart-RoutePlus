@@ -14,11 +14,11 @@ Example:
 
 import time
 
+from logic.src.policies.helpers.operators.solution_initialization.zone_si import (
+    find_initial_solution,
+)
 from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.common.routes import (
     uncross_arcs_in_routes,
-)
-from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.common.solution_initialization import (
-    find_initial_solution,
 )
 from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.heuristics.anneal import (
     run_annealing_loop,
