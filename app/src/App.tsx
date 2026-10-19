@@ -24,6 +24,9 @@ const TrainingMonitor = lazy(() =>
 const ProcessMonitor = lazy(() =>
   import("./pages/monitor/ProcessMonitor").then((m) => ({ default: m.ProcessMonitor }))
 );
+const CloudMonitor = lazy(() =>
+  import("./pages/cloud/CloudMonitor").then((m) => ({ default: m.CloudMonitor }))
+);
 const SimulationSummary = lazy(() =>
   import("./pages/analysis/SimulationSummary").then((m) => ({ default: m.SimulationSummary }))
 );
@@ -122,6 +125,9 @@ function ActivePage() {
       break;
     case "process_monitor":
       page = <ProcessMonitor />;
+      break;
+    case "cloud_monitor":
+      page = <CloudMonitor />;
       break;
     case "sim_launcher":
       page = <SimulationLauncher />;

@@ -2,6 +2,7 @@ import {
   Activity,
   BarChart2,
   Bot,
+  Cloud,
   Cpu,
   Database,
   FileText,
@@ -33,6 +34,7 @@ const NAV: NavSection[] = [
       { mode: "simulation", label: "Simulation Digital Twin", streamlitEquivalent: "simulation" },
       { mode: "training", label: "Training Monitor", streamlitEquivalent: "training" },
       { mode: "process_monitor", label: "Process Monitor" },
+      { mode: "cloud_monitor", label: "Cloud Job Monitor" },
     ],
   },
   {
@@ -78,6 +80,7 @@ const ICON: Record<AppMode, React.ReactNode> = {
   simulation: <Map size={15} />,
   training: <Activity size={15} />,
   process_monitor: <Terminal size={15} />,
+  cloud_monitor: <Cloud size={15} />,
   simulation_summary: <BarChart2 size={15} />,
   benchmark: <Layers size={15} />,
   city_comparison: <Globe size={15} />,
