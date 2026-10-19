@@ -25,7 +25,7 @@ from logic.controllers.cloud.model import (
 from logic.controllers.cloud.profiles import control_plane_from_uri, store_from_uri
 from logic.controllers.cloud.runtime import EXIT_IDLE, EXIT_NO_LICENSE, EXIT_TERMINATED, run_task
 from logic.controllers.cloud.service import CloudService, RemoteConfig
-from logic.controllers.cloud.staging import fetch_inputs, stage_job_inputs
+from logic.controllers.cloud.store.staging import fetch_inputs, stage_job_inputs
 from logic.controllers.cloud.testing import FakeClock, MemoryObjectStore, ScriptedBackend
 
 REPO = Path(__file__).resolve().parents[5]

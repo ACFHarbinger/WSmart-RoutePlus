@@ -263,7 +263,7 @@ class ObjectStore(abc.ABC):
 
     def put_content_addressed(self, local: Path, namespace: str = "cas") -> ResultFile:
         """Upload a file under ``<namespace>/<sha256>`` once; later uploads of the same content are skipped."""
-        from logic.controllers.cloud.storage import sha256_file
+        from logic.controllers.cloud.store.storage import sha256_file
 
         digest = sha256_file(local)
         key = f"{namespace}/{digest}"

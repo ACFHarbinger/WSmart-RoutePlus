@@ -49,8 +49,8 @@ from logic.controllers.cloud.model import (
     new_id,
 )
 from logic.controllers.cloud.runtime import entry_script
-from logic.controllers.cloud.staging import stage_job_inputs
-from logic.controllers.cloud.storage import download_results, upload_tree
+from logic.controllers.cloud.store.staging import stage_job_inputs
+from logic.controllers.cloud.store.storage import download_results, upload_tree
 
 BackendKey = Tuple[Provider, ComputeKind]
 _LEASE_SECONDS = 120.0
