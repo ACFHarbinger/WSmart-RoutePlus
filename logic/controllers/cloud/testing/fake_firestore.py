@@ -15,7 +15,7 @@ exclusive-lease contract (real Firestore retries contended transactions).
 
 Attributes:
     FakeFirestoreClient: The client.
-    FAKE_SDK: The :class:`~logic.controllers.cloud.control_planes.firebase.FirestoreSDK` helpers for it.
+    FAKE_SDK: The :class:`~logic.controllers.cloud.control.firebase.FirestoreSDK` helpers for it.
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ import json
 import threading
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from logic.controllers.cloud.control_planes.firebase import FirestoreSDK
+from logic.controllers.cloud.control.firebase import FirestoreSDK
 
 _MAX_DOC_BYTES = 1 << 20
 _OPS: Dict[str, Callable[[Any, Any], bool]] = {

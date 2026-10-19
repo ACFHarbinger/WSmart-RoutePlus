@@ -22,7 +22,7 @@ URI: ``supabase://<project-ref>`` (the URL ``https://<project-ref>.supabase.co``
 the key from ``SUPABASE_KEY`` or the ``supabase/<profile>`` keychain entry, CR-08).
 
 Attributes:
-    SupabaseAdapter: :class:`~logic.controllers.cloud.control_planes.documents.DocumentAdapter` on Supabase.
+    SupabaseAdapter: :class:`~logic.controllers.cloud.control.documents.DocumentAdapter` on Supabase.
     SupabaseControlPlane: The control plane.
     control_plane_from_uri: Factory for ``supabase://`` URIs.
 """
@@ -34,7 +34,7 @@ import time
 from typing import Any, Callable, List, Optional, Sequence
 from urllib.parse import ParseResult
 
-from logic.controllers.cloud.control_planes.documents import (
+from logic.controllers.cloud.control.documents import (
     Doc,
     DocumentAdapter,
     DocumentControlPlane,

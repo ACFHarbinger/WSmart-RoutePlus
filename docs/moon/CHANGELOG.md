@@ -68,7 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `profiles.py`: control planes and object stores from URIs (`sqlite://`, `file://`; `firestore://`, `supabase://`, `gs://`, `s3://` and `az://` resolve to the provider packages).
   - `CloudService(remote=RemoteConfig(...))`: jobs for GCP, AWS and Azure need an image, stage their inputs at submit, and launch the runtime with the control-plane and store URIs in the environment and the Gurobi secret by name.
   - A task SIGTERMed after day 2 resumed on a fresh machine (empty work and project directories) and finished with the same results as an uninterrupted run.
-- **CR-04 (#124): Firebase and Supabase control planes** in `logic/controllers/cloud/control_planes/`:
+- **CR-04 (#124): Firebase and Supabase control planes** in `logic/controllers/cloud/control/`:
   - `documents.py`: `DocumentControlPlane` implements the `ControlPlane` contract (records, state machine, conditional updates) over a `DocumentAdapter` of atomic storage primitives.
   - `firebase.py`: Cloud Firestore adapter. Leases and every read-modify-write run in Firestore transactions, and batches are capped at 500 writes. Result document ids are hashes, because Firestore ids cannot contain `/`. Composite indexes and security rules are in `infra/cloud/firebase/`.
   - `supabase.py`: Postgres adapter through PostgREST. `infra/cloud/supabase/migrations/0001_cloud_runner.sql` creates the tables, row-level security, Realtime publication and four functions (`wsr_insert_job`, `wsr_lease_task` with `FOR UPDATE SKIP LOCKED`, `wsr_expire_leases`, `wsr_replace_results`). Other updates are optimistic on a `rev` column, retried on conflict.

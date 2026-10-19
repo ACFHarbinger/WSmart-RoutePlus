@@ -3,8 +3,8 @@
 import threading
 
 import pytest
-from logic.controllers.cloud.control_planes.firebase import FirestoreControlPlane
-from logic.controllers.cloud.control_planes.supabase import ConflictError, SupabaseControlPlane
+from logic.controllers.cloud.control.firebase import FirestoreControlPlane
+from logic.controllers.cloud.control.supabase import ConflictError, SupabaseControlPlane
 from logic.controllers.cloud.model import CellSpec, JobRecord, JobSpec, TaskRecord, TaskState
 from logic.controllers.cloud.profiles import control_plane_from_uri
 from logic.controllers.cloud.testing import control_plane_contract

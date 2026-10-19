@@ -15,7 +15,7 @@ Default Credentials or the ``gcp/<profile>`` keychain entry, CR-08).
 
 Attributes:
     FirestoreSDK: The SDK helpers the adapter needs.
-    FirestoreAdapter: :class:`~logic.controllers.cloud.control_planes.documents.DocumentAdapter` on Firestore.
+    FirestoreAdapter: :class:`~logic.controllers.cloud.control.documents.DocumentAdapter` on Firestore.
     FirestoreControlPlane: The control plane.
     control_plane_from_uri: Factory for ``firestore://`` URIs.
 """
@@ -29,7 +29,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, List, Optional, Sequence
 from urllib.parse import ParseResult
 
-from logic.controllers.cloud.control_planes.documents import (
+from logic.controllers.cloud.control.documents import (
     Doc,
     DocumentAdapter,
     DocumentControlPlane,
