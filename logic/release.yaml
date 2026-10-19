@@ -86,6 +86,11 @@ infrastructure:
   - logic.controllers.cli               # the CLI: main.py's parsers (Q-11b)
   - logic.controllers.hydra_dispatch
   - logic.controllers.parser_dispatch
+  - logic.controllers.cloud.__main__                  # cloud runner CLI (v1.1.0, #120); its SDKs are the [cloud] extra
+  - logic.controllers.cloud.runtime                   # entry point of the cloud image (CR-02, CR-03)
+  - logic.controllers.cloud.local._wrap               # started by name (`python -m`) by the local backend
+  - logic.controllers.cloud.control_planes.firebase   # reached through profiles.PROVIDER_FACTORIES strings
+  - logic.controllers.cloud.control_planes.supabase
 
 # Packages excluded from the release even though a seed pulls them in.
 excluded_packages:
@@ -93,7 +98,6 @@ excluded_packages:
   - logic.src.pipeline.learning.hpo                        # Q-6
   - logic.src.pipeline.learning.meta                       # not in the paper's stack (Q-12a)
   - logic.cloud                                      # `sync_drive` CLI job defer-imports it (drive_parser/parser_dispatch); cloud sync is out of scope (Q-1/Q-2)
-  - logic.controllers.cloud                          # `cloud` CLI job defer-imports it (parser_dispatch); ships as the [cloud] extra in CR-17 (#137)
   - logic.benchmark                                  # `benchmark` CLI job defer-imports it (jobs/ops_runner.py); out of scope
   - logic.test                                       # `test_suite` CLI job runner (jobs/ops_runner.py); the release ships the curated test files (P-06), not the runner
 
@@ -132,6 +136,25 @@ dependency_extras:
     - seaborn                # tracking/logging visualisation
   neural:
     - lightning>=2.6.1       # PyTorch callbacks (main gets it only indirectly)
+  # Cloud runner SDKs (CR-03, #123). Release-only on purpose: adding them to
+  # logic/pyproject.toml re-resolves 11 existing packages of the dev lock
+  # (starlette 1.x, fastapi, zenml, pyjwt, grpcio, opentelemetry, websockets).
+  cloud:
+    - google-cloud-batch>=0.17
+    - google-cloud-run>=0.10
+    - google-cloud-compute>=1.14
+    - google-cloud-storage>=2.10
+    - google-cloud-secret-manager>=2.16
+    - google-cloud-firestore>=2.13
+    - boto3>=1.28
+    - azure-identity>=1.15
+    - azure-batch>=14.0
+    - azure-mgmt-appcontainers>=3.0
+    - azure-mgmt-compute>=30.0
+    - azure-storage-blob>=12.19
+    - azure-keyvault-secrets>=4.7
+    - supabase>=2.0
+    - keyring>=24.0
     - tensorboard>=2.20.0    # plotting utilities (main gets it only indirectly)
     - loss-landscapes        # plotting utilities (logic.src.utils.plotting)
     - plotly                 # plotting utilities (logic.src.utils.plotting)
