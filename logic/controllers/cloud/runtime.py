@@ -9,7 +9,7 @@ It reads its task from the environment:
 - ``WSR_CLOUD_PROJECT_ROOT``: where ``main.py`` is (default: this checkout);
 - ``WSR_CLOUD_SYNC_SECONDS``: seconds between output uploads (default 30);
 - ``WSR_GUROBI_LICENSE``: the license text, injected by the backend from the secret store;
-- ``WSR_SECRET_REFS``: secret references to resolve with the machine's identity (:mod:`.secret_refs`),
+- ``WSR_SECRET_REFS``: secret references to resolve with the machine's identity (:mod:`.auth.secret_refs`),
   for services that cannot inject secrets natively. ``WSR_GUROBI_LICENSE`` may be one of them.
 
 Then it:
@@ -48,9 +48,9 @@ import time
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
+from logic.controllers.cloud.auth.secret_refs import parse_refs, redact, resolve_refs
 from logic.controllers.cloud.interfaces import ControlPlane, ObjectStore
 from logic.controllers.cloud.model import CellSpec, GurobiMode, JobSpec, ResultFile
-from logic.controllers.cloud.secret_refs import parse_refs, redact, resolve_refs
 from logic.controllers.cloud.staging import fetch_inputs
 from logic.controllers.cloud.storage import sha256_file
 
