@@ -31,6 +31,12 @@ dependencies = [
 
 # Corrected 'dev' dependencies
 [dependency-groups]
+cloud = [
+    "google>=3.0.0",
+    "google-cloud>=0.34.0",
+    "google-cloud-firestore>=2.34.1",
+    "supabase>=2.16.0",
+]
 dev = [
     "black>=25.9.0",
     "expecttest>=0.3.0",
