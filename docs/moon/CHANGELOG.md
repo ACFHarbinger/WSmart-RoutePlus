@@ -24,6 +24,11 @@ Directories renamed after what they hold. No behaviour changes.
 #### Changed
 
 - **HPO search spaces** (`logic/src/pipeline/simulations/hpo/`): `filters/` → `packing/`, `interceptors/` → `route_improvement/`, `jobs/` → `routing/`, `rules/` → `acceptance_criteria/`. The directory constants in `search_spaces.py` follow (`PACKING_DIR`, `ROUTE_IMPROVEMENT_DIR`, `ROUTING_DIR`, `ACCEPTANCE_CRITERIA_DIR`), as do the loaded spaces (`PACKING_SPACES`, `ROUTE_IMPROVEMENT_SPACES`, `ROUTING_SPACES`, `ACCEPTANCE_CRITERIA_SPACES`). `tools/check_hpo_jobs.py` and `tools/convert_policy_yaml.py` read `hpo/routing/`.
+- **HPO component names** (`search_spaces.py`) follow the directories:
+  - `get_component_search_space` component types: `"job"` → `"routing"`, `"filter"` → `"packing"`, `"interceptor"` → `"route_improvement"`, `"rule"` → `"acceptance_criteria"`;
+  - `compose_search_space` parameters: `job`/`filter`/`interceptor`/`rule` → `routing`/`packing`/`route_improvement`/`acceptance_criteria`, and the `*_keywords` parameters likewise;
+  - template generators: `generate_policy_filters` → `generate_routing_templates`, `generate_packing_jobs` → `generate_packing_templates`, `generate_route_improvement_interceptors` → `generate_route_improvement_templates`, `generate_acceptance_criteria_rules` → `generate_acceptance_criteria_templates`.
+  The `hpo_sim` config fields (`selection_name`, `improver_name`, `acceptance_name` and their `*_keywords`) are unchanged.
 - **Small simulator modules merged** (`logic/src/pipeline/simulations/`):
   - `rng.py` (day random streams) and `problem_flags.py` (`per_trip_shift`) → `day_setup.py`;
   - `solver_status.py` (per-day solver status and certificate) and `aggregation.py` (sample aggregation) → `reporting.py`.

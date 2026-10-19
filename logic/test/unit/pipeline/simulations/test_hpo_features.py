@@ -15,10 +15,10 @@ from logic.src.pipeline.simulations.hpo.base import (
 from logic.src.pipeline.simulations.hpo.search_spaces import (
     _extract_params_from_config,
     compose_search_space,
-    generate_acceptance_criteria_rules,
-    generate_packing_jobs,
-    generate_policy_filters,
-    generate_route_improvement_interceptors,
+    generate_acceptance_criteria_templates,
+    generate_packing_templates,
+    generate_route_improvement_templates,
+    generate_routing_templates,
     get_component_search_space,
     get_search_space,
     load_all_search_spaces,
@@ -225,7 +225,7 @@ class TestSearchSpaces:
             get_component_search_space("invalid_type", "name")
 
         # Component not found
-        assert get_component_search_space("filter", "non_existent") == {}
+        assert get_component_search_space("packing", "non_existent") == {}
 
     @pytest.mark.unit
     @patch(
@@ -246,10 +246,10 @@ class TestSearchSpaces:
     )
     def test_compose_search_space(self) -> None:
         composed = compose_search_space(
-            job="test_job",
-            filter="test_filter",
-            interceptor=["test_interceptor"],
-            rule="test_rule",
+            routing="test_job",
+            packing="test_filter",
+            route_improvement=["test_interceptor"],
+            acceptance_criteria="test_rule",
         )
         assert "p" in composed
         assert "packing.0.p" in composed
@@ -258,8 +258,8 @@ class TestSearchSpaces:
 
         # Keywords check
         composed_kw = compose_search_space(
-            job="test_job",
-            job_keywords="non_existent",
+            routing="test_job",
+            routing_keywords="non_existent",
         )
         assert composed_kw == {}
 
@@ -298,8 +298,8 @@ class TestSearchSpaces:
         # We test that the generator functions complete without errors when paths do not exist.
         # Since we patched os.path.exists to return False, they should try to write files.
         with patch("logic.src.configs.policies", MagicMock(__path__=["mock_path"])):
-            generate_policy_filters()
-        generate_route_improvement_interceptors()
-        generate_packing_jobs()
-        generate_acceptance_criteria_rules()
+            generate_routing_templates()
+        generate_route_improvement_templates()
+        generate_packing_templates()
+        generate_acceptance_criteria_templates()
         assert mock_makedirs.called
