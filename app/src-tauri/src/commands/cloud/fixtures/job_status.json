@@ -1,0 +1,17 @@
+{
+  "job_id": "job-d6bfac98d9f1",
+  "name": "test-job",
+  "state": "queued",
+  "counts": {
+    "queued": 1
+  },
+  "tasks": [
+    {
+      "task_id": "task-7efe0804b60f",
+      "cell_id": "cell",
+      "state": "queued",
+      "attempt": 1,
+      "message": null
+    }
+  ]
+}
