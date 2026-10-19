@@ -414,6 +414,7 @@ export type AppMode =
   | "eval_runner"       // Evaluation Runner        — §G.12
   | "report_studio"     // Report & Deck Generator  — §H interim (archived logic/gen pipeline)
   | "system_tools"      // File System Tools & Test Suite — PySide6 GUI parity
+  | "cloud_launcher"    // Cloud Launcher           — CR-14 (§J.1)
   | "settings";         // App Settings             — §G.19
 
 export interface NavSection {

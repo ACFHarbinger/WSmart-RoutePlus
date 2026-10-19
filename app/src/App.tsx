@@ -51,6 +51,9 @@ const HPOTracker = lazy(() =>
 const SimulationLauncher = lazy(() =>
   import("./pages/launch/SimulationLauncher").then((m) => ({ default: m.SimulationLauncher }))
 );
+const CloudLauncher = lazy(() =>
+  import("./pages/cloud/CloudLauncher").then((m) => ({ default: m.CloudLauncher }))
+);
 const TrainingHub = lazy(() =>
   import("./pages/launch/TrainingHub").then((m) => ({ default: m.TrainingHub }))
 );
@@ -125,6 +128,9 @@ function ActivePage() {
       break;
     case "sim_launcher":
       page = <SimulationLauncher />;
+      break;
+    case "cloud_launcher":
+      page = <CloudLauncher />;
       break;
     case "training_hub":
       page = <TrainingHub />;

@@ -14,6 +14,7 @@ const PREFETCH: Partial<Record<AppMode, () => Promise<unknown>>> = {
   algorithms: () => import("../../pages/analysis/AlgorithmComparison"),
   hpo_tracker: () => import("../../pages/analysis/HPOTracker"),
   sim_launcher: () => import("../../pages/launch/SimulationLauncher"),
+  cloud_launcher: () => import("../../pages/cloud/CloudLauncher"),
   training_hub: () => import("../../pages/launch/TrainingHub"),
   data_gen: () => import("../../pages/launch/DataGeneration"),
   eval_runner: () => import("../../pages/launch/EvaluationRunner"),
