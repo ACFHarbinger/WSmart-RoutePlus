@@ -1,6 +1,9 @@
 mod commands;
 
-use commands::{arrow, data, hpo, mlflow, policies, process, sim_watcher, system, telemetry, tensor, zenml};
+use commands::{
+    arrow, cloud, data, hpo, mlflow, policies, process, sim_watcher, system, telemetry, tensor,
+    zenml,
+};
 
 #[cfg(desktop)]
 use std::sync::Mutex;
@@ -92,6 +95,24 @@ pub fn run() {
             system::get_app_version,
             system::check_for_updates,
             system::install_app_update,
+            // Cloud runner (CR-13)
+            cloud::cloud_list_jobs,
+            cloud::cloud_job_status,
+            cloud::cloud_submit,
+            cloud::cloud_cancel,
+            cloud::cloud_retry,
+            cloud::cloud_task_logs,
+            cloud::cloud_download,
+            cloud::cloud_verify_download,
+            cloud::cloud_backends,
+            cloud::cloud_worker_tick,
+            cloud::cloud_store_credential,
+            cloud::cloud_delete_credential,
+            cloud::cloud_has_credential,
+            cloud::cloud_watch_job,
+            cloud::cloud_unwatch_job,
+            cloud::cloud_stop_all_watchers,
+            cloud::cloud_list_watched_jobs,
         ])
         .run(tauri::generate_context!())
         .expect("error while running WSmart-Route Studio");
