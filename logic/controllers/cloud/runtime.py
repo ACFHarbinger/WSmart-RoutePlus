@@ -43,13 +43,14 @@ import signal
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from logic.controllers.cloud.interfaces import ControlPlane, ObjectStore
 from logic.controllers.cloud.model import CellSpec, GurobiMode, JobSpec, ResultFile
-from logic.controllers.cloud.secret_refs import parse_refs, resolve_refs
+from logic.controllers.cloud.secret_refs import parse_refs, redact, resolve_refs
 from logic.controllers.cloud.staging import fetch_inputs
 from logic.controllers.cloud.storage import sha256_file
 
@@ -116,6 +117,35 @@ class OutputMirror:
                 local = self.root / relpath
                 records[relpath] = ResultFile(relpath, key, sha256_file(local), local.stat().st_size)
         return [records[relpath] for relpath in sorted(records)]
+
+
+def entry_script(project_root: Path) -> str:
+    """The simulator's entry script: ``main.py`` in a checkout, ``__main__.py`` in a release tree."""
+    return "main.py" if (Path(project_root) / "main.py").is_file() else "__main__.py"
+
+
+def _tee(stream: Any, path: Path, echo: Any) -> threading.Thread:
+    """Copy the simulator's output to a log file and to the runtime's stdout (the cloud log)."""
+
+    def pump() -> None:
+        with open(path, "ab") as log:
+            for line in iter(stream.readline, b""):
+                log.write(line)
+                log.flush()
+                if echo is not None:
+                    echo.write(line)
+                    echo.flush()
+
+    thread = threading.Thread(target=pump, daemon=True)
+    thread.start()
+    return thread
+
+
+def _tail(path: Path, lines: int = 20) -> str:
+    try:
+        return "\n".join(path.read_text(errors="replace").splitlines()[-lines:])
+    except OSError:
+        return ""
 
 
 def _write_license(workdir: Path, text: str) -> Path:
@@ -237,17 +267,18 @@ def run_task(
 
     argv = [
         python,
-        "main.py",
+        entry_script(project_root),
         *cell.argv,
         "sim.cpu_cores=1",
         "sim.resume=true",
         "sim.checkpoint_days=1",
         f"sim.output_dir={outputs}",
     ]
-    with open(workdir / "simulator.log", "ab") as log:
-        proc = subprocess.Popen(
-            argv, cwd=project_root, env=env, stdout=log, stderr=subprocess.STDOUT, start_new_session=True
-        )
+    log_path = workdir / f"simulator-attempt-{task.attempt}.log"
+    proc = subprocess.Popen(
+        argv, cwd=project_root, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, start_new_session=True
+    )
+    pump = _tee(proc.stdout, log_path, getattr(sys.stdout, "buffer", None))
     code, terminated = _supervise(
         proc,
         mirror,
@@ -257,6 +288,9 @@ def run_task(
         clock,
         sleep,
     )
+    pump.join(timeout=10)
+    if log_path.is_file():
+        store.put_file(log_path, f"work/{job_id}/{task_id}/logs/attempt-{task.attempt}.log")
     if code is None:
         note(f"no new output for {spec.resources.idle_seconds:.0f}s; stopped")
         return EXIT_IDLE
@@ -264,7 +298,7 @@ def run_task(
         note("terminated (SIGTERM); outputs uploaded for the next attempt")
         return EXIT_TERMINATED
     if code != 0:
-        note(f"simulator exited with code {code}")
+        note(f"simulator exited with code {code}:\n{redact(_tail(log_path), [license_text or '', *secrets.values()])}")
         return code
     cp.record_results(task_id, mirror.index())
     cp.update_task(task_id, heartbeat=clock(), progress={"files": len(mirror.files), "done": True})

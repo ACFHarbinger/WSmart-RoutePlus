@@ -48,6 +48,7 @@ from logic.controllers.cloud.model import (
     job_state,
     new_id,
 )
+from logic.controllers.cloud.runtime import entry_script
 from logic.controllers.cloud.staging import stage_job_inputs
 from logic.controllers.cloud.storage import download_results, upload_tree
 
@@ -196,7 +197,7 @@ class CloudService:
         outputs = workdir / "outputs"
         argv = [
             self.python,
-            "main.py",
+            entry_script(getattr(self._backend(spec), "cwd", Path("."))),
             *task.cell.argv,
             "sim.cpu_cores=1",
             "sim.resume=true",
