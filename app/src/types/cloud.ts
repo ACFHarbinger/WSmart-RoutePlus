@@ -106,3 +106,15 @@ export interface CloudDownloadProgressEvent {
   total_files?: number | null;
   message?: string | null;
 }
+
+export type CloudProvider = "local" | "gcp" | "aws" | "azure";
+export type CloudComputeKind = "process" | "batch" | "serverless" | "vm";
+export type CloudGurobiMode = "none" | "wls_secret" | "byo";
+
+export interface CloudJobEstimate {
+  cost_usd?: number | null;
+  eta_seconds?: number | null;
+  memory_required_gb?: number | null;
+  source?: string | null;
+  details?: Record<string, unknown>;
+}
