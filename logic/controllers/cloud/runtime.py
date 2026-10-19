@@ -14,7 +14,7 @@ It reads its task from the environment:
 
 Then it:
 
-1. resolves ``WSR_SECRET_REFS`` (exit 4 if one cannot be resolved) and fetches the staged inputs (:mod:`.staging`);
+1. resolves ``WSR_SECRET_REFS`` (exit 4 if one cannot be resolved) and fetches the staged inputs (:mod:`.store.staging`);
 2. writes the Gurobi license file (mode 0600) when the job has a license mode,
    and fails before running when a cell needs Gurobi and no license was injected;
 3. restores the task's outputs mirror from the object store, so a new attempt on
@@ -51,8 +51,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from logic.controllers.cloud.auth.secret_refs import parse_refs, redact, resolve_refs
 from logic.controllers.cloud.interfaces import ControlPlane, ObjectStore
 from logic.controllers.cloud.model import CellSpec, GurobiMode, JobSpec, ResultFile
-from logic.controllers.cloud.staging import fetch_inputs
-from logic.controllers.cloud.storage import sha256_file
+from logic.controllers.cloud.store.staging import fetch_inputs
+from logic.controllers.cloud.store.storage import sha256_file
 
 EXIT_NO_LICENSE = 3
 EXIT_NO_SECRET = 4

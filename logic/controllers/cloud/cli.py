@@ -24,7 +24,7 @@ from logic.controllers.cloud.model import (
     to_dict,
 )
 from logic.controllers.cloud.service import CloudService
-from logic.controllers.cloud.storage import sha256_file
+from logic.controllers.cloud.store.storage import sha256_file
 from logic.controllers.cloud.worker import serve, spawn_worker
 
 REPO_ROOT = Path(__file__).resolve().parents[3]

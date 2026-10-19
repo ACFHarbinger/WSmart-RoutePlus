@@ -24,7 +24,7 @@ sys.path.insert(0, str(REPO))
 
 from logic.controllers.cloud.local import FilesystemObjectStore, SQLiteControlPlane  # noqa: E402
 from logic.controllers.cloud.model import CellSpec, ComputeKind, JobRecord, JobSpec, Provider, TaskRecord  # noqa: E402
-from logic.controllers.cloud.staging import stage_job_inputs  # noqa: E402
+from logic.controllers.cloud.store.staging import stage_job_inputs  # noqa: E402
 
 CELL = [
     "test_sim",

@@ -8,7 +8,7 @@
 #   docker build -f infra/cloud/image/Dockerfile -t wsmart-route:<commit> build/release
 #
 # No data and no model weights are baked in: a task's inputs are staged to object
-# storage at submit and fetched by the runtime into /app (see logic/controllers/cloud/staging.py).
+# storage at submit and fetched by the runtime into /app (see logic/controllers/cloud/store/staging.py).
 FROM python:3.12-slim
 
 ARG EXTRAS=solvers,cloud

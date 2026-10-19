@@ -15,7 +15,7 @@ from typing import Dict, List, Optional, Union
 
 from logic.controllers.cloud.interfaces import ObjectStore, SecretStore
 from logic.controllers.cloud.model import ResultFile
-from logic.controllers.cloud.storage import sha256_file
+from logic.controllers.cloud.store.storage import sha256_file
 
 
 class FilesystemObjectStore(ObjectStore):
