@@ -7,7 +7,7 @@ Attributes:
     ThompsonSamplingBandit: Bandit agent using Thompson Sampling.
 
 Example:
-    >>> from logic.src.policies.helpers.reinforcement_learning.agents.bandits.thompson import ThompsonSamplingBandit
+    >>> from logic.src.policies.helpers.learning.agents.bandits.thompson import ThompsonSamplingBandit
     >>> agent = ThompsonSamplingBandit(n_arms=3)
     >>> action = agent.select_action(state=None, rng=agent.rng)
 """

@@ -8,7 +8,7 @@ Attributes:
     SoftmaxBandit: Bandit agent using the Softmax policy.
 
 Example:
-    >>> from logic.src.policies.helpers.reinforcement_learning.agents.bandits.softmax import SoftmaxBandit
+    >>> from logic.src.policies.helpers.learning.agents.bandits.softmax import SoftmaxBandit
     >>> agent = SoftmaxBandit(n_arms=3, temperature=0.5)
     >>> action = agent.select_action(state=None, rng=agent.rng)
 """

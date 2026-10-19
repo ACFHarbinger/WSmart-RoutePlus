@@ -7,6 +7,6 @@ Attributes:
     state: Module for extracting state-based features.
 
 Example:
-    >>> from logic.src.policies.helpers.reinforcement_learning.features import state
+    >>> from logic.src.policies.helpers.learning.features import state
     >>> features = state.extract_state_features(...)
 """

@@ -10,6 +10,6 @@ Attributes:
     features: Sub-package containing feature extraction utilities.
 
 Example:
-    >>> from logic.src.policies.helpers.reinforcement_learning.agents import BanditAgent
+    >>> from logic.src.policies.helpers.learning.agents import BanditAgent
     >>> agent = BanditAgent(...)
 """

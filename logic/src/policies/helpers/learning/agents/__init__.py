@@ -8,6 +8,6 @@ Attributes:
     bandits: Sub-package containing Multi-Armed Bandit (MAB) implementations.
 
 Example:
-    >>> from logic.src.policies.helpers.reinforcement_learning.agents.bandits import EpsilonGreedyAgent
+    >>> from logic.src.policies.helpers.learning.agents.bandits import EpsilonGreedyAgent
     >>> agent = EpsilonGreedyAgent(...)
 """

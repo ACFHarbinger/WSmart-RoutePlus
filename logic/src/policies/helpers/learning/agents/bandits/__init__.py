@@ -15,7 +15,7 @@ Attributes:
     EXP3Agent: Exponential-weight algorithm for exploration and exploitation.
 
 Example:
-    >>> from logic.src.policies.helpers.reinforcement_learning.agents.bandits import UCBBandit
+    >>> from logic.src.policies.helpers.learning.agents.bandits import UCBBandit
     >>> agent = UCBBandit(n_arms=5)
     >>> action = agent.select_arm()
     >>> agent.update(action, reward=1.0)

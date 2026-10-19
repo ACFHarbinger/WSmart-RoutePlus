@@ -8,7 +8,7 @@ Attributes:
     BanditAgent: Abstract base class for all bandit agents.
 
 Example:
-    >>> from logic.src.policies.helpers.reinforcement_learning.agents.bandits.base import BanditAgent
+    >>> from logic.src.policies.helpers.learning.agents.bandits.base import BanditAgent
     >>> # Note: BanditAgent is abstract and cannot be instantiated directly.
 """
 
@@ -19,7 +19,7 @@ from typing import Any, Deque, Dict, Optional
 
 import numpy as np
 
-from logic.src.policies.helpers.reinforcement_learning.agents.base import RLAgent
+from logic.src.policies.helpers.learning.agents.base import RLAgent
 
 
 class BanditAgent(RLAgent, ABC):

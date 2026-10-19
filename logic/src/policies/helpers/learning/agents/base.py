@@ -8,7 +8,7 @@ Attributes:
     RLAgent: Abstract base class for all RL agents.
 
 Example:
-    >>> from logic.src.policies.helpers.reinforcement_learning.agents.base import RLAgent
+    >>> from logic.src.policies.helpers.learning.agents.base import RLAgent
     >>> # RLAgent is abstract and should be subclassed.
 """
 
