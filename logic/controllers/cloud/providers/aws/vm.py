@@ -9,7 +9,8 @@ from __future__ import annotations
 import base64
 import contextlib
 import json
-from typing import Any, Dict, List, Optional
+import shlex
+from typing import Any, Dict, Optional
 
 from logic.controllers.cloud.interfaces import (
     AttemptState,
@@ -29,9 +30,9 @@ class Ec2Backend(ComputeBackend):
 
     Args:
         client: Pre-configured boto3 EC2 client (injected for testing).
-        ssm_client: Optional pre-configured boto3 SSM client.
         image_id: AMI ID for WSmart-Route runner VM.
         default_instance_type: Default EC2 instance type.
+        credentials: Optional ProviderCredentials instance or profile name.
         profile: AWS credentials profile name.
         region: AWS region.
     """
@@ -42,23 +43,28 @@ class Ec2Backend(ComputeBackend):
     def __init__(
         self,
         client: Any = None,
-        ssm_client: Any = None,
         image_id: str = "ami-wsr-latest",
         default_instance_type: str = "c6i.large",
+        credentials: Any = None,
         profile: str = "default",
         region: str = "us-east-1",
     ) -> None:
         self._client = client
-        self._ssm_client = ssm_client
         self.image_id = image_id
         self.default_instance_type = default_instance_type
+        self.credentials = credentials
         self.profile = profile
         self.region = region
 
     @property
     def client(self) -> Any:
         if self._client is None:
-            self._client = make_boto3_client("ec2", profile=self.profile, region=self.region)
+            self._client = make_boto3_client(
+                "ec2",
+                credentials=self.credentials,
+                profile=self.profile,
+                region=self.region,
+            )
         return self._client
 
     def capabilities(self) -> BackendCapabilities:
@@ -84,6 +90,56 @@ class Ec2Backend(ComputeBackend):
                 return parts[2]
         return handle
 
+    def _build_user_data(self, launch: LaunchSpec) -> str:
+        """Construct UserData bootstrap script executing the task in Docker and shutting down."""
+        env = dict(launch.env)
+        env.setdefault("WSR_JOB_ID", launch.task.job_id)
+        env.setdefault("WSR_TASK_ID", launch.task.task_id)
+
+        # Inject secrets via WSR_SECRET_REFS (common secret path)
+        if launch.secret_env:
+            secret_refs = {
+                var: f"awssm://{self.region}/{sec_name}"
+                for var, sec_name in sorted(launch.secret_env.items())
+            }
+            env["WSR_SECRET_REFS"] = json.dumps(secret_refs)
+
+        # Format docker run -e arguments
+        env_flags = " ".join(f"-e {shlex.quote(f'{k}={v}')}" for k, v in sorted(env.items()))
+        image = launch.image or "wsmart-route:latest"
+        cmd = " ".join(shlex.quote(arg) for arg in launch.argv)
+
+        script = f"""#!/bin/bash
+set -euo pipefail
+
+# Ensure docker is installed and running
+if ! command -v docker >/dev/null 2>&1; then
+    (apt-get update && apt-get install -y docker.io) || yum install -y docker || true
+fi
+systemctl start docker || service docker start || true
+
+# Query EC2 Instance ID
+TOKEN=$(curl -s -m 5 -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 60" || echo "")
+if [ -n "$TOKEN" ]; then
+    INSTANCE_ID=$(curl -s -m 5 -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id || echo "")
+else
+    INSTANCE_ID=$(curl -s -m 5 http://169.254.169.254/latest/meta-data/instance-id || echo "")
+fi
+
+# Run the container image
+EXIT_CODE=0
+docker run --rm {env_flags} {shlex.quote(image)} {cmd} || EXIT_CODE=$?
+
+# Record exit code via EC2 instance tag
+if [ -n "$INSTANCE_ID" ]; then
+    aws ec2 create-tags --region {shlex.quote(self.region)} --resources "$INSTANCE_ID" --tags Key=wsr:exit_code,Value="$EXIT_CODE" || true
+fi
+
+# Clean shutdown and termination
+shutdown -h now
+"""
+        return script
+
     def submit(self, launch: LaunchSpec) -> str:
         instance_type = launch.resources.machine_type or self.default_instance_type
 
@@ -91,11 +147,16 @@ class Ec2Backend(ComputeBackend):
         if launch.resources.cpus > 128 or launch.resources.memory_gb > 512:
             raise CapacityError(f"requested resources exceed EC2 capabilities: {launch.resources}")
 
+        user_data_script = self._build_user_data(launch)
+        user_data_b64 = base64.b64encode(user_data_script.encode("utf-8")).decode("utf-8")
+
         kwargs: Dict[str, Any] = {
             "ImageId": self.image_id,
             "InstanceType": instance_type,
             "MinCount": 1,
             "MaxCount": 1,
+            "InstanceInitiatedShutdownBehavior": "terminate",
+            "UserData": user_data_b64,
             "TagSpecifications": [
                 {
                     "ResourceType": "instance",
@@ -103,6 +164,7 @@ class Ec2Backend(ComputeBackend):
                         {"Key": "wsr:task_id", "Value": launch.task.task_id},
                         {"Key": "wsr:job_id", "Value": launch.task.job_id},
                         {"Key": "wsr:attempt", "Value": str(launch.task.attempt)},
+                        {"Key": "wsr:spot", "Value": "true" if launch.resources.spot else "false"},
                     ],
                 }
             ],
@@ -114,18 +176,6 @@ class Ec2Backend(ComputeBackend):
                 "MarketType": "spot",
                 "SpotOptions": {"SpotInstanceType": "one-time"},
             }
-
-        # Embed launch bootstrap into UserData script
-        user_data_payload = {
-            "argv": list(launch.argv),
-            "env": dict(launch.env),
-            "secret_env": dict(launch.secret_env),
-            "image": launch.image,
-            "task_id": launch.task.task_id,
-            "job_id": launch.task.job_id,
-        }
-        user_data_script = f"#!/bin/bash\n# WSR-LAUNCH-SPEC\n# {json.dumps(user_data_payload)}\n"
-        kwargs["UserData"] = base64.b64encode(user_data_script.encode("utf-8")).decode("utf-8")
 
         try:
             resp = self.client.run_instances(**kwargs)
@@ -151,49 +201,62 @@ class Ec2Backend(ComputeBackend):
 
         reservations = resp.get("Reservations", [])
         if not reservations or not reservations[0].get("Instances"):
-            return BackendStatus(AttemptState.UNKNOWN, message="no such attempt")
+            return BackendStatus(AttemptState.UNKNOWN, message="no such instance")
 
-        inst = reservations[0]["Instances"][0]
-        state_info = inst.get("State", {})
-        state_name = state_info.get("Name", "")
-        state_reason = inst.get("StateReason", {})
-        reason_code = state_reason.get("Code", "")
-        reason_msg = state_reason.get("Message", "")
+        instance = reservations[0]["Instances"][0]
+        state = instance.get("State", {}).get("Name", "")
+        state_reason = instance.get("StateReason", {}).get("Code", "")
+        reason_msg = instance.get("StateReason", {}).get("Message", "")
+        transition_reason = instance.get("StateTransitionReason", "")
 
-        # Check in-memory/test status override
-        if "_status" in inst:
-            return inst["_status"]
+        tags = {t.get("Key"): t.get("Value") for t in instance.get("Tags", [])}
+        is_spot = tags.get("wsr:spot") == "true" or "InstanceMarketOptions" in instance
 
-        if state_name == "pending":
-            return BackendStatus(AttemptState.PENDING, message=reason_msg)
+        if state == "pending":
+            return BackendStatus(AttemptState.PENDING)
 
-        if state_name == "running":
-            # If instance recorded a completion tag, check it
-            tags = {t.get("Key"): t.get("Value") for t in inst.get("Tags", [])}
-            if tags.get("wsr:status") == "succeeded":
-                return BackendStatus(AttemptState.SUCCEEDED, exit_code=0)
-            if tags.get("wsr:status") == "failed":
-                exit_code = int(tags.get("wsr:exit_code", "1"))
-                return BackendStatus(AttemptState.FAILED, exit_code=exit_code, message=tags.get("wsr:reason"))
-            return BackendStatus(AttemptState.RUNNING, message=reason_msg)
+        if state == "running":
+            return BackendStatus(AttemptState.RUNNING)
 
-        if state_name in ("shutting-down", "terminated", "stopped"):
-            # Check for spot interruption
-            if "SpotInstanceTermination" in reason_code or "spot" in reason_msg.lower():
-                return BackendStatus(AttemptState.PREEMPTED, message=reason_msg or "EC2 spot termination")
+        if state in ("shutting-down", "terminated", "stopped"):
+            # Check spot interruption
+            if (
+                state_reason == "Server.SpotInstanceTermination"
+                or "spot" in transition_reason.lower()
+                or "spot" in reason_msg.lower()
+            ):
+                return BackendStatus(
+                    AttemptState.PREEMPTED,
+                    message=reason_msg or "EC2 spot instance termination",
+                )
 
-            tags = {t.get("Key"): t.get("Value") for t in inst.get("Tags", [])}
-            if tags.get("wsr:status") == "succeeded":
-                return BackendStatus(AttemptState.SUCCEEDED, exit_code=0)
+            # Check recorded exit code tag
+            exit_code_str = tags.get("wsr:exit_code")
+            if exit_code_str is not None:
+                try:
+                    code = int(exit_code_str)
+                    if code == 0:
+                        return BackendStatus(AttemptState.SUCCEEDED, exit_code=0)
+                    if code == 143 and is_spot:
+                        return BackendStatus(
+                            AttemptState.PREEMPTED,
+                            message="EC2 spot preemption (exit code 143)",
+                        )
+                    return BackendStatus(
+                        AttemptState.FAILED,
+                        exit_code=code,
+                        message=f"Container exited with code {code}",
+                    )
+                except ValueError:
+                    pass
 
-            exit_code = int(tags.get("wsr:exit_code", "1")) if "wsr:exit_code" in tags else 1
             return BackendStatus(
                 AttemptState.FAILED,
-                exit_code=exit_code,
-                message=reason_msg or f"instance {state_name}",
+                exit_code=1,
+                message=reason_msg or f"instance terminated: {transition_reason}",
             )
 
-        return BackendStatus(AttemptState.UNKNOWN, message=f"unknown EC2 state: {state_name}")
+        return BackendStatus(AttemptState.UNKNOWN, message=f"unknown EC2 state: {state}")
 
     def cancel(self, handle: str) -> None:
         instance_id = self._parse_handle(handle)
@@ -202,31 +265,17 @@ class Ec2Backend(ComputeBackend):
 
     def logs(self, handle: str, tail: Optional[int] = None) -> str:
         instance_id = self._parse_handle(handle)
-        log_lines: List[str] = []
-
         try:
-            # Check if instance object has _log_lines attached in tests
-            resp = self.client.describe_instances(InstanceIds=[instance_id])
-            reservations = resp.get("Reservations", [])
-            if reservations and reservations[0].get("Instances"):
-                inst = reservations[0]["Instances"][0]
-                if "_log_lines" in inst:
-                    log_lines = list(inst["_log_lines"])
-
-            if not log_lines:
-                console_resp = self.client.get_console_output(InstanceId=instance_id)
-                output = console_resp.get("Output", "")
-                if output:
-                    log_lines = output.splitlines()
+            resp = self.client.get_console_output(InstanceId=instance_id)
+            output = resp.get("Output", "")
+            if output:
+                lines = output.splitlines()
+                if tail is not None:
+                    return "\n".join(lines[-tail:])
+                return output
         except Exception:
             pass
-
-        if not log_lines:
-            return ""
-
-        if tail is not None:
-            return "\n".join(log_lines[-tail:])
-        return "\n".join(log_lines)
+        return ""
 
     def price_per_hour(
         self,
@@ -234,7 +283,7 @@ class Ec2Backend(ComputeBackend):
         region: Optional[str] = None,
         spot: bool = False,
     ) -> Optional[float]:
-        return price_per_hour(machine_type or self.default_instance_type, region or self.region, spot)
+        return price_per_hour(machine_type, region or self.region, spot)
 
 
 __all__ = ["Ec2Backend"]

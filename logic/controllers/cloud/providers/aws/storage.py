@@ -2,6 +2,7 @@
 
 Attributes:
     S3ObjectStore: :class:`~logic.controllers.cloud.interfaces.ObjectStore` backed by Amazon S3.
+    store_from_uri: Create S3ObjectStore from parsed s3:// URI.
 """
 
 from __future__ import annotations
@@ -13,7 +14,7 @@ from typing import Any, List, Optional
 from logic.controllers.cloud.interfaces import ObjectStore
 from logic.controllers.cloud.model import ResultFile
 from logic.controllers.cloud.providers.aws._sdk import make_boto3_client
-from logic.controllers.cloud.storage import sha256_file
+from logic.controllers.cloud.store.storage import sha256_file
 
 
 class S3ObjectStore(ObjectStore):
@@ -23,6 +24,7 @@ class S3ObjectStore(ObjectStore):
         bucket: S3 bucket name.
         prefix: Optional prefix for all objects in the store.
         client: Optional pre-configured boto3 S3 client (injected for testing).
+        credentials: Optional ProviderCredentials instance or profile name.
         profile: AWS credentials profile name (used when client is not provided).
         region: AWS region name (used when client is not provided).
     """
@@ -32,11 +34,13 @@ class S3ObjectStore(ObjectStore):
         bucket: str,
         prefix: str = "",
         client: Any = None,
+        credentials: Any = None,
         profile: str = "default",
         region: Optional[str] = None,
     ) -> None:
         self.bucket = bucket
         self.prefix = prefix.strip("/") + ("/" if prefix.strip("/") else "")
+        self.credentials = credentials
         self.profile = profile
         self.region = region
         self._client = client
@@ -44,7 +48,7 @@ class S3ObjectStore(ObjectStore):
     @property
     def client(self) -> Any:
         if self._client is None:
-            self._client = make_boto3_client("s3", profile=self.profile, region=self.region)
+            self._client = make_boto3_client("s3", credentials=self.credentials, profile=self.profile, region=self.region)
         return self._client
 
     def _resolve_key(self, key: str) -> str:
@@ -95,7 +99,6 @@ class S3ObjectStore(ObjectStore):
             code = getattr(exc, "response", {}).get("Error", {}).get("Code")
             if code in ("404", "NoSuchKey") or isinstance(exc, KeyError) or "404" in str(exc):
                 return False
-            # Check message or type for test stubs
             if "NoSuchKey" in str(exc) or "not found" in str(exc).lower():
                 return False
             return False
@@ -127,4 +130,11 @@ class S3ObjectStore(ObjectStore):
             self.client.delete_object(Bucket=self.bucket, Key=s3_key)
 
 
-__all__ = ["S3ObjectStore"]
+def store_from_uri(parsed: Any, **kwargs: Any) -> S3ObjectStore:
+    """Create S3ObjectStore from a parsed s3:// URI."""
+    bucket = parsed.netloc
+    prefix = parsed.path.lstrip("/")
+    return S3ObjectStore(bucket=bucket, prefix=prefix, **kwargs)
+
+
+__all__ = ["S3ObjectStore", "store_from_uri"]
