@@ -93,6 +93,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - The Tauri commands call `python -m logic.controllers.cloud --project-root <repo>` instead of `python main.py cloud`.
   - The job poller keeps at least 1 s between polls, delays rather than bursts after a slow poll, and tags each watcher with a generation. Before, a finished poller could unregister a newer watcher of the same job, which then could not be stopped.
   - `CloudDownloadResult` carries the optional `file_list`.
+- **CR-06 (#126): AWS backends, S3 object store, and Secrets Manager** in `logic/controllers/cloud/providers/aws/`:
+  - `batch.py`: `AwsBatchBackend` for AWS Batch jobs (`ComputeKind.BATCH`), supporting container overrides, native secret resolution via Secrets Manager ARNs (`secrets[].valueFrom`), wall-time limits, spot preemption mapping, and cancellation.
+  - `serverless.py`: `EcsFargateBackend` for AWS ECS Fargate tasks (`ComputeKind.SERVERLESS`), supporting Fargate Spot capacity providers, native secret references, and spot interruption handling.
+  - `vm.py`: `Ec2Backend` for EC2 instances (`ComputeKind.VM`), supporting spot market options, UserData bootstrap injection, spot termination detection, and cancellation.
+  - `storage.py`: `S3ObjectStore` implementing `ObjectStore` with content-addressing support and parent directory creation.
+  - `secrets.py`: `AwsSecretsManagerStore` implementing `SecretStore` with automatic secret creation and updates.
+  - `registry.py`: `EcrImageRegistry` for Amazon ECR image push and tag digest resolution.
+  - `pricing.py`: static price table for AWS instance types and Fargate across regions.
+  - `_sdk.py`: lazy `boto3` client factory preventing SDK imports at module load time.
+  - Provider registration in `logic/controllers/cloud/providers/__init__.py` (`BACKENDS` dictionary and dynamic `load_backend`).
+  - Unit and contract tests in `logic/test/unit/controllers/cloud/providers/test_aws_contracts.py` passing `backend_contract`, `object_store_contract`, and `secret_store_contract` with in-process fakes.
 - **Roadmap:** `docs/moon/roadmaps/cloud.md` (§J), linked from `docs/moon/ROADMAP.md`: the v1.1.0 cloud runner design, its 17 work packages (#121–#137, epic #120) and future work.
 - **Agent brief:** `.agent/tasks/cloud-runner-2026-10-19.md`, with Claude's and Gemini's lanes, and a kickoff entry on the agent bus.
 
