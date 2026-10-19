@@ -1,0 +1,16 @@
+[
+  {
+    "provider": "local",
+    "compute": "process",
+    "capabilities": {
+      "provider": "local",
+      "kinds": [
+        "process"
+      ],
+      "max_wall_seconds": null,
+      "supports_spot": false,
+      "regions": [],
+      "machine_types": {}
+    }
+  }
+]

@@ -9,3 +9,4 @@ pub mod process;
 pub mod sim_watcher;
 pub mod system;
 pub mod telemetry;
+pub mod cloud;
