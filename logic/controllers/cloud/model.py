@@ -193,6 +193,8 @@ class JobSpec:
         gurobi_secret: Secret-store name of the license (``wls_secret``) or of the supplied license (``byo``).
         image: Container image reference, or None for the local backend.
         labels: Free-form labels.
+        inputs: Paths relative to the project root that remote tasks need (staged to object storage at submit).
+        inputs_manifest: Object-store key of the staged inputs manifest (set by the service at submit).
     """
 
     name: str
@@ -205,6 +207,8 @@ class JobSpec:
     gurobi_secret: Optional[str] = None
     image: Optional[str] = None
     labels: Dict[str, str] = field(default_factory=dict)
+    inputs: List[str] = field(default_factory=lambda: ["data/simulator"])
+    inputs_manifest: Optional[str] = None
 
     def validate(self) -> None:
         """Raise ``ValueError`` for an unrunnable spec."""

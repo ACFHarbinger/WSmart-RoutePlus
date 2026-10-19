@@ -22,6 +22,7 @@ import os
 import socket
 import sys
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -47,10 +48,28 @@ from logic.controllers.cloud.model import (
     job_state,
     new_id,
 )
+from logic.controllers.cloud.staging import stage_job_inputs
 from logic.controllers.cloud.storage import download_results, upload_tree
 
 BackendKey = Tuple[Provider, ComputeKind]
 _LEASE_SECONDS = 120.0
+
+
+@dataclass
+class RemoteConfig:
+    """How remote (container) tasks reach the control plane and the object store.
+
+    Attributes:
+        control_plane_uri: Control-plane URI the task runtime opens (see :mod:`.profiles`).
+        store_uri: Object-store URI the task runtime opens.
+        project_root: Local repository whose ``JobSpec.inputs`` are staged at submit.
+        python: Interpreter inside the image.
+    """
+
+    control_plane_uri: str
+    store_uri: str
+    project_root: Path
+    python: str = "python"
 
 
 class CloudService:
@@ -63,6 +82,7 @@ class CloudService:
         workroot: Local directory for attempt state and local task outputs.
         python: Interpreter used for ``main.py`` on the local backend.
         clock: Time source (tests pass a fake clock).
+        remote: Settings for providers other than ``local``; required to submit to them.
     """
 
     def __init__(
@@ -73,8 +93,10 @@ class CloudService:
         workroot: Path,
         python: str = sys.executable,
         clock: Callable[[], float] = time.time,
+        remote: Optional[RemoteConfig] = None,
     ) -> None:
         self.cp = control_plane
+        self.remote = remote
         self.store = store
         self.backends = backends
         self.workroot = Path(workroot)
@@ -88,7 +110,14 @@ class CloudService:
         """Validate and enqueue a job; returns its record."""
         spec.validate()
         self._backend(spec)  # fail now, not at the first start, if no backend serves the job
-        job = JobRecord(job_id=new_id("job"), spec=spec, created_at=self.clock())
+        job_id = new_id("job")
+        if Provider(spec.provider) != Provider.LOCAL:
+            if self.remote is None:
+                raise ValueError(f"submitting to {Provider(spec.provider).value} needs a RemoteConfig")
+            if not spec.image:
+                raise ValueError("a remote job needs an image (the release image built by CR-03)")
+            spec.inputs_manifest = stage_job_inputs(self.store, spec, self.remote.project_root, job_id)
+        job = JobRecord(job_id=job_id, spec=spec, created_at=self.clock())
         tasks = [TaskRecord(task_id=new_id("task"), job_id=job.job_id, cell=cell) for cell in spec.cells]
         self.cp.create_job(job, tasks)
         self._event(job.job_id, "submitted", data={"name": spec.name, "tasks": len(tasks)})
@@ -160,6 +189,8 @@ class CloudService:
         return self.workroot / task.job_id / task.task_id
 
     def _launch(self, job: JobRecord, task: TaskRecord) -> LaunchSpec:
+        if Provider(job.spec.provider) != Provider.LOCAL:
+            return self._remote_launch(job, task)
         spec = job.spec
         workdir = self.task_dir(task)
         outputs = workdir / "outputs"
@@ -190,6 +221,28 @@ class CloudService:
             secret_env=secret_env,
             workdir=str(workdir),
             image=spec.image,
+        )
+
+    def _remote_launch(self, job: JobRecord, task: TaskRecord) -> LaunchSpec:
+        """A container attempt: the image runs the task runtime, which reads the rest from the control plane."""
+        assert self.remote is not None
+        env = {
+            "WSR_CLOUD_CONTROL_PLANE": self.remote.control_plane_uri,
+            "WSR_CLOUD_STORE": self.remote.store_uri,
+            "WSR_CLOUD_JOB_ID": job.job_id,
+            "WSR_CLOUD_TASK_ID": task.task_id,
+            "WSR_CLOUD_ATTEMPT": str(task.attempt),
+        }
+        secret_env = {}
+        if GurobiMode(job.spec.gurobi) != GurobiMode.NONE and job.spec.gurobi_secret:
+            secret_env["WSR_GUROBI_LICENSE"] = job.spec.gurobi_secret
+        return LaunchSpec(
+            task=task,
+            resources=job.spec.resources,
+            argv=[self.remote.python, "-m", "logic.controllers.cloud.runtime"],
+            env=env,
+            secret_env=secret_env,
+            image=job.spec.image,
         )
 
     def _poll(self, job: JobRecord, task: TaskRecord, backend: ComputeBackend) -> int:
