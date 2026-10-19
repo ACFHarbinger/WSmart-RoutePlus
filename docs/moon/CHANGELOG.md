@@ -226,6 +226,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `useCloudAnalysisStore`: Zustand persistence store for active analysis tabs, selected jobs, task filters, and column sorting preferences.
   - Navigation integration in `Sidebar.tsx` (under Analysis section), `App.tsx` (lazy route), and `pagePrefetch.ts`.
   - Full suite of Vitest unit and component tests (`CostAccrualCard.test.tsx`, `PredictionAccuracyCard.test.tsx`, `cloudAnalysis.test.ts`, `cloudAnalysisStore.test.ts`).
+- **CR-07 (#127): Azure backends, Blob store, and Key Vault** in `logic/controllers/cloud/providers/azure/`:
+  - `batch.py`: `AzureBatchBackend` for Azure Batch jobs (`ComputeKind.BATCH`), supporting container tasks, native Key Vault secret references (`@Microsoft.KeyVault(SecretUri=...)`), wall-clock time constraints, and low-priority / spot node preemption mapping to `AttemptState.PREEMPTED`.
+  - `serverless.py`: `ContainerAppsJobsBackend` for Azure Container Apps Jobs (`ComputeKind.SERVERLESS`), supporting template overrides, native secret references (`secretRef`), CPU/memory limits, cancellation, and spot eviction mapping.
+  - `vm.py`: `AzureVmBackend` for Azure Virtual Machines (`ComputeKind.VM`), supporting spot priority with deallocate eviction policy, custom data script bootstrap, instance status polling, and spot eviction detection.
+  - `storage.py`: `BlobObjectStore` implementing `ObjectStore` backed by Azure Blob Storage with content-addressing and prefix filtering.
+  - `secrets.py`: `KeyVaultSecretStore` implementing `SecretStore` backed by Azure Key Vault with name sanitization and secret lifecycle handling.
+  - `registry.py`: `AcrImageRegistry` for Azure Container Registry image tag resolution and manifest push.
+  - `pricing.py`: static hourly price table for Azure VM types (D-series, F-series, B-series) and Container Apps across regions.
+  - `_sdk.py`: lazy Azure SDK client factories without module-level imports.
+  - Unit and contract tests in `logic/test/unit/controllers/cloud/providers/test_azure_contracts.py` passing `backend_contract`, `object_store_contract`, and `secret_store_contract` with in-process fakes.
 - **Roadmap:** `docs/moon/roadmaps/cloud.md` (§J), linked from `docs/moon/ROADMAP.md`: the v1.1.0 cloud runner design, its 17 work packages (#121–#137, epic #120) and future work.
 - **Agent brief:** `.agent/tasks/cloud-runner-2026-10-19.md`, with Claude's and Gemini's lanes, and a kickoff entry on the agent bus.
 
