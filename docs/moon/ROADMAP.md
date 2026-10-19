@@ -33,6 +33,7 @@ still merge prerequisites; unit success does not replace those gates.
 | [§G — WSmart-Route Studio](roadmaps/studio.md) | Tauri 2.0 app: analytics, geospatial, ML introspection, launcher UIs |
 | [§H — Analysis & Presentation Studio](roadmaps/presentation_studio.md) | Migration of `logic/gen/` report + deck generation into the Studio |
 | [§I — Publication & Dissemination](roadmaps/publication_dissemination.md) | MPVRPP paper, reproducible LaTeX generation, public website |
+| [§J — Cloud Runner](roadmaps/cloud.md) | v1.1.0: simulations on GCP, AWS and Azure; Firebase/Supabase control plane; Studio job manager (#120) |
 
 
 ---
