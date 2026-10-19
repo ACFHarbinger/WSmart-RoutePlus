@@ -17,6 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Package layout (`2026-10-19`)
+
+Directories renamed after what they hold. No behaviour changes.
+
+#### Changed
+
+- **HPO search spaces** (`logic/src/pipeline/simulations/hpo/`): `filters/` → `packing/`, `interceptors/` → `route_improvement/`, `jobs/` → `routing/`, `rules/` → `acceptance_criteria/`. The directory constants in `search_spaces.py` follow (`PACKING_DIR`, `ROUTE_IMPROVEMENT_DIR`, `ROUTING_DIR`, `ACCEPTANCE_CRITERIA_DIR`), as do the loaded spaces (`PACKING_SPACES`, `ROUTE_IMPROVEMENT_SPACES`, `ROUTING_SPACES`, `ACCEPTANCE_CRITERIA_SPACES`). `tools/check_hpo_jobs.py` and `tools/convert_policy_yaml.py` read `hpo/routing/`.
+
 ### SANS operators moved to `helpers/operators` (`2026-10-18`)
 
 The neighbourhood and perturbation operators of `simulated_annealing_neighborhood_search` now live under `logic/src/policies/helpers/operators`. Operators that did the same thing are merged. Every SANS and LAC call site keeps its exact behaviour, including the random numbers it draws: a characterization run of all 61 operator call forms over 150 seeds matched the previous outputs and generator states. The SA engines, their dispatch tables (`heuristics/sans_operators.py`, `search/random_search.py`), the objectives and the refinement drivers stay in the SANS package.

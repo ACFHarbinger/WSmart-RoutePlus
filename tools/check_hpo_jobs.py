@@ -1,6 +1,6 @@
 """Check and convert the simulator HPO job files against the policy configs.
 
-Every job under ``logic/src/pipeline/simulations/hpo/jobs/<key>.json`` restates
+Every job under ``logic/src/pipeline/simulations/hpo/routing/<key>.json`` restates
 its policy's tunable fields. Two failure modes have shipped through this gap:
 keys silently dropped by the YAML loader (``policy_aco_hh.yaml`` lost three
 keys until 2026-09-27) and keys tuning fields the engine never reads (released
@@ -38,7 +38,7 @@ REPO = Path(__file__).resolve().parents[1]
 if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 LOGIC = REPO / "logic"
-JOBS_DIR = LOGIC / "src" / "pipeline" / "simulations" / "hpo" / "jobs"
+JOBS_DIR = LOGIC / "src" / "pipeline" / "simulations" / "hpo" / "routing"
 STAGE_MANIFESTS = [
     LOGIC / "src" / "policies" / "routing" / "_manifest.py",
     LOGIC / "src" / "policies" / "packing" / "_manifest.py",

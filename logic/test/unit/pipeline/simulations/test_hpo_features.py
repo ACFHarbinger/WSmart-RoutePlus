@@ -229,19 +229,19 @@ class TestSearchSpaces:
 
     @pytest.mark.unit
     @patch(
-        "logic.src.pipeline.simulations.hpo.search_spaces.FILTER_SPACES",
+        "logic.src.pipeline.simulations.hpo.search_spaces.PACKING_SPACES",
         {"test_filter": {"p": {"type": "float", "low": 0.0, "high": 1.0}}},
     )
     @patch(
-        "logic.src.pipeline.simulations.hpo.search_spaces.INTERCEPTOR_SPACES",
+        "logic.src.pipeline.simulations.hpo.search_spaces.ROUTE_IMPROVEMENT_SPACES",
         {"test_interceptor": {"p": {"type": "int", "low": 1, "high": 10}}},
     )
     @patch(
-        "logic.src.pipeline.simulations.hpo.search_spaces.JOB_SPACES",
+        "logic.src.pipeline.simulations.hpo.search_spaces.ROUTING_SPACES",
         {"test_job": {"p": {"type": "categorical", "choices": ["a"]}}},
     )
     @patch(
-        "logic.src.pipeline.simulations.hpo.search_spaces.RULE_SPACES",
+        "logic.src.pipeline.simulations.hpo.search_spaces.ACCEPTANCE_CRITERIA_SPACES",
         {"test_rule": {"p": {"type": "float", "low": 0.0, "high": 1.0}}},
     )
     def test_compose_search_space(self) -> None:

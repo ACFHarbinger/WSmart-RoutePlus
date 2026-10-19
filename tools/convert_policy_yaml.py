@@ -30,7 +30,7 @@ except ImportError:  # pragma: no cover
 ROOT = Path(__file__).resolve().parents[1]
 POLICIES = ROOT / "logic" / "configs" / "policies"
 OTHER = POLICIES / "other"
-HPO_JOBS = ROOT / "logic" / "src" / "pipeline" / "simulations" / "hpo" / "jobs"
+HPO_JOBS = ROOT / "logic" / "src" / "pipeline" / "simulations" / "hpo" / "routing"
 
 PACKING_FIELD_REMAP: Dict[str, str] = {
     "frequency": "threshold",
