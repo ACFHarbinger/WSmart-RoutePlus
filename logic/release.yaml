@@ -93,6 +93,7 @@ excluded_packages:
   - logic.src.pipeline.learning.hpo                        # Q-6
   - logic.src.pipeline.learning.meta                       # not in the paper's stack (Q-12a)
   - logic.cloud                                      # `sync_drive` CLI job defer-imports it (drive_parser/parser_dispatch); cloud sync is out of scope (Q-1/Q-2)
+  - logic.controllers.cloud                          # `cloud` CLI job defer-imports it (parser_dispatch); ships as the [cloud] extra in CR-17 (#137)
   - logic.benchmark                                  # `benchmark` CLI job defer-imports it (jobs/ops_runner.py); out of scope
   - logic.test                                       # `test_suite` CLI job runner (jobs/ops_runner.py); the release ships the curated test files (P-06), not the runner
 

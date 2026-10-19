@@ -13,6 +13,7 @@ Example:
 
 from logic.controllers.cli.base import ConfigsParser
 from logic.controllers.cli.bench_parser import add_benchmark_args
+from logic.controllers.cli.cloud_parser import add_cloud_args
 from logic.controllers.cli.drive_parser import add_drive_sync_args
 from logic.controllers.cli.fs_parser import add_files_args
 from logic.controllers.cli.out_parser import add_excel_summary_args, add_output_args
@@ -77,6 +78,10 @@ def get_parser() -> ConfigsParser:
         help="Copy data and outputs to or from a Google Drive folder (rclone, copy only)",
     )
     add_drive_sync_args(sync_parser)
+
+    # Cloud runner: submit, monitor and manage simulation jobs (local, GCP, AWS, Azure)
+    cloud_parser = subparsers.add_parser("cloud", help="Run simulation jobs on the cloud runner")
+    add_cloud_args(cloud_parser)
 
     # TUI
     return parser
