@@ -406,6 +406,7 @@ export type AppMode =
   | "hpo_tracker"       // HPO Tracker              — logic/src/ui/pages/hpo_tracker.py
   // Studio-only modes
   | "process_monitor"   // Process Monitor          — §G.15
+  | "cloud_monitor"     // Cloud Job Monitor        — CR-15 (§J.1)
   | "sim_launcher"      // Simulation Launcher      — §G.9
   | "training_hub"      // Training & HPO Hub       — §G.10
   | "data_gen"          // Data Generation Wizard   — §G.11

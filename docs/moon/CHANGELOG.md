@@ -37,6 +37,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `commands/cloud/keychain.rs`: OS keychain credential management via the `keyring` crate (`cloud_store_credential`, `cloud_delete_credential`, `cloud_has_credential`) under service `wsmart-route.cloud` and account `{provider}/{profile}`. Secrets are never logged, returned to frontend, or written to disk.
   - Rust unit tests verifying fixture deserialization across all CLI subcommands against real CLI-generated fixtures, validation of request parameters, SHA-256 hashing, and poller lifecycle.
   - TypeScript client in `app/src/utils/cloud/` and types in `app/src/types/cloud.ts` wrapping Tauri invokes and event subscriptions.
+- **CR-15 (#135): Studio Cloud Job Monitor and Manager Actions** in `app/src/pages/cloud/CloudMonitor.tsx`:
+  - `CloudMonitor.tsx`: Real-time monitoring and management dashboard for cloud routing jobs. Provides master-detail view with live updates fed by CR-13 background poller (`watchCloudJob`), state breakdown counters, proportional progress bars, and state/search filtering.
+  - Manager actions: On-demand cancellation (`cancelCloudJob`), requeuing failed/cancelled tasks (`retryCloudJob`), scheduler placement stepping (`tickCloudWorker`), and hash-checked results downloading (`downloadCloudJobResults`).
+  - `CloudStatusBadge.tsx`: Visual status pill for all job and task states (`running`, `succeeded`, `failed`, `cancelled`, `queued`, `placing`, `starting`, `preempted`, `retrying`) with animation pulse for active states.
+  - `TaskMetricsPanel.tsx`: Dedicated resource telemetry panel with structured placeholders for CPU load, memory RSS, and throughput, cleanly rendering the "Metrics pending (CR-12)" empty state until the instrumentation engine lands.
+  - `TaskLogsModal.tsx`: Real-time log inspector supporting configurable tail counts (50 to all), live poll refresh, auto-scroll to bottom, and clipboard export.
+  - `DownloadModal.tsx`: Interactive download manager tracking stages, file counts, and checksum verification status via `onCloudDownloadProgress`.
+  - `useCloudMonitorStore`: Zustand persistence store for UI state, root path, search filters, and active tabs.
+  - App navigation integration in `Sidebar.tsx` (under Monitor section), `App.tsx` (lazy route), and `pagePrefetch.ts`.
 - **Cloud runner, local worker and light entry point** (found while reviewing CR-13):
   - `cloud submit` now starts a detached background worker (`logic/controllers/cloud/worker.py`) unless one already holds `<root>/worker.lock`. The worker schedules every job under the root and exits when all have finished. Before, a job submitted from the Studio stayed queued, because nothing ran the scheduler. `--no-worker` keeps the old behaviour.
   - `python -m logic.controllers.cloud` runs the same commands without `main.py`'s start-up imports: about 0.3 s and 33 MB per call instead of 2 s and 690 MB. The Studio's status polling uses it.
