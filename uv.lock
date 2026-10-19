@@ -8865,6 +8865,23 @@ analysis = [
     { name = "pyvis" },
     { name = "statsmodels" },
 ]
+cloud = [
+    { name = "azure-batch" },
+    { name = "azure-identity" },
+    { name = "azure-keyvault-secrets" },
+    { name = "azure-mgmt-appcontainers" },
+    { name = "azure-mgmt-compute" },
+    { name = "azure-storage-blob" },
+    { name = "boto3" },
+    { name = "google-cloud-batch" },
+    { name = "google-cloud-compute" },
+    { name = "google-cloud-firestore" },
+    { name = "google-cloud-run" },
+    { name = "google-cloud-secret-manager" },
+    { name = "google-cloud-storage" },
+    { name = "keyring" },
+    { name = "supabase" },
+]
 cptp = [
     { name = "cptp" },
 ]
@@ -8943,23 +8960,6 @@ viz = [
 ]
 
 [package.dev-dependencies]
-cloud = [
-    { name = "azure-batch" },
-    { name = "azure-identity" },
-    { name = "azure-keyvault-secrets" },
-    { name = "azure-mgmt-appcontainers" },
-    { name = "azure-mgmt-compute" },
-    { name = "azure-storage-blob" },
-    { name = "boto3" },
-    { name = "google-cloud-batch" },
-    { name = "google-cloud-compute" },
-    { name = "google-cloud-firestore" },
-    { name = "google-cloud-run" },
-    { name = "google-cloud-secret-manager" },
-    { name = "google-cloud-storage" },
-    { name = "keyring" },
-    { name = "supabase" },
-]
 dev = [
     { name = "black" },
     { name = "expecttest" },
@@ -8987,12 +8987,25 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "alns", marker = "extra == 'solvers'", specifier = ">=7.0.0" },
+    { name = "azure-batch", marker = "extra == 'cloud'", specifier = ">=14.0" },
+    { name = "azure-identity", marker = "extra == 'cloud'", specifier = ">=1.15" },
+    { name = "azure-keyvault-secrets", marker = "extra == 'cloud'", specifier = ">=4.7" },
+    { name = "azure-mgmt-appcontainers", marker = "extra == 'cloud'", specifier = ">=3.0" },
+    { name = "azure-mgmt-compute", marker = "extra == 'cloud'", specifier = ">=30.0" },
+    { name = "azure-storage-blob", marker = "extra == 'cloud'", specifier = ">=12.19" },
+    { name = "boto3", marker = "extra == 'cloud'", specifier = ">=1.28" },
     { name = "cptp", marker = "extra == 'cptp'", directory = "logic/submodules/BPC-CPTP" },
     { name = "cryptography", specifier = ">=45.0.6" },
     { name = "dehb", marker = "extra == 'hpo'", specifier = ">=0.1.2" },
     { name = "fast-tsp", marker = "extra == 'solvers'", specifier = ">=0.1.4" },
     { name = "geopandas", marker = "extra == 'geo'", specifier = ">=1.0.1" },
     { name = "geopy", marker = "extra == 'geo'", specifier = ">=2.4.1" },
+    { name = "google-cloud-batch", marker = "extra == 'cloud'", specifier = ">=0.17" },
+    { name = "google-cloud-compute", marker = "extra == 'cloud'", specifier = ">=1.14" },
+    { name = "google-cloud-firestore", marker = "extra == 'cloud'", specifier = ">=2.34.1" },
+    { name = "google-cloud-run", marker = "extra == 'cloud'", specifier = ">=0.10" },
+    { name = "google-cloud-secret-manager", marker = "extra == 'cloud'", specifier = ">=2.16" },
+    { name = "google-cloud-storage", marker = "extra == 'cloud'", specifier = ">=2.10" },
     { name = "googlemaps", marker = "extra == 'geo'", specifier = ">=4.10.0" },
     { name = "gurobipy", marker = "extra == 'solvers'", specifier = ">=11.0.3" },
     { name = "hexaly", marker = "extra == 'solvers'", specifier = ">=14.0.20251008", index = "https://pip.hexaly.com/" },
@@ -9000,6 +9013,7 @@ requires-dist = [
     { name = "hydra-core", specifier = ">=1.3.0" },
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "joblib", specifier = ">=1.5.1" },
+    { name = "keyring", marker = "extra == 'cloud'", specifier = ">=24.0" },
     { name = "litlogger", marker = "extra == 'tracking'", specifier = ">=0.1.0" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "loss-landscapes", marker = "extra == 'analysis'", specifier = ">=3.0.6" },
@@ -9049,6 +9063,7 @@ requires-dist = [
     { name = "sqlalchemy-utils", marker = "extra == 'tracking'", specifier = ">=0.41.0" },
     { name = "sqlmodel", marker = "extra == 'tracking'", specifier = ">=0.0.14" },
     { name = "statsmodels", marker = "extra == 'analysis'", specifier = ">=0.14.6" },
+    { name = "supabase", marker = "extra == 'cloud'", specifier = ">=2.16.0" },
     { name = "tensordict", marker = "extra == 'neural'", specifier = "==0.13.0" },
     { name = "torch", marker = "extra == 'neural'", specifier = "==2.13.0" },
     { name = "torch-geometric", marker = "extra == 'neural'", specifier = ">=2.3.1" },
@@ -9063,26 +9078,9 @@ requires-dist = [
     { name = "wandb", marker = "extra == 'neural'", specifier = ">=0.16.0" },
     { name = "zenml", extras = ["server"], marker = "extra == 'tracking'", specifier = ">=0.60.0" },
 ]
-provides-extras = ["neural", "gpu", "geo", "solvers", "cptp", "viz", "hpo", "tracking", "analysis", "docs", "web"]
+provides-extras = ["neural", "gpu", "geo", "solvers", "cloud", "cptp", "viz", "hpo", "tracking", "analysis", "docs", "web"]
 
 [package.metadata.requires-dev]
-cloud = [
-    { name = "azure-batch", specifier = ">=14.0" },
-    { name = "azure-identity", specifier = ">=1.15" },
-    { name = "azure-keyvault-secrets", specifier = ">=4.7" },
-    { name = "azure-mgmt-appcontainers", specifier = ">=3.0" },
-    { name = "azure-mgmt-compute", specifier = ">=30.0" },
-    { name = "azure-storage-blob", specifier = ">=12.19" },
-    { name = "boto3", specifier = ">=1.28" },
-    { name = "google-cloud-batch", specifier = ">=0.17" },
-    { name = "google-cloud-compute", specifier = ">=1.14" },
-    { name = "google-cloud-firestore", specifier = ">=2.34.1" },
-    { name = "google-cloud-run", specifier = ">=0.10" },
-    { name = "google-cloud-secret-manager", specifier = ">=2.16" },
-    { name = "google-cloud-storage", specifier = ">=2.10" },
-    { name = "keyring", specifier = ">=24.0" },
-    { name = "supabase", specifier = ">=2.16.0" },
-]
 dev = [
     { name = "black", specifier = ">=25.9.0" },
     { name = "expecttest", specifier = ">=0.3.0" },
