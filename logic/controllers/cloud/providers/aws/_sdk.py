@@ -9,12 +9,18 @@ from __future__ import annotations
 from typing import Any, Optional
 
 
-def make_boto3_client(service_name: str, profile: str = "default", region: Optional[str] = None) -> Any:
+def make_boto3_client(
+    service_name: str,
+    credentials: Optional[Any] = None,
+    profile: str = "default",
+    region: Optional[str] = None,
+) -> Any:
     """Create a boto3 client for the specified AWS service.
 
     Args:
         service_name: AWS service identifier ('s3', 'secretsmanager', 'batch', 'ecs', 'ec2', 'logs', 'ecr').
-        profile: AWS credentials profile name.
+        credentials: Optional ProviderCredentials instance or profile name.
+        profile: AWS credentials profile name (fallback if credentials not given).
         region: AWS region override.
 
     Returns:
@@ -23,8 +29,14 @@ def make_boto3_client(service_name: str, profile: str = "default", region: Optio
     import boto3
 
     kwargs: dict[str, Any] = {}
-    if profile and profile != "default":
+    if credentials is not None:
+        if hasattr(credentials, "aws_session_kwargs"):
+            kwargs.update(credentials.aws_session_kwargs())
+        elif isinstance(credentials, str) and credentials != "default":
+            kwargs["profile_name"] = credentials
+    elif profile and profile != "default":
         kwargs["profile_name"] = profile
+
     if region:
         kwargs["region_name"] = region
 

@@ -7,6 +7,7 @@ Attributes:
 from __future__ import annotations
 
 import contextlib
+import hashlib
 from typing import Any, Dict, List, Optional
 
 from logic.controllers.cloud.interfaces import (
@@ -20,6 +21,7 @@ from logic.controllers.cloud.interfaces import (
 from logic.controllers.cloud.model import ComputeKind, Provider
 from logic.controllers.cloud.providers.aws._sdk import make_boto3_client
 from logic.controllers.cloud.providers.aws.pricing import price_per_hour
+from logic.controllers.cloud.providers.aws.secrets import AwsSecretsManagerStore
 
 
 class AwsBatchBackend(ComputeBackend):
@@ -30,7 +32,10 @@ class AwsBatchBackend(ComputeBackend):
         logs_client: Optional pre-configured boto3 CloudWatch Logs client.
         job_queue: AWS Batch job queue name.
         job_queue_spot: Optional AWS Batch job queue for spot instances.
-        job_definition: AWS Batch job definition name.
+        job_definition: AWS Batch job definition name prefix.
+        execution_role_arn: IAM role ARN for ECS/Batch container task execution.
+        secrets_store: Optional AwsSecretsManagerStore for resolving secret ARNs.
+        credentials: Optional ProviderCredentials instance or profile name.
         profile: AWS credentials profile name.
         region: AWS region.
     """
@@ -45,6 +50,9 @@ class AwsBatchBackend(ComputeBackend):
         job_queue: str = "wsr-batch-queue",
         job_queue_spot: Optional[str] = None,
         job_definition: str = "wsr-batch-job",
+        execution_role_arn: Optional[str] = None,
+        secrets_store: Optional[AwsSecretsManagerStore] = None,
+        credentials: Any = None,
         profile: str = "default",
         region: str = "us-east-1",
     ) -> None:
@@ -53,21 +61,46 @@ class AwsBatchBackend(ComputeBackend):
         self.job_queue = job_queue
         self.job_queue_spot = job_queue_spot or f"{job_queue}-spot"
         self.job_definition = job_definition
+        self.execution_role_arn = execution_role_arn
+        self.credentials = credentials
         self.profile = profile
         self.region = region
+        self._secrets_store = secrets_store
+        self._secret_arn_cache: Dict[str, str] = {}
+        self._job_def_cache: Dict[str, str] = {}
 
     @property
     def client(self) -> Any:
         if self._client is None:
-            self._client = make_boto3_client("batch", profile=self.profile, region=self.region)
+            self._client = make_boto3_client(
+                "batch",
+                credentials=self.credentials,
+                profile=self.profile,
+                region=self.region,
+            )
         return self._client
 
     @property
     def logs_client(self) -> Any:
         if self._logs_client is None:
             with contextlib.suppress(Exception):
-                self._logs_client = make_boto3_client("logs", profile=self.profile, region=self.region)
+                self._logs_client = make_boto3_client(
+                    "logs",
+                    credentials=self.credentials,
+                    profile=self.profile,
+                    region=self.region,
+                )
         return self._logs_client
+
+    @property
+    def secrets_store(self) -> AwsSecretsManagerStore:
+        if self._secrets_store is None:
+            self._secrets_store = AwsSecretsManagerStore(
+                credentials=self.credentials,
+                profile=self.profile,
+                region=self.region,
+            )
+        return self._secrets_store
 
     def capabilities(self) -> BackendCapabilities:
         return BackendCapabilities(
@@ -91,6 +124,69 @@ class AwsBatchBackend(ComputeBackend):
                 return parts[2]
         return handle
 
+    def _resolve_secret_arn(self, secret_name: str) -> str:
+        if secret_name.startswith("arn:aws:secretsmanager:"):
+            return secret_name
+        if secret_name in self._secret_arn_cache:
+            return self._secret_arn_cache[secret_name]
+        arn = self.secrets_store.get_arn(secret_name)
+        self._secret_arn_cache[secret_name] = arn
+        return arn
+
+    def _get_or_register_job_definition(self, launch: LaunchSpec) -> str:
+        """Register or reuse a job definition per (image, sorted secret_env)."""
+        image = launch.image or "wsmart-route:latest"
+        secret_items = tuple(sorted(launch.secret_env.items())) if launch.secret_env else ()
+        cache_key = f"{image}:{secret_items}"
+        if cache_key in self._job_def_cache:
+            return self._job_def_cache[cache_key]
+
+        key_hash = hashlib.sha256(cache_key.encode("utf-8")).hexdigest()[:12]
+        def_name = f"wsr-{key_hash}"
+
+        # Check if an active definition exists
+        if hasattr(self.client, "describe_job_definitions"):
+            try:
+                desc = self.client.describe_job_definitions(jobDefinitionName=def_name, status="ACTIVE")
+                defs = desc.get("jobDefinitions", [])
+                if defs:
+                    arn = defs[0].get("jobDefinitionArn", def_name)
+                    self._job_def_cache[cache_key] = arn
+                    return arn
+            except Exception:
+                pass
+
+        # Register new job definition
+        secrets_list = []
+        for env_var, sec_name in secret_items:
+            sec_arn = self._resolve_secret_arn(sec_name)
+            secrets_list.append({"name": env_var, "valueFrom": sec_arn})
+
+        container_properties: Dict[str, Any] = {
+            "image": image,
+            "resourceRequirements": [
+                {"type": "VCPU", "value": str(max(1, int(round(launch.resources.cpus))))},
+                {"type": "MEMORY", "value": str(max(512, int(round(launch.resources.memory_gb * 1024))))},
+            ],
+        }
+        if secrets_list:
+            container_properties["secrets"] = secrets_list
+        if self.execution_role_arn:
+            container_properties["executionRoleArn"] = self.execution_role_arn
+
+        if hasattr(self.client, "register_job_definition"):
+            reg_resp = self.client.register_job_definition(
+                jobDefinitionName=def_name,
+                type="container",
+                containerProperties=container_properties,
+            )
+            arn = reg_resp.get("jobDefinitionArn", def_name)
+            self._job_def_cache[cache_key] = arn
+            return arn
+
+        self._job_def_cache[cache_key] = def_name
+        return def_name
+
     def submit(self, launch: LaunchSpec) -> str:
         # Enforce quota / capacity constraints
         if launch.resources.cpus > 128 or launch.resources.memory_gb > 512:
@@ -99,7 +195,10 @@ class AwsBatchBackend(ComputeBackend):
             )
 
         queue = self.job_queue_spot if launch.resources.spot else self.job_queue
+        job_def = self._get_or_register_job_definition(launch)
 
+        # In AWS Batch, containerOverrides ONLY supports command, environment, resourceRequirements
+        # Image and secrets belong strictly in the job definition
         container_overrides: Dict[str, Any] = {
             "command": list(launch.argv),
             "environment": [{"name": k, "value": str(v)} for k, v in sorted(launch.env.items())],
@@ -109,23 +208,15 @@ class AwsBatchBackend(ComputeBackend):
             ],
         }
 
-        # Native secret references
-        if launch.secret_env:
-            container_overrides["secrets"] = [
-                {"name": k, "valueFrom": str(v)} for k, v in sorted(launch.secret_env.items())
-            ]
-
-        if launch.image:
-            container_overrides["image"] = launch.image
-
         kwargs: Dict[str, Any] = {
             "jobName": f"wsr-{launch.task.task_id}",
             "jobQueue": queue,
-            "jobDefinition": self.job_definition,
+            "jobDefinition": job_def,
             "containerOverrides": container_overrides,
             "parameters": {
                 "taskId": launch.task.task_id,
                 "jobId": launch.task.job_id,
+                "spot": "true" if launch.resources.spot else "false",
             },
         }
 
@@ -165,9 +256,17 @@ class AwsBatchBackend(ComputeBackend):
             return BackendStatus(AttemptState.SUCCEEDED, exit_code=0)
 
         if status == "FAILED":
-            # Detect spot preemption
+            # Detect spot preemption: check statusReason text, or exit code 143 on spot capacity
             reason_lower = (status_reason or "").lower()
-            if any(term in reason_lower for term in ("spot", "preempt", "reclaim", "host ec2 terminated")):
+            is_spot = (
+                job.get("parameters", {}).get("spot") == "true"
+                or "spot" in job.get("jobQueue", "").lower()
+            )
+            is_preempted = (
+                any(term in reason_lower for term in ("spot", "preempt", "reclaim", "host ec2 terminated"))
+                or (exit_code == 143 and is_spot)
+            )
+            if is_preempted:
                 return BackendStatus(AttemptState.PREEMPTED, message=status_reason or "spot preemption")
 
             code = exit_code if exit_code is not None else 1
@@ -189,18 +288,14 @@ class AwsBatchBackend(ComputeBackend):
             jobs = resp.get("jobs", [])
             if jobs:
                 job = jobs[0]
-                # Check for in-memory / fake log attribute first
-                if "_log_lines" in job:
-                    log_lines = list(job["_log_lines"])
-                elif self.logs_client is not None:
-                    container = job.get("container", {})
-                    stream_name = container.get("logStreamName")
-                    if stream_name:
-                        log_resp = self.logs_client.get_log_events(
-                            logGroupName="/aws/batch/job",
-                            logStreamName=stream_name,
-                        )
-                        log_lines = [ev.get("message", "") for ev in log_resp.get("events", [])]
+                container = job.get("container", {})
+                stream_name = container.get("logStreamName")
+                if stream_name and self.logs_client is not None:
+                    log_resp = self.logs_client.get_log_events(
+                        logGroupName="/aws/batch/job",
+                        logStreamName=stream_name,
+                    )
+                    log_lines = [ev.get("message", "") for ev in log_resp.get("events", [])]
         except Exception:
             pass
 

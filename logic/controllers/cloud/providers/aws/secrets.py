@@ -18,6 +18,7 @@ class AwsSecretsManagerStore(SecretStore):
     Args:
         client: Optional pre-configured boto3 SecretsManager client (injected for testing).
         prefix: Optional prefix for secret names in AWS Secrets Manager.
+        credentials: Optional ProviderCredentials instance or profile name.
         profile: AWS credentials profile name (used when client is not provided).
         region: AWS region name (used when client is not provided).
     """
@@ -26,10 +27,12 @@ class AwsSecretsManagerStore(SecretStore):
         self,
         client: Any = None,
         prefix: str = "",
+        credentials: Any = None,
         profile: str = "default",
         region: Optional[str] = None,
     ) -> None:
         self.prefix = prefix
+        self.credentials = credentials
         self.profile = profile
         self.region = region
         self._client = client
@@ -37,11 +40,29 @@ class AwsSecretsManagerStore(SecretStore):
     @property
     def client(self) -> Any:
         if self._client is None:
-            self._client = make_boto3_client("secretsmanager", profile=self.profile, region=self.region)
+            self._client = make_boto3_client(
+                "secretsmanager",
+                credentials=self.credentials,
+                profile=self.profile,
+                region=self.region,
+            )
         return self._client
 
     def _secret_id(self, name: str) -> str:
         return f"{self.prefix}{name}"
+
+    def get_arn(self, name: str) -> str:
+        """Resolve a secret name to its AWS Secrets Manager ARN."""
+        secret_id = self._secret_id(name)
+        if secret_id.startswith("arn:aws:secretsmanager:"):
+            return secret_id
+        if hasattr(self.client, "describe_secret"):
+            resp = self.client.describe_secret(SecretId=secret_id)
+            if "ARN" in resp:
+                return resp["ARN"]
+        # Fallback pseudo-ARN for test stubs
+        reg = self.region or "us-east-1"
+        return f"arn:aws:secretsmanager:{reg}:123456789012:secret:{secret_id}"
 
     def get(self, name: str) -> Optional[str]:
         secret_id = self._secret_id(name)
@@ -76,7 +97,6 @@ class AwsSecretsManagerStore(SecretStore):
                 or "ResourceNotFoundException" in str(exc)
                 or "not found" in str(exc).lower()
             ):
-                # Secret does not exist yet: create it
                 self.client.create_secret(Name=secret_id, SecretString=value)
             else:
                 raise
@@ -94,8 +114,6 @@ class AwsSecretsManagerStore(SecretStore):
                 or "not found" in str(exc).lower()
             ):
                 return
-            # Delete is best-effort and a no-op if absent
-            pass
 
 
 __all__ = ["AwsSecretsManagerStore"]

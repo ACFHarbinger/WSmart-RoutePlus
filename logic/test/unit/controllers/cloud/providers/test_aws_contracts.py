@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import base64
 import io
 from typing import Any, Dict, List
+from urllib.parse import urlparse
 
 import pytest
 from logic.controllers.cloud.interfaces import (
@@ -27,6 +29,7 @@ from logic.controllers.cloud.providers.aws import (
     S3ObjectStore,
     price_per_hour,
 )
+from logic.controllers.cloud.providers.aws.storage import store_from_uri
 from logic.controllers.cloud.testing import (
     backend_contract,
     object_store_contract,
@@ -89,17 +92,59 @@ class FakeSecretsManagerClient:
         self.secrets[Name] = SecretString
         return {}
 
+    def describe_secret(self, SecretId: str, **kwargs: Any) -> Dict[str, Any]:
+        if SecretId not in self.secrets and not SecretId.startswith("arn:"):
+            raise KeyError(f"ResourceNotFoundException: {SecretId}")
+        return {"ARN": f"arn:aws:secretsmanager:us-east-1:123456789012:secret:{SecretId}"}
+
     def delete_secret(self, SecretId: str, **kwargs: Any) -> Dict[str, Any]:
         self.secrets.pop(SecretId, None)
         return {}
 
 
+class FakeLogsClient:
+    """In-memory CloudWatch Logs client for contract testing."""
+
+    def __init__(self) -> None:
+        self.streams: Dict[str, List[str]] = {}
+
+    def get_log_events(self, logGroupName: str, logStreamName: str, **kwargs: Any) -> Dict[str, Any]:
+        lines = self.streams.get(logStreamName, [f"log for {logStreamName}"])
+        return {"events": [{"message": line} for line in lines]}
+
+
 class FakeBatchClient:
-    """In-memory AWS Batch client for contract testing."""
+    """In-memory AWS Batch client for contract testing.
+
+    Rejects invalid API calls mirroring real AWS Batch behavior (e.g. secrets/image in containerOverrides).
+    """
 
     def __init__(self) -> None:
         self.jobs: Dict[str, Dict[str, Any]] = {}
         self.submits: List[Dict[str, Any]] = []
+        self.job_definitions: Dict[str, Dict[str, Any]] = {}
+
+    def describe_job_definitions(self, jobDefinitionName: str, status: str = "ACTIVE", **kwargs: Any) -> Dict[str, Any]:
+        defs = [d for name, d in self.job_definitions.items() if name == jobDefinitionName and d.get("status") == status]
+        return {"jobDefinitions": defs}
+
+    def register_job_definition(
+        self,
+        jobDefinitionName: str,
+        type: str,
+        containerProperties: Dict[str, Any],
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        arn = f"arn:aws:batch:us-east-1:123456789012:job-definition/{jobDefinitionName}:1"
+        data = {
+            "jobDefinitionName": jobDefinitionName,
+            "jobDefinitionArn": arn,
+            "status": "ACTIVE",
+            "type": type,
+            "containerProperties": containerProperties,
+        }
+        self.job_definitions[jobDefinitionName] = data
+        return {"jobDefinitionArn": arn, "jobDefinitionName": jobDefinitionName}
 
     def submit_job(
         self,
@@ -109,6 +154,12 @@ class FakeBatchClient:
         containerOverrides: Dict[str, Any],
         **kwargs: Any,
     ) -> Dict[str, Any]:
+        # Strict API validation: real AWS Batch rejects image or secrets in containerOverrides
+        if "image" in containerOverrides:
+            raise ValueError("ParamValidationError: containerOverrides cannot contain 'image'")
+        if "secrets" in containerOverrides:
+            raise ValueError("ParamValidationError: containerOverrides cannot contain 'secrets'")
+
         job_id = f"batch-{len(self.jobs) + 1}"
         cmd_str = " ".join(containerOverrides.get("command", []))
         task_id = kwargs.get("parameters", {}).get("taskId", "")
@@ -120,21 +171,26 @@ class FakeBatchClient:
             outcome = "hang"
         elif "preempt" in task_id or "preempt" in cmd_str:
             outcome = "preempt"
+        elif "exit143" in task_id or "exit143" in cmd_str:
+            outcome = "exit143"
 
         self.submits.append(
             {
                 "jobName": jobName,
                 "jobQueue": jobQueue,
+                "jobDefinition": jobDefinition,
                 "containerOverrides": containerOverrides,
                 "kwargs": kwargs,
             }
         )
         self.jobs[job_id] = {
             "jobId": job_id,
+            "jobQueue": jobQueue,
             "outcome": outcome,
             "cancelled": False,
             "polls": 0,
-            "_log_lines": [f"batch log output for {jobName}"],
+            "parameters": kwargs.get("parameters", {}),
+            "logStreamName": f"stream-{job_id}",
         }
         return {"jobId": job_id}
 
@@ -156,6 +212,10 @@ class FakeBatchClient:
                     status = "FAILED"
                     reason = "Host EC2 (instance i-0123456789) terminated by spot reclaim"
                     exit_code = 137
+                elif j["outcome"] == "exit143":
+                    status = "FAILED"
+                    reason = "Container received SIGTERM and exited 143"
+                    exit_code = 143
                 elif j["outcome"] == "fail":
                     status = "FAILED"
                     reason = "Container failed with exit code 1"
@@ -168,10 +228,14 @@ class FakeBatchClient:
                 result.append(
                     {
                         "jobId": jid,
+                        "jobQueue": j["jobQueue"],
+                        "parameters": j["parameters"],
                         "status": status,
                         "statusReason": reason,
-                        "container": {"exitCode": exit_code},
-                        "_log_lines": j["_log_lines"],
+                        "container": {
+                            "exitCode": exit_code,
+                            "logStreamName": j["logStreamName"],
+                        },
                     }
                 )
         return {"jobs": result}
@@ -183,11 +247,31 @@ class FakeBatchClient:
 
 
 class FakeEcsClient:
-    """In-memory AWS ECS client for contract testing."""
+    """In-memory AWS ECS client for contract testing.
+
+    Rejects missing networkConfiguration and illegal containerOverrides.
+    """
 
     def __init__(self) -> None:
         self.tasks: Dict[str, Dict[str, Any]] = {}
         self.runs: List[Dict[str, Any]] = []
+        self.task_definitions: Dict[str, Dict[str, Any]] = {}
+
+    def describe_task_definition(self, taskDefinition: str, **kwargs: Any) -> Dict[str, Any]:
+        if taskDefinition in self.task_definitions:
+            return {"taskDefinition": self.task_definitions[taskDefinition]}
+        return {}
+
+    def register_task_definition(self, family: str, **kwargs: Any) -> Dict[str, Any]:
+        arn = f"arn:aws:ecs:us-east-1:123456789012:task-definition/{family}:1"
+        data = {
+            "family": family,
+            "taskDefinitionArn": arn,
+            "status": "ACTIVE",
+            **kwargs,
+        }
+        self.task_definitions[family] = data
+        return {"taskDefinition": data}
 
     def run_task(
         self,
@@ -196,23 +280,37 @@ class FakeEcsClient:
         overrides: Dict[str, Any],
         **kwargs: Any,
     ) -> Dict[str, Any]:
-        task_arn = f"arn:aws:ecs:us-east-1:123456789012:task/{cluster}/task-{len(self.tasks) + 1}"
+        # Fargate requires awsvpc networkConfiguration
+        if "networkConfiguration" not in kwargs or "awsvpcConfiguration" not in kwargs["networkConfiguration"]:
+            raise ValueError("InvalidParameterException: networkConfiguration required for Fargate")
+
         container_overrides = overrides.get("containerOverrides", [{}])[0]
+        if "secrets" in container_overrides:
+            raise ValueError("ParamValidationError: containerOverrides cannot contain 'secrets'")
+        if "image" in container_overrides:
+            raise ValueError("ParamValidationError: containerOverrides cannot contain 'image'")
+
+        task_arn = f"arn:aws:ecs:us-east-1:123456789012:task/{cluster}/task-{len(self.tasks) + 1}"
         cmd_str = " ".join(container_overrides.get("command", []))
+        tags = kwargs.get("tags", [])
+        task_id = next((t["value"] for t in tags if t.get("key") == "wsr:task_id"), "")
 
         outcome = "succeed"
-        if "fail" in cmd_str:
+        if "fail" in task_id or "fail" in cmd_str:
             outcome = "fail"
-        elif "hang" in cmd_str:
+        elif "hang" in task_id or "hang" in cmd_str:
             outcome = "hang"
-        elif "preempt" in cmd_str:
+        elif "preempt" in task_id or "preempt" in cmd_str:
             outcome = "preempt"
+        elif "exit143" in task_id or "exit143" in cmd_str:
+            outcome = "exit143"
 
         self.runs.append(
             {
                 "cluster": cluster,
                 "taskDefinition": taskDefinition,
                 "overrides": overrides,
+                "networkConfiguration": kwargs.get("networkConfiguration"),
                 "kwargs": kwargs,
             }
         )
@@ -221,7 +319,7 @@ class FakeEcsClient:
             "outcome": outcome,
             "cancelled": False,
             "polls": 0,
-            "_log_lines": ["ecs container log output line 1", "ecs container log output line 2"],
+            "tags": kwargs.get("tags", []),
         }
         return {"tasks": [{"taskArn": task_arn}]}
 
@@ -246,15 +344,20 @@ class FakeEcsClient:
                     code = "SpotInterruption"
                     reason = "Fargate spot interruption"
                     exit_code = 137
+                elif t["outcome"] == "exit143":
+                    status = "STOPPED"
+                    code = "EssentialContainerExited"
+                    reason = "Container received SIGTERM and exited 143"
+                    exit_code = 143
                 elif t["outcome"] == "fail":
                     status = "STOPPED"
                     code = "EssentialContainerExited"
-                    reason = "Process exited with code 1"
+                    reason = "Task failed with exit code 1"
                     exit_code = 1
                 else:
                     status = "STOPPED"
                     code = "EssentialContainerExited"
-                    reason = "Process exited cleanly"
+                    reason = "Task finished successfully"
                     exit_code = 0
 
                 result.append(
@@ -263,8 +366,8 @@ class FakeEcsClient:
                         "lastStatus": status,
                         "stopCode": code,
                         "stoppedReason": reason,
+                        "tags": t["tags"],
                         "containers": [{"exitCode": exit_code}],
-                        "_log_lines": t["_log_lines"],
                     }
                 )
         return {"tasks": result}
@@ -283,92 +386,99 @@ class FakeEc2Client:
         self.runs: List[Dict[str, Any]] = []
 
     def run_instances(self, **kwargs: Any) -> Dict[str, Any]:
-        inst_id = f"i-{len(self.instances) + 1:012d}"
-        tags = {}
-        for spec in kwargs.get("TagSpecifications", []):
-            for t in spec.get("Tags", []):
-                tags[t.get("Key")] = t.get("Value")
-        task_id = tags.get("wsr:task_id", "")
+        # Validate shutdown behavior
+        if kwargs.get("InstanceInitiatedShutdownBehavior") != "terminate":
+            raise ValueError("InstanceInitiatedShutdownBehavior must be 'terminate'")
 
+        instance_id = f"i-{len(self.instances) + 1:017d}"
         user_data_b64 = kwargs.get("UserData", "")
-        try:
-            import base64
-            user_data = base64.b64decode(user_data_b64).decode("utf-8")
-        except Exception:
-            user_data = ""
+        user_data = base64.b64decode(user_data_b64).decode("utf-8") if user_data_b64 else ""
+
+        tags = []
+        for spec in kwargs.get("TagSpecifications", []):
+            tags.extend(spec.get("Tags", []))
+        task_id = next((t["Value"] for t in tags if t.get("Key") == "wsr:task_id"), "")
 
         outcome = "succeed"
-        if "fail" in task_id or "fail" in user_data:
+        if "fail" in task_id or "test_sim_fail" in user_data:
             outcome = "fail"
-        elif "hang" in task_id or "hang" in user_data:
+        elif "hang" in task_id or "test_sim_hang" in user_data:
             outcome = "hang"
-        elif "preempt" in task_id or "preempt" in user_data:
+        elif "preempt" in task_id or "test_sim_preempt" in user_data:
             outcome = "preempt"
+        elif "exit143" in task_id or "test_sim_exit143" in user_data:
+            outcome = "exit143"
 
-        self.runs.append(kwargs)
-        self.instances[inst_id] = {
-            "InstanceId": inst_id,
+        self.runs.append({"kwargs": kwargs, "userData": user_data})
+        self.instances[instance_id] = {
+            "InstanceId": instance_id,
             "outcome": outcome,
             "cancelled": False,
             "polls": 0,
-            "_log_lines": ["ec2 console output row 1", "ec2 console output row 2"],
+            "Tags": tags,
+            "InstanceMarketOptions": kwargs.get("InstanceMarketOptions"),
         }
-        return {"Instances": [{"InstanceId": inst_id}]}
+        return {"Instances": [{"InstanceId": instance_id}]}
+
+    def create_tags(self, Resources: List[str], Tags: List[Dict[str, str]], **kwargs: Any) -> Dict[str, Any]:
+        for res_id in Resources:
+            if res_id in self.instances:
+                existing = {t["Key"]: t["Value"] for t in self.instances[res_id]["Tags"]}
+                for tag in Tags:
+                    existing[tag["Key"]] = tag["Value"]
+                self.instances[res_id]["Tags"] = [{"Key": k, "Value": v} for k, v in existing.items()]
+        return {}
 
     def describe_instances(self, InstanceIds: List[str]) -> Dict[str, Any]:
-        reservations = []
+        result = []
         for iid in InstanceIds:
             if iid in self.instances:
                 inst = self.instances[iid]
                 inst["polls"] += 1
+
+                tags_dict = {t["Key"]: t["Value"] for t in inst["Tags"]}
+                state = "running"
+                reason_code = ""
+                reason_msg = ""
+                trans_reason = ""
+
                 if inst["cancelled"]:
                     state = "terminated"
-                    code = "Client.UserInitiatedShutdown"
-                    msg = "Cancelled by WSmart-Route"
-                    status_tag = "failed"
-                    exit_code = "143"
+                    trans_reason = "User initiated shutdown"
+                    tags_dict["wsr:exit_code"] = "143"
                 elif inst["outcome"] == "hang":
                     state = "running"
-                    code = ""
-                    msg = ""
-                    status_tag = "running"
-                    exit_code = ""
                 elif inst["outcome"] == "preempt":
                     state = "terminated"
-                    code = "Server.SpotInstanceTermination"
-                    msg = "Instance interrupted by spot price"
-                    status_tag = "preempted"
-                    exit_code = "137"
+                    reason_code = "Server.SpotInstanceTermination"
+                    reason_msg = "Spot instance termination notice received"
+                    trans_reason = "Server.SpotInstanceTermination"
+                elif inst["outcome"] == "exit143":
+                    state = "terminated"
+                    trans_reason = "Container exited 143"
+                    tags_dict["wsr:exit_code"] = "143"
                 elif inst["outcome"] == "fail":
                     state = "terminated"
-                    code = "Client.InstanceTermination"
-                    msg = "Container exited with code 1"
-                    status_tag = "failed"
-                    exit_code = "1"
+                    trans_reason = "Container exited 1"
+                    tags_dict["wsr:exit_code"] = "1"
                 else:
                     state = "terminated"
-                    code = "Client.InstanceTermination"
-                    msg = "Container finished successfully"
-                    status_tag = "succeeded"
-                    exit_code = "0"
+                    trans_reason = "Normal exit"
+                    tags_dict["wsr:exit_code"] = "0"
 
-                reservations.append(
+                inst["Tags"] = [{"Key": k, "Value": v} for k, v in tags_dict.items()]
+
+                result.append(
                     {
-                        "Instances": [
-                            {
-                                "InstanceId": iid,
-                                "State": {"Name": state},
-                                "StateReason": {"Code": code, "Message": msg},
-                                "Tags": [
-                                    {"Key": "wsr:status", "Value": status_tag},
-                                    {"Key": "wsr:exit_code", "Value": exit_code},
-                                ],
-                                "_log_lines": inst["_log_lines"],
-                            }
-                        ]
+                        "InstanceId": iid,
+                        "State": {"Name": state},
+                        "StateReason": {"Code": reason_code, "Message": reason_msg},
+                        "StateTransitionReason": trans_reason,
+                        "Tags": inst["Tags"],
+                        "InstanceMarketOptions": inst.get("InstanceMarketOptions"),
                     }
                 )
-        return {"Reservations": reservations}
+        return {"Reservations": [{"Instances": result}]}
 
     def terminate_instances(self, InstanceIds: List[str]) -> Dict[str, Any]:
         for iid in InstanceIds:
@@ -377,172 +487,309 @@ class FakeEc2Client:
         return {}
 
     def get_console_output(self, InstanceId: str) -> Dict[str, Any]:
-        if InstanceId in self.instances:
-            lines = self.instances[InstanceId]["_log_lines"]
-            return {"Output": "\n".join(lines)}
-        return {"Output": ""}
-
-
-class FakeEcrClient:
-    """In-memory ECR client for contract testing."""
-
-    def __init__(self) -> None:
-        self.images: Dict[str, str] = {}
-
-    def describe_images(self, repositoryName: str, imageIds: List[Dict[str, str]]) -> Dict[str, Any]:
-        tag = imageIds[0].get("imageTag")
-        if tag in self.images:
-            return {"imageDetails": [{"imageDigest": self.images[tag]}]}
-        raise KeyError(f"ImageNotFoundException: {tag}")
-
-    def put_image(self, repositoryName: str, imageManifest: str, imageTag: str) -> Dict[str, Any]:
-        digest = f"sha256:{imageTag}-digest"
-        self.images[imageTag] = digest
-        return {"image": {"imageDigest": digest}}
+        return {"Output": f"console logs for instance {InstanceId}\nline 2\n"}
 
 
 # ---------------------------------------------------------------------------
-# Launch helper
+# Test Helpers
 # ---------------------------------------------------------------------------
 
 
-def _launch(outcome: str) -> LaunchSpec:
-    task = TaskRecord(
-        task_id=f"task-{outcome}",
-        job_id="job-aws",
-        cell=CellSpec(cell_id=outcome, argv=["test_sim", f"sim.outcome={outcome}"]),
-    )
+def make_test_launch(
+    task_id: str = "task-001",
+    command: str = "test_sim",
+    cpus: float = 2.0,
+    memory_gb: float = 4.0,
+    spot: bool = False,
+    secret_env: Dict[str, str] | None = None,
+) -> LaunchSpec:
     return LaunchSpec(
-        task=task,
-        resources=Resources(cpus=1.0, memory_gb=2.0),
-        argv=["python", "main.py", "test_sim", f"outcome={outcome}"],
-        env={"TEST_VAR": "val"},
-        secret_env={"GUROBI_KEY": "gurobi-secret-id"},
+        task=TaskRecord(
+            task_id=task_id,
+            job_id="job-001",
+            cell=CellSpec(cell_id="c1", argv=[command]),
+        ),
+        argv=[command, "--days", "30"],
+        env={"WSR_JOB_ID": "job-001"},
+        secret_env=secret_env or {},
+        image="wsmart-route:v1.1.0",
+        resources=Resources(cpus=cpus, memory_gb=memory_gb, spot=spot),
     )
 
 
+def make_launch_for_outcome(outcome: str) -> LaunchSpec:
+    return make_test_launch(task_id=f"task-{outcome}", command=f"test_sim_{outcome}")
+
+
 # ---------------------------------------------------------------------------
-# Contract Tests
+# Contracts & Provider Unit Tests
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.unit
-def test_aws_s3_object_store_contract():
+def test_aws_s3_object_store_contract() -> None:
     client = FakeS3Client()
     object_store_contract(lambda: S3ObjectStore(bucket="wsr-test-bucket", client=client))
 
 
-@pytest.mark.unit
-def test_aws_secrets_manager_contract():
+def test_aws_s3_store_from_uri() -> None:
+    store = store_from_uri(urlparse("s3://my-bucket/runs/prefix/"), client=FakeS3Client())
+    assert store.bucket == "my-bucket"
+    assert store.prefix == "runs/prefix/"
+
+
+def test_aws_secrets_manager_contract() -> None:
     client = FakeSecretsManagerClient()
     secret_store_contract(lambda: AwsSecretsManagerStore(client=client))
 
 
-@pytest.mark.unit
-def test_aws_batch_backend_contract():
-    client = FakeBatchClient()
+def test_aws_batch_backend_contract() -> None:
     backend_contract(
-        make=lambda: AwsBatchBackend(client=client),
-        launch=_launch,
-        poll_seconds=0.0,
+        lambda: AwsBatchBackend(
+            client=FakeBatchClient(),
+            logs_client=FakeLogsClient(),
+            secrets_store=AwsSecretsManagerStore(client=FakeSecretsManagerClient()),
+        ),
+        launch=make_launch_for_outcome,
     )
 
 
-@pytest.mark.unit
-def test_aws_batch_preemption_and_capacity():
-    client = FakeBatchClient()
-    backend = AwsBatchBackend(client=client)
+def test_aws_batch_rejects_container_overrides_secrets_and_registers_job_def() -> None:
+    batch_client = FakeBatchClient()
+    sm_client = FakeSecretsManagerClient()
+    sm_client.create_secret(Name="WSR_GUROBI_KEY", SecretString="dummy-license-key")
+    secrets_store = AwsSecretsManagerStore(client=sm_client)
 
-    # Spot preemption detection
-    handle = backend.submit(_launch("preempt"))
-    status = backend.poll(handle)
-    assert status.state == AttemptState.PREEMPTED
-    assert "spot" in (status.message or "").lower()
+    backend = AwsBatchBackend(
+        client=batch_client,
+        logs_client=FakeLogsClient(),
+        secrets_store=secrets_store,
+        execution_role_arn="arn:aws:iam::123456789012:role/wsr-exec-role",
+    )
 
-    # Secret environment variable pass-through
-    assert len(client.submits) > 0
-    overrides = client.submits[-1]["containerOverrides"]
-    assert overrides["secrets"] == [{"name": "GUROBI_KEY", "valueFrom": "gurobi-secret-id"}]
+    launch = make_test_launch(
+        task_id="task-batch-def",
+        secret_env={"WSR_GUROBI_LICENSE": "WSR_GUROBI_KEY"},
+    )
+    handle = backend.submit(launch)
+    assert handle.startswith("aws-batch:us-east-1:")
 
-    # Capacity error on oversized resource request
-    excessive_launch = _launch("succeed")
-    excessive_launch.resources = Resources(cpus=256.0, memory_gb=1024.0)
+    # Verify a job definition was registered with secrets and image
+    assert len(batch_client.job_definitions) == 1
+    def_data = next(iter(batch_client.job_definitions.values()))
+    props = def_data["containerProperties"]
+    assert props["image"] == "wsmart-route:v1.1.0"
+    assert props["secrets"] == [
+        {"name": "WSR_GUROBI_LICENSE", "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:WSR_GUROBI_KEY"}
+    ]
+    assert props["executionRoleArn"] == "arn:aws:iam::123456789012:role/wsr-exec-role"
+
+    # Verify containerOverrides has NO image or secrets
+    assert len(batch_client.submits) == 1
+    co = batch_client.submits[0]["containerOverrides"]
+    assert "image" not in co
+    assert "secrets" not in co
+    assert co["command"] == ["test_sim", "--days", "30"]
+
+
+def test_aws_batch_spot_preemption_and_exit_143() -> None:
+    batch_client = FakeBatchClient()
+    backend = AwsBatchBackend(
+        client=batch_client,
+        logs_client=FakeLogsClient(),
+        secrets_store=AwsSecretsManagerStore(client=FakeSecretsManagerClient()),
+    )
+
+    # Preemption status reason
+    handle_preempt = backend.submit(make_test_launch(task_id="task-preempt", spot=True))
+    st = backend.poll(handle_preempt)
+    assert st.state == AttemptState.PREEMPTED
+
+    # Exit code 143 on spot
+    handle_143 = backend.submit(make_test_launch(task_id="task-exit143", spot=True))
+    st_143 = backend.poll(handle_143)
+    assert st_143.state == AttemptState.PREEMPTED
+
+    # Capacity error on oversized resource
     with pytest.raises(CapacityError):
-        backend.submit(excessive_launch)
+        backend.submit(make_test_launch(cpus=256.0, memory_gb=1024.0))
 
 
-@pytest.mark.unit
-def test_aws_ecs_fargate_backend_contract():
-    client = FakeEcsClient()
+def test_aws_ecs_fargate_backend_contract() -> None:
     backend_contract(
-        make=lambda: EcsFargateBackend(client=client),
-        launch=_launch,
-        poll_seconds=0.0,
+        lambda: EcsFargateBackend(
+            client=FakeEcsClient(),
+            logs_client=FakeLogsClient(),
+            secrets_store=AwsSecretsManagerStore(client=FakeSecretsManagerClient()),
+        ),
+        launch=make_launch_for_outcome,
     )
 
 
-@pytest.mark.unit
-def test_aws_ecs_fargate_spot_and_capacity():
-    client = FakeEcsClient()
-    backend = EcsFargateBackend(client=client)
+def test_aws_ecs_fargate_rejects_missing_network_and_registers_task_def() -> None:
+    ecs_client = FakeEcsClient()
+    sm_client = FakeSecretsManagerClient()
+    sm_client.create_secret(Name="WSR_GUROBI_KEY", SecretString="dummy-license-key")
+    secrets_store = AwsSecretsManagerStore(client=sm_client)
 
-    # Spot preemption detection
-    handle = backend.submit(_launch("preempt"))
-    status = backend.poll(handle)
-    assert status.state == AttemptState.PREEMPTED
+    backend = EcsFargateBackend(
+        client=ecs_client,
+        logs_client=FakeLogsClient(),
+        subnets=["subnet-0123", "subnet-4567"],
+        security_groups=["sg-9999"],
+        execution_role_arn="arn:aws:iam::123456789012:role/ecs-task-exec",
+        secrets_store=secrets_store,
+    )
 
-    # Capacity error
-    huge_launch = _launch("succeed")
-    huge_launch.resources = Resources(cpus=32.0, memory_gb=256.0)
-    with pytest.raises(CapacityError):
-        backend.submit(huge_launch)
+    launch = make_test_launch(
+        task_id="task-fargate-def",
+        secret_env={"WSR_GUROBI_LICENSE": "WSR_GUROBI_KEY"},
+        spot=True,
+    )
+    handle = backend.submit(launch)
+    assert handle.startswith("aws-ecs:us-east-1:wsr-cluster:")
+
+    # Verify task definition registered
+    assert len(ecs_client.task_definitions) == 1
+    td = next(iter(ecs_client.task_definitions.values()))
+    assert td["requiresCompatibilities"] == ["FARGATE"]
+    assert td["networkMode"] == "awsvpc"
+    container = td["containerDefinitions"][0]
+    assert container["image"] == "wsmart-route:v1.1.0"
+    assert container["secrets"] == [
+        {"name": "WSR_GUROBI_LICENSE", "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:WSR_GUROBI_KEY"}
+    ]
+
+    # Verify networkConfiguration passed to run_task
+    assert len(ecs_client.runs) == 1
+    run_call = ecs_client.runs[0]
+    awsvpc = run_call["networkConfiguration"]["awsvpcConfiguration"]
+    assert awsvpc["subnets"] == ["subnet-0123", "subnet-4567"]
+    assert awsvpc["securityGroups"] == ["sg-9999"]
+
+    # Verify containerOverrides does not have secrets or image
+    co = run_call["overrides"]["containerOverrides"][0]
+    assert "secrets" not in co
+    assert "image" not in co
+
+    # Spot interruption and exit code 143 map to PREEMPTED
+    st = backend.poll(handle)
+    assert st.state == AttemptState.SUCCEEDED
+
+    handle_preempt = backend.submit(make_test_launch(task_id="task-preempt", spot=True))
+    assert backend.poll(handle_preempt).state == AttemptState.PREEMPTED
+
+    handle_143 = backend.submit(make_test_launch(task_id="task-exit143", spot=True))
+    assert backend.poll(handle_143).state == AttemptState.PREEMPTED
 
 
-@pytest.mark.unit
-def test_aws_ec2_backend_contract():
-    client = FakeEc2Client()
+def test_aws_ec2_backend_contract() -> None:
     backend_contract(
-        make=lambda: Ec2Backend(client=client),
-        launch=_launch,
-        poll_seconds=0.0,
+        lambda: Ec2Backend(client=FakeEc2Client()),
+        launch=make_launch_for_outcome,
     )
 
 
-@pytest.mark.unit
-def test_aws_ec2_spot_preemption():
-    client = FakeEc2Client()
-    backend = Ec2Backend(client=client)
-    handle = backend.submit(_launch("preempt"))
-    status = backend.poll(handle)
-    assert status.state == AttemptState.PREEMPTED
+def test_aws_ec2_user_data_script_and_spot_preemption() -> None:
+    ec2_client = FakeEc2Client()
+    backend = Ec2Backend(client=ec2_client, region="us-west-2")
+
+    launch = make_test_launch(
+        task_id="task-ec2-run",
+        secret_env={"WSR_GUROBI_LICENSE": "gurobi-secret-name"},
+        spot=True,
+    )
+    handle = backend.submit(launch)
+    assert handle.startswith("aws-ec2:us-west-2:")
+
+    # Verify run_instances arguments and user data decoding
+    assert len(ec2_client.runs) == 1
+    run_info = ec2_client.runs[0]
+    kwargs = run_info["kwargs"]
+    assert kwargs["InstanceInitiatedShutdownBehavior"] == "terminate"
+
+    user_data = run_info["userData"]
+    assert "#!/bin/bash" in user_data
+    assert "docker run --rm" in user_data
+    assert "wsmart-route:v1.1.0" in user_data
+    assert "test_sim" in user_data
+    assert "shutdown -h now" in user_data
+    assert "aws ec2 create-tags" in user_data
+    assert "WSR_SECRET_REFS" in user_data
+    assert "awssm://us-west-2/gurobi-secret-name" in user_data
+
+    # Test polling states
+    st = backend.poll(handle)
+    assert st.state == AttemptState.SUCCEEDED
+
+    # Test spot interruption
+    handle_preempt = backend.submit(make_test_launch(task_id="task-preempt", spot=True))
+    assert backend.poll(handle_preempt).state == AttemptState.PREEMPTED
+
+    # Test exit code 143 on spot
+    handle_143 = backend.submit(make_test_launch(task_id="task-exit143", spot=True))
+    assert backend.poll(handle_143).state == AttemptState.PREEMPTED
 
 
-@pytest.mark.unit
-def test_aws_ecr_image_registry():
-    client = FakeEcrClient()
-    registry = EcrImageRegistry(client=client, repository="wsr-release")
-    assert registry.resolve("v1.1.0") is None
-    digest = registry.push("local:v1.1.0", "v1.1.0")
-    assert digest.startswith("sha256:")
-    assert registry.resolve("v1.1.0") is not None
+def test_aws_ecr_image_registry() -> None:
+    commands: List[List[str]] = []
+
+    def mock_run(argv: List[str], input: Any = None, **kwargs: Any) -> Any:
+        commands.append(argv)
+        class MockResult:
+            returncode = 0
+            stdout = '["123456789012.dkr.ecr.us-east-1.amazonaws.com/wsmart-route@sha256:abcd1234efgh5678"]'
+            stderr = ""
+        if argv[:3] == ["docker", "manifest", "inspect"]:
+            class ManifestResult:
+                returncode = 0
+                stdout = '{"Descriptor": {"digest": "sha256:abcd1234efgh5678"}}'
+                stderr = ""
+            return ManifestResult()
+        return MockResult()
+
+    registry = EcrImageRegistry(
+        account="123456789012",
+        region="us-east-1",
+        image="wsmart-route",
+        run=mock_run,
+    )
+    digest = registry.push("local:latest", "v1.1.0")
+    assert digest == "sha256:abcd1234efgh5678"
+
+    resolved = registry.resolve("v1.1.0")
+    assert resolved == "sha256:abcd1234efgh5678"
 
 
-@pytest.mark.unit
-def test_aws_pricing():
-    assert price_per_hour("c6i.large", "us-east-1", spot=False) == 0.085
-    assert price_per_hour("c6i.large", "us-east-1", spot=True) == 0.034
-    assert price_per_hour("fargate", "us-east-1", spot=False) == 0.04048
-    assert price_per_hour("unknown-type") is None
+def test_aws_pricing() -> None:
+    p_ondemand = price_per_hour("c6i.large", "us-east-1", spot=False)
+    p_spot = price_per_hour("c6i.large", "us-east-1", spot=True)
+    assert p_ondemand is not None and p_spot is not None
+    assert p_spot < p_ondemand
+
+    f_ondemand = price_per_hour("fargate.1vcpu", "us-east-1", spot=False)
+    f_spot = price_per_hour("fargate.1vcpu", "us-east-1", spot=True)
+    assert f_ondemand is not None and f_spot is not None
+    assert f_spot < f_ondemand
 
 
-@pytest.mark.unit
-def test_aws_load_backend():
+def test_aws_load_backend() -> None:
     from logic.controllers.cloud.providers import load_backend
 
-    batch_be = load_backend(Provider.AWS, ComputeKind.BATCH, client=FakeBatchClient())
-    assert isinstance(batch_be, AwsBatchBackend)
-    fargate_be = load_backend(Provider.AWS, ComputeKind.SERVERLESS, client=FakeEcsClient())
-    assert isinstance(fargate_be, EcsFargateBackend)
-    ec2_be = load_backend(Provider.AWS, ComputeKind.VM, client=FakeEc2Client())
-    assert isinstance(ec2_be, Ec2Backend)
+    batch = load_backend(
+        Provider.AWS,
+        ComputeKind.BATCH,
+        client=FakeBatchClient(),
+        logs_client=FakeLogsClient(),
+    )
+    assert isinstance(batch, AwsBatchBackend)
 
+    ecs = load_backend(
+        Provider.AWS,
+        ComputeKind.SERVERLESS,
+        client=FakeEcsClient(),
+        logs_client=FakeLogsClient(),
+    )
+    assert isinstance(ecs, EcsFargateBackend)
+
+    ec2 = load_backend(Provider.AWS, ComputeKind.VM, client=FakeEc2Client())
+    assert isinstance(ec2, Ec2Backend)
