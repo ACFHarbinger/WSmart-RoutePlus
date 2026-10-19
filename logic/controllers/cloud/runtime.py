@@ -8,11 +8,13 @@ It reads its task from the environment:
 - ``WSR_CLOUD_WORKDIR``: scratch directory (default: a temporary directory);
 - ``WSR_CLOUD_PROJECT_ROOT``: where ``main.py`` is (default: this checkout);
 - ``WSR_CLOUD_SYNC_SECONDS``: seconds between output uploads (default 30);
-- ``WSR_GUROBI_LICENSE``: the license text, injected by the backend from the secret store.
+- ``WSR_GUROBI_LICENSE``: the license text, injected by the backend from the secret store;
+- ``WSR_SECRET_REFS``: secret references to resolve with the machine's identity (:mod:`.secret_refs`),
+  for services that cannot inject secrets natively. ``WSR_GUROBI_LICENSE`` may be one of them.
 
 Then it:
 
-1. fetches the staged inputs (:mod:`.staging`);
+1. resolves ``WSR_SECRET_REFS`` (exit 4 if one cannot be resolved) and fetches the staged inputs (:mod:`.staging`);
 2. writes the Gurobi license file (mode 0600) when the job has a license mode,
    and fails before running when a cell needs Gurobi and no license was injected;
 3. restores the task's outputs mirror from the object store, so a new attempt on
@@ -30,7 +32,7 @@ progress and results.
 Attributes:
     OutputMirror: Incremental upload and restore of a task's output directory.
     run_task: Run one attempt; returns the exit code.
-    EXIT_NO_LICENSE, EXIT_IDLE, EXIT_TERMINATED: Runtime exit codes.
+    EXIT_NO_LICENSE, EXIT_NO_SECRET, EXIT_IDLE, EXIT_TERMINATED: Runtime exit codes.
 """
 
 from __future__ import annotations
@@ -47,10 +49,12 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from logic.controllers.cloud.interfaces import ControlPlane, ObjectStore
 from logic.controllers.cloud.model import CellSpec, GurobiMode, JobSpec, ResultFile
+from logic.controllers.cloud.secret_refs import parse_refs, resolve_refs
 from logic.controllers.cloud.staging import fetch_inputs
 from logic.controllers.cloud.storage import sha256_file
 
 EXIT_NO_LICENSE = 3
+EXIT_NO_SECRET = 4
 EXIT_IDLE = 124
 EXIT_TERMINATED = 143
 PACKAGE_ROOT = Path(__file__).resolve().parents[3]
@@ -195,6 +199,8 @@ def run_task(
     clock: Callable[[], float] = time.time,
     sleep: Callable[[float], None] = time.sleep,
     license_text: Optional[str] = None,
+    secret_refs: Optional[Dict[str, str]] = None,
+    resolvers: Optional[Dict[str, Any]] = None,
 ) -> int:
     """Run one attempt of a task; returns the process exit code (see the module docstring)."""
     job = cp.get_job(job_id)
@@ -206,10 +212,20 @@ def run_task(
     def note(message: str, **fields: Any) -> None:
         cp.update_task(task_id, message=message, **fields)
 
+    try:
+        secrets = resolve_refs(secret_refs or {}, resolvers)
+    except LookupError as exc:
+        note(str(exc))
+        return EXIT_NO_SECRET
+    license_text = secrets.pop("WSR_GUROBI_LICENSE", None) or license_text
+
     policy_dir = None
     if spec.inputs_manifest:
         policy_dir = fetch_inputs(store, spec.inputs_manifest, cell.cell_id, project_root, workdir)
     env = _simulator_env(spec, cell, workdir, policy_dir, license_text)
+    if env is not None:
+        env.pop("WSR_SECRET_REFS", None)
+        env.update(secrets)
     if env is None:
         note("no Gurobi license was injected (WSR_GUROBI_LICENSE)")
         return EXIT_NO_LICENSE
@@ -271,6 +287,7 @@ def main() -> int:
         project_root=Path(os.environ.get("WSR_CLOUD_PROJECT_ROOT") or PACKAGE_ROOT),
         sync_seconds=float(os.environ.get("WSR_CLOUD_SYNC_SECONDS", "30")),
         license_text=os.environ.get("WSR_GUROBI_LICENSE"),
+        secret_refs=parse_refs(os.environ.get("WSR_SECRET_REFS")),
     )
 
 

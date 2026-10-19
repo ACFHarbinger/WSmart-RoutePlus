@@ -81,6 +81,14 @@ def add_cloud_args(parser: argparse.ArgumentParser) -> None:
 
     commands.add_parser("backends", help="List the configured backends")
 
+    commands.add_parser("credentials", help="Which providers have a usable CLI login or keychain credential")
+    commands.add_parser("profiles", help="List the profiles in the cloud profiles file")
+    secrets = commands.add_parser("secrets", help="Store or remove a secret in the OS keychain (never printed)")
+    secrets.add_argument("action", choices=["set", "delete", "exists"])
+    secrets.add_argument("name", help="Secret name (for example gurobi-wls), or provider/profile for a credential.")
+    secrets.add_argument("--from-file", default=None, help="Read the value from this file (set).")
+    secrets.add_argument("--stdin", action="store_true", help="Read the value from standard input (set).")
+
     worker = commands.add_parser("worker", help="Run the scheduler until every job finishes")
     worker.add_argument("--job", default=None, help="Only wait for this job.")
     worker.add_argument("--poll", type=float, default=5.0)
