@@ -54,6 +54,7 @@ const NAV: NavSection[] = [
     label: "Launch",
     items: [
       { mode: "sim_launcher", label: "Simulation Launcher" },
+      { mode: "cloud_launcher", label: "Cloud Launcher" },
       { mode: "training_hub", label: "Training & HPO Hub" },
       { mode: "data_gen", label: "Data Generation" },
       { mode: "eval_runner", label: "Evaluation Runner" },
@@ -90,6 +91,7 @@ const ICON: Record<AppMode, React.ReactNode> = {
   algorithms: <Bot size={15} />,
   hpo_tracker: <Sliders size={15} />,
   sim_launcher: <Play size={15} />,
+  cloud_launcher: <Cloud size={15} />,
   training_hub: <Cpu size={15} />,
   data_gen: <FlaskConical size={15} />,
   config_editor: <FileText size={15} />,

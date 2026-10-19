@@ -37,6 +37,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `commands/cloud/keychain.rs`: OS keychain credential management via the `keyring` crate (`cloud_store_credential`, `cloud_delete_credential`, `cloud_has_credential`) under service `wsmart-route.cloud` and account `{provider}/{profile}`. Secrets are never logged, returned to frontend, or written to disk.
   - Rust unit tests verifying fixture deserialization across all CLI subcommands against real CLI-generated fixtures, validation of request parameters, SHA-256 hashing, and poller lifecycle.
   - TypeScript client in `app/src/utils/cloud/` and types in `app/src/types/cloud.ts` wrapping Tauri invokes and event subscriptions.
+- **CR-14 (#134): Studio Cloud Launcher** in `app/src/pages/cloud/CloudLauncher.tsx`:
+  - `CloudLauncher.tsx`: Studio launcher interface for submitting distributed simulation runs and multi-cell experiment manifests. Supports single `test_sim` commands with preset templates, batch manifests with regex policy filtering, and custom job names and local state roots.
+  - `ProviderSelector.tsx`: dynamic target provider (`local`, `gcp`, `aws`, `azure`) and compute topology (`process`, `batch`, `serverless`, `vm`) configuration with active backend capability inspection (`listCloudBackends`).
+  - `CredentialModal.tsx`: secure OS keychain credential management for cloud profiles (`cloud_has_credential`, `cloud_store_credential`, `cloud_delete_credential`) without exposing secrets on disk or in logs.
+  - `EstimatePanel.tsx`: typed resource and cost estimation panel (`CloudJobEstimate`). Explicitly renders "Estimate unavailable (CR-10 cost and ETA engine pending)" when estimates are absent or pending without mocking arbitrary numbers.
+  - Resource and fault tolerance controls: parallel task caps, CPUs, RAM, Spot/Preemptible toggle, retries, wall-clock time, and idle timeouts.
+  - Gurobi licensing integration: WLS secret and BYO license configuration options.
+  - Live CLI command preview mirroring `logic/controllers/cli/cloud_parser.py` with one-click clipboard copying.
+  - Form state persistence in `useCloudLauncherStore` via Zustand (`wsroute-cloud-launcher`).
+  - App navigation integration in `Sidebar.tsx` (under Launch section with Cloud icon) and lazy loading in `App.tsx`.
 - **CR-15 (#135): Studio Cloud Job Monitor and Manager Actions** in `app/src/pages/cloud/CloudMonitor.tsx`:
   - `CloudMonitor.tsx`: Real-time monitoring and management dashboard for cloud routing jobs. Provides master-detail view with live updates fed by CR-13 background poller (`watchCloudJob`), state breakdown counters, proportional progress bars, and state/search filtering.
   - Manager actions: On-demand cancellation (`cancelCloudJob`), requeuing failed/cancelled tasks (`retryCloudJob`), scheduler placement stepping (`tickCloudWorker`), and hash-checked results downloading (`downloadCloudJobResults`).

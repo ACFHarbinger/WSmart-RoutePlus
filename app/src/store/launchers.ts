@@ -7,6 +7,7 @@
  */
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { CloudComputeKind, CloudGurobiMode, CloudProvider } from "../types/cloud";
 
 // ── Simulation Launcher (§G.9)
 
@@ -333,5 +334,56 @@ export const useDataGenStore = create<DataGenState>()(
       patch: (updates) => set(updates as Partial<DataGenState>),
     }),
     { name: "wsroute-data-gen" }
+  )
+);
+
+// ── Cloud Launcher (CR-14 / §J.1)
+
+export interface CloudLauncherState {
+  jobType: "command" | "manifest";
+  command: string;
+  manifestPath: string;
+  policyFilter: string;
+  jobName: string;
+  provider: CloudProvider;
+  compute: CloudComputeKind;
+  cloudProfile: string;
+  maxParallel: number;
+  cpus: number;
+  memoryGb: number;
+  spot: boolean;
+  retries: number;
+  maxWallSeconds: number;
+  idleSeconds: number;
+  gurobiMode: CloudGurobiMode;
+  gurobiSecret: string;
+  root: string;
+  patch: (updates: Partial<Omit<CloudLauncherState, "patch">>) => void;
+}
+
+export const useCloudLauncherStore = create<CloudLauncherState>()(
+  persist(
+    (set) => ({
+      jobType: "command",
+      command: "test_sim --policies aco_hh alns --days 30 --area figueiradafoz",
+      manifestPath: "",
+      policyFilter: "",
+      jobName: "",
+      provider: "local",
+      compute: "process",
+      cloudProfile: "default",
+      maxParallel: 4,
+      cpus: 2,
+      memoryGb: 4,
+      spot: false,
+      retries: 2,
+      maxWallSeconds: 7200,
+      idleSeconds: 60,
+      gurobiMode: "none",
+      gurobiSecret: "",
+      root: "outputs/cloud",
+      patch: (updates) => set(updates as Partial<CloudLauncherState>),
+    }),
+    { name: "wsroute-cloud-launcher" }
   )
 );
