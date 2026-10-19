@@ -11,7 +11,7 @@ Attributes:
 
 Example:
     >>> from logic.src.pipeline.rl.core import GSPO
-    >>> from logic.src.envs import GSPOEnv
+    >>> from logic.src.pipeline.rl.envs import GSPOEnv
     >>> from logic.src.models import GSPOPPOAgent
     >>> env = GSPOEnv()
     >>> agent = GSPOPPOAgent(env)

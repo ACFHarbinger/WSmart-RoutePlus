@@ -90,7 +90,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 import numpy as np
 
 from logic.src.configs.policies.alns import ALNSConfig
-from logic.src.envs.common.expand_pool import current_expand_pool
+from logic.src.pipeline.rl.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators import (
     build_greedy_routes,
     cluster_profit_removal,

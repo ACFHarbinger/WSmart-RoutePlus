@@ -449,7 +449,7 @@ PROBLEMS: List[str] = [
 ]
 ```
 
-**Mapping**: `{problem_name}` → `logic/src/envs/{problem_name}.py`
+**Mapping**: `{problem_name}` → `logic/src/pipeline/rl/envs/{problem_name}.py`
 
 ---
 
@@ -1427,7 +1427,7 @@ PROBLEMS: List[str] = [
 ]
 ```
 
-**Mapping**: `{problem_name}` → `logic/src/envs/{problem_name}.py`
+**Mapping**: `{problem_name}` → `logic/src/pipeline/rl/envs/{problem_name}.py`
 
 ---
 
@@ -2799,7 +2799,7 @@ def check_capacity(load: float, cfg: EnvConfig) -> bool:
 | File                                          | Constants Used                          | Purpose                 |
 | --------------------------------------------- | --------------------------------------- | ----------------------- |
 | `logic/src/policies/__init__.py`              | `SIMPLE_POLICIES`, `THRESHOLD_POLICIES` | Policy factory          |
-| `logic/src/envs/*.py`                         | `MAX_WASTE`, `VEHICLE_CAPACITY`         | Environment physics     |
+| `logic/src/pipeline/rl/envs/*.py`                         | `MAX_WASTE`, `VEHICLE_CAPACITY`         | Environment physics     |
 | `logic/src/pipeline/rl/core/*.py`             | `METRIC_MAPPING`, `LOSS_KEYS`           | RL training             |
 | `logic/src/pipeline/simulations/simulator.py` | `METRICS`, `SIM_METRICS`                | Simulation logging      |
 | `logic/src/utils/logging/plotting/*.py`       | `PLOT_COLOURS`, `MARKERS`               | Matplotlib charts       |

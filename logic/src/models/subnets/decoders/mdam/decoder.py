@@ -20,10 +20,10 @@ import torch
 from tensordict import TensorDict
 from torch import nn
 
-from logic.src.envs.base.base import RL4COEnvBase
 from logic.src.models.subnets.decoders.common import select_action
 from logic.src.models.subnets.decoders.mdam.path import MDAMPath
 from logic.src.models.subnets.embeddings.dynamic import DynamicEmbedding
+from logic.src.pipeline.rl.envs.base.base import RL4COEnvBase
 
 
 class MDAMDecoder(nn.Module):

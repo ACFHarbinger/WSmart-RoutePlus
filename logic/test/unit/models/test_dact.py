@@ -4,9 +4,9 @@ Tests for DACT Model and TSPkopt Environment.
 
 import pytest
 import torch
-from logic.src.envs.tsp_kopt import TSPkoptEnv
 from logic.src.models.core.dact import DACT
 from logic.src.models.core.dact.policy import DACTPolicy
+from logic.src.pipeline.rl.envs.tsp_kopt import TSPkoptEnv
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

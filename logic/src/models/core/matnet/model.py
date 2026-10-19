@@ -20,7 +20,7 @@ from typing import Any, Dict, Optional
 from tensordict import TensorDict
 from torch import nn
 
-from logic.src.envs.base.base import RL4COEnvBase
+from logic.src.pipeline.rl.envs.base.base import RL4COEnvBase
 
 from .policy import MatNetPolicy
 

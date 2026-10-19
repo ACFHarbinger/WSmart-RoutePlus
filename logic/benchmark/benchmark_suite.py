@@ -5,9 +5,9 @@ import torch
 from tensordict import TensorDict
 
 from logic.src.configs.policies.swc_tcf import SWCTCFConfig
-from logic.src.envs import PTP
 from logic.src.models import AttentionModel
 from logic.src.models.subnets.factories import AttentionComponentFactory
+from logic.src.pipeline.rl.envs import PTP
 from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.policy_swc_tcf import (
     run_swc_tcf_optimizer,

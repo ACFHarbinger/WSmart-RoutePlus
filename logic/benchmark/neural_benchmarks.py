@@ -36,8 +36,8 @@ def benchmark_neural_model(
     print(f"[*] Benchmarking {model_name.upper()} (nodes={num_nodes}, batch={batch_size}, device={device})...")
 
     # Setup environment
-    from logic.src.envs import get_env
-    from logic.src.envs.base import RL4COEnvBase
+    from logic.src.pipeline.rl.envs import get_env
+    from logic.src.pipeline.rl.envs.base import RL4COEnvBase
     env: RL4COEnvBase = get_env("ptp", device=device)
 
     # Instantiate policy directly

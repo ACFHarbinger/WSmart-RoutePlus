@@ -11,7 +11,6 @@ only. `docs/moon/` stays internal.
 | `logic.src.constants` | [constants.md](constants.md) |
 | `logic.src.data` | [data.md](data.md) |
 | `logic.src.enums` | [enums.md](enums.md) |
-| `logic.src.envs` | [envs.md](envs.md) |
 | `logic.src.interfaces` | [interfaces.md](interfaces.md) |
 | `logic.src.models` | [models.md](models.md) |
 | `logic.src.pipeline` | [pipeline.md](pipeline.md) |

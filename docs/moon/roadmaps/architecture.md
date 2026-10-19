@@ -91,7 +91,7 @@
 
 ### §B.6 — Environment Plugin System (Analogous to §B.3)
 
-**Pain**: Adding a new problem environment (e.g., a new VRP variant) requires modifying `logic/src/envs/problems.py`, the CLI parser, the data generator, and the Studio environment selector — no single registration point.
+**Pain**: Adding a new problem environment (e.g., a new VRP variant) requires modifying `logic/src/pipeline/rl/envs/problems.py`, the CLI parser, the data generator, and the Studio environment selector — no single registration point.
 
 **Options**
 

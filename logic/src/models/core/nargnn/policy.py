@@ -19,8 +19,6 @@ from typing import Any, Dict, Optional
 from tensordict import TensorDict
 from torch import nn
 
-from logic.src.envs import get_env
-from logic.src.envs.base.base import RL4COEnvBase
 from logic.src.models.common.non_autoregressive.decoder import (
     NonAutoregressiveDecoder,
 )
@@ -32,6 +30,8 @@ from logic.src.models.common.non_autoregressive.policy import (
 )
 from logic.src.models.subnets.decoders.nar import SimpleNARDecoder
 from logic.src.models.subnets.encoders.nargnn import NARGNNEncoder
+from logic.src.pipeline.rl.envs import get_env
+from logic.src.pipeline.rl.envs.base.base import RL4COEnvBase
 
 
 class NARGNNPolicy(NonAutoregressivePolicy):

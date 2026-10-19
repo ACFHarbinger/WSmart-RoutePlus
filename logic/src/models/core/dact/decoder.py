@@ -28,8 +28,8 @@ import torch.nn.functional as F
 from tensordict import TensorDict
 from torch import nn
 
-from logic.src.envs.base.base import RL4COEnvBase
 from logic.src.models.common.improvement.policy import ImprovementDecoder
+from logic.src.pipeline.rl.envs.base.base import RL4COEnvBase
 
 
 class DACTDecoder(ImprovementDecoder):

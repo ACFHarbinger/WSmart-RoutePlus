@@ -5,9 +5,9 @@ import json
 import pytest
 import torch
 from logic.src.configs.models import ActivationConfig, NormalizationConfig
-from logic.src.envs.cptp import CPTPEnv
-from logic.src.envs.ptp import PTPEnv
 from logic.src.models.core.attention_model.policy import AttentionModelPolicy
+from logic.src.pipeline.rl.envs.cptp import CPTPEnv
+from logic.src.pipeline.rl.envs.ptp import PTPEnv
 from logic.src.utils.model.loader import load_model
 from tensordict import TensorDict
 

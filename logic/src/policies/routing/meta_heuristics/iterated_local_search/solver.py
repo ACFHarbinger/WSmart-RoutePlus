@@ -18,7 +18,7 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 
 from logic.src.configs.policies.ils import ILSConfig
-from logic.src.envs.common.expand_pool import current_expand_pool
+from logic.src.pipeline.rl.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
 from logic.src.policies.helpers.operators.search_heuristics.destroy_repair_llh import (
     build_greedy_initial_routes,
