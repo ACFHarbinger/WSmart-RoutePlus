@@ -66,10 +66,18 @@ export interface CloudTaskLogsResult {
   log: string;
 }
 
+export interface CloudDownloadedFile {
+  relpath: string;
+  sha256: string;
+  size: number;
+}
+
 export interface CloudDownloadResult {
   job_id: string;
   dest: string;
   files: number;
+  /** Per-file listing; empty with older CLIs. */
+  file_list: CloudDownloadedFile[];
 }
 
 export interface BackendCapabilities {

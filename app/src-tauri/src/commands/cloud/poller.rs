@@ -44,8 +44,13 @@ pub trait CloudJobWatcher: Send + Sync {
 }
 
 /// Polling-based implementation of [`CloudJobWatcher`] for the local control plane.
+/// A watcher's cancel channel and generation; the generation keeps a finished
+/// poller from unregistering a newer watcher of the same job.
+type WatcherEntry = (u64, tokio::sync::watch::Sender<bool>);
+
 pub struct LocalJobPoller {
-    active_watchers: Arc<Mutex<HashMap<String, tokio::sync::watch::Sender<bool>>>>,
+    active_watchers: Arc<Mutex<HashMap<String, WatcherEntry>>>,
+    next_generation: std::sync::atomic::AtomicU64,
 }
 
 impl Default for LocalJobPoller {
@@ -58,6 +63,7 @@ impl LocalJobPoller {
     pub fn new() -> Self {
         Self {
             active_watchers: Arc::new(Mutex::new(HashMap::new())),
+            next_generation: std::sync::atomic::AtomicU64::new(0),
         }
     }
 }
@@ -72,12 +78,16 @@ impl CloudJobWatcher for LocalJobPoller {
         python_executable: Option<String>,
         app: AppHandle,
     ) -> Result<(), String> {
-        let safe_interval = interval_ms.max(200);
+        // Each poll starts a Python process; keep at least a second between them.
+        let safe_interval = interval_ms.max(1000);
+        let generation = self
+            .next_generation
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
 
         // Cancel previous watcher for this job if already running
         {
             let mut guard = self.active_watchers.lock().map_err(|e| e.to_string())?;
-            if let Some(old_tx) = guard.remove(&job_id) {
+            if let Some((_, old_tx)) = guard.remove(&job_id) {
                 let _ = old_tx.send(true);
             }
         }
@@ -85,7 +95,7 @@ impl CloudJobWatcher for LocalJobPoller {
         let (cancel_tx, mut cancel_rx) = tokio::sync::watch::channel(false);
         {
             let mut guard = self.active_watchers.lock().map_err(|e| e.to_string())?;
-            guard.insert(job_id.clone(), cancel_tx);
+            guard.insert(job_id.clone(), (generation, cancel_tx));
         }
 
         let registry = Arc::clone(&self.active_watchers);
@@ -93,6 +103,8 @@ impl CloudJobWatcher for LocalJobPoller {
 
         tokio::spawn(async move {
             let mut ticker = tokio::time::interval(tokio::time::Duration::from_millis(safe_interval));
+            // A slow poll delays the next one instead of triggering a burst of catch-up polls.
+            ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
 
             loop {
                 tokio::select! {
@@ -137,7 +149,9 @@ impl CloudJobWatcher for LocalJobPoller {
 
             // Cleanup from active map
             if let Ok(mut guard) = registry.lock() {
-                guard.remove(&task_job_id);
+                if guard.get(&task_job_id).map(|(g, _)| *g) == Some(generation) {
+                    guard.remove(&task_job_id);
+                }
             }
         });
 
@@ -146,7 +160,7 @@ impl CloudJobWatcher for LocalJobPoller {
 
     fn unwatch_job(&self, job_id: &str) -> Result<(), String> {
         let mut guard = self.active_watchers.lock().map_err(|e| e.to_string())?;
-        if let Some(tx) = guard.remove(job_id) {
+        if let Some((_, tx)) = guard.remove(job_id) {
             let _ = tx.send(true);
         }
         Ok(())
@@ -154,7 +168,7 @@ impl CloudJobWatcher for LocalJobPoller {
 
     fn stop_all(&self) -> Result<(), String> {
         let mut guard = self.active_watchers.lock().map_err(|e| e.to_string())?;
-        for (_, tx) in guard.drain() {
+        for (_, (_, tx)) in guard.drain() {
             let _ = tx.send(true);
         }
         Ok(())

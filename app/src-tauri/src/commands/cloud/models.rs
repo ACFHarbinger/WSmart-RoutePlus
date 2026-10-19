@@ -114,6 +114,17 @@ pub struct CloudDownloadResult {
     pub job_id: String,
     pub dest: String,
     pub files: usize,
+    /// Per-file listing (`relpath`, `sha256`, `size`); absent from older CLIs.
+    #[serde(default)]
+    pub file_list: Vec<CloudDownloadedFile>,
+}
+
+/// One downloaded result file, as listed by `cloud download --json`.
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub struct CloudDownloadedFile {
+    pub relpath: String,
+    pub sha256: String,
+    pub size: u64,
 }
 
 /// Capabilities of a compute backend.
