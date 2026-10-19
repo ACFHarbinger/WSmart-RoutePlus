@@ -78,7 +78,7 @@ def _secrets(opts: Dict[str, Any]) -> Any:
     """``secrets set|delete|exists NAME``: the value is read from a file or stdin and never printed."""
     import sys
 
-    from logic.controllers.cloud.credentials import KeychainSecretStore, secret_account
+    from logic.controllers.cloud.auth.credentials import KeychainSecretStore, secret_account
 
     name = opts["name"]
     account = name if "/" in name else secret_account(name)
@@ -189,7 +189,7 @@ def _backends(ctx: _Context) -> Any:
 
 
 def _credentials(ctx: _Context) -> Any:
-    from logic.controllers.cloud.credentials import detect_logins
+    from logic.controllers.cloud.auth.credentials import detect_logins
 
     logins = [to_dict(status) for status in detect_logins()]
     _print(ctx.opts, logins, "\n".join(f"{s['provider']}: {'usable' if s['usable'] else 'no login'}" for s in logins))
@@ -197,7 +197,7 @@ def _credentials(ctx: _Context) -> Any:
 
 
 def _profiles(ctx: _Context) -> Any:
-    from logic.controllers.cloud.config import load_profiles
+    from logic.controllers.cloud.auth.config import load_profiles
 
     profiles = [to_dict(profile) for profile in load_profiles().values()]
     _print(ctx.opts, profiles, "\n".join(f"{p['name']}: {p['provider']}/{p['compute']}" for p in profiles))
