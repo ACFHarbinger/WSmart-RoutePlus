@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from logic.controllers.cloud.local.backend import LocalProcessBackend
 from logic.controllers.cloud.local.control_plane import SQLiteControlPlane
@@ -23,21 +23,24 @@ from logic.controllers.cloud.model import (
     to_dict,
 )
 from logic.controllers.cloud.service import CloudService
+from logic.controllers.cloud.storage import sha256_file
+from logic.controllers.cloud.worker import serve, spawn_worker
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
-def local_service(root: Path) -> CloudService:
-    """The local profile rooted at ``root``.
+def local_service(root: Path, project_root: Optional[Path] = None) -> CloudService:
+    """The local profile rooted at ``root``; local tasks run ``main.py`` in ``project_root``.
 
     Secrets come from ``WSR_SECRET_<NAME>`` environment variables.
     """
     root = Path(root)
+    project_root = Path(project_root) if project_root else REPO_ROOT
     secrets = EnvSecretStore(prefix="WSR_SECRET_")
     return CloudService(
         control_plane=SQLiteControlPlane(root / "control.db"),
         store=FilesystemObjectStore(root / "objects"),
-        backends={(Provider.LOCAL, ComputeKind.PROCESS): LocalProcessBackend(cwd=REPO_ROOT, secrets=secrets)},
+        backends={(Provider.LOCAL, ComputeKind.PROCESS): LocalProcessBackend(cwd=project_root, secrets=secrets)},
         workroot=root / "work",
     )
 
@@ -73,7 +76,8 @@ def _print(opts: Dict[str, Any], payload: Any, text: str) -> None:
 def run_cloud(opts: Dict[str, Any]) -> Any:
     """Execute one ``cloud`` sub-command; returns its payload."""
     root = Path(opts.get("root") or "outputs/cloud")
-    service = local_service(root)
+    project_root = Path(opts["project_root"]) if opts.get("project_root") else REPO_ROOT
+    service = local_service(root, project_root)
     command = opts["cloud_command"]
 
     if command == "submit":
@@ -83,7 +87,9 @@ def run_cloud(opts: Dict[str, Any]) -> Any:
         else:
             spec = job_from_command(opts["sim_command"], **overrides)
         job = service.submit(spec)
-        payload = {"job_id": job.job_id, "tasks": len(spec.cells)}
+        payload: Dict[str, Any] = {"job_id": job.job_id, "tasks": len(spec.cells)}
+        if not opts.get("wait") and not opts.get("no_worker"):
+            payload["worker_pid"] = spawn_worker(root, project_root=project_root, python=service.python)
         _print(opts, payload, f"submitted {job.job_id} ({len(spec.cells)} task(s))")
         if opts.get("wait"):
             state = service.run(job.job_id, poll_seconds=float(opts.get("poll") or 5.0))
@@ -123,9 +129,12 @@ def run_cloud(opts: Dict[str, Any]) -> Any:
     if command == "download":
         dest = Path(opts.get("dest") or root / "results" / opts["job_id"])
         files = service.download(opts["job_id"], dest)
-        _print(
-            opts, {"job_id": opts["job_id"], "dest": str(dest), "files": len(files)}, f"{len(files)} file(s) in {dest}"
-        )
+        listing = [
+            {"relpath": path.relative_to(dest).as_posix(), "sha256": sha256_file(path), "size": path.stat().st_size}
+            for path in files
+        ]
+        payload = {"job_id": opts["job_id"], "dest": str(dest), "files": len(files), "file_list": listing}
+        _print(opts, payload, f"{len(files)} file(s) in {dest}")
         return files
 
     if command == "backends":
@@ -141,8 +150,12 @@ def run_cloud(opts: Dict[str, Any]) -> Any:
             changes = service.tick()
             _print(opts, {"changes": changes}, f"{changes} change(s)")
             return changes
-        state = service.run(opts.get("job"), poll_seconds=float(opts.get("poll") or 5.0))
-        _print(opts, {"state": state.value if state else None}, "queue drained")
-        return state
+        if opts.get("job"):
+            state = service.run(opts["job"], poll_seconds=float(opts.get("poll") or 5.0))
+            _print(opts, {"state": state.value if state else None}, f"{opts['job']}: {state.value if state else None}")
+            return state
+        reason = serve(service, root, poll_seconds=float(opts.get("poll") or 5.0))
+        _print(opts, {"stopped": reason}, reason)
+        return reason
 
     raise ValueError(f"unknown cloud command {command!r}")

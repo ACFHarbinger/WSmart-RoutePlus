@@ -30,6 +30,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `testing/`: fakes and the contract suites every backend, control plane, object store and secret store must pass.
   - CLI: `python main.py cloud submit|status|logs|cancel|retry|download|backends|worker`, with `--json` output for the Studio. A real two-day `test_sim` cell ran end to end through it.
   - `logic.controllers.cloud` is excluded from the release until CR-17 ships it as the `[cloud]` extra.
+- **Cloud runner, local worker and light entry point** (found while reviewing CR-13):
+  - `cloud submit` now starts a detached background worker (`logic/controllers/cloud/worker.py`) unless one already holds `<root>/worker.lock`. The worker schedules every job under the root and exits when all have finished. Before, a job submitted from the Studio stayed queued, because nothing ran the scheduler. `--no-worker` keeps the old behaviour.
+  - `python -m logic.controllers.cloud` runs the same commands without `main.py`'s start-up imports: about 0.3 s and 33 MB per call instead of 2 s and 690 MB. The Studio's status polling uses it.
+  - `--project-root` sets the repository whose `main.py` local tasks run.
+  - `cloud download --json` adds `file_list` (`relpath`, `sha256`, `size` per file) next to the `files` count.
 - **Roadmap:** `docs/moon/roadmaps/cloud.md` (§J), linked from `docs/moon/ROADMAP.md`: the v1.1.0 cloud runner design, its 17 work packages (#121–#137, epic #120) and future work.
 - **Agent brief:** `.agent/tasks/cloud-runner-2026-10-19.md`, with Claude's and Gemini's lanes, and a kickoff entry on the agent bus.
 

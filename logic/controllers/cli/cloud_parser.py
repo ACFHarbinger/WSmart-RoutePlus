@@ -27,6 +27,11 @@ def add_cloud_args(parser: argparse.ArgumentParser) -> None:
         default="outputs/cloud",
         help="Local state directory of the local profile: control plane, objects and task outputs.",
     )
+    parser.add_argument(
+        "--project-root",
+        default=None,
+        help="Repository root whose main.py local tasks run (default: this checkout).",
+    )
     parser.add_argument("--json", action="store_true", help="Print machine-readable JSON.")
     commands = parser.add_subparsers(dest="cloud_command", required=True, help="cloud command")
 
@@ -52,6 +57,11 @@ def add_cloud_args(parser: argparse.ArgumentParser) -> None:
         "--gurobi-secret", default=None, help="Secret-store name of the Gurobi license (never the value)."
     )
     submit.add_argument("--wait", action="store_true", help="Run the scheduler here until the job finishes.")
+    submit.add_argument(
+        "--no-worker",
+        action="store_true",
+        help="Do not start a background worker (by default one starts unless a worker is already running).",
+    )
     submit.add_argument("--poll", type=float, default=5.0, help="Seconds between scheduling passes with --wait.")
 
     status = commands.add_parser("status", help="A job's state, or the recent jobs")

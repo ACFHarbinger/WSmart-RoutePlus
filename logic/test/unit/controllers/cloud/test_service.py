@@ -214,7 +214,7 @@ def test_cli_runs_a_manifest_end_to_end_and_resumes_a_killed_task(tmp_path, monk
     )
     root = tmp_path / "state"
     command, opts = registry.get_parser().parse_process_args(
-        ["cloud", "--root", str(root), "submit", "--manifest", str(manifest), "--max-parallel", "2"]
+        ["cloud", "--root", str(root), "submit", "--manifest", str(manifest), "--max-parallel", "2", "--no-worker"]
     )
     assert command == "cloud"
     job_id = cli.run_cloud(opts)["job_id"]
