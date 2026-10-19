@@ -61,6 +61,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `python -m logic.controllers.cloud` runs the same commands without `main.py`'s start-up imports: about 0.3 s and 33 MB per call instead of 2 s and 690 MB. The Studio's status polling uses it.
   - `--project-root` sets the repository whose `main.py` local tasks run.
   - `cloud download --json` adds `file_list` (`relpath`, `sha256`, `size` per file) next to the `files` count.
+- **CR-02 (#122): task runtime** (`python -m logic.controllers.cloud.runtime`, the entry point of the release image):
+  - `staging.py`: at submit, a remote job's shared inputs (`JobSpec.inputs`, default `data/simulator`) and each cell's policy directory are uploaded content-addressed (unchanged files once across jobs) with a manifest (`JobSpec.inputs_manifest`). The runtime fetches them into the project root and its work directory, checking every hash.
+  - `runtime.py`: restores the task's outputs mirror (`work/<job>/<task>/outputs/` in the object store), runs `main.py test_sim` with daily checkpoints, uploads changed outputs every `WSR_CLOUD_SYNC_SECONDS`, and records a heartbeat when outputs change. It stops a run after `idle_seconds` without new output (exit 124). On SIGTERM it syncs and exits 143, so the next attempt, on any machine, resumes from the last finished day. On success it records the results index.
+  - Gurobi: the backend injects `WSR_GUROBI_LICENSE` from the secret store; the runtime writes it to a mode-0600 license file for `GRB_LICENSE_FILE`, keeps the secret out of the simulator's environment, and fails before the run (exit 3) when a cell needs Gurobi and no license was injected.
+  - `profiles.py`: control planes and object stores from URIs (`sqlite://`, `file://`; `firestore://`, `supabase://`, `gs://`, `s3://` and `az://` resolve to the provider packages).
+  - `CloudService(remote=RemoteConfig(...))`: jobs for GCP, AWS and Azure need an image, stage their inputs at submit, and launch the runtime with the control-plane and store URIs in the environment and the Gurobi secret by name.
+  - A task SIGTERMed after day 2 resumed on a fresh machine (empty work and project directories) and finished with the same results as an uninterrupted run.
 - **CR-13/CR-15 review fixes** (Studio cloud backend):
   - The Tauri commands call `python -m logic.controllers.cloud --project-root <repo>` instead of `python main.py cloud`.
   - The job poller keeps at least 1 s between polls, delays rather than bursts after a slow poll, and tags each watcher with a generation. Before, a finished poller could unregister a newer watcher of the same job, which then could not be stopped.
