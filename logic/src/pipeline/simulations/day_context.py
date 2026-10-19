@@ -36,7 +36,7 @@ from logic.src.pipeline.simulations.naming import (  # noqa: F401
     resolve_policy_display_name,
     to_slug,
 )
-from logic.src.pipeline.simulations.solver_status import current_solver_status, reset_solver_status
+from logic.src.pipeline.simulations.reporting import current_solver_status, reset_solver_status
 
 
 @dataclass
@@ -407,8 +407,13 @@ def run_day(context: SimulationDayContext) -> SimulationDayContext:
     """
     from logic.src.envs.common.expand_pool import reset_expand_pool, set_expand_pool
     from logic.src.envs.common.released_specs import released_spec
+    from logic.src.pipeline.simulations.day_setup import (
+        apply_shared_bin_rng,
+        policy_seed,
+        seed_policy_rng,
+        shared_env_seed,
+    )
     from logic.src.pipeline.simulations.pipeline import resolve_pipeline
-    from logic.src.pipeline.simulations.rng import apply_shared_bin_rng, policy_seed, seed_policy_rng, shared_env_seed
 
     # Validate the selected pipeline before reseeding or mutating simulation state.
     configured = context.day_pipeline

@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
-from logic.src.pipeline.simulations.solver_status import current_solver_status, reset_solver_status
+from logic.src.pipeline.simulations.reporting import current_solver_status, reset_solver_status
 from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow import (
     formulations,
     gurobi,

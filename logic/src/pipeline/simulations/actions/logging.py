@@ -17,9 +17,9 @@ from rich.table import Table
 
 from logic.src.pipeline.simulations.actions.base import SimulationAction, bind_context
 from logic.src.pipeline.simulations.day_context import get_daily_results
-from logic.src.pipeline.simulations.failure_analyzer import FailureAnalyzer
 from logic.src.tracking.integrations.simulation import get_sim_tracker
 from logic.src.tracking.logging.log_utils import send_daily_output_to_gui
+from logic.src.tracking.logging.modules.failure_analyzer import FailureAnalyzer
 from logic.src.tracking.logging.modules.failure_emit import emit_sim_failure_summary
 
 
@@ -63,7 +63,7 @@ class LogAction(SimulationAction):
         if getattr(context, "metrics_phase", "final") != "final":
             raise ValueError("logging preliminary metrics; collection has not published the executed plan")
         from logic.src.envs.common.objectives import Economics
-        from logic.src.pipeline.simulations.problem_flags import per_trip_shift
+        from logic.src.pipeline.simulations.day_setup import per_trip_shift
 
         economics = None
         revenue = getattr(bins, "revenue", None) if bins is not None else None
@@ -90,7 +90,7 @@ class LogAction(SimulationAction):
             economics=economics,
         )
 
-        from logic.src.pipeline.simulations.solver_status import current_solver_certificate
+        from logic.src.pipeline.simulations.reporting import current_solver_certificate
 
         proof = current_solver_certificate()
         dlog["solver_certificate"] = proof

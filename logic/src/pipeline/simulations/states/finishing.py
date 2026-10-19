@@ -200,7 +200,7 @@ class FinishingState(SimState):
                                 pol_results.append(shared_metrics[res_key])
 
                         if pol_results:
-                            from logic.src.pipeline.simulations.aggregation import summary_pair
+                            from logic.src.pipeline.simulations.reporting import summary_pair
 
                             mean_metrics, _std_metrics, summary = summary_pair(pol_results)
                             mean_metrics["n_failed"] = float(summary.n_failed)

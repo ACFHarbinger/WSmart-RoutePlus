@@ -3,7 +3,7 @@
 import pandas as pd
 import pytest
 from logic.src.pipeline.simulations.day_context import get_daily_results, record_aborted_day, resolve_solver_status
-from logic.src.pipeline.simulations.solver_status import (
+from logic.src.pipeline.simulations.reporting import (
     current_solver_status,
     format_backend_status,
     note_solver_status,

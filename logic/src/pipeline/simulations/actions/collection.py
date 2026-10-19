@@ -131,7 +131,7 @@ class CollectAction(SimulationAction):
         time_spent_h = driving_time_h + service_time_total_h
 
         # TCPTP validates each trip against the shift. Other problems keep the tour.
-        from logic.src.pipeline.simulations.problem_flags import per_trip_shift
+        from logic.src.pipeline.simulations.day_setup import per_trip_shift
 
         shift_checked = per_trip_shift(context)
         if shift_checked and tour and len(tour) > 2:

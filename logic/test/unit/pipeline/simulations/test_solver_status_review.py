@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 from logic.src.pipeline.simulations.day_context import SimulationDayContext, run_day
-from logic.src.pipeline.simulations.solver_status import current_solver_status, note_solver_status, reset_solver_status
+from logic.src.pipeline.simulations.reporting import current_solver_status, note_solver_status, reset_solver_status
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

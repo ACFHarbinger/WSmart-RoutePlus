@@ -163,7 +163,7 @@ def _run_ortools_tcf_optimizer(  # noqa: C901
     objective.SetMaximization()
 
     # 5. Optimization & Parsing
-    from logic.src.pipeline.simulations.solver_status import format_backend_status, note_solver_status
+    from logic.src.pipeline.simulations.reporting import format_backend_status, note_solver_status
 
     status = solver.Solve()
     note_solver_status(format_backend_status("ortools", status))

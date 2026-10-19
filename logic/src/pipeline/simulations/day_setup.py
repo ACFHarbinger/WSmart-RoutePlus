@@ -1,9 +1,11 @@
-"""Random streams for one simulation day.
+"""Per-day inputs of the day loop: random streams and problem flags.
 
 The environment stream is shared by every policy on the same sample and day.
 The policy stream depends on a stable policy id and must not reseed the bins.
+The problem flags are read from ``ProblemSpec``.
 """
 
+import contextlib
 import random
 from typing import Any
 
@@ -39,3 +41,20 @@ def apply_shared_bin_rng(bins: Any, seed: int) -> None:
     if bins is None:
         return
     bins.rng = np.random.default_rng(int(seed))
+
+
+def per_trip_shift(context: Any) -> bool:
+    """True when each trip must fit the shift (TCPTP).
+
+    A missing spec is loaded from the released registry by problem name.
+    Unreleased names are not shift-checked.
+    """
+    spec = getattr(context, "problem_spec", None)
+    if spec is None:
+        from logic.src.envs.common.released_specs import released_spec
+
+        spec = released_spec(str(getattr(context, "problem", "") or ""))
+        if spec is not None:
+            with contextlib.suppress(Exception):
+                context.problem_spec = spec
+    return getattr(spec, "per_trip_shift", False) is True

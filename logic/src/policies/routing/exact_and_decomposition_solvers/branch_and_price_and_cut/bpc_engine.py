@@ -200,7 +200,7 @@ def run_bpc(  # noqa: C901
         >>> problem = build_subproblem(dist_matrix, wastes, capacity=10, revenue=1, cost_unit=1)
         >>> result = run_bpc(problem)  # SolveResult(routes, profit, cost)
     """
-    from logic.src.pipeline.simulations.solver_status import (
+    from logic.src.pipeline.simulations.reporting import (
         note_solver_incumbent,
         note_solver_status,
         reset_solver_certificate,

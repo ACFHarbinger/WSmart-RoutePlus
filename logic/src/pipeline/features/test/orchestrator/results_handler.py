@@ -99,7 +99,7 @@ def aggregate_final_results(log_tmp: Any, cfg: Config, lock: Any) -> Tuple[Dict[
             for key, val in log_tmp.items():
                 log_full[key].extend(list(val))
 
-            from logic.src.pipeline.simulations.aggregation import summary_pair
+            from logic.src.pipeline.simulations.reporting import summary_pair
 
             for pol_name in policy_names:
                 # A policy with no successful sample is omitted. An all-zero mean

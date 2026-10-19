@@ -596,7 +596,7 @@ def sequential_simulations(  # noqa: C901
                 if res_std and log_std is not None:
                     log_std.update(res_std)
             else:
-                from logic.src.pipeline.simulations.aggregation import summary_pair
+                from logic.src.pipeline.simulations.reporting import summary_pair
 
                 failed_payloads = []
                 for item in failed_log:

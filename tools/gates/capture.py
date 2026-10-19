@@ -47,7 +47,10 @@ class _RootProofFilter(logging.Filter):
 
 def install_legacy_observer() -> bool:
     """Install logging-only proof capture when the target tree has no native publisher."""
-    status = importlib.import_module("logic.src.pipeline.simulations.solver_status")
+    try:
+        status = importlib.import_module("logic.src.pipeline.simulations.reporting")
+    except ModuleNotFoundError:  # trees before the 2026-10-19 layout, such as the gate baseline
+        status = importlib.import_module("logic.src.pipeline.simulations.solver_status")
     if hasattr(status, "current_solver_certificate"):
         return False
     module = importlib.import_module(

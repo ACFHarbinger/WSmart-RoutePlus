@@ -20,7 +20,7 @@ import numpy as np
 from omegaconf import DictConfig, OmegaConf
 
 from logic.src.pipeline.simulations.day_context import resolve_solver_status
-from logic.src.pipeline.simulations.solver_status import current_solver_status, reset_solver_status
+from logic.src.pipeline.simulations.reporting import current_solver_status, reset_solver_status
 from logic.src.policies.routing.base import RoutingAlgorithmFactory, RoutingAlgorithmRegistry
 
 from .base import SimulationAction, _as_policy_mapping, bind_context
