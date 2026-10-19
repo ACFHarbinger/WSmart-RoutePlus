@@ -81,6 +81,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `config.py`: cloud profiles in `$WSR_CLOUD_CONFIG` or `~/.config/wsmart-route/cloud.yaml` (provider, compute kind, region, credential source, control-plane and store URIs, image, Gurobi secret name). Unknown keys are rejected, so secrets cannot be put there.
   - CLI: `cloud credentials`, `cloud profiles`, `cloud secrets set|delete|exists NAME` (a value is read only from `--from-file` or `--stdin`, never from an argument, and is never printed). `run_cloud` dispatches through a command table.
   - A Gurobi license resolved through a reference reaches the simulator as a mode-0600 file, and its value appears nowhere in the control-plane database or the object store.
+- **CR-06 (#126) review fixes, made during integration:**
+  - The EC2 user data now has `trap 'shutdown -h now' EXIT`, so the instance stops (and, with `InstanceInitiatedShutdownBehavior=terminate`, is deleted) even when a step fails. It also logs Docker in to ECR before pulling an ECR image; before, a private image could not be pulled.
+  - The image uses `CMD`, not `ENTRYPOINT`, for the task runtime: backends pass `LaunchSpec.argv` as the whole container command, which an entry point would have doubled.
+  - `firestore://` URIs raise a `ValueError` with the login command when no Google credentials are found, instead of `DefaultCredentialsError`.
 - **Moved:** `staging.py` and `storage.py` into `logic/controllers/cloud/store/` (imports `logic.controllers.cloud.store.*`).
 - **Moved:** the authentication modules into `logic/controllers/cloud/auth/`: `credentials.py`, `config.py` (cloud profiles) and `secret_refs.py`. Imports are `logic.controllers.cloud.auth.*`; `profiles.py` (control-plane and store URIs) stays in `logic/controllers/cloud/`.
 - **CR-03 (#123): release image and registries**:

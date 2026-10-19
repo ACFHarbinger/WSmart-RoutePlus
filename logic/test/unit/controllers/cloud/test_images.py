@@ -76,7 +76,8 @@ def test_acr_and_failures():
 @pytest.mark.unit
 def test_dockerfile_invariants():
     text = (ROOT / "infra/cloud/image/Dockerfile").read_text()
-    assert 'ENTRYPOINT ["python", "-m", "logic.controllers.cloud.runtime"]' in text
+    assert 'CMD ["python", "-m", "logic.controllers.cloud.runtime"]' in text
+    assert not any(line.startswith("ENTRYPOINT") for line in text.splitlines())
     assert "USER wsr" in text and "ARG EXTRAS=solvers,cloud" in text
     copies = [line.split()[1:] for line in text.splitlines() if line.startswith("COPY")]
     assert copies == [["pyproject.toml", "/tmp/pyproject.toml"], [".", "/app"]]  # the release tree only

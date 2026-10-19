@@ -45,4 +45,5 @@ RUN useradd --create-home --uid 10001 --gid 0 wsr \
  && chown -R wsr:0 /app /work \
  && chmod -R g=u /app /work
 USER wsr
-ENTRYPOINT ["python", "-m", "logic.controllers.cloud.runtime"]
+# CMD, not ENTRYPOINT: backends pass LaunchSpec.argv as the full container command.
+CMD ["python", "-m", "logic.controllers.cloud.runtime"]

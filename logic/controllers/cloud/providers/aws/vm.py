@@ -99,8 +99,7 @@ class Ec2Backend(ComputeBackend):
         # Inject secrets via WSR_SECRET_REFS (common secret path)
         if launch.secret_env:
             secret_refs = {
-                var: f"awssm://{self.region}/{sec_name}"
-                for var, sec_name in sorted(launch.secret_env.items())
+                var: f"awssm://{self.region}/{sec_name}" for var, sec_name in sorted(launch.secret_env.items())
             }
             env["WSR_SECRET_REFS"] = json.dumps(secret_refs)
 
@@ -109,8 +108,18 @@ class Ec2Backend(ComputeBackend):
         image = launch.image or "wsmart-route:latest"
         cmd = " ".join(shlex.quote(arg) for arg in launch.argv)
 
+        registry = image.split("/", 1)[0] if "/" in image else ""
+        ecr_login = ""
+        if ".dkr.ecr." in registry and ".amazonaws.com" in registry:
+            ecr_login = (
+                f"aws ecr get-login-password --region {shlex.quote(self.region)} "
+                f"| docker login --username AWS --password-stdin {shlex.quote(registry)}"
+            )
+
         script = f"""#!/bin/bash
 set -euo pipefail
+# Whatever happens below, stop the instance (InstanceInitiatedShutdownBehavior=terminate deletes it).
+trap 'shutdown -h now' EXIT
 
 # Ensure docker is installed and running
 if ! command -v docker >/dev/null 2>&1; then
@@ -126,6 +135,9 @@ else
     INSTANCE_ID=$(curl -s -m 5 http://169.254.169.254/latest/meta-data/instance-id || echo "")
 fi
 
+# Log in to ECR when the image is there (the instance role needs ecr:GetAuthorizationToken)
+{ecr_login}
+
 # Run the container image
 EXIT_CODE=0
 docker run --rm {env_flags} {shlex.quote(image)} {cmd} || EXIT_CODE=$?
@@ -135,8 +147,7 @@ if [ -n "$INSTANCE_ID" ]; then
     aws ec2 create-tags --region {shlex.quote(self.region)} --resources "$INSTANCE_ID" --tags Key=wsr:exit_code,Value="$EXIT_CODE" || true
 fi
 
-# Clean shutdown and termination
-shutdown -h now
+# The EXIT trap shuts the instance down.
 """
         return script
 
