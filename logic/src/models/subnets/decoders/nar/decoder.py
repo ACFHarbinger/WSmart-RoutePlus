@@ -19,8 +19,8 @@ from typing import Any, Tuple
 import torch
 from tensordict import TensorDict
 
-from logic.src.envs.base.base import RL4COEnvBase
 from logic.src.models.common.non_autoregressive.decoder import NonAutoregressiveDecoder
+from logic.src.pipeline.rl.envs.base.base import RL4COEnvBase
 
 
 class SimpleNARDecoder(NonAutoregressiveDecoder):

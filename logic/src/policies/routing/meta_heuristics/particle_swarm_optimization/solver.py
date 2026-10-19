@@ -16,7 +16,7 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 
 from logic.src.configs.policies.pso import PSOConfig
-from logic.src.envs.common.expand_pool import current_expand_pool
+from logic.src.pipeline.rl.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators.recreate_repair.greedy import (
     greedy_insertion,
     greedy_profit_insertion,

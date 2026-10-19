@@ -19,7 +19,6 @@ from typing import Any, Dict, Optional, cast
 
 from tensordict import TensorDict
 
-from logic.src.envs.base.base import RL4COEnvBase
 from logic.src.models.common.non_autoregressive.encoder import (
     NonAutoregressiveEncoder,
 )
@@ -28,6 +27,7 @@ from logic.src.models.common.non_autoregressive.policy import (
 )
 from logic.src.models.subnets.decoders.deepaco import ACODecoder
 from logic.src.models.subnets.encoders.deepaco.encoder import DeepACOEncoder
+from logic.src.pipeline.rl.envs.base.base import RL4COEnvBase
 
 
 class DeepACOPolicy(NonAutoregressivePolicy):

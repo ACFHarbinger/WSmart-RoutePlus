@@ -291,7 +291,7 @@ class SimulationMixin:
         Returns:
             The environment, or None when the model's problem has no RL environment.
         """
-        from logic.src.envs import get_env
+        from logic.src.pipeline.rl.envs import get_env
 
         env_name = getattr(self.model, "env_name", None) or getattr(self.problem, "NAME", None)
         if env_name not in ("ptp", "cptp"):

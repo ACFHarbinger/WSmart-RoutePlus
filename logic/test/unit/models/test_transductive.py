@@ -7,13 +7,13 @@ from unittest.mock import MagicMock
 import pytest
 import torch
 import torch.nn as nn
-from logic.src.envs.ptp import PTPEnv
 from logic.src.models.common.transductive.active_search import ActiveSearch
 from logic.src.models.common.transductive.eas import EAS
 from logic.src.models.common.transductive.eas_embeddings import EASEmb
 from logic.src.models.common.transductive.eas_layers import EASLay
 from logic.src.models.core.attention_model import AttentionModel
 from logic.src.models.subnets.factories import AttentionComponentFactory
+from logic.src.pipeline.rl.envs.ptp import PTPEnv
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

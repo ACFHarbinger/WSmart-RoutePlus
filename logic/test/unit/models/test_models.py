@@ -3,12 +3,11 @@
 from typing import cast
 from unittest.mock import MagicMock
 
-import logic.src.envs as problem_module
+import logic.src.pipeline.rl.envs as problem_module
 import pytest
 import torch
 import torch.nn as nn
 from logic.src.data.datasets import BaselineDataset
-from logic.src.envs import CPTP
 from logic.src.models.core.attention_model import AttentionModel
 from logic.src.models.core.moe import MoEAttentionModel, MoETemporalAttentionModel
 from logic.src.models.subnets.encoders.moe.encoder import MoEGraphAttentionEncoder
@@ -29,6 +28,7 @@ from logic.src.pipeline.rl.common.baselines import (
 from logic.src.pipeline.rl.common.baselines import (
     WarmupBaseline as WarmupBaseline,
 )
+from logic.src.pipeline.rl.envs import CPTP
 from logic.src.policies.routing.learning_algorithms.neural_agent import NeuralAgent
 from tensordict import TensorDict
 from torch.utils.data import Dataset

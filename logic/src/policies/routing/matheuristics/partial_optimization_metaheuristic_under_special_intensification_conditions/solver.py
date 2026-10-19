@@ -74,7 +74,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 import numpy as np
 import pandas as pd
 
-from logic.src.envs.common.expand_pool import current_expand_pool
+from logic.src.pipeline.rl.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.routing.matheuristics.partial_optimization_metaheuristic_under_special_intensification_conditions.pmedian import (
     _compute_d_prox,
     _initialize_pmedian,

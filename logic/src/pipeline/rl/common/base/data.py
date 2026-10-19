@@ -76,7 +76,7 @@ def _create_eval_env_and_gen(cfg: Any, eval_graph: Any) -> tuple:
     Returns:
         Tuple of (env, generator) both on CPU.
     """
-    from logic.src.envs import get_env
+    from logic.src.pipeline.rl.envs import get_env
 
     env_cfg = _task_env_cfg(cfg)
     env_name = str(_cfg_get(env_cfg, "name", "ptp") or "ptp")

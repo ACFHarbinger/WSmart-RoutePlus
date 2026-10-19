@@ -508,7 +508,7 @@ omit = [
 | `logic/src/models/`   | 70%     | 85%    |
 | `logic/src/policies/` | 60%     | 80%    |
 | `logic/src/pipeline/` | 60%     | 75%    |
-| `logic/src/envs/`     | 70%     | 85%    |
+| `logic/src/pipeline/rl/envs/`     | 70%     | 85%    |
 | `logic/src/utils/`    | 50%     | 70%    |
 
 ### Improving Coverage

@@ -19,13 +19,13 @@ from typing import Any, Dict, Optional
 
 from tensordict import TensorDict
 
-from logic.src.envs.base.base import RL4COEnvBase
 from logic.src.models.common.autoregressive.policy import (
     AutoregressivePolicy,
 )
 from logic.src.models.subnets.decoders.matnet import MatNetDecoder
 from logic.src.models.subnets.embeddings.matnet import MatNetInitEmbedding
 from logic.src.models.subnets.encoders.matnet.encoder import MatNetEncoder
+from logic.src.pipeline.rl.envs.base.base import RL4COEnvBase
 
 
 class MatNetPolicy(AutoregressivePolicy):

@@ -14,10 +14,10 @@ import torch
 from omegaconf import DictConfig, OmegaConf
 
 from logic.src.configs import Config
-from logic.src.envs import get_env
 from logic.src.interfaces import IEnv, ITraversable
 from logic.src.pipeline.features.base import deep_sanitize, flatten_config_dict, remap_legacy_keys
 from logic.src.pipeline.rl.core.reinforce import REINFORCE
+from logic.src.pipeline.rl.envs import get_env
 from logic.src.policies.packing.vectorized.factory import create_selector_from_config
 from logic.src.tracking.logging.pylogger import get_pylogger
 

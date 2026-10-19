@@ -35,7 +35,7 @@ import numpy as np
 
 from logic.src.configs.policies.aco_ks import KSparseACOConfig
 from logic.src.configs.policies.lca import LCAConfig
-from logic.src.envs.common.expand_pool import current_expand_pool
+from logic.src.pipeline.rl.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.local_search.local_search_general import GeneralLocalSearch
 from logic.src.policies.helpers.operators import (
     greedy_insertion,

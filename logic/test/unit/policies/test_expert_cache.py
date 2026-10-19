@@ -2,7 +2,7 @@
 
 import pytest
 import torch
-from logic.src.envs.cptp import CPTPEnv
+from logic.src.pipeline.rl.envs.cptp import CPTPEnv
 from logic.src.policies.vector.expert_cache import CachedExpert
 from logic.src.policies.vector.profitable_nearest_neighbour import ProfitableNearestNeighbourPolicy
 from tensordict import TensorDict

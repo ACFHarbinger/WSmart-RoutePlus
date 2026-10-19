@@ -5,7 +5,7 @@
 > truth for signatures and module inventories.
 
 
-**Module**: `logic/src/envs`
+**Module**: `logic/src/pipeline/rl/envs`
 **Purpose**: Defines the mathematical "physics" of routing problems, governing state transitions, action validity, and reward signals.
 **Version**: 3.0
 **Last Updated**: February 2026
@@ -18,16 +18,16 @@ The `envs` module implements the core Reinforcement Learning environments for th
 
 This document serves as a comprehensive technical guide for the following components:
 
-1.  **Base Architecture** (`logic/src/envs/base`)
-2.  **Data Generators** (in each problem module, `logic/src/envs/<problem>.py`; bases in `logic/src/envs/base/generator.py`)
-3.  **Environment Implementations** (Root `logic/src/envs/*.py`)
-4.  **Task Wrappers** (in each problem module, `logic/src/envs/<problem>.py`; `BaseProblem` in `logic/src/envs/base/problem.py`)
+1.  **Base Architecture** (`logic/src/pipeline/rl/envs/base`)
+2.  **Data Generators** (in each problem module, `logic/src/pipeline/rl/envs/<problem>.py`; bases in `logic/src/pipeline/rl/envs/base/generator.py`)
+3.  **Environment Implementations** (Root `logic/src/pipeline/rl/envs/*.py`)
+4.  **Task Wrappers** (in each problem module, `logic/src/pipeline/rl/envs/<problem>.py`; `BaseProblem` in `logic/src/pipeline/rl/envs/base/problem.py`)
 
 ---
 
 ## 2. Base Environment Architecture
 
-**Module**: `logic/src/envs/base`
+**Module**: `logic/src/pipeline/rl/envs/base`
 
 This submodule defines the foundational building blocks for all Reinforcement Learning environments. It provides a robust, vectorized, and type-safe interface that facilitates high-performance batch processing and state management.
 
@@ -139,7 +139,7 @@ Any concrete environment inheriting from `RL4COEnvBase` **MUST** implement:
 
 ## 3. Procedural Data Generators
 
-**Module**: `logic/src/envs/<problem>.py` (generators), `logic/src/envs/base/generator.py` (bases)
+**Module**: `logic/src/pipeline/rl/envs/<problem>.py` (generators), `logic/src/pipeline/rl/envs/base/generator.py` (bases)
 
 This submodule implements the **dynamic instance generation** system. Instead of iterating over a fixed dataset, these classes procedurally generate new problem instances on the fly, allowing for infinite training data and robust generalization.
 
@@ -236,7 +236,7 @@ A global dictionary mapping string keys to generator classes.
 The standard way to instantiate generators.
 
 ```python
-from logic.src.envs import get_generator
+from logic.src.pipeline.rl.envs import get_generator
 
 # Create a generator for 50-node WCVRP instances on GPU
 gen = get_generator("wcvrp", num_loc=50, device="cuda", fill_distribution="gamma")
@@ -251,7 +251,7 @@ data = gen.generate(128)
 
 ## 4. Environment Implementations
 
-**Module**: `logic/src/envs`
+**Module**: `logic/src/pipeline/rl/envs`
 
 This section details the concrete environment classes found in the root of the `envs` directory. These classes implement the rigorous "physics" of routing problems—defining state spaces, transitions, validity masks, and reward functions.
 
@@ -373,7 +373,7 @@ Subclasses that mix constraints.
 
 ## 5. Task Wrappers
 
-**Module**: `logic/src/envs/<problem>.py` (tasks), `logic/src/envs/base/problem.py` (`BaseProblem`)
+**Module**: `logic/src/pipeline/rl/envs/<problem>.py` (tasks), `logic/src/pipeline/rl/envs/base/problem.py` (`BaseProblem`)
 
 This submodule defines **static problem definitions** and **cost evaluators**. Unlike the dynamic environment classes, these "Task" classes are largely stateless utility collections used to validate full solutions and compute standardized benchmarks.
 
@@ -459,9 +459,9 @@ Defines the evaluation metrics for multi-day scenarios.
 
 ---
 
-## ⚠️ Distinction from `logic.src.envs`
+## ⚠️ Distinction from `logic.src.pipeline.rl.envs`
 
-| Component    | `logic/src/envs/*.py`                                  | `logic/src/envs/*.py`                          |
+| Component    | `logic/src/pipeline/rl/envs/*.py`                                  | `logic/src/pipeline/rl/envs/*.py`                          |
 | :----------- | :----------------------------------------------------- | :--------------------------------------------------- |
 | **Purpose**  | **RL Environment** (State machine, transitions, masks) | **Problem Definition** (Cost evaluation, validation) |
 | **State**    | Dynamic `TensorDict` (updates every step)              | Static `TensorDict` (dataset) + Complete Tour        |

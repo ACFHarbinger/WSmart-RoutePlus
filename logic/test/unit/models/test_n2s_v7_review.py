@@ -2,9 +2,9 @@
 
 import pytest
 import torch
-from logic.src.envs.tsp_kopt import TSPkoptEnv
 from logic.src.models.core.n2s.decoder import N2SDecoder
 from logic.src.models.core.n2s.policy import N2SPolicy, validate_pdp_solution
+from logic.src.pipeline.rl.envs.tsp_kopt import TSPkoptEnv
 from tensordict import TensorDict
 
 

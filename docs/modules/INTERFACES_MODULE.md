@@ -179,7 +179,7 @@ class IEnv(Protocol):
 
 ```python
 from logic.src.interfaces import IEnv
-from logic.src.envs import VRPPEnv
+from logic.src.pipeline.rl.envs import VRPPEnv
 
 # Environment implements IEnv protocol
 env: IEnv = VRPPEnv(num_loc=50)
@@ -613,7 +613,7 @@ def check_policy_selection(bins: IBinContainer, mask: torch.Tensor):
 from logic.src.interfaces import (
     IEnv, IPolicy, IPackingAlgorithm, Iroute improvement
 )
-from logic.src.envs import WCVRPEnv
+from logic.src.pipeline.rl.envs import WCVRPEnv
 from logic.src.policies import HGSPolicy
 from logic.src.policies.helpers.packing import LastMinuteSelection
 from logic.src.policies.helpers.route_improvement import TwoOptProcessor

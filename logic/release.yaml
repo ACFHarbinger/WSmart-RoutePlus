@@ -76,12 +76,12 @@ infrastructure:
   - logic.src.policies.packing.vectorized.service_level   # released strategy, loaded by string target in vectorized/factory.py
   - logic.src.policies.packing.vectorized.regular         # released strategy, loaded by string target in vectorized/factory.py
   - logic.src.policies.packing.vectorized.spec            # shared rules of the vectorised selectors
-  - logic.src.envs.base.routing     # shared routing base env + generator (P-23, Q-3a)
-  - logic.src.envs.base.resources   # load and shift-time resource constraints
-  - logic.src.envs.ptp
-  - logic.src.envs.cptp
-  - logic.src.envs.tcptp
-  - logic.src.envs.cvrp
+  - logic.src.pipeline.rl.envs.base.routing     # shared routing base env + generator (P-23, Q-3a)
+  - logic.src.pipeline.rl.envs.base.resources   # load and shift-time resource constraints
+  - logic.src.pipeline.rl.envs.ptp
+  - logic.src.pipeline.rl.envs.cptp
+  - logic.src.pipeline.rl.envs.tcptp
+  - logic.src.pipeline.rl.envs.cvrp
   - logic.src.models.common.policy_contract   # the P-24 forward/output contract and its check
   - logic.controllers.cli               # the CLI: main.py's parsers (Q-11b)
   - logic.controllers.hydra_dispatch

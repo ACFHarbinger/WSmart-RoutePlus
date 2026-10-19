@@ -11,7 +11,7 @@ Attributes:
 
 Example:
     >>> from logic.src.pipeline.rl.core import DRGRPO
-    >>> from logic.src.envs import DRGRPOEnv
+    >>> from logic.src.pipeline.rl.envs import DRGRPOEnv
     >>> from logic.src.models import DRGRPOPPOAgent
     >>> env = DRGRPOEnv()
     >>> agent = DRGRPOPPOAgent(env)
