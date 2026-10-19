@@ -5,16 +5,16 @@ from pathlib import Path
 
 import pytest
 from logic.controllers.cloud import cli
-from logic.controllers.cloud.config import load_profiles
-from logic.controllers.cloud.credentials import (
+from logic.controllers.cloud.auth.config import load_profiles
+from logic.controllers.cloud.auth.credentials import (
     KeychainSecretStore,
     MissingCredentialError,
     ProviderCredentials,
     credential_account,
     detect_logins,
 )
+from logic.controllers.cloud.auth.secret_refs import parse_refs, redact, resolve_refs
 from logic.controllers.cloud.runtime import EXIT_NO_SECRET, run_task
-from logic.controllers.cloud.secret_refs import parse_refs, redact, resolve_refs
 from logic.controllers.cloud.testing import secret_store_contract
 
 
@@ -165,7 +165,7 @@ def test_profiles_file(tmp_path, monkeypatch):
 def test_cli_secrets_never_print_values(tmp_path, monkeypatch, capsys):
     backend = FakeKeyring()
     monkeypatch.setattr(
-        "logic.controllers.cloud.credentials.KeychainSecretStore.__init__",
+        "logic.controllers.cloud.auth.credentials.KeychainSecretStore.__init__",
         lambda self, backend_=None: setattr(self, "backend", backend),
     )
     value_file = tmp_path / "lic"

@@ -27,7 +27,7 @@ from typing import Dict, Optional
 
 from logic.controllers.cloud.interfaces import ObjectStore
 from logic.controllers.cloud.model import JobSpec
-from logic.controllers.cloud.storage import sha256_file
+from logic.controllers.cloud.store.storage import sha256_file
 
 
 def _upload_tree(store: ObjectStore, base: Path, relroot: Path) -> Dict[str, str]:

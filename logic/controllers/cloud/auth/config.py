@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import Dict, Optional
 from urllib.parse import urlparse
 
-from logic.controllers.cloud.credentials import PROVIDERS, ProviderCredentials
+from logic.controllers.cloud.auth.credentials import PROVIDERS, ProviderCredentials
 from logic.controllers.cloud.interfaces import SecretStore
 from logic.controllers.cloud.model import ComputeKind
 from logic.controllers.cloud.service import RemoteConfig
