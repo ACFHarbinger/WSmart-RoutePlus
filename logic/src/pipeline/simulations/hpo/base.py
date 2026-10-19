@@ -156,7 +156,7 @@ class PolicyHPOBase(ABC):
                     raise ValueError(
                         f"[{policy_name}] Parameter '{name}' (type='{p_type}') is missing "
                         f"required key(s): {missing}. "
-                        f"Edit the corresponding JSON in hpo/jobs/{policy_name}.json."
+                        f"Edit the corresponding JSON in hpo/routing/{policy_name}.json."
                     )
                 if spec["low"] >= spec["high"]:
                     raise ValueError(

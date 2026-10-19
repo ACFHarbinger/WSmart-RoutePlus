@@ -49,16 +49,16 @@ from typing import Any, Dict, List, Optional, Union
 # ---------------------------------------------------------------------------
 
 # Packing algorithm parameter search spaces
-FILTERS_DIR = os.path.join(os.path.dirname(__file__), "filters")
+PACKING_DIR = os.path.join(os.path.dirname(__file__), "packing")
 
 # Route improver parameter search spaces
-INTERCEPTORS_DIR = os.path.join(os.path.dirname(__file__), "interceptors")
+ROUTE_IMPROVEMENT_DIR = os.path.join(os.path.dirname(__file__), "route_improvement")
 
 # Routing algorithm parameter search spaces  (primary source loaded at import)
-JOBS_DIR = os.path.join(os.path.dirname(__file__), "jobs")
+ROUTING_DIR = os.path.join(os.path.dirname(__file__), "routing")
 
 # Move acceptance criteria parameter search spaces
-RULES_DIR = os.path.join(os.path.dirname(__file__), "rules")
+ACCEPTANCE_CRITERIA_DIR = os.path.join(os.path.dirname(__file__), "acceptance_criteria")
 
 # ---------------------------------------------------------------------------
 # Validation
@@ -106,7 +106,7 @@ def validate_search_space(space: Dict[str, Any], policy_name: str) -> List[str]:
             if missing:
                 errors.append(
                     f"[{policy_name}] '{name}' (type='{p_type}'): missing required "
-                    f"key(s) {missing}. Edit hpo/jobs/{policy_name}.json."
+                    f"key(s) {missing}. Edit hpo/routing/{policy_name}.json."
                 )
             elif spec["low"] >= spec["high"]:
                 errors.append(
@@ -136,13 +136,13 @@ def load_all_search_spaces(directory: Optional[str] = None) -> Dict[str, Dict[st
 
     Args:
         directory: Path to the directory containing JSON files.
-            Defaults to :data:`JOBS_DIR` if not supplied.
+            Defaults to :data:`ROUTING_DIR` if not supplied.
 
     Returns:
         Dict[str, Dict[str, Dict[str, Any]]]: Mapping of lowercase policy names
             to their search space specification dicts.
     """
-    target_dir = directory or JOBS_DIR
+    target_dir = directory or ROUTING_DIR
     spaces: Dict[str, Dict[str, Dict[str, Any]]] = {}
 
     if not os.path.exists(target_dir):
@@ -174,13 +174,13 @@ def load_all_search_spaces(directory: Optional[str] = None) -> Dict[str, Dict[st
 
 
 # Eagerly loaded at import time from the respective directories.
-FILTER_SPACES: Dict[str, Dict[str, Dict[str, Any]]] = load_all_search_spaces(FILTERS_DIR)
-INTERCEPTOR_SPACES: Dict[str, Dict[str, Dict[str, Any]]] = load_all_search_spaces(INTERCEPTORS_DIR)
-JOB_SPACES: Dict[str, Dict[str, Dict[str, Any]]] = load_all_search_spaces(JOBS_DIR)
-RULE_SPACES: Dict[str, Dict[str, Dict[str, Any]]] = load_all_search_spaces(RULES_DIR)
+PACKING_SPACES: Dict[str, Dict[str, Dict[str, Any]]] = load_all_search_spaces(PACKING_DIR)
+ROUTE_IMPROVEMENT_SPACES: Dict[str, Dict[str, Dict[str, Any]]] = load_all_search_spaces(ROUTE_IMPROVEMENT_DIR)
+ROUTING_SPACES: Dict[str, Dict[str, Dict[str, Any]]] = load_all_search_spaces(ROUTING_DIR)
+ACCEPTANCE_CRITERIA_SPACES: Dict[str, Dict[str, Dict[str, Any]]] = load_all_search_spaces(ACCEPTANCE_CRITERIA_DIR)
 
 # Maintain backward compatibility for existing callers.
-POLICY_SEARCH_SPACES = JOB_SPACES
+POLICY_SEARCH_SPACES = ROUTING_SPACES
 
 
 def get_component_search_space(
@@ -207,10 +207,10 @@ def get_component_search_space(
         Dict[str, Dict[str, Any]]: Mapping of prefixed config paths to HPO specs.
     """
     registry_map = {
-        "filter": (FILTER_SPACES, "packing.{idx}."),
-        "interceptor": (INTERCEPTOR_SPACES, "route_improvement.{idx}."),
-        "rule": (RULE_SPACES, "acceptance_criterion.params."),
-        "job": (JOB_SPACES, ""),
+        "filter": (PACKING_SPACES, "packing.{idx}."),
+        "interceptor": (ROUTE_IMPROVEMENT_SPACES, "route_improvement.{idx}."),
+        "rule": (ACCEPTANCE_CRITERIA_SPACES, "acceptance_criterion.params."),
+        "job": (ROUTING_SPACES, ""),
     }
 
     if component_type not in registry_map:
@@ -391,12 +391,12 @@ def generate_policy_filters() -> None:
     """Scaffold JSON search space templates from policy dataclass configs.
 
     Scans the ``logic.src.configs.policies`` package, finds dataclass
-    ``*Config`` classes, and writes template JSON files to :data:`JOBS_DIR`.
+    ``*Config`` classes, and writes template JSON files to :data:`ROUTING_DIR`.
     Existing files are **not** overwritten to protect manually-tuned bounds.
     """
     from logic.src.configs import policies as policies_pkg
 
-    os.makedirs(JOBS_DIR, exist_ok=True)
+    os.makedirs(ROUTING_DIR, exist_ok=True)
     package_path = policies_pkg.__path__
 
     for _, module_name, is_pkg in pkgutil.walk_packages(package_path):
@@ -424,7 +424,7 @@ def generate_policy_filters() -> None:
             continue
 
         base_name = module_name.split(".")[-1].lower().replace("postconfig", "").replace("config", "")
-        output_path = os.path.join(JOBS_DIR, f"{base_name}.json")
+        output_path = os.path.join(ROUTING_DIR, f"{base_name}.json")
 
         if os.path.exists(output_path):
             print(f"[generate_policy_filters] Skipping existing file: {output_path}")
@@ -440,12 +440,12 @@ def generate_route_improvement_interceptors() -> None:
     """Scaffold JSON search space templates for route improvement configs.
 
     Scans ``logic.src.configs.policies.other.route_improvement`` and writes
-    template JSON files to :data:`INTERCEPTORS_DIR`.  Existing files are not
+    template JSON files to :data:`ROUTE_IMPROVEMENT_DIR`.  Existing files are not
     overwritten.
     """
     from logic.src.configs.policies.other import route_improvement
 
-    os.makedirs(INTERCEPTORS_DIR, exist_ok=True)
+    os.makedirs(ROUTE_IMPROVEMENT_DIR, exist_ok=True)
 
     for name, obj in inspect.getmembers(route_improvement):
         if not (
@@ -456,7 +456,7 @@ def generate_route_improvement_interceptors() -> None:
             continue
 
         base_name = name.lower().replace("postconfig", "").replace("config", "")
-        output_path = os.path.join(INTERCEPTORS_DIR, f"{base_name}.json")
+        output_path = os.path.join(ROUTE_IMPROVEMENT_DIR, f"{base_name}.json")
 
         if os.path.exists(output_path):
             print(f"[generate_route_improvement_interceptors] Skipping existing: {output_path}")
@@ -472,12 +472,12 @@ def generate_packing_jobs() -> None:
     """Scaffold JSON search space templates for packing configs.
 
     Scans ``logic.src.configs.policies.other.packing`` and writes
-    template JSON files to :data:`FILTERS_DIR`.  Existing files are not
+    template JSON files to :data:`PACKING_DIR`.  Existing files are not
     overwritten.
     """
     from logic.src.configs.policies.other import packing
 
-    os.makedirs(FILTERS_DIR, exist_ok=True)
+    os.makedirs(PACKING_DIR, exist_ok=True)
 
     for name, obj in inspect.getmembers(packing):
         if not (
@@ -488,7 +488,7 @@ def generate_packing_jobs() -> None:
             continue
 
         base_name = name.lower().replace("selectionconfig", "").replace("postconfig", "").replace("config", "")
-        output_path = os.path.join(FILTERS_DIR, f"{base_name}.json")
+        output_path = os.path.join(PACKING_DIR, f"{base_name}.json")
 
         if os.path.exists(output_path):
             print(f"[generate_packing_jobs] Skipping existing: {output_path}")
@@ -504,12 +504,12 @@ def generate_acceptance_criteria_rules() -> None:
     """Scaffold JSON search space templates for acceptance criteria configs.
 
     Scans ``logic.src.configs.policies.other.acceptance_criteria`` and writes
-    template JSON files to :data:`RULES_DIR`. Existing files are not
+    template JSON files to :data:`ACCEPTANCE_CRITERIA_DIR`. Existing files are not
     overwritten.
     """
     from logic.src.configs.policies.other import acceptance_criteria
 
-    os.makedirs(RULES_DIR, exist_ok=True)
+    os.makedirs(ACCEPTANCE_CRITERIA_DIR, exist_ok=True)
 
     for name, obj in inspect.getmembers(acceptance_criteria):
         if not (
@@ -526,7 +526,7 @@ def generate_acceptance_criteria_rules() -> None:
             .replace("postconfig", "")
             .replace("config", "")
         )
-        output_path = os.path.join(RULES_DIR, f"{base_name}.json")
+        output_path = os.path.join(ACCEPTANCE_CRITERIA_DIR, f"{base_name}.json")
 
         if os.path.exists(output_path):
             print(f"[generate_acceptance_criteria_rules] Skipping existing: {output_path}")
