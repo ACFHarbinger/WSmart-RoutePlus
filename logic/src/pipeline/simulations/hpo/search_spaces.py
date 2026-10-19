@@ -7,23 +7,23 @@ space is defined as a dictionary with parameter names as keys and their HPO
 specifications as values.
 
 Search space JSON files are stored in sub-directories next to this module:
-  - jobs/         Routing algorithm parameter search spaces.
-  - interceptors/ Route improver parameter search spaces.
-  - filters/      Mandatory node selection parameter search spaces.
-  - rules/        Move acceptance criteria parameter search spaces.
+  - routing/             Routing algorithm parameter search spaces.
+  - route_improvement/   Route improver parameter search spaces.
+  - packing/             Packing algorithm parameter search spaces.
+  - acceptance_criteria/ Move acceptance criteria parameter search spaces.
 
 Attributes:
     POLICY_SEARCH_SPACES: Dictionary mapping policy names to their search spaces,
-        loaded eagerly from the jobs/ directory at import time.
+        loaded eagerly from the routing/ directory at import time.
 
 Functions:
     get_search_space:           Retrieve the search space for a specific policy.
     validate_search_space:      Validate a search space before running trials.
-    load_all_search_spaces:     Load all JSON search spaces from the jobs/ directory.
-    generate_policy_filters:            Scaffold JSON templates from policy dataclass configs.
-    generate_route_improvement_interceptors: Scaffold JSON templates for route improvers.
-    generate_packing_jobs:  Scaffold JSON templates for mandatory selectors.
-    generate_acceptance_criteria_rules: Scaffold JSON templates for acceptance criteria.
+    load_all_search_spaces:     Load all JSON search spaces from the routing/ directory.
+    generate_routing_templates:             Scaffold JSON templates from policy dataclass configs.
+    generate_route_improvement_templates:   Scaffold JSON templates for route improvers.
+    generate_packing_templates:             Scaffold JSON templates for packing algorithms.
+    generate_acceptance_criteria_templates: Scaffold JSON templates for acceptance criteria.
 
 Example:
     >>> from logic.src.policies.helpers.hpo import get_search_space
@@ -193,13 +193,13 @@ def get_component_search_space(
     """Retrieve search space for a specific component with its config path prefix.
 
     Component types and their associated prefixes:
-      - 'filter'      -> 'packing.0.'
-      - 'interceptor' -> 'route_improvement.0.'
-      - 'rule'        -> 'acceptance_criterion.params.'
-      - 'job'         -> '' (relative to policy config root)
+      - 'packing'             -> 'packing.0.'
+      - 'route_improvement'   -> 'route_improvement.0.'
+      - 'acceptance_criteria' -> 'acceptance_criterion.params.'
+      - 'routing'             -> '' (relative to policy config root)
 
     Args:
-        component_type: One of 'filter', 'interceptor', 'rule', 'job'.
+        component_type: One of 'packing', 'route_improvement', 'acceptance_criteria', 'routing'.
         name: Name of the component (e.g., 'boltzmann', 'alns').
         raise_on_invalid: Whether to validate the space before returning.
 
@@ -207,10 +207,10 @@ def get_component_search_space(
         Dict[str, Dict[str, Any]]: Mapping of prefixed config paths to HPO specs.
     """
     registry_map = {
-        "filter": (PACKING_SPACES, "packing.{idx}."),
-        "interceptor": (ROUTE_IMPROVEMENT_SPACES, "route_improvement.{idx}."),
-        "rule": (ACCEPTANCE_CRITERIA_SPACES, "acceptance_criterion.params."),
-        "job": (ROUTING_SPACES, ""),
+        "packing": (PACKING_SPACES, "packing.{idx}."),
+        "route_improvement": (ROUTE_IMPROVEMENT_SPACES, "route_improvement.{idx}."),
+        "acceptance_criteria": (ACCEPTANCE_CRITERIA_SPACES, "acceptance_criterion.params."),
+        "routing": (ROUTING_SPACES, ""),
     }
 
     if component_type not in registry_map:
@@ -250,48 +250,56 @@ def get_component_search_space(
 
 
 def compose_search_space(
-    job: Optional[str] = None,
-    filter: Optional[Union[str, List[str]]] = None,
-    interceptor: Optional[Union[str, List[str]]] = None,
-    rule: Optional[Union[str, List[str]]] = None,
-    job_keywords: Optional[str] = None,
-    filter_keywords: Optional[str] = None,
-    interceptor_keywords: Optional[str] = None,
-    rule_keywords: Optional[str] = None,
+    routing: Optional[str] = None,
+    packing: Optional[Union[str, List[str]]] = None,
+    route_improvement: Optional[Union[str, List[str]]] = None,
+    acceptance_criteria: Optional[Union[str, List[str]]] = None,
+    routing_keywords: Optional[str] = None,
+    packing_keywords: Optional[str] = None,
+    route_improvement_keywords: Optional[str] = None,
+    acceptance_criteria_keywords: Optional[str] = None,
 ) -> Dict[str, Dict[str, Any]]:
     """Compose a full search space from multiple components.
 
     Args:
-        job: Name of the main policy (from jobs/).
-        filter: Name of the selection strategy (from filters/).
-        interceptor: Name of the improver (from interceptors/).
-        rule: Name of the acceptance rule (from rules/).
+        routing: Name of the routing algorithm (from routing/).
+        packing: Name(s) of the packing algorithm(s) (from packing/).
+        route_improvement: Name(s) of the improver(s) (from route_improvement/).
+        acceptance_criteria: Name(s) of the acceptance criterion (from acceptance_criteria/).
+        routing_keywords: Keep only routing parameters matching these keywords.
+        packing_keywords: Keep only packing parameters matching these keywords.
+        route_improvement_keywords: Keep only improver parameters matching these keywords.
+        acceptance_criteria_keywords: Keep only acceptance parameters matching these keywords.
 
     Returns:
         Dict[str, Dict[str, Any]]: Combined search space with appropriate prefixes.
     """
     composed: Dict[str, Dict[str, Any]] = {}
 
-    if job:
-        composed.update(get_component_search_space("job", job, keywords=job_keywords))
+    if routing:
+        composed.update(get_component_search_space("routing", routing, keywords=routing_keywords))
 
-    # Handle multiple filters (mandatory selectors)
-    if filter:
-        filters = [filter] if isinstance(filter, str) else filter
-        for idx, f_name in enumerate(filters):
-            composed.update(get_component_search_space("filter", f_name, keywords=filter_keywords, index=idx))
+    # Handle multiple packing algorithms
+    if packing:
+        packings = [packing] if isinstance(packing, str) else packing
+        for idx, p_name in enumerate(packings):
+            composed.update(get_component_search_space("packing", p_name, keywords=packing_keywords, index=idx))
 
-    # Handle multiple interceptors (route improvers)
-    if interceptor:
-        interceptors = [interceptor] if isinstance(interceptor, str) else interceptor
-        for idx, i_name in enumerate(interceptors):
-            composed.update(get_component_search_space("interceptor", i_name, keywords=interceptor_keywords, index=idx))
+    # Handle multiple route improvers
+    if route_improvement:
+        improvers = [route_improvement] if isinstance(route_improvement, str) else route_improvement
+        for idx, i_name in enumerate(improvers):
+            composed.update(
+                get_component_search_space("route_improvement", i_name, keywords=route_improvement_keywords, index=idx)
+            )
 
-    # Acceptance criteria (rule) - usually single, but keep consistent
-    if rule:
-        rules = [rule] if isinstance(rule, str) else rule
-        for r_name in rules:
-            composed.update(get_component_search_space("rule", r_name, keywords=rule_keywords))
+    # Acceptance criteria - usually single, but keep consistent
+    if acceptance_criteria:
+        criteria = [acceptance_criteria] if isinstance(acceptance_criteria, str) else acceptance_criteria
+        for c_name in criteria:
+            composed.update(
+                get_component_search_space("acceptance_criteria", c_name, keywords=acceptance_criteria_keywords)
+            )
 
     return composed
 
@@ -387,7 +395,7 @@ def _extract_params_from_config(config_class: Any) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def generate_policy_filters() -> None:
+def generate_routing_templates() -> None:
     """Scaffold JSON search space templates from policy dataclass configs.
 
     Scans the ``logic.src.configs.policies`` package, finds dataclass
@@ -407,7 +415,7 @@ def generate_policy_filters() -> None:
         try:
             module = importlib.import_module(full_module_name)
         except Exception as exc:
-            print(f"[generate_policy_filters] Error importing {full_module_name}: {exc}")
+            print(f"[generate_routing_templates] Error importing {full_module_name}: {exc}")
             continue
 
         config_class = None
@@ -427,16 +435,16 @@ def generate_policy_filters() -> None:
         output_path = os.path.join(ROUTING_DIR, f"{base_name}.json")
 
         if os.path.exists(output_path):
-            print(f"[generate_policy_filters] Skipping existing file: {output_path}")
+            print(f"[generate_routing_templates] Skipping existing file: {output_path}")
             continue
 
         params = _extract_params_from_config(config_class)
         with open(output_path, "w") as fh:
             json.dump(params, fh, indent=4)
-        print(f"[generate_policy_filters] Generated: {output_path}")
+        print(f"[generate_routing_templates] Generated: {output_path}")
 
 
-def generate_route_improvement_interceptors() -> None:
+def generate_route_improvement_templates() -> None:
     """Scaffold JSON search space templates for route improvement configs.
 
     Scans ``logic.src.configs.policies.other.route_improvement`` and writes
@@ -459,16 +467,16 @@ def generate_route_improvement_interceptors() -> None:
         output_path = os.path.join(ROUTE_IMPROVEMENT_DIR, f"{base_name}.json")
 
         if os.path.exists(output_path):
-            print(f"[generate_route_improvement_interceptors] Skipping existing: {output_path}")
+            print(f"[generate_route_improvement_templates] Skipping existing: {output_path}")
             continue
 
         params = _extract_params_from_config(obj)
         with open(output_path, "w") as fh:
             json.dump(params, fh, indent=4)
-        print(f"[generate_route_improvement_interceptors] Generated: {output_path}")
+        print(f"[generate_route_improvement_templates] Generated: {output_path}")
 
 
-def generate_packing_jobs() -> None:
+def generate_packing_templates() -> None:
     """Scaffold JSON search space templates for packing configs.
 
     Scans ``logic.src.configs.policies.other.packing`` and writes
@@ -491,16 +499,16 @@ def generate_packing_jobs() -> None:
         output_path = os.path.join(PACKING_DIR, f"{base_name}.json")
 
         if os.path.exists(output_path):
-            print(f"[generate_packing_jobs] Skipping existing: {output_path}")
+            print(f"[generate_packing_templates] Skipping existing: {output_path}")
             continue
 
         params = _extract_params_from_config(obj)
         with open(output_path, "w") as fh:
             json.dump(params, fh, indent=4)
-        print(f"[generate_packing_jobs] Generated: {output_path}")
+        print(f"[generate_packing_templates] Generated: {output_path}")
 
 
-def generate_acceptance_criteria_rules() -> None:
+def generate_acceptance_criteria_templates() -> None:
     """Scaffold JSON search space templates for acceptance criteria configs.
 
     Scans ``logic.src.configs.policies.other.acceptance_criteria`` and writes
@@ -529,17 +537,17 @@ def generate_acceptance_criteria_rules() -> None:
         output_path = os.path.join(ACCEPTANCE_CRITERIA_DIR, f"{base_name}.json")
 
         if os.path.exists(output_path):
-            print(f"[generate_acceptance_criteria_rules] Skipping existing: {output_path}")
+            print(f"[generate_acceptance_criteria_templates] Skipping existing: {output_path}")
             continue
 
         params = _extract_params_from_config(obj)
         with open(output_path, "w") as fh:
             json.dump(params, fh, indent=4)
-        print(f"[generate_acceptance_criteria_rules] Generated: {output_path}")
+        print(f"[generate_acceptance_criteria_templates] Generated: {output_path}")
 
 
 if __name__ == "__main__":
-    generate_policy_filters()
-    generate_route_improvement_interceptors()
-    generate_packing_jobs()
-    generate_acceptance_criteria_rules()
+    generate_routing_templates()
+    generate_route_improvement_templates()
+    generate_packing_templates()
+    generate_acceptance_criteria_templates()

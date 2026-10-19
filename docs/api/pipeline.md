@@ -1047,10 +1047,10 @@ Search space definitions for simulation policies.
 - `get_component_search_space()` — Retrieve search space for a specific component with its config path prefix.
 - `compose_search_space()` — Compose a full search space from multiple components.
 - `get_search_space()` — Retrieve and validate the search space for a specific policy.
-- `generate_policy_filters()` — Scaffold JSON search space templates from policy dataclass configs.
-- `generate_route_improvement_interceptors()` — Scaffold JSON search space templates for route improvement configs.
-- `generate_packing_jobs()` — Scaffold JSON search space templates for packing configs.
-- `generate_acceptance_criteria_rules()` — Scaffold JSON search space templates for acceptance criteria configs.
+- `generate_routing_templates()` — Scaffold JSON search space templates from policy dataclass configs.
+- `generate_route_improvement_templates()` — Scaffold JSON search space templates for route improvement configs.
+- `generate_packing_templates()` — Scaffold JSON search space templates for packing configs.
+- `generate_acceptance_criteria_templates()` — Scaffold JSON search space templates for acceptance criteria configs.
 
 ### `logic.src.pipeline.simulations.naming`
 

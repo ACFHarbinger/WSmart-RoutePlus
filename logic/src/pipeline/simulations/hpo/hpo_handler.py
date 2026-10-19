@@ -552,14 +552,14 @@ def run_hpo_sim(cfg: Config) -> Union[float, List[float]]:
         from logic.src.pipeline.simulations.hpo.search_spaces import compose_search_space
 
         search_space = compose_search_space(
-            job=hpo_sim.policy_name,
-            filter=getattr(hpo_sim, "selection_name", None),
-            interceptor=getattr(hpo_sim, "improver_name", None),
-            rule=getattr(hpo_sim, "acceptance_name", None),
-            job_keywords=getattr(hpo_sim, "policy_keywords", None),
-            filter_keywords=getattr(hpo_sim, "selection_keywords", None),
-            interceptor_keywords=getattr(hpo_sim, "improver_keywords", None),
-            rule_keywords=getattr(hpo_sim, "acceptance_keywords", None),
+            routing=hpo_sim.policy_name,
+            packing=getattr(hpo_sim, "selection_name", None),
+            route_improvement=getattr(hpo_sim, "improver_name", None),
+            acceptance_criteria=getattr(hpo_sim, "acceptance_name", None),
+            routing_keywords=getattr(hpo_sim, "policy_keywords", None),
+            packing_keywords=getattr(hpo_sim, "selection_keywords", None),
+            route_improvement_keywords=getattr(hpo_sim, "improver_keywords", None),
+            acceptance_criteria_keywords=getattr(hpo_sim, "acceptance_keywords", None),
         )
 
         if not search_space:
