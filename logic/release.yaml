@@ -136,25 +136,22 @@ dependency_extras:
     - seaborn                # tracking/logging visualisation
   neural:
     - lightning>=2.6.1       # PyTorch callbacks (main gets it only indirectly)
-  # Cloud runner SDKs (CR-03, #123). Release-only on purpose: adding them to
-  # logic/pyproject.toml re-resolves 11 existing packages of the dev lock
-  # (starlette 1.x, fastapi, zenml, pyjwt, grpcio, opentelemetry, websockets).
-  cloud:
-    - google-cloud-batch>=0.17
-    - google-cloud-run>=0.10
-    - google-cloud-compute>=1.14
-    - google-cloud-storage>=2.10
-    - google-cloud-secret-manager>=2.16
-    - google-cloud-firestore>=2.13
-    - boto3>=1.28
-    - azure-identity>=1.15
-    - azure-batch>=14.0
-    - azure-mgmt-appcontainers>=3.0
-    - azure-mgmt-compute>=30.0
-    - azure-storage-blob>=12.19
-    - azure-keyvault-secrets>=4.7
-    - supabase>=2.0
-    - keyring>=24.0
     - tensorboard>=2.20.0    # plotting utilities (main gets it only indirectly)
     - loss-landscapes        # plotting utilities (logic.src.utils.plotting)
     - plotly                 # plotting utilities (logic.src.utils.plotting)
+  cloud:                     # cloud runner SDKs (v1.1.0, #120); versions in logic/pyproject.toml
+    - google-cloud-batch
+    - google-cloud-run
+    - google-cloud-compute
+    - google-cloud-storage
+    - google-cloud-secret-manager
+    - google-cloud-firestore
+    - boto3
+    - azure-identity
+    - azure-batch
+    - azure-mgmt-appcontainers
+    - azure-mgmt-compute
+    - azure-storage-blob
+    - azure-keyvault-secrets
+    - supabase
+    - keyring
