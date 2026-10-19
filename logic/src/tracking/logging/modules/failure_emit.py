@@ -1,6 +1,6 @@
 """Simulation failure analysis bridge for WSmart-Route Studio (§A.6).
 
-Serialises :class:`~logic.src.pipeline.simulations.failure_analyzer.FailureAnalyzer`
+Serialises :class:`~logic.src.tracking.logging.modules.failure_analyzer.FailureAnalyzer`
 summaries into ``SIM_FAILURE_START:`` log lines recognised by the Tauri Studio app.
 
 Example:

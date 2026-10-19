@@ -32,7 +32,7 @@ class TimeConstraintAction(SimulationAction):
         """Repair the final route before collection mutates any bin contents."""
 
         context = bind_context(context)
-        from logic.src.pipeline.simulations.problem_flags import per_trip_shift
+        from logic.src.pipeline.simulations.day_setup import per_trip_shift
 
         if not per_trip_shift(context):
             self._split_over_capacity_trips(context)

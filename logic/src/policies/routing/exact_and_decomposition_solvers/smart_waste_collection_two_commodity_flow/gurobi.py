@@ -293,7 +293,7 @@ def _run_gurobi_optimizer(  # noqa: C901
         if time_limit > 0:
             mdl.Params.TimeLimit = float(time_limit)
 
-        from logic.src.pipeline.simulations.solver_status import format_backend_status, note_solver_status
+        from logic.src.pipeline.simulations.reporting import format_backend_status, note_solver_status
 
         mdl.optimize()
         note_solver_status(format_backend_status("gurobi", mdl.Status), append=retry)

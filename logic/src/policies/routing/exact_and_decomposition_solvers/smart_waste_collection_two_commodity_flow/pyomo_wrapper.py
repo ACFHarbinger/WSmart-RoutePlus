@@ -225,7 +225,7 @@ def _run_pyomo_tcf_optimizer(  # noqa: C901
         # A time limit hit before any incumbent reports maxTimeLimit with no solution to load.
         return status_ok and len(getattr(res, "solution", [])) > 0
 
-    from logic.src.pipeline.simulations.solver_status import format_backend_status, note_solver_status
+    from logic.src.pipeline.simulations.reporting import format_backend_status, note_solver_status
 
     results = opt.solve(model, tee=False, load_solutions=False)
     note_solver_status(format_backend_status("pyomo", results.solver.termination_condition))

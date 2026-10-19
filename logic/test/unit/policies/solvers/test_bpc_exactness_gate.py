@@ -122,7 +122,7 @@ def test_bpc_matches_brute_force_with_valid_certificate(caplog):
         f"BPC incumbent {profit} != brute-force optimum {optimum}"
     )
     _certified_bound(caplog, profit, optimum)
-    from logic.src.pipeline.simulations.solver_status import current_solver_certificate
+    from logic.src.pipeline.simulations.reporting import current_solver_certificate
 
     proof = current_solver_certificate()
     assert proof is not None

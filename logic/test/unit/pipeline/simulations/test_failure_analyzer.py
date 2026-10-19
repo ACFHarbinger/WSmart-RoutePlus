@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from logic.src.constants import MAX_CAPACITY_PERCENT
-from logic.src.pipeline.simulations.failure_analyzer import FailureAnalyzer
+from logic.src.tracking.logging.modules.failure_analyzer import FailureAnalyzer
 from logic.src.tracking.logging.modules.failure_emit import (
     SIM_FAILURE_MARKER,
     emit_sim_failure_summary,

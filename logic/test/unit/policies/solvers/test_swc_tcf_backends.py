@@ -379,7 +379,7 @@ def test_gurobi_forced_bins_have_an_incumbent_at_once():
 
 def test_gurobi_no_incumbent_executes_the_best_start(monkeypatch):
     """#41: if Gurobi still ends without a solution, the most profitable start is executed."""
-    from logic.src.pipeline.simulations.solver_status import current_solver_status, note_solver_status
+    from logic.src.pipeline.simulations.reporting import current_solver_status, note_solver_status
     from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow import (
         gurobi as gurobi_mod,
     )

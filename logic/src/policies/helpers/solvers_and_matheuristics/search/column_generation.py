@@ -457,7 +457,7 @@ def column_generation_loop(  # noqa: C901
             lagrangian_ub = obj_val + (effective_fleet * max(0.0, max_rc))
 
             if node_depth == 0:
-                from logic.src.pipeline.simulations.solver_status import note_root_bound
+                from logic.src.pipeline.simulations.reporting import note_root_bound
 
                 note_root_bound(float(lagrangian_ub))
 

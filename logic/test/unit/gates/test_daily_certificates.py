@@ -3,7 +3,7 @@
 import copy
 
 import pytest
-from logic.src.pipeline.simulations.solver_status import (
+from logic.src.pipeline.simulations.reporting import (
     current_solver_certificate,
     note_root_bound,
     note_solver_incumbent,

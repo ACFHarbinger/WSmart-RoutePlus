@@ -24,6 +24,11 @@ Directories renamed after what they hold. No behaviour changes.
 #### Changed
 
 - **HPO search spaces** (`logic/src/pipeline/simulations/hpo/`): `filters/` → `packing/`, `interceptors/` → `route_improvement/`, `jobs/` → `routing/`, `rules/` → `acceptance_criteria/`. The directory constants in `search_spaces.py` follow (`PACKING_DIR`, `ROUTE_IMPROVEMENT_DIR`, `ROUTING_DIR`, `ACCEPTANCE_CRITERIA_DIR`), as do the loaded spaces (`PACKING_SPACES`, `ROUTE_IMPROVEMENT_SPACES`, `ROUTING_SPACES`, `ACCEPTANCE_CRITERIA_SPACES`). `tools/check_hpo_jobs.py` and `tools/convert_policy_yaml.py` read `hpo/routing/`.
+- **Small simulator modules merged** (`logic/src/pipeline/simulations/`):
+  - `rng.py` (day random streams) and `problem_flags.py` (`per_trip_shift`) → `day_setup.py`;
+  - `solver_status.py` (per-day solver status and certificate) and `aggregation.py` (sample aggregation) → `reporting.py`.
+  The functions keep their names. `tools/gates/capture.py` falls back to `solver_status` on trees with the old layout, such as the gate baseline.
+- **Moved:** `pipeline/simulations/failure_analyzer.py` → `tracking/logging/modules/failure_analyzer.py`, next to `failure_emit.py`, which serialises its summaries. It analyses a finished day; it is not a step of the simulation.
 
 ### SANS operators moved to `helpers/operators` (`2026-10-18`)
 
