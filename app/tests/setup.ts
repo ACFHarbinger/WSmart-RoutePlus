@@ -10,3 +10,38 @@ import { vi } from "vitest";
   }),
   transformCallback: (cb: unknown) => cb,
 };
+
+// Polyfill localStorage in test environment for Zustand persist middleware
+const createStorageMock = () => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: (key: string) => store[key] ?? null,
+    setItem: (key: string, value: string) => {
+      store[key] = String(value);
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
+    get length() {
+      return Object.keys(store).length;
+    },
+    key: (i: number) => Object.keys(store)[i] ?? null,
+  };
+};
+
+const storage = createStorageMock();
+Object.defineProperty(globalThis, "localStorage", {
+  value: storage,
+  writable: true,
+  configurable: true,
+});
+if (typeof window !== "undefined") {
+  Object.defineProperty(window, "localStorage", {
+    value: storage,
+    writable: true,
+    configurable: true,
+  });
+}

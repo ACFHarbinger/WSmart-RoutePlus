@@ -5,6 +5,7 @@ const PREFETCH: Partial<Record<AppMode, () => Promise<unknown>>> = {
   simulation: () => import("../../pages/monitor/SimulationMonitor"),
   training: () => import("../../pages/monitor/TrainingMonitor"),
   process_monitor: () => import("../../pages/monitor/ProcessMonitor"),
+  cloud_monitor: () => import("../../pages/cloud/CloudMonitor"),
   simulation_summary: () => import("../../pages/analysis/SimulationSummary"),
   benchmark: () => import("../../pages/analysis/BenchmarkAnalysis"),
   city_comparison: () => import("../../pages/analysis/CityComparison"),
