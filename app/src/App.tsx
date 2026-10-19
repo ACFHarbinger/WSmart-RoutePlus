@@ -27,6 +27,12 @@ const ProcessMonitor = lazy(() =>
 const CloudMonitor = lazy(() =>
   import("./pages/cloud/CloudMonitor").then((m) => ({ default: m.CloudMonitor }))
 );
+const CloudLauncher = lazy(() =>
+  import("./pages/cloud/CloudLauncher").then((m) => ({ default: m.CloudLauncher }))
+);
+const CloudAnalysis = lazy(() =>
+  import("./pages/cloud/CloudAnalysis").then((m) => ({ default: m.CloudAnalysis }))
+);
 const SimulationSummary = lazy(() =>
   import("./pages/analysis/SimulationSummary").then((m) => ({ default: m.SimulationSummary }))
 );
@@ -131,6 +137,12 @@ function ActivePage() {
       break;
     case "cloud_monitor":
       page = <CloudMonitor />;
+      break;
+    case "cloud_launcher":
+      page = <CloudLauncher />;
+      break;
+    case "cloud_analysis":
+      page = <CloudAnalysis />;
       break;
     case "sim_launcher":
       page = <SimulationLauncher />;

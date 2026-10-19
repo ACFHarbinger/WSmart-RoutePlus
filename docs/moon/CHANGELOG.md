@@ -202,6 +202,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `_sdk.py`: lazy `boto3` client factory preventing SDK imports at module load time.
   - Provider registration in `logic/controllers/cloud/providers/__init__.py` (`BACKENDS` dictionary and dynamic `load_backend`).
   - Unit and contract tests in `logic/test/unit/controllers/cloud/providers/test_aws_contracts.py` passing `backend_contract`, `object_store_contract`, and `secret_store_contract` with in-process fakes.
+- **CR-16 (#136): Studio Cloud Analysis Dashboard** in `app/src/pages/cloud/CloudAnalysis.tsx`:
+  - `CloudAnalysis.tsx`: Post-run aggregate analytics dashboard for cloud simulation jobs. Includes master job picker, top-level KPI cards (total tasks, wall-clock time, total compute hours, concurrency speedup factor, accrued cost), and multi-tab exploration (`overview`, `waterfall`, `tasks`, `cost`).
+  - `CostAccrualCard.tsx`: Financial telemetry and budget tracking aligning with CR-10. Displays accrued cost across compute duration, pre-run budget estimate with variance, and spot capacity savings breakdown vs on-demand baseline. Gracefully handles uncalibrated/unbounded estimates ("Unbounded / No Cap").
+  - `PredictionAccuracyCard.tsx`: Task duration prediction accuracy card aligning with CR-11 runtime surrogates. Analyzes observed vs predicted execution time, mean absolute percentage error, ±15% tolerance counts, and prediction bias. Cleanly renders "Pending CR-11 Calibration" when pre-run predictions are absent.
+  - `TaskDurationWaterfall.tsx`: Gantt-style ECharts waterfall visualization plotting task durations color-coded by terminal execution state (`succeeded`, `failed`, `cancelled`, `preempted`).
+  - Task Inspection Table: Interactive, sortable, and searchable task grid with policy identification, state filters, task log inspection via `TaskLogsModal`, and browser-based CSV export (`exportTasksToCsv`).
+  - Financial & Spot Breakdown tab: In-depth infrastructure analysis detailing compute engine type, region, spot tier discount percentages, and cloud billing governance notes.
+  - `useCloudAnalysisStore`: Zustand persistence store for active analysis tabs, selected jobs, task filters, and column sorting preferences.
+  - Navigation integration in `Sidebar.tsx` (under Analysis section), `App.tsx` (lazy route), and `pagePrefetch.ts`.
+  - Full suite of Vitest unit and component tests (`CostAccrualCard.test.tsx`, `PredictionAccuracyCard.test.tsx`, `cloudAnalysis.test.ts`, `cloudAnalysisStore.test.ts`).
 - **Roadmap:** `docs/moon/roadmaps/cloud.md` (§J), linked from `docs/moon/ROADMAP.md`: the v1.1.0 cloud runner design, its 17 work packages (#121–#137, epic #120) and future work.
 - **Agent brief:** `.agent/tasks/cloud-runner-2026-10-19.md`, with Claude's and Gemini's lanes, and a kickoff entry on the agent bus.
 
