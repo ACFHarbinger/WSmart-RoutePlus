@@ -31,23 +31,6 @@ dependencies = [
 
 # Corrected 'dev' dependencies
 [dependency-groups]
-cloud = [
-    "google-cloud-batch>=0.17",
-    "google-cloud-run>=0.10",
-    "google-cloud-compute>=1.14",
-    "google-cloud-storage>=2.10",
-    "google-cloud-secret-manager>=2.16",
-    "google-cloud-firestore>=2.34.1",
-    "boto3>=1.28",
-    "azure-identity>=1.15",
-    "azure-batch>=14.0",
-    "azure-mgmt-appcontainers>=3.0",
-    "azure-mgmt-compute>=30.0",
-    "azure-storage-blob>=12.19",
-    "azure-keyvault-secrets>=4.7",
-    "supabase>=2.16.0",
-    "keyring>=24.0",
-]
 dev = [
     "black>=25.9.0",
     "expecttest>=0.3.0",
@@ -109,6 +92,25 @@ solvers = [
     "alns>=7.0.0",
     "fast-tsp>=0.1.4",
     "pyomo>=6.9.5",
+]
+# Cloud runner (v1.1.0, #120): SDKs of the control planes, compute backends,
+# object and secret stores, and the OS keychain; each is imported lazily.
+cloud = [
+    "google-cloud-batch>=0.17",
+    "google-cloud-run>=0.10",
+    "google-cloud-compute>=1.14",
+    "google-cloud-storage>=2.10",
+    "google-cloud-secret-manager>=2.16",
+    "google-cloud-firestore>=2.34.1",
+    "boto3>=1.28",
+    "azure-identity>=1.15",
+    "azure-batch>=14.0",
+    "azure-mgmt-appcontainers>=3.0",
+    "azure-mgmt-compute>=30.0",
+    "azure-storage-blob>=12.19",
+    "azure-keyvault-secrets>=4.7",
+    "supabase>=2.16.0",
+    "keyring>=24.0",
 ]
 # CPTP branch-and-cut pricer of the BPC (pricing_engine: cptp): the
 # logic/submodules/BPC-CPTP submodule (ACFHarbinger fork of spoorendonk/cptp),
