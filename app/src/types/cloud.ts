@@ -2,6 +2,10 @@
 //! Cloud Runner types mirroring Rust / Python models for CR-13.
 */
 
+export type CloudProvider = "local" | "gcp" | "aws" | "azure";
+export type CloudComputeKind = "process" | "batch" | "serverless" | "vm";
+export type CloudGurobiMode = "none" | "wls_secret" | "byo";
+
 export interface CloudJobSummary {
   job_id: string;
   name: string;
@@ -125,4 +129,49 @@ export interface CloudJobEstimate {
   memory_required_gb?: number | null;
   source?: string | null;
   details?: Record<string, unknown>;
+  estimated_wall_seconds?: number;
+  estimated_cost_usd?: number;
+  hourly_rate_usd?: number;
+  machine_type?: string | null;
+  spot?: boolean;
+  provider?: string;
+  compute?: string;
+}
+
+export interface CloudTaskAnalysis {
+  task_id: string;
+  cell_id: string;
+  policy?: string | null;
+  state: string;
+  attempt: number;
+  duration_seconds: number;
+  expected_wall_seconds?: number | null;
+  cost_usd: number;
+  cpu_percent?: number | null;
+  memory_rss_mb?: number | null;
+  message?: string | null;
+}
+
+export interface CloudJobAnalysis {
+  job_id: string;
+  name: string;
+  state: string;
+  provider: string;
+  compute: string;
+  spot: boolean;
+  machine_type?: string | null;
+  region?: string | null;
+  total_tasks: number;
+  succeeded_tasks: number;
+  failed_tasks: number;
+  cancelled_tasks: number;
+  preempted_tasks: number;
+  total_wall_seconds: number;
+  total_compute_seconds: number;
+  accrued_cost_usd: number;
+  estimated_cost_usd?: number | null;
+  on_demand_baseline_cost_usd?: number | null;
+  spot_savings_usd?: number | null;
+  spot_savings_pct?: number | null;
+  tasks: CloudTaskAnalysis[];
 }
