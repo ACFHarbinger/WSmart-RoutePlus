@@ -1,0 +1,20 @@
+{
+  "indexes": [
+    {"collectionGroup": "wsr_tasks", "queryScope": "COLLECTION", "fields": [
+      {"fieldPath": "state", "order": "ASCENDING"}, {"fieldPath": "seq", "order": "ASCENDING"}]},
+    {"collectionGroup": "wsr_tasks", "queryScope": "COLLECTION", "fields": [
+      {"fieldPath": "state", "order": "ASCENDING"}, {"fieldPath": "job_id", "order": "ASCENDING"},
+      {"fieldPath": "seq", "order": "ASCENDING"}]},
+    {"collectionGroup": "wsr_tasks", "queryScope": "COLLECTION", "fields": [
+      {"fieldPath": "job_id", "order": "ASCENDING"}, {"fieldPath": "seq", "order": "ASCENDING"}]},
+    {"collectionGroup": "wsr_tasks", "queryScope": "COLLECTION", "fields": [
+      {"fieldPath": "state", "order": "ASCENDING"}, {"fieldPath": "lease_expires", "order": "ASCENDING"}]},
+    {"collectionGroup": "wsr_events", "queryScope": "COLLECTION", "fields": [
+      {"fieldPath": "job_id", "order": "ASCENDING"}, {"fieldPath": "at", "order": "ASCENDING"},
+      {"fieldPath": "n", "order": "ASCENDING"}]},
+    {"collectionGroup": "wsr_metrics", "queryScope": "COLLECTION", "fields": [
+      {"fieldPath": "task_id", "order": "ASCENDING"}, {"fieldPath": "at", "order": "ASCENDING"},
+      {"fieldPath": "n", "order": "ASCENDING"}]}
+  ],
+  "fieldOverrides": []
+}
