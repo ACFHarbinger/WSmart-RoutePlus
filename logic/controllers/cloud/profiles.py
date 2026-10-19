@@ -33,8 +33,8 @@ from logic.controllers.cloud.interfaces import ControlPlane, ObjectStore
 
 # (kind, scheme) -> "module:function"; the function takes the parsed URI.
 PROVIDER_FACTORIES: Dict[Tuple[str, str], str] = {
-    ("control_plane", "firestore"): "logic.controllers.cloud.providers.firebase:control_plane_from_uri",
-    ("control_plane", "supabase"): "logic.controllers.cloud.providers.supabase:control_plane_from_uri",
+    ("control_plane", "firestore"): "logic.controllers.cloud.control_planes.firebase:control_plane_from_uri",
+    ("control_plane", "supabase"): "logic.controllers.cloud.control_planes.supabase:control_plane_from_uri",
     ("store", "gs"): "logic.controllers.cloud.providers.gcp.storage:store_from_uri",
     ("store", "s3"): "logic.controllers.cloud.providers.aws.storage:store_from_uri",
     ("store", "az"): "logic.controllers.cloud.providers.azure.storage:store_from_uri",
@@ -51,7 +51,12 @@ def _provider(kind: str, uri: str):
         factory = getattr(importlib.import_module(module), function)
     except (ImportError, AttributeError) as exc:
         raise ValueError(f"{kind.replace('_', ' ')} URI {uri!r} needs {module}, which is not available: {exc}") from exc
-    return factory(parsed)
+    try:
+        return factory(parsed)
+    except ImportError as exc:
+        raise ValueError(
+            f"{kind.replace('_', ' ')} URI {uri!r} needs a provider SDK that is not installed: {exc}"
+        ) from exc
 
 
 def control_plane_from_uri(uri: str) -> ControlPlane:

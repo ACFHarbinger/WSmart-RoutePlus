@@ -1,0 +1,13 @@
+rules_version = '2';
+// WSmart-Route cloud runner control plane (CR-04, #124). Single-tenant: any signed-in
+// user of the project may use the runner. Schedulers and task runtimes use service
+// accounts, which bypass these rules. A per-user, brokered model is future work
+// (docs/moon/roadmaps/cloud.md, §J.3).
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{collection}/{doc} {
+      allow read, write: if request.auth != null
+        && collection in ['wsr_jobs', 'wsr_tasks', 'wsr_events', 'wsr_metrics', 'wsr_results'];
+    }
+  }
+}
