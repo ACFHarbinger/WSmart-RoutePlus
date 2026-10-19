@@ -1,5 +1,5 @@
 -- WSmart-Route cloud runner control plane (CR-04, #124).
--- Used by logic/controllers/cloud/control_planes/supabase.py. Apply with `supabase db push`
+-- Used by logic/controllers/cloud/control/supabase.py. Apply with `supabase db push`
 -- or psql. Single-tenant: any authenticated user of the project may use the runner;
 -- the service role bypasses row-level security.
 

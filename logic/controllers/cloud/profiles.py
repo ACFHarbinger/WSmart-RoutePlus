@@ -33,8 +33,8 @@ from logic.controllers.cloud.interfaces import ControlPlane, ObjectStore
 
 # (kind, scheme) -> "module:function"; the function takes the parsed URI.
 PROVIDER_FACTORIES: Dict[Tuple[str, str], str] = {
-    ("control_plane", "firestore"): "logic.controllers.cloud.control_planes.firebase:control_plane_from_uri",
-    ("control_plane", "supabase"): "logic.controllers.cloud.control_planes.supabase:control_plane_from_uri",
+    ("control_plane", "firestore"): "logic.controllers.cloud.control.firebase:control_plane_from_uri",
+    ("control_plane", "supabase"): "logic.controllers.cloud.control.supabase:control_plane_from_uri",
     ("store", "gs"): "logic.controllers.cloud.providers.gcp.storage:store_from_uri",
     ("store", "s3"): "logic.controllers.cloud.providers.aws.storage:store_from_uri",
     ("store", "az"): "logic.controllers.cloud.providers.azure.storage:store_from_uri",

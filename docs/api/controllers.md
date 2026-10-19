@@ -127,18 +127,18 @@ Cloud profiles: where jobs run and how to authenticate, without secrets in the f
 - `default_config_path()` — ``$WSR_CLOUD_CONFIG``, or ``~/.config/wsmart-route/cloud.yaml``.
 - `load_profiles()` — Read and validate every profile; an absent file has none.
 
-### `logic.controllers.cloud.control_planes.__init__`
+### `logic.controllers.cloud.control.__init__`
 
 Hosted control planes: Firebase (Cloud Firestore) and Supabase (Postgres).
 
-### `logic.controllers.cloud.control_planes.documents`
+### `logic.controllers.cloud.control.documents`
 
 A control plane over a JSON document store, shared by the Firebase and Supabase implementations.
 
 - **class `DocumentAdapter`** — Storage primitives of a document store. Every method is atomic on its service.
 - **class `DocumentControlPlane`** — :class:`ControlPlane` on a :class:`DocumentAdapter`.
 
-### `logic.controllers.cloud.control_planes.firebase`
+### `logic.controllers.cloud.control.firebase`
 
 Firebase (Cloud Firestore) control plane.
 
@@ -148,7 +148,7 @@ Firebase (Cloud Firestore) control plane.
 - **class `FirestoreControlPlane`** — The control plane on Cloud Firestore.
 - `control_plane_from_uri()` — ``firestore://<project>[/<database>]``.
 
-### `logic.controllers.cloud.control_planes.supabase`
+### `logic.controllers.cloud.control.supabase`
 
 Supabase (Postgres) control plane.
 
