@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Type
 
-from logic.src.pipeline.rl.envs import CPTP, CVRP, PTP, TCPTP
+from logic.src.pipeline.learning.envs import CPTP, CVRP, PTP, TCPTP
 
 
 def load_problem(name: str) -> Type[Any]:

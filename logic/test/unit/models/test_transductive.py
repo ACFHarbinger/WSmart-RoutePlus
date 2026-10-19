@@ -13,7 +13,7 @@ from logic.src.models.common.transductive.eas_embeddings import EASEmb
 from logic.src.models.common.transductive.eas_layers import EASLay
 from logic.src.models.core.attention_model import AttentionModel
 from logic.src.models.subnets.factories import AttentionComponentFactory
-from logic.src.pipeline.rl.envs.ptp import PTPEnv
+from logic.src.pipeline.learning.envs.ptp import PTPEnv
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

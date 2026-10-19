@@ -24,7 +24,7 @@ from logic.src.models.common.autoregressive.policy import AutoregressivePolicy
 from logic.src.models.subnets.decoders.polynet import PolyNetDecoder
 from logic.src.models.subnets.embeddings import get_init_embedding
 from logic.src.models.subnets.encoders.gat.encoder import GraphAttentionEncoder
-from logic.src.pipeline.rl.envs.base.base import RL4COEnvBase
+from logic.src.pipeline.learning.envs.base.base import RL4COEnvBase
 
 
 class PolyNetPolicy(AutoregressivePolicy):
@@ -165,7 +165,7 @@ class PolyNetPolicy(AutoregressivePolicy):
         )
 
         # 5. Reward extraction
-        from logic.src.pipeline.rl.envs import get_env
+        from logic.src.pipeline.learning.envs import get_env
 
         if env is None:
             env = get_env(self.env_name)  # type: ignore[arg-type]

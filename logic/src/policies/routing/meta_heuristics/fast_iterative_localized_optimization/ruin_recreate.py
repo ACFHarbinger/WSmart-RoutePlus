@@ -15,7 +15,7 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 
-from logic.src.pipeline.rl.envs.common.expand_pool import current_expand_pool
+from logic.src.pipeline.learning.envs.common.expand_pool import current_expand_pool
 
 
 class RuinAndRecreate:

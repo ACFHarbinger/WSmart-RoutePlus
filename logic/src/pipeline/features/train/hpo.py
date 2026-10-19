@@ -42,9 +42,9 @@ from logic.src.pipeline.callbacks.pytorch.hpo_health import (
     apply_dehb_health_penalty,
 )
 from logic.src.pipeline.features.train.model_factory import create_model
-from logic.src.pipeline.rl.common.trainer import WSTrainer
-from logic.src.pipeline.rl.hpo import DifferentialEvolutionHyperband, OptunaHPO, RayTuneHPO
-from logic.src.pipeline.rl.hpo.base import BaseHPO, apply_params, normalise_search_space
+from logic.src.pipeline.learning.common.trainer import WSTrainer
+from logic.src.pipeline.learning.hpo import DifferentialEvolutionHyperband, OptunaHPO, RayTuneHPO
+from logic.src.pipeline.learning.hpo.base import BaseHPO, apply_params, normalise_search_space
 
 try:
     from optuna.integration import PyTorchLightningPruningCallback
@@ -60,7 +60,7 @@ except ImportError:
     mlflow = None  # type: ignore[assignment]
 
 try:
-    from logic.src.pipeline.rl.hpo.zenml_hpo_pipeline import hpo_pipeline
+    from logic.src.pipeline.learning.hpo.zenml_hpo_pipeline import hpo_pipeline
     from logic.src.tracking.integrations.zenml_bridge import configure_zenml_stack
 except ImportError:
     configure_zenml_stack = None  # type: ignore[assignment]
@@ -169,9 +169,9 @@ def run_hpo(cfg: Config) -> float:
 
     Dispatches to the appropriate backend based on ``cfg.hpo.method``:
 
-    * ``"dehb"`` → :class:`~logic.src.pipeline.rl.hpo.dehb.DifferentialEvolutionHyperband`
-    * ``"asha"`` / ``"pbt"`` / ``"bohb"`` → :class:`~logic.src.pipeline.rl.hpo.ray_tune_hpo.RayTuneHPO`
-    * anything else → :class:`~logic.src.pipeline.rl.hpo.optuna_hpo.OptunaHPO`
+    * ``"dehb"`` → :class:`~logic.src.pipeline.learning.hpo.dehb.DifferentialEvolutionHyperband`
+    * ``"asha"`` / ``"pbt"`` / ``"bohb"`` → :class:`~logic.src.pipeline.learning.hpo.ray_tune_hpo.RayTuneHPO`
+    * anything else → :class:`~logic.src.pipeline.learning.hpo.optuna_hpo.OptunaHPO`
 
     When ``cfg.tracking.mlflow_enabled`` is ``True`` the entire HPO
     session is wrapped in an MLflow parent run so the best result and

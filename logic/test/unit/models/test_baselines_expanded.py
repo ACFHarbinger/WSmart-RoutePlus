@@ -4,7 +4,12 @@ from unittest.mock import MagicMock
 
 import pytest
 import torch
-from logic.src.pipeline.rl.common.baselines import ExponentialBaseline, RolloutBaseline, WarmupBaseline, get_baseline
+from logic.src.pipeline.learning.common.baselines import (
+    ExponentialBaseline,
+    RolloutBaseline,
+    WarmupBaseline,
+    get_baseline,
+)
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

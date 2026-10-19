@@ -39,7 +39,7 @@ def _create_reinforce(cfg: Any, policy: Any, env: Any, kw: Dict[str, Any]) -> An
     Returns:
         The REINFORCE module.
     """
-    from logic.src.pipeline.rl.core.reinforce import REINFORCE
+    from logic.src.pipeline.learning.core.reinforce import REINFORCE
 
     return REINFORCE(**kw)
 

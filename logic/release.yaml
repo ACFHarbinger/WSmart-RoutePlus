@@ -65,8 +65,8 @@ infrastructure:
   - logic.src.pipeline.features.test
   - logic.src.pipeline.features.train
   - logic.src.pipeline.features.eval
-  - logic.src.pipeline.rl.core.reinforce
-  - logic.src.pipeline.rl.core.imitation
+  - logic.src.pipeline.learning.core.reinforce
+  - logic.src.pipeline.learning.core.imitation
   - logic.src.pipeline.features.train.model_factory.imitation   # reached through the factory registry's string target
   - logic.src.models.core.attention_model
   - logic.src.policies.vector.profitable_nearest_neighbour   # imitation expert (Q-4a)
@@ -76,12 +76,12 @@ infrastructure:
   - logic.src.policies.packing.vectorized.service_level   # released strategy, loaded by string target in vectorized/factory.py
   - logic.src.policies.packing.vectorized.regular         # released strategy, loaded by string target in vectorized/factory.py
   - logic.src.policies.packing.vectorized.spec            # shared rules of the vectorised selectors
-  - logic.src.pipeline.rl.envs.base.routing     # shared routing base env + generator (P-23, Q-3a)
-  - logic.src.pipeline.rl.envs.base.resources   # load and shift-time resource constraints
-  - logic.src.pipeline.rl.envs.ptp
-  - logic.src.pipeline.rl.envs.cptp
-  - logic.src.pipeline.rl.envs.tcptp
-  - logic.src.pipeline.rl.envs.cvrp
+  - logic.src.pipeline.learning.envs.base.routing     # shared routing base env + generator (P-23, Q-3a)
+  - logic.src.pipeline.learning.envs.base.resources   # load and shift-time resource constraints
+  - logic.src.pipeline.learning.envs.ptp
+  - logic.src.pipeline.learning.envs.cptp
+  - logic.src.pipeline.learning.envs.tcptp
+  - logic.src.pipeline.learning.envs.cvrp
   - logic.src.models.common.policy_contract   # the P-24 forward/output contract and its check
   - logic.controllers.cli               # the CLI: main.py's parsers (Q-11b)
   - logic.controllers.hydra_dispatch
@@ -90,8 +90,8 @@ infrastructure:
 # Packages excluded from the release even though a seed pulls them in.
 excluded_packages:
   - logic.src.pipeline.simulations.hpo               # Q-6: HPO stays out of 1.0.0
-  - logic.src.pipeline.rl.hpo                        # Q-6
-  - logic.src.pipeline.rl.meta                       # not in the paper's stack (Q-12a)
+  - logic.src.pipeline.learning.hpo                        # Q-6
+  - logic.src.pipeline.learning.meta                       # not in the paper's stack (Q-12a)
   - logic.cloud                                      # `sync_drive` CLI job defer-imports it (drive_parser/parser_dispatch); cloud sync is out of scope (Q-1/Q-2)
   - logic.benchmark                                  # `benchmark` CLI job defer-imports it (jobs/ops_runner.py); out of scope
   - logic.test                                       # `test_suite` CLI job runner (jobs/ops_runner.py); the release ships the curated test files (P-06), not the runner

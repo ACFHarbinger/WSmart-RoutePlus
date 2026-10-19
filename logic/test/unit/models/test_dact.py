@@ -6,7 +6,7 @@ import pytest
 import torch
 from logic.src.models.core.dact import DACT
 from logic.src.models.core.dact.policy import DACTPolicy
-from logic.src.pipeline.rl.envs.tsp_kopt import TSPkoptEnv
+from logic.src.pipeline.learning.envs.tsp_kopt import TSPkoptEnv
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

@@ -24,7 +24,7 @@ from typing import Any, Dict, List, Optional, Set
 import numpy as np
 
 from logic.src.configs.policies.aco_ks import KSparseACOConfig
-from logic.src.pipeline.rl.envs.common.expand_pool import current_expand_pool
+from logic.src.pipeline.learning.envs.common.expand_pool import current_expand_pool
 
 from .pheromones import SparsePheromoneTau
 

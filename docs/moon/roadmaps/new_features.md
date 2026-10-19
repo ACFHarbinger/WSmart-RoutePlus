@@ -61,7 +61,7 @@
 
 - **A** — Add a `warm_start` mode to the training pipeline: initialize from an existing checkpoint and fine-tune for N epochs on the current day's distribution before evaluating. `[Research]`
 - **B** — Implement the `MetaRNN` (already exists in `logic/src/models/meta/`) as the online adapter: on each day, perform one or more gradient steps using the day's context as the meta-input.
-- **C** — Use the contextual bandit module (already in `logic/src/pipeline/rl/meta/`) to select among a portfolio of pre-trained policies based on day context, without gradient updates.
+- **C** — Use the contextual bandit module (already in `logic/src/pipeline/learning/meta/`) to select among a portfolio of pre-trained policies based on day context, without gradient updates.
 - **D** — Implement reservoir sampling of "hard" instances encountered during simulation and periodically fine-tune on them.
 
 **Recommendation**: **Option C** is the lowest-risk path (no gradient updates in production, just policy selection) and leverages existing code. **Option B** is the research-grade approach that the MetaRNN architecture was designed for.

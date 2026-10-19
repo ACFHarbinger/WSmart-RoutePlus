@@ -26,7 +26,7 @@ from torch import nn
 from logic.src.models.common.autoregressive.policy import AutoregressivePolicy
 from logic.src.models.subnets.embeddings import get_init_embedding
 from logic.src.models.subnets.encoders.gat import GraphAttentionEncoder
-from logic.src.pipeline.rl.envs.base.base import RL4COEnvBase
+from logic.src.pipeline.learning.envs.base.base import RL4COEnvBase
 from logic.src.policies.vector.adaptive_large_neighborhood_search import VectorizedALNS
 from logic.src.policies.vector.ant_colony_system import VectorizedACOPolicy
 from logic.src.policies.vector.hybrid_genetic_search import VectorizedHGS

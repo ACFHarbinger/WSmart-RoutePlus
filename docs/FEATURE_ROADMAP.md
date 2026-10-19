@@ -104,7 +104,7 @@ Items are marked as:
 
 ### 1.2 RewardScaler ✅
 
-**File**: `logic/src/pipeline/rl/common/reward_scaler.py`
+**File**: `logic/src/pipeline/learning/common/reward_scaler.py`
 
 - [x] `RewardScaler` class with Welford's algorithm
 - [x] Running mean/variance normalization
@@ -116,7 +116,7 @@ Items are marked as:
 
 ### 1.3 Trainer Optimizations ✅
 
-**File**: `logic/src/pipeline/rl/common/trainer.py`
+**File**: `logic/src/pipeline/learning/common/trainer.py`
 
 - [x] Auto DDP configuration
 - [x] JIT profiling disable
@@ -128,7 +128,7 @@ Items are marked as:
 
 ### 1.4 A2C Algorithm ✅
 
-**File**: `logic/src/pipeline/rl/core/a2c.py`
+**File**: `logic/src/pipeline/learning/core/a2c.py`
 
 - [x] Port A2C from RL4CO
 - [x] Separate actor/critic optimizers
@@ -518,7 +518,7 @@ _Neural network building blocks that rl4co provides for its model zoo._
 - [x] `MVMoE_AM` -- AM with MoE encoder/decoder kwargs
 - [x] Registered in `RL_ALGORITHM_REGISTRY`
 
-**File**: `logic/src/pipeline/rl/core/mvmoe.py`
+**File**: `logic/src/pipeline/learning/core/mvmoe.py`
 
 ---
 
@@ -528,7 +528,7 @@ _Neural network building blocks that rl4co provides for its model zoo._
 - [x] `SharedBaseline` -- shared weight baseline using `create_critic_from_actor`
 - [x] Registered in `BASELINE_REGISTRY` as "mean" and "shared"
 
-**File**: `logic/src/pipeline/rl/common/baselines.py`
+**File**: `logic/src/pipeline/learning/common/baselines.py`
 
 ---
 
@@ -588,7 +588,7 @@ _Improvements for human understanding, code discoverability, and maintainability
 - [x] `RL_ALGORITHM_REGISTRY` mapping algorithm names to Lightning module classes
 - [x] `get_rl_algorithm(name)` -- factory function for RL algorithm lookup
 
-**Files**: `logic/src/models/policies/__init__.py`, `logic/src/pipeline/rl/__init__.py`
+**Files**: `logic/src/models/policies/__init__.py`, `logic/src/pipeline/learning/__init__.py`
 
 ---
 

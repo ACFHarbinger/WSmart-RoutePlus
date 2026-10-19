@@ -3,7 +3,7 @@ Hyper-Parameter Optimization (HPO) constants.
 
 This module defines configuration keys for HPO experiments.
 Used by:
-- logic/src/pipeline/rl/hpo/ (Optuna, DEHB, Ray Tune)
+- logic/src/pipeline/learning/hpo/ (Optuna, DEHB, Ray Tune)
 - logic/src/configs/hpo.py (HPO config dataclass validation)
 - logic/controllers/cli/ts_parser.py (CLI argument parsing for HPO commands)
 

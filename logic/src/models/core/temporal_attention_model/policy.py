@@ -25,7 +25,7 @@ from logic.src.models.core.attention_model.policy import AttentionModelPolicy
 from logic.src.models.subnets.modules.activation_function import ActivationFunction
 from logic.src.models.subnets.other.gru_fill_predictor import GatedRecurrentUnitFillPredictor
 from logic.src.models.subnets.other.lstm_fill_predictor import LongShortTermMemoryFillPredictor
-from logic.src.pipeline.rl.envs.base.base import RL4COEnvBase
+from logic.src.pipeline.learning.envs.base.base import RL4COEnvBase
 from logic.src.utils.data.td_state_wrapper import TensorDictStateWrapper
 
 

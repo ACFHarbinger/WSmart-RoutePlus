@@ -19,7 +19,7 @@ from typing import Any, Dict, Optional
 
 from torch import nn
 
-from logic.src.pipeline.rl.envs.base.base import RL4COEnvBase
+from logic.src.pipeline.learning.envs.base.base import RL4COEnvBase
 
 from .policy import NeuOptPolicy
 

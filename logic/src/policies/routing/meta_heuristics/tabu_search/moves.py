@@ -10,7 +10,7 @@ Example:
 import copy
 from typing import Any, List, Sequence, Tuple
 
-from logic.src.pipeline.rl.envs.common.expand_pool import current_expand_pool
+from logic.src.pipeline.learning.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators.destroy_ruin import (
     cluster_removal,
     random_removal,

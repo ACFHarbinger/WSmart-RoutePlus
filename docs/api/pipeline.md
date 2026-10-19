@@ -283,105 +283,105 @@ ZenML training pipeline for WSmart-Route.
 
 - `training_pipeline()` — Serialise *cfg* and launch the ZenML training pipeline.
 
-### `logic.src.pipeline.rl.__init__`
+### `logic.src.pipeline.learning.__init__`
 
 Reinforcement Learning subpackage for WSmart-Route.
 
 - `get_rl_algorithm()` — Look up an RL algorithm class by its short name.
 
-### `logic.src.pipeline.rl.common.__init__`
+### `logic.src.pipeline.learning.common.__init__`
 
 Training common subpackage for WSmart-Route.
 
-### `logic.src.pipeline.rl.common.base.__init__`
+### `logic.src.pipeline.learning.common.base.__init__`
 
 RL Base Components.
 
-### `logic.src.pipeline.rl.common.base.data`
+### `logic.src.pipeline.learning.common.base.data`
 
 Data logic for RL4COLitModule.
 
 - **class `DataMixin`** — Mixin for data loading logic.
 
-### `logic.src.pipeline.rl.common.base.module`
+### `logic.src.pipeline.learning.common.base.module`
 
 Main RL4COLitModule class assembling all mixins.
 
 - **class `RL4COLitModule`** — Base PyTorch Lightning module for RL training.
 
-### `logic.src.pipeline.rl.common.base.optimization`
+### `logic.src.pipeline.learning.common.base.optimization`
 
 Optimization logic for RL4COLitModule.
 
 - **class `OptimizationMixin`** — Mixin for optimizer and scheduler configuration.
 
-### `logic.src.pipeline.rl.common.base.steps`
+### `logic.src.pipeline.learning.common.base.steps`
 
 Training/Validation step logic for RL4COLitModule.
 
 - **class `StepMixin`** — Mixin for training, validation, and test steps.
 
-### `logic.src.pipeline.rl.common.baselines.__init__`
+### `logic.src.pipeline.learning.common.baselines.__init__`
 
 RL Baselines sub-package.
 
 - `get_baseline()` — Get baseline by name.
 
-### `logic.src.pipeline.rl.common.baselines.base`
+### `logic.src.pipeline.learning.common.baselines.base`
 
 Base abstract class and simple baseline implementations.
 
 - **class `Baseline`** — Base class for baselines.
 
-### `logic.src.pipeline.rl.common.baselines.critic`
+### `logic.src.pipeline.learning.common.baselines.critic`
 
 Neural critic-based baselines.
 
 - **class `CriticBaseline`** — Learned critic baseline.
 
-### `logic.src.pipeline.rl.common.baselines.exponential`
+### `logic.src.pipeline.learning.common.baselines.exponential`
 
 Exponential moving average baseline.
 
 - **class `ExponentialBaseline`** — Moving average (exponential) baseline.
 
-### `logic.src.pipeline.rl.common.baselines.mean`
+### `logic.src.pipeline.learning.common.baselines.mean`
 
 mean.py module.
 
 - **class `MeanBaseline`** — Simple batch-mean baseline.
 
-### `logic.src.pipeline.rl.common.baselines.none`
+### `logic.src.pipeline.learning.common.baselines.none`
 
 none.py module.
 
 - **class `NoBaseline`** — No baseline (vanilla REINFORCE).
 
-### `logic.src.pipeline.rl.common.baselines.pomo`
+### `logic.src.pipeline.learning.common.baselines.pomo`
 
 POMO-style multi-start mean baseline.
 
 - **class `POMOBaseline`** — POMO baseline: mean reward across starts of the SAME instance.
 
-### `logic.src.pipeline.rl.common.baselines.rollout`
+### `logic.src.pipeline.learning.common.baselines.rollout`
 
 Greedy rollout baseline with significance-based updates.
 
 - **class `RolloutBaseline`** — Greedy rollout baseline with significance-based updates.
 
-### `logic.src.pipeline.rl.common.baselines.shared_critic`
+### `logic.src.pipeline.learning.common.baselines.shared_critic`
 
 shared_critic.py module.
 
 - **class `SharedBaseline`** — Shared baseline using a critic that shares the encoder with the actor.
 
-### `logic.src.pipeline.rl.common.baselines.warmup`
+### `logic.src.pipeline.learning.common.baselines.warmup`
 
 Gradual transition warmup baseline.
 
 - **class `WarmupBaseline`** — Gradual transition from ExponentialBaseline to target baseline.
 
-### `logic.src.pipeline.rl.common.epoch`
+### `logic.src.pipeline.learning.common.epoch`
 
 Epoch-level utilities for RL training.
 
@@ -392,7 +392,7 @@ Epoch-level utilities for RL training.
 - `refresh_fill()` — Redraw the bin state of a share of the instances to 1..``max_days`` days of waste.
 - `apply_time_step()` — Applies the time-step progression to the training dataset for an epoch.
 
-### `logic.src.pipeline.rl.common.pbrs_wrapper`
+### `logic.src.pipeline.learning.common.pbrs_wrapper`
 
 Potential-Based Reward Shaping (PBRS) for constructive RL.
 
@@ -400,19 +400,19 @@ Potential-Based Reward Shaping (PBRS) for constructive RL.
 - `get_potential_fn()` — Return the potential function registered for *env_name*.
 - **class `PBRSShaper`** — Episode-level Potential-Based Reward Shaper.
 
-### `logic.src.pipeline.rl.common.reward_scaler`
+### `logic.src.pipeline.learning.common.reward_scaler`
 
 Reward scaling utilities for RL training.
 
 - **class `RewardScaler`** — Reward/advantage scaler using running statistics.
 
-### `logic.src.pipeline.rl.common.reward_scaler_batch`
+### `logic.src.pipeline.learning.common.reward_scaler_batch`
 
 reward_scaler_batch.py module.
 
 - **class `BatchRewardScaler`** — Per-batch reward scaler (no running statistics).
 
-### `logic.src.pipeline.rl.common.route_improvement`
+### `logic.src.pipeline.learning.common.route_improvement`
 
 Route improvement utilities.
 
@@ -420,131 +420,131 @@ Route improvement utilities.
 - `decode_routes()` — Convert action sequences to clean route lists on CPU.
 - `calculate_efficiency()` — Compute kg/km efficiency metric.
 
-### `logic.src.pipeline.rl.common.trainer`
+### `logic.src.pipeline.learning.common.trainer`
 
 Custom PyTorch Lightning Trainer for WSmart-Route.
 
 - **class `WSTrainer`** — Extended Trainer with WSmart-Route specific features.
 
-### `logic.src.pipeline.rl.core.__init__`
+### `logic.src.pipeline.learning.core.__init__`
 
 RL Pipeline module for WSmart-Route.
 
-### `logic.src.pipeline.rl.core.a2c`
+### `logic.src.pipeline.learning.core.a2c`
 
 Advantage Actor-Critic (A2C) implementation.
 
 - **class `A2C`** — Advantage Actor-Critic (A2C) algorithm.
 
-### `logic.src.pipeline.rl.core.adaptive_imitation`
+### `logic.src.pipeline.learning.core.adaptive_imitation`
 
 Adaptive Imitation Learning + RL algorithm.
 
 - **class `AdaptiveImitation`** — Combined RL + Imitation Learning with Adaptive Weight Scheduling.
 
-### `logic.src.pipeline.rl.core.dr_grpo`
+### `logic.src.pipeline.learning.core.dr_grpo`
 
 DR-GRPO (GRPO done Right) algorithm.
 
 - **class `DRGRPO`** — DR-GRPO (GRPO done Right).
 
-### `logic.src.pipeline.rl.core.gdpo`
+### `logic.src.pipeline.learning.core.gdpo`
 
 GDPO: Group reward-Decoupled Normalization Policy Optimization.
 
 - **class `GDPO`** — Group reward-Decoupled Normalization Policy Optimization (GDPO).
 
-### `logic.src.pipeline.rl.core.gspo`
+### `logic.src.pipeline.learning.core.gspo`
 
 Group Sequence Policy Optimization (GSPO) algorithm.
 
 - **class `GSPO`** — Group Sequence Policy Optimization (GSPO).
 
-### `logic.src.pipeline.rl.core.imitation`
+### `logic.src.pipeline.learning.core.imitation`
 
 Imitation Learning algorithm implementation.
 
 - **class `ImitationLearning`** — Imitation Learning / Supervised Learning.
 
-### `logic.src.pipeline.rl.core.losses.__init__`
+### `logic.src.pipeline.learning.core.losses.__init__`
 
 Modular loss functions for imitation learning and policy optimization.
 
-### `logic.src.pipeline.rl.core.losses.js_divergence_loss`
+### `logic.src.pipeline.learning.core.losses.js_divergence_loss`
 
 Jensen-Shannon Divergence loss for policy distillation.
 
 - `js_divergence_loss()` — Compute Jensen-Shannon Divergence between two distributions.
 
-### `logic.src.pipeline.rl.core.losses.kl_divergence_loss`
+### `logic.src.pipeline.learning.core.losses.kl_divergence_loss`
 
 KL Divergence loss for policy distillation.
 
 - `kl_divergence_loss()` — Compute KL Divergence between policy and target distribution.
 - `reverse_kl_divergence_loss()` — Compute Reverse KL Divergence (mode-seeking).
 
-### `logic.src.pipeline.rl.core.losses.nll_loss`
+### `logic.src.pipeline.learning.core.losses.nll_loss`
 
 Negative Log-Likelihood loss for behavior cloning.
 
 - `nll_loss()` — Compute Negative Log-Likelihood loss for behavior cloning.
 
-### `logic.src.pipeline.rl.core.losses.weighted_nll_loss`
+### `logic.src.pipeline.learning.core.losses.weighted_nll_loss`
 
 Weighted Negative Log-Likelihood loss for advantage-weighted imitation.
 
 - `weighted_nll_loss()` — Compute Weighted Negative Log-Likelihood loss.
 
-### `logic.src.pipeline.rl.core.mvmoe_am`
+### `logic.src.pipeline.learning.core.mvmoe_am`
 
 MVMoE (Multi-View Mixture of Experts) models.
 
 - **class `MVMoE_AM`** — MVMoE with Attention Model backbone.
 
-### `logic.src.pipeline.rl.core.mvmoe_pomo`
+### `logic.src.pipeline.learning.core.mvmoe_pomo`
 
 MVMoE (Multi-View Mixture of Experts) models.
 
 - **class `MVMoE_POMO`** — MVMoE with POMO backbone.
 
-### `logic.src.pipeline.rl.core.pomo`
+### `logic.src.pipeline.learning.core.pomo`
 
 POMO (Policy Optimization with Multiple Optima) implementation.
 
 - **class `POMO`** — POMO algorithm: REINFORCE with shared baseline and multi-start decoding.
 
-### `logic.src.pipeline.rl.core.ppo`
+### `logic.src.pipeline.learning.core.ppo`
 
 PPO algorithm implementation.
 
 - **class `PPO`** — Proximal Policy Optimization (PPO).
 
-### `logic.src.pipeline.rl.core.reinforce`
+### `logic.src.pipeline.learning.core.reinforce`
 
 REINFORCE algorithm implementation.
 
 - **class `REINFORCE`** — REINFORCE with baseline.
 
-### `logic.src.pipeline.rl.core.sapo`
+### `logic.src.pipeline.learning.core.sapo`
 
 Soft Adaptive Policy Optimization (SAPO) algorithm.
 
 - **class `SAPO`** — Soft Adaptive Policy Optimization (SAPO).
 
-### `logic.src.pipeline.rl.core.symnco`
+### `logic.src.pipeline.learning.core.symnco`
 
 SymNCO algorithm implementation.
 
 - **class `SymNCO`** — SymNCO algorithm: REINFORCE with problem/solution symmetricity and invariance losses.
 
-### `logic.src.pipeline.rl.envs.__init__`
+### `logic.src.pipeline.learning.envs.__init__`
 
 Environments, instance generators and problem tasks.
 
 - `get_env()` — Build an environment by name, importing only that env module.
 - `get_generator()` — Build an instance generator by name (e.g. "ptp", "cptp", "tsp", "irp", "atsp", "cvrp").
 
-### `logic.src.pipeline.rl.envs.atsp`
+### `logic.src.pipeline.learning.envs.atsp`
 
 Asymmetric Traveling Salesman Problem (ATSP) task and environment.
 
@@ -552,49 +552,49 @@ Asymmetric Traveling Salesman Problem (ATSP) task and environment.
 - **class `ATSPEnv`** — Asymmetric Traveling Salesman Problem Environment.
 - **class `ATSP`** — Asymmetric Traveling Salesman Problem (ATSP) task definition.
 
-### `logic.src.pipeline.rl.envs.base.__init__`
+### `logic.src.pipeline.learning.envs.base.__init__`
 
 Base environment definitions.
 
-### `logic.src.pipeline.rl.envs.base.base`
+### `logic.src.pipeline.learning.envs.base.base`
 
 RL4CO Base Environment.
 
 - **class `RL4COEnvBase`** — Base environment class for combinatorial optimization problems.
 
-### `logic.src.pipeline.rl.envs.base.batch`
+### `logic.src.pipeline.learning.envs.base.batch`
 
 Batch handling mixin for RL4CO environment.
 
 - **class `BatchMixin`** — Mixin to handle batch size management and TorchRL compatibility.
 
-### `logic.src.pipeline.rl.envs.base.generator`
+### `logic.src.pipeline.learning.envs.base.generator`
 
 Base generator class for problem instances.
 
 - **class `Generator`** — Abstract base class for problem instance generators.
 - **class `RoutingGenerator`** — Shared generator of the routing problems: customer locations, a depot, optional road distances.
 
-### `logic.src.pipeline.rl.envs.base.improvement`
+### `logic.src.pipeline.learning.envs.base.improvement`
 
 Improvement-based environment base class.
 
 - **class `ImprovementEnvBase`** — Base environment for improvement-based methods.
 
-### `logic.src.pipeline.rl.envs.base.ops`
+### `logic.src.pipeline.learning.envs.base.ops`
 
 Core operations mixin for RL4CO environment.
 
 - `as_batch_nodes()` — Squeeze decoder node indices to shape ``[B]`` for gather/scatter.
 - **class `OpsMixin`** — Mixin to handle Step, Reset, and Cost calculations.
 
-### `logic.src.pipeline.rl.envs.base.problem`
+### `logic.src.pipeline.learning.envs.base.problem`
 
 Base problem definition and legacy constants.
 
 - **class `BaseProblem`** — Legacy base class for routing problems.
 
-### `logic.src.pipeline.rl.envs.base.resources`
+### `logic.src.pipeline.learning.envs.base.resources`
 
 Declarative resource constraints of the routing environments.
 
@@ -602,17 +602,17 @@ Declarative resource constraints of the routing environments.
 - **class `LoadResource`** — Vehicle capacity / load resource constraint.
 - **class `ShiftTimeResource`** — Per-trip time budget resource constraint (travel + service time).
 
-### `logic.src.pipeline.rl.envs.base.routing`
+### `logic.src.pipeline.learning.envs.base.routing`
 
 Base environment and generator of the routing problems.
 
 - **class `RoutingEnv`** — Base environment of the routing problems: elementary routes under resource constraints.
 
-### `logic.src.pipeline.rl.envs.common.__init__`
+### `logic.src.pipeline.learning.envs.common.__init__`
 
 Backend-neutral routing objectives and simulation KPI definitions.
 
-### `logic.src.pipeline.rl.envs.common.expand_pool`
+### `logic.src.pipeline.learning.envs.common.expand_pool`
 
 Problem-derived optional-visit flag for routing solvers.
 
@@ -620,7 +620,7 @@ Problem-derived optional-visit flag for routing solvers.
 - `reset_expand_pool()` — Restore the previous flag.
 - `current_expand_pool()` — Return the active flag, or ``default`` when the day loop has not set one.
 
-### `logic.src.pipeline.rl.envs.common.metrics`
+### `logic.src.pipeline.learning.envs.common.metrics`
 
 Torch-free KPI registry and explicit day/sample aggregation.
 
@@ -631,7 +631,7 @@ Torch-free KPI registry and explicit day/sample aggregation.
 - **class `MetricSummary`** — Equal-weight sample statistics; an empty successful population has no estimate.
 - `summarize_samples()` — Exclude failed samples, retain zero-distance compatibility, count defined ratios.
 
-### `logic.src.pipeline.rl.envs.common.objectives`
+### `logic.src.pipeline.learning.envs.common.objectives`
 
 Pure objective arithmetic shared by scalar, NumPy and Torch callers.
 
@@ -639,17 +639,17 @@ Pure objective arithmetic shared by scalar, NumPy and Torch callers.
 - `profit_objective()` — Return net profit; overflow counts are reported separately, without a penalty.
 - `distance_objective()` — Return negative distance for maximization; CVRP cost is its negation.
 
-### `logic.src.pipeline.rl.envs.common.released_specs`
+### `logic.src.pipeline.learning.envs.common.released_specs`
 
 Torch-free problem specs for the released classical simulator.
 
 - `released_spec()` — Return a released spec, or None when the name is not a released problem.
 
-### `logic.src.pipeline.rl.envs.core.__init__`
+### `logic.src.pipeline.learning.envs.core.__init__`
 
 Core utilities for shared-family problems.
 
-### `logic.src.pipeline.rl.envs.core.ptp`
+### `logic.src.pipeline.learning.envs.core.ptp`
 
 Shared utilities, economic objectives, and tour evaluation for Profitable Tour Problems.
 
@@ -657,7 +657,7 @@ Shared utilities, economic objectives, and tour evaluation for Profitable Tour P
 - `calc_cumulative_trip_load()` — Vectorized per-trip cumulative load calculation.
 - `evaluate_profitable_tour()` — Vectorized evaluation of a completed tour sequence for profitable tour problems.
 
-### `logic.src.pipeline.rl.envs.cptp`
+### `logic.src.pipeline.learning.envs.cptp`
 
 Capacitated Profitable Tour Problem (CPTP) environment, generator, and task specification.
 
@@ -665,7 +665,7 @@ Capacitated Profitable Tour Problem (CPTP) environment, generator, and task spec
 - **class `CPTPEnv`** — Capacitated Profitable Tour Problem Environment.
 - **class `CPTP`** — Capacitated Profitable Tour Problem (CPTP) task definition.
 
-### `logic.src.pipeline.rl.envs.cvrp`
+### `logic.src.pipeline.learning.envs.cvrp`
 
 Capacitated Vehicle Routing Problem (CVRP) environment, generator, and task specification.
 
@@ -674,7 +674,7 @@ Capacitated Vehicle Routing Problem (CVRP) environment, generator, and task spec
 - `evaluate_cvrp_tour()` — Vectorized evaluation of a CVRP tour sequence.
 - **class `CVRP`** — Capacitated Vehicle Routing Problem (CVRP) task definition.
 
-### `logic.src.pipeline.rl.envs.irp`
+### `logic.src.pipeline.learning.envs.irp`
 
 Inventory Routing Problem (IRP) task and environment on the routing base.
 
@@ -682,7 +682,7 @@ Inventory Routing Problem (IRP) task and environment on the routing base.
 - **class `IRPEnv`** — Inventory Routing Problem Environment on the routing base.
 - **class `IRP`** — Inventory Routing Problem (IRP) task definition.
 
-### `logic.src.pipeline.rl.envs.op`
+### `logic.src.pipeline.learning.envs.op`
 
 Orienteering Problem (OP) task and environment on the routing base.
 
@@ -690,7 +690,7 @@ Orienteering Problem (OP) task and environment on the routing base.
 - **class `OPEnv`** — Orienteering Problem Environment on the routing base.
 - **class `OP`** — Orienteering Problem (OP) task definition.
 
-### `logic.src.pipeline.rl.envs.pctsp`
+### `logic.src.pipeline.learning.envs.pctsp`
 
 Prize-Collecting Traveling Salesman Problem (PCTSP) task and environment on the routing base.
 
@@ -698,7 +698,7 @@ Prize-Collecting Traveling Salesman Problem (PCTSP) task and environment on the 
 - **class `PCTSPEnv`** — Prize-Collecting TSP Environment on the routing base.
 - **class `PCTSP`** — Prize-Collecting TSP (PCTSP) task definition.
 
-### `logic.src.pipeline.rl.envs.pdp`
+### `logic.src.pipeline.learning.envs.pdp`
 
 Pickup and Delivery Problem (PDP) task and environment on the routing base.
 
@@ -706,7 +706,7 @@ Pickup and Delivery Problem (PDP) task and environment on the routing base.
 - **class `PDPEnv`** — Pickup and Delivery Problem Environment on the routing base.
 - **class `PDP`** — Pickup and Delivery Problem (PDP) task definition.
 
-### `logic.src.pipeline.rl.envs.ptp`
+### `logic.src.pipeline.learning.envs.ptp`
 
 Profitable Tour Problem (PTP) environment, generator, and task specification.
 
@@ -714,21 +714,21 @@ Profitable Tour Problem (PTP) environment, generator, and task specification.
 - **class `PTPEnv`** — Profitable Tour Problem Environment.
 - **class `PTP`** — Profitable Tour Problem (PTP) task definition.
 
-### `logic.src.pipeline.rl.envs.spctsp`
+### `logic.src.pipeline.learning.envs.spctsp`
 
 Stochastic Prize-Collecting TSP (SPCTSP) task and environment on the routing base.
 
 - **class `SPCTSPEnv`** — Stochastic Prize-Collecting TSP Environment on the routing base.
 - **class `SPCTSP`** — Stochastic Prize-Collecting TSP (SPCTSP) task definition.
 
-### `logic.src.pipeline.rl.envs.spec`
+### `logic.src.pipeline.learning.envs.spec`
 
 Problem specification and registry.
 
 - **class `ProblemSpec`** — Declarative specification of a routing problem.
 - **class `ProblemRegistry`** — Registry mapping problem names to ProblemSpec instances.
 
-### `logic.src.pipeline.rl.envs.tcptp`
+### `logic.src.pipeline.learning.envs.tcptp`
 
 Time-constrained Capacitated Profitable Tour Problem (TCPTP) environment, generator, and task specification.
 
@@ -736,7 +736,7 @@ Time-constrained Capacitated Profitable Tour Problem (TCPTP) environment, genera
 - **class `TCPTPEnv`** — Time-constrained Capacitated Profitable Tour Problem Environment.
 - **class `TCPTP`** — Time-constrained Capacitated Profitable Tour Problem (TCPTP) task definition.
 
-### `logic.src.pipeline.rl.envs.thop`
+### `logic.src.pipeline.learning.envs.thop`
 
 Thief Orienteering Problem (ThOP) task and environment on the routing base.
 
@@ -744,7 +744,7 @@ Thief Orienteering Problem (ThOP) task and environment on the routing base.
 - **class `ThOPEnv`** — Thief Orienteering Problem Environment on the routing base.
 - **class `ThOP`** — Thief Orienteering Problem (ThOP) task definition.
 
-### `logic.src.pipeline.rl.envs.tsp`
+### `logic.src.pipeline.learning.envs.tsp`
 
 Traveling Salesman Problem (TSP) task, environment, and generator.
 
@@ -752,17 +752,17 @@ Traveling Salesman Problem (TSP) task, environment, and generator.
 - **class `TSPEnv`** — Traveling Salesman Problem Environment on the routing base.
 - **class `TSP`** — Traveling Salesman Problem (TSP) task definition.
 
-### `logic.src.pipeline.rl.envs.tsp_kopt`
+### `logic.src.pipeline.learning.envs.tsp_kopt`
 
 TSPkopt Environment implementation.
 
 - **class `TSPkoptEnv`** — TSP Environment for improvement-based methods (k-opt).
 
-### `logic.src.pipeline.rl.hpo.__init__`
+### `logic.src.pipeline.learning.hpo.__init__`
 
 HPO Module Initialization.
 
-### `logic.src.pipeline.rl.hpo.base`
+### `logic.src.pipeline.learning.hpo.base`
 
 Abstract base class for Hyperparameter Optimization backends.
 
@@ -770,119 +770,119 @@ Abstract base class for Hyperparameter Optimization backends.
 - `apply_params()` — Apply a flat dict of dotted-path parameters to a Config object.
 - **class `BaseHPO`** — Abstract base class for HPO backends (Optuna, DEHB, …).
 
-### `logic.src.pipeline.rl.hpo.dehb`
+### `logic.src.pipeline.learning.hpo.dehb`
 
 Differential Evolution Hyperband (DEHB) wrapper.
 
 - **class `DifferentialEvolutionHyperband`** — HPO backend using Differential Evolution Hyperband.
 
-### `logic.src.pipeline.rl.hpo.hyp_rl`
+### `logic.src.pipeline.learning.hpo.hyp_rl`
 
 Hyp-RL: Hyperparameter Optimization by Reinforcement Learning.
 
 - **class `HypRLHPO`** — Hyp-RL: Hyperparameter Optimization by Reinforcement Learning.
 
-### `logic.src.pipeline.rl.hpo.hyp_rl_enc`
+### `logic.src.pipeline.learning.hpo.hyp_rl_enc`
 
 Hyperparameter Encoder for HPO.
 
 - **class `HyperparameterEncoder`** — Encodes hyperparameter configurations into fixed-size embeddings.
 
-### `logic.src.pipeline.rl.hpo.hyp_rl_pol`
+### `logic.src.pipeline.learning.hpo.hyp_rl_pol`
 
 LSTM-based Policy Network for Hyp-RL.
 
 - **class `HypRLPolicy`** — LSTM-based policy network for Hyp-RL.
 
-### `logic.src.pipeline.rl.hpo.optuna_hpo`
+### `logic.src.pipeline.learning.hpo.optuna_hpo`
 
 Optuna HPO Integration.
 
 - **class `OptunaHPO`** — Handles Optuna-based Hyperparameter Optimization.
 
-### `logic.src.pipeline.rl.hpo.ray_tune_hpo`
+### `logic.src.pipeline.learning.hpo.ray_tune_hpo`
 
 Ray Tune HPO backend for WSmart-Route.
 
 - **class `RayTuneHPO`** — Ray Tune HPO backend with ASHA / PBT / BOHB schedulers.
 
-### `logic.src.pipeline.rl.hpo.zenml_hpo_pipeline`
+### `logic.src.pipeline.learning.hpo.zenml_hpo_pipeline`
 
 ZenML HPO pipeline for WSmart-Route.
 
 - `hpo_pipeline()` — Serialise *cfg* and launch the ZenML HPO pipeline.
 
-### `logic.src.pipeline.rl.meta.__init__`
+### `logic.src.pipeline.learning.meta.__init__`
 
 Meta-Learning Package.
 
-### `logic.src.pipeline.rl.meta.contextual_bandits`
+### `logic.src.pipeline.learning.meta.contextual_bandits`
 
 Contextual Bandit Approach for Weight Configuration Selection.
 
 - **class `WeightContextualBandit`** — A contextual bandit approach for dynamically selecting weight configurations.
 
-### `logic.src.pipeline.rl.meta.hrl`
+### `logic.src.pipeline.learning.meta.hrl`
 
 Hierarchical Reinforcement Learning (HRL) module.
 
 - **class `HRLModule`** — Lightning module for Hierarchical RL.
 
-### `logic.src.pipeline.rl.meta.hrl_irp`
+### `logic.src.pipeline.learning.meta.hrl_irp`
 
 HRL-IRP Lightning Training Module for Multi-Period Inventory Routing.
 
 - **class `HRLIRPModule`** — Multi-period IRP Lightning module extending HRLModule.
 
-### `logic.src.pipeline.rl.meta.hypernet_strategy`
+### `logic.src.pipeline.learning.meta.hypernet_strategy`
 
 Hypernetwork Strategy for Meta-RL.
 
 - **class `HyperNetworkStrategy`** — Weight adjustment strategy using a Hypernetwork.
 
-### `logic.src.pipeline.rl.meta.module`
+### `logic.src.pipeline.learning.meta.module`
 
 Meta-Reinforcement Learning (Meta-RL) module.
 
 - **class `MetaRLModule`** — Lightning module for Meta-Reinforcement Learning.
 
-### `logic.src.pipeline.rl.meta.multi_objective.pareto_front`
+### `logic.src.pipeline.learning.meta.multi_objective.pareto_front`
 
 pareto_front.py module.
 
 - **class `ParetoFront`** — Maintains a set of non-dominated solutions.
 
-### `logic.src.pipeline.rl.meta.multi_objective.pareto_solution`
+### `logic.src.pipeline.learning.meta.multi_objective.pareto_solution`
 
 pareto_solution.py module.
 
 - **class `ParetoSolution`** — Represents a solution on the Pareto front.
 
-### `logic.src.pipeline.rl.meta.multi_objective.weight_optimizer`
+### `logic.src.pipeline.learning.meta.multi_objective.weight_optimizer`
 
 Multi-Objective Reinforcement Learning (MORL) Weight Optimizer.
 
 - **class `MORLWeightOptimizer`** — Pareto-based multi-objective weight optimizer.
 
-### `logic.src.pipeline.rl.meta.registry`
+### `logic.src.pipeline.learning.meta.registry`
 
 Meta-Learning Strategy Registry.
 
 - `get_meta_strategy()` — Get meta-learning strategy by name.
 
-### `logic.src.pipeline.rl.meta.td_learning`
+### `logic.src.pipeline.learning.meta.td_learning`
 
 Cost Weight Manager using Temporal Difference (TD) Learning.
 
 - **class `CostWeightManager`** — Adjusts cost weights (w_lost, w_waste, w_length, w_overflows) using
 
-### `logic.src.pipeline.rl.meta.weight_optimizer`
+### `logic.src.pipeline.learning.meta.weight_optimizer`
 
 Neural Network-Based Meta-Learning for Reward Weight Optimization.
 
 - **class `RewardWeightOptimizer`** — Manager for the meta-learning process of optimizing reward weights
 
-### `logic.src.pipeline.rl.meta.weight_strategy`
+### `logic.src.pipeline.learning.meta.weight_strategy`
 
 Abstract Strategy Pattern for Weight Adjustment.
 

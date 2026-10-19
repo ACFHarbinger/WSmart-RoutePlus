@@ -114,8 +114,7 @@ WSmart-Route/
 │   ├── src/
 │   │   ├── models/          # Neural architectures
 │   │   ├── policies/        # Classical solvers
-│   │   ├── envs/            # Problem environments
-│   │   ├── pipeline/        # Training/evaluation orchestration
+│   │   ├── pipeline/        # Training/evaluation orchestration (learning/envs: problem environments)
 │   │   └── utils/           # Shared utilities
 │   └── test/                # Test suite
 ├── app/                      # WSmart-Route Studio (Tauri 2.0)
@@ -492,7 +491,7 @@ from logic.src.policies.last_minute import LastMinute
 policy = LastMinute(threshold=0.9)  # Trigger at 90% full
 ```
 
-### 3.4 Problem Environments (`logic/src/pipeline/rl/envs/`)
+### 3.4 Problem Environments (`logic/src/pipeline/learning/envs/`)
 
 #### VRPP (`envs/vrpp.py`)
 
@@ -692,9 +691,9 @@ class FinishingState(SimState):
         return None
 ```
 
-### 3.6 Reinforcement Learning Pipeline (`logic/src/pipeline/rl/`)
+### 3.6 Reinforcement Learning Pipeline (`logic/src/pipeline/learning/`)
 
-### 3.6 Reinforcement Learning Pipeline (`logic/src/pipeline/rl/`)
+### 3.6 Reinforcement Learning Pipeline (`logic/src/pipeline/learning/`)
 
 The RL pipeline uses PyTorch Lightning for scalable training and easy experiment management.
 
@@ -705,8 +704,8 @@ Implements policy gradient algorithms using PyTorch Lightning:
 **REINFORCE Algorithm:**
 
 ```python
-from logic.src.pipeline.rl.core import REINFORCE
-from logic.src.pipeline.rl.core.baselines import RolloutBaseline
+from logic.src.pipeline.learning.core import REINFORCE
+from logic.src.pipeline.learning.core.baselines import RolloutBaseline
 
 # Create RL algorithm with baseline
 rl = REINFORCE(
@@ -745,7 +744,7 @@ loss = rl.compute_loss(batch, model)
 Utilities for epoch management:
 
 ```python
-from logic.src.pipeline.rl.features.epoch import (
+from logic.src.pipeline.learning.features.epoch import (
     prepare_epoch,
     regenerate_dataset,
     compute_validation_metrics,
@@ -770,7 +769,7 @@ metrics = compute_validation_metrics(model, val_dataset, problem)
 4.  Select best configuration based on validation performance.
 
 ```python
-from logic.src.pipeline.rl.hpo import DifferentialEvolutionHyperband
+from logic.src.pipeline.learning.hpo import DifferentialEvolutionHyperband
 
 search_space = {
     'lr_model': (1e-5, 1e-3, 'log'),
@@ -1242,8 +1241,8 @@ python main.py test_sim --policies my_heuristic --size 20 --days 31
 **Step 1: Define Problem Class**
 
 ```python
-# logic/src/pipeline/rl/envs/my_problem.py
-from logic.src.pipeline.rl.envs.base import RL4COEnvBase
+# logic/src/pipeline/learning/envs/my_problem.py
+from logic.src.pipeline.learning.envs.base import RL4COEnvBase
 
 class MyProblem(BaseProblem):
     NAME = 'my_problem'
@@ -1265,7 +1264,7 @@ class MyProblem(BaseProblem):
 **Step 2: Add State Definitions**
 
 ```python
-# logic/src/pipeline/rl/envs/my_problem.py (continued)
+# logic/src/pipeline/learning/envs/my_problem.py (continued)
 # States are now embedded in the environment class
 
 class StateMyProblem(BaseState):
@@ -1359,8 +1358,8 @@ class MyDecoder(nn.Module):
 **Step 1: Create Algorithm (Lightning-based)**
 
 ```python
-# logic/src/pipeline/rl/core/my_algorithm.py
-from logic.src.pipeline.rl.core.base import RL4COLitModule
+# logic/src/pipeline/learning/core/my_algorithm.py
+from logic.src.pipeline.learning.core.base import RL4COLitModule
 
 class MyRLAlgorithm(RL4COLitModule):
     """Custom RL algorithm using Lightning."""
@@ -1395,8 +1394,8 @@ class MyRLAlgorithm(RL4COLitModule):
 **Step 2: Register in Registry**
 
 ```python
-# logic/src/pipeline/rl/core/__init__.py
-from logic.src.pipeline.rl.core.my_algorithm import MyRLAlgorithm
+# logic/src/pipeline/learning/core/__init__.py
+from logic.src.pipeline.learning.core.my_algorithm import MyRLAlgorithm
 
 RL_ALGORITHM_REGISTRY['my_algorithm'] = MyRLAlgorithm
 ```
@@ -1511,8 +1510,8 @@ if torch.cuda.device_count() > 1:
 **Creating a Custom Baseline:**
 
 ```python
-# logic/src/pipeline/rl/core/my_baseline.py
-from logic.src.pipeline.rl.core.baselines import Baseline
+# logic/src/pipeline/learning/core/my_baseline.py
+from logic.src.pipeline.learning.core.baselines import Baseline
 import torch
 
 class MyBaseline(Baseline):

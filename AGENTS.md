@@ -48,7 +48,7 @@ This document provides a high-level overview of the codebase. For deep dives int
 | **[Configuration Guide](docs/CONFIGURATION_GUIDE.md)**         | -                       | Comprehensive guide to Hydra configuration, CLI syntax, multi-run sweeps, and best practices |
 | **[Constants Module](docs/CONSTANTS_MODULE.md)**               | `logic/src/utils/`      | System-wide constants, problem definitions, enum types, and magic numbers                    |
 | **[Data Module](docs/DATA_MODULE.md)**                         | `logic/src/data/`       | Dataset generation, loading utilities, data augmentation, and transforms                     |
-| **[Environments Module](docs/ENVS_MODULE.md)**                 | `logic/src/pipeline/rl/envs/`       | Problem environments (VRPP, WCVRP, SCWCVRP), state management, and physics                   |
+| **[Environments Module](docs/ENVS_MODULE.md)**                 | `logic/src/pipeline/learning/envs/`       | Problem environments (VRPP, WCVRP, SCWCVRP), state management, and physics                   |
 | **[Interfaces Module](docs/INTERFACES_MODULE.md)**             | `logic/src/interfaces/` | Abstract base classes, protocols, type definitions, and contracts                            |
 | **[Models Module](docs/MODELS_MODULE.md)**                     | `logic/src/models/`     | Neural architectures (264KB doc): encoders, decoders, attention mechanisms, graph layers     |
 | **[Pipeline Module](docs/PIPELINE_MODULE.md)**                 | `logic/src/pipeline/`   | Training pipeline, evaluation, simulation orchestration, RL algorithms, and HPO              |
@@ -145,9 +145,9 @@ logic/src/
 │   ├── subnets/      # Encoders, decoders, predictors
 │   └── policies/     # Classical policies (HGS, local_search, split)
 ├── policies/         # Classical & heuristic algorithms
-├── envs/             # Problem environments (replacing tasks/)
 ├── pipeline/         # Training, evaluation, simulation orchestration
-│   ├── rl/           # Lightning-based RL pipeline
+│   ├── learning/     # Lightning-based RL pipeline
+│   │   └── envs/     # Problem environments
 │   ├── features/     # Feature-specific implementations (train, eval, test)
 │   └── simulations/  # Simulator engine
 ├── data/             # Data generation utilities
@@ -714,7 +714,7 @@ probs = F.softmax(logits, dim=-1)  # Can select invalid nodes
 | CLI parsers         | `logic/controllers/cli/`                  |
 | Neural models       | `logic/src/models/`               |
 | Classical policies  | `logic/src/policies/`             |
-| Problem definitions | `logic/src/pipeline/rl/envs/`                 |
+| Problem definitions | `logic/src/pipeline/learning/envs/`                 |
 | Simulator engine    | `logic/src/pipeline/simulations/` |
 | Studio desktop app  | `app/` (React + Tauri)            |
 | Configuration       | `assets/configs/`                 |

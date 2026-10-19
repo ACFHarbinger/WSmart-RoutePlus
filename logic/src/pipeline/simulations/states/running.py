@@ -110,7 +110,7 @@ class RunningState(SimState):
             kg_rows = (ctx.daily_log or {}).get("kg") or []
             if kg_rows:
                 from logic.src.constants import SIM_METRICS
-                from logic.src.pipeline.rl.envs.common.metrics import METRICS as KPI
+                from logic.src.pipeline.learning.envs.common.metrics import METRICS as KPI
 
                 records = []
                 for index in range(len(kg_rows)):

@@ -30,6 +30,7 @@ Directories renamed after what they hold. No behaviour changes.
   The functions keep their names. `tools/gates/capture.py` falls back to `solver_status` on trees with the old layout, such as the gate baseline.
 - **Moved:** `pipeline/simulations/failure_analyzer.py` → `tracking/logging/modules/failure_analyzer.py`, next to `failure_emit.py`, which serialises its summaries. It analyses a finished day; it is not a step of the simulation.
 - **Moved:** `logic/src/envs` → `logic/src/pipeline/rl/envs`, and its tests from `logic/test/unit/envs` to `logic/test/unit/pipeline/rl/envs`. Imports are `logic.src.pipeline.rl.envs.*`. `logic/release.yaml`, the release build check in `logic/package/build_release.py`, the docs and the notebooks use the new path; `docs/api/envs.md` is folded into `docs/api/pipeline.md`. No saved model checkpoint pickles a reference to the old module path (all 374 `.pt`/`.ckpt` files checked).
+- **Renamed:** `logic/src/pipeline/rl` → `logic/src/pipeline/learning` (tests: `logic/test/unit/pipeline/rl` → `logic/test/unit/pipeline/learning`). The environments are therefore at `logic.src.pipeline.learning.envs`. Registry targets, `logic/release.yaml`, `logic/package/build_release.py`, docs and notebooks are updated; the PyInstaller specs collect every `logic` submodule and need no change. The `rl` config group and `cfg.rl` keys are unchanged.
 
 ### SANS operators moved to `helpers/operators` (`2026-10-18`)
 

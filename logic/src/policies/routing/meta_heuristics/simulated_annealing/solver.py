@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 
 from logic.src.configs.policies.sa import SAConfig
-from logic.src.pipeline.rl.envs.common.expand_pool import current_expand_pool
+from logic.src.pipeline.learning.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.local_search.local_search_base import LocalSearch
 from logic.src.policies.helpers.operators import (
     greedy_insertion,

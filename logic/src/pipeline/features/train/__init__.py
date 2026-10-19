@@ -11,8 +11,8 @@ from hydra.core.config_store import ConfigStore
 
 from logic.src.configs import Config
 from logic.src.models.core.attention_model.policy import AttentionModelPolicy
-from logic.src.pipeline.rl.common.trainer import WSTrainer
-from logic.src.pipeline.rl.envs import get_env
+from logic.src.pipeline.learning.common.trainer import WSTrainer
+from logic.src.pipeline.learning.envs import get_env
 from logic.src.utils.registry import lazy_getattr
 
 from .engine import run_training

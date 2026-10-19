@@ -115,7 +115,7 @@ class HierarchicalNeuralAgentPolicy(BaseMultiPeriodRoutingPolicy):
         params = self.params
         if params.checkpoint_path is not None:
             try:
-                from logic.src.pipeline.rl.meta.hrl_irp import HRLIRPModule
+                from logic.src.pipeline.learning.meta.hrl_irp import HRLIRPModule
 
                 self._module = HRLIRPModule.load_from_checkpoint(
                     params.checkpoint_path,

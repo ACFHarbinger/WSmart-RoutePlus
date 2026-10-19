@@ -15,7 +15,7 @@ Confirmed against the filesystem, not assumed from names. POMO has no `logic/src
 |---|---|---|
 | `Attention_Model.pdf` | `logic/src/models/core/attention_model/` + `GlimpseDecoder` | constructive policy |
 | `Pointer_Networks.pdf` | `logic/src/models/core/pointer_network/` | constructive policy |
-| `POMO.pdf` | `logic/src/pipeline/rl/core/pomo.py` (algorithm) and `pomo_size` on AM | RL trainer, not a separate architecture |
+| `POMO.pdf` | `logic/src/pipeline/learning/core/pomo.py` (algorithm) and `pomo_size` on AM | RL trainer, not a separate architecture |
 | `Sym-NCO.pdf` | `logic/src/models/core/attention_model/symnco_policy.py` | AM subclass + projection head |
 | `DACT.pdf` | `logic/src/models/core/dact/` | improvement (2-opt pairs) |
 | `DR-ALNS.pdf` | `logic/src/models/core/dr_alns/` | PPO-controlled ALNS |
@@ -139,7 +139,7 @@ Shared building blocks most `core/` models compose: `logic/src/models/subnets/` 
 ## 3. POMO (Kwon et al. 2020)
 
 **Paper**: Kwon et al., "POMO: Policy Optimization with Multiple Optima for Neural Combinatorial Optimization", NeurIPS 2020 (`POMO.pdf`)
-**Implementation**: `logic/src/pipeline/rl/core/pomo.py` (subclass of `REINFORCE`); `pomo_size` on `AttentionModel` / `GlimpseDecoder`; forced start nodes in `AttentionModelPolicy.forward`
+**Implementation**: `logic/src/pipeline/learning/core/pomo.py` (subclass of `REINFORCE`); `pomo_size` on `AttentionModel` / `GlimpseDecoder`; forced start nodes in `AttentionModelPolicy.forward`
 **Faithfulness**: ★★★★☆ (4/5)
 
 ### Why this is not under `models/core/`
@@ -164,7 +164,7 @@ POMO is a **training algorithm** for an existing constructive policy (almost alw
 ## 4. Sym-NCO (Kim et al. 2022)
 
 **Paper**: Kim, Park & Park, "Sym-NCO: Leveraging Symmetricity for Neural Combinatorial Optimization", NeurIPS 2022 (`Sym-NCO.pdf`)
-**Implementation**: `logic/src/models/core/attention_model/symnco_policy.py` (projection head); `logic/src/pipeline/rl/core/symnco.py` (losses); `logic/configs/models/symnco.yaml`
+**Implementation**: `logic/src/models/core/attention_model/symnco_policy.py` (projection head); `logic/src/pipeline/learning/core/symnco.py` (losses); `logic/configs/models/symnco.yaml`
 **Faithfulness**: ★★★★☆ (4/5)
 
 ### What matches
