@@ -1,0 +1,77 @@
+"""CLI parser for the cloud runner (``cloud`` sub-command).
+
+Example::
+
+    python main.py cloud submit --manifest cells.json --max-parallel 4 --wait
+    python main.py cloud submit --command "test_sim sim.graph.area=riomaior sim.graph.num_loc=100 ..."
+    python main.py cloud status job-1f3a9c2e5b7d --json
+    python main.py cloud worker
+
+Attributes:
+    add_cloud_args: Register the ``cloud`` sub-commands on an existing sub-parser.
+"""
+
+from __future__ import annotations
+
+import argparse
+
+
+def add_cloud_args(parser: argparse.ArgumentParser) -> None:
+    """Register the ``cloud`` sub-commands on *parser*.
+
+    Args:
+        parser: An :class:`argparse.ArgumentParser` (or sub-parser) to populate.
+    """
+    parser.add_argument(
+        "--root",
+        default="outputs/cloud",
+        help="Local state directory of the local profile: control plane, objects and task outputs.",
+    )
+    parser.add_argument("--json", action="store_true", help="Print machine-readable JSON.")
+    commands = parser.add_subparsers(dest="cloud_command", required=True, help="cloud command")
+
+    submit = commands.add_parser("submit", help="Submit a job: a manifest of cells or one test_sim command")
+    source = submit.add_mutually_exclusive_group(required=True)
+    source.add_argument("--manifest", help="Manifest file (native or rerun format, JSON or YAML).")
+    source.add_argument("--command", dest="sim_command", help="One test_sim command line, quoted.")
+    submit.add_argument("--policy", default=None, help="Keep only this routing algorithm's cells (rerun manifests).")
+    submit.add_argument("--name", default=None, help="Job name.")
+    submit.add_argument("--provider", default=None, choices=["local", "gcp", "aws", "azure"])
+    submit.add_argument("--compute", default=None, choices=["process", "batch", "serverless", "vm"])
+    submit.add_argument("--max-parallel", type=int, default=None, help="Tasks of this job running at once.")
+    submit.add_argument("--cpus", type=float, default=None)
+    submit.add_argument("--memory-gb", type=float, default=None)
+    submit.add_argument("--spot", action="store_true", help="Use spot or preemptible capacity.")
+    submit.add_argument("--retries", type=int, default=None, help="Automatic retries per task.")
+    submit.add_argument("--max-wall", type=float, default=None, help="Wall-time limit per attempt, in seconds.")
+    submit.add_argument(
+        "--idle", type=float, default=None, help="Kill an attempt after this many seconds without progress."
+    )
+    submit.add_argument("--gurobi", default=None, choices=["none", "wls_secret", "byo"])
+    submit.add_argument(
+        "--gurobi-secret", default=None, help="Secret-store name of the Gurobi license (never the value)."
+    )
+    submit.add_argument("--wait", action="store_true", help="Run the scheduler here until the job finishes.")
+    submit.add_argument("--poll", type=float, default=5.0, help="Seconds between scheduling passes with --wait.")
+
+    status = commands.add_parser("status", help="A job's state, or the recent jobs")
+    status.add_argument("job_id", nargs="?", default=None)
+
+    logs = commands.add_parser("logs", help="A task's current log")
+    logs.add_argument("task_id")
+    logs.add_argument("--tail", type=int, default=None)
+
+    for name, text in (("cancel", "Cancel a job"), ("retry", "Requeue a job's failed and cancelled tasks")):
+        sub = commands.add_parser(name, help=text)
+        sub.add_argument("job_id")
+
+    download = commands.add_parser("download", help="Download a job's results")
+    download.add_argument("job_id")
+    download.add_argument("--dest", default=None, help="Destination root (default: <root>/results/<job_id>).")
+
+    commands.add_parser("backends", help="List the configured backends")
+
+    worker = commands.add_parser("worker", help="Run the scheduler until every job finishes")
+    worker.add_argument("--job", default=None, help="Only wait for this job.")
+    worker.add_argument("--poll", type=float, default=5.0)
+    worker.add_argument("--once", action="store_true", help="Run one scheduling pass and exit.")

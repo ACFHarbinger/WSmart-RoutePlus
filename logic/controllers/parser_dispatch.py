@@ -13,6 +13,7 @@ Supported commands
 - ``"clean_results"`` / ``"excel_summary"`` → :func:`~logic.controllers.jobs.ops_runner.run_output_command`
 - ``"update_ms"`` / ``"update_ri"``     → :func:`~logic.controllers.jobs.ops_runner.run_target_update`
 - ``"sync_drive"``                    → :func:`~logic.cloud.cli.run_sync` (rclone copy to or from Google Drive)
+- ``"cloud"``                         → :func:`~logic.controllers.cloud.cli.run_cloud` (cloud runner jobs)
 
 Example::
 
@@ -114,7 +115,8 @@ def parser_entry_point(
             run_file_system(opts, inner_comm)
 
         else:
-            _pretty_print_args(comm, opts)
+            if not (comm == "cloud" and opts.get("json")):  # keep JSON output parseable for the Studio
+                _pretty_print_args(comm, opts)
 
             if comm == "benchmark":
                 run_benchmarks(opts)
@@ -126,6 +128,10 @@ def parser_entry_point(
                 from logic.cloud.cli import run_sync
 
                 run_sync(opts)
+            elif comm == "cloud":
+                from logic.controllers.cloud.cli import run_cloud
+
+                run_cloud(opts)
             else:
                 assert comm == "test_suite"
                 run_test_suite(opts)

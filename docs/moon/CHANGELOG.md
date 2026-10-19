@@ -21,6 +21,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Added
 
+- **CR-01 (#121): cloud runner core** in `logic/controllers/cloud/`:
+  - `model.py`: `JobSpec`, `CellSpec`, `Resources`, `TaskRecord`, `JobRecord`, events and result records; the task state machine (`TRANSITIONS`, `check_transition`) and the derived job state.
+  - `manifest.py`: job specs from native manifests, the paper rerun manifests (filtered by `policy`) and single `test_sim` commands. Runner-owned settings (`sim.cpu_cores`, `sim.resume`, `sim.checkpoint_days`, `sim.output_dir`) are dropped from the cells.
+  - `interfaces.py`: `ControlPlane`, `ComputeBackend`, `ObjectStore`, `SecretStore` and `ImageRegistry`.
+  - `local/`: the SQLite control plane (atomic leases across processes), a filesystem object store, environment and in-memory secret stores, and a subprocess backend whose attempts survive a scheduler restart and wait for free memory.
+  - `service.py`: `CloudService` submits jobs, starts tasks up to `max_parallel`, retries failures and preemptions (resuming from the daily checkpoints), enforces the wall-time and idle limits, cancels, requeues and downloads hash-checked results into the `outputs/` layout.
+  - `testing/`: fakes and the contract suites every backend, control plane, object store and secret store must pass.
+  - CLI: `python main.py cloud submit|status|logs|cancel|retry|download|backends|worker`, with `--json` output for the Studio. A real two-day `test_sim` cell ran end to end through it.
+  - `logic.controllers.cloud` is excluded from the release until CR-17 ships it as the `[cloud]` extra.
 - **Roadmap:** `docs/moon/roadmaps/cloud.md` (§J), linked from `docs/moon/ROADMAP.md`: the v1.1.0 cloud runner design, its 17 work packages (#121–#137, epic #120) and future work.
 - **Agent brief:** `.agent/tasks/cloud-runner-2026-10-19.md`, with Claude's and Gemini's lanes, and a kickoff entry on the agent bus.
 
