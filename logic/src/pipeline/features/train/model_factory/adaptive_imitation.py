@@ -14,7 +14,7 @@ import pytorch_lightning as pl
 from hydra.utils import instantiate
 
 from logic.src.configs import Config
-from logic.src.pipeline.rl.core.adaptive_imitation import AdaptiveImitation
+from logic.src.pipeline.learning.core.adaptive_imitation import AdaptiveImitation
 
 from .imitation import _resolve_configs
 

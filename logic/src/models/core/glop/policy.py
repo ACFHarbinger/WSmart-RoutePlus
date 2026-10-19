@@ -23,7 +23,7 @@ from tensordict import TensorDict
 
 from logic.src.models.common.non_autoregressive.policy import NonAutoregressivePolicy
 from logic.src.models.subnets.modules.glop_factory import get_adapter
-from logic.src.pipeline.rl.envs.base.base import RL4COEnvBase
+from logic.src.pipeline.learning.envs.base.base import RL4COEnvBase
 
 # Type for subproblem solvers
 SubProblemSolverType = Callable[[torch.Tensor], torch.Tensor]

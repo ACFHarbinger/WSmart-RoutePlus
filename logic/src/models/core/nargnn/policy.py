@@ -30,8 +30,8 @@ from logic.src.models.common.non_autoregressive.policy import (
 )
 from logic.src.models.subnets.decoders.nar import SimpleNARDecoder
 from logic.src.models.subnets.encoders.nargnn import NARGNNEncoder
-from logic.src.pipeline.rl.envs import get_env
-from logic.src.pipeline.rl.envs.base.base import RL4COEnvBase
+from logic.src.pipeline.learning.envs import get_env
+from logic.src.pipeline.learning.envs.base.base import RL4COEnvBase
 
 
 class NARGNNPolicy(NonAutoregressivePolicy):

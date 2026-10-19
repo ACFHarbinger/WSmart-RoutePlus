@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 
 import pytest
 import torch
-from logic.src.pipeline.rl.common.base import RL4COLitModule
+from logic.src.pipeline.learning.common.base import RL4COLitModule
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

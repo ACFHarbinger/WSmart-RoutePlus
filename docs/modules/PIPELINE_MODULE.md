@@ -691,7 +691,7 @@ def get_baseline(name: str, policy: Optional[nn.Module] = None, **kwargs) -> Bas
 **Usage Example**:
 
 ```python
-from logic.src.pipeline.rl.common.baselines import get_baseline
+from logic.src.pipeline.learning.common.baselines import get_baseline
 
 # Create critic baseline with learned value network
 baseline = get_baseline(
@@ -714,7 +714,7 @@ baseline = get_baseline("exponential", beta=0.8)
 Classic policy gradient with baselines.
 
 ```python
-from logic.src.pipeline.rl import REINFORCE
+from logic.src.pipeline.learning import REINFORCE
 
 model = REINFORCE(
     env=env,
@@ -743,7 +743,7 @@ Where:
 Trust-region policy optimization with clipping.
 
 ```python
-from logic.src.pipeline.rl import PPO
+from logic.src.pipeline.learning import PPO
 
 model = PPO(
     env=env,
@@ -776,7 +776,7 @@ Where:
 Multi-start decoding for combinatorial optimization.
 
 ```python
-from logic.src.pipeline.rl import POMO
+from logic.src.pipeline.learning import POMO
 
 model = POMO(
     env=env,
@@ -800,7 +800,7 @@ $$
 Supervised learning from expert demonstrations.
 
 ```python
-from logic.src.pipeline.rl import ImitationLearning
+from logic.src.pipeline.learning import ImitationLearning
 
 model = ImitationLearning(
     env=env,
@@ -824,7 +824,7 @@ $$
 Gradual transition from imitation to RL.
 
 ```python
-from logic.src.pipeline.rl import AdaptiveImitation
+from logic.src.pipeline.learning import AdaptiveImitation
 
 model = AdaptiveImitation(
     env=env,
@@ -864,7 +864,7 @@ Where $\alpha(t)$ linearly decays from 1 → 0 over `transition_epochs`.
 **Usage**:
 
 ```python
-from logic.src.pipeline.rl.meta import MetaRLModule
+from logic.src.pipeline.learning.meta import MetaRLModule
 
 model = MetaRLModule(
     env=env,
@@ -882,7 +882,7 @@ model = MetaRLModule(
 **File**: `rl/hpo/optuna_hpo.py`
 
 ```python
-from logic.src.pipeline.rl.hpo import OptunaHPO
+from logic.src.pipeline.learning.hpo import OptunaHPO
 
 hpo = OptunaHPO(
     study_name="vrpp_hpo",
@@ -909,7 +909,7 @@ best_params = hpo.optimize(cfg, search_space)
 Efficient HPO combining differential evolution with successive halving.
 
 ```python
-from logic.src.pipeline.rl.hpo import DifferentialEvolutionHyperband
+from logic.src.pipeline.learning.hpo import DifferentialEvolutionHyperband
 
 dehb = DifferentialEvolutionHyperband(
     min_budget=1,             # Minimum epochs
@@ -1653,7 +1653,7 @@ run_training(cfg)
 ### Example 7: Hyperparameter Optimization
 
 ```python
-from logic.src.pipeline.rl.hpo import OptunaHPO
+from logic.src.pipeline.learning.hpo import OptunaHPO
 from logic.src.configs import Config
 
 cfg = Config()

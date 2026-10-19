@@ -19,7 +19,7 @@ and built-ins. Used by:
    - Generates summary statistics for interactive plots
    - Example: stats["median"](route_lengths) → typical route length
 
-3. **HPO objective functions**: logic/src/pipeline/rl/hpo/
+3. **HPO objective functions**: logic/src/pipeline/learning/hpo/
    - Reduces multi-run results to single scalar value
    - Example: stats["min"](validation_losses) → best validation loss
 

@@ -250,8 +250,7 @@ WSmart-Route/
 │   │   ├── cli/           # Command-line interface
 │   │   ├── models/        # Neural network models
 │   │   ├── policies/      # Classical optimization algorithms
-│   │   ├── envs/          # Problem environments
-│   │   ├── pipeline/      # Orchestration (rl, features, simulations)
+│   │   ├── pipeline/      # Orchestration (learning, features, simulations); learning/envs holds the problem environments
 │   │   ├── data/          # Data generation
 │   │   └── utils/         # Utilities
 │   └── test/              # Unit & integration tests

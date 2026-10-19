@@ -171,7 +171,7 @@ DEFAULT_TIME_LIMIT = 600  # seconds (10 minutes)
 DEFAULT_EVAL_BATCH_SIZE: int = 1024  # instances per batch (HRL manager default)
 
 # Default rollout batch size for baseline computation.
-# Used in: logic/src/pipeline/rl/common/baselines/rollout.py (REINFORCE/PPO baselines)
+# Used in: logic/src/pipeline/learning/common/baselines/rollout.py (REINFORCE/PPO baselines)
 # Smaller than eval batch size because rollouts compute full episodes.
 # 64 balances memory and baseline quality; increase for more samples.
 DEFAULT_ROLLOUT_BATCH_SIZE: int = 64  # episodes per rollout (baseline computation default)

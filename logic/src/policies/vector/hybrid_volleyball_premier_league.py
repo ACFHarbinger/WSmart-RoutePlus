@@ -25,7 +25,7 @@ from tensordict import TensorDict
 
 from logic.src.constants.simulation import VEHICLE_CAPACITY
 from logic.src.models.common.autoregressive.policy import AutoregressivePolicy
-from logic.src.pipeline.rl.envs.base.base import RL4COEnvBase
+from logic.src.pipeline.learning.envs.base.base import RL4COEnvBase
 from logic.src.policies.vector.adaptive_large_neighborhood_search import (
     VectorizedALNS,
 )

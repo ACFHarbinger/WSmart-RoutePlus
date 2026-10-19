@@ -208,7 +208,7 @@
 
 ### §A.4 — RL Loss Landscape & Training Health Monitoring
 
-**Pain**: The Lightning-based RL pipeline (`logic/src/pipeline/rl/`) logs loss values but provides no automated detection of training instability (exploding/vanishing gradients, policy collapse, reward stagnation). Researchers must manually inspect WandB logs.
+**Pain**: The Lightning-based RL pipeline (`logic/src/pipeline/learning/`) logs loss values but provides no automated detection of training instability (exploding/vanishing gradients, policy collapse, reward stagnation). Researchers must manually inspect WandB logs.
 
 **Options**
 

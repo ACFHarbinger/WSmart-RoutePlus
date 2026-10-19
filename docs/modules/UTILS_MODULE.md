@@ -1931,7 +1931,7 @@ Directory                    Files    LOC      Comments
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 logic/src/models/            45       12,345   1,234
 logic/src/policies/          28       8,901    890
-logic/src/pipeline/rl/envs/              12       4,567    456
+logic/src/pipeline/learning/envs/              12       4,567    456
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Total                        85       25,813   2,580
 ```

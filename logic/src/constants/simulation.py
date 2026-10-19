@@ -4,7 +4,7 @@ Simulation and Physics constants.
 This module defines physical constants, problem constraints, and metric definitions
 for the WSmart+ Route simulation engine. Used by:
 - logic/src/pipeline/simulations/simulator.py (multi-day simulation orchestrator)
-- logic/src/pipeline/rl/envs/*.py (problem environment physics)
+- logic/src/pipeline/learning/envs/*.py (problem environment physics)
 - logic/src/data/generators/*.py (instance generation)
 
 Metric Naming Conventions
@@ -134,7 +134,7 @@ VEHICLE_CAPACITY: float = 200.0  # kg (default for synthetic instances)
 # Supported Problem Types
 # -----------------------
 # Environment registry for problem selection via CLI/config.
-# Format: {problem_name} → logic/src/pipeline/rl/envs/{problem_name}.py
+# Format: {problem_name} → logic/src/pipeline/learning/envs/{problem_name}.py
 PROBLEMS: List[str] = [
     "ptp",  # Profitable Tour Problem (maximize profit - cost)
     "cptp",  # Capacitated Profitable Tour Problem (adds the vehicle capacity constraint)

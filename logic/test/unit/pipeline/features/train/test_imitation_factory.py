@@ -42,7 +42,7 @@ _FACTORY = "logic.src.pipeline.features.train.model_factory"
         # The imitation factory imports its module on call, so the class is patched at its source.
         (
             "imitation",
-            "logic.src.pipeline.rl.core.imitation",
+            "logic.src.pipeline.learning.core.imitation",
             f"{_FACTORY}.imitation:_create_imitation",
             "ImitationLearning",
         ),

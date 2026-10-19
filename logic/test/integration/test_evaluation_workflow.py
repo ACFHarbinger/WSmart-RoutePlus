@@ -13,7 +13,7 @@ from logic.src.configs.models.normalization import NormalizationConfig
 from logic.src.models.core.attention_model import AttentionModel
 from logic.src.models.subnets.factories.attention import AttentionComponentFactory
 from logic.src.pipeline.features.eval import eval_dataset
-from logic.src.pipeline.rl.envs import PTP
+from logic.src.pipeline.learning.envs import PTP
 
 pytestmark = [pytest.mark.integration, pytest.mark.slow]
 
@@ -131,7 +131,7 @@ class ListDataset(torch.utils.data.Dataset):
 @pytest.fixture(autouse=True)
 def patch_validate_tours(monkeypatch):
     """Patches validate_tours to avoid assertion error on random model output."""
-    from logic.src.pipeline.rl.envs.base.problem import BaseProblem
+    from logic.src.pipeline.learning.envs.base.problem import BaseProblem
     monkeypatch.setattr(BaseProblem, "validate_tours", lambda x: True)
 
 

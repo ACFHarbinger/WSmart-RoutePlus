@@ -5,7 +5,7 @@ import torch
 from hypothesis import given
 from hypothesis import strategies as st
 from hypothesis.extra.numpy import arrays
-from logic.src.pipeline.rl.common.reward_scaler import RewardScaler
+from logic.src.pipeline.learning.common.reward_scaler import RewardScaler
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

@@ -267,7 +267,7 @@ class N2SPolicy(ImprovementPolicy):
         Returns:
             dict[str, Any]: Results including reward, log_likelihood, and actions.
         """
-        from logic.src.pipeline.rl.envs import get_env
+        from logic.src.pipeline.learning.envs import get_env
         from logic.src.utils.decoding import batchify, unbatchify
 
         # Track if caller supplied a solution explicitly in td

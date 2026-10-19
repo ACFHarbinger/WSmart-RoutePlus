@@ -5,7 +5,7 @@ Tests for NeuOpt Model and Policy.
 import pytest
 from logic.src.models.core.neuopt import NeuOpt
 from logic.src.models.core.neuopt.policy import NeuOptPolicy
-from logic.src.pipeline.rl.envs.tsp_kopt import TSPkoptEnv
+from logic.src.pipeline.learning.envs.tsp_kopt import TSPkoptEnv
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

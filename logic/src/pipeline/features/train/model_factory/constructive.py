@@ -10,7 +10,7 @@ from typing import Any, Dict, cast
 import pytorch_lightning as pl
 
 from logic.src.configs import Config
-from logic.src.pipeline.rl import (
+from logic.src.pipeline.learning import (
     POMO,
     SymNCO,
 )

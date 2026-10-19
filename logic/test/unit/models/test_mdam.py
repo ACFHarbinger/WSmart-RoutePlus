@@ -8,7 +8,7 @@ import pytest
 import torch
 from logic.src.models.subnets.decoders.mdam.decoder import MDAMDecoder
 from logic.src.models.subnets.decoders.mdam.path import MDAMPath
-from logic.src.pipeline.rl.envs.base import RL4COEnvBase
+from logic.src.pipeline.learning.envs.base import RL4COEnvBase
 from tensordict import TensorDict, TensorDictBase
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

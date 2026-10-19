@@ -3,7 +3,7 @@
 from typing import cast
 from unittest.mock import MagicMock
 
-import logic.src.pipeline.rl.envs as problem_module
+import logic.src.pipeline.learning.envs as problem_module
 import pytest
 import torch
 import torch.nn as nn
@@ -13,22 +13,22 @@ from logic.src.models.core.moe import MoEAttentionModel, MoETemporalAttentionMod
 from logic.src.models.subnets.encoders.moe.encoder import MoEGraphAttentionEncoder
 from logic.src.models.subnets.modules.moe_feed_forward import MoEFeedForward
 from logic.src.models.subnets.modules.moe_layer import MoE
-from logic.src.pipeline.rl.common.baselines import (
+from logic.src.pipeline.learning.common.baselines import (
     CriticBaseline as CriticBaseline,
 )
-from logic.src.pipeline.rl.common.baselines import (
+from logic.src.pipeline.learning.common.baselines import (
     ExponentialBaseline as ExponentialBaseline,
 )
-from logic.src.pipeline.rl.common.baselines import (
+from logic.src.pipeline.learning.common.baselines import (
     NoBaseline as NoBaseline,
 )
-from logic.src.pipeline.rl.common.baselines import (
+from logic.src.pipeline.learning.common.baselines import (
     RolloutBaseline as RolloutBaseline,
 )
-from logic.src.pipeline.rl.common.baselines import (
+from logic.src.pipeline.learning.common.baselines import (
     WarmupBaseline as WarmupBaseline,
 )
-from logic.src.pipeline.rl.envs import CPTP
+from logic.src.pipeline.learning.envs import CPTP
 from logic.src.policies.routing.learning_algorithms.neural_agent import NeuralAgent
 from tensordict import TensorDict
 from torch.utils.data import Dataset
@@ -285,7 +285,7 @@ class TestReinforceBaselines:
 
         # A reporting val_dataset is not a comparison pool: without the baseline's own pool the
         # callback must not promote (B-codex-01). Promotion with a pool is covered by the
-        # rollout lifecycle tests in logic/test/unit/pipeline/rl/.
+        # rollout lifecycle tests in logic/test/unit/pipeline/learning/.
         mock_setup = mocker.patch.object(rb, "setup")
         rb.epoch_callback(mock_policy, 0, val_dataset=MagicMock(), env=MagicMock())
         assert not mock_setup.called

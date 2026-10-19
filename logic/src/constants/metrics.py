@@ -13,7 +13,7 @@ METRIC_MAPPING Usage Context
 Maps canonical metric categories to lists of equivalent names used in different
 subsystems. Used by:
 
-1. **RL training pipeline**: logic/src/pipeline/rl/
+1. **RL training pipeline**: logic/src/pipeline/learning/
    - Normalizes reward component keys (reward_waste → collection)
    - Enables logging consistency across different algorithms
    - Example: model logs "reward_waste", charts display "collection"

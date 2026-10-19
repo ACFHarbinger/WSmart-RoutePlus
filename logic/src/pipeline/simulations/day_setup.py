@@ -51,7 +51,7 @@ def per_trip_shift(context: Any) -> bool:
     """
     spec = getattr(context, "problem_spec", None)
     if spec is None:
-        from logic.src.pipeline.rl.envs.common.released_specs import released_spec
+        from logic.src.pipeline.learning.envs.common.released_specs import released_spec
 
         spec = released_spec(str(getattr(context, "problem", "") or ""))
         if spec is not None:

@@ -46,7 +46,7 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 
 from logic.src.configs.policies.ss_hh import SSHHConfig
-from logic.src.pipeline.rl.envs.common.expand_pool import current_expand_pool
+from logic.src.pipeline.learning.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators import (
     cluster_removal,
     greedy_insertion,

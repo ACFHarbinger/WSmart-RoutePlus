@@ -36,7 +36,7 @@ from logic.src.configs import Config
 from logic.src.interfaces import ITraversable
 from logic.src.pipeline.callbacks import SpeedMonitor
 from logic.src.pipeline.features.train.model_factory.builder import create_model
-from logic.src.pipeline.rl.common.trainer import WSTrainer
+from logic.src.pipeline.learning.common.trainer import WSTrainer
 from logic.src.tracking.logging.pylogger import get_pylogger
 
 try:
@@ -45,7 +45,7 @@ except ImportError:
     configure_zenml_stack = None  # type: ignore[assignment]
 
 if TYPE_CHECKING:
-    from logic.src.pipeline.rl.common.base.module import RL4COLitModule
+    from logic.src.pipeline.learning.common.base.module import RL4COLitModule
 
 logger = get_pylogger(__name__)
 

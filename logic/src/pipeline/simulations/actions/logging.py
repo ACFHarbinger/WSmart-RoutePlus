@@ -62,7 +62,7 @@ class LogAction(SimulationAction):
             raise ValueError("logging a day whose tour was never set")
         if getattr(context, "metrics_phase", "final") != "final":
             raise ValueError("logging preliminary metrics; collection has not published the executed plan")
-        from logic.src.pipeline.rl.envs.common.objectives import Economics
+        from logic.src.pipeline.learning.envs.common.objectives import Economics
         from logic.src.pipeline.simulations.day_setup import per_trip_shift
 
         economics = None

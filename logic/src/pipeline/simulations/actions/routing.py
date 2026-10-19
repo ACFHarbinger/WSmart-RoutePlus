@@ -127,7 +127,7 @@ class RoutingAction(SimulationAction):
 
         # An empty mandatory set skips the solver only when the problem does not
         # let the solver choose optional visits. That flag comes from ProblemSpec.
-        from logic.src.pipeline.rl.envs.common.expand_pool import current_expand_pool
+        from logic.src.pipeline.learning.envs.common.expand_pool import current_expand_pool
 
         mandatory = getattr(context, "mandatory", [])
         if not mandatory and not current_expand_pool(default=True):

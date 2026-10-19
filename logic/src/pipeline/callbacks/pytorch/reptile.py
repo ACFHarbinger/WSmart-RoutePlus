@@ -26,7 +26,7 @@ from pytorch_lightning.callbacks import Callback
 from torch.optim import Adam
 
 if TYPE_CHECKING:
-    from logic.src.pipeline.rl.common.base.module import RL4COLitModule
+    from logic.src.pipeline.learning.common.base.module import RL4COLitModule
 
 
 class ReptileCallback(Callback):

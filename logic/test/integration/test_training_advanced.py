@@ -7,10 +7,10 @@ import pytest
 from logic.src.models.common.critic_network.policy import CriticNetwork as CriticNetworkPolicy
 from logic.src.models.core.attention_model.policy import AttentionModelPolicy
 from logic.src.models.subnets.factories.attention import AttentionComponentFactory
-from logic.src.pipeline.rl.core.dr_grpo import DRGRPO
-from logic.src.pipeline.rl.core.gdpo import GDPO
-from logic.src.pipeline.rl.core.reinforce import REINFORCE
-from logic.src.pipeline.rl.envs.ptp import PTPEnv
+from logic.src.pipeline.learning.core.dr_grpo import DRGRPO
+from logic.src.pipeline.learning.core.gdpo import GDPO
+from logic.src.pipeline.learning.core.reinforce import REINFORCE
+from logic.src.pipeline.learning.envs.ptp import PTPEnv
 from pytorch_lightning import Trainer
 
 pytestmark = [pytest.mark.integration, pytest.mark.slow]

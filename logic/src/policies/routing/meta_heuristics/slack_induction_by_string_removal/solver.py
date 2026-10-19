@@ -27,7 +27,7 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 
 from logic.src.configs.policies.sisr import SISRConfig
-from logic.src.pipeline.rl.envs.common.expand_pool import current_expand_pool
+from logic.src.pipeline.learning.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators import (
     greedy_insertion_with_blinks,
     greedy_profit_insertion_with_blinks,

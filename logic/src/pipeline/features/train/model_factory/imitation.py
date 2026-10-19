@@ -56,7 +56,7 @@ def _create_imitation(cfg: Config, policy, env, kw: Dict[str, Any]) -> pl.Lightn
     # Forward the full keyword set, as REINFORCE receives it: the base module reads the
     # training setup (cfg, train_time, batch sizes, curriculum) from it.
     module_kw = {k: v for k, v in kw.items() if k not in ("policy_config", "seed", "device", "loss_fn", "fill_from", "expert_cache", "precompute")}
-    from logic.src.pipeline.rl.core.imitation import ImitationLearning
+    from logic.src.pipeline.learning.core.imitation import ImitationLearning
 
     return ImitationLearning(
         policy_config=policy_config,

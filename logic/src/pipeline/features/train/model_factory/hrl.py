@@ -11,7 +11,7 @@ import pytorch_lightning as pl
 
 from logic.src.configs import Config
 from logic.src.models.meta.hrl_manager import MandatoryManager
-from logic.src.pipeline.rl import HRLModule
+from logic.src.pipeline.learning import HRLModule
 
 
 def _create_hrl(cfg: Config, policy, env, kw: Dict[str, Any]) -> pl.LightningModule:

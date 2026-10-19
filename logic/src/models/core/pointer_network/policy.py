@@ -21,7 +21,7 @@ from tensordict import TensorDict
 
 from logic.src.models.common.autoregressive.policy import AutoregressivePolicy
 from logic.src.models.core.pointer_network import PointerNetwork
-from logic.src.pipeline.rl.envs.base.base import RL4COEnvBase
+from logic.src.pipeline.learning.envs.base.base import RL4COEnvBase
 from logic.src.utils.tasks.dummy_problem import DummyProblem
 
 

@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 from tensordict import TensorDict
 
 from logic.src.models.common.autoregressive.policy import AutoregressivePolicy
-from logic.src.pipeline.rl.envs.base.base import RL4COEnvBase
+from logic.src.pipeline.learning.envs.base.base import RL4COEnvBase
 
 if TYPE_CHECKING:
     from logic.src.policies.vector.alns import VectorizedALNS

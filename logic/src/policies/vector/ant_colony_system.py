@@ -22,7 +22,7 @@ import torch
 from tensordict import TensorDict
 
 from logic.src.models.common.autoregressive.policy import AutoregressivePolicy
-from logic.src.pipeline.rl.envs.base.base import RL4COEnvBase
+from logic.src.pipeline.learning.envs.base.base import RL4COEnvBase
 from logic.src.tracking.viz_mixin import PolicyVizMixin
 
 

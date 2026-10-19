@@ -19,7 +19,7 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 
 from logic.src.configs.policies.hgs_alns import HGSALNSConfig
-from logic.src.pipeline.rl.envs.common.expand_pool import current_expand_pool
+from logic.src.pipeline.learning.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators.crossover_recombination import ordered_crossover
 from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns import (
