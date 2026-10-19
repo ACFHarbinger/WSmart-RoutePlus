@@ -61,6 +61,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `python -m logic.controllers.cloud` runs the same commands without `main.py`'s start-up imports: about 0.3 s and 33 MB per call instead of 2 s and 690 MB. The Studio's status polling uses it.
   - `--project-root` sets the repository whose `main.py` local tasks run.
   - `cloud download --json` adds `file_list` (`relpath`, `sha256`, `size` per file) next to the `files` count.
+- **CR-13/CR-15 review fixes** (Studio cloud backend):
+  - The Tauri commands call `python -m logic.controllers.cloud --project-root <repo>` instead of `python main.py cloud`.
+  - The job poller keeps at least 1 s between polls, delays rather than bursts after a slow poll, and tags each watcher with a generation. Before, a finished poller could unregister a newer watcher of the same job, which then could not be stopped.
+  - `CloudDownloadResult` carries the optional `file_list`.
 - **Roadmap:** `docs/moon/roadmaps/cloud.md` (§J), linked from `docs/moon/ROADMAP.md`: the v1.1.0 cloud runner design, its 17 work packages (#121–#137, epic #120) and future work.
 - **Agent brief:** `.agent/tasks/cloud-runner-2026-10-19.md`, with Claude's and Gemini's lanes, and a kickoff entry on the agent bus.
 
