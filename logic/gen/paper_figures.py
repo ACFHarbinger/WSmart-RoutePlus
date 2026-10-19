@@ -142,14 +142,14 @@ def fig_scale(clean: pd.DataFrame, horizon: int, out: Path, colors: dict, cfg: d
 
 
 def _simulate_last_minute(increments: np.ndarray, tau: float, capacity: float) -> np.ndarray:
-    """Re-simulate the Last-Minute rule and return per-bin, per-day fill levels."""
+    """Record post-arrival levels, then immediately serve threshold requests."""
     n_bins, n_days = increments.shape
     level = np.zeros(n_bins)
     out = np.zeros_like(increments)
     for d in range(n_days):
-        collect = level >= tau
         level = np.minimum(level + increments[:, d], capacity)
         out[:, d] = level.copy()
+        collect = level >= tau
         level[collect] = 0.0
     return out
 
@@ -158,14 +158,10 @@ def fig_fill_trajectory(out_dir: Path) -> None:
     """
     The multi-period mechanism behind the paper's central claim, as a figure.
 
-    The static aggregates show an ordered trade-off between efficiency and
-    overflow, but not *why*. This figure shows the Last-Minute mechanism for three bins'
-    fill levels over the 30-day horizon under the two Last-Minute thresholds,
-    CF70 and CF90, re-simulated from the scenario's daily deposits. CF70
-    collects earlier and more often, holding the bin below the threshold; CF90
-    defers collection until the bin is nearly full, hauling more per visit but
-    occasionally overflowing. That is the trade-off, at the level of a single
-    bin, before any aggregation.
+    This threshold-only illustration deposits waste before selection and serves
+    every selected bin immediately. It omits routing and optional visits; a
+    large arrival can cause overflow before either threshold triggers service.
+    Bins are chosen by input-accumulation ranks, not observed policy outcomes.
     """
     # The scenario's daily deposits, in % of bin capacity, as (bins, days). They are the
     # same for every policy; the simulator's fill_history workbooks hold this same matrix.
@@ -179,12 +175,10 @@ def fig_fill_trajectory(out_dir: Path) -> None:
     levels_70 = _simulate_last_minute(increments, 70.0, capacity)
     levels_90 = _simulate_last_minute(increments, 90.0, capacity)
 
-    # Choose three bins that span the accumulation spectrum: a heavy one that
-    # overflows under CF90 but not CF70, a typical one, and a light one.
+    # Match the manuscript's one-based input ranks: 90th, 50th and 10th of 100.
     total = increments.sum(axis=1)
-    heavy = int(np.argmax((levels_90.max(axis=1) >= capacity) & (levels_70.max(axis=1) < capacity)))
-    median = int(np.argsort(total)[len(total) // 2])
-    light = int(np.argsort(total)[max(0, len(total) // 8)])
+    order = np.argsort(total, kind="stable")
+    heavy, median, light = (int(order[rank - 1]) for rank in (90, 50, 10))
 
     days = np.arange(1, levels_70.shape[1] + 1)
     fig, axes = plt.subplots(1, 3, figsize=(9.6, 2.9), sharey=True)
