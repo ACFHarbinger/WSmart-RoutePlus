@@ -204,7 +204,15 @@ class FirestoreControlPlane(DocumentControlPlane):
 
 def control_plane_from_uri(uri: ParseResult) -> FirestoreControlPlane:
     """``firestore://<project>[/<database>]``."""
+    from google.auth.exceptions import DefaultCredentialsError
     from google.cloud import firestore
 
     database = uri.path.strip("/") or "(default)"
-    return FirestoreControlPlane(firestore.Client(project=uri.netloc, database=database))
+    try:
+        client = firestore.Client(project=uri.netloc, database=database)
+    except DefaultCredentialsError as exc:
+        raise ValueError(
+            "no Google credentials for the Firestore control plane: run `gcloud auth application-default login` "
+            "or use a keychain profile"
+        ) from exc
+    return FirestoreControlPlane(client)

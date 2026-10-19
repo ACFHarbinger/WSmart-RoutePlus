@@ -125,7 +125,9 @@ class FakeBatchClient:
         self.job_definitions: Dict[str, Dict[str, Any]] = {}
 
     def describe_job_definitions(self, jobDefinitionName: str, status: str = "ACTIVE", **kwargs: Any) -> Dict[str, Any]:
-        defs = [d for name, d in self.job_definitions.items() if name == jobDefinitionName and d.get("status") == status]
+        defs = [
+            d for name, d in self.job_definitions.items() if name == jobDefinitionName and d.get("status") == status
+        ]
         return {"jobDefinitions": defs}
 
     def register_job_definition(
@@ -579,7 +581,10 @@ def test_aws_batch_rejects_container_overrides_secrets_and_registers_job_def() -
     props = def_data["containerProperties"]
     assert props["image"] == "wsmart-route:v1.1.0"
     assert props["secrets"] == [
-        {"name": "WSR_GUROBI_LICENSE", "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:WSR_GUROBI_KEY"}
+        {
+            "name": "WSR_GUROBI_LICENSE",
+            "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:WSR_GUROBI_KEY",
+        }
     ]
     assert props["executionRoleArn"] == "arn:aws:iam::123456789012:role/wsr-exec-role"
 
@@ -656,7 +661,10 @@ def test_aws_ecs_fargate_rejects_missing_network_and_registers_task_def() -> Non
     container = td["containerDefinitions"][0]
     assert container["image"] == "wsmart-route:v1.1.0"
     assert container["secrets"] == [
-        {"name": "WSR_GUROBI_LICENSE", "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:WSR_GUROBI_KEY"}
+        {
+            "name": "WSR_GUROBI_LICENSE",
+            "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:WSR_GUROBI_KEY",
+        }
     ]
 
     # Verify networkConfiguration passed to run_task
@@ -716,6 +724,15 @@ def test_aws_ec2_user_data_script_and_spot_preemption() -> None:
     assert "aws ec2 create-tags" in user_data
     assert "WSR_SECRET_REFS" in user_data
     assert "awssm://us-west-2/gurobi-secret-name" in user_data
+    assert "trap 'shutdown -h now' EXIT" in user_data  # the instance stops even if a step fails
+    assert "docker login" not in user_data  # a public image needs no registry login
+
+    ecr_launch = make_test_launch(task_id="task-ecr")
+    ecr_launch.image = "123456789012.dkr.ecr.us-west-2.amazonaws.com/wsmart-route@sha256:" + "ab" * 32
+    backend.submit(ecr_launch)
+    ecr_script = ec2_client.runs[-1]["userData"]
+    assert "aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin " in ecr_script
+    assert ecr_script.index("docker login") < ecr_script.index("docker run")
 
     # Test polling states
     st = backend.poll(handle)
@@ -735,15 +752,19 @@ def test_aws_ecr_image_registry() -> None:
 
     def mock_run(argv: List[str], input: Any = None, **kwargs: Any) -> Any:
         commands.append(argv)
+
         class MockResult:
             returncode = 0
             stdout = '["123456789012.dkr.ecr.us-east-1.amazonaws.com/wsmart-route@sha256:abcd1234efgh5678"]'
             stderr = ""
+
         if argv[:3] == ["docker", "manifest", "inspect"]:
+
             class ManifestResult:
                 returncode = 0
                 stdout = '{"Descriptor": {"digest": "sha256:abcd1234efgh5678"}}'
                 stderr = ""
+
             return ManifestResult()
         return MockResult()
 
