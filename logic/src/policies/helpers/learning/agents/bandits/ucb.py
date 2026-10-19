@@ -10,7 +10,7 @@ Attributes:
     SlidingWindowUCBBandit: UCB variant using a fixed-size sliding window.
 
 Example:
-    >>> from logic.src.policies.helpers.reinforcement_learning.agents.bandits.ucb import UCBBandit
+    >>> from logic.src.policies.helpers.learning.agents.bandits.ucb import UCBBandit
     >>> agent = UCBBandit(n_arms=3, c=2.0)
     >>> action = agent.select_action(state=None, rng=agent.rng)
 """

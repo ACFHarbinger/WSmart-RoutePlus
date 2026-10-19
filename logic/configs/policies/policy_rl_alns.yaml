@@ -12,7 +12,7 @@ rl_alns:
       - default
     route_improvement: []
     rl_config:
-      _target_: logic.src.configs.policies.helpers.reinforcement_learning.RLConfig
+      _target_: logic.src.configs.policies.helpers.learning.RLConfig
       agent_type: bandit
       bandit:
         algorithm: ucb1

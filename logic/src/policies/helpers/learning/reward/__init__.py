@@ -7,6 +7,6 @@ Attributes:
     shaping: Module containing reward shaping techniques.
 
 Example:
-    >>> from logic.src.policies.helpers.reinforcement_learning.reward import shaping
+    >>> from logic.src.policies.helpers.learning.reward import shaping
     >>> reward = shaping.calculate_shaped_reward(...)
 """

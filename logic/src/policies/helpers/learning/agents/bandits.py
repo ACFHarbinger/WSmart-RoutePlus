@@ -14,7 +14,7 @@ Attributes:
     EXP3Agent: Adversarial bandit algorithm.
 
 Example:
-    >>> from logic.src.policies.helpers.reinforcement_learning.agents.bandits import UCBBandit
+    >>> from logic.src.policies.helpers.learning.agents.bandits import UCBBandit
     >>> agent = UCBBandit(n_arms=5)
 """
 

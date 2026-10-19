@@ -179,6 +179,114 @@ Threshold Accepting (TA) Criterion.
 
 Policy Helpers Package.
 
+### `logic.src.policies.helpers.learning.__init__`
+
+Reinforcement Learning Helpers Module.
+
+### `logic.src.policies.helpers.learning.agents.__init__`
+
+Agents Module.
+
+### `logic.src.policies.helpers.learning.agents.bandits.__init__`
+
+Bandit Agents Module.
+
+### `logic.src.policies.helpers.learning.agents.bandits.base`
+
+Base Bandit Module.
+
+- **class `BanditAgent`** — Base class for Multi-Armed Bandit (MAB) agents.
+
+### `logic.src.policies.helpers.learning.agents.bandits.epsilon_greedy`
+
+Epsilon Greedy Bandit Module.
+
+- **class `EpsilonGreedyBandit`** — Epsilon-Greedy Bandit policy.
+
+### `logic.src.policies.helpers.learning.agents.bandits.exp3`
+
+Exp3 Bandit Module.
+
+- **class `EXP3Agent`** — EXP3 algorithm for adversarial bandits.
+
+### `logic.src.policies.helpers.learning.agents.bandits.softmax`
+
+Softmax Bandit Module.
+
+- **class `SoftmaxBandit`** — Softmax Sampling Bandit policy.
+
+### `logic.src.policies.helpers.learning.agents.bandits.thompson`
+
+Thompson Sampling Bandit Module.
+
+- **class `ThompsonSamplingBandit`** — Thompson Sampling Bandit policy for Bernoulli environments.
+
+### `logic.src.policies.helpers.learning.agents.bandits.ucb`
+
+UCB Bandit Module.
+
+- **class `UCBBandit`** — Upper Confidence Bound (UCB1) Bandit policy.
+- **class `DiscountedUCBBandit`** — Discounted UCB Bandit policy.
+- **class `SlidingWindowUCBBandit`** — Sliding Window UCB Bandit policy.
+
+### `logic.src.policies.helpers.learning.agents.bandits`
+
+Multi-Armed Bandit (MAB) agents.
+
+### `logic.src.policies.helpers.learning.agents.base`
+
+Base Agent Module.
+
+- **class `RLAgent`** — Abstract Base Class for all Reinforcement Learning agents.
+
+### `logic.src.policies.helpers.learning.agents.td_learning`
+
+TD Learning Module.
+
+- **class `TDAgent`** — Base class for Temporal Difference (TD) learning agents.
+- **class `QLearningAgent`** — Q-Learning Agent (Off-policy TD control).
+- **class `SarsaAgent`** — SARSA Agent (On-policy TD control).
+- **class `ExpectedSarsaAgent`** — Expected SARSA Agent (On-policy TD control).
+
+### `logic.src.policies.helpers.learning.alns_perturbation_context`
+
+ALNS Perturbation Context Module.
+
+- **class `ALNSPerturbationContext`** — Context object required by perturbation operators.
+
+### `logic.src.policies.helpers.learning.alns_sarsa`
+
+Enhanced Adaptive Large Neighborhood Search (ALNS) with SARSA Reinforcement Learning.
+
+- **class `ALNSSARSASolver`** — Enhanced ALNS solver with SARSA reinforcement learning for operator selection.
+
+### `logic.src.policies.helpers.learning.alns_sarsa_operators`
+
+Repair, unstringing and perturbation operators of the SARSA-driven ALNS.
+
+- **class `ALNSSARSARepairMixin`** — Repair, unstringing and perturbation operators of :class:`ALNSSARSASolver`.
+
+### `logic.src.policies.helpers.learning.features.__init__`
+
+Features Module.
+
+### `logic.src.policies.helpers.learning.features.state`
+
+State feature extraction for Reinforcement Learning in VRP policies.
+
+- **class `StateFeatureExtractor`** — Extracts features from the current state of optimization search.
+
+### `logic.src.policies.helpers.learning.reward.__init__`
+
+Reward Module.
+
+### `logic.src.policies.helpers.learning.reward.shaping`
+
+Reward shaping strategies for reinforcement learning in optimization search.
+
+- **class `RewardShaper`** — Handles reward shaping for reinforcement learning-based optimization policies.
+- **class `AdaptiveRewardShaper`** — Adapts rewards based on search progress.
+
 ### `logic.src.policies.helpers.local_search.__init__`
 
 Local Search Package.
@@ -1032,114 +1140,6 @@ Initialization strategies for vehicle routing solutions.
 
 - `find_initial_solution()` — Construct a feasible initial solution for the routing problem.
 - `compute_initial_solution()` — Simplified initial solution builder for SANS policy.
-
-### `logic.src.policies.helpers.reinforcement_learning.__init__`
-
-Reinforcement Learning Helpers Module.
-
-### `logic.src.policies.helpers.reinforcement_learning.agents.__init__`
-
-Agents Module.
-
-### `logic.src.policies.helpers.reinforcement_learning.agents.bandits.__init__`
-
-Bandit Agents Module.
-
-### `logic.src.policies.helpers.reinforcement_learning.agents.bandits.base`
-
-Base Bandit Module.
-
-- **class `BanditAgent`** — Base class for Multi-Armed Bandit (MAB) agents.
-
-### `logic.src.policies.helpers.reinforcement_learning.agents.bandits.epsilon_greedy`
-
-Epsilon Greedy Bandit Module.
-
-- **class `EpsilonGreedyBandit`** — Epsilon-Greedy Bandit policy.
-
-### `logic.src.policies.helpers.reinforcement_learning.agents.bandits.exp3`
-
-Exp3 Bandit Module.
-
-- **class `EXP3Agent`** — EXP3 algorithm for adversarial bandits.
-
-### `logic.src.policies.helpers.reinforcement_learning.agents.bandits.softmax`
-
-Softmax Bandit Module.
-
-- **class `SoftmaxBandit`** — Softmax Sampling Bandit policy.
-
-### `logic.src.policies.helpers.reinforcement_learning.agents.bandits.thompson`
-
-Thompson Sampling Bandit Module.
-
-- **class `ThompsonSamplingBandit`** — Thompson Sampling Bandit policy for Bernoulli environments.
-
-### `logic.src.policies.helpers.reinforcement_learning.agents.bandits.ucb`
-
-UCB Bandit Module.
-
-- **class `UCBBandit`** — Upper Confidence Bound (UCB1) Bandit policy.
-- **class `DiscountedUCBBandit`** — Discounted UCB Bandit policy.
-- **class `SlidingWindowUCBBandit`** — Sliding Window UCB Bandit policy.
-
-### `logic.src.policies.helpers.reinforcement_learning.agents.bandits`
-
-Multi-Armed Bandit (MAB) agents.
-
-### `logic.src.policies.helpers.reinforcement_learning.agents.base`
-
-Base Agent Module.
-
-- **class `RLAgent`** — Abstract Base Class for all Reinforcement Learning agents.
-
-### `logic.src.policies.helpers.reinforcement_learning.agents.td_learning`
-
-TD Learning Module.
-
-- **class `TDAgent`** — Base class for Temporal Difference (TD) learning agents.
-- **class `QLearningAgent`** — Q-Learning Agent (Off-policy TD control).
-- **class `SarsaAgent`** — SARSA Agent (On-policy TD control).
-- **class `ExpectedSarsaAgent`** — Expected SARSA Agent (On-policy TD control).
-
-### `logic.src.policies.helpers.reinforcement_learning.alns_perturbation_context`
-
-ALNS Perturbation Context Module.
-
-- **class `ALNSPerturbationContext`** — Context object required by perturbation operators.
-
-### `logic.src.policies.helpers.reinforcement_learning.alns_sarsa`
-
-Enhanced Adaptive Large Neighborhood Search (ALNS) with SARSA Reinforcement Learning.
-
-- **class `ALNSSARSASolver`** — Enhanced ALNS solver with SARSA reinforcement learning for operator selection.
-
-### `logic.src.policies.helpers.reinforcement_learning.alns_sarsa_operators`
-
-Repair, unstringing and perturbation operators of the SARSA-driven ALNS.
-
-- **class `ALNSSARSARepairMixin`** — Repair, unstringing and perturbation operators of :class:`ALNSSARSASolver`.
-
-### `logic.src.policies.helpers.reinforcement_learning.features.__init__`
-
-Features Module.
-
-### `logic.src.policies.helpers.reinforcement_learning.features.state`
-
-State feature extraction for Reinforcement Learning in VRP policies.
-
-- **class `StateFeatureExtractor`** — Extracts features from the current state of optimization search.
-
-### `logic.src.policies.helpers.reinforcement_learning.reward.__init__`
-
-Reward Module.
-
-### `logic.src.policies.helpers.reinforcement_learning.reward.shaping`
-
-Reward shaping strategies for reinforcement learning in optimization search.
-
-- **class `RewardShaper`** — Handles reward shaping for reinforcement learning-based optimization policies.
-- **class `AdaptiveRewardShaper`** — Adapts rewards based on search progress.
 
 ### `logic.src.policies.helpers.solvers_and_matheuristics.__init__`
 

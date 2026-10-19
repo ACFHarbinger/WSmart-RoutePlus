@@ -8,7 +8,7 @@ Attributes:
     EXP3Agent: Bandit agent using the EXP3 policy.
 
 Example:
-    >>> from logic.src.policies.helpers.reinforcement_learning.agents.bandits.exp3 import EXP3Agent
+    >>> from logic.src.policies.helpers.learning.agents.bandits.exp3 import EXP3Agent
     >>> agent = EXP3Agent(n_arms=3, gamma=0.1)
     >>> action = agent.select_action(state=None, rng=agent.rng)
 """
