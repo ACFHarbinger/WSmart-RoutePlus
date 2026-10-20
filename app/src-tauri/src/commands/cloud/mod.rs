@@ -223,6 +223,34 @@ pub async fn cloud_task_logs(
     .await
 }
 
+/// A task's telemetry (CR-12): resource samples, peaks, latest progress and per-day KPIs.
+///
+/// Returns the `cloud metrics --json` payload unchanged (the app's `CloudTaskMetrics`).
+#[tauri::command]
+pub async fn cloud_task_metrics(
+    task_id: String,
+    since: Option<f64>,
+    project_root: Option<String>,
+    root: Option<String>,
+    python_executable: Option<String>,
+) -> Result<serde_json::Value, String> {
+    if task_id.trim().is_empty() {
+        return Err("task_id cannot be empty".to_string());
+    }
+    let mut subcmd = vec!["metrics".to_string(), task_id];
+    if let Some(s) = since {
+        subcmd.push("--since".to_string());
+        subcmd.push(s.to_string());
+    }
+    run_cloud_cli::<serde_json::Value>(
+        project_root.as_deref(),
+        root.as_deref(),
+        python_executable.as_deref(),
+        &subcmd,
+    )
+    .await
+}
+
 /// Download all completed task result files for a job into local output directory.
 #[tauri::command]
 pub async fn cloud_download(
