@@ -13,6 +13,10 @@ Tags: `[Quick Win]` ≤ 1 day · `[Research]` involves novel work · `[Blocked]`
 
 ## Anchor Index
 
+CR-16 integrated on 2026-10-20 with owner authorization: merge `e3e6b974b`
+includes reviewed corrections `a49b9b3c9`. Azure CR-07 remains unmerged;
+see the [integration record](../../.agent/tasks/codex-cloud-review-2026-10-20.md).
+
 CR-16 transport review, 2026-10-20: Gemini `343fe9c10` closes the telemetry
 transport gap. Further retry/missing-data/estimate-provenance corrections pass
 12 Python, 95 frontend and 18 Rust tests; see the
