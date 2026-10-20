@@ -13,15 +13,16 @@ Example:
 from typing import Any, Dict, Optional, Type, Union
 
 from logic.src.configs.policies import BPCConfig
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.routing.base.generic_policy import GenericRoutingPolicy
 from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price_and_cut.bpc_engine import (
     run_bpc,
 )
+from logic.src.utils.registry import ALL
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.EXACT,
     PolicyTag.DECOMPOSITION,
     PolicyTag.MATH_PROGRAMMING,

@@ -26,9 +26,6 @@ from .store_connection import (
 from .store_records import (
     TrackingStoreRecordMixin as TrackingStoreRecordMixin,
 )
-from .store_records import (
-    _safe_json_dumps as _safe_json_dumps,
-)
 
 # ---------------------------------------------------------------------------
 # Store

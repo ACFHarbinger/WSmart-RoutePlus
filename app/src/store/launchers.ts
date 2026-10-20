@@ -361,6 +361,10 @@ export interface CloudLauncherState {
   machineType: string;
   region: string;
   budgetUsd: number;
+  /** CR-09: priority, one placement target per line, and the warm pool. */
+  priority: number;
+  targets: string;
+  pool: boolean;
   root: string;
   patch: (updates: Partial<Omit<CloudLauncherState, "patch">>) => void;
 }
@@ -386,6 +390,9 @@ export const useCloudLauncherStore = create<CloudLauncherState>()(
       machineType: "",
       region: "",
       budgetUsd: 0,
+      priority: 0,
+      targets: "",
+      pool: false,
       gurobiMode: "none",
       gurobiSecret: "",
       root: "outputs/cloud",

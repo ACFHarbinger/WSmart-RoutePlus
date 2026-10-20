@@ -21,12 +21,13 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, Union
 import numpy as np
 
 from logic.src.configs.policies import CVRPConfig
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import (
     BaseRoutingPolicy,
     _structured_load,
 )
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
+from logic.src.utils.registry import ALL
 
 if TYPE_CHECKING:
     from logic.src.interfaces.context.multi_day_context import MultiDayContext
@@ -35,7 +36,7 @@ if TYPE_CHECKING:
 from .cvrp import find_routes, find_routes_ortools
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.HEURISTIC,
     PolicyTag.ROUTING,
 )

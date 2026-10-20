@@ -21,7 +21,8 @@ Example:
 from dataclasses import dataclass
 from typing import Any, List, Optional
 
-from .other.packing import PackingConfig
+from logic.src.configs.policies.other.packing_dispatch import PackingConfig
+
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -73,7 +74,6 @@ class DistancePSOConfig:
     seed: Optional[int] = None
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
-
 
     def get_inertia_weight(self, iteration: int) -> float:
         """

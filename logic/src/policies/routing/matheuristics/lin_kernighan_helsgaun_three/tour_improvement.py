@@ -26,30 +26,12 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.kopt_moves_2_3 import (
-    _try_2opt_move as _try_2opt_move,
-)
-from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.kopt_moves_2_3 import (
-    _try_3opt_move as _try_3opt_move,
-)
-from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.kopt_moves_2_3 import (
-    check_acceptance as check_acceptance,
-)
-from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.kopt_moves_4_5 import (
-    _try_4opt_move as _try_4opt_move,
-)
-from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.kopt_moves_4_5 import (
-    _try_5opt_move as _try_5opt_move,
-)
 from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.load_tracker import (
     LoadState,
 )
 from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.objective import (
     get_score,
     is_better,
-)
-from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.or_opt_moves import (
-    _try_oropt_move as _try_oropt_move,
 )
 from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.tour_construction import (
     build_tour_from_segments,

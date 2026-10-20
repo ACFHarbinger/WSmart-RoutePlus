@@ -15,8 +15,9 @@ Example:
     None
 """
 
+from logic.src.configs.policies.other.packing_dispatch import PackingConfig
+
 from .acceptance_criteria import AcceptanceConfig
-from .packing import PackingConfig
 from .reinforcement_learning import (
     BanditConfig,
     ContextFeatureExtractorConfig,

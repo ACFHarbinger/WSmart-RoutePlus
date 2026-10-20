@@ -16,19 +16,7 @@ import torch
 from logic.src.pipeline.learning.envs.base.problem import BaseProblem
 from logic.src.pipeline.learning.envs.spec import PROBLEMS, ProblemSpec
 
-from .thop_env import (
-    ThOPEnv as ThOPEnv,
-)
-from .thop_generator import (
-    MAX_TIMES as MAX_TIMES,
-)
-from .thop_generator import (
-    ThOPGenerator as ThOPGenerator,
-)
-
 # Default time-budget table (mirrors the OP max-length table)
-
-
 
 
 class ThOP(BaseProblem):
@@ -118,9 +106,9 @@ ThOP_SPEC = ProblemSpec(
     objective=lambda profit, **kw: float(profit),
     constraints=(),
     metrics=("cost", "reward", "profit", "length", "time"),
-    env_target="logic.src.pipeline.learning.envs.thop:ThOPEnv",
+    env_target="logic.src.pipeline.learning.envs.thop_env:ThOPEnv",
     expand_pool=True,
 )
 PROBLEMS.register(ThOP_SPEC)
 
-__all__ = ["ThOPGenerator", "ThOPEnv", "ThOP", "ThOP_SPEC"]
+__all__ = ["ThOP", "ThOP_SPEC"]

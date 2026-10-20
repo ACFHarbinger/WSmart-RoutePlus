@@ -12,15 +12,16 @@ Example:
 from typing import Any, Dict, List, Optional, Tuple, Type
 
 from logic.src.configs.policies.popmusic import POPMUSICConfig
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.routing.matheuristics.partial_optimization_metaheuristic_under_special_intensification_conditions.solver import (
     run_popmusic,
 )
+from logic.src.utils.registry import ALL
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.MATHEURISTIC,
     PolicyTag.DECOMPOSITION,
     PolicyTag.META_HEURISTIC,

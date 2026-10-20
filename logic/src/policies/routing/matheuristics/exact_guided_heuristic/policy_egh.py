@@ -39,14 +39,15 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 import numpy as np
 
 from logic.src.configs.policies.egh import ExactGuidedHeuristicConfig
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
+from logic.src.utils.registry import ALL
 
 from .dispatcher import run_pipeline
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.MATHEURISTIC,
     PolicyTag.EXACT,
     PolicyTag.META_HEURISTIC,

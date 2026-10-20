@@ -200,10 +200,6 @@ class HGSRRSolver:
                 population.sort(key=lambda x: x.fitness)
                 population = population[: self.params.population_size]
 
-            # Decay operator weights periodically
-            if it % 10 == 0:
-                self.operator_manager.decay_weights()
-
             getattr(self, "_viz_record", lambda **k: None)(
                 iteration=it,
                 best_profit=best_profit_so_far,

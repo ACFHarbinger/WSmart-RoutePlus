@@ -145,29 +145,3 @@ class GraphConvolution(nn.Module):
         if self.bias is not None:
             out += self.bias
         return out
-
-    def single_graph_forward(self, h: torch.Tensor, adj: torch.Tensor) -> torch.Tensor:
-        """Applies graph convolution to a single unbatched graph.
-
-        Args:
-            h: Node features of shape (nodes, in_channels).
-            adj: Single graph adjacency matrix of shape (nodes, nodes).
-
-        Returns:
-            torch.Tensor: Updated features of shape (nodes, out_channels).
-        """
-        support = self.linear(h)
-        if self.aggregation == "max":
-            source_idx, target_idx = adj.nonzero(as_tuple=True)
-            messages = support[source_idx]
-            out = scatter(messages, target_idx, dim=0, dim_size=h.size(0), reduce="max")
-        elif self.aggregation == "mean":
-            degrees = adj.sum(dim=0).clamp(min=1)
-            messages = torch.matmul(adj.to(support.dtype), support)
-            out = messages / degrees.unsqueeze(1)
-        else:
-            out = torch.matmul(adj.to(support.dtype), support)
-
-        if self.bias is not None:
-            out += self.bias
-        return out

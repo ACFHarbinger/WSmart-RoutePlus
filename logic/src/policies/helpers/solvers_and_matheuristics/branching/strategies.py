@@ -28,11 +28,6 @@ from logic.src.policies.helpers.solvers_and_matheuristics.branching.constraints 
 )
 from logic.src.policies.helpers.solvers_and_matheuristics.common.route import Route
 
-from .node_fleet_branching import FleetSizeBranching as FleetSizeBranching
-from .node_fleet_branching import NodeVisitationBranching as NodeVisitationBranching
-from .node_fleet_branching import RyanFosterBranching as RyanFosterBranching
-from .partition_branching import MultiEdgePartitionBranching as MultiEdgePartitionBranching
-
 if TYPE_CHECKING:
     from logic.src.policies.helpers.solvers_and_matheuristics.common.node import BranchNode
 
@@ -147,14 +142,6 @@ class EdgeBranching:
                 branching_rule="edge",
             ),
         )
-
-
-
-
-
-
-
-
 
 
 class HierarchicalStrongBranching:

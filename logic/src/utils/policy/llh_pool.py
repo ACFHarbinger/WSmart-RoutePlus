@@ -61,9 +61,6 @@ from .llh_multi_period import (
     LLH as LLH,
 )
 from .llh_multi_period import (
-    Plan as Plan,
-)
-from .llh_multi_period import (
     _make_cross_day_move as _make_cross_day_move,
 )
 from .llh_multi_period import (

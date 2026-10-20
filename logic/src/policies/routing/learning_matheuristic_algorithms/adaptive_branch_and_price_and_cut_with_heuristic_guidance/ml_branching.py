@@ -57,9 +57,7 @@ Example:
     ...
 """
 
-from typing import Any, Dict, List, Optional, Tuple
-
-import numpy as np
+from typing import Any, Dict, Optional, Tuple
 
 
 class MLBranchingStrategy:
@@ -147,49 +145,6 @@ class MLBranchingStrategy:
         self.pseudocost_ema_alpha = pseudocost_ema_alpha
         self.historical_pseudocosts: Dict[int, Tuple[float, float]] = {}
 
-    def compute_gnn_features(
-        self,
-        fractional_vars: List[Any],
-        current_fills: np.ndarray,
-        mean_fill_rates: np.ndarray,
-        scenario_variances: np.ndarray,
-        days_to_overflow: np.ndarray,
-    ) -> Any:
-        """
-        Construct the bipartite graph feature representation of the current
-        fractional LP state for GNN inference.
-
-        Node features per fractional variable i:
-            [current_fill_i, mean_fill_rate_i,
-             variance_of_scenario_prizes_i, days_to_overflow_i]
-
-        Edge features per fractional arc (i, j):
-            [λ_ij, |reduced_cost_ij|]
-
-        The resulting graph object should be compatible with the GNN
-        architecture used during training (e.g. a PyTorch Geometric
-        ``HeteroData`` object for bipartite constraint–variable graphs).
-
-        Args:
-            fractional_vars: Fractional variable objects with ``.id``
-                attributes identifying their corresponding bin / route.
-            current_fills: 1-D array of current fill levels, shape (n_bins,).
-            mean_fill_rates: 1-D array of mean daily fill increments E[δᵢ],
-                shape (n_bins,).
-            scenario_variances: 1-D array of cross-scenario prize variances
-                Var_ξ[π_i^ξ], shape (n_bins,).
-            days_to_overflow: 1-D array of predicted days to overflow,
-                shape (n_bins,).
-
-        Returns:
-            Graph-structured feature object suitable for the GNN model's
-            forward pass.  Currently a stub returning ``None``; replace with
-            the actual graph construction once the GNN architecture is fixed.
-        """
-        # Stub: construct node feature matrix from the four signal arrays
-        # and build the bipartite edge index from the fractional LP support.
-        return None
-
     def _reliability_score(self, var_id: int) -> float:
         """
         Compute the reliability branching score for a variable.
@@ -211,67 +166,3 @@ class MLBranchingStrategy:
 
         psi_down, psi_up = self.historical_pseudocosts[var_id]
         return min(psi_down, psi_up) + self.reliability_c * max(psi_down, psi_up)
-
-    def select_branching_variable(self, fractional_vars: List[Any], **kwargs: Any) -> Any:
-        """
-        Select the variable to branch on from the fractional LP solution.
-
-        If a trained GNN ``model`` is available, it is used to score all
-        fractional variables and the highest-scoring one is returned.
-        Otherwise, reliability branching is applied.
-
-        Args:
-            fractional_vars: Fractional variable objects (0 < λ < 1) from
-                the current master LP relaxation.  Each must expose ``.id``.
-            kwargs: Optional keyword arguments forwarded to the GNN model's
-                inference routine (e.g. pre-computed graph features).
-
-        Returns:
-            The variable object from ``fractional_vars`` selected for
-            branching, or ``None`` if the list is empty.
-        """
-        if self.model is not None:
-            # GNN inference stub — replace with actual model forward pass:
-            # scores = self.model(self.compute_gnn_features(...))
-            # return fractional_vars[np.argmax(scores)]
-            pass
-
-        # Reliability branching fallback
-        best_var = None
-        best_score = -float("inf")
-
-        for var in fractional_vars:
-            score = self._reliability_score(var.id)
-            if score > best_score:
-                best_score = score
-                best_var = var
-
-        return best_var
-
-    def update_pseudocosts(self, var_id: int, delta_down: float, delta_up: float) -> None:
-        """
-        Update the pseudo-cost estimates for a variable after an exact
-        evaluation (strong branching or observed child LP objective change).
-
-        Uses an exponential moving average:
-
-            Ψ_new = α · Ψ_old + (1 − α) · Δ_observed
-
-        where α = ``self.pseudocost_ema_alpha``.
-
-        Args:
-            var_id: Identifier of the variable whose pseudo-costs are updated.
-            delta_down: Observed objective degradation per unit of
-                fractionality when branching down (fixing xᵢ = 0).
-            delta_up: Observed objective degradation per unit of fractionality
-                when branching up (fixing xᵢ = 1).
-        """
-        alpha = self.pseudocost_ema_alpha
-        if var_id not in self.historical_pseudocosts:
-            self.historical_pseudocosts[var_id] = (delta_down, delta_up)
-        else:
-            old_down, old_up = self.historical_pseudocosts[var_id]
-            self.historical_pseudocosts[var_id] = (
-                alpha * old_down + (1.0 - alpha) * delta_down,
-                alpha * old_up + (1.0 - alpha) * delta_up,
-            )

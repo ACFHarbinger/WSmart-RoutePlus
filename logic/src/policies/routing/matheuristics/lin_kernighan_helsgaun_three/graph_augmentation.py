@@ -60,16 +60,13 @@ Attributes:
     decode_augmented_tour: Decode a flat augmented tour into per-vehicle routes.
     is_dummy_depot: Check whether a node index is an augmented dummy depot.
     is_any_depot: Check whether a node index is any depot (real or dummy).
-    inject_augmented_dummies: Rebuild a flat tour by injecting dummy depot indices.
-    validate_augmented_graph: Validate structure of an augmented distance matrix.
 
 Example:
     >>> import numpy as np
     >>> from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.graph_augmentation import augment_graph, decode_augmented_tour
     >>> dist = np.zeros((3, 3))
     >>> aug_dist, aug_waste, n_orig = augment_graph(dist, {1: 0.5}, n_vehicles=2)
-    >>> routes = decode_augmented_tour([0, 1, 3, 2, 0], n_orig)
-"""
+    >>> routes = decode_augmented_tour([0, 1, 3, 2, 0], n_orig)"""
 
 from __future__ import annotations
 
@@ -359,101 +356,3 @@ def is_any_depot(node: int, n_original: int) -> bool:
         bool: True if node is the main depot (0) or a dummy depot index.
     """
     return node == 0 or node >= n_original
-
-
-def inject_augmented_dummies(routes: List[List[int]], n_original: int, n_vehicles: int) -> List[int]:
-    """
-    Inject augmented dummy depots into a multi-route solution to create a flat tour.
-
-    Dummy depots are inserted between consecutive routes using indices
-    [n_original, n_original+1, ...].
-
-    Args:
-        routes: List of routes (no depot nodes).
-        n_original: Original graph size N.
-        n_vehicles: Number of vehicles (determines dummy depot count).
-
-    Returns:
-        Closed tour with augmented dummy depot indices.
-        Example: routes=[[3,5], [7,2]] → [0, 3, 5, N, 7, 2, 0]
-                 where N = n_original
-
-    Example:
-        >>> routes = [[1, 2], [3, 4], [5]]
-        >>> tour = inject_augmented_dummies(routes, n_original=6, n_vehicles=3)
-        >>> tour
-        [0, 1, 2, 6, 3, 4, 7, 5, 0]
-    """
-    if not routes:
-        return [0, 0]
-
-    tour = [0]  # Start at main depot
-    dummy_idx = n_original  # First dummy starts at n_original
-
-    for route_idx, route in enumerate(routes):
-        tour.extend(route)
-
-        # Insert dummy between routes (not after last route)
-        if route_idx < len(routes) - 1:
-            tour.append(dummy_idx)
-            dummy_idx += 1
-
-    tour.append(0)  # Return to main depot
-    return tour
-
-
-def validate_augmented_graph(
-    augmented_dist: np.ndarray,
-    augmented_waste: np.ndarray,
-    n_original: int,
-    n_vehicles: int,
-) -> None:
-    """
-    Validate the augmented graph structure for correctness.
-
-    Checks:
-    1. Matrix dimensions match expected size
-    2. Symmetry of distance matrix
-    3. Zero demand for dummy depots
-    4. Depot distances copied correctly to dummies
-
-    Args:
-        augmented_dist: Augmented distance matrix.
-        augmented_waste: Augmented waste array.
-        n_original: Original graph size.
-        n_vehicles: Number of vehicles.
-
-    Raises:
-        AssertionError: If validation fails.
-    """
-    n_dummies = max(0, n_vehicles - 1)
-    n_expected = n_original + n_dummies
-
-    # Check dimensions
-    assert augmented_dist.shape == (
-        n_expected,
-        n_expected,
-    ), f"Distance matrix shape mismatch: {augmented_dist.shape} != {(n_expected, n_expected)}"
-    assert augmented_waste.shape[0] == n_expected, (
-        f"Waste array size mismatch: {augmented_waste.shape[0]} != {n_expected}"
-    )
-
-    # Check symmetry
-    assert np.allclose(augmented_dist, augmented_dist.T), "Distance matrix is not symmetric"
-
-    # Check dummy demands are zero
-    for dummy_idx in range(n_dummies):
-        aug_idx = n_original + dummy_idx
-        assert augmented_waste[aug_idx] == 0.0, f"Dummy depot {aug_idx} has non-zero demand: {augmented_waste[aug_idx]}"
-
-    # Check dummy-to-depot distances are zero
-    for dummy_idx in range(n_dummies):
-        aug_idx = n_original + dummy_idx
-        assert augmented_dist[aug_idx, 0] == 0.0, (
-            f"Dummy {aug_idx} to depot distance != 0: {augmented_dist[aug_idx, 0]}"
-        )
-        assert augmented_dist[0, aug_idx] == 0.0, (
-            f"Depot to dummy {aug_idx} distance != 0: {augmented_dist[0, aug_idx]}"
-        )
-
-    print(f"✓ Augmented graph validation passed (N={n_original}, M={n_vehicles})")

@@ -17,14 +17,15 @@ Example:
 from dataclasses import replace
 from typing import Any, Dict, List, Optional, Tuple, cast
 
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.interfaces.context import PackingContext, SearchContext
 from logic.src.interfaces.packing import IPackingAlgorithm
+from logic.src.utils.registry import ALL
 
 from .base.registry import PackingRegistry
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.PACKING,
     PolicyTag.ORCHESTRATOR,
 )

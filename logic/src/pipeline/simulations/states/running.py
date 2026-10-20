@@ -34,7 +34,7 @@ from logic.src.pipeline.simulations.checkpoints import CheckpointError, checkpoi
 from logic.src.pipeline.simulations.day_context import SimulationDayContext, run_day
 from logic.src.pipeline.simulations.states.base.base import SimState
 from logic.src.pipeline.simulations.states.finishing import FinishingState
-from logic.src.tracking.logging.log_utils import final_simulation_summary
+from logic.src.tracking.logging.modules.summary_display import final_simulation_summary
 from logic.src.utils.infrastructure.setup_sims import get_graph_config
 
 if TYPE_CHECKING:

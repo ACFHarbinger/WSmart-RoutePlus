@@ -5,7 +5,6 @@ Thin wrappers around the canonical operator implementations in
 logic.src.policies.helpers.operators.*. Do NOT re-implement operators here.
 
 Attributes:
-    initial_plan_greedy: Build an initial D-day plan using the specified initialization method.
     _build_single_day_routes: Dispatch single-day routing to the appropriate operator.
     greedy_day_route: Greedy nearest-profit-ratio construction for a single day.
     two_opt: Standard 2-opt improvement on a single route (depot excluded).
@@ -19,13 +18,12 @@ Example:
     [1, 2, 3, 4, 5, 6]
     >>> from logic.src.utils.policy.wrappers import two_opt
     >>> two_opt(problem, [1, 2, 3])
-    [1, 3, 2]
-"""
+    [1, 3, 2]"""
 
 from __future__ import annotations
 
 import random
-from typing import List, Optional
+from typing import List
 
 import numpy as np
 
@@ -56,45 +54,6 @@ from logic.src.policies.helpers.operators.solution_initialization import (
     build_regret_routes,
     build_savings_routes,
 )
-
-
-def initial_plan_greedy(
-    problem: ProblemContext,
-    rng: Optional[np.random.Generator] = None,
-    method: str = "greedy",
-) -> List[List[int]]:
-    """
-    Build an initial D-day plan using the specified initialization method.
-
-    Advances the problem state day-by-day using mean fill increments.
-    Returns a full D-day plan as List[List[int]] (one flat route per day,
-    depot excluded).
-
-    Args:
-        problem:  ProblemContext for day 0.
-        rng:      NumPy Generator for stochastic initialization methods.
-        method:   One of "greedy", "nn", "savings", "regret", "grasp",
-                  "farthest", "farthest_profit".
-
-    The per-day route is extracted as the flattened union of all vehicle
-    routes returned by the underlying initializer (single-vehicle assumption).
-
-    Returns:
-        List[List[int]]: A list of routes, one for each day in the horizon.
-    """
-    _rng_stdlib = random.Random(int(rng.integers(0, 2**31)) if rng is not None else 42)
-    _np_rng = rng or np.random.default_rng(42)
-
-    plan: List[List[int]] = []
-    current = problem
-
-    for _ in range(problem.horizon):
-        routes = _build_single_day_routes(current, _rng_stdlib, _np_rng, method)
-        flat = [node for route in routes for node in route]
-        plan.append(flat)
-        current = current.advance(flat)
-
-    return plan
 
 
 def _build_single_day_routes(

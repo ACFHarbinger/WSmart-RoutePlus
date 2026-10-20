@@ -16,7 +16,6 @@ def mock_sim_dependencies(mocker, tmp_path, mock_bins_instance):
     and sequential_simulations.
     """
     # 1. Patch ROOT_DIR in both modules to ensure consistency
-    mocker.patch("logic.src.pipeline.simulations.states.initializing.ROOT_DIR", str(tmp_path))
     mocker.patch("logic.src.pipeline.simulations.states.base.context.ROOT_DIR", str(tmp_path))
     mocker.patch("logic.src.pipeline.simulations.simulator.ROOT_DIR", str(tmp_path))
     mocker.patch("logic.src.pipeline.simulations.simulator_progress.ROOT_DIR", str(tmp_path))
@@ -82,7 +81,9 @@ def mock_sim_dependencies(mocker, tmp_path, mock_bins_instance):
         "logic.src.pipeline.simulations.states.initializing.setup_model",
         return_value=(MagicMock(), MagicMock()),
     )
-    mock_setup_env = mocker.patch("logic.src.pipeline.simulations.states.initializing.setup_env", return_value="mock_or_env")
+    mock_setup_env = mocker.patch(
+        "logic.src.pipeline.simulations.states.initializing.setup_env", return_value="mock_or_env"
+    )
 
     # 7. Mock day function
     mock_dlog = {
@@ -125,8 +126,9 @@ def mock_sim_dependencies(mocker, tmp_path, mock_bins_instance):
 
     # 9. Mock utilities
     mock_update_policy_log_section = mocker.MagicMock()
-    mocker.patch("logic.src.pipeline.simulations.states.finishing.update_policy_log_section", mock_update_policy_log_section)
-    mocker.patch("logic.src.pipeline.simulations.simulator.update_policy_log_section", mock_update_policy_log_section)
+    mocker.patch(
+        "logic.src.pipeline.simulations.states.finishing.update_policy_log_section", mock_update_policy_log_section
+    )
     mocker.patch(
         "logic.src.pipeline.simulations.simulator_progress.update_policy_log_section", mock_update_policy_log_section
     )
@@ -150,6 +152,7 @@ def mock_sim_dependencies(mocker, tmp_path, mock_bins_instance):
         "_setup_basedata": mock_setup_basedata,
         "_setup_dist_path_tup": mock_setup_dist,
     }
+
 
 @pytest.fixture
 def mock_load_dependencies(mocker):

@@ -17,18 +17,19 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.search_context import AcceptanceMetrics, ImprovementMetrics
 from logic.src.interfaces.route_improvement import IRouteImprovement
 from logic.src.policies.acceptance_criteria.boltzmann_metropolis_criterion import (
     BoltzmannAcceptance,
 )
+from logic.src.utils.registry import ALL
 
 from .base import RouteImproverRegistry
 from .common.helpers import assemble_tour, route_distance, route_load, split_tour, to_numpy, tour_distance
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.IMPROVEMENT,
     PolicyTag.META_HEURISTIC,
     PolicyTag.STOCHASTIC,

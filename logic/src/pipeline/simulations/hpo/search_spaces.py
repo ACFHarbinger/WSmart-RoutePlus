@@ -43,9 +43,6 @@ import os
 from typing import Any, Dict, List, Optional, Union
 
 from .search_space_templates import (
-    _extract_params_from_config as _extract_params_from_config,
-)
-from .search_space_templates import (
     generate_acceptance_criteria_templates as generate_acceptance_criteria_templates,
 )
 from .search_space_templates import (
@@ -351,14 +348,9 @@ def get_search_space(policy_name: str, raise_on_invalid: bool = True) -> Dict[st
 # ---------------------------------------------------------------------------
 
 
-
 # ---------------------------------------------------------------------------
 # Scaffold generators (called from __main__ or a management command)
 # ---------------------------------------------------------------------------
-
-
-
-
 
 
 if __name__ == "__main__":

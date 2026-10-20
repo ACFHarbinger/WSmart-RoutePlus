@@ -223,14 +223,3 @@ class AdaptiveOperatorSelector:
             }
 
         return stats
-
-    def reset_statistics(self) -> None:
-        """Reset all operator statistics.
-
-        """
-        for op in self.operators:
-            self.scores[op].clear()
-            self.times[op].clear()
-            self.applications[op] = 0
-            self.improvements[op] = 0
-            self.weights[op] = 1.0

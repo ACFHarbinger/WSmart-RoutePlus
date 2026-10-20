@@ -62,16 +62,6 @@ class IBinContainer(Protocol):
         """
         ...
 
-    def update_fill_levels(self, visited: torch.Tensor) -> None:
-        """
-        Update bin states after collection.
-
-        Args:
-            visited: Binary tensor (batch, n_bins) indicating collected bins
-
-        """
-        ...
-
     def get(self, key: str, default: Optional[Any] = None) -> Any:
         """
         Get attribute by key with optional default.

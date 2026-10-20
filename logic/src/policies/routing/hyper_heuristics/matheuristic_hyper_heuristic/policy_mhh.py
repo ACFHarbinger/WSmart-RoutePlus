@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 
 from logic.src.configs.policies.mhh import MHHConfig
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.problem_context import ProblemContext
 from logic.src.interfaces.context.solution_context import SolutionContext
@@ -31,9 +31,10 @@ from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.utils.policy.llh_pool import LLHPool
 from logic.src.utils.policy.routes import route_profit
 from logic.src.utils.policy.wrappers import greedy_day_route
+from logic.src.utils.registry import ALL
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.HYPER_HEURISTIC,
     PolicyTag.MATHEURISTIC,
     PolicyTag.MULTI_PERIOD,

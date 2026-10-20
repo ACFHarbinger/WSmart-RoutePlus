@@ -53,28 +53,6 @@ from typing import List, Tuple
 
 import numpy as np
 
-from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.tour_initialization import (
-    KoptTopologyFactory as KoptTopologyFactory,
-)
-from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.tour_initialization import (
-    _double_bridge_kick as _double_bridge_kick,
-)
-from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.tour_initialization import (
-    _get_tour_array as _get_tour_array,
-)
-from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.tour_initialization import (
-    _initialize_tour as _initialize_tour,
-)
-from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.tour_merging import (
-    merge_tours as merge_tours,
-)
-from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.tour_merging import (
-    merge_tours_best as merge_tours_best,
-)
-from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.tour_merging import (
-    merge_tours_ip as merge_tours_ip,
-)
-
 
 def build_tour_from_segments(
     curr_tour: List[int],

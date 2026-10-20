@@ -18,7 +18,7 @@ import gurobipy as gp
 import numpy as np
 
 from logic.src.configs.policies.lns_mip import LnsMipConfig
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.problem_context import ProblemContext
 from logic.src.interfaces.context.solution_context import SolutionContext
@@ -31,9 +31,10 @@ from logic.src.policies.routing.matheuristics.kernel_search.solver import (
 )
 from logic.src.utils.policy.routes import route_cost, route_profit
 from logic.src.utils.policy.wrappers import greedy_day_route
+from logic.src.utils.registry import ALL
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.MATHEURISTIC,
     PolicyTag.LARGE_NEIGHBORHOOD_SEARCH,
     PolicyTag.MULTI_PERIOD,

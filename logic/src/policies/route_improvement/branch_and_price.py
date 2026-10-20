@@ -33,9 +33,10 @@ from typing import Any, Dict, List, Optional, Tuple
 import networkx as nx
 import numpy as np
 
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.search_context import ImprovementMetrics
 from logic.src.interfaces.route_improvement import IRouteImprovement
+from logic.src.utils.registry import ALL
 
 from .base import RouteImproverRegistry
 from .branch_price_inhouse import BranchPriceInhouseMixin
@@ -116,7 +117,7 @@ def _time_limit(seconds: float):
         signal.signal(signal.SIGALRM, old_handler)
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.IMPROVEMENT,
     PolicyTag.EXACT,
     PolicyTag.SOLVER,

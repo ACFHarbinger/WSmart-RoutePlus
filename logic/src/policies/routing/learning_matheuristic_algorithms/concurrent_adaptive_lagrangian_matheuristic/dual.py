@@ -52,9 +52,6 @@ import numpy as np
 
 from .params import DualBoundParams, LagrangianParams
 from .proximal_bundle import (
-    BundleEntry as BundleEntry,
-)
-from .proximal_bundle import (
     DualBoundTracker as DualBoundTracker,
 )
 from .proximal_bundle import (
@@ -219,15 +216,6 @@ class EMADualBoundTracker(DualBoundTracker):
         step = mu * gap / g_norm_sq
         new_lambdas = current_lambdas + step * g
         return new_lambdas, step
-
-    def ema_snapshot(self) -> np.ndarray:
-        """Returns a snapshot of the current EMA subgradients.
-
-        Returns:
-            np.ndarray: Copy of the internal EMA array.
-        """
-        with self._lock:
-            return self._ema.copy()
 
 
 # ---------------------------------------------------------------------------

@@ -82,22 +82,6 @@ class BranchAndPriceSolver(BranchAndPriceRoutesMixin, BranchAndPriceSearchMixin)
         revenue_per_kg: float,
         cost_per_km: float,
         mandatory_nodes: Optional[Set[int]] = None,
-        max_iterations: int = 100,
-        max_routes_per_iteration: int = 10,
-        optimality_gap: float = 1e-4,
-        use_ryan_foster: bool = False,
-        branching_strategy: str = "edge",
-        tree_search_strategy: str = "best_first",
-        max_branch_nodes: int = 1000,
-        use_exact_pricing: bool = False,
-        vehicle_limit: Optional[int] = None,
-        use_ng_routes: bool = True,
-        ng_neighborhood_size: int = 8,
-        cleanup_frequency: int = 20,
-        cleanup_threshold: float = -100.0,
-        early_termination_gap: float = 1e-3,
-        multiple_waste_types: bool = False,
-        allow_heuristic_ryan_foster: bool = False,
         params: Optional[BPConfig] = None,
     ) -> None:
         """Initialise the Branch-and-Price solver.
@@ -110,47 +94,9 @@ class BranchAndPriceSolver(BranchAndPriceRoutesMixin, BranchAndPriceSearchMixin)
             revenue_per_kg: Revenue per unit of waste collected.
             cost_per_km: Operating cost per unit of distance travelled.
             mandatory_nodes: Node indices that must be visited.
-            max_iterations: Maximum iterations for column generation loop.
-            max_routes_per_iteration: Maximum columns to add per pricing call.
-            optimality_gap: Relative gap for proven optimality.
-            use_ryan_foster: Whether to use Ryan-Foster branching.
-            branching_strategy: Branching rule ('ryan_foster', 'edge', etc.).
-            tree_search_strategy: B&B search strategy ('best_first', 'depth_first').
-            max_branch_nodes: Maximum nodes to explore in the B&B tree.
-            use_exact_pricing: Whether to use DP-based exact pricing.
-            vehicle_limit: Maximum number of vehicles available.
-            use_ng_routes: Whether to use ng-route relaxation.
-            ng_neighborhood_size: Size of ng-neighborhoods for relaxation.
-            cleanup_frequency: Iterations between column cleanup rounds.
-            cleanup_threshold: Minimum reduced cost for column retention.
-            early_termination_gap: Gap at which to stop search early.
-            multiple_waste_types: Whether the problem has multiple waste types.
-            allow_heuristic_ryan_foster: Whether to allow Ryan-Foster branching.
-            params: Standardized BP parameters (overrides individual arguments).
+            params: BP parameters (default: ``BPConfig()``).
         """
-        if params is None:
-            # Create a params object from explicit arguments for backward compatibility
-            params = BPConfig(
-                max_iterations=max_iterations,
-                max_routes_per_iteration=max_routes_per_iteration,
-                optimality_gap=optimality_gap,
-                branching_strategy=branching_strategy,
-                max_branch_nodes=max_branch_nodes,
-                use_exact_pricing=use_exact_pricing,
-                vehicle_limit=vehicle_limit,
-                use_ng_routes=use_ng_routes,
-                ng_neighborhood_size=ng_neighborhood_size,
-                cleanup_frequency=cleanup_frequency,
-                cleanup_threshold=cleanup_threshold,
-                early_termination_gap=early_termination_gap,
-                multiple_waste_types=multiple_waste_types,
-                allow_heuristic_ryan_foster=allow_heuristic_ryan_foster,
-                tree_search_strategy=tree_search_strategy,
-            )
-            # Handle legacy Ryan-Foster promotion
-            if use_ryan_foster and params.branching_strategy == "edge":
-                params.branching_strategy = "ryan_foster"
-
+        params = params if params is not None else BPConfig()
         self.params = params
         self.n_nodes = n_nodes
         self.cost_matrix = cost_matrix
@@ -181,12 +127,9 @@ class BranchAndPriceSolver(BranchAndPriceRoutesMixin, BranchAndPriceSearchMixin)
             )
             self._ng_neighborhoods = _tmp.ng_neighborhoods
 
-        # Resolve branching strategy using central logic.
-        branching_strategy = self._resolve_branching_strategy(
-            branching_strategy=branching_strategy,
-            use_ryan_foster=use_ryan_foster,
-            values={},  # Values handled at policy level, but solver respects init args
-        )
+        branching_strategy = self.params.branching_strategy
+        if branching_strategy == "edge" and (self.params.use_ryan_foster_branching or self.params.use_ryan_foster):
+            branching_strategy = "ryan_foster"
 
         if branching_strategy == "divergence" and not self.params.multiple_waste_types:
             logging.info(
@@ -195,7 +138,6 @@ class BranchAndPriceSolver(BranchAndPriceRoutesMixin, BranchAndPriceSearchMixin)
             branching_strategy = "multi_edge_partition"
 
         self.params.branching_strategy = branching_strategy
-        self.params.tree_search_strategy = tree_search_strategy
         self.params.use_ryan_foster = branching_strategy == "ryan_foster"
 
         if self.params.use_ryan_foster and not self.params.allow_heuristic_ryan_foster:
@@ -357,32 +299,6 @@ class BranchAndPriceSolver(BranchAndPriceRoutesMixin, BranchAndPriceSearchMixin)
             bool: True if solution is integer.
         """
         return all(abs(v - round(v)) <= tol for v in route_values.values())
-
-    @staticmethod
-    def _resolve_branching_strategy(
-        branching_strategy: str,
-        use_ryan_foster: bool,
-        values: Dict[str, Any],
-    ) -> str:
-        """Single source of truth for branching strategy resolution.
-
-        Args:
-            branching_strategy: Explicit strategy string.
-            use_ryan_foster: Legacy boolean flag.
-            values: Runtime configuration dictionary.
-
-        Returns:
-            str: Resolved branching strategy.
-        """
-        if "branching_strategy" in values:
-            return str(values["branching_strategy"])
-        if branching_strategy != "edge":  # non-default means explicitly set
-            return branching_strategy
-        if values.get("use_ryan_foster_branching", False):
-            return "ryan_foster"
-        if use_ryan_foster:
-            return "ryan_foster"
-        return "edge"
 
     def _get_statistics(self) -> Dict[str, Any]:
         """Collect and return solver statistics.

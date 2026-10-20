@@ -124,27 +124,6 @@ class DEOperatorsMixin:
                 break
         return trial
 
-    def _differential_mutation(
-        self,
-        base: np.ndarray,
-        diff1: np.ndarray,
-        diff2: np.ndarray,
-        F: float,
-    ) -> np.ndarray:
-        """Continuous DE mutation operator: v = x_r1 + F * (x_r2 - x_r3).
-
-        Args:
-            base: Base vector (x_r1).
-            diff1: First differential vector (x_r2).
-            diff2: Second differential vector (x_r3).
-            F: Mutation scale factor.
-
-        Returns:
-            Mutant vector, clipped to domain [-1.0, 1.0].
-        """
-        mutant = base + F * (diff1 - diff2)
-        return np.clip(mutant, -1.0, 1.0)
-
     def _binomial_crossover(self, target: np.ndarray, mutant: np.ndarray, CR: float) -> np.ndarray:
         """Binomial crossover operator with domain enforcement.
 

@@ -172,7 +172,7 @@ def execute_and_monitor_tasks(
     policies = sim.full_policies
 
     # Resolve all names upfront to avoid disagreement with workers
-    from logic.src.pipeline.simulations.day_context import resolve_policy_display_name, to_slug
+    from logic.src.pipeline.simulations.naming import resolve_policy_display_name, to_slug
 
     resolved_info = [resolve_policy_display_name(p, sim) for p in policies]
     policy_names = []

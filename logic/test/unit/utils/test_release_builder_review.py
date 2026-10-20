@@ -25,7 +25,7 @@ def test_build_refuses_repository_destination():
 
 def test_multiline_lazy_map_is_detected():
     source = '_LAZY = {\n    "Thing": "logic.src.thing:Thing",\n}\n'
-    assert builder.LAZY_LINE_RE.search(source).group(2) == "Thing"
+    assert closure.LAZY_LINE_RE.search(source).group(2) == "Thing"
 
 
 def test_closure_keeps_parent_initializers_and_deferred_runtime_imports(tmp_path, monkeypatch):
@@ -124,4 +124,4 @@ def test_multiline_lazy_map_pruning_is_format_independent(tmp_path, monkeypatch)
     monkeypatch.setattr(closure, "REPO", tmp_path)
     dropped = builder.filter_lazy_map(path, {"logic.src.facade.keep"}, tmp_path)
     assert dropped
-    assert builder.lazy_targets(path) == {"Keep": "logic.src.facade.keep"}
+    assert closure.lazy_targets(path) == {"Keep": "logic.src.facade.keep"}

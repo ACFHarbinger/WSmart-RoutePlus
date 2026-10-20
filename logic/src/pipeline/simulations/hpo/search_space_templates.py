@@ -151,20 +151,23 @@ def generate_route_improvement_templates() -> None:
 def generate_packing_templates() -> None:
     """Scaffold JSON search space templates for packing configs.
 
-    Scans ``logic.src.configs.policies.other.packing`` and writes
-    template JSON files to :data:`PACKING_DIR`.  Existing files are not
+    Scans the modules that define the packing configs (``packing_dispatch``,
+    ``packing_learned`` and ``packing_threshold``) and
+    writes template JSON files to :data:`PACKING_DIR`.  Existing files are not
     overwritten.
     """
-    from logic.src.configs.policies.other import packing
+    from logic.src.configs.policies.other import packing_dispatch, packing_learned, packing_threshold
 
     os.makedirs(PACKING_DIR, exist_ok=True)
 
-    for name, obj in inspect.getmembers(packing):
-        if not (
-            name.endswith("Config")
-            and dataclasses.is_dataclass(obj)
-            and getattr(obj, "__module__", "").startswith(packing.__name__)  # packing and its packing_* parts
-        ):
+    members = [
+        (name, obj)
+        for module in (packing_dispatch, packing_learned, packing_threshold)
+        for name, obj in inspect.getmembers(module)
+        if getattr(obj, "__module__", "") == module.__name__  # each config once, from its defining module
+    ]
+    for name, obj in sorted(members, key=lambda item: item[0]):
+        if not (name.endswith("Config") and dataclasses.is_dataclass(obj)):
             continue
 
         base_name = name.lower().replace("selectionconfig", "").replace("postconfig", "").replace("config", "")

@@ -18,20 +18,21 @@ from typing import Any, Dict
 from loguru import logger
 
 from logic.src.configs import RouteImprovingConfig
-from logic.src.constants import ROOT_DIR  # noqa: F401  (ROOT_DIR: test patch point)
 from logic.src.constants.paths import CONFIGS_DIR
 from logic.src.interfaces import ITraversable
-from logic.src.policies.route_improvement import RouteImproverFactory
-from logic.src.policies.routing.other_algorithms.travelling_salesman_problem.tsp import get_route_cost
-from logic.src.utils.configs.config_loader import load_config
-
-from .base import (
-    SimulationAction,
+from logic.src.pipeline.simulations.actions.policy_config import (
     _as_plain_dict,
     _as_policy_mapping,
     _file_yaml_pairs,
     _is_mapping,
     _load_policy_yaml_section,
+)
+from logic.src.policies.route_improvement import RouteImproverFactory
+from logic.src.utils.configs.config_loader import load_config
+from logic.src.utils.routing.tours import get_route_cost
+
+from .base import (
+    SimulationAction,
     _pop_context_key,
     _record_live_params,
     _set_live_capture_meta,
@@ -294,7 +295,9 @@ class RouteImprovementAction(SimulationAction):
                 pf_params.update(ri_yaml)
                 from logic.src.tracking.logging.modules.policy_viz_emit import PolicyVizStreamSession
 
-                viz_policy = str(getattr(context, "display_name", None) or getattr(context, "policy_name", None) or "unknown")
+                viz_policy = str(
+                    getattr(context, "display_name", None) or getattr(context, "policy_name", None) or "unknown"
+                )
                 with PolicyVizStreamSession(
                     processor,
                     viz_policy,

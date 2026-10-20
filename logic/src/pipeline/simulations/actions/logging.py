@@ -18,9 +18,9 @@ from rich.table import Table
 from logic.src.pipeline.simulations.actions.base import SimulationAction, bind_context
 from logic.src.pipeline.simulations.day_context import get_daily_results
 from logic.src.tracking.integrations.simulation import get_sim_tracker
-from logic.src.tracking.logging.log_utils import send_daily_output_to_gui
 from logic.src.tracking.logging.modules.failure_analyzer import FailureAnalyzer
 from logic.src.tracking.logging.modules.failure_emit import emit_sim_failure_summary
+from logic.src.tracking.logging.modules.gui import send_daily_output_to_gui
 
 
 class LogAction(SimulationAction):

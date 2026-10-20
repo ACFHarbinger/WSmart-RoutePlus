@@ -19,7 +19,6 @@ import copy
 import math
 import random
 import time
-from random import Random
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
@@ -71,86 +70,6 @@ def _initialize_solution_state(
     current_solution = uncross_arcs_in_sans_routes(initial_solution, id_to_index, distance_matrix)
 
     return current_solution, missing_bins
-
-
-def _select_neighbor(
-    solution: List[List[int]],
-    removed_bins: Set[int],
-    data: Dict[str, Any],
-    vehicle_capacity: float,
-    id_to_index: Dict[int, int],
-    stocks: Dict[int, float],
-    mandatory_bins: Set[int],
-    distance_matrix: np.ndarray,
-    rng: Random,
-) -> Tuple[Optional[List[List[int]]], Optional[str]]:
-    """Select and apply a neighbor operator.
-
-    Args:
-        solution: The current solution.
-        removed_bins: Set of bins that have been removed.
-        data: Problem data.
-        vehicle_capacity: Capacity of vehicles.
-        id_to_index: Mapping from bin IDs to indices.
-        stocks: Stock levels for each bin.
-        mandatory_bins: Set of bins that must be included in the solution.
-        distance_matrix: Distance matrix for routes.
-        rng: Random number generator.
-
-    Returns:
-        A tuple containing the new solution and the operator applied.
-    """
-    route_ops = [
-        "2opt",
-        "move",
-        "swap",
-        "remove",
-        "insert",
-        "move_n_random",
-        "move_n_consec",
-        "swap_n_random",
-        "swap_n_consec",
-        "remove_n_bins",
-        "remove_n_bins_consec",
-        "relocate",
-        "cross",
-        "or-opt",
-    ]
-    add_ops = [
-        "add_n_bins",
-        "add_n_bins_consec",
-        "add_route_removed",
-        "add_route_removed_consec",
-    ]
-
-    valid_ops = []
-    if len(solution) > 0:
-        valid_ops.extend(route_ops)
-    if len(removed_bins) > 0:
-        valid_ops.extend(add_ops)
-
-    if not valid_ops:
-        return None, None
-
-    op = rng.choice(valid_ops)
-
-    new_solution = apply_operator(
-        op,
-        copy.deepcopy(solution),
-        copy.deepcopy(removed_bins),
-        data,
-        vehicle_capacity,
-        id_to_index,
-        stocks,
-        mandatory_bins,
-        distance_matrix,
-        rng=rng,
-    )
-
-    # Filter out empty routes
-    new_solution = [r for r in new_solution if len(r) > 2]
-
-    return new_solution, op
 
 
 def improved_simulated_annealing(  # noqa: C901

@@ -22,7 +22,7 @@ import torch
 
 from logic.src.policies.vector.core.crossover import vectorized_ordered_crossover
 from logic.src.policies.vector.core.population import VectorizedPopulation
-from logic.src.policies.vector.local_search import (
+from logic.src.policies.vector.operators import (
     vectorized_relocate,
     vectorized_swap,
     vectorized_swap_star,

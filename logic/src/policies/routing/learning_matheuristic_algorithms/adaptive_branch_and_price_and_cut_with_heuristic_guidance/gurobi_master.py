@@ -175,44 +175,6 @@ class GurobiMasterProblem:
     # Cut Interface                                                         #
     # ------------------------------------------------------------------ #
 
-    def add_benders_cut(self, cut: Dict) -> None:
-        """
-        Add a single aggregated Benders optimality cut to the master model.
-
-        Cut form (derived in ``TemporalBendersCoordinator.generate_benders_cut``):
-
-            θ[d]  ≥  constant  +  Σ_i  coefficients[i] · z[i, d]
-
-        The cut is immediately active: ``model.update()`` is called before
-        returning.
-
-        Args:
-            cut: Dictionary with keys:
-                ``"day"``          – day index d ∈ [0, T−1].
-                ``"constant"``     – scalar RHS constant.
-                ``"coefficients"`` – {bin_id: linear coefficient of z[bin_id, d]}.
-
-        """
-        d = cut["day"]
-        constant = float(cut["constant"])
-        coeffs: Dict = cut.get("coefficients", {})
-
-        if coeffs:
-            expr = gp.quicksum(float(coeffs[i]) * self.z[i, d] for i in coeffs if 1 <= i <= self.n_bins)
-            self.model.addConstr(
-                self.theta[d] >= constant + expr,
-                name=f"cut_{self._cut_count}",
-            )
-        else:
-            # Constant-only cut: θ[d] ≥ constant (no variable contribution)
-            self.model.addConstr(
-                self.theta[d] >= constant,
-                name=f"cut_{self._cut_count}",
-            )
-
-        self._cut_count += 1
-        self.model.update()
-
     def add_benders_cuts_bulk(self, cuts: List[Dict]) -> None:
         """
         Add multiple cuts in a single ``model.update()`` call.
@@ -302,17 +264,6 @@ class GurobiMasterProblem:
         """
         try:
             return self.model.ObjVal
-        except (AttributeError, gp.GurobiError):
-            return float("inf")
-
-    def get_mip_gap(self) -> float:
-        """Return the relative MIP gap of the last solve (0.0 = optimal).
-
-        Returns:
-            MIP gap as a float (0.0 = optimal).
-        """
-        try:
-            return self.model.MIPGap
         except (AttributeError, gp.GurobiError):
             return float("inf")
 

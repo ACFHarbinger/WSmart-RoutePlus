@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.problem_context import ProblemContext
 from logic.src.interfaces.context.solution_context import SolutionContext
@@ -27,6 +27,7 @@ from logic.src.policies.helpers.operators.crossover_recombination.pattern_and_it
 from logic.src.policies.helpers.operators.inter_route_local_search.inter_day_shift import inter_day_shift
 from logic.src.policies.routing.base.base_multi_period_policy import BaseMultiPeriodRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
+from logic.src.utils.registry import ALL
 
 from .individual import Individual
 from .initialization import generate_initial_individual
@@ -34,7 +35,7 @@ from .population import Population
 from .split import compute_daily_loads, split_day
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.META_HEURISTIC,
     PolicyTag.POPULATION_BASED,
     PolicyTag.EVOLUTIONARY_ALGORITHM,

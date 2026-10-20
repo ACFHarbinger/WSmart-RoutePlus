@@ -145,11 +145,3 @@ class PSOPolicyAdapter(BaseMultiPeriodRoutingPolicy):
             Full name string.
         """
         return "Particle Swarm Optimization (PSO)"
-
-    def get_acronym(self) -> str:
-        """Return policy acronym.
-
-        Returns:
-            Short acronym string.
-        """
-        return "PSO"

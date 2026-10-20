@@ -85,9 +85,6 @@ from .rl_bandit import (
     _OPERATOR_GRID as _OPERATOR_GRID,
 )
 from .rl_bandit import (
-    _STATE_DEFAULTS as _STATE_DEFAULTS,
-)
-from .rl_bandit import (
     _action_to_budget_fracs as _action_to_budget_fracs,
 )
 from .rl_bandit import (

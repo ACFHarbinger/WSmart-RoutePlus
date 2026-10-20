@@ -23,7 +23,7 @@ from logic.src.policies.helpers.solvers_and_matheuristics import (
     SeparationEngine,
     create_cutting_plane_engine,
 )
-from logic.src.policies.helpers.solvers_and_matheuristics.search.bpc_tree import (
+from logic.src.policies.helpers.solvers_and_matheuristics.search.bpc_options import (
     total_travel_cost as _total_travel_cost,
 )
 from logic.src.policies.helpers.solvers_and_matheuristics.vrpp_model import VRPPModel

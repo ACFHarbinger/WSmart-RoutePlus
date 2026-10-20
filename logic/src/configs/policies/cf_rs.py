@@ -17,7 +17,8 @@ Example:
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from .other.packing import PackingConfig
+from logic.src.configs.policies.other.packing_dispatch import PackingConfig
+
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -64,7 +65,6 @@ class CFRSConfig:
             to apply to the resulting tours for further refinement.
     """
 
-
     # Reproducibility seed for Routing phase
     seed: Optional[int] = None
 
@@ -101,7 +101,6 @@ class CFRSConfig:
     # Tour refinement strategies
     route_improvement: Optional[List[RouteImprovingConfig]] = None
 
-
     @classmethod
     def from_config(cls, config: Any) -> "CFRSConfig":
         """Create CFRSConfig from a configuration object or dictionary.
@@ -113,6 +112,7 @@ class CFRSConfig:
             "CFRSConfig": Populated parameter dataclass.
         """
         from dataclasses import fields
+
         if isinstance(config, dict):
             return cls(**{k: v for k, v in config.items() if k in {f.name for f in fields(cls)}})
 
@@ -134,4 +134,5 @@ class CFRSConfig:
             Dict[str, Any]: Mapping of parameter names to their values.
         """
         from dataclasses import fields
+
         return {f.name: getattr(self, f.name) for f in fields(self)}

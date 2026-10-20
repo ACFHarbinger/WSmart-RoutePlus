@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 import numpy as np
 
 from logic.src.configs.policies.nds_brkga import NDSBRKGAConfig
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.joint_context import JointSelectionConstructionContext
 from logic.src.policies.packing_and_routing.base.base_joint_policy import BaseJointPolicy
 from logic.src.policies.packing_and_routing.base.registry import JointPolicyRegistry
@@ -33,9 +33,10 @@ from logic.src.policies.packing_and_routing.non_dominated_sorting_biased_random_
 )
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.routing.base.sub_problem import coerce_config
+from logic.src.utils.registry import ALL
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.META_HEURISTIC,
     PolicyTag.POPULATION_BASED,
     PolicyTag.EVOLUTIONARY_ALGORITHM,

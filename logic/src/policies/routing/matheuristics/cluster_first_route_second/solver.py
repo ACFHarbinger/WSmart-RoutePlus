@@ -42,9 +42,9 @@ from logic.src.policies.routing.matheuristics.cluster_first_route_second.greedy_
 from logic.src.policies.routing.matheuristics.cluster_first_route_second.mip_assignment import (
     assign_exact_mip,
 )
+from logic.src.policies.routing.matheuristics.cluster_first_route_second.tsp_genetic import find_route_ga
 from logic.src.policies.routing.matheuristics.cluster_first_route_second.tsp_metaheuristics import (
     find_route_aco,
-    find_route_ga,
     find_route_pso,
 )
 from logic.src.policies.routing.other_algorithms.travelling_salesman_problem.tsp import (

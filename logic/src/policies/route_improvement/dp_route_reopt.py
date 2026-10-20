@@ -14,19 +14,20 @@ Example:
 
 from typing import Any, List, Tuple
 
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.search_context import ImprovementMetrics
 from logic.src.interfaces.route_improvement import IRouteImprovement
 from logic.src.policies.helpers.operators.intensification_fixing import (
     dp_route_reopt,
     dp_route_reopt_profit,
 )
+from logic.src.utils.registry import ALL
 
 from .base import RouteImproverRegistry
 from .common.helpers import assemble_tour, split_tour, to_numpy
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.IMPROVEMENT,
     PolicyTag.EXACT,
 )

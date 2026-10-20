@@ -131,28 +131,22 @@ import time
 import warnings
 from typing import Any, Dict, List, Optional, Set, Union
 
-from gurobipy import GRB  # noqa: F401  (patched by tests)
-
 from logic.src.configs.policies.ms_bpc_sp import MSBPCSPConfig
 from logic.src.policies.helpers.solvers_and_matheuristics import (
     RCSPPSolver,
     VRPPMasterProblem,
 )
 from logic.src.policies.helpers.solvers_and_matheuristics.master_problem.warm_start import greedy_warm_start_columns
+from logic.src.policies.helpers.solvers_and_matheuristics.search.bpc_options import (
+    total_travel_cost as _total_travel_cost,
+)
 from logic.src.policies.helpers.solvers_and_matheuristics.search.bpc_tree import (
     BPCSearchOptions,
     search_bpc_tree,
 )
-from logic.src.policies.helpers.solvers_and_matheuristics.search.bpc_tree import (
-    total_travel_cost as _total_travel_cost,
-)
-from logic.src.policies.helpers.solvers_and_matheuristics.search.column_generation import (
-    column_generation_loop as _column_generation_loop,  # noqa: F401  (re-exported for P-33 tests)
-)
 from logic.src.policies.routing.base.base_routing_policy import _structured_load, _unwrap_engine_section
 from logic.src.policies.routing.base.sub_problem import SolveResult, SubProblem
 from logic.src.policies.routing.exact_and_decomposition_solvers.multi_stage_branch_and_price_and_cut_with_set_partition.ms_bpc_sp_phases import (
-    _RELAX_RETRY_MAX_NODES,  # noqa: F401  (re-exported)
     _best_bpc_solution,
     _build_tree_and_cuts,
     _empty_result_fallback,

@@ -16,7 +16,6 @@ Example:
 
 from __future__ import annotations
 
-import copy
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import torch
@@ -39,51 +38,6 @@ from logic.src.pipeline.learning.envs.base.base import RL4COEnvBase
 from logic.src.utils.functions.problem import is_ptp_problem, is_tsp_problem
 
 
-class _ContextEmbedderAdapter:
-    """Thin proxy delegating context embedding calls to an underlying module.
-
-    Preserves backwards compatibility for callers expecting the legacy
-    ``context_embedder`` interface without registering duplicate parameter
-    keys in the model's ``state_dict``.
-    """
-
-    def __init__(self, target: nn.Module) -> None:
-        self.__dict__["_target"] = target
-
-    def __call__(self, *args: Any, **kwargs: Any) -> Any:
-        return self.forward(*args, **kwargs)
-
-    def forward(self, *args: Any, **kwargs: Any) -> Any:
-        return self._target(*args, **kwargs)
-
-    def init_node_embeddings(self, nodes: Any, *args: Any, **kwargs: Any) -> Any:
-        if hasattr(self._target, "init_node_embeddings"):
-            return self._target.init_node_embeddings(nodes, *args, **kwargs)
-        return self.forward(nodes, *args, **kwargs)
-
-    def __getattr__(self, name: str) -> Any:
-        # deepcopy probes a newly allocated proxy before restoring its state.
-        # Bypass __getattr__ while looking up the target so that this probe
-        # raises AttributeError instead of recursively querying _target.
-        target = object.__getattribute__(self, "_target")
-        return getattr(target, name)
-
-    def __deepcopy__(self, memo: Dict[int, Any]) -> Any:
-        # Do not delegate copy/state protocols to the wrapped nn.Module.
-        # The shared memo also preserves the alias to a copied model's
-        # registered init_embedding rather than creating a second module.
-        cloned = object.__new__(type(self))
-        memo[id(self)] = cloned
-        cloned.__dict__.update(copy.deepcopy(self.__dict__, memo))
-        return cloned
-
-    def __setattr__(self, name: str, val: Any) -> None:
-        if name == "_target":
-            self.__dict__["_target"] = val
-        else:
-            self.__dict__[name] = val
-
-
 class AttentionModel(AttentionModelPolicy, DecodingMixin):
     """Attention Model for neural combinatorial optimization.
 
@@ -101,7 +55,6 @@ class AttentionModel(AttentionModelPolicy, DecodingMixin):
         encoder (nn.Module): The graph attention encoder.
         decoder (nn.Module): The autoregressive attention decoder.
         init_embedding (nn.Module): Problem-specific initial feature projection.
-        context_embedder (Any): Backwards-compatible proxy to ``init_embedding``.
         pomo_size (int): Parallel start size for POMO (if enabled).
         checkpoint_encoder (bool): Whether to use gradient checkpointing on encoding.
         aggregation_graph (str): Global aggregation method ('avg', 'max', 'sum').
@@ -243,8 +196,6 @@ class AttentionModel(AttentionModelPolicy, DecodingMixin):
         self.hidden_dim = hidden_dim
         self.n_heads = n_heads
         self._configure_legacy_embedding(temporal_horizon, embed_dim)
-        self._context_embedder_adapter: Optional[_ContextEmbedderAdapter] = None
-        self._context_embedder_override: Optional[Any] = None
         self.set_strategy("greedy")
 
     @staticmethod
@@ -285,22 +236,9 @@ class AttentionModel(AttentionModelPolicy, DecodingMixin):
         """Determines if the model is configured for Profitable Tour Problem."""
         return is_ptp_problem(self.problem)
 
-    @property
-    def context_embedder(self) -> Any:
-        """Backwards-compatible proxy to the initial embedding module."""
-        if self._context_embedder_override is not None:
-            return self._context_embedder_override
-        if self._context_embedder_adapter is None:
-            self._context_embedder_adapter = _ContextEmbedderAdapter(self.init_embedding)
-        return self._context_embedder_adapter
-
-    @context_embedder.setter
-    def context_embedder(self, val: Any) -> None:
-        self._context_embedder_override = val
-
     def _get_initial_embeddings(self, input: Any) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
         """Processes raw instance data into initial node embeddings."""
-        res = self.context_embedder(input)
+        res = self.init_embedding(input)
         if isinstance(res, tuple):
             return res
         return res, None

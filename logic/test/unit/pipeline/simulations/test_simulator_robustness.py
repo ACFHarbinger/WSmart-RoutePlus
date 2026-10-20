@@ -11,7 +11,7 @@ from logic.src.configs.tasks.sim import SimConfig
 from logic.src.pipeline.features.test.orchestrator.parallel_runner import execute_and_monitor_tasks
 from logic.src.pipeline.features.test.orchestrator.results_handler import aggregate_final_results
 from logic.src.pipeline.simulations.checkpoints import CheckpointError
-from logic.src.pipeline.simulations.day_context import get_full_policy_name, policy_result_key
+from logic.src.pipeline.simulations.naming import get_full_policy_name, policy_result_key
 from logic.src.pipeline.simulations.simulator import sequential_simulations
 from logic.src.pipeline.simulations.states.running import RunningState, pad_model_ls
 from logic.test.unit.pipeline.simulations.test_states import _make_test_cfg
@@ -318,8 +318,16 @@ def test_generated_stats_horizon_runs_every_day_without_replaying_row_zero(tmp_p
     from logic.src.pipeline.simulations.bins import Bins
 
     n_days, n_bins = 4, 6
-    bins = Bins(n=n_bins, data_dir=str(tmp_path), sample_dist="gamma", area="riomaior", waste_type="paper",
-                n_days=n_days + 1, n_samples=1, seed=7)
+    bins = Bins(
+        n=n_bins,
+        data_dir=str(tmp_path),
+        sample_dist="gamma",
+        area="riomaior",
+        waste_type="paper",
+        n_days=n_days + 1,
+        n_samples=1,
+        seed=7,
+    )
     bins.set_gamma_distribution(option=0)
     bins.start_with_fill = True
     bins.set_sample_waste(0)

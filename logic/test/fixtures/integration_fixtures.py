@@ -117,10 +117,7 @@ def setup_sim_data(tmp_path, mocker):
     mocker.patch("logic.src.pipeline.simulations.checkpoints.ROOT_DIR", str(tmp_path))
     mocker.patch("logic.src.constants.ROOT_DIR", str(tmp_path))
     mocker.patch("logic.src.pipeline.simulations.states.base.context.ROOT_DIR", str(tmp_path))
-    mocker.patch("logic.src.pipeline.simulations.states.initializing.ROOT_DIR", str(tmp_path))
     mocker.patch("logic.src.pipeline.simulations.hpo.hpo_handler.ROOT_DIR", str(tmp_path))
-    mocker.patch("logic.src.pipeline.simulations.actions.route_improvement.ROOT_DIR", str(tmp_path))
-    mocker.patch("logic.src.pipeline.simulations.actions.node_selection.ROOT_DIR", str(tmp_path))
     mocker.patch("logic.src.pipeline.simulations.bins.base.ROOT_DIR", str(tmp_path))
     mocker.patch("logic.src.pipeline.simulations.repository.ROOT_DIR", str(tmp_path))
     # Mock fast_tsp to avoid solver crashes with dummy data

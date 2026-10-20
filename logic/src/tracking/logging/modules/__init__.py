@@ -26,12 +26,9 @@ Example:
     >>> setup_system_logger("experiment.log")
 """
 
-from .analysis import (
-    final_simulation_summary,
-    load_log_dict,
-    output_stats,
-    runs_per_policy,
-)
+from logic.src.tracking.logging.modules.summary_display import final_simulation_summary
+
+from .analysis import load_log_dict, output_stats, runs_per_policy
 from .gui import send_daily_output_to_gui, send_final_output_to_gui
 from .metrics import get_loss_stats, log_epoch, log_values
 from .storage import (

@@ -13,15 +13,16 @@ from __future__ import annotations
 from typing import Any, Dict, Optional, Tuple, Type, Union
 
 from logic.src.configs.policies import SWCTCFConfig
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.routing.base.generic_policy import GenericRoutingPolicy
 from logic.src.policies.routing.base.sub_problem import SubProblem
+from logic.src.utils.registry import ALL
 
 from .dispatcher import run_swc_tcf_optimizer
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.EXACT,
     PolicyTag.MATH_PROGRAMMING,
     PolicyTag.SOLVER,

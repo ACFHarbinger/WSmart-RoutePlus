@@ -12,16 +12,15 @@ from logic.src.policies.vector.hybrid_genetic_search import (
     vectorized_linear_split,
     vectorized_ordered_crossover,
 )
-from logic.src.policies.vector.local_search import (
+from logic.src.policies.vector.operators import vectorized_two_opt
+from logic.src.policies.vector.operators import (
     vectorized_relocate,
     vectorized_swap,
     vectorized_swap_star,
-    vectorized_two_opt,
     vectorized_two_opt_star,
 )
 
 pytestmark = [pytest.mark.unit, pytest.mark.slow]
-
 
 
 class TestHGS:

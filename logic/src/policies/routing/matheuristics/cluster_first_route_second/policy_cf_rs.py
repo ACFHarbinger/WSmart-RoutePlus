@@ -17,16 +17,17 @@ Example:
 from typing import Any, Dict, List, Optional, Tuple, Type
 
 from logic.src.configs.policies.cf_rs import CFRSConfig
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.search_context import SearchContext
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
+from logic.src.utils.registry import ALL
 
 from .solver import run_cf_rs
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.MATHEURISTIC,
     PolicyTag.DECOMPOSITION,
     PolicyTag.PROFIT_AWARE,

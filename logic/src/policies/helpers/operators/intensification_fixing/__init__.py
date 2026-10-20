@@ -24,8 +24,10 @@ Example:
     >>> improved = dp_route_reopt(routes, dist_matrix, wastes, capacity)
 """
 
+from logic.src.policies.helpers.operators.intensification_fixing.fix_and_optimize_profit import fix_and_optimize_profit
+
 from .dp_route_reopt import dp_route_reopt, dp_route_reopt_profit
-from .fix_and_optimize import fix_and_optimize, fix_and_optimize_profit
+from .fix_and_optimize import fix_and_optimize
 from .set_partitioning_polish import set_partitioning_polish, set_partitioning_polish_profit
 
 INTENSIFICATION_OPERATORS = {

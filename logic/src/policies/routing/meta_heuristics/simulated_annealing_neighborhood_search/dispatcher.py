@@ -59,7 +59,7 @@ from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood
 from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.refinement.route_search import (
     find_solutions,
 )
-from logic.src.policies.routing.other_algorithms.travelling_salesman_problem.tsp import get_route_cost
+from logic.src.utils.routing.tours import get_route_cost
 
 if TYPE_CHECKING:
     from logic.src.interfaces.context.multi_day_context import MultiDayContext

@@ -191,24 +191,6 @@ class VRPPModel:
                 cut_edges.append((i, j))
         return cut_edges
 
-    def edges_in_set(self, node_set: Set[int]) -> List[Tuple[int, int]]:
-        """Return edges with both endpoints in node_set.
-
-        E(S) := {(i, j) ∈ E : i ∈ S, j ∈ S}
-
-        Args:
-            node_set: Set of node IDs.
-
-        Returns:
-            List of edge tuples (u, v) internal to the set.
-        """
-        edges_in = []
-
-        for i, j in self.edges:
-            if i in node_set and j in node_set:
-                edges_in.append((i, j))
-        return edges_in
-
     def total_demand(self, node_set: Set[int]) -> float:
         """Calculate total demand of nodes in node_set.
 

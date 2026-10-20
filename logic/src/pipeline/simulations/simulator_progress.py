@@ -13,10 +13,8 @@ import os
 from typing import Any, Dict, List, Optional, Union
 
 from logic.src.constants import ROOT_DIR, SIM_METRICS
-from logic.src.tracking.logging.log_utils import (
-    display_simulation_summary_table,
-    update_policy_log_section,
-)
+from logic.src.tracking.logging.modules.storage import update_policy_log_section
+from logic.src.tracking.logging.modules.summary_display import display_simulation_summary_table
 
 
 def display_log_metrics(

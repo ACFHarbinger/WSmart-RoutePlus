@@ -16,13 +16,6 @@ import torch
 from logic.src.pipeline.learning.envs.base.problem import BaseProblem
 from logic.src.pipeline.learning.envs.spec import PROBLEMS, ProblemSpec
 
-from .irp_env import (
-    IRPEnv as IRPEnv,
-)
-from .irp_generator import (
-    IRPGenerator as IRPGenerator,
-)
-
 
 class IRP(BaseProblem):
     """Inventory Routing Problem (IRP) task definition."""
@@ -59,9 +52,9 @@ IRP_SPEC = ProblemSpec(
     objective=lambda cost, **kw: -float(cost),
     constraints=(),
     metrics=("cost", "reward", "length"),
-    env_target="logic.src.pipeline.learning.envs.irp:IRPEnv",
+    env_target="logic.src.pipeline.learning.envs.irp_env:IRPEnv",
     expand_pool=False,
 )
 PROBLEMS.register(IRP_SPEC)
 
-__all__ = ["IRPGenerator", "IRPEnv", "IRP", "IRP_SPEC"]
+__all__ = ["IRP", "IRP_SPEC"]
