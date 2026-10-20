@@ -16,16 +16,17 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 
 from logic.src.configs.policies.mp_aco import MP_ACO_Config
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.problem_context import ProblemContext
 from logic.src.interfaces.context.solution_context import SolutionContext
 from logic.src.policies.routing.base.base_multi_period_policy import BaseMultiPeriodRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.utils.policy.routes import route_cost, route_profit
+from logic.src.utils.registry import ALL
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.META_HEURISTIC,
     PolicyTag.SWARM_INTELLIGENCE,
     PolicyTag.MULTI_PERIOD,

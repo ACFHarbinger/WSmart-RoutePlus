@@ -31,12 +31,6 @@ Policy enum for WSmart-Route.
 
 - **class `PolicyTag`** — Policy tags for WSmart-Route.
 
-### `logic.src.enums.registry`
-
-Tag-query facade over the shared ``ALL`` registry.
-
-- **class `GlobalRegistry`** — Compatibility wrapper around ``ALL`` for tag-only registration.
-
 ### `logic.src.enums.trainer_tags`
 
 Trainer enum for WSmart-Route.

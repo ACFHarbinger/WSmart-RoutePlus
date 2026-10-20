@@ -326,12 +326,3 @@ class HybridMemeticLargeNeighborhoodSearchParams:
                 top_kwargs[f.name] = sub_cfg
 
         return cls(**top_kwargs)
-
-    @property
-    def max_iterations(self) -> int:
-        """Alias for max_generations for legacy compatibility.
-
-        Returns:
-            int: The maximum number of iterations.
-        """
-        return self.max_generations

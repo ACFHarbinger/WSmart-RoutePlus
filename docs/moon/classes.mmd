@@ -661,7 +661,6 @@ classDiagram
     repair_scores
     repair_weights
     segment_size : int
-    decay_weights()* None
     entropy() float
     select_operators(rng: random.Random) Tuple[str, str]
     update_scores(destroy_op: str, repair_op: str, score: float) None
@@ -3322,14 +3321,6 @@ classDiagram
     add_cut(cut_type: str, data: Any) None
     apply_to_master(master: MasterProblemSupport) int
   }
-  class GlobalRegistry {
-    get_all() Dict[T_Algorithm, Set[AnyTag]]
-    get_name(obj: T_Algorithm) str
-    query_difference(require: List[AnyTag], exclude: List[AnyTag], expected_type: Optional[Type[T]]) Union[List[T_Algorithm], List[Type[T]]]
-    query_intersection() Union[List[T_Algorithm], List[Type[T]]]
-    query_union() Union[List[T_Algorithm], List[Type[T]]]
-    register() Callable[[T_Algorithm], T_Algorithm]
-  }
   class GoogleMapsStrategy {
     calculate(coords: pd.DataFrame) np.ndarray
   }
@@ -5282,17 +5273,6 @@ classDiagram
   class LearnedSelectionConfig {
     learned_model_path : Optional[str]
     learned_threshold : float
-  }
-  class LegacyCriticNetwork {
-    aggregation_graph : str
-    context_embedder
-    embed_dim
-    encoder
-    hidden_dim
-    is_vrpp
-    is_wc
-    value_head : Sequential
-    forward(inputs)
   }
   class LinKernighanHelsgaunRouteImprover {
     process(tour: List[int]) Tuple[List[int], ImprovementMetrics]
@@ -11285,9 +11265,7 @@ classDiagram
   PointerAttention --* PointerDecoder : pointer
   PointerAttention --* PointerDecoder : glimpse
   GenericContextEmbedder --* AttentionModel : context_embedder
-  VRPPContextEmbedder --* LegacyCriticNetwork : context_embedder
   VRPPContextEmbedder --* AttentionModel : context_embedder
-  WCVRPContextEmbedder --* LegacyCriticNetwork : context_embedder
   WCVRPContextEmbedder --* AttentionModel : context_embedder
   DynamicEmbedding --* MDAMDecoder : dynamic_embedding
   DynamicEmbedding --* PolyNetDecoder : dynamic_embedding

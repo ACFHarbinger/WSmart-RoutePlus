@@ -27,7 +27,6 @@ from .autoregressive.constructive import ConstructivePolicy
 from .autoregressive.decoder import AutoregressiveDecoder
 from .autoregressive.encoder import AutoregressiveEncoder
 from .autoregressive.policy import AutoregressivePolicy
-from .critic_network.model import LegacyCriticNetwork as LegacyCriticNetwork
 from .improvement.decoder import ImprovementDecoder
 from .improvement.encoder import ImprovementEncoder
 from .improvement.policy import ImprovementPolicy
@@ -58,7 +57,6 @@ __all__ = [
     "EASEmb",
     "EASLay",
     "CriticNetwork",
-    "LegacyCriticNetwork",
     "create_critic_from_actor",
     "TimeTrackingPolicy",
 ]

@@ -94,15 +94,6 @@ def apply_lns(  # noqa: C901
     else:
         effective_q = max(1, min(math.ceil(0.05 * total_nodes), 10))
 
-    # Backward compatibility: "regret_2" / "regret_3_profit" style names
-    # are parsed into (base_op, repair_k) pairs.
-    if repair_op.startswith("regret_"):
-        parts = repair_op.split("_")
-        # Parts: ["regret", "<k>"] or ["regret", "<k>", "profit"]
-        if len(parts) >= 2 and parts[1].isdigit():
-            repair_k = int(parts[1])
-            repair_op = "regret_profit" if (len(parts) == 3 and parts[2] == "profit") else "regret"
-
     # Dispatch destroy
     if destroy_op not in _DESTROY_OPS:
         raise ValueError(f"Unknown destroy_op: {destroy_op!r}")

@@ -17,13 +17,14 @@ from typing import List, Tuple
 
 import numpy as np
 
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.interfaces.context import PackingContext, SearchContext
 from logic.src.interfaces.packing import IPackingAlgorithm
 from logic.src.policies.packing.base import PackingRegistry
+from logic.src.utils.registry import ALL
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.PACKING,
     PolicyTag.HEURISTIC,
     PolicyTag.DETERMINISTIC,
@@ -49,8 +50,8 @@ class DeadlineDrivenSelection(IPackingAlgorithm):
         if context.accumulation_rates is None:
             raise ValueError("DeadlineDrivenSelection requires accumulation_rates.")
 
-        # Extract horizon dynamically, defaulting to context.threshold for backwards compatibility
-        horizon_days = getattr(context, "horizon_days", context.threshold)
+        # The threshold is the deadline horizon in days
+        horizon_days = context.threshold
 
         rem_capacity = context.max_fill - context.current_fill
 

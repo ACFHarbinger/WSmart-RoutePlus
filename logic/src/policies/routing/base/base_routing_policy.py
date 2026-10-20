@@ -283,7 +283,7 @@ class BaseRoutingPolicy(RoutingExecutionMixin, PolicyVizMixin, IRoutingAlgorithm
         Load area-specific parameters (Q, R, C) and merge with config overrides.
 
         Uses the typed config dataclass (``self._config``) when available,
-        falling back to dict-based extraction for backward compatibility.
+        falling back to dict-based extraction for policies built without one.
 
         Args:
             area: Geographic area name.
@@ -311,7 +311,7 @@ class BaseRoutingPolicy(RoutingExecutionMixin, PolicyVizMixin, IRoutingAlgorithm
             if self._seed is not None and policy_config.get("seed") is None:
                 policy_config["seed"] = self._seed
         else:
-            # Legacy path: extract from raw config dict
+            # Untyped path: extract from raw config dict
             config_key = self._get_config_key()
             policy_section = config.get(config_key, config)
             if hasattr(policy_section, "items"):
@@ -320,7 +320,7 @@ class BaseRoutingPolicy(RoutingExecutionMixin, PolicyVizMixin, IRoutingAlgorithm
                 raise TypeError("policy YAML must be a mapping after P-13; run tools/convert_policy_yaml.py")
             else:
                 policy_config = {}
-            # Ensure seed from context also makes it into legacy path if missing
+            # Ensure seed from context also makes it into the untyped path if missing
             if policy_config.get("seed") is None and config.get("seed") is not None:
                 policy_config["seed"] = config["seed"]
 

@@ -11,16 +11,17 @@ import sys
 from contextlib import suppress
 from typing import List, Tuple
 
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.interfaces.context import PackingContext, SearchContext
 from logic.src.interfaces.packing import IPackingAlgorithm
+from logic.src.utils.registry import ALL
 
 from .base import PackingRegistry
 from .spec import last_minute as last_minute_rule
 from .spec import selected_ids
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.PACKING,
     PolicyTag.HEURISTIC,
 )

@@ -62,7 +62,7 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.problem_context import ProblemContext
 from logic.src.interfaces.context.solution_context import SolutionContext
 from logic.src.policies.routing.base.base_multi_period_policy import (
@@ -71,6 +71,7 @@ from logic.src.policies.routing.base.base_multi_period_policy import (
 from logic.src.policies.routing.base.factory import (
     RoutingAlgorithmRegistry,
 )
+from logic.src.utils.registry import ALL
 
 from .bandit import build_context
 from .calm_layers import CALMLayerMixin as CALMLayerMixin
@@ -91,7 +92,7 @@ from .selection import (
 # ---------------------------------------------------------------------------
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.MATHEURISTIC,
     PolicyTag.MATH_PROGRAMMING,
     PolicyTag.PROFIT_AWARE,

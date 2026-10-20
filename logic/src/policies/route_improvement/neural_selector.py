@@ -18,9 +18,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.search_context import ImprovementMetrics
 from logic.src.interfaces.route_improvement import IRouteImprovement
+from logic.src.utils.registry import ALL
 
 from .base import RouteImproverRegistry
 from .common.helpers import split_tour, to_numpy, tour_distance
@@ -60,7 +61,7 @@ class OperatorSelectionPolicy(nn.Module):
         return F.softmax(logits, dim=-1)
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.IMPROVEMENT,
     PolicyTag.REINFORCEMENT_LEARNING,
 )

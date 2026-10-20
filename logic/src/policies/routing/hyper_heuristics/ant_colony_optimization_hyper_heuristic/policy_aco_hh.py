@@ -15,7 +15,7 @@ import random
 from typing import Any, Dict, Optional, Type, Union
 
 from logic.src.configs.policies import HyperHeuristicACOConfig
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.policies.helpers.operators.solution_initialization.greedy_si import build_greedy_routes
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.routing.base.generic_policy import GenericRoutingPolicy
@@ -23,9 +23,10 @@ from logic.src.policies.routing.base.sub_problem import SubProblem
 from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_aco import (
     HyperHeuristicACO,
 )
+from logic.src.utils.registry import ALL
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.HYPER_HEURISTIC,
     PolicyTag.SWARM_INTELLIGENCE,
     PolicyTag.ROUTING,

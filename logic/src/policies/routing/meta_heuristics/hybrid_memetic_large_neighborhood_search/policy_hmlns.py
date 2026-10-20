@@ -120,85 +120,44 @@ class HybridMemeticLargeNeighborhoodSearchPolicy(BaseRoutingPolicy):
         seed = values.get("seed", 42)
         profit_aware_operators = values.get("profit_aware_operators", False)
 
-        # Get MACO config (nested or flattened)
-        maco_config = values.get("maco", values.get("aco", {}))
-        if isinstance(maco_config, dict):
-            aco_params = MACOParams(
-                n_ants=maco_config.get("n_ants", 20),
-                alpha=maco_config.get("alpha", 1.0),
-                beta=maco_config.get("beta", 2.0),
-                rho=maco_config.get("rho", 0.1),
-                tau_0=maco_config.get("tau_0", 1.0),
-                tau_min=maco_config.get("tau_min", 0.001),
-                tau_max=maco_config.get("tau_max", 10.0),
-                max_iterations=maco_config.get("max_iterations", 1),
-                time_limit=maco_config.get("time_limit", 60.0),
-                local_search=maco_config.get("local_search", False),
-                local_search_iterations=maco_config.get("local_search_iterations", 0),
-                elitist_weight=maco_config.get("elitist_weight", 1.0),
-                seed=seed,
-                profit_aware_operators=profit_aware_operators,
-            )
-        else:
-            # Fallback to flattened parameters for backward compatibility
-            aco_params = MACOParams(
-                n_ants=values.get("aco_n_ants", 20),
-                k_sparse=values.get("aco_k_sparse", 10),
-                alpha=values.get("aco_alpha", 1.0),
-                beta=values.get("aco_beta", 2.0),
-                rho=values.get("aco_rho", 0.1),
-                scale=values.get("aco_scale", 5.0),
-                tau_0=values.get("aco_tau_0", 1.0),
-                tau_min=values.get("aco_tau_min", 0.001),
-                tau_max=values.get("aco_tau_max", 10.0),
-                max_iterations=values.get("aco_iterations", 1),
-                time_limit=values.get("aco_time_limit", 60.0),
-                local_search=values.get("aco_local_search", False),
-                local_search_iterations=values.get("aco_local_search_iterations", 0),
-                elitist_weight=values.get("aco_elitist_weight", 1.0),
-                seed=seed,
-                profit_aware_operators=profit_aware_operators,
-            )
+        # Get MACO config
+        maco_config = values.get("maco", values.get("aco", {})) or {}
+        aco_params = MACOParams(
+            n_ants=maco_config.get("n_ants", 20),
+            alpha=maco_config.get("alpha", 1.0),
+            beta=maco_config.get("beta", 2.0),
+            rho=maco_config.get("rho", 0.1),
+            tau_0=maco_config.get("tau_0", 1.0),
+            tau_min=maco_config.get("tau_min", 0.001),
+            tau_max=maco_config.get("tau_max", 10.0),
+            max_iterations=maco_config.get("max_iterations", 1),
+            time_limit=maco_config.get("time_limit", 60.0),
+            local_search=maco_config.get("local_search", False),
+            local_search_iterations=maco_config.get("local_search_iterations", 0),
+            elitist_weight=maco_config.get("elitist_weight", 1.0),
+            seed=seed,
+            profit_aware_operators=profit_aware_operators,
+        )
 
-        # Get ALNS config (nested or flattened)
-        alns_config = values.get("alns", {})
-        if isinstance(alns_config, dict):
-            alns_params = ALNSConfig(
-                max_iterations=alns_config.get("max_iterations", 500),
-                acceptance_criterion=AcceptanceConfig(
-                    method="bmc",
-                    params=BoltzmannAcceptanceConfig(
-                        initial_temp=alns_config.get("start_temp", 100.0),
-                        alpha=alns_config.get("cooling_rate", 0.95),
-                        start_temp_control=0.05,
-                    ),
+        # Get ALNS config
+        alns_config = values.get("alns") or {}
+        alns_params = ALNSConfig(
+            max_iterations=alns_config.get("max_iterations", 500),
+            acceptance_criterion=AcceptanceConfig(
+                method="bmc",
+                params=BoltzmannAcceptanceConfig(
+                    initial_temp=alns_config.get("start_temp", 100.0),
+                    alpha=alns_config.get("cooling_rate", 0.95),
+                    start_temp_control=0.05,
                 ),
-                reaction_factor=alns_config.get("reaction_factor", 0.1),
-                max_removal_pct=alns_config.get("max_removal_pct", 0.2),
-                segment_size=alns_config.get("segment_size", 10),
-                time_limit=alns_config.get("time_limit", 60.0),
-                seed=seed,
-                profit_aware_operators=profit_aware_operators,
-            )
-        else:
-            # Fallback to flattened parameters for backward compatibility
-            alns_params = ALNSConfig(
-                max_iterations=values.get("alns_iterations", 500),
-                acceptance_criterion=AcceptanceConfig(
-                    method="bmc",
-                    params=BoltzmannAcceptanceConfig(
-                        initial_temp=values.get("alns_start_temp", 100.0),
-                        alpha=values.get("alns_cooling_rate", 0.95),
-                        start_temp_control=0.05,
-                    ),
-                ),
-                reaction_factor=values.get("alns_reaction_factor", 0.1),
-                max_removal_pct=values.get("alns_max_removal_pct", 0.2),
-                segment_size=values.get("segment_size", 10),
-                time_limit=values.get("alns_time_limit", 60.0),
-                seed=seed,
-                profit_aware_operators=profit_aware_operators,
-            )
+            ),
+            reaction_factor=alns_config.get("reaction_factor", 0.1),
+            max_removal_pct=alns_config.get("max_removal_pct", 0.2),
+            segment_size=alns_config.get("segment_size", 10),
+            time_limit=alns_config.get("time_limit", 60.0),
+            seed=seed,
+            profit_aware_operators=profit_aware_operators,
+        )
 
         params = HybridMemeticLargeNeighborhoodSearchParams(
             population_size=values.get("population_size", 30),

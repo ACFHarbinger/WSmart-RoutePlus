@@ -23,16 +23,17 @@ if TYPE_CHECKING:
     from logic.src.interfaces.context.search_context import SearchContext
 
 from logic.src.configs.policies.src import SRCConfig
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.search_context import SearchContext
 from logic.src.interfaces.routing_algorithm import IRoutingAlgorithm
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
+from logic.src.utils.registry import ALL
 
 logger = logging.getLogger(__name__)
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.HEURISTIC,
     PolicyTag.ROUTING,
     PolicyTag.PROFIT_AWARE,

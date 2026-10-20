@@ -51,7 +51,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type
 import numpy as np
 
 from logic.src.configs.policies.esdp import ExactSDPConfig
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.problem_context import ProblemContext
 from logic.src.interfaces.context.solution_context import SolutionContext
@@ -60,11 +60,12 @@ from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.routing.exact_and_decomposition_solvers.exact_stochastic_dynamic_programming.esdp_engine import (
     ExactSDPEngine,
 )
+from logic.src.utils.registry import ALL
 
 _SDP_CACHE: Dict[Tuple[int, int, int, float], ExactSDPEngine] = {}
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.EXACT,
     PolicyTag.STOCHASTIC,
     PolicyTag.MULTI_PERIOD,

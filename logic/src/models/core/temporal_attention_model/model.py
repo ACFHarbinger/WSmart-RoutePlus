@@ -194,7 +194,8 @@ class TemporalAttentionModel(AttentionModel):
                 - init_context (Optional[Any]): Initial state context (None here).
         """
         # 1. Base spatial/constant feature projection
-        base_embeddings = self.context_embedder.init_node_embeddings(input)
+        embed = self.init_embedding
+        base_embeddings = getattr(embed, "init_node_embeddings", embed)(input)
 
         if "fill_history" not in input or not self.predict_future:
             return base_embeddings, None

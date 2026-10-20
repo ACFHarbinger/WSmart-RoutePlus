@@ -22,15 +22,16 @@ from logic.src.configs.policies.other import (
     TDLearningConfig,
 )
 from logic.src.configs.policies.rl_alns import RLALNSConfig
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.routing.learning_heuristic_algorithms.reinforcement_learning_adaptive_large_neighborhood_search.solver import (
     RLALNSSolver,
 )
+from logic.src.utils.registry import ALL
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.REINFORCEMENT_LEARNING,
     PolicyTag.META_HEURISTIC,
     PolicyTag.LARGE_NEIGHBORHOOD_SEARCH,
