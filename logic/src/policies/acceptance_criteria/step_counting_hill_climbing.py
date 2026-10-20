@@ -35,13 +35,16 @@ class StepCountingHillClimbing(IAcceptanceCriterion):
         bound (float): Current acceptance threshold.
     """
 
-    def __init__(self, step_size: int):
+    def __init__(self, step_size: int = 1, maximization: bool = True):
         """Initialize the SCHC criterion.
 
         Args:
             step_size: The number of iterations the bound remains static.
+                ``ac_schc.yaml`` names no step, so the default is one.
+            maximization: When false, a lower objective beats the bound.
         """
         self.step_size = max(1, step_size)
+        self.maximization = maximization
         self.counter = 0
         self.bound = 0.0
 
@@ -73,7 +76,10 @@ class StepCountingHillClimbing(IAcceptanceCriterion):
         current_obj = cast(float, current_obj)
         candidate_obj = cast(float, candidate_obj)
         # Accept if the candidate is better than the frozen bound
-        _accepted = bool(candidate_obj >= self.bound)
+        if self.maximization:
+            _accepted = bool(candidate_obj >= self.bound)
+        else:
+            _accepted = bool(candidate_obj <= self.bound)
         return _accepted, {
             "accepted": _accepted,
             "delta": candidate_obj - current_obj,

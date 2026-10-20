@@ -162,7 +162,9 @@ class RoutingAction(SimulationAction):
             else:
                 from logic.src.pipeline.simulations.bins.prediction import ScenarioGenerator
 
-                horizon = flat_cfg.get("policy.horizon") or flat_cfg.get("policy.num_days") or 7
+                from logic.src.pipeline.simulations.actions.policy_config import policy_horizon
+
+                horizon = policy_horizon(flat_cfg)
                 method = flat_cfg.get("policy.scenario_method") or "stochastic"
                 generator = ScenarioGenerator(method=method, horizon=horizon, seed=seed)
 

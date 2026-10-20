@@ -14,7 +14,7 @@ Example:
     False, {'accepted': False, 'delta': -2.0, 'pointer': 0, 'current_history_val': 100.0}
 """
 
-from typing import Any, Dict, List, Tuple, cast
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 from logic.src.interfaces.acceptance_criterion import IAcceptanceCriterion, ObjectiveValue
 from logic.src.interfaces.context.search_context import AcceptanceMetrics
@@ -36,13 +36,25 @@ class LateAcceptance(IAcceptanceCriterion):
         pointer (int): Current index in the circular array.
     """
 
-    def __init__(self, queue_size: int):
+    def __init__(
+        self,
+        queue_size: Optional[int] = None,
+        history_length: Optional[int] = None,
+        maximization: bool = True,
+    ):
         """Initialize the LAHC criterion.
 
         Args:
             queue_size: The length of the historical memory queue (L).
+            history_length: Name used by ``ac_lahc.yaml`` for ``queue_size``.
+            maximization: Stored for the packaged file.
         """
+        if queue_size is None:
+            queue_size = history_length
+        if queue_size is None:
+            raise TypeError("LateAcceptance.__init__() missing 1 required positional argument: 'queue_size'")
         self.L = max(1, queue_size)
+        self.maximization = maximization
         self.history: List[float] = []
         self.pointer = 0
 

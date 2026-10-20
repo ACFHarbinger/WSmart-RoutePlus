@@ -60,6 +60,25 @@ def _field_re(field_label: str) -> re.Pattern:
     return re.compile(rf"({field_label}:\s*)\{{[^}}]+\}}")
 
 
+def _rewrite_field(content: str, field_label: str, stem: str, keys: List[str]) -> Tuple[str, int]:
+    """Replace an inline or block ``field_label`` section.
+
+    Packaged policy files use a nested block, not ``packing: { ... }``.
+    """
+    keys_str = ", ".join(f'"{key}"' for key in keys)
+    inline = f'{{ "other/{stem}.yaml": [{keys_str}] }}'
+    new_content, count = _field_re(field_label).subn(rf"\g<1>{inline}", content)
+    if count:
+        return new_content, count
+    block = re.compile(rf"(?m)^([ \t]*){re.escape(field_label)}:[ \t]*\n(?:\1[ \t]+.*(?:\n|$))*")
+
+    def _repl(match: re.Match) -> str:
+        indent = match.group(1)
+        return f"{indent}{field_label}: {inline}\n"
+
+    return block.subn(_repl, content)
+
+
 def _list_available(configs_dir: str, file_prefix: str) -> List[str]:
     """Return the sorted stems of the ``<prefix>*.yaml`` strategy files."""
     other_dir = os.path.join(configs_dir, "other")
@@ -123,11 +142,7 @@ def _update(
         if key not in available_keys:
             raise ValueError(f"Key '{key}' not found in {stem}.yaml. Available keys: {available_keys}")
 
-    keys_str = ", ".join(f'"{k}"' for k in keys)
-    replacement = f'\\g<1>{{ "other/{stem}.yaml": [{keys_str}] }}'
-
     modified: List[Tuple[str, int]] = []
-    pattern = _field_re(field_label)
 
     for constructor in constructors:
         policy_file = os.path.join(configs_dir, f"policy_{constructor}.yaml")
@@ -139,7 +154,7 @@ def _update(
         with open(policy_file, "r", encoding="utf-8") as fh:
             content = fh.read()
 
-        new_content, count = pattern.subn(replacement, content)
+        new_content, count = _rewrite_field(content, field_label, stem, keys)
 
         if count == 0:
             if verbose:

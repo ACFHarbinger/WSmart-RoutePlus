@@ -32,6 +32,7 @@ from logic.src.pipeline.simulations.actions.policy_config import (
     _is_non_string_sequence,
     _live_ac_payload,
     _load_policy_yaml_section,
+    policy_horizon,
 )
 from logic.src.policies.packing import PackingContext, PackingFactory
 from logic.src.utils.configs.config_loader import load_config
@@ -44,6 +45,59 @@ from .base import (
     _set_live_capture_meta,
     bind_context,
 )
+
+
+def _packing_coordinates(bins: Any, context: Any) -> Any:
+    """Bin positions from the container or the day context.
+
+    ``Bins`` is not an ``IBinContainer``, and the day stores the table on
+    ``coords``. Either source is enough for a geographic sector rule.
+    """
+    coords = None
+    if isinstance(bins, IBinContainer):
+        coords = bins.get("coords")
+    if coords is None:
+        coords = getattr(bins, "coords", None)
+    if coords is None:
+        coords = getattr(context, "coordinates", None)
+    if coords is None:
+        coords = getattr(context, "coords", None)
+    return coords
+
+
+def _packing_scenario_tree(context: Any, flat_cfg: Any, strategy_name: Any) -> Any:
+    """Scenario tree for overflow-risk packing.
+
+    The routing action builds the tree after packing returns, so a knapsack
+    that scores future overflow never saw it. Reuse a tree already on the
+    day, and otherwise build one for the strategies that read it.
+    """
+    existing = getattr(context, "scenario_tree", None)
+    if existing is not None:
+        return existing
+    if str(strategy_name) not in {"mip_knapsack", "fptas_knapsack"}:
+        return None
+    bins = getattr(context, "bins", None)
+    if bins is None or not hasattr(bins, "c"):
+        return None
+    from logic.src.pipeline.simulations.bins.prediction import ScenarioGenerator
+
+    horizon = policy_horizon(flat_cfg)
+    seed = getattr(context, "seed", None)
+    generator = ScenarioGenerator(
+        method="stochastic",
+        horizon=horizon,
+        seed=42 if seed is None else int(seed),
+    )
+    wastes = np.asarray(bins.c, dtype=float)
+    n = len(wastes)
+    means = getattr(bins, "means", None)
+    stds = getattr(bins, "std", None)
+    bin_stats = {
+        "means": np.zeros(n) if means is None else np.asarray(means, dtype=float),
+        "stds": np.zeros(n) if stds is None else np.asarray(stds, dtype=float),
+    }
+    return generator.generate(current_wastes=wastes, bin_stats=bin_stats)
 
 
 class PackingAction(SimulationAction):
@@ -131,6 +185,9 @@ class PackingAction(SimulationAction):
             ctx_vehicle_capacity = getattr(context, "max_capacity", 100.0)
 
         final_mandatory: set = set()
+        flat_cfg = _as_policy_mapping(getattr(context, "config", {}))
+        travel_cost = float(getattr(bins, "expenses", 0.0) or 0.0)
+        coordinates = _packing_coordinates(bins, context)
 
         for strat_info in strategies:
             # 1. Normalize name and parameters
@@ -211,7 +268,7 @@ class PackingAction(SimulationAction):
                 synergy_threshold=_pf("synergy_threshold", 0.60),
                 radius=_pf("radius", 10.0),
                 n_vehicles=_pi("n_vehicles", 1),
-                cost_per_km=_pf("cost_per_km", 0.0),
+                cost_per_km=_pf("cost_per_km", travel_cost),
                 use_eoq_threshold=bool(_p.get("use_eoq_threshold", False)) if hasattr(_p, "get") else False,
                 holding_cost_per_kg_day=_pf("holding_cost_per_kg_day", 0.0),
                 ordering_cost_per_visit=_pf("ordering_cost_per_visit", 0.0),
@@ -238,9 +295,8 @@ class PackingAction(SimulationAction):
                 wasserstein_radius=_pf("wasserstein_radius", 0.1),
                 wasserstein_p=_pi("wasserstein_p", 1),
                 overflow_penalty_frac=_pf("overflow_penalty_frac", 1.0),
-                coordinates=bins.get("coords")
-                if isinstance(bins, IBinContainer)
-                else getattr(context, "coordinates", None),
+                coordinates=coordinates,
+                scenario_tree=_packing_scenario_tree(context, flat_cfg, s_name),
                 current_collection_day=_pi("current_collection_day", 0),
                 seed=s_params.get("seed") if hasattr(s_params, "get") else None,
             )

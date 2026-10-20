@@ -62,6 +62,7 @@ class GeneralizedTsallisSA(IAcceptanceCriterion):
         min_temp: float = 1e-6,
         seed: Optional[int] = None,
         maximization: bool = False,
+        initial_temp: Optional[float] = None,
     ):
         """Initialize the Generalized Tsallis SA criterion.
 
@@ -76,7 +77,9 @@ class GeneralizedTsallisSA(IAcceptanceCriterion):
             seed: Random seed. Defaults to None.
             maximization: Whether the problem is maximization. Defaults to False.
         """
-        if not (1.0 < q < 3.0):
+        # q = 1 is the Boltzmann limit named by ac_gt_sa.yaml. The open
+        # interval (1, 3) is the heavy-tailed regime.
+        if q != 1.0 and not (1.0 < q < 3.0):
             raise ValueError("Parameter q must be in the range (1, 3) for Tsallis SA.")
 
         self.q = q
@@ -88,7 +91,7 @@ class GeneralizedTsallisSA(IAcceptanceCriterion):
 
         self.rng = random.Random(seed)
         self.deltas: deque[float] = deque(maxlen=window_size)
-        self.temp = 0.0
+        self.temp = 0.0 if initial_temp is None else float(initial_temp)
         self.sigma = 0.0
 
     def setup(self, initial_objective: ObjectiveValue) -> None:
@@ -151,6 +154,19 @@ class GeneralizedTsallisSA(IAcceptanceCriterion):
 
         if self.temp <= self.min_temp:
             _accepted = bool(False)
+            return _accepted, {
+                "accepted": _accepted,
+                "delta": candidate_obj - current_obj,
+                "temperature": self.temp,
+                "q": self.q,
+                "sigma": self.sigma,
+                "maximization": self.maximization,
+            }
+
+        # q = 1 is the Boltzmann limit of the Tsallis probability.
+        if self.q == 1.0:
+            prob = math.exp(-delta / self.temp)
+            _accepted = bool(self.rng.random() < prob)
             return _accepted, {
                 "accepted": _accepted,
                 "delta": candidate_obj - current_obj,

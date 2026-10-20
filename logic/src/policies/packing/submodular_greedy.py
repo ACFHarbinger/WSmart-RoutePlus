@@ -90,9 +90,7 @@ class SubmodularGreedySelection(IPackingAlgorithm):
             """Calculates the total objective function value."""
             # f(S) = sum max(0, r_i - alpha * d_i)
             vals = revenues - alpha * current_min_dists
-            return np.sum(np.maximum(0, vals)), SearchContext.initialize(
-                selection_metrics={"strategy": "SubmodularGreedySelection"}
-            )
+            return float(np.sum(np.maximum(0, vals)))
 
         # Initial objective value (S = {0})
         current_obj = get_total_objective(min_dist_to_S)
@@ -109,7 +107,7 @@ class SubmodularGreedySelection(IPackingAlgorithm):
             affected = k_dists < current_min_dists
 
             if not np.any(affected):
-                return 0.0, SearchContext.initialize(selection_metrics={"strategy": "SubmodularGreedySelection"})
+                return 0.0
 
             new_d = k_dists[affected]
             old_d = current_min_dists[affected]
@@ -117,9 +115,7 @@ class SubmodularGreedySelection(IPackingAlgorithm):
 
             old_val = np.maximum(0, r - alpha * old_d)
             new_val = np.maximum(0, r - alpha * new_d)
-            return np.sum(new_val - old_val), SearchContext.initialize(
-                selection_metrics={"strategy": "SubmodularGreedySelection"}
-            )
+            return float(np.sum(new_val - old_val))
 
         for i in range(n_bins):
             gain = compute_marginal_gain(i, min_dist_to_S)

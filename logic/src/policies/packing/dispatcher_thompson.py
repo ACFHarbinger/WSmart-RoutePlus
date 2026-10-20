@@ -155,6 +155,9 @@ class ThompsonDispatcher(IPackingAlgorithm):
             state = self._load_state_locked(state_path)
 
         samples = {}
+        # Same seed and same posterior must pick the same arm. A missing
+        # seed keeps the process-wide generator.
+        draw_rng = np.random.default_rng(context.seed) if context.seed is not None else None
         for name in candidates:
             alpha, beta = state.get(name, (1.0, 1.0))
 
@@ -166,9 +169,13 @@ class ThompsonDispatcher(IPackingAlgorithm):
             beta_p = 1.0 + (beta - 1.0) / temperature
 
             # Sample from Beta distribution
-            theta = np.random.beta(alpha_p, beta_p)
-            # Add tiny jitter for tie-breaking
-            samples[name] = theta + 1e-12 * np.random.random()
+            if draw_rng is not None:
+                theta = float(draw_rng.beta(alpha_p, beta_p))
+                jitter = float(draw_rng.random())
+            else:
+                theta = float(np.random.beta(alpha_p, beta_p))
+                jitter = float(np.random.random())
+            samples[name] = theta + 1e-12 * jitter
 
         names = list(samples.keys())
         values = np.array([samples[n] for n in names])
@@ -181,6 +188,13 @@ class ThompsonDispatcher(IPackingAlgorithm):
         strategy = PackingFactory.create_strategy(winner_name)
         mandatory, sub_ctx = strategy.pack(context)
 
-        # Merge metrics into a fresh context
-        ctx = SearchContext.initialize(selection_metrics={"strategy": "ThompsonDispatcher", "winner": winner_name})
+        # Merge metrics into a fresh context. ``winner`` is what the day loop
+        # reads when it records the realised profit onto this posterior.
+        ctx = SearchContext.initialize(
+            selection_metrics={
+                "strategy": "ThompsonDispatcher",
+                "winner": winner_name,
+                "dispatcher_state_path": state_path,
+            }
+        )
         return mandatory, ctx.merge(sub_ctx)

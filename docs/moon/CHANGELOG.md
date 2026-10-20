@@ -17,6 +17,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Stage-plumbing fixes from the Cursor review of PR #140 (`2026-10-20`)
+
+#### Fixed
+
+- **Packing.** `submodular_greedy` and `supermodular_greedy` no longer crash on a tuple gain. Fractional knapsack's 1/2 fallback compares net profit, the objective it packs by. `combined` passes each child its parameters. `PackingAction` takes `cost_per_km` from `bins.expenses`, reads the day's `coords`, and builds a scenario tree for `mip_knapsack`/`fptas_knapsack`. Whittle's cardinality ignores empty bins. The Thompson dispatcher draws from `PackingContext.seed`, and `CollectAction` records the day's profit on its posterior. Deadline compares the unfloored days to overflow. Rollout's Monte Carlo follows `PackingContext.seed`. None of the paper's packers (`last_minute`, `service_level`, `lookahead`, `regular`) changed.
+- **Route improvement and acceptance.** Simulated annealing and ruin-recreate (`lns_acceptance: sa`) pass negated tour length to the maximising Boltzmann rule. Steepest 2-opt prices interior arcs on a directed matrix. The relocate sweeps try the slot after the depot. SWAP* prices every slot on a Top-3 cache miss. Tabu search forces the best rejected neighbour, not the first. The ten packaged acceptance files (`ac_gd`, `ac_rrt`, `ac_nlgd`, `ac_ta`, `ac_lahc`, `ac_schc`, `ac_oba`, `ac_svns`, `ac_gt_sa`, `ac_ema`) build the criterion they name. `RouteImprovementAction` rejects a refined tour that visits the same stops and is longer; tours that add bins or depot returns are kept as before.
+- **Routing base.** `ProblemContext` reads the fill rates `Bins` stores (`means`/`std`) and the policy's horizon; multi-period policies pass their configured horizon, and the routing scenario tree reads `horizon`/`num_days`. `jgo` and `jsa` are in the routing manifest, and the joint base unpacks the area-parameter tuple, so `nds_brkga`, `jgo` and `jsa` run.
+- **Config and CLI.** `meta_train`, `hpo_sim` and `tasks=slurm` compose. `sim.days`, `sim.n_samples` and the root `seed` reach the simulator (defaults unchanged: 30 days, 1 sample, seed 42); `eval.seed` and `data.seed` follow `seed`. `file_system delete` selects nothing by default and can select simulator outputs. `update_ms`/`update_ri` rewrite block-style policy YAML. `test_suite` points at `logic/test`.
+
+Tests: `test_review_fixes_2026_10_20.py` under `logic/test/unit/policies/{packing,route_improvement,routing}` and `logic/test/unit/configs`.
+
+Verified: full suite with torch, 2,698 passed and 9 skipped. The paper policies over 2 days of Rio Maior 100 give 13 of 13 logs identical to `main`.
+
 ### Simulator fixes from the Kimi review of PR #138 (`2026-10-20`)
 
 #### Fixed

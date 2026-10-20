@@ -212,13 +212,15 @@ class RuinRecreateRouteImprover(IRouteImprovement):
                 else:
                     # SA mode: delegate to BoltzmannAcceptance
                     assert sa_criterion is not None
+                    # Same Metropolis rule as ALNS, which passes profit. This
+                    # improver passes distance, so negate it before the call.
                     accepted, step_metrics = sa_criterion.accept(
-                        current_obj=current_cost,
-                        candidate_obj=trial_cost,
+                        current_obj=-current_cost,
+                        candidate_obj=-trial_cost,
                     )
                     sa_criterion.step(
-                        current_obj=current_cost,
-                        candidate_obj=trial_cost,
+                        current_obj=-current_cost,
+                        candidate_obj=-trial_cost,
                         accepted=accepted,
                     )
 

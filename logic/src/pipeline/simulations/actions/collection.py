@@ -66,6 +66,28 @@ def capacity_report(tour: List[int], bins: Any, capacity_pct: float) -> Tuple[Li
     return loads_pct, loads_kg, violations
 
 
+def _record_thompson_reward(context: Any, profit: float) -> None:
+    """Update the Thompson posterior with this day's profit.
+
+    ``pack`` only samples. Nothing else called ``record_reward``, so every
+    later day redrew the prior. The winner name is stored on the packing
+    search context.
+    """
+    search = getattr(context, "search_context", None)
+    metrics = getattr(search, "selection_metrics", None) or {}
+    winner = metrics.get("winner")
+    if not isinstance(winner, str) or not winner:
+        return
+    from logic.src.policies.packing.dispatcher_thompson import ThompsonDispatcher
+
+    ThompsonDispatcher.record_reward(
+        winner,
+        reward=float(profit),
+        success_prob=1.0 if profit > 0 else 0.0,
+        state_path=metrics.get("dispatcher_state_path"),
+    )
+
+
 class CollectAction(SimulationAction):
     """
     Processes waste collection from bins visited in the tour.
@@ -193,3 +215,4 @@ class CollectAction(SimulationAction):
         context.profit = profit
         context.time_spent = time_spent_h
         context.metrics_phase = "final"
+        _record_thompson_reward(context, profit)

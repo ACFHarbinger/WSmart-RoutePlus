@@ -13,7 +13,7 @@ Example:
     True, {'accepted': True, 'delta': -5.0, 'threshold': 10.0}
 """
 
-from typing import Any, Dict, Tuple, cast
+from typing import Any, Dict, Optional, Tuple, cast
 
 from logic.src.interfaces.acceptance_criterion import IAcceptanceCriterion, ObjectiveValue
 from logic.src.interfaces.context.search_context import AcceptanceMetrics
@@ -34,16 +34,32 @@ class ThresholdAccepting(IAcceptanceCriterion):
         decay_rate (float): Amount by which the threshold is reduced at each step.
     """
 
-    def __init__(self, initial_threshold: float, max_iterations: int):
+    def __init__(
+        self,
+        initial_threshold: float,
+        max_iterations: Optional[int] = None,
+        decay_rate: Optional[float] = None,
+        maximization: bool = True,
+    ):
         """Initialize the Threshold Accepting criterion.
 
         Args:
             initial_threshold: The starting absolute tolerance for
                 deterioration.
             max_iterations: The budget used to calculate linear decay.
+            decay_rate: Per-step decay from ``ac_ta.yaml``, used when
+                ``max_iterations`` is omitted.
+            maximization: Stored for the packaged file. The threshold test
+                is a bound on deterioration in either direction.
         """
         self.threshold = initial_threshold
-        self.decay_rate = initial_threshold / max_iterations if max_iterations > 0 else 0.0
+        self.maximization = maximization
+        if decay_rate is not None:
+            self.decay_rate = float(decay_rate)
+        elif max_iterations is not None:
+            self.decay_rate = initial_threshold / max_iterations if max_iterations > 0 else 0.0
+        else:
+            raise TypeError("ThresholdAccepting.__init__() missing 1 required positional argument: 'max_iterations'")
 
     def setup(self, initial_objective: ObjectiveValue) -> None:
         """Initialize the criterion state.

@@ -14,7 +14,7 @@ Example:
     >>> bins = strategy.pack(context)
 """
 
-from dataclasses import replace
+from dataclasses import fields, replace
 from typing import Any, Dict, List, Optional, Tuple, cast
 
 from logic.src.enums import PolicyTag
@@ -80,7 +80,7 @@ class CombinedSelection(IPackingAlgorithm):
             name = config.get("name")
             params = config.get("params", {})
             if name:
-                strategy = PackingFactory.create_strategy(name)
+                strategy = PackingFactory.create_strategy(name, **params)
                 strategies.append((strategy, params))
 
         if not strategies:
@@ -118,14 +118,14 @@ class CombinedSelection(IPackingAlgorithm):
         Returns:
             PackingContext: The updated selection context.
         """
-        # Map params to context fields
-        updates = {}
-
-        # Common mappings based on PackingAction logic
-        if "threshold" in params:
-            updates["threshold"] = float(params["threshold"])
-
-        # Add other mappings if needed
+        # Copy every child parameter that PackingContext actually stores.
+        # Constructor kwargs cover strategies that read their own fields;
+        # the rest (last-minute's threshold, and any strategy that only
+        # reads the context) need the same values on the context.
+        context_fields = {item.name for item in fields(PackingContext)} - {"bin_ids", "current_fill"}
+        updates = {key: value for key, value in params.items() if key in context_fields}
+        if "threshold" in updates:
+            updates["threshold"] = float(updates["threshold"])
         if updates:
             return replace(context, **cast(Dict[str, Any], updates))
         return context

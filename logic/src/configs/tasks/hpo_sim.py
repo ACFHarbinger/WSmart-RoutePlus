@@ -18,7 +18,7 @@ Example:
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
-from logic.src.configs.envs.env import GraphConfig
+from logic.src.configs.envs.env import EnvConfig, GraphConfig
 
 
 @dataclass
@@ -58,3 +58,4 @@ class SimHPOConfig:
     acceptance_keywords: Optional[str] = None
     improver_keywords: Optional[str] = None
     graph: Any = field(default_factory=lambda: GraphConfig(n_samples=5))
+    env: Optional[EnvConfig] = None

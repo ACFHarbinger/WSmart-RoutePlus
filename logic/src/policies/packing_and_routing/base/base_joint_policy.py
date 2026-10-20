@@ -135,7 +135,12 @@ class BaseJointPolicy(PolicyVizMixin, IRoutingAlgorithm):
 
         area = kwargs.get("area", "generic")
         waste_type = kwargs.get("waste_type", "generic")
-        values = load_area_and_waste_type_params(area, waste_type)
+        # get_area_params returns (capacity_pct, revenue, density, expenses, volume).
+        # JointSelectionConstructionContext.capacity is kilograms.
+        capacity_pct, revenue_kg, bin_density, cost_per_km, bin_volume = load_area_and_waste_type_params(
+            area, waste_type
+        )
+        capacity_kg = float(capacity_pct) / 100.0 * float(bin_volume) * float(bin_density)
 
         # 2. Build Joint Context
         if bins is not None and distance_matrix is not None:
@@ -143,22 +148,16 @@ class BaseJointPolicy(PolicyVizMixin, IRoutingAlgorithm):
             bin_ids = bins.bin_ids if hasattr(bins, "bin_ids") else np.arange(1, len(bins.c) + 1, dtype=np.int32)
             current_fill = bins.c if hasattr(bins, "c") else np.zeros(len(bin_ids))
 
-            # Revenue calculation (Revenue per fill unit)
-            bin_density = float(values.get("B", 1.0))
-            bin_volume = float(values.get("V", 1.0))
-            revenue_kg = float(values.get("R", 0.12))
-            cost_per_km = float(values.get("C", 0.05))
-
             context = JointSelectionConstructionContext(
                 bin_ids=bin_ids,
                 current_fill=current_fill.copy(),
                 distance_matrix=distance_matrix,
-                capacity=float(values.get("capacity", 500.0)),
-                revenue_kg=revenue_kg,
-                cost_per_km=cost_per_km,
-                bin_density=bin_density,
-                bin_volume=bin_volume,
-                max_fill=float(values.get("max_fill", 100.0)),
+                capacity=capacity_kg,
+                revenue_kg=float(revenue_kg),
+                cost_per_km=float(cost_per_km),
+                bin_density=float(bin_density),
+                bin_volume=float(bin_volume),
+                max_fill=100.0,
                 n_vehicles=int(kwargs.get("n_vehicles", 1)),
                 scenario_tree=kwargs.get("scenario_tree"),
                 mandatory_override=kwargs.get("mandatory"),

@@ -187,8 +187,13 @@ class BaseMultiPeriodRoutingPolicy(BaseRoutingPolicy):
             kwargs.get("config", {}),
         )
 
-        # 2. Build typed problem descriptor
-        problem = ProblemContext.from_kwargs(kwargs, capacity, revenue, cost_unit)
+        # 2. Build typed problem descriptor. The day context has no horizon
+        # field; the typed policy config does. Pass it through so a lookahead
+        # of 2 is not planned as the ProblemContext default of 7.
+        problem_kwargs = dict(kwargs)
+        if problem_kwargs.get("horizon") is None and getattr(self.config, "horizon", None) is not None:
+            problem_kwargs["horizon"] = self.horizon
+        problem = ProblemContext.from_kwargs(problem_kwargs, capacity, revenue, cost_unit)
 
         multi_day_ctx: Optional[MultiDayContext] = kwargs.get("multi_day_context")
         search_ctx: Optional[SearchContext] = kwargs.get("search_context")

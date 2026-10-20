@@ -79,7 +79,7 @@ def add_ms_update_args(parser: argparse.ArgumentParser) -> None:
         "--file",
         metavar="MS_FILE",
         help=(
-            "Packing algorithm file stem, e.g. 'ms_service_level'.  "
+            "Packing algorithm file stem, e.g. 'pk_last_minute'.  "
             "Must be present in logic/configs/policies/other/.  "
             "Required unless --list-strategies or --list-keys is used."
         ),

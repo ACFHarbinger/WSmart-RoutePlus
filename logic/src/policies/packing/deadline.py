@@ -58,11 +58,12 @@ class DeadlineDrivenSelection(IPackingAlgorithm):
         # Prevent division by zero for bins with zero expected accumulation
         mu = np.where(context.accumulation_rates == 0, 1e-9, context.accumulation_rates)
 
-        # Compute the expected number of days until the bin hits capacity
-        # Equation: d* = floor((tau - w) / mu)
-        days_to_overflow = np.floor(rem_capacity / mu)
+        # Expected days until the bin hits capacity. Flooring that count
+        # collects bins that are still under capacity at the end of the horizon
+        # (floor(2.9) <= 2). Compare the unfloored time instead.
+        days_to_overflow = rem_capacity / mu
 
-        # Select bins whose deadline is within the requested horizon
+        # Select bins that reach capacity within the requested horizon
         mandatory_indices = np.nonzero(days_to_overflow <= horizon_days)[0]
 
         return (mandatory_indices + 1).tolist(), SearchContext.initialize(

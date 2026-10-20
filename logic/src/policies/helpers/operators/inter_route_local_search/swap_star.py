@@ -27,19 +27,31 @@ Example:
 Removes u from route r_u and v from route r_v, then reinserts each node
 into the other route at the best position. Only applies the move if it
 improves the total cost by a threshold margin.
-
-Args:
-    ls: LocalSearch instance containing routes and distance matrix.
-    u: Node to remove from route r_u.
-    v: Node to remove from route r_v.
-    r_u: Index of the route containing u.
-    p_u: Position of u in route r_u.
-    r_v: Index of the route containing v.
-    p_v: Position of v in route r_v.
-
-Returns:
-    bool: True if the swap was applied (improving), False otherwise.
 """
+
+from typing import Any, List, Tuple
+
+
+def _edge(ls: Any, i: int, j: int) -> float:
+    matrix = getattr(ls, "d", None)
+    if matrix is not None:
+        return float(matrix[i, j])
+    return float(ls.get_dist(i, j))
+
+
+def _best_insertion(route: List[int], node: int, ls: Any) -> Tuple[float, int]:
+    """Cheapest insertion of ``node`` into ``route`` (depot is index 0)."""
+    best_delta = float("inf")
+    best_pos = 0
+    n = len(route)
+    for pos in range(n + 1):
+        prev = route[pos - 1] if pos > 0 else 0
+        nxt = route[pos] if pos < n else 0
+        delta = _edge(ls, prev, node) + _edge(ls, node, nxt) - _edge(ls, prev, nxt)
+        if delta < best_delta:
+            best_delta = delta
+            best_pos = pos
+    return best_delta, best_pos
 
 
 def move_swap_star(ls, u: int, v: int, r_u: int, p_u: int, r_v: int, p_v: int) -> bool:
@@ -128,11 +140,15 @@ def move_swap_star(ls, u: int, v: int, r_u: int, p_u: int, r_v: int, p_v: int) -
             best_pos_u = pos if pos < p_v else pos - 1
             break
 
-    # Fallback: check "in-place" insertion where v was
-    cost_in_place_u = ls.d[prev_v, u] + ls.d[u, next_v] - ls.d[prev_v, next_v]
-    if cost_in_place_u < best_delta_u:
-        best_delta_u = cost_in_place_u
-        best_pos_u = p_v
+    # Cache miss: the only priced slot used to be the hole the other customer
+    # left. SWAP* reinserts at the best position on the stripped route.
+    if best_pos_u == -1:
+        best_delta_u, best_pos_u = _best_insertion(temp_rv, u, ls)
+    else:
+        cost_in_place_u = ls.d[prev_v, u] + ls.d[u, next_v] - ls.d[prev_v, next_v]
+        if cost_in_place_u < best_delta_u:
+            best_delta_u = cost_in_place_u
+            best_pos_u = p_v
 
     # If no valid insertion found, reject
     if best_pos_u == -1:
@@ -158,11 +174,13 @@ def move_swap_star(ls, u: int, v: int, r_u: int, p_u: int, r_v: int, p_v: int) -
             best_pos_v = pos if pos < p_u else pos - 1
             break
 
-    # Fallback: check "in-place" insertion where u was
-    cost_in_place_v = ls.d[prev_u, v] + ls.d[v, next_u] - ls.d[prev_u, next_u]
-    if cost_in_place_v < best_delta_v:
-        best_delta_v = cost_in_place_v
-        best_pos_v = p_u
+    if best_pos_v == -1:
+        best_delta_v, best_pos_v = _best_insertion(temp_ru, v, ls)
+    else:
+        cost_in_place_v = ls.d[prev_u, v] + ls.d[v, next_u] - ls.d[prev_u, next_u]
+        if cost_in_place_v < best_delta_v:
+            best_delta_v = cost_in_place_v
+            best_pos_v = p_u
 
     # If no valid insertion found, reject
     if best_pos_v == -1:

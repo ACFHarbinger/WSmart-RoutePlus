@@ -105,6 +105,7 @@ def main() -> None:
     )
 
     routing = scan(SRC / "policies" / "routing", "RoutingAlgorithmRegistry.register")
+    routing.update(scan(SRC / "policies" / "packing_and_routing", "RoutingAlgorithmRegistry.register"))
     write_manifest(
         SRC / "policies" / "routing" / "_manifest.py",
         "logic.src.utils.registry",

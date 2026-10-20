@@ -285,14 +285,15 @@ def _collect_directories_to_delete(opts: Dict[str, Any]):
             if os.path.exists(path):
                 to_delete.append((desc, path))
 
-    # Assets-based paths
-    assets_mappings = {
-        "test_sim": (opts.get("test_sim_dir"), "test sim outputs"),
-        "test_checkpoint": (opts.get("test_sim_checkpoint_dir"), "test sim checkpoints"),
+    # Simulator outputs. Argparse sets ``test`` / ``test_dir`` and
+    # ``test_checkpoint`` / ``test_checkpoint_dir``.
+    sim_mappings = {
+        "test": (opts.get("test_dir"), "simulator outputs"),
+        "test_checkpoint": (opts.get("test_checkpoint_dir"), "simulator checkpoints"),
     }
-    for key, (dname, desc) in assets_mappings.items():
+    for key, (dname, desc) in sim_mappings.items():
         if opts.get(key) and dname:
-            path = os.path.join(ROOT_DIR, "assets", dname)
+            path = os.path.join(ROOT_DIR, dname)
             if os.path.exists(path):
                 to_delete.append((desc, path))
 

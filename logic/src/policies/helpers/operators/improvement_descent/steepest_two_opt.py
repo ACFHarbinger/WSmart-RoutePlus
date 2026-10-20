@@ -29,6 +29,8 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
+from logic.src.policies.helpers.operators.intra_route_local_search.k_opt_apply import reversal_delta
+
 # ---------------------------------------------------------------------------
 # Internal search engine
 # ---------------------------------------------------------------------------
@@ -62,6 +64,8 @@ def _find_best_2opt(
     best_delta = -1e-6  # Strict improvement threshold
     best_move: Optional[Tuple[int, int, int]] = None
     d = dist_matrix
+    matrix = np.asarray(d, dtype=float)
+    symmetric = matrix.ndim == 2 and bool(np.allclose(matrix, matrix.T))
 
     for r_idx, route in enumerate(routes):
         n = len(route)
@@ -80,9 +84,11 @@ def _find_best_2opt(
                 b = route[j - 1]
                 nxt = route[j] if j < n else 0
 
-                # Reversing route[i:j] swaps boundary edges:
+                # Reversing route[i:j] swaps the boundary edges and, on a
+                # directed matrix, every interior arc.
                 #   (prev→a) + (b→nxt)  →  (prev→b) + (a→nxt)
-                delta = (d[prev, b] + d[a, nxt] - d[prev, a] - d[b, nxt]) * C
+                interior = 0.0 if symmetric else reversal_delta(d, route[i:j], symmetric=False)
+                delta = (d[prev, b] + d[a, nxt] - d[prev, a] - d[b, nxt] + interior) * C
 
                 if delta < best_delta:
                     best_delta = delta

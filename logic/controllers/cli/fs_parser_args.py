@@ -113,11 +113,11 @@ def add_files_delete_args(parser: Any) -> Any:
     """
     parser.add_argument(
         "--wandb",
-        action="store_false",
+        action="store_true",
         help="Flag to delete the train wandb log directory",
     )
     parser.add_argument("--log_dir", default="logs", help="Directory of train logs")
-    parser.add_argument("--log", action="store_false", help="Flag to delete the train log directory")
+    parser.add_argument("--log", action="store_true", help="Flag to delete the train log directory")
     parser.add_argument(
         "--output_dir",
         default="model_weights",
@@ -125,7 +125,7 @@ def add_files_delete_args(parser: Any) -> Any:
     )
     parser.add_argument(
         "--output",
-        action="store_false",
+        action="store_true",
         help="Flag to delete the train output models directory",
     )
     parser.add_argument("--data_dir", default="datasets", help="Directory of generated datasets")
