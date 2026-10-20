@@ -25,16 +25,16 @@ exclude = [
     "logic/docs",
     "logic/benchmark",
     "notebooks",
-    "packages/wsmart_bin_analysis/test",
-    "packages/wsmart_bin_analysis/python",
+    "logic/submodules/WSmart-Bin-Analysis/test",
+    "logic/submodules/WSmart-Bin-Analysis/python",
 ]
 
 [tool.pyrefly]
 # Core settings
 project-includes = [
     "logic",
-    "packages/wsmart_bin_analysis/python",
-    "packages/wsmart_bin_analysis/export",
+    "logic/submodules/WSmart-Bin-Analysis/python",
+    "logic/submodules/WSmart-Bin-Analysis/export",
 ]     # Directories/files to include in type checking
 
 project-excludes = [
@@ -68,14 +68,14 @@ target-version = "py310"
 exclude = [
     "notebooks/",
     "logic/docs/*.md",
-    "packages/wsmart_bin_analysis/notebooks",
-    "packages/wsmart_bin_analysis/export/notebooks",
+    "logic/submodules/WSmart-Bin-Analysis/notebooks",
+    "logic/submodules/WSmart-Bin-Analysis/export/notebooks",
     "assets/",
     "archive/",
 ]
 extend-exclude = [
-    "packages/wsmart_bin_analysis/notebooks",
-    "packages/wsmart_bin_analysis/export/notebooks",
+    "logic/submodules/WSmart-Bin-Analysis/notebooks",
+    "logic/submodules/WSmart-Bin-Analysis/export/notebooks",
 ]
 force-exclude = true
 
@@ -187,7 +187,7 @@ wsr_temp_dir = "./temp_test"
 [tool.coverage.run]
 source = ["logic/src"]
 omit = [
-    "packages/wsmart_bin_analysis/python",
+    "logic/submodules/WSmart-Bin-Analysis/python",
     "*/benchmark/*",
     "*/test/*",
     "*/test_*",

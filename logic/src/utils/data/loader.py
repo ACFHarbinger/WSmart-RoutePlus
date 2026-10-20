@@ -250,10 +250,9 @@ def load_grid_base(
     Returns:
         GridBase object.
     """
-    from packages.wsmart_bin_analysis import GridBase
-
     from logic.src.constants.paths import ROOT_DIR
     from logic.src.constants.waste import COUNTY_ALIASES
+    from logic.submodules.wsmart_bin_analysis import GridBase
 
     if data_dir is None:
         data_dir = os.path.join(ROOT_DIR, "data", "simulator")
@@ -316,4 +315,4 @@ def load_grid_base(
 # --- Logic Strategy Imports (Below function definitions) ---
 
 if TYPE_CHECKING:
-    from packages.wsmart_bin_analysis import GridBase
+    from logic.submodules.wsmart_bin_analysis import GridBase

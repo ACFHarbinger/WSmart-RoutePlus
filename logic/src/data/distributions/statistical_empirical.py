@@ -21,7 +21,7 @@ import pandas
 import torch
 
 if TYPE_CHECKING:
-    from packages.wsmart_bin_analysis import GridBase
+    from logic.submodules.wsmart_bin_analysis import GridBase
 
 from .base import BaseDistribution
 

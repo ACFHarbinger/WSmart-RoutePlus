@@ -1,6 +1,6 @@
-[submodule "logic/src/pipeline/simulations/wsmart_bin_analysis"]
-	path = packages/wsmart_bin_analysis
-	url = https://github.com/ACFHarbinger/wsmart_bin_analysis.git
+[submodule "logic/submodules/WSmart-Bin-Analysis"]
+	path = logic/submodules/WSmart-Bin-Analysis
+	url = https://github.com/ACFHarbinger/WSmart-Bin-Analysis.git
 [submodule "logic/submodules/HGS-CVRP"]
 	path = logic/submodules/HGS-CVRP
 	url = https://github.com/ACFHarbinger/HGS-CVRP.git

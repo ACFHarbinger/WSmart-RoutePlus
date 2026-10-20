@@ -197,9 +197,11 @@ def run_build(manifest: dict, out: Path) -> int:  # noqa: C901
     shutil.copy2(LOGIC / "__init__.py", out / "logic" / "__init__.py")
 
     # --- the bin-analysis package (RQ-grok-7 a): runtime modules only ------ #
-    bin_analysis = REPO / "packages" / "wsmart_bin_analysis"
+    bin_analysis = REPO / "logic" / "submodules" / "WSmart-Bin-Analysis"
     if not (bin_analysis / "__init__.py").is_file():
-        raise SystemExit(f"{bin_analysis} is empty: run git submodule update --init packages/wsmart_bin_analysis")
+        raise SystemExit(
+            f"{bin_analysis} is empty: run git submodule update --init logic/submodules/WSmart-Bin-Analysis"
+        )
     for path in [
         bin_analysis / "__init__.py",
         *sorted((bin_analysis / "export").rglob("*.py")),
@@ -207,10 +209,12 @@ def run_build(manifest: dict, out: Path) -> int:  # noqa: C901
     ]:
         if "__pycache__" in path.parts or "notebooks" in path.parts:
             continue
-        dest = out / "packages" / "wsmart_bin_analysis" / path.relative_to(bin_analysis)
+        dest = out / "logic" / "submodules" / "WSmart-Bin-Analysis" / path.relative_to(bin_analysis)
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(path, dest)
-    (out / "packages" / "__init__.py").write_text('"""Vendored companion packages of the release."""\n')
+    symlink_target = out / "logic" / "submodules" / "wsmart_bin_analysis"
+    if not symlink_target.exists():
+        symlink_target.symlink_to("WSmart-Bin-Analysis")
 
     # --- registry manifests: released keys only -------------------------- #
     for stage, stage_path in STAGES.items():
@@ -351,7 +355,7 @@ for key in ("swc_tcf", "bpc", "alns", "sans", "hgs", "psoma", "aco_hh", "pg_clns
 assert "na" in ROUTING.names(), "released neural policy is not declared"
 assert ROUTING.get("hgs_alns") is None, "unreleased routing key resolves"
 import logic.src.pipeline.simulations.simulator  # noqa: F401
-from packages.wsmart_bin_analysis import GridBase  # noqa: F401
+from logic.submodules.wsmart_bin_analysis import GridBase  # noqa: F401
 
 assert "torch" not in sys.modules
 print("smoke OK: classical routing keys and simulator import without the neural extra")
