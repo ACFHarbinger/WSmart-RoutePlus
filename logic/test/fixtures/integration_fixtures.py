@@ -113,6 +113,7 @@ def setup_sim_data(tmp_path, mocker):
     # Patch ROOT_DIR in key places
     mocker.patch("logic.src.pipeline.simulations.states.ROOT_DIR", str(tmp_path))
     mocker.patch("logic.src.pipeline.simulations.simulator.ROOT_DIR", str(tmp_path))
+    mocker.patch("logic.src.pipeline.simulations.simulator_progress.ROOT_DIR", str(tmp_path))
     mocker.patch("logic.src.pipeline.simulations.checkpoints.ROOT_DIR", str(tmp_path))
     mocker.patch("logic.src.constants.ROOT_DIR", str(tmp_path))
     mocker.patch("logic.src.pipeline.simulations.states.base.context.ROOT_DIR", str(tmp_path))
