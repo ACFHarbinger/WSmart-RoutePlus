@@ -84,6 +84,3 @@ def validate_data_config(cfg: Config) -> None:
 
     data.graphs = graphs
 
-
-# Keep backward-compatible alias
-validate_gen_data_args = validate_data_config

@@ -76,7 +76,7 @@ def test_simulation_context_init(mock_sim_opts):
         # Should initialize and transition to InitializingState
         expected_sim = {**mock_sim_opts, "run_name": None, "full_policies": mock_sim_opts["policies"], "graph": {"area": "Rio Maior", "num_loc": 20, "size": 20, "n_days": 2, "n_samples": 1, "waste_type": "glass"}}
         assert OmegaConf.to_container(context.cfg.sim) == expected_sim
-        assert context.policy == "none_regular_unif_none"
+        assert context.pol_name == "none_regular_unif_none"
         mock_transition.assert_called()
         # Verify call args
         args, _ = mock_transition.call_args
@@ -88,7 +88,8 @@ def test_run_day_execution():
     """Test run_day function orchestrates actions."""
     # Mock SimulationDayContext
     mock_context = MagicMock()
-    mock_context.policy = "cvrp"
+    mock_context.day_pipeline = None
+    mock_context.config = None
     mock_context.policy_name = "cvrp"
     mock_context.seed = 42
     mock_context.day = 1

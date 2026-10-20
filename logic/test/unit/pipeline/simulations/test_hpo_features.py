@@ -265,7 +265,7 @@ class TestSearchSpaces:
 
     @pytest.mark.unit
     @patch(
-        "logic.src.pipeline.simulations.hpo.search_spaces.POLICY_SEARCH_SPACES",
+        "logic.src.pipeline.simulations.hpo.search_spaces.ROUTING_SPACES",
         {"test_policy": {"p": {"type": "float", "low": 0.0, "high": 1.0}}},
     )
     def test_get_search_space(self) -> None:
@@ -275,7 +275,7 @@ class TestSearchSpaces:
         # Mock invalid spec
         with (
             patch(
-                "logic.src.pipeline.simulations.hpo.search_spaces.POLICY_SEARCH_SPACES",
+                "logic.src.pipeline.simulations.hpo.search_spaces.ROUTING_SPACES",
                 {"test_policy": {"p": {"type": "float", "low": 5.0, "high": 1.0}}},
             ),
             pytest.raises(ValueError, match="has 1 error"),

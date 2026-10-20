@@ -3,7 +3,6 @@ Validation logic for evaluation pipeline.
 
 Attributes:
     validate_eval_config: Validate and sanitize evaluation configuration.
-    validate_eval_args: Alias for validate_eval_config.
 
 Example:
     >>> config = Config()
@@ -64,6 +63,3 @@ def validate_eval_config(cfg: Config) -> None:
     if waste:
         graph.waste_type = waste
 
-
-# Keep backward-compatible alias
-validate_eval_args = validate_eval_config

@@ -26,17 +26,17 @@ def test_deep_decoder_precompute():
     # Test avg
     fixed_avg = model._precompute(embeddings)
     assert fixed_avg.node_embeddings.shape == (batch, nodes, dim)
-    assert fixed_avg.context_node_projected.shape == (batch, 1, dim)
+    assert fixed_avg.graph_context.shape == (batch, 1, dim)
 
     # Test sum
     model.aggregation_graph = "sum"
     fixed_sum = model._precompute(embeddings)
-    assert fixed_sum.context_node_projected.shape == (batch, 1, dim)
+    assert fixed_sum.graph_context.shape == (batch, 1, dim)
 
     # Test max
     model.aggregation_graph = "max"
     fixed_max = model._precompute(embeddings)
-    assert fixed_max.context_node_projected.shape == (batch, 1, dim)
+    assert fixed_max.graph_context.shape == (batch, 1, dim)
 
 
 def test_deep_decoder_get_log_p():
@@ -64,12 +64,12 @@ def test_deep_decoder_get_log_p():
 def test_deep_decoder_slicing():
     """Verify slicing of fixed context."""
     node_embeddings = torch.randn(4, 5, 16)
-    context_node_projected = torch.randn(4, 1, 16)
-    fixed = AttentionDecoderCache(node_embeddings, context_node_projected)
+    graph_context = torch.randn(4, 1, 16)
+    fixed = AttentionDecoderCache(node_embeddings, graph_context)
 
     sliced = fixed[0:2]
     assert sliced.node_embeddings.shape == (2, 5, 16)
-    assert sliced.context_node_projected.shape == (2, 1, 16)
+    assert sliced.graph_context.shape == (2, 1, 16)
 
 
 def test_deep_decoder_policy_forward():

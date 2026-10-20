@@ -137,7 +137,6 @@ class MandatoryManager(nn.Module):
             embed_dim or hidden_dim,
             feed_forward_hidden or (embed_dim or hidden_dim) * 4,
         )
-        self.hidden_dim = self.embed_dim  # For backwards compatibility with internal refs
         self.input_dim_dynamic = input_dim_dynamic
         self.global_input_dim = global_input_dim
         self.critical_threshold = critical_threshold

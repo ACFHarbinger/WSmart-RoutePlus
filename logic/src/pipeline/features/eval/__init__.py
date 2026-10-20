@@ -18,7 +18,7 @@ from logic.src.configs import Config
 from logic.src.tracking.logging.pylogger import get_pylogger
 
 from .engine import eval_dataset, eval_dataset_mp, get_best
-from .validation import validate_eval_args, validate_eval_config
+from .validation import validate_eval_config
 
 try:
     from logic.src.pipeline.features.eval.zenml_eval_pipeline import eval_pipeline
@@ -128,10 +128,7 @@ def run_evaluate_model(cfg: Config, sinks: Optional[List[Any]] = None) -> None:
                 run.__exit__(None, None, None)
                 return
 
-            if isinstance(datasets, str):
-                datasets = [datasets]
-            else:  # list / tuple / OmegaConf ListConfig
-                datasets = [str(d) for d in datasets]
+            datasets = [datasets] if isinstance(datasets, str) else [str(d) for d in datasets]
 
             for dataset_path in datasets:
                 temp = ev.decoding.temperature if ev.decoding else 1.0
@@ -174,4 +171,4 @@ def _run_eval_via_zenml(cfg: Config) -> None:
         run_evaluate_model(cfg, sinks=[])
 
 
-__all__ = ["run_evaluate_model", "eval_dataset", "eval_dataset_mp", "get_best", "validate_eval_args"]
+__all__ = ["run_evaluate_model", "eval_dataset", "eval_dataset_mp", "get_best", "validate_eval_config"]

@@ -42,7 +42,6 @@ class MultiHeadAttentionMDAM(nn.Module):
     Attributes:
         embed_dim (int): Total dimensionality of the input/output embeddings.
         n_heads (int): Number of parallel attention heads.
-        num_heads (int): Alias for `n_heads` for backward compatibility.
         val_dim (int): Dimensionality of values per head (full `embed_dim` for MDAM).
         norm_factor (float): Scaling factor for scores (1 / sqrt(embed_dim)).
         W_query (nn.Parameter): Learnable query projection weights for each head.
@@ -69,7 +68,6 @@ class MultiHeadAttentionMDAM(nn.Module):
 
         self.embed_dim = embed_dim
         self.n_heads = n_heads
-        self.num_heads = n_heads  # Alias for compatibility
         self.val_dim = embed_dim  # Full embed_dim per head for MDAM
         self.norm_factor = 1 / math.sqrt(embed_dim)
 

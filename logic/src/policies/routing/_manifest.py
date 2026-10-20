@@ -53,7 +53,6 @@ ENTRIES = {
     "ils_rvnd_sp": "logic.src.policies.routing.matheuristics.iterated_local_search_randomized_variable_neighborhood_descent_set_partitioning.policy_ils_rvnd_sp:ILSRVNDSPPolicy",
     "kgls": "logic.src.policies.routing.meta_heuristics.knowledge_guided_local_search.policy_kgls:KGLSPolicy",
     "ks": "logic.src.policies.routing.matheuristics.kernel_search.policy_ks:KernelSearchPolicy",
-    "lac": "logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.policy_sans:SANSPolicy",
     "lasm": "logic.src.policies.routing.learning_matheuristic_algorithms.learning_allocated_sequential_matheuristic.policy_lasm:LASMPolicy",
     "lb": "logic.src.policies.routing.matheuristics.local_branching.policy_lb:LocalBranchingPolicy",
     "lb_vns": "logic.src.policies.routing.matheuristics.local_branching_variable_neighborhood_search.policy_lb_vns:LocalBranchingVNSPolicy",

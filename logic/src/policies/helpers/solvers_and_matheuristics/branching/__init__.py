@@ -25,7 +25,6 @@ from __future__ import annotations
 
 from .constraints import (
     AnyBranchingConstraint,
-    BranchingConstraint,
     EdgeBranchingConstraint,
     FleetSizeBranchingConstraint,
     NodeVisitationBranchingConstraint,
@@ -46,7 +45,6 @@ __all__ = [
     "FleetSizeBranchingConstraint",
     "NodeVisitationBranchingConstraint",
     "AnyBranchingConstraint",
-    "BranchingConstraint",
     "EdgeBranching",
     "RyanFosterBranching",
     "FleetSizeBranching",

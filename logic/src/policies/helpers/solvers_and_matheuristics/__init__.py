@@ -19,7 +19,6 @@ Example:
 from logic.src.policies.helpers.solvers_and_matheuristics.branching import (
     AnyBranchingConstraint,
     BranchAndBoundTree,
-    BranchingConstraint,
     EdgeBranching,
     EdgeBranchingConstraint,
     FleetSizeBranchingConstraint,
@@ -61,7 +60,6 @@ from .lagrangian_relaxation.uncapacitated_orienteering_problem import solve_unca
 
 __all__ = [
     "AnyBranchingConstraint",
-    "BranchingConstraint",
     "EdgeBranchingConstraint",
     "FleetSizeBranchingConstraint",
     "NodeVisitationBranchingConstraint",

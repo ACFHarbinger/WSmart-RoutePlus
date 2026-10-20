@@ -82,20 +82,3 @@ class AttentionDecoderCache:
             logit_key=self.logit_key[key] if self.logit_key is not None else None,
         )
 
-    @property
-    def context_node_projected(self) -> Optional[torch.Tensor]:
-        """Alias for graph_context (backwards compatibility).
-
-        Returns:
-            Optional[torch.Tensor]: Same as self.graph_context.
-        """
-        return self.graph_context
-
-    @context_node_projected.setter
-    def context_node_projected(self, value: Optional[torch.Tensor]) -> None:
-        """Setter for context_node_projected (backwards compatibility).
-
-        Args:
-            value: New graph context tensor.
-        """
-        self.graph_context = value

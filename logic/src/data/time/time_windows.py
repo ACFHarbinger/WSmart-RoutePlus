@@ -12,7 +12,8 @@ Time windows can be specified via:
    - ``interval_between``: The number of routing-allowed days between no-collection windows.
 
 Example:
-    >>> from logic.src.data.time.time_windows import load_time_windows, build_time_window_pattern
+    >>> from logic.src.data.time.schedule import build_time_window_pattern
+    >>> from logic.src.data.time.time_windows import load_time_windows
     >>> schedule = build_time_window_pattern(start_day=5, days_after=2, interval_between=4, n_days=30)
     >>> schedule.is_routing_allowed(day=5)
     False
@@ -253,8 +254,6 @@ def load_time_windows(
 
 
 __all__ = [
-    "TimeWindowSchedule",
-    "build_time_window_pattern",
     "load_time_windows_file",
     "load_time_windows",
 ]
