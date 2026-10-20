@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Cloud local backend import path (`2026-10-20`)
+
+#### Fixed
+
+- **Local backend tasks failed when the repository was not on the import path.** `LocalProcessBackend` starts `python -m logic.controllers.cloud.local._wrap` in the task's work directory, which need not contain this checkout. It now prepends the repository root to `PYTHONPATH`, as `spawn_worker` already did. This fixes the four cloud tests that failed in the main suite: `test_local_process_backend`, `test_local_backend_resolves_secrets_without_logging_them`, `test_cli_runs_a_manifest_end_to_end_and_resumes_a_killed_task` and `test_download_lists_files_with_hashes`.
+
 ### Codex CR-16 telemetry review corrections (`2026-10-20`)
 
 - Align retry-wide timestamp spans with summed attempt durations; preserve unavailable/invalid totals and policy identity; restrict prediction accuracy to completed single-attempt samples. Monetary values are prorated scheduler-time/price-hint estimates with transported provenance, not invoiced costs or universal provider billing minimums. Index lifecycle events by task. Validation: 12 Python service, 95 frontend and 18 Rust cloud tests pass, plus TypeScript/Ruff/diff checks.
