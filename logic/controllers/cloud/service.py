@@ -506,6 +506,7 @@ class CloudService:
             events = events_by_task.get(t.task_id, [])
             dur, cost = self._task_duration_and_cost(t, events, price_per_hour, provider)
             intervals = self._task_attempt_intervals(t, events)
+            resource = self._latest_resource(t.task_id)
             task_summaries.append(
                 {
                     "task_id": t.task_id,
@@ -519,6 +520,9 @@ class CloudService:
                     "expected_wall_seconds": t.cell.expected_wall_seconds,
                     "policy": extract_policy_from_cell(t.cell),
                     "cost": cost,
+                    "cpu_percent": resource.get("cpu_percent"),
+                    "memory_rss_mb": resource.get("memory_rss_mb"),
+                    "progress": dict(t.progress),
                 }
             )
 
@@ -537,6 +541,19 @@ class CloudService:
             "cost_source": "scheduler_elapsed_price_hint",
             "tasks": task_summaries,
         }
+
+    def _latest_resource(self, task_id: str) -> Dict[str, Any]:
+        """The task's most recent resource record (CR-12), or an empty dict."""
+        for record in reversed(self.cp.get_metrics(task_id)):
+            if record.get("kind") == "resource":
+                return record
+        return {}
+
+    def metrics(self, task_id: str, since: Optional[float] = None) -> Dict[str, Any]:
+        """A task's telemetry: resource samples, peaks, latest progress and per-day KPIs (CR-12)."""
+        from logic.controllers.cloud.telemetry import task_metrics
+
+        return task_metrics(self.cp.get_metrics(task_id, since=since), task_id)
 
     def cancel(self, job_id: str) -> None:
         """Cancel a job: queued tasks never start, running attempts are stopped at the next tick."""

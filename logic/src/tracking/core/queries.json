@@ -18,5 +18,9 @@
   "insert_artifact": "INSERT INTO artifacts (run_id, name, path, artifact_type, file_hash, size_bytes, created_at, metadata) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
   "get_artifacts_base": "SELECT * FROM artifacts WHERE run_id = ?",
   "insert_dataset_event": "INSERT INTO dataset_events (run_id, event_type, file_path, file_hash, prev_hash, size_bytes, shape, metadata, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-  "get_dataset_events": "SELECT * FROM dataset_events WHERE run_id = ? ORDER BY timestamp"
+  "get_dataset_events": "SELECT * FROM dataset_events WHERE run_id = ? ORDER BY timestamp",
+  "insert_run_event": "INSERT INTO run_events (run_id, kind, data, timestamp) VALUES (?, ?, ?, ?)",
+  "get_run_events": "SELECT kind, data, timestamp FROM run_events WHERE run_id = ? ORDER BY timestamp, id",
+  "delete_run_metrics": "DELETE FROM metrics WHERE run_id = ?",
+  "delete_run_events": "DELETE FROM run_events WHERE run_id = ?"
 }

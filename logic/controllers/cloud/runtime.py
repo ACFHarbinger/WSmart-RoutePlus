@@ -8,6 +8,7 @@ It reads its task from the environment:
 - ``WSR_CLOUD_WORKDIR``: scratch directory (default: a temporary directory);
 - ``WSR_CLOUD_PROJECT_ROOT``: where ``main.py`` is (default: this checkout);
 - ``WSR_CLOUD_SYNC_SECONDS``: seconds between output uploads (default 30);
+- ``WSR_CLOUD_SAMPLE_SECONDS``: seconds between resource samples and progress reads (default 5);
 - ``WSR_GUROBI_LICENSE``: the license text, injected by the backend from the secret store;
 - ``WSR_SECRET_REFS``: secret references to resolve with the machine's identity (:mod:`.auth.secret_refs`),
   for services that cannot inject secrets natively. ``WSR_GUROBI_LICENSE`` may be one of them.
@@ -22,9 +23,12 @@ Then it:
 4. runs ``main.py test_sim`` with ``sim.resume=true sim.checkpoint_days=1``, uploads
    changed output files every ``WSR_CLOUD_SYNC_SECONDS`` and records a heartbeat
    whenever outputs change;
-5. kills the run after ``Resources.idle_seconds`` without new output;
-6. on SIGTERM (spot preemption, cancellation) stops the simulator, uploads once
-   more and exits 143; on success records the results index and exits 0.
+5. streams resource, progress and day records to the control plane (:mod:`.telemetry`)
+   and keeps the latest day in the task's progress;
+6. kills the run after ``Resources.idle_seconds`` without new output;
+7. on SIGTERM (spot preemption, cancellation) stops the simulator, uploads once
+   more and exits 143; on failure records the log tail as a ``log_tail`` event;
+   on success records the results index and exits 0.
 
 The scheduler owns the task's state; the runtime only writes heartbeats,
 progress and results.
@@ -50,9 +54,10 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from logic.controllers.cloud.auth.secret_refs import parse_refs, redact, resolve_refs
 from logic.controllers.cloud.interfaces import ControlPlane, ObjectStore
-from logic.controllers.cloud.model import CellSpec, GurobiMode, JobSpec, ResultFile
+from logic.controllers.cloud.model import CellSpec, Event, GurobiMode, JobSpec, ResultFile
 from logic.controllers.cloud.store.staging import fetch_inputs
 from logic.controllers.cloud.store.storage import sha256_file
+from logic.controllers.cloud.telemetry import TaskTelemetry, days_from_argv
 
 EXIT_NO_LICENSE = 3
 EXIT_NO_SECRET = 4
@@ -183,8 +188,9 @@ def _supervise(
     sync_seconds: float,
     clock: Callable[[], float],
     sleep: Callable[[float], None],
+    on_tick: Optional[Callable[[float], None]] = None,
 ) -> Tuple[Optional[int], bool]:
-    """Wait for the simulator while mirroring its outputs.
+    """Wait for the simulator while mirroring its outputs (and calling ``on_tick`` every loop).
 
     Returns:
         ``(exit code, terminated)``; the code is None when the idle limit stopped the run.
@@ -202,6 +208,8 @@ def _supervise(
         while proc.poll() is None:
             sleep(min(1.0, sync_seconds))
             now = clock()
+            if on_tick is not None:
+                on_tick(now)
             if now - last_sync >= sync_seconds:
                 last_sync = now
                 if mirror.sync():
@@ -229,6 +237,7 @@ def run_task(
     clock: Callable[[], float] = time.time,
     sleep: Callable[[float], None] = time.sleep,
     license_text: Optional[str] = None,
+    sample_seconds: float = 5.0,
     secret_refs: Optional[Dict[str, str]] = None,
     resolvers: Optional[Dict[str, Any]] = None,
 ) -> int:
@@ -279,16 +288,28 @@ def run_task(
         argv, cwd=project_root, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, start_new_session=True
     )
     pump = _tee(proc.stdout, log_path, getattr(sys.stdout, "buffer", None))
+    telemetry = TaskTelemetry(
+        cp, task_id, outputs, workdir, days=days_from_argv(cell.argv), sample_seconds=sample_seconds, clock=clock
+    )
+    telemetry.attach(proc.pid)
     code, terminated = _supervise(
         proc,
         mirror,
-        lambda now, files: cp.update_task(task_id, heartbeat=now, progress={"files": files}),
+        lambda now, files: cp.update_task(
+            task_id, heartbeat=now, progress={"files": files, **telemetry.progress.latest}
+        ),
         spec.resources.idle_seconds,
         sync_seconds,
         clock,
         sleep,
+        on_tick=telemetry.tick,
     )
     pump.join(timeout=10)
+    telemetry.close()
+    if telemetry.errors:
+        cp.append_event(
+            Event(job_id=job_id, kind="telemetry_error", task_id=task_id, data={"errors": telemetry.errors}, at=clock())
+        )
     if log_path.is_file():
         store.put_file(log_path, f"work/{job_id}/{task_id}/logs/attempt-{task.attempt}.log")
     if code is None:
@@ -298,10 +319,16 @@ def run_task(
         note("terminated (SIGTERM); outputs uploaded for the next attempt")
         return EXIT_TERMINATED
     if code != 0:
-        note(f"simulator exited with code {code}:\n{redact(_tail(log_path), [license_text or '', *secrets.values()])}")
+        tail = redact(_tail(log_path), [license_text or "", *secrets.values()])
+        cp.append_event(
+            Event(job_id=job_id, kind="log_tail", task_id=task_id, data={"code": code, "tail": tail}, at=clock())
+        )
+        note(f"simulator exited with code {code}:\n{tail}")
         return code
     cp.record_results(task_id, mirror.index())
-    cp.update_task(task_id, heartbeat=clock(), progress={"files": len(mirror.files), "done": True})
+    cp.update_task(
+        task_id, heartbeat=clock(), progress={"files": len(mirror.files), "done": True, **telemetry.progress.latest}
+    )
     return 0
 
 
@@ -320,6 +347,7 @@ def main() -> int:
         workdir=Path(workdir),
         project_root=Path(os.environ.get("WSR_CLOUD_PROJECT_ROOT") or PACKAGE_ROOT),
         sync_seconds=float(os.environ.get("WSR_CLOUD_SYNC_SECONDS", "30")),
+        sample_seconds=float(os.environ.get("WSR_CLOUD_SAMPLE_SECONDS", "5")),
         license_text=os.environ.get("WSR_GUROBI_LICENSE"),
         secret_refs=parse_refs(os.environ.get("WSR_SECRET_REFS")),
     )

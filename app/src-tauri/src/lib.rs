@@ -102,6 +102,7 @@ pub fn run() {
             cloud::cloud_cancel,
             cloud::cloud_retry,
             cloud::cloud_task_logs,
+            cloud::cloud_task_metrics,
             cloud::cloud_download,
             cloud::cloud_verify_download,
             cloud::cloud_backends,

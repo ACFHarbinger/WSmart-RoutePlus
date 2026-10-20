@@ -18,7 +18,7 @@ export interface TaskMetricsPanelProps {
   /**
    * Task metrics data.
    * If null, undefined, or empty points, renders the empty state
-   * per CR-15 requirements (CR-12 instrumentation pending).
+   * (no resource samples received yet for this task).
    */
   metrics?: TaskMetricsData | null;
   className?: string;
@@ -44,7 +44,7 @@ export function TaskMetricsPanel({
             </h4>
           </div>
           <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-canvas-surface text-canvas-muted border border-canvas-border">
-            Metrics pending (CR-12)
+            No samples yet
           </span>
         </div>
 
@@ -54,12 +54,12 @@ export function TaskMetricsPanel({
           </div>
           <div className="space-y-1">
             <p className="text-xs text-gray-300 font-medium">
-              Task metrics unavailable (CR-12 instrumentation pending).
+              No resource samples for this task yet.
             </p>
             <p className="text-xs text-canvas-muted leading-relaxed">
-              Live CPU load, memory RSS usage, and throughput telemetry will plot
-              here once the CR-12 instrumentation engine publishes task metrics to
-              the control plane.
+              The task runtime samples CPU load and memory RSS every few seconds
+              while the simulator runs; samples appear here after the first flush
+              to the control plane. Tasks run before this telemetry existed have none.
             </p>
           </div>
         </div>

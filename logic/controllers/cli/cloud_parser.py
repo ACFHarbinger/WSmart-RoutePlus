@@ -5,6 +5,8 @@ Example::
     python main.py cloud submit --manifest cells.json --max-parallel 4 --wait
     python main.py cloud submit --command "test_sim sim.graph.area=riomaior sim.graph.num_loc=100 ..."
     python main.py cloud status job-1f3a9c2e5b7d --json
+    python main.py cloud metrics task-1f3a9c2e5b7d-0000 --json
+    python main.py cloud track job-1f3a9c2e5b7d
     python main.py cloud worker
 
 Attributes:
@@ -74,6 +76,15 @@ def add_cloud_args(parser: argparse.ArgumentParser) -> None:
     for name, text in (("cancel", "Cancel a job"), ("retry", "Requeue a job's failed and cancelled tasks")):
         sub = commands.add_parser(name, help=text)
         sub.add_argument("job_id")
+
+    metrics = commands.add_parser("metrics", help="A task's resource samples, progress and per-day KPIs")
+    metrics.add_argument("task_id")
+    metrics.add_argument("--since", type=float, default=None, help="Only records after this Unix time.")
+
+    track = commands.add_parser("track", help="Import a job's tasks, metrics and events into the tracking database")
+    track.add_argument("job_id")
+    track.add_argument("--tracking-uri", default=None, help="Tracking database directory (default: the tracker's).")
+    track.add_argument("--experiment", default="cloud", help="Tracking experiment name.")
 
     download = commands.add_parser("download", help="Download a job's results")
     download.add_argument("job_id")
