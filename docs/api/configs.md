@@ -627,6 +627,12 @@ POPMUSIC (Partial Optimization Metaheuristic Under Special Intensification Condi
 - **class `POPMUSICSubSolverConfig`** — Nested configuration for sub-solvers within POPMUSIC.
 - **class `POPMUSICConfig`** — Configuration for POPMUSIC matheuristic.
 
+### `logic.src.configs.policies.profitable_nn`
+
+Profitable nearest-neighbour expert configuration.
+
+- **class `ProfitableNNConfig`** — Configuration for the profitable nearest-neighbour expert.
+
 ### `logic.src.configs.policies.pso`
 
 Particle Swarm Optimization (PSO) with velocity momentum configuration.
@@ -788,19 +794,6 @@ Learning algorithm configuration.
 Adaptive Imitation Learning specific configuration.
 
 - **class `AdaptiveImitationConfig`** — Adaptive Imitation Learning specific configuration.
-
-### `logic.src.configs.learning.experts`
-
-Expert-policy configurations for imitation learning.
-
-- **class `ACOConfig`** — Configuration for Ant Colony Optimization expert policy (HH-ACO, KS-ACO).
-- **class `VectorALNSConfig`** — Configuration for Adaptive Large Neighborhood Search (ALNS) expert policy.
-- **class `VectorHGSConfig`** — Configuration for Hybrid Genetic Search (HGS) expert policy.
-- **class `VectorHGSALNSConfig`** — Configuration for Hybrid Genetic Search with ALNS Education (HGS-ALNS) expert policy.
-- **class `VectorHVPLConfig`** — Configuration for Hybrid Volleyball Premier League (HVPL) expert policy.
-- **class `VectorILSConfig`** — Configuration for Iterated Local Search (ILS) expert policy.
-- **class `ProfitableNNConfig`** — Configuration for the profitable nearest-neighbour expert.
-- **class `RLSConfig`** — Configuration for Random Local Search (RLS) policy.
 
 ### `logic.src.configs.learning.gdpo`
 

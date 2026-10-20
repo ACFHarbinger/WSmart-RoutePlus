@@ -4586,43 +4586,34 @@ Policies module for WSmart-Route.
 
 ### `logic.src.policies.vector.adaptive_large_neighborhood_search`
 
-Vectorized Adaptive Large Neighborhood Search (ALNS) Policy.
+Batched ALNS engine mirroring the simulator's ``ALNSSolver``.
 
-- **class `VectorizedALNS`** — Parallelized Adaptive Large Neighborhood Search.
+- **class `VectorizedALNSEngine`** — Batched Adaptive Large Neighbourhood Search for the VRPP.
 
 ### `logic.src.policies.vector.alns`
 
-ALNS Policy wrapper for RL4CO integration.
+Vectorised ALNS policy: the simulator's ALNS (``ALNSConfig``) on a batch.
 
-- **class `VectorizedALNS`** — RL4CO-compatible ALNS Policy wrapper.
+- **class `VectorizedALNS`** — Batched counterpart of the simulator's ``ALNSPolicy`` / ``ALNSSolver``.
 
 ### `logic.src.policies.vector.ant_colony_system`
 
-Vectorized Ant Colony Optimization (ACO) Policy.
+Vectorised K-sparse ACO: the simulator's KS-ACO (``KSparseACOConfig``) on a batch.
 
-- **class `VectorizedACOPolicy`** — Vectorized ACS Policy for Combinatorial Optimization.
+- `candidate_mask()` — ``[B, M, M]`` mask of the ``k`` nearest nodes of every node (depot forced in for bins).
+- `construct_ants()` — Build ``n_ants`` solutions per instance.
+- `nearest_neighbour_cost()` — Cost of a capacity-feasible nearest-neighbour solution over all bins ``[B]``.
+- **class `VectorizedACOPolicy`** — Batched counterpart of the simulator's ``KSparseACOPolicy`` / ``KSparseACOSolver``.
 
 ### `logic.src.policies.vector.core.__init__`
 
-Hybrid Genetic Search (HGS) core components.
+Core genetic components of the vectorised experts.
 
 ### `logic.src.policies.vector.core.crossover`
 
 Genetic Crossover Operators for HGS.
 
 - `vectorized_ordered_crossover()` — Vectorized Ordered Crossover (OX1) with shared cuts across batch.
-
-### `logic.src.policies.vector.core.evaluation`
-
-Evaluation metrics for HGS.
-
-- `calc_broken_pairs_distance()` — Computes average Broken Pairs Distance (BPD) for each individual.
-
-### `logic.src.policies.vector.core.population`
-
-HGS Population Management.
-
-- **class `VectorizedPopulation`** — Manages a diverse population of solutions for the HGS algorithm.
 
 ### `logic.src.policies.vector.expert_cache`
 
@@ -4632,38 +4623,37 @@ Disk cache of profitable nearest-neighbour expert solves.
 
 ### `logic.src.policies.vector.hgs`
 
-HGS Policy wrapper for RL4CO.
+Vectorised HGS policy: the simulator's HGS (``HGSConfig``) on a batch.
 
-- **class `VectorizedHGS`** — HGS-based Policy wrapper using vectorized GPU-accelerated implementation.
+- **class `VectorizedHGS`** — Batched counterpart of the simulator's ``HGSPolicy`` / ``HGSSolver``.
 
 ### `logic.src.policies.vector.hgs_alns`
 
-Vectorized HGS-ALNS Hybrid Policy for RL.
+Vectorised HGS-ALNS policy: the simulator's HGS-ALNS (``HGSALNSConfig``) on a batch.
 
-- **class `VectorizedHGSALNSEngine`** — HGS Engine with ALNS-based Education.
-- **class `VectorizedHGSALNS`** — Vectorized HGS-ALNS Policy wrapper for the RL4CO ecosystem.
+- **class `VectorizedHGSALNS`** — Batched counterpart of the simulator's ``HGSALNSPolicy`` / ``HGSALNSSolver``.
 
 ### `logic.src.policies.vector.hybrid_genetic_search`
 
-Vectorized Hybrid Genetic Search (HGS) algorithm.
+Batched Hybrid Genetic Search engine mirroring the simulator's ``HGSSolver``.
 
-- **class `VectorizedHGS`** — Vectorized Hybrid Genetic Search (HGS) Solver.
+- `decode()` — Giant tours ``[B, N]`` -> route sequences via the break-even filter and profit Split.
+- `encode()` — Giant tours: the bins of ``S`` in route order, then the unvisited bins in ``old_tours`` order.
+- `educate()` — Decode, educate with local search and re-encode giant tours.
+- **class `HGSPopulation`** — A batched population of ``[B, P]`` individuals with liveness masks.
+- **class `VectorizedHGSEngine`** — Batched HGS for the VRPP configured by ``HGSConfig``.
 
 ### `logic.src.policies.vector.hybrid_volleyball_premier_league`
 
-Vectorized Hybrid Volleyball Premier League (HVPL) Policy.
+Vectorised HVPL policy: the simulator's Hybrid VPL (``HVPLConfig``) on a batch.
 
-- **class `VectorizedHVPL`** — Vectorized HVPL Policy for high-performance routing.
+- **class `VectorizedHVPL`** — Batched counterpart of the simulator's ``HVPLPolicy`` / ``HVPLSolver``.
 
 ### `logic.src.policies.vector.iterated_local_search`
 
-Iterated Local Search (ILS) Policy.
+Vectorised Iterated Local Search: the simulator's ILS (``ILSConfig``) on a batch.
 
-- **class `IteratedLocalSearchPolicy`** — Iterated Local Search (ILS) solver for VRP.
-
-### `logic.src.policies.vector.local_search`
-
-Vectorized local search operators for vehicle routing problems.
+- **class `IteratedLocalSearchPolicy`** — Batched counterpart of the simulator's ``ILSPolicy`` / ``ILSSolver``.
 
 ### `logic.src.policies.vector.operators.__init__`
 
@@ -4833,29 +4823,96 @@ Profitable nearest-neighbour expert for imitation learning on PTP and CPTP.
 
 ### `logic.src.policies.vector.random_local_search`
 
-Random local search policy expert.
+Vectorised random local search: the simulator's RLS route improver on a batch.
 
-- **class `RandomLocalSearchPolicy`** — Random Local Search expert policy.
+- **class `RandomLocalSearchPolicy`** — Batched counterpart of the simulator's ``random_local_search`` route improver.
 
 ### `logic.src.policies.vector.shared.__init__`
 
-Shared policy utilities package.
+Shared components of the vectorised experts.
 
-### `logic.src.policies.vector.shared.limited`
+### `logic.src.policies.vector.shared.acceptance`
 
-Limited split algorithm.
+Batched acceptance criteria for the vectorised policies.
 
-- `vectorized_split_limited()` — Limited split using K-step updates (dynamic programming).
+- **class `BatchedAcceptance`** — One acceptance criterion per instance, built from a simulator acceptance config.
 
-### `logic.src.policies.vector.shared.linear`
+### `logic.src.policies.vector.shared.base`
 
-Vectorized linear split algorithm.
+Common base of the vectorised routing policies.
 
-- `vectorized_linear_split()` — Partitions giant tours into feasible routes using shortest paths.
+- `load_config()` — Build a ``config_cls`` instance from a dataclass, a mapping and/or field overrides.
+- **class `VectorizedRoutingPolicy`** — Base of the vectorised policies: config, seeding, instance parsing and outputs.
 
-### `logic.src.policies.vector.shared.reconstruction`
+### `logic.src.policies.vector.shared.factory`
 
-Route reconstruction utilities.
+Expert-policy factory: simulator policy config -> vectorised policy.
 
-- `reconstruct_routes()` — Reconstructs routes from the predecessor matrix P (unlimited vehicles).
-- `reconstruct_limited()` — Reconstructs routes for the limited vehicle split algorithm.
+- `load_expert_policy_cls()` — Import the expert policy class named by ``config``'s class name.
+- `create_expert_policy()` — Instantiate the vectorised expert for ``config``.
+
+### `logic.src.policies.vector.shared.llh`
+
+Batched destroy-repair low-level heuristics (``search_heuristics.destroy_repair_llh``).
+
+- `apply_llh()` — Apply the low-level heuristic ``LLH_NAMES[idx]`` with ``n`` removals per row.
+
+### `logic.src.policies.vector.shared.routes`
+
+Batched route-sequence operators shared by the vectorised policies.
+
+- `width()` — Route-sequence width for ``n_bins`` bins.
+- `empty_routes()` — Route sequences with no route (all zeros).
+- `normalize()` — Drop empty routes (repeated zeros) and pack every row to the left.
+- `from_route_lists()` — Route sequences from Python route lists.
+- `to_route_lists()` — Python route lists from route sequences.
+- `from_giant_tours()` — Route sequences from packed giant tours, cutting a new route when the load would exceed capacity.
+- `to_giant_tours()` — Packed giant tours (visited bins in route order) from route sequences.
+- `seq_cost()` — Total distance of route sequences ``[B]``.
+- `seq_revenue()` — Collected revenue ``R * waste`` of route sequences ``[B]``.
+- `seq_profit()` — Profit ``R * waste - C * distance`` of route sequences ``[B]``.
+- `route_ids()` — Route index of every position (a depot zero opens the route that follows it).
+- `route_loads()` — Route ids per position and load per route id ``([B, L], [B, L])``.
+- `prune_unprofitable_routes()` — Vectorised ``prune_unprofitable_routes``: drop every route with profit < -1e-4.
+- `visited()` — Boolean mask ``[B, M]`` of the bins present in ``S`` (depot excluded).
+- `n_visited()` — Number of bins per row ``[B]``.
+- `neighbours()` — Previous and next node of every position (depot outside the row).
+- `removal_detour()` — Distance saved by removing the bin at each position (0 at depot positions).
+- `delete_positions()` — Remove the bins at the masked positions and drop routes left empty.
+- `delete_nodes()` — Remove the masked nodes ``[B, M]`` wherever they are.
+- `insert_nodes()` — Insert ``node[b]`` right after position ``gap[b]`` for the active rows.
+- `insertion_costs()` — Insertion detours of candidate bins at every gap.
+- `greedy_insertion()` — Greedy (cheapest / most profitable) insertion of the pending bins.
+- `regret_insertion()` — Regret-k insertion of the pending bins (cost or profit flavour).
+- `random_removal()` — Remove ``n[b]`` bins chosen uniformly at random.
+- `worst_removal()` — Randomised worst removal (Ropke & Pisinger 2006): pick rank ``floor(y^p |L|)``.
+- `shaw_removal()` — Shaw (relatedness) removal: random seed, then the rank ``floor(y^r |L|)`` most
+- `string_removal()` — Remove a string of consecutive bins of one route, starting at a random bin.
+- `cluster_removal()` — Remove the ``n`` visited bins closest to a random visited seed bin.
+- `neighbor_removal()` — Remove the ``n`` visited bins with the largest distance to their route neighbours.
+- `relocate_move()` — Best improving relocation of a chain of ``chain`` consecutive bins of one route.
+- `swap_move()` — Best improving exchange of two bins (intra- or inter-route), capacity checked.
+- `two_opt_move()` — Best improving intra-route 2-opt (segment reversal).
+- `two_opt_star_move()` — Best improving 2-opt* (tail exchange between two routes), capacity checked.
+- `local_search_move()` — One best-improvement move of the named operator (keys of the simulator's RLS op map).
+- `local_search()` — Apply the operators in turn until no move improves or ``max_moves`` moves were tried.
+- `greedy_profit_construction()` — Vectorised ``build_greedy_routes`` (no mandatory bins).
+- `random_giant_tours()` — Random permutations of the bins ``[B, N]``.
+
+### `logic.src.policies.vector.shared.vrpp`
+
+Batched VRPP primitives shared by the vectorised expert policies.
+
+- **class `VRPPBatch`** — A batch of VRPP instances.
+- `parse_instance()` — Read distances, wastes, capacities and objective weights from ``td``.
+- `compact()` — Pack the non-zero entries of every row to the left, keeping their order.
+- `lengths()` — Number of bins in every giant tour.
+- `visited_mask()` — Boolean mask ``[B, M]`` of the nodes present in every giant tour (depot excluded).
+- `tour_from_mask_order()` — Giant tours made of the nodes of ``order`` whose ``keep`` flag is set.
+- `giant_tour_cost()` — Length of ``depot -> tour -> depot`` with no intermediate depot returns.
+- `profit_split()` — Split giant tours into capacity-feasible routes of maximum profit.
+- `route_list_distance()` — Total distance of depot-to-depot routes.
+- `routes_to_tours()` — Giant tours ``[B, N]`` that list the bins of ``routes`` in route order.
+- `routes_to_actions()` — Padded CPTP action sequences: each route then a depot return, then the day end.
+- `replay_reward()` — Reward of ``actions`` replayed through ``env``; ``fallback`` without an environment.
+- `hash_rows()` — Hashable key per giant tour, for visited-solution tracking.
