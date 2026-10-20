@@ -175,7 +175,7 @@ class SimulationRepository(ABC):
         Retrieves the temporal resource parameters for time-constrained problems.
 
         Returns the working-shift budget and travel/service rates used by
-time-constrained problem variants alongside their capacity constraint.
+        time-constrained problem variants alongside their capacity constraint.
         With coordinates and distances, the second value is a pairwise travel
         time matrix in hours, loaded from ``tm_filepath`` or computed using
         the uniform speed. Without matrix inputs the scalar-speed API remains

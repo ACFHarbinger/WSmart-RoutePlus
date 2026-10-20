@@ -110,7 +110,7 @@ class ScenarioGenerator:
             horizon: Simulation horizon.
             seed: Random seed.
             distribution: Statistical distribution to use for waste levels.
-            dist_kwargs: Parameters for the distribution.
+            dist_kwargs: Additional arguments for the distribution.
         """
         self.method = method
         self.horizon = horizon
