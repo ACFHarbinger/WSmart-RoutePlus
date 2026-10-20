@@ -109,6 +109,15 @@ pub struct CloudSubmitRequest {
     /// Job cost cap in USD (CR-10).
     #[serde(default)]
     pub budget: Option<f64>,
+    /// Higher runs first when jobs compete (CR-09).
+    #[serde(default)]
+    pub priority: Option<i64>,
+    /// Placement targets `provider/compute[/region[/machine_type[/spot]]][:max_tasks]` (CR-09).
+    #[serde(default)]
+    pub targets: Option<Vec<String>>,
+    /// Run on the warm worker pool (CR-09).
+    #[serde(default)]
+    pub pool: Option<bool>,
     /// Wait for the job to finish synchronously in CLI runner.
     pub wait: Option<bool>,
     /// Seconds between scheduling passes when wait is enabled.

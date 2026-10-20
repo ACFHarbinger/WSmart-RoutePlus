@@ -143,6 +143,19 @@ pub async fn cloud_submit(
         subcmd.push("--budget".to_string());
         subcmd.push(b.to_string());
     }
+    if let Some(p) = request.priority {
+        subcmd.push("--priority".to_string());
+        subcmd.push(p.to_string());
+    }
+    for target in request.targets.iter().flatten() {
+        if !target.trim().is_empty() {
+            subcmd.push("--target".to_string());
+            subcmd.push(target.trim().to_string());
+        }
+    }
+    if let Some(true) = request.pool {
+        subcmd.push("--pool".to_string());
+    }
     if let Some(true) = request.wait {
         subcmd.push("--wait".to_string());
     }
