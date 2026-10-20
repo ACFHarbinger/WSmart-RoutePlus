@@ -152,7 +152,7 @@ def test_separate_capacity_cuts_maxflow_success(base_vrpp_model: VRPPModel) -> N
     mock_flow.toarray.return_value = np.zeros((6, 6))
     mock_flow_result.flow = mock_flow
 
-    with patch("logic.src.policies.helpers.solvers_and_matheuristics.separation.engine.maximum_flow", return_value=mock_flow_result):
+    with patch("logic.src.policies.helpers.solvers_and_matheuristics.separation.capacity_separation.maximum_flow", return_value=mock_flow_result):
         cuts = engine.separate_fractional(x_vals, y_vals, node_count=0)
         assert isinstance(cuts, list)
 
@@ -161,7 +161,7 @@ def test_separate_capacity_cuts_maxflow_fallback(base_vrpp_model: VRPPModel) -> 
     x_vals = np.ones(15) * 0.5
     y_vals = np.ones(5)
 
-    with patch("logic.src.policies.helpers.solvers_and_matheuristics.separation.engine.maximum_flow", side_effect=Exception("Scipy flow error")):
+    with patch("logic.src.policies.helpers.solvers_and_matheuristics.separation.capacity_separation.maximum_flow", side_effect=Exception("Scipy flow error")):
         cuts = engine.separate_fractional(x_vals, y_vals, node_count=0)
         assert isinstance(cuts, list)
 
@@ -188,7 +188,7 @@ def test_separate_pcsec_exact_success(base_vrpp_model: VRPPModel) -> None:
     mock_flow.toarray.return_value = np.zeros((6, 6))
     mock_flow_result.flow = mock_flow
 
-    with patch("logic.src.policies.helpers.solvers_and_matheuristics.separation.engine.maximum_flow", return_value=mock_flow_result):
+    with patch("logic.src.policies.helpers.solvers_and_matheuristics.separation.pcsec_separation.maximum_flow", return_value=mock_flow_result):
         cuts = engine.separate_fractional(x_vals, y_vals, node_count=0)
         assert isinstance(cuts, list)
 
@@ -197,7 +197,7 @@ def test_separate_pcsec_exact_fallback(base_vrpp_model: VRPPModel) -> None:
     x_vals = np.ones(15) * 0.5
     y_vals = np.ones(5)
 
-    with patch("logic.src.policies.helpers.solvers_and_matheuristics.separation.engine.maximum_flow", side_effect=Exception("Scipy flow error")):
+    with patch("logic.src.policies.helpers.solvers_and_matheuristics.separation.pcsec_separation.maximum_flow", side_effect=Exception("Scipy flow error")):
         cuts = engine.separate_fractional(x_vals, y_vals, node_count=0)
         assert isinstance(cuts, list)
 

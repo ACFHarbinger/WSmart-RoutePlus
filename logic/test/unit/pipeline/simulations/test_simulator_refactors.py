@@ -156,12 +156,12 @@ def test_display_log_metrics_is_the_mean_writer(tmp_path):
         sections.append(section)
 
     with (
-        patch("logic.src.pipeline.simulations.simulator.ROOT_DIR", str(tmp_path)),
+        patch("logic.src.pipeline.simulations.simulator_progress.ROOT_DIR", str(tmp_path)),
         patch(
-            "logic.src.pipeline.simulations.simulator.update_policy_log_section",
+            "logic.src.pipeline.simulations.simulator_progress.update_policy_log_section",
             side_effect=_capture,
         ),
-        patch("logic.src.pipeline.simulations.simulator.display_simulation_summary_table"),
+        patch("logic.src.pipeline.simulations.simulator_progress.display_simulation_summary_table"),
     ):
         display_log_metrics(
             "test_out",

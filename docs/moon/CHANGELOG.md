@@ -17,6 +17,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### File-size refactor (`2026-10-20`)
+
+#### Changed
+
+- **Code files over 500 lines split to 150-500 lines** across `logic/` (about 90 files, seven agent lanes: Claude, Codex, Gemini, Kimi, Mistral, Grok, Cursor; brief in `.agent/tasks/file-size-refactor-2026-10-20.md`, lane reports on `.agent/bus/2026-10-20.md`). Code was moved, not changed: whole functions and classes to sibling modules, large classes into mixins, and every original module keeps its import path by re-exporting what moved. `tools/check_pure_move.py 957185ee1` reports 7,436 of 7,439 definitions unchanged; the three intended changes are below. Test changes are mock patch targets that follow the moved code, plus split test files.
+- **Two functions too long to move whole** were shortened by extracting private helpers: `column_generation_loop` (its node set-up, into `branching/pruning._prepare_node_relaxation`) and `run_ms_bpc_sp` (its stages, into the new `ms_bpc_sp_phases.py`). `run_ms_bpc_sp` returns identical results on 12 seeded instances, and the names the tests patch stay on the engine module.
+- A few modules that only re-export after the split are under 150 lines (for example `irp.py`, `thop.py`, `store.py`).
+
+#### Fixed
+
+- **`generate_packing_templates`** matched configs by `__module__ == packing.__name__` and would have skipped the configs moved to `packing_dispatch`, `packing_learned` and `packing_threshold`; it now matches the `packing*` modules and finds the same 34 configs as before.
+
+#### Notes
+
+- The full suite gives the same result before and after (2,472 passed; the same 7 failures on both: three simulation integration tests and four cloud-runner tests).
+- Pre-existing bugs the lanes noticed but did not fix are listed on the bus for the ultra-review.
+
 ### Paper results from the 2026-10-19 vintage (`2026-10-20`)
 
 #### Changed
