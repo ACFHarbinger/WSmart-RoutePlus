@@ -16,15 +16,25 @@ export interface AnalysisComputeOptions {
   estimatedCostUsd?: number | null;
 }
 
-/** Status messages and IDs are not execution telemetry. Returns real duration if present on task. */
+/** Only finite, nonnegative transported observations are usable. */
+function observed(value: number | null | undefined): number | null {
+  return value != null && Number.isFinite(value) && value >= 0 ? value : null;
+}
+
 export function extractTaskDuration(task: CloudTaskSummary): number | null {
-  if (task.duration != null && !isNaN(task.duration)) {
-    return task.duration;
-  }
-  if (task.started_at != null && task.finished_at != null && task.finished_at >= task.started_at) {
-    return task.finished_at - task.started_at;
-  }
-  return null;
+  if (task.duration != null) return observed(task.duration);
+  // A current attempt's timestamps cannot recover the duration of prior retries.
+  if (task.attempt > 1) return null;
+  const start = observed(task.started_at);
+  const end = observed(task.finished_at);
+  return start != null && end != null && end >= start ? end - start : null;
+}
+
+/** Missing observations must not silently become partial job totals. */
+function completeSum(values: (number | null | undefined)[]): number | null {
+  const valid = values.map(observed);
+  return valid.length > 0 && valid.every((value) => value != null)
+    ? valid.reduce<number>((sum, value) => sum + value!, 0) : null;
 }
 
 /**
@@ -46,10 +56,10 @@ export function computeJobAnalysis(
   options?: AnalysisComputeOptions
 ): CloudJobAnalysis {
   const tasks: CloudTaskAnalysis[] = job.tasks.map((task) => {
-    const duration = task.duration ?? (task.started_at != null && task.finished_at != null ? task.finished_at - task.started_at : null);
-    const expected = task.expected_wall_seconds ?? null;
+    const duration = extractTaskDuration(task);
+    const expected = observed(task.expected_wall_seconds);
     const policy = task.policy ?? null;
-    const cost = task.cost ?? null;
+    const cost = observed(task.cost);
     return {
       task_id: task.task_id,
       cell_id: task.cell_id,
@@ -65,42 +75,20 @@ export function computeJobAnalysis(
 
   const count = (state: string) => tasks.filter((task) => task.state === state).length;
 
-  const validDurations = tasks
-    .map((t) => t.duration_seconds)
-    .filter((d): d is number => d != null && !isNaN(d));
-
-  const total_compute_seconds = validDurations.length > 0
-    ? validDurations.reduce((acc, d) => acc + d, 0)
-    : null;
-
-  const startedTimes = job.tasks
-    .map((t) => t.started_at)
-    .filter((t): t is number => t != null && !isNaN(t));
-
-  const finishedTimes = job.tasks
-    .map((t) => t.finished_at ?? (t.started_at != null && t.duration != null ? t.started_at + t.duration : null))
-    .filter((t): t is number => t != null && !isNaN(t));
-
-  let total_wall_seconds: number | null = null;
-  if (startedTimes.length > 0 && finishedTimes.length > 0) {
-    const minStart = Math.min(...startedTimes);
-    const maxEnd = Math.max(...finishedTimes);
-    if (maxEnd >= minStart) {
-      total_wall_seconds = maxEnd - minStart;
-    }
-  }
-
-  const validCosts = tasks
-    .map((t) => t.cost_usd)
-    .filter((c): c is number => c != null && !isNaN(c));
-
-  const accrued_cost_usd = validCosts.length > 0
-    ? validCosts.reduce((acc, c) => acc + c, 0)
-    : null;
+  const total_compute_seconds = completeSum(tasks.map((task) => task.duration_seconds));
+  // Status timestamps span the first attempt through the last observed end.
+  // Never synthesize an end by adding summed retry durations to a latest start.
+  const starts = job.tasks.map((task) => observed(task.started_at));
+  const ends = job.tasks.map((task) => observed(task.finished_at));
+  const completeTiming = starts.length > 0 && starts.every((time) => time != null)
+    && ends.every((time, index) => time != null && time >= starts[index]!);
+  const total_wall_seconds = completeTiming
+    ? Math.max(0, Math.max(...ends as number[]) - Math.min(...starts as number[])) : null;
+  const accrued_cost_usd = completeSum(tasks.map((task) => task.cost_usd));
 
   const spot = job.spot ?? options?.spot ?? null;
-  const onDemandRate = job.on_demand_price_per_hour ?? options?.onDemandHourlyRateUsd ?? null;
-  const hourlyRate = job.price_per_hour ?? options?.hourlyRateUsd ?? null;
+  const onDemandRate = observed(job.on_demand_price_per_hour ?? options?.onDemandHourlyRateUsd);
+  const hourlyRate = observed(job.price_per_hour ?? options?.hourlyRateUsd);
 
   let on_demand_baseline_cost_usd: number | null = null;
   let spot_savings_usd: number | null = null;
@@ -117,15 +105,10 @@ export function computeJobAnalysis(
     }
   }
 
-  let estimated_cost_usd = options?.estimatedCostUsd ?? null;
+  let estimated_cost_usd = observed(options?.estimatedCostUsd);
   if (estimated_cost_usd == null && hourlyRate != null) {
-    const validExpected = tasks
-      .map((t) => t.expected_wall_seconds)
-      .filter((e): e is number => e != null && !isNaN(e));
-    if (validExpected.length > 0) {
-      const sumExpected = validExpected.reduce((acc, e) => acc + e, 0);
-      estimated_cost_usd = (sumExpected / 3600.0) * hourlyRate;
-    }
+    const sumExpected = completeSum(tasks.map((task) => task.expected_wall_seconds));
+    if (sumExpected != null) estimated_cost_usd = sumExpected / 3600.0 * hourlyRate;
   }
 
   return {
@@ -203,5 +186,5 @@ export function exportTasksToCsv(tasks: CloudTaskAnalysis[], filename = "cloud_t
 }
 
 export function formatObserved(value: number | null | undefined, digits = 1): string {
-  return value == null ? "Unavailable" : value.toFixed(digits);
+  return observed(value) == null ? "Unavailable" : value!.toFixed(digits);
 }

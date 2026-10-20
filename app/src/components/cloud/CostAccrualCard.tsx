@@ -23,7 +23,7 @@ export function CostAccrualCard({ analysis }: CostAccrualCardProps) {
             <DollarSign size={18} />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-neutral-200">Cost & Budget Accrual (CR-10)</h3>
+            <h3 className="text-sm font-semibold text-neutral-200">Compute Cost Estimates</h3>
             <p className="text-xs text-neutral-500">
               Provider: <span className="uppercase text-neutral-300 font-mono">{analysis.provider}</span> •{" "}
               Compute: <span className="text-neutral-300 font-mono">{analysis.compute}</span> •{" "}
@@ -49,37 +49,39 @@ export function CostAccrualCard({ analysis }: CostAccrualCardProps) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {/* Accrued Cost */}
+        {/* Estimated Compute Cost */}
         <div className="bg-neutral-950/60 border border-neutral-800/80 rounded p-3">
-          <span className="text-xs text-neutral-400">Total Accrued Cost</span>
+          <span className="text-xs text-neutral-400">Estimated Compute Cost</span>
           <div className="text-xl font-bold font-mono text-neutral-100 mt-1">
             ${formatObserved(analysis.accrued_cost_usd, 4)}
           </div>
           <span className="text-[11px] text-neutral-500">
-            Across {formatObserved(analysis.total_compute_seconds, 1)}s compute time
+            Prorated price hint over {formatObserved(analysis.total_compute_seconds, 1)}s scheduler time; not an invoice
           </span>
         </div>
 
         {/* Estimated / Budget Cap */}
         <div className="bg-neutral-950/60 border border-neutral-800/80 rounded p-3">
-          <span className="text-xs text-neutral-400">Pre-Run Estimate (CR-10)</span>
+          <span className="text-xs text-neutral-400">Predicted Cost Estimate</span>
           {hasEstimate ? (
             <>
               <div className="text-xl font-bold font-mono text-neutral-200 mt-1">
                 ${analysis.estimated_cost_usd?.toFixed(4)}
               </div>
               <span className="text-[11px] text-neutral-500">
-                {(analysis.accrued_cost_usd ?? Infinity) <= (analysis.estimated_cost_usd ?? 0) ? (
+                {analysis.accrued_cost_usd == null ? (
+                  <span>Observed duration unavailable</span>
+                ) : analysis.accrued_cost_usd <= (analysis.estimated_cost_usd ?? 0) ? (
                   <span className="text-emerald-400">Within estimate</span>
                 ) : (
-                  <span className="text-amber-400">Over initial estimate</span>
+                  <span className="text-amber-400">Above predicted estimate</span>
                 )}
               </span>
             </>
           ) : (
             <>
-              <div className="text-sm font-mono text-neutral-500 mt-2">Unbounded / No Cap</div>
-              <span className="text-[11px] text-neutral-600">Pending CR-10 model calibration</span>
+              <div className="text-sm font-mono text-neutral-500 mt-2">Estimate unavailable</div>
+              <span className="text-[11px] text-neutral-600">No runtime predictions available</span>
             </>
           )}
         </div>

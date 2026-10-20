@@ -190,15 +190,15 @@ export function CloudAnalysis() {
   // Grouped policy metrics
   const policySummary = useMemo(() => {
     if (!analysis) return [];
-    const map = new Map<string, { count: number; computeSec: number; costUsd: number }>();
+    const map = new Map<string, { count: number; computeSec: number | null; costUsd: number | null }>();
 
     for (const t of analysis.tasks) {
       if (!t.policy) continue;
       const pol = t.policy;
       const curr = map.get(pol) || { count: 0, computeSec: 0, costUsd: 0 };
       curr.count += 1;
-      curr.computeSec += t.duration_seconds ?? 0;
-      curr.costUsd += t.cost_usd ?? 0;
+      curr.computeSec = curr.computeSec == null || t.duration_seconds == null ? null : curr.computeSec + t.duration_seconds;
+      curr.costUsd = curr.costUsd == null || t.cost_usd == null ? null : curr.costUsd + t.cost_usd;
       map.set(pol, curr);
     }
 
@@ -361,10 +361,10 @@ export function CloudAnalysis() {
                 </div>
               </div>
 
-              {/* Average Concurrency */}
+              {/* Average Attempt Concurrency */}
               <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-3.5">
                 <div className="flex items-center justify-between text-neutral-400 text-xs">
-                  <span>Average Concurrency</span>
+                  <span>Average Attempt Concurrency</span>
                   <Zap size={14} className="text-amber-400" />
                 </div>
                 <div className="text-2xl font-bold font-mono text-amber-400 mt-1">
@@ -377,10 +377,10 @@ export function CloudAnalysis() {
                 </div>
               </div>
 
-              {/* Accrued Cost */}
+              {/* Estimated Compute Cost */}
               <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-3.5">
                 <div className="flex items-center justify-between text-neutral-400 text-xs">
-                  <span>Accrued Cost</span>
+                  <span>Estimated Compute Cost</span>
                   <DollarSign size={14} className="text-emerald-400" />
                 </div>
                 <div className="text-2xl font-bold font-mono text-emerald-400 mt-1">
@@ -468,7 +468,7 @@ export function CloudAnalysis() {
                         </div>
                         <div className="mt-2 pt-2 border-t border-neutral-800/60 flex items-center justify-between text-[11px] text-neutral-500 font-mono">
                           <span>Compute: {formatDuration(p.computeSec)}</span>
-                          <span>Cost: ${p.costUsd.toFixed(4)}</span>
+                          <span>Cost: ${formatObserved(p.costUsd, 4)}</span>
                         </div>
                       </div>
                     ))}
@@ -690,7 +690,7 @@ export function CloudAnalysis() {
                         </span>
                       </div>
                       <div className="flex justify-between items-center text-neutral-400">
-                        <span>Effective Accrued Cost</span>
+                        <span>Effective Estimated Compute Cost</span>
                         <span className="font-mono text-emerald-400 font-bold">
                           ${formatObserved(analysis.accrued_cost_usd, 4)}
                         </span>

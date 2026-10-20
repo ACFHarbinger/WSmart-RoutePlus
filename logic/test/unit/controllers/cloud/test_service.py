@@ -297,7 +297,7 @@ def test_status_telemetry_payload_and_policy_extraction(tmp_path):
 
 
 @pytest.mark.unit
-def test_status_retry_duration_and_provider_billing_semantics(tmp_path):
+def test_status_retry_duration_and_prorated_price_estimate(tmp_path):
     from logic.controllers.cloud.service import RemoteConfig
 
     clock = FakeClock()
@@ -355,6 +355,36 @@ def test_status_retry_duration_and_provider_billing_semantics(tmp_path):
     assert task["attempt"] == 2
     # Execution elapsed time is 25s + 80s = 105s
     assert task["duration"] == 105.0
-    # Provider minimum allocation is 60s per attempt on AWS: max(60, 25) + max(60, 80) = 60 + 80 = 140s
-    expected_cost = round((140.0 / 3600.0) * 0.034, 6)
+    # Scheduler timing supports a prorated estimate, not provider billing minimums.
+    expected_cost = round((105.0 / 3600.0) * 0.034, 6)
     assert task["cost"] == expected_cost
+
+    assert task["started_at"] == job.created_at  # First attempt, not latest attempt.
+    assert task["finished_at"] == job.created_at + 105.0
+    assert status["cost_source"] == "scheduler_elapsed_price_hint"
+
+
+@pytest.mark.unit
+def test_retry_with_missing_history_does_not_claim_complete_duration(tmp_path):
+    from logic.controllers.cloud.model import TaskRecord
+
+    service = _service(tmp_path, ScriptedBackend())
+    task = TaskRecord(
+        task_id="task",
+        job_id="job",
+        cell=CellSpec(cell_id="c", argv=["run"]),
+        state=TaskState.SUCCEEDED,
+        attempt=2,
+        started_at=50.0,
+        finished_at=60.0,
+    )
+    assert service._task_duration_and_cost(task, [], 1.0, Provider.AWS) == (None, None)
+
+
+@pytest.mark.unit
+def test_policy_metadata_does_not_guess_from_paths_or_multi_policy_cells():
+    from logic.controllers.cloud.service import extract_policy_from_cell
+
+    for argv in (["test_sim", "--policies", "alns", "bpc"], ["test_sim", "sim.policies=[alns,bpc]"]):
+        assert extract_policy_from_cell(CellSpec(cell_id="cell", argv=argv)) is None
+    assert extract_policy_from_cell(CellSpec(cell_id="cell", argv=["test_sim"], policy_dir="/yaml/0")) is None
