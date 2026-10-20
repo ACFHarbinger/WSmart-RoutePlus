@@ -6,14 +6,11 @@ Attributes:
 
 from __future__ import annotations
 
-import base64
-import json
+import hashlib
 import os
-import shlex
-import time
+import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-from urllib.parse import quote
 
 from logic.controllers.cloud.interfaces import (
     AttemptState,
@@ -28,10 +25,13 @@ from logic.controllers.cloud.providers.azure._sdk import (
     make_compute_management_client,
     make_network_management_client,
 )
+from logic.controllers.cloud.providers.azure.orphan_queue import AzureVmOrphanQueueMixin
 from logic.controllers.cloud.providers.azure.pricing import price_per_hour
+from logic.controllers.cloud.providers.azure.provisioning import AzureProvisioningMixin
+from logic.controllers.cloud.providers.azure.vm_bootstrap import AzureVmBootstrapMixin
 
 
-class AzureVmBackend(ComputeBackend):
+class AzureVmBackend(AzureProvisioningMixin, AzureVmOrphanQueueMixin, AzureVmBootstrapMixin, ComputeBackend):
     """Azure Virtual Machine compute backend.
 
     Args:
@@ -90,7 +90,8 @@ class AzureVmBackend(ComputeBackend):
             self.orphan_file = Path(orphan_file)
         else:
             base_dir = Path(os.environ.get("WSR_STATE_DIR", Path.home() / ".wsr"))
-            self.orphan_file = base_dir / "azure_vm_orphans.json"
+            scope = hashlib.sha256(f"{self.subscription_id}:{self.profile}".encode()).hexdigest()[:16]
+            self.orphan_file = base_dir / f"azure_vm_orphans_{scope}.json"
 
     @property
     def client(self) -> Any:
@@ -135,91 +136,6 @@ class AzureVmBackend(ComputeBackend):
                 return parts[2], parts[3]
         return self.resource_group, handle
 
-    def _get_or_generate_ssh_key(self) -> str:
-        """Return configured SSH public key or generate a throwaway key."""
-        if self.ssh_public_key:
-            return self.ssh_public_key.strip()
-
-        from cryptography.hazmat.primitives import serialization
-        from cryptography.hazmat.primitives.asymmetric import rsa
-
-        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-        return (
-            private_key.public_key()
-            .public_bytes(
-                encoding=serialization.Encoding.OpenSSH,
-                format=serialization.PublicFormat.OpenSSH,
-            )
-            .decode("utf-8")
-        )
-
-    def _build_custom_data(self, launch: LaunchSpec) -> str:
-        """Construct UserData bootstrap script executing the task in Docker and shutting down."""
-        env = dict(launch.env)
-        env.setdefault("WSR_JOB_ID", launch.task.job_id)
-        env.setdefault("WSR_TASK_ID", launch.task.task_id)
-
-        # Inject secrets via WSR_SECRET_REFS (common secret path)
-        if launch.secret_env:
-            secret_refs = {
-                var: f"akv://{self.vault_name}/{sec_name}" for var, sec_name in sorted(launch.secret_env.items())
-            }
-            env["WSR_SECRET_REFS"] = json.dumps(secret_refs)
-
-        # Format docker run -e arguments
-        env_flags = " ".join(f"-e {shlex.quote(f'{k}={v}')}" for k, v in sorted(env.items()))
-        image = launch.image or "wsmart-route:latest"
-        cmd = " ".join(shlex.quote(arg) for arg in launch.argv)
-
-        registry = image.split("/", 1)[0] if "/" in image else ""
-        # The stock Ubuntu image has no Azure CLI. Exchange the managed identity
-        # token for an ACR refresh token; ARM tokens are not Docker passwords.
-        acr_login = ""
-        if registry.endswith(".azurecr.io"):
-            acr_login = f"""ACR_TOKEN=$(curl -fsS -m 30 -X POST \\
-    --data-urlencode grant_type=access_token \\
-    --data-urlencode service={shlex.quote(registry)} \\
-    --data-urlencode "access_token=$ACCESS_TOKEN" \\
-    https://{registry}/oauth2/exchange | python3 -c 'import json,sys; print(json.load(sys.stdin)["refresh_token"])')
-printf '%s' "$ACR_TOKEN" | docker login {shlex.quote(registry)} \\
-    -u 00000000-0000-0000-0000-000000000000 --password-stdin
-"""
-
-        identity_query = quote(self.identity_id, safe="")
-        script = f"""#!/bin/bash
-set -euo pipefail
-trap 'shutdown -h now' EXIT
-
-# Dependencies for the selected Ubuntu image. Fail before launching if setup fails.
-if ! command -v docker >/dev/null 2>&1; then
-    apt-get update
-    apt-get install -y docker.io curl python3
-fi
-systemctl start docker
-
-ACCESS_TOKEN=$(curl -fsS -m 30 -H "Metadata:true" \\
-    'http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/&mi_res_id={identity_query}' \\
-    | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')
-{acr_login}
-EXIT_CODE=0
-docker run --rm {env_flags} {shlex.quote(image)} {cmd} || EXIT_CODE=$?
-
-# Refresh after execution: the initial token may have expired during the run.
-ACCESS_TOKEN=$(curl -fsS -m 30 -H "Metadata:true" \\
-    'http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/&mi_res_id={identity_query}' \\
-    | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')
-VM_ID=$(curl -fsS -m 30 -H "Metadata:true" \\
-    'http://169.254.169.254/metadata/instance/compute/resourceId?api-version=2021-02-01&format=text')
-# Merge the actual exit code without replacing scheduler ownership tags.
-TAG_BODY=$(printf '{{"operation":"Merge","properties":{{"tags":{{"wsr-exit-code":"%s"}}}}}}' "$EXIT_CODE")
-curl -fsS -m 30 -X PATCH \\
-    -H "Authorization: Bearer $ACCESS_TOKEN" \\
-    -H "Content-Type: application/json" \\
-    -d "$TAG_BODY" \\
-    "https://management.azure.com$VM_ID/providers/Microsoft.Resources/tags/default?api-version=2021-04-01"
-"""
-        return base64.b64encode(script.encode("utf-8")).decode("utf-8")
-
     @staticmethod
     def _is_not_found(exc: Exception) -> bool:
         """Return True if exception indicates the Azure resource does not exist (404/NotFound)."""
@@ -229,107 +145,12 @@ curl -fsS -m 30 -X PATCH \\
         if resp is not None and getattr(resp, "status_code", None) == 404:
             return True
         error_code = getattr(exc, "error_code", None) or getattr(exc, "code", None)
-        if isinstance(error_code, str) and error_code.lower() in (
+        # Message text may describe a missing permission/credential, not a resource.
+        return isinstance(error_code, str) and error_code.lower() in (
             "resourcenotfound",
             "notfound",
             "resourcegroupnotfound",
-        ):
-            return True
-        msg = str(exc).lower()
-        return "resourcenotfound" in msg or "not found" in msg or "404" in msg
-
-    def _load_orphans(self) -> List[Dict[str, Any]]:
-        """Load the list of pending orphan resources from disk."""
-        if not self.orphan_file.exists():
-            return []
-        try:
-            with open(self.orphan_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                return data if isinstance(data, list) else []
-        except Exception:
-            return []
-
-    def _save_orphans(self, orphans: List[Dict[str, Any]]) -> None:
-        """Atomically persist the list of pending orphan resources."""
-        try:
-            self.orphan_file.parent.mkdir(parents=True, exist_ok=True)
-            tmp_file = self.orphan_file.with_suffix(f".tmp.{os.getpid()}")
-            with open(tmp_file, "w", encoding="utf-8") as f:
-                json.dump(orphans, f, indent=2)
-            tmp_file.replace(self.orphan_file)
-        except Exception:
-            pass
-
-    def _record_orphan(self, kind: str, resource_group: str, name: str, error: Optional[str] = None) -> None:
-        """Record an uncleaned resource into the persistent orphan queue."""
-        orphans = self._load_orphans()
-        now = time.time()
-        for record in orphans:
-            if (
-                record.get("kind") == kind
-                and record.get("resource_group") == resource_group
-                and record.get("name") == name
-            ):
-                record["attempts"] = record.get("attempts", 0) + 1
-                record["last_attempt"] = now
-                if error:
-                    record["last_error"] = str(error)
-                self._save_orphans(orphans)
-                return
-        orphans.append(
-            {
-                "kind": kind,
-                "resource_group": resource_group,
-                "name": name,
-                "recorded_at": now,
-                "last_attempt": now,
-                "attempts": 1,
-                "last_error": str(error) if error else None,
-            }
         )
-        self._save_orphans(orphans)
-
-    def drain_orphans(self) -> List[str]:
-        """Retry deletion for all recorded orphan resources; returns list of cleaned resource identifiers."""
-        orphans = self._load_orphans()
-        if not orphans:
-            return []
-
-        remaining: List[Dict[str, Any]] = []
-        cleaned: List[str] = []
-
-        # Sort so that VMs are deleted before NICs (NIC cannot be deleted while attached to VM)
-        orphans.sort(key=lambda r: 0 if r.get("kind") == "vm" else 1)
-
-        for record in orphans:
-            kind = record.get("kind")
-            rg = record.get("resource_group", self.resource_group)
-            name = record.get("name", "")
-            if not name:
-                continue
-
-            success = False
-            try:
-                if kind == "vm":
-                    self._delete_vm_resource(rg, name)
-                    success = True
-                elif kind == "nic":
-                    self._cleanup_nic_in_rg(rg, name)
-                    success = True
-            except Exception as exc:
-                if self._is_not_found(exc):
-                    success = True
-                else:
-                    record["attempts"] = record.get("attempts", 0) + 1
-                    record["last_attempt"] = time.time()
-                    record["last_error"] = str(exc)
-                    remaining.append(record)
-
-            if success:
-                cleaned.append(f"{kind}:{rg}:{name}")
-
-        self._save_orphans(remaining)
-        return cleaned
 
     def _cleanup_nic_in_rg(self, rg: str, nic_name: str) -> None:
         """Attempt to delete a network interface in the specified resource group."""
@@ -369,8 +190,7 @@ curl -fsS -m 30 -X PATCH \\
         try:
             self._delete_vm_resource(rg, vm_name)
         except Exception as exc:
-            # If API not available in minimal test mock, do not fail before NIC delete
-            if not self._is_not_found(exc) and not (isinstance(exc, RuntimeError) and "not available" in str(exc)):
+            if not self._is_not_found(exc):
                 self._record_orphan("vm", rg, vm_name, str(exc))
 
         # 2. Attempt NIC deletion
@@ -389,11 +209,40 @@ curl -fsS -m 30 -X PATCH \\
         return status
 
     def submit(self, launch: LaunchSpec) -> str:
-        """Create and start an Azure Virtual Machine executing the task."""
+        """Persist intent before the first resource allocation and retain it through handoff."""
+        self.reconcile_provisions()
         self.drain_orphans()
-        vm_name = f"wsr-vm-{launch.task.task_id}"[:64]
+        suffix = f"-a{launch.task.attempt}" if launch.task.attempt > 1 else ""
+        vm_name = f"wsr-vm-{launch.task.task_id}"[: 64 - len(suffix)] + suffix
+        for orphan in self._load_orphans():
+            if (
+                orphan.get("subscription_id") == self.subscription_id
+                and orphan.get("profile") == self.profile
+                and orphan.get("resource_group") == self.resource_group
+                and orphan.get("name") in (vm_name, f"nic-{vm_name}")
+            ):
+                raise CapacityError(
+                    "Previous Azure resources still require cleanup before this attempt can be submitted"
+                )
+        if launch.task.lease_owner:
+            vm_name = vm_name[:55] + "-" + uuid.uuid4().hex[:8]
+        handle = f"azure-vm:{self.region}:{self.resource_group}:{vm_name}"
+        token = self._begin_provision(launch, vm_name, handle)
+        try:
+            self._check_provision_lease(launch)
+            self._allocate_vm(launch, vm_name)
+            self._check_provision_lease(launch)
+        except Exception:
+            self._teardown_failed_submit(self.resource_group, vm_name, f"nic-{vm_name}")
+            self._forget_provision(token)
+            raise
+        return handle
+
+    def _allocate_vm(self, launch: LaunchSpec, vm_name: str) -> None:
+        """Allocate one journalled VM; the submit wrapper owns failure recovery."""
         vm_size = launch.resources.machine_type or self.default_vm_size
         custom_data = self._build_custom_data(launch)
+        ssh_key = self._get_or_generate_ssh_key()
 
         # 1. Create or update Network Interface (NIC) attached to configured subnet
         nic_name = f"nic-{vm_name}"
@@ -428,8 +277,8 @@ curl -fsS -m 30 -X PATCH \\
         if not nic_id:
             nic_id = f"/subscriptions/{self.subscription_id}/resourceGroups/{self.resource_group}/providers/Microsoft.Network/networkInterfaces/{nic_name}"
 
+        self._check_provision_lease(launch)
         # 2. Build full VM create parameters
-        ssh_key = self._get_or_generate_ssh_key()
         vm_params: Dict[str, Any] = {
             "location": self.region,
             "hardware_profile": {"vm_size": vm_size},
@@ -501,7 +350,6 @@ curl -fsS -m 30 -X PATCH \\
         vm_api = getattr(self.client, "virtual_machines", self.client)
         create_fn = getattr(vm_api, "begin_create_or_update", getattr(vm_api, "create_or_update", None))
         if create_fn is None:
-            self._cleanup_nic(nic_name)
             raise RuntimeError("Azure VM create API not available")
 
         try:
@@ -513,13 +361,10 @@ curl -fsS -m 30 -X PATCH \\
             if hasattr(poller, "result"):
                 poller.result()
         except Exception as exc:
-            self._teardown_failed_submit(self.resource_group, vm_name, nic_name)
             msg = str(exc)
             if any(term in msg.lower() for term in ("quotaexceeded", "allocationfailed", "capacity", "notavail")):
                 raise CapacityError(f"Azure VM capacity unavailable: {msg}") from exc
             raise
-
-        return f"azure-vm:{self.region}:{self.resource_group}:{vm_name}"
 
     def _resolve_terminal_status(self, exit_code_str: Optional[str], is_spot: bool) -> BackendStatus:
         """Derive final BackendStatus from exit code tag and spot configuration."""
@@ -564,10 +409,12 @@ curl -fsS -m 30 -X PATCH \\
         try:
             view = get_fn(resource_group_name=rg, vm_name=vm_name)
         except Exception as exc:
+            if self._is_not_found(exc):
+                return BackendStatus(AttemptState.FAILED, exit_code=1, message="VM resource no longer exists")
             return BackendStatus(AttemptState.UNKNOWN, message=str(exc))
 
         if not view:
-            return BackendStatus(AttemptState.UNKNOWN, message="no such VM")
+            return BackendStatus(AttemptState.FAILED, exit_code=1, message="no such VM")
 
         statuses = getattr(view, "statuses", []) or (view.get("statuses", []) if isinstance(view, dict) else [])
         status_codes = [s.code if hasattr(s, "code") else s.get("code", "") for s in statuses]

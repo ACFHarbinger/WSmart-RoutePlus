@@ -17,6 +17,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Azure provisioning crash recovery (`2026-10-20`)
+
+- Persist a scoped allocation intent before creating a NIC or VM, flush journal data and its directory entry, and retain it until the control plane accepts the backend handle. On restart, expire placing leases before reconciling; preserve live owners and accepted handles, reclaim abandoned allocations, and retain failed deletion work durably.
+- Renew leases during slow provisioning, use unique resource names per leased submission and reject stale scheduler handoffs. NIC provisioning failures now pass through the same teardown path as VM failures.
+- Keep journal files under the configured persistent `WSR_STATE_DIR` (or the explicit orphan-file directory); recovery requires the same directory and control-plane scope on restart. Unknown account/control-plane ownership is preserved rather than deleted.
+- Added crash tests before/after NIC creation, after VM creation, around durable handoff, with competing ownership, plus an actual child process exiting during provisioning. The cloud-controller suite passes (142 tests, four Docker/Postgres-only skips).
+
+### Codex Azure orphan/logging review (`2026-10-20`)
+
+- Scope orphan cleanup by subscription/profile, serialize queue mutations, and surface corrupt/unwritable state. Handle disappearance after VM cancellation, distinguish retry VM names, block reuse pending cleanup, and drain cleanup during scheduler maintenance without active jobs. Fix Log Analytics timespan/dependency/error handling; refresh the lock. Added offline account-boundary, queue, SDK and service regressions (67 tests pass). The provisioning crash window still requires a write-ahead intent and ownership reconciliation before merge.
+
 ### Azure compute backend blockers resolved and service integration verified (`2026-10-20`)
 
 - **Partial-VM Teardown & Durable Orphan Queue**:

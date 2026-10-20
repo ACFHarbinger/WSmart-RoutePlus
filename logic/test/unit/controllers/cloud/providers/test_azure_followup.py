@@ -310,9 +310,7 @@ def test_vm_params_has_boot_diagnostics_enabled() -> None:
             CreatePoller(),
         )[1]
     )
-    network = SimpleNamespace(
-        begin_create_or_update=lambda **kwargs: SimpleNamespace(result=lambda: {"id": "/nic"})
-    )
+    network = SimpleNamespace(begin_create_or_update=lambda **kwargs: SimpleNamespace(result=lambda: {"id": "/nic"}))
     backend = AzureVmBackend(client=client, network_client=network)
     launch = LaunchSpec(
         task=TaskRecord(task_id="task-diag", job_id="job", cell=CellSpec(cell_id="cell", argv=["run"])),
@@ -331,7 +329,7 @@ def test_container_apps_logs_via_azure_monitor_query() -> None:
     queries: list[str] = []
 
     class FakeLogsQueryClient:
-        def query_workspace(self, workspace_id: str, query: str) -> Any:
+        def query_workspace(self, workspace_id: str, query: str, *, timespan: Any) -> Any:
             queries.append(query)
             return SimpleNamespace(
                 tables=[
@@ -353,8 +351,8 @@ def test_container_apps_logs_via_azure_monitor_query() -> None:
     logs = backend.logs("azure-aca:eastus:wsr-rg:my-job:my-exec", tail=2)
     assert len(queries) == 1
     assert "ContainerAppConsoleLogs_CL" in queries[0]
-    assert "ContainerJobName_s == 'my-job'" in queries[0]
-    assert "ExecutionName_s == 'my-exec'" in queries[0]
+    assert 'ContainerJobName_s == "my-job"' in queries[0]
+    assert 'ExecutionName_s == "my-exec"' in queries[0]
     assert logs == "[INFO] Optimization epoch 1 completed\n[INFO] Job finished successfully"
 
 

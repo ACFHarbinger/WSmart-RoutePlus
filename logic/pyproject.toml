@@ -108,6 +108,7 @@ cloud = [
     "azure-mgmt-appcontainers>=3.0.0,<4.0.0",
     "azure-mgmt-compute>=30.0.0,<31.0.0",
     "azure-mgmt-network>=25.0.0,<26.0.0",
+    "azure-monitor-query>=1.2,<3.0",
     "azure-storage-blob>=12.19",
     "azure-keyvault-secrets>=4.7",
     "supabase>=2.16.0",

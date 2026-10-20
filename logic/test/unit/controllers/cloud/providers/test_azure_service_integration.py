@@ -33,9 +33,7 @@ class StatefulFakeVmClient:
         self.deleted_calls: List[str] = []
         self.create_calls: List[str] = []
 
-    def begin_create_or_update(
-        self, resource_group_name: str, vm_name: str, parameters: Dict[str, Any]
-    ) -> Any:
+    def begin_create_or_update(self, resource_group_name: str, vm_name: str, parameters: Dict[str, Any]) -> Any:
         key = f"{resource_group_name}:{vm_name}"
         self.create_calls.append(vm_name)
         self.vms[key] = {
@@ -103,7 +101,9 @@ class FakeNetworkClient:
 
         class NicPoller:
             def result(self) -> Dict[str, Any]:
-                return {"id": f"/subscriptions/sub/resourceGroups/{resource_group_name}/providers/Microsoft.Network/networkInterfaces/{network_interface_name}"}
+                return {
+                    "id": f"/subscriptions/sub/resourceGroups/{resource_group_name}/providers/Microsoft.Network/networkInterfaces/{network_interface_name}"
+                }
 
         return NicPoller()
 
@@ -277,8 +277,9 @@ def test_azure_vm_service_spot_eviction_retry(tmp_path: Path) -> None:
     assert len(fake_vm_client.create_calls) == 2
 
     # Second attempt succeeds
-    fake_vm_client.vms[vm_key_1]["status"] = "PowerState/deallocated"
-    fake_vm_client.vms[vm_key_1]["exit_code"] = 0
+    vm_key_2 = next(key for key in fake_vm_client.vms if key != vm_key_1)
+    fake_vm_client.vms[vm_key_2]["status"] = "PowerState/deallocated"
+    fake_vm_client.vms[vm_key_2]["exit_code"] = 0
     service.tick()
 
     final_status = service.status(job.job_id)
@@ -411,9 +412,7 @@ def test_azure_container_apps_service_lifecycle_and_cancel(tmp_path: Path) -> No
                 for k, v in executions.items()
             ]
 
-        def begin_stop_execution(
-            self, resource_group_name: str, job_name: str, job_execution_name: str
-        ) -> Any:
+        def begin_stop_execution(self, resource_group_name: str, job_name: str, job_execution_name: str) -> Any:
             stopped_calls.append(job_execution_name)
             if job_execution_name in executions:
                 executions[job_execution_name]["status"] = "Stopped"
@@ -453,3 +452,52 @@ def test_azure_container_apps_service_lifecycle_and_cancel(tmp_path: Path) -> No
 
     assert service.status(job.job_id)["state"] == JobState.CANCELLED.value
     assert exec_name in stopped_calls
+
+
+@pytest.mark.unit
+def test_cancelled_vm_disappears_from_realistic_api(tmp_path: Path) -> None:
+    class MissingResource(Exception):
+        status_code = 404
+
+    class DisappearingVmClient(StatefulFakeVmClient):
+        def begin_delete(self, resource_group_name: str, vm_name: str) -> Any:
+            self.vms.pop(f"{resource_group_name}:{vm_name}", None)
+            return SimpleNamespace(result=lambda: None)
+
+        def instance_view(self, resource_group_name: str, vm_name: str) -> Any:
+            if f"{resource_group_name}:{vm_name}" not in self.vms:
+                raise MissingResource()
+            return super().instance_view(resource_group_name, vm_name)
+
+    backend = AzureVmBackend(
+        client=DisappearingVmClient(), network_client=FakeNetworkClient(), orphan_file=tmp_path / "orphans.json"
+    )
+    service = _make_azure_service(tmp_path, backend)
+    job = service.submit(
+        JobSpec(
+            name="cancel",
+            provider=Provider.AZURE,
+            compute=ComputeKind.VM,
+            image="runner",
+            inputs=[],
+            cells=[CellSpec(cell_id="cell", argv=["test_sim"])],
+        )
+    )
+    service.tick()
+    service.cancel(job.job_id)
+    service.tick()
+    assert service.status(job.job_id)["state"] == "cancelled"
+
+
+@pytest.mark.unit
+def test_scheduler_drains_orphans_without_active_jobs(tmp_path: Path) -> None:
+    deleted = []
+    backend = AzureVmBackend(
+        client=SimpleNamespace(begin_delete=lambda **kwargs: deleted.append(kwargs)),
+        orphan_file=tmp_path / "orphans.json",
+    )
+    backend._record_orphan("vm", "rg", "orphan")
+    service = _make_azure_service(tmp_path, backend)
+    assert service.tick() == 0
+    assert len(deleted) == 1
+    assert backend._load_orphans() == []
