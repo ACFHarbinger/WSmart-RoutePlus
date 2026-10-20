@@ -61,7 +61,12 @@ class ACOLocalSearch(LocalSearch):
             params: Hyperparameters and configuration.
             neighbors: Precomputed granular neighbors. Defaults to None.
         """
-        super().__init__(None, waste, capacity, R, C, params, neighbors=neighbors, node_coords=node_coords)
+        # The shared move operators (2-opt*, exchange chains, SWAP*, ...) read ``self.d``
+        # directly, so the Euclidean matrix is built from the coordinates (same values as
+        # ``_dist``); without it they fail on ``None``.
+        coords = np.asarray(node_coords, dtype=float)
+        dist_matrix = np.sqrt(((coords[:, None, :] - coords[None, :, :]) ** 2).sum(axis=2))
+        super().__init__(dist_matrix, waste, capacity, R, C, params, neighbors=neighbors, node_coords=node_coords)
 
     def _dist(self, i: int, j: int) -> float:
         """On-demand exact distance calculation to replace matrix lookups.
