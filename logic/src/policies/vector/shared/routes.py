@@ -17,7 +17,8 @@ Attributes:
     insert_nodes: Insert one bin per row at a given gap.
     random_removal / worst_removal / shaw_removal / string_removal / cluster_removal /
     neighbor_removal: Destroy operators (cost or profit flavour).
-    greedy_insertion / regret_insertion: Repair operators (cost or profit flavour).
+    greedy_insertion / regret_insertion / savings_insertion: Repair operators (cost or
+        profit flavour).
     local_search_move: One improving move of a named local-search operator.
 """
 
@@ -677,53 +678,209 @@ def shaw_removal(
     return delete_nodes(S, removed), removed
 
 
-def string_removal(
-    S: torch.Tensor, n: torch.Tensor, inst: VRPPBatch, gen: Optional[torch.Generator]
+def _row_seeds(B: int, gen: Optional[torch.Generator], device: torch.device) -> List[int]:
+    return torch.randint(0, 2**62, (B,), generator=gen, device=device).tolist()
+
+
+def _per_row_ruin(
+    S: torch.Tensor, n: torch.Tensor, inst: VRPPBatch, gen: Optional[torch.Generator], fn
 ) -> Tuple[torch.Tensor, torch.Tensor]:
-    """Remove a string of consecutive bins of one route, starting at a random bin."""
+    """Apply a simulator ruin operator ``fn(routes, n, dist, waste, rng)`` row by row."""
+    import random as _random
+
     B, M = S.size(0), inst.dist.size(1)
-    dev = S.device
-    r = _uniform(S.shape, gen, dev)
-    r = torch.where(S != 0, r, torch.full_like(r, -1.0))
-    start = r.argmax(dim=1)
-    rid = route_ids(S)
-    srid = rid[torch.arange(B, device=dev), start]
-    j = torch.arange(S.size(1), device=dev).unsqueeze(0)
-    pos = (j >= start.unsqueeze(1)) & (j < (start + n).unsqueeze(1)) & (rid == srid.unsqueeze(1)) & (S != 0)
-    pos = pos & (n > 0).unsqueeze(1)
-    removed = _removed_nodes(S, pos, M)
-    return delete_positions(S, pos), removed
+    routes = to_route_lists(S)
+    dist = inst.dist.detach().cpu().double().numpy()
+    waste = inst.waste.detach().cpu().double().numpy()
+    seeds = _row_seeds(B, gen, S.device)
+    nn = n.tolist()
+    out: List[List[List[int]]] = []
+    removed = torch.zeros(B, M, dtype=torch.bool, device=S.device)
+    for b in range(B):
+        if nn[b] <= 0 or not any(routes[b]):
+            out.append(routes[b])
+            continue
+        w = {i: float(waste[b, i]) for i in range(1, M)}
+        new, rem = fn([r[:] for r in routes[b]], int(nn[b]), dist[b], w, _random.Random(seeds[b]))
+        out.append(new)
+        if rem:
+            removed[b, torch.tensor(rem, dtype=torch.long, device=S.device)] = True
+    return from_route_lists(out, M - 1, S.device), removed
 
 
-def cluster_removal(
+def string_removal(
+    S: torch.Tensor, n: torch.Tensor, inst: VRPPBatch, gen: Optional[torch.Generator], profit_aware: bool = False
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """SISR string removal (``string_removal`` / ``string_profit_removal``).
+
+    The SISR ruin (Christiaens & Vanden Berghe 2020) is a sequential, data-dependent
+    walk (string lengths, the split-string geometric draw, tours already ruined), so it
+    runs row by row with the simulator's own operator and a per-row ``random.Random``
+    seeded from ``gen``.
+    """
+    from logic.src.policies.helpers.operators.destroy_ruin.string import string_profit_removal
+    from logic.src.policies.helpers.operators.destroy_ruin.string import string_removal as _sr
+
+    R, C = float(inst.R), float(inst.C)
+    if profit_aware:
+        return _per_row_ruin(
+            S, n, inst, gen, lambda r, k, d, w, rng: string_profit_removal(r, k, d, wastes=w, R=R, C=C, rng=rng)
+        )
+    return _per_row_ruin(S, n, inst, gen, lambda r, k, d, w, rng: _sr(r, k, d, rng=rng))
+
+
+def _node_profits(S: torch.Tensor, inst: VRPPBatch) -> torch.Tensor:
+    """Marginal profit ``R w - C detour`` of every visited bin ``[B, M]`` (+inf elsewhere)."""
+    M = inst.dist.size(1)
+    prof_pos = torch.gather(inst.waste, 1, S) * inst.R - inst.C * removal_detour(S, inst)
+    out = torch.full((S.size(0), M), float("inf"), device=S.device, dtype=prof_pos.dtype)
+    out.scatter_(1, torch.where(S != 0, S, torch.zeros_like(S)), torch.where(S != 0, prof_pos, out[:, :1].expand_as(S)))
+    out[:, 0] = float("inf")
+    return out
+
+
+def _profit_similarity_removal(
     S: torch.Tensor, n: torch.Tensor, inst: VRPPBatch, gen: Optional[torch.Generator]
 ) -> Tuple[torch.Tensor, torch.Tensor]:
-    """Remove the ``n`` visited bins closest to a random visited seed bin."""
+    """``neighbor_profit_removal`` / ``cluster_profit_removal`` (same selection rule).
+
+    Bins sorted by (marginal profit, id); the seed is drawn uniformly from the bottom
+    quartile (at least one); then the ``n - 1`` bins with the closest marginal profit to
+    the seed's (ties by id) are removed with it.
+    """
     B, M = S.size(0), inst.dist.size(1)
     dev = S.device
     b = torch.arange(B, device=dev)
     inroute = visited(S, M)
-    r = _uniform((B, M), gen, dev)
+    prof = _node_profits(S, inst)
+    order = torch.argsort(prof, dim=1, stable=True)  # ids ascending within ties
+    cnt = inroute.sum(dim=1)
+    bq = (cnt // 4).clamp(min=1)
+    pick = (torch.rand(B, generator=gen, device=dev) * bq).long().clamp(max=(bq - 1).clamp(min=0))
+    seed = order[b, pick]
+    diff = (prof - prof[b, seed].unsqueeze(1)).abs()
+    diff = torch.where(
+        inroute & (torch.arange(M, device=dev).unsqueeze(0) != seed.unsqueeze(1)),
+        diff,
+        torch.full_like(diff, float("inf")),
+    )
+    rank = torch.argsort(torch.argsort(diff, dim=1, stable=True), dim=1)
+    removed = inroute & (rank < (n - 1).clamp(min=0).unsqueeze(1))
+    removed[b, seed] = True
+    act = (cnt > 0) & (n > 0)
+    removed = removed & act.unsqueeze(1)
+    return delete_nodes(S, removed), removed
+
+
+def cluster_removal(
+    S: torch.Tensor, n: torch.Tensor, inst: VRPPBatch, gen: Optional[torch.Generator], profit_aware: bool = False
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Cluster removal (``cluster_removal`` / ``cluster_profit_removal``).
+
+    Cost flavour (Shaw-style, Kruskal two-cluster splits of a random route, then of the
+    route of the nearest unremoved bin to a random removed pivot): a sequential,
+    data-dependent procedure run row by row with the simulator's operator and a per-row
+    ``random.Random`` seeded from ``gen``. Profit flavour: batched (see
+    :func:`_profit_similarity_removal`).
+    """
+    if profit_aware:
+        return _profit_similarity_removal(S, n, inst, gen)
+    from logic.src.policies.helpers.operators.destroy_ruin.cluster import cluster_removal as _cr
+
+    nodes = list(range(1, inst.dist.size(1)))
+    return _per_row_ruin(S, n, inst, gen, lambda r, k, d, w, rng: _cr(r, k, d, nodes=nodes, rng=rng))
+
+
+def neighbor_removal(
+    S: torch.Tensor, n: torch.Tensor, inst: VRPPBatch, gen: Optional[torch.Generator], profit_aware: bool = False
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Neighbour removal (``neighbor_removal`` / ``neighbor_profit_removal``).
+
+    Cost flavour: a uniformly random visited seed and the ``min(n, |visited|)`` visited
+    bins closest to it (the seed included). Profit flavour: see
+    :func:`_profit_similarity_removal`.
+    """
+    if profit_aware:
+        return _profit_similarity_removal(S, n, inst, gen)
+    B, M = S.size(0), inst.dist.size(1)
+    dev = S.device
+    b = torch.arange(B, device=dev)
+    inroute = visited(S, M)
+    r = torch.rand(B, M, generator=gen, device=dev)
     seed = torch.where(inroute, r, torch.full_like(r, -1.0)).argmax(dim=1)
-    d = torch.where(inroute, inst.dist[b, seed], torch.full((B, M), BIG, device=dev))
+    d = torch.where(inroute, inst.dist[b, seed], torch.full((B, M), float("inf"), device=dev))
+    d[b, seed] = torch.where(inroute[b, seed], torch.full_like(d[b, seed], -1.0), d[b, seed])
     rank = torch.argsort(torch.argsort(d, dim=1, stable=True), dim=1)
     removed = inroute & (rank < n.unsqueeze(1))
     return delete_nodes(S, removed), removed
 
 
-def neighbor_removal(
-    S: torch.Tensor, n: torch.Tensor, inst: VRPPBatch, gen: Optional[torch.Generator]
-) -> Tuple[torch.Tensor, torch.Tensor]:
-    """Remove the ``n`` visited bins with the largest distance to their route neighbours."""
-    M = inst.dist.size(1)
-    prev, nxt = neighbours(S)
-    b = _bidx(S)
-    score = inst.dist[b, prev, S] + inst.dist[b, S, nxt]
-    score = torch.where(S != 0, -score, torch.full_like(score, BIG))
-    rank = torch.argsort(torch.argsort(score, dim=1, stable=True), dim=1)
-    pos = (rank < n.unsqueeze(1)) & (S != 0)
-    removed = _removed_nodes(S, pos, M)
-    return delete_positions(S, pos), removed
+def savings_insertion(S: torch.Tensor, pending: torch.Tensor, inst: VRPPBatch, profit_aware: bool) -> torch.Tensor:
+    """Savings repair (``savings_insertion`` / ``savings_profit_insertion``).
+
+    Every step inserts the (bin, slot) of largest saving ``d(0,i) + d(i,0) - detour``
+    over the capacity-feasible slots of the existing routes (first in bin-id, route,
+    position order on ties).
+
+    Cost flavour: when no slot fits, the lowest-id pending bin opens a new route (or is
+    dropped when it exceeds the capacity). Profit flavour: only slots with insertion
+    profit ``R w - C detour >= -1e-4`` count, and opening a new route scores 0 for a bin
+    whose round-trip profit clears the dynamic seed hurdle, compared in the same
+    iteration order; the loop stops when nothing qualifies and the result goes through
+    ``prune_unprofitable_routes``.
+    """
+    pending = pending.clone()
+    pending[:, 0] = False
+    B = S.size(0)
+    b = torch.arange(B, device=S.device)
+    for _ in range(int(pending.sum(dim=1).max().item()) if pending.numel() else 0):
+        if not bool(pending.any()):
+            break
+        cand = _candidates(pending)
+        detour, feas, newr, _ = insertion_costs(S, cand, inst)
+        ded = inst.dist[b.unsqueeze(1), 0, cand] + inst.dist[b.unsqueeze(1), cand, 0]
+        saving = ded.unsqueeze(2) - detour
+        existing = feas & ~newr.unsqueeze(1)
+        new_gap = torch.argmax(newr.long(), dim=1)
+        w = torch.gather(inst.waste, 1, cand)
+        if not profit_aware:
+            score = torch.where(existing, saving, torch.full_like(saving, -BIG))
+            flat = score.flatten(1)
+            best = flat.max(dim=1).values
+            arg = flat.argmax(dim=1)
+            has = best > -BIG / 2
+            node = torch.where(has, cand[b, arg // score.size(2)], cand[:, 0])
+            gap = torch.where(has, arg % score.size(2), new_gap)
+            ok_new = torch.gather(inst.waste, 1, cand[:, :1]).squeeze(1) <= inst.capacity
+            act = pending.any(dim=1) & (has | ok_new)
+            S = insert_nodes(S, node, gap, act)
+            done = torch.zeros_like(pending)
+            done[b, node] = True
+            pending = pending & ~(done & pending.any(dim=1).unsqueeze(1))
+        else:
+            prof = (w * inst.R).unsqueeze(2) - inst.C * detour
+            ok = existing & (prof >= -1e-4)
+            score = torch.where(ok, saving, torch.full_like(saving, -BIG))
+            new_profit = w * inst.R - ded * inst.C
+            hurdle = _seed_hurdle(cand, pending, inst, ded)
+            new_ok = (new_profit >= hurdle) & (cand != 0)
+            new_score = torch.where(new_ok, torch.zeros_like(new_profit), torch.full_like(new_profit, -BIG))
+            full = torch.cat([score, new_score.unsqueeze(2)], dim=2)  # per bin: slots, then new route
+            flat = full.flatten(1)
+            best = flat.max(dim=1).values
+            arg = flat.argmax(dim=1)
+            has = (best > -BIG / 2) & pending.any(dim=1)
+            k = arg // full.size(2)
+            g = arg % full.size(2)
+            use_new = g == score.size(2)
+            node = cand[b, k]
+            gap = torch.where(use_new, new_gap, g)
+            S = insert_nodes(S, node, gap, has)
+            done = torch.zeros_like(pending)
+            done[b, node] = True
+            pending = pending & ~(done & has.unsqueeze(1))
+            pending = pending & has.unsqueeze(1)
+    return prune_unprofitable_routes(S, inst) if profit_aware else S
 
 
 # ---------------------------------------------------------------------------

@@ -8,7 +8,8 @@ Same loop as :class:`~logic.src.policies.routing.meta_heuristics.adaptive_large_
 - destroy operators: random, worst, Shaw (+ string, cluster, neighbour with
   ``extended_operators``), in the cost or profit flavour (``profit_aware_operators``);
 - repair slots: greedy and regret-k for ``k`` in ``regret_pool``, each as a clean and a
-  noisy slot (noise ``U[-noise_factor, noise_factor] * max_dist``);
+  noisy slot (noise ``U[-noise_factor, noise_factor] * max_dist``), plus the savings
+  insertion (single slot) with ``regret_pool="regretAll"``;
 - removal count ``U{min(n, 4), max(lower, min(max_removal_cap, int(xi * n_nodes)))}``;
 - roulette-wheel operator choice per instance, sigma_1/2/3 scoring with
   visited-solution tracking, segment weight updates every ``segment_size`` iterations
@@ -85,9 +86,8 @@ class VectorizedALNSEngine:
                 self.repair_k.append(k)
                 self.repair_noisy.append(noisy)
         if cfg.regret_pool == "regretAll":
-            # Savings insertion has no vectorised counterpart; greedy insertion takes its slot.
             self.repair_names.append("Savings" + p)
-            self.repair_k.append(0)
+            self.repair_k.append(-1)
             self.repair_noisy.append(False)
 
     # ------------------------------------------------------------------
@@ -105,10 +105,10 @@ class VectorizedALNSEngine:
         if name.startswith("Shaw"):
             return rs.shaw_removal(S, n, inst, self.cfg.shaw_randomization, self.gen, pa)
         if name.startswith("String"):
-            return rs.string_removal(S, n, inst, self.gen)
+            return rs.string_removal(S, n, inst, self.gen, pa)
         if name.startswith("Cluster"):
-            return rs.cluster_removal(S, n, inst, self.gen)
-        return rs.neighbor_removal(S, n, inst, self.gen)
+            return rs.cluster_removal(S, n, inst, self.gen, pa)
+        return rs.neighbor_removal(S, n, inst, self.gen, pa)
 
     def _repair(self, r: int, S: torch.Tensor, removed: torch.Tensor, inst: VRPPBatch) -> torch.Tensor:
         pa = bool(self.cfg.profit_aware_operators)
@@ -122,6 +122,8 @@ class VectorizedALNSEngine:
             u = torch.rand(S.size(0), generator=self.gen, device=S.device) * 2 - 1
             noise = u * self.cfg.noise_factor * max_d
         k = self.repair_k[r]
+        if k < 0:
+            return rs.savings_insertion(S, pending, inst, pa)
         if k == 0:
             return rs.greedy_insertion(S, pending, inst, pa, noise)
         return rs.regret_insertion(S, pending, inst, k, pa, noise)
