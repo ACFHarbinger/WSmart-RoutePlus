@@ -189,7 +189,7 @@ class SimulationRepository(ABC):
         if not np.isfinite(service_time_h) or service_time_h < 0:
             raise ValueError("service_time_h must be finite and nonnegative")
         if coords is not None and distance_matrix is not None:
-            from logic.src.data.processor.temporal import compute_time_matrix
+            from logic.src.data.time.travel_matrix import compute_time_matrix
 
             return (
                 shift_hours,
@@ -199,3 +199,28 @@ class SimulationRepository(ABC):
         if coords is not None or distance_matrix is not None or tm_filepath is not None:
             raise ValueError("Travel-time loading requires both coordinates and distances")
         return (shift_hours, avg_speed_kmh, service_time_h)
+
+    @staticmethod
+    def get_time_window_params(
+        source: Optional[Any] = None,
+        n_days: Optional[int] = None,
+        **kwargs: Any,
+    ) -> Optional[Any]:
+        """Retrieves the time-window schedule for simulation days.
+
+        Returns a TimeWindowSchedule defining day-level routing availability,
+        or None if no time-window constraints are active.
+
+        Args:
+            source: Path to CSV/Excel file, 3-parameter pattern, dict, or schedule.
+            n_days: Total days in the simulation horizon.
+            **kwargs: Additional pattern parameters (start_day, days_after, interval_between).
+
+        Returns:
+            Optional TimeWindowSchedule instance.
+        """
+        if source is None and not kwargs:
+            return None
+        from logic.src.data.time.time_windows import load_time_windows
+
+        return load_time_windows(source=source, n_days=n_days, **kwargs)

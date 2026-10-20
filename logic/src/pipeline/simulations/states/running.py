@@ -216,6 +216,9 @@ class RunningState(SimState):
         (distance_matrix, paths_between_states, dm_tensor, distancesC) = ctx.dist_tup
 
         display_name = getattr(ctx, "display_name", ctx.pol_name)
+        time_windows = getattr(ctx, "time_windows", None)
+        routing_allowed = True if time_windows is None else time_windows.is_routing_allowed(day)
+
         return SimulationDayContext(
             graph_size=sim.graph.num_loc,
             full_policy=ctx.pol_name,
@@ -259,6 +262,8 @@ class RunningState(SimState):
             vehicle_capacity=float(
                 getattr(ctx, "vehicle_capacity", 100.0) if getattr(ctx, "vehicle_capacity", None) is not None else 100.0
             ),
+            time_windows=time_windows,
+            routing_allowed=routing_allowed,
         )
 
     def _update_ctx_from_day_context(self, ctx, day_context):

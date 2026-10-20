@@ -66,6 +66,8 @@ _PROVIDED = frozenset(
         "seed",
         "n_vehicles",
         "graph_size",
+        "time_windows",
+        "routing_allowed",
     }
 )
 

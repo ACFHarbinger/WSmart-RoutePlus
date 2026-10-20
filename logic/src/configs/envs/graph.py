@@ -12,7 +12,7 @@ Example:
 """
 
 from dataclasses import dataclass, field
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from .objective import ObjectiveConfig
 
@@ -53,6 +53,9 @@ class GraphConfig:
     dm_filepath: Optional[str] = None
     tm_filepath: Optional[str] = None
     time_matrix_unit: str = "seconds"
+    time_windows: Optional[Any] = None
+    time_window_filepath: Optional[str] = None
+    time_window_pattern: Optional[Any] = None
     save_updated_dm: Optional[str] = None
     edge_threshold: Union[float, int, str] = "0"
     edge_method: Optional[str] = None

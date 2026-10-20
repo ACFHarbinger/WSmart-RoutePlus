@@ -79,6 +79,9 @@ class SimConfig:
     shift_hours: float = 7.0
     avg_speed_kmh: float = 35.0
     service_time_h: float = 1.5 / 60.0
+    time_windows: Optional[Any] = None
+    time_window_filepath: Optional[str] = None
+    time_window_pattern: Optional[Any] = None
     days: int = 31
     seed: int = 42
     output_dir: str = "output"

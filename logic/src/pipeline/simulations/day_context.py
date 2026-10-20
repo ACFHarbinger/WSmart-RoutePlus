@@ -139,6 +139,8 @@ class SimulationDayContext:
     avg_speed_kmh: float = 35.0
     service_time_h: float = 1.5 / 60.0
     vehicle_capacity: float = 100.0
+    time_windows: Optional[Any] = None
+    routing_allowed: bool = True
 
     # Optional/Mutable Fields
     daily_log: Optional[Dict[str, Any]] = None
@@ -392,6 +394,60 @@ def get_daily_results(
     return dlog
 
 
+def _run_non_routing_day(
+    context: SimulationDayContext,
+    commands: List[Any],
+    log_actions: List[Any],
+    token: Any,
+) -> SimulationDayContext:
+    """Execute a simulation day where routing is prohibited by time window constraints."""
+    from logic.src.pipeline.learning.envs.common.expand_pool import reset_expand_pool
+    from logic.src.pipeline.simulations.day_setup import apply_shared_bin_rng, shared_env_seed
+
+    wall_start = time.perf_counter()
+    reset_solver_status()
+    context.solver_status = "no_routing"
+    context.metrics_phase = "unset"
+
+    sample_id = getattr(context, "sample_id", 0)
+    try:
+        sample_id = int(sample_id)
+    except (TypeError, ValueError):
+        sample_id = 0
+    env_seed = shared_env_seed(context.seed, sample_id, context.day)
+    apply_shared_bin_rng(context.bins, env_seed)
+
+    try:
+        for command in commands:
+            if command.__class__.__name__ == "FillAction":
+                command.execute(context)
+
+        context.tour = [0]
+        context.cost = 0.0
+        context.profit = 0.0
+        context.ncol = 0
+        context.total_collected = 0.0
+        if getattr(context, "bins", None) is not None:
+            context.collected = np.zeros(context.bins.n)
+        else:
+            context.collected = None
+        context.mandatory = []
+        context.time = 0.0
+        context.time_spent = 0.0
+        context.solver_status = "no_routing"
+        context.metrics_phase = "final"
+
+        for command in log_actions:
+            context.day_wall_time = time.perf_counter() - wall_start
+            command.execute(context)
+    finally:
+        context.day_wall_time = time.perf_counter() - wall_start
+        if isinstance(context.daily_log, dict):
+            context.daily_log["day_wall_time"] = context.day_wall_time
+        reset_expand_pool(token)
+    return context
+
+
 def run_day(context: SimulationDayContext) -> SimulationDayContext:
     """Run one validated day.
 
@@ -449,6 +505,9 @@ def run_day(context: SimulationDayContext) -> SimulationDayContext:
         spec = PROBLEMS.get(problem_name)
     context.problem_spec = spec
     token = set_expand_pool(bool(spec.expand_pool))
+
+    if not getattr(context, "routing_allowed", True):
+        return _run_non_routing_day(context, commands, log_actions, token)
 
     wall_start = time.perf_counter()
     policy_time = 0.0
