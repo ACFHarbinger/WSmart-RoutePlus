@@ -66,6 +66,14 @@ def add_cloud_args(parser: argparse.ArgumentParser) -> None:
     submit.add_argument(
         "--gurobi-secret", default=None, help="Secret-store name of the Gurobi license (never the value)."
     )
+    submit.add_argument("--priority", type=int, default=None, help="Higher runs first when jobs compete (default 0).")
+    submit.add_argument(
+        "--target",
+        action="append",
+        default=None,
+        help="Placement target provider/compute[/region[/machine_type[/spot]]][:max_tasks]; repeat for spill-over.",
+    )
+    submit.add_argument("--pool", action="store_true", help="Run on the warm worker pool (cloud worker --pool).")
     submit.add_argument("--wait", action="store_true", help="Run the scheduler here until the job finishes.")
     submit.add_argument(
         "--no-worker",
@@ -151,3 +159,8 @@ def add_cloud_args(parser: argparse.ArgumentParser) -> None:
     worker.add_argument("--job", default=None, help="Only wait for this job.")
     worker.add_argument("--poll", type=float, default=5.0)
     worker.add_argument("--once", action="store_true", help="Run one scheduling pass and exit.")
+    worker.add_argument(
+        "--pool", action="store_true", help="Be a warm pool worker: run pool jobs' tasks on this machine."
+    )
+    worker.add_argument("--slots", type=int, default=1, help="Pool worker: tasks run at once.")
+    worker.add_argument("--idle", type=float, default=300.0, help="Pool worker: exit after this many idle seconds.")

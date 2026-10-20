@@ -182,6 +182,37 @@ class CellSpec:
 
 
 @dataclass
+class PlacementTarget:
+    """One place a job's tasks may run (CR-09 placement).
+
+    Attributes:
+        provider: Provider.
+        compute: Compute kind on that provider.
+        region: Region, or None for the backend's default.
+        machine_type: Machine type, or None for the job's.
+        spot: Use spot or preemptible capacity there.
+        max_tasks: Quota: tasks running there at once, across all jobs (None: no limit).
+    """
+
+    provider: Provider
+    compute: ComputeKind
+    region: Optional[str] = None
+    machine_type: Optional[str] = None
+    spot: bool = False
+    max_tasks: Optional[int] = None
+
+    def key(self) -> str:
+        """A stable id such as ``gcp/batch/europe-west1/e2-standard-4/spot``."""
+        parts = [
+            Provider(self.provider).value,
+            ComputeKind(self.compute).value,
+            self.region or "-",
+            self.machine_type or "-",
+        ]
+        return "/".join(parts + (["spot"] if self.spot else []))
+
+
+@dataclass
 class JobSpec:
     """What the user submits.
 
@@ -198,6 +229,9 @@ class JobSpec:
         labels: Free-form labels.
         inputs: Paths relative to the project root that remote tasks need (staged to object storage at submit).
         inputs_manifest: Object-store key of the staged inputs manifest (set by the service at submit).
+        priority: Higher runs first when jobs compete for parallelism or quota (CR-09).
+        placement: Where tasks may run (CR-09); empty means ``provider``/``compute`` only.
+        pool: Run on the warm worker pool (``cloud worker --pool``) instead of per-task launches.
     """
 
     name: str
@@ -212,6 +246,9 @@ class JobSpec:
     labels: Dict[str, str] = field(default_factory=dict)
     inputs: List[str] = field(default_factory=lambda: ["data/simulator"])
     inputs_manifest: Optional[str] = None
+    priority: int = 0
+    placement: List[PlacementTarget] = field(default_factory=list)
+    pool: bool = False
 
     def validate(self) -> None:
         """Raise ``ValueError`` for an unrunnable spec."""
@@ -229,6 +266,10 @@ class JobSpec:
             raise ValueError("a cell needs Gurobi but the job has no Gurobi license mode")
         if GurobiMode(self.gurobi) != GurobiMode.NONE and not self.gurobi_secret:
             raise ValueError("a Gurobi license mode needs gurobi_secret (a secret-store name, never the value)")
+        if len({t.key() for t in self.placement}) != len(self.placement):
+            raise ValueError("placement targets must be distinct")
+        if any(t.max_tasks is not None and t.max_tasks < 1 for t in self.placement):
+            raise ValueError("a placement target's max_tasks must be at least 1")
 
 
 @dataclass
@@ -248,6 +289,8 @@ class TaskRecord:
         heartbeat: Unix time of the latest progress or heartbeat.
         started_at: Unix time the current attempt started.
         finished_at: Unix time the task reached a terminal state.
+        placement: :meth:`PlacementTarget.key` of the target the current attempt was placed on (CR-09),
+            or None for the job's own ``provider``/``compute``.
         message: Latest failure or status message.
     """
 
@@ -264,6 +307,7 @@ class TaskRecord:
     started_at: Optional[float] = None
     finished_at: Optional[float] = None
     message: Optional[str] = None
+    placement: Optional[str] = None
 
 
 @dataclass
@@ -347,6 +391,10 @@ def spec_from_dict(data: Dict[str, Any]) -> JobSpec:
     data["compute"] = ComputeKind(data["compute"])
     data["gurobi"] = GurobiMode(data["gurobi"])
     data["resources"] = Resources(**data["resources"])
+    data["placement"] = [
+        PlacementTarget(**{**t, "provider": Provider(t["provider"]), "compute": ComputeKind(t["compute"])})
+        for t in data.get("placement") or []
+    ]
     return JobSpec(**data)
 
 
