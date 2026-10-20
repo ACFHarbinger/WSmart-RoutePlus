@@ -13,7 +13,7 @@ interface PredictionAccuracyCardProps {
 
 export function PredictionAccuracyCard({ analysis }: PredictionAccuracyCardProps) {
   const tasksWithPred = analysis.tasks.filter(
-    (t) => t.expected_wall_seconds != null && t.expected_wall_seconds > 0 && t.duration_seconds != null && t.duration_seconds > 0
+    (t) => t.state === "succeeded" && t.attempt === 1 && t.expected_wall_seconds != null && t.expected_wall_seconds > 0 && t.duration_seconds != null && t.duration_seconds > 0
   );
 
   const hasPredictionData = tasksWithPred.length > 0;

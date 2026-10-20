@@ -500,6 +500,7 @@ mod tests {
                 region: Some("us-east-1".to_string()),
                 price_per_hour: Some(0.034),
                 on_demand_price_per_hour: Some(0.085),
+                cost_source: Some("scheduler_elapsed_price_hint".to_string()),
                 tasks: vec![CloudTaskSummary {
                     task_id: "task-456".to_string(),
                     cell_id: "c0".to_string(),

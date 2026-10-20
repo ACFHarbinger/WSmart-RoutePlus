@@ -103,3 +103,36 @@ describe("recorded cloud analysis data", () => {
     expect(analysis.tasks[1].expected_wall_seconds).toBe(250.0);
   });
 });
+
+
+describe("incomplete and retry telemetry", () => {
+  const task = { task_id: "task", cell_id: "cell", state: "succeeded", attempt: 1,
+    duration: 10, cost: 1, expected_wall_seconds: 12, started_at: 100, finished_at: 110 };
+  const job: CloudJobStatus = { job_id: "job", name: "test", state: "succeeded", counts: {},
+    price_per_hour: 1, tasks: [task] };
+  it("does not expose partial observations as full job totals", () => {
+    const analysis = computeJobAnalysis({ ...job, tasks: [task, {
+      task_id: "missing", cell_id: "cell", state: "queued", attempt: 1,
+    }] });
+    expect(analysis.total_compute_seconds).toBeNull();
+    expect(analysis.total_wall_seconds).toBeNull();
+    expect(analysis.accrued_cost_usd).toBeNull();
+    expect(analysis.estimated_cost_usd).toBeNull();
+  });
+  it("does not infer retry totals from current-attempt timestamps", () => {
+    expect(extractTaskDuration({ ...task, attempt: 2, duration: undefined })).toBeNull();
+  });
+  it("rejects invalid observations", () => {
+    for (const duration of [-1, Infinity, NaN]) {
+      const analysis = computeJobAnalysis({ ...job, tasks: [{ ...task, duration }] });
+      expect(analysis.total_compute_seconds).toBeNull();
+    }
+  });
+  it("uses observed running interval endpoints without inventing retry end times", () => {
+    const analysis = computeJobAnalysis({ ...job, tasks: [{ ...task,
+      state: "running", attempt: 2, started_at: 0, finished_at: 200, duration: 100,
+    }] });
+    expect(analysis.total_compute_seconds).toBe(100);
+    expect(analysis.total_wall_seconds).toBe(200);
+  });
+});

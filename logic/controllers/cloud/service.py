@@ -75,22 +75,19 @@ class RemoteConfig:
 
 
 def extract_policy_from_cell(cell: CellSpec) -> Optional[str]:
-    """Extract policy identity from a cell's argv or policy directory."""
+    """Return a single explicitly requested policy; paths and multiple policies are ambiguous."""
     argv = cell.argv or []
-    for i, arg in enumerate(argv):
-        if arg in ("--policies", "-p") and i + 1 < len(argv):
-            val = argv[i + 1]
-            if not val.startswith("-"):
-                return val
-    for arg in argv:
-        if arg.startswith(("sim.policies=", "policies=")):
-            val = arg.split("=", 1)[1].strip("'\"[]")
-            if val:
-                return val
-    if cell.policy_dir:
-        name = Path(cell.policy_dir).name
-        if name and name not in ("policies", "config", "configs"):
-            return name
+    for index, arg in enumerate(argv):
+        if arg in ("--policies", "-p"):
+            values = []
+            for value in argv[index + 1 :]:
+                if value.startswith("-") or "=" in value:
+                    break
+                values.append(value)
+            return values[0] if len(values) == 1 else None
+        if arg.startswith(("sim.policies=", "policies=", "--policies=")):
+            values = [value.strip(" '\"[]") for value in arg.split("=", 1)[1].split(",")]
+            return values[0] if len(values) == 1 and values[0] else None
     return None
 
 
@@ -403,6 +400,32 @@ class CloudService:
             pass
         return None
 
+    def _task_attempt_intervals(
+        self,
+        task: TaskRecord,
+        events: Sequence[Event],
+    ) -> List[Tuple[float, float]]:
+        """Scheduler-observed attempt intervals, including the current open attempt."""
+        intervals: List[Tuple[float, float]] = []
+        attempt_start: Optional[float] = None
+        for event in events:
+            if event.task_id != task.task_id or event.kind != "state":
+                continue
+            to_state = event.data.get("to")
+            if to_state in ("starting", "running") and attempt_start is None:
+                attempt_start = event.at
+            elif to_state in ("succeeded", "failed", "cancelled", "preempted") and attempt_start is not None:
+                if event.at >= attempt_start:
+                    intervals.append((attempt_start, event.at))
+                attempt_start = None
+        if attempt_start is not None and task.state in ACTIVE:
+            intervals.append((attempt_start, max(attempt_start, self.clock())))
+        if not intervals and task.started_at is not None and task.attempt == 1:
+            end = task.finished_at if task.finished_at is not None else (self.clock() if task.state in ACTIVE else None)
+            if end is not None and end >= task.started_at:
+                intervals.append((task.started_at, end))
+        return intervals
+
     def _task_duration_and_cost(
         self,
         task: TaskRecord,
@@ -410,46 +433,27 @@ class CloudService:
         price_per_hour: Optional[float],
         provider: Provider,
     ) -> Tuple[Optional[float], Optional[float]]:
-        """Compute execution duration and accrued billed cost across attempts."""
-        intervals: List[Tuple[float, float]] = []
-        task_events = [e for e in events if e.task_id == task.task_id]
+        """Return scheduler elapsed seconds and a prorated price-hint estimate.
 
-        attempt_start: Optional[float] = None
-        for e in task_events:
-            to_state = e.data.get("to")
-            if to_state in ("starting", "running") and attempt_start is None:
-                attempt_start = e.at
-            elif to_state in ("succeeded", "failed", "cancelled", "preempted") and attempt_start is not None:
-                intervals.append((attempt_start, e.at))
-                attempt_start = None
-
-        if attempt_start is not None and task.state in ACTIVE:
-            intervals.append((attempt_start, self.clock()))
-
-        if not intervals and task.started_at is not None:
-            end_t = (
-                task.finished_at if task.finished_at is not None else (self.clock() if task.state in ACTIVE else None)
-            )
-            if end_t is not None and end_t >= task.started_at:
-                intervals.append((task.started_at, end_t))
-
-        if not intervals:
+        These are not provider allocation records or invoiced charges. Billing
+        minimums and rounding vary by product and cannot be inferred from provider.
+        """
+        intervals = self._task_attempt_intervals(task, events)
+        # A retry without complete attempt history must not appear as a full total.
+        if not intervals or len(intervals) < task.attempt:
             return None, None
-
-        total_duration = sum(max(0.0, end - start) for start, end in intervals)
-        if price_per_hour is None:
-            return total_duration, None
-
-        is_cloud = provider in (Provider.AWS, Provider.GCP, Provider.AZURE)
-        billed_seconds = sum(max(60.0, end - start) if is_cloud else max(0.0, end - start) for start, end in intervals)
-        cost = round((billed_seconds / 3600.0) * price_per_hour, 6)
-        return total_duration, cost
+        duration = sum(end - start for start, end in intervals)
+        cost = None if price_per_hour is None else round(duration / 3600.0 * price_per_hour, 6)
+        return duration, cost
 
     def status(self, job_id: str) -> Dict[str, Any]:
         """A job's state and per-task summary."""
         job = self.cp.get_job(job_id)
         tasks = self.cp.list_tasks(job_id)
-        events = self.cp.list_events(job_id)
+        events_by_task: Dict[str, List[Event]] = {}
+        for event in self.cp.list_events(job_id):
+            if event.task_id is not None:
+                events_by_task.setdefault(event.task_id, []).append(event)
         counts: Dict[str, int] = {}
         for task in tasks:
             counts[task.state.value] = counts.get(task.state.value, 0) + 1
@@ -464,7 +468,9 @@ class CloudService:
 
         task_summaries = []
         for t in tasks:
+            events = events_by_task.get(t.task_id, [])
             dur, cost = self._task_duration_and_cost(t, events, price_per_hour, provider)
+            intervals = self._task_attempt_intervals(t, events)
             task_summaries.append(
                 {
                     "task_id": t.task_id,
@@ -472,8 +478,8 @@ class CloudService:
                     "state": t.state.value,
                     "attempt": t.attempt,
                     "message": t.message,
-                    "started_at": t.started_at,
-                    "finished_at": t.finished_at,
+                    "started_at": intervals[0][0] if intervals else None,
+                    "finished_at": intervals[-1][1] if intervals else None,
                     "duration": dur,
                     "expected_wall_seconds": t.cell.expected_wall_seconds,
                     "policy": extract_policy_from_cell(t.cell),
@@ -493,6 +499,7 @@ class CloudService:
             "region": region,
             "price_per_hour": price_per_hour,
             "on_demand_price_per_hour": on_demand_price_per_hour,
+            "cost_source": "scheduler_elapsed_price_hint",
             "tasks": task_summaries,
         }
 

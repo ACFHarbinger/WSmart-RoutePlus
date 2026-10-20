@@ -34,9 +34,9 @@ describe("CostAccrualCard (CR-16 / CR-10)", () => {
 
   it("renders pending calibration when estimated_cost_usd is null", () => {
     render(<CostAccrualCard analysis={mockBaseAnalysis} />);
-    expect(screen.getByText(/Cost & Budget Accrual \(CR-10\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/Unbounded \/ No Cap/i)).toBeInTheDocument();
-    expect(screen.getByText(/Pending CR-10 model calibration/i)).toBeInTheDocument();
+    expect(screen.getByText(/Compute Cost Estimates/i)).toBeInTheDocument();
+    expect(screen.getByText(/Estimate unavailable/i)).toBeInTheDocument();
+    expect(screen.getByText(/No runtime predictions available/i)).toBeInTheDocument();
     expect(screen.getByText(/\$0\.0425/i)).toBeInTheDocument();
   });
 

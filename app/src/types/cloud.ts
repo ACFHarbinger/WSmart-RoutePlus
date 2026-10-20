@@ -39,6 +39,7 @@ export interface CloudJobStatus {
   region?: string | null;
   price_per_hour?: number | null;
   on_demand_price_per_hour?: number | null;
+  cost_source?: string | null;
   tasks: CloudTaskSummary[];
 }
 

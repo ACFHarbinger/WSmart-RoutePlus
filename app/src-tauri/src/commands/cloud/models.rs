@@ -62,6 +62,8 @@ pub struct CloudJobStatus {
     #[serde(default)]
     pub on_demand_price_per_hour: Option<f64>,
     #[serde(default)]
+    pub cost_source: Option<String>,
+    #[serde(default)]
     pub tasks: Vec<CloudTaskSummary>,
 }
 

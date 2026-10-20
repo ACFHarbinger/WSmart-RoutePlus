@@ -94,4 +94,12 @@ describe("PredictionAccuracyCard (CR-16 / CR-11)", () => {
     expect(screen.getByText("Mean absolute error: 66.7%")).toBeInTheDocument();
   });
 
+  it("does not treat running or retried aggregate time as a completed prediction sample", () => {
+    render(<PredictionAccuracyCard analysis={{ ...mockBaseAnalysis, tasks: [
+      { ...mockBaseAnalysis.tasks[0], state: "running", expected_wall_seconds: 100 },
+      { ...mockBaseAnalysis.tasks[1], attempt: 2, expected_wall_seconds: 100 },
+    ] }} />);
+    expect(screen.getByText(/No Pre-Run Runtime Predictions Available/i)).toBeInTheDocument();
+  });
+
 });

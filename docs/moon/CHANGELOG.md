@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Codex CR-16 telemetry review corrections (`2026-10-20`)
+
+- Align retry-wide timestamp spans with summed attempt durations; preserve unavailable/invalid totals and policy identity; restrict prediction accuracy to completed single-attempt samples. Monetary values are prorated scheduler-time/price-hint estimates with transported provenance, not invoiced costs or universal provider billing minimums. Index lifecycle events by task. Validation: 12 Python service, 95 frontend and 18 Rust cloud tests pass, plus TypeScript/Ruff/diff checks.
+
 ### Learning config layout (`2026-10-20`)
 
 #### Changed
