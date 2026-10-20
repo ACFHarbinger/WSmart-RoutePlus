@@ -241,8 +241,6 @@ class AdaptiveRoutingAlgorithmOrchestrator(ARCOWeightsMixin, BaseRoutingPolicy):
 
         Returns:
             5-tuple: (tour, cost, profit, search_context, multi_day_context).
-        Args:
-            kwargs: Description of kwargs.
         """
         self._initialize_constructors()
 
@@ -312,6 +310,10 @@ class AdaptiveRoutingAlgorithmOrchestrator(ARCOWeightsMixin, BaseRoutingPolicy):
         """
         Return the greedy-optimal routing algorithm sequence given current weights.
 
+        Selection is forced to greedy via explicit ``strategy``/``epsilon``
+        overrides, so ``params.selection_strategy`` and ``params.epsilon``
+        are never touched: the method is re-entrant and exception-safe.
+
         Useful for logging or inspection after online learning has converged.
 
         Returns:
@@ -321,17 +323,7 @@ class AdaptiveRoutingAlgorithmOrchestrator(ARCOWeightsMixin, BaseRoutingPolicy):
         assert self._w_first is not None
         assert self._W is not None
 
-        # Temporarily override strategy with greedy for read-only extraction
-        original_strategy = self.params.selection_strategy
-        original_epsilon = self.params.epsilon
-        self.params.selection_strategy = "greedy"
-        self.params.epsilon = 0.0
-
-        idx_seq = self._select_sequence()
-
-        self.params.selection_strategy = original_strategy
-        self.params.epsilon = original_epsilon
-
+        idx_seq = self._select_sequence(strategy="greedy", epsilon=0.0)
         return [self._constructor_names[i] for i in idx_seq]
 
     # ------------------------------------------------------------------
