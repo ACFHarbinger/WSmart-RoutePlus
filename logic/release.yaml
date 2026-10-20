@@ -102,7 +102,7 @@ excluded_packages:
   - logic.test                                       # `test_suite` CLI job runner (jobs/ops_runner.py); the release ships the curated test files (P-06), not the runner
 
 # Notes:
-# - `packages/wsmart_bin_analysis` (RQ-grok-7 a, moved by WP-08) ships vendored: the
+# - `logic/submodules/WSmart-Bin-Analysis` (RQ-grok-7 a, moved to logic/submodules/) ships vendored: the
 #   builder copies its runtime modules (`__init__.py`, `export/`, `python/`) and the
 #   release pyproject adds matplotlib, which it imports on load.
 # - Q-16a is open: the released routing adapters (through base_routing_policy ->

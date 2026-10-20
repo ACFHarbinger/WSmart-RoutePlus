@@ -51,7 +51,7 @@ for pkg in ("gurobipy", "ortools", "fast_tsp"):
 datas = [
     (os.path.join(ROOT, "logic/configs"), "logic/configs"),
     (os.path.join(ROOT, "logic/src/tracking/logging/modules/popup.html"), "logic/src/tracking/logging/modules"),
-    (os.path.join(ROOT, "logic/src/pipeline/simulations/wsmart_bin_analysis/LICENSE"), "logic/src/pipeline/simulations/wsmart_bin_analysis"),
+    (os.path.join(ROOT, "logic/submodules/WSmart-Bin-Analysis/LICENSE"), "logic/submodules/WSmart-Bin-Analysis"),
 ]
 datas += _solver_datas
 # Hydra ships its own config files; Lightning reads version files at import.

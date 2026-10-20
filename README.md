@@ -552,7 +552,7 @@ This project adapts code and ideas from:
 
 - [Attention, Learn to Solve Routing Problems](https://github.com/wouterkool/attention-learn-to-route)
 - [POMO: Policy Optimization with Multiple Optima](https://github.com/yd-kwon/POMO/tree/master)
-- [WSmart+ Bin Analysis](https://github.com/ACFPeacekeeper/wsmart_bin_analysis)
+- [WSmart+ Bin Analysis](https://github.com/ACFHarbinger/WSmart-Bin-Analysis)
 - [Do We Need Anisotropic Graph Neural Networks?](https://github.com/shyam196/egc)
 - [Learning TSP Requires Rethinking Generalization](https://github.com/chaitjo/learning-tsp)
 - [HGS-CVRP](https://github.com/vidalt/HGS-CVRP)
