@@ -7,7 +7,7 @@
  * - Resource sizing (parallel tasks, CPUs, RAM, spot capacity, retries, timeouts).
  * - Gurobi WLS secret management.
  * - Live CLI command preview.
- * - Resource & cost estimation panel (CR-10 pending).
+ * - Machine type, region and budget cap, with the CR-10 cost and ETA estimate.
  */
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
@@ -27,7 +27,9 @@ import { useAppStore } from "../../store/app";
 import { useCloudLauncherStore } from "../../store/launchers";
 import type { CloudBackendEntry, CloudSubmitRequest } from "../../types/cloud";
 import { listCloudBackends, submitCloudJob } from "../../utils/cloud";
+import { CostLimitsFields } from "../../components/cloud/CostLimitsFields";
 import { EstimatePanel } from "../../components/cloud/EstimatePanel";
+import { useCloudEstimate } from "../../hooks/cloud/useCloudEstimate";
 import { ProviderSelector } from "../../components/cloud/ProviderSelector";
 
 const PRESET_COMMANDS = [
@@ -65,6 +67,9 @@ export function CloudLauncher() {
     idleSeconds,
     gurobiMode,
     gurobiSecret,
+    machineType,
+    region,
+    budgetUsd,
     root,
     patch,
   } = useCloudLauncherStore();
@@ -167,6 +172,10 @@ export function CloudLauncher() {
       }
     }
 
+    if (machineType.trim()) parts.push("--machine-type", machineType.trim());
+    if (region.trim()) parts.push("--region", region.trim());
+    if (budgetUsd > 0) parts.push("--budget", String(budgetUsd));
+
     return parts.join(" ");
   }, [
     root,
@@ -186,7 +195,28 @@ export function CloudLauncher() {
     idleSeconds,
     gurobiMode,
     gurobiSecret,
+    machineType,
+    region,
+    budgetUsd,
   ]);
+
+  // CR-10: what the job would cost and how long it would take, before submitting.
+  const estimateRequest = useMemo<CloudSubmitRequest | null>(() => {
+    const source = jobType === "manifest" ? manifestPath.trim() : command.trim();
+    if (!source) return null;
+    return {
+      ...(jobType === "manifest"
+        ? { manifest: source, policy: policyFilter.trim() || undefined }
+        : { command: source }),
+      provider,
+      compute,
+      max_parallel: maxParallel,
+      spot,
+      machine_type: machineType.trim() || undefined,
+      region: region.trim() || undefined,
+    };
+  }, [jobType, manifestPath, command, policyFilter, provider, compute, maxParallel, spot, machineType, region]);
+  const estimate = useCloudEstimate(estimateRequest, { projectRoot, root });
 
   const handleCopyCli = () => {
     navigator.clipboard.writeText(cliPreview);
@@ -228,6 +258,9 @@ export function CloudLauncher() {
         idle: idleSeconds,
         gurobi: gurobiMode,
         gurobi_secret: gurobiSecret.trim() || undefined,
+        machine_type: machineType.trim() || undefined,
+        region: region.trim() || undefined,
+        budget: budgetUsd > 0 ? budgetUsd : undefined,
       };
 
       if (jobType === "manifest") {
@@ -629,7 +662,10 @@ export function CloudLauncher() {
         </div>
 
         {/* Section 5: Cost & ETA Estimation (CR-10) */}
-        <EstimatePanel estimate={null} />
+        <div className="card bg-canvas-surface border border-canvas-border rounded-xl p-4">
+          <CostLimitsFields machineType={machineType} region={region} budgetUsd={budgetUsd} onChange={patch} />
+        </div>
+        <EstimatePanel estimate={estimate} />
 
         {/* Section 6: CLI Command Preview & Launch */}
         <div className="card bg-canvas-surface border border-canvas-border rounded-xl p-4 space-y-3">

@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from logic.controllers.cloud.local.backend import LocalProcessBackend
 from logic.controllers.cloud.local.control_plane import SQLiteControlPlane
@@ -39,6 +39,10 @@ def local_service(root: Path, project_root: Optional[Path] = None) -> CloudServi
     project_root = Path(project_root) if project_root else REPO_ROOT
     secrets = EnvSecretStore(prefix="WSR_SECRET_")
     cp = SQLiteControlPlane(root / "control.db")
+    from logic.controllers.cloud.cost import BudgetPolicy, PriceTable
+
+    budget_file = root / "budget.json"
+    budget = BudgetPolicy(**json.loads(budget_file.read_text())) if budget_file.is_file() else None
 
     def predictor():
         from logic.controllers.cloud.prediction import fitted_predictor
@@ -51,6 +55,8 @@ def local_service(root: Path, project_root: Optional[Path] = None) -> CloudServi
         backends={(Provider.LOCAL, ComputeKind.PROCESS): LocalProcessBackend(cwd=project_root, secrets=secrets)},
         workroot=root / "work",
         predictor_factory=predictor,
+        prices=PriceTable(root / "prices.json"),
+        budget=budget,
     )
 
 
@@ -70,6 +76,9 @@ def _spec_overrides(opts: Dict[str, Any]) -> Dict[str, Any]:
         "max_wall_seconds": opts.get("max_wall"),
         "idle_seconds": opts.get("idle"),
         "spot": True if opts.get("spot") else None,
+        "machine_type": opts.get("machine_type"),
+        "region": opts.get("region"),
+        "budget_usd": opts.get("budget"),
     }
     if any(value is not None for value in resource_fields.values()):
         defaults = to_dict(Resources())
@@ -224,6 +233,80 @@ def _predict(ctx: _Context) -> Any:
     return payload
 
 
+def _cost(ctx: _Context) -> Any:
+    from logic.controllers.cloud.cost import import_billing_csv
+
+    opts, service = ctx.opts, ctx.service
+    action = opts["cost_command"]
+    if action == "prices":
+        price = service.prices.price_per_hour(opts["provider"], opts["machine_type"], opts.get("region"), False)
+        spot = service.prices.price_per_hour(opts["provider"], opts["machine_type"], opts.get("region"), True)
+        payload = {
+            "provider": opts["provider"],
+            "machine_type": opts["machine_type"],
+            "on_demand_usd_h": price,
+            "spot_usd_h": spot,
+        }
+        _print(opts, payload, f"{opts['machine_type']}: on demand {price} USD/h, spot {spot} USD/h")
+        return payload
+    if action == "import-billing":
+        totals = import_billing_csv(service.cp, Path(opts["path"]), opts["provider"], service.clock())
+        _print(opts, {"jobs": totals}, f"recorded billing for {len(totals)} job(s)")
+        return totals
+    if action == "show":
+        job = service.cp.get_job(opts["job_id"])
+        tasks = service.cp.list_tasks(job.job_id)
+        costs = service._task_costs(job, tasks)
+        events = service.cp.list_events(job.job_id)
+        billing = [e.data for e in events if e.kind == "billing"]
+        payload = {
+            "job_id": job.job_id,
+            "accrued_usd": service.job_accrued(job, tasks),
+            "budget_usd": job.spec.resources.budget_usd,
+            "month_accrued_usd": service.month_accrued(service.clock()),
+            "monthly_budget_usd": service.budget.monthly_usd if service.budget else None,
+            "estimate": next((e.data for e in reversed(events) if e.kind == "cost_estimate"), None),
+            "billing": billing[-1] if billing else None,
+            "tasks": [
+                {"task_id": t, "elapsed_s": c[0], "accrued_usd": c[1], "rate_usd_h": c[2]} for t, c in costs.items()
+            ],
+        }
+        _print(opts, payload, f"{job.job_id}: {payload['accrued_usd']} USD accrued (cap {payload['budget_usd']})")
+        return payload
+    overrides = {k: v for k, v in _spec_overrides(opts).items() if v is not None}
+    if opts.get("manifest"):
+        spec = load_manifest(Path(opts["manifest"]), policy=opts.get("policy"), **overrides)
+    else:
+        spec = job_from_command(opts["sim_command"], **overrides)
+    predictions = service.predict(spec)
+    estimate = service.estimate(spec, predictions) if predictions is not None else None
+    if estimate is None:
+        _print(opts, None, "no estimate (no runtime predictor)")
+        return None
+    payload = estimate.to_dict()
+    payload.update(
+        cost_usd=estimate.mid,
+        eta_seconds=_makespan([p.p50 for p in predictions if p.p50 is not None], spec.max_parallel),
+        memory_required_gb=max((p.memory_gb for p in predictions), default=None),
+        hourly_rate_usd=estimate.price_per_hour,
+        provider=Provider(spec.provider).value,
+        compute=ComputeKind(spec.compute).value,
+        source=f"CR-10 estimate: p50 of {len(estimate.cells)} cell(s), range {estimate.low}-{estimate.high} USD",
+    )
+    _print(opts, payload, f"{estimate.mid} USD ({estimate.low}-{estimate.high}) at {estimate.price_per_hour} USD/h")
+    return payload
+
+
+def _makespan(seconds: List[float], slots: int) -> Optional[float]:
+    """Longest-first list scheduling of the cells' p50 times onto ``slots`` parallel tasks."""
+    if not seconds:
+        return None
+    loads = [0.0] * max(1, slots)
+    for value in sorted(seconds, reverse=True):
+        loads[loads.index(min(loads))] += value
+    return round(max(loads), 1)
+
+
 def _cancel(ctx: _Context) -> Any:
     job_id = ctx.opts["job_id"]
     ctx.service.cancel(job_id)
@@ -298,6 +381,7 @@ _COMMANDS: Dict[str, Callable[[_Context], Any]] = {
     "metrics": _metrics,
     "track": _track,
     "predict": _predict,
+    "cost": _cost,
     "cancel": _cancel,
     "retry": _retry,
     "download": _download,

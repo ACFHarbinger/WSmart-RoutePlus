@@ -145,6 +145,8 @@ class Resources:
         max_retries: Automatic retries after a failure or preemption.
         machine_type: Provider machine type, or None for the backend's default.
         region: Provider region, or None for the backend's default.
+        budget_usd: The job's cost cap in USD (CR-10): a submit whose estimate exceeds it is
+            refused, and the job is cancelled when its accrued cost reaches it (None: no cap).
     """
 
     cpus: float = 1.0
@@ -155,6 +157,7 @@ class Resources:
     max_retries: int = 2
     machine_type: Optional[str] = None
     region: Optional[str] = None
+    budget_usd: Optional[float] = None
 
 
 @dataclass
