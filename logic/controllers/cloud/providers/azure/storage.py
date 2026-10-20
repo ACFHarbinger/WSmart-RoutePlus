@@ -13,7 +13,7 @@ from typing import Any, List, Optional
 from logic.controllers.cloud.interfaces import ObjectStore
 from logic.controllers.cloud.model import ResultFile
 from logic.controllers.cloud.providers.azure._sdk import make_blob_service_client
-from logic.controllers.cloud.storage import sha256_file
+from logic.controllers.cloud.store.storage import sha256_file
 
 
 class BlobObjectStore(ObjectStore):
@@ -132,4 +132,23 @@ class BlobObjectStore(ObjectStore):
             blob_client.delete_blob()
 
 
-__all__ = ["BlobObjectStore"]
+def store_from_uri(parsed: Any, **kwargs: Any) -> BlobObjectStore:
+    """Create BlobObjectStore from a parsed az:// URI.
+
+    URI format: az://<account>/<container>[/<prefix>]
+    """
+    account = parsed.netloc
+    path = parsed.path.lstrip("/")
+    parts = path.split("/", 1)
+    container = parts[0] if parts and parts[0] else "wsr-data"
+    prefix = parts[1] if len(parts) > 1 else ""
+    account_url = f"https://{account}.blob.core.windows.net" if account else None
+    return BlobObjectStore(
+        container=container,
+        prefix=prefix,
+        account_url=account_url,
+        **kwargs,
+    )
+
+
+__all__ = ["BlobObjectStore", "store_from_uri"]

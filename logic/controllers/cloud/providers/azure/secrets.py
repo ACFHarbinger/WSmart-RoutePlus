@@ -55,7 +55,12 @@ class KeyVaultSecretStore(SecretStore):
         except Exception as exc:
             status = getattr(exc, "status_code", None)
             code = getattr(exc, "error_code", None)
-            if status == 404 or code == "SecretNotFound" or isinstance(exc, KeyError) or "not found" in str(exc).lower():
+            if (
+                status == 404
+                or code == "SecretNotFound"
+                or isinstance(exc, KeyError)
+                or "not found" in str(exc).lower()
+            ):
                 return None
             return None
 
@@ -70,6 +75,12 @@ class KeyVaultSecretStore(SecretStore):
                 self.client.begin_delete_secret(secret_name)
             elif hasattr(self.client, "delete_secret"):
                 self.client.delete_secret(secret_name)
+
+    def get_secret_url(self, name: str) -> str:
+        """Get the full Key Vault secret URL."""
+        secret_name = self._sanitize_name(name)
+        base = self.vault_url.rstrip("/")
+        return f"{base}/secrets/{secret_name}"
 
 
 __all__ = ["KeyVaultSecretStore"]

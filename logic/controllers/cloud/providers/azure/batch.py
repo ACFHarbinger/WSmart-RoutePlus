@@ -7,6 +7,7 @@ Attributes:
 from __future__ import annotations
 
 import contextlib
+import json
 from typing import Any, Dict, List, Optional
 
 from logic.controllers.cloud.interfaces import (
@@ -25,12 +26,21 @@ from logic.controllers.cloud.providers.azure.pricing import price_per_hour
 class AzureBatchBackend(ComputeBackend):
     """Azure Batch compute backend.
 
+    Note:
+        The Azure Batch pool must be container-enabled and configured with the user-assigned
+        managed identity referenced by ``identity_id``. This identity is required both for
+        authenticating to private Azure Container Registry (ACR) instances and for resolving
+        ``akv://`` Key Vault secret references at runtime.
+
     Args:
         client: Pre-configured BatchServiceClient (injected for testing).
         pool_id: Azure Batch pool identifier.
         pool_id_spot: Optional Azure Batch pool using Spot / Low-Priority nodes.
         job_id: Azure Batch job identifier.
         batch_url: Azure Batch account URL.
+        vault_name: Azure Key Vault name for secret references.
+        registry_server: Optional container registry server (e.g. 'myacr.azurecr.io').
+        identity_id: User-assigned managed identity resource ID for ACR and Key Vault access.
         profile: Azure credentials profile name.
         region: Azure region.
     """
@@ -45,6 +55,9 @@ class AzureBatchBackend(ComputeBackend):
         pool_id_spot: Optional[str] = None,
         job_id: str = "wsr-jobs",
         batch_url: Optional[str] = None,
+        vault_name: str = "wsr-vault",
+        registry_server: Optional[str] = None,
+        identity_id: Optional[str] = None,
         profile: str = "default",
         region: str = "eastus",
     ) -> None:
@@ -53,6 +66,12 @@ class AzureBatchBackend(ComputeBackend):
         self.pool_id_spot = pool_id_spot or f"{pool_id}-spot"
         self.job_id = job_id
         self.batch_url = batch_url or "https://wsrbatch.eastus.batch.azure.com"
+        self.vault_name = vault_name
+        self.registry_server = registry_server
+        self.identity_id = (
+            identity_id
+            or "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/wsr-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/wsr-batch-identity"
+        )
         self.profile = profile
         self.region = region
 
@@ -94,12 +113,18 @@ class AzureBatchBackend(ComputeBackend):
         task_id = f"task-{launch.task.task_id}"
         pool_id = self.pool_id_spot if launch.resources.spot else self.pool_id
 
-        env_settings = [{"name": k, "value": str(v)} for k, v in sorted(launch.env.items())]
-        # Native secret references
+        env = dict(launch.env)
+        env.setdefault("WSR_JOB_ID", launch.task.job_id)
+        env.setdefault("WSR_TASK_ID", launch.task.task_id)
+
+        # Inject secrets via WSR_SECRET_REFS (common secret path)
         if launch.secret_env:
-            env_settings.extend(
-                [{"name": k, "value": f"@Microsoft.KeyVault(SecretUri={v})"} for k, v in sorted(launch.secret_env.items())]
-            )
+            secret_refs = {
+                var: f"akv://{self.vault_name}/{sec_name}" for var, sec_name in sorted(launch.secret_env.items())
+            }
+            env["WSR_SECRET_REFS"] = json.dumps(secret_refs)
+
+        env_settings = [{"name": k, "value": str(v)} for k, v in sorted(env.items())]
 
         cmd_line = " ".join(launch.argv)
         task_data: Dict[str, Any] = {
@@ -114,8 +139,19 @@ class AzureBatchBackend(ComputeBackend):
                 "max_wall_clock_time": f"PT{int(launch.resources.max_wall_seconds)}S",
             }
 
-        if launch.image:
-            task_data["container_settings"] = {"image_name": launch.image}
+        image = launch.image or "wsmart-route:latest"
+        registry = image.split("/", 1)[0] if "/" in image else ""
+        container_settings: Dict[str, Any] = {"image_name": image}
+
+        # Private ACR images require registry settings with identity reference on container-enabled pools
+        if ".azurecr.io" in registry or self.registry_server:
+            reg_server = self.registry_server or registry
+            reg_dict: Dict[str, Any] = {"registry_server": reg_server}
+            if self.identity_id:
+                reg_dict["identity_reference"] = {"resource_id": self.identity_id}
+            container_settings["registry"] = reg_dict
+
+        task_data["container_settings"] = container_settings
 
         self.client.task.add(job_id=self.job_id, task=task_data)
         return f"azure-batch:{self.region}:{self.job_id}:{task_id}"
@@ -131,12 +167,17 @@ class AzureBatchBackend(ComputeBackend):
             return BackendStatus(AttemptState.UNKNOWN, message="no such task")
 
         state = getattr(task, "state", None) or task.get("state", "")
+        pool_id = getattr(task, "pool_id", "") or (task.get("pool_id", "") if isinstance(task, dict) else "")
+        is_spot = (pool_id == self.pool_id_spot) or ("-spot" in str(pool_id))
+
         exec_info = getattr(task, "execution_info", None) or task.get("execution_info", {})
         exit_code = getattr(exec_info, "exit_code", None) if exec_info else None
         if exit_code is None and isinstance(exec_info, dict):
             exit_code = exec_info.get("exit_code")
 
-        failure_info = getattr(exec_info, "failure_info", None) or (exec_info.get("failure_info") if isinstance(exec_info, dict) else None)
+        failure_info = getattr(exec_info, "failure_info", None) or (
+            exec_info.get("failure_info") if isinstance(exec_info, dict) else None
+        )
         fail_msg = str(failure_info) if failure_info else ""
 
         if state in ("active", "preparing"):
@@ -151,6 +192,7 @@ class AzureBatchBackend(ComputeBackend):
             is_preempted = (
                 getattr(exec_info, "preempted", False)
                 or (isinstance(exec_info, dict) and exec_info.get("preempted", False))
+                or (exit_code == 143 and is_spot)
                 or any(term in fail_lower for term in ("spot", "preempt", "lowpriority", "evicted", "node unallocated"))
             )
             if is_preempted:
@@ -174,12 +216,7 @@ class AzureBatchBackend(ComputeBackend):
         log_lines: List[str] = []
 
         try:
-            task = self.client.task.get(job_id=job_id, task_id=task_id)
-            if hasattr(task, "_log_lines"):
-                log_lines = list(task._log_lines)
-            elif isinstance(task, dict) and "_log_lines" in task:
-                log_lines = list(task["_log_lines"])
-            elif hasattr(self.client, "file"):
+            if hasattr(self.client, "file"):
                 stream = self.client.file.get_from_task(job_id=job_id, task_id=task_id, file_path="stdout.txt")
                 data = stream.read() if hasattr(stream, "read") else bytes(stream)
                 log_lines = data.decode("utf-8", errors="replace").splitlines()
