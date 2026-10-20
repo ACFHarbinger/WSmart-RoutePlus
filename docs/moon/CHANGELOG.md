@@ -17,6 +17,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Remaining test failures and Launcher scheduling fields (`2026-10-20`)
+
+#### Fixed
+
+- `test_integration.py::test_sim_sequential_basic` and `::test_sim_policy_neural_mock`: their mock routing adapters returned the old 3-tuple; they now return the routing contract `(tour, cost, profit, search_context, multi_day_context)`.
+- `test_hrl_manager.py::test_gatlst_manager_init` checked `MandatoryManager.hidden_dim`, the compatibility alias removed in `e33884f49`; it now checks `embed_dim` (`hidden_dim` remains the legacy constructor argument).
+
+#### Added
+
+- **Launcher**: priority, placement targets (one per line) and warm pool inputs (`PlacementFields`) for the CR-09 scheduler. They are added to the CLI preview and passed by `cloud_submit` (`--priority`, `--target`, `--pool`).
+
 ### Cloud runner CR-17: docs, release extra, CI gate and close-out fixes (`2026-10-20`)
 
 #### Added
