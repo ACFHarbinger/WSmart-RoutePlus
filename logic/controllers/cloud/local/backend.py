@@ -33,6 +33,8 @@ from logic.controllers.cloud.interfaces import (
 from logic.controllers.cloud.model import ComputeKind, Provider
 
 _GIB = 1 << 30
+# The directory holding the ``logic`` package: the wrapper is started as ``-m logic...``.
+_PACKAGE_ROOT = Path(__file__).resolve().parents[4]
 
 
 def mem_available() -> int:
@@ -83,6 +85,8 @@ class LocalProcessBackend(ComputeBackend):
             (attempt / stale).unlink(missing_ok=True)
         env = dict(os.environ)
         env.update(launch.env)
+        # The task's cwd need not contain this checkout, so make ``-m logic...`` importable from anywhere.
+        env["PYTHONPATH"] = os.pathsep.join(p for p in (str(_PACKAGE_ROOT), env.get("PYTHONPATH", "")) if p)
         for var, secret_name in launch.secret_env.items():
             value = self.secrets.get(secret_name) if self.secrets is not None else None
             if value is None:
