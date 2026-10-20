@@ -127,21 +127,27 @@ sim:
   run_name: "lm_cls"
   checkpoint_dir: "checkpoints"
   checkpoint_days: 0
+  # Schema defaults are days=31 and n_samples=1. The day loop reads the graph
+  # fields below, so an override of sim.days / sim.n_samples has to land there.
+  # 30 keeps the paper horizon; seed follows the root seed the CLI sets.
+  days: 30
+  n_samples: 1
+  seed: ${seed}
   data_distribution: "emp"
 
   # Relative to ROOT/data/simulator/
   graph:
     tm_filepath: null # ID-labelled CSV; basename resolves under data/simulator/time_matrix
     time_matrix_unit: seconds # seconds | minutes | hours; internal times are hours
-    n_days: 30
+    n_days: ${sim.days}
     num_loc: 350
-    n_samples: 1
+    n_samples: ${sim.n_samples}
     area: "figueiradafoz"
     waste_type: "plastic"
     distance_method: "file"
     dm_filepath: "gmaps_distmat_${sim.graph.waste_type}[${sim.graph.area}].csv"
     focus_graph: "graphs_${sim.graph.num_loc}V_1N_${sim.graph.waste_type}.json"
-    load_dataset: "data/simulator/datasets/${sim.graph.area}${sim.graph.num_loc}_${sim.data_distribution}_wsr${sim.graph.n_days}_N${sim.graph.n_samples}_seed42.npz"
+    load_dataset: "data/simulator/datasets/${sim.graph.area}${sim.graph.num_loc}_${sim.data_distribution}_wsr${sim.graph.n_days}_N${sim.graph.n_samples}_seed${sim.seed}.npz"
     save_updated_dm: "gmaps_distmat.csv"
 
   # Policies to run

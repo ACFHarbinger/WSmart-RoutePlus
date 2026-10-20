@@ -51,6 +51,8 @@ ENTRIES = {
     "ils": "logic.src.policies.routing.meta_heuristics.iterated_local_search.policy_ils:ILSPolicy",
     "ils_bd": "logic.src.policies.routing.exact_and_decomposition_solvers.integer_l_shaped_benders_decomposition.policy_ils_bd:IntegerLShapedPolicy",
     "ils_rvnd_sp": "logic.src.policies.routing.matheuristics.iterated_local_search_randomized_variable_neighborhood_descent_set_partitioning.policy_ils_rvnd_sp:ILSRVNDSPPolicy",
+    "jgo": "logic.src.policies.packing_and_routing.joint_greedy_orienteering.policy_jgo:JointGreedyPolicy",
+    "jsa": "logic.src.policies.packing_and_routing.joint_simulated_annealing.policy_jsa:JointSAPolicy",
     "kgls": "logic.src.policies.routing.meta_heuristics.knowledge_guided_local_search.policy_kgls:KGLSPolicy",
     "ks": "logic.src.policies.routing.matheuristics.kernel_search.policy_ks:KernelSearchPolicy",
     "lasm": "logic.src.policies.routing.learning_matheuristic_algorithms.learning_allocated_sequential_matheuristic.policy_lasm:LASMPolicy",

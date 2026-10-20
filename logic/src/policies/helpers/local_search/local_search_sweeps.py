@@ -190,8 +190,9 @@ class SweepLocalSearch(SweepExchangeMixin, SweepRouteMixin, LocalSearch):
                 for r_v in range(len(self.routes)):
                     route_v = self.routes[r_v]
 
-                    for p_v in range(len(route_v)):
-                        v = route_v[p_v]
+                    # p_v == -1 inserts immediately after the depot.
+                    for p_v in range(-1, len(route_v)):
+                        v = 0 if p_v < 0 else route_v[p_v]
                         if move_relocate(self, u, v, r_u, p_u, r_v, p_v):
                             return True
         return False
@@ -217,7 +218,7 @@ class SweepLocalSearch(SweepExchangeMixin, SweepRouteMixin, LocalSearch):
                 for p_u in range(len(route_u) - chain_len + 1):
                     for r_v in range(len(self.routes)):
                         route_v = self.routes[r_v]
-                        for p_v in range(len(route_v)):
+                        for p_v in range(-1, len(route_v)):
                             if relocate_chain(self, r_u, p_u, r_v, p_v, chain_len=chain_len):
                                 return True
         return False

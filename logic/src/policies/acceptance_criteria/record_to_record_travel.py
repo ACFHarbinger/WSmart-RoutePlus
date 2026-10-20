@@ -14,7 +14,7 @@ Example:
     True, {'accepted': True, 'delta': -2.0, 'global_best': 100.0, 'tolerance_floor': 95.0}
 """
 
-from typing import Any, Dict, Tuple, cast
+from typing import Any, Dict, Optional, Tuple, cast
 
 from logic.src.interfaces.acceptance_criterion import IAcceptanceCriterion, ObjectiveValue
 from logic.src.interfaces.context.search_context import AcceptanceMetrics
@@ -35,15 +35,27 @@ class RecordToRecordTravel(IAcceptanceCriterion):
         global_best (float): The best objective value found so far.
     """
 
-    def __init__(self, tolerance: float):
+    def __init__(
+        self,
+        tolerance: Optional[float] = None,
+        record_deviation: Optional[float] = None,
+        maximization: bool = True,
+    ):
         """Initialize the Record-to-Record Travel criterion.
 
         Args:
             tolerance: The allowed percentage deviation from the global best
                 (e.g., 0.05 means solutions within 5% of the global best are accepted).
+            record_deviation: Name used by ``ac_rrt.yaml`` for ``tolerance``.
+            maximization: Whether a higher objective is better.
         """
+        if tolerance is None:
+            tolerance = record_deviation
+        if tolerance is None:
+            raise TypeError("RecordToRecordTravel.__init__() missing 1 required positional argument: 'tolerance'")
         self.tolerance = tolerance
-        self.global_best = -float("inf")
+        self.maximization = maximization
+        self.global_best = -float("inf") if maximization else float("inf")
 
     def setup(self, initial_objective: ObjectiveValue) -> None:
         """Initialize the global best record.
@@ -73,8 +85,12 @@ class RecordToRecordTravel(IAcceptanceCriterion):
         candidate_obj = cast(float, candidate_obj)
         # Assuming strictly positive profit objectives.
         # Accept if candidate is greater than or equal to 95% of the global best.
-        allowable_floor = self.global_best * (1.0 - self.tolerance)
-        _accepted = bool(candidate_obj >= allowable_floor)
+        if self.maximization:
+            allowable_floor = self.global_best * (1.0 - self.tolerance)
+            _accepted = bool(candidate_obj >= allowable_floor)
+        else:
+            allowable_ceiling = self.global_best * (1.0 + self.tolerance)
+            _accepted = bool(candidate_obj <= allowable_ceiling)
         return _accepted, {
             "accepted": _accepted,
             "delta": candidate_obj - current_obj,

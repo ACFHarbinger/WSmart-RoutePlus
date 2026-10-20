@@ -133,7 +133,9 @@ class WhittleIndexSelection(IPackingAlgorithm):
         if context.n_vehicles <= 0:
             mandatory = np.nonzero(whittle_indices > 1e-3)[0]
         else:
-            mean_mass = np.mean((context.current_fill / max_fill) * bin_cap)
+            masses = (context.current_fill / max_fill) * bin_cap
+            positive = masses[masses > 0]
+            mean_mass = float(np.mean(positive)) if positive.size else 1e-9
             mean_mass = max(mean_mass, 1e-9)
             k = int(context.n_vehicles * (context.vehicle_capacity / mean_mass))
             k = max(1, min(k, n_bins))

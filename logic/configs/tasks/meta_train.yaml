@@ -36,7 +36,7 @@ meta_rl:
   # =============================================================================
   env:
     name: "ptp" # Problem type for meta-training. TCPTP: set to "tcptp" with envs@meta_rl.env=tcptp.
-    distance_method: "gmaps" # Distance calculation method
+    # distance_method lives on GraphConfig (curriculum_graphs), not EnvConfig.
 
   # Meta-Learning Strategy
   meta_strategy:

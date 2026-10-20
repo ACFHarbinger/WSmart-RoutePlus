@@ -15,13 +15,21 @@ Example:
     False, {'accepted': False, 'delta': -2.0, 'alpha': 0.1}
 """
 
-from typing import Any, Dict, Tuple, cast
+from typing import Any, Dict, Optional, Tuple, cast
 
 from logic.src.interfaces.acceptance_criterion import IAcceptanceCriterion, ObjectiveValue
 from logic.src.interfaces.context.search_context import AcceptanceMetrics
 from logic.src.interfaces.distance_metric import IDistanceMetric
 
 from .base.registry import AcceptanceCriterionRegistry
+
+
+class _ZeroDistance:
+    """Structural distance of 0, used when the YAML names no metric."""
+
+    def compute(self, current: Any, candidate: Any) -> float:
+        del current, candidate
+        return 0.0
 
 
 @AcceptanceCriterionRegistry.register("svns")
@@ -43,17 +51,24 @@ class SkewedVNSAcceptance(IAcceptanceCriterion):
         maximization (bool): Whether the problem is maximization.
     """
 
-    def __init__(self, alpha: float, metric: IDistanceMetric, maximization: bool = True):
+    def __init__(
+        self,
+        alpha: float,
+        metric: Optional[IDistanceMetric] = None,
+        maximization: bool = True,
+    ):
         """Initialize the Skewed VNS criterion.
 
         Args:
             alpha: Scaling factor for structural distance.
             metric: Metric for computing structural distance rho.
+                ``ac_svns.yaml`` names none; a missing metric contributes 0
+                until a caller supplies solutions.
             maximization: Whether the problem is maximization.
                 Defaults to True.
         """
         self.alpha = alpha
-        self.metric = metric
+        self.metric = metric if metric is not None else _ZeroDistance()
         self.maximization = maximization
 
     def setup(self, initial_objective: ObjectiveValue) -> None:

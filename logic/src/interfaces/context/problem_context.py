@@ -44,6 +44,31 @@ if TYPE_CHECKING:
     from logic.src.pipeline.simulations.bins.prediction import ScenarioTree
 
 
+def _problem_horizon(kwargs: Dict[str, Any]) -> int:
+    """Horizon from the day kwargs, then the policy config, else 7.
+
+    ``SimulationDayContext`` has ``day`` and no ``horizon``. Multi-period
+    configs store the length as ``horizon`` or ``num_days``.
+    """
+    top = kwargs.get("horizon")
+    if top is not None:
+        return int(top)
+    cfg = kwargs.get("config")
+    if cfg is not None:
+        getter = getattr(cfg, "get", None)
+        if getter is not None:
+            value = getter("horizon")
+            if value is None:
+                value = getter("num_days")
+        else:
+            value = getattr(cfg, "horizon", None)
+            if value is None:
+                value = getattr(cfg, "num_days", None)
+        if value is not None:
+            return int(value)
+    return 7
+
+
 @dataclass(frozen=True)
 class ProblemContext:
     """
@@ -156,14 +181,22 @@ class ProblemContext:
             except Exception:
                 pass  # locations stays zeros; algorithms degrade gracefully
 
-        # Fill-rate statistics (may be absent for single-day simulations)
+        # Fill-rate statistics (may be absent for single-day simulations).
+        # Bins stores the rates on ``means`` / ``std``. Older callers used
+        # ``rate`` / ``rate_std``. Either name is the daily increment.
         fill_rate_means = np.zeros(n)
         fill_rate_stds = np.zeros(n)
         if bins is not None:
-            if hasattr(bins, "rate") and bins.rate is not None:
-                fill_rate_means = np.asarray(bins.rate, dtype=float)
-            if hasattr(bins, "rate_std") and bins.rate_std is not None:
-                fill_rate_stds = np.asarray(bins.rate_std, dtype=float)
+            rate = getattr(bins, "rate", None)
+            if rate is None:
+                rate = getattr(bins, "means", None)
+            if rate is not None:
+                fill_rate_means = np.asarray(rate, dtype=float)
+            rate_std = getattr(bins, "rate_std", None)
+            if rate_std is None:
+                rate_std = getattr(bins, "std", None)
+            if rate_std is not None:
+                fill_rate_stds = np.asarray(rate_std, dtype=float)
 
         n_vehicles_raw = kwargs.get("n_vehicles")
         n_vehicles = int(n_vehicles_raw) if n_vehicles_raw is not None and int(n_vehicles_raw) > 0 else None
@@ -177,7 +210,7 @@ class ProblemContext:
             max_fill=float(getattr(bins, "max_fill", 100.0)) if bins is not None else 100.0,
             revenue_per_kg=revenue_per_kg,
             cost_per_km=cost_per_km,
-            horizon=kwargs.get("horizon", 7),
+            horizon=_problem_horizon(kwargs),
             mandatory=kwargs.get("mandatory", []),
             locations=locations,
             scenario_tree=kwargs.get("scenario_tree"),

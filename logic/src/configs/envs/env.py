@@ -36,6 +36,7 @@ class EnvConfig:
             ``None`` falls through to ``SimulationRepository.get_temporal_params()``.
         avg_speed_kmh: Optional average driving speed in km/h (``tcptp`` only).
         service_time_h: Optional per-bin service time in hours (``tcptp`` only).
+        distance_method: Optional distance computation method for meta-RL envs.
         curriculum_graphs: Ordered list of graphs for sequential curriculum
             learning. The **first entry** is used for single-stage training.
             Each :class:`GraphConfig` entry carries an optional ``reward`` field
@@ -62,5 +63,6 @@ class EnvConfig:
     mean: float = 0.0
     variance: float = 0.0
     temporal_horizon: int = 0
+    distance_method: Optional[str] = None
     curriculum_graphs: List[GraphConfig] = field(default_factory=list)
     eval_graphs: List[GraphConfig] = field(default_factory=list)

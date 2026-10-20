@@ -85,6 +85,25 @@ class Config:
     start: int = 0
     p: Dict[str, Any] = field(default_factory=dict)
     callbacks: Dict[str, Any] = field(default_factory=dict)
+    # Flat keys from logic/configs/tasks/slurm.yaml. The file is a Hydra
+    # tasks-group member, so composition rejects any root key Config lacks.
+    # The sbatch helper reads the same names; they stay optional everywhere else.
+    number_of_cores: Optional[int] = None
+    command: Optional[str] = None
+    model: Optional[Any] = None
+    problem: Optional[str] = None
+    gs: Optional[int] = None
+    bs: Optional[int] = None
+    ne: Optional[int] = None
+    es: Optional[int] = None
+    ebs: Optional[int] = None
+    et: Optional[float] = None
+    days: Optional[int] = None
+    od: Optional[str] = None
+    ns: Optional[int] = None
+    lvl: Optional[Any] = None
+    cf: Optional[Any] = None
+    nv: Optional[int] = None
 
 
 __all__ = [

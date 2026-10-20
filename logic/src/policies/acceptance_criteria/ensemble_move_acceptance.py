@@ -18,7 +18,7 @@ Example:
     True, {'accepted': True, 'delta': -2.0}
 """
 
-from typing import Any, Dict, List, Tuple, cast
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 from logic.src.interfaces.acceptance_criterion import IAcceptanceCriterion, ObjectiveValue
 from logic.src.interfaces.context.search_context import AcceptanceMetrics
@@ -38,21 +38,35 @@ class EnsembleAcceptance(IAcceptanceCriterion):
         rule (str): Aggregation logic ('G-AND', 'G-OR', 'G-VOT').
     """
 
-    def __init__(self, criteria: List[IAcceptanceCriterion], rule: str = "G-VOT"):
+    def __init__(
+        self,
+        criteria: Optional[List[IAcceptanceCriterion]] = None,
+        rule: str = "G-VOT",
+        methods: Optional[List[str]] = None,
+        weights: Optional[List[float]] = None,
+    ):
         """Initialize the Ensemble criterion.
 
         Args:
             criteria: The instantiated sub-criteria.
             rule: The aggregation logic ('G-AND', 'G-OR', 'G-VOT').
                 Defaults to 'G-VOT'.
+            methods: Registry names from ``ac_ema.yaml``. Each is built
+                into a criterion when ``criteria`` is omitted.
+            weights: Voting weights from the same file.
 
         Raises:
             ValueError: If the criteria list is empty.
         """
+        if not criteria and methods:
+            from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
+
+            criteria = [AcceptanceCriterionFactory.create(str(name)) for name in methods]
         if not criteria:
             raise ValueError("EnsembleAcceptance requires at least one initialized criterion.")
         self.criteria = criteria
         self.rule = rule.upper()
+        self.weights = list(weights) if weights is not None else []
 
     def setup(self, initial_objective: ObjectiveValue) -> None:
         """Initialize all sub-criteria in the ensemble.

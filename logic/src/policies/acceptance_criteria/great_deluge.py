@@ -42,6 +42,9 @@ class GreatDelugeAcceptance(IAcceptanceCriterion):
         target_fitness_multiplier: Optional[float] = None,
         max_iterations: int = 1000,
         target_objective: Optional[float] = None,
+        initial_level: Optional[float] = None,
+        decay_rate: Optional[float] = None,
+        maximization: bool = True,
     ):
         """Initialize the Great Deluge criterion.
 
@@ -50,8 +53,15 @@ class GreatDelugeAcceptance(IAcceptanceCriterion):
                 (e.g., 1.1 implies a 10% expected improvement over the initial solution).
             max_iterations: The total budget of iterations to reach the target.
             target_objective: Absolute terminal boundary, instead of a relative multiplier.
+            initial_level: Starting water level from ``ac_gd.yaml``.
+            decay_rate: Per-step change of that level. Positive raises it
+                when ``maximization`` is true.
+            maximization: Whether a higher objective is better.
         """
-        if (target_fitness_multiplier is None) == (target_objective is None):
+        self.initial_level = initial_level
+        self.explicit_decay = decay_rate
+        self.maximization = maximization
+        if initial_level is None and (target_fitness_multiplier is None) == (target_objective is None):
             raise ValueError("Specify exactly one of target_fitness_multiplier and target_objective")
         self.target_objective = target_objective
         self.target_multiplier = target_fitness_multiplier
@@ -66,6 +76,11 @@ class GreatDelugeAcceptance(IAcceptanceCriterion):
             initial_objective: The initial solution's objective.
         """
         initial_objective = cast(float, initial_objective)
+        if self.initial_level is not None:
+            self.water_level = float(self.initial_level)
+            step = 0.0 if self.explicit_decay is None else float(self.explicit_decay)
+            self.rain_speed = step if self.maximization else -abs(step)
+            return
         self.water_level = initial_objective
         target_objective = (
             self.target_objective

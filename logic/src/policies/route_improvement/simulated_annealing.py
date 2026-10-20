@@ -117,13 +117,15 @@ class SimulatedAnnealingRouteImprover(IRouteImprovement):
                     continue
 
                 # 3. Delegate acceptance to the criterion (returns metrics now)
+                # BoltzmannAcceptance maximises. Tour length is a cost, so
+                # present its negation. A longer tour is then a worsening move.
                 is_accepted, step_metrics = criterion.accept(
-                    current_obj=current_cost,
-                    candidate_obj=current_cost + delta,
+                    current_obj=-current_cost,
+                    candidate_obj=-(current_cost + delta),
                 )
                 criterion.step(
-                    current_obj=current_cost,
-                    candidate_obj=current_cost + delta,
+                    current_obj=-current_cost,
+                    candidate_obj=-(current_cost + delta),
                     accepted=is_accepted,
                 )
                 # Cap trace length to avoid unbounded memory in long runs

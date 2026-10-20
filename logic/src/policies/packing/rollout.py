@@ -20,7 +20,7 @@ Example:
     >>> bins = strategy.pack(context)
 """
 
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 
@@ -94,6 +94,9 @@ class RolloutSelection(IPackingAlgorithm):
 
         dist_to_depot = context.distance_matrix[0, 1:] if context.distance_matrix is not None else np.zeros(n_bins)
         round_trip_cost = 2 * dist_to_depot * cost_per_km
+        # Reseed every pack() so the same day and PackingContext.seed
+        # produce the same mandatory set. None keeps the process generator.
+        scenario_rng = np.random.default_rng(context.seed) if context.seed is not None else None
 
         mandatory_indices = []
 
@@ -111,6 +114,7 @@ class RolloutSelection(IPackingAlgorithm):
                 round_trip_cost,
                 max_fill,
                 sigma[i],
+                scenario_rng,
             )
             r_defer = self._eval_bin(
                 i,
@@ -124,6 +128,7 @@ class RolloutSelection(IPackingAlgorithm):
                 round_trip_cost,
                 max_fill,
                 sigma[i],
+                scenario_rng,
             )
 
             if r_collect > r_defer:
@@ -146,6 +151,7 @@ class RolloutSelection(IPackingAlgorithm):
         round_trip_cost: np.ndarray,
         max_fill: float,
         target_sigma: float,
+        scenario_rng: Optional[np.random.Generator] = None,
     ) -> float:
         """Evaluate expected reward for a single bin.
 
@@ -205,7 +211,13 @@ class RolloutSelection(IPackingAlgorithm):
             # Step 2: Roll out for horizon days
             for t in range(1, horizon + 1):
                 # Accumulate
-                delta = np.random.normal(mu, sigma) if n_scenarios > 1 and sigma > 0 else mu
+                if n_scenarios > 1 and sigma > 0:
+                    if scenario_rng is not None:
+                        delta = float(scenario_rng.normal(mu, sigma))
+                    else:
+                        delta = float(np.random.normal(mu, sigma))
+                else:
+                    delta = mu
                 current_f += delta
 
                 # Apply discount factor to future rewards/penalties

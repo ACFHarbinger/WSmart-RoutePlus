@@ -98,8 +98,8 @@ def add_test_suite_args(parser: Any) -> Any:
     )
     parser.add_argument(
         "--test-dir",
-        default="tests",
-        help="Directory containing test files (default: tests)",
+        default="logic/test",
+        help="Directory containing test files (default: logic/test)",
     )
     return parser
 

@@ -14,7 +14,7 @@ Example:
 """
 
 import math
-from typing import Any, Dict, Tuple, cast
+from typing import Any, Dict, Optional, Tuple, cast
 
 from logic.src.interfaces.acceptance_criterion import IAcceptanceCriterion, ObjectiveValue
 from logic.src.interfaces.context.search_context import AcceptanceMetrics
@@ -53,6 +53,7 @@ class NonLinearGreatDeluge(IAcceptanceCriterion):
         gap_epsilon: float = 0.01,
         beta: float = 5.0,
         maximization: bool = False,
+        initial_level: Optional[float] = None,
     ):
         """Initialize the NLGD criterion.
 
@@ -70,6 +71,7 @@ class NonLinearGreatDeluge(IAcceptanceCriterion):
         self.gap_epsilon = gap_epsilon
         self.beta = beta
         self.maximization = maximization
+        self.initial_level = initial_level
 
         self.level_0 = 0.0
         self.water_level = 0.0
@@ -83,6 +85,12 @@ class NonLinearGreatDeluge(IAcceptanceCriterion):
             initial_objective: The initial solution's objective.
         """
         initial_objective = cast(float, initial_objective)
+        if self.initial_level is not None:
+            self.level_0 = float(self.initial_level)
+            self.f_best_ever = initial_objective
+            self.water_level = self.level_0
+            self.t = 0
+            return
         if self.maximization:
             self.level_0 = initial_objective * (1.0 - self.initial_tolerance)
             self.f_best_ever = initial_objective

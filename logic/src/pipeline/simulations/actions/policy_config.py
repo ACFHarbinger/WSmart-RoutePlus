@@ -65,6 +65,29 @@ def _to_plain_mapping(cfg: Any) -> Dict[str, Any]:
     return {}
 
 
+def policy_horizon(flat_cfg: Any, default: int = 7) -> int:
+    """Planning horizon from a flattened policy mapping.
+
+    Packaged files store the length as ``horizon`` or ``num_days``. A lookup
+    of the literal key ``policy.horizon`` never sees either name.
+
+    Args:
+        flat_cfg: Mapping returned by :func:`_as_policy_mapping`.
+        default: Value used when the file names neither field.
+
+    Returns:
+        int: The configured horizon.
+    """
+    getter = getattr(flat_cfg, "get", None)
+    if getter is None:
+        return default
+    for key in ("horizon", "num_days", "policy.horizon", "policy.num_days"):
+        value = getter(key)
+        if value is not None:
+            return int(value)
+    return default
+
+
 def _as_policy_mapping(cfg: Any) -> dict:
     """Unwrap a policy-name or engine wrapper and return the parameter mapping.
 

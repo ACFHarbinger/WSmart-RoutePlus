@@ -40,6 +40,16 @@ from .base import (
 )
 
 
+def _stops(tour: Any) -> list:
+    """Customers and interior depot returns of a tour, as a sorted list."""
+    nodes = [int(n) for n in tour]
+    while nodes and nodes[0] == 0:
+        nodes.pop(0)
+    while nodes and nodes[-1] == 0:
+        nodes.pop()
+    return sorted(nodes)
+
+
 class RouteImprovementAction(SimulationAction):
     """
     Refines generated collection tours using modular refinement strategies.
@@ -309,11 +319,26 @@ class RouteImprovementAction(SimulationAction):
                     refined_tour, metrics = processor.process(tour, **pf_params)
                 if refined_tour != tour:
                     dist_matrix = getattr(context, "distance_matrix", None)
-                    new_cost = get_route_cost(dist_matrix, refined_tour)
+                    new_cost = get_route_cost(dist_matrix, refined_tour) if dist_matrix is not None else None
+                    old_cost = getattr(context, "cost", None)
+                    if old_cost is None and dist_matrix is not None:
+                        old_cost = get_route_cost(dist_matrix, tour)
+                    # A longer reordering of the same stops is not an improvement.
+                    # Insertion improvers add profitable bins and split repairs add
+                    # depot returns; both lengthen the tour on purpose, so only a
+                    # same-stops tour is judged by distance.
+                    same_stops = _stops(refined_tour) == _stops(tour)
+                    if (
+                        same_stops
+                        and new_cost is not None
+                        and old_cost is not None
+                        and float(new_cost) > float(old_cost) + 1e-9
+                    ):
+                        continue
 
                     tour = refined_tour
                     context.tour = refined_tour
-                    context.cost = new_cost
+                    context.cost = new_cost if new_cost is not None else old_cost
 
                     # Merge into the ledger if active in the simulation context
                     incoming_ctx = getattr(context, "search_context", None)

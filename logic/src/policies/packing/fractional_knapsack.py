@@ -124,7 +124,7 @@ class FractionalKnapsackSelection(IPackingAlgorithm):
         dist_depot: np.ndarray,
         cost_per_km: float,
         capacity: float,
-    ) -> List[int]:
+    ) -> Tuple[List[int], float]:
         """Greedily fill a single vehicle, mutating ``eligible`` in place.
 
         Args:
@@ -137,9 +137,10 @@ class FractionalKnapsackSelection(IPackingAlgorithm):
             capacity: Vehicle capacity.
 
         Returns:
-            List[int]: Indices of packed bins.
+            Tuple[List[int], float]: Packed indices and their insertion net profit.
         """
         packed: List[int] = []
+        objective = 0.0
         remaining = capacity
 
         while eligible:
@@ -167,9 +168,10 @@ class FractionalKnapsackSelection(IPackingAlgorithm):
 
             eligible.discard(chosen)
             packed.append(chosen)
+            objective += float(net_profit[best])
             remaining -= float(mass[chosen])
 
-        return packed
+        return packed, objective
 
     def __init__(self, n_vehicles: Optional[int] = None, cost_per_km: Optional[float] = None) -> None:
         """
@@ -238,20 +240,24 @@ class FractionalKnapsackSelection(IPackingAlgorithm):
         # --- Greedy pass across all K knapsacks ---
         remaining = set(eligible_idx)
         greedy_selected: List[int] = []
+        greedy_value = 0.0
         for _ in range(n_vehicles):
             if not remaining:
                 break
-            greedy_selected.extend(
-                self._pack_one_knapsack(remaining, revenue, mass, dm, dist_depot, cost_per_km, capacity)
+            chunk, chunk_value = self._pack_one_knapsack(
+                remaining, revenue, mass, dm, dist_depot, cost_per_km, capacity
             )
-        greedy_value = float(np.sum(revenue[greedy_selected])) if greedy_selected else 0.0
+            greedy_selected.extend(chunk)
+            greedy_value += chunk_value
 
         # --- Best-single-item fallback for the 1/2-approximation guarantee ---
-        # OPT <= V(greedy) + V(best_single_item), so max(.,.) >= OPT / 2.
+        # The objective is net profit, the same quantity the density step maximises.
+        # Comparing raw revenue keeps a high-revenue bin whose travel cost makes
+        # it worse than the feasible set already packed.
         elig_arr = np.fromiter(eligible_idx, dtype=int, count=len(eligible_idx))
-        best_local = int(np.argmax(revenue[elig_arr]))
+        best_local = int(np.argmax(net_profit_depot[elig_arr]))
         best_single = int(elig_arr[best_local])
-        best_single_value = float(revenue[best_single])
+        best_single_value = float(net_profit_depot[best_single])
 
         if best_single_value > greedy_value:
             return [best_single + 1], SearchContext.initialize(

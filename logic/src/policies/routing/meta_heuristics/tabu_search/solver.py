@@ -258,6 +258,9 @@ class TSSolver(TSMemoryMixin, TSMoveGenerationMixin):
         best_candidate = None
         best_candidate_profit = float("-inf")
         best_move_desc = None
+        least_rejected = None
+        least_rejected_profit = float("-inf")
+        least_rejected_desc = None
 
         for candidate_routes, move_desc in candidates:
             candidate_profit = self._evaluate(candidate_routes)
@@ -274,6 +277,10 @@ class TSSolver(TSMemoryMixin, TSMoveGenerationMixin):
             )
 
             if not is_accepted:
+                if candidate_profit > least_rejected_profit:
+                    least_rejected = candidate_routes
+                    least_rejected_profit = candidate_profit
+                    least_rejected_desc = move_desc
                 continue
 
             # Apply frequency-based penalty for diversification (Objective selection phase)
@@ -288,10 +295,12 @@ class TSSolver(TSMemoryMixin, TSMoveGenerationMixin):
                 best_candidate_profit = candidate_profit
                 best_move_desc = move_desc
 
-        # If all moves are rejected, force the least-rejected one (Tabu search convention)
-        if best_candidate is None and candidates:
-            best_candidate, best_move_desc = candidates[0]
-            best_candidate_profit = self._evaluate(best_candidate)
+        # If all moves are rejected, force the least-rejected one (Tabu search convention).
+        # That is the highest-profit neighbour, not whichever candidate the shuffle left first.
+        if best_candidate is None and least_rejected is not None:
+            best_candidate = least_rejected
+            best_candidate_profit = least_rejected_profit
+            best_move_desc = least_rejected_desc
 
         return best_candidate, best_candidate_profit, best_move_desc
 

@@ -13,7 +13,7 @@ Example:
     True, {'accepted': True, 'delta': -2.0, 'threshold': 0.0, 'age': 0}
 """
 
-from typing import Any, Dict, Tuple, cast
+from typing import Any, Dict, Optional, Tuple, cast
 
 from logic.src.interfaces.acceptance_criterion import IAcceptanceCriterion, ObjectiveValue
 from logic.src.interfaces.context.search_context import AcceptanceMetrics
@@ -36,17 +36,39 @@ class OldBachelorAcceptance(IAcceptanceCriterion):
         age (int): Number of consecutive rejections.
     """
 
-    def __init__(self, contraction: float, dilation: float):
+    def __init__(
+        self,
+        contraction: Optional[float] = None,
+        dilation: Optional[float] = None,
+        initial_threshold: Optional[float] = None,
+        increment: Optional[float] = None,
+        decrement: Optional[float] = None,
+        maximization: bool = True,
+    ):
         """Initialize the Old Bachelor criterion.
 
         Args:
             contraction: Amount to reduce the threshold upon an accepted move.
             dilation: Base amount to increase the threshold upon a
                 rejected move.
+            initial_threshold: Starting tolerance from ``ac_oba.yaml``.
+            increment: YAML name for ``dilation``.
+            decrement: YAML name for ``contraction``.
+            maximization: Stored for the packaged file.
         """
+        if contraction is None:
+            contraction = decrement
+        if dilation is None:
+            dilation = increment
+        if contraction is None or dilation is None:
+            raise TypeError(
+                "OldBachelorAcceptance.__init__() missing required arguments: 'contraction' and 'dilation'"
+            )
         self.contraction = contraction
         self.dilation = dilation
-        self.threshold = 0.0
+        self.initial_threshold = 0.0 if initial_threshold is None else float(initial_threshold)
+        self.maximization = maximization
+        self.threshold = self.initial_threshold
         self.age = 0
 
     def setup(self, initial_objective: ObjectiveValue) -> None:
@@ -56,7 +78,7 @@ class OldBachelorAcceptance(IAcceptanceCriterion):
             initial_objective: The initial solution's objective.
         """
         initial_objective = cast(float, initial_objective)
-        self.threshold = 0.0  # Start with strict greedy behavior
+        self.threshold = self.initial_threshold
         self.age = 0
 
     def accept(
