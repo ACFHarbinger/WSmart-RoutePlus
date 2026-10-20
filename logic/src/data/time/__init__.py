@@ -5,14 +5,16 @@ This package provides loaders for time-related simulation constraints:
 - ``travel_matrix``: travel-time matrices between bins (directed, in hours).
 - ``time_windows``:  day-level routing windows that mark simulation days as
   open (collections allowed) or closed (no routing).
+- ``schedule``:      time window schedule representations and pattern generators.
 
 Submodules
 ----------
 - ``travel_matrix``:  ``compute_time_matrix`` — load or compute a travel-time
   matrix aligned to simulation coordinates.
-- ``time_windows``:   ``load_time_windows``, ``build_time_window_pattern``,
-  ``load_time_windows_file``, ``TimeWindowSchedule`` — build day-level routing schedules
-  from a CSV / Excel schedule file or from a periodic pattern specification.
+- ``time_windows``:   ``load_time_windows``, ``load_time_windows_file`` — load
+  time-window constraints from files or multi-format specifications.
+- ``schedule``:       ``TimeWindowSchedule``, ``build_time_window_pattern`` —
+  schedule container and 3-parameter pattern generator.
 
 Attributes:
     compute_time_matrix: Build a travel-time matrix from distances and speed, or
@@ -28,9 +30,9 @@ from logic.src.utils.registry import lazy_getattr
 _LAZY = {
     "compute_time_matrix": "logic.src.data.time.travel_matrix:compute_time_matrix",
     "load_time_windows": "logic.src.data.time.time_windows:load_time_windows",
-    "build_time_window_pattern": "logic.src.data.time.time_windows:build_time_window_pattern",
+    "build_time_window_pattern": "logic.src.data.time.schedule:build_time_window_pattern",
     "load_time_windows_file": "logic.src.data.time.time_windows:load_time_windows_file",
-    "TimeWindowSchedule": "logic.src.data.time.time_windows:TimeWindowSchedule",
+    "TimeWindowSchedule": "logic.src.data.time.schedule:TimeWindowSchedule",
 }
 
 __all__ = list(_LAZY)

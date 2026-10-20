@@ -21,7 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Added
 
-- **Time Windows constraints in simulator** (`logic/src/data/time/time_windows.py`):
+- **Time Windows constraints in simulator** (`logic/src/data/time/`):
+  - Structured across `schedule.py` (`TimeWindowSchedule` and `build_time_window_pattern`, 216 LoC) and `time_windows.py` (file loader & unified dispatching, 260 LoC) to ensure both stay well within the <500 LoC threshold.
   - Support for optional simulation time window constraints where no routing occurs on designated days.
   - Can be specified via CSV/Excel file with boolean indicators per day, or via a 3-parameter periodic pattern (`start_day`, `days_after`, `interval_between`).
   - Added `TimeWindowSchedule` class and `load_time_windows`, `build_time_window_pattern`, `load_time_windows_file` utilities.
