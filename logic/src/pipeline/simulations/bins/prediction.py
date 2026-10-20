@@ -110,7 +110,7 @@ class ScenarioGenerator:
             horizon: Simulation horizon.
             seed: Random seed.
             distribution: Statistical distribution to use for waste levels.
-            dist_kwargs: Additional arguments for the distribution.
+            dist_kwargs: Parameters for the distribution.
         """
         self.method = method
         self.horizon = horizon
@@ -265,17 +265,17 @@ def predict_days_to_overflow(ui: np.ndarray, vi: np.ndarray, f: np.ndarray, cl: 
         np.ndarray: Predicted days to overflow per bin (clipped at 31).
     """
     n = np.zeros(ui.shape[0]) + 31
+    # Loop-invariant guards and headroom, hoisted out of the day loop.
+    safe_vi = np.where(vi == 0, 1e-9, vi)
+    safe_ui = np.where(ui == 0, 1e-9, ui)
+    headroom = 100 - f
     for ii in np.arange(1, 31, 1):
-        # Prevent division by zero
-        safe_vi = np.where(vi == 0, 1e-9, vi)
-        safe_ui = np.where(ui == 0, 1e-9, ui)
-
         k = ii * safe_ui**2 / safe_vi
         th = safe_vi / safe_ui
         aux = np.zeros(ui.shape[0]) + 31
 
         # Calculate CDF
-        p = 1 - gamma.cdf(100 - f, k, scale=th)
+        p = 1 - gamma.cdf(headroom, k, scale=th)
 
         aux[np.nonzero(p > cl)[0]] = ii
         n = np.minimum(n, aux)

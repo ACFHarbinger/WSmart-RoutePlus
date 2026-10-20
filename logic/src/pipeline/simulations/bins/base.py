@@ -105,7 +105,7 @@ class Bins(BinsFillingMixin):
             noise_mean: Mean of the sensor noise.
             noise_variance: Variance of the sensor noise.
             n_days: Total number of simulation days.
-            n_samples: Number of waste samples in the dataset.
+            n_samples: Number of samples to generate.
             seed: Random seed for reproducibility.
         """
         assert sample_dist == "emp" or "gamma" in sample_dist
@@ -322,7 +322,10 @@ class Bins(BinsFillingMixin):
         Returns:
             Numpy array of predicted days to overflow.
         """
-        return predict_days_to_overflow(self.means, self.std, self.c, cl)
+        # predict_days_to_overflow expects the fill-rate VARIANCE (see its
+        # docstring and the gamma method-of-moments mapping k = ui^2/vi);
+        # self.std is a standard deviation, so square it here.
+        return predict_days_to_overflow(self.means, self.std**2, self.c, cl)
 
     def set_indices(self, indices: Optional[Union[List[int], np.ndarray]] = None) -> None:
         """Sets subset of bin indices.
