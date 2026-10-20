@@ -144,9 +144,9 @@ export interface CloudTaskAnalysis {
   policy?: string | null;
   state: string;
   attempt: number;
-  duration_seconds: number;
+  duration_seconds: number | null;
   expected_wall_seconds?: number | null;
-  cost_usd: number;
+  cost_usd: number | null;
   cpu_percent?: number | null;
   memory_rss_mb?: number | null;
   message?: string | null;
@@ -158,7 +158,7 @@ export interface CloudJobAnalysis {
   state: string;
   provider: string;
   compute: string;
-  spot: boolean;
+  spot: boolean | null;
   machine_type?: string | null;
   region?: string | null;
   total_tasks: number;
@@ -166,9 +166,9 @@ export interface CloudJobAnalysis {
   failed_tasks: number;
   cancelled_tasks: number;
   preempted_tasks: number;
-  total_wall_seconds: number;
-  total_compute_seconds: number;
-  accrued_cost_usd: number;
+  total_wall_seconds: number | null;
+  total_compute_seconds: number | null;
+  accrued_cost_usd: number | null;
   estimated_cost_usd?: number | null;
   on_demand_baseline_cost_usd?: number | null;
   spot_savings_usd?: number | null;

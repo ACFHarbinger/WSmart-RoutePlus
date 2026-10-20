@@ -86,4 +86,12 @@ describe("PredictionAccuracyCard (CR-16 / CR-11)", () => {
     expect(screen.getByText(/2 \/ 2/i)).toBeInTheDocument();
     expect(screen.getByText(/100% within margin/i)).toBeInTheDocument();
   });
+  it("does not cancel opposing prediction errors", () => {
+    render(<PredictionAccuracyCard analysis={{ ...mockBaseAnalysis, tasks: [
+      { ...mockBaseAnalysis.tasks[0], duration_seconds: 50, expected_wall_seconds: 100 },
+      { ...mockBaseAnalysis.tasks[1], duration_seconds: 150, expected_wall_seconds: 100 },
+    ] }} />);
+    expect(screen.getByText("Mean absolute error: 66.7%")).toBeInTheDocument();
+  });
+
 });

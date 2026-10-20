@@ -109,6 +109,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Simulation paper** (submodule at `dd76028`): tables, evidence and prose now use `docs/private/global/simulation/rerun-2026-10-19` (BPC with the CPTP pricer, ACO-HH with the mandatory-bin fix). The statements that ACO-HH omits mandatory requests are removed; the remaining executed-service gaps are SWC-TCF's empty bin-days. The observation-contract audit replays the rerun logs with the closed-form lookahead.
 
+### Codex cloud review corrections (`2026-10-20`)
+
+- Removed invented cloud execution durations, predictions, prices and concurrency from analysis; missing telemetry stays unavailable. Corrected per-task prediction MAPE, plain-text chart tooltips and stale detail responses. CR-16 still needs the real Python/Rust/TypeScript telemetry contract and rebasing against integrated Studio changes; see the Codex cloud review of 2026-10-20 on the main checkout.
+
 ### Cloud runner planned (`2026-10-19`)
 
 #### Added

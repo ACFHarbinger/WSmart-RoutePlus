@@ -1,9 +1,10 @@
+import { formatObserved } from "../../utils/cloud/analysis";
 /**
  * Cloud Analysis Dashboard — Post-run aggregate analytics, execution timeline,
  * cost accrual (CR-10), runtime prediction accuracy (CR-11), and task table (CR-16 / §J.1).
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
   ArrowUpDown,
@@ -39,7 +40,8 @@ import { PredictionAccuracyCard } from "../../components/cloud/PredictionAccurac
 import { TaskDurationWaterfall } from "../../components/cloud/TaskDurationWaterfall";
 import { TaskLogsModal } from "../../components/cloud/TaskLogsModal";
 
-function formatDuration(seconds: number): string {
+function formatDuration(seconds: number | null): string {
+  if (seconds == null) return "Unavailable";
   if (!seconds || seconds <= 0) return "0.0s";
   if (seconds < 60) return `${seconds.toFixed(1)}s`;
   const mins = Math.floor(seconds / 60);
@@ -97,17 +99,21 @@ export function CloudAnalysis() {
     fetchJobs();
   }, [fetchJobs]);
 
+  const detailGeneration = useRef(0);
+
   // Load active job details
   const fetchJobDetail = useCallback(
     async (jobId: string) => {
+      const generation = ++detailGeneration.current;
+      setActiveJob(null);
       setLoadingDetail(true);
       try {
         const detail = await getCloudJobStatus(jobId, { projectRoot, root });
-        setActiveJob(detail);
+        if (generation === detailGeneration.current) setActiveJob(detail);
       } catch (err: any) {
         toast.error(`Failed to load job status for ${jobId}: ${err?.message || err}`);
       } finally {
-        setLoadingDetail(false);
+        if (generation === detailGeneration.current) setLoadingDetail(false);
       }
     },
     [projectRoot, root]
@@ -119,6 +125,7 @@ export function CloudAnalysis() {
     } else {
       setActiveJob(null);
     }
+    return () => { detailGeneration.current++; };
   }, [selectedJobId, fetchJobDetail]);
 
   // Derived analysis calculations
@@ -159,9 +166,9 @@ export function CloudAnalysis() {
       } else if (sortBy === "state") {
         comparison = a.state.localeCompare(b.state);
       } else if (sortBy === "duration") {
-        comparison = a.duration_seconds - b.duration_seconds;
+        comparison = (a.duration_seconds ?? -1) - (b.duration_seconds ?? -1);
       } else if (sortBy === "cost") {
-        comparison = a.cost_usd - b.cost_usd;
+        comparison = (a.cost_usd ?? -1) - (b.cost_usd ?? -1);
       }
       return sortDirection === "asc" ? comparison : -comparison;
     });
@@ -186,11 +193,12 @@ export function CloudAnalysis() {
     const map = new Map<string, { count: number; computeSec: number; costUsd: number }>();
 
     for (const t of analysis.tasks) {
-      const pol = t.policy || "default";
+      if (!t.policy) continue;
+      const pol = t.policy;
       const curr = map.get(pol) || { count: 0, computeSec: 0, costUsd: 0 };
       curr.count += 1;
-      curr.computeSec += t.duration_seconds;
-      curr.costUsd += t.cost_usd;
+      curr.computeSec += t.duration_seconds ?? 0;
+      curr.costUsd += t.cost_usd ?? 0;
       map.set(pol, curr);
     }
 
@@ -360,10 +368,9 @@ export function CloudAnalysis() {
                   <Zap size={14} className="text-amber-400" />
                 </div>
                 <div className="text-2xl font-bold font-mono text-amber-400 mt-1">
-                  {(
-                    analysis.total_compute_seconds / Math.max(1, analysis.total_wall_seconds)
-                  ).toFixed(1)}
-                  x
+                  {analysis.total_compute_seconds == null || !analysis.total_wall_seconds
+                    ? "Unavailable"
+                    : `${(analysis.total_compute_seconds / analysis.total_wall_seconds).toFixed(1)}x`}
                 </div>
                 <div className="text-[11px] text-neutral-500 mt-1">
                   Parallel execution acceleration
@@ -377,10 +384,10 @@ export function CloudAnalysis() {
                   <DollarSign size={14} className="text-emerald-400" />
                 </div>
                 <div className="text-2xl font-bold font-mono text-emerald-400 mt-1">
-                  ${analysis.accrued_cost_usd.toFixed(4)}
+                  ${formatObserved(analysis.accrued_cost_usd, 4)}
                 </div>
                 <div className="text-[11px] text-neutral-500 mt-1">
-                  {analysis.spot ? "Spot discounted tier" : "Standard on-demand rate"}
+                  {analysis.spot == null ? "Pricing unavailable" : analysis.spot ? "Spot discounted tier" : "Standard on-demand rate"}
                 </div>
               </div>
             </div>
@@ -441,7 +448,7 @@ export function CloudAnalysis() {
                       Workload Policy Distribution
                     </h3>
                     <span className="text-xs text-neutral-500">
-                      {policySummary.length} distinct policies
+                      {policySummary.length ? `${policySummary.length} distinct policies` : "Policy metadata unavailable"}
                     </span>
                   </div>
 
@@ -626,10 +633,10 @@ export function CloudAnalysis() {
                               #{task.attempt}
                             </td>
                             <td className="py-2.5 px-3 text-right text-neutral-200">
-                              {task.duration_seconds.toFixed(2)}s
+                              {formatObserved(task.duration_seconds, 2)}s
                             </td>
                             <td className="py-2.5 px-3 text-right text-emerald-400">
-                              ${task.cost_usd.toFixed(4)}
+                              ${formatObserved(task.cost_usd, 4)}
                             </td>
                             <td className="py-2.5 px-3 text-center">
                               <button
@@ -673,25 +680,25 @@ export function CloudAnalysis() {
                       <div className="flex justify-between items-center text-neutral-400">
                         <span>Provisioning Tier</span>
                         <span className="font-mono text-neutral-200">
-                          {analysis.spot ? "Preemptible / Spot" : "Standard On-Demand"}
+                          {analysis.spot == null ? "Unavailable" : analysis.spot ? "Preemptible / Spot" : "Standard On-Demand"}
                         </span>
                       </div>
                       <div className="flex justify-between items-center text-neutral-400">
                         <span>Baseline On-Demand Cost</span>
                         <span className="font-mono text-neutral-200">
-                          ${(analysis.on_demand_baseline_cost_usd ?? 0).toFixed(4)}
+                          ${formatObserved(analysis.on_demand_baseline_cost_usd, 4)}
                         </span>
                       </div>
                       <div className="flex justify-between items-center text-neutral-400">
                         <span>Effective Accrued Cost</span>
                         <span className="font-mono text-emerald-400 font-bold">
-                          ${analysis.accrued_cost_usd.toFixed(4)}
+                          ${formatObserved(analysis.accrued_cost_usd, 4)}
                         </span>
                       </div>
                       <div className="flex justify-between items-center text-neutral-400 pt-2 border-t border-neutral-800">
                         <span>Net Spot Savings</span>
                         <span className="font-mono text-emerald-400 font-bold">
-                          -${(analysis.spot_savings_usd ?? 0).toFixed(4)} ({analysis.spot_savings_pct}%)
+                          -${formatObserved(analysis.spot_savings_usd, 4)} ({analysis.spot_savings_pct}%)
                         </span>
                       </div>
                     </div>
@@ -700,9 +707,8 @@ export function CloudAnalysis() {
                       <div>
                         <h4 className="font-semibold text-neutral-300 mb-1">Billing Governance Note (§J.1 / CR-10)</h4>
                         <p className="text-[11px] text-neutral-500 leading-relaxed">
-                          Cloud compute tasks are metered on fractional core-seconds. When running under preemptible / spot capacity,
-                          savings up to 60-80% are achieved compared to on-demand pricing. Preempted attempts are automatically retried
-                          from daily simulation checkpoints to avoid duplicated compute expenditure.
+                          Billing depends on the provider, resource and all attempts, including retries.
+                          Cost and savings require recorded usage and applicable prices.
                         </p>
                       </div>
 

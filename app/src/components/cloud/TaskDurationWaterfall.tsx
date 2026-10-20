@@ -1,3 +1,4 @@
+import { formatObserved } from "../../utils/cloud/analysis";
 /**
  * Task Duration Waterfall / Gantt chart — visualizes execution duration and status
  * distribution across tasks in a cloud job (§J.1 / CR-16).
@@ -24,10 +25,10 @@ const STATE_COLORS: Record<string, string> = {
 
 export function TaskDurationWaterfall({ tasks, height = 340 }: TaskDurationWaterfallProps) {
   const option = useMemo(() => {
-    if (!tasks || tasks.length === 0) return null;
+    if (!tasks.some((task) => task.duration_seconds != null)) return null;
 
     // Show top 30 tasks sorted by duration descending or execution order
-    const displayTasks = tasks.slice(0, 30);
+    const displayTasks = tasks.filter((task) => task.duration_seconds != null).slice(0, 30);
     const taskLabels = displayTasks.map((t) => t.task_id.replace("task-", ""));
     const durations = displayTasks.map((t) => ({
       value: t.duration_seconds,
@@ -41,24 +42,18 @@ export function TaskDurationWaterfall({ tasks, height = 340 }: TaskDurationWater
     return {
       backgroundColor: "transparent",
       tooltip: {
+        renderMode: "richText",
         trigger: "item",
         backgroundColor: "#18181b",
         borderColor: "#27272a",
         textStyle: { color: "#e4e4e7", fontSize: 12 },
         formatter: (params: any) => {
           const t: CloudTaskAnalysis = params.data.task;
-          return `
-            <div style="font-family: monospace; font-size: 11px;">
-              <strong style="color: #60a5fa;">${t.task_id}</strong><br/>
-              Cell: ${t.cell_id}<br/>
-              State: <span style="text-transform: capitalize; color: ${
-                STATE_COLORS[t.state.toLowerCase()] || "#fff"
-              }; font-weight: bold;">${t.state}</span><br/>
-              Duration: <strong>${t.duration_seconds.toFixed(2)}s</strong><br/>
-              Attempt: #${t.attempt}<br/>
-              Cost: $${t.cost_usd.toFixed(4)}
-            </div>
-          `;
+          return [
+            t.task_id, `Cell: ${t.cell_id}`, `State: ${t.state}`,
+            `Duration: ${formatObserved(t.duration_seconds, 2)}s`,
+            `Attempt: #${t.attempt}`, `Cost: ${formatObserved(t.cost_usd, 4)}`,
+          ].join("\n");
         },
       },
       grid: {
@@ -103,7 +98,7 @@ export function TaskDurationWaterfall({ tasks, height = 340 }: TaskDurationWater
     };
   }, [tasks]);
 
-  if (!tasks || tasks.length === 0) {
+  if (!option) {
     return (
       <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-8 flex flex-col items-center justify-center text-center">
         <BarChart3 className="text-neutral-600 mb-2" size={32} />

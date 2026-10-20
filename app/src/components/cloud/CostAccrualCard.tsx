@@ -1,3 +1,4 @@
+import { formatObserved } from "../../utils/cloud/analysis";
 /**
  * Cost Accrual Card — displays financial telemetry, estimated budget vs accrued cost,
  * and spot cost reduction breakdown for CR-10 / CR-16 (§J.1).
@@ -11,7 +12,7 @@ interface CostAccrualCardProps {
 }
 
 export function CostAccrualCard({ analysis }: CostAccrualCardProps) {
-  const hasEstimate = analysis.estimated_cost_usd != null && analysis.estimated_cost_usd > 0;
+  const hasEstimate = analysis.estimated_cost_usd != null && analysis.estimated_cost_usd >= 0;
   const hasSpotSavings = analysis.spot_savings_usd != null && analysis.spot_savings_usd > 0;
 
   return (
@@ -26,7 +27,7 @@ export function CostAccrualCard({ analysis }: CostAccrualCardProps) {
             <p className="text-xs text-neutral-500">
               Provider: <span className="uppercase text-neutral-300 font-mono">{analysis.provider}</span> •{" "}
               Compute: <span className="text-neutral-300 font-mono">{analysis.compute}</span> •{" "}
-              Tier: <span className="text-neutral-300 font-mono">{analysis.spot ? "Spot / Preemptible" : "On-Demand"}</span>
+              Tier: <span className="text-neutral-300 font-mono">{analysis.spot == null ? "Unavailable" : analysis.spot ? "Spot / Preemptible" : "On-Demand"}</span>
             </p>
           </div>
         </div>
@@ -52,10 +53,10 @@ export function CostAccrualCard({ analysis }: CostAccrualCardProps) {
         <div className="bg-neutral-950/60 border border-neutral-800/80 rounded p-3">
           <span className="text-xs text-neutral-400">Total Accrued Cost</span>
           <div className="text-xl font-bold font-mono text-neutral-100 mt-1">
-            ${analysis.accrued_cost_usd.toFixed(4)}
+            ${formatObserved(analysis.accrued_cost_usd, 4)}
           </div>
           <span className="text-[11px] text-neutral-500">
-            Across {analysis.total_compute_seconds.toFixed(1)}s compute time
+            Across {formatObserved(analysis.total_compute_seconds, 1)}s compute time
           </span>
         </div>
 
@@ -68,7 +69,7 @@ export function CostAccrualCard({ analysis }: CostAccrualCardProps) {
                 ${analysis.estimated_cost_usd?.toFixed(4)}
               </div>
               <span className="text-[11px] text-neutral-500">
-                {analysis.accrued_cost_usd <= (analysis.estimated_cost_usd ?? 0) ? (
+                {(analysis.accrued_cost_usd ?? Infinity) <= (analysis.estimated_cost_usd ?? 0) ? (
                   <span className="text-emerald-400">Within estimate</span>
                 ) : (
                   <span className="text-amber-400">Over initial estimate</span>
@@ -98,10 +99,10 @@ export function CostAccrualCard({ analysis }: CostAccrualCardProps) {
           ) : (
             <>
               <div className="text-sm font-mono text-neutral-500 mt-2">
-                {analysis.spot ? "Calculating..." : "$0.0000"}
+                {analysis.spot_savings_usd == null ? "Unavailable" : "$0.0000"}
               </div>
               <span className="text-[11px] text-neutral-600">
-                {analysis.spot ? "Spot rate applied" : "Running on standard on-demand"}
+                {analysis.spot == null ? "Pricing unavailable" : analysis.spot ? "Spot rate applied" : "Running on standard on-demand"}
               </span>
             </>
           )}
@@ -111,7 +112,7 @@ export function CostAccrualCard({ analysis }: CostAccrualCardProps) {
         <div className="bg-neutral-950/60 border border-neutral-800/80 rounded p-3">
           <span className="text-xs text-neutral-400">Aggregate CPU Hours</span>
           <div className="text-xl font-bold font-mono text-neutral-100 mt-1">
-            {(analysis.total_compute_seconds / 3600).toFixed(3)} hrs
+            {formatObserved(analysis.total_compute_seconds == null ? null : analysis.total_compute_seconds / 3600, 3)} hrs
           </div>
           <span className="text-[11px] text-neutral-500">
             {analysis.total_tasks} parallel task allocations
