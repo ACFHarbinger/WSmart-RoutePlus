@@ -55,15 +55,6 @@ from .fs_parser_args import (
     add_files_args as add_files_args,
 )
 from .fs_parser_args import (
-    add_files_crypto_args as add_files_crypto_args,
-)
-from .fs_parser_args import (
-    add_files_delete_args as add_files_delete_args,
-)
-from .fs_parser_args import (
-    add_files_update_args as add_files_update_args,
-)
-from .fs_parser_args import (
     validate_file_system_args as validate_file_system_args,
 )
 
@@ -324,7 +315,7 @@ if __name__ == "__main__":
     add_files_args(_parser)
     try:
         parsed_args = _parser.parse_process_args(sys.argv[1:], "file_system")
-        comm, opts = validate_file_system_args(parsed_args) # pyrefly: ignore [bad-argument-type]
+        comm, opts = validate_file_system_args(parsed_args)  # pyrefly: ignore [bad-argument-type]
         if comm == "update":
             update_file_system_entries(opts)
         elif comm == "delete":

@@ -5,17 +5,18 @@ import logging
 import numpy as np
 import pytest
 import yaml
-from logic.src.configs.policies.other.packing import (
+from logic.src.configs.policies.other.packing_dispatch import (
     BernoulliRandomSelectionConfig,
-    CombinedSelectionConfig,
     FilterAndFanSelectionConfig,
     FPTASKnapsackSelectionConfig,
-    FractionalKnapsackSelectionConfig,
-    MIPKnapsackSelectionConfig,
     PackingConfig,
     PortfolioDispatcherSelectionConfig,
-    RevenueSelectionConfig,
 )
+from logic.src.configs.policies.other.packing_learned import (
+    FractionalKnapsackSelectionConfig,
+    MIPKnapsackSelectionConfig,
+)
+from logic.src.configs.policies.other.packing_threshold import CombinedSelectionConfig, RevenueSelectionConfig
 from logic.src.policies.packing.base.factory import PackingFactory
 from logic.src.policies.packing.dispatcher_portfolio import PortfolioDispatcher
 from logic.src.policies.packing.fptas_knapsack import FPTASKnapsackSelection

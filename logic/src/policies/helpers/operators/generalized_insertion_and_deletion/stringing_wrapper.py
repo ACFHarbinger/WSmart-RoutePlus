@@ -26,9 +26,6 @@ from typing import Dict, List, Optional
 import numpy as np
 
 from .stringing_search import (
-    _apply_stringing_op as _apply_stringing_op,
-)
-from .stringing_search import (
     _evaluate_routes as _evaluate_routes,
 )
 from .stringing_search import (
@@ -42,7 +39,6 @@ __all__ = [
     "stringing_insertion",
     "stringing_profit_insertion",
     "stringing_insertion_wrapper",
-    "_apply_stringing_op",
     "_evaluate_routes",
     "_try_string_insertion",
     "_try_string_insertion_deterministic",

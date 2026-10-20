@@ -20,13 +20,15 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple, Union, 
 
 import numpy as np
 
-from logic.src.policies.helpers.solvers_and_matheuristics.branching.strategies import (
-    EdgeBranching,
+from logic.src.policies.helpers.solvers_and_matheuristics.branching.node_fleet_branching import (
     FleetSizeBranching,
-    MultiEdgePartitionBranching,
     NodeVisitationBranching,
     RyanFosterBranching,
 )
+from logic.src.policies.helpers.solvers_and_matheuristics.branching.partition_branching import (
+    MultiEdgePartitionBranching,
+)
+from logic.src.policies.helpers.solvers_and_matheuristics.branching.strategies import EdgeBranching
 from logic.src.policies.helpers.solvers_and_matheuristics.common.node import BranchNode
 
 if TYPE_CHECKING:

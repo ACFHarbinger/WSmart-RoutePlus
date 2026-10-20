@@ -23,6 +23,15 @@ Theoretical Framework:
 
 from __future__ import annotations
 
+from logic.src.policies.helpers.solvers_and_matheuristics.branching.node_fleet_branching import (
+    FleetSizeBranching,
+    NodeVisitationBranching,
+    RyanFosterBranching,
+)
+from logic.src.policies.helpers.solvers_and_matheuristics.branching.partition_branching import (
+    MultiEdgePartitionBranching,
+)
+
 from .constraints import (
     AnyBranchingConstraint,
     EdgeBranchingConstraint,
@@ -30,13 +39,7 @@ from .constraints import (
     NodeVisitationBranchingConstraint,
     RyanFosterBranchingConstraint,
 )
-from .strategies import (
-    EdgeBranching,
-    FleetSizeBranching,
-    MultiEdgePartitionBranching,
-    NodeVisitationBranching,
-    RyanFosterBranching,
-)
+from .strategies import EdgeBranching
 from .tree import BranchAndBoundTree
 
 __all__ = [

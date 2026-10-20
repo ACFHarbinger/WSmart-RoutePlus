@@ -27,14 +27,14 @@ import gurobipy as gp
 import numpy as np
 from gurobipy import GRB
 
+from logic.src.policies.helpers.solvers_and_matheuristics.master_problem.column_pool_support import (
+    VRPPMasterProblemSupportMixin,
+)
 from logic.src.policies.helpers.solvers_and_matheuristics.master_problem.constraints import (
     VRPPMasterProblemConstraintsMixin,
 )
 from logic.src.policies.helpers.solvers_and_matheuristics.master_problem.pool import GlobalCutPool
-from logic.src.policies.helpers.solvers_and_matheuristics.master_problem.problem_support import (
-    MasterProblemSupport,
-    VRPPMasterProblemSupportMixin,
-)
+from logic.src.policies.helpers.solvers_and_matheuristics.master_problem.problem_support import MasterProblemSupport
 
 from .column_management import MasterColumnManagementMixin
 
@@ -44,7 +44,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class VRPPMasterProblem(MasterColumnManagementMixin, VRPPMasterProblemConstraintsMixin, VRPPMasterProblemSupportMixin, MasterProblemSupport):
+class VRPPMasterProblem(
+    MasterColumnManagementMixin, VRPPMasterProblemConstraintsMixin, VRPPMasterProblemSupportMixin, MasterProblemSupport
+):
     """
     Master Problem (MP) for the Branch-and-Price-and-Cut algorithm.
 
@@ -158,7 +160,6 @@ class VRPPMasterProblem(MasterColumnManagementMixin, VRPPMasterProblemConstraint
         self.C = cost_per_km
         self.vehicle_limit = vehicle_limit
         self.global_cut_pool = global_cut_pool or GlobalCutPool()
-
 
         self.model: Optional[gp.Model] = None
         self.routes: List[Route] = []

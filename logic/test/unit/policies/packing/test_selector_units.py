@@ -4,7 +4,7 @@ from dataclasses import asdict
 
 import numpy as np
 import pytest
-from logic.src.configs.policies.other.packing import ServiceLevelSelectionConfig
+from logic.src.configs.policies.other.packing_threshold import ServiceLevelSelectionConfig
 from logic.src.interfaces.context.packing_context import PackingContext
 from logic.src.policies.packing.last_minute import LastMinuteSelection
 

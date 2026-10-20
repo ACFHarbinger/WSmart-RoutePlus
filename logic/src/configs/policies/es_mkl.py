@@ -16,7 +16,8 @@ Example:
 from dataclasses import dataclass
 from typing import Any, List, Optional
 
-from .other.packing import PackingConfig
+from logic.src.configs.policies.other.packing_dispatch import PackingConfig
+
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -89,7 +90,6 @@ class MuKappaLambdaESConfig:
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
 
-
     def __post_init__(self):
         """Validate parameters.
 
@@ -119,6 +119,7 @@ class MuKappaLambdaESConfig:
             "MuKappaLambdaESConfig" instance.
         """
         import dataclasses
+
         if isinstance(config, dict):
             return cls(**{k: v for k, v in config.items() if k in {f.name for f in dataclasses.fields(cls)}})
 

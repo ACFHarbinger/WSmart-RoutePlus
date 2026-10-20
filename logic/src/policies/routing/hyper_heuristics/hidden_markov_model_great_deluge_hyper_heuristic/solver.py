@@ -54,19 +54,10 @@ from .hmm_belief import (
     _N_OBS as _N_OBS,
 )
 from .hmm_belief import (
-    _OBS_IMPROVE as _OBS_IMPROVE,
-)
-from .hmm_belief import (
     _OBS_SAME as _OBS_SAME,
 )
 from .hmm_belief import (
     _OBS_SAME_COST as _OBS_SAME_COST,
-)
-from .hmm_belief import (
-    _OBS_WORSE as _OBS_WORSE,
-)
-from .hmm_belief import (
-    _OBS_WORSE_COST as _OBS_WORSE_COST,
 )
 from .hmm_belief import (
     HMMBeliefMixin as HMMBeliefMixin,

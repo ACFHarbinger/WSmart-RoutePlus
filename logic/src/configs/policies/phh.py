@@ -22,7 +22,8 @@ Example:
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
-from .other.packing import PackingConfig
+from logic.src.configs.policies.other.packing_dispatch import PackingConfig
+
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -51,7 +52,6 @@ class PHHConfig:
     packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None
 
-
     @classmethod
     def from_config(cls, config: Any) -> "PHHConfig":
         """
@@ -64,6 +64,7 @@ class PHHConfig:
             "PHHConfig": Parameters for the PHH solver.
         """
         from dataclasses import fields
+
         if isinstance(config, dict):
             return cls(**{k: v for k, v in config.items() if k in {f.name for f in fields(cls)}})
 
@@ -81,4 +82,5 @@ class PHHConfig:
             Dict[str, Any]: Dictionary representation of PHHConfig.
         """
         from dataclasses import fields
+
         return {f.name: getattr(self, f.name) for f in fields(self)}

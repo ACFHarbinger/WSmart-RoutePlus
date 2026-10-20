@@ -22,6 +22,8 @@ Example:
 """
 
 # Unstringing/Stringing imports removed to avoid circularity with ..unstringing_stringing
+from logic.src.policies.helpers.operators.destroy_ruin.branch_and_bound_profit import bb_profit_removal
+
 from .bin_pool import (
     remove_bins_from_route,
     remove_n_bins_across_routes,
@@ -29,7 +31,7 @@ from .bin_pool import (
     remove_n_bins_random,
     remove_segment_without_mandatory,
 )
-from .branch_and_bound import bb_profit_removal, bb_removal
+from .branch_and_bound import bb_removal
 from .cluster import cluster_profit_removal, cluster_removal
 from .guided import penalized_removal
 from .historical import historical_profit_removal, historical_removal

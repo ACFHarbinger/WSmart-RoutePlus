@@ -17,8 +17,8 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 
 from logic.src.configs.policies.other.acceptance_criteria import AcceptanceConfig
+from logic.src.configs.policies.other.packing_dispatch import PackingConfig
 
-from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -99,10 +99,10 @@ class LocalBranchingVNSConfig:
     route_improvement: Optional[RouteImprovingConfig] = None
     acceptance_criterion: AcceptanceConfig = field(default_factory=lambda: AcceptanceConfig(method="only_improving"))
 
-
     def __post_init__(self):
         """Ensure acceptance criterion is initialized even if not passed in config."""
         from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
+
         if self.acceptance_criterion is None:
             # Standard VNS uses Improving-Only acceptance
             self.acceptance_criterion = AcceptanceCriterionFactory.create(name="oi")
@@ -120,6 +120,7 @@ class LocalBranchingVNSConfig:
         from dataclasses import fields
 
         from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
+
         if isinstance(config, dict):
             params = cls(**{k: v for k, v in config.items() if k in {f.name for f in fields(cls)}})
         else:
@@ -155,4 +156,5 @@ class LocalBranchingVNSConfig:
             Dict[str, Any]: Dictionary representation of LocalBranchingVNSConfig.
         """
         from dataclasses import fields
+
         return {f.name: getattr(self, f.name) for f in fields(self)}

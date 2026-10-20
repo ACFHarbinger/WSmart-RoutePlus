@@ -17,6 +17,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Compatibility re-exports removed (`2026-10-20`)
+
+#### Added
+
+- **`logic/validation/check_reexports.py`**: finds re-exports, meaning names a non-`__init__` module imports but never uses itself. For each it follows the import chain to the defining module and lists the importers (module-level or deferred, absolute or relative), the string references (`mock.patch` targets, YAML) and the module-attribute uses.
+  - `--fix` rewrites the importers to the defining module and removes the re-export from the module and its `__all__`.
+  - Modules whose namespace is read dynamically (`getmembers`, `vars`, `dir`, `__dict__`, `getattr`, `import_module`), targets an f-string may build (`envs.{name}:{Prefix}Generator`), attribute uses and string references are reported for review by hand instead (`--ignore-dynamic`, `--no-strings`).
+- `vulture` in the `dev` dependency group (for the unused-symbol pass).
+
+#### Removed
+
+- **260 re-exports** (248 and 6 by `--fix`, 6 by hand), including the facades the file-size refactor left so old import paths kept working; 186 files changed, importers now import from the defining modules.
+- **Modules that were only re-exports**: `configs/policies/other/packing.py`, `tracking/logging/log_utils.py`, `policies/vector/local_search.py`, `pheromone_guided_cooperative_large_neighborhood_search/operators/{repair,destroy,exchange,move,route}_operators.py` and `perturbation_shaking/sans/{move,swap}.py`.
+- `policies/helpers/learning/agents/bandits.py`: dead, shadowed by the `agents/bandits/` package of the same name, which every import already resolved to.
+- Test-only re-exports (`ms_bpc_sp_engine.GRB` and `_column_generation_loop`, `build_release.LAZY_LINE_RE` and `lazy_targets`): the tests use the defining modules.
+
+#### Fixed
+
+- **No-op patches deleted**: `mock.patch` targets on names the module never used (`initializing.ROOT_DIR`, `node_selection.ROOT_DIR`, `route_improvement.ROOT_DIR`, `simulator.update_policy_log_section`) changed nothing.
+- `test_sequential_loop_does_not_write_mean` patched `simulator.update_policy_log_section`, which `simulator.py` never calls, so its assertion was vacuous. It now patches the mean writer's module, `simulator_progress`, and still passes.
+- The env and generator targets for `irp` and `thop` and their `ProblemSpec.env_target` point at `irp_env`, `irp_generator`, `thop_env` and `thop_generator`; the f-string targets had relied on the re-exports.
+- `generate_packing_templates` reads the three modules that define the packing configs (the same 34 configs).
+
+Full suite: 2,608 passed, no failures; release build, closure verification and smoke pass.
+
 ### Remaining test failures and Launcher scheduling fields (`2026-10-20`)
 
 #### Fixed

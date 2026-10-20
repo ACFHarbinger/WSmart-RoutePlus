@@ -9,7 +9,7 @@ from logic.src.pipeline.simulations.reporting import (
     note_solver_status,
     reset_solver_status,
 )
-from logic.src.tracking.logging.modules.analysis import daily_row_is_visible
+from logic.src.tracking.logging.modules.summary_display import daily_row_is_visible
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

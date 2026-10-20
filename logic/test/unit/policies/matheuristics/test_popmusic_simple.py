@@ -1,5 +1,3 @@
-
-
 import os
 import sys
 from unittest.mock import MagicMock, patch
@@ -11,8 +9,10 @@ import pytest
 # Add project root to path
 sys.path.append(os.path.abspath("."))
 
-from logic.src.policies.routing.matheuristics.partial_optimization_metaheuristic_under_special_intensification_conditions.solver import (
+from logic.src.policies.routing.matheuristics.partial_optimization_metaheuristic_under_special_intensification_conditions.popmusic_utils import (
     find_route_neighbors,
+)
+from logic.src.policies.routing.matheuristics.partial_optimization_metaheuristic_under_special_intensification_conditions.solver import (
     run_popmusic,
 )
 from scipy.spatial import KDTree
@@ -104,12 +104,15 @@ def test_popmusic_lifo_order():
         G = {0: [1], 1: [0], 2: [3], 3: [2]}
         return routes, centers, G
 
-    with patch(
-        "logic.src.policies.routing.matheuristics.partial_optimization_metaheuristic_under_special_intensification_conditions.solver._optimize_subproblem",
-        side_effect=mock_optimize,
-    ), patch(
-        "logic.src.policies.routing.matheuristics.partial_optimization_metaheuristic_under_special_intensification_conditions.solver._initialize_pmedian",
-        side_effect=mock_init,
+    with (
+        patch(
+            "logic.src.policies.routing.matheuristics.partial_optimization_metaheuristic_under_special_intensification_conditions.solver._optimize_subproblem",
+            side_effect=mock_optimize,
+        ),
+        patch(
+            "logic.src.policies.routing.matheuristics.partial_optimization_metaheuristic_under_special_intensification_conditions.solver._initialize_pmedian",
+            side_effect=mock_init,
+        ),
     ):
         run_popmusic(**data, subproblem_size=2, seed_strategy="lifo")
 
@@ -134,8 +137,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\nTESTS FAILED: {e}")
         import traceback
-
-
 
         traceback.print_exc()
         sys.exit(1)

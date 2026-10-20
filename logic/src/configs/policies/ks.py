@@ -17,7 +17,8 @@ Example:
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
-from .other.packing import PackingConfig
+from logic.src.configs.policies.other.packing_dispatch import PackingConfig
+
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -74,7 +75,6 @@ class KernelSearchConfig:
     packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None
 
-
     @classmethod
     def from_config(cls, config: Any) -> "KernelSearchConfig":
         """Create KernelSearchConfig from a configuration object or dictionary.
@@ -86,6 +86,7 @@ class KernelSearchConfig:
             "KernelSearchConfig": Populated parameter dataclass.
         """
         from dataclasses import fields
+
         if isinstance(config, dict):
             return cls(**{k: v for k, v in config.items() if k in {f.name for f in fields(cls)}})
 
@@ -106,4 +107,5 @@ class KernelSearchConfig:
             Dict[str, Any]: Mapping of parameter names to their values.
         """
         from dataclasses import fields
+
         return {f.name: getattr(self, f.name) for f in fields(self)}

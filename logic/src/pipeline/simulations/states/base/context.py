@@ -140,7 +140,7 @@ class SimulationContext:
         self.pol_cfg = deep_sanitize(raw_policy)
 
         # Use centralized utility for consistent name resolution across processes
-        from logic.src.pipeline.simulations.day_context import resolve_policy_display_name, to_slug
+        from logic.src.pipeline.simulations.naming import resolve_policy_display_name, to_slug
 
         self.pol_id_orig, self.display_name = resolve_policy_display_name(raw_policy, sim)
         self.pol_name = to_slug(self.display_name)

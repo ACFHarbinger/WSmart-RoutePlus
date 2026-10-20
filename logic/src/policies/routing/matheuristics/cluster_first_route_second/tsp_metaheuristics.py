@@ -38,9 +38,6 @@ from typing import List, Optional
 
 import numpy as np
 
-from logic.src.policies.routing.matheuristics.cluster_first_route_second.tsp_genetic import (
-    find_route_ga as find_route_ga,
-)
 from logic.src.policies.routing.matheuristics.cluster_first_route_second.tsp_local_search import (
     _calculate_tour_distance,
     _get_swap_operators,

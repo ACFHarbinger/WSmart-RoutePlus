@@ -2,7 +2,7 @@
 
 from logic.src.configs import Config
 from logic.src.pipeline.features.test.config import expand_policy_configs
-from logic.src.pipeline.simulations.actions.base import _as_policy_mapping
+from logic.src.pipeline.simulations.actions.policy_config import _as_policy_mapping
 from omegaconf import OmegaConf
 
 

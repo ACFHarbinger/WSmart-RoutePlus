@@ -22,9 +22,6 @@ from logic.src.policies.helpers.solvers_and_matheuristics.master_problem import 
 from logic.src.policies.helpers.solvers_and_matheuristics.search.cut_engine_base import CuttingPlaneEngine
 from logic.src.policies.helpers.solvers_and_matheuristics.vrpp_model import VRPPModel
 
-from .cuts_clique_rank import EdgeCliqueCutEngine as EdgeCliqueCutEngine
-from .cuts_clique_rank import LimitedMemoryRank1CutEngine as LimitedMemoryRank1CutEngine
-
 
 class SubsetRowCutEngine(CuttingPlaneEngine):
     """Subset-Row Inequality (SRI) separation engine.

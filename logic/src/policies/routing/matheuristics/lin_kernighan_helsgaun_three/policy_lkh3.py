@@ -37,10 +37,8 @@ from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.graph_augmentation import (
     augment_graph,
 )
-from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.lkh3 import (
-    solve_lkh3,
-    solve_lkh3_with_alns,
-)
+from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.lkh3 import solve_lkh3
+from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.lkh3_alns_entry import solve_lkh3_with_alns
 
 
 @GlobalRegistry.register(
@@ -159,7 +157,9 @@ class LKH3Policy(BaseRoutingPolicy):
         # If native prize-collecting is enabled, we skip standard CVRP augmentation
         # as the solver will perform Jonker-Volgenant ATSP transformation internally.
         # Select LKH-3 variant (with or without Adaptive Large Neighborhood Search)
-        policy_function = solve_lkh3_with_alns if current_expand_pool() or params.native_prize_collecting else solve_lkh3
+        policy_function = (
+            solve_lkh3_with_alns if current_expand_pool() or params.native_prize_collecting else solve_lkh3
+        )
 
         # Type-safe demand representation
         waste_arr: Optional[np.ndarray] = None

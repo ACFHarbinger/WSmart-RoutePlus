@@ -57,14 +57,10 @@ from typing import Dict, List, Optional
 
 import numpy as np
 
-from logic.src.policies.helpers.operators.destroy_ruin.branch_and_bound import (
-    bb_profit_removal,
-    bb_removal,
-)
-from logic.src.policies.helpers.operators.recreate_repair.branch_and_bound import (
-    bb_insertion,
-    bb_profit_insertion,
-)
+from logic.src.policies.helpers.operators.destroy_ruin.branch_and_bound import bb_removal
+from logic.src.policies.helpers.operators.destroy_ruin.branch_and_bound_profit import bb_profit_removal
+from logic.src.policies.helpers.operators.recreate_repair.branch_and_bound import bb_insertion
+from logic.src.policies.helpers.operators.recreate_repair.branch_and_bound_profit import bb_profit_insertion
 
 
 def bb_perturbation(

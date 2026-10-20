@@ -38,12 +38,6 @@ from .run_artifacts import (
 from .run_logging import (
     RunLoggingMixin as RunLoggingMixin,
 )
-from .run_logging import (
-    _flatten_dict as _flatten_dict,
-)
-from .run_logging import (
-    _safe_float as _safe_float,
-)
 
 # ---------------------------------------------------------------------------
 # Module-level active-run registry (one per process)
@@ -79,8 +73,6 @@ def set_active_run(run: Optional["Run"]) -> None:
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
-
 
 
 # ---------------------------------------------------------------------------

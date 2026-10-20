@@ -19,11 +19,12 @@ from typing import Any, Dict
 import numpy as np
 from omegaconf import DictConfig, OmegaConf
 
+from logic.src.pipeline.simulations.actions.policy_config import _as_policy_mapping
 from logic.src.pipeline.simulations.day_context import resolve_solver_status
 from logic.src.pipeline.simulations.reporting import current_solver_status, reset_solver_status
 from logic.src.policies.routing.base import RoutingAlgorithmFactory, RoutingAlgorithmRegistry
 
-from .base import SimulationAction, _as_policy_mapping, bind_context
+from .base import SimulationAction, bind_context
 
 
 class RoutingAction(SimulationAction):
@@ -189,7 +190,9 @@ class RoutingAction(SimulationAction):
             # 3. Unpack adapter results: tour represents global bin IDs
             from logic.src.tracking.logging.modules.policy_viz_emit import PolicyVizStreamSession
 
-            viz_policy = str(getattr(context, "display_name", None) or getattr(context, "policy_name", None) or full_policy)
+            viz_policy = str(
+                getattr(context, "display_name", None) or getattr(context, "policy_name", None) or full_policy
+            )
             viz_sample = int(getattr(context, "sample_id", 0))
             viz_day = int(getattr(context, "day", 0))
             viz_log = getattr(context, "realtime_log_path", None)

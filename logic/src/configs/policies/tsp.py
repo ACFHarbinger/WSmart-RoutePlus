@@ -20,7 +20,8 @@ Example:
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from .other.packing import PackingConfig
+from logic.src.configs.policies.other.packing_dispatch import PackingConfig
+
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -42,7 +43,6 @@ class TSPConfig:
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
 
-
     @classmethod
     def from_config(cls, config: Any) -> "TSPConfig":
         """Create TSPConfig from a configuration object or dictionary.
@@ -54,6 +54,7 @@ class TSPConfig:
             "TSPConfig": Configuration parameters for the Traveling Salesman Problem.
         """
         from dataclasses import fields
+
         if isinstance(config, dict):
             return cls(**{k: v for k, v in config.items() if k in {f.name for f in fields(cls)}})
 
@@ -69,4 +70,5 @@ class TSPConfig:
             Dict[str, Any]: Dictionary representation of the parameters.
         """
         from dataclasses import fields
+
         return {f.name: getattr(self, f.name) for f in fields(self)}

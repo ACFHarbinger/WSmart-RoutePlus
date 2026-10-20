@@ -24,10 +24,10 @@ import numpy as np
 
 from logic.src.constants import SIM_METRICS
 from logic.src.data.processor import save_matrix_to_excel
-from logic.src.tracking.logging.log_utils import (
+from logic.src.tracking.logging.modules.storage import update_policy_log_section
+from logic.src.tracking.logging.modules.summary_display import (
     display_per_policy_simulation_summary,
     display_simulation_summary_table,
-    update_policy_log_section,
 )
 from logic.src.utils.infrastructure.setup_sims import get_graph_config
 

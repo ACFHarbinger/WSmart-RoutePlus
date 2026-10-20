@@ -83,13 +83,8 @@ from logic.src.policies.helpers.solvers_and_matheuristics.search.column_generati
 from logic.src.policies.helpers.solvers_and_matheuristics.search.cutting_planes import CuttingPlaneEngine
 
 from .bpc_options import BPCSearchOptions as BPCSearchOptions
-from .bpc_options import total_travel_cost as total_travel_cost
 
 logger = logging.getLogger(__name__)
-
-
-
-
 
 
 def search_bpc_tree(  # noqa: C901

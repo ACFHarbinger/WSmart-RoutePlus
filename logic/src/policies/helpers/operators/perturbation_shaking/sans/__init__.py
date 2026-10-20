@@ -31,25 +31,29 @@ Example:
     >>> print(routes)
 """
 
-from .move import (
+from logic.src.policies.helpers.operators.perturbation_shaking.sans.inter_move import (
     add_route_consecutive,
     add_route_random,
     move_between_routes,
     move_n_2_routes_consecutive,
     move_n_2_routes_random,
+    transfer_n_bins_consecutive,
+    transfer_n_bins_random,
+)
+from logic.src.policies.helpers.operators.perturbation_shaking.sans.inter_swap import (
+    exchange_n_bins_random,
+    exchange_route_tails,
+    swap_n_2_routes_consecutive,
+    swap_n_2_routes_random,
+)
+from logic.src.policies.helpers.operators.perturbation_shaking.sans.intra_move import (
     move_n_route_consecutive,
     move_n_route_random,
     or_opt_move,
     rearrange_part_route,
     relocate_within_route,
-    transfer_n_bins_consecutive,
-    transfer_n_bins_random,
 )
-from .swap import (
-    exchange_n_bins_random,
-    exchange_route_tails,
-    swap_n_2_routes_consecutive,
-    swap_n_2_routes_random,
+from logic.src.policies.helpers.operators.perturbation_shaking.sans.intra_swap import (
     swap_n_route_consecutive,
     swap_n_route_random,
 )

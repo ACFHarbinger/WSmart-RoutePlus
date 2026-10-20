@@ -39,16 +39,11 @@ from logic.src.pipeline.features.test.orchestrator.parallel_runner import (
     run_parallel_simulations,
 )
 from logic.src.pipeline.simulations.repository import load_indices
-from logic.src.pipeline.simulations.simulator import (
-    display_log_metrics,
-    sequential_simulations,
-)
-from logic.src.tracking.logging.log_utils import (
-    output_stats,
-    runs_per_policy,
-    send_final_output_to_gui,
-)
+from logic.src.pipeline.simulations.simulator import sequential_simulations
+from logic.src.pipeline.simulations.simulator_progress import display_log_metrics
 from logic.src.tracking.logging.logger_writer import LoggerWriter, setup_logger_redirection
+from logic.src.tracking.logging.modules.analysis import output_stats, runs_per_policy
+from logic.src.tracking.logging.modules.gui import send_final_output_to_gui
 
 __all__ = [
     "simulator_testing",
@@ -167,7 +162,7 @@ def simulator_testing(cfg: Config, data_size: int, device: Any) -> None:  # noqa
         data_size: Number of available data points for the area.
         device: Torch device for neural models.
     """
-    from logic.src.pipeline.simulations.day_context import policy_result_key
+    from logic.src.pipeline.simulations.naming import policy_result_key
 
     sim = cfg.sim
     log_file = setup_logger_redirection(echo_to_terminal=True)
