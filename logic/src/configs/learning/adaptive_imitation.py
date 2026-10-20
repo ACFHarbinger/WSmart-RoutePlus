@@ -19,19 +19,27 @@ Example:
 from dataclasses import dataclass
 from typing import Any, Union
 
-from logic.src.configs.rl.policies import (
+from .experts import (
     ACOConfig,
     ProfitableNNConfig,
     RLSConfig,
     VectorALNSConfig,
     VectorHGSALNSConfig,
     VectorHGSConfig,
+    VectorHVPLConfig,
     VectorILSConfig,
 )
 
 # Type alias for expert policy configurations
 ExpertPolicyConfig = Union[
-    VectorHGSConfig, VectorALNSConfig, VectorILSConfig, RLSConfig, ACOConfig, VectorHGSALNSConfig, ProfitableNNConfig
+    VectorHGSConfig,
+    VectorALNSConfig,
+    VectorILSConfig,
+    VectorHVPLConfig,
+    RLSConfig,
+    ACOConfig,
+    VectorHGSALNSConfig,
+    ProfitableNNConfig,
 ]
 
 

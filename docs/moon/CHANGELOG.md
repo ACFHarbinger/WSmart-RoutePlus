@@ -17,6 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Learning config layout (`2026-10-20`)
+
+#### Changed
+
+- **`logic/src/configs/rl` is now `logic/src/configs/learning`**. Algorithm dataclasses sit next to `RLConfig`. The expert dataclasses from `rl/policies/` are one module, `logic.src.configs.learning.experts`, and the short aliases (`ALNSConfig`, `HGSConfig`, `ILSConfig`, `HGSALNSConfig`, `HVPLConfig` on that package) are gone. Hydra targets use `logic.src.configs.learning.experts.<Class>` with the `Vector*` names. `VectorHVPLConfig` keeps `alns_iterations` so the HVPL expert yaml matches `VectorizedHVPL`, and both imitation trainers dispatch that config.
+- **Removed `logic/configs/models/policies/ahvpl.yaml`**. It targeted `AHVPLConfig`, which had no class.
+- **Expert dataclasses now carry the fields the vector policies already accept** (`population_size`, `elite_size`, `n_generations`, `max_iterations`, `alns_start_temp`, `alns_cooling_rate`, `max_vehicles` where that policy reads them). `alns.yaml` no longer sets `weight_update_frequency` or `min_removal_pct`; the vector ALNS policy does not read them, so Hydra could not build the config.
+
 ### Dead-code sweep (`2026-10-20`)
 
 #### Added

@@ -14,7 +14,7 @@
 #     models/policies@rl.imitation.policy_config=profitable_nn
 # =============================================================================
 
-_target_: logic.src.configs.rl.policies.ProfitableNNConfig
+_target_: logic.src.configs.learning.experts.ProfitableNNConfig
 
 two_opt_passes: 5
 # Maximum number of full 2-opt sweeps per tour

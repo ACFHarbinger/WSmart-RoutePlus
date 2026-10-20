@@ -110,7 +110,7 @@ logic/src/configs/
 │   │   └── route_improvement.py
 │   └── README.md
 │
-├── rl/                      # Reinforcement learning configurations
+├── learning/                # Reinforcement learning configurations
 │   ├── __init__.py          # RLConfig
 │   ├── README.md
 │   ├── core/                # Learning algorithms
@@ -1097,12 +1097,12 @@ post_proc = route improvementConfig(
 
 ## 7. Reinforcement Learning Configurations
 
-**Directory**: `logic/src/configs/rl/`
+**Directory**: `logic/src/configs/learning/`
 **Purpose**: RL algorithms, baselines, and expert policy wrappers
 
 ### RLConfig
 
-**File**: `rl/__init__.py`
+**File**: `learning/__init__.py`
 
 Central RL algorithm configuration.
 
@@ -1181,7 +1181,7 @@ rl_config = RLConfig(
 
 ### PPOConfig
 
-**File**: `rl/core/ppo.py`
+**File**: `learning/ppo.py`
 
 Proximal Policy Optimization parameters.
 
@@ -1205,7 +1205,7 @@ class PPOConfig:
 
 ### POMOConfig
 
-**File**: `rl/core/pomo.py`
+**File**: `learning/pomo.py`
 
 Policy Optimization with Multiple Optima.
 
@@ -1227,7 +1227,7 @@ class POMOConfig:
 
 ### SymNCOConfig
 
-**File**: `rl/core/symnco.py`
+**File**: `learning/symnco.py`
 
 Symmetry-aware Neural Combinatorial Optimization.
 
@@ -1247,7 +1247,7 @@ class SymNCOConfig:
 
 ### ImitationConfig
 
-**File**: `rl/core/imitation.py`
+**File**: `learning/imitation.py`
 
 Supervised learning from expert policies.
 
@@ -1267,7 +1267,7 @@ class ImitationConfig:
 
 ### AdaptiveImitationConfig
 
-**File**: `rl/core/adaptive_imitation.py`
+**File**: `learning/adaptive_imitation.py`
 
 Dynamic IL-to-RL transition.
 
@@ -1993,9 +1993,8 @@ from logic.src.configs.policies import (
 )
 
 # RL configs
-from logic.src.configs.rl import RLConfig
-from logic.src.configs.rl.core import (
-    PPOConfig, POMOConfig, SymNCOConfig,
+from logic.src.configs.learning import (
+    RLConfig, PPOConfig, POMOConfig, SymNCOConfig,
     ImitationConfig, AdaptiveImitationConfig
 )
 
@@ -2078,9 +2077,9 @@ Config
 | `models/decoder.py`         | ~40   | DecoderConfig     |
 | `models/decoding.py`        | 23    | DecodingConfig    |
 | `models/optim.py`           | ~25   | OptimConfig       |
-| `rl/__init__.py`            | 44    | RLConfig          |
-| `rl/core/ppo.py`            | 14    | PPOConfig         |
-| `rl/core/pomo.py`           | ~20   | POMOConfig        |
+| `learning/__init__.py`      | 44    | RLConfig          |
+| `learning/ppo.py`           | 14    | PPOConfig         |
+| `learning/pomo.py`          | ~20   | POMOConfig        |
 | `policies/alns.py`          | 39    | ALNSConfig        |
 | `policies/helpers/packing.py` | ~60   | PackingConfig      |
 | `tasks/train.py`            | 75    | TrainConfig       |

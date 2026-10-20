@@ -11,7 +11,7 @@
 #   python main.py train rl.imitation.policy_config=tasks/policies/rl/alns
 # =============================================================================
 
-_target_: logic.src.configs.rl.policies.ALNSConfig
+_target_: logic.src.configs.learning.experts.VectorALNSConfig
 
 # Runtime Control
 time_limit: 30.0
@@ -32,19 +32,10 @@ cooling_rate: 0.995
 # Temperature decay per iteration (T_new = T_old * cooling_rate)
 # Range: 0.98-0.9999 (lower = faster cooling)
 
-# Operator Weights
-weight_update_frequency: 50
-# Update operator weights every N iterations based on performance
-# Range: 25-100
-
 # Removal Parameters
 max_removal_pct: 0.3
 # Maximum percentage of solution to remove in destroy phase
 # Range: 0.1-0.5 (0.2 = conservative, 0.3 = balanced, 0.5 = aggressive)
-
-min_removal_pct: 0.1
-# Minimum percentage of solution to remove
-# Range: 0.05-0.2
 
 # Vehicle Constraints
 max_vehicles: 0

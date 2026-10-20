@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 import torch
-from logic.src.configs.rl.policies import ProfitableNNConfig
+from logic.src.configs.learning.experts import ProfitableNNConfig
 from logic.src.pipeline.features.train.model_factory.builder import _load_initial_weights
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

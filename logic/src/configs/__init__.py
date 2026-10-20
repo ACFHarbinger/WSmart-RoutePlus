@@ -33,9 +33,9 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 
 from .envs import EnvConfig, GraphConfig, ObjectiveConfig
+from .learning import RLConfig
 from .models import DecoderConfig, DecodingConfig, EncoderConfig, ModelConfig, OptimConfig
 from .policies.other import PackingConfig, RouteImprovingConfig
-from .rl import RLConfig
 from .tasks import DataConfig, EvalConfig, HPOConfig, MetaRLConfig, SimConfig, SimHPOConfig, TrainConfig
 from .tracking import TrackingConfig
 

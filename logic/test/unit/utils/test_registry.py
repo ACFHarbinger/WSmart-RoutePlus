@@ -90,25 +90,22 @@ def test_routing_manifest_covers_declared_policy_modules():
     assert {"swc_tcf", "alns", "hgs"} <= declared
 
 
-def test_hydra_vector_config_aliases():
-    from logic.src.configs.rl.policies import (
-        ALNSConfig,
-        HGSALNSConfig,
-        HGSConfig,
-        HVPLConfig,
-        ILSConfig,
-        VectorALNSConfig,
-        VectorHGSALNSConfig,
-        VectorHGSConfig,
-        VectorHVPLConfig,
-        VectorILSConfig,
-    )
+def test_expert_policy_hydra_targets_resolve():
+    import importlib
+    import re
+    from pathlib import Path
 
-    assert ALNSConfig is VectorALNSConfig
-    assert HGSConfig is VectorHGSConfig
-    assert ILSConfig is VectorILSConfig
-    assert HGSALNSConfig is VectorHGSALNSConfig
-    assert HVPLConfig is VectorHVPLConfig
+    root = Path(__file__).resolve().parents[3] / "configs" / "models" / "policies"
+    targets = []
+    for path in sorted(root.glob("*.yaml")):
+        match = re.search(r"^_target_: (\S+)", path.read_text(), re.MULTILINE)
+        assert match, path
+        target = match.group(1)
+        targets.append(target)
+        module_name, _, class_name = target.rpartition(".")
+        cls = getattr(importlib.import_module(module_name), class_name)
+        assert cls.__module__ == "logic.src.configs.learning.experts", path
+    assert any(item.endswith("VectorHVPLConfig") for item in targets)
 
 
 def test_released_classical_imports_do_not_load_torch():

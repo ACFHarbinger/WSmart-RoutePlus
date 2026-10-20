@@ -785,7 +785,7 @@ python main.py test_sim \
 
 **Purpose:** Configure expert policies for **Imitation Learning** and **Adaptive Imitation Learning**.
 
-These configs use `_target_` to instantiate Python dataclasses in `logic/src/configs/rl/policies/`.
+These configs use `_target_` to instantiate Python dataclasses in `logic/src/configs/learning/experts.py`.
 
 **Available Policies:**
 

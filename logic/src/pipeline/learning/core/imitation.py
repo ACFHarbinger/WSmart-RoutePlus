@@ -50,6 +50,10 @@ _EXPERT_TARGETS = {
         "logic.src.policies.vector.profitable_nearest_neighbour",
         "ProfitableNearestNeighbourPolicy",
     ),
+    "VectorHVPLConfig": (
+        "logic.src.policies.vector.hybrid_volleyball_premier_league",
+        "VectorizedHVPL",
+    ),
 }
 
 
@@ -88,7 +92,7 @@ class ImitationLearning(RL4COLitModule):
 
     def __init__(
         self,
-        policy_config: Any,  # Expert policy configuration (HGSConfig, ALNSConfig, etc.)
+        policy_config: Any,  # Expert policy configuration from learning.experts
         env_name: str,
         loss_fn: str = "nll",
         seed: int = 42,
@@ -102,7 +106,7 @@ class ImitationLearning(RL4COLitModule):
         Initialize ImitationLearning module.
 
         Args:
-            policy_config: Expert policy configuration (HGSConfig, ALNSConfig, etc.).
+            policy_config: Expert policy configuration from ``logic.src.configs.learning.experts``.
             env_name: Environment name for the policy.
             loss_fn: Loss function to use ('nll', 'weighted_nll', 'kl', 'reverse_kl', 'js').
             seed: Random seed for reproducibility.
@@ -154,7 +158,7 @@ class ImitationLearning(RL4COLitModule):
         """Create expert policy from configuration.
 
         Args:
-            policy_config: Expert policy configuration (HGSConfig, ALNSConfig, etc.).
+            policy_config: Expert policy configuration from ``logic.src.configs.learning.experts``.
             env_name: Environment name for the policy.
             seed: Random seed for reproducibility.
             device: Device to run the policy on.

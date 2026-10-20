@@ -11,7 +11,7 @@
 #   python main.py train rl.imitation.policy_config=tasks/policies/rl/hvpl
 # =============================================================================
 
-_target_: logic.src.configs.rl.policies.HVPLConfig
+_target_: logic.src.configs.learning.experts.VectorHVPLConfig
 
 # Runtime Control
 time_limit: 30.0

@@ -11,7 +11,7 @@
 #   python main.py train rl.imitation.policy_config=tasks/policies/rl/hgs_alns
 # =============================================================================
 
-_target_: logic.src.configs.rl.policies.HGSALNSConfig
+_target_: logic.src.configs.learning.experts.VectorHGSALNSConfig
 
 # Runtime Control
 time_limit: 30.0
