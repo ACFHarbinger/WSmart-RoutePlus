@@ -127,6 +127,11 @@ class FakeAzureBatchClient:
         self.file = self
 
     def add(self, job_id: str, task: Dict[str, Any]) -> None:
+        if "pool_id" in task:
+            raise ValueError(
+                "ParamValidationError: TaskAddParameter has no pool_id field; pool is configured on the Job"
+            )
+
         task_id = task["id"]
         cmd = task.get("command_line", "")
 
@@ -167,7 +172,7 @@ class FakeAzureBatchClient:
             "polls": 0,
             "log_lines": [f"azure batch log for {task_id}"],
             "task_data": task,
-            "pool_id": task.get("pool_id", ""),
+            "job_id": job_id,
         }
 
     def get(self, job_id: str, task_id: str) -> Optional[Dict[str, Any]]:
@@ -219,7 +224,6 @@ class FakeAzureBatchClient:
             "id": task_id,
             "state": state,
             "execution_info": exec_info,
-            "pool_id": t["pool_id"],
         }
 
     def terminate(self, job_id: str, task_id: str) -> None:
@@ -235,6 +239,58 @@ class FakeAzureBatchClient:
         return io.BytesIO(b"")
 
 
+class FakeJobExecutionBase:
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+
+class FakeJobsExecutionsOperations:
+    def __init__(self, executions: Dict[str, Dict[str, Any]]) -> None:
+        self._executions = executions
+
+    def list(self, resource_group_name: str, job_name: str) -> List[Dict[str, Any]]:
+        prefix = f"{resource_group_name}:{job_name}:"
+        result = []
+        for k, v in self._executions.items():
+            if k.startswith(prefix):
+                v["polls"] += 1
+                if v["cancelled"]:
+                    status = "Failed"
+                    msg = "Cancelled by user"
+                    exit_code = 143
+                elif v["outcome"] == "hang":
+                    status = "Running"
+                    msg = ""
+                    exit_code = None
+                elif v["outcome"] == "preempt":
+                    status = "Failed"
+                    msg = "Container app job spot instance was preempted"
+                    exit_code = 137
+                elif v["outcome"] == "exit143":
+                    status = "Failed"
+                    msg = "Container app spot node interrupted (exit 143)"
+                    exit_code = 143
+                elif v["outcome"] == "fail":
+                    status = "Failed"
+                    msg = "Container failed with exit code 1"
+                    exit_code = 1
+                else:
+                    status = "Succeeded"
+                    msg = ""
+                    exit_code = 0
+
+                result.append(
+                    {
+                        "name": v["name"],
+                        "status": status,
+                        "message": msg,
+                        "exit_code": exit_code,
+                        "spot": v.get("spot", False),
+                    }
+                )
+        return result
+
+
 class FakeContainerAppsClient:
     """In-memory Azure Container Apps client for contract testing.
 
@@ -244,9 +300,12 @@ class FakeContainerAppsClient:
     def __init__(self) -> None:
         self.executions: Dict[str, Dict[str, Any]] = {}
         self.jobs = self
+        self.jobs_executions = FakeJobsExecutionsOperations(self.executions)
         self.job_executions = self
         self.job_definitions: Dict[str, Dict[str, Any]] = {
-            "wsr-rg:wsr-job": {"configuration": {"secrets": [{"name": "GUROBI_KEY"}, {"name": "gurobi-secret"}]}}
+            "wsr-rg:wsr-job": {
+                "properties": {"configuration": {"secrets": [{"name": "GUROBI_KEY"}, {"name": "gurobi-secret"}]}}
+            }
         }
 
     def get(
@@ -293,14 +352,36 @@ class FakeContainerAppsClient:
             "spot": e.get("spot", False),
         }
 
-    def start(self, resource_group_name: str, job_name: str, template: Dict[str, Any]) -> Dict[str, Any]:
+    def begin_update(self, resource_group_name: str, job_name: str, job_envelope: Dict[str, Any]) -> Any:
+        props = job_envelope.get("properties")
+        if not props or not props.get("configuration") or "secrets" not in props["configuration"]:
+            raise ValueError("JobPatchProperties must have properties.configuration.secrets")
+        for s in props["configuration"]["secrets"]:
+            if "name" not in s:
+                raise ValueError("Secret in properties.configuration.secrets missing name")
+            if "keyVaultUrl" in s:
+                raise ValueError("Secret has camelCase keyVaultUrl; expected snake_case key_vault_url")
+
+        key = f"{resource_group_name}:{job_name}"
+        self.job_definitions[key] = job_envelope
+
+        class UpdatePoller:
+            def result(self) -> Dict[str, Any]:
+                return job_envelope
+
+        return UpdatePoller()
+
+    update = begin_update
+
+    def begin_start(self, resource_group_name: str, job_name: str, template: Dict[str, Any]) -> Any:
         container = template.get("containers", [{}])[0]
         cmd = " ".join(container.get("command", []))
         exec_name = f"exec-{len(self.executions) + 1}"
 
         # Verify referenced secrets exist in configuration.secrets
         job_def = self.job_definitions.get(f"{resource_group_name}:{job_name}", {})
-        known_secrets = {s["name"] for s in job_def.get("configuration", {}).get("secrets", [])}
+        cfg = job_def.get("properties", {}).get("configuration", {}) or job_def.get("configuration", {})
+        known_secrets = {s["name"] for s in cfg.get("secrets", [])}
         for env_entry in container.get("env", []):
             if "secretRef" in env_entry:
                 ref = env_entry["secretRef"]
@@ -326,17 +407,32 @@ class FakeContainerAppsClient:
             "log_lines": [f"container apps log for {exec_name}"],
             "spot": bool("preempt" in outcome or "exit143" in outcome),
         }
-        return {"name": exec_name}
+
+        class StartPoller:
+            def result(self) -> FakeJobExecutionBase:
+                return FakeJobExecutionBase(exec_name)
+
+        return StartPoller()
+
+    start = begin_start
+
+    def begin_stop_execution(self, resource_group_name: str, job_name: str, job_execution_name: str) -> Any:
+        key = f"{resource_group_name}:{job_name}:{job_execution_name}"
+        if key in self.executions:
+            self.executions[key]["cancelled"] = True
+
+        class StopPoller:
+            def result(self) -> None:
+                return None
+
+        return StopPoller()
+
+    stop = begin_stop_execution
 
     def get_log_stream(self, resource_group_name: str, job_name: str, job_execution_name: str) -> io.BytesIO:
         key = f"{resource_group_name}:{job_name}:{job_execution_name}"
         lines = self.executions.get(key, {}).get("log_lines", [])
         return io.BytesIO("\n".join(lines).encode("utf-8"))
-
-    def stop(self, resource_group_name: str, job_name: str, job_execution_name: str) -> None:
-        key = f"{resource_group_name}:{job_name}:{job_execution_name}"
-        if key in self.executions:
-            self.executions[key]["cancelled"] = True
 
 
 class FakeNetworkInterfacesClient:
@@ -368,6 +464,17 @@ class FakeNetworkInterfacesClient:
         return Poller()
 
     create_or_update = begin_create_or_update
+
+    def begin_delete(self, resource_group_name: str, network_interface_name: str) -> Any:
+        self.nics.pop(f"{resource_group_name}:{network_interface_name}", None)
+
+        class DeletePoller:
+            def result(self) -> None:
+                return None
+
+        return DeletePoller()
+
+    delete = begin_delete
 
 
 def _validate_azure_vm_parameters(parameters: Dict[str, Any]) -> None:

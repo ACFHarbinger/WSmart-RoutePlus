@@ -62,7 +62,7 @@ class KeyVaultSecretStore(SecretStore):
                 or "not found" in str(exc).lower()
             ):
                 return None
-            return None
+            raise
 
     def put(self, name: str, value: str) -> None:
         secret_name = self._sanitize_name(name)

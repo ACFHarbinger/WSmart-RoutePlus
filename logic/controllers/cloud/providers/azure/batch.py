@@ -54,6 +54,7 @@ class AzureBatchBackend(ComputeBackend):
         pool_id: str = "wsr-batch-pool",
         pool_id_spot: Optional[str] = None,
         job_id: str = "wsr-jobs",
+        job_id_spot: Optional[str] = None,
         batch_url: Optional[str] = None,
         vault_name: str = "wsr-vault",
         registry_server: Optional[str] = None,
@@ -65,6 +66,7 @@ class AzureBatchBackend(ComputeBackend):
         self.pool_id = pool_id
         self.pool_id_spot = pool_id_spot or f"{pool_id}-spot"
         self.job_id = job_id
+        self.job_id_spot = job_id_spot or f"{job_id}-spot"
         self.batch_url = batch_url or "https://wsrbatch.eastus.batch.azure.com"
         self.vault_name = vault_name
         self.registry_server = registry_server
@@ -111,7 +113,7 @@ class AzureBatchBackend(ComputeBackend):
             )
 
         task_id = f"task-{launch.task.task_id}"
-        pool_id = self.pool_id_spot if launch.resources.spot else self.pool_id
+        target_job_id = self.job_id_spot if launch.resources.spot else self.job_id
 
         env = dict(launch.env)
         env.setdefault("WSR_JOB_ID", launch.task.job_id)
@@ -131,7 +133,6 @@ class AzureBatchBackend(ComputeBackend):
             "id": task_id,
             "command_line": cmd_line,
             "environment_settings": env_settings,
-            "pool_id": pool_id,
         }
 
         if launch.resources.max_wall_seconds is not None:
@@ -153,8 +154,8 @@ class AzureBatchBackend(ComputeBackend):
 
         task_data["container_settings"] = container_settings
 
-        self.client.task.add(job_id=self.job_id, task=task_data)
-        return f"azure-batch:{self.region}:{self.job_id}:{task_id}"
+        self.client.task.add(job_id=target_job_id, task=task_data)
+        return f"azure-batch:{self.region}:{target_job_id}:{task_id}"
 
     def poll(self, handle: str) -> BackendStatus:
         job_id, task_id = self._parse_handle(handle)
@@ -167,8 +168,7 @@ class AzureBatchBackend(ComputeBackend):
             return BackendStatus(AttemptState.UNKNOWN, message="no such task")
 
         state = getattr(task, "state", None) or task.get("state", "")
-        pool_id = getattr(task, "pool_id", "") or (task.get("pool_id", "") if isinstance(task, dict) else "")
-        is_spot = (pool_id == self.pool_id_spot) or ("-spot" in str(pool_id))
+        is_spot = (job_id == self.job_id_spot) or ("-spot" in str(job_id))
 
         exec_info = getattr(task, "execution_info", None) or task.get("execution_info", {})
         exit_code = getattr(exec_info, "exit_code", None) if exec_info else None
