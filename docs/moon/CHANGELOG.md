@@ -17,6 +17,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Cloud runner CR-05: GCP backends (`2026-10-20`)
+
+#### Added
+
+- **`logic/controllers/cloud/providers/gcp/`** (#125). Tested against in-process fakes only; no real API call.
+  - **`GcpBatchBackend`**: one Batch job per attempt, with `task_count` 1 and no Batch retries (the scheduler retries with resume). Attempts are not grouped into task arrays: the runner's unit of retry and accounting is the task. Spot runs use `provisioning_model: SPOT`, and preemption (exit code 50001) maps to `PREEMPTED`. `secret_env` becomes `secret_variables` that reference Secret Manager versions, and `max_run_duration` follows `max_wall_seconds`.
+  - **`CloudRunJobsBackend`**: one job and one execution per attempt. Launches beyond Cloud Run's 24 h, 8 vCPU or 32 GiB limits raise `CapacityError`, so the scheduler places the task elsewhere. Secrets are Secret Manager env sources, there is no spot, and the job is deleted once its execution ends.
+  - **`ComputeEngineBackend`**: self-deleting Container-Optimized OS VMs. The startup script takes a metadata-server token, runs the image, uploads the exit code to the GCS status store and deletes its own instance. Secrets reach the runtime as `WSR_SECRET_REFS` `gcpsm://` references, never as values in metadata. Polling reads the exit object even after the VM is gone or the coordinator has restarted (the ids are in the handle). A spot VM gone without an exit code counts as preempted.
+  - **Supporting pieces**: `GcsObjectStore` (`gs://` profiles), `GcpSecretManagerStore`, `ArtifactRegistry` (pushes through Docker, resolves through the API when a client is given), price hints (`pricing.py`: list prices for e2, n2, c2 and Cloud Run sizes, with regional factors) and machine capabilities.
+  - **Shared behaviour**: quota and stock-out errors become `CapacityError`. Cancelled Batch jobs and VMs (stopped by deletion) report `FAILED` (cancelled), not `UNKNOWN`. Logs come from the runtime's uploaded attempt log, or the VM serial port.
+- **Shared fixtures**: `testing.contract_launch(outcome)` and `testing.outcome_of(env)`. The scripted outcome travels in `WSR_FAKE_OUTCOME`, which any provider's fake can read from its request.
+- Tests: `test_gcp_contracts.py` (11) with fakes in `gcp_fakes.py`. All three backends pass the CR-01 backend contract, GCS the object-store contract and Secret Manager the secret-store contract.
+
+#### Changed
+
+- `test_profiles_resolve_local_uris_and_name_missing_providers`: `gs://` now resolves, so the missing-provider message is checked with a provider that does not exist.
+
 ### Cloud runner CR-09: scheduler (`2026-10-20`)
 
 #### Added
