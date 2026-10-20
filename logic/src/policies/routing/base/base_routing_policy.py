@@ -269,7 +269,8 @@ class BaseRoutingPolicy(RoutingExecutionMixin, PolicyVizMixin, IRoutingAlgorithm
             mandatory: List of bin IDs to visit.
 
         Returns:
-            Optional tuple containing (empty_tour, 0.0) if no targets, else None.
+            Optional tuple ``(tour, cost, profit)`` = ``([0, 0], 0.0, 0.0)`` if
+            no targets (owner ruling D3), else None.
         """
 
         if not mandatory:
@@ -331,7 +332,7 @@ class BaseRoutingPolicy(RoutingExecutionMixin, PolicyVizMixin, IRoutingAlgorithm
         bin_volume = policy_config.get("bin_volume", V)
 
         # Scale revenue to euro per percent for VRPP/Classical solvers
-        # revenue_kg (€/kg) * density (kg/L) * bin_volume (L) / 100 = € per 1% fill
+        # revenue_kg (EUR/kg) * density (kg/L) * bin_volume (L) / 100 = EUR per 1% fill
         revenue_scaled = revenue_kg * (density * bin_volume / 100.0)
 
         shift_hours = policy_config.get("shift_hours")
@@ -357,6 +358,15 @@ class BaseRoutingPolicy(RoutingExecutionMixin, PolicyVizMixin, IRoutingAlgorithm
         }
         # Merge all policy config params into values for solver consumption
         values.update(policy_config)
+        # ``policy_config`` may carry raw "capacity"/"revenue"/"cost_unit"
+        # overrides (revenue in EUR/kg), while solvers consume percent-of-bin
+        # capacity and EUR-per-% revenue via "Q"/"R" and the positional
+        # arguments. Re-assert the scaled economics under the plain keys so a
+        # solver reading values["revenue"]/values["capacity"] cannot get a
+        # different unit than a solver reading values["R"]/values["Q"].
+        values["capacity"] = capacity
+        values["revenue"] = revenue_scaled
+        values["cost_unit"] = cost_unit
 
         return capacity, revenue_scaled, cost_unit, values
 

@@ -106,7 +106,12 @@ class FinishingState(SimState):
                         record[key] = column[index]
                 records.append(record)
             names = [key for key in SIM_METRICS if key in records[0]]
-            if any("time_spent" in record for record in records):
+            # Only aggregate "time_spent" when EVERY record carries it. With
+            # ``any(...)``, a single record lacking the key (e.g. an aborted-day
+            # row restored from a checkpoint) makes MetricRegistry.value raise
+            # KeyError, crashing the finished sample at aggregation time.
+            # Missing shift time stays absent rather than being counted as zero.
+            if records and all("time_spent" in record for record in records):
                 names.append("time_spent")
             sample_metrics = KPI.aggregate_days(records, names)
 

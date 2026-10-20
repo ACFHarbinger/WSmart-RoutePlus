@@ -322,7 +322,10 @@ class Bins(BinsFillingMixin):
         Returns:
             Numpy array of predicted days to overflow.
         """
-        return predict_days_to_overflow(self.means, self.std, self.c, cl)
+        # predict_days_to_overflow expects the fill-rate VARIANCE (see its
+        # docstring and the gamma method-of-moments mapping k = ui^2/vi);
+        # self.std is a standard deviation, so square it here.
+        return predict_days_to_overflow(self.means, self.std**2, self.c, cl)
 
     def set_indices(self, indices: Optional[Union[List[int], np.ndarray]] = None) -> None:
         """Sets subset of bin indices.

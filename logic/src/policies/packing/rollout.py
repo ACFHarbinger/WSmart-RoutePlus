@@ -218,7 +218,10 @@ class RolloutSelection(IPackingAlgorithm):
 
                 # Apply base policy to decide if we collect tomorrow
                 mock_ctx.current_fill[0] = current_f
-                if base_policy.pack(mock_ctx):
+                # pack() returns (selected_ids, search_context); a 2-tuple is
+                # always truthy, so unpack and test the selection itself.
+                base_selected, _ = base_policy.pack(mock_ctx)
+                if base_selected:
                     revenue = (current_f / max_fill) * bin_cap * revenue_kg
                     # Consistently discount both revenue and costs at time t
                     scenario_reward += discount_t * (revenue - round_trip_cost[idx])

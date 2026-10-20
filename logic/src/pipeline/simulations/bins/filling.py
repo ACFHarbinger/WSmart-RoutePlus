@@ -143,7 +143,10 @@ class BinsFillingMixin:
         self.real_c = np.minimum(self.real_c + todaysfilling, MAX_CAPACITY_PERCENT)
 
         if noisyfilling is not None:
-            self.c = np.minimum(self.c + noisyfilling, MAX_CAPACITY_PERCENT)
+            # Clip at 0 as well as at capacity: a negative noisy increment must
+            # not drive the observed level below zero (the noise_variance branch
+            # below already clips both tails).
+            self.c = np.clip(self.c + noisyfilling, 0, MAX_CAPACITY_PERCENT)
         elif self.noise_variance > 0:
             noise = self.rng.normal(self.noise_mean, np.sqrt(self.noise_variance), self.n)
             self.c = np.clip(self.real_c + noise, 0, MAX_CAPACITY_PERCENT)

@@ -105,13 +105,13 @@ class SimulationRepository(ABC):
                 - vehicle_capacity: Payload per trip, returned in percent of one full bin
                   (the unit the routing algorithms plan in). The constants below are kg and are
                   converted at the end: e.g. 3500 kg / (2.5 * 19 kg per bin) * 100 = 7368.4 %.
-                - revenue: Revenue per kg of collected waste (€/kg)
-                - density: Waste density (kg/L)
-                - expenses: Cost per km traveled (€/km)
-                - bin_volume: Individual bin volume (L)
+                - revenue: Revenue per kg of collected waste (EUR/kg)
+                - density: Waste density (kg/m3)
+                - expenses: Cost per km traveled (EUR/km)
+                - bin_volume: Individual bin volume (m3)
 
         Raises:
-            AssertionError: If waste_type or area not recognized
+            ValueError: If waste_type or area not recognized
         """
         expenses = 1.0
         bin_volume = 2.5
@@ -126,7 +126,9 @@ class SimulationRepository(ABC):
                 density = 21.0
                 vehicle_capacity = 4000.0
             else:
-                assert src_area == "figueiradafoz", f"Unknown waste collection area: {src_area}"
+                # Not assert: input validation must survive `python -O`.
+                if src_area != "figueiradafoz":
+                    raise ValueError(f"Unknown waste collection area: {src_area}")
                 density = 32.0
                 vehicle_capacity = 3000.0
 
@@ -136,18 +138,21 @@ class SimulationRepository(ABC):
                 density = 19.0
                 vehicle_capacity = 3500.0
             else:
-                assert src_area == "figueiradafoz", f"Unknown waste collection area: {src_area}"
+                if src_area != "figueiradafoz":
+                    raise ValueError(f"Unknown waste collection area: {src_area}")
                 density = 20.0
                 vehicle_capacity = 2500.0
 
         else:
-            assert waste_type == "glass", f"Unknown waste type: {waste_type}"
+            if waste_type != "glass":
+                raise ValueError(f"Unknown waste type: {waste_type}")
             revenue = 0.90 * 84 / 1000
             if src_area in ["riomaior", "mixrmbac"]:
                 density = 190.0
                 vehicle_capacity = 9000.0
             else:
-                assert src_area == "figueiradafoz", f"Unknown waste collection area: {src_area}"
+                if src_area != "figueiradafoz":
+                    raise ValueError(f"Unknown waste collection area: {src_area}")
                 density = 200.0
                 vehicle_capacity = 8000.0
 

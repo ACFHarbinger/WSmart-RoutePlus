@@ -89,11 +89,11 @@ def test_get_area_params():
     assert dens == 200.0
 
     # Test invalid waste type
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         SimulationRepository.get_area_params("Rio Maior", "invalid_type")
 
     # Test invalid area
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         SimulationRepository.get_area_params("invalid_area", "paper")
 
 
