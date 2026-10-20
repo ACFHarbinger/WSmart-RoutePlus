@@ -1,5 +1,9 @@
 """Analysis utilities for experiment and simulation logs.
 
+ResultsDB lives in ``analysis_results``.
+
+Slug parsing lives in ``analysis_slug``.
+
 This module provides tools for aggregating, summarising, and reporting on
 experimental results.  The primary entry point for post-processing is
 :class:`ResultsDB` together with :func:`load_log_dict`, which recursively
@@ -25,7 +29,7 @@ import os
 import re
 import statistics
 import threading
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import logic.src.constants as udef
 from logic.src.tracking.logging.modules.storage import update_policy_log_section
@@ -37,328 +41,35 @@ from logic.src.tracking.logging.modules.summary_display import (
 )
 from logic.src.utils.input.files import compose_dirpath, read_json
 
+from .analysis_results import (
+    ResultsDB as ResultsDB,
+)
+from .analysis_slug import (
+    _ACCEPTANCE_CRITERIA as _ACCEPTANCE_CRITERIA,
+)
+from .analysis_slug import (
+    _MANDATORY_PREFIXES as _MANDATORY_PREFIXES,
+)
+from .analysis_slug import (
+    _ROUTE_IMPROVERS as _ROUTE_IMPROVERS,
+)
+from .analysis_slug import (
+    _ROUTING_ALGORITHM_ENGINES as _ROUTING_ALGORITHM_ENGINES,
+)
+from .analysis_slug import (
+    _ROUTING_ALGORITHMS as _ROUTING_ALGORITHMS,
+)
+from .analysis_slug import (
+    _parse_slug as _parse_slug,
+)
+
 # ── Policy slug component vocabularies (ordered longest → shortest) ────────────
 # Used by _parse_slug to decompose a full slug into its four named parts.
 
-_MANDATORY_PREFIXES: List[str] = [
-    "last_minute_cf70",
-    "last_minute_cf80",
-    "last_minute_cf90",
-    "last_minute_cf",
-    "service_level1",
-    "service_level2",
-    "service_level",
-    "last_minute",
-    "regular_lvl5",
-    "regular_lvl4",
-    "regular_lvl3",
-    "regular_lvl2",
-    "regular_lvl1",
-    "regular",
-    "lookahead",
-]
-
-_ROUTE_IMPROVERS: List[str] = [
-    "tsp_fast_tsp",
-    "cvrp_ortools",
-    "ftsp",
-    "tsp",
-]
-
-_ROUTING_ALGORITHMS: List[str] = [
-    "vrpp_gurobi",
-    "pg_clns",
-    "swc_tcf",
-    "sans_new",
-    "ks_aco",
-    "aco_hh",
-    "alns",
-    "psoma",
-    "sisr",
-    "hvpl",
-    "gurobi",
-    "ortools",
-    "sans",
-    "hgs",
-    "bpc",
-]
-
 # Empty by default — these are highly project-specific and must be supplied by
 # the caller via load_log_dict / _parse_slug when present in slug names.
-_ROUTING_ALGORITHM_ENGINES: List[str] = []
-
-_ACCEPTANCE_CRITERIA: List[str] = []
 
 
-def _parse_slug(
-    slug: str,
-    mandatory_prefixes: Optional[List[str]] = None,
-    routing_algorithms: Optional[List[str]] = None,
-    route_improvers: Optional[List[str]] = None,
-    routing_algorithm_engines: Optional[List[str]] = None,
-    acceptance_criteria: Optional[List[str]] = None,
-) -> Dict[str, str]:
-    """Best-effort decomposition of a policy slug into its five named components.
-
-    The expected slug format is::
-
-        {packing}_{routing_algorithm}_{routing_algorithm_engine}_{acceptance_criterion}_{route_improver}
-
-    Any component may be absent.  Parsing proceeds in this order so that each
-    vocabulary is applied to the right portion of the slug:
-
-    1. Strip the ``packing`` prefix (longest match from the start).
-    2. Strip the ``route_improver`` suffix (longest match from the end).
-    3. Strip the ``routing_algorithm`` prefix (longest match from the start).
-    4. Strip the ``routing_algorithm_engine`` prefix (longest match from the
-       start of the remainder).
-    5. Match ``acceptance_criterion`` from the vocabulary (longest prefix match);
-       fall back to consuming the whole remainder when no vocabulary entry
-       matches.
-
-    Vocabulary lists default to the module-level constants when ``None``
-    is passed.  ``_ROUTING_ALGORITHM_ENGINES`` and ``_ACCEPTANCE_CRITERIA``
-    default to empty lists, so callers must supply them when their slugs
-    contain those components.
-
-    Args:
-        slug: Full policy slug, e.g.
-            ``"lookahead_aco_hh_ortools_custom_ftsp"``.
-        mandatory_prefixes: Ordered packing prefixes (longest-first).
-            Defaults to ``_MANDATORY_PREFIXES``.
-        routing_algorithms: Ordered routing-algorithm names.  Defaults to
-            ``_ROUTING_ALGORITHMS``.
-        route_improvers: Ordered route-improver suffixes (longest-first).
-            Defaults to ``_ROUTE_IMPROVERS``.
-        routing_algorithm_engines: Ordered constructor-engine names
-            (longest-first).  Defaults to ``_ROUTING_ALGORITHM_ENGINES``
-            (empty — must be supplied when engines appear in slugs).
-        acceptance_criteria: Ordered acceptance-criterion names (longest-first).
-            Defaults to ``_ACCEPTANCE_CRITERIA`` (empty — whatever remains
-            after all other components are stripped becomes the criterion).
-
-    Returns:
-        Dict with keys ``packing``, ``routing_algorithm``,
-        ``routing_algorithm_engine``, ``acceptance_criterion``, and
-        ``route_improver``.  Missing components are empty strings.
-    """
-    m_prefixes = mandatory_prefixes if mandatory_prefixes is not None else _MANDATORY_PREFIXES
-    r_constructors = routing_algorithms if routing_algorithms is not None else _ROUTING_ALGORITHMS
-    r_improvers = route_improvers if route_improvers is not None else _ROUTE_IMPROVERS
-    r_engines = routing_algorithm_engines if routing_algorithm_engines is not None else _ROUTING_ALGORITHM_ENGINES
-    a_criteria = acceptance_criteria if acceptance_criteria is not None else _ACCEPTANCE_CRITERIA
-
-    remainder = slug
-
-    # 1. Strip packing prefix from the start.
-    mandatory = ""
-    for prefix in m_prefixes:
-        if remainder.startswith(prefix + "_"):
-            mandatory = prefix
-            remainder = remainder[len(prefix) + 1 :]
-            break
-
-    # 2. Strip route-improver suffix from the end.
-    improver = ""
-    for suf in r_improvers:
-        if remainder.endswith("_" + suf):
-            improver = suf
-            remainder = remainder[: -(len(suf) + 1)]
-            break
-
-    # 3. Strip routing-algorithm prefix from the start.
-    constructor = ""
-    for c in r_constructors:
-        if remainder.startswith(c):
-            constructor = c
-            rest = remainder[len(c) :]
-            remainder = rest[1:] if rest.startswith("_") else rest
-            break
-
-    # 4. Strip routing algorithm engine from the start of what remains.
-    engine = ""
-    for e in r_engines:
-        if remainder.startswith(e):
-            engine = e
-            rest = remainder[len(e) :]
-            remainder = rest[1:] if rest.startswith("_") else rest
-            break
-
-    # 5. Match acceptance criterion from vocabulary; fall back to the whole remainder.
-    acceptance = ""
-    for a in a_criteria:
-        if remainder.startswith(a):
-            rest = remainder[len(a) :]
-            # Only consume if it accounts for the whole remainder or is followed by '_'.
-            if rest == "" or rest.startswith("_"):
-                acceptance = a
-                remainder = rest[1:] if rest.startswith("_") else ""
-                break
-    if not acceptance:
-        acceptance = remainder
-
-    return {
-        "packing": mandatory,
-        "routing_algorithm": constructor,
-        "routing_algorithm_engine": engine,
-        "acceptance_criterion": acceptance,
-        "route_improver": improver,
-    }
-
-
-class ResultsDB:
-    """Queryable container for simulation results loaded from log directories.
-
-    Each row in the underlying DataFrame represents the aggregated results for
-    one policy / graph-size / distribution / run_name combination.  The
-    ``filter`` method narrows the view without modifying the original; calls
-    can be chained.
-
-    Attributes:
-        METADATA_COLS: Descriptive column names that identify a result's context.
-
-    Example::
-
-        db = load_log_dict(home_dir, "output")
-        # Filter then view as DataFrame
-        df = db.filter(packing="lookahead", n_bins=100).mean_metrics()
-        # Group by routing algorithm, average profit across graph sizes
-        db.to_dataframe().groupby("routing_algorithm")["profit"].mean()
-    """
-
-    METADATA_COLS: List[str] = [
-        "n_days",
-        "n_bins",
-        "area",
-        "waste_type",
-        "data_distribution",
-        "run_name",
-        "policy_slug",
-        "n_samples",
-        "packing",
-        "routing_algorithm",
-        "routing_algorithm_engine",
-        "acceptance_criterion",
-        "route_improver",
-    ]
-
-    def __init__(self, df: Any) -> None:
-        self._df = df
-
-    @classmethod
-    def from_records(cls, records: List[Dict[str, Any]]) -> "ResultsDB":
-        """Construct a ResultsDB from a list of flat record dicts."""
-        try:
-            import pandas as pd
-
-            return cls(pd.DataFrame(records))
-        except ImportError as exc:
-            raise ImportError("pandas is required for ResultsDB") from exc
-
-    # ── Filtering ─────────────────────────────────────────────────────────────
-
-    def filter(
-        self,
-        n_days: Optional[Any] = None,
-        n_bins: Optional[Any] = None,
-        area: Optional[str] = None,
-        waste_type: Optional[str] = None,
-        data_distribution: Optional[str] = None,
-        run_name: Optional[str] = None,
-        policy_slug: Optional[str] = None,
-        packing: Optional[str] = None,
-        routing_algorithm: Optional[str] = None,
-        routing_algorithm_engine: Optional[str] = None,
-        acceptance_criterion: Optional[str] = None,
-        route_improver: Optional[str] = None,
-    ) -> "ResultsDB":
-        """Return a narrowed ResultsDB matching all non-None filters.
-
-        String parameters use case-insensitive substring matching.
-        Numeric parameters accept a scalar (equality) or a list (membership).
-        Filters are AND-ed together.
-        """
-        df = self._df
-
-        def _apply(col: str, val: Any) -> None:
-            nonlocal df
-            if val is None or col not in df.columns:
-                return
-            if isinstance(val, (list, tuple)):
-                df = df[df[col].isin(val)]
-            elif isinstance(val, str):
-                df = df[df[col].astype(str).str.contains(val, case=False, regex=False, na=False)]
-            else:
-                df = df[df[col] == val]
-
-        _apply("n_days", n_days)
-        _apply("n_bins", n_bins)
-        _apply("area", area)
-        _apply("waste_type", waste_type)
-        _apply("data_distribution", data_distribution)
-        _apply("run_name", run_name)
-        _apply("policy_slug", policy_slug)
-        _apply("packing", packing)
-        _apply("routing_algorithm", routing_algorithm)
-        _apply("routing_algorithm_engine", routing_algorithm_engine)
-        _apply("acceptance_criterion", acceptance_criterion)
-        _apply("route_improver", route_improver)
-
-        return ResultsDB(df.reset_index(drop=True))
-
-    # ── Export ────────────────────────────────────────────────────────────────
-
-    def to_dataframe(self, include_raw: bool = False) -> Any:
-        """Return the underlying DataFrame.
-
-        Args:
-            include_raw: If True, keep the heavy ``samples`` and ``daily``
-                columns (loaded only when requested in :func:`load_log_dict`).
-        """
-        df = self._df.copy()
-        if not include_raw:
-            df = df.drop(columns=[c for c in ("samples", "daily") if c in df.columns])
-        return df
-
-    @property
-    def metric_cols(self) -> List[str]:
-        """Mean metric column names (excludes metadata and ``_std`` columns)."""
-        exclude = set(self.METADATA_COLS) | {"samples", "daily"}
-        return [c for c in self._df.columns if c not in exclude and not c.endswith("_std")]
-
-    @property
-    def std_cols(self) -> List[str]:
-        """Standard-deviation column names (columns ending with ``_std``)."""
-        return [c for c in self._df.columns if c.endswith("_std")]
-
-    def mean_metrics(self) -> Any:
-        """Return a DataFrame with metadata + mean metric columns only."""
-        cols = [c for c in self.METADATA_COLS if c in self._df.columns] + self.metric_cols
-        return self._df[cols].copy()
-
-    def std_metrics(self) -> Any:
-        """Return a DataFrame with metadata + standard-deviation columns only."""
-        cols = [c for c in self.METADATA_COLS if c in self._df.columns] + self.std_cols
-        return self._df[cols].copy()
-
-    def groupby(self, by: Any) -> Any:
-        """Delegate to ``DataFrame.groupby`` for aggregation and pivoting."""
-        return self._df.groupby(by)
-
-    def __len__(self) -> int:
-        return len(self._df)
-
-    def __repr__(self) -> str:
-        def _uniq(col: str) -> Union[List[Any], str]:
-            return sorted(self._df[col].dropna().unique().tolist()) if col in self._df.columns else "—"
-
-        return (
-            f"ResultsDB({len(self._df)} results)\n"
-            f"  distributions : {_uniq('data_distribution')}\n"
-            f"  n_bins        : {_uniq('n_bins')}\n"
-            f"  run_names     : {_uniq('run_name')}\n"
-            f"  constructors  : {_uniq('routing_algorithm')}"
-        )
 
 
 def load_log_dict(  # noqa: C901
