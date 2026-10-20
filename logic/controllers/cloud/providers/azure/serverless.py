@@ -97,39 +97,46 @@ class ContainerAppsJobsBackend(ComputeBackend):
 
         # Verify or declare secrets in job configuration
         if launch.secret_env and hasattr(jobs_api, "get"):
-            try:
-                job_def = jobs_api.get(resource_group_name=self.resource_group, job_name=self.job_name)
-                config = getattr(job_def, "configuration", None) or (
-                    job_def.get("configuration") if isinstance(job_def, dict) else {}
+            job_def = jobs_api.get(resource_group_name=self.resource_group, job_name=self.job_name)
+            props = getattr(job_def, "properties", None) or (
+                job_def.get("properties") if isinstance(job_def, dict) else job_def
+            )
+            config = getattr(props, "configuration", None) or (
+                props.get("configuration") if isinstance(props, dict) else {}
+            )
+            existing_secrets = getattr(config, "secrets", None) or (
+                config.get("secrets") if isinstance(config, dict) else []
+            )
+            existing_names = {s.name if hasattr(s, "name") else s.get("name") for s in (existing_secrets or [])}
+            missing = [sec for sec in launch.secret_env.values() if sec not in existing_names]
+            if missing:
+                update_fn = getattr(jobs_api, "begin_update", getattr(jobs_api, "update", None))
+                if update_fn is None or not self.vault_url:
+                    raise ValueError(
+                        f"secrets {missing} not declared in Container Apps job {self.job_name} configuration.secrets"
+                    )
+                new_secrets = list(existing_secrets or [])
+                for sec_name in missing:
+                    entry = {"name": sec_name}
+                    entry["key_vault_url"] = f"{self.vault_url.rstrip('/')}/secrets/{sec_name}"
+                    if self.identity_id:
+                        entry["identity"] = self.identity_id
+                    new_secrets.append(entry)
+
+                patch_envelope = {
+                    "properties": {
+                        "configuration": {
+                            "secrets": new_secrets,
+                        }
+                    }
+                }
+                update_poller = update_fn(
+                    resource_group_name=self.resource_group,
+                    job_name=self.job_name,
+                    job_envelope=patch_envelope,
                 )
-                existing_secrets = getattr(config, "secrets", None) or (
-                    config.get("secrets") if isinstance(config, dict) else []
-                )
-                existing_names = {s.name if hasattr(s, "name") else s.get("name") for s in (existing_secrets or [])}
-                missing = [sec for sec in launch.secret_env.values() if sec not in existing_names]
-                if missing:
-                    update_fn = getattr(jobs_api, "begin_update", getattr(jobs_api, "update", None))
-                    if update_fn:
-                        new_secrets = list(existing_secrets or [])
-                        for sec_name in missing:
-                            entry = {"name": sec_name}
-                            if self.vault_url:
-                                entry["keyVaultUrl"] = f"{self.vault_url.rstrip('/')}/secrets/{sec_name}"
-                            if self.identity_id:
-                                entry["identity"] = self.identity_id
-                            new_secrets.append(entry)
-                        update_fn(
-                            resource_group_name=self.resource_group,
-                            job_name=self.job_name,
-                            job_envelope={"configuration": {"secrets": new_secrets}},
-                        )
-                    else:
-                        raise ValueError(
-                            f"secrets {missing} not declared in Container Apps job {self.job_name} configuration.secrets"
-                        )
-            except Exception as exc:
-                if "not declared" in str(exc):
-                    raise
+                if hasattr(update_poller, "result"):
+                    update_poller.result()
 
         env_vars = [{"name": k, "value": str(v)} for k, v in sorted(launch.env.items())]
         # Native secret references
@@ -154,27 +161,44 @@ class ContainerAppsJobsBackend(ComputeBackend):
         if start_fn is None:
             raise RuntimeError("Azure Container Apps jobs start API not available")
 
-        resp = start_fn(
+        poller = start_fn(
             resource_group_name=self.resource_group,
             job_name=self.job_name,
             template=template,
         )
-        exec_name = getattr(resp, "name", None) or (
-            resp.get("name") if isinstance(resp, dict) else f"exec-{launch.task.task_id}"
-        )
+        resp = poller.result() if hasattr(poller, "result") else poller
+        exec_name = getattr(resp, "name", None) or (resp.get("name") if isinstance(resp, dict) else None)
+        if not exec_name:
+            raise RuntimeError("Container Apps start did not return execution name")
 
         return f"azure-aca:{self.region}:{self.resource_group}:{self.job_name}:{exec_name}"
 
     def poll(self, handle: str) -> BackendStatus:
         rg, job_name, exec_name = self._parse_handle(handle)
-        jobs_api = getattr(self.client, "job_executions", getattr(self.client, "jobs", self.client))
-        get_fn = getattr(jobs_api, "get", None)
-
-        if get_fn is None:
-            return BackendStatus(AttemptState.UNKNOWN, message="jobs API not available")
+        executions_api = getattr(self.client, "jobs_executions", None)
+        execution = None
 
         try:
-            execution = get_fn(resource_group_name=rg, job_name=job_name, job_execution_name=exec_name)
+            if executions_api is not None and hasattr(executions_api, "list"):
+                for item in executions_api.list(resource_group_name=rg, job_name=job_name):
+                    item_name = getattr(item, "name", None) or (item.get("name") if isinstance(item, dict) else None)
+                    if item_name == exec_name:
+                        execution = item
+                        break
+            else:
+                fallback_api = getattr(self.client, "job_executions", getattr(self.client, "jobs", self.client))
+                if hasattr(fallback_api, "get"):
+                    execution = fallback_api.get(
+                        resource_group_name=rg, job_name=job_name, job_execution_name=exec_name
+                    )
+                elif hasattr(fallback_api, "list"):
+                    for item in fallback_api.list(resource_group_name=rg, job_name=job_name):
+                        item_name = getattr(item, "name", None) or (
+                            item.get("name") if isinstance(item, dict) else None
+                        )
+                        if item_name == exec_name:
+                            execution = item
+                            break
         except Exception as exc:
             return BackendStatus(AttemptState.UNKNOWN, message=str(exc))
 
@@ -219,11 +243,18 @@ class ContainerAppsJobsBackend(ComputeBackend):
 
     def cancel(self, handle: str) -> None:
         rg, job_name, exec_name = self._parse_handle(handle)
-        jobs_api = getattr(self.client, "job_executions", getattr(self.client, "jobs", self.client))
-        stop_fn = getattr(jobs_api, "begin_stop", getattr(jobs_api, "stop", None))
+        jobs_api = getattr(self.client, "jobs", self.client)
+        stop_fn = getattr(jobs_api, "begin_stop_execution", getattr(jobs_api, "stop_execution", None))
         if stop_fn is not None:
             with contextlib.suppress(Exception):
-                stop_fn(resource_group_name=rg, job_name=job_name, job_execution_name=exec_name)
+                poller = stop_fn(resource_group_name=rg, job_name=job_name, job_execution_name=exec_name)
+                if hasattr(poller, "result"):
+                    poller.result()
+        else:
+            legacy_stop = getattr(jobs_api, "begin_stop", getattr(jobs_api, "stop", None))
+            if legacy_stop is not None:
+                with contextlib.suppress(Exception):
+                    legacy_stop(resource_group_name=rg, job_name=job_name, job_execution_name=exec_name)
 
     def logs(self, handle: str, tail: Optional[int] = None) -> str:
         rg, job_name, exec_name = self._parse_handle(handle)

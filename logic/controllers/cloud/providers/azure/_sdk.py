@@ -9,6 +9,30 @@ from __future__ import annotations
 from typing import Any, Optional
 
 
+class MsrestTokenCredentialAdapter:
+    """Adapter wrapping an Azure Identity TokenCredential for msrest-based SDKs (e.g. Azure Batch 14.x)."""
+
+    def __init__(
+        self,
+        token_credential: Any,
+        resource: str = "https://batch.core.windows.net/",
+    ) -> None:
+        self._cred = token_credential
+        self._resource = resource
+
+    def signed_session(self, session: Any = None) -> Any:
+        import requests
+
+        session = session or requests.Session()
+        scope = self._resource if self._resource.endswith("/.default") else f"{self._resource.rstrip('/')}/.default"
+        token = self._cred.get_token(scope).token
+        session.headers["Authorization"] = f"Bearer {token}"
+        return session
+
+    def refresh_session(self, session: Any = None) -> Any:
+        return self.signed_session(session)
+
+
 def make_azure_credential(profile: str = "default", credentials: Optional[Any] = None) -> Any:
     """Create Azure credential instance lazily.
 
@@ -89,6 +113,9 @@ def make_batch_service_client(
     elif cred is None:
         cred = make_azure_credential(profile)
 
+    if cred is not None and not hasattr(cred, "signed_session"):
+        cred = MsrestTokenCredentialAdapter(cred)
+
     return BatchServiceClient(credentials=cred, batch_url=batch_url)
 
 
@@ -147,6 +174,7 @@ def make_network_management_client(
 
 
 __all__ = [
+    "MsrestTokenCredentialAdapter",
     "make_azure_credential",
     "make_batch_service_client",
     "make_blob_service_client",

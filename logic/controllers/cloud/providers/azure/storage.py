@@ -109,19 +109,16 @@ class BlobObjectStore(ObjectStore):
             code = getattr(exc, "error_code", None)
             if status == 404 or code == "BlobNotFound" or isinstance(exc, KeyError) or "not found" in str(exc).lower():
                 return False
-            return False
+            raise
 
     def list(self, prefix: str) -> List[str]:
         blob_prefix = self._resolve_key(prefix) if prefix else self.prefix
         keys: List[str] = []
 
-        try:
-            blobs = self.container_client.list_blobs(name_starts_with=blob_prefix)
-            for blob in blobs:
-                name = blob.name if hasattr(blob, "name") else blob.get("name", "")
-                keys.append(self._strip_prefix(name))
-        except Exception:
-            pass
+        blobs = self.container_client.list_blobs(name_starts_with=blob_prefix)
+        for blob in blobs:
+            name = blob.name if hasattr(blob, "name") else blob.get("name", "")
+            keys.append(self._strip_prefix(name))
 
         return sorted(keys)
 

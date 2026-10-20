@@ -17,6 +17,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Azure cloud provider integration blockers resolved (`2026-10-20`)
+
+- **Batch Placement & Job API**: Replaced invalid task-level `pool_id` placement with job-level targeting (`job_id_spot` for spot tasks, `job_id` for on-demand). Inferred spot status from job handle rather than non-existent task field.
+- **Container Apps Jobs SDK Adapter**: Implemented real `azure-mgmt-appcontainers==3.0.0` execution lifecycle using `jobs_executions.list(...)`, `jobs.begin_stop_execution(...)`, and awaited LRO poller result on `jobs.begin_start(...)`.
+- **Container Apps Secret Patching**: Corrected patch envelope structure to `{"properties": {"configuration": {"secrets": ...}}}` with snake_case `key_vault_url`, awaited update LRO poller, and propagated update failures without proceeding without required secrets.
+- **Batch Authentication Adapter**: Added `MsrestTokenCredentialAdapter` wrapping `azure.identity` TokenCredentials with `signed_session(session)` for `azure.batch` 14.x msrest pipelines.
+- **Dependency Contracts**: Added `azure-mgmt-network>=25.0.0,<26.0.0` to `cloud` optional dependencies in `logic/pyproject.toml` and pinned compatible version bounds for `azure-batch`, `azure-mgmt-appcontainers`, and `azure-mgmt-compute`.
+- **VM Cleanup & Billing Safety**: Cleaned up pre-created NIC if VM creation fails; triggered VM deletion upon asynchronous provisioning failure or spot eviction; surfaced deletion errors on deallocated/stopped VMs.
+- **Diagnostics & Failure Handling**: Fetched log content from boot diagnostics URL in VM `logs()`, handled absent Container Apps log stream gracefully, and re-raised authorization/service errors in Key Vault and Blob Storage rather than swallowing into `None` or `False`.
+- **Validation**: Expanded test suite to 25 unit/contract/regression tests covering all resolved blockers.
+
 ### Codex cloud review corrections (`2026-10-20`)
 
 - Corrected Azure VM ACR token exchange, numeric exit-code Merge tagging, token refresh, SSH-key generation failure handling, and the Compute 30 NIC deletion field. Added local bootstrap regressions. CR-07 remains pending real Batch/Container Apps SDK adapters, installation/version bounds and reliable cleanup; see the Codex cloud review of 2026-10-20 on the main checkout.

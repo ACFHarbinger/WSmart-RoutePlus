@@ -212,6 +212,23 @@ curl -fsS -m 30 -X PATCH \\
 """
         return base64.b64encode(script.encode("utf-8")).decode("utf-8")
 
+    def _cleanup_nic(self, nic_name: str) -> None:
+        """Attempt to delete a network interface if VM creation fails."""
+        try:
+            nic_api = getattr(self.network_client, "network_interfaces", self.network_client)
+            del_fn = getattr(nic_api, "begin_delete", getattr(nic_api, "delete", None))
+            if del_fn is not None:
+                del_fn(resource_group_name=self.resource_group, network_interface_name=nic_name)
+        except Exception:
+            pass
+
+    def _delete_vm_resource(self, rg: str, vm_name: str) -> None:
+        """Delete Azure Virtual Machine resource to halt billing."""
+        vm_api = getattr(self.client, "virtual_machines", self.client)
+        delete_fn = getattr(vm_api, "begin_delete", getattr(vm_api, "delete", None))
+        if delete_fn is not None:
+            delete_fn(resource_group_name=rg, vm_name=vm_name)
+
     def submit(self, launch: LaunchSpec) -> str:
         """Create and start an Azure Virtual Machine executing the task."""
         vm_name = f"wsr-vm-{launch.task.task_id}"[:64]
@@ -319,6 +336,7 @@ curl -fsS -m 30 -X PATCH \\
         vm_api = getattr(self.client, "virtual_machines", self.client)
         create_fn = getattr(vm_api, "begin_create_or_update", getattr(vm_api, "create_or_update", None))
         if create_fn is None:
+            self._cleanup_nic(nic_name)
             raise RuntimeError("Azure VM create API not available")
 
         try:
@@ -328,6 +346,7 @@ curl -fsS -m 30 -X PATCH \\
                 parameters=vm_params,
             )
         except Exception as exc:
+            self._cleanup_nic(nic_name)
             msg = str(exc)
             if any(term in msg.lower() for term in ("quotaexceeded", "allocationfailed", "capacity", "notavail")):
                 raise CapacityError(f"Azure VM capacity unavailable: {msg}") from exc
@@ -386,8 +405,22 @@ curl -fsS -m 30 -X PATCH \\
         status_codes = [s.code if hasattr(s, "code") else s.get("code", "") for s in statuses]
         status_str = " ".join(status_codes).lower()
 
+        # Check for asynchronous provisioning or capacity failure
+        if "provisioningstate/failed" in status_str:
+            with contextlib.suppress(Exception):
+                self._delete_vm_resource(rg, vm_name)
+            if any(term in status_str for term in ("spoteviction", "evicted", "preempt")):
+                return BackendStatus(AttemptState.PREEMPTED, message=f"Azure spot VM evicted: {status_str}")
+            return BackendStatus(
+                AttemptState.FAILED,
+                exit_code=1,
+                message=f"Azure VM provisioning failed: {status_str}",
+            )
+
         # Check spot eviction from instance view statuses
         if any(term in status_str for term in ("spoteviction", "evicted", "preempt")):
+            with contextlib.suppress(Exception):
+                self._delete_vm_resource(rg, vm_name)
             return BackendStatus(AttemptState.PREEMPTED, message="Azure spot VM evicted")
 
         tags = getattr(view, "tags", {}) or (view.get("tags", {}) if isinstance(view, dict) else {})
@@ -416,10 +449,14 @@ curl -fsS -m 30 -X PATCH \\
             final_status = self._resolve_terminal_status(exit_code_str, is_spot)
 
             # Delete the stopped VM to halt billing (NIC and disk delete via delete_option="Delete")
-            delete_fn = getattr(vm_api, "begin_delete", getattr(vm_api, "delete", None))
-            if delete_fn is not None:
-                with contextlib.suppress(Exception):
-                    delete_fn(resource_group_name=rg, vm_name=vm_name)
+            try:
+                self._delete_vm_resource(rg, vm_name)
+            except Exception as exc:
+                return BackendStatus(
+                    AttemptState.FAILED,
+                    exit_code=1,
+                    message=f"VM execution completed but deletion failed ({exc}); manual cleanup required",
+                )
 
             return final_status
 
@@ -427,11 +464,8 @@ curl -fsS -m 30 -X PATCH \\
 
     def cancel(self, handle: str) -> None:
         rg, vm_name = self._parse_handle(handle)
-        vm_api = getattr(self.client, "virtual_machines", self.client)
-        delete_fn = getattr(vm_api, "begin_delete", getattr(vm_api, "delete", None))
-        if delete_fn is not None:
-            with contextlib.suppress(Exception):
-                delete_fn(resource_group_name=rg, vm_name=vm_name)
+        with contextlib.suppress(Exception):
+            self._delete_vm_resource(rg, vm_name)
 
     def logs(self, handle: str, tail: Optional[int] = None) -> str:
         rg, vm_name = self._parse_handle(handle)
@@ -443,7 +477,18 @@ curl -fsS -m 30 -X PATCH \\
                 data = vm_api.retrieve_boot_diagnostics_data(resource_group_name=rg, vm_name=vm_name)
                 content = getattr(data, "serial_console_log_blob_uri", None)
                 if content:
-                    log_lines = str(content).splitlines()
+                    url = str(content)
+                    if url.startswith("http://") or url.startswith("https://"):
+                        try:
+                            import requests
+
+                            resp = requests.get(url, timeout=10)
+                            if resp.status_code == 200:
+                                log_lines = resp.text.splitlines()
+                        except Exception:
+                            pass
+                    if not log_lines:
+                        log_lines = url.splitlines()
         except Exception:
             pass
 
