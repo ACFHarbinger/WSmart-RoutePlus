@@ -244,3 +244,117 @@ def test_cli_runs_a_manifest_end_to_end_and_resumes_a_killed_task(tmp_path, monk
     logs = sorted((tmp_path / "outputs").rglob("log_x_1N.json"))
     assert [json.loads(p.read_text())["policy_dir"] for p in logs] == ["/yaml/0", "/yaml/1"]
     assert all(t.state == TaskState.SUCCEEDED for t in tasks)
+
+
+@pytest.mark.unit
+def test_status_telemetry_payload_and_policy_extraction(tmp_path):
+    clock = FakeClock()
+    service = _service(tmp_path, ScriptedBackend(script=lambda launch: "succeed", polls_to_finish=1), clock=clock)
+    spec = JobSpec(
+        name="telemetry-test",
+        cells=[
+            CellSpec(
+                cell_id="c0",
+                argv=["test_sim", "--policies", "bpc"],
+                expected_wall_seconds=150.0,
+            ),
+            CellSpec(
+                cell_id="c1",
+                argv=["test_sim", "sim.policies=[alns]"],
+                expected_wall_seconds=200.0,
+            ),
+        ],
+        provider=Provider.LOCAL,
+        compute=ComputeKind.PROCESS,
+        resources=Resources(spot=True, machine_type="c6i.large", region="us-east-1"),
+    )
+    job = service.submit(spec)
+    service.tick()
+    clock.advance(35.0)
+    service.tick()
+    # Finish the running task
+    clock.advance(10.0)
+    service.tick()
+
+    status = service.status(job.job_id)
+    assert status["provider"] == "local"
+    assert status["compute"] == "process"
+    assert status["spot"] is True
+    assert status["machine_type"] == "c6i.large"
+    assert status["region"] == "us-east-1"
+    assert len(status["tasks"]) == 2
+
+    t0 = status["tasks"][0]
+    assert t0["policy"] == "bpc"
+    assert t0["expected_wall_seconds"] == 150.0
+    assert t0["duration"] == 45.0
+    assert t0["started_at"] is not None
+    assert t0["finished_at"] is not None
+
+    t1 = status["tasks"][1]
+    assert t1["policy"] == "alns"
+    assert t1["expected_wall_seconds"] == 200.0
+
+
+@pytest.mark.unit
+def test_status_retry_duration_and_provider_billing_semantics(tmp_path):
+    from logic.controllers.cloud.service import RemoteConfig
+
+    clock = FakeClock()
+    (tmp_path / "data" / "simulator").mkdir(parents=True, exist_ok=True)
+    attempts = {"c0": 0}
+
+    def script_fn(launch):
+        attempts["c0"] += 1
+        if attempts["c0"] == 1:
+            return "fail"
+        return "succeed"
+
+    backend = ScriptedBackend(script=script_fn, polls_to_finish=1)
+    service = _service(tmp_path, backend, clock=clock)
+    service.remote = RemoteConfig(
+        control_plane_uri="sqlite:///control.db",
+        store_uri=f"file://{tmp_path}/store",
+        project_root=tmp_path,
+    )
+    spec = JobSpec(
+        name="billing-test",
+        cells=[
+            CellSpec(
+                cell_id="c0",
+                argv=["test_sim", "--policies", "bpc"],
+                expected_wall_seconds=120.0,
+            ),
+        ],
+        provider=Provider.AWS,
+        compute=ComputeKind.BATCH,
+        resources=Resources(spot=True, machine_type="c6i.large", region="us-east-1", max_retries=1),
+        image="release:latest",
+    )
+    # Register dummy backend for aws/batch
+    service.backends[(Provider.AWS, ComputeKind.BATCH)] = backend
+    job = service.submit(spec)
+
+    # Attempt 1: start at 0, tick, advance 25s, tick (fails)
+    service.tick()
+    clock.advance(25.0)
+    service.tick()
+
+    # Attempt 2: retry, advance 80s, tick to poll and succeed
+    service.tick()
+    clock.advance(80.0)
+    service.tick()
+    service.tick()
+
+    status = service.status(job.job_id)
+    assert status["state"] == "succeeded"
+    assert status["price_per_hour"] == 0.034
+    assert status["on_demand_price_per_hour"] == 0.085
+
+    task = status["tasks"][0]
+    assert task["attempt"] == 2
+    # Execution elapsed time is 25s + 80s = 105s
+    assert task["duration"] == 105.0
+    # Provider minimum allocation is 60s per attempt on AWS: max(60, 25) + max(60, 80) = 60 + 80 = 140s
+    expected_cost = round((140.0 / 3600.0) * 0.034, 6)
+    assert task["cost"] == expected_cost

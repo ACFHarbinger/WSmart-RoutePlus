@@ -25,6 +25,18 @@ pub struct CloudTaskSummary {
     pub attempt: u32,
     #[serde(default)]
     pub message: Option<String>,
+    #[serde(default)]
+    pub started_at: Option<f64>,
+    #[serde(default)]
+    pub finished_at: Option<f64>,
+    #[serde(default)]
+    pub duration: Option<f64>,
+    #[serde(default)]
+    pub expected_wall_seconds: Option<f64>,
+    #[serde(default)]
+    pub policy: Option<String>,
+    #[serde(default)]
+    pub cost: Option<f64>,
 }
 
 /// Detailed status of a cloud job including its individual task records.
@@ -35,6 +47,20 @@ pub struct CloudJobStatus {
     pub state: String,
     #[serde(default)]
     pub counts: HashMap<String, u64>,
+    #[serde(default)]
+    pub provider: Option<String>,
+    #[serde(default)]
+    pub compute: Option<String>,
+    #[serde(default)]
+    pub spot: Option<bool>,
+    #[serde(default)]
+    pub machine_type: Option<String>,
+    #[serde(default)]
+    pub region: Option<String>,
+    #[serde(default)]
+    pub price_per_hour: Option<f64>,
+    #[serde(default)]
+    pub on_demand_price_per_hour: Option<f64>,
     #[serde(default)]
     pub tasks: Vec<CloudTaskSummary>,
 }

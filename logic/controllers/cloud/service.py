@@ -24,7 +24,7 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from logic.controllers.cloud.interfaces import (
     AttemptState,
@@ -36,6 +36,7 @@ from logic.controllers.cloud.interfaces import (
 )
 from logic.controllers.cloud.model import (
     ACTIVE,
+    CellSpec,
     ComputeKind,
     Event,
     GurobiMode,
@@ -71,6 +72,26 @@ class RemoteConfig:
     store_uri: str
     project_root: Path
     python: str = "python"
+
+
+def extract_policy_from_cell(cell: CellSpec) -> Optional[str]:
+    """Extract policy identity from a cell's argv or policy directory."""
+    argv = cell.argv or []
+    for i, arg in enumerate(argv):
+        if arg in ("--policies", "-p") and i + 1 < len(argv):
+            val = argv[i + 1]
+            if not val.startswith("-"):
+                return val
+    for arg in argv:
+        if arg.startswith(("sim.policies=", "policies=")):
+            val = arg.split("=", 1)[1].strip("'\"[]")
+            if val:
+                return val
+    if cell.policy_dir:
+        name = Path(cell.policy_dir).name
+        if name and name not in ("policies", "config", "configs"):
+            return name
+    return None
 
 
 class CloudService:
@@ -360,28 +381,119 @@ class CloudService:
 
     # Management -----------------------------------------------------------
 
+    def _get_price_per_hour(self, spec: JobSpec, spot: bool) -> Optional[float]:
+        key = (Provider(spec.provider), ComputeKind(spec.compute))
+        backend = self.backends.get(key)
+        if backend is not None:
+            try:
+                p = backend.price_per_hour(spec.resources.machine_type, spec.resources.region, spot)
+                if p is not None:
+                    return p
+            except Exception:
+                pass
+        prov = Provider(spec.provider).value
+        try:
+            import importlib
+
+            mod = importlib.import_module(f"logic.controllers.cloud.providers.{prov}.pricing")
+            fn = getattr(mod, "price_per_hour", None)
+            if callable(fn):
+                return fn(spec.resources.machine_type, spec.resources.region, spot)
+        except Exception:
+            pass
+        return None
+
+    def _task_duration_and_cost(
+        self,
+        task: TaskRecord,
+        events: Sequence[Event],
+        price_per_hour: Optional[float],
+        provider: Provider,
+    ) -> Tuple[Optional[float], Optional[float]]:
+        """Compute execution duration and accrued billed cost across attempts."""
+        intervals: List[Tuple[float, float]] = []
+        task_events = [e for e in events if e.task_id == task.task_id]
+
+        attempt_start: Optional[float] = None
+        for e in task_events:
+            to_state = e.data.get("to")
+            if to_state in ("starting", "running") and attempt_start is None:
+                attempt_start = e.at
+            elif to_state in ("succeeded", "failed", "cancelled", "preempted") and attempt_start is not None:
+                intervals.append((attempt_start, e.at))
+                attempt_start = None
+
+        if attempt_start is not None and task.state in ACTIVE:
+            intervals.append((attempt_start, self.clock()))
+
+        if not intervals and task.started_at is not None:
+            end_t = (
+                task.finished_at if task.finished_at is not None else (self.clock() if task.state in ACTIVE else None)
+            )
+            if end_t is not None and end_t >= task.started_at:
+                intervals.append((task.started_at, end_t))
+
+        if not intervals:
+            return None, None
+
+        total_duration = sum(max(0.0, end - start) for start, end in intervals)
+        if price_per_hour is None:
+            return total_duration, None
+
+        is_cloud = provider in (Provider.AWS, Provider.GCP, Provider.AZURE)
+        billed_seconds = sum(max(60.0, end - start) if is_cloud else max(0.0, end - start) for start, end in intervals)
+        cost = round((billed_seconds / 3600.0) * price_per_hour, 6)
+        return total_duration, cost
+
     def status(self, job_id: str) -> Dict[str, Any]:
         """A job's state and per-task summary."""
         job = self.cp.get_job(job_id)
         tasks = self.cp.list_tasks(job_id)
+        events = self.cp.list_events(job_id)
         counts: Dict[str, int] = {}
         for task in tasks:
             counts[task.state.value] = counts.get(task.state.value, 0) + 1
-        return {
-            "job_id": job_id,
-            "name": job.spec.name,
-            "state": job_state((t.state for t in tasks), job.cancel_requested).value,
-            "counts": counts,
-            "tasks": [
+
+        provider = Provider(job.spec.provider)
+        compute = ComputeKind(job.spec.compute)
+        spot = bool(job.spec.resources.spot)
+        machine_type = job.spec.resources.machine_type
+        region = job.spec.resources.region
+        price_per_hour = self._get_price_per_hour(job.spec, spot=spot)
+        on_demand_price_per_hour = self._get_price_per_hour(job.spec, spot=False)
+
+        task_summaries = []
+        for t in tasks:
+            dur, cost = self._task_duration_and_cost(t, events, price_per_hour, provider)
+            task_summaries.append(
                 {
                     "task_id": t.task_id,
                     "cell_id": t.cell.cell_id,
                     "state": t.state.value,
                     "attempt": t.attempt,
                     "message": t.message,
+                    "started_at": t.started_at,
+                    "finished_at": t.finished_at,
+                    "duration": dur,
+                    "expected_wall_seconds": t.cell.expected_wall_seconds,
+                    "policy": extract_policy_from_cell(t.cell),
+                    "cost": cost,
                 }
-                for t in tasks
-            ],
+            )
+
+        return {
+            "job_id": job_id,
+            "name": job.spec.name,
+            "state": job_state((t.state for t in tasks), job.cancel_requested).value,
+            "counts": counts,
+            "provider": provider.value,
+            "compute": compute.value,
+            "spot": spot,
+            "machine_type": machine_type,
+            "region": region,
+            "price_per_hour": price_per_hour,
+            "on_demand_price_per_hour": on_demand_price_per_hour,
+            "tasks": task_summaries,
         }
 
     def cancel(self, job_id: str) -> None:

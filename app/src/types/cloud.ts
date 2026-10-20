@@ -19,6 +19,12 @@ export interface CloudTaskSummary {
   state: "queued" | "placing" | "starting" | "running" | "preempted" | "retrying" | "succeeded" | "failed" | "cancelled" | string;
   attempt: number;
   message?: string | null;
+  started_at?: number | null;
+  finished_at?: number | null;
+  duration?: number | null;
+  expected_wall_seconds?: number | null;
+  policy?: string | null;
+  cost?: number | null;
 }
 
 export interface CloudJobStatus {
@@ -26,6 +32,13 @@ export interface CloudJobStatus {
   name: string;
   state: "queued" | "running" | "succeeded" | "failed" | "cancelled" | string;
   counts: Record<string, number>;
+  provider?: "local" | "gcp" | "aws" | "azure" | string | null;
+  compute?: "process" | "batch" | "serverless" | "vm" | string | null;
+  spot?: boolean | null;
+  machine_type?: string | null;
+  region?: string | null;
+  price_per_hour?: number | null;
+  on_demand_price_per_hour?: number | null;
   tasks: CloudTaskSummary[];
 }
 
@@ -118,10 +131,6 @@ export interface CloudDownloadProgressEvent {
   total_files?: number | null;
   message?: string | null;
 }
-
-export type CloudProvider = "local" | "gcp" | "aws" | "azure";
-export type CloudComputeKind = "process" | "batch" | "serverless" | "vm";
-export type CloudGurobiMode = "none" | "wls_secret" | "byo";
 
 export interface CloudJobEstimate {
   cost_usd?: number | null;
