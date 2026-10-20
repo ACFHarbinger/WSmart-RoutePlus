@@ -58,11 +58,16 @@ def worker_running(root: Path) -> bool:
 
 
 def spawn_worker(
-    root: Path, project_root: Path, python: str = sys.executable, poll_seconds: float = 5.0
+    root: Path,
+    project_root: Path,
+    python: str = sys.executable,
+    poll_seconds: float = 5.0,
+    profile: Optional[str] = None,
 ) -> Optional[int]:
     """Start a detached ``cloud worker`` for ``root`` unless one is running; returns its pid or None.
 
-    The worker imports this package (it runs from this checkout) and starts tasks in ``project_root``.
+    The worker imports this package (it runs from this checkout) and starts tasks in ``project_root``;
+    with ``profile`` it schedules that cloud profile's jobs.
     """
     root = Path(root).resolve()
     if worker_running(root):
@@ -80,6 +85,7 @@ def spawn_worker(
                 str(root),
                 "--project-root",
                 str(Path(project_root).resolve()),
+                *(["--profile", profile] if profile else []),
                 "worker",
                 "--poll",
                 str(poll_seconds),

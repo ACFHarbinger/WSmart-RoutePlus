@@ -15,6 +15,8 @@ The file is ``$WSR_CLOUD_CONFIG``, or ``~/.config/wsmart-route/cloud.yaml``:
         store: gs://my-bucket/wsmart-route
         image: europe-west1-docker.pkg.dev/my-project/wsr/wsmart-route:1.1.0
         gurobi_secret: gurobi-wls # optional: secret name of the Gurobi license
+        backend_options:          # optional, non-secret provider settings for the backends
+          project: my-project
 
 Attributes:
     Profile: One profile.
@@ -25,9 +27,9 @@ Attributes:
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, field, fields
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 from urllib.parse import urlparse
 
 from logic.controllers.cloud.auth.credentials import PROVIDERS, ProviderCredentials
@@ -53,6 +55,7 @@ class Profile:
     keychain_profile: str = "default"
     image: Optional[str] = None
     gurobi_secret: Optional[str] = None
+    backend_options: Dict[str, Any] = field(default_factory=dict)
 
     def validate(self) -> None:
         """Raise ``ValueError`` for an unusable profile."""
@@ -67,6 +70,12 @@ class Profile:
             raise ValueError(f"profile {self.name!r}: unsupported control_plane {self.control_plane!r}")
         if urlparse(self.store).scheme not in _STORE_SCHEMES:
             raise ValueError(f"profile {self.name!r}: unsupported store {self.store!r}")
+        if not isinstance(self.backend_options, dict):
+            raise ValueError(f"profile {self.name!r}: backend_options must be a mapping")
+        markers = ("secret", "password", "token", "private_key", "access_key", "api_key", "connection_string")
+        suspicious = [k for k in self.backend_options if any(m in k.lower() for m in markers)]
+        if suspicious:
+            raise ValueError(f"profile {self.name!r}: backend_options must not hold secrets ({', '.join(suspicious)})")
 
     def provider_credentials(self, keychain: Optional[SecretStore] = None) -> ProviderCredentials:
         """The profile's SDK credentials."""

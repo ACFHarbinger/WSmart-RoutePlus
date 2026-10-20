@@ -187,3 +187,82 @@ jobs:
 
       - name: Run Slow Unit Tests
         run: uv run pytest -m "unit and slow"
+
+  # Job 6: Cloud runner suites (v1.1.0, CR-17). Every provider is tested against
+  # in-process fakes: no credentials, no real cloud calls. The suites must pass both
+  # with the [cloud] extra installed and without it (the SDKs are imported lazily).
+  test-cloud:
+    needs: quality-checks
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10"]
+        sdks: ["with-cloud-extra", "without-cloud-extra"]
+
+    steps:
+      - name: Checkout repository with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          token: ${{ secrets.PUBLIC_REPO_TOKEN }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          if [ "${{ matrix.sdks }}" = "with-cloud-extra" ]; then
+            uv sync --all-packages --all-extras --all-groups
+          else
+            uv sync --all-packages --all-extras --no-extra cloud --all-groups
+          fi
+
+      - name: Cloud runner contract and scheduler suites
+        run: uv run pytest logic/test/unit/controllers/cloud -p no:cacheprovider --junitxml=cloud-${{ matrix.sdks }}.xml
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloud-tests-${{ matrix.sdks }}
+          path: cloud-${{ matrix.sdks }}.xml
+
+  # Job 7: Release build and smoke (CR-17): the release tree builds, its import closure
+  # verifies, and the smoke runs the classical stack and the cloud runner without the
+  # neural and cloud extras.
+  release-smoke:
+    needs: quality-checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          token: ${{ secrets.PUBLIC_REPO_TOKEN }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: uv sync --all-packages --all-extras --all-groups
+
+      - name: Build and smoke the release tree
+        run: |
+          uv run python logic/package/build_release.py --check
+          uv run python logic/package/build_release.py --build "$RUNNER_TEMP/release"
+          uv run python logic/package/build_release.py --smoke "$RUNNER_TEMP/release"

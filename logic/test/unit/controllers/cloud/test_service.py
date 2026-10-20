@@ -388,3 +388,67 @@ def test_policy_metadata_does_not_guess_from_paths_or_multi_policy_cells():
     for argv in (["test_sim", "--policies", "alns", "bpc"], ["test_sim", "sim.policies=[alns,bpc]"]):
         assert extract_policy_from_cell(CellSpec(cell_id="cell", argv=argv)) is None
     assert extract_policy_from_cell(CellSpec(cell_id="cell", argv=["test_sim"], policy_dir="/yaml/0")) is None
+
+
+@pytest.mark.unit
+def test_cancelled_attempt_the_backend_no_longer_knows_is_cancelled(tmp_path):
+    """After a coordinator restart, a deleted (cancelled) attempt polls UNKNOWN; it must not stay running."""
+    from logic.controllers.cloud.interfaces import AttemptState, BackendStatus
+
+    class Forgetful(ScriptedBackend):
+        def poll(self, handle):
+            if self.attempts[handle].cancelled:
+                return BackendStatus(AttemptState.UNKNOWN, message="no such attempt")
+            return super().poll(handle)
+
+    backend = Forgetful(script=lambda launch: "hang")
+    service = _service(tmp_path, backend)
+    job = service.submit(JobSpec(name="c", cells=[CellSpec(cell_id="x", argv=["test_sim"])]))
+    service.tick()
+    service.tick()
+    service.cancel(job.job_id)
+    for _ in range(3):
+        service.tick()
+    task = service.cp.list_tasks(job.job_id)[0]
+    assert task.state == TaskState.CANCELLED and "no longer visible" in task.message
+
+
+@pytest.mark.unit
+def test_profile_service_builds_the_providers_backends(tmp_path, monkeypatch):
+    from logic.controllers.cloud import cli
+    from logic.controllers.cloud.auth.config import Profile, load_profiles
+    from logic.controllers.cloud.providers.gcp import CloudRunJobsBackend, ComputeEngineBackend, GcpBatchBackend
+
+    config = tmp_path / "cloud.yaml"
+    config.write_text(
+        "profiles:\n"
+        "  gcp-test:\n"
+        "    provider: gcp\n"
+        "    compute: batch\n"
+        "    region: europe-west4\n"
+        f"    control_plane: sqlite://{tmp_path / 'cp.db'}\n"
+        f"    store: file://{tmp_path / 'store'}\n"
+        "    image: europe-west4-docker.pkg.dev/p/wsr/wsmart-route@sha256:1\n"
+        "    backend_options:\n"
+        "      project: my-project\n"
+    )
+    monkeypatch.setenv("WSR_CLOUD_CONFIG", str(config))
+    profile = load_profiles()["gcp-test"]
+    from logic.controllers.cloud.profile_service import profile_service
+
+    service = profile_service(profile, tmp_path / "root", tmp_path)
+    batch = service.backends[(Provider.GCP, ComputeKind.BATCH)]
+    assert isinstance(batch, GcpBatchBackend) and (batch.project, batch.region) == ("my-project", "europe-west4")
+    assert isinstance(service.backends[(Provider.GCP, ComputeKind.SERVERLESS)], CloudRunJobsBackend)
+    assert isinstance(service.backends[(Provider.GCP, ComputeKind.VM)], ComputeEngineBackend)
+    assert (Provider.LOCAL, ComputeKind.PROCESS) in service.backends and service.remote.store_uri.startswith("file://")
+    with pytest.raises(ValueError, match="secrets"):
+        Profile(
+            name="bad", provider="gcp", control_plane="sqlite://x", store="file:///x", backend_options={"api_key": "x"}
+        ).validate()
+    with pytest.raises(ValueError, match="unknown cloud profile"):
+        cli.run_cloud({"cloud_command": "status", "profile": "nope", "root": str(tmp_path / "root")})
+    status = cli.run_cloud(
+        {"cloud_command": "status", "profile": "gcp-test", "root": str(tmp_path / "root"), "json": True}
+    )
+    assert status == []

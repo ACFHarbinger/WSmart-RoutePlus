@@ -34,6 +34,11 @@ def add_cloud_args(parser: argparse.ArgumentParser) -> None:
         default=None,
         help="Repository root whose main.py local tasks run (default: this checkout).",
     )
+    parser.add_argument(
+        "--profile",
+        default=None,
+        help="Cloud profile (see `cloud profiles`): its control plane, store and provider backends. Default: local.",
+    )
     parser.add_argument("--json", action="store_true", help="Print machine-readable JSON.")
     commands = parser.add_subparsers(dest="cloud_command", required=True, help="cloud command")
 
