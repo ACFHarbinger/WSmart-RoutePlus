@@ -25,7 +25,7 @@ Ryan & Foster (1981) — node-pair branching.
 from __future__ import annotations
 
 import logging
-from typing import List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import gurobipy as gp
 from gurobipy import GRB
@@ -36,8 +36,10 @@ from logic.src.policies.helpers.solvers_and_matheuristics import (
     VRPPMasterProblem,
 )
 from logic.src.policies.helpers.solvers_and_matheuristics.branching.constraints import (
+    EdgeBranchingConstraint,
     FleetSizeBranchingConstraint,
     NodeVisitationBranchingConstraint,
+    RyanFosterBranchingConstraint,
 )
 
 logger = logging.getLogger(__name__)
@@ -372,3 +374,63 @@ def extract_forced_sets_from_constraints(
                 forced_out.add(bc.node)
 
     return forced_in, forced_out
+
+
+def _prepare_node_relaxation(
+    master: VRPPMasterProblem,
+    pricing_solver: Any,
+    branching_constraints: Optional[List[AnyBranchingConstraint]],
+) -> Tuple[int, int]:
+    """Harden the pricing relaxation for a B&B node and check its arc branches.
+
+    Enforces strict elementarity for nodes in Ryan-Foster pairs, forced node
+    visits and active SRI subsets, so the ng-relaxation cannot bypass them via
+    cycles; then raises ``RuntimeError`` if the must-use arc branches conflict
+    (more than one must-use arc leaving or entering a node).
+
+    Args:
+        master: Master problem instance.
+        pricing_solver: RCSPP pricing solver.
+        branching_constraints: Active constraints.
+
+    Returns:
+        Tuple[int, int]: (number of elementary nodes, value returned by
+        ``enforce_elementarity``, or 0 when no node needed it).
+    """
+    # Task 5: Arc Conflict Pre-check (Exactness Rule)
+    # We must enforce strict elementarity for nodes involved in active SRIs or
+    # Ryan-Foster node-pair branching to prevent the ng-relaxation from
+    # bypassing these constraints via cycles.
+    elementary_nodes: Set[int] = set()
+
+    # Extract nodes from Ryan-Foster branches
+    for bc in branching_constraints or []:
+        if isinstance(bc, RyanFosterBranchingConstraint):
+            elementary_nodes.add(bc.node_r)
+            elementary_nodes.add(bc.node_s)
+        elif isinstance(bc, NodeVisitationBranchingConstraint) and bc.forced:
+            # Force nodes are also strictly elementary to prevent cyclic bypass
+            elementary_nodes.add(bc.node)
+
+    # Extract nodes from active SRI subsets
+    for subset in master.active_sri_cuts.keys():
+        elementary_nodes.update(subset)
+
+    added_elem = 0
+    if elementary_nodes:
+        added_elem = pricing_solver.enforce_elementarity(list(elementary_nodes))
+
+    # Task 5: Arc Conflict Pre-check (Exactness Rule)
+    # Scan branching constraints for conflicting must_use arcs.
+    # At most one must_use arc can exit node u, and at most one can enter node v.
+    out_arcs: Dict[int, int] = {}
+    in_arcs: Dict[int, int] = {}
+    for bc in branching_constraints or []:
+        if isinstance(bc, EdgeBranchingConstraint) and bc.must_use:
+            if bc.u in out_arcs and out_arcs[bc.u] != bc.v:
+                raise RuntimeError(f"Conflicting must_use out-arcs at node {bc.u}")
+            if bc.v in in_arcs and in_arcs[bc.v] != bc.u:
+                raise RuntimeError(f"Conflicting must_use in-arcs at node {bc.v}")
+            out_arcs[bc.u] = bc.v
+            in_arcs[bc.v] = bc.u
+    return len(elementary_nodes), added_elem

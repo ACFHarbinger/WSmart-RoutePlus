@@ -22,13 +22,14 @@ from __future__ import annotations
 import logging
 import time
 import warnings
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from gurobipy import GRB
 
 from logic.src.policies.helpers.solvers_and_matheuristics.branching import AnyBranchingConstraint
 from logic.src.policies.helpers.solvers_and_matheuristics.branching.pruning import (
     BPCPruningException,
+    _prepare_node_relaxation,
 )
 from logic.src.policies.helpers.solvers_and_matheuristics.branching.pruning import (
     apply_branching_to_master as _apply_branching_to_master,
@@ -142,53 +143,12 @@ def column_generation_loop(  # noqa: C901
     # If no fleet limit is active, the worst-case number of vehicles is n_nodes.
     fleet_size: int = vehicle_limit if vehicle_limit is not None else master.n_nodes
 
-    # Task 5: Arc Conflict Pre-check (Exactness Rule)
-    # We must enforce strict elementarity for nodes involved in active SRIs or
-    # Ryan-Foster node-pair branching to prevent the ng-relaxation from
-    # bypassing these constraints via cycles.
-    elementary_nodes: Set[int] = set()
-
-    # Extract nodes from Ryan-Foster branches
-    from logic.src.policies.helpers.solvers_and_matheuristics.branching import (
-        NodeVisitationBranchingConstraint,
-        RyanFosterBranchingConstraint,
-    )
-
-    for bc in branching_constraints or []:
-        if isinstance(bc, RyanFosterBranchingConstraint):
-            elementary_nodes.add(bc.node_r)
-            elementary_nodes.add(bc.node_s)
-        elif isinstance(bc, NodeVisitationBranchingConstraint) and bc.forced:
-            # Force nodes are also strictly elementary to prevent cyclic bypass
-            elementary_nodes.add(bc.node)
-
-    # Extract nodes from active SRI subsets
-    for subset in master.active_sri_cuts.keys():
-        elementary_nodes.update(subset)
-
-    if elementary_nodes:
-        added_elem = pricing_solver.enforce_elementarity(list(elementary_nodes))
-        if added_elem > 0:
-            logger.info(
-                f"[Theoretical Hardening] Enforcing strict elementarity for "
-                f"{len(elementary_nodes)} nodes (SRI/Ryan-Foster parity)."
-            )
-
-    # Task 5: Arc Conflict Pre-check (Exactness Rule)
-    # Scan branching constraints for conflicting must_use arcs.
-    # At most one must_use arc can exit node u, and at most one can enter node v.
-    from logic.src.policies.helpers.solvers_and_matheuristics.branching import EdgeBranchingConstraint
-
-    out_arcs: Dict[int, int] = {}
-    in_arcs: Dict[int, int] = {}
-    for bc in branching_constraints or []:
-        if isinstance(bc, EdgeBranchingConstraint) and bc.must_use:
-            if bc.u in out_arcs and out_arcs[bc.u] != bc.v:
-                raise RuntimeError(f"Conflicting must_use out-arcs at node {bc.u}")
-            if bc.v in in_arcs and in_arcs[bc.v] != bc.u:
-                raise RuntimeError(f"Conflicting must_use in-arcs at node {bc.v}")
-            out_arcs[bc.u] = bc.v
-            in_arcs[bc.v] = bc.u
+    # Strict elementarity for branched/SRI nodes, then the must-use arc conflict check.
+    n_elementary, added_elem = _prepare_node_relaxation(master, pricing_solver, branching_constraints)
+    if added_elem > 0:
+        logger.info(
+            f"[Theoretical Hardening] Enforcing strict elementarity for {n_elementary} nodes (SRI/Ryan-Foster parity)."
+        )
 
     for _iteration in range(max_cg_iterations):
         if time_limit is not None and time_limit > 0 and (time.perf_counter() - start_time) > time_limit:
