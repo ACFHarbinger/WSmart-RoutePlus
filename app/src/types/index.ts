@@ -404,9 +404,11 @@ export type AppMode =
   | "experiment_tracker"// Experiment Tracker       — logic/src/ui/pages/experiment_tracker.py
   | "algorithms"        // Algorithms Registry      — logic/src/ui/pages/algorithms.py
   | "hpo_tracker"       // HPO Tracker              — logic/src/ui/pages/hpo_tracker.py
+  | "cloud_analysis"    // Cloud Analysis Dashboard — CR-16 (§J.1)
   // Studio-only modes
   | "process_monitor"   // Process Monitor          — §G.15
   | "cloud_monitor"     // Cloud Job Monitor        — CR-15 (§J.1)
+  | "cloud_launcher"    // Cloud Launcher           — CR-14 (§J.1)
   | "sim_launcher"      // Simulation Launcher      — §G.9
   | "training_hub"      // Training & HPO Hub       — §G.10
   | "data_gen"          // Data Generation Wizard   — §G.11

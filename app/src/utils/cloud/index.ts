@@ -271,3 +271,12 @@ export async function onCloudDownloadProgress(
     onProgress(event.payload);
   });
 }
+
+export {
+  computeJobAnalysis,
+  exportTasksToCsv,
+  extractTaskDuration,
+  extractPolicyFromCellId,
+  type AnalysisComputeOptions,
+} from "./analysis";
+
