@@ -178,7 +178,7 @@ def nearest_neighbour_cost(inst: VRPPBatch, cand: torch.Tensor, gen: Optional[to
     r = torch.arange(B, device=dev)
     unv = torch.ones(B, M, dtype=torch.bool, device=dev)
     unv[:, 0] = False
-    # A bin that never fits would loop forever in the simulator; it is left out here.
+    # A bin that never fits is left out, as in the simulator.
     unv = unv & (inst.waste <= inst.capacity.unsqueeze(1))
     log_n = max(1, int(math.log2(M)))
     cur = torch.zeros(B, dtype=torch.long, device=dev)

@@ -171,7 +171,8 @@ class KSparseACOSolver:
         Returns:
             float: Cost of the nearest neighbor tour.
         """
-        unvisited = set(self.nodes)
+        # A bin heavier than the capacity can never be served; keeping it would loop forever.
+        unvisited = {n for n in self.nodes if self.wastes.get(n, 0) <= self.capacity}
         log_n_limit = max(1, int(np.log2(self.n_nodes)))
         total_cost = 0.0
         while unvisited:
@@ -259,13 +260,15 @@ class KSparseACOSolver:
 
                 # Dynamic MMAS Bound Update (Stützle & Hoos, 2000)
                 # We update tau_max based on the new best cost, and scale tau_min proportionately.
-                new_tau_max = 1.0 / (self.params.rho * best_cost)
-                self.pheromone.tau_max = new_tau_max
+                # A zero-cost best (no bin worth its round trip) gives no finite bound.
+                if best_cost > 0:
+                    new_tau_max = 1.0 / (self.params.rho * best_cost)
+                    self.pheromone.tau_max = new_tau_max
 
-                # tau_min is typically set to tau_max / a, where a depends on the problem size.
-                # Hale uses a fixed tau_min, but scaling it is theoretically safer.
-                # For now, we enforce that the default_value respects the new bounds.
-                self.pheromone.default_value = min(self.pheromone.default_value, new_tau_max)
+                    # tau_min is typically set to tau_max / a, where a depends on the problem size.
+                    # Hale uses a fixed tau_min, but scaling it is theoretically safer.
+                    # For now, we enforce that the default_value respects the new bounds.
+                    self.pheromone.default_value = min(self.pheromone.default_value, new_tau_max)
 
             # Global pheromone update: MMAS (evaporate all, then reinforce best)
             self._global_pheromone_update(best_routes, best_cost)
