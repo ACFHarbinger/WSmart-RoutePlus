@@ -6,7 +6,7 @@ Attributes:
 
 from __future__ import annotations
 
-import contextlib
+import json
 from typing import Any, Dict, List, Optional
 
 from logic.controllers.cloud.interfaces import (
@@ -73,12 +73,11 @@ class ContainerAppsJobsBackend(ComputeBackend):
     @property
     def logs_client(self) -> Any:
         if self._logs_client is None and self.workspace_id:
-            with contextlib.suppress(Exception):
-                from azure.monitor.query import LogsQueryClient
+            from azure.monitor.query import LogsQueryClient
 
-                from logic.controllers.cloud.providers.azure._sdk import make_azure_credential
+            from logic.controllers.cloud.providers.azure._sdk import make_azure_credential
 
-                self._logs_client = LogsQueryClient(make_azure_credential(self.profile))
+            self._logs_client = LogsQueryClient(make_azure_credential(self.profile))
         return self._logs_client
 
     def capabilities(self) -> BackendCapabilities:
@@ -277,31 +276,29 @@ class ContainerAppsJobsBackend(ComputeBackend):
         rg, job_name, exec_name = self._parse_handle(handle)
         log_lines: List[str] = []
 
-        # 1. Query Azure Monitor Log Analytics workspace if configured
-        if self.logs_client is not None and self.workspace_id:
-            try:
-                query = (
-                    f"ContainerAppConsoleLogs_CL "
-                    f"| where ContainerJobName_s == '{job_name}' and ExecutionName_s == '{exec_name}' "
-                    f"| order by TimeGenerated asc "
-                    f"| project Log_s"
-                )
-                response = self.logs_client.query_workspace(
-                    workspace_id=self.workspace_id,
-                    query=query,
-                )
-                tables = getattr(response, "tables", [])
-                for table in tables:
-                    rows = getattr(table, "rows", [])
-                    for row in rows:
-                        val = row[0] if isinstance(row, (list, tuple)) and row else row
-                        if val is not None:
-                            log_lines.append(str(val))
-            except Exception:
-                pass
+        # A configured workspace is authoritative: errors are not an empty log.
+        if self.workspace_id:
+            query = (
+                "ContainerAppConsoleLogs_CL "
+                f"| where ContainerJobName_s == {json.dumps(job_name)} "
+                f"and ExecutionName_s == {json.dumps(exec_name)} "
+                "| order by TimeGenerated asc | project Log_s"
+            )
+            response = self.logs_client.query_workspace(
+                workspace_id=self.workspace_id,
+                query=query,
+                timespan=None,
+            )
+            if getattr(response, "partial_error", None) is not None:
+                raise RuntimeError("Azure Log Analytics returned incomplete logs")
+            for table in getattr(response, "tables", []):
+                for row in getattr(table, "rows", []):
+                    value = row[0] if isinstance(row, (list, tuple)) and row else row
+                    if value is not None:
+                        log_lines.append(str(value))
 
         # 2. In-process test fakes fallback (if jobs_api provides get_log_stream)
-        if not log_lines:
+        if not log_lines and not self.workspace_id:
             try:
                 jobs_api = getattr(self.client, "job_executions", getattr(self.client, "jobs", self.client))
                 if hasattr(jobs_api, "get_log_stream"):

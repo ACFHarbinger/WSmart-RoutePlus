@@ -49,6 +49,7 @@ from logic.controllers.cloud.model import (
     job_state,
     new_id,
 )
+from logic.controllers.cloud.provisioning_lease import renew_provisioning_lease
 from logic.controllers.cloud.runtime import entry_script
 from logic.controllers.cloud.store.staging import stage_job_inputs
 from logic.controllers.cloud.store.storage import download_results, upload_tree
@@ -121,7 +122,12 @@ class CloudService:
         self.workroot = Path(workroot)
         self.python = python
         self.clock = clock
-        self.owner = f"{socket.gethostname()}-{os.getpid()}"
+        self.owner = f"{socket.gethostname()}-{os.getpid()}-{new_id('scheduler')}"
+        scope = self.remote.control_plane_uri if self.remote else str(self.workroot.resolve())
+        for backend in self.backends.values():
+            configure = getattr(backend, "configure_recovery", None)
+            if callable(configure):
+                configure(self.cp, scope)
 
     # Submission -----------------------------------------------------------
 
@@ -153,7 +159,15 @@ class CloudService:
 
     def tick(self) -> int:
         """One scheduling pass over every unfinished job; returns the number of state changes."""
+        # Expiration atomically fences crashed placing owners before reconciliation.
         changes = len(self.cp.expire_leases(self.clock()))
+        for backend in self.backends.values():
+            reconcile = getattr(backend, "reconcile_provisions", None)
+            if callable(reconcile):
+                reconcile()
+            drain = getattr(backend, "drain_orphans", None)
+            if callable(drain):
+                drain()
         for job in self.cp.list_jobs(limit=1000):
             tasks = self.cp.list_tasks(job.job_id)
             if job_state((t.state for t in tasks), job.cancel_requested) in (
@@ -193,15 +207,36 @@ class CloudService:
 
     def _start(self, job: JobRecord, task: TaskRecord, backend: ComputeBackend) -> bool:
         try:
-            handle = backend.submit(self._launch(job, task))
+            if callable(getattr(backend, "configure_recovery", None)):
+                with renew_provisioning_lease(self.cp, task, _LEASE_SECONDS):
+                    handle = backend.submit(self._launch(job, task))
+            else:
+                handle = backend.submit(self._launch(job, task))
         except CapacityError as exc:
+            if not self._owns_placing(task):
+                return False
             self._set(task, TaskState.QUEUED, message=f"waiting for capacity: {exc}", lease_owner=None)
             return False
         except Exception as exc:  # noqa: BLE001 - a broken launch fails the task, not the scheduler
+            if not self._owns_placing(task):
+                return False
             self._set(task, TaskState.FAILED, finished_at=self.clock(), message=f"launch failed: {exc}")
             return True
+        if not self._owns_placing(task):
+            return False
         self._set(task, TaskState.STARTING, backend_handle=handle, started_at=self.clock(), heartbeat=self.clock())
+        confirm = getattr(backend, "confirm_provision", None)
+        if callable(confirm):
+            confirm(handle)
         return True
+
+    def _owns_placing(self, task: TaskRecord) -> bool:
+        current = self.cp.get_task(task.task_id)
+        return (
+            current.state == TaskState.PLACING
+            and current.attempt == task.attempt
+            and current.lease_owner == task.lease_owner
+        )
 
     def task_dir(self, task: TaskRecord) -> Path:
         """Local directory of a task's attempts and outputs."""
