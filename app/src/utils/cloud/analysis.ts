@@ -16,8 +16,14 @@ export interface AnalysisComputeOptions {
   estimatedCostUsd?: number | null;
 }
 
-/** Status messages and IDs are not execution telemetry. */
-export function extractTaskDuration(_task: CloudTaskSummary): null {
+/** Status messages and IDs are not execution telemetry. Returns real duration if present on task. */
+export function extractTaskDuration(task: CloudTaskSummary): number | null {
+  if (task.duration != null && !isNaN(task.duration)) {
+    return task.duration;
+  }
+  if (task.started_at != null && task.finished_at != null && task.finished_at >= task.started_at) {
+    return task.finished_at - task.started_at;
+  }
   return null;
 }
 
@@ -39,37 +45,110 @@ export function computeJobAnalysis(
   job: CloudJobStatus,
   options?: AnalysisComputeOptions
 ): CloudJobAnalysis {
-  // The status transport currently carries no timestamps, prices or predictions.
-  // Preserve missing data until the Python -> Rust -> TypeScript contract exposes it.
-  const tasks: CloudTaskAnalysis[] = job.tasks.map((task) => ({
-    ...task,
-    policy: null, // cell_id is opaque (normally a hash), not a policy path.
-    duration_seconds: null,
-    expected_wall_seconds: null,
-    cost_usd: null,
-  }));
+  const tasks: CloudTaskAnalysis[] = job.tasks.map((task) => {
+    const duration = task.duration ?? (task.started_at != null && task.finished_at != null ? task.finished_at - task.started_at : null);
+    const expected = task.expected_wall_seconds ?? null;
+    const policy = task.policy ?? null;
+    const cost = task.cost ?? null;
+    return {
+      task_id: task.task_id,
+      cell_id: task.cell_id,
+      policy,
+      state: task.state,
+      attempt: task.attempt,
+      duration_seconds: duration,
+      expected_wall_seconds: expected,
+      cost_usd: cost,
+      message: task.message ?? null,
+    };
+  });
+
   const count = (state: string) => tasks.filter((task) => task.state === state).length;
+
+  const validDurations = tasks
+    .map((t) => t.duration_seconds)
+    .filter((d): d is number => d != null && !isNaN(d));
+
+  const total_compute_seconds = validDurations.length > 0
+    ? validDurations.reduce((acc, d) => acc + d, 0)
+    : null;
+
+  const startedTimes = job.tasks
+    .map((t) => t.started_at)
+    .filter((t): t is number => t != null && !isNaN(t));
+
+  const finishedTimes = job.tasks
+    .map((t) => t.finished_at ?? (t.started_at != null && t.duration != null ? t.started_at + t.duration : null))
+    .filter((t): t is number => t != null && !isNaN(t));
+
+  let total_wall_seconds: number | null = null;
+  if (startedTimes.length > 0 && finishedTimes.length > 0) {
+    const minStart = Math.min(...startedTimes);
+    const maxEnd = Math.max(...finishedTimes);
+    if (maxEnd >= minStart) {
+      total_wall_seconds = maxEnd - minStart;
+    }
+  }
+
+  const validCosts = tasks
+    .map((t) => t.cost_usd)
+    .filter((c): c is number => c != null && !isNaN(c));
+
+  const accrued_cost_usd = validCosts.length > 0
+    ? validCosts.reduce((acc, c) => acc + c, 0)
+    : null;
+
+  const spot = job.spot ?? options?.spot ?? null;
+  const onDemandRate = job.on_demand_price_per_hour ?? options?.onDemandHourlyRateUsd ?? null;
+  const hourlyRate = job.price_per_hour ?? options?.hourlyRateUsd ?? null;
+
+  let on_demand_baseline_cost_usd: number | null = null;
+  let spot_savings_usd: number | null = null;
+  let spot_savings_pct: number | null = null;
+
+  if (spot && accrued_cost_usd != null && total_compute_seconds != null && onDemandRate != null) {
+    on_demand_baseline_cost_usd = (total_compute_seconds / 3600.0) * onDemandRate;
+    if (on_demand_baseline_cost_usd > accrued_cost_usd) {
+      spot_savings_usd = on_demand_baseline_cost_usd - accrued_cost_usd;
+      spot_savings_pct = (spot_savings_usd / on_demand_baseline_cost_usd) * 100;
+    } else {
+      spot_savings_usd = 0;
+      spot_savings_pct = 0;
+    }
+  }
+
+  let estimated_cost_usd = options?.estimatedCostUsd ?? null;
+  if (estimated_cost_usd == null && hourlyRate != null) {
+    const validExpected = tasks
+      .map((t) => t.expected_wall_seconds)
+      .filter((e): e is number => e != null && !isNaN(e));
+    if (validExpected.length > 0) {
+      const sumExpected = validExpected.reduce((acc, e) => acc + e, 0);
+      estimated_cost_usd = (sumExpected / 3600.0) * hourlyRate;
+    }
+  }
+
   return {
     job_id: job.job_id,
     name: job.name,
     state: job.state,
-    provider: options?.provider ?? "Unknown",
-    compute: options?.compute ?? "Unknown",
-    spot: options?.spot ?? null,
-    machine_type: options?.machineType ?? null,
-    region: options?.region ?? null,
+    provider: job.provider ?? options?.provider ?? "Unknown",
+    compute: job.compute ?? options?.compute ?? "Unknown",
+    spot,
+    machine_type: job.machine_type ?? options?.machineType ?? null,
+    region: job.region ?? options?.region ?? null,
     total_tasks: tasks.length,
     succeeded_tasks: count("succeeded"),
     failed_tasks: count("failed"),
     cancelled_tasks: count("cancelled"),
     preempted_tasks: count("preempted"),
-    total_wall_seconds: null,
-    total_compute_seconds: null,
-    accrued_cost_usd: null,
-    estimated_cost_usd: options?.estimatedCostUsd ?? null,
-    on_demand_baseline_cost_usd: null,
-    spot_savings_usd: null,
-    spot_savings_pct: null,
+    total_wall_seconds,
+    total_compute_seconds,
+    accrued_cost_usd,
+    estimated_cost_usd,
+    on_demand_baseline_cost_usd,
+    spot_savings_usd,
+    spot_savings_pct,
     tasks,
   };
 }

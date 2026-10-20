@@ -104,7 +104,7 @@ export function TaskDurationWaterfall({ tasks, height = 340 }: TaskDurationWater
         <BarChart3 className="text-neutral-600 mb-2" size={32} />
         <h4 className="text-sm font-medium text-neutral-300">No task durations available</h4>
         <p className="text-xs text-neutral-500 mt-1">
-          Duration waterfall will populate as task attempts finish execution.
+          Duration comparison will populate as task attempts finish execution.
         </p>
       </div>
     );
@@ -116,7 +116,7 @@ export function TaskDurationWaterfall({ tasks, height = 340 }: TaskDurationWater
         <div className="flex items-center gap-2">
           <BarChart3 size={16} className="text-blue-400" />
           <h3 className="text-sm font-semibold text-neutral-200">
-            Task Execution Duration Waterfall
+            Task Execution Duration Comparison
           </h3>
           <span className="text-xs text-neutral-500">
             ({tasks.length} total tasks)

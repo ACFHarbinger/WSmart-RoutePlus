@@ -280,7 +280,7 @@ export function CloudAnalysis() {
           <button
             onClick={() => setMode("simulation_summary")}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 rounded transition-colors"
-            title="Open in Simulation Summary"
+            title="Switch view to Simulation Summary"
           >
             <LineChart size={14} />
             <span>Sim Summary</span>
@@ -361,19 +361,19 @@ export function CloudAnalysis() {
                 </div>
               </div>
 
-              {/* Parallel Speedup */}
+              {/* Average Concurrency */}
               <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-3.5">
                 <div className="flex items-center justify-between text-neutral-400 text-xs">
-                  <span>Concurrency Factor</span>
+                  <span>Average Concurrency</span>
                   <Zap size={14} className="text-amber-400" />
                 </div>
                 <div className="text-2xl font-bold font-mono text-amber-400 mt-1">
                   {analysis.total_compute_seconds == null || !analysis.total_wall_seconds
                     ? "Unavailable"
-                    : `${(analysis.total_compute_seconds / analysis.total_wall_seconds).toFixed(1)}x`}
+                    : `${(analysis.total_compute_seconds / analysis.total_wall_seconds).toFixed(1)} tasks`}
                 </div>
                 <div className="text-[11px] text-neutral-500 mt-1">
-                  Parallel execution acceleration
+                  Average active parallel tasks
                 </div>
               </div>
 
@@ -397,7 +397,7 @@ export function CloudAnalysis() {
               <nav className="flex items-center gap-1">
                 {[
                   { id: "overview" as AnalysisTab, label: "Overview & Telemetry", icon: Gauge },
-                  { id: "waterfall" as AnalysisTab, label: "Execution Waterfall", icon: BarChart3 },
+                  { id: "waterfall" as AnalysisTab, label: "Duration Comparison", icon: BarChart3 },
                   { id: "tasks" as AnalysisTab, label: "Task Inspection Table", icon: Layers },
                   { id: "cost" as AnalysisTab, label: "Financial & Spot Breakdown", icon: DollarSign },
                 ].map((tab) => {

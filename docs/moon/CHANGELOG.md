@@ -111,7 +111,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Codex cloud review corrections (`2026-10-20`)
 
-- Removed invented cloud execution durations, predictions, prices and concurrency from analysis; missing telemetry stays unavailable. Corrected per-task prediction MAPE, plain-text chart tooltips and stale detail responses. CR-16 still needs the real Python/Rust/TypeScript telemetry contract and rebasing against integrated Studio changes; see the Codex cloud review of 2026-10-20 on the main checkout.
+- **Telemetry analysis transport & CR-16 integration:**
+  - Implemented real telemetry and status analysis payload in Python `CloudService.status` (`logic/controllers/cloud/service.py`) exposing provider, compute kind, spot flag, machine type, region, hourly rates (with on-demand baseline), per-task timestamps (`started_at`, `finished_at`, `duration`), pre-run predictions (`expected_wall_seconds`), policy identity (extracted from `CellSpec`), and billed costs across all retry attempts adhering to cloud provider billing minimums.
+  - Mirrored status models through Rust Tauri commands (`CloudTaskSummary`, `CloudJobStatus` in `app/src-tauri/src/commands/cloud/models.rs`) and TypeScript interfaces (`app/src/types/cloud.ts`).
+  - Rebased `feat/cloud-16-analysis` onto `main`, dropping duplicate launcher files and duplicate route/nav declarations from CR-14.
+  - Updated `computeJobAnalysis` in `app/src/utils/cloud/analysis.ts` to preserve and aggregate real transported metrics (total compute hours, wall clock time from timestamp spans, accrued expenditure, spot savings percentage, and surrogate duration predictions), keeping missing observations nullable.
+  - Corrected concurrency metrics in `CloudAnalysis.tsx` to display true average concurrent tasks rather than claiming a sequential baseline speedup factor.
+- Removed invented cloud execution durations, predictions, prices and concurrency from analysis; missing telemetry stays unavailable. Corrected per-task prediction MAPE, plain-text chart tooltips and stale detail responses.
 
 ### Cloud runner planned (`2026-10-19`)
 

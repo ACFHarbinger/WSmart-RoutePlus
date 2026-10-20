@@ -17,7 +17,6 @@ import {
   Settings,
   Sliders,
   Terminal,
-  UploadCloud,
   Zap,
   FolderOpen,
   ClipboardList,
@@ -56,7 +55,6 @@ const NAV: NavSection[] = [
   {
     label: "Launch",
     items: [
-      { mode: "cloud_launcher", label: "Cloud Launcher" },
       { mode: "sim_launcher", label: "Simulation Launcher" },
       { mode: "cloud_launcher", label: "Cloud Launcher" },
       { mode: "training_hub", label: "Training & HPO Hub" },
@@ -86,7 +84,6 @@ const ICON: Record<AppMode, React.ReactNode> = {
   training: <Activity size={15} />,
   process_monitor: <Terminal size={15} />,
   cloud_monitor: <Cloud size={15} />,
-  cloud_launcher: <UploadCloud size={15} />,
   cloud_analysis: <LineChart size={15} />,
   simulation_summary: <BarChart2 size={15} />,
   benchmark: <Layers size={15} />,
