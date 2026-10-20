@@ -290,6 +290,28 @@ def load_temporal_params(**kwargs):
     return params
 
 
+def load_time_windows(**kwargs):
+    """
+    Convenience wrapper to load time-window schedule from the repository.
+
+    Returns:
+        Optional TimeWindowSchedule instance. See
+        SimulationRepository.get_time_window_params.
+    """
+    schedule = SimulationRepository.get_time_window_params(**kwargs)
+    with contextlib.suppress(Exception):
+        run = get_active_run() if get_active_run is not None else None
+        if run is not None and schedule is not None:
+            run.log_params(
+                {
+                    "data.time_windows_active": True,
+                    "data.time_windows_n_days": schedule.n_days,
+                    "data.time_windows_blocked_count": len(schedule.blocked_days),
+                }
+            )
+    return schedule
+
+
 __all__ = [
     "SimulationRepository",
     "FileSystemRepository",
@@ -301,4 +323,5 @@ __all__ = [
     "load_simulator_data",
     "load_area_and_waste_type_params",
     "load_temporal_params",
+    "load_time_windows",
 ]

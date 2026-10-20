@@ -119,6 +119,7 @@ sim:
   shift_hours: 7.0 # TCPTP per depot-to-depot trip, including return and service
   avg_speed_kmh: 35.0 # Uniform fallback for every bin and depot leg
   service_time_h: 0.025
+  time_windows: null # Optional routing time windows: CSV/Excel path or [start_day, days_after, interval_between]
   # TCPTP keeps this file's graph/policy lists; only the problem tag changes.
   #   python main.py test_sim sim.problem=tcptp
   # Do not flip the committed default -- the paper's 30-day factorial is ptp.

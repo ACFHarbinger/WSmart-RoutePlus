@@ -186,6 +186,7 @@ class SimulationContext:
         self.time_matrix: Optional[np.ndarray] = None
         self.avg_speed_kmh: float = 35.0
         self.service_time_h: float = 1.5 / 60.0
+        self.time_windows: Optional[Any] = None
         self.transition_to(InitializingState())
 
     def transition_to(self, state: Optional[SimState]) -> None:

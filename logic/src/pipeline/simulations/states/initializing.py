@@ -35,7 +35,11 @@ from logic.src.data.processor import (
 from logic.src.pipeline.simulations.actions.base import _as_policy_mapping
 from logic.src.pipeline.simulations.bins import Bins
 from logic.src.pipeline.simulations.checkpoints import SimulationCheckpoint
-from logic.src.pipeline.simulations.repository import load_area_and_waste_type_params, load_temporal_params
+from logic.src.pipeline.simulations.repository import (
+    load_area_and_waste_type_params,
+    load_temporal_params,
+    load_time_windows,
+)
 from logic.src.pipeline.simulations.states.base.base import SimState
 from logic.src.pipeline.simulations.states.running import RunningState
 from logic.src.tracking.logging.log_utils import setup_system_logger
@@ -243,6 +247,19 @@ class InitializingState(SimState):
         ctx.shift_hours = shift_hours
         ctx.avg_speed_kmh = avg_speed_kmh
         ctx.service_time_h = service_time_h
+
+        tw_source = (
+            getattr(sim, "time_windows", None)
+            or getattr(graph, "time_windows", None)
+            or getattr(sim, "time_window_filepath", None)
+            or getattr(graph, "time_window_filepath", None)
+            or getattr(sim, "time_window_pattern", None)
+            or getattr(graph, "time_window_pattern", None)
+        )
+        if tw_source is not None:
+            ctx.time_windows = load_time_windows(source=tw_source, n_days=graph.n_days)
+        else:
+            ctx.time_windows = None
 
     def _load_checkpoint_if_needed(self, ctx: SimulationContext) -> Tuple[Optional[Any], int]:
         """

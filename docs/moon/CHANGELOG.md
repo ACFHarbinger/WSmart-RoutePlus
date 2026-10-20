@@ -17,6 +17,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Simulation Time Windows & Temporal Module Reorganization (`2026-10-20`)
+
+#### Added
+
+- **Time Windows constraints in simulator** (`logic/src/data/time/time_windows.py`):
+  - Support for optional simulation time window constraints where no routing occurs on designated days.
+  - Can be specified via CSV/Excel file with boolean indicators per day, or via a 3-parameter periodic pattern (`start_day`, `days_after`, `interval_between`).
+  - Added `TimeWindowSchedule` class and `load_time_windows`, `build_time_window_pattern`, `load_time_windows_file` utilities.
+  - Added `SimulationRepository.get_time_window_params` and `load_time_windows` repository wrapper.
+  - Integrated with `SimConfig`, `GraphConfig`, `SimulationContext`, `InitializingState`, `RunningState`, and `SimulationDayContext`.
+  - On non-routing days, bins accumulate filling as normal while routing is bypassed (`tour=[0]`, `solver_status="no_routing"`).
+  - Comprehensive unit test suite in `logic/test/unit/pipeline/simulations/test_time_windows.py`.
+
+#### Changed
+
+- **Moved travel time matrices to `logic/src/data/time/`**:
+  - `logic/src/data/processor/temporal.py` moved and renamed to `logic/src/data/time/travel_matrix.py`.
+  - Maintained backward-compatibility stub at `logic/src/data/processor/temporal.py` re-exporting `compute_time_matrix`.
+  - Updated repository and test imports to use `logic.src.data.time.travel_matrix`.
+
 ### Autoregressive DRL paper submodule (`2026-10-20`)
 
 #### Added
