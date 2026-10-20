@@ -250,7 +250,7 @@ class HVPLSolver(HVPLEvolutionMixin):
             if routes:
                 population.append(routes)
 
-        # If not enough solutions, fill with random constructions
+        # If not enough solutions, fill with greedy constructions
         while len(population) < self.params.n_teams:
             routes = self._random_construction()
             population.append(routes)
@@ -259,7 +259,11 @@ class HVPLSolver(HVPLEvolutionMixin):
         return self._select_diverse_elite(population, self.params.n_teams)
 
     def _random_construction(self) -> List[List[int]]:
-        """Build a random routing solution.
+        """Build a greedy routing solution.
+
+        Despite the historical name, this delegates to ``build_greedy_routes``
+        (a randomized-greedy construction driven by the solver RNG), not a
+        uniform-random one. Used to top up the ACO-initialized population.
 
         Args:
             None.
