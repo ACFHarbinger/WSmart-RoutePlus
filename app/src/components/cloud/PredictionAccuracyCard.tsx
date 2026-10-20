@@ -1,3 +1,4 @@
+import { formatObserved } from "../../utils/cloud/analysis";
 /**
  * Prediction Accuracy Card — displays actual vs predicted task runtime metrics,
  * model calibration error, and variance for CR-11 / CR-16 (§J.1).
@@ -12,7 +13,7 @@ interface PredictionAccuracyCardProps {
 
 export function PredictionAccuracyCard({ analysis }: PredictionAccuracyCardProps) {
   const tasksWithPred = analysis.tasks.filter(
-    (t) => t.expected_wall_seconds != null && t.expected_wall_seconds > 0 && t.duration_seconds > 0
+    (t) => t.expected_wall_seconds != null && t.expected_wall_seconds > 0 && t.duration_seconds != null && t.duration_seconds > 0
   );
 
   const hasPredictionData = tasksWithPred.length > 0;
@@ -22,28 +23,30 @@ export function PredictionAccuracyCard({ analysis }: PredictionAccuracyCardProps
   let withinToleranceCount = 0;
   let overEstimateCount = 0;
   let underEstimateCount = 0;
+  let absolutePercentageError = 0;
 
   if (hasPredictionData) {
     for (const t of tasksWithPred) {
-      const actual = t.duration_seconds;
+      const actual = t.duration_seconds!;
       const pred = t.expected_wall_seconds!;
       totalActualSec += actual;
       totalPredSec += pred;
 
+      absolutePercentageError += Math.abs(actual - pred) / actual;
       const relDiff = Math.abs(actual - pred) / pred;
       if (relDiff <= 0.15) {
         withinToleranceCount++;
       }
       if (pred > actual) {
         overEstimateCount++;
-      } else {
+      } else if (pred < actual) {
         underEstimateCount++;
       }
     }
   }
 
   const overallRatio = totalPredSec > 0 ? totalActualSec / totalPredSec : 1.0;
-  const overallErrorPct = totalPredSec > 0 ? (Math.abs(totalActualSec - totalPredSec) / totalPredSec) * 100 : 0;
+  const overallErrorPct = tasksWithPred.length ? absolutePercentageError / tasksWithPred.length * 100 : 0;
   const accuracyPct = Math.max(0, 100 - overallErrorPct);
 
   return (
@@ -85,9 +88,9 @@ export function PredictionAccuracyCard({ analysis }: PredictionAccuracyCardProps
             Once CR-11 model calibration is enabled during manifest generation, actual vs predicted runtimes will display here.
           </p>
           <div className="mt-4 flex items-center justify-center gap-4 text-xs font-mono text-neutral-400">
-            <span>Observed Compute: <strong>{analysis.total_compute_seconds.toFixed(1)}s</strong></span>
+            <span>Observed Compute: <strong>{formatObserved(analysis.total_compute_seconds, 1)}s</strong></span>
             <span>•</span>
-            <span>Observed Wall Time: <strong>{analysis.total_wall_seconds.toFixed(1)}s</strong></span>
+            <span>Observed Wall Time: <strong>{formatObserved(analysis.total_wall_seconds, 1)}s</strong></span>
             <span>•</span>
             <span>Total Tasks: <strong>{analysis.total_tasks}</strong></span>
           </div>
