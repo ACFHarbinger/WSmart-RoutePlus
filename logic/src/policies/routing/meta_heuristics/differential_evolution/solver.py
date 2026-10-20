@@ -20,6 +20,10 @@ References:
 
     Bean, J.C. (1994). "Genetic Algorithms and Random Keys for Sequencing
     and Optimization." ORSA Journal on Computing, 6(2), 154-160.
+
+The Random Key encoding/decoding helpers live in ``random_key.py`` and the
+continuous DE mutation/crossover operators in ``de_operators.py``; both are
+mixed into ``DESolver`` here.
 """
 
 import contextlib
@@ -33,13 +37,15 @@ import numpy as np
 from logic.src.configs.policies.aco_ks import KSparseACOConfig
 from logic.src.configs.policies.de import DEConfig
 from logic.src.policies.helpers.local_search.local_search_general import GeneralLocalSearch
-from logic.src.policies.helpers.operators.solution_initialization.greedy_si import build_greedy_routes
 from logic.src.policies.routing.meta_heuristics.differential_evolution.evolution_strategy import (
     create_evolution_strategy,
 )
 
+from .de_operators import DEOperatorsMixin
+from .random_key import DERandomKeyMixin
 
-class DESolver:
+
+class DESolver(DERandomKeyMixin, DEOperatorsMixin):
     """
     Memetic Differential Evolution (MDE) solver for VRPP.
 
@@ -272,248 +278,26 @@ class DESolver:
     # Private helpers: Vectorized index generation
     # ------------------------------------------------------------------
 
-    def _generate_mutation_indices(self, pop_size: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """Pure NumPy implementation of 3 mutually exclusive random indices for all i.
-
-        Ensures r1[i] != r2[i] != r3[i] != i for all i in [0, pop_size) using
-        offset-based modulo arithmetic, avoiding sequential Python loops.
-
-        Args:
-            pop_size: The size of the population.
-
-        Returns:
-            Tuple of three NumPy arrays (r1, r2, r3).
-        """
-        # Generate 3 distinct offsets in [1, pop_size-1] for each individual i.
-        # By adding these offsets to i modulo pop_size, we guarantee r_j != i.
-        # By ensuring offsets are unique per i, we guarantee r1 != r2 != r3.
-        num_offsets = pop_size - 1
-        offset_perms = np.argsort(self.rng.rand(pop_size, num_offsets), axis=1) + 1
-
-        # Select first 3 random offsets
-        offsets = offset_perms[:, :3]
-
-        # Compute final indices using broadcasting and modulo
-        rows = np.arange(pop_size)[:, None]
-        r_indices = (rows + offsets) % pop_size
-
-        return r_indices[:, 0], r_indices[:, 1], r_indices[:, 2]
-
-    def _vectorized_exponential_crossover(self, target_pop: np.ndarray, mutant_pop: np.ndarray) -> np.ndarray:
-        """Fully vectorized implementation of Exponential Crossover.
-
-        Replaces the sequential population loop with a single matrix operation
-        using 2D Boolean masks and probabilistic sequence length calculation.
-
-        Args:
-            target_pop: The current population matrix.
-            mutant_pop: The mutated population matrix.
-
-        Returns:
-            The trial population matrix.
-        """
-        NP, D = target_pop.shape
-        CR = self.params.crossover_rate
-
-        # 1. Select starting indices n for each individual
-        n_starts = self.rng.randint(0, D, size=NP)
-
-        # 2. Simulate the do...while loop with a Geometric Stop
-        # P(L=k) = CR^(k-1) * (1-CR) for k in [1, D]
-        # In NP, this is equivalent to generating masks from random values.
-        # Stop probability is (1 - CR).
-        L = self.rng.geometric(1 - CR, size=NP)
-        L = np.clip(L, 1, D)
-
-        # 3. Create the crossover mask
-        # For each i, mutant contributes indices [n[i], n[i] + L[i]) modulo D.
-        idx_grid = np.arange(D)
-        # Calculate circular distance: (j - n_starts[i]) % D
-        dist = (idx_grid - n_starts[:, None]) % D
-        mask = dist < L[:, None]
-
-        return np.where(mask, mutant_pop, target_pop)
 
     # ------------------------------------------------------------------
     # Private helpers: Population initialization
     # ------------------------------------------------------------------
 
-    def _initialize_population(self) -> np.ndarray:
-        """Initialize population as continuous Random Key vectors.
-
-        Returns:
-            Population matrix of shape (pop_size, n_nodes) in [-1.0, 1.0].
-        """
-        population = np.zeros((self.pop_size, self.n_nodes))
-
-        # Generate base greedy solution
-        greedy_routes = build_greedy_routes(
-            dist_matrix=self.dist_matrix,
-            wastes=self.wastes,
-            capacity=self.capacity,
-            R=self.R,
-            C=self.C,
-            mandatory_nodes=self.mandatory_nodes,
-            rng=self.py_rng,
-        )
-        greedy_vector = self._encode_routes(greedy_routes)
-
-        # Seed first 10% of population (minimum 1) with Gaussian deviations
-        n_seeded = max(1, self.pop_size // 10)
-        for i in range(n_seeded):
-            # Storn & Price (1997) suggest Gaussian noise for preliminary solutions
-            noise = self.rng.normal(0, 0.1, size=self.n_nodes)
-            population[i] = np.clip(greedy_vector + noise, -1.0, 1.0)
-
-        # Initialize remaining population uniformly at random
-        for i in range(n_seeded, self.pop_size):
-            population[i] = self.rng.uniform(-1.0, 1.0, size=self.n_nodes)
-
-        return population
-
-    def _encode_routes(self, routes: List[List[int]]) -> np.ndarray:
-        """Encode discrete routes into a continuous Random Key vector with noise injection.
-
-        Args:
-            routes: Discrete routing solution.
-
-        Returns:
-            Continuous vector of shape (n_nodes,) in [-1.0, 1.0].
-        """
-        # Initialize all nodes with random negative values (unvisited representation)
-        # Distributing across [-1.0, -0.01] prevents genetic uniformity
-        new_vector = self.rng.uniform(-1.0, -0.01, size=self.n_nodes)
-
-        # Process each route independently to maintain route structure
-        for route in routes:
-            if not route:
-                continue
-
-            n_stops = len(route)
-
-            # Generate linearly spaced base values in safe positive domain [0.1, 0.9]
-            # Avoiding extreme boundaries [0.0, 1.0] gives noise room to operate
-            base_values = np.linspace(0.1, 0.9, n_stops)
-
-            # Inject uniform noise to prevent identical encodings
-            # Noise magnitude [-0.05, 0.05] is small enough to preserve sequence order
-            # but large enough to maintain population diversity
-            noise = self.rng.uniform(-0.05, 0.05, size=n_stops)
-
-            # Assign combined base + noise to visited nodes
-            for idx, node in enumerate(route):
-                vector_idx = node - 1  # Convert 1-indexed node to 0-indexed array position
-                # Clip to [0.0, 1.0] to handle edge cases where noise pushes values out
-                new_vector[vector_idx] = np.clip(base_values[idx] + noise[idx], 0.0, 1.0)
-
-        return new_vector
 
     # ------------------------------------------------------------------
     # Private helpers: Random Key decoder
     # ------------------------------------------------------------------
 
-    def _decode_vector(self, vector: np.ndarray) -> List[List[int]]:
-        """Decode continuous Random Key vector into discrete VRPP routes.
-
-        Args:
-            vector: Continuous vector of shape (n_nodes,) in [-1.0, 1.0].
-
-        Returns:
-            Discrete routing solution satisfying capacity constraints.
-        """
-        # Step 1: Node selection
-        selected_nodes = []
-        for i in range(self.n_nodes):
-            node_id = i + 1  # Convert 0-indexed to 1-indexed
-            if vector[i] >= 0.0 or node_id in self.mandatory_nodes:
-                selected_nodes.append((vector[i], node_id))
-
-        if not selected_nodes:
-            return []
-
-        # Step 2: Sort by Random Key values (ascending)
-        selected_nodes.sort(key=lambda x: x[0])
-        sorted_nodes = [node_id for _, node_id in selected_nodes]
-
-        # Step 3: Route packing with capacity constraints
-        routes = []
-        current_route = []
-        current_load = 0.0
-
-        for node in sorted_nodes:
-            node_waste = self.wastes.get(node, 0.0)
-
-            # Check if adding node would violate capacity
-            if current_load + node_waste <= self.capacity:
-                current_route.append(node)
-                current_load += node_waste
-            else:
-                # Start new route if current route is not empty
-                if current_route:
-                    routes.append(current_route)
-                # Start fresh with this node
-                current_route = [node]
-                current_load = node_waste
-
-        # Add final route if not empty
-        if current_route:
-            routes.append(current_route)
-
-        return routes
 
     # ------------------------------------------------------------------
     # Private helpers: Memory-preserving boundary handling
     # ------------------------------------------------------------------
 
-    def _apply_boundary_handling(self, vector: np.ndarray, base_vector: np.ndarray) -> np.ndarray:
-        """Apply bounce-back boundary handling to preserve genetic diversity.
-
-        Args:
-            vector: The continuous vector to bound.
-            base_vector: The reference vector (mutant base or target parent).
-
-        Returns:
-            Bounded vector strictly within [-1.0, 1.0].
-        """
-        # Lower bound violation
-        low_mask = vector < -1.0
-        if np.any(low_mask):
-            # x_new = base + rand * (boundary - base)
-            vector[low_mask] = base_vector[low_mask] + self.rng.rand(np.sum(low_mask)) * (-1.0 - base_vector[low_mask])  # type: ignore[call-overload]
-
-        # Upper bound violation
-        high_mask = vector > 1.0
-        if np.any(high_mask):
-            vector[high_mask] = base_vector[high_mask] + self.rng.rand(np.sum(high_mask)) * (  # type: ignore[call-overload]
-                1.0 - base_vector[high_mask]
-            )
-
-        return vector
 
     # ------------------------------------------------------------------
     # Private helpers: Exponential crossover
     # ------------------------------------------------------------------
 
-    def _exponential_crossover(self, target: np.ndarray, mutant: np.ndarray) -> np.ndarray:
-        """Perform exponential crossover (DE/rand/1/exp).
-
-        Args:
-            target: Target vector.
-            mutant: Mutant vector.
-
-        Returns:
-            The trial vector.
-        """
-        trial = target.copy()
-        n = self.rng.randint(0, self.n_nodes)
-        L = 0
-        while True:
-            trial[n] = mutant[n]
-            n = (n + 1) % self.n_nodes
-            L += 1
-            if self.n_nodes <= L or self.rng.rand() >= self.params.crossover_rate:
-                break
-        return trial
 
     # ------------------------------------------------------------------
     # Private helpers: Continuous DE operators (Legacy - kept for reference)
@@ -524,49 +308,6 @@ class DESolver:
     #       in solve() using NumPy matrix operations.
     # ------------------------------------------------------------------
 
-    def _differential_mutation(
-        self,
-        base: np.ndarray,
-        diff1: np.ndarray,
-        diff2: np.ndarray,
-        F: float,
-    ) -> np.ndarray:
-        """Continuous DE mutation operator: v = x_r1 + F * (x_r2 - x_r3).
-
-        Args:
-            base: Base vector (x_r1).
-            diff1: First differential vector (x_r2).
-            diff2: Second differential vector (x_r3).
-            F: Mutation scale factor.
-
-        Returns:
-            Mutant vector, clipped to domain [-1.0, 1.0].
-        """
-        mutant = base + F * (diff1 - diff2)
-        return np.clip(mutant, -1.0, 1.0)
-
-    def _binomial_crossover(self, target: np.ndarray, mutant: np.ndarray, CR: float) -> np.ndarray:
-        """Binomial crossover operator with domain enforcement.
-
-        Args:
-            target: Target vector (x_i).
-            mutant: Mutant vector (v_i).
-            CR: Crossover probability [0, 1].
-
-        Returns:
-            Trial vector (u_i), clipped to domain [-1.0, 1.0].
-        """
-        trial = np.copy(target)
-
-        # Ensure at least one dimension comes from mutant
-        j_rand = self.rng.randint(0, self.n_nodes)
-
-        for j in range(self.n_nodes):
-            if j == j_rand or self.rng.random() < CR:
-                trial[j] = mutant[j]
-
-        # Enforce domain bounds to prevent vector explosion
-        return np.clip(trial, -1.0, 1.0)
 
     # ------------------------------------------------------------------
     # Private helpers: Solution evaluation

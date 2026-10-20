@@ -25,6 +25,10 @@ Architecture
    ``forward_looking_insertion`` repair for inter-period slots.
 4. Exposes a new ``solve_horizon()`` entry point that returns the full
    T-day plan alongside Day-0 routes for the simulator.
+5. Horizon-level support methods (initial horizon construction, horizon
+   cost/profit evaluation, the forward-looking repair closure and
+   single-day operator application) live in ``horizon_support.py`` as the
+   ``ALNSHorizonSupportMixin``.
 
 Chromosome representation
 --------------------------
@@ -46,18 +50,13 @@ Computers & Operations Research, 39(11), 2537–2548.
 from __future__ import annotations
 
 import time
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
 from logic.src.configs.policies.alns_ipo import ALNSIPOConfig
-from logic.src.pipeline.learning.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators import (
-    build_greedy_routes,
-    forward_looking_insertion,
     greedy_horizon_insertion,
-    greedy_insertion,
-    greedy_profit_insertion,
     pattern_removal,
     random_horizon_removal,
     regret_k_temporal_insertion,
@@ -72,8 +71,10 @@ from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_sear
 )
 from logic.src.tracking.viz_mixin import PolicyStateRecorder
 
+from .horizon_support import ALNSHorizonSupportMixin
 
-class ALNSSolverIPO(ALNSSolver):
+
+class ALNSSolverIPO(ALNSHorizonSupportMixin, ALNSSolver):
     r"""ALNS with Inter-Period Operators (IPO) for T-day horizon optimization.
 
     Adds inter-period destroy operators (ShiftVisitRemoval, PatternRemoval)
@@ -251,89 +252,8 @@ class ALNSSolverIPO(ALNSSolver):
             self.repair_scores.append(0.0)
             self.repair_counts.append(0)
 
-    def _make_fl_repair(self) -> Callable:
-        """Build the forward-looking repair operator closure.
 
-        Returns:
-            The repair operator function.
-        """
 
-        def _fl(horizon_routes: List[List[List[int]]], removed: Any, _noise: float = 0.0) -> List[List[List[int]]]:
-            return forward_looking_insertion(
-                horizon_routes=horizon_routes,
-                removed=removed,
-                dist_matrix=self.dist_matrix,
-                wastes=self.wastes,
-                capacity=self.capacity,
-                R=self.R,
-                C=self.C,
-                scenario_tree=self._scenario_tree,
-                stockout_penalty=self.stockout_penalty,
-                look_ahead_days=self.forward_looking_depth,
-                lambda_inventory=self.inventory_lambda,
-            )
-
-        return _fl
-
-    # ------------------------------------------------------------------
-    # Helper: build initial horizon solution
-    # ------------------------------------------------------------------
-
-    def build_initial_horizon_solution(self) -> List[List[List[int]]]:
-        """Build an initial T-day horizon solution using the parent greedy heuristic.
-
-        Returns:
-            A full T-day initial plan.
-        """
-        horizon: List[List[List[int]]] = []
-        for _ in range(self.horizon):
-            day_routes = build_greedy_routes(
-                dist_matrix=self.dist_matrix,
-                wastes=self.wastes,
-                capacity=self.capacity,
-                R=self.R,
-                C=self.C,
-                mandatory_nodes=self.mandatory_nodes,
-                rng=self.random,
-            )
-            horizon.append(day_routes)
-        return horizon
-
-    # ------------------------------------------------------------------
-    # Horizon cost evaluation
-    # ------------------------------------------------------------------
-
-    def calculate_horizon_cost(self, horizon_routes: List[List[List[int]]]) -> float:
-        """Compute total routing cost across the horizon.
-
-        Args:
-            horizon_routes: Full T-day solution to evaluate.
-
-        Returns:
-            Total routing cost.
-        """
-        total = 0.0
-        for day_routes in horizon_routes:
-            total += self.calculate_cost(day_routes)
-        return total
-
-    def calculate_horizon_profit(self, horizon_routes: List[List[List[int]]]) -> float:
-        """Compute total profit (revenue − routing cost) across the horizon.
-
-        Args:
-            horizon_routes: Full T-day solution to evaluate.
-
-        Returns:
-            Total net profit.
-        """
-        total_cost = self.calculate_horizon_cost(horizon_routes)
-        total_rev = sum(
-            self.wastes.get(node, 0.0) * self.R
-            for day_routes in horizon_routes
-            for route in day_routes
-            for node in route
-        )
-        return total_rev - total_cost
 
     # ------------------------------------------------------------------
     # Multi-period solve
@@ -448,42 +368,6 @@ class ALNSSolverIPO(ALNSSolver):
 
         return best_horizon, best_profit, best_cost
 
-    def _apply_single_day_ops(self, day_routes: List[List[int]], d_idx: int) -> Tuple[List[List[int]], List[int]]:
-        """Apply a single-day destroy operator and greedily repair.
-
-        Args:
-            day_routes: Routes for the selected day.
-            d_idx: Index of the destroy operator to apply.
-
-        Returns:
-            Tuple containing (repaired_routes, removed_nodes).
-        """
-        destroy_op = self.destroy_ops[d_idx]
-        n_nodes = sum(len(r) for r in day_routes)
-        if n_nodes == 0:
-            return day_routes, []
-
-        lower = min(n_nodes, self.params.min_removal)
-        upper = min(n_nodes, self.params.max_removal_cap, max(lower, int(n_nodes * self.params.max_removal_pct)))
-        upper = max(upper, lower)
-        n_rem = self.random.randint(lower, upper)
-
-        new_routes, removed = destroy_op([r[:] for r in day_routes], n_rem)
-
-        # Repair with greedy (single-day)
-        common_kw: Dict = dict(
-            dist_matrix=self.dist_matrix,
-            wastes=self.wastes,
-            capacity=self.capacity,
-            mandatory_nodes=self.mandatory_nodes,
-            expand_pool=current_expand_pool(),
-        )
-        if self.profit_aware_operators:
-            repaired = greedy_profit_insertion(new_routes, removed, R=self.R, C=self.C, **common_kw)
-        else:
-            repaired = greedy_insertion(new_routes, removed, **common_kw)
-
-        return repaired, removed
 
     def _check_accept(
         self, current_profit: float, new_profit: float, best_profit: float, iteration: int
