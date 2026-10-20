@@ -7,9 +7,11 @@ Attributes:
 from __future__ import annotations
 
 import base64
-import contextlib
 import json
+import os
 import shlex
+import time
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 from urllib.parse import quote
 
@@ -64,6 +66,7 @@ class AzureVmBackend(ComputeBackend):
         vault_name: str = "wsr-vault",
         profile: str = "default",
         region: str = "eastus",
+        orphan_file: Optional[Path | str] = None,
     ) -> None:
         self._client = client
         self._network_client = network_client
@@ -83,6 +86,11 @@ class AzureVmBackend(ComputeBackend):
         self.vault_name = vault_name
         self.profile = profile
         self.region = region
+        if orphan_file is not None:
+            self.orphan_file = Path(orphan_file)
+        else:
+            base_dir = Path(os.environ.get("WSR_STATE_DIR", Path.home() / ".wsr"))
+            self.orphan_file = base_dir / "azure_vm_orphans.json"
 
     @property
     def client(self) -> Any:
@@ -212,25 +220,177 @@ curl -fsS -m 30 -X PATCH \\
 """
         return base64.b64encode(script.encode("utf-8")).decode("utf-8")
 
-    def _cleanup_nic(self, nic_name: str) -> None:
-        """Attempt to delete a network interface if VM creation fails."""
+    @staticmethod
+    def _is_not_found(exc: Exception) -> bool:
+        """Return True if exception indicates the Azure resource does not exist (404/NotFound)."""
+        if getattr(exc, "status_code", None) == 404:
+            return True
+        resp = getattr(exc, "response", None)
+        if resp is not None and getattr(resp, "status_code", None) == 404:
+            return True
+        error_code = getattr(exc, "error_code", None) or getattr(exc, "code", None)
+        if isinstance(error_code, str) and error_code.lower() in (
+            "resourcenotfound",
+            "notfound",
+            "resourcegroupnotfound",
+        ):
+            return True
+        msg = str(exc).lower()
+        return "resourcenotfound" in msg or "not found" in msg or "404" in msg
+
+    def _load_orphans(self) -> List[Dict[str, Any]]:
+        """Load the list of pending orphan resources from disk."""
+        if not self.orphan_file.exists():
+            return []
         try:
-            nic_api = getattr(self.network_client, "network_interfaces", self.network_client)
-            del_fn = getattr(nic_api, "begin_delete", getattr(nic_api, "delete", None))
-            if del_fn is not None:
-                del_fn(resource_group_name=self.resource_group, network_interface_name=nic_name)
+            with open(self.orphan_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                return data if isinstance(data, list) else []
+        except Exception:
+            return []
+
+    def _save_orphans(self, orphans: List[Dict[str, Any]]) -> None:
+        """Atomically persist the list of pending orphan resources."""
+        try:
+            self.orphan_file.parent.mkdir(parents=True, exist_ok=True)
+            tmp_file = self.orphan_file.with_suffix(f".tmp.{os.getpid()}")
+            with open(tmp_file, "w", encoding="utf-8") as f:
+                json.dump(orphans, f, indent=2)
+            tmp_file.replace(self.orphan_file)
         except Exception:
             pass
 
+    def _record_orphan(self, kind: str, resource_group: str, name: str, error: Optional[str] = None) -> None:
+        """Record an uncleaned resource into the persistent orphan queue."""
+        orphans = self._load_orphans()
+        now = time.time()
+        for record in orphans:
+            if (
+                record.get("kind") == kind
+                and record.get("resource_group") == resource_group
+                and record.get("name") == name
+            ):
+                record["attempts"] = record.get("attempts", 0) + 1
+                record["last_attempt"] = now
+                if error:
+                    record["last_error"] = str(error)
+                self._save_orphans(orphans)
+                return
+        orphans.append(
+            {
+                "kind": kind,
+                "resource_group": resource_group,
+                "name": name,
+                "recorded_at": now,
+                "last_attempt": now,
+                "attempts": 1,
+                "last_error": str(error) if error else None,
+            }
+        )
+        self._save_orphans(orphans)
+
+    def drain_orphans(self) -> List[str]:
+        """Retry deletion for all recorded orphan resources; returns list of cleaned resource identifiers."""
+        orphans = self._load_orphans()
+        if not orphans:
+            return []
+
+        remaining: List[Dict[str, Any]] = []
+        cleaned: List[str] = []
+
+        # Sort so that VMs are deleted before NICs (NIC cannot be deleted while attached to VM)
+        orphans.sort(key=lambda r: 0 if r.get("kind") == "vm" else 1)
+
+        for record in orphans:
+            kind = record.get("kind")
+            rg = record.get("resource_group", self.resource_group)
+            name = record.get("name", "")
+            if not name:
+                continue
+
+            success = False
+            try:
+                if kind == "vm":
+                    self._delete_vm_resource(rg, name)
+                    success = True
+                elif kind == "nic":
+                    self._cleanup_nic_in_rg(rg, name)
+                    success = True
+            except Exception as exc:
+                if self._is_not_found(exc):
+                    success = True
+                else:
+                    record["attempts"] = record.get("attempts", 0) + 1
+                    record["last_attempt"] = time.time()
+                    record["last_error"] = str(exc)
+                    remaining.append(record)
+
+            if success:
+                cleaned.append(f"{kind}:{rg}:{name}")
+
+        self._save_orphans(remaining)
+        return cleaned
+
+    def _cleanup_nic_in_rg(self, rg: str, nic_name: str) -> None:
+        """Attempt to delete a network interface in the specified resource group."""
+        nic_api = getattr(self.network_client, "network_interfaces", self.network_client)
+        del_fn = getattr(nic_api, "begin_delete", getattr(nic_api, "delete", None))
+        if del_fn is None:
+            raise RuntimeError("Azure NIC deletion API not available")
+        try:
+            poller = del_fn(resource_group_name=rg, network_interface_name=nic_name)
+            if hasattr(poller, "result"):
+                poller.result()
+        except Exception as exc:
+            if not self._is_not_found(exc):
+                raise
+
+    def _cleanup_nic(self, nic_name: str) -> None:
+        """Attempt to delete a network interface if VM creation fails."""
+        self._cleanup_nic_in_rg(self.resource_group, nic_name)
+
     def _delete_vm_resource(self, rg: str, vm_name: str) -> None:
-        """Delete Azure Virtual Machine resource to halt billing."""
+        """Wait for deletion so asynchronous failures cannot masquerade as cleanup."""
         vm_api = getattr(self.client, "virtual_machines", self.client)
         delete_fn = getattr(vm_api, "begin_delete", getattr(vm_api, "delete", None))
-        if delete_fn is not None:
-            delete_fn(resource_group_name=rg, vm_name=vm_name)
+        if delete_fn is None:
+            raise RuntimeError("Azure VM deletion API not available")
+        try:
+            poller = delete_fn(resource_group_name=rg, vm_name=vm_name)
+            if hasattr(poller, "result"):
+                poller.result()
+        except Exception as exc:
+            if not self._is_not_found(exc):
+                raise
+
+    def _teardown_failed_submit(self, rg: str, vm_name: str, nic_name: str) -> None:
+        """Teardown partial VM first, then NIC, recording orphans if cleanup fails."""
+        # 1. Attempt partial VM deletion first (detaches NIC)
+        try:
+            self._delete_vm_resource(rg, vm_name)
+        except Exception as exc:
+            # If API not available in minimal test mock, do not fail before NIC delete
+            if not self._is_not_found(exc) and not (isinstance(exc, RuntimeError) and "not available" in str(exc)):
+                self._record_orphan("vm", rg, vm_name, str(exc))
+
+        # 2. Attempt NIC deletion
+        try:
+            self._cleanup_nic_in_rg(rg, nic_name)
+        except Exception as exc:
+            if not self._is_not_found(exc):
+                self._record_orphan("nic", rg, nic_name, str(exc))
+
+    def _finish_after_cleanup(self, rg: str, vm_name: str, status: BackendStatus) -> BackendStatus:
+        """Keep the scheduler polling until cleanup succeeds, preserving the outcome."""
+        try:
+            self._delete_vm_resource(rg, vm_name)
+        except Exception as exc:
+            return BackendStatus(AttemptState.UNKNOWN, message=f"VM deletion failed; retry cleanup: {exc}")
+        return status
 
     def submit(self, launch: LaunchSpec) -> str:
         """Create and start an Azure Virtual Machine executing the task."""
+        self.drain_orphans()
         vm_name = f"wsr-vm-{launch.task.task_id}"[:64]
         vm_size = launch.resources.machine_type or self.default_vm_size
         custom_data = self._build_custom_data(launch)
@@ -273,6 +433,11 @@ curl -fsS -m 30 -X PATCH \\
         vm_params: Dict[str, Any] = {
             "location": self.region,
             "hardware_profile": {"vm_size": vm_size},
+            "diagnostics_profile": {
+                "boot_diagnostics": {
+                    "enabled": True,
+                }
+            },
             "storage_profile": {
                 "image_reference": {
                     "publisher": "canonical",
@@ -340,13 +505,15 @@ curl -fsS -m 30 -X PATCH \\
             raise RuntimeError("Azure VM create API not available")
 
         try:
-            create_fn(
+            poller = create_fn(
                 resource_group_name=self.resource_group,
                 vm_name=vm_name,
                 parameters=vm_params,
             )
+            if hasattr(poller, "result"):
+                poller.result()
         except Exception as exc:
-            self._cleanup_nic(nic_name)
+            self._teardown_failed_submit(self.resource_group, vm_name, nic_name)
             msg = str(exc)
             if any(term in msg.lower() for term in ("quotaexceeded", "allocationfailed", "capacity", "notavail")):
                 raise CapacityError(f"Azure VM capacity unavailable: {msg}") from exc
@@ -386,6 +553,7 @@ curl -fsS -m 30 -X PATCH \\
         )
 
     def poll(self, handle: str) -> BackendStatus:
+        self.drain_orphans()
         rg, vm_name = self._parse_handle(handle)
         vm_api = getattr(self.client, "virtual_machines", self.client)
         get_fn = getattr(vm_api, "instance_view", getattr(vm_api, "get", None))
@@ -405,23 +573,20 @@ curl -fsS -m 30 -X PATCH \\
         status_codes = [s.code if hasattr(s, "code") else s.get("code", "") for s in statuses]
         status_str = " ".join(status_codes).lower()
 
-        # Check for asynchronous provisioning or capacity failure
+        # Every terminal path must complete deletion before releasing the attempt.
         if "provisioningstate/failed" in status_str:
-            with contextlib.suppress(Exception):
-                self._delete_vm_resource(rg, vm_name)
             if any(term in status_str for term in ("spoteviction", "evicted", "preempt")):
-                return BackendStatus(AttemptState.PREEMPTED, message=f"Azure spot VM evicted: {status_str}")
-            return BackendStatus(
-                AttemptState.FAILED,
-                exit_code=1,
-                message=f"Azure VM provisioning failed: {status_str}",
-            )
+                outcome = BackendStatus(AttemptState.PREEMPTED, message=f"Azure spot VM evicted: {status_str}")
+            else:
+                outcome = BackendStatus(
+                    AttemptState.FAILED, exit_code=1, message=f"Azure VM provisioning failed: {status_str}"
+                )
+            return self._finish_after_cleanup(rg, vm_name, outcome)
 
-        # Check spot eviction from instance view statuses
         if any(term in status_str for term in ("spoteviction", "evicted", "preempt")):
-            with contextlib.suppress(Exception):
-                self._delete_vm_resource(rg, vm_name)
-            return BackendStatus(AttemptState.PREEMPTED, message="Azure spot VM evicted")
+            return self._finish_after_cleanup(
+                rg, vm_name, BackendStatus(AttemptState.PREEMPTED, message="Azure spot VM evicted")
+            )
 
         tags = getattr(view, "tags", {}) or (view.get("tags", {}) if isinstance(view, dict) else {})
         if not tags and hasattr(vm_api, "get"):
@@ -448,24 +613,18 @@ curl -fsS -m 30 -X PATCH \\
             # Stopped VMs continue to bill while allocated; read exit status and trigger deletion
             final_status = self._resolve_terminal_status(exit_code_str, is_spot)
 
-            # Delete the stopped VM to halt billing (NIC and disk delete via delete_option="Delete")
-            try:
-                self._delete_vm_resource(rg, vm_name)
-            except Exception as exc:
-                return BackendStatus(
-                    AttemptState.FAILED,
-                    exit_code=1,
-                    message=f"VM execution completed but deletion failed ({exc}); manual cleanup required",
-                )
-
-            return final_status
+            return self._finish_after_cleanup(rg, vm_name, final_status)
 
         return BackendStatus(AttemptState.UNKNOWN, message=f"unknown VM status: {status_codes}")
 
     def cancel(self, handle: str) -> None:
         rg, vm_name = self._parse_handle(handle)
-        with contextlib.suppress(Exception):
+        try:
             self._delete_vm_resource(rg, vm_name)
+        except Exception as exc:
+            if not self._is_not_found(exc):
+                self._record_orphan("vm", rg, vm_name, str(exc))
+                raise
 
     def logs(self, handle: str, tail: Optional[int] = None) -> str:
         rg, vm_name = self._parse_handle(handle)
@@ -487,8 +646,6 @@ curl -fsS -m 30 -X PATCH \\
                                 log_lines = resp.text.splitlines()
                         except Exception:
                             pass
-                    if not log_lines:
-                        log_lines = url.splitlines()
         except Exception:
             pass
 

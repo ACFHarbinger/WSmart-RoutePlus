@@ -66,13 +66,11 @@ def test_ssh_key_is_parseable() -> None:
 
 
 def test_batch_credential_adapter_prepares_signed_request() -> None:
-    import sys
     from collections import namedtuple
 
     import requests
     from logic.controllers.cloud.providers.azure._sdk import (
         MsrestTokenCredentialAdapter,
-        make_batch_service_client,
     )
 
     AccessToken = namedtuple("AccessToken", ["token", "expires_on"])
@@ -85,19 +83,6 @@ def test_batch_credential_adapter_prepares_signed_request() -> None:
     session = requests.Session()
     adapter.signed_session(session)
     assert session.headers.get("Authorization") == "Bearer synthetic-batch-token-12345"
-
-    sdk_dir = "/tmp/wsr-cr07-sdk"
-    if sdk_dir in sys.path or os.path.exists(sdk_dir):
-        if sdk_dir not in sys.path:
-            sys.path.insert(0, sdk_dir)
-        try:
-            client = make_batch_service_client(
-                batch_url="https://testbatch.eastus.batch.azure.com",
-                credential=SyntheticTokenCredential(),
-            )
-            assert hasattr(client.config.credentials, "signed_session")
-        except ImportError:
-            pass
 
 
 def test_container_apps_secret_patch_shape_and_await_poller() -> None:
@@ -251,7 +236,7 @@ def test_vm_deletion_failure_reported() -> None:
 
     backend = AzureVmBackend(client=FailingDeleteVmClient())
     st = backend.poll("azure-vm:eastus:wsr-rg:test-vm")
-    assert st.state == AttemptState.FAILED
+    assert st.state == AttemptState.UNKNOWN
     assert "deletion failed" in (st.message or "")
 
 

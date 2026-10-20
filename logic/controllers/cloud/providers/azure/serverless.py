@@ -40,6 +40,8 @@ class ContainerAppsJobsBackend(ComputeBackend):
     def __init__(
         self,
         client: Any = None,
+        logs_client: Any = None,
+        workspace_id: Optional[str] = None,
         resource_group: str = "wsr-rg",
         job_name: str = "wsr-job",
         subscription_id: str = "00000000-0000-0000-0000-000000000000",
@@ -49,6 +51,8 @@ class ContainerAppsJobsBackend(ComputeBackend):
         region: str = "eastus",
     ) -> None:
         self._client = client
+        self._logs_client = logs_client
+        self.workspace_id = workspace_id
         self.resource_group = resource_group
         self.job_name = job_name
         self.subscription_id = subscription_id
@@ -65,6 +69,17 @@ class ContainerAppsJobsBackend(ComputeBackend):
                 profile=self.profile,
             )
         return self._client
+
+    @property
+    def logs_client(self) -> Any:
+        if self._logs_client is None and self.workspace_id:
+            with contextlib.suppress(Exception):
+                from azure.monitor.query import LogsQueryClient
+
+                from logic.controllers.cloud.providers.azure._sdk import make_azure_credential
+
+                self._logs_client = LogsQueryClient(make_azure_credential(self.profile))
+        return self._logs_client
 
     def capabilities(self) -> BackendCapabilities:
         return BackendCapabilities(
@@ -205,7 +220,12 @@ class ContainerAppsJobsBackend(ComputeBackend):
         if not execution:
             return BackendStatus(AttemptState.UNKNOWN, message="no such execution")
 
-        status = getattr(execution, "status", None) or (execution.get("status") if isinstance(execution, dict) else "")
+        status = (
+            getattr(execution, "status", None)
+            or getattr(getattr(execution, "properties", None), "status", None)
+            or (execution.get("status") if isinstance(execution, dict) else "")
+            or (execution.get("properties", {}).get("status") if isinstance(execution, dict) else "")
+        )
         status_str = str(status).lower()
 
         if status_str in ("pending", "starting"):
@@ -217,7 +237,7 @@ class ContainerAppsJobsBackend(ComputeBackend):
         if status_str == "succeeded":
             return BackendStatus(AttemptState.SUCCEEDED, exit_code=0)
 
-        if status_str in ("failed", "degraded"):
+        if status_str in ("failed", "degraded", "stopped", "cancelled"):
             # Check for spot preemption or exit code 143
             msg = getattr(execution, "message", "") or (
                 execution.get("message", "") if isinstance(execution, dict) else ""
@@ -245,39 +265,61 @@ class ContainerAppsJobsBackend(ComputeBackend):
         rg, job_name, exec_name = self._parse_handle(handle)
         jobs_api = getattr(self.client, "jobs", self.client)
         stop_fn = getattr(jobs_api, "begin_stop_execution", getattr(jobs_api, "stop_execution", None))
-        if stop_fn is not None:
-            with contextlib.suppress(Exception):
-                poller = stop_fn(resource_group_name=rg, job_name=job_name, job_execution_name=exec_name)
-                if hasattr(poller, "result"):
-                    poller.result()
-        else:
-            legacy_stop = getattr(jobs_api, "begin_stop", getattr(jobs_api, "stop", None))
-            if legacy_stop is not None:
-                with contextlib.suppress(Exception):
-                    legacy_stop(resource_group_name=rg, job_name=job_name, job_execution_name=exec_name)
+        if stop_fn is None:
+            stop_fn = getattr(jobs_api, "begin_stop", getattr(jobs_api, "stop", None))
+        if stop_fn is None:
+            raise RuntimeError("Azure Container Apps stop API not available")
+        poller = stop_fn(resource_group_name=rg, job_name=job_name, job_execution_name=exec_name)
+        if hasattr(poller, "result"):
+            poller.result()
 
     def logs(self, handle: str, tail: Optional[int] = None) -> str:
         rg, job_name, exec_name = self._parse_handle(handle)
         log_lines: List[str] = []
 
-        try:
-            jobs_api = getattr(self.client, "job_executions", getattr(self.client, "jobs", self.client))
-            if hasattr(jobs_api, "get_log_stream"):
-                stream = jobs_api.get_log_stream(
-                    resource_group_name=rg, job_name=job_name, job_execution_name=exec_name
+        # 1. Query Azure Monitor Log Analytics workspace if configured
+        if self.logs_client is not None and self.workspace_id:
+            try:
+                query = (
+                    f"ContainerAppConsoleLogs_CL "
+                    f"| where ContainerJobName_s == '{job_name}' and ExecutionName_s == '{exec_name}' "
+                    f"| order by TimeGenerated asc "
+                    f"| project Log_s"
                 )
-                data = (
-                    stream.read()
-                    if hasattr(stream, "read")
-                    else bytes(stream)
-                    if isinstance(stream, (bytes, bytearray))
-                    else str(stream)
+                response = self.logs_client.query_workspace(
+                    workspace_id=self.workspace_id,
+                    query=query,
                 )
-                if isinstance(data, bytes):
-                    data = data.decode("utf-8", errors="replace")
-                log_lines = data.splitlines()
-        except Exception:
-            pass
+                tables = getattr(response, "tables", [])
+                for table in tables:
+                    rows = getattr(table, "rows", [])
+                    for row in rows:
+                        val = row[0] if isinstance(row, (list, tuple)) and row else row
+                        if val is not None:
+                            log_lines.append(str(val))
+            except Exception:
+                pass
+
+        # 2. In-process test fakes fallback (if jobs_api provides get_log_stream)
+        if not log_lines:
+            try:
+                jobs_api = getattr(self.client, "job_executions", getattr(self.client, "jobs", self.client))
+                if hasattr(jobs_api, "get_log_stream"):
+                    stream = jobs_api.get_log_stream(
+                        resource_group_name=rg, job_name=job_name, job_execution_name=exec_name
+                    )
+                    data = (
+                        stream.read()
+                        if hasattr(stream, "read")
+                        else bytes(stream)
+                        if isinstance(stream, (bytes, bytearray))
+                        else str(stream)
+                    )
+                    if isinstance(data, bytes):
+                        data = data.decode("utf-8", errors="replace")
+                    log_lines = data.splitlines()
+            except Exception:
+                pass
 
         if not log_lines:
             return ""

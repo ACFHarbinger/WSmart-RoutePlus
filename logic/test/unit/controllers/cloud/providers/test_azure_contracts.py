@@ -839,7 +839,7 @@ def test_azure_vm_backend_contract():
 
 
 @pytest.mark.unit
-def test_azure_vm_custom_data_script_and_spot_preemption():
+def test_azure_vm_custom_data_script_and_spot_preemption(monkeypatch):
     client = FakeAzureVmClient()
     backend = AzureVmBackend(client=client, vault_name="my-vault")
 
@@ -877,7 +877,17 @@ def test_azure_vm_custom_data_script_and_spot_preemption():
     assert params["identity"]["type"] == "UserAssigned"
     assert backend.identity_id in params["identity"]["user_assigned_identities"]
 
-    # Verify logs
+    # Boot diagnostics returns a URI; log contents come from its HTTP response.
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(
+        client,
+        "retrieve_boot_diagnostics_data",
+        lambda **kwargs: SimpleNamespace(serial_console_log_blob_uri="https://logs.example.invalid/serial"),
+    )
+    monkeypatch.setattr(
+        "requests.get", lambda url, timeout: SimpleNamespace(status_code=200, text="azure vm serial console log")
+    )
     assert "azure vm serial console log" in backend.logs(handle)
 
     # Test polling states and billing halt (VM deletion on stopped/deallocated)
