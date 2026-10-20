@@ -766,7 +766,7 @@ def test_azure_vm_custom_data_script_and_spot_preemption():
     assert params["os_profile"]["admin_username"] == "wsruser"
     assert params["os_profile"]["linux_configuration"]["disable_password_authentication"] is True
     assert len(params["os_profile"]["linux_configuration"]["ssh"]["public_keys"]) >= 1
-    assert params["network_profile"]["network_interfaces"][0]["properties"]["delete_option"] == "Delete"
+    assert params["network_profile"]["network_interfaces"][0]["delete_option"] == "Delete"
     assert params["identity"]["type"] == "UserAssigned"
     assert backend.identity_id in params["identity"]["user_assigned_identities"]
 
@@ -786,7 +786,7 @@ def test_azure_vm_custom_data_script_and_spot_preemption():
     )
     backend.submit(acr_launch)
     acr_record = client.vms["wsr-rg:wsr-vm-task-vm-acr"]
-    assert "az acr login --name myacr" in acr_record["custom_data"]
+    assert "https://myacr.azurecr.io/oauth2/exchange" in acr_record["custom_data"]
     assert "myacr.azurecr.io" in acr_record["custom_data"]
 
     # Test spot interruption

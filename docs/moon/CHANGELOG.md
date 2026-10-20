@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Codex cloud review corrections (`2026-10-20`)
+
+- Corrected Azure VM ACR token exchange, numeric exit-code Merge tagging, token refresh, SSH-key generation failure handling, and the Compute 30 NIC deletion field. Added local bootstrap regressions. CR-07 remains pending real Batch/Container Apps SDK adapters, installation/version bounds and reliable cleanup; see the Codex cloud review of 2026-10-20 on the main checkout.
+
 ### Codex CR-16 telemetry review corrections (`2026-10-20`)
 
 - Align retry-wide timestamp spans with summed attempt durations; preserve unavailable/invalid totals and policy identity; restrict prediction accuracy to completed single-attempt samples. Monetary values are prorated scheduler-time/price-hint estimates with transported provenance, not invoiced costs or universal provider billing minimums. Index lifecycle events by task. Validation: 12 Python service, 95 frontend and 18 Rust cloud tests pass, plus TypeScript/Ruff/diff checks.
