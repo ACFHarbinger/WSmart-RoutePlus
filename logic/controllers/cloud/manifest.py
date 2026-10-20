@@ -35,6 +35,7 @@ from logic.controllers.cloud.model import (
     ComputeKind,
     GurobiMode,
     JobSpec,
+    PlacementTarget,
     Provider,
     Resources,
 )
@@ -139,9 +140,14 @@ def _job_fields(data: Dict[str, Any]) -> Dict[str, Any]:
         fields["resources"] = Resources(**data["resources"])
     if "gurobi" in data:
         fields["gurobi"] = GurobiMode(data["gurobi"])
-    for name in ("max_parallel", "gurobi_secret", "image", "labels"):
+    for name in ("max_parallel", "gurobi_secret", "image", "labels", "priority", "pool"):
         if name in data:
             fields[name] = data[name]
+    if "placement" in data:  # CR-09: [{"provider": "gcp", "compute": "batch", "max_tasks": 8, ...}, ...]
+        fields["placement"] = [
+            PlacementTarget(**{**t, "provider": Provider(t["provider"]), "compute": ComputeKind(t["compute"])})
+            for t in data["placement"]
+        ]
     return fields
 
 

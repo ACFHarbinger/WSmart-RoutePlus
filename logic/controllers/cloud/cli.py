@@ -19,6 +19,7 @@ from logic.controllers.cloud.manifest import job_from_command, load_manifest
 from logic.controllers.cloud.model import (
     ComputeKind,
     GurobiMode,
+    PlacementTarget,
     Provider,
     Resources,
     to_dict,
@@ -28,6 +29,35 @@ from logic.controllers.cloud.store.storage import sha256_file
 from logic.controllers.cloud.worker import serve, spawn_worker
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
+
+
+def pool_worker_service(root: Path, project_root: Path, slots: int) -> CloudService:
+    """A warm pool worker (CR-09): the shared control plane and store (``WSR_CLOUD_CONTROL_PLANE`` and
+    ``WSR_CLOUD_STORE`` on a cloud machine, else the local profile) and this machine's processes."""
+    import os
+
+    from logic.controllers.cloud.profiles import control_plane_from_uri, store_from_uri
+    from logic.controllers.cloud.service import RemoteConfig
+
+    cp_uri, store_uri = os.environ.get("WSR_CLOUD_CONTROL_PLANE"), os.environ.get("WSR_CLOUD_STORE")
+    root = Path(root)
+    cp = control_plane_from_uri(cp_uri) if cp_uri else SQLiteControlPlane(root / "control.db")
+    store = store_from_uri(store_uri) if store_uri else FilesystemObjectStore(root / "objects")
+    remote = (
+        RemoteConfig(control_plane_uri=cp_uri, store_uri=store_uri, project_root=project_root)
+        if cp_uri and store_uri
+        else None
+    )
+    secrets = EnvSecretStore(prefix="WSR_SECRET_")
+    return CloudService(
+        control_plane=cp,
+        store=store,
+        backends={(Provider.LOCAL, ComputeKind.PROCESS): LocalProcessBackend(cwd=project_root, secrets=secrets)},
+        workroot=root / "work",
+        remote=remote,
+        pool_mode=True,
+        pool_slots=slots,
+    )
 
 
 def local_service(root: Path, project_root: Optional[Path] = None) -> CloudService:
@@ -43,6 +73,13 @@ def local_service(root: Path, project_root: Optional[Path] = None) -> CloudServi
 
     budget_file = root / "budget.json"
     budget = BudgetPolicy(**json.loads(budget_file.read_text())) if budget_file.is_file() else None
+    pool_file = root / "pool.json"  # CR-09 warm pool: {"target": "aws/vm/-/c6i.xlarge", "cpus": 4, ...}
+    pool = None
+    if pool_file.is_file():
+        from logic.controllers.cloud.scheduler import PoolPolicy
+
+        data = json.loads(pool_file.read_text())
+        pool = PoolPolicy(**{**data, "target": parse_target(data["target"])})
 
     def predictor():
         from logic.controllers.cloud.prediction import fitted_predictor
@@ -57,6 +94,7 @@ def local_service(root: Path, project_root: Optional[Path] = None) -> CloudServi
         predictor_factory=predictor,
         prices=PriceTable(root / "prices.json"),
         budget=budget,
+        pool=pool,
     )
 
 
@@ -69,6 +107,12 @@ def _spec_overrides(opts: Dict[str, Any]) -> Dict[str, Any]:
     if opts.get("gurobi"):
         overrides["gurobi"] = GurobiMode(opts["gurobi"])
     overrides["gurobi_secret"] = opts.get("gurobi_secret")
+    if opts.get("priority") is not None:
+        overrides["priority"] = int(opts["priority"])
+    if opts.get("target"):
+        overrides["placement"] = [parse_target(t) for t in opts["target"]]
+    if opts.get("pool"):
+        overrides["pool"] = True
     resource_fields = {
         "cpus": opts.get("cpus"),
         "memory_gb": opts.get("memory_gb"),
@@ -85,6 +129,20 @@ def _spec_overrides(opts: Dict[str, Any]) -> Dict[str, Any]:
         defaults.update({key: value for key, value in resource_fields.items() if value is not None})
         overrides["resources"] = Resources(**defaults)
     return overrides
+
+
+def parse_target(text: str) -> PlacementTarget:
+    """``provider/compute[/region[/machine_type[/spot]]][:max_tasks]`` (``-`` skips a field)."""
+    body, _, quota = text.partition(":")
+    parts = body.split("/")
+    if len(parts) < 2:
+        raise ValueError(f"placement target {text!r}: expected provider/compute[/region[/machine_type[/spot]]]")
+    region = parts[2] if len(parts) > 2 and parts[2] != "-" else None
+    machine = parts[3] if len(parts) > 3 and parts[3] != "-" else None
+    spot = len(parts) > 4 and parts[4] == "spot"
+    return PlacementTarget(
+        Provider(parts[0]), ComputeKind(parts[1]), region, machine, spot, int(quota) if quota else None
+    )
 
 
 def _print(opts: Dict[str, Any], payload: Any, text: str) -> None:
@@ -361,6 +419,13 @@ def _profiles(ctx: _Context) -> Any:
 def _worker(ctx: _Context) -> Any:
     opts, service = ctx.opts, ctx.service
     poll = float(opts.get("poll") or 5.0)
+    if opts.get("pool"):
+        from logic.controllers.cloud.scheduler import run_pool_worker
+
+        worker = pool_worker_service(ctx.root, ctx.project_root, slots=int(opts.get("slots") or 1))
+        reason = run_pool_worker(worker, idle_seconds=float(opts.get("idle") or 300.0), poll_seconds=poll)
+        _print(opts, {"stopped": reason}, reason)
+        return reason
     if opts.get("once"):
         changes = service.tick()
         _print(opts, {"changes": changes}, f"{changes} change(s)")
