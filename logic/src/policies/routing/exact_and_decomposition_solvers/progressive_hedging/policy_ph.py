@@ -48,17 +48,18 @@ from typing import Any, Dict, List, Optional, Tuple, Type
 import numpy as np
 
 from logic.src.configs.policies import PHConfig
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.problem_context import ProblemContext
 from logic.src.interfaces.context.solution_context import SolutionContext
 from logic.src.policies.routing.base.base_multi_period_policy import BaseMultiPeriodRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
+from logic.src.utils.registry import ALL
 
 from .ph_engine import ProgressiveHedgingEngine
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.DECOMPOSITION,
     PolicyTag.STOCHASTIC,
     PolicyTag.MULTI_PERIOD,

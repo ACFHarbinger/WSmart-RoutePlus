@@ -20,11 +20,12 @@ from typing import Any, List, Set, Tuple
 
 import numpy as np
 
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.search_context import ImprovementMetrics
 from logic.src.interfaces.route_improvement import IRouteImprovement
 from logic.src.policies.helpers.operators.intensification_fixing import dp_route_reopt
 from logic.src.policies.helpers.operators.search_heuristics.large_neighborhood_search import apply_lns
+from logic.src.utils.registry import ALL
 
 from .base import RouteImproverRegistry
 from .common.helpers import (
@@ -70,7 +71,7 @@ def _canonical(route: List[int]) -> Tuple[int, ...]:
     return min(fwd, rev)
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.IMPROVEMENT,
     PolicyTag.MATHEURISTIC,
     PolicyTag.MATH_PROGRAMMING,

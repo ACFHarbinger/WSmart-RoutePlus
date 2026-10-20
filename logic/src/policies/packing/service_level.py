@@ -8,16 +8,17 @@ Attributes:
 
 from typing import List, Tuple
 
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.interfaces.context import PackingContext, SearchContext
 from logic.src.interfaces.packing import IPackingAlgorithm
 from logic.src.policies.packing.base import PackingRegistry
+from logic.src.utils.registry import ALL
 
 from .spec import selected_ids
 from .spec import service_level as service_level_rule
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.PACKING,
     PolicyTag.HEURISTIC,
     PolicyTag.STOCHASTIC,

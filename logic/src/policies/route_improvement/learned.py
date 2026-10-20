@@ -25,13 +25,14 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.search_context import ImprovementMetrics
 from logic.src.interfaces.route_improvement import IRouteImprovement
 from logic.src.policies.helpers.operators.improvement_descent import (
     two_opt_steepest,
     two_opt_steepest_profit,
 )
+from logic.src.utils.registry import ALL
 
 from .base import RouteImproverRegistry
 from .common.helpers import (
@@ -113,7 +114,7 @@ class MoveScorer(nn.Module):
         return self.move_head(combined).squeeze(-1)  # (M,)
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.IMPROVEMENT,
     PolicyTag.REINFORCEMENT_LEARNING,
 )

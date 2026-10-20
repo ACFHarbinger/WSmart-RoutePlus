@@ -111,7 +111,3 @@ class PTPInitEmbedding(nn.Module):
         if not self.legacy_depot_projection:
             embeddings[:, 0, :] = self.depot_embed(depot)
         return embeddings
-
-    def init_node_embeddings(self, nodes: Any, *args: Any, **kwargs: Any) -> torch.Tensor:
-        """Alias for forward to support legacy context embedder interface."""
-        return self.forward(nodes, *args, **kwargs)

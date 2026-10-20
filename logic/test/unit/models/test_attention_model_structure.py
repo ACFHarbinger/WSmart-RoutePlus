@@ -42,7 +42,7 @@ class TestAttentionModelStructure:
         model = AttentionModel(embed_dim=128, hidden_dim=64, problem=mock_problem, component_factory=mock_factory)
 
         # Mock embedder output
-        model.context_embedder.forward = MagicMock(return_value=(torch.rand(1, 10, 128), None))
+        model.init_embedding.forward = MagicMock(return_value=(torch.rand(1, 10, 128), None))
 
         # Mock decoder output
         # decoder(input, embeddings, ...) -> (log_p, pi, cost)
@@ -71,5 +71,5 @@ class TestAttentionModelStructure:
 
         assert cost.item() == 10.0
         # assert mock_problem.get_costs.called  # AttentionModel delegates cost calc to decoder
-        assert model.context_embedder.forward.called
+        assert model.init_embedding.forward.called
         assert model.decoder.called

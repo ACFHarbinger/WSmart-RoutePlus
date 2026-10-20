@@ -83,9 +83,8 @@ class BranchAndBoundTree:
         self,
         v_model: Optional[VRPPModel] = None,
         params: Optional[Union[BPCConfig, MSBPCSPConfig]] = None,
-        # Legacy positional arguments kept for backward compatibility only.
-        # If params is supplied these are ignored; a DeprecationWarning is emitted
-        # when they differ from their defaults to surface accidental misuse.
+        # Used when params is None (Branch-and-Price passes these directly). With
+        # params they are ignored, and a warning flags non-default values.
         max_nodes: int = 1000,
         strategy: str = "edge",
         search_strategy: str = "best_first",

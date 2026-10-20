@@ -17,6 +17,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Compatibility shims removed (`2026-10-20`)
+
+#### Removed
+
+- **`GlobalRegistry`** (`logic/src/enums/registry.py`), a wrapper that forwarded to `ALL`. The 131 `@GlobalRegistry.register(...)` decorators now call `@ALL.register(...)` (`logic.src.utils.registry`).
+- **`LegacyCriticNetwork`** (`models/common/critic_network/model.py`) and its tests.
+- **`AttentionModel.context_embedder`**, a proxy for `init_embedding`, along with its adapter class. Checkpoints saved with `context_embedder.*` keys still load, because the loader's key remap stays. `PTPEmbedding.init_node_embeddings`, an alias of `forward`, is removed too.
+- **Flattened parameters in HVPL and HMLNS** (`alns_iterations`, `aco_n_ants`, ...). These branches never ran, because the policy values are plain dicts and the nested `aco`/`maco`/`alns` sections are always mappings.
+- **Explicit solver arguments**:
+  - `BranchAndPriceSolver` takes `params: BPConfig` (default `BPConfig()`) instead of 18 keyword arguments.
+  - `BranchAndCutSolver` no longer takes `**kwargs`.
+- **Other aliases**:
+  - `HybridMemeticLargeNeighborhoodSearchParams.max_iterations`; the solver reads `max_generations`.
+  - `apply_lns` parsing of `regret_<k>[_profit]` names; use `repair_op="regret"` with `repair_k`.
+  - The no-op `decay_weights` of the HGS-RR operator manager.
+  - The `horizon_days` lookup in deadline packing; the context has no such field, so the threshold was always used.
+
+#### Fixed
+
+- **Branch-and-Price overwrote its configuration.** With `params` given, the constructor reset `branching_strategy` and `tree_search_strategy` to its argument defaults (`edge`, `best_first`), so configured values were ignored. It now reads them from `params`, and `use_ryan_foster_branching` selects Ryan-Foster.
+- **The multi-day path dropped the fleet size.** It passed `vehicle_limit` next to `params`, where it was ignored. A non-zero `n_vehicles` now sets `params.vehicle_limit`.
+- Both fixes leave the default configuration's behaviour unchanged.
+
+#### Kept
+
+- These are live paths, not shims; misleading "legacy" comments on them were reworded:
+  - the branch-and-bound tree's explicit arguments, which Branch-and-Price uses;
+  - `calculate_reward`, used by RL-ALNS;
+  - the base routing policy's untyped-config path;
+  - POPMUSIC's `greedy`/`nearest_neighbor` initial solvers, which are selectable options.
+
+#### Verified
+
+- Full suite 2,605 passed (the shim-only tests are gone); the release build, closure verification and smoke pass. A 2-day Rio Maior 100 simulation of ALNS, HGS, ACO-HH, SANS, PSOMA, PG-CLNS, HVPL and BP gives identical kg, km, overflows and profit to main for all 14 policy logs. HMLNS crashes on both (see the next entry).
+
 ### Unused functions, classes and methods removed (`2026-10-20`)
 
 #### Added

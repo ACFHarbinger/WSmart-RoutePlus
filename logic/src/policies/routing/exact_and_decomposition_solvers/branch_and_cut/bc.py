@@ -77,31 +77,20 @@ class BranchAndCutSolver(BCLagrangianMixin, BCCutSeparationMixin):
         model: VRPPModel,
         params: Optional[BCConfig] = None,
         scenarios: Optional[List[Dict[int, float]]] = None,
-        **kwargs: Any,
     ):
         """
         Initialize Branch-and-Cut solver.
 
         Args:
             model: VRPPModel instance defining the problem.
-            params: Standardized BC configuration.
+            params: BC configuration (default: ``BCConfig()``).
             scenarios: Optional list of mappings from node index to stochastic demand for SAA scenarios.
-            kwargs: Legacy configuration parameters (for backward compatibility).
         """
         if not GUROBI_AVAILABLE:
             raise ImportError("Gurobi is required for Branch-and-Cut solver")
 
         if params is None:
-            # Create a defaults-aware params object from explicit arguments or framework defaults
-            params = BCConfig(
-                time_limit=kwargs.get("time_limit", 300.0),
-                mip_gap=kwargs.get("mip_gap", 0.01),
-                max_cuts_per_round=kwargs.get("max_cuts_per_round", 50),
-                use_heuristics=kwargs.get("use_heuristics", True),
-                verbose=kwargs.get("verbose", False),
-                profit_aware_operators=kwargs.get("profit_aware_operators", False),
-                enable_fractional_capacity_cuts=kwargs.get("enable_fractional_capacity_cuts", True),
-            )
+            params = BCConfig()
 
         self.model = model
         self.params = params

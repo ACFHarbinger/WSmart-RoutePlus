@@ -18,15 +18,16 @@ from typing import Any, Dict, List, Optional, Type, Union
 import numpy as np
 
 from logic.src.configs.policies import HGSConfig
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.routing.base.generic_policy import GenericRoutingPolicy
 from logic.src.policies.routing.base.sub_problem import SubProblem
+from logic.src.utils.registry import ALL
 
 from .dispatcher import run_hgs
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.META_HEURISTIC,
     PolicyTag.POPULATION_BASED,
     PolicyTag.EVOLUTIONARY_ALGORITHM,

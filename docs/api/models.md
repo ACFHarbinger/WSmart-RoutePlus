@@ -43,12 +43,6 @@ Autoregressive Policy module.
 
 Critic Network components for VRP.
 
-### `logic.src.models.common.critic_network.model`
-
-Backward-compatibility shim for CriticNetwork.
-
-- **class `LegacyCriticNetwork`** — Legacy Critic Network using problem objects and component factories.
-
 ### `logic.src.models.common.critic_network.policy`
 
 Critic Network for estimating graph-level state values.

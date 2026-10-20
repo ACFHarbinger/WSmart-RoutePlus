@@ -30,7 +30,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 import numpy as np
 
 from logic.src.configs.policies.lkh3 import LKH3Config
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.pipeline.learning.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
@@ -39,9 +39,10 @@ from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.graph
 )
 from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.lkh3 import solve_lkh3
 from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.lkh3_alns_entry import solve_lkh3_with_alns
+from logic.src.utils.registry import ALL
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.MATHEURISTIC,
     PolicyTag.META_HEURISTIC,
     PolicyTag.LOCAL_SEARCH,

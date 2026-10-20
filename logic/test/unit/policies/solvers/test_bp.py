@@ -4,6 +4,7 @@ Unit tests for Pure Branch-and-Price Solver.
 
 import numpy as np
 import pytest
+from logic.src.configs.policies.bp import BPConfig
 from logic.src.policies.helpers.solvers_and_matheuristics import Route, VRPPMasterProblem
 from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price.bp import (
     BranchAndPriceSolver,
@@ -78,7 +79,7 @@ def test_bp_solver_small_instance():
         revenue_per_kg=R,
         cost_per_km=C,
         mandatory_nodes={1},
-        use_exact_pricing=True
+        params=BPConfig(use_exact_pricing=True),
     )
 
     tour, profit, stats = solver.solve()
@@ -106,8 +107,7 @@ def test_bp_vehicle_limit():
         revenue_per_kg=R,
         cost_per_km=C,
         mandatory_nodes=set(),
-        vehicle_limit=1,
-        use_exact_pricing=True
+        params=BPConfig(vehicle_limit=1, use_exact_pricing=True),
     )
 
     tour, profit, stats = solver.solve()
