@@ -219,12 +219,11 @@ All improvement policies share a library of vectorized (GPU-batched) local searc
 
 ### 6.5 Giant Tour Decomposition
 
-All improvement policies use `vectorized_linear_split()` to convert a giant tour (single permutation of all nodes) into feasible multi-vehicle routes:
+The vectorised experts (`logic/src/policies/vector`) work on batched route sequences (`0 r1 0 r2 0 …`) and decode giant tours with `profit_split()` (`shared/vrpp.py`), the batched counterpart of the simulator's `LinearSplit`:
 
-- **Algorithm**: Bellman-Ford on a DAG for optimal segmentation under capacity constraints
-- **Supports**: `max_vehicles` constraint (unlimited when set to 0)
-- **TSP mode**: Single vehicle, no wastes → one route covering all nodes
-- **CVRP/WCVRP mode**: Multi-vehicle with waste-based splits
+- **Algorithm**: dynamic programme over the tour positions; a route is a contiguous capacity-feasible segment
+- **Supports**: `max_vehicles` (unlimited when 0) and skipping unprofitable bins (VRPP)
+- **Objective**: profit `R * waste - C * distance`
 
 ## 7. Environment Dependencies
 

@@ -785,7 +785,7 @@ python main.py test_sim \
 
 **Purpose:** Configure expert policies for **Imitation Learning** and **Adaptive Imitation Learning**.
 
-These configs use `_target_` to instantiate Python dataclasses in `logic/src/configs/learning/experts.py`.
+These configs use `_target_` to instantiate the **simulator's own policy config dataclasses** (`logic/src/configs/policies/*.py`: `HGSConfig`, `ALNSConfig`, `HGSALNSConfig`, `HVPLConfig`, `ILSConfig`, `KSparseACOConfig`, `RandomLocalSearchPostConfig`), so a vectorised expert takes exactly the parameters of its non-vectorised counterpart. Simulation-only fields (`packing`, `route_improvement`, `engine`) are ignored by the experts. The profitable nearest-neighbour expert has no simulator counterpart; its config is `logic/src/configs/policies/profitable_nn.py`.
 
 **Available Policies:**
 
