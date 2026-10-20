@@ -29,17 +29,14 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from logic.controllers.cloud.cost.budget import BudgetPolicy, CostMixin
 from logic.controllers.cloud.interfaces import (
     AttemptState,
-    CapacityError,
     ComputeBackend,
     ControlPlane,
-    LaunchSpec,
     ObjectStore,
 )
 from logic.controllers.cloud.model import (
     ACTIVE,
     ComputeKind,
     Event,
-    GurobiMode,
     JobRecord,
     JobSpec,
     JobState,
@@ -50,7 +47,10 @@ from logic.controllers.cloud.model import (
     new_id,
 )
 from logic.controllers.cloud.provisioning_lease import renew_provisioning_lease
-from logic.controllers.cloud.runtime import entry_script
+from logic.controllers.cloud.scheduler.mixin import SchedulerMixin
+from logic.controllers.cloud.scheduler.placement import TargetHealth, count_by_target, targets_of
+from logic.controllers.cloud.scheduler.pool import PoolMixin
+from logic.controllers.cloud.service_launch import ServiceLaunchMixin
 from logic.controllers.cloud.service_status import ServiceStatusMixin
 from logic.controllers.cloud.service_status import extract_policy_from_cell as extract_policy_from_cell  # noqa: F401
 from logic.controllers.cloud.store.staging import stage_job_inputs
@@ -77,7 +77,7 @@ class RemoteConfig:
     python: str = "python"
 
 
-class CloudService(ServiceStatusMixin, CostMixin):
+class CloudService(ServiceStatusMixin, ServiceLaunchMixin, CostMixin, SchedulerMixin, PoolMixin):
     """The job manager.
 
     Args:
@@ -107,8 +107,15 @@ class CloudService(ServiceStatusMixin, CostMixin):
         predictor_factory: Optional[Callable[[], Any]] = None,
         prices: Optional[Any] = None,
         budget: Optional[BudgetPolicy] = None,
+        pool_mode: bool = False,
+        pool_slots: int = 1,
+        pool: Optional[Any] = None,
     ) -> None:
         self.cp = control_plane
+        self.health = TargetHealth()  # CR-09 per-target circuit breaker (in memory: resets with the process)
+        self.pool_mode, self.pool_slots = pool_mode, max(1, int(pool_slots))
+        self.pool = pool  # CR-09 PoolPolicy: the coordinator keeps this many workers alive
+        self._pool_workers: Dict[str, float] = {}
         self.prices = prices
         self.budget = budget
         self._cost_written: Dict[str, Any] = {}
@@ -132,11 +139,16 @@ class CloudService(ServiceStatusMixin, CostMixin):
     def submit(self, spec: JobSpec) -> JobRecord:
         """Validate and enqueue a job; returns its record."""
         spec.validate()
-        self._backend(spec)  # fail now, not at the first start, if no backend serves the job
+        if spec.placement:  # fail now, not at the first start, if no backend serves the job
+            if not any((Provider(t.provider), ComputeKind(t.compute)) in self.backends for t in spec.placement):
+                raise ValueError("no backend serves any of the job's placement targets")
+        else:
+            self._backend(spec)
         job_id = new_id("job")
-        if Provider(spec.provider) != Provider.LOCAL:
+        remote_targets = [Provider(t.provider) for t in targets_of(spec) if Provider(t.provider) != Provider.LOCAL]
+        if remote_targets:
             if self.remote is None:
-                raise ValueError(f"submitting to {Provider(spec.provider).value} needs a RemoteConfig")
+                raise ValueError(f"submitting to {remote_targets[0].value} needs a RemoteConfig")
             if not spec.image:
                 raise ValueError("a remote job needs an image (the release image built by CR-03)")
             spec.inputs_manifest = stage_job_inputs(self.store, spec, self.remote.project_root, job_id)
@@ -181,6 +193,7 @@ class CloudService(ServiceStatusMixin, CostMixin):
         """One scheduling pass over every unfinished job; returns the number of state changes."""
         # Expiration atomically fences crashed placing owners before reconciliation.
         changes = len(self.cp.expire_leases(self.clock()))
+        self._month_memo: Optional[Dict[str, float]] = {}  # CR-10 monthly spend, once per pass (not jobs x jobs)
         for backend in self.backends.values():
             reconcile = getattr(backend, "reconcile_provisions", None)
             if callable(reconcile):
@@ -188,68 +201,84 @@ class CloudService(ServiceStatusMixin, CostMixin):
             drain = getattr(backend, "drain_orphans", None)
             if callable(drain):
                 drain()
-        for job in self.cp.list_jobs(limit=1000):
-            tasks = self.cp.list_tasks(job.job_id)
+        jobs = self._by_priority(self.cp.list_jobs(limit=1000))  # CR-09: higher priority first
+        tasks_by_job = {job.job_id: self.cp.list_tasks(job.job_id) for job in jobs}
+        every_task = [task for tasks in tasks_by_job.values() for task in tasks]
+        running = count_by_target(every_task, ACTIVE)  # quota use per target, across jobs
+        starting = count_by_target(every_task, (TaskState.PLACING, TaskState.STARTING))
+        for job in jobs:
+            tasks = tasks_by_job[job.job_id]
             if job_state((t.state for t in tasks), job.cancel_requested) in (
                 JobState.SUCCEEDED,
                 JobState.FAILED,
                 JobState.CANCELLED,
             ) and not any(t.state in ACTIVE for t in tasks):
                 continue
-            changes += self._tick_job(job, tasks)
+            if bool(job.spec.pool) != self.pool_mode:
+                # Pool jobs run on pool workers; the coordinator only requeues their dead workers' tasks.
+                changes += self._requeue_stale_pool_tasks(job, tasks) if job.spec.pool else 0
+                continue
+            changes += self._tick_job(job, tasks, running, starting)
+        changes += self._scale_pool(jobs, tasks_by_job)  # CR-09 warm pool (coordinator only)
+        self._month_memo = None  # outside a pass the monthly spend is computed fresh
         return changes
 
-    def _tick_job(self, job: JobRecord, tasks: List[TaskRecord]) -> int:
-        backend = self._backend(job.spec)
-        changes = self._accrue(job, tasks)  # CR-10: cost records, warnings, and a cancel at a cap
+    def _tick_job(
+        self,
+        job: JobRecord,
+        tasks: List[TaskRecord],
+        running: Optional[Dict[str, int]] = None,
+        starting: Optional[Dict[str, int]] = None,
+    ) -> int:
+        running = count_by_target(tasks, ACTIVE) if running is None else running
+        starting = count_by_target(tasks, (TaskState.PLACING, TaskState.STARTING)) if starting is None else starting
+        changes = 0 if self.pool_mode else self._accrue(job, tasks)  # CR-10 (the coordinator accrues)
         job = self.cp.get_job(job.job_id)
+        mine = [t for t in tasks if not self.pool_mode or t.lease_owner == self.owner]  # a pool worker's own tasks
+        if self.pool_mode:
+            self._pool_heartbeat(mine)
         if job.cancel_requested:
             for task in tasks:
                 if task.state == TaskState.QUEUED:
                     self._set(task, TaskState.CANCELLED, finished_at=self.clock(), message="cancelled")
                     changes += 1
-                elif task.state in ACTIVE and task.backend_handle:
-                    backend.cancel(task.backend_handle)
-        for task in tasks:
+            for task in mine:
+                if task.state in ACTIVE and task.backend_handle:
+                    self._task_backend(job, task).cancel(task.backend_handle)
+        for task in mine:
             if task.state in (TaskState.STARTING, TaskState.RUNNING) and task.backend_handle:
-                changes += self._poll(job, task, backend)
+                changes += self._poll(job, task, self._task_backend(job, task))
         if job.cancel_requested:
             return changes
-        running = sum(1 for t in self.cp.list_tasks(job.job_id) if t.state in ACTIVE)
-        while running < job.spec.max_parallel:
+        current = self.cp.list_tasks(job.job_id)
+        active = sum(1 for t in current if t.state in ACTIVE)
+        limit = self._parallelism(job, current, running)  # CR-09 auto-scaling cap
+        if self.pool_mode:
+            limit = min(
+                limit, self.pool_slots - sum(1 for t in current if t.state in ACTIVE and t.lease_owner == self.owner)
+            )
+        while active < limit:
             leased = self.cp.lease_task(self.owner, _LEASE_SECONDS, job_id=job.job_id)
             if leased is None:
                 break
-            if not self._start(job, leased, backend):
+            started = self._place_and_start(job, leased, running, starting)
+            if not started:
                 break
-            running += 1
+            active += 1
             changes += 1
         return changes
 
-    def _start(self, job: JobRecord, task: TaskRecord, backend: ComputeBackend) -> bool:
-        try:
-            if callable(getattr(backend, "configure_recovery", None)):
-                with renew_provisioning_lease(self.cp, task, _LEASE_SECONDS):
-                    handle = backend.submit(self._launch(job, task))
-            else:
-                handle = backend.submit(self._launch(job, task))
-        except CapacityError as exc:
-            if not self._owns_placing(task):
-                return False
-            self._set(task, TaskState.QUEUED, message=f"waiting for capacity: {exc}", lease_owner=None)
-            return False
-        except Exception as exc:  # noqa: BLE001 - a broken launch fails the task, not the scheduler
-            if not self._owns_placing(task):
-                return False
-            self._set(task, TaskState.FAILED, finished_at=self.clock(), message=f"launch failed: {exc}")
-            return True
-        if not self._owns_placing(task):
-            return False
-        self._set(task, TaskState.STARTING, backend_handle=handle, started_at=self.clock(), heartbeat=self.clock())
-        confirm = getattr(backend, "confirm_provision", None)
-        if callable(confirm):
-            confirm(handle)
-        return True
+    def _submit_attempt(self, backend: ComputeBackend, view: JobRecord, task: TaskRecord) -> str:
+        """Launch one attempt of ``task`` on ``backend`` with ``view``'s (target-specific) spec."""
+        if self.pool_mode:
+            # A pool worker runs the task runtime (staging, license, output mirror) as a local process.
+            launch = self._remote_launch(view, task) if self.remote is not None else self._launch(view, task)
+            launch.workdir = str(self.task_dir(task))
+            return backend.submit(launch)
+        if callable(getattr(backend, "configure_recovery", None)):
+            with renew_provisioning_lease(self.cp, task, _LEASE_SECONDS):
+                return backend.submit(self._launch(view, task))
+        return backend.submit(self._launch(view, task))
 
     def _owns_placing(self, task: TaskRecord) -> bool:
         current = self.cp.get_task(task.task_id)
@@ -262,63 +291,6 @@ class CloudService(ServiceStatusMixin, CostMixin):
     def task_dir(self, task: TaskRecord) -> Path:
         """Local directory of a task's attempts and outputs."""
         return self.workroot / task.job_id / task.task_id
-
-    def _launch(self, job: JobRecord, task: TaskRecord) -> LaunchSpec:
-        if Provider(job.spec.provider) != Provider.LOCAL:
-            return self._remote_launch(job, task)
-        spec = job.spec
-        workdir = self.task_dir(task)
-        outputs = workdir / "outputs"
-        argv = [
-            self.python,
-            entry_script(getattr(self._backend(spec), "cwd", Path("."))),
-            *task.cell.argv,
-            "sim.cpu_cores=1",
-            "sim.resume=true",
-            "sim.checkpoint_days=1",
-            f"sim.output_dir={outputs}",
-        ]
-        env = {var: "1" for var in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS")}
-        env.update(task.cell.env)
-        env["WSR_CLOUD_JOB_ID"], env["WSR_CLOUD_TASK_ID"] = job.job_id, task.task_id
-        env["WSR_CLOUD_ATTEMPT"] = str(task.attempt)
-        if task.cell.policy_dir:
-            env["WSR_POLICY_CONFIG_DIR"] = task.cell.policy_dir
-        secret_env = {}
-        if GurobiMode(spec.gurobi) != GurobiMode.NONE and spec.gurobi_secret:
-            # The task runtime (CR-02) turns this into a license file before the run.
-            secret_env["WSR_GUROBI_LICENSE"] = spec.gurobi_secret
-        return LaunchSpec(
-            task=task,
-            resources=spec.resources,
-            argv=argv,
-            env=env,
-            secret_env=secret_env,
-            workdir=str(workdir),
-            image=spec.image,
-        )
-
-    def _remote_launch(self, job: JobRecord, task: TaskRecord) -> LaunchSpec:
-        """A container attempt: the image runs the task runtime, which reads the rest from the control plane."""
-        assert self.remote is not None
-        env = {
-            "WSR_CLOUD_CONTROL_PLANE": self.remote.control_plane_uri,
-            "WSR_CLOUD_STORE": self.remote.store_uri,
-            "WSR_CLOUD_JOB_ID": job.job_id,
-            "WSR_CLOUD_TASK_ID": task.task_id,
-            "WSR_CLOUD_ATTEMPT": str(task.attempt),
-        }
-        secret_env = {}
-        if GurobiMode(job.spec.gurobi) != GurobiMode.NONE and job.spec.gurobi_secret:
-            secret_env["WSR_GUROBI_LICENSE"] = job.spec.gurobi_secret
-        return LaunchSpec(
-            task=task,
-            resources=job.spec.resources,
-            argv=[self.remote.python, "-m", "logic.controllers.cloud.runtime"],
-            env=env,
-            secret_env=secret_env,
-            image=job.spec.image,
-        )
 
     def _poll(self, job: JobRecord, task: TaskRecord, backend: ComputeBackend) -> int:
         handle = task.backend_handle
@@ -348,6 +320,7 @@ class CloudService(ServiceStatusMixin, CostMixin):
             backend.cancel(handle)
             return self._fail(job, self._ensure_running(task), reason)
         task = self._ensure_running(task)
+        self._record_outcome(job, task, status.state.value)  # CR-09 target health (succeeded/preempted/failed)
         if status.state == AttemptState.SUCCEEDED:
             files = self._collect(job, task)
             self.cp.record_results(task.task_id, files)
@@ -393,7 +366,7 @@ class CloudService(ServiceStatusMixin, CostMixin):
 
     def _collect(self, job: JobRecord, task: TaskRecord):
         """Upload a local task's outputs. Container tasks upload their own (CR-02) and are left as they are."""
-        if Provider(job.spec.provider) != Provider.LOCAL:
+        if Provider(self._task_spec(job, task).provider) != Provider.LOCAL:
             return self.cp.list_results(task.task_id)
         outputs = self.task_dir(task) / "outputs"
         if not outputs.is_dir():
@@ -456,7 +429,7 @@ class CloudService(ServiceStatusMixin, CostMixin):
         task = self.cp.get_task(task_id)
         if not task.backend_handle:
             return ""
-        return self._backend(self.cp.get_job(task.job_id).spec).logs(task.backend_handle, tail)
+        return self._task_backend(self.cp.get_job(task.job_id), task).logs(task.backend_handle, tail)
 
     def download(self, job_id: str, dest: Path) -> List[Path]:
         """Download every succeeded task's results under ``dest`` (the ``outputs/`` layout)."""

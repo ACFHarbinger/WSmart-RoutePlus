@@ -17,6 +17,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Cloud runner CR-09: scheduler (`2026-10-20`)
+
+#### Added
+
+- **`logic/controllers/cloud/scheduler/`** (#129). Retries with resume, wall-time limits, idle kill and cancellation already existed; this package adds:
+  - **Priorities**: `JobSpec.priority`. Jobs are served highest first, then oldest, so they take parallelism and quota first.
+  - **Cross-provider placement**: `JobSpec.placement` lists `PlacementTarget`s (provider, compute, region, machine type, spot, `max_tasks` quota across jobs). Each start ranks the eligible targets by expected cost (CR-11 p50 × CR-10 price; spot inflated by 1 + 2 × its recent preemption rate), then by tasks already starting there, then by list order.
+  - **Spill-over**: a capacity error or launch failure moves the task to the next target in the same pass. A per-target circuit breaker (3 consecutive failures, 300 s cooldown, then half-open) keeps a failing target out. The chosen target is stored per attempt (`TaskRecord.placement`) and drives polling, cancelling, logs, collection and pricing. A task that every target refuses fails with `launch failed: ...`; otherwise it waits with the reasons in its message. Jobs without `placement` behave exactly as before.
+  - **Auto-scaling**: a job's running tasks grow with its queue up to the smallest of `max_parallel`, its targets' free quota and the tasks its remaining budget pays for at the estimated task cost. Running tasks are never stopped to shrink. A job whose remaining budget cannot pay for one more task, with nothing running, is stopped (`budget_stop`, `reason: exhausted`) instead of waiting forever.
+  - **Warm pool**: `JobSpec.pool` jobs are served by `cloud worker --pool --slots N --idle S`, a `CloudService` in pool mode on its own machine. It leases pool tasks, runs them through the task runtime as local processes, refreshes their heartbeats each tick and exits after `S` idle seconds (scale to zero).
+    - The coordinator, configured by `PoolPolicy` in `<root>/pool.json`, never starts pool tasks. It keeps `min(max_workers, max(min_workers, machines needed))` workers. Machines needed is a first-fit-decreasing packing (`pack`, `slots_per_machine`) of the queued and running pool tasks' CR-11 memory onto the worker machine.
+    - It requeues the tasks of a worker whose heartbeats stop (`heartbeat_timeout`).
+- **CLI and manifests**: `cloud submit --priority`, `--pool` and repeatable `--target provider/compute[/region[/machine_type[/spot]]][:max_tasks]`. Native manifests accept `priority`, `pool` and `placement`.
+- Tests: `test_scheduler.py` (9). The completion check drains a 20-task queue over three fake providers, with spot preemptions, a 2-task capacity limit, a target whose first three launches fail, a 2-task quota and a scripted failure. Every task succeeds within the quota, capacity and `max_parallel` limits.
+
+#### Changed
+
+- The monthly spend is computed once per scheduling pass rather than once per job.
+- `_launch` and `_remote_launch` moved unchanged to `service_launch.py` (`ServiceLaunchMixin`), keeping `service.py` at 448 lines.
+
 ### Cloud runner CR-10: cost estimates, budget caps and accrual (`2026-10-20`)
 
 #### Added

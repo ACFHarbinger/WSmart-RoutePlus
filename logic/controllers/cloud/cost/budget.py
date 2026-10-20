@@ -108,14 +108,15 @@ class CostMixin:
         self, job: JobRecord, tasks: Sequence[TaskRecord]
     ) -> Dict[str, Tuple[Optional[float], Optional[float], float]]:
         """``task_id -> (elapsed seconds, accrued USD, USD/h)`` from the scheduler's attempt history."""
-        spec = job.spec
-        price = self._get_price_per_hour(spec, spot=bool(spec.resources.spot))
+        task_spec = getattr(self, "_task_spec", None)  # CR-09: a placed attempt is priced at its target
         events: Dict[str, List[Any]] = {}
         for event in self.cp.list_events(job.job_id):
             if event.task_id is not None:
                 events.setdefault(event.task_id, []).append(event)
         out = {}
         for task in tasks:
+            spec = task_spec(job, task) if task_spec is not None else job.spec
+            price = self._get_price_per_hour(spec, spot=bool(spec.resources.spot))
             elapsed, cost = self._task_duration_and_cost(
                 task, events.get(task.task_id, []), price, Provider(spec.provider)
             )
@@ -127,11 +128,16 @@ class CostMixin:
         return round(sum(c or 0.0 for _, c, _ in self._task_costs(job, tasks).values()), 6)
 
     def month_accrued(self, now: float) -> float:
-        """Accrued cost of every job created in ``now``'s UTC month."""
+        """Accrued cost of every job created in ``now``'s UTC month (once per scheduling pass)."""
         month = _month(now)
-        return round(
-            sum(self.job_accrued(j) for j in self.cp.list_jobs(limit=1000) if _month(j.created_at) == month), 6
-        )
+        memo = getattr(self, "_month_memo", None)
+        if memo is not None and month in memo:
+            return memo[month]
+        jobs = [j for j in self.cp.list_jobs(limit=1000) if _month(j.created_at) == month]
+        total = round(sum(self.job_accrued(j) for j in jobs), 6)
+        if memo is not None:
+            memo[month] = total
+        return total
 
     def month_committed(self, now: float) -> float:
         """The month's accrued cost, with unfinished jobs at max(p50 estimate, accrued)."""
