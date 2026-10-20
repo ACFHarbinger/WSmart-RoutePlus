@@ -150,7 +150,7 @@ def test_dependency_grapher_tracing(tmp_path):
     mock_template.render.return_value = "Mocked HTML Content"
     grapher.jinja_env.get_template.return_value = mock_template
 
-    with patch("logic.validation.trace_dependencies.Network") as mock_network_cls:
+    with patch("logic.validation.dependency_grapher.Network") as mock_network_cls:
         mock_net = MagicMock()
         mock_net.show.side_effect = lambda f, notebook: Path(f).write_text("<html><body></body></html>")
         mock_network_cls.return_value = mock_net
