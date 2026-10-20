@@ -80,15 +80,6 @@ class SimulationContext:
     pol_id: int = 0
     pol_cfg: Dict[str, Any] = {}
 
-    @property
-    def policy(self) -> str:
-        """Alias for pol_name for backward compatibility.
-
-        Returns:
-            The extracted policy name.
-        """
-        return self.pol_name
-
     def __init__(
         self,
         cfg: Union[Config, DictConfig],

@@ -22,7 +22,7 @@ from tensordict import TensorDict
 from torch import nn
 
 from logic.src.interfaces.env import IEnv
-from logic.src.models import CriticNetwork as LegacyCriticNetwork
+from logic.src.models import CriticNetwork
 from logic.src.models.common.autoregressive.constructive import ConstructivePolicy
 from logic.src.pipeline.learning.common.base import RL4COLitModule
 from logic.src.pipeline.learning.envs.base.base import RL4COEnvBase
@@ -97,7 +97,7 @@ class A2C(RL4COLitModule):
 
         # Critic network
         if critic is None:
-            critic = LegacyCriticNetwork(
+            critic = CriticNetwork(
                 env_name=env.name if hasattr(env, "name") else "ptp",
                 embed_dim=getattr(policy, "embed_dim", 128),
                 hidden_dim=256,

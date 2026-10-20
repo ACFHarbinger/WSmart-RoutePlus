@@ -29,7 +29,6 @@ from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood
 
 
 @RoutingAlgorithmRegistry.register("sans")
-@RoutingAlgorithmRegistry.register("lac")  # Backward compatibility alias
 class SANSPolicy(BaseRoutingPolicy):
     """
     Simulated Annealing Neighborhood Search policy class.

@@ -15,7 +15,7 @@ Search space JSON files are stored in sub-directories next to this module:
   - acceptance_criteria/ Move acceptance criteria parameter search spaces.
 
 Attributes:
-    POLICY_SEARCH_SPACES: Dictionary mapping policy names to their search spaces,
+    ROUTING_SPACES: Dictionary mapping routing algorithm names to their search spaces,
         loaded eagerly from the routing/ directory at import time.
 
 Functions:
@@ -193,9 +193,6 @@ ROUTE_IMPROVEMENT_SPACES: Dict[str, Dict[str, Dict[str, Any]]] = load_all_search
 ROUTING_SPACES: Dict[str, Dict[str, Dict[str, Any]]] = load_all_search_spaces(ROUTING_DIR)
 ACCEPTANCE_CRITERIA_SPACES: Dict[str, Dict[str, Dict[str, Any]]] = load_all_search_spaces(ACCEPTANCE_CRITERIA_DIR)
 
-# Maintain backward compatibility for existing callers.
-POLICY_SEARCH_SPACES = ROUTING_SPACES
-
 
 def get_component_search_space(
     component_type: str,
@@ -334,7 +331,7 @@ def get_search_space(policy_name: str, raise_on_invalid: bool = True) -> Dict[st
     Raises:
         ValueError: If ``raise_on_invalid=True`` and the space has invalid specs.
     """
-    space = POLICY_SEARCH_SPACES.get(policy_name.lower(), {})
+    space = ROUTING_SPACES.get(policy_name.lower(), {})
 
     if space and raise_on_invalid:
         errors = validate_search_space(space, policy_name)

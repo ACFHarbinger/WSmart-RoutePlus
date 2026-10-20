@@ -255,5 +255,3 @@ AnyBranchingConstraint = Union[
     NodeVisitationBranchingConstraint,
 ]
 
-# Backward-compatibility alias
-BranchingConstraint = EdgeBranchingConstraint

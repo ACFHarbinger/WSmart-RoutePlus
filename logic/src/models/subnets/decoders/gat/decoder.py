@@ -346,10 +346,6 @@ class DeepGATDecoder(nn.Module):
             Tuple[torch.Tensor, torch.Tensor]: Log probabilities and valid mask.
         """
         step_context = self._get_parallel_step_context(fixed.node_embeddings, state)
-
-        # fixed.context_node_projected might not be present if it's generic cache
-        # If it's AttentionDecoderCache from our common.cache, check its properties
-        # It seems it used graph_context in __init__
         query = fixed.graph_context + self.project_step_context(step_context)
 
         # Pass raw embeddings to decoder

@@ -7,13 +7,13 @@ import numpy as np
 import pandas as pd
 import pytest
 from logic.src.configs.policies.sans import SANSConfig
+from logic.src.policies.helpers.operators.solution_initialization.zone_si import (
+    _get_bin_stock,
+)
 from logic.src.policies.routing.base import base_routing_policy
 from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search import dispatcher
 from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.common.revenue import (
     compute_waste_collection_revenue,
-)
-from logic.src.policies.helpers.operators.solution_initialization.zone_si import (
-    _get_bin_stock,
 )
 from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.policy_sans import (
     SANSPolicy,
@@ -146,9 +146,9 @@ def test_legacy_invalid_combination_reports_configuration_error(context):
         SANSPolicy().execute(**context)
 
 
-@pytest.mark.parametrize("path", [("sans", "og_a"), ("sans", "og_b"), ("lac", "a"), ("lac", "b")])
+@pytest.mark.parametrize("path", [("sans", "og_a"), ("sans", "og_b")])
 def test_legacy_yaml_variants_carry_their_seven_numbers(path):
-    """og_a/og_b (and the lac aliases) used to set preset names and a 'params' list nothing read."""
+    """og_a/og_b used to set preset names and a 'params' list nothing read."""
     import dataclasses
     from pathlib import Path
 

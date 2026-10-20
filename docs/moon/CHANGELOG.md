@@ -17,6 +17,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Backwards Compatibility Cleanup (`2026-10-20`)
+
+#### Removed
+
+- **Removed legacy & backwards-compatibility stubs across the codebase**:
+  - Deleted `logic/src/data/processor/temporal.py` deprecation stub; all callers use `logic.src.data.time.travel_matrix`.
+  - Removed backwards-compatibility re-exports of `TimeWindowSchedule` and `build_time_window_pattern` from `logic/src/data/time/time_windows.py` (callers import from `logic.src.data.time.schedule` or `logic.src.data.time`).
+  - Removed `validate_gen_data_args` alias from `logic/src/data/generators/validators.py` and exported canonical `validate_data_config` in `logic/src/data/generators/__init__.py`.
+  - Removed `validate_eval_args` alias from `logic/src/pipeline/features/eval/validation.py` and exported canonical `validate_eval_config` in `logic/src/pipeline/features/eval/__init__.py`.
+  - Removed `context.policy` backward-compatibility property alias from `SimulationContext` (`logic/src/pipeline/simulations/states/base/context.py`); code uses canonical `pol_name`/`policy_name`.
+  - Removed `context_node_projected` getter/setter alias from `AttentionDecoderCache` (`logic/src/models/subnets/decoders/common/cache.py`); callers use canonical `graph_context`.
+  - Removed `BranchingConstraint = EdgeBranchingConstraint` alias from `logic/src/policies/helpers/solvers_and_matheuristics/branching/constraints.py` and its re-exports.
+  - Removed private backwards-compatibility aliases `_vectorized_split_limited`, `_reconstruct_routes`, `_reconstruct_limited` from `logic/src/policies/vector/shared/__init__.py`, exporting canonical public functions directly.
+  - Removed `self.num_heads = n_heads` alias from `MultiHeadAttentionMDAM` (`logic/src/models/subnets/modules/mdam_attention.py`).
+  - Removed `self.hidden_dim = self.embed_dim` alias from `MandatoryManager` (`logic/src/models/meta/hrl_manager/model.py`).
+  - Removed `LegacyCriticNetwork` alias in `A2C` (`logic/src/pipeline/learning/core/a2c.py`) in favor of direct `CriticNetwork` import.
+  - Removed `"lac"` backward-compatibility registry entry from `SANSPolicy` (`logic/src/policies/routing/meta_heuristics/simulated_annealing_neighborhood_search/policy_sans.py`) and `logic/src/policies/routing/_manifest.py`.
+  - Removed `POLICY_SEARCH_SPACES = ROUTING_SPACES` alias from `logic/src/pipeline/simulations/hpo/search_spaces.py` and updated callers to canonical `ROUTING_SPACES`.
+
 ### Simulation Time Windows & Temporal Module Reorganization (`2026-10-20`)
 
 #### Added

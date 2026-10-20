@@ -8,23 +8,16 @@ import pandas as pd
 import pytest
 from logic.src.configs.envs.graph import GraphConfig
 from logic.src.configs.tasks.sim import SimConfig
-from logic.src.data.processor.temporal import compute_time_matrix as legacy_compute_time_matrix
+from logic.src.data.time.schedule import build_time_window_pattern
 from logic.src.data.time.time_windows import (
-    build_time_window_pattern,
     load_time_windows,
     load_time_windows_file,
 )
-from logic.src.data.time.travel_matrix import compute_time_matrix
 from logic.src.pipeline.simulations.day_context import SimulationDayContext, run_day
 from logic.src.pipeline.simulations.repository import load_time_windows as repo_load_time_windows
 from logic.src.pipeline.simulations.states.initializing import InitializingState
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
-
-
-def test_legacy_temporal_reexport():
-    """Verify temporal.py in processor re-exports travel_matrix.compute_time_matrix."""
-    assert legacy_compute_time_matrix is compute_time_matrix
 
 
 def test_build_time_window_pattern_basic():

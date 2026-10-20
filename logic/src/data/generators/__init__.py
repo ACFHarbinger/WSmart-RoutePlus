@@ -6,15 +6,15 @@ PTP, CPTP and TCPTP problem types.
 
 Attributes:
     generate_datasets: Generate datasets based on the provided arguments.
-    validate_gen_data_args: Validate the arguments for dataset generation.
+    validate_data_config: Validate the arguments for dataset generation.
 
 Example:
-    from logic.src.data.generators import generate_datasets, validate_gen_data_args
-    args = validate_gen_data_args(args)
+    from logic.src.data.generators import generate_datasets, validate_data_config
+    args = validate_data_config(args)
     data = generate_datasets(args)
 """
 
 from .datasets import generate_datasets
-from .validators import validate_gen_data_args
+from .validators import validate_data_config
 
-__all__ = ["generate_datasets", "validate_gen_data_args"]
+__all__ = ["generate_datasets", "validate_data_config"]
