@@ -155,12 +155,17 @@ class CollectAction(SimulationAction):
                 else:
                     cur_trip_bins += 1
                     if getattr(context, "vehicle_capacity", None) is not None:
-                        cur_load += float(bins.c[node - 1])
+                        # Feasibility is physical: validate against the TRUE fill
+                        # (real_c), not the noisy observation (c). Using c could
+                        # pass a physically over-capacity trip (silent kg/profit
+                        # corruption) or fail a feasible one (killing the sample).
+                        cur_load += float(bins.real_c[node - 1])
                 prev_node = node
 
         # Per-trip payload telemetry, for every problem type. TCPTP rejects violations above;
         # for the PTP variants the simulator still executes the tour, so record and warn.
-        capacity_pct = float(getattr(context, "vehicle_capacity", float("inf")) or float("inf"))
+        _vehicle_capacity = getattr(context, "vehicle_capacity", None)
+        capacity_pct = float(_vehicle_capacity) if _vehicle_capacity is not None else float("inf")
         try:
             loads_pct, loads_kg, violations = capacity_report(tour, bins, capacity_pct)
         except (AttributeError, IndexError, TypeError, ValueError) as exc:  # telemetry must never stop a collection

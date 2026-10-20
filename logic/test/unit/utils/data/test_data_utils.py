@@ -23,5 +23,5 @@ class TestDataUtils:
         assert cap > 0
 
     def test_load_area_and_waste_type_params_error(self):
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValueError):
             load_area_and_waste_type_params("Rio Maior", "uranium")

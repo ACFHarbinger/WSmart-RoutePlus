@@ -113,6 +113,23 @@ class PackingAction(SimulationAction):
         if n_bins is None:
             n_bins = len(current_fill) if current_fill is not None else 0
 
+        # Economic/capacity fields for the PackingContext. The real values live
+        # on the bins object (``revenue`` EUR/kg, ``density``, ``volume``) and on
+        # the day context as ``vehicle_capacity`` (percent of one bin); the
+        # attributes read before (``max_capacity``/``revenue_kg``/``bin_density``/
+        # ``bin_volume``) do not exist on SimulationDayContext, so the defaults
+        # fired on every run and economic strategies saw a 2.5 kg bin at 1 EUR/kg.
+        ctx_revenue_kg = getattr(bins, "revenue", getattr(context, "revenue_kg", 1.0))
+        ctx_bin_density = getattr(bins, "density", getattr(context, "bin_density", 1.0))
+        ctx_bin_volume = getattr(bins, "volume", getattr(context, "bin_volume", 2.5))
+        # PackingContext.vehicle_capacity is a mass (the knapsack rules compare it
+        # with kg), so convert from percent of one bin: 7368.4 % * 47.5 kg / 100 = 3500 kg.
+        ctx_vehicle_capacity_pct = getattr(context, "vehicle_capacity", None)
+        if ctx_vehicle_capacity_pct is not None:
+            ctx_vehicle_capacity = float(ctx_vehicle_capacity_pct) / 100.0 * ctx_bin_volume * ctx_bin_density
+        else:
+            ctx_vehicle_capacity = getattr(context, "max_capacity", 100.0)
+
         final_mandatory: set = set()
 
         for strat_info in strategies:
@@ -183,10 +200,10 @@ class PackingAction(SimulationAction):
                 next_collection_day=getattr(context, "next_collection_day", None),
                 distance_matrix=getattr(context, "distance_matrix", None),
                 paths_between_states=getattr(context, "paths_between_states", None),
-                vehicle_capacity=getattr(context, "max_capacity", 100.0),
-                revenue_kg=getattr(context, "revenue_kg", 1.0),
-                bin_density=getattr(context, "bin_density", 1.0),
-                bin_volume=getattr(context, "bin_volume", 2.5),
+                vehicle_capacity=ctx_vehicle_capacity,
+                revenue_kg=ctx_revenue_kg,
+                bin_density=ctx_bin_density,
+                bin_volume=ctx_bin_volume,
                 max_fill=MAX_CAPACITY_PERCENT,
                 # New fields for advanced strategies
                 horizon_days=_pi("horizon_days", 3),
