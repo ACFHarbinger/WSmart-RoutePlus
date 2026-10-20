@@ -19,7 +19,7 @@ class ARCOWeightsMixin:
     # Adaptive sequence selection
     # ------------------------------------------------------------------
 
-    def _select_sequence(self) -> List[int]:
+    def _select_sequence(self, strategy: Optional[str] = None, epsilon: Optional[float] = None) -> List[int]:
         """
         Build a full permutation of routing algorithm indices using adaptive weights.
 
@@ -28,6 +28,12 @@ class ARCOWeightsMixin:
           - k  > 0: score vector = W[prev, :].
           Mask out already-chosen routing algorithms, then apply the configured
           selection strategy.
+
+        Args:
+            strategy: Optional selection strategy override; defaults to
+                ``self.params.selection_strategy`` when None.
+            epsilon: Optional exploration-rate override; defaults to
+                ``self.params.epsilon`` when None.
 
         Returns:
             List[int]: Routing algorithm indices in the selected execution order.
@@ -48,31 +54,42 @@ class ARCOWeightsMixin:
             for a in available:
                 masked_scores[a] = max(raw_scores[a], self.params.weight_floor)
 
-            next_idx = self._apply_strategy(masked_scores, available)
+            next_idx = self._apply_strategy(masked_scores, available, strategy=strategy, epsilon=epsilon)
             chosen.append(next_idx)
             available.remove(next_idx)
             prev = next_idx
 
         return chosen
 
-    def _apply_strategy(self, scores: np.ndarray, available: List[int]) -> int:
+    def _apply_strategy(
+        self,
+        scores: np.ndarray,
+        available: List[int],
+        strategy: Optional[str] = None,
+        epsilon: Optional[float] = None,
+    ) -> int:
         """
         Apply the configured selection strategy over the available candidates.
 
         Args:
             scores: Full score vector (−inf for already-chosen).
             available: Indices of routing algorithms still available.
+            strategy: Optional selection strategy override; defaults to
+                ``self.params.selection_strategy`` when None.
+            epsilon: Optional exploration-rate override; defaults to
+                ``self.params.epsilon`` when None.
 
         Returns:
             int: Selected routing algorithm index.
         """
-        strategy = self.params.selection_strategy
+        strategy = strategy or self.params.selection_strategy
+        epsilon = self.params.epsilon if epsilon is None else epsilon
 
         if strategy == "greedy":
             return int(np.argmax(scores))
 
         if strategy == "epsilon_greedy":
-            if self._rng.random() < self.params.epsilon:
+            if self._rng.random() < epsilon:
                 return self._rng.choice(available)
             return int(np.argmax(scores))
 
