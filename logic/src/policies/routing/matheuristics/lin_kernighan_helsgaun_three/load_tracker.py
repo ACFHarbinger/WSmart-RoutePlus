@@ -43,7 +43,6 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 
 from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.objective import (
-    calculate_penalty,
     is_any_depot,
 )
 
@@ -184,70 +183,6 @@ def build_load_state(
     )
 
 
-def get_route_nodes(tour: List[int], route_idx: int, n_original: int) -> List[int]:
-    """
-    Extract nodes belonging to a specific route.
-
-    Args:
-        tour: Closed tour with augmented dummy depots.
-        route_idx: Index of the route to extract (0-indexed).
-        n_original: Original graph size.
-
-    Returns:
-        List of customer nodes in the route.
-
-    Example:
-        >>> tour = [0, 1, 2, 5, 3, 4, 6, 7, 0]  # n_original=5
-        >>> get_route_nodes(tour, route_idx=1, n_original=5)
-        [3, 4]  # Route 1 between dummy 5 and dummy 6
-    """
-    routes: List[List[int]] = []
-    current_route: List[int] = []
-
-    for node in tour:
-        if is_any_depot(node, n_original):
-            if current_route:
-                routes.append(current_route)
-                current_route = []
-        else:
-            current_route.append(node)
-
-    if current_route:
-        routes.append(current_route)
-
-    if route_idx < len(routes):
-        return routes[route_idx]
-    return []
-
-
-def calculate_route_penalty(nodes: List[int], waste: np.ndarray, capacity: float) -> Tuple[float, float]:
-    """
-    Calculate load and penalty for a single route.
-
-    Args:
-        nodes: List of customer nodes in route.
-        waste: Demand array.
-        capacity: Vehicle capacity.
-
-    Returns:
-        (load, penalty) where penalty = max(0, load - capacity).
-
-    Example:
-        >>> nodes = [1, 2, 3]
-        >>> waste = np.array([0, 30, 40, 35])
-        >>> load, penalty = calculate_route_penalty(nodes, waste, capacity=100)
-        >>> load, penalty
-        (105.0, 5.0)  # Exceeds capacity by 5
-    """
-    load = 0.0
-    for node in nodes:
-        if 0 <= node < len(waste):
-            load += waste[node]
-
-    penalty = max(0.0, load - capacity)
-    return load, penalty
-
-
 def get_exact_penalty_delta(  # noqa: C901
     curr_tour: List[int],
     broken_edges: List[Tuple[int, int]],
@@ -380,36 +315,6 @@ def get_exact_penalty_delta(  # noqa: C901
         new_penalty += current_load - capacity
 
     return new_penalty - old_penalty
-
-
-def calculate_penalty_delta_exact(
-    old_tour: List[int],
-    new_tour: List[int],
-    waste: np.ndarray,
-    capacity: float,
-    n_original: int,
-) -> float:
-    """
-    Exact penalty delta computation (fallback for validation).
-
-    This is the O(N) ground-truth method used to validate the fast computation.
-
-    Args:
-        old_tour: Current tour.
-        new_tour: Proposed tour after k-opt move.
-        waste: Demand array.
-        capacity: Vehicle capacity.
-        n_original: Original graph size.
-
-    Returns:
-        ΔP = P(new_tour) - P(old_tour).
-
-    Complexity: O(N) - use only for validation/testing.
-    """
-    p_old = calculate_penalty(old_tour, waste, capacity, n_original)
-    p_new = calculate_penalty(new_tour, waste, capacity, n_original)
-
-    return p_new - p_old
 
 
 def update_load_state_after_move(

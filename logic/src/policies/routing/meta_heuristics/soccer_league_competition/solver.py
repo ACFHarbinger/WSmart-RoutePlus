@@ -417,24 +417,6 @@ class SLCSolver:
         # Apply comprehensive local search (reusing instance)
         return self.ls.optimize(child_routes)
 
-    def _league_best(self, teams: List[List[Tuple[List[List[int]], float]]]) -> Tuple[List[List[int]], float]:
-        """Return the best (routes, profit) across all teams.
-
-        Args:
-            teams: List of teams.
-
-        Returns:
-            Best routes and profit.
-        """
-        best_p = -float("inf")
-        best_r: List[List[int]] = []
-        for team in teams:
-            for routes, profit in team:
-                if profit > best_p:
-                    best_p = profit
-                    best_r = routes
-        return copy.deepcopy(best_r), best_p
-
     def _evaluate(self, routes: List[List[int]]) -> float:
         """Net profit for a set of routes.
 

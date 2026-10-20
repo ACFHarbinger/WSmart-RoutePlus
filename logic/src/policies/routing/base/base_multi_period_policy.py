@@ -58,24 +58,6 @@ class BaseMultiPeriodRoutingPolicy(BaseRoutingPolicy):
         self.horizon: int = getattr(self.config, "horizon", 7)
         self.stockout_penalty: float = getattr(self.config, "stockout_penalty", 500.0)
 
-    def _get_scenario_tree(self, kwargs: Dict[str, Any]) -> ScenarioTree:
-        """Extract the scenario tree from the simulation context.
-
-        Args:
-            kwargs: Context dictionary containing 'scenario_tree'.
-
-        Returns:
-            The extracted ScenarioTree instance.
-
-        Raises:
-            ValueError: If 'scenario_tree' is missing from kwargs.
-        """
-
-        tree = kwargs.get("scenario_tree")
-        if tree is None:
-            raise ValueError(f"{type(self).__name__} requires a ScenarioTree in the context.")
-        return tree
-
     def _predict_mandatory_nodes_for_horizon(
         self, tree: ScenarioTree, initial_mandatory: List[int]
     ) -> Dict[int, List[int]]:
@@ -115,19 +97,6 @@ class BaseMultiPeriodRoutingPolicy(BaseRoutingPolicy):
             mandatory_map[t] = day_mandatory
 
         return mandatory_map
-
-    def _calculate_stockout_costs(self, inventory_sequence: np.ndarray) -> float:
-        """
-        Calculate penalties for waste overflows (>100%).
-
-        Args:
-            inventory_sequence: array of shape (N, T) with fill levels.
-
-        Returns:
-            Total penalty cost.
-        """
-        overflows = np.maximum(0, inventory_sequence - 100.0)
-        return float(np.sum(overflows) * self.stockout_penalty)
 
     @abstractmethod
     def _run_multi_period_solver(

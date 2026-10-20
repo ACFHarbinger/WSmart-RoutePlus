@@ -95,15 +95,3 @@ class IEnv(Protocol):
             torch.Tensor: Reward for the given actions
         """
         ...
-
-    def get_action_mask(self, tensordict: TensorDictBase) -> torch.Tensor:
-        """
-        Get valid action mask.
-
-        Args:
-            tensordict: TensorDict containing the input data
-
-        Returns:
-            torch.Tensor: Mask of valid actions
-        """
-        ...

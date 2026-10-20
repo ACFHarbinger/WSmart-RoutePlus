@@ -112,12 +112,3 @@ class SparseDispatcher:
         # Sum contributions based on original batch indices
         combined = zeros.index_add(0, self._batch_index, stitched.float())
         return combined
-
-    def expert_to_gates(self) -> List[torch.Tensor]:
-        """Retrieves gating values mapped to the specific expert input tensors.
-
-        Returns:
-            List[torch.Tensor]: A list of gating scalars for each expert's block.
-        """
-        # Split nonzero gates for each expert
-        return list(torch.split(self._nonzero_gates, self._part_sizes, dim=0))

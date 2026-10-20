@@ -12,7 +12,7 @@ Example:
 """
 
 import itertools
-from typing import Dict, List, Tuple, Union
+from typing import List, Tuple, Union
 
 import numpy as np
 
@@ -129,32 +129,3 @@ class StateSpaceManager:
                 reachable_states.append((st, p))
 
         return reachable_states
-
-    def state_to_fraction(self, state: Tuple[int, ...]) -> Dict[int, float]:
-        """Map discrete state tuple back to dictionary of continuous variables.
-
-        Args:
-            state: Discrete state tuple.
-
-        Returns:
-            Dict[int, float]: Mapping of node index to continuous fill fraction.
-        """
-        return {b_idx + 1: state[b_idx] / max(1, self.L - 1) for b_idx in range(self.num_nodes - 1)}
-
-    def fraction_to_state(self, fractions: Dict[int, float]) -> Tuple[int, ...]:
-        """Map continuous dictionary to discrete state tuple.
-
-        Args:
-            fractions: Mapping of node index to continuous fill fraction.
-
-        Returns:
-            Tuple[int, ...]: Discrete state tuple.
-        """
-        lst = []
-        for b_idx in range(self.num_nodes - 1):
-            node_idx = b_idx + 1
-            val = fractions.get(node_idx, 0.0)
-            discrete_val = int(round(val * (self.L - 1)))
-            discrete_val = max(0, min(self.L - 1, discrete_val))
-            lst.append(discrete_val)
-        return tuple(lst)

@@ -267,9 +267,6 @@ class Registry:
         return result
 
     # Compatibility names used by the old stage registries and a few tests.
-    def get_strategy_class(self, name: str) -> Optional[Any]:
-        return self.get(name)
-
     def get_route_improver_class(self, name: str) -> Optional[Any]:
         return self.get(name)
 
@@ -277,9 +274,6 @@ class Registry:
         return self.names()
 
     def list_improvers(self) -> List[str]:
-        return self.names()
-
-    def list_criteria(self) -> List[str]:
         return self.names()
 
     def list_routing_algorithms(self) -> List[str]:

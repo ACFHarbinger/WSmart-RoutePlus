@@ -21,7 +21,6 @@ Example:
     [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 """
 
-import contextlib
 from typing import Any, Dict, List
 
 
@@ -125,8 +124,3 @@ class PolicyVizMixin:
             return self.__viz_recorder.get()  # type: ignore[attr-defined]
         except AttributeError:
             return {}
-
-    def reset_viz(self) -> None:
-        """Clears all recorded telemetry. Safe to call before re-use."""
-        with contextlib.suppress(AttributeError):
-            self.__viz_recorder.reset()  # type: ignore[attr-defined]

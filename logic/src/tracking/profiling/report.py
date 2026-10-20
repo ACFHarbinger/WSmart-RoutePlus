@@ -292,17 +292,6 @@ class ProfilingReport:
         gaps.sort(key=lambda x: x["gap_sec"], reverse=True)
         return gaps
 
-    def slowest_call(self) -> Optional[Dict[str, Any]]:
-        """
-        Return the single longest recorded call, or ``None`` if empty.
-
-        Returns:
-            Optional[Dict[str, Any]]
-        """
-        if not self._records:
-            return None
-        return max(self._records, key=lambda r: r["duration_sec"])
-
     def summary(self) -> Dict[str, Any]:
         """
         Return a high-level summary dict.

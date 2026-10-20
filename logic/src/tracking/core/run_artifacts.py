@@ -133,34 +133,3 @@ class RunArtifactMixin:
             if h is not None:
                 self._file_hashes[file_path] = h
         return self
-
-    def check_file_changed(self, file_path: str) -> bool:
-        """Determines if a watched file has changed on disk.
-
-        Updating the baseline hash on every call ensures subsequent checks
-        measure drift from the most recent confirmed state.
-
-        Args:
-            file_path: Path to the file to check.
-
-        Returns:
-            bool: True if the file hash has changed since the last observation.
-        """
-        if not os.path.exists(file_path):
-            return False
-        current = hash_file(file_path)
-        prev = self._file_hashes.get(file_path)
-        if current is not None:
-            self._file_hashes[file_path] = current
-        changed = prev is None or current != prev
-        if changed and prev is not None:
-            # Observed change — log it automatically
-            self._store.log_dataset_event(
-                self.run_id,
-                event_type="hash_change",
-                file_path=file_path,
-                file_hash=current,
-                prev_hash=prev,
-                size_bytes=os.path.getsize(file_path),
-            )
-        return changed

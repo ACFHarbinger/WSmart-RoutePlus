@@ -154,10 +154,6 @@ class MasterProblemSupport(Protocol):
         """Extracts dual values from the solved LP into internal registries."""
         ...
 
-    def _apply_dual_smoothing(self) -> None:
-        """Applies exponential smoothing to dual values to stabilize column generation."""
-        ...
-
     def solve_ip(self, time_limit: Optional[float] = None) -> Tuple[float, List[Route]]:
         """Solves the RMP as an Integer Program.
 

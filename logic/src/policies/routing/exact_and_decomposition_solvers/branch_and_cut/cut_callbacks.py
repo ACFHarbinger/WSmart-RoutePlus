@@ -100,28 +100,6 @@ class BCCutSeparationMixin(StochasticCutsMixin):
                     active.append(cut)  # type: ignore[arg-type]
         return active
 
-    def _handle_custom_branching(self, model):
-        """Custom branching on cuts (Section 5.4, Fischetti et al. 1997).
-
-        Note:
-            NOT IMPLEMENTED: Gurobi does not expose a programmatic branching
-            interface from within Python callbacks. The paper's "branching on cuts"
-            strategy (choosing S such that sum_{e in delta(S)} x_e is fractional-odd
-            and imposing sum x_e <= 2k or sum x_e >= 2k+2) cannot be enforced via
-            cbBranch() — no such Gurobi API method exists.
-
-        Alternative approaches for influencing branching in Gurobi:
-          1. Set BranchPriority on x_vars to prefer edges near 0.5.
-          2. Use GRB.Param.BranchDir to prefer branching directions.
-          3. Implement a custom B&B loop outside Gurobi (not done here).
-
-        Gurobi's default variable branching (most fractional variable) is used
-        instead, which corresponds to the paper's fallback strategy.
-
-        Args:
-            model: The Gurobi model instance.
-        """
-
     def _add_integer_cuts(self, model):
         """Add violated cuts at integer solutions (MIPSOL callback).
 

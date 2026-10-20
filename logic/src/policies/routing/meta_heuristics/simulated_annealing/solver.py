@@ -103,23 +103,6 @@ class SASolver(LocalSearch):
             total += self.d[prev, 0]
         return total
 
-    def _get_route_arcs(self, route: List[int]) -> List[Tuple[int, int]]:
-        """Extract arcs from a route.
-
-        Args:
-            route: Sequence of nodes.
-
-        Returns:
-            List of (from_node, to_node) tuples.
-        """
-        if not route:
-            return []
-        arcs = [(0, route[0])]
-        for i in range(len(route) - 1):
-            arcs.append((route[i], route[i + 1]))
-        arcs.append((route[-1], 0))
-        return arcs
-
     def _get_affected_arcs(
         self, op: str, current_routes: List[List[int]], u: int, v: int, r_u: int, p_u: int, r_v: int, p_v: int
     ) -> Tuple[List[Tuple[int, int]], List[Tuple[int, int]]]:

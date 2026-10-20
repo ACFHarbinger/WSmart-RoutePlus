@@ -12,7 +12,7 @@ Examples:
     >>> progressive_hedging_cg.calculate_augmented_reduced_cost()
 """
 
-from typing import Dict, List, Set
+from typing import Dict, List
 
 import numpy as np
 
@@ -71,31 +71,6 @@ class ProgressiveHedgingCGLoop:
 
         # Consensus variable: x̄_k = (1/|Ξ|) Σ_ξ x_k^ξ
         self.x_bar: Dict[int, float] = {}
-
-    def update_x_bar(self, scenario_solutions: Dict[int, Dict[int, float]]) -> None:
-        """
-        Recompute the consensus variable x̄ from the current per-scenario solutions.
-
-        For each variable k that appears in at least one scenario solution:
-
-            x̄_k  =  (1/|Ξ|) · Σ_ξ  x_k^ξ
-
-        Variables absent from a scenario solution contribute 0.0 to the sum,
-        meaning that |Ξ| in the denominator always equals ``self.num_scenarios``
-        regardless of sparsity.
-
-        Args:
-            scenario_solutions: Mapping from scenario id to a sparse solution
-                dict {var_id: value}.  Values represent the current fractional
-                or integral assignment of route k in scenario ξ's RMP.
-        """
-        all_vars: Set[int] = set()
-        for sol in scenario_solutions.values():
-            all_vars.update(sol.keys())
-
-        for var_id in all_vars:
-            total = sum(sol.get(var_id, 0.0) for sol in scenario_solutions.values())
-            self.x_bar[var_id] = total / self.num_scenarios
 
     def compute_dynamic_penalty(self, var_id: int, scenario_prizes: Dict[int, float]) -> float:
         """

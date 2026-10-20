@@ -160,48 +160,6 @@ class Individual:
             self._visited_cache = {node for route in self._routes for node in route}
         return self._visited_cache
 
-    def get_unvisited_nodes(self) -> List[int]:
-        """
-        Get the list of nodes in the giant tour that are not currently visited.
-
-        For VRPP, these are nodes that the Split algorithm decided to skip
-        because they were unprofitable, or that local search removed.
-
-        Returns:
-            List of node IDs in giant_tour but not in routes, in giant_tour order.
-        """
-        visited = self.get_visited_nodes()
-        return [node for node in self.giant_tour if node not in visited]
-
-    def assert_invariants(self, expected_nodes: Optional[Set[int]] = None) -> None:
-        """
-        Assert that the individual satisfies HGS genotype invariants:
-
-        1. giant_tour contains no duplicate nodes.
-        2. All nodes in routes are also in giant_tour.
-        3. If expected_nodes is provided, giant_tour contains exactly those nodes.
-        (Fix 21: Add a genotype integrity check utility)
-
-        Args:
-            expected_nodes: Optional set of expected node IDs.
-
-        """
-        tour_set = set(self.giant_tour)
-        assert len(tour_set) == len(self.giant_tour), (
-            f"giant_tour contains duplicates: {len(self.giant_tour) - len(tour_set)} duplicate(s)."
-        )
-
-        for route in self._routes:
-            for node in route:
-                assert node in tour_set, f"Node {node} appears in routes but not in giant_tour."
-
-        if expected_nodes is not None:
-            assert tour_set == expected_nodes, (
-                f"giant_tour node set mismatch. "
-                f"Missing: {expected_nodes - tour_set}. "
-                f"Extra: {tour_set - expected_nodes}."
-            )
-
     def __lt__(self, other: "Individual") -> bool:
         """
         Comparison based on biased fitness (used for sorting).
