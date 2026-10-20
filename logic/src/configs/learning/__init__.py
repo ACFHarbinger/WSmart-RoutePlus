@@ -1,7 +1,7 @@
 """Learning algorithm configuration.
 
-``RLConfig`` is the training-loop configuration. Algorithm dataclasses and the
-expert-policy dataclasses in ``experts`` sit in this package. The package used
+``RLConfig`` is the training-loop configuration. Algorithm dataclasses sit in this
+package (imitation experts use the simulator policy configs). The package used
 to live at ``logic.src.configs.rl``.
 
 Attributes:
@@ -27,16 +27,6 @@ Example:
 from dataclasses import dataclass, field
 
 from .adaptive_imitation import AdaptiveImitationConfig
-from .experts import (
-    ACOConfig,
-    ProfitableNNConfig,
-    RLSConfig,
-    VectorALNSConfig,
-    VectorHGSALNSConfig,
-    VectorHGSConfig,
-    VectorHVPLConfig,
-    VectorILSConfig,
-)
 from .gdpo import GDPOConfig
 from .grpo import GRPOConfig
 from .imitation import ImitationConfig
@@ -105,12 +95,4 @@ __all__ = [
     "ImitationConfig",
     "GDPOConfig",
     "AdaptiveImitationConfig",
-    "ACOConfig",
-    "ProfitableNNConfig",
-    "RLSConfig",
-    "VectorALNSConfig",
-    "VectorHGSConfig",
-    "VectorHGSALNSConfig",
-    "VectorHVPLConfig",
-    "VectorILSConfig",
 ]

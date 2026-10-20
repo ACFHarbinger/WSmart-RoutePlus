@@ -18,7 +18,6 @@ Example:
 
 from __future__ import annotations
 
-from dataclasses import asdict
 from typing import Any, Optional
 
 import torch
@@ -34,41 +33,8 @@ from logic.src.pipeline.learning.core.losses import (
 )
 from logic.src.policies.vector.expert_cache import CachedExpert
 from logic.src.policies.vector.profitable_nearest_neighbour import ProfitableNearestNeighbourPolicy
+from logic.src.policies.vector.shared.factory import create_expert_policy
 from logic.src.utils.data.rl_utils import safe_td_copy
-
-# Expert policies load lazily so that importing the imitation trainer does not
-# pull every vectorised solver (owner ruling Q-4a: only the expert configured
-# for the run is needed; the 1.0.0 release ships the profitable-NN expert).
-_EXPERT_TARGETS = {
-    "VectorHGSConfig": ("logic.src.policies.vector.hgs", "VectorizedHGS"),
-    "VectorALNSConfig": ("logic.src.policies.vector.alns", "VectorizedALNS"),
-    "VectorHGSALNSConfig": ("logic.src.policies.vector.hgs_alns", "VectorizedHGSALNS"),
-    "RLSConfig": ("logic.src.policies.vector.random_local_search", "RandomLocalSearchPolicy"),
-    "VectorILSConfig": ("logic.src.policies.vector.iterated_local_search", "IteratedLocalSearchPolicy"),
-    "ACOConfig": ("logic.src.policies.vector.ant_colony_system", "VectorizedACOPolicy"),
-    "ProfitableNNConfig": (
-        "logic.src.policies.vector.profitable_nearest_neighbour",
-        "ProfitableNearestNeighbourPolicy",
-    ),
-    "VectorHVPLConfig": (
-        "logic.src.policies.vector.hybrid_volleyball_premier_league",
-        "VectorizedHVPL",
-    ),
-}
-
-
-def _load_expert_policy_cls(config: Any) -> Any:
-    """Import the expert policy class named by ``config``'s class name."""
-    import importlib
-
-    try:
-        module_name, attr = _EXPERT_TARGETS[type(config).__name__]
-    except KeyError:
-        raise ValueError(
-            f"Unknown policy config type: {type(config).__name__}. "
-            f"Supported types: {sorted(_EXPERT_TARGETS)}"
-        ) from None
-    return getattr(importlib.import_module(module_name), attr)
 
 
 class ImitationLearning(RL4COLitModule):
@@ -92,7 +58,7 @@ class ImitationLearning(RL4COLitModule):
 
     def __init__(
         self,
-        policy_config: Any,  # Expert policy configuration from learning.experts
+        policy_config: Any,  # Simulator policy config of the expert
         env_name: str,
         loss_fn: str = "nll",
         seed: int = 42,
@@ -106,7 +72,7 @@ class ImitationLearning(RL4COLitModule):
         Initialize ImitationLearning module.
 
         Args:
-            policy_config: Expert policy configuration from ``logic.src.configs.learning.experts``.
+            policy_config: Expert policy configuration from ``logic.src.configs.policies`` (the simulator policy config).
             env_name: Environment name for the policy.
             loss_fn: Loss function to use ('nll', 'weighted_nll', 'kl', 'reverse_kl', 'js').
             seed: Random seed for reproducibility.
@@ -158,7 +124,7 @@ class ImitationLearning(RL4COLitModule):
         """Create expert policy from configuration.
 
         Args:
-            policy_config: Expert policy configuration from ``logic.src.configs.learning.experts``.
+            policy_config: Expert policy configuration from ``logic.src.configs.policies`` (the simulator policy config).
             env_name: Environment name for the policy.
             seed: Random seed for reproducibility.
             device: Device to run the policy on.
@@ -166,17 +132,8 @@ class ImitationLearning(RL4COLitModule):
         Returns:
             Initialized expert policy instance.
         """
-        # Map config types to policy classes (loaded lazily, see _EXPERT_TARGETS)
-        policy_cls = _load_expert_policy_cls(policy_config)
-
-        # Convert config to dict and add env_name
-        config_dict = asdict(policy_config)
-        config_dict["env_name"] = env_name
-        config_dict["device"] = device
-        config_dict["seed"] = seed
-
-        # Create and return the policy
-        return policy_cls(**config_dict)
+        # Expert policies load lazily (owner ruling Q-4a: only the configured expert is imported).
+        return create_expert_policy(policy_config, env_name=env_name, seed=seed, device=device)
 
     def _rollout(self, td: TensorDict, env: Any, phase: str) -> dict:
         """Skip the model rollout in training when the expert's routes empty the bins.

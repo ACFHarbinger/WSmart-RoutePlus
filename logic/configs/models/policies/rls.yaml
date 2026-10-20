@@ -11,23 +11,20 @@
 #   python main.py train rl.imitation.policy_config=tasks/policies/rl/rls
 # =============================================================================
 
-_target_: logic.src.configs.learning.experts.RLSConfig
+_target_: logic.src.configs.policies.other.route_improvement.RandomLocalSearchPostConfig
 
-# Search Parameters
-n_iterations: 100
-# Number of local search operator applications
-# Range: 50-500 (50 = fast, 100 = balanced, 500 = thorough)
+# Same fields as the simulator's random local search route improver
+# (RandomLocalSearchPostConfig).
 
+iterations: 1000
+# Number of operator applications
 time_limit: 30.0
-# Maximum wall-clock seconds for RLS solver
-# Range: 10-60
-
-# Operator Selection Probabilities
-op_probs:
-  two_opt: 0.25 # Standard 2-opt (intra-route)
-  swap: 0.15 # Swap two nodes
-  relocate: 0.15 # Move single node
-  two_opt_star: 0.2 # 2-opt* (inter-route)
-  swap_star: 0.15 # Swap between routes
-  three_opt: 0.1 # 3-opt reconnection
-# Note: Probabilities are normalized internally if they don't sum to 1
+seed: 42
+params:
+  two_opt: 0.2
+  two_opt_star: 0.2
+  swap: 0.15
+  swap_star: 0.15
+  relocate: 0.15
+  three_opt: 0.1
+# Operator selection probabilities (normalised internally)

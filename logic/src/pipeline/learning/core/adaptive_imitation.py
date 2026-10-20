@@ -9,7 +9,7 @@ Attributes:
     AdaptiveImitation: Combined RL and Imitation Learning algorithm.
 
 Example:
-    >>> # config = VectorHGSConfig(time_limit=60.0)
+    >>> # config = HGSConfig(time_limit=60.0)
     >>> # agent = AdaptiveImitation(config, env_name="ptp")
     >>> # trainer.fit(agent)
 """
@@ -17,22 +17,11 @@ Example:
 from __future__ import annotations
 
 import json
-from dataclasses import asdict
 from typing import Any
 
 import torch
 from tensordict import TensorDict
 
-from logic.src.configs.learning.experts import (
-    ACOConfig,
-    ProfitableNNConfig,
-    RLSConfig,
-    VectorALNSConfig,
-    VectorHGSALNSConfig,
-    VectorHGSConfig,
-    VectorHVPLConfig,
-    VectorILSConfig,
-)
 from logic.src.pipeline.learning.core.losses import (
     kl_divergence_loss,
     nll_loss,
@@ -40,14 +29,7 @@ from logic.src.pipeline.learning.core.losses import (
     weighted_nll_loss,
 )
 from logic.src.pipeline.learning.core.reinforce import REINFORCE
-from logic.src.policies.vector.alns import VectorizedALNS
-from logic.src.policies.vector.ant_colony_system import VectorizedACOPolicy
-from logic.src.policies.vector.hgs import VectorizedHGS
-from logic.src.policies.vector.hgs_alns import VectorizedHGSALNS
-from logic.src.policies.vector.hybrid_volleyball_premier_league import VectorizedHVPL
-from logic.src.policies.vector.iterated_local_search import IteratedLocalSearchPolicy
-from logic.src.policies.vector.profitable_nearest_neighbour import ProfitableNearestNeighbourPolicy
-from logic.src.policies.vector.random_local_search import RandomLocalSearchPolicy
+from logic.src.policies.vector.shared.factory import create_expert_policy
 
 
 class AdaptiveImitation(REINFORCE):
@@ -97,7 +79,7 @@ class AdaptiveImitation(REINFORCE):
         Initialize AdaptiveImitation module.
 
         Args:
-            policy_config: Expert policy configuration from ``logic.src.configs.learning.experts``.
+            policy_config: Expert policy configuration from ``logic.src.configs.policies`` (the simulator policy config).
             env_name: Environment name for the policy.
             il_weight: Initial weight for imitation learning loss.
             il_decay: Decay rate for imitation learning weight per epoch.
@@ -162,7 +144,7 @@ class AdaptiveImitation(REINFORCE):
         """Create expert policy from configuration.
 
         Args:
-            policy_config: Expert policy configuration from ``logic.src.configs.learning.experts``.
+            policy_config: Expert policy configuration from ``logic.src.configs.policies`` (the simulator policy config).
             env_name: Environment name for the policy.
             seed: Random seed for reproducibility.
             device: Device to run the policy on.
@@ -170,34 +152,7 @@ class AdaptiveImitation(REINFORCE):
         Returns:
             Initialized expert policy instance.
         """
-        # Map config types to policy classes
-        config_to_policy_map = {
-            VectorHGSConfig: VectorizedHGS,
-            VectorALNSConfig: VectorizedALNS,
-            VectorHGSALNSConfig: VectorizedHGSALNS,
-            RLSConfig: RandomLocalSearchPolicy,
-            VectorILSConfig: IteratedLocalSearchPolicy,
-            ACOConfig: VectorizedACOPolicy,
-            ProfitableNNConfig: ProfitableNearestNeighbourPolicy,
-            VectorHVPLConfig: VectorizedHVPL,
-        }
-
-        # Get the policy class for this config type
-        policy_cls = config_to_policy_map.get(type(policy_config))
-        if policy_cls is None:
-            raise ValueError(
-                f"Unknown policy config type: {type(policy_config)}. "
-                f"Supported types: {list(config_to_policy_map.keys())}"
-            )
-
-        # Convert config to dict and add env_name
-        config_dict = asdict(policy_config)
-        config_dict["env_name"] = env_name
-        config_dict["device"] = device
-        config_dict["seed"] = seed
-
-        # Create and return the policy
-        return policy_cls(**config_dict)
+        return create_expert_policy(policy_config, env_name=env_name, seed=seed, device=device)
 
     def _sanitize_td(self, td: TensorDict) -> TensorDict:
         """

@@ -11,73 +11,34 @@
 #   python main.py train rl.imitation.policy_config=tasks/policies/rl/aco
 # =============================================================================
 
-_target_: logic.src.configs.learning.experts.ACOConfig
+_target_: logic.src.configs.policies.aco_ks.KSparseACOConfig
 
-# Colony Parameters
+# Same fields as the simulator's K-Sparse ACO (KSparseACOConfig); packing and
+# route_improvement are simulator-only and ignored by the vectorised expert.
+
 n_ants: 20
 # Number of ants in the colony
-# Range: 10-50 (10 = fast, 20 = balanced, 50 = thorough)
-
 max_iterations: 50
 # Maximum number of ACO iterations
-# Range: 20-200
-
 time_limit: 30.0
-# Maximum wall-clock seconds for ACO solver
-# Range: 10-60
-
-# Pheromone Parameters
+# Maximum wall-clock seconds
 alpha: 1.0
 # Pheromone importance factor
-# Range: 0.5-2.0 (higher = more emphasis on pheromone trails)
-
 beta: 2.0
 # Heuristic (distance) importance factor
-# Range: 1.0-5.0 (higher = more greedy based on distances)
-
 rho: 0.1
 # Pheromone evaporation rate
-# Range: 0.01-0.5 (higher = faster convergence but less diversity)
-
 tau_0: 1.0
-# Initial pheromone level on all edges
-# Range: 0.1-10.0
-
+# Initial pheromone level (null = derived from a nearest-neighbour tour)
 tau_min: 0.01
-# Minimum pheromone bound (prevents edge starvation)
-# Range: 0.001-0.1
-
 tau_max: 10.0
-# Maximum pheromone bound (prevents premature convergence)
-# Range: 1.0-100.0
-
-# Search Strategy
+# Max-min pheromone bounds
 q0: 0.9
 # Probability of exploitation vs exploration (ACS-style)
-# Range: 0.0-1.0 (0 = pure exploration, 1 = pure exploitation)
-
 k_sparse: 15
-# Number of nearest neighbors to consider (k-sparse ACO)
-# Range: 5-50 (lower = faster but less thorough)
-
-# Hyper-Heuristic Parameters
-sequence_length: 5
-# Length of local search operator sequence (HH-ACO)
-# Range: 3-10
-
+# Number of nearest neighbours each ant may move to
 local_search: true
-# Whether to apply local search after construction
-# Options: true (slower but better), false (faster)
-
+local_search_iterations: 500
+# Local search after construction
 elitist_weight: 1.0
-# Weight for elitist pheromone update (best ant emphasis)
-# Range: 0.0-5.0 (higher = more exploitation of best solution)
-
-# Local Search Operators
-operators:
-  - swap
-  - 2opt_intra
-  - relocate
-  - swap_star
-  - perturb
-# Available operators for local search and hyper-heuristic sequencing
+profit_aware_operators: false

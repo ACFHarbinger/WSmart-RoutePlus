@@ -11,45 +11,15 @@
 #   python main.py train rl.imitation.policy_config=tasks/policies/rl/ils
 # =============================================================================
 
-_target_: logic.src.configs.learning.experts.VectorILSConfig
+_target_: logic.src.configs.policies.ils.ILSConfig
 
-# Search Parameters
-n_restarts: 5
-# Number of ILS restarts (perturbation cycles)
-# Range: 3-20 (3 = fast, 5 = balanced, 20 = thorough)
-
-ls_iterations: 50
-# Local search iterations within each phase
-# Range: 20-200
-
-perturbation_strength: 0.2
-# Fraction of tour to perturb between restarts
-# Range: 0.1-0.5 (0.1 = mild, 0.2 = balanced, 0.5 = aggressive)
+# Same fields as the simulator's ILS (ILSConfig): perturbation + five low-level
+# heuristics. engine, packing and route_improvement are simulator-only and ignored.
 
 time_limit: 30.0
-# Maximum wall-clock seconds for ILS solver
-# Range: 10-60
-
-# Local Search Configuration
-ls_operator: "two_opt"
-# Local search operator: "two_opt", "swap", "relocate", or dict of {operator: prob}
-# Example dict: {two_opt: 0.5, swap: 0.3, relocate: 0.2}
-
-perturbation_type: "double_bridge"
-# Perturbation method: "double_bridge", "shuffle", "random_swap", or dict
-# Example dict: {double_bridge: 0.5, shuffle: 0.3, random_swap: 0.2}
-
-# Operator Selection Probabilities (used when ls_operator is dict-based)
-op_probs:
-  two_opt: 0.25
-  swap: 0.15
-  relocate: 0.15
-  two_opt_star: 0.2
-  swap_star: 0.15
-  three_opt: 0.1
-
-# Perturbation Probabilities (used when perturbation_type is dict-based)
-perturb_probs:
-  double_bridge: 0.5 # 4-opt style perturbation
-  shuffle: 0.3 # Random segment shuffle
-  random_swap: 0.2 # Random node swaps
+n_restarts: 30
+inner_iterations: 20
+n_removal: 2
+n_llh: 5
+perturbation_strength: 0.15
+profit_aware_operators: false
