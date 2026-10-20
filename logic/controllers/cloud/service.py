@@ -24,7 +24,7 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from logic.controllers.cloud.interfaces import (
     AttemptState,
@@ -36,7 +36,6 @@ from logic.controllers.cloud.interfaces import (
 )
 from logic.controllers.cloud.model import (
     ACTIVE,
-    CellSpec,
     ComputeKind,
     Event,
     GurobiMode,
@@ -50,6 +49,8 @@ from logic.controllers.cloud.model import (
     new_id,
 )
 from logic.controllers.cloud.runtime import entry_script
+from logic.controllers.cloud.service_status import ServiceStatusMixin
+from logic.controllers.cloud.service_status import extract_policy_from_cell as extract_policy_from_cell  # noqa: F401
 from logic.controllers.cloud.store.staging import stage_job_inputs
 from logic.controllers.cloud.store.storage import download_results, upload_tree
 
@@ -74,24 +75,7 @@ class RemoteConfig:
     python: str = "python"
 
 
-def extract_policy_from_cell(cell: CellSpec) -> Optional[str]:
-    """Return a single explicitly requested policy; paths and multiple policies are ambiguous."""
-    argv = cell.argv or []
-    for index, arg in enumerate(argv):
-        if arg in ("--policies", "-p"):
-            values = []
-            for value in argv[index + 1 :]:
-                if value.startswith("-") or "=" in value:
-                    break
-                values.append(value)
-            return values[0] if len(values) == 1 else None
-        if arg.startswith(("sim.policies=", "policies=", "--policies=")):
-            values = [value.strip(" '\"[]") for value in arg.split("=", 1)[1].split(",")]
-            return values[0] if len(values) == 1 and values[0] else None
-    return None
-
-
-class CloudService:
+class CloudService(ServiceStatusMixin):
     """The job manager.
 
     Args:
@@ -102,6 +86,8 @@ class CloudService:
         python: Interpreter used for ``main.py`` on the local backend.
         clock: Time source (tests pass a fake clock).
         remote: Settings for providers other than ``local``; required to submit to them.
+        predictor_factory: Builds the CR-11 runtime predictor on first use (submit or
+            :meth:`predict`); None disables prediction.
     """
 
     def __init__(
@@ -113,8 +99,11 @@ class CloudService:
         python: str = sys.executable,
         clock: Callable[[], float] = time.time,
         remote: Optional[RemoteConfig] = None,
+        predictor_factory: Optional[Callable[[], Any]] = None,
     ) -> None:
         self.cp = control_plane
+        self.predictor_factory = predictor_factory
+        self._predictor: Optional[Any] = None
         self.remote = remote
         self.store = store
         self.backends = backends
@@ -136,11 +125,27 @@ class CloudService:
             if not spec.image:
                 raise ValueError("a remote job needs an image (the release image built by CR-03)")
             spec.inputs_manifest = stage_job_inputs(self.store, spec, self.remote.project_root, job_id)
+        predictions = self.predict(spec)
+        for cell, prediction in zip(spec.cells, predictions or [], strict=False):
+            if cell.expected_wall_seconds is None and prediction.p50 is not None:
+                cell.expected_wall_seconds = prediction.p50  # what the scheduler and the Analysis page read
         job = JobRecord(job_id=job_id, spec=spec, created_at=self.clock())
         tasks = [TaskRecord(task_id=new_id("task"), job_id=job.job_id, cell=cell) for cell in spec.cells]
         self.cp.create_job(job, tasks)
         self._event(job.job_id, "submitted", data={"name": spec.name, "tasks": len(tasks)})
+        if predictions:
+            from logic.controllers.cloud.prediction import record_predictions
+
+            record_predictions(self.cp, job.job_id, predictions, self.clock())
         return job
+
+    def predict(self, spec: JobSpec) -> Optional[List[Any]]:
+        """CR-11 predictions for ``spec``'s cells on its machine type, or None without a predictor."""
+        if self.predictor_factory is None:
+            return None
+        if self._predictor is None:
+            self._predictor = self.predictor_factory()
+        return self._predictor.predict(spec.cells, spec.resources.machine_type)
 
     def _backend(self, spec: JobSpec) -> ComputeBackend:
         key = (Provider(spec.provider), ComputeKind(spec.compute))
@@ -376,149 +381,7 @@ class CloudService:
                 raise TimeoutError(f"job {job_id or '(all)'} still running after {timeout}s")
             sleep(poll_seconds)
 
-    # Management -----------------------------------------------------------
-
-    def _get_price_per_hour(self, spec: JobSpec, spot: bool) -> Optional[float]:
-        key = (Provider(spec.provider), ComputeKind(spec.compute))
-        backend = self.backends.get(key)
-        if backend is not None:
-            try:
-                p = backend.price_per_hour(spec.resources.machine_type, spec.resources.region, spot)
-                if p is not None:
-                    return p
-            except Exception:
-                pass
-        prov = Provider(spec.provider).value
-        try:
-            import importlib
-
-            mod = importlib.import_module(f"logic.controllers.cloud.providers.{prov}.pricing")
-            fn = getattr(mod, "price_per_hour", None)
-            if callable(fn):
-                return fn(spec.resources.machine_type, spec.resources.region, spot)
-        except Exception:
-            pass
-        return None
-
-    def _task_attempt_intervals(
-        self,
-        task: TaskRecord,
-        events: Sequence[Event],
-    ) -> List[Tuple[float, float]]:
-        """Scheduler-observed attempt intervals, including the current open attempt."""
-        intervals: List[Tuple[float, float]] = []
-        attempt_start: Optional[float] = None
-        for event in events:
-            if event.task_id != task.task_id or event.kind != "state":
-                continue
-            to_state = event.data.get("to")
-            if to_state in ("starting", "running") and attempt_start is None:
-                attempt_start = event.at
-            elif to_state in ("succeeded", "failed", "cancelled", "preempted") and attempt_start is not None:
-                if event.at >= attempt_start:
-                    intervals.append((attempt_start, event.at))
-                attempt_start = None
-        if attempt_start is not None and task.state in ACTIVE:
-            intervals.append((attempt_start, max(attempt_start, self.clock())))
-        if not intervals and task.started_at is not None and task.attempt == 1:
-            end = task.finished_at if task.finished_at is not None else (self.clock() if task.state in ACTIVE else None)
-            if end is not None and end >= task.started_at:
-                intervals.append((task.started_at, end))
-        return intervals
-
-    def _task_duration_and_cost(
-        self,
-        task: TaskRecord,
-        events: Sequence[Event],
-        price_per_hour: Optional[float],
-        provider: Provider,
-    ) -> Tuple[Optional[float], Optional[float]]:
-        """Return scheduler elapsed seconds and a prorated price-hint estimate.
-
-        These are not provider allocation records or invoiced charges. Billing
-        minimums and rounding vary by product and cannot be inferred from provider.
-        """
-        intervals = self._task_attempt_intervals(task, events)
-        # A retry without complete attempt history must not appear as a full total.
-        if not intervals or len(intervals) < task.attempt:
-            return None, None
-        duration = sum(end - start for start, end in intervals)
-        cost = None if price_per_hour is None else round(duration / 3600.0 * price_per_hour, 6)
-        return duration, cost
-
-    def status(self, job_id: str) -> Dict[str, Any]:
-        """A job's state and per-task summary."""
-        job = self.cp.get_job(job_id)
-        tasks = self.cp.list_tasks(job_id)
-        events_by_task: Dict[str, List[Event]] = {}
-        for event in self.cp.list_events(job_id):
-            if event.task_id is not None:
-                events_by_task.setdefault(event.task_id, []).append(event)
-        counts: Dict[str, int] = {}
-        for task in tasks:
-            counts[task.state.value] = counts.get(task.state.value, 0) + 1
-
-        provider = Provider(job.spec.provider)
-        compute = ComputeKind(job.spec.compute)
-        spot = bool(job.spec.resources.spot)
-        machine_type = job.spec.resources.machine_type
-        region = job.spec.resources.region
-        price_per_hour = self._get_price_per_hour(job.spec, spot=spot)
-        on_demand_price_per_hour = self._get_price_per_hour(job.spec, spot=False)
-
-        task_summaries = []
-        for t in tasks:
-            events = events_by_task.get(t.task_id, [])
-            dur, cost = self._task_duration_and_cost(t, events, price_per_hour, provider)
-            intervals = self._task_attempt_intervals(t, events)
-            resource = self._latest_resource(t.task_id)
-            task_summaries.append(
-                {
-                    "task_id": t.task_id,
-                    "cell_id": t.cell.cell_id,
-                    "state": t.state.value,
-                    "attempt": t.attempt,
-                    "message": t.message,
-                    "started_at": intervals[0][0] if intervals else None,
-                    "finished_at": intervals[-1][1] if intervals else None,
-                    "duration": dur,
-                    "expected_wall_seconds": t.cell.expected_wall_seconds,
-                    "policy": extract_policy_from_cell(t.cell),
-                    "cost": cost,
-                    "cpu_percent": resource.get("cpu_percent"),
-                    "memory_rss_mb": resource.get("memory_rss_mb"),
-                    "progress": dict(t.progress),
-                }
-            )
-
-        return {
-            "job_id": job_id,
-            "name": job.spec.name,
-            "state": job_state((t.state for t in tasks), job.cancel_requested).value,
-            "counts": counts,
-            "provider": provider.value,
-            "compute": compute.value,
-            "spot": spot,
-            "machine_type": machine_type,
-            "region": region,
-            "price_per_hour": price_per_hour,
-            "on_demand_price_per_hour": on_demand_price_per_hour,
-            "cost_source": "scheduler_elapsed_price_hint",
-            "tasks": task_summaries,
-        }
-
-    def _latest_resource(self, task_id: str) -> Dict[str, Any]:
-        """The task's most recent resource record (CR-12), or an empty dict."""
-        for record in reversed(self.cp.get_metrics(task_id)):
-            if record.get("kind") == "resource":
-                return record
-        return {}
-
-    def metrics(self, task_id: str, since: Optional[float] = None) -> Dict[str, Any]:
-        """A task's telemetry: resource samples, peaks, latest progress and per-day KPIs (CR-12)."""
-        from logic.controllers.cloud.telemetry import task_metrics
-
-        return task_metrics(self.cp.get_metrics(task_id, since=since), task_id)
+    # Management (status, metrics and price hints are in ServiceStatusMixin) ----------
 
     def cancel(self, job_id: str) -> None:
         """Cancel a job: queued tasks never start, running attempts are stopped at the next tick."""

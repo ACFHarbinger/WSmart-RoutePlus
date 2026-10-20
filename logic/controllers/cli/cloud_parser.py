@@ -86,6 +86,20 @@ def add_cloud_args(parser: argparse.ArgumentParser) -> None:
     track.add_argument("--tracking-uri", default=None, help="Tracking database directory (default: the tracker's).")
     track.add_argument("--experiment", default="cloud", help="Tracking experiment name.")
 
+    predict = commands.add_parser("predict", help="Runtime and memory predictions (CR-11)")
+    predict_commands = predict.add_subparsers(dest="predict_command", required=True)
+    estimate = predict_commands.add_parser(
+        "estimate", help="Predict a manifest's or command's cells without submitting"
+    )
+    estimate_source = estimate.add_mutually_exclusive_group(required=True)
+    estimate_source.add_argument("--manifest", help="Manifest file (native or rerun format, JSON or YAML).")
+    estimate_source.add_argument("--command", dest="sim_command", help="One test_sim command line, quoted.")
+    estimate.add_argument("--policy", default=None, help="Keep only this routing algorithm's cells (rerun manifests).")
+    estimate.add_argument("--machine-type", default=None, help="Machine type the cells would run on.")
+    predict_commands.add_parser("evaluate", help="Held-out error of the bundled model")
+    accuracy = predict_commands.add_parser("accuracy", help="Predicted against actual wall time of a finished job")
+    accuracy.add_argument("job_id")
+
     download = commands.add_parser("download", help="Download a job's results")
     download.add_argument("job_id")
     download.add_argument("--dest", default=None, help="Destination root (default: <root>/results/<job_id>).")
