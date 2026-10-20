@@ -1,353 +1,229 @@
-"""Vectorized Adaptive Large Neighborhood Search (ALNS) Policy.
+"""Batched ALNS engine mirroring the simulator's ``ALNSSolver``.
 
-This module implements a high-performance, GPU-optimized version of the
-ALNS meta-heuristic. It utilizes a hybrid optimization strategy: treating the
-global solution as a giant tour for fast TSP-based local search, and
-synchronizing with a CVRP route split periodically to enforce capacity
-constraints and apply inter-route operators (e.g., Cross-exchange, Swap*).
+Same loop as :class:`~logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns.ALNSSolver`
+(Ropke & Pisinger 2005/2006), run on every instance of a batch at once:
+
+- initial solution: ``build_greedy_routes`` (random-order profitable insertion with the
+  dynamic seed hurdle), unless a starting solution is given;
+- destroy operators: random, worst, Shaw (+ string, cluster, neighbour with
+  ``extended_operators``), in the cost or profit flavour (``profit_aware_operators``);
+- repair slots: greedy and regret-k for ``k`` in ``regret_pool``, each as a clean and a
+  noisy slot (noise ``U[-noise_factor, noise_factor] * max_dist``);
+- removal count ``U{min(n, 4), max(lower, min(max_removal_cap, int(xi * n_nodes)))}``;
+- roulette-wheel operator choice per instance, sigma_1/2/3 scoring with
+  visited-solution tracking, segment weight updates every ``segment_size`` iterations
+  with ``reaction_factor``;
+- acceptance by the configured simulator acceptance criterion (one per instance);
+- stop after ``max_iterations`` or ``time_limit`` seconds.
 
 Attributes:
-    VectorizedALNS: Solver for parallelized neighborhood search on CUDA.
-
-Example:
-    None
+    VectorizedALNSEngine: The batched ALNS search.
 """
 
 from __future__ import annotations
 
 import time
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Callable, List, Optional, Tuple
 
 import torch
 
-from logic.src.policies.vector.operators import (
-    vectorized_cluster_removal,
-    vectorized_greedy_insertion,
-    vectorized_random_removal,
-    vectorized_regret_k_insertion,
-    vectorized_relocate,
-    vectorized_swap,
-    vectorized_swap_star,
-    vectorized_three_opt,
-    vectorized_two_opt,
-    vectorized_two_opt_star,
-    vectorized_worst_removal,
-)
-from logic.src.policies.vector.shared.linear import vectorized_linear_split
-from logic.src.tracking.viz_mixin import PolicyVizMixin
+from logic.src.configs.policies.alns import ALNSConfig
+from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.engine import MIN_REMOVAL_LOWER_BOUND
+from logic.src.policies.vector.shared import routes as rs
+from logic.src.policies.vector.shared.acceptance import BatchedAcceptance
+from logic.src.policies.vector.shared.vrpp import VRPPBatch, hash_rows
 
 
-class VectorizedALNS(PolicyVizMixin):
-    """Parallelized Adaptive Large Neighborhood Search.
+def _regret_ks(pool: str) -> List[int]:
+    if pool == "regret2":
+        return [2]
+    return [2, 3, 4]
 
-    Explores complex neighborhood topographies by dynamically selecting weighted
-    destroy and repair operators. Optimized for batch execution on NVIDIA GPUs.
+
+class VectorizedALNSEngine:
+    """Batched Adaptive Large Neighbourhood Search for the VRPP.
 
     Attributes:
-        dist_matrix (torch.Tensor): pairwise distance cost tensor [B, N, N].
-        wastes (torch.Tensor): demand/fill levels for each bin [B, N].
-        vehicle_capacity (float): maximum load per vehicle.
-        time_limit (float): execution timeout in seconds.
-        device (torch.device): hardware target for tensor operations.
-        seed (int): RNG seed for reproducible search.
-        generator (torch.Generator): hardware-local random number generator.
-        destroy_ops (List[Callable]): pool of candidate removal operators.
-        repair_ops (List[Callable]): pool of candidate insertion operators.
-        d_weights (torch.Tensor): adaptive probabilities for destroy operators [D].
-        r_weights (torch.Tensor): adaptive probabilities for repair operators [R].
+        cfg: ``ALNSConfig`` of the simulator ALNS.
+        expand_pool: Repairs may insert any unvisited bin (VRPP mode).
+        destroy_names: Destroy operator names.
+        repair_names: Repair slot names.
+        repair_noisy: Noisy flag per repair slot.
     """
 
     def __init__(
         self,
-        dist_matrix: torch.Tensor,
-        wastes: torch.Tensor,
-        vehicle_capacity: float,
-        time_limit: float = 1.0,
-        device: str = "cuda",
-        seed: int = 42,
-        generator: Optional[torch.Generator] = None,
-        **kwargs: Any,
+        cfg: ALNSConfig,
+        generator: torch.Generator,
+        expand_pool: bool = True,
+        recorder: Optional[Callable[..., Any]] = None,
     ) -> None:
-        """Initializes the vectorized ALNS solver.
+        """Set up the operator registries.
 
         Args:
-            dist_matrix: problem distance tensor [B, N, N].
-            wastes: bin fill levels [B, N].
-            vehicle_capacity: payload constraint for individual vehicles.
-            time_limit: maximum time allowed for the optimization loop.
-            device: computation device ('cpu' or 'cuda').
-            seed: random constant for search reproducibility.
-            generator: existing torch generator to share state.
-            kwargs: Additional keyword arguments.
+            cfg: ALNS configuration.
+            generator: Torch generator for every random draw.
+            expand_pool: Repairs may insert any unvisited bin.
+            recorder: Optional telemetry callback.
         """
-        self.dist_matrix = dist_matrix
-        self.wastes = wastes
-        self.vehicle_capacity = vehicle_capacity
-        self.time_limit = time_limit
-        self.device = torch.device(device)
-        self.seed = seed
-        if generator is not None:
-            self.generator = generator
-        else:
-            self.generator = torch.Generator(device=self.device).manual_seed(self.seed)
+        self.cfg = cfg
+        self.gen = generator
+        self.expand_pool = expand_pool
+        self._record = recorder or (lambda **k: None)
+        pa = bool(cfg.profit_aware_operators)
+        p = "Profit" if pa else ""
+        self.destroy_names = ["RandomRemoval", f"Worst{p}Removal", f"Shaw{p}Removal"]
+        if cfg.extended_operators:
+            self.destroy_names += [f"String{p}Removal", f"Cluster{p}Removal", f"Neighbor{p}Removal"]
+        base = [("Greedy" + p, 0)] + [(f"Regret{k}{p}", k) for k in _regret_ks(cfg.regret_pool)]
+        self.repair_names: List[str] = []
+        self.repair_k: List[int] = []
+        self.repair_noisy: List[bool] = []
+        for name, k in base:
+            for noisy in (False, True):
+                self.repair_names.append(f"{name}{'Noisy' if noisy else 'Clean'}")
+                self.repair_k.append(k)
+                self.repair_noisy.append(noisy)
+        if cfg.regret_pool == "regretAll":
+            # Savings insertion has no vectorised counterpart; greedy insertion takes its slot.
+            self.repair_names.append("Savings" + p)
+            self.repair_k.append(0)
+            self.repair_noisy.append(False)
 
-        self.destroy_ops = [
-            vectorized_random_removal,
-            vectorized_worst_removal,
-            vectorized_cluster_removal,
-        ]
-        self.repair_ops = [vectorized_greedy_insertion, vectorized_regret_k_insertion]
+    # ------------------------------------------------------------------
+    def _destroy(self, d: int, S: torch.Tensor, n: torch.Tensor, inst: VRPPBatch) -> Tuple[torch.Tensor, torch.Tensor]:
+        pa = bool(self.cfg.profit_aware_operators)
+        name = self.destroy_names[d]
+        if name == "RandomRemoval":
+            P, pos = rs.random_removal(S, n, self.gen)
+            removed = torch.zeros(S.size(0), inst.dist.size(1), dtype=torch.bool, device=S.device)
+            removed.scatter_(1, torch.where(pos, S, torch.zeros_like(S)), True)
+            removed[:, 0] = False
+            return P, removed
+        if name.startswith("Worst"):
+            return rs.worst_removal(S, n, inst, self.cfg.worst_removal_randomness, self.gen, pa)
+        if name.startswith("Shaw"):
+            return rs.shaw_removal(S, n, inst, self.cfg.shaw_randomization, self.gen, pa)
+        if name.startswith("String"):
+            return rs.string_removal(S, n, inst, self.gen)
+        if name.startswith("Cluster"):
+            return rs.cluster_removal(S, n, inst, self.gen)
+        return rs.neighbor_removal(S, n, inst, self.gen)
 
-        self.d_weights = torch.ones(len(self.destroy_ops), device=device)
-        self.r_weights = torch.ones(len(self.repair_ops), device=device)
+    def _repair(self, r: int, S: torch.Tensor, removed: torch.Tensor, inst: VRPPBatch) -> torch.Tensor:
+        pa = bool(self.cfg.profit_aware_operators)
+        pending = removed.clone()
+        if self.expand_pool:
+            pending = pending | ~rs.visited(S, inst.dist.size(1))
+            pending[:, 0] = False
+        noise = None
+        if self.repair_noisy[r]:
+            max_d = inst.dist.flatten(1).max(dim=1).values
+            u = torch.rand(S.size(0), generator=self.gen, device=S.device) * 2 - 1
+            noise = u * self.cfg.noise_factor * max_d
+        k = self.repair_k[r]
+        if k == 0:
+            return rs.greedy_insertion(S, pending, inst, pa, noise)
+        return rs.regret_insertion(S, pending, inst, k, pa, noise)
 
-    def __getstate__(self) -> Dict[str, Any]:
-        """Prepares the solver for serialization, handling non-picklable RNG.
+    # ------------------------------------------------------------------
+    def solve(self, inst: VRPPBatch, initial: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Run ALNS on the batch.
+
+        Args:
+            inst: Instances.
+            initial: Optional starting route sequences.
 
         Returns:
-            Dict[str, Any]: Attribute map with generator state extracted.
+            Tuple of (best route sequences, best profit ``[B]``).
         """
-        state = self.__dict__.copy()
-        if "generator" in state and state["generator"] is not None:
-            state["generator_state"] = state["generator"].get_state()
-            state["generator_device"] = str(state["generator"].device)
-            del state["generator"]
-        return state
+        cfg = self.cfg
+        B, M = inst.dist.size(0), inst.dist.size(1)
+        n_nodes = M - 1
+        dev = inst.device
+        start = time.perf_counter()
+        S = initial.clone() if initial is not None else rs.greedy_profit_construction(inst, self.gen)
+        cur_profit = rs.seq_profit(S, inst)
+        best_S, best_profit = S.clone(), cur_profit.clone()
+        if n_nodes == 0 or cfg.max_iterations <= 0:
+            return best_S, best_profit
 
-    def __setstate__(self, state: Dict[str, Any]) -> None:
-        """Restores search state and RNG parameters from persistent storage.
+        nD, nR = len(self.destroy_names), len(self.repair_names)
+        d_w = torch.ones(B, nD, device=dev)
+        r_w = torch.ones(B, nR, device=dev)
+        d_sc = torch.zeros(B, nD, device=dev)
+        r_sc = torch.zeros(B, nR, device=dev)
+        d_ct = torch.zeros(B, nD, device=dev)
+        r_ct = torch.zeros(B, nR, device=dev)
+        rf = float(cfg.reaction_factor)
+        visited_sets = [set() for _ in range(B)]
+        for b, h in enumerate(hash_rows(S)):
+            visited_sets[b].add(h)
+        acc = BatchedAcceptance(cfg.acceptance_criterion, B)
+        acc.setup(cur_profit)
+        upper_cap = min(int(cfg.max_removal_cap), int(cfg.xi * n_nodes))
+        b_idx = torch.arange(B, device=dev)
 
-        Args:
-            state: Serialized dictionary of solver attributes.
-        """
-        gen_state = state.pop("generator_state", None)
-        gen_device = state.pop("generator_device", None)
-        self.__dict__.update(state)
-        if gen_state is not None:
-            self.generator = torch.Generator(device=gen_device)
-            self.generator.set_state(gen_state)
-        else:
-            self.generator = torch.Generator(device="cpu")
-
-    def solve(
-        self,
-        initial_solutions: torch.Tensor,
-        n_iterations: int = 2000,
-        time_limit: Optional[float] = None,
-        max_vehicles: int = 0,
-        start_temp: float = 0.5,
-        cooling_rate: float = 0.9995,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Optimizes the provided solutions using adaptive search.
-
-        Employs a split-and-solve strategy:
-        1. Neighborhood moves are evaluated on a 'giant tour' (TSP) for speed.
-        2. Solutions are periodically split into feasibility routes (CVRP) to apply
-           inter-route optimization (Swap*, 2-opt*).
-        3. Acceptance is governed by a Simulated Annealing criterion.
-
-        Args:
-            initial_solutions: baseline node sequences [B, N].
-            n_iterations: number of improvement cycles to execute.
-            time_limit: overrides class wall-clock timeout if provided.
-            max_vehicles: upper bound on fleet size for the split operator.
-            start_temp: initial Simulated Annealing temperature.
-            cooling_rate: decay multiplier for SA temperature per step.
-
-        Returns:
-            Tuple[List[List[int]], torch.Tensor]:
-                - best_routes: optimized node sequences split by depots.
-                - final_costs: objective values for the best discovered tours [B].
-        """
-        B, N = initial_solutions.size()
-        device = initial_solutions.device
-        start_time = time.time()
-
-        current_solutions = initial_solutions.clone()
-
-        # Initial TSP costs (dist_matrix[prev, curr])
-        def get_tsp_costs(tours: torch.Tensor) -> torch.Tensor:
-            """Compute total TSP distance for each tour in the batch."""
-            padded = torch.zeros(B, N + 2, dtype=torch.long, device=device)
-            padded[:, 1:-1] = tours
-            shifted = torch.roll(padded, shifts=-1, dims=1)
-            dist = self.dist_matrix[torch.arange(B, device=device).unsqueeze(1), padded, shifted]
-            return dist[:, :-1].sum(dim=1)
-
-        current_costs = get_tsp_costs(current_solutions)
-        best_solutions = current_solutions.clone()
-        best_costs = current_costs.clone()
-
-        T = torch.full((B,), start_temp, device=device)
-
-        for i in range(n_iterations):
-            if time_limit and (time.time() - start_time > time_limit):
+        for it in range(int(cfg.max_iterations)):
+            if cfg.time_limit > 0 and time.perf_counter() - start > cfg.time_limit:
                 break
+            d_sel = torch.multinomial(d_w, 1, generator=self.gen).squeeze(1)
+            r_sel = torch.multinomial(r_w, 1, generator=self.gen).squeeze(1)
+            cur_n = rs.n_visited(S)
+            lower = torch.clamp(cur_n, max=MIN_REMOVAL_LOWER_BOUND)
+            upper = torch.maximum(lower, torch.full_like(lower, upper_cap))
+            u = torch.rand(B, generator=self.gen, device=dev)
+            n_rm = lower + (u * (upper - lower + 1).float()).long().clamp(max=(upper - lower).max().item() if B else 0)
+            n_rm = torch.minimum(n_rm, upper)
+            n_rm = torch.where(cur_n == 0, torch.zeros_like(n_rm), n_rm)
 
-            # 1. Select Operators
-            d_idx = int(torch.multinomial(self.d_weights, 1, generator=self.generator).item())
-            r_idx = int(torch.multinomial(self.r_weights, 1, generator=self.generator).item())
-            destroy_op = self.destroy_ops[d_idx]
-            repair_op = self.repair_ops[r_idx]
+            cand = S.clone()
+            for d in range(nD):
+                for r in range(nR):
+                    rows = ((d_sel == d) & (r_sel == r)).nonzero(as_tuple=True)[0]
+                    if rows.numel() == 0:
+                        continue
+                    sub = inst.subset(rows)
+                    P, removed = self._destroy(d, S[rows], n_rm[rows], sub)
+                    cand[rows] = self._repair(r, P, removed, sub)
+            new_profit = rs.seq_profit(cand, inst)
 
-            n_remove = torch.randint(
-                max(1, int(N * 0.1)),
-                max(2, int(N * 0.4) + 1),
-                (1,),
-                device=device,
-                generator=self.generator,
-            ).item()
+            hashes = hash_rows(cand)
+            is_new = torch.tensor([h not in visited_sets[b] for b, h in enumerate(hashes)], device=dev)
+            accepted = acc.accept(cur_profit, new_profit, best_profit, it, int(cfg.max_iterations))
+            score = torch.zeros(B, device=dev)
+            new_best = new_profit > best_profit + 1e-6
+            better = new_profit > cur_profit + 1e-6
+            score = torch.where(accepted & is_new & ~better, torch.full_like(score, cfg.sigma_3), score)
+            score = torch.where(accepted & is_new & better, torch.full_like(score, cfg.sigma_2), score)
+            score = torch.where(new_best, torch.full_like(score, cfg.sigma_1), score)
 
-            # 2. Destroy & Repair (Fast TSP operators)
-            if destroy_op == vectorized_random_removal:
-                partial, removed = destroy_op(current_solutions, int(n_remove), generator=self.generator)  # type: ignore[operator]
-            else:
-                partial, removed = destroy_op(
-                    current_solutions,
-                    self.dist_matrix, # pyrefly: ignore [bad-argument-type]
-                    int(n_remove), # pyrefly: ignore [bad-argument-type]
-                    generator=self.generator, # pyrefly: ignore [bad-keyword-argument]
-                )  # type: ignore[operator]
+            best_S = torch.where(new_best.unsqueeze(1), cand, best_S)
+            best_profit = torch.where(new_best, new_profit, best_profit)
+            for b in accepted.nonzero(as_tuple=True)[0].tolist():
+                visited_sets[b].add(hashes[b])
+            S = torch.where(accepted.unsqueeze(1), cand, S)
+            cur_profit = torch.where(accepted, new_profit, cur_profit)
 
-            candidate_solutions = repair_op(partial, removed, self.dist_matrix)  # type: ignore[operator]
-
-            # 3. Fast Education (TSP Local Search)
-            if i % 20 == 0:
-                candidate_solutions = vectorized_two_opt(
-                    candidate_solutions,
-                    self.dist_matrix,
-                    max_iterations=20,
-                    generator=self.generator,
-                )
-                candidate_solutions = vectorized_relocate(
-                    candidate_solutions,
-                    self.dist_matrix,
-                    max_iterations=10,
-                    generator=self.generator,
-                )
-                candidate_solutions = vectorized_swap(
-                    candidate_solutions,
-                    self.dist_matrix,
-                    max_iterations=10,
-                    generator=self.generator,
-                )
-                if N > 40 and i % 100 == 0:
-                    candidate_solutions = vectorized_three_opt(
-                        candidate_solutions,
-                        self.dist_matrix,
-                        max_iterations=5,
-                        generator=self.generator,
-                    )
-
-            # 3b. Advanced Inter-Route Education (Periodic)
-            if i > 0 and i % 100 == 0:
-                # 1. Split into CVRP routes
-                routes_list, _ = vectorized_linear_split(
-                    candidate_solutions,
-                    self.dist_matrix,
-                    self.wastes,
-                    self.vehicle_capacity,
-                    max_vehicles=max_vehicles,
-                )
-
-                # 2. Convert to padded tensor for vectorized operators
-                max_r_len = max(len(r) for r in routes_list)
-                routes_tensor = torch.zeros((B, max_r_len), device=device, dtype=torch.long)
-                for b_idx in range(B):
-                    r_nodes = torch.tensor(routes_list[b_idx], device=device, dtype=torch.long)
-                    routes_tensor[b_idx, : len(r_nodes)] = r_nodes
-
-                # 3. Apply inter-route operators
-                routes_tensor = vectorized_two_opt_star(
-                    routes_tensor,
-                    self.dist_matrix,
-                    max_iterations=10,
-                    generator=self.generator,
-                )
-                routes_tensor = vectorized_swap_star(
-                    routes_tensor,
-                    self.dist_matrix,
-                    max_iterations=10,
-                    generator=self.generator,
-                )
-
-                # 4. Flatten back to giant tour
-                flattened = []
-                for b_idx in range(B):
-                    nodes = routes_tensor[b_idx]
-                    mask_nz = nodes != 0
-                    flat_nodes = nodes[mask_nz]
-                    # Ensure consistency with global node count N
-                    if flat_nodes.size(0) < N:
-                        existing = set(flat_nodes.tolist())
-                        all_c = set(candidate_solutions[b_idx].tolist())
-                        missing = list(all_c - existing)
-                        if missing:
-                            flat_nodes = torch.cat(
-                                [
-                                    flat_nodes,
-                                    torch.tensor(missing, device=device, dtype=torch.long),
-                                ]
-                            )
-                        if flat_nodes.size(0) < N:
-                            flat_nodes = torch.cat(
-                                [
-                                    flat_nodes,
-                                    torch.zeros(
-                                        N - flat_nodes.size(0),
-                                        device=device,
-                                        dtype=torch.long,
-                                    ),
-                                ]
-                            )
-                    elif flat_nodes.size(0) > N:
-                        flat_nodes = flat_nodes[:N]
-                    flattened.append(flat_nodes)
-                candidate_solutions = torch.stack(flattened)
-
-            # 4. Evaluate TSP gain
-            candidate_costs = get_tsp_costs(candidate_solutions)
-            delta = candidate_costs - current_costs
-
-            # 5. Accept/Reject (SA)
-            prob = torch.exp(-delta / T).clamp(max=1.0)
-            accept = (delta <= 0) | (torch.rand(B, device=device, generator=self.generator) < prob)
-
-            current_solutions[accept] = candidate_solutions[accept]
-            current_costs[accept] = candidate_costs[accept]
-
-            improved = candidate_costs < best_costs
-            best_solutions[improved] = candidate_solutions[improved]
-            best_costs[improved] = candidate_costs[improved]
-
-            # 6. Weights
-            scores = torch.zeros(B, device=device)
-            scores[improved] = 10.0
-            scores[accept & ~improved] = 2.0
-            avg_score = scores.mean().item()
-            self.d_weights[d_idx] = 0.9 * self.d_weights[d_idx] + 0.1 * avg_score
-            self.r_weights[r_idx] = 0.9 * self.r_weights[r_idx] + 0.1 * avg_score
-
-            self._viz_record(
-                iteration=i,
-                d_idx=d_idx,
-                r_idx=r_idx,
-                best_cost=float(best_costs.min().item()),
-                current_cost=float(current_costs.mean().item()),
-                temperature=float(T.mean().item()),
-                n_improved=int(improved.sum().item()),
-                n_accepted=int(accept.sum().item()),
+            d_sc[b_idx, d_sel] += score
+            r_sc[b_idx, r_sel] += score
+            d_ct[b_idx, d_sel] += 1
+            r_ct[b_idx, r_sel] += 1
+            if (it + 1) % int(cfg.segment_size) == 0:
+                d_w = torch.where(d_ct > 0, (1 - rf) * d_w + rf * d_sc / d_ct.clamp(min=1), d_w)
+                r_w = torch.where(r_ct > 0, (1 - rf) * r_w + rf * r_sc / r_ct.clamp(min=1), r_w)
+                # Keep the roulette wheel valid when every weight decayed to 0.
+                d_w = torch.where(d_w.sum(1, keepdim=True) > 0, d_w, torch.ones_like(d_w))
+                r_w = torch.where(r_w.sum(1, keepdim=True) > 0, r_w, torch.ones_like(r_w))
+                d_sc.zero_()
+                r_sc.zero_()
+                d_ct.zero_()
+                r_ct.zero_()
+            acc.step(cur_profit, new_profit, accepted, best_profit, it, int(cfg.max_iterations))
+            self._record(
+                iteration=it,
+                best_profit=float(best_profit.mean()),
+                current_profit=float(cur_profit.mean()),
+                accepted=int(accepted.sum()),
             )
-
-            T *= cooling_rate
-
-        # Final conversion to CVRP routes using optimal split
-        best_routes, final_costs = vectorized_linear_split(
-            best_solutions,
-            self.dist_matrix,
-            self.wastes,
-            self.vehicle_capacity,
-            max_vehicles=max_vehicles,
-        )
-
-        return best_routes, final_costs
+        return best_S, best_profit

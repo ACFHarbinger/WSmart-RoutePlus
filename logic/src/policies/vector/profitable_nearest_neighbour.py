@@ -34,6 +34,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from logic.src.configs.policies.profitable_nn import ProfitableNNConfig
 from logic.src.pipeline.learning.envs.base.base import RL4COEnvBase
 
 # Bump when a change can alter the expert's tours; cached expert solves carry it.
@@ -163,19 +164,29 @@ class ProfitableNearestNeighbourPolicy(torch.nn.Module):
         two_opt_passes: Maximum number of full 2-opt sweeps per tour.
     """
 
-    def __init__(self, env_name: str, two_opt_passes: int = 5, seed: int = 42, device: str = "cpu", **kwargs: Any):
+    def __init__(
+        self,
+        env_name: str,
+        config: Optional[ProfitableNNConfig] = None,
+        seed: int = 42,
+        device: str = "cpu",
+        two_opt_passes: Optional[int] = None,
+        **kwargs: Any,
+    ):
         """Initialise the expert.
 
         Args:
             env_name: Environment identifier.
-            two_opt_passes: Maximum number of full 2-opt sweeps per tour.
+            config: ``ProfitableNNConfig``; defaults to its defaults.
             seed: Unused; the expert is deterministic.
             device: Unused; actions are placed on the input's device.
+            two_opt_passes: Overrides ``config.two_opt_passes`` when given.
             kwargs: Ignored extra configuration keys.
         """
         super().__init__()
         self.env_name = env_name
-        self.two_opt_passes = two_opt_passes
+        self.config = config if config is not None else ProfitableNNConfig()
+        self.two_opt_passes = self.config.two_opt_passes if two_opt_passes is None else two_opt_passes
 
     @staticmethod
     def _tour_cost(D: np.ndarray, tour: List[int]) -> float:

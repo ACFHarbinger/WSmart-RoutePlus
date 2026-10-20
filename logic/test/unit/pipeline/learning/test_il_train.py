@@ -1,22 +1,15 @@
 """Tests for Imitation Learning training pipelines."""
 
-import time
 from typing import Any
 
 import pytest
 import torch
-from logic.src.policies.vector.core.evaluation import calc_broken_pairs_distance
-from logic.src.policies.vector.hybrid_genetic_search import (
-    VectorizedHGS,
-    VectorizedPopulation,
-    vectorized_linear_split,
-    vectorized_ordered_crossover,
-)
-from logic.src.policies.vector.operators import vectorized_two_opt
+from logic.src.policies.vector.core.crossover import vectorized_ordered_crossover
 from logic.src.policies.vector.operators import (
     vectorized_relocate,
     vectorized_swap,
     vectorized_swap_star,
+    vectorized_two_opt,
     vectorized_two_opt_star,
 )
 
@@ -52,20 +45,6 @@ class TestHGS:
         dist = torch.sqrt((diff**2).sum(dim=2))
         wastes = torch.tensor([0.0, 1.0, 1.0, 1.0, 1.0, 1.0], device=device)
         return dist, wastes
-
-    @pytest.mark.unit
-    def test_broken_pairs_distance(self, device):
-        """Test calculation of broken pairs distance."""
-        B, P, N = 2, 4, 3
-        pop = torch.tensor([[1, 2, 3]], device=device).expand(B, P, N)
-        diversity = calc_broken_pairs_distance(pop)
-        assert torch.allclose(diversity, torch.zeros_like(diversity))
-
-        pop3 = torch.tensor([[1, 2, 3, 4], [1, 2, 4, 3]], device=device).unsqueeze(0)
-
-        diversity = calc_broken_pairs_distance(pop3)
-        assert torch.isclose(diversity[0, 0], torch.tensor(0.5, device=device))
-        assert torch.isclose(diversity[0, 1], torch.tensor(0.5, device=device))
 
     @pytest.mark.unit
     def test_vectorized_swap(self, device, mock_dist_matrix):
@@ -157,20 +136,6 @@ class TestHGS:
         assert set(nodes.tolist()) == {1, 2, 3, 4}
 
     @pytest.mark.unit
-    def test_population_diversity(self, device):
-        """Test population diversity calculation."""
-        B, P, N = 1, 10, 5
-        pop = VectorizedPopulation(size=5, device=device)
-        population = torch.stack([torch.randperm(N, device=device) + 1 for _ in range(P)]).unsqueeze(0)
-        costs = torch.rand((B, P), device=device)
-        pop.initialize(population, costs, nb_elite=2)
-
-        assert pop.biased_fitness is not None
-        assert pop.diversity_scores is not None
-        assert pop.diversity_scores.shape == (B, P)
-        assert pop.biased_fitness.shape == (B, P)
-
-    @pytest.mark.unit
     def test_vectorized_ordered_crossover(self):
         """Test vectorized ordered crossover operator."""
         B, N = 4, 10
@@ -183,107 +148,6 @@ class TestHGS:
             assert len(torch.unique(nodes)) == N
             assert nodes.min() == 1
             assert nodes.max() == N
-
-    @pytest.mark.unit
-    def test_vectorized_linear_split(self, device, sample_data):
-        """Test vectorized linear split for routing."""
-        dist, wastes = sample_data
-        # 5 nodes + depot. wastes = 1 each.
-        # Capacity = 2.
-        # Expected split:
-        # Route 1: 1-2 (Load 2)
-        # Route 2: 3-4 (Load 2)
-        # Route 3: 5 (Load 1)
-        # Or similar.
-
-        # Giant tour: 1-2-3-4-5
-        tours = torch.tensor([[1, 2, 3, 4, 5]], device=device)
-        B = 1
-        dist_b = dist.unsqueeze(0)
-        wastes_b = wastes.unsqueeze(0)
-
-        capacity = 2.0
-
-        routes, costs = vectorized_linear_split(tours, dist_b, wastes_b, capacity)
-
-        # Check output structure
-        assert len(routes) == B
-        # routes[0] is a flat list [0, n, n, 0, n, n, 0...]
-        r_flat = routes[0]
-        assert isinstance(r_flat, list)
-
-        # Parse into individual routes
-        parsed_routes = []
-        current_route = [0]
-        for node_val in r_flat[1:]:
-            current_route.append(node_val)
-            if node_val == 0:
-                if len(current_route) > 2:  # Ignore 0-0 sequence if any
-                    parsed_routes.append(current_route)
-                current_route = [0]
-
-        # With capacity 2 and 5 items, we expect at least 3 routes.
-        assert len(parsed_routes) == 3
-
-        # Check validity
-        for r in parsed_routes:
-            # r is [0, n1, n2, ..., 0]
-            assert r[0] == 0 and r[-1] == 0
-            nodes = r[1:-1]
-            load = wastes[nodes].sum()
-            assert load <= capacity + 1e-5
-
-        # Check total nodes cover
-        all_nodes = []
-        for r in parsed_routes:
-            all_nodes.extend(r[1:-1])
-        all_nodes = sorted(all_nodes)
-        assert all_nodes == [1, 2, 3, 4, 5]
-
-    @pytest.mark.unit
-    def test_time_limit(self, device, sample_data):
-        """Test time limit enforcement."""
-        dist, wastes = sample_data
-        B = 2
-        dist_b = dist.unsqueeze(0).expand(B, -1, -1)
-        wastes_b = wastes.unsqueeze(0).expand(B, -1)
-
-        hgs = VectorizedHGS(dist_b, wastes_b, vehicle_capacity=10.0, time_limit=10.0, device=device)
-        init_sol = torch.stack([torch.randperm(5, device=device) + 1 for _ in range(B)])
-
-        start_t = time.time()
-        hgs.solve(init_sol, n_generations=10000, population_size=10, time_limit=0.2)
-        end_t = time.time()
-        # Allow sufficient buffer for initialization overhead and generation granularity
-        assert (end_t - start_t) < 3.0
-
-    @pytest.mark.unit
-    def test_max_vehicles_constraint(self, device, sample_data):
-        """Test maximum vehicles constraint."""
-        dist, wastes = sample_data
-        dist_b = dist.unsqueeze(0)
-        wastes_b = wastes.unsqueeze(0)
-        tours = torch.tensor([[1, 2, 3, 4, 5]], device=device)
-
-        hgs = VectorizedHGS(dist_b, wastes_b, vehicle_capacity=3.0, device=device)
-        routes, costs = hgs.solve(tours, n_generations=1, population_size=5, max_vehicles=2)
-        assert costs[0] < float("inf")
-
-        routes_inf, costs_inf = hgs.solve(tours, n_generations=1, population_size=5, max_vehicles=1)
-        assert costs_inf[0] == float("inf") or costs_inf[0] > 1e9
-
-    @pytest.mark.unit
-    def test_stagnation_restart_runs(self, mocker, device, sample_data):
-        """Test restart mechanism on stagnation."""
-        dist, wastes = sample_data
-        B = 1
-        dist_b = dist.unsqueeze(0)
-        wastes_b = wastes.unsqueeze(0)
-        hgs = VectorizedHGS(dist_b, wastes_b, vehicle_capacity=10.0, device=device)
-        init_sol = torch.stack([torch.randperm(5, device=device) + 1 for _ in range(B)])
-
-        # Run enough gens to trigger restart (50 is threshold)
-        hgs.solve(init_sol, n_generations=60, population_size=10, elite_size=2)
 
 
 class TestVectorized2OptIL:
