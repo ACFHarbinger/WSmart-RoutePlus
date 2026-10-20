@@ -13,6 +13,7 @@ Attributes:
     check_relative_imports.py   — Audit relative import usage
     check_type_coverage.py      — Measure per-file annotation coverage
     check_unused_imports.py     — Detect unused import statements
+    check_dead_code.py          — Unused modules and compatibility alias re-exports
     count_loc.py                — Count lines of code and comments
     trace_dependencies.py       — Trace function / class dependency graphs
     tree_loc.py                 — Tree-view LoC display

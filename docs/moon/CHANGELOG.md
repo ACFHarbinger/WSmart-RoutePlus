@@ -17,6 +17,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Dead-code sweep (`2026-10-20`)
+
+#### Added
+
+- **`logic/validation/check_dead_code.py`** (recipe `just check-dead-code`): reports modules under `logic/src` with no importer and no Hydra or registry string, and module-level `Alias = Canonical` re-exports that nothing imports. F-string registry targets, `module:name` targets, test imports, and `__main__` entry points count as uses. Assignments to `Any` or `object` stay as optional-dependency fallbacks.
+
+#### Removed
+
+- **Compatibility aliases with no remaining caller**:
+  - `MSBPCSPPruningException` from the MS-BPC-SP engine. Callers use `BPCPruningException`.
+  - `MultiStartGreedyEval` and `MultiStartGreedyAugmentEval` from the evaluator package. Callers use `MultiStartEval` and `MultiStartAugmentEval`.
+  - `ENV_REGISTRY` from the environment package. Callers use `ENV_TARGETS`.
+  - `LLH_POOL` from the low-level heuristic pool. Callers use `INTRA_ROUTE_POOL`.
+  - Unused MS-BPC-SP re-exports `_reset_master_constraints` and `_detect_cycles` on the engine, and `_reset_master_constraints`, `_detect_cycles`, and `_column_generation_loop` on node selection. The engine still re-exports `_column_generation_loop` for the shared column-generation test.
+
 ### Backwards Compatibility Cleanup (`2026-10-20`)
 
 #### Removed
