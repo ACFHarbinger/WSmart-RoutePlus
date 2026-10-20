@@ -163,7 +163,7 @@ def generate_packing_templates() -> None:
         if not (
             name.endswith("Config")
             and dataclasses.is_dataclass(obj)
-            and getattr(obj, "__module__", "") == packing.__name__
+            and getattr(obj, "__module__", "").startswith(packing.__name__)  # packing and its packing_* parts
         ):
             continue
 
