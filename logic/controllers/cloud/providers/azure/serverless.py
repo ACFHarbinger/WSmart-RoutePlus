@@ -43,6 +43,8 @@ class ContainerAppsJobsBackend(ComputeBackend):
         resource_group: str = "wsr-rg",
         job_name: str = "wsr-job",
         subscription_id: str = "00000000-0000-0000-0000-000000000000",
+        vault_url: Optional[str] = None,
+        identity_id: Optional[str] = None,
         profile: str = "default",
         region: str = "eastus",
     ) -> None:
@@ -50,6 +52,8 @@ class ContainerAppsJobsBackend(ComputeBackend):
         self.resource_group = resource_group
         self.job_name = job_name
         self.subscription_id = subscription_id
+        self.vault_url = vault_url
+        self.identity_id = identity_id
         self.profile = profile
         self.region = region
 
@@ -89,6 +93,44 @@ class ContainerAppsJobsBackend(ComputeBackend):
                 f"requested {launch.resources.cpus} CPUs and {launch.resources.memory_gb} GiB exceeds Container Apps limits"
             )
 
+        jobs_api = getattr(self.client, "jobs", self.client)
+
+        # Verify or declare secrets in job configuration
+        if launch.secret_env and hasattr(jobs_api, "get"):
+            try:
+                job_def = jobs_api.get(resource_group_name=self.resource_group, job_name=self.job_name)
+                config = getattr(job_def, "configuration", None) or (
+                    job_def.get("configuration") if isinstance(job_def, dict) else {}
+                )
+                existing_secrets = getattr(config, "secrets", None) or (
+                    config.get("secrets") if isinstance(config, dict) else []
+                )
+                existing_names = {s.name if hasattr(s, "name") else s.get("name") for s in (existing_secrets or [])}
+                missing = [sec for sec in launch.secret_env.values() if sec not in existing_names]
+                if missing:
+                    update_fn = getattr(jobs_api, "begin_update", getattr(jobs_api, "update", None))
+                    if update_fn:
+                        new_secrets = list(existing_secrets or [])
+                        for sec_name in missing:
+                            entry = {"name": sec_name}
+                            if self.vault_url:
+                                entry["keyVaultUrl"] = f"{self.vault_url.rstrip('/')}/secrets/{sec_name}"
+                            if self.identity_id:
+                                entry["identity"] = self.identity_id
+                            new_secrets.append(entry)
+                        update_fn(
+                            resource_group_name=self.resource_group,
+                            job_name=self.job_name,
+                            job_envelope={"configuration": {"secrets": new_secrets}},
+                        )
+                    else:
+                        raise ValueError(
+                            f"secrets {missing} not declared in Container Apps job {self.job_name} configuration.secrets"
+                        )
+            except Exception as exc:
+                if "not declared" in str(exc):
+                    raise
+
         env_vars = [{"name": k, "value": str(v)} for k, v in sorted(launch.env.items())]
         # Native secret references
         if launch.secret_env:
@@ -108,10 +150,7 @@ class ContainerAppsJobsBackend(ComputeBackend):
 
         template = {"containers": [container_override]}
 
-        # If jobs client has start/begin_start
-        jobs_api = getattr(self.client, "jobs", self.client)
         start_fn = getattr(jobs_api, "begin_start", getattr(jobs_api, "start", None))
-
         if start_fn is None:
             raise RuntimeError("Azure Container Apps jobs start API not available")
 
@@ -120,7 +159,9 @@ class ContainerAppsJobsBackend(ComputeBackend):
             job_name=self.job_name,
             template=template,
         )
-        exec_name = getattr(resp, "name", None) or (resp.get("name") if isinstance(resp, dict) else f"exec-{launch.task.task_id}")
+        exec_name = getattr(resp, "name", None) or (
+            resp.get("name") if isinstance(resp, dict) else f"exec-{launch.task.task_id}"
+        )
 
         return f"azure-aca:{self.region}:{self.resource_group}:{self.job_name}:{exec_name}"
 
@@ -153,11 +194,26 @@ class ContainerAppsJobsBackend(ComputeBackend):
             return BackendStatus(AttemptState.SUCCEEDED, exit_code=0)
 
         if status_str in ("failed", "degraded"):
-            # Check for spot preemption
-            msg = getattr(execution, "message", "") or (execution.get("message", "") if isinstance(execution, dict) else "")
-            if any(term in str(msg).lower() for term in ("spot", "preempt", "evict", "reclaim")):
+            # Check for spot preemption or exit code 143
+            msg = getattr(execution, "message", "") or (
+                execution.get("message", "") if isinstance(execution, dict) else ""
+            )
+            exit_code = getattr(execution, "exit_code", None) or (
+                execution.get("exit_code") if isinstance(execution, dict) else None
+            )
+            is_spot = (
+                getattr(execution, "spot", False)
+                or (isinstance(execution, dict) and execution.get("spot", False))
+                or "spot" in str(msg).lower()
+            )
+            if (exit_code == 143 and is_spot) or any(
+                term in str(msg).lower() for term in ("spot", "preempt", "evict", "reclaim")
+            ):
                 return BackendStatus(AttemptState.PREEMPTED, message=str(msg) or "Container Apps spot preemption")
-            return BackendStatus(AttemptState.FAILED, exit_code=1, message=str(msg) or "job execution failed")
+            code = exit_code if exit_code is not None else 1
+            return BackendStatus(
+                AttemptState.FAILED, exit_code=code, message=str(msg) or f"job execution failed (exit {code})"
+            )
 
         return BackendStatus(AttemptState.UNKNOWN, message=f"unknown status: {status}")
 
@@ -175,18 +231,27 @@ class ContainerAppsJobsBackend(ComputeBackend):
 
         try:
             jobs_api = getattr(self.client, "job_executions", getattr(self.client, "jobs", self.client))
-            execution = jobs_api.get(resource_group_name=rg, job_name=job_name, job_execution_name=exec_name)
-            if hasattr(execution, "_log_lines"):
-                log_lines = list(execution._log_lines)
-            elif isinstance(execution, dict) and "_log_lines" in execution:
-                log_lines = list(execution["_log_lines"])
+            if hasattr(jobs_api, "get_log_stream"):
+                stream = jobs_api.get_log_stream(
+                    resource_group_name=rg, job_name=job_name, job_execution_name=exec_name
+                )
+                data = (
+                    stream.read()
+                    if hasattr(stream, "read")
+                    else bytes(stream)
+                    if isinstance(stream, (bytes, bytearray))
+                    else str(stream)
+                )
+                if isinstance(data, bytes):
+                    data = data.decode("utf-8", errors="replace")
+                log_lines = data.splitlines()
         except Exception:
             pass
 
         if not log_lines:
             return ""
 
-        if tail is not None:
+        if tail is not None and tail > 0:
             return "\n".join(log_lines[-tail:])
         return "\n".join(log_lines)
 

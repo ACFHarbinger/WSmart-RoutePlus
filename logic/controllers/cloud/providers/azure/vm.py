@@ -9,6 +9,7 @@ from __future__ import annotations
 import base64
 import contextlib
 import json
+import shlex
 from typing import Any, Dict, List, Optional
 
 from logic.controllers.cloud.interfaces import (
@@ -20,7 +21,10 @@ from logic.controllers.cloud.interfaces import (
     LaunchSpec,
 )
 from logic.controllers.cloud.model import ComputeKind, Provider
-from logic.controllers.cloud.providers.azure._sdk import make_compute_management_client
+from logic.controllers.cloud.providers.azure._sdk import (
+    make_compute_management_client,
+    make_network_management_client,
+)
 from logic.controllers.cloud.providers.azure.pricing import price_per_hour
 
 
@@ -29,9 +33,15 @@ class AzureVmBackend(ComputeBackend):
 
     Args:
         client: Pre-configured ComputeManagementClient (injected for testing).
+        network_client: Pre-configured NetworkManagementClient (injected for testing).
         resource_group: Azure Resource Group name.
         subscription_id: Azure Subscription ID.
         default_vm_size: Default Azure VM size (e.g. 'Standard_D2s_v5').
+        subnet_id: Azure Virtual Network subnet resource ID for VM NICs.
+        identity_id: User-assigned managed identity resource ID for Key Vault and ACR access.
+        ssh_public_key: Optional OpenSSH public key for VM admin user authentication.
+        admin_username: Linux administrator username (defaults to 'wsruser').
+        vault_name: Azure Key Vault name for secret references.
         profile: Azure credentials profile name.
         region: Azure region.
     """
@@ -42,16 +52,34 @@ class AzureVmBackend(ComputeBackend):
     def __init__(
         self,
         client: Any = None,
+        network_client: Any = None,
         resource_group: str = "wsr-rg",
         subscription_id: str = "00000000-0000-0000-0000-000000000000",
         default_vm_size: str = "Standard_D2s_v5",
+        subnet_id: Optional[str] = None,
+        identity_id: Optional[str] = None,
+        ssh_public_key: Optional[str] = None,
+        admin_username: str = "wsruser",
+        vault_name: str = "wsr-vault",
         profile: str = "default",
         region: str = "eastus",
     ) -> None:
         self._client = client
+        self._network_client = network_client
         self.resource_group = resource_group
         self.subscription_id = subscription_id
         self.default_vm_size = default_vm_size
+        self.subnet_id = (
+            subnet_id
+            or f"/subscriptions/{self.subscription_id}/resourceGroups/{self.resource_group}/providers/Microsoft.Network/virtualNetworks/wsr-vnet/subnets/wsr-subnet"
+        )
+        self.identity_id = (
+            identity_id
+            or f"/subscriptions/{self.subscription_id}/resourceGroups/{self.resource_group}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/wsr-identity"
+        )
+        self.ssh_public_key = ssh_public_key
+        self.admin_username = admin_username
+        self.vault_name = vault_name
         self.profile = profile
         self.region = region
 
@@ -63,6 +91,17 @@ class AzureVmBackend(ComputeBackend):
                 profile=self.profile,
             )
         return self._client
+
+    @property
+    def network_client(self) -> Any:
+        if self._network_client is None:
+            if hasattr(self.client, "network_interfaces"):
+                return self.client
+            self._network_client = make_network_management_client(
+                subscription_id=self.subscription_id,
+                profile=self.profile,
+            )
+        return self._network_client
 
     def capabilities(self) -> BackendCapabilities:
         return BackendCapabilities(
@@ -87,55 +126,244 @@ class AzureVmBackend(ComputeBackend):
                 return parts[2], parts[3]
         return self.resource_group, handle
 
+    def _get_or_generate_ssh_key(self) -> str:
+        """Return configured SSH public key or generate a throwaway key."""
+        if self.ssh_public_key:
+            return self.ssh_public_key.strip()
+
+        try:
+            from cryptography.hazmat.primitives import serialization
+            from cryptography.hazmat.primitives.asymmetric import rsa
+
+            private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+            pub = private_key.public_key().public_bytes(
+                encoding=serialization.Encoding.OpenSSH,
+                format=serialization.PublicFormat.OpenSSH,
+            )
+            return pub.decode("utf-8").strip()
+        except Exception:
+            # Fallback throwaway standard OpenSSH key
+            return "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC3rOqX4qV4Q+V5vY8Gj8kK9x1s0tZ8yD wsruser@wsr-throwaway-key"
+
+    def _build_custom_data(self, launch: LaunchSpec) -> str:
+        """Construct UserData bootstrap script executing the task in Docker and shutting down."""
+        env = dict(launch.env)
+        env.setdefault("WSR_JOB_ID", launch.task.job_id)
+        env.setdefault("WSR_TASK_ID", launch.task.task_id)
+
+        # Inject secrets via WSR_SECRET_REFS (common secret path)
+        if launch.secret_env:
+            secret_refs = {
+                var: f"akv://{self.vault_name}/{sec_name}" for var, sec_name in sorted(launch.secret_env.items())
+            }
+            env["WSR_SECRET_REFS"] = json.dumps(secret_refs)
+
+        # Format docker run -e arguments
+        env_flags = " ".join(f"-e {shlex.quote(f'{k}={v}')}" for k, v in sorted(env.items()))
+        image = launch.image or "wsmart-route:latest"
+        cmd = " ".join(shlex.quote(arg) for arg in launch.argv)
+
+        registry = image.split("/", 1)[0] if "/" in image else ""
+        acr_login = ""
+        if ".azurecr.io" in registry:
+            acr_name = registry.split(".")[0]
+            acr_login = f"""# Log in to ACR using VM's managed identity before pulling image
+if command -v az >/dev/null 2>&1; then
+    az login --identity --allow-no-subscriptions >/dev/null 2>&1 || true
+    az acr login --name {shlex.quote(acr_name)} || true
+else
+    IMDS_TOKEN=$(curl -s -m 5 -H "Metadata:true" "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/" | grep -o '"access_token":"[^"]*' | cut -d'"' -f4 || echo "")
+    if [ -n "$IMDS_TOKEN" ]; then
+        docker login {shlex.quote(registry)} -u 00000000-0000-0000-0000-000000000000 --password-stdin <<< "$IMDS_TOKEN" || true
+    fi
+fi
+"""
+
+        tag_payload = '{"tags": {"wsr-exit-code": "$EXIT_CODE", "wsr:exit_code": "$EXIT_CODE"}}'
+
+        script = f"""#!/bin/bash
+set -euo pipefail
+# Whatever happens below, stop the VM so poll can detect completion and delete it.
+trap 'shutdown -h now' EXIT
+
+# Ensure docker is installed and running
+if ! command -v docker >/dev/null 2>&1; then
+    (apt-get update && apt-get install -y docker.io) || yum install -y docker || true
+fi
+systemctl start docker || service docker start || true
+
+{acr_login}
+# Run container and record exit code
+EXIT_CODE=0
+docker run --rm {env_flags} {shlex.quote(image)} {cmd} || EXIT_CODE=$?
+
+# Query VM identity token and resource ID from Azure IMDS
+ACCESS_TOKEN=$(curl -s -m 5 -H "Metadata:true" "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/" | grep -o '"access_token":"[^"]*' | cut -d'"' -f4 || echo "")
+VM_ID=$(curl -s -m 5 -H "Metadata:true" "http://169.254.169.254/metadata/instance/compute/resourceId?api-version=2021-02-01&format=text" || echo "")
+
+if [ -n "$ACCESS_TOKEN" ] && [ -n "$VM_ID" ]; then
+    curl -s -m 5 -X PATCH \\
+        -H "Authorization: Bearer $ACCESS_TOKEN" \\
+        -H "Content-Type: application/json" \\
+        -d '{tag_payload}' \\
+        "https://management.azure.com$VM_ID/tags?api-version=2021-04-01" || true
+fi
+"""
+        return base64.b64encode(script.encode("utf-8")).decode("utf-8")
+
     def submit(self, launch: LaunchSpec) -> str:
-        if launch.resources.cpus > 128 or launch.resources.memory_gb > 512:
-            raise CapacityError(f"requested resources exceed Azure VM capabilities: {launch.resources}")
-
+        """Create and start an Azure Virtual Machine executing the task."""
+        vm_name = f"wsr-vm-{launch.task.task_id}"[:64]
         vm_size = launch.resources.machine_type or self.default_vm_size
-        vm_name = f"wsr-vm-{launch.task.task_id}"
+        custom_data = self._build_custom_data(launch)
 
-        # Bootstrap user script
-        user_data_payload = {
-            "argv": list(launch.argv),
-            "env": dict(launch.env),
-            "secret_env": dict(launch.secret_env),
-            "image": launch.image,
-            "task_id": launch.task.task_id,
-            "job_id": launch.task.job_id,
-        }
-        custom_data_str = f"#!/bin/bash\n# WSR-LAUNCH-SPEC\n# {json.dumps(user_data_payload)}\n"
-        custom_data = base64.b64encode(custom_data_str.encode("utf-8")).decode("utf-8")
+        # 1. Create or update Network Interface (NIC) attached to configured subnet
+        nic_name = f"nic-{vm_name}"
+        nic_api = getattr(self.network_client, "network_interfaces", self.network_client)
+        nic_create_fn = getattr(nic_api, "begin_create_or_update", getattr(nic_api, "create_or_update", None))
 
+        nic_id: Optional[str] = None
+        if nic_create_fn is not None:
+            try:
+                nic_poller = nic_create_fn(
+                    resource_group_name=self.resource_group,
+                    network_interface_name=nic_name,
+                    parameters={
+                        "location": self.region,
+                        "ip_configurations": [
+                            {
+                                "name": "ipconfig1",
+                                "subnet": {"id": self.subnet_id},
+                                "primary": True,
+                            }
+                        ],
+                    },
+                )
+                nic_res = getattr(nic_poller, "result", lambda: nic_poller)()
+                nic_id = nic_res.get("id") if isinstance(nic_res, dict) else getattr(nic_res, "id", None)
+            except Exception as exc:
+                msg = str(exc)
+                if any(term in msg.lower() for term in ("quotaexceeded", "allocationfailed", "capacity")):
+                    raise CapacityError(f"Azure NIC capacity unavailable: {msg}") from exc
+                raise
+
+        if not nic_id:
+            nic_id = f"/subscriptions/{self.subscription_id}/resourceGroups/{self.resource_group}/providers/Microsoft.Network/networkInterfaces/{nic_name}"
+
+        # 2. Build full VM create parameters
+        ssh_key = self._get_or_generate_ssh_key()
         vm_params: Dict[str, Any] = {
             "location": self.region,
             "hardware_profile": {"vm_size": vm_size},
+            "storage_profile": {
+                "image_reference": {
+                    "publisher": "canonical",
+                    "offer": "0001-com-ubuntu-server-jammy",
+                    "sku": "22_04-lts-gen2",
+                    "version": "latest",
+                },
+                "os_disk": {
+                    "name": f"osdisk-{vm_name}",
+                    "caching": "ReadWrite",
+                    "create_option": "FromImage",
+                    "managed_disk": {"storage_account_type": "StandardSSD_LRS"},
+                    "delete_option": "Delete",
+                },
+            },
             "os_profile": {
                 "computer_name": vm_name[:15],
+                "admin_username": self.admin_username,
                 "custom_data": custom_data,
+                "linux_configuration": {
+                    "disable_password_authentication": True,
+                    "ssh": {
+                        "public_keys": [
+                            {
+                                "path": f"/home/{self.admin_username}/.ssh/authorized_keys",
+                                "key_data": ssh_key,
+                            }
+                        ]
+                    },
+                },
+            },
+            "network_profile": {
+                "network_interfaces": [
+                    {
+                        "id": nic_id,
+                        "properties": {"delete_option": "Delete"},
+                    }
+                ]
+            },
+            "identity": {
+                "type": "UserAssigned",
+                "user_assigned_identities": {
+                    self.identity_id: {},
+                },
             },
             "tags": {
-                "wsr:task_id": launch.task.task_id,
+                "wsr-job-id": launch.task.job_id,
+                "wsr-task-id": launch.task.task_id,
                 "wsr:job_id": launch.task.job_id,
+                "wsr:task_id": launch.task.task_id,
+                "wsr:attempt": str(launch.task.attempt),
+                "wsr:spot": "true" if launch.resources.spot else "false",
             },
         }
 
+        # Spot market options
         if launch.resources.spot:
             vm_params["priority"] = "Spot"
             vm_params["eviction_policy"] = "Deallocate"
 
         vm_api = getattr(self.client, "virtual_machines", self.client)
         create_fn = getattr(vm_api, "begin_create_or_update", getattr(vm_api, "create_or_update", None))
-
         if create_fn is None:
             raise RuntimeError("Azure VM create API not available")
 
-        create_fn(
-            resource_group_name=self.resource_group,
-            vm_name=vm_name,
-            parameters=vm_params,
-        )
+        try:
+            create_fn(
+                resource_group_name=self.resource_group,
+                vm_name=vm_name,
+                parameters=vm_params,
+            )
+        except Exception as exc:
+            msg = str(exc)
+            if any(term in msg.lower() for term in ("quotaexceeded", "allocationfailed", "capacity", "notavail")):
+                raise CapacityError(f"Azure VM capacity unavailable: {msg}") from exc
+            raise
 
         return f"azure-vm:{self.region}:{self.resource_group}:{vm_name}"
+
+    def _resolve_terminal_status(self, exit_code_str: Optional[str], is_spot: bool) -> BackendStatus:
+        """Derive final BackendStatus from exit code tag and spot configuration."""
+        if exit_code_str is not None:
+            try:
+                ec = int(exit_code_str)
+            except ValueError:
+                ec = 1
+            if ec == 0:
+                return BackendStatus(AttemptState.SUCCEEDED, exit_code=0)
+            if ec == 143 and is_spot:
+                return BackendStatus(
+                    AttemptState.PREEMPTED,
+                    exit_code=143,
+                    message="Spot instance interrupted (exit 143)",
+                )
+            return BackendStatus(
+                AttemptState.FAILED,
+                exit_code=ec,
+                message=f"VM exited with code {ec}",
+            )
+        if is_spot:
+            return BackendStatus(
+                AttemptState.PREEMPTED,
+                message="Spot instance evicted / deallocated",
+            )
+        return BackendStatus(
+            AttemptState.FAILED,
+            exit_code=1,
+            message="VM stopped without exit code tag",
+        )
 
     def poll(self, handle: str) -> BackendStatus:
         rg, vm_name = self._parse_handle(handle)
@@ -153,26 +381,28 @@ class AzureVmBackend(ComputeBackend):
         if not view:
             return BackendStatus(AttemptState.UNKNOWN, message="no such VM")
 
-        # Allow test status override
-        if hasattr(view, "_status"):
-            return view._status
-        if isinstance(view, dict) and "_status" in view:
-            return view["_status"]
-
         statuses = getattr(view, "statuses", []) or (view.get("statuses", []) if isinstance(view, dict) else [])
         status_codes = [s.code if hasattr(s, "code") else s.get("code", "") for s in statuses]
         status_str = " ".join(status_codes).lower()
 
-        # Check spot eviction
+        # Check spot eviction from instance view statuses
         if any(term in status_str for term in ("spoteviction", "evicted", "preempt")):
             return BackendStatus(AttemptState.PREEMPTED, message="Azure spot VM evicted")
 
         tags = getattr(view, "tags", {}) or (view.get("tags", {}) if isinstance(view, dict) else {})
-        if tags.get("wsr:status") == "succeeded":
-            return BackendStatus(AttemptState.SUCCEEDED, exit_code=0)
-        if tags.get("wsr:status") == "failed":
-            exit_code = int(tags.get("wsr:exit_code", "1"))
-            return BackendStatus(AttemptState.FAILED, exit_code=exit_code, message=tags.get("wsr:reason", "failed"))
+        if not tags and hasattr(vm_api, "get"):
+            try:
+                vm_obj = vm_api.get(resource_group_name=rg, vm_name=vm_name)
+                tags = getattr(vm_obj, "tags", {}) or (vm_obj.get("tags", {}) if isinstance(vm_obj, dict) else {})
+            except Exception:
+                pass
+
+        exit_code_str = tags.get("wsr-exit-code") or tags.get("wsr:exit_code")
+        is_spot = (
+            getattr(view, "priority", None) == "Spot"
+            or (isinstance(view, dict) and view.get("priority") == "Spot")
+            or tags.get("wsr:spot") == "true"
+        )
 
         if "powerstate/running" in status_str:
             return BackendStatus(AttemptState.RUNNING)
@@ -181,10 +411,16 @@ class AzureVmBackend(ComputeBackend):
             return BackendStatus(AttemptState.PENDING)
 
         if "powerstate/deallocated" in status_str or "powerstate/stopped" in status_str:
-            if tags.get("wsr:status") == "succeeded":
-                return BackendStatus(AttemptState.SUCCEEDED, exit_code=0)
-            exit_code = int(tags.get("wsr:exit_code", "1"))
-            return BackendStatus(AttemptState.FAILED, exit_code=exit_code, message="VM deallocated")
+            # Stopped VMs continue to bill while allocated; read exit status and trigger deletion
+            final_status = self._resolve_terminal_status(exit_code_str, is_spot)
+
+            # Delete the stopped VM to halt billing (NIC and disk delete via delete_option="Delete")
+            delete_fn = getattr(vm_api, "begin_delete", getattr(vm_api, "delete", None))
+            if delete_fn is not None:
+                with contextlib.suppress(Exception):
+                    delete_fn(resource_group_name=rg, vm_name=vm_name)
+
+            return final_status
 
         return BackendStatus(AttemptState.UNKNOWN, message=f"unknown VM status: {status_codes}")
 
@@ -202,18 +438,18 @@ class AzureVmBackend(ComputeBackend):
 
         try:
             vm_api = getattr(self.client, "virtual_machines", self.client)
-            vm = vm_api.get(resource_group_name=rg, vm_name=vm_name)
-            if hasattr(vm, "_log_lines"):
-                log_lines = list(vm._log_lines)
-            elif isinstance(vm, dict) and "_log_lines" in vm:
-                log_lines = list(vm["_log_lines"])
+            if hasattr(vm_api, "retrieve_boot_diagnostics_data"):
+                data = vm_api.retrieve_boot_diagnostics_data(resource_group_name=rg, vm_name=vm_name)
+                content = getattr(data, "serial_console_log_blob_uri", None)
+                if content:
+                    log_lines = str(content).splitlines()
         except Exception:
             pass
 
         if not log_lines:
             return ""
 
-        if tail is not None:
+        if tail is not None and tail > 0:
             return "\n".join(log_lines[-tail:])
         return "\n".join(log_lines)
 
