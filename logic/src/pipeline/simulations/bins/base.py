@@ -105,7 +105,7 @@ class Bins(BinsFillingMixin):
             noise_mean: Mean of the sensor noise.
             noise_variance: Variance of the sensor noise.
             n_days: Total number of simulation days.
-            n_samples: Number of samples to generate.
+            n_samples: Number of waste samples in the dataset.
             seed: Random seed for reproducibility.
         """
         assert sample_dist == "emp" or "gamma" in sample_dist
