@@ -77,11 +77,8 @@ import numpy as np
 from .branch_and_bound_profit import (
     _marginal_detour as _marginal_detour,
 )
-from .branch_and_bound_profit import (
-    bb_profit_removal as bb_profit_removal,
-)
 
-__all__ = ["bb_removal", "bb_profit_removal"]
+__all__ = ["bb_removal"]
 
 # ---------------------------------------------------------------------------
 # Internal helpers: per-node cost scores
@@ -400,4 +397,3 @@ def bb_removal(
             modified_routes.append(new_route)
 
     return modified_routes, final_removed
-

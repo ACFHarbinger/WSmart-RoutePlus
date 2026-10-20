@@ -23,16 +23,6 @@ from logic.gen.paper_data import (
     display_name,
     improver_pairs,
 )
-from logic.gen.paper_diagrams import fig_policy_space, fig_simulation_loop
-from logic.gen.paper_networks import (
-    COORD_DIR,
-    classical_mds,
-    embedding_stress,
-    fig_networks,
-    find_distance_matrix,
-    read_distance_matrix,
-    read_network_layout,
-)
 from logic.gen.report_utils import savefig
 
 
@@ -204,15 +194,6 @@ __all__ = [
     "fig_pareto",
     "fig_strategy_tradeoff",
     "fig_improver_paired",
-    "find_distance_matrix",
-    "read_distance_matrix",
-    "classical_mds",
-    "embedding_stress",
-    "read_network_layout",
-    "fig_networks",
     "fig_scale",
     "fig_fill_trajectory",
-    "fig_policy_space",
-    "fig_simulation_loop",
-    "COORD_DIR",
 ]

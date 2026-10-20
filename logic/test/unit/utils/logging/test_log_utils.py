@@ -4,14 +4,9 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 import torch
-from logic.src.tracking.logging.log_utils import (
-    log_epoch,
-    log_to_json,
-    log_to_json2,
-    log_values,
-    output_stats,
-    runs_per_policy,
-)
+from logic.src.tracking.logging.modules.analysis import output_stats, runs_per_policy
+from logic.src.tracking.logging.modules.metrics import log_epoch, log_values
+from logic.src.tracking.logging.modules.storage import log_to_json, log_to_json2
 from logic.src.tracking.logging.structured_logging import log_training
 from omegaconf import OmegaConf
 

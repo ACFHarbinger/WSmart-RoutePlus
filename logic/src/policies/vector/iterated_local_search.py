@@ -22,16 +22,16 @@ from tensordict import TensorDict
 
 from logic.src.models.common.improvement.policy import ImprovementPolicy
 from logic.src.pipeline.learning.envs.base.base import RL4COEnvBase
-from logic.src.tracking.viz_mixin import PolicyVizMixin
-
-from .local_search import (
+from logic.src.policies.vector.operators import (
     vectorized_relocate,
     vectorized_swap,
     vectorized_swap_star,
     vectorized_three_opt,
-    vectorized_two_opt,
     vectorized_two_opt_star,
 )
+from logic.src.tracking.viz_mixin import PolicyVizMixin
+
+from .operators import vectorized_two_opt
 from .shared.linear import vectorized_linear_split
 
 

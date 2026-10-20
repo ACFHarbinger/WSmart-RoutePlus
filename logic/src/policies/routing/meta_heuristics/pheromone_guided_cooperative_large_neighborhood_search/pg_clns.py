@@ -23,8 +23,7 @@ import time
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from logic.src.configs.policies.pg_clns import PGCLNSConfig
-from logic.src.policies.routing.base.sub_problem import SubProblem
-from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.engine import coerce_config
+from logic.src.policies.routing.base.sub_problem import SubProblem, coerce_config
 from logic.src.tracking.viz_mixin import PolicyVizMixin
 
 from .aco import ACOSolver

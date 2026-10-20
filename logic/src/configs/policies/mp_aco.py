@@ -14,7 +14,8 @@ Example:
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
-from .other.packing import PackingConfig
+from logic.src.configs.policies.other.packing_dispatch import PackingConfig
+
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -46,7 +47,6 @@ class MP_ACO_Config:
     packing: Optional[PackingConfig] = None
     route_improvement: Optional[RouteImprovingConfig] = None
 
-
     @classmethod
     def from_config(cls, config: Any) -> "MP_ACO_Config":
         """Create MP_ACO_Config from a configuration object or dictionary.
@@ -58,6 +58,7 @@ class MP_ACO_Config:
             "MP_ACO_Config": The instantiated parameters.
         """
         from dataclasses import fields
+
         if isinstance(config, dict):
             return cls(**{k: v for k, v in config.items() if k in {f.name for f in fields(cls)}})
 
@@ -80,4 +81,5 @@ class MP_ACO_Config:
             Dict[str, Any]: A dictionary of parameter names and values.
         """
         from dataclasses import fields
+
         return {f.name: getattr(self, f.name) for f in fields(self)}

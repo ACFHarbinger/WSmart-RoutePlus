@@ -55,16 +55,16 @@ from logic.src.policies.helpers.solvers_and_matheuristics.search.cuts_capacity i
     RoundedCapacityCutEngine,
     RoundedMultistarCutEngine,
 )
+from logic.src.policies.helpers.solvers_and_matheuristics.search.cuts_clique_rank import (
+    EdgeCliqueCutEngine,
+    LimitedMemoryRank1CutEngine,
+)
 from logic.src.policies.helpers.solvers_and_matheuristics.search.cuts_fleet_cover import (
     BasicFleetCoverEngine,
     PhysicalCapacityLCIEngine,
     SaturatedArcLCIEngine,
 )
-from logic.src.policies.helpers.solvers_and_matheuristics.search.cuts_subset_row import (
-    EdgeCliqueCutEngine,
-    LimitedMemoryRank1CutEngine,
-    SubsetRowCutEngine,
-)
+from logic.src.policies.helpers.solvers_and_matheuristics.search.cuts_subset_row import SubsetRowCutEngine
 from logic.src.policies.helpers.solvers_and_matheuristics.separation import (
     SeparationEngine,
 )

@@ -51,8 +51,6 @@ from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_h
 from logic.src.policies.routing.hyper_heuristics.hyper_heuristic_base import HyperHeuristicSearch
 
 from .hyper_aco_hooks import HyperACOSearchHooksMixin
-from .hyper_aco_hooks import _elitism_sync_count as _elitism_sync_count
-from .hyper_aco_hooks import _MoveTelemetry as _MoveTelemetry
 from .hyper_aco_pheromones import HyperACOPheromoneMixin
 from .hyper_operators import (
     HYPER_OPERATORS,

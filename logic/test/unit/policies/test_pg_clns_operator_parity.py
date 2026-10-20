@@ -20,20 +20,20 @@ from logic.src.policies.helpers.operators.destroy_ruin.worst import worst_remova
 from logic.src.policies.helpers.operators.recreate_repair.greedy import (
     greedy_profit_insertion,
 )
-from logic.src.policies.helpers.operators.recreate_repair.regret import (
-    regret_2_profit_insertion,
-)
+from logic.src.policies.helpers.operators.recreate_repair.regret_profit import regret_2_profit_insertion
 
 
 @pytest.fixture
 def simple_dist_matrix():
     """4-node problem: depot (0) + 3 customers."""
-    return np.array([
-        [0.0, 10.0, 20.0, 30.0],
-        [10.0, 0.0, 15.0, 25.0],
-        [20.0, 15.0, 0.0, 10.0],
-        [30.0, 25.0, 10.0, 0.0],
-    ])
+    return np.array(
+        [
+            [0.0, 10.0, 20.0, 30.0],
+            [10.0, 0.0, 15.0, 25.0],
+            [20.0, 15.0, 0.0, 10.0],
+            [30.0, 25.0, 10.0, 0.0],
+        ]
+    )
 
 
 @pytest.fixture
@@ -105,9 +105,7 @@ class TestCapacityChecks:
         R = 1.0
         C = 1.0
 
-        result = greedy_profit_insertion(
-            routes, removed_nodes, simple_dist_matrix, wastes, capacity, R, C
-        )
+        result = greedy_profit_insertion(routes, removed_nodes, simple_dist_matrix, wastes, capacity, R, C)
         # Node 1 should NOT be inserted (demand > capacity)
         assert 1 not in [n for r in result for n in r]
 
@@ -120,9 +118,7 @@ class TestCapacityChecks:
         R = 10.0  # high revenue to make it profitable
         C = 0.1
 
-        result = greedy_profit_insertion(
-            routes, removed_nodes, simple_dist_matrix, wastes, capacity, R, C
-        )
+        result = greedy_profit_insertion(routes, removed_nodes, simple_dist_matrix, wastes, capacity, R, C)
         # Node 1 should be inserted
         assert 1 in [n for r in result for n in r]
 
@@ -137,8 +133,7 @@ class TestCapacityChecks:
         mandatory_nodes = [1]
 
         result = greedy_profit_insertion(
-            routes, removed_nodes, simple_dist_matrix, wastes, capacity, R, C,
-            mandatory_nodes=mandatory_nodes
+            routes, removed_nodes, simple_dist_matrix, wastes, capacity, R, C, mandatory_nodes=mandatory_nodes
         )
         # Even though mandatory, node 1 can't be served (demand > capacity)
         assert 1 not in [n for r in result for n in r]
@@ -158,8 +153,7 @@ class TestMandatoryNodeHandling:
         mandatory_nodes = [1]
 
         result = greedy_profit_insertion(
-            routes, removed_nodes, simple_dist_matrix, wastes, capacity, R, C,
-            mandatory_nodes=mandatory_nodes
+            routes, removed_nodes, simple_dist_matrix, wastes, capacity, R, C, mandatory_nodes=mandatory_nodes
         )
         # Mandatory node 1 should be inserted
         assert 1 in [n for r in result for n in r]
@@ -173,9 +167,7 @@ class TestMandatoryNodeHandling:
         R = 0.01  # very low revenue
         C = 10.0  # very high cost
 
-        result = greedy_profit_insertion(
-            routes, removed_nodes, simple_dist_matrix, wastes, capacity, R, C
-        )
+        result = greedy_profit_insertion(routes, removed_nodes, simple_dist_matrix, wastes, capacity, R, C)
         # Optional node 1 should NOT be inserted (unprofitable)
         assert 1 not in [n for r in result for n in r]
 
@@ -192,9 +184,7 @@ class TestDirectedDistance:
         R = 1.0
         C = 0.1
 
-        result = greedy_profit_insertion(
-            routes, removed_nodes, simple_dist_matrix, wastes, capacity, R, C
-        )
+        result = greedy_profit_insertion(routes, removed_nodes, simple_dist_matrix, wastes, capacity, R, C)
         # Both nodes should be inserted (both profitable)
         all_nodes = [n for r in result for n in r]
         assert 2 in all_nodes
@@ -213,8 +203,6 @@ class TestRegretInsertion:
         R = 1.0
         C = 1.0
 
-        result = regret_2_profit_insertion(
-            routes, removed_nodes, simple_dist_matrix, wastes, capacity, R, C
-        )
+        result = regret_2_profit_insertion(routes, removed_nodes, simple_dist_matrix, wastes, capacity, R, C)
         # Node 1 should NOT be inserted
         assert 1 not in [n for r in result for n in r]

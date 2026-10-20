@@ -20,10 +20,6 @@ import torch
 from torch import nn
 
 # Re-export the canonical CriticNetwork and factory
-from logic.src.models.common.critic_network.policy import (  # noqa: F401
-    CriticNetwork,
-    create_critic_from_actor,
-)
 from logic.src.models.subnets.embeddings import (
     PTPContextEmbedder,
 )
@@ -150,8 +146,4 @@ class LegacyCriticNetwork(nn.Module):
         return self.value_head(graph_embeddings)
 
 
-__all__ = [
-    "CriticNetwork",
-    "LegacyCriticNetwork",
-    "create_critic_from_actor",
-]
+__all__ = ["LegacyCriticNetwork"]

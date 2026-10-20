@@ -10,12 +10,14 @@ Example:
     >>> config.time_limit
     300.0
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, List, Optional
 
-from .other.packing import PackingConfig
+from logic.src.configs.policies.other.packing_dispatch import PackingConfig
+
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -71,7 +73,6 @@ class BPConfig:
     allow_heuristic_ryan_foster: bool = False
     use_ryan_foster: bool = False
 
-
     @classmethod
     def from_config(cls, config: Any) -> "BPConfig":
         """Create a BPConfig instance from a configuration object or dictionary.
@@ -83,6 +84,7 @@ class BPConfig:
             A BPConfig instance with values mapped from the config.
         """
         from dataclasses import fields
+
         if isinstance(config, dict):
             return cls(**{k: v for k, v in config.items() if k in {f.name for f in fields(cls)}})
 

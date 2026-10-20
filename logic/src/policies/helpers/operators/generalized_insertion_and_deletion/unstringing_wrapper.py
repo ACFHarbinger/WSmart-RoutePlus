@@ -26,12 +26,6 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 
 from .unstringing_search import (
-    _apply_unstring_op as _apply_unstring_op,
-)
-from .unstringing_search import (
-    _evaluate_routes as _evaluate_routes,
-)
-from .unstringing_search import (
     _try_unstring_removal as _try_unstring_removal,
 )
 from .unstringing_search import (
@@ -42,8 +36,6 @@ __all__ = [
     "unstringing_removal",
     "unstringing_profit_removal",
     "unstringing_removal_wrapper",
-    "_apply_unstring_op",
-    "_evaluate_routes",
     "_try_unstring_removal",
     "_try_unstring_removal_deterministic",
 ]

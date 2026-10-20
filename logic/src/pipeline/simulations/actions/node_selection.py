@@ -19,25 +19,27 @@ from typing import Any, Dict, List, cast
 import numpy as np
 
 from logic.src.configs import PackingConfig
-from logic.src.constants import MAX_CAPACITY_PERCENT, ROOT_DIR  # noqa: F401  (ROOT_DIR: test patch point)
+from logic.src.constants import MAX_CAPACITY_PERCENT
 from logic.src.constants.paths import CONFIGS_DIR
 from logic.src.interfaces import IBinContainer, ITraversable
 from logic.src.interfaces.context.search_context import SearchContext
-from logic.src.policies.packing import PackingContext, PackingFactory
-from logic.src.utils.configs.config_loader import load_config
-
-from .base import (
-    SimulationAction,
-    _append_context_list,
+from logic.src.pipeline.simulations.actions.policy_config import (
     _as_plain_dict,
     _as_policy_mapping,
-    _ensure_mutable_config,
     _file_yaml_pairs,
     _inject_acceptance_into_config,
     _is_mapping,
     _is_non_string_sequence,
     _live_ac_payload,
     _load_policy_yaml_section,
+)
+from logic.src.policies.packing import PackingContext, PackingFactory
+from logic.src.utils.configs.config_loader import load_config
+
+from .base import (
+    SimulationAction,
+    _append_context_list,
+    _ensure_mutable_config,
     _record_live_params,
     _set_live_capture_meta,
     bind_context,

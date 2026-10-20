@@ -22,8 +22,9 @@ from logic.src.configs.policies.tsp import TSPConfig
 from logic.src.enums import GlobalRegistry, PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
+from logic.src.utils.routing.tours import get_multi_tour, get_route_cost
 
-from .tsp import find_route, get_multi_tour, get_route_cost
+from .tsp import find_route
 
 
 @GlobalRegistry.register(

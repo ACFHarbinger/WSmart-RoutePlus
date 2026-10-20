@@ -57,24 +57,8 @@ from gurobipy import GRB
 from .fix_and_optimize_profit import (
     _route_distance as _route_distance,
 )
-from .fix_and_optimize_profit import (
-    _route_profit as _route_profit,
-)
-from .fix_and_optimize_profit import (
-    _solve_vrpp_mip as _solve_vrpp_mip,
-)
-from .fix_and_optimize_profit import (
-    fix_and_optimize_profit as fix_and_optimize_profit,
-)
 
-__all__ = [
-    "fix_and_optimize",
-    "fix_and_optimize_profit",
-    "_route_distance",
-    "_route_profit",
-    "_solve_cvrp_mip",
-    "_solve_vrpp_mip",
-]
+__all__ = ["fix_and_optimize", "_route_distance", "_solve_cvrp_mip"]
 
 # ---------------------------------------------------------------------------
 # Gurobi CVRP sub-MIP solver
@@ -295,4 +279,3 @@ def fix_and_optimize(
     )
 
     return [list(r) for r in fixed_routes] + optimal_free
-

@@ -114,9 +114,6 @@ from logic.src.policies.helpers.operators.search_heuristics._tour_construction i
 from logic.src.tracking.viz_mixin import PolicyStateRecorder
 
 from .lin_kernighan_helsgaun_alpha import (
-    compute_1tree as compute_1tree,
-)
-from .lin_kernighan_helsgaun_alpha import (
     compute_alpha_measures as compute_alpha_measures,
 )
 from .lin_kernighan_helsgaun_alpha import (
@@ -129,15 +126,7 @@ from .lin_kernighan_helsgaun_search import (
     _improve_tour as _improve_tour,
 )
 
-__all__ = [
-    "solve_lkh",
-    "solve_lkh1",
-    "compute_alpha_measures",
-    "get_candidate_set",
-    "compute_1tree",
-    "run_subgradient",
-    "_improve_tour",
-]
+__all__ = ["solve_lkh", "solve_lkh1", "compute_alpha_measures", "get_candidate_set", "run_subgradient", "_improve_tour"]
 
 
 """

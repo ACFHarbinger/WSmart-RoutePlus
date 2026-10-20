@@ -52,9 +52,6 @@ import numpy as np
 
 from .params import DualBoundParams, LagrangianParams
 from .proximal_bundle import (
-    BundleEntry as BundleEntry,
-)
-from .proximal_bundle import (
     DualBoundTracker as DualBoundTracker,
 )
 from .proximal_bundle import (

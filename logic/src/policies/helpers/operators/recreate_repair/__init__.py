@@ -15,6 +15,14 @@ Example:
     >>> routes = bb_insertion(routes, removed, dist_matrix, wastes, capacity)
 """
 
+from logic.src.policies.helpers.operators.recreate_repair.branch_and_bound_profit import bb_profit_insertion
+from logic.src.policies.helpers.operators.recreate_repair.regret_profit import (
+    regret_2_profit_insertion,
+    regret_3_profit_insertion,
+    regret_4_profit_insertion,
+    regret_k_profit_insertion,
+)
+
 from .bin_pool import (
     add_n_bins_consecutive,
     add_n_bins_random,
@@ -25,7 +33,7 @@ from .bin_pool import (
     insert_n_bins_block,
     insert_n_bins_cheapest,
 )
-from .branch_and_bound import bb_insertion, bb_profit_insertion
+from .branch_and_bound import bb_insertion
 from .deep import deep_insertion, deep_profit_insertion
 from .farthest import farthest_insertion, farthest_profit_insertion
 from .forward_looking import forward_looking_insertion
@@ -36,13 +44,9 @@ from .multi_period import greedy_horizon_insertion, regret_k_temporal_insertion,
 from .nearest import nearest_insertion, nearest_profit_insertion
 from .regret import (
     regret_2_insertion,
-    regret_2_profit_insertion,
     regret_3_insertion,
-    regret_3_profit_insertion,
     regret_4_insertion,
-    regret_4_profit_insertion,
     regret_k_insertion,
-    regret_k_profit_insertion,
 )
 from .savings import savings_insertion, savings_profit_insertion
 

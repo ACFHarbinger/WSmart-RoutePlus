@@ -31,11 +31,6 @@ from logic.src.policies.helpers.local_search.local_search_hgs import HGSLocalSea
 from logic.src.policies.routing.base.sub_problem import SubProblem
 
 from .evolution import evaluate
-from .hgs_population import _MAX_PENALTY as _MAX_PENALTY
-from .hgs_population import _MIN_PENALTY as _MIN_PENALTY
-from .hgs_population import _TARGET_COVERAGE_HIGH as _TARGET_COVERAGE_HIGH
-from .hgs_population import _TARGET_COVERAGE_LOW as _TARGET_COVERAGE_LOW
-from .hgs_population import _TARGET_MARGIN as _TARGET_MARGIN
 from .hgs_population import HGSPopulationMixin
 from .individual import Individual
 from .split import LinearSplit
@@ -127,9 +122,7 @@ class HGSSolver(HGSPopulationMixin):
         self.n_nodes = len(dist_matrix) - 1
         self.nodes = list(range(1, self.n_nodes + 1))
 
-        self.split_manager = LinearSplit(
-            dist_matrix, wastes, capacity, R, C, cfg.max_vehicles, mandatory_nodes
-        )
+        self.split_manager = LinearSplit(dist_matrix, wastes, capacity, R, C, cfg.max_vehicles, mandatory_nodes)
         self.ls = HGSLocalSearch(dist_matrix, wastes, capacity, R, C, mandatory_nodes, cfg)
         if x_coords is not None and y_coords is not None:
             self.ls.x_coords = x_coords
@@ -213,7 +206,11 @@ class HGSSolver(HGSPopulationMixin):
         # In VRPP, Split always produces feasible routes, so child.is_feasible
         # is always True and this block would never trigger anyway — but the
         # explicit guard makes the intent clear.
-        if not current_expand_pool() and not child.is_feasible and self.random.random() < self.params.repair_probability:
+        if (
+            not current_expand_pool()
+            and not child.is_feasible
+            and self.random.random() < self.params.repair_probability
+        ):
             repaired = Individual(child.giant_tour[:], expand_pool=child.expand_pool)
             evaluate(repaired, self.split_manager, penalty_capacity * 10.0)
             repaired = self.ls.optimize(repaired)

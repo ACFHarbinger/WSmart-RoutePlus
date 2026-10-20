@@ -14,7 +14,8 @@ Example:
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from .other.packing import PackingConfig
+from logic.src.configs.policies.other.packing_dispatch import PackingConfig
+
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -68,7 +69,6 @@ class BCConfig:
     enable_heuristic_rcc_separation: bool = True
     enable_exact_rcc_separation: bool = False
     use_comb_cuts: bool = False
-
 
     @classmethod
     def from_config(cls, config: Dict[str, Any]) -> "BCConfig":

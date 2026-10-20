@@ -6,7 +6,8 @@ import numpy as np
 import pytest
 import torch
 from logic.src.pipeline.simulations.actions.routing import RoutingAction
-from logic.src.pipeline.simulations.simulator import display_log_metrics, sequential_simulations
+from logic.src.pipeline.simulations.simulator import sequential_simulations
+from logic.src.pipeline.simulations.simulator_progress import display_log_metrics
 from logic.src.pipeline.simulations.states import FinishingState, SimulationContext
 from logic.test.unit.pipeline.simulations.test_simulator_robustness import _orch_cfg
 from logic.test.unit.pipeline.simulations.test_states import _make_test_cfg
@@ -126,7 +127,7 @@ def test_sequential_loop_does_not_write_mean(mock_context, tmp_path):
 
     def _run():
         # The context resolves the slug before run(); mirror a successful sample.
-        from logic.src.pipeline.simulations.day_context import policy_result_key
+        from logic.src.pipeline.simulations.naming import policy_result_key
 
         slug = policy_result_key("alns", cfg.sim)
         slug_holder["slug"] = slug
@@ -136,7 +137,7 @@ def test_sequential_loop_does_not_write_mean(mock_context, tmp_path):
 
     with (
         patch("logic.src.pipeline.simulations.simulator.ROOT_DIR", str(tmp_path)),
-        patch("logic.src.pipeline.simulations.simulator.update_policy_log_section") as mock_write,
+        patch("logic.src.pipeline.simulations.simulator_progress.update_policy_log_section") as mock_write,
     ):
         log, log_std, failed = sequential_simulations(
             cfg, torch.device("cpu"), [None, None], [[0, 1]], "weights", lock=None

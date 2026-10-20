@@ -37,7 +37,6 @@ from networkx.algorithms.shortest_paths.weighted import dijkstra_path
 
 from logic.src.constants.routing import SCALE
 from logic.src.policies.helpers.operators.intra_route_local_search.k_opt import directed_two_opt_route
-from logic.src.utils.routing.tours import get_multi_tour, get_route_cost  # noqa: F401  (re-exported)
 
 from .two_opt import solve_tsp_2opt
 

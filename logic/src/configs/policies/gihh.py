@@ -14,8 +14,9 @@ Example:
 from dataclasses import dataclass, field
 from typing import Any, List, Optional
 
+from logic.src.configs.policies.other.packing_dispatch import PackingConfig
+
 from .other.acceptance_criteria import AcceptanceConfig, OnlyImprovingConfig
-from .other.packing import PackingConfig
 from .other.route_improvement import RouteImprovingConfig
 
 

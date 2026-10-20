@@ -17,6 +17,7 @@ from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
+from gurobipy import GRB
 from logic.src.policies.helpers.solvers_and_matheuristics import (
     PricingStatus,
     Route,
@@ -119,8 +120,10 @@ def test_ms_engine_uses_the_shared_cg_loop():
     assert ms_bpc_sp_engine.search_bpc_tree is search_bpc_tree, (
         "the engine's B&B walk must resolve to the shared search_bpc_tree"
     )
-    assert ms_bpc_sp_engine._column_generation_loop is column_generation_loop, (
-        "the engine's CG entry must resolve to the shared column_generation_loop"
+    from logic.src.policies.helpers.solvers_and_matheuristics.search import bpc_tree
+
+    assert bpc_tree._column_generation_loop is column_generation_loop, (
+        "the shared tree the engine drives must run the shared column_generation_loop"
     )
 
 
@@ -244,7 +247,7 @@ def test_pricing_status_and_duplicate_timeout_safeguard():
     master = MagicMock()
     master.n_nodes = 6
     master.active_sri_cuts = {}
-    master.model.Status = ms_bpc_sp_engine.GRB.OPTIMAL
+    master.model.Status = GRB.OPTIMAL
     master.phase = 2
     master.solve_lp_relaxation.return_value = (10.0, {})
     master.add_route.return_value = False
@@ -391,7 +394,7 @@ def test_cg_at_root_only_descendant_leaves_node_incomplete():
     m = MagicMock()
     m.n_nodes = 2
     m.active_sri_cuts = {}
-    m.model.Status = ms_bpc_sp_engine.GRB.OPTIMAL
+    m.model.Status = GRB.OPTIMAL
     m.phase = 2
     m.solve_lp_relaxation.return_value = (10.0, {})
     p = MagicMock()
@@ -438,7 +441,7 @@ def test_farkas_unexhausted_preserves_incomplete_node():
     master = MagicMock()
     master.n_nodes = 2
     master.active_sri_cuts = {}
-    master.model.Status = ms_bpc_sp_engine.GRB.INFEASIBLE
+    master.model.Status = GRB.INFEASIBLE
     master.phase = 1
     master.farkas_duals = {1: 1.0}
     master.solve_lp_relaxation.return_value = (0.0, {})

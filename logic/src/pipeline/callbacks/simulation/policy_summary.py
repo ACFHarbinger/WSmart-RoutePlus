@@ -24,7 +24,7 @@ from rich.table import Table
 from logic.src.configs import Config, PackingConfig
 from logic.src.constants import CONFIGS_DIR
 from logic.src.interfaces import ITraversable
-from logic.src.pipeline.simulations.actions.base import _as_policy_mapping
+from logic.src.pipeline.simulations.actions.policy_config import _as_policy_mapping
 from logic.src.tracking.logging.logger_writer import LoggerWriter
 from logic.src.utils.configs.config_loader import load_config
 
@@ -66,7 +66,7 @@ class PolicySummaryCallback:
         table.add_column("Route Improvement", style="blue")
         table.add_column("Acceptance", style="red")
 
-        from logic.src.pipeline.simulations.day_context import resolve_policy_display_name
+        from logic.src.pipeline.simulations.naming import resolve_policy_display_name
 
         policies: List[str] = cfg.sim.full_policies or []
         config_paths: Dict[str, Any] = dict(cfg.sim.config_path) if cfg.sim.config_path else {}

@@ -57,18 +57,10 @@ import numpy as np
 from omegaconf import DictConfig
 
 from logic.src.constants import ROOT_DIR, SIM_METRICS
-from logic.src.pipeline.simulations.day_context import policy_result_key
+from logic.src.pipeline.simulations.naming import policy_result_key
 from logic.src.pipeline.simulations.repository import set_repository_from_path
-from logic.src.tracking.logging.log_utils import (
-    display_simulation_summary_table as display_simulation_summary_table,
-)
-from logic.src.tracking.logging.log_utils import (
-    output_stats,
-)
-from logic.src.tracking.logging.log_utils import (
-    update_policy_log_section as update_policy_log_section,
-)
 from logic.src.tracking.logging.logger_writer import setup_logger_redirection
+from logic.src.tracking.logging.modules.analysis import output_stats
 
 try:
     import logic.src.tracking as wst
@@ -81,7 +73,6 @@ from .checkpoints import CheckpointError
 from .simulator_progress import ProgressUpdater as ProgressUpdater
 from .simulator_progress import SimpleCounter as SimpleCounter
 from .simulator_progress import _failed_sample as _failed_sample
-from .simulator_progress import display_log_metrics as display_log_metrics
 from .states import SimulationContext
 
 if TYPE_CHECKING:
@@ -276,7 +267,7 @@ def sequential_simulations(  # noqa: C901
             - log_std: Dict[policy] -> List[std_metrics] (None if n_samples=1)
             - failed_log: List of error result dictionaries
     """
-    from logic.src.pipeline.simulations.day_context import resolve_policy_display_name, to_slug
+    from logic.src.pipeline.simulations.naming import resolve_policy_display_name, to_slug
 
     sim = cfg.sim
     policies = sim.full_policies
@@ -350,7 +341,9 @@ def sequential_simulations(  # noqa: C901
                 else:
                     err = result_dict if isinstance(result_dict, dict) else {}
                     failed_log.append(
-                        _failed_sample(err, pol_name, sample_id, err.get("error", "simulation failed"), err.get("traceback", ""))
+                        _failed_sample(
+                            err, pol_name, sample_id, err.get("error", "simulation failed"), err.get("traceback", "")
+                        )
                     )
 
                 # Final update for this sample
