@@ -27,9 +27,9 @@ from logic.src.models.common.autoregressive.policy import AutoregressivePolicy
 from logic.src.models.subnets.embeddings import get_init_embedding
 from logic.src.models.subnets.encoders.gat import GraphAttentionEncoder
 from logic.src.pipeline.learning.envs.base.base import RL4COEnvBase
-from logic.src.policies.vector.adaptive_large_neighborhood_search import VectorizedALNS
-from logic.src.policies.vector.ant_colony_system import VectorizedACOPolicy
-from logic.src.policies.vector.hybrid_genetic_search import VectorizedHGS
+from logic.src.policies.vector.core.tour_aco import VectorizedTourACOPolicy
+from logic.src.policies.vector.core.tour_alns import VectorizedTourALNS
+from logic.src.policies.vector.core.tour_hgs import VectorizedTourHGS
 from logic.src.policies.vector.operators import (
     vectorized_cluster_removal,
     vectorized_cross_exchange,
@@ -75,7 +75,7 @@ class HybridTwoStagePolicy(AutoregressivePolicy):
         INIT_ALGOS (List[str]): Registry of initialization choices.
         OPERATORS (List[Callable]): Registry of vectorized refinement moves.
         improvement_decoder (ImprovementStepDecoder): Operator scheduler.
-        aco_model (Optional[VectorizedACOPolicy]): Neural ACO instance (lazy).
+        aco_model (Optional[VectorizedTourACOPolicy]): Neural ACO instance (lazy).
     """
 
     def __init__(
@@ -148,7 +148,7 @@ class HybridTwoStagePolicy(AutoregressivePolicy):
         self.improvement_decoder = ImprovementStepDecoder(
             embed_dim=embed_dim, n_operators=len(self.OPERATORS), hidden_dim=hidden_dim
         )
-        self.aco_model: Optional[VectorizedACOPolicy] = None
+        self.aco_model: Optional[VectorizedTourACOPolicy] = None
 
     def __getstate__(self) -> Dict[str, Any]:
         """Serializes current model state, handling PRNG portability.
@@ -216,7 +216,7 @@ class HybridTwoStagePolicy(AutoregressivePolicy):
         tours = torch.zeros(batch_size, td["locs"].size(1), dtype=torch.long, device=device)
 
         if self.aco_model is None:
-            self.aco_model = VectorizedACOPolicy(
+            self.aco_model = VectorizedTourACOPolicy(
                 env_name=self.env_name,
                 embed_dim=self.encoder.embed_dim,
                 **kwargs,  # type: ignore[arg-type]
@@ -232,11 +232,11 @@ class HybridTwoStagePolicy(AutoregressivePolicy):
             wastes = sub_td.get("waste", None)
 
             if algo_name == "hgs":
-                solver = VectorizedHGS(dist_matrix, wastes, vehicle_capacity=1.0, device=device)
+                solver = VectorizedTourHGS(dist_matrix, wastes, vehicle_capacity=1.0, device=device)
                 rand_sol = self._get_random_tours(sub_td)
                 sub_tours, _ = solver.solve(rand_sol, n_generations=5, population_size=10)
             elif algo_name == "alns":
-                solver = VectorizedALNS(dist_matrix, wastes, vehicle_capacity=1.0, device=device)
+                solver = VectorizedTourALNS(dist_matrix, wastes, vehicle_capacity=1.0, device=device)
                 rand_sol = self._get_random_tours(sub_td)
                 sub_tours, _ = solver.solve(rand_sol, n_iterations=10)  # type: ignore
             elif algo_name == "aco":
