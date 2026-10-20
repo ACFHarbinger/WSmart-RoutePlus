@@ -122,7 +122,6 @@ def test_ms_engine_uses_the_shared_cg_loop():
     assert ms_bpc_sp_engine._column_generation_loop is column_generation_loop, (
         "the engine's CG entry must resolve to the shared column_generation_loop"
     )
-    assert ms_bpc_sp_engine.MSBPCSPPruningException is ms_bpc_sp_engine.BPCPruningException
 
 
 def _partitions(items):

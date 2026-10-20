@@ -36,9 +36,6 @@ ENV_TARGETS: Dict[str, str] = {
     "tsp_kopt": "logic.src.pipeline.learning.envs.tsp_kopt:TSPkoptEnv",
 }
 
-# Kept for callers that inspect keys. Values are resolved on get_env.
-ENV_REGISTRY = ENV_TARGETS
-
 GENERATOR_TARGETS: Dict[str, str] = {
     **{
         name: f"logic.src.pipeline.learning.envs.{name}:{_CLASS_PREFIX[name]}Generator"
@@ -116,7 +113,6 @@ def __getattr__(name: str) -> Any:
 
 
 __all__ = [
-    "ENV_REGISTRY",
     "ENV_TARGETS",
     "GENERATOR_REGISTRY",
     "GENERATOR_TARGETS",

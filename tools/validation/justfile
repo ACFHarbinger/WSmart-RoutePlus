@@ -76,3 +76,7 @@ check-embedded-languages:
 # Check for unused imports in the Python source code
 check-unused-imports:
     uv run python logic/validation/check_unused_imports.py logic/src --exclude submodules/WSmart-Bin-Analysis/test --ignore_factories
+
+# Unused modules and compatibility alias re-exports
+check-dead-code:
+    uv run python logic/validation/check_dead_code.py logic/src --repo .

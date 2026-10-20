@@ -27,7 +27,6 @@ Attributes:
     _make_double_bridge: Create a double bridge operator.
     INTRA_ROUTE_POOL: List of intra-route operators.
     MULTI_PERIOD_LLH_POOL: List of multi-period operators.
-    LLH_POOL: Compatibility alias for the old single-route pool.
     LLHPool: Low-Level Heuristic Pool for hyper-heuristics.
 
 Example:
@@ -146,9 +145,6 @@ MULTI_PERIOD_LLH_POOL: List[Tuple[str, LLH]] = [
     ("double_bridge", _make_double_bridge()),
     ("day_shuffle", _make_day_shuffle()),
 ]
-
-# Compatibility alias for the old single-route pool
-LLH_POOL = INTRA_ROUTE_POOL
 
 
 class LLHPool:

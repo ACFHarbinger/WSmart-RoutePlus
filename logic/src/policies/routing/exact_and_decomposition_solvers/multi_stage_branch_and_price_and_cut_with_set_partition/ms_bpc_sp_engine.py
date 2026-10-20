@@ -138,16 +138,7 @@ from logic.src.policies.helpers.solvers_and_matheuristics import (
     RCSPPSolver,
     VRPPMasterProblem,
 )
-from logic.src.policies.helpers.solvers_and_matheuristics.branching.pruning import (
-    BPCPruningException,
-)
-from logic.src.policies.helpers.solvers_and_matheuristics.branching.pruning import (
-    reset_master_constraints as _reset_master_constraints,  # noqa: F401  (re-exported for tests)
-)
 from logic.src.policies.helpers.solvers_and_matheuristics.master_problem.warm_start import greedy_warm_start_columns
-from logic.src.policies.helpers.solvers_and_matheuristics.pricing.smoothing import (
-    detect_cycles as _detect_cycles,  # noqa: F401  (re-exported for tests)
-)
 from logic.src.policies.helpers.solvers_and_matheuristics.search.bpc_tree import (
     BPCSearchOptions,
     search_bpc_tree,
@@ -174,9 +165,6 @@ from logic.src.policies.routing.exact_and_decomposition_solvers.multi_stage_bran
 )
 
 logger = logging.getLogger(__name__)
-
-
-MSBPCSPPruningException = BPCPruningException
 
 
 def run_ms_bpc_sp(  # noqa: C901
