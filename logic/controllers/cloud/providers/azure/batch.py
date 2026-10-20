@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import shlex
 from typing import Any, Dict, List, Optional
 
 from logic.controllers.cloud.interfaces import (
@@ -36,7 +37,8 @@ class AzureBatchBackend(ComputeBackend):
         client: Pre-configured BatchServiceClient (injected for testing).
         pool_id: Azure Batch pool identifier.
         pool_id_spot: Optional Azure Batch pool using Spot / Low-Priority nodes.
-        job_id: Azure Batch job identifier.
+        job_id: Existing Azure Batch job bound to pool_id through pool_info.
+        job_id_spot: Existing job bound to pool_id_spot; defaults to job_id + "-spot".
         batch_url: Azure Batch account URL.
         vault_name: Azure Key Vault name for secret references.
         registry_server: Optional container registry server (e.g. 'myacr.azurecr.io').
@@ -128,7 +130,7 @@ class AzureBatchBackend(ComputeBackend):
 
         env_settings = [{"name": k, "value": str(v)} for k, v in sorted(env.items())]
 
-        cmd_line = " ".join(launch.argv)
+        cmd_line = shlex.join(launch.argv)
         task_data: Dict[str, Any] = {
             "id": task_id,
             "command_line": cmd_line,
@@ -167,10 +169,10 @@ class AzureBatchBackend(ComputeBackend):
         if not task:
             return BackendStatus(AttemptState.UNKNOWN, message="no such task")
 
-        state = getattr(task, "state", None) or task.get("state", "")
-        is_spot = (job_id == self.job_id_spot) or ("-spot" in str(job_id))
+        state = task.get("state", "") if isinstance(task, dict) else getattr(task, "state", "")
+        is_spot = job_id == self.job_id_spot
 
-        exec_info = getattr(task, "execution_info", None) or task.get("execution_info", {})
+        exec_info = task.get("execution_info") if isinstance(task, dict) else getattr(task, "execution_info", None)
         exit_code = getattr(exec_info, "exit_code", None) if exec_info else None
         if exit_code is None and isinstance(exec_info, dict):
             exit_code = exec_info.get("exit_code")

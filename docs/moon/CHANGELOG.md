@@ -17,6 +17,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Azure compute backend blockers resolved and service integration verified (`2026-10-20`)
+
+- **Partial-VM Teardown & Durable Orphan Queue**:
+  - Enforced partial VM resource deletion *before* NIC deletion on failed submit to avoid NIC-in-use errors.
+  - Implemented idempotent not-found handling (treating 404, `ResourceNotFound`, and `NotFound` as clean deletions).
+  - Added durable JSON orphan queue (`orphan_file`, `_record_orphan`, `drain_orphans`) tracking uncleaned resources across scheduler timeouts, loss, or crashes, drained automatically on `submit()` and `poll()`.
+- **Boot Diagnostics & Container Apps Log Analytics**:
+  - Enabled managed boot diagnostics in `vm_params` (`{"diagnostics_profile": {"boot_diagnostics": {"enabled": True}}}`).
+  - Added Azure Monitor Log Analytics query support (`ContainerAppConsoleLogs_CL`) for `ContainerAppsJobsBackend.logs()` with `logs_client` and `workspace_id`, maintaining fallback for offline test fakes.
+- **Integrated CloudService Tests**:
+  - Added end-to-end service integration test suite driving Azure VM and Container Apps through `CloudService` lifecycle (submit -> run -> success, job cancellation propagating to backend deletion, spot eviction retry handling, and submit capacity partial teardown).
+  - All 46 provider contract, regression, and service integration tests pass offline without cloud credentials.
+
 ### Azure cloud provider integration blockers resolved (`2026-10-20`)
 
 - **Batch Placement & Job API**: Replaced invalid task-level `pool_id` placement with job-level targeting (`job_id_spot` for spot tasks, `job_id` for on-demand). Inferred spot status from job handle rather than non-existent task field.
