@@ -114,17 +114,21 @@ class PackingAction(SimulationAction):
             n_bins = len(current_fill) if current_fill is not None else 0
 
         # Economic/capacity fields for the PackingContext. The real values live
-        # on the day context as ``vehicle_capacity`` (percent of one bin) and on
-        # the bins object (``revenue`` EUR/kg, ``density``, ``volume``); the
+        # on the bins object (``revenue`` EUR/kg, ``density``, ``volume``) and on
+        # the day context as ``vehicle_capacity`` (percent of one bin); the
         # attributes read before (``max_capacity``/``revenue_kg``/``bin_density``/
         # ``bin_volume``) do not exist on SimulationDayContext, so the defaults
         # fired on every run and economic strategies saw a 2.5 kg bin at 1 EUR/kg.
-        ctx_vehicle_capacity = getattr(context, "vehicle_capacity", None)
-        if ctx_vehicle_capacity is None:
-            ctx_vehicle_capacity = getattr(context, "max_capacity", 100.0)
         ctx_revenue_kg = getattr(bins, "revenue", getattr(context, "revenue_kg", 1.0))
         ctx_bin_density = getattr(bins, "density", getattr(context, "bin_density", 1.0))
         ctx_bin_volume = getattr(bins, "volume", getattr(context, "bin_volume", 2.5))
+        # PackingContext.vehicle_capacity is a mass (the knapsack rules compare it
+        # with kg), so convert from percent of one bin: 7368.4 % * 47.5 kg / 100 = 3500 kg.
+        ctx_vehicle_capacity_pct = getattr(context, "vehicle_capacity", None)
+        if ctx_vehicle_capacity_pct is not None:
+            ctx_vehicle_capacity = float(ctx_vehicle_capacity_pct) / 100.0 * ctx_bin_volume * ctx_bin_density
+        else:
+            ctx_vehicle_capacity = getattr(context, "max_capacity", 100.0)
 
         final_mandatory: set = set()
 

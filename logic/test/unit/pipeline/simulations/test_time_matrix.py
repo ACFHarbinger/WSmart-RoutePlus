@@ -110,7 +110,8 @@ def test_infeasible_return_does_not_mutate_bins(tour):
 
 def test_capacity_violation_does_not_mutate_bins():
     bins = MagicMock()
-    bins.c = np.array([60, 60])
+    bins.c = np.array([40, 40])  # the observed fill fits; the true fill does not
+    bins.real_c = np.array([60, 60])
     context = {
         "problem": "tcptp",
         "tour": [0, 1, 2, 0],

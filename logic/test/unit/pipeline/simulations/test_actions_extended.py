@@ -52,6 +52,26 @@ class TestPackingActionDetailed:
         action.execute(base_context)
         assert 'mandatory' in base_context
 
+    def test_packing_context_gets_the_area_economics_in_kg(self, base_context, mock_bins):
+        from logic.src.pipeline.simulations.actions import node_selection
+
+        mock_bins.revenue, mock_bins.density, mock_bins.volume = 0.6, 19.0, 2.5
+        state = {'c': np.full(5, 80.0), 'means': np.full(5, 10.0), 'std': np.ones(5)}
+        mock_bins.get.side_effect = state.get
+        mock_bins.c, mock_bins.n = state['c'], 5
+        base_context['config'] = {'packing': {'last_minute': {'threshold': 70}}}
+        base_context['vehicle_capacity'] = 3500.0 / 47.5 * 100  # percent of one bin
+        real, seen = node_selection.PackingContext, {}
+
+        def capture(**kwargs):
+            seen.update(kwargs)
+            return real(**kwargs)
+
+        with patch.object(node_selection, 'PackingContext', side_effect=capture):
+            PackingAction().execute(base_context)
+        assert seen['vehicle_capacity'] == pytest.approx(3500.0)
+        assert (seen['revenue_kg'], seen['bin_density'], seen['bin_volume']) == (0.6, 19.0, 2.5)
+
 class TestFillActionDetailed:
     def test_stochastic_fill(self, base_context, mock_bins):
         action = FillAction()

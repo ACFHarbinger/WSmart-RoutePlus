@@ -187,24 +187,16 @@ class BaseMultiPeriodRoutingPolicy(BaseRoutingPolicy):
             kwargs.get("config", {}),
         )
 
+        # 2. Build typed problem descriptor
+        problem = ProblemContext.from_kwargs(kwargs, capacity, revenue, cost_unit)
+
         multi_day_ctx: Optional[MultiDayContext] = kwargs.get("multi_day_context")
         search_ctx: Optional[SearchContext] = kwargs.get("search_context")
 
         if search_ctx is None:
             search_ctx = SearchContext.initialize()
 
-        # 2. Empty-mandatory ruling (D3): same contract as the single-period
-        # BaseRoutingPolicy.execute — an empty mandatory set yields the empty
-        # tour [0, 0] at zero cost/profit instead of running the solver.
-        early_result = self._validate_mandatory(kwargs.get("mandatory"))
-        if early_result is not None:
-            tour, cost, profit = early_result
-            return tour, cost, profit, search_ctx, multi_day_ctx
-
-        # 3. Build typed problem descriptor
-        problem = ProblemContext.from_kwargs(kwargs, capacity, revenue, cost_unit)
-
-        # 4. Solve
+        # 3. Solve
         solution, full_plan, solver_metadata = self._run_multi_period_solver(problem, multi_day_ctx)
 
         # Merge telemetry into the ledger
@@ -212,14 +204,14 @@ class BaseMultiPeriodRoutingPolicy(BaseRoutingPolicy):
 
         search_ctx = merge_context(search_ctx, phase=SearchPhase.ROUTING, construction_metrics=solver_metadata)
 
-        # 5. Update MultiDayContext with full plan snapshot
+        # 4. Update MultiDayContext with full plan snapshot
         if multi_day_ctx is not None:
             multi_day_ctx = multi_day_ctx.update(
                 full_plan_snapshot=full_plan,
                 extra={**multi_day_ctx.extra, **solver_metadata},
             )
 
-        # 6. Return in the existing 5-tuple format
+        # 5. Return in the existing 5-tuple format
         tour = solution.to_flat_tour()
         cost = solution.total_cost
         profit = solution.total_profit

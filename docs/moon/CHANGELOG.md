@@ -17,6 +17,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Simulator fixes from the Kimi review of PR #138 (`2026-10-20`)
+
+#### Fixed
+
+- **Days to overflow** (`Bins.predict_days_to_overflow`) passed the fill-rate standard deviation where `predict_days_to_overflow` expects the variance. Its other caller already passed the variance. Nothing in the simulator calls the `Bins` method today.
+- **TCPTP trip check** (`CollectAction`) summed the observed fill `bins.c`, while the capacity report used the true fill `bins.real_c`. It now checks the true fill (`test_capacity_violation_does_not_mutate_bins` now has an observed fill that fits and a true fill that doesn't). A zero vehicle capacity no longer reads as unlimited in the payload telemetry.
+- **Observed fill from a noisy-fill file** is clipped at 0 as well as at 100, as the noise-variance branch already was.
+- **Packing economics** (`PackingAction`). The `PackingContext` capacity, revenue, density and bin volume came from context attributes that don't exist, so the defaults always applied: a 2.5 kg bin at €1/kg and a 100 kg vehicle. They now come from the bins and the day context, with the vehicle capacity converted from percent of a bin to kg, which is what the knapsack rules compare it with. The paper's four packing rules don't read these fields. Covered by `test_packing_context_gets_the_area_economics_in_kg`.
+- **Rollout packing** tested the `(selected, context)` tuple returned by `pack()`, which is always truthy, so every simulated day collected. It now tests the selection.
+- **Sample aggregation** (`FinishingState`) adds `time_spent` only when every daily record has it. One record without it raised `KeyError`.
+- **`values` passed to the solvers** carry the scaled capacity and revenue under `capacity` and `revenue` too, not the raw config values. No solver reads those keys today.
+- **Unknown area or waste type** in `get_area_params` raises `ValueError`, not an `assert` that `python -O` removes. The docstring units are corrected to m³ and kg/m³.
+
+#### Changed
+
+- `predict_days_to_overflow` computes its loop-invariant terms once.
+- `get_area_params` raises `ValueError` for an unknown area or waste type; its tests expect that now.
+
+#### Not taken from the PR
+
+- The empty-mandatory short-circuit in `BaseMultiPeriodRoutingPolicy.execute`. Multi-period planners (CP-SAT, LBBD, PH, ST-EF) are usually given no mandatory set and choose the visits themselves, so it stopped them from ever routing; their tests caught it. Ruling D3 is about single-day policies.
+
+#### Verified
+
+- Full test suite: 2,638 passed, 0 failed.
+- A 2-day Rio Maior 100 run of ALNS, HGS, ACO-HH, SANS, PSOMA, PG-CLNS and BP: all 13 logs identical to `main` in kg, km, kg lost, overflows and profit.
+
 ### Hybrid policies ran the wrong engine (`2026-10-20`)
 
 #### Fixed
