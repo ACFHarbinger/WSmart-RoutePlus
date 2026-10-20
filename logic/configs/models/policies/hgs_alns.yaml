@@ -11,53 +11,17 @@
 #   python main.py train rl.imitation.policy_config=tasks/policies/rl/hgs_alns
 # =============================================================================
 
-_target_: logic.src.configs.learning.experts.VectorHGSALNSConfig
+_target_: logic.src.configs.policies.hgs_alns.HGSALNSConfig
 
-# Runtime Control
+# Same fields as the simulator's HGS-ALNS (HGSALNSConfig): HGS with ALNS
+# education. packing and route_improvement are simulator-only and ignored.
+
 time_limit: 30.0
-# Maximum wall-clock seconds for full HGS-ALNS pipeline
-# Range: 20-60 (20s = fast, 30s = balanced, 60s = high quality)
-# Note: Shared between HGS phase and ALNS education phase
-
-# Evolution Control
-n_generations: 100
-# Maximum number of HGS generations
-# Range: 50-200
-
-# HGS Population Management
-population_size: 50
-# Total individuals in genetic pool
-# Range: 25-100
-
-elite_size: 10
-# Number of solutions to "educate" with ALNS
-# Range: 5-25 (typically 20% of population_size)
-# Only elite solutions undergo ALNS refinement
-
-# Genetic Operators
-mutation_rate: 0.2
-# Probability of mutation after crossover in HGS phase
-# Range: 0.0-0.5
-
-crossover_rate: 0.7
-# Probability of applying crossover after mutation
-# Range: 0.0-1.0 (0.0 = pure mutation, 1.0 = pure crossover)
-# Recommendation: 0.7 for CVRP, 0.5 for VRPTW
-
-# ALNS Education Phase
-alns_education_iterations: 50
-# Number of destroy-repair cycles applied to each elite solution
-# Range: 10-200 (10 = light polish, 50 = balanced, 100 = deep search)
-# Higher values → better solutions but slower training
-
-alns_start_temp: 0.5
-# Starting temperature for ALNS
-# Range: 0.1-1.0 (0.1 = slow cooling, 1.0 = fast cooling)
-
-alns_cooling_rate: 0.9995
-# Cooling rate for ALNS
-# Range: 0.99-0.9999 (0.99 = slow cooling, 0.9999 = fast cooling)
-
-# Vehicle Constraints
-max_vehicles: 0
-# Maximum number of vehicles (0 = unlimited)
+profit_aware_operators: false
+hgs:
+  _target_: logic.src.configs.policies.hgs.HGSConfig
+  time_limit: 30.0
+alns:
+  _target_: logic.src.configs.policies.alns.ALNSConfig
+  max_iterations: 50
+  # Destroy-repair cycles of each education

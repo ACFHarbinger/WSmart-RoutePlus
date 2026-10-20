@@ -104,8 +104,11 @@ def test_expert_policy_hydra_targets_resolve():
         targets.append(target)
         module_name, _, class_name = target.rpartition(".")
         cls = getattr(importlib.import_module(module_name), class_name)
-        assert cls.__module__ == "logic.src.configs.learning.experts", path
-    assert any(item.endswith("VectorHVPLConfig") for item in targets)
+        assert cls.__module__.startswith("logic.src.configs.policies."), path
+        from logic.src.policies.vector.shared.factory import EXPERT_TARGETS
+
+        assert class_name in EXPERT_TARGETS, path
+    assert any(item.endswith(".HVPLConfig") for item in targets)
 
 
 def test_released_classical_imports_do_not_load_torch():

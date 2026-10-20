@@ -13,26 +13,25 @@ Example:
 from dataclasses import dataclass
 from typing import Any, Optional, Union
 
-from .experts import (
-    ACOConfig,
-    ProfitableNNConfig,
-    RLSConfig,
-    VectorALNSConfig,
-    VectorHGSALNSConfig,
-    VectorHGSConfig,
-    VectorHVPLConfig,
-    VectorILSConfig,
-)
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
+from logic.src.configs.policies.alns import ALNSConfig
+from logic.src.configs.policies.hgs import HGSConfig
+from logic.src.configs.policies.hgs_alns import HGSALNSConfig
+from logic.src.configs.policies.hvpl import HVPLConfig
+from logic.src.configs.policies.ils import ILSConfig
+from logic.src.configs.policies.other.route_improvement import RandomLocalSearchPostConfig
+from logic.src.configs.policies.profitable_nn import ProfitableNNConfig
 
-# Type alias for expert policy configurations
+# Type alias for expert policy configurations: the simulator policy configs of the
+# vectorised experts (``logic.src.policies.vector``).
 ExpertPolicyConfig = Union[
-    VectorHGSConfig,
-    VectorALNSConfig,
-    VectorILSConfig,
-    VectorHVPLConfig,
-    RLSConfig,
-    ACOConfig,
-    VectorHGSALNSConfig,
+    HGSConfig,
+    ALNSConfig,
+    ILSConfig,
+    HVPLConfig,
+    RandomLocalSearchPostConfig,
+    KSparseACOConfig,
+    HGSALNSConfig,
     ProfitableNNConfig,
 ]
 
@@ -43,7 +42,7 @@ class ImitationConfig:
 
     Attributes:
         policy_config: Configuration for the expert policy to imitate.
-                      One of the classes in ``logic.src.configs.learning.experts``.
+                      A simulator policy config (``ExpertPolicyConfig``).
         loss_fn: Loss function to use ('nll' for negative log-likelihood, 'mse' for mean squared error).
         fill_from: Whose routes empty the bins between time-training days: 'model' (the model's
                    sampled rollout; trained the paper models) or 'expert' (the expert's tours;

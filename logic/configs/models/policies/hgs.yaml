@@ -11,44 +11,25 @@
 #   python main.py train rl.imitation.policy_config=tasks/policies/rl/hgs
 # =============================================================================
 
-_target_: logic.src.configs.learning.experts.VectorHGSConfig
+_target_: logic.src.configs.policies.hgs.HGSConfig
 
-# Runtime Control
+# Same fields as the simulator's HGS (HGSConfig); packing, route_improvement,
+# engine and the acceptance-criterion telemetry are simulator-only and ignored.
+
 time_limit: 30.0
-# Maximum wall-clock seconds for HGS solver
-# Range: 10-60 (10s = fast but lower quality, 30s = balanced, 60s = high quality)
-# Note: Training speed vs demonstration quality tradeoff
-
-# Population Management
-population_size: 50
-# Total individuals in genetic pool
-# Range: 25-100 (25 = fast, 50 = balanced, 100 = thorough)
-# Higher = better solutions but slower training
-
-elite_size: 10
-# Number of elite solutions to preserve each generation
-# Range: 5-25 (typically 20% of population_size)
-
-# Genetic Operators
-mutation_rate: 0.2
-# Probability of mutation after crossover
-# Range: 0.0-0.5 (0.1 = conservative, 0.2 = balanced, 0.4 = aggressive)
-
-crossover_rate: 0.7
-# Probability of applying crossover after mutation
-# Range: 0.0-1.0 (0.0 = pure mutation, 1.0 = pure crossover)
-# Recommendation: 0.7 for CVRP, 0.5 for VRPTW
-
-# Evolution Control
-n_generations: 100
-# Maximum number of generations
-# Range: 50-200 (adaptive stopping typically halts earlier)
-
-# Vehicle Constraints
+# Maximum wall-clock seconds (0 = unlimited)
+restart_timer: 60.0
+mu: 25
+# Minimum population size
+n_offspring: 40
+# Offspring generated before survivor selection
+nb_elite: 4
+nb_close: 5
+n_iterations_no_improvement: 20000
+crossover_rate: 1.0
+mutation_rate: 1.0
+local_search_iterations: 500
+nb_granular: 20
 max_vehicles: 0
-# Maximum number of vehicles (0 = unlimited, determined by problem)
-
-# Local Search
-max_iterations: 50
-# Number of iterations for local search
-# Range: 10-100 (10 = fast, 50 = balanced, 100 = thorough)
+# Maximum number of vehicles (0 = unlimited)
+profit_aware_operators: true

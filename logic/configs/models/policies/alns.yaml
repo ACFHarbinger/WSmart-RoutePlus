@@ -11,32 +11,28 @@
 #   python main.py train rl.imitation.policy_config=tasks/policies/rl/alns
 # =============================================================================
 
-_target_: logic.src.configs.learning.experts.VectorALNSConfig
+_target_: logic.src.configs.policies.alns.ALNSConfig
 
-# Runtime Control
+# Same fields as the simulator's ALNS (ALNSConfig); packing, route_improvement
+# and engine are simulator-only and ignored by the vectorised expert.
+
 time_limit: 30.0
-# Maximum wall-clock seconds for ALNS solver
-# Range: 10-60 (10s = fast, 30s = balanced, 60s = high quality)
-
-# Search Parameters
-max_iterations: 10000
-# Maximum number of destroy-repair iterations
-# Range: 1000-25000 (adaptive stopping typically halts earlier)
-
-# Temperature Schedule (Simulated Annealing)
-start_temp: 100.0
-# Initial acceptance temperature for worse solutions
-# Range: 50-200 (higher = more exploration)
-
-cooling_rate: 0.995
-# Temperature decay per iteration (T_new = T_old * cooling_rate)
-# Range: 0.98-0.9999 (lower = faster cooling)
-
-# Removal Parameters
-max_removal_pct: 0.3
-# Maximum percentage of solution to remove in destroy phase
-# Range: 0.1-0.5 (0.2 = conservative, 0.3 = balanced, 0.5 = aggressive)
-
-# Vehicle Constraints
-max_vehicles: 0
-# Maximum number of vehicles (0 = unlimited)
+# Maximum wall-clock seconds
+max_iterations: 5000
+# Destroy-repair iterations
+reaction_factor: 0.1
+segment_size: 100
+# Adaptive weight update (Ropke & Pisinger 2006)
+xi: 0.4
+max_removal_cap: 100
+# Removal size upper bound: min(cap, xi * n)
+noise_factor: 0.025
+worst_removal_randomness: 3.0
+shaw_randomization: 6.0
+regret_pool: regret234
+sigma_1: 33.0
+sigma_2: 9.0
+sigma_3: 13.0
+profit_aware_operators: true
+extended_operators: false
+# acceptance_criterion keeps the simulator default

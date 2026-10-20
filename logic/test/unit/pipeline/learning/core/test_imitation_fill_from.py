@@ -4,7 +4,7 @@ from typing import Any, List, Optional
 
 import pytest
 import torch
-from logic.src.configs.learning.experts import ProfitableNNConfig
+from logic.src.configs.policies.profitable_nn import ProfitableNNConfig
 from logic.src.pipeline.learning.core.imitation import ImitationLearning
 from logic.src.pipeline.learning.envs.cptp import CPTPEnv
 from tensordict import TensorDict
@@ -109,3 +109,44 @@ def test_precompute_needs_the_expert_fill_and_a_cache(tmp_path) -> None:
         _module("model", expert_cache=str(tmp_path), precompute=True)
     with pytest.raises(ValueError, match="precompute"):
         _module("expert", precompute=True)
+
+
+def _small_expert_configs() -> List[Any]:
+    from logic.src.configs.policies import ALNSConfig, HGSALNSConfig, HGSConfig, HVPLConfig, ILSConfig, KSparseACOConfig
+    from logic.src.configs.policies.other.route_improvement import RandomLocalSearchPostConfig
+
+    hgs = HGSConfig(mu=4, n_offspring=4, n_iterations_no_improvement=3, local_search_iterations=5)
+    return [
+        ALNSConfig(max_iterations=20),
+        hgs,
+        HGSALNSConfig(hgs=hgs, alns=ALNSConfig(max_iterations=5)),
+        HVPLConfig(n_teams=3, max_iterations=2, aco_init_iterations=2, alns_params=ALNSConfig(max_iterations=5)),
+        ILSConfig(n_restarts=3, inner_iterations=3),
+        KSparseACOConfig(n_ants=4, max_iterations=3, local_search_iterations=5, k_sparse=3),
+        RandomLocalSearchPostConfig(iterations=10),
+    ]
+
+
+@pytest.mark.parametrize("config", _small_expert_configs(), ids=lambda c: type(c).__name__)
+def test_every_vectorised_expert_drives_the_expert_fill(config: Any) -> None:
+    """The experts take the simulator policy configs; the selective ones serve bins 1-3 only.
+
+    RLS (a route improver: it never drops bins) and K-sparse ACO without profit-aware
+    operators visit every bin, as their simulator counterparts do.
+    """
+    env = CPTPEnv(generator_params={"num_loc": 4}, check_env_specs=False, waste_weight=10.0, cost_weight=1.0)
+    module = ImitationLearning(
+        policy_config=config, env_name="cptp", fill_from="expert", env=env, policy=_StubPolicy(), train_time=True
+    )
+    module.log = lambda *a, **k: None
+    _, batch = _module("expert")
+
+    out = module.shared_step(batch, 0, phase="train")
+
+    assert out["source"] == "expert"
+    assert out["loss"].requires_grad
+    served = set(module._epoch_actions[0].flatten().tolist())
+    if type(config).__name__ in {"RandomLocalSearchPostConfig", "KSparseACOConfig"}:
+        assert {0, 1, 2, 3} <= served
+    else:
+        assert served == {0, 1, 2, 3}
