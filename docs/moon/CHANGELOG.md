@@ -17,6 +17,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Hybrid policies ran the wrong engine (`2026-10-20`)
+
+#### Fixed
+
+- **Routing engine resolution** (`pipeline/simulations/actions/routing.py`). When a policy's config named no engine, the routing action took the first config key that matched a registered engine, in set order, before it looked at the policy name. Hybrids nest their components' sections at the top level, so they ran a component instead:
+  - HVPL, HMLNS and RL-HVPL ran ALNS, with their own `alns` section;
+  - HGS-ALNS ran ALNS;
+  - CALM ran TPKS.
+
+  The engine named in the policy name now comes first, and a config key is a deterministic fallback. All 87 other policy YAMLs resolve as before; none of the affected policies is in the paper or the 1.0 release. Covered by `test_routing_engine_resolution_prefers_the_policy_name`.
+
+#### Removed
+
+- `policy_hms.yaml` and `policy_rl_ahvpl.yaml`, configs for policies that no longer exist. They only ever ran ALNS.
+
+#### Known issues
+
+Running for the first time, four of the five hybrids crash on a 2-day Rio Maior 100 run (HVPL completes):
+- HMLNS and RL-HVPL: `ALNSConfig` has no `max_removal_pct`.
+- HGS-ALNS: `_select_parents()` is called without `pop_infeasible`.
+- CALM: `float()` is given a dict.
+
+These are listed for the ultra review.
+
 ### Compatibility shims removed (`2026-10-20`)
 
 #### Removed

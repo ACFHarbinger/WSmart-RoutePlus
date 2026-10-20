@@ -27,6 +27,15 @@ from logic.src.policies.routing.base import RoutingAlgorithmFactory, RoutingAlgo
 from .base import SimulationAction, bind_context
 
 
+def _engine_in_name(name: str, registered: Any) -> Any:
+    """The longest registered engine that is a ``_``-delimited part of ``name``, or None."""
+    lower = name.lower()
+    for eng in sorted(registered, key=lambda k: (-len(k), k)):
+        if eng == lower or f"_{eng}_" in lower or lower.startswith(f"{eng}_") or lower.endswith(f"_{eng}"):
+            return eng
+    return None
+
+
 class RoutingAction(SimulationAction):
     """
     Executes the routing policy to generate collection tours.
@@ -92,36 +101,26 @@ class RoutingAction(SimulationAction):
         # Explicit engine/solver from config
         solver_key = flat_cfg.get("policy.type") or flat_cfg.get("policy.solver") or flat_cfg.get("policy.engine")
 
-        # Fallback: identify solver from keys in raw config matching registry
         # (register every adapter first: the registry otherwise holds only the imported ones)
         RoutingAlgorithmFactory.ensure_registered()
-        if not solver_key:
-            registered = set(RoutingAlgorithmRegistry.list_routing_algorithms())
-            for key in registered:
-                if key in raw_cfg:
-                    solver_key = key
-                    break
+        registered = set(RoutingAlgorithmRegistry.list_routing_algorithms())
 
-        # Last resort: use full_policy string
+        # Next the engine named in the policy name ('lookahead_hvpl_custom_emp' -> 'hvpl'),
+        # then a config key naming an engine. The name comes first because hybrids nest
+        # their components' sections ('alns' inside HVPL's config) at the top level.
         if not solver_key:
-            solver_key = full_policy
+            solver_key = _engine_in_name(full_policy, registered)
+        if not solver_key:
+            solver_key = next((k for k in sorted(registered, key=lambda k: (-len(k), k)) if k in raw_cfg), None)
 
         # Resolve compound names (e.g. 'lookahead_lahc_custom_emp' -> 'lahc')
-        registered = set(RoutingAlgorithmRegistry.list_routing_algorithms())
         if solver_key and solver_key not in registered:
-            lower = str(solver_key).lower()
-            # Try to extract a registered engine from the compound name
-            resolved = False
-            for eng in sorted(registered, key=len, reverse=True):
-                # Match with word boundaries (underscore or string ends)
-                if f"_{eng}_" in lower or lower.startswith(f"{eng}_") or lower.endswith(f"_{eng}") or eng == lower:
-                    solver_key = eng
-                    resolved = True
-                    break
-            if not resolved:
-                raise ValueError(
-                    f"Unknown policy '{solver_key}' (from '{full_policy}'). Registered policies: {sorted(registered)}"
-                )
+            solver_key = _engine_in_name(str(solver_key), registered) or solver_key
+        if not solver_key or solver_key not in registered:
+            raise ValueError(
+                f"Unknown policy '{solver_key or full_policy}' (from '{full_policy}'). "
+                f"Registered policies: {sorted(registered)}"
+            )
 
         # A status noted on a previous day must not be copied onto this one.
         reset_solver_status()

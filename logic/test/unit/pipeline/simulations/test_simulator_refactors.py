@@ -176,3 +176,36 @@ def test_display_log_metrics_is_the_mean_writer(tmp_path):
         )
 
     assert sections == ["mean", "std"]
+
+
+@pytest.mark.parametrize(
+    "full_policy, config, expected",
+    [
+        # Hybrids nest their components' sections; the policy name wins over them.
+        ("lookahead_hvpl_custom_emp", {"n_teams": 10, "aco": {}, "alns": {"max_iterations": 1}}, "hvpl"),
+        ("lookahead_hgs_alns_custom_emp", {"hgs": {}, "alns": {}}, "hgs_alns"),
+        ("lookahead_alns_custom_emp", {"max_iterations": 1}, "alns"),
+        # Without an engine in the name, a config key names it.
+        ("", {"hgs": {"population_size": 4}}, "hgs"),
+    ],
+)
+def test_routing_engine_resolution_prefers_the_policy_name(full_policy, config, expected):
+    """The engine comes from the policy name before config keys that name other engines."""
+    adapter, context = _route_context(None)
+    context["full_policy"], context["config"] = full_policy, config
+    with (
+        patch("logic.src.policies.routing.base.factory.RoutingAlgorithmFactory.ensure_registered"),
+        patch(
+            "logic.src.policies.routing.base.factory.RoutingAlgorithmFactory.get_adapter", return_value=adapter
+        ) as get_adapter,
+        patch(
+            "logic.src.policies.routing.base.registry.RoutingAlgorithmRegistry.list_routing_algorithms",
+            return_value=["alns", "hgs", "hgs_alns", "hvpl"],
+        ),
+        patch("logic.src.pipeline.simulations.bins.prediction.ScenarioGenerator"),
+        patch("logic.src.tracking.logging.modules.policy_viz_emit.PolicyVizStreamSession") as viz,
+    ):
+        viz.return_value.__enter__.return_value = None
+        viz.return_value.__exit__.return_value = False
+        RoutingAction().execute(context)
+    assert get_adapter.call_args.args[0] == expected
