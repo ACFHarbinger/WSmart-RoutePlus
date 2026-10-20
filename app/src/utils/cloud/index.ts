@@ -16,6 +16,7 @@ import type {
   CloudSubmitRequest,
   CloudSubmitResult,
   CloudTaskLogsResult,
+  CloudTaskMetrics,
   CloudWorkerTickResult,
 } from "../../types/cloud";
 
@@ -107,6 +108,23 @@ export async function getCloudTaskLogs(
   return invoke<CloudTaskLogsResult>("cloud_task_logs", {
     taskId,
     tail,
+    projectRoot: options?.projectRoot,
+    root: options?.root,
+    pythonExecutable: options?.pythonExecutable,
+  });
+}
+
+/**
+ * Fetch a task's telemetry: resource samples, peaks and simulation progress (CR-12).
+ */
+export async function getCloudTaskMetrics(
+  taskId: string,
+  since?: number,
+  options?: CloudCliOptions
+): Promise<CloudTaskMetrics> {
+  return invoke<CloudTaskMetrics>("cloud_task_metrics", {
+    taskId,
+    since,
     projectRoot: options?.projectRoot,
     root: options?.root,
     pythonExecutable: options?.pythonExecutable,

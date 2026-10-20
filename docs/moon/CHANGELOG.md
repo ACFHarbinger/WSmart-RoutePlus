@@ -56,6 +56,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Corrected Azure VM ACR token exchange, numeric exit-code Merge tagging, token refresh, SSH-key generation failure handling, and the Compute 30 NIC deletion field. Added local bootstrap regressions. CR-07 remains pending real Batch/Container Apps SDK adapters, installation/version bounds and reliable cleanup; see the Codex cloud review of 2026-10-20 on the main checkout.
 
+### Cloud runner CR-12: instrumentation and tracking (`2026-10-20`)
+
+#### Added
+
+- **Task telemetry** (`logic/controllers/cloud/telemetry.py`, #132). While the simulator runs, the task runtime writes three kinds of control-plane metric records:
+  - **`resource`**: CPU, `memory_rss_mb`, threads and processes of the simulator's process tree, plus work-directory size and network counters, every `WSR_CLOUD_SAMPLE_SECONDS` (default 5). Resource sampling needs `psutil` and is skipped without it.
+  - **`progress`**: one record per policy and day, read incrementally from the day logger's `log_realtime_*.jsonl`, with the day, the horizon, the solver status and the day's KPIs. The task's `progress` field carries the latest day.
+  - **`log_tail`** and **`telemetry_error`**: lifecycle events for a failed simulator and for instrumentation errors. Instrumentation errors never stop a task.
+- **Batched, rate-limited writes** (`TelemetryBuffer`): at most one write per 10 s, at most 200 records each. Cost records (`kind: cost`, CR-10) use the same stream.
+- **Tracking module**: a `run_events` table, `log_run_event`, `get_run_events` and `clear_run_data` on `TrackingStore`. `import_job` creates one `cloud_task` run per task, tagged with job, cell, provider, compute and attempt. It records metrics as `resource/*`, `progress/*` and `cost/*` and lifecycle events in `run_events`. The run's artifact directory is the job's `cloud download` folder, which links it to the local outputs. Re-importing is idempotent.
+- **CLI**:
+  - `cloud metrics <task>`: resource points, peaks, latest progress and per-day KPIs.
+  - `cloud track <job>`: imports the job into the simulator's tracking database (`assets/tracking/tracking.db`).
+  - `cloud status`: each task now has `cpu_percent`, `memory_rss_mb` and `progress`.
+- **App**: the `cloud_task_metrics` Tauri command and `getCloudTaskMetrics`. The Monitor's telemetry tab plots the selected task's samples and shows its current day, refreshing every 10 s. Its empty state no longer says CR-12 is pending.
+- Tests: `test_telemetry.py` (8).
+
+### Cloud local backend import path (`2026-10-20`)
+
+#### Fixed
+
+- **Local backend tasks failed when the repository was not on the import path.** `LocalProcessBackend` starts `python -m logic.controllers.cloud.local._wrap` in the task's work directory, which need not contain this checkout. It now prepends the repository root to `PYTHONPATH`, as `spawn_worker` already did. This fixes the four cloud tests that failed in the main suite: `test_local_process_backend`, `test_local_backend_resolves_secrets_without_logging_them`, `test_cli_runs_a_manifest_end_to_end_and_resumes_a_killed_task` and `test_download_lists_files_with_hashes`.
+
 ### Codex CR-16 telemetry review corrections (`2026-10-20`)
 
 - Align retry-wide timestamp spans with summed attempt durations; preserve unavailable/invalid totals and policy identity; restrict prediction accuracy to completed single-attempt samples. Monetary values are prorated scheduler-time/price-hint estimates with transported provenance, not invoiced costs or universal provider billing minimums. Index lifecycle events by task. Validation: 12 Python service, 95 frontend and 18 Rust cloud tests pass, plus TypeScript/Ruff/diff checks.

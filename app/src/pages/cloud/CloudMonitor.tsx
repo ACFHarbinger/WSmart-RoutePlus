@@ -29,10 +29,12 @@ import { useCloudMonitorStore } from "../../store/cloudMonitor";
 import type {
   CloudJobStatus,
   CloudJobSummary,
+  CloudTaskMetrics,
 } from "../../types/cloud";
 import {
   cancelCloudJob,
   getCloudJobStatus,
+  getCloudTaskMetrics,
   listCloudJobs,
   retryCloudJob,
   tickCloudWorker,
@@ -68,6 +70,8 @@ export function CloudMonitor() {
 
   // Modals state
   const [logTaskId, setLogTaskId] = useState<string | null>(null);
+  const [metricsTaskId, setMetricsTaskId] = useState<string | null>(null);
+  const [taskMetrics, setTaskMetrics] = useState<CloudTaskMetrics | null>(null);
   const [downloadJobId, setDownloadJobId] = useState<string | null>(null);
 
   // Manager action in-progress states
@@ -96,6 +100,39 @@ export function CloudMonitor() {
   useEffect(() => {
     fetchJobs();
   }, [fetchJobs]);
+
+  // Telemetry tab (CR-12): default to the first running task, else the first task.
+  const metricsTask = useMemo(() => {
+    const tasks = activeJob?.tasks ?? [];
+    return (
+      tasks.find((t) => t.task_id === metricsTaskId) ??
+      tasks.find((t) => t.state === "running") ??
+      tasks[0] ??
+      null
+    );
+  }, [activeJob, metricsTaskId]);
+
+  useEffect(() => {
+    if (activeTab !== "metrics" || !metricsTask) {
+      setTaskMetrics(null);
+      return;
+    }
+    let cancelled = false;
+    const load = () =>
+      getCloudTaskMetrics(metricsTask.task_id, undefined, { projectRoot, root })
+        .then((m) => {
+          if (!cancelled) setTaskMetrics(m);
+        })
+        .catch(() => {
+          if (!cancelled) setTaskMetrics(null);
+        });
+    load();
+    const interval = autoRefresh ? setInterval(load, 10000) : undefined;
+    return () => {
+      cancelled = true;
+      if (interval) clearInterval(interval);
+    };
+  }, [activeTab, metricsTask, autoRefresh, projectRoot, root]);
 
   // Periodic polling for the job list when auto-refresh is active
   useEffect(() => {
@@ -675,9 +712,42 @@ export function CloudMonitor() {
                   </div>
                 )}
 
-                {/* Tab 2: Resource Telemetry (CR-12 pending) */}
+                {/* Tab 2: Resource Telemetry (CR-12) */}
                 {activeTab === "metrics" && (
-                  <TaskMetricsPanel metrics={null} />
+                  <div className="space-y-3">
+                    {activeJob.tasks.length > 1 && (
+                      <select
+                        data-testid="metrics-task-select"
+                        value={metricsTask?.task_id ?? ""}
+                        onChange={(e) => setMetricsTaskId(e.target.value)}
+                        className="input text-xs py-1"
+                      >
+                        {activeJob.tasks.map((t) => (
+                          <option key={t.task_id} value={t.task_id}>
+                            {t.cell_id} ({t.state})
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    {taskMetrics?.progress && (
+                      <p data-testid="metrics-progress" className="text-xs text-gray-400">
+                        {taskMetrics.progress.policy}: day {taskMetrics.progress.day}
+                        {taskMetrics.progress.days ? ` of ${taskMetrics.progress.days}` : ""}
+                      </p>
+                    )}
+                    <TaskMetricsPanel
+                      metrics={
+                        taskMetrics
+                          ? {
+                              task_id: taskMetrics.task_id,
+                              points: taskMetrics.points,
+                              peak_cpu: taskMetrics.peak_cpu ?? undefined,
+                              peak_memory_mb: taskMetrics.peak_memory_mb ?? undefined,
+                            }
+                          : null
+                      }
+                    />
+                  </div>
                 )}
 
                 {/* Tab 3: Raw Status JSON */}

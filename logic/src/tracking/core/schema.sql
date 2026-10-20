@@ -76,3 +76,15 @@ CREATE TABLE IF NOT EXISTS dataset_events (
     timestamp   TEXT    NOT NULL,
     FOREIGN KEY (run_id) REFERENCES runs(id)
 );
+
+-- Lifecycle events of a run (cloud tasks: submitted, state changes, retries, results).
+-- "timestamp" is the event's Unix time, so imported events keep their order.
+CREATE TABLE IF NOT EXISTS run_events (
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    run_id    TEXT    NOT NULL,
+    kind      TEXT    NOT NULL,
+    data      TEXT    DEFAULT '{}',
+    timestamp REAL    NOT NULL,
+    FOREIGN KEY (run_id) REFERENCES runs(id)
+);
+CREATE INDEX IF NOT EXISTS idx_run_events_run ON run_events (run_id, timestamp);

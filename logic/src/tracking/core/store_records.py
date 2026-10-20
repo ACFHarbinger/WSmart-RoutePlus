@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import time
 from typing import Any, Dict, List, Optional, Tuple
 
 
@@ -276,6 +277,46 @@ class TrackingStoreRecordMixin:
         with self._conn() as conn:
             rows = conn.execute(self.queries["get_dataset_events"], (run_id,)).fetchall()
             return [dict(r) for r in rows]
+
+    def log_run_event(
+        self, run_id: str, kind: str, data: Optional[Dict[str, Any]] = None, at: Optional[float] = None
+    ) -> None:
+        """Records a lifecycle event of a run.
+
+        Args:
+            run_id: UUID string identifying the run.
+            kind: Event kind (e.g., 'submitted', 'state', 'retry').
+            data: JSON-serialisable payload.
+            at: Unix time of the event. Defaults to now.
+        """
+        with self._conn() as conn:
+            conn.execute(
+                self.queries["insert_run_event"],
+                (run_id, kind, _safe_json_dumps(data or {}), float(time.time() if at is None else at)),
+            )
+
+    def get_run_events(self, run_id: str) -> List[Dict[str, Any]]:
+        """Returns a run's lifecycle events, oldest first.
+
+        Args:
+            run_id: UUID string identifying the run.
+
+        Returns:
+            List of ``{"kind", "data", "timestamp"}`` dictionaries.
+        """
+        with self._conn() as conn:
+            rows = conn.execute(self.queries["get_run_events"], (run_id,)).fetchall()
+        return [{"kind": r[0], "data": json.loads(r[1] or "{}"), "timestamp": r[2]} for r in rows]
+
+    def clear_run_data(self, run_id: str) -> None:
+        """Deletes a run's metrics and events, so an import can be repeated.
+
+        Args:
+            run_id: UUID string identifying the run.
+        """
+        with self._conn() as conn:
+            conn.execute(self.queries["delete_run_metrics"], (run_id,))
+            conn.execute(self.queries["delete_run_events"], (run_id,))
 
 
 def _safe_json_dumps(value: Any) -> str:

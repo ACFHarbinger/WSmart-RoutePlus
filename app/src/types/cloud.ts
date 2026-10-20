@@ -79,6 +79,28 @@ export interface CloudRetryResult {
   retried: number;
 }
 
+/** One resource sample of a task (CR-12 telemetry). */
+export interface CloudTaskMetricPoint {
+  timestamp_ms: number;
+  cpu_percent: number;
+  memory_rss_mb: number;
+}
+
+/** A task's telemetry from `cloud metrics --json` (CR-12). */
+export interface CloudTaskMetrics {
+  task_id: string;
+  points: CloudTaskMetricPoint[];
+  peak_cpu: number | null;
+  peak_memory_mb: number | null;
+  progress: {
+    day: number;
+    days: number | null;
+    policy: string;
+    kpis: Record<string, number>;
+  } | null;
+  days: Array<{ policy: string; day: number; solver_status?: string | null } & Record<string, unknown>>;
+}
+
 export interface CloudTaskLogsResult {
   task_id: string;
   log: string;

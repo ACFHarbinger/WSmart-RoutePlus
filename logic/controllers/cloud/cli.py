@@ -153,6 +153,37 @@ def _logs(ctx: _Context) -> Any:
     return text
 
 
+def _metrics(ctx: _Context) -> Any:
+    payload = ctx.service.metrics(ctx.opts["task_id"], since=ctx.opts.get("since"))
+    progress = payload["progress"]
+    text = f"{payload['task_id']}: {len(payload['points'])} resource sample(s)" + (
+        f", day {progress['day']}/{progress['days'] or '?'} ({progress['policy']})" if progress else ""
+    )
+    _print(ctx.opts, payload, text)
+    return payload
+
+
+def _track(ctx: _Context) -> Any:
+    from logic.controllers.cloud.telemetry import import_job
+    from logic.src.constants import ROOT_DIR
+    from logic.src.tracking import _DEFAULT_TRACKING_URI
+    from logic.src.tracking.core.store import TrackingStore
+
+    # The same database the simulator's tracker writes (tracking.db under the tracking directory).
+    uri = Path(ctx.opts.get("tracking_uri") or Path(ROOT_DIR) / _DEFAULT_TRACKING_URI)
+    store = TrackingStore(str(uri / "tracking.db"))
+    job_id = ctx.opts["job_id"]
+    run_ids = import_job(
+        ctx.service.cp,
+        job_id,
+        store,
+        experiment=ctx.opts.get("experiment") or "cloud",
+        results_dir=(ctx.root / "results" / job_id).resolve(),
+    )
+    _print(ctx.opts, {"job_id": job_id, "runs": run_ids}, f"imported {len(run_ids)} run(s)")
+    return run_ids
+
+
 def _cancel(ctx: _Context) -> Any:
     job_id = ctx.opts["job_id"]
     ctx.service.cancel(job_id)
@@ -224,6 +255,8 @@ _COMMANDS: Dict[str, Callable[[_Context], Any]] = {
     "submit": _submit,
     "status": _status,
     "logs": _logs,
+    "metrics": _metrics,
+    "track": _track,
     "cancel": _cancel,
     "retry": _retry,
     "download": _download,
