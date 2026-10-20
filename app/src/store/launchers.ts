@@ -357,6 +357,10 @@ export interface CloudLauncherState {
   idleSeconds: number;
   gurobiMode: CloudGurobiMode;
   gurobiSecret: string;
+  /** CR-10: machine type and region for prices, and the job's cost cap (0: none). */
+  machineType: string;
+  region: string;
+  budgetUsd: number;
   root: string;
   patch: (updates: Partial<Omit<CloudLauncherState, "patch">>) => void;
 }
@@ -379,6 +383,9 @@ export const useCloudLauncherStore = create<CloudLauncherState>()(
       retries: 2,
       maxWallSeconds: 7200,
       idleSeconds: 60,
+      machineType: "",
+      region: "",
+      budgetUsd: 0,
       gurobiMode: "none",
       gurobiSecret: "",
       root: "outputs/cloud",

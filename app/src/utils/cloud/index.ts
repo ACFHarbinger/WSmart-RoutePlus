@@ -13,6 +13,7 @@ import type {
   CloudJobStatusUpdateEvent,
   CloudJobSummary,
   CloudRetryResult,
+  CloudJobEstimate,
   CloudSubmitRequest,
   CloudSubmitResult,
   CloudTaskLogsResult,
@@ -46,6 +47,21 @@ export async function getCloudJobStatus(
 ): Promise<CloudJobStatus> {
   return invoke<CloudJobStatus>("cloud_job_status", {
     jobId,
+    projectRoot: options?.projectRoot,
+    root: options?.root,
+    pythonExecutable: options?.pythonExecutable,
+  });
+}
+
+/**
+ * Pre-launch cost and ETA estimate of a submit request (CR-10); null without a predictor.
+ */
+export async function getCloudCostEstimate(
+  request: CloudSubmitRequest,
+  options?: CloudCliOptions
+): Promise<CloudJobEstimate | null> {
+  return invoke<CloudJobEstimate | null>("cloud_cost_estimate", {
+    request,
     projectRoot: options?.projectRoot,
     root: options?.root,
     pythonExecutable: options?.pythonExecutable,

@@ -138,6 +138,11 @@ pub async fn cloud_submit(
         subcmd.push("--gurobi-secret".to_string());
         subcmd.push(gs.clone());
     }
+    push_cost_args(&mut subcmd, &request);
+    if let Some(b) = request.budget {
+        subcmd.push("--budget".to_string());
+        subcmd.push(b.to_string());
+    }
     if let Some(true) = request.wait {
         subcmd.push("--wait".to_string());
     }
@@ -189,6 +194,72 @@ pub async fn cloud_retry(
     }
     let subcmd = vec!["retry".to_string(), job_id];
     run_cloud_cli::<CloudRetryResult>(
+        project_root.as_deref(),
+        root.as_deref(),
+        python_executable.as_deref(),
+        &subcmd,
+    )
+    .await
+}
+
+/// Machine type and region flags shared by `submit` and `cost estimate`.
+fn push_cost_args(subcmd: &mut Vec<String>, request: &CloudSubmitRequest) {
+    if let Some(ref m) = request.machine_type {
+        if !m.trim().is_empty() {
+            subcmd.push("--machine-type".to_string());
+            subcmd.push(m.trim().to_string());
+        }
+    }
+    if let Some(ref r) = request.region {
+        if !r.trim().is_empty() {
+            subcmd.push("--region".to_string());
+            subcmd.push(r.trim().to_string());
+        }
+    }
+}
+
+/// Pre-launch cost and ETA estimate of a submit request (CR-10), without submitting.
+///
+/// Returns the `cloud cost estimate --json` payload (the app's `CloudJobEstimate`), or
+/// `null` when no runtime predictor is available.
+#[tauri::command]
+pub async fn cloud_cost_estimate(
+    request: CloudSubmitRequest,
+    project_root: Option<String>,
+    root: Option<String>,
+    python_executable: Option<String>,
+) -> Result<serde_json::Value, String> {
+    let mut subcmd = vec!["cost".to_string(), "estimate".to_string()];
+    if let Some(ref m) = request.manifest {
+        subcmd.push("--manifest".to_string());
+        subcmd.push(m.clone());
+    } else if let Some(ref c) = request.command {
+        subcmd.push("--command".to_string());
+        subcmd.push(c.clone());
+    } else {
+        return Err("cloud_cost_estimate requires either 'manifest' or 'command' in request".to_string());
+    }
+    if let Some(ref p) = request.policy {
+        subcmd.push("--policy".to_string());
+        subcmd.push(p.clone());
+    }
+    if let Some(ref prov) = request.provider {
+        subcmd.push("--provider".to_string());
+        subcmd.push(prov.clone());
+    }
+    if let Some(ref comp) = request.compute {
+        subcmd.push("--compute".to_string());
+        subcmd.push(comp.clone());
+    }
+    if let Some(mp) = request.max_parallel {
+        subcmd.push("--max-parallel".to_string());
+        subcmd.push(mp.to_string());
+    }
+    if let Some(true) = request.spot {
+        subcmd.push("--spot".to_string());
+    }
+    push_cost_args(&mut subcmd, &request);
+    run_cloud_cli::<serde_json::Value>(
         project_root.as_deref(),
         root.as_deref(),
         python_executable.as_deref(),

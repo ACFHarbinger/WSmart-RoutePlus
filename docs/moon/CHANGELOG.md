@@ -17,6 +17,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Cloud runner CR-10: cost estimates, budget caps and accrual (`2026-10-20`)
+
+#### Added
+
+- **`logic/controllers/cloud/cost/`** (#130). All amounts are list-price estimates, not invoices.
+  - **`PriceTable`**: hourly prices per provider, region, machine type and spot. Overrides in `<root>/prices.json`, refreshed per provider and region by `update(provider, region, fetcher)`, take precedence over the providers' static tables. `provider_fetcher` picks up a provider pricing module's `fetch_prices` (none exist yet: fakes only). The status view and accrual both use this table.
+  - **Pre-launch estimate** (`estimate_job`, `CloudService.estimate`): CR-11 p10/p50/p90 × hourly price, one task per instance, summed per job. Local jobs cost 0; an unknown price gives None, never 0.
+  - **Caps**: `Resources.budget_usd` per job, and `BudgetPolicy(monthly_usd, warn_fractions)` read from `<root>/budget.json`.
+    - At submit, a p50 estimate over the job cap, or over the month's remaining budget, raises `BudgetExceeded` before anything is stored. The month counts unfinished jobs at max(p50 estimate, accrued). A p90 over a cap only warns.
+    - Each scheduling pass writes `kind: cost` records (`accrued_usd`, `rate_usd_h`, `elapsed_s`) to the CR-12 stream, at most every 60 s and once more at the end. It emits one `budget_warning` per scope and fraction, and cancels the job when its accrued cost reaches its cap. When the month reaches its cap, every running job of that month is cancelled (`budget_stop`).
+  - **Billing exports** (`import_billing_csv`): per-job totals from a CSV with a `wsr_job_id` label column (GCP, AWS and Azure column names), recorded as `billing` events.
+- **CLI**: `cloud submit --machine-type --region --budget`, plus `cloud cost estimate` (with `cost_usd`, `eta_seconds` from longest-first packing onto `--max-parallel` slots, and `memory_required_gb`), `cloud cost show <job>`, `cloud cost prices <provider> <machine_type>` and `cloud cost import-billing <csv> --provider`.
+- **App**: the `cloud_cost_estimate` Tauri command and `getCloudCostEstimate`. The Launcher has machine type, region and budget fields (`CostLimitsFields`) and a debounced estimate (`useCloudEstimate`) in its `EstimatePanel`. Submit passes the new flags.
+- Tests: `test_cost.py` (8) and `CostLimitsFields.test.tsx`.
+
 ### Cloud runner CR-11: runtime and memory prediction (`2026-10-20`)
 
 #### Added
