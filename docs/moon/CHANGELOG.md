@@ -17,6 +17,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Azure provisioning crash recovery (`2026-10-20`)
+
+- Persist a scoped allocation intent before creating a NIC or VM, flush journal data and its directory entry, and retain it until the control plane accepts the backend handle. On restart, expire placing leases before reconciling; preserve live owners and accepted handles, reclaim abandoned allocations, and retain failed deletion work durably.
+- Renew leases during slow provisioning, use unique resource names per leased submission and reject stale scheduler handoffs. NIC provisioning failures now pass through the same teardown path as VM failures.
+- Keep journal files under the configured persistent `WSR_STATE_DIR` (or the explicit orphan-file directory); recovery requires the same directory and control-plane scope on restart. Unknown account/control-plane ownership is preserved rather than deleted.
+- Added crash tests before/after NIC creation, after VM creation, around durable handoff, with competing ownership, plus an actual child process exiting during provisioning. The initial cloud-controller suite passed (142 tests, four Docker/Postgres-only skips); after integrating CR-12 instrumentation, the combined suite passes 150 tests with the same four skips.
+
+### Codex Azure orphan/logging review (`2026-10-20`)
+
+- Scope orphan cleanup by subscription/profile, serialize queue mutations, and surface corrupt/unwritable state. Handle disappearance after VM cancellation, distinguish retry VM names, block reuse pending cleanup, and drain cleanup during scheduler maintenance without active jobs. Fix Log Analytics timespan/dependency/error handling; refresh the lock. Added offline account-boundary, queue, SDK and service regressions (67 tests pass). The provisioning crash window still requires a write-ahead intent and ownership reconciliation before merge.
+
+### Azure compute backend blockers resolved and service integration verified (`2026-10-20`)
+
+- **Partial-VM Teardown & Durable Orphan Queue**:
+  - Enforced partial VM resource deletion *before* NIC deletion on failed submit to avoid NIC-in-use errors.
+  - Implemented idempotent not-found handling (treating 404, `ResourceNotFound`, and `NotFound` as clean deletions).
+  - Added durable JSON orphan queue (`orphan_file`, `_record_orphan`, `drain_orphans`) tracking uncleaned resources across scheduler timeouts, loss, or crashes, drained automatically on `submit()` and `poll()`.
+- **Boot Diagnostics & Container Apps Log Analytics**:
+  - Enabled managed boot diagnostics in `vm_params` (`{"diagnostics_profile": {"boot_diagnostics": {"enabled": True}}}`).
+  - Added Azure Monitor Log Analytics query support (`ContainerAppConsoleLogs_CL`) for `ContainerAppsJobsBackend.logs()` with `logs_client` and `workspace_id`, maintaining fallback for offline test fakes.
+- **Integrated CloudService Tests**:
+  - Added end-to-end service integration test suite driving Azure VM and Container Apps through `CloudService` lifecycle (submit -> run -> success, job cancellation propagating to backend deletion, spot eviction retry handling, and submit capacity partial teardown).
+  - All 46 provider contract, regression, and service integration tests pass offline without cloud credentials.
+
+### Azure cloud provider integration blockers resolved (`2026-10-20`)
+
+- **Batch Placement & Job API**: Replaced invalid task-level `pool_id` placement with job-level targeting (`job_id_spot` for spot tasks, `job_id` for on-demand). Inferred spot status from job handle rather than non-existent task field.
+- **Container Apps Jobs SDK Adapter**: Implemented real `azure-mgmt-appcontainers==3.0.0` execution lifecycle using `jobs_executions.list(...)`, `jobs.begin_stop_execution(...)`, and awaited LRO poller result on `jobs.begin_start(...)`.
+- **Container Apps Secret Patching**: Corrected patch envelope structure to `{"properties": {"configuration": {"secrets": ...}}}` with snake_case `key_vault_url`, awaited update LRO poller, and propagated update failures without proceeding without required secrets.
+- **Batch Authentication Adapter**: Added `MsrestTokenCredentialAdapter` wrapping `azure.identity` TokenCredentials with `signed_session(session)` for `azure.batch` 14.x msrest pipelines.
+- **Dependency Contracts**: Added `azure-mgmt-network>=25.0.0,<26.0.0` to `cloud` optional dependencies in `logic/pyproject.toml` and pinned compatible version bounds for `azure-batch`, `azure-mgmt-appcontainers`, and `azure-mgmt-compute`.
+- **VM Cleanup & Billing Safety**: Cleaned up pre-created NIC if VM creation fails; triggered VM deletion upon asynchronous provisioning failure or spot eviction; surfaced deletion errors on deallocated/stopped VMs.
+- **Diagnostics & Failure Handling**: Fetched log content from boot diagnostics URL in VM `logs()`, handled absent Container Apps log stream gracefully, and re-raised authorization/service errors in Key Vault and Blob Storage rather than swallowing into `None` or `False`.
+- **Validation**: Expanded test suite to 25 unit/contract/regression tests covering all resolved blockers.
+
+### Codex cloud review corrections (`2026-10-20`)
+
+- Corrected Azure VM ACR token exchange, numeric exit-code Merge tagging, token refresh, SSH-key generation failure handling, and the Compute 30 NIC deletion field. Added local bootstrap regressions. CR-07 remains pending real Batch/Container Apps SDK adapters, installation/version bounds and reliable cleanup; see the Codex cloud review of 2026-10-20 on the main checkout.
+
 ### Cloud runner CR-12: instrumentation and tracking (`2026-10-20`)
 
 #### Added
@@ -249,6 +288,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `useCloudAnalysisStore`: Zustand persistence store for active analysis tabs, selected jobs, task filters, and column sorting preferences.
   - Navigation integration in `Sidebar.tsx` (under Analysis section), `App.tsx` (lazy route), and `pagePrefetch.ts`.
   - Full suite of Vitest unit and component tests (`CostAccrualCard.test.tsx`, `PredictionAccuracyCard.test.tsx`, `cloudAnalysis.test.ts`, `cloudAnalysisStore.test.ts`).
+- **CR-07 (#127): Azure backends, Blob store, and Key Vault** in `logic/controllers/cloud/providers/azure/`:
+  - `batch.py`: `AzureBatchBackend` for Azure Batch jobs (`ComputeKind.BATCH`), supporting container tasks, native Key Vault secret references (`@Microsoft.KeyVault(SecretUri=...)`), wall-clock time constraints, and low-priority / spot node preemption mapping to `AttemptState.PREEMPTED`.
+  - `serverless.py`: `ContainerAppsJobsBackend` for Azure Container Apps Jobs (`ComputeKind.SERVERLESS`), supporting template overrides, native secret references (`secretRef`), CPU/memory limits, cancellation, and spot eviction mapping.
+  - `vm.py`: `AzureVmBackend` for Azure Virtual Machines (`ComputeKind.VM`), supporting spot priority with deallocate eviction policy, custom data script bootstrap, instance status polling, and spot eviction detection.
+  - `storage.py`: `BlobObjectStore` implementing `ObjectStore` backed by Azure Blob Storage with content-addressing and prefix filtering.
+  - `secrets.py`: `KeyVaultSecretStore` implementing `SecretStore` backed by Azure Key Vault with name sanitization and secret lifecycle handling.
+  - `registry.py`: `AcrImageRegistry` for Azure Container Registry image tag resolution and manifest push.
+  - `pricing.py`: static hourly price table for Azure VM types (D-series, F-series, B-series) and Container Apps across regions.
+  - `_sdk.py`: lazy Azure SDK client factories without module-level imports.
+  - Unit and contract tests in `logic/test/unit/controllers/cloud/providers/test_azure_contracts.py` passing `backend_contract`, `object_store_contract`, and `secret_store_contract` with in-process fakes.
 - **Roadmap:** `docs/moon/roadmaps/cloud.md` (§J), linked from `docs/moon/ROADMAP.md`: the v1.1.0 cloud runner design, its 17 work packages (#121–#137, epic #120) and future work.
 - **Agent brief:** `.agent/tasks/cloud-runner-2026-10-19.md`, with Claude's and Gemini's lanes, and a kickoff entry on the agent bus.
 
