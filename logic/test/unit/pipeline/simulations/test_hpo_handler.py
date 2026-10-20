@@ -150,9 +150,9 @@ class TestHPOObjectiveAndWorker:
         return OmegaConf.structured(cfg)
 
     @pytest.mark.unit
-    @patch("logic.src.pipeline.simulations.hpo.hpo_handler.load_indices")
-    @patch("logic.src.pipeline.simulations.hpo.hpo_handler.sequential_simulations")
-    @patch("logic.src.pipeline.simulations.hpo.hpo_handler.expand_policy_configs")
+    @patch("logic.src.pipeline.simulations.hpo.hpo_objective.load_indices")
+    @patch("logic.src.pipeline.simulations.hpo.hpo_objective.sequential_simulations")
+    @patch("logic.src.pipeline.simulations.hpo.hpo_objective.expand_policy_configs")
     def test_objective_single_objective(
         self,
         mock_expand: Any,
@@ -194,8 +194,8 @@ class TestHPOObjectiveAndWorker:
             callback(day=2, cum_metrics={"profit": 120.0}, s_id=0)
 
     @pytest.mark.unit
-    @patch("logic.src.pipeline.simulations.hpo.hpo_handler.load_indices")
-    @patch("logic.src.pipeline.simulations.hpo.hpo_handler.sequential_simulations")
+    @patch("logic.src.pipeline.simulations.hpo.hpo_objective.load_indices")
+    @patch("logic.src.pipeline.simulations.hpo.hpo_objective.sequential_simulations")
     def test_objective_multi_objective(
         self,
         mock_seq_sim: Any,
