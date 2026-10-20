@@ -22,13 +22,14 @@ import joblib
 import numpy as np
 import torch
 
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.interfaces.context import PackingContext, SearchContext
 from logic.src.interfaces.packing import IPackingAlgorithm
 from logic.src.policies.packing.base import PackingRegistry
+from logic.src.utils.registry import ALL
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.PACKING,
     PolicyTag.REINFORCEMENT_LEARNING,
 )

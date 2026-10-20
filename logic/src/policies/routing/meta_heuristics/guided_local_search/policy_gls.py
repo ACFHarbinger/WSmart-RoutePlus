@@ -14,14 +14,15 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 import numpy as np
 
 from logic.src.configs.policies.gls import GLSConfig
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
+from logic.src.utils.registry import ALL
 
 from .solver import GLSSolver
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.META_HEURISTIC,
     PolicyTag.TRAJECTORY_BASED,
     PolicyTag.LOCAL_SEARCH,

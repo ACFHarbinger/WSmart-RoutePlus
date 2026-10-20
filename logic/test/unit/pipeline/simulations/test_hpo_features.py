@@ -12,8 +12,8 @@ from logic.src.pipeline.simulations.hpo.base import (
     PolicyHPOBase,
     _build_grid_from_search_space,
 )
+from logic.src.pipeline.simulations.hpo.search_space_templates import _extract_params_from_config
 from logic.src.pipeline.simulations.hpo.search_spaces import (
-    _extract_params_from_config,
     compose_search_space,
     generate_acceptance_criteria_templates,
     generate_packing_templates,
@@ -26,7 +26,6 @@ from logic.src.pipeline.simulations.hpo.search_spaces import (
 )
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
-
 
 
 @dataclasses.dataclass

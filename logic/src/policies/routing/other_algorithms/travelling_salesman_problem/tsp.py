@@ -28,16 +28,13 @@ Reference:
 """
 
 import logging
-from typing import List, Tuple
+from typing import List
 
 import fast_tsp
-import networkx as nx
 import numpy as np
-from networkx.algorithms.shortest_paths.weighted import dijkstra_path
 
 from logic.src.constants.routing import SCALE
 from logic.src.policies.helpers.operators.intra_route_local_search.k_opt import directed_two_opt_route
-from logic.src.utils.routing.tours import get_multi_tour, get_route_cost  # noqa: F401  (re-exported)
 
 from .two_opt import solve_tsp_2opt
 
@@ -121,65 +118,7 @@ def get_path_cost(G, p):
     return c
 
 
-def get_partial_tour(
-    tour: List[int],
-    bins: np.ndarray,
-    max_capacity: float,
-    distance_matrix: np.ndarray,
-    cost: float,
-) -> Tuple[np.ndarray, float]:
-    """
-    Reduce a tour to fit within vehicle capacity by removing bins with minimal waste.
-
-    Args:
-        tour: Current tour.
-        bins: Waste amounts for each bin.
-        max_capacity: Vehicle capacity limit.
-        distance_matrix: Distance matrix.
-        cost: Current routing cost.
-
-    Returns:
-        Tuple[np.ndarray, float]: (Reduced tour, updated cost).
-    """
-    tmp_tour = np.array([x - 1 for x in tour if x != 0])
-    total_waste = np.sum(bins[tmp_tour])
-    while total_waste > max_capacity:
-        min_waste_bin_idx = np.argmin(bins[tmp_tour])
-        bin_to_remove = tmp_tour[min_waste_bin_idx]
-        total_waste -= bins[bin_to_remove]
-        cost -= float(distance_matrix[tmp_tour[min_waste_bin_idx - 1], bin_to_remove])
-        tmp_tour = np.delete(tmp_tour, min_waste_bin_idx)
-    return tmp_tour, cost
-
-
 # Create matrix will all distances
-def dist_matrix_from_graph(G: nx.Graph) -> Tuple[np.ndarray, List[List[List[int]]]]:
-    """
-    Compute all-pairs shortest path distances and paths from a NetworkX graph.
-
-    Args:
-        G: Input graph with nodes 0..N-1 and weighted edges.
-
-    Returns:
-        Tuple[np.ndarray, List[List[List[int]]]]: (Distance matrix, Path matrix).
-            Distance matrix is N x N numpy array of shortest path lengths.
-            Path matrix contains the sequence of nodes for each shortest path.
-    """
-    paths_between_states: List[List[List[int]]] = []
-    n_vertices = len(G.nodes)
-    dist_matrix = np.zeros((n_vertices, n_vertices), int)
-    for id_i in range(n_vertices):
-        paths_between_states.append([])
-        for id_j in range(n_vertices):
-            if id_i == id_j:
-                paths_between_states[id_i].append([])
-                continue
-            p = dijkstra_path(G, source=id_i, target=id_j)
-            paths_between_states[id_i].append(p)
-            dist_matrix[id_i, id_j] = int(get_path_cost(G, p))
-    return dist_matrix, paths_between_states
-
-
 def calculate_tour_cost(distance_matrix: np.ndarray, tour: List[int]) -> float:
     """
     Calculate the total distance of a given tour sequence.

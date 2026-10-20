@@ -60,13 +60,7 @@ from logic.src.pipeline.simulations.repository import (
 )
 
 from .hpo_objective import (
-    _MINIMISE_METRICS as _MINIMISE_METRICS,
-)
-from .hpo_objective import (
     _export_hpo_visualization_reports as _export_hpo_visualization_reports,
-)
-from .hpo_objective import (
-    _extract_metric as _extract_metric,
 )
 from .hpo_objective import (
     _metric_direction as _metric_direction,
@@ -76,9 +70,6 @@ from .hpo_objective import (
 )
 from .hpo_objective import (
     objective as objective,
-)
-from .hpo_objective import (
-    objective_debug as objective_debug,
 )
 from .hpo_objective import (
     worker as worker,
@@ -194,7 +185,9 @@ class HPOSimulationHandler:
                 with open(db_path, "a"):
                     pass
 
-    def get_objective(self, lock: Any, data_size: int) -> Callable[[optuna.Trial], Union[float, List[float], Tuple[float]]]:
+    def get_objective(
+        self, lock: Any, data_size: int
+    ) -> Callable[[optuna.Trial], Union[float, List[float], Tuple[float]]]:
         """Creates the Optuna objective closure.
 
         Args:
@@ -208,7 +201,7 @@ class HPOSimulationHandler:
 
         def objective_fn(trial: optuna.Trial) -> Union[float, List[float]]:
             # Use the existing functional objective but wrapped in the class state.
-            return objective(trial, self.cfg, data_size, lock) # pyrefly: ignore [bad-return]
+            return objective(trial, self.cfg, data_size, lock)  # pyrefly: ignore [bad-return]
 
         return objective_fn
 
@@ -230,7 +223,7 @@ class HPOSimulationHandler:
             evaluator = FanovaImportanceEvaluator(n_trees=64, max_depth=64)
 
             def target_fn(t: FrozenTrial) -> float:
-                return float(t.values[target_idx] if t.values else t.value) # pyrefly: ignore [bad-argument-type]
+                return float(t.values[target_idx] if t.values else t.value)  # pyrefly: ignore [bad-argument-type]
 
             importances = optuna.importance.get_param_importances(self.study, evaluator=evaluator, target=target_fn)
 
@@ -250,7 +243,7 @@ class HPOSimulationHandler:
             best_trials = self.study.best_trials
             logger.info(f"--- Pareto Front ({len(best_trials)} optimal configs) ---")
             for _i, trial in enumerate(best_trials):
-                metrics_str = " | ".join(f"{n}: {v:.4f}" for n, v in zip(self.metric_names, trial.values, strict=False)) # pyrefly: ignore [bad-argument-type]
+                metrics_str = " | ".join(f"{n}: {v:.4f}" for n, v in zip(self.metric_names, trial.values, strict=False))  # pyrefly: ignore [bad-argument-type]
                 logger.info(f"Trial {trial.number} -> {metrics_str}")
         except Exception:
             if self.study.best_trial:
@@ -258,12 +251,9 @@ class HPOSimulationHandler:
                 logger.info(f"Best Params: {self.study.best_params}")
 
 
-
-
 # ---------------------------------------------------------------------------
 # Objective
 # ---------------------------------------------------------------------------
-
 
 
 # ---------------------------------------------------------------------------
@@ -271,12 +261,9 @@ class HPOSimulationHandler:
 # ---------------------------------------------------------------------------
 
 
-
-
 # ---------------------------------------------------------------------------
 # Orchestrator
 # ---------------------------------------------------------------------------
-
 
 
 def run_hpo_sim(cfg: Config) -> Union[float, List[float]]:
@@ -438,7 +425,7 @@ def run_hpo_sim(cfg: Config) -> Union[float, List[float]]:
 
         # Report the trial closest to the ideal point (normalised L1 distance).
         best_trial = _select_pareto_representative(pareto_trials, directions)
-        best_values = list(best_trial.values) if best_trial else [] # pyrefly: ignore [bad-argument-type]
+        best_values = list(best_trial.values) if best_trial else []  # pyrefly: ignore [bad-argument-type]
 
         if run is not None and best_trial:
             run.log_params({f"hpo/best/{k}": v for k, v in best_trial.params.items()})
@@ -466,10 +453,9 @@ def run_hpo_sim(cfg: Config) -> Union[float, List[float]]:
             run.set_tag("mode", "single_objective")
             run.flush()
 
-        return best_value # pyrefly: ignore [bad-return]
+        return best_value  # pyrefly: ignore [bad-return]
 
 
 # ---------------------------------------------------------------------------
 # Pareto selection helper
 # ---------------------------------------------------------------------------
-

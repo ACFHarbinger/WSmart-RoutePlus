@@ -8,16 +8,17 @@ Attributes:
 
 from typing import List, Tuple
 
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.interfaces.context import PackingContext, SearchContext
 from logic.src.interfaces.packing import IPackingAlgorithm
 from logic.src.policies.packing.base.registry import PackingRegistry
+from logic.src.utils.registry import ALL
 
 from .spec import lookahead as lookahead_rule
 from .spec import selected_ids
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.PACKING,
     PolicyTag.HEURISTIC,
     PolicyTag.MULTI_PERIOD,

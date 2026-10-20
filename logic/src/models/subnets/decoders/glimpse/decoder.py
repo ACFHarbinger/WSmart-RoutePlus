@@ -137,15 +137,6 @@ class GlimpseDecoder(GlimpseDecoderLogitsMixin, GlimpseDecoderInnerMixin, nn.Mod
         """
         return next(self.parameters()).device
 
-    def set_step_context_dim(self, dim: int) -> None:
-        """Sets the dimension of the step context projection.
-
-        Args:
-            dim: New dimensionality for step context.
-        """
-        self.step_context_dim = dim
-        self.project_step_context = nn.Linear(dim, self.embed_dim, bias=False)
-
     def set_strategy(self, strategy: str, temp: Optional[float] = None) -> None:
         """Sets the decoding strategy and temperature.
 

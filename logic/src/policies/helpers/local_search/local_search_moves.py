@@ -20,23 +20,14 @@ from logic.src.policies.helpers.operators.inter_route_local_search import (
     swap_2_1,
     swap_2_2,
 )
-from logic.src.policies.helpers.operators.inter_route_local_search.cross_exchange import (
-    cross_exchange,
-    improved_cross_exchange,
-    lambda_interchange,
-)
-from logic.src.policies.helpers.operators.inter_route_local_search.cyclic_transfer import cyclic_transfer
 from logic.src.policies.helpers.operators.inter_route_local_search.ejection_chain import ejection_chain
-from logic.src.policies.helpers.operators.inter_route_local_search.exchange_chain import exchange_2_0, exchange_2_1
 from logic.src.policies.helpers.operators.intra_route_local_search import (
     move_2opt_intra,
     move_3opt_intra,
     move_or_opt,
     move_relocate,
     move_swap,
-    relocate_chain,
 )
-from logic.src.policies.helpers.operators.intra_route_local_search.k_permutation import three_permutation
 
 
 class LocalSearchMovesMixin:
@@ -210,83 +201,6 @@ class LocalSearchMovesMixin:
         """
         return swap_2_2(self, r_u, p_u, r_v, p_v)
 
-    def _try_cross_exchange(self, r_u: int, p_u: int, r_v: int, p_v: int) -> bool:
-        """Apply Cross-Exchange operator.
-
-        Args:
-            r_u: First route index.
-            p_u: First position.
-            r_v: Second route index.
-            p_v: Second position.
-
-        Returns:
-            bool: True if the Cross-Exchange move was accepted.
-        """
-        return cross_exchange(self, r_u, p_u, 1, r_v, p_v, 1)
-
-    def _try_improved_cross_exchange(self, r_u: int, p_u: int, r_v: int, p_v: int) -> bool:
-        """Apply Improved Cross-Exchange operator.
-
-        Args:
-            r_u: First route index.
-            p_u: First position.
-            r_v: Second route index.
-            p_v: Second position.
-
-        Returns:
-            bool: True if the Improved Cross-Exchange move was accepted.
-        """
-        return improved_cross_exchange(self, r_u, p_u, 1, r_v, p_v, 1)
-
-    def _try_lambda_interchange(self, r_u: int, r_v: int) -> bool:
-        """Apply Lambda-Interchange operator.
-
-        Args:
-            r_u: First route index.
-            r_v: Second route index.
-
-        Returns:
-            bool: True if the Lambda-Interchange move was accepted.
-        """
-        return lambda_interchange(self, getattr(self.params, "lambda_max", 2))
-
-    def _try_cyclic_transfer(self, r_u: int, p_u: int, r_v: int, p_v: int) -> bool:
-        """Apply Cyclic Transfer move (3-route exchange).
-
-        Args:
-            r_u: First route index.
-            p_u: First position.
-            r_v: Second route index.
-            p_v: Second position.
-
-        Returns:
-            bool: True if the Cyclic Transfer move was accepted.
-        """
-        if len(self.routes) < 3:
-            return False
-        candidates = [r for r in range(len(self.routes)) if r != r_u and r != r_v and self.routes[r]]
-        if not candidates:
-            return False
-        r_w = self.random.choice(candidates)
-        p_w = self.random.randint(0, len(self.routes[r_w]) - 1)
-        return cyclic_transfer(self, [(r_u, p_u), (r_v, p_v), (r_w, p_w)])
-
-    def _try_exchange_chains(self, r_u: int, p_u: int, r_v: int, p_v: int) -> bool:
-        """Try applying various Exchange Chain operators.
-
-        Args:
-            r_u: First route index.
-            p_u: First position.
-            r_v: Second route index.
-            p_v: Second position.
-
-        Returns:
-            bool: True if any Exchange Chain move was accepted.
-        """
-        if exchange_2_0(self, r_u, p_u, r_v, p_v):
-            return True
-        return exchange_2_1(self, r_u, p_u, r_v, p_v)
-
     def _try_ejection_chain(self, r_u: int) -> bool:
         """Docstring.
 
@@ -297,36 +211,6 @@ class LocalSearchMovesMixin:
             bool: True if the Ejection Chain move was accepted.
         """
         return ejection_chain(self, r_u)
-
-    def _move_relocate_chain(self, u: int, r_u: int, p_u: int, r_v: int, p_v: int) -> bool:
-        """Docstring.
-
-        Args:
-            u: Starting node ID for the chain.
-            r_u: Source route index.
-            p_u: Starting position in `r_u`.
-            r_v: Target route index.
-            p_v: Target position in `r_v`.
-
-        Returns:
-            bool: True if the Relocate Chain move was accepted.
-        """
-        if relocate_chain(self, r_u, p_u, r_v, p_v, chain_len=2):
-            return True
-        return relocate_chain(self, r_u, p_u, r_v, p_v, chain_len=3)
-
-    def _move_three_permutation(self, u: int, r_u: int, p_u: int) -> bool:
-        """Apply 3-Permutation move.
-
-        Args:
-            u: Node ID to permute.
-            r_u: Route index.
-            p_u: Position of node `u`.
-
-        Returns:
-            bool: True if the 3-Permutation move was accepted.
-        """
-        return three_permutation(self, r_u, p_u)
 
     def _move_unrouted_insert(self, node: int, route_idx: int, _hint_pos: int) -> bool:
         """

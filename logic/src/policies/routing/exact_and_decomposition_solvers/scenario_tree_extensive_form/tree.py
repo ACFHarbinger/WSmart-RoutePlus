@@ -139,14 +139,6 @@ class ScenarioTree:
         """
         return [n for n in self.nodes.values() if n.day == day]
 
-    def get_root(self) -> ScenarioNode:
-        """Returns the root node of the tree.
-
-        Returns:
-            ScenarioNode: The node at day 0.
-        """
-        return self.nodes[0]
-
     def get_leaves(self) -> List[ScenarioNode]:
         """Returns all leaf nodes in the tree.
 

@@ -6,7 +6,8 @@ import numpy as np
 import pytest
 import torch
 from logic.src.pipeline.simulations.actions.routing import RoutingAction
-from logic.src.pipeline.simulations.simulator import display_log_metrics, sequential_simulations
+from logic.src.pipeline.simulations.simulator import sequential_simulations
+from logic.src.pipeline.simulations.simulator_progress import display_log_metrics
 from logic.src.pipeline.simulations.states import FinishingState, SimulationContext
 from logic.test.unit.pipeline.simulations.test_simulator_robustness import _orch_cfg
 from logic.test.unit.pipeline.simulations.test_states import _make_test_cfg
@@ -126,7 +127,7 @@ def test_sequential_loop_does_not_write_mean(mock_context, tmp_path):
 
     def _run():
         # The context resolves the slug before run(); mirror a successful sample.
-        from logic.src.pipeline.simulations.day_context import policy_result_key
+        from logic.src.pipeline.simulations.naming import policy_result_key
 
         slug = policy_result_key("alns", cfg.sim)
         slug_holder["slug"] = slug
@@ -136,7 +137,7 @@ def test_sequential_loop_does_not_write_mean(mock_context, tmp_path):
 
     with (
         patch("logic.src.pipeline.simulations.simulator.ROOT_DIR", str(tmp_path)),
-        patch("logic.src.pipeline.simulations.simulator.update_policy_log_section") as mock_write,
+        patch("logic.src.pipeline.simulations.simulator_progress.update_policy_log_section") as mock_write,
     ):
         log, log_std, failed = sequential_simulations(
             cfg, torch.device("cpu"), [None, None], [[0, 1]], "weights", lock=None
@@ -175,3 +176,36 @@ def test_display_log_metrics_is_the_mean_writer(tmp_path):
         )
 
     assert sections == ["mean", "std"]
+
+
+@pytest.mark.parametrize(
+    "full_policy, config, expected",
+    [
+        # Hybrids nest their components' sections; the policy name wins over them.
+        ("lookahead_hvpl_custom_emp", {"n_teams": 10, "aco": {}, "alns": {"max_iterations": 1}}, "hvpl"),
+        ("lookahead_hgs_alns_custom_emp", {"hgs": {}, "alns": {}}, "hgs_alns"),
+        ("lookahead_alns_custom_emp", {"max_iterations": 1}, "alns"),
+        # Without an engine in the name, a config key names it.
+        ("", {"hgs": {"population_size": 4}}, "hgs"),
+    ],
+)
+def test_routing_engine_resolution_prefers_the_policy_name(full_policy, config, expected):
+    """The engine comes from the policy name before config keys that name other engines."""
+    adapter, context = _route_context(None)
+    context["full_policy"], context["config"] = full_policy, config
+    with (
+        patch("logic.src.policies.routing.base.factory.RoutingAlgorithmFactory.ensure_registered"),
+        patch(
+            "logic.src.policies.routing.base.factory.RoutingAlgorithmFactory.get_adapter", return_value=adapter
+        ) as get_adapter,
+        patch(
+            "logic.src.policies.routing.base.registry.RoutingAlgorithmRegistry.list_routing_algorithms",
+            return_value=["alns", "hgs", "hgs_alns", "hvpl"],
+        ),
+        patch("logic.src.pipeline.simulations.bins.prediction.ScenarioGenerator"),
+        patch("logic.src.tracking.logging.modules.policy_viz_emit.PolicyVizStreamSession") as viz,
+    ):
+        viz.return_value.__enter__.return_value = None
+        viz.return_value.__exit__.return_value = False
+        RoutingAction().execute(context)
+    assert get_adapter.call_args.args[0] == expected

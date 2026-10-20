@@ -6,16 +6,14 @@ a giant tour into optimal routes based on vehicle capacity.
 
 Attributes:
     LinearSplit: Solver class for the Split algorithm.
-    split_algorithm: Wrapper function for the Split algorithm.
 
 Example:
     >>> split_manager = LinearSplit(dist_matrix, wastes, capacity, R, C)
-    >>> routes, profit = split_manager.split(giant_tour)
-"""
+    >>> routes, profit = split_manager.split(giant_tour)"""
 
 import warnings
 from collections import deque
-from typing import Any, Deque, Dict, List, Optional, Tuple
+from typing import Deque, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -450,33 +448,3 @@ class LinearSplit:
             curr = prev
         routes.reverse()
         return routes, total_profit
-
-
-def split_algorithm(
-    giant_tour: List[int],
-    dist_matrix: np.ndarray,
-    wastes: Dict[int, float],
-    capacity: float,
-    R: float,
-    C: float,
-    values: Dict[str, Any],
-    mandatory_nodes: Optional[List[int]] = None,
-):
-    """
-    Convenience wrapper for the LinearSplit algorithm.
-
-    Args:
-        giant_tour: Giant tour to be split.
-        dist_matrix: Distance matrix.
-        wastes: Dictionary of node wastes.
-        capacity: Vehicle capacity.
-        R: Revenue multiplier.
-        C: Cost multiplier.
-        values: Configuration parameters including `max_vehicles`.
-        mandatory_nodes: List of mandatory node indices.
-
-    Returns:
-        Tuple[List[List[int]], float]: Decoded routes and total profit.
-    """
-    s = LinearSplit(dist_matrix, wastes, capacity, R, C, values.get("max_vehicles", 0), mandatory_nodes)
-    return s.split(giant_tour)

@@ -14,7 +14,8 @@ Example:
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from .other.packing import PackingConfig
+from logic.src.configs.policies.other.packing_dispatch import PackingConfig
+
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -84,7 +85,6 @@ class IntegerLShapedBendersConfig:
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
 
-
     @classmethod
     def from_config(cls, config: Any) -> "IntegerLShapedBendersConfig":
         """Create IntegerLShapedBendersConfig from a configuration object or dictionary.
@@ -97,6 +97,7 @@ class IntegerLShapedBendersConfig:
         """
         from dataclasses import MISSING, fields
         from typing import Dict
+
         if isinstance(config, dict):
             valid_keys = {f.name for f in fields(cls)}
             return cls(**{k: v for k, v in config.items() if k in valid_keys})
@@ -116,4 +117,5 @@ class IntegerLShapedBendersConfig:
             Dict mapping field name to field value.
         """
         from dataclasses import fields
+
         return {f.name: getattr(self, f.name) for f in fields(self)}

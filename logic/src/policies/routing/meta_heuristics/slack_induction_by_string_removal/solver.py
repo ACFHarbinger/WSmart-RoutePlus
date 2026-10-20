@@ -230,39 +230,3 @@ class SISRSolver:
             rng=self.random,
         )
         return routes
-
-    def _calculate_profit(self, routes: List[List[int]]) -> float:
-        """
-        Calculate total profit (revenue - cost) for routes.
-
-        Args:
-            routes: List of routes.
-
-        Returns:
-            Total profit.
-        """
-        collected_revenue = sum(self.wastes.get(node, 0) * self.R for route in routes for node in route)
-        cost = self._calculate_cost(routes) * self.C
-        return collected_revenue - cost
-
-    def _is_valid_route(self, route: List[int]) -> bool:
-        """
-        Check if a route is valid (respects capacity constraints).
-
-        Args:
-            route: Route to validate.
-
-        Returns:
-            True if valid, False otherwise.
-        """
-        if not route:
-            return True
-
-        # Check capacity constraint
-        total_waste = sum(self.wastes.get(node, 0) for node in route)
-        if total_waste > self.capacity:
-            return False
-
-        # Check for duplicate nodes (except depot)
-        non_depot_nodes = [n for n in route if n != 0]
-        return len(non_depot_nodes) == len(set(non_depot_nodes))

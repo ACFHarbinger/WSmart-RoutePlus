@@ -184,7 +184,7 @@ def plot_loss_landscape(
         span: Range of perturbation along the random directions. Defaults to 1.0.
 
     """
-    from logic.src.policies.vector.local_search import vectorized_two_opt
+    from logic.src.policies.vector.operators import vectorized_two_opt
 
     print("Computing Loss Landscape...")
     os.makedirs(output_dir, exist_ok=True)

@@ -27,8 +27,6 @@ from typing import TYPE_CHECKING, Any, Dict, FrozenSet, List, Optional, Protocol
 import gurobipy as gp
 import numpy as np
 
-from .column_pool_support import VRPPMasterProblemSupportMixin as VRPPMasterProblemSupportMixin
-
 if TYPE_CHECKING:
     from logic.src.policies.helpers.solvers_and_matheuristics.branching.constraints import AnyBranchingConstraint
     from logic.src.policies.helpers.solvers_and_matheuristics.common.route import Route
@@ -154,10 +152,6 @@ class MasterProblemSupport(Protocol):
 
     def _extract_duals(self) -> None:
         """Extracts dual values from the solved LP into internal registries."""
-        ...
-
-    def _apply_dual_smoothing(self) -> None:
-        """Applies exponential smoothing to dual values to stabilize column generation."""
         ...
 
     def solve_ip(self, time_limit: Optional[float] = None) -> Tuple[float, List[Route]]:
@@ -311,6 +305,7 @@ class MasterProblemSupport(Protocol):
             int: Number of redundant routes removed.
         """
         ...
+
     def add_set_packing_capacity_cut(self: MasterProblemSupport, node_list: List[int], rhs: float) -> bool:
         """Adds a capacity cut specifically for set packing formulations.
 

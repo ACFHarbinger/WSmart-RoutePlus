@@ -138,15 +138,6 @@ class AdaptiveOperatorManager:
             self.repair_scores[op] = 0.0
             self.repair_counts[op] = 0
 
-    def decay_weights(self) -> None:
-        """Deprecated in favor of segment-based updates.
-
-        Args:
-            None.
-
-        """
-        pass
-
     def entropy(self) -> float:
         """Compute entropy of operator weight distributions.
 

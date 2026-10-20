@@ -103,24 +103,17 @@ from logic.gen.paper_data import (
     paired_horizon_frame,
     split_degenerate,
 )
+from logic.gen.paper_diagrams import fig_policy_space, fig_simulation_loop
 from logic.gen.paper_figures import (
     fig_fill_trajectory,
     fig_improver_paired,
-    fig_networks,
     fig_pareto,
-    fig_policy_space,
     fig_scale,
-    fig_simulation_loop,
     fig_strategy_tradeoff,
 )
+from logic.gen.paper_networks import fig_networks
 from logic.gen.report_utils import apply_theme, load_json, load_theme
 
-from .paper_latex_tables import (
-    horizon_rows as horizon_rows,
-)
-from .paper_latex_tables import (
-    improver_rows as improver_rows,
-)
 from .paper_latex_tables import (
     table_excluded as table_excluded,
 )
@@ -158,14 +151,6 @@ from .paper_latex_tables import (
 # --------------------------------------------------------------------------- #
 # Tables
 # --------------------------------------------------------------------------- #
-
-
-
-
-
-
-
-
 
 
 # --------------------------------------------------------------------------- #

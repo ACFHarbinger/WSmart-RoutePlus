@@ -64,7 +64,6 @@ Attributes:
     calculate_penalty: Compute total capacity violation over all routes in the tour.
     get_score: Return the full (penalty, cost) pair for a tour with dummy depots.
     is_better: Lexicographic dominance check — True iff (p1, c1) strictly beats (p2, c2).
-    split_tour_at_dummies: Extract multi-route representation from a dummy-depot-encoded tour.
     solve_subgradient: Held-Karp subgradient ascent to optimize node penalties.
     compute_alpha_measures: Compute alpha-nearness for every edge using MST sensitivity.
     get_candidate_set: Build sorted candidate list per node restricted to small alpha-measures.
@@ -74,8 +73,7 @@ Example:
     >>> from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.objective import get_score, is_better, solve_subgradient
     >>> dm = np.zeros((3, 3))
     >>> pi = solve_subgradient(dm)
-    >>> pen, cost = get_score([0, 1, 2, 0], dm, None, None, 3)
-"""
+    >>> pen, cost = get_score([0, 1, 2, 0], dm, None, None, 3)"""
 
 from __future__ import annotations
 
@@ -123,37 +121,6 @@ def is_any_depot(node: int, n_original: Optional[int] = None) -> bool:
         True if the node is a depot or dummy depot, False otherwise.
     """
     return node == DEPOT_NODE or is_dummy_depot(node, n_original)
-
-
-def split_tour_at_dummies(tour: List[int], n_original: Optional[int] = None) -> List[List[int]]:
-    """
-    Split an augmented Hamiltonian circuit into discrete vehicle routes.
-
-    Segments are delimited by any node identified as a depot or dummy depot.
-    Resulting routes contain only customer node indices.
-
-    Args:
-        tour: The tour to split.
-        n_original: The number of original nodes.
-
-    Returns:
-        The split routes.
-    """
-    routes: List[List[int]] = []
-    current: List[int] = []
-
-    for node in tour:
-        if is_any_depot(node, n_original):
-            if current:
-                routes.append(current)
-                current = []
-        else:
-            current.append(node)
-
-    if current:
-        routes.append(current)
-
-    return routes
 
 
 # ---------------------------------------------------------------------------

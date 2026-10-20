@@ -107,19 +107,14 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.interfaces.context import PackingContext, SearchContext
 from logic.src.interfaces.packing import IPackingAlgorithm
 from logic.src.policies.packing.base import PackingRegistry
+from logic.src.utils.registry import ALL
 
 from .fptas_knapsack_dp import (
-    _DIST_EPS as _DIST_EPS,
-)
-from .fptas_knapsack_dp import (
     _EPS_GUARD as _EPS_GUARD,
-)
-from .fptas_knapsack_dp import (
-    _MAX_DP_VALUES as _MAX_DP_VALUES,
 )
 from .fptas_knapsack_dp import (
     _compute_overflow_risk as _compute_overflow_risk,
@@ -138,11 +133,9 @@ from .fptas_knapsack_dp import (
 # ---------------------------------------------------------------------------
 
 
-
 # ---------------------------------------------------------------------------
 # FPTAS core: (1-ε)-approximation for the 0/1 knapsack problem
 # ---------------------------------------------------------------------------
-
 
 
 # ---------------------------------------------------------------------------
@@ -150,7 +143,7 @@ from .fptas_knapsack_dp import (
 # ---------------------------------------------------------------------------
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.PACKING,
     PolicyTag.MATHEURISTIC,
     PolicyTag.HEURISTIC,

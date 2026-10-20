@@ -1,7 +1,7 @@
 """Generic name-and-tag registry for policies, models and related adapters.
 
 One ``Registry`` type is the union of the old stage registries (name → class,
-``create``) and ``GlobalRegistry`` (object → tags, set queries). Stage instances
+``create``) and the tag registry (object → tags, set queries). Stage instances
 scope name lookup; the root ``ALL`` instance is the union of their tag indexes.
 """
 
@@ -89,7 +89,7 @@ class Registry:
     """Name lookup, lazy construction and tag queries.
 
     ``register`` accepts both the stage-registry form ``register("alns")`` and
-    the old ``GlobalRegistry`` form ``register(PolicyTag.EXACT, ...)``.
+    the tag-only form ``register(PolicyTag.EXACT, ...)``.
     """
 
     def __init__(self, name: str, parent: Optional["Registry"] = None) -> None:
@@ -267,9 +267,6 @@ class Registry:
         return result
 
     # Compatibility names used by the old stage registries and a few tests.
-    def get_strategy_class(self, name: str) -> Optional[Any]:
-        return self.get(name)
-
     def get_route_improver_class(self, name: str) -> Optional[Any]:
         return self.get(name)
 
@@ -277,9 +274,6 @@ class Registry:
         return self.names()
 
     def list_improvers(self) -> List[str]:
-        return self.names()
-
-    def list_criteria(self) -> List[str]:
         return self.names()
 
     def list_routing_algorithms(self) -> List[str]:

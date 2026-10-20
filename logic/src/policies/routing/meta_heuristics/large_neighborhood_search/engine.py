@@ -25,9 +25,8 @@ import time
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from logic.src.policies.helpers.operators import build_greedy_routes
-from logic.src.policies.routing.base.sub_problem import coerce_config
 
-__all__ = ["LNSBase", "MIN_REMOVAL_LOWER_BOUND", "coerce_config"]
+__all__ = ["LNSBase", "MIN_REMOVAL_LOWER_BOUND"]
 
 MIN_REMOVAL_LOWER_BOUND: int = 4
 

@@ -1,12 +1,10 @@
 """Network maps of the paper: bin layouts recovered from the road-distance matrices by classical MDS.
 
 Attributes:
-    read_network_layout: 2-D layout of one scenario's network.
     fig_networks: The three road networks side by side.
 
 Example:
-    >>> fig_networks(out_dir, cfg)
-"""
+    >>> fig_networks(out_dir, cfg)"""
 
 from __future__ import annotations
 
@@ -14,7 +12,6 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 
 from logic.gen.paper_data import (
     NETWORK_MAP_DIR,
@@ -113,31 +110,6 @@ def embedding_stress(coords: np.ndarray, dist: np.ndarray) -> float:
     diff = np.linalg.norm(coords[:, None, :] - coords[None, :, :], axis=-1) - dist
     off = ~np.eye(len(dist), dtype=bool)
     return float(np.sqrt((diff[off] ** 2).sum() / (dist[off] ** 2).sum()))
-
-
-def read_network_layout(scenario: dict) -> dict:
-    """
-    Positions for one network: true coordinates when available, else an embedding.
-
-    Returns ``{"coords", "depot", "source", "stress"}``. ``source`` is
-    ``"coordinates"`` or ``"embedding"`` and drives what the caption is allowed
-    to claim.
-    """
-    node_ids, dist = read_distance_matrix(find_distance_matrix(scenario))
-
-    coord_file = COORD_DIR / f"{scenario['key']}.csv"
-    if coord_file.exists():
-        frame = pd.read_csv(coord_file).set_index("id")
-        coords = frame.loc[node_ids, ["x", "y"]].to_numpy(dtype=float)
-        return {"coords": coords, "depot": 0, "source": "coordinates", "stress": None}
-
-    coords = classical_mds(dist)
-    return {
-        "coords": coords,
-        "depot": 0,
-        "source": "embedding",
-        "stress": embedding_stress(coords, dist),
-    }
 
 
 def fig_networks(out_dir: Path, cfg: dict) -> None:

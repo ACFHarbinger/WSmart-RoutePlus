@@ -122,17 +122,6 @@ class SsHhState:
         """
         return self._idx[name]
 
-    def reset_scores(self, initial_score: float = 1.0) -> None:
-        """Reset all scores and history to their initial state.
-
-        Args:
-            initial_score: The score value to reset everything to.
-        """
-        self.scores[:] = initial_score
-        self.call_counts[:] = 0
-        self.improvement_totals[:] = 0.0
-        self._history = [[] for _ in range(self.n)]
-
 
 def ss_hh_select(
     state: SsHhState,

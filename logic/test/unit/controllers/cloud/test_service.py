@@ -383,7 +383,7 @@ def test_retry_with_missing_history_does_not_claim_complete_duration(tmp_path):
 
 @pytest.mark.unit
 def test_policy_metadata_does_not_guess_from_paths_or_multi_policy_cells():
-    from logic.controllers.cloud.service import extract_policy_from_cell
+    from logic.controllers.cloud.service_status import extract_policy_from_cell
 
     for argv in (["test_sim", "--policies", "alns", "bpc"], ["test_sim", "sim.policies=[alns,bpc]"]):
         assert extract_policy_from_cell(CellSpec(cell_id="cell", argv=argv)) is None

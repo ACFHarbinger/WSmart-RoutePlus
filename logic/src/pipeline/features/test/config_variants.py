@@ -246,40 +246,6 @@ def _parse_inner_components(
     return ms_list, ac_list, pp_list, ms_idx, ac_idx
 
 
-def _apply_overrides(var_cfg: Any, ms_idx: int, ms_item: Any, ac_idx: int, ac_item: Any) -> None:
-    """Apply mandatory and acceptance criteria overrides to a deep-copied config.
-
-    Args:
-        var_cfg: Deep-copied policy configuration object.
-        ms_idx: Index of the mandatory config to modify.
-        ms_item: Mandatory list item to apply.
-        ac_idx: Index of the acceptance criteria config to modify.
-        ac_item: Acceptance criteria list item to apply.
-    """
-    var_inner, _ = _find_inner_config(var_cfg)
-    if var_inner:
-        if isinstance(var_inner, list):
-            if ms_item is not None and 0 <= ms_idx < len(var_inner):
-                item_obj = var_inner[ms_idx]
-                if isinstance(item_obj, (dict, ITraversable)):
-                    if "packing" in item_obj:
-                        cast(Any, item_obj)["packing"] = [ms_item]
-                    else:
-                        cast(Any, item_obj)["mandatory"] = [ms_item]
-            if ac_item is not None and 0 <= ac_idx < len(var_inner):
-                item_obj = var_inner[ac_idx]
-                if isinstance(item_obj, (dict, ITraversable)):
-                    cast(Any, item_obj)["acceptance_criteria"] = [ac_item]
-        else:  # dict
-            if ms_item is not None:
-                if "packing" in var_inner:
-                    var_inner["packing"] = [ms_item]
-                elif "mandatory" in var_inner:
-                    var_inner["mandatory"] = [ms_item]
-            if ac_item is not None:
-                var_inner["acceptance_criteria"] = [ac_item]
-
-
 def _expand_dict_ms_list(ms_list: Any) -> List[Any]:
     """Expand a dict-format packing into a flat list of single-variant dicts.
 

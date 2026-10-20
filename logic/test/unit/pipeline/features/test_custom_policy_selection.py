@@ -9,8 +9,8 @@ yaml's own last-minute variants, so that selection could not be expressed.
 import pytest
 from logic.src.configs import Config
 from logic.src.pipeline.features.test.config import expand_policy_configs
-from logic.src.pipeline.simulations.actions.base import _as_policy_mapping
-from logic.src.pipeline.simulations.day_context import find_policy_keys
+from logic.src.pipeline.simulations.actions.policy_config import _as_policy_mapping
+from logic.src.pipeline.simulations.naming import find_policy_keys
 from omegaconf import OmegaConf
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

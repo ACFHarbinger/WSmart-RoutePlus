@@ -18,7 +18,8 @@ Example:
 from dataclasses import dataclass
 from typing import Any, List, Optional
 
-from .other.packing import PackingConfig
+from logic.src.configs.policies.other.packing_dispatch import PackingConfig
+
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -55,7 +56,6 @@ class MemeticAlgorithmToleranceBasedSelectionConfig:
     profit_aware_operators: bool = False
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
-
 
     @classmethod
     def from_config(cls, config: Any) -> "MemeticAlgorithmToleranceBasedSelectionConfig":

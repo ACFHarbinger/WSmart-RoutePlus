@@ -13,40 +13,6 @@ Example:
 """
 
 
-def _categorize_bins_by_zone(bins, bins_coordinates):
-    """
-    Group bins into zones based on longitude.
-
-    Args:
-        bins: The bins to categorize.
-        bins_coordinates: The coordinates of the bins.
-
-    Returns:
-        Dict[int, List[int]]: The bins categorized by zone.
-    """
-    max_lng = max(bins_coordinates["Lng"])
-    min_lng = min(bins_coordinates["Lng"])
-    lng_amp = max_lng - min_lng
-    zone_1_l = min_lng + lng_amp / 3
-    zone_2_l = min_lng + 2 * lng_amp / 3
-
-    zone_bins = {1: [], 2: [], 3: []}  # type: ignore[var-annotated]
-    for i in range(len(bins)):
-        bin_id = bins[i]
-        try:
-            lng = bins_coordinates.iloc[bin_id - 1 if bin_id > 0 else 0]["Lng"]
-        except IndexError:
-            continue
-
-        if min_lng <= lng < zone_1_l:
-            zone_bins[1].append(bin_id)
-        elif zone_1_l <= lng < zone_2_l:
-            zone_bins[2].append(bin_id)
-        else:
-            zone_bins[3].append(bin_id)
-    return zone_bins
-
-
 def _get_bin_stock(data, bin_id, E, B):
     """
     Get the stock of a bin.

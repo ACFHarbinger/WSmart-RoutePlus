@@ -30,18 +30,25 @@ from logic.src.utils.registry import import_target, lazy_getattr
 
 _PROBLEMS = ("ptp", "cptp", "tcptp", "cvrp", "tsp", "atsp", "op", "pctsp", "spctsp", "pdp", "irp", "thop")
 _CLASS_PREFIX = {name: name.upper() for name in _PROBLEMS} | {"thop": "ThOP"}
+# Problems whose env and generator live in their own modules (<name>_env, <name>_generator).
+_SPLIT = ("irp", "thop")
+
+
+def _module(name: str, part: str) -> str:
+    return (
+        f"logic.src.pipeline.learning.envs.{name}_{part}"
+        if name in _SPLIT
+        else f"logic.src.pipeline.learning.envs.{name}"
+    )
+
 
 ENV_TARGETS: Dict[str, str] = {
-    **{name: f"logic.src.pipeline.learning.envs.{name}:{_CLASS_PREFIX[name]}Env" for name in _PROBLEMS},
+    **{name: f"{_module(name, 'env')}:{_CLASS_PREFIX[name]}Env" for name in _PROBLEMS},
     "tsp_kopt": "logic.src.pipeline.learning.envs.tsp_kopt:TSPkoptEnv",
 }
 
 GENERATOR_TARGETS: Dict[str, str] = {
-    **{
-        name: f"logic.src.pipeline.learning.envs.{name}:{_CLASS_PREFIX[name]}Generator"
-        for name in _PROBLEMS
-        if name != "spctsp"
-    },
+    **{name: f"{_module(name, 'generator')}:{_CLASS_PREFIX[name]}Generator" for name in _PROBLEMS if name != "spctsp"},
     "spctsp": "logic.src.pipeline.learning.envs.pctsp:PCTSPGenerator",  # SPCTSP reuses the PCTSP generator
 }
 
@@ -64,7 +71,7 @@ _TARGETS: Dict[str, str] = {
     "PROBLEMS": "logic.src.pipeline.learning.envs.spec:PROBLEMS",
     "TSPkoptEnv": "logic.src.pipeline.learning.envs.tsp_kopt:TSPkoptEnv",
     "SPCTSPGenerator": "logic.src.pipeline.learning.envs.spctsp:SPCTSPGenerator",
-    **{f"{_CLASS_PREFIX[n]}Env": f"logic.src.pipeline.learning.envs.{n}:{_CLASS_PREFIX[n]}Env" for n in _PROBLEMS},
+    **{f"{_CLASS_PREFIX[n]}Env": ENV_TARGETS[n] for n in _PROBLEMS},
     **{_CLASS_PREFIX[n]: f"logic.src.pipeline.learning.envs.{n}:{_CLASS_PREFIX[n]}" for n in _PROBLEMS},
     **{f"{_CLASS_PREFIX[n]}Generator": GENERATOR_TARGETS[n] for n in _PROBLEMS if n != "spctsp"},
 }

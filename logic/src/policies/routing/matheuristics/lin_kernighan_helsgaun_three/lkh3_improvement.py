@@ -12,6 +12,14 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 
 from logic.src.interfaces.acceptance_criterion import IAcceptanceCriterion
+from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.kopt_moves_2_3 import (
+    _try_2opt_move,
+    _try_3opt_move,
+)
+from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.kopt_moves_4_5 import (
+    _try_4opt_move,
+    _try_5opt_move,
+)
 from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.load_tracker import (
     build_load_state,
     update_load_state_after_move,
@@ -19,14 +27,8 @@ from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.load_
 from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.objective import (
     is_better,
 )
-from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.tour_improvement import (
-    _dynamic_kopt_search,
-    _try_2opt_move,
-    _try_3opt_move,
-    _try_4opt_move,
-    _try_5opt_move,
-    _try_oropt_move,
-)
+from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.or_opt_moves import _try_oropt_move
+from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.tour_improvement import _dynamic_kopt_search
 
 
 def _improve_tour(  # noqa: C901

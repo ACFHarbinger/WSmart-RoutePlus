@@ -23,7 +23,8 @@ from logic.src.policies.helpers.operators.destroy_ruin import (
     worst_removal,
 )
 from logic.src.policies.helpers.operators.recreate_repair import greedy_insertion, greedy_profit_insertion
-from logic.src.policies.helpers.operators.recreate_repair.regret import regret_k_insertion, regret_k_profit_insertion
+from logic.src.policies.helpers.operators.recreate_repair.regret import regret_k_insertion
+from logic.src.policies.helpers.operators.recreate_repair.regret_profit import regret_k_profit_insertion
 
 _DESTROY_OPS = {
     "random": random_removal,
@@ -92,15 +93,6 @@ def apply_lns(  # noqa: C901
         effective_q = max(1, min(int(ruin_fraction * total_nodes), total_nodes))
     else:
         effective_q = max(1, min(math.ceil(0.05 * total_nodes), 10))
-
-    # Backward compatibility: "regret_2" / "regret_3_profit" style names
-    # are parsed into (base_op, repair_k) pairs.
-    if repair_op.startswith("regret_"):
-        parts = repair_op.split("_")
-        # Parts: ["regret", "<k>"] or ["regret", "<k>", "profit"]
-        if len(parts) >= 2 and parts[1].isdigit():
-            repair_k = int(parts[1])
-            repair_op = "regret_profit" if (len(parts) == 3 and parts[2] == "profit") else "regret"
 
     # Dispatch destroy
     if destroy_op not in _DESTROY_OPS:

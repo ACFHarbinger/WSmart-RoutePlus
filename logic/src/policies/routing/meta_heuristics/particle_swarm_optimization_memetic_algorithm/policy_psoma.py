@@ -19,14 +19,15 @@ Example:
 from typing import Any, Dict, Optional, Type, Union
 
 from logic.src.configs.policies.psoma import PSOMAConfig
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.routing.base.generic_policy import GenericRoutingPolicy
+from logic.src.utils.registry import ALL
 
 from .solver import PSOMASolver
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.META_HEURISTIC,
     PolicyTag.POPULATION_BASED,
     PolicyTag.SWARM_INTELLIGENCE,

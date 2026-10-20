@@ -20,13 +20,13 @@ Example:
     ...         return self.encoder(td)
 """
 
+from logic.src.models.common.critic_network.policy import CriticNetwork as CriticNetwork
+from logic.src.models.common.critic_network.policy import create_critic_from_actor as create_critic_from_actor
+
 from .autoregressive.constructive import ConstructivePolicy
 from .autoregressive.decoder import AutoregressiveDecoder
 from .autoregressive.encoder import AutoregressiveEncoder
 from .autoregressive.policy import AutoregressivePolicy
-from .critic_network.model import CriticNetwork as CriticNetwork
-from .critic_network.model import LegacyCriticNetwork as LegacyCriticNetwork
-from .critic_network.model import create_critic_from_actor as create_critic_from_actor
 from .improvement.decoder import ImprovementDecoder
 from .improvement.encoder import ImprovementEncoder
 from .improvement.policy import ImprovementPolicy
@@ -57,7 +57,6 @@ __all__ = [
     "EASEmb",
     "EASLay",
     "CriticNetwork",
-    "LegacyCriticNetwork",
     "create_critic_from_actor",
     "TimeTrackingPolicy",
 ]

@@ -28,6 +28,7 @@ import { useCloudLauncherStore } from "../../store/launchers";
 import type { CloudBackendEntry, CloudSubmitRequest } from "../../types/cloud";
 import { listCloudBackends, submitCloudJob } from "../../utils/cloud";
 import { CostLimitsFields } from "../../components/cloud/CostLimitsFields";
+import { PlacementFields, parseTargets } from "../../components/cloud/PlacementFields";
 import { EstimatePanel } from "../../components/cloud/EstimatePanel";
 import { useCloudEstimate } from "../../hooks/cloud/useCloudEstimate";
 import { ProviderSelector } from "../../components/cloud/ProviderSelector";
@@ -70,6 +71,9 @@ export function CloudLauncher() {
     machineType,
     region,
     budgetUsd,
+    priority,
+    targets,
+    pool,
     root,
     patch,
   } = useCloudLauncherStore();
@@ -175,6 +179,9 @@ export function CloudLauncher() {
     if (machineType.trim()) parts.push("--machine-type", machineType.trim());
     if (region.trim()) parts.push("--region", region.trim());
     if (budgetUsd > 0) parts.push("--budget", String(budgetUsd));
+    if (priority !== 0) parts.push("--priority", String(priority));
+    for (const target of parseTargets(targets)) parts.push("--target", target);
+    if (pool) parts.push("--pool");
 
     return parts.join(" ");
   }, [
@@ -198,6 +205,9 @@ export function CloudLauncher() {
     machineType,
     region,
     budgetUsd,
+    priority,
+    targets,
+    pool,
   ]);
 
   // CR-10: what the job would cost and how long it would take, before submitting.
@@ -261,6 +271,9 @@ export function CloudLauncher() {
         machine_type: machineType.trim() || undefined,
         region: region.trim() || undefined,
         budget: budgetUsd > 0 ? budgetUsd : undefined,
+        priority: priority !== 0 ? priority : undefined,
+        targets: parseTargets(targets).length ? parseTargets(targets) : undefined,
+        pool: pool || undefined,
       };
 
       if (jobType === "manifest") {
@@ -664,6 +677,9 @@ export function CloudLauncher() {
         {/* Section 5: Cost & ETA Estimation (CR-10) */}
         <div className="card bg-canvas-surface border border-canvas-border rounded-xl p-4">
           <CostLimitsFields machineType={machineType} region={region} budgetUsd={budgetUsd} onChange={patch} />
+          <div className="pt-4">
+            <PlacementFields priority={priority} targets={targets} pool={pool} onChange={patch} />
+          </div>
         </div>
         <EstimatePanel estimate={estimate} />
 

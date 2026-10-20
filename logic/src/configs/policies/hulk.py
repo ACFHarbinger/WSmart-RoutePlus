@@ -14,8 +14,6 @@ Example:
 from dataclasses import dataclass, field
 from typing import Any, List, Optional
 
-from hydra.core.config_store import ConfigStore
-
 
 @dataclass
 class HULKConfig:
@@ -105,7 +103,6 @@ class HULKConfig:
     score_reject: float = 0.5
     operator_weights: dict = field(default_factory=dict)
 
-
     @classmethod
     def from_config(cls, config: Any) -> "HULKConfig":
         """
@@ -157,9 +154,3 @@ class HULKConfig:
         if not self.operator_weights:
             all_ops = self.unstring_operators + self.string_operators + self.local_search_operators
             self.operator_weights = {op: 1.0 for op in all_ops}
-
-
-def register_configs():
-    """Register HULK configs with Hydra."""
-    cs = ConfigStore.instance()
-    cs.store(group="policies", name="hulk", node=HULKConfig)

@@ -104,7 +104,7 @@ def test_constructor_id_from_expanded_policy_name() -> None:
 def test_calibrated_acceptance_yaml_keeps_its_calibration_control():
     import math
 
-    from logic.src.pipeline.simulations.actions.base import _acceptance_config_from_entry
+    from logic.src.pipeline.simulations.actions.policy_config import _acceptance_config_from_entry
     from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
 
     spec = _acceptance_config_from_entry({"other/ac_bmc.yaml": "bmc_calibrated"})

@@ -197,7 +197,7 @@ class HybridMemeticLargeNeighborhoodSearchSolver(HMLNSEvolutionMixin):
         # ═══════════════════════════════════════════════════════════
         # PHASE 2: POPULATION EVOLUTION WITH HGS
         # ═══════════════════════════════════════════════════════════
-        for iteration in range(self.params.max_iterations):
+        for iteration in range(self.params.max_generations):
             if self.params.time_limit > 0 and time.perf_counter() - start_time > self.params.time_limit:
                 break
 

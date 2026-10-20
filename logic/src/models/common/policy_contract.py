@@ -25,32 +25,19 @@ loss (teacher forcing) and the simulator's neural agent (``actions``). The Atten
 
 Attributes:
     STRATEGIES: Decoding strategies of the contract.
-    PolicyOutput: Typed view of the output dict.
     check_policy_output: Validate an output against the contract.
 
 Example:
     >>> out = policy(env.reset(td), env, strategy="sampling")
-    >>> check_policy_output(out, batch_size=td.batch_size[0])
-"""
+    >>> check_policy_output(out, batch_size=td.batch_size[0])"""
 
 from __future__ import annotations
 
-from typing import Any, Mapping, TypedDict
+from typing import Any, Mapping
 
 import torch
-from tensordict import TensorDict
 
 STRATEGIES = ("greedy", "sampling")
-
-
-class PolicyOutput(TypedDict, total=False):
-    """Output of a policy forward call (see the module docstring)."""
-
-    reward: torch.Tensor
-    actions: torch.Tensor
-    log_likelihood: torch.Tensor
-    entropy: torch.Tensor
-    td: TensorDict
 
 
 def check_policy_output(out: Mapping[str, Any], batch_size: int, needs_log_likelihood: bool = True) -> None:
@@ -70,7 +57,9 @@ def check_policy_output(out: Mapping[str, Any], batch_size: int, needs_log_likel
         raise ValueError(f"policy output lacks {missing}")
     actions = out["actions"]
     if actions.dim() != 2 or actions.size(0) != batch_size or actions.dtype != torch.long:
-        raise ValueError(f"actions must be long [batch={batch_size}, steps], got {actions.dtype} {tuple(actions.shape)}")
+        raise ValueError(
+            f"actions must be long [batch={batch_size}, steps], got {actions.dtype} {tuple(actions.shape)}"
+        )
     for key in ("reward", "log_likelihood", "entropy"):
         if key in out and tuple(out[key].shape) != (batch_size,):
             raise ValueError(f"{key} must be [batch={batch_size}], got {tuple(out[key].shape)}")

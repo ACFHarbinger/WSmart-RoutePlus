@@ -17,6 +17,122 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Hybrid policies ran the wrong engine (`2026-10-20`)
+
+#### Fixed
+
+- **Routing engine resolution** (`pipeline/simulations/actions/routing.py`). When a policy's config named no engine, the routing action took the first config key that matched a registered engine, in set order, before it looked at the policy name. Hybrids nest their components' sections at the top level, so they ran a component instead:
+  - HVPL, HMLNS and RL-HVPL ran ALNS, with their own `alns` section;
+  - HGS-ALNS ran ALNS;
+  - CALM ran TPKS.
+
+  The engine named in the policy name now comes first, and a config key is a deterministic fallback. All 87 other policy YAMLs resolve as before; none of the affected policies is in the paper or the 1.0 release. Covered by `test_routing_engine_resolution_prefers_the_policy_name`.
+
+#### Removed
+
+- `policy_hms.yaml` and `policy_rl_ahvpl.yaml`, configs for policies that no longer exist. They only ever ran ALNS.
+
+#### Known issues
+
+Running for the first time, four of the five hybrids crash on a 2-day Rio Maior 100 run (HVPL completes):
+- HMLNS and RL-HVPL: `ALNSConfig` has no `max_removal_pct`.
+- HGS-ALNS: `_select_parents()` is called without `pop_infeasible`.
+- CALM: `float()` is given a dict.
+
+These are listed for the ultra review.
+
+### Compatibility shims removed (`2026-10-20`)
+
+#### Removed
+
+- **`GlobalRegistry`** (`logic/src/enums/registry.py`), a wrapper that forwarded to `ALL`. The 131 `@GlobalRegistry.register(...)` decorators now call `@ALL.register(...)` (`logic.src.utils.registry`).
+- **`LegacyCriticNetwork`** (`models/common/critic_network/model.py`) and its tests.
+- **`AttentionModel.context_embedder`**, a proxy for `init_embedding`, along with its adapter class. Checkpoints saved with `context_embedder.*` keys still load, because the loader's key remap stays. `PTPEmbedding.init_node_embeddings`, an alias of `forward`, is removed too.
+- **Flattened parameters in HVPL and HMLNS** (`alns_iterations`, `aco_n_ants`, ...). These branches never ran, because the policy values are plain dicts and the nested `aco`/`maco`/`alns` sections are always mappings.
+- **Explicit solver arguments**:
+  - `BranchAndPriceSolver` takes `params: BPConfig` (default `BPConfig()`) instead of 18 keyword arguments.
+  - `BranchAndCutSolver` no longer takes `**kwargs`.
+- **Other aliases**:
+  - `HybridMemeticLargeNeighborhoodSearchParams.max_iterations`; the solver reads `max_generations`.
+  - `apply_lns` parsing of `regret_<k>[_profit]` names; use `repair_op="regret"` with `repair_k`.
+  - The no-op `decay_weights` of the HGS-RR operator manager.
+  - The `horizon_days` lookup in deadline packing; the context has no such field, so the threshold was always used.
+
+#### Fixed
+
+- **Branch-and-Price overwrote its configuration.** With `params` given, the constructor reset `branching_strategy` and `tree_search_strategy` to its argument defaults (`edge`, `best_first`), so configured values were ignored. It now reads them from `params`, and `use_ryan_foster_branching` selects Ryan-Foster.
+- **The multi-day path dropped the fleet size.** It passed `vehicle_limit` next to `params`, where it was ignored. A non-zero `n_vehicles` now sets `params.vehicle_limit`.
+- Both fixes leave the default configuration's behaviour unchanged.
+
+#### Kept
+
+- These are live paths, not shims; misleading "legacy" comments on them were reworded:
+  - the branch-and-bound tree's explicit arguments, which Branch-and-Price uses;
+  - `calculate_reward`, used by RL-ALNS;
+  - the base routing policy's untyped-config path;
+  - POPMUSIC's `greedy`/`nearest_neighbor` initial solvers, which are selectable options.
+
+#### Verified
+
+- Full suite 2,605 passed (the shim-only tests are gone); the release build, closure verification and smoke pass. A 2-day Rio Maior 100 simulation of ALNS, HGS, ACO-HH, SANS, PSOMA, PG-CLNS, HVPL and BP gives identical kg, km, overflows and profit to main for all 14 policy logs. HMLNS crashes on both (see the next entry).
+
+### Unused functions, classes and methods removed (`2026-10-20`)
+
+#### Added
+
+- **`logic/validation/check_unused_symbols.py`**: runs vulture over the repository (tests count as users) and sorts each unused function, class, method or property in production code by evidence of use:
+  - `STRING`: a token in YAML, JSON, TOML, TS, Rust or notebook files, or in a Python string literal;
+  - `DECORATED`: has registration decorators;
+  - `HOOK`: torch, TorchRL, Lightning, argparse or `ast` callbacks, or a dunder;
+  - `OVERRIDE`: a method of a class with an external ancestor;
+  - `FSTRING`: matches an f-string prefix or suffix (`getattr(self, f"_try_{move}")`);
+  - `CANDIDATE`: no evidence. `--remove` deletes the `CANDIDATE` definitions, with their decorators, and their module-docstring entries.
+
+#### Removed
+
+- **116 unused definitions in 69 files (2,522 lines)**: 24 functions, 2 classes (`KoptTopologyFactory`, `PolicyOutput`), 81 methods and 9 properties with no reference anywhere. They include unused local-search move variants (`_try_cross_exchange`, `three_opt_star`, `four_opt_star`, ...), statistics getters, unused interface methods and config property aliases (`RLHVPLConfig.qlearning_*`).
+- The Azure provider's three candidates are left for its lane (CR-07). Two names used only in notebooks (`set_daily_waste`, `to_dataframe`) stay.
+
+#### Verified
+
+- Full suite 2,608 passed; the release build, closure verification and smoke pass. A 2-day Rio Maior 100 simulation of ALNS, HGS, ACO-HH, SANS, PSOMA and PG-CLNS gives identical kg, km and overflows to main for all 12 policy logs.
+
+### Compatibility re-exports removed (`2026-10-20`)
+
+#### Added
+
+- **`logic/validation/check_reexports.py`**: finds re-exports, meaning names a non-`__init__` module imports but never uses itself. For each it follows the import chain to the defining module and lists the importers (module-level or deferred, absolute or relative), the string references (`mock.patch` targets, YAML) and the module-attribute uses.
+  - `--fix` rewrites the importers to the defining module and removes the re-export from the module and its `__all__`.
+  - Modules whose namespace is read dynamically (`getmembers`, `vars`, `dir`, `__dict__`, `getattr`, `import_module`), targets an f-string may build (`envs.{name}:{Prefix}Generator`), attribute uses and string references are reported for review by hand instead (`--ignore-dynamic`, `--no-strings`).
+- `vulture` in the `dev` dependency group (for the unused-symbol pass).
+
+#### Removed
+
+- **260 re-exports** (248 and 6 by `--fix`, 6 by hand), including the facades the file-size refactor left so old import paths kept working; 186 files changed, importers now import from the defining modules.
+- **Modules that were only re-exports**: `configs/policies/other/packing.py`, `tracking/logging/log_utils.py`, `policies/vector/local_search.py`, `pheromone_guided_cooperative_large_neighborhood_search/operators/{repair,destroy,exchange,move,route}_operators.py` and `perturbation_shaking/sans/{move,swap}.py`.
+- `policies/helpers/learning/agents/bandits.py`: dead, shadowed by the `agents/bandits/` package of the same name, which every import already resolved to.
+- Test-only re-exports (`ms_bpc_sp_engine.GRB` and `_column_generation_loop`, `build_release.LAZY_LINE_RE` and `lazy_targets`): the tests use the defining modules.
+
+#### Fixed
+
+- **No-op patches deleted**: `mock.patch` targets on names the module never used (`initializing.ROOT_DIR`, `node_selection.ROOT_DIR`, `route_improvement.ROOT_DIR`, `simulator.update_policy_log_section`) changed nothing.
+- `test_sequential_loop_does_not_write_mean` patched `simulator.update_policy_log_section`, which `simulator.py` never calls, so its assertion was vacuous. It now patches the mean writer's module, `simulator_progress`, and still passes.
+- The env and generator targets for `irp` and `thop` and their `ProblemSpec.env_target` point at `irp_env`, `irp_generator`, `thop_env` and `thop_generator`; the f-string targets had relied on the re-exports.
+- `generate_packing_templates` reads the three modules that define the packing configs (the same 34 configs).
+
+Full suite: 2,608 passed, no failures; release build, closure verification and smoke pass.
+
+### Remaining test failures and Launcher scheduling fields (`2026-10-20`)
+
+#### Fixed
+
+- `test_integration.py::test_sim_sequential_basic` and `::test_sim_policy_neural_mock`: their mock routing adapters returned the old 3-tuple; they now return the routing contract `(tour, cost, profit, search_context, multi_day_context)`.
+- `test_hrl_manager.py::test_gatlst_manager_init` checked `MandatoryManager.hidden_dim`, the compatibility alias removed in `e33884f49`; it now checks `embed_dim` (`hidden_dim` remains the legacy constructor argument).
+
+#### Added
+
+- **Launcher**: priority, placement targets (one per line) and warm pool inputs (`PlacementFields`) for the CR-09 scheduler. They are added to the CLI preview and passed by `cloud_submit` (`--priority`, `--target`, `--pool`).
+
 ### Cloud runner CR-17: docs, release extra, CI gate and close-out fixes (`2026-10-20`)
 
 #### Added

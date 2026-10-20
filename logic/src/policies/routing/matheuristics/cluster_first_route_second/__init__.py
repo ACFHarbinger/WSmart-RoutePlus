@@ -26,11 +26,13 @@ Example:
     >>> policy = ClusterFirstRouteSecondPolicy()
 """
 
+from logic.src.policies.routing.matheuristics.cluster_first_route_second.tsp_genetic import find_route_ga
+
 from .greedy_assignment import assign_greedy
 from .mip_assignment import assign_exact_mip
 from .policy_cf_rs import ClusterFirstRouteSecondPolicy
 from .solver import run_cf_rs
-from .tsp_metaheuristics import find_route_aco, find_route_ga, find_route_pso
+from .tsp_metaheuristics import find_route_aco, find_route_pso
 
 __all__ = [
     "ClusterFirstRouteSecondPolicy",

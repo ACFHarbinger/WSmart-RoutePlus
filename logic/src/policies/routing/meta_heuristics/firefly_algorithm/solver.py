@@ -318,38 +318,6 @@ class FASolver:
         # 3. Apply local search to refine the "attracted" solution
         return self.ls.optimize(current_routes)
 
-    def _partition_flat(self, nodes: List[int]) -> List[List[int]]:
-        """Partition flat nodes into feasible routes.
-
-        Args:
-            nodes: List of node indices.
-
-        Returns:
-            Grouped routes.
-        """
-        routes: List[List[int]] = []
-        curr: List[int] = []
-        load = 0.0
-        for n in nodes:
-            w = self.wastes.get(n, 0.0)
-            if load + w <= self.capacity:
-                curr.append(n)
-                load += w
-            else:
-                if curr:
-                    routes.append(curr)
-                curr = [n]
-                load = w
-        if curr:
-            routes.append(curr)
-
-        # Mandatory coverage
-        visited = {n for r in routes for n in r}
-        for n in self.mandatory_nodes:
-            if n not in visited:
-                routes.append([n])
-        return routes
-
     def _best_insertion_cost(self, node: int, routes: List[List[int]]) -> float:
         """Compute the minimum insertion cost of a node.
 

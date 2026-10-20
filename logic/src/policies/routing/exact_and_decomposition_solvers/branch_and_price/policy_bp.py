@@ -27,16 +27,17 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 import numpy as np
 
 from logic.src.configs.policies.bp import BPConfig
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.search_context import SearchContext
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
+from logic.src.utils.registry import ALL
 
 from .bp import BranchAndPriceSolver
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.EXACT,
     PolicyTag.DECOMPOSITION,
     PolicyTag.MATH_PROGRAMMING,
@@ -147,6 +148,8 @@ class BranchAndPricePolicy(BaseRoutingPolicy):
         mandatory = kwargs.get("mandatory", [])
 
         params = self._effective_config(config_dict)
+        if num_vehicles:
+            params.vehicle_limit = num_vehicles
 
         solver = BranchAndPriceSolver(
             n_nodes=len(dist_matrix) - 1,
@@ -157,7 +160,6 @@ class BranchAndPricePolicy(BaseRoutingPolicy):
             cost_per_km=C,
             mandatory_nodes=set(mandatory),
             params=params,
-            vehicle_limit=num_vehicles,
         )
 
         flat_tour, profit, _stats = solver.solve()

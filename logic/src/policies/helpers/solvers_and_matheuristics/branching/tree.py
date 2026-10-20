@@ -20,13 +20,15 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple, Union, 
 
 import numpy as np
 
-from logic.src.policies.helpers.solvers_and_matheuristics.branching.strategies import (
-    EdgeBranching,
+from logic.src.policies.helpers.solvers_and_matheuristics.branching.node_fleet_branching import (
     FleetSizeBranching,
-    MultiEdgePartitionBranching,
     NodeVisitationBranching,
     RyanFosterBranching,
 )
+from logic.src.policies.helpers.solvers_and_matheuristics.branching.partition_branching import (
+    MultiEdgePartitionBranching,
+)
+from logic.src.policies.helpers.solvers_and_matheuristics.branching.strategies import EdgeBranching
 from logic.src.policies.helpers.solvers_and_matheuristics.common.node import BranchNode
 
 if TYPE_CHECKING:
@@ -81,9 +83,8 @@ class BranchAndBoundTree:
         self,
         v_model: Optional[VRPPModel] = None,
         params: Optional[Union[BPCConfig, MSBPCSPConfig]] = None,
-        # Legacy positional arguments kept for backward compatibility only.
-        # If params is supplied these are ignored; a DeprecationWarning is emitted
-        # when they differ from their defaults to surface accidental misuse.
+        # Used when params is None (Branch-and-Price passes these directly). With
+        # params they are ignored, and a warning flags non-default values.
         max_nodes: int = 1000,
         strategy: str = "edge",
         search_strategy: str = "best_first",

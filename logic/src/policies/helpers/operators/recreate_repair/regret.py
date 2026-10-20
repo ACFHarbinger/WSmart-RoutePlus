@@ -21,33 +21,7 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from .regret_profit import (
-    _get_insertion_options_with_profit as _get_insertion_options_with_profit,
-)
-from .regret_profit import (
-    regret_2_profit_insertion as regret_2_profit_insertion,
-)
-from .regret_profit import (
-    regret_3_profit_insertion as regret_3_profit_insertion,
-)
-from .regret_profit import (
-    regret_4_profit_insertion as regret_4_profit_insertion,
-)
-from .regret_profit import (
-    regret_k_profit_insertion as regret_k_profit_insertion,
-)
-
-__all__ = [
-    "regret_2_insertion",
-    "regret_k_insertion",
-    "regret_3_insertion",
-    "regret_4_insertion",
-    "regret_2_profit_insertion",
-    "regret_k_profit_insertion",
-    "regret_3_profit_insertion",
-    "regret_4_profit_insertion",
-    "_get_insertion_options_with_profit",
-]
+__all__ = ["regret_2_insertion", "regret_k_insertion", "regret_3_insertion", "regret_4_insertion"]
 
 
 def regret_2_insertion(
@@ -351,4 +325,3 @@ def regret_4_insertion(
         expand_pool=expand_pool,
         noise=noise,
     )
-

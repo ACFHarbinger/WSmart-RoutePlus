@@ -72,9 +72,6 @@ from .lbbd_subproblems import (
     _route_cost_from_nodes as _route_cost_from_nodes,
 )
 from .lbbd_subproblems import (
-    _route_revenue_from_nodes as _route_revenue_from_nodes,
-)
-from .lbbd_subproblems import (
     _solve_sub_alns as _solve_sub_alns,
 )
 from .lbbd_subproblems import (

@@ -79,18 +79,19 @@ if TYPE_CHECKING:
     from logic.src.interfaces.context.search_context import SearchContext
 
 from logic.src.configs.policies.arco import ARCOConfig
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.search_context import SearchContext
 from logic.src.interfaces.routing_algorithm import IRoutingAlgorithm
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
+from logic.src.utils.registry import ALL
 
 from .arco_weights import ARCOWeightsMixin
 
 logger = logging.getLogger(__name__)
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.HEURISTIC,
     PolicyTag.ROUTING,
     PolicyTag.PROFIT_AWARE,
@@ -307,35 +308,6 @@ class AdaptiveRoutingAlgorithmOrchestrator(ARCOWeightsMixin, BaseRoutingPolicy):
     # Introspection helpers
     # ------------------------------------------------------------------
 
-    def get_weight_summary(self) -> Dict[str, Any]:
-        """
-        Return a human-readable snapshot of current adaptive weights.
-
-        Returns:
-            Dict with keys:
-                ``"first_position"``: dict mapping routing algorithm name → w_first score.
-                ``"transition_matrix"``: dict mapping (from, to) pair → W score.
-                ``"call_counts"``: dict mapping routing algorithm name → total call count.
-        """
-        self._initialize_constructors()
-        assert self._w_first is not None
-        assert self._W is not None
-        assert self._call_counts is not None
-
-        first_pos = {self._constructor_names[i]: float(self._w_first[i]) for i in range(self._n)}
-        transitions = {
-            (self._constructor_names[i], self._constructor_names[j]): float(self._W[i, j])
-            for i in range(self._n)
-            for j in range(self._n)
-            if i != j
-        }
-        calls = {self._constructor_names[i]: int(self._call_counts[i]) for i in range(self._n)}
-        return {
-            "first_position": first_pos,
-            "transition_matrix": transitions,
-            "call_counts": calls,
-        }
-
     def best_sequence(self) -> List[str]:
         """
         Return the greedy-optimal routing algorithm sequence given current weights.
@@ -361,11 +333,6 @@ class AdaptiveRoutingAlgorithmOrchestrator(ARCOWeightsMixin, BaseRoutingPolicy):
         self.params.epsilon = original_epsilon
 
         return [self._constructor_names[i] for i in idx_seq]
-
-    def reset_weights(self) -> None:
-        """Reset all adaptive weights to their initial uniform values."""
-        if self._initialized:
-            self._init_weights()
 
     # ------------------------------------------------------------------
     # Required abstract method — not used (execute() is overridden)

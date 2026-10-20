@@ -81,7 +81,8 @@ class TestIntegrationSimulation:
         RoutingAlgorithmRegistry.register("policy_regular_emp")(MockPolicy)
         RoutingAlgorithmRegistry.register("none_regular_none")(MockPolicy)
         instance = MockPolicy.return_value
-        instance.execute.return_value = ([0, 1, 2, 0], 10.0, None)
+        # The routing contract: (tour, cost, profit, search_context, multi_day_context)
+        instance.execute.return_value = ([0, 1, 2, 0], 10.0, 0.0, None, None)
         try:
             log, log_std, failed = self._run_sim(sim_opts)
             assert not failed
@@ -102,7 +103,8 @@ class TestIntegrationSimulation:
         RoutingAlgorithmRegistry.register("none_meanstd0.84_am_none")(MockPolicy)
 
         instance = MockPolicy.return_value
-        instance.execute.return_value = ([0, 1, 2, 0], 10.0, None)
+        # The routing contract: (tour, cost, profit, search_context, multi_day_context)
+        instance.execute.return_value = ([0, 1, 2, 0], 10.0, 0.0, None, None)
 
         try:
             mock_setup.return_value = (MagicMock(), {})

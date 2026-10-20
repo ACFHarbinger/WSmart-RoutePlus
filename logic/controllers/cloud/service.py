@@ -52,7 +52,6 @@ from logic.controllers.cloud.scheduler.placement import TargetHealth, count_by_t
 from logic.controllers.cloud.scheduler.pool import PoolMixin
 from logic.controllers.cloud.service_launch import ServiceLaunchMixin
 from logic.controllers.cloud.service_status import ServiceStatusMixin
-from logic.controllers.cloud.service_status import extract_policy_from_cell as extract_policy_from_cell  # noqa: F401
 from logic.controllers.cloud.store.staging import stage_job_inputs
 from logic.controllers.cloud.store.storage import download_results, upload_tree
 

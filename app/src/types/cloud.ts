@@ -64,6 +64,10 @@ export interface CloudSubmitRequest {
   region?: string;
   /** Job cost cap in USD (CR-10): refused above it, cancelled when it is reached. */
   budget?: number;
+  /** CR-09: higher runs first; placement targets with spill-over; the warm pool. */
+  priority?: number;
+  targets?: string[];
+  pool?: boolean;
   wait?: boolean;
   poll?: number;
 }

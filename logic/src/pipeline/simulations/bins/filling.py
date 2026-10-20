@@ -161,18 +161,6 @@ class BinsFillingMixin:
             float(np.sum(todays_lost)),
         )
 
-    def deterministic_filling(self, date):
-        """Loads deterministic fill levels from historical data.
-
-        Args:
-            date: Date string or object to load values for.
-
-        Returns:
-            The processed filling tuple.
-        """
-        todaysfilling = self.grid.get_values_by_date(date, sample=True)
-        return self._process_filling(todaysfilling)
-
     def load_filling(self, day: int) -> Tuple[int, np.ndarray, np.ndarray, float]:
         """Loads deterministic waste fills from pre-recorded data.
 

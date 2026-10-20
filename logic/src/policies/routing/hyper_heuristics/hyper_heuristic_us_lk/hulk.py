@@ -366,15 +366,3 @@ class HULKSolver:
             return True, delta
 
         return False, delta
-
-    def get_operator_statistics(self) -> Dict:
-        """Get performance statistics for all operators.
-
-        Returns:
-            Dict: Dictionary containing statistics for unstringing, stringing, and local search operators.
-        """
-        return {
-            "unstring": self.unstring_selector.get_statistics(),
-            "string": self.string_selector.get_statistics(),
-            "local_search": self.local_search_selector.get_statistics(),
-        }

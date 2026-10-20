@@ -131,10 +131,6 @@ class FilesystemTracker:
             "size_bytes": os.path.getsize(path),
         }
 
-    def clear_cache(self) -> None:
-        """Clears the internal hash cache to force re-computation."""
-        self._hash_cache.clear()
-
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------

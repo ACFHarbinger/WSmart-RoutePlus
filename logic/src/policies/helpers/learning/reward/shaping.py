@@ -111,7 +111,7 @@ class RewardShaper:
     def calculate_reward(
         self, new_cost: float, current_cost: float, best_cost: float, accepted: bool, stagnation_count: int = 0
     ) -> float:
-        """Legacy/Backward compatibility method for cost-minimization problems.
+        """Reward for cost-minimisation searches (RL-ALNS).
 
         Inverts the logic of compute_reward since lower cost is better.
 

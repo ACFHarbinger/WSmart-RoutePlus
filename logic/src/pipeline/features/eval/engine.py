@@ -65,9 +65,6 @@ from .eval_loop import (
     _build_dataset_kwargs as _build_dataset_kwargs,
 )
 from .eval_loop import (
-    _build_eval_kwargs as _build_eval_kwargs,
-)
-from .eval_loop import (
     _eval_dataset as _eval_dataset,
 )
 
@@ -106,8 +103,6 @@ def get_best(
     return [sequences[i] if i >= 0 else None for i in result], [float(cost[i]) if i >= 0 else math.inf for i in result]
 
 
-
-
 def eval_dataset_mp(
     args: Tuple[str, int, float, Config, int, int],
 ) -> List[Dict[str, Any]]:
@@ -136,7 +131,6 @@ def eval_dataset_mp(
     dataset = model.problem.make_dataset(filename=dataset_path, **ds_kwargs)
     device = torch.device("cuda:{}".format(i))
     return _eval_dataset(model, dataset, beam_width, softmax_temp, cfg, device)
-
 
 
 def eval_dataset(

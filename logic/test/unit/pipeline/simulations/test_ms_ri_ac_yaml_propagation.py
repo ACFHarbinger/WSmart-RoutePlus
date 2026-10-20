@@ -301,7 +301,7 @@ def test_expanded_paper_policies_match_ms_ri_ac_yaml() -> None:
     from hydra import compose, initialize_config_dir
     from logic.src.constants.paths import CONFIGS_DIR
     from logic.src.pipeline.features.test.config import expand_policy_configs
-    from logic.src.pipeline.simulations.actions.base import (
+    from logic.src.pipeline.simulations.actions.policy_config import (
         _as_policy_mapping,
         _file_yaml_pairs,
         _find_key,

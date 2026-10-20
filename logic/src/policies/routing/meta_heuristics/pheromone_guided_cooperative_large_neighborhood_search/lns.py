@@ -29,14 +29,11 @@ import random
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from logic.src.configs.policies.pg_clns import PGCLNSLNSConfig
-from logic.src.policies.routing.base.sub_problem import SubProblem
+from logic.src.policies.routing.base.sub_problem import SubProblem, coerce_config
 from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.acceptance import (
     LegacySAAcceptance,
 )
-from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.engine import (
-    LNSBase,
-    coerce_config,
-)
+from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.engine import LNSBase
 from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.weight_updates import (
     EmaWeightUpdate,
 )

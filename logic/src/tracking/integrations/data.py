@@ -175,31 +175,6 @@ class RuntimeDataTracker:
     # Delta / drift helpers
     # ------------------------------------------------------------------
 
-    def field_drift(
-        self,
-        field: str,
-        stat: str = "mean",
-        window: int = 2,
-    ) -> Optional[float]:
-        """Calculates the drift in a specific statistic over recent snapshots.
-
-        Args:
-            field: Tensor field name (key in TensorDict/dict).
-            stat: Statistic to compare (mean, std, min, max). Defaults to "mean".
-            window: Number of recent snapshots to look back. Defaults to 2.
-
-        Returns:
-            Optional[float]: Absolute delta, or None if insufficient history.
-        """
-        relevant = [s for _, s in self._history if field in s and stat in s[field]]
-        if len(relevant) < window:
-            return None
-        prev = relevant[-window][field][stat]
-        curr = relevant[-1][field][stat]
-        with contextlib.suppress(TypeError, ValueError):
-            return abs(float(curr) - float(prev))
-        return None
-
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------

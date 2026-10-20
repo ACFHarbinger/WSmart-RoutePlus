@@ -136,12 +136,12 @@ from logic.src.policies.helpers.solvers_and_matheuristics.branching.pruning impo
 )
 from logic.src.policies.helpers.solvers_and_matheuristics.master_problem import VRPPMasterProblem
 from logic.src.policies.helpers.solvers_and_matheuristics.master_problem.warm_start import greedy_warm_start_columns
+from logic.src.policies.helpers.solvers_and_matheuristics.search.bpc_options import (
+    total_travel_cost as _total_travel_cost,
+)
 from logic.src.policies.helpers.solvers_and_matheuristics.search.bpc_tree import (
     BPCSearchOptions,
     search_bpc_tree,
-)
-from logic.src.policies.helpers.solvers_and_matheuristics.search.bpc_tree import (
-    total_travel_cost as _total_travel_cost,
 )
 from logic.src.policies.helpers.solvers_and_matheuristics.separation import SeparationEngine
 from logic.src.policies.helpers.solvers_and_matheuristics.vrpp_model import VRPPModel

@@ -10,19 +10,16 @@ from logic.src.configs import Config
 from logic.src.constants import SIM_METRICS
 from logic.src.pipeline.simulations.hpo.hpo_handler import (
     HPOSimulationHandler,
-    _extract_metric,
     _metric_direction,
     _select_pareto_representative,
     objective,
     run_hpo_sim,
     worker,
 )
+from logic.src.pipeline.simulations.hpo.hpo_objective import _extract_metric
 from omegaconf import OmegaConf
 
 pytestmark = [pytest.mark.unit, pytest.mark.slow]
-
-
-
 
 
 class TestHPOHandlerUtilities:

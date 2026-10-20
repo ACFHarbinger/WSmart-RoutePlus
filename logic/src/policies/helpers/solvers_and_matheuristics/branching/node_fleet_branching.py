@@ -12,8 +12,6 @@ from logic.src.policies.helpers.solvers_and_matheuristics.branching.constraints 
 )
 from logic.src.policies.helpers.solvers_and_matheuristics.common.route import Route
 
-from .partition_branching import MultiEdgePartitionBranching as MultiEdgePartitionBranching
-
 if TYPE_CHECKING:
     from logic.src.policies.helpers.solvers_and_matheuristics.common.node import BranchNode
 

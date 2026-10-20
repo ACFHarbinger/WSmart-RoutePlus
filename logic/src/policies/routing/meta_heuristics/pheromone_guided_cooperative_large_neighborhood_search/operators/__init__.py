@@ -35,7 +35,7 @@ Example:
 """
 
 # Destroy operators
-from .destroy_operators import (
+from logic.src.policies.routing.meta_heuristics.pheromone_guided_cooperative_large_neighborhood_search.operators.destroy import (
     cluster_removal,
     random_removal,
     shaw_removal,
@@ -44,15 +44,18 @@ from .destroy_operators import (
 )
 
 # Exchange operators
-from .exchange_operators import (
+from logic.src.policies.routing.meta_heuristics.pheromone_guided_cooperative_large_neighborhood_search.operators.exchange import (
     move_or_opt,
 )
 
 # Move operators
-from .move_operators import move_relocate, move_swap
+from logic.src.policies.routing.meta_heuristics.pheromone_guided_cooperative_large_neighborhood_search.operators.move import (
+    move_relocate,
+    move_swap,
+)
 
 # Repair operators
-from .repair_operators import (
+from logic.src.policies.routing.meta_heuristics.pheromone_guided_cooperative_large_neighborhood_search.operators.repair import (
     greedy_insertion,
     greedy_insertion_with_blinks,
     regret_2_insertion,
@@ -60,7 +63,7 @@ from .repair_operators import (
 )
 
 # Route operators
-from .route_operators import (
+from logic.src.policies.routing.meta_heuristics.pheromone_guided_cooperative_large_neighborhood_search.operators.route import (
     move_2opt_intra,
     move_2opt_star,
     move_3opt_intra,

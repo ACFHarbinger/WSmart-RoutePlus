@@ -84,13 +84,7 @@ from logic.src.policies.helpers.operators.search_heuristics.lin_kernighan_helsga
 from logic.src.tracking.viz_mixin import PolicyStateRecorder
 
 from .lin_kernighan_search import (
-    _apply_2opt_positions as _apply_2opt_positions,
-)
-from .lin_kernighan_search import (
     _build_pos_map as _build_pos_map,
-)
-from .lin_kernighan_search import (
-    _lk_extend as _lk_extend,
 )
 from .lin_kernighan_search import (
     _lk_search as _lk_search,
@@ -102,16 +96,7 @@ from .lin_kernighan_search import (
     _succ as _succ,
 )
 
-__all__ = [
-    "solve_lk",
-    "_build_pos_map",
-    "_apply_2opt_positions",
-    "_succ",
-    "_pred",
-    "_lk_search",
-    "_lk_extend",
-    "_improve_tour_lk",
-]
+__all__ = ["solve_lk", "_build_pos_map", "_succ", "_pred", "_lk_search", "_improve_tour_lk"]
 
 # ---------------------------------------------------------------------------
 # One improvement pass over the full tour

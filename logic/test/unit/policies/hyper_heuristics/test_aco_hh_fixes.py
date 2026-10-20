@@ -63,7 +63,9 @@ def test_operator_pool_and_sequence_length_are_honoured():
     """B-kimi-47/48: the yaml operators list and sequence_length were ignored."""
     inst = _instance(0, 9, 60.0, 5, 40)
     dist, wastes, cap, init, mandatory = inst
-    params = HyperHeuristicACOConfig(n_ants=2, max_iterations=1, seed=1, operators=["swap", "relocate"], sequence_length=3)
+    params = HyperHeuristicACOConfig(
+        n_ants=2, max_iterations=1, seed=1, operators=["swap", "relocate"], sequence_length=3
+    )
     solver = HyperHeuristicACO(_problem(inst), params, init)
     assert solver.operator_names == ["swap", "relocate"]
     sequence, _end = solver._select_sequence(0)
@@ -94,7 +96,7 @@ def test_first_hop_deposits_on_real_rows_only():
 
 def test_elitism_sync_count_uses_ceiling():
     """B-kimi-51: elitism syncs ceil(n_ants * ratio) ants, matching the flowchart."""
-    from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_aco import (
+    from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_aco_hooks import (
         _elitism_sync_count,
     )
 
@@ -115,6 +117,7 @@ def test_operator_wrappers_swallow_data_errors_only():
 
     real_random_removal = ops.random_removal
     try:
+
         def raise_value_error(routes, n, rng=None):
             raise ValueError("simulated node/matrix mismatch")
 

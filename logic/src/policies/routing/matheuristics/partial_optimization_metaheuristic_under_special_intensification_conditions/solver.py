@@ -73,16 +73,11 @@ from logic.src.policies.routing.matheuristics.partial_optimization_metaheuristic
     _assemble_subproblem,
     _route_centroid,
 )
-from logic.src.policies.routing.matheuristics.partial_optimization_metaheuristic_under_special_intensification_conditions.popmusic_utils import (
-    find_route_neighbors as find_route_neighbors,
-)
 from logic.src.policies.routing.matheuristics.partial_optimization_metaheuristic_under_special_intensification_conditions.subproblem import (
     _evaluate_slots,
     _optimize_subproblem,
 )
-from logic.src.policies.routing.other_algorithms.travelling_salesman_problem.tsp import (
-    get_route_cost,
-)
+from logic.src.utils.routing.tours import get_route_cost
 
 from .state import POPMUSICState
 

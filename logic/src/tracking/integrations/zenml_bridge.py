@@ -18,7 +18,7 @@ Example:
 from __future__ import annotations
 
 import contextlib
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from logic.src.tracking.core.run import Run
 from logic.src.tracking.logging.pylogger import get_pylogger
@@ -192,25 +192,3 @@ def configure_zenml_stack(
     except Exception as exc:
         logger.warning(f"ZenML stack configuration failed (non-fatal): {exc}")
         return False
-
-
-def extract_zenml_step_output(
-    pipeline_name: str,
-    step_name: str,
-) -> Optional[Any]:
-    """Retrieves a primary output artifact from the most recent run of a pipeline.
-
-    Args:
-        pipeline_name: Name of the registered ZenML pipeline.
-        step_name: Name of the step whose output should be loaded.
-
-    Returns:
-        Optional[Any]: The materialized Python object, or None if not found.
-    """
-    with contextlib.suppress(Exception):
-        if Client is None:
-            return None
-        client = Client()
-        last_run = client.get_pipeline(pipeline_name).last_run
-        return last_run.steps[step_name].output.load()
-    return None

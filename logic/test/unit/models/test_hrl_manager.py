@@ -22,7 +22,7 @@ def test_gatlst_manager_init():
         device="cpu"
     )
     assert isinstance(manager, MandatoryManager)
-    assert manager.hidden_dim == 16
+    assert manager.embed_dim == 16  # hidden_dim is the legacy constructor name; the attribute is embed_dim
 
 def test_gatlst_manager_forward():
     batch_size = 4

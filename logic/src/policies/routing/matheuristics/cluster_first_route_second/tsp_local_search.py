@@ -45,62 +45,6 @@ def _two_opt_swap(tour: List[int], i: int, k: int) -> List[int]:
     return new_tour
 
 
-def _apply_swap_sequence(tour: List[int], swap_ops: List[Tuple[int, int]], max_swaps: int = 3) -> List[int]:
-    """
-    Apply a sequence of swap operations to move toward a target tour.
-
-    This implements the discrete PSO velocity update mechanism by
-    probabilistically applying swaps that move the current particle
-    toward its personal best and the global best.
-
-    Args:
-        tour: Current tour
-        swap_ops: List of (i, j) swap operations
-        max_swaps: Maximum number of swaps to apply
-
-    Returns:
-        Modified tour
-    """
-    result = tour.copy()
-    num_swaps = min(len(swap_ops), max_swaps)
-
-    for i in range(num_swaps):
-        idx1, idx2 = swap_ops[i]
-        if 0 < idx1 < len(result) - 1 and 0 < idx2 < len(result) - 1:
-            result[idx1], result[idx2] = result[idx2], result[idx1]
-
-    return result
-
-
-def _get_swap_sequence(source: List[int], target: List[int]) -> List[Tuple[int, int]]:
-    """
-    Compute sequence of swap operations to transform source tour into target tour.
-
-    This is used to compute the "velocity" in discrete PSO by finding
-    the swaps needed to move from current position to pbest/gbest.
-
-    Args:
-        source: Current tour
-        target: Target tour
-
-    Returns:
-        List of (i, j) index pairs to swap
-    """
-    swaps = []
-    temp = source.copy()
-
-    for i in range(1, len(temp) - 1):  # Exclude depot at start and end
-        if temp[i] != target[i]:
-            # Find where target[i] is in temp
-            for j in range(i + 1, len(temp) - 1):
-                if temp[j] == target[i]:
-                    swaps.append((i, j))
-                    temp[i], temp[j] = temp[j], temp[i]
-                    break
-
-    return swaps
-
-
 def _get_swap_operators(tour1: List[int], tour2: List[int]) -> List[Tuple[int, int]]:
     """Compute sequence of swap operations to transform tour1 into tour2.
 
@@ -121,37 +65,3 @@ def _get_swap_operators(tour1: List[int], tour2: List[int]) -> List[Tuple[int, i
                     t1[i], t1[j] = t1[j], t1[i]
                     break
     return swaps
-
-
-def _apply_2opt_local_search(
-    tour: List[int],
-    distance_matrix: np.ndarray,
-    n_customers: int,
-    max_swaps: int = 10,
-) -> List[int]:
-    """Apply random 2-opt swaps to improve a tour.
-
-    Args:
-        tour: Current tour including depot at start and end.
-        distance_matrix: Distance matrix of shape (n_nodes, n_nodes).
-        n_customers: Number of customer nodes (excluding depot).
-        max_swaps: Maximum number of 2-opt swaps to attempt.
-
-    Returns:
-        List[int]: Improved tour after applying the best 2-opt moves found.
-    """
-    best_tour = tour.copy()
-    best_dist = _calculate_tour_distance(best_tour, distance_matrix)
-
-    # Try a limited number of 2-opt swaps
-    for _ in range(min(max_swaps, n_customers)):
-        i = np.random.randint(1, n_customers)
-        k = np.random.randint(i + 1, n_customers + 1)
-        new_tour = _two_opt_swap(best_tour, i, k)
-        new_dist = _calculate_tour_distance(new_tour, distance_matrix)
-
-        if new_dist < best_dist:
-            best_tour = new_tour
-            best_dist = new_dist
-
-    return best_tour

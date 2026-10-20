@@ -248,16 +248,13 @@ def test_m_gemini_01_subclasses():
 
 
 def test_used_model_can_be_copied_for_rollout_baseline():
-    """A cached context proxy must follow the copied embedding, not recurse."""
+    """A copied model (the rollout baseline) owns its embedding: training one leaves the other alone."""
     import copy
 
     _, model = _build_test_models()
-    proxy = model.context_embedder
     cloned = copy.deepcopy(model)
 
-    assert cloned.context_embedder is not proxy
-    assert cloned.context_embedder._target is cloned.init_embedding
-    assert cloned.context_embedder._target is not model.init_embedding
+    assert cloned.init_embedding is not model.init_embedding
     before = model.init_embedding.node_embed.weight.detach().clone()
     with torch.no_grad():
         cloned.init_embedding.node_embed.weight.add_(1.0)

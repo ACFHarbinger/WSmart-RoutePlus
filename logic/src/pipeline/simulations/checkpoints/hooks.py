@@ -59,14 +59,6 @@ class CheckpointHook:
         """
         return self.day
 
-    def get_checkpoint_info(self) -> dict:
-        """Get checkpoint info.
-
-        Returns:
-            Dictionary with checkpoint instance and interval.
-        """
-        return {"checkpoint": self.checkpoint, "interval": self.checkpoint_interval}
-
     def set_timer(self, tic: float) -> None:
         """Set timer.
 
@@ -74,14 +66,6 @@ class CheckpointHook:
             tic: Performance counter timestamp.
         """
         self.tic = tic
-
-    def set_state_getter(self, state_getter: Callable[[], Any]) -> None:
-        """Set state getter.
-
-        Args:
-            state_getter: The callable to fetch simulation state.
-        """
-        self.state_getter = state_getter
 
     def before_day(self, day: int) -> None:
         """Before day.

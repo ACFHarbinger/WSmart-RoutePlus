@@ -246,18 +246,6 @@ class MultiStepTimer:
         """
         return sum(sum(v) for v in self._phases.values())
 
-    def phase_total(self, phase: str) -> float:
-        """
-        Accumulated time for *phase* (0.0 if not recorded).
-
-        Args:
-            phase: The name of the phase to get the total time for.
-
-        Returns:
-            float
-        """
-        return sum(self._phases.get(phase, [0.0]))
-
     def summary(self) -> Dict[str, float]:
         """
         Return ``{phase: total_seconds}`` for every recorded phase.

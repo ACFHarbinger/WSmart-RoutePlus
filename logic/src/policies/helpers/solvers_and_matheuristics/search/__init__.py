@@ -32,7 +32,9 @@ Example:
     >>> search = BestFirstSearch()
 """
 
-from .bpc_tree import BPCSearchOptions, search_bpc_tree, total_travel_cost
+from logic.src.policies.helpers.solvers_and_matheuristics.search.bpc_options import total_travel_cost
+
+from .bpc_tree import BPCSearchOptions, search_bpc_tree
 from .cutting_planes import (
     BasicFleetCoverEngine,
     CompositeCuttingPlaneEngine,

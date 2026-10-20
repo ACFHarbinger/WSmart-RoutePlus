@@ -66,25 +66,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
-from .branch_and_bound_profit import (
-    _get_sorted_positions_profit as _get_sorted_positions_profit,
-)
-from .branch_and_bound_profit import (
-    _lds_reinsert_profit as _lds_reinsert_profit,
-)
-from .branch_and_bound_profit import (
-    bb_profit_insertion as bb_profit_insertion,
-)
-
-__all__ = [
-    "bb_insertion",
-    "bb_profit_insertion",
-    "_compute_plan_cost",
-    "_get_sorted_positions",
-    "_get_sorted_positions_profit",
-    "_lds_reinsert",
-    "_lds_reinsert_profit",
-]
+__all__ = ["bb_insertion", "_compute_plan_cost", "_get_sorted_positions", "_lds_reinsert"]
 
 # ---------------------------------------------------------------------------
 # Shared internal types
@@ -429,4 +411,3 @@ def bb_insertion(
                 routes.append([orphan])
 
     return routes
-

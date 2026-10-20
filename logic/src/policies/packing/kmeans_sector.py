@@ -30,10 +30,11 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 from sklearn.cluster import KMeans
 
-from logic.src.enums import GlobalRegistry, PolicyTag
+from logic.src.enums import PolicyTag
 from logic.src.interfaces.context import PackingContext, SearchContext
 from logic.src.interfaces.packing import IPackingAlgorithm
 from logic.src.policies.packing.base import PackingRegistry
+from logic.src.utils.registry import ALL
 
 # Module-level cache: (n_bins, n_sectors, coord_hash) -> integer label array.
 # Avoids re-running K-means on every call within a simulation episode.
@@ -82,7 +83,7 @@ def _fit_kmeans(coordinates: np.ndarray, n_sectors: int) -> np.ndarray:
     return labels
 
 
-@GlobalRegistry.register(
+@ALL.register(
     PolicyTag.PACKING,
     PolicyTag.HEURISTIC,
     PolicyTag.DETERMINISTIC,

@@ -80,7 +80,6 @@ from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.graph
     augment_graph,
     decode_augmented_tour,
 )
-from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.lkh3_alns_entry import solve_lkh3_with_alns
 from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.lkh3_improvement import (
     _improve_tour,
 )
@@ -94,11 +93,11 @@ from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.objec
 from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.popmusic import (
     popmusic_candidates,
 )
-from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.tour_construction import (
+from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.tour_initialization import (
     _double_bridge_kick,
     _initialize_tour,
-    merge_tours_best,
 )
+from logic.src.policies.routing.matheuristics.lin_kernighan_helsgaun_three.tour_merging import merge_tours_best
 from logic.src.tracking.viz_mixin import PolicyStateRecorder
 
 
@@ -375,7 +374,4 @@ def solve_lkh3(  # noqa: C901
 # ---------------------------------------------------------------------------
 
 
-__all__ = [
-    "solve_lkh3",
-    "solve_lkh3_with_alns",
-]
+__all__ = ["solve_lkh3"]

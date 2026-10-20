@@ -17,7 +17,8 @@ Example:
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from .other.packing import PackingConfig
+from logic.src.configs.policies.other.packing_dispatch import PackingConfig
+
 from .other.route_improvement import RouteImprovingConfig
 
 
@@ -118,7 +119,6 @@ class BBConfig:
     # LR-UOP: B&B phase
     lr_branching_strategy: str = "max_waste"
     lr_max_bb_nodes: int = 5000
-
 
     @classmethod
     def from_config(cls, config: Dict[str, Any]) -> "BBConfig":
