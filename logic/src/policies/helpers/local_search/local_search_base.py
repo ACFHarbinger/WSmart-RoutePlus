@@ -175,6 +175,9 @@ class LocalSearch(LocalSearchPairMixin, LocalSearchMovesMixin, ABC):
         for r_idx in routes_to_update:
             route = self.routes[r_idx]
             if not route:
+                # Inserting into an empty route bypasses the cache; drop entries of the old route.
+                for per_route in self.top_insertions.values():
+                    per_route.pop(r_idx, None)
                 continue
             for node in self.neighbors:
                 if node in routed:  # O(1) instead of O(route_length)
@@ -259,7 +262,9 @@ class LocalSearch(LocalSearchPairMixin, LocalSearchMovesMixin, ABC):
         # Store target neighborhood for _process_pair to filter operators
         self._target_neighborhood = target_neighborhood if target_neighborhood else "all"
 
-        # Initialize Top-3 Insertion Cache for O(1) SWAP* evaluation (Vidal 2022)
+        # Initialize Top-3 Insertion Cache for O(1) SWAP* evaluation (Vidal 2022).
+        # Entries from a previous call describe other routes, so start from scratch.
+        self.top_insertions.clear()
         if any(n not in self.node_map for n in self.neighbors):
             self._compute_top_insertions()
 

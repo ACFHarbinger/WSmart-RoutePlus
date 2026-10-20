@@ -218,6 +218,9 @@ class LocalSearchPairMixin:
         for ri in sorted(affected_indices):
             for pi, node in enumerate(self.routes[ri]):
                 self.node_map[node] = (ri, pi)
+                # A routed node's insertion entries are no longer maintained (the cache only
+                # tracks unrouted nodes), so drop them before they go stale.
+                self.top_insertions.pop(node, None)
             self.route_loads[ri] = self._calc_load_fresh(self.routes[ri])
             self.route_sectors.pop(ri, None)  # invalidate stale sector cache
 
