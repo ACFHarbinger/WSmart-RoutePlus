@@ -38,11 +38,19 @@ def local_service(root: Path, project_root: Optional[Path] = None) -> CloudServi
     root = Path(root)
     project_root = Path(project_root) if project_root else REPO_ROOT
     secrets = EnvSecretStore(prefix="WSR_SECRET_")
+    cp = SQLiteControlPlane(root / "control.db")
+
+    def predictor():
+        from logic.controllers.cloud.prediction import fitted_predictor
+
+        return fitted_predictor(cp)
+
     return CloudService(
-        control_plane=SQLiteControlPlane(root / "control.db"),
+        control_plane=cp,
         store=FilesystemObjectStore(root / "objects"),
         backends={(Provider.LOCAL, ComputeKind.PROCESS): LocalProcessBackend(cwd=project_root, secrets=secrets)},
         workroot=root / "work",
+        predictor_factory=predictor,
     )
 
 
@@ -184,6 +192,38 @@ def _track(ctx: _Context) -> Any:
     return run_ids
 
 
+def _predict(ctx: _Context) -> Any:
+    from logic.controllers.cloud.prediction import prediction_accuracy
+
+    opts, service = ctx.opts, ctx.service
+    action = opts["predict_command"]
+    if action == "accuracy":
+        report = prediction_accuracy(service.cp, opts["job_id"])
+        text = f"{report['job_id']}: {len(report['tasks'])} task(s), median APE {report['median_ape']}, coverage {report['coverage']}"
+        _print(opts, report, text)
+        return report
+    if action == "evaluate":
+        from logic.controllers.cloud.prediction import default_predictor
+
+        report = default_predictor().evaluate()
+        _print(opts, report, " ".join(f"{k}={v}" for k, v in report.items()))
+        return report
+    if opts.get("manifest"):
+        spec = load_manifest(Path(opts["manifest"]), policy=opts.get("policy"))
+    else:
+        spec = job_from_command(opts["sim_command"])
+    spec.resources.machine_type = opts.get("machine_type") or spec.resources.machine_type
+    predictions = [p.to_dict() for p in service.predict(spec) or []]
+    total = sum(p["p50"] for p in predictions if p["p50"] is not None)
+    text = "\n".join(
+        f"{p['cell_id']}: {p['p50']} s ({p['p10']}-{p['p90']}), {p['memory_gb']} GiB [{p['source']}]"
+        for p in predictions
+    )
+    payload = {"cells": predictions, "total_p50_seconds": round(total, 1)}
+    _print(opts, payload, text + f"\ntotal (p50): {total:.0f} s")
+    return payload
+
+
 def _cancel(ctx: _Context) -> Any:
     job_id = ctx.opts["job_id"]
     ctx.service.cancel(job_id)
@@ -257,6 +297,7 @@ _COMMANDS: Dict[str, Callable[[_Context], Any]] = {
     "logs": _logs,
     "metrics": _metrics,
     "track": _track,
+    "predict": _predict,
     "cancel": _cancel,
     "retry": _retry,
     "download": _download,
