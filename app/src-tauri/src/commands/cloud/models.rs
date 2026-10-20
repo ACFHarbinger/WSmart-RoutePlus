@@ -100,6 +100,15 @@ pub struct CloudSubmitRequest {
     pub gurobi: Option<String>,
     /// Secret-store name of Gurobi license (never the secret value itself).
     pub gurobi_secret: Option<String>,
+    /// Provider machine type (prices and runtime predictions use it, CR-10/CR-11).
+    #[serde(default)]
+    pub machine_type: Option<String>,
+    /// Provider region.
+    #[serde(default)]
+    pub region: Option<String>,
+    /// Job cost cap in USD (CR-10).
+    #[serde(default)]
+    pub budget: Option<f64>,
     /// Wait for the job to finish synchronously in CLI runner.
     pub wait: Option<bool>,
     /// Seconds between scheduling passes when wait is enabled.

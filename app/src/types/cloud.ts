@@ -59,6 +59,11 @@ export interface CloudSubmitRequest {
   idle?: number;
   gurobi?: "none" | "wls_secret" | "byo" | string;
   gurobi_secret?: string;
+  /** Provider machine type (CR-10 prices, CR-11 predictions). */
+  machine_type?: string;
+  region?: string;
+  /** Job cost cap in USD (CR-10): refused above it, cancelled when it is reached. */
+  budget?: number;
   wait?: boolean;
   poll?: number;
 }

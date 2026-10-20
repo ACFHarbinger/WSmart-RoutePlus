@@ -99,6 +99,7 @@ pub fn run() {
             cloud::cloud_list_jobs,
             cloud::cloud_job_status,
             cloud::cloud_submit,
+            cloud::cloud_cost_estimate,
             cloud::cloud_cancel,
             cloud::cloud_retry,
             cloud::cloud_task_logs,

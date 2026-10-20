@@ -5,7 +5,7 @@ export interface EstimatePanelProps {
   /**
    * Typed estimate prop.
    * If null, undefined, or missing values, renders "estimate unavailable"
-   * per CR-14 requirements (CR-10 cost/ETA engine pending).
+   * (no runtime prediction or no price for the chosen machine).
    */
   estimate?: CloudJobEstimate | null;
   className?: string;
@@ -48,8 +48,8 @@ export function EstimatePanel({ estimate, className = "" }: EstimatePanelProps) 
               </span>
             </div>
             <p className="text-xs text-canvas-muted leading-relaxed">
-              Estimate unavailable (CR-10 cost and ETA engine pending). Exact cloud
-              cost and duration predictions will appear automatically once CR-10 is integrated.
+              Estimate unavailable: the runtime predictor could not read the cells (use
+              sim.graph.* arguments or a rerun manifest) or no price is known for this machine.
             </p>
           </div>
         </div>

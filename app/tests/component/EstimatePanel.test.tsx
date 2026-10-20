@@ -12,7 +12,7 @@ describe("EstimatePanel (CR-14)", () => {
     render(<EstimatePanel estimate={null} />);
     expect(screen.getByTestId("estimate-panel-unavailable")).toBeInTheDocument();
     expect(screen.getAllByText(/Estimate unavailable/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/CR-10 cost and ETA engine pending/i)).toBeInTheDocument();
+    expect(screen.getByText(/runtime predictor could not read the cells/i)).toBeInTheDocument();
   });
 
   it("renders 'estimate unavailable' when estimate is undefined", () => {

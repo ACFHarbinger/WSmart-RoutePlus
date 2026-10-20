@@ -42,6 +42,13 @@ class ServiceStatusMixin:
     """Read-only job views of :class:`.service.CloudService`; needs ``cp``, ``backends`` and ``clock``."""
 
     def _get_price_per_hour(self, spec: JobSpec, spot: bool) -> Optional[float]:
+        prices = getattr(self, "prices", None)  # CR-10 price table: overrides first, then static tables
+        if prices is not None:
+            price = prices.price_per_hour(
+                Provider(spec.provider).value, spec.resources.machine_type, spec.resources.region, spot
+            )
+            if price is not None:
+                return price
         key = (Provider(spec.provider), ComputeKind(spec.compute))
         backend = self.backends.get(key)
         if backend is not None:
