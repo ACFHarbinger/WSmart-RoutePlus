@@ -20,7 +20,7 @@ try:
     from logic.src.tracking.core.run import get_active_run
 except ImportError:
     get_active_run = None  # type: ignore[assignment]
-from logic.src.pipeline.simulations.bins.prediction import calculate_frequency_and_level
+from logic.src.pipeline.simulations.bins.prediction import calculate_frequency_and_level_vectorized
 
 
 class BinsFillingMixin:
@@ -256,18 +256,23 @@ class BinsFillingMixin:
                 )
 
     def set_collection_level_and_freq(self, cf=0.9):
-        """Sets visit frequency and level thresholds.
+        """Set collection days and levels from the fill distribution.
+
+        Batched: one vectorized gamma-quantile evaluation for all bins.
 
         Args:
-            cf: Confidence factor for frequency calculation.
+            cf: Confidence level for the gamma quantile (default 0.9).
         """
-        for ii in range(0, self.n):
-            f2, lv2 = calculate_frequency_and_level(
-                self.dist_param1[ii] * self.dist_param2[ii] if self.distribution == "gamma" else self.dist_param1[ii],
-                self.dist_param1[ii] * self.dist_param2[ii] ** 2
-                if self.distribution == "gamma"
-                else self.dist_param2[ii],
-                cf,
-            )
-            self.collectdays[ii] = f2
-            self.collectlevl[ii] = lv2
+        # dist_param1/2 may be plain Python lists (see __set_param tiling),
+        # so normalise to arrays before the elementwise products.
+        param1 = np.asarray(self.dist_param1, dtype=float)
+        param2 = np.asarray(self.dist_param2, dtype=float)
+        if self.distribution == "gamma":
+            ui = param1 * param2
+            vi = param1 * param2**2
+        else:
+            ui = param1
+            vi = param2
+        freqs, levels = calculate_frequency_and_level_vectorized(ui, vi, cf)
+        self.collectdays[:] = freqs
+        self.collectlevl[:] = levels

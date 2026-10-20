@@ -312,3 +312,37 @@ def calculate_frequency_and_level(ui: float, vi: float, cf: float) -> Tuple[int,
         if v > 100:
             return n, float(ov)
     return 49, float(ov)
+
+
+def calculate_frequency_and_level_vectorized(
+    ui: np.ndarray, vi: np.ndarray, cf: float
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Vectorized counterpart of ``calculate_frequency_and_level``.
+
+    Semantics match the scalar version exactly, per bin: the frequency is the
+    first n in [1, 49] whose gamma quantile exceeds 100 (49 if none does),
+    and the level is 100 minus the quantile at n == 1.
+
+    Args:
+        ui: Mean daily fill rate per bin.
+        vi: Variance of the daily fill rate per bin.
+        cf: Confidence level (e.g. 0.9).
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: int frequencies and float levels.
+    """
+    ui = np.asarray(ui, dtype=float)
+    vi = np.asarray(vi, dtype=float)
+    safe_vi = np.where(vi == 0, 1e-9, vi)
+    safe_ui = np.where(ui == 0, 1e-9, ui)
+    th = safe_vi / safe_ui
+    k1 = safe_ui**2 / safe_vi
+    ov = 100 - gamma.ppf(1 - cf, k1, scale=th)
+    freq = np.full(ui.shape, 49, dtype=int)
+    found = np.zeros(ui.shape, dtype=bool)
+    for n in range(1, 50):
+        v = gamma.ppf(1 - cf, n * k1, scale=th)
+        hit = (v > 100) & ~found
+        freq = np.where(hit, n, freq)
+        found |= hit
+    return freq, ov
