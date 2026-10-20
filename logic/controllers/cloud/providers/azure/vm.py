@@ -11,6 +11,7 @@ import contextlib
 import json
 import shlex
 from typing import Any, Dict, List, Optional
+from urllib.parse import quote
 
 from logic.controllers.cloud.interfaces import (
     AttemptState,
@@ -131,19 +132,18 @@ class AzureVmBackend(ComputeBackend):
         if self.ssh_public_key:
             return self.ssh_public_key.strip()
 
-        try:
-            from cryptography.hazmat.primitives import serialization
-            from cryptography.hazmat.primitives.asymmetric import rsa
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
 
-            private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-            pub = private_key.public_key().public_bytes(
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        return (
+            private_key.public_key()
+            .public_bytes(
                 encoding=serialization.Encoding.OpenSSH,
                 format=serialization.PublicFormat.OpenSSH,
             )
-            return pub.decode("utf-8").strip()
-        except Exception:
-            # Fallback throwaway standard OpenSSH key
-            return "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC3rOqX4qV4Q+V5vY8Gj8kK9x1s0tZ8yD wsruser@wsr-throwaway-key"
+            .decode("utf-8")
+        )
 
     def _build_custom_data(self, launch: LaunchSpec) -> str:
         """Construct UserData bootstrap script executing the task in Docker and shutting down."""
@@ -164,50 +164,51 @@ class AzureVmBackend(ComputeBackend):
         cmd = " ".join(shlex.quote(arg) for arg in launch.argv)
 
         registry = image.split("/", 1)[0] if "/" in image else ""
+        # The stock Ubuntu image has no Azure CLI. Exchange the managed identity
+        # token for an ACR refresh token; ARM tokens are not Docker passwords.
         acr_login = ""
-        if ".azurecr.io" in registry:
-            acr_name = registry.split(".")[0]
-            acr_login = f"""# Log in to ACR using VM's managed identity before pulling image
-if command -v az >/dev/null 2>&1; then
-    az login --identity --allow-no-subscriptions >/dev/null 2>&1 || true
-    az acr login --name {shlex.quote(acr_name)} || true
-else
-    IMDS_TOKEN=$(curl -s -m 5 -H "Metadata:true" "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/" | grep -o '"access_token":"[^"]*' | cut -d'"' -f4 || echo "")
-    if [ -n "$IMDS_TOKEN" ]; then
-        docker login {shlex.quote(registry)} -u 00000000-0000-0000-0000-000000000000 --password-stdin <<< "$IMDS_TOKEN" || true
-    fi
-fi
+        if registry.endswith(".azurecr.io"):
+            acr_login = f"""ACR_TOKEN=$(curl -fsS -m 30 -X POST \\
+    --data-urlencode grant_type=access_token \\
+    --data-urlencode service={shlex.quote(registry)} \\
+    --data-urlencode "access_token=$ACCESS_TOKEN" \\
+    https://{registry}/oauth2/exchange | python3 -c 'import json,sys; print(json.load(sys.stdin)["refresh_token"])')
+printf '%s' "$ACR_TOKEN" | docker login {shlex.quote(registry)} \\
+    -u 00000000-0000-0000-0000-000000000000 --password-stdin
 """
 
-        tag_payload = '{"tags": {"wsr-exit-code": "$EXIT_CODE", "wsr:exit_code": "$EXIT_CODE"}}'
-
+        identity_query = quote(self.identity_id, safe="")
         script = f"""#!/bin/bash
 set -euo pipefail
-# Whatever happens below, stop the VM so poll can detect completion and delete it.
 trap 'shutdown -h now' EXIT
 
-# Ensure docker is installed and running
+# Dependencies for the selected Ubuntu image. Fail before launching if setup fails.
 if ! command -v docker >/dev/null 2>&1; then
-    (apt-get update && apt-get install -y docker.io) || yum install -y docker || true
+    apt-get update
+    apt-get install -y docker.io curl python3
 fi
-systemctl start docker || service docker start || true
+systemctl start docker
 
+ACCESS_TOKEN=$(curl -fsS -m 30 -H "Metadata:true" \\
+    'http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/&mi_res_id={identity_query}' \\
+    | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')
 {acr_login}
-# Run container and record exit code
 EXIT_CODE=0
 docker run --rm {env_flags} {shlex.quote(image)} {cmd} || EXIT_CODE=$?
 
-# Query VM identity token and resource ID from Azure IMDS
-ACCESS_TOKEN=$(curl -s -m 5 -H "Metadata:true" "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/" | grep -o '"access_token":"[^"]*' | cut -d'"' -f4 || echo "")
-VM_ID=$(curl -s -m 5 -H "Metadata:true" "http://169.254.169.254/metadata/instance/compute/resourceId?api-version=2021-02-01&format=text" || echo "")
-
-if [ -n "$ACCESS_TOKEN" ] && [ -n "$VM_ID" ]; then
-    curl -s -m 5 -X PATCH \\
-        -H "Authorization: Bearer $ACCESS_TOKEN" \\
-        -H "Content-Type: application/json" \\
-        -d '{tag_payload}' \\
-        "https://management.azure.com$VM_ID/tags?api-version=2021-04-01" || true
-fi
+# Refresh after execution: the initial token may have expired during the run.
+ACCESS_TOKEN=$(curl -fsS -m 30 -H "Metadata:true" \\
+    'http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/&mi_res_id={identity_query}' \\
+    | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')
+VM_ID=$(curl -fsS -m 30 -H "Metadata:true" \\
+    'http://169.254.169.254/metadata/instance/compute/resourceId?api-version=2021-02-01&format=text')
+# Merge the actual exit code without replacing scheduler ownership tags.
+TAG_BODY=$(printf '{{"operation":"Merge","properties":{{"tags":{{"wsr-exit-code":"%s"}}}}}}' "$EXIT_CODE")
+curl -fsS -m 30 -X PATCH \\
+    -H "Authorization: Bearer $ACCESS_TOKEN" \\
+    -H "Content-Type: application/json" \\
+    -d "$TAG_BODY" \\
+    "https://management.azure.com$VM_ID/providers/Microsoft.Resources/tags/default?api-version=2021-04-01"
 """
         return base64.b64encode(script.encode("utf-8")).decode("utf-8")
 
@@ -290,7 +291,7 @@ fi
                 "network_interfaces": [
                     {
                         "id": nic_id,
-                        "properties": {"delete_option": "Delete"},
+                        "delete_option": "Delete",
                     }
                 ]
             },
