@@ -207,9 +207,9 @@ class VectorizedTourALNS(PolicyVizMixin):
             else:
                 partial, removed = destroy_op(
                     current_solutions,
-                    self.dist_matrix, # pyrefly: ignore [bad-argument-type]
-                    int(n_remove), # pyrefly: ignore [bad-argument-type]
-                    generator=self.generator, # pyrefly: ignore [bad-keyword-argument]
+                    self.dist_matrix,  # pyrefly: ignore [bad-argument-type]
+                    int(n_remove),  # pyrefly: ignore [bad-argument-type]
+                    generator=self.generator,  # pyrefly: ignore [bad-keyword-argument]
                 )  # type: ignore[operator]
 
             candidate_solutions = repair_op(partial, removed, self.dist_matrix)  # type: ignore[operator]
