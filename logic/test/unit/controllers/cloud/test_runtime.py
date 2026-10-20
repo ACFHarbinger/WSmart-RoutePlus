@@ -104,7 +104,9 @@ def test_profiles_resolve_local_uris_and_name_missing_providers(tmp_path, monkey
     assert isinstance(store_from_uri(f"file://{tmp_path / 's'}"), FilesystemObjectStore)
     gcs = store_from_uri("gs://bucket/prefix")  # CR-05: the GCS client is only created on first use
     assert isinstance(gcs, GcsObjectStore) and (gcs.bucket_name, gcs.prefix) == ("bucket", "prefix/")
-    monkeypatch.setitem(profiles.PROVIDER_FACTORIES, ("store", "xx"), "logic.controllers.cloud.providers.nowhere.storage:f")
+    monkeypatch.setitem(
+        profiles.PROVIDER_FACTORIES, ("store", "xx"), "logic.controllers.cloud.providers.nowhere.storage:f"
+    )
     with pytest.raises(ValueError, match="providers.nowhere.storage"):
         store_from_uri("xx://bucket/prefix")
     with pytest.raises(ValueError, match="unsupported"):
@@ -255,3 +257,30 @@ def test_remote_jobs_stage_inputs_and_launch_the_runtime(tmp_path):
     assert launch.secret_env == {"WSR_GUROBI_LICENSE": "gurobi-wls"} and launch.workdir is None
     with pytest.raises(ValueError, match="image"):
         service.submit(JobSpec(name="r", cells=[cell], provider=Provider.GCP, compute=ComputeKind.BATCH))
+
+
+@pytest.mark.unit
+def test_mirror_skips_a_file_renamed_during_its_upload(tmp_path):
+    """A checkpoint's ``.tmp`` replaced between the scan and the upload must not stop the runtime."""
+    from logic.controllers.cloud.runtime import OutputMirror
+
+    root = tmp_path / "outputs"
+    (root / "checkpoints").mkdir(parents=True)
+    (root / "checkpoints" / "day.json.tmp").write_text("{}")
+    (root / "keep.txt").write_text("x")
+
+    class RenamingStore(MemoryObjectStore):
+        def put_file(self, local, key):
+            if Path(local).name.endswith(".tmp"):
+                Path(local).replace(Path(local).with_suffix(""))  # the simulator's os.replace wins the race
+                raise FileNotFoundError(str(local))
+            return super().put_file(local, key)
+
+    store = RenamingStore()
+    mirror = OutputMirror(store, "work/j/t/outputs", root)
+    assert mirror.sync() == 1  # keep.txt; the vanished .tmp is skipped
+    assert mirror.sync() == 1  # day.json, which replaced it
+    assert sorted(store.list("work/j/t/outputs/")) == [
+        "work/j/t/outputs/checkpoints/day.json",
+        "work/j/t/outputs/keep.txt",
+    ]

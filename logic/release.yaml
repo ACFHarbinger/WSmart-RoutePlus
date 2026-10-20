@@ -91,6 +91,25 @@ infrastructure:
   - logic.controllers.cloud.local._wrap               # started by name (`python -m`) by the local backend
   - logic.controllers.cloud.control.firebase   # reached through profiles.PROVIDER_FACTORIES strings
   - logic.controllers.cloud.control.supabase
+  # Provider backends, stores and price tables are reached only through strings
+  # (providers.BACKENDS, profiles.PROVIDER_FACTORIES, the CR-10 PriceTable's pricing lookup).
+  - logic.controllers.cloud.providers
+  - logic.controllers.cloud.testing                   # fakes and contract suites: the release can check a provider without credentials
+  - logic.controllers.cloud.providers.gcp.batch
+  - logic.controllers.cloud.providers.gcp.serverless
+  - logic.controllers.cloud.providers.gcp.vm
+  - logic.controllers.cloud.providers.gcp.storage
+  - logic.controllers.cloud.providers.gcp.pricing
+  - logic.controllers.cloud.providers.aws.batch
+  - logic.controllers.cloud.providers.aws.serverless
+  - logic.controllers.cloud.providers.aws.vm
+  - logic.controllers.cloud.providers.aws.storage
+  - logic.controllers.cloud.providers.aws.pricing
+  - logic.controllers.cloud.providers.azure.batch
+  - logic.controllers.cloud.providers.azure.serverless
+  - logic.controllers.cloud.providers.azure.vm
+  - logic.controllers.cloud.providers.azure.storage
+  - logic.controllers.cloud.providers.azure.pricing
 
 # Packages excluded from the release even though a seed pulls them in.
 excluded_packages:

@@ -298,6 +298,11 @@ class CloudService(ServiceStatusMixin, ServiceLaunchMixin, CostMixin, SchedulerM
         status = backend.poll(handle)
         now = self.clock()
         limits = job.spec.resources
+        if status.state == AttemptState.UNKNOWN and job.cancel_requested:
+            # A backend that stops attempts by deleting them (Batch jobs, VMs) cannot answer for one
+            # cancelled before a restart: the cancel was asked for, so the attempt is cancelled.
+            self._set(task, TaskState.CANCELLED, finished_at=now, message="cancelled (attempt no longer visible)")
+            return 1
         if status.state in (AttemptState.PENDING, AttemptState.RUNNING, AttemptState.UNKNOWN):
             activity = _last_activity(backend, handle)
             if activity is not None and (task.heartbeat is None or activity > task.heartbeat):

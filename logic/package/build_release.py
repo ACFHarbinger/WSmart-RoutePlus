@@ -168,6 +168,21 @@ def run_check(manifest: dict) -> int:  # noqa: C901
     return 0
 
 
+BIN_ANALYSIS_DIR = "logic.submodules.WSmart-Bin-Analysis"
+BIN_ANALYSIS_PACKAGE = "logic.submodules.wsmart_bin_analysis"  # the symlink the code imports
+
+
+def staged_module_names(out: Path) -> set:
+    """Modules of the staged tree, with the bin-analysis files also under their importable symlink name.
+
+    ``rglob`` does not follow the ``wsmart_bin_analysis -> WSmart-Bin-Analysis`` symlink, so its
+    files are found under the hyphenated directory name, which no import uses.
+    """
+    names = {file_to_module(p, out) for p in (out / "logic").rglob("*.py")}
+    names |= {BIN_ANALYSIS_PACKAGE + n[len(BIN_ANALYSIS_DIR) :] for n in names if n.startswith(BIN_ANALYSIS_DIR)}
+    return names
+
+
 def run_build(manifest: dict, out: Path) -> int:  # noqa: C901
     out = out.resolve()
     if out in (REPO, LOGIC) or out in REPO.parents or LOGIC in out.parents:
@@ -245,7 +260,7 @@ def run_build(manifest: dict, out: Path) -> int:  # noqa: C901
         shutil.copy2(path, dest)
 
     # --- lazy maps and eager init imports -------------------------------- #
-    staged_modules = {file_to_module(p, out) for p in (out / "logic").rglob("*.py")}
+    staged_modules = staged_module_names(out)
     for staged in sorted((out / "logic").rglob("__init__.py")):
         notes += filter_lazy_map(staged, staged_modules, out)
         notes += drop_pruned_init_imports(staged, staged_modules, out)
@@ -284,7 +299,7 @@ def run_build(manifest: dict, out: Path) -> int:  # noqa: C901
     write_docs_index(manifest, out)
 
     # --- verification ----------------------------------------------------- #
-    staged_modules = {file_to_module(p, out) for p in (out / "logic").rglob("*.py")}
+    staged_modules = staged_module_names(out)
     errors = verify_staged(out, staged_modules)
     staged_py = list((out / "logic").rglob("*.py"))
     lines = sum(len(p.read_text().splitlines()) for p in staged_py)
@@ -359,6 +374,46 @@ from logic.submodules.wsmart_bin_analysis import GridBase  # noqa: F401
 
 assert "torch" not in sys.modules
 print("smoke OK: classical routing keys and simulator import without the neural extra")
+
+# The cloud runner without the [cloud] extra: provider modules import (their SDKs are lazy),
+# the CLI parses, and a local job runs end to end against a scripted backend.
+class NoCloudSdk(importlib.abc.MetaPathFinder):
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname.split(".")[0] in {"boto3", "botocore", "azure", "supabase", "keyring"} or fullname.startswith("google.cloud"):
+            raise ImportError("cloud extra unavailable during the smoke: " + fullname)
+        return None
+
+sys.meta_path.insert(0, NoCloudSdk())
+import importlib as _il
+from logic.controllers.cloud.providers import BACKENDS
+for target in sorted(set(BACKENDS.values())):
+    module, _, cls = target.partition(":")
+    assert hasattr(_il.import_module(module), cls), target
+for provider in ("gcp", "aws", "azure"):
+    _il.import_module(f"logic.controllers.cloud.providers.{provider}.storage")
+    assert _il.import_module(f"logic.controllers.cloud.providers.{provider}.pricing").price_per_hour is not None
+import logic.controllers.cloud.__main__  # noqa: F401
+from logic.controllers.cloud.model import CellSpec, JobSpec, TaskState
+from logic.controllers.cloud.local import SQLiteControlPlane
+from logic.controllers.cloud.service import CloudService
+from logic.controllers.cloud.testing import FakeClock, MemoryObjectStore, ScriptedBackend
+from logic.controllers.cloud.model import ComputeKind, Provider
+import tempfile
+service = CloudService(
+    control_plane=SQLiteControlPlane(":memory:"),
+    store=MemoryObjectStore(),
+    backends={(Provider.LOCAL, ComputeKind.PROCESS): ScriptedBackend()},
+    workroot=tempfile.mkdtemp(),
+    clock=FakeClock(),
+)
+job = service.submit(JobSpec(name="smoke", cells=[CellSpec(cell_id="c", argv=["test_sim"])]))
+for _ in range(5):
+    service.tick()
+assert [t.state for t in service.cp.list_tasks(job.job_id)] == [TaskState.SUCCEEDED]
+from logic.controllers.cloud.prediction import default_predictor
+assert default_predictor().predict([CellSpec(cell_id="30d/riomaior/100/emp/la_cls/lookahead/alns", argv=["test_sim"])])[0].p50
+assert not any(m.startswith(("boto3", "google.cloud", "azure")) for m in sys.modules)
+print("smoke OK: cloud runner imports and runs a local job without the cloud extra")
 """
 
 

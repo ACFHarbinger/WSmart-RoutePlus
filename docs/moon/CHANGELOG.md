@@ -17,6 +17,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Cloud runner CR-17: docs, release extra, CI gate and close-out fixes (`2026-10-20`)
+
+#### Added
+
+- **`docs/CLOUD_RUNNER_GUIDE.md`** (#137): profiles, credentials and secrets, launching from the CLI and the Studio, following jobs, placement and the warm pool, costs and limits, prediction, and testing with fakes. It states that nothing is validated against a real API yet.
+- **`--profile NAME`** on every cloud command (`profile_service.py`). It builds the service from a profile: control plane, store, and the provider's backends for every compute kind plus local processes.
+  - Constructor arguments are filtered by each backend's signature. The new profile field `backend_options` passes non-secret provider settings, and keys that look like secrets are rejected.
+  - `submit` defaults to the profile's provider, compute kind, region, image and Gurobi secret. The spawned worker inherits the profile.
+- **CI**: `test-cloud` runs the cloud suites with and without the `[cloud]` extra and uploads JUnit reports; `release-smoke` builds the release tree and runs its smoke.
+- **Release**: provider backends, stores, price tables and `cloud.testing` are seeded in `logic/release.yaml`. They are reached only through strings, so the release had pruned `providers/` completely. The smoke now checks that the cloud runner imports every provider and runs a local job with no cloud SDK. With `[cloud]`, the release resolves.
+
+#### Fixed
+
+- **Task runtime crash**: `OutputMirror.sync` failed with `FileNotFoundError` when a file was renamed between the scan and the upload (the simulator replacing `checkpoints/day.json.tmp`). The runtime exited 1 mid-run. It now skips the file and uploads its replacement on the next sync. This was the 'flaky' `test_preempted_task_resumes_on_another_machine_with_identical_results`: 1 failure in 20 loaded runs before, 0 in 30 after. Regression test: `test_mirror_skips_a_file_renamed_during_its_upload`.
+- **Release build**: closure verification failed on main after the bin-analysis submodule moved to `logic/submodules/WSmart-Bin-Analysis`. The staged module scan does not follow the `wsmart_bin_analysis` symlink, so the imported name was missing. Its modules are now registered under both names (`staged_module_names`).
+- **Stuck cancels**: a cancelled attempt that its backend no longer knows (deleted Batch jobs or VMs after a coordinator restart) polled `UNKNOWN` forever. A cancel-requested task with an `UNKNOWN` attempt is now cancelled.
+
 ### Cloud runner CR-05: GCP backends (`2026-10-20`)
 
 #### Added

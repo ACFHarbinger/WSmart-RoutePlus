@@ -107,7 +107,12 @@ class OutputMirror:
             signature = (stat.st_size, stat.st_mtime_ns)
             if self._seen.get(relpath) == signature:
                 continue
-            record = self.store.put_file(path, f"{self.prefix}/{relpath}")
+            try:
+                record = self.store.put_file(path, f"{self.prefix}/{relpath}")
+            except FileNotFoundError:
+                # Renamed or removed during the upload (a checkpoint's ``.tmp`` replaced by the final
+                # file): skip it; the next sync uploads what took its place.
+                continue
             self.files[relpath] = ResultFile(relpath=relpath, key=record.key, sha256=record.sha256, size=record.size)
             self._seen[relpath] = signature
             uploaded += 1

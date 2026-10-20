@@ -191,7 +191,14 @@ class _Context:
 
 def _submit(ctx: _Context) -> Any:
     opts, service = ctx.opts, ctx.service
+    profile = opts.get("_profile")
+    if profile is not None:  # the profile's provider, compute kind, region, image and license by default
+        for key, value in (("provider", profile.provider), ("compute", profile.compute), ("region", profile.region)):
+            opts[key] = opts.get(key) or value
+        opts["gurobi_secret"] = opts.get("gurobi_secret") or profile.gurobi_secret
     overrides = _spec_overrides(opts)
+    if profile is not None and profile.image and not overrides.get("image"):
+        overrides["image"] = profile.image
     if opts.get("manifest"):
         spec = load_manifest(Path(opts["manifest"]), policy=opts.get("policy"), **overrides)
     else:
@@ -199,7 +206,9 @@ def _submit(ctx: _Context) -> Any:
     job = service.submit(spec)
     payload: Dict[str, Any] = {"job_id": job.job_id, "tasks": len(spec.cells)}
     if not opts.get("wait") and not opts.get("no_worker"):
-        payload["worker_pid"] = spawn_worker(ctx.root, project_root=ctx.project_root, python=service.python)
+        payload["worker_pid"] = spawn_worker(
+            ctx.root, project_root=ctx.project_root, python=service.python, profile=opts.get("profile")
+        )
     _print(opts, payload, f"submitted {job.job_id} ({len(spec.cells)} task(s))")
     if opts.get("wait"):
         state = service.run(job.job_id, poll_seconds=float(opts.get("poll") or 5.0))
@@ -465,4 +474,17 @@ def run_cloud(opts: Dict[str, Any]) -> Any:
         raise ValueError(f"unknown cloud command {command!r}")
     root = Path(opts.get("root") or "outputs/cloud")
     project_root = Path(opts["project_root"]) if opts.get("project_root") else REPO_ROOT
-    return _COMMANDS[command](_Context(opts, root, project_root, local_service(root, project_root)))
+    if opts.get("profile"):
+        from logic.controllers.cloud.auth.config import load_profiles
+        from logic.controllers.cloud.profile_service import profile_service
+
+        profiles = load_profiles()
+        if opts["profile"] not in profiles:
+            raise ValueError(
+                f"unknown cloud profile {opts['profile']!r} (known: {', '.join(sorted(profiles)) or 'none'})"
+            )
+        opts["_profile"] = profiles[opts["profile"]]
+        service = profile_service(opts["_profile"], root, project_root)
+    else:
+        service = local_service(root, project_root)
+    return _COMMANDS[command](_Context(opts, root, project_root, service))
