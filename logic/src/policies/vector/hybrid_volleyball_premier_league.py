@@ -3,7 +3,8 @@
 Mirrors :class:`~logic.src.policies.routing.meta_heuristics.hybrid_volleyball_premier_league.solver.HVPLSolver`
 (Sun et al. 2023) with every team of every instance processed together:
 
-1. ACO initialisation, twice (active and passive leagues): ``aco_init_iterations`` ant
+1. hyper-heuristic ACO initialisation (``HyperHeuristicACO.construct``, run per row with
+   the simulator class), twice (active and passive leagues): ``aco_init_iterations``
    constructions, padded with ``build_greedy_routes`` solutions up to ``n_teams``, the
    ``n_teams`` most profitable kept;
 2. ``max_iterations`` seasons (or ``time_limit`` seconds), each with
@@ -16,7 +17,8 @@ Mirrors :class:`~logic.src.policies.routing.meta_heuristics.hybrid_volleyball_pr
    - substitution of the ``max(1, int(n_teams * substitution_rate))`` weakest teams by
      random passive teams;
    - ALNS coaching of every team with ``alns_params``;
-   - best tracking; on a new best its edges get ``1 / cost`` pheromone.
+   - best tracking (the simulator's pheromone deposit on a new best is never read
+     after initialisation, so it has no effect and is not mirrored).
 
 Attributes:
     VectorizedHVPL: Batched HVPL expert configured by ``HVPLConfig``.
@@ -24,6 +26,7 @@ Attributes:
 
 from __future__ import annotations
 
+import dataclasses
 import time
 from typing import Optional
 
@@ -35,7 +38,6 @@ from logic.src.policies.vector.shared.base import VectorizedRoutingPolicy
 from logic.src.policies.vector.shared.vrpp import VRPPBatch
 
 from .adaptive_large_neighborhood_search import VectorizedALNSEngine
-from .ant_colony_system import candidate_mask, construct_ants
 
 
 class VectorizedHVPL(VectorizedRoutingPolicy):
@@ -55,35 +57,66 @@ class VectorizedHVPL(VectorizedRoutingPolicy):
         L = rs.width(inst.n_bins)
         return rs.greedy_profit_construction(self._rep(inst, T), self.generator).view(inst.batch_size, T, L)
 
-    def _league(self, inst: VRPPBatch, tau: torch.Tensor, cand: torch.Tensor) -> torch.Tensor:
+    def _hh_aco_solvers(self, inst: VRPPBatch) -> list:
+        """One simulator ``HyperHeuristicACO`` per row, as ``HVPLSolver.aco_solver``.
+
+        The hyper-heuristic ACO builds solutions by bootstrapping with a uniformly drawn
+        ``recreate_repair`` heuristic and applying a roulette-selected operator sequence;
+        its eleven insertion heuristics (regret-k, GENI, LDS branch-and-bound, ...) and
+        eleven LS/ruin operators have no batched form, so construction runs row by row
+        with the simulator's own class, its ``seed`` drawn from ``self.generator``. The
+        node-level pheromones HVPL deposits are never read by ``construct`` (and HVPL
+        constructs only before its first deposit), so they are not mirrored.
+        """
+        from logic.src.policies.routing.base.sub_problem import build_subproblem
+        from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic.hyper_aco import (
+            HyperHeuristicACO,
+        )
+
+        dist = inst.dist.detach().cpu().double().numpy()
+        waste = inst.waste.detach().cpu().double().numpy()
+        cap = inst.capacity.detach().cpu().double().tolist()
+        seeds = rs._row_seeds(inst.batch_size, self.generator, inst.device)
+        solvers = []
+        for b in range(inst.batch_size):
+            aco_cfg = dataclasses.replace(self.cfg.aco_params, seed=int(seeds[b]) % (2**32))
+            problem = build_subproblem(
+                dist_matrix=dist[b],
+                wastes={i: float(waste[b, i]) for i in range(1, inst.n_bins + 1)},
+                capacity=float(cap[b]),
+                revenue=float(inst.R),
+                cost_unit=float(inst.C),
+                mandatory_nodes=[],
+            )
+            solvers.append(HyperHeuristicACO(problem, aco_cfg))
+        return solvers
+
+    def _league(self, inst: VRPPBatch, solvers: list) -> torch.Tensor:
+        """``HVPLSolver._aco_initialization``: HH-ACO constructions, greedy fill, top ``n_teams``."""
         cfg = self.cfg
-        aco = cfg.aco_params
         T = int(cfg.n_teams)
         n_init = int(cfg.aco_init_iterations)
-        parts = []
-        if n_init > 0:
-            parts.append(
-                construct_ants(
-                    inst,
-                    tau,
-                    cand,
-                    n_init,
-                    aco.alpha,
-                    aco.beta,
-                    bool(cfg.profit_aware_operators),
-                    self.generator,
-                    self.expand_pool,
-                )
-            )
-        if n_init < T:
-            parts.append(self._greedy_teams(inst, T - n_init))
-        pool = torch.cat(parts, dim=1)
-        if pool.size(1) <= T:
-            return pool
-        P = pool.size(1)
-        prof = rs.seq_profit(pool.reshape(-1, pool.size(2)), self._rep(inst, P)).view(inst.batch_size, P)
+        B, N, L = inst.batch_size, inst.n_bins, rs.width(inst.n_bins)
+        nodes = list(range(1, N + 1))
+        built = [[r for r in (solvers[b].construct(nodes, []) for _ in range(n_init)) if r] for b in range(B)]
+        P = max(T, max((len(x) for x in built), default=0))
+        pool = rs.empty_routes(B * P, N, inst.device).view(B, P, L).clone()
+        n_fill = []
+        for b in range(B):
+            if built[b]:
+                pool[b, : len(built[b])] = rs.from_route_lists(built[b], N, inst.device)
+            n_fill.append(max(0, T - len(built[b])))
+        k = max(n_fill)
+        if k > 0:
+            greedy = self._greedy_teams(inst, k)
+            for b in range(B):
+                c = len(built[b])
+                pool[b, c : c + n_fill[b]] = greedy[b, : n_fill[b]]
+        sizes = torch.tensor([max(T, len(x)) for x in built], device=inst.device)
+        prof = rs.seq_profit(pool.reshape(-1, L), self._rep(inst, P)).view(B, P)
+        prof = torch.where(torch.arange(P, device=inst.device).unsqueeze(0) < sizes.unsqueeze(1), prof, -float("inf"))
         top = torch.argsort(-prof, dim=1, stable=True)[:, :T]
-        return torch.gather(pool, 1, top.unsqueeze(2).expand(-1, -1, pool.size(2)))
+        return torch.gather(pool, 1, top.unsqueeze(2).expand(-1, -1, L))
 
     def _profits(self, teams: torch.Tensor, inst: VRPPBatch) -> torch.Tensor:
         B, T, L = teams.shape
@@ -108,25 +141,22 @@ class VectorizedHVPL(VectorizedRoutingPolicy):
             torch.Tensor: Best route sequences.
         """
         cfg = self.cfg
-        aco, alns_cfg = cfg.aco_params, cfg.alns_params
+        alns_cfg = cfg.alns_params
         B, N, M = inst.batch_size, inst.n_bins, inst.n_bins + 1
         dev = inst.device
         if N == 0:
             return rs.empty_routes(B, N, dev)
         start = time.perf_counter()
         T = int(cfg.n_teams)
-        tau0 = float(aco.tau_0) if aco.tau_0 is not None else 1.0
-        tau = torch.full((B, M, M), tau0, device=dev)
-        cand = candidate_mask(inst, int(getattr(cfg.aco, "k_sparse", 10)))
-        active = self._league(inst, tau, cand)
-        passive = self._league(inst, tau, cand)
+        solvers = self._hh_aco_solvers(inst)
+        active = self._league(inst, solvers)
+        passive = self._league(inst, solvers)
         prof = self._profits(active, inst)
         order = torch.argsort(-prof, dim=1, stable=True)
         active = torch.gather(active, 1, order.unsqueeze(2).expand_as(active))
         prof = torch.gather(prof, 1, order)
         best_S, best_p = active[:, 0].clone(), prof[:, 0].clone()
         alns = VectorizedALNSEngine(alns_cfg, self.generator, self.expand_pool)
-        b = torch.arange(B, device=dev)
         L = active.size(2)
         repT = self._rep(inst, T)
         pa = bool(cfg.profit_aware_operators)
@@ -185,11 +215,5 @@ class VectorizedHVPL(VectorizedRoutingPolicy):
             imp = prof[:, 0] > best_p
             best_S = torch.where(imp.unsqueeze(1), active[:, 0], best_S)
             best_p = torch.where(imp, prof[:, 0], best_p)
-            if bool(imp.any()):
-                cost = rs.seq_cost(best_S, inst).clamp(min=1e-12)
-                u, v = best_S[:, :-1], best_S[:, 1:]
-                edge = ((u != 0) | (v != 0)) & imp.unsqueeze(1)
-                delta = (1.0 / cost).unsqueeze(1).expand_as(u)
-                tau.index_put_((b.unsqueeze(1).expand_as(u)[edge], u[edge], v[edge]), delta[edge], accumulate=True)
             self._viz_record(iteration=season, best_profit=float(best_p.mean()))
         return best_S
