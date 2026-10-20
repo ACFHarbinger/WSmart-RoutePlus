@@ -127,8 +127,3 @@ def apply_figure_table_numbers(md: str) -> str:
 
     md = re.sub(r"_TABCAP_: ([^\n]+)", _tab_num, md)
     return md
-
-
-def finalize_markdown(md: str) -> str:
-    """Apply the full markdown post-processing pipeline."""
-    return apply_figure_table_numbers(figureize_images(md))

@@ -107,30 +107,6 @@ class TensorDictStateWrapper:
             val = val.unsqueeze(-1)
         return val
 
-    def get_current_efficiency(self) -> torch.Tensor:
-        """
-        Get current efficiency (legacy placeholder).
-
-        Returns:
-            The current efficiency.
-        """
-        # Legacy placeholder
-        val = torch.zeros(self.td.batch_size, device=self.td.device)
-        return val.unsqueeze(-1)
-
-    def get_remaining_overflows(self) -> torch.Tensor:
-        """
-        Get remaining overflows (legacy placeholder).
-
-        Returns:
-            The remaining overflows.
-        """
-        # Legacy placeholder or value from td
-        val = self.td.get("remaining_overflows", torch.zeros(self.td.batch_size, device=self.td.device))
-        if val.dim() == 1:
-            val = val.unsqueeze(-1)
-        return val
-
     def update(self, action: torch.Tensor) -> "TensorDictStateWrapper":
         """
         Update state by taking an action in the environment.
@@ -159,15 +135,6 @@ class TensorDictStateWrapper:
         if "done" in self.td.keys():
             return self.td["done"].all().item()
         return False
-
-    def get_finished(self) -> torch.Tensor:
-        """
-        Get finished mask for the batch.
-
-        Returns:
-            The finished mask.
-        """
-        return self.td.get("done", torch.zeros(self.td.batch_size, dtype=torch.bool, device=self.td.device))
 
     def __getitem__(self, key):
         """

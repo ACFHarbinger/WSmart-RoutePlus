@@ -314,35 +314,3 @@ class LocalSearch(LocalSearchPairMixin, LocalSearchMovesMixin, ABC):
         """
         target = getattr(self, "_target_neighborhood", "all")
         return target == "all" or target == op_name
-
-    def accept_move(self, current_obj: float, candidate_obj: float, **kwargs: Any) -> bool:
-        """
-        Consult the registered acceptance criterion to decide if a move should be applied.
-
-        Args:
-            current_obj: Objective value of the current solution.
-            candidate_obj: Objective value of the proposed solution.
-            kwargs: Additional context for the acceptance decision.
-
-        Returns:
-            bool: True if the move should be accepted, False otherwise.
-        """
-        if self.acceptance_criterion is None:
-            return candidate_obj > current_obj + 1e-4
-        accepted, _ = self.acceptance_criterion.accept(current_obj=current_obj, candidate_obj=candidate_obj, **kwargs)
-        return accepted
-
-    def step_move(self, current_obj: float, candidate_obj: float, accepted: bool, **kwargs: Any) -> None:
-        """
-        Perform internal state updates (e.g., cooling, counting) after a move decision.
-
-        Args:
-            current_obj: Objective value before the move attempt.
-            candidate_obj: Objective value after the move attempt.
-            accepted: Whether the move was actually accepted and applied.
-            kwargs: Additional context for the step update.
-        """
-        if self.acceptance_criterion is not None:
-            self.acceptance_criterion.step(
-                current_obj=current_obj, candidate_obj=candidate_obj, accepted=accepted, **kwargs
-            )

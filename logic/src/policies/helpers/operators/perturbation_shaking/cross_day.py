@@ -27,38 +27,6 @@ from logic.src.interfaces.context.problem_context import ProblemContext
 # ---------------------------------------------------------------------------
 
 
-def recompute_cascade_from(
-    plan: List[List[int]],
-    problem: ProblemContext,
-    start_day: int,
-) -> Tuple[List[List[int]], ProblemContext]:
-    """
-    Synchronize fill-level transitions across the planning horizon after plan changes.
-
-    In multi-period routing (MPVRP), removing a bin from day `d` affects the
-    waste generated for that customer on day `d+1` and all subsequent days.
-    This helper identifies the start day of a perturbation and ensures that
-    downstream profit calculations and capacity checks are consistent.
-
-    Args:
-        plan:      The D-day plan (List of List of nodes, depot excluded).
-        problem:   The initial ProblemContext at the very beginning of day 0.
-        start_day: The index of the first day in the horizon that was modified.
-                   Fill levels for days < start_day remain valid.
-
-    Returns:
-        Tuple[List[List[int]], ProblemContext]:
-            - The original plan (structure unchanged).
-            - The day-0 ProblemContext.
-
-    Notes:
-        The actual re-simulation is usually performed by the caller or a
-        SolutionContext object using the `ProblemContext.advance(route)` method.
-        This function serves as a protocol marker to ensure cascade awareness.
-    """
-    return plan, problem
-
-
 def cross_day_move(
     plan: List[List[int]],
     problem: ProblemContext,

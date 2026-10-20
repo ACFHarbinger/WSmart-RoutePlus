@@ -155,20 +155,6 @@ class Solution:
                 return False
         return True
 
-    def get_route_load(self, route_idx: int) -> float:
-        """
-        Get load for specific route.
-
-        Args:
-            route_idx: Route index.
-
-        Returns:
-            float: Route load.
-        """
-        if route_idx >= len(self.routes):
-            return 0.0
-        return sum(self.wastes.get(node, 0.0) for node in self.routes[route_idx])
-
     def get_total_nodes(self) -> int:
         """
         Get total number of nodes in solution.
@@ -194,16 +180,6 @@ class Solution:
             self.R,
             self.C,
         )
-
-    def update_routes(self, new_routes: List[List[int]]):
-        """
-        Update routes and recompute metrics.
-
-        Args:
-            new_routes: New route configuration.
-        """
-        self.routes = new_routes
-        self._compute_metrics()
 
     def __repr__(self) -> str:
         """

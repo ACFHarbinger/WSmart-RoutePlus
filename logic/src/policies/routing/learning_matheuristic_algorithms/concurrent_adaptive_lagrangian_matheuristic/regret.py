@@ -234,13 +234,3 @@ class RegretPreprocessor:
             self._iters_since_improvement += 1
             if self._phase == "soft" and self._iters_since_improvement >= self.params.escalation_patience:
                 self._phase = "hard"
-
-    def force_phase(self, phase: str) -> None:
-        """Manual override, for testing / ablations.
-
-        Args:
-            phase: Phase to force ("soft" or "hard").
-
-        """
-        assert phase in ("soft", "hard")
-        self._phase = phase

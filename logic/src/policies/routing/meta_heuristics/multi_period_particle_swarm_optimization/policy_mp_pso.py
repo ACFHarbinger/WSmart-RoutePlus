@@ -91,33 +91,6 @@ class MultiPeriodPSOPolicy(BaseMultiPeriodRoutingPolicy):
             cur_prob = cur_prob.advance(rt)
         return tot
 
-    def _subtract_plans(self, p1: List[List[List[int]]], p2: List[List[List[int]]]) -> List[tuple]:
-        """Subtract two plans to find the swap sequence.
-
-        Args:
-            p1: Target multi-period plan.
-            p2: Current multi-period plan.
-
-        Returns:
-            List[tuple]: List of (day, i, j) swaps needed to make p2 look like p1.
-        """
-        # returns list of (day, i, j) swaps needed to make p2 look like p1
-        # very simplified dummy logic
-        return []
-
-    def _add_velocity(self, plan: List[List[List[int]]], vel: List[tuple]) -> List[List[List[int]]]:
-        """Apply a swap sequence velocity to a plan.
-
-        Args:
-            plan: The current multi-period plan.
-            vel: The velocity as a swap sequence.
-
-        Returns:
-            List[List[List[int]]]: The updated multi-period plan.
-        """
-        # applies swaps
-        return plan
-
     def _run_multi_period_solver(
         self,
         problem: ProblemContext,

@@ -77,14 +77,6 @@ class BoltzmannAcceptance(IAcceptanceCriterion):
         """
         return self.T
 
-    def set_temperature(self, value: float) -> None:
-        """Set the current temperature parameter.
-
-        Args:
-            value: The new temperature value.
-        """
-        self.T = value
-
     def accept(
         self, current_obj: ObjectiveValue, candidate_obj: ObjectiveValue, **kwargs: Any
     ) -> Tuple[bool, AcceptanceMetrics]:

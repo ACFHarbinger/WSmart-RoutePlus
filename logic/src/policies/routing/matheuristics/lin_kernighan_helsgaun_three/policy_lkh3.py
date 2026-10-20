@@ -84,29 +84,6 @@ class LKH3Policy(BaseRoutingPolicy):
         """
         return "lkh3"
 
-    def _tour_to_routes(self, tour: List[int]) -> List[List[int]]:
-        """Split a flat closed tour at depot (0) into individual route lists.
-
-        Args:
-            tour: Flat tour with depot visits (e.g. ``[0, 3, 1, 0, 2, 4, 0]``).
-
-        Returns:
-            List of route lists, each without leading/trailing depot.
-            Example: ``[[3, 1], [2, 4]]``.
-        """
-        routes: List[List[int]] = []
-        current: List[int] = []
-        for node in tour:
-            if node == 0:
-                if current:
-                    routes.append(current)
-                    current = []
-            else:
-                current.append(node)
-        if current:
-            routes.append(current)
-        return routes
-
     def _run_solver(
         self,
         sub_dist_matrix: np.ndarray,
@@ -259,75 +236,3 @@ class LKH3Policy(BaseRoutingPolicy):
                 total += dist[route[k], route[k + 1]]
             total += dist[route[-1], 0]
         return total
-
-    def _enforce_mandatory_and_filter(
-        self,
-        routes: List[List[int]],
-        mandatory_set: set,
-        dist: np.ndarray,
-        wastes: Dict[int, float],
-        capacity: float,
-        revenue: float,
-        cost_unit: float,
-    ) -> List[List[int]]:
-        """Enforce mandatory nodes and filter unprofitable optional nodes.
-
-        1. Removes optional (non-mandatory) nodes whose marginal profit
-           contribution is negative — i.e., the cost of the detour to
-           collect them exceeds the revenue from their fill level.
-        2. Ensures every mandatory node appears in at least one route;
-           any missing mandatory node is appended as a single-node route.
-
-        Args:
-            routes: Current routes (from the LKH-3 tour split).
-            mandatory_set: Set of local node indices that must be visited.
-            dist: (N × N) distance matrix.
-            wastes: ``{local_idx: fill_level}``.
-            capacity: Vehicle capacity.
-            revenue: Revenue per unit collected.
-            cost_unit: Cost per distance unit.
-
-        Returns:
-            Filtered routes with mandatory nodes guaranteed.
-        """
-        filtered_routes: List[List[int]] = []
-        for route in routes:
-            if not route:
-                continue
-
-            # Keep mandatory nodes unconditionally; filter optional ones
-            kept: List[int] = []
-            for node in route:
-                if node in mandatory_set:
-                    kept.append(node)
-                else:
-                    # Check marginal profit of visiting this optional node
-                    node_fill = wastes.get(node, 0.0)
-                    node_revenue = revenue * node_fill
-
-                    # Estimate detour cost: cost of inserting this node
-                    # between its predecessor and successor
-                    prev = kept[-1] if kept else 0
-                    # Approximate successor as depot (worst case)
-                    detour_cost = cost_unit * (dist[prev, node] + dist[node, 0] - dist[prev, 0])
-
-                    if node_revenue > detour_cost:
-                        kept.append(node)
-
-            if kept:
-                # Re-check capacity feasibility
-                route_load = sum(wastes.get(n, 0.0) for n in kept)
-                if route_load <= capacity + 1e-6:
-                    filtered_routes.append(kept)
-                # NOTE: No post-hoc capacity splitting! The LKH-3 engine with
-                # augmented dummy depots handles multi-route optimization natively.
-                # If a filtered route exceeds capacity, it's discarded rather than
-                # split, as splitting would destroy the LKH-3 optimization.
-
-        # Ensure every mandatory node is visited
-        visited = {node for route in filtered_routes for node in route}
-        missing = mandatory_set - visited
-        for node in sorted(missing):
-            filtered_routes.append([node])
-
-        return filtered_routes

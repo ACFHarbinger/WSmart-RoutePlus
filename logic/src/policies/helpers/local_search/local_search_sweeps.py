@@ -55,7 +55,7 @@ from logic.src.policies.helpers.operators.intra_route_local_search import (
 )
 
 # Import operators from their respective modules
-from logic.src.policies.helpers.operators.search_heuristics import apply_ges, apply_lns, solve_lkh
+from logic.src.policies.helpers.operators.search_heuristics import apply_ges, apply_lns
 
 from .local_search_base import LocalSearch
 from .local_search_sweeps_exchange import SweepExchangeMixin
@@ -285,45 +285,6 @@ class SweepLocalSearch(SweepExchangeMixin, SweepRouteMixin, LocalSearch):
             self.set_routes(new_routes)
             return True
         return False
-
-    def lkh_refinement(self) -> bool:
-        """
-        Apply Lin-Kernighan-Helsgaun heuristic to refine individual routes.
-
-        Uses LKH to optimize each route as a TSP subproblem.
-
-        Args:
-            None
-
-        Returns:
-            bool: True if an improving move was found and applied, False otherwise.
-        """
-        improved = False
-        waste_array = np.zeros(len(self.d))
-        for node, w in self.waste.items():
-            if node < len(waste_array):
-                waste_array[node] = w
-
-        for r_idx, route in enumerate(self.routes):
-            if len(route) < 3:
-                continue
-
-            # Build TSP instance for this route
-            nodes = [0] + route + [0]
-            initial_cost = sum(self.d[nodes[i], nodes[i + 1]] for i in range(len(nodes) - 1))
-
-            # Apply LKH
-            improved_tour, improved_cost = solve_lkh(
-                self.d, initial_tour=nodes, max_iterations=20, np_rng=self.rng, seed=self.seed
-            )
-            if improved_cost < initial_cost - 1e-6:
-                # Extract route from tour (remove depot duplicates)
-                new_route = [n for n in improved_tour if n != 0]
-                self.routes[r_idx] = new_route
-                self._update_map({r_idx})
-                improved = True
-
-        return improved
 
 
 __all__ = ["SweepLocalSearch"]

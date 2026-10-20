@@ -217,15 +217,6 @@ class EMADualBoundTracker(DualBoundTracker):
         new_lambdas = current_lambdas + step * g
         return new_lambdas, step
 
-    def ema_snapshot(self) -> np.ndarray:
-        """Returns a snapshot of the current EMA subgradients.
-
-        Returns:
-            np.ndarray: Copy of the internal EMA array.
-        """
-        with self._lock:
-            return self._ema.copy()
-
 
 # ---------------------------------------------------------------------------
 # Factory

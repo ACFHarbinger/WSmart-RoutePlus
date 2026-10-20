@@ -17,6 +17,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Unused functions, classes and methods removed (`2026-10-20`)
+
+#### Added
+
+- **`logic/validation/check_unused_symbols.py`**: runs vulture over the repository (tests count as users) and sorts each unused function, class, method or property in production code by evidence of use:
+  - `STRING`: a token in YAML, JSON, TOML, TS, Rust or notebook files, or in a Python string literal;
+  - `DECORATED`: has registration decorators;
+  - `HOOK`: torch, TorchRL, Lightning, argparse or `ast` callbacks, or a dunder;
+  - `OVERRIDE`: a method of a class with an external ancestor;
+  - `FSTRING`: matches an f-string prefix or suffix (`getattr(self, f"_try_{move}")`);
+  - `CANDIDATE`: no evidence. `--remove` deletes the `CANDIDATE` definitions, with their decorators, and their module-docstring entries.
+
+#### Removed
+
+- **116 unused definitions in 69 files (2,522 lines)**: 24 functions, 2 classes (`KoptTopologyFactory`, `PolicyOutput`), 81 methods and 9 properties with no reference anywhere. They include unused local-search move variants (`_try_cross_exchange`, `three_opt_star`, `four_opt_star`, ...), statistics getters, unused interface methods and config property aliases (`RLHVPLConfig.qlearning_*`).
+- The Azure provider's three candidates are left for its lane (CR-07). Two names used only in notebooks (`set_daily_waste`, `to_dataframe`) stay.
+
+#### Verified
+
+- Full suite 2,608 passed; the release build, closure verification and smoke pass. A 2-day Rio Maior 100 simulation of ALNS, HGS, ACO-HH, SANS, PSOMA and PG-CLNS gives identical kg, km and overflows to main for all 12 policy logs.
+
 ### Compatibility re-exports removed (`2026-10-20`)
 
 #### Added

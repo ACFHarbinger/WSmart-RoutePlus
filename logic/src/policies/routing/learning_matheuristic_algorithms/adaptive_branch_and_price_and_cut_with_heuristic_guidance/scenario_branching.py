@@ -11,7 +11,7 @@ Examples:
     >>> scenario_branching.select_branching_variable()
 """
 
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 
 class ScenarioConsistentBranching:
@@ -109,54 +109,3 @@ class ScenarioConsistentBranching:
         visited_count = sum(1 for sol in deterministic_scenario_solutions.values() if sol.get(var_id, 0) == 1)
 
         return visited_count / total_scenarios if total_scenarios > 0 else 0.5
-
-    def select_branching_variable(
-        self,
-        fractional_vars: List[Any],
-        scenario_tree: Any,
-        deterministic_solutions: Dict[int, Dict[int, int]],
-        days_remaining: int,
-        initial_horizon: int,
-    ) -> Any:
-        """
-        Select the fractional variable to branch on by maximising consensus score.
-
-        Iterates over all fractional variables in the current master LP and
-        returns the one for which |consensus(g_i) − 0.5| is largest, i.e. the
-        variable whose value is most agreed upon (in either direction) by the
-        individual-scenario optimal solutions.
-
-        Ties are broken implicitly in favour of the variable encountered first
-        in ``fractional_vars``.
-
-        Args:
-            fractional_vars: List of variable objects with a ``.id`` attribute,
-                representing variables that are fractional (0 < λ < 1) in the
-                current master LP relaxation.
-            scenario_tree: ScenarioTree; passed through to ``calculate_consensus``
-                for potential probability-weighted extensions.
-            deterministic_solutions: Per-scenario optimal solutions
-                {scenario_id: {var_id: 0 or 1}} used to compute consensus.
-            days_remaining: Number of planning days remaining in the horizon.
-                Available for horizon-adaptive threshold tuning (currently
-                unused in the active threshold-free variant).
-            initial_horizon: Full planning horizon length T.  Used as the
-                normalising denominator in horizon-adaptive threshold decay
-                (currently unused).
-
-        Returns:
-            The variable object from ``fractional_vars`` with the highest
-            |consensus − 0.5| score, or ``None`` if the list is empty.
-        """
-        best_var = None
-        best_score = -1.0
-
-        for var in fractional_vars:
-            consensus = self.calculate_consensus(var.id, scenario_tree, deterministic_solutions)
-            score = abs(consensus - 0.5)
-
-            if score > best_score:
-                best_score = score
-                best_var = var
-
-        return best_var
