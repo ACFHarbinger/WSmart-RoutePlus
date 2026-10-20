@@ -42,6 +42,8 @@ Example:
     >>> llh_pool.h8_perturb_2opt(problem, route, rng)
     >>> llh_pool.h9_worst_removal(problem, route, rng)
     >>> llh_pool.h10_greedy_shuffle(problem, route, rng)
+
+Single-route heuristics live in ``llh_single_route``. Multi-period operator factories live in ``llh_multi_period``. The pools and ``LLHPool`` stay here, and every moved name is re-exported.
 """
 
 import copy
@@ -51,477 +53,71 @@ from typing import Callable, List, Tuple
 import numpy as np
 
 from logic.src.interfaces.context.problem_context import ProblemContext
-from logic.src.policies.helpers.operators.intra_route_local_search import (
-    or_opt_route,
-    three_opt_route,
-    two_opt_route,
-)
-from logic.src.policies.helpers.operators.perturbation_shaking import (
-    cross_day_move,
-    cross_day_swap,
-    day_merge_split,
-    day_shuffle,
-    double_bridge,
-)
 from logic.src.utils.policy.wrappers import (
     greedy_day_route,
     two_opt,
 )
 
-# --- Type Aliases ---
-Plan = List[List[int]]
-LLH = Callable[[Plan, ProblemContext, np.random.Generator], Plan]
-
-
-# --- Intra-Route Operators (Single Route) ---
-
-
-def h1_greedy_move(problem: ProblemContext, route: List[int], rng: np.random.Generator) -> List[int]:
-    """
-    Insert a random profitable non-mandatory node.
-
-    Args:
-        problem: Problem context.
-        route: Route to modify.
-        rng: Random number generator.
-
-    Returns:
-        Modified route.
-    """
-    nodes = set(range(1, len(problem.distance_matrix)))
-    cand = list(nodes - set(route))
-    if not cand:
-        return route
-    v = rng.choice(cand)
-    if sum(problem.wastes.get(n, 0.0) for n in route) + problem.wastes.get(v, 0.0) <= problem.capacity:
-        new_rt = route + [v]
-        return two_opt(new_rt, problem.distance_matrix)
-    return route
-
-
-def h2_random_drop(problem: ProblemContext, route: List[int], rng: np.random.Generator) -> List[int]:
-    """
-    Remove a random non-mandatory node.
-
-    Args:
-        problem: Problem context.
-        route: Route to modify.
-        rng: Random number generator.
-
-    Returns:
-        Modified route.
-    """
-    cand = [v for v in route if v not in problem.mandatory]
-    if not cand:
-        return route
-    v = rng.choice(cand)
-    new_rt = [n for n in route if n != v]
-    return two_opt(new_rt, problem.distance_matrix)
-
-
-def h3_two_opt(problem: ProblemContext, route: List[int], rng: np.random.Generator) -> List[int]:
-    """
-    Standard 2-opt search.
-
-    Args:
-        problem: Problem context.
-        route: Route to modify.
-        rng: Random number generator.
-
-    Returns:
-        Modified route.
-    """
-    return two_opt(list(route), problem.distance_matrix)
-
-
-def h4_swap_nodes(problem: ProblemContext, route: List[int], rng: np.random.Generator) -> List[int]:
-    """
-    Swap two nodes in the route.
-
-    Args:
-        problem: Problem context.
-        route: Route to modify.
-        rng: Random number generator.
-
-    Returns:
-        Modified route.
-    """
-    if len(route) < 2:
-        return route
-    new_rt = list(route)
-    i, j = rng.choice(range(len(route)), size=2, replace=False)
-    new_rt[i], new_rt[j] = new_rt[j], new_rt[i]
-    return new_rt
-
-
-def h5_relocate_node(problem: ProblemContext, route: List[int], rng: np.random.Generator) -> List[int]:
-    """
-    Relocate a node to a different position.
-
-    Args:
-        problem: Problem context.
-        route: Route to modify.
-        rng: Random number generator.
-
-    Returns:
-        Modified route.
-    """
-    if len(route) < 2:
-        return route
-    new_rt = list(route)
-    v = new_rt.pop(rng.integers(len(new_rt)))
-    new_rt.insert(rng.integers(len(new_rt) + 1), v)
-    return new_rt
-
-
-def h6_replace_node(problem: ProblemContext, route: List[int], rng: np.random.Generator) -> List[int]:
-    """
-    Replace a node with a more profitable external node.
-
-    Args:
-        problem: Problem context.
-        route: Route to modify.
-        rng: Random number generator.
-
-    Returns:
-        Modified route.
-    """
-    cand_ext = list(set(range(1, len(problem.distance_matrix))) - set(route))
-    cand_in = [v for v in route if v not in problem.mandatory]
-    if not cand_ext or not cand_in:
-        return route
-    v_in = rng.choice(cand_in)
-    v_ext = rng.choice(cand_ext)
-    # Check capacity
-    if (
-        sum(problem.wastes.get(n, 0.0) for n in route) - problem.wastes.get(v_in, 0.0) + problem.wastes.get(v_ext, 0.0)
-        <= problem.capacity
-    ):
-        new_rt = [v_ext if n == v_in else n for n in route]
-        return two_opt(new_rt, problem.distance_matrix)
-    return route
-
-
-def h7_greedy_multi(problem: ProblemContext, route: List[int], rng: np.random.Generator) -> List[int]:
-    """
-    Try to insert multiple profitable nodes.
-
-    Args:
-        problem: Problem context.
-        route: Route to modify.
-        rng: Random number generator.
-
-    Returns:
-        Modified route.
-    """
-    res = list(route)
-    for _ in range(3):
-        res = h1_greedy_move(problem, res, rng)
-    return res
-
-
-def h8_perturb_2opt(problem: ProblemContext, route: List[int], rng: np.random.Generator) -> List[int]:
-    """
-    Random double bridge swap.
-
-    Args:
-        problem: Problem context.
-        route: Route to modify.
-        rng: Random number generator.
-
-    Returns:
-        Modified route.
-    """
-    if len(route) < 4:
-        return route
-    # Simplified: just do 2 random swaps
-    res = h4_swap_nodes(problem, route, rng)
-    return h4_swap_nodes(problem, res, rng)
-
-
-def h9_worst_removal(problem: ProblemContext, route: List[int], rng: np.random.Generator) -> List[int]:
-    """
-    Remove node with highest distance contribution.
-
-    Args:
-        problem: Problem context.
-        route: Route to modify.
-        rng: Random number generator.
-
-    Returns:
-        Modified route.
-    """
-    if len(route) < 2:
-        return route
-    path = [0] + route + [0]
-    costs = []
-    for i in range(len(route)):
-        # cost added by node i: dist(prev, i) + dist(i, next) - dist(prev, next)
-        c = (
-            problem.distance_matrix[path[i]][path[i + 1]]
-            + problem.distance_matrix[path[i + 1]][path[i + 2]]
-            - problem.distance_matrix[path[i]][path[i + 2]]
-        )
-        # Weight by profit (low profit high cost is worst)
-        p = problem.wastes.get(route[i], 1e-6)
-        costs.append(c / p)
-
-    idx = np.argmax(costs)
-    if route[idx] in problem.mandatory:
-        return route
-    new_rt = [n for i, n in enumerate(route) if i != idx]
-    return new_rt
-
-
-def h10_greedy_shuffle(problem: ProblemContext, route: List[int], rng: np.random.Generator) -> List[int]:
-    """
-    Shuffle route and 2-opt it.
-
-    Args:
-        problem: Problem context.
-        route: Route to modify.
-        rng: Random number generator.
-
-    Returns:
-        Modified route.
-    """
-    new_rt = list(route)
-    rng.shuffle(new_rt)
-    return two_opt(new_rt, problem.distance_matrix)
-
-
-# --- Multi-Period Operator Builders ---
-
-
-def _make_or_opt(chain_len: int) -> LLH:
-    """
-    Create an OR-opt operator for a specific chain length.
-
-    Args:
-        chain_len: Length of the chain to optimize.
-
-    Returns:
-        OR-opt operator.
-    """
-
-    def _op(plan: Plan, problem: ProblemContext, rng: np.random.Generator) -> Plan:
-        """
-        Apply OR-opt to a random route in the plan.
-
-        Args:
-            plan: Current plan.
-            problem: Problem context.
-            rng: Random number generator.
-
-        Returns:
-            Modified plan.
-        """
-        d = int(rng.integers(0, len(plan)))
-        new_route = or_opt_route(plan[d], problem.distance_matrix, chain_lengths=(chain_len,))
-        new_plan = list(plan)
-        new_plan[d] = new_route
-        return new_plan
-
-    return _op
-
-
-def _make_two_opt() -> LLH:
-    """
-    Create a 2-opt operator for multi-period plans.
-
-    Returns:
-        2-opt operator.
-    """
-
-    def _op(plan: Plan, problem: ProblemContext, rng: np.random.Generator) -> Plan:
-        """
-        Apply 2-opt to a random route in the plan.
-
-        Args:
-            plan: Current plan.
-            problem: Problem context.
-            rng: Random number generator.
-
-        Returns:
-            Modified plan.
-        """
-        d = int(rng.integers(0, len(plan)))
-        new_plan = list(plan)
-        new_plan[d] = two_opt_route(plan[d], problem.distance_matrix)
-        return new_plan
-
-    return _op
-
-
-def _make_three_opt() -> LLH:
-    """
-    Create a 3-opt operator for multi-period plans.
-
-    Returns:
-        3-opt operator.
-    """
-
-    def _op(plan: Plan, problem: ProblemContext, rng: np.random.Generator) -> Plan:
-        """
-        Apply 3-opt to a random route in the plan.
-
-        Args:
-            plan: Current plan.
-            problem: Problem context.
-            rng: Random number generator.
-
-        Returns:
-            Modified plan.
-        """
-        d = int(rng.integers(0, len(plan)))
-        new_plan = list(plan)
-        new_plan[d] = three_opt_route(plan[d], problem.distance_matrix)
-        return new_plan
-
-    return _op
-
-
-def _make_cross_day_move() -> LLH:
-    """
-    Create a cross-day move operator for multi-period plans.
-
-    Returns:
-        Cross-day move operator.
-    """
-
-    def _op(plan: Plan, problem: ProblemContext, rng: np.random.Generator) -> Plan:
-        """
-        Apply cross-day move to a random route in the plan.
-
-        Args:
-            plan: Current plan.
-            problem: Problem context.
-            rng: Random number generator.
-
-        Returns:
-            Modified plan.
-        """
-        all_pairs = [(n, d) for d, route in enumerate(plan) for n in route]
-        if not all_pairs:
-            return plan
-        bin_id, src_day = all_pairs[int(rng.integers(0, len(all_pairs)))]
-        tgt_day = int(rng.integers(0, len(plan)))
-        new_plan, _ = cross_day_move(plan, problem, bin_id, src_day, tgt_day)
-        return new_plan
-
-    return _op
-
-
-def _make_cross_day_swap() -> LLH:
-    """
-    Create a cross-day swap operator for multi-period plans.
-
-    Returns:
-        Cross-day swap operator.
-    """
-
-    def _op(plan: Plan, problem: ProblemContext, rng: np.random.Generator) -> Plan:
-        """
-        Apply cross-day swap to a random pair of routes in the plan.
-
-        Args:
-            plan: Current plan.
-            problem: Problem context.
-            rng: Random number generator.
-
-        Returns:
-            Modified plan.
-        """
-        all_pairs = [(n, d) for d, route in enumerate(plan) for n in route]
-        if len(all_pairs) < 2:
-            return plan
-        idx = rng.choice(len(all_pairs), size=2, replace=False)
-        (bin_i, day_i), (bin_j, day_j) = all_pairs[idx[0]], all_pairs[idx[1]]
-        new_plan, _ = cross_day_swap(plan, problem, bin_i, day_i, bin_j, day_j)
-        return new_plan
-
-    return _op
-
-
-def _make_day_merge_split() -> LLH:
-    """
-    Create a day merge-split operator for multi-period plans.
-
-    Returns:
-        Day merge-split operator.
-    """
-
-    def _op(plan: Plan, problem: ProblemContext, rng: np.random.Generator) -> Plan:
-        """
-        Apply day merge-split to the plan.
-
-        Args:
-            plan: Current plan.
-            problem: Problem context.
-            rng: Random number generator.
-
-        Returns:
-            Modified plan.
-        """
-        new_plan, _ = day_merge_split(plan, problem, rng)
-        return new_plan
-
-    return _op
-
-
-def _make_double_bridge() -> LLH:
-    """
-    Create a double bridge operator for multi-period plans.
-
-    Returns:
-        Double bridge operator.
-    """
-
-    def _op(plan: Plan, problem: ProblemContext, rng: np.random.Generator) -> Plan:
-        """
-        Apply double bridge to a random route in the plan.
-
-        Args:
-            plan: Current plan.
-            problem: Problem context.
-            rng: Random number generator.
-
-        Returns:
-            Modified plan.
-        """
-        d = int(rng.integers(0, len(plan)))
-        new_plan = list(plan)
-        double_bridge(new_plan, d, rng)
-        return new_plan
-
-    return _op
-
-
-def _make_day_shuffle() -> LLH:
-    """
-    Create a day shuffle operator for multi-period plans.
-
-    Returns:
-        Day shuffle operator.
-    """
-
-    def _op(plan: Plan, problem: ProblemContext, rng: np.random.Generator) -> Plan:
-        """
-        Apply day shuffle to the plan.
-
-        Args:
-            plan: Current plan.
-            problem: Problem context.
-            rng: Random number generator.
-
-        Returns:
-            Modified plan.
-        """
-        new_plan, _ = day_shuffle(plan, problem, rng, k=3)
-        return new_plan
-
-    return _op
-
+from .llh_multi_period import (
+    LLH as LLH,
+)
+from .llh_multi_period import (
+    Plan as Plan,
+)
+from .llh_multi_period import (
+    _make_cross_day_move as _make_cross_day_move,
+)
+from .llh_multi_period import (
+    _make_cross_day_swap as _make_cross_day_swap,
+)
+from .llh_multi_period import (
+    _make_day_merge_split as _make_day_merge_split,
+)
+from .llh_multi_period import (
+    _make_day_shuffle as _make_day_shuffle,
+)
+from .llh_multi_period import (
+    _make_double_bridge as _make_double_bridge,
+)
+from .llh_multi_period import (
+    _make_or_opt as _make_or_opt,
+)
+from .llh_multi_period import (
+    _make_three_opt as _make_three_opt,
+)
+from .llh_multi_period import (
+    _make_two_opt as _make_two_opt,
+)
+from .llh_single_route import (
+    h1_greedy_move as h1_greedy_move,
+)
+from .llh_single_route import (
+    h2_random_drop as h2_random_drop,
+)
+from .llh_single_route import (
+    h3_two_opt as h3_two_opt,
+)
+from .llh_single_route import (
+    h4_swap_nodes as h4_swap_nodes,
+)
+from .llh_single_route import (
+    h5_relocate_node as h5_relocate_node,
+)
+from .llh_single_route import (
+    h6_replace_node as h6_replace_node,
+)
+from .llh_single_route import (
+    h7_greedy_multi as h7_greedy_multi,
+)
+from .llh_single_route import (
+    h8_perturb_2opt as h8_perturb_2opt,
+)
+from .llh_single_route import (
+    h9_worst_removal as h9_worst_removal,
+)
+from .llh_single_route import (
+    h10_greedy_shuffle as h10_greedy_shuffle,
+)
 
 # --- LLH Pools ---
 
