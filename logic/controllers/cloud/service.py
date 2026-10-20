@@ -26,6 +26,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
+from logic.controllers.cloud.cost.budget import BudgetPolicy, CostMixin
 from logic.controllers.cloud.interfaces import (
     AttemptState,
     CapacityError,
@@ -76,7 +77,7 @@ class RemoteConfig:
     python: str = "python"
 
 
-class CloudService(ServiceStatusMixin):
+class CloudService(ServiceStatusMixin, CostMixin):
     """The job manager.
 
     Args:
@@ -89,6 +90,9 @@ class CloudService(ServiceStatusMixin):
         remote: Settings for providers other than ``local``; required to submit to them.
         predictor_factory: Builds the CR-11 runtime predictor on first use (submit or
             :meth:`predict`); None disables prediction.
+        prices: CR-10 price table (:class:`.cost.PriceTable`); None uses the backends' and
+            providers' static prices.
+        budget: CR-10 monthly cap and warning fractions; None means no monthly cap.
     """
 
     def __init__(
@@ -101,8 +105,13 @@ class CloudService(ServiceStatusMixin):
         clock: Callable[[], float] = time.time,
         remote: Optional[RemoteConfig] = None,
         predictor_factory: Optional[Callable[[], Any]] = None,
+        prices: Optional[Any] = None,
+        budget: Optional[BudgetPolicy] = None,
     ) -> None:
         self.cp = control_plane
+        self.prices = prices
+        self.budget = budget
+        self._cost_written: Dict[str, Any] = {}
         self.predictor_factory = predictor_factory
         self._predictor: Optional[Any] = None
         self.remote = remote
@@ -132,6 +141,8 @@ class CloudService(ServiceStatusMixin):
                 raise ValueError("a remote job needs an image (the release image built by CR-03)")
             spec.inputs_manifest = stage_job_inputs(self.store, spec, self.remote.project_root, job_id)
         predictions = self.predict(spec)
+        estimate = self.estimate(spec, predictions) if predictions is not None else None
+        budget_warnings = self._check_budget(spec, estimate)  # raises BudgetExceeded before anything is stored
         for cell, prediction in zip(spec.cells, predictions or [], strict=False):
             if cell.expected_wall_seconds is None and prediction.p50 is not None:
                 cell.expected_wall_seconds = prediction.p50  # what the scheduler and the Analysis page read
@@ -143,6 +154,10 @@ class CloudService(ServiceStatusMixin):
             from logic.controllers.cloud.prediction import record_predictions
 
             record_predictions(self.cp, job.job_id, predictions, self.clock())
+        if estimate is not None:
+            self._event(job.job_id, "cost_estimate", data=estimate.to_dict())
+        for warning in budget_warnings:
+            self._event(job.job_id, "budget_warning", data=warning)
         return job
 
     def predict(self, spec: JobSpec) -> Optional[List[Any]]:
@@ -186,7 +201,8 @@ class CloudService(ServiceStatusMixin):
 
     def _tick_job(self, job: JobRecord, tasks: List[TaskRecord]) -> int:
         backend = self._backend(job.spec)
-        changes = 0
+        changes = self._accrue(job, tasks)  # CR-10: cost records, warnings, and a cancel at a cap
+        job = self.cp.get_job(job.job_id)
         if job.cancel_requested:
             for task in tasks:
                 if task.state == TaskState.QUEUED:

@@ -49,6 +49,14 @@ def add_cloud_args(parser: argparse.ArgumentParser) -> None:
     submit.add_argument("--cpus", type=float, default=None)
     submit.add_argument("--memory-gb", type=float, default=None)
     submit.add_argument("--spot", action="store_true", help="Use spot or preemptible capacity.")
+    submit.add_argument("--machine-type", default=None, help="Provider machine type (prices and predictions use it).")
+    submit.add_argument("--region", default=None, help="Provider region.")
+    submit.add_argument(
+        "--budget",
+        type=float,
+        default=None,
+        help="Job cost cap in USD: refused above it, cancelled when it is reached.",
+    )
     submit.add_argument("--retries", type=int, default=None, help="Automatic retries per task.")
     submit.add_argument("--max-wall", type=float, default=None, help="Wall-time limit per attempt, in seconds.")
     submit.add_argument(
@@ -99,6 +107,31 @@ def add_cloud_args(parser: argparse.ArgumentParser) -> None:
     predict_commands.add_parser("evaluate", help="Held-out error of the bundled model")
     accuracy = predict_commands.add_parser("accuracy", help="Predicted against actual wall time of a finished job")
     accuracy.add_argument("job_id")
+
+    cost = commands.add_parser("cost", help="Estimates, accrued cost, prices and billing imports (CR-10)")
+    cost_commands = cost.add_subparsers(dest="cost_command", required=True)
+    cost_estimate = cost_commands.add_parser(
+        "estimate", help="Estimate a manifest's or command's cost without submitting"
+    )
+    cost_source = cost_estimate.add_mutually_exclusive_group(required=True)
+    cost_source.add_argument("--manifest", help="Manifest file (native or rerun format, JSON or YAML).")
+    cost_source.add_argument("--command", dest="sim_command", help="One test_sim command line, quoted.")
+    cost_estimate.add_argument("--policy", default=None, help="Keep only this routing algorithm's cells.")
+    cost_estimate.add_argument("--provider", default=None, choices=["local", "gcp", "aws", "azure"])
+    cost_estimate.add_argument("--compute", default=None, choices=["process", "batch", "serverless", "vm"])
+    cost_estimate.add_argument("--machine-type", default=None)
+    cost_estimate.add_argument("--region", default=None)
+    cost_estimate.add_argument("--spot", action="store_true")
+    cost_estimate.add_argument("--max-parallel", type=int, default=None, help="Tasks running at once (for the ETA).")
+    cost_show = cost_commands.add_parser("show", help="A job's accrued cost per task, the month's total and billing")
+    cost_show.add_argument("job_id")
+    cost_prices = cost_commands.add_parser("prices", help="Hourly price of a provider machine type")
+    cost_prices.add_argument("provider", choices=["gcp", "aws", "azure"])
+    cost_prices.add_argument("machine_type")
+    cost_prices.add_argument("--region", default=None)
+    cost_billing = cost_commands.add_parser("import-billing", help="Record a provider billing export's per-job totals")
+    cost_billing.add_argument("path", help="Billing export CSV with a wsr_job_id label column.")
+    cost_billing.add_argument("--provider", required=True, choices=["gcp", "aws", "azure"])
 
     download = commands.add_parser("download", help="Download a job's results")
     download.add_argument("job_id")
