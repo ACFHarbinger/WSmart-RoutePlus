@@ -1,368 +1,110 @@
-"""Iterated Local Search (ILS) Policy.
+"""Vectorised Iterated Local Search: the simulator's ILS (``ILSConfig``) on a batch.
 
-This module implements the ILS meta-heuristic, which enhances local search
-by introducing controlled perturbations. This mechanism allows the search
-to escape local optima while maintaining significant high-quality structural
-features of the solution.
+Mirrors :class:`~logic.src.policies.routing.meta_heuristics.iterated_local_search.solver.ILSSolver`:
+
+1. initial solution by ``build_greedy_routes``;
+2. ``n_restarts`` times: a greedy descent of at most ``inner_iterations`` steps, each
+   step applying one random low-level heuristic out of the first ``n_llh``
+   (random/worst/cluster removal of ``n_removal`` bins + greedy/regret-2 repair) and
+   keeping it only when it improves;
+3. the configured acceptance criterion decides whether the descent's local optimum
+   replaces the incumbent; the best solution is tracked;
+4. perturbation: random removal of ``max(2, int(n * perturbation_strength))`` bins and
+   greedy reinsertion, then the next restart;
+5. stop after ``time_limit`` seconds.
 
 Attributes:
-    IteratedLocalSearchPolicy: ILS solver for combinatorial routing problems.
-
-Example:
-    >>> policy = IteratedLocalSearchPolicy(env_name="ptp")
-    >>> out = policy(td)
+    IteratedLocalSearchPolicy: Batched ILS expert configured by ``ILSConfig``.
 """
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Union
+import time
+from typing import Optional
 
 import torch
-from tensordict import TensorDict
 
-from logic.src.models.common.improvement.policy import ImprovementPolicy
-from logic.src.pipeline.learning.envs.base.base import RL4COEnvBase
-from logic.src.policies.vector.operators import (
-    vectorized_relocate,
-    vectorized_swap,
-    vectorized_swap_star,
-    vectorized_three_opt,
-    vectorized_two_opt_star,
-)
-from logic.src.tracking.viz_mixin import PolicyVizMixin
-
-from .operators import vectorized_two_opt
-from .shared.linear import vectorized_linear_split
+from logic.src.configs.policies.ils import ILSConfig
+from logic.src.policies.vector.shared import routes as rs
+from logic.src.policies.vector.shared.acceptance import BatchedAcceptance
+from logic.src.policies.vector.shared.base import VectorizedRoutingPolicy
+from logic.src.policies.vector.shared.llh import LLH_NAMES, apply_llh
+from logic.src.policies.vector.shared.vrpp import VRPPBatch
 
 
-class IteratedLocalSearchPolicy(ImprovementPolicy, PolicyVizMixin):
-    """Iterated Local Search (ILS) solver for VRP.
+class IteratedLocalSearchPolicy(VectorizedRoutingPolicy):
+    """Batched counterpart of the simulator's ``ILSPolicy`` / ``ILSSolver``.
 
-    Orchestrates a robust optimization loop:
-    1. Base Local Search (converge to local optimum).
-    2. Perturbation (jump to different search region).
-    3. Refinement (local search on perturbed state).
-    4. Acceptance (Greedy or stochastic update).
-
-    Attributes:
-        ls_operator: Targeted LS method or probability map.
-        perturbation_type: Method used for jumps.
-        n_restarts: Total number of ILS cycles.
-        ls_iterations: Intensity of internal local search steps.
-        perturbation_strength: Ratio of tour affected by structural edits.
-        default_op_probs: Static weights for operator sampling.
-        default_perturb_probs: Static weights for mode sampling.
-        op_map: Mapping from string identifiers to functions.
+    Takes exactly the ``ILSConfig`` fields; ``engine``, ``packing`` and
+    ``route_improvement`` are simulator-only and ignored.
     """
 
-    def __init__(
-        self,
-        env_name: str,
-        ls_operator: Union[str, Dict[str, float]] = "two_opt",
-        perturbation_type: Union[str, Dict[str, float]] = "double_bridge",
-        n_restarts: int = 5,
-        ls_iterations: int = 50,
-        perturbation_strength: float = 0.2,
-        seed: int = 42,
-        device: str = "cpu",
-        **kwargs: Any,
-    ) -> None:
-        """Initialize the ILS policy.
+    config_cls = ILSConfig
+
+    def solve(self, inst: VRPPBatch, initial: Optional[torch.Tensor] = None) -> torch.Tensor:
+        """Run the batched ILS.
 
         Args:
-            env_name: Name of the environment identifier.
-            ls_operator: Identifier or probability map for local search operators.
-            perturbation_type: Identifier or probability map for jumping modes.
-            n_restarts: Number of ILS cycles (restarts).
-            ls_iterations: Maximum iterations for each local search phase.
-            perturbation_strength: Fraction of the solution to alter during jumps.
-            seed: Random seed for search reproducibility.
-            device: Computing device for operations.
-            kwargs: Additional keyword arguments.
-        """
-        super().__init__(env_name=env_name, seed=seed, device=device, **kwargs)
-        self.ls_operator = ls_operator
-        self.perturbation_type = perturbation_type
-        self.n_restarts = n_restarts
-        self.ls_iterations = ls_iterations
-        self.perturbation_strength = perturbation_strength
-
-        # Default probabilities
-        self.default_op_probs = {
-            "two_opt": 0.25,
-            "swap": 0.15,
-            "relocate": 0.15,
-            "two_opt_star": 0.2,
-            "swap_star": 0.15,
-            "three_opt": 0.1,
-        }
-        self.default_perturb_probs = {
-            "double_bridge": 0.5,
-            "shuffle": 0.3,
-            "random_swap": 0.2,
-        }
-
-        # Mapping operator names to functions
-        self.op_map = {
-            "two_opt": vectorized_two_opt,
-            "swap": vectorized_swap,
-            "relocate": vectorized_relocate,
-            "three_opt": vectorized_three_opt,
-            "two_opt_star": vectorized_two_opt_star,
-            "swap_star": vectorized_swap_star,
-            "2opt": vectorized_two_opt,
-            "3opt": vectorized_three_opt,
-        }
-
-    def _perturb(self, tours: torch.Tensor, device: torch.device, mode: str) -> torch.Tensor:
-        """Apply a jumping operator to the current solution.
-
-        Supports double-bridge (TP-style), sequence shuffles, and random swaps.
-
-        Args:
-            tours: Candidate giant tours of shape [B, N].
-            device: Hardware locator.
-            mode: One of 'double_bridge', 'shuffle', or 'random_swap'.
+            inst: Instances.
+            initial: Optional starting route sequences.
 
         Returns:
-            torch.Tensor: Perturbed tours of shape [B, N].
+            torch.Tensor: Best route sequences.
         """
-        B, N = tours.shape
-        result = tours.clone()
+        cfg = self.cfg
+        pa = bool(cfg.profit_aware_operators)
+        B = inst.batch_size
+        dev = inst.device
+        start = time.perf_counter()
+        S = initial.clone() if initial is not None else rs.greedy_profit_construction(inst, self.generator)
+        if inst.n_bins == 0:
+            return S
+        profit = rs.seq_profit(S, inst)
+        best_S, best_profit = S.clone(), profit.clone()
+        acc = BatchedAcceptance(cfg.acceptance_criterion, B)
+        acc.setup(profit)
+        n_llh = max(1, min(int(cfg.n_llh), len(LLH_NAMES)))
 
-        for b in range(B):
-            t_list: List[int] = tours[b].tolist()
-            # Remove padding (zeros at end)
-            actual_n = int((tours[b] != 0).sum().item())
-            # If the tour has a trailing zero that isn't padding (depot at end)
-            if 0 < actual_n < N and t_list[actual_n - 1] == 0 or actual_n == N:
-                pass
+        def timed_out() -> bool:
+            return cfg.time_limit > 0 and time.perf_counter() - start > cfg.time_limit
 
-            n = len(t_list)
-
-            if mode == "double_bridge":
-                if n < 8:
-                    continue
-                positions = sorted(self.rng.sample(range(1, n - 1), 3))
-                p1, p2, p3 = positions
-                new_list = t_list[:p1] + t_list[p2:p3] + t_list[p1:p2] + t_list[p3:]
-                result[b, : len(new_list)] = torch.tensor(new_list, device=device)
-
-            elif mode == "shuffle":
-                seg_len = max(2, int(n * self.perturbation_strength))
-                if n - seg_len - 1 <= 1:
-                    continue
-                start = self.rng.randint(1, n - seg_len - 1)
-                segment = t_list[start : start + seg_len]
-                self.rng.shuffle(segment)
-                new_list = t_list[:start] + segment + t_list[start + seg_len :]
-                result[b, : len(new_list)] = torch.tensor(new_list, device=device)
-
-            else:  # random_swap
-                n_swaps = max(1, int(n * self.perturbation_strength))
-                new_list = t_list[:]
-                for _ in range(n_swaps):
-                    if n < 3:
-                        break
-                    i, j = self.rng.sample(range(1, n - 1), 2)
-                    new_list[i], new_list[j] = new_list[j], new_list[i]
-                result[b, : len(new_list)] = torch.tensor(new_list, device=device)
-
-        return result
-
-    def _compute_costs(self, tours: torch.Tensor, dist_matrix: torch.Tensor) -> torch.Tensor:
-        """Calculate total Euclidean cost for a batch of tours.
-
-        Args:
-            tours: Node sequences of shape [B, N].
-            dist_matrix: Problem distances of shape [B, N, N].
-
-        Returns:
-            torch.Tensor: Summation of edge costs of shape [B].
-        """
-        B = tours.shape[0]
-        device = tours.device
-        batch_ids = torch.arange(B, device=device).view(B, 1)
-
-        from_n = tours[:, :-1]
-        to_n = tours[:, 1:]
-
-        dists = dist_matrix[batch_ids, from_n, to_n] if dist_matrix.dim() == 3 else dist_matrix[from_n, to_n]
-
-        return dists.sum(dim=1)
-
-    def forward(
-        self,
-        td: TensorDict,
-        env: Optional[RL4COEnvBase] = None,
-        strategy: str = "greedy",
-        num_starts: int = 1,
-        max_steps: Optional[int] = None,
-        phase: str = "train",
-        return_actions: bool = True,
-        **kwargs: Any,
-    ) -> Dict[str, Any]:
-        """Run the complete ILS refinement procedure.
-
-        Args:
-            td: TensorDict containing problem instance data.
-            env: Optional environment for reward calculation.
-            strategy: Solver strategy (e.g., "greedy").
-            num_starts: Unused in ILS.
-            max_steps: Maximum step constraint.
-            phase: Current phase ("train", "val", "test").
-            return_actions: Whether to return full action sequences.
-            kwargs: Additional keyword arguments.
-
-        Returns:
-            Dict[str, Any]: Optimized results dictionary containing:
-                - actions (torch.Tensor): Best discovered routes.
-                - reward (torch.Tensor): Multi-objective objective value.
-                - cost (torch.Tensor): Raw objective value from edge summation.
-                - log_likelihood (torch.Tensor): Zero vector (ILS is non-pi).
-        """
-        batch_size = td.batch_size[0]
-
-        # 1. Extract environment data
-        locs = td["locs"]
-        device = td.device if td.device is not None else locs.device
-        num_nodes = locs.shape[1]
-
-        if locs.dim() == 3 and locs.shape[-1] == 2:
-            diff = locs.unsqueeze(2) - locs.unsqueeze(1)
-            dist_matrix = torch.sqrt((diff**2).sum(dim=-1))
-        else:
-            dist_matrix = locs
-
-        waste = td.get("waste", torch.zeros(batch_size, num_nodes, device=device))
-        capacity = td.get("capacity", torch.ones(batch_size, device=device))
-
-        # 2. Prepare initial solutions (giant tours)
-        if kwargs.get("initial_solution") is not None:
-            solutions = kwargs["initial_solution"].clone().to(device)
-        else:
-            solutions = torch.stack(
-                [
-                    torch.randperm(num_nodes - 1, device=self.device, generator=self.generator) + 1
-                    for _ in range(batch_size)
-                ]
+        for restart in range(int(cfg.n_restarts)):
+            if timed_out():
+                break
+            inner_S, inner_p = S.clone(), profit.clone()
+            active = torch.ones(B, dtype=torch.bool, device=dev)
+            for _ in range(int(cfg.inner_iterations)):
+                if timed_out() or not bool(active.any()):
+                    break
+                llh = torch.randint(0, n_llh, (B,), generator=self.generator, device=dev)
+                cand = inner_S.clone()
+                n = torch.full((B,), int(cfg.n_removal), device=dev, dtype=torch.long)
+                for h in range(n_llh):
+                    rows = ((llh == h) & active).nonzero(as_tuple=True)[0]
+                    if rows.numel():
+                        cand[rows] = apply_llh(
+                            h, inner_S[rows], n[rows], inst.subset(rows), self.generator, pa, self.expand_pool
+                        )
+                cp = rs.seq_profit(cand, inst)
+                improved = active & (cp > inner_p)
+                inner_S = torch.where(improved.unsqueeze(1), cand, inner_S)
+                inner_p = torch.where(improved, cp, inner_p)
+                active = improved
+            accepted = acc.accept(profit, inner_p, best_profit, restart, int(cfg.n_restarts))
+            S = torch.where(accepted.unsqueeze(1), inner_S, S)
+            profit = torch.where(accepted, inner_p, profit)
+            better = accepted & (profit > best_profit)
+            best_S = torch.where(better.unsqueeze(1), S, best_S)
+            best_profit = torch.where(better, profit, best_profit)
+            acc.step(profit, inner_p, accepted, best_profit, restart, int(cfg.n_restarts))
+            # Perturbation (random removal + greedy repair) for the next restart.
+            nv = rs.n_visited(S)
+            pert = nv >= 4
+            n_rm = torch.clamp((nv.float() * cfg.perturbation_strength).long(), min=2)
+            P = apply_llh(
+                0, S, torch.where(pert, n_rm, torch.zeros_like(n_rm)), inst, self.generator, pa, self.expand_pool
             )
-
-        # Convert to routed format initially
-        routes_list, _ = vectorized_linear_split(solutions, dist_matrix, waste, capacity)
-
-        # Create a padded route tensor (B, max_len)
-        max_l = max(len(r) for r in routes_list)
-        current_routes = torch.zeros((batch_size, max_l), dtype=torch.long, device=device)
-        for b in range(batch_size):
-            r = routes_list[b]
-            current_routes[b, : len(r)] = torch.tensor(r, device=device)
-
-        # 3. Prepare sampling distributions
-        op_probs_dict = None
-        ops_sorted: List[str] = []
-        op_weights: List[float] = []
-
-        if isinstance(self.ls_operator, str) and self.ls_operator == "random":
-            op_probs_dict = self.default_op_probs
-        elif isinstance(self.ls_operator, dict):
-            op_probs_dict = self.ls_operator
-
-        if op_probs_dict:
-            ops_sorted = sorted(op_probs_dict.keys())
-            op_weights = [op_probs_dict.get(op, 0.0) for op in ops_sorted]
-
-        p_probs_dict = None
-        p_modes_sorted: List[str] = []
-        p_weights: List[float] = []
-
-        if isinstance(self.perturbation_type, str) and self.perturbation_type == "random":
-            p_probs_dict = self.default_perturb_probs
-        elif isinstance(self.perturbation_type, dict):
-            p_probs_dict = self.perturbation_type
-
-        if p_probs_dict:
-            p_modes_sorted = sorted(p_probs_dict.keys())
-            p_weights = [p_probs_dict.get(m, 0.0) for m in p_modes_sorted]
-
-        # 4. Initial local search
-        ls_func = None
-        if op_probs_dict:
-            initial_op = self.rng.choices(ops_sorted, weights=op_weights)[0]
-            ls_func = self.op_map.get(initial_op, vectorized_two_opt)
-        else:
-            op_name = self.ls_operator if isinstance(self.ls_operator, str) else "two_opt"
-            ls_func = self.op_map.get(op_name, vectorized_two_opt)
-
-        current_routes = ls_func(
-            current_routes,
-            dist_matrix,
-            max_iterations=self.ls_iterations,
-            generator=self.generator,
-        )
-        best_routes = current_routes.clone()
-        best_costs = self._compute_costs(best_routes, dist_matrix)
-
-        # 5. ILS loop
-        for _restart_idx in range(self.n_restarts):
-            # Sample perturbation mode
-            if p_probs_dict:
-                p_mode = self.rng.choices(p_modes_sorted, weights=p_weights)[0]
-            else:
-                p_mode = self.perturbation_type if isinstance(self.perturbation_type, str) else "double_bridge"
-
-            # Perturb
-            perturbed = self._perturb(current_routes, device, p_mode)
-
-            # Sample LS operator for this restart
-            if op_probs_dict:
-                iter_op = self.rng.choices(ops_sorted, weights=op_weights)[0]
-                iter_ls_func = self.op_map.get(iter_op, vectorized_two_opt)
-            else:
-                iter_ls_func = ls_func if ls_func is not None else vectorized_two_opt
-
-            # Local search on perturbed solution
-            refined = iter_ls_func(
-                perturbed,
-                dist_matrix,
-                max_iterations=self.ls_iterations,
-                generator=self.generator,
-            )
-            refined_costs = self._compute_costs(refined, dist_matrix)
-
-            # Accept if improving
-            improved = refined_costs < best_costs - 1e-6
-            best_routes[improved] = refined[improved]
-            best_costs[improved] = refined_costs[improved]
-
-            self._viz_record(
-                restart=_restart_idx,
-                perturb_mode=p_mode,
-                n_improved=int(improved.sum().item()),
-                best_cost=float(best_costs.min().item()),
-                candidate_cost=float(refined_costs.min().item()),
-            )
-
-            # Always move to refined for exploration
-            current_routes = refined
-
-        # 6. Final Evaluation and Output
-        costs = best_costs
-
-        # RL4CO return format
-        R = getattr(env, "waste_weight", 1.0)
-        C = getattr(env, "cost_weight", 1.0)
-
-        all_rewards = []
-        for b in range(batch_size):
-            collected_nodes = set(best_routes[b].tolist()) - {0}
-            profit = sum(waste[b, node].item() * R for node in collected_nodes if node < num_nodes)
-            cost = costs[b].item() * C
-            all_rewards.append(torch.tensor(profit - cost, device=device))
-
-        return {
-            "reward": torch.stack(all_rewards),
-            "actions": best_routes,
-            "log_likelihood": torch.zeros(batch_size, device=device),
-            "cost": costs,
-        }
+            S = torch.where(pert.unsqueeze(1), P, S)
+            profit = rs.seq_profit(S, inst)
+            self._viz_record(iteration=restart, best_profit=float(best_profit.mean()))
+        return best_S

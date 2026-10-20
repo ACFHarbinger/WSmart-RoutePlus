@@ -1,481 +1,195 @@
-"""Vectorized Hybrid Volleyball Premier League (HVPL) Policy.
+"""Vectorised HVPL policy: the simulator's Hybrid VPL (``HVPLConfig``) on a batch.
 
-This module implements the HVPL algorithm, a population-based meta-heuristic
-that mimics the competition and coaching dynamics of a professional sports
-league. It fuses constructionist capabilities (ACO) with improvement
-heuristics (ALNS) using a parallelized population management system on the GPU.
+Mirrors :class:`~logic.src.policies.routing.meta_heuristics.hybrid_volleyball_premier_league.solver.HVPLSolver`
+(Sun et al. 2023) with every team of every instance processed together:
+
+1. ACO initialisation, twice (active and passive leagues): ``aco_init_iterations`` ant
+   constructions, padded with ``build_greedy_routes`` solutions up to ``n_teams``, the
+   ``n_teams`` most profitable kept;
+2. ``max_iterations`` seasons (or ``time_limit`` seconds), each with
+   - HGS evolution: ``n_teams`` offspring from size-3 tournaments, crossover with
+     probability ``crossover_rate`` (union of the parents' bins, cut to the
+     ``int(1.1 * |parent1|)`` heaviest when larger, rebuilt by greedy insertion) and
+     mutation with probability ``mutation_rate`` (random removal of
+     ``max(2, int(0.2 n))`` bins + greedy reinsertion);
+   - selection of the ``n_teams`` best of parents and offspring;
+   - substitution of the ``max(1, int(n_teams * substitution_rate))`` weakest teams by
+     random passive teams;
+   - ALNS coaching of every team with ``alns_params``;
+   - best tracking; on a new best its edges get ``1 / cost`` pheromone.
 
 Attributes:
-    VectorizedHVPL: High-performance population-based hybrid policy.
-
-Example:
-    >>> from logic.src.policies.vector.hybrid_volleyball_premier_league import VectorizedHVPL
-    >>> policy = VectorizedHVPL(env_name="ptp")
-    >>> out = policy(td)
+    VectorizedHVPL: Batched HVPL expert configured by ``HVPLConfig``.
 """
 
 from __future__ import annotations
 
-import random
 import time
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Optional
 
 import torch
-from tensordict import TensorDict
 
-from logic.src.constants.simulation import VEHICLE_CAPACITY
-from logic.src.models.common.autoregressive.policy import AutoregressivePolicy
-from logic.src.pipeline.learning.envs.base.base import RL4COEnvBase
-from logic.src.policies.vector.adaptive_large_neighborhood_search import (
-    VectorizedALNS,
-)
-from logic.src.policies.vector.hgs import VectorizedHGS
-from logic.src.policies.vector.shared.linear import vectorized_linear_split
+from logic.src.configs.policies.hvpl import HVPLConfig
+from logic.src.policies.vector.shared import routes as rs
+from logic.src.policies.vector.shared.base import VectorizedRoutingPolicy
+from logic.src.policies.vector.shared.vrpp import VRPPBatch
+
+from .adaptive_large_neighborhood_search import VectorizedALNSEngine
+from .ant_colony_system import candidate_mask, construct_ants
 
 
-class VectorizedHVPL(AutoregressivePolicy):
-    """Vectorized HVPL Policy for high-performance routing.
+class VectorizedHVPL(VectorizedRoutingPolicy):
+    """Batched counterpart of the simulator's ``HVPLPolicy`` / ``HVPLSolver``.
 
-    Maintains a league of 'teams' (giant tours) which undergo a coaching phase
-    (ALNS refinement), global competition (best-tour tracking), and a substitution
-    phase (replacing low-performers via ACO construction).
-
-    Attributes:
-        n_teams: Population size (teams) per problem instance.
-        max_iterations: Number of seasons/cycles to simulate.
-        sub_rate: Portion of teams to replace per cycle.
-        time_limit: Wall-clock runtime constraint in seconds.
-        aco_iterations: Iterations for the construction phase.
-        alns_iterations: Internal iterations for the coaching phase.
+    Takes exactly the ``HVPLConfig`` fields (``aco``/``aco_params``, ``alns``/``alns_params``);
+    ``packing`` and ``route_improvement`` are simulator-only and ignored.
     """
 
-    def __init__(
-        self,
-        env_name: str,
-        n_teams: int = 10,
-        max_iterations: int = 20,
-        sub_rate: float = 0.2,
-        time_limit: float = 60.0,
-        aco_iterations: int = 1,
-        alns_iterations: int = 100,
-        device: str = "cuda",
-        generator: Optional[torch.Generator] = None,
-        rng: Optional[random.Random] = None,
-        **kwargs: Any,
-    ) -> None:
-        """Initialize the HVPL policy.
+    config_cls = HVPLConfig
 
-        Args:
-            env_name: Name of the environment identifier.
-            n_teams: Number of parallel teams (individuals) in the league.
-            max_iterations: Number of seasons (generations) to simulate.
-            sub_rate: Probability/ratio of replacing underperforming teams.
-            time_limit: Maximum execution time in seconds.
-            aco_iterations: Number of construction iterations for new teams.
-            alns_iterations: Number of refinement iterations in the coaching phase.
-            device: Computing device for tensor operations.
-            generator: Torch RNG generator for sampling.
-            rng: Python random instance for heuristics.
-            kwargs: Additional keyword arguments.
-        """
-        super().__init__(env_name=env_name, device=device, generator=generator, rng=rng, **kwargs)
-        self.n_teams = n_teams
-        self.max_iterations = max_iterations
-        self.sub_rate = sub_rate
-        self.time_limit = time_limit
-        self.aco_iterations = aco_iterations
-        self.alns_iterations = alns_iterations
+    # ------------------------------------------------------------------
+    def _rep(self, inst: VRPPBatch, T: int) -> VRPPBatch:
+        return inst.subset(torch.arange(inst.batch_size, device=inst.device).repeat_interleave(T))
 
-    def __getstate__(self) -> Dict[str, Any]:
-        """Prepare state for serialization, stripping hardware-bound RNGs.
+    def _greedy_teams(self, inst: VRPPBatch, T: int) -> torch.Tensor:
+        L = rs.width(inst.n_bins)
+        return rs.greedy_profit_construction(self._rep(inst, T), self.generator).view(inst.batch_size, T, L)
 
-        Returns:
-            Dict[str, Any]: Attribute map suitable for pickling.
-        """
-        state = self.__dict__.copy()
-        if "generator" in state:
-            gen = state["generator"]
-            state["generator_state"] = gen.get_state()
-            state["generator_device"] = str(gen.device)
-            del state["generator"]
-        return state
-
-    def __setstate__(self, state: Dict[str, Any]) -> None:
-        """Restore search parameters and re-initialize device RNGs.
-
-        Args:
-            state: Serialized attribute dictionary.
-        """
-        if "generator_state" in state:
-            gen_state = state.pop("generator_state")
-            gen_device = state.pop("generator_device")
-            gen = torch.Generator(device=gen_device)
-            gen.set_state(gen_state)
-            state["generator"] = gen
-        self.__dict__.update(state)
-
-    def forward(
-        self,
-        td: TensorDict,
-        env: Optional[RL4COEnvBase] = None,
-        strategy: str = "greedy",
-        num_starts: int = 1,
-        max_steps: Optional[int] = None,
-        phase: str = "train",
-        return_actions: bool = True,
-        **kwargs: Any,
-    ) -> Dict[str, Any]:
-        """Execute the HVPL simulation loop.
-
-        Args:
-            td: TensorDict containing instance data (locations, demands).
-            env: Optional environment for reward calculation.
-            strategy: Solver strategy (e.g., "greedy").
-            num_starts: Unused in HVPL.
-            max_steps: Maximum step constraint.
-            phase: Current phase ("train", "val", "test").
-            return_actions: Whether to return full action sequences.
-            kwargs: Additional keyword arguments.
-
-        Returns:
-            Dict[str, Any]: Optimized results dictionary including:
-                - actions (torch.Tensor): Padded action sequences.
-                - reward (torch.Tensor): Calculated reward for the solution.
-                - cost (torch.Tensor): Raw objective value from the engine.
-                - log_likelihood (torch.Tensor): Zero vector (HVPL is non-pi).
-        """
-        batch_size = td.batch_size[0]
-        device = td.device if td.device is not None else td["locs"].device
-        start_time = time.time()
-
-        # 1. Setup Data
-        dist_matrix, waste, capacity = self._setup_data(td)
-        num_nodes = dist_matrix.shape[1]
-
-        # 2. League Initialization (ACO Construction)
-        expanded_dist = dist_matrix.repeat_interleave(self.n_teams, dim=0)
-        expanded_waste = waste.repeat_interleave(self.n_teams, dim=0)
-        expanded_capacity = capacity.repeat_interleave(self.n_teams, dim=0)
-
-        tau = torch.ones((batch_size, num_nodes, num_nodes), device=device) * 0.1
-        eta = 1.0 / (dist_matrix + 1e-6)
-
-        population_tours = self._aco_construct(dist_matrix, tau, eta, self.n_teams)
-
-        best_tours = population_tours[:, 0].clone()
-        best_costs = torch.full((batch_size,), float("inf"), device=device)
-
-        # 3. League Season
-        for _iter in range(self.max_iterations):
-            if time.time() - start_time > self.time_limit:
-                break
-
-            # 4. Coaching Phase (Vectorized ALNS refinement)
-            instance_costs, coached_routes_list = self._coaching_phase(
-                population_tours, expanded_dist, expanded_waste, expanded_capacity
-            )
-
-            # 5. Global Competition (Select iteration best per batch)
-            improved = self._global_competition(
-                instance_costs,
-                mentored_routes_list=coached_routes_list,
-                best_tours=best_tours,
-                best_costs=best_costs,
-                num_nodes=num_nodes,
-            )
-
-            # 6. Pheromone Update (Stochastic reinforcement of best edges)
-            if improved.any():
-                tau = self._update_pheromones(tau, best_tours, best_costs)
-
-            # 7. Substitution Phase (Replace weakest solutions)
-            if self.sub_rate > 0:
-                self._substitution_phase(population_tours, instance_costs, dist_matrix, tau, eta)
-
-        # 8. Final packaging
-        return self._format_output(td, best_tours, dist_matrix, waste, capacity, env=env)
-
-    def _setup_data(self, td: TensorDict) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        """Extract and compute necessary tensors from the TensorDict state.
-
-        Args:
-            td: Input state bundle.
-
-        Returns:
-            Tuple[torch.Tensor, torch.Tensor, torch.Tensor]: A tuple containing:
-                - dist_matrix: Euclidean cost tensor of shape [B, N, N].
-                - waste: Falling levels of shape [B, N].
-                - capacity: Scalar or per-route limits of shape [B].
-        """
-        batch_size = td.batch_size[0]
-        device = td.device if td.device is not None else td["locs"].device
-        locs = td["locs"]
-        num_nodes = locs.shape[1]
-
-        if locs.dim() == 3 and locs.shape[-1] == 2:
-            diff = locs.unsqueeze(2) - locs.unsqueeze(1)
-            dist_matrix = torch.sqrt((diff**2).sum(dim=-1))
-        else:
-            dist_matrix = locs
-
-        waste_at_nodes = td.get("waste", torch.zeros(batch_size, num_nodes - 1, device=device))
-        waste = torch.cat([torch.zeros(batch_size, 1, device=device), waste_at_nodes], dim=1)
-        capacity = td.get("capacity", torch.ones(batch_size, device=device) * VEHICLE_CAPACITY)
-        if capacity.dim() == 0:
-            capacity = capacity.expand(batch_size)
-
-        return dist_matrix, waste, capacity
-
-    def _coaching_phase(
-        self,
-        population_tours: torch.Tensor,
-        dist: torch.Tensor,
-        waste: torch.Tensor,
-        capacity: torch.Tensor,
-    ) -> Tuple[torch.Tensor, List[List[int]]]:
-        """Apply ALNS improvement search to the entire population.
-
-        Args:
-            population_tours: Candidate giant tours of shape [B, K, N].
-            dist: Expanded distances of shape [B*K, N, N].
-            waste: Expanded demands of shape [B*K, N].
-            capacity: Expanded limits of shape [B*K].
-
-        Returns:
-            Tuple[torch.Tensor, List[List[int]]]: A tuple containing:
-                - instance_costs: Refinement costs per team of shape [B, K].
-                - coached_routes_list: Nested route collections from ALNS.
-        """
-        batch_size = population_tours.shape[0]
-        device = population_tours.device
-
-        alns_engine = VectorizedALNS(dist_matrix=dist, wastes=waste, vehicle_capacity=capacity, device=str(device))
-
-        flat_tours = population_tours.view(batch_size * self.n_teams, -1)
-        coached_routes_list, coached_costs = alns_engine.solve(
-            initial_solutions=flat_tours, n_iterations=self.alns_iterations
-        )
-
-        instance_costs = coached_costs.view(batch_size, self.n_teams)
-        return instance_costs, coached_routes_list
-
-    def _global_competition(
-        self,
-        instance_costs: torch.Tensor,
-        mentored_routes_list: Union[List[List[int]], List[torch.Tensor]],
-        best_tours: torch.Tensor,
-        best_costs: torch.Tensor,
-        num_nodes: int,
-    ) -> torch.Tensor:
-        """Find batch improvements and update the elite giant tours.
-
-        Args:
-            instance_costs: Costs for all teams of shape [B, K].
-            mentored_routes_list: Refined routes from ALNS.
-            best_tours: Persistent elite tours of shape [B, N-1].
-            best_costs: Persistent elite costs of shape [B].
-            num_nodes: Total node count.
-
-        Returns:
-            torch.Tensor: Boolean improvement flag per batch instance of shape [B].
-        """
-        batch_size = instance_costs.shape[0]
-        device = best_tours.device
-
-        min_costs, min_idx = instance_costs.min(dim=1)
-        improved = min_costs < best_costs
-        best_costs[improved] = min_costs[improved]
-
-        for b in range(batch_size):
-            best_idx = int(min_idx[b].item())
-            flat_idx = b * self.n_teams + best_idx
-            routes = mentored_routes_list[flat_idx]
-
-            if isinstance(routes, torch.Tensor):
-                nodes = routes[routes != 0]
-            else:
-                nodes = torch.tensor([n for n in routes if n != 0], device=device)
-
-            if nodes.size(0) < num_nodes - 1:
-                nodes = torch.cat(
-                    [
-                        nodes,
-                        torch.zeros(
-                            num_nodes - 1 - nodes.size(0),
-                            dtype=torch.long,
-                            device=device,
-                        ),
-                    ]
+    def _league(self, inst: VRPPBatch, tau: torch.Tensor, cand: torch.Tensor) -> torch.Tensor:
+        cfg = self.cfg
+        aco = cfg.aco_params
+        T = int(cfg.n_teams)
+        n_init = int(cfg.aco_init_iterations)
+        parts = []
+        if n_init > 0:
+            parts.append(
+                construct_ants(
+                    inst,
+                    tau,
+                    cand,
+                    n_init,
+                    aco.alpha,
+                    aco.beta,
+                    bool(cfg.profit_aware_operators),
+                    self.generator,
+                    self.expand_pool,
                 )
-            elif nodes.size(0) > num_nodes - 1:
-                nodes = nodes[: num_nodes - 1]
-            best_tours[b] = nodes
-        return improved
-
-    def _substitution_phase(
-        self,
-        population_tours: torch.Tensor,
-        instance_costs: torch.Tensor,
-        dist_matrix: torch.Tensor,
-        tau: torch.Tensor,
-        eta: torch.Tensor,
-    ) -> None:
-        """Identify worst performers and replace them via re-construction.
-
-        Args:
-            population_tours: Current giant tour pool of shape [B, K, N-1].
-            instance_costs: Recorded team performance of shape [B, K].
-            dist_matrix: Global problem distances of shape [B, N, N].
-            tau: Pheromone trails for guided construction of shape [B, N, N].
-            eta: Heuristic visibility of shape [B, N, N].
-        """
-        batch_size = population_tours.shape[0]
-        n_sub = int(self.n_teams * self.sub_rate)
-        if n_sub > 0:
-            worst_indices = instance_costs.argsort(dim=1, descending=True)[:, :n_sub]
-            sub_tours = self._aco_construct(dist_matrix, tau, eta, n_sub)
-            for b in range(batch_size):
-                for s in range(n_sub):
-                    idx = int(worst_indices[b, s].item())
-                    population_tours[b, idx] = sub_tours[b, s]
-
-    def _format_output(
-        self,
-        td: TensorDict,
-        best_tours: torch.Tensor,
-        dist_matrix: torch.Tensor,
-        waste: torch.Tensor,
-        capacity: torch.Tensor,
-        env: Optional[RL4COEnvBase] = None,
-    ) -> Dict[str, Any]:
-        """Final conversion from giant tours to split routes and output dicts.
-
-        Args:
-            td: Input state for metadata access.
-            best_tours: Final elite tours of shape [B, N-1].
-            dist_matrix: Problem scaling of shape [B, N, N].
-            waste: Demands of shape [B, N].
-            capacity: Constraints of shape [B].
-            env: Environment instance for reward sizing.
-
-        Returns:
-            Dict[str, Any]: Final results bundle dictionary with:
-                - actions (torch.Tensor): Padded action sequences.
-                - reward (torch.Tensor): Calculated reward/cost for the solution.
-                - cost (torch.Tensor): Raw objective value from the engine.
-                - log_likelihood (torch.Tensor): Zero vector (HVPL is non-pi).
-        """
-        batch_size = best_tours.shape[0]
-        device = best_tours.device
-
-        final_routes, final_costs = vectorized_linear_split(best_tours, dist_matrix, waste, capacity)
-
-        max_len = max([len(r) for r in final_routes] + [2])
-        all_actions = []
-        for r in final_routes:
-            a = torch.tensor(r, device=device, dtype=torch.long)
-            if len(a) < max_len:
-                a = torch.cat([a, torch.zeros(max_len - len(a), device=device, dtype=torch.long)])
-            all_actions.append(a)
-
-        padded_actions = torch.stack(all_actions)
-
-        reward = VectorizedHGS._compute_reward(td, env, padded_actions)
-
-        return {
-            "actions": padded_actions,
-            "reward": reward,
-            "cost": final_costs.to(device),
-            "log_likelihood": torch.zeros(batch_size, device=device),
-        }
-
-    def _aco_construct(
-        self,
-        dist_matrix: torch.Tensor,
-        tau: torch.Tensor,
-        eta: torch.Tensor,
-        n_ants_per_instance: int,
-    ) -> torch.Tensor:
-        """Parallelized construction utilizing iteration pheromone state.
-
-        Args:
-            dist_matrix: Distances of shape [B, N, N].
-            tau: Shared pheromones of shape [B, N, N].
-            eta: Heuristic data of shape [B, N, N].
-            n_ants_per_instance: Concurrent walkers per instance.
-
-        Returns:
-            torch.Tensor: Constructed giant tours of shape [B, K, N-1].
-        """
-        batch_size, num_nodes, _ = dist_matrix.shape
-        device = dist_matrix.device
-
-        tau_k = tau.unsqueeze(1).expand(-1, n_ants_per_instance, -1, -1)
-        eta_k = eta.unsqueeze(1).expand(-1, n_ants_per_instance, -1, -1)
-
-        current_node = torch.zeros((batch_size, n_ants_per_instance), dtype=torch.long, device=device)
-        visited = torch.zeros(
-            (batch_size, n_ants_per_instance, num_nodes),
-            dtype=torch.bool,
-            device=device,
-        )
-        visited.scatter_(2, current_node.unsqueeze(2), 1)
-
-        tours = []
-        for _ in range(num_nodes - 1):
-            gather_idx = current_node.view(batch_size, n_ants_per_instance, 1, 1).expand(-1, -1, 1, num_nodes)
-            tau_step = tau_k.gather(2, gather_idx).squeeze(2)
-            eta_step = eta_k.gather(2, gather_idx).squeeze(2)
-
-            scores = (tau_step**1.0) * (eta_step**2.0)
-            scores.masked_fill_(visited, 0)
-
-            probs = scores / (scores.sum(dim=-1, keepdim=True) + 1e-10)
-            next_node = torch.multinomial(probs.view(-1, num_nodes), 1, generator=self.generator).view(
-                batch_size, n_ants_per_instance
             )
+        if n_init < T:
+            parts.append(self._greedy_teams(inst, T - n_init))
+        pool = torch.cat(parts, dim=1)
+        if pool.size(1) <= T:
+            return pool
+        P = pool.size(1)
+        prof = rs.seq_profit(pool.reshape(-1, pool.size(2)), self._rep(inst, P)).view(inst.batch_size, P)
+        top = torch.argsort(-prof, dim=1, stable=True)[:, :T]
+        return torch.gather(pool, 1, top.unsqueeze(2).expand(-1, -1, pool.size(2)))
 
-            current_node = next_node
-            visited.scatter_(2, current_node.unsqueeze(2), 1)
-            tours.append(current_node)
+    def _profits(self, teams: torch.Tensor, inst: VRPPBatch) -> torch.Tensor:
+        B, T, L = teams.shape
+        return rs.seq_profit(teams.reshape(B * T, L), self._rep(inst, T)).view(B, T)
 
-        return torch.stack(tours, dim=2)
+    def _tournament(self, profits: torch.Tensor, n: int, k: int = 3) -> torch.Tensor:
+        B, T = profits.shape
+        r = torch.rand(B, n, T, generator=self.generator, device=profits.device)
+        picks = torch.argsort(r, dim=2)[:, :, : min(k, T)]
+        p = torch.gather(profits.unsqueeze(1).expand(-1, n, -1), 2, picks)
+        return torch.gather(picks, 2, p.argmax(dim=2, keepdim=True)).squeeze(2)
 
-    def _update_pheromones(self, tau: torch.Tensor, best_tours: torch.Tensor, best_costs: torch.Tensor) -> torch.Tensor:
-        """Update pheromone intensities based on global batch performance.
+    # ------------------------------------------------------------------
+    def solve(self, inst: VRPPBatch, initial: Optional[torch.Tensor] = None) -> torch.Tensor:
+        """Run the batched HVPL.
 
         Args:
-            tau: Current trails [B, N, N].
-            best_tours: Elite sequences [B, N-1].
-            best_costs: Elite costs [B].
+            inst: Instances.
+            initial: Ignored.
 
         Returns:
-            torch.Tensor: Reinforced pheromone matrix [B, N, N].
+            torch.Tensor: Best route sequences.
         """
-        batch_size, N_minus_1 = best_tours.shape
-        num_nodes = N_minus_1 + 1
-        device = tau.device
-
-        tau = 0.9 * tau
-        delta = 1.0 / (best_costs + 1e-10)
-
-        padded = torch.zeros((batch_size, num_nodes + 1), dtype=torch.long, device=device)
-        padded[:, 1:-1] = best_tours
-
-        from_nodes = padded[:, :-1]
-        to_nodes = padded[:, 1:]
-
-        batch_idx = torch.arange(batch_size, device=device).unsqueeze(1).expand(-1, num_nodes)
-
-        tau.index_put_(
-            (batch_idx.flatten(), from_nodes.flatten(), to_nodes.flatten()),
-            delta.repeat_interleave(num_nodes).to(tau.dtype),
-            accumulate=True,
-        )
-        tau.index_put_(
-            (batch_idx.flatten(), to_nodes.flatten(), from_nodes.flatten()),
-            delta.repeat_interleave(num_nodes).to(tau.dtype),
-            accumulate=True,
-        )
-
-        return torch.clamp(tau, 0.01, 10.0)
+        cfg = self.cfg
+        aco, alns_cfg = cfg.aco_params, cfg.alns_params
+        B, N, M = inst.batch_size, inst.n_bins, inst.n_bins + 1
+        dev = inst.device
+        if N == 0:
+            return rs.empty_routes(B, N, dev)
+        start = time.perf_counter()
+        T = int(cfg.n_teams)
+        tau0 = float(aco.tau_0) if aco.tau_0 is not None else 1.0
+        tau = torch.full((B, M, M), tau0, device=dev)
+        cand = candidate_mask(inst, int(getattr(cfg.aco, "k_sparse", 10)))
+        active = self._league(inst, tau, cand)
+        passive = self._league(inst, tau, cand)
+        prof = self._profits(active, inst)
+        order = torch.argsort(-prof, dim=1, stable=True)
+        active = torch.gather(active, 1, order.unsqueeze(2).expand_as(active))
+        prof = torch.gather(prof, 1, order)
+        best_S, best_p = active[:, 0].clone(), prof[:, 0].clone()
+        alns = VectorizedALNSEngine(alns_cfg, self.generator, self.expand_pool)
+        b = torch.arange(B, device=dev)
+        L = active.size(2)
+        repT = self._rep(inst, T)
+        pa = bool(cfg.profit_aware_operators)
+        for season in range(int(cfg.max_iterations)):
+            if cfg.time_limit > 0 and time.perf_counter() - start > cfg.time_limit:
+                break
+            # HGS evolution.
+            i1 = self._tournament(prof, T)
+            i2 = self._tournament(prof, T)
+            p1 = torch.gather(active, 1, i1.unsqueeze(2).expand(-1, -1, L)).reshape(B * T, L)
+            p2 = torch.gather(active, 1, i2.unsqueeze(2).expand(-1, -1, L)).reshape(B * T, L)
+            child = p1.clone()
+            do_x = torch.rand(B * T, generator=self.generator, device=dev) < cfg.crossover_rate
+            if bool(do_x.any()):
+                v1, v2 = rs.visited(p1, M), rs.visited(p2, M)
+                union = v1 | v2
+                n1 = v1.sum(dim=1)
+                keep_n = (n1.float() * 1.1).long()
+                prune = union.sum(dim=1) > n1
+                w = torch.where(union, repT.waste, torch.full_like(repT.waste, -1.0))
+                rank = torch.argsort(torch.argsort(-w, dim=1, stable=True), dim=1)
+                pruned = union & (rank < keep_n.unsqueeze(1))
+                nodes = torch.where(prune.unsqueeze(1), pruned, union)
+                if self.expand_pool:
+                    nodes = torch.ones_like(nodes)
+                    nodes[:, 0] = False
+                rebuilt = rs.greedy_insertion(torch.zeros_like(p1), nodes, repT, pa)
+                child = torch.where(do_x.unsqueeze(1), rebuilt, child)
+            do_m = torch.rand(B * T, generator=self.generator, device=dev) < cfg.mutation_rate
+            if bool(do_m.any()):
+                n_rm = torch.clamp((rs.n_visited(child).float() * 0.2).long(), min=2)
+                Pm, pos = rs.random_removal(child, n_rm, self.generator)
+                removed = torch.zeros(B * T, M, dtype=torch.bool, device=dev)
+                removed.scatter_(1, torch.where(pos, child, torch.zeros_like(child)), True)
+                removed[:, 0] = False
+                pending = removed | (~rs.visited(Pm, M) if self.expand_pool else removed)
+                pending[:, 0] = False
+                mutated = rs.greedy_insertion(Pm, pending, repT, pa)
+                child = torch.where(do_m.unsqueeze(1), mutated, child)
+            off = child.view(B, T, L)
+            comb = torch.cat([active, off], dim=1)
+            comb_p = torch.cat([prof, self._profits(off, inst)], dim=1)
+            top = torch.argsort(-comb_p, dim=1, stable=True)[:, :T]
+            active = torch.gather(comb, 1, top.unsqueeze(2).expand(-1, -1, L))
+            # Substitution of the weakest teams by random passive teams.
+            n_sub = max(1, int(T * cfg.substitution_rate))
+            pick = torch.randint(0, passive.size(1), (B, n_sub), generator=self.generator, device=dev)
+            active[:, T - n_sub :] = torch.gather(passive, 1, pick.unsqueeze(2).expand(-1, -1, L))
+            # ALNS coaching of every team.
+            coached, _ = alns.solve(repT, active.reshape(B * T, L))
+            active = coached.view(B, T, L)
+            prof = self._profits(active, inst)
+            order = torch.argsort(-prof, dim=1, stable=True)
+            active = torch.gather(active, 1, order.unsqueeze(2).expand_as(active))
+            prof = torch.gather(prof, 1, order)
+            imp = prof[:, 0] > best_p
+            best_S = torch.where(imp.unsqueeze(1), active[:, 0], best_S)
+            best_p = torch.where(imp, prof[:, 0], best_p)
+            if bool(imp.any()):
+                cost = rs.seq_cost(best_S, inst).clamp(min=1e-12)
+                u, v = best_S[:, :-1], best_S[:, 1:]
+                edge = ((u != 0) | (v != 0)) & imp.unsqueeze(1)
+                delta = (1.0 / cost).unsqueeze(1).expand_as(u)
+                tau.index_put_((b.unsqueeze(1).expand_as(u)[edge], u[edge], v[edge]), delta[edge], accumulate=True)
+            self._viz_record(iteration=season, best_profit=float(best_p.mean()))
+        return best_S

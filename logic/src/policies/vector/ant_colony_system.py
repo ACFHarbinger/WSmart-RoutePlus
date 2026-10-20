@@ -1,327 +1,254 @@
-"""Vectorized Ant Colony Optimization (ACO) Policy.
+"""Vectorised K-sparse ACO: the simulator's KS-ACO (``KSparseACOConfig``) on a batch.
 
-This module implements a high-performance, GPU-accelerated Ant Colony
-System (ACS). It processes multiple problem instances and multiple ants per
-instance in parallel using tensor operations, drastically reducing the
-computational overhead of pheromone updates and local updates.
+Mirrors :class:`~logic.src.policies.routing.meta_heuristics.ant_colony_optimization_k_sparse.solver.KSparseACOSolver`
+(MMAS, Stützle & Hoos 2000; Hale 2021), with all ants of all instances built at once:
+
+- candidate lists: the ``k_sparse`` nearest nodes of every node (the depot is always a
+  candidate of a bin);
+- construction: from the depot, the next bin is drawn among the feasible bins in the
+  candidate list (or among all feasible bins when none is a candidate) with probability
+  ``tau^alpha * eta^beta``, ``eta = 1 / d``; a bin is feasible when it fits the
+  remaining capacity and, with ``profit_aware_operators``, when its revenue beats its
+  marginal detour; a route closes when no bin is feasible and a new one starts while
+  some unvisited bin pays its depot round trip;
+- optional local search (``local_search``, ``local_search_iterations`` moves);
+- the iteration-best and best-so-far solutions are the cheapest ones; on a new best,
+  ``tau_max = 1 / (rho * best_cost)``; MMAS update: deposit ``1 / best_cost`` on the
+  best-so-far edges, then evaporate everything by ``(1 - rho)`` within
+  ``[tau_min, tau_max]``;
+- ``tau_0`` defaults to ``rho / nearest-neighbour cost`` when None;
+- stop after ``max_iterations`` or ``time_limit`` seconds.
 
 Attributes:
-    VectorizedACOPolicy: High-performance parallel ACO policy.
-
-Example:
-    >>> from logic.src.policies.vector.ant_colony_system import VectorizedACOPolicy
-    >>> policy = VectorizedACOPolicy(env_name="tsp")
-    >>> out = policy(td, env=env)
+    construct_ants: Batched ant construction.
+    VectorizedACOPolicy: Batched KS-ACO expert configured by ``KSparseACOConfig``.
 """
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple
+import time
+from typing import Optional
 
 import torch
-from tensordict import TensorDict
 
-from logic.src.models.common.autoregressive.policy import AutoregressivePolicy
-from logic.src.pipeline.learning.envs.base.base import RL4COEnvBase
-from logic.src.tracking.viz_mixin import PolicyVizMixin
+from logic.src.configs.policies.aco_ks import KSparseACOConfig
+from logic.src.policies.vector.shared import routes as rs
+from logic.src.policies.vector.shared.base import VectorizedRoutingPolicy
+from logic.src.policies.vector.shared.vrpp import VRPPBatch
+
+from .hybrid_genetic_search import HGS_LS_OPERATORS
 
 
-class VectorizedACOPolicy(AutoregressivePolicy, PolicyVizMixin):
-    """Vectorized ACS Policy for Combinatorial Optimization.
+def candidate_mask(inst: VRPPBatch, k: int) -> torch.Tensor:
+    """``[B, M, M]`` mask of the ``k`` nearest nodes of every node (depot forced in for bins)."""
+    B, M = inst.dist.size(0), inst.dist.size(1)
+    d = inst.dist.clone()
+    eye = torch.eye(M, dtype=torch.bool, device=d.device).unsqueeze(0)
+    d = torch.where(eye, torch.full_like(d, float("inf")), d)
+    k = max(0, min(k, M - 1))
+    mask = torch.zeros(B, M, M, dtype=torch.bool, device=d.device)
+    if k > 0:
+        idx = torch.topk(d, k, dim=2, largest=False).indices
+        mask.scatter_(2, idx, True)
+        # Guarantee depot access: replace the furthest candidate by the depot.
+        missing = ~mask[:, 1:, 0]
+        far = idx[:, 1:, -1]
+        rows = missing.nonzero(as_tuple=True)
+        mask[rows[0], rows[1] + 1, far[rows]] = False
+        mask[:, 1:, 0] = True
+    return mask
 
-    Maintains a global pheromone matrix (tau) per batch and utilizes heuristic
-    information (eta) to guide ants through a stochastic decision process.
-    Supports ACS-specific elitism and weight-based pheromone updates.
 
-    Attributes:
-        n_ants: Number of parallel agents per batch instance.
-        n_iterations: Number of pheromone update cycles.
-        alpha: Pheromone influence coefficient.
-        beta: Heuristic/distance influence coefficient.
-        decay: Pheromone evaporation rate.
-        elitism: Number of top ants contributing to global updates.
-        q0: ACS exploitation probability (vs exploration).
-        min_pheromone: Floor value for pheromone trails to prevent stagnation.
+def construct_ants(
+    inst: VRPPBatch,
+    tau: torch.Tensor,
+    cand: torch.Tensor,
+    n_ants: int,
+    alpha: float,
+    beta: float,
+    profit_aware: bool,
+    gen: Optional[torch.Generator],
+    expand_pool: bool = True,
+) -> torch.Tensor:
+    """Build ``n_ants`` solutions per instance.
+
+    Args:
+        inst: Instances.
+        tau: Pheromones ``[B, M, M]``.
+        cand: Candidate masks ``[B, M, M]``.
+        n_ants: Ants per instance.
+        alpha: Pheromone exponent.
+        beta: Heuristic exponent.
+        profit_aware: Only bins whose revenue beats their detour are feasible.
+        gen: Torch generator.
+        expand_pool: VRPP mode (new routes only while some bin pays its round trip).
+
+    Returns:
+        torch.Tensor: Route sequences ``[B, n_ants, L]``.
+    """
+    B, M = inst.dist.size(0), inst.dist.size(1)
+    N = M - 1
+    dev = inst.device
+    R = B * n_ants
+    rep = torch.arange(B, device=dev).repeat_interleave(n_ants)
+    D = inst.dist[rep]
+    W = inst.waste[rep]
+    cap = inst.capacity[rep]
+    T = tau[rep]
+    CM = cand[rep]
+    eta = torch.where(D > 0, 1.0 / D.clamp(min=1e-12), torch.zeros_like(D))
+    L = rs.width(N)
+    S = torch.zeros(R, L, dtype=torch.long, device=dev)
+    pos = torch.zeros(R, dtype=torch.long, device=dev)
+    cur = torch.zeros(R, dtype=torch.long, device=dev)
+    load = torch.zeros(R, device=dev)
+    unv = torch.ones(R, M, dtype=torch.bool, device=dev)
+    unv[:, 0] = False
+    unv = unv & (cap.unsqueeze(1) + 1e-9 >= W)  # bins that can never fit are dropped
+    done = torch.zeros(R, dtype=torch.bool, device=dev)
+    r = torch.arange(R, device=dev)
+    rev = W * inst.R
+    pays_round = rev > 2 * D[:, 0, :] * inst.C
+    # Before the first route: stop when nothing pays (VRPP).
+    if expand_pool:
+        done = done | ~(unv & pays_round).any(dim=1)
+    for _ in range(2 * N + 2):
+        if bool(done.all()):
+            break
+        feas = unv & (load.unsqueeze(1) + W <= cap.unsqueeze(1) + 1e-9)
+        if profit_aware and expand_pool:
+            marg = (D[r, cur] + D[:, :, 0] - D[r, cur, 0].unsqueeze(1)) * inst.C
+            feas = feas & (rev > marg)
+        in_c = feas & CM[r, cur]
+        pool = torch.where(in_c.any(dim=1, keepdim=True), in_c, feas)
+        has = pool.any(dim=1) & ~done
+        weight = (T[r, cur].clamp(min=0) ** alpha) * (eta[r, cur] ** beta)
+        weight = torch.where(pool, weight, torch.zeros_like(weight))
+        zero_tot = weight.sum(dim=1) <= 0
+        weight = torch.where(zero_tot.unsqueeze(1), pool.float(), weight)
+        weight = torch.where(has.unsqueeze(1), weight, torch.ones_like(weight))
+        nxt = torch.multinomial(weight, 1, generator=gen).squeeze(1)
+        # Move.
+        pos = torch.where(has, pos + 1, pos)
+        S[r[has], pos[has]] = nxt[has]
+        load = torch.where(has, load + W[r, nxt], load)
+        unv[r[has], nxt[has]] = False
+        cur = torch.where(has, nxt, cur)
+        # Close the route of ants with nothing feasible.
+        close = ~has & ~done & (cur != 0)
+        pos = torch.where(close, pos + 1, pos)
+        cur = torch.where(close, torch.zeros_like(cur), cur)
+        load = torch.where(close, torch.zeros_like(load), load)
+        # Ants at the depot with nothing feasible, or (VRPP) nothing paying, are done.
+        stuck = ~has & ~done & ~close
+        cont = unv.any(dim=1)
+        if expand_pool:
+            cont = cont & (unv & pays_round).any(dim=1)
+        done = done | stuck | (close & ~cont) | (~unv.any(dim=1) & (cur == 0))
+    return rs.normalize(S).view(B, n_ants, L)
+
+
+def nearest_neighbour_cost(inst: VRPPBatch) -> torch.Tensor:
+    """Cost of a capacity-feasible nearest-neighbour solution over all bins ``[B]``."""
+    B, M = inst.dist.size(0), inst.dist.size(1)
+    dev = inst.device
+    r = torch.arange(B, device=dev)
+    unv = torch.ones(B, M, dtype=torch.bool, device=dev)
+    unv[:, 0] = False
+    unv = unv & (inst.waste <= inst.capacity.unsqueeze(1) + 1e-9)
+    cur = torch.zeros(B, dtype=torch.long, device=dev)
+    load = torch.zeros(B, device=dev)
+    total = torch.zeros(B, device=dev)
+    for _ in range(2 * M):
+        if not bool(unv.any()):
+            break
+        feas = unv & (load.unsqueeze(1) + inst.waste <= inst.capacity.unsqueeze(1) + 1e-9)
+        d = torch.where(feas, inst.dist[r, cur], torch.full_like(inst.waste, float("inf")))
+        best, nxt = d.min(dim=1)
+        has = torch.isfinite(best)
+        total = total + torch.where(has, best, inst.dist[r, cur, 0])
+        load = torch.where(has, load + inst.waste[r, nxt], torch.zeros_like(load))
+        unv[r[has], nxt[has]] = False
+        cur = torch.where(has, nxt, torch.zeros_like(cur))
+    return total + inst.dist[r, cur, 0]
+
+
+class VectorizedACOPolicy(VectorizedRoutingPolicy):
+    """Batched counterpart of the simulator's ``KSparseACOPolicy`` / ``KSparseACOSolver``.
+
+    Takes exactly the ``KSparseACOConfig`` fields; ``packing``, ``route_improvement`` and
+    ``acceptance_criterion`` (unused by the simulator's MMAS loop) are ignored. ``q0``
+    is accepted but, as in the simulator's MMAS construction, not used.
     """
 
-    def __init__(
-        self,
-        env_name: str,
-        n_ants: int = 20,
-        n_iterations: int = 50,
-        alpha: float = 1.0,
-        beta: float = 2.0,
-        decay: float = 0.1,
-        elitism: int = 1,
-        q0: float = 0.9,
-        min_pheromone: float = 0.01,
-        seed: int = 42,
-        device: str = "cpu",
-        **kwargs: Any,
-    ) -> None:
-        """Initialize the ACO policy.
+    config_cls = KSparseACOConfig
+
+    def solve(self, inst: VRPPBatch, initial: Optional[torch.Tensor] = None) -> torch.Tensor:
+        """Run the batched KS-ACO.
 
         Args:
-            env_name: Name of the environment (e.g., "tsp").
-            n_ants: Number of parallel ants to use per batch instance.
-            n_iterations: Number of ACO iterations/generations.
-            alpha: Pheromone importance exponent.
-            beta: Heuristic importance exponent.
-            decay: Pheromone evaporation rate (rho).
-            elitism: Number of top ants to use for global pheromone update.
-            q0: Probability of choosing the best move (exploitation) in ACS.
-            min_pheromone: Minimum pheromone level (tau_min).
-            seed: Random seed for reproducibility.
-            device: Computing device ("cpu", "cuda").
-            kwargs: Additional arguments for AutoregressivePolicy.
-        """
-        super().__init__(env_name=env_name, seed=seed, device=device, **kwargs)
-        self.n_ants = n_ants
-        self.n_iterations = n_iterations
-        self.alpha = alpha
-        self.seed = seed
-        self.beta = beta
-        self.decay = decay
-        self.elitism = elitism
-        self.q0 = q0
-        self.min_pheromone = min_pheromone
-
-    def __getstate__(self) -> Dict[str, Any]:
-        """Prepare state for serialization, extracting generator state.
+            inst: Instances.
+            initial: Ignored.
 
         Returns:
-            Dict[str, Any]: Attribute map safe for pickling.
+            torch.Tensor: Best route sequences.
         """
-        state = self.__dict__.copy()
-        if "generator" in state:
-            gen = state["generator"]
-            state["generator_state"] = gen.get_state()
-            state["generator_device"] = str(gen.device)
-            del state["generator"]
-        return state
-
-    def __setstate__(self, state: Dict[str, Any]) -> None:
-        """Restore state and initialize RNG from serialized data.
-
-        Args:
-            state: Serialized dictionary of attributes.
-        """
-        if "generator_state" in state:
-            gen_state = state.pop("generator_state")
-            gen_device = state.pop("generator_device")
-            gen = torch.Generator(device=gen_device)
-            gen.set_state(gen_state)
-            state["generator"] = gen
-        self.__dict__.update(state)
-
-    def _get_heuristic(self, dist_matrix: torch.Tensor) -> torch.Tensor:
-        """Compute inverse distance heuristic.
-
-        Args:
-            dist_matrix: Pairwise node distances of shape [B, N, N].
-
-        Returns:
-            torch.Tensor: Heuristic visibility information (eta) of shape [B, N, N].
-        """
-        dist_safe = dist_matrix + 1e-6
-        return 1.0 / dist_safe
-
-    def forward(
-        self,
-        td: TensorDict,
-        env: Optional[RL4COEnvBase] = None,
-        strategy: str = "sampling",
-        num_starts: int = 1,
-        **kwargs: Any,
-    ) -> Dict[str, Any]:
-        """Execute the parallel ACO search.
-
-        Constructs solutions for all ants, updates pheromones based on iteration
-        quality, and tracks the global best solution across the batch.
-
-        Args:
-            td: TensorDict containing the problem instance data (e.g., node locations).
-            env: Optional environment for step transitions and masking.
-            strategy: Decoding strategy (e.g., "sampling", "greedy").
-            num_starts: Number of starting nodes/tours to evaluate.
-            kwargs: Additional keyword arguments.
-
-        Returns:
-            Dict[str, Any]: Dictionary containing:
-                - actions: The best tour found for each instance.
-                - reward: Negative tour cost.
-                - cost: Absolute tour length.
-                - log_likelihood: Dummy probabilities (ACO is not gradient-based).
-        """
-        batch_size = td.batch_size[0]
-        device = td.device if td.device is not None else td["locs"].device
-
-        locs = td["locs"]
-        if locs.dim() == 3 and locs.shape[-1] == 2:
-            diff = locs.unsqueeze(2) - locs.unsqueeze(1)
-            dist_matrix = torch.sqrt((diff**2).sum(dim=-1))
+        cfg = self.cfg
+        B, M = inst.dist.size(0), inst.dist.size(1)
+        dev = inst.device
+        if M <= 1:
+            return rs.empty_routes(B, 0, dev)
+        if cfg.tau_0 is None:
+            nn = nearest_neighbour_cost(inst)
+            tau0 = torch.where(nn > 0, cfg.rho / nn.clamp(min=1e-12), torch.full_like(nn, cfg.tau_max))
         else:
-            dist_matrix = locs
-
-        num_nodes = dist_matrix.shape[1]
-
-        eta = self._get_heuristic(dist_matrix)
-        tau = torch.ones_like(dist_matrix) * self.min_pheromone
-
-        best_tours = torch.zeros((batch_size, num_nodes), dtype=torch.long, device=device)
-        best_costs = torch.full((batch_size,), float("inf"), device=device)
-
-        for _aco_iter in range(self.n_iterations):
-            iter_ant_tours, _ = self._construct_solutions(dist_matrix, tau, eta, env)
-            costs = self._evaluate_batch(iter_ant_tours, dist_matrix)
-
-            min_costs, min_idx = costs.min(dim=1)
-            improved = min_costs < best_costs
-            best_costs[improved] = min_costs[improved]
-
-            best_ants_indices = min_idx.view(batch_size, 1, 1).expand(-1, 1, num_nodes)
-            best_tours_iter = iter_ant_tours.gather(1, best_ants_indices).squeeze(1)
-            best_tours[improved] = best_tours_iter[improved]
-
-            tau = self._update_pheromones(tau, iter_ant_tours, costs)
-
-            self._viz_record(
-                iteration=_aco_iter,
-                global_best_cost=float(best_costs.min().item()),
-                iter_best_cost=float(min_costs.min().item()),
-                tau_mean=float(tau.mean().item()),
-                tau_max=float(tau.max().item()),
+            tau0 = torch.full((B,), float(cfg.tau_0), device=dev)
+        tau = tau0.view(B, 1, 1).expand(B, M, M).clone()
+        tau_max = torch.full((B,), float(cfg.tau_max), device=dev)
+        cand = candidate_mask(inst, int(cfg.k_sparse))
+        best_S = rs.empty_routes(B, M - 1, dev)
+        best_cost = torch.full((B,), float("inf"), device=dev)
+        start = time.perf_counter()
+        b = torch.arange(B, device=dev)
+        for it in range(int(cfg.max_iterations)):
+            if cfg.time_limit > 0 and time.perf_counter() - start > cfg.time_limit:
+                break
+            ants = construct_ants(
+                inst,
+                tau,
+                cand,
+                int(cfg.n_ants),
+                cfg.alpha,
+                cfg.beta,
+                bool(cfg.profit_aware_operators),
+                self.generator,
+                self.expand_pool,
             )
-
-        return {
-            "actions": best_tours,
-            "reward": -best_costs,
-            "cost": best_costs,
-            "log_likelihood": torch.zeros(batch_size, device=device),
-        }
-
-    def _construct_solutions(
-        self,
-        dist_matrix: torch.Tensor,
-        tau: torch.Tensor,
-        eta: torch.Tensor,
-        env: Optional[RL4COEnvBase],
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Parallel path construction for all ants.
-
-        Utilizes multinomial sampling guided by (tau^alpha * eta^beta) with masking
-        for previously visited nodes.
-
-        Args:
-            dist_matrix: Distance tensor of shape [B, N, N].
-            tau: Pheromone matrix of shape [B, N, N].
-            eta: Heuristic matrix of shape [B, N, N].
-            env: Environment for masking/validations.
-
-        Returns:
-            Tuple[torch.Tensor, torch.Tensor]: A tuple containing:
-                - final_ant_tours: Node sequences of shape [B, K, N].
-                - log_probs_sum: Tour probabilities of shape [B, K].
-        """
-        batch_size, num_nodes, _ = dist_matrix.shape
-        n_ants = self.n_ants
-        device = dist_matrix.device
-
-        # [B, K, N, N]
-        tau_k = tau.unsqueeze(1).expand(-1, n_ants, -1, -1)
-        eta_k = eta.unsqueeze(1).expand(-1, n_ants, -1, -1)
-
-        current_node = torch.zeros((batch_size, n_ants), dtype=torch.long, device=device)
-        visited = torch.zeros((batch_size, n_ants, num_nodes), dtype=torch.bool, device=device)
-        visited.scatter_(2, current_node.unsqueeze(2), 1)
-
-        tours_accumulator: List[torch.Tensor] = [current_node]
-        log_probs_sum = torch.zeros((batch_size, n_ants), device=device)
-
-        for _ in range(num_nodes - 1):
-            gather_idx = current_node.view(batch_size, n_ants, 1, 1).expand(-1, -1, 1, num_nodes)
-            tau_step = tau_k.gather(2, gather_idx).squeeze(2)
-            eta_step = eta_k.gather(2, gather_idx).squeeze(2)
-
-            scores = (tau_step**self.alpha) * (eta_step**self.beta)
-            scores.masked_fill_(visited, 0)
-
-            probs = scores / (scores.sum(dim=-1, keepdim=True) + 1e-10)
-
-            rand_val = torch.rand((batch_size, n_ants), generator=self.generator, device=device)
-            greedy_mask = rand_val < self.q0
-            greedy_action = probs.argmax(dim=-1)
-            sample_probs = probs + 1e-10
-            sample_action = torch.multinomial(sample_probs.view(-1, num_nodes), 1, generator=self.generator).view(
-                batch_size, n_ants
+            A, L = ants.size(1), ants.size(2)
+            flat = ants.reshape(B * A, L)
+            rep = b.repeat_interleave(A)
+            sub = inst.subset(rep)
+            if cfg.local_search:
+                flat = rs.local_search(flat, sub, HGS_LS_OPERATORS, int(cfg.local_search_iterations))
+            costs = rs.seq_cost(flat, sub).view(B, A)
+            ib_cost, ib = costs.min(dim=1)
+            ib_S = flat.view(B, A, L)[b, ib]
+            improved = ib_cost < best_cost
+            best_cost = torch.where(improved, ib_cost, best_cost)
+            best_S = torch.where(improved.unsqueeze(1), ib_S, best_S)
+            new_tau_max = 1.0 / (cfg.rho * best_cost.clamp(min=1e-12))
+            tau_max = torch.where(improved & (best_cost > 0), new_tau_max, tau_max)
+            # Deposit on best-so-far edges, then evaporate and bound.
+            ok = torch.isfinite(best_cost) & (best_cost > 0) & (rs.n_visited(best_S) > 0)
+            delta = torch.where(ok, 1.0 / best_cost.clamp(min=1e-12), torch.zeros_like(best_cost))
+            u, v = best_S[:, :-1], best_S[:, 1:]
+            edge = (u != 0) | (v != 0)
+            tau.index_put_(
+                (b.unsqueeze(1).expand_as(u)[edge], u[edge], v[edge]),
+                delta.unsqueeze(1).expand_as(u)[edge],
+                accumulate=True,
             )
-
-            next_node = torch.where(greedy_mask, greedy_action, sample_action)
-
-            current_node = next_node
-            visited.scatter_(2, current_node.unsqueeze(2), 1)
-            tours_accumulator.append(current_node)
-
-            selected_probs = probs.gather(2, next_node.unsqueeze(2)).squeeze(2)
-            log_probs_sum += torch.log(selected_probs + 1e-10)
-
-        final_ant_tours = torch.stack(tours_accumulator, dim=2)
-        return final_ant_tours, log_probs_sum
-
-    def _evaluate_batch(self, ant_tours: torch.Tensor, dist_matrix: torch.Tensor) -> torch.Tensor:
-        """Compute total lengths for all constructed ant tours.
-
-        Args:
-            ant_tours: Node sequences of shape [B, K, N].
-            dist_matrix: Distances of shape [B, N, N].
-
-        Returns:
-            torch.Tensor: Absolute tour lengths of shape [B, K].
-        """
-        batch_size, n_ants, num_nodes = ant_tours.shape
-
-        from_node = ant_tours
-        to_node = torch.roll(ant_tours, -1, dims=2)
-
-        batch_idx = (
-            torch.arange(batch_size, device=ant_tours.device)
-            .view(batch_size, 1, 1)
-            .expand(batch_size, n_ants, num_nodes)
-        )
-        dists = dist_matrix[batch_idx, from_node, to_node]
-
-        return dists.sum(dim=2)
-
-    def _update_pheromones(self, tau: torch.Tensor, ant_tours: torch.Tensor, costs: torch.Tensor) -> torch.Tensor:
-        """Perform pheromone evaporation and global update from the best ants.
-
-        Args:
-            tau: Current pheromone matrix of shape [B, N, N].
-            ant_tours: Iteration tours of shape [B, K, N].
-            costs: Iteration costs of shape [B, K].
-
-        Returns:
-            torch.Tensor: Evaporated and updated pheromone matrix.
-        """
-        tau = (1 - self.decay) * tau
-        batch_size, n_ants, num_nodes = ant_tours.shape
-
-        min_costs, min_idx = costs.min(dim=1)
-        idx_expanded = min_idx.view(batch_size, 1, 1).expand(-1, 1, num_nodes)
-        best_tours = ant_tours.gather(1, idx_expanded).squeeze(1)
-
-        delta = 1.0 / (min_costs.view(batch_size, 1, 1) + 1e-10)
-
-        from_node = best_tours
-        to_node = torch.roll(best_tours, -1, dims=1)
-        batch_idx = torch.arange(batch_size, device=tau.device).view(batch_size, 1)
-
-        b_idx_flat = batch_idx.expand(-1, num_nodes).reshape(-1)
-        from_flat = from_node.reshape(-1)
-        to_flat = to_node.reshape(-1)
-        delta_flat = delta.expand(-1, -1, num_nodes).reshape(-1)
-
-        tau.index_put_((b_idx_flat, from_flat, to_flat), delta_flat, accumulate=True)
-        tau.index_put_((b_idx_flat, to_flat, from_flat), delta_flat, accumulate=True)
-
-        return torch.clamp(tau, min=self.min_pheromone, max=10.0)
+            tau = torch.where(ok.view(B, 1, 1), tau * (1 - cfg.rho), tau)
+            tau = torch.maximum(torch.minimum(tau, tau_max.view(B, 1, 1)), torch.full_like(tau, cfg.tau_min))
+            self._viz_record(iteration=it, best_cost=float(best_cost.mean()))
+        return best_S

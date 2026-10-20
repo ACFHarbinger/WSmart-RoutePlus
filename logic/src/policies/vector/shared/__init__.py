@@ -1,28 +1,14 @@
-"""Shared policy utilities package.
-
-This package provides shared algorithmic components used across different
-routing policies, including split algorithms for transforming giant tours
-into multiple routes and utilities for route reconstruction.
+"""Shared components of the vectorised experts.
 
 Attributes:
-    vectorized_linear_split: Linear time split algorithm.
-    vectorized_split_limited: Limited capacity split algorithm.
-    reconstruct_routes: Reconstructs tour sequences from split indices.
-    reconstruct_limited: Reconstruction utility for limited-capacity scenarios.
+    vrpp: Batched VRPP instances, the profit Split DP and action/reward helpers.
+    routes: Batched route-sequence encoding with the simulator's destroy, repair and
+        local-search operators.
+    acceptance: Per-instance simulator acceptance criteria.
+    llh: The ILS low-level heuristics.
+    base: ``VectorizedRoutingPolicy`` and simulator-config loading.
+    factory: Simulator policy config -> vectorised expert.
 
 Example:
-    None
+    >>> from logic.src.policies.vector.shared.factory import create_expert_policy
 """
-
-from __future__ import annotations
-
-from .limited import vectorized_split_limited
-from .linear import vectorized_linear_split
-from .reconstruction import reconstruct_limited, reconstruct_routes
-
-__all__ = [
-    "vectorized_linear_split",
-    "vectorized_split_limited",
-    "reconstruct_routes",
-    "reconstruct_limited",
-]

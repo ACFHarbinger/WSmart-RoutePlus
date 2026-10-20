@@ -1,5 +1,3 @@
-
-
 import pytest
 import torch
 from logic.src.policies.vector.random_local_search import (
@@ -8,9 +6,6 @@ from logic.src.policies.vector.random_local_search import (
 from tensordict import TensorDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
-
-
-
 
 
 @pytest.mark.unit
@@ -30,7 +25,7 @@ def test_random_local_search_policy_basic():
     )
     td["waste"][:, 0] = 0.0  # Depot
 
-    policy = RandomLocalSearchPolicy(env_name="cptp", n_iterations=10, device=device).to(device)
+    policy = RandomLocalSearchPolicy(env_name="cptp", iterations=10, device=device).to(device)
 
     # Mock environment
     class MockEnv:
@@ -74,11 +69,10 @@ def test_random_local_search_policy_custom_probs():
         "three_opt": 0.0,
     }
 
-    policy = RandomLocalSearchPolicy(env_name="cptp", n_iterations=5, op_probs=op_probs, device=device).to(device)
+    policy = RandomLocalSearchPolicy(env_name="cptp", iterations=5, params=op_probs, device=device).to(device)
 
-    assert torch.allclose(
-        policy.probs, torch.tensor([0.0, 0.0, 0.0, 0.0, 1.0, 0.0])
-    )  # sorted order: relocate, swap, swap_star, three_opt, two_opt, two_opt_star
+    assert policy.cfg.params == op_probs
+    assert policy.cfg.iterations == 5
 
     # Mock environment
     class MockEnv:

@@ -1,0 +1,1040 @@
+"""Batched route-sequence operators shared by the vectorised policies.
+
+A batch of VRPP solutions is a **route sequence** tensor ``S`` of shape ``[B, L]``:
+``0 r1 0 r2 0 ... rk 0`` padded with zeros, where every ``ri`` is a depot-to-depot route
+and ``L = 2 N + 2`` (``N`` bins) so a new route always fits. Depot zeros sit at both
+ends of every route, so the detour, insertion and capacity rules below are exactly the
+route-based rules of the simulator's operators
+(:mod:`logic.src.policies.helpers.operators`): removal savings use the route
+neighbours, an insertion between two consecutive depot zeros opens a new route, and a
+route's load is checked against the vehicle capacity.
+
+Attributes:
+    empty_routes: Route sequences with no route.
+    normalize: Drop empty routes and pack every row.
+    seq_cost / seq_revenue / seq_profit: Objective terms of route sequences.
+    delete_positions: Remove the bins at the given positions.
+    insert_nodes: Insert one bin per row at a given gap.
+    random_removal / worst_removal / shaw_removal / string_removal / cluster_removal /
+    neighbor_removal: Destroy operators (cost or profit flavour).
+    greedy_insertion / regret_insertion: Repair operators (cost or profit flavour).
+    local_search_move: One improving move of a named local-search operator.
+"""
+
+from __future__ import annotations
+
+from typing import List, Optional, Tuple
+
+import torch
+
+from .vrpp import VRPPBatch
+
+BIG = 1e12
+
+
+# ---------------------------------------------------------------------------
+# Encoding helpers
+# ---------------------------------------------------------------------------
+
+
+def width(n_bins: int) -> int:
+    """Route-sequence width for ``n_bins`` bins."""
+    return 2 * n_bins + 2
+
+
+def empty_routes(batch: int, n_bins: int, device: torch.device) -> torch.Tensor:
+    """Route sequences with no route (all zeros)."""
+    return torch.zeros(batch, width(n_bins), dtype=torch.long, device=device)
+
+
+def _stable_keep(S: torch.Tensor, keep: torch.Tensor) -> torch.Tensor:
+    L = S.size(1)
+    key = (~keep).long() * (L + 1) + torch.arange(L, device=S.device).unsqueeze(0)
+    order = torch.argsort(key, dim=1)
+    out = torch.gather(S, 1, order)
+    n_keep = keep.sum(dim=1, keepdim=True)
+    pos = torch.arange(L, device=S.device).unsqueeze(0)
+    return torch.where(pos < n_keep, out, torch.zeros_like(out))
+
+
+def normalize(S: torch.Tensor) -> torch.Tensor:
+    """Drop empty routes (repeated zeros) and pack every row to the left.
+
+    Args:
+        S: Route sequences ``[B, L]``.
+
+    Returns:
+        torch.Tensor: Normalised route sequences (row starts with the depot).
+    """
+    prev = torch.cat([torch.ones_like(S[:, :1]), S[:, :-1]], dim=1)
+    keep = (S != 0) | (prev != 0)
+    out = _stable_keep(S, keep)
+    # Ensure a leading depot.
+    lead_missing = out[:, 0] != 0
+    if bool(lead_missing.any()):
+        shifted = torch.cat([torch.zeros_like(out[:, :1]), out[:, :-1]], dim=1)
+        out = torch.where(lead_missing.unsqueeze(1), shifted, out)
+    return out
+
+
+def from_route_lists(routes: List[List[List[int]]], n_bins: int, device: torch.device) -> torch.Tensor:
+    """Route sequences from Python route lists.
+
+    Args:
+        routes: Route lists, one per instance.
+        n_bins: Number of bins.
+        device: Target device.
+
+    Returns:
+        torch.Tensor: Route sequences ``[B, L]``.
+    """
+    S = empty_routes(len(routes), n_bins, device)
+    for b, rl in enumerate(routes):
+        seq = [0]
+        for r in rl:
+            if r:
+                seq.extend(int(n) for n in r)
+                seq.append(0)
+        S[b, : len(seq)] = torch.tensor(seq, dtype=torch.long, device=device)
+    return S
+
+
+def to_route_lists(S: torch.Tensor) -> List[List[List[int]]]:
+    """Python route lists from route sequences.
+
+    Args:
+        S: Route sequences ``[B, L]``.
+
+    Returns:
+        List of route lists.
+    """
+    out: List[List[List[int]]] = []
+    for row in S.cpu().tolist():
+        routes: List[List[int]] = []
+        cur: List[int] = []
+        for n in row:
+            if n == 0:
+                if cur:
+                    routes.append(cur)
+                    cur = []
+            else:
+                cur.append(n)
+        if cur:
+            routes.append(cur)
+        out.append(routes)
+    return out
+
+
+def from_giant_tours(tours: torch.Tensor, inst: VRPPBatch) -> torch.Tensor:
+    """Route sequences from packed giant tours, cutting a new route when the load would exceed capacity."""
+    B, N = tours.shape
+    rows = tours.cpu().tolist()
+    w = inst.waste.cpu().tolist()
+    cap = inst.capacity.cpu().tolist()
+    routes = []
+    for b in range(B):
+        rl: List[List[int]] = []
+        cur: List[int] = []
+        load = 0.0
+        for n in rows[b]:
+            if n == 0:
+                continue
+            if cur and load + w[b][n] > cap[b] + 1e-9:
+                rl.append(cur)
+                cur, load = [], 0.0
+            cur.append(n)
+            load += w[b][n]
+        if cur:
+            rl.append(cur)
+        routes.append(rl)
+    return from_route_lists(routes, N, tours.device)
+
+
+def to_giant_tours(S: torch.Tensor, n_bins: int) -> torch.Tensor:
+    """Packed giant tours (visited bins in route order) from route sequences."""
+    keep = S != 0
+    out = _stable_keep(S, keep)
+    return out[:, :n_bins]
+
+
+def _bidx(S: torch.Tensor) -> torch.Tensor:
+    return torch.arange(S.size(0), device=S.device).unsqueeze(1)
+
+
+def seq_cost(S: torch.Tensor, inst: VRPPBatch) -> torch.Tensor:
+    """Total distance of route sequences ``[B]``."""
+    return inst.dist[_bidx(S), S[:, :-1], S[:, 1:]].sum(dim=1)
+
+
+def seq_revenue(S: torch.Tensor, inst: VRPPBatch) -> torch.Tensor:
+    """Collected revenue ``R * waste`` of route sequences ``[B]``."""
+    return torch.gather(inst.waste, 1, S).sum(dim=1) * inst.R
+
+
+def seq_profit(S: torch.Tensor, inst: VRPPBatch) -> torch.Tensor:
+    """Profit ``R * waste - C * distance`` of route sequences ``[B]``."""
+    return seq_revenue(S, inst) - inst.C * seq_cost(S, inst)
+
+
+def route_ids(S: torch.Tensor) -> torch.Tensor:
+    """Route index of every position (a depot zero opens the route that follows it)."""
+    return torch.cumsum((S == 0).long(), dim=1) - 1
+
+
+def route_loads(S: torch.Tensor, inst: VRPPBatch) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Route ids per position and load per route id ``([B, L], [B, L])``."""
+    rid = route_ids(S)
+    w = torch.gather(inst.waste, 1, S)
+    loads = torch.zeros(S.shape, device=S.device, dtype=w.dtype).scatter_add_(1, rid.clamp(min=0), w)
+    return rid, loads
+
+
+def prune_unprofitable_routes(S: torch.Tensor, inst: VRPPBatch) -> torch.Tensor:
+    """Vectorised ``prune_unprofitable_routes``: drop every route with profit < -1e-4.
+
+    Args:
+        S: Route sequences.
+        inst: Instances.
+
+    Returns:
+        torch.Tensor: Route sequences without the loss-making routes.
+    """
+    rid = route_ids(S).clamp(min=0)
+    b = _bidx(S)
+    nxt = torch.roll(S, -1, dims=1)
+    nxt[:, -1] = 0
+    leg = inst.dist[b, S, nxt] * ((S != 0) | (nxt != 0)).to(inst.dist.dtype)
+    gain = torch.gather(inst.waste, 1, S) * inst.R - inst.C * leg
+    route_profit = torch.zeros(S.shape, device=S.device, dtype=gain.dtype).scatter_add_(1, rid, gain)
+    drop = (torch.gather(route_profit, 1, rid) < -1e-4) & (S != 0)
+    return delete_positions(S, drop) if bool(drop.any()) else S
+
+
+def visited(S: torch.Tensor, n_nodes: int) -> torch.Tensor:
+    """Boolean mask ``[B, M]`` of the bins present in ``S`` (depot excluded)."""
+    m = torch.zeros(S.size(0), n_nodes, dtype=torch.bool, device=S.device)
+    m.scatter_(1, S, True)
+    m[:, 0] = False
+    return m
+
+
+def n_visited(S: torch.Tensor) -> torch.Tensor:
+    """Number of bins per row ``[B]``."""
+    return (S != 0).sum(dim=1)
+
+
+def neighbours(S: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Previous and next node of every position (depot outside the row)."""
+    prev = torch.cat([torch.zeros_like(S[:, :1]), S[:, :-1]], dim=1)
+    nxt = torch.cat([S[:, 1:], torch.zeros_like(S[:, :1])], dim=1)
+    return prev, nxt
+
+
+def removal_detour(S: torch.Tensor, inst: VRPPBatch) -> torch.Tensor:
+    """Distance saved by removing the bin at each position (0 at depot positions)."""
+    prev, nxt = neighbours(S)
+    b = _bidx(S)
+    d = inst.dist[b, prev, S] + inst.dist[b, S, nxt] - inst.dist[b, prev, nxt]
+    return torch.where(S != 0, d, torch.zeros_like(d))
+
+
+def delete_positions(S: torch.Tensor, pos_mask: torch.Tensor) -> torch.Tensor:
+    """Remove the bins at the masked positions and drop routes left empty."""
+    keep = ~(pos_mask & (S != 0))
+    return normalize(_stable_keep(S, keep))
+
+
+def delete_nodes(S: torch.Tensor, node_mask: torch.Tensor) -> torch.Tensor:
+    """Remove the masked nodes ``[B, M]`` wherever they are."""
+    return delete_positions(S, torch.gather(node_mask, 1, S))
+
+
+def insert_nodes(S: torch.Tensor, node: torch.Tensor, gap: torch.Tensor, active: torch.Tensor) -> torch.Tensor:
+    """Insert ``node[b]`` right after position ``gap[b]`` for the active rows.
+
+    Args:
+        S: Route sequences ``[B, L]``.
+        node: Bin to insert per row ``[B]``.
+        gap: Position after which to insert ``[B]``.
+        active: Rows to modify ``[B]``.
+
+    Returns:
+        torch.Tensor: Updated route sequences.
+    """
+    L = S.size(1)
+    j = torch.arange(L, device=S.device).unsqueeze(0)
+    g = gap.unsqueeze(1)
+    src = torch.where(j <= g, j, j - 1).clamp(min=0)
+    out = torch.gather(S, 1, src)
+    out = torch.where(j == g + 1, node.unsqueeze(1), out)
+    out = torch.where(active.unsqueeze(1), out, S)
+    # Rows keep at least one slack zero, so a bin inserted between trailing zeros is
+    # followed by a depot zero and forms a closed route.
+    return normalize(out)
+
+
+# ---------------------------------------------------------------------------
+# Insertion evaluation
+# ---------------------------------------------------------------------------
+
+
+def _gap_tables(S: torch.Tensor, inst: VRPPBatch) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Per gap ``k`` (between positions k and k+1): validity, new-route flag, route id and load."""
+    rid, loads = route_loads(S, inst)
+    a, b = S[:, :-1], S[:, 1:]
+    is_zero_pair = (a == 0) & (b == 0)
+    # Only the first (0, 0) gap is kept: it opens a new route.
+    first_pair = is_zero_pair & (torch.cumsum(is_zero_pair.long(), dim=1) == 1)
+    valid = (~is_zero_pair) | first_pair
+    g_rid = rid[:, :-1]
+    g_load = torch.gather(loads, 1, g_rid.clamp(min=0))
+    g_load = torch.where(first_pair, torch.zeros_like(g_load), g_load)
+    return valid, first_pair, g_rid, g_load
+
+
+def insertion_costs(
+    S: torch.Tensor, cand: torch.Tensor, inst: VRPPBatch
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Insertion detours of candidate bins at every gap.
+
+    Args:
+        S: Route sequences ``[B, L]``.
+        cand: Candidate bins ``[B, K]`` (0 = no candidate).
+        inst: Instances.
+
+    Returns:
+        Tuple of (detour ``[B, K, L-1]``, capacity-feasible mask, new-route gap mask ``[B, L-1]``,
+        gap route ids ``[B, L-1]``).
+    """
+    valid, newr, g_rid, g_load = _gap_tables(S, inst)
+    b = torch.arange(S.size(0), device=S.device).view(-1, 1, 1)
+    a = S[:, :-1].unsqueeze(1)
+    nx = S[:, 1:].unsqueeze(1)
+    c = cand.unsqueeze(2)
+    detour = inst.dist[b, a, c] + inst.dist[b, c, nx] - inst.dist[b, a, nx]
+    w = torch.gather(inst.waste, 1, cand).unsqueeze(2)
+    feas = valid.unsqueeze(1) & (g_load.unsqueeze(1) + w <= inst.capacity.view(-1, 1, 1) + 1e-9) & (c != 0)
+    return detour, feas, newr, g_rid
+
+
+def _seed_hurdle(cand: torch.Tensor, unassigned: torch.Tensor, inst: VRPPBatch, new_cost: torch.Tensor) -> torch.Tensor:
+    """Vectorised ``_dynamic_seed_hurdle`` of the simulator (no mandatory bins)."""
+    b = torch.arange(cand.size(0), device=cand.device).unsqueeze(1)
+    M = inst.dist.size(1)
+    n_total = max(M - 1, 1)
+    d0 = inst.dist[:, 0, :]  # [B, M]
+    # synergy[b, k, v] = (d(0,c) + d(0,v) - d(c,v)) * C over unassigned v != c
+    dcv = inst.dist[b.unsqueeze(2), cand.unsqueeze(2), torch.arange(M, device=cand.device).view(1, 1, -1)]
+    syn = (d0[b, cand].unsqueeze(2) + d0.unsqueeze(1) - dcv) * inst.C
+    others = unassigned.unsqueeze(1) & (torch.arange(M, device=cand.device).view(1, 1, -1) != cand.unsqueeze(2))
+    cnt = others.sum(dim=2).clamp(min=0)
+    mean_syn = torch.where(others, syn, torch.zeros_like(syn)).sum(dim=2) / cnt.clamp(min=1)
+    mean_syn = torch.where(cnt > 0, mean_syn, torch.zeros_like(mean_syn))
+    rho = cnt.float() / n_total
+    hurdle = -rho * mean_syn.clamp(min=0)
+    return torch.maximum(hurdle, -new_cost * inst.C).clamp(max=0.0)
+
+
+def _candidates(mask: torch.Tensor) -> torch.Tensor:
+    """Sorted candidate bin ids ``[B, K]`` (0-padded) from a node mask ``[B, M]``."""
+    M = mask.size(1)
+    ids = torch.arange(M, device=mask.device).unsqueeze(0).expand_as(mask)
+    key = torch.where(mask, ids, ids + M)
+    srt = torch.sort(key, dim=1).values
+    out = torch.where(srt < M, srt, torch.zeros_like(srt))
+    K = int(mask.sum(dim=1).max().item()) if mask.numel() else 0
+    return out[:, : max(K, 1)]
+
+
+def greedy_insertion(
+    S: torch.Tensor,
+    pending: torch.Tensor,
+    inst: VRPPBatch,
+    profit_aware: bool,
+    noise: Optional[torch.Tensor] = None,
+) -> torch.Tensor:
+    """Greedy (cheapest / most profitable) insertion of the pending bins.
+
+    Cost flavour (``greedy_insertion``): insert the bin with the cheapest feasible
+    insertion; when no pending bin fits an existing route, open a new route for the
+    lowest-id pending bin. Profit flavour (``greedy_profit_insertion``): insert the bin
+    with the largest insertion profit ``R w - C detour`` (>= -1e-4); a new route is
+    opened when its profit beats every existing slot and clears the dynamic seed hurdle;
+    bins with no admissible slot stay unvisited.
+
+    Args:
+        S: Route sequences.
+        pending: Bins to insert ``[B, M]``.
+        inst: Instances.
+        profit_aware: Use the profit flavour.
+        noise: Additive detour noise per row ``[B]`` (``max(0, detour + noise)``).
+
+    Returns:
+        torch.Tensor: Repaired route sequences.
+    """
+    pending = pending.clone()
+    pending[:, 0] = False
+    B = S.size(0)
+    noise_v = noise.view(-1, 1, 1) if noise is not None else None
+    for _ in range(int(pending.sum(dim=1).max().item()) if pending.numel() else 0):
+        if not bool(pending.any()):
+            break
+        cand = _candidates(pending)
+        detour, feas, newr, _ = insertion_costs(S, cand, inst)
+        if noise_v is not None:
+            detour = (detour + noise_v).clamp(min=0.0)
+        b = torch.arange(B, device=S.device)
+        if not profit_aware:
+            existing = feas & ~newr.unsqueeze(1)
+            score = torch.where(existing, detour, torch.full_like(detour, BIG))
+            flat = score.flatten(1)
+            best, arg = flat.min(dim=1)
+            has = best < BIG / 2
+            k_idx = arg // score.size(2)
+            g_idx = arg % score.size(2)
+            node = cand[b, k_idx]
+            # No existing route fits any pending bin: new route for the lowest id bin.
+            new_gap = torch.argmax(newr.long(), dim=1)
+            fallback = cand[:, 0]
+            active = pending.any(dim=1)
+            node = torch.where(has, node, fallback)
+            gap = torch.where(has, g_idx, new_gap)
+            ok_new = torch.gather(inst.waste, 1, fallback.unsqueeze(1)).squeeze(1) <= inst.capacity + 1e-9
+            active = active & (has | ok_new)
+            S = insert_nodes(S, node, gap, active)
+            done = torch.zeros_like(pending)
+            done[b, node] = True
+            # Bins that can never be inserted are dropped.
+            drop = (~has) & ~ok_new & pending.any(dim=1)
+            done[b, fallback] = done[b, fallback] | drop
+            pending = pending & ~(done & (active | drop).unsqueeze(1))
+        else:
+            w = torch.gather(inst.waste, 1, cand)
+            rev = (w * inst.R).unsqueeze(2)
+            prof = rev - inst.C * detour
+            existing = feas & ~newr.unsqueeze(1) & (prof >= -1e-4)
+            ex_score = torch.where(existing, prof, torch.full_like(prof, -BIG))
+            # New route option.
+            new_cost = inst.dist[b.unsqueeze(1), 0, cand] + inst.dist[b.unsqueeze(1), cand, 0]
+            if noise is not None:
+                new_cost = (new_cost + noise.view(-1, 1)).clamp(min=0.0)
+            new_prof = w * inst.R - inst.C * new_cost
+            hurdle = _seed_hurdle(cand, pending, inst, new_cost)
+            new_ok = (new_prof >= hurdle) & (w <= inst.capacity.view(-1, 1) + 1e-9) & (cand != 0)
+            new_score = torch.where(new_ok, new_prof, torch.full_like(new_prof, -BIG))
+            best_ex, arg_ex = ex_score.max(dim=2)
+            use_new = new_score > best_ex
+            node_score = torch.where(use_new, new_score, best_ex)
+            best, k_idx = node_score.max(dim=1)
+            has = best > -BIG / 2
+            node = cand[b, k_idx]
+            new_gap = torch.argmax(newr.long(), dim=1)
+            gap = torch.where(use_new[b, k_idx], new_gap, arg_ex[b, k_idx])
+            active = has & pending.any(dim=1)
+            S = insert_nodes(S, node, gap, active)
+            done = torch.zeros_like(pending)
+            done[b, node] = True
+            pending = pending & ~(done & active.unsqueeze(1))
+            # Rows with nothing admissible stop: their remaining bins stay unvisited.
+            pending = pending & has.unsqueeze(1)
+    return prune_unprofitable_routes(S, inst) if profit_aware else S
+
+
+def regret_insertion(
+    S: torch.Tensor,
+    pending: torch.Tensor,
+    inst: VRPPBatch,
+    k: int,
+    profit_aware: bool,
+    noise: Optional[torch.Tensor] = None,
+) -> torch.Tensor:
+    """Regret-k insertion of the pending bins (cost or profit flavour).
+
+    Per bin, the best slot of every route is ranked; the bin with the most missing
+    routes, then the largest regret ``sum_{h=2..k} |c_h - c_1|``, then the best value,
+    is inserted at its best slot. Bins with no admissible slot are left unvisited. The
+    profit flavour also offers a new route (seed hurdle) as an option.
+
+    Args:
+        S: Route sequences.
+        pending: Bins to insert ``[B, M]``.
+        inst: Instances.
+        k: Regret depth.
+        profit_aware: Use the profit flavour.
+        noise: Additive detour noise per row.
+
+    Returns:
+        torch.Tensor: Repaired route sequences.
+    """
+    pending = pending.clone()
+    pending[:, 0] = False
+    B = S.size(0)
+    L = S.size(1)
+    for _ in range(int(pending.sum(dim=1).max().item()) if pending.numel() else 0):
+        if not bool(pending.any()):
+            break
+        cand = _candidates(pending)
+        K = cand.size(1)
+        detour, feas, newr, g_rid = insertion_costs(S, cand, inst)
+        if noise is not None:
+            detour = (detour + noise.view(-1, 1, 1)).clamp(min=0.0)
+        b = torch.arange(B, device=S.device)
+        w = torch.gather(inst.waste, 1, cand)
+        if profit_aware:
+            val = (w * inst.R).unsqueeze(2) - inst.C * detour  # maximise
+            ok = feas & ~newr.unsqueeze(1) & (val >= -1e-4)
+            sval = torch.where(ok, -val, torch.full_like(val, BIG))  # minimise -profit
+        else:
+            ok = feas & ~newr.unsqueeze(1)
+            sval = torch.where(ok, detour, torch.full_like(detour, BIG))
+        # Best slot per route: reduce over gaps with the same route id.
+        rid = g_rid.clamp(min=0).unsqueeze(1).expand(-1, K, -1)
+        per_route = torch.full((B, K, L), BIG, device=S.device)
+        per_route = per_route.scatter_reduce(2, rid, sval, reduce="amin", include_self=True)
+        new_opt: Optional[torch.Tensor] = None
+        if profit_aware:
+            new_cost = inst.dist[b.unsqueeze(1), 0, cand] + inst.dist[b.unsqueeze(1), cand, 0]
+            if noise is not None:
+                new_cost = (new_cost + noise.view(-1, 1)).clamp(min=0.0)
+            new_prof = w * inst.R - inst.C * new_cost
+            hurdle = _seed_hurdle(cand, pending, inst, new_cost)
+            new_ok = (new_prof >= hurdle) & (w <= inst.capacity.view(-1, 1) + 1e-9) & (cand != 0)
+            new_opt = torch.where(new_ok, -new_prof, torch.full_like(new_prof, BIG))
+            per_route = torch.cat([per_route, new_opt.unsqueeze(2)], dim=2)
+        srt = torch.sort(per_route, dim=2).values
+        n_opt = (srt < BIG / 2).sum(dim=2)
+        missing = (k - n_opt).clamp(min=0)
+        kk = min(k, srt.size(2))
+        diffs = srt[:, :, 1:kk] - srt[:, :, :1]
+        diffs = torch.where(srt[:, :, 1:kk] < BIG / 2, diffs, torch.zeros_like(diffs))
+        regret = diffs.sum(dim=2)
+        best_val = srt[:, :, 0]
+        has_opt = (n_opt > 0) & (cand != 0)
+        # Lexicographic key: missing routes, regret, then the best value (smaller is better).
+        key = missing.double() * 1e15 + regret.double().clamp(max=1e14) * 1e0
+        key = key - best_val.double() * 1e-6
+        key = torch.where(has_opt, key, torch.full_like(key, -float("inf")))
+        _, k_idx = key.max(dim=1)
+        has = has_opt.any(dim=1)
+        node = cand[b, k_idx]
+        # Best gap for that bin (existing route) or the new-route gap.
+        node_slots = sval[b, k_idx]  # [B, L-1]
+        best_slot_val, best_gap = node_slots.min(dim=1)
+        gap = best_gap
+        if profit_aware:
+            assert new_opt is not None
+            nv = new_opt[b, k_idx]
+            use_new = nv < best_slot_val
+            gap = torch.where(use_new, torch.argmax(newr.long(), dim=1), best_gap)
+        active = has & pending.any(dim=1)
+        S = insert_nodes(S, node, gap, active)
+        done = torch.zeros_like(pending)
+        done[b, node] = True
+        # Bins without any admissible slot leave the pool.
+        no_opt_nodes = torch.zeros_like(pending)
+        no_opt_nodes.scatter_(1, cand, (~has_opt) & (cand != 0))
+        pending = pending & ~(done & active.unsqueeze(1)) & ~no_opt_nodes
+        pending = pending & has.unsqueeze(1)
+    return prune_unprofitable_routes(S, inst) if profit_aware else S
+
+
+# ---------------------------------------------------------------------------
+# Destroy operators
+# ---------------------------------------------------------------------------
+
+
+def _uniform(shape, gen: Optional[torch.Generator], device: torch.device) -> torch.Tensor:
+    return torch.rand(shape, generator=gen, device=device)
+
+
+def random_removal(
+    S: torch.Tensor, n: torch.Tensor, gen: Optional[torch.Generator]
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Remove ``n[b]`` bins chosen uniformly at random.
+
+    Returns:
+        Tuple of (partial route sequences, removed node mask ``[B, M]`` built by the caller).
+    """
+    r = _uniform(S.shape, gen, S.device)
+    r = torch.where(S != 0, r, torch.full_like(r, 2.0))
+    rank = torch.argsort(torch.argsort(r, dim=1), dim=1)
+    pos = rank < n.unsqueeze(1)
+    return delete_positions(S, pos), pos & (S != 0)
+
+
+def _removed_nodes(S: torch.Tensor, pos: torch.Tensor, n_nodes: int) -> torch.Tensor:
+    m = torch.zeros(S.size(0), n_nodes, dtype=torch.bool, device=S.device)
+    m.scatter_(1, torch.where(pos, S, torch.zeros_like(S)), True)
+    m[:, 0] = False
+    return m
+
+
+def worst_removal(
+    S: torch.Tensor,
+    n: torch.Tensor,
+    inst: VRPPBatch,
+    p: float,
+    gen: Optional[torch.Generator],
+    profit_aware: bool,
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Randomised worst removal (Ropke & Pisinger 2006): pick rank ``floor(y^p |L|)``.
+
+    Cost flavour ranks by largest detour saving; profit flavour by lowest marginal
+    profit ``R w - C detour``. Savings are recomputed after every removal.
+
+    Returns:
+        Tuple of (partial route sequences, removed node mask ``[B, M]``).
+    """
+    M = inst.dist.size(1)
+    removed = torch.zeros(S.size(0), M, dtype=torch.bool, device=S.device)
+    for t in range(int(n.max().item()) if n.numel() else 0):
+        act = (t < n) & (n_visited(S) > 0)
+        if not bool(act.any()):
+            break
+        det = removal_detour(S, inst)
+        # Ascending order: least profitable (profit-aware) or largest saving first.
+        score = torch.gather(inst.waste, 1, S) * inst.R - inst.C * det if profit_aware else -det
+        score = torch.where(S != 0, score, torch.full_like(score, BIG))
+        order = torch.argsort(score, dim=1, stable=True)
+        cnt = n_visited(S)
+        y = _uniform((S.size(0),), gen, S.device)
+        idx = torch.minimum((y**p * cnt).long(), (cnt - 1).clamp(min=0))
+        pos_idx = order[torch.arange(S.size(0), device=S.device), idx]
+        pos = torch.zeros_like(S, dtype=torch.bool)
+        pos[torch.arange(S.size(0), device=S.device), pos_idx] = True
+        pos = pos & act.unsqueeze(1)
+        removed |= _removed_nodes(S, pos, M)
+        S = delete_positions(S, pos)
+    return S, removed
+
+
+def shaw_removal(
+    S: torch.Tensor,
+    n: torch.Tensor,
+    inst: VRPPBatch,
+    randomization: float,
+    gen: Optional[torch.Generator],
+    profit_aware: bool,
+    phi: float = 9.0,
+    chi: float = 3.0,
+    psi: float = 2.0,
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Shaw (relatedness) removal: random seed, then the rank ``floor(y^r |L|)`` most
+    related bin to a random already-removed pivot.
+
+    Relatedness is ``phi d/d_max + chi |w_i - w_j|/w_range`` (cost flavour) or
+    ``phi d/d_max + psi |pi_i - pi_j|/pi_range`` with marginal profits ``pi``
+    (profit flavour).
+
+    Returns:
+        Tuple of (partial route sequences, removed node mask ``[B, M]``).
+    """
+    B, M = S.size(0), inst.dist.size(1)
+    dev = S.device
+    b = torch.arange(B, device=dev)
+    inroute = visited(S, M)
+    dmax = inst.dist.flatten(1).max(dim=1).values.clamp(min=1e-9)
+    if profit_aware:
+        det = removal_detour(S, inst)
+        prof_pos = torch.gather(inst.waste, 1, S) * inst.R - inst.C * det
+        attr = torch.zeros(B, M, device=dev).scatter_(1, S, prof_pos)
+        wmax = inst.waste.max(dim=1).values * inst.R
+        wmin = inst.waste[:, 1:].min(dim=1).values * inst.R if M > 1 else torch.zeros(B, device=dev)
+        rng_ = (wmax - (wmin - 2 * dmax * inst.C)).clamp(min=1e-9)
+        coef = psi
+    else:
+        attr = inst.waste
+        rng_ = (
+            (inst.waste[:, 1:].max(dim=1).values - inst.waste[:, 1:].min(dim=1).values).clamp(min=1e-9)
+            if M > 1
+            else torch.ones(B, device=dev)
+        )
+        coef = chi
+    removed = torch.zeros(B, M, dtype=torch.bool, device=dev)
+    # Seed.
+    r = _uniform((B, M), gen, dev)
+    r = torch.where(inroute, r, torch.full_like(r, -1.0))
+    seed = r.argmax(dim=1)
+    act0 = (n > 0) & inroute.any(dim=1)
+    removed[b, seed] = act0
+    for t in range(1, int(n.max().item()) if n.numel() else 0):
+        act = (t < n) & ((inroute & ~removed).any(dim=1))
+        if not bool(act.any()):
+            break
+        pr = _uniform((B, M), gen, dev)
+        pr = torch.where(removed, pr, torch.full_like(pr, -1.0))
+        pivot = pr.argmax(dim=1)
+        rel = coef * (attr - attr[b, pivot].unsqueeze(1)).abs() / rng_.unsqueeze(1)
+        rel = rel + phi * inst.dist[b, :, pivot] / dmax.unsqueeze(1)
+        cand = inroute & ~removed
+        rel = torch.where(cand, rel, torch.full_like(rel, BIG))
+        order = torch.argsort(rel, dim=1, stable=True)
+        cnt = cand.sum(dim=1)
+        y = _uniform((B,), gen, dev)
+        idx = torch.minimum((y**randomization * cnt).long(), (cnt - 1).clamp(min=0))
+        pick = order[b, idx]
+        removed[b, pick] = removed[b, pick] | act
+    return delete_nodes(S, removed), removed
+
+
+def string_removal(
+    S: torch.Tensor, n: torch.Tensor, inst: VRPPBatch, gen: Optional[torch.Generator]
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Remove a string of consecutive bins of one route, starting at a random bin."""
+    B, M = S.size(0), inst.dist.size(1)
+    dev = S.device
+    r = _uniform(S.shape, gen, dev)
+    r = torch.where(S != 0, r, torch.full_like(r, -1.0))
+    start = r.argmax(dim=1)
+    rid = route_ids(S)
+    srid = rid[torch.arange(B, device=dev), start]
+    j = torch.arange(S.size(1), device=dev).unsqueeze(0)
+    pos = (j >= start.unsqueeze(1)) & (j < (start + n).unsqueeze(1)) & (rid == srid.unsqueeze(1)) & (S != 0)
+    pos = pos & (n > 0).unsqueeze(1)
+    removed = _removed_nodes(S, pos, M)
+    return delete_positions(S, pos), removed
+
+
+def cluster_removal(
+    S: torch.Tensor, n: torch.Tensor, inst: VRPPBatch, gen: Optional[torch.Generator]
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Remove the ``n`` visited bins closest to a random visited seed bin."""
+    B, M = S.size(0), inst.dist.size(1)
+    dev = S.device
+    b = torch.arange(B, device=dev)
+    inroute = visited(S, M)
+    r = _uniform((B, M), gen, dev)
+    seed = torch.where(inroute, r, torch.full_like(r, -1.0)).argmax(dim=1)
+    d = torch.where(inroute, inst.dist[b, seed], torch.full((B, M), BIG, device=dev))
+    rank = torch.argsort(torch.argsort(d, dim=1, stable=True), dim=1)
+    removed = inroute & (rank < n.unsqueeze(1))
+    return delete_nodes(S, removed), removed
+
+
+def neighbor_removal(
+    S: torch.Tensor, n: torch.Tensor, inst: VRPPBatch, gen: Optional[torch.Generator]
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Remove the ``n`` visited bins with the largest distance to their route neighbours."""
+    M = inst.dist.size(1)
+    prev, nxt = neighbours(S)
+    b = _bidx(S)
+    score = inst.dist[b, prev, S] + inst.dist[b, S, nxt]
+    score = torch.where(S != 0, -score, torch.full_like(score, BIG))
+    rank = torch.argsort(torch.argsort(score, dim=1, stable=True), dim=1)
+    pos = (rank < n.unsqueeze(1)) & (S != 0)
+    removed = _removed_nodes(S, pos, M)
+    return delete_positions(S, pos), removed
+
+
+# ---------------------------------------------------------------------------
+# Local search (one improving move per call, exact capacity checks)
+# ---------------------------------------------------------------------------
+
+
+def _apply_if(S_new: torch.Tensor, S: torch.Tensor, cond: torch.Tensor) -> torch.Tensor:
+    return torch.where(cond.unsqueeze(1), S_new, S)
+
+
+def relocate_move(S: torch.Tensor, inst: VRPPBatch, chain: int = 1) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Best improving relocation of a chain of ``chain`` consecutive bins of one route.
+
+    Returns:
+        Tuple of (route sequences, improved flags ``[B]``).
+    """
+    B, L = S.shape
+    dev = S.device
+    b = torch.arange(B, device=dev)
+    rid, loads = route_loads(S, inst)
+    best_gain = torch.zeros(B, device=dev)
+    best_S = S
+    # Candidate chain starts: positions whose next chain-1 entries are bins of the same route.
+    starts = []
+    for s in range(1, L - chain):
+        ok = (S[:, s : s + chain] != 0).all(dim=1)
+        if chain > 1:
+            ok = ok & (rid[:, s : s + chain] == rid[:, s : s + 1]).all(dim=1)
+        if bool(ok.any()):
+            starts.append((s, ok))
+    cost0 = seq_cost(S, inst)
+    for s, ok in starts:
+        pos = torch.zeros_like(S, dtype=torch.bool)
+        pos[:, s : s + chain] = True
+        pos = pos & ok.unsqueeze(1)
+        chain_nodes = S[:, s : s + chain]
+        chain_load = torch.gather(inst.waste, 1, chain_nodes).sum(dim=1)
+        src_rid = rid[:, s]
+        partial = delete_positions(S, pos)
+        # Insert the chain at every gap of the partial solution, capacity checked.
+        rid_p, loads_p = route_loads(partial, inst)
+        valid, newr, g_rid, g_load = _gap_tables(partial, inst)
+        a, nx = partial[:, :-1], partial[:, 1:]
+        first, last = chain_nodes[:, 0], chain_nodes[:, -1]
+        ins = (
+            inst.dist[b.unsqueeze(1), a, first.unsqueeze(1)]
+            + inst.dist[b.unsqueeze(1), last.unsqueeze(1), nx]
+            - inst.dist[b.unsqueeze(1), a, nx]
+        )
+        inner = torch.zeros(B, device=dev)
+        for t in range(chain - 1):
+            inner = inner + inst.dist[b, chain_nodes[:, t], chain_nodes[:, t + 1]]
+        feas = valid & (g_load + chain_load.unsqueeze(1) <= inst.capacity.unsqueeze(1) + 1e-9)
+        cost_p = seq_cost(partial, inst)
+        new_cost = cost_p.unsqueeze(1) + ins + inner.unsqueeze(1)
+        gain = cost0.unsqueeze(1) - new_cost
+        gain = torch.where(feas & ok.unsqueeze(1), gain, torch.full_like(gain, -BIG))
+        g, gi = gain.max(dim=1)
+        better = g > best_gain + 1e-9
+        if bool(better.any()):
+            cand = partial
+            for t in range(chain):
+                cand = insert_nodes(cand, chain_nodes[:, t], gi + t, better)
+            best_S = _apply_if(cand, best_S, better)
+            best_gain = torch.where(better, g, best_gain)
+        _ = src_rid
+    return best_S, best_gain > 1e-9
+
+
+def swap_move(S: torch.Tensor, inst: VRPPBatch, inter_only: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Best improving exchange of two bins (intra- or inter-route), capacity checked."""
+    B, L = S.shape
+    dev = S.device
+    b = torch.arange(B, device=dev).view(-1, 1, 1)
+    rid, loads = route_loads(S, inst)
+    prev, nxt = neighbours(S)
+    I = torch.arange(L, device=dev).view(1, -1, 1)
+    J = torch.arange(L, device=dev).view(1, 1, -1)
+    u = S.unsqueeze(2)
+    v = S.unsqueeze(1)
+    pu, nu = prev.unsqueeze(2), nxt.unsqueeze(2)
+    pv, nv = prev.unsqueeze(1), nxt.unsqueeze(1)
+    D = inst.dist
+    old = D[b, pu, u] + D[b, u, nu] + D[b, pv, v] + D[b, v, nv]
+    new = D[b, pu, v] + D[b, v, nu] + D[b, pv, u] + D[b, u, nv]
+    adjacent = J == I + 1
+    # Adjacent i, i+1: old = d(pu,u)+d(u,v)+d(v,nv), new = d(pu,v)+d(v,u)+d(u,nv)
+    old_adj = D[b, pu, u] + D[b, u, v] + D[b, v, nv]
+    new_adj = D[b, pu, v] + D[b, v, u] + D[b, u, nv]
+    gain = torch.where(adjacent, old_adj - new_adj, old - new)
+    wu = torch.gather(inst.waste, 1, S).unsqueeze(2)
+    wv = torch.gather(inst.waste, 1, S).unsqueeze(1)
+    ru, rv = rid.unsqueeze(2), rid.unsqueeze(1)
+    lu = torch.gather(loads, 1, rid.clamp(min=0)).unsqueeze(2)
+    lv = torch.gather(loads, 1, rid.clamp(min=0)).unsqueeze(1)
+    cap = inst.capacity.view(-1, 1, 1) + 1e-9
+    same = ru == rv
+    feas_cap = same | ((lu - wu + wv <= cap) & (lv - wv + wu <= cap))
+    ok = (J > I) & (u != 0) & (v != 0) & feas_cap
+    if inter_only:
+        ok = ok & ~same
+    gain = torch.where(ok, gain, torch.full_like(gain, -BIG))
+    g, idx = gain.flatten(1).max(dim=1)
+    better = g > 1e-9
+    i_idx, j_idx = idx // L, idx % L
+    bb = torch.arange(B, device=dev)
+    out = S.clone()
+    ui, vj = S[bb, i_idx], S[bb, j_idx]
+    out[bb, i_idx] = torch.where(better, vj, ui)
+    out[bb, j_idx] = torch.where(better, ui, vj)
+    return out, better
+
+
+def two_opt_move(S: torch.Tensor, inst: VRPPBatch) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Best improving intra-route 2-opt (segment reversal)."""
+    B, L = S.shape
+    dev = S.device
+    b = torch.arange(B, device=dev).view(-1, 1, 1)
+    rid = route_ids(S)
+    prev, nxt = neighbours(S)
+    I = torch.arange(L, device=dev).view(1, -1, 1)
+    J = torch.arange(L, device=dev).view(1, 1, -1)
+    a, s_i = prev.unsqueeze(2), S.unsqueeze(2)
+    s_j, d_ = S.unsqueeze(1), nxt.unsqueeze(1)
+    D = inst.dist
+    # Reverse S[i..j]: edges (a, s_i) and (s_j, d) become (a, s_j) and (s_i, d). Symmetric distances assumed
+    # for the inner segment; asymmetric instances recompute the exact cost below.
+    gain = D[b, a, s_i] + D[b, s_j, d_] - D[b, a, s_j] - D[b, s_i, d_]
+    same = rid.unsqueeze(2) == rid.unsqueeze(1)
+    ok = (J > I) & (s_i != 0) & (s_j != 0) & same
+    gain = torch.where(ok, gain, torch.full_like(gain, -BIG))
+    g, idx = gain.flatten(1).max(dim=1)
+    i_idx, j_idx = idx // L, idx % L
+    pos = torch.arange(L, device=dev).unsqueeze(0)
+    inside = (pos >= i_idx.unsqueeze(1)) & (pos <= j_idx.unsqueeze(1))
+    src = torch.where(inside, i_idx.unsqueeze(1) + j_idx.unsqueeze(1) - pos, pos)
+    cand = torch.gather(S, 1, src)
+    better = (g > 1e-9) & (seq_cost(cand, inst) < seq_cost(S, inst) - 1e-9)
+    return _apply_if(cand, S, better), better
+
+
+def two_opt_star_move(S: torch.Tensor, inst: VRPPBatch) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Best improving 2-opt* (tail exchange between two routes), capacity checked."""
+    B, L = S.shape
+    dev = S.device
+    b = torch.arange(B, device=dev).view(-1, 1, 1)
+    rid, loads = route_loads(S, inst)
+    w = torch.gather(inst.waste, 1, S)
+    # Prefix load within each route up to and including position.
+    cum = torch.cumsum(w, dim=1)
+    route_start_cum = torch.zeros_like(loads).scatter_reduce(
+        1, rid.clamp(min=0), cum - w, reduce="amin", include_self=False
+    )
+    head = cum - torch.gather(route_start_cum, 1, rid.clamp(min=0))
+    tot = torch.gather(loads, 1, rid.clamp(min=0))
+    _, nxt = neighbours(S)
+    u, nu = S.unsqueeze(2), nxt.unsqueeze(2)
+    v, nv = S.unsqueeze(1), nxt.unsqueeze(1)
+    D = inst.dist
+    gain = D[b, u, nu] + D[b, v, nv] - D[b, u, nv] - D[b, v, nu]
+    hu, hv = head.unsqueeze(2), head.unsqueeze(1)
+    tu, tv = tot.unsqueeze(2), tot.unsqueeze(1)
+    cap = inst.capacity.view(-1, 1, 1) + 1e-9
+    feas = (hu + (tv - hv) <= cap) & (hv + (tu - hu) <= cap)
+    I = torch.arange(L, device=dev).view(1, -1, 1)
+    J = torch.arange(L, device=dev).view(1, 1, -1)
+    ok = (rid.unsqueeze(2) < rid.unsqueeze(1)) & (u != 0) & (v != 0) & feas & (J > I)
+    gain = torch.where(ok, gain, torch.full_like(gain, -BIG))
+    g, idx = gain.flatten(1).max(dim=1)
+    better = g > 1e-9
+    if not bool(better.any()):
+        return S, better
+    routes = to_route_lists(S)
+    i_l, j_l = (idx // L).tolist(), (idx % L).tolist()
+    rows = S.cpu().tolist()
+    for bi in range(B):
+        if not bool(better[bi]):
+            continue
+        row = rows[bi]
+        ri = sum(1 for x in row[: i_l[bi] + 1] if x == 0) - 1
+        rj = sum(1 for x in row[: j_l[bi] + 1] if x == 0) - 1
+        pi = i_l[bi] - (_route_start(row, ri) + 1)
+        pj = j_l[bi] - (_route_start(row, rj) + 1)
+        A, Bm = routes[bi][ri], routes[bi][rj]
+        routes[bi][ri], routes[bi][rj] = A[: pi + 1] + Bm[pj + 1 :], Bm[: pj + 1] + A[pi + 1 :]
+    out = from_route_lists(routes, (L - 2) // 2, dev)
+    better = better & (seq_cost(out, inst) < seq_cost(S, inst) - 1e-9)
+    return _apply_if(out, S, better), better
+
+
+def _route_start(row: List[int], r: int) -> int:
+    seen = -1
+    for k, x in enumerate(row):
+        if x == 0:
+            seen += 1
+            if seen == r:
+                return k
+    return 0
+
+
+LS_OPERATORS = (
+    "two_opt",
+    "swap",
+    "relocate",
+    "two_opt_star",
+    "swap_star",
+    "three_opt",
+    "or_opt",
+    "relocate_chain",
+    "cross_exchange",
+)
+
+
+def local_search_move(S: torch.Tensor, inst: VRPPBatch, name: str) -> Tuple[torch.Tensor, torch.Tensor]:
+    """One best-improvement move of the named operator (keys of the simulator's RLS op map).
+
+    ``two_opt`` intra-route 2-opt, ``swap`` any exchange, ``relocate`` single bin,
+    ``two_opt_star`` tail exchange, ``swap_star`` inter-route exchange, ``three_opt``
+    and ``or_opt`` chain-2 relocation, ``relocate_chain`` chain-3 relocation,
+    ``cross_exchange`` inter-route exchange followed by a chain-2 relocation.
+
+    Returns:
+        Tuple of (route sequences, improved flags).
+    """
+    if name == "two_opt":
+        return two_opt_move(S, inst)
+    if name == "swap":
+        return swap_move(S, inst)
+    if name == "relocate":
+        return relocate_move(S, inst, 1)
+    if name == "two_opt_star":
+        return two_opt_star_move(S, inst)
+    if name == "swap_star":
+        return swap_move(S, inst, inter_only=True)
+    if name in ("three_opt", "or_opt"):
+        return relocate_move(S, inst, 2)
+    if name == "relocate_chain":
+        return relocate_move(S, inst, 3)
+    if name == "cross_exchange":
+        S1, a = swap_move(S, inst, inter_only=True)
+        S2, c = relocate_move(S1, inst, 2)
+        return S2, a | c
+    raise ValueError(f"Unknown local search operator: {name!r}")
+
+
+def local_search(S: torch.Tensor, inst: VRPPBatch, ops: Tuple[str, ...], max_moves: int) -> torch.Tensor:
+    """Apply the operators in turn until no move improves or ``max_moves`` moves were tried."""
+    moves = 0
+    while moves < max_moves:
+        any_imp = torch.zeros(S.size(0), dtype=torch.bool, device=S.device)
+        for op in ops:
+            S, imp = local_search_move(S, inst, op)
+            any_imp |= imp
+            moves += 1
+            if moves >= max_moves:
+                break
+        if not bool(any_imp.any()):
+            break
+    return S
+
+
+# ---------------------------------------------------------------------------
+# Construction
+# ---------------------------------------------------------------------------
+
+
+def greedy_profit_construction(inst: VRPPBatch, gen: Optional[torch.Generator]) -> torch.Tensor:
+    """Vectorised ``build_greedy_routes`` (no mandatory bins).
+
+    Bins are taken in a random order; each goes to its most profitable feasible slot
+    (insertion profit >= -1e-4) or to a new route when that is more profitable and clears
+    the dynamic seed hurdle; otherwise it stays unvisited.
+
+    Args:
+        inst: Instances.
+        gen: Torch generator for the bin order.
+
+    Returns:
+        torch.Tensor: Route sequences.
+    """
+    B, M = inst.dist.size(0), inst.dist.size(1)
+    N = M - 1
+    dev = inst.device
+    S = empty_routes(B, N, dev)
+    if N == 0:
+        return S
+    order = torch.argsort(torch.rand(B, N, generator=gen, device=dev), dim=1) + 1
+    b = torch.arange(B, device=dev)
+    remaining = torch.ones(B, M, dtype=torch.bool, device=dev)
+    remaining[:, 0] = False
+    for t in range(N):
+        node = order[:, t]
+        remaining[b, node] = False
+        cand = node.unsqueeze(1)
+        detour, feas, newr, _ = insertion_costs(S, cand, inst)
+        w = torch.gather(inst.waste, 1, cand)
+        prof = (w * inst.R).unsqueeze(2) - inst.C * detour
+        ok = feas & ~newr.unsqueeze(1) & (prof >= -1e-4)
+        sc = torch.where(ok, prof, torch.full_like(prof, -BIG)).squeeze(1)
+        best, gi = sc.max(dim=1)
+        new_cost = inst.dist[b, 0, node] + inst.dist[b, node, 0]
+        new_prof = w.squeeze(1) * inst.R - inst.C * new_cost
+        hurdle = _seed_hurdle(cand, remaining, inst, new_cost.unsqueeze(1)).squeeze(1)
+        use_new = (new_prof > best) & (new_prof >= hurdle) & (w.squeeze(1) <= inst.capacity + 1e-9)
+        gap = torch.where(use_new, torch.argmax(newr.long(), dim=1), gi)
+        active = use_new | (best > -BIG / 2)
+        S = insert_nodes(S, node, gap, active)
+    return prune_unprofitable_routes(S, inst)
+
+
+def random_giant_tours(B: int, N: int, gen: Optional[torch.Generator], device: torch.device) -> torch.Tensor:
+    """Random permutations of the bins ``[B, N]``."""
+    return torch.argsort(torch.rand(B, N, generator=gen, device=device), dim=1) + 1
