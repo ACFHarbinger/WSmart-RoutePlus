@@ -13,6 +13,11 @@ Tags: `[Quick Win]` ≤ 1 day · `[Research]` involves novel work · `[Blocked]`
 
 ## Anchor Index
 
+CR-16 transport review, 2026-10-20: Gemini `343fe9c10` closes the telemetry
+transport gap. Further retry/missing-data/estimate-provenance corrections pass
+12 Python, 95 frontend and 18 Rust tests; see the
+[latest review](../../.agent/tasks/codex-cloud-review-2026-10-20.md).
+
 Cloud follow-up, 2026-10-20: Gemini Azure `2f4b89bdf` reviewed with further
 provider/cleanup corrections and a refreshed SDK lock (35 passing tests). Partial-VM
 cleanup and CR-16 telemetry integration remain open; see the
