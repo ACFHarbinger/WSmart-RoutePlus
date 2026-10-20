@@ -9,7 +9,7 @@ Attributes:
     AdaptiveImitation: Combined RL and Imitation Learning algorithm.
 
 Example:
-    >>> # config = HGSConfig(iterations=100)
+    >>> # config = VectorHGSConfig(time_limit=60.0)
     >>> # agent = AdaptiveImitation(config, env_name="ptp")
     >>> # trainer.fit(agent)
 """
@@ -23,13 +23,14 @@ from typing import Any
 import torch
 from tensordict import TensorDict
 
-from logic.src.configs.rl.policies import (
+from logic.src.configs.learning.experts import (
     ACOConfig,
     ProfitableNNConfig,
     RLSConfig,
     VectorALNSConfig,
     VectorHGSALNSConfig,
     VectorHGSConfig,
+    VectorHVPLConfig,
     VectorILSConfig,
 )
 from logic.src.pipeline.learning.core.losses import (
@@ -43,6 +44,7 @@ from logic.src.policies.vector.alns import VectorizedALNS
 from logic.src.policies.vector.ant_colony_system import VectorizedACOPolicy
 from logic.src.policies.vector.hgs import VectorizedHGS
 from logic.src.policies.vector.hgs_alns import VectorizedHGSALNS
+from logic.src.policies.vector.hybrid_volleyball_premier_league import VectorizedHVPL
 from logic.src.policies.vector.iterated_local_search import IteratedLocalSearchPolicy
 from logic.src.policies.vector.profitable_nearest_neighbour import ProfitableNearestNeighbourPolicy
 from logic.src.policies.vector.random_local_search import RandomLocalSearchPolicy
@@ -95,7 +97,7 @@ class AdaptiveImitation(REINFORCE):
         Initialize AdaptiveImitation module.
 
         Args:
-            policy_config: Expert policy configuration (HGSConfig, ALNSConfig, etc.).
+            policy_config: Expert policy configuration from ``logic.src.configs.learning.experts``.
             env_name: Environment name for the policy.
             il_weight: Initial weight for imitation learning loss.
             il_decay: Decay rate for imitation learning weight per epoch.
@@ -160,7 +162,7 @@ class AdaptiveImitation(REINFORCE):
         """Create expert policy from configuration.
 
         Args:
-            policy_config: Expert policy configuration (HGSConfig, ALNSConfig, etc.).
+            policy_config: Expert policy configuration from ``logic.src.configs.learning.experts``.
             env_name: Environment name for the policy.
             seed: Random seed for reproducibility.
             device: Device to run the policy on.
@@ -177,6 +179,7 @@ class AdaptiveImitation(REINFORCE):
             VectorILSConfig: IteratedLocalSearchPolicy,
             ACOConfig: VectorizedACOPolicy,
             ProfitableNNConfig: ProfitableNearestNeighbourPolicy,
+            VectorHVPLConfig: VectorizedHVPL,
         }
 
         # Get the policy class for this config type

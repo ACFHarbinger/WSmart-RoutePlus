@@ -11,7 +11,7 @@
 #   python main.py train rl.imitation.policy_config=tasks/policies/rl/ils
 # =============================================================================
 
-_target_: logic.src.configs.rl.policies.ILSConfig
+_target_: logic.src.configs.learning.experts.VectorILSConfig
 
 # Search Parameters
 n_restarts: 5

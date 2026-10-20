@@ -11,7 +11,7 @@
 #   python main.py train rl.imitation.policy_config=tasks/policies/rl/aco
 # =============================================================================
 
-_target_: logic.src.configs.rl.policies.ACOConfig
+_target_: logic.src.configs.learning.experts.ACOConfig
 
 # Colony Parameters
 n_ants: 20

@@ -1,7 +1,19 @@
-"""RL algorithm configuration.
+"""Learning algorithm configuration.
+
+``RLConfig`` is the training-loop configuration. Algorithm dataclasses and the
+expert-policy dataclasses in ``experts`` sit in this package. The package used
+to live at ``logic.src.configs.rl``.
 
 Attributes:
     RLConfig: Configuration for RL algorithms.
+    PPOConfig: Configuration for PPO.
+    SAPOConfig: Configuration for SAPO.
+    GRPOConfig: Configuration for GRPO.
+    POMOConfig: Configuration for POMO.
+    SymNCOConfig: Configuration for SymNCO.
+    ImitationConfig: Configuration for imitation learning.
+    GDPOConfig: Configuration for GDPO.
+    AdaptiveImitationConfig: Configuration for adaptive imitation.
 
 Example:
     RLConfig(
@@ -14,14 +26,24 @@ Example:
 
 from dataclasses import dataclass, field
 
-from .core.adaptive_imitation import AdaptiveImitationConfig
-from .core.gdpo import GDPOConfig
-from .core.grpo import GRPOConfig
-from .core.imitation import ImitationConfig
-from .core.pomo import POMOConfig
-from .core.ppo import PPOConfig
-from .core.sapo import SAPOConfig
-from .core.symnco import SymNCOConfig
+from .adaptive_imitation import AdaptiveImitationConfig
+from .experts import (
+    ACOConfig,
+    ProfitableNNConfig,
+    RLSConfig,
+    VectorALNSConfig,
+    VectorHGSALNSConfig,
+    VectorHGSConfig,
+    VectorHVPLConfig,
+    VectorILSConfig,
+)
+from .gdpo import GDPOConfig
+from .grpo import GRPOConfig
+from .imitation import ImitationConfig
+from .pomo import POMOConfig
+from .ppo import PPOConfig
+from .sapo import SAPOConfig
+from .symnco import SymNCOConfig
 
 
 @dataclass
@@ -71,3 +93,24 @@ class RLConfig:
     imitation: ImitationConfig = field(default_factory=ImitationConfig)
     gdpo: GDPOConfig = field(default_factory=GDPOConfig)
     adaptive_imitation: AdaptiveImitationConfig = field(default_factory=AdaptiveImitationConfig)
+
+
+__all__ = [
+    "RLConfig",
+    "PPOConfig",
+    "SAPOConfig",
+    "GRPOConfig",
+    "POMOConfig",
+    "SymNCOConfig",
+    "ImitationConfig",
+    "GDPOConfig",
+    "AdaptiveImitationConfig",
+    "ACOConfig",
+    "ProfitableNNConfig",
+    "RLSConfig",
+    "VectorALNSConfig",
+    "VectorHGSConfig",
+    "VectorHGSALNSConfig",
+    "VectorHVPLConfig",
+    "VectorILSConfig",
+]
