@@ -13,6 +13,11 @@ Tags: `[Quick Win]` ≤ 1 day · `[Research]` involves novel work · `[Blocked]`
 
 ## Anchor Index
 
+Cloud follow-up, 2026-10-20: Gemini Azure `2f4b89bdf` reviewed with further
+provider/cleanup corrections and a refreshed SDK lock (35 passing tests). Partial-VM
+cleanup and CR-16 telemetry integration remain open; see the
+[follow-up review](../../.agent/tasks/codex-cloud-review-2026-10-20.md).
+
 Cloud review, 2026-10-20: CR-07 and CR-16 still require changes before integration.
 See [Codex review](../../.agent/tasks/codex-cloud-review-2026-10-20.md) for
 corrective edits, SDK adapter blockers and the missing analysis telemetry transport.
