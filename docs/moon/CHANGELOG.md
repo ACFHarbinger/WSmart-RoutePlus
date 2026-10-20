@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Autoregressive DRL paper submodule (`2026-10-20`)
+
+#### Added
+
+- **`assets/papers/Autoregressive-Deep-Reinforcement-Learning-for-Waste-Collection-Route-Planning`**: the ACFHarbinger GitHub repository as a submodule. Its Overleaf project is the local remote `overleaf` (`https://git@git.overleaf.com/671f898ed9913ebc7ae5fefa`, branch `master`) for future merges; remotes live in the clone's `.git/config`, so a fresh clone needs `git remote add overleaf ...` again. The Overleaf and GitHub histories share no commit, so the first merge needs `--allow-unrelated-histories`.
+
 ### File-size refactor (`2026-10-20`)
 
 #### Changed
