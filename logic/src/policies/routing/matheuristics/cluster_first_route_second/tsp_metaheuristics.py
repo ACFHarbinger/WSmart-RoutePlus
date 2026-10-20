@@ -16,6 +16,10 @@ Reference:
     Section 4: "VFJ algorithm with PSO performs better than VFJ algorithm with
     ACO and VFJ algorithm with GA"
 
+The Genetic Algorithm components moved to :mod:`tsp_genetic` and the shared
+local-search helpers moved to :mod:`tsp_local_search`; this module re-exports
+``find_route_ga`` and imports the shared helpers for internal use.
+
 Attributes:
     find_route_pso: TSP solver using Velocity Tentative PSO.
     find_route_aco: TSP solver using Ant Colony Optimization.
@@ -30,156 +34,17 @@ Example:
 
 import random
 import time
-from typing import Dict, List, Optional, Set, Tuple
+from typing import List, Optional
 
 import numpy as np
 
-
-def _calculate_tour_distance(tour: List[int], distance_matrix: np.ndarray) -> float:
-    """Calculate total distance of a TSP tour.
-
-    Args:
-        tour: Sequence of node indices representing the tour.
-        distance_matrix: Distance matrix of shape (n_nodes, n_nodes).
-
-    Returns:
-        float: Sum of edge distances along the tour.
-    """
-    total = 0.0
-    for i in range(len(tour) - 1):
-        total += distance_matrix[tour[i], tour[i + 1]]
-    return total
-
-
-def _two_opt_swap(tour: List[int], i: int, k: int) -> List[int]:
-    """
-    Perform 2-opt swap on tour segment between indices i and k.
-
-    2-opt removes two edges and reconnects the path by reversing the segment.
-    This is the fundamental local search operator for TSP.
-
-    Args:
-        tour: Current tour (includes depot at start and end)
-        i: Start index of segment to reverse
-        k: End index of segment to reverse
-
-    Returns:
-        New tour with reversed segment
-    """
-    new_tour = tour[:i] + tour[i : k + 1][::-1] + tour[k + 1 :]
-    return new_tour
-
-
-def _apply_swap_sequence(tour: List[int], swap_ops: List[Tuple[int, int]], max_swaps: int = 3) -> List[int]:
-    """
-    Apply a sequence of swap operations to move toward a target tour.
-
-    This implements the discrete PSO velocity update mechanism by
-    probabilistically applying swaps that move the current particle
-    toward its personal best and the global best.
-
-    Args:
-        tour: Current tour
-        swap_ops: List of (i, j) swap operations
-        max_swaps: Maximum number of swaps to apply
-
-    Returns:
-        Modified tour
-    """
-    result = tour.copy()
-    num_swaps = min(len(swap_ops), max_swaps)
-
-    for i in range(num_swaps):
-        idx1, idx2 = swap_ops[i]
-        if 0 < idx1 < len(result) - 1 and 0 < idx2 < len(result) - 1:
-            result[idx1], result[idx2] = result[idx2], result[idx1]
-
-    return result
-
-
-def _get_swap_sequence(source: List[int], target: List[int]) -> List[Tuple[int, int]]:
-    """
-    Compute sequence of swap operations to transform source tour into target tour.
-
-    This is used to compute the "velocity" in discrete PSO by finding
-    the swaps needed to move from current position to pbest/gbest.
-
-    Args:
-        source: Current tour
-        target: Target tour
-
-    Returns:
-        List of (i, j) index pairs to swap
-    """
-    swaps = []
-    temp = source.copy()
-
-    for i in range(1, len(temp) - 1):  # Exclude depot at start and end
-        if temp[i] != target[i]:
-            # Find where target[i] is in temp
-            for j in range(i + 1, len(temp) - 1):
-                if temp[j] == target[i]:
-                    swaps.append((i, j))
-                    temp[i], temp[j] = temp[j], temp[i]
-                    break
-
-    return swaps
-
-
-def _get_swap_operators(tour1: List[int], tour2: List[int]) -> List[Tuple[int, int]]:
-    """Compute sequence of swap operations to transform tour1 into tour2.
-
-    Args:
-        tour1: Source tour to transform.
-        tour2: Target tour to reach.
-
-    Returns:
-        List[Tuple[int, int]]: Index-pair swaps that convert tour1 to tour2.
-    """
-    swaps = []
-    t1 = list(tour1)
-    for i in range(len(t1)):
-        if t1[i] != tour2[i]:
-            for j in range(i + 1, len(t1)):
-                if t1[j] == tour2[i]:
-                    swaps.append((i, j))
-                    t1[i], t1[j] = t1[j], t1[i]
-                    break
-    return swaps
-
-
-def _apply_2opt_local_search(
-    tour: List[int],
-    distance_matrix: np.ndarray,
-    n_customers: int,
-    max_swaps: int = 10,
-) -> List[int]:
-    """Apply random 2-opt swaps to improve a tour.
-
-    Args:
-        tour: Current tour including depot at start and end.
-        distance_matrix: Distance matrix of shape (n_nodes, n_nodes).
-        n_customers: Number of customer nodes (excluding depot).
-        max_swaps: Maximum number of 2-opt swaps to attempt.
-
-    Returns:
-        List[int]: Improved tour after applying the best 2-opt moves found.
-    """
-    best_tour = tour.copy()
-    best_dist = _calculate_tour_distance(best_tour, distance_matrix)
-
-    # Try a limited number of 2-opt swaps
-    for _ in range(min(max_swaps, n_customers)):
-        i = np.random.randint(1, n_customers)
-        k = np.random.randint(i + 1, n_customers + 1)
-        new_tour = _two_opt_swap(best_tour, i, k)
-        new_dist = _calculate_tour_distance(new_tour, distance_matrix)
-
-        if new_dist < best_dist:
-            best_tour = new_tour
-            best_dist = new_dist
-
-    return best_tour
+from logic.src.policies.routing.matheuristics.cluster_first_route_second.tsp_genetic import (
+    find_route_ga as find_route_ga,
+)
+from logic.src.policies.routing.matheuristics.cluster_first_route_second.tsp_local_search import (
+    _calculate_tour_distance,
+    _get_swap_operators,
+)
 
 
 def find_route_pso(
@@ -393,123 +258,3 @@ def find_route_aco(
                 pheromones[n2, n1] += deposit
 
     return best_tour
-
-
-def _eer_crossover(p1: List[int], p2: List[int], customers: List[int]) -> List[int]:
-    """Enhanced Edge Recombination (EER) crossover.
-
-    Args:
-        p1: First parent tour (customer nodes only, no depot).
-        p2: Second parent tour (customer nodes only, no depot).
-        customers: List of customer node indices.
-
-    Returns:
-        List[int]: Child tour produced by EER crossover.
-    """
-    n_cust = len(customers)
-    edge_table: Dict[int, Set[int]] = {node: set() for node in customers}
-    for parent in [p1, p2]:
-        for i in range(n_cust):
-            edge_table[parent[i]].add(parent[(i - 1) % n_cust])
-            edge_table[parent[i]].add(parent[(i + 1) % n_cust])
-
-    child: List[int] = []
-    curr = random.choice([p1[0], p2[0]])
-    while len(child) < n_cust:
-        child.append(curr)
-        for neighbors in edge_table.values():
-            neighbors.discard(curr)
-
-        if len(child) == n_cust:
-            break
-
-        neighbors = list(edge_table[curr])  # type: ignore[assignment]
-        if not neighbors:
-            remaining = [node for node in customers if node not in child]
-            curr = random.choice(remaining)
-        else:
-            min_neighbors = min(len(edge_table[n]) for n in neighbors)
-            candidates = [n for n in neighbors if len(edge_table[n]) == min_neighbors]
-            curr = random.choice(candidates)
-    return child
-
-
-def find_route_ga(
-    distance_matrix: np.ndarray,
-    cluster: List[int],
-    time_limit: float = 60.0,
-    seed: int = 42,
-    pop_size: int = 50,
-    mutation_rate: float = 0.2,
-) -> List[int]:
-    """
-    Solve TSP using Genetic Algorithm (GA).
-
-    Args:
-        distance_matrix: Pre-computed all-pairs distance matrix.
-        cluster: List of node indices.
-        time_limit: Maximum time.
-        seed: Random seed.
-        pop_size: Population size.
-        mutation_rate: Mutation probability.
-
-    Returns:
-        List[int]: Best TSP tour found as a list of node indices.
-    """
-    np.random.seed(seed)
-    random.seed(seed)
-    start_time = time.time()
-
-    if not cluster:
-        return [0, 0]
-    if len(cluster) <= 3:
-        return list(cluster) + [0] if cluster[-1] != 0 else cluster
-
-    customers = [node for node in cluster if node != 0]
-    n_cust = len(customers)
-
-    def _get_tour(perm):
-        return [0] + perm + [0]
-
-    def _get_dist(perm):
-        return _calculate_tour_distance(_get_tour(perm), distance_matrix)
-
-    # Initialize population
-    population = []
-    for _ in range(pop_size):
-        perm = np.random.permutation(customers).tolist()
-        population.append(perm)
-
-    best_perm = min(population, key=_get_dist)
-    best_dist = _get_dist(best_perm)
-
-    while time.time() - start_time < time_limit:
-        population.sort(key=_get_dist)
-        new_pop = population[:2]  # Elitism
-
-        while len(new_pop) < pop_size:
-            if time.time() - start_time >= time_limit:
-                break
-            # Selection (Tournament)
-            p1 = min(random.sample(population, min(5, len(population))), key=_get_dist)
-            p2 = min(random.sample(population, min(5, len(population))), key=_get_dist)
-
-            # Crossover (Enhanced Edge Recombination - EER)
-            # Ref: Sultana & Akhand (2017) specify EER for adjacency preservation
-            child = _eer_crossover(p1, p2, customers)
-
-            # Mutation (Swap)
-            if random.random() < mutation_rate and n_cust >= 2:
-                i1, i2 = random.sample(range(n_cust), 2)
-                child[i1], child[i2] = child[i2], child[i1]
-
-            new_pop.append(child)
-
-            d = _get_dist(child)
-            if d < best_dist:
-                best_dist = d
-                best_perm = list(child)
-
-        population = new_pop
-
-    return _get_tour(best_perm)

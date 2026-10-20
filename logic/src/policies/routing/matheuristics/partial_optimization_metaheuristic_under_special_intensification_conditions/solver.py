@@ -14,29 +14,19 @@ Reference:
     Alvim, A. C. F., & Taillard, É. D. (2013). POPMUSIC for the world location
     routing problem. EURO Journal on Transportation and Logistics, 2, 231–254.
 
+The route-centroid, nearest-route lookup and O(r) subproblem-assembly helpers
+moved to :mod:`popmusic_utils` and are re-imported here; the Issue-2
+adjacency-walk details are documented in that module.
+
 Architectural notes (four-issue refactor):
     Issue 1 — Asymptotic initialization:
         Initial solution is built via a two-level p-median alternating heuristic
-        (p = floor(sqrt(n))) running in O(n^{3/2}). Cluster membership uses a
-        profit-biased assignment metric d_assign(i,c) = d(i,c)/d_max / (rev(i)/rev_max + ε)
-        (ratio form, dimensionless, parameter-free). Cluster centers are recomputed as
-        the geographic median of assigned nodes (stable centroid semantics). The proximity
-        network G is built on pure geometric distance d_prox between cluster centers
-        (two-metric architecture), preserving spatial locality for subproblem assembly.
-
-    Issue 2 — KDTree inefficiency:
-        The proximity network G is built once during initialization as a static
-        adjacency list dict[int, list[int]] sorted by inter-center distance. Subproblem
-        assembly walks G in O(r). Centroids are updated in O(r) after each improvement.
-        G topology is never rebuilt — consistent with the paper's proximate optimality
-        assumption.
+        (p = floor(sqrt(n))) running in O(n^{3/2}) with profit-biased assignment.
 
     Issue 3 — VRPP subproblem purity:
-        Every unvisited node u ∈ U is represented as a singleton part s_u = {u} with
-        centroid = coord(u), inserted into G and the seed stack U at initialization and
-        whenever a node becomes unvisited. The r-part invariant is preserved exactly:
-        a subproblem of size r may contain a mix of proper routes and singleton parts.
-        p = |active_routes| + |singleton_unvisited| is dynamic.
+        Every unvisited node u ∈ U is represented as a singleton part s_u = {u}
+        with centroid = coord(u), inserted into G and the seed stack U whenever
+        a node becomes unvisited. The r-part invariant is preserved exactly.
 
     Issue 4 — Ghost routes / data structure:
         A pre-allocated stable centroid buffer coords[MAX_PARTS, 2] is maintained.
@@ -79,6 +69,13 @@ from logic.src.policies.routing.matheuristics.partial_optimization_metaheuristic
     _compute_d_prox,
     _initialize_pmedian,
 )
+from logic.src.policies.routing.matheuristics.partial_optimization_metaheuristic_under_special_intensification_conditions.popmusic_utils import (
+    _assemble_subproblem,
+    _route_centroid,
+)
+from logic.src.policies.routing.matheuristics.partial_optimization_metaheuristic_under_special_intensification_conditions.popmusic_utils import (
+    find_route_neighbors as find_route_neighbors,
+)
 from logic.src.policies.routing.matheuristics.partial_optimization_metaheuristic_under_special_intensification_conditions.subproblem import (
     _evaluate_slots,
     _optimize_subproblem,
@@ -92,106 +89,6 @@ from .state import POPMUSICState
 # ---------------------------------------------------------------------------
 # Issue 1 — p-median initialization with profit-biased assignment
 # ---------------------------------------------------------------------------
-
-
-# ---------------------------------------------------------------------------
-# Utility: centroid computation
-# ---------------------------------------------------------------------------
-
-
-def _route_centroid(
-    nodes: List[int],
-    coord_array: np.ndarray,
-) -> np.ndarray:
-    """
-    Compute the geographic centroid (mean coordinate) of non-depot nodes.
-
-    Args:
-        nodes: Route node list including depot sentinels (0).
-        coord_array: Shape (n+1, 2) — all node coordinates.
-
-    Returns:
-        centroid: Shape (2,) float64.
-    """
-    customers = [n for n in nodes if n != 0]
-    if not customers:
-        return coord_array[0].copy()
-    return coord_array[customers].mean(axis=0)
-
-
-def find_route_neighbors(
-    seed_idx: int,
-    centroids: List[np.ndarray],
-    k: int = 5,
-    kdtree: Any = None,
-    k_prox: int = 10,
-) -> List[int]:
-    """
-    Find the k nearest route neighbors of a seed route using a KDTree.
-
-    Queries the KDTree for k_prox candidates around the seed centroid, then
-    returns the k nearest indices (including the seed itself at position 0,
-    since KDTree includes the query point).
-
-    Args:
-        seed_idx: Index of the seed route in centroids.
-        centroids: List of route centroid coordinate arrays.
-        k: Number of neighbors to return (including the seed itself).
-        kdtree: Pre-built scipy.spatial.KDTree over the centroid coordinates.
-        k_prox: Number of candidates to fetch from the KDTree before selecting k.
-
-    Returns:
-        List of route indices (length <= k), sorted by ascending distance.
-    """
-    n_query = min(k_prox, len(centroids))
-    _, indices = kdtree.query(np.asarray(centroids[seed_idx]), k=n_query)
-    if np.ndim(indices) == 0:
-        return [int(indices)]
-    return list(indices[:k])
-
-
-# ---------------------------------------------------------------------------
-# Issue 2 — O(r) subproblem assembly via static adjacency list walk
-# ---------------------------------------------------------------------------
-
-
-def _assemble_subproblem(
-    seed_slot: int,
-    state: POPMUSICState,
-    r: int,
-) -> List[int]:
-    """
-    Assemble a subproblem of at most r parts by walking the adjacency list G.
-
-    Time complexity: O(r) — independent of n (Issue 2 guarantee).
-
-    The walk is a BFS/greedy expansion from seed_slot: at each step, the
-    unvisited neighbor with the smallest d_prox (pre-sorted in G) is added
-    until r parts are collected or G is exhausted.
-
-    Args:
-        seed_slot: Slot index of the seed part.
-        state: Current POPMUSICState.
-        r: Subproblem size (number of parts).
-
-    Returns:
-        List of slot indices forming the subproblem (length ≤ r).
-    """
-    selected: List[int] = [seed_slot]
-    visited: Set[int] = {seed_slot}
-    frontier: deque[int] = deque([seed_slot])
-
-    while frontier and len(selected) < r:
-        current = frontier.popleft()
-        for neighbor in state.G.get(current, []):
-            if neighbor not in visited and neighbor in state.active:
-                visited.add(neighbor)
-                selected.append(neighbor)
-                frontier.append(neighbor)
-                if len(selected) >= r:
-                    break
-
-    return selected
 
 
 # ---------------------------------------------------------------------------
