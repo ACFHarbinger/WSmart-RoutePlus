@@ -3,8 +3,9 @@
 Mirrors :class:`~logic.src.policies.route_improvement.random_local_search.RandomLocalSearchRouteImprover`
 configured by ``RandomLocalSearchPostConfig``: ``iterations`` times, an operator is drawn
 from ``params`` (normalised probabilities, NumPy ``default_rng(seed)`` exactly as the
-simulator draws them) and applied as an improving move with capacity checks; time
-stops the search after ``time_limit`` seconds.
+simulator draws them) and one first-improvement sweep of that operator is applied, as
+``SweepLocalSearch`` does (:func:`~logic.src.policies.vector.shared.sweeps.sweep`);
+time stops the search after ``time_limit`` seconds.
 
 The starting solution is ``initial_solution`` when given, otherwise a random giant tour
 over all bins cut into capacity-feasible routes.
@@ -24,6 +25,7 @@ import torch
 from logic.src.configs.policies.other.route_improvement import RandomLocalSearchPostConfig
 from logic.src.policies.vector.shared import routes as rs
 from logic.src.policies.vector.shared.base import VectorizedRoutingPolicy
+from logic.src.policies.vector.shared.sweeps import SweepState, sweep
 from logic.src.policies.vector.shared.vrpp import VRPPBatch
 
 
@@ -61,10 +63,11 @@ class RandomLocalSearchPolicy(VectorizedRoutingPolicy):
         probs = probs / (probs.sum() + 1e-10)
         rng = np.random.default_rng(self.seed)
         start = time.perf_counter()
+        state = SweepState.from_seqs(S)
         for it in range(int(cfg.iterations)):
             if cfg.time_limit > 0 and time.perf_counter() - start > cfg.time_limit:
                 break
             op = str(rng.choice(active_ops, p=probs))
-            S, _ = rs.local_search_move(S, inst, op)
+            state, _ = sweep(state, inst, op, self.generator)
             self._viz_record(iteration=it, op_name=op)
-        return S
+        return state.to_seqs(inst.n_bins)

@@ -49,8 +49,6 @@ from logic.src.policies.vector.shared import routes as rs
 from logic.src.policies.vector.shared.pair_ls import granular_neighbors, pair_local_search
 from logic.src.policies.vector.shared.vrpp import VRPPBatch, compact, profit_split
 
-HGS_LS_OPERATORS = ("relocate", "swap", "two_opt", "two_opt_star", "swap_star")
-
 
 def decode(tours: torch.Tensor, inst: VRPPBatch, max_vehicles: int = 0) -> torch.Tensor:
     """``evaluate`` of an individual without routes: break-even filter, then profit Split."""
