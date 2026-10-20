@@ -13,6 +13,16 @@ Tags: `[Quick Win]` ≤ 1 day · `[Research]` involves novel work · `[Blocked]`
 
 ## Anchor Index
 
+Azure provisioning recovery implemented on 2026-10-20 (`ef0cce991`): the
+write-ahead journal and durable ownership reconciliation close the previously
+recorded crash-window blocker. Combined cloud validation: 150 passed, four
+Docker/Postgres-only skips; see the [recovery record](../../.agent/tasks/codex-cloud-review-2026-10-20.md).
+
+Azure CR-07 review, 2026-10-20: `919a1392a` reviewed with further queue,
+cancellation and SDK corrections (67 tests pass). Merge remains blocked by
+the allocation-to-handle crash window; see the
+[latest review](../../.agent/tasks/codex-cloud-review-2026-10-20.md).
+
 CR-16 integrated on 2026-10-20 with owner authorization: merge `e3e6b974b`
 includes reviewed corrections `a49b9b3c9`. Azure CR-07 remains unmerged;
 see the [integration record](../../.agent/tasks/codex-cloud-review-2026-10-20.md).
