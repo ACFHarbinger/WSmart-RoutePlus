@@ -96,11 +96,17 @@ def _machine(tmp_path, name):
 
 
 @pytest.mark.unit
-def test_profiles_resolve_local_uris_and_name_missing_providers(tmp_path):
+def test_profiles_resolve_local_uris_and_name_missing_providers(tmp_path, monkeypatch):
+    from logic.controllers.cloud import profiles
+    from logic.controllers.cloud.providers.gcp import GcsObjectStore
+
     assert isinstance(control_plane_from_uri(f"sqlite://{tmp_path / 'a.db'}"), SQLiteControlPlane)
     assert isinstance(store_from_uri(f"file://{tmp_path / 's'}"), FilesystemObjectStore)
-    with pytest.raises(ValueError, match="providers.gcp.storage"):
-        store_from_uri("gs://bucket/prefix")
+    gcs = store_from_uri("gs://bucket/prefix")  # CR-05: the GCS client is only created on first use
+    assert isinstance(gcs, GcsObjectStore) and (gcs.bucket_name, gcs.prefix) == ("bucket", "prefix/")
+    monkeypatch.setitem(profiles.PROVIDER_FACTORIES, ("store", "xx"), "logic.controllers.cloud.providers.nowhere.storage:f")
+    with pytest.raises(ValueError, match="providers.nowhere.storage"):
+        store_from_uri("xx://bucket/prefix")
     with pytest.raises(ValueError, match="unsupported"):
         store_from_uri("ftp://x")
 
