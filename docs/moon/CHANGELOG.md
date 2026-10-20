@@ -17,6 +17,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Cloud runner CR-11: runtime and memory prediction (`2026-10-20`)
+
+#### Added
+
+- **`logic/controllers/cloud/prediction/`** (#131): wall-time quantiles (p10, p50, p90) and memory for every cell of a job.
+  - **Model:** three gradient-boosted quantile regressions (scikit-learn) on log wall time. Features: routing algorithm, packing variant, improver, distribution, area, network size and horizon, read from the cell's `test_sim` arguments or its rerun id.
+  - **Training data:** the bundled `runtime_training.csv` (810 runs on one laptop), built by `tools/build_runtime_training.py`. 210 cells come from the rerun drivers' timed `done` lines. The other 600 are summary runs whose wall time is their policy time plus the measured overhead of 19–32 s; on the timed cells, wall time is 1.00–1.03 × policy time.
+  - **Held-out error** (52 timed cells): median APE 20%, median error 265 s, p10–p90 coverage 77%. Run `cloud predict evaluate` to reproduce.
+  - **Machine types:** the median observed/predicted ratio of each type's completed single-attempt tasks (at least 3), else 1.0.
+  - **Memory:** the 90th percentile of observed CR-12 peaks per routing algorithm and size × 1.25, else the rerun drivers' reservation.
+  - **Fallback:** the manifest's `expected_wall_seconds` (0.5–2×) when scikit-learn is missing or the cell has no size or horizon.
+- **Submit:** `CloudService(predictor_factory=...)`, set by the local profile, fills each cell's `expected_wall_seconds` that the submitter left empty (the scheduler and the Analysis page read it). It records the full predictions as a `prediction` event. `CloudService.predict(spec)` serves the CR-10 estimate and the CR-09 packing.
+- **CLI:** `cloud predict estimate --manifest/--command [--machine-type]`, `cloud predict evaluate` and `cloud predict accuracy <job>` (predicted against actual wall time, median APE and interval coverage).
+- Tests: `test_prediction.py` (7).
+
+#### Changed
+
+- `CloudService`'s `status`, `metrics` and their price and duration helpers moved unchanged to `service_status.py` (`ServiceStatusMixin`). This keeps `service.py` under 500 lines. `extract_policy_from_cell` is re-exported from `service`.
+
 ### Cloud runner CR-12: instrumentation and tracking (`2026-10-20`)
 
 #### Added
