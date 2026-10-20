@@ -10,6 +10,7 @@ import {
   GitBranch,
   Globe,
   Layers,
+  LineChart,
   Map,
   Table2,
   Play,
@@ -48,6 +49,7 @@ const NAV: NavSection[] = [
       { mode: "experiment_tracker", label: "Experiment Tracker", streamlitEquivalent: "experiment_tracker" },
       { mode: "algorithms", label: "Algorithm Registry", streamlitEquivalent: "algorithms" },
       { mode: "hpo_tracker", label: "HPO Tracker", streamlitEquivalent: "hpo_tracker" },
+      { mode: "cloud_analysis", label: "Cloud Analysis" },
     ],
   },
   {
@@ -82,6 +84,7 @@ const ICON: Record<AppMode, React.ReactNode> = {
   training: <Activity size={15} />,
   process_monitor: <Terminal size={15} />,
   cloud_monitor: <Cloud size={15} />,
+  cloud_analysis: <LineChart size={15} />,
   simulation_summary: <BarChart2 size={15} />,
   benchmark: <Layers size={15} />,
   city_comparison: <Globe size={15} />,

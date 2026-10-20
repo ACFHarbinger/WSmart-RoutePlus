@@ -27,6 +27,12 @@ const ProcessMonitor = lazy(() =>
 const CloudMonitor = lazy(() =>
   import("./pages/cloud/CloudMonitor").then((m) => ({ default: m.CloudMonitor }))
 );
+const CloudLauncher = lazy(() =>
+  import("./pages/cloud/CloudLauncher").then((m) => ({ default: m.CloudLauncher }))
+);
+const CloudAnalysis = lazy(() =>
+  import("./pages/cloud/CloudAnalysis").then((m) => ({ default: m.CloudAnalysis }))
+);
 const SimulationSummary = lazy(() =>
   import("./pages/analysis/SimulationSummary").then((m) => ({ default: m.SimulationSummary }))
 );
@@ -53,9 +59,6 @@ const HPOTracker = lazy(() =>
 );
 const SimulationLauncher = lazy(() =>
   import("./pages/launch/SimulationLauncher").then((m) => ({ default: m.SimulationLauncher }))
-);
-const CloudLauncher = lazy(() =>
-  import("./pages/cloud/CloudLauncher").then((m) => ({ default: m.CloudLauncher }))
 );
 const TrainingHub = lazy(() =>
   import("./pages/launch/TrainingHub").then((m) => ({ default: m.TrainingHub }))
@@ -132,11 +135,14 @@ function ActivePage() {
     case "cloud_monitor":
       page = <CloudMonitor />;
       break;
-    case "sim_launcher":
-      page = <SimulationLauncher />;
-      break;
     case "cloud_launcher":
       page = <CloudLauncher />;
+      break;
+    case "cloud_analysis":
+      page = <CloudAnalysis />;
+      break;
+    case "sim_launcher":
+      page = <SimulationLauncher />;
       break;
     case "training_hub":
       page = <TrainingHub />;
