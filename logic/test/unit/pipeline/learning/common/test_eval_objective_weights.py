@@ -4,9 +4,8 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
-from omegaconf import OmegaConf
-
 from logic.src.pipeline.learning.common.base.data import _create_eval_env_and_gen
+from omegaconf import OmegaConf
 
 
 @pytest.mark.parametrize(

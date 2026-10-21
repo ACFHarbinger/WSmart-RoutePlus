@@ -4,9 +4,8 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
-from omegaconf import OmegaConf
-
 from logic.src.pipeline.features.train.model_factory.builder import _init_policy
+from omegaconf import OmegaConf
 
 
 @pytest.mark.parametrize("hydra", [True, False])
