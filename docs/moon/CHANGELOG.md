@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Codex: preserve Hydra model constructor overrides (`2026-10-21`)
 
 - Forward configured top-level model values rather than DictConfig internals, preserving temporal horizons and MoE overrides. Regression tests cover Hydra and object configurations. Existing checkpoints are unchanged; changes to future affected training require owner review.
+
 ### Codex CPTP checkpoint compatibility (2026-10-21)
 
 - Restore coordinate Euclidean distances in the learned CPTP step-context feature. Road objective matrices in kilometers no longer change inputs to existing checkpoints.
@@ -35,6 +36,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Codex resource-history compatibility (2026-10-21)
 
 - Preserve the latest cloud resource sample when more than 20 progress, day, or cost records follow it; bounded reads fall back to history when necessary. Covered for SQLite and document control planes.
+### Codex rollout baseline precomputation (`2026-10-21`)
+
+- Skip the unused epoch-wide rollout cache in Lightning for the built-in Attention Model with PTP/CPTP data. Keep per-batch packed baseline evaluation and the original DataLoader seed draw; custom contracts retain explicit precomputation. On CPU, a 64-instance/100-customer small Attention Model avoids about 0.24 seconds per epoch preparation. Regression checks compare sampling RNG, loss and gradients with and without mandatory packing. Existing checkpoint weights are unchanged.
+
 ### Codex adaptive imitation resume (`2026-10-21`)
 
 - Preserve imitation weight, stop flag, patience count and best validation reward in Lightning checkpoints. Legacy checkpoints retain constructor defaults. This corrects future resumed training and requires owner review; existing paper weights are unchanged.
