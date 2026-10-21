@@ -184,9 +184,12 @@ class ServiceStatusMixin:
                 if record.get("kind") == "resource":
                     return record
         except TypeError:
-            for record in reversed(self.cp.get_metrics(task_id)):
-                if record.get("kind") == "resource":
-                    return record
+            pass  # Older control planes do not support bounded reads.
+        # Progress/day/cost events can outnumber resource samples by any ratio.
+        # Keep the bounded fast path, but never mistake a missing page for no sample.
+        for record in reversed(self.cp.get_metrics(task_id)):
+            if record.get("kind") == "resource":
+                return record
         return {}
 
     def metrics(self, task_id: str, since: Optional[float] = None) -> Dict[str, Any]:

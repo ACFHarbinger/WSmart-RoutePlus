@@ -17,6 +17,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Codex: atomic telemetry schema initialization (`2026-10-21`)
+
+- Initialize SQLite schema metadata with an atomic insert that ignores only an existing version key, preserving its value. Independent simulator processes can now initialize the same fresh telemetry database without a unique-key error dropping a policy snapshot. A two-process regression forces the original race and verifies both snapshots are persisted.
+
+### Codex: respect per-instance evaluation days (`2026-10-21`)
+
+- Select each row's own temporal waste slice in both environment reset and mandatory packing. Missing days retain day zero; out-of-range days clamp to the available series. Regression tests cover mixed, reordered, uniform and clamped days across both consumers. Existing single-day/uniform-day paper inputs and checkpoints are unchanged; future affected training requires owner review.
+
+### Codex: preserve zero validation objective weights (`2026-10-21`)
+
+- Keep explicitly zero cost/revenue weights when constructing validation environments; only missing or null weights receive the unit default. Tests cover per-eval and training-graph fallback objectives. Existing nonzero paper objectives and checkpoints are unchanged; affected future training needs owner review.
+
+### Codex: preserve Hydra model constructor overrides (`2026-10-21`)
+
+- Forward configured top-level model values rather than DictConfig internals, preserving temporal horizons and MoE overrides. Regression tests cover Hydra and object configurations. Existing checkpoints are unchanged; changes to future affected training require owner review.
+
+### Codex explicit-half decoding likelihoods (2026-10-21)
+
+- Compute explicit fp16/bfloat16 action log probabilities and entropy in float32 log space, preserving zero masked mass and avoiding large additive-epsilon gradient bias. Float32 paths retain their prior behavior; this does not retrain checkpoints.
+
+### Codex beam identity and cache compatibility (2026-10-21)
+
+- Preserve original instance IDs through beam slicing and environment steps, align all decoder cache tensors by those IDs, and support unequal and reordered beam widths with Glimpse/GAT decoders.
+- Restore the public beam precomputation and terminal result contracts; simulator beam backtracking now handles fewer feasible candidates than the requested width. Greedy decoding and checkpoint parameter shapes are unchanged.
+- Check returned public beam costs independently against route geometry and unique collections; exercise reward-aware simulator scoring in the ragged-beam regression.
+
+### Codex CPTP checkpoint compatibility (2026-10-21)
+
+- Restore coordinate Euclidean distances in the learned CPTP step-context feature. Road objective matrices in kilometers no longer change inputs to existing checkpoints.
+
+### Codex resource-history compatibility (2026-10-21)
+
+- Preserve the latest cloud resource sample when more than 20 progress, day, or cost records follow it; bounded reads fall back to history when necessary. Covered for SQLite and document control planes.
+
+### Codex rollout cache compatibility follow-up (`2026-10-21`)
+
+- Restrict skipped rollout precomputation to the built-in TensorDictDataset. Custom datasets retain iteration and RNG side effects, including stochastic item transforms; regression checks compare their cached rewards and RNG states.
+
+### Codex rollout baseline precomputation (`2026-10-21`)
+
+- Skip the unused epoch-wide rollout cache in Lightning for the built-in Attention Model with PTP/CPTP data. Keep per-batch packed baseline evaluation and the original DataLoader seed draw; custom contracts retain explicit precomputation. On CPU, a 64-instance/100-customer small Attention Model avoids about 0.24 seconds per epoch preparation. Regression checks compare sampling RNG, loss and gradients with and without mandatory packing. Existing checkpoint weights are unchanged.
+
+### Codex adaptive imitation resume (`2026-10-21`)
+
+- Preserve imitation weight, stop flag, patience count and best validation reward in Lightning checkpoints. Legacy checkpoints retain constructor defaults. This corrects future resumed training and requires owner review; existing paper weights are unchanged.
+
 ### Gemini swarm review fixes across Lanes A, B, C, D (`2026-10-20`)
 
 #### Fixed

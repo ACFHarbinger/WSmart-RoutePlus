@@ -86,7 +86,14 @@ class DecodingMixin:
         Returns:
             Any: A structure containing predicted indices and their log-probs.
         """
-        return self.decoder.propose_expansions(beam, fixed, expand_size, normalize, max_calc_batch_size)
+        # Cache rows belong to original instances, not to current beam positions.
+        # Index even when batch sizes match: pruning can reorder/duplicate rows.
+        fixed = fixed[beam.state.ids.reshape(-1)]
+        if hasattr(self.decoder, "propose_expansions"):
+            log_p = self.decoder.propose_expansions(beam, fixed, expand_size, normalize, max_calc_batch_size)
+        else:
+            log_p, _ = self.decoder._get_log_p(fixed, beam.state, normalize=normalize)
+        return log_p.squeeze(1) if log_p.dim() == 3 and log_p.size(1) == 1 else log_p
 
     def sample_many(
         self,

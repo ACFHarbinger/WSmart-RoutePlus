@@ -89,8 +89,10 @@ def _create_eval_env_and_gen(cfg: Any, eval_graph: Any) -> tuple:
     env_graph_reward = _cfg_get(env_graph, "reward", None)
     active_reward = eval_graph_reward if eval_graph_reward is not None else env_graph_reward
 
-    cost_weight = float(_cfg_get(active_reward, "cost_weight", 1.0) or 1.0)
-    waste_weight = float(_cfg_get(active_reward, "waste_weight", 1.0) or 1.0)
+    cost_weight_cfg = _cfg_get(active_reward, "cost_weight", None)
+    waste_weight_cfg = _cfg_get(active_reward, "waste_weight", None)
+    cost_weight = float(cost_weight_cfg) if cost_weight_cfg is not None else 1.0
+    waste_weight = float(waste_weight_cfg) if waste_weight_cfg is not None else 1.0
     data_dist = str(_cfg_get(train_cfg, "data_distribution", "gamma3") or "gamma3")
 
     n_samples = int(_cfg_get(eval_graph, "n_samples", 512))

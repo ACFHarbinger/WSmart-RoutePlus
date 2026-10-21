@@ -133,7 +133,6 @@ class SimulationMixin:
 
             # 3. Define expansion logic that bridges beam search and the model
             batch_size = state.ids.size(0)
-            num_nodes = fixed.node_embeddings.size(1)
             step_count = [1]
 
             def propose_expansions(beam: Any) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
@@ -147,13 +146,11 @@ class SimulationMixin:
                         current_mask = current_mask.squeeze(1)
                     log_p = log_p.masked_fill(current_mask, float("-inf"))
 
-                # 0. Get current beam width for indexing
-                current_beam_width = log_p.size(0) // batch_size
+                batch_indices = beam.state.ids.reshape(-1)
 
                 # Reward-aware scoring (incorporating Profit and Distance signals)
                 if params and getattr(params, "reward_weight", 0.0) > 0:
                     td = beam.state.td
-                    batch_indices = torch.arange(batch_size, device=log_p.device).repeat_interleave(current_beam_width)
 
                     # 1. Profit signal from the current state (waste levels)
                     waste = td["waste"]  # [B * beam, N] or [B * beam, N-1]
@@ -196,38 +193,14 @@ class SimulationMixin:
                 lp_curr = step_count[0] ** lp_alpha
                 norm_score = combined_score / lp_curr
 
-                # Reshape to [batch_size, current_beam_width * num_nodes]
-                norm_score_batch = norm_score.view(batch_size, -1)
-                valid_mask = ~torch.isinf(norm_score_batch)
-
-                parents_list = []
-                actions_list = []
-                scores_list = []
-
-                for b in range(batch_size):
-                    valid_b = torch.nonzero(valid_mask[b]).squeeze(-1)
-
-                    # Prune to top beam_width to save memory and avoid OOM
-                    if valid_b.size(0) > beam_width:
-                        sort_b = norm_score_batch[b, valid_b]
-                        _, top_k_idx = torch.topk(sort_b, beam_width)
-                        valid_b = valid_b[top_k_idx]
-
-                    scores_b = norm_score_batch[b, valid_b]
-
-                    # Map back to (parent_in_beam, action_index)
-                    parent_b = (b * current_beam_width) + (valid_b // num_nodes)
-                    action_b = valid_b % num_nodes
-
-                    parents_list.append(parent_b)
-                    actions_list.append(action_b)
-                    scores_list.append(scores_b)
-
+                # Beam widths can differ by original instance after masking.
+                # BatchBeam.topk groups these candidates using preserved state IDs.
+                parent, action = torch.where(torch.isfinite(norm_score))
                 step_count[0] += 1
-                return torch.cat(parents_list), torch.cat(actions_list), torch.cat(scores_list)
+                return parent, action, norm_score[parent, action]
 
             # 4. Execute Beam Search
-            beams, _ = _beam_search(state, beam_width, propose_expansions)
+            beams, final_state = _beam_search(state, beam_width, propose_expansions)
 
             # 5. Backtrack to reconstruct the best action sequence
             actions_list = [b.action for b in beams[1:]]
@@ -238,8 +211,13 @@ class SimulationMixin:
                 pi = torch.zeros((state.ids.size(0), 1), dtype=torch.long, device=state.ids.device)
             else:
                 all_pi = backtrack(parents_list, actions_list)
-                # Reshape to [batch, beam_width, seq_len] and take the best (index 0)
-                pi = all_pi.view(state.ids.size(0), beam_width, -1)[:, 0, :]
+                final_beam = beams[-1]
+                final_ids = final_state.ids.reshape(-1)
+                best_rows = []
+                for batch_idx in range(batch_size):
+                    candidates = torch.where(final_ids == batch_idx)[0]
+                    best_rows.append(candidates[final_beam.score[candidates].argmax()])
+                pi = all_pi[torch.stack(best_rows)]
         else:
             # Standard forward pass (Greedy/Sampling)
             # We explicitly pass the strategy to the model to avoid it trying to do
@@ -303,7 +281,11 @@ class SimulationMixin:
         if env_name not in ("ptp", "cptp"):
             return None
         pv = profit_vars or {}
-        cache_key = (env_name, str(device), tuple(sorted((k, float(v)) for k, v in pv.items() if isinstance(v, (int, float)))))
+        cache_key = (
+            env_name,
+            str(device),
+            tuple(sorted((k, float(v)) for k, v in pv.items() if isinstance(v, (int, float)))),
+        )
         if getattr(self, "_env_cache_key", None) != cache_key:
             self._env = get_env(
                 env_name,

@@ -25,6 +25,7 @@ from logic.src.pipeline.learning.envs.base.generator import Generator, RoutingGe
 from logic.src.pipeline.learning.envs.base.ops import OpsMixin, as_batch_nodes
 from logic.src.pipeline.learning.envs.base.resources import Resource
 from logic.src.pipeline.learning.envs.common.objectives import distance_objective, profit_objective
+from logic.src.utils.data.temporal import select_instance_day
 
 
 class RoutingEnv(RL4COEnvBase):
@@ -145,9 +146,7 @@ class RoutingEnv(RL4COEnvBase):
         # Handle multi-day 3D waste tensors
         if waste is not None and waste.dim() > 2:
             current_day_t = tensordict.get("current_day", None)
-            day_idx = int(current_day_t.reshape(-1)[0].item()) if current_day_t is not None else 0
-            day_idx = min(day_idx, waste.shape[1] - 1)
-            waste = waste[:, day_idx, :]
+            waste = select_instance_day(waste, current_day_t)
             tensordict["waste"] = waste
 
         gen_n = getattr(self.generator, "num_loc", None)
