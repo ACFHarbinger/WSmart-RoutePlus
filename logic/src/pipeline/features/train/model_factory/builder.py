@@ -276,7 +276,8 @@ def _init_policy(cfg: Config, env: Any):
 
     # Copy other top-level model params
     if model_cfg:
-        for k, v in vars(model_cfg).items():
+        model_items = model_cfg.items() if isinstance(model_cfg, (DictConfig, dict)) else vars(model_cfg).items()
+        for k, v in model_items:
             if k not in ["encoder", "decoder", "name"]:
                 policy_kwargs[k] = v
 

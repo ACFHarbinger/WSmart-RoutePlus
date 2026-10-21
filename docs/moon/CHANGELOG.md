@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Codex: preserve Hydra model constructor overrides (`2026-10-21`)
+
+- Forward configured top-level model values rather than DictConfig internals, preserving temporal horizons and MoE overrides. Regression tests cover Hydra and object configurations. Existing checkpoints are unchanged; changes to future affected training require owner review.
+
 ### Gemini swarm review fixes across Lanes A, B, C, D (`2026-10-20`)
 
 #### Fixed
