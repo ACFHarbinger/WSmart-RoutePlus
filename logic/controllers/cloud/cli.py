@@ -19,6 +19,7 @@ from logic.controllers.cloud.manifest import job_from_command, load_manifest
 from logic.controllers.cloud.model import (
     ComputeKind,
     GurobiMode,
+    JobState,
     PlacementTarget,
     Provider,
     Resources,
@@ -26,7 +27,7 @@ from logic.controllers.cloud.model import (
 )
 from logic.controllers.cloud.service import CloudService
 from logic.controllers.cloud.store.storage import sha256_file
-from logic.controllers.cloud.worker import serve, spawn_worker
+from logic.controllers.cloud.worker import serve, spawn_worker, worker_lock
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -211,7 +212,21 @@ def _submit(ctx: _Context) -> Any:
         )
     _print(opts, payload, f"submitted {job.job_id} ({len(spec.cells)} task(s))")
     if opts.get("wait"):
-        state = service.run(job.job_id, poll_seconds=float(opts.get("poll") or 5.0))
+        import time
+
+        poll_sec = float(opts.get("poll") or 5.0)
+        with worker_lock(ctx.root) as mine:
+            if mine:
+                state = service.run(job.job_id, poll_seconds=poll_sec)
+            else:
+                state = None
+                while True:
+                    st = service.status(job.job_id)
+                    job_st = JobState(st["state"])
+                    if job_st in (JobState.SUCCEEDED, JobState.FAILED, JobState.CANCELLED):
+                        state = job_st
+                        break
+                    time.sleep(poll_sec)
         payload["state"] = state.value if state else None
         _print(opts, payload, f"{job.job_id}: {payload['state']}")
     return payload

@@ -102,11 +102,19 @@ class ContextEmbedder(nn.Module, ABC):
         """
         current_node = state.get_current_node() if hasattr(state, "get_current_node") else state.get("current_node")
 
-        batch_size = embeddings.size(0)
-
         # Ensure current_node is (batch)
         if current_node.dim() > 1:
             current_node = current_node.squeeze(-1)
+
+        batch_size = current_node.size(0)
+
+        if embeddings.size(0) != batch_size:
+            if embeddings.size(0) == 1:
+                embeddings = embeddings.expand(batch_size, -1, -1)
+            elif batch_size % embeddings.size(0) == 0:
+                embeddings = embeddings.repeat_interleave(batch_size // embeddings.size(0), dim=0)
+            else:
+                embeddings = embeddings.expand(batch_size, -1, -1)
 
         # Gather current node embedding: [batch, 1, embed_dim]
         step_context = embeddings.gather(

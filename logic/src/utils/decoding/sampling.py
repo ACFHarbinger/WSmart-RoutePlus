@@ -54,15 +54,18 @@ class Sampling(DecodingStrategy):
         logits = self._process_logits(logits, mask)
         probs = F.softmax(logits, dim=-1)
 
-        # Handle numerical issues
-        probs = probs.clamp(min=NUMERICAL_EPSILON)
-        probs = probs / probs.sum(dim=-1, keepdim=True)
+        # Ensure masked/invalid nodes have exactly zero probability
+        if self.mask_logits and mask is not None:
+            probs = probs.masked_fill(~mask, 0.0)
 
-        dist = torch.distributions.Categorical(probs)
-        action = dist.sample()
-        log_prob = dist.log_prob(action)
+        probs_sum = probs.sum(dim=-1, keepdim=True).clamp(min=1e-12)
+        probs = probs / probs_sum
 
-        # Calculate entropy = -sum(p * log(p))
-        entropy = dist.entropy()
+        action = torch.multinomial(probs, num_samples=1).squeeze(-1)
+        eps = 1e-4 if probs.dtype == torch.float16 else NUMERICAL_EPSILON
+        log_prob = torch.log(probs.gather(1, action.unsqueeze(-1)) + eps).squeeze(-1)
+
+        # Calculate entropy = -sum(p * log(p)) over non-zero probabilities
+        entropy = -(torch.where(probs > 0, probs * torch.log(probs.clamp(min=eps)), torch.zeros_like(probs))).sum(dim=-1)
 
         return action, log_prob, entropy

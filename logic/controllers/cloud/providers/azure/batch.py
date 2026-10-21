@@ -114,7 +114,11 @@ class AzureBatchBackend(ComputeBackend):
                 f"requested {launch.resources.cpus} CPUs and {launch.resources.memory_gb} GiB exceeds Azure Batch quota"
             )
 
-        task_id = f"task-{launch.task.task_id}"
+        task_id = (
+            f"task-{launch.task.task_id}"
+            if getattr(launch.task, "attempt", 1) <= 1
+            else f"task-{launch.task.task_id}-a{launch.task.attempt}"
+        )
         target_job_id = self.job_id_spot if launch.resources.spot else self.job_id
 
         env = dict(launch.env)

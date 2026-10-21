@@ -207,7 +207,14 @@ class OP(BaseProblem):
             }
 
         prize_all = dataset.get("prize", torch.zeros(pi.size(0), pi.size(1), device=pi.device))
-        if prize_all.shape[-1] == pi.shape[-1] - 1:
+        num_loc = dataset.get("num_loc")
+        if num_loc is None:
+            if "locs" in dataset:
+                loc_s = dataset["locs"].shape[-2]
+                num_loc = loc_s + 1 if "depot" in dataset else loc_s
+            else:
+                num_loc = prize_all.shape[-1] + 1
+        if prize_all.shape[-1] == num_loc - 1 or prize_all.shape[-1] <= pi.max().item():
             prize_all = torch.cat([torch.zeros_like(prize_all[:, :1]), prize_all], dim=-1)
 
         collected_prize = prize_all.gather(1, pi).sum(-1)

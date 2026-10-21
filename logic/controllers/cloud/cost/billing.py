@@ -24,6 +24,7 @@ from logic.controllers.cloud.model import Event
 COLUMNS = {
     "job": ("wsr_job_id", "labels.wsr_job_id", "resourceTags/user:wsr_job_id", "tags/wsr_job_id", "job_id"),
     "cost": ("cost_usd", "cost", "lineItem/UnblendedCost", "costInBillingCurrency", "CostInBillingCurrency"),
+    "currency": ("billingCurrency", "BillingCurrency", "currency", "CurrencyCode", "currency_code"),
 }
 
 
@@ -42,10 +43,15 @@ def import_billing_csv(cp: ControlPlane, path: Path, provider: str, at: float) -
         reader = csv.DictReader(handle)
         job_col = _column(reader.fieldnames or [], COLUMNS["job"])
         cost_col = _column(reader.fieldnames or [], COLUMNS["cost"])
+        currency_col = _column(reader.fieldnames or [], COLUMNS["currency"])
         if job_col is None or cost_col is None:
             raise ValueError(f"{path}: no job label column ({COLUMNS['job']}) or cost column ({COLUMNS['cost']})")
         totals: Dict[str, float] = {}
         for row in reader:
+            if currency_col:
+                curr = (row.get(currency_col) or "USD").strip().upper()
+                if curr and curr != "USD":
+                    raise ValueError(f"{path}: non-USD billing currency '{curr}' is not supported")
             job_id = (row.get(job_col) or "").strip()
             if not job_id:
                 continue

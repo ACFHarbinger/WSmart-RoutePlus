@@ -174,7 +174,13 @@ class SimulationMixin:
                         w_len = cw_val[batch_indices].unsqueeze(-1) if isinstance(cw_val, torch.Tensor) else cw_val
 
                     # Incremental reward proxy: Profit - Cost
-                    incremental_reward = waste - dists * w_len
+                    w_waste = 27.74
+                    if params and hasattr(params, "waste_weight") and params.waste_weight is not None:
+                        w_waste = float(params.waste_weight)
+                    elif cost_weights and "waste" in cost_weights:
+                        cw_w = cost_weights["waste"]
+                        w_waste = cw_w[batch_indices].unsqueeze(-1) if isinstance(cw_w, torch.Tensor) else cw_w
+                    incremental_reward = waste * w_waste - dists * w_len
                     # Inject into log_p (additive in log-space acts as a soft priority)
                     log_p = log_p + params.reward_weight * incremental_reward
 

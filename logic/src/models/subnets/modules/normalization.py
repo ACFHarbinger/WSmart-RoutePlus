@@ -156,7 +156,12 @@ class Normalization(nn.Module):
             torch.Tensor: Normalized tensor with same shape as input.
         """
         if isinstance(self.normalizer, nn.BatchNorm1d):
-            return self.normalizer(input.view(-1, input.size(-1))).view(*input.size())
+            flat = input.view(-1, input.size(-1))
+            if flat.size(0) == 1 and not self.normalizer.track_running_stats:
+                if self.normalizer.affine and self.normalizer.weight is not None and self.normalizer.bias is not None:
+                    return (flat * self.normalizer.weight + self.normalizer.bias).view(*input.size())
+                return flat.view(*input.size())
+            return self.normalizer(flat).view(*input.size())
         elif isinstance(self.normalizer, (nn.InstanceNorm1d, nn.GroupNorm)):
             # Normalize over embedding dimension (last)
             orig_shape = input.shape

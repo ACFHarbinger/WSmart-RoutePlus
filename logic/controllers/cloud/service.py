@@ -214,8 +214,10 @@ class CloudService(ServiceStatusMixin, ServiceLaunchMixin, CostMixin, SchedulerM
             ) and not any(t.state in ACTIVE for t in tasks):
                 continue
             if bool(job.spec.pool) != self.pool_mode:
-                # Pool jobs run on pool workers; the coordinator only requeues their dead workers' tasks.
-                changes += self._requeue_stale_pool_tasks(job, tasks) if job.spec.pool else 0
+                # Pool jobs run on pool workers; the coordinator only requeues their dead workers' tasks and accrues costs.
+                if job.spec.pool and not self.pool_mode:
+                    changes += self._requeue_stale_pool_tasks(job, tasks)
+                    changes += self._accrue(job, tasks)
                 continue
             changes += self._tick_job(job, tasks, running, starting)
         changes += self._scale_pool(jobs, tasks_by_job)  # CR-09 warm pool (coordinator only)
@@ -251,20 +253,27 @@ class CloudService(ServiceStatusMixin, ServiceLaunchMixin, CostMixin, SchedulerM
             return changes
         current = self.cp.list_tasks(job.job_id)
         active = sum(1 for t in current if t.state in ACTIVE)
-        limit = self._parallelism(job, current, running)  # CR-09 auto-scaling cap
+        parallelism = self._parallelism(job, current, running)  # CR-09 auto-scaling cap
         if self.pool_mode:
-            limit = min(
-                limit, self.pool_slots - sum(1 for t in current if t.state in ACTIVE and t.lease_owner == self.owner)
-            )
-        while active < limit:
+            my_tasks = [t for t in current if t.state in ACTIVE and t.lease_owner == self.owner]
+            my_active = len(my_tasks)
+            can_lease = (active < parallelism) and (my_active < self.pool_slots)
+        else:
+            can_lease = active < parallelism
+        while can_lease:
             leased = self.cp.lease_task(self.owner, _LEASE_SECONDS, job_id=job.job_id)
             if leased is None:
                 break
             started = self._place_and_start(job, leased, running, starting)
             if not started:
                 break
-            active += 1
             changes += 1
+            active += 1
+            if self.pool_mode:
+                my_active += 1
+                can_lease = (active < parallelism) and (my_active < self.pool_slots)
+            else:
+                can_lease = active < parallelism
         return changes
 
     def _submit_attempt(self, backend: ComputeBackend, view: JobRecord, task: TaskRecord) -> str:
@@ -326,8 +335,11 @@ class CloudService(ServiceStatusMixin, ServiceLaunchMixin, CostMixin, SchedulerM
         task = self._ensure_running(task)
         self._record_outcome(job, task, status.state.value)  # CR-09 target health (succeeded/preempted/failed)
         if status.state == AttemptState.SUCCEEDED:
-            files = self._collect(job, task)
-            self.cp.record_results(task.task_id, files)
+            if Provider(self._task_spec(job, task).provider) == Provider.LOCAL:
+                files = self._collect(job, task)
+                self.cp.record_results(task.task_id, files)
+            else:
+                files = self.cp.list_results(task.task_id)
             self._set(task, TaskState.SUCCEEDED, finished_at=now, message=None)
             self._event(job.job_id, "result", task.task_id, {"files": len(files)})
             return 1
@@ -438,9 +450,13 @@ class CloudService(ServiceStatusMixin, ServiceLaunchMixin, CostMixin, SchedulerM
     def download(self, job_id: str, dest: Path) -> List[Path]:
         """Download every succeeded task's results under ``dest`` (the ``outputs/`` layout)."""
         written: List[Path] = []
-        for task in self.cp.list_tasks(job_id):
-            if task.state == TaskState.SUCCEEDED:
-                written += download_results(self.store, self.cp.list_results(task.task_id), dest)
+        succeeded = [task for task in self.cp.list_tasks(job_id) if task.state == TaskState.SUCCEEDED]
+        multi_cell = len(succeeded) > 1
+        for task in succeeded:
+            results = self.cp.list_results(task.task_id)
+            needs_subfolder = multi_cell and not any(task.cell.cell_id in Path(r.relpath).parts for r in results)
+            task_dest = dest / task.cell.cell_id if needs_subfolder else dest
+            written += download_results(self.store, results, task_dest)
         return written
 
 

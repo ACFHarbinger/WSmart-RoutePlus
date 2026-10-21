@@ -203,8 +203,19 @@ class DocumentControlPlane(ControlPlane):
                 "metrics", {"task_id": task_id, "at": float(record.get("at", self.clock())), "record": record}
             )
 
-    def get_metrics(self, task_id: str, since: Optional[float] = None) -> List[Dict[str, Any]]:
-        return [doc["record"] for doc in self.adapter.list_appended("metrics", task_id, since)]
+    def get_metrics(
+        self,
+        task_id: str,
+        since: Optional[float] = None,
+        limit: Optional[int] = None,
+        reverse: bool = False,
+    ) -> List[Dict[str, Any]]:
+        docs = [doc["record"] for doc in self.adapter.list_appended("metrics", task_id, since)]
+        if reverse:
+            docs = list(reversed(docs))
+        if limit is not None:
+            docs = docs[:limit]
+        return docs
 
     def record_results(self, task_id: str, files: Sequence[ResultFile]) -> None:
         self.adapter.replace_results(task_id, [dict(to_dict(record), task_id=task_id) for record in files])

@@ -94,7 +94,7 @@ class TCPTPEnv(CPTPEnv):
 
     NAME: str = "tcptp"
     name: str = "tcptp"
-    explicit_stop: bool = False
+    explicit_stop: bool = True
 
     def __init__(
         self,
@@ -124,15 +124,12 @@ class TCPTPEnv(CPTPEnv):
         self.resources = (LoadResource(), ShiftTimeResource())
 
     def _check_done(self, tensordict: TensorDict) -> torch.Tensor:
-        """End at the depot once no customer is reachable even on a fresh trip.
-
-        A depot return starts a new trip, so it ends a multi-trip TCPTP day only on
-        exhaustion (the pre-WP-07 ``envs/routing/tcptp.py`` rule).
-        """
+        """End at the depot once explicit stop triggers or customer actions are exhausted."""
         current = tensordict["current_node"].reshape(-1)
         step = tensordict["i"].reshape(-1)
-        exhausted = ~self._get_action_mask(tensordict)[:, 1:].any(dim=1)
-        return (current == 0) & (step > 0) & exhausted
+        exhausted = (current == 0) & (step > 0) & ~self._get_action_mask(tensordict)[:, 1:].any(dim=1)
+        finished = tensordict.get("finished", torch.zeros_like(current, dtype=torch.bool))
+        return finished | exhausted
 
 
 class TCPTP(CPTP):

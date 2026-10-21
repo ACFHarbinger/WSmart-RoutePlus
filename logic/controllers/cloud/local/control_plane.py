@@ -223,9 +223,17 @@ class SQLiteControlPlane(ControlPlane):
                 [(task_id, float(record.get("at", time.time())), json.dumps(record)) for record in records],
             )
 
-    def get_metrics(self, task_id: str, since: Optional[float] = None) -> List[Dict[str, Any]]:
+    def get_metrics(
+        self,
+        task_id: str,
+        since: Optional[float] = None,
+        limit: Optional[int] = None,
+        reverse: bool = False,
+    ) -> List[Dict[str, Any]]:
+        order = "DESC" if reverse else "ASC"
+        limit_clause = f" LIMIT {int(limit)}" if limit is not None else ""
         rows = self._read(
-            "SELECT doc FROM metrics WHERE task_id = ? AND at > ? ORDER BY id",
+            f"SELECT doc FROM metrics WHERE task_id = ? AND at > ? ORDER BY id {order}{limit_clause}",
             (task_id, -1.0 if since is None else since),
         )
         return [json.loads(row[0]) for row in rows]

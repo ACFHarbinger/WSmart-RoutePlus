@@ -35,6 +35,8 @@ def _test_safe_sqlite3_connect(database, *args, **kwargs):
         if is_prod_tracking or is_prod_telemetry:
             fname = "telemetry.db" if is_prod_telemetry else "tracking.db"
             database = str(_TEST_SQLITE_DIR / fname)
+        elif "test_tracking" in db_str:
+            Path(database).parent.mkdir(parents=True, exist_ok=True)
     return _original_sqlite3_connect(database, *args, **kwargs)
 
 

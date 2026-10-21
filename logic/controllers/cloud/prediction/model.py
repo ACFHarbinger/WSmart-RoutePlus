@@ -120,7 +120,13 @@ class RuntimePredictor:
     def _frame(self, rows: Sequence[Dict[str, Any]]):
         import pandas as pd
 
-        return pd.DataFrame([{k: r.get(k) for k in MODEL_CATEGORICAL + NUMERIC} for r in rows])
+        def _val(r, k):
+            v = r.get(k)
+            if k == "policy" and v in ("na.amgat", "amgat", "na"):
+                return "am"
+            return v
+
+        return pd.DataFrame([{k: _val(r, k) for k in MODEL_CATEGORICAL + NUMERIC} for r in rows])
 
     def _fit(self, rows: Sequence[Dict[str, Any]]) -> Dict[float, Any]:
         from sklearn.compose import ColumnTransformer

@@ -120,7 +120,7 @@ class OutputMirror:
 
     def index(self) -> List[ResultFile]:
         """Every file currently in the mirror, with the hash of its latest upload."""
-        records = dict(self.files)
+        records = {relpath: res for relpath, res in self.files.items() if (self.root / relpath).is_file()}
         for key in self.store.list(self.prefix + "/"):
             relpath = key[len(self.prefix) + 1 :]
             if relpath not in records and (self.root / relpath).is_file():
