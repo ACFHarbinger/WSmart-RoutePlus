@@ -65,14 +65,11 @@ def _ensure_schema(conn: sqlite3.Connection) -> None:
             ON policy_viz_snapshots(policy, day);
         """
     )
-    row = conn.execute(
-        "SELECT value FROM schema_meta WHERE key = 'version'"
-    ).fetchone()
-    if row is None:
-        conn.execute(
-            "INSERT INTO schema_meta (key, value) VALUES ('version', ?)",
-            (str(_SCHEMA_VERSION),),
-        )
+    conn.execute(
+        "INSERT INTO schema_meta (key, value) VALUES ('version', ?) "
+        "ON CONFLICT(key) DO NOTHING",
+        (str(_SCHEMA_VERSION),),
+    )
     conn.commit()
 
 
