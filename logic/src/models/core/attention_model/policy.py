@@ -123,6 +123,15 @@ class AttentionModelPolicy(AutoregressivePolicy):
         """
         return self.init_embedding(td)
 
+    @staticmethod
+    def _forced_action_log_prob(logits: torch.Tensor, valid_mask: torch.Tensor, action: torch.Tensor) -> torch.Tensor:
+        """Score a supplied action without additive-epsilon bias in half precision."""
+        masked_logits = logits.masked_fill(~valid_mask, float("-inf"))
+        if logits.dtype in (torch.float16, torch.bfloat16):
+            return torch.log_softmax(masked_logits.float(), dim=-1).gather(1, action.unsqueeze(-1)).squeeze(-1)
+        probs = torch.softmax(masked_logits, dim=-1)
+        return torch.log(probs.gather(1, action.unsqueeze(-1)) + 1e-10).squeeze(-1)
+
     def forward(  # type: ignore[override]
         self,
         td: TensorDict,
@@ -217,17 +226,13 @@ class AttentionModelPolicy(AutoregressivePolicy):
                 # Teacher forcing
                 action = actions[:, step_idx]
                 # Compute log_prob of this action
-                probs = torch.softmax(logits.masked_fill(~valid_mask, float("-inf")), dim=-1)
-                eps = 1e-4 if probs.dtype == torch.float16 else 1e-10
-                log_p = torch.log(probs.gather(1, action.unsqueeze(-1)) + eps).squeeze(-1)
+                log_p = self._forced_action_log_prob(logits, valid_mask, action)
             elif step_idx == 0 and start_nodes is not None:
                 # Forced start node (POMO mandatory-only mode): pin first action to
                 # the pre-selected mandatory node while still computing log_p from
                 # the decoder distribution so that gradients flow correctly.
                 action = start_nodes.to(td.device)
-                probs = torch.softmax(logits.masked_fill(~valid_mask, float("-inf")), dim=-1)
-                eps = 1e-4 if probs.dtype == torch.float16 else 1e-10
-                log_p = torch.log(probs.gather(1, action.unsqueeze(-1)) + eps).squeeze(-1)
+                log_p = self._forced_action_log_prob(logits, valid_mask, action)
             else:
                 # Select action
                 action, log_p, entropy_step = self._select_action(logits, valid_mask, strategy)

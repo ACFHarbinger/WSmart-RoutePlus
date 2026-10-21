@@ -28,6 +28,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Codex: preserve Hydra model constructor overrides (`2026-10-21`)
 
 - Forward configured top-level model values rather than DictConfig internals, preserving temporal horizons and MoE overrides. Regression tests cover Hydra and object configurations. Existing checkpoints are unchanged; changes to future affected training require owner review.
+### Codex explicit-half decoding likelihoods (2026-10-21)
+
+- Compute explicit fp16/bfloat16 action log probabilities and entropy in float32 log space, preserving zero masked mass and avoiding large additive-epsilon gradient bias. Float32 paths retain their prior behavior; this does not retrain checkpoints.
+
 ### Codex beam identity and cache compatibility (2026-10-21)
 
 - Preserve original instance IDs through beam slicing and environment steps, align all decoder cache tensors by those IDs, and support unequal and reordered beam widths with Glimpse/GAT decoders.
