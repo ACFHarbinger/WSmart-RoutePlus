@@ -89,6 +89,7 @@ class GlimpseDecoderLogitsMixin:
             self.n_heads,
             tanh_clipping=self.tanh_clipping,
             mask_val=mask_val,
+            mask_inner=getattr(self, "mask_inner", True),
         ).squeeze(1)
 
         if normalize:
@@ -115,14 +116,18 @@ class GlimpseDecoderLogitsMixin:
                 query = query.squeeze(1)
             return query
 
-        current_node = state.get_current_node()
-        batch_size = embeddings.size(0)
-
-        # Ensure current_node is (batch, 1) or (batch)
+        current_node = state.get_current_node() if hasattr(state, "get_current_node") else state.get("current_node")
         if current_node.dim() > 1:
-            current_node = current_node.reshape(batch_size, -1)
-            # If it became (batch, 1), good. If (batch, N), typically N=1 here.
-            current_node = current_node[:, 0]  # Make it (batch,) for cleaner unsqueezing below
+            current_node = current_node.squeeze(-1)
+        batch_size = current_node.size(0)
+
+        if embeddings.size(0) != batch_size:
+            if embeddings.size(0) == 1:
+                embeddings = embeddings.expand(batch_size, -1, -1)
+            elif batch_size % embeddings.size(0) == 0:
+                embeddings = embeddings.repeat_interleave(batch_size // embeddings.size(0), dim=0)
+            else:
+                embeddings = embeddings.expand(batch_size, -1, -1)
 
         # Simple context: [batch, embed]
         # AM typically uses [embeddings(current_node), embeddings(first_node), capacity_left]

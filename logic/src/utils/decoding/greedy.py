@@ -65,7 +65,8 @@ class Greedy(DecodingStrategy):
         probs = F.softmax(logits, dim=-1)
 
         action = probs.argmax(dim=-1)
-        log_prob = torch.log(probs.gather(1, action.unsqueeze(-1)) + NUMERICAL_EPSILON).squeeze(-1)
+        eps = 1e-4 if probs.dtype == torch.float16 else NUMERICAL_EPSILON
+        log_prob = torch.log(probs.gather(1, action.unsqueeze(-1)) + eps).squeeze(-1)
 
         # Entropy for greedy is 0 since it's deterministic
         entropy = torch.zeros_like(log_prob)

@@ -390,7 +390,14 @@ class PCTSP(BaseProblem):
             }
 
         penalty = dataset.get("penalty", torch.zeros(pi.size(0), pi.size(1), device=pi.device))
-        if penalty.shape[-1] == pi.max().item():
+        num_loc = dataset.get("num_loc")
+        if num_loc is None:
+            if "locs" in dataset:
+                loc_s = dataset["locs"].shape[-2]
+                num_loc = loc_s + 1 if "depot" in dataset else loc_s
+            else:
+                num_loc = penalty.shape[-1] + 1
+        if penalty.shape[-1] == num_loc - 1 or penalty.shape[-1] <= pi.max().item():
             penalty = torch.cat([torch.zeros_like(penalty[:, :1]), penalty], dim=-1)
 
         saved_penalty = penalty.gather(1, pi).sum(-1)

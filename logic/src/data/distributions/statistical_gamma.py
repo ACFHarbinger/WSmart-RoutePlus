@@ -89,7 +89,7 @@ class Gamma(BaseDistribution):
             return torch.from_numpy(self._sample_array(size, rng=rng)).float()
 
         m = torch.distributions.Gamma(self.alpha, 1 / self.theta)
-        return m.sample(torch.Size(size))
+        return m.sample(torch.Size(size)) / 100.0
 
     def _sample_array(self, size: Tuple[int, ...], rng: Optional[np.random.Generator] = None) -> np.ndarray:
         """Sample from Gamma distribution.

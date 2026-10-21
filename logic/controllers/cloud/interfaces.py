@@ -187,8 +187,14 @@ class ControlPlane(abc.ABC):
         """Append metric records (each with an ``at`` timestamp)."""
 
     @abc.abstractmethod
-    def get_metrics(self, task_id: str, since: Optional[float] = None) -> List[Dict[str, Any]]:
-        """A task's metric records, oldest first."""
+    def get_metrics(
+        self,
+        task_id: str,
+        since: Optional[float] = None,
+        limit: Optional[int] = None,
+        reverse: bool = False,
+    ) -> List[Dict[str, Any]]:
+        """A task's metric records, oldest first (or latest first when reverse=True)."""
 
     @abc.abstractmethod
     def record_results(self, task_id: str, files: Sequence[ResultFile]) -> None:

@@ -82,23 +82,31 @@ class CostMixin:
 
     def _check_budget(self, spec: JobSpec, estimate: Optional[CostEstimate]) -> List[Dict[str, Any]]:
         """Raise :class:`BudgetExceeded` if the p50 estimate breaks a cap; returns p90 warnings."""
+        policy = self.budget
         if estimate is None or estimate.mid is None:
             if spec.resources.budget_usd is not None:
                 raise BudgetExceeded("the job has a budget cap but no cost estimate (no runtime prediction or price)")
+            if (
+                policy is not None
+                and policy.monthly_usd is not None
+                and Provider(spec.provider) != Provider.LOCAL
+                and (policy.monthly_usd - self.month_committed(self.clock())) <= 0
+            ):
+                remaining = policy.monthly_usd - self.month_committed(self.clock())
+                raise BudgetExceeded(f"monthly budget exceeded ({remaining:.2f} USD left)")
             return []
         warnings = []
         caps = [("job", spec.resources.budget_usd)]
-        policy = self.budget
         if policy is not None and policy.monthly_usd is not None:
             caps.append(("month", policy.monthly_usd - self.month_committed(self.clock())))
         for scope, cap in caps:
             if cap is None:
                 continue
-            if estimate.mid > cap:
+            if Provider(spec.provider) != Provider.LOCAL and estimate.mid > cap:
                 raise BudgetExceeded(
                     f"estimated {estimate.mid:.2f} USD exceeds the {scope} budget ({cap:.2f} USD left)"
                 )
-            if estimate.high is not None and estimate.high > cap:
+            if Provider(spec.provider) != Provider.LOCAL and estimate.high is not None and estimate.high > cap:
                 warnings.append({"scope": scope, "estimate": True, "high_usd": estimate.high, "cap_usd": cap})
         return warnings
 
@@ -141,7 +149,12 @@ class CostMixin:
 
     def month_committed(self, now: float) -> float:
         """The month's accrued cost, with unfinished jobs at max(p50 estimate, accrued)."""
-        month, total = _month(now), 0.0
+        month = _month(now)
+        memo = getattr(self, "_month_memo", None)
+        memo_key = f"committed_{month}"
+        if memo is not None and memo_key in memo:
+            return memo[memo_key]
+        total = 0.0
         for job in self.cp.list_jobs(limit=1000):
             if _month(job.created_at) != month:
                 continue
@@ -151,7 +164,10 @@ class CostMixin:
                 estimates = [e.data.get("mid") for e in self.cp.list_events(job.job_id) if e.kind == "cost_estimate"]
                 accrued = max(accrued, estimates[-1] or 0.0) if estimates else accrued
             total += accrued
-        return round(total, 6)
+        res = round(total, 6)
+        if memo is not None:
+            memo[memo_key] = res
+        return res
 
     def _accrue(self, job: JobRecord, tasks: Sequence[TaskRecord]) -> int:
         """Write cost records, emit warnings and stop the job at its caps; returns state changes (0)."""

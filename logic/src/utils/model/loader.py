@@ -267,6 +267,13 @@ def _parse_hydra_config(cfg: Any) -> Dict[str, Any]:
         args = {
             "problem": env.get("name", "ptp"),
             "encoder": enc.get("type", "gat"),
+            "decoder_type": dec.get("type", "glimpse"),
+            "decoder": dec.get("type", "glimpse"),
+            "decoder_normalization": (
+                dec.get("normalization", {}).get("norm_type", "instance")
+                if isinstance(dec.get("normalization"), dict)
+                else dec.get("normalization", "instance")
+            ),
             "model": model.get("name", "am"),
             "embed_dim": enc.get("embed_dim", 128),
             "hidden_dim": enc.get("hidden_dim", 512),
@@ -306,6 +313,9 @@ def _parse_hydra_config(cfg: Any) -> Dict[str, Any]:
         args = {
             "problem": env.get("name", "ptp"),
             "encoder": model.get("encoder_type", "gat"),
+            "decoder_type": model.get("decoder_type", "glimpse"),
+            "decoder": model.get("decoder_type", "glimpse"),
+            "decoder_normalization": model.get("decoder_normalization", "instance"),
             "model": model.get("name", "am"),
             "embed_dim": model.get("embed_dim", 128),
             "hidden_dim": model.get("hidden_dim", 512),

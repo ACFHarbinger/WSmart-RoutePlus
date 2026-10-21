@@ -418,11 +418,21 @@ class DeepGATDecoder(nn.Module):
                 query = query.squeeze(1)
             return query
 
-        current_node = state.get_current_node()
+        current_node = state.get_current_node() if hasattr(state, "get_current_node") else state.get("current_node")
+        if current_node.dim() == 1:
+            current_node = current_node.unsqueeze(-1)
         batch_size, num_steps = current_node.size()
 
         if num_steps > 1:
             raise NotImplementedError("Parallel steps > 1 not supported yet")
+
+        if embeddings.size(0) != batch_size:
+            if embeddings.size(0) == 1:
+                embeddings = embeddings.expand(batch_size, -1, -1)
+            elif batch_size % embeddings.size(0) == 0:
+                embeddings = embeddings.repeat_interleave(batch_size // embeddings.size(0), dim=0)
+            else:
+                embeddings = embeddings.expand(batch_size, -1, -1)
 
         current_node_embed = torch.gather(
             embeddings,

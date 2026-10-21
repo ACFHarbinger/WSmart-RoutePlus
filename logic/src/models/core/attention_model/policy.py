@@ -208,31 +208,38 @@ class AttentionModelPolicy(AutoregressivePolicy):
                 mask = mask.squeeze(1)
             valid_mask = ~mask
 
+            if actions is not None and step_idx >= actions.size(1):
+                break
+
+            active = ~td["done"].squeeze(-1) if td["done"].dim() > 1 else ~td["done"]
+
             if actions is not None:
                 # Teacher forcing
                 action = actions[:, step_idx]
                 # Compute log_prob of this action
                 probs = torch.softmax(logits.masked_fill(~valid_mask, float("-inf")), dim=-1)
-                log_p = torch.log(probs.gather(1, action.unsqueeze(-1)) + 1e-10).squeeze(-1)
+                eps = 1e-4 if probs.dtype == torch.float16 else 1e-10
+                log_p = torch.log(probs.gather(1, action.unsqueeze(-1)) + eps).squeeze(-1)
             elif step_idx == 0 and start_nodes is not None:
                 # Forced start node (POMO mandatory-only mode): pin first action to
                 # the pre-selected mandatory node while still computing log_p from
                 # the decoder distribution so that gradients flow correctly.
                 action = start_nodes.to(td.device)
                 probs = torch.softmax(logits.masked_fill(~valid_mask, float("-inf")), dim=-1)
-                log_p = torch.log(probs.gather(1, action.unsqueeze(-1)) + 1e-10).squeeze(-1)
+                eps = 1e-4 if probs.dtype == torch.float16 else 1e-10
+                log_p = torch.log(probs.gather(1, action.unsqueeze(-1)) + eps).squeeze(-1)
             else:
                 # Select action
                 action, log_p, entropy_step = self._select_action(logits, valid_mask, strategy)
                 if isinstance(entropy_step, torch.Tensor):
-                    entropy = entropy + entropy_step
+                    entropy = entropy + (entropy_step * active.float())
 
             # Update state
             td["action"] = action
             td = env.step(td)["next"].clone()
 
-            # update log likelihood
-            log_likelihood = log_likelihood + log_p
+            # update log likelihood for active instances only
+            log_likelihood = log_likelihood + (log_p * active.float())
             output_actions.append(action)
             step_idx += 1
 

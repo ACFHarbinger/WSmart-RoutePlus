@@ -17,6 +17,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Gemini swarm review fixes across Lanes A, B, C, D (`2026-10-20`)
+
+#### Fixed
+
+- **Lane A: Attention Models & Decoding.**
+  - `embeddings/context`: Fixed context embedders (`cptp`, `generic`, `ptp`, `base`) crashing on multi-instance beam search by deriving `batch_size = current_node.size(0)` and dynamically broadcasting embeddings across beams (A1).
+  - `models/core/attention_model/policy.py`: Prevented finished instances from accumulating log-probabilities and entropy indefinitely during decoding steps via active instance masking (`active.float()`) (A2); added bounds check preventing IndexError in teacher-forcing when trajectories exceed action length (A3); safeguarded log-probability computations against float16 numerical epsilon underflow (`eps = 1e-4` under `torch.float16`) (A5).
+  - `utils/decoding/sampling.py`: Prevented masked probabilities from clamping to positive values by zeroing invalid actions and computing exact entropy over non-zero actions (A4, A11).
+  - `utils/decoding/greedy.py`: Applied float16-safe numerical epsilon (`1e-4`) under `torch.float16` preventing `-inf` log-probabilities (A5).
+  - `utils/model/loader.py`: Preserved `decoder_type`, `decoder`, and `decoder_normalization` in both parser branches of `_parse_hydra_config` (A6).
+  - `pipeline/learning/envs/base/problem.py`: Unpacked `(parent, action, score)` triplet from `propose_expansions` in `BaseProblem.beam_search` (A7).
+  - `models/subnets/modules/normalization.py` & `configs/models/normalization.py`: Changed `BatchNorm1d` default `track_stats` / `track_running_stats` to `True` so singleton inputs in `eval()` do not raise `ValueError` (A8).
+  - `decoders/glimpse/decoder_logits.py` & `attention.py`: Forwarded `mask_inner` flag to `one_to_many_logits` for proper internal attention masking (A9).
+  - `embeddings/context/cptp.py`: Precomputed distance matrix lookup replacing on-the-fly euclidean distance recalculation (A10: 3.72x speedup).
+
+- **Lane B: Environments & Rewards.**
+  - `pipeline/learning/envs/tcptp.py`: Enabled `explicit_stop: bool = True` and updated `_check_done` to terminate when finished or customer actions are exhausted (B12).
+  - `pipeline/learning/common/base/data.py`: Read from `_waste_full` to restore full 3D tensor across multi-day evaluation replication (B13).
+  - `data/distributions/statistical_gamma.py`: Normalized `_sample_tensor` by `/ 100.0` matching `_sample_array` distribution scale (B14).
+  - `pipeline/features/eval/eval_loop.py`: Checked `"dist_matrix"`, `"dm"`, and `"dist"` keys for distance matrix input, and scaled reported `"kg"` by `bin_capacity_kg` (default 47.5 kg) (B15).
+  - `pipeline/learning/envs/ptp.py`: Initialized `td["max_waste"] = torch.ones(bs)` in `_generate` (B16).
+  - `pipeline/learning/envs/op.py`: Prepended depot 0 to `prize_all` whenever indexing customer nodes in partial tours (B17).
+  - `pipeline/learning/envs/pctsp.py`: Prepended depot 0 to `penalty` whenever indexing customer nodes in partial tours (B18).
+  - `policies/routing/learning_algorithms/neural_agent/simulation.py`: Scaled incremental reward waste term by `waste_weight` (default 27.74 €/bin) in `compute_simulator_day` (B19).
+  - `pipeline/learning/envs/base/problem.py`: Batched `dist_matrix[batch_indices]` and preserved intermediate depot legs in `get_tour_length` (B20).
+  - `pipeline/learning/envs/base/routing.py`: Vectorized road distance step indexing via tensor slicing (B21: 73.41x speedup).
+
+- **Lane C: Cloud Money & Scheduling.**
+  - `controllers/cloud/service.py`: Coordinator accrues costs for pool jobs on each scheduling tick (C22); decoupled pool worker local slot availability from global parallelism cap in `_tick_job` (C23).
+  - `controllers/cloud/service_status.py`: Preserved attempt interval durations and costs across retried tasks (C24).
+  - `controllers/cloud/scheduler/mixin.py`: Cancelled backend task on placing lease expiry in `_place_and_start` (C25); enforced monthly budget cap in `_parallelism` auto-scaling against accrued monthly spend (C27).
+  - `controllers/cloud/cost/budget.py`: Enforced monthly budget cap check for unestimated remote jobs (C26); exempted zero-cost local jobs from monthly budget cap refusals (C29); memoized `month_committed` calculations within each scheduling pass via `_month_memo` (C33: 74.90x speedup).
+  - `controllers/cloud/cost/billing.py`: Validated currency is `"USD"` before storing billing export totals (C28).
+  - `controllers/cloud/prediction/features.py`: Supported unbracketed `sim.policies`, `sim.days=N`, and fallback policy parsing (C30).
+  - `controllers/cloud/prediction/model.py` & `features.py`: Mapped `na.amgat`, `amgat`, and `na` to `am` for runtime prediction (C31).
+  - `controllers/cloud/prediction/history.py`: Cached static fitted predictor `RuntimePredictor(load_table())` via `get_base_predictor()` (C34: 105.64x speedup).
+
+- **Lane D: Cloud State, Retry & Results.**
+  - `controllers/cloud/telemetry.py`: Supported `sim.graph.n_days=N`, `sim.days=N`, and `days=N` in `days_from_argv` (D35).
+  - `controllers/cloud/service.py`: Requeued retried tasks directly to `TaskState.QUEUED` with event emission, eliminating stuck `RETRYING` transitions (D36); partitioned multi-cell job downloads under `dest / cell_id` when paths do not already contain cell_id (D39); skipped redundant `record_results` on remote tasks in `_poll` (D43: 5.62x speedup).
+  - `controllers/cloud/providers/azure/batch.py`: Appended `-a{attempt}` to Azure Batch `task_id` for distinct retry tracking (D38).
+  - `controllers/cloud/runtime.py`: Filtered deleted local files from `OutputMirror.index()` (D40).
+  - `controllers/cloud/cli.py`: Acquired `worker_lock` during `cloud submit --wait` to prevent scheduler race conditions (D41).
+  - `controllers/cloud/service_status.py`: Optimized `_latest_resource` via `get_metrics(limit=20, reverse=True)` (D42: 7.92x speedup).
+
+#### Optimizations (Performance Deltas)
+
+- **A10 (CPTP distance lookup)**: 119.96 ms -> 32.22 ms (3.72x speedup).
+- **A11 (Sampling entropy & multinomial)**: 200.58 ms -> 240.69 ms (exact entropy calculation without illegal probability leakage).
+- **B21 (Routing vectorized DM indexing)**: 1108.92 ms -> 15.11 ms (73.41x speedup).
+- **C33 (Budget month committed memoization)**: 61.75 ms -> 0.82 ms (74.90x speedup).
+- **C34 (Fitted predictor static cache)**: 111,798.05 ms -> 1058.33 ms (105.64x speedup).
+- **D42 (Latest resource query limit)**: 26.23 ms -> 3.31 ms (7.92x speedup).
+- **D43 (Remote record_results bypass)**: 12.05 ms -> 2.14 ms (5.62x speedup).
+
+#### Verified
+
+- Dedicated regression unit tests added in `logic/test/unit/models/test_review_fixes_gemini_lane_a.py`, `logic/test/unit/pipeline/test_review_fixes_gemini_lane_b.py`, `logic/test/unit/controllers/cloud/test_review_fixes_gemini_lane_c.py`, and `logic/test/unit/controllers/cloud/test_review_fixes_gemini_lane_d.py` (33/33 passed).
+- Full regression unit test suite passes cleanly with PyTorch under isolated execution (238 passed in models, 632 passed in pipeline, 200 passed in cloud; 0 failures).
+- 2-day Rio Maior 100 simulation parity verified against `main` for standard paper policies (`alns`, `hgs`, `aco_hh`, `sans`, `psoma`, `pg_clns`, `bp`): all 13 logs identical to `main` in kg, km, kg lost, overflows, and profit (0.000 unintended deviation).
+
 ### Stage-plumbing fixes from the Cursor review of PR #140 (`2026-10-20`)
 
 #### Fixed

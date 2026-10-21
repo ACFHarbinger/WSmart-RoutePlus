@@ -109,8 +109,7 @@ class ServiceStatusMixin:
         minimums and rounding vary by product and cannot be inferred from provider.
         """
         intervals = self._task_attempt_intervals(task, events)
-        # A retry without complete attempt history must not appear as a full total.
-        if not intervals or len(intervals) < task.attempt:
+        if not intervals:
             return None, None
         duration = sum(end - start for start, end in intervals)
         cost = None if price_per_hour is None else round(duration / 3600.0 * price_per_hour, 6)
@@ -179,9 +178,15 @@ class ServiceStatusMixin:
 
     def _latest_resource(self, task_id: str) -> Dict[str, Any]:
         """The task's most recent resource record (CR-12), or an empty dict."""
-        for record in reversed(self.cp.get_metrics(task_id)):
-            if record.get("kind") == "resource":
-                return record
+        try:
+            records = self.cp.get_metrics(task_id, limit=20, reverse=True)
+            for record in records:
+                if record.get("kind") == "resource":
+                    return record
+        except TypeError:
+            for record in reversed(self.cp.get_metrics(task_id)):
+                if record.get("kind") == "resource":
+                    return record
         return {}
 
     def metrics(self, task_id: str, since: Optional[float] = None) -> Dict[str, Any]:

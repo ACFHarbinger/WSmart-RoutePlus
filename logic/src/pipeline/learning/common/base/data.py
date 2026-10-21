@@ -251,7 +251,7 @@ class DataMixin:
                     # injecting 'current_day' so the env selects the right waste slice.
                     n_days_eval = int(_cfg_get(eval_graph, "n_days", 1))
                     start_day_eval = int(_cfg_get(eval_graph, "start_day", 0) or 0)
-                    waste_field = val_ds.data.get("waste", None)
+                    waste_field = val_ds.data.get("_waste_full", val_ds.data.get("waste", None))
                     if n_days_eval > 1 and waste_field is not None and waste_field.dim() > 2:
                         n_available = waste_field.shape[1]
                         day_tds = []
@@ -260,6 +260,8 @@ class DataMixin:
                             if day_idx >= n_available:
                                 break
                             td_day = val_ds.data.clone()
+                            if "_waste_full" in td_day.keys():
+                                td_day["waste"] = waste_field
                             td_day["current_day"] = torch.full(val_ds.data.batch_size, day_idx, dtype=torch.long)
                             day_tds.append(td_day)
                         if len(day_tds) > 1:

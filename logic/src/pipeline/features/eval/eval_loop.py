@@ -185,7 +185,11 @@ def _eval_dataset(
             else:
                 batch_i = cast(torch.Tensor, instance).unsqueeze(0).to(device)
 
-            dm_input = batch_i.get("dist_matrix") if isinstance(batch_i, dict) else None
+            dm_input = (
+                batch_i.get("dist_matrix", batch_i.get("dm", batch_i.get("dist", None)))
+                if isinstance(batch_i, dict)
+                else None
+            )
             if hasattr(model.problem, "evaluate_tour"):
                 c_dict = model.problem.evaluate_tour(batch_i, seq_tensor, dist_matrix=dm_input)
             else:
@@ -197,13 +201,14 @@ def _eval_dataset(
                 "overflows": torch.tensor(0.0),
             }
 
+        bin_cap_kg = float(batch_i.get("bin_capacity_kg", 47.5)) if isinstance(batch_i, dict) else 47.5
         result = {
             "cost": -float(reward),
             "reward": float(reward),
             "seq": seq,
             "duration": duration_per_batch,
             "km": c_dict["length"].item(),
-            "kg": c_dict["waste"].item() * 100,
+            "kg": c_dict["waste"].item() * bin_cap_kg,
             "overflows": c_dict["overflows"].item(),
         }
         # Additive KPI: only present when the problem tracks it (e.g. tcptp's

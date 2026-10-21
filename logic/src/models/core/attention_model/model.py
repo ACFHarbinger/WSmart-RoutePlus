@@ -405,9 +405,28 @@ class AttentionModel(AttentionModelPolicy, DecodingMixin):
             for k in matching_keys:
                 state_dict.pop(k)
 
+        # If model has normalizers with track_running_stats=False, pop running buffers from checkpoint
+        bn_suffixes = (".running_mean", ".running_var", ".num_batches_tracked")
+        for k in list(state_dict.keys()):
+            if any(k.endswith(sfx) for sfx in bn_suffixes):
+                # Check if buffer exists in model
+                curr = self
+                parts = k.split(".")
+                exists = True
+                for part in parts[:-1]:
+                    if hasattr(curr, part):
+                        curr = getattr(curr, part)
+                    else:
+                        exists = False
+                        break
+                if not exists or (hasattr(curr, "_buffers") and parts[-1] not in curr._buffers):
+                    state_dict.pop(k, None)
+
         super()._load_from_state_dict(
             state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
         )
+        # If loading a legacy checkpoint that lacked running stats, don't fail strict on missing stats
+        missing_keys[:] = [k for k in missing_keys if not any(k.endswith(sfx) for sfx in bn_suffixes)]
 
     def load_state_dict(
         self,
@@ -420,6 +439,12 @@ class AttentionModel(AttentionModelPolicy, DecodingMixin):
         Strips Lightning ``policy.`` prefix if present at root level, then delegates
         to PyTorch's loading mechanism (which invokes ``_load_from_state_dict``).
         """
-        if any(k.startswith("policy.") for k in state_dict.keys()):
-            state_dict = {(k[len("policy.") :] if k.startswith("policy.") else k): v for k, v in state_dict.items()}
-        return super().load_state_dict(state_dict, strict=strict)
+        model_keys = set(self.state_dict().keys())
+        bn_suffixes = (".running_mean", ".running_var", ".num_batches_tracked")
+        cleaned_sd = {}
+        for k, v in state_dict.items():
+            clean_k = k[len("policy.") :] if k.startswith("policy.") else k
+            if any(clean_k.endswith(sfx) for sfx in bn_suffixes) and clean_k not in model_keys:
+                continue
+            cleaned_sd[clean_k] = v
+        return super().load_state_dict(cleaned_sd, strict=strict)

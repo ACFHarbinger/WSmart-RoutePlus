@@ -36,10 +36,23 @@ def _argv_values(argv: List[str]) -> Dict[str, str]:
 
 
 def _policy(values: Dict[str, str], parts: List[str]) -> str:
-    match = re.fullmatch(r"\[\s*([^\],\s]+)\s*\]", values.get("sim.policies", ""))
-    if match:
-        return match.group(1).strip("'\"")
-    return parts[-1] if len(parts) >= 7 else UNKNOWN
+    raw = values.get("sim.policies") or values.get("sim.policy") or values.get("policy") or ""
+    if raw:
+        match = re.search(r"([^\],\s'\"\[]+)", raw)
+        if match:
+            pol = match.group(1).strip("'\" ")
+            if pol in ("na.amgat", "amgat", "na"):
+                return "am"
+            return pol
+    if len(parts) >= 7:
+        pol = parts[-1]
+    elif len(parts) >= 2 and parts[-1]:
+        pol = parts[-1]
+    else:
+        return UNKNOWN
+    if pol in ("na.amgat", "amgat", "na"):
+        return "am"
+    return pol
 
 
 def cell_features(cell: CellSpec, machine_type: Optional[str] = None) -> Dict[str, Any]:
@@ -48,11 +61,17 @@ def cell_features(cell: CellSpec, machine_type: Optional[str] = None) -> Dict[st
     parts = cell.cell_id.split("/")
     run_name = values.get("sim.run_name") or (parts[4] if len(parts) >= 7 else "")
     improver = next((i for i in _IMPROVERS if run_name.endswith(i)), UNKNOWN)
-    packing = parts[5] if len(parts) >= 7 and parts[5] in _PACKING else UNKNOWN
+    packing_raw = values.get("sim.packing") or values.get("packing") or (parts[5] if len(parts) >= 7 and parts[5] in _PACKING else UNKNOWN)
+    packing = packing_raw if packing_raw in _PACKING else UNKNOWN
 
     def number(key: str, index: int, suffix: str = "") -> Optional[int]:
         raw = values.get(key) or (parts[index].removesuffix(suffix) if len(parts) > index else "")
         return int(raw) if raw.isdigit() else None
+
+    raw_days = values.get("sim.graph.n_days") or values.get("sim.days") or values.get("days")
+    horizon = int(raw_days) if (raw_days and raw_days.isdigit()) else number("sim.graph.n_days", 0, "d")
+    raw_size = values.get("sim.graph.num_loc") or values.get("sim.num_loc") or values.get("num_loc")
+    size = int(raw_size) if (raw_size and raw_size.isdigit()) else number("sim.graph.num_loc", 2)
 
     return {
         "policy": _policy(values, parts),
@@ -60,7 +79,7 @@ def cell_features(cell: CellSpec, machine_type: Optional[str] = None) -> Dict[st
         "improver": improver,
         "distribution": values.get("sim.data_distribution") or (parts[3] if len(parts) >= 7 else UNKNOWN),
         "area": values.get("sim.graph.area") or (parts[1] if len(parts) >= 7 else UNKNOWN),
-        "size": number("sim.graph.num_loc", 2),
-        "horizon": number("sim.graph.n_days", 0, "d"),
+        "size": size,
+        "horizon": horizon,
         "machine_type": machine_type or UNKNOWN,
     }

@@ -338,11 +338,13 @@ class TaskTelemetry:
 
 
 def days_from_argv(argv: List[str]) -> Optional[int]:
-    """The horizon of a ``test_sim`` command line (``sim.graph.n_days=N``), if given."""
+    """The horizon of a ``test_sim`` command line (``sim.graph.n_days=N``, ``sim.days=N``, or ``days=N``), if given."""
     for arg in argv:
         key, sep, value = arg.partition("=")
-        if sep and key.lstrip("+") == "sim.graph.n_days" and value.isdigit():
-            return int(value)
+        clean_key = key.lstrip("+")
+        clean_val = value.strip("'\" ")
+        if sep and clean_key in ("sim.graph.n_days", "sim.days", "days") and clean_val.isdigit():
+            return int(clean_val)
     return None
 
 

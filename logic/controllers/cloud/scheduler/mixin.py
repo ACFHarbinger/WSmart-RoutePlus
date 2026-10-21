@@ -18,6 +18,7 @@ Attributes:
 
 from __future__ import annotations
 
+import contextlib
 import math
 from typing import Dict, List, Optional, Sequence
 
@@ -77,7 +78,7 @@ class SchedulerMixin:
             for task in tasks:
                 if task.state in ACTIVE and task.placement in mine:
                     mine[task.placement] += 1
-            free = sum(max(0, q - running.get(t.key(), 0)) for t, q in zip(targets_of(job.spec), quotas))
+            free = sum(max(0, q - running.get(t.key(), 0)) for t, q in zip(targets_of(job.spec), quotas, strict=True))
             cap = min(cap, sum(mine.values()) + free)
         budget = job.spec.resources.budget_usd
         if budget is not None:
@@ -98,6 +99,21 @@ class SchedulerMixin:
                     }
                     self._event(job.job_id, "budget_stop", data=data)
                     self.cancel(job.job_id)
+        policy = getattr(self, "budget", None)
+        if (
+            policy is not None
+            and getattr(policy, "monthly_usd", None) is not None
+            and Provider(job.spec.provider) != Provider.LOCAL
+        ):
+            month_left = policy.monthly_usd - self.month_accrued(self.clock())
+            active = sum(1 for t in tasks if t.state in ACTIVE)
+            if month_left <= 0:
+                cap = min(cap, active)
+            else:
+                per_task = self._estimated_task_cost(job)
+                if per_task:
+                    affordable_month = max(0, math.floor(month_left / per_task))
+                    cap = min(cap, active + affordable_month)
         return cap
 
     def _estimated_task_cost(self, job: JobRecord) -> Optional[float]:
@@ -160,6 +176,8 @@ class SchedulerMixin:
                 last_error, launch_failed = exc, launch_failed + 1
                 continue
             if not self._owns_placing(task):
+                with contextlib.suppress(Exception):
+                    backend.cancel(handle)
                 return None
             self.health.record(key, "launched", now)
             self._set(task, TaskState.STARTING, backend_handle=handle, started_at=now, heartbeat=now)

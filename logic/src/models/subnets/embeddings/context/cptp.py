@@ -82,14 +82,20 @@ class CPTPContextEmbedder(PTPContextEmbedder):
         Returns:
             torch.Tensor: Projected step context embedding, shape (batch, 1, embed_dim).
         """
-        batch_size = embeddings.size(0)
         current_node = state.get_current_node() if hasattr(state, "get_current_node") else state.get("current_node")
 
         if current_node.dim() > 1:
             current_node = current_node.squeeze(-1)  # [B]
 
-        if embeddings.size(0) == 1 and batch_size > 1:
-            embeddings = embeddings.expand(batch_size, -1, -1)
+        batch_size = current_node.size(0)
+
+        if embeddings.size(0) != batch_size:
+            if embeddings.size(0) == 1:
+                embeddings = embeddings.expand(batch_size, -1, -1)
+            elif batch_size % embeddings.size(0) == 0:
+                embeddings = embeddings.repeat_interleave(batch_size // embeddings.size(0), dim=0)
+            else:
+                embeddings = embeddings.expand(batch_size, -1, -1)
 
         # 1. Current node embedding [B, 1, embed_dim]
         current_node_embed = embeddings.gather(
@@ -116,15 +122,35 @@ class CPTPContextEmbedder(PTPContextEmbedder):
             unvisited_waste_mean = torch.zeros(batch_size, 1, 1, device=embeddings.device)
 
         # 3. Mean Euclidean distance from current node to unvisited profitable nodes [B, 1, 1]
-        if locs is not None and visited is not None and waste is not None:
-            cur_idx = current_node.unsqueeze(-1).unsqueeze(-1).expand(batch_size, 1, 2)
-            cur_pos = locs.gather(1, cur_idx).squeeze(1)  # [B, 2]
-            dist_to_all = torch.norm(locs - cur_pos.unsqueeze(1), dim=-1)  # [B, N]
-            unvisited_profitable = (~visited) & (waste > 0)
-            unvisited_profitable[:, 0] = False  # exclude depot
-            count = unvisited_profitable.float().sum(dim=-1, keepdim=True).clamp(min=1.0)
-            mean_dist = (dist_to_all * unvisited_profitable.float()).sum(dim=-1, keepdim=True) / count
-            mean_dist_unvisited = mean_dist.unsqueeze(1)  # [B, 1, 1]
+        if visited is not None and waste is not None:
+            dist_mat = td.get("dist", td.get("dm", td.get("dist_matrix", None)))
+            if dist_mat is not None:
+                if dist_mat.dim() == 2:
+                    dist_mat = dist_mat.unsqueeze(0).expand(batch_size, -1, -1)
+                elif dist_mat.size(0) != batch_size:
+                    if dist_mat.size(0) == 1:
+                        dist_mat = dist_mat.expand(batch_size, -1, -1)
+                    elif batch_size % dist_mat.size(0) == 0:
+                        dist_mat = dist_mat.repeat_interleave(batch_size // dist_mat.size(0), dim=0)
+                    else:
+                        dist_mat = dist_mat.expand(batch_size, -1, -1)
+                cur_idx = current_node.view(batch_size, 1, 1).expand(-1, 1, dist_mat.size(-1))
+                dist_to_all = dist_mat.gather(1, cur_idx).squeeze(1)  # [B, N]
+            elif locs is not None:
+                cur_idx = current_node.unsqueeze(-1).unsqueeze(-1).expand(batch_size, 1, locs.size(-1))
+                cur_pos = locs.gather(1, cur_idx).squeeze(1)  # [B, 2]
+                dist_to_all = torch.norm(locs - cur_pos.unsqueeze(1), dim=-1)  # [B, N]
+            else:
+                dist_to_all = None
+
+            if dist_to_all is not None:
+                unvisited_profitable = (~visited) & (waste > 0)
+                unvisited_profitable[:, 0] = False  # exclude depot
+                count = unvisited_profitable.float().sum(dim=-1, keepdim=True).clamp(min=1.0)
+                mean_dist = (dist_to_all * unvisited_profitable.float()).sum(dim=-1, keepdim=True) / count
+                mean_dist_unvisited = mean_dist.unsqueeze(1)  # [B, 1, 1]
+            else:
+                mean_dist_unvisited = torch.zeros(batch_size, 1, 1, device=embeddings.device)
         else:
             mean_dist_unvisited = torch.zeros(batch_size, 1, 1, device=embeddings.device)
 

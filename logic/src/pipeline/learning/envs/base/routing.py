@@ -70,6 +70,7 @@ class RoutingEnv(RL4COEnvBase):
         self._road_ids: Optional[dict[Any, int]] = None
         self._road_matrix: Optional[torch.Tensor] = None
         self._road_cache: dict[tuple[int, ...], torch.Tensor] = {}
+        self._road_lookup: Optional[torch.Tensor] = None
 
     def _attach_road_distances(self, tensordict: TensorDict) -> None:
         """Add road distance matrix ``dm`` (km) for instances built on real network topology."""
@@ -85,6 +86,13 @@ class RoutingEnv(RL4COEnvBase):
             ids, body = load_labelled_distance_matrix(self.dm_filepath)
             self._road_ids = {bin_id: pos for pos, bin_id in enumerate(ids)}
             self._road_matrix = torch.as_tensor(body, dtype=torch.float32)
+            if ids and max(ids) < 200_000 and min(ids) >= 0:
+                lookup = torch.full((max(ids) + 1,), -1, dtype=torch.long)
+                for pos, bin_id in enumerate(ids):
+                    lookup[bin_id] = pos
+                self._road_lookup = lookup
+            else:
+                self._road_lookup = None
 
         assert self._road_ids is not None
 
@@ -103,6 +111,22 @@ class RoutingEnv(RL4COEnvBase):
         device = tensordict.device
         if bool((node_ids == node_ids[:1]).all()):
             dm = submatrix(node_ids[0]).to(device).unsqueeze(0).expand(bs, -1, -1)
+        elif (
+            getattr(self, "_road_lookup", None) is not None
+            and 0 in self._road_ids
+            and node_ids.max().item() < len(self._road_lookup)
+            and node_ids.min().item() >= 0
+        ):
+            depot_pos = self._road_ids[0]
+            lookup = self._road_lookup.to(node_ids.device)
+            cust_pos = lookup[node_ids.long()]
+            if (cust_pos < 0).any():
+                dm = torch.stack([submatrix(row) for row in node_ids]).to(device)
+            else:
+                depot_col = torch.full((bs, 1), depot_pos, dtype=torch.long, device=node_ids.device)
+                all_pos = torch.cat([depot_col, cust_pos], dim=-1)
+                mat = self._road_matrix.to(device)
+                dm = mat[all_pos.unsqueeze(-1), all_pos.unsqueeze(-2)]
         else:
             dm = torch.stack([submatrix(row) for row in node_ids]).to(device)
         tensordict["dm"] = dm

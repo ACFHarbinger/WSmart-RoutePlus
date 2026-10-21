@@ -32,6 +32,7 @@ def one_to_many_logits(
     dist_bias: Optional[torch.Tensor] = None,
     mask_val: float = -math.inf,
     tanh_clipping: float = 10.0,
+    mask_inner: bool = True,
 ) -> torch.Tensor:
     """Computes attention logits for a query against multiple nodes.
 
@@ -46,6 +47,7 @@ def one_to_many_logits(
         dist_bias: Optional distance or cost bias.
         mask_val: Value to use for masked nodes.
         tanh_clipping: Scaling factor for tanh logit clipping.
+        mask_inner: Whether to mask invalid nodes in the inner glimpse attention.
 
     Returns:
         torch.Tensor: Logits for node selection of shape (batch, graph_size).
@@ -63,7 +65,7 @@ def one_to_many_logits(
     attn_scores = torch.matmul(q_heads, glimpse_K.transpose(-2, -1)) / math.sqrt(key_size)
 
     # Masking
-    if mask is not None:
+    if mask is not None and mask_inner:
         # mask: [batch_size, num_steps, graph_size]
         mask_expanded = mask.unsqueeze(1)  # [batch_size, 1, num_steps, graph_size]
         attn_scores = attn_scores.masked_fill(mask_expanded, mask_val)

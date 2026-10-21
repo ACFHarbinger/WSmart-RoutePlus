@@ -152,7 +152,7 @@ class PTPGenerator(RoutingGenerator):
         bs = tuple(td.batch_size)
         td["waste"] = self._generate_fill_levels(bs, td["locs"], td["depot"])
         td["capacity"] = torch.full(bs, self.capacity, device=self.device)
-        td["max_waste"] = torch.full(bs, self.capacity, device=self.device)
+        td["max_waste"] = torch.ones(bs, device=self.device)
         return td
 
     def _generate_fill_levels(

@@ -145,21 +145,19 @@ class BaseProblem:
             # Simple distance matrix lookup
             if dist_matrix.dim() == 2:  # type: ignore[union-attr]
                 dist_matrix = dist_matrix.unsqueeze(0)  # type: ignore[union-attr]
+            if dist_matrix.size(0) == 1 and pi.size(0) > 1:
+                dist_matrix = dist_matrix.expand(pi.size(0), -1, -1)
+            batch_size = pi.size(0)
+            batch_indices = torch.arange(batch_size, device=pi.device)
             src_vertices, dst_vertices = pi[:, :-1], pi[:, 1:]
-            dst_mask: torch.Tensor = dst_vertices != 0
-            pair_mask: torch.Tensor = (src_vertices != 0) & (dst_mask)
-            dists: torch.Tensor = dist_matrix[0, src_vertices, dst_vertices] * pair_mask.float()  # type: ignore[index]
-            last_dst: torch.Tensor = torch.max(
-                dst_mask * torch.arange(dst_vertices.size(1), device=dst_vertices.device),
-                dim=1,
-            ).indices
-            length: torch.Tensor = (
-                dist_matrix[  # type: ignore[index]
-                    0, dst_vertices[torch.arange(dst_vertices.size(0), device=dst_vertices.device), last_dst], 0
-                ]
-                + dists.sum(dim=1)
-                + dist_matrix[0, 0, pi[:, 0]]  # type: ignore[index]
+            dists = dist_matrix[batch_indices.unsqueeze(-1), src_vertices, dst_vertices]
+            start_dist = dist_matrix[batch_indices, 0, pi[:, 0]]
+            end_dist = torch.where(
+                pi[:, -1] != 0,
+                dist_matrix[batch_indices, pi[:, -1], 0],
+                torch.zeros_like(start_dist),
             )
+            length = dists.sum(dim=1) + start_dist + end_dist
         else:
             loc_val = dataset.get("locs") if "locs" in dataset else dataset.get("loc")
             waste_val = dataset.get("waste")
@@ -221,7 +219,20 @@ class BaseProblem:
             """Propose expansions for the current beam search state."""
             if model is None:
                 raise ValueError("Model is required for proposing expansions.")
-            return model.propose_expansions(beam, fixed, normalize=True)
+            log_p = model.propose_expansions(beam, fixed, normalize=True)
+            mask = beam.state.get_mask()
+            if mask is not None:
+                if mask.dim() == 3:
+                    mask = mask.squeeze(1)
+                log_p = log_p.masked_fill(mask.bool(), float("-inf"))
+            combined_score = log_p + beam.score.unsqueeze(-1)
+            k = min(beam_size, log_p.size(-1))
+            top_scores, top_actions = torch.topk(combined_score, k=k, dim=-1)
+            valid_k = ~torch.isinf(top_scores) & ~torch.isnan(top_scores)
+            if not valid_k.any():
+                return None, None, None
+            parent_idx = torch.arange(log_p.size(0), device=log_p.device).unsqueeze(-1).expand_as(top_actions)
+            return parent_idx[valid_k], top_actions[valid_k], top_scores[valid_k]
 
         # Note: make_state is problem-specific, must be implemented by subclasses
         state = cls.make_state(input, cost_weights=cost_weights, **kwargs)

@@ -167,8 +167,13 @@ class PTPContextEmbedder(ContextEmbedder):
             current_node = current_node.squeeze(-1)  # [B]
 
         batch_size = current_node.size(0)
-        if embeddings.size(0) == 1 and batch_size > 1:
-            embeddings = embeddings.expand(batch_size, -1, -1)
+        if embeddings.size(0) != batch_size:
+            if embeddings.size(0) == 1:
+                embeddings = embeddings.expand(batch_size, -1, -1)
+            elif batch_size % embeddings.size(0) == 0:
+                embeddings = embeddings.repeat_interleave(batch_size // embeddings.size(0), dim=0)
+            else:
+                embeddings = embeddings.expand(batch_size, -1, -1)
 
         # 1. Current node embedding [B, 1, embed_dim]
         current_node_embed = embeddings.gather(

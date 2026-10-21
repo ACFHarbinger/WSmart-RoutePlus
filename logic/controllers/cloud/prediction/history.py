@@ -69,23 +69,39 @@ def _machine_factors(base: RuntimePredictor, rows: Sequence[Dict[str, Any]]) -> 
     return {m: round(statistics.median(r), 4) for m, r in by_machine.items() if len(r) >= MIN_MACHINE_SAMPLES}
 
 
+_BASE_PREDICTOR: Optional[RuntimePredictor] = None
+
+
+def get_base_predictor() -> RuntimePredictor:
+    """Return the cached base RuntimePredictor fit on the static bundled table."""
+    global _BASE_PREDICTOR
+    if _BASE_PREDICTOR is None:
+        _BASE_PREDICTOR = RuntimePredictor(load_table())
+    return _BASE_PREDICTOR
+
+
 def fitted_predictor(cp: Optional[ControlPlane] = None) -> RuntimePredictor:
     """The bundled table's model, with machine factors and memory peaks from ``cp``'s completed tasks.
 
     Cloud rows are not mixed into the laptop-time regression: they set each machine's
-    speed factor against it, so a few fast or slow machines cannot distort the laptop model.
+    speed factor against it, so a LOG-time model is preserved.
     """
-    base = RuntimePredictor(load_table())
+    base = get_base_predictor()
     if cp is None:
         return base
     rows = cloud_records(cp)
+    if not rows:
+        return base
+    import copy
+
+    pred = copy.copy(base)
     peaks: Dict[Tuple[str, Optional[int]], List[float]] = {}
     for row in rows:
         if row.get("peak_memory_mb"):
             peaks.setdefault((row["policy"], row["size"]), []).append(row["peak_memory_mb"])
-    base.machine_factors = _machine_factors(base, rows)
-    base.memory_peaks = peaks
-    return base
+    pred.machine_factors = _machine_factors(pred, rows)
+    pred.memory_peaks = peaks
+    return pred
 
 
 def record_predictions(cp: ControlPlane, job_id: str, predictions: Sequence[Prediction], at: float) -> None:
