@@ -36,6 +36,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Codex resource-history compatibility (2026-10-21)
 
 - Preserve the latest cloud resource sample when more than 20 progress, day, or cost records follow it; bounded reads fall back to history when necessary. Covered for SQLite and document control planes.
+### Codex rollout cache compatibility follow-up (`2026-10-21`)
+
+- Restrict skipped rollout precomputation to the built-in TensorDictDataset. Custom datasets retain iteration and RNG side effects, including stochastic item transforms; regression checks compare their cached rewards and RNG states.
+
 ### Codex rollout baseline precomputation (`2026-10-21`)
 
 - Skip the unused epoch-wide rollout cache in Lightning for the built-in Attention Model with PTP/CPTP data. Keep per-batch packed baseline evaluation and the original DataLoader seed draw; custom contracts retain explicit precomputation. On CPU, a 64-instance/100-customer small Attention Model avoids about 0.24 seconds per epoch preparation. Regression checks compare sampling RNG, loss and gradients with and without mandatory packing. Existing checkpoint weights are unchanged.

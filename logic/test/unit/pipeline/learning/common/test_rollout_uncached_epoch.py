@@ -86,3 +86,44 @@ def test_custom_policy_keeps_explicit_cache_contract():
     dataset = TensorDictDataset(TensorDict({"x": torch.ones(2, 1)}, [2]))
     prepared = baseline.prepare_uncached_dataset(dataset, SimpleNamespace(batch_size=[2], reset=lambda td: td))
     assert torch.equal(prepared.baseline, torch.full((2, 1), 2.0))
+
+
+def test_stochastic_custom_dataset_keeps_precomputation_rng_consumption():
+    from logic.src.pipeline.learning.common.baselines import RolloutBaseline
+    from torch.utils.data import Dataset
+
+    class StochasticDataset(Dataset):
+        def __init__(self, data):
+            self.data = data
+            self.reads = 0
+
+        def __len__(self):
+            return len(self.data)
+
+        def __getitem__(self, index):
+            self.reads += 1
+            row = self.data[index].clone()
+            row["waste"] = row["waste"] * torch.rand(())
+            return row
+
+    torch.manual_seed(42)
+    env = get_env("cptp", generator_params={"num_loc": 2}, check_env_specs=False)
+    env.batch_size = torch.Size([2])
+    policy = AttentionModelPolicy(
+        env_name="cptp", embed_dim=16, hidden_dim=32, n_encode_layers=1, n_heads=4, normalization="layer"
+    )
+    baseline = RolloutBaseline(policy)
+    raw = env.generator(batch_size=2)
+    initial_rng = torch.get_rng_state().clone()
+    results = []
+    for uncached in (False, True):
+        torch.set_rng_state(initial_rng)
+        dataset = StochasticDataset(raw.clone())
+        prepared = (
+            baseline.prepare_uncached_dataset(dataset, env) if uncached else baseline.wrap_dataset(dataset, env=env)
+        )
+        assert prepared.dataset is dataset
+        assert dataset.reads == 2
+        results.append((prepared.baseline, torch.get_rng_state().clone()))
+    assert torch.equal(results[0][0], results[1][0])
+    assert torch.equal(results[0][1], results[1][1])

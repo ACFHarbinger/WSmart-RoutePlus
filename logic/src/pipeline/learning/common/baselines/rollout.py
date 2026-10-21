@@ -303,6 +303,7 @@ class RolloutBaseline(Baseline):
         if (
             type(self.baseline_policy) is not AttentionModelPolicy
             or type(env) not in (PTPEnv, CPTPEnv)
+            or type(dataset) is not TensorDictDataset
             or not isinstance(data, TensorDict)
             or "locs" not in data.keys()
             or "waste" not in data.keys()
