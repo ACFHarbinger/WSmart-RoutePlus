@@ -255,12 +255,9 @@ class AttentionModel(AttentionModelPolicy, DecodingMixin):
 
     def precompute_fixed(self, input: Any, edges: Optional[torch.Tensor] = None) -> Any:
         """Precomputes and caches graph-level state for efficient search."""
-        from logic.src.utils.decoding import CachedLookup
-
-        embeddings, init_context = self._get_initial_embeddings(input)
+        embeddings, _ = self._get_initial_embeddings(input)
         encoded_embeddings = self.encoder(embeddings)
-        self.decoder(input, encoded_embeddings, init_context, None, precompute_only=True)
-        return CachedLookup(embeddings=encoded_embeddings, context=init_context)
+        return self.decoder._precompute(encoded_embeddings)
 
     def expand(self, t: Union[torch.Tensor, ITensorDictLike, None]) -> Any:
         """Expands instance features to support parallel POMO constructions."""

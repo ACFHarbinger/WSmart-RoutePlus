@@ -20,6 +20,7 @@ from typing import Any, Dict, Optional, cast
 import numpy as np
 import torch
 from scipy import stats
+from tensordict import TensorDict
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
 
@@ -281,6 +282,39 @@ class RolloutBaseline(Baseline):
             out = self._invoke_greedy(policy, td_copy, env)
 
         return out["reward"]
+
+    def prepare_uncached_dataset(self, dataset: Any, env: Optional[Any] = None) -> Any:
+        """Skip the unused Lightning cache without shifting the sampling RNG.
+
+        training_step unwraps cached values before shared_step calculates its loss,
+        so Lightning already evaluates the frozen baseline on each packed batch.
+        Keep that evaluation and avoid a duplicate full-dataset rollout. A sequential
+        DataLoader iterator still draws its base seed, even with zero workers; retain
+        that draw so subsequent sampled model actions use the same RNG stream.
+
+        Only the built-in deterministic greedy policy and complete routing data are
+        eligible. Other policy/environment contracts retain ordinary precomputation.
+        """
+        from logic.src.models.core.attention_model.policy import AttentionModelPolicy
+        from logic.src.pipeline.learning.envs.cptp import CPTPEnv
+        from logic.src.pipeline.learning.envs.ptp import PTPEnv
+
+        data = getattr(dataset, "data", None)
+        if (
+            type(self.baseline_policy) is not AttentionModelPolicy
+            or type(env) not in (PTPEnv, CPTPEnv)
+            or type(dataset) is not TensorDictDataset
+            or not isinstance(data, TensorDict)
+            or "locs" not in data.keys()
+            or "waste" not in data.keys()
+        ):
+            return self.wrap_dataset(dataset, env=env)
+        batch_size = DEFAULT_ROLLOUT_BATCH_SIZE
+        if len(env.batch_size) > 0:
+            batch_size = int(env.batch_size[0])
+        # Match the iterator initialization in _rollout_dataset; do not decode.
+        iter(DataLoader(dataset, batch_size=batch_size, collate_fn=tensordict_collate_fn, num_workers=0))
+        return dataset
 
     def wrap_dataset(
         self,

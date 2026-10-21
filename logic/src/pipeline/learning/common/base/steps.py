@@ -20,6 +20,7 @@ from logic.src.constants.metrics import METRIC_MAPPING
 from logic.src.interfaces import ITraversable
 from logic.src.pipeline.learning.common.pbrs_wrapper import PBRSShaper
 from logic.src.tracking.logging.pylogger import get_pylogger
+from logic.src.utils.data.temporal import select_instance_day
 from logic.src.utils.functions.rl import ensure_tensordict
 
 if TYPE_CHECKING:
@@ -93,8 +94,6 @@ class StepMixin:
             n_days_avail = waste_3d.shape[1]
 
             current_day_t = td.get("current_day", None)
-            day_idx = int(current_day_t.reshape(-1)[0].item()) if current_day_t is not None else 0
-            day_idx = min(day_idx, n_days_avail - 1)
 
             # Compute mean positive day-over-day accumulation rate when no
             # explicit rate key is present in the TensorDict.
@@ -102,7 +101,7 @@ class StepMixin:
                 deltas = (waste_3d[:, 1:, :] - waste_3d[:, :-1, :]).clamp(min=0.0)
                 selector_kwargs["accumulation_rates"] = deltas.mean(dim=1)  # [B, num_loc]
 
-            fill_levels = waste_3d[:, day_idx, :]  # [B, num_loc]
+            fill_levels = select_instance_day(waste_3d, current_day_t)  # [B, num_loc]
         elif fill_levels.dim() == 1:
             fill_levels = fill_levels.unsqueeze(0)
 

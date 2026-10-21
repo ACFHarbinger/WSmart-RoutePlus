@@ -299,6 +299,7 @@ class RL4COLitModule(DataMixin, OptimizationMixin, StepMixin, pl.LightningModule
             self.train_dataset,
             self._time_training_day(),
             phase="train",
+            precompute_baseline=False,
         )
 
     def on_train_epoch_end(self):
