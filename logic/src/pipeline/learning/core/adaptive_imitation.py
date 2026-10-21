@@ -17,7 +17,7 @@ Example:
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, Dict
 
 import torch
 from tensordict import TensorDict
@@ -294,6 +294,26 @@ class AdaptiveImitation(REINFORCE):
             self.log("train/expert_cost", expert_cost.mean(), on_step=False, on_epoch=True)
 
         return total_loss
+
+    def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
+        """Preserve the annealing schedule alongside weights and carried bin fill."""
+        super().on_save_checkpoint(checkpoint)
+        checkpoint["adaptive_imitation_schedule"] = {
+            "current_il_weight": self.current_il_weight,
+            "stop_il": self.stop_il,
+            "wait": self.wait,
+            "best_reward": self.best_reward,
+        }
+
+    def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
+        """Resume the saved schedule; legacy checkpoints retain constructor defaults."""
+        super().on_load_checkpoint(checkpoint)
+        schedule = checkpoint.get("adaptive_imitation_schedule")
+        if schedule is not None:
+            self.current_il_weight = float(schedule["current_il_weight"])
+            self.stop_il = bool(schedule["stop_il"])
+            self.wait = int(schedule["wait"])
+            self.best_reward = float(schedule["best_reward"])
 
     def on_train_epoch_end(self):
         """

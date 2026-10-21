@@ -31,6 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Codex resource-history compatibility (2026-10-21)
 
 - Preserve the latest cloud resource sample when more than 20 progress, day, or cost records follow it; bounded reads fall back to history when necessary. Covered for SQLite and document control planes.
+### Codex adaptive imitation resume (`2026-10-21`)
+
+- Preserve imitation weight, stop flag, patience count and best validation reward in Lightning checkpoints. Legacy checkpoints retain constructor defaults. This corrects future resumed training and requires owner review; existing paper weights are unchanged.
 
 ### Gemini swarm review fixes across Lanes A, B, C, D (`2026-10-20`)
 
