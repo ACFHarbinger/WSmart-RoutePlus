@@ -52,6 +52,17 @@ class Sampling(DecodingStrategy):
             Tuple of (action, log_prob, entropy)
         """
         logits = self._process_logits(logits, mask)
+        if logits.dtype in (torch.float16, torch.bfloat16):
+            # Half-precision epsilons either underflow or materially bias scores.
+            # Work in log space in fp32; masked entries retain exactly zero mass.
+            log_probs = F.log_softmax(logits.float(), dim=-1)
+            probs = log_probs.exp()
+            action = torch.multinomial(probs, num_samples=1).squeeze(-1)
+            log_prob = log_probs.gather(1, action.unsqueeze(-1)).squeeze(-1)
+            finite_logs = log_probs.masked_fill(~torch.isfinite(log_probs), 0.0)
+            entropy = -(probs * finite_logs).sum(dim=-1)
+            return action, log_prob, entropy
+
         probs = F.softmax(logits, dim=-1)
 
         # Ensure masked/invalid nodes have exactly zero probability
@@ -66,6 +77,8 @@ class Sampling(DecodingStrategy):
         log_prob = torch.log(probs.gather(1, action.unsqueeze(-1)) + eps).squeeze(-1)
 
         # Calculate entropy = -sum(p * log(p)) over non-zero probabilities
-        entropy = -(torch.where(probs > 0, probs * torch.log(probs.clamp(min=eps)), torch.zeros_like(probs))).sum(dim=-1)
+        entropy = -(torch.where(probs > 0, probs * torch.log(probs.clamp(min=eps)), torch.zeros_like(probs))).sum(
+            dim=-1
+        )
 
         return action, log_prob, entropy

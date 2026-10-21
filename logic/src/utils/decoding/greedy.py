@@ -62,6 +62,12 @@ class Greedy(DecodingStrategy):
             Tuple of (action, log_prob, entropy)
         """
         logits = self._process_logits(logits, mask)
+        if logits.dtype in (torch.float16, torch.bfloat16):
+            log_probs = F.log_softmax(logits.float(), dim=-1)
+            action = log_probs.argmax(dim=-1)
+            log_prob = log_probs.gather(1, action.unsqueeze(-1)).squeeze(-1)
+            return action, log_prob, torch.zeros_like(log_prob)
+
         probs = F.softmax(logits, dim=-1)
 
         action = probs.argmax(dim=-1)
