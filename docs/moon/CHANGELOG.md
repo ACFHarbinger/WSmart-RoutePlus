@@ -24,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Codex: preserve Hydra model constructor overrides (`2026-10-21`)
 
 - Forward configured top-level model values rather than DictConfig internals, preserving temporal horizons and MoE overrides. Regression tests cover Hydra and object configurations. Existing checkpoints are unchanged; changes to future affected training require owner review.
+### Codex CPTP checkpoint compatibility (2026-10-21)
+
+- Restore coordinate Euclidean distances in the learned CPTP step-context feature. Road objective matrices in kilometers no longer change inputs to existing checkpoints.
+
 ### Codex resource-history compatibility (2026-10-21)
 
 - Preserve the latest cloud resource sample when more than 20 progress, day, or cost records follow it; bounded reads fall back to history when necessary. Covered for SQLite and document control planes.

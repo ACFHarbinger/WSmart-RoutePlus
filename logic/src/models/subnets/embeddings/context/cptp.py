@@ -122,35 +122,17 @@ class CPTPContextEmbedder(PTPContextEmbedder):
             unvisited_waste_mean = torch.zeros(batch_size, 1, 1, device=embeddings.device)
 
         # 3. Mean Euclidean distance from current node to unvisited profitable nodes [B, 1, 1]
-        if visited is not None and waste is not None:
-            dist_mat = td.get("dist", td.get("dm", td.get("dist_matrix", None)))
-            if dist_mat is not None:
-                if dist_mat.dim() == 2:
-                    dist_mat = dist_mat.unsqueeze(0).expand(batch_size, -1, -1)
-                elif dist_mat.size(0) != batch_size:
-                    if dist_mat.size(0) == 1:
-                        dist_mat = dist_mat.expand(batch_size, -1, -1)
-                    elif batch_size % dist_mat.size(0) == 0:
-                        dist_mat = dist_mat.repeat_interleave(batch_size // dist_mat.size(0), dim=0)
-                    else:
-                        dist_mat = dist_mat.expand(batch_size, -1, -1)
-                cur_idx = current_node.view(batch_size, 1, 1).expand(-1, 1, dist_mat.size(-1))
-                dist_to_all = dist_mat.gather(1, cur_idx).squeeze(1)  # [B, N]
-            elif locs is not None:
-                cur_idx = current_node.unsqueeze(-1).unsqueeze(-1).expand(batch_size, 1, locs.size(-1))
-                cur_pos = locs.gather(1, cur_idx).squeeze(1)  # [B, 2]
-                dist_to_all = torch.norm(locs - cur_pos.unsqueeze(1), dim=-1)  # [B, N]
-            else:
-                dist_to_all = None
-
-            if dist_to_all is not None:
-                unvisited_profitable = (~visited) & (waste > 0)
-                unvisited_profitable[:, 0] = False  # exclude depot
-                count = unvisited_profitable.float().sum(dim=-1, keepdim=True).clamp(min=1.0)
-                mean_dist = (dist_to_all * unvisited_profitable.float()).sum(dim=-1, keepdim=True) / count
-                mean_dist_unvisited = mean_dist.unsqueeze(1)  # [B, 1, 1]
-            else:
-                mean_dist_unvisited = torch.zeros(batch_size, 1, 1, device=embeddings.device)
+        if locs is not None and visited is not None and waste is not None:
+            # This is a learned coordinate-space feature. Objective road matrices
+            # are in kilometers and must not replace the checkpoint's input units.
+            cur_idx = current_node.unsqueeze(-1).unsqueeze(-1).expand(batch_size, 1, locs.size(-1))
+            cur_pos = locs.gather(1, cur_idx).squeeze(1)
+            dist_to_all = torch.norm(locs - cur_pos.unsqueeze(1), dim=-1)
+            unvisited_profitable = (~visited) & (waste > 0)
+            unvisited_profitable[:, 0] = False
+            count = unvisited_profitable.float().sum(dim=-1, keepdim=True).clamp(min=1.0)
+            mean_dist = (dist_to_all * unvisited_profitable.float()).sum(dim=-1, keepdim=True) / count
+            mean_dist_unvisited = mean_dist.unsqueeze(1)
         else:
             mean_dist_unvisited = torch.zeros(batch_size, 1, 1, device=embeddings.device)
 
