@@ -44,9 +44,7 @@ def _policy(values: Dict[str, str], parts: List[str]) -> str:
             if pol in ("na.amgat", "amgat", "na"):
                 return "am"
             return pol
-    if len(parts) >= 7:
-        pol = parts[-1]
-    elif len(parts) >= 2 and parts[-1]:
+    if len(parts) >= 7 or (len(parts) >= 2 and parts[-1]):
         pol = parts[-1]
     else:
         return UNKNOWN
