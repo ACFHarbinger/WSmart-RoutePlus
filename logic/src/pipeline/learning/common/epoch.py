@@ -47,6 +47,7 @@ def prepare_epoch(
     dataset: Dataset,
     epoch: int,
     phase: str = "train",
+    precompute_baseline: bool = True,
 ) -> Dataset:
     """
     Prepare dataset for a new epoch.
@@ -59,6 +60,8 @@ def prepare_epoch(
         dataset: The dataset instance.
         epoch: The current epoch number.
         phase: The current phase (train, val, test).
+        precompute_baseline: Whether to build cached rollout values. Lightning uses
+            per-batch baseline evaluation and can skip its unused cache.
 
     Returns:
         The prepared dataset for the current epoch.
@@ -75,6 +78,8 @@ def prepare_epoch(
         # Unwrap dataset first to avoid nested BaselineDataset
         if hasattr(baseline, "unwrap_dataset"):
             dataset = baseline.unwrap_dataset(dataset)
+        if not precompute_baseline and hasattr(baseline, "prepare_uncached_dataset"):
+            return baseline.prepare_uncached_dataset(dataset, env=env)
         # Wrap dataset with baseline values (e.g. RolloutBaseline)
         return baseline.wrap_dataset(dataset, policy=model, env=env)
     return dataset
