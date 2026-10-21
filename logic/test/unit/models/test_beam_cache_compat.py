@@ -107,6 +107,18 @@ def test_public_cptp_beam_search_matches_individual_instances():
     with torch.no_grad():
         scores, tours, costs, ids, batch_size = model.beam_search(td, beam_size=3, cost_weights=1.0)
         assert batch_size == 2
+        # Independently check the returned cost against geometry and unique
+        # collections, rather than comparing two calls to the same implementation.
+        locs = torch.cat([td["depot"][:, None], td["locs"]], dim=1)
+        waste = torch.cat([torch.zeros_like(td["waste"][:, :1]), td["waste"]], dim=1)
+        for row, route in enumerate(tours):
+            cost, original_id = costs[row], ids[row]
+            depot = torch.zeros(1, dtype=route.dtype, device=route.device)
+            closed_route = torch.cat([depot, route, depot])
+            points = locs[original_id, closed_route]
+            distance = (points[1:] - points[:-1]).norm(dim=-1).sum()
+            collected = waste[original_id, route.unique()].sum()
+            torch.testing.assert_close(cost, distance - collected)
         for index in range(2):
             solo = model.beam_search(td[index : index + 1], beam_size=3, cost_weights=1.0)
             torch.testing.assert_close(scores[ids == index], solo[0])
@@ -114,7 +126,8 @@ def test_public_cptp_beam_search_matches_individual_instances():
             torch.testing.assert_close(costs[ids == index], solo[2])
 
 
-def test_simulator_beam_width_larger_than_feasible_candidates():
+@pytest.mark.parametrize("reward_weight", [0.0, 1.0])
+def test_simulator_beam_width_larger_than_feasible_candidates(reward_weight):
     from logic.src.configs.policies.na import NeuralAgentConfig
     from logic.src.models.core.attention_model.model import AttentionModel
     from logic.src.pipeline.learning.envs.cptp import CPTP
@@ -131,7 +144,7 @@ def test_simulator_beam_width_larger_than_feasible_candidates():
             (None, torch.zeros(2, 2)),
             torch.zeros(2, 2),
             {"cost_km": 1.0, "revenue_kg": 0.5837, "bin_capacity": 47.5, "vehicle_capacity": 10.0},
-            params=NeuralAgentConfig(decoding_strategy="beam_search", beam_width=3),
+            params=NeuralAgentConfig(decoding_strategy="beam_search", beam_width=3, reward_weight=reward_weight),
         )
     assert route[0] == 0
     assert route[-1] == 0
