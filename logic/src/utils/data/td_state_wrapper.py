@@ -52,6 +52,7 @@ class TensorDictStateWrapper:
             # Default IDs for batching
             bs = td.batch_size[0] if len(td.batch_size) > 0 else 1
             self.ids = torch.arange(bs, device=td.device).unsqueeze(-1)
+            td["ids"] = self.ids
 
         # Expose common properties directly
         self.dist_matrix = td.get("dist", None)
@@ -147,3 +148,13 @@ class TensorDictStateWrapper:
             The indexed state.
         """
         return TensorDictStateWrapper(self.td[key], self.problem_name, self.env)
+
+    def construct_solutions(self, actions: torch.Tensor) -> torch.Tensor:
+        """Return the node-index sequence reconstructed by beam backtracking."""
+        return actions
+
+    def get_final_cost(self) -> torch.Tensor:
+        """Expose the environment's negated reward in the beam result contract."""
+        if self.env is None:
+            raise ValueError("Environment (env) must be provided to evaluate beam costs.")
+        return -self.env.get_reward(self.td).reshape(-1, 1)
