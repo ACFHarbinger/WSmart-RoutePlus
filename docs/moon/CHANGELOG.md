@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Codex: atomic telemetry schema initialization (`2026-10-21`)
+
+- Initialize SQLite schema metadata with an atomic insert that ignores only an existing version key, preserving its value. Independent simulator processes can now initialize the same fresh telemetry database without a unique-key error dropping a policy snapshot. A two-process regression forces the original race and verifies both snapshots are persisted.
+
 ### Codex: respect per-instance evaluation days (`2026-10-21`)
 
 - Select each row's own temporal waste slice in both environment reset and mandatory packing. Missing days retain day zero; out-of-range days clamp to the available series. Regression tests cover mixed, reordered, uniform and clamped days across both consumers. Existing single-day/uniform-day paper inputs and checkpoints are unchanged; future affected training requires owner review.
