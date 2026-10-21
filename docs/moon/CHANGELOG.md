@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Codex: respect per-instance evaluation days (`2026-10-21`)
+
+- Select each row's own temporal waste slice in both environment reset and mandatory packing. Missing days retain day zero; out-of-range days clamp to the available series. Regression tests cover mixed, reordered, uniform and clamped days across both consumers. Existing single-day/uniform-day paper inputs and checkpoints are unchanged; future affected training requires owner review.
+
 ### Codex: preserve zero validation objective weights (`2026-10-21`)
 
 - Keep explicitly zero cost/revenue weights when constructing validation environments; only missing or null weights receive the unit default. Tests cover per-eval and training-graph fallback objectives. Existing nonzero paper objectives and checkpoints are unchanged; affected future training needs owner review.
