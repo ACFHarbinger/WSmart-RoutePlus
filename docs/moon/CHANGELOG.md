@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Codex: preserve zero validation objective weights (`2026-10-21`)
+
+- Keep explicitly zero cost/revenue weights when constructing validation environments; only missing or null weights receive the unit default. Tests cover per-eval and training-graph fallback objectives. Existing nonzero paper objectives and checkpoints are unchanged; affected future training needs owner review.
+
 ### Codex: preserve Hydra model constructor overrides (`2026-10-21`)
 
 - Forward configured top-level model values rather than DictConfig internals, preserving temporal horizons and MoE overrides. Regression tests cover Hydra and object configurations. Existing checkpoints are unchanged; changes to future affected training require owner review.
