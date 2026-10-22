@@ -29,7 +29,7 @@ data:
   # Instances carry PTP/CPTP fields plus shift_hours/avg_speed_kmh/service_time_h.
   data_distributions: ["gamma3"] # Waste generation distributions to use.
   penalty_factor: 3.0
-  overwrite: true
+  overwrite: false # The default graphs regenerate the paper's shipped datasets: refuse to replace them
   seed: ${seed}
   dataset_type: "test_simulator" # train, train_time, test_simulator
   data_dir: "simulator/datasets" # Directory to save generated data
