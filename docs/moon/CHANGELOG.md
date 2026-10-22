@@ -32,6 +32,7 @@ Fixes from the ultrareview of the 137 targeted functions. None of these changes 
 #### Optimizations
 
 - **`get_route_cost`** (`utils/routing/tours.py`) copied the full N×N distance matrix on every call (it runs at least twice per policy per day in collection and route improvement). It now reads the matrix with `np.asarray`; fancy indexing already copies the edges it needs, so results are bit-identical. Microbenchmark (one third of the nodes in the tour): N=101 12.5→9.9 µs, N=318 60.7→11.1 µs, N=1001 936→24 µs per call. Covered by `test_route_cost_no_copy.py`.
+- **`CostMixin._check_budget`** (`controllers/cloud/cost/budget.py`): with no cost estimate and a monthly cap, it called `month_committed` twice, once for the test and once for the message. Each call lists every job, task and event of the month, and nothing is memoized outside a scheduling pass (`submit` is outside one). It now reads the value once; refusals and messages are unchanged. Covered by `test_budget_month_committed_once.py`.
 
 ### Review-swarm follow-up fixes (`2026-10-21`)
 
