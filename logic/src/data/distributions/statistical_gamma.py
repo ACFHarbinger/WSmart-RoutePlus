@@ -79,7 +79,8 @@ class Gamma(BaseDistribution):
             torch.Tensor: Sampled values
         """
         if generator is None:
-            generator = torch.Generator()
+            # The global RNG: a fresh ``torch.Generator()`` has the same fixed seed on every call.
+            generator = torch.default_generator
         if self.option is not None:
             # Use per-node heterogeneous params; fall back to numpy then convert
             # Draw a fresh seed per call: seeding from initial_seed() repeated the same sample,
