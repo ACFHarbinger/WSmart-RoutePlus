@@ -17,6 +17,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Review-swarm follow-up fixes (`2026-10-21`)
+
+#### Fixed
+
+- **MACO empty mandatory set** — `None` mandatory nodes reached the subproblem builder; now falls back to `[]` (Lucas, `95717fa`).
+- **HVPL `_random_construction` docstring** (`policies/routing/meta_heuristics/hybrid_volleyball_premier_league/solver.py`) claimed a random construction but the body calls `build_greedy_routes`; the docstring and the ACO-initialization comment now say greedy. The method name is kept for compatibility.
+- **ARCO `best_sequence`** (`policies/routing/other_algorithms/adaptive_routing_algorithm_orchestrator/`) temporarily overwrote `params.selection_strategy` and `params.epsilon` and restored them without `try/finally` — not re-entrant, and an exception mid-selection would leak the override. `_select_sequence`/`_apply_strategy` now take optional `strategy`/`epsilon` overrides and `best_sequence` passes `greedy` explicitly, leaving `params` untouched.
+- **ARCO `execute` docstring** carried a duplicated trailing `Args: kwargs` block; removed.
+
+#### Changed
+
+- **Collection frequency/level** (`pipeline/simulations/bins/`): new `calculate_frequency_and_level_vectorized` evaluates all bins in one batched gamma-quantile pass with semantics identical to the scalar loop (frequency = first n in 1..49 with quantile > 100, else 49; level = 100 − quantile at n = 1). `set_collection_level_and_freq` calls it once instead of looping per bin. The scalar function is kept.
+- Covered by `test_frequency_vectorization.py` (vectorized vs scalar, exact match).
+
+#### Verified
+
+- Vectorized vs scalar outputs identical on 10,000 randomized (ui, vi) cases including zeros and extreme ratios (cf ∈ {0.5, 0.9, 0.99}).
+- Merged as PR #142 on 2026-10-22: full suite 2,788 passed, 9 skipped; 2-day Rio Maior 100 parity of the paper policies plus NA against main, 14 of 14 logs identical.
+
 ### Codex: atomic telemetry schema initialization (`2026-10-21`)
 
 - Initialize SQLite schema metadata with an atomic insert that ignores only an existing version key, preserving its value. Independent simulator processes can now initialize the same fresh telemetry database without a unique-key error dropping a policy snapshot. A two-process regression forces the original race and verifies both snapshots are persisted.
