@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 import pytest
 import yaml
-
 from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.hgs import HGSSolver
 from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.heuristics import sans

@@ -232,7 +232,6 @@ def validate_release_tests(
     import os
     import shutil
 
-    test_root = out / "logic" / "test"
     remaining = list(staged_tests)
     excluded: dict = {}
     before = {p.name for p in out.iterdir()}
