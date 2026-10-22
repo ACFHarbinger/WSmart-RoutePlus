@@ -488,6 +488,9 @@ app/cypress/videos/
 app/cypress/downloads/
 app/coverage/
 
+# Node artifacts
+/**/node_modules/
+
 # Packaged exports
 /dist/
 /build/
@@ -497,6 +500,6 @@ app/coverage/
 assets/telemetry.db
 
 # Agentic files and directories to ignore
+.agents
 .claude
 .antigravity
-.agents/teamwork
