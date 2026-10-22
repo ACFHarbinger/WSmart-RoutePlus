@@ -87,6 +87,14 @@ infrastructure:
   - logic.controllers.hydra_dispatch
   - logic.controllers.parser_dispatch
 
+# Hydra tasks released: `logic/configs/tasks/<task>.yaml` ships for these only. The
+# other task configs (hpo, hpo_sim, meta_train, slurm) need excluded code (Q-6, Q-12a).
+tasks:
+  - test_sim
+  - train
+  - eval
+  - gen_data
+
 # Packages excluded from the release even though a seed pulls them in.
 excluded_packages:
   - logic.src.pipeline.simulations.hpo               # Q-6: HPO stays out of 1.0.0
