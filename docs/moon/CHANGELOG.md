@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Claude: package evaluation fixes (`2026-10-22`)
+
+#### Fixed
+
+- **Summary tables when output is redirected** (`tracking/logging/modules/summary_display.py`): Rich assumes 80 columns when stdout is not a terminal, so next to the long policy names every metric column of the end-of-run tables printed empty (in log files, pipes and the setup-script runs). Those tables now use 200 columns when not on a terminal.
+
 ### Release 1.0.2 package (`2026-10-22`)
 
 - Version 1.0.2 in `pyproject.toml`, `logic/pyproject.toml` and `logic/release.yaml`. It is 1.0.1 plus the review-swarm fixes (Kimi, Grok, Cursor, Gemini, Codex, the Claude ultrareview and its follow-ups), the reproducible iteration budgets of the paper heuristics, and the `policies/vectorized/` layout. As in 1.0.1, the cloud runner (`logic.controllers.cloud`) is excluded; it ships with v1.1.0 (#120). The package is published as the branch `package/1.0.2`, without `data.zip` and the executables.

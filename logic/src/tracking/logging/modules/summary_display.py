@@ -20,6 +20,18 @@ from rich.table import Table
 
 import logic.src.constants as udef
 
+# Rich assumes 80 columns when stdout is not a terminal (a log file, a pipe), which squeezes the
+# metric columns of the summary tables to nothing next to the long policy names.
+_NON_TERMINAL_WIDTH = 200
+
+
+def _console() -> Console:
+    """Console for the summary tables, wide enough for every column when output is redirected."""
+    console = Console()
+    if not console.is_terminal:
+        console = Console(width=_NON_TERMINAL_WIDTH)
+    return console
+
 
 def final_simulation_summary(log: Dict[str, Any], policy: str, n_samples: int) -> None:
     """Log a final summary of simulation statistics for a policy.
@@ -56,7 +68,7 @@ def display_simulation_summary_table(  # noqa: C901
     if not log:
         return
 
-    console = Console()
+    console = _console()
     table = Table(
         title=title,
         box=box.DOUBLE_EDGE,
@@ -173,7 +185,7 @@ def display_per_policy_simulation_summary(  # noqa: C901
         title_prefix: Prefix for the table titles.
         lock: Optional lock for thread-safe printing.
     """
-    console = Console()
+    console = _console()
 
     # 1. STATISTICS SUMMARY TABLE
     summary_title = f"{title_prefix} [bold cyan]{pol_name}[/] (Sample #{sample_id}) - [yellow]Stats Summary[/]"
