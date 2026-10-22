@@ -20,8 +20,8 @@ from logic.src.utils.target.policy_link_updater import (
 )
 
 POLICY_YAML = """name: test_constructor
-packing: { "other/pk_last_minute.yaml": ["old_key"] }
-route_improvement: { "other/ri_cls.yaml": ["old_key"] }
+packing: { "other/packing/pk_last_minute.yaml": ["old_key"] }
+route_improvement: { "other/route_improvement/ri_cls.yaml": ["old_key"] }
 other_key: 1
 """
 
@@ -54,11 +54,11 @@ def test_update_packing_roundtrip(tmp_path):
     assert os.path.basename(filepath) == "policy_testc.yaml"
     content = Path(filepath).read_text(encoding="utf-8")
     assert (
-        'packing: { "other/pk_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }'
+        'packing: { "other/packing/pk_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"] }'
         in content
     )
     # the unrelated override is untouched
-    assert 'route_improvement: { "other/ri_cls.yaml": ["old_key"] }' in content
+    assert 'route_improvement: { "other/route_improvement/ri_cls.yaml": ["old_key"] }' in content
 
 
 def test_update_route_improvement_roundtrip(tmp_path):
@@ -72,8 +72,8 @@ def test_update_route_improvement_roundtrip(tmp_path):
     )
     assert len(modified) == 1
     content = Path(modified[0][0]).read_text(encoding="utf-8")
-    assert 'route_improvement: { "other/ri_ftsp.yaml": ["ftsp"] }' in content
-    assert 'packing: { "other/pk_last_minute.yaml": ["old_key"] }' in content
+    assert 'route_improvement: { "other/route_improvement/ri_ftsp.yaml": ["ftsp"] }' in content
+    assert 'packing: { "other/packing/pk_last_minute.yaml": ["old_key"] }' in content
 
 
 def test_listing_helpers(tmp_path):

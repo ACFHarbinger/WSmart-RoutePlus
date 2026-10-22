@@ -22,7 +22,7 @@ Example:
     >>> policy = NDSBRKGAPolicy()
 """
 
-from logic.src.configs.policies.nds_brkga import NDSBRKGAConfig
+from logic.src.configs.policies.packing_and_routing.nds_brkga import NDSBRKGAConfig
 
 from .chromosome import Chromosome, compute_adaptive_thresholds
 from .crossover import biased_crossover

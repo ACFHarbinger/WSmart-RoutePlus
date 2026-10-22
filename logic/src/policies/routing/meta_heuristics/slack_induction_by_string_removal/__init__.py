@@ -15,7 +15,7 @@ Example:
     >>> routes, cost, revenue = solver.solve()
 """
 
-from logic.src.configs.policies.sisr import SISRConfig
+from logic.src.configs.policies.routing.meta_heuristics.sisr import SISRConfig
 
 from .solver import SISRSolver
 

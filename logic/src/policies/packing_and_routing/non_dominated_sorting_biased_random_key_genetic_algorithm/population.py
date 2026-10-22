@@ -36,7 +36,7 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from logic.src.configs.policies.nds_brkga import NDSBRKGAConfig
+from logic.src.configs.policies.packing_and_routing.nds_brkga import NDSBRKGAConfig
 from logic.src.policies.packing_and_routing.non_dominated_sorting_biased_random_key_genetic_algorithm.chromosome import (
     Chromosome,
 )

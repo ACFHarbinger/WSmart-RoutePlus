@@ -1,0 +1,111 @@
+"""
+Kernel Search matheuristic configuration.
+
+This module defines the settings used by the Kernel Search framework to decompose
+and solve VRPP instances.
+
+Attributes:
+    KernelSearchConfig: Configuration for the Kernel Search policy.
+
+Example:
+    >>> from configs.policies.ks import KernelSearchConfig
+    >>> config = KernelSearchConfig()
+    >>> config.time_limit
+    300.0
+"""
+
+from dataclasses import dataclass
+from typing import Any, Dict, Optional
+
+from logic.src.configs.policies.packing.dispatch import PackingConfig
+
+from logic.src.configs.policies.route_improvement import RouteImprovingConfig
+
+
+@dataclass
+class KernelSearchConfig:
+    """
+    Configuration for the Kernel Search matheuristic framework.
+
+    Kernel Search (Angelelli et al., 2010) is a matheuristic designed to solve
+    large-scale combinatorial optimization problems by restricting the binary
+    variable space to a high-quality subset (the Kernel) and iteratively
+    exploring additional candidate variables (Buckets) via restricted MIPs.
+
+    Attributes:
+        time_limit (float): Maximum allowed execution time for the entire matheuristic.
+            If the cumulative runtime exceeds this value, the current iteration
+            finishes and returns the best solution found so far. Defaults to 300.0s.
+        initial_kernel_size (int): The number of decision variables (nodes and edges)
+            included in the initial 'Kernel'. These are selected based on their
+            fractional values in the initial LP relaxation. Defaults to 50.
+        bucket_size (int): The number of variables added from the remaining set to
+            the search space in each iterative sub-MIP. Small buckets lead to faster
+            iterations but may miss synergies. Defaults to 20.
+        max_buckets (int): The maximum number of buckets to process. Setting this
+            restricts the depth of the search and total runtime. Defaults to 10.
+        mip_limit_nodes (int): The branch-and-bound node limit for each sub-MIP
+            solve. Prevents any single iteration from stalling the entire search.
+            Defaults to 5000 nodes.
+        mip_gap (float): The targeted relative optimality gap for each sub-problem.
+            Defaults to 0.01 (1%).
+        seed (int): Random seed for Gurobi's internal heuristics and algorithmic
+            variations to ensure deterministic behavior. Defaults to 42.
+        engine (str): Identifier for the optimization engine. Use "gurobi" to
+            invoke the project's native Gurobi-based KS solver.
+        framework (str): Identifier for the optimization framework. Options
+            include "ortools" and "pyomon".
+        packing (Optional[PackingConfig]): Logic for pre-selecting
+            mandatory bins (e.g., those nearly full or overdue).
+        route_improvement (Optional[RouteImprovingConfig]): Settings for applying
+            localized refinement (e.g., 2-opt, Or-opt) to the final matheuristic tour.
+    """
+
+    time_limit: float = 300.0
+    initial_kernel_size: int = 50
+    bucket_size: int = 20
+    max_buckets: int = 10
+    mip_limit_nodes: int = 5000
+    mip_gap: float = 0.01
+    seed: int = 42
+
+    # Infrastructure
+    engine: str = "gurobi"
+    framework: str = "ortools"
+    packing: Optional[PackingConfig] = None
+    route_improvement: Optional[RouteImprovingConfig] = None
+
+    @classmethod
+    def from_config(cls, config: Any) -> "KernelSearchConfig":
+        """Create KernelSearchConfig from a configuration object or dictionary.
+
+        Args:
+            config: Configuration object or dict with KS parameter attributes.
+
+        Returns:
+            "KernelSearchConfig": Populated parameter dataclass.
+        """
+        from dataclasses import fields
+
+        if isinstance(config, dict):
+            return cls(**{k: v for k, v in config.items() if k in {f.name for f in fields(cls)}})
+
+        return cls(
+            initial_kernel_size=getattr(config, "initial_kernel_size", 50),
+            bucket_size=getattr(config, "bucket_size", 20),
+            max_buckets=getattr(config, "max_buckets", 15),
+            time_limit=getattr(config, "time_limit", 300.0),
+            mip_limit_nodes=getattr(config, "mip_limit_nodes", 10000),
+            mip_gap=getattr(config, "mip_gap", 0.01),
+            seed=getattr(config, "seed", 42),
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert KernelSearchConfig to a dictionary for backend compatibility.
+
+        Returns:
+            Dict[str, Any]: Mapping of parameter names to their values.
+        """
+        from dataclasses import fields
+
+        return {f.name: getattr(self, f.name) for f in fields(self)}

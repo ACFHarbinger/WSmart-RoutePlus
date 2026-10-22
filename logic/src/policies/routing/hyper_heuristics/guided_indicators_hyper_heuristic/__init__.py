@@ -23,7 +23,7 @@ Example:
     231.0
 """
 
-from logic.src.configs.policies.gihh import GIHHConfig
+from logic.src.configs.policies.routing.hyper_heuristics.gihh import GIHHConfig
 
 from .gihh import GIHHSolver
 

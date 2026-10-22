@@ -283,14 +283,14 @@ def _step_delete_path(args: Dict[str, Any], job: BatchJob) -> None:
 
 
 _MS_CONFIGS: Dict[str, Any] = {
-    "lookahead":     {"other/pk_lookahead.yaml": ["lookahead"]},
-    "last_minute":   {"other/pk_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"]},
-    "service_level": {"other/pk_service_level.yaml": ["service_level1", "service_level2"]},
+    "lookahead":     {"other/packing/pk_lookahead.yaml": ["lookahead"]},
+    "last_minute":   {"other/packing/pk_last_minute.yaml": ["last_minute_cf70", "last_minute_cf90"]},
+    "service_level": {"other/packing/pk_service_level.yaml": ["service_level1", "service_level2"]},
 }
 
 _RI_CONFIGS: Dict[str, Any] = {
-    "cls":  {"other/ri_cls.yaml": ["default"]},
-    "ftsp": {"other/ri_ftsp.yaml": ["ftsp"]},
+    "cls":  {"other/route_improvement/ri_cls.yaml": ["default"]},
+    "ftsp": {"other/route_improvement/ri_ftsp.yaml": ["ftsp"]},
 }
 
 
@@ -350,11 +350,13 @@ def _step_patch_policy_yaml(args: Dict[str, Any], job: BatchJob) -> None:
     tmp_dir = Path(_tempfile.mkdtemp(prefix=f"wsr_policy_{job.name}_{job.index}_"))
     job.runtime_env["WSR_POLICY_CONFIG_DIR"] = str(tmp_dir)
 
+    from logic.src.utils.configs.policy_files import find_policy_file
+
     for pol_name in policies:
-        src_path = canonical_dir / f"policy_{pol_name}.yaml"
-        if not src_path.exists():
-            src_path = canonical_dir / f"{pol_name}.yaml"
-        if not src_path.exists():
+        src_path = find_policy_file(f"policy_{pol_name}.yaml", canonical_dir) or find_policy_file(
+            f"{pol_name}.yaml", canonical_dir
+        )
+        if src_path is None:
             print(f"  [patch_policy_yaml] WARNING: no YAML found for '{pol_name}', skipping")
             continue
 

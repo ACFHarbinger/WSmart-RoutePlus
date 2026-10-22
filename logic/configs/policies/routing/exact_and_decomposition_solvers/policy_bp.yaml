@@ -1,0 +1,13 @@
+bp:
+  gurobi:
+    time_limit: 60
+    max_iterations: 100
+    max_routes_per_iteration: 10
+    optimality_gap: 0.0001
+    use_ryan_foster_branching: false
+    use_exact_pricing: false
+    multi_day_mode: false
+    packing:
+      other/packing/pk_lookahead.yaml:
+      - default
+    route_improvement: []

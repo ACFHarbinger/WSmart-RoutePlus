@@ -1,0 +1,12 @@
+cvrp:
+  ortools:
+    engine: ortools
+    n_vehicles: 0
+    cache: false
+    packing:
+      other/packing/pk_regular.yaml:
+      - regular_lvl3
+      - regular_lvl4
+      - regular_lvl5
+    time_limit: 60
+    route_improvement: []

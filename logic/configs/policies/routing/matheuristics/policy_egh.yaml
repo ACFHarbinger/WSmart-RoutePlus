@@ -1,0 +1,38 @@
+egh:
+  alpha: 0.5
+  time_limit: 120.0
+  seed: null
+  alns_max_iterations: 0
+  alns_segment_size: 100
+  alns_reaction_factor: 0.1
+  alns_cooling_rate: 0.995
+  alns_start_temp_control: 0.05
+  alns_sigma_1: 33.0
+  alns_sigma_2: 9.0
+  alns_sigma_3: 13.0
+  alns_xi: 0.4
+  alns_min_removal: 4
+  alns_noise_factor: 0.025
+  alns_worst_removal_randomness: 3.0
+  alns_shaw_randomization: 6.0
+  alns_regret_pool: regret234
+  alns_extended_operators: false
+  alns_profit_aware_operators: true
+  alns_vrpp: true
+  alns_engine: custom
+  bpc_ng_size_min: 8
+  bpc_ng_size_max: 16
+  bpc_max_bb_nodes_min: 200
+  bpc_max_bb_nodes_max: 1000
+  bpc_cutting_planes: rcc
+  bpc_branching_strategy: divergence
+  skip_bpc: false
+  sp_pool_cap: 50000
+  sp_mip_gap: 0.0001
+  packing:
+    other/packing/pk_last_minute.yaml:
+    - last_minute_cf70
+    - last_minute_cf90
+  route_improvement:
+    other/route_improvement/ri_cls.yaml:
+    - default

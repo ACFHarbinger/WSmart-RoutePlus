@@ -10,7 +10,7 @@ Attributes:
 
 """
 
-from logic.src.configs.policies.hgs_alns import HGSALNSConfig
+from logic.src.configs.policies.routing.meta_heuristics.hgs_alns import HGSALNSConfig
 
 from .hgs_alns import HGSALNSSolver
 

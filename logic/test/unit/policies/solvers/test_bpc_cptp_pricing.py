@@ -82,7 +82,7 @@ def test_cptp_pricer_falls_back_on_unrepresentable_duals():
 
 
 def test_cptp_engine_keeps_only_cut_families_it_prices():
-    from logic.src.configs.policies.bpc import BPCConfig
+    from logic.src.configs.policies.routing.exact_and_decomposition_solvers.bpc import BPCConfig
 
     engine = make_cut_engine(BPCConfig(pricing_engine="cptp"), v_model=None, sep_engine=object(), dist=np.zeros((2, 2)))
     names = {type(e).__name__ for e in engine.engines}

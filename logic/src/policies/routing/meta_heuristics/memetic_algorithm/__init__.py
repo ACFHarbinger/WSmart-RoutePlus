@@ -10,7 +10,7 @@ Example:
     >>> policy = MAPolicy()
 """
 
-from logic.src.configs.policies.ma import MAConfig
+from logic.src.configs.policies.routing.meta_heuristics.ma import MAConfig
 
 from .policy_ma import MAPolicy
 from .solver import MASolver

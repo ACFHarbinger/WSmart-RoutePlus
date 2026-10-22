@@ -4,9 +4,9 @@ from unittest.mock import patch
 
 import numpy as np
 import pytest
-from logic.src.configs.policies.aco_ks import KSparseACOConfig
-from logic.src.configs.policies.alns import ALNSConfig
-from logic.src.configs.policies.pg_clns import PGCLNSConfig
+from logic.src.configs.policies.routing.meta_heuristics.aco_ks import KSparseACOConfig
+from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
+from logic.src.configs.policies.routing.meta_heuristics.pg_clns import PGCLNSConfig
 from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.meta_heuristics.pheromone_guided_cooperative_large_neighborhood_search.pg_clns import (
     PGCLNSSolver,

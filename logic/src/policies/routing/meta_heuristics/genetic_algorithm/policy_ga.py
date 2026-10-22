@@ -4,7 +4,7 @@ Attributes:
     GAPolicy: Policy class for Genetic Algorithm.
 
 Example:
-    >>> from logic.src.configs.policies.ga import GAConfig
+    >>> from logic.src.configs.policies.routing.meta_heuristics.ga import GAConfig
     >>> config = GAConfig(pop_size=50)
     >>> policy = GAPolicy(config)
 """
@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
-from logic.src.configs.policies.ga import GAConfig
+from logic.src.configs.policies.routing.meta_heuristics.ga import GAConfig
 from logic.src.enums import PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry

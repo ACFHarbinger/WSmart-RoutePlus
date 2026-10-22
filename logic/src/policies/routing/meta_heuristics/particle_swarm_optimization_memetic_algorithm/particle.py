@@ -14,7 +14,7 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 
-from logic.src.configs.policies.psoma import PSOMAConfig
+from logic.src.configs.policies.routing.meta_heuristics.psoma import PSOMAConfig
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.split import LinearSplit
 
 

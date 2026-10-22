@@ -80,7 +80,7 @@ def add_ms_update_args(parser: argparse.ArgumentParser) -> None:
         metavar="MS_FILE",
         help=(
             "Packing algorithm file stem, e.g. 'pk_last_minute'.  "
-            "Must be present in logic/configs/policies/other/.  "
+            "Must be present under logic/configs/policies/other/.  "
             "Required unless --list-strategies or --list-keys is used."
         ),
     )
@@ -134,7 +134,7 @@ def add_ri_update_args(parser: argparse.ArgumentParser) -> None:
         metavar="RI_FILE",
         help=(
             "Route-improver file stem, e.g. 'ri_ftsp'.  "
-            "Must be present in logic/configs/policies/other/.  "
+            "Must be present under logic/configs/policies/other/.  "
             "Required unless --list-improvers or --list-keys is used."
         ),
     )

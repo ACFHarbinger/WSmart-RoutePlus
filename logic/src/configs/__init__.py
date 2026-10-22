@@ -35,7 +35,8 @@ from typing import Any, Dict, Optional
 from .learning.envs import EnvConfig, GraphConfig, ObjectiveConfig
 from .learning import RLConfig
 from .models import DecoderConfig, DecodingConfig, EncoderConfig, ModelConfig, OptimConfig
-from .policies.other import PackingConfig, RouteImprovingConfig
+from .policies.packing import PackingConfig
+from .policies.route_improvement import RouteImprovingConfig
 from .tasks import DataConfig, EvalConfig, HPOConfig, MetaRLConfig, SimConfig, SimHPOConfig, TrainConfig
 from .tracking import TrackingConfig
 

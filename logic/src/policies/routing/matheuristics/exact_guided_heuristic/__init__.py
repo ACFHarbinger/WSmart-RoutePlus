@@ -25,7 +25,7 @@ Policy registration (automatic on import)::
     policy = ExactGuidedHeuristicPolicy()
 """
 
-from logic.src.configs.policies.egh import ExactGuidedHeuristicConfig
+from logic.src.configs.policies.routing.matheuristics.egh import ExactGuidedHeuristicConfig
 
 from .dispatcher import run_pipeline
 from .policy_egh import ExactGuidedHeuristicPolicy

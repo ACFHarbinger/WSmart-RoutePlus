@@ -11,7 +11,7 @@
 #   python main.py train rl.imitation.policy_config=tasks/policies/rl/aco
 # =============================================================================
 
-_target_: logic.src.configs.policies.aco_ks.KSparseACOConfig
+_target_: logic.src.configs.policies.routing.meta_heuristics.aco_ks.KSparseACOConfig
 
 # Same fields as the simulator's K-Sparse ACO (KSparseACOConfig); packing and
 # route_improvement are simulator-only and ignored by the vectorised expert.

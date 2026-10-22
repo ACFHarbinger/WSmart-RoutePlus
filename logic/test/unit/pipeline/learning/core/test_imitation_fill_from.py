@@ -4,7 +4,7 @@ from typing import Any, List, Optional
 
 import pytest
 import torch
-from logic.src.configs.policies.profitable_nn import ProfitableNNConfig
+from logic.src.configs.policies.vectorized.routing.profitable_nn import ProfitableNNConfig
 from logic.src.pipeline.learning.core.imitation import ImitationLearning
 from logic.src.pipeline.learning.envs.cptp import CPTPEnv
 from tensordict import TensorDict
@@ -113,7 +113,7 @@ def test_precompute_needs_the_expert_fill_and_a_cache(tmp_path) -> None:
 
 def _small_expert_configs() -> List[Any]:
     from logic.src.configs.policies import ALNSConfig, HGSALNSConfig, HGSConfig, HVPLConfig, ILSConfig, KSparseACOConfig
-    from logic.src.configs.policies.other.route_improvement import RandomLocalSearchPostConfig
+    from logic.src.configs.policies.route_improvement import RandomLocalSearchPostConfig
 
     hgs = HGSConfig(mu=4, n_offspring=4, n_iterations_no_improvement=3, local_search_iterations=5)
     return [

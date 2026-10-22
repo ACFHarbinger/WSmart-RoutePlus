@@ -49,7 +49,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from logic.src.configs.policies.cp_sat import CPSATConfig
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.cp_sat import CPSATConfig
 from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.problem_context import ProblemContext

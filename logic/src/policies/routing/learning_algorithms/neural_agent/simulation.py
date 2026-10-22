@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 import torch
 
 if TYPE_CHECKING:
-    from logic.src.configs.policies.na import NeuralAgentConfig
+    from logic.src.configs.policies.routing.learning_algorithms.na import NeuralAgentConfig
 
 from logic.src.tracking.hooks.attention_hooks import add_attention_hooks
 from logic.src.utils.decoding.beam_search import _beam_search

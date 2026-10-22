@@ -53,7 +53,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from logic.src.configs.policies.ils_bd import IntegerLShapedBendersConfig
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.ils_bd import IntegerLShapedBendersConfig
 from logic.src.policies.helpers.solvers_and_matheuristics import (
     SeparationEngine,
 )

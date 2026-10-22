@@ -50,6 +50,7 @@ from logic.src.utils.infrastructure.setup_env import setup_env
 from logic.src.utils.infrastructure.setup_manager import setup_hrl_manager
 from logic.src.utils.infrastructure.setup_sims import get_graph_config
 from logic.src.utils.infrastructure.setup_worker import setup_model
+from logic.src.utils.configs.policy_files import policy_file
 
 if TYPE_CHECKING:
     from logic.src.pipeline.simulations.states.base.base import SimulationContext
@@ -201,7 +202,7 @@ class InitializingState(SimState):
         if isinstance(ctx.pol_cfg, dict) and "model" in ctx.pol_cfg:
             model_name = ctx.pol_cfg["model"].get("name", "").lower()
 
-        neural_cfg_path = os.path.join(CONFIGS_DIR, "policies", "policy_neural.yaml")
+        neural_cfg_path = str(policy_file("policy_neural.yaml"))
         pol_parts = ctx.pol_name.lower().replace("_", " ").replace("-", " ").split()
         is_neural = any(kw in pol_parts for kw in ["na", "amgat", "am", "ptr", "ddam", "transgcn"]) or any(
             kw in model_name for kw in ["na", "amgat", "am", "ptr", "ddam", "transgcn"]

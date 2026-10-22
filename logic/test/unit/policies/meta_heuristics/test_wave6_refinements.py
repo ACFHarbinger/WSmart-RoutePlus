@@ -2,9 +2,9 @@
 
 import numpy as np
 import pytest
-from logic.src.configs.policies.lca import LCAConfig
-from logic.src.configs.policies.slc import SLCConfig
-from logic.src.configs.policies.vpl import VPLConfig
+from logic.src.configs.policies.routing.meta_heuristics.lca import LCAConfig
+from logic.src.configs.policies.routing.meta_heuristics.slc import SLCConfig
+from logic.src.configs.policies.routing.meta_heuristics.vpl import VPLConfig
 from logic.src.policies.routing.meta_heuristics.league_championship_algorithm.solver import LCASolver
 from logic.src.policies.routing.meta_heuristics.soccer_league_competition.solver import SLCSolver
 from logic.src.policies.routing.meta_heuristics.volleyball_premier_league.solver import VPLSolver

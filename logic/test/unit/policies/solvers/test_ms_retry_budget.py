@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, Mock
 
 import numpy as np
 import pytest
-from logic.src.configs.policies.ms_bpc_sp import MSBPCSPConfig
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.ms_bpc_sp import MSBPCSPConfig
 from logic.src.policies.routing.base.sub_problem import SolveResult, build_subproblem
 from logic.src.policies.routing.exact_and_decomposition_solvers.multi_stage_branch_and_price_and_cut_with_set_partition import (
     ms_bpc_sp_engine as engine,

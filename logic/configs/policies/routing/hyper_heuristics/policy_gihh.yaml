@@ -1,0 +1,15 @@
+gihh:
+  custom:
+    time_limit: 60.0
+    max_iterations: 1000
+    nonimp_threshold: 150
+    seg: 80
+    alpha: 0.5
+    beta: 0.4
+    gamma: 0.1
+    min_prob: 0.05
+    profit_aware_operators: false
+    packing:
+      other/packing/pk_lookahead.yaml:
+      - default
+    route_improvement: []

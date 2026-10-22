@@ -1,0 +1,46 @@
+rl_hvpl:
+  n_teams: 10
+  max_iterations: 100
+  sub_rate: 0.2
+  time_limit: 60.0
+  elite_coaching_iterations: 300
+  regular_coaching_iterations: 100
+  elite_size: 3
+  pheromone_update_strategy: profit
+  profit_weight: 1.0
+  profit_aware_operators: false
+  aco:
+    n_ants: 10
+    k_sparse: 10
+    alpha: 1.0
+    beta: 2.0
+    rho: 0.1
+    q0: 0.9
+    tau_min: 0.001
+    tau_max: 10.0
+    max_iterations: 1
+    local_search: true
+    local_search_iterations: 50
+    elitist_weight: 1.0
+  alns:
+    max_iterations: 200
+    reaction_factor: 0.5
+    acceptance_criterion:
+      method: bmc
+      params:
+        initial_temp: 100.0
+        alpha: 0.97
+        start_temp_control: 0.05
+    xi: 0.3
+  rl_config:
+    td_learning:
+      alpha: 0.1
+      gamma: 0.9
+      epsilon: 1.0
+      epsilon_decay: 0.99
+      epsilon_decay_step: 1
+      epsilon_min: 0.05
+  packing:
+    other/packing/pk_lookahead.yaml:
+    - default
+  route_improvement: []

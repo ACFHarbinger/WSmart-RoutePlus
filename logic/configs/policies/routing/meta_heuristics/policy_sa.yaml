@@ -1,0 +1,15 @@
+sa:
+  initial_temperature: 100.0
+  cooling_rate: 0.95
+  min_temperature: 0.01
+  nb_granular: 20
+  time_limit: 60.0
+  seed: 42
+  profit_aware_operators: false
+  packing:
+    other/packing/pk_lookahead.yaml:
+    - default
+  route_improvement: []
+  acceptance_criteria:
+    other/acceptance_criteria/ac_bmc.yaml:
+    - bmc

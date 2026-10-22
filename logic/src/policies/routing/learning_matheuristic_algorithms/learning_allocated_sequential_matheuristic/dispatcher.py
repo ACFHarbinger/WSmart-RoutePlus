@@ -36,7 +36,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Type
 import numpy as np
 from numpy.typing import NDArray
 
-from logic.src.configs.policies.lasm import LASMPipelineConfig
+from logic.src.configs.policies.routing.learning_matheuristic_algorithms.lasm import LASMPipelineConfig
 from logic.src.policies.routing.matheuristics.exact_guided_heuristic.route_pool import RoutePool
 
 from .rl_controller import RLController
@@ -139,7 +139,7 @@ def _import_alns_config() -> Optional[Type[Any]]:
         Optional[Type[Any]]: The ALNS parameters class.
     """
     try:
-        from logic.src.configs.policies.alns import ALNSConfig
+        from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
 
         return ALNSConfig
     except ImportError:

@@ -11,7 +11,7 @@
 #   python main.py train rl.imitation.policy_config=tasks/policies/rl/hgs
 # =============================================================================
 
-_target_: logic.src.configs.policies.hgs.HGSConfig
+_target_: logic.src.configs.policies.routing.meta_heuristics.hgs.HGSConfig
 
 # Same fields as the simulator's HGS (HGSConfig); packing, route_improvement,
 # engine and the acceptance-criterion telemetry are simulator-only and ignored.

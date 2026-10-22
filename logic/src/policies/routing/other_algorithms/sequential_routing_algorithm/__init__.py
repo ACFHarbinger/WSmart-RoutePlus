@@ -14,7 +14,7 @@ Example:
     >>> src.execute(mandatory=[1, 2, 3], bins=bins_object, distance_matrix=distance_matrix)
 """
 
-from logic.src.configs.policies.src import SRCConfig as SRCConfig
+from logic.src.configs.policies.routing.other_algorithms.src import SRCConfig as SRCConfig
 
 from .policy_src import SequentialRoutingAlgorithm as SequentialRoutingAlgorithm
 

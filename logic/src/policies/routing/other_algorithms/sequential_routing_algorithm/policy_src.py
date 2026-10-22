@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from logic.src.interfaces.context.multi_day_context import MultiDayContext
     from logic.src.interfaces.context.search_context import SearchContext
 
-from logic.src.configs.policies.src import SRCConfig
+from logic.src.configs.policies.routing.other_algorithms.src import SRCConfig
 from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.search_context import SearchContext
 from logic.src.interfaces.routing_algorithm import IRoutingAlgorithm
@@ -94,7 +94,7 @@ class SequentialRoutingAlgorithm(BaseRoutingPolicy):
         Returns:
             Optional[Type]: The config class for the Sequential Routing Algorithm.
         """
-        from logic.src.configs.policies.src import SRCConfig
+        from logic.src.configs.policies.routing.other_algorithms.src import SRCConfig
 
         return SRCConfig
 

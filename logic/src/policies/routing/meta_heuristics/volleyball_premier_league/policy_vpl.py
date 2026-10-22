@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
-from logic.src.configs.policies.vpl import VPLConfig
+from logic.src.configs.policies.routing.meta_heuristics.vpl import VPLConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.routing.meta_heuristics.volleyball_premier_league.solver import VPLSolver

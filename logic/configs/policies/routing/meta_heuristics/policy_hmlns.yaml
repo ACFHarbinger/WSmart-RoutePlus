@@ -1,0 +1,39 @@
+hmlns:
+  custom:
+    population_size: 10
+    max_generations: 50
+    substitution_rate: 0.2
+    crossover_rate: 0.8
+    mutation_rate: 0.1
+    elitism_count: 3
+    aco_init_iterations: 50
+    time_limit: 60.0
+    maco:
+      n_ants: 10
+      k_sparse: 10
+      alpha: 1.0
+      beta: 2.0
+      rho: 0.1
+      scale: 5.0
+      update_schedule: auto
+      stagnation_limit: 25
+      max_iterations: 100
+      time_limit: 20.0
+    alns:
+      max_iterations: 100
+      reaction_factor: 0.5
+      min_removal: 1
+      max_removal_pct: 0.2
+      segment_size: 10
+      time_limit: 60.0
+      acceptance_criterion:
+        method: bmc
+        params:
+          initial_temp: 100.0
+          alpha: 0.95
+          start_temp_control: 0.05
+    profit_aware_operators: true
+    packing:
+      other/packing/pk_lookahead.yaml:
+      - default
+    route_improvement: []

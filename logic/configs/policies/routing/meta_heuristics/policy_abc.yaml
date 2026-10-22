@@ -1,0 +1,13 @@
+abc:
+  custom:
+    n_sources: 20
+    n_removal: 1
+    limit: 10
+    max_iterations: 200
+    time_limit: 60.0
+    local_search_iterations: 100
+    profit_aware_operators: false
+    packing:
+      other/packing/pk_lookahead.yaml:
+      - default
+    route_improvement: []

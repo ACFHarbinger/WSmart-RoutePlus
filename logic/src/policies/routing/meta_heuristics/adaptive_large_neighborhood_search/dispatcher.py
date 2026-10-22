@@ -15,7 +15,7 @@ Example:
 import dataclasses
 from typing import Any, Dict, Optional, Union
 
-from logic.src.configs.policies.alns import ALNSConfig
+from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
 from logic.src.policies.routing.base.sub_problem import SolveResult, SubProblem
 
 from .alns import ALNSSolver

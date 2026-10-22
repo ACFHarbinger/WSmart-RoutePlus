@@ -15,7 +15,7 @@ import re
 from pathlib import Path
 from typing import List
 
-from logic.src.configs.policies.sa import SAConfig
+from logic.src.configs.policies.routing.meta_heuristics.sa import SAConfig
 from logic.src.configs.tracking import TrackingConfig
 
 _ROOT = Path(__file__).resolve().parents[4]

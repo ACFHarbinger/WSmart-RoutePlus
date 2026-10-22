@@ -22,7 +22,7 @@ try:
 except ImportError:
     OR_TOOLS_AVAILABLE = False
 
-from logic.src.configs.policies.cp_sat import CPSATConfig
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.cp_sat import CPSATConfig
 
 
 class CPSATEngine:

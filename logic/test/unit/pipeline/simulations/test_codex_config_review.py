@@ -10,7 +10,7 @@ from omegaconf import OmegaConf
 
 
 def test_hydra_mapping_keeps_selected_service_level():
-    cfg = OmegaConf.create({"packing": {"other/pk_service_level.yaml": "service_level2"}})
+    cfg = OmegaConf.create({"packing": {"other/packing/pk_service_level.yaml": "service_level2"}})
     parsed = PackingAction()._gather_strategies({"config": cfg})
     assert len(parsed) == 1
     assert parsed[0]["name"] == "service_level"
@@ -33,7 +33,7 @@ def test_inject_acceptance_into_struct_locked_nested_hydra_node() -> None:
         "coords": None,
     }.get(key)
     bins.n = 2
-    nested = OmegaConf.create({"acceptance_criteria": {"other/ac_bmc.yaml": "bmc"}})
+    nested = OmegaConf.create({"acceptance_criteria": {"other/acceptance_criteria/ac_bmc.yaml": "bmc"}})
     OmegaConf.set_struct(nested, True)
     context = {
         "bins": bins,
@@ -82,7 +82,7 @@ def test_packing_does_not_call_setdefault_on_day_context() -> None:
     bins.n = 2
     ctx = _DayContextLike(
         bins=bins,
-        config={"packing": {"other/pk_last_minute.yaml": "last_minute_cf70"}},
+        config={"packing": {"other/packing/pk_last_minute.yaml": "last_minute_cf70"}},
         day=0,
         max_capacity=100.0,
         threshold=None,
@@ -107,7 +107,7 @@ def test_calibrated_acceptance_yaml_keeps_its_calibration_control():
     from logic.src.pipeline.simulations.actions.policy_config import _acceptance_config_from_entry
     from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
 
-    spec = _acceptance_config_from_entry({"other/ac_bmc.yaml": "bmc_calibrated"})
+    spec = _acceptance_config_from_entry({"other/acceptance_criteria/ac_bmc.yaml": "bmc_calibrated"})
     criterion = AcceptanceCriterionFactory.build(spec)
     criterion.setup(20.0)
     assert 0.05 * 20.0 / math.log(2.0) == criterion.T

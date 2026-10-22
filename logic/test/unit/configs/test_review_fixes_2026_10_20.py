@@ -83,7 +83,7 @@ def test_update_packing_rewrites_a_block_section(tmp_path) -> None:
         "demo:\n"
         "  custom:\n"
         "    packing:\n"
-        "      other/pk_lookahead.yaml:\n"
+        "      other/packing/pk_lookahead.yaml:\n"
         "      - default\n"
         "    time_limit: 60.0\n"
     )
@@ -92,7 +92,7 @@ def test_update_packing_rewrites_a_block_section(tmp_path) -> None:
     import yaml
 
     data = yaml.safe_load(policy.read_text())
-    assert data["demo"]["custom"]["packing"] == {"other/pk_last_minute.yaml": ["last_minute_cf70"]}
+    assert data["demo"]["custom"]["packing"] == {"other/packing/pk_last_minute.yaml": ["last_minute_cf70"]}
     assert data["demo"]["custom"]["time_limit"] == 60.0
 
 

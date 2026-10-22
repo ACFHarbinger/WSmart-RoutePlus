@@ -38,6 +38,7 @@ from .base import (
     _set_live_capture_meta,
     bind_context,
 )
+from logic.src.utils.configs.policy_files import policy_file
 
 
 def _stops(tour: Any) -> list:
@@ -112,7 +113,7 @@ class RouteImprovementAction(SimulationAction):
                 # OmegaConf ListConfig or other non-dict sequence
                 pp_list = list(pp_list)
             elif hasattr(pp_list, "items"):
-                # New dict format: {"other/ri_ftsp.yaml": ["ftsp"]} → wrap as single item
+                # New dict format: {"other/route_improvement/ri_ftsp.yaml": ["ftsp"]} → wrap as single item
                 pp_list = [pp_list]
             else:
                 pp_list = []
@@ -152,7 +153,7 @@ class RouteImprovementAction(SimulationAction):
             A list of instantiated route improver processors.
         """
         pp_name = ""
-        # Resolve dict format: {"other/ri_ftsp.yaml": "default"} or {"other/ri_ftsp.yaml": ["default"]}
+        # Resolve dict format: {"other/route_improvement/ri_ftsp.yaml": "default"} or {"other/route_improvement/ri_ftsp.yaml": ["default"]}
         file_pairs = _file_yaml_pairs(item)
         if file_pairs:
             file_key, variant_val = file_pairs[0]
@@ -197,7 +198,7 @@ class RouteImprovementAction(SimulationAction):
                         except Exception:
                             pass
                     variant_val = str(variant_val) if variant_val is not None else ""
-                    fpath = os.path.join(CONFIGS_DIR, "policies", file_key)
+                    fpath = str(policy_file(file_key))
                     try:
                         cfg = load_config(fpath)
                         if "config" in cfg and len(cfg) == 1:
@@ -238,7 +239,7 @@ class RouteImprovementAction(SimulationAction):
                         logger.warning(f"Error loading route_improvement config {file_key}: {e}")
                         return []
         elif isinstance(item, str) and (item.endswith(".xml") or item.endswith(".yaml")):
-            fpath = os.path.join(CONFIGS_DIR, "policies", item)
+            fpath = str(policy_file(item))
             try:
                 cfg = load_config(fpath)
                 if "config" in cfg and len(cfg) == 1:

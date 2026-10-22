@@ -25,7 +25,7 @@ except ImportError:
     gp: Any = None  # type: ignore[assignment,no-redef]
     GRB: Any = None  # type: ignore[assignment,misc,no-redef]
 
-from logic.src.configs.policies.lbbd import LBBDConfig
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.lbbd import LBBDConfig
 from logic.src.pipeline.simulations.bins.prediction import ScenarioTree, ScenarioTreeNode
 
 

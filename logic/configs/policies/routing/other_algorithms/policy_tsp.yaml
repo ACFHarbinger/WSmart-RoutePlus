@@ -1,0 +1,8 @@
+tsp:
+  fast_tsp:
+    cache: true
+    packing:
+      other/packing/pk_last_minute.yaml:
+      - cf70
+    time_limit: 60
+    route_improvement: []

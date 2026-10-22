@@ -1,0 +1,18 @@
+bb:
+  formulation: dfj
+  time_limit: 60.0
+  mip_gap: 0.01
+  branching_strategy: strong
+  strong_branching_limit: 5
+  packing:
+    other/packing/pk_lookahead.yaml:
+    - default
+  route_improvement: []
+  seed: null
+  lr_lambda_init: 0.0
+  lr_max_subgradient_iters: 100
+  lr_subgradient_theta: 1.0
+  lr_subgradient_time_fraction: 0.4
+  lr_op_time_limit: 10.0
+  lr_branching_strategy: max_waste
+  lr_max_bb_nodes: 5000

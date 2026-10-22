@@ -27,7 +27,7 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from logic.src.configs.policies.rl_alns import RLALNSConfig
+from logic.src.configs.policies.routing.learning_heuristic_algorithms.rl_alns import RLALNSConfig
 from logic.src.policies.helpers.learning.features.state import StateFeatureExtractor
 from logic.src.policies.helpers.learning.reward.shaping import AdaptiveRewardShaper, RewardShaper
 from logic.src.policies.helpers.operators.solution_initialization.nearest_neighbor_si import build_nn_routes

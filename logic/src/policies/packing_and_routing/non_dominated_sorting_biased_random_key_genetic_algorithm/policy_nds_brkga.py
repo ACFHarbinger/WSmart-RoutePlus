@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
-from logic.src.configs.policies.nds_brkga import NDSBRKGAConfig
+from logic.src.configs.policies.packing_and_routing.nds_brkga import NDSBRKGAConfig
 from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.joint_context import JointSelectionConstructionContext
 from logic.src.policies.packing_and_routing.base.base_joint_policy import BaseJointPolicy

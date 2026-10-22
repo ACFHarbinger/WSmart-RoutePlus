@@ -42,7 +42,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 
-from logic.src.configs.policies.aco_hh import HyperHeuristicACOConfig
+from logic.src.configs.policies.routing.hyper_heuristics.aco_hh import HyperHeuristicACOConfig
 from logic.src.policies.routing.base.base_routing_policy import _structured_load, _unwrap_engine_section
 from logic.src.policies.routing.base.sub_problem import SubProblem
 from logic.src.policies.routing.hyper_heuristics.ant_colony_optimization_hyper_heuristic.bootstrap import (

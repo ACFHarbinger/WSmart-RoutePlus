@@ -661,7 +661,7 @@ hgs:
     - elite_size: 10 # Elite preservation
     - mutation_rate: 0.2 # Mutation probability
     - engine: "custom" # PyVRP backend
-    - packing: ["other/pk_lookahead.yaml"]
+    - packing: ["other/packing/pk_lookahead.yaml"]
     - route_improvement: []
 ```
 
@@ -742,7 +742,7 @@ neural:
   custom:
     - model_path: "checkpoints/best_model.pt"
     - decoding_strategy: "greedy"
-    - packing: ["other/pk_lookahead.yaml"]
+    - packing: ["other/packing/pk_lookahead.yaml"]
 ```
 
 ---
@@ -766,7 +766,7 @@ neural:
 # Change packing algorithm for HGS
 python main.py test_sim \
   sim.policies=[hgs] \
-  +hgs.custom[0].packing=["other/pk_last_minute_cf90.yaml"]
+  +hgs.custom[0].packing=["other/packing/pk_last_minute_cf90.yaml"]
 ```
 
 #### 6.2 route improvement

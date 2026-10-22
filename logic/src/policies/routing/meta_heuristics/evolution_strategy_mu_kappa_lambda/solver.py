@@ -22,8 +22,8 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from logic.src.configs.policies.aco_ks import KSparseACOConfig
-from logic.src.configs.policies.es_mkl import MuKappaLambdaESConfig
+from logic.src.configs.policies.routing.meta_heuristics.aco_ks import KSparseACOConfig
+from logic.src.configs.policies.routing.meta_heuristics.es_mkl import MuKappaLambdaESConfig
 from logic.src.pipeline.learning.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.local_search.local_search_general import GeneralLocalSearch
 from logic.src.policies.helpers.operators import (

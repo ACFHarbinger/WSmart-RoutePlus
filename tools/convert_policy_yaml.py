@@ -165,7 +165,7 @@ def rename_packing_yamls(other_dir: Path = OTHER) -> List[Tuple[Path, Path]]:
 
 
 def iter_policy_yamls(policies_dir: Path = POLICIES) -> Iterable[Path]:
-    yield from sorted(policies_dir.glob("policy_*.yaml"))
+    yield from sorted(policies_dir.rglob("policy_*.yaml"))
     yield from sorted((policies_dir / "other").glob("*.yaml"))
 
 

@@ -19,14 +19,14 @@ Example:
 from dataclasses import dataclass
 from typing import Any, Union
 
-from logic.src.configs.policies.aco_ks import KSparseACOConfig
-from logic.src.configs.policies.alns import ALNSConfig
-from logic.src.configs.policies.hgs import HGSConfig
-from logic.src.configs.policies.hgs_alns import HGSALNSConfig
-from logic.src.configs.policies.hvpl import HVPLConfig
-from logic.src.configs.policies.ils import ILSConfig
-from logic.src.configs.policies.other.route_improvement import RandomLocalSearchPostConfig
-from logic.src.configs.policies.profitable_nn import ProfitableNNConfig
+from logic.src.configs.policies.routing.meta_heuristics.aco_ks import KSparseACOConfig
+from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
+from logic.src.configs.policies.routing.meta_heuristics.hgs import HGSConfig
+from logic.src.configs.policies.routing.meta_heuristics.hgs_alns import HGSALNSConfig
+from logic.src.configs.policies.routing.meta_heuristics.hvpl import HVPLConfig
+from logic.src.configs.policies.routing.meta_heuristics.ils import ILSConfig
+from logic.src.configs.policies.route_improvement import RandomLocalSearchPostConfig
+from logic.src.configs.policies.vectorized.routing.profitable_nn import ProfitableNNConfig
 
 # Type alias for expert policy configurations: the simulator policy configs of the
 # vectorised experts (``logic.src.policies.vectorized.routing``).

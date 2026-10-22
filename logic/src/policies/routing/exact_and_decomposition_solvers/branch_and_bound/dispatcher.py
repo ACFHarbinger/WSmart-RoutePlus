@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 import gurobipy as gp
 import numpy as np
 
-from logic.src.configs.policies.bb import BBConfig
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.bb import BBConfig
 from logic.src.tracking.viz_mixin import PolicyStateRecorder
 
 from .dfj import run_bb_dfj

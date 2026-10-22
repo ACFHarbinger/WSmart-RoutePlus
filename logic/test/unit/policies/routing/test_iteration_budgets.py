@@ -62,13 +62,13 @@ def test_sans_stops_after_max_iterations(monkeypatch) -> None:
 @pytest.mark.parametrize(
     "file, path, budget_key",
     [
-        ("policy_alns.yaml", ("alns", "custom"), "max_iterations"),
-        ("policy_hgs.yaml", ("hgs", "custom"), "max_iterations"),
-        ("policy_sans.yaml", ("sans", "new"), "max_iterations"),
-        ("policy_pg_clns.yaml", ("pg_clns", "custom"), "max_iterations"),
-        ("policy_aco_hh.yaml", ("aco_hh", "custom"), "max_iterations"),
-        ("policy_psoma.yaml", ("psoma",), "max_iterations"),
-        ("other/ri_cls.yaml", ("default",), "iterations"),
+        ("routing/meta_heuristics/policy_alns.yaml", ("alns", "custom"), "max_iterations"),
+        ("routing/meta_heuristics/policy_hgs.yaml", ("hgs", "custom"), "max_iterations"),
+        ("routing/meta_heuristics/policy_sans.yaml", ("sans", "new"), "max_iterations"),
+        ("routing/meta_heuristics/policy_pg_clns.yaml", ("pg_clns", "custom"), "max_iterations"),
+        ("routing/hyper_heuristics/policy_aco_hh.yaml", ("aco_hh", "custom"), "max_iterations"),
+        ("routing/meta_heuristics/policy_psoma.yaml", ("psoma",), "max_iterations"),
+        ("other/route_improvement/ri_cls.yaml", ("default",), "iterations"),
     ],
 )
 def test_paper_policies_keep_time_limit_as_a_guard(file, path, budget_key) -> None:

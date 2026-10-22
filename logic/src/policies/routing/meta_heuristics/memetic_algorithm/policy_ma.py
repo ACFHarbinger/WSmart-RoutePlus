@@ -4,7 +4,7 @@ Attributes:
     MAPolicy: Policy class for Memetic Algorithm.
 
 Example:
-    >>> from logic.src.configs.policies.ma import MAConfig
+    >>> from logic.src.configs.policies.routing.meta_heuristics.ma import MAConfig
     >>> config = MAConfig(pop_size=50)
     >>> policy = MAPolicy(config)
 """
@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
-from logic.src.configs.policies.ma import MAConfig
+from logic.src.configs.policies.routing.meta_heuristics.ma import MAConfig
 from logic.src.enums import PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry

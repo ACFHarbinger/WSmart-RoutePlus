@@ -7,7 +7,7 @@ Attributes:
     FAPolicy: Policy class for Discrete Firefly Algorithm.
 
 Example:
-    >>> from logic.src.configs.policies.fa import FAConfig
+    >>> from logic.src.configs.policies.routing.meta_heuristics.fa import FAConfig
     >>> config = FAConfig(pop_size=20)
     >>> policy = FAPolicy(config)
 """
@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
-from logic.src.configs.policies.fa import FAConfig
+from logic.src.configs.policies.routing.meta_heuristics.fa import FAConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 

@@ -93,7 +93,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
 import numpy as np
 
-from logic.src.configs.policies.alns import ALNSConfig
+from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
 from logic.src.policies.helpers.operators import (
     build_greedy_routes,
 )

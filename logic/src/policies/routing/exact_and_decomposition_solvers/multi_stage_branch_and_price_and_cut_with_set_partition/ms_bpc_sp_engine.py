@@ -131,7 +131,7 @@ import time
 import warnings
 from typing import Any, Dict, List, Optional, Set, Union
 
-from logic.src.configs.policies.ms_bpc_sp import MSBPCSPConfig
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.ms_bpc_sp import MSBPCSPConfig
 from logic.src.policies.helpers.solvers_and_matheuristics import (
     RCSPPSolver,
     VRPPMasterProblem,

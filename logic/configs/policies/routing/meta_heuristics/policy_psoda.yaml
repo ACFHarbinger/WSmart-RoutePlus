@@ -1,0 +1,20 @@
+psoda:
+  custom:
+    population_size: 20
+    inertia_weight_start: 0.9
+    inertia_weight_end: 0.4
+    cognitive_coef: 2.0
+    social_coef: 2.0
+    n_removal: 3
+    velocity_to_mutation_rate: 0.1
+    local_search_iterations: 100
+    alpha_profit: 1.0
+    beta_will: 0.5
+    gamma_cost: 0.3
+    max_iterations: 500
+    time_limit: 60.0
+    profit_aware_operators: false
+    packing:
+      other/packing/pk_lookahead.yaml:
+      - default
+    route_improvement: []

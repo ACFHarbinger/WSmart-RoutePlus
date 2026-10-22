@@ -10,7 +10,7 @@ Example:
     >>> policy = PSOPolicyAdapter()
 """
 
-from logic.src.configs.policies.pso import PSOConfig
+from logic.src.configs.policies.routing.meta_heuristics.pso import PSOConfig
 
 from .policy_pso import PSOPolicyAdapter
 from .solver import PSOSolver

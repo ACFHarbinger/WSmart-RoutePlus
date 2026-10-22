@@ -128,7 +128,7 @@ def test_public_cptp_beam_search_matches_individual_instances():
 
 @pytest.mark.parametrize("reward_weight", [0.0, 1.0])
 def test_simulator_beam_width_larger_than_feasible_candidates(reward_weight):
-    from logic.src.configs.policies.na import NeuralAgentConfig
+    from logic.src.configs.policies.routing.learning_algorithms.na import NeuralAgentConfig
     from logic.src.models.core.attention_model.model import AttentionModel
     from logic.src.pipeline.learning.envs.cptp import CPTP
     from logic.src.policies.routing.learning_algorithms.neural_agent.agent import NeuralAgent

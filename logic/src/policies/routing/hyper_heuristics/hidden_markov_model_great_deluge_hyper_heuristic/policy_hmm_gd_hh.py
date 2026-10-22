@@ -19,7 +19,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
-from logic.src.configs.policies.hmm_gd_hh import HMMGDHHConfig
+from logic.src.configs.policies.routing.hyper_heuristics.hmm_gd_hh import HMMGDHHConfig
 from logic.src.enums import PolicyTag
 from logic.src.policies.helpers.operators.solution_initialization.greedy_si import build_greedy_routes
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy

@@ -28,7 +28,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
-from logic.src.configs.policies.bp import BPConfig
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.bp import BPConfig
 from logic.src.policies.helpers.solvers_and_matheuristics import (
     BranchAndBoundTree,
     BranchNode,

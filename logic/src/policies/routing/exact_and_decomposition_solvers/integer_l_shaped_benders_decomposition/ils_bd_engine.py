@@ -44,7 +44,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from logic.src.configs.policies.ils_bd import IntegerLShapedBendersConfig
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.ils_bd import IntegerLShapedBendersConfig
 from logic.src.policies.helpers.solvers_and_matheuristics.vrpp_model import VRPPModel
 
 from .scenario import ScenarioGenerator
@@ -71,7 +71,7 @@ class IntegerLShapedEngine:
 
         from logic.src.policies.helpers.solvers_and_matheuristics.vrpp_model import VRPPModel
         from logic.src.policies.routing.exact_and_decomposition_solvers.integer_l_shaped_benders_decomposition.ils_bd_engine import IntegerLShapedEngine
-        from logic.src.configs.policies.ils_bd import IntegerLShapedBendersConfig
+        from logic.src.configs.policies.routing.exact_and_decomposition_solvers.ils_bd import IntegerLShapedBendersConfig
 
         model = VRPPModel(n_nodes=..., cost_matrix=..., wastes=..., ...)
         engine = IntegerLShapedEngine(model, IntegerLShapedBendersConfig())

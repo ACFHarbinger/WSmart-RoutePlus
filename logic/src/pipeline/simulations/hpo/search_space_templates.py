@@ -119,11 +119,11 @@ def generate_routing_templates() -> None:
 def generate_route_improvement_templates() -> None:
     """Scaffold JSON search space templates for route improvement configs.
 
-    Scans ``logic.src.configs.policies.other.route_improvement`` and writes
+    Scans ``logic.src.configs.policies.route_improvement`` and writes
     template JSON files to :data:`ROUTE_IMPROVEMENT_DIR`.  Existing files are not
     overwritten.
     """
-    from logic.src.configs.policies.other import route_improvement
+    from logic.src.configs.policies import route_improvement
 
     os.makedirs(ROUTE_IMPROVEMENT_DIR, exist_ok=True)
 
@@ -156,7 +156,9 @@ def generate_packing_templates() -> None:
     writes template JSON files to :data:`PACKING_DIR`.  Existing files are not
     overwritten.
     """
-    from logic.src.configs.policies.other import packing_dispatch, packing_learned, packing_threshold
+    from logic.src.configs.policies.packing import dispatch as packing_dispatch
+    from logic.src.configs.policies.packing import learned as packing_learned
+    from logic.src.configs.policies.packing import threshold as packing_threshold
 
     os.makedirs(PACKING_DIR, exist_ok=True)
 
@@ -186,11 +188,11 @@ def generate_packing_templates() -> None:
 def generate_acceptance_criteria_templates() -> None:
     """Scaffold JSON search space templates for acceptance criteria configs.
 
-    Scans ``logic.src.configs.policies.other.acceptance_criteria`` and writes
+    Scans ``logic.src.configs.policies.acceptance_criteria`` and writes
     template JSON files to :data:`ACCEPTANCE_CRITERIA_DIR`. Existing files are not
     overwritten.
     """
-    from logic.src.configs.policies.other import acceptance_criteria
+    from logic.src.configs.policies import acceptance_criteria
 
     os.makedirs(ACCEPTANCE_CRITERIA_DIR, exist_ok=True)
 

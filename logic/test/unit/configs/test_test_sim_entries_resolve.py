@@ -147,7 +147,7 @@ def test_policies_references_point_at_defaults_sections():
     that the defaults list actually provides (``${p.<section>...}``), so no
     entry can dangle after a rename or removal (the mp_bmc class of bug)."""
     text = _TEST_SIM.read_text(encoding="utf-8")
-    defaults = set(re.findall(r"^\s*- /policies@p\.([A-Za-z0-9_]+):", text, re.M))
+    defaults = set(re.findall(r"^\s*- /policies(?:/[A-Za-z0-9_/]+)?@p\.([A-Za-z0-9_]+):", text, re.M))
     refs = re.findall(r"^\s*- ([A-Za-z0-9_]+): \$\{p\.([A-Za-z0-9_]+)\.", text, re.M)
     assert refs, "no sim.policies interpolations found"
     for _key, section in refs:

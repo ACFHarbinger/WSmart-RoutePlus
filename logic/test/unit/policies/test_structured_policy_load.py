@@ -16,7 +16,7 @@ def _registered():
 
 
 def test_alns_yaml_loads_into_alns_config():
-    section = OmegaConf.to_container(OmegaConf.load(POLICY_DIR / "policy_alns.yaml"), resolve=True)["alns"]
+    section = OmegaConf.to_container(OmegaConf.load(POLICY_DIR / "routing/meta_heuristics/policy_alns.yaml"), resolve=True)["alns"]
     config = RoutingAlgorithmFactory.get_adapter("alns", config={"alns": section, "seed": 1})._config
     assert config.time_limit == 600.0
     from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
@@ -27,7 +27,7 @@ def test_alns_yaml_loads_into_alns_config():
 
 
 def test_unknown_key_fails_loudly():
-    from logic.src.configs.policies.alns import ALNSConfig
+    from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
 
     with pytest.raises(ValueError, match="not_a_real_field"):
         _structured_load(ALNSConfig, {"time_limit": 10.0, "not_a_real_field": 1})

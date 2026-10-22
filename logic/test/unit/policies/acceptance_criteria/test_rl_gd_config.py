@@ -3,8 +3,8 @@
 from types import SimpleNamespace
 
 import pytest
-from logic.src.configs.policies.other.acceptance_criteria import AcceptanceConfig
-from logic.src.configs.policies.rl_gd_hh import RLGDHHConfig
+from logic.src.configs.policies.acceptance_criteria import AcceptanceConfig
+from logic.src.configs.policies.routing.learning_heuristic_algorithms.rl_gd_hh import RLGDHHConfig
 from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
 from omegaconf import OmegaConf
 

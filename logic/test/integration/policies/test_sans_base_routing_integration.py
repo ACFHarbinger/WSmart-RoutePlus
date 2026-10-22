@@ -6,7 +6,7 @@ from unittest.mock import patch
 import numpy as np
 import pandas as pd
 import pytest
-from logic.src.configs.policies.sans import SANSConfig
+from logic.src.configs.policies.routing.meta_heuristics.sans import SANSConfig
 from logic.src.policies.helpers.operators.solution_initialization.zone_si import (
     _get_bin_stock,
 )
@@ -154,7 +154,7 @@ def test_legacy_yaml_variants_carry_their_seven_numbers(path):
 
     from omegaconf import ListConfig, OmegaConf
 
-    yaml_path = Path(__file__).resolve().parents[3] / "configs" / "policies" / "policy_sans.yaml"
+    yaml_path = Path(__file__).resolve().parents[3] / "configs" / "policies" / "routing/meta_heuristics/policy_sans.yaml"
     variant = OmegaConf.load(yaml_path)[path[0]][path[1]]
     assert "params" not in variant
     valid_keys = {f.name for f in dataclasses.fields(SANSConfig)}

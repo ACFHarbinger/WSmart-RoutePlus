@@ -10,7 +10,7 @@ Example:
     >>> policy = HSPolicy()
 """
 
-from logic.src.configs.policies.hs import HSConfig
+from logic.src.configs.policies.routing.meta_heuristics.hs import HSConfig
 
 from .policy_hs import HSPolicy
 from .solver import HSSolver

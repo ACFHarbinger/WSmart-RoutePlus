@@ -16,7 +16,7 @@ Example:
     >>> routes = solver.solve(dist, capacity, demand, nodes)
 """
 
-from logic.src.configs.policies.vpl import VPLConfig
+from logic.src.configs.policies.routing.meta_heuristics.vpl import VPLConfig
 
 from .policy_vpl import VPLPolicy
 from .solver import VPLSolver

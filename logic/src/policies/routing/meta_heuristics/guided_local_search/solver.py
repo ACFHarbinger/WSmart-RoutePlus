@@ -32,7 +32,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
-from logic.src.configs.policies.gls import GLSConfig
+from logic.src.configs.policies.routing.meta_heuristics.gls import GLSConfig
 from logic.src.policies.helpers.operators.solution_initialization.nearest_neighbor_si import build_nn_routes
 
 from .llh_operators import GLSLLHOperatorsMixin

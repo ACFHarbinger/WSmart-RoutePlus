@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
-from logic.src.configs.policies.other.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
+from logic.src.configs.policies.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
 from logic.src.pipeline.simulations.actions.node_selection import PackingAction
 from logic.src.pipeline.simulations.actions.route_improvement import RouteImprovementAction
 from logic.src.policies.route_improvement.local_search import ClassicalLocalSearchRouteImprover
@@ -22,21 +22,21 @@ pytestmark = [pytest.mark.unit, pytest.mark.fast]
 def test_last_minute_list_variant_loads_yaml_threshold() -> None:
     """``{ms_last_minute.yaml: [last_minute_cf70]}`` must not be treated as a strategy name."""
     action = PackingAction()
-    parsed = action._parse_strategy_item({"other/pk_last_minute.yaml": ["last_minute_cf70"]})
+    parsed = action._parse_strategy_item({"other/packing/pk_last_minute.yaml": ["last_minute_cf70"]})
     assert parsed, "expected at least one strategy"
     assert parsed[0]["name"] == "last_minute"
     assert parsed[0]["params"].get("threshold") == 70
 
 
 def test_last_minute_omegaconf_listconfig_variant_loads_yaml_threshold() -> None:
-    item = OmegaConf.create({"other/pk_last_minute.yaml": ["last_minute_cf90"]})
+    item = OmegaConf.create({"other/packing/pk_last_minute.yaml": ["last_minute_cf90"]})
     parsed = PackingAction()._parse_strategy_item(item)
     assert parsed[0]["name"] == "last_minute"
     assert parsed[0]["params"].get("threshold") == 90
 
 
 def test_lookahead_default_list_variant_reads_yaml_day() -> None:
-    parsed = PackingAction()._parse_strategy_item({"other/pk_lookahead.yaml": ["default"]})
+    parsed = PackingAction()._parse_strategy_item({"other/packing/pk_lookahead.yaml": ["default"]})
     assert parsed[0]["name"] == "lookahead"
     assert parsed[0]["params"].get("current_collection_day") == 0
 
@@ -59,7 +59,7 @@ def test_bmc_yaml_is_injected_as_typed_acceptance_criterion() -> None:
         "config": {
             "psoma": {
                 "custom": {
-                    "acceptance_criteria": {"other/ac_bmc.yaml": ["bmc"]},
+                    "acceptance_criteria": {"other/acceptance_criteria/ac_bmc.yaml": ["bmc"]},
                     "packing": {},
                 }
             }
@@ -88,7 +88,7 @@ def test_oi_yaml_is_injected_as_only_improving() -> None:
     bins.n = 2
     context: Dict[str, Any] = {
         "bins": bins,
-        "config": {"hgs": {"acceptance_criteria": {"other/ac_oi.yaml": ["oi"]}}},
+        "config": {"hgs": {"acceptance_criteria": {"other/acceptance_criteria/ac_oi.yaml": ["oi"]}}},
         "day": 0,
         "max_capacity": 100.0,
     }
@@ -101,7 +101,7 @@ def test_oi_yaml_is_injected_as_only_improving() -> None:
 
 def test_psoma_from_config_consumes_injected_bmc_not_dataclass_t0() -> None:
     """PSOMA solver must instantiate BMC from ``acceptance_criterion``, not T0=3."""
-    from logic.src.configs.policies.psoma import PSOMAConfig
+    from logic.src.configs.policies.routing.meta_heuristics.psoma import PSOMAConfig
     from logic.src.policies.routing.base.sub_problem import build_subproblem
     from logic.src.policies.routing.meta_heuristics.particle_swarm_optimization_memetic_algorithm.solver import (
         PSOMASolver,
@@ -130,7 +130,7 @@ def test_psoma_from_config_consumes_injected_bmc_not_dataclass_t0() -> None:
 
 def test_alns_from_config_consumes_injected_bmc_on_attrdict() -> None:
     """Attribute mappings and plain mappings both preserve injected BMC."""
-    from logic.src.configs.policies.alns import ALNSConfig
+    from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
     from logic.src.policies.routing.base.sub_problem import build_subproblem
     from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns import (
         ALNSSolver,
@@ -155,8 +155,8 @@ def test_alns_from_config_consumes_injected_bmc_on_attrdict() -> None:
 
 
 def test_hgs_from_config_consumes_injected_oi() -> None:
-    from logic.src.configs.policies.hgs import HGSConfig
-    from logic.src.configs.policies.other.acceptance_criteria import OnlyImprovingConfig
+    from logic.src.configs.policies.routing.meta_heuristics.hgs import HGSConfig
+    from logic.src.configs.policies.acceptance_criteria import OnlyImprovingConfig
     from logic.src.policies.acceptance_criteria.only_improving import OnlyImproving
     from logic.src.policies.routing.base.sub_problem import build_subproblem
     from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.hgs import HGSSolver
@@ -230,7 +230,7 @@ def test_ri_yaml_iterations_are_passed_without_clobbering_policy_time_limit() ->
         "tour": [0, 1, 2, 0],
         "distance_matrix": np.zeros((3, 3)),
         "time_limit": 60.0,
-        "config": {"route_improvement": {"other/ri_cls.yaml": ["default"]}},
+        "config": {"route_improvement": {"other/route_improvement/ri_cls.yaml": ["default"]}},
         "sample_id": 0,
         "day": 0,
         "policy_name": "alns",
@@ -328,8 +328,8 @@ def test_expanded_paper_policies_match_ms_ri_ac_yaml() -> None:
 
     action = PackingAction()
     assert cfg.sim.config_path, "expander stored no policies"
-    cls_yaml = _load_policy_yaml_section("other/ri_cls.yaml", "default")
-    bmc_yaml = _load_policy_yaml_section("other/ac_bmc.yaml", "bmc")["params"]
+    cls_yaml = _load_policy_yaml_section("other/route_improvement/ri_cls.yaml", "default")
+    bmc_yaml = _load_policy_yaml_section("other/acceptance_criteria/ac_bmc.yaml", "bmc")["params"]
     saw_last_minute = False
     saw_lookahead = False
     saw_bmc = False
@@ -390,9 +390,9 @@ def test_live_test_sim_captures_ms_ri_ac(tmp_path, monkeypatch) -> None:
         "engine": "custom",
         "time_limit": 2.0,
         "max_iterations": 20,
-        "packing": {"other/pk_last_minute.yaml": "last_minute_cf70"},
-        "route_improvement": {"other/ri_cls.yaml": "default"},
-        "acceptance_criteria": {"other/ac_bmc.yaml": "bmc"},
+        "packing": {"other/packing/pk_last_minute.yaml": "last_minute_cf70"},
+        "route_improvement": {"other/route_improvement/ri_cls.yaml": "default"},
+        "acceptance_criteria": {"other/acceptance_criteria/ac_bmc.yaml": "bmc"},
     }
     with initialize_config_dir(version_base=None, config_dir=CONFIGS_DIR):
         cfg = compose(

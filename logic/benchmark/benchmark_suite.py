@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from logic.src.configs.policies.swc_tcf import SWCTCFConfig
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.swc_tcf import SWCTCFConfig
 from logic.src.models import AttentionModel
 from logic.src.models.subnets.factories import AttentionComponentFactory
 from logic.src.pipeline.learning.envs import PTP

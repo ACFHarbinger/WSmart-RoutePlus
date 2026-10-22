@@ -2,7 +2,7 @@
 
 import numpy as np
 import pytest
-from logic.src.configs.policies.de import DEConfig
+from logic.src.configs.policies.routing.meta_heuristics.de import DEConfig
 from logic.src.policies.routing.meta_heuristics.differential_evolution.solver import DESolver
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

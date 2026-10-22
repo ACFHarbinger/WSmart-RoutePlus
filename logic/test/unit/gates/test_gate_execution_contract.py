@@ -60,10 +60,10 @@ def test_external_harness_uses_the_target_checkout_config_names(tmp_path, monkey
     assert entry["max_iterations"] == 17
     assert entry["profit_aware_operators"] is False
     assert "other/ms_last_minute.yaml" in entry["packing"]
-    renamed = tmp_path / "logic/configs/policies/other/pk_last_minute.yaml"
+    renamed = tmp_path / "logic/configs/policies/other/packing/pk_last_minute.yaml"
     renamed.parent.mkdir(parents=True)
     renamed.write_text("")
-    assert "other/pk_last_minute.yaml" in cell_policy_entry("ALNS")["alns"]["packing"]
+    assert "other/packing/pk_last_minute.yaml" in cell_policy_entry("ALNS")["alns"]["packing"]
 
 
 @pytest.mark.parametrize(

@@ -11,7 +11,7 @@
 #   python main.py train rl.imitation.policy_config=tasks/policies/rl/alns
 # =============================================================================
 
-_target_: logic.src.configs.policies.alns.ALNSConfig
+_target_: logic.src.configs.policies.routing.meta_heuristics.alns.ALNSConfig
 
 # Same fields as the simulator's ALNS (ALNSConfig); packing, route_improvement
 # and engine are simulator-only and ignored by the vectorised expert.

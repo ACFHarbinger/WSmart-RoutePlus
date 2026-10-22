@@ -11,7 +11,7 @@
 #   python main.py train rl.imitation.policy_config=tasks/policies/rl/ils
 # =============================================================================
 
-_target_: logic.src.configs.policies.ils.ILSConfig
+_target_: logic.src.configs.policies.routing.meta_heuristics.ils.ILSConfig
 
 # Same fields as the simulator's ILS (ILSConfig): perturbation + five low-level
 # heuristics. engine, packing and route_improvement are simulator-only and ignored.

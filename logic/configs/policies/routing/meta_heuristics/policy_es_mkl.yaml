@@ -1,0 +1,25 @@
+es_mkl:
+  custom:
+    mu: 15
+    kappa: 7
+    lambda_: 100
+    rho: 15
+    tau_local: 0.7071
+    tau_global: 0.3536
+    recombination_type: intermediate
+    initial_sigma: 1.0
+    min_sigma: 1e-10
+    max_sigma: 10.0
+    bounds_min: -5.0
+    bounds_max: 5.0
+    n_removal: 3
+    local_search_iterations: 100
+    max_iterations: 500
+    time_limit: 60.0
+    profit_aware_operators: false
+    packing:
+      other/packing/pk_lookahead.yaml:
+      - default
+    route_improvement:
+    - 2opt_intra
+    - relocate

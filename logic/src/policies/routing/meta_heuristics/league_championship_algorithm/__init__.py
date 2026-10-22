@@ -10,7 +10,7 @@ Attributes:
 
 """
 
-from logic.src.configs.policies.lca import LCAConfig
+from logic.src.configs.policies.routing.meta_heuristics.lca import LCAConfig
 
 from .policy_lca import LCAPolicy
 

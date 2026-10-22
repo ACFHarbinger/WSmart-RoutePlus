@@ -1,0 +1,9 @@
+src:
+  routing_algorithms:
+  - tsp
+  - alns
+  time_limit: 60
+  packing:
+    other/packing/pk_lookahead.yaml:
+    - default
+  seed: 42

@@ -37,7 +37,7 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from logic.src.configs.policies.rl_hvpl import RLHVPLConfig
+from logic.src.configs.policies.routing.learning_heuristic_algorithms.rl_hvpl import RLHVPLConfig
 from logic.src.policies.helpers.learning.alns_sarsa import (
     ALNSSARSASolver,
 )

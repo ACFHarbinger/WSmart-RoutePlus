@@ -11,7 +11,7 @@ Example:
 
 from typing import Any, Dict, List, Optional, Tuple, Type
 
-from logic.src.configs.policies.aks import AdaptiveKernelSearchConfig
+from logic.src.configs.policies.routing.matheuristics.aks import AdaptiveKernelSearchConfig
 from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.search_context import SearchContext

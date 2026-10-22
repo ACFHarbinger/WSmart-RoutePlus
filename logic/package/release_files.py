@@ -125,7 +125,7 @@ def pytest_ini_section(root_pyproject: Path) -> List[str]:
     return lines
 
 
-OTHER_REF_RE = re.compile(r"other/([A-Za-z0-9_]+\.yaml)")
+OTHER_REF_RE = re.compile(r"other/(?:[A-Za-z0-9_]+/)?([A-Za-z0-9_]+\.yaml)")
 
 
 def released_stage_configs(manifest: dict, policies_dir: Path) -> Set[str]:
@@ -141,23 +141,23 @@ def released_stage_configs(manifest: dict, policies_dir: Path) -> Set[str]:
     keep = {f"pk_{key}.yaml" for key in stages.get("packing", ())}
     keep |= {f"ac_{key}.yaml" for key in stages.get("acceptance", ())}
     improvers = set(stages.get("route_improvement", ()))
-    for ri_path in (policies_dir / "other").glob("ri_*.yaml"):
+    for ri_path in (policies_dir / "other").rglob("ri_*.yaml"):
         variants = yaml.safe_load(ri_path.read_text()) or {}
         methods = {m for v in variants.values() if isinstance(v, dict) for m in v.get("methods", [])}
         if methods and methods <= improvers:
             keep.add(ri_path.name)
-    for policy_yaml in policies_dir.glob("policy_*.yaml"):
+    for policy_yaml in policies_dir.rglob("policy_*.yaml"):
         keep |= set(OTHER_REF_RE.findall(policy_yaml.read_text()))
     if "pk_eoq_last_minute.yaml" in keep:  # RQ-cursor-3: 1.0.0 last-minute is fill-threshold only
         keep.discard("pk_eoq_last_minute.yaml")
     return keep
 
 
-POLICY_DEFAULT_RE = re.compile(r"^\s*-\s*/policies@p\.[A-Za-z0-9_]+:\s*(policy_[A-Za-z0-9_]+)\s*$")
+POLICY_DEFAULT_RE = re.compile(r"^\s*-\s*/policies(?:/([A-Za-z0-9_/]+))?@p\.[A-Za-z0-9_]+:\s*(policy_[A-Za-z0-9_]+)\s*$")
 
 
 def prune_policy_defaults(task_yaml: Path, policies_dir: Path) -> int:
-    """Remove ``- /policies@p.<key>: policy_<key>`` defaults whose YAML was pruned.
+    """Remove ``- /policies/<group>@p.<key>: policy_<key>`` defaults whose YAML was pruned.
 
     Hydra fails to compose a task whose defaults list names a missing config, and
     the task YAMLs list every policy in main.
@@ -165,7 +165,7 @@ def prune_policy_defaults(task_yaml: Path, policies_dir: Path) -> int:
     kept, dropped = [], 0
     for line in task_yaml.read_text().splitlines(keepends=True):
         match = POLICY_DEFAULT_RE.match(line)
-        if match and not (policies_dir / f"{match.group(1)}.yaml").exists():
+        if match and not (policies_dir / (match.group(1) or "") / f"{match.group(2)}.yaml").exists():
             dropped += 1
             continue
         kept.append(line)

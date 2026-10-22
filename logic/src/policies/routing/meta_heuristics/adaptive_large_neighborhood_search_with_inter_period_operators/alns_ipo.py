@@ -54,7 +54,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from logic.src.configs.policies.alns_ipo import ALNSIPOConfig
+from logic.src.configs.policies.routing.meta_heuristics.alns_ipo import ALNSIPOConfig
 from logic.src.policies.helpers.operators import (
     greedy_horizon_insertion,
     pattern_removal,

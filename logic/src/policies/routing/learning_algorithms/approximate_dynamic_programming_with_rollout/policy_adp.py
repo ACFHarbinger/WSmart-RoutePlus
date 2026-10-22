@@ -19,7 +19,7 @@ Example:
 from dataclasses import asdict
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
-from logic.src.configs.policies.adp import ADPRolloutConfig
+from logic.src.configs.policies.routing.learning_algorithms.adp import ADPRolloutConfig
 from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.problem_context import ProblemContext

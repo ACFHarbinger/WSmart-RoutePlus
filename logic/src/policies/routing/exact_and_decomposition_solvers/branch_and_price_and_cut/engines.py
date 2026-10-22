@@ -24,7 +24,7 @@ from typing import Any, Dict
 
 import numpy as np
 
-from logic.src.configs.policies.bpc import BPCConfig
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.bpc import BPCConfig
 from logic.src.policies.helpers.solvers_and_matheuristics.pricing import RCSPPSolver
 from logic.src.policies.helpers.solvers_and_matheuristics.search.cutting_planes import (
     CompositeCuttingPlaneEngine,

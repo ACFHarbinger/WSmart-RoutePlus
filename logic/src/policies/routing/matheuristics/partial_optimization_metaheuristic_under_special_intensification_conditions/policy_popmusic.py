@@ -11,7 +11,7 @@ Example:
 
 from typing import Any, Dict, List, Optional, Tuple, Type
 
-from logic.src.configs.policies.popmusic import POPMUSICConfig
+from logic.src.configs.policies.routing.matheuristics.popmusic import POPMUSICConfig
 from logic.src.enums import PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry

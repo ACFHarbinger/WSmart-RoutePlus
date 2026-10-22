@@ -148,11 +148,11 @@ def run_check(manifest: dict) -> int:  # noqa: C901
     routing = set(manifest["stages"].get("routing", ()))
     packing = set(manifest["stages"].get("packing", ()))
     for key in routing:
-        if not (LOGIC / "configs" / "policies" / f"policy_{key}.yaml").is_file():
-            problems.append(f"routing key {key!r}: no configs/policies/policy_{key}.yaml")
+        if not any((LOGIC / "configs" / "policies").rglob(f"policy_{key}.yaml")):
+            problems.append(f"routing key {key!r}: no configs/policies/**/policy_{key}.yaml")
     for key in packing:
-        if not (LOGIC / "configs" / "policies" / "other" / f"pk_{key}.yaml").is_file():
-            problems.append(f"packing key {key!r}: no configs/policies/other/pk_{key}.yaml")
+        if not any((LOGIC / "configs" / "policies" / "other").rglob(f"pk_{key}.yaml")):
+            problems.append(f"packing key {key!r}: no configs/policies/other/**/pk_{key}.yaml")
     for stage, keys in manifest["stages"].items():
         for key in keys:
             target = stage_entries[stage].get(key, "")
@@ -262,15 +262,19 @@ def run_build(  # noqa: C901
 
     # --- package configs: released YAML only ----------------------------- #
     routing = set(manifest["stages"].get("routing", ()))
-    for yaml_path in sorted((out / "logic" / "configs" / "policies").glob("policy_*.yaml")):
+    for yaml_path in sorted((out / "logic" / "configs" / "policies").rglob("policy_*.yaml")):
         if yaml_path.stem.removeprefix("policy_") not in routing:
             yaml_path.unlink()
     other_dir = out / "logic" / "configs" / "policies" / "other"
     if other_dir.is_dir():
         keep = released_stage_configs(manifest, out / "logic" / "configs" / "policies")
-        for yaml_path in sorted(other_dir.glob("*.yaml")):
+        for yaml_path in sorted(other_dir.rglob("*.yaml")):
             if yaml_path.name not in keep:
                 yaml_path.unlink()
+    # The policy configs are grouped by category; drop the groups the release empties.
+    for folder in sorted((out / "logic" / "configs" / "policies").rglob("*"), reverse=True):
+        if folder.is_dir() and not any(folder.iterdir()):
+            folder.rmdir()
 
     # --- tests: release CI set only (P-06) ------------------------------- #
     release, pruned = release_tests(manifest, kept)

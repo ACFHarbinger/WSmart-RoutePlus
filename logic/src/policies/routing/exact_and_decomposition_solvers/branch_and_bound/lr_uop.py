@@ -71,7 +71,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
-from logic.src.configs.policies.bb import BBConfig
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.bb import BBConfig
 from logic.src.policies.helpers.solvers_and_matheuristics.lagrangian_relaxation.subgradient_optimization import (
     _nearest_neighbour_tour_cost,
     run_subgradient,

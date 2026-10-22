@@ -46,7 +46,7 @@ from __future__ import annotations
 from dataclasses import MISSING, dataclass, field, fields
 from typing import Any, Dict, List, Optional
 
-from logic.src.configs.policies.tpks import TpksConfig
+from logic.src.configs.policies.routing.matheuristics.tpks import TpksConfig
 
 # ---------------------------------------------------------------------------
 # Lookahead (scenario tree + per-bin DP)

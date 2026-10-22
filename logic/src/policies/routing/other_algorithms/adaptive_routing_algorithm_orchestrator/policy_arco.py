@@ -78,7 +78,7 @@ import numpy as np
 if TYPE_CHECKING:
     from logic.src.interfaces.context.search_context import SearchContext
 
-from logic.src.configs.policies.arco import ARCOConfig
+from logic.src.configs.policies.routing.other_algorithms.arco import ARCOConfig
 from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.search_context import SearchContext
 from logic.src.interfaces.routing_algorithm import IRoutingAlgorithm
@@ -171,7 +171,7 @@ class AdaptiveRoutingAlgorithmOrchestrator(ARCOWeightsMixin, BaseRoutingPolicy):
         Returns:
             Description of return value.
         """
-        from logic.src.configs.policies.arco import ARCOConfig
+        from logic.src.configs.policies.routing.other_algorithms.arco import ARCOConfig
 
         return ARCOConfig
 

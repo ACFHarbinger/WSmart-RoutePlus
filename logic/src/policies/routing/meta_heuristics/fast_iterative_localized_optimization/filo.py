@@ -24,7 +24,7 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from logic.src.configs.policies.filo import FILOConfig
+from logic.src.configs.policies.routing.meta_heuristics.filo import FILOConfig
 from logic.src.policies.helpers.local_search.local_search_filo import (
     FILOLocalSearch,
 )

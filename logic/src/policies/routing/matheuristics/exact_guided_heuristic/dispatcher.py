@@ -28,7 +28,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 import numpy as np
 from numpy.typing import NDArray
 
-from logic.src.configs.policies.egh import ExactGuidedHeuristicConfig
+from logic.src.configs.policies.routing.matheuristics.egh import ExactGuidedHeuristicConfig
 
 from .route_pool import RoutePool
 from .stage_alns import run_alns_stage
@@ -56,7 +56,7 @@ def _build_alns_params(pipeline_params: ExactGuidedHeuristicConfig, time_limit: 
     """
     import dataclasses
 
-    from logic.src.configs.policies.alns import ALNSConfig
+    from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
 
     values_dict = pipeline_params.as_alns_values_dict()
     values_dict["time_limit"] = time_limit

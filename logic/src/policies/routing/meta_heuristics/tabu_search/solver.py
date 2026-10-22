@@ -16,7 +16,7 @@ from typing import Any, DefaultDict, Deque, Dict, List, Optional, Sequence, Tupl
 
 import numpy as np
 
-from logic.src.configs.policies.ts import TSConfig
+from logic.src.configs.policies.routing.meta_heuristics.ts import TSConfig
 from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
 from logic.src.policies.helpers.operators.solution_initialization.greedy_si import build_greedy_routes
 from logic.src.policies.routing.meta_heuristics.tabu_search.memory import TSMemoryMixin

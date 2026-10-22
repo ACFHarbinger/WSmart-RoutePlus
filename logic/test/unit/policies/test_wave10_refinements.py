@@ -2,8 +2,8 @@
 
 import numpy as np
 import pytest
-from logic.src.configs.policies.fa import FAConfig
-from logic.src.configs.policies.qde import QDEConfig
+from logic.src.configs.policies.routing.meta_heuristics.fa import FAConfig
+from logic.src.configs.policies.routing.meta_heuristics.qde import QDEConfig
 from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price_and_cut.bpc_engine import (
     run_bpc,

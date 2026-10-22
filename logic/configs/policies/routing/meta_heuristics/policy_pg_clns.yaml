@@ -1,0 +1,39 @@
+pg_clns:
+  custom:
+    population_size: 10
+    max_iterations: 30
+    replacement_rate: 0.2
+    # time_limit is only a guard; the iteration budget ends the run, so results do not depend on machine speed.
+    time_limit: 600.0
+    aco:
+      n_ants: 10
+      k_sparse: 10
+      alpha: 1.0
+      beta: 2.0
+      rho: 0.1
+      q0: 0.9
+      tau_0: 1.0
+      tau_min: 0.001
+      tau_max: 10.0
+      max_iterations: 1
+      time_limit: 600.0
+      local_search: false
+      elitist_weight: 1.0
+    lns:
+      max_iterations: 100
+      reaction_factor: 0.5
+      xi: 0.2
+      time_limit: 600.0
+      acceptance_criterion:
+        method: bmc
+        params:
+          initial_temp: 100.0
+          alpha: 0.95
+    profit_aware_operators: true
+    packing:
+      other/packing/pk_last_minute.yaml:
+      - last_minute_cf70
+      - last_minute_cf90
+    route_improvement:
+      other/route_improvement/ri_cls.yaml:
+      - default

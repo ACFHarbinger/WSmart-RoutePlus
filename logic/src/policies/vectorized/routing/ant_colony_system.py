@@ -40,7 +40,7 @@ from typing import Optional
 
 import torch
 
-from logic.src.configs.policies.aco_ks import KSparseACOConfig
+from logic.src.configs.policies.routing.meta_heuristics.aco_ks import KSparseACOConfig
 from logic.src.policies.vectorized.routing.shared import routes as rs
 from logic.src.policies.vectorized.routing.shared.base import VectorizedRoutingPolicy
 from logic.src.policies.vectorized.routing.shared.pair_ls import pair_local_search

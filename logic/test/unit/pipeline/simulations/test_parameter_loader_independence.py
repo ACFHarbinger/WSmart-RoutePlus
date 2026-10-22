@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import numpy as np
 import pytest
-from logic.src.configs.policies.other.acceptance_criteria import (
+from logic.src.configs.policies.acceptance_criteria import (
     AcceptanceConfig,
     BoltzmannAcceptanceConfig,
 )

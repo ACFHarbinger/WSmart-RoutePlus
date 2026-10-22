@@ -23,7 +23,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
-from logic.src.configs.policies.rl_gd_hh import RLGDHHConfig
+from logic.src.configs.policies.routing.learning_heuristic_algorithms.rl_gd_hh import RLGDHHConfig
 from logic.src.enums import PolicyTag
 from logic.src.policies.acceptance_criteria.great_deluge import GreatDelugeAcceptance
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy

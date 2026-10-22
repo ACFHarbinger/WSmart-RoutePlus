@@ -6,6 +6,6 @@ from omegaconf import OmegaConf
 
 
 def test_src_yaml_sets_a_packing():
-    yaml_path = Path(__file__).resolve().parents[3] / "configs" / "policies" / "policy_src.yaml"
+    yaml_path = Path(__file__).resolve().parents[3] / "configs" / "policies" / "routing/other_algorithms/policy_src.yaml"
     section = OmegaConf.to_container(OmegaConf.load(yaml_path))["src"]
-    assert section.get("packing") == {"other/pk_lookahead.yaml": ["default"]}
+    assert section.get("packing") == {"other/packing/pk_lookahead.yaml": ["default"]}

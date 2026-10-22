@@ -12,7 +12,7 @@ import random
 import numpy as np
 import pandas as pd
 import pytest
-from logic.src.configs.policies.hgs import HGSConfig
+from logic.src.configs.policies.routing.meta_heuristics.hgs import HGSConfig
 from logic.src.policies.helpers.local_search import local_search_base
 
 # HGS and ALNS auxiliary imports

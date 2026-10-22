@@ -22,7 +22,7 @@ from typing import Optional
 import numpy as np
 import torch
 
-from logic.src.configs.policies.other.route_improvement import RandomLocalSearchPostConfig
+from logic.src.configs.policies.route_improvement import RandomLocalSearchPostConfig
 from logic.src.policies.vectorized.routing.shared import routes as rs
 from logic.src.policies.vectorized.routing.shared.base import VectorizedRoutingPolicy
 from logic.src.policies.vectorized.routing.shared.sweeps import SweepState, sweep

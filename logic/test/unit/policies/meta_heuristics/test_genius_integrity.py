@@ -4,7 +4,7 @@ Integration tests for GENIUS solver integrity.
 
 import numpy as np
 import pytest
-from logic.src.configs.policies.genius import GENIUSConfig
+from logic.src.configs.policies.routing.meta_heuristics.genius import GENIUSConfig
 from logic.src.policies.routing.meta_heuristics.genius.solver import GENIUSSolver
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

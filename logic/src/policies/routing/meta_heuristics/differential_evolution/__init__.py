@@ -14,7 +14,7 @@ Example:
     >>> routes, profit, cost = solver.solve()
 """
 
-from logic.src.configs.policies.de import DEConfig
+from logic.src.configs.policies.routing.meta_heuristics.de import DEConfig
 
 from .solver import DESolver
 

@@ -10,7 +10,7 @@ from typing import Optional
 
 import torch
 
-from logic.src.configs.policies.hgs import HGSConfig
+from logic.src.configs.policies.routing.meta_heuristics.hgs import HGSConfig
 from logic.src.policies.vectorized.routing.shared.base import VectorizedRoutingPolicy
 from logic.src.policies.vectorized.routing.shared.vrpp import VRPPBatch
 

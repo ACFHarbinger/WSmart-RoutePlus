@@ -24,7 +24,7 @@ from typing import Any, Dict, List, Set, Tuple
 
 import numpy as np
 
-from logic.src.configs.policies.ils_bd import IntegerLShapedBendersConfig
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.ils_bd import IntegerLShapedBendersConfig
 
 from .ils_bd_engine import IntegerLShapedEngine
 from .master_problem import MasterProblem

@@ -21,7 +21,7 @@ from typing import Optional
 
 import torch
 
-from logic.src.configs.policies.hgs_alns import HGSALNSConfig
+from logic.src.configs.policies.routing.meta_heuristics.hgs_alns import HGSALNSConfig
 from logic.src.policies.vectorized.routing.core.crossover import vectorized_ordered_crossover
 from logic.src.policies.vectorized.routing.shared import routes as rs
 from logic.src.policies.vectorized.routing.shared.base import VectorizedRoutingPolicy

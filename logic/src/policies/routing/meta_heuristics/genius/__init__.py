@@ -27,7 +27,7 @@ Example:
     >>> routes, profit, cost = solver.solve()
 """
 
-from logic.src.configs.policies.genius import GENIUSConfig
+from logic.src.configs.policies.routing.meta_heuristics.genius import GENIUSConfig
 
 from .policy_genius import GENIUSPolicy
 from .solver import GENIUSSolver

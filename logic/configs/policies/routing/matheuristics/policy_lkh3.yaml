@@ -1,0 +1,25 @@
+lkh3:
+  custom:
+    runs: 10
+    max_trials: 1000
+    popmusic_subpath_size: 50
+    popmusic_trials: 50
+    popmusic_max_candidates: 5
+    max_k_opt: 5
+    use_ip_merging: true
+    max_pool_size: 5
+    subgradient_iterations: 50
+    dynamic_topology_discovery: false
+    native_prize_collecting: false
+    alns_iterations: 100
+    plateau_limit: 10
+    deep_plateau_limit: 30
+    perturb_operator_weights:
+    - 0.6
+    - 0.4
+    time_limit: 60
+    profit_aware_operators: true
+    packing:
+      other/packing/pk_lookahead.yaml:
+      - default
+    route_improvement: []

@@ -13,7 +13,7 @@ Example:
     >>> print(solution)
 """
 
-from logic.src.configs.policies.rts import RTSConfig
+from logic.src.configs.policies.routing.meta_heuristics.rts import RTSConfig
 
 from .solver import RTSSolver
 

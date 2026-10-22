@@ -1,0 +1,15 @@
+rl_gd_hh:
+  custom:
+    max_iterations: 10000
+    time_limit: 60.0
+    reward_improvement: 1.0
+    penalty_worsening: 1.0
+    punishment_type: RL1
+    utility_upper_bound: 40.0
+    min_utility: 0.0
+    initial_utility: 30.0
+    quality_lb: 0.0
+    packing:
+      other/packing/pk_lookahead.yaml:
+      - default
+    route_improvement: []

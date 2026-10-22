@@ -129,7 +129,7 @@ import time
 import warnings
 from typing import Any, Dict, Optional, Union
 
-from logic.src.configs.policies.bpc import BPCConfig
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.bpc import BPCConfig
 from logic.src.policies.helpers.solvers_and_matheuristics.branching import BranchAndBoundTree
 from logic.src.policies.helpers.solvers_and_matheuristics.branching.pruning import (
     apply_branching_to_master as _apply_branching_to_master,

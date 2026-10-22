@@ -17,7 +17,7 @@ Example:
     >>> solver = HGSRRSolver(dist_matrix, wastes, capacity, R, C, params)
 """
 
-from logic.src.configs.policies.hgs_rr import HGSRRConfig
+from logic.src.configs.policies.routing.meta_heuristics.hgs_rr import HGSRRConfig
 
 from .hgs_rr import HGSRRSolver
 

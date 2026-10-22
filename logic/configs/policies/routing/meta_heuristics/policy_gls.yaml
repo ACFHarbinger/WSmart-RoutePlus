@@ -1,0 +1,15 @@
+gls:
+  custom:
+    lambda_param: 1.0
+    alpha_param: 0.3
+    penalty_cycles: 1000
+    inner_iterations: 100
+    fls_coupling_prob: 0.8
+    n_removal: 3
+    n_llh: 6
+    time_limit: 60.0
+    profit_aware_operators: false
+    packing:
+      other/packing/pk_lookahead.yaml:
+      - default
+    route_improvement: []

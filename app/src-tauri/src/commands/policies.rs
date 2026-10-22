@@ -14,7 +14,7 @@ pub struct SimPolicyEntry {
 }
 
 /// Parse `logic/configs/tasks/test_sim.yaml` and extract policy IDs from lines like:
-/// `- /policies@p.aco_hh: policy_aco_hh`
+/// `- /policies/routing/hyper_heuristics@p.aco_hh: policy_aco_hh`
 #[tauri::command]
 pub fn list_sim_policies(project_root: String) -> Result<Vec<SimPolicyEntry>, String> {
     let yaml_path = Path::new(&project_root).join("logic/configs/tasks/test_sim.yaml");
@@ -27,11 +27,15 @@ pub fn list_sim_policies(project_root: String) -> Result<Vec<SimPolicyEntry>, St
 
     for line in content.lines() {
         let trimmed = line.trim();
-        if !trimmed.starts_with("- /policies@p.") {
+        // e.g. "- /policies/routing/hyper_heuristics@p.aco_hh: policy_aco_hh"
+        // (the config group is the policy's category folder; older files use "- /policies@p.").
+        if !trimmed.starts_with("- /policies") {
             continue;
         }
-        // e.g. "- /policies@p.aco_hh: policy_aco_hh"
-        let after_prefix = trimmed.trim_start_matches("- /policies@p.");
+        let Some(at_idx) = trimmed.find("@p.") else {
+            continue;
+        };
+        let after_prefix = &trimmed[at_idx + "@p.".len()..];
         let colon_idx = after_prefix.find(':').ok_or_else(|| {
             format!("Malformed policy line in test_sim.yaml: {trimmed}")
         })?;

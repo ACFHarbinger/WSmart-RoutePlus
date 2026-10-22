@@ -26,8 +26,8 @@ for name in ['alns', 'pg_clns', 'bpc', 'cvrp', 'hgs', 'psoma', 'aco_hh', 'sans',
 from logic.src.pipeline.simulations.states.base.context import SimulationContext
 from logic.src.pipeline.features.test.engine import run_simulator_test
 from logic.src.pipeline.simulations.actions.fill import FillAction
-from logic.src.configs.policies.alns import ALNSConfig
-from logic.src.configs.policies.pg_clns import PGCLNSConfig
+from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
+from logic.src.configs.policies.routing.meta_heuristics.pg_clns import PGCLNSConfig
 from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns import ALNSSolver
 from logic.src.policies.routing.meta_heuristics.pheromone_guided_cooperative_large_neighborhood_search.lns import LNSSolver

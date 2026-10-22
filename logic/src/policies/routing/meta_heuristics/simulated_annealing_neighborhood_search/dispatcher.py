@@ -15,7 +15,7 @@ Attributes:
 
 Example:
     >>> from logic.src.data.bins import Bins
-    >>> from logic.src.configs.policies.sans import SANSConfig
+    >>> from logic.src.configs.policies.routing.meta_heuristics.sans import SANSConfig
     >>> from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.policy_sans import SANSPolicy
     >>> # Create dummy data
     >>> distance_matrix = np.array([[0, 1, 2], [1, 0, 3], [2, 3, 0]])
@@ -65,7 +65,7 @@ from logic.src.utils.routing.tours import get_route_cost
 if TYPE_CHECKING:
     from logic.src.interfaces.context.multi_day_context import MultiDayContext
 
-from logic.src.configs.policies.sans import SANSConfig
+from logic.src.configs.policies.routing.meta_heuristics.sans import SANSConfig
 
 
 def execute_new(

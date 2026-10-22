@@ -13,7 +13,7 @@ Example:
 
 from typing import Any, Dict, Optional, Type, Union
 
-from logic.src.configs.policies.pg_clns import PGCLNSConfig
+from logic.src.configs.policies.routing.meta_heuristics.pg_clns import PGCLNSConfig
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.routing.base.generic_policy import GenericRoutingPolicy
 

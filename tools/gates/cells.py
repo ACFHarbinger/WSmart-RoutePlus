@@ -4,7 +4,7 @@ Cell definition (owner ruling Q-14): each released routing algorithm x one
 packing algorithm x CLS, on Rio Maior 100 over 5 days, seed 42.
 
 Packing choice: ``last_minute_cf70`` (the paper's ``lm`` baseline; first
-variant in ``other/ms_last_minute.yaml``). Improver: CLS (``other/ri_cls.yaml``
+variant in ``other/ms_last_minute.yaml``). Improver: CLS (``other/route_improvement/ri_cls.yaml``
 ``default``). Acceptance stays each solver's paper wiring (ALNS/BMC, HGS/OI);
 the harness does not re-wire it.
 
@@ -73,7 +73,7 @@ GATE_A_SIM: Dict[str, Any] = {
 
 # Gate-(a) packing x improver pins (paper lm_cls baseline).
 GATE_A_PACKING = {"other/ms_last_minute.yaml": ["last_minute_cf70"]}
-GATE_A_IMPROVER = {"other/ri_cls.yaml": ["default"]}
+GATE_A_IMPROVER = {"other/route_improvement/ri_cls.yaml": ["default"]}
 
 # Per-cell caller overrides merged over the flattened YAML variant.
 # ``policy`` is the test_sim variant key; ``constructor`` is the summary label.
@@ -145,7 +145,9 @@ def cell_policy_entry(constructor: str, model_path: str = "", time_capped: bool 
     # otherwise falls back to dataclass defaults, which changed during P-10.
     import yaml
 
-    path = Path.cwd() / f"logic/configs/policies/policy_{cell['policy']}.yaml"
+    # Main groups the policy YAMLs by category; the unchanged gate baseline keeps them flat.
+    root = Path.cwd() / "logic/configs/policies"
+    path = next(root.rglob(f"policy_{cell['policy']}.yaml"), root / f"policy_{cell['policy']}.yaml")
     if not path.is_file():
         raise ValueError(f"Missing gate policy YAML: {path}")
     source = yaml.safe_load(path.read_text())[cell["policy"]]
@@ -170,8 +172,8 @@ def cell_policy_entry(constructor: str, model_path: str = "", time_capped: bool 
         }
     )
     overrides.update(cell.get("overrides", {}))
-    if (Path.cwd() / "logic/configs/policies/other/pk_last_minute.yaml").exists():
-        overrides["packing"] = {"other/pk_last_minute.yaml": ["last_minute_cf70"]}
+    if (Path.cwd() / "logic/configs/policies/other/packing/pk_last_minute.yaml").exists():
+        overrides["packing"] = {"other/packing/pk_last_minute.yaml": ["last_minute_cf70"]}
     if time_capped and cell["policy"] != "na":
         overrides["time_limit"] = 60.0
         if cell["policy"] == "sans":

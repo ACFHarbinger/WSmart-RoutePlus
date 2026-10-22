@@ -4,7 +4,7 @@ Attributes:
     HSPolicy: Policy class for Harmony Search.
 
 Example:
-    >>> from logic.src.configs.policies.hs import HSConfig
+    >>> from logic.src.configs.policies.routing.meta_heuristics.hs import HSConfig
     >>> config = HSConfig(hm_size=20)
     >>> policy = HSPolicy(config)
 """
@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
-from logic.src.configs.policies.hs import HSConfig
+from logic.src.configs.policies.routing.meta_heuristics.hs import HSConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 

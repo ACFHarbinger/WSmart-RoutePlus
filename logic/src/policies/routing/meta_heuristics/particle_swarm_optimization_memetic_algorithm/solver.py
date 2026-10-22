@@ -26,7 +26,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
-from logic.src.configs.policies.psoma import PSOMAConfig
+from logic.src.configs.policies.routing.meta_heuristics.psoma import PSOMAConfig
 from logic.src.policies.routing.base.sub_problem import SubProblem
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.split import LinearSplit
 from logic.src.policies.routing.meta_heuristics.population_search import PopulationSearch

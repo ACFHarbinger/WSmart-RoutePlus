@@ -6,7 +6,7 @@ Attributes:
 
 """
 
-from logic.src.configs.policies.es_mpl import MuPlusLambdaESConfig
+from logic.src.configs.policies.routing.meta_heuristics.es_mpl import MuPlusLambdaESConfig
 
 from .solver import MuPlusLambdaESSolver
 

@@ -40,7 +40,7 @@ import gurobipy as gp
 import numpy as np
 from gurobipy import GRB, quicksum
 
-from logic.src.configs.policies.bb import BBConfig
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.bb import BBConfig
 from logic.src.policies.helpers.solvers_and_matheuristics.common.node import Node
 from logic.src.tracking.viz_mixin import PolicyStateRecorder
 

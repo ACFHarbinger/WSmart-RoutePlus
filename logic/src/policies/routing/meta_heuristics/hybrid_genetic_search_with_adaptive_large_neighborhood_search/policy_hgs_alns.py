@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
-from logic.src.configs.policies.hgs_alns import HGSALNSConfig
+from logic.src.configs.policies.routing.meta_heuristics.hgs_alns import HGSALNSConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search_with_adaptive_large_neighborhood_search.hgs_alns import (

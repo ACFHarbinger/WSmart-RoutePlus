@@ -34,7 +34,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from logic.src.configs.policies.profitable_nn import ProfitableNNConfig
+from logic.src.configs.policies.vectorized.routing.profitable_nn import ProfitableNNConfig
 from logic.src.pipeline.learning.envs.base.base import RL4COEnvBase
 
 # Bump when a change can alter the expert's tours; cached expert solves carry it.

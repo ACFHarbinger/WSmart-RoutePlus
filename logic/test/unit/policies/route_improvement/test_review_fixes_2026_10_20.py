@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from logic.src.policies.routing.meta_heuristics.tabu_search.solver import TSSolver
-from logic.src.configs.policies.ts import TSConfig
+from logic.src.configs.policies.routing.meta_heuristics.ts import TSConfig
 from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -239,7 +239,7 @@ def test_packaged_acceptance_file_builds_and_runs(stem: str) -> None:
 
     import yaml
 
-    path = Path(__file__).resolve().parents[5] / "logic" / "configs" / "policies" / "other" / f"ac_{stem}.yaml"
+    path = Path(__file__).resolve().parents[5] / "logic" / "configs" / "policies" / "other" / "acceptance_criteria" / f"ac_{stem}.yaml"
     section = next(iter(yaml.safe_load(path.read_text()).values()))
     # The live path (HGS, PSOMA, ALNS) passes the params mapping as ``config``.
     criterion = AcceptanceCriterionFactory.create(name=section["method"], config=section.get("params"))

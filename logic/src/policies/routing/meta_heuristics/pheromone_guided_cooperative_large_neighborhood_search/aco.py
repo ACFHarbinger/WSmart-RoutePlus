@@ -19,7 +19,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
-from logic.src.configs.policies.aco_ks import KSparseACOConfig
+from logic.src.configs.policies.routing.meta_heuristics.aco_ks import KSparseACOConfig
 from logic.src.tracking.viz_mixin import PolicyVizMixin
 
 from .construction import SolutionConstructor

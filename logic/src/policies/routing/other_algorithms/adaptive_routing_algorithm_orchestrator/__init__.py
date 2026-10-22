@@ -14,7 +14,7 @@ Example:
     >>> routes = arco.build_routes(context)
 """
 
-from logic.src.configs.policies.arco import ARCOConfig as ARCOConfig
+from logic.src.configs.policies.routing.other_algorithms.arco import ARCOConfig as ARCOConfig
 
 from .policy_arco import AdaptiveRoutingAlgorithmOrchestrator as AdaptiveRoutingAlgorithmOrchestrator
 

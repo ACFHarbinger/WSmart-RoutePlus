@@ -1,0 +1,13 @@
+slc:
+  custom:
+    n_teams: 5
+    team_size: 4
+    n_removal: 1
+    stagnation_limit: 5
+    max_iterations: 50
+    time_limit: 60.0
+    local_search_iterations: 500
+    packing:
+      other/packing/pk_lookahead.yaml:
+      - default
+    route_improvement: []

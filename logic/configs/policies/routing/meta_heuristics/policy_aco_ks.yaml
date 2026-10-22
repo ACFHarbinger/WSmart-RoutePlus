@@ -1,0 +1,22 @@
+aco_ks:
+  custom:
+    n_ants: 20
+    k_sparse: 15
+    alpha: 1.0
+    beta: 2.0
+    rho: 0.1
+    scale: 3
+    tau_min: 0.001
+    tau_max: 10.0
+    max_iterations: 100
+    time_limit: 30.0
+    local_search: true
+    local_search_iterations: 500
+    elitist_weight: 1.0
+    packing:
+      other/packing/pk_lookahead.yaml:
+      - default
+    route_improvement: []
+    acceptance_criteria:
+      other/acceptance_criteria/ac_oi.yaml:
+      - oi

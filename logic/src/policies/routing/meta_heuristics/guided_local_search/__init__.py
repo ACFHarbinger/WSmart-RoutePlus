@@ -10,7 +10,7 @@ Example:
     >>> policy = GLSPolicy()
 """
 
-from logic.src.configs.policies.gls import GLSConfig
+from logic.src.configs.policies.routing.meta_heuristics.gls import GLSConfig
 
 from .solver import GLSSolver
 
