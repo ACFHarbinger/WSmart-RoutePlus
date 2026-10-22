@@ -25,6 +25,7 @@ CONTEXT_EMBEDDING_REGISTRY: Dict[str, Any] = {
     "ptp": PTPContextEmbedder,
     "cptp": CPTPContextEmbedder,
     "cptptc": CPTPContextEmbedder,
+    "cptptwtc": CPTPContextEmbedder,
 }
 
 __all__: list[str] = [

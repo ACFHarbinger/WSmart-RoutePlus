@@ -36,6 +36,9 @@ class EnvConfig:
             ``None`` falls through to ``SimulationRepository.get_temporal_params()``.
         avg_speed_kmh: Optional average driving speed in km/h (``cptptc`` only).
         service_time_h: Optional per-bin service time in hours (``cptptc`` only).
+        day_hours: Optional working-day length in hours; the depot's time window (``cptptwtc`` only).
+        tw_min_width_h: Optional shortest bin time window in hours (``cptptwtc`` only).
+        tw_max_width_h: Optional longest bin time window in hours (``cptptwtc`` only).
         distance_method: Optional distance computation method for meta-RL envs.
         curriculum_graphs: Ordered list of graphs for sequential curriculum
             learning. The **first entry** is used for single-stage training.
@@ -54,6 +57,10 @@ class EnvConfig:
     shift_hours: Optional[float] = None
     avg_speed_kmh: Optional[float] = None
     service_time_h: Optional[float] = None
+    # cptptwtc time windows (ignored by every other problem; None = the generator's defaults)
+    day_hours: Optional[float] = None
+    tw_min_width_h: Optional[float] = None
+    tw_max_width_h: Optional[float] = None
     # Data distribution and generation
     data_distribution: Optional[str] = None
     min_fill: float = 0.0

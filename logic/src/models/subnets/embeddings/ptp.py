@@ -53,6 +53,10 @@ class PTPInitEmbedding(nn.Module):
         # Depot features: x, y
         self.depot_embed = nn.Linear(2, embed_dim)
 
+    def _extra_node_features(self, td: Any, locs: torch.Tensor, waste: torch.Tensor) -> list:
+        """Further per-node features [B, N, k] after x, y and waste (none for PTP; see CPTPTWTC)."""
+        return []
+
     def forward(self, td: Union[TensorDict, Dict[str, Any]], temporal_features: bool = True) -> torch.Tensor:
         """Encodes PTP instance features into initial node embeddings.
 
@@ -78,7 +82,7 @@ class PTPInitEmbedding(nn.Module):
         elif waste.dim() == 1:
             waste = waste.unsqueeze(0)
 
-        node_features_list: list[torch.Tensor] = [locs, waste.unsqueeze(-1)]
+        node_features_list: list[torch.Tensor] = [locs, waste.unsqueeze(-1), *self._extra_node_features(td, locs, waste)]
         if self.temporal_horizon > 0 and temporal_features:
             temp_feat = td.get("temporal_features") if hasattr(td, "get") else None
             if temp_feat is not None:

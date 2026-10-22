@@ -27,6 +27,7 @@ EDGE_EMBEDDING_REGISTRY: Dict[str, Any] = {
     "ptp": TSPEdgeEmbedding,
     "cptp": CPTPEdgeEmbedding,
     "cptptc": CPTPEdgeEmbedding,
+    "cptptwtc": CPTPEdgeEmbedding,
     "none": NoEdgeEmbedding,
 }
 

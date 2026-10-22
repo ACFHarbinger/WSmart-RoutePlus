@@ -24,6 +24,7 @@ STATE_EMBEDDING_REGISTRY: Dict[str, Any] = {
     "ptp": PTPState,
     "cptp": CPTPState,
     "cptptc": CPTPState,
+    "cptptwtc": CPTPState,
 }
 
 __all__: list[str] = [

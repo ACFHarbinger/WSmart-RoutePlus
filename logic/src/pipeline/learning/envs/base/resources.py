@@ -16,7 +16,7 @@ Example:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Tuple
 
 import numpy as np
 import torch
@@ -269,4 +269,102 @@ class ShiftTimeResource(Resource):
         return False
 
 
-__all__ = ["Resource", "LoadResource", "ShiftTimeResource"]
+class TimeWindowResource(Resource):
+    """Day clock with per-node time windows (CPTPTWTC).
+
+    ``current_time`` is the time of day (h). It runs across trips: a depot return resets the
+    shift budget (``ShiftTimeResource``), not the clock. Service at a node starts at
+    ``max(arrival, tw_early)``; moving to a node is infeasible when service would start after
+    its ``tw_late``, or when the vehicle could then no longer reach the depot before the day
+    ends (``tw_late`` of the depot, ``day_hours``). The depot itself is never masked here, so a
+    vehicle that is out of time can always go home.
+    """
+
+    name: str = "time_window"
+    reset_at_depot: bool = False
+
+    def __init__(
+        self,
+        default_day_hours: float = 10.0,
+        default_avg_speed_kmh: float = 30.0,
+        default_service_time_h: float = 0.0833,
+    ) -> None:
+        self.default_day_hours = default_day_hours
+        self.default_avg_speed_kmh = default_avg_speed_kmh
+        self.default_service_time_h = default_service_time_h
+
+    def reset(self, state: Any) -> Any:
+        if not isinstance(state, (TensorDict, TensorDictBase)):
+            return state
+        bs = state.batch_size[0] if len(state.batch_size) > 0 else 1
+        device = state.device
+        n_nodes = state["locs"].size(-2)
+        day = state.get("day_hours", torch.full((bs,), self.default_day_hours, device=device))
+        early = state.get("tw_early", torch.zeros(bs, n_nodes - 1, device=device))
+        late = state.get("tw_late", day.unsqueeze(-1).expand(bs, n_nodes - 1).clone())
+        if early.size(-1) == n_nodes - 1:  # windows of the bins only: the depot is open all day
+            early = torch.cat([torch.zeros(bs, 1, device=device), early], dim=-1)
+            late = torch.cat([day.unsqueeze(-1), late], dim=-1)
+        state["day_hours"] = day
+        state["tw_early"] = early
+        state["tw_late"] = late
+        state["current_time"] = torch.zeros(bs, device=device)
+        return state
+
+    def _travel_time_from_current(self, state: TensorDictBase) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Travel times (h) from the current node to every node, and from every node to the depot."""
+        current = as_batch_nodes(
+            state.get("current_node", torch.zeros(state.batch_size[0], 1, dtype=torch.long, device=state.device))
+        )
+        locs = state["locs"]
+        time_matrix = state.get("time_matrix", None)
+        if time_matrix is not None:
+            to_node = time_matrix.gather(1, current[:, None, None].expand(-1, -1, time_matrix.size(-1))).squeeze(1)
+            return to_node, time_matrix[:, :, 0]
+        dm = state.get("dm", None)
+        if dm is None:
+            current_loc = locs.gather(1, current[:, None, None].expand(-1, -1, 2)).squeeze(1)
+            dist_to_node = (locs - current_loc.unsqueeze(1)).norm(p=2, dim=-1)
+            dist_to_depot = (locs - locs[:, 0:1, :]).norm(p=2, dim=-1)
+        else:
+            dist_to_node = dm.gather(1, current[:, None, None].expand(-1, -1, dm.size(-1))).squeeze(1)
+            dist_to_depot = dm[:, :, 0]
+        speed = state.get(
+            "avg_speed_kmh", torch.full((locs.size(0),), self.default_avg_speed_kmh, device=locs.device)
+        ).unsqueeze(-1)
+        return dist_to_node / speed, dist_to_depot / speed
+
+    def step(self, state: Any, action: Any, is_depot: Any) -> Any:
+        if not isinstance(state, (TensorDict, TensorDictBase)):
+            return state
+        bs = state.batch_size[0] if len(state.batch_size) > 0 else 1
+        device = state.device
+        act = action.reshape(-1)
+        at_depot = is_depot.reshape(-1) if torch.is_tensor(is_depot) else torch.full((bs,), bool(is_depot), device=device)
+        speed = state.get("avg_speed_kmh", torch.full((bs,), self.default_avg_speed_kmh, device=device))
+        travel = state.get("step_distance", torch.zeros(bs, device=device)) / speed
+        time_matrix = state.get("time_matrix", None)
+        if time_matrix is not None and "prev_node" in state.keys():
+            travel = time_matrix[torch.arange(bs, device=device), state["prev_node"].reshape(-1), act]
+        rows = torch.arange(bs, device=device)
+        start = torch.maximum(state["current_time"] + travel, state["tw_early"][rows, act])
+        service = state.get("service_time_h", torch.full((bs,), self.default_service_time_h, device=device))
+        state["current_time"] = start + torch.where(at_depot, torch.zeros_like(service), service)
+        return state
+
+    def exceeds_limit(self, state: Any) -> Any:
+        if not isinstance(state, (TensorDict, TensorDictBase)):
+            return False
+        to_node, to_depot = self._travel_time_from_current(state)
+        start = torch.maximum(state["current_time"].unsqueeze(-1) + to_node, state["tw_early"])
+        service = state.get(
+            "service_time_h", torch.full((to_node.size(0),), self.default_service_time_h, device=to_node.device)
+        ).unsqueeze(-1)
+        late = start > state["tw_late"] + 1e-6
+        no_way_home = start + service + to_depot > state["tw_late"][:, :1] + 1e-6
+        blocked = late | no_way_home
+        blocked[:, 0] = False
+        return blocked
+
+
+__all__ = ["Resource", "LoadResource", "ShiftTimeResource", "TimeWindowResource"]

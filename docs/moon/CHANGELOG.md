@@ -17,6 +17,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Claude: new problem CPTPTWTC (`2026-10-22`)
+
+#### Added
+
+- **Capacitated Profitable Tour Problem with Time Windows and Time Constraints (CPTPTWTC)**, `logic/src/pipeline/learning/envs/cptptwtc.py` (`CPTPTWTCGenerator`, `CPTPTWTCEnv`, `CPTPTWTC`, `CPTPTWTC_SPEC`) and `logic/configs/envs/cptptwtc.yaml`. It is CPTPTC (vehicle capacity and per-trip shift budget) plus a time window `[tw_early, tw_late]` per bin, in hours from the start of the working day: an early vehicle waits, service must start by `tw_late`, and the vehicle must be back before the day (the depot's window, `day_hours`) ends. The day clock runs across trips; a depot return resets the shift budget, not the clock.
+- **`TimeWindowResource`** (`envs/base/resources.py`) tracks the clock and masks bins whose window would be missed or after which the depot can no longer be reached in time. `CPTPTWTC.evaluate_tour` adds `tw_violations` (and raises with `check_feasibility`).
+- **Model:** `CPTPTWTCInitEmbedding` adds each node's window (as fractions of the day) to CPTP's node features through a new `PTPInitEmbedding._extra_node_features` hook (empty for PTP/CPTP, so their parameters and outputs are unchanged); the context, edge and state embedders are CPTP's.
+- **Data:** windows are drawn by `logic/src/data/time/node_time_windows.py` (default day 10 h, windows 2–6 h; `day_hours`, `tw_min_width_h` and `tw_max_width_h` on `EnvConfig`), both by the generator and by `gen_data data.problem=cptptwtc`, whose datasets carry `day_hours`, `tw_early` and `tw_late`.
+- Learning side only: the simulator has no bin time windows, so `test_sim` does not take `cptptwtc`, and the problem is not in the release.
+
 ### Claude: TCPTP renamed CPTPTC (`2026-10-22`)
 
 #### Changed

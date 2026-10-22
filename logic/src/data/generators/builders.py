@@ -345,6 +345,17 @@ class VRPInstanceBuilder:
             }
         )
 
+        if self._problem_name == "cptptwtc":  # bin time windows within the working day
+            from logic.src.data.time.node_time_windows import DEFAULT_DAY_HOURS, sample_node_time_windows
+
+            early, late = sample_node_time_windows(
+                (bs, locs_tensor.shape[-2]), generator=self.generator, device=self.generator.device
+            )
+            early, late = early.to(device), late.to(device)
+            td_data.update(
+                {"day_hours": torch.full((bs,), DEFAULT_DAY_HOURS, device=device), "tw_early": early, "tw_late": late}
+            )
+
         return TensorDict(td_data, batch_size=[bs], device=device)
 
     def _vehicle_cap_percent(self) -> float:
