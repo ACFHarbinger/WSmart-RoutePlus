@@ -61,6 +61,7 @@ from logic.package.release_staging import (
     filter_lazy_map,
     filter_manifest_file,
     validate_release_tests,
+    write_release_conftest,
     verify_staged,
 )
 
@@ -178,7 +179,33 @@ def staged_module_names(out: Path) -> set:
     return {file_to_module(p, out) for p in (out / "logic").rglob("*.py")}
 
 
-def run_build(manifest: dict, out: Path) -> int:  # noqa: C901
+def make_test_venv(out: Path, venv: Path, python_version: str = "3.12") -> str:
+    """Install the staged release (solvers, neural and test extras) into ``venv``; return its interpreter.
+
+    The release tests then run against the package's own pinned dependencies, as a user's
+    setup script installs them, not against main's environment.
+    """
+    venv = venv.resolve()
+    if not (venv / "bin" / "python").exists():
+        subprocess.run(["uv", "venv", "-q", "--python", python_version, str(venv)], check=True)
+    env = dict(__import__("os").environ, VIRTUAL_ENV=str(venv))
+    subprocess.run(
+        ["uv", "pip", "install", "-q", "--reinstall-package", "wsmart-route", f"{out}[solvers,neural,test]"],
+        check=True,
+        env=env,
+    )
+    for leftover in [out / "build", *out.glob("*.egg-info")]:
+        shutil.rmtree(leftover, ignore_errors=True)
+    return str(venv / "bin" / "python")
+
+
+def run_build(  # noqa: C901
+    manifest: dict,
+    out: Path,
+    test_python: Optional[str] = None,
+    test_data: Optional[Path] = None,
+    test_venv: Optional[Path] = None,
+) -> int:
     out = out.resolve()
     if out in (REPO, LOGIC) or out in REPO.parents or LOGIC in out.parents:
         raise ValueError("Release destination must not contain the repository or lie inside logic/")
@@ -260,17 +287,6 @@ def run_build(manifest: dict, out: Path) -> int:  # noqa: C901
         notes += filter_lazy_map(staged, staged_modules, out)
         notes += drop_pruned_init_imports(staged, staged_modules, out)
 
-    # --- release test selection: validated against the staged tree -------- #
-    staged_tests = [test_out / p.relative_to(LOGIC / "test") for p in release]
-    release, collect_failures = validate_release_tests(out, staged_tests)
-    (test_out / "release_tests.txt").write_text("\n".join(str(p.relative_to(test_out)) for p in release) + "\n")
-    if collect_failures:
-        (test_out / "release_tests.excluded.txt").write_text(
-            "# Failed collection against the staged tree (dynamically imported "
-            "modules outside the release):\n" + "\n".join(sorted(collect_failures)) + "\n"
-        )
-        notes.append(f"{len(collect_failures)} test files excluded by collection validation")
-
     # --- excluded packages: drop the data files their pruned code read ----- #
     for excluded in manifest["excluded_packages"]:
         folder = out / Path(*excluded.split("."))
@@ -297,6 +313,25 @@ def run_build(manifest: dict, out: Path) -> int:  # noqa: C901
     # --- release pyproject + docs index ---------------------------------- #
     write_release_pyproject(manifest, out)
     write_docs_index(manifest, out)
+
+    # --- release tests: only those that pass in the staged tree ----------- #
+    dropped_plugins = write_release_conftest(LOGIC / "test" / "conftest.py", out)
+    if dropped_plugins:
+        notes.append(f"conftest.py: dropped the pruned fixture plugins {', '.join(dropped_plugins)}")
+    if test_venv is not None:
+        test_python = make_test_venv(out, test_venv)
+    staged_tests = [test_out / p.relative_to(LOGIC / "test") for p in release]
+    release, failures = validate_release_tests(out, staged_tests, python=test_python, data_dir=test_data)
+    for path in set(staged_tests) - set(release):
+        path.unlink()
+    (test_out / "release_tests.txt").write_text("\n".join(str(p.relative_to(test_out)) for p in release) + "\n")
+    if failures:
+        (test_out / "release_tests.excluded.txt").write_text(
+            "# Not shipped: these tests fail in the release tree (they need excluded code, the repository's\n"
+            "# tools/ or main.py, or behaviour the release leaves out). First failure per file:\n"
+            + "\n".join(failures) + "\n"
+        )
+        notes.append(f"{len(failures)} test files dropped: they fail in the release tree")
 
     # --- verification ----------------------------------------------------- #
     staged_modules = staged_module_names(out)
@@ -438,13 +473,32 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--check", action="store_true", help="validate the manifest against the tree")
     parser.add_argument("--build", metavar="DIR", help="build the release tree into DIR")
+    parser.add_argument(
+        "--test-python",
+        metavar="PY",
+        help="interpreter of the release environment that runs the release tests (default: this one)",
+    )
+    parser.add_argument(
+        "--test-venv",
+        metavar="DIR",
+        help="create or update a venv in DIR with the staged release and run the release tests in it",
+    )
+    parser.add_argument(
+        "--test-data", metavar="DIR", help="the package data folder, linked in as data/ while the tests run"
+    )
     parser.add_argument("--smoke", metavar="DIR", help="torch-free smoke test against a built tree")
     args = parser.parse_args()
     manifest = load_manifest()
     if args.check:
         return run_check(manifest)
     if args.build:
-        return run_build(manifest, Path(args.build))
+        return run_build(
+            manifest,
+            Path(args.build),
+            args.test_python,
+            Path(args.test_data) if args.test_data else None,
+            Path(args.test_venv) if args.test_venv else None,
+        )
     if args.smoke:
         return run_smoke(Path(args.smoke))
     parser.print_help()
