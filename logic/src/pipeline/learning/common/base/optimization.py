@@ -75,7 +75,13 @@ class OptimizationMixin:
             gamma = self.lr_scheduler_kwargs.get("gamma", 0.99)
             scheduler = torch.optim.lr_scheduler.ExponentialLR(opt, gamma=gamma)
         elif name == "plateau":
-            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, **self.lr_scheduler_kwargs)
+            # Lightning steps ReduceLROnPlateau only with a monitored metric; rewards are maximized.
+            kwargs = dict(self.lr_scheduler_kwargs)
+            monitor = kwargs.pop("monitor", "val/reward")
+            if "reward" in monitor:
+                kwargs.setdefault("mode", "max")
+            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, **kwargs)
+            return {"optimizer": opt, "lr_scheduler": {"scheduler": scheduler, "monitor": monitor}}
         else:
             raise ValueError(f"Unknown scheduler: {self.lr_scheduler_name}")
 
