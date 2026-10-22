@@ -19,7 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Claude ultrareview fixes (`2026-10-22`)
 
-Fixes from the ultrareview of the 137 targeted functions. None of these changes moves a paper policy's results or the trained NA weights; the paper-moving findings are listed under "Needs owner" and in FINDINGS.md §6.
+Fixes from the ultrareview of the 137 targeted functions. Apart from the two entries under "Fixed (moves paper results)", which Afonso approved on 2026-10-22, none of these changes moves a paper policy's results or the trained NA weights. The other owner-level findings are in FINDINGS.md §6.
+
+#### Fixed (moves paper results)
+
+- **SANS `new` engine revenue** (`configs/policies/sans.py`, `simulated_annealing_neighborhood_search/dispatcher.py::execute_new`): `SANSConfig` declared `V: float = 0.0`, and `_load_area_params` lets the policy config overwrite the area's bin volume, so `sans.new` loaded `stock · 0 · density / 100 = 0` per bin and searched with zero revenue (distance and the mandatory penalty only). With the area's volume restored the units would still be wrong: kg against a capacity in % and revenue in EUR per %. `execute_new` now uses the percent-unit identity `V · B = 100`, as `execute_og` already does with its identity factors, so a full bin loads 100 % and earns `R` per %. The unused `V` field is removed. **This changes `sans.new` routes and KPIs**; the `og` engines are unchanged. Covered by `test_sans_new_percent_units.py`.
 
 #### Fixed
 
