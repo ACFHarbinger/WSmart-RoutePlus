@@ -673,15 +673,19 @@ DataLoader(dataset, num_workers=8, pin_memory=True, persistent_workers=True)
 
 ### 9.1 Studio Won't Launch
 
-**Symptom**: Blank window or WebKitGTK errors when running `just studio`.
+**Symptom**: Blank window, `WebKit encountered an internal error`, or `WebKitNetworkProcess: symbol lookup error: /snap/core20/.../libpthread.so.0: undefined symbol: __libc_pthread_init`.
+
+**Cause**: A Snap-launched shell exports `/snap/core20` on `LD_LIBRARY_PATH` and sets `SNAP`. WebKitGTK's network process then loads Snap's `libpthread` instead of the system one. The same environment hides the host GTK modules (`colorreload-gtk-module`, `window-decorations-gtk-module`) and makes Glycin report that it is inside a Snap.
 
 **Fixes**:
+
+Studio strips Snap library paths and the inherited `SNAP*` variables before GTK starts, unless the Studio binary itself lives under `/snap`. Launch it again from the same terminal.
 
 ```bash
 # Install JS dependencies (first checkout)
 just studio-install
 
-# Linux WebKitGTK rendering issues
+# Linux WebKitGTK compositing issues that remain after the library-path fix
 WEBKIT_DISABLE_COMPOSITING_MODE=1 just studio
 
 # Missing system libraries (Debian/Ubuntu)
