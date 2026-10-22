@@ -23,6 +23,28 @@ from logic.package.release_closure import (
 )
 
 
+def pin_to_tested(dep: str) -> str:
+    """Pin a requirement to the version installed in the environment that builds (and tests) the release.
+
+    ``logic/pyproject.toml`` only gives lower bounds, so a fresh install of the package resolved
+    much newer libraries than the ones main's suite runs on (pyvrp 0.14 changed ``Client``'s
+    signature and broke the CVRP pyvrp engine). Local versions (``+cu130`` wheels from a custom
+    index) and packages that are not installed keep their specifier.
+    """
+    from importlib.metadata import PackageNotFoundError, version
+
+    spec, _, marker = dep.partition(";")
+    head = re.split(r"[<>=!~ ]", spec.strip(), maxsplit=1)[0]
+    name = head.split("[", 1)[0]
+    try:
+        installed = version(name)
+    except PackageNotFoundError:
+        return dep
+    if "+" in installed:
+        return dep
+    return f"{head}=={installed}" + (f";{marker}" if marker else "")
+
+
 def write_release_pyproject(manifest: dict, out: Path) -> None:
     """Generate the installable release pyproject from logic/pyproject.toml."""
     try:  # Python 3.11+
@@ -67,6 +89,9 @@ def write_release_pyproject(manifest: dict, out: Path) -> None:
         lines.append(f'description = "{project["description"]}"')
     if project.get("requires-python"):
         lines.append(f'requires-python = "{project["requires-python"]}"')
+    deps = [pin_to_tested(dep) for dep in deps]
+    extras = {group: [pin_to_tested(dep) for dep in reqs] for group, reqs in extras.items()}
+    lines.append("# Versions pinned to the environment the release was built and tested in.")
     lines.append("dependencies = [")
     lines += [f'    "{dep}",' for dep in deps]
     lines.append("]")
@@ -80,7 +105,24 @@ def write_release_pyproject(manifest: dict, out: Path) -> None:
         "",
     ]
     lines += release_uv_indexes(base, deps + [dep for group in extras.values() for dep in group])
+    lines += ["", *pytest_ini_section(LOGIC.parent / "pyproject.toml")]
     (out / "pyproject.toml").write_text("\n".join(lines) + "\n")
+
+
+def pytest_ini_section(root_pyproject: Path) -> List[str]:
+    """The repository's ``[tool.pytest.ini_options]`` block, verbatim.
+
+    The shipped tests are validated against the staged tree under these settings (log level,
+    markers, warning filters); without them ``caplog`` misses the solvers' INFO logs.
+    """
+    text = root_pyproject.read_text()
+    match = re.search(r"^\[tool\.pytest\.ini_options\]\n.*?(?=^\[(?!\s*\])|\Z)", text, re.M | re.S)
+    if match is None:
+        return []
+    lines = match.group(0).rstrip().splitlines()
+    while lines and (not lines[-1].strip() or lines[-1].lstrip().startswith("#")):
+        lines.pop()  # the comment banner of the next section
+    return lines
 
 
 OTHER_REF_RE = re.compile(r"other/([A-Za-z0-9_]+\.yaml)")
