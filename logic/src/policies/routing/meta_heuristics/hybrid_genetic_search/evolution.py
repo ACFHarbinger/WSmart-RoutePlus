@@ -95,7 +95,7 @@ def update_biased_fitness(
         nb_elite: Number of elite individuals to protect.
         neighbor_size: Number of nearest neighbors (nbClose) to consider for diversity.
         distance_cache: Optional cache for pairwise diversity distances.
-        inv: Optional inverse index mapping id(ind) -> set of cache keys involving
+        inv: Optional inverse index mapping ind.serial -> set of cache keys involving
              that individual. When provided alongside distance_cache, newly computed
              distances are registered in the index so _evict_cache can purge them
              in O(P) instead of O(P²).
@@ -115,19 +115,19 @@ def update_biased_fitness(
     for i in range(n):
         for j in range(i + 1, n):
             if distance_cache is not None:
-                key = (id(population[i]), id(population[j]))
+                key = (population[i].serial, population[j].serial)
                 if key not in distance_cache:
                     d = _compute_broken_pairs_distance(population[i], population[j])
-                    rev_key = (id(population[j]), id(population[i]))
+                    rev_key = (population[j].serial, population[i].serial)
                     distance_cache[key] = d
                     distance_cache[rev_key] = d
                     # Register both directions in the inverse index so eviction
                     # can find and remove these entries in O(P) per individual.
                     if inv is not None:
-                        inv.setdefault(id(population[i]), set()).add(key)
-                        inv.setdefault(id(population[i]), set()).add(rev_key)
-                        inv.setdefault(id(population[j]), set()).add(key)
-                        inv.setdefault(id(population[j]), set()).add(rev_key)
+                        inv.setdefault(population[i].serial, set()).add(key)
+                        inv.setdefault(population[i].serial, set()).add(rev_key)
+                        inv.setdefault(population[j].serial, set()).add(key)
+                        inv.setdefault(population[j].serial, set()).add(rev_key)
                 else:
                     d = distance_cache[key]
             else:

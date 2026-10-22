@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Claude: HGS repeatability (`2026-10-22`)
+
+#### Fixed
+
+- **HGS diversity caches keyed by a serial number** (`hybrid_genetic_search/individual.py`, `evolution.py`, `hgs_population.py`): the broken-pairs distance cache was keyed by `id(individual)`. Python reuses the `id` of a garbage-collected individual, and individuals that leave the population outside `_trim_pop` were not evicted, so a new individual could read a stale distance. When that happened depended on garbage-collection timing, so the same seed could give different HGS routes (seen when an earlier test had run HGS in the same process). Each `Individual` now has a `serial` from a process-wide counter.
+
 ### Studio launch on a Snap-tainted desktop (`2026-10-22`)
 
 #### Fixed

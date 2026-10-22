@@ -42,16 +42,15 @@ class HGSPopulationMixin:
 
         Uses an inverse index for O(P) eviction instead of O(P²) full cache scan.
         Called immediately before removing an individual from a subpopulation
-        so that the object-ID key can never produce a stale cache hit (Python
-        may reuse the id() of a garbage-collected object for a new individual).
+        so that the cache does not keep entries for individuals that left the population.
 
         Args:
             ind: Individual about to be removed.
             cache: Distance cache to purge (modified in-place).
-            inv: Inverse index mapping id(ind) -> set of cache keys (modified in-place).
+            inv: Inverse index mapping ind.serial -> set of cache keys (modified in-place).
 
         """
-        ind_id = id(ind)
+        ind_id = ind.serial
         for key in inv.pop(ind_id, ()):
             cache.pop(key, None)
             # Clean up the other individual's inverse entry for this key too.
