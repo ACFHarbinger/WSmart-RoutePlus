@@ -125,7 +125,7 @@ class MemeticACOSolver(MACOPheromoneUpdateMixin):
         self.R = R
         self.C = C
         self.params = params
-        self.mandatory_nodes = mandatory_nodes
+        self.mandatory_nodes = mandatory_nodes or []
 
         self.n_nodes = len(dist_matrix)
         self.nodes = list(range(1, self.n_nodes))  # exclude depot (0)
