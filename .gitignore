@@ -499,3 +499,4 @@ assets/telemetry.db
 # Agentic files and directories to ignore
 .claude
 .antigravity
+.agents/teamwork
