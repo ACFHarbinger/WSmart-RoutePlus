@@ -62,8 +62,8 @@ def regular(
 ) -> NDArray[np.bool_]:
     """Collect every eligible bin on scheduled days.
 
-    Scheduled days are ``1, 1+period, 1+2*period, …``. A non-positive
-    ``frequency`` means every day. Eligibility is ``fill >= min_fill``.
+    Scheduled days are ``1, 1+period, 1+2*period, …``. A ``frequency`` below
+    one day (non-positive included) means every day. Eligibility is ``fill >= min_fill``.
 
     Args:
         fills: Current fill levels, percent of capacity.
@@ -77,7 +77,7 @@ def regular(
     values = np.asarray(fills, dtype=np.float64)
     eligible = values >= float(min_fill)
     period = float(frequency)
-    if period <= 0:
+    if period < 1:  # int(period) would be 0 for a sub-daily period
         return eligible
     if (int(current_day) - 1) % int(period) != 0:
         return np.zeros(values.shape, dtype=bool)
