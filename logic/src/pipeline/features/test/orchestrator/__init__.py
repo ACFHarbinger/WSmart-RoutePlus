@@ -192,7 +192,9 @@ def simulator_testing(cfg: Config, data_size: int, device: Any) -> None:  # noqa
         original_stderr.write("\n\n[WARNING] Caught CTRL+C (SIGINT). Forcing immediate shutdown...\n")
         original_stderr.flush()
         try:
-            os.killpg(os.getpgrp(), signal.SIGKILL)
+            if hasattr(os, "killpg"):  # POSIX: stop the workers too
+                os.killpg(os.getpgrp(), signal.SIGKILL)
+            os._exit(1)
         except OSError:
             os._exit(1)
 
