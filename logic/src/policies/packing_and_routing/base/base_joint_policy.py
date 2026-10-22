@@ -158,7 +158,7 @@ class BaseJointPolicy(PolicyVizMixin, IRoutingAlgorithm):
                 bin_density=float(bin_density),
                 bin_volume=float(bin_volume),
                 max_fill=100.0,
-                n_vehicles=int(kwargs.get("n_vehicles", 1)),
+                n_vehicles=int(kwargs["n_vehicles"]) if kwargs.get("n_vehicles") is not None else 1,
                 scenario_tree=kwargs.get("scenario_tree"),
                 mandatory_override=kwargs.get("mandatory"),
             )

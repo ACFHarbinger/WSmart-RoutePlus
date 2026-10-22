@@ -114,3 +114,23 @@ def test_joint_base_unpacks_the_area_parameter_tuple(monkeypatch) -> None:
     assert ctx.revenue_kg == pytest.approx(0.5)
     assert ctx.cost_per_km == pytest.approx(1.2)
     assert out[0] == [0, 0]
+
+
+@pytest.mark.parametrize("n_vehicles, expected", [(None, 1), (0, 0), (3, 3)])
+def test_joint_base_accepts_an_explicit_none_fleet(monkeypatch, n_vehicles, expected) -> None:
+    from logic.src.policies.packing_and_routing.base import base_joint_policy as bj
+    from logic.src.pipeline.simulations import repository
+
+    monkeypatch.setattr(
+        repository, "load_area_and_waste_type_params", lambda area, waste: (80.0, 0.5, 20.0, 1.2, 2.5)
+    )
+    seen = {}
+
+    class _Probe(bj.BaseJointPolicy):
+        def solve_joint(self, context):
+            seen["ctx"] = context
+            return [], [], 0.0, 0.0
+
+    probe = _Probe.__new__(_Probe)
+    probe.execute(**_kwargs(n_vehicles=n_vehicles))
+    assert seen["ctx"].n_vehicles == expected
