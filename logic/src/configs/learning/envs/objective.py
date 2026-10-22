@@ -5,7 +5,7 @@ Attributes:
     ObjectiveConfig: Objective configuration.
 
 Example:
-    >>> from logic.src.configs.envs import ObjectiveConfig
+    >>> from logic.src.configs.learning.envs import ObjectiveConfig
     >>> config = ObjectiveConfig()
     >>> print(config)
     ObjectiveConfig(cost_weight=1.0, waste_weight=1.0, overflow_penalty=1.0)

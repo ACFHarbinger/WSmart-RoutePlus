@@ -58,7 +58,7 @@ class TestTrainingOrchestration:
         cfg.device = "cpu"
         # Reduce data size to prevent hanging
         if not cfg.train.env.curriculum_graphs:
-            from logic.src.configs.envs.graph import GraphConfig
+            from logic.src.configs.learning.envs.graph import GraphConfig
             cfg.train.env.curriculum_graphs.append(OmegaConf.create(cast(Any, GraphConfig())))
         cfg.train.env.curriculum_graphs[0].n_samples = 10
 

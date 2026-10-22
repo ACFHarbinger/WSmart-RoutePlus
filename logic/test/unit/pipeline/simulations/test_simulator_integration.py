@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 import torch
 from logic.src.configs import Config
-from logic.src.configs.envs.graph import GraphConfig
+from logic.src.configs.learning.envs.graph import GraphConfig
 from logic.src.configs.tasks.sim import SimConfig
 from logic.src.pipeline.simulations.checkpoints.manager import CheckpointError
 

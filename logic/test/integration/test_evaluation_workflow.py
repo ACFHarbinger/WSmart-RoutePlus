@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 import torch
 from logic.src.configs import Config
-from logic.src.configs.envs.graph import GraphConfig
+from logic.src.configs.learning.envs.graph import GraphConfig
 from logic.src.configs.models.activation_function import ActivationConfig
 from logic.src.configs.models.normalization import NormalizationConfig
 from logic.src.models.core.attention_model import AttentionModel

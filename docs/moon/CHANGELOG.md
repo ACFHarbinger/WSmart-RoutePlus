@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Claude: configuration layout mirrors the code (`2026-10-22`)
+
+#### Changed
+
+- **`logic/src/configs/learning/`** now holds `core/` (the training-loop and algorithm dataclasses, formerly directly in `configs/learning/`) and `envs/` (formerly `configs/envs/`). `from logic.src.configs.learning import RLConfig` (and the other algorithm and environment configs) still works; module paths such as `configs.learning.imitation` and `configs.envs.graph` are now `configs.learning.core.imitation` and `configs.learning.envs.graph` (hard break).
+
 ### Claude: package evaluation fixes (`2026-10-22`)
 
 #### Fixed

@@ -5,7 +5,7 @@ Attributes:
     EnvConfig: Environment configuration.
 
 Example:
-    >>> from logic.src.configs.envs import EnvConfig
+    >>> from logic.src.configs.learning.envs import EnvConfig
     >>> config = EnvConfig()
     >>> print(config)
     EnvConfig(name='ptp', min_loc=0.0, max_loc=1.0, capacity=None, shift_hours=None, avg_speed_kmh=None, service_time_h=None, data_distribution=None, min_fill=0.0, max_fill=1.0, fill_distribution='uniform', stochastic=False, mean=0.0, variance=0.0, temporal_horizon=0, curriculum_graphs=[], eval_graphs=[])

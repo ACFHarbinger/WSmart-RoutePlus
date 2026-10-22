@@ -9,23 +9,23 @@ Configuration dataclasses for WSmart-Route.
 
 - **class `Config`** — Root configuration.
 
-### `logic.src.configs.envs.__init__`
+### `logic.src.configs.learning.envs.__init__`
 
 Environment configuration dataclasses.
 
-### `logic.src.configs.envs.env`
+### `logic.src.configs.learning.envs.env`
 
 Env Config module.
 
 - **class `EnvConfig`** — Environment configuration.
 
-### `logic.src.configs.envs.graph`
+### `logic.src.configs.learning.envs.graph`
 
 Graph/instance configuration module.
 
 - **class `GraphConfig`** — Configuration for problem instances and graph data.
 
-### `logic.src.configs.envs.objective`
+### `logic.src.configs.learning.envs.objective`
 
 Objective/Reward configuration module.
 
@@ -789,49 +789,49 @@ Learning algorithm configuration.
 
 - **class `RLConfig`** — RL algorithm configuration.
 
-### `logic.src.configs.learning.adaptive_imitation`
+### `logic.src.configs.learning.core.adaptive_imitation`
 
 Adaptive Imitation Learning specific configuration.
 
 - **class `AdaptiveImitationConfig`** — Adaptive Imitation Learning specific configuration.
 
-### `logic.src.configs.learning.gdpo`
+### `logic.src.configs.learning.core.gdpo`
 
 GDPO specific configuration.
 
 - **class `GDPOConfig`** — GDPO specific configuration.
 
-### `logic.src.configs.learning.grpo`
+### `logic.src.configs.learning.core.grpo`
 
 GRPO specific configuration.
 
 - **class `GRPOConfig`** — GRPO specific configuration.
 
-### `logic.src.configs.learning.imitation`
+### `logic.src.configs.learning.core.imitation`
 
 Imitation specific configuration.
 
 - **class `ImitationConfig`** — Imitation learning configuration.
 
-### `logic.src.configs.learning.pomo`
+### `logic.src.configs.learning.core.pomo`
 
 POMO specific configuration.
 
 - **class `POMOConfig`** — POMO specific configuration.
 
-### `logic.src.configs.learning.ppo`
+### `logic.src.configs.learning.core.ppo`
 
 PPO specific configuration.
 
 - **class `PPOConfig`** — PPO specific configuration.
 
-### `logic.src.configs.learning.sapo`
+### `logic.src.configs.learning.core.sapo`
 
 SAPO specific configuration.
 
 - **class `SAPOConfig`** — SAPO specific configuration.
 
-### `logic.src.configs.learning.symnco`
+### `logic.src.configs.learning.core.symnco`
 
 SymNCO specific configuration.
 
