@@ -132,3 +132,19 @@ def test_staged_bin_analysis_modules_use_the_importable_name(tmp_path):
     pkg.mkdir(parents=True)
     (pkg / "grid.py").write_text("")
     assert "logic.submodules.wsmart_bin_analysis.export.grid" in builder.staged_module_names(tmp_path)
+
+
+def test_only_released_task_configs_ship(tmp_path):
+    for name in ("test_sim", "train", "hpo", "meta_train"):
+        (tmp_path / f"{name}.yaml").write_text("")
+    assert builder.prune_task_configs(tmp_path, ["test_sim", "train"]) == ["hpo", "meta_train"]
+    assert sorted(p.stem for p in tmp_path.glob("*.yaml")) == ["test_sim", "train"]
+    assert builder.prune_task_configs(tmp_path, None) == []
+
+
+def test_gen_data_does_not_overwrite_by_default():
+    import yaml
+
+    cfg = yaml.safe_load((Path(__file__).resolve().parents[3] / "configs" / "tasks" / "gen_data.yaml").read_text())
+    assert cfg["data"]["overwrite"] is False
+

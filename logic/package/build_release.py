@@ -34,7 +34,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 if not __package__:
     # Script-style invocation: python logic/package/build_release.py
@@ -84,7 +84,20 @@ def load_manifest() -> dict:
         if section not in manifest:
             raise SystemExit(f"release.yaml: missing required section {section!r}")
     manifest.setdefault("excluded_packages", [])
+    manifest.setdefault("tasks", None)  # None: every task config ships
     return manifest
+
+
+def prune_task_configs(tasks_dir: Path, released: Optional[List[str]]) -> List[str]:
+    """Delete the task YAMLs of unreleased tasks from a staged ``configs/tasks``; return their names."""
+    if released is None:
+        return []
+    removed = []
+    for task_yaml in sorted(tasks_dir.glob("*.yaml")):
+        if task_yaml.stem not in released:
+            task_yaml.unlink()
+            removed.append(task_yaml.stem)
+    return removed
 
 
 # --------------------------------------------------------------------------- #
@@ -128,6 +141,9 @@ def run_check(manifest: dict) -> int:  # noqa: C901
     for excluded in manifest["excluded_packages"]:
         if module_to_file(excluded, REPO) is None:
             problems.append(f"excluded package {excluded!r} does not resolve to a file")
+    for task in manifest["tasks"] or ():
+        if not (LOGIC / "configs" / "tasks" / f"{task}.yaml").is_file():
+            problems.append(f"task {task!r}: no configs/tasks/{task}.yaml")
     routing = set(manifest["stages"].get("routing", ()))
     packing = set(manifest["stages"].get("packing", ()))
     for key in routing:
@@ -261,6 +277,11 @@ def run_build(manifest: dict, out: Path) -> int:  # noqa: C901
         if folder.is_dir() and not any(folder.rglob("*.py")):
             shutil.rmtree(folder)
             notes.append(f"{excluded}: removed its data files (no code ships)")
+
+    # --- task configs: only the released tasks ship ----------------------- #
+    removed_tasks = prune_task_configs(out / "logic" / "configs" / "tasks", manifest["tasks"])
+    if removed_tasks:
+        notes.append(f"configs/tasks: dropped the unreleased task configs {', '.join(removed_tasks)}")
 
     # --- task defaults: drop the policy groups that do not ship ------------ #
     for task_yaml in sorted((out / "logic" / "configs" / "tasks").glob("*.yaml")):
@@ -436,6 +457,7 @@ if __name__ == "__main__":
 
 __all__ = [
     "load_manifest",
+    "prune_task_configs",
     "filter_manifest_file",
     "filter_lazy_map",
     "drop_pruned_init_imports",
