@@ -28,7 +28,7 @@ def is_ptp_problem(problem: Any) -> bool:
     """
     name = problem if isinstance(problem, str) else getattr(problem, "NAME", "")
     name = name.lower()
-    # ptp, cptp and tcptp all contain "ptp"; tcptp subclasses CPTP and
+    # ptp, cptp and cptptc all contain "ptp"; cptptc subclasses CPTP and
     # shares the node layout and reward.
     return "ptp" in name or "pcvrp" in name
 

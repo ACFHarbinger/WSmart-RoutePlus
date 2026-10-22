@@ -18,7 +18,7 @@ class ProblemSpec:
     """Declarative specification of a routing problem.
 
     Attributes:
-        name: Canonical problem identifier (e.g. "cptp", "ptp", "cvrp", "tcptp").
+        name: Canonical problem identifier (e.g. "cptp", "ptp", "cvrp", "cptptc").
         objective: Pure economic / cost objective function.
         constraints: Tuple of declarative Resource constraints.
         repair: Optional repair operator for invalid/overweight tours.
@@ -26,8 +26,8 @@ class ProblemSpec:
         env_target: Lazy import target string for the RL environment class
             (e.g. "logic.src.pipeline.learning.envs.cptp:CPTPEnv").
         features: Optional feature specification for embedding projections.
-        expand_pool: Whether unvisited candidate pools may expand dynamically (True for PTP/CPTP/TCPTP, False for CVRP).
-        per_trip_shift: Repair and validate each trip against the shift budget (TCPTP).
+        expand_pool: Whether unvisited candidate pools may expand dynamically (True for PTP/CPTP/CPTPTC, False for CVRP).
+        per_trip_shift: Repair and validate each trip against the shift budget (CPTPTC).
     """
 
     name: str
@@ -92,7 +92,7 @@ PROBLEMS = ProblemRegistry(
     {
         "ptp": "logic.src.pipeline.learning.envs.common.released_specs:PTP_SPEC",
         "cptp": "logic.src.pipeline.learning.envs.common.released_specs:CPTP_SPEC",
-        "tcptp": "logic.src.pipeline.learning.envs.common.released_specs:TCPTP_SPEC",
+        "cptptc": "logic.src.pipeline.learning.envs.common.released_specs:CPTPTC_SPEC",
         "cvrp": "logic.src.pipeline.learning.envs.common.released_specs:CVRP_SPEC",
         **{
             name: f"logic.src.pipeline.learning.envs.{name}:{name.upper()}_SPEC"

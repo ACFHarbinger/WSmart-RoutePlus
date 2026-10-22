@@ -31,7 +31,7 @@ sys.meta_path.insert(0, NoNeural())
 from logic.src.pipeline.learning.envs.common.metrics import METRICS
 from logic.src.pipeline.learning.envs.common.objectives import profit_objective
 from logic.src.pipeline.learning.envs.spec import PROBLEMS
-assert 'tcptp' in PROBLEMS
+assert 'cptptc' in PROBLEMS
 assert profit_objective(10, 2, revenue_kg=3, cost_km=4) == 22
 assert 'reward' not in METRICS
 """
@@ -155,7 +155,7 @@ def test_problem_specs_keep_tensor_objectives_and_canonical_kpis():
     from logic.src.pipeline.learning.envs.spec import PROBLEMS, ProblemRegistry
 
     assert not ProblemRegistry().keys()
-    for name in ("ptp", "cptp", "tcptp", "cvrp"):
+    for name in ("ptp", "cptp", "cptptc", "cvrp"):
         spec = PROBLEMS[name]
         assert set(spec.metrics) <= set(METRICS)
         assert "reward" not in spec.metrics

@@ -2,7 +2,7 @@
 Data generation and management module for WSmart-Route.
 
 This package contains tools for creating synthetic VRP instances, including
-builders for various problem types (PTP, CPTP, TCPTP) and generation scripts.
+builders for various problem types (PTP, CPTP, CPTPTC) and generation scripts.
 
 Attributes:
     generate_datasets: Generate datasets for various problem types.

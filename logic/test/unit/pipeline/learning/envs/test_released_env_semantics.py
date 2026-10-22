@@ -1,14 +1,14 @@
-"""The released PTP and TCPTP keep the dynamics of the pre-WP-07 envs (review CR-12).
+"""The released PTP and CPTPTC keep the dynamics of the pre-WP-07 envs (review CR-12).
 
-Checked against rollouts of ``envs/routing/{ptp,tcptp}.py`` at a5eb27eec: PTP never offers an
-empty bin unless it is mandatory, and a TCPTP day continues after a depot return while a
+Checked against rollouts of ``envs/routing/{ptp,cptptc}.py`` at a5eb27eec: PTP never offers an
+empty bin unless it is mandatory, and a CPTPTC day continues after a depot return while a
 customer is still reachable on a fresh trip.
 """
 
 import pytest
 import torch
 from logic.src.pipeline.learning.envs.ptp import PTPEnv
-from logic.src.pipeline.learning.envs.tcptp import TCPTPEnv
+from logic.src.pipeline.learning.envs.cptptc import CPTPTCEnv
 from tensordict import TensorDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -37,8 +37,8 @@ def test_ptp_masks_empty_bins_unless_mandatory():
     assert td["action_mask"].tolist() == [[False, True, True, True]]
 
 
-def test_tcptp_day_continues_after_a_depot_return():
-    env = TCPTPEnv(generator_params={"num_loc": 2}, check_env_specs=False)
+def test_cptptc_day_continues_after_a_depot_return():
+    env = CPTPTCEnv(generator_params={"num_loc": 2}, check_env_specs=False)
     td = env.reset(_raw([0.6, 0.6]))
     # Capacity 1 fits one bin per trip: the first return to the depot must not end the day.
     for action, done in ((1, False), (0, False), (2, False), (0, True)):

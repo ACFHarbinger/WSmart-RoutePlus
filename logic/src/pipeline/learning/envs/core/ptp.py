@@ -1,7 +1,7 @@
 """Shared utilities, economic objectives, and tour evaluation for Profitable Tour Problems.
 
 This module defines the canonical economic formula (EUR) and vectorized tour
-evaluation routines for PTP, CPTP, and TCPTP.
+evaluation routines for PTP, CPTP, and CPTPTC.
 """
 
 from __future__ import annotations
@@ -71,7 +71,7 @@ def evaluate_profitable_tour(  # noqa: C901
         pi: Tour sequence of shape [B, L] or [L].
         dist_matrix: Optional precomputed distance matrix [B, N, N] or [N, N].
         capacity: Optional vehicle capacity per trip. If None, read from dataset.
-        shift_hours: Optional shift time limit for TCPTP.
+        shift_hours: Optional shift time limit for CPTPTC.
         avg_speed_kmh: Optional average vehicle speed.
         service_time_h: Optional service time per customer visit.
         cw_dict: Optional legacy cost weight dictionary.
@@ -188,7 +188,7 @@ def evaluate_profitable_tour(  # noqa: C901
         if check_feasibility and has_load_overflow.any():
             raise AssertionError("Used more than capacity")
 
-    # Time budget per trip (TCPTP)
+    # Time budget per trip (CPTPTC)
     time_spent = torch.zeros(bs, device=device)
     has_temporal = shift_hours is not None or "shift_hours" in dataset or "time_matrix" in dataset
     if has_temporal:
@@ -239,7 +239,7 @@ def evaluate_profitable_tour(  # noqa: C901
                         overflows[b] += 1.0
                         if check_feasibility:
                             raise AssertionError(
-                                f"TCPTP: trip time {cur_trip_time:.4f}h exceeds shift budget {shift_t[b].item():.4f}h"
+                                f"CPTPTC: trip time {cur_trip_time:.4f}h exceeds shift budget {shift_t[b].item():.4f}h"
                             )
                     time_spent[b] += leg_t
                     cur_trip_time = 0.0
@@ -251,7 +251,7 @@ def evaluate_profitable_tour(  # noqa: C901
                         overflows[b] += 1.0
                         if check_feasibility:
                             raise AssertionError(
-                                f"TCPTP: trip time {cur_trip_time:.4f}h exceeds shift budget {shift_t[b].item():.4f}h"
+                                f"CPTPTC: trip time {cur_trip_time:.4f}h exceeds shift budget {shift_t[b].item():.4f}h"
                             )
                 prev_node = node
 
@@ -275,7 +275,7 @@ def evaluate_profitable_tour(  # noqa: C901
                     overflows[b] += 1.0
                     if check_feasibility:
                         raise AssertionError(
-                            f"TCPTP: trip time {cur_trip_time:.4f}h exceeds shift budget {shift_t[b].item():.4f}h"
+                            f"CPTPTC: trip time {cur_trip_time:.4f}h exceeds shift budget {shift_t[b].item():.4f}h"
                         )
 
     valid = overflows <= 0

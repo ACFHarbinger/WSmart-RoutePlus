@@ -728,13 +728,13 @@ Problem specification and registry.
 - **class `ProblemSpec`** — Declarative specification of a routing problem.
 - **class `ProblemRegistry`** — Registry mapping problem names to ProblemSpec instances.
 
-### `logic.src.pipeline.learning.envs.tcptp`
+### `logic.src.pipeline.learning.envs.cptptc`
 
-Time-constrained Capacitated Profitable Tour Problem (TCPTP) environment, generator, and task specification.
+Capacitated Profitable Tour Problem with Time Constraints (CPTPTC) environment, generator, and task specification.
 
-- **class `TCPTPGenerator`** — Generator for Time-constrained Capacitated Profitable Tour Problem (TCPTP) instances.
-- **class `TCPTPEnv`** — Time-constrained Capacitated Profitable Tour Problem Environment.
-- **class `TCPTP`** — Time-constrained Capacitated Profitable Tour Problem (TCPTP) task definition.
+- **class `CPTPTCGenerator`** — Generator for Capacitated Profitable Tour Problem with Time Constraints (CPTPTC) instances.
+- **class `CPTPTCEnv`** — Capacitated Profitable Tour Problem with Time Constraints Environment.
+- **class `CPTPTC`** — Capacitated Profitable Tour Problem with Time Constraints (CPTPTC) task definition.
 
 ### `logic.src.pipeline.learning.envs.thop`
 
@@ -943,9 +943,9 @@ Action for routing policy execution.
 
 ### `logic.src.pipeline.simulations.actions.time_constraints`
 
-Make the final route vehicle-feasible after construction and improvement (TCPTP: also shift-feasible).
+Make the final route vehicle-feasible after construction and improvement (CPTPTC: also shift-feasible).
 
-- **class `TimeConstraintAction`** — Insert depot returns so every trip fits the vehicle (and, for TCPTP, the shift).
+- **class `TimeConstraintAction`** — Insert depot returns so every trip fits the vehicle (and, for CPTPTC, the shift).
 
 ### `logic.src.pipeline.simulations.bins.__init__`
 
@@ -1009,7 +1009,7 @@ Per-day inputs of the day loop: random streams and problem flags.
 - `policy_seed()` — Seed for a routing policy. Does not affect the shared fill stream.
 - `seed_policy_rng()` — Seed Python and NumPy. Seed PyTorch only when it is installed.
 - `apply_shared_bin_rng()` — Reset the bin generator to the shared environment seed.
-- `per_trip_shift()` — True when each trip must fit the shift (TCPTP).
+- `per_trip_shift()` — True when each trip must fit the shift (CPTPTC).
 
 ### `logic.src.pipeline.simulations.hpo.__init__`
 

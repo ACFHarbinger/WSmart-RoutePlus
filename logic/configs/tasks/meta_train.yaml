@@ -4,7 +4,7 @@
 # =============================================================================
 # Configuration for meta-RL training across multiple problem distributions.
 # Used by: python main.py mrl_train
-# TCPTP:    python main.py meta_train envs@meta_rl.env=tcptp meta_rl.env.name=tcptp
+# CPTPTC:    python main.py meta_train envs@meta_rl.env=cptptc meta_rl.env.name=cptptc
 #          meta_rl.env.name below is hardcoded and must stay in lockstep
 #          with the composed /envs@meta_rl.env group.
 #
@@ -35,7 +35,7 @@ meta_rl:
   # Environment
   # =============================================================================
   env:
-    name: "ptp" # Problem type for meta-training. TCPTP: set to "tcptp" with envs@meta_rl.env=tcptp.
+    name: "ptp" # Problem type for meta-training. CPTPTC: set to "cptptc" with envs@meta_rl.env=cptptc.
     # distance_method lives on GraphConfig (curriculum_graphs), not EnvConfig.
 
   # Meta-Learning Strategy

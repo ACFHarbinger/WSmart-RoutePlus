@@ -28,7 +28,7 @@ from typing import Any, Dict
 
 from logic.src.utils.registry import import_target, lazy_getattr
 
-_PROBLEMS = ("ptp", "cptp", "tcptp", "cvrp", "tsp", "atsp", "op", "pctsp", "spctsp", "pdp", "irp", "thop")
+_PROBLEMS = ("ptp", "cptp", "cptptc", "cvrp", "tsp", "atsp", "op", "pctsp", "spctsp", "pdp", "irp", "thop")
 _CLASS_PREFIX = {name: name.upper() for name in _PROBLEMS} | {"thop": "ThOP"}
 # Problems whose env and generator live in their own modules (<name>_env, <name>_generator).
 _SPLIT = ("irp", "thop")

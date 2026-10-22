@@ -1,4 +1,4 @@
-"""The problem names are ptp, cptp and tcptp; the former names are rejected (no aliases)."""
+"""The problem names are ptp, cptp and cptptc; the former names are rejected (no aliases)."""
 
 import pytest
 from logic.src.models.subnets.embeddings import INIT_EMBEDDING_REGISTRY, get_init_embedding
@@ -10,7 +10,7 @@ from logic.src.utils.model.problem_factory import load_problem
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
-NEW = ("ptp", "cptp", "tcptp")
+NEW = ("ptp", "cptp", "cptptc")
 OLD = ("vrpp", "cvrpp", "ctop", "wcvrp", "cwcvrp", "swcvrp", "scwcvrp", "sdwcvrp")
 
 

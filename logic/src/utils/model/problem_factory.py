@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Type
 
-from logic.src.pipeline.learning.envs import CPTP, CVRP, PTP, TCPTP
+from logic.src.pipeline.learning.envs import CPTP, CVRP, PTP, CPTPTC
 
 
 def load_problem(name: str) -> Type[Any]:
@@ -12,7 +12,7 @@ def load_problem(name: str) -> Type[Any]:
     mapping = {
         "ptp": PTP,
         "cptp": CPTP,
-        "tcptp": TCPTP,
+        "cptptc": CPTPTC,
         "cvrp": CVRP,
     }
     problem = mapping.get(name.lower())

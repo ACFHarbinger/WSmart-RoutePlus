@@ -26,16 +26,16 @@ class EnvConfig:
     ``curriculum_graphs`` acts as the primary training graph.
 
     Attributes:
-        name: Name of the environment (e.g., 'ptp', 'cptp', 'tcptp').
+        name: Name of the environment (e.g., 'ptp', 'cptp', 'cptptc').
         min_loc: Minimum coordinate value.
         max_loc: Maximum coordinate value.
-        capacity: Vehicle capacity (optional). For ``tcptp`` this is the same
+        capacity: Vehicle capacity (optional). For ``cptptc`` this is the same
             per-trip vehicle capacity as CPTP; it is not replaced by the
             time budget.
-        shift_hours: Optional per-trip time budget in hours (``tcptp`` only).
+        shift_hours: Optional per-trip time budget in hours (``cptptc`` only).
             ``None`` falls through to ``SimulationRepository.get_temporal_params()``.
-        avg_speed_kmh: Optional average driving speed in km/h (``tcptp`` only).
-        service_time_h: Optional per-bin service time in hours (``tcptp`` only).
+        avg_speed_kmh: Optional average driving speed in km/h (``cptptc`` only).
+        service_time_h: Optional per-bin service time in hours (``cptptc`` only).
         distance_method: Optional distance computation method for meta-RL envs.
         curriculum_graphs: Ordered list of graphs for sequential curriculum
             learning. The **first entry** is used for single-stage training.
@@ -49,7 +49,7 @@ class EnvConfig:
     min_loc: float = 0.0
     max_loc: float = 1.0
     capacity: Optional[float] = None
-    # tcptp temporal resource (ignored by every other problem; None = use
+    # cptptc temporal resource (ignored by every other problem; None = use
     # SimulationRepository.get_temporal_params() when the env actually reads them)
     shift_hours: Optional[float] = None
     avg_speed_kmh: Optional[float] = None

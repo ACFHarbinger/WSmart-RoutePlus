@@ -7,11 +7,11 @@ from tensordict import TensorDict
 pytestmark = [pytest.mark.unit]
 
 
-def test_tcptp_check_done_explicit_stop_and_exhaustion():
-    """Verify TCPTPEnv._check_done respects explicit finished flag and exhausted customer actions."""
-    from logic.src.pipeline.learning.envs.tcptp import TCPTPEnv
+def test_cptptc_check_done_explicit_stop_and_exhaustion():
+    """Verify CPTPTCEnv._check_done respects explicit finished flag and exhausted customer actions."""
+    from logic.src.pipeline.learning.envs.cptptc import CPTPTCEnv
 
-    env = TCPTPEnv(generator_params={"num_loc": 5})
+    env = CPTPTCEnv(generator_params={"num_loc": 5})
     td = env.reset(batch_size=[2])
 
     # Case 1: Initially at depot, i=0 -> not done
