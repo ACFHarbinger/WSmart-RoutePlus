@@ -4,9 +4,9 @@ from dataclasses import dataclass
 from typing import Optional
 
 import pytest
-from logic.src.policies.packing.vectorized.factory import create_selector_from_config
-from logic.src.policies.packing.vectorized.last_minute import LastMinuteSelector
-from logic.src.policies.packing.vectorized.regular import RegularSelector
+from logic.src.policies.vectorized.packing.factory import create_selector_from_config
+from logic.src.policies.vectorized.packing.last_minute import LastMinuteSelector
+from logic.src.policies.vectorized.packing.regular import RegularSelector
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

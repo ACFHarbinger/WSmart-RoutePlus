@@ -1,6 +1,6 @@
 import pytest
 import torch
-from logic.src.policies.vector.hgs_alns import VectorizedHGSALNS
+from logic.src.policies.vectorized.routing.hgs_alns import VectorizedHGSALNS
 from tensordict import TensorDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

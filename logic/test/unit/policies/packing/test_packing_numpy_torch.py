@@ -108,16 +108,16 @@ def test_released_vectorized_path_does_not_import_hrl_manager():
         import sys
         from pathlib import Path
 
-        from logic.src.policies.packing import vectorized as vec_pkg
-        from logic.src.policies.packing.vectorized.factory import (
+        from logic.src.policies.vectorized import packing as vec_pkg
+        from logic.src.policies.vectorized.packing.factory import (
             create_selector_from_config,
             get_vectorized_selector,
         )
-        from logic.src.policies.packing.vectorized.last_minute import LastMinuteSelector
-        from logic.src.policies.packing.vectorized.lookahead import LookaheadSelector
-        from logic.src.policies.packing.vectorized.regular import RegularSelector
-        from logic.src.policies.packing.vectorized.service_level import ServiceLevelSelector
-        import logic.src.policies.packing.vectorized.manager as manager_mod
+        from logic.src.policies.vectorized.packing.last_minute import LastMinuteSelector
+        from logic.src.policies.vectorized.packing.lookahead import LookaheadSelector
+        from logic.src.policies.vectorized.packing.regular import RegularSelector
+        from logic.src.policies.vectorized.packing.service_level import ServiceLevelSelector
+        import logic.src.policies.vectorized.packing.manager as manager_mod
 
         for name in ("last_minute", "regular", "service_level", "lookahead"):
             get_vectorized_selector(name)

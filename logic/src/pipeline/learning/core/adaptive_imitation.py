@@ -29,7 +29,7 @@ from logic.src.pipeline.learning.core.losses import (
     weighted_nll_loss,
 )
 from logic.src.pipeline.learning.core.reinforce import REINFORCE
-from logic.src.policies.vector.shared.factory import create_expert_policy
+from logic.src.policies.vectorized.routing.shared.factory import create_expert_policy
 
 
 class AdaptiveImitation(REINFORCE):

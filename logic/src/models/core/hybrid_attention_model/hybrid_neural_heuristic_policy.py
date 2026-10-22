@@ -22,8 +22,8 @@ from logic.src.models.common.autoregressive.policy import AutoregressivePolicy
 from logic.src.pipeline.learning.envs.base.base import RL4COEnvBase
 
 if TYPE_CHECKING:
-    from logic.src.policies.vector.alns import VectorizedALNS
-    from logic.src.policies.vector.hgs import VectorizedHGS
+    from logic.src.policies.vectorized.routing.alns import VectorizedALNS
+    from logic.src.policies.vectorized.routing.hgs import VectorizedHGS
 
 
 class NeuralHeuristicHybrid(AutoregressivePolicy):

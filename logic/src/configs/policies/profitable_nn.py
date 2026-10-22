@@ -1,7 +1,7 @@
 """Profitable nearest-neighbour expert configuration.
 
 The profitable nearest-neighbour heuristic exists only as a vectorised imitation
-expert (``logic.src.policies.vector.profitable_nearest_neighbour``); it has no
+expert (``logic.src.policies.vectorized.routing.profitable_nearest_neighbour``); it has no
 simulator counterpart, so this is its only configuration.
 
 Attributes:

@@ -69,13 +69,13 @@ infrastructure:
   - logic.src.pipeline.learning.core.imitation
   - logic.src.pipeline.features.train.model_factory.imitation   # reached through the factory registry's string target
   - logic.src.models.core.attention_model
-  - logic.src.policies.vector.profitable_nearest_neighbour   # imitation expert (Q-4a)
-  - logic.src.policies.packing.vectorized                    # vectorised packing (Q-4a)
-  - logic.src.policies.packing.vectorized.lookahead       # released strategy, loaded by string target in vectorized/factory.py
-  - logic.src.policies.packing.vectorized.last_minute     # released strategy, loaded by string target in vectorized/factory.py
-  - logic.src.policies.packing.vectorized.service_level   # released strategy, loaded by string target in vectorized/factory.py
-  - logic.src.policies.packing.vectorized.regular         # released strategy, loaded by string target in vectorized/factory.py
-  - logic.src.policies.packing.vectorized.spec            # shared rules of the vectorised selectors
+  - logic.src.policies.vectorized.routing.profitable_nearest_neighbour   # imitation expert (Q-4a)
+  - logic.src.policies.vectorized.packing                    # vectorised packing (Q-4a)
+  - logic.src.policies.vectorized.packing.lookahead       # released strategy, loaded by string target in vectorized/packing/factory.py
+  - logic.src.policies.vectorized.packing.last_minute     # released strategy, loaded by string target in vectorized/packing/factory.py
+  - logic.src.policies.vectorized.packing.service_level   # released strategy, loaded by string target in vectorized/packing/factory.py
+  - logic.src.policies.vectorized.packing.regular         # released strategy, loaded by string target in vectorized/packing/factory.py
+  - logic.src.policies.vectorized.packing.spec            # shared rules of the vectorised selectors
   - logic.src.pipeline.learning.envs.base.routing     # shared routing base env + generator (P-23, Q-3a)
   - logic.src.pipeline.learning.envs.base.resources   # load and shift-time resource constraints
   - logic.src.pipeline.learning.envs.ptp

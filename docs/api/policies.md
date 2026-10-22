@@ -1616,66 +1616,66 @@ Supermodular Greedy Packing Algorithm Module.
 
 - **class `SupermodularGreedySelection`** — Selection strategy based on Supermodular Greedy maximization (Synergy).
 
-### `logic.src.policies.packing.vectorized.__init__`
+### `logic.src.policies.vectorized.packing.__init__`
 
 Vectorized packing adapters. Public names load on first access.
 
-### `logic.src.policies.packing.vectorized.base`
+### `logic.src.policies.vectorized.packing.base`
 
 Base selector module.
 
 - **class `VectorizedSelector`** — Abstract base class for vectorized packing algorithms.
 
-### `logic.src.policies.packing.vectorized.combined`
+### `logic.src.policies.vectorized.packing.combined`
 
 Combined packing algorithm.
 
 - **class `CombinedSelector`** — Combines multiple packing algorithms with Boolean logic.
 
-### `logic.src.policies.packing.vectorized.factory`
+### `logic.src.policies.vectorized.packing.factory`
 
 Selection strategy factory.
 
 - `create_selector_from_config()` — Create a vectorized selector from a PackingConfig or dict.
 - `get_vectorized_selector()` — Create a vectorized selector by name.
 
-### `logic.src.policies.packing.vectorized.last_minute`
+### `logic.src.policies.vectorized.packing.last_minute`
 
 Last-minute packing adapter (batched Torch).
 
 - **class `LastMinuteSelector`** — Threshold-based reactive packing algorithm.
 
-### `logic.src.policies.packing.vectorized.lookahead`
+### `logic.src.policies.vectorized.packing.lookahead`
 
 Lookahead packing adapter (batched Torch).
 
 - **class `LookaheadSelector`** — Vectorised predictive selection looking ahead to the next collection day.
 
-### `logic.src.policies.packing.vectorized.manager`
+### `logic.src.policies.vectorized.packing.manager`
 
 Manager (Neural) packing algorithm.
 
 - **class `ManagerSelector`** — Neural network-based selection using MandatoryManager.
 
-### `logic.src.policies.packing.vectorized.regular`
+### `logic.src.policies.vectorized.packing.regular`
 
 Regular packing adapter (batched Torch).
 
 - **class `RegularSelector`** — Periodic collection strategy.
 
-### `logic.src.policies.packing.vectorized.revenue`
+### `logic.src.policies.vectorized.packing.revenue`
 
 Revenue packing algorithm.
 
 - **class `RevenueSelector`** — Revenue-based packing algorithm.
 
-### `logic.src.policies.packing.vectorized.service_level`
+### `logic.src.policies.vectorized.packing.service_level`
 
 Service-level packing adapter (batched Torch).
 
 - **class `ServiceLevelSelector`** — Statistical overflow prediction strategy.
 
-### `logic.src.policies.packing.vectorized.spec`
+### `logic.src.policies.vectorized.packing.spec`
 
 Batched Torch adapters of the released packing rules (P-37).
 
@@ -4577,26 +4577,26 @@ Internal implementation of Iterative 2-opt for TSP.
 
 - `solve_tsp_2opt()` — Solve TSP via iterative 2-opt.
 
-### `logic.src.policies.vector.__init__`
+### `logic.src.policies.vectorized.routing.__init__`
 
 Policies module for WSmart-Route.
 
 - `get_policy_class()` — Look up a policy class by its short CLI name.
 - `get_policy()` — Create a policy instance by short CLI name.
 
-### `logic.src.policies.vector.adaptive_large_neighborhood_search`
+### `logic.src.policies.vectorized.routing.adaptive_large_neighborhood_search`
 
 Batched ALNS engine mirroring the simulator's ``ALNSSolver``.
 
 - **class `VectorizedALNSEngine`** — Batched Adaptive Large Neighbourhood Search for the VRPP.
 
-### `logic.src.policies.vector.alns`
+### `logic.src.policies.vectorized.routing.alns`
 
 Vectorised ALNS policy: the simulator's ALNS (``ALNSConfig``) on a batch.
 
 - **class `VectorizedALNS`** — Batched counterpart of the simulator's ``ALNSPolicy`` / ``ALNSSolver``.
 
-### `logic.src.policies.vector.ant_colony_system`
+### `logic.src.policies.vectorized.routing.ant_colony_system`
 
 Vectorised K-sparse ACO: the simulator's KS-ACO (``KSparseACOConfig``) on a batch.
 
@@ -4605,35 +4605,35 @@ Vectorised K-sparse ACO: the simulator's KS-ACO (``KSparseACOConfig``) on a batc
 - `nearest_neighbour_cost()` — Cost of a capacity-feasible nearest-neighbour solution over all bins ``[B]``.
 - **class `VectorizedACOPolicy`** — Batched counterpart of the simulator's ``KSparseACOPolicy`` / ``KSparseACOSolver``.
 
-### `logic.src.policies.vector.core.__init__`
+### `logic.src.policies.vectorized.routing.core.__init__`
 
 Core genetic components of the vectorised experts.
 
-### `logic.src.policies.vector.core.crossover`
+### `logic.src.policies.vectorized.routing.core.crossover`
 
 Genetic Crossover Operators for HGS.
 
 - `vectorized_ordered_crossover()` — Vectorized Ordered Crossover (OX1) with shared cuts across batch.
 
-### `logic.src.policies.vector.expert_cache`
+### `logic.src.policies.vectorized.routing.expert_cache`
 
 Disk cache of profitable nearest-neighbour expert solves.
 
 - **class `CachedExpert`** — Profitable nearest-neighbour expert with a disk cache of its tours.
 
-### `logic.src.policies.vector.hgs`
+### `logic.src.policies.vectorized.routing.hgs`
 
 Vectorised HGS policy: the simulator's HGS (``HGSConfig``) on a batch.
 
 - **class `VectorizedHGS`** — Batched counterpart of the simulator's ``HGSPolicy`` / ``HGSSolver``.
 
-### `logic.src.policies.vector.hgs_alns`
+### `logic.src.policies.vectorized.routing.hgs_alns`
 
 Vectorised HGS-ALNS policy: the simulator's HGS-ALNS (``HGSALNSConfig``) on a batch.
 
 - **class `VectorizedHGSALNS`** — Batched counterpart of the simulator's ``HGSALNSPolicy`` / ``HGSALNSSolver``.
 
-### `logic.src.policies.vector.hybrid_genetic_search`
+### `logic.src.policies.vectorized.routing.hybrid_genetic_search`
 
 Batched Hybrid Genetic Search engine mirroring the simulator's ``HGSSolver``.
 
@@ -4643,221 +4643,221 @@ Batched Hybrid Genetic Search engine mirroring the simulator's ``HGSSolver``.
 - **class `HGSPopulation`** — A batched population of ``[B, P]`` individuals with liveness masks.
 - **class `VectorizedHGSEngine`** — Batched HGS for the VRPP configured by ``HGSConfig``.
 
-### `logic.src.policies.vector.hybrid_volleyball_premier_league`
+### `logic.src.policies.vectorized.routing.hybrid_volleyball_premier_league`
 
 Vectorised HVPL policy: the simulator's Hybrid VPL (``HVPLConfig``) on a batch.
 
 - **class `VectorizedHVPL`** — Batched counterpart of the simulator's ``HVPLPolicy`` / ``HVPLSolver``.
 
-### `logic.src.policies.vector.iterated_local_search`
+### `logic.src.policies.vectorized.routing.iterated_local_search`
 
 Vectorised Iterated Local Search: the simulator's ILS (``ILSConfig``) on a batch.
 
 - **class `IteratedLocalSearchPolicy`** — Batched counterpart of the simulator's ``ILSPolicy`` / ``ILSSolver``.
 
-### `logic.src.policies.vector.operators.__init__`
+### `logic.src.policies.vectorized.routing.operators.__init__`
 
 Vectorized local search operators for WSmart-Route.
 
-### `logic.src.policies.vector.operators.destroy.__init__`
+### `logic.src.policies.vectorized.routing.operators.destroy.__init__`
 
 Destroy operators package.
 
-### `logic.src.policies.vector.operators.destroy.cluster_removal`
+### `logic.src.policies.vectorized.routing.operators.destroy.cluster_removal`
 
 Cluster removal operator.
 
 - `vectorized_cluster_removal()` — Removes a cluster of spatially related nodes from the tours.
 
-### `logic.src.policies.vector.operators.destroy.random_removal`
+### `logic.src.policies.vectorized.routing.operators.destroy.random_removal`
 
 Random removal operator.
 
 - `vectorized_random_removal()` — Vectorized random removal of nodes from tours.
 
-### `logic.src.policies.vector.operators.destroy.shaw_removal`
+### `logic.src.policies.vectorized.routing.operators.destroy.shaw_removal`
 
 Shaw removal operator.
 
 - `vectorized_shaw_removal()` — Vectorized Shaw removal across a batch of tours using PyTorch.
 
-### `logic.src.policies.vector.operators.destroy.string_removal`
+### `logic.src.policies.vectorized.routing.operators.destroy.string_removal`
 
 String removal operator.
 
 - `vectorized_string_removal()` — Vectorized string removal across a batch of tours using PyTorch.
 
-### `logic.src.policies.vector.operators.destroy.worst_removal`
+### `logic.src.policies.vectorized.routing.operators.destroy.worst_removal`
 
 Worst removal operator.
 
 - `vectorized_worst_removal()` — Vectorized worst removal (highest cost-savings ejection).
 
-### `logic.src.policies.vector.operators.exchange.__init__`
+### `logic.src.policies.vectorized.routing.operators.exchange.__init__`
 
 Exchange operators package.
 
-### `logic.src.policies.vector.operators.exchange.cross_exchange`
+### `logic.src.policies.vectorized.routing.operators.exchange.cross_exchange`
 
 Cross-exchange (segment swap) operator.
 
 - `vectorized_cross_exchange()` — Vectorized cross-exchange local search across a batch of tours.
 
-### `logic.src.policies.vector.operators.exchange.ejection_chain`
+### `logic.src.policies.vectorized.routing.operators.exchange.ejection_chain`
 
 Ejection chain operator.
 
 - `vectorized_ejection_chain()` — Vectorized ejection chain operator for fleet minimization.
 
-### `logic.src.policies.vector.operators.exchange.lambda_interchange`
+### `logic.src.policies.vectorized.routing.operators.exchange.lambda_interchange`
 
 Lambda-interchange operator.
 
 - `vectorized_lambda_interchange()` — Vectorized λ-interchange local search across a batch of tours.
 
-### `logic.src.policies.vector.operators.exchange.or_opt`
+### `logic.src.policies.vectorized.routing.operators.exchange.or_opt`
 
 Or-opt local search operator.
 
 - `vectorized_or_opt()` — Vectorized Or-opt local search using parallel chain evaluation.
 
-### `logic.src.policies.vector.operators.move.__init__`
+### `logic.src.policies.vectorized.routing.operators.move.__init__`
 
 Move operators for routing policies.
 
-### `logic.src.policies.vector.operators.move.relocate`
+### `logic.src.policies.vectorized.routing.operators.move.relocate`
 
 Relocate local search operator.
 
 - `vectorized_relocate()` — Vectorized Relocate operator using parallel sampling.
 
-### `logic.src.policies.vector.operators.move.swap`
+### `logic.src.policies.vectorized.routing.operators.move.swap`
 
 Swap local search operator.
 
 - `vectorized_swap()` — Vectorized Swap operator for intra-route optimization.
 
-### `logic.src.policies.vector.operators.repair.__init__`
+### `logic.src.policies.vectorized.routing.operators.repair.__init__`
 
 Repair operators package.
 
-### `logic.src.policies.vector.operators.repair.greedy_insertion`
+### `logic.src.policies.vectorized.routing.operators.repair.greedy_insertion`
 
 Greedy insertion repair operator.
 
 - `vectorized_greedy_insertion()` — Vectorized greedy insertion.
 
-### `logic.src.policies.vector.operators.repair.regret_k_insertion`
+### `logic.src.policies.vectorized.routing.operators.repair.regret_k_insertion`
 
 Regret-K insertion repair operator.
 
 - `vectorized_regret_k_insertion()` — Vectorized Regret-K insertion.
 
-### `logic.src.policies.vector.operators.route.__init__`
+### `logic.src.policies.vectorized.routing.operators.route.__init__`
 
 Route-level optimization operators.
 
-### `logic.src.policies.vector.operators.route.lkh`
+### `logic.src.policies.vectorized.routing.operators.route.lkh`
 
 Vectorized Lin-Kernighan-Helsgaun (LKH-3) Operator.
 
 - `vectorized_lkh()` — Vectorized LKH local search across a batch of tours.
 
-### `logic.src.policies.vector.operators.route.swap_star`
+### `logic.src.policies.vectorized.routing.operators.route.swap_star`
 
 Swap* local search operator.
 
 - `vectorized_swap_star()` — Vectorized Swap* operator for inter-route optimization.
 
-### `logic.src.policies.vector.operators.route.three_opt`
+### `logic.src.policies.vectorized.routing.operators.route.three_opt`
 
 3-opt local search operator.
 
 - `vectorized_three_opt()` — Vectorized 3-opt local search using parallel sampling for efficiency.
 
-### `logic.src.policies.vector.operators.route.two_opt`
+### `logic.src.policies.vectorized.routing.operators.route.two_opt`
 
 2-opt local search operator.
 
 - `vectorized_two_opt()` — Vectorized 2-opt local search using parallel gain evaluation.
 
-### `logic.src.policies.vector.operators.route.two_opt_star`
+### `logic.src.policies.vectorized.routing.operators.route.two_opt_star`
 
 2-opt* local search operator.
 
 - `vectorized_two_opt_star()` — Vectorized 2-opt* (Tail Swap) operator.
 
-### `logic.src.policies.vector.operators.unstringing.__init__`
+### `logic.src.policies.vectorized.routing.operators.unstringing.__init__`
 
 Unstringing operators package.
 
-### `logic.src.policies.vector.operators.unstringing.type_i`
+### `logic.src.policies.vectorized.routing.operators.unstringing.type_i`
 
 Type I unstringing operator.
 
 - `vectorized_type_i_unstringing()` — Vectorized Type I Unstringing local search across a batch of tours.
 
-### `logic.src.policies.vector.operators.unstringing.type_ii`
+### `logic.src.policies.vectorized.routing.operators.unstringing.type_ii`
 
 Type II unstringing operator.
 
 - `vectorized_type_ii_unstringing()` — Vectorized Type II Unstringing local search across a batch of tours.
 
-### `logic.src.policies.vector.operators.unstringing.type_iii`
+### `logic.src.policies.vectorized.routing.operators.unstringing.type_iii`
 
 Type III unstringing operator.
 
 - `vectorized_type_iii_unstringing()` — Vectorized Type III Unstringing local search across a batch of tours.
 
-### `logic.src.policies.vector.operators.unstringing.type_iv`
+### `logic.src.policies.vectorized.routing.operators.unstringing.type_iv`
 
 Type IV unstringing operator.
 
 - `vectorized_type_iv_unstringing()` — Vectorized Type IV Unstringing local search across a batch of tours.
 
-### `logic.src.policies.vector.profitable_nearest_neighbour`
+### `logic.src.policies.vectorized.routing.profitable_nearest_neighbour`
 
 Profitable nearest-neighbour expert for imitation learning on PTP and CPTP.
 
 - **class `ProfitableNearestNeighbourPolicy`** — Selective nearest-neighbour expert.
 
-### `logic.src.policies.vector.random_local_search`
+### `logic.src.policies.vectorized.routing.random_local_search`
 
 Vectorised random local search: the simulator's RLS route improver on a batch.
 
 - **class `RandomLocalSearchPolicy`** — Batched counterpart of the simulator's ``random_local_search`` route improver.
 
-### `logic.src.policies.vector.shared.__init__`
+### `logic.src.policies.vectorized.routing.shared.__init__`
 
 Shared components of the vectorised experts.
 
-### `logic.src.policies.vector.shared.acceptance`
+### `logic.src.policies.vectorized.routing.shared.acceptance`
 
 Batched acceptance criteria for the vectorised policies.
 
 - **class `BatchedAcceptance`** — One acceptance criterion per instance, built from a simulator acceptance config.
 
-### `logic.src.policies.vector.shared.base`
+### `logic.src.policies.vectorized.routing.shared.base`
 
 Common base of the vectorised routing policies.
 
 - `load_config()` — Build a ``config_cls`` instance from a dataclass, a mapping and/or field overrides.
 - **class `VectorizedRoutingPolicy`** — Base of the vectorised policies: config, seeding, instance parsing and outputs.
 
-### `logic.src.policies.vector.shared.factory`
+### `logic.src.policies.vectorized.routing.shared.factory`
 
 Expert-policy factory: simulator policy config -> vectorised policy.
 
 - `load_expert_policy_cls()` — Import the expert policy class named by ``config``'s class name.
 - `create_expert_policy()` — Instantiate the vectorised expert for ``config``.
 
-### `logic.src.policies.vector.shared.llh`
+### `logic.src.policies.vectorized.routing.shared.llh`
 
 Batched destroy-repair low-level heuristics (``search_heuristics.destroy_repair_llh``).
 
 - `apply_llh()` — Apply the low-level heuristic ``LLH_NAMES[idx]`` with ``n`` removals per row.
 
-### `logic.src.policies.vector.shared.routes`
+### `logic.src.policies.vectorized.routing.shared.routes`
 
 Batched route-sequence operators shared by the vectorised policies.
 
@@ -4899,7 +4899,7 @@ Batched route-sequence operators shared by the vectorised policies.
 - `greedy_profit_construction()` — Vectorised ``build_greedy_routes`` (no mandatory bins).
 - `random_giant_tours()` — Random permutations of the bins ``[B, N]``.
 
-### `logic.src.policies.vector.shared.vrpp`
+### `logic.src.policies.vectorized.routing.shared.vrpp`
 
 Batched VRPP primitives shared by the vectorised expert policies.
 

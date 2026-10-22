@@ -5199,7 +5199,7 @@ The evaluator uses the unified interface in this directory to compare the three 
 #### Creating a Unified Policy
 
 ```python
-from logic.src.policies.vector import ModelFactory
+from logic.src.policies.vectorized.routing import ModelFactory
 
 ## Same interface, different worlds
 am_policy = ModelFactory.assemble("am", weights="./best.pt")
@@ -5336,7 +5336,7 @@ Standard HGS (like the Vidal implementation) is single-threaded. WSmart-Route's 
 ### 🧪 Usage Example
 
 ```python
-from logic.src.policies.vector.hgs import VectorizedHGS
+from logic.src.policies.vectorized.routing.hgs import VectorizedHGS
 
 ## 1. Initialize solver for 5 seconds per batch
 solver = VectorizedHGS(time_limit=5.0)
@@ -5501,7 +5501,7 @@ In our **Vectorized Operator**:
 ### 🧪 Usage Example: Manual Refinement
 
 ```python
-from logic.src.policies.vector.operators import TwoOptOperator
+from logic.src.policies.vectorized.routing.operators import TwoOptOperator
 
 ## 1. Start with a random tour
 tour = torch.arange(100).unsqueeze(0)
@@ -5614,7 +5614,7 @@ The `ManagerSelection` policy is the primary entry point for the **HRL Manager**
 ### 🧪 Usage Example
 
 ```python
-from logic.src.policies.vector.selection import RevenuePolicy
+from logic.src.policies.vectorized.routing.selection import RevenuePolicy
 
 ## Configure for 2x distance penalty
 select_logic = RevenuePolicy(profit_exponent=2.0)
@@ -5731,7 +5731,7 @@ The `RewardNormalizer` is critical for `CriticNetwork` training. By sharing this
 #### Using a Shared Schedule for Search
 
 ```python
-from logic.src.policies.vector.shared import CosineSchedule
+from logic.src.policies.vectorized.routing.shared import CosineSchedule
 
 ## 1. Warm up for 100 steps, then cool down
 temp_logic = CosineSchedule(start=1.0, end=0.01, total_steps=1000)

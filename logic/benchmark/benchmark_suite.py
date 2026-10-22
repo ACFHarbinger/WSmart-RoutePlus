@@ -12,7 +12,7 @@ from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.policy_swc_tcf import (
     run_swc_tcf_optimizer,
 )
-from logic.src.policies.vector.random_local_search import RandomLocalSearchPolicy
+from logic.src.policies.vectorized.routing.random_local_search import RandomLocalSearchPolicy
 
 
 def get_dummy_model(device="cpu"):

@@ -55,7 +55,7 @@ def test_packing_registry_declares_without_vectorized():
         assert PackingRegistry.get("revenue_threshold") is PackingRegistry.get("revenue")
         strategy = PackingFactory.create_strategy("last_minute")
         assert strategy is not None
-        leaked = [name for name in sys.modules if name.startswith("logic.src.policies.packing.vectorized")]
+        leaked = [name for name in sys.modules if name.startswith("logic.src.policies.vectorized.packing")]
         assert not leaked, leaked
         """
     )
@@ -105,7 +105,7 @@ def test_expert_policy_hydra_targets_resolve():
         module_name, _, class_name = target.rpartition(".")
         cls = getattr(importlib.import_module(module_name), class_name)
         assert cls.__module__.startswith("logic.src.configs.policies."), path
-        from logic.src.policies.vector.shared.factory import EXPERT_TARGETS
+        from logic.src.policies.vectorized.routing.shared.factory import EXPERT_TARGETS
 
         assert class_name in EXPERT_TARGETS, path
     assert any(item.endswith(".HVPLConfig") for item in targets)

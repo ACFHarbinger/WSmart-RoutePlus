@@ -219,7 +219,7 @@ All improvement policies share a library of vectorized (GPU-batched) local searc
 
 ### 6.5 Giant Tour Decomposition
 
-The vectorised experts (`logic/src/policies/vector`) work on batched route sequences (`0 r1 0 r2 0 …`) and decode giant tours with `profit_split()` (`shared/vrpp.py`), the batched counterpart of the simulator's `LinearSplit`:
+The vectorised experts (`logic/src/policies/vectorized/routing`) work on batched route sequences (`0 r1 0 r2 0 …`) and decode giant tours with `profit_split()` (`shared/vrpp.py`), the batched counterpart of the simulator's `LinearSplit`:
 
 - **Algorithm**: dynamic programme over the tour positions; a route is a contiguous capacity-feasible segment
 - **Supports**: `max_vehicles` (unlimited when 0) and skipping unprofitable bins (VRPP)

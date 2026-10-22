@@ -10,7 +10,7 @@ from typing import List
 import numpy as np
 import pytest
 import torch
-from logic.src.policies.vector.profitable_nearest_neighbour import ProfitableNearestNeighbourPolicy
+from logic.src.policies.vectorized.routing.profitable_nearest_neighbour import ProfitableNearestNeighbourPolicy
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

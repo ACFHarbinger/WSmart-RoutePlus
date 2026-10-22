@@ -3,8 +3,8 @@
 import pytest
 import torch
 from logic.src.pipeline.learning.envs.cptp import CPTPEnv
-from logic.src.policies.vector.expert_cache import CachedExpert
-from logic.src.policies.vector.profitable_nearest_neighbour import ProfitableNearestNeighbourPolicy
+from logic.src.policies.vectorized.routing.expert_cache import CachedExpert
+from logic.src.policies.vectorized.routing.profitable_nearest_neighbour import ProfitableNearestNeighbourPolicy
 from tensordict import TensorDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
