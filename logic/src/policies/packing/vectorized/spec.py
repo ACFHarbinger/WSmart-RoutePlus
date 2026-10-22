@@ -47,8 +47,8 @@ def regular(
 ) -> torch.Tensor:
     """Collect eligible customers on scheduled days.
 
-    Scheduled days are ``1, 1+period, …``. A missing day or a non-positive
-    period collects every day. Eligibility is ``fill >= min_fill`` (fraction).
+    Scheduled days are ``1, 1+period, …``. A missing day or a period below
+    one day (non-positive included) collects every day. Eligibility is ``fill >= min_fill`` (fraction).
 
     Args:
         fill_levels: Current fills ``[B, N]`` as fractions.
@@ -64,7 +64,7 @@ def regular(
     eligible = fill_levels >= float(min_fill)
     period = float(frequency)
 
-    if period <= 0 or current_day is None:
+    if period < 1 or current_day is None:  # int(period) would be 0 for a sub-daily period
         return _clear_depot(eligible)
 
     day = current_day if isinstance(current_day, torch.Tensor) else torch.tensor(current_day, device=device)
