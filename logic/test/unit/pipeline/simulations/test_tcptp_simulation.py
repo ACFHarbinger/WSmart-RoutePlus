@@ -171,6 +171,25 @@ class TestCTOPCollectionAction:
         with pytest.raises(AssertionError, match="TCPTP violation: trip duration"):
             action.execute(context)
 
+    def test_tcptp_with_no_vehicle_capacity_skips_the_capacity_check(self):
+        bins = MagicMock()
+        bins.collect.return_value = ([1], 50.0, 1, 100.0)
+        dist_matrix = np.array([[0.0, 10.0], [10.0, 0.0]])
+        context: Dict[str, Any] = {
+            "bins": bins,
+            "tour": [0, 1, 0],
+            "distance_matrix": dist_matrix,
+            "avg_speed_kmh": 20.0,
+            "service_time_h": 0.5,
+            "shift_hours": 8.0,
+            "problem": "tcptp",
+            "vehicle_capacity": None,
+        }
+
+        CollectAction().execute(context)
+
+        assert context["cost"] == 20.0
+
 
 class TestCTOPLoggingAndContext:
     """Tests daily logging and context tracking of TCPTP metrics."""

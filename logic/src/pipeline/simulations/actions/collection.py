@@ -155,6 +155,8 @@ class CollectAction(SimulationAction):
         # TCPTP validates each trip against the shift. Other problems keep the tour.
         from logic.src.pipeline.simulations.day_setup import per_trip_shift
 
+        _vehicle_capacity = getattr(context, "vehicle_capacity", None)
+        capacity_pct = float(_vehicle_capacity) if _vehicle_capacity is not None else float("inf")
         shift_checked = per_trip_shift(context)
         if shift_checked and tour and len(tour) > 2:
             cur_trip_time = 0.0
@@ -169,14 +171,14 @@ class CollectAction(SimulationAction):
                         raise AssertionError(
                             f"TCPTP violation: trip duration {trip_time:.4f}h exceeds shift budget {shift_hours:.4f}h"
                         )
-                    if cur_load > getattr(context, "vehicle_capacity", float("inf")) + 1e-6:
+                    if cur_load > capacity_pct + 1e-6:
                         raise AssertionError("TCPTP violation: trip exceeds vehicle capacity")
                     cur_trip_time = 0.0
                     cur_load = 0.0
                     cur_trip_bins = 0
                 else:
                     cur_trip_bins += 1
-                    if getattr(context, "vehicle_capacity", None) is not None:
+                    if _vehicle_capacity is not None:
                         # Feasibility is physical: validate against the TRUE fill
                         # (real_c), not the noisy observation (c). Using c could
                         # pass a physically over-capacity trip (silent kg/profit
@@ -186,8 +188,6 @@ class CollectAction(SimulationAction):
 
         # Per-trip payload telemetry, for every problem type. TCPTP rejects violations above;
         # for the PTP variants the simulator still executes the tour, so record and warn.
-        _vehicle_capacity = getattr(context, "vehicle_capacity", None)
-        capacity_pct = float(_vehicle_capacity) if _vehicle_capacity is not None else float("inf")
         try:
             loads_pct, loads_kg, violations = capacity_report(tour, bins, capacity_pct)
         except (AttributeError, IndexError, TypeError, ValueError) as exc:  # telemetry must never stop a collection
