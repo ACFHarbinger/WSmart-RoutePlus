@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Fixed
 
+- **`python . --help`** (`__main__.py`): `--help` was passed to Hydra as a task (`Could not find 'tasks/--help'`). `-h`, `--help` and `help` now print the usage, listing the tasks whose configs the tree ships (the release lists only its own), and exit 0.
 - **Release ships only its tasks** (`logic/release.yaml` `tasks:`, `build_release.py`): the package carried the `hpo`, `hpo_sim`, `meta_train` and `slurm` task configs although their code is excluded, so those tasks crashed with import errors. The manifest now lists the released tasks (`test_sim`, `train`, `eval`, `gen_data`); `--check` validates them and the build drops the other task configs.
 - **`gen_data` no longer overwrites by default** (`configs/tasks/gen_data.yaml`): its default graphs regenerate the paper's Figueira da Foz 350 Gamma-3 test datasets under their own names in `data/simulator/datasets/`, and `overwrite: true` replaced the shipped files silently. The default is now `false` (as in `DataConfig`); pass `data.overwrite=true` to replace a file.
 - **Summary tables when output is redirected** (`tracking/logging/modules/summary_display.py`): Rich assumes 80 columns when stdout is not a terminal, so next to the long policy names every metric column of the end-of-run tables printed empty (in log files, pipes and the setup-script runs). Those tables now use 200 columns when not on a terminal.
