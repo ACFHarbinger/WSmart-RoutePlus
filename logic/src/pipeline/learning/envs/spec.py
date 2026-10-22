@@ -96,7 +96,7 @@ PROBLEMS = ProblemRegistry(
         "cvrp": "logic.src.pipeline.learning.envs.common.released_specs:CVRP_SPEC",
         **{
             name: f"logic.src.pipeline.learning.envs.{name}:{name.upper()}_SPEC"
-            for name in ("tsp", "atsp", "op", "pctsp", "spctsp", "pdp", "irp")
+            for name in ("cptptwtc", "tsp", "atsp", "op", "pctsp", "spctsp", "pdp", "irp")
         },
         "thop": "logic.src.pipeline.learning.envs.thop:ThOP_SPEC",
     }

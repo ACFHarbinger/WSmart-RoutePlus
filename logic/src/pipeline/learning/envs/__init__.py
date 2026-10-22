@@ -28,7 +28,7 @@ from typing import Any, Dict
 
 from logic.src.utils.registry import import_target, lazy_getattr
 
-_PROBLEMS = ("ptp", "cptp", "cptptc", "cvrp", "tsp", "atsp", "op", "pctsp", "spctsp", "pdp", "irp", "thop")
+_PROBLEMS = ("ptp", "cptp", "cptptc", "cptptwtc", "cvrp", "tsp", "atsp", "op", "pctsp", "spctsp", "pdp", "irp", "thop")
 _CLASS_PREFIX = {name: name.upper() for name in _PROBLEMS} | {"thop": "ThOP"}
 # Problems whose env and generator live in their own modules (<name>_env, <name>_generator).
 _SPLIT = ("irp", "thop")
@@ -63,6 +63,7 @@ _TARGETS: Dict[str, str] = {
     "Resource": "logic.src.pipeline.learning.envs.base.resources:Resource",
     "LoadResource": "logic.src.pipeline.learning.envs.base.resources:LoadResource",
     "ShiftTimeResource": "logic.src.pipeline.learning.envs.base.resources:ShiftTimeResource",
+    "TimeWindowResource": "logic.src.pipeline.learning.envs.base.resources:TimeWindowResource",
     "Generator": "logic.src.pipeline.learning.envs.base.generator:Generator",
     "RoutingGenerator": "logic.src.pipeline.learning.envs.base.generator:RoutingGenerator",
     "BaseProblem": "logic.src.pipeline.learning.envs.base.problem:BaseProblem",
