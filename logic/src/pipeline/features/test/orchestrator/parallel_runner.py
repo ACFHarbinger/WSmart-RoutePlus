@@ -55,8 +55,11 @@ def pool_start_method(sim: Any, device: Any) -> str:
     if requested not in (None, "", "spawn"):
         raise ValueError("pool_start_method accepts 'spawn' or the Linux opt-in 'forkserver'")
     is_cuda = "cuda" in str(device)
-    # Default stays spawn. no_cuda keeps the existing CPU fork path.
-    return "spawn" if is_cuda else ("fork" if getattr(sim, "no_cuda", False) else "spawn")
+    # Default stays spawn. no_cuda keeps the existing CPU fork path where the platform has fork
+    # (Windows has only spawn).
+    if is_cuda or not getattr(sim, "no_cuda", False) or "fork" not in mp.get_all_start_methods():
+        return "spawn"
+    return "fork"
 
 
 def run_parallel_simulations(

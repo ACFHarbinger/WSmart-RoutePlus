@@ -47,4 +47,9 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    # Required for the simulator's worker processes in a frozen executable (spawn on Windows);
+    # a no-op when running from source.
+    import multiprocessing
+
+    multiprocessing.freeze_support()
     main()
