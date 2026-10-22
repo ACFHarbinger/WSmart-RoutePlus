@@ -168,16 +168,16 @@ class ProblemContext:
         locations = np.zeros((n + 1, 2))
         if coords is not None:
             try:
-                ci = coords.set_index("ID")
                 depot_row = coords[coords["ID"] == 0]
                 if len(depot_row) > 0:
                     locations[0] = [float(depot_row["Lng"].iloc[0]), float(depot_row["Lat"].iloc[0])]
                 else:
                     locations[0] = [float(coords["Lng"].mean()), float(coords["Lat"].mean())]
-                for local_idx in range(1, n + 1):
-                    global_id = local_idx
-                    if global_id in ci.index:
-                        locations[local_idx] = [float(ci.loc[global_id, "Lng"]), float(ci.loc[global_id, "Lat"])]
+                # Node g is row g of ``coords`` (depot first, bins sorted by ID, as in
+                # get_daily_results); the "ID" column holds real bin IDs, not node indices.
+                for local_idx in range(1, min(n + 1, len(coords))):
+                    row = coords.iloc[local_idx]
+                    locations[local_idx] = [float(row["Lng"]), float(row["Lat"])]
             except Exception:
                 pass  # locations stays zeros; algorithms degrade gracefully
 
@@ -218,7 +218,8 @@ class ProblemContext:
             waste_type=kwargs.get("waste_type", "plastic"),
             n_vehicles=n_vehicles,
             seed=kwargs.get("seed", 42),
-            day_index=kwargs.get("day_index", 0),
+            # The simulator's day context passes the day as ``day``.
+            day_index=int(kwargs.get("day_index", kwargs.get("day", 0)) or 0),
             extra={
                 k: v
                 for k, v in kwargs.items()
