@@ -201,7 +201,7 @@ For policy named `"sans_0.95"`:
 
 1. Check `THRESHOLD_POLICIES` → `"sans"` found
 2. Parse threshold: `0.95`
-3. Load config: `assets/configs/policies/policy_sans.yaml`
+3. Load config: `assets/configs/policies/routing/meta_heuristics/policy_sans.yaml`
 4. Pass `threshold=0.95` to `PolicyConfig` constructor
 
 For policy named `"last_minute"`:
@@ -1179,7 +1179,7 @@ For policy named `"sans_0.95"`:
 
 1. Check `THRESHOLD_POLICIES` → `"sans"` found
 2. Parse threshold: `0.95`
-3. Load config: `assets/configs/policies/policy_sans.yaml`
+3. Load config: `assets/configs/policies/routing/meta_heuristics/policy_sans.yaml`
 4. Pass `threshold=0.95` to `PolicyConfig` constructor
 
 For policy named `"last_minute"`:

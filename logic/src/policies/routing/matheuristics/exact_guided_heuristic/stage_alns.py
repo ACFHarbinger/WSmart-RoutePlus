@@ -38,7 +38,7 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from logic.src.configs.policies.alns import ALNSConfig
+from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
 from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns import ALNSSolver
 
 from .route_pool import RoutePool, VRPPRoute

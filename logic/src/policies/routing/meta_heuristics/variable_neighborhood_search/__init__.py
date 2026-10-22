@@ -10,7 +10,7 @@ Example:
     >>> routes, profit, cost = solver.solve()
 """
 
-from logic.src.configs.policies.vns import VNSConfig
+from logic.src.configs.policies.routing.meta_heuristics.vns import VNSConfig
 
 from .solver import VNSSolver
 

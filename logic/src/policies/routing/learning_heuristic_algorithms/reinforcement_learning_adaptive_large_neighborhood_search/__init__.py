@@ -21,7 +21,7 @@ Example:
     >>> print(f"Metrics: {metrics}")
 """
 
-from logic.src.configs.policies.rl_alns import RLALNSConfig
+from logic.src.configs.policies.routing.learning_heuristic_algorithms.rl_alns import RLALNSConfig
 
 from .solver import RLALNSSolver
 

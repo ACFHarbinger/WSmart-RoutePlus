@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
-from logic.src.configs.policies.bc import BCConfig
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.bc import BCConfig
 from logic.src.enums import PolicyTag
 from logic.src.policies.helpers.solvers_and_matheuristics.vrpp_model import VRPPModel
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy

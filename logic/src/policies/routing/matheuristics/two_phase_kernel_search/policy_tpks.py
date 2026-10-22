@@ -12,7 +12,7 @@ Example:
 
 from typing import List, Optional, Tuple, Type
 
-from logic.src.configs.policies.tpks import TpksConfig
+from logic.src.configs.policies.routing.matheuristics.tpks import TpksConfig
 from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.search_context import SearchContext

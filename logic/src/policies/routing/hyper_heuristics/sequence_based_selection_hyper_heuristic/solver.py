@@ -47,7 +47,7 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from logic.src.configs.policies.ss_hh import SSHHConfig
+from logic.src.configs.policies.routing.hyper_heuristics.ss_hh import SSHHConfig
 from logic.src.policies.helpers.operators.solution_initialization.nearest_neighbor_si import build_nn_routes
 
 from .sshh_low_level import SSHHLowLevelMixin as SSHHLowLevelMixin

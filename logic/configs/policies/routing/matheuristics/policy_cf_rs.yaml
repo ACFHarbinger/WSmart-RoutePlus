@@ -1,0 +1,8 @@
+cf_rs:
+  custom:
+    num_clusters: 0
+    time_limit: 2.0
+    packing:
+      other/packing/pk_lookahead.yaml:
+      - default
+    route_improvement: []

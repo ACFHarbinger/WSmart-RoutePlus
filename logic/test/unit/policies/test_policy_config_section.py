@@ -27,7 +27,7 @@ def _registered():
 
 
 def test_aco_hh_entry_name_reads_its_yaml():
-    section = _section("policy_aco_hh.yaml", "aco_hh")
+    section = _section("routing/hyper_heuristics/policy_aco_hh.yaml", "aco_hh")
     config = RoutingAlgorithmFactory.get_adapter("aco_hh", config={"aco_hh": section, "seed": 1})._config
     keyed = RoutingAlgorithmFactory.get_adapter("aco_hh", config={"hyper_aco": section, "seed": 1})._config
     assert config == keyed
@@ -36,7 +36,7 @@ def test_aco_hh_entry_name_reads_its_yaml():
 
 @pytest.mark.parametrize("variant", ["og_a", "og_b"])
 def test_sans_legacy_variant_entry_name_selects_the_og_engine(variant):
-    section = _section("policy_sans.yaml", "sans", variant)
+    section = _section("routing/meta_heuristics/policy_sans.yaml", "sans", variant)
     for wrapped in (section, OmegaConf.create(section)):  # the simulator passes a DictConfig section
         config = RoutingAlgorithmFactory.get_adapter("sans", config={f"sans_{variant}": wrapped, "seed": 1})._config
         assert config.engine == "og"
@@ -44,7 +44,7 @@ def test_sans_legacy_variant_entry_name_selects_the_og_engine(variant):
 
 
 def test_flat_config_with_a_dict_field_is_not_mistaken_for_a_section():
-    flat = {"engine": "og", "time_limit": 5, "packing": {"other/pk_last_minute.yaml": ["x"]}}
+    flat = {"engine": "og", "time_limit": 5, "packing": {"other/packing/pk_last_minute.yaml": ["x"]}}
     config = RoutingAlgorithmFactory.get_adapter("sans", config=flat)._config
     assert (config.engine, config.time_limit) == ("og", 5)
 
@@ -52,9 +52,9 @@ def test_flat_config_with_a_dict_field_is_not_mistaken_for_a_section():
 @pytest.mark.parametrize(
     "entry, filename, expected",
     [
-        ("aco_hh", "policy_aco_hh.yaml", {"n_ants": 10, "rho": 0.5, "time_limit": 600.0}),
-        ("bpc", "policy_bpc.yaml", {"cutting_planes": "all", "max_cg_iterations": 150, "max_bb_nodes": 2000}),
-        ("swc_tcf", "policy_swc_tcf.yaml", {"time_limit": 60.0, "framework": "gurobi"}),
+        ("aco_hh", "routing/hyper_heuristics/policy_aco_hh.yaml", {"n_ants": 10, "rho": 0.5, "time_limit": 600.0}),
+        ("bpc", "routing/exact_and_decomposition_solvers/policy_bpc.yaml", {"cutting_planes": "all", "max_cg_iterations": 150, "max_bb_nodes": 2000}),
+        ("swc_tcf", "routing/exact_and_decomposition_solvers/policy_swc_tcf.yaml", {"time_limit": 60.0, "framework": "gurobi"}),
     ],
 )
 def test_omegaconf_custom_lists_reach_the_typed_config(entry, filename, expected):

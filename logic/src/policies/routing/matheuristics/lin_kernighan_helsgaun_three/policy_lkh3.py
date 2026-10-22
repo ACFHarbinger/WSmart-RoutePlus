@@ -29,7 +29,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
-from logic.src.configs.policies.lkh3 import LKH3Config
+from logic.src.configs.policies.routing.matheuristics.lkh3 import LKH3Config
 from logic.src.enums import PolicyTag
 from logic.src.pipeline.learning.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy

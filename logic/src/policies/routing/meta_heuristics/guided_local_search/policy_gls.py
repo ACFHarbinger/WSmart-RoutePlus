@@ -4,7 +4,7 @@ Attributes:
     GLSPolicy: Policy class for Guided Local Search.
 
 Example:
-    >>> from logic.src.configs.policies.gls import GLSConfig
+    >>> from logic.src.configs.policies.routing.meta_heuristics.gls import GLSConfig
     >>> config = GLSConfig(lambda_param=1.0)
     >>> policy = GLSPolicy(config)
 """
@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
-from logic.src.configs.policies.gls import GLSConfig
+from logic.src.configs.policies.routing.meta_heuristics.gls import GLSConfig
 from logic.src.enums import PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry

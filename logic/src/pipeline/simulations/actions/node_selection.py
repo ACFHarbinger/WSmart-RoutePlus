@@ -45,6 +45,7 @@ from .base import (
     _set_live_capture_meta,
     bind_context,
 )
+from logic.src.utils.configs.policy_files import policy_file
 
 
 def _packing_coordinates(bins: Any, context: Any) -> Any:
@@ -391,7 +392,7 @@ class PackingAction(SimulationAction):
                     strategies.append({"name": k, "params": v if _is_mapping(v) else {}})
             return strategies
         elif isinstance(item, str) and (item.endswith(".xml") or item.endswith(".yaml")):
-            fpath = os.path.join(CONFIGS_DIR, "policies", item)
+            fpath = str(policy_file(item))
             cfg = load_config(fpath)
             if "config" in cfg and len(cfg) == 1:
                 cfg = cfg["config"]

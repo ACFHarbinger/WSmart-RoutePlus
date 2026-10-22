@@ -15,7 +15,7 @@ from typing import Dict, List, Optional, Set, Tuple
 import gurobipy as gp
 import numpy as np
 
-from logic.src.configs.policies.tpks import TpksConfig
+from logic.src.configs.policies.routing.matheuristics.tpks import TpksConfig
 from logic.src.policies.routing.matheuristics.adaptive_kernel_search.aks import (
     _assess_difficulty,
     _get_feasible,

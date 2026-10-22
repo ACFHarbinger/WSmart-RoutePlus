@@ -1,0 +1,13 @@
+ss_hh:
+  custom:
+    n_llh: 5
+    n_removal: 2
+    threshold_infeasible: 0.001
+    threshold_feasible_base: 0.0001
+    threshold_decay_rate: 0.01
+    max_iterations: 500
+    time_limit: 60.0
+    packing:
+      other/packing/pk_lookahead.yaml:
+      - default
+    route_improvement: []

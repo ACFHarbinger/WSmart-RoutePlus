@@ -10,7 +10,7 @@ Example:
     >>> policy = TSPolicy()
 """
 
-from logic.src.configs.policies.ts import TSConfig
+from logic.src.configs.policies.routing.meta_heuristics.ts import TSConfig
 
 from .policy_ts import TSPolicy
 from .solver import TSSolver

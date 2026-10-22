@@ -174,7 +174,7 @@ def _solve_sub_alns(
         Tuple of routes and profit.
     """
     try:
-        from logic.src.configs.policies.alns import ALNSConfig
+        from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
         from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns import (
             ALNSSolver,
         )
@@ -236,7 +236,7 @@ def _solve_sub_bpc(
         Tuple of routes and profit.
     """
     try:
-        from logic.src.configs.policies.bpc import BPCConfig
+        from logic.src.configs.policies.routing.exact_and_decomposition_solvers.bpc import BPCConfig
         from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price_and_cut.bpc_engine import (
             run_bpc,
         )

@@ -47,7 +47,7 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from logic.src.configs.policies.hmm_gd_hh import HMMGDHHConfig
+from logic.src.configs.policies.routing.hyper_heuristics.hmm_gd_hh import HMMGDHHConfig
 from logic.src.policies.helpers.operators.solution_initialization.nearest_neighbor_si import build_nn_routes
 
 from .hmm_belief import (

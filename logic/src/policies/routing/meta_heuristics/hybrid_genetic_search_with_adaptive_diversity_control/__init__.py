@@ -11,7 +11,7 @@ Example:
     >>> policy = PolicyHGSADC(config)
 """
 
-from logic.src.configs.policies.hgs_adc import HGSADCConfig as HGSADCConfig
+from logic.src.configs.policies.routing.meta_heuristics.hgs_adc import HGSADCConfig as HGSADCConfig
 
 from . import policy_hgs_adc as policy_hgs_adc
 from .policy_hgs_adc import PolicyHGSADC as PolicyHGSADC

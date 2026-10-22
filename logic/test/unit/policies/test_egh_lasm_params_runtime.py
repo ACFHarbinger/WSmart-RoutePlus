@@ -12,8 +12,8 @@ cannot recur silently.
 """
 
 import pytest
-from logic.src.configs.policies.egh import ExactGuidedHeuristicConfig
-from logic.src.configs.policies.lasm import LASMPipelineConfig
+from logic.src.configs.policies.routing.matheuristics.egh import ExactGuidedHeuristicConfig
+from logic.src.configs.policies.routing.learning_matheuristic_algorithms.lasm import LASMPipelineConfig
 from logic.src.policies.routing.matheuristics.exact_guided_heuristic import dispatcher as egh_dispatcher
 
 # ---------------------------------------------------------------- EGH

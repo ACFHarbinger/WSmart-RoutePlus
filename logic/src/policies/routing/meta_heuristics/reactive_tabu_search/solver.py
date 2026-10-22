@@ -30,7 +30,7 @@ from typing import Any, Deque, Dict, List, Optional, Tuple, cast
 
 import numpy as np
 
-from logic.src.configs.policies.rts import RTSConfig
+from logic.src.configs.policies.routing.meta_heuristics.rts import RTSConfig
 from logic.src.policies.helpers.operators.solution_initialization.nearest_neighbor_si import build_nn_routes
 
 from .llh_operators import RTSLLHOperatorsMixin

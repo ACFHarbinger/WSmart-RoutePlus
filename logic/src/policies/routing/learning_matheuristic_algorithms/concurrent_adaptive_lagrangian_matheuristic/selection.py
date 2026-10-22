@@ -66,7 +66,7 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from logic.src.configs.policies.tpks import TpksConfig
+from logic.src.configs.policies.routing.matheuristics.tpks import TpksConfig
 from logic.src.policies.routing.matheuristics.two_phase_kernel_search.solver import (
     run_tpks_gurobi,
 )

@@ -18,7 +18,7 @@ Reference:
     In: Handbook of Natural Computing (pages 1-31).
 """
 
-from logic.src.configs.policies.es_mkl import MuKappaLambdaESConfig
+from logic.src.configs.policies.routing.meta_heuristics.es_mkl import MuKappaLambdaESConfig
 
 from .solver import Individual, MuKappaLambdaESSolver
 

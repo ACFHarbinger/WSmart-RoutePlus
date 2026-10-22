@@ -13,7 +13,7 @@ Example:
 import dataclasses
 from typing import Any, Dict, Optional, Union
 
-from logic.src.configs.policies.hgs import HGSConfig
+from logic.src.configs.policies.routing.meta_heuristics.hgs import HGSConfig
 from logic.src.policies.routing.base.sub_problem import SolveResult, SubProblem
 
 from .hgs import HGSSolver

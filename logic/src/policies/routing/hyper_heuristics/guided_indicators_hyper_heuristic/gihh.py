@@ -30,7 +30,7 @@ from typing import Dict, List, Optional
 
 import numpy as np
 
-from logic.src.configs.policies.gihh import GIHHConfig
+from logic.src.configs.policies.routing.hyper_heuristics.gihh import GIHHConfig
 from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
 from logic.src.policies.helpers.local_search.local_search_sweeps import SweepLocalSearch
 from logic.src.policies.helpers.operators import (

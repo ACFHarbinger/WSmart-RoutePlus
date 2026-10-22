@@ -10,7 +10,7 @@ Example:
     >>> policy = SAPolicy()
 """
 
-from logic.src.configs.policies.sa import SAConfig
+from logic.src.configs.policies.routing.meta_heuristics.sa import SAConfig
 
 from .policy_sa import SAPolicy
 from .solver import SASolver

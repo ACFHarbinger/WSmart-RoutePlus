@@ -12,22 +12,18 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 
 def _registered_constructor_keys() -> Tuple[str, ...]:
-    """Return every routing-algorithm key, taken from ``logic/configs/policies/policy_<key>.yaml``.
+    """Return every routing-algorithm key, taken from the ``policy_<key>.yaml`` files under ``logic/configs/policies``.
 
     The file names are used instead of the live ``RoutingAlgorithmRegistry`` because the registry
     only holds the adapters imported so far (SWC-TCF, for one, is imported lazily), which would
     make the seed depend on import order.
     """
-    from logic.src.constants.paths import CONFIGS_DIR
+    from logic.src.utils.configs.policy_files import routing_policy_files
 
-    policies_dir = os.path.join(CONFIGS_DIR, "policies")
     try:
-        names = os.listdir(policies_dir)
+        return tuple(sorted(routing_policy_files()))
     except OSError:  # pragma: no cover - frozen builds without configs fall back to the token heuristic
         return ()
-    return tuple(
-        sorted(n[len("policy_") : -len(".yaml")] for n in names if n.startswith("policy_") and n.endswith(".yaml"))
-    )
 
 
 # Tokens that name a selector or an improvement stage, not a routing algorithm.
@@ -135,7 +131,7 @@ def _clean(name: Any) -> str:  # noqa: C901
         return _clean(name.strategy)
 
     if hasattr(name, "get") or isinstance(name, Mapping):
-        # Handle new dict format: {"other/pk_last_minute.yaml": "cf70"}
+        # Handle new dict format: {"other/packing/pk_last_minute.yaml": "cf70"}
         if len(name) == 1:
             key, val = next(iter(name.items()))
             key_str = str(key)

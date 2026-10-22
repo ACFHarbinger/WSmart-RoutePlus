@@ -1,0 +1,87 @@
+sans:
+  new:
+    engine: new
+    # time_limit is only a guard; the iteration budget ends the run, so results do not depend on machine speed.
+    time_limit: 600
+    max_iterations: 1800000
+    perc_bins_can_overflow: 0
+    T_min: 0.01
+    T_init: 75
+    iterations_per_T: 5000
+    alpha: 0.95
+    packing:
+      other/packing/pk_last_minute.yaml:
+      - last_minute_cf70
+      - last_minute_cf90
+    route_improvement:
+      other/route_improvement/ri_cls.yaml:
+      - default
+  og_a:
+    engine: og
+    combination:
+    - 500
+    - 75
+    - 0.7
+    - 0
+    - 0.095
+    - 0
+    - 0
+    time_limit: 60
+    packing:
+      other/packing/pk_last_minute.yaml:
+      - last_minute_cf70
+      - last_minute_cf90
+    route_improvement:
+      other/route_improvement/ri_cls.yaml:
+      - default
+  og_b:
+    engine: og
+    combination:
+    - 2000
+    - 75
+    - 0.7
+    - 0
+    - 0.095
+    - 0
+    - 0
+    time_limit: 60
+    packing:
+      other/packing/pk_last_minute.yaml:
+      - last_minute_cf70
+      - last_minute_cf90
+    route_improvement:
+      other/route_improvement/ri_cls.yaml:
+      - default
+lac:
+  a:
+    engine: og
+    combination:
+    - 500
+    - 75
+    - 0.7
+    - 0
+    - 0.095
+    - 0
+    - 0
+    time_limit: 60
+    packing:
+      other/packing/pk_last_minute.yaml:
+      - last_minute_cf70
+      - last_minute_cf90
+    route_improvement: []
+  b:
+    engine: og
+    combination:
+    - 2000
+    - 75
+    - 0.7
+    - 0
+    - 0.095
+    - 0
+    - 0
+    time_limit: 60
+    packing:
+      other/packing/pk_last_minute.yaml:
+      - last_minute_cf70
+      - last_minute_cf90
+    route_improvement: []

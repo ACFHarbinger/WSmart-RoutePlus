@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
-from logic.src.configs.policies.ils_bd import IntegerLShapedBendersConfig
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.ils_bd import IntegerLShapedBendersConfig
 from logic.src.policies.helpers.solvers_and_matheuristics import (
     CapacityCut,
     PCSubtourEliminationCut,

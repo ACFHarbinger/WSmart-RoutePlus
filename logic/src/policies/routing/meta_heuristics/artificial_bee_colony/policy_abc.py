@@ -7,7 +7,7 @@ Attributes:
     ABCPolicy: Adapter class for the ABC solver.
 
 Example:
-    >>> from logic.src.configs.policies.abc import ABCConfig
+    >>> from logic.src.configs.policies.routing.meta_heuristics.abc import ABCConfig
     >>> from logic.src.policies.routing.meta_heuristics.artificial_bee_colony import ABCPolicy
     >>> config = ABCConfig(n_sources=20)
     >>> policy = ABCPolicy(config)
@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
-from logic.src.configs.policies.abc import ABCConfig
+from logic.src.configs.policies.routing.meta_heuristics.abc import ABCConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 

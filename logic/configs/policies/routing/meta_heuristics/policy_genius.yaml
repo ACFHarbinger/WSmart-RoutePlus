@@ -1,0 +1,12 @@
+genius:
+  custom:
+    neighborhood_size: 5
+    unstring_type: 1
+    string_type: 1
+    n_iterations: 1
+    random_us_sampling: false
+    time_limit: 60.0
+    packing:
+      other/packing/pk_lookahead.yaml:
+      - default
+    route_improvement: []

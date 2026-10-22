@@ -34,7 +34,10 @@ from __future__ import annotations
 
 import os
 import re
+from pathlib import Path
 from typing import List, Tuple
+
+from logic.src.utils.configs.policy_files import find_policy_file
 
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _DEFAULT_CONFIGS_DIR = os.path.normpath(os.path.join(_SCRIPT_DIR, "../../../configs/policies"))
@@ -45,7 +48,7 @@ def _resolve_stem(yaml_arg: str) -> str:
 
     Args:
         yaml_arg: e.g. ``"ms_service_level"``, ``"ms_service_level.yaml"``,
-            or ``"other/pk_service_level.yaml"``.
+            or ``"other/packing/pk_service_level.yaml"``.
 
     Returns:
         Bare stem, e.g. ``"ms_service_level"``.
@@ -54,6 +57,16 @@ def _resolve_stem(yaml_arg: str) -> str:
     if name.endswith(".yaml"):
         name = name[:-5]
     return name
+
+
+# Stage files live in other/<stage>/ by their prefix.
+_OTHER_SUBDIRS = {"pk_": "packing", "ri_": "route_improvement", "ac_": "acceptance_criteria"}
+
+
+def _other_rel(stem: str) -> str:
+    """Path of a stage file relative to the policies folder, e.g. ``other/packing/pk_regular.yaml``."""
+    subdir = next((d for p, d in _OTHER_SUBDIRS.items() if stem.startswith(p)), None)
+    return f"other/{subdir}/{stem}.yaml" if subdir else f"other/{stem}.yaml"
 
 
 def _field_re(field_label: str) -> re.Pattern:
@@ -66,7 +79,7 @@ def _rewrite_field(content: str, field_label: str, stem: str, keys: List[str]) -
     Packaged policy files use a nested block, not ``packing: { ... }``.
     """
     keys_str = ", ".join(f'"{key}"' for key in keys)
-    inline = f'{{ "other/{stem}.yaml": [{keys_str}] }}'
+    inline = f'{{ "{_other_rel(stem)}": [{keys_str}] }}'
     new_content, count = _field_re(field_label).subn(rf"\g<1>{inline}", content)
     if count:
         return new_content, count
@@ -81,20 +94,16 @@ def _rewrite_field(content: str, field_label: str, stem: str, keys: List[str]) -
 
 def _list_available(configs_dir: str, file_prefix: str) -> List[str]:
     """Return the sorted stems of the ``<prefix>*.yaml`` strategy files."""
-    other_dir = os.path.join(configs_dir, "other")
-    if not os.path.isdir(other_dir):
+    other_dir = Path(configs_dir) / "other"
+    if not other_dir.is_dir():
         return []
-    return sorted(
-        os.path.splitext(f)[0]
-        for f in os.listdir(other_dir)
-        if f.startswith(file_prefix) and f.endswith(".yaml")
-    )
+    return sorted(p.stem for p in other_dir.rglob(f"{file_prefix}*.yaml"))
 
 
 def _list_keys(yaml_stem: str, configs_dir: str) -> List[str]:
     """Return the top-level keys defined in the strategy file *yaml_stem*."""
-    path = os.path.join(configs_dir, "other", f"{yaml_stem}.yaml")
-    if not os.path.isfile(path):
+    path = find_policy_file(f"{yaml_stem}.yaml", configs_dir)
+    if path is None:
         return []
     keys: List[str] = []
     with open(path, "r", encoding="utf-8") as fh:
@@ -130,8 +139,8 @@ def _update(
         ValueError: If a requested key is not present in the strategy file.
     """
     stem = _resolve_stem(yaml_stem_arg)
-    strategy_path = os.path.join(configs_dir, "other", f"{stem}.yaml")
-    if not os.path.isfile(strategy_path):
+    strategy_path = os.path.join(configs_dir, _other_rel(stem))
+    if find_policy_file(f"{stem}.yaml", configs_dir) is None:
         raise FileNotFoundError(
             f"{missing_file_noun} not found: {strategy_path}\n"
             f"Available: {_list_available(configs_dir, file_prefix)}"
@@ -145,8 +154,9 @@ def _update(
     modified: List[Tuple[str, int]] = []
 
     for constructor in constructors:
-        policy_file = os.path.join(configs_dir, f"policy_{constructor}.yaml")
-        if not os.path.isfile(policy_file):
+        found = find_policy_file(f"policy_{constructor}.yaml", configs_dir)
+        policy_file = str(found) if found is not None else os.path.join(configs_dir, f"policy_{constructor}.yaml")
+        if found is None:
             if verbose:
                 print(f"  [WARN] Policy file not found: {policy_file}")
             continue

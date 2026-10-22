@@ -15,7 +15,7 @@ from omegaconf import OmegaConf
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
-_LOOKAHEAD = {"other/pk_lookahead.yaml": "lookahead"}
+_LOOKAHEAD = {"other/packing/pk_lookahead.yaml": "lookahead"}
 
 
 def _expand(policies):
@@ -45,7 +45,7 @@ def test_custom_dict_lookahead_is_not_replaced_by_the_yaml_variant():
                         "time_limit": 2.0,
                         "engine": "custom",
                         "packing": _LOOKAHEAD,
-                        "route_improvement": {"other/ri_cls.yaml": "default"},
+                        "route_improvement": {"other/route_improvement/ri_cls.yaml": "default"},
                     }
                 }
             }
@@ -67,7 +67,7 @@ def test_resolved_custom_variant_keeps_its_own_packing():
                     "engine": "gurobi",
                     "time_limit": 60.0,
                     "packing": _LOOKAHEAD,
-                    "route_improvement": {"other/ri_cls.yaml": "default"},
+                    "route_improvement": {"other/route_improvement/ri_cls.yaml": "default"},
                 }
             }
         ]

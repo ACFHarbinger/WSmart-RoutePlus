@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 import pytest
-from logic.src.configs.policies.alns import ALNSConfig
-from logic.src.configs.policies.other.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
+from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
+from logic.src.configs.policies.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
 from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.matheuristics.cluster_first_route_second.solver import run_cf_rs
 from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_search.alns import ALNSSolver

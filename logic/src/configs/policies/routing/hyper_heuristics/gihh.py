@@ -1,0 +1,119 @@
+"""
+GIHH (Hyper-Heuristic with Two Guidance Indicators) configuration.
+
+Attributes:
+    GIHHConfig: Configuration for the GIHH (Hyper-Heuristic with Two Guidance Indicators) policy.
+
+Example:
+    >>> from configs.policies.gihh import GIHHConfig
+    >>> config = GIHHConfig()
+    >>> config.time_limit
+    60.0
+"""
+
+from dataclasses import dataclass, field
+from typing import Any, List, Optional
+
+from logic.src.configs.policies.packing.dispatch import PackingConfig
+
+from logic.src.configs.policies.acceptance_criteria import AcceptanceConfig, OnlyImprovingConfig
+from logic.src.configs.policies.route_improvement import RouteImprovingConfig
+
+
+@dataclass
+class GIHHConfig:
+    """Configuration for GIHH (Hyper-Heuristic with Two Guidance Indicators) policy.
+
+    Attributes:
+        time_limit: Maximum time in seconds for the solver.
+        seed: Random seed for reproducibility.
+        max_iterations: Maximum number of iterations.
+
+        # Episodic Learning Parameters (Chen et al. 2018)
+        seg: Segment size for episodic weight updates.
+        alpha: Weight momentum parameter.
+        beta: Quality reward weight parameter.
+        gamma: Directional penalty parameter.
+        min_prob: Minimum selection probability for any operator.
+
+        # Stopping criteria
+        nonimp_threshold: Maximum iterations without improvement before stop.
+
+        packing: List of packing algorithm config files.
+        route_improvement: List of route improvement operations to apply.
+        acceptance_criterion: Acceptance criterion config for local search.
+    """
+
+    time_limit: float = 60.0
+    seed: Optional[int] = None
+    max_iterations: int = 1000
+    profit_aware_operators: bool = False
+
+    # Episodic Learning Parameters
+    seg: int = 80
+    alpha: float = 0.5
+    beta: float = 0.4
+    gamma: float = 0.1
+    min_prob: float = 0.05
+
+    # Stopping criteria
+    nonimp_threshold: int = 150
+
+    packing: Optional[List[PackingConfig]] = None
+    route_improvement: Optional[List[RouteImprovingConfig]] = None
+    acceptance_criterion: AcceptanceConfig = field(
+        default_factory=lambda: AcceptanceConfig(method="only_improving", params=OnlyImprovingConfig())
+    )
+
+    def __post_init__(self) -> None:
+        """Ensure acceptance criterion is initialized even if not passed in config.
+
+        Returns:
+            None
+        """
+        if self.acceptance_criterion is None:
+            # Standard GIHH uses Improving-Only acceptance
+            from logic.src.policies.acceptance_criteria.base.factory import (
+                AcceptanceCriterionFactory,
+            )
+
+            self.acceptance_criterion = AcceptanceCriterionFactory.create(name="oi")
+
+    @classmethod
+    def from_config(cls, config: Any) -> "GIHHConfig":
+        """Create parameters from a configuration object.
+
+        Args:
+            config: Configuration object.
+
+        Returns:
+            GIHHConfig: Parameters for GIHH algorithm.
+        """
+        # Build parameters
+        params = cls(
+            time_limit=getattr(config, "time_limit", 60.0),
+            max_iterations=getattr(config, "max_iterations", 1000),
+            seed=getattr(config, "seed", None),
+            seg=getattr(config, "seg", 80),
+            alpha=getattr(config, "alpha", 0.5),
+            beta=getattr(config, "beta", 0.4),
+            gamma=getattr(config, "gamma", 0.1),
+            min_prob=getattr(config, "min_prob", 0.05),
+            nonimp_threshold=getattr(config, "nonimp_threshold", 150),
+            profit_aware_operators=getattr(config, "profit_aware_operators", False),
+        )
+
+        # Handle Acceptance Criterion Injection
+        from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
+
+        acceptance_cfg = getattr(config, "acceptance_criterion", None)
+        if acceptance_cfg:
+            params.acceptance_criterion = AcceptanceCriterionFactory.create(
+                name=acceptance_cfg.method,
+                config=acceptance_cfg.params,
+            )
+        else:
+            # Default to only_improving for standard GIHH
+            params.acceptance_criterion = AcceptanceCriterionFactory.create(name="oi")
+
+        return params

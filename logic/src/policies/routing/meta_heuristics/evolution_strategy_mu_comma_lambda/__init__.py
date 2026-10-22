@@ -9,7 +9,7 @@ Example:
     >>> solver = MuCommaLambdaESSolver(dist_matrix, wastes, capacity, R, C, params)
 """
 
-from logic.src.configs.policies.es_mcl import MuCommaLambdaESConfig
+from logic.src.configs.policies.routing.meta_heuristics.es_mcl import MuCommaLambdaESConfig
 
 from .solver import MuCommaLambdaESSolver
 

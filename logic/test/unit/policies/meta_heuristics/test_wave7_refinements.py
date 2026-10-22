@@ -2,9 +2,9 @@
 
 import numpy as np
 import pytest
-from logic.src.configs.policies.fa import FAConfig
-from logic.src.configs.policies.hs import HSConfig
-from logic.src.configs.policies.sca import SCAConfig
+from logic.src.configs.policies.routing.meta_heuristics.fa import FAConfig
+from logic.src.configs.policies.routing.meta_heuristics.hs import HSConfig
+from logic.src.configs.policies.routing.meta_heuristics.sca import SCAConfig
 from logic.src.policies.routing.meta_heuristics.firefly_algorithm.solver import FASolver
 from logic.src.policies.routing.meta_heuristics.harmony_search.solver import HSSolver
 from logic.src.policies.routing.meta_heuristics.sine_cosine_algorithm.solver import SCASolver

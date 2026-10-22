@@ -44,6 +44,7 @@ from logic.src.pipeline.simulations.simulator_progress import display_log_metric
 from logic.src.tracking.logging.logger_writer import LoggerWriter, setup_logger_redirection
 from logic.src.tracking.logging.modules.analysis import output_stats, runs_per_policy
 from logic.src.tracking.logging.modules.gui import send_final_output_to_gui
+from logic.src.utils.configs.policy_files import policy_file
 
 __all__ = [
     "simulator_testing",
@@ -79,7 +80,7 @@ def _expand_other_ref(ref_dict: dict, root_dir: str) -> dict:
 
     result = {}
     for yaml_path, keys in ref_dict.items():
-        full_path = os.path.join(CONFIGS_DIR, "policies", yaml_path)
+        full_path = str(policy_file(yaml_path))
         if not os.path.exists(full_path):
             return ref_dict  # Keep original if file not found
         with open(full_path) as f:

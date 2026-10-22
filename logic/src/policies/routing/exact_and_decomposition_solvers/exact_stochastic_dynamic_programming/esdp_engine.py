@@ -17,7 +17,7 @@ from typing import Dict, FrozenSet, Tuple
 import numpy as np
 from tqdm import tqdm
 
-from logic.src.configs.policies.esdp import ExactSDPConfig
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.esdp import ExactSDPConfig
 
 from .cop_evaluator import COPEvaluator
 from .state_space import StateSpaceManager

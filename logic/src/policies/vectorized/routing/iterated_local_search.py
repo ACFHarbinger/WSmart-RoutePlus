@@ -24,7 +24,7 @@ from typing import Optional
 
 import torch
 
-from logic.src.configs.policies.ils import ILSConfig
+from logic.src.configs.policies.routing.meta_heuristics.ils import ILSConfig
 from logic.src.policies.vectorized.routing.shared import routes as rs
 from logic.src.policies.vectorized.routing.shared.acceptance import BatchedAcceptance
 from logic.src.policies.vectorized.routing.shared.base import VectorizedRoutingPolicy

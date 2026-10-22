@@ -1,0 +1,14 @@
+swc_tcf:
+  gurobi:
+    Omega: 0.1
+    psi: 1
+    engine: gurobi
+    framework: gurobi
+    packing:
+      other/packing/pk_last_minute.yaml:
+      - last_minute_cf70
+      - last_minute_cf90
+    time_limit: 60.0
+    route_improvement:
+      other/route_improvement/ri_cls.yaml:
+      - default

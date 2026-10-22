@@ -14,7 +14,7 @@ Example:
     >>> routes, profit, cost = solver.solve()
 """
 
-from logic.src.configs.policies.psoda import DistancePSOConfig
+from logic.src.configs.policies.routing.meta_heuristics.psoda import DistancePSOConfig
 
 from .solver import DistancePSOSolver
 

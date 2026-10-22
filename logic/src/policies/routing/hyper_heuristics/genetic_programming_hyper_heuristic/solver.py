@@ -66,7 +66,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
-from logic.src.configs.policies.gp_hh import GPHHConfig
+from logic.src.configs.policies.routing.hyper_heuristics.gp_hh import GPHHConfig
 
 from .gphh_construction import GPHHConstructionMixin as GPHHConstructionMixin
 from .tree import GPNode, _mutate, _random_tree, _subtree_crossover

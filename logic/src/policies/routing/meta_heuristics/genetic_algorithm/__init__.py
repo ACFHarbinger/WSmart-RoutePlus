@@ -10,7 +10,7 @@ Example:
     >>> policy = GAPolicy()
 """
 
-from logic.src.configs.policies.ga import GAConfig
+from logic.src.configs.policies.routing.meta_heuristics.ga import GAConfig
 
 from .solver import GASolver
 

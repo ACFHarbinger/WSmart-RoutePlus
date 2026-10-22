@@ -27,6 +27,7 @@ from logic.src.interfaces import ITraversable
 from logic.src.pipeline.simulations.actions.policy_config import _as_policy_mapping
 from logic.src.tracking.logging.logger_writer import LoggerWriter
 from logic.src.utils.configs.config_loader import load_config
+from logic.src.utils.configs.policy_files import policy_file
 
 
 class PolicySummaryCallback:
@@ -192,7 +193,7 @@ class PolicySummaryCallback:
                         except Exception:
                             raw_val = ""
                     variant_val = str(raw_val) if raw_val is not None else ""
-                    fpath = os.path.join(CONFIGS_DIR, "policies", first_key)
+                    fpath = str(policy_file(first_key))
                     try:
                         cfg = load_config(fpath)
                         if variant_val and variant_val in cfg:
@@ -316,7 +317,7 @@ class PolicySummaryCallback:
         items = list(pp) if _is_sequence else [pp]
         for item in items:
             item_obj: object = item
-            # Handle new dict format: {"other/ri_ftsp.yaml": "default"} or {"other/ri_ftsp.yaml": ["default"]}
+            # Handle new dict format: {"other/route_improvement/ri_ftsp.yaml": "default"} or {"other/route_improvement/ri_ftsp.yaml": ["default"]}
             if (isinstance(item_obj, dict) or hasattr(item_obj, "items")) and not isinstance(item_obj, str):
                 item_dict = dict(item_obj.items()) if hasattr(item_obj, "items") else dict(item_obj)
                 if len(item_dict) == 1:
@@ -330,7 +331,7 @@ class PolicySummaryCallback:
                             except Exception:
                                 pass
                         variant_val = str(variant_val) if variant_val else ""
-                        fpath = os.path.join(CONFIGS_DIR, "policies", file_key)
+                        fpath = str(policy_file(file_key))
                         if os.path.exists(fpath):
                             try:
                                 ri_cfg = load_config(fpath)
@@ -356,7 +357,7 @@ class PolicySummaryCallback:
                 steps.append(str(next(iter(item_dict.keys()))))
             elif isinstance(item_obj, str):
                 if item_obj.endswith(".yaml") or item_obj.endswith(".xml"):
-                    fpath = os.path.join(CONFIGS_DIR, "policies", item_obj)
+                    fpath = str(policy_file(item_obj))
                     if os.path.exists(fpath):
                         try:
                             ri_cfg = load_config(fpath)
@@ -410,7 +411,7 @@ class PolicySummaryCallback:
         items = list(ac) if _is_ac_sequence else [ac]
         for item in items:
             item_obj: object = item
-            # Handle new dict format: {"other/ac_oi.yaml": "oi"} or {"other/ac_oi.yaml": ["oi"]}
+            # Handle new dict format: {"other/acceptance_criteria/ac_oi.yaml": "oi"} or {"other/acceptance_criteria/ac_oi.yaml": ["oi"]}
             if (isinstance(item_obj, dict) or hasattr(item_obj, "items")) and not isinstance(item_obj, str):
                 item_dict = dict(item_obj.items()) if hasattr(item_obj, "items") else dict(item_obj)
                 if len(item_dict) == 1:
@@ -424,7 +425,7 @@ class PolicySummaryCallback:
                             except Exception:
                                 pass
                         variant_val = str(variant_val) if variant_val else ""
-                        fpath = os.path.join(CONFIGS_DIR, "policies", file_key)
+                        fpath = str(policy_file(file_key))
                         if os.path.exists(fpath):
                             try:
                                 ac_cfg = load_config(fpath)

@@ -10,7 +10,7 @@ Attributes:
 
 """
 
-from logic.src.configs.policies.ma_ts import MemeticAlgorithmToleranceBasedSelectionConfig
+from logic.src.configs.policies.routing.meta_heuristics.ma_ts import MemeticAlgorithmToleranceBasedSelectionConfig
 
 from .solver import MemeticAlgorithmToleranceBasedSelectionSolver
 

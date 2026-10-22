@@ -32,8 +32,8 @@ from logic.src.policies.helpers.solvers_and_matheuristics.branching.strategies i
 from logic.src.policies.helpers.solvers_and_matheuristics.common.node import BranchNode
 
 if TYPE_CHECKING:
-    from logic.src.configs.policies.bpc import BPCConfig
-    from logic.src.configs.policies.ms_bpc_sp import MSBPCSPConfig
+    from logic.src.configs.policies.routing.exact_and_decomposition_solvers.bpc import BPCConfig
+    from logic.src.configs.policies.routing.exact_and_decomposition_solvers.ms_bpc_sp import MSBPCSPConfig
     from logic.src.policies.helpers.solvers_and_matheuristics.common.route import Route
     from logic.src.policies.helpers.solvers_and_matheuristics.vrpp_model import VRPPModel
 

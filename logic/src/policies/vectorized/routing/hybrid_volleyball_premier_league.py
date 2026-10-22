@@ -32,7 +32,7 @@ from typing import Optional
 
 import torch
 
-from logic.src.configs.policies.hvpl import HVPLConfig
+from logic.src.configs.policies.routing.meta_heuristics.hvpl import HVPLConfig
 from logic.src.policies.vectorized.routing.shared import routes as rs
 from logic.src.policies.vectorized.routing.shared.base import VectorizedRoutingPolicy
 from logic.src.policies.vectorized.routing.shared.vrpp import VRPPBatch

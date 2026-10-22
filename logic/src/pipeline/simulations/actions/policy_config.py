@@ -9,6 +9,7 @@ unchanged from ``base.py``, which re-exports every name.
 import os
 from dataclasses import asdict, is_dataclass
 from typing import Any, Dict, List, Mapping, Optional, Tuple
+from logic.src.utils.configs.policy_files import policy_file
 
 
 def _find_key(d: Any, target_key: str) -> Any:
@@ -224,7 +225,7 @@ def _load_policy_yaml_section(file_key: str, variant: str) -> Dict[str, Any]:
     from logic.src.constants.paths import CONFIGS_DIR
     from logic.src.utils.configs.config_loader import load_config
 
-    fpath = os.path.join(CONFIGS_DIR, "policies", file_key)
+    fpath = str(policy_file(file_key))
     try:
         cfg = load_config(fpath)
     except (OSError, ValueError):
@@ -268,7 +269,7 @@ def _make_acceptance_config(method: str, params: Any) -> Any:
     Returns:
         ``AcceptanceConfig`` with nested param dataclass for BMC / OI.
     """
-    from logic.src.configs.policies.other.acceptance_criteria import (
+    from logic.src.configs.policies.acceptance_criteria import (
         AcceptanceConfig,
         BoltzmannAcceptanceConfig,
         OnlyImprovingConfig,

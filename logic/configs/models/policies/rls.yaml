@@ -11,7 +11,7 @@
 #   python main.py train rl.imitation.policy_config=tasks/policies/rl/rls
 # =============================================================================
 
-_target_: logic.src.configs.policies.other.route_improvement.RandomLocalSearchPostConfig
+_target_: logic.src.configs.policies.route_improvement.RandomLocalSearchPostConfig
 
 # Same fields as the simulator's random local search route improver
 # (RandomLocalSearchPostConfig).

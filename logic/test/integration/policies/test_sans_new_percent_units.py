@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import numpy as np
 import pandas as pd
 import pytest
-from logic.src.configs.policies.sans import SANSConfig
+from logic.src.configs.policies.routing.meta_heuristics.sans import SANSConfig
 from logic.src.policies.routing.base import base_routing_policy
 from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search import dispatcher
 from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.heuristics.sans_state import (

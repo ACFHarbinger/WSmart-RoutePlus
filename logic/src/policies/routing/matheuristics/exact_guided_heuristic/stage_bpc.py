@@ -37,7 +37,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
-from logic.src.configs.policies.egh import ExactGuidedHeuristicConfig
+from logic.src.configs.policies.routing.matheuristics.egh import ExactGuidedHeuristicConfig
 from logic.src.policies.routing.base.sub_problem import build_subproblem
 
 from .route_pool import RoutePool, VRPPRoute
@@ -85,7 +85,7 @@ def run_bpc_stage(
                           failure/timeout).
     """
     try:
-        from logic.src.configs.policies.bpc import BPCConfig
+        from logic.src.configs.policies.routing.exact_and_decomposition_solvers.bpc import BPCConfig
         from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price_and_cut.bpc_engine import (
             run_bpc,
         )

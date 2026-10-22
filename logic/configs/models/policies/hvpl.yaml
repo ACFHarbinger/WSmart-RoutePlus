@@ -11,7 +11,7 @@
 #   python main.py train rl.imitation.policy_config=tasks/policies/rl/hvpl
 # =============================================================================
 
-_target_: logic.src.configs.policies.hvpl.HVPLConfig
+_target_: logic.src.configs.policies.routing.meta_heuristics.hvpl.HVPLConfig
 
 # Same fields as the simulator's Hybrid VPL (HVPLConfig); packing and
 # route_improvement are simulator-only and ignored. aco_params / alns_params keep

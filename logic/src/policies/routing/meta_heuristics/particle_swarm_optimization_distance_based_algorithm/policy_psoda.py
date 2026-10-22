@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
-from logic.src.configs.policies.psoda import DistancePSOConfig
+from logic.src.configs.policies.routing.meta_heuristics.psoda import DistancePSOConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 

@@ -28,7 +28,7 @@ from typing import Any, Callable, List, Optional, Tuple
 
 import torch
 
-from logic.src.configs.policies.alns import ALNSConfig
+from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
 from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.engine import MIN_REMOVAL_LOWER_BOUND
 from logic.src.policies.vectorized.routing.shared import routes as rs
 from logic.src.policies.vectorized.routing.shared.acceptance import BatchedAcceptance

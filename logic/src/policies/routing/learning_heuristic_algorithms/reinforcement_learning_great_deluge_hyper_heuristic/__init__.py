@@ -22,7 +22,7 @@ Example:
     >>> print(solution)
 """
 
-from logic.src.configs.policies.rl_gd_hh import RLGDHHConfig
+from logic.src.configs.policies.routing.learning_heuristic_algorithms.rl_gd_hh import RLGDHHConfig
 
 from .policy_rl_gd_hh import RLGDHHPolicy
 from .solver import RLGDHHSolver

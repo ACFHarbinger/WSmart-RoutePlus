@@ -9,7 +9,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 def test_rl_alns_solver():
     print("\n=== Testing RLALNSSolver ===")
-    from logic.src.configs.policies.rl_alns import (
+    from logic.src.configs.policies.routing.learning_heuristic_algorithms.rl_alns import (
         RLALNSConfig,
     )
     from logic.src.policies.routing.learning_heuristic_algorithms.reinforcement_learning_adaptive_large_neighborhood_search.solver import (
@@ -28,7 +28,7 @@ def test_rl_alns_solver():
 
     for algo in algos:
         print(f"Testing with algorithm: {algo}")
-        from logic.src.configs.policies.other import BanditConfig, RLConfig
+        from logic.src.configs.policies.helpers.learning.reinforcement_learning import BanditConfig, RLConfig
         rl_config = RLConfig(
             agent_type="bandit",
             bandit=BanditConfig(algorithm=algo)

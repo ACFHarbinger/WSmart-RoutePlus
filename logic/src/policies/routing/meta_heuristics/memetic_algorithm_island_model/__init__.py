@@ -10,7 +10,7 @@ Attributes:
 
 """
 
-from logic.src.configs.policies.ma_im import MemeticAlgorithmIslandModelConfig
+from logic.src.configs.policies.routing.meta_heuristics.ma_im import MemeticAlgorithmIslandModelConfig
 
 from .solver import MemeticAlgorithmIslandModelSolver
 

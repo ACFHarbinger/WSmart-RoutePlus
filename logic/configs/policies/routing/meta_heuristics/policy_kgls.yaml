@@ -1,0 +1,19 @@
+kgls:
+  time_limit: 60.0
+  local_search_iterations: 100
+  num_perturbations: 3
+  neighborhood_size: 20
+  moves:
+  - relocate
+  - swap
+  - two_opt
+  - cross_exchange
+  penalization_cycle:
+  - width
+  - length
+  - width_length
+  packing:
+    other/packing/pk_lookahead.yaml:
+    - default
+  profit_aware_operators: false
+  route_improvement: []

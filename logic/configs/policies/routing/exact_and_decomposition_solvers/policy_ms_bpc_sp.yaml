@@ -1,0 +1,43 @@
+ms_bpc_sp:
+  custom:
+    profit_aware_operators: false
+    greedy_warm_start: true
+    seed: null
+    packing:
+      other/packing/pk_lookahead.yaml:
+      - default
+    time_limit: 60.0
+    route_improvement: []
+    search_strategy: depth_first
+    prefer_shorter_path_dfs: true
+    cutting_planes: saturated_arc_lci
+    max_cut_iterations: 5
+    max_cuts_per_iteration: 5
+    enable_heuristic_rcc_separation: true
+    enable_comb_cuts: false
+    cut_orthogonality_threshold: 0.8
+    branching_strategy: divergence
+    use_spatial_partitioning: false
+    enable_strong_branching_heuristic: false
+    strong_branching_size: 5
+    max_cg_iterations: 50
+    max_routes_per_pricing: 5
+    rc_tolerance: 1.0e-08
+    cg_at_root_only: false
+    enable_column_pool_deduplication: true
+    use_ng_routes: true
+    ng_neighborhood_size: 8
+    rcspp_timeout: 30.0
+    rcspp_max_labels: 1000000
+    lr_pre_pruning: false
+    lr_lambda_init: 0.0
+    lr_max_subgradient_iters: 30
+    lr_subgradient_theta: 1.0
+    lr_op_time_limit: 3.0
+    lr_pre_pruning_depth_limit: -1
+    lr_warm_start_cg: false
+    max_bb_nodes: 1000
+    optimality_gap: 0.0001
+    early_termination_gap: 0.001
+    exact_mode: false
+    enable_node_visitation_branching: true

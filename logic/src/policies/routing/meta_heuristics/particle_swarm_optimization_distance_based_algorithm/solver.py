@@ -39,7 +39,7 @@ Attributes:
 
 Example:
     >>> from logic.src.policies.routing.meta_heuristics.particle_swarm_optimization_distance_based_algorithm.solver import DistancePSOSolver
-    >>> from logic.src.configs.policies.psoda import DistancePSOConfig
+    >>> from logic.src.configs.policies.routing.meta_heuristics.psoda import DistancePSOConfig
     >>> params = DistancePSOConfig()
     >>> solver = DistancePSOSolver(dist_matrix, wastes, capacity, R, C, params)
     >>> routes, profit, cost = solver.solve()
@@ -56,8 +56,8 @@ from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
-from logic.src.configs.policies.aco_ks import KSparseACOConfig
-from logic.src.configs.policies.psoda import DistancePSOConfig
+from logic.src.configs.policies.routing.meta_heuristics.aco_ks import KSparseACOConfig
+from logic.src.configs.policies.routing.meta_heuristics.psoda import DistancePSOConfig
 from logic.src.policies.helpers.local_search.local_search_general import GeneralLocalSearch
 from logic.src.policies.helpers.operators.solution_initialization.nearest_neighbor_si import build_nn_routes
 

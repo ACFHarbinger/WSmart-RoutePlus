@@ -11,7 +11,7 @@ Attributes:
 
 """
 
-from logic.src.configs.policies.kgls import KGLSConfig
+from logic.src.configs.policies.routing.meta_heuristics.kgls import KGLSConfig
 
 from .kgls import KGLSSolver
 from .policy_kgls import KGLSPolicy

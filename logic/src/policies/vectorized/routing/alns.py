@@ -14,7 +14,7 @@ from typing import Optional
 
 import torch
 
-from logic.src.configs.policies.alns import ALNSConfig
+from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
 from logic.src.policies.vectorized.routing.shared.base import VectorizedRoutingPolicy
 from logic.src.policies.vectorized.routing.shared.vrpp import VRPPBatch
 

@@ -27,7 +27,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from logic.src.configs.policies.gp_mp_hh import GP_MP_HH_Config
+from logic.src.configs.policies.routing.hyper_heuristics.gp_mp_hh import GP_MP_HH_Config
 from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.problem_context import ProblemContext

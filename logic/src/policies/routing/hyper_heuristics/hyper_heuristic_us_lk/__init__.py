@@ -27,7 +27,7 @@ Example:
 
 from typing import Any, List, Optional, Tuple
 
-from logic.src.configs.policies.hulk import HULKConfig
+from logic.src.configs.policies.routing.hyper_heuristics.hulk import HULKConfig
 
 from .hulk import HULKSolver
 

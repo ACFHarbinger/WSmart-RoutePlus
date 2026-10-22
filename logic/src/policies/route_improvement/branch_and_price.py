@@ -52,7 +52,7 @@ logger = logging.getLogger(__name__)
 
 # Primary: in-house solver
 try:
-    from logic.src.configs.policies.bp import BPConfig as BPConfig
+    from logic.src.configs.policies.routing.exact_and_decomposition_solvers.bp import BPConfig as BPConfig
     from logic.src.policies.routing.exact_and_decomposition_solvers.branch_and_price.bp import (
         BranchAndPriceSolver as BranchAndPriceSolver,
     )

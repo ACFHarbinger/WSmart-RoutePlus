@@ -2,7 +2,7 @@
 
 import numpy as np
 import pytest
-from logic.src.configs.policies.filo import FILOConfig
+from logic.src.configs.policies.routing.meta_heuristics.filo import FILOConfig
 from logic.src.policies.routing.meta_heuristics.fast_iterative_localized_optimization.filo import FILOSolver
 
 pytestmark = [pytest.mark.unit, pytest.mark.slow]

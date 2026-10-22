@@ -12,7 +12,7 @@ Example:
     >>> policy = JointGreedyPolicy()
 """
 
-from logic.src.configs.policies.jgo import JointGreedyConfig
+from logic.src.configs.policies.packing_and_routing.jgo import JointGreedyConfig
 
 from .policy_jgo import JointGreedyPolicy
 

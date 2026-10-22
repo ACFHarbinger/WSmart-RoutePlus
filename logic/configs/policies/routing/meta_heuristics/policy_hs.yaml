@@ -1,0 +1,13 @@
+hs:
+  custom:
+    hm_size: 10
+    HMCR: 0.9
+    PAR: 0.3
+    max_iterations: 500
+    time_limit: 60.0
+    local_search_iterations: 100
+    profit_aware_operators: false
+    packing:
+      other/packing/pk_lookahead.yaml:
+      - default
+    route_improvement: []

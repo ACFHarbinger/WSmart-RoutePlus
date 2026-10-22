@@ -11,7 +11,7 @@
 #   python main.py train rl.imitation.policy_config=tasks/policies/rl/hgs_alns
 # =============================================================================
 
-_target_: logic.src.configs.policies.hgs_alns.HGSALNSConfig
+_target_: logic.src.configs.policies.routing.meta_heuristics.hgs_alns.HGSALNSConfig
 
 # Same fields as the simulator's HGS-ALNS (HGSALNSConfig): HGS with ALNS
 # education. packing and route_improvement are simulator-only and ignored.
@@ -19,9 +19,9 @@ _target_: logic.src.configs.policies.hgs_alns.HGSALNSConfig
 time_limit: 30.0
 profit_aware_operators: false
 hgs:
-  _target_: logic.src.configs.policies.hgs.HGSConfig
+  _target_: logic.src.configs.policies.routing.meta_heuristics.hgs.HGSConfig
   time_limit: 30.0
 alns:
-  _target_: logic.src.configs.policies.alns.ALNSConfig
+  _target_: logic.src.configs.policies.routing.meta_heuristics.alns.ALNSConfig
   max_iterations: 50
   # Destroy-repair cycles of each education

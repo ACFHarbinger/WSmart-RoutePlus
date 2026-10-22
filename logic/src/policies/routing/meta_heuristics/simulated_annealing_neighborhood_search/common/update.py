@@ -18,7 +18,7 @@ Attributes:
 Example:
     >>> import numpy as np
     >>> from logic.src.data.bins import Bins
-    >>> from logic.src.configs.policies.sans import SANSConfig
+    >>> from logic.src.configs.policies.routing.meta_heuristics.sans import SANSConfig
     >>> from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.policy_sans import SANSPolicy
     >>>
     >>> # Setup data (same as LAC)

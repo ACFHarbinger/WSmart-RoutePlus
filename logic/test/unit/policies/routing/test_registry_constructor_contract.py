@@ -49,7 +49,7 @@ from logic.src.policies.routing.base.factory import RoutingAlgorithmFactory
 from logic.src.policies.routing.base.registry import RoutingAlgorithmRegistry
 
 _REPO_ROOT = Path(__file__).resolve().parents[5]
-_POLICY_YAMLS = sorted((_REPO_ROOT / "logic" / "configs" / "policies").glob("policy_*.yaml"))
+_POLICY_YAMLS = sorted((_REPO_ROOT / "logic" / "configs" / "policies").rglob("policy_*.yaml"))
 _TEST_SIM = _REPO_ROOT / "logic" / "configs" / "tasks" / "test_sim.yaml"
 
 RoutingAlgorithmFactory.ensure_registered()

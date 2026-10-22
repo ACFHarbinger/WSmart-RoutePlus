@@ -1,0 +1,15 @@
+hmm_gd_hh:
+  custom:
+    learning_rate: 0.1
+    n_llh: 5
+    n_removal: 2
+    flood_margin: 0.05
+    rain_speed: 0.001
+    max_iterations: 500
+    time_limit: 60.0
+    local_search_iterations: 500
+    profit_aware_operators: false
+    packing:
+      other/packing/pk_lookahead.yaml:
+      - default
+    route_improvement: []

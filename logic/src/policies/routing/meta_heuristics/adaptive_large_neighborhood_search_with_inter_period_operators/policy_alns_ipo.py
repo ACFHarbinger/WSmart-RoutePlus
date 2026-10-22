@@ -14,7 +14,7 @@ Example:
 from dataclasses import asdict
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
-from logic.src.configs.policies.alns_ipo import ALNSIPOConfig
+from logic.src.configs.policies.routing.meta_heuristics.alns_ipo import ALNSIPOConfig
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.problem_context import ProblemContext
 from logic.src.interfaces.context.solution_context import SolutionContext

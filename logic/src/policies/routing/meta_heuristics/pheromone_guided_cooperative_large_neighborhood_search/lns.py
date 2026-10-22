@@ -28,7 +28,7 @@ import copy
 import random
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-from logic.src.configs.policies.pg_clns import PGCLNSLNSConfig
+from logic.src.configs.policies.routing.meta_heuristics.pg_clns import PGCLNSLNSConfig
 from logic.src.policies.routing.base.sub_problem import SubProblem, coerce_config
 from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.acceptance import (
     LegacySAAcceptance,

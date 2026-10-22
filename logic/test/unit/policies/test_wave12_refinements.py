@@ -2,7 +2,7 @@
 
 import numpy as np
 import pytest
-from logic.src.configs.policies.de import DEConfig
+from logic.src.configs.policies.routing.meta_heuristics.de import DEConfig
 from logic.src.policies.helpers.operators.generalized_insertion_and_deletion import (
     apply_type_i_us,
     apply_type_iii_us,

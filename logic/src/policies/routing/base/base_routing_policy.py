@@ -74,7 +74,7 @@ def _structured_load(config_cls: Type, mapping: Dict[str, Any]) -> Any:
 
     def with_acceptance(config):
         if "acceptance_criterion" in known and "acceptance_criterion" in mapping:
-            from logic.src.configs.policies.other.acceptance_criteria import AcceptanceConfig
+            from logic.src.configs.policies.acceptance_criteria import AcceptanceConfig
 
             spec = mapping["acceptance_criterion"]
             if isinstance(spec, (dict, DictConfig)):

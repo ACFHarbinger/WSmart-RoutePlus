@@ -27,7 +27,7 @@ import networkx as nx
 import numpy as np
 from gurobipy import GRB, quicksum
 
-from logic.src.configs.policies.bb import BBConfig
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.bb import BBConfig
 from logic.src.tracking.viz_mixin import PolicyStateRecorder
 
 

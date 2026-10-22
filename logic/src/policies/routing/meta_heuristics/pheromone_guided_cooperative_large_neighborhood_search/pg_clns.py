@@ -22,7 +22,7 @@ import copy
 import time
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from logic.src.configs.policies.pg_clns import PGCLNSConfig
+from logic.src.configs.policies.routing.meta_heuristics.pg_clns import PGCLNSConfig
 from logic.src.policies.routing.base.sub_problem import SubProblem, coerce_config
 from logic.src.tracking.viz_mixin import PolicyVizMixin
 

@@ -1,0 +1,14 @@
+gp_hh:
+  custom:
+    gp_pop_size: 20
+    max_gp_generations: 30
+    tournament_size: 3
+    tree_depth: 3
+    parsimony_coefficient: 0.0
+    n_training_instances: 3
+    training_sample_ratio: 0.5
+    time_limit: 60.0
+    packing:
+      other/packing/pk_lookahead.yaml:
+      - default
+    route_improvement: []

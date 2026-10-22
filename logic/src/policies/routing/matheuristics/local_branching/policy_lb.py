@@ -20,7 +20,7 @@ Example:
 
 from typing import Any, Dict, List, Optional, Tuple, Type
 
-from logic.src.configs.policies.lb import LocalBranchingConfig
+from logic.src.configs.policies.routing.matheuristics.lb import LocalBranchingConfig
 from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
 from logic.src.interfaces.context.search_context import SearchContext

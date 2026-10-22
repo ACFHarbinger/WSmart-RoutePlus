@@ -22,11 +22,11 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
-from logic.src.configs.policies.aco_ks import KSparseACOConfig
-from logic.src.configs.policies.alns import ALNSConfig
-from logic.src.configs.policies.other import RLConfig
-from logic.src.configs.policies.other.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
-from logic.src.configs.policies.rl_hvpl import RLHVPLConfig
+from logic.src.configs.policies.routing.meta_heuristics.aco_ks import KSparseACOConfig
+from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
+from logic.src.configs.policies.helpers.learning.reinforcement_learning import RLConfig
+from logic.src.configs.policies.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
+from logic.src.configs.policies.routing.learning_heuristic_algorithms.rl_hvpl import RLHVPLConfig
 from logic.src.enums import PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry

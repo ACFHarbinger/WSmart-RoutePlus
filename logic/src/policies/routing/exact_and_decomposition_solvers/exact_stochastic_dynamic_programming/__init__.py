@@ -8,7 +8,7 @@ Attributes:
 
 """
 
-from logic.src.configs.policies.esdp import ExactSDPConfig
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.esdp import ExactSDPConfig
 
 from .esdp_engine import ExactSDPEngine
 

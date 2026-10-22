@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 
-from logic.src.configs.policies.hgs_rr import HGSRRConfig
+from logic.src.configs.policies.routing.meta_heuristics.hgs_rr import HGSRRConfig
 from logic.src.pipeline.learning.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators import destroy_ruin as destroy_operators
 from logic.src.policies.helpers.operators import recreate_repair as repair_operators

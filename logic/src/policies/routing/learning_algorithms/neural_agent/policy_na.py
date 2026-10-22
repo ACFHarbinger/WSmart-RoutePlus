@@ -30,7 +30,7 @@ from logic.src.utils.registry import ALL
 if TYPE_CHECKING:
     from logic.src.interfaces.context.multi_day_context import MultiDayContext
 
-from logic.src.configs.policies.na import NeuralAgentConfig
+from logic.src.configs.policies.routing.learning_algorithms.na import NeuralAgentConfig
 
 from .agent import NeuralAgent
 

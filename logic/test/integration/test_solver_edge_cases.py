@@ -2,7 +2,7 @@
 
 import numpy as np
 import pytest
-from logic.src.configs.policies.swc_tcf import SWCTCFConfig
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.swc_tcf import SWCTCFConfig
 from logic.src.policies import run_hgs
 from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.policy_swc_tcf import (

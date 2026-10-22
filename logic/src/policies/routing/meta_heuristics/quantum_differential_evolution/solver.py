@@ -15,7 +15,7 @@ Attributes:
 
 Example:
     >>> from logic.src.policies.routing.meta_heuristics.quantum_differential_evolution.solver import QDESolver
-    >>> from logic.src.configs.policies.qde import QDEConfig
+    >>> from logic.src.configs.policies.routing.meta_heuristics.qde import QDEConfig
     >>> params = QDEConfig()
     >>> solver = QDESolver(dist_matrix, wastes, capacity, R, C, params)
     >>> routes, profit, cost = solver.solve()
@@ -28,8 +28,8 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from logic.src.configs.policies.aco_ks import KSparseACOConfig
-from logic.src.configs.policies.qde import QDEConfig
+from logic.src.configs.policies.routing.meta_heuristics.aco_ks import KSparseACOConfig
+from logic.src.configs.policies.routing.meta_heuristics.qde import QDEConfig
 from logic.src.pipeline.learning.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.local_search.local_search_general import GeneralLocalSearch
 from logic.src.policies.helpers.operators.recreate_repair.greedy import (

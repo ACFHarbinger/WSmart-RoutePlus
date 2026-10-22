@@ -5,18 +5,18 @@ import logging
 import numpy as np
 import pytest
 import yaml
-from logic.src.configs.policies.other.packing_dispatch import (
+from logic.src.configs.policies.packing.dispatch import (
     BernoulliRandomSelectionConfig,
     FilterAndFanSelectionConfig,
     FPTASKnapsackSelectionConfig,
     PackingConfig,
     PortfolioDispatcherSelectionConfig,
 )
-from logic.src.configs.policies.other.packing_learned import (
+from logic.src.configs.policies.packing.learned import (
     FractionalKnapsackSelectionConfig,
     MIPKnapsackSelectionConfig,
 )
-from logic.src.configs.policies.other.packing_threshold import CombinedSelectionConfig, RevenueSelectionConfig
+from logic.src.configs.policies.packing.threshold import CombinedSelectionConfig, RevenueSelectionConfig
 from logic.src.policies.packing.base.factory import PackingFactory
 from logic.src.policies.packing.dispatcher_portfolio import PortfolioDispatcher
 from logic.src.policies.packing.fptas_knapsack import FPTASKnapsackSelection
@@ -118,7 +118,7 @@ def test_unaccepted_set_setting_is_ignored():
 def test_each_wired_selector_has_a_loadable_yaml(name):
     from pathlib import Path
 
-    root = Path(__file__).resolve().parents[4] / "configs" / "policies" / "other"
+    root = Path(__file__).resolve().parents[4] / "configs" / "policies" / "other" / "packing"
     files = list(root.glob(f"pk_{name}.yaml")) + list(
         root.glob(f"pk_{name.replace('dispatcher_', 'dispatcher_')}.yaml")
     )

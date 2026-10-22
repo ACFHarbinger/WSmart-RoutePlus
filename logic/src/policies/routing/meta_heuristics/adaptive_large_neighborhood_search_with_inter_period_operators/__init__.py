@@ -10,7 +10,7 @@ Example:
     >>> policy = ALNSInterPeriodOperatorsPolicy()
 """
 
-from logic.src.configs.policies.alns_ipo import ALNSIPOConfig
+from logic.src.configs.policies.routing.meta_heuristics.alns_ipo import ALNSIPOConfig
 
 from .alns_ipo import ALNSSolverIPO
 from .policy_alns_ipo import ALNSInterPeriodOperatorsPolicy

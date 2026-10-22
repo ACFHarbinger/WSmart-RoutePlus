@@ -16,7 +16,7 @@ Attributes:
 
 """
 
-from logic.src.configs.policies.hvpl import HVPLConfig
+from logic.src.configs.policies.routing.meta_heuristics.hvpl import HVPLConfig
 
 from .policy_hvpl import HVPLPolicy
 from .solver import HVPLSolver

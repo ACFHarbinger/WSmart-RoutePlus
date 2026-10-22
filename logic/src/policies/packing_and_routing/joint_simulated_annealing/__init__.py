@@ -12,7 +12,7 @@ Example:
     >>> policy = JointSAPolicy()
 """
 
-from logic.src.configs.policies.jsa import JointSAConfig
+from logic.src.configs.policies.packing_and_routing.jsa import JointSAConfig
 
 from .policy_jsa import JointSAPolicy
 

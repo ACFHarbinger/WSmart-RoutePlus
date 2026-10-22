@@ -4,7 +4,7 @@ import random
 
 import numpy as np
 import pytest
-from logic.src.configs.policies.psoma import PSOMAConfig
+from logic.src.configs.policies.routing.meta_heuristics.psoma import PSOMAConfig
 from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.meta_heuristics.particle_swarm_optimization_memetic_algorithm.solver import (
     PSOMASolver,

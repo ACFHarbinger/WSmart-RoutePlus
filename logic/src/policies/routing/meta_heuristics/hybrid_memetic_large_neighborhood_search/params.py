@@ -21,7 +21,7 @@ from __future__ import annotations
 from dataclasses import MISSING, dataclass, field, fields
 from typing import TYPE_CHECKING, Any, Dict, Optional, Type
 
-from logic.src.configs.policies.alns import ALNSConfig
+from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
 
 if TYPE_CHECKING:
     from logic.src.interfaces.acceptance_criterion import IAcceptanceCriterion

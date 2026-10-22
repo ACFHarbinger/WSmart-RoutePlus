@@ -14,14 +14,14 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 
-from logic.src.configs.policies.other import (
+from logic.src.configs.policies.helpers.learning.reinforcement_learning import (
     BanditConfig,
     FeatureExtractorConfig,
     RewardShapingConfig,
     RLConfig,
     TDLearningConfig,
 )
-from logic.src.configs.policies.rl_alns import RLALNSConfig
+from logic.src.configs.policies.routing.learning_heuristic_algorithms.rl_alns import RLALNSConfig
 from logic.src.enums import PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry

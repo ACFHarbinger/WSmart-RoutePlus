@@ -1,0 +1,43 @@
+hulk:
+  max_iterations: 1000
+  time_limit: 60.0
+  restarts: 3
+  restart_threshold: 100
+  epsilon: 0.3
+  epsilon_decay: 0.995
+  min_epsilon: 0.05
+  memory_size: 50
+  accept_worse_prob: 0.1
+  acceptance_decay: 0.99
+  start_temp: 100.0
+  cooling_rate: 0.99
+  min_temp: 0.01
+  min_destroy_size: 2
+  max_destroy_pct: 0.3
+  profit_aware_operators: false
+  local_search_iterations: 10
+  local_search_operators:
+  - 2-opt
+  - 3-opt
+  - swap
+  - relocate
+  unstring_operators:
+  - type_i
+  - type_ii
+  - type_iii
+  - type_iv
+  string_operators:
+  - type_i
+  - type_ii
+  - type_iii
+  - type_iv
+  score_improvement: 10.0
+  score_accept: 5.0
+  score_reject: -1.0
+  score_best: 20.0
+  weight_learning_rate: 0.1
+  weight_decay: 0.95
+  packing:
+    other/packing/pk_lookahead.yaml:
+    - default
+  route_improvement: []

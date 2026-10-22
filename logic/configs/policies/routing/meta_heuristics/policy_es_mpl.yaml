@@ -1,0 +1,13 @@
+es_mpl:
+  custom:
+    mu: 10
+    lambda_: 5
+    n_removal: 3
+    local_search_iterations: 100
+    max_iterations: 500
+    time_limit: 60.0
+    profit_aware_operators: false
+    packing:
+      other/packing/pk_lookahead.yaml:
+      - default
+    route_improvement: []

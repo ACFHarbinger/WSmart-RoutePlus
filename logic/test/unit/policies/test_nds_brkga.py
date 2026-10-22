@@ -11,7 +11,7 @@ import pytest
 # to avoid descriptor creation errors if another test imports protobuf.
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
-from logic.src.configs.policies.nds_brkga import NDSBRKGAConfig
+from logic.src.configs.policies.packing_and_routing.nds_brkga import NDSBRKGAConfig
 from logic.src.policies.packing_and_routing.non_dominated_sorting_biased_random_key_genetic_algorithm.chromosome import (
     Chromosome,
     compute_adaptive_thresholds,

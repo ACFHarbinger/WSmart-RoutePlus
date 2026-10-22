@@ -10,7 +10,7 @@ Attributes:
     GenericRoutingPolicy (Type): Declarative adapter base (WP-11 P-30).
 
 Example:
-    >>> from logic.src.configs.policies.psoma import PSOMAConfig
+    >>> from logic.src.configs.policies.routing.meta_heuristics.psoma import PSOMAConfig
     >>> config = PSOMAConfig(pop_size=20)
     >>> policy = PSOMAPolicy(config)
     >>> routes = policy.solve(problem)
@@ -18,7 +18,7 @@ Example:
 
 from typing import Any, Dict, Optional, Type, Union
 
-from logic.src.configs.policies.psoma import PSOMAConfig
+from logic.src.configs.policies.routing.meta_heuristics.psoma import PSOMAConfig
 from logic.src.enums import PolicyTag
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.policies.routing.base.generic_policy import GenericRoutingPolicy

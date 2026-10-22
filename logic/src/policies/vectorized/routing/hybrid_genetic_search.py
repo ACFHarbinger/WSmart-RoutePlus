@@ -44,7 +44,7 @@ from typing import Any, Callable, Optional, Tuple
 
 import torch
 
-from logic.src.configs.policies.hgs import HGSConfig
+from logic.src.configs.policies.routing.meta_heuristics.hgs import HGSConfig
 from logic.src.policies.vectorized.routing.shared import routes as rs
 from logic.src.policies.vectorized.routing.shared.pair_ls import granular_neighbors, pair_local_search
 from logic.src.policies.vectorized.routing.shared.vrpp import VRPPBatch, compact, profit_split

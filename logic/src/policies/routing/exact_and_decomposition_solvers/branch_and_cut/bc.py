@@ -26,7 +26,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
-from logic.src.configs.policies.bc import BCConfig
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.bc import BCConfig
 from logic.src.pipeline.learning.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.solvers_and_matheuristics import (
     SeparationEngine,

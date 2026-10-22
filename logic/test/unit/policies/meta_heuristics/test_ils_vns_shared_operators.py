@@ -18,8 +18,8 @@ import random
 
 import numpy as np
 import pytest
-from logic.src.configs.policies.ils import ILSConfig
-from logic.src.configs.policies.vns import VNSConfig
+from logic.src.configs.policies.routing.meta_heuristics.ils import ILSConfig
+from logic.src.configs.policies.routing.meta_heuristics.vns import VNSConfig
 from logic.src.policies.helpers.operators.destroy_ruin import (
     cluster_removal,
     random_removal,

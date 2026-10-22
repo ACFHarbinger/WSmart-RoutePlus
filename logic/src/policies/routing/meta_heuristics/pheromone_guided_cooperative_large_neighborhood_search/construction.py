@@ -20,7 +20,7 @@ from typing import Dict, List, Optional, Set
 
 import numpy as np
 
-from logic.src.configs.policies.aco_ks import KSparseACOConfig
+from logic.src.configs.policies.routing.meta_heuristics.aco_ks import KSparseACOConfig
 
 from .pheromones import PheromoneTau
 

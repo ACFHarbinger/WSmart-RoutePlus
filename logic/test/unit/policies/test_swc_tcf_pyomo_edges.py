@@ -6,7 +6,7 @@ import pytest
 pytest.importorskip("pyomo")
 pytest.importorskip("gurobipy")
 
-from logic.src.configs.policies.swc_tcf import SWCTCFConfig
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.swc_tcf import SWCTCFConfig
 from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.dispatcher import (  # noqa: E402
     run_swc_tcf_optimizer,

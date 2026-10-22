@@ -5,6 +5,8 @@ Moved from ``logic.src.pipeline.features.test.config``.
 
 import copy
 import os
+
+from logic.src.utils.configs.policy_files import find_policy_file
 from typing import Any, Dict, List, Tuple, cast
 
 import logic.src.constants as udef
@@ -30,11 +32,11 @@ def _resolve_policy_cfg_path(pol_name: str) -> str:
     search_dirs = [d for d in [custom, canonical] if d]
 
     def _check_dirs(filename: str) -> str:
-        for d in search_dirs:
-            p = os.path.join(d, filename)
-            if os.path.exists(p):
-                return p
-        return ""
+        # The job-specific dir holds flat copies; the canonical tree is organised by category.
+        if custom and os.path.exists(os.path.join(custom, filename)):
+            return os.path.join(custom, filename)
+        found = find_policy_file(filename, canonical)
+        return str(found) if found is not None else ""
 
     # Try direct mapping first
     for fname in (f"{pol_name}.yaml", f"policy_{pol_name}.yaml" if not pol_name.startswith("policy_") else ""):
@@ -249,8 +251,8 @@ def _parse_inner_components(
 def _expand_dict_ms_list(ms_list: Any) -> List[Any]:
     """Expand a dict-format packing into a flat list of single-variant dicts.
 
-    A dict like ``{"other/pk_last_minute.yaml": ["cf70", "cf90"]}`` expands to
-    ``[{"other/pk_last_minute.yaml": "cf70"}, {"other/pk_last_minute.yaml": "cf90"}]``.
+    A dict like ``{"other/packing/pk_last_minute.yaml": ["cf70", "cf90"]}`` expands to
+    ``[{"other/packing/pk_last_minute.yaml": "cf70"}, {"other/packing/pk_last_minute.yaml": "cf90"}]``.
     Plain lists of strings or already-flat lists are returned unchanged.
 
     Args:

@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 import pytest
-from logic.src.configs.policies.na import NeuralAgentConfig
+from logic.src.configs.policies.routing.learning_algorithms.na import NeuralAgentConfig
 from logic.src.constants.paths import CONFIGS_DIR
 from logic.src.pipeline.simulations.actions.node_selection import PackingAction
 from logic.src.pipeline.simulations.actions.route_improvement import RouteImprovementAction
@@ -20,7 +20,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 def _na_yaml() -> Any:
-    return OmegaConf.load(Path(CONFIGS_DIR) / "policies" / "policy_na.yaml")
+    return OmegaConf.load(Path(CONFIGS_DIR) / "policies" / "routing/learning_algorithms/policy_na.yaml")
 
 
 def _adapter_from_yaml() -> Any:
@@ -62,7 +62,7 @@ def test_na_adapter_honours_omegaconf_amgat_section() -> None:
 
 
 def test_na_yaml_lookahead_list_variant_loads_day_zero() -> None:
-    parsed = PackingAction()._parse_strategy_item({"other/pk_lookahead.yaml": ["default"]})
+    parsed = PackingAction()._parse_strategy_item({"other/packing/pk_lookahead.yaml": ["default"]})
     assert parsed[0]["name"] == "lookahead"
     assert parsed[0]["params"].get("current_collection_day") == 0
 

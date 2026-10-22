@@ -1,0 +1,14 @@
+ks:
+  custom:
+    initial_kernel_size: 100
+    bucket_size: 50
+    max_buckets: 15
+    time_limit: 60.0
+    mip_limit_nodes: 10000
+    mip_gap: 0.01
+    framework: ortools
+    engine: gurobi
+    packing:
+      other/packing/pk_lookahead.yaml:
+      - default
+    route_improvement: []

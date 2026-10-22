@@ -11,7 +11,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from logic.src.configs.policies.swc_tcf import SWCTCFConfig
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.swc_tcf import SWCTCFConfig
 from logic.src.policies.routing.base.sub_problem import build_subproblem
 from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow import (
     run_swc_tcf_optimizer,

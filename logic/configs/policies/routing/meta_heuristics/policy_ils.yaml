@@ -1,0 +1,16 @@
+ils:
+  custom:
+    n_restarts: 4000
+    inner_iterations: 60
+    perturbation_strength: 0.25
+    n_removal: 3
+    n_llh: 5
+    time_limit: 60.0
+    profit_aware_operators: false
+    packing:
+      other/packing/pk_lookahead.yaml:
+      - default
+    route_improvement: []
+    acceptance_criteria:
+      other/acceptance_criteria/ac_oi.yaml:
+      - oi

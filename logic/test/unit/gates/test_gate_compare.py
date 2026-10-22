@@ -116,11 +116,11 @@ def test_gate_b_verdict_pass_review_and_missing_key():
 
 def test_cell_policy_entry_pins_packing_improver_and_timing():
     # The packing file is pk_* after the WP-03 rename and ms_* on the unchanged baseline.
-    renamed = (Path(__file__).resolve().parents[4] / "logic/configs/policies/other/pk_last_minute.yaml").exists()
-    packing = {f"other/{'pk' if renamed else 'ms'}_last_minute.yaml": ["last_minute_cf70"]}
+    renamed = (Path(__file__).resolve().parents[4] / "logic/configs/policies/other/packing/pk_last_minute.yaml").exists()
+    packing = {"other/packing/pk_last_minute.yaml" if renamed else "other/ms_last_minute.yaml": ["last_minute_cf70"]}
     entry = cell_policy_entry("ALNS")
     assert entry["alns"]["packing"] == packing
-    assert entry["alns"]["route_improvement"] == {"other/ri_cls.yaml": ["default"]}
+    assert entry["alns"]["route_improvement"] == {"other/route_improvement/ri_cls.yaml": ["default"]}
     assert entry["alns"]["time_limit"] == 0
     assert entry["alns"]["max_iterations"] == 4500
     assert entry["alns"]["profit_aware_operators"] is True
