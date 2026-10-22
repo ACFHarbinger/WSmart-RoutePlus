@@ -164,6 +164,7 @@ def execute_new(
         density_val=B,
         max_vehicles=1,
         rng=rng,
+        max_iterations=params.max_iterations,
     )
 
     tour = optimized_routes[0] if optimized_routes else [0, 0]

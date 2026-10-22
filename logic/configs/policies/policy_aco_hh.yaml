@@ -8,7 +8,8 @@ aco_hh:
     stagnation_limit: 10
     max_iterations: 50
     elitism_ratio: 0.5
-    time_limit: 60.0
+    # time_limit is only a guard; the iteration budget ends the run, so results do not depend on machine speed.
+    time_limit: 600.0
     sequence_length: null
     Q: 1.0
     lambda_val: 1.0001

@@ -96,6 +96,7 @@ def improved_simulated_annealing(  # noqa: C901
     max_vehicles=None,
     recorder: Optional[PolicyStateRecorder] = None,
     rng: Optional[random.Random] = None,
+    max_iterations: int = 0,
 ):
     """Refine routing solutions using a multi-neighborhood Simulated Annealing algorithm.
 
@@ -123,6 +124,7 @@ def improved_simulated_annealing(  # noqa: C901
         max_vehicles: Maximum number of vehicles allowed.
         recorder: Telemetry recorder.
         rng: Random number generator.
+        max_iterations: Total neighbour moves before stopping (0 = no cap).
 
     Returns:
         Tuple: (best_solution, best_profit, last_distance, last_weight, last_receita).
@@ -163,9 +165,13 @@ def improved_simulated_annealing(  # noqa: C901
 
     no_improvement_count = 0
     T = T_init
+    moves = 0
+
+    def _budget_spent() -> bool:
+        return 0 < max_iterations <= moves
 
     # --- 2. MAIN SIMULATED ANNEALING LOOP ---
-    while T_min < T:
+    while T_min < T and not _budget_spent():
         if time.perf_counter() - start_time > time_limit:
             if verbose:
                 print("[DEBUG] Time limit reached.")
@@ -173,8 +179,9 @@ def improved_simulated_annealing(  # noqa: C901
 
         # Inner Loop
         for _ in range(iterations_per_T):
-            if time.perf_counter() - start_time > time_limit:
+            if time.perf_counter() - start_time > time_limit or _budget_spent():
                 break
+            moves += 1
 
             # --- 3/4. NEIGHBOR SELECTION AND EVALUATION ---
             # (A first _select_neighbor call here produced a neighbour that was always

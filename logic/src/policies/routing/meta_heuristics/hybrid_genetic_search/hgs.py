@@ -150,14 +150,14 @@ class HGSSolver(HGSPopulationMixin):
             self.acceptance_criterion = AcceptanceCriterionFactory.create(name="oi")
         self.params.acceptance_criterion = self.acceptance_criterion
 
-        # Per-subpopulation diversity distance caches, keyed by (id(ind_a), id(ind_b)).
+        # Per-subpopulation diversity distance caches, keyed by (ind_a.serial, ind_b.serial).
         # Maintained across iterations; entries are evicted precisely when an individual
         # is removed, avoiding the stale-hit problem from clearing the entire cache.
         self._feas_cache: dict = {}
         self._infeas_cache: dict = {}
 
         # Inverse index for O(P) cache eviction instead of O(P²) full scan.
-        # Maps id(ind) -> set of cache keys that involve that individual.
+        # Maps ind.serial -> set of cache keys that involve that individual.
         self._feas_inv: Dict[int, set] = {}
         self._infeas_inv: Dict[int, set] = {}
 
@@ -263,6 +263,8 @@ class HGSSolver(HGSPopulationMixin):
             if use_time_limit and elapsed >= self.params.time_limit:
                 break
             if not use_time_limit and it_no_improvement >= self.params.n_iterations_no_improvement:
+                break
+            if self.params.max_iterations > 0 and it >= self.params.max_iterations:
                 break
 
             if use_time_limit and it_no_improvement >= restart_threshold:

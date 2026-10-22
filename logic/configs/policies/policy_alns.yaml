@@ -1,7 +1,8 @@
 alns:
   custom:
-    time_limit: 60.0
-    max_iterations: 5000
+    # time_limit is only a guard; the iteration budget ends the run, so results do not depend on machine speed.
+    time_limit: 600.0
+    max_iterations: 4500
     reaction_factor: 0.1
     xi: 0.4
     extended_operators: false

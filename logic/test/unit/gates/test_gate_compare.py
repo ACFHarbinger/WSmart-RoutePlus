@@ -122,7 +122,7 @@ def test_cell_policy_entry_pins_packing_improver_and_timing():
     assert entry["alns"]["packing"] == packing
     assert entry["alns"]["route_improvement"] == {"other/ri_cls.yaml": ["default"]}
     assert entry["alns"]["time_limit"] == 0
-    assert entry["alns"]["max_iterations"] == 5000
+    assert entry["alns"]["max_iterations"] == 4500
     assert entry["alns"]["profit_aware_operators"] is True
     assert cell_policy_entry("HGS")["hgs"]["restart_timer"] == 0
     assert cell_policy_entry("CVRP")["cvrp"]["solution_limit"] == 1000

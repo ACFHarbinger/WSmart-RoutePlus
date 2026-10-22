@@ -18,7 +18,7 @@ def _registered():
 def test_alns_yaml_loads_into_alns_config():
     section = OmegaConf.to_container(OmegaConf.load(POLICY_DIR / "policy_alns.yaml"), resolve=True)["alns"]
     config = RoutingAlgorithmFactory.get_adapter("alns", config={"alns": section, "seed": 1})._config
-    assert config.time_limit == 60.0
+    assert config.time_limit == 600.0
     from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
 
     criterion = AcceptanceCriterionFactory.build(config.acceptance_criterion)
