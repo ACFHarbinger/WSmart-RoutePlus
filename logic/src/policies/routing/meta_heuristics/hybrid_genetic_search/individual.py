@@ -13,7 +13,12 @@ Example:
     >>> ind = Individual(giant_tour=[1, 5, 2])
 """
 
+import itertools
 from typing import List, Optional, Set
+
+# Serial numbers key the diversity-distance caches. id() can be reused once an
+# individual is garbage-collected, and the reuse timing made HGS non-repeatable.
+_SERIAL = itertools.count()
 
 
 class Individual:
@@ -85,6 +90,7 @@ class Individual:
                         If False (CVRP mode), repair operators only consider removed nodes.
 
         """
+        self.serial = next(_SERIAL)
         self.giant_tour = giant_tour
         self._routes: List[List[int]] = []
         self._visited_cache: Optional[Set[int]] = None
