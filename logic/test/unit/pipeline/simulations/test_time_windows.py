@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 import numpy as np
 import pandas as pd
 import pytest
-from logic.src.configs.envs.graph import GraphConfig
+from logic.src.configs.learning.envs.graph import GraphConfig
 from logic.src.configs.tasks.sim import SimConfig
 from logic.src.data.time.schedule import build_time_window_pattern
 from logic.src.data.time.time_windows import (

@@ -13,7 +13,7 @@ import numpy as np
 import torch
 
 from logic.src.configs import Config
-from logic.src.configs.envs.graph import GraphConfig
+from logic.src.configs.learning.envs.graph import GraphConfig
 from logic.src.configs.tasks.data import DataConfig
 from logic.src.constants import ROOT_DIR
 from logic.src.data.generators.builders import VRPInstanceBuilder

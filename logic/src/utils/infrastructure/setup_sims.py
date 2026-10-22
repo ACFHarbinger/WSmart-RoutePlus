@@ -18,7 +18,7 @@ from typing import Any
 import numpy as np
 from omegaconf import DictConfig, ListConfig, OmegaConf
 
-from logic.src.configs.envs.graph import GraphConfig
+from logic.src.configs.learning.envs.graph import GraphConfig
 
 
 def deep_sanitize(val: Any) -> Any:

@@ -5,7 +5,7 @@ Attributes:
     GraphConfig: Graph configuration.
 
 Example:
-    >>> from logic.src.configs.envs import GraphConfig
+    >>> from logic.src.configs.learning.envs import GraphConfig
     >>> config = GraphConfig()
     >>> print(config)
     GraphConfig(num_loc=50, num_nodes=50, num_customers=20, customer_types={'A': 0.25, 'B': 0.5, 'C': 0.25}, area='alpine', demand_distribution='normal', demand_normal_mean=10, demand_normal_std=1, min_demand=1, max_demand=25, capacity_distribution='normal', capacity_normal_mean=300, capacity_normal_std=50, min_capacity=200, max_capacity=400, instance_generator='random', edge_probability=0.3, shuffle_seed=42)

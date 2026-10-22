@@ -16,7 +16,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 
-from logic.src.configs.envs.objective import ObjectiveConfig
+from logic.src.configs.learning.envs.objective import ObjectiveConfig
 from logic.src.configs.models.model import ModelConfig
 
 
