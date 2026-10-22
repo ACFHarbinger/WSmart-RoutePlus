@@ -1,6 +1,8 @@
 hgs:
   custom:
-    time_limit: 60.0
+    # time_limit is only a guard; the iteration budget ends the run, so results do not depend on machine speed.
+    time_limit: 600.0
+    max_iterations: 650
     restart_timer: 60
     n_iterations_no_improvement: 20000
     mu: 25

@@ -51,6 +51,9 @@ class SANSConfig:
         T_init: Initial temperature for simulated annealing.
         iterations_per_T: Number of iterations at each temperature level.
         alpha: Cooling rate (temperature multiplier).
+        max_iterations: Total neighbour moves of the 'new' engine before it stops (0 = no cap).
+            With a cap the run is reproducible: the stop no longer depends on machine speed;
+            time_limit stays a guard.
         combination: Seven numbers read by position by the 'og' engine (iterations, initial
             temperature, cooling factor, vehicle, load, route-difference and shift penalties).
         packing: List of packing algorithm config files.
@@ -65,6 +68,7 @@ class SANSConfig:
     T_init: float = 75.0
     iterations_per_T: int = 5000
     alpha: float = 0.95
+    max_iterations: int = 0
     combination: Optional[List[float]] = None
     shift_duration: float = 28800.0  # 8 hours
     packing: Optional[List[PackingConfig]] = None

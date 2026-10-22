@@ -3,4 +3,5 @@ default:
   - classical_local_search
   ls_operator: 2opt
   iterations: 1000
-  time_limit: 30.0
+  # time_limit is only a guard; the iteration budget ends the run, so results do not depend on machine speed.
+  time_limit: 600.0

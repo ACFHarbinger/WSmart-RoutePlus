@@ -1,7 +1,9 @@
 sans:
   new:
     engine: new
-    time_limit: 60
+    # time_limit is only a guard; the iteration budget ends the run, so results do not depend on machine speed.
+    time_limit: 600
+    max_iterations: 1800000
     perc_bins_can_overflow: 0
     T_min: 0.01
     T_init: 75

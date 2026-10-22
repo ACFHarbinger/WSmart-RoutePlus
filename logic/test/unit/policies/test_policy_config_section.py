@@ -31,7 +31,7 @@ def test_aco_hh_entry_name_reads_its_yaml():
     config = RoutingAlgorithmFactory.get_adapter("aco_hh", config={"aco_hh": section, "seed": 1})._config
     keyed = RoutingAlgorithmFactory.get_adapter("aco_hh", config={"hyper_aco": section, "seed": 1})._config
     assert config == keyed
-    assert (config.n_ants, config.rho, config.time_limit, config.profit_aware_operators) == (10, 0.5, 60.0, True)
+    assert (config.n_ants, config.rho, config.time_limit, config.profit_aware_operators) == (10, 0.5, 600.0, True)
 
 
 @pytest.mark.parametrize("variant", ["og_a", "og_b"])
@@ -52,7 +52,7 @@ def test_flat_config_with_a_dict_field_is_not_mistaken_for_a_section():
 @pytest.mark.parametrize(
     "entry, filename, expected",
     [
-        ("aco_hh", "policy_aco_hh.yaml", {"n_ants": 10, "rho": 0.5, "time_limit": 60.0}),
+        ("aco_hh", "policy_aco_hh.yaml", {"n_ants": 10, "rho": 0.5, "time_limit": 600.0}),
         ("bpc", "policy_bpc.yaml", {"cutting_planes": "all", "max_cg_iterations": 150, "max_bb_nodes": 2000}),
         ("swc_tcf", "policy_swc_tcf.yaml", {"time_limit": 60.0, "framework": "gurobi"}),
     ],

@@ -17,6 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Claude: reproducible routing budgets (`2026-10-22`)
+
+#### Changed
+
+- **The paper's heuristics now stop on an iteration budget, not the clock.** ALNS, HGS, SANS (`new`) and PG-CLNS all ended at their 60 s `time_limit`, so a run's result depended on machine speed and load (ALNS gave 93.5 to 109.6 km over the same 2 days in four runs of the same code). Each budget is about what the laptop reaches in 60 s: ALNS `max_iterations` 5000 → 4500; HGS a new `max_iterations` 650 (offspring generations); SANS a new `max_iterations` 1,800,000 (neighbour moves); PG-CLNS `max_iterations` 50 → 30. `time_limit` becomes a 600 s guard there and in ACO-HH, PSOMA, PG-CLNS's ACO/LNS stages and the `cls` improver, which already stopped on their iteration counts. **This changes the ALNS, HGS, SANS and PG-CLNS results; their paper numbers need a rerun.**
+- **HGS** (`hybrid_genetic_search/hgs.py`, `HGSConfig.max_iterations`, 0 = no cap): the cap is checked next to the time limit; restarts are unchanged.
+- **SANS** (`heuristics/sans.py`, `SANSConfig.max_iterations`, 0 = no cap): a total move budget for the `new` engine.
+
 ### Claude: HGS repeatability (`2026-10-22`)
 
 #### Fixed

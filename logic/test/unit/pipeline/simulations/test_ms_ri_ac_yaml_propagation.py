@@ -243,7 +243,7 @@ def test_ri_yaml_iterations_are_passed_without_clobbering_policy_time_limit() ->
 
     assert captured.get("iterations") == 1000
     assert captured.get("ls_operator") == "2opt"
-    assert captured.get("time_limit") == pytest.approx(30.0)
+    assert captured.get("time_limit") == pytest.approx(600.0)
     assert context["time_limit"] == pytest.approx(60.0)
 
 
@@ -369,7 +369,7 @@ def test_expanded_paper_policies_match_ms_ri_ac_yaml() -> None:
             saw_cls = True
             assert cls_yaml["ls_operator"] == "2opt"
             assert cls_yaml["iterations"] == 1000
-            assert cls_yaml["time_limit"] == pytest.approx(30.0)
+            assert cls_yaml["time_limit"] == pytest.approx(600.0)
     assert saw_last_minute and saw_lookahead and saw_bmc and saw_oi and saw_cls
 
 
@@ -430,7 +430,7 @@ def test_live_test_sim_captures_ms_ri_ac(tmp_path, monkeypatch) -> None:
     assert "classical_local_search" in ri["methods"]
     assert ri["ls_operator"] == "2opt"
     assert ri["iterations"] == 1000
-    assert ri["time_limit"] == pytest.approx(30.0)
+    assert ri["time_limit"] == pytest.approx(600.0)
     ac = next(row["payload"] for row in records if row["kind"] == "acceptance_criteria")
     assert ac["method"] == "bmc"
     assert ac["params"]["initial_temp"] == pytest.approx(100.0)
@@ -452,4 +452,4 @@ def test_live_test_sim_captures_ms_ri_ac(tmp_path, monkeypatch) -> None:
     cls_live = next(row["payload"] for row in records if row["kind"] == "consumer_cls")
     assert cls_live["ls_operator"] == "2opt"
     assert cls_live["iterations"] == 1000
-    assert cls_live["time_limit"] == pytest.approx(30.0)
+    assert cls_live["time_limit"] == pytest.approx(600.0)
