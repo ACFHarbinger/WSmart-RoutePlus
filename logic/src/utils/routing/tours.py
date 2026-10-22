@@ -30,8 +30,9 @@ def get_route_cost(distancesC, tour):
     """
     if type(tour).__module__.startswith("torch") and type(distancesC).__module__.startswith("torch"):
         return distancesC[tour[:-1], tour[1:]].sum().cpu().numpy().item()
-    distancesC2 = distancesC.copy() if isinstance(distancesC, np.ndarray) else np.array(distancesC)
-    tour2 = tour.copy() if isinstance(tour, np.ndarray) else np.array(tour)
+    # Read-only: fancy indexing already returns a copy, so the matrix is not duplicated per call.
+    distancesC2 = np.asarray(distancesC)
+    tour2 = np.asarray(tour)
     return np.sum(distancesC2[tour2[:-1], tour2[1:]]).item()
 
 

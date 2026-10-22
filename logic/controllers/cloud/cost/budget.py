@@ -86,14 +86,11 @@ class CostMixin:
         if estimate is None or estimate.mid is None:
             if spec.resources.budget_usd is not None:
                 raise BudgetExceeded("the job has a budget cap but no cost estimate (no runtime prediction or price)")
-            if (
-                policy is not None
-                and policy.monthly_usd is not None
-                and Provider(spec.provider) != Provider.LOCAL
-                and (policy.monthly_usd - self.month_committed(self.clock())) <= 0
-            ):
+            if policy is not None and policy.monthly_usd is not None and Provider(spec.provider) != Provider.LOCAL:
+                # One pass over the month's jobs and events (outside a tick nothing is memoized).
                 remaining = policy.monthly_usd - self.month_committed(self.clock())
-                raise BudgetExceeded(f"monthly budget exceeded ({remaining:.2f} USD left)")
+                if remaining <= 0:
+                    raise BudgetExceeded(f"monthly budget exceeded ({remaining:.2f} USD left)")
             return []
         warnings = []
         caps = [("job", spec.resources.budget_usd)]
