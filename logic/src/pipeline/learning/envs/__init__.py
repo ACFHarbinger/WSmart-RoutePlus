@@ -30,16 +30,14 @@ from logic.src.utils.registry import import_target, lazy_getattr
 
 _PROBLEMS = ("ptp", "cptp", "cptptc", "cptptwtc", "cvrp", "tsp", "atsp", "op", "pctsp", "spctsp", "pdp", "irp", "thop")
 _CLASS_PREFIX = {name: name.upper() for name in _PROBLEMS} | {"thop": "ThOP"}
-# Problems whose env and generator live in their own modules (<name>_env, <name>_generator).
+# Problems whose generator lives in envs/generators/<name>.py (their env and task stay in envs/<name>.py).
 _SPLIT = ("irp", "thop")
 
 
 def _module(name: str, part: str) -> str:
-    return (
-        f"logic.src.pipeline.learning.envs.{name}_{part}"
-        if name in _SPLIT
-        else f"logic.src.pipeline.learning.envs.{name}"
-    )
+    if name in _SPLIT and part == "generator":
+        return f"logic.src.pipeline.learning.envs.generators.{name}"
+    return f"logic.src.pipeline.learning.envs.{name}"
 
 
 ENV_TARGETS: Dict[str, str] = {

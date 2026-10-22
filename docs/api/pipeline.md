@@ -613,6 +613,7 @@ Declarative resource constraints of the routing environments.
 - **class `Resource`** — Declarative resource constraint of a routing environment.
 - **class `LoadResource`** — Vehicle capacity / load resource constraint.
 - **class `ShiftTimeResource`** — Per-trip time budget resource constraint (travel + service time).
+- **class `TimeWindowResource`** — Day clock with per-node time windows (CPTPTWTC).
 
 ### `logic.src.pipeline.learning.envs.base.routing`
 
@@ -685,6 +686,15 @@ Capacitated Profitable Tour Problem with Time Constraints (CPTPTC) environment, 
 - **class `CPTPTCEnv`** — Capacitated Profitable Tour Problem with Time Constraints Environment.
 - **class `CPTPTC`** — Capacitated Profitable Tour Problem with Time Constraints (CPTPTC) task definition.
 
+### `logic.src.pipeline.learning.envs.cptptwtc`
+
+Capacitated Profitable Tour Problem with Time Windows and Time Constraints (CPTPTWTC).
+
+- **class `CPTPTWTCGenerator`** — Generator for CPTPTWTC instances: CPTPTC fields plus per-bin time windows.
+- **class `CPTPTWTCEnv`** — CPTPTWTC environment: CPTPTC's capacity and shift budget plus bin time windows.
+- `time_window_violations()` — Count, per instance, the visits of ``pi`` that start after their window closes.
+- **class `CPTPTWTC`** — Capacitated Profitable Tour Problem with Time Windows and Time Constraints task definition.
+
 ### `logic.src.pipeline.learning.envs.cvrp`
 
 Capacitated Vehicle Routing Problem (CVRP) environment, generator, and task specification.
@@ -694,23 +704,28 @@ Capacitated Vehicle Routing Problem (CVRP) environment, generator, and task spec
 - `evaluate_cvrp_tour()` — Vectorized evaluation of a CVRP tour sequence.
 - **class `CVRP`** — Capacitated Vehicle Routing Problem (CVRP) task definition.
 
-### `logic.src.pipeline.learning.envs.irp`
+### `logic.src.pipeline.learning.envs.generators.__init__`
 
-Inventory Routing Problem (IRP) task and environment on the routing base.
+Instance generators kept in their own modules (IRP, ThOP); the other problems hold theirs beside the env.
 
-- **class `IRP`** — Inventory Routing Problem (IRP) task definition.
-
-### `logic.src.pipeline.learning.envs.irp_env`
-
-Environment for the Inventory Routing Problem.
-
-- **class `IRPEnv`** — Inventory Routing Problem Environment on the routing base.
-
-### `logic.src.pipeline.learning.envs.irp_generator`
+### `logic.src.pipeline.learning.envs.generators.irp`
 
 Instance generator for the Inventory Routing Problem.
 
 - **class `IRPGenerator`** — Generator for deterministic Inventory Routing Problem (IRP) instances.
+
+### `logic.src.pipeline.learning.envs.generators.thop`
+
+Instance generator for the Thief Orienteering Problem.
+
+- **class `ThOPGenerator`** — Generator for the Thief Orienteering Problem.
+
+### `logic.src.pipeline.learning.envs.irp`
+
+Inventory Routing Problem (IRP): environment, task and specification on the routing base.
+
+- **class `IRPEnv`** — Inventory Routing Problem Environment on the routing base.
+- **class `IRP`** — Inventory Routing Problem (IRP) task definition.
 
 ### `logic.src.pipeline.learning.envs.op`
 
@@ -760,21 +775,10 @@ Problem specification and registry.
 
 ### `logic.src.pipeline.learning.envs.thop`
 
-Thief Orienteering Problem (ThOP) task and environment on the routing base.
-
-- **class `ThOP`** — Thief Orienteering Problem (ThOP) task definition.
-
-### `logic.src.pipeline.learning.envs.thop_env`
-
-Environment for the Thief Orienteering Problem.
+Thief Orienteering Problem (ThOP): environment, task and specification on the routing base.
 
 - **class `ThOPEnv`** — Thief Orienteering Problem Environment on the routing base.
-
-### `logic.src.pipeline.learning.envs.thop_generator`
-
-Instance generator for the Thief Orienteering Problem.
-
-- **class `ThOPGenerator`** — Generator for the Thief Orienteering Problem.
+- **class `ThOP`** — Thief Orienteering Problem (ThOP) task definition.
 
 ### `logic.src.pipeline.learning.envs.tsp`
 

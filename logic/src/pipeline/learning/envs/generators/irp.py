@@ -1,6 +1,6 @@
 """Instance generator for the Inventory Routing Problem.
 
-Moved from ``logic.src.pipeline.learning.envs.irp``.
+The IRP environment and task are in ``logic.src.pipeline.learning.envs.irp``.
 """
 
 from __future__ import annotations
