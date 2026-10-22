@@ -148,3 +148,33 @@ def test_gen_data_does_not_overwrite_by_default():
     cfg = yaml.safe_load((Path(__file__).resolve().parents[3] / "configs" / "tasks" / "gen_data.yaml").read_text())
     assert cfg["data"]["overwrite"] is False
 
+
+
+def test_release_conftest_registers_only_shipped_fixture_plugins(tmp_path):
+    from logic.package.release_staging import write_release_conftest
+
+    source = tmp_path / "conftest_src.py"
+    source.write_text('import pytest\npytest_plugins = [\n    "logic.test.fixtures.kept",\n    "logic.test.fixtures.gone",\n]\n')
+    fixtures = tmp_path / "out" / "logic" / "test" / "fixtures"
+    fixtures.mkdir(parents=True)
+    (fixtures / "kept.py").write_text("")
+    assert write_release_conftest(source, tmp_path / "out") == ["logic.test.fixtures.gone"]
+    staged = (tmp_path / "out" / "logic" / "test" / "conftest.py").read_text()
+    assert '"logic.test.fixtures.kept"' in staged and "gone" not in staged
+
+
+def test_release_requirements_pin_to_the_installed_versions():
+    from importlib.metadata import version
+
+    from logic.package.release_files import pin_to_tested
+
+    assert pin_to_tested("pytest>=1.0") == f"pytest=={version('pytest')}"
+    assert pin_to_tested("surely-not-installed-wsr>=1") == "surely-not-installed-wsr>=1"
+
+
+def test_release_pyproject_carries_the_pytest_settings(tmp_path):
+    from logic.package.release_files import pytest_ini_section
+
+    root = tmp_path / "pyproject.toml"
+    root.write_text('[project]\nname = "x"\n\n[tool.pytest.ini_options]\nlog_level = "INFO"\n\n# ===\n[tool.coverage.run]\n')
+    assert pytest_ini_section(root) == ["[tool.pytest.ini_options]", 'log_level = "INFO"']
