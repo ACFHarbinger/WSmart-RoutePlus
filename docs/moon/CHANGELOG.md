@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Fixed
 
 - **`ProblemContext.from_kwargs`** (`interfaces/context/problem_context.py`): node `g`'s coordinates now come from row `g` of `coords`, as in `RoutingExecutionMixin.execute` (`1fbd41e`); the `ID` column holds real bin IDs, so the old lookup left every location at zero. `day_index` now falls back to the day context's `day`, so multi-period policies no longer always see day 0. Off-paper (multi-period policies only).
+- **`import_billing_csv`** (`controllers/cloud/cost/billing.py`): a cost with comma thousands separators (`"1,234.56"`) is now read, and any other unparseable cost raises instead of being skipped, which under-reported the job's bill.
 
 ### Claude ultrareview fixes (`2026-10-22`)
 

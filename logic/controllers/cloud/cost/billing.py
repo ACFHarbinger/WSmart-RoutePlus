@@ -15,6 +15,7 @@ Attributes:
 from __future__ import annotations
 
 import csv
+import re
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -27,6 +28,9 @@ COLUMNS = {
     "currency": ("billingCurrency", "BillingCurrency", "currency", "CurrencyCode", "currency_code"),
 }
 
+
+# "1,234.56": comma thousands separators with a point decimal, as the USD exports write them.
+_THOUSANDS = re.compile(r"^-?\d{1,3}(,\d{3})+(\.\d+)?$")
 
 def _column(header, names) -> Optional[str]:
     lowered = {h.lower(): h for h in header}
@@ -55,10 +59,15 @@ def import_billing_csv(cp: ControlPlane, path: Path, provider: str, at: float) -
             job_id = (row.get(job_col) or "").strip()
             if not job_id:
                 continue
+            raw = (row.get(cost_col) or "").strip()
+            if _THOUSANDS.match(raw):
+                raw = raw.replace(",", "")
             try:
-                totals[job_id] = totals.get(job_id, 0.0) + float(row.get(cost_col) or 0.0)
+                cost = float(raw) if raw else 0.0
             except ValueError:
-                continue
+                # Skipping the row would under-report the job's bill.
+                raise ValueError(f"{path}: unparseable cost {row.get(cost_col)!r} for job '{job_id}'") from None
+            totals[job_id] = totals.get(job_id, 0.0) + cost
     known = {job.job_id for job in cp.list_jobs(limit=10_000)}
     recorded = {}
     for job_id, total in sorted(totals.items()):

@@ -184,6 +184,19 @@ def test_billing_export_is_attributed_to_jobs(tmp_path):
 
 
 @pytest.mark.unit
+def test_billing_export_reads_thousands_separators_and_rejects_bad_costs(tmp_path):
+    service, clock = _service(tmp_path)
+    job = service.submit(_spec())
+    export = tmp_path / "billing.csv"
+    export.write_text(f'service,labels.wsr_job_id,cost\nCompute,{job.job_id},"1,234.50"\nStorage,{job.job_id},0.25\n')
+    assert import_billing_csv(service.cp, export, "gcp", clock()) == {job.job_id: 1234.75}
+    for bad in ("n/a", '"1234,56"'):
+        export.write_text(f"service,labels.wsr_job_id,cost\nCompute,{job.job_id},{bad}\n")
+        with pytest.raises(ValueError, match="unparseable cost"):
+            import_billing_csv(service.cp, export, "gcp", clock())
+
+
+@pytest.mark.unit
 def test_cli_cost_commands(tmp_path):
     from logic.controllers.cloud import cli
 
