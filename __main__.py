@@ -9,6 +9,7 @@ invoked via ``python main.py <command>`` instead.
 
 import sys
 import warnings
+from pathlib import Path
 
 from logic.controllers.hydra_dispatch import hydra_entry_point
 
@@ -19,13 +20,24 @@ warnings.filterwarnings(
 )
 
 
+def _usage() -> str:
+    """Usage text listing the tasks whose configs this tree ships (the release ships fewer)."""
+    root = Path(__file__).resolve().parent
+    tasks = sorted(p.stem for p in (root / "logic" / "configs" / "tasks").glob("*.yaml"))
+    text = f"Usage: python . <task> [overrides...]\nAvailable tasks: {', '.join(tasks)}"
+    if (root / "main.py").is_file():
+        text += "\n\nFor non-Hydra commands (test_suite, file_system, etc.), use: python main.py <command>"
+    return text
+
+
 def main() -> None:
     """Parse the CLI command and dispatch to Hydra."""
     if len(sys.argv) < 2:
-        print("Usage: python -m WSmart-Route <task> [overrides...]")
-        print("Available tasks: train, evaluation, test_sim, gen_data, hpo, meta_train")
-        print("\nFor non-Hydra commands (test_suite, file_system, etc.), use: python main.py <command>")
+        print(_usage())
         sys.exit(1)
+    if sys.argv[1] in ("-h", "--help", "help"):
+        print(_usage())
+        sys.exit(0)
 
     raw_task = sys.argv.pop(1)
     task = {"evaluation": "eval", "sim_hpo": "hpo_sim"}.get(raw_task, raw_task)
