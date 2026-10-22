@@ -45,6 +45,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 
+from logic.src.constants import MAX_CAPACITY_PERCENT
 from logic.src.data.processor import convert_to_dict
 from logic.src.interfaces.context.search_context import SearchContext
 from logic.src.policies.helpers.operators.solution_initialization.zone_si import (
@@ -107,8 +108,11 @@ def execute_new(
     Q, R, C, values = policy._load_area_params(area, waste_type, config)
     policy._log_solver_params(values, kwargs)
 
-    B = values.get("B", 0)
-    V = values.get("V", 0)
+    # Q and R are in percentage points of one bin (capacity in %, revenue in EUR per %), and
+    # compute_profit loads stock * V * B / 100. V * B = 100 keeps those units, like execute_og's
+    # identity factors. The area's real volume and density would load kg against a % capacity.
+    B = 1.0
+    V = MAX_CAPACITY_PERCENT
 
     # Prepare data for SANS logic
     data = pd.DataFrame(

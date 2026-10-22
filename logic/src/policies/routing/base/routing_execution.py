@@ -234,11 +234,13 @@ class RoutingExecutionMixin:
                     x_arr[0] = float(coords["Lng"].mean())
                     y_arr[0] = float(coords["Lat"].mean())
 
-                coord_index = coords.set_index("ID")
-                for local_idx, original_id in enumerate(sub_node_ids, start=1):
-                    if original_id in coord_index.index:
-                        x_arr[local_idx] = float(coord_index.loc[original_id, "Lng"])
-                        y_arr[local_idx] = float(coord_index.loc[original_id, "Lat"])
+                # Node g is row g of ``coords`` (depot first, bins sorted by ID, as in
+                # get_daily_results); the "ID" column holds real bin IDs, not node indices.
+                for local_idx, global_idx in enumerate(sub_node_ids, start=1):
+                    if 0 < int(global_idx) < len(coords):
+                        row = coords.iloc[int(global_idx)]
+                        x_arr[local_idx] = float(row["Lng"])
+                        y_arr[local_idx] = float(row["Lat"])
                     else:
                         # Missing coordinate: disable pruning for safety
                         x_arr = None  # type: ignore[assignment]

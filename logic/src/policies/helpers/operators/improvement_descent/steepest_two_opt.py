@@ -36,10 +36,17 @@ from logic.src.policies.helpers.operators.intra_route_local_search.k_opt_apply i
 # ---------------------------------------------------------------------------
 
 
+def _is_symmetric(dist_matrix: np.ndarray) -> bool:
+    """O(N^2) check, so callers that loop over one matrix do it once."""
+    matrix = np.asarray(dist_matrix, dtype=float)
+    return matrix.ndim == 2 and bool(np.allclose(matrix, matrix.T))
+
+
 def _find_best_2opt(
     routes: List[List[int]],
     dist_matrix: np.ndarray,
     C: float,
+    symmetric: Optional[bool] = None,
 ) -> Tuple[float, Optional[Tuple[int, int, int]]]:
     """Find the globally best improving intra-route 2-opt move.
 
@@ -56,6 +63,7 @@ def _find_best_2opt(
         dist_matrix: Square distance matrix, depot at index 0.
         C: Cost coefficient.  Scales the delta for unit consistency; typically
             1.0 for CVRP and the actual cost-per-km for VRPP.
+        symmetric: Whether ``dist_matrix`` is symmetric; checked here when None.
 
     Returns:
         ``(best_delta, (r_idx, i, j))`` where ``routes[r_idx][i:j]`` should be
@@ -64,8 +72,8 @@ def _find_best_2opt(
     best_delta = -1e-6  # Strict improvement threshold
     best_move: Optional[Tuple[int, int, int]] = None
     d = dist_matrix
-    matrix = np.asarray(d, dtype=float)
-    symmetric = matrix.ndim == 2 and bool(np.allclose(matrix, matrix.T))
+    if symmetric is None:
+        symmetric = _is_symmetric(d)
 
     for r_idx, route in enumerate(routes):
         n = len(route)
@@ -148,8 +156,9 @@ def two_opt_steepest(
     if not working:
         return working
 
+    symmetric = _is_symmetric(dist_matrix)
     for _ in range(max_iter):
-        _, move = _find_best_2opt(working, dist_matrix, C)
+        _, move = _find_best_2opt(working, dist_matrix, C, symmetric=symmetric)
         if move is None:
             break
         r_idx, i, j = move
