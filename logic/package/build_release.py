@@ -62,8 +62,8 @@ from logic.package.release_staging import (
     filter_manifest_file,
     import_sweep,
     validate_release_tests,
-    write_release_conftest,
     verify_staged,
+    write_release_conftest,
 )
 
 # logic/ subtrees that ship in the release. Anything else (benchmark, cloud,

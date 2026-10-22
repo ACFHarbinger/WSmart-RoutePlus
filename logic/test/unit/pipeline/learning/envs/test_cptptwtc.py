@@ -2,7 +2,6 @@
 
 import pytest
 import torch
-
 from logic.src.pipeline.learning.envs import CPTPTWTC, PROBLEMS, get_env
 from logic.src.pipeline.learning.envs.cptptwtc import CPTPTWTCEnv, CPTPTWTCGenerator, time_window_violations
 
