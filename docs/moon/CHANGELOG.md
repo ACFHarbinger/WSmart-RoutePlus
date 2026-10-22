@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Fixes from the ultrareview of the 137 targeted functions. None of these changes moves a paper policy's results or the trained NA weights; the paper-moving findings are listed under "Needs owner" and in FINDINGS.md §6.
 
+#### Fixed
+
+- **`AttentionModel._load_from_state_dict`** (`models/core/attention_model/model.py`) walked every BatchNorm buffer key from the model itself with the full key, prefix included. PyTorch passes each module the whole state dict, so loaded nested (a Lightning checkpoint, `policy.` prefix) every `running_mean`/`running_var`/`num_batches_tracked` was dropped, the policy's and its siblings' alike, and strict loading failed. Only keys under `prefix` are now considered, walked relative to it. Dormant for the paper model (`track_stats` is off, so it has no such buffers). Covered by `test_am_nested_bn_buffers.py`.
+
 #### Optimizations
 
 - **`get_route_cost`** (`utils/routing/tours.py`) copied the full N×N distance matrix on every call (it runs at least twice per policy per day in collection and route improvement). It now reads the matrix with `np.asarray`; fancy indexing already copies the edges it needs, so results are bit-identical. Microbenchmark (one third of the nodes in the tour): N=101 12.5→9.9 µs, N=318 60.7→11.1 µs, N=1001 936→24 µs per call. Covered by `test_route_cost_no_copy.py`.
