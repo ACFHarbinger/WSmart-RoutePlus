@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Studio launch on a Snap-tainted desktop (`2026-10-22`)
+
+#### Fixed
+
+- **WSmart-Route Studio showed "WebKit encountered an internal error"** when the desktop session or a Snap-packaged IDE put `/snap/core20` on `LD_LIBRARY_PATH`. `WebKitNetworkProcess` loaded that `libpthread` and died on `__libc_pthread_init` (`GLIBC_PRIVATE`). On Linux, Studio now drops Snap entries from the library and GTK paths and clears an inherited `SNAP*` identity before GTK starts, unless the Studio binary itself is under `/snap`. After that scrub, a `GTK_MODULES` name with no host `lib*.so` is dropped. Host modules such as `colorreload-gtk-module` stay once Snap's `GTK_PATH` no longer hides them.
+- **`ProcessEntry`** in `app/src-tauri/src/commands/process.rs` was never built. Spawned processes are reported with `ProcessSpawned`. The unused struct is removed, which clears the `dead_code` warning.
+
 ### Claude: vectorised policies in one package (`2026-10-22`)
 
 #### Changed

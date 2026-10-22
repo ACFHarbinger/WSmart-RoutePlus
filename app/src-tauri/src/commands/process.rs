@@ -19,16 +19,6 @@ pub enum ProcessStatus {
     Failed,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct ProcessEntry {
-    pub id: String,
-    pub command: String,
-    pub pid: u32,
-    pub status: ProcessStatus,
-    pub start_time: u64,
-    pub exit_code: Option<i32>,
-}
-
 /// Emitted immediately after a process is spawned so the frontend can
 /// register the process in its store before any stdout lines arrive.
 #[derive(Debug, Serialize, Deserialize, Clone)]
