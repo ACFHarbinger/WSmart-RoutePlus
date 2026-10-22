@@ -17,6 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Claude ultrareview fixes (`2026-10-22`)
+
+Fixes from the ultrareview of the 137 targeted functions. None of these changes moves a paper policy's results or the trained NA weights; the paper-moving findings are listed under "Needs owner" and in FINDINGS.md §6.
+
+#### Optimizations
+
+- **`get_route_cost`** (`utils/routing/tours.py`) copied the full N×N distance matrix on every call (it runs at least twice per policy per day in collection and route improvement). It now reads the matrix with `np.asarray`; fancy indexing already copies the edges it needs, so results are bit-identical. Microbenchmark (one third of the nodes in the tour): N=101 12.5→9.9 µs, N=318 60.7→11.1 µs, N=1001 936→24 µs per call. Covered by `test_route_cost_no_copy.py`.
+
 ### Review-swarm follow-up fixes (`2026-10-21`)
 
 #### Fixed
