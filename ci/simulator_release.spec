@@ -37,6 +37,11 @@ hiddenimports += collect_submodules("scipy._external")
 for pkg in ("hydra", "omegaconf", "tensordict", "torchrl", "pytorch_lightning", "lightning_fabric"):
     hiddenimports += collect_submodules(pkg)
 hiddenimports += ["shapely.geometry", "openpyxl", "jinja2"]
+# mypyc-compiled wheels (tomli, which pyvrp imports) load a hashed helper extension,
+# <hash>__mypyc, that the import analysis does not see; without it HGS, PSOMA and CVRP crash.
+import pkgutil  # noqa: E402
+
+hiddenimports += [module.name for module in pkgutil.iter_modules() if module.name.endswith("__mypyc")]
 
 # Compiled solver packages load submodules and native libraries dynamically
 # (e.g. gurobipy._attrutil); bundle them whole.
