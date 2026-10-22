@@ -1,4 +1,4 @@
-# WSmart-Route 1.0.0 release manifest — the single source of truth for the
+# WSmart-Route 1.0.2 release manifest — the single source of truth for the
 # released package. Everything here is built by `logic/package/build_release.py`
 # from `main` (owner ruling Q-10a); unreleased components stay in `main` and are
 # excluded from the package (Q-8/Q-8b).
@@ -9,7 +9,7 @@
 # Scope (owner ruling Q-1/Q-2): only the components tested in the paper
 # simulations. Problems: PTP, CPTP, TCPTP and CVRP.
 
-version: "1.0.0"
+version: "1.0.2"
 
 # Problems released. These are `envs/<name>.py` problem names.
 problems:
@@ -86,30 +86,6 @@ infrastructure:
   - logic.controllers.cli               # the CLI: main.py's parsers (Q-11b)
   - logic.controllers.hydra_dispatch
   - logic.controllers.parser_dispatch
-  - logic.controllers.cloud.__main__                  # cloud runner CLI (v1.1.0, #120); its SDKs are the [cloud] extra
-  - logic.controllers.cloud.runtime                   # entry point of the cloud image (CR-02, CR-03)
-  - logic.controllers.cloud.local._wrap               # started by name (`python -m`) by the local backend
-  - logic.controllers.cloud.control.firebase   # reached through profiles.PROVIDER_FACTORIES strings
-  - logic.controllers.cloud.control.supabase
-  # Provider backends, stores and price tables are reached only through strings
-  # (providers.BACKENDS, profiles.PROVIDER_FACTORIES, the CR-10 PriceTable's pricing lookup).
-  - logic.controllers.cloud.providers
-  - logic.controllers.cloud.testing                   # fakes and contract suites: the release can check a provider without credentials
-  - logic.controllers.cloud.providers.gcp.batch
-  - logic.controllers.cloud.providers.gcp.serverless
-  - logic.controllers.cloud.providers.gcp.vm
-  - logic.controllers.cloud.providers.gcp.storage
-  - logic.controllers.cloud.providers.gcp.pricing
-  - logic.controllers.cloud.providers.aws.batch
-  - logic.controllers.cloud.providers.aws.serverless
-  - logic.controllers.cloud.providers.aws.vm
-  - logic.controllers.cloud.providers.aws.storage
-  - logic.controllers.cloud.providers.aws.pricing
-  - logic.controllers.cloud.providers.azure.batch
-  - logic.controllers.cloud.providers.azure.serverless
-  - logic.controllers.cloud.providers.azure.vm
-  - logic.controllers.cloud.providers.azure.storage
-  - logic.controllers.cloud.providers.azure.pricing
 
 # Packages excluded from the release even though a seed pulls them in.
 excluded_packages:
@@ -117,6 +93,7 @@ excluded_packages:
   - logic.src.pipeline.learning.hpo                        # Q-6
   - logic.src.pipeline.learning.meta                       # not in the paper's stack (Q-12a)
   - logic.cloud                                      # `sync_drive` CLI job defer-imports it (drive_parser/parser_dispatch); cloud sync is out of scope (Q-1/Q-2)
+  - logic.controllers.cloud                          # cloud runner: not in 1.0.x (owner ruling 2026-10-19); ships with v1.1.0 (#120)
   - logic.benchmark                                  # `benchmark` CLI job defer-imports it (jobs/ops_runner.py); out of scope
   - logic.test                                       # `test_suite` CLI job runner (jobs/ops_runner.py); the release ships the curated test files (P-06), not the runner
 
@@ -158,19 +135,3 @@ dependency_extras:
     - tensorboard>=2.20.0    # plotting utilities (main gets it only indirectly)
     - loss-landscapes        # plotting utilities (logic.src.utils.plotting)
     - plotly                 # plotting utilities (logic.src.utils.plotting)
-  cloud:                     # cloud runner SDKs (v1.1.0, #120); versions in logic/pyproject.toml
-    - google-cloud-batch
-    - google-cloud-run
-    - google-cloud-compute
-    - google-cloud-storage
-    - google-cloud-secret-manager
-    - google-cloud-firestore
-    - boto3
-    - azure-identity
-    - azure-batch
-    - azure-mgmt-appcontainers
-    - azure-mgmt-compute
-    - azure-storage-blob
-    - azure-keyvault-secrets
-    - supabase
-    - keyring

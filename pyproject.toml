@@ -1,6 +1,6 @@
 [project]
 name = "wsmart-route-workspace"
-version = "1.0.0"
+version = "1.0.2"
 description = "Root workspace manifest for WSmart-Route. The actual Python module lives in logic/ (see logic/pyproject.toml)."
 readme = "README.md"
 requires-python = ">=3.10"

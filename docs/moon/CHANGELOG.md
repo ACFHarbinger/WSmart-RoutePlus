@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Release 1.0.2 package (`2026-10-22`)
+
+- Version 1.0.2 in `pyproject.toml`, `logic/pyproject.toml` and `logic/release.yaml`. It is 1.0.1 plus the review-swarm fixes (Kimi, Grok, Cursor, Gemini, Codex, the Claude ultrareview and its follow-ups), the reproducible iteration budgets of the paper heuristics, and the `policies/vectorized/` layout. As in 1.0.1, the cloud runner (`logic.controllers.cloud`) is excluded; it ships with v1.1.0 (#120). The package is published as the branch `package/1.0.2`, without `data.zip` and the executables.
+
 ### Claude: reproducible routing budgets (`2026-10-22`)
 
 #### Changed
