@@ -66,7 +66,6 @@ class SANSConfig:
     iterations_per_T: int = 5000
     alpha: float = 0.95
     combination: Optional[List[float]] = None
-    V: float = 0.0
     shift_duration: float = 28800.0  # 8 hours
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
