@@ -405,10 +405,12 @@ class AttentionModel(AttentionModelPolicy, DecodingMixin):
         # If model has normalizers with track_running_stats=False, pop running buffers from checkpoint
         bn_suffixes = (".running_mean", ".running_var", ".num_batches_tracked")
         for k in list(state_dict.keys()):
-            if any(k.endswith(sfx) for sfx in bn_suffixes):
+            # PyTorch hands every module the whole state dict: only this model's keys are ours,
+            # and they are walked relative to ``prefix`` (a Lightning load nests us under "policy.").
+            if k.startswith(prefix) and any(k.endswith(sfx) for sfx in bn_suffixes):
                 # Check if buffer exists in model
                 curr = self
-                parts = k.split(".")
+                parts = k[len(prefix) :].split(".")
                 exists = True
                 for part in parts[:-1]:
                     if hasattr(curr, part):
