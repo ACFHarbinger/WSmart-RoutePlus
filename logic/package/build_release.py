@@ -154,19 +154,12 @@ def run_check(manifest: dict) -> int:  # noqa: C901
     return 0
 
 
-BIN_ANALYSIS_DIR = "logic.submodules.WSmart-Bin-Analysis"
-BIN_ANALYSIS_PACKAGE = "logic.submodules.wsmart_bin_analysis"  # the symlink the code imports
-
-
 def staged_module_names(out: Path) -> set:
-    """Modules of the staged tree, with the bin-analysis files also under their importable symlink name.
+    """Modules of the staged tree.
 
-    ``rglob`` does not follow the ``wsmart_bin_analysis -> WSmart-Bin-Analysis`` symlink, so its
-    files are found under the hyphenated directory name, which no import uses.
+    The bin-analysis files are staged under their importable name, ``wsmart_bin_analysis``.
     """
-    names = {file_to_module(p, out) for p in (out / "logic").rglob("*.py")}
-    names |= {BIN_ANALYSIS_PACKAGE + n[len(BIN_ANALYSIS_DIR) :] for n in names if n.startswith(BIN_ANALYSIS_DIR)}
-    return names
+    return {file_to_module(p, out) for p in (out / "logic").rglob("*.py")}
 
 
 def run_build(manifest: dict, out: Path) -> int:  # noqa: C901
@@ -208,14 +201,14 @@ def run_build(manifest: dict, out: Path) -> int:  # noqa: C901
         *sorted((bin_analysis / "export").rglob("*.py")),
         *sorted((bin_analysis / "python").rglob("*.py")),
     ]:
-        if "__pycache__" in path.parts or "notebooks" in path.parts:
+        if "__pycache__" in path.parts or "notebooks" in path.parts or "docs" in path.parts:
             continue
-        dest = out / "logic" / "submodules" / "WSmart-Bin-Analysis" / path.relative_to(bin_analysis)
+        # A real directory under the name the code imports: a symlink in the package
+        # becomes a plain file in a zip or a Windows checkout, and PyInstaller's
+        # collect_submodules("logic") does not see a hyphenated directory.
+        dest = out / "logic" / "submodules" / "wsmart_bin_analysis" / path.relative_to(bin_analysis)
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(path, dest)
-    symlink_target = out / "logic" / "submodules" / "wsmart_bin_analysis"
-    if not symlink_target.exists():
-        symlink_target.symlink_to("WSmart-Bin-Analysis")
 
     # --- registry manifests: released keys only -------------------------- #
     for stage, stage_path in STAGES.items():
