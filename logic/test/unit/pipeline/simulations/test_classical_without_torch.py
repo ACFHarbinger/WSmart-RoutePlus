@@ -17,7 +17,8 @@ class BlockNeural(importlib.abc.MetaPathFinder):
 sys.meta_path.insert(0, BlockNeural())
 import numpy as np
 import runpy
-runpy.run_path("main.py", run_name="gate_classical_import")
+# The repository runs main.py; the release package ships __main__.py instead.
+runpy.run_path("main.py" if __import__("os").path.exists("main.py") else "__main__.py", run_name="gate_classical_import")
 from types import SimpleNamespace
 from logic.src.policies.routing.base.factory import RoutingAlgorithmFactory
 for name in ['alns', 'pg_clns', 'bpc', 'cvrp', 'hgs', 'psoma', 'aco_hh', 'sans', 'swc_tcf']:

@@ -5,10 +5,14 @@ End-to-end smoke tests for CLI commands.
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
 pytestmark = [pytest.mark.e2e, pytest.mark.slow]
+
+# The repository's entry point is main.py; the release package ships __main__.py instead.
+ENTRY = "main.py" if Path("main.py").exists() else "__main__.py"
 
 
 
@@ -18,7 +22,7 @@ pytestmark = [pytest.mark.e2e, pytest.mark.slow]
 def test_cli_help():
     """Test that main.py --help runs successfully."""
     result = subprocess.run(
-        [sys.executable, "main.py", "--help"],
+        [sys.executable, ENTRY, "--help"],
         capture_output=True,
         text=True,
     )
@@ -36,7 +40,7 @@ def test_cli_gen_data_smoke(tmp_path, problem):
     result = subprocess.run(
         [
             sys.executable,
-            "main.py",
+            ENTRY,
             "gen_data",
             "data.dataset_type=test_simulator",
             f"data.problem={problem}",
@@ -76,7 +80,7 @@ def test_cli_train_lightning_smoke(tmp_path):
         result = subprocess.run(
             [
                 sys.executable,
-                "main.py",
+                ENTRY,
                 "train",
                 "train.env.name=ptp",
                 "train.env.curriculum_graphs.0.num_loc=10",
@@ -133,7 +137,7 @@ def test_cli_eval_smoke(tmp_path):
     subprocess.run(
         [
             sys.executable,
-            "main.py",
+            ENTRY,
             "gen_data",
             "data.dataset_type=test_simulator",
             "data.problem=ptp",
@@ -151,7 +155,7 @@ def test_cli_eval_smoke(tmp_path):
     assert data_file.exists()
 
     result = subprocess.run(
-        [sys.executable, "main.py", "eval", "--help"],
+        [sys.executable, ENTRY, "eval", "--help"],
         capture_output=True,
         text=True,
     )
@@ -166,7 +170,7 @@ def test_cli_test_sim_smoke():
     result = subprocess.run(
         [
             sys.executable,
-            "main.py",
+            ENTRY,
             "test_sim",
             "--help",
         ],
@@ -188,7 +192,7 @@ def test_cli_train_lightning_ppo_smoke(tmp_path):
         result = subprocess.run(
             [
                 sys.executable,
-                "main.py",
+                ENTRY,
                 "train",
                 "train.env.name=ptp",
                 "train.env.curriculum_graphs.0.num_loc=10",

@@ -2,6 +2,8 @@
 Fixtures specifically for Integration Tests.
 """
 
+import importlib.util
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -117,7 +119,8 @@ def setup_sim_data(tmp_path, mocker):
     mocker.patch("logic.src.pipeline.simulations.checkpoints.ROOT_DIR", str(tmp_path))
     mocker.patch("logic.src.constants.ROOT_DIR", str(tmp_path))
     mocker.patch("logic.src.pipeline.simulations.states.base.context.ROOT_DIR", str(tmp_path))
-    mocker.patch("logic.src.pipeline.simulations.hpo.hpo_handler.ROOT_DIR", str(tmp_path))
+    if importlib.util.find_spec("logic.src.pipeline.simulations.hpo") is not None:  # not in the release
+        mocker.patch("logic.src.pipeline.simulations.hpo.hpo_handler.ROOT_DIR", str(tmp_path))
     mocker.patch("logic.src.pipeline.simulations.bins.base.ROOT_DIR", str(tmp_path))
     mocker.patch("logic.src.pipeline.simulations.repository.ROOT_DIR", str(tmp_path))
     # Mock fast_tsp to avoid solver crashes with dummy data

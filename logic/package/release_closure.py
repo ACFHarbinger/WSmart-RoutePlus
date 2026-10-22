@@ -282,6 +282,14 @@ def release_tests(manifest: dict, kept: Set[Path]) -> Tuple[List[Path], List[Pat
     pruned: List[Path] = []
     kept_modules = {file_to_module(f, REPO) for f in kept}
     for path in sorted((LOGIC / "test").rglob("*.py")):
+        if "fixtures" in path.relative_to(LOGIC / "test").parts:
+            # Fixture modules are judged by what they import: their mocker.patch target strings
+            # may name excluded modules, and the tests that use those fixtures are validated by
+            # running them in the staged tree.
+            found = imports_of(path, REPO)
+            names = {trimmed(n, REPO) for n in found.module_level | found.deferred}
+            (release if {n for n in names if n} <= kept_modules else pruned).append(path)
+            continue
         modules = set()
         text = path.read_text()
         for match in LOGIC_MODULE_RE.finditer(text):

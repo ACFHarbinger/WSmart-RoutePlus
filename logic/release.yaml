@@ -143,3 +143,7 @@ dependency_extras:
     - tensorboard>=2.20.0    # plotting utilities (main gets it only indirectly)
     - loss-landscapes        # plotting utilities (logic.src.utils.plotting)
     - plotly                 # plotting utilities (logic.src.utils.plotting)
+  test:                      # running the shipped release tests (`logic/test`, see release_tests.txt)
+    - pytest>=8.4.2
+    - pytest-mock>=3.15.1
+    - hypothesis>=6.141.1
