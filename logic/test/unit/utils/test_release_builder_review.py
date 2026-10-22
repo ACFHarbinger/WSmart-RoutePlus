@@ -125,3 +125,10 @@ def test_multiline_lazy_map_pruning_is_format_independent(tmp_path, monkeypatch)
     dropped = builder.filter_lazy_map(path, {"logic.src.facade.keep"}, tmp_path)
     assert dropped
     assert closure.lazy_targets(path) == {"Keep": "logic.src.facade.keep"}
+
+
+def test_staged_bin_analysis_modules_use_the_importable_name(tmp_path):
+    pkg = tmp_path / "logic" / "submodules" / "wsmart_bin_analysis" / "export"
+    pkg.mkdir(parents=True)
+    (pkg / "grid.py").write_text("")
+    assert "logic.submodules.wsmart_bin_analysis.export.grid" in builder.staged_module_names(tmp_path)

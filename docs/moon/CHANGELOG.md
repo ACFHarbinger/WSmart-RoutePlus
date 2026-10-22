@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`ProblemContext.from_kwargs`** (`interfaces/context/problem_context.py`): node `g`'s coordinates now come from row `g` of `coords`, as in `RoutingExecutionMixin.execute` (`1fbd41e`); the `ID` column holds real bin IDs, so the old lookup left every location at zero. `day_index` now falls back to the day context's `day`, so multi-period policies no longer always see day 0. Off-paper (multi-period policies only).
 - **`import_billing_csv`** (`controllers/cloud/cost/billing.py`): a cost with comma thousands separators (`"1,234.56"`) is now read, and any other unparseable cost raises instead of being skipped, which under-reported the job's bill.
 - **Explicit `None` values:** `CollectAction` no longer raises a `TypeError` on a TCPTP trip when `vehicle_capacity` is `None` (no capacity check, as for the payload report), and `BaseJointPolicy.execute` reads `n_vehicles=None` as one vehicle. `0` is still passed through unchanged. Neither is reached by a packaged config today.
+- **Release builder** (`logic/package/build_release.py`): the bin-analysis runtime modules are staged as a real `logic/submodules/wsmart_bin_analysis/` directory instead of `WSmart-Bin-Analysis/` plus a `wsmart_bin_analysis` symlink. A symlink becomes a plain text file in a zip or a Windows checkout (the import then fails), and PyInstaller's `collect_submodules("logic")` skips the hyphenated directory. The submodule's Sphinx `docs/` are no longer copied.
 
 ### Claude ultrareview fixes (`2026-10-22`)
 
