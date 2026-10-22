@@ -58,7 +58,15 @@ class BatchMixin:
                 - output_dict: Dictionary with 'attention_weights', 'graph_masks'
         """
         hook_data = add_attention_hooks(self.model.encoder)  # type: ignore[attr-defined]
+        try:
+            return self._batch_sim(input, dist_matrix, hook_data, hrl_manager, waste_history, threshold, mask_threshold)
+        finally:
+            # Hooks registered per call would otherwise pile up on the encoder, one more set each batch.
+            for handle in hook_data.get("handles", []):
+                handle.remove()
 
+    def _batch_sim(self, input, dist_matrix, hook_data, hrl_manager, waste_history, threshold, mask_threshold):
+        """Body of :meth:`compute_batch_sim`, run while the attention hooks are attached."""
         mask = None
         if hrl_manager is not None and waste_history is not None:
             # Static: Customer Locations (Batch, N, 2)
@@ -110,7 +118,9 @@ class BatchMixin:
         # Use model forward pass
         out = self.model(input, cost_weights=None, return_pi=True, pad=False, mask=mask)  # type: ignore[attr-defined]
         if isinstance(out, dict):
-            pi = out.get("actions") or out.get("pi")
+            pi = out.get("actions")
+            if pi is None:  # a tensor has no truth value, so ``or`` cannot pick the fallback
+                pi = out.get("pi")
             cost = out.get("cost")
         else:
             cost, _, _, pi, _ = out
@@ -145,41 +155,27 @@ class BatchMixin:
         else:
             last_dst = torch.zeros(dst_vertices.size(0), dtype=torch.long, device=dst_vertices.device)
 
-        travelled = dist_matrix[src_vertices, dst_vertices] * pair_mask.float()  # pyrefly: ignore[missing-attribute]
+        if dist_matrix.dim() == 2:
+
+            def edge(a, b):
+                return dist_matrix[a, b]
+        else:
+            # One matrix per instance (B x N x N): index each row of ``pi`` into its own matrix.
+            rows = torch.arange(pi.size(0), device=pi.device)
+
+            def edge(a, b):
+                batch = rows.view(-1, *([1] * (a.dim() - 1))) if torch.is_tensor(a) and a.dim() > 0 else rows
+                return dist_matrix[batch, a, b]
+
+        travelled = edge(src_vertices, dst_vertices) * pair_mask.float()  # pyrefly: ignore[missing-attribute]
 
         ret_dict = {}
         ret_dict["overflows"] = cost_dict["overflows"]
         ret_dict["kg"] = cost_dict["waste"] * 100
         ret_dict["waste"] = cost_dict["waste"]
 
-        if dist_matrix.dim() == 2:
-            # Assuming batch dim 0 is implied?
-            # dist_matrix: (N, N). src_vertices: (B, L).
-            # This logic mimics original code but might need careful checking if dist_matrix is (B, N, N)
-            ret_dict["km"] = (
-                travelled.sum(dim=1)
-                + dist_matrix[0, src_vertices[:, 0]]
-                + dist_matrix[
-                    dst_vertices[
-                        torch.arange(dst_vertices.size(0), device=dst_vertices.device),
-                        last_dst,
-                    ],
-                    0,
-                ]
-            )
-        else:
-            ret_dict["km"] = (
-                travelled.sum(dim=1)
-                + dist_matrix[0, 0, src_vertices[:, 0]]
-                + dist_matrix[
-                    0,
-                    dst_vertices[
-                        torch.arange(dst_vertices.size(0), device=dst_vertices.device),
-                        last_dst,
-                    ],
-                    0,
-                ]
-            )
+        last_vertex = dst_vertices[torch.arange(dst_vertices.size(0), device=dst_vertices.device), last_dst]
+        ret_dict["km"] = travelled.sum(dim=1) + edge(0, src_vertices[:, 0]) + edge(last_vertex, 0)
 
         attention_weights = torch.tensor([])
         if hook_data["weights"]:

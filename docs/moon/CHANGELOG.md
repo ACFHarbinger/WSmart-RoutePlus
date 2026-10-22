@@ -24,6 +24,7 @@ Fixes from the ultrareview of the 137 targeted functions. None of these changes 
 #### Fixed
 
 - **`AttentionModel._load_from_state_dict`** (`models/core/attention_model/model.py`) walked every BatchNorm buffer key from the model itself with the full key, prefix included. PyTorch passes each module the whole state dict, so loaded nested (a Lightning checkpoint, `policy.` prefix) every `running_mean`/`running_var`/`num_batches_tracked` was dropped, the policy's and its siblings' alike, and strict loading failed. Only keys under `prefix` are now considered, walked relative to it. Dormant for the paper model (`track_stats` is off, so it has no such buffers). Covered by `test_am_nested_bn_buffers.py`.
+- **`NeuralAgent.compute_batch_sim`** (`policies/routing/learning_algorithms/neural_agent/batch.py`): `out.get("actions") or out.get("pi")` raised "Boolean value of Tensor … is ambiguous" for any dict output with a multi-element action tensor (the AttentionModel's own output); the attention hooks it registers were never removed, so each call added another set to the encoder; and a per-instance `B×N×N` distance matrix was indexed as if shared (`dist[src, dst]`, and instance 0's depot rows for every instance). The fallback is now an `is None` check, the hooks are removed in a `finally`, and 3-D matrices are indexed per instance. Shared-matrix `km` is unchanged. Only tests call this path; the simulator's NA uses `run_day`. Covered by `test_batch_sim_review.py`.
 
 #### Optimizations
 
