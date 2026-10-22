@@ -29,7 +29,7 @@ from logic.src.configs.policies.other.route_improvement import RandomLocalSearch
 from logic.src.configs.policies.profitable_nn import ProfitableNNConfig
 
 # Type alias for expert policy configurations: the simulator policy configs of the
-# vectorised experts (``logic.src.policies.vector``).
+# vectorised experts (``logic.src.policies.vectorized.routing``).
 ExpertPolicyConfig = Union[
     HGSConfig,
     ALNSConfig,

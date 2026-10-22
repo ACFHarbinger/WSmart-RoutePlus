@@ -4,8 +4,8 @@ Unit tests for vectorized policy implementations (Local Search, HGS, Split).
 
 import pytest
 import torch
-from logic.src.policies.vector.core.crossover import vectorized_ordered_crossover
-from logic.src.policies.vector.operators import (
+from logic.src.policies.vectorized.routing.core.crossover import vectorized_ordered_crossover
+from logic.src.policies.vectorized.routing.operators import (
     vectorized_relocate,
     vectorized_swap,
     vectorized_swap_star,

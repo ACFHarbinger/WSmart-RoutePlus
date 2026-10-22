@@ -20,7 +20,7 @@ import torch
 
 from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.search_context import SearchContext
-from logic.src.policies.packing.vectorized import get_vectorized_selector
+from logic.src.policies.vectorized.packing import get_vectorized_selector
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 from logic.src.tracking.core.run import get_active_run

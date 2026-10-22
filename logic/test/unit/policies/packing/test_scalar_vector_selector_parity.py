@@ -10,10 +10,10 @@ from logic.src.policies.packing.last_minute import LastMinuteSelection
 from logic.src.policies.packing.lookahead import LookaheadSelection
 from logic.src.policies.packing.regular import RegularSelection
 from logic.src.policies.packing.service_level import ServiceLevelSelection
-from logic.src.policies.packing.vectorized.last_minute import LastMinuteSelector
-from logic.src.policies.packing.vectorized.lookahead import LookaheadSelector
-from logic.src.policies.packing.vectorized.regular import RegularSelector
-from logic.src.policies.packing.vectorized.service_level import ServiceLevelSelector
+from logic.src.policies.vectorized.packing.last_minute import LastMinuteSelector
+from logic.src.policies.vectorized.packing.lookahead import LookaheadSelector
+from logic.src.policies.vectorized.packing.regular import RegularSelector
+from logic.src.policies.vectorized.packing.service_level import ServiceLevelSelector
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

@@ -18,7 +18,7 @@ from logic.src.interfaces import IEnv, ITraversable
 from logic.src.pipeline.features.base import deep_sanitize, flatten_config_dict, remap_legacy_keys
 from logic.src.pipeline.learning.core.reinforce import REINFORCE
 from logic.src.pipeline.learning.envs import get_env
-from logic.src.policies.packing.vectorized.factory import create_selector_from_config
+from logic.src.policies.vectorized.packing.factory import create_selector_from_config
 from logic.src.tracking.logging.pylogger import get_pylogger
 
 try:
@@ -235,9 +235,9 @@ def _init_policy(cfg: Config, env: Any):
         "temporal": "logic.src.models.core.temporal_attention_model.policy:TemporalAMPolicy",
         "pointer": "logic.src.models.core.pointer_network.policy:PointerNetworkPolicy",
         "symnco": "logic.src.models.core.attention_model.symnco_policy:SymNCOPolicy",
-        "alns": "logic.src.policies.vector.alns:VectorizedALNS",
-        "hgs": "logic.src.policies.vector.hgs:VectorizedHGS",
-        "hgs_alns": "logic.src.policies.vector.hgs_alns:VectorizedHGSALNS",
+        "alns": "logic.src.policies.vectorized.routing.alns:VectorizedALNS",
+        "hgs": "logic.src.policies.vectorized.routing.hgs:VectorizedHGS",
+        "hgs_alns": "logic.src.policies.vectorized.routing.hgs_alns:VectorizedHGSALNS",
         "hybrid": _HYBRID,
         "hybrid_two_stage": "logic.src.models.core.hybrid_attention_model.hybrid_two_step_policy:HybridTwoStagePolicy",
     }
@@ -317,11 +317,11 @@ def _init_hybrid_policy(cfg: Config):
     env_name = getattr(env_cfg, "name", "ptp") if env_cfg else "ptp"
 
     if ref_strategy == "alns":
-        heuristic_policy = import_target("logic.src.policies.vector.alns:VectorizedALNS")(
+        heuristic_policy = import_target("logic.src.policies.vectorized.routing.alns:VectorizedALNS")(
             env_name=env_name, time_limit=ref_time, max_iterations=ref_iters, max_vehicles=max_v
         )
     else:
-        heuristic_policy = import_target("logic.src.policies.vector.hgs:VectorizedHGS")(
+        heuristic_policy = import_target("logic.src.policies.vectorized.routing.hgs:VectorizedHGS")(
             env_name=env_name, time_limit=ref_time, max_iterations=ref_iters
         )
     return import_target(_HYBRID)(neural_policy=neural_policy, heuristic_policy=heuristic_policy)

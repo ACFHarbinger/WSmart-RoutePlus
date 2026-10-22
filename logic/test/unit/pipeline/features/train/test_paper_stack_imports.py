@@ -33,8 +33,8 @@ def test_only_the_attention_model_reinforce_and_imitation_load() -> None:
     assert not any(
         m.startswith(("logic.src.pipeline.learning.hpo", "logic.src.pipeline.learning.meta")) for m in loaded
     )
-    vector = {m.split(".")[4] for m in loaded if m.startswith("logic.src.policies.vector.")}
+    vector = {m.split(".")[5] for m in loaded if m.startswith("logic.src.policies.vectorized.routing.")}
     assert vector == {"expert_cache", "profitable_nearest_neighbour", "shared"}
     # Only the lightweight expert factory of ``shared``; the solvers load lazily.
-    shared = {m for m in loaded if m.startswith("logic.src.policies.vector.shared.")}
-    assert shared == {"logic.src.policies.vector.shared.factory"}
+    shared = {m for m in loaded if m.startswith("logic.src.policies.vectorized.routing.shared.")}
+    assert shared == {"logic.src.policies.vectorized.routing.shared.factory"}

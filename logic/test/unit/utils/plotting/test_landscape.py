@@ -64,7 +64,7 @@ def test_rl_loss_fn(mock_model):
 
 
 @patch("logic.src.utils.plotting.landscape.get_batch")
-@patch("logic.src.policies.vector.operators.vectorized_two_opt")
+@patch("logic.src.policies.vectorized.routing.operators.vectorized_two_opt")
 @patch("logic.src.utils.plotting.landscape.loss_landscapes.random_plane")
 @patch("logic.src.utils.plotting.landscape.plt")
 def test_plot_loss_landscape(mock_plt, mock_random_plane, mock_two_opt, mock_get_batch, mock_model, tmp_path):
@@ -112,7 +112,7 @@ def test_rl_loss_fn_exception_handling(mock_model, tmp_path, mocker):
     mocker.patch("loss_landscapes.random_plane", side_effect=Exception("Test Error"))
     mocker.patch("logic.src.utils.plotting.landscape.get_batch", return_value={"dist": torch.zeros((1, 5, 5))})
     mocker.patch(
-        "logic.src.policies.vector.operators.vectorized_two_opt",
+        "logic.src.policies.vectorized.routing.operators.vectorized_two_opt",
         return_value=torch.zeros((16, 51), dtype=torch.long),
     )
 

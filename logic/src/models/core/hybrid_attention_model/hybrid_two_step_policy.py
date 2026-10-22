@@ -27,10 +27,10 @@ from logic.src.models.common.autoregressive.policy import AutoregressivePolicy
 from logic.src.models.subnets.embeddings import get_init_embedding
 from logic.src.models.subnets.encoders.gat import GraphAttentionEncoder
 from logic.src.pipeline.learning.envs.base.base import RL4COEnvBase
-from logic.src.policies.vector.core.tour_aco import VectorizedTourACOPolicy
-from logic.src.policies.vector.core.tour_alns import VectorizedTourALNS
-from logic.src.policies.vector.core.tour_hgs import VectorizedTourHGS
-from logic.src.policies.vector.operators import (
+from logic.src.policies.vectorized.routing.core.tour_aco import VectorizedTourACOPolicy
+from logic.src.policies.vectorized.routing.core.tour_alns import VectorizedTourALNS
+from logic.src.policies.vectorized.routing.core.tour_hgs import VectorizedTourHGS
+from logic.src.policies.vectorized.routing.operators import (
     vectorized_cluster_removal,
     vectorized_cross_exchange,
     vectorized_ejection_chain,

@@ -20,7 +20,7 @@ from logic.src.policies.routing.other_algorithms.capacitated_vehicle_routing_pro
     find_routes,
     find_routes_ortools,
 )
-from logic.src.policies.vector.random_local_search import (
+from logic.src.policies.vectorized.routing.random_local_search import (
     RandomLocalSearchPolicy,
 )
 from logic.src.tracking.logging.structured_logging import log_benchmark_metric

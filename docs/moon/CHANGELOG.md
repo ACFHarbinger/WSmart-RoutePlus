@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Claude: vectorised policies in one package (`2026-10-22`)
+
+#### Changed
+
+- **`logic/src/policies/vectorized/`** now holds both batched policy families: `routing/` (formerly `logic/src/policies/vector/`) and `packing/` (formerly `logic/src/policies/packing/vectorized/`). Imports, lazy registries, the release manifest, tests, the API docs and the notebooks use the new paths; `from logic.src.policies.packing import LastMinuteSelector` (and the other re-exported selectors) still works. Hard break: the old module paths no longer import.
+
 ### Claude: ultrareview follow-ups (`2026-10-22`)
 
 #### Fixed

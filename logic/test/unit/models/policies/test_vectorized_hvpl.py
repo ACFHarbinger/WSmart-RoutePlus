@@ -1,6 +1,6 @@
 import pytest
 import torch
-from logic.src.policies.vector.hybrid_volleyball_premier_league import VectorizedHVPL
+from logic.src.policies.vectorized.routing.hybrid_volleyball_premier_league import VectorizedHVPL
 from tensordict import TensorDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

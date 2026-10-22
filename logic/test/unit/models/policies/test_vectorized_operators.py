@@ -2,7 +2,7 @@
 
 import pytest
 import torch
-from logic.src.policies.vector.operators import (
+from logic.src.policies.vectorized.routing.operators import (
     vectorized_greedy_insertion,
     vectorized_random_removal,
     vectorized_regret_k_insertion,
