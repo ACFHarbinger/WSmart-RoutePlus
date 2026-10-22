@@ -80,9 +80,20 @@ def parse_registry_manifest(path: Path) -> Dict[str, str]:
     return entries
 
 
+# Import names whose files sit under another folder: the bin-analysis submodule's folder name has
+# a hyphen, and logic/__init__.py maps the import name onto it.
+MODULE_ALIASES = {"logic.submodules.wsmart_bin_analysis": ("logic", "submodules", "WSmart-Bin-Analysis")}
+
+
 def module_to_file(module: str, root: Path) -> Optional[Path]:
     """Map a dotted module under ``<root>/logic`` to its file, or None."""
-    candidate = root.joinpath(*module.split("."))
+    parts = module.split(".")
+    for alias, folder in MODULE_ALIASES.items():
+        alias_parts = alias.split(".")
+        if parts[: len(alias_parts)] == alias_parts and not root.joinpath(*alias_parts).exists():
+            parts = [*folder, *parts[len(alias_parts) :]]
+            break
+    candidate = root.joinpath(*parts)
     if candidate.with_suffix(".py").is_file():
         return candidate.with_suffix(".py")
     if (candidate / "__init__.py").is_file():
