@@ -24,11 +24,11 @@ CPTP_SPEC = ProblemSpec(
     env_target="logic.src.pipeline.learning.envs.cptp:CPTPEnv",
     expand_pool=True,
 )
-TCPTP_SPEC = ProblemSpec(
-    name="tcptp",
+CPTPTC_SPEC = ProblemSpec(
+    name="cptptc",
     objective=profit_objective,
     metrics=DEFAULT_METRICS + ("time_spent",),
-    env_target="logic.src.pipeline.learning.envs.tcptp:TCPTPEnv",
+    env_target="logic.src.pipeline.learning.envs.cptptc:CPTPTCEnv",
     expand_pool=True,
     per_trip_shift=True,
 )
@@ -40,7 +40,7 @@ CVRP_SPEC = ProblemSpec(
     expand_pool=False,
 )
 
-_RELEASED = {spec.name: spec for spec in (PTP_SPEC, CPTP_SPEC, TCPTP_SPEC, CVRP_SPEC)}
+_RELEASED = {spec.name: spec for spec in (PTP_SPEC, CPTP_SPEC, CPTPTC_SPEC, CVRP_SPEC)}
 
 
 def released_spec(name: str) -> Optional[ProblemSpec]:

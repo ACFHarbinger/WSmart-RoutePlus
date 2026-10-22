@@ -23,7 +23,7 @@ from .ptp import PTPState
 STATE_EMBEDDING_REGISTRY: Dict[str, Any] = {
     "ptp": PTPState,
     "cptp": CPTPState,
-    "tcptp": CPTPState,
+    "cptptc": CPTPState,
 }
 
 __all__: list[str] = [

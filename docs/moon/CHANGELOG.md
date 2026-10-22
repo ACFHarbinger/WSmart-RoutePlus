@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Claude: TCPTP renamed CPTPTC (`2026-10-22`)
+
+#### Changed
+
+- **The Time-constrained Capacitated Profitable Tour Problem (TCPTP) is now the Capacitated Profitable Tour Problem with Time Constraints (CPTPTC)**, in code and file names: `envs/cptptc.py` (`CPTPTCEnv`, `CPTPTCGenerator`, `CPTPTC_SPEC`), `logic/configs/envs/cptptc.yaml`, the task configs, the release manifest and the tests. Hard break, as for the earlier renames: checkpoints and datasets that record `tcptp` are rejected; regenerate them.
+
 ### Claude: configuration layout mirrors the code (`2026-10-22`)
 
 #### Changed

@@ -1,9 +1,9 @@
-"""Time-constrained Capacitated Profitable Tour Problem (TCPTP) environment, generator, and task specification.
+"""Capacitated Profitable Tour Problem with Time Constraints (CPTPTC) environment, generator, and task specification.
 
-In TCPTP, each trip is bounded by two simultaneous constraints: vehicle capacity
+In CPTPTC, each trip is bounded by two simultaneous constraints: vehicle capacity
 and working shift time budget (driving time + customer service time).
 
-The module also holds ``TCPTPGenerator``, the problem's instance generator.
+The module also holds ``CPTPTCGenerator``, the problem's instance generator.
 """
 
 from __future__ import annotations
@@ -15,20 +15,20 @@ from tensordict import TensorDict
 
 from logic.src.constants.temporal import get_default_temporal_params
 from logic.src.pipeline.learning.envs.base.resources import LoadResource, ShiftTimeResource
-from logic.src.pipeline.learning.envs.common.released_specs import TCPTP_SPEC
+from logic.src.pipeline.learning.envs.common.released_specs import CPTPTC_SPEC
 from logic.src.pipeline.learning.envs.core.ptp import evaluate_profitable_tour
 from logic.src.pipeline.learning.envs.cptp import CPTP, CPTPEnv
 from logic.src.pipeline.learning.envs.ptp import PTPGenerator
 from logic.src.pipeline.learning.envs.spec import PROBLEMS
 
 
-class TCPTPGenerator(PTPGenerator):
+class CPTPTCGenerator(PTPGenerator):
     """
-    Generator for Time-constrained Capacitated Profitable Tour Problem (TCPTP) instances.
+    Generator for Capacitated Profitable Tour Problem with Time Constraints (CPTPTC) instances.
 
     Same node/waste layout as PTP (reused as-is: locations, depot, waste
     values), plus the per-instance temporal resource fields consumed by
-    ``TCPTPEnv``/``TCPTP``: the working-shift time budget, average driving
+    ``CPTPTCEnv``/``CPTPTC``: the working-shift time budget, average driving
     speed, and per-bin service time. Defaults describe one driver's 7h
     shift; pass ``shift_hours``/``avg_speed_kmh``/``service_time_h`` to
     override them.
@@ -48,7 +48,7 @@ class TCPTPGenerator(PTPGenerator):
         **kwargs,
     ) -> None:
         """
-        Initialize TCPTP generator.
+        Initialize CPTPTC generator.
 
         Args:
             args: Positional arguments forwarded to PTPGenerator.
@@ -64,7 +64,7 @@ class TCPTPGenerator(PTPGenerator):
         self.service_time_h = service_time_h if service_time_h is not None else default_service_time_h
 
     def _generate(self, batch_size: Union[int, Sequence[int]]) -> TensorDict:
-        """Generate TCPTP instances: PTP fields plus temporal resource fields.
+        """Generate CPTPTC instances: PTP fields plus temporal resource fields.
 
         Args:
             batch_size: Batch size.
@@ -84,21 +84,21 @@ class TCPTPGenerator(PTPGenerator):
         return td
 
 
-class TCPTPEnv(CPTPEnv):
-    """Time-constrained Capacitated Profitable Tour Problem Environment.
+class CPTPTCEnv(CPTPEnv):
+    """Capacitated Profitable Tour Problem with Time Constraints Environment.
 
     Attributes:
-        NAME: Environment identifier "tcptp".
+        NAME: Environment identifier "cptptc".
         explicit_stop: False. Ends on exhaustion.
     """
 
-    NAME: str = "tcptp"
-    name: str = "tcptp"
+    NAME: str = "cptptc"
+    name: str = "cptptc"
     explicit_stop: bool = True
 
     def __init__(
         self,
-        generator: Optional[TCPTPGenerator] = None,
+        generator: Optional[CPTPTCGenerator] = None,
         generator_params: Optional[dict] = None,
         waste_weight: float = 1.0,
         cost_weight: float = 1.0,
@@ -109,7 +109,7 @@ class TCPTPEnv(CPTPEnv):
     ) -> None:
         generator_params = generator_params or kwargs
         if generator is None:
-            generator = TCPTPGenerator(**generator_params, device=device)
+            generator = CPTPTCGenerator(**generator_params, device=device)
 
         super().__init__(
             generator=generator,
@@ -132,10 +132,10 @@ class TCPTPEnv(CPTPEnv):
         return finished | exhausted
 
 
-class TCPTP(CPTP):
-    """Time-constrained Capacitated Profitable Tour Problem (TCPTP) task definition."""
+class CPTPTC(CPTP):
+    """Capacitated Profitable Tour Problem with Time Constraints (CPTPTC) task definition."""
 
-    NAME: str = "tcptp"
+    NAME: str = "cptptc"
 
     @staticmethod
     def evaluate_tour(
@@ -147,7 +147,7 @@ class TCPTP(CPTP):
         shift_hours: Optional[float] = None,
         **kwargs: Any,
     ) -> Dict[str, torch.Tensor]:
-        """Evaluate a completed TCPTP tour sequence with capacity and time budget checks."""
+        """Evaluate a completed CPTPTC tour sequence with capacity and time budget checks."""
         return evaluate_profitable_tour(
             dataset,
             pi,
@@ -159,6 +159,6 @@ class TCPTP(CPTP):
         )
 
 
-PROBLEMS.register(TCPTP_SPEC)
+PROBLEMS.register(CPTPTC_SPEC)
 
-__all__ = ["TCPTPGenerator", "TCPTPEnv", "TCPTP", "TCPTP_SPEC"]
+__all__ = ["CPTPTCGenerator", "CPTPTCEnv", "CPTPTC", "CPTPTC_SPEC"]

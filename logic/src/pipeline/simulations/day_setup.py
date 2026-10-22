@@ -44,7 +44,7 @@ def apply_shared_bin_rng(bins: Any, seed: int) -> None:
 
 
 def per_trip_shift(context: Any) -> bool:
-    """True when each trip must fit the shift (TCPTP).
+    """True when each trip must fit the shift (CPTPTC).
 
     A missing spec is loaded from the released registry by problem name.
     Unreleased names are not shift-checked.

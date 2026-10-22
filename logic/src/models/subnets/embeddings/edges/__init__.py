@@ -26,7 +26,7 @@ from .tsp import TSPEdgeEmbedding
 EDGE_EMBEDDING_REGISTRY: Dict[str, Any] = {
     "ptp": TSPEdgeEmbedding,
     "cptp": CPTPEdgeEmbedding,
-    "tcptp": CPTPEdgeEmbedding,
+    "cptptc": CPTPEdgeEmbedding,
     "none": NoEdgeEmbedding,
 }
 

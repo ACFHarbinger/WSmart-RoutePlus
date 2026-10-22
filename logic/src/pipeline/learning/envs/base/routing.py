@@ -1,6 +1,6 @@
 """Base environment and generator of the routing problems.
 
-Every routing environment (PTP, CPTP, TCPTP, CVRP and the unreleased variants)
+Every routing environment (PTP, CPTP, CPTPTC, CVRP and the unreleased variants)
 builds elementary routes from the depot under declarative resource constraints
 (:mod:`logic.src.pipeline.learning.envs.base.resources`): this module holds that shared state,
 step, masking and reward logic.

@@ -24,7 +24,7 @@ from .ptp import PTPContextEmbedder
 CONTEXT_EMBEDDING_REGISTRY: Dict[str, Any] = {
     "ptp": PTPContextEmbedder,
     "cptp": CPTPContextEmbedder,
-    "tcptp": CPTPContextEmbedder,
+    "cptptc": CPTPContextEmbedder,
 }
 
 __all__: list[str] = [

@@ -56,7 +56,7 @@ from .static import StaticEmbedding
 INIT_EMBEDDING_REGISTRY: Dict[str, Any] = {
     "ptp": PTPInitEmbedding,
     "cptp": CPTPInitEmbedding,
-    "tcptp": CPTPInitEmbedding,
+    "cptptc": CPTPInitEmbedding,
 }
 
 DYNAMIC_EMBEDDING_REGISTRY: Dict[str, Any] = {
