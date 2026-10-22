@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Claude: ultrareview follow-ups (`2026-10-22`)
+
+#### Fixed
+
+- **`ProblemContext.from_kwargs`** (`interfaces/context/problem_context.py`): node `g`'s coordinates now come from row `g` of `coords`, as in `RoutingExecutionMixin.execute` (`1fbd41e`); the `ID` column holds real bin IDs, so the old lookup left every location at zero. `day_index` now falls back to the day context's `day`, so multi-period policies no longer always see day 0. Off-paper (multi-period policies only).
+
 ### Claude ultrareview fixes (`2026-10-22`)
 
 Fixes from the ultrareview of the 137 targeted functions. Apart from the two entries under "Fixed (moves paper results)", which Afonso approved on 2026-10-22, none of these changes moves a paper policy's results or the trained NA weights. The other owner-level findings are in FINDINGS.md §6.
