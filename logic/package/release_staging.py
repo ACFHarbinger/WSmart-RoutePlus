@@ -169,6 +169,43 @@ def write_release_conftest(source: Path, out: Path) -> List[str]:
     return dropped
 
 
+_IMPORT_SWEEP = r"""
+import importlib, pathlib, sys, traceback
+root = pathlib.Path.cwd()
+failures = 0
+for path in sorted((root / "logic").rglob("*.py")):
+    rel = path.relative_to(root)
+    if rel.parts[1] == "test" or "-" in str(rel):
+        continue
+    name = ".".join(rel.with_suffix("").parts).removesuffix(".__init__")
+    try:
+        importlib.import_module(name)
+    except Exception as exc:
+        failures += 1
+        print(f"IMPORT-FAIL {name}: {type(exc).__name__}: {exc}"[:300])
+sys.exit(1 if failures else 0)
+"""
+
+
+def import_sweep(out: Path, python: Optional[str] = None) -> List[str]:
+    """Import every shipped module of the staged tree with ``python``; return the failures.
+
+    The closure check is static; a module-level import that resolves only through a lazy
+    registry (``from logic.src.pipeline.learning.envs import CPTPTWTC`` when that problem's
+    module is pruned) passes it and still breaks at import time in the release.
+    """
+    import os
+    import shutil
+
+    env = dict(os.environ, PYTHONPATH=str(out))
+    result = subprocess.run(
+        [python or sys.executable, "-c", _IMPORT_SWEEP], cwd=out, env=env, capture_output=True, text=True, timeout=3600
+    )
+    for cache in out.rglob("__pycache__"):
+        shutil.rmtree(cache, ignore_errors=True)
+    return [line.removeprefix("IMPORT-FAIL ") for line in result.stdout.splitlines() if line.startswith("IMPORT-FAIL ")]
+
+
 _RESULT_RE = re.compile(r"^(?:FAILED|ERROR) (\S+?\.py)(?:::\S*)?(?: - (.*))?$")
 
 
@@ -239,7 +276,7 @@ def validate_release_tests(
                 shutil.rmtree(target, ignore_errors=True)
             else:
                 target.unlink(missing_ok=True)
-        for cache in test_root.rglob("__pycache__"):
+        for cache in out.rglob("__pycache__"):  # the run byte-compiled the whole tree
             shutil.rmtree(cache, ignore_errors=True)
     return remaining, [f"{path}: {reason}" for path, reason in sorted(excluded.items())]
 

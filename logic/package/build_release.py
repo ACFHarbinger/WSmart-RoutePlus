@@ -60,6 +60,7 @@ from logic.package.release_staging import (
     drop_pruned_init_imports,
     filter_lazy_map,
     filter_manifest_file,
+    import_sweep,
     validate_release_tests,
     write_release_conftest,
     verify_staged,
@@ -246,6 +247,8 @@ def run_build(  # noqa: C901
     ]:
         if "__pycache__" in path.parts or "notebooks" in path.parts or "docs" in path.parts:
             continue
+        if path.stem.endswith("_experiment"):  # research scripts (statsmodels); nothing imports them
+            continue
         # A real directory under the name the code imports: a symlink in the package
         # becomes a plain file in a zip or a Windows checkout, and PyInstaller's
         # collect_submodules("logic") does not see a hyphenated directory.
@@ -324,6 +327,9 @@ def run_build(  # noqa: C901
         notes.append(f"conftest.py: dropped the pruned fixture plugins {', '.join(dropped_plugins)}")
     if test_venv is not None:
         test_python = make_test_venv(out, test_venv)
+    import_failures = import_sweep(out, test_python)
+    if import_failures:
+        raise SystemExit("release modules fail to import:\n  " + "\n  ".join(import_failures))
     staged_tests = [test_out / p.relative_to(LOGIC / "test") for p in release]
     release, failures = validate_release_tests(out, staged_tests, python=test_python, data_dir=test_data)
     for path in set(staged_tests) - set(release):
