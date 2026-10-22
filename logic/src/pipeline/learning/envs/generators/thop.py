@@ -1,6 +1,6 @@
 """Instance generator for the Thief Orienteering Problem.
 
-Moved from ``logic.src.pipeline.learning.envs.thop``.
+The ThOP environment and task are in ``logic.src.pipeline.learning.envs.thop``.
 """
 
 from __future__ import annotations

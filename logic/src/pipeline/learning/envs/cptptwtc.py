@@ -33,7 +33,6 @@ from logic.src.pipeline.learning.envs.cptptc import CPTPTC, CPTPTCEnv, CPTPTCGen
 from logic.src.pipeline.learning.envs.spec import PROBLEMS, ProblemSpec
 
 
-
 class CPTPTWTCGenerator(CPTPTCGenerator):
     """Generator for CPTPTWTC instances: CPTPTC fields plus per-bin time windows.
 
