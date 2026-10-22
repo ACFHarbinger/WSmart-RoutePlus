@@ -70,4 +70,32 @@ Directory Structure and Module Descriptions:
      - unit: Component-level unit test definitions.
 """
 
+import importlib.abc
+import importlib.util
+import sys
+from pathlib import Path
+
 __all__: list[str] = []
+
+# The bin-analysis submodule lives in logic/submodules/WSmart-Bin-Analysis, a folder name Python
+# cannot import. Code imports it as logic.submodules.wsmart_bin_analysis; this finder maps that
+# name onto the submodule. It runs last, so a real wsmart_bin_analysis folder (the release
+# package stages one) takes precedence.
+_BIN_ANALYSIS_NAME = "logic.submodules.wsmart_bin_analysis"
+_BIN_ANALYSIS_DIR = Path(__file__).resolve().parent / "submodules" / "WSmart-Bin-Analysis"
+
+
+class _BinAnalysisFinder(importlib.abc.MetaPathFinder):
+    """Resolve ``logic.submodules.wsmart_bin_analysis`` to the WSmart-Bin-Analysis submodule."""
+
+    def find_spec(self, fullname, path=None, target=None):  # noqa: D102
+        init = _BIN_ANALYSIS_DIR / "__init__.py"
+        if fullname != _BIN_ANALYSIS_NAME or not init.is_file():
+            return None
+        return importlib.util.spec_from_file_location(
+            fullname, init, submodule_search_locations=[str(_BIN_ANALYSIS_DIR)]
+        )
+
+
+if not any(isinstance(finder, _BinAnalysisFinder) for finder in sys.meta_path):
+    sys.meta_path.append(_BinAnalysisFinder())
