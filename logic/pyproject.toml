@@ -1,6 +1,6 @@
 [project]
 name = "wsmart-route"
-version = "1.0.0"
+version = "1.0.2"
 description = "Machine Learning Models and Operations Research Solvers for Combinatorial Optimization Tasks"
 requires-python = ">=3.10"
 # Base install is torch-free: the classical simulator and solvers run without
