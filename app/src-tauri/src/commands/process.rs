@@ -62,6 +62,8 @@ pub async fn spawn_python_process(
     let mut cmd = Command::new(&python);
     cmd.args(&python_args)
         .current_dir(&working_dir)
+        // The simulator streams live policy telemetry (POLICY_VIZ_START lines) only to the Studio
+        .env("WSR_STUDIO", "1")
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())
         .kill_on_drop(false);

@@ -90,7 +90,7 @@ def run_sp_stage(
         rest = candidates[sp_pool_cap // 2 :]
         sampled = random.sample(rest, min(sp_pool_cap // 2, len(rest)))
         candidates = top + sampled
-        logger.debug("[SP] Pool capped %d → %d routes", len(pool), len(candidates))
+        logger.debug("[SP] Pool capped %d -> %d routes", len(pool), len(candidates))
 
     K = len(candidates)
 
