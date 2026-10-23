@@ -20,7 +20,7 @@ const STEPS = [
   },
   {
     title: "Output Browser",
-    body: "Browse assets/output/, inspect run configs, export .wsroute bundles, or drag-drop a bundle anywhere in the app to import it.",
+    body: "Browse the simulation runs (outputs/simulations/), inspect run configs, export .wsroute bundles, or drag-drop a bundle anywhere in the app to import it.",
     spotlight: "output-browser",
   },
   {

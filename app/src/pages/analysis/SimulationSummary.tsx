@@ -94,6 +94,7 @@ import { SqlQueryPanel } from "../../components/analysis/explorer/SqlQueryPanel"
 import { useDuckDbStore } from "../../store/duckdb";
 import { toast } from "sonner";
 import type { DayLogEntry } from "../../types";
+import { simOutputRoots } from "../../utils/runs/outputRoots";
 
 const SUMMARY_SIM_TABLE = "summary_sim";
 
@@ -1944,11 +1945,11 @@ export function SimulationSummary() {
     setPortfolioLoading(true);
     try {
       const refs = await scanOutputPortfolio(
-        `${projectRoot}/assets/output`,
+        simOutputRoots(projectRoot),
         PORTFOLIO_SCAN_DEFAULT
       );
       if (!refs.length) {
-        toast.info("No simulation logs found under assets/output");
+        toast.info("No simulation logs found under outputs/simulations or assets/output");
         return;
       }
       const progressId = toast.loading(`Loading portfolio… 0 / ${refs.length}`);

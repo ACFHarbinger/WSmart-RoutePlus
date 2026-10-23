@@ -274,7 +274,7 @@ export const useReportGenStore = create<ReportGenState>()(
       simHtml: false,
       simMapMode: "street" as const,
       simHeatmapLabels: "both" as const,
-      parseOutputDir: "assets/output/90days",
+      parseOutputDir: "outputs/simulations/90days",
       parseOutCsv: "public/global/simulation/simulation_summary_90d.csv",
       presFiguresDir: "public/figures/simulation/30d",
       presOut: "assets/windows/wsmart_route_results.pptx",

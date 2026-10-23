@@ -1,5 +1,5 @@
 /**
- * Discover simulation JSONL logs under assets/output runs (§G.1.4 portfolio).
+ * Discover simulation JSONL logs in the simulation output folders (§G.1.4 portfolio).
  */
 
 import { invoke } from "@tauri-apps/api/core";
@@ -34,18 +34,20 @@ export interface OutputLogRef {
 export const PORTFOLIO_SCAN_DEFAULT = 480;
 export const PORTFOLIO_SCAN_LEGACY = 48;
 
-/** Collect JSONL paths from output run folders (capped for Wasm/UI budget). */
+/** Collect JSONL paths from the run folders of one or more output roots (capped for Wasm/UI budget). */
 export async function scanOutputPortfolio(
-  outputPath: string,
+  outputPaths: string | string[],
   limit = PORTFOLIO_SCAN_DEFAULT
 ): Promise<OutputLogRef[]> {
-  const dirs = await invoke<OutputDir[]>("list_output_dirs", { outputPath });
   const refs: OutputLogRef[] = [];
 
-  for (const dir of dirs) {
-    if (refs.length >= limit) break;
-    const jsonl = await findRunJsonl(dir.path);
-    if (jsonl) refs.push({ path: jsonl, label: dir.name });
+  for (const outputPath of Array.isArray(outputPaths) ? outputPaths : [outputPaths]) {
+    const dirs = await invoke<OutputDir[]>("list_output_dirs", { outputPath });
+    for (const dir of dirs) {
+      if (refs.length >= limit) return refs;
+      const jsonl = await findRunJsonl(dir.path);
+      if (jsonl) refs.push({ path: jsonl, label: dir.name });
+    }
   }
 
   return refs;

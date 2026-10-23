@@ -17,6 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Claude: Studio follows the simulator's output layout (`2026-10-24`)
+
+#### Fixed
+
+- **Studio looked for runs in `assets/output`**, where the simulator stopped writing on 2026-10-13. The Output Browser, Experiment Tracker, Simulation Summary, Benchmark Analysis and City Comparison now scan `outputs/simulations` first and still the older `assets/output` (`app/src/utils/runs/outputRoots.ts`); dropped bundles are imported into `outputs/simulations/.imports`, and the report launcher's default parse folder is `outputs/simulations/90days`.
+- **Run detection from stdout**: the Hydra-snapshot and pruned-config parsers matched only `→`; they accept the `->` the simulator prints since 8f0ce9b77, and bare run paths under `outputs/simulations`.
+- The Studio sets `WSR_STUDIO=1` for the processes it launches (8f0ce9b77), so it still receives the live policy telemetry stream.
+
 ### Claude: run folders and console output from the third Windows test (`2026-10-23`)
 
 Third Windows test of the 1.0.2 package: 0 test failures, all 20 smoke runs identical to Linux, Ctrl+C clean. Fixed what it still found:

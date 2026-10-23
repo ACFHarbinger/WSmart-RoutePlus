@@ -52,6 +52,7 @@ import { parentRunBrushLabelFromCheckpointPath } from "../../utils/training/chec
 import { useDuckDbStore } from "../../store/duckdb";
 import { toast } from "sonner";
 import type { DayLogEntry, EvalAnalyticsRow } from "../../types";
+import { simOutputRoots } from "../../utils/runs/outputRoots";
 
 const BENCHMARK_SIM_TABLE = "benchmark_sim";
 
@@ -326,11 +327,11 @@ export function BenchmarkAnalysis() {
     setPortfolioLoading(true);
     try {
       const refs = await scanOutputPortfolio(
-        `${projectRoot}/assets/output`,
+        simOutputRoots(projectRoot),
         PORTFOLIO_SCAN_DEFAULT
       );
       if (!refs.length) {
-        toast.error("No simulation logs found under assets/output");
+        toast.error("No simulation logs found under outputs/simulations or assets/output");
         return;
       }
       const progressId = toast.loading(`Scanning portfolio… 0 / ${refs.length}`);

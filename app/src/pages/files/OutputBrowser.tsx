@@ -1,5 +1,5 @@
 /**
- * Output Browser — browse the assets/output/ directory tree (§G.14).
+ * Output Browser — browse the simulation output folders, outputs/simulations/ and the older assets/output/ (§G.14).
  *
  * Ports the PySide6 file-explorer tab. Provides:
  *   - Run list (from list_output_dirs)
@@ -48,6 +48,7 @@ import {
 } from "../../utils/training/checkpoints";
 import { portfolioRunLabel } from "../../utils/duckdb/arrowPipeline";
 import { useRecentHandoff } from "../../hooks/files/useRecentHandoff";
+import { simOutputRoots } from "../../utils/runs/outputRoots";
 
 function formatBytes(b: number) {
   if (b < 1024) return `${b} B`;
@@ -155,7 +156,7 @@ export function OutputBrowser() {
   const [runCheckpoints, setRunCheckpoints] = useState<DirEntry[] | null>(null);
   const [viewingCheckpoint, setViewingCheckpoint] = useState<DirEntry | null>(null);
 
-  const outputPath = projectRoot ? `${projectRoot}/assets/output` : null;
+  const outputPaths = useMemo(() => (projectRoot ? simOutputRoots(projectRoot) : null), [projectRoot]);
   const brushLogPath = selectedRun ? (runJsonlPath ?? selectedRun.path) : null;
   const derivedRunLabel = useLogPathRunLabelBrush(brushLogPath);
   const sourceRunLabel = useMemo(
@@ -167,21 +168,23 @@ export function OutputBrowser() {
   );
 
   const refresh = useCallback(async () => {
-    if (!outputPath) return;
+    if (!outputPaths) return;
     setLoading(true);
     try {
-      const found = await invoke<OutputDir[]>("list_output_dirs", { outputPath });
-      setRuns(found);
+      const found = await Promise.all(
+        outputPaths.map((outputPath) => invoke<OutputDir[]>("list_output_dirs", { outputPath }))
+      );
+      setRuns(found.flat());
     } catch (err) {
       toast.error("Failed to list output directories", { description: String(err) });
     } finally {
       setLoading(false);
     }
-  }, [outputPath]);
+  }, [outputPaths]);
 
   useEffect(() => {
-    if (outputPath) refresh();
-  }, [outputPath, refresh]);
+    if (outputPaths) refresh();
+  }, [outputPaths, refresh]);
 
   const selectRun = useCallback(async (run: OutputDir) => {
     handoff(run.path, "run", { storedLabel: run.name, navigate: false });
@@ -289,10 +292,10 @@ export function OutputBrowser() {
       setPendingRunPath(null);
       return;
     }
-    if (!loading && outputPath) {
+    if (!loading && outputPaths) {
       void refresh();
     }
-  }, [pendingRunPath, runs, loading, outputPath, setPendingRunPath, selectRun, refresh]);
+  }, [pendingRunPath, runs, loading, outputPaths, setPendingRunPath, selectRun, refresh]);
 
   const toggleDir = useCallback(async (entry: DirEntry) => {
     setExpandedDirs((prev) => {

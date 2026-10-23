@@ -7,6 +7,7 @@ import type { WsrouteExtractResult } from "../../types";
 import { highestPriorityKind, recentHandoffSpec } from "../../utils/runs/recentHandoff";
 import { useFileDrop } from "./useFileDrop";
 import { useRecentHandoff } from "./useRecentHandoff";
+import { simOutputRoot } from "../../utils/runs/outputRoots";
 
 function findPath(paths: string[], re: RegExp): string | undefined {
   return paths.find((p) => re.test(p));
@@ -42,7 +43,7 @@ export function useGlobalFileDrop() {
           toast.error("Set project root in Settings before importing bundles");
           return;
         }
-        const destDir = `${projectRoot}/assets/output/.imports/${Date.now()}`;
+        const destDir = `${simOutputRoot(projectRoot)}/.imports/${Date.now()}`;
         try {
           const result = await invoke<WsrouteExtractResult>("extract_wsroute_bundle", {
             path: wsroute,
@@ -73,7 +74,7 @@ export function useGlobalFileDrop() {
 
       if (classified.length === 0) {
         toast.error(
-          "Drop a .wsroute, .jsonl, .csv, checkpoint, config, training logs/, or assets/output run"
+          "Drop a .wsroute, .jsonl, .csv, checkpoint, config, training logs/, or simulation run folder"
         );
         return;
       }

@@ -38,6 +38,7 @@ import { ZenMLPipelineView } from "./ZenMLPipelineView";
 import { ChartExportButtons } from "../../components/common/ChartExportButtons";
 import { downloadCsv } from "../../utils/charts/tableExport";
 import type { MlflowMetricPoint, MlflowRun, OutputDir } from "../../types";
+import { simOutputRoots } from "../../utils/runs/outputRoots";
 
 const DEFAULT_TRACKING_URI = "mlruns";
 const DEFAULT_EXPERIMENT = "wsmart-route";
@@ -181,9 +182,13 @@ export function ExperimentTracker() {
   const refreshOutputDirs = useCallback(async () => {
     if (!projectRoot) return;
     try {
-      const found = await invoke<OutputDir[]>("list_output_dirs", {
-        outputPath: `${projectRoot}/assets/output`,
-      });
+      const found = (
+        await Promise.all(
+          simOutputRoots(projectRoot).map((outputPath) =>
+            invoke<OutputDir[]>("list_output_dirs", { outputPath })
+          )
+        )
+      ).flat();
       setOutputDirs(found.sort((a, b) => b.created_at.localeCompare(a.created_at)));
     } catch {
       setOutputDirs([]);

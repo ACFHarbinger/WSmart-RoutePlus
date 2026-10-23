@@ -61,7 +61,7 @@ export function recentFileLabel(path: string): string {
  * (§G.7 / §G.8 / §G.14 / §G.17 / §D.7).
  *
  * File extensions take priority. Bare directories use path heuristics for Lightning
- * training runs under ``logs/`` and simulation output runs under ``assets/output``.
+ * training runs under ``logs/`` and simulation output runs under ``outputs/simulations`` (``assets/output`` before 2026-10-13).
  */
 export function recentKindFromPath(path: string): RecentFileKind | null {
   const normalized = path.replace(/\\/g, "/");

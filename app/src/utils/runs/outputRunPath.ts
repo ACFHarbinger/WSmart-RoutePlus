@@ -1,5 +1,5 @@
 /**
- * Derive assets/output run directories from process stdout (§G.14 / §G.9 / §G.15).
+ * Derive simulation run directories from process stdout (§G.14 / §G.9 / §G.15).
  */
 import type { ProcessEntry } from "../../types";
 import { extractJsonlPathFromLogLines } from "../benchmark/policyTelemetryTrends";
@@ -8,9 +8,10 @@ import { trainingRunPathFromLogLines } from "../training/trainingRunPath";
 
 export type ProcessLogPathKind = "sim" | "train" | "auto";
 
-const PRUNED_CONFIG_RE = /Pruned config saved → (.+)/;
-const HYDRA_SNAPSHOT_RE = /Hydra config snapshot saved → (.+)/;
-const ASSETS_OUTPUT_RE = /([^\s'"]*assets\/output\/[^\s'"]+)/;
+// The simulator prints "->" (it printed "→" before 2026-10-24, which the Windows console garbles)
+const PRUNED_CONFIG_RE = /Pruned config saved (?:→|->) (.+)/;
+const HYDRA_SNAPSHOT_RE = /Hydra config snapshot saved (?:→|->) (.+)/;
+const ASSETS_OUTPUT_RE = /([^\s'"]*(?:outputs\/simulations|assets\/output)\/[^\s'"]+)/;
 
 /** Resolve the Hydra run root from a simulation ``.jsonl`` log path. */
 export function outputRunPathFromJsonl(jsonlPath: string): string {
@@ -43,7 +44,7 @@ export function outputRunPathFromHydraArtifact(artifactPath: string): string {
   return normalized.slice(0, lastSlash);
 }
 
-/** Scan stdout for Hydra snapshot / pruned-config / assets/output paths (newest line wins). */
+/** Scan stdout for Hydra snapshot / pruned-config / simulation output paths (newest line wins). */
 export function extractOutputRunPathFromLogLines(lines: string[]): string | null {
   for (let i = lines.length - 1; i >= 0; i--) {
     const line = lines[i]!;
@@ -68,7 +69,7 @@ export function extractOutputRunPathFromLogLines(lines: string[]): string | null
   return null;
 }
 
-/** Scan process stdout for the newest run directory under assets/output. */
+/** Scan process stdout for the newest simulation run directory. */
 export function outputRunPathFromLogLines(lines: string[]): string | null {
   const jsonl = extractJsonlPathFromLogLines(lines);
   if (jsonl) return outputRunPathFromJsonl(jsonl);

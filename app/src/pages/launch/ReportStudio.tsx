@@ -496,7 +496,7 @@ export function ReportStudio() {
           {s.simMode === "parse" ? (
             <>
               <p className="text-[11px] text-canvas-muted">
-                Parses a raw <code>assets/output/&lt;horizon&gt;days/</code> tree into the
+                Parses a raw <code>outputs/simulations/&lt;horizon&gt;days/</code> tree into the
                 summary CSV schema (policy metadata decoded from filenames).
               </p>
               <Field label="Raw Output Tree">

@@ -38,6 +38,7 @@ import { PolicyTelemetryTrendsPanel } from "../../components/analysis/telemetry/
 import { SqlQueryPanel } from "../../components/analysis/explorer/SqlQueryPanel";
 import { useDuckDbStore } from "../../store/duckdb";
 import type { DayLogEntry } from "../../types";
+import { simOutputRoots } from "../../utils/runs/outputRoots";
 const CITY_SIM_TABLE = "city_sim";
 
 interface RunFile extends CityRunSlice {}
@@ -118,12 +119,12 @@ export function CityComparison() {
 
   const loadOutputPortfolio = useCallback(async () => {
     if (!projectRoot) return;
-    const outputPath = `${projectRoot}/assets/output`;
+    const outputPath = simOutputRoots(projectRoot);
     setPortfolioLoading(true);
     try {
       const refs = await scanOutputPortfolio(outputPath, PORTFOLIO_SCAN_DEFAULT);
       if (!refs.length) {
-        toast.info("No simulation logs found under assets/output");
+        toast.info("No simulation logs found under outputs/simulations or assets/output");
         return;
       }
       toast.info(`Loading ${refs.length} logs…`);
