@@ -17,6 +17,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Claude: run folders and console output from the third Windows test (`2026-10-23`)
+
+Third Windows test of the 1.0.2 package: 0 test failures, all 20 smoke runs identical to Linux, Ctrl+C clean. Fixed what it still found:
+
+#### Fixed
+
+- **Run files under `assets/`**: the config snapshot (`hydra/`), the folders `_ensure_directories` makes, and the final realtime log still used `<root>/assets/<output_dir>/...`, left over from before results moved to `<root>/<output_dir>` (2026-10-13). They now go into the run folder with the results, so the final GUI output also lands in the same `.jsonl` as the daily lines.
+- **Policy telemetry flooded the console**: `PolicyVizStreamSession` printed the whole ALNS ring buffer to stdout (and appended it to the realtime log) every 0.5 s, so one 3-day run logged ~28 MB. The live stream and the stdout copy are now only for WSmart-Route Studio, which sets `WSR_STUDIO=1` when it launches Python (`spawn_python_process`); other runs write one final snapshot per solve to the log.
+- **ASCII arrows** in the simulator's config-snapshot and SP-pool log lines (`→` came out garbled on the Windows console).
+
 ### Claude: Windows portability from the second Windows test (`2026-10-23`)
 
 Second Windows test of the 1.0.2 package (Windows 11 VM): all 10 routing algorithms ran from source and from the executable with results identical to Linux; 17 tests failed and Ctrl+C left a process behind. Fixed:

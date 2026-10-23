@@ -225,7 +225,6 @@ def _ensure_directories(cfg: Config) -> None:
     try:
         parent_dir = os.path.join(
             udef.ROOT_DIR,
-            "assets",
             sim.output_dir,
             f"{sim.graph.n_days}days",
             f"{sim.graph.area}{sim.graph.num_loc}_{sim.graph.waste_type}",

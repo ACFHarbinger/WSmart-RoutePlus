@@ -77,3 +77,20 @@ def test_frozen_usage_names_the_executable(monkeypatch):
     monkeypatch.setattr(sys, "frozen", True, raising=False)
     monkeypatch.setattr(sys, "executable", str(Path("/opt/wsr/WSmartRoute.exe")))
     assert entry_point._usage().startswith("Usage: WSmartRoute.exe <task>")
+
+
+def test_simulation_directories_are_made_under_the_output_dir_not_assets(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+
+    import logic.src.constants as udef
+    from logic.src.pipeline.features.test import engine
+
+    monkeypatch.setattr(udef, "ROOT_DIR", str(tmp_path))
+    graph = SimpleNamespace(n_days=3, area="riomaior", num_loc=100, waste_type="plastic")
+    sim = SimpleNamespace(
+        output_dir="outputs/smoke", graph=graph, data_distribution="emp", run_name="smoke_alns", checkpoint_dir="temp"
+    )
+    engine._ensure_directories(SimpleNamespace(sim=sim))
+    results = tmp_path / "outputs" / "smoke" / "3days" / "riomaior100_plastic" / "emp" / "smoke_alns"
+    assert (results / "fill_history").is_dir()
+    assert not (tmp_path / "assets").exists()

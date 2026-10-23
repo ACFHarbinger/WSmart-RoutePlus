@@ -221,7 +221,6 @@ def simulator_testing(cfg: Config, data_size: int, device: Any) -> None:  # noqa
         # pyrefly: ignore [no-matching-overload]
         _snapshot_dir = os.path.join(
             udef.ROOT_DIR,
-            "assets",
             sim.output_dir,
             f"{sim.graph.n_days}days",
             f"{sim.graph.area}{sim.graph.num_loc}_{sim.graph.waste_type}"
@@ -252,7 +251,7 @@ def simulator_testing(cfg: Config, data_size: int, device: Any) -> None:  # noqa
                         relative_content = content.replace(repo_path, "~/Repositories/WSmart-Route")
                         with open(os.path.join(target_hydra_dir, fname), "w") as f_out:
                             f_out.write(relative_content)
-                logger.info(f"Hydra config snapshot saved → {target_hydra_dir}")
+                logger.info(f"Hydra config snapshot saved -> {target_hydra_dir}")
             else:
                 logger.warning(f"Could not find source .hydra directory at {source_hydra_dir}")
 
@@ -261,7 +260,7 @@ def simulator_testing(cfg: Config, data_size: int, device: Any) -> None:  # noqa
                 pruned_yaml = _generate_pruned_config(cfg, str(udef.ROOT_DIR))
                 with open(pruned_path, "w") as _f:
                     _f.write(pruned_yaml)
-                logger.info(f"Pruned config saved → {pruned_path}")
+                logger.info(f"Pruned config saved -> {pruned_path}")
             except Exception as _pruned_err:
                 logger.warning(f"Could not save pruned_config.yaml: {_pruned_err}")
         except Exception as _snap_err:
@@ -333,7 +332,6 @@ def simulator_testing(cfg: Config, data_size: int, device: Any) -> None:  # noqa
         # pyrefly: ignore [no-matching-overload]
         realtime_log_path = os.path.join(
             udef.ROOT_DIR,
-            "assets",
             sim.output_dir,
             f"{sim.graph.n_days}days",
             f"{sim.graph.area}{sim.graph.num_loc}_{sim.graph.waste_type}",

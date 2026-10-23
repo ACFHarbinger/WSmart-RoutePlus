@@ -10,6 +10,7 @@ Example:
 from __future__ import annotations
 
 import json
+import os
 import sys
 import threading
 from typing import Any, Dict, List, Optional
@@ -20,6 +21,14 @@ from logic.src.utils.infrastructure.setup_sims import deep_sanitize
 
 POLICY_VIZ_MARKER = "POLICY_VIZ_START:"
 STREAM_INTERVAL_SEC = 0.5  # 2 Hz refresh for §A.3 Option B
+# The Studio sets this when it launches a run. Without it nobody reads the live stream, and each
+# snapshot repeats the whole ring buffer, so a console run of ALNS printed tens of MB of it.
+STUDIO_ENV = "WSR_STUDIO"
+
+
+def studio_attached() -> bool:
+    """Whether WSmart-Route Studio launched this process and reads its live telemetry."""
+    return os.environ.get(STUDIO_ENV, "") not in ("", "0")
 
 
 def detect_policy_viz_type(viz_data: Dict[str, List[Any]]) -> str:
@@ -71,6 +80,7 @@ class PolicyVizStreamSession:
 
     Wraps routing / improvement so the Studio receives live telemetry via
     ``process:stdout`` and ``sim:policy_viz_update`` without waiting for solver completion.
+    Outside the Studio (see :func:`studio_attached`) only the final snapshot is written.
     """
 
     def __init__(
@@ -94,6 +104,8 @@ class PolicyVizStreamSession:
         self._thread: Optional[threading.Thread] = None
 
     def __enter__(self) -> "PolicyVizStreamSession":
+        if not studio_attached():
+            return self
         self._thread = threading.Thread(
             target=self._emit_loop,
             name="policy-viz-stream",
@@ -142,7 +154,7 @@ def maybe_emit_policy_viz(
         policy: Display policy name written to the log line.
         sample_idx: Simulation sample index.
         day: Simulation day (1-indexed).
-        log_path: Optional JSONL path for append; stdout is always written.
+        log_path: Optional JSONL path for append; stdout is written when the Studio is attached.
         lock: Optional thread lock for safe file appending.
 
     Returns:
@@ -170,7 +182,7 @@ def send_policy_viz_to_gui(
     log_path: Optional[str],
     lock: Optional[threading.Lock] = None,
 ) -> None:
-    """Write a ``POLICY_VIZ_START:`` line to stdout and the simulation log file.
+    """Write a ``POLICY_VIZ_START:`` line to the simulation log file (and stdout for the Studio).
 
     Args:
         viz_data: Telemetry dict from ``PolicyVizMixin.get_viz_data()``.
@@ -188,7 +200,8 @@ def send_policy_viz_to_gui(
     json_payload = json.dumps(payload, separators=(",", ":"))
     log_msg = f"{POLICY_VIZ_MARKER}{policy},{sample_idx},{day},{policy_type},{json_payload}"
 
-    print(log_msg, flush=True)
+    if studio_attached():
+        print(log_msg, flush=True)
 
     try:
         persist_policy_viz_snapshot(
