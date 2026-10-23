@@ -171,7 +171,8 @@ class NARGNNPolicy(NonAutoregressivePolicy):
         out = {
             "actions": actions,
             "reward": env.get_reward(td, actions) if env is not None else None,
-            "log_likelihood": get_log_likelihood(logprobs, None, td.get("mask", None), True),
+            # td["mask"] is the node action mask after decoding, not a per-step mask: sum every step
+            "log_likelihood": get_log_likelihood(logprobs, None, None, True),
             "heatmap": heatmap,
             "node_embed": node_embed,
         }
