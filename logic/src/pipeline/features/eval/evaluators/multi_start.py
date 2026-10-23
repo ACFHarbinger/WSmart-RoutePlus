@@ -18,7 +18,7 @@ import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from logic.src.pipeline.features.eval.eval_base import EvalBase
+from logic.src.pipeline.features.eval.eval_base import EvalBase, samples_per_second
 from logic.src.utils.functions import move_to
 
 
@@ -56,7 +56,7 @@ class MultiStartEval(EvalBase):
         """
         policy.eval()
         results = []
-        start_time = time.time()
+        start_time = time.perf_counter()
 
         for batch in tqdm(data_loader, disable=not self.progress, desc="Multi-Start Eval"):
             batch = move_to(batch, self.device)  # type: ignore[arg-type]
@@ -64,11 +64,11 @@ class MultiStartEval(EvalBase):
                 out = policy(batch, strategy="greedy", num_starts=self.num_starts, **kwargs)
                 results.append(out)
 
-        total_time = time.time() - start_time
+        total_time = time.perf_counter() - start_time
         avg_reward = torch.cat([r["reward"] for r in results]).mean().item()
 
         return {
             "avg_reward": avg_reward,
             "total_time": total_time,
-            "samples_per_second": len(data_loader.dataset) / total_time,  # type: ignore[arg-type]
+            "samples_per_second": samples_per_second(len(data_loader.dataset), total_time),  # type: ignore[arg-type]
         }

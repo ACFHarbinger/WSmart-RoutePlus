@@ -17,6 +17,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Claude: Windows portability from the second Windows test (`2026-10-23`)
+
+Second Windows test of the 1.0.2 package (Windows 11 VM): all 10 routing algorithms ran from source and from the executable with results identical to Linux; 17 tests failed and Ctrl+C left a process behind. Fixed:
+
+#### Fixed
+
+- **Ctrl+C on Windows**: the simulator's shutdown handler (and `handle_shutdown`) killed the workers only through a POSIX process group, so on Windows the `multiprocessing` Manager outlived the run and kept the executable's unpacked `_MEI*` folder locked. `parallel_runner.kill_child_processes` kills every live child first.
+- **`get_path_until_string`** split only on `os.sep`, so on Windows a forward-slash path (a `focus_graph` from a config) was never truncated and data loading got `None`; it now splits on both separators there and keeps the path's own separators.
+- **Atomic distance-matrix write**: `os.replace` onto a file another writer is replacing fails on Windows with `PermissionError`; `_replace_with_retry` retries for up to 2 s.
+- **Evaluation throughput**: the evaluators divided by a `time.time()` duration that Windows' ~15 ms clock can report as 0; they use `time.perf_counter()` and `samples_per_second` returns 0.0 for an unmeasured duration.
+- **`--help` of the executable** printed `python .`; it names the executable when frozen.
+- **Setup scripts** install the `test` extra, install the Visual C++ runtime without a UAC prompt from an elevated shell, and say how to install it by hand when the prompt is declined.
+- **Tests on Windows**: path assertions use `os.path.join`; the symlink security tests use a `make_symlink` fixture that skips when Windows refuses to create symlinks (WinError 1314); new `test_windows_portability.py`.
+
 ### Claude: release installs on a clean Windows (`2026-10-23`)
 
 First Windows test of the 1.0.2 package (Windows 11 VM): setup could not complete. Fixed:

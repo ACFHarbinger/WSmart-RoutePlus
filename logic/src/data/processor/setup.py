@@ -12,6 +12,7 @@ Example:
 import contextlib
 import os
 import tempfile
+import time
 
 import numpy as np
 import pandas as pd
@@ -43,6 +44,22 @@ def load_simulator_data(*args, **kwargs):
     from logic.src.pipeline.simulations.repository import load_simulator_data as _load_simulator_data
 
     return _load_simulator_data(*args, **kwargs)
+
+
+def _replace_with_retry(source, destination, attempts=100, delay=0.02):
+    """``os.replace`` that waits out another writer's replace of the same destination.
+
+    On Windows, replacing a file that another process or thread is replacing or reading at that
+    moment fails with ``PermissionError`` (WinError 5) instead of waiting; POSIX never does.
+    """
+    for attempt in range(attempts):
+        try:
+            os.replace(source, destination)
+            return
+        except PermissionError:
+            if attempt == attempts - 1:
+                raise
+            time.sleep(delay)
 
 
 def _save_distance_matrix_atomic(save_path, node_ids, distance_matrix):
@@ -81,7 +98,7 @@ def _save_distance_matrix_atomic(save_path, node_ids, distance_matrix):
             pd.DataFrame(matrix).to_csv(matrix_f, index=False, header=False)
             matrix_f.flush()
             os.fsync(matrix_f.fileno())
-        os.replace(temp_path, destination)
+        _replace_with_retry(temp_path, destination)
     finally:
         if temp_path is not None and os.path.exists(temp_path):
             os.unlink(temp_path)

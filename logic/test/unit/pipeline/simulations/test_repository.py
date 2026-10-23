@@ -1,5 +1,6 @@
 
 
+import os
 from unittest.mock import MagicMock, patch
 
 import logic.src.pipeline.simulations.repository as repo_module
@@ -99,8 +100,8 @@ def test_get_area_params():
 
 def test_filesystem_repository_init_and_dir():
     repo = FileSystemRepository("/dummy/root")
-    assert repo.default_data_dir == "/dummy/root/data/simulator"
-    assert repo._get_data_dir() == "/dummy/root/data/simulator"
+    assert repo.default_data_dir == os.path.join("/dummy/root", "data", "simulator")
+    assert repo._get_data_dir() == os.path.join("/dummy/root", "data", "simulator")
     assert repo._get_data_dir("/override/path") == "/override/path"
 
 
@@ -155,20 +156,20 @@ def test_get_mixrmbac_data(tmp_path):
         w, c = repo._get_mixrmbac_data("d_dir", 10, "mixrmbac")
         assert w is df_waste
         assert c is df_coords
-        mock_read.assert_any_call("d_dir/bins_waste/StockAndAccumulationRate - small.xlsx")
-        mock_read.assert_any_call("d_dir/coordinates/Coordinates - small.xlsx")
+        mock_read.assert_any_call(os.path.join("d_dir", "bins_waste", "StockAndAccumulationRate - small.xlsx"))
+        mock_read.assert_any_call(os.path.join("d_dir", "coordinates", "Coordinates - small.xlsx"))
 
         # bins <= 50
         mock_read.reset_mock()
         mock_read.side_effect = [df_waste, df_coords]
         w, c = repo._get_mixrmbac_data("d_dir", 30, "mixrmbac")
-        mock_read.assert_any_call("d_dir/bins_waste/StockAndAccumulationRate - 50bins.xlsx")
+        mock_read.assert_any_call(os.path.join("d_dir", "bins_waste", "StockAndAccumulationRate - 50bins.xlsx"))
 
         # bins <= 225
         mock_read.reset_mock()
         mock_read.side_effect = [df_waste, df_coords]
         w, c = repo._get_mixrmbac_data("d_dir", 100, "mixrmbac")
-        mock_read.assert_any_call("d_dir/bins_waste/StockAndAccumulationRate.xlsx")
+        mock_read.assert_any_call(os.path.join("d_dir", "bins_waste", "StockAndAccumulationRate.xlsx"))
 
         # bins > 225 should assert/raise
         with pytest.raises(AssertionError):
@@ -194,8 +195,8 @@ def test_get_riomaior_data(tmp_path):
         w, c = repo._get_riomaior_data("d_dir", 104, "riomaior", None)
         assert "Lng" in c.columns
         assert "Lat" in c.columns
-        mock_read.assert_any_call("d_dir/bins_waste/Rio_Maior_Sensores_2021_2024_cleaned_104.csv")
-        mock_read.assert_any_call("d_dir/coordinates/coordinates104.csv")
+        mock_read.assert_any_call(os.path.join("d_dir", "bins_waste", "Rio_Maior_Sensores_2021_2024_cleaned_104.csv"))
+        mock_read.assert_any_call(os.path.join("d_dir", "coordinates", "coordinates104.csv"))
 
         # number_of_bins != 104, wtype is specified
         mock_read.reset_mock()
@@ -214,8 +215,8 @@ def test_get_riomaior_data(tmp_path):
         w, c = repo._get_riomaior_data("d_dir", 50, "riomaior", "paper")
         assert len(c) == 1
         assert c.iloc[0]["ID"] == 1
-        mock_read.assert_any_call("d_dir/bins_waste/old_out_crude_rate[riomaior].csv")
-        mock_read.assert_any_call("d_dir/coordinates/old_out_info[riomaior].csv")
+        mock_read.assert_any_call(os.path.join("d_dir", "bins_waste", "old_out_crude_rate[riomaior].csv"))
+        mock_read.assert_any_call(os.path.join("d_dir", "coordinates", "old_out_info[riomaior].csv"))
 
         # number_of_bins > 317 should assert/raise
         with pytest.raises(AssertionError):
@@ -238,8 +239,8 @@ def test_get_figueiradafoz_data(tmp_path):
         mock_read.side_effect = [df_crude, df_info]
         w, c = repo._get_figueiradafoz_data("d_dir", 10, "figueiradafoz", "paper")
         assert len(c) == 1
-        mock_read.assert_any_call("d_dir/bins_waste/out_rate_crude[figdafoz].csv")
-        mock_read.assert_any_call("d_dir/coordinates/out_info[figdafoz].csv")
+        mock_read.assert_any_call(os.path.join("d_dir", "bins_waste", "out_rate_crude[figdafoz].csv"))
+        mock_read.assert_any_call(os.path.join("d_dir", "coordinates", "out_info[figdafoz].csv"))
 
         # bins > 1094 should assert/raise
         mock_read.reset_mock()

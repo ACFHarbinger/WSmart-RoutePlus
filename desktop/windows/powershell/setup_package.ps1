@@ -37,17 +37,23 @@ $vcUrl = "https://aka.ms/vs/17/release/vc_redist.x64.exe"
 if (-not (Test-VCRuntime)) {
     Write-Host "[setup] Microsoft Visual C++ runtime not found: installing it (Windows asks for administrator rights)"
     $installer = Join-Path $env:TEMP "vc_redist.x64.exe"
-    $code = "not run"
+    $code = "none: the installer did not run"
+    # An elevated shell installs directly; otherwise Windows shows an administrator prompt (UAC) to approve
+    $elevated = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
+        [Security.Principal.WindowsBuiltInRole]::Administrator)
+    $verb = if ($elevated) { @{} } else { @{ Verb = "RunAs" } }
     try {
         Invoke-WebRequest $vcUrl -OutFile $installer -UseBasicParsing
-        $code = (Start-Process -FilePath $installer -ArgumentList "/install", "/passive", "/norestart" -Verb RunAs -Wait -PassThru).ExitCode
+        $code = (Start-Process -FilePath $installer -ArgumentList "/install", "/passive", "/norestart" @verb -Wait -PassThru).ExitCode
     } catch {
         Write-Host "[setup] $($_.Exception.Message)"
     }
     Remove-Item $installer -ErrorAction SilentlyContinue
     # 3010: installed, restart pending; 1638: a newer version is already installed
     if (($code -notin 0, 1638, 3010) -or -not (Test-VCRuntime)) {
-        throw "[setup] the Visual C++ runtime could not be installed (exit code $code); install it from $vcUrl and run setup again"
+        throw ("[setup] the Visual C++ runtime could not be installed (exit code $code). Approve the administrator " +
+            "prompt when setup shows it, or download $vcUrl, run it as administrator with " +
+            "'/install /passive /norestart', and run setup again")
     }
 }
 
@@ -72,7 +78,7 @@ if (-not (Test-Path "logic\__init__.py")) {
 }
 
 # Creates .venv on the first run and brings it up to date afterwards.
-Invoke-Checked "uv sync" { uv sync --extra solvers --extra neural --no-dev }
+Invoke-Checked "uv sync" { uv sync --extra solvers --extra neural --extra test --no-dev }
 
 # On Windows the default torch wheel is CPU-only: with an NVIDIA GPU, switch to the CUDA build.
 if (Get-Command nvidia-smi -ErrorAction SilentlyContinue) {

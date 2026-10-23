@@ -31,7 +31,7 @@ if errorlevel 1 (
     echo [setup] Microsoft Visual C++ runtime not found: installing it ^(Windows asks for administrator rights^)
     powershell -NoProfile -ExecutionPolicy Bypass -Command "$f=Join-Path $env:TEMP 'vc_redist.x64.exe'; Invoke-WebRequest '%VCURL%' -OutFile $f -UseBasicParsing; $p=Start-Process -FilePath $f -ArgumentList '/install','/passive','/norestart' -Verb RunAs -Wait -PassThru; Remove-Item $f -ErrorAction SilentlyContinue; if ($p.ExitCode -notin 0,1638,3010) { exit 1 }"
     call :vcruntime
-    if errorlevel 1 (echo [setup] the Visual C++ runtime could not be installed; install it from %VCURL% and run setup again & goto :fail)
+    if errorlevel 1 (echo [setup] the Visual C++ runtime could not be installed. Approve the administrator prompt, or run %VCURL% as administrator with /install /passive /norestart, and run setup again & goto :fail)
 )
 
 where uv >nul 2>nul
@@ -56,7 +56,7 @@ if not exist "logic\__init__.py" (
 )
 
 rem Creates .venv on the first run and brings it up to date afterwards.
-uv sync --extra solvers --extra neural --no-dev
+uv sync --extra solvers --extra neural --extra test --no-dev
 if errorlevel 1 goto :fail
 
 rem On Windows the default torch wheel is CPU-only: with an NVIDIA GPU, switch to the CUDA build.

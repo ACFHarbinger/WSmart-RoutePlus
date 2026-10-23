@@ -3,6 +3,7 @@
 Attributes:
     run_parallel_simulations: Executes simulations in parallel using a multiprocessing pool.
     execute_and_monitor_tasks: Executes parallel tasks and monitors their progress.
+    kill_child_processes: Kills the live multiprocessing children (Manager, pool workers).
     handle_shutdown: Handles graceful shutdown on keyboard interrupt.
     cleanup_multiprocessing_pool: Safely closes and joins the multiprocessing pool.
 
@@ -239,6 +240,16 @@ def execute_and_monitor_tasks(
     return log, log_std, failed_log
 
 
+def kill_child_processes() -> None:
+    """Kill this process's live multiprocessing children (the Manager and the pool workers).
+
+    Windows has no process groups, so on a forced exit these outlive the parent (and keep a frozen
+    executable's unpacked folder locked) unless they are killed one by one.
+    """
+    for child in mp.active_children():
+        child.kill()
+
+
 def handle_shutdown(pool: Pool, original_stderr: Any) -> None:
     """
     Handle graceful shutdown on keyboard interrupt.
@@ -255,6 +266,7 @@ def handle_shutdown(pool: Pool, original_stderr: Any) -> None:
         pool.join()
     except Exception:
         pass
+    kill_child_processes()
 
     os._exit(1)
 

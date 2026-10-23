@@ -45,7 +45,7 @@ if [ ! -f logic/__init__.py ]; then
 fi
 
 # Creates .venv on the first run and brings it up to date afterwards.
-uv sync --extra solvers --extra neural --no-dev
+uv sync --extra solvers --extra neural --extra test --no-dev
 
 if [ -f data.zip ]; then
   unpack data.zip data

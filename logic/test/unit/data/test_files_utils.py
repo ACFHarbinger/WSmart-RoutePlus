@@ -55,6 +55,6 @@ def test_compose_dirpath():
 
     path = mock_fun(home, ndays, nbins, out, area)
     # Expected: /test/res/30days/madrid20_ (output_dir is relative to the repository root)
-    assert path.startswith("/test/res/30days")
+    assert path.startswith(os.path.join("/test", "res", "30days"))
     assert "30days" in path
     assert "madrid20_" in path
