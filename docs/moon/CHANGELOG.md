@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Claude: autoregressive paper submodule renamed (`2026-10-23`)
+
+#### Changed
+
+- **`assets/papers/Autoregressive-Deep-Reinforcement-Learning-for-Waste-Collection-Routing`**: the autoregressive DRL paper submodule (formerly `...-Waste-Collection-Route-Planning`) now has the name, path and URL of its GitHub repository. Existing checkouts: run `git submodule sync` after pulling.
+
 ### Claude: new problem CPTPTWTC (`2026-10-22`)
 
 #### Added
