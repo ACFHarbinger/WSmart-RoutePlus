@@ -15,10 +15,25 @@ from typing import Callable, Tuple
 import torch
 from torch import nn
 
+
+def _scatter_mean(src: torch.Tensor, index: torch.Tensor, dim: int = 0, dim_size: int | None = None) -> torch.Tensor:
+    """Mean of the rows of ``src`` grouped by ``index`` (``torch_scatter.scatter_mean`` for ``dim=0``).
+
+    Used when torch-scatter is not installed or does not load: it has no Windows wheels, and its
+    Linux wheels are built for torch 2.12, not the pinned 2.13. Rows of empty groups are zero.
+    """
+    if dim != 0:
+        raise NotImplementedError("_scatter_mean only supports dim=0")
+    size = int(index.max()) + 1 if dim_size is None else dim_size
+    out = src.new_zeros((size, *src.shape[1:])).index_add_(0, index, src)
+    count = torch.zeros(size, dtype=src.dtype, device=src.device).index_add_(0, index, torch.ones_like(index, dtype=src.dtype))
+    return out / count.clamp(min=1).view(-1, *([1] * (src.dim() - 1)))
+
+
 try:
     from torch_scatter import scatter_mean
 except (ImportError, OSError):
-    scatter_mean = None
+    scatter_mean = _scatter_mean
 
 try:
     from torch_geometric.nn import BatchNorm
@@ -74,11 +89,11 @@ class GNNLayer(nn.Module):
         """Checks if required PyG dependencies are available.
 
         Raises:
-            ImportError: If torch-geometric or torch-scatter is not available.
+            ImportError: If torch-geometric is not available.
         """
-        if BatchNorm is None or scatter_mean is None:
+        if BatchNorm is None:
             raise ImportError(
-                "GNNLayer requires torch-geometric and torch-scatter with matching CUDA extensions. "
+                "GNNLayer requires torch-geometric. "
                 "Please ensure PyG is installed and working: "
                 "https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html"
             )
@@ -111,7 +126,7 @@ class GNNLayer(nn.Module):
 
         edge_weighted = torch.sigmoid(w0) * x2[edge_index[1]]
         if self.agg_fn == "mean":
-            aggregated = scatter_mean(edge_weighted, edge_index[0], dim=0, dim_size=x0.size(0))  # type: ignore[calling-non-callable]
+            aggregated = scatter_mean(edge_weighted, edge_index[0], dim=0, dim_size=x0.size(0))
         else:
             raise NotImplementedError(f"Aggregation {self.agg_fn} not implemented")
 

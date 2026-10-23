@@ -11,6 +11,20 @@
 
 version: "1.0.2"
 
+# Python versions the release installs on. The upper bound is the newest Python every pinned
+# dependency publishes Windows and Linux wheels for (ortools 9.9: up to 3.12); `version` is written
+# to the package's .python-version, so uv picks the tested interpreter instead of the newest one.
+python:
+  requires: ">=3.10,<3.13"
+  version: "3.12"
+
+# Requirements of logic/pyproject.toml's extras that the release leaves out. torch-scatter and
+# torch-sparse have no Windows wheels and no wheels for the pinned torch 2.13 (the Linux ones are
+# built for torch 2.12 and do not load); the shipped code falls back to plain torch without them.
+dropped_requirements:
+  - torch-scatter
+  - torch-sparse
+
 # Problems released. These are `envs/<name>.py` problem names.
 problems:
   - ptp

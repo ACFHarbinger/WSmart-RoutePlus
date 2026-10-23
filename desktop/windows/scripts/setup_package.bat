@@ -3,11 +3,12 @@ rem WSmart+ Route package setup for Windows (Command Prompt).
 rem
 rem   scripts\windows\setup.bat
 rem
-rem 1. installs uv if it is missing;
-rem 2. unpacks the code archive (code.zip or wsmart_route_source.zip) when logic\ is not there yet (the 1.0.0 release's pyproject.toml sits at the root);
-rem 3. creates the virtual environment (.venv), or updates it if it already exists
-rem    (with an NVIDIA GPU it also installs the CUDA build of torch);
-rem 4. unpacks data.zip into data\.
+rem 1. installs the Microsoft Visual C++ x64 runtime if it is missing (torch needs it; asks for administrator rights);
+rem 2. installs uv if it is missing;
+rem 3. unpacks the code archive (code.zip or wsmart_route_source.zip) when logic\ is not there yet (the 1.0.0 release's pyproject.toml sits at the root);
+rem 4. creates the virtual environment (.venv) with the Python in .python-version, or updates it if it
+rem    already exists (with an NVIDIA GPU it also installs the CUDA build of torch);
+rem 5. unpacks data.zip into data\ and creates executables\ for the Windows executable.
 rem
 rem The package root is the nearest parent folder that holds pyproject.toml. Written for the exported
 rem package; do not run it against a development checkout.
@@ -22,6 +23,16 @@ goto :findroot
 :rootfound
 cd /d "%ROOT%"
 echo [setup] package root: %CD%
+
+rem torch's DLLs need the Visual C++ 2015-2022 x64 runtime, which a clean Windows does not have.
+set "VCURL=https://aka.ms/vs/17/release/vc_redist.x64.exe"
+call :vcruntime
+if errorlevel 1 (
+    echo [setup] Microsoft Visual C++ runtime not found: installing it ^(Windows asks for administrator rights^)
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "$f=Join-Path $env:TEMP 'vc_redist.x64.exe'; Invoke-WebRequest '%VCURL%' -OutFile $f -UseBasicParsing; $p=Start-Process -FilePath $f -ArgumentList '/install','/passive','/norestart' -Verb RunAs -Wait -PassThru; Remove-Item $f -ErrorAction SilentlyContinue; if ($p.ExitCode -notin 0,1638,3010) { exit 1 }"
+    call :vcruntime
+    if errorlevel 1 (echo [setup] the Visual C++ runtime could not be installed; install it from %VCURL% and run setup again & goto :fail)
+)
 
 where uv >nul 2>nul
 if errorlevel 1 (
@@ -63,9 +74,16 @@ if exist "data.zip" (
     echo [setup] no data.zip: skipping ^(place the runtime data in %CD%\data yourself^)
 )
 
+if not exist "executables" mkdir "executables"
+
 echo [setup] done. Activate the environment with:  .venv\Scripts\activate
 endlocal
 exit /b 0
+
+:vcruntime
+reg query "HKLM\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64" /v Installed 2>nul | find "0x1" >nul && exit /b 0
+if exist "%WINDIR%\System32\vcruntime140_1.dll" exit /b 0
+exit /b 1
 
 :fail
 echo [setup] failed.

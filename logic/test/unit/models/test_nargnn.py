@@ -6,7 +6,7 @@ import pytest
 import torch
 from logic.src.models.core.nargnn import NARGNN
 from logic.src.models.core.nargnn.policy import NARGNNPolicy
-from logic.src.models.subnets.encoders.nargnn.gnn_layer import BatchNorm, scatter_mean
+from logic.src.models.subnets.encoders.nargnn.gnn_layer import BatchNorm, _scatter_mean
 from tensordict import TensorDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -14,12 +14,21 @@ pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 
-PYG_AVAILABLE = BatchNorm is not None and scatter_mean is not None
+PYG_AVAILABLE = BatchNorm is not None
+
+
+def test_scatter_mean_fallback_matches_group_means():
+    """The torch-only scatter_mean (no torch-scatter wheel on Windows) averages rows per index."""
+    src = torch.tensor([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0], [7.0, 8.0]])
+    index = torch.tensor([0, 2, 0, 2])
+    out = _scatter_mean(src, index, dim=0, dim_size=4)
+    expected = torch.tensor([[3.0, 4.0], [0.0, 0.0], [5.0, 6.0], [0.0, 0.0]])
+    assert torch.equal(out, expected)
 
 
 @pytest.mark.skipif(
     not PYG_AVAILABLE,
-    reason="torch_geometric and torch_scatter are required for NARGNN",
+    reason="torch_geometric is required for NARGNN",
 )
 class TestNARGNN:
     """Tests for NARGNN Model and Policy."""
