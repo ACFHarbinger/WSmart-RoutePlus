@@ -93,6 +93,27 @@ def test_release_keeps_selected_solver_extra_without_unreleased_backends(tmp_pat
     assert not any(value.startswith("torch") for value in project["dependencies"])
 
 
+def test_release_pins_python_and_drops_listed_requirements(tmp_path):
+    import tomli
+
+    builder.write_release_pyproject(
+        {
+            "version": "1.0.2",
+            "python": {"requires": ">=3.10,<3.13", "version": "3.12"},
+            "dropped_requirements": ["torch-scatter", "torch_sparse"],
+        },
+        tmp_path,
+    )
+    text = (tmp_path / "pyproject.toml").read_text()
+    project = tomli.loads(text)["project"]
+    assert project["requires-python"] == ">=3.10,<3.13"
+    assert (tmp_path / ".python-version").read_text() == "3.12\n"
+    neural = project["optional-dependencies"]["neural"]
+    assert any(value.startswith("torch==") for value in neural)
+    assert not any(value.startswith(("torch-scatter", "torch-sparse", "torch_scatter", "torch_sparse")) for value in neural)
+    assert "data.pyg.org" not in text  # no pyg index without the packages that use it
+
+
 def test_lazy_closure_does_not_depend_on_queue_order(tmp_path, monkeypatch):
     sources = {
         "logic/__init__.py": "",

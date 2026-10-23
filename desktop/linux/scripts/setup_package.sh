@@ -5,9 +5,9 @@
 #
 # 1. installs uv if it is missing;
 # 2. unpacks the code archive (code.zip or wsmart_route_source.zip) when logic/ is not there yet (the 1.0.0 release's pyproject.toml sits at the root);
-# 3. creates the virtual environment (.venv), or updates it if it already exists;
+# 3. creates the virtual environment (.venv) with the Python in .python-version, or updates it if it already exists;
 # 4. unpacks data.zip into data/;
-# 5. makes the Linux executable runnable.
+# 5. creates executables/ and makes the Linux executable runnable.
 #
 # The package root is the nearest parent folder that holds pyproject.toml. This script is written for
 # the exported package (the main repository keeps a copy under desktop/linux/scripts; do not run it
@@ -53,6 +53,7 @@ else
   echo "[setup] no data.zip: skipping (place the runtime data in $ROOT/data yourself)"
 fi
 
+mkdir -p executables
 [ -f executables/WSmartRoute ] && chmod +x executables/WSmartRoute
 
 echo "[setup] done. Activate the environment with:  source .venv/bin/activate"

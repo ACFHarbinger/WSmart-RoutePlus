@@ -2,11 +2,12 @@
 #
 #   powershell -ExecutionPolicy Bypass -File scripts\windows\setup.ps1
 #
-# 1. installs uv if it is missing;
-# 2. unpacks the code archive (code.zip or wsmart_route_source.zip) when logic\ is not there yet (the 1.0.0 release's pyproject.toml sits at the root);
-# 3. creates the virtual environment (.venv), or updates it if it already exists
-#    (with an NVIDIA GPU it also installs the CUDA build of torch);
-# 4. unpacks data.zip into data\.
+# 1. installs the Microsoft Visual C++ x64 runtime if it is missing (torch needs it; asks for administrator rights);
+# 2. installs uv if it is missing;
+# 3. unpacks the code archive (code.zip or wsmart_route_source.zip) when logic\ is not there yet (the 1.0.0 release's pyproject.toml sits at the root);
+# 4. creates the virtual environment (.venv) with the Python in .python-version, or updates it if it
+#    already exists (with an NVIDIA GPU it also installs the CUDA build of torch);
+# 5. unpacks data.zip into data\ and creates executables\ for the Windows executable.
 #
 # The package root is the nearest parent folder that holds pyproject.toml. Written for the exported
 # package; do not run it against a development checkout.
@@ -26,6 +27,29 @@ while (-not (Test-Path (Join-Path $root "pyproject.toml"))) {
 }
 Set-Location $root
 Write-Host "[setup] package root: $root"
+
+# torch's DLLs need the Visual C++ 2015-2022 x64 runtime, which a clean Windows does not have.
+function Test-VCRuntime {
+    $key = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64" -ErrorAction SilentlyContinue
+    return ($key -and $key.Installed -eq 1) -or (Test-Path "$env:WINDIR\System32\vcruntime140_1.dll")
+}
+$vcUrl = "https://aka.ms/vs/17/release/vc_redist.x64.exe"
+if (-not (Test-VCRuntime)) {
+    Write-Host "[setup] Microsoft Visual C++ runtime not found: installing it (Windows asks for administrator rights)"
+    $installer = Join-Path $env:TEMP "vc_redist.x64.exe"
+    $code = "not run"
+    try {
+        Invoke-WebRequest $vcUrl -OutFile $installer -UseBasicParsing
+        $code = (Start-Process -FilePath $installer -ArgumentList "/install", "/passive", "/norestart" -Verb RunAs -Wait -PassThru).ExitCode
+    } catch {
+        Write-Host "[setup] $($_.Exception.Message)"
+    }
+    Remove-Item $installer -ErrorAction SilentlyContinue
+    # 3010: installed, restart pending; 1638: a newer version is already installed
+    if (($code -notin 0, 1638, 3010) -or -not (Test-VCRuntime)) {
+        throw "[setup] the Visual C++ runtime could not be installed (exit code $code); install it from $vcUrl and run setup again"
+    }
+}
 
 if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
     Write-Host "[setup] uv not found: installing it"
@@ -61,5 +85,7 @@ if (Test-Path "data.zip") {
 } else {
     Write-Host "[setup] no data.zip: skipping (place the runtime data in $root\data yourself)"
 }
+
+New-Item -ItemType Directory -Force -Path "executables" | Out-Null
 
 Write-Host "[setup] done. Activate the environment with:  .venv\Scripts\Activate.ps1"

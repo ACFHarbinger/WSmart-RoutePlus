@@ -1,7 +1,7 @@
 """Files the release builder writes or trims: the release ``pyproject.toml``, stage configs, task defaults and the docs index.
 
 Attributes:
-    write_release_pyproject: The release's root ``pyproject.toml``.
+    write_release_pyproject: The release's root ``pyproject.toml`` (and ``.python-version``).
     released_stage_configs: Stage YAMLs a shipped policy references.
     prune_policy_defaults: Drop task defaults of unreleased policies.
     write_docs_index: ``docs/release.md``.
@@ -87,10 +87,12 @@ def write_release_pyproject(manifest: dict, out: Path) -> None:
     ]
     if project.get("description"):
         lines.append(f'description = "{project["description"]}"')
-    if project.get("requires-python"):
-        lines.append(f'requires-python = "{project["requires-python"]}"')
-    deps = [pin_to_tested(dep) for dep in deps]
-    extras = {group: [pin_to_tested(dep) for dep in reqs] for group, reqs in extras.items()}
+    requires_python = manifest.get("python", {}).get("requires") or project.get("requires-python")
+    if requires_python:
+        lines.append(f'requires-python = "{requires_python}"')
+    dropped = {norm_name(name) for name in manifest.get("dropped_requirements", [])}
+    deps = [pin_to_tested(dep) for dep in deps if norm_name(dep) not in dropped]
+    extras = {group: [pin_to_tested(dep) for dep in reqs if norm_name(dep) not in dropped] for group, reqs in extras.items()}
     lines.append("# Versions pinned to the environment the release was built and tested in.")
     lines.append("dependencies = [")
     lines += [f'    "{dep}",' for dep in deps]
@@ -107,6 +109,13 @@ def write_release_pyproject(manifest: dict, out: Path) -> None:
     lines += release_uv_indexes(base, deps + [dep for group in extras.values() for dep in group])
     lines += ["", *pytest_ini_section(LOGIC.parent / "pyproject.toml")]
     (out / "pyproject.toml").write_text("\n".join(lines) + "\n")
+    if manifest.get("python", {}).get("version"):
+        (out / ".python-version").write_text(f'{manifest["python"]["version"]}\n')
+
+
+def norm_name(requirement: str) -> str:
+    """The normalised project name of a requirement (``torch_scatter>=2`` -> ``torch-scatter``)."""
+    return re.sub(r"[-_.]+", "-", re.split(r"[<>=!~ ;\[]", requirement.strip(), maxsplit=1)[0]).lower()
 
 
 def pytest_ini_section(root_pyproject: Path) -> List[str]:
