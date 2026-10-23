@@ -54,6 +54,19 @@ describe("extractOutputRunPathFromLogLines", () => {
   it("returns null with no matches", () => {
     expect(extractOutputRunPathFromLogLines(["nothing here"])).toBeNull();
   });
+
+  it("reads the ASCII arrow the simulator prints now", () => {
+    const lines = [
+      "[INFO] Hydra config snapshot saved -> C:\\wsr\\outputs/simulations\\3days\\run\\hydra",
+    ];
+    expect(extractOutputRunPathFromLogLines(lines)).toBe("C:/wsr/outputs/simulations/3days/run");
+  });
+
+  it("extracts bare outputs/simulations paths", () => {
+    expect(
+      extractOutputRunPathFromLogLines(["saved to outputs/simulations/30days/runA"])
+    ).toBe("outputs/simulations/30days/runA");
+  });
 });
 
 describe("URI helpers", () => {

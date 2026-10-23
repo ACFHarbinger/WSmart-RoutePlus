@@ -108,7 +108,7 @@ export function parseFilename(stem: string): ParsedFilename | null {
   return { strategy, cf, sl_var: slVar, improver, constructor, acceptance };
 }
 
-/** Walk an `assets/output/<horizon>days/` tree into SimRows (ports parse_output_dir). */
+/** Walk an `outputs/simulations/<horizon>days/` tree into SimRows (ports parse_output_dir). */
 export async function parseOutputDir(root: string): Promise<SimRow[]> {
   const files = await listFilesRecursive(root, { prefix: "log_", suffix: ".json" });
   const rows: SimRow[] = [];
