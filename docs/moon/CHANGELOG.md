@@ -26,6 +26,8 @@ First Windows test of the 1.0.2 package (Windows 11 VM): setup could not complet
 - **Release Python version**: `logic/release.yaml` `python:` sets the release's `requires-python` to `>=3.10,<3.13` (ortools 9.9 has no wheels past 3.12) and writes `.python-version` (3.12, the tested interpreter). Without it uv picked CPython 3.15, for which tensordict has no wheels.
 - **torch-scatter / torch-sparse dropped from the release** (`dropped_requirements:`, applied by `write_release_pyproject`): they have no Windows wheels, and their only wheels (Linux, torch 2.12.1) do not load with the pinned torch 2.13, so `uv sync` failed on Windows and the packages were dead weight on Linux. The pyg index goes with them.
 - **`GNNLayer` without torch-scatter**: `nargnn/gnn_layer.py` falls back to a plain-torch `scatter_mean` (`index_add_`), so NARGNN no longer raises ImportError when torch-scatter is missing or broken; its tests now run instead of being skipped.
+- **NARGNN log-likelihood**: `NARGNNPolicy` passed the node action mask (`[B, N+1]`) to `get_log_likelihood` as a per-step mask, a shape error hidden while the tests were skipped; it now sums every step.
+- **Summary table of a failed policy**: `display_simulation_summary_table` crashed with `TypeError` on the `None` metrics of a policy whose samples all failed, hiding the real error (for example a missing data file); it shows a dash.
 - **Windows setup scripts** (`desktop/windows/*/setup_package.*`): install the Microsoft Visual C++ x64 runtime when it is missing (torch's DLLs fail with WinError 126 without it), and create `executables\`; the Linux script creates `executables/` too.
 
 ### Claude: autoregressive paper submodule renamed (`2026-10-23`)

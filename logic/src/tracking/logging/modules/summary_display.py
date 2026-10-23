@@ -119,7 +119,9 @@ def display_simulation_summary_table(  # noqa: C901
             else:
                 val = 0.0
 
-            if key == "profit":
+            if val is None:  # a policy whose samples all failed has no value for the metric
+                row.append("—")
+            elif key == "profit":
                 row.append(f"${val:,.2f}")
             elif key in ["kg", "kg_lost"]:
                 row.append(f"{val:,.1f}kg")
