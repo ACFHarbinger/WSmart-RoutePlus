@@ -88,7 +88,7 @@ class TestDataDefects:
 class TestDirectoriesDefects:
     """Tests for directories.py defects."""
 
-    def test_symlink_traversal_blocked(self, tmp_path):
+    def test_symlink_traversal_blocked(self, tmp_path, make_symlink):
         """encrypt_directory should not follow symlinks outside the input directory."""
         from logic.src.utils.security.directories import encrypt_directory
 
@@ -100,7 +100,7 @@ class TestDirectoriesDefects:
         input_dir = tmp_path / "input"
         input_dir.mkdir()
         symlink = input_dir / "symlink.txt"
-        symlink.symlink_to(outside_file)
+        make_symlink(symlink, outside_file)
 
         output_dir = tmp_path / "output"
 

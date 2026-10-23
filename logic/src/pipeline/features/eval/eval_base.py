@@ -3,6 +3,7 @@ Base class for evaluation strategies.
 
 Attributes:
     EvalBase: Base class for evaluation strategies.
+    samples_per_second: Evaluation throughput, 0.0 when no time was measured.
 
 Example:
     >>> evaluator = EvalBase(env)
@@ -16,6 +17,11 @@ from typing import Any, Dict
 
 import torch
 from torch.utils.data import DataLoader
+
+
+def samples_per_second(n_samples: int, seconds: float) -> float:
+    """Throughput of an evaluation; 0.0 for an empty dataset or a duration the clock did not resolve."""
+    return n_samples / seconds if n_samples and seconds > 0 else 0.0
 
 
 class EvalBase(ABC):

@@ -19,7 +19,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from logic.src.data.processor.transforms import StateAugmentation
-from logic.src.pipeline.features.eval.eval_base import EvalBase
+from logic.src.pipeline.features.eval.eval_base import EvalBase, samples_per_second
 from logic.src.utils.functions import move_to
 
 
@@ -62,7 +62,7 @@ class MultiStartAugmentEval(EvalBase):
         """
         policy.eval()
         results = []
-        start_time = time.time()
+        start_time = time.perf_counter()
 
         augment = StateAugmentation(num_augment=self.num_augment)
         for batch in tqdm(data_loader, disable=not self.progress, desc="Multi-Start Augment Eval"):
@@ -77,12 +77,12 @@ class MultiStartAugmentEval(EvalBase):
                 out["reward"] = reward
                 results.append(out)
 
-        total_time = time.time() - start_time
+        total_time = time.perf_counter() - start_time
         avg_reward = torch.cat([r["reward"] for r in results]).mean().item()
 
         dataset = data_loader.dataset
         return {
             "avg_reward": avg_reward,
             "total_time": total_time,
-            "samples_per_second": len(dataset) / total_time if dataset else 0.0,  # type: ignore[arg-type]
+            "samples_per_second": samples_per_second(len(dataset) if dataset else 0, total_time),  # type: ignore[arg-type]
         }

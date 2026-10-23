@@ -7,6 +7,7 @@ Non-Hydra commands (test_suite, file_system, benchmark) must be
 invoked via ``python main.py <command>`` instead.
 """
 
+import os
 import sys
 import warnings
 from pathlib import Path
@@ -24,7 +25,8 @@ def _usage() -> str:
     """Usage text listing the tasks whose configs this tree ships (the release ships fewer)."""
     root = Path(__file__).resolve().parent
     tasks = sorted(p.stem for p in (root / "logic" / "configs" / "tasks").glob("*.yaml"))
-    text = f"Usage: python . <task> [overrides...]\nAvailable tasks: {', '.join(tasks)}"
+    program = os.path.basename(sys.executable) if getattr(sys, "frozen", False) else "python ."
+    text = f"Usage: {program} <task> [overrides...]\nAvailable tasks: {', '.join(tasks)}"
     if (root / "main.py").is_file():
         text += "\n\nFor non-Hydra commands (test_suite, file_system, etc.), use: python main.py <command>"
     return text

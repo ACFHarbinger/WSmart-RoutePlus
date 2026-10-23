@@ -35,6 +35,7 @@ from logic.src.pipeline.callbacks import PolicySummaryCallback
 
 # Local imports from modular components
 from logic.src.pipeline.features.test.orchestrator.parallel_runner import (
+    kill_child_processes,
     pool_start_method,
     run_parallel_simulations,
 )
@@ -192,6 +193,7 @@ def simulator_testing(cfg: Config, data_size: int, device: Any) -> None:  # noqa
         original_stderr.write("\n\n[WARNING] Caught CTRL+C (SIGINT). Forcing immediate shutdown...\n")
         original_stderr.flush()
         try:
+            kill_child_processes()
             if hasattr(os, "killpg"):  # POSIX: stop the workers too
                 os.killpg(os.getpgrp(), signal.SIGKILL)
             os._exit(1)

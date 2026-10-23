@@ -14,7 +14,11 @@ Example:
 from __future__ import annotations
 
 import os
+import re
 from typing import Optional
+
+# Characters that separate path components here: "/" only on POSIX, both "\\" and "/" on Windows
+_SEPARATORS = re.escape(os.sep + (os.altsep or ""))
 
 
 def get_path_until_string(path: str, end_str: str) -> Optional[str]:
@@ -26,12 +30,10 @@ def get_path_until_string(path: str, end_str: str) -> Optional[str]:
         end_str: The directory name to truncate at.
 
     Returns:
-        The truncated path or None if end_str is not found.
+        The truncated path or None if end_str is not found. The path keeps its own separators.
     """
-    path_ls = str.split(path, os.sep)
-    try:
-        idx = path_ls.index(end_str)
-        return os.sep.join(path_ls[: idx + 1])
-    except ValueError:
-        print(f"Path '{path}' does not contain '{end_str}'")
-        return None
+    for component in re.finditer(f"[^{_SEPARATORS}]+", path):
+        if component.group() == end_str:
+            return path[: component.end()]
+    print(f"Path '{path}' does not contain '{end_str}'")
+    return None
