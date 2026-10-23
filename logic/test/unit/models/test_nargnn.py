@@ -46,7 +46,7 @@ class TestNARGNN:
             done = torch.ones(td.batch_size, dtype=torch.bool) if self.step_count >= self.num_nodes else torch.zeros(td.batch_size, dtype=torch.bool)
             return {"next": TensorDict({
                 "done": done,
-                "mask": torch.ones(td.batch_size[0], self.num_nodes, dtype=torch.bool),
+                "mask": torch.ones(td.batch_size[0], self.num_nodes + 1, dtype=torch.bool),  # depot + bins
             }, batch_size=td.batch_size)}
 
         self.env.step.side_effect = mock_step
@@ -76,7 +76,7 @@ class TestNARGNN:
             "waste": torch.rand(self.batch_size, self.num_nodes),
             "depot": torch.rand(self.batch_size, 2),
             "current_node": torch.zeros(self.batch_size, dtype=torch.long),
-            "mask": torch.ones(self.batch_size, self.num_nodes, dtype=torch.bool),
+            "mask": torch.ones(self.batch_size, self.num_nodes + 1, dtype=torch.bool),  # depot + bins
             "done": torch.zeros(self.batch_size, dtype=torch.bool),
         }, batch_size=[self.batch_size])
 
@@ -96,7 +96,7 @@ class TestNARGNN:
             "waste": torch.rand(self.batch_size, self.num_nodes),
             "depot": torch.rand(self.batch_size, 2),
             "current_node": torch.zeros(self.batch_size, dtype=torch.long),
-            "mask": torch.ones(self.batch_size, self.num_nodes, dtype=torch.bool),
+            "mask": torch.ones(self.batch_size, self.num_nodes + 1, dtype=torch.bool),  # depot + bins
             "done": torch.zeros(self.batch_size, dtype=torch.bool),
         }, batch_size=[self.batch_size])
 
