@@ -9,6 +9,7 @@
  *   Python Path     — override the auto-detected Python executable (blank = auto)
  *   Theme           — dark / light / system
  *   Reduce Motion   — accessibility / low-GPU mode
+ *   Window          — background mode (BackgroundModeCard; applies at once)
  */
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
@@ -22,6 +23,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { OpenPathToolbar } from "../../components/common/OpenPathToolbar";
+import { BackgroundModeCard } from "../../components/settings/BackgroundModeCard";
 import { useStartupTiming } from "../../hooks/app/useStartupTiming";
 import { toast } from "sonner";
 import { useAppStore } from "../../store/app";
@@ -341,6 +343,7 @@ export function Settings() {
         </div>
       </div>
 
+      <BackgroundModeCard />
       {/* Save / Discard */}
       <div className="flex items-center gap-3">
         <button
