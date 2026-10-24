@@ -13,7 +13,7 @@ import { DataGenSourceAndPreview } from "../../components/launch/DataGenPreviewP
 import { useAppStore } from "../../store/app";
 import { useGlobalFiltersStore } from "../../store/filters";
 import { useLaunchTriggerStore } from "../../store/launchTrigger";
-import { TRAIN_PROBLEMS, useDataGenStore } from "../../store/launchers";
+import { DATA_GEN_PROBLEMS, useDataGenStore } from "../../store/launchers";
 import { useProcessStore } from "../../store/process";
 import { useSpawnProcess } from "../../hooks/process/useSpawnProcess";
 import { useProcessRunLabelBrush } from "../../hooks/brush/useProcessRunLabelBrush";
@@ -22,7 +22,7 @@ import { brushLogPathFromProcessLines, outputRunPathFromLogLines } from "../../u
 import { dataGenLivePanelTitle, findRecentLauncherProcessId } from "../../utils/process/launcherProcess";
 import type { DatasetPreviewStats } from "../../types";
 
-const PROBLEMS = [...TRAIN_PROBLEMS, "all"] as const;
+const PROBLEMS = DATA_GEN_PROBLEMS;
 const DISTRIBUTIONS = ["gamma3", "emp"] as const;
 const DATASET_TYPES = [
   { value: "test_simulator", label: "Test Simulator" },

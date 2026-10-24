@@ -14,26 +14,37 @@ export interface PolicyFamilyGroup {
   policies: string[];
 }
 
+/** Folders in `logic/configs/tasks/test_sim.yaml`, not name prefixes. */
+const EXACT_POLICY_IDS = new Set([
+  "bb", "bc", "bp", "bpc", "ms_bpc_sp", "cp_sat", "esdp", "ils_bd", "lbbd",
+  "ph", "st_ef", "swc_tcf",
+]);
+const NEURAL_POLICY_IDS = new Set(["hna", "na"]);
+const META_POLICY_IDS = new Set([
+  "hgs_adc", "abc", "aco_ks", "alns", "alns_ipo", "de", "es_mcl", "es_mkl",
+  "es_mpl", "fa", "filo", "ga", "genius", "gls", "hgs", "hgs_alns", "hgs_rr",
+  "hmlns", "hs", "hvpl", "ils", "kgls", "lca", "ma", "ma_dp", "ma_im", "ma_ts",
+  "mp_aco", "mp_ils", "mp_pso", "pg_clns", "pso", "psoda", "psoma", "qde",
+  "rts", "sa", "sans", "sca", "sisr", "slc", "ts", "vns", "vpl",
+  "aco_hh", "amphh", "gihh", "gp_hh", "gp_mp_hh", "hmm_gd_hh", "hulk", "mhh",
+  "phh", "shh", "ss_hh",
+]);
+
 export function groupPoliciesByFamily(
   availablePolicies: SimPolicyEntry[]
 ): PolicyFamilyGroup[] {
   const allIds = availablePolicies.map((p) => p.id);
   const paperSet = new Set<string>(PAPER_BENCHMARK_POLICIES);
   const paper = allIds.filter((id) => paperSet.has(id));
-  const exact = allIds.filter((id) =>
-    /^(bpc|gurobi|hexaly|ortools|exact)/i.test(id)
-  );
-  const metaheuristic = allIds.filter((id) =>
-    /^(alns|hgs|aco|pg_clns|psoma|sans|tabu|sa_|vns|ga_|ils)/i.test(id)
-  );
-  const neural = allIds.filter((id) =>
-    /^(am|tam|deep_decoder|moe|ptr|symnco|drl|rl_|ppo|dqn|meta)/i.test(id)
-  );
-  const rule = allIds.filter(
+  const rest = allIds.filter((id) => !paperSet.has(id));
+  const exact = rest.filter((id) => EXACT_POLICY_IDS.has(id));
+  const neural = rest.filter((id) => NEURAL_POLICY_IDS.has(id));
+  const metaheuristic = rest.filter((id) => META_POLICY_IDS.has(id));
+  const rule = rest.filter(
     (id) =>
-      !exact.includes(id) &&
-      !metaheuristic.includes(id) &&
-      !neural.includes(id)
+      !EXACT_POLICY_IDS.has(id) &&
+      !NEURAL_POLICY_IDS.has(id) &&
+      !META_POLICY_IDS.has(id)
   );
 
   return [
@@ -52,19 +63,19 @@ export function groupPoliciesByFamily(
     {
       id: "exact",
       label: "Exact & Mathematical Solvers",
-      description: "Branch-and-Price-and-Cut (BPC), Gurobi, OR-Tools, Hexaly",
+      description: "BPC, SWC-TCF, LBBD, and the other exact methods",
       policies: exact,
     },
     {
       id: "neural",
       label: "Neural & DRL Policies",
-      description: "Constructive attention & reinforcement learning decoders",
+      description: "Neural agent (na) and hierarchical neural agent (hna)",
       policies: neural,
     },
     {
       id: "constructive",
       label: "Constructive & Threshold Heuristics",
-      description: "SWC-TCF, regular periodic, and threshold rules",
+      description: "Matheuristics, learning heuristics, and other rules",
       policies: rule,
     },
   ].filter((g) => g.policies.length > 0);
@@ -98,12 +109,16 @@ export function buildSimHydraArgs(params: {
   return [...args, ...extra];
 }
 
+/** Same template as `sim.graph.load_dataset` in `logic/configs/tasks/test_sim.yaml`. */
 export function resolveSimDatasetPreviewPath(
   area: string,
   numLoc: number,
-  distribution: string
+  distribution: string,
+  days: number,
+  samples: number,
+  seed: number
 ): string {
-  return `data/${area}_${numLoc}_${distribution}_test.npz`;
+  return `data/simulator/datasets/${area}${numLoc}_${distribution}_wsr${days}_N${samples}_seed${seed}.npz`;
 }
 
 export function SimPolicySelectorCard({
