@@ -1,28 +1,13 @@
 /**
  * Training Hub — full-featured training / HPO / eval launcher (§G.10).
  *
- * Form parameters mirror the controller justfile exactly:
- *   train:    envs, models, model.encoder.type, train.batch_size, seed
+ * Form parameters mirror the controller justfile and Hydra configs:
+ *   train:    envs@train.env, models, model.encoder.type, train.batch_size, seed
  *   hpo:      hpo.n_trials, hpo.method, hpo.num_workers
  *   eval:     eval.policy.model.load_path, eval.datasets, eval.val_size, eval.decoding.strategy
- *
- * After launch the "Live Progress" panel subscribes to process:stdout events
- * and parses JSON metric lines emitted by the Lightning CSV logger / custom
- * training scripts. Accumulates metrics into a live ECharts chart.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import ReactECharts from "echarts-for-react";
-import type EChartsReact from "echarts-for-react";
-import { Play, ChevronDown, ChevronUp, Terminal, FolderOpen } from "lucide-react";
-import { GlobalFilterBar } from "../../components/layout/GlobalFilterBar";
-import { OpenPathToolbar } from "../../components/common/OpenPathToolbar";
-import { parentRunBrushLabelFromCheckpointPath } from "../../utils/training/checkpoints";
-import { EvalCheckpointLiveCard } from "../../components/monitor/eval/EvalCheckpointLiveCard";
-import { EvalResultCard } from "../../components/monitor/eval/EvalResultCard";
-import { LauncherLivePanel } from "../../components/monitor/live/LauncherLivePanel";
-import { TrainHpoLivePanel } from "../../components/monitor/live/TrainHpoLivePanel";
-import { ProcessIdFooter } from "../../components/monitor/process/ProcessIdFooter";
-import { ChartExportButtons } from "../../components/common/ChartExportButtons";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Play, ChevronDown, ChevronUp, Terminal } from "lucide-react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useAppStore } from "../../store/app";
 import { useGlobalFiltersStore } from "../../store/filters";
@@ -51,13 +36,18 @@ import {
   findRecentTrainProcessId,
   trainHpoLivePanelTitle,
 } from "../../utils/training/trainingProcess";
-import type { ProcessEntry, TrainingMetricsRow } from "../../types";
-
-type Mode = "train" | "hpo" | "meta" | "eval";
+import {
+  buildTrainHubHydraArgs,
+  PROBLEMS,
+  TrainHubLiveSection,
+  type TrainHubMode,
+} from "../../components/launch/TrainHubSections";
+import { TrainHubModeSpecificCard } from "../../components/launch/TrainHubForms";
+import type { ProcessEntry } from "../../types";
 
 function findRecentHubProcessId(
   processes: Record<string, ProcessEntry>,
-  hubMode: Mode
+  hubMode: TrainHubMode
 ): string | null {
   if (hubMode === "hpo") return findRecentHpoProcessId(processes);
   if (hubMode === "meta") return findRecentMetaTrainProcessId(processes);
@@ -65,113 +55,31 @@ function findRecentHubProcessId(
   return findRecentTrainProcessId(processes);
 }
 
-const PROBLEMS = ["vrpp", "wcvrp", "scwcvrp"] as const;
-const MODELS = ["am", "tam", "ddam", "moe"] as const;
-const ENCODERS = ["gat", "gcn", "mha"] as const;
-const HPO_METHODS = ["nsgaii", "tpe", "dehb", "random"] as const;
-const META_STRATEGIES = ["hrl", "weight_learning", "hypernet", "maml"] as const;
-const EVAL_STRATEGIES = ["greedy", "sampling", "beam"] as const;
-
-function LiveChart({
-  metrics,
-  logScale,
+function SelectField<T extends string>({
+  label,
+  value,
+  onChange,
+  options,
 }: {
-  metrics: TrainingMetricsRow[];
-  logScale: boolean;
+  label: string;
+  value: T;
+  onChange: (v: T) => void;
+  options: readonly T[];
 }) {
-  const chartRef = useRef<EChartsReact | null>(null);
-  const option = useMemo(() => {
-    const xs = metrics.map((_, i) => i + 1);
-    const scaleLoss = (v: number | null | undefined) =>
-      v == null ? null : logScale ? Math.max(v, 1e-8) : v;
-    const trainLoss = metrics.map((m) => scaleLoss(m.train_loss));
-    const valLoss = metrics.map((m) => scaleLoss(m.val_loss));
-    const reward = metrics.map((m) => m.reward ?? null);
-    const hasReward = reward.some((v) => v !== null);
-
-    return {
-      backgroundColor: "transparent",
-      tooltip: { trigger: "axis" as const },
-      legend: {
-        data: ["train_loss", "val_loss", ...(hasReward ? ["reward"] : [])],
-        textStyle: { color: "#9090b0", fontSize: 10 },
-        top: 0,
-      },
-      grid: { left: 50, right: hasReward ? 55 : 10, top: 30, bottom: 30 },
-      xAxis: {
-        type: "category" as const,
-        data: xs,
-        axisLabel: { color: "#9090b0", fontSize: 9 },
-        name: "update",
-        nameTextStyle: { color: "#9090b0" },
-      },
-      yAxis: [
-        {
-          type: (logScale ? "log" : "value") as "log" | "value",
-          logBase: 10,
-          name: logScale ? "Loss (log)" : "Loss",
-          nameTextStyle: { color: "#9090b0", fontSize: 9 },
-          axisLabel: { color: "#9090b0", fontSize: 9 },
-          minorSplitLine: { show: false },
-        },
-        ...(hasReward
-          ? [{
-              type: "value" as const,
-              name: "Reward",
-              nameTextStyle: { color: "#9090b0", fontSize: 9 },
-              axisLabel: { color: "#9090b0", fontSize: 9 },
-              splitLine: { show: false },
-            }]
-          : []),
-      ],
-      series: [
-        {
-          name: "train_loss",
-          type: "line" as const,
-          smooth: true,
-          symbol: "none",
-          color: "#6366f1",
-          data: trainLoss,
-        },
-        {
-          name: "val_loss",
-          type: "line" as const,
-          smooth: true,
-          symbol: "none",
-          lineStyle: { type: "dashed" as const },
-          color: "#34d399",
-          data: valLoss,
-        },
-        ...(hasReward
-          ? [{
-              name: "reward",
-              type: "line" as const,
-              smooth: true,
-              symbol: "none",
-              yAxisIndex: 1,
-              lineStyle: { type: "dotted" as const },
-              color: "#fbbf24",
-              data: reward,
-            }]
-          : []),
-      ],
-    };
-  }, [metrics, logScale]);
-
   return (
-    <div className="space-y-1">
-      <p className="text-[10px] text-canvas-muted">
-        {logScale
-          ? "Log-scale loss axis — reward stays linear on right axis"
-          : "Linear loss · reward on right axis when present"}
-      </p>
-      <div className="flex justify-end">
-        <ChartExportButtons
-          chartRef={{ current: chartRef.current }}
-          filenameStem="training-live"
-        />
-      </div>
-      <ReactECharts ref={chartRef} option={option} style={{ height: 200 }} />
+    <div className="flex flex-col gap-1">
+      <label className="text-xs text-canvas-muted">{label}</label>
+      <select
+        className="select-base w-36"
+        value={value}
+        onChange={(e) => onChange(e.target.value as T)}
+      >
+        {options.map((o) => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }
@@ -182,17 +90,32 @@ export function TrainingHub() {
   const logScale = useGlobalFiltersStore((s) => s.logScale);
   const { spawn, launching } = useSpawnProcess();
 
-  // Persisted form state (§D.4 session persistence)
   const {
-    trainMode: mode, problem, seed, wandb, extraOverrides,
-    model, encoder, batchSize, epochs,
-    hpoTrials, hpoMethod, hpoWorkers,
-    metaStrategy, metaLr, metaHistoryLength, mrlBatchSize, mrlStep,
-    checkpointPath, evalDataset, evalSamples, evalStrategy,
+    trainMode: mode,
+    problem,
+    seed,
+    wandb,
+    extraOverrides,
+    model,
+    encoder,
+    batchSize,
+    epochs,
+    hpoTrials,
+    hpoMethod,
+    hpoWorkers,
+    metaStrategy,
+    metaLr,
+    metaHistoryLength,
+    mrlBatchSize,
+    mrlStep,
+    checkpointPath,
+    evalDataset,
+    evalSamples,
+    evalStrategy,
     patch,
   } = useTrainHubStore();
 
-  const setTrainMode = (v: Mode) => patch({ trainMode: v });
+  const setTrainMode = (v: TrainHubMode) => patch({ trainMode: v });
   const setProblem = (v: string) => patch({ problem: v });
   const setSeed = (v: number) => patch({ seed: v });
   const setWandb = (v: boolean) => patch({ wandb: v });
@@ -214,10 +137,8 @@ export function TrainingHub() {
   const setEvalSamples = (v: number) => patch({ evalSamples: v });
   const setEvalStrategy = (v: string) => patch({ evalStrategy: v });
 
-  // Ephemeral UI state
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  // Live progress tracking (local id set on launch; falls back to process store after navigation)
   const [liveProcessId, setLiveProcessId] = useState<string | null>(null);
   const processes = useProcessStore((s) => s.processes);
   const displayProcessId = useMemo(
@@ -241,78 +162,68 @@ export function TrainingHub() {
       filters: [{ name: "Dataset", extensions: ["pkl", "json", "csv"] }],
     })) as string | null;
     if (!path) return;
-    // CSV datasets are reopenable in Data Explorer via Command Palette recents (§G.6 / §G.10).
     if (/\.csv$/i.test(path)) {
       handoff(path, "csv", { navigate: false });
     }
     setEvalDataset(path);
   };
 
-  const hydraArgs = useMemo(() => {
-    const base = [`seed=${seed}`];
-    if (!wandb) base.push("tracker.enabled=false");
-
-    const extra = extraOverrides
-      .split("\n")
-      .map((l) => l.trim())
-      .filter(Boolean);
-
-    if (mode === "train") {
-      return [
-        ...base,
-        `envs=${problem}`,
-        `models=${model}`,
-        `model.encoder.type=${encoder}`,
-        `train.batch_size=${batchSize}`,
-        `train.max_epochs=${epochs}`,
-        `hpo.n_trials=0`,
-        ...extra,
-      ];
-    }
-    if (mode === "hpo") {
-      return [
-        ...base,
-        `envs=${problem}`,
-        `models=${model}`,
-        `model.encoder.type=${encoder}`,
-        `hpo.n_trials=${hpoTrials}`,
-        `hpo.method=${hpoMethod}`,
-        `hpo.num_workers=${hpoWorkers}`,
-        ...extra,
-      ];
-    }
-    if (mode === "meta") {
-      // meta_train uses the `tracking` config group (no `tracker.enabled` key)
-      return [
-        `seed=${seed}`,
-        ...(wandb ? ["tracking.wandb_mode=online"] : []),
-        `meta_rl.meta_strategy=${metaStrategy}`,
-        `meta_rl.meta_lr=${metaLr}`,
-        `meta_rl.meta_history_length=${metaHistoryLength}`,
-        `meta_rl.mrl_batch_size=${mrlBatchSize}`,
-        `meta_rl.mrl_step=${mrlStep}`,
-        ...extra,
-      ];
-    }
-    return [
-      ...base,
-      ...(checkpointPath ? [`eval.policy.model.load_path=${checkpointPath}`] : []),
-      ...(evalDataset ? [`eval.datasets=[${evalDataset}]`] : []),
-      `eval.problem=${problem}`,
-      `eval.val_size=${evalSamples}`,
-      `eval.decoding.strategy=${evalStrategy}`,
-      ...extra,
-    ];
-  }, [
-    mode, seed, wandb, problem, model, encoder, batchSize, epochs,
-    hpoTrials, hpoMethod, hpoWorkers,
-    metaStrategy, metaLr, metaHistoryLength, mrlBatchSize, mrlStep,
-    checkpointPath, evalDataset, evalSamples, evalStrategy,
-    extraOverrides,
-  ]);
+  const hydraArgs = useMemo(
+    () =>
+      buildTrainHubHydraArgs({
+        mode,
+        seed,
+        wandb,
+        problem,
+        model,
+        encoder,
+        batchSize,
+        epochs,
+        hpoTrials,
+        hpoMethod,
+        hpoWorkers,
+        metaStrategy,
+        metaLr,
+        metaHistoryLength,
+        mrlBatchSize,
+        mrlStep,
+        checkpointPath,
+        evalDataset,
+        evalSamples,
+        evalStrategy,
+        extraOverrides,
+      }),
+    [
+      mode,
+      seed,
+      wandb,
+      problem,
+      model,
+      encoder,
+      batchSize,
+      epochs,
+      hpoTrials,
+      hpoMethod,
+      hpoWorkers,
+      metaStrategy,
+      metaLr,
+      metaHistoryLength,
+      mrlBatchSize,
+      mrlStep,
+      checkpointPath,
+      evalDataset,
+      evalSamples,
+      evalStrategy,
+      extraOverrides,
+    ]
+  );
 
   const entrypoint =
-    mode === "meta" ? "meta_train" : mode === "train" || mode === "hpo" ? "train" : "eval";
+    mode === "meta"
+      ? "meta_train"
+      : mode === "train" || mode === "hpo"
+        ? "train"
+        : "eval";
   const commandPreview = `python main.py ${entrypoint} \\\n  ${hydraArgs.join(" \\\n  ")}`;
 
   const launch = useCallback(async () => {
@@ -328,32 +239,8 @@ export function TrainingHub() {
 
   const trainNonce = useLaunchTriggerStore((s) => s.trainNonce);
   useEffect(() => {
-    if (trainNonce > 0) launch();
+    if (trainNonce > 0) void launch();
   }, [trainNonce, launch]);
-
-  function SelectField<T extends string>({
-    label, value, onChange, options,
-  }: {
-    label: string;
-    value: T;
-    onChange: (v: T) => void;
-    options: readonly T[];
-  }) {
-    return (
-      <div className="flex flex-col gap-1">
-        <label className="text-xs text-canvas-muted">{label}</label>
-        <select
-          className="select-base w-36"
-          value={value}
-          onChange={(e) => onChange(e.target.value as T)}
-        >
-          {options.map((o) => (
-            <option key={o} value={o}>{o}</option>
-          ))}
-        </select>
-      </div>
-    );
-  }
 
   const liveLogLines = displayProc?.logLines ?? [];
   const liveRunLabel = useProcessRunLabelBrush(displayProcessId, liveLogLines);
@@ -385,7 +272,8 @@ export function TrainingHub() {
   const isDone = runStatus !== null && runStatus !== "running";
   const latestMetric = liveMetrics[liveMetrics.length - 1];
   const showTrainingAnalytics =
-    displayProcessId != null && (mode === "train" || mode === "hpo" || mode === "meta");
+    displayProcessId != null &&
+    (mode === "train" || mode === "hpo" || mode === "meta");
   const trainHpoLiveTitle = trainHpoLivePanelTitle({
     isRunning: !isDone,
     status: runStatus ?? undefined,
@@ -395,8 +283,13 @@ export function TrainingHub() {
   });
 
   const evalCheckpointName = useMemo(() => {
-    if (!displayProcessId || !displayProc) return checkpointPath.split(/[/\\]/).pop() ?? "checkpoint";
-    return checkpointLabelFromEvalProcess(displayProcessId, displayProc.command ?? "");
+    if (!displayProcessId || !displayProc) {
+      return checkpointPath.split(/[/\\]/).pop() ?? "checkpoint";
+    }
+    return checkpointLabelFromEvalProcess(
+      displayProcessId,
+      displayProc.command ?? ""
+    );
   }, [displayProcessId, displayProc, checkpointPath]);
 
   const evalResult = useMemo(() => {
@@ -419,7 +312,9 @@ export function TrainingHub() {
   });
 
   const completedEvalCheckpointPath =
-    mode === "eval" && isDone && runStatus === "completed" ? checkpointPath || null : null;
+    mode === "eval" && isDone && runStatus === "completed"
+      ? checkpointPath || null
+      : null;
 
   return (
     <div className="space-y-4 max-w-2xl">
@@ -431,9 +326,19 @@ export function TrainingHub() {
             <button
               key={m}
               onClick={() => setTrainMode(m)}
-              className={mode === m ? "btn-primary text-sm py-1.5 px-4" : "btn-ghost text-sm py-1.5 px-4"}
+              className={
+                mode === m
+                  ? "btn-primary text-sm py-1.5 px-4"
+                  : "btn-ghost text-sm py-1.5 px-4"
+              }
             >
-              {m === "train" ? "Train" : m === "hpo" ? "HPO Sweep" : m === "meta" ? "Meta-RL" : "Evaluate"}
+              {m === "train"
+                ? "Train"
+                : m === "hpo"
+                  ? "HPO Sweep"
+                  : m === "meta"
+                    ? "Meta-RL"
+                    : "Evaluate"}
             </button>
           ))}
         </div>
@@ -444,7 +349,12 @@ export function TrainingHub() {
         <h2 className="text-sm font-semibold text-gray-200">Common</h2>
         <div className="flex flex-wrap gap-4 items-end">
           {mode !== "meta" && (
-            <SelectField label="Problem" value={problem} onChange={setProblem} options={PROBLEMS} />
+            <SelectField
+              label="Problem"
+              value={problem}
+              onChange={setProblem}
+              options={PROBLEMS}
+            />
           )}
           <div className="flex flex-col gap-1">
             <label className="text-xs text-canvas-muted">Seed</label>
@@ -468,167 +378,44 @@ export function TrainingHub() {
         </div>
       </div>
 
-      {/* Mode-specific form */}
-      {(mode === "train" || mode === "hpo") && (
-        <div className="card space-y-4">
-          <h2 className="text-sm font-semibold text-gray-200">
-            {mode === "train" ? "Model Architecture" : "HPO Configuration"}
-          </h2>
-          <div className="flex flex-wrap gap-4 items-end">
-            <SelectField label="Model" value={model} onChange={setModel} options={MODELS} />
-            <SelectField label="Encoder" value={encoder} onChange={setEncoder} options={ENCODERS} />
-            {mode === "train" && (
-              <>
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs text-canvas-muted">Batch Size</label>
-                  <input type="number" className="input-base font-mono text-sm w-24" value={batchSize} min={1} onChange={(e) => setBatchSize(Number(e.target.value))} />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs text-canvas-muted">Max Epochs</label>
-                  <input type="number" className="input-base font-mono text-sm w-24" value={epochs} min={1} onChange={(e) => setEpochs(Number(e.target.value))} />
-                </div>
-              </>
-            )}
-            {mode === "hpo" && (
-              <>
-                <SelectField label="Method" value={hpoMethod} onChange={setHpoMethod} options={HPO_METHODS} />
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs text-canvas-muted">Trials</label>
-                  <input type="number" className="input-base font-mono text-sm w-24" value={hpoTrials} min={1} onChange={(e) => setHpoTrials(Number(e.target.value))} />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs text-canvas-muted">Workers</label>
-                  <input type="number" className="input-base font-mono text-sm w-20" value={hpoWorkers} min={1} onChange={(e) => setHpoWorkers(Number(e.target.value))} />
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {mode === "meta" && (
-        <div className="card space-y-4">
-          <h2 className="text-sm font-semibold text-gray-200">Meta-Learning</h2>
-          <div className="flex flex-wrap gap-4 items-end">
-            <SelectField
-              label="Strategy"
-              value={metaStrategy}
-              onChange={setMetaStrategy}
-              options={META_STRATEGIES}
-            />
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-canvas-muted">Meta LR</label>
-              <input
-                type="number"
-                className="input-base font-mono text-sm w-28"
-                value={metaLr}
-                min={0}
-                step={0.000001}
-                onChange={(e) => setMetaLr(Number(e.target.value))}
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-canvas-muted">History Length</label>
-              <input
-                type="number"
-                className="input-base font-mono text-sm w-24"
-                value={metaHistoryLength}
-                min={1}
-                onChange={(e) => setMetaHistoryLength(Number(e.target.value))}
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-canvas-muted">Batch Size</label>
-              <input
-                type="number"
-                className="input-base font-mono text-sm w-24"
-                value={mrlBatchSize}
-                min={1}
-                onChange={(e) => setMrlBatchSize(Number(e.target.value))}
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-canvas-muted">Meta Step</label>
-              <input
-                type="number"
-                className="input-base font-mono text-sm w-20"
-                value={mrlStep}
-                min={1}
-                onChange={(e) => setMrlStep(Number(e.target.value))}
-              />
-            </div>
-          </div>
-          <p className="text-[10px] text-canvas-muted">
-            Runs <code>main.py meta_train</code> — problem defaults to the meta-RL environment
-            (cwcvrp); override via <code>meta_rl.env.name</code> in Extra Hydra Overrides.
-          </p>
-        </div>
-      )}
-
-      {mode === "eval" && (
-        <div className="card space-y-4">
-          <h2 className="text-sm font-semibold text-gray-200">Evaluation</h2>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-canvas-muted">Checkpoint</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                className="input-base font-mono text-xs flex-1"
-                value={checkpointPath}
-                onChange={(e) => setCheckpointPath(e.target.value)}
-                placeholder="path/to/best.pt"
-              />
-              <button onClick={pickCheckpoint} className="btn-ghost text-xs flex items-center gap-1">
-                <FolderOpen size={12} />
-              </button>
-            </div>
-            {checkpointPath.trim() ? (
-              <OpenPathToolbar
-                path={checkpointPath.trim()}
-                projectRoot={projectRoot}
-                kind="checkpoint"
-                labeled
-                labeledIconSize={12}
-                brushLabel={parentRunBrushLabelFromCheckpointPath(
-                  checkpointPath.trim(),
-                  projectRoot
-                )}
-                chipClassName="max-w-full"
-              />
-            ) : null}
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-canvas-muted">Dataset</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                className="input-base font-mono text-xs flex-1"
-                value={evalDataset}
-                onChange={(e) => setEvalDataset(e.target.value)}
-                placeholder="path/to/dataset.pkl"
-              />
-              <button onClick={pickDataset} className="btn-ghost text-xs flex items-center gap-1">
-                <FolderOpen size={12} />
-              </button>
-            </div>
-            {evalDataset.trim() ? (
-              <OpenPathToolbar
-                path={evalDataset.trim()}
-                projectRoot={projectRoot}
-                chipClassName="max-w-full"
-                handoff={false}
-              />
-            ) : null}
-          </div>
-          <div className="flex flex-wrap gap-4 items-end">
-            <SelectField label="Strategy" value={evalStrategy} onChange={setEvalStrategy} options={EVAL_STRATEGIES} />
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-canvas-muted">Val Samples</label>
-              <input type="number" className="input-base font-mono text-sm w-24" value={evalSamples} min={1} onChange={(e) => setEvalSamples(Number(e.target.value))} />
-            </div>
-          </div>
-        </div>
-      )}
+      <TrainHubModeSpecificCard
+        mode={mode}
+        model={model}
+        setModel={setModel}
+        encoder={encoder}
+        setEncoder={setEncoder}
+        batchSize={batchSize}
+        setBatchSize={setBatchSize}
+        epochs={epochs}
+        setEpochs={setEpochs}
+        hpoMethod={hpoMethod}
+        setHpoMethod={setHpoMethod}
+        hpoTrials={hpoTrials}
+        setHpoTrials={setHpoTrials}
+        hpoWorkers={hpoWorkers}
+        setHpoWorkers={setHpoWorkers}
+        metaStrategy={metaStrategy}
+        setMetaStrategy={setMetaStrategy}
+        metaLr={metaLr}
+        setMetaLr={setMetaLr}
+        metaHistoryLength={metaHistoryLength}
+        setMetaHistoryLength={setMetaHistoryLength}
+        mrlBatchSize={mrlBatchSize}
+        setMrlBatchSize={setMrlBatchSize}
+        mrlStep={mrlStep}
+        setMrlStep={setMrlStep}
+        checkpointPath={checkpointPath}
+        setCheckpointPath={setCheckpointPath}
+        pickCheckpoint={() => void pickCheckpoint()}
+        evalDataset={evalDataset}
+        setEvalDataset={setEvalDataset}
+        pickDataset={() => void pickDataset()}
+        evalStrategy={evalStrategy}
+        setEvalStrategy={setEvalStrategy}
+        evalSamples={evalSamples}
+        setEvalSamples={setEvalSamples}
+        projectRoot={projectRoot}
+      />
 
       {/* Advanced */}
       <div className="card">
@@ -664,10 +451,12 @@ export function TrainingHub() {
       {/* Launch */}
       <div className="flex items-center gap-3">
         {!projectRoot && (
-          <p className="text-xs text-accent-warning">Configure Project Root in Settings first.</p>
+          <p className="text-xs text-accent-warning">
+            Configure Project Root in Settings first.
+          </p>
         )}
         <button
-          onClick={launch}
+          onClick={() => void launch()}
           disabled={launching || !projectRoot}
           className="btn-primary flex items-center gap-2"
         >
@@ -676,139 +465,34 @@ export function TrainingHub() {
         </button>
       </div>
 
-      {/* Live progress panel */}
       {displayProcessId && (
-        <GlobalFilterBar
-          showLogScale
-          runLabels={liveRunLabel ? [liveRunLabel] : []}
-        />
-      )}
-
-      {displayProcessId && mode === "eval" && displayProc && (
-        <LauncherLivePanel
-          header={{
-            status: isDone ? runStatus ?? "running" : "running",
-            title: evalLiveTitle,
-            runLabel: liveRunLabel,
-            logPath: liveLogPath,
-            projectRoot,
-            navMesh: {
-              kind: "eval",
-              hideSelf: true,
-              hideHub: true,
-              showPostRun: isDone && runStatus === "completed",
-              showOutputBrowser: isDone && runStatus === "completed",
-              outputRunPath,
-              checkpointPath: completedEvalCheckpointPath,
-              onOpenAnalytics:
-                evalResult && hasEvalMetrics(evalResult) ? openEvalInAnalytics : undefined,
-            },
-          }}
-          footer={
-            <ProcessIdFooter
-              processId={displayProcessId}
-              logPath={liveLogPath}
-              runLabel={liveRunLabel}
-              projectRoot={projectRoot}
-            />
-          }
-          logLines={liveLogLines}
-          logTailWaiting={!isDone}
-        >
-          {!isDone || !evalResult || !hasEvalMetrics(evalResult) ? (
-            <EvalCheckpointLiveCard
-              procId={displayProcessId}
-              checkpointName={evalCheckpointName}
-              checkpointPath={completedEvalCheckpointPath ?? (checkpointPath.trim() || null)}
-              projectRoot={projectRoot}
-              status={displayProc.status}
-              isRunning={!isDone}
-              result={evalResult ?? undefined}
-              logLines={liveLogLines}
-              showLogTail={false}
-            />
-          ) : (
-            <EvalResultCard
-              result={evalResult}
-              projectRoot={projectRoot}
-              onOpenAnalytics={openEvalInAnalytics}
-            />
-          )}
-        </LauncherLivePanel>
-      )}
-
-      {displayProcessId && mode !== "eval" && (
-        <TrainHpoLivePanel
-          header={{
-            status: isDone ? runStatus : "running",
-            title: trainHpoLiveTitle,
-            runLabel: liveRunLabel,
-            logPath: liveLogPath,
-            projectRoot,
-            showLiveSuffix: !isDone,
-            metricCount: liveMetrics.length,
-            healthCount: liveHealth.length,
-            attentionCount: liveAttention.length,
-            layout: "split",
-            runningIcon: "activity",
-            titleTone: "heading",
-            navMesh: {
-              hideHub: true,
-              showTrainLinks: showTrainingAnalytics,
-              showHpoLinks: mode === "hpo",
-              showOutputBrowser: isDone && runStatus === "completed",
-              outputRunPath,
-              trainingRunPath,
-            },
-          }}
-          progress={
-            !isDone && displayProcessId
-              ? {
-                  processId: displayProcessId,
-                  fallbackTotal: mode === "train" ? epochs : undefined,
-                  fallbackValue: latestMetric?.epoch,
-                }
-              : undefined
-          }
-          showAnalytics={showTrainingAnalytics}
-          analyticsWrapperClassName={isDone ? undefined : "pt-0"}
-          analytics={{
-            metrics: liveMetrics,
-            healthEntries: liveHealth,
-            attentionEntries: liveAttention,
-            logScale,
-            theme: effectiveTheme,
-            exportNamePrefix: "training-hub",
-            isPostRun: isDone,
-            postRunFallback:
-              "Post-run shortcuts — open Training Monitor or Output Browser for this run",
-            middleContent: (
-              <>
-                {liveMetrics.length >= 2 && <GlobalFilterBar showLogScale />}
-                {liveMetrics.length >= 2 ? (
-                  <LiveChart metrics={liveMetrics} logScale={logScale} />
-                ) : (
-                  <p className="text-xs text-canvas-muted">
-                    {isDone
-                      ? liveMetrics.length === 0
-                        ? "No JSON metric lines detected in stdout."
-                        : "Only one metric update received."
-                      : "Waiting for metric JSON lines on stdout…"}
-                  </p>
-                )}
-              </>
-            ),
-          }}
-          logLines={liveLogLines}
-          logTailWaiting={!isDone}
-          footer={
-            <ProcessIdFooter
-              processId={displayProcessId}
-              logPath={liveLogPath}
-              runLabel={liveRunLabel}
-              projectRoot={projectRoot}
-            />
-          }
+        <TrainHubLiveSection
+          displayProcessId={displayProcessId}
+          mode={mode}
+          displayProc={displayProc}
+          isDone={isDone}
+          runStatus={runStatus}
+          evalLiveTitle={evalLiveTitle}
+          trainHpoLiveTitle={trainHpoLiveTitle}
+          liveRunLabel={liveRunLabel}
+          liveLogPath={liveLogPath}
+          projectRoot={projectRoot}
+          outputRunPath={outputRunPath}
+          trainingRunPath={trainingRunPath}
+          completedEvalCheckpointPath={completedEvalCheckpointPath}
+          evalResult={evalResult}
+          openEvalInAnalytics={openEvalInAnalytics}
+          liveLogLines={liveLogLines}
+          evalCheckpointName={evalCheckpointName}
+          checkpointPath={checkpointPath}
+          liveMetrics={liveMetrics}
+          liveHealth={liveHealth}
+          liveAttention={liveAttention}
+          showTrainingAnalytics={showTrainingAnalytics}
+          epochs={epochs}
+          latestMetric={latestMetric}
+          logScale={logScale}
+          effectiveTheme={effectiveTheme}
         />
       )}
     </div>

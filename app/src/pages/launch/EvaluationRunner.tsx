@@ -1,39 +1,21 @@
 /**
  * Evaluation Runner — multi-checkpoint evaluation and comparison (§G.12).
- *
- * Spawns one `main.py eval` process per checkpoint so results can be compared
- * side-by-side in the Process Monitor. Each run is tagged with the checkpoint
- * filename so logs are easy to identify.
- *
- * Hydra args mirror the controller justfile eval recipe:
- *   eval.policy.model.load_path, eval.datasets, eval.problem,
- *   eval.val_size, eval.decoding.strategy
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import ReactECharts from "echarts-for-react";
-import type EChartsReact from "echarts-for-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  BarChart3,
   ChevronDown,
   ChevronUp,
-  Download,
   FolderOpen,
   Play,
   Plus,
   Terminal,
-  Trash2,
 } from "lucide-react";
-import { GlobalFilterBar } from "../../components/layout/GlobalFilterBar";
-import { ChartExportButtons } from "../../components/common/ChartExportButtons";
 import { OpenPathToolbar } from "../../components/common/OpenPathToolbar";
-import { parentRunBrushLabelFromCheckpointPath } from "../../utils/training/checkpoints";
-import { EvalCheckpointLiveCard } from "../../components/monitor/eval/EvalCheckpointLiveCard";
-import { LauncherLivePanel } from "../../components/monitor/live/LauncherLivePanel";
-import { ProcessIdFooter } from "../../components/monitor/process/ProcessIdFooter";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useAppStore } from "../../store/app";
 import { useGlobalFiltersStore } from "../../store/filters";
 import { useLaunchTriggerStore } from "../../store/launchTrigger";
+import { TRAIN_PROBLEMS } from "../../store/launchers";
 import { useProcessStore } from "../../store/process";
 import { useRecentHandoff } from "../../hooks/files/useRecentHandoff";
 import { useSpawnProcess } from "../../hooks/process/useSpawnProcess";
@@ -43,246 +25,22 @@ import {
   checkpointLabelFromEvalProcess,
   checkpointPathFromEvalCommand,
   collectEvalResultFromLogLines,
-  evalLivePanelTitle,
   hasEvalMetrics,
   toEvalAnalyticsRows,
 } from "../../utils/benchmark/evalResults";
 import { useProcessRunLabelBrush } from "../../hooks/brush/useProcessRunLabelBrush";
 import { findRecentEvalProcessIds } from "../../utils/process/launcherProcess";
 import { brushLogPathFromProcessLines, outputRunPathFromLogLines } from "../../utils/runs/outputRunPath";
+import {
+  CheckpointRow,
+  EvalRunnerLiveSection,
+  ResultsGrid,
+  type CheckpointEntry,
+} from "../../components/launch/EvalRunnerSections";
 
-const PROBLEMS = ["vrpp", "wcvrp", "scwcvrp"] as const;
+const PROBLEMS = TRAIN_PROBLEMS;
 const STRATEGIES = ["greedy", "sampling", "beam"] as const;
 const DEVICES = ["cpu", "cuda:0", "cuda:1"] as const;
-
-interface CheckpointEntry {
-  id: string;
-  path: string;
-}
-
-const EVAL_CHART_METRICS = [
-  { key: "cost", label: "Tour Cost" },
-  { key: "gap", label: "Optimality Gap (%)" },
-  { key: "time", label: "Time (s)" },
-] as const;
-
-const EVAL_COLORS = ["#6366f1", "#34d399", "#fbbf24", "#f87171", "#818cf8", "#a3e635"];
-
-function ResultsGrid({
-  results,
-  logScale,
-  runLabels,
-  projectRoot,
-  onOpenAnalytics,
-}: {
-  results: EvalResult[];
-  logScale: boolean;
-  runLabels?: string[];
-  projectRoot?: string | null;
-  onOpenAnalytics: () => void;
-}) {
-  const chartRefs = useRef<Record<string, EChartsReact | null>>({});
-  const allKeys = Array.from(
-    new Set(results.flatMap((r) => Object.keys(r).filter((k) => k !== "checkpointName")))
-  );
-  const numKeys = allKeys.filter((k) =>
-    results.some((r) => typeof r[k] === "number")
-  );
-  const checkpoints = results.map((r) => r.checkpointName);
-
-  const makeBarOption = (metricKey: string, metricLabel: string) => ({
-    backgroundColor: "transparent",
-    grid: { left: 50, right: 10, top: 20, bottom: 55 },
-    xAxis: {
-      type: "category",
-      data: checkpoints,
-      axisLabel: { color: "#9090b0", fontSize: 9, rotate: 25 },
-    },
-    yAxis: {
-      type: (logScale ? "log" : "value") as "log" | "value",
-      logBase: 10,
-      name: metricLabel,
-      nameTextStyle: { color: "#9090b0" },
-      axisLabel: { color: "#9090b0", fontSize: 10 },
-      minorSplitLine: { show: false },
-    },
-    series: [
-      {
-        type: "bar",
-        data: results.map((r, i) => {
-          const raw = (r[metricKey] as number | undefined) ?? 0;
-          return {
-            value: logScale ? Math.max(raw, 0.001) : raw,
-            itemStyle: { color: EVAL_COLORS[i % EVAL_COLORS.length] },
-          };
-        }),
-      },
-    ],
-    tooltip: { trigger: "axis" },
-  });
-
-  const exportCsv = () => {
-    const cols = ["checkpoint", ...numKeys];
-    const rows = results.map((r) =>
-      cols.map((c) => (c === "checkpoint" ? r.checkpointName : String(r[c] ?? ""))).join(",")
-    );
-    const csv = [cols.join(","), ...rows].join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "eval_results.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  return (
-    <div className="space-y-3">
-      <GlobalFilterBar showLogScale runLabels={runLabels} />
-
-      <div className="card space-y-3">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-gray-200">Results ({results.length})</h2>
-        <div className="flex items-center gap-2">
-          <button onClick={onOpenAnalytics} className="btn-ghost text-xs flex items-center gap-1">
-            <BarChart3 size={12} />
-            Open in Analytics →
-          </button>
-          <button onClick={exportCsv} className="btn-ghost text-xs flex items-center gap-1">
-            <Download size={12} />
-            Export CSV
-          </button>
-        </div>
-      </div>
-      <p className="text-[10px] text-canvas-muted">
-        {logScale
-          ? "Log-scale bars — tour cost · optimality gap · eval time per checkpoint"
-          : "Linear bars — tour cost · optimality gap · eval time per checkpoint"}
-      </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {EVAL_CHART_METRICS.filter(({ key }) => numKeys.includes(key)).map(({ key, label }) => (
-          <div key={key} className="rounded-lg border border-canvas-border/40 p-2">
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-xs text-canvas-muted">{label}</p>
-              <ChartExportButtons
-                chartRef={{ current: chartRefs.current[key] }}
-                filenameStem={`eval-runner-${key}`}
-                size={10}
-              />
-            </div>
-            <ReactECharts
-              ref={(el) => {
-                chartRefs.current[key] = el;
-              }}
-              option={makeBarOption(key, label)}
-              style={{ height: 180 }}
-            />
-          </div>
-        ))}
-      </div>
-
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs">
-          <thead>
-            <tr className="border-b border-canvas-border">
-              <th className="text-left py-1.5 pr-4 text-canvas-muted font-medium">Checkpoint</th>
-              {numKeys.map((k) => (
-                <th key={k} className="text-right py-1.5 px-3 text-canvas-muted font-medium">
-                  {k}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-canvas-border/30">
-            {results.map((r) => (
-              <tr key={r.checkpointName} className="hover:bg-canvas-hover/40">
-                <td className="py-1.5 pr-4 max-w-[240px]">
-                  {r.checkpointPath ? (
-                    <OpenPathToolbar
-                      path={r.checkpointPath}
-                      projectRoot={projectRoot}
-                      kind="checkpoint"
-                      label={r.checkpointName}
-                      brushLabel={parentRunBrushLabelFromCheckpointPath(
-                        r.checkpointPath,
-                        projectRoot
-                      )}
-                      chipClassName="max-w-full"
-                      className="max-w-full min-w-0"
-                    />
-                  ) : (
-                    <span className="font-mono text-gray-300 truncate">{r.checkpointName}</span>
-                  )}
-                </td>
-                {numKeys.map((k) => (
-                  <td key={k} className="py-1.5 px-3 text-right font-mono text-gray-400">
-                    {typeof r[k] === "number"
-                      ? (r[k] as number).toFixed(4)
-                      : "—"}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      </div>
-    </div>
-  );
-}
-
-function CheckpointRow({
-  entry,
-  projectRoot,
-  onRemove,
-  onPickFile,
-  onChange,
-}: {
-  entry: CheckpointEntry;
-  projectRoot?: string | null;
-  onRemove: () => void;
-  onPickFile: () => void;
-  onChange: (path: string) => void;
-}) {
-  const trimmedPath = entry.path.trim();
-
-  return (
-    <div className="space-y-1">
-      <div className="flex items-center gap-2">
-        <input
-          type="text"
-          className="input-base font-mono text-xs flex-1"
-          value={entry.path}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="path/to/checkpoint.pt"
-        />
-        <button
-          onClick={onPickFile}
-          className="btn-ghost p-1.5 text-canvas-muted hover:text-gray-200"
-          title="Browse"
-        >
-          <FolderOpen size={13} />
-        </button>
-        <button
-          onClick={onRemove}
-          className="btn-ghost p-1.5 text-accent-danger/60 hover:text-accent-danger"
-          title="Remove"
-        >
-          <Trash2 size={13} />
-        </button>
-      </div>
-      {trimmedPath ? (
-        <OpenPathToolbar
-          path={trimmedPath}
-          projectRoot={projectRoot}
-          kind="checkpoint"
-          brushLabel={parentRunBrushLabelFromCheckpointPath(trimmedPath, projectRoot)}
-          chipClassName="max-w-full"
-        />
-      ) : null}
-    </div>
-  );
-}
 
 export function EvaluationRunner() {
   const { pendingCheckpoint, setPendingCheckpoint, setMode, setPendingEvalResults } =
@@ -291,12 +49,10 @@ export function EvaluationRunner() {
   const logScale = useGlobalFiltersStore((s) => s.logScale);
   const { spawn, launching } = useSpawnProcess();
 
-  // Checkpoint list — pre-populated from Training Monitor "Load in Eval Runner" action
   const [checkpoints, setCheckpoints] = useState<CheckpointEntry[]>([
     { id: "ckpt_0", path: "" },
   ]);
 
-  // Consume pendingCheckpoint set by TrainingMonitor checkpoint browser
   useEffect(() => {
     if (pendingCheckpoint) {
       handoff(pendingCheckpoint, "checkpoint", { navigate: false });
@@ -305,18 +61,14 @@ export function EvaluationRunner() {
     }
   }, [pendingCheckpoint, handoff, setPendingCheckpoint]);
 
-  // Eval params
-  const [problem, setProblem] = useState("vrpp");
+  const [problem, setProblem] = useState<string>("ptp");
   const [datasetPath, setDatasetPath] = useState("");
   const [valSize, setValSize] = useState(10);
   const [strategy, setStrategy] = useState("greedy");
   const [device, setDevice] = useState("cpu");
-
-  // Advanced
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [extraOverrides, setExtraOverrides] = useState("");
 
-  // Live progress state (§D.2 / §G.12); falls back to process store after navigation
   const [liveProcessIds, setLiveProcessIds] = useState<string[]>([]);
   const processes = useProcessStore((s) => s.processes);
   const displayProcessIds = useMemo(
@@ -353,10 +105,14 @@ export function EvaluationRunner() {
 
   const liveRunSummary = useMemo(() => {
     if (displayProcessIds.length === 0) return null;
-    const statuses = displayProcessIds.map((id) => processes[id]?.status ?? "running");
+    const statuses = displayProcessIds.map(
+      (id) => processes[id]?.status ?? "running"
+    );
     const running = statuses.filter((s) => s === "running").length;
     const completed = statuses.filter((s) => s === "completed").length;
-    const failed = statuses.filter((s) => s === "failed" || s === "cancelled").length;
+    const failed = statuses.filter(
+      (s) => s === "failed" || s === "cancelled"
+    ).length;
     const allDone = running === 0;
     const aggregate: ProcessStatus | "running" = allDone
       ? failed > 0 && completed === 0
@@ -370,12 +126,16 @@ export function EvaluationRunner() {
 
   const completedCheckpointPath = useMemo(() => {
     if (validCheckpoints.length !== 1) return null;
-    if (!liveRunSummary?.allDone || liveRunSummary.aggregate !== "completed") return null;
+    if (!liveRunSummary?.allDone || liveRunSummary.aggregate !== "completed") {
+      return null;
+    }
     return validCheckpoints[0].path;
   }, [validCheckpoints, liveRunSummary]);
 
   const outputRunPath = useMemo(() => {
-    const lines = displayProcessIds.flatMap((id) => processes[id]?.logLines ?? []);
+    const lines = displayProcessIds.flatMap(
+      (id) => processes[id]?.logLines ?? []
+    );
     return outputRunPathFromLogLines(lines);
   }, [displayProcessIds, processes]);
 
@@ -383,14 +143,19 @@ export function EvaluationRunner() {
   const primaryEvalLogLines = primaryEvalProcessId
     ? processes[primaryEvalProcessId]?.logLines
     : undefined;
-  const liveRunLabel = useProcessRunLabelBrush(primaryEvalProcessId, primaryEvalLogLines);
+  const liveRunLabel = useProcessRunLabelBrush(
+    primaryEvalProcessId,
+    primaryEvalLogLines
+  );
   const liveLogPath = useMemo(
     () => brushLogPathFromProcessLines(primaryEvalLogLines ?? [], "sim"),
     [primaryEvalLogLines]
   );
 
   const singleCheckpointEval = displayProcessIds.length === 1;
-  const singleEvalProc = singleCheckpointEval ? processes[displayProcessIds[0]] : undefined;
+  const singleEvalProc = singleCheckpointEval
+    ? processes[displayProcessIds[0]]
+    : undefined;
   const singleEvalLogLines = singleEvalProc?.logLines ?? [];
   const singleEvalLogTailWaiting = singleEvalProc?.status === "running";
 
@@ -406,7 +171,9 @@ export function EvaluationRunner() {
   };
 
   const updateCheckpoint = (id: string, path: string) => {
-    setCheckpoints((prev) => prev.map((c) => (c.id === id ? { ...c, path } : c)));
+    setCheckpoints((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, path } : c))
+    );
   };
 
   const pickCheckpointFile = async (id: string) => {
@@ -423,14 +190,12 @@ export function EvaluationRunner() {
       filters: [{ name: "Dataset", extensions: ["pkl", "json", "csv"] }],
     })) as string | null;
     if (!path) return;
-    // CSV datasets are reopenable in Data Explorer via Command Palette recents (§G.6 / §G.12).
     if (/\.csv$/i.test(path)) {
       handoff(path, "csv", { navigate: false });
     }
     setDatasetPath(path);
   };
 
-  // Show preview for first checkpoint
   const previewArgs = useMemo(() => {
     const ckpt = validCheckpoints[0];
     const base = [
@@ -446,7 +211,15 @@ export function EvaluationRunner() {
       .map((l) => l.trim())
       .filter(Boolean);
     return [...base, ...extra];
-  }, [problem, valSize, strategy, device, validCheckpoints, datasetPath, extraOverrides]);
+  }, [
+    problem,
+    valSize,
+    strategy,
+    device,
+    validCheckpoints,
+    datasetPath,
+    extraOverrides,
+  ]);
 
   const commandPreview =
     validCheckpoints.length > 1
@@ -491,13 +264,20 @@ export function EvaluationRunner() {
 
     setLiveProcessIds(launchedIds);
   }, [
-    projectRoot, validCheckpoints, problem, valSize, strategy, device,
-    datasetPath, extraOverrides, spawn,
+    projectRoot,
+    validCheckpoints,
+    problem,
+    valSize,
+    strategy,
+    device,
+    datasetPath,
+    extraOverrides,
+    spawn,
   ]);
 
   const evalNonce = useLaunchTriggerStore((s) => s.evalNonce);
   useEffect(() => {
-    if (evalNonce > 0) launch();
+    if (evalNonce > 0) void launch();
   }, [evalNonce, launch]);
 
   return (
@@ -522,7 +302,7 @@ export function EvaluationRunner() {
               entry={c}
               projectRoot={projectRoot}
               onRemove={() => removeCheckpoint(c.id)}
-              onPickFile={() => pickCheckpointFile(c.id)}
+              onPickFile={() => void pickCheckpointFile(c.id)}
               onChange={(path) => updateCheckpoint(c.id, path)}
             />
           ))}
@@ -530,7 +310,8 @@ export function EvaluationRunner() {
 
         {validCheckpoints.length > 1 && (
           <p className="text-xs text-canvas-muted">
-            {validCheckpoints.length} checkpoints — each will be evaluated in a separate process.
+            {validCheckpoints.length} checkpoints — each will be evaluated in a
+            separate process.
           </p>
         )}
       </div>
@@ -539,9 +320,10 @@ export function EvaluationRunner() {
       <div className="card space-y-4">
         <h2 className="text-sm font-semibold text-gray-200">Evaluation</h2>
 
-        {/* Dataset */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs text-canvas-muted">Dataset (optional — uses config default if empty)</label>
+          <label className="text-xs text-canvas-muted">
+            Dataset (optional — uses config default if empty)
+          </label>
           <div className="flex gap-2">
             <input
               type="text"
@@ -550,7 +332,10 @@ export function EvaluationRunner() {
               onChange={(e) => setDatasetPath(e.target.value)}
               placeholder="path/to/dataset.pkl"
             />
-            <button onClick={pickDataset} className="btn-ghost p-1.5 text-canvas-muted hover:text-gray-200">
+            <button
+              onClick={() => void pickDataset()}
+              className="btn-ghost p-1.5 text-canvas-muted hover:text-gray-200"
+            >
               <FolderOpen size={13} />
             </button>
           </div>
@@ -565,7 +350,6 @@ export function EvaluationRunner() {
         </div>
 
         <div className="flex flex-wrap gap-4">
-          {/* Problem */}
           <div className="flex flex-col gap-1.5">
             <label className="text-xs text-canvas-muted">Problem</label>
             <select
@@ -573,11 +357,14 @@ export function EvaluationRunner() {
               value={problem}
               onChange={(e) => setProblem(e.target.value)}
             >
-              {PROBLEMS.map((p) => <option key={p} value={p}>{p}</option>)}
+              {PROBLEMS.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
             </select>
           </div>
 
-          {/* Strategy */}
           <div className="flex flex-col gap-1.5">
             <label className="text-xs text-canvas-muted">Decoding Strategy</label>
             <select
@@ -585,11 +372,14 @@ export function EvaluationRunner() {
               value={strategy}
               onChange={(e) => setStrategy(e.target.value)}
             >
-              {STRATEGIES.map((s) => <option key={s} value={s}>{s}</option>)}
+              {STRATEGIES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
             </select>
           </div>
 
-          {/* Device */}
           <div className="flex flex-col gap-1.5">
             <label className="text-xs text-canvas-muted">Device</label>
             <select
@@ -597,11 +387,14 @@ export function EvaluationRunner() {
               value={device}
               onChange={(e) => setDevice(e.target.value)}
             >
-              {DEVICES.map((d) => <option key={d} value={d}>{d}</option>)}
+              {DEVICES.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
             </select>
           </div>
 
-          {/* Val size */}
           <div className="flex flex-col gap-1.5">
             <label className="text-xs text-canvas-muted">Val Samples</label>
             <input
@@ -642,11 +435,12 @@ export function EvaluationRunner() {
           Command preview
         </div>
         <pre className="font-mono text-xs text-accent-secondary whitespace-pre-wrap bg-canvas-bg rounded-lg p-3">
-          {validCheckpoints.length > 0 ? commandPreview : "# Add a checkpoint path above to see the command"}
+          {validCheckpoints.length > 0
+            ? commandPreview
+            : "# Add a checkpoint path above to see the command"}
         </pre>
       </div>
 
-      {/* Results grid */}
       {results.length > 0 && (
         <ResultsGrid
           results={results}
@@ -660,13 +454,17 @@ export function EvaluationRunner() {
       {/* Launch */}
       <div className="flex items-center gap-3">
         {!projectRoot && (
-          <p className="text-xs text-accent-warning">Configure Project Root in Settings first.</p>
+          <p className="text-xs text-accent-warning">
+            Configure Project Root in Settings first.
+          </p>
         )}
         {validCheckpoints.length === 0 && (
-          <p className="text-xs text-accent-warning">Add at least one checkpoint path.</p>
+          <p className="text-xs text-accent-warning">
+            Add at least one checkpoint path.
+          </p>
         )}
         <button
-          onClick={launch}
+          onClick={() => void launch()}
           disabled={launching || !projectRoot || validCheckpoints.length === 0}
           className="btn-primary flex items-center gap-2"
         >
@@ -674,79 +472,27 @@ export function EvaluationRunner() {
           {launching
             ? "Launching…"
             : validCheckpoints.length > 1
-            ? `Evaluate ${validCheckpoints.length} Checkpoints`
-            : "Evaluate"}
+              ? `Evaluate ${validCheckpoints.length} Checkpoints`
+              : "Evaluate"}
         </button>
       </div>
 
-      {/* Live progress panel */}
       {liveRunSummary && (
-        <LauncherLivePanel
-          header={{
-            status: liveRunSummary.allDone
-              ? liveRunSummary.aggregate
-              : "running",
-            title: evalLivePanelTitle({
-              isRunning: !liveRunSummary.allDone,
-              status: liveRunSummary.aggregate,
-              total: displayProcessIds.length,
-              runningCount: liveRunSummary.running,
-              completedCount: liveRunSummary.completed,
-            }),
-            runLabel: liveRunLabel,
-            logPath: liveLogPath,
-            projectRoot,
-            navMesh: {
-              kind: "eval",
-              hideSelf: true,
-              showPostRun:
-                liveRunSummary.allDone && liveRunSummary.aggregate === "completed",
-              showOutputBrowser:
-                liveRunSummary.allDone && liveRunSummary.aggregate === "completed",
-              outputRunPath,
-              checkpointPath: completedCheckpointPath,
-              onOpenAnalytics: results.length > 0 ? openInAnalytics : undefined,
-            },
-          }}
-          footer={
-            <ProcessIdFooter
-              processIds={displayProcessIds}
-              logPath={liveLogPath}
-              runLabel={liveRunLabel}
-              projectRoot={projectRoot}
-            />
-          }
-          logLines={singleCheckpointEval ? singleEvalLogLines : undefined}
-          logTailWaiting={singleCheckpointEval ? singleEvalLogTailWaiting : false}
-        >
-          <div className="space-y-2">
-            {displayProcessIds.map((procId) => {
-              const proc = processes[procId];
-              const ckptName = checkpointLabelFromEvalProcess(
-                procId,
-                proc?.command ?? ""
-              );
-              const isRunning = proc?.status === "running";
-              const ckptResult = results.find((r) => r.checkpointName === ckptName);
-              const ckptPath = checkpointPathFromEvalCommand(proc?.command ?? "");
-
-              return (
-                <EvalCheckpointLiveCard
-                  key={procId}
-                  procId={procId}
-                  checkpointName={ckptName}
-                  checkpointPath={ckptPath}
-                  projectRoot={projectRoot}
-                  status={proc?.status}
-                  isRunning={isRunning}
-                  result={ckptResult}
-                  logLines={proc?.logLines ?? []}
-                  showLogTail={!singleCheckpointEval}
-                />
-              );
-            })}
-          </div>
-        </LauncherLivePanel>
+        <EvalRunnerLiveSection
+          liveRunSummary={liveRunSummary}
+          displayProcessIds={displayProcessIds}
+          processes={processes}
+          results={results}
+          liveRunLabel={liveRunLabel}
+          liveLogPath={liveLogPath}
+          projectRoot={projectRoot}
+          outputRunPath={outputRunPath}
+          completedCheckpointPath={completedCheckpointPath}
+          openInAnalytics={openInAnalytics}
+          singleCheckpointEval={singleCheckpointEval}
+          singleEvalLogLines={singleEvalLogLines}
+          singleEvalLogTailWaiting={singleEvalLogTailWaiting}
+        />
       )}
     </div>
   );

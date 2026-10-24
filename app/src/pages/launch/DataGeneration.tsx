@@ -1,30 +1,19 @@
 /**
  * Data Generation Wizard — full Hydra form for `main.py gen_data` (§G.11).
- *
- * Mirrors the controller justfile gen-data recipe and gen_data.yaml config.
- * Key Hydra args: data.problem, data.data_distributions, data.dataset_type,
- * data.seed, plus per-graph overrides via "Advanced" panel.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import ReactECharts from "echarts-for-react";
-import type EChartsReact from "echarts-for-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Play, ChevronDown, ChevronUp, Terminal, FolderOpen, BarChart2 } from "lucide-react";
-import { ChartExportButtons } from "../../components/common/ChartExportButtons";
-import { OpenPathToolbar } from "../../components/common/OpenPathToolbar";
+import { Play, ChevronDown, ChevronUp, Terminal } from "lucide-react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { toast } from "sonner";
 import { GlobalFilterBar } from "../../components/layout/GlobalFilterBar";
 import { LauncherLivePanel } from "../../components/monitor/live/LauncherLivePanel";
 import { ProcessIdFooter } from "../../components/monitor/process/ProcessIdFooter";
+import { DataGenSourceAndPreview } from "../../components/launch/DataGenPreviewPanel";
 import { useAppStore } from "../../store/app";
 import { useGlobalFiltersStore } from "../../store/filters";
-import {
-  chartMetricYAxisType,
-  displayBarValue,
-} from "../../utils/charts/chartLogScale";
 import { useLaunchTriggerStore } from "../../store/launchTrigger";
-import { useDataGenStore } from "../../store/launchers";
+import { TRAIN_PROBLEMS, useDataGenStore } from "../../store/launchers";
 import { useProcessStore } from "../../store/process";
 import { useSpawnProcess } from "../../hooks/process/useSpawnProcess";
 import { useProcessRunLabelBrush } from "../../hooks/brush/useProcessRunLabelBrush";
@@ -33,7 +22,7 @@ import { brushLogPathFromProcessLines, outputRunPathFromLogLines } from "../../u
 import { dataGenLivePanelTitle, findRecentLauncherProcessId } from "../../utils/process/launcherProcess";
 import type { DatasetPreviewStats } from "../../types";
 
-const PROBLEMS = ["vrpp", "wcvrp", "scwcvrp", "all"] as const;
+const PROBLEMS = [...TRAIN_PROBLEMS, "all"] as const;
 const DISTRIBUTIONS = ["gamma3", "emp"] as const;
 const DATASET_TYPES = [
   { value: "test_simulator", label: "Test Simulator" },
@@ -47,46 +36,32 @@ const DIST_LABELS: Record<string, string> = {
   emp: "Empirical",
 };
 
-function formatBytes(b: number) {
-  if (b < 1024) return `${b} B`;
-  if (b < 1024 ** 2) return `${(b / 1024).toFixed(1)} KB`;
-  return `${(b / 1024 ** 2).toFixed(1)} MB`;
-}
-
-function DemandHistogram({ option, logScale = false }: { option: object; logScale?: boolean }) {
-  const chartRef = useRef<EChartsReact | null>(null);
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-1">
-        <p className="text-xs text-canvas-muted">
-          Demand distribution{logScale ? " · log-scale counts" : ""}
-        </p>
-        <ChartExportButtons
-          chartRef={{ current: chartRef.current }}
-          filenameStem="dataset-demand-hist"
-        />
-      </div>
-      <ReactECharts ref={chartRef} option={option} style={{ height: 140 }} />
-    </div>
-  );
-}
-
 export function DataGeneration() {
   const { projectRoot, pythonPath } = useAppStore();
   const logScale = useGlobalFiltersStore((s) => s.logScale);
   const { spawn, launching } = useSpawnProcess();
 
-  // Persisted form state (§D.4 session persistence)
   const {
-    dataSource, tsplibPath, sensorCsvPath,
-    problem, distributions, datasetType, seed, overwrite,
-    area, numLoc, nSamples, nDays, extraOverrides, patch,
+    dataSource,
+    tsplibPath,
+    sensorCsvPath,
+    problem,
+    distributions,
+    datasetType,
+    seed,
+    overwrite,
+    area,
+    numLoc,
+    nSamples,
+    nDays,
+    extraOverrides,
+    patch,
   } = useDataGenStore();
 
-  const setDataSource = (v: "synthetic" | "tsplib" | "sensor") => patch({ dataSource: v });
+  const setDataSource = (v: "synthetic" | "tsplib" | "sensor") =>
+    patch({ dataSource: v });
   const setTsplibPath = (v: string) => patch({ tsplibPath: v });
   const setSensorCsvPath = (v: string) => patch({ sensorCsvPath: v });
-
   const setProblem = (v: string) => patch({ problem: v });
   const setDistributions = (v: string[]) => patch({ distributions: v });
   const setDatasetType = (v: string) => patch({ datasetType: v });
@@ -98,10 +73,8 @@ export function DataGeneration() {
   const setNDays = (v: number) => patch({ nDays: v });
   const setExtraOverrides = (v: string) => patch({ extraOverrides: v });
 
-  // Ephemeral UI state
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  // Live progress state (local id set on launch; falls back to process store after navigation)
   const [liveProcessId, setLiveProcessId] = useState<string | null>(null);
   const processes = useProcessStore((s) => s.processes);
   const displayProcessId = useMemo(
@@ -110,7 +83,9 @@ export function DataGeneration() {
   );
   const displayProc = displayProcessId ? processes[displayProcessId] : null;
   const runStatus = displayProc?.status ?? null;
-  const [previewStats, setPreviewStats] = useState<DatasetPreviewStats | null>(null);
+  const [previewStats, setPreviewStats] = useState<DatasetPreviewStats | null>(
+    null
+  );
   const [previewDatasetPath, setPreviewDatasetPath] = useState("");
   const [previewLoading, setPreviewLoading] = useState(false);
 
@@ -158,45 +133,20 @@ export function DataGeneration() {
     }
   };
 
-  const demandHistOption = useMemo(() => {
-    if (!previewStats?.demand_histogram.length) return null;
-    const yKey = "count";
-    return {
-      backgroundColor: "transparent",
-      grid: { left: 40, right: 10, top: 10, bottom: 30 },
-      xAxis: {
-        type: "category",
-        data: ["0–0.25", "0.25–0.5", "0.5–0.75", "0.75–1.0", "1.0+"],
-        axisLabel: { color: "#9090b0", fontSize: 9 },
-      },
-      yAxis: {
-        type: chartMetricYAxisType(yKey, logScale),
-        logBase: 10,
-        axisLabel: { color: "#9090b0", fontSize: 9 },
-        minorSplitLine: { show: false },
-      },
-      series: [{
-        type: "bar",
-        data: previewStats.demand_histogram.map((v) => displayBarValue(v, yKey, logScale)),
-        itemStyle: { color: "#6366f1" },
-      }],
-      tooltip: { trigger: "axis" },
-    };
-  }, [previewStats, logScale]);
-
   const hydraArgs = useMemo(() => {
-    const distList = distributions.length > 0 ? distributions.join(",") : "gamma3";
+    const distList =
+      distributions.length > 0 ? distributions.join(",") : "gamma3";
     const sourceArgs =
       dataSource === "tsplib" && tsplibPath
         ? [`data.source=tsplib`, `data.tsplib_instance=${tsplibPath}`]
         : dataSource === "sensor" && sensorCsvPath
-        ? [`data.source=sensor`, `data.sensor_file=${sensorCsvPath}`]
-        : [
-            `data.graphs.0.area=${area}`,
-            `data.graphs.0.num_loc=${numLoc}`,
-            `data.graphs.0.n_samples=${nSamples}`,
-            `data.graphs.0.n_days=${nDays}`,
-          ];
+          ? [`data.source=sensor`, `data.sensor_file=${sensorCsvPath}`]
+          : [
+              `data.graphs.0.area=${area}`,
+              `data.graphs.0.num_loc=${numLoc}`,
+              `data.graphs.0.n_samples=${nSamples}`,
+              `data.graphs.0.n_days=${nDays}`,
+            ];
     const args = [
       `data.problem=${problem}`,
       `data.data_distributions=[${distList}]`,
@@ -210,7 +160,21 @@ export function DataGeneration() {
       .map((l) => l.trim())
       .filter(Boolean);
     return [...args, ...extra];
-  }, [problem, distributions, datasetType, overwrite, dataSource, tsplibPath, sensorCsvPath, area, numLoc, nSamples, nDays, seed, extraOverrides]);
+  }, [
+    problem,
+    distributions,
+    datasetType,
+    overwrite,
+    dataSource,
+    tsplibPath,
+    sensorCsvPath,
+    area,
+    numLoc,
+    nSamples,
+    nDays,
+    seed,
+    extraOverrides,
+  ]);
 
   const commandPreview = `python main.py gen_data \\\n  ${hydraArgs.join(" \\\n  ")}`;
 
@@ -229,7 +193,7 @@ export function DataGeneration() {
 
   const dataGenNonce = useLaunchTriggerStore((s) => s.dataGenNonce);
   useEffect(() => {
-    if (dataGenNonce > 0) launch();
+    if (dataGenNonce > 0) void launch();
   }, [dataGenNonce, launch]);
 
   const liveLogLines = displayProc?.logLines ?? [];
@@ -250,6 +214,8 @@ export function DataGeneration() {
     [liveLogLines]
   );
 
+  const isDone = runStatus !== null && runStatus !== "running";
+
   return (
     <div className="space-y-4 max-w-2xl">
       <GlobalFilterBar
@@ -257,140 +223,28 @@ export function DataGeneration() {
         runLabels={liveRunLabel ? [liveRunLabel] : []}
       />
 
-      {/* Data source */}
-      <div className="card space-y-3">
-        <h2 className="text-sm font-semibold text-gray-200">Data Source</h2>
-        <div className="flex flex-wrap gap-4">
-          {(["synthetic", "tsplib", "sensor"] as const).map((src) => (
-            <label key={src} className="flex items-center gap-2 cursor-pointer text-sm text-gray-300">
-              <input
-                type="radio"
-                name="dataSource"
-                className="accent-accent-primary"
-                checked={dataSource === src}
-                onChange={() => setDataSource(src)}
-              />
-              {src === "synthetic" ? "Synthetic" : src === "tsplib" ? "TSPLIB" : "Sensor CSV"}
-            </label>
-          ))}
-        </div>
-        {dataSource === "tsplib" && (
-          <div className="space-y-1">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                className="input-base font-mono text-xs flex-1"
-                value={tsplibPath}
-                onChange={(e) => setTsplibPath(e.target.value)}
-                placeholder="path/to/instance.vrp"
-              />
-              <button onClick={pickTsplibFile} className="btn-ghost p-1.5 text-canvas-muted hover:text-gray-200">
-                <FolderOpen size={13} />
-              </button>
-            </div>
-            {tsplibPath.trim() ? (
-              <OpenPathToolbar
-                path={tsplibPath.trim()}
-                projectRoot={projectRoot}
-                chipClassName="max-w-full"
-                handoff={false}
-              />
-            ) : null}
-          </div>
-        )}
-        {dataSource === "sensor" && (
-          <div className="space-y-1">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                className="input-base font-mono text-xs flex-1"
-                value={sensorCsvPath}
-                onChange={(e) => setSensorCsvPath(e.target.value)}
-                placeholder="path/to/bins.csv (timestamp,bin_id,fill_level,waste_type)"
-              />
-              <button onClick={pickSensorFile} className="btn-ghost p-1.5 text-canvas-muted hover:text-gray-200">
-                <FolderOpen size={13} />
-              </button>
-            </div>
-            {sensorCsvPath.trim() ? (
-              <OpenPathToolbar
-                path={sensorCsvPath.trim()}
-                projectRoot={projectRoot}
-                kind="csv"
-                labeled
-                labeledIconSize={12}
-                chipClassName="max-w-full"
-              />
-            ) : null}
-            <p className="text-[10px] text-canvas-muted">
-              CSV format: timestamp, bin_id, fill_level, waste_type (§12.3 sensor schema)
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Dataset preview panel */}
-      <div className="card space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-gray-200">Instance Preview</h2>
-          <button
-            onClick={previewDataset}
-            disabled={previewLoading || !projectRoot}
-            className="btn-ghost text-xs flex items-center gap-1"
-          >
-            <BarChart2 size={12} />
-            {previewLoading ? "Loading…" : "Preview .pkl/.pt"}
-          </button>
-        </div>
-        {previewDatasetPath.trim() ? (
-          <OpenPathToolbar
-            path={previewDatasetPath.trim()}
-            projectRoot={projectRoot}
-            chipClassName="max-w-full"
-            handoff={false}
-          />
-        ) : null}
-        {previewStats ? (
-          <div className="space-y-3">
-            <div className="grid grid-cols-4 gap-2 text-xs">
-              <div className="kpi-card">
-                <p className="text-canvas-muted">Instances</p>
-                <p className="font-mono text-gray-100">{previewStats.num_instances}</p>
-              </div>
-              <div className="kpi-card">
-                <p className="text-canvas-muted">Nodes</p>
-                <p className="font-mono text-gray-100">{previewStats.num_nodes ?? "—"}</p>
-              </div>
-              <div className="kpi-card">
-                <p className="text-canvas-muted">Demand μ±σ</p>
-                <p className="font-mono text-gray-100">
-                  {previewStats.demand_mean != null
-                    ? `${previewStats.demand_mean.toFixed(3)} ± ${(previewStats.demand_std ?? 0).toFixed(3)}`
-                    : "—"}
-                </p>
-              </div>
-              <div className="kpi-card">
-                <p className="text-canvas-muted">File size</p>
-                <p className="font-mono text-gray-100">{formatBytes(previewStats.file_size_bytes)}</p>
-              </div>
-            </div>
-            {demandHistOption && (
-              <DemandHistogram option={demandHistOption} logScale={logScale} />
-            )}
-          </div>
-        ) : (
-          <p className="text-xs text-canvas-muted">
-            Pick a generated dataset to inspect node count, demand statistics, and histogram.
-          </p>
-        )}
-      </div>
+      <DataGenSourceAndPreview
+        dataSource={dataSource}
+        setDataSource={setDataSource}
+        tsplibPath={tsplibPath}
+        setTsplibPath={setTsplibPath}
+        pickTsplibFile={() => void pickTsplibFile()}
+        sensorCsvPath={sensorCsvPath}
+        setSensorCsvPath={setSensorCsvPath}
+        pickSensorFile={() => void pickSensorFile()}
+        projectRoot={projectRoot}
+        previewLoading={previewLoading}
+        previewDataset={() => void previewDataset()}
+        previewDatasetPath={previewDatasetPath}
+        previewStats={previewStats}
+        logScale={logScale}
+      />
 
       {/* Problem + distribution */}
       <div className="card space-y-4">
         <h2 className="text-sm font-semibold text-gray-200">Dataset</h2>
 
         <div className="flex flex-wrap gap-6">
-          {/* Problem */}
           <div className="flex flex-col gap-1.5">
             <label className="text-xs text-canvas-muted">Problem</label>
             <select
@@ -399,12 +253,13 @@ export function DataGeneration() {
               onChange={(e) => setProblem(e.target.value)}
             >
               {PROBLEMS.map((p) => (
-                <option key={p} value={p}>{p}</option>
+                <option key={p} value={p}>
+                  {p}
+                </option>
               ))}
             </select>
           </div>
 
-          {/* Dataset type */}
           <div className="flex flex-col gap-1.5">
             <label className="text-xs text-canvas-muted">Dataset Type</label>
             <select
@@ -413,12 +268,13 @@ export function DataGeneration() {
               onChange={(e) => setDatasetType(e.target.value)}
             >
               {DATASET_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
               ))}
             </select>
           </div>
 
-          {/* Seed */}
           <div className="flex flex-col gap-1.5">
             <label className="text-xs text-canvas-muted">Seed</label>
             <input
@@ -431,12 +287,16 @@ export function DataGeneration() {
           </div>
         </div>
 
-        {/* Distributions */}
         <div>
-          <label className="block text-xs text-canvas-muted mb-2">Distributions</label>
+          <label className="block text-xs text-canvas-muted mb-2">
+            Distributions
+          </label>
           <div className="flex gap-4">
             {DISTRIBUTIONS.map((d) => (
-              <label key={d} className="flex items-center gap-2 cursor-pointer text-sm text-gray-300">
+              <label
+                key={d}
+                className="flex items-center gap-2 cursor-pointer text-sm text-gray-300"
+              >
                 <input
                   type="checkbox"
                   className="accent-accent-primary"
@@ -448,11 +308,12 @@ export function DataGeneration() {
             ))}
           </div>
           {distributions.length === 0 && (
-            <p className="text-xs text-accent-warning mt-1">Select at least one distribution.</p>
+            <p className="text-xs text-accent-warning mt-1">
+              Select at least one distribution.
+            </p>
           )}
         </div>
 
-        {/* Overwrite toggle */}
         <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-300 w-fit">
           <input
             type="checkbox"
@@ -464,66 +325,64 @@ export function DataGeneration() {
         </label>
       </div>
 
-      {/* Graph configuration — only for synthetic source */}
       {dataSource === "synthetic" && (
-      <div className="card space-y-4">
-        <h2 className="text-sm font-semibold text-gray-200">Graph</h2>
-        <div className="flex flex-wrap gap-4">
-          {/* Area */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-canvas-muted">Area</label>
-            <select
-              className="select-base w-44"
-              value={area}
-              onChange={(e) => setArea(e.target.value)}
-            >
-              {AREAS.map((a) => (
-                <option key={a} value={a}>{a}</option>
-              ))}
-            </select>
+        <div className="card space-y-4">
+          <h2 className="text-sm font-semibold text-gray-200">Graph</h2>
+          <div className="flex flex-wrap gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs text-canvas-muted">Area</label>
+              <select
+                className="select-base w-44"
+                value={area}
+                onChange={(e) => setArea(e.target.value)}
+              >
+                {AREAS.map((a) => (
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs text-canvas-muted">Locations</label>
+              <input
+                type="number"
+                className="input-base font-mono text-sm w-24"
+                value={numLoc}
+                min={1}
+                onChange={(e) => setNumLoc(Number(e.target.value))}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs text-canvas-muted">Samples</label>
+              <input
+                type="number"
+                className="input-base font-mono text-sm w-24"
+                value={nSamples}
+                min={1}
+                onChange={(e) => setNSamples(Number(e.target.value))}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs text-canvas-muted">Days</label>
+              <input
+                type="number"
+                className="input-base font-mono text-sm w-24"
+                value={nDays}
+                min={1}
+                onChange={(e) => setNDays(Number(e.target.value))}
+              />
+            </div>
           </div>
 
-          {/* num_loc */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-canvas-muted">Locations</label>
-            <input
-              type="number"
-              className="input-base font-mono text-sm w-24"
-              value={numLoc}
-              min={1}
-              onChange={(e) => setNumLoc(Number(e.target.value))}
-            />
-          </div>
-
-          {/* n_samples */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-canvas-muted">Samples</label>
-            <input
-              type="number"
-              className="input-base font-mono text-sm w-24"
-              value={nSamples}
-              min={1}
-              onChange={(e) => setNSamples(Number(e.target.value))}
-            />
-          </div>
-
-          {/* n_days */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-canvas-muted">Days</label>
-            <input
-              type="number"
-              className="input-base font-mono text-sm w-24"
-              value={nDays}
-              min={1}
-              onChange={(e) => setNDays(Number(e.target.value))}
-            />
-          </div>
+          <p className="text-xs text-canvas-muted">
+            Configures <code>data.graphs[0]</code>. For multi-graph generation
+            use Advanced Overrides.
+          </p>
         </div>
-
-        <p className="text-xs text-canvas-muted">
-          Configures <code>data.graphs[0]</code>. For multi-graph generation use Advanced Overrides.
-        </p>
-      </div>
       )}
 
       {/* Advanced overrides */}
@@ -560,14 +419,18 @@ export function DataGeneration() {
       {/* Launch */}
       <div className="flex items-center gap-3">
         {!projectRoot && (
-          <p className="text-xs text-accent-warning">Configure Project Root in Settings first.</p>
+          <p className="text-xs text-accent-warning">
+            Configure Project Root in Settings first.
+          </p>
         )}
         <button
-          onClick={launch}
+          onClick={() => void launch()}
           disabled={
-            launching || !projectRoot || distributions.length === 0
-            || (dataSource === "tsplib" && !tsplibPath.trim())
-            || (dataSource === "sensor" && !sensorCsvPath.trim())
+            launching ||
+            !projectRoot ||
+            distributions.length === 0 ||
+            (dataSource === "tsplib" && !tsplibPath.trim()) ||
+            (dataSource === "sensor" && !sensorCsvPath.trim())
           }
           className="btn-primary flex items-center gap-2"
         >
@@ -576,47 +439,43 @@ export function DataGeneration() {
         </button>
       </div>
 
-      {/* Live progress panel */}
-      {displayProcessId && (() => {
-        const isDone = runStatus !== null && runStatus !== "running";
-        return (
-          <LauncherLivePanel
-            header={{
-              status: isDone ? (runStatus ?? "running") : "running",
-              title: dataGenLivePanelTitle({
-                isRunning: !isDone,
-                status: runStatus ?? undefined,
-              }),
-              runLabel: liveRunLabel,
-              logPath: liveLogPath,
-              projectRoot,
-              navMesh: {
-                kind: "data_gen",
-                hideSelf: true,
-                showPostRun: isDone && runStatus === "completed",
-                showOutputBrowser: isDone && runStatus === "completed",
-                outputRunPath,
-                csvPath: dataExplorerCsvPath,
-              },
-            }}
-            progress={
-              !isDone && displayProcessId
-                ? { processId: displayProcessId }
-                : undefined
-            }
-            footer={
-              <ProcessIdFooter
-                processId={displayProcessId}
-                logPath={liveLogPath}
-                runLabel={liveRunLabel}
-                projectRoot={projectRoot}
-              />
-            }
-            logLines={liveLogLines}
-            logTailWaiting={!isDone}
-          />
-        );
-      })()}
+      {displayProcessId && (
+        <LauncherLivePanel
+          header={{
+            status: isDone ? (runStatus ?? "running") : "running",
+            title: dataGenLivePanelTitle({
+              isRunning: !isDone,
+              status: runStatus ?? undefined,
+            }),
+            runLabel: liveRunLabel,
+            logPath: liveLogPath,
+            projectRoot,
+            navMesh: {
+              kind: "data_gen",
+              hideSelf: true,
+              showPostRun: isDone && runStatus === "completed",
+              showOutputBrowser: isDone && runStatus === "completed",
+              outputRunPath,
+              csvPath: dataExplorerCsvPath,
+            },
+          }}
+          progress={
+            !isDone && displayProcessId
+              ? { processId: displayProcessId }
+              : undefined
+          }
+          footer={
+            <ProcessIdFooter
+              processId={displayProcessId}
+              logPath={liveLogPath}
+              runLabel={liveRunLabel}
+              projectRoot={projectRoot}
+            />
+          }
+          logLines={liveLogLines}
+          logTailWaiting={!isDone}
+        />
+      )}
     </div>
   );
 }
