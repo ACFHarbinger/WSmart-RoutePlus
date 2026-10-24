@@ -70,29 +70,29 @@ describe("launcherArgs — Slice V7 Hydra argument builders & domain nomenclatur
     expect(args).toContain("sim.verbose=true");
   });
 
-  it("resolveSimDatasetPreviewPath builds the expected .npz path", () => {
-    expect(resolveSimDatasetPreviewPath("figueiradafoz", 350, "emp")).toBe(
-      "data/figueiradafoz_350_emp_test.npz"
+  it("resolveSimDatasetPreviewPath matches test_sim.yaml load_dataset", () => {
+    expect(resolveSimDatasetPreviewPath("figueiradafoz", 350, "emp", 30, 1, 42)).toBe(
+      "data/simulator/datasets/figueiradafoz350_emp_wsr30_N1_seed42.npz"
     );
-    expect(resolveSimDatasetPreviewPath("riomaior", 100, "gamma3")).toBe(
-      "data/riomaior_100_gamma3_test.npz"
+    expect(resolveSimDatasetPreviewPath("riomaior", 100, "gamma3", 90, 10, 7)).toBe(
+      "data/simulator/datasets/riomaior100_gamma3_wsr90_N10_seed7.npz"
     );
   });
 
-  it("groupPoliciesByFamily groups policies into Paper Benchmark, Metaheuristics, Exact, Neural, and Constructive", () => {
+  it("groupPoliciesByFamily uses registry folders, not name prefixes", () => {
     const entries = [
-      ...PAPER_BENCHMARK_POLICIES.map((id) => ({ id, config_key: `policy_${id}` })),
-      { id: "gurobi_vrpp", config_key: "policy_gurobi_vrpp" },
-      { id: "deep_decoder_rl", config_key: "policy_deep_decoder_rl" },
-      { id: "regular_3d", config_key: "policy_regular_3d" },
-    ];
+      "aco_hh", "alns", "amphh", "bpc", "hgs", "hna", "na", "swc_tcf",
+      "lbbd", "bb", "abpc_hg", "rl_alns",
+    ].map((id) => ({ id, config_key: `policy_${id}` }));
     const groups = groupPoliciesByFamily(entries);
-    const ids = groups.map((g) => g.id);
-    expect(ids).toContain("paper");
-    expect(ids).toContain("metaheuristics");
-    expect(ids).toContain("exact");
-    expect(ids).toContain("neural");
-    expect(ids).toContain("constructive");
+    const byFamily = Object.fromEntries(groups.map((g) => [g.id, g.policies]));
+    expect(byFamily.neural).toEqual(["hna", "na"]);
+    expect(byFamily.metaheuristics).toContain("amphh");
+    expect(byFamily.neural).not.toContain("amphh");
+    expect(byFamily.exact).toEqual(expect.arrayContaining(["lbbd", "bb"]));
+    expect(byFamily.exact).not.toContain("swc_tcf");
+    expect(byFamily.paper).toContain("swc_tcf");
+    expect(byFamily.constructive).toEqual(expect.arrayContaining(["abpc_hg", "rl_alns"]));
   });
 
   it("buildTrainHubHydraArgs emits envs@train.env=<problem> and models=deep_decoder", () => {
@@ -123,6 +123,32 @@ describe("launcherArgs — Slice V7 Hydra argument builders & domain nomenclatur
     expect(trainArgs).toContain("envs@train.env=cptptwtc");
     expect(trainArgs).toContain("models=deep_decoder");
     expect(trainArgs).toContain("tracker.enabled=false");
+
+    const metaArgs = buildTrainHubHydraArgs({
+      mode: "meta",
+      seed: 42,
+      wandb: false,
+      problem: "cptp",
+      model: "am",
+      encoder: "gat",
+      batchSize: 64,
+      epochs: 10,
+      hpoTrials: 1,
+      hpoMethod: "tpe",
+      hpoWorkers: 1,
+      metaStrategy: "hrl",
+      metaLr: 0.00001,
+      metaHistoryLength: 10,
+      mrlBatchSize: 32,
+      mrlStep: 1,
+      checkpointPath: "",
+      evalDataset: "",
+      evalSamples: 10,
+      evalStrategy: "greedy",
+      extraOverrides: "",
+    });
+    expect(metaArgs).toContain("envs@meta_rl.env=cptp");
+    expect(metaArgs).toContain("meta_rl.env.name=cptp");
   });
 
   it("buildReportStudioCliArgs reflects bound scenario filter in simulation report mode", () => {

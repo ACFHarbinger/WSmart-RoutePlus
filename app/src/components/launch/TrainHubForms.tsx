@@ -246,9 +246,10 @@ export function TrainHubModeSpecificCard({
           </div>
         </div>
         <p className="text-[10px] text-canvas-muted">
-          Runs <code>main.py meta_train</code> — problem defaults to the meta-RL
-          environment (cwcvrp); override via <code>meta_rl.env.name</code> in
-          Extra Hydra Overrides.
+          Runs <code>main.py meta_train</code> with{" "}
+          <code>envs@meta_rl.env</code> and <code>meta_rl.env.name</code> set
+          to the problem selected above. The composed default in{" "}
+          <code>meta_train.yaml</code> is <code>ptp</code>.
         </p>
       </div>
     );

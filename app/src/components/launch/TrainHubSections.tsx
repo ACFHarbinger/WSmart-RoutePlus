@@ -91,6 +91,8 @@ export function buildTrainHubHydraArgs(params: {
     return [
       `seed=${params.seed}`,
       ...(params.wandb ? ["tracking.wandb_mode=online"] : []),
+      `envs@meta_rl.env=${params.problem}`,
+      `meta_rl.env.name=${params.problem}`,
       `meta_rl.meta_strategy=${params.metaStrategy}`,
       `meta_rl.meta_lr=${params.metaLr}`,
       `meta_rl.meta_history_length=${params.metaHistoryLength}`,

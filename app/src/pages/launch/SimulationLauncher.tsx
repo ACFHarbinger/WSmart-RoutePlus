@@ -178,8 +178,8 @@ export function SimulationLauncher() {
   );
 
   const datasetPreviewPath = useMemo(
-    () => resolveSimDatasetPreviewPath(area, numLoc, distribution),
-    [area, numLoc, distribution]
+    () => resolveSimDatasetPreviewPath(area, numLoc, distribution, days, samples, seed),
+    [area, numLoc, distribution, days, samples, seed]
   );
 
   const commandPreview = `python main.py test_sim \\\n  ${hydraArgs.join(" \\\n  ")}`;

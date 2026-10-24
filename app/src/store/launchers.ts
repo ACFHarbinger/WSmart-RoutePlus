@@ -24,6 +24,11 @@ export const PAPER_BENCHMARK_POLICIES = [
   "swc_tcf",
 ] as const;
 
+/** Problems `logic/configs/tasks/gen_data.yaml` accepts. */
+export const DATA_GEN_PROBLEMS = ["ptp", "cptp", "cptptc", "all"] as const;
+
+const RETIRED_PROBLEM_IDS = new Set(["vrpp", "wcvrp", "scwcvrp", "cwcvrp"]);
+
 export const TRAIN_PROBLEMS = [
   "ptp",
   "cptp",
@@ -355,7 +360,7 @@ export const useDataGenStore = create<DataGenState>()(
       dataSource: "synthetic",
       tsplibPath: "",
       sensorCsvPath: "",
-      problem: "vrpp",
+      problem: "ptp",
       distributions: ["gamma3"],
       datasetType: "test_simulator",
       seed: 42,
@@ -367,7 +372,20 @@ export const useDataGenStore = create<DataGenState>()(
       extraOverrides: "",
       patch: (updates) => set(updates as Partial<DataGenState>),
     }),
-    { name: "wsroute-data-gen" }
+    {
+      name: "wsroute-data-gen",
+      version: 1,
+      migrate: (persisted, version) => {
+        const state = persisted as DataGenState;
+        if (version < 1 && RETIRED_PROBLEM_IDS.has(state.problem)) {
+          state.problem = "ptp";
+        }
+        if (!DATA_GEN_PROBLEMS.includes(state.problem as (typeof DATA_GEN_PROBLEMS)[number])) {
+          state.problem = "ptp";
+        }
+        return state;
+      },
+    }
   )
 );
 
