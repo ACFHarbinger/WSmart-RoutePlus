@@ -28,9 +28,23 @@ import { useLayoutStore } from "../../store/layout";
 import type { AppMode, NavSection } from "../../types";
 import { prefetchPage } from "../../utils/app/pagePrefetch";
 
-const NAV: NavSection[] = [
+/**
+ * Navigation grouped into the 5 user workflows (Run / Watch / Read / Query / Write)
+ * plus Files & App (Slice V4).
+ */
+export const NAV: NavSection[] = [
   {
-    label: "Monitor",
+    label: "Run",
+    items: [
+      { mode: "sim_launcher", label: "Simulation Launcher" },
+      { mode: "training_hub", label: "Training & HPO Hub" },
+      { mode: "data_gen", label: "Data Generation" },
+      { mode: "eval_runner", label: "Evaluation Runner" },
+      { mode: "cloud_launcher", label: "Cloud Launcher" },
+    ],
+  },
+  {
+    label: "Watch",
     items: [
       { mode: "simulation", label: "Simulation Digital Twin", streamlitEquivalent: "simulation" },
       { mode: "training", label: "Training Monitor", streamlitEquivalent: "training" },
@@ -39,27 +53,27 @@ const NAV: NavSection[] = [
     ],
   },
   {
-    label: "Analysis",
+    label: "Read",
     items: [
       { mode: "simulation_summary", label: "Simulation Summary", streamlitEquivalent: "simulation_summary" },
       { mode: "benchmark", label: "Benchmark Analysis", streamlitEquivalent: "benchmark" },
       { mode: "city_comparison", label: "City Comparison" },
-      { mode: "olap_explorer", label: "OLAP Explorer" },
-      { mode: "data_explorer", label: "Data Explorer", streamlitEquivalent: "data_explorer" },
       { mode: "experiment_tracker", label: "Experiment Tracker", streamlitEquivalent: "experiment_tracker" },
-      { mode: "algorithms", label: "Algorithm Registry", streamlitEquivalent: "algorithms" },
       { mode: "hpo_tracker", label: "HPO Tracker", streamlitEquivalent: "hpo_tracker" },
+      { mode: "algorithms", label: "Algorithm Registry", streamlitEquivalent: "algorithms" },
       { mode: "cloud_analysis", label: "Cloud Analysis" },
     ],
   },
   {
-    label: "Launch",
+    label: "Query",
     items: [
-      { mode: "sim_launcher", label: "Simulation Launcher" },
-      { mode: "cloud_launcher", label: "Cloud Launcher" },
-      { mode: "training_hub", label: "Training & HPO Hub" },
-      { mode: "data_gen", label: "Data Generation" },
-      { mode: "eval_runner", label: "Evaluation Runner" },
+      { mode: "olap_explorer", label: "OLAP Explorer" },
+      { mode: "data_explorer", label: "Data Explorer", streamlitEquivalent: "data_explorer" },
+    ],
+  },
+  {
+    label: "Write",
+    items: [
       { mode: "report_studio", label: "Report Studio" },
     ],
   },
@@ -117,14 +131,16 @@ export function Sidebar() {
         "shrink-0 flex flex-col bg-canvas-surface border-r border-canvas-border h-screen overflow-y-auto z-30",
         "w-56 transition-transform duration-200",
         "fixed lg:static inset-y-0 left-0",
-        sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0 lg:w-0 lg:border-0 lg:overflow-hidden",
+        sidebarOpen
+          ? "translate-x-0"
+          : "-translate-x-full lg:translate-x-0 lg:w-0 lg:border-0 lg:overflow-hidden",
       ].join(" ")}
     >
       {/* Brand */}
       <div className="px-4 py-4 border-b border-canvas-border">
         <div className="flex items-center gap-2">
           <Zap size={18} className="text-accent-primary" />
-          <span className="font-bold text-sm tracking-tight text-white">
+          <span className="font-bold text-sm tracking-tight text-canvas-text">
             WSmart-Route
           </span>
         </div>
@@ -162,10 +178,14 @@ export function Sidebar() {
                         "w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm transition-colors text-left",
                         active
                           ? "bg-accent-primary/20 text-accent-secondary font-medium"
-                          : "text-gray-400 hover:text-gray-100 hover:bg-canvas-hover",
+                          : "text-canvas-muted hover:text-canvas-text hover:bg-canvas-hover",
                       ].join(" ")}
                     >
-                      <span className={active ? "text-accent-primary" : "text-canvas-muted"}>
+                      <span
+                        className={
+                          active ? "text-accent-primary" : "text-canvas-muted"
+                        }
+                      >
                         {ICON[item.mode]}
                       </span>
                       {item.label}

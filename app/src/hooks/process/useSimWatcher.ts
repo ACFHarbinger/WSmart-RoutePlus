@@ -2,35 +2,33 @@ import { useEffect } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { useSimStore } from "../../store/sim";
-import type { DayLogEntry, PolicyVizEntry, SimFailureEntry } from "../../types";
+import type { DayLogEntry, PolicyVizEntry, SimBatchUpdate, SimFailureEntry } from "../../types";
 
 /**
- * Starts the Rust file-watcher for a simulation log file and pipes
- * new `DayLogEntry` objects into the sim store as they arrive.
- *
- * Replaces Streamlit's `stream_log_file()` + `time.sleep()` + `st.rerun()` pattern.
- * The Rust backend polls the file every 200 ms and emits `sim:day_update` events
- * only when new `GUI_DAY_LOG_START:` lines are found — zero unnecessary re-renders.
+ * Starts the Rust incremental file-watcher for a simulation log file and pipes
+ * batched `SimBatchUpdate` objects into the sim store as they arrive.
  */
 export function useSimWatcher(logPath: string | null) {
-  const { addEntry, addPolicyVizEntry, addFailureEntry, setWatching } = useSimStore();
-
   useEffect(() => {
     if (!logPath) return;
 
     let unlisten: (() => void) | undefined;
 
     (async () => {
+      const ulBatch = await listen<SimBatchUpdate>("sim:batch_update", (event) => {
+        useSimStore.getState().applyBatch(event.payload);
+      });
       const ulDay = await listen<DayLogEntry>("sim:day_update", (event) => {
-        addEntry(event.payload);
+        useSimStore.getState().addEntry(event.payload);
       });
       const ulViz = await listen<PolicyVizEntry>("sim:policy_viz_update", (event) => {
-        addPolicyVizEntry(event.payload);
+        useSimStore.getState().addPolicyVizEntry(event.payload);
       });
       const ulFailure = await listen<SimFailureEntry>("sim:failure_update", (event) => {
-        addFailureEntry(event.payload);
+        useSimStore.getState().addFailureEntry(event.payload);
       });
       unlisten = () => {
+        ulBatch();
         ulDay();
         ulViz();
         ulFailure();
@@ -38,7 +36,7 @@ export function useSimWatcher(logPath: string | null) {
 
       try {
         await invoke("start_sim_watcher", { path: logPath });
-        setWatching(true);
+        useSimStore.getState().setWatching(true);
       } catch (err) {
         console.error("Failed to start sim watcher:", err);
       }
@@ -47,7 +45,7 @@ export function useSimWatcher(logPath: string | null) {
     return () => {
       unlisten?.();
       invoke("stop_sim_watcher").catch(() => {});
-      setWatching(false);
+      useSimStore.getState().setWatching(false);
     };
-  }, [logPath, addEntry, addPolicyVizEntry, addFailureEntry, setWatching]);
+  }, [logPath]);
 }

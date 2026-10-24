@@ -206,61 +206,64 @@ export default function App() {
     refreshRecentLabels(projectRoot);
   }, [projectRoot, refreshRecentLabels]);
 
-  // Warm all lazy route + vendor chunks on startup (§G.7)
+  // Defer lazy route + vendor chunk warming until after first paint / idle (Slice V4)
   useEffect(() => {
-    void Promise.all([
-      import("./pages/monitor/SimulationMonitor"),
-      import("./pages/monitor/TrainingMonitor"),
-      import("./pages/monitor/ProcessMonitor"),
-      import("./pages/analysis/SimulationSummary"),
-      import("./pages/analysis/BenchmarkAnalysis"),
-      import("./pages/analysis/CityComparison"),
-      import("./pages/analysis/AlgorithmComparison"),
-      import("./pages/analysis/OlapExplorer"),
-      import("./pages/analysis/DataExplorer"),
-      import("./pages/analysis/ExperimentTracker"),
-      import("./pages/analysis/HPOTracker"),
-      import("./pages/launch/SimulationLauncher"),
-      import("./pages/launch/TrainingHub"),
-      import("./pages/launch/DataGeneration"),
-      import("./pages/launch/EvaluationRunner"),
-      import("./pages/launch/ReportStudio"),
-      import("./pages/files/ConfigEditor"),
-      import("./pages/files/OutputBrowser"),
-      import("./pages/files/SystemTools"),
-      import("./pages/app/Settings"),
-      import("echarts-for-react"),
-      import("./components/maps/DeckRouteMap"),
-      import("maplibre-gl"),
-      import("@deck.gl/react"),
-      import("@monaco-editor/react"),
-      import("@duckdb/duckdb-wasm"),
-      import("sigma"),
-      import("@react-three/fiber"),
-    ]).then(() => markStartup("prefetchDone"));
-    const modes: AppMode[] = [
-      "simulation",
-      "training",
-      "simulation_summary",
-      "benchmark",
-      "city_comparison",
-      "algorithms",
-      "olap_explorer",
-      "data_explorer",
-      "experiment_tracker",
-      "hpo_tracker",
-      "process_monitor",
-      "sim_launcher",
-      "training_hub",
-      "data_gen",
-      "eval_runner",
-      "report_studio",
-      "config_editor",
-      "output_browser",
-      "system_tools",
-      "settings",
-    ];
-    for (const mode of modes) prefetchPage(mode);
+    const warmChunks = () => {
+      void Promise.all([
+        import("./pages/monitor/SimulationMonitor"),
+        import("./pages/monitor/TrainingMonitor"),
+        import("./pages/monitor/ProcessMonitor"),
+        import("./pages/analysis/SimulationSummary"),
+        import("./pages/analysis/BenchmarkAnalysis"),
+        import("./pages/analysis/CityComparison"),
+        import("./pages/analysis/AlgorithmComparison"),
+        import("./pages/analysis/OlapExplorer"),
+        import("./pages/analysis/DataExplorer"),
+        import("./pages/analysis/ExperimentTracker"),
+        import("./pages/analysis/HPOTracker"),
+        import("./pages/launch/SimulationLauncher"),
+        import("./pages/launch/TrainingHub"),
+        import("./pages/launch/DataGeneration"),
+        import("./pages/launch/EvaluationRunner"),
+        import("./pages/launch/ReportStudio"),
+        import("./pages/files/ConfigEditor"),
+        import("./pages/files/OutputBrowser"),
+        import("./pages/files/SystemTools"),
+        import("./pages/app/Settings"),
+        import("echarts-for-react"),
+        import("./components/maps/DeckRouteMap"),
+      ]).then(() => markStartup("prefetchDone"));
+      const modes: AppMode[] = [
+        "simulation",
+        "training",
+        "simulation_summary",
+        "benchmark",
+        "city_comparison",
+        "algorithms",
+        "olap_explorer",
+        "data_explorer",
+        "experiment_tracker",
+        "hpo_tracker",
+        "process_monitor",
+        "sim_launcher",
+        "training_hub",
+        "data_gen",
+        "eval_runner",
+        "report_studio",
+        "config_editor",
+        "output_browser",
+        "system_tools",
+        "settings",
+      ];
+      for (const m of modes) prefetchPage(m);
+    };
+
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      const id = window.requestIdleCallback(warmChunks, { timeout: 1500 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const timer = setTimeout(warmChunks, 400);
+    return () => clearTimeout(timer);
   }, []);
 
   // Global keyboard shortcuts

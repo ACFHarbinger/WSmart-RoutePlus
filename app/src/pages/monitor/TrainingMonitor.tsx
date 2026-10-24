@@ -1,38 +1,33 @@
 /**
- * Training Monitor — live and historical training metrics (§G.17).
+ * Training Monitor — live and historical training metrics (§G.17, Slice V5).
  *
- * Ports the Streamlit `training` mode from:
- *   logic/src/ui/pages/training.py
- *   logic/src/ui/pages/training_charts.py
- *   logic/src/ui/services/data_loader.py (discover_training_runs, load_training_metrics)
- *
- * §G.17 additions in this pass:
- *   - Multi-run overlay chart: all selected runs on one ECharts canvas, colour-coded
- *   - Hyperparameter panel: reads hparams.yaml via read_text_file, flat key-value table
- *   - Gradient norm sparkline: separate chart for the grad_norm column
- *   - Checkpoint browser: lists checkpoints/ dir, "Load in Eval Runner" button
+ * Subscribes to both `"process:stdout_batch"` (batched 50ms Rust emitter)
+ * and `"process:stdout"` for backward compatibility.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import ReactECharts from "echarts-for-react";
-import type EChartsReact from "echarts-for-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { ChevronDown, ChevronRight, FolderOpen, RefreshCw } from "lucide-react";
+import { FolderOpen, RefreshCw } from "lucide-react";
 import { LoadedRunRow } from "../../components/common/LoadedRunRow";
 import { OpenPathToolbar } from "../../components/common/OpenPathToolbar";
 import { GlobalFilterBar } from "../../components/layout/GlobalFilterBar";
 import { ProcessIdFooter } from "../../components/monitor/process/ProcessIdFooter";
 import { TrainHpoLivePanel } from "../../components/monitor/live/TrainHpoLivePanel";
-import { GradNormSparkline, LrSparkline } from "../../components/monitor/live/TrainingMetricSparklines";
-import { ChartExportButtons } from "../../components/common/ChartExportButtons";
 import { RuntimeAttentionPanel } from "../../components/analysis/topology/RuntimeAttentionPanel";
 import { TrainingHealthPanel } from "../../components/analysis/training/TrainingHealthPanel";
+import {
+  MultiRunChart,
+  RunPanel,
+  RUN_COLORS,
+} from "../../components/monitor/training/TrainingMonitorPanels";
 import { useProcessRunLabelBrush } from "../../hooks/brush/useProcessRunLabelBrush";
 import { useAppStore } from "../../store/app";
 import { useGlobalFiltersStore } from "../../store/filters";
 import { useProcessStore } from "../../store/process";
-import { collectAttentionVizFromLogLines, parseAttentionVizLine } from "../../utils/graph/attentionViz";
-import { filterCheckpointEntries, parentRunBrushLabelFromCheckpointPath } from "../../utils/training/checkpoints";
+import {
+  collectAttentionVizFromLogLines,
+  parseAttentionVizLine,
+} from "../../utils/graph/attentionViz";
 import {
   collectTrainingHealthFromLogLines,
   parseTrainingHealthLine,
@@ -49,7 +44,6 @@ import {
 } from "../../utils/runs/outputRunPath";
 import { useRecentHandoff } from "../../hooks/files/useRecentHandoff";
 import { trainingRunPathFromLogLines } from "../../utils/training/trainingRunPath";
-
 import {
   findActiveLiveTrainProcessId,
   findRecentTrainOrHpoProcessId,
@@ -58,317 +52,17 @@ import {
 } from "../../utils/training/trainingProcess";
 import type {
   AttentionVizEntry,
-  DirEntry,
+  StdoutBatch,
   StdoutLine,
   TrainingHealthEntry,
   TrainingRun,
   TrainingMetricsRow,
 } from "../../types";
 
-// Virtual key used for the live-process entry in metricsMap
 const LIVE_KEY = "__live__";
 const LIVE_HEALTH_KEY = "__live_health__";
 const LIVE_ATTENTION_KEY = "__live_attention__";
 
-// ── Colour palette for multi-run overlay
-const RUN_COLORS = [
-  "#6366f1", // indigo
-  "#34d399", // emerald
-  "#f87171", // red
-  "#fbbf24", // amber
-  "#a78bfa", // violet
-  "#fb923c", // orange
-  "#38bdf8", // sky
-  "#f472b6", // pink
-];
-
-function formatBytes(n: number): string {
-  if (n < 1024) return `${n} B`;
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
-  return `${(n / 1024 / 1024).toFixed(1)} MB`;
-}
-
-// ── Multi-run overlay chart (train_loss + reward per run on shared axes)
-function MultiRunChart({
-  runsMetrics,
-  logScale,
-}: {
-  runsMetrics: { name: string; metrics: TrainingMetricsRow[] }[];
-  logScale: boolean;
-}) {
-  const chartRef = useRef<EChartsReact | null>(null);
-  if (runsMetrics.length === 0) return null;
-
-  const series: object[] = [];
-  const legendData: string[] = [];
-
-  runsMetrics.forEach(({ name, metrics }, i) => {
-    const color = RUN_COLORS[i % RUN_COLORS.length];
-    const epochs = metrics.map((r) => r.epoch ?? r.step ?? 0);
-    const scaleY = (y: number | null | undefined) =>
-      y == null ? null : logScale ? Math.max(y, 1e-8) : y;
-    const trainLoss = metrics.map((r, j) => [epochs[j], scaleY(r.train_loss)]);
-    const valLoss = metrics.map((r, j) => [epochs[j], scaleY(r.val_loss)]);
-    const reward = metrics.map((r, j) => [epochs[j], r.reward ?? null]);
-
-    const hasReward = metrics.some((r) => r.reward != null);
-    const shortName = name.length > 20 ? `…${name.slice(-18)}` : name;
-
-    legendData.push(`${shortName} loss`, ...(hasReward ? [`${shortName} reward`] : []));
-
-    series.push({
-      name: `${shortName} loss`,
-      type: "line",
-      data: trainLoss,
-      smooth: true,
-      lineStyle: { color, width: 2 },
-      itemStyle: { color },
-      symbol: "none",
-      encode: { x: 0, y: 1 },
-    });
-
-    if (metrics.some((r) => r.val_loss != null)) {
-      series.push({
-        name: `${shortName} val`,
-        type: "line",
-        data: valLoss,
-        smooth: true,
-        lineStyle: { color, width: 1.5, type: "dashed" },
-        itemStyle: { color },
-        symbol: "none",
-        encode: { x: 0, y: 1 },
-      });
-    }
-
-    if (hasReward) {
-      series.push({
-        name: `${shortName} reward`,
-        type: "line",
-        yAxisIndex: 1,
-        data: reward,
-        smooth: true,
-        lineStyle: { color, width: 2, type: "dotted" },
-        itemStyle: { color },
-        symbol: "none",
-        encode: { x: 0, y: 1 },
-      });
-    }
-  });
-
-  return (
-    <div className="card space-y-2">
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-canvas-muted">
-          {logScale ? "Multi-run overlay (log-scale loss)" : "Multi-run overlay"}
-        </p>
-        <ChartExportButtons
-          chartRef={{ current: chartRef.current }}
-          filenameStem="training-overlay"
-        />
-      </div>
-      <ReactECharts
-        ref={chartRef}
-        option={{
-          backgroundColor: "transparent",
-          legend: {
-            data: legendData,
-            textStyle: { color: "#9090b0", fontSize: 10 },
-            type: "scroll",
-          },
-          grid: { left: 50, right: 60, top: 45, bottom: 30 },
-          xAxis: {
-            type: "value",
-            name: "Epoch",
-            nameTextStyle: { color: "#9090b0" },
-            axisLabel: { color: "#9090b0", fontSize: 10 },
-          },
-          yAxis: [
-            {
-              type: (logScale ? "log" : "value") as "log" | "value",
-              logBase: 10,
-              name: logScale ? "Loss (log)" : "Loss",
-              nameTextStyle: { color: "#9090b0" },
-              axisLabel: { color: "#9090b0", fontSize: 10 },
-              minorSplitLine: { show: false },
-            },
-            {
-              type: "value",
-              name: "Reward",
-              nameTextStyle: { color: "#9090b0" },
-              axisLabel: { color: "#9090b0", fontSize: 10 },
-              splitLine: { show: false },
-            },
-          ],
-          series,
-          tooltip: { trigger: "axis" },
-        }}
-        style={{ height: 260 }}
-      />
-    </div>
-  );
-}
-
-// ── Hyperparameter panel (reads hparams.yaml, renders flat key-value table)
-function HparamsPanel({ runPath }: { runPath: string }) {
-  const [pairs, setPairs] = useState<{ key: string; value: string }[] | null>(null);
-  const [expanded, setExpanded] = useState(false);
-
-  useEffect(() => {
-    const hparamsPath = `${runPath}/hparams.yaml`;
-    invoke<string>("read_text_file", { path: hparamsPath })
-      .then((text) => {
-        const parsed = text
-          .split("\n")
-          .map((line) => line.match(/^(\S[^:]*?):\s*(.*)$/))
-          .filter(Boolean)
-          .map((m) => ({ key: m![1].trim(), value: m![2].trim() }))
-          .filter(({ key }) => !key.startsWith("#"));
-        setPairs(parsed);
-      })
-      .catch(() => setPairs(null));
-  }, [runPath]);
-
-  if (!pairs?.length) return null;
-
-  const visible = expanded ? pairs : pairs.slice(0, 8);
-
-  return (
-    <div className="rounded-xl border border-canvas-border overflow-hidden">
-      <button
-        className="w-full flex items-center gap-2 px-4 py-2.5 bg-canvas-surface hover:bg-canvas-hover text-left"
-        onClick={() => setExpanded((v) => !v)}
-      >
-        {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-        <span className="text-xs font-semibold text-canvas-muted uppercase tracking-wider">
-          Hyperparameters
-        </span>
-        <span className="ml-auto text-xs text-canvas-muted">{pairs.length} params</span>
-      </button>
-      {expanded && (
-        <div className="px-4 py-2 bg-canvas-bg border-t border-canvas-border">
-          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-0.5">
-            {visible.map(({ key, value }) => (
-              <>
-                <dt key={`k-${key}`} className="text-xs text-canvas-muted font-mono py-0.5">{key}</dt>
-                <dd key={`v-${key}`} className="text-xs text-gray-300 font-mono py-0.5 truncate">{value || "—"}</dd>
-              </>
-            ))}
-          </dl>
-          {pairs.length > 8 && (
-            <button
-              className="text-xs text-accent-primary mt-2"
-              onClick={() => setExpanded((v) => !v)}
-            >
-              {expanded && visible.length < pairs.length
-                ? `Show all ${pairs.length} params`
-                : "Collapse"}
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Checkpoint browser
-function CheckpointBrowser({
-  runPath,
-  projectRoot,
-}: {
-  runPath: string;
-  projectRoot: string | null;
-}) {
-  const [checkpoints, setCheckpoints] = useState<DirEntry[] | null>(null);
-
-  useEffect(() => {
-    invoke<DirEntry[]>("list_dir", { path: `${runPath}/checkpoints` })
-      .then((entries) =>
-        setCheckpoints(filterCheckpointEntries(entries))
-      )
-      .catch(() => setCheckpoints([]));
-  }, [runPath]);
-
-  if (!checkpoints?.length) return null;
-
-  return (
-    <div className="rounded-xl border border-canvas-border overflow-hidden">
-      <div className="px-4 py-2.5 bg-canvas-surface">
-        <p className="text-xs font-semibold text-canvas-muted uppercase tracking-wider">
-          Checkpoints ({checkpoints.length})
-        </p>
-      </div>
-      <div className="divide-y divide-canvas-border/40 bg-canvas-bg">
-        {checkpoints.map((ckpt) => (
-          <div key={ckpt.path} className="flex items-center gap-3 px-4 py-2">
-            <OpenPathToolbar
-              path={ckpt.path}
-              projectRoot={projectRoot}
-              kind="checkpoint"
-              label={ckpt.name}
-              brushLabel={parentRunBrushLabelFromCheckpointPath(ckpt.path, projectRoot)}
-              chipClassName="flex-1 min-w-0 max-w-none"
-              labeled
-              labeledIconSize={12}
-              className="flex-1 min-w-0"
-            >
-              <span className="text-xs text-canvas-muted shrink-0">
-                {formatBytes(ckpt.size_bytes)}
-              </span>
-            </OpenPathToolbar>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ── Run panel (chart + hparams + checkpoints for one or more selected runs)
-function RunPanel({
-  run,
-  metrics,
-  color,
-  projectRoot,
-  logScale = false,
-}: {
-  run: TrainingRun;
-  metrics: TrainingMetricsRow[];
-  color: string;
-  projectRoot: string | null;
-  logScale?: boolean;
-}) {
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
-        <OpenPathToolbar
-          path={run.path}
-          projectRoot={projectRoot}
-          kind="training"
-          label={run.name}
-          brushLabel={run.name}
-          storedLabel={run.name}
-          className="flex-1 min-w-0"
-        >
-          <span className="text-xs text-canvas-muted shrink-0">{metrics.length} epochs</span>
-        </OpenPathToolbar>
-      </div>
-      <GradNormSparkline
-        metrics={metrics}
-        logScale={logScale}
-        exportName="training-monitor-grad-norm"
-      />
-      <LrSparkline
-        metrics={metrics}
-        logScale={logScale}
-        exportName="training-monitor-lr"
-      />
-      {run.has_hparams && <HparamsPanel runPath={run.path} />}
-      <CheckpointBrowser runPath={run.path} projectRoot={projectRoot} />
-    </div>
-  );
-}
-
-// ── Main page
 export function TrainingMonitor() {
   const {
     effectiveTheme,
@@ -386,7 +80,6 @@ export function TrainingMonitor() {
 
   const logsPath = projectRoot ? `${projectRoot}/logs` : "";
 
-  // ── Live training mode: watch for an active train_* or hpo_* process
   const processes = useProcessStore((s) => s.processes);
   const activeTrainId = useMemo(
     () => findActiveLiveTrainProcessId(processes),
@@ -474,7 +167,6 @@ export function TrainingMonitor() {
 
   const latestLiveMetric = effectiveLiveMetrics[effectiveLiveMetrics.length - 1];
 
-  // Subscribe to stdout of the active training process and accumulate live rows
   useEffect(() => {
     if (!activeTrainId) {
       setMetricsMap((m) => {
@@ -500,31 +192,62 @@ export function TrainingMonitor() {
     setMetricsMap((m) => ({ ...m, [LIVE_KEY]: [] }));
     setHealthMap((h) => ({ ...h, [LIVE_HEALTH_KEY]: [] }));
     setAttentionMap((a) => ({ ...a, [LIVE_ATTENTION_KEY]: [] }));
-    let unlisten: (() => void) | null = null;
-    listen<StdoutLine>("process:stdout", (event) => {
-      const { id, line } = event.payload;
-      if (id !== activeTrainId) return;
-      const row = parseTrainingMetricLine(line);
-      if (row) setMetricsMap((m) => ({ ...m, [LIVE_KEY]: [...(m[LIVE_KEY] ?? []), row] }));
-      const alert = parseTrainingHealthLine(line);
-      if (alert) {
+
+    const processLines = (lines: string[]) => {
+      const newRows: TrainingMetricsRow[] = [];
+      const newAlerts: TrainingHealthEntry[] = [];
+      const newAttentions: AttentionVizEntry[] = [];
+      for (const line of lines) {
+        const row = parseTrainingMetricLine(line);
+        if (row) newRows.push(row);
+        const alert = parseTrainingHealthLine(line);
+        if (alert) newAlerts.push(alert);
+        const attention = parseAttentionVizLine(line);
+        if (attention) newAttentions.push(attention);
+      }
+      if (newRows.length > 0) {
+        setMetricsMap((m) => ({
+          ...m,
+          [LIVE_KEY]: [...(m[LIVE_KEY] ?? []), ...newRows],
+        }));
+      }
+      if (newAlerts.length > 0) {
         setHealthMap((h) => ({
           ...h,
-          [LIVE_HEALTH_KEY]: [...(h[LIVE_HEALTH_KEY] ?? []), alert],
+          [LIVE_HEALTH_KEY]: [...(h[LIVE_HEALTH_KEY] ?? []), ...newAlerts],
         }));
       }
-      const attention = parseAttentionVizLine(line);
-      if (attention) {
+      if (newAttentions.length > 0) {
         setAttentionMap((a) => ({
           ...a,
-          [LIVE_ATTENTION_KEY]: [...(a[LIVE_ATTENTION_KEY] ?? []), attention],
+          [LIVE_ATTENTION_KEY]: [...(a[LIVE_ATTENTION_KEY] ?? []), ...newAttentions],
         }));
       }
-    }).then((fn) => { unlisten = fn; });
-    return () => { unlisten?.(); };
+    };
+
+    let unlistenBatch: (() => void) | null = null;
+    let unlistenSingle: (() => void) | null = null;
+    listen<StdoutBatch>("process:stdout_batch", (event) => {
+      if (event.payload.id === activeTrainId) {
+        processLines(event.payload.lines);
+      }
+    }).then((fn) => {
+      unlistenBatch = fn;
+    });
+    listen<StdoutLine>("process:stdout", (event) => {
+      if (event.payload.id === activeTrainId) {
+        processLines([event.payload.line]);
+      }
+    }).then((fn) => {
+      unlistenSingle = fn;
+    });
+
+    return () => {
+      unlistenBatch?.();
+      unlistenSingle?.();
+    };
   }, [activeTrainId]);
 
-  // Auto-select the live key when a train/HPO process starts or rehydrates after completion
   useEffect(() => {
     if (activeTrainId && !selected.includes(LIVE_KEY)) {
       setSelected((s) => [LIVE_KEY, ...s]);
@@ -706,7 +429,6 @@ export function TrainingMonitor() {
 
   const runsMetrics = useMemo(() => {
     const result: { name: string; metrics: TrainingMetricsRow[] }[] = [];
-    // Live entry first
     if (selected.includes(LIVE_KEY) && effectiveLiveMetrics.length > 0) {
       result.push({ name: liveRunLabel, metrics: effectiveLiveMetrics });
     }
@@ -715,7 +437,7 @@ export function TrainingMonitor() {
       if (metrics.length > 0) result.push({ name: r.name, metrics });
     }
     return result;
-  }, [selected, selectedRunObjects, effectiveLiveMetrics, liveRunLabel]);
+  }, [selected, selectedRunObjects, effectiveLiveMetrics, liveRunLabel, metricsMap]);
 
   if (!projectRoot) {
     return (
@@ -730,7 +452,6 @@ export function TrainingMonitor() {
     <div className="space-y-4">
       <GlobalFilterBar showLogScale runLabels={filterRunLabels} />
 
-      {/* Controls */}
       <div className="flex items-center gap-3">
         <button
           onClick={discover}
@@ -766,7 +487,6 @@ export function TrainingMonitor() {
         </div>
       )}
 
-      {/* Live / recent train-HPO indicator */}
       {recentTrainId && recentTrainProc && (
         <TrainHpoLivePanel
           cardClassName="border-accent-success/30"
@@ -774,8 +494,8 @@ export function TrainingMonitor() {
             status: activeTrainRunning
               ? "running"
               : recentTrainCompleted
-                ? "completed"
-                : recentTrainProc.status,
+              ? "completed"
+              : recentTrainProc.status,
             title: trainHpoLivePanelTitle({
               isRunning: activeTrainRunning,
               status: recentTrainProc.status,
@@ -842,7 +562,6 @@ export function TrainingMonitor() {
         />
       )}
 
-      {/* Run selector */}
       {runs.length > 0 && (
         <div className="card">
           <p className="text-xs font-semibold text-canvas-muted uppercase tracking-wider mb-3">
@@ -890,12 +609,8 @@ export function TrainingMonitor() {
         </div>
       )}
 
-      {/* Training health alerts (§A.4) */}
-      {displayedHealth.length > 0 && (
-        <TrainingHealthPanel entries={displayedHealth} />
-      )}
+      {displayedHealth.length > 0 && <TrainingHealthPanel entries={displayedHealth} />}
 
-      {/* Runtime attention ring-buffer (§A.2 Option A) */}
       {displayedAttention.length > 0 && (
         <RuntimeAttentionPanel
           entries={displayedAttention}
@@ -904,10 +619,8 @@ export function TrainingMonitor() {
         />
       )}
 
-      {/* Multi-run overlay chart */}
       {runsMetrics.length > 0 && <MultiRunChart runsMetrics={runsMetrics} logScale={logScale} />}
 
-      {/* Per-run panels (grad norm, hparams, checkpoints) */}
       {selectedRunObjects.map((run, i) => {
         const liveOffset = activeTrainId ? 1 : 0;
         const metrics = metricsMap[run.name];

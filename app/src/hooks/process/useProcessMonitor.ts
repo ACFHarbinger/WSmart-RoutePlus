@@ -19,7 +19,14 @@ import { parsePolicyVizLine } from "../../utils/benchmark/policyTelemetry";
 import { parseSimFailureLine } from "../../utils/sim/simFailure";
 import { isTrainOrHpoProcess } from "../../utils/training/trainingProcess";
 import { trainingRunPathFromLogLines } from "../../utils/training/trainingRunPath";
-import type { ProcessSpawned, StdoutLine, StatusUpdate } from "../../types";
+import type {
+  PolicyVizEntry,
+  ProcessSpawned,
+  SimFailureEntry,
+  StatusUpdate,
+  StdoutBatch,
+  StdoutLine,
+} from "../../types";
 
 async function maybeSendOsNotification(title: string, body: string) {
   if (!document.hidden) return;
@@ -220,40 +227,53 @@ function processToastHandoffOptions(id: string): {
   return {};
 }
 
+function ingestStdoutLines(id: string, lines: string[]) {
+  if (lines.length === 0) return;
+  useProcessStore.getState().appendLogs(id, lines);
+  const vizBatch: PolicyVizEntry[] = [];
+  const failureBatch: SimFailureEntry[] = [];
+  for (const line of lines) {
+    const viz = parsePolicyVizLine(line);
+    if (viz) vizBatch.push(viz);
+    const failure = parseSimFailureLine(line);
+    if (failure) failureBatch.push(failure);
+  }
+  const sim = useSimStore.getState();
+  if (vizBatch.length > 0) sim.addPolicyVizEntries(vizBatch);
+  if (failureBatch.length > 0) sim.addFailureEntries(failureBatch);
+}
+
 /**
- * Subscribes to `process:spawn`, `process:stdout`, and `process:status` Tauri events
- * and funnels them into the process store.
+ * Subscribes to `process:spawn`, `process:stdout_batch`, `process:stdout`, and
+ * `process:status` Tauri events and funnels them into the process store.
  *
  * Mount this once at the app root so all pages share the same process state.
- * `process:spawn` is emitted by Rust right after a process starts, so the frontend
- * always learns about a process even if it was spawned from a different page.
+ * Uses imperative `getState()` inside event listeners so the root shell never
+ * re-renders on incoming log batches.
  */
 export function useProcessMonitor() {
-  const { addProcess, appendLog, updateStatus, processes } = useProcessStore();
   const unlistenRefs = useRef<Array<() => void>>([]);
 
   useEffect(() => {
     const setup = async () => {
       const ulSpawn = await listen<ProcessSpawned>("process:spawn", (event) => {
         const { id, command, pid, start_time } = event.payload;
-        addProcess({ id, command, pid, status: "running", startTime: start_time });
+        useProcessStore
+          .getState()
+          .addProcess({ id, command, pid, status: "running", startTime: start_time });
+      });
+
+      const ulBatch = await listen<StdoutBatch>("process:stdout_batch", (event) => {
+        ingestStdoutLines(event.payload.id, event.payload.lines);
       });
 
       const ulStdout = await listen<StdoutLine>("process:stdout", (event) => {
-        appendLog(event.payload.id, event.payload.line);
-        const viz = parsePolicyVizLine(event.payload.line);
-        if (viz) {
-          useSimStore.getState().addPolicyVizEntry(viz);
-        }
-        const failure = parseSimFailureLine(event.payload.line);
-        if (failure) {
-          useSimStore.getState().addFailureEntry(failure);
-        }
+        ingestStdoutLines(event.payload.id, [event.payload.line]);
       });
 
       const ulStatus = await listen<StatusUpdate>("process:status", (event) => {
         const { id, status, exit_code } = event.payload;
-        updateStatus(id, status, exit_code ?? undefined);
+        useProcessStore.getState().updateStatus(id, status, exit_code ?? undefined);
 
         const label = id.split("_")[0];
         const handoffOpts = processToastHandoffOptions(id);
@@ -286,7 +306,7 @@ export function useProcessMonitor() {
         }
       });
 
-      unlistenRefs.current = [ulSpawn, ulStdout, ulStatus];
+      unlistenRefs.current = [ulSpawn, ulBatch, ulStdout, ulStatus];
     };
 
     setup().catch(console.error);
@@ -294,7 +314,7 @@ export function useProcessMonitor() {
     return () => {
       unlistenRefs.current.forEach((ul) => ul());
     };
-  }, [addProcess, appendLog, updateStatus]);
+  }, []);
 
   // Global Ctrl+. shortcut — cancel the first running process (§D.7)
   useEffect(() => {
@@ -306,8 +326,10 @@ export function useProcessMonitor() {
         target instanceof HTMLTextAreaElement ||
         target instanceof HTMLSelectElement ||
         target.isContentEditable
-      ) return;
+      )
+        return;
 
+      const processes = useProcessStore.getState().processes;
       const running = Object.values(processes).find((p) => p.status === "running");
       if (!running) return;
 
@@ -316,5 +338,5 @@ export function useProcessMonitor() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [processes]);
+  }, []);
 }

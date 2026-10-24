@@ -1,34 +1,24 @@
 /**
- * Simulation Digital Twin — real-time visualization of a running simulation (§G.16).
+ * Simulation Digital Twin — real-time visualization of a running simulation (§G.16, Slice V5).
  *
- * Ports the Streamlit `simulation` mode from:
- *   logic/src/ui/pages/simulation/{kpi,map,charts,bins,tour,summary_sections}.py
- *   logic/src/ui/services/log_parser.py  (stream_log_file)
- *   logic/src/ui/services/simulation_analytics.py
- *
- * Architecture: Rust file-watcher emits sim:day_update events → React updates in <200 ms
- * (replaces Streamlit's time.sleep + st.rerun loop).
- *
- * §G.16 additions (recent passes):
- *   - Day scrubber with ◀/▶ step buttons, "Following" badge, "Latest" reset
- *   - Bin-fill strip chart (bin_state_c percentages, sorted descending, overflow highlight)
- *   - Tour sequence table (stop #, bin ID, fill %, collected, mandatory flags)
- *   - deck.gl tile map: overlay vs side-by-side split when exactly 2 policies visible
+ * Uses `useSimThrottle` (2 Hz visibility-aware throttle), `StalenessDot`,
+ * `useLoadedRunStore` synchronization, and optional hexagonal spatial density overlay.
  */
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import ReactECharts from "echarts-for-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { ChevronLeft, ChevronRight, FolderOpen, Pause, Play, RefreshCw } from "lucide-react";
 import { GlobalFilterBar } from "../../components/layout/GlobalFilterBar";
 import { KpiCard } from "../../components/ui/KpiCard";
+import { StalenessDot } from "../../components/ui/telemetry/status";
 import { useSimWatcher } from "../../hooks/process/useSimWatcher";
+import { useSimThrottle } from "../../hooks/sim/useSimThrottle";
 import { useAppStore } from "../../store/app";
+import { useLoadedRunStore } from "../../store/loadedRun";
 import { useRecentHandoff } from "../../hooks/files/useRecentHandoff";
 import { useGlobalFiltersStore } from "../../store/filters";
 import { useProcessStore } from "../../store/process";
 import { useSimStore, uniquePolicies, uniqueSamples, filterEntries } from "../../store/sim";
-import { ChartExportButtons } from "../../components/common/ChartExportButtons";
 import { OpenPathToolbar } from "../../components/common/OpenPathToolbar";
 import { hexToRgb } from "../../utils/charts/colors";
 import {
@@ -37,17 +27,10 @@ import {
   guessGraphPreset,
   loadGraphCoordinates,
 } from "../../utils/graph/graphCoords";
-import {
-  chartMetricDisplay,
-  chartMetricYAxisType,
-  isLogScaleMetric,
-} from "../../utils/charts/chartLogScale";
-
 import { GraphTopologyPanel } from "../../components/analysis/topology/GraphTopologyPanel";
 import { FailureAnalysisPanel } from "../../components/analysis/routes/FailureAnalysisPanel";
 import { PolicyTelemetryPanel } from "../../components/analysis/telemetry/PolicyTelemetryPanel";
 import { PolicyTelemetryTrendsPanel } from "../../components/analysis/telemetry/PolicyTelemetryTrendsPanel";
-import { RouteViz } from "../../components/analysis/routes/RouteViz";
 import { SqlQueryPanel } from "../../components/analysis/explorer/SqlQueryPanel";
 import {
   formatPipelineTimingBadge,
@@ -58,260 +41,27 @@ import { useDuckDbStore } from "../../store/duckdb";
 import { toast } from "sonner";
 import { filterFailureEntries } from "../../utils/sim/simFailure";
 import { useLogPathRunLabelBrush } from "../../hooks/brush/useLogPathRunLabelBrush";
-import type { DayLogEntry, PolicyVizEntry, SimDayData, SimFailureEntry } from "../../types";
+import {
+  BinFillStrip,
+  computeDelta,
+  MetricTimeseries,
+  POLICY_COLORS,
+  PRIMARY_KPIS,
+  SECONDARY_KPIS,
+  TourTable,
+} from "../../components/monitor/sim/SimMonitorPanels";
+import { SimMonitorMapSection } from "../../components/monitor/sim/SimMonitorMapSection";
+import type { DayLogEntry, PolicyVizEntry, SimFailureEntry } from "../../types";
 
-const DeckRouteMap = lazy(() => import("../../components/maps/DeckRouteMap"));
-
-// ── KPI definitions — mirrors _PRIMARY_KPI_MAP and _SECONDARY_KPI_MAP in kpi.py
-const PRIMARY_KPIS = [
-  { key: "profit", label: "Profit (€)", lowerIsBetter: false },
-  { key: "km", label: "Distance (km)", lowerIsBetter: true },
-  { key: "kg", label: "Waste (kg)", lowerIsBetter: false },
-  { key: "overflows", label: "Overflows", lowerIsBetter: true },
-] as const;
-
-const SECONDARY_KPIS = [
-  { key: "ncol", label: "Collections", lowerIsBetter: false },
-  { key: "kg_lost", label: "Waste Lost (kg)", lowerIsBetter: true },
-  { key: "kg/km", label: "Efficiency (kg/km)", lowerIsBetter: false },
-  { key: "cost", label: "Cost (€)", lowerIsBetter: true },
-] as const;
-
-// ── Day-over-day delta
-function computeDelta(entries: DayLogEntry[], day: number, key: string): number | null {
-  const prev = entries.find((e) => e.day === day - 1);
-  const curr = entries.find((e) => e.day === day);
-  if (!prev || !curr) return null;
-  const a = (curr.data as Record<string, number>)[key];
-  const b = (prev.data as Record<string, number>)[key];
-  if (typeof a !== "number" || typeof b !== "number") return null;
-  return a - b;
-}
-
-// 8-colour palette for policy overlay (distinct, readable on dark bg)
-const POLICY_COLORS = [
-  "#6366f1", "#34d399", "#f87171", "#fbbf24",
-  "#a78bfa", "#fb923c", "#38bdf8", "#f472b6",
-];
-
-// ── Metric timeseries chart — supports multi-policy overlay
-function MetricTimeseries({
-  policySeries,
-  metricKey,
-  label,
-  logScale = false,
-}: {
-  policySeries: { policy: string; entries: DayLogEntry[]; color: string }[];
-  metricKey: string;
-  label: string;
-  logScale?: boolean;
-}) {
-  const chartRef = useRef<ReactECharts>(null);
-  const allDays = [...new Set(policySeries.flatMap((s) => s.entries.map((e) => e.day)))].sort(
-    (a, b) => a - b
-  );
-  const metricLog = logScale && isLogScaleMetric(metricKey);
-
-  const series = policySeries.map(({ policy, entries, color }) => ({
-    name: policy,
-    type: "line" as const,
-    smooth: true,
-    symbol: "circle",
-    symbolSize: 3,
-    lineStyle: { color, width: 1.8 },
-    itemStyle: { color },
-    areaStyle: policySeries.length === 1 ? { color: `${color}1e` } : undefined,
-    data: allDays.map((day) => {
-      const e = entries.find((en) => en.day === day);
-      if (!e) return null;
-      const raw = (e.data as Record<string, number>)[metricKey];
-      return chartMetricDisplay(raw, metricKey, logScale);
-    }),
-  }));
-
-  return (
-    <div className="card">
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-xs text-canvas-muted">
-          {label}
-          {metricLog ? " · log" : ""}
-        </p>
-        <ChartExportButtons
-          chartRef={chartRef}
-          filenameStem={`${metricKey}-timeseries`}
-          size={11}
-        />
-      </div>
-      <ReactECharts
-        ref={chartRef}
-        option={{
-          backgroundColor: "transparent",
-          grid: { left: 40, right: 10, top: policySeries.length > 1 ? 20 : 10, bottom: 30 },
-          xAxis: {
-            type: "category",
-            data: allDays,
-            axisLabel: { color: "#9090b0", fontSize: 10 },
-          },
-          yAxis: {
-            type: chartMetricYAxisType(metricKey, logScale),
-            logBase: 10,
-            axisLabel: { color: "#9090b0", fontSize: 10 },
-            minorSplitLine: { show: false },
-          },
-          legend: policySeries.length > 1
-            ? { data: policySeries.map((s) => s.policy), textStyle: { color: "#9090b0", fontSize: 9 }, top: 0 }
-            : undefined,
-          series,
-          tooltip: { trigger: "axis" },
-        }}
-        style={{ height: 140 }}
-      />
-    </div>
-  );
-}
-
-// ── Bin-fill strip chart (mirrors bin_charts.py fill level bars)
-function BinFillStrip({ data }: { data: SimDayData }) {
-  const { bin_state_c, bin_state_collected, mandatory } = data;
-  if (!bin_state_c?.length) return null;
-
-  const mandatorySet = new Set(mandatory ?? []);
-  const sorted = [...bin_state_c.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 25);
-
-  return (
-    <div className="card space-y-2">
-      <p className="text-xs text-canvas-muted">
-        Bin Fill Levels — top 25 of {bin_state_c.length} bins
-      </p>
-      <div className="space-y-1">
-        {sorted.map(([idx, fill]) => {
-          const pct = Math.min(100, fill * 100);
-          const barColor =
-            pct >= 100
-              ? "bg-accent-danger"
-              : pct >= 80
-              ? "bg-accent-warning"
-              : "bg-accent-success";
-          const isMandatory = mandatorySet.has(idx);
-          const isCollected = bin_state_collected?.[idx] ?? false;
-
-          return (
-            <div key={idx} className="flex items-center gap-2 text-xs">
-              <span className="font-mono w-10 text-right text-canvas-muted">#{idx}</span>
-              <div className="flex-1 h-2.5 bg-canvas-elevated rounded-full overflow-hidden">
-                <div
-                  className={`h-full ${barColor} rounded-full`}
-                  style={{ width: `${pct}%` }}
-                />
-              </div>
-              <span className="font-mono w-10 text-right text-gray-400">
-                {pct.toFixed(0)}%
-              </span>
-              {isMandatory && (
-                <span className="text-accent-danger font-bold w-4 text-center" title="Mandatory">!</span>
-              )}
-              {isCollected && (
-                <span className="text-accent-success w-4 text-center" title="Collected">✓</span>
-              )}
-              {!isMandatory && !isCollected && <span className="w-4" />}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ── Tour sequence table (mirrors tour_table in tour.py)
-function TourTable({ data, day, policy }: { data: SimDayData; day: number; policy: string }) {
-  const { tour, tour_indices, bin_state_c, bin_state_collected, mandatory } = data;
-
-  const indices: number[] = useMemo(() => {
-    if (tour_indices?.length) return tour_indices;
-    if (tour?.length) {
-      return tour.map((stop) => (typeof stop === "number" ? stop : stop.id));
-    }
-    return [];
-  }, [tour, tour_indices]);
-
-  if (indices.length === 0) return null;
-
-  const mandatorySet = new Set(mandatory ?? []);
-  const LIMIT = 60;
-
-  return (
-    <div className="card space-y-2">
-      <p className="text-xs text-canvas-muted">
-        Tour — Day {day} · {policy} · {indices.length} stops
-      </p>
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs">
-          <thead>
-            <tr className="border-b border-canvas-border text-canvas-muted text-left">
-              <th className="py-1 pr-3 font-normal">#</th>
-              <th className="py-1 pr-3 font-normal">Bin</th>
-              <th className="py-1 pr-3 text-right font-normal">Fill</th>
-              <th className="py-1 pr-2 text-center font-normal">Collected</th>
-              <th className="py-1 text-center font-normal">Mandatory</th>
-            </tr>
-          </thead>
-          <tbody>
-            {indices.slice(0, LIMIT).map((binIdx, stop) => {
-              const fill = bin_state_c ? bin_state_c[binIdx] : undefined;
-              const collected = bin_state_collected?.[binIdx];
-              const mandatory = mandatorySet.has(binIdx);
-              return (
-                <tr
-                  key={stop}
-                  className={`border-b border-canvas-border/20 hover:bg-canvas-hover ${
-                    mandatory ? "text-accent-warning" : "text-gray-300"
-                  }`}
-                >
-                  <td className="py-0.5 pr-3 text-canvas-muted">{stop + 1}</td>
-                  <td className="py-0.5 pr-3 font-mono">#{binIdx}</td>
-                  <td className="py-0.5 pr-3 text-right font-mono">
-                    {fill != null ? `${(fill * 100).toFixed(1)}%` : "—"}
-                  </td>
-                  <td className="py-0.5 pr-2 text-center">
-                    {collected ? (
-                      <span className="text-accent-success">✓</span>
-                    ) : (
-                      <span className="text-canvas-muted">—</span>
-                    )}
-                  </td>
-                  <td className="py-0.5 text-center">
-                    {mandatory ? (
-                      <span className="text-accent-danger font-bold">!</span>
-                    ) : (
-                      <span className="text-canvas-muted">—</span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        {indices.length > LIMIT && (
-          <p className="text-xs text-canvas-muted mt-1">
-            Showing {LIMIT} of {indices.length} stops.
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ── Main page
 export function SimulationMonitor() {
   const {
-    entries,
+    entries: rawEntries,
     policyVizEntries,
     failureEntries,
     selectedDay,
     watchPath,
     isWatching,
+    lastEventAt,
     loadEntries,
     loadPolicyVizEntries,
     loadFailureEntries,
@@ -321,6 +71,9 @@ export function SimulationMonitor() {
     setWatchPath,
     reset,
   } = useSimStore();
+  const entries = useSimThrottle(rawEntries, 500);
+  const setLoadedRun = useLoadedRunStore((s) => s.setLoadedRun);
+
   const runningSimProcess = useProcessStore((s) =>
     Object.values(s.processes).find(
       (p) => p.status === "running" && p.command.includes("test_sim")
@@ -343,7 +96,6 @@ export function SimulationMonitor() {
     setSampleId,
   } = useGlobalFiltersStore();
 
-  // Keep sim store in sync for legacy consumers (AlgorithmComparison, etc.)
   useEffect(() => {
     setSelectedPolicy(selectedPolicy);
     setSelectedSample(selectedSample);
@@ -365,7 +117,6 @@ export function SimulationMonitor() {
     return { min: Math.min(...days), max: Math.max(...days) };
   }, [filteredEntries]);
 
-  // When selectedDay is null → auto-follow latest (mirrors "Follow latest" in Streamlit)
   const displayDay = selectedDay ?? dayRange.max;
   const displayEntry = filteredEntries.find((e) => e.day === displayDay) ?? null;
 
@@ -393,8 +144,7 @@ export function SimulationMonitor() {
   const [activeLogPath, setActiveLogPath] = useState<string | null>(null);
   useLogPathRunLabelBrush(activeLogPath);
   const sourceRunLabel = useMemo(
-    () =>
-      activeLogPath ? portfolioRunLabel(activeLogPath, undefined, projectRoot) : null,
+    () => (activeLogPath ? portfolioRunLabel(activeLogPath, undefined, projectRoot) : null),
     [activeLogPath, projectRoot]
   );
   const [graphPreset, setGraphPreset] = useState(GRAPH_PRESETS[0].id);
@@ -413,6 +163,12 @@ export function SimulationMonitor() {
       loadFailureEntries(failureHistorical);
       setActiveLogPath(path);
       if (watch) setWatchPath(path);
+      setLoadedRun({
+        path,
+        label: portfolioRunLabel(path, undefined, projectRoot) ?? "simulation_log",
+        entries: historical,
+        source: watch ? "live" : "viewing",
+      });
       handoff(path, "log", { navigate: false });
 
       if (duckdbReady) {
@@ -423,7 +179,19 @@ export function SimulationMonitor() {
           .finally(() => setDuckdbLoading(false));
       }
     },
-    [reset, loadEntries, loadPolicyVizEntries, loadFailureEntries, setWatchPath, handoff, duckdbReady, projectRoot, setLastPipeline, setDuckdbLoading]
+    [
+      reset,
+      loadEntries,
+      loadPolicyVizEntries,
+      loadFailureEntries,
+      setWatchPath,
+      setLoadedRun,
+      handoff,
+      duckdbReady,
+      projectRoot,
+      setLastPipeline,
+      setDuckdbLoading,
+    ]
   );
 
   const openLog = useCallback(async () => {
@@ -451,6 +219,7 @@ export function SimulationMonitor() {
   const [mapLayout, setMapLayout] = useState<"overlay" | "split">("overlay");
   const [showFailureOverlay, setShowFailureOverlay] = useState(true);
   const [showRouteDiff, setShowRouteDiff] = useState(false);
+  const [showHexDensity, setShowHexDensity] = useState(false);
   const [duckdbProfitRange, setDuckdbProfitRange] = useState<[number, number] | null>(null);
 
   useEffect(() => {
@@ -491,7 +260,6 @@ export function SimulationMonitor() {
     [displayEntry]
   );
 
-  // Chart policy overlay — defaults to all policies; separate from detail-panel selectedPolicy
   const [chartPolicies, setChartPolicies] = useState<string[]>([]);
   const activeChartPolicies = useMemo(
     () => (chartPolicies.length > 0 ? chartPolicies : policies),
@@ -572,10 +340,8 @@ export function SimulationMonitor() {
     [mapRoutes]
   );
 
-  // Build per-policy series for MetricTimeseries
   useEffect(() => {
     if (!isPlaying || dayRange.max <= dayRange.min) return;
-
     const intervalMs = 800 / playbackSpeed;
     const timer = window.setInterval(() => {
       const current = selectedDay ?? dayRange.max;
@@ -585,7 +351,6 @@ export function SimulationMonitor() {
         setSelectedDay(current + 1);
       }
     }, intervalMs);
-
     return () => window.clearInterval(timer);
   }, [isPlaying, playbackSpeed, dayRange.min, dayRange.max, selectedDay, setSelectedDay]);
 
@@ -614,6 +379,8 @@ export function SimulationMonitor() {
           <FolderOpen size={14} />
           Open Log File
         </button>
+
+        {isWatching && <StalenessDot lastEventAt={lastEventAt} />}
 
         {watchPath && (
           <OpenPathToolbar
@@ -653,9 +420,7 @@ export function SimulationMonitor() {
           <select
             className="select-base w-32"
             value={selectedSample ?? ""}
-            onChange={(e) =>
-              setSampleId(e.target.value ? Number(e.target.value) : null)
-            }
+            onChange={(e) => setSampleId(e.target.value ? Number(e.target.value) : null)}
           >
             <option value="">All samples</option>
             {samples.map((s) => (
@@ -664,7 +429,6 @@ export function SimulationMonitor() {
           </select>
         )}
 
-        {/* Day scrubber with step buttons and auto-follow */}
         {dayRange.max > 0 && (
           <div className="flex items-center gap-1.5 ml-auto">
             <span className="text-xs text-canvas-muted">Day</span>
@@ -692,7 +456,7 @@ export function SimulationMonitor() {
             >
               <ChevronRight size={12} />
             </button>
-            <span className="text-xs font-mono text-canvas-muted w-14 text-center">
+            <span className="text-xs font-mono text-canvas-muted w-14 text-center tabular-nums">
               {displayDay}/{dayRange.max}
             </span>
             <button
@@ -740,7 +504,6 @@ export function SimulationMonitor() {
         )}
       </div>
 
-      {/* Policy overlay chip selector — shown when ≥2 policies are present */}
       {policies.length > 1 && (
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs text-canvas-muted shrink-0">Charts:</span>
@@ -778,7 +541,6 @@ export function SimulationMonitor() {
 
       {displayEntry && (
         <>
-          {/* Primary KPIs */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {PRIMARY_KPIS.map(({ key, label, lowerIsBetter }) => (
               <KpiCard
@@ -792,7 +554,6 @@ export function SimulationMonitor() {
             ))}
           </div>
 
-          {/* Secondary KPIs */}
           <button
             className="btn-ghost text-xs"
             onClick={() => setShowSecondary((v) => !v)}
@@ -814,7 +575,6 @@ export function SimulationMonitor() {
             </div>
           )}
 
-          {/* Timeseries charts — one per primary KPI, each overlaying activeChartPolicies */}
           <p className="text-[10px] text-canvas-muted">
             {logScale
               ? "Daily KPI timeseries · log-scale (symlog overflows, log profit/km/kg)"
@@ -832,190 +592,42 @@ export function SimulationMonitor() {
             ))}
           </div>
 
-          {/* Bin-fill strip chart */}
-          <div className="flex items-center gap-2">
-            <button
-              className="btn-ghost text-xs"
-              onClick={() => setShowBinFill((v) => !v)}
-            >
-              {showBinFill ? "Hide" : "Show"} bin fill chart
-            </button>
-            <button
-              className="btn-ghost text-xs"
-              onClick={() => setShowTourTable((v) => !v)}
-            >
-              {showTourTable ? "Hide" : "Show"} tour table
-            </button>
-            <button
-              className="btn-ghost text-xs"
-              onClick={() => setShowRouteMap((v) => !v)}
-            >
-              {showRouteMap ? "Hide" : "Show"} route map
-            </button>
-            {showRouteMap && policies.length > 1 && (
-              <div className="flex items-center gap-1 flex-wrap ml-1">
-                <span className="text-[10px] text-canvas-muted">Map:</span>
-                {policies.map((p, i) => {
-                  const color = POLICY_COLORS[i % POLICY_COLORS.length];
-                  const active = activeMapPolicies.includes(p);
-                  return (
-                    <button
-                      key={p}
-                      onClick={() => toggleMapPolicy(p)}
-                      className={`text-[10px] px-1.5 py-0.5 rounded-full border ${
-                        active ? "opacity-100" : "opacity-35"
-                      }`}
-                      style={{ borderColor: color, color: active ? color : undefined }}
-                    >
-                      {p}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-            {showRouteMap && mapRoutes.length === 2 && (
-              <div className="flex items-center gap-1 bg-canvas-elevated rounded-lg p-0.5 ml-1">
-                {(["overlay", "split"] as const).map((layout) => (
-                  <button
-                    key={layout}
-                    onClick={() => setMapLayout(layout)}
-                    className={`text-xs px-2 py-0.5 rounded-md capitalize ${
-                      mapLayout === layout
-                        ? "bg-accent-primary text-white"
-                        : "text-canvas-muted hover:text-gray-200"
-                    }`}
-                  >
-                    {layout}
-                  </button>
-                ))}
-              </div>
-            )}
-            {showRouteMap && !hasGeoCoords && entries.length > 0 && (
-              <div className="flex items-center gap-2 ml-1 flex-wrap">
-                <select
-                  className="select-base text-xs py-0.5"
-                  value={graphPreset}
-                  onChange={(e) => setGraphPreset(e.target.value)}
-                >
-                  {GRAPH_PRESETS.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.label}
-                    </option>
-                  ))}
-                </select>
-                {activeLogPath && guessGraphPreset(activeLogPath, entries) === graphPreset && (
-                  <span className="text-[10px] text-accent-secondary">auto-detected</span>
-                )}
-                <button
-                  onClick={() => void applyGraphCoords()}
-                  disabled={loadingGraphCoords}
-                  className="btn-ghost text-xs"
-                >
-                  {loadingGraphCoords ? "Loading…" : "Load graph coords"}
-                </button>
-              </div>
-            )}
-            {showRouteMap && mapHasFailureData && (
-              <button
-                className={`btn-ghost text-xs ml-1 ${
-                  showFailureOverlay ? "text-accent-danger" : ""
-                }`}
-                onClick={() => setShowFailureOverlay((v) => !v)}
-              >
-                {showFailureOverlay ? "Hide" : "Show"} failure overlay
-              </button>
-            )}
-            {showRouteMap && mapRoutes.length === 2 && mapLayout === "overlay" && (
-              <button
-                className={`btn-ghost text-xs ${showRouteDiff ? "text-accent-secondary" : ""}`}
-                onClick={() => setShowRouteDiff((v) => !v)}
-              >
-                {showRouteDiff ? "Hide" : "Show"} route diff
-              </button>
-            )}
-            {showRouteMap && hasBinCoords && (
-              <div className="flex items-center gap-1 bg-canvas-elevated rounded-lg p-0.5 ml-1">
-                {(["echarts", "deckgl"] as const).map((m) => (
-                  <button
-                    key={m}
-                    onClick={() => setRouteMapMode(m)}
-                    className={`text-xs px-2 py-0.5 rounded-md ${
-                      routeMapMode === m
-                        ? "bg-accent-primary text-white"
-                        : "text-canvas-muted hover:text-gray-200"
-                    }`}
-                  >
-                    {m === "echarts" ? "ECharts" : hasGeoCoords ? "Mercator" : "OrbitView"}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <SimMonitorMapSection
+            showBinFill={showBinFill}
+            setShowBinFill={setShowBinFill}
+            showTourTable={showTourTable}
+            setShowTourTable={setShowTourTable}
+            showRouteMap={showRouteMap}
+            setShowRouteMap={setShowRouteMap}
+            policies={policies}
+            activeMapPolicies={activeMapPolicies}
+            toggleMapPolicy={toggleMapPolicy}
+            mapRoutes={mapRoutes}
+            mapLayout={mapLayout}
+            setMapLayout={setMapLayout}
+            hasGeoCoords={hasGeoCoords}
+            hasBinCoords={hasBinCoords}
+            entries={entries}
+            graphPreset={graphPreset}
+            setGraphPreset={setGraphPreset}
+            activeLogPath={activeLogPath}
+            applyGraphCoords={applyGraphCoords}
+            loadingGraphCoords={loadingGraphCoords}
+            mapHasFailureData={mapHasFailureData}
+            showFailureOverlay={showFailureOverlay}
+            setShowFailureOverlay={setShowFailureOverlay}
+            showRouteDiff={showRouteDiff}
+            setShowRouteDiff={setShowRouteDiff}
+            showHexDensity={showHexDensity}
+            setShowHexDensity={setShowHexDensity}
+            routeMapMode={routeMapMode}
+            setRouteMapMode={setRouteMapMode}
+            isPlaying={isPlaying}
+            playbackSpeed={playbackSpeed}
+            displayDay={displayDay}
+            displayEntry={displayEntry}
+          />
 
-          {showRouteMap && mapRoutes.length > 0 ? (
-            routeMapMode === "deckgl" && hasBinCoords ? (
-              <Suspense fallback={<p className="text-xs text-canvas-muted">Loading tile map…</p>}>
-                {mapLayout === "split" && mapRoutes.length === 2 ? (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                    {mapRoutes.map((route) => (
-                      <div key={route.id} className="space-y-1">
-                        <p className="text-xs font-mono text-canvas-muted px-1">{route.label}</p>
-                        <DeckRouteMap
-                          routes={[route]}
-                          animate={isPlaying}
-                          playbackSpeed={playbackSpeed}
-                          showFailureOverlay={showFailureOverlay}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <DeckRouteMap
-                    routes={mapRoutes}
-                    animate={isPlaying}
-                    playbackSpeed={playbackSpeed}
-                    showFailureOverlay={showFailureOverlay}
-                    showRouteDiff={showRouteDiff}
-                  />
-                )}
-              </Suspense>
-            ) : mapLayout === "split" && mapRoutes.length === 2 ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                {mapRoutes.map((route) => (
-                  <div key={route.id} className="space-y-1">
-                    <p className="text-xs font-mono text-canvas-muted px-1">{route.label}</p>
-                    <RouteViz
-                      data={route.data}
-                      title="Route Map Preview"
-                      subtitle={route.label}
-                      filenameStem="route-map"
-                      showFailureOverlay={showFailureOverlay}
-                    />
-                  </div>
-                ))}
-              </div>
-            ) : mapRoutes.length === 2 && mapLayout === "overlay" ? (
-              <RouteViz
-                data={mapRoutes[0].data}
-                compareData={mapRoutes[1].data}
-                primaryLabel={mapRoutes[0].label}
-                compareLabel={mapRoutes[1].label}
-                title="Route Map Preview"
-                subtitle={`Day ${displayDay} · overlay compare`}
-                filenameStem="route-map-overlay"
-                showFailureOverlay={showFailureOverlay}
-                showTourDiff={showRouteDiff}
-              />
-            ) : displayEntry ? (
-              <RouteViz
-                data={displayEntry.data}
-                title="Route Map Preview"
-                subtitle={`Day ${displayDay} · ${displayEntry.policy}`}
-                filenameStem="route-map"
-                showFailureOverlay={showFailureOverlay}
-              />
-            ) : null
-          ) : null}
           {showBinFill && <BinFillStrip data={displayEntry.data} />}
           {showTourTable && (
             <TourTable

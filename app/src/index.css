@@ -3,13 +3,86 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
+  :root,
+  :root.dark {
     color-scheme: dark;
+    --noc-bg-deep: #090e1a;
+    --noc-bg-panel: #0f172a;
+    --noc-bg-card: #1e293b;
+    --noc-bg-hover: rgba(148, 163, 184, 0.08);
+    --noc-text-primary: #f8fafc;
+    --noc-text-secondary: #e2e8f0;
+    --noc-text-muted: #94a3b8;
+    --noc-border: rgba(148, 163, 184, 0.14);
+    --noc-border-strong: rgba(148, 163, 184, 0.28);
+    --noc-gridline: rgba(148, 163, 184, 0.14);
+    --noc-focus-ring: rgba(56, 189, 248, 0.55);
+
+    --noc-ok: #10b981;
+    --noc-warn: #eab308;
+    --noc-crit: #ef4444;
+    --noc-idle: #94a3b8;
+    --noc-cyan: #38bdf8;
+    --noc-teal: #06b6d4;
+    --noc-indigo: #6366f1;
+    --noc-indigo-text: #818cf8;
+    --noc-purple: #a855f7;
+    --noc-purple-text: #c084fc;
+    --noc-pink: #ec4899;
+    --noc-amber: #f59e0b;
+    --noc-orange: #f97316;
+    --noc-emerald: #22c55e;
+  }
+
+  :root.light {
+    color-scheme: light;
+    --noc-bg-deep: #f8fafc;
+    --noc-bg-panel: #ffffff;
+    --noc-bg-card: #f1f5f9;
+    --noc-bg-hover: rgba(15, 23, 42, 0.05);
+    --noc-text-primary: #0f172a;
+    --noc-text-secondary: #1e293b;
+    --noc-text-muted: #475569;
+    --noc-border: rgba(15, 23, 42, 0.12);
+    --noc-border-strong: rgba(15, 23, 42, 0.24);
+    --noc-gridline: rgba(15, 23, 42, 0.10);
+    --noc-focus-ring: rgba(67, 56, 202, 0.45);
+
+    --noc-ok: #047857;
+    --noc-warn: #a16207;
+    --noc-crit: #b91c1c;
+    --noc-idle: #475569;
+    --noc-cyan: #0369a1;
+    --noc-teal: #0e7490;
+    --noc-indigo: #4338ca;
+    --noc-indigo-text: #4338ca;
+    --noc-purple: #6b21a8;
+    --noc-purple-text: #6b21a8;
+    --noc-pink: #be185d;
+    --noc-amber: #b45309;
+    --noc-orange: #c2410c;
+    --noc-emerald: #15803d;
   }
 
   body {
-    @apply bg-canvas-bg text-gray-100 antialiased;
+    background-color: var(--noc-bg-deep);
+    color: var(--noc-text-primary);
+    @apply antialiased;
     font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  }
+
+  :root.light .text-gray-100,
+  :root.light .text-gray-200 {
+    color: var(--noc-text-primary);
+  }
+
+  :root.light .text-gray-300 {
+    color: var(--noc-text-secondary);
+  }
+
+  :root.light .text-gray-400,
+  :root.light .text-gray-500 {
+    color: var(--noc-text-muted);
   }
 
   /* Scrollbar styling */
@@ -17,19 +90,42 @@
     @apply w-1.5 h-1.5;
   }
   ::-webkit-scrollbar-track {
-    @apply bg-canvas-surface;
+    background-color: var(--noc-bg-panel);
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-canvas-border rounded-full;
+    background-color: var(--noc-border-strong);
+    @apply rounded-full;
   }
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-canvas-muted;
+    background-color: var(--noc-text-muted);
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+html.reduce-motion *,
+html.reduce-motion ::before,
+html.reduce-motion ::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
 }
 
 @layer components {
   .card {
-    @apply bg-canvas-surface border border-canvas-border rounded-xl p-4;
+    background-color: var(--noc-bg-panel);
+    border-color: var(--noc-border);
+    @apply border rounded-xl p-4;
   }
 
   .kpi-card {
@@ -38,18 +134,22 @@
 
   .kpi-value {
     @apply text-2xl font-bold tabular-nums;
+    font-variant-numeric: tabular-nums;
   }
 
   .kpi-label {
-    @apply text-xs uppercase tracking-wider text-canvas-muted;
+    color: var(--noc-text-muted);
+    @apply text-xs uppercase tracking-wider;
   }
 
   .kpi-delta-pos {
-    @apply text-accent-success text-sm font-medium;
+    color: var(--noc-ok);
+    @apply text-sm font-medium tabular-nums;
   }
 
   .kpi-delta-neg {
-    @apply text-accent-danger text-sm font-medium;
+    color: var(--noc-crit);
+    @apply text-sm font-medium tabular-nums;
   }
 
   .btn-primary {
@@ -57,11 +157,15 @@
   }
 
   .btn-ghost {
-    @apply bg-transparent hover:bg-canvas-hover text-gray-300 font-medium px-3 py-1.5 rounded-lg transition-colors;
+    color: var(--noc-text-secondary);
+    @apply bg-transparent hover:bg-canvas-hover font-medium px-3 py-1.5 rounded-lg transition-colors;
   }
 
   .input-base {
-    @apply bg-canvas-elevated border border-canvas-border rounded-lg px-3 py-2 text-sm text-gray-100 placeholder-canvas-muted focus:outline-none focus:border-accent-primary transition-colors w-full;
+    background-color: var(--noc-bg-card);
+    border-color: var(--noc-border);
+    color: var(--noc-text-primary);
+    @apply border rounded-lg px-3 py-2 text-sm placeholder-canvas-muted focus:outline-none focus:border-accent-primary transition-colors w-full;
   }
 
   .select-base {
@@ -69,10 +173,13 @@
   }
 
   .log-line {
-    @apply font-mono text-xs text-gray-400 py-0.5 border-b border-canvas-border/30 last:border-0;
+    color: var(--noc-text-muted);
+    border-color: var(--noc-border);
+    @apply font-mono text-xs py-0.5 border-b last:border-0 tabular-nums;
   }
 
   .log-line-stderr {
-    @apply log-line text-accent-warning;
+    color: var(--noc-warn);
+    @apply log-line;
   }
 }

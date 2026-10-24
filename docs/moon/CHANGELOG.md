@@ -17,6 +17,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Gemini: Studio NOC/Orion UI/UX & Operations Research Telemetry Overhaul — Slices V0–V5 + V6 Part 1 (`2026-10-24`)
+
+Implements Slices V0 through V5 and the first half of Slice V6 from `.agent/reports/studio-ux-brainstorm/FINAL-PLAN.md` (§G.20):
+
+#### Added
+
+- **Slice V0 — Live Pipeline & Streaming Engine**:
+  - `app/src-tauri/src/commands/process.rs`: Concurrent stdout/stderr readers emitting 50 ms / 50-line `StdoutBatch` payloads on `"process:stdout_batch"`.
+  - `app/src-tauri/src/commands/sim_watcher.rs`: Incremental byte-offset reader `read_new_log_lines(&Path, &mut u64)` using `SeekFrom::Start(offset)` (handling file truncation/rotation) and emitting batched `"sim:batch_update"` (`SimBatchUpdate`).
+  - `app/src/store/sim.ts` & `app/src/hooks/sim/useSimThrottle.ts`: $O(1)$ map-based indexing (`entryIndexByKey`) with single-commit `applyBatch(entries)` and a 250 ms (`4 Hz`) UI throttle hook with Pause/Resume support.
+- **Slice V1 — NOC Design Tokens & Dual-Theme Contrast System**:
+  - `app/src/components/ui/telemetry/tokens.ts`, `app/src/components/ui/telemetry/panel.ts`, `app/src/utils/charts/palettes.ts`, `app/src/index.css`, and `app/tailwind.config.ts`: Dual-theme `--noc-*` CSS custom properties for both `.dark` (deep obsidian `#070a12`) and `.light` (crisp daylight `#f8fafc`), 5-stop waste fill ramp (`FILL_RAMP_STOPS`), Okabe-Ito colorblind-safe policy palette, and `html.reduce-motion` support.
+- **Slice V2 — Telemetry Primitives & Shared Metric Contract**:
+  - `app/src/components/ui/telemetry/metrics.ts`, `gauges.tsx`, `status.tsx`, `SubtabBar.tsx`, `charts.tsx`, `KitGallery.tsx`, and `app/src/components/ui/KpiCard.tsx`: Direction-aware `SIM_METRICS` registry, `normalizeCohortMetric`, `SemiCircleGauge`, `RadialProgressRing`, `CapacitySegmentBar`, `ProvenanceBadge`, `StalenessDot`, `SubtabBar`, and `TelemetryTimeSeriesCard`.
+- **Slice V3 — High-Density Scientific Visualizations (`ui/orion/`)**:
+  - `OrionGlowDefs.tsx`: Pure `<radialGradient>` / `<linearGradient>` SVG defs with zero `feGaussianBlur`.
+  - `OrionDotMatrixHeatmap.tsx`: Apache ECharts HTML5 Canvas 2D heatmap (`progressive: 5000`) for 350-bin × 90-day waste fill matrices with synchronized daily overflow summary strip.
+  - `OrionHoneycombMatrix.tsx`: Interactive SVG hexagonal 2D parameter/HPO sensitivity sweep grid with keyboard `gridcell` navigation.
+  - `OrionRadarChart.tsx`: Direction-aware multi-objective policy radar ($1.0 = \text{best}$ in cohort on every axis, inverting lower-is-better metrics, with raw mean $\pm$ std in tooltips).
+- **Slice V4 — Shell, Navigation & Loaded-Run State**:
+  - `app/src/store/loadedRun.ts` & `app/src/components/layout/LoadedRunChip.tsx`: Persistent active-run state across Studio pages with `[Viewing]` vs `[Live Stream]` header badge toggle in `TopBar.tsx`, complete 23-mode `TITLES` map, and workflow-oriented sidebar grouping (**Run / Watch / Read / Query / Write / Files / App**).
+- **Slice V5 — Monitor Pages & Hexagonal Spatial Density Overlay**:
+  - `app/src/utils/map/deckRouteGeometry.ts` & `app/src/components/maps/DeckRouteMap.tsx`: Extracted route geometry builders and added optional `Hex Cluster (on/off)` spatial bin density `PolygonLayer` overlay toggle alongside ground-truth GPS street routes.
+  - Decomposed `SimulationMonitor.tsx` (1,082 → 487 LoC), `ProcessMonitor.tsx` (713 → 431 LoC), and `TrainingMonitor.tsx` (934 → 489 LoC) into modular subcomponents $\le 500$ LoC.
+- **Slice V6 (Part 1) — `SimulationSummary.tsx` & `MLIntrospectionPanel.tsx` Decomposition**:
+  - Decomposed `SimulationSummary.tsx` (2,872 → 269 LoC) into `SummaryCoreWidgets.tsx`, `SummaryComparisonCharts.tsx` (with direction-aware `PolicyRadarChart`), `SummaryHierarchyPanel.tsx`, `SummaryParallelAndFacets.tsx`, `SummaryHierarchyAndBars.tsx`, `SummaryRouteSection.tsx`, `SummaryPortfolioSections.tsx`, and `useSimulationSummaryController.ts`; added `SubtabBar` (**All Panels / Table / Trajectories / Map / Compare**) and `OrionDotMatrixHeatmap`.
+  - Decomposed `MLIntrospectionPanel.tsx` (1,185 → 462 LoC) into `MLAttentionControls.tsx`, `MLAttentionAndLossViews.tsx`, and `useMLIntrospectionOptions.ts`.
+
 ### Claude: PG-CLNS on the shared operators (`2026-10-24`)
 
 Owner ruling 2026-10-24: the 1.0.2 release keeps PG-CLNS's own operator copies (the ones the paper ran on); `main` keeps only the shared library.

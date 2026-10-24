@@ -1,16 +1,7 @@
 /**
  * ML Introspection — TensorDict/NPZ inspector, attention heatmap, loss contour (§G.5).
  */
-import {
-  lazy,
-  Suspense,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import ReactECharts from "echarts-for-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { FolderOpen, RefreshCw } from "lucide-react";
@@ -19,90 +10,23 @@ import { OpenPathToolbar } from "../../common/OpenPathToolbar";
 import { useLogPathRunLabelBrush } from "../../../hooks/brush/useLogPathRunLabelBrush";
 import { useAppStore } from "../../../store/app";
 import { runTensorArrowPipeline, type ArrowPipelineTiming } from "../../../utils/duckdb/arrowPipeline";
-import { buildAttentionGraphOption } from "../../../utils/graph/attentionGraph";
-import { CanvasExportButton } from "../../common/CanvasExportButton";
-import { ChartExportButtons } from "../../common/ChartExportButtons";
-import {
-  distributionDisplayName,
-  inferDistributionLabel,
-} from "../../../utils/benchmark/distributionCompare";
-import { GRAPH_PRESETS, loadGraphCoordinates } from "../../../utils/graph/graphCoords";
-import { chartMetricDisplay, transformMatrixLogScale } from "../../../utils/charts/chartLogScale";
-import { analyzeLossMinima, resolveBpcMarker, type LandscapeMarker } from "../../../utils/graph/lossLandscape";
-import {
-  CLUSTER_PALETTE,
-  reorderRowsByClusters,
-  sphericalKMeans,
-} from "../../../utils/graph/sphericalKMeans";
-import {
-  applySparseTopK,
-  buildMatrixHeatmapOption,
-  classifyAttentionRole,
-  defaultIndices,
-  detectHeadAxis,
-  diffMatrices,
-  groupAttentionKeys,
-  leadingIndexCount,
-  suggestAttentionKeys,
-  type AttentionRole,
-} from "../../../utils/charts/tensorHeatmap";
+import { distributionDisplayName, inferDistributionLabel } from "../../../utils/benchmark/distributionCompare";
+import { loadGraphCoordinates } from "../../../utils/graph/graphCoords";
+import { resolveBpcMarker, type LandscapeMarker } from "../../../utils/graph/lossLandscape";
+import { classifyAttentionRole, defaultIndices, detectHeadAxis, groupAttentionKeys, leadingIndexCount, suggestAttentionKeys, type AttentionRole } from "../../../utils/charts/tensorHeatmap";
 import { RuntimeAttentionPanel } from "../topology/RuntimeAttentionPanel";
 import { parseAttentionVizLine } from "../../../utils/graph/attentionViz";
 import type { AttentionVizEntry, NpzArchiveInfo, NpzVectorData, TensorSlicePreview } from "../../../types";
-
 import type { LossLandscapeView } from "./LossLandscape3D";
+import { MLArchiveTableSection, MLAttentionControlsToolbar, type AttentionView, type CompareMode, type IntrospectionTab } from "./MLAttentionControls";
+import { MLAttentionVisualSection, MLLossLandscapeSection } from "./MLAttentionAndLossViews";
+import { useMLIntrospectionOptions } from "./useMLIntrospectionOptions";
 
-const LossLandscape3D = lazy(() =>
-  import("./LossLandscape3D").then((m) => ({ default: m.LossLandscape3D }))
-);
-const AttentionSigmaView = lazy(() =>
-  import("../topology/AttentionSigmaView").then((m) => ({ default: m.AttentionSigmaView }))
-);
-
-type IntrospectionTab = "tensor" | "attention" | "loss";
-type CompareMode = "single" | "side-by-side" | "overlay" | "distribution";
-type AttentionView = "heatmap" | "graph" | "sigma";
-
-function formatBytes(b: number): string {
-  if (b < 1024) return `${b} B`;
-  if (b < 1024 ** 2) return `${(b / 1024).toFixed(1)} KB`;
-  return `${(b / 1024 ** 2).toFixed(1)} MB`;
-}
-
-
-
-function buildLogAwareMatrixHeatmap(
-  rawValues: number[][],
-  opts: Parameters<typeof buildMatrixHeatmapOption>[1] & { title?: string },
-  useLogScale: boolean,
-  metricKey = "attention"
-): Record<string, unknown> {
-  const displayValues = useLogScale
-    ? transformMatrixLogScale(rawValues, metricKey, true)
-    : rawValues;
-  const title = opts.title
-    ? `${opts.title}${useLogScale ? " · log colour" : ""}`
-    : opts.title;
-  const base = buildMatrixHeatmapOption(displayValues, { ...opts, title });
-  if (!useLogScale) return base;
-  const xLabel = opts.xLabel ?? "Col";
-  const yLabel = opts.yLabel ?? "Row";
-  return {
-    ...base,
-    tooltip: {
-      position: "top",
-      formatter: (p: { value?: [number, number, number] }) => {
-        const v = p.value;
-        if (!v) return "";
-        const raw = rawValues[v[1]]?.[v[0]];
-        const rawText = Number.isFinite(raw) ? Number(raw).toFixed(4) : "—";
-        return `${yLabel} ${v[1]} · ${xLabel} ${v[0]}<br/>${rawText}`;
-      },
-    },
-  };
-}
-
-export function MLIntrospectionPanel({ logScale = false }: { logScale?: boolean }) {
+export function MLIntrospectionPanel({
+  logScale = false,
+}: {
+  logScale?: boolean;
+}) {
   const { projectRoot, pythonPath, effectiveTheme: theme } = useAppStore();
   const [tab, setTab] = useState<IntrospectionTab>("tensor");
   const [archivePath, setArchivePath] = useState<string | null>(null);
@@ -132,12 +56,6 @@ export function MLIntrospectionPanel({ logScale = false }: { logScale?: boolean 
   const [clusterK, setClusterK] = useState(0);
   const [lossView, setLossView] = useState<LossLandscapeView>("surface");
   const [runtimeAttentionEntries, setRuntimeAttentionEntries] = useState<AttentionVizEntry[]>([]);
-  const chartRef = useRef<ReactECharts>(null);
-  const compareChartRef = useRef<ReactECharts>(null);
-  const graphChartRef = useRef<ReactECharts>(null);
-  const lossChartRef = useRef<ReactECharts>(null);
-  const loss3dRef = useRef<HTMLDivElement>(null);
-  const attentionSigmaRef = useRef<HTMLDivElement>(null);
 
   const pickArchive = useCallback(async () => {
     const selected = await open({
@@ -177,7 +95,15 @@ export function MLIntrospectionPanel({ logScale = false }: { logScale?: boolean 
   }, []);
 
   const primaryDistLabel = useMemo(
-    () => (archivePath ? distributionDisplayName(inferDistributionLabel(archivePath, archive?.arrays.map((a) => a.key))) : "Primary"),
+    () =>
+      archivePath
+        ? distributionDisplayName(
+            inferDistributionLabel(
+              archivePath,
+              archive?.arrays.map((a) => a.key)
+            )
+          )
+        : "Primary",
     [archivePath, archive]
   );
 
@@ -189,33 +115,43 @@ export function MLIntrospectionPanel({ logScale = false }: { logScale?: boolean 
     [distArchivePath]
   );
 
-  const inspectArchive = useCallback(async (path: string) => {
-    setLoading(true);
-    try {
-      const info = await invoke<NpzArchiveInfo>("inspect_npz_archive", {
-        path,
-        projectRoot: projectRoot || null,
-        pythonExecutable: pythonPath || null,
-      });
-      setArchive(info);
-      const attnKeys = suggestAttentionKeys(info.arrays);
-      const lossKey = info.arrays.find((a) => /loss_grid|loss_surface|landscape/i.test(a.key));
-      const defaultKey =
-        attnKeys[0] ?? lossKey?.key ?? info.arrays.find((a) => a.shape.length >= 2)?.key ?? "";
-      setSelectedKey(defaultKey);
-      if (defaultKey) {
-        const shape = info.arrays.find((a) => a.key === defaultKey)?.shape ?? [];
-        setIndices(defaultIndices(shape));
-        setHeadIndex(0);
+  const inspectArchive = useCallback(
+    async (path: string) => {
+      setLoading(true);
+      try {
+        const info = await invoke<NpzArchiveInfo>("inspect_npz_archive", {
+          path,
+          projectRoot: projectRoot || null,
+          pythonExecutable: pythonPath || null,
+        });
+        setArchive(info);
+        const attnKeys = suggestAttentionKeys(info.arrays);
+        const lossKey = info.arrays.find((a) =>
+          /loss_grid|loss_surface|landscape/i.test(a.key)
+        );
+        const defaultKey =
+          attnKeys[0] ??
+          lossKey?.key ??
+          info.arrays.find((a) => a.shape.length >= 2)?.key ??
+          "";
+        setSelectedKey(defaultKey);
+        if (defaultKey) {
+          const shape = info.arrays.find((a) => a.key === defaultKey)?.shape ?? [];
+          setIndices(defaultIndices(shape));
+          setHeadIndex(0);
+        }
+        toast.success("Archive inspected", {
+          description: `${info.arrays.length} array(s)`,
+        });
+      } catch (err) {
+        setArchive(null);
+        toast.error("Inspect failed", { description: String(err) });
+      } finally {
+        setLoading(false);
       }
-      toast.success("Archive inspected", { description: `${info.arrays.length} array(s)` });
-    } catch (err) {
-      setArchive(null);
-      toast.error("Inspect failed", { description: String(err) });
-    } finally {
-      setLoading(false);
-    }
-  }, [projectRoot, pythonPath]);
+    },
+    [projectRoot, pythonPath]
+  );
 
   useEffect(() => {
     if (archivePath) void inspectArchive(archivePath);
@@ -312,7 +248,11 @@ export function MLIntrospectionPanel({ logScale = false }: { logScale?: boolean 
           const dist = await loadSlice(distArchivePath, effectiveIndices, selectedKey);
           setDistPreview(dist);
           setComparePreview(null);
-        } else if (tab === "attention" && compareMode !== "single" && compareMode !== "distribution") {
+        } else if (
+          tab === "attention" &&
+          compareMode !== "single" &&
+          compareMode !== "distribution"
+        ) {
           const cmp = await loadSlice(archivePath, compareIndices, selectedKey);
           setComparePreview(cmp);
           setDistPreview(null);
@@ -340,18 +280,33 @@ export function MLIntrospectionPanel({ logScale = false }: { logScale?: boolean 
 
   useEffect(() => {
     if (archivePath && selectedKey) void loadPreview();
-  }, [archivePath, selectedKey, effectiveIndices, compareIndices, tab, topK, compareMode, distArchivePath, loadPreview]);
+  }, [
+    archivePath,
+    selectedKey,
+    effectiveIndices,
+    compareIndices,
+    tab,
+    topK,
+    compareMode,
+    distArchivePath,
+    loadPreview,
+  ]);
 
   useEffect(() => {
     if (!archive || tab !== "loss") return;
-    const lossKey = archive.arrays.find((a) => /loss_grid|loss_surface|landscape/i.test(a.key))?.key;
-    if (lossKey && lossKey !== selectedKey) {
-      setSelectedKey(lossKey);
-    }
+    const lossKey = archive.arrays.find((a) =>
+      /loss_grid|loss_surface|landscape/i.test(a.key)
+    )?.key;
+    if (lossKey && lossKey !== selectedKey) setSelectedKey(lossKey);
   }, [archive, tab, selectedKey]);
 
   useEffect(() => {
-    if (!projectRoot || tab !== "attention" || (attentionView !== "graph" && attentionView !== "sigma")) return;
+    if (
+      !projectRoot ||
+      tab !== "attention" ||
+      (attentionView !== "graph" && attentionView !== "sigma")
+    )
+      return;
     let cancelled = false;
     void loadGraphCoordinates(projectRoot, graphPreset)
       .then((coords) => {
@@ -388,230 +343,19 @@ export function MLIntrospectionPanel({ logScale = false }: { logScale?: boolean 
     }
   }, [archivePath, selectedKey, effectiveIndices, topK, projectRoot, pythonPath]);
 
-  const clusteredAttention = useMemo(() => {
-    if (!preview || tab !== "attention" || clusterK <= 1) {
-      return { values: preview?.values ?? null, bandSplits: [] as number[] };
-    }
-    let grid = preview.values;
-    if (sparseK > 0) grid = applySparseTopK(grid, sparseK);
-    const labels = sphericalKMeans(grid, clusterK);
-    const reordered = reorderRowsByClusters(grid, labels);
-    return { values: reordered.values, bandSplits: reordered.bandSplits };
-  }, [preview, tab, clusterK, sparseK]);
-
-  const processedValues = useMemo(() => {
-    if (tab === "attention" && clusterK > 1) return clusteredAttention.values;
-    if (!preview) return null;
-    let grid = preview.values;
-    if (sparseK > 0) grid = applySparseTopK(grid, sparseK);
-    return grid;
-  }, [preview, sparseK, tab, clusterK, clusteredAttention.values]);
-
-  const compareValues = useMemo(() => {
-    if (!comparePreview) return null;
-    let grid = comparePreview.values;
-    if (sparseK > 0) grid = applySparseTopK(grid, sparseK);
-    return grid;
-  }, [comparePreview, sparseK]);
-
-  const distValues = useMemo(() => {
-    if (!distPreview) return null;
-    let grid = distPreview.values;
-    if (sparseK > 0) grid = applySparseTopK(grid, sparseK);
-    return grid;
-  }, [distPreview, sparseK]);
-
-  const heatmapOption = useMemo(() => {
-    if (!processedValues) return null;
-    const isDiffMatrix =
-      (compareMode === "overlay" && !!compareValues) ||
-      (compareMode === "distribution" && !!distValues);
-    const values =
-      compareMode === "overlay" && compareValues
-        ? diffMatrices(processedValues, compareValues)
-        : compareMode === "distribution" && distValues
-          ? diffMatrices(processedValues, distValues)
-          : processedValues;
-    const label =
-      tab === "attention"
-        ? compareMode === "distribution"
-          ? `${primaryDistLabel} · ${preview?.key} [${effectiveIndices.join(",")}]${
-              distValues ? " Δ" : ""
-            }`
-          : `Attention · ${preview?.key} [${effectiveIndices.join(",")}]${
-              compareMode === "overlay" && compareValues ? " Δ" : ""
-            }`
-        : `${preview?.key} [${preview?.full_shape.join("×")}]`;
-    const heatmapOpts = {
-      title: label,
-      min: compareMode === "overlay" || compareMode === "distribution" ? undefined : preview?.min,
-      max: compareMode === "overlay" || compareMode === "distribution" ? undefined : preview?.max,
-      theme,
-      xLabel: tab === "attention" ? "Key" : "X",
-      yLabel: tab === "attention" ? "Query" : "Y",
-      attentionRole: tab === "attention" ? activeAttentionRole : undefined,
-      clusterBandSplits: tab === "attention" ? clusteredAttention.bandSplits : undefined,
-      clusterPalette: CLUSTER_PALETTE,
-    };
-    const useLogScale = logScale && tab === "attention" && !isDiffMatrix;
-    return buildLogAwareMatrixHeatmap(values, heatmapOpts, useLogScale);
-  }, [
-    processedValues,
-    compareValues,
-    distValues,
-    compareMode,
-    preview,
-    tab,
-    effectiveIndices,
-    theme,
-    primaryDistLabel,
-    activeAttentionRole,
-    clusteredAttention.bandSplits,
-    logScale,
-  ]);
-
-  const compareHeatmapOption = useMemo(() => {
-    if (compareMode === "side-by-side" && compareValues) {
-      return buildLogAwareMatrixHeatmap(
-        compareValues,
-        {
-          title: `Compare step ${compareStep}`,
-          min: comparePreview?.min,
-          max: comparePreview?.max,
-          theme,
-          xLabel: "Key",
-          yLabel: "Query",
-          attentionRole: activeAttentionRole,
-        },
-        logScale
-      );
-    }
-    if (compareMode === "distribution" && distValues) {
-      return buildLogAwareMatrixHeatmap(
-        distValues,
-        {
-          title: `${distCompareLabel} · ${distPreview?.key ?? selectedKey}`,
-          min: distPreview?.min,
-          max: distPreview?.max,
-          theme,
-          xLabel: "Key",
-          yLabel: "Query",
-          attentionRole: activeAttentionRole,
-        },
-        logScale
-      );
-    }
-    return null;
-  }, [
-    compareValues,
-    distValues,
-    compareMode,
-    compareStep,
-    comparePreview,
-    distPreview,
-    distCompareLabel,
-    selectedKey,
-    theme,
-    activeAttentionRole,
-    logScale,
-  ]);
-
-  const primaryHeatmapOption = useMemo(() => {
-    if (!processedValues || compareMode !== "distribution") return heatmapOption;
-    return buildLogAwareMatrixHeatmap(
-      processedValues,
-      {
-        title: `${primaryDistLabel} · ${preview?.key ?? selectedKey} [${effectiveIndices.join(",")}]`,
-        min: preview?.min,
-        max: preview?.max,
-        theme,
-        xLabel: "Key",
-        yLabel: "Query",
-        attentionRole: activeAttentionRole,
-      },
-      logScale
-    );
-  }, [
-    processedValues,
-    compareMode,
-    heatmapOption,
-    primaryDistLabel,
-    preview,
-    selectedKey,
-    effectiveIndices,
-    theme,
-    activeAttentionRole,
-    logScale,
-  ]);
-
-  const attentionGraphOption = useMemo(() => {
-    if (!processedValues || !graphCoords?.length || attentionView !== "graph") return null;
-    return buildAttentionGraphOption(graphCoords, processedValues, {
-      title: `Attention graph · query row ${decodeStep} · ${selectedKey}`,
-      theme,
-      queryRow: decodeStep,
-      topK: sparseK > 0 ? sparseK : 24,
-      sparseValues: sparseK > 0 ? processedValues : undefined,
-      logScale,
-    });
-  }, [processedValues, graphCoords, attentionView, decodeStep, selectedKey, theme, sparseK, logScale]);
-
-  const lossOption = useMemo(() => {
-    if (!lossPreview) return null;
-    const rawValues = lossPreview.values;
-    const displayValues = logScale
-      ? rawValues.map((row) =>
-          row.map((v) => (Number.isFinite(v) ? (chartMetricDisplay(v, "loss", true) ?? v) : v))
-        )
-      : rawValues;
-    const base = buildMatrixHeatmapOption(displayValues, {
-      title: `Loss landscape · ${lossPreview.key}${logScale ? " · log colour" : ""}`,
-      theme,
-      xLabel: "θ₁",
-      yLabel: "θ₂",
-    });
-    const withTooltip: Record<string, unknown> = {
-      ...base,
-      tooltip: {
-        position: "top",
-        formatter: (p: { value?: [number, number, number] }) => {
-          const v = p.value;
-          if (!v) return "";
-          const raw = rawValues[v[1]]?.[v[0]];
-          const rawText = Number.isFinite(raw) ? Number(raw).toFixed(4) : "—";
-          return `θ₂ ${v[1]} · θ₁ ${v[0]}<br/>loss ${rawText}`;
-        },
-      },
-    };
-    if (!lossMarkers.length) return withTooltip;
-    const markPoint = {
-      data: lossMarkers.map((m) => ({
-        name: m.label,
-        coord: [m.col, m.row],
-        value: m.loss != null ? m.loss.toFixed(4) : "",
-        itemStyle: { color: m.color ?? "#f59e0b" },
-      })),
-      symbol: "diamond",
-      symbolSize: 14,
-    };
-    const series = (withTooltip.series as Record<string, unknown>[])?.[0];
-    if (!series) return withTooltip;
-    return { ...withTooltip, series: [{ ...series, markPoint }] };
-  }, [lossPreview, lossMarkers, theme, logScale]);
-
-  const lossMinima = useMemo(
-    () => (lossPreview ? analyzeLossMinima(lossPreview.values) : null),
-    [lossPreview]
-  );
+  const {
+    processedValues, heatmapOption, compareHeatmapOption, primaryHeatmapOption,
+    attentionGraphOption, lossOption, lossMinima,
+  } = useMLIntrospectionOptions({
+    preview, comparePreview, distPreview, lossPreview, lossMarkers, tab, clusterK,
+    sparseK, compareMode, effectiveIndices, theme, primaryDistLabel, distCompareLabel,
+    selectedKey, compareStep, activeAttentionRole, logScale, graphCoords, attentionView, decodeStep,
+  });
 
   const maxDecodeStep = selectedArray && leading >= 1 ? selectedArray.shape[leading - 1] - 1 : 0;
 
   if (!projectRoot) {
-    return (
-      <div className="card text-xs text-canvas-muted">
-        Set project root to inspect TensorDict / NPZ archives.
-      </div>
-    );
+    return <div className="card text-xs text-canvas-muted">Set project root to inspect TensorDict / NPZ archives.</div>;
   }
 
   return (
@@ -629,9 +373,7 @@ export function MLIntrospectionPanel({ logScale = false }: { logScale?: boolean 
               key={t}
               onClick={() => setTab(t)}
               className={`text-xs px-2.5 py-1 rounded-md transition-colors capitalize ${
-                tab === t
-                  ? "bg-accent-primary text-white"
-                  : "text-canvas-muted hover:text-gray-200"
+                tab === t ? "bg-accent-primary text-white" : "text-canvas-muted hover:text-gray-200"
               }`}
             >
               {t === "tensor" ? "Archive" : t === "attention" ? "Attention" : "Loss"}
@@ -642,8 +384,7 @@ export function MLIntrospectionPanel({ logScale = false }: { logScale?: boolean 
 
       <div className="flex flex-wrap items-center gap-2">
         <button onClick={() => void pickArchive()} className="btn-primary text-xs flex items-center gap-1">
-          <FolderOpen size={12} />
-          Open .npz / .npy / .td
+          <FolderOpen size={12} /> Open .npz / .npy / .td
         </button>
         {archivePath && (
           <button
@@ -651,534 +392,70 @@ export function MLIntrospectionPanel({ logScale = false }: { logScale?: boolean 
             disabled={loading}
             className="btn-ghost text-xs flex items-center gap-1"
           >
-            <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
-            Re-inspect
+            <RefreshCw size={12} className={loading ? "animate-spin" : ""} /> Re-inspect
           </button>
         )}
         {archivePath && (
-          <OpenPathToolbar
-            path={archivePath}
-            projectRoot={projectRoot}
-            chipClassName="max-w-md"
-            handoff={false}
-          />
+          <OpenPathToolbar path={archivePath} projectRoot={projectRoot} chipClassName="max-w-md" handoff={false} />
         )}
       </div>
 
       {archive && tab === "tensor" && (
-        <div className="overflow-auto">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="border-b border-canvas-border">
-                <th className="text-left py-2 px-2 text-canvas-muted">Key</th>
-                <th className="text-left py-2 px-2 text-canvas-muted">Shape</th>
-                <th className="text-left py-2 px-2 text-canvas-muted">Dtype</th>
-                <th className="text-right py-2 px-2 text-canvas-muted">Size</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-canvas-border">
-              {archive.arrays.map((a) => (
-                <tr
-                  key={a.key}
-                  className={`hover:bg-canvas-hover cursor-pointer ${
-                    selectedKey === a.key ? "bg-canvas-hover/60" : ""
-                  }`}
-                  onClick={() => {
-                    setSelectedKey(a.key);
-                    setIndices(defaultIndices(a.shape));
-                    setDecodeStep(0);
-                    setHeadIndex(0);
-                  }}
-                >
-                  <td className="py-2 px-2 font-mono text-gray-300">{a.key}</td>
-                  <td className="py-2 px-2 font-mono text-canvas-muted">[{a.shape.join(", ")}]</td>
-                  <td className="py-2 px-2 text-canvas-muted">{a.dtype}</td>
-                  <td className="py-2 px-2 text-right text-canvas-muted">{formatBytes(a.size_bytes)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="flex flex-wrap items-center gap-2 mt-3">
-            <button
-              onClick={() => void ingestTensorSlice()}
-              disabled={!selectedKey || pipelineLoading}
-              className="btn-primary text-xs"
-            >
-              {pipelineLoading ? "Ingesting…" : "Ingest slice → DuckDB"}
-            </button>
-            {tensorPipeline && (
-              <span className="text-[10px] text-canvas-muted font-mono">
-                {tensorPipeline.tableName}: {tensorPipeline.rowCount} rows · {tensorPipeline.totalMs} ms
-                {tensorPipeline.withinBudget ? " ✓" : " (budget)"}
-              </span>
-            )}
-          </div>
-          {tensorPipeline && (
-            <p className="text-[10px] text-canvas-muted mt-1 font-mono">
-              SELECT row, col, value FROM &quot;{tensorPipeline.tableName}&quot; ORDER BY value DESC LIMIT 20;
-            </p>
-          )}
-          <p className="text-[10px] text-canvas-muted mt-2">
-            Total payload {formatBytes(archive.total_bytes)}
-            {archive.used_memmap
-              ? " · large .npy/.npz eligible for mmap / decompress slice"
-              : ""}
-          </p>
-        </div>
+        <MLArchiveTableSection
+          archive={archive} selectedKey={selectedKey} setSelectedKey={setSelectedKey}
+          setIndices={setIndices} setDecodeStep={setDecodeStep} setHeadIndex={setHeadIndex}
+          ingestTensorSlice={ingestTensorSlice} pipelineLoading={pipelineLoading} tensorPipeline={tensorPipeline}
+        />
       )}
 
       {tab === "attention" && (
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => void loadAttentionLog()}
-              className="btn-ghost text-xs flex items-center gap-1"
-            >
-              <FolderOpen size={12} />
-              Load attention_viz.jsonl
+            <button onClick={() => void loadAttentionLog()} className="btn-ghost text-xs flex items-center gap-1">
+              <FolderOpen size={12} /> Load attention_viz.jsonl
             </button>
             {runtimeAttentionEntries.length > 0 && (
               <span className="text-[10px] text-canvas-muted">
-                {runtimeAttentionEntries.length} runtime capture
-                {runtimeAttentionEntries.length !== 1 ? "s" : ""}
+                {runtimeAttentionEntries.length} runtime capture{runtimeAttentionEntries.length !== 1 ? "s" : ""}
               </span>
             )}
           </div>
-          <RuntimeAttentionPanel
-            entries={runtimeAttentionEntries}
-            theme={theme}
-            logScale={logScale}
-          />
+          <RuntimeAttentionPanel entries={runtimeAttentionEntries} theme={theme} logScale={logScale} />
         </div>
       )}
 
       {(tab === "attention" || tab === "loss") && archive && (
-        <div className="flex flex-wrap items-center gap-3 text-xs">
-          <label className="flex items-center gap-1.5 text-canvas-muted">
-            Array
-            <select
-              className="select-base text-xs py-0.5 max-w-[200px]"
-              value={selectedKey}
-              onChange={(e) => {
-                const key = e.target.value;
-                setSelectedKey(key);
-                const shape = archive.arrays.find((a) => a.key === key)?.shape ?? [];
-                setIndices(defaultIndices(shape));
-                setDecodeStep(0);
-                setHeadIndex(0);
-              }}
-            >
-              {(tab === "attention"
-                ? roleFilteredKeys
-                : archive.arrays
-                    .filter((a) => /loss_grid|loss_surface|landscape/i.test(a.key) || a.shape.length === 2)
-                    .map((a) => a.key)
-              ).map((k) => (
-                <option key={k} value={k}>
-                  {k}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          {tab === "attention" && (
-            <>
-              <label className="flex items-center gap-1 text-canvas-muted">
-                Q/K/V
-                <select
-                  className="select-base text-xs py-0.5"
-                  value={attentionRole}
-                  onChange={(e) => {
-                    const role = e.target.value as AttentionRole | "all";
-                    setAttentionRole(role);
-                    if (role !== "all" && attentionGroups?.[role]?.[0]) {
-                      const key = attentionGroups[role][0];
-                      setSelectedKey(key);
-                      const shape = archive.arrays.find((a) => a.key === key)?.shape ?? [];
-                      setIndices(defaultIndices(shape));
-                      setDecodeStep(0);
-                      setHeadIndex(0);
-                    }
-                  }}
-                >
-                  <option value="all">All</option>
-                  <option value="query">Query ({attentionGroups?.query.length ?? 0})</option>
-                  <option value="key">Key ({attentionGroups?.key.length ?? 0})</option>
-                  <option value="value">Value ({attentionGroups?.value.length ?? 0})</option>
-                  <option value="weights">Weights ({attentionGroups?.weights.length ?? 0})</option>
-                </select>
-              </label>
-              <label className="flex items-center gap-1 text-canvas-muted">
-                View
-                <select
-                  className="select-base text-xs py-0.5"
-                  value={attentionView}
-                  onChange={(e) => setAttentionView(e.target.value as AttentionView)}
-                >
-                  <option value="heatmap">Heatmap</option>
-                  <option value="graph">Graph on coords (ECharts)</option>
-                  <option value="sigma">Graph on coords (Sigma.js)</option>
-                </select>
-              </label>
-              {(attentionView === "graph" || attentionView === "sigma") && (
-                <label className="flex items-center gap-1 text-canvas-muted">
-                  Graph
-                  <select
-                    className="select-base text-xs py-0.5"
-                    value={graphPreset}
-                    onChange={(e) => setGraphPreset(e.target.value)}
-                  >
-                    {GRAPH_PRESETS.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              )}
-            </>
-          )}
-
-          {tab === "attention" && headCount > 1 && (
-            <label className="flex items-center gap-1 text-canvas-muted">
-              Head
-              <select
-                className="select-base text-xs py-0.5 w-14"
-                value={headIndex}
-                onChange={(e) => setHeadIndex(Number(e.target.value))}
-              >
-                {Array.from({ length: headCount }, (_, i) => (
-                  <option key={i} value={i}>
-                    {i}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-
-          {tab === "attention" &&
-            leading > 1 &&
-            indices
-              .slice(0, leading - 1)
-              .map((_, dim) =>
-                dim === headAxis ? null : (
-                  <label key={dim} className="flex items-center gap-1 text-canvas-muted">
-                    d{dim}
-                    <input
-                      type="number"
-                      min={0}
-                      max={(selectedArray?.shape[dim] ?? 1) - 1}
-                      value={indices[dim] ?? 0}
-                      onChange={(e) => {
-                        const v = Number(e.target.value);
-                        setIndices((prev) => {
-                          const next = [...prev];
-                          next[dim] = v;
-                          return next;
-                        });
-                      }}
-                      className="input-base w-14 text-xs py-0.5"
-                    />
-                  </label>
-                )
-              )}
-
-          {tab === "attention" && leading >= 1 && (
-            <div className="flex items-center gap-2 flex-1 min-w-[180px]">
-              <span className="text-canvas-muted">Decode step</span>
-              <input
-                type="range"
-                min={0}
-                max={Math.max(0, maxDecodeStep)}
-                value={decodeStep}
-                onChange={(e) => setDecodeStep(Number(e.target.value))}
-                className="flex-1 accent-accent-primary"
-              />
-              <span className="font-mono text-gray-300 w-8">{decodeStep}</span>
-            </div>
-          )}
-
-          {tab === "attention" && (
-            <>
-              <label className="flex items-center gap-1 text-canvas-muted">
-                Compare
-                <select
-                  className="select-base text-xs py-0.5"
-                  value={compareMode}
-                  onChange={(e) => setCompareMode(e.target.value as CompareMode)}
-                >
-                  <option value="single">Single</option>
-                  <option value="side-by-side">Side-by-side</option>
-                  <option value="overlay">Overlay Δ</option>
-                  <option value="distribution">Empirical vs Gamma-3</option>
-                </select>
-              </label>
-              {compareMode === "distribution" && (
-                <>
-                  <button
-                    onClick={() => void pickDistArchive()}
-                    className="btn-ghost text-xs flex items-center gap-1"
-                  >
-                    <FolderOpen size={12} />
-                    {distArchivePath ? "Change compare archive" : "Open compare .npz"}
-                  </button>
-                  {archivePath && (
-                    <span className="text-canvas-muted">
-                      {primaryDistLabel} vs {distCompareLabel}
-                    </span>
-                  )}
-                </>
-              )}
-              {compareMode !== "single" && compareMode !== "distribution" && (
-                <div className="flex items-center gap-2 min-w-[140px]">
-                  <span className="text-canvas-muted">vs step</span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={Math.max(0, maxDecodeStep)}
-                    value={compareStep}
-                    onChange={(e) => setCompareStep(Number(e.target.value))}
-                    className="flex-1 accent-accent-warning"
-                  />
-                  <span className="font-mono text-gray-300 w-8">{compareStep}</span>
-                </div>
-              )}
-              <label className="flex items-center gap-1 text-canvas-muted">
-                Sparse top-k
-                <select
-                  className="select-base text-xs py-0.5 w-16"
-                  value={sparseK}
-                  onChange={(e) => setSparseK(Number(e.target.value))}
-                >
-                  <option value={0}>Off</option>
-                  {[4, 8, 16, 32].map((k) => (
-                    <option key={k} value={k}>
-                      {k}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex items-center gap-1 text-canvas-muted">
-                K-means
-                <select
-                  className="select-base text-xs py-0.5 w-16"
-                  value={clusterK}
-                  onChange={(e) => setClusterK(Number(e.target.value))}
-                >
-                  <option value={0}>Off</option>
-                  {[2, 3, 4, 6, 8].map((k) => (
-                    <option key={k} value={k}>
-                      {k}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex items-center gap-1 text-canvas-muted">
-                Matrix cap
-                <select
-                  className="select-base text-xs py-0.5 w-16"
-                  value={topK}
-                  onChange={(e) => setTopK(Number(e.target.value))}
-                >
-                  {[24, 32, 48, 64].map((k) => (
-                    <option key={k} value={k}>
-                      {k}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </>
-          )}
-
-          {preview && tab === "attention" && (
-            <span className="text-canvas-muted">
-              {preview.rust_ms} ms · downsampled
-              {preview.used_memmap
-                ? " · mmap slice"
-                : preview.used_decompress_slice
-                  ? " · decompress slice"
-                  : ""}
-            </span>
-          )}
-        </div>
+        <MLAttentionControlsToolbar
+          tab={tab} archive={archive} selectedKey={selectedKey} setSelectedKey={setSelectedKey}
+          setIndices={setIndices} setDecodeStep={setDecodeStep} setHeadIndex={setHeadIndex}
+          roleFilteredKeys={roleFilteredKeys} attentionRole={attentionRole} setAttentionRole={setAttentionRole}
+          attentionGroups={attentionGroups} attentionView={attentionView} setAttentionView={setAttentionView}
+          graphPreset={graphPreset} setGraphPreset={setGraphPreset} headCount={headCount} headIndex={headIndex}
+          leading={leading} indices={indices} headAxis={headAxis} selectedArrayShape={selectedArray?.shape}
+          maxDecodeStep={maxDecodeStep} decodeStep={decodeStep} compareMode={compareMode} setCompareMode={setCompareMode}
+          pickDistArchive={pickDistArchive} distArchivePath={distArchivePath} archivePath={archivePath}
+          primaryDistLabel={primaryDistLabel} distCompareLabel={distCompareLabel} compareStep={compareStep}
+          setCompareStep={setCompareStep} sparseK={sparseK} setSparseK={setSparseK} clusterK={clusterK}
+          setClusterK={setClusterK} topK={topK} setTopK={setTopK} preview={preview}
+        />
       )}
 
-      {tab === "attention" && attentionView === "graph" && attentionGraphOption && (
-        <div className="space-y-2">
-          <div className="flex justify-end gap-2">
-            <ChartExportButtons
-              chartRef={graphChartRef}
-              filenameStem={`attention-graph-${selectedKey}`}
-            />
-          </div>
-          <ReactECharts ref={graphChartRef} option={attentionGraphOption} style={{ height: 400 }} notMerge />
-          <p className="text-[10px] text-canvas-muted">
-            Bipartite graph overlay: query node (amber) at decode step {decodeStep}; edge opacity ∝
-            attention weight to key nodes on {GRAPH_PRESETS.find((p) => p.id === graphPreset)?.label}.
-            {logScale ? " Log-scale edge mapping — tooltips show raw weights." : ""}
-          </p>
-        </div>
-      )}
-
-      {tab === "attention" && attentionView === "sigma" && processedValues && graphCoords?.length && (
-        <div className="space-y-2">
-          <div className="flex justify-end gap-2">
-            <CanvasExportButton
-              container={() => attentionSigmaRef.current}
-              filename={`attention-sigma-${selectedKey}.png`}
-            />
-          </div>
-          <div ref={attentionSigmaRef}>
-            <Suspense
-              fallback={
-                <div className="h-[400px] flex items-center justify-center text-xs text-canvas-muted">
-                  Loading Sigma.js canvas…
-                </div>
-              }
-            >
-              <AttentionSigmaView
-                coords={graphCoords}
-                values={processedValues}
-                queryRow={decodeStep}
-                topK={sparseK > 0 ? sparseK : 24}
-                sparseValues={sparseK > 0 ? processedValues : undefined}
-                theme={theme}
-                logScale={logScale}
-              />
-            </Suspense>
-          </div>
-          <p className="text-[10px] text-canvas-muted">
-            Sigma.js WebGL bipartite graph: ForceAtlas2 layout on{" "}
-            {GRAPH_PRESETS.find((p) => p.id === graphPreset)?.label}; query node (amber) at decode step{" "}
-            {decodeStep}; edge opacity ∝ attention weight.
-            {logScale ? " Log-scale edge mapping — edge weight attribute stores raw values." : ""}
-          </p>
-        </div>
-      )}
-
-      {tab === "attention" && attentionView === "heatmap" && heatmapOption && (
-        <div className="space-y-2">
-          <div className="flex justify-end gap-2 flex-wrap">
-            <ChartExportButtons
-              chartRef={chartRef}
-              filenameStem={`attention-${selectedKey}`}
-            />
-            {(compareMode === "side-by-side" || compareMode === "distribution") && compareHeatmapOption && (
-              <ChartExportButtons
-                chartRef={compareChartRef}
-                filenameStem={
-                  compareMode === "distribution"
-                    ? `attention-compare-${distCompareLabel}`
-                    : `attention-compare-step-${compareStep}`
-                }
-              />
-            )}
-          </div>
-          <div
-            className={
-              (compareMode === "side-by-side" || compareMode === "distribution") && compareHeatmapOption
-                ? "grid grid-cols-1 lg:grid-cols-2 gap-3"
-                : ""
-            }
-          >
-            <ReactECharts
-              ref={chartRef}
-              option={compareMode === "distribution" ? (primaryHeatmapOption ?? heatmapOption) : heatmapOption}
-              style={{ height: 360 }}
-              notMerge
-            />
-            {(compareMode === "side-by-side" || compareMode === "distribution") && compareHeatmapOption && (
-              <ReactECharts
-                ref={compareChartRef}
-                option={compareHeatmapOption}
-                style={{ height: 360 }}
-                notMerge
-              />
-            )}
-          </div>
-          <p className="text-[10px] text-canvas-muted">
-            Q/K/V colour palettes ({activeAttentionRole}) · spherical k-means row bands · head selector ·
-            sparse top-k · decode-step compare · Empirical vs Gamma-3 (side-by-side / overlay Δ).
-            {logScale
-              ? " Log-scale colour map on raw weights (overlay Δ stays linear)."
-              : " Linear colour map."}{" "}
-            Graph-on-coords via ECharts or Sigma.js WebGL (View toggle).
-          </p>
-        </div>
+      {tab === "attention" && (
+        <MLAttentionVisualSection
+          attentionView={attentionView} attentionGraphOption={attentionGraphOption} selectedKey={selectedKey}
+          decodeStep={decodeStep} graphPreset={graphPreset} logScale={logScale} processedValues={processedValues}
+          graphCoords={graphCoords} sparseK={sparseK} theme={theme} heatmapOption={heatmapOption}
+          compareMode={compareMode} compareHeatmapOption={compareHeatmapOption}
+          primaryHeatmapOption={primaryHeatmapOption} distCompareLabel={distCompareLabel}
+          compareStep={compareStep} activeAttentionRole={activeAttentionRole}
+        />
       )}
 
       {tab === "loss" && (
-        <div className="space-y-2">
-          {lossPreview ? (
-            <>
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-canvas-muted">3D view</span>
-                <select
-                  className="select-base text-xs py-0.5"
-                  value={lossView}
-                  onChange={(e) => setLossView(e.target.value as LossLandscapeView)}
-                >
-                  <option value="surface">Surface mesh</option>
-                  <option value="voxels">InstancedMesh voxels</option>
-                </select>
-              </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <div className="flex justify-end gap-2">
-                    <CanvasExportButton
-                      container={() => loss3dRef.current}
-                      filename={`loss-terrain-3d-${lossView}.png`}
-                      label="3D PNG"
-                    />
-                  </div>
-                  <Suspense
-                    fallback={
-                      <div className="h-[280px] flex items-center justify-center text-xs text-canvas-muted">
-                        Loading 3D canvas…
-                      </div>
-                    }
-                  >
-                    <LossLandscape3D
-                      ref={loss3dRef}
-                      values={lossPreview.values}
-                      markers={lossMarkers}
-                      view={lossView}
-                      logScale={logScale}
-                    />
-                  </Suspense>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-end gap-2">
-                    <ChartExportButtons chartRef={lossChartRef} filenameStem="loss-landscape" />
-                  </div>
-                  {lossOption && (
-                    <ReactECharts ref={lossChartRef} option={lossOption} style={{ height: 248 }} notMerge />
-                  )}
-                  <p className="text-[10px] text-canvas-muted">
-                    {logScale
-                      ? "Log-scale 3D terrain + contour colour map — tooltips show raw loss values"
-                      : "Linear 3D terrain + contour colour map — loss grid from NPZ export"}
-                  </p>
-                </div>
-              </div>
-              {lossMinima && (
-                <p className="text-[10px] text-canvas-muted">
-                  Minima annotation: {lossMinima.label} basin (sharpness {lossMinima.sharpness.toFixed(3)}).
-                  {lossMinima.generalizationNote}
-                  {lossMarkers.length > 0
-                    ? " Amber diamond = BPC exact-solver projection on the landscape."
-                    : " Bundle bpc_theta1/bpc_theta2 in the NPZ (see export_loss_landscape.py) for the BPC marker."}
-                </p>
-              )}
-            </>
-          ) : (
-            <p className="text-xs text-canvas-muted">
-              Open a loss landscape `.npz` (e.g. from{" "}
-              <code className="font-mono">logic/gen/export_loss_landscape.py</code>) containing a{" "}
-              <code className="font-mono">loss_grid</code> 2D array.
-            </p>
-          )}
-        </div>
+        <MLLossLandscapeSection
+          lossPreview={lossPreview} lossView={lossView} setLossView={setLossView}
+          lossMarkers={lossMarkers} lossOption={lossOption} lossMinima={lossMinima} logScale={logScale}
+        />
       )}
     </div>
   );
