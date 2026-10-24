@@ -25,25 +25,15 @@ import {
   guessGraphPreset,
   loadGraphCoordinates,
 } from "../../utils/graph/graphCoords";
-import {
-  formatPipelineTimingBadge,
-  portfolioRunLabel,
-  runSimulationArrowPipeline,
-} from "../../utils/duckdb/arrowPipeline";
+import { formatPipelineTimingBadge, portfolioRunLabel, runSimulationArrowPipeline } from "../../utils/duckdb/arrowPipeline";
 import { useDuckDbStore } from "../../store/duckdb";
 import { toast } from "sonner";
 import { filterFailureEntries } from "../../utils/sim/simFailure";
 import { useLogPathRunLabelBrush } from "../../hooks/brush/useLogPathRunLabelBrush";
 import { POLICY_COLORS } from "../../components/monitor/sim/SimMonitorPanels";
 import { SimMonitorMapSection } from "../../components/monitor/sim/SimMonitorMapSection";
-import {
-  SimMonitorAdvancedPanels,
-  SimMonitorKpiSection,
-} from "../../components/monitor/sim/SimMonitorDetailPanels";
-import {
-  SimMonitorChartPolicySelector,
-  SimMonitorDayScrubber,
-} from "../../components/monitor/sim/SimMonitorHeaderControls";
+import { SimMonitorAdvancedPanels, SimMonitorKpiSection } from "../../components/monitor/sim/SimMonitorDetailPanels";
+import { SimMonitorChartPolicySelector, SimMonitorDayScrubber } from "../../components/monitor/sim/SimMonitorHeaderControls";
 import { useSimMonitorMapRoutes } from "../../components/monitor/sim/useSimMonitorMapRoutes";
 import type { DayLogEntry, PolicyVizEntry, SimFailureEntry } from "../../types";
 

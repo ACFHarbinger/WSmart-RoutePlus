@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { Toaster } from "sonner";
 import { Layout } from "./components/layout/Layout";
@@ -94,85 +94,104 @@ function PageFallback() {
   );
 }
 
-function ActivePage() {
-  const mode = useAppStore((s) => s.mode);
+const PERSISTENT_MODES: readonly AppMode[] = [
+  "simulation",
+  "training",
+  "simulation_summary",
+  "benchmark",
+  "olap_explorer",
+  "data_explorer",
+];
 
-  let page: React.ReactNode;
+function renderPage(mode: AppMode) {
   switch (mode) {
     case "simulation":
-      page = <SimulationMonitor />;
-      break;
+      return <SimulationMonitor />;
     case "training":
-      page = <TrainingMonitor />;
-      break;
+      return <TrainingMonitor />;
     case "simulation_summary":
-      page = <SimulationSummary />;
-      break;
+      return <SimulationSummary />;
     case "benchmark":
-      page = <BenchmarkAnalysis />;
-      break;
+      return <BenchmarkAnalysis />;
     case "city_comparison":
-      page = <CityComparison />;
-      break;
+      return <CityComparison />;
     case "olap_explorer":
-      page = <OlapExplorer />;
-      break;
+      return <OlapExplorer />;
     case "data_explorer":
-      page = <DataExplorer />;
-      break;
+      return <DataExplorer />;
     case "experiment_tracker":
-      page = <ExperimentTracker />;
-      break;
+      return <ExperimentTracker />;
     case "algorithms":
-      page = <AlgorithmComparison />;
-      break;
+      return <AlgorithmComparison />;
     case "hpo_tracker":
-      page = <HPOTracker />;
-      break;
+      return <HPOTracker />;
     case "process_monitor":
-      page = <ProcessMonitor />;
-      break;
+      return <ProcessMonitor />;
     case "cloud_monitor":
-      page = <CloudMonitor />;
-      break;
+      return <CloudMonitor />;
     case "cloud_launcher":
-      page = <CloudLauncher />;
-      break;
+      return <CloudLauncher />;
     case "cloud_analysis":
-      page = <CloudAnalysis />;
-      break;
+      return <CloudAnalysis />;
     case "sim_launcher":
-      page = <SimulationLauncher />;
-      break;
+      return <SimulationLauncher />;
     case "training_hub":
-      page = <TrainingHub />;
-      break;
+      return <TrainingHub />;
     case "data_gen":
-      page = <DataGeneration />;
-      break;
+      return <DataGeneration />;
     case "config_editor":
-      page = <ConfigEditor />;
-      break;
+      return <ConfigEditor />;
     case "output_browser":
-      page = <OutputBrowser />;
-      break;
+      return <OutputBrowser />;
     case "eval_runner":
-      page = <EvaluationRunner />;
-      break;
+      return <EvaluationRunner />;
     case "report_studio":
-      page = <ReportStudio />;
-      break;
+      return <ReportStudio />;
     case "system_tools":
-      page = <SystemTools />;
-      break;
+      return <SystemTools />;
     case "settings":
-      page = <Settings />;
-      break;
+      return <Settings />;
     default:
-      page = <SimulationMonitor />;
+      return <SimulationMonitor />;
   }
+}
 
-  return <Suspense fallback={<PageFallback />}>{page}</Suspense>;
+function ActivePage() {
+  const mode = useAppStore((s) => s.mode);
+  const [visited, setVisited] = useState<Set<AppMode>>(() => new Set([mode]));
+
+  useEffect(() => {
+    setVisited((prev) => {
+      if (prev.has(mode)) return prev;
+      const next = new Set(prev);
+      next.add(mode);
+      return next;
+    });
+  }, [mode]);
+
+  const isCurrentPersistent = PERSISTENT_MODES.includes(mode);
+
+  return (
+    <Suspense fallback={<PageFallback />}>
+      {/* Mounted persistent views (Slice V4 zero-flicker retention) */}
+      {PERSISTENT_MODES.filter((m) => visited.has(m)).map((m) => (
+        <div
+          key={m}
+          style={{ display: mode === m ? "block" : "none" }}
+          className="h-full"
+        >
+          {renderPage(m)}
+        </div>
+      ))}
+
+      {/* Ephemeral / launcher views rendered on-demand */}
+      {!isCurrentPersistent && (
+        <div key={mode} className="h-full">
+          {renderPage(mode)}
+        </div>
+      )}
+    </Suspense>
+  );
 }
 
 // Keyboard shortcut map — digit keys (no modifiers) for quick navigation

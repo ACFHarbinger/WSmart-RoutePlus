@@ -10,7 +10,11 @@ import { GlobalFilterBar } from "../../components/layout/GlobalFilterBar";
 import { OpenPathToolbar } from "../../components/common/OpenPathToolbar";
 import { LoadedRunRow } from "../../components/common/LoadedRunRow";
 import { SubtabBar } from "../../components/ui/telemetry/SubtabBar";
-import { OrionDotMatrixHeatmap } from "../../components/ui/orion/OrionDotMatrixHeatmap";
+import {
+  OrionDotMatrixHeatmap,
+  OrionHoneycombMap,
+  getSampleRoutingOrionData,
+} from "../../components/ui/orion";
 import {
   formatPipelineTimingBadge,
   portfolioRunLabel,
@@ -191,17 +195,26 @@ export function SimulationSummary() {
           )}
 
           {showMap && (
-            <SummaryRouteSection
-              routeVizDays={c.routeVizDays}
-              routeVizDay={c.routeVizDay}
-              setRouteVizDay={c.setRouteVizDay}
-              routeVizHasFailureData={c.routeVizHasFailureData}
-              showFailureOverlay={c.showFailureOverlay}
-              setShowFailureOverlay={c.setShowFailureOverlay}
-              routeVizEntries={c.routeVizEntries}
-              showRouteDiff={c.showRouteDiff}
-              setShowRouteDiff={c.setShowRouteDiff}
-            />
+            <div className="space-y-4">
+              <SummaryRouteSection
+                routeVizDays={c.routeVizDays}
+                routeVizDay={c.routeVizDay}
+                setRouteVizDay={c.setRouteVizDay}
+                routeVizHasFailureData={c.routeVizHasFailureData}
+                showFailureOverlay={c.showFailureOverlay}
+                setShowFailureOverlay={c.setShowFailureOverlay}
+                routeVizEntries={c.routeVizEntries}
+                showRouteDiff={c.showRouteDiff}
+                setShowRouteDiff={c.setShowRouteDiff}
+              />
+              <OrionHoneycombMap
+                zones={getSampleRoutingOrionData().honeycombZones}
+                trajectories={getSampleRoutingOrionData().zoneTrajectories}
+                title="Regional Waste Zone Honeycomb Matrix & Tour Corridors"
+                subtitle="Spatial bin fill density & vehicle tour trajectories across collection sectors"
+                height={340}
+              />
+            </div>
           )}
 
           {showCompare && (

@@ -39,6 +39,7 @@ import { SqlQueryPanel } from "../../components/analysis/explorer/SqlQueryPanel"
 import { useDuckDbStore } from "../../store/duckdb";
 import type { DayLogEntry } from "../../types";
 import { simOutputRoots } from "../../utils/runs/outputRoots";
+import { OrionHoneycombMap, getSampleRoutingOrionData } from "../../components/ui/orion";
 const CITY_SIM_TABLE = "city_sim";
 
 interface RunFile extends CityRunSlice {}
@@ -301,6 +302,16 @@ export function CityComparison() {
             onEvents={{ click: onChartClick }}
           />
         </div>
+      )}
+
+      {cityGroups.length >= 1 && (
+        <OrionHoneycombMap
+          zones={getSampleRoutingOrionData().honeycombZones}
+          trajectories={getSampleRoutingOrionData().zoneTrajectories}
+          title="Multi-City Situational Honeycomb & Dispatch Corridors"
+          subtitle="Regional bin density, overflow risk, and inter-zone transit routes"
+          height={320}
+        />
       )}
 
       {runs.length >= 1 && (

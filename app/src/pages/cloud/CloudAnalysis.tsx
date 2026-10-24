@@ -7,12 +7,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
   BarChart3,
-  DollarSign,
   Download,
   ExternalLink,
   FileSpreadsheet,
-  Gauge,
-  Layers,
   LineChart,
   RefreshCw,
 } from "lucide-react";
@@ -33,6 +30,8 @@ import {
 } from "../../components/cloud/CloudAnalysisSections";
 import { DownloadModal } from "../../components/cloud/DownloadModal";
 import { TaskLogsModal } from "../../components/cloud/TaskLogsModal";
+import { SubtabBar } from "../../components/ui/telemetry/SubtabBar";
+import { EmptyStateChip } from "../../components/ui/telemetry/status";
 
 export function CloudAnalysis() {
   const { projectRoot, setMode } = useAppStore();
@@ -180,20 +179,20 @@ export function CloudAnalysis() {
   }, [analysis]);
 
   return (
-    <div className="flex flex-col h-full bg-neutral-950 text-neutral-100 overflow-y-auto">
-      <header className="px-6 py-4 bg-neutral-900 border-b border-neutral-800 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-10">
+    <div className="flex flex-col h-full bg-noc-bgDeep text-noc-textPrimary overflow-y-auto">
+      <header className="px-6 py-4 bg-noc-bgPanel border-b border-noc-border flex flex-wrap items-center justify-between gap-4 sticky top-0 z-10">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded bg-indigo-500/10 text-indigo-400">
             <BarChart3 size={20} />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-base font-semibold text-neutral-100">Cloud Analysis Dashboard</h1>
-              <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-400 border border-neutral-700">
+              <h1 className="text-base font-semibold text-noc-textPrimary">Cloud Analysis Dashboard</h1>
+              <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-noc-bgDeep text-noc-textMuted border border-noc-border">
                 CR-16
               </span>
             </div>
-            <p className="text-xs text-neutral-400">
+            <p className="text-xs text-noc-textMuted">
               Post-run performance metrics, task duration waterfalls, cost telemetry & runtime predictions
             </p>
           </div>
@@ -204,7 +203,7 @@ export function CloudAnalysis() {
             <select
               value={selectedJobId || ""}
               onChange={(e) => setSelectedJobId(e.target.value || null)}
-              className="bg-neutral-950 border border-neutral-700 text-xs rounded px-3 py-1.5 text-neutral-200 focus:outline-none focus:border-indigo-500 font-mono pr-8 cursor-pointer"
+              className="bg-noc-bgDeep border border-noc-border text-xs rounded px-3 py-1.5 text-noc-textPrimary focus:outline-none focus:border-indigo-500 font-mono pr-8 cursor-pointer"
             >
               {jobs.length === 0 ? (
                 <option value="">No cloud jobs found</option>
@@ -226,7 +225,7 @@ export function CloudAnalysis() {
               if (selectedJobId) fetchJobDetail(selectedJobId);
             }}
             disabled={loadingJobs || loadingDetail}
-            className="p-1.5 text-neutral-400 hover:text-neutral-200 bg-neutral-800 hover:bg-neutral-700 rounded transition-colors"
+            className="p-1.5 text-noc-textMuted hover:text-noc-textPrimary bg-noc-bgDeep border border-noc-border hover:bg-noc-panel rounded transition-colors"
             title="Refresh Analysis"
           >
             <RefreshCw size={15} className={loadingJobs || loadingDetail ? "animate-spin" : ""} />
@@ -237,7 +236,7 @@ export function CloudAnalysis() {
               if (selectedJobId) setDownloadJobId(selectedJobId);
             }}
             disabled={!selectedJobId}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-neutral-800 hover:bg-neutral-700 text-neutral-200 rounded transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-noc-bgDeep hover:bg-noc-panel text-noc-textPrimary border border-noc-border rounded transition-colors disabled:opacity-50"
           >
             <Download size={14} />
             <span>Download Results</span>
@@ -255,7 +254,7 @@ export function CloudAnalysis() {
 
           <button
             onClick={() => setMode("cloud_monitor")}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-noc-bgDeep hover:bg-noc-panel text-noc-textPrimary border border-noc-border rounded transition-colors"
             title="Switch to Live Monitor"
           >
             <Activity size={14} />
@@ -266,48 +265,33 @@ export function CloudAnalysis() {
 
       <main className="p-6 flex-1 flex flex-col gap-6">
         {!activeJob || !analysis ? (
-          <div className="flex-1 flex flex-col items-center justify-center py-20 text-center">
-            <Layers className="w-12 h-12 text-neutral-600 mb-3" />
-            <h3 className="text-base font-semibold text-neutral-300">No Cloud Job Selected</h3>
-            <p className="text-xs text-neutral-500 max-w-sm mt-1">
-              Select a job from the top dropdown or launch a new run in Cloud Launcher to view detailed analysis.
-            </p>
+          <div className="flex-1 flex flex-col items-center justify-center py-16">
+            <EmptyStateChip
+              title="No Cloud Job Selected"
+              description="Select a job from the top dropdown or launch a new run in Cloud Launcher to view detailed analysis."
+              tone="idle"
+            />
           </div>
         ) : (
           <>
             <CloudAnalysisKpiStrip analysis={analysis} />
 
-            <div className="flex items-center justify-between border-b border-neutral-800">
-              <nav className="flex items-center gap-1">
-                {[
-                  { id: "overview" as AnalysisTab, label: "Overview & Telemetry", icon: Gauge },
-                  { id: "waterfall" as AnalysisTab, label: "Duration Comparison", icon: BarChart3 },
-                  { id: "tasks" as AnalysisTab, label: "Task Inspection Table", icon: Layers },
-                  { id: "cost" as AnalysisTab, label: "Financial & Spot Breakdown", icon: DollarSign },
-                ].map((tab) => {
-                  const Icon = tab.icon;
-                  const isActive = activeTab === tab.id;
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`flex items-center gap-2 px-4 py-2.5 text-xs font-medium border-b-2 transition-colors ${
-                        isActive
-                          ? "border-indigo-500 text-indigo-400 bg-neutral-900/40"
-                          : "border-transparent text-neutral-400 hover:text-neutral-200 hover:border-neutral-700"
-                      }`}
-                    >
-                      <Icon size={14} />
-                      <span>{tab.label}</span>
-                    </button>
-                  );
-                })}
-              </nav>
+            <div className="flex items-center justify-between border-b border-noc-border pb-2">
+              <SubtabBar
+                tabs={[
+                  { id: "overview", label: "Overview & Telemetry" },
+                  { id: "waterfall", label: "Duration Comparison" },
+                  { id: "tasks", label: "Task Inspection Table" },
+                  { id: "cost", label: "Financial & Spot Breakdown" },
+                ]}
+                activeId={activeTab}
+                onChange={(id) => setActiveTab(id as AnalysisTab)}
+              />
 
               {activeTab === "tasks" && (
                 <button
                   onClick={handleExportCsv}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-neutral-800 hover:bg-neutral-700 text-neutral-200 rounded transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-noc-bgDeep hover:bg-noc-panel text-noc-textPrimary border border-noc-border rounded transition-colors"
                   title="Export filtered tasks to CSV"
                 >
                   <FileSpreadsheet size={14} className="text-emerald-400" />

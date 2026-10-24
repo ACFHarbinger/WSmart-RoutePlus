@@ -16,6 +16,7 @@ import {
   ReportStudioOutputSection,
   resolveReportStudioOutputPaths,
 } from "../../components/launch/ReportStudioHelpers";
+import { SubtabBar } from "../../components/ui/telemetry/SubtabBar";
 import { useAppStore } from "../../store/app";
 import { useReportGenStore, type ReportGenTab } from "../../store/launchers";
 import { useLoadedRunStore } from "../../store/loadedRun";
@@ -315,22 +316,13 @@ export function ReportStudio() {
           <strong>Legacy</strong> spawns the archived <code>logic/gen</code>{" "}
           Python scripts.
         </p>
-        <div className="flex gap-2 flex-wrap items-center">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => patch({ tab: t.id })}
-              className={
-                tab === t.id
-                  ? "btn-primary text-sm py-1.5 px-4"
-                  : "btn-ghost text-sm py-1.5 px-4"
-              }
-            >
-              {t.label}
-            </button>
-          ))}
-          <span className="flex-1" />
-          <div className="flex gap-1 rounded-lg bg-canvas-bg p-0.5">
+        <div className="flex gap-2 flex-wrap items-center justify-between">
+          <SubtabBar
+            tabs={TABS}
+            activeId={tab}
+            onChange={(id) => patch({ tab: id as ReportGenTab })}
+          />
+          <div className="flex gap-1 rounded-lg bg-noc-deep p-0.5 border border-noc-border">
             {(["native", "legacy"] as const).map((e) => (
               <button
                 key={e}
@@ -338,7 +330,7 @@ export function ReportStudio() {
                 className={
                   engine === e
                     ? "btn-primary text-xs py-1 px-3"
-                    : "btn-ghost text-xs py-1 px-3 text-canvas-muted"
+                    : "btn-ghost text-xs py-1 px-3 text-noc-textMuted hover:text-noc-textPrimary"
                 }
               >
                 {e === "native" ? "Native" : "Legacy"}

@@ -56,8 +56,8 @@ export function GlobalFilterBar({
   }
 
   return (
-    <div className="flex items-center gap-2 flex-wrap text-xs bg-canvas-elevated/50 border border-canvas-border rounded-lg px-3 py-1.5">
-      <span className="text-canvas-muted shrink-0">Filters</span>
+    <div className="flex items-center gap-2 flex-wrap text-xs bg-noc-panel border border-noc-border rounded-xl px-3 py-1.5 select-none shadow-sm">
+      <span className="text-noc-textMuted shrink-0 font-medium">Filters</span>
 
       {policies.length > 0 && (
         <select

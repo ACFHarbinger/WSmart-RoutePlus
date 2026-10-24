@@ -55,49 +55,49 @@ export function OnboardingDialog() {
   if (!visible) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="card max-w-lg w-full space-y-4">
-        <div className="flex items-start justify-between gap-3">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-[1px]">
+      <div className="max-w-lg w-full space-y-4 bg-noc-bgPanel border border-noc-borderStrong rounded-xl shadow-2xl p-5">
+        <div className="flex items-start justify-between gap-3 pb-2 border-b border-noc-border">
           <div className="flex items-center gap-2">
-            <Zap size={18} className="text-accent-primary" />
-            <h2 className="text-sm font-semibold text-gray-100">Welcome to WSmart-Route Studio</h2>
+            <Zap size={18} className="text-noc-cyan" />
+            <h2 className="text-sm font-semibold text-noc-textPrimary">Welcome to WSmart-Route Studio</h2>
           </div>
-          <button onClick={dismiss} className="btn-ghost p-1" title="Dismiss (configure later in Settings)">
+          <button onClick={dismiss} className="btn-ghost p-1 text-noc-textMuted hover:text-noc-textPrimary" title="Dismiss (configure later in Settings)">
             <X size={14} />
           </button>
         </div>
 
-        <p className="text-xs text-canvas-muted leading-relaxed">
-          Studio needs the repository root where <code className="font-mono">main.py</code> lives.
+        <p className="text-xs text-noc-textMuted leading-relaxed">
+          Studio needs the repository root where <code className="font-mono text-noc-cyan bg-noc-bgDeep px-1 py-0.5 rounded">main.py</code> lives.
           This enables simulation launchers, output browsing, and Python subprocess integration.
         </p>
 
-        <ol className="text-xs text-canvas-muted space-y-1.5 list-decimal list-inside">
+        <ol className="text-xs text-noc-textMuted space-y-1.5 list-decimal list-inside">
           <li>Clone or locate your WSmart-Route repository</li>
-          <li>Select the directory containing <code className="font-mono">main.py</code></li>
+          <li>Select the directory containing <code className="font-mono text-noc-cyan bg-noc-bgDeep px-1 py-0.5 rounded">main.py</code></li>
           <li>Confirm — launchers and file browsers unlock immediately</li>
         </ol>
 
         <div className="flex gap-2">
           <input
             type="text"
-            className="input-base flex-1 font-mono text-xs"
+            className="input-base flex-1 font-mono text-xs bg-noc-bgDeep border border-noc-border text-noc-textPrimary"
             value={draftRoot}
             onChange={(e) => setDraftRoot(e.target.value)}
             placeholder="/path/to/WSmart-Route"
             spellCheck={false}
           />
-          <button onClick={pickRoot} className="btn-ghost shrink-0 flex items-center gap-1.5 text-xs">
+          <button onClick={pickRoot} className="btn-ghost shrink-0 flex items-center gap-1.5 text-xs bg-noc-bgDeep border border-noc-border text-noc-textPrimary hover:bg-noc-panel">
             <FolderOpen size={13} />
             Browse
           </button>
         </div>
 
-        <div className="flex items-center gap-3 pt-1">
+        <div className="flex items-center gap-3 pt-2 border-t border-noc-border">
           <button
             onClick={validateAndSave}
             disabled={validating || !draftRoot.trim()}
-            className="btn-primary text-sm"
+            className="btn-primary text-sm font-medium"
           >
             {validating ? "Validating…" : "Get Started"}
           </button>
@@ -106,7 +106,7 @@ export function OnboardingDialog() {
               dismiss();
               setMode("settings");
             }}
-            className="btn-ghost text-xs"
+            className="btn-ghost text-xs text-noc-textMuted hover:text-noc-textPrimary"
           >
             Open Settings instead
           </button>

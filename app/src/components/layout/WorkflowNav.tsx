@@ -20,7 +20,7 @@ export function WorkflowNav() {
 
   return (
     <nav
-      className="flex items-center gap-0.5 px-5 py-1.5 bg-canvas-bg border-b border-canvas-border overflow-x-auto"
+      className="flex items-center gap-1 px-4 py-1.5 bg-noc-deep border-b border-noc-border overflow-x-auto select-none"
       aria-label="Analytical workflow"
     >
       {WORKFLOW_STEPS.map((step, i) => {
@@ -28,15 +28,15 @@ export function WorkflowNav() {
         return (
           <span key={step.mode} className="flex items-center shrink-0">
             {i > 0 && (
-              <ChevronRight size={10} className="text-canvas-muted mx-0.5" />
+              <ChevronRight size={10} className="text-noc-textMuted mx-0.5 opacity-60" />
             )}
             <button
               type="button"
               onClick={() => setMode(step.mode)}
-              className={`text-[10px] px-2 py-0.5 rounded-full transition-colors whitespace-nowrap ${
+              className={`text-[11px] px-2.5 py-0.5 rounded-full transition-colors whitespace-nowrap font-medium ${
                 active
-                  ? "bg-accent-primary/25 text-accent-secondary font-medium"
-                  : "text-canvas-muted hover:text-canvas-text hover:bg-canvas-hover"
+                  ? "bg-noc-card border border-noc-cyan/40 text-noc-cyan font-semibold shadow-sm"
+                  : "text-noc-textMuted hover:text-noc-textPrimary hover:bg-canvas-hover"
               }`}
             >
               {step.label}

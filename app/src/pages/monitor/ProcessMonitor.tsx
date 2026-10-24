@@ -2,6 +2,7 @@
  * Process Monitor — tabular view of all spawned processes with inline log viewer (§G.15, Slice V5).
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { EmptyStateChip, HudStatusPill } from "../../components/ui/telemetry/status";
 import { Terminal } from "lucide-react";
 import { GlobalFilterBar } from "../../components/layout/GlobalFilterBar";
 import { useProcessRunLabelBrush } from "../../hooks/brush/useProcessRunLabelBrush";
@@ -201,12 +202,15 @@ export function ProcessMonitor() {
 
   if (ids.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-canvas-muted gap-2">
-        <Terminal size={28} className="opacity-30" />
-        <p className="text-sm">No processes yet.</p>
-        <p className="text-xs">
-          Launch a simulation, training run, or data generation to see it here.
-        </p>
+      <div className="p-4">
+        <EmptyStateChip
+          icon={<Terminal size={20} />}
+          title="No Active or Completed Subprocesses"
+          description="Launch a simulation, training run, or data generation to stream live telemetry here."
+          actionLabel="Launch Simulation"
+          onAction={() => setMode("sim_launcher")}
+          tone="idle"
+        />
       </div>
     );
   }
@@ -219,17 +223,25 @@ export function ProcessMonitor() {
         showLogScale
       />
 
-      <div className="flex items-center gap-3">
-        <p className="text-sm text-canvas-muted tabular-nums">
-          {ids.length} process{ids.length !== 1 ? "es" : ""}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <HudStatusPill
+            label="PROCESSES"
+            value={ids.length}
+            tone={running > 0 ? "ok" : "idle"}
+            pulse={running > 0}
+          />
           {running > 0 && (
-            <span className="ml-2 text-accent-success">· {running} running</span>
+            <HudStatusPill label="RUNNING" value={running} tone="ok" pulse />
           )}
-        </p>
+          {completed > 0 && (
+            <HudStatusPill label="COMPLETED" value={completed} tone="indigo" />
+          )}
+        </div>
         {completed > 0 && (
           <button
             onClick={clearCompleted}
-            className="btn-ghost text-xs text-canvas-muted ml-auto"
+            className="btn-ghost text-xs text-noc-textMuted hover:text-noc-textPrimary"
           >
             Clear completed ({completed})
           </button>

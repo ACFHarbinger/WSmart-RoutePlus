@@ -23,6 +23,8 @@ import { trainingRunPathFromLogLines } from "../../utils/training/trainingRunPat
 import { trialLogDirFromUserAttrs } from "../../utils/training/trialRunPath";
 import { collectTrainingMetricsFromLogLines } from "../../utils/training/trainingMetrics";
 import { findRecentHpoProcessId, trainHpoLivePanelTitle } from "../../utils/training/trainingProcess";
+import { MonitorTileStrip } from "../../components/ui/telemetry/status";
+import { HpoTrialOrbitalPanel } from "../../components/analysis/hpo/HpoTrialOrbitalPanel";
 import { buildCrossStudyHistoryOption, buildHistoryOption, buildParallelOption, HpoStudyVisualsSection } from "../../components/analysis/hpo/HpoChartsAndTable";
 import type { HpoReportExportResult, OptunaStudyData, OptunaStudySummary, OptunaTrial } from "../../types";
 
@@ -415,12 +417,7 @@ export function HPOTracker() {
             </select>
             <div className="flex items-center gap-2">
               {studyData && studyData.trials.filter((t) => t.state === "COMPLETE").length >= 2 && (
-                <button
-                  onClick={exportPlotlyReports}
-                  disabled={exporting}
-                  className="btn-ghost text-xs flex items-center gap-1"
-                  title="Export optuna.visualization Plotly HTML to assets/hpo_reports/"
-                >
+                <button onClick={exportPlotlyReports} disabled={exporting} className="btn-ghost text-xs flex items-center gap-1" title="Export Plotly HTML">
                   <Download size={12} className={exporting ? "animate-pulse" : ""} /> Export Plotly
                 </button>
               )}
@@ -436,44 +433,45 @@ export function HPOTracker() {
             <label className="text-xs text-canvas-muted">Compare with</label>
             <select className="select-base flex-1 text-xs" value={compareStudy ?? ""} onChange={(e) => setCompareStudy(e.target.value || null)}>
               <option value="">— none —</option>
-              {studies
-                .filter((s) => s.name !== selectedStudy)
-                .map((s) => (
-                  <option key={s.name} value={s.name}>
-                    {s.name}{s.best_value != null ? ` (best: ${s.best_value.toFixed(4)})` : ""}
-                  </option>
-                ))}
+              {studies.filter((s) => s.name !== selectedStudy).map((s) => (
+                <option key={s.name} value={s.name}>
+                  {s.name}{s.best_value != null ? ` (best: ${s.best_value.toFixed(4)})` : ""}
+                </option>
+              ))}
             </select>
           </div>
 
           {studyData && (
-            <div className="grid grid-cols-4 gap-3 text-xs">
-              <div className="kpi-card">
-                <p className="text-canvas-muted">Trials</p>
-                <p className="text-lg font-mono text-gray-100 tabular-nums">{studyData.trials.length}</p>
-              </div>
-              <div className="kpi-card">
-                <p className="text-canvas-muted">Completed</p>
-                <p className="text-lg font-mono text-gray-100 tabular-nums">
-                  {studyData.trials.filter((t) => t.state === "COMPLETE").length}
-                </p>
-              </div>
-              <div className="kpi-card">
-                <p className="text-canvas-muted">Best Value</p>
-                <p className="text-lg font-mono text-accent-success tabular-nums">
-                  {studyData.best_value != null ? studyData.best_value.toFixed(6) : "—"}
-                </p>
-              </div>
-              <div className="kpi-card">
-                <p className="text-canvas-muted">Parameters</p>
-                <p className="text-lg font-mono text-gray-100 tabular-nums">
-                  {Object.keys(studyData.importances).length || "—"}
-                </p>
-              </div>
+            <div className="pt-1">
+              <MonitorTileStrip
+                tiles={[
+                  { id: "trials", label: "Total Trials", value: studyData.trials.length, tone: "cyan" },
+                  {
+                    id: "completed",
+                    label: "Completed",
+                    value: studyData.trials.filter((t) => t.state === "COMPLETE").length,
+                    tone: "indigo",
+                  },
+                  {
+                    id: "best",
+                    label: "Best Objective",
+                    value: studyData.best_value != null ? studyData.best_value.toFixed(4) : "—",
+                    tone: "ok",
+                  },
+                  {
+                    id: "params",
+                    label: "Sweep Params",
+                    value: Object.keys(studyData.importances).length || "—",
+                    tone: "amber",
+                  },
+                ]}
+              />
             </div>
           )}
         </div>
       )}
+
+      {studyData && <HpoTrialOrbitalPanel studyData={studyData} />}
 
       {studyData && (
         <HpoStudyVisualsSection

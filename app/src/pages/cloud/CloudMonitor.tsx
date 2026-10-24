@@ -2,22 +2,11 @@
  * Cloud Monitor — Live monitoring and manager actions for cloud routing jobs (CR-15 / §J.1).
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  Activity,
-  Layers,
-  Play,
-  RefreshCw,
-  Search,
-  Zap,
-} from "lucide-react";
+import { Activity, Layers, Play, RefreshCw, Search, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { useAppStore } from "../../store/app";
 import { useCloudMonitorStore } from "../../store/cloudMonitor";
-import type {
-  CloudJobStatus,
-  CloudJobSummary,
-  CloudTaskMetrics,
-} from "../../types/cloud";
+import type { CloudJobStatus, CloudJobSummary, CloudTaskMetrics } from "../../types/cloud";
 import {
   cancelCloudJob,
   getCloudJobStatus,

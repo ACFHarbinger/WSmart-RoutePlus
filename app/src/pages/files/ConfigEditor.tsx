@@ -13,7 +13,7 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
-import { FolderOpen, Copy, RefreshCw, FileText, Table2, GitCompare, Save, Download, Rocket, ListChecks } from "lucide-react";
+import { FolderOpen, Copy, RefreshCw, Save, Download, Rocket } from "lucide-react";
 import { toast } from "sonner";
 import { OpenPathToolbar } from "../../components/common/OpenPathToolbar";
 import { useLogPathRunLabelBrush } from "../../hooks/brush/useLogPathRunLabelBrush";
@@ -21,6 +21,8 @@ import { useAppStore } from "../../store/app";
 import { useSimLauncherStore, useTrainHubStore, useDataGenStore } from "../../store/launchers";
 import { useRecentHandoff } from "../../hooks/files/useRecentHandoff";
 import { applyConfigToLauncher, type LauncherTarget } from "../../utils/process/configToLauncher";
+import { SubtabBar } from "../../components/ui/telemetry/SubtabBar";
+import { EmptyStateChip } from "../../components/ui/telemetry/status";
 import {
   ConfigDiffView,
   ConfigFormView,
@@ -212,10 +214,10 @@ export function ConfigEditor() {
   return (
     <div className="space-y-4">
       {/* Load resolved Hydra config */}
-      <div className="card flex items-center gap-3 flex-wrap">
-        <span className="text-xs text-canvas-muted">Load resolved config:</span>
+      <div className="bg-noc-bgPanel border border-noc-border rounded-xl p-3.5 flex items-center gap-3 flex-wrap">
+        <span className="text-xs text-noc-textMuted">Load resolved config:</span>
         <select
-          className="select-base w-36 text-xs"
+          className="select-base w-36 text-xs bg-noc-bgDeep border border-noc-border text-noc-textPrimary"
           value={hydraTask}
           onChange={(e) => setHydraTask(e.target.value)}
         >
@@ -232,7 +234,7 @@ export function ConfigEditor() {
           Load via --cfg job
         </button>
         {!projectRoot && (
-          <span className="text-xs text-accent-warning">Configure project root in Settings.</span>
+          <span className="text-xs text-noc-warn">Configure project root in Settings.</span>
         )}
       </div>
 
@@ -264,7 +266,7 @@ export function ConfigEditor() {
             </button>
 
             <select
-              className="select-base text-xs w-40"
+              className="select-base text-xs w-40 bg-noc-bgDeep border border-noc-border text-noc-textPrimary"
               value={applyTarget}
               onChange={(e) => setApplyTarget(e.target.value as LauncherTarget)}
             >
@@ -278,28 +280,17 @@ export function ConfigEditor() {
             </button>
 
             {/* View mode toggle */}
-            <div className="ml-auto flex items-center gap-1 bg-canvas-elevated rounded-lg p-1">
-              {(
-                [
-                  { mode: "raw", Icon: FileText, label: "Raw" },
-                  { mode: "table", Icon: Table2, label: "Table" },
-                  { mode: "form", Icon: ListChecks, label: "Form" },
-                  { mode: "diff", Icon: GitCompare, label: "Diff" },
-                ] as const
-              ).map(({ mode, Icon, label }) => (
-                <button
-                  key={mode}
-                  onClick={() => setViewMode(mode)}
-                  className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md transition-colors ${
-                    viewMode === mode
-                      ? "bg-accent-primary text-white"
-                      : "text-canvas-muted hover:text-gray-200"
-                  }`}
-                >
-                  <Icon size={12} />
-                  {label}
-                </button>
-              ))}
+            <div className="ml-auto">
+              <SubtabBar
+                tabs={[
+                  { id: "raw", label: "Raw" },
+                  { id: "table", label: "Table" },
+                  { id: "form", label: "Form" },
+                  { id: "diff", label: "Diff" },
+                ]}
+                activeId={viewMode}
+                onChange={(id) => setViewMode(id as ViewMode)}
+              />
             </div>
           </>
         )}
@@ -315,8 +306,12 @@ export function ConfigEditor() {
       )}
 
       {!content && (
-        <div className="flex items-center justify-center h-48 text-canvas-muted text-sm">
-          Open a YAML config file (e.g. <code className="font-mono text-xs mx-1">pruned_config.yaml</code> from a run directory).
+        <div className="py-8">
+          <EmptyStateChip
+            title="No Configuration Loaded"
+            description="Open a YAML config file (e.g. pruned_config.yaml from a run directory) or load a resolved config via --cfg job."
+            tone="idle"
+          />
         </div>
       )}
 

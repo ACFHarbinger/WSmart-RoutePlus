@@ -2,14 +2,7 @@
  * Evaluation Runner — multi-checkpoint evaluation and comparison (§G.12).
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  ChevronDown,
-  ChevronUp,
-  FolderOpen,
-  Play,
-  Plus,
-  Terminal,
-} from "lucide-react";
+import { ChevronDown, ChevronUp, FolderOpen, Play, Plus, Terminal } from "lucide-react";
 import { OpenPathToolbar } from "../../components/common/OpenPathToolbar";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useAppStore } from "../../store/app";
@@ -31,12 +24,7 @@ import {
 import { useProcessRunLabelBrush } from "../../hooks/brush/useProcessRunLabelBrush";
 import { findRecentEvalProcessIds } from "../../utils/process/launcherProcess";
 import { brushLogPathFromProcessLines, outputRunPathFromLogLines } from "../../utils/runs/outputRunPath";
-import {
-  CheckpointRow,
-  EvalRunnerLiveSection,
-  ResultsGrid,
-  type CheckpointEntry,
-} from "../../components/launch/EvalRunnerSections";
+import { CheckpointRow, EvalRunnerLiveSection, ResultsGrid, type CheckpointEntry } from "../../components/launch/EvalRunnerSections";
 
 const PROBLEMS = TRAIN_PROBLEMS;
 const STRATEGIES = ["greedy", "sampling", "beam"] as const;
