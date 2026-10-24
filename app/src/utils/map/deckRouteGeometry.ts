@@ -242,8 +242,9 @@ export function buildTourDiffHighlights(
 /**
  * Compute hexagonal spatial density clusters for a `SimDayData` snapshot (Owner Ruling #3).
  *
- * Groups bin coordinates into axial hex cells and aggregates bin count, mean fill %,
- * peak fill %, and overflow count without replacing ground-truth GPS routes.
+ * Groups bin coordinates into axial hex cells in a local metre frame and aggregates
+ * bin count, mean fill %, peak fill %, and overflow count. Cells are equal-area
+ * on the ground. They are not street zones, and they do not replace the GPS tour.
  */
 export function buildHexDensityCells(
   data: SimDayData | undefined,
@@ -261,13 +262,28 @@ export function buildHexDensityCells(
   }
   if (entries.length === 0) return [];
 
-  const xs = entries.map((e) => e.pos[0]);
-  const ys = entries.map((e) => e.pos[1]);
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
-  const span = Math.max(maxX - minX, maxY - minY, 1e-4);
+  const lngs = entries.map((e) => e.pos[0]);
+  const lats = entries.map((e) => e.pos[1]);
+  const minLng = Math.min(...lngs);
+  const minLat = Math.min(...lats);
+  const maxLat = Math.max(...lats);
+  const midLat = ((minLat + maxLat) / 2) * (Math.PI / 180);
+  const metresPerDegLat = 111_320;
+  const metresPerDegLng = Math.max(1, 111_320 * Math.cos(midLat));
+  const toMetres = (lng: number, lat: number): [number, number] => [
+    (lng - minLng) * metresPerDegLng,
+    (lat - minLat) * metresPerDegLat,
+  ];
+  const toLngLat = (x: number, y: number): [number, number] => [
+    minLng + x / metresPerDegLng,
+    minLat + y / metresPerDegLat,
+  ];
+  const projected = entries.map((e) => ({ ...e, xy: toMetres(e.pos[0], e.pos[1]) }));
+  const span = Math.max(
+    ...projected.map((e) => e.xy[0]),
+    ...projected.map((e) => e.xy[1]),
+    1
+  );
   const radius = span / Math.max(4, gridDivisions);
 
   const hexW = Math.sqrt(3) * radius;
@@ -278,15 +294,15 @@ export function buildHexDensityCells(
     { row: number; col: number; cx: number; cy: number; fills: number[] }
   >();
 
-  for (const e of entries) {
-    const row = Math.round((e.pos[1] - minY) / vertStep);
+  for (const e of projected) {
+    const row = Math.round(e.xy[1] / vertStep);
     const xOffset = row % 2 !== 0 ? hexW / 2 : 0;
-    const col = Math.round((e.pos[0] - minX - xOffset) / hexW);
+    const col = Math.round((e.xy[0] - xOffset) / hexW);
     const key = `${row}:${col}`;
     let bucket = buckets.get(key);
     if (!bucket) {
-      const cx = minX + col * hexW + xOffset;
-      const cy = minY + row * vertStep;
+      const cx = col * hexW + xOffset;
+      const cy = row * vertStep;
       bucket = { row, col, cx, cy, fills: [] };
       buckets.set(key, bucket);
     }
@@ -298,17 +314,20 @@ export function buildHexDensityCells(
     const polygon: [number, number][] = [];
     for (let i = 0; i < 6; i++) {
       const angle = (Math.PI / 180) * (60 * i - 30);
-      polygon.push([
-        b.cx + radius * 0.92 * Math.cos(angle),
-        b.cy + radius * 0.92 * Math.sin(angle),
-      ]);
+      polygon.push(
+        toLngLat(
+          b.cx + radius * 0.92 * Math.cos(angle),
+          b.cy + radius * 0.92 * Math.sin(angle)
+        )
+      );
     }
+    const [centerLng, centerLat] = toLngLat(b.cx, b.cy);
     const sum = b.fills.reduce((a, v) => a + v, 0);
     const maxFill = Math.max(...b.fills);
     const overflowCount = b.fills.filter((v) => v >= 100).length;
     cells.push({
       id,
-      center: [b.cx, b.cy],
+      center: [centerLng, centerLat],
       polygon,
       binCount: b.fills.length,
       meanFill: sum / b.fills.length,
