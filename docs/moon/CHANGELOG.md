@@ -17,6 +17,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Gemini: Studio NOC/Orion UI/UX — Slice V8 & Strict 500-LoC Architectural Audit Across app/ (`2026-10-24`)
+
+Implements Slice V8 from `.agent/reports/studio-ux-brainstorm/FINAL-PLAN.md` (§G.20) and enforces Owner Ruling 8 (strict 500-line ceiling across every `.ts`, `.tsx`, and `.rs` file in `app/`):
+
+#### Added
+
+- **Slice V8 — Accessibility, Settings, & Reduced Motion**:
+  - `app/src/store/app.ts`: Added `reduceMotion: boolean` and `setReduceMotion(reduce: boolean)` persisted in localStorage, dynamically syncing `document.documentElement.classList.toggle("reduce-motion", reduceMotion)` and disabling transition animations in charts, Deck.gl, and SVG components.
+  - `app/src/pages/app/Settings.tsx` (413 LoC) & `app/src/components/app/SettingsSections.tsx` (277 LoC): Decomposed settings into modular sections; added dedicated accessibility toggle for "Reduced Motion".
+- **Files & Workspace Management**:
+  - `app/src/pages/files/ConfigEditor.tsx` (360 LoC) & `app/src/components/files/ConfigEditorViews.tsx` (219 LoC): Decomposed configuration editor into tree browser, raw YAML editor, and parsed schema views.
+  - `app/src/pages/files/OutputBrowser.tsx` (477 LoC), `app/src/components/files/OutputBrowserTree.tsx` (433 LoC), and `app/src/components/files/OutputBrowserDetail.tsx` (294 LoC): Fully modularized run lists, filesystem explorer, session profiles, and multi-format details preview (Markdown, CSV, JSON, logs).
+- **Visualization & Geometry Decomposition**:
+  - `app/src/components/maps/DeckRouteMap.tsx` (321 LoC) & `app/src/utils/map/deckRouteLayers.ts` (349 LoC): Extracted Deck.gl layer constructors (`buildDeckLayers`, arc layers, path layers, hex cluster polygons, depot markers).
+  - `app/src/pages/monitor/SimulationMonitor.tsx` (500 LoC), `SimMonitorDetailPanels.tsx` (193 LoC), `SimMonitorHeaderControls.tsx` (138 LoC), & `useSimMonitorMapRoutes.ts` (72 LoC): Extracted KPI panels, day scrubbers, map route processing, and chart policy controls.
+  - `app/src/pages/monitor/TrainingMonitor.tsx` (404 LoC) & `TrainingMonitorViews.tsx` (384 LoC): Extracted live listener, run loader, and run selection panels.
+  - `app/src/utils/graph/graphTopology.ts` (454 LoC), `graphTopologyLayout.ts` (163 LoC), & `graphTopologyPheromone.ts` (131 LoC): Extracted KNN, force-directed, radial layout algorithms, and ACO pheromone matrix math.
+  - `app/src/gen/charts/dataset.ts` (337 LoC), `datasetDistributions.ts` (260 LoC), & `datasetTd.ts` (160 LoC): Decomposed dataset distribution and training data ECharts builders.
+  - `app/src/gen/charts/simulation.ts` (39 LoC), `simulationScatter.ts` (340 LoC), `simulationHeatmaps.ts` (298 LoC), `simulationKpi.ts` (348 LoC), & `simulationRanking.ts` (298 LoC): Decomposed simulation ECharts generators into cohesive, independently maintainable modules.
+  - `app/src/gen/data/simulation.ts` (404 LoC) & `simulationTables.ts` (247 LoC): Extracted hierarchical matrix and GitHub-flavored markdown table builders.
+  - `app/src/gen/report/simulationReport.ts` (328 LoC), `simulationReportFigures.ts` (192 LoC), & `simulationReportTemplate.ts` (230 LoC): Extracted PNG figure rendering pipeline and Markdown report templates.
+  - `app/src/gen/report/interactiveHtml.ts` (334 LoC) & `interactiveDatasetHtml.ts` (228 LoC): Extracted interactive single-file HTML dataset inspection generator.
+  - `app/src/gen/deck/htmlDeck.ts` (422 LoC) & `htmlDeckDiagrams.ts` (197 LoC): Extracted HTML deck styling and architecture SVG diagrams.
+  - `app/src/gen/deck/deckBuilder.ts` (460 LoC), `deckBuilderHelpers.ts` (254 LoC), & `deckBuilderDiagrams.ts` (301 LoC): Extracted native PowerPoint shape diagrams and artifact exporter.
+- **Tauri Rust Backend Submodule Decomposition**:
+  - `app/src-tauri/src/commands/cloud/mod.rs` (468 LoC) & `tests.rs` (232 LoC): Extracted unit test fixtures into dedicated submodule.
+  - `app/src-tauri/src/commands/data/mod.rs` (259 LoC), `files.rs` (240 LoC), `bundle.rs` (258 LoC), `parquet.rs` (100 LoC), & `tests.rs` (157 LoC): Decomposed monolithic `data.rs` into idiomatic Rust submodules.
+  - `app/src-tauri/src/commands/tensor/mod.rs` (354 LoC), `npy.rs` (415 LoC), `td.rs` (194 LoC), & `tests.rs` (129 LoC): Decomposed monolithic `tensor.rs` into memory-mapped NumPy and TensorDict submodules.
+- **Strict 500-LoC Enforcement (Owner Ruling 8)**:
+  - Verified across `app/src` and `app/src-tauri/src` that `find app/src app/src-tauri/src -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.rs" \) -exec wc -l {} \; | awk '$1 > 500'` returns strictly zero files.
+
 ### Gemini: Studio NOC/Orion UI/UX & Operations Research Telemetry Overhaul — Slices V0–V7 (`2026-10-24`)
 
 Implements Slices V0 through V7 from `.agent/reports/studio-ux-brainstorm/FINAL-PLAN.md` (§G.20):
