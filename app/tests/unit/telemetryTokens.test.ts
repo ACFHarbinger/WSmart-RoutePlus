@@ -62,6 +62,11 @@ describe("NOC Design Tokens & WCAG AA Contrast (Slice V1)", () => {
     const uniqueHex = new Set(NOC_POLICY_PALETTE.map((p) => p.hex));
     expect(uniqueHex.size).toBe(12);
     expect(getPolicyColor("bpc")).toBe("#38bdf8");
+    expect(getPolicyColor("hna")).toBe("#fb7185");
+    expect(getPolicyColor("hna_emp")).toBe("#fb7185");
+    expect(getPolicyColor("na")).toBe("#4ade80");
+    expect(getPolicyColor("ms_bpc_sp")).toBe("#38bdf8");
+    expect(getPolicyColor("abpc_hg")).toBe(getPolicyColor("not_a_policy"));
     expect(getPolicyColor("last_minute_cf70_hgs_cls_1N")).toBe("#f59e0b");
     expect(getPolicyRgb("alns")).toEqual([129, 140, 248]);
   });

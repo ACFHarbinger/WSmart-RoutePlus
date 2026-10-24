@@ -166,13 +166,11 @@ export function PolicyRadarChart({
   policies,
   brushed,
   policyMeta,
-  logScale = false,
 }: {
   stats: Record<string, PolicyStats>;
   policies: string[];
   brushed?: string[] | null;
   policyMeta?: Record<string, PolicyMeta>;
-  logScale?: boolean;
 }) {
   const chartRef = useRef<EChartsReact | null>(null);
 
@@ -251,8 +249,7 @@ export function PolicyRadarChart({
     <div className="card space-y-2">
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold text-gray-300">
-          Policy Radar (1.0 = Best in Cohort)
-          {logScale ? " · direction-normalised" : ""}
+          Policy Radar (1.0 = best in this cohort)
         </p>
         <ChartExportButtons
           chartRef={{ current: chartRef.current }}

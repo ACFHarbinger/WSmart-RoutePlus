@@ -65,21 +65,34 @@ export const OrionRadarChart: React.FC<OrionRadarChartProps> = ({
     return cohort.slice(0, maxInitialVisible).map((c) => c.policy);
   }, [cohort, maxInitialVisible, selectedPolicies]);
 
+  const plottedAxes = useMemo(
+    () =>
+      axes.filter((axis) =>
+        cohort.every(
+          (entry) =>
+            entry.means[axis] != null && Number.isFinite(entry.means[axis])
+        )
+      ),
+    [axes, cohort]
+  );
+
   const { normalizedByPolicy, indicators } = useMemo(() => {
     const byAxis: Record<SimKpiKey, number[]> = {} as Record<SimKpiKey, number[]>;
-    for (const axis of axes) {
+    for (const axis of plottedAxes) {
       const contract = SIM_METRICS[axis];
-      const rawValues = cohort.map((c) => c.means[axis] ?? 0);
+      const rawValues = cohort.map((c) => c.means[axis] as number);
       byAxis[axis] = normalizeCohortMetric(rawValues, contract.higherIsBetter);
     }
 
     const normMap = new Map<string, number[]>();
     cohort.forEach((entry, idx) => {
-      const vec = axes.map((axis) => Number((byAxis[axis]?.[idx] ?? 0.15).toFixed(3)));
+      const vec = plottedAxes.map((axis) =>
+        Number((byAxis[axis]?.[idx] ?? 0).toFixed(3))
+      );
       normMap.set(entry.policy, vec);
     });
 
-    const inds = axes.map((axis) => {
+    const inds = plottedAxes.map((axis) => {
       const c = SIM_METRICS[axis];
       return {
         name: `${c.shortLabel} (${c.directionArrow} best)`,
@@ -89,7 +102,7 @@ export const OrionRadarChart: React.FC<OrionRadarChartProps> = ({
     });
 
     return { normalizedByPolicy: normMap, indicators: inds };
-  }, [axes, cohort]);
+  }, [cohort, plottedAxes]);
 
   const option = useMemo(() => {
     const visibleEntries = cohort.filter((c) =>
@@ -104,7 +117,7 @@ export const OrionRadarChart: React.FC<OrionRadarChartProps> = ({
           const policyName = params.name ?? "";
           const entry = cohort.find((c) => c.policy === policyName);
           if (!entry) return policyName;
-          const lines = axes.map((axis, i) => {
+          const lines = plottedAxes.map((axis, i) => {
             const c = SIM_METRICS[axis];
             const raw = entry.means[axis];
             const std = entry.stds?.[axis];
@@ -158,7 +171,7 @@ export const OrionRadarChart: React.FC<OrionRadarChartProps> = ({
         },
       ],
     };
-  }, [activePolicies, axes, cohort, indicators, normalizedByPolicy]);
+  }, [activePolicies, cohort, indicators, normalizedByPolicy, plottedAxes]);
 
   const togglePolicy = (policy: string) => {
     setSelectedPolicies((prev) =>

@@ -281,7 +281,6 @@ export function SummaryPortfolioAndCompareSection({
           policies={policies}
           brushed={effectiveBrushed}
           policyMeta={policyMeta}
-          logScale={logScale}
         />
         <div className="space-y-2">
           <div className="card space-y-2">
