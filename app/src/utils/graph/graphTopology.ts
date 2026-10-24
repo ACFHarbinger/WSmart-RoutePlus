@@ -2,24 +2,47 @@
  * Topological graph analytics — distance matrix → edge list + force layout (§G.4).
  */
 import { invoke } from "@tauri-apps/api/core";
-import type { DayLogEntry, SimDayData } from "../../types";
-import { pheromoneWeightDisplay } from "../charts/chartLogScale";
+import type { SimDayData } from "../../types";
 import { parseLogPath } from "../sim/simMetadata";
+import {
+  TopologyLayoutMode,
+  DENSE_GRAPH_NODE_THRESHOLD,
+  GraphEdge,
+  pheromoneEdgeKey,
+  resolveLayoutMode,
+  buildKnnEdgeList,
+  forceDirectedLayout,
+  radialDenseLayout,
+} from "./graphTopologyLayout";
+import {
+  guiIdToMatrixIndex,
+  tourIndicesToMatrixPairs,
+  countTourEdgeSteps,
+  accumulateTourPheromoneByStep,
+  accumulateTourPheromone,
+  normalizePheromone,
+  pheromoneIntensity,
+} from "./graphTopologyPheromone";
 
-export type TopologyLayoutMode = "force" | "radial";
-
-/** Auto-select radial layout for dense graphs (Cosmograph-style fallback). */
-export const DENSE_GRAPH_NODE_THRESHOLD = 200;
+export type { TopologyLayoutMode, GraphEdge };
+export {
+  DENSE_GRAPH_NODE_THRESHOLD,
+  pheromoneEdgeKey,
+  resolveLayoutMode,
+  buildKnnEdgeList,
+  forceDirectedLayout,
+  radialDenseLayout,
+  tourIndicesToMatrixPairs,
+  countTourEdgeSteps,
+  accumulateTourPheromoneByStep,
+  accumulateTourPheromone,
+  normalizePheromone,
+  pheromoneIntensity,
+};
 
 export interface DistanceMatrixData {
   nodeIds: number[];
   distances: number[][];
-}
-
-export interface GraphEdge {
-  source: number;
-  target: number;
-  distance: number;
 }
 
 export interface TopologyNodeMeta {
@@ -129,166 +152,6 @@ export async function loadDistanceMatrixForLog(
   throw lastErr ?? new Error("No distance matrix found for log");
 }
 
-/** k-nearest-neighbor edge list (undirected, deduplicated). */
-export function buildKnnEdgeList(
-  distances: number[][],
-  k = 3,
-  maxEdges = 1200
-): GraphEdge[] {
-  const n = distances.length;
-  const edgeMap = new Map<string, GraphEdge>();
-
-  for (let i = 0; i < n; i++) {
-    const neighbors = distances[i]
-      .map((d, j) => ({ j, d }))
-      .filter(({ j, d }) => j !== i && Number.isFinite(d) && d > 0)
-      .sort((a, b) => a.d - b.d)
-      .slice(0, k);
-
-    for (const { j, d } of neighbors) {
-      const a = Math.min(i, j);
-      const b = Math.max(i, j);
-      const key = `${a}-${b}`;
-      const existing = edgeMap.get(key);
-      if (!existing || d < existing.distance) {
-        edgeMap.set(key, { source: a, target: b, distance: d });
-      }
-      if (edgeMap.size >= maxEdges) break;
-    }
-    if (edgeMap.size >= maxEdges) break;
-  }
-
-  return [...edgeMap.values()];
-}
-
-/** Simple force-directed layout (Fruchterman-Reingold style). */
-export function forceDirectedLayout(
-  nodeCount: number,
-  edges: GraphEdge[],
-  seedPositions?: Map<number, [number, number]>,
-  iterations = 80
-): [number, number][] {
-  const area = Math.max(400, nodeCount * 12);
-  const pos: [number, number][] = Array.from({ length: nodeCount }, (_, i) => {
-    const seed = seedPositions?.get(i);
-    if (seed) return [...seed] as [number, number];
-    const angle = (2 * Math.PI * i) / Math.max(nodeCount, 1);
-    return [Math.cos(angle) * area * 0.35, Math.sin(angle) * area * 0.35];
-  });
-
-  const k = Math.sqrt((area * area) / Math.max(nodeCount, 1));
-
-  for (let iter = 0; iter < iterations; iter++) {
-    const disp: [number, number][] = pos.map(() => [0, 0]);
-    const temp = area * (1 - iter / iterations);
-
-    for (let i = 0; i < nodeCount; i++) {
-      for (let j = i + 1; j < nodeCount; j++) {
-        let dx = pos[i][0] - pos[j][0];
-        let dy = pos[i][1] - pos[j][1];
-        let dist = Math.hypot(dx, dy);
-        if (dist < 1e-6) {
-          dx = (Math.random() - 0.5) * 0.01;
-          dy = (Math.random() - 0.5) * 0.01;
-          dist = Math.hypot(dx, dy);
-        }
-        const repulse = (k * k) / dist;
-        const fx = (dx / dist) * repulse;
-        const fy = (dy / dist) * repulse;
-        disp[i][0] += fx;
-        disp[i][1] += fy;
-        disp[j][0] -= fx;
-        disp[j][1] -= fy;
-      }
-    }
-
-    for (const { source, target, distance } of edges) {
-      let dx = pos[source][0] - pos[target][0];
-      let dy = pos[source][1] - pos[target][1];
-      let dist = Math.hypot(dx, dy);
-      if (dist < 1e-6) dist = 1e-6;
-      const attract = (dist * dist) / Math.max(distance, 1e-3);
-      const fx = (dx / dist) * attract;
-      const fy = (dy / dist) * attract;
-      disp[source][0] -= fx;
-      disp[source][1] -= fy;
-      disp[target][0] += fx;
-      disp[target][1] += fy;
-    }
-
-    for (let i = 0; i < nodeCount; i++) {
-      let dx = disp[i][0];
-      let dy = disp[i][1];
-      const dist = Math.hypot(dx, dy);
-      if (dist > 0) {
-        const scale = Math.min(dist, temp) / dist;
-        dx *= scale;
-        dy *= scale;
-      }
-      pos[i][0] += dx;
-      pos[i][1] += dy;
-    }
-  }
-
-  return pos;
-}
-
-/** Radial dense layout — depot at centre, bins on concentric rings (§G.4 Cosmograph fallback). */
-export function radialDenseLayout(
-  nodeCount: number,
-  nodeIds: number[]
-): [number, number][] {
-  const area = Math.max(320, nodeCount * 10);
-  const pos: [number, number][] = Array.from({ length: nodeCount }, () => [0, 0]);
-
-  const depotIdx = nodeIds.indexOf(0);
-  if (depotIdx >= 0) pos[depotIdx] = [0, 0];
-
-  const ringNodes = nodeIds
-    .map((id, idx) => ({ id, idx }))
-    .filter(({ idx }) => idx !== depotIdx);
-  const rings = nodeCount >= DENSE_GRAPH_NODE_THRESHOLD ? 3 : 2;
-  const perRing = Math.ceil(ringNodes.length / rings);
-
-  ringNodes.forEach(({ idx }, order) => {
-    const ring = Math.floor(order / Math.max(perRing, 1));
-    const slot = order % Math.max(perRing, 1);
-    const ringCount = Math.min(perRing, ringNodes.length - ring * perRing);
-    const radius = area * (0.28 + (ring / Math.max(rings - 1, 1)) * 0.42);
-    const angle = (2 * Math.PI * slot) / Math.max(ringCount, 1);
-    pos[idx] = [Math.cos(angle) * radius, Math.sin(angle) * radius];
-  });
-
-  return pos;
-}
-
-export function resolveLayoutMode(
-  nodeCount: number,
-  mode: TopologyLayoutMode | "auto" = "auto"
-): TopologyLayoutMode {
-  if (mode === "auto") {
-    return nodeCount >= DENSE_GRAPH_NODE_THRESHOLD ? "radial" : "force";
-  }
-  return mode;
-}
-
-export function pheromoneEdgeKey(a: number, b: number): string {
-  const lo = Math.min(a, b);
-  const hi = Math.max(a, b);
-  return `${lo}-${hi}`;
-}
-
-function guiIdToMatrixIndex(guiId: number, nodeIds: number[]): number | null {
-  if (guiId === -1) {
-    const depotIdx = nodeIds.indexOf(0);
-    return depotIdx >= 0 ? depotIdx : 0;
-  }
-  const binId = guiId;
-  const idx = nodeIds.indexOf(binId);
-  if (idx >= 0) return idx;
-  return guiId >= 0 && guiId < nodeIds.length ? guiId : null;
-}
-
 /** Map simulation day data onto matrix node indices. */
 export function buildNodeMetaFromSim(
   data: SimDayData | null,
@@ -369,120 +232,6 @@ export function topologyNodeStyle(
     color: nodeColor(meta, fillRange, !highlighted),
     dimmed: !highlighted,
   };
-}
-
-/** Extract consecutive tour segments as undirected matrix-index pairs. */
-export function tourIndicesToMatrixPairs(
-  tourIndices: number[] | undefined,
-  nodeIds: number[]
-): Array<[number, number]> {
-  if (!tourIndices?.length) return [];
-  const indices = tourIndices
-    .map((guiId) => guiIdToMatrixIndex(guiId, nodeIds))
-    .filter((idx): idx is number => idx != null);
-  const pairs: Array<[number, number]> = [];
-  for (let i = 0; i < indices.length - 1; i++) {
-    const a = indices[i];
-    const b = indices[i + 1];
-    if (a !== b) pairs.push([a, b]);
-  }
-  return pairs;
-}
-
-/** Count consecutive tour edge pairs for the given day entry. */
-export function countTourEdgeSteps(
-  entry: DayLogEntry | undefined,
-  nodeIds: number[]
-): number {
-  if (!entry) return 0;
-  return tourIndicesToMatrixPairs(entry.data.tour_indices, nodeIds).length;
-}
-
-/**
- * Deposit synthetic ACO τ along tour edges up to `upToStep` (per-iteration stepping).
- * Each ant step adds τ on the next consecutive tour edge; later steps deposit slightly more.
- */
-export function accumulateTourPheromoneByStep(
-  entry: DayLogEntry,
-  nodeIds: number[],
-  upToStep: number,
-  opts: { depositScale?: number } = {}
-): Map<string, number> {
-  const pairs = tourIndicesToMatrixPairs(entry.data.tour_indices, nodeIds);
-  const weights = new Map<string, number>();
-  if (!pairs.length || upToStep <= 0) return weights;
-
-  const scale =
-    opts.depositScale ?? 1 + Math.max(0, (entry.data.profit ?? 0) / 500);
-  const limit = Math.min(upToStep, pairs.length);
-
-  for (let i = 0; i < limit; i++) {
-    const [a, b] = pairs[i];
-    const key = pheromoneEdgeKey(a, b);
-    const stepFactor = 1 + (i / Math.max(pairs.length, 1)) * 0.5;
-    weights.set(key, (weights.get(key) ?? 0) + scale * stepFactor);
-  }
-
-  return weights;
-}
-
-/**
- * Accumulate synthetic ACO pheromone from tour edges up to `upToDay`.
- * Older days decay exponentially; deposit scales with route profit when present.
- */
-export function accumulateTourPheromone(
-  entries: DayLogEntry[],
-  nodeIds: number[],
-  upToDay: number,
-  opts: { decay?: number; minDay?: number } = {}
-): Map<string, number> {
-  const { decay = 0.88, minDay = 1 } = opts;
-  const weights = new Map<string, number>();
-  const relevant = entries
-    .filter((e) => e.day >= minDay && e.day <= upToDay)
-    .sort((a, b) => a.day - b.day);
-
-  if (!relevant.length) return weights;
-
-  const maxDay = Math.max(...relevant.map((e) => e.day));
-  for (const entry of relevant) {
-    const age = maxDay - entry.day;
-    const depositScale = 1 + Math.max(0, (entry.data.profit ?? 0) / 500);
-    const dayFactor = Math.pow(decay, age) * depositScale;
-    for (const [a, b] of tourIndicesToMatrixPairs(entry.data.tour_indices, nodeIds)) {
-      const key = pheromoneEdgeKey(a, b);
-      weights.set(key, (weights.get(key) ?? 0) + dayFactor);
-    }
-  }
-
-  return weights;
-}
-
-export function normalizePheromone(
-  weights: Map<string, number>,
-  logScale = false
-): Map<string, number> {
-  if (!weights.size) return weights;
-  let max = 0;
-  const scaled = new Map<string, number>();
-  for (const [k, v] of weights) {
-    const t = logScale ? pheromoneWeightDisplay(v, true) : v;
-    scaled.set(k, t);
-    max = Math.max(max, t);
-  }
-  if (max <= 0) return weights;
-  const out = new Map<string, number>();
-  for (const [k, v] of scaled) out.set(k, v / max);
-  return out;
-}
-
-/** Normalized τ intensity in [0, 1] for edge styling across renderers. */
-export function pheromoneIntensity(
-  weights: Map<string, number>,
-  key: string,
-  logScale = false
-): number {
-  return normalizePheromone(weights, logScale).get(key) ?? 0;
 }
 
 function pheromoneEdgeStyle(

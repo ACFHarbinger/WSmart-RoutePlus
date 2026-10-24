@@ -7,9 +7,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
-import { ChevronLeft, ChevronRight, FolderOpen, Pause, Play, RefreshCw } from "lucide-react";
+import { FolderOpen, RefreshCw } from "lucide-react";
 import { GlobalFilterBar } from "../../components/layout/GlobalFilterBar";
-import { KpiCard } from "../../components/ui/KpiCard";
 import { StalenessDot } from "../../components/ui/telemetry/status";
 import { useSimWatcher } from "../../hooks/process/useSimWatcher";
 import { useSimThrottle } from "../../hooks/sim/useSimThrottle";
@@ -20,18 +19,12 @@ import { useGlobalFiltersStore } from "../../store/filters";
 import { useProcessStore } from "../../store/process";
 import { useSimStore, uniquePolicies, uniqueSamples, filterEntries } from "../../store/sim";
 import { OpenPathToolbar } from "../../components/common/OpenPathToolbar";
-import { hexToRgb } from "../../utils/charts/colors";
 import {
   enrichEntriesWithGraphCoords,
   GRAPH_PRESETS,
   guessGraphPreset,
   loadGraphCoordinates,
 } from "../../utils/graph/graphCoords";
-import { GraphTopologyPanel } from "../../components/analysis/topology/GraphTopologyPanel";
-import { FailureAnalysisPanel } from "../../components/analysis/routes/FailureAnalysisPanel";
-import { PolicyTelemetryPanel } from "../../components/analysis/telemetry/PolicyTelemetryPanel";
-import { PolicyTelemetryTrendsPanel } from "../../components/analysis/telemetry/PolicyTelemetryTrendsPanel";
-import { SqlQueryPanel } from "../../components/analysis/explorer/SqlQueryPanel";
 import {
   formatPipelineTimingBadge,
   portfolioRunLabel,
@@ -41,16 +34,17 @@ import { useDuckDbStore } from "../../store/duckdb";
 import { toast } from "sonner";
 import { filterFailureEntries } from "../../utils/sim/simFailure";
 import { useLogPathRunLabelBrush } from "../../hooks/brush/useLogPathRunLabelBrush";
-import {
-  BinFillStrip,
-  computeDelta,
-  MetricTimeseries,
-  POLICY_COLORS,
-  PRIMARY_KPIS,
-  SECONDARY_KPIS,
-  TourTable,
-} from "../../components/monitor/sim/SimMonitorPanels";
+import { POLICY_COLORS } from "../../components/monitor/sim/SimMonitorPanels";
 import { SimMonitorMapSection } from "../../components/monitor/sim/SimMonitorMapSection";
+import {
+  SimMonitorAdvancedPanels,
+  SimMonitorKpiSection,
+} from "../../components/monitor/sim/SimMonitorDetailPanels";
+import {
+  SimMonitorChartPolicySelector,
+  SimMonitorDayScrubber,
+} from "../../components/monitor/sim/SimMonitorHeaderControls";
+import { useSimMonitorMapRoutes } from "../../components/monitor/sim/useSimMonitorMapRoutes";
 import type { DayLogEntry, PolicyVizEntry, SimFailureEntry } from "../../types";
 
 export function SimulationMonitor() {
@@ -83,9 +77,7 @@ export function SimulationMonitor() {
   const [telemetryTrendsKey, setTelemetryTrendsKey] = useState(0);
 
   useEffect(() => {
-    if (policyVizEntries.length > 0) {
-      setTelemetryTrendsKey((k) => k + 1);
-    }
+    if (policyVizEntries.length > 0) setTelemetryTrendsKey((k) => k + 1);
   }, [policyVizEntries.length]);
 
   const {
@@ -300,45 +292,19 @@ export function SimulationMonitor() {
     [policies]
   );
 
-  useEffect(() => {
-    if (!pendingMapCompare) return;
-    setShowRouteMap(true);
-    setMapPolicies(pendingMapCompare.policies);
-    setMapLayout(pendingMapCompare.layout);
-    if (pendingMapCompare.mapMode) setRouteMapMode(pendingMapCompare.mapMode);
-    setPendingMapCompare(null);
-  }, [pendingMapCompare, setPendingMapCompare]);
-
-  const mapRoutes = useMemo(() => {
-    const dayEntries = entries.filter(
-      (e) =>
-        e.day === displayDay &&
-        (selectedSample === null || e.sample_id === selectedSample) &&
-        activeMapPolicies.includes(e.policy)
-    );
-    return dayEntries
-      .filter((e) => e.data.all_bin_coords?.length)
-      .map((e) => {
-        const idx = policies.indexOf(e.policy);
-        return {
-          id: `${e.policy}-${e.sample_id}`,
-          label: e.policy,
-          data: e.data,
-          color: hexToRgb(POLICY_COLORS[idx % POLICY_COLORS.length]),
-        };
-      });
-  }, [entries, displayDay, selectedSample, activeMapPolicies, policies]);
-
-  const mapHasFailureData = useMemo(
-    () =>
-      mapRoutes.some(
-        (r) =>
-          r.data.failure_analysis?.has_failure &&
-          ((r.data.failure_analysis.overflow_bins?.length ?? 0) > 0 ||
-            (r.data.failure_analysis.skipped_high_fill_bins?.length ?? 0) > 0)
-      ),
-    [mapRoutes]
-  );
+  const { mapRoutes, mapHasFailureData } = useSimMonitorMapRoutes({
+    entries,
+    displayDay,
+    selectedSample,
+    activeMapPolicies,
+    policies,
+    pendingMapCompare,
+    setPendingMapCompare,
+    setShowRouteMap,
+    setMapPolicies,
+    setMapLayout,
+    setRouteMapMode,
+  });
 
   useEffect(() => {
     if (!isPlaying || dayRange.max <= dayRange.min) return;
@@ -391,9 +357,7 @@ export function SimulationMonitor() {
             labeledTargets={["summary"]}
             trailing={
               <>
-                {isWatching && (
-                  <RefreshCw size={11} className="animate-spin text-accent-success shrink-0" />
-                )}
+                {isWatching && <RefreshCw size={11} className="animate-spin text-accent-success shrink-0" />}
                 {duckdbLoading && <span className="shrink-0">· DuckDB ingesting…</span>}
                 {!duckdbLoading && lastPipeline?.tableName === "monitor_sim" && (
                   <span className="shrink-0">· {formatPipelineTimingBadge(lastPipeline)}</span>
@@ -429,106 +393,24 @@ export function SimulationMonitor() {
           </select>
         )}
 
-        {dayRange.max > 0 && (
-          <div className="flex items-center gap-1.5 ml-auto">
-            <span className="text-xs text-canvas-muted">Day</span>
-            <button
-              onClick={() => setSelectedDay(Math.max(dayRange.min, displayDay - 1))}
-              disabled={displayDay <= dayRange.min}
-              className="btn-ghost p-1 disabled:opacity-30"
-              title="Previous day"
-            >
-              <ChevronLeft size={12} />
-            </button>
-            <input
-              type="range"
-              min={dayRange.min}
-              max={dayRange.max}
-              value={displayDay}
-              onChange={(e) => setSelectedDay(Number(e.target.value))}
-              className="w-28 accent-accent-primary"
-            />
-            <button
-              onClick={() => setSelectedDay(Math.min(dayRange.max, displayDay + 1))}
-              disabled={displayDay >= dayRange.max}
-              className="btn-ghost p-1 disabled:opacity-30"
-              title="Next day"
-            >
-              <ChevronRight size={12} />
-            </button>
-            <span className="text-xs font-mono text-canvas-muted w-14 text-center tabular-nums">
-              {displayDay}/{dayRange.max}
-            </span>
-            <button
-              onClick={() => {
-                if (isPlaying) {
-                  setIsPlaying(false);
-                } else {
-                  if (selectedDay === null) setSelectedDay(dayRange.min);
-                  setIsPlaying(true);
-                }
-              }}
-              className="btn-ghost p-1"
-              title={isPlaying ? "Pause day playback" : "Play through simulation days"}
-            >
-              {isPlaying ? <Pause size={12} /> : <Play size={12} />}
-            </button>
-            <select
-              className="select-base text-[10px] py-0.5 w-14"
-              value={playbackSpeed}
-              onChange={(e) => setPlaybackSpeed(Number(e.target.value) as 1 | 2 | 4)}
-              title="Playback speed"
-            >
-              <option value={1}>1×</option>
-              <option value={2}>2×</option>
-              <option value={4}>4×</option>
-            </select>
-            {selectedDay !== null ? (
-              <button
-                onClick={() => {
-                  setIsPlaying(false);
-                  setSelectedDay(null);
-                }}
-                className="btn-ghost text-xs text-accent-primary"
-                title="Jump to latest day and follow live updates"
-              >
-                Latest ↓
-              </button>
-            ) : isWatching ? (
-              <span className="flex items-center gap-1 text-xs text-accent-success">
-                <span className="w-1.5 h-1.5 rounded-full bg-accent-success animate-pulse" />
-                Following
-              </span>
-            ) : null}
-          </div>
-        )}
+        <SimMonitorDayScrubber
+          dayRange={dayRange}
+          displayDay={displayDay}
+          setSelectedDay={setSelectedDay}
+          isPlaying={isPlaying}
+          setIsPlaying={setIsPlaying}
+          playbackSpeed={playbackSpeed}
+          setPlaybackSpeed={setPlaybackSpeed}
+          selectedDay={selectedDay}
+          isWatching={isWatching}
+        />
       </div>
 
-      {policies.length > 1 && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-canvas-muted shrink-0">Charts:</span>
-          {policies.map((p, i) => {
-            const color = POLICY_COLORS[i % POLICY_COLORS.length];
-            const active = activeChartPolicies.includes(p);
-            return (
-              <button
-                key={p}
-                onClick={() => toggleChartPolicy(p)}
-                className={`text-xs px-2 py-0.5 rounded-full border transition-opacity ${
-                  active ? "opacity-100" : "opacity-35"
-                }`}
-                style={{
-                  borderColor: color,
-                  color: active ? color : undefined,
-                  background: active ? `${color}18` : undefined,
-                }}
-              >
-                {p}
-              </button>
-            );
-          })}
-        </div>
-      )}
+      <SimMonitorChartPolicySelector
+        policies={policies}
+        activeChartPolicies={activeChartPolicies}
+        toggleChartPolicy={toggleChartPolicy}
+      />
 
       {!displayEntry && (
         <div className="flex flex-col items-center justify-center h-64 text-canvas-muted gap-3">
@@ -541,56 +423,15 @@ export function SimulationMonitor() {
 
       {displayEntry && (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {PRIMARY_KPIS.map(({ key, label, lowerIsBetter }) => (
-              <KpiCard
-                key={key}
-                label={label}
-                value={(displayEntry.data as Record<string, number>)[key]}
-                delta={computeDelta(filteredEntries, displayDay, key)}
-                colorize
-                lowerIsBetter={lowerIsBetter}
-              />
-            ))}
-          </div>
-
-          <button
-            className="btn-ghost text-xs"
-            onClick={() => setShowSecondary((v) => !v)}
-          >
-            {showSecondary ? "Hide" : "Show"} secondary metrics
-          </button>
-          {showSecondary && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {SECONDARY_KPIS.map(({ key, label, lowerIsBetter }) => (
-                <KpiCard
-                  key={key}
-                  label={label}
-                  value={(displayEntry.data as Record<string, number>)[key]}
-                  delta={computeDelta(filteredEntries, displayDay, key)}
-                  colorize
-                  lowerIsBetter={lowerIsBetter}
-                />
-              ))}
-            </div>
-          )}
-
-          <p className="text-[10px] text-canvas-muted">
-            {logScale
-              ? "Daily KPI timeseries · log-scale (symlog overflows, log profit/km/kg)"
-              : "Daily KPI timeseries · linear scale"}
-          </p>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {PRIMARY_KPIS.map(({ key, label }) => (
-              <MetricTimeseries
-                key={key}
-                policySeries={policySeries}
-                metricKey={key}
-                label={label}
-                logScale={logScale}
-              />
-            ))}
-          </div>
+          <SimMonitorKpiSection
+            displayEntry={displayEntry}
+            displayDay={displayDay}
+            filteredEntries={filteredEntries}
+            showSecondary={showSecondary}
+            setShowSecondary={setShowSecondary}
+            policySeries={policySeries}
+            logScale={logScale}
+          />
 
           <SimMonitorMapSection
             showBinFill={showBinFill}
@@ -628,65 +469,30 @@ export function SimulationMonitor() {
             displayEntry={displayEntry}
           />
 
-          {showBinFill && <BinFillStrip data={displayEntry.data} />}
-          {showTourTable && (
-            <TourTable
-              data={displayEntry.data}
-              day={displayDay}
-              policy={displayEntry.policy}
-            />
-          )}
-
-          <FailureAnalysisPanel
-            entry={displayFailureEntry}
-            embedded={displayEntry?.data.failure_analysis ?? null}
-          />
-
-          <PolicyTelemetryPanel
-            entries={policyVizEntries}
-            policy={selectedPolicy}
-            sampleId={selectedSample}
-            day={displayDay}
-            theme={theme}
-            logScale={logScale}
-            live={policyVizLive}
-          />
-
-          <PolicyTelemetryTrendsPanel
-            theme={theme}
-            logScale={logScale}
-            refreshKey={telemetryTrendsKey}
-            initialPolicy={selectedPolicy}
-            initialRunLabel={sourceRunLabel}
-          />
-
-          <GraphTopologyPanel
-            logPath={activeLogPath}
-            projectRoot={projectRoot}
-            simData={displayEntry?.data ?? null}
-            theme={theme}
-            duckdbProfitRange={duckdbProfitRange}
-            entries={filteredEntries}
+          <SimMonitorAdvancedPanels
+            showBinFill={showBinFill}
+            showTourTable={showTourTable}
+            displayEntry={displayEntry}
             displayDay={displayDay}
-            dayRange={dayRange}
-            onDaySelect={setSelectedDay}
+            displayFailureEntry={displayFailureEntry}
+            policyVizEntries={policyVizEntries}
+            selectedPolicy={selectedPolicy}
+            selectedSample={selectedSample}
+            theme={theme}
             logScale={logScale}
+            policyVizLive={policyVizLive}
+            telemetryTrendsKey={telemetryTrendsKey}
+            sourceRunLabel={sourceRunLabel}
+            activeLogPath={activeLogPath}
+            projectRoot={projectRoot}
+            duckdbProfitRange={duckdbProfitRange}
+            filteredEntries={filteredEntries}
+            dayRange={dayRange}
+            setSelectedDay={setSelectedDay}
+            duckdbReady={duckdbReady}
+            lastPipeline={lastPipeline}
+            setDuckdbProfitRange={setDuckdbProfitRange}
           />
-
-          {duckdbReady && lastPipeline?.tableName === "monitor_sim" && (
-            <SqlQueryPanel
-              tableName={lastPipeline.tableName}
-              theme={theme}
-              onDaySelect={(day) => setSelectedDay(day)}
-              onProfitRange={(min, max) => setDuckdbProfitRange([min, max])}
-              highlightPolicies={selectedPolicy ? [selectedPolicy] : null}
-              highlightRunLabels={sourceRunLabel ? [sourceRunLabel] : null}
-              brushSqlSync
-              autoRunOnBrushSync
-              portfolioMode
-              portfolioRunLabels={sourceRunLabel ? [sourceRunLabel] : []}
-            />
-          )}
         </>
       )}
     </div>

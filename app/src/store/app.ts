@@ -12,6 +12,7 @@ interface AppState {
   mode: AppMode;
   theme: ThemePreference;
   effectiveTheme: EffectiveTheme;
+  reduceMotion: boolean;
   projectRoot: string;
   pythonPath: string;
   // Ephemeral — set by TrainingMonitor checkpoint browser to pre-populate EvaluationRunner
@@ -29,6 +30,7 @@ interface AppState {
   setMode: (mode: AppMode) => void;
   setTheme: (theme: ThemePreference) => void;
   setEffectiveTheme: (effective: EffectiveTheme) => void;
+  setReduceMotion: (reduce: boolean) => void;
   setProjectRoot: (root: string) => void;
   setPythonPath: (path: string) => void;
   setPendingCheckpoint: (path: string | null) => void;
@@ -48,6 +50,7 @@ export const useAppStore = create<AppState>()(
       mode: "simulation",
       theme: "dark",
       effectiveTheme: "dark",
+      reduceMotion: false,
       projectRoot: "",
       pythonPath: "",
       pendingCheckpoint: null,
@@ -66,6 +69,12 @@ export const useAppStore = create<AppState>()(
         set({ theme, effectiveTheme: effective });
       },
       setEffectiveTheme: (effectiveTheme) => set({ effectiveTheme }),
+      setReduceMotion: (reduceMotion) => {
+        if (typeof document !== "undefined") {
+          document.documentElement.classList.toggle("reduce-motion", reduceMotion);
+        }
+        set({ reduceMotion });
+      },
       setProjectRoot: (projectRoot) => set({ projectRoot }),
       setPythonPath: (pythonPath) => set({ pythonPath }),
       setPendingCheckpoint: (pendingCheckpoint) => set({ pendingCheckpoint }),
@@ -85,6 +94,7 @@ export const useAppStore = create<AppState>()(
       partialize: (s) => ({
         mode: s.mode,
         theme: s.theme,
+        reduceMotion: s.reduceMotion,
         projectRoot: s.projectRoot,
         pythonPath: s.pythonPath,
       }),
@@ -93,6 +103,9 @@ export const useAppStore = create<AppState>()(
         const effective = resolveEffectiveTheme(state.theme);
         applyDomTheme(effective);
         state.effectiveTheme = effective;
+        if (typeof document !== "undefined") {
+          document.documentElement.classList.toggle("reduce-motion", Boolean(state.reduceMotion));
+        }
       },
     }
   )
