@@ -36,21 +36,21 @@ export function KeyboardShortcutsHelp() {
       onClick={() => setShortcutsOpen(false)}
     >
       <div
-        className="card max-w-md w-full space-y-3"
+        className="max-w-md w-full space-y-3 bg-noc-bgPanel border border-noc-borderStrong rounded-xl p-4 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-gray-200">Keyboard Shortcuts</h2>
-          <button onClick={() => setShortcutsOpen(false)} className="btn-ghost p-1">
+        <div className="flex items-center justify-between pb-2 border-b border-noc-border">
+          <h2 className="text-sm font-semibold text-noc-textPrimary">Keyboard Shortcuts</h2>
+          <button onClick={() => setShortcutsOpen(false)} className="btn-ghost p-1 text-noc-textMuted hover:text-noc-textPrimary">
             <X size={14} />
           </button>
         </div>
         <table className="w-full text-xs">
-          <tbody className="divide-y divide-canvas-border">
+          <tbody className="divide-y divide-noc-border">
             {SHORTCUTS.map(({ keys, action }) => (
               <tr key={keys}>
-                <td className="py-1.5 pr-4 font-mono text-accent-secondary whitespace-nowrap">{keys}</td>
-                <td className="py-1.5 text-canvas-muted">{action}</td>
+                <td className="py-1.5 pr-4 font-mono text-noc-cyan font-medium whitespace-nowrap">{keys}</td>
+                <td className="py-1.5 text-noc-textMuted">{action}</td>
               </tr>
             ))}
           </tbody>

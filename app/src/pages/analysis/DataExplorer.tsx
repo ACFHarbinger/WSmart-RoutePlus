@@ -16,6 +16,7 @@ import { useTableRunLabelBrush } from "../../hooks/brush/useTableRunLabelBrush";
 import { useAppStore } from "../../store/app";
 import { useGlobalFiltersStore } from "../../store/filters";
 import { useRecentHandoff } from "../../hooks/files/useRecentHandoff";
+import { EmptyStateChip } from "../../components/ui/telemetry/status";
 import { downloadCsv, downloadParquetFromCsv } from "../../utils/charts/tableExport";
 import { formatPipelineTimingBadge, portfolioRunLabel, runCsvArrowPipeline } from "../../utils/duckdb/arrowPipeline";
 import { groupRunLabelsByCity, resolveBrushedRunLabels } from "../../utils/benchmark/cityComparison";
@@ -312,11 +313,7 @@ export function DataExplorer() {
                 onClick={async () => {
                   setExporting(true);
                   try {
-                    const out = await downloadParquetFromCsv(
-                      projectRoot,
-                      file.path,
-                      file.path.replace(/\.csv$/i, ".parquet")
-                    );
+                    const out = await downloadParquetFromCsv(projectRoot, file.path, file.path.replace(/\.csv$/i, ".parquet"));
                     if (out) toast.success("Parquet export complete", { description: out.split("/").pop() });
                   } catch (err) {
                     toast.error("Parquet export failed", { description: String(err) });
@@ -335,9 +332,14 @@ export function DataExplorer() {
       </div>
 
       {!file && (
-        <div className="flex items-center justify-center h-48 text-canvas-muted text-sm">
-          Open a CSV file from the output directory to explore.
-        </div>
+        <EmptyStateChip
+          icon={<FolderOpen size={20} />}
+          title="No CSV Dataset Loaded"
+          description="Open a CSV file from the output directory to explore schemas, rows, and distributions."
+          actionLabel="Open CSV"
+          onAction={openCsv}
+          tone="cyan"
+        />
       )}
 
       {file && (

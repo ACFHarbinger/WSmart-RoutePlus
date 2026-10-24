@@ -34,29 +34,29 @@ export function TaskMetricsPanel({
     return (
       <div
         data-testid="task-metrics-empty"
-        className={`card bg-canvas-elevated/30 border border-canvas-border rounded-xl p-5 space-y-4 ${className}`}
+        className={`bg-noc-panel border border-noc-border rounded-xl p-5 space-y-4 ${className}`}
       >
-        <div className="flex items-center justify-between border-b border-canvas-border pb-3">
+        <div className="flex items-center justify-between border-b border-noc-border pb-3">
           <div className="flex items-center gap-2">
-            <Activity size={16} className="text-canvas-muted" />
-            <h4 className="text-sm font-semibold text-gray-200">
+            <Activity size={16} className="text-noc-textMuted" />
+            <h4 className="text-sm font-semibold text-noc-textPrimary">
               Task Resource Telemetry
             </h4>
           </div>
-          <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-canvas-surface text-canvas-muted border border-canvas-border">
+          <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-noc-deep text-noc-textMuted border border-noc-border">
             No samples yet
           </span>
         </div>
 
         <div className="flex items-start gap-3 py-2">
-          <div className="p-2 rounded-lg bg-canvas-surface border border-canvas-border text-canvas-muted">
+          <div className="p-2 rounded-lg bg-noc-deep border border-noc-border text-noc-textMuted">
             <Info size={18} />
           </div>
           <div className="space-y-1">
-            <p className="text-xs text-gray-300 font-medium">
+            <p className="text-xs text-noc-textPrimary font-medium">
               No resource samples for this task yet.
             </p>
-            <p className="text-xs text-canvas-muted leading-relaxed">
+            <p className="text-xs text-noc-textMuted leading-relaxed">
               The task runtime samples CPU load and memory RSS every few seconds
               while the simulator runs; samples appear here after the first flush
               to the control plane. Tasks run before this telemetry existed have none.
@@ -66,32 +66,32 @@ export function TaskMetricsPanel({
 
         {/* Placeholder metric cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-          <div className="rounded-lg p-3 bg-canvas-surface/60 border border-canvas-border/60 flex flex-col gap-1">
-            <div className="flex items-center gap-1.5 text-xs text-canvas-muted">
+          <div className="rounded-lg p-3 bg-noc-deep border border-noc-border flex flex-col gap-1">
+            <div className="flex items-center gap-1.5 text-xs text-noc-textMuted">
               <Cpu size={13} />
               <span>CPU Load</span>
             </div>
-            <span className="text-base font-bold font-mono text-canvas-muted">
+            <span className="text-base font-bold font-mono text-noc-textMuted">
               — %
             </span>
           </div>
 
-          <div className="rounded-lg p-3 bg-canvas-surface/60 border border-canvas-border/60 flex flex-col gap-1">
-            <div className="flex items-center gap-1.5 text-xs text-canvas-muted">
+          <div className="rounded-lg p-3 bg-noc-deep border border-noc-border flex flex-col gap-1">
+            <div className="flex items-center gap-1.5 text-xs text-noc-textMuted">
               <HardDrive size={13} />
               <span>Memory RSS</span>
             </div>
-            <span className="text-base font-bold font-mono text-canvas-muted">
+            <span className="text-base font-bold font-mono text-noc-textMuted">
               — MB
             </span>
           </div>
 
-          <div className="rounded-lg p-3 bg-canvas-surface/60 border border-canvas-border/60 flex flex-col gap-1">
-            <div className="flex items-center gap-1.5 text-xs text-canvas-muted">
+          <div className="rounded-lg p-3 bg-noc-deep border border-noc-border flex flex-col gap-1">
+            <div className="flex items-center gap-1.5 text-xs text-noc-textMuted">
               <Zap size={13} />
               <span>I/O Throughput</span>
             </div>
-            <span className="text-base font-bold font-mono text-canvas-muted">
+            <span className="text-base font-bold font-mono text-noc-textMuted">
               — MB/s
             </span>
           </div>
@@ -106,47 +106,47 @@ export function TaskMetricsPanel({
   return (
     <div
       data-testid="task-metrics-active"
-      className={`card bg-canvas-elevated/40 border border-canvas-border rounded-xl p-5 space-y-4 ${className}`}
+      className={`bg-noc-panel border border-noc-border rounded-xl p-5 space-y-4 ${className}`}
     >
-      <div className="flex items-center justify-between border-b border-canvas-border pb-3">
+      <div className="flex items-center justify-between border-b border-noc-border pb-3">
         <div className="flex items-center gap-2">
-          <Activity size={16} className="text-accent-primary" />
-          <h4 className="text-sm font-semibold text-gray-200">
+          <Activity size={16} className="text-noc-cyan" />
+          <h4 className="text-sm font-semibold text-noc-textPrimary">
             Task Resource Telemetry: {metrics.task_id}
           </h4>
         </div>
-        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-accent-primary/10 text-accent-primary border border-accent-primary/20">
+        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-noc-cyan/15 text-noc-cyan border border-noc-cyan/30">
           Live Heartbeats
         </span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="rounded-lg p-3 bg-canvas-surface border border-canvas-border flex flex-col gap-1">
-          <div className="flex items-center gap-1.5 text-xs text-canvas-muted">
+        <div className="rounded-lg p-3 bg-noc-deep border border-noc-border flex flex-col gap-1">
+          <div className="flex items-center gap-1.5 text-xs text-noc-textMuted">
             <Cpu size={13} />
             <span>CPU Utilisation</span>
           </div>
-          <span className="text-lg font-bold font-mono text-gray-100">
+          <span className="text-lg font-bold font-mono text-noc-textPrimary tabular-nums">
             {latestPoint.cpu_percent.toFixed(1)}%
           </span>
         </div>
 
-        <div className="rounded-lg p-3 bg-canvas-surface border border-canvas-border flex flex-col gap-1">
-          <div className="flex items-center gap-1.5 text-xs text-canvas-muted">
+        <div className="rounded-lg p-3 bg-noc-deep border border-noc-border flex flex-col gap-1">
+          <div className="flex items-center gap-1.5 text-xs text-noc-textMuted">
             <HardDrive size={13} />
             <span>Memory RSS</span>
           </div>
-          <span className="text-lg font-bold font-mono text-gray-100">
+          <span className="text-lg font-bold font-mono text-noc-textPrimary tabular-nums">
             {latestPoint.memory_rss_mb.toFixed(0)} MB
           </span>
         </div>
 
-        <div className="rounded-lg p-3 bg-canvas-surface border border-canvas-border flex flex-col gap-1">
-          <div className="flex items-center gap-1.5 text-xs text-canvas-muted">
+        <div className="rounded-lg p-3 bg-noc-deep border border-noc-border flex flex-col gap-1">
+          <div className="flex items-center gap-1.5 text-xs text-noc-textMuted">
             <Zap size={13} />
             <span>I/O Throughput</span>
           </div>
-          <span className="text-lg font-bold font-mono text-gray-100">
+          <span className="text-lg font-bold font-mono text-noc-textPrimary tabular-nums">
             {(latestPoint.disk_io_mbps ?? 0).toFixed(1)} MB/s
           </span>
         </div>

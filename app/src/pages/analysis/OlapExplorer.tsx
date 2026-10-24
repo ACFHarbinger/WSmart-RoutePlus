@@ -18,6 +18,9 @@ import { useRecentHandoff } from "../../hooks/files/useRecentHandoff";
 import { useDuckDbStore } from "../../store/duckdb";
 
 import { useGlobalFiltersStore } from "../../store/filters";
+import { nocPanelStyle } from "../../components/ui/telemetry/panel";
+import { SubtabBar } from "../../components/ui/telemetry/SubtabBar";
+import { EmptyStateChip } from "../../components/ui/telemetry/status";
 import {
   formatPipelineTimingBadge,
   portfolioRunLabel,
@@ -34,7 +37,6 @@ import {
 import {
   runLabelMapFromSingleTableLabels,
   runLabelMapFromTablePaths,
-  tableRunLabelBrushActive,
 } from "../../utils/benchmark/policyTelemetryTrends";
 
 const CUSTOM_TABLE_PREFIX = "olap_";
@@ -268,35 +270,26 @@ export function OlapExplorer() {
       </div>
 
       {tables.length > 0 && (
-        <div className="card">
-          <p className="text-xs font-semibold text-gray-300 mb-2">Ingested tables</p>
-          <div className="flex flex-wrap gap-2">
-            {tables.map((name) => {
-              const runBrushActive =
-                tableBrushByName[name] === activeRunLabel ||
-                tableRunLabelBrushActive(tableRunLabelsByName[name], activeRunLabel);
-              const tableRunLabel = tableBrushByName[name];
-              return (
-                <button
-                  key={name}
-                  onClick={() => {
-                    setSelectedTable(name);
-                    if (tableRunLabel) handleRunLabelClick(tableRunLabel);
-                  }}
-                  className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${
-                    selectedTable === name
-                      ? "border-accent-primary bg-accent-primary/15 text-accent-secondary"
-                      : "border-canvas-border text-canvas-muted hover:text-gray-200"
-                  } ${runBrushActive ? "ring-1 ring-accent-secondary/40" : ""}`}
-                >
-                  {name}
-                  <span className="ml-1.5 text-canvas-muted font-mono">
-                    ({rowCounts[name] ?? "…"})
-                  </span>
-                </button>
-              );
-            })}
+        <div className="rounded-xl border p-4 space-y-3" style={nocPanelStyle}>
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-bold uppercase tracking-wider text-noc-textPrimary">Ingested DuckDB Tables</p>
+            <span className="text-[11px] font-mono text-noc-textMuted tabular-nums">
+              {tables.length} tables active
+            </span>
           </div>
+          <SubtabBar
+            tabs={tables.map((t) => ({
+              id: t,
+              label: t,
+              count: rowCounts[t] ?? undefined,
+            }))}
+            activeId={selectedTable}
+            onChange={(name) => {
+              setSelectedTable(name);
+              const tableRunLabel = tableBrushByName[name];
+              if (tableRunLabel) handleRunLabelClick(tableRunLabel);
+            }}
+          />
         </div>
       )}
 
@@ -359,13 +352,14 @@ export function OlapExplorer() {
       )}
 
       {duckdbReady && tables.length === 0 && (
-        <div className="card text-sm text-canvas-muted space-y-2">
-          <p>
-            No tables ingested yet. Load a simulation log in Simulation Summary, open a CSV in
-            Data Explorer, or ingest a CSV / JSONL above (prefers sibling ``.arrow`` sidecars from
-            ``.wsroute`` bundles).
-          </p>
-        </div>
+        <EmptyStateChip
+          icon={<Database size={20} />}
+          title="No DuckDB Tables Ingested"
+          description="Load a simulation log in Simulation Summary, open a CSV in Data Explorer, or ingest a CSV/JSONL above."
+          actionLabel="Ingest Dataset"
+          onAction={() => void ingestData()}
+          tone="cyan"
+        />
       )}
     </div>
   );

@@ -148,15 +148,15 @@ export function CommandPalette() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 pt-[12vh]"
+      className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 p-4 pt-[12vh] backdrop-blur-[1px]"
       onClick={() => setCommandPaletteOpen(false)}
     >
       <div
-        className="card w-full max-w-lg overflow-hidden shadow-xl"
+        className="w-full max-w-lg overflow-hidden shadow-2xl bg-noc-bgPanel border border-noc-borderStrong rounded-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center gap-2 px-3 py-2 border-b border-canvas-border">
-          <Search size={14} className="text-canvas-muted shrink-0" />
+        <div className="flex items-center gap-2 px-3.5 py-2.5 border-b border-noc-border bg-noc-bgDeep/60">
+          <Search size={14} className="text-noc-textMuted shrink-0" />
           <input
             ref={inputRef}
             type="text"
@@ -184,29 +184,25 @@ export function CommandPalette() {
               }
             }}
             placeholder="Search views, actions, and recent files…"
-            className="input-base flex-1 border-0 bg-transparent text-sm focus:ring-0"
+            className="input-base flex-1 border-0 bg-transparent text-sm focus:ring-0 text-noc-textPrimary placeholder:text-noc-textMuted"
           />
-          <kbd className="text-[10px] text-canvas-muted font-mono shrink-0">Esc</kbd>
+          <kbd className="text-[10px] text-noc-textMuted font-mono shrink-0 bg-noc-bgDeep border border-noc-border px-1.5 py-0.5 rounded">Esc</kbd>
         </div>
 
         <ul className="max-h-72 overflow-y-auto py-1">
           {showRecent && (
             <>
-              <li className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-canvas-muted">
+              <li className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-noc-textMuted">
                 Recent
               </li>
               {filteredRecent.map((file, i) => {
                 const itemIndex = i;
                 const active = activeIndex === itemIndex;
                 const kindMeta = (
-                  <span className="text-[10px] text-canvas-muted shrink-0">{file.kind}</span>
+                  <span className="text-[10px] text-noc-textMuted shrink-0">{file.kind}</span>
                 );
                 return (
                   <li key={file.path}>
-                    {/*
-                      Use a div row (not button) so OpenPathToolbar chip/handoff
-                      buttons are not nested interactive elements (§G.7 / §D.7).
-                    */}
                     <div
                       role="option"
                       aria-selected={active}
@@ -214,8 +210,8 @@ export function CommandPalette() {
                       onClick={() => void openRecentFile(file)}
                       className={`w-full flex items-center justify-between gap-2 px-3 py-2 text-left text-sm transition-colors cursor-pointer ${
                         active
-                          ? "bg-accent-primary/20 text-accent-secondary"
-                          : "text-gray-300 hover:bg-canvas-hover"
+                          ? "bg-noc-cyan/15 text-noc-cyan font-medium"
+                          : "text-noc-textPrimary hover:bg-noc-bgDeep"
                       }`}
                     >
                       {isKnownRecentKind(file.kind) ? (
@@ -245,10 +241,10 @@ export function CommandPalette() {
             </>
           )}
           {paletteItems.length === 0 && (
-            <li className="px-3 py-4 text-xs text-canvas-muted text-center">No matching commands</li>
+            <li className="px-3 py-4 text-xs text-noc-textMuted text-center">No matching commands</li>
           )}
           {filteredCommands.length > 0 && (
-            <li className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-canvas-muted">
+            <li className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-noc-textMuted">
               Commands
             </li>
           )}
@@ -263,12 +259,12 @@ export function CommandPalette() {
                   onClick={() => runCommand(cmd)}
                   className={`w-full flex items-center justify-between px-3 py-2 text-left text-sm transition-colors ${
                     active
-                      ? "bg-accent-primary/20 text-accent-secondary"
-                      : "text-gray-300 hover:bg-canvas-hover"
+                      ? "bg-noc-cyan/15 text-noc-cyan font-medium"
+                      : "text-noc-textPrimary hover:bg-noc-bgDeep"
                   }`}
                 >
                   <span>{cmd.label}</span>
-                  <span className="text-[10px] text-canvas-muted">{cmd.section}</span>
+                  <span className="text-[10px] text-noc-textMuted">{cmd.section}</span>
                 </button>
               </li>
             );

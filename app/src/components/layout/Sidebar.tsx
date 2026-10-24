@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useAppStore } from "../../store/app";
 import { useLayoutStore } from "../../store/layout";
+import { useProcessStore } from "../../store/process";
 import type { AppMode, NavSection } from "../../types";
 import { prefetchPage } from "../../utils/app/pagePrefetch";
 
@@ -123,12 +124,14 @@ export function Sidebar() {
   const { mode, setMode } = useAppStore();
   const sidebarOpen = useLayoutStore((s) => s.sidebarOpen);
   const setSidebarOpen = useLayoutStore((s) => s.setSidebarOpen);
+  const processes = useProcessStore((s) => s.processes);
+  const running = Object.values(processes).filter((p) => p.status === "running").length;
 
   return (
     <aside
       data-tour="sidebar"
       className={[
-        "shrink-0 flex flex-col bg-canvas-surface border-r border-canvas-border h-screen overflow-y-auto z-30",
+        "shrink-0 flex flex-col bg-noc-panel border-r border-noc-border h-screen overflow-y-auto z-30 select-none",
         "w-56 transition-transform duration-200",
         "fixed lg:static inset-y-0 left-0",
         sidebarOpen
@@ -137,26 +140,34 @@ export function Sidebar() {
       ].join(" ")}
     >
       {/* Brand */}
-      <div className="px-4 py-4 border-b border-canvas-border">
+      <div className="px-4 py-3.5 border-b border-noc-border bg-noc-deep/50">
         <div className="flex items-center gap-2">
-          <Zap size={18} className="text-accent-primary" />
-          <span className="font-bold text-sm tracking-tight text-canvas-text">
-            WSmart-Route
-          </span>
+          <div className="w-6 h-6 rounded-md bg-noc-cyan/15 border border-noc-cyan/30 flex items-center justify-center">
+            <Zap size={14} className="text-noc-cyan" />
+          </div>
+          <div>
+            <span className="font-bold text-xs tracking-wider uppercase text-noc-textPrimary">
+              WSmart-Route
+            </span>
+            <div className="text-[9px] uppercase font-mono tracking-widest text-noc-cyan">
+              NOC Studio
+            </div>
+          </div>
         </div>
-        <p className="text-[10px] text-canvas-muted mt-0.5 ml-6">Studio</p>
       </div>
 
       {/* Nav sections */}
       <nav className="flex-1 px-2 py-3 space-y-4">
         {NAV.map((section) => (
           <div key={section.label}>
-            <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-widest text-canvas-muted">
+            <p className="px-2.5 pb-1 text-[10px] font-bold uppercase tracking-wider text-noc-textMuted">
               {section.label}
             </p>
             <ul className="space-y-0.5">
               {section.items.map((item) => {
                 const active = mode === item.mode;
+                const isProcessMonitor = item.mode === "process_monitor";
+
                 return (
                   <li key={item.mode}>
                     <button
@@ -175,20 +186,24 @@ export function Sidebar() {
                         if (window.innerWidth < 1024) setSidebarOpen(false);
                       }}
                       className={[
-                        "w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm transition-colors text-left",
+                        "w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-colors text-left font-medium",
                         active
-                          ? "bg-accent-primary/20 text-accent-secondary font-medium"
-                          : "text-canvas-muted hover:text-canvas-text hover:bg-canvas-hover",
+                          ? "bg-noc-card border-l-2 border-noc-cyan text-noc-textPrimary shadow-sm"
+                          : "text-noc-textSecondary hover:text-noc-textPrimary hover:bg-canvas-hover border-l-2 border-transparent",
                       ].join(" ")}
                     >
-                      <span
-                        className={
-                          active ? "text-accent-primary" : "text-canvas-muted"
-                        }
-                      >
-                        {ICON[item.mode]}
-                      </span>
-                      {item.label}
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className={active ? "text-noc-cyan" : "text-noc-textMuted"}>
+                          {ICON[item.mode]}
+                        </span>
+                        <span className="truncate">{item.label}</span>
+                      </div>
+
+                      {isProcessMonitor && running > 0 && (
+                        <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-noc-ok/20 text-noc-ok border border-noc-ok/40 tabular-nums animate-pulse">
+                          {running}
+                        </span>
+                      )}
                     </button>
                   </li>
                 );
@@ -199,8 +214,9 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="px-4 py-3 border-t border-canvas-border">
-        <p className="text-[10px] text-canvas-muted">v0.1.0</p>
+      <div className="px-4 py-2.5 border-t border-noc-border text-[10px] font-mono text-noc-textMuted flex items-center justify-between">
+        <span>v0.1.0</span>
+        <span className="text-noc-ok">CONNECTED</span>
       </div>
     </aside>
   );

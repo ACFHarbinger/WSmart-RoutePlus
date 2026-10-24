@@ -11,6 +11,7 @@ import { Play, Terminal, FolderOpen, AlertTriangle } from "lucide-react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { ProcessLogTail } from "../../components/monitor/process/ProcessLogTail";
 import { StatusPill } from "../../components/ui/StatusPill";
+import { SubtabBar } from "../../components/ui/telemetry/SubtabBar";
 import { useAppStore } from "../../store/app";
 import { useSystemToolsStore, type SystemToolsTab } from "../../store/launchers";
 import { useProcessStore } from "../../store/process";
@@ -174,19 +175,13 @@ export function SystemTools() {
   return (
     <div className="space-y-4 max-w-2xl">
       {/* Tab selector */}
-      <div className="card space-y-3">
-        <h2 className="text-sm font-semibold text-gray-200">System Tools</h2>
-        <div className="flex gap-2 flex-wrap">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => patch({ tab: t.id })}
-              className={tab === t.id ? "btn-primary text-sm py-1.5 px-4" : "btn-ghost text-sm py-1.5 px-4"}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+      <div className="bg-noc-bgPanel border border-noc-border rounded-xl p-4 space-y-3">
+        <h2 className="text-sm font-semibold text-noc-textPrimary">System Tools</h2>
+        <SubtabBar
+          tabs={TABS}
+          activeId={tab}
+          onChange={(id) => patch({ tab: id as SystemToolsTab })}
+        />
       </div>
 
       {tab === "update" && (

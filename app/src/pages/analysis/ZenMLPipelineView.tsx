@@ -13,6 +13,11 @@ import {
 } from "../../utils/charts/chartLogScale";
 import { ChartExportButtons } from "../../components/common/ChartExportButtons";
 import { downloadCsv } from "../../utils/charts/tableExport";
+import {
+  OrionConstellationGraph,
+  type ConstellationNode,
+  type ConstellationLink,
+} from "../../components/ui/orion";
 import type { ZenmlPipelineRun, ZenmlPipelineStep } from "../../types";
 
 const STEP_COLORS: Record<string, string> = {
@@ -77,6 +82,60 @@ export function ZenMLPipelineView({ logScale = false }: { logScale?: boolean }) 
       .then(setSteps)
       .catch(() => setSteps([]));
   }, [projectRoot, pythonPath, selectedRunId]);
+
+  const { dagNodes, dagLinks } = useMemo(() => {
+    if (steps.length === 0) return { dagNodes: [], dagLinks: [] };
+    const nodes: ConstellationNode[] = [
+      {
+        id: "pipeline-root",
+        label: "DAG Root",
+        tier: 0,
+        group: "Pipeline Execution",
+        status: "nominal",
+        tone: "cyan",
+        details: `Active ZenML pipeline run: ${selectedRunId?.slice(0, 8)}`,
+      },
+    ];
+    const links: ConstellationLink[] = [];
+
+    steps.forEach((s, idx) => {
+      const isComplete = s.status.toLowerCase().includes("complete");
+      const isFailed = s.status.toLowerCase().includes("fail");
+      const tone = isComplete ? "ok" : isFailed ? "crit" : "amber";
+
+      nodes.push({
+        id: s.name,
+        label: s.name,
+        tier: 1,
+        group: "Step",
+        status: isComplete ? "nominal" : "warn",
+        tone,
+        details: `Step duration: ${s.duration_seconds != null ? `${s.duration_seconds.toFixed(2)}s` : "—"}`,
+        metrics: {
+          Status: s.status,
+          Duration: s.duration_seconds != null ? `${s.duration_seconds.toFixed(1)}s` : "—",
+        },
+      });
+
+      if (idx === 0) {
+        links.push({
+          source: "pipeline-root",
+          target: s.name,
+          active: true,
+          tone: "cyan",
+        });
+      } else {
+        links.push({
+          source: steps[idx - 1].name,
+          target: s.name,
+          active: true,
+          tone: "indigo",
+        });
+      }
+    });
+
+    return { dagNodes: nodes, dagLinks: links };
+  }, [steps, selectedRunId]);
 
   const ganttOption = useMemo(() => {
     const withDuration = steps.filter((s) => s.duration_seconds != null && s.duration_seconds > 0);
@@ -197,6 +256,16 @@ export function ZenMLPipelineView({ logScale = false }: { logScale?: boolean }) 
               </tbody>
             </table>
           </div>
+
+          {selectedRunId && dagNodes.length > 0 && (
+            <OrionConstellationGraph
+              nodes={dagNodes}
+              links={dagLinks}
+              title={`Pipeline DAG Topology: ${runs.find((r) => r.id === selectedRunId)?.pipeline ?? selectedRunId.slice(0, 8)}`}
+              subtitle="Step execution status & DAG dependency flow"
+              height={320}
+            />
+          )}
 
           {selectedRunId && steps.length > 0 && (
             <div className="space-y-2">

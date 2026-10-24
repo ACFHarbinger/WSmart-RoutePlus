@@ -1,4 +1,6 @@
 import { KpiCard } from "../../ui/KpiCard";
+import { KpiCardGrid } from "../../ui/telemetry/status";
+import { OrionRadialRingMeter } from "../../ui/orion/OrionRadialRingMeter";
 import { BinFillStrip, computeDelta, MetricTimeseries, PRIMARY_KPIS, SECONDARY_KPIS, TourTable } from "./SimMonitorPanels";
 import { FailureAnalysisPanel } from "../../analysis/routes/FailureAnalysisPanel";
 import { PolicyTelemetryPanel } from "../../analysis/telemetry/PolicyTelemetryPanel";
@@ -24,19 +26,64 @@ export function SimMonitorKpiSection({
   policySeries: Array<{ policy: string; entries: DayLogEntry[]; color: string }>;
   logScale: boolean;
 }) {
+  const data = displayEntry.data as Record<string, number>;
+  const totalDays = Math.max(1, filteredEntries.length);
+  const dayProgressPct = Math.min(100, Math.round((displayDay / totalDays) * 100));
+  const capacityPct = Math.min(100, Math.round(((data.kg ?? 0) / 3000) * 100));
+  const overflowVal = data.overflows ?? 0;
+
+  const kpiItems = PRIMARY_KPIS.map(({ key, label, lowerIsBetter }) => ({
+    label,
+    value: data[key],
+    delta: computeDelta(filteredEntries, displayDay, key),
+    colorize: true,
+    lowerIsBetter,
+    provenance: "simulated" as const,
+    tone: (key === "overflows" && overflowVal > 0 ? "crit" : key === "profit" ? "ok" : "cyan") as any,
+  }));
+
   return (
     <>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {PRIMARY_KPIS.map(({ key, label, lowerIsBetter }) => (
-          <KpiCard
-            key={key}
-            label={label}
-            value={(displayEntry.data as Record<string, number>)[key]}
-            delta={computeDelta(filteredEntries, displayDay, key)}
-            colorize
-            lowerIsBetter={lowerIsBetter}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 items-center">
+        <div className="xl:col-span-2">
+          <KpiCardGrid items={kpiItems} columns={4} />
+        </div>
+        <div className="flex justify-center">
+          <OrionRadialRingMeter
+            title="Real-Time Fleet & Route Rings"
+            subtitle={`Day ${displayDay} telemetry telemetry summary`}
+            centerValue={`${dayProgressPct}%`}
+            centerLabel="DAY PROGRESS"
+            size={220}
+            rings={[
+              {
+                id: "progress",
+                label: "Route Progress",
+                value: dayProgressPct,
+                max: 100,
+                unit: "%",
+                tone: "cyan",
+              },
+              {
+                id: "capacity",
+                label: "Fleet Capacity",
+                value: capacityPct,
+                max: 100,
+                unit: "%",
+                tone: capacityPct >= 90 ? "warn" : "ok",
+              },
+              {
+                id: "overflow",
+                label: "Overflow Risk",
+                value: overflowVal,
+                max: 10,
+                unit: "bins",
+                tone: overflowVal > 0 ? "crit" : "ok",
+                critAt: 1,
+              },
+            ]}
           />
-        ))}
+        </div>
       </div>
 
       <button

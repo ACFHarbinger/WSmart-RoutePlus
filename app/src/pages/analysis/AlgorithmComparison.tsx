@@ -6,6 +6,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactECharts from "echarts-for-react";
 import type EChartsReact from "echarts-for-react";
 import { Map } from "lucide-react";
+import { SubtabBar } from "../../components/ui/telemetry/SubtabBar";
+import { OrionRadarChart, type RadarPolicyCohortEntry } from "../../components/ui/orion/OrionRadarChart";
+import { OrionOrbitalBubbleChart } from "../../components/ui/orion/OrionOrbitalBubbleChart";
+import { getSampleRoutingOrionData } from "../../components/ui/orion";
 import { PolicyTelemetryTrendsPanel } from "../../components/analysis/telemetry/PolicyTelemetryTrendsPanel";
 import { SqlQueryPanel } from "../../components/analysis/explorer/SqlQueryPanel";
 import { OpenPathToolbar } from "../../components/common/OpenPathToolbar";
@@ -73,6 +77,8 @@ export function AlgorithmComparison() {
   const barRefs = useRef<Record<string, EChartsReact | null>>({});
   const logScale = useGlobalFiltersStore((s) => s.logScale);
   const [showErrorBars, setShowErrorBars] = useState(false);
+  const [subtab, setSubtab] = useState<"charts" | "orion">("charts");
+  const sampleData = useMemo(() => getSampleRoutingOrionData(), []);
 
   useEffect(() => {
     if (!duckdbReady || !watchPath) return;
@@ -177,8 +183,8 @@ export function AlgorithmComparison() {
         showLogScale
       />
 
-      <div className="flex items-center gap-3 flex-wrap">
-        {watchPath && (
+      {watchPath && (
+        <div className="flex items-center gap-3 flex-wrap">
           <OpenPathToolbar
             path={watchPath}
             projectRoot={projectRoot}
@@ -193,20 +199,63 @@ export function AlgorithmComparison() {
               ) : null
             }
           />
-        )}
-        <button onClick={openOnMap} className="btn-ghost text-xs flex items-center gap-1.5">
-          <Map size={12} />
-          Compare on Map
-        </button>
-        <button
-          onClick={() => setShowErrorBars((v) => !v)}
-          className={`btn-ghost text-xs ${showErrorBars ? "text-accent-secondary" : ""}`}
-        >
-          {showErrorBars ? "Error bars (on)" : "Error bars (off)"}
-        </button>
+        </div>
+      )}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <SubtabBar
+          tabs={[
+            { id: "charts", label: "Standard Metrics" },
+            { id: "orion", label: "Orion Radar & Orbital View" },
+          ]}
+          activeId={subtab}
+          onChange={setSubtab}
+        />
+        <div className="flex items-center gap-2">
+          <button onClick={openOnMap} className="btn-ghost text-xs flex items-center gap-1.5">
+            <Map size={12} />
+            Compare on Map
+          </button>
+          {subtab === "charts" && (
+            <button
+              onClick={() => setShowErrorBars((v) => !v)}
+              className={`btn-ghost text-xs ${showErrorBars ? "text-accent-secondary" : ""}`}
+            >
+              {showErrorBars ? "Error bars (on)" : "Error bars (off)"}
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="card">
+      {subtab === "orion" ? (
+        <div className="space-y-4">
+          <OrionRadarChart
+            cohort={
+              policies.length > 0
+                ? policies.map((p) => {
+                    const pEntries = filtered.filter((e) => e.policy === p);
+                    const means: Record<string, number> = {};
+                    METRICS.forEach(({ key }) => {
+                      const vals = pEntries.map((e) => (e.data as Record<string, number>)[key] ?? 0);
+                      means[key] = mean(vals);
+                    });
+                    return { policy: p, means } as RadarPolicyCohortEntry;
+                  })
+                : sampleData.radarCohort
+            }
+            title="Direction-Aware Multi-Objective Policy Radar"
+            subtitle="Comparing Gurobi, HGS, ALNS, AM, TAM, DDAM on Multi-Objective Frontier"
+            height={340}
+          />
+          <OrionOrbitalBubbleChart
+            bubbles={sampleData.orbitalBubbles}
+            title="Pareto Optimal Policy Frontiers & Runtime Gap Clusters"
+            subtitle="Concentric orbital distribution of solver configurations and neural rollouts"
+            height={340}
+          />
+        </div>
+      ) : (
+        <>
+          <div className="card">
         <div className="flex items-center justify-between mb-3">
           <p className="text-xs text-canvas-muted">
             Radar — {logScale ? "log-normalised" : "normalised"} average metrics per policy
@@ -350,6 +399,9 @@ export function AlgorithmComparison() {
           );
         })}
       </div>
+
+        </>
+      )}
 
       {watchPath && (
         <PolicyTelemetryTrendsPanel

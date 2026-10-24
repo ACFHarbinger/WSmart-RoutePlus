@@ -30,18 +30,8 @@ import {
 } from "../../utils/benchmark/evalResults";
 import { useProcessRunLabelBrush } from "../../hooks/brush/useProcessRunLabelBrush";
 import { findRecentLauncherProcessId } from "../../utils/process/launcherProcess";
-import {
-  findRecentHpoProcessId,
-  findRecentMetaTrainProcessId,
-  findRecentTrainProcessId,
-  trainHpoLivePanelTitle,
-} from "../../utils/training/trainingProcess";
-import {
-  buildTrainHubHydraArgs,
-  PROBLEMS,
-  TrainHubLiveSection,
-  type TrainHubMode,
-} from "../../components/launch/TrainHubSections";
+import { findRecentHpoProcessId, findRecentMetaTrainProcessId, findRecentTrainProcessId, trainHpoLivePanelTitle } from "../../utils/training/trainingProcess";
+import { buildTrainHubHydraArgs, PROBLEMS, TrainHubLiveSection, type TrainHubMode } from "../../components/launch/TrainHubSections";
 import { TrainHubModeSpecificCard } from "../../components/launch/TrainHubForms";
 import type { ProcessEntry } from "../../types";
 
