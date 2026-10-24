@@ -17,6 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Claude: Studio keeps running in the background when its window is closed (`2026-10-24`)
+
+#### Added
+
+- **Background mode** (`app/src-tauri/src/background.rs`): the window's X hides the Studio instead of quitting, so simulations and training runs launched from it keep running and keep streaming. The first time, a notification says so. A tray icon reopens the window (left click on Windows and macOS; the menu everywhere) and has **Quit WSmart-Route Studio**. Launching the Studio again shows the hidden window instead of starting a second copy (`tauri-plugin-single-instance`).
+- If there is no tray icon (on Linux, when `libayatana-appindicator3` is not installed, which is probed first because the tray backend would otherwise abort the app), the X quits as before, so the window is never hidden with no way back.
+- Tauri `tray-icon` feature; `libloading` (Linux, already in the dependency tree) for the AppIndicator probe.
+
 ### Gemini: Studio NOC/Orion UI/UX — Slice V8 & Strict 500-LoC Architectural Audit Across app/ (`2026-10-24`)
 
 Implements Slice V8 from `.agent/reports/studio-ux-brainstorm/FINAL-PLAN.md` (§G.20) and enforces Owner Ruling 8 (strict 500-line ceiling across every `.ts`, `.tsx`, and `.rs` file in `app/`):
