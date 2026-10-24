@@ -4,6 +4,7 @@ Attributes:
     filter_manifest_file: Keep only the released keys of a registry manifest.
     filter_lazy_map: Drop lazy-map entries whose modules are not staged.
     drop_pruned_init_imports: Remove ``__init__`` imports of pruned modules.
+    drop_unbound_exports: Remove ``__all__`` and docstring entries for names an ``__init__`` no longer binds.
     verify_staged: Every staged import resolves inside the staged tree.
 
 Example:
@@ -142,7 +143,73 @@ def drop_pruned_init_imports(path: Path, staged_modules: Set[str], out: Path) ->
         for start, end in sorted(remove_spans, reverse=True):
             del lines[start - 1 : end]
         path.write_text("".join(lines))
+        drop_unbound_exports(path)
     return dropped
+
+
+ATTRIBUTE_LINE_RE = re.compile(r"^    ([A-Za-z_][A-Za-z0-9_]*): ")
+
+
+def _bound_names(tree: ast.Module) -> Set[str]:
+    """Names a module binds at top level (imports, definitions, assignments)."""
+    bound: Set[str] = set()
+    for node in tree.body:
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            bound.update((alias.asname or alias.name).split(".")[0] for alias in node.names)
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            bound.add(node.name)
+        elif isinstance(node, ast.Assign):
+            bound.update(target.id for target in node.targets if isinstance(target, ast.Name))
+        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            bound.add(node.target.id)
+    return bound
+
+
+def _unbound_all_lines(path: Path, tree: ast.Module, bound: Set[str]) -> Set[int]:
+    """Line indexes of ``__all__`` entries (one per line) that name unbound names."""
+    lines: Set[int] = set()
+    for node in tree.body:
+        if not (
+            isinstance(node, ast.Assign)
+            and any(isinstance(target, ast.Name) and target.id == "__all__" for target in node.targets)
+            and isinstance(node.value, (ast.List, ast.Tuple))
+        ):
+            continue
+        for element in node.value.elts:
+            if isinstance(element, ast.Constant) and element.value not in bound:
+                if element.lineno in (node.lineno, node.end_lineno) or element.lineno != element.end_lineno:
+                    raise SystemExit(f"{path}: __all__ entry {element.value!r} is not on a line of its own")
+                lines.add(element.lineno - 1)
+    return lines
+
+
+def _unbound_attribute_lines(tree: ast.Module, lines: List[str], bound: Set[str]) -> Set[int]:
+    """Line indexes of the module docstring's ``Attributes:`` entries for unbound names."""
+    if not tree.body or ast.get_docstring(tree, clean=False) is None:
+        return set()
+    drop: Set[int] = set()
+    in_attributes = False
+    for index in range(tree.body[0].lineno - 1, tree.body[0].end_lineno):
+        text = lines[index].rstrip("\n")
+        if text.strip() == "Attributes:":
+            in_attributes = True
+        elif in_attributes and text.strip():
+            match = ATTRIBUTE_LINE_RE.match(text)
+            if match is None:
+                in_attributes = False
+            elif match.group(1) not in bound:
+                drop.add(index)
+    return drop
+
+
+def drop_unbound_exports(path: Path) -> None:
+    """Drop the ``__all__`` names, and the docstring ``Attributes:`` lines, of names the module no longer binds."""
+    tree = ast.parse(path.read_text())
+    lines = path.read_text().splitlines(keepends=True)
+    bound = _bound_names(tree)
+    drop = _unbound_all_lines(path, tree, bound) | _unbound_attribute_lines(tree, lines, bound)
+    if drop:
+        path.write_text("".join(line for index, line in enumerate(lines) if index not in drop))
 
 
 def write_release_conftest(source: Path, out: Path) -> List[str]:
@@ -249,9 +316,24 @@ def validate_release_tests(
             if not files:
                 break
             result = subprocess.run(
-                [python or sys.executable, "-m", "pytest", "-q", "-rfE", "-p", "no:cacheprovider",
-                 "-o", "addopts=--import-mode=importlib", "--continue-on-collection-errors", *files],
-                cwd=out, env=env, capture_output=True, text=True, timeout=7200,
+                [
+                    python or sys.executable,
+                    "-m",
+                    "pytest",
+                    "-q",
+                    "-rfE",
+                    "-p",
+                    "no:cacheprovider",
+                    "-o",
+                    "addopts=--import-mode=importlib",
+                    "--continue-on-collection-errors",
+                    *files,
+                ],
+                cwd=out,
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=7200,
             )
             failing: dict = {}
             for line in result.stdout.splitlines():

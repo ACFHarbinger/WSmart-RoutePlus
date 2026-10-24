@@ -3,6 +3,7 @@
 Attributes:
     REPO: Repository root.
     STAGES: Stage name -> registry manifest file.
+    INDEXED_INITS: Package inits whose eager re-exports are indexed, not followed.
     compute_closure: Every module reachable from the released stage keys and infrastructure seeds.
     release_tests: The curated tests whose imports stay inside the closure.
 
@@ -42,6 +43,13 @@ LAZY_LINE_RE = re.compile(r'^(\s*)"([A-Za-z_][A-Za-z0-9_]*)":\s*"(logic\.[A-Za-z
 LOGIC_MODULE_RE = re.compile(r"\blogic(?:\.[A-Za-z_][A-Za-z0-9_]*)+\b")
 
 
+# Package inits whose module-level re-exports are indexed like a lazy map instead of
+# followed. ``logic.src.configs.policies`` imports the config dataclass of every policy
+# family; following it would ship the configs of every unreleased policy. A config ships
+# when a kept module imports it, by module path or by name from the package.
+INDEXED_INITS = ("logic.src.configs.policies",)
+
+
 def lazy_targets(path: Path) -> Dict[str, str]:
     """Read literal lazy re-export maps independently of quote style or line wrapping."""
     for node in ast.parse(path.read_text()).body:
@@ -60,6 +68,33 @@ def lazy_targets(path: Path) -> Dict[str, str]:
                     if isinstance(key, str) and isinstance(item, str)
                 }
     return {}
+
+
+def eager_targets(path: Path, root: Path) -> Dict[str, str]:
+    """Map each name a package init imports at module level from ``logic.*`` to its module."""
+    targets: Dict[str, str] = {}
+    pkg = _package_of(path, root)
+    for node in ast.parse(path.read_text()).body:
+        if not isinstance(node, ast.ImportFrom) or node.module is None and node.level == 0:
+            continue
+        if node.level == 0:
+            module = node.module
+        else:
+            up = pkg[: len(pkg) - (node.level - 1)]
+            module = ".".join(up + ([node.module] if node.module else []))
+        if not module.startswith("logic"):
+            continue
+        for alias in node.names:
+            targets[alias.asname or alias.name] = module
+    return targets
+
+
+def package_index(path: Path, module: str, root: Path) -> Dict[str, str]:
+    """Name -> target module served by a package init: its lazy map, plus eager re-exports if indexed."""
+    index = lazy_targets(path)
+    if module in INDEXED_INITS:
+        index.update(eager_targets(path, root))
+    return index
 
 
 def parse_registry_manifest(path: Path) -> Dict[str, str]:
@@ -236,8 +271,10 @@ def compute_closure(manifest: dict) -> Tuple[Set[Path], List[str]]:  # noqa: C90
             # A lazy map is indexed, not followed: a target ships only when a kept
             # module imports its name (below). Following every entry would ship
             # every architecture and algorithm behind the facades (Q-12).
-            lazy_index[root] = lazy_targets(path)
+            lazy_index[root] = package_index(path, root, REPO)
             surface.update(trimmed(dep, REPO) for dep in imports.deferred)
+            if root in INDEXED_INITS:
+                pending = sorted(deferred)
         for dep in pending:
             root_dep = trimmed(dep, REPO)
             if not root_dep:
@@ -250,7 +287,9 @@ def compute_closure(manifest: dict) -> Tuple[Set[Path], List[str]]:  # noqa: C90
                 if "." not in name:
                     if root_dep not in lazy_index:
                         package_path = module_to_file(root_dep, REPO)
-                        lazy_index[root_dep] = lazy_targets(package_path) if package_path is not None else {}
+                        lazy_index[root_dep] = (
+                            package_index(package_path, root_dep, REPO) if package_path is not None else {}
+                        )
                     target = lazy_index.get(root_dep, {}).get(name)
                     if target and target not in kept_modules:
                         surface.add(trimmed(target, REPO))

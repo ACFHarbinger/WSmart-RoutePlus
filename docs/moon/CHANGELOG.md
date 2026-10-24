@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Claude: the 1.0.2 package ships only the paper policies' configs (`2026-10-24`)
+
+#### Changed
+
+- **Release builder** (`logic/package/release_closure.py`, `release_staging.py`): `logic.src.configs.policies` re-exports every policy family's config dataclass, and the closure used to follow those imports, so the package carried the configs of about 90 unreleased policies. The closure now indexes that package's eager re-exports like a lazy map (`INDEXED_INITS`): a config ships when shipped code imports it, by module path or by name. The staged `__init__` drops the imports, `__all__` names and docstring `Attributes:` lines of the pruned configs (`drop_unbound_exports`). `package/1.0.2` was rebuilt: 90 config files fewer; the release tests and the 10-algorithm smoke are unchanged.
+- `logic/src/configs/policies/__init__.py`: the docstring example uses `HGSConfig` instead of the unreleased `ARCOConfig`.
+
 ### Claude: Studio follows the simulator's output layout (`2026-10-24`)
 
 #### Fixed
