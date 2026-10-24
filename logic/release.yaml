@@ -127,9 +127,12 @@ excluded_packages:
 #   simulations.repository) and the day-loop states still import torch. The smoke
 #   asserts torch-freedom for the registries and their packing, improver and
 #   acceptance components only.
-# - `logic/src/configs/` ships whole: the config dataclasses of every family are
-#   declarative data, eagerly imported by `configs/__init__`, and carry no
-#   runnable code. Pruning them is WP-04/05/06 config consolidation work.
+# - A policy config dataclass under `logic/src/configs/policies/` ships only when
+#   shipped code imports it: the closure indexes that package's eager re-exports
+#   instead of following them (`INDEXED_INITS` in release_closure.py), and the
+#   staged `__init__` loses the imports, `__all__` names and docstring lines of
+#   the rest. Beyond the released policies, ms_bpc_sp (BPC's branching tree) and
+#   hgs_alns/hvpl/ils (typed fields of the imitation configs) still ship.
 # - The neural stack is the `wsmart-route[neural]` extra in `logic/pyproject.toml`.
 #   Classical routing and simulator imports do not require the neural extra.
 # - `logic/configs/policies/policy_<key>.yaml` and `other/pk_<key>.yaml` ship

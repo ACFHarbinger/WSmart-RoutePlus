@@ -110,7 +110,9 @@ def test_release_pins_python_and_drops_listed_requirements(tmp_path):
     assert (tmp_path / ".python-version").read_text() == "3.12\n"
     neural = project["optional-dependencies"]["neural"]
     assert any(value.startswith("torch==") for value in neural)
-    assert not any(value.startswith(("torch-scatter", "torch-sparse", "torch_scatter", "torch_sparse")) for value in neural)
+    assert not any(
+        value.startswith(("torch-scatter", "torch-sparse", "torch_scatter", "torch_sparse")) for value in neural
+    )
     assert "data.pyg.org" not in text  # no pyg index without the packages that use it
 
 
@@ -170,12 +172,13 @@ def test_gen_data_does_not_overwrite_by_default():
     assert cfg["data"]["overwrite"] is False
 
 
-
 def test_release_conftest_registers_only_shipped_fixture_plugins(tmp_path):
     from logic.package.release_staging import write_release_conftest
 
     source = tmp_path / "conftest_src.py"
-    source.write_text('import pytest\npytest_plugins = [\n    "logic.test.fixtures.kept",\n    "logic.test.fixtures.gone",\n]\n')
+    source.write_text(
+        'import pytest\npytest_plugins = [\n    "logic.test.fixtures.kept",\n    "logic.test.fixtures.gone",\n]\n'
+    )
     fixtures = tmp_path / "out" / "logic" / "test" / "fixtures"
     fixtures.mkdir(parents=True)
     (fixtures / "kept.py").write_text("")
@@ -197,5 +200,58 @@ def test_release_pyproject_carries_the_pytest_settings(tmp_path):
     from logic.package.release_files import pytest_ini_section
 
     root = tmp_path / "pyproject.toml"
-    root.write_text('[project]\nname = "x"\n\n[tool.pytest.ini_options]\nlog_level = "INFO"\n\n# ===\n[tool.coverage.run]\n')
+    root.write_text(
+        '[project]\nname = "x"\n\n[tool.pytest.ini_options]\nlog_level = "INFO"\n\n# ===\n[tool.coverage.run]\n'
+    )
     assert pytest_ini_section(root) == ["[tool.pytest.ini_options]", 'log_level = "INFO"']
+
+
+def test_indexed_config_init_ships_only_the_configs_kept_code_imports(tmp_path, monkeypatch):
+    configs = "logic/src/configs/policies"
+    sources = {
+        "logic/__init__.py": "",
+        "logic/src/__init__.py": "",
+        "logic/src/configs/__init__.py": "",
+        f"{configs}/__init__.py": (
+            "from logic.src.configs.policies.a import AConfig\n"
+            "from logic.src.configs.policies.b import BConfig\n"
+            "from logic.src.configs.policies.c import CConfig\n"
+        ),
+        f"{configs}/a.py": "class AConfig: pass\n",
+        f"{configs}/b.py": "class BConfig: pass\n",
+        f"{configs}/c.py": "class CConfig: pass\n",
+        "logic/src/entry.py": (
+            "from logic.src.configs.policies import AConfig\nfrom logic.src.configs.policies.c import CConfig\n"
+        ),
+    }
+    for name, text in sources.items():
+        path = tmp_path / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text)
+    monkeypatch.setattr(closure, "REPO", tmp_path)
+    monkeypatch.setattr(closure, "LOGIC", tmp_path / "logic")
+    monkeypatch.setattr(closure, "STAGES", {})
+    kept, _ = builder.compute_closure({"stages": {}, "infrastructure": ["logic.src.entry"], "excluded_packages": []})
+    kept = {path.relative_to(tmp_path).as_posix() for path in kept}
+    assert {f"{configs}/__init__.py", f"{configs}/a.py", f"{configs}/c.py"} <= kept
+    assert f"{configs}/b.py" not in kept
+
+
+def test_pruned_init_drops_the_exports_and_docstring_lines_of_removed_names(tmp_path, monkeypatch):
+    from logic.package import release_staging as staging
+
+    package = tmp_path / "logic/src/facade"
+    package.mkdir(parents=True)
+    (package / "keep.py").write_text("class Keep: pass\n")
+    (package / "drop.py").write_text("class Drop: pass\n")
+    path = package / "__init__.py"
+    path.write_text(
+        '"""Facade.\n\nAttributes:\n    Keep: Kept.\n\n    Drop: Dropped.\n\nExample:\n    >>> 1\n    1\n"""\n\n'
+        "from logic.src.facade.keep import Keep\nfrom logic.src.facade.drop import Drop\n\n"
+        '__all__ = [\n    "Keep",\n    "Drop",\n]\n'
+    )
+    monkeypatch.setattr(closure, "REPO", tmp_path)
+    assert staging.drop_pruned_init_imports(path, {"logic.src.facade", "logic.src.facade.keep"}, tmp_path)
+    text = path.read_text()
+    assert "Drop" not in text
+    assert '    "Keep",' in text and "    Keep: Kept." in text and ">>> 1" in text
