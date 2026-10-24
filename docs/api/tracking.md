@@ -322,10 +322,11 @@ SQLite persistence for policy telemetry cross-run trending (§A.3 Option C).
 
 Policy telemetry bridge for WSmart-Route Studio (§A.3).
 
+- `studio_attached()` — Whether WSmart-Route Studio launched this process and reads its live telemetry.
 - `detect_policy_viz_type()` — Infer algorithm family from telemetry key signatures.
 - **class `PolicyVizStreamSession`** — Emit growing ring-buffer snapshots at 2 Hz during solver execution (§A.3 Option B).
 - `maybe_emit_policy_viz()` — Emit policy telemetry when ``source`` (or a nested engine) recorded data.
-- `send_policy_viz_to_gui()` — Write a ``POLICY_VIZ_START:`` line to stdout and the simulation log file.
+- `send_policy_viz_to_gui()` — Write a ``POLICY_VIZ_START:`` line to the simulation log file (and stdout for the Studio).
 
 ### `logic.src.tracking.logging.modules.storage`
 

@@ -110,6 +110,7 @@ The inner evaluation loop lives in ``eval_loop``; this module keeps the public e
 
 Base class for evaluation strategies.
 
+- `samples_per_second()` — Throughput of an evaluation; 0.0 for an empty dataset or a duration the clock did not resolve.
 - **class `EvalBase`** — Base class for evaluation strategies.
 
 ### `logic.src.pipeline.features.eval.eval_loop`
@@ -211,6 +212,7 @@ Parallel execution engine for simulations.
 - `pool_start_method()` — Start method of the simulation pool: 'spawn' for CUDA to avoid initialization errors, or 'fork'
 - `run_parallel_simulations()` — Execute simulations in parallel using a multiprocessing pool.
 - `execute_and_monitor_tasks()` — Execute parallel tasks and monitor their progress.
+- `kill_child_processes()` — Kill this process's live multiprocessing children (the Manager and the pool workers).
 - `handle_shutdown()` — Handle graceful shutdown on keyboard interrupt.
 - `cleanup_multiprocessing_pool()` — Safely close and join the multiprocessing pool.
 
