@@ -18,8 +18,8 @@ export const NOC_POLICY_PALETTE: readonly PolicyPaletteEntry[] = [
   { id: "bpc",      label: "BPC",      family: "exact",         hex: "#38bdf8", rgb: [56, 189, 248] },
   { id: "hgs",      label: "HGS",      family: "metaheuristic", hex: "#f59e0b", rgb: [245, 158, 11] },
   { id: "alns",     label: "ALNS",     family: "metaheuristic", hex: "#818cf8", rgb: [129, 140, 248] },
-  { id: "swc_tcf",  label: "SWC-TCF",  family: "matheuristic",  hex: "#2dd4bf", rgb: [45, 212, 191] },
-  { id: "pg_clns",  label: "PG-CLNS",  family: "matheuristic",  hex: "#fb923c", rgb: [251, 146, 60] },
+  { id: "swc_tcf",  label: "SWC-TCF",  family: "exact",         hex: "#2dd4bf", rgb: [45, 212, 191] },
+  { id: "pg_clns",  label: "PG-CLNS",  family: "metaheuristic", hex: "#fb923c", rgb: [251, 146, 60] },
   { id: "sans",     label: "SANS",     family: "metaheuristic", hex: "#f472b6", rgb: [244, 114, 182] },
   { id: "psoma",    label: "PSOMA",    family: "metaheuristic", hex: "#a3e635", rgb: [163, 230, 53] },
   { id: "aco_hh",   label: "ACO_HH",   family: "metaheuristic", hex: "#c084fc", rgb: [192, 132, 252] },
@@ -35,28 +35,30 @@ const POLICY_MAP: Record<string, PolicyPaletteEntry> = Object.fromEntries(
   NOC_POLICY_PALETTE.map((p) => [p.id.toLowerCase(), p])
 );
 
+function paletteByToken(policy: string): PolicyPaletteEntry | undefined {
+  const tokens = policy.toLowerCase().trim().split(/[^a-z0-9]+/).filter(Boolean);
+  const byLength = [...NOC_POLICY_PALETTE].sort((a, b) => b.id.length - a.id.length);
+  return byLength.find((entry) => tokens.includes(entry.id));
+}
+
 /** Resolve a policy identifier or compound variant label to its CVD-safe hex color. */
 export function getPolicyColor(policy: string, fallbackIdx = 0): string {
   const norm = policy.toLowerCase().trim();
-  if (POLICY_MAP[norm]) return POLICY_MAP[norm]!.hex;
-  for (const entry of NOC_POLICY_PALETTE) {
-    if (norm.includes(entry.id)) {
-      return entry.hex;
-    }
-  }
-  return NOC_POLICY_PALETTE[fallbackIdx % NOC_POLICY_PALETTE.length]!.hex;
+  return (
+    POLICY_MAP[norm]?.hex ??
+    paletteByToken(policy)?.hex ??
+    NOC_POLICY_PALETTE[fallbackIdx % NOC_POLICY_PALETTE.length]!.hex
+  );
 }
 
 /** Resolve a policy identifier to its Deck.gl `[r, g, b]` tuple. */
 export function getPolicyRgb(policy: string, fallbackIdx = 0): [number, number, number] {
   const norm = policy.toLowerCase().trim();
-  if (POLICY_MAP[norm]) return POLICY_MAP[norm]!.rgb;
-  for (const entry of NOC_POLICY_PALETTE) {
-    if (norm.includes(entry.id)) {
-      return entry.rgb;
-    }
-  }
-  return NOC_POLICY_PALETTE[fallbackIdx % NOC_POLICY_PALETTE.length]!.rgb;
+  return (
+    POLICY_MAP[norm]?.rgb ??
+    paletteByToken(policy)?.rgb ??
+    NOC_POLICY_PALETTE[fallbackIdx % NOC_POLICY_PALETTE.length]!.rgb
+  );
 }
 
 /** ECharts visualMap piecewise configuration for bin fill levels (0 to >=100% overflow). */
