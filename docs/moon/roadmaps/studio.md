@@ -870,6 +870,69 @@ Source files ported from: `logic/src/ui/pages/experiment_tracker.py`, `logic/src
 
 ---
 
+### §G.20 — Phase 20: NOC/Orion Telemetry & Operations Research Overhaul (Slices V0–V8) 📋
+
+> **Specification**: Consolidated Final Plan in [`.agent/reports/studio-ux-brainstorm/FINAL-PLAN.md`](../../.agent/reports/studio-ux-brainstorm/FINAL-PLAN.md) synthesizing architectural audits across Mistral, Codex, Grok, and Gemini, approved by owner rulings on 2026-10-24. Tracking issue: #145.
+
+**Goal**: Transform WSmart-Route Studio into a mission-critical Network Operations Center (NOC) & Operations Research Telemetry Studio, eliminating live streaming bottlenecks, enforcing verified WCAG AA dual-theme contrast, and deploying high-density scientific visualizations.
+
+#### §G.20.0 — Slice V0: Live Pipeline & Streaming Engine (Prerequisite) (#146)
+- [ ] Batch Tauri `process:stdout`/`stderr` events in `src-tauri/src/commands/process.rs` ($\le 20\text{ Hz}$ or 50-line buffers).
+- [ ] Incremental byte-offset log reader in `src-tauri/src/commands/sim_watcher.rs` (replaces full 28 MB `read_to_string` 200 ms polling).
+- [ ] Ring-buffered chunking in `store/process.ts` and $O(1)$ Map-keyed deduplication in `store/sim.ts`.
+- [ ] 2 Hz UI throttle clock via `useSimThrottle` hook; pause re-renders when `document.visibilityState === 'hidden'`.
+
+#### §G.20.1 — Slice V1: NOC Design Tokens & Dual-Theme System (#147)
+- [ ] Implement paired `--noc-*` CSS variables in `index.css` and `tailwind.config.ts` supporting both Dark (`#090e1a`/`#0f172a`) and Light (`#f8fafc`/`#ffffff`) themes.
+- [ ] Add explicit contrast-safe text tokens (`--noc-indigo-text` `#818cf8` dark / `#4338ca` light) satisfying WCAG AA $\ge 4.5:1$.
+- [ ] CVD-safe (Deuteranopia, Protanopia, Tritanopia) 12-policy categorical palette in `utils/charts/palettes.ts` keyed by real policy IDs (`bpc`, `hgs`, `alns`, `aco_hh`, `pg_clns`, `psoma`, `sans`, `swc_tcf`, `na`, `hna`).
+- [ ] Automated Vitest contrast suite (`telemetryTokens.test.ts`) asserting text $\ge 4.5:1$ and stroke $\ge 3.0:1$ across both modes.
+
+#### §G.20.2 — Slice V2: Telemetry Primitives & Shared Metric Contract (#148)
+- [ ] Shared `MetricContract` (`key`, `label`, `unit`, `higherIsBetter`, `formatter`) covering all 8 `SimDayData` KPIs.
+- [ ] Direction-aware `KpiCard` with tabular numbers (`tabular-nums`) and automatic polarity on deltas (`lowerIsBetter` for km, overflows, cost).
+- [ ] Lightweight `HudStatusPill`, `Meter` with warning/critical thresholds, and decoupled `StalenessDot` heartbeat indicator.
+- [ ] `ProvenanceBadge` distinguishing exact bounds (gap = 0), solver incumbents, metaheuristics, neural rollouts, and stochastic estimates.
+- [ ] Dev-only `KitGallery` under `import.meta.env.DEV`.
+
+#### §G.20.3 — Slice V3: High-Density Scientific Visualizations (#149)
+- [ ] `OrionDotMatrixHeatmap`: ECharts/Canvas 2D heatmap rendering 350 bins × 90 days (31,500 cells) with $\ge 100\%$ overflow alert inflection and daily overflow totals bar.
+- [ ] Direction-Aware `PolicyRadarChart`: Inverted polygon scaling for lower-is-better metrics ($1 = \text{best}$), raw mean $\pm$ std tooltips, and 4-policy default overlay cap with isolation.
+- [ ] `OrionHoneycombMatrix`: 2D parameter sensitivity surfaces and HPO tuning grids.
+- [ ] Hardware-accelerated radial gradient sprites (`OrionGlowDefs.tsx`) replacing banned `feGaussianBlur` filters.
+
+#### §G.20.4 — Slice V4: Shell, Workflow Navigation & Loaded-Run State (#150)
+- [ ] Reorganize sidebar navigation into 5 user workflows: **Run** / **Watch** / **Read** / **Query** / **Write** (+ Files).
+- [ ] Global `useLoadedRunStore` tracking the active run across Summary, Digital Twin, OLAP Explorer, and Report Studio.
+- [ ] Header `LoadedRunChip` displaying the active run with dual-state badges (`[Viewing]` vs `[Live Stream]`) and one-click switching.
+- [ ] Clickable TopBar Process Pill navigating directly to the active process in Process Monitor; resolve raw mode IDs in `TITLES`.
+- [ ] Bounded Zustand view state caching; unmount heavy Deck.gl and Three.js canvases when navigating away.
+
+#### §G.20.5 — Slice V5: Monitor Suite Overhaul & Decomposition (#151)
+- [ ] Decompose `SimulationMonitor.tsx` (1,082 LoC) into modular subcomponents $\le 500$ LoC (`SimulationControls`, `MetricTimeseries`, `BinFillStrip`, `TourTable`, `SimulationMapPanel`, `PolicyTelemetryPanel`).
+- [ ] Decompose `ProcessMonitor.tsx` (713 LoC) with virtualized log viewer handling 10,000 lines without frame drops.
+- [ ] Dual spatial map visualization in `SimulationMapPanel`: ground-truth GPS street routes on MapLibre/Deck.gl + optional hexagonal density clustering overlay toggle.
+
+#### §G.20.6 — Slice V6: Analysis & Summary Suite Overhaul (#152)
+- [ ] Decompose `SimulationSummary.tsx` (2,872 LoC) into modular subcomponents $\le 500$ LoC (`RankingTable`, `TrajectoryChart`, `PolicyRadarChart`, `PolicyParetoChart`, `PolicyHeatmapChart`).
+- [ ] Restructure Summary around clean subtabs: **Table** (mean $\pm$ sample std, n days, CSV/Parquet export) / **Trajectories** / **Map** / **Compare**.
+- [ ] Unify Algorithm Registry and City Comparison as sub-views reading the global `loadedRun`.
+- [ ] Decompose `MLIntrospectionPanel.tsx` (1,185 LoC) into matrix, attention, and embedding submodules.
+
+#### §G.20.7 — Slice V7: Launchers, Cloud & Report Studio (#153)
+- [ ] `SimulationLauncher.tsx` (591 LoC $\rightarrow \le 500$ LoC): expose `sim.days` field, real-time `.npz` dataset path verification, and dual policy selection mode (family-grouped 8-policy Paper Benchmark preset vs advanced 89-policy grid with "Select All" confirmation barrier).
+- [ ] Replace 5-second automatic redirect with an explicit "Open in Summary" action button.
+- [ ] Synchronize `TrainingHub.tsx` (816 LoC $\rightarrow \le 500$ LoC) with live Python logic tree: problem options `ptp`, `cptp`, `cptptc`, `cptptwtc`, `cvrp` (sent as `envs@train.env=<name>`) and model `deep_decoder` (replacing `ddam`).
+- [ ] Bind `ReportStudio.tsx` directly to the active `loadedRun` record.
+
+#### §G.20.8 — Slice V8: System Tools, Files & Final Compliance (#154)
+- [ ] Style `OutputBrowser.tsx`, `ConfigEditor.tsx`, `Settings.tsx`, and modal dialogs with NOC design tokens.
+- [ ] Decompose remaining oversized files: `OutputBrowser.tsx` (990 LoC), `ConfigEditor.tsx` (515 LoC), `Settings.tsx` (585 LoC), and Rust commands (`data.rs` 1,018 LoC, `tensor.rs` 1,063 LoC, `cloud/mod.rs` 702 LoC).
+- [ ] Enforce the 500-line limit: zero files $>500$ physical lines across TypeScript and Rust source trees (Orion components $\le 400$ LoC).
+- [ ] Full Linux WebKitGTK 30 fps validation under software compositing (`WEBKIT_DISABLE_COMPOSITING_MODE=1`) and `prefers-reduced-motion` compliance.
+
+---
+
 ### §G — Studio Complete ✅
 
 All twenty phases (§G.0–§G.19) are delivered. WSmart-Route Studio is the primary desktop interface for launching simulations and training runs, browsing results, and performing post-hoc analytics. Post-§G analytics bridges continue under §A (e.g. §A.3 Policy Telemetry in hundred-ninth pass; §A.5 Optuna Plotly export in hundred-tenth pass; §A.4 Training Health in hundred-eleventh pass; §A.6 Failure Analysis in hundred-twelfth pass; §A.2 WandB attention heatmaps in hundred-thirteenth pass; §A.1 Route Solution visualizer in hundred-fourteenth pass; §A.6 route-diff failure overlay in hundred-fifteenth pass; §A.6 ECharts route-diff parity in hundred-sixteenth pass; §A.2 Studio attention ring-buffer in hundred-seventeenth pass; §A.4 HPO health prune metrics in hundred-eighteenth pass; §A.3 live policy telemetry stream in hundred-nineteenth pass; §A.3 SQLite cross-run telemetry trending in hundred-twentieth pass; §A.3 cross-run improvement trajectory chart in hundred-twenty-first pass; §A.3 trajectory brush + Benchmark Analysis panel in hundred-twenty-second pass; §A.3 chart brush filter + Simulation Summary panel in hundred-twenty-third pass; §A.3 chart brush dimming + Algorithm/City Comparison panels in hundred-twenty-fourth pass; §A.3 run_label brush sync + OLAP Explorer panel in hundred-twenty-fifth pass; §A.3 trajectory click fix + Simulation Monitor / Data Explorer panels in hundred-twenty-sixth pass; §A.3 Output Browser trends panel + KPI brush in hundred-twenty-seventh pass; §A.3 Process Monitor telemetry + Output Browser run_label auto-brush in hundred-twenty-eighth pass; §A.3 Simulation Launcher live telemetry + Process Monitor brush parity in hundred-twenty-ninth pass). Remaining release-engineering items (code-signing keys, hosted signed update CDN) are deferred per §G.8.
@@ -935,6 +998,7 @@ Phase 18 →  Phase 1, Phase 17 (builds on analytics dashboard and training runs
 | §G.16 | Simulation Digital Twin | High | Very High | P1 ✅ |
 | §G.17 | Training Monitor | Medium | Very High | P1 ✅ |
 | §G.18 | Experiment & HPO Tracker | High | High | P2 ✅ |
+| §G.20 | NOC/Orion Telemetry & OR Overhaul (V0–V8) | High | Very High | P0 📋 |
 
 ---
 

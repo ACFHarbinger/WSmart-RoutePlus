@@ -13,6 +13,16 @@ Tags: `[Quick Win]` ≤ 1 day · `[Research]` involves novel work · `[Blocked]`
 
 ## Anchor Index
 
+Studio NOC/Orion Telemetry Overhaul finalized on 2026-10-24:
+Consolidated multi-agent specification ([`FINAL-PLAN.md`](../../.agent/reports/studio-ux-brainstorm/FINAL-PLAN.md))
+synthesizes architectural audits across Mistral, Codex, Grok, and Gemini, approved by owner rulings.
+Phases Slices V0 through V8 scheduled under §G.20: upstream live pipeline engine (V0) eliminates Tauri
+IPC event storms and 28 MB polling; paired `--noc-*` design tokens enforce dual light/dark WCAG AA
+contrast (V1); direction-aware telemetry primitives and shared metrics contracts (V2); 350×90 ECharts
+dot-matrix heatmap and direction-scaled radar (V3); 5-task workflow sitemap and global loaded-run chip (V4);
+decomposition of 34 grandfathered files >500 LoC (V5–V8); and synchronization with live Python problem
+names (`ptp`/`cptp`/`cptptc`/`cvrp`) and models (`deep_decoder`). See [`studio.md`](roadmaps/studio.md#g20--phase-20-nocorion-telemetry--operations-research-overhaul-slices-v0v8-).
+
 Azure provisioning recovery implemented on 2026-10-20 (`ef0cce991`): the
 write-ahead journal and durable ownership reconciliation close the previously
 recorded crash-window blocker. Combined cloud validation: 150 passed, four
