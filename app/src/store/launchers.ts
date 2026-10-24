@@ -11,10 +11,42 @@ import type { CloudComputeKind, CloudGurobiMode, CloudProvider } from "../types/
 
 // ── Simulation Launcher (§G.9)
 
+export type PolicyViewMode = "standard" | "advanced";
+
+export const PAPER_BENCHMARK_POLICIES = [
+  "aco_hh",
+  "alns",
+  "bpc",
+  "hgs",
+  "pg_clns",
+  "psoma",
+  "sans",
+  "swc_tcf",
+] as const;
+
+export const TRAIN_PROBLEMS = [
+  "ptp",
+  "cptp",
+  "cptptc",
+  "cptptwtc",
+  "cvrp",
+] as const;
+
+export const TRAIN_MODELS = [
+  "am",
+  "tam",
+  "deep_decoder",
+  "moe",
+  "ptr",
+  "symnco",
+] as const;
+
 interface SimLauncherState {
   selectedPolicies: string[];
+  policyViewMode: PolicyViewMode;
   area: string;
   numLoc: number;
+  days: number;
   samples: number;
   nCores: number;
   seed: number;
@@ -26,9 +58,11 @@ interface SimLauncherState {
 export const useSimLauncherStore = create<SimLauncherState>()(
   persist(
     (set) => ({
-      selectedPolicies: ["aco_hh", "alns", "bpc", "hgs", "pg_clns", "psoma", "sans", "swc_tcf"],
+      selectedPolicies: [...PAPER_BENCHMARK_POLICIES],
+      policyViewMode: "standard",
       area: "figueiradafoz",
       numLoc: 350,
+      days: 30,
       samples: 1,
       nCores: 4,
       seed: 42,
@@ -71,7 +105,7 @@ export const useTrainHubStore = create<TrainHubState>()(
   persist(
     (set) => ({
       trainMode: "train",
-      problem: "vrpp",
+      problem: "ptp",
       seed: 42,
       wandb: false,
       extraOverrides: "",
@@ -193,7 +227,7 @@ export const useSystemToolsStore = create<SystemToolsState>()(
 export type ReportGenTab = "dataset" | "simulation" | "presentation";
 export type ReportGenEngine = "native" | "legacy";
 
-interface ReportGenState {
+export interface ReportGenState {
   tab: ReportGenTab;
   /** "native" runs the in-app §H generator; "legacy" spawns the archived Python scripts. */
   engine: ReportGenEngine;

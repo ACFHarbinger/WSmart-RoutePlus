@@ -17,9 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Gemini: Studio NOC/Orion UI/UX & Operations Research Telemetry Overhaul — Slices V0–V6 (`2026-10-24`)
+### Gemini: Studio NOC/Orion UI/UX & Operations Research Telemetry Overhaul — Slices V0–V7 (`2026-10-24`)
 
-Implements Slices V0 through V6 from `.agent/reports/studio-ux-brainstorm/FINAL-PLAN.md` (§G.20):
+Implements Slices V0 through V7 from `.agent/reports/studio-ux-brainstorm/FINAL-PLAN.md` (§G.20):
 
 #### Added
 
@@ -44,7 +44,16 @@ Implements Slices V0 through V6 from `.agent/reports/studio-ux-brainstorm/FINAL-
 - **Slice V6 — Analysis Pages Decomposition & Visualization Integration**:
   - Decomposed `SimulationSummary.tsx` (2,872 → 269 LoC) into `SummaryCoreWidgets.tsx`, `SummaryComparisonCharts.tsx` (with direction-aware `PolicyRadarChart`), `SummaryHierarchyPanel.tsx`, `SummaryParallelAndFacets.tsx`, `SummaryHierarchyAndBars.tsx`, `SummaryRouteSection.tsx`, `SummaryPortfolioSections.tsx`, and `useSimulationSummaryController.ts`; added `SubtabBar` (**All Panels / Table / Trajectories / Map / Compare**) and `OrionDotMatrixHeatmap`.
   - Decomposed `MLIntrospectionPanel.tsx` (1,185 → 462 LoC) into `MLAttentionControls.tsx`, `MLAttentionAndLossViews.tsx`, and `useMLIntrospectionOptions.ts`.
-  - Decomposed `ExperimentTracker.tsx` (797 → 435 LoC) + `ExperimentMlflowSection.tsx` (422 LoC), `HPOTracker.tsx` (941 → 495 LoC) + `HpoChartsAndTable.tsx` (496 LoC, with `OrionHoneycombMatrix` wired for 2D hyperparameter sweeps), `DataExplorer.tsx` (700 → 494 LoC) + `DataExplorerGeoAndCharts.tsx`, `BenchmarkAnalysis.tsx` (936 → 423 LoC) + `BenchmarkEvalAndBars.tsx` (413 LoC) + `BenchmarkPortfolioCharts.tsx` (251 LoC), `SqlQueryPanel.tsx` (663 → 434 LoC) + `SqlQueryResultsView.tsx` (320 LoC), and `GraphTopologyPanel.tsx` (596 → 387 LoC) + `GraphTopologyControls.tsx` (387 LoC). Every file under `app/src/pages/analysis/` and `app/src/components/analysis/` is now $\le 500$ LoC.
+  - Decomposed `ExperimentTracker.tsx` (797 → 435 LoC) + `ExperimentMlflowSection.tsx` (422 LoC), `HPOTracker.tsx` (941 → 495 LoC) + `HpoChartsAndTable.tsx` (496 LoC, with `OrionHoneycombMatrix` wired for 2D hyperparameter sweeps), `DataExplorer.tsx` (700 → 494 LoC) + `DataExplorerGeoAndCharts.tsx`, `BenchmarkAnalysis.tsx` (936 → 423 LoC) + `BenchmarkEvalAndBars.tsx` (413 LoC) + `BenchmarkPortfolioCharts.tsx` (251 LoC), `SqlQueryPanel.tsx` (663 → 434 LoC) + `SqlQueryResultsView.tsx` (320 LoC), and `GraphTopologyPanel.tsx` (596 → 387 LoC) + `GraphTopologyControls.tsx` (387 LoC). Every file under `app/src/pages/analysis/` and `app/src/components/analysis/` is $\le 500$ LoC.
+- **Slice V7 — Launchers, Cloud & Domain Nomenclature Synchronization**:
+  - `app/src/store/launchers.ts`: Synchronized problem options with `logic/src/utils/model/problem_factory.py` (`ptp`, `cptp`, `cptptc`, `cptptwtc`, `cvrp` via `envs@train.env=<name>`) and neural models with `logic/configs/models/` (`am`, `tam`, `deep_decoder`, `moe`, `ptr`, `symnco`, replacing `ddam` with `deep_decoder`). Added `PAPER_BENCHMARK_POLICIES` and `PolicyViewMode`.
+  - `app/src/pages/launch/SimulationLauncher.tsx` (468 LoC), `SimPolicySelector.tsx` (368 LoC), `SimLiveMonitorSection.tsx` (225 LoC): Added `sim.days` parameter, resolved `.npz` dataset path preview badge, dual policy selection modes (`Standard View` grouped by family with default 8-policy Paper Benchmark preset vs `Advanced Grid` with confirmation dialog before select-all), and explicit "Open in Summary" handoff populating `useLoadedRunStore`. Decomposed to $\le 500$ LoC.
+  - `app/src/pages/launch/TrainingHub.tsx` (500 LoC), `TrainHubSections.tsx` (420 LoC), `TrainHubForms.tsx` (338 LoC): Decomposed to $\le 500$ LoC with synchronized problem and model options.
+  - `app/src/pages/launch/EvaluationRunner.tsx` (499 LoC), `EvalRunnerSections.tsx` (389 LoC): Decomposed to $\le 500$ LoC with synchronized `TRAIN_PROBLEMS`.
+  - `app/src/pages/launch/DataGeneration.tsx` (481 LoC), `DataGenPreviewPanel.tsx` (256 LoC): Decomposed to $\le 500$ LoC with synchronized problem choices.
+  - `app/src/pages/launch/ReportStudio.tsx` (431 LoC), `ReportStudioForms.tsx` (459 LoC), `ReportStudioHelpers.tsx` (195 LoC): Decomposed to $\le 500$ LoC and bound to `useLoadedRunStore` with auto-population of scenario filters.
+  - `app/src/pages/cloud/CloudLauncher.tsx` (425 LoC), `CloudLauncherSections.tsx` (367 LoC), `CloudMonitor.tsx` (500 LoC), `CloudMonitorDetail.tsx` (358 LoC), `CloudAnalysis.tsx` (352 LoC), `CloudAnalysisSections.tsx` (472 LoC): Decomposed all cloud views and components to $\le 500$ LoC.
+  - `app/tests/unit/launcherArgs.test.ts`: Added unit tests verifying Hydra argument building, `.npz` path preview resolution, policy family grouping, and domain nomenclature.
 
 ### Claude: PG-CLNS on the shared operators (`2026-10-24`)
 
