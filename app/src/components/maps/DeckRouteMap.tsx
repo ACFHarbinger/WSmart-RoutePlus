@@ -1,210 +1,36 @@
 /**
- * deck.gl route map with tile basemap (§G.16) or OrbitView Cartesian mode (§G.3.4).
- * Supports multi-policy route overlay; TripsLayer animation; depot marker.
+ * deck.gl route map with tile basemap (§G.16), OrbitView Cartesian mode (§G.3.4),
+ * and optional Hexagonal Spatial Density Clustering overlay (Owner Ruling #3, Slice V5).
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import DeckGL from "@deck.gl/react";
 import { OrbitView, COORDINATE_SYSTEM } from "@deck.gl/core";
-import { CanvasExportButton } from "../common/CanvasExportButton";
-import { FailureOverlayLegend } from "../analysis/routes/FailureOverlayLegend";
-import { resolveBinPositions } from "../../utils/map/mapPositions";
-import {
-  computeTourDiff,
-  FAILURE_RGB,
-  failureBinIdSets,
-  TOUR_DIFF_RGB,
-} from "../../utils/map/routeFailureOverlay";
-import { PathLayer, ScatterplotLayer } from "@deck.gl/layers";
+import { PathLayer, PolygonLayer, ScatterplotLayer } from "@deck.gl/layers";
 import { TripsLayer } from "@deck.gl/geo-layers";
 import MapGL from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
-import type { SimDayData, SimFailureSummary } from "../../types";
-import { splitVehicleTourIndices, VEHICLE_COLORS_RGB } from "../../utils/map/vehicleTours";
+import { CanvasExportButton } from "../common/CanvasExportButton";
+import { FailureOverlayLegend } from "../analysis/routes/FailureOverlayLegend";
+import { resolveBinPositions } from "../../utils/map/mapPositions";
+import { FAILURE_RGB, TOUR_DIFF_RGB } from "../../utils/map/routeFailureOverlay";
+import {
+  buildFailureHighlights,
+  buildHexDensityCells,
+  buildRouteGeometry,
+  buildTourDiffHighlights,
+  fillRgb,
+  stopRadius,
+  TRIP_SEGMENT_MS,
+  type FailureHighlightPoint,
+  type HexDensityCell,
+  type MapRoute,
+  type TourDiffPoint,
+  type VehicleTourStop,
+} from "../../utils/map/deckRouteGeometry";
+
+export type { MapRoute };
 
 const MAP_STYLE = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
-const TRIP_SEGMENT_MS = 120;
-
-export interface MapRoute {
-  id: string;
-  label: string;
-  data: SimDayData;
-  color: [number, number, number];
-}
-
-function fillRgb(pct: number): [number, number, number] {
-  if (pct >= 100) return [248, 113, 113];
-  if (pct >= 80) return [251, 191, 36];
-  return [52, 211, 153];
-}
-
-interface VehicleGeometry {
-  vehicleId: number;
-  color: [number, number, number];
-  path: [number, number][];
-  tripPath: [number, number, number][];
-  tripLength: number;
-}
-
-interface VehicleTourStop {
-  position: [number, number];
-  fill: number;
-  collected: number;
-  vehicleId: number;
-  color: [number, number, number];
-}
-
-function stopRadius(fill: number, collected: number, multiPolicy: boolean): number {
-  const base = multiPolicy ? 40 : 50;
-  const fillScale = 0.5 + (Math.min(100, fill) / 100) * 0.5;
-  const collectedScale = collected > 0 ? 1 + Math.min(collected, 50) / 50 : 1;
-  return base * fillScale * collectedScale;
-}
-
-function buildVehicleSegment(
-  segment: number[],
-  posById: Map<number, [number, number]>,
-  vehicleId: number,
-  timeOffset: number
-): VehicleGeometry {
-  const pathCoords: [number, number][] = [];
-  const tripCoords: [number, number, number][] = [];
-  let t = timeOffset;
-
-  const pushStop = (id: number) => {
-    const p = posById.get(id);
-    if (!p) return;
-    pathCoords.push(p);
-    tripCoords.push([p[0], p[1], t]);
-    t += TRIP_SEGMENT_MS;
-  };
-
-  const depot = posById.get(-1);
-  if (depot) pushStop(-1);
-  for (const id of segment) pushStop(id);
-  if (depot && pathCoords.length > 1) {
-    pathCoords.push(depot);
-    tripCoords.push([depot[0], depot[1], t]);
-  }
-
-  return {
-    vehicleId,
-    color: VEHICLE_COLORS_RGB[vehicleId % VEHICLE_COLORS_RGB.length],
-    path: pathCoords,
-    tripPath: tripCoords,
-    tripLength: t,
-  };
-}
-
-function buildRouteGeometry(data: SimDayData) {
-  const { all_bin_coords, tour_indices, bin_state_c, bin_state_collected } = data;
-  if (!all_bin_coords?.length) {
-    return {
-      vehicles: [] as VehicleGeometry[],
-      path: [] as [number, number][],
-      tripPath: [] as [number, number, number][],
-      tripLength: 0,
-      tourPoints: [] as Array<{ position: [number, number]; fill: number; collected: number }>,
-      vehicleTourStops: [] as VehicleTourStop[],
-      idlePoints: [] as Array<{ position: [number, number] }>,
-      depotPoint: null as { position: [number, number] } | null,
-      hasGeo: false,
-      hasBins: false,
-      center: { longitude: 0, latitude: 0 },
-    };
-  }
-
-  const { posById, hasGeo } = resolveBinPositions(all_bin_coords);
-
-  const segments = splitVehicleTourIndices(data);
-  const allTourIds = new Set(segments.flat());
-  const tourSet = new Set(tour_indices ?? allTourIds);
-
-  let timeOffset = 0;
-  const vehicles = segments.map((segment, i) => {
-    const geom = buildVehicleSegment(segment, posById, i, timeOffset);
-    timeOffset = geom.tripLength + TRIP_SEGMENT_MS;
-    return geom;
-  });
-
-  const primary = vehicles[0];
-  const pathCoords = primary?.path ?? [];
-  const tripCoords = primary?.tripPath ?? [];
-  const tripLength = vehicles.length
-    ? Math.max(...vehicles.map((v) => v.tripLength), 0)
-    : 0;
-
-  const collectedAt = (id: number) => {
-    const v = bin_state_collected?.[id];
-    return typeof v === "number" && v > 0 ? v : 0;
-  };
-
-  const tourPts = [...tourSet]
-    .map((id) => {
-      const position = posById.get(id);
-      if (!position) return null;
-      return {
-        position,
-        fill: (bin_state_c?.[id] ?? 0) * 100,
-        collected: collectedAt(id),
-      };
-    })
-    .filter(Boolean) as Array<{ position: [number, number]; fill: number; collected: number }>;
-
-  const vehicleTourStops: VehicleTourStop[] = segments.flatMap((segment, vi) =>
-    segment
-      .map((id) => {
-        const position = posById.get(id);
-        if (!position) return null;
-        return {
-          position,
-          fill: (bin_state_c?.[id] ?? 0) * 100,
-          collected: collectedAt(id),
-          vehicleId: vi,
-          color: VEHICLE_COLORS_RGB[vi % VEHICLE_COLORS_RGB.length],
-        };
-      })
-      .filter(Boolean) as VehicleTourStop[]
-  );
-
-  const idlePts = all_bin_coords
-    .filter((b) => b.id >= 0 && !tourSet.has(b.id))
-    .map((b) => {
-      const position = posById.get(b.id);
-      return position ? { position } : null;
-    })
-    .filter(Boolean) as Array<{ position: [number, number] }>;
-
-  const depot = posById.get(-1);
-  const lngs = [...posById.values()].map((p) => p[0]);
-  const lats = [...posById.values()].map((p) => p[1]);
-
-  return {
-    vehicles,
-    path: pathCoords,
-    tripPath: tripCoords,
-    tripLength,
-    tourPoints: tourPts,
-    vehicleTourStops,
-    idlePoints: idlePts,
-    depotPoint: depot ? { position: depot } : null,
-    hasGeo,
-    hasBins: posById.size > 0,
-    center: {
-      longitude: lngs.length ? lngs.reduce((a, b) => a + b, 0) / lngs.length : 0,
-      latitude: lats.length ? lats.reduce((a, b) => a + b, 0) / lats.length : 0,
-    },
-  };
-}
-
-interface FailureHighlightPoint {
-  position: [number, number];
-  kind: "overflow" | "skipped";
-}
-
-interface TourDiffPoint {
-  position: [number, number];
-  side: "onlyFirst" | "onlySecond";
-}
 
 interface Props {
   routes: MapRoute[];
@@ -212,46 +38,7 @@ interface Props {
   playbackSpeed?: number;
   showFailureOverlay?: boolean;
   showRouteDiff?: boolean;
-}
-
-function buildFailureHighlights(
-  posById: Map<number, [number, number]>,
-  summary: SimFailureSummary | null | undefined
-): FailureHighlightPoint[] {
-  const { overflowIds, skippedIds } = failureBinIdSets(summary);
-  const points: FailureHighlightPoint[] = [];
-
-  for (const id of overflowIds) {
-    const position = posById.get(id);
-    if (position) points.push({ position, kind: "overflow" });
-  }
-  for (const id of skippedIds) {
-    if (overflowIds.has(id)) continue;
-    const position = posById.get(id);
-    if (position) points.push({ position, kind: "skipped" });
-  }
-
-  return points;
-}
-
-function buildTourDiffHighlights(
-  first: SimDayData,
-  second: SimDayData,
-  posById: Map<number, [number, number]>
-): TourDiffPoint[] {
-  const diff = computeTourDiff(first, second);
-  const points: TourDiffPoint[] = [];
-
-  for (const id of diff.onlyFirst) {
-    const position = posById.get(id);
-    if (position) points.push({ position, side: "onlyFirst" });
-  }
-  for (const id of diff.onlySecond) {
-    const position = posById.get(id);
-    if (position) points.push({ position, side: "onlySecond" });
-  }
-
-  return points;
+  showHexDensity?: boolean;
 }
 
 export default function DeckRouteMap({
@@ -260,10 +47,12 @@ export default function DeckRouteMap({
   playbackSpeed = 1,
   showFailureOverlay = true,
   showRouteDiff = false,
+  showHexDensity: initialHexDensity = false,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [pitch3d, setPitch3d] = useState(false);
+  const [hexDensityOn, setHexDensityOn] = useState(initialHexDensity);
   const [mapView, setMapView] = useState({
     longitude: 0,
     latitude: 0,
@@ -277,6 +66,10 @@ export default function DeckRouteMap({
     rotationOrbit: 0,
     zoom: 1.2,
   });
+
+  useEffect(() => {
+    setHexDensityOn(initialHexDensity);
+  }, [initialHexDensity]);
 
   const geometries = useMemo(
     () => routes.map((r) => ({ route: r, ...buildRouteGeometry(r.data) })),
@@ -341,6 +134,11 @@ export default function DeckRouteMap({
 
   const pos3d = (p: [number, number], z = 0): [number, number, number] => [p[0], p[1], z];
 
+  const hexCells = useMemo(
+    () => (hexDensityOn ? buildHexDensityCells(routes[0]?.data, 10) : []),
+    [hexDensityOn, routes]
+  );
+
   const failureHighlights = useMemo(() => {
     if (!showFailureOverlay) return [] as FailureHighlightPoint[];
     const base = geometries[0];
@@ -377,6 +175,25 @@ export default function DeckRouteMap({
   const layers = useMemo(() => {
     const result = [];
     const base = geometries[0];
+
+    if (hexDensityOn && hexCells.length > 0) {
+      result.push(
+        new PolygonLayer({
+          id: "hex-density-clusters",
+          data: hexCells,
+          coordinateSystem: cartesianSystem,
+          getPolygon: (d: HexDensityCell) =>
+            cartesianMode ? d.polygon.map((p) => pos3d(p, 0.005)) : d.polygon,
+          getFillColor: (d: HexDensityCell) =>
+            [...fillRgb(d.maxFill), 85] as [number, number, number, number],
+          getLineColor: (d: HexDensityCell) =>
+            [...fillRgb(d.maxFill), 200] as [number, number, number, number],
+          stroked: true,
+          filled: true,
+          lineWidthMinPixels: 1,
+        })
+      );
+    }
 
     if (base?.idlePoints.length) {
       result.push(
@@ -422,9 +239,7 @@ export default function DeckRouteMap({
 
       for (const vehicle of vehicleSegments) {
         const rgb: [number, number, number, number] =
-          vehicleSegments.length > 1
-            ? [...vehicle.color, 230]
-            : policyRgb;
+          vehicleSegments.length > 1 ? [...vehicle.color, 230] : policyRgb;
 
         if (animate && vehicle.tripPath.length >= 2) {
           const tripData = cartesianMode
@@ -440,14 +255,9 @@ export default function DeckRouteMap({
               id: `trips-${id}-v${vehicle.vehicleId}`,
               data: tripData,
               coordinateSystem: cartesianSystem,
-              getPath: (d: {
-                path: [number, number, number][];
-                timestamps?: number[];
-              }) => d.path,
-              getTimestamps: (d: {
-                path: [number, number, number][];
-                timestamps?: number[];
-              }) => d.timestamps ?? d.path.map((p) => p[2]),
+              getPath: (d: { path: [number, number, number][]; timestamps?: number[] }) => d.path,
+              getTimestamps: (d: { path: [number, number, number][]; timestamps?: number[] }) =>
+                d.timestamps ?? d.path.map((p) => p[2]),
               getColor: rgb,
               currentTime,
               trailLength: Math.max(vehicle.tripLength * 0.6, TRIP_SEGMENT_MS * 2),
@@ -618,6 +428,8 @@ export default function DeckRouteMap({
     cartesianSystem,
     failureHighlights,
     tourDiffHighlights,
+    hexDensityOn,
+    hexCells,
   ]);
 
   if (!hasBins) {
@@ -671,12 +483,23 @@ export default function DeckRouteMap({
         </DeckGL>
       )}
       <div className="absolute top-2 right-2 flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => setHexDensityOn((v) => !v)}
+          className={`btn-ghost text-xs px-1.5 py-0.5 bg-black/50 rounded ${
+            hexDensityOn ? "text-accent-secondary" : ""
+          }`}
+          title="Toggle Hexagonal Spatial Density Clustering overlay"
+        >
+          {hexDensityOn ? "Hex Cluster (on)" : "Hex Cluster (off)"}
+        </button>
         {cartesianMode ? (
           <span className="text-[10px] px-1.5 py-0.5 bg-black/50 rounded text-accent-secondary">
             OrbitView
           </span>
         ) : (
           <button
+            type="button"
             onClick={() => setPitch3d((v) => !v)}
             className={`btn-ghost text-xs px-1.5 py-0.5 bg-black/50 rounded ${
               pitch3d ? "text-accent-secondary" : ""

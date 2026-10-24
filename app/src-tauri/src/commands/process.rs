@@ -30,9 +30,9 @@ pub struct ProcessSpawned {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct StdoutLine {
+pub struct StdoutBatch {
     pub id: String,
-    pub line: String,
+    pub lines: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -99,30 +99,73 @@ pub async fn spawn_python_process(
     let stderr = child.stderr.take();
 
     tokio::spawn(async move {
-        // Stream stdout
-        if let Some(out) = stdout {
-            let mut lines = BufReader::new(out).lines();
-            while let Ok(Some(line)) = lines.next_line().await {
-                let _ = task_app.emit(
-                    "process:stdout",
-                    StdoutLine { id: task_id.clone(), line },
-                );
-            }
-        }
+        let (line_tx, mut line_rx) = tokio::sync::mpsc::unbounded_channel::<String>();
 
-        // Stream stderr to the same event for simplicity
-        if let Some(err) = stderr {
-            let mut lines = BufReader::new(err).lines();
-            while let Ok(Some(line)) = lines.next_line().await {
-                let _ = task_app.emit(
-                    "process:stdout",
-                    StdoutLine {
-                        id: task_id.clone(),
-                        line: format!("[stderr] {line}"),
-                    },
-                );
+        let out_handle = stdout.map(|out| {
+            let tx = line_tx.clone();
+            tokio::spawn(async move {
+                let mut lines = BufReader::new(out).lines();
+                while let Ok(Some(line)) = lines.next_line().await {
+                    let _ = tx.send(line);
+                }
+            })
+        });
+
+        let err_handle = stderr.map(|err| {
+            let tx = line_tx.clone();
+            tokio::spawn(async move {
+                let mut lines = BufReader::new(err).lines();
+                while let Ok(Some(line)) = lines.next_line().await {
+                    let _ = tx.send(format!("[stderr] {line}"));
+                }
+            })
+        });
+        drop(line_tx);
+
+        let batch_app = task_app.clone();
+        let batch_id = task_id.clone();
+        let drain_handle = tokio::spawn(async move {
+            let mut batch: Vec<String> = Vec::with_capacity(50);
+            let mut ticker = tokio::time::interval(tokio::time::Duration::from_millis(50));
+            ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+
+            loop {
+                tokio::select! {
+                    maybe_line = line_rx.recv() => {
+                        match maybe_line {
+                            Some(line) => {
+                                batch.push(line);
+                                if batch.len() >= 50 {
+                                    let lines = std::mem::replace(&mut batch, Vec::with_capacity(50));
+                                    let _ = batch_app.emit(
+                                        "process:stdout_batch",
+                                        StdoutBatch { id: batch_id.clone(), lines },
+                                    );
+                                }
+                            }
+                            None => {
+                                if !batch.is_empty() {
+                                    let _ = batch_app.emit(
+                                        "process:stdout_batch",
+                                        StdoutBatch { id: batch_id.clone(), lines: batch },
+                                    );
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    _ = ticker.tick() => {
+                        if !batch.is_empty() {
+                            let lines = std::mem::replace(&mut batch, Vec::with_capacity(50));
+                            let _ = batch_app.emit(
+                                "process:stdout_batch",
+                                StdoutBatch { id: batch_id.clone(), lines },
+                            );
+                        }
+                    }
+                }
             }
-        }
+        });
 
         let exit_status = tokio::select! {
             status = child.wait() => status.ok(),
@@ -131,6 +174,14 @@ pub async fn spawn_python_process(
                 None
             }
         };
+
+        if let Some(h) = out_handle {
+            let _ = h.await;
+        }
+        if let Some(h) = err_handle {
+            let _ = h.await;
+        }
+        let _ = drain_handle.await;
 
         let (status, code) = match exit_status {
             Some(s) if s.success() => (ProcessStatus::Completed, Some(0)),

@@ -4,50 +4,73 @@ import type { ProcessEntry, ProcessStatus } from "../types";
 
 interface ProcessState {
   processes: Record<string, ProcessEntry>;
+  lastEventAt: number | null;
   addProcess: (entry: Omit<ProcessEntry, "logLines">) => void;
   appendLog: (id: string, line: string) => void;
+  appendLogs: (id: string, lines: string[]) => void;
   updateStatus: (id: string, status: ProcessStatus, exitCode?: number) => void;
   removeProcess: (id: string) => void;
   clearCompleted: () => void;
 }
 
+const MAX_LOG_LINES = 2000;
+
 export const useProcessStore = create<ProcessState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       processes: {},
+      lastEventAt: null,
 
       addProcess: (entry) =>
-        set((s) => ({
-          processes: {
-            ...s.processes,
-            [entry.id]: { ...entry, logLines: [] },
-          },
-        })),
+        set((s) => {
+          const now = Date.now();
+          return {
+            lastEventAt: now,
+            processes: {
+              ...s.processes,
+              [entry.id]: { ...entry, logLines: [], lastEventAt: now },
+            },
+          };
+        }),
 
-      appendLog: (id, line) =>
+      appendLogs: (id, lines) => {
+        if (lines.length === 0) return;
         set((s) => {
           const proc = s.processes[id];
           if (!proc) return s;
+          const now = Date.now();
+          const combined =
+            proc.logLines.length + lines.length <= MAX_LOG_LINES
+              ? [...proc.logLines, ...lines]
+              : [...proc.logLines.slice(-(MAX_LOG_LINES - lines.length)), ...lines].slice(-MAX_LOG_LINES);
           return {
+            lastEventAt: now,
             processes: {
               ...s.processes,
               [id]: {
                 ...proc,
-                // Keep the last 2000 lines to avoid unbounded memory growth
-                logLines: [...proc.logLines.slice(-1999), line],
+                lastEventAt: now,
+                logLines: combined,
               },
             },
           };
-        }),
+        });
+      },
+
+      appendLog: (id, line) => {
+        get().appendLogs(id, [line]);
+      },
 
       updateStatus: (id, status, exitCode) =>
         set((s) => {
           const proc = s.processes[id];
           if (!proc) return s;
+          const now = Date.now();
           return {
+            lastEventAt: now,
             processes: {
               ...s.processes,
-              [id]: { ...proc, status, exitCode },
+              [id]: { ...proc, status, exitCode, lastEventAt: now },
             },
           };
         }),

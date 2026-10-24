@@ -188,6 +188,7 @@ export interface ProcessEntry {
   startTime: number;
   exitCode?: number;
   logLines: string[];
+  lastEventAt?: number;
 }
 
 export interface ProcessSpawned {
@@ -200,6 +201,17 @@ export interface ProcessSpawned {
 export interface StdoutLine {
   id: string;
   line: string;
+}
+
+export interface StdoutBatch {
+  id: string;
+  lines: string[];
+}
+
+export interface SimBatchUpdate {
+  day_entries: DayLogEntry[];
+  viz_entries: PolicyVizEntry[];
+  failure_entries: SimFailureEntry[];
 }
 
 export interface StatusUpdate {
