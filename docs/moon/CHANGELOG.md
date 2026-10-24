@@ -17,6 +17,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Claude: PG-CLNS on the shared operators (`2026-10-24`)
+
+Owner ruling 2026-10-24: the 1.0.2 release keeps PG-CLNS's own operator copies (the ones the paper ran on); `main` keeps only the shared library.
+
+#### Changed
+
+- **PG-CLNS uses `logic/src/policies/helpers/operators`.** Its LNS destroys with the shared random, worst (randomised, `p = 3`) and cluster removal and repairs with the shared greedy and regret-2 profit insertion; its ACO local search runs the shared relocate, swap, or-opt, 2-opt, 3-opt, 2-opt* and SWAP* moves (`lns.py`, `local_search.py`, which gains the `get_dist`/`top_insertions` interface those moves read). This redoes ed45f86f1 on the current tree, after its revert in 0a7e700b6.
+- **Behaviour (future runs):** random removal is unchanged (parity test against 63f116656; the seeded PG-CLNS snapshots in `test_lns_acceptance_migration.py` are re-pinned); cluster removal is the shared MST variant, worst removal is randomised, greedy repair opens a new route for profitable optional bins, regret-2 differs in route opening and tie-breaking, and repair rejects a bin above vehicle capacity. PG-CLNS results on `main` will differ from the paper runs; the paper numbers stay reproducible with the 1.0.2 package.
+
+#### Removed
+
+- PG-CLNS's `operators/` package (destroy, repair, move, exchange, route: 21 files, ~1,700 lines). Every operator in it has a shared counterpart, so nothing had to be added to `helpers/operators`.
+
 ### Claude: the 1.0.2 package ships only the paper policies' configs (`2026-10-24`)
 
 #### Changed

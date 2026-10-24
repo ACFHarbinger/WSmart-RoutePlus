@@ -25,17 +25,12 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
+from logic.src.policies.helpers.operators.inter_route_local_search.k_opt_star import move_2opt_star
+from logic.src.policies.helpers.operators.inter_route_local_search.swap_star import move_swap_star
+from logic.src.policies.helpers.operators.intra_route_local_search.k_opt import move_2opt_intra, move_3opt_intra
+from logic.src.policies.helpers.operators.intra_route_local_search.relocate import move_or_opt, move_relocate
+from logic.src.policies.helpers.operators.intra_route_local_search.swap import move_swap
 from logic.src.tracking.viz_mixin import PolicyVizMixin
-
-from .operators import (
-    move_2opt_intra,
-    move_2opt_star,
-    move_3opt_intra,
-    move_or_opt,
-    move_relocate,
-    move_swap,
-    move_swap_star,
-)
 
 
 class LocalSearch(PolicyVizMixin, ABC):
@@ -100,6 +95,22 @@ class LocalSearch(PolicyVizMixin, ABC):
         self.node_map: Dict[int, Tuple[int, int]] = {}
         self.route_loads: List[float] = []
         self.routes: List[List[int]] = []
+        # SWAP* of the shared operators reads a top-3 insertion cache when one is
+        # filled; PG-CLNS never fills it, so SWAP* evaluates every position.
+        self.top_insertions: Dict[int, Dict[int, List[Tuple[float, int]]]] = {}
+
+    def get_dist(self, i: int, j: int) -> float:
+        """
+        Distance between two nodes, as the shared move operators read it.
+
+        Args:
+            i: The index of the first node.
+            j: The index of the second node.
+
+        Returns:
+            float: The distance from node i to node j.
+        """
+        return float(self.d[i, j])
 
     @abstractmethod
     def optimize(self, solution: Any) -> Any:
@@ -334,7 +345,7 @@ class LocalSearch(PolicyVizMixin, ABC):
         Perform or-opt move.
 
         Args:
-            u: Node to move.
+            u: Node to move (unused: the shared operator reads it from r_u/p_u).
             chain_len: Length of the chain to move.
             r_u: Route index of node u.
             p_u: Position index of node u.
@@ -342,7 +353,7 @@ class LocalSearch(PolicyVizMixin, ABC):
         Returns:
             bool: Whether the move was successful.
         """
-        return move_or_opt(self, u, chain_len, r_u, p_u)
+        return move_or_opt(self, r_u, p_u, chain_len)
 
 
 class ACOLocalSearch(LocalSearch):

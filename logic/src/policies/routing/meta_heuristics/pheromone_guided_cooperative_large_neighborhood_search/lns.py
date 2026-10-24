@@ -3,9 +3,9 @@ Large Neighborhood Search (LNS) policy module.
 
 This module provides the PG-CLNS coaching LNS. The solver builds on the
 shared :class:`~logic.src.policies.routing.meta_heuristics.large_neighborhood_search.engine.LNSBase`
-loop skeleton (WP-11 P-31) while keeping its OWN frozen operator copies from
-this package's ``operators/`` directory (owner ruling 2026-10-07: the PG-CLNS
-operators must not be swapped for the shared library). PG-CLNS-specific
+loop skeleton (WP-11 P-31) and the shared destroy and repair operators of
+``logic/src/policies/helpers/operators`` (owner ruling 2026-10-24; the 1.0.2
+release keeps the PG-CLNS operators the paper ran on). PG-CLNS-specific
 semantics (EMA weights, deep-copy policy, ``max_removal_pct``/``xi`` removal
 bounds, no visited set, 3/1 scoring, inline-SA acceptance) live in the hooks
 below.
@@ -28,7 +28,14 @@ import copy
 import random
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
+import numpy as np
+
 from logic.src.configs.policies.routing.meta_heuristics.pg_clns import PGCLNSLNSConfig
+from logic.src.policies.helpers.operators.destroy_ruin.cluster import cluster_removal
+from logic.src.policies.helpers.operators.destroy_ruin.random import random_removal
+from logic.src.policies.helpers.operators.destroy_ruin.worst import worst_removal
+from logic.src.policies.helpers.operators.recreate_repair.greedy import greedy_profit_insertion
+from logic.src.policies.helpers.operators.recreate_repair.regret_profit import regret_2_profit_insertion
 from logic.src.policies.routing.base.sub_problem import SubProblem, coerce_config
 from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.acceptance import (
     LegacySAAcceptance,
@@ -39,14 +46,12 @@ from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.weight
 )
 from logic.src.tracking.viz_mixin import PolicyVizMixin
 
-from .operators import cluster_removal, greedy_insertion, random_removal, regret_2_insertion, worst_removal
-
 
 class LNSSolver(LNSBase, PolicyVizMixin):
     """
     Custom implementation of Large Neighborhood Search for VRP variants.
 
-    PG-CLNS keeps its own frozen operator copies and its pre-P-11 semantics:
+    PG-CLNS runs the shared destroy and repair operators with its pre-P-11 semantics:
     per-iteration EMA weight update, deep-copy solution snapshots, no visited
     set, and the legacy inline simulated-annealing acceptance packaged as
     :class:`LegacySAAcceptance` (rebuilt per ``solve()`` so the temperature
@@ -109,40 +114,40 @@ class LNSSolver(LNSBase, PolicyVizMixin):
         else:
             actual_seed = 42
         self.random = random.Random(actual_seed)
+        self.np_random = np.random.default_rng(actual_seed)
 
         self.n_nodes = len(self.dist_matrix) - 1
         self.nodes = list(range(1, self.n_nodes + 1))
 
         # ------------------------------------------------------------------
-        # Operator registry — PG-CLNS keeps its OWN frozen operator copies
-        # (owner ruling 2026-10-07). The 2-arg operators get swallow-noise
-        # wrappers so they plug into the shared 3-arg repair slot shape.
+        # Operator registry: the shared operators. PG-CLNS repairs without
+        # noise, so the repair wrappers swallow the 3-arg slot's noise.
         # ------------------------------------------------------------------
         self.destroy_ops: List[Callable] = [
             lambda r, n: random_removal(r, n, rng=self.random),
-            lambda r, n: worst_removal(r, n, self.dist_matrix),
+            lambda r, n: worst_removal(r, n, self.dist_matrix, p=3.0, rng=self.np_random),
             lambda r, n: cluster_removal(r, n, self.dist_matrix, self.nodes, rng=self.random),
         ]
         self.repair_ops: List[Callable] = [
-            lambda r, n, _noise=0.0: greedy_insertion(
+            lambda r, n, _noise=0.0: greedy_profit_insertion(
                 r,
                 n,
                 self.dist_matrix,
                 self.wastes,
                 self.capacity,
                 R=self.R,
+                C=self.C,
                 mandatory_nodes=self.mandatory_nodes,
-                cost_unit=self.C,
             ),
-            lambda r, n, _noise=0.0: regret_2_insertion(
+            lambda r, n, _noise=0.0: regret_2_profit_insertion(
                 r,
                 n,
                 self.dist_matrix,
                 self.wastes,
                 self.capacity,
                 R=self.R,
+                C=self.C,
                 mandatory_nodes=self.mandatory_nodes,
-                cost_unit=self.C,
             ),
         ]
         self.repair_noisy = [False] * len(self.repair_ops)
