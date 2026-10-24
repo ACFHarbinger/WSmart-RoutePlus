@@ -199,9 +199,13 @@ export function SimMonitorMapSection({
             className={`btn-ghost text-xs ${
               showHexDensity ? "text-accent-secondary" : ""
             }`}
+            title="Equal-area cells in a local metre grid. Not street zones."
             onClick={() => setShowHexDensity((v) => !v)}
           >
             {showHexDensity ? "Hide" : "Show"} hex density
+            <span className="sr-only">
+              Equal-area metre cells over the bins. Not street zones.
+            </span>
           </button>
         )}
         {showRouteMap && hasBinCoords && (
