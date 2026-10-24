@@ -3,10 +3,9 @@
  * Ports Streamlit `data_explorer` mode.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, FolderOpen, Download } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
-import { FolderOpen, Download } from "lucide-react";
 import { toast } from "sonner";
 import { OpenPathToolbar } from "../../components/common/OpenPathToolbar";
 import { PolicyTelemetryTrendsPanel } from "../../components/analysis/telemetry/PolicyTelemetryTrendsPanel";
@@ -18,11 +17,7 @@ import { useAppStore } from "../../store/app";
 import { useGlobalFiltersStore } from "../../store/filters";
 import { useRecentHandoff } from "../../hooks/files/useRecentHandoff";
 import { downloadCsv, downloadParquetFromCsv } from "../../utils/charts/tableExport";
-import {
-  formatPipelineTimingBadge,
-  portfolioRunLabel,
-  runCsvArrowPipeline,
-} from "../../utils/duckdb/arrowPipeline";
+import { formatPipelineTimingBadge, portfolioRunLabel, runCsvArrowPipeline } from "../../utils/duckdb/arrowPipeline";
 import { groupRunLabelsByCity, resolveBrushedRunLabels } from "../../utils/benchmark/cityComparison";
 import { useDuckDbStore } from "../../store/duckdb";
 
@@ -483,21 +478,11 @@ export function DataExplorer() {
 
           {totalPages > 1 && (
             <div className="flex items-center gap-3 text-xs text-canvas-muted">
-              <button
-                className="btn-ghost py-1 px-2"
-                disabled={page === 0}
-                onClick={() => setPage((p) => p - 1)}
-              >
+              <button className="btn-ghost py-1 px-2" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
                 ← Prev
               </button>
-              <span>
-                Page {page + 1} / {totalPages}
-              </span>
-              <button
-                className="btn-ghost py-1 px-2"
-                disabled={page >= totalPages - 1}
-                onClick={() => setPage((p) => p + 1)}
-              >
+              <span className="tabular-nums">Page {page + 1} / {totalPages}</span>
+              <button className="btn-ghost py-1 px-2" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}>
                 Next →
               </button>
             </div>

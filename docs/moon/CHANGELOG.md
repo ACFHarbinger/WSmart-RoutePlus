@@ -17,9 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Gemini: Studio NOC/Orion UI/UX & Operations Research Telemetry Overhaul — Slices V0–V5 + V6 Part 1 (`2026-10-24`)
+### Gemini: Studio NOC/Orion UI/UX & Operations Research Telemetry Overhaul — Slices V0–V6 (`2026-10-24`)
 
-Implements Slices V0 through V5 and the first half of Slice V6 from `.agent/reports/studio-ux-brainstorm/FINAL-PLAN.md` (§G.20):
+Implements Slices V0 through V6 from `.agent/reports/studio-ux-brainstorm/FINAL-PLAN.md` (§G.20):
 
 #### Added
 
@@ -41,9 +41,10 @@ Implements Slices V0 through V5 and the first half of Slice V6 from `.agent/repo
 - **Slice V5 — Monitor Pages & Hexagonal Spatial Density Overlay**:
   - `app/src/utils/map/deckRouteGeometry.ts` & `app/src/components/maps/DeckRouteMap.tsx`: Extracted route geometry builders and added optional `Hex Cluster (on/off)` spatial bin density `PolygonLayer` overlay toggle alongside ground-truth GPS street routes.
   - Decomposed `SimulationMonitor.tsx` (1,082 → 487 LoC), `ProcessMonitor.tsx` (713 → 431 LoC), and `TrainingMonitor.tsx` (934 → 489 LoC) into modular subcomponents $\le 500$ LoC.
-- **Slice V6 (Part 1) — `SimulationSummary.tsx` & `MLIntrospectionPanel.tsx` Decomposition**:
+- **Slice V6 — Analysis Pages Decomposition & Visualization Integration**:
   - Decomposed `SimulationSummary.tsx` (2,872 → 269 LoC) into `SummaryCoreWidgets.tsx`, `SummaryComparisonCharts.tsx` (with direction-aware `PolicyRadarChart`), `SummaryHierarchyPanel.tsx`, `SummaryParallelAndFacets.tsx`, `SummaryHierarchyAndBars.tsx`, `SummaryRouteSection.tsx`, `SummaryPortfolioSections.tsx`, and `useSimulationSummaryController.ts`; added `SubtabBar` (**All Panels / Table / Trajectories / Map / Compare**) and `OrionDotMatrixHeatmap`.
   - Decomposed `MLIntrospectionPanel.tsx` (1,185 → 462 LoC) into `MLAttentionControls.tsx`, `MLAttentionAndLossViews.tsx`, and `useMLIntrospectionOptions.ts`.
+  - Decomposed `ExperimentTracker.tsx` (797 → 435 LoC) + `ExperimentMlflowSection.tsx` (422 LoC), `HPOTracker.tsx` (941 → 495 LoC) + `HpoChartsAndTable.tsx` (496 LoC, with `OrionHoneycombMatrix` wired for 2D hyperparameter sweeps), `DataExplorer.tsx` (700 → 494 LoC) + `DataExplorerGeoAndCharts.tsx`, `BenchmarkAnalysis.tsx` (936 → 423 LoC) + `BenchmarkEvalAndBars.tsx` (413 LoC) + `BenchmarkPortfolioCharts.tsx` (251 LoC), `SqlQueryPanel.tsx` (663 → 434 LoC) + `SqlQueryResultsView.tsx` (320 LoC), and `GraphTopologyPanel.tsx` (596 → 387 LoC) + `GraphTopologyControls.tsx` (387 LoC). Every file under `app/src/pages/analysis/` and `app/src/components/analysis/` is now $\le 500$ LoC.
 
 ### Claude: PG-CLNS on the shared operators (`2026-10-24`)
 

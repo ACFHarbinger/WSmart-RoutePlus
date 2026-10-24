@@ -1,11 +1,9 @@
 /**
  * DuckDB-Wasm SQL query editor panel (§G.6).
  */
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import ReactECharts from "echarts-for-react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Download, Play } from "lucide-react";
 import { toast } from "sonner";
-import { PivotTablePanel } from "./PivotTablePanel";
 import { useGlobalFiltersStore } from "../../../store/filters";
 import { resolveBrushedRunLabels } from "../../../utils/benchmark/cityComparison";
 import { queryDuckDb } from "../../../utils/duckdb/duckdbClient";
@@ -14,15 +12,14 @@ import {
   sqlTemplates,
   type PortfolioBrushFilter,
 } from "../../../utils/duckdb/duckdbTemplates";
-import { ChartExportButtons } from "../../common/ChartExportButtons";
 import {
   buildAutoChartOption,
-  heatmapCellLabels,
   suggestChartAlternatives,
   type AutoChartSpec,
   type AutoChartType,
 } from "../../../utils/charts/queryAutoChart";
 import { downloadCsv } from "../../../utils/charts/tableExport";
+import { SqlQueryResultsView } from "./SqlQueryResultsView";
 
 const MonacoEditor = lazy(() => import("@monaco-editor/react"));
 
@@ -31,21 +28,13 @@ interface Props {
   theme: "dark" | "light";
   onDaySelect?: (day: number) => void;
   onProfitRange?: (min: number, max: number) => void;
-  /** Multi-policy brush from chart panels (§G.1 / §G.6 bidirectional filter). */
   highlightPolicies?: string[] | null;
-  /** Portfolio ``run_label`` brush from multi-run chart panels (§G.6). */
   highlightRunLabels?: string[] | null;
-  /** Sync Monaco SQL to brushed-policies query when chart brush changes (§G.1). */
   brushSqlSync?: boolean;
-  /** Auto-execute SQL when brush sync updates the editor (§G.2 segment → DuckDB). */
   autoRunOnBrushSync?: boolean;
-  /** Panel starts expanded (e.g. when a chart brush is active). */
   defaultOpen?: boolean;
-  /** Include portfolio ``run_label`` query templates (§G.6). */
   portfolioMode?: boolean;
-  /** Include Algorithm Comparison policy-analysis templates (§G.6). */
   algorithmMode?: boolean;
-  /** All portfolio ``run_label`` values — enables city brush SQL expansion (§G.6). */
   portfolioRunLabels?: string[];
 }
 
@@ -79,7 +68,6 @@ export function SqlQueryPanel({
   const [filterText, setFilterText] = useState("");
   const [chartTypeOverride, setChartTypeOverride] = useState<AutoChartType | null>(null);
   const logScale = useGlobalFiltersStore((s) => s.logScale);
-  const autoChartRef = useRef<ReactECharts>(null);
 
   const templates = useMemo(
     () => sqlTemplates(tableName, { portfolio: portfolioMode, algorithm: algorithmMode }),
@@ -235,40 +223,40 @@ export function SqlQueryPanel({
     }
   };
 
-  const applyCrossFilter = (col: string, value: string) => {
-    if (/^policy$/i.test(col)) {
-      setPolicy(value);
-      toast.success("Cross-filter applied", { description: `Policy: ${value}` });
-      return;
-    }
-    if (/^run_label$/i.test(col)) {
-      setBrushedCity(null);
-      setRunLabel(value);
-      toast.success("Cross-filter applied", { description: `Run: ${value}` });
-      return;
-    }
-    if (/^city_scale$/i.test(col)) {
-      setRunLabel(null);
-      setBrushedCity(value);
-      toast.success("Cross-filter applied", { description: `City: ${value}` });
-    }
-  };
+  const applyCrossFilter = useCallback(
+    (col: string, value: string) => {
+      if (/^policy$/i.test(col)) {
+        setPolicy(value);
+        toast.success("Cross-filter applied", { description: `Policy: ${value}` });
+        return;
+      }
+      if (/^run_label$/i.test(col)) {
+        setBrushedCity(null);
+        setRunLabel(value);
+        toast.success("Cross-filter applied", { description: `Run: ${value}` });
+        return;
+      }
+      if (/^city_scale$/i.test(col)) {
+        setRunLabel(null);
+        setBrushedCity(value);
+        toast.success("Cross-filter applied", { description: `City: ${value}` });
+      }
+    },
+    [setPolicy, setBrushedCity, setRunLabel]
+  );
 
   const profitCol = useMemo(
     () => columns.find((c) => /^profit$/i.test(c)) ?? null,
     [columns]
   );
-
   const policyCol = useMemo(
     () => columns.find((c) => /^policy$/i.test(c)) ?? null,
     [columns]
   );
-
   const runLabelCol = useMemo(
     () => columns.find((c) => /^run_label$/i.test(c)) ?? null,
     [columns]
   );
-
   const cityScaleCol = useMemo(
     () => columns.find((c) => /^city_scale$/i.test(c)) ?? null,
     [columns]
@@ -329,102 +317,6 @@ export function SqlQueryPanel({
       description: `€${min.toFixed(0)} – €${max.toFixed(0)}`,
     });
   }, [profitCol, rows, onProfitRange]);
-
-  const handlePivotCrossFilter = (rowKey: string, label: string) => {
-    applyCrossFilter(rowKey, label);
-  };
-
-  const onAutoChartClick = useCallback(
-    (params: {
-      componentType?: string;
-      name?: string;
-      seriesName?: string;
-      value?: unknown;
-    }) => {
-      if (!chartSpec || params.componentType !== "series") return;
-
-      if (chartSpec.type === "bar") {
-        applyCrossFilter(chartSpec.xKey, String(params.name ?? ""));
-        return;
-      }
-
-      if (chartSpec.type === "grouped-bar" && chartSpec.seriesKey) {
-        if (params.seriesName) {
-          applyCrossFilter(chartSpec.seriesKey, String(params.seriesName));
-        }
-        if (params.name) {
-          applyCrossFilter(chartSpec.xKey, String(params.name));
-        }
-        return;
-      }
-
-      if (chartSpec.type === "heatmap" && chartSpec.seriesKey) {
-        const val = params.value as [number, number, number] | undefined;
-        if (!val) return;
-        const { colLabel, rowLabel } = heatmapCellLabels(
-          chartSpec,
-          rows,
-          val[0],
-          val[1]
-        );
-        if (colLabel) applyCrossFilter(chartSpec.xKey, colLabel);
-        if (rowLabel) applyCrossFilter(chartSpec.seriesKey, rowLabel);
-        return;
-      }
-
-      if (chartSpec.type === "scatter" && chartSpec.labelKey) {
-        if (params.seriesName === "Pareto front") return;
-        const label =
-          params.name ??
-          (typeof params.value === "object" &&
-          params.value != null &&
-          "name" in (params.value as object)
-            ? String((params.value as { name?: string }).name ?? "")
-            : "");
-        if (label) applyCrossFilter(chartSpec.labelKey, label);
-        return;
-      }
-
-      if (chartSpec.type === "line") {
-        const raw =
-          typeof params.value === "object" &&
-          params.value != null &&
-          Array.isArray(params.value)
-            ? params.value[0]
-            : params.name;
-        const value = String(raw ?? "");
-        if (/^(policy|run_label|city_scale)$/i.test(chartSpec.xKey)) {
-          applyCrossFilter(chartSpec.xKey, value);
-          return;
-        }
-        if (/^day$/i.test(chartSpec.xKey) && onDaySelect != null) {
-          const day = Number(value);
-          if (Number.isFinite(day)) onDaySelect(day);
-        }
-      }
-    },
-    [chartSpec, rows, applyCrossFilter, onDaySelect]
-  );
-
-  const autoChartCrossFilterHint = useMemo(() => {
-    if (!chartSpec) return false;
-    if (chartSpec.type === "bar") {
-      return /^(policy|run_label|city_scale)$/i.test(chartSpec.xKey);
-    }
-    if (chartSpec.type === "grouped-bar" || chartSpec.type === "heatmap") {
-      return Boolean(chartSpec.seriesKey);
-    }
-    if (chartSpec.type === "scatter" && chartSpec.labelKey) {
-      return /^(policy|run_label|city_scale)$/i.test(chartSpec.labelKey);
-    }
-    if (chartSpec.type === "line") {
-      return (
-        /^(policy|run_label|city_scale|day)$/i.test(chartSpec.xKey) &&
-        (onDaySelect != null || !/^day$/i.test(chartSpec.xKey))
-      );
-    }
-    return false;
-  }, [chartSpec, onDaySelect]);
 
   return (
     <div className="card space-y-3">
@@ -506,156 +398,35 @@ export function SqlQueryPanel({
 
           {error && <p className="text-xs text-accent-danger font-mono">{error}</p>}
 
-          {chartSpec && chartOption && (
-            <div className="space-y-1.5">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="text-xs text-canvas-muted">
-                  Auto-chart (§G.6): <span className="text-gray-300">{chartSpec.label}</span>
-                </p>
-                {chartAlternatives.length > 1 && (
-                  <div className="flex flex-wrap gap-1">
-                    {chartAlternatives.map((alt) => (
-                      <button
-                        key={alt.type}
-                        type="button"
-                        onClick={() => setChartTypeOverride(alt.type)}
-                        className={`text-[10px] px-2 py-0.5 rounded border transition-colors ${
-                          chartSpec.type === alt.type
-                            ? "border-accent-primary bg-accent-primary/15 text-accent-secondary"
-                            : "border-canvas-border text-canvas-muted hover:text-gray-200"
-                        }`}
-                      >
-                        {alt.type}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                <ChartExportButtons
-                  chartRef={autoChartRef}
-                  filenameStem="auto-chart"
-                  size={11}
-                  className="py-0.5"
-                />
-
-              </div>
-              <ReactECharts
-                ref={autoChartRef}
-                option={chartOption}
-                style={{ height: 200 }}
-                onEvents={
-                  autoChartCrossFilterHint ? { click: onAutoChartClick } : undefined
-                }
-              />
-              {autoChartCrossFilterHint && (
-                <p className="text-[10px] text-canvas-muted">
-                  Click a bar, line point, scatter point, or heatmap cell to cross-filter linked
-                  panels.
-                </p>
-              )}
-            </div>
-          )}
-
-          {sortedRows.length > 0 && (
-            <PivotTablePanel
-              columns={columns}
-              rows={rows}
-              logScale={logScale}
-              onRowClick={handlePivotCrossFilter}
-              highlightPolicyLabels={highlightPolicies}
-              highlightRunLabels={highlightRunLabels}
-              highlightCityScaleLabels={highlightCityScale}
-            />
-          )}
-
-          {sortedRows.length > 0 && (
-            <input
-              type="search"
-              value={filterText}
-              onChange={(e) => setFilterText(e.target.value)}
-              placeholder="Filter rows…"
-              className="input-base w-full max-w-xs text-xs"
-            />
-          )}
-
-          {filteredRows.length > 0 && (
-            <div className="overflow-auto max-h-64 rounded-lg border border-canvas-border">
-              <table className="w-full text-xs">
-                <thead className="bg-canvas-elevated sticky top-0">
-                  <tr>
-                    {columns.map((c) => (
-                      <th
-                        key={c}
-                        onClick={() => toggleSort(c)}
-                        className="px-3 py-2 text-left text-canvas-muted font-medium whitespace-nowrap cursor-pointer hover:text-gray-200"
-                      >
-                        <span className="inline-flex items-center gap-1">
-                          {c}
-                          {sortCol === c &&
-                            (sortDir === "asc" ? <ChevronUp size={10} /> : <ChevronDown size={10} />)}
-                        </span>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-canvas-border">
-                  {filteredRows.slice(0, 200).map((row, i) => {
-                    const highlighted = rowMatchesHighlight(row);
-                    const isActive =
-                      (policyCol &&
-                        activePolicy &&
-                        String(row[policyCol] ?? "") === activePolicy) ||
-                      (runLabelCol &&
-                        activeRunLabel &&
-                        String(row[runLabelCol] ?? "") === activeRunLabel) ||
-                      (cityScaleCol &&
-                        brushedCity &&
-                        String(row[cityScaleCol] ?? "") === brushedCity);
-                    const dayCol = columns.find((c) => /^day$/i.test(c));
-                    return (
-                    <tr
-                      key={i}
-                      className={`hover:bg-canvas-hover ${
-                        isActive
-                          ? "bg-accent-primary/15 ring-1 ring-inset ring-accent-primary/40"
-                          : highlighted
-                            ? ""
-                            : "opacity-35"
-                      }`}
-                    >
-                      {columns.map((c) => {
-                        const isBrushCol =
-                          c === policyCol || c === runLabelCol || c === cityScaleCol;
-                        const isDayCol = c === dayCol && onDaySelect != null;
-                        return (
-                          <td
-                            key={c}
-                            onClick={() => {
-                              if (isBrushCol) {
-                                applyCrossFilter(c, String(row[c] ?? ""));
-                                return;
-                              }
-                              if (isDayCol && row[c] != null) {
-                                const day = Number(row[c]);
-                                if (Number.isFinite(day)) onDaySelect(day);
-                              }
-                            }}
-                            className={`px-3 py-1.5 text-gray-300 whitespace-nowrap font-mono ${
-                              isBrushCol || isDayCol
-                                ? "cursor-pointer hover:text-accent-secondary"
-                                : ""
-                            }`}
-                          >
-                            {String(row[c] ?? "—")}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <SqlQueryResultsView
+            chartSpec={chartSpec}
+            chartOption={chartOption}
+            chartAlternatives={chartAlternatives}
+            setChartTypeOverride={setChartTypeOverride}
+            sortedRows={sortedRows}
+            filteredRows={filteredRows}
+            rows={rows}
+            columns={columns}
+            logScale={logScale}
+            handlePivotCrossFilter={applyCrossFilter}
+            highlightPolicies={highlightPolicies}
+            highlightRunLabels={highlightRunLabels}
+            highlightCityScale={highlightCityScale}
+            filterText={filterText}
+            setFilterText={setFilterText}
+            sortCol={sortCol}
+            sortDir={sortDir}
+            toggleSort={toggleSort}
+            rowMatchesHighlight={rowMatchesHighlight}
+            policyCol={policyCol}
+            runLabelCol={runLabelCol}
+            cityScaleCol={cityScaleCol}
+            activePolicy={activePolicy}
+            activeRunLabel={activeRunLabel}
+            brushedCity={brushedCity}
+            applyCrossFilter={applyCrossFilter}
+            onDaySelect={onDaySelect}
+          />
         </>
       )}
     </div>
