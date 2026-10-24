@@ -2,10 +2,8 @@ import { useMemo, useRef } from "react";
 import ReactECharts from "echarts-for-react";
 import { ChartExportButtons } from "../../common/ChartExportButtons";
 import { OpenPathToolbar } from "../../common/OpenPathToolbar";
-import {
-  OrionHoneycombMatrix,
-  type HoneycombCellData,
-} from "../../ui/orion/OrionHoneycombMatrix";
+import { OrionHoneycombMatrix } from "../../ui/orion/OrionHoneycombMatrix";
+import { buildHpoHoneycomb } from "./hpoHoneycomb";
 import { resolveLocalProjectPath } from "../../../utils/runs/outputRunPath";
 import { trialLogDirFromUserAttrs } from "../../../utils/training/trialRunPath";
 import type { OptunaStudyData, OptunaTrial } from "../../../types";
@@ -220,36 +218,10 @@ export function HpoStudyVisualsSection({
     [studyData.trials]
   );
 
-  // Build 2D parameter sweep honeycomb cells from top 2 hyperparameters (Owner Ruling #3)
-  const honeycombConfig = useMemo(() => {
-    if (completedTrials.length < 2) return null;
-    const importanceSorted = Object.entries(studyData.importances)
-      .sort((a, b) => b[1] - a[1])
-      .map(([k]) => k);
-    const allParamKeys = [
-      ...new Set(completedTrials.flatMap((t) => Object.keys(t.params))),
-    ];
-    const top2 =
-      importanceSorted.length >= 2
-        ? importanceSorted.slice(0, 2)
-        : allParamKeys.slice(0, 2);
-    if (top2.length < 2) return null;
-    const [xKey, yKey] = top2;
-    const cols = Math.min(6, Math.ceil(Math.sqrt(completedTrials.length)));
-    const cells: HoneycombCellData[] = completedTrials
-      .slice(0, 24)
-      .map((t, idx) => ({
-        id: `trial-${t.number}`,
-        row: Math.floor(idx / cols),
-        col: idx % cols,
-        label: `#${t.number}`,
-        xParam: `${xKey}=${String(t.params[xKey] ?? "—")}`,
-        yParam: `${yKey}=${String(t.params[yKey] ?? "—")}`,
-        value: Number(t.value ?? 0),
-        secondaryLabel: t.state,
-      }));
-    return { xKey, yKey, cells };
-  }, [completedTrials, studyData.importances]);
+  const honeycombConfig = useMemo(
+    () => buildHpoHoneycomb(completedTrials, studyData.importances),
+    [completedTrials, studyData.importances]
+  );
 
   return (
     <>
@@ -300,7 +272,7 @@ export function HpoStudyVisualsSection({
       {honeycombConfig && (
         <OrionHoneycombMatrix
           title={`2D Hyperparameter Sweep Honeycomb (${honeycombConfig.xKey} × ${honeycombConfig.yKey})`}
-          subtitle="Trial objective landscape across top 2 hyperparameters (lower objective = optimal)"
+          subtitle="Each cell is one pair of hyperparameter values. When several trials share a pair, the cell keeps the lower objective."
           xAxisLabel={honeycombConfig.xKey}
           yAxisLabel={honeycombConfig.yKey}
           cells={honeycombConfig.cells}
