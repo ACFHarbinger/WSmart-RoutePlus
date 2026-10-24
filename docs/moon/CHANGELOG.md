@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Background mode** (`app/src-tauri/src/background.rs`): the window's X hides the Studio instead of quitting, so simulations and training runs launched from it keep running and keep streaming. The first time, a notification says so. A tray icon reopens the window (left click on Windows and macOS; the menu everywhere) and has **Quit WSmart-Route Studio**. Launching the Studio again shows the hidden window instead of starting a second copy (`tauri-plugin-single-instance`).
 - If there is no tray icon (on Linux, when `libayatana-appindicator3` is not installed, which is probed first because the tray backend would otherwise abort the app), the X quits as before, so the window is never hidden with no way back.
 - Tauri `tray-icon` feature; `libloading` (Linux, already in the dependency tree) for the AppIndicator probe.
+- **Settings → Window**: "Keep running in the background when the window is closed" (on by default, saved with the other settings, applies at once). With it off, the X quits. When there is no tray icon the card says so and how to get one (`components/settings/BackgroundModeCard.tsx`, `utils/app/backgroundMode.ts`, `store/app.ts` `closeToBackground`).
 
 ### Gemini: Studio NOC/Orion UI/UX — Slice V8 & Strict 500-LoC Architectural Audit Across app/ (`2026-10-24`)
 

@@ -7,6 +7,7 @@ import {
   type EffectiveTheme,
   type ThemePreference,
 } from "../utils/charts/theme";
+import { syncCloseToBackground } from "../utils/app/backgroundMode";
 
 interface AppState {
   mode: AppMode;
@@ -15,6 +16,8 @@ interface AppState {
   reduceMotion: boolean;
   projectRoot: string;
   pythonPath: string;
+  // Closing the window hides the Studio (tray icon) instead of quitting
+  closeToBackground: boolean;
   // Ephemeral — set by TrainingMonitor checkpoint browser to pre-populate EvaluationRunner
   pendingCheckpoint: string | null;
   // Ephemeral — set by OutputBrowser to auto-load a log file in SimulationSummary
@@ -33,6 +36,7 @@ interface AppState {
   setReduceMotion: (reduce: boolean) => void;
   setProjectRoot: (root: string) => void;
   setPythonPath: (path: string) => void;
+  setCloseToBackground: (enabled: boolean) => void;
   setPendingCheckpoint: (path: string | null) => void;
   setPendingLogPath: (path: string | null) => void;
   setPendingEvalResults: (rows: EvalAnalyticsRow[] | null) => void;
@@ -53,6 +57,7 @@ export const useAppStore = create<AppState>()(
       reduceMotion: false,
       projectRoot: "",
       pythonPath: "",
+      closeToBackground: true,
       pendingCheckpoint: null,
       pendingLogPath: null,
       pendingEvalResults: null,
@@ -77,6 +82,10 @@ export const useAppStore = create<AppState>()(
       },
       setProjectRoot: (projectRoot) => set({ projectRoot }),
       setPythonPath: (pythonPath) => set({ pythonPath }),
+      setCloseToBackground: (closeToBackground) => {
+        void syncCloseToBackground(closeToBackground);
+        set({ closeToBackground });
+      },
       setPendingCheckpoint: (pendingCheckpoint) => set({ pendingCheckpoint }),
       setPendingLogPath: (pendingLogPath) => set({ pendingLogPath }),
       setPendingEvalResults: (pendingEvalResults: EvalAnalyticsRow[] | null) =>
@@ -97,6 +106,7 @@ export const useAppStore = create<AppState>()(
         reduceMotion: s.reduceMotion,
         projectRoot: s.projectRoot,
         pythonPath: s.pythonPath,
+        closeToBackground: s.closeToBackground,
       }),
       onRehydrateStorage: () => (state) => {
         if (!state) return;
@@ -106,6 +116,8 @@ export const useAppStore = create<AppState>()(
         if (typeof document !== "undefined") {
           document.documentElement.classList.toggle("reduce-motion", Boolean(state.reduceMotion));
         }
+        // The backend starts with background mode on; apply a saved "off".
+        if (state.closeToBackground === false) void syncCloseToBackground(false);
       },
     }
   )
