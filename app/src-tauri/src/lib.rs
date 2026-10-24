@@ -1,3 +1,4 @@
+mod background;
 mod commands;
 #[cfg(target_os = "linux")]
 mod host_env;
@@ -17,11 +18,20 @@ pub fn run() {
     #[cfg(target_os = "linux")]
     host_env::prepare();
 
-    tauri::Builder::default()
+    let builder = tauri::Builder::default();
+    // Launching the Studio again shows the running (possibly hidden) window; must be the first plugin.
+    #[cfg(desktop)]
+    let builder = builder.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+        background::show_main_window(app);
+    }));
+
+    builder
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
+        .manage(background::CloseToBackground::default())
+        .on_window_event(background::on_window_event)
         .setup(|app| {
             #[cfg(desktop)]
             {
@@ -34,6 +44,7 @@ pub fn run() {
                 }
                 app.handle().plugin(updater.build())?;
                 app.manage(system::PendingUpdate(Mutex::new(None)));
+                background::setup_tray(app.handle());
             }
             Ok(())
         })
@@ -100,6 +111,8 @@ pub fn run() {
             system::get_app_version,
             system::check_for_updates,
             system::install_app_update,
+            // Background mode: closing the window keeps the Studio running
+            background::set_close_to_background,
             // Cloud runner (CR-13)
             cloud::cloud_list_jobs,
             cloud::cloud_job_status,
