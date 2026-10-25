@@ -70,7 +70,7 @@ logic/src/pipeline/
 │   └── hpo/                # Hyperparameter optimization
 │
 ├── simulations/            # Simulation engine (~80 files)
-│   ├── simulator.py        # Top-level orchestration
+│   ├── manager.py          # Top-level orchestration
 │   ├── bins/               # Bin state management
 │   ├── network/            # Distance calculation strategies
 │   ├── actions/            # Command pattern (daily steps)
@@ -930,7 +930,7 @@ Physics engine for waste collection simulation with realistic bin dynamics.
 
 ```
 simulations/
-├── simulator.py                # Top-level orchestration
+├── manager.py                  # Top-level orchestration
 ├── bins/
 │   ├── base.py                 # Bins class (state management)
 │   └── prediction.py           # Fill level prediction
@@ -973,7 +973,7 @@ simulations/
 
 ### Simulator Orchestration
 
-**File**: `simulations/simulator.py`
+**File**: `simulations/manager.py`
 
 **Key Functions**:
 

@@ -4,8 +4,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
-from logic.src.pipeline.simulations.day_context import run_day
-from logic.src.pipeline.simulations.simulator import single_simulation
+from logic.src.pipeline.simulations.manager import single_simulation
+from logic.src.pipeline.simulations.sim_day import run_day
 from logic.src.pipeline.simulations.states import InitializingState, SimulationContext
 from omegaconf import OmegaConf
 
@@ -115,7 +115,7 @@ def test_run_day_execution():
 @pytest.mark.integration
 def test_single_simulation_wrapper(mock_sim_opts):
     """Test the single_simulation wrapper function."""
-    with patch("logic.src.pipeline.simulations.simulator.SimulationContext") as MockContext:
+    with patch("logic.src.pipeline.simulations.manager.SimulationContext") as MockContext:
         instance = MockContext.return_value
         instance.run.return_value = {"success": True, "regular_unif": {"profit": 100}}
 

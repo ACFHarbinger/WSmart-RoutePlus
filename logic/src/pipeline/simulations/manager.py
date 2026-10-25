@@ -31,12 +31,12 @@ Attributes:
     _shared_metrics: Multiprocessing Manager.dict for real-time stats.
 
 Example:
-    >>> from logic.src.pipeline.simulations.simulator import sequential_simulations
+    >>> from logic.src.pipeline.simulations.manager import sequential_simulations
     >>> # Run a sequential batch (pseudo-code)
     >>> # log, log_std, failed = sequential_simulations(cfg, device, indices, samples, weights, lock)
 
 ``display_log_metrics``, ``SimpleCounter``, ``ProgressUpdater`` and ``_failed_sample``
-live in ``simulator_progress.py`` and are re-exported here.
+live in ``progress.py`` and are re-exported here.
 """
 
 from __future__ import annotations
@@ -70,9 +70,9 @@ except ImportError:
     get_active_run = None  # type: ignore[assignment]
 
 from .checkpoints import CheckpointError
-from .simulator_progress import ProgressUpdater as ProgressUpdater
-from .simulator_progress import SimpleCounter as SimpleCounter
-from .simulator_progress import _failed_sample as _failed_sample
+from .progress import ProgressUpdater as ProgressUpdater
+from .progress import SimpleCounter as SimpleCounter
+from .progress import _failed_sample as _failed_sample
 from .states import SimulationContext
 
 if TYPE_CHECKING:

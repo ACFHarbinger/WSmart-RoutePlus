@@ -1,5 +1,5 @@
 import pytest
-from logic.src.pipeline.simulations.day_context import run_day
+from logic.src.pipeline.simulations.sim_day import run_day
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

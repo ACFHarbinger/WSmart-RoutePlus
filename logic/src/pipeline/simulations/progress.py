@@ -4,7 +4,7 @@ Holds :func:`display_log_metrics` (writes the aggregated mean and std sections o
 policy log and prints the summary table), the :class:`SimpleCounter` and
 :class:`ProgressUpdater` progress wrappers that ``sequential_simulations`` drives, and
 ``_failed_sample``, the failure record that keeps a failed sample's partial KPIs. Moved
-unchanged from ``simulator.py``, which re-exports them.
+unchanged from ``manager.py``, which re-exports them.
 """
 
 from __future__ import annotations

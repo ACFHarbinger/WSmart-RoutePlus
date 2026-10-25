@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import torch
-from logic.src.pipeline.simulations.day_context import SimulationDayContext
+from logic.src.pipeline.simulations.sim_day import SimulationDayContext
 
 
 @pytest.fixture

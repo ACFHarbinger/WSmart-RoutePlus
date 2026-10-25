@@ -1,7 +1,7 @@
 """The per-policy RNG seed depends on the routing algorithm only (B-grok-01)."""
 
 import pytest
-from logic.src.pipeline.simulations.day_context import get_canonical_policy_name
+from logic.src.pipeline.simulations.sim_day import get_canonical_policy_name
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

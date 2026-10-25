@@ -15,10 +15,10 @@ from logic.src.configs import Config
 from logic.src.constants import ROOT_DIR, SIM_METRICS
 from logic.src.pipeline.features.test.config import expand_policy_configs
 from logic.src.pipeline.simulations.hpo.base import PolicyHPOBase
+from logic.src.pipeline.simulations.manager import sequential_simulations
 from logic.src.pipeline.simulations.repository import (
     load_indices,
 )
-from logic.src.pipeline.simulations.simulator import sequential_simulations
 from logic.src.utils.infrastructure.setup_sims import get_graph_config
 
 logger = logging.getLogger("HPO_Handler")

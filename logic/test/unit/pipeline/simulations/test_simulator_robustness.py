@@ -11,8 +11,8 @@ from logic.src.configs.tasks.sim import SimConfig
 from logic.src.pipeline.features.test.orchestrator.parallel_runner import execute_and_monitor_tasks
 from logic.src.pipeline.features.test.orchestrator.results_handler import aggregate_final_results
 from logic.src.pipeline.simulations.checkpoints import CheckpointError
+from logic.src.pipeline.simulations.manager import sequential_simulations
 from logic.src.pipeline.simulations.naming import get_full_policy_name, policy_result_key
-from logic.src.pipeline.simulations.simulator import sequential_simulations
 from logic.src.pipeline.simulations.states.running import RunningState, pad_model_ls
 from logic.test.unit.pipeline.simulations.test_states import _make_test_cfg
 
@@ -175,7 +175,7 @@ def test_partial_samples_average_only_successes():
     assert log[slug] == [2.0, 4.0]
 
 
-@patch("logic.src.pipeline.simulations.simulator.SimulationContext")
+@patch("logic.src.pipeline.simulations.manager.SimulationContext")
 def test_sequential_checkpoint_error_is_recorded(mock_context, tmp_path):
     """A CheckpointError is a failed sample, not a skipped one."""
     cfg = _orch_cfg()
@@ -183,7 +183,7 @@ def test_sequential_checkpoint_error_is_recorded(mock_context, tmp_path):
     instance = mock_context.return_value
     instance.run.side_effect = CheckpointError({"error": "disk", "policy": "alns"})
 
-    with patch("logic.src.pipeline.simulations.simulator.ROOT_DIR", str(tmp_path)):
+    with patch("logic.src.pipeline.simulations.manager.ROOT_DIR", str(tmp_path)):
         log, _log_std, failed = sequential_simulations(cfg, torch.device("cpu"), [None], [[0]], "weights", lock=None)
 
     assert len(failed) == 1
@@ -192,7 +192,7 @@ def test_sequential_checkpoint_error_is_recorded(mock_context, tmp_path):
     assert not any(isinstance(vals, list) and vals and all(v == 0 for v in vals) for vals in log.values())
 
 
-@patch("logic.src.pipeline.simulations.simulator.SimulationContext")
+@patch("logic.src.pipeline.simulations.manager.SimulationContext")
 def test_sequential_unsuccessful_result_is_recorded(mock_context, tmp_path):
     """A day loop that stores an error result still reaches failed_log."""
     cfg = _orch_cfg()
@@ -203,7 +203,7 @@ def test_sequential_unsuccessful_result_is_recorded(mock_context, tmp_path):
         "error": "day failed",
     }
 
-    with patch("logic.src.pipeline.simulations.simulator.ROOT_DIR", str(tmp_path)):
+    with patch("logic.src.pipeline.simulations.manager.ROOT_DIR", str(tmp_path)):
         _log, _log_std, failed = sequential_simulations(cfg, torch.device("cpu"), [None], [[0]], "weights", lock=None)
 
     assert failed[0]["sample_id"] == 0

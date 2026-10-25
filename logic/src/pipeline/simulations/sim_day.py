@@ -8,7 +8,7 @@ Attributes:
     SimulationDayContext: Represents the context of a single simulation day.
 
 Example:
-    >>> from logic.src.pipeline.simulations.day_context import SimulationDayContext
+    >>> from logic.src.pipeline.simulations.sim_day import SimulationDayContext
     >>> context = SimulationDayContext(graph_size=51)
     >>> context.graph_size
     51
@@ -394,7 +394,7 @@ def _run_non_routing_day(
 ) -> SimulationDayContext:
     """Execute a simulation day where routing is prohibited by time window constraints."""
     from logic.src.envs.common.expand_pool import reset_expand_pool
-    from logic.src.pipeline.simulations.day_setup import apply_shared_bin_rng, shared_env_seed
+    from logic.src.pipeline.simulations.pipeline import apply_shared_bin_rng, shared_env_seed
 
     wall_start = time.perf_counter()
     reset_solver_status()
@@ -455,13 +455,13 @@ def run_day(context: SimulationDayContext) -> SimulationDayContext:
     """
     from logic.src.envs.common.expand_pool import reset_expand_pool, set_expand_pool
     from logic.src.envs.common.released_specs import released_spec
-    from logic.src.pipeline.simulations.day_setup import (
+    from logic.src.pipeline.simulations.pipeline import (
         apply_shared_bin_rng,
         policy_seed,
+        resolve_pipeline,
         seed_policy_rng,
         shared_env_seed,
     )
-    from logic.src.pipeline.simulations.pipeline import resolve_pipeline
 
     # Validate the selected pipeline before reseeding or mutating simulation state.
     configured = context.day_pipeline
