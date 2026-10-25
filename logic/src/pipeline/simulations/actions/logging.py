@@ -16,7 +16,7 @@ from rich.console import Console
 from rich.table import Table
 
 from logic.src.pipeline.simulations.actions.base import SimulationAction, bind_context
-from logic.src.pipeline.simulations.sim_day import get_daily_results
+from logic.src.pipeline.simulations.daily import get_daily_results
 from logic.src.tracking.integrations.simulation import get_sim_tracker
 from logic.src.tracking.logging.modules.failure_analyzer import FailureAnalyzer
 from logic.src.tracking.logging.modules.failure_emit import emit_sim_failure_summary

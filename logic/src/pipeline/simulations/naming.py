@@ -1,6 +1,6 @@
 """Policy display names and result keys.
 
-Re-exported from ``sim_day`` so existing callers keep their import path.
+Re-exported from ``daily`` so existing callers keep their import path.
 """
 
 from __future__ import annotations

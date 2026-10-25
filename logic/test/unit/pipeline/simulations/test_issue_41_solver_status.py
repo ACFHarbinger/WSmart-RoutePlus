@@ -8,7 +8,7 @@ from logic.src.pipeline.simulations.reporting import (
     note_solver_status,
     reset_solver_status,
 )
-from logic.src.pipeline.simulations.sim_day import get_daily_results, record_aborted_day, resolve_solver_status
+from logic.src.pipeline.simulations.daily import get_daily_results, record_aborted_day, resolve_solver_status
 from logic.src.tracking.logging.modules.summary_display import daily_row_is_visible
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

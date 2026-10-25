@@ -21,7 +21,7 @@ from omegaconf import DictConfig, OmegaConf
 
 from logic.src.pipeline.simulations.actions.policy_config import _as_policy_mapping
 from logic.src.pipeline.simulations.reporting import current_solver_status, reset_solver_status
-from logic.src.pipeline.simulations.sim_day import resolve_solver_status
+from logic.src.pipeline.simulations.daily import resolve_solver_status
 from logic.src.policies.routing.base import RoutingAlgorithmFactory, RoutingAlgorithmRegistry
 
 from .base import SimulationAction, bind_context
