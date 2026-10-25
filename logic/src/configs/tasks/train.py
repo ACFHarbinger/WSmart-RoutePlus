@@ -16,7 +16,7 @@ Example:
 from dataclasses import dataclass, field
 from typing import Any, List, Optional, Union
 
-from logic.src.configs.learning.envs.env import EnvConfig
+from logic.src.configs.envs.env import EnvConfig
 from logic.src.configs.policies.routing.learning_algorithms.na import NeuralAgentConfig
 
 

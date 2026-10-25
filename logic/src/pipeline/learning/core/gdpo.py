@@ -9,7 +9,7 @@ Attributes:
 
 Example:
     >>> from logic.src.pipeline.learning.core import GDPO
-    >>> from logic.src.pipeline.learning.envs import GDPOEnv
+    >>> from logic.src.envs import GDPOEnv
     >>> from logic.src.models import GDPOPPOAgent
     >>> env = GDPOEnv()
     >>> agent = GDPOPPOAgent(env)

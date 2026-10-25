@@ -5,10 +5,10 @@ import copy
 import pytest
 import torch
 from logic.src.data.datasets import TensorDictDataset
+from logic.src.envs import get_env
 from logic.src.models.core.attention_model.policy import AttentionModelPolicy
 from logic.src.pipeline.learning.common.epoch import prepare_epoch
 from logic.src.pipeline.learning.core.reinforce import REINFORCE
-from logic.src.pipeline.learning.envs import get_env
 from tensordict import TensorDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

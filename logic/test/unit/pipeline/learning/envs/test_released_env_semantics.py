@@ -7,8 +7,8 @@ customer is still reachable on a fresh trip.
 
 import pytest
 import torch
-from logic.src.pipeline.learning.envs.ptp import PTPEnv
-from logic.src.pipeline.learning.envs.cptptc import CPTPTCEnv
+from logic.src.envs.cptptc import CPTPTCEnv
+from logic.src.envs.ptp import PTPEnv
 from tensordict import TensorDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

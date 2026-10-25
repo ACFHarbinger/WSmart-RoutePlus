@@ -95,7 +95,7 @@ class FinishingState(SimState):
             sample_metrics["time_spent"] = float(np.sum(ctx.daily_log["time_spent"]))
         daily_kg = ctx.daily_log.get("kg") if ctx.daily_log else None
         if daily_kg:
-            from logic.src.pipeline.learning.envs.common.metrics import METRICS as KPI
+            from logic.src.envs.common.metrics import METRICS as KPI
 
             records = []
             for index in range(len(daily_kg)):

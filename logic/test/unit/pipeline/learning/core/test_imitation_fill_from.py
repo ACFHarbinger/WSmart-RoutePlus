@@ -5,8 +5,8 @@ from typing import Any, List, Optional
 import pytest
 import torch
 from logic.src.configs.policies.vectorized.routing.profitable_nn import ProfitableNNConfig
+from logic.src.envs.cptp import CPTPEnv
 from logic.src.pipeline.learning.core.imitation import ImitationLearning
-from logic.src.pipeline.learning.envs.cptp import CPTPEnv
 from tensordict import TensorDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

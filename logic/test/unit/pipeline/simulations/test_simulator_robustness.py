@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import torch
 from logic.src.configs import Config
-from logic.src.configs.learning.envs.graph import GraphConfig
+from logic.src.configs.envs.graph import GraphConfig
 from logic.src.configs.tasks.sim import SimConfig
 from logic.src.pipeline.features.test.orchestrator.parallel_runner import execute_and_monitor_tasks
 from logic.src.pipeline.features.test.orchestrator.results_handler import aggregate_final_results

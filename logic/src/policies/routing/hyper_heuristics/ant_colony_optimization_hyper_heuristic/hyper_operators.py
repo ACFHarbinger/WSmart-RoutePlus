@@ -31,7 +31,7 @@ Example:
 import logging
 from typing import Callable, Dict, Optional
 
-from logic.src.pipeline.learning.envs.common.expand_pool import current_expand_pool
+from logic.src.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators import (
     greedy_insertion,
     greedy_profit_insertion,

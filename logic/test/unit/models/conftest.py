@@ -5,7 +5,7 @@ batch size 4), moved unchanged from ``test_improvement_decoders.py``.
 """
 
 import pytest
-from logic.src.pipeline.learning.envs.tsp_kopt import TSPkoptEnv
+from logic.src.envs.tsp_kopt import TSPkoptEnv
 
 
 @pytest.fixture

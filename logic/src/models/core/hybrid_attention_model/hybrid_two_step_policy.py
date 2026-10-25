@@ -23,10 +23,10 @@ import torch
 from tensordict import TensorDict
 from torch import nn
 
+from logic.src.envs.base.base import RL4COEnvBase
 from logic.src.models.common.autoregressive.policy import AutoregressivePolicy
 from logic.src.models.subnets.embeddings import get_init_embedding
 from logic.src.models.subnets.encoders.gat import GraphAttentionEncoder
-from logic.src.pipeline.learning.envs.base.base import RL4COEnvBase
 from logic.src.policies.vectorized.routing.core.tour_aco import VectorizedTourACOPolicy
 from logic.src.policies.vectorized.routing.core.tour_alns import VectorizedTourALNS
 from logic.src.policies.vectorized.routing.core.tour_hgs import VectorizedTourHGS

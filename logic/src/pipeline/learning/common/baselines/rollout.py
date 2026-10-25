@@ -295,9 +295,9 @@ class RolloutBaseline(Baseline):
         Only the built-in deterministic greedy policy and complete routing data are
         eligible. Other policy/environment contracts retain ordinary precomputation.
         """
+        from logic.src.envs.cptp import CPTPEnv
+        from logic.src.envs.ptp import PTPEnv
         from logic.src.models.core.attention_model.policy import AttentionModelPolicy
-        from logic.src.pipeline.learning.envs.cptp import CPTPEnv
-        from logic.src.pipeline.learning.envs.ptp import PTPEnv
 
         data = getattr(dataset, "data", None)
         if (

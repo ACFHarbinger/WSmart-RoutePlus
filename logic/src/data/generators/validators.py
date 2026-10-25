@@ -16,7 +16,7 @@ import re
 from typing import List, Optional
 
 from logic.src.configs import Config
-from logic.src.configs.learning.envs.graph import GraphConfig
+from logic.src.configs.envs.graph import GraphConfig
 from logic.src.constants import MAP_DEPOTS, WASTE_TYPES
 
 

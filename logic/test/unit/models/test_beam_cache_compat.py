@@ -5,10 +5,10 @@ from types import SimpleNamespace
 import pytest
 import torch
 from logic.src.configs.models.normalization import NormalizationConfig
+from logic.src.envs.cptp import CPTPEnv
 from logic.src.models.core.attention_model.decoding import DecodingMixin
 from logic.src.models.subnets.decoders.gat.decoder import DeepGATDecoder
 from logic.src.models.subnets.decoders.glimpse.decoder import GlimpseDecoder
-from logic.src.pipeline.learning.envs.cptp import CPTPEnv
 from logic.src.utils.data.td_state_wrapper import TensorDictStateWrapper
 from logic.src.utils.decoding.batch_beam import BatchBeam
 
@@ -94,8 +94,8 @@ def test_beam_loop_completes_heterogeneous_instances(kind):
 
 
 def test_public_cptp_beam_search_matches_individual_instances():
+    from logic.src.envs.cptp import CPTP
     from logic.src.models.core.attention_model.model import AttentionModel
-    from logic.src.pipeline.learning.envs.cptp import CPTP
 
     torch.manual_seed(5)
     env = CPTPEnv(generator_params={"num_loc": 3})
@@ -129,8 +129,8 @@ def test_public_cptp_beam_search_matches_individual_instances():
 @pytest.mark.parametrize("reward_weight", [0.0, 1.0])
 def test_simulator_beam_width_larger_than_feasible_candidates(reward_weight):
     from logic.src.configs.policies.routing.learning_algorithms.na import NeuralAgentConfig
+    from logic.src.envs.cptp import CPTP
     from logic.src.models.core.attention_model.model import AttentionModel
-    from logic.src.pipeline.learning.envs.cptp import CPTP
     from logic.src.policies.routing.learning_algorithms.neural_agent.agent import NeuralAgent
 
     model = AttentionModel(

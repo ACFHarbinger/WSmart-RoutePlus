@@ -18,8 +18,8 @@ from typing import Any, Dict, Tuple, Union
 import torch
 from tensordict import TensorDict
 
+from logic.src.envs.base.base import RL4COEnvBase
 from logic.src.models.common.non_autoregressive.decoder import NonAutoregressiveDecoder
-from logic.src.pipeline.learning.envs.base.base import RL4COEnvBase
 
 
 class ACODecoder(NonAutoregressiveDecoder):

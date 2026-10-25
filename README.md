@@ -99,7 +99,7 @@ Detailed technical documentation for each subsystem. Essential for deep dives in
 | **[Configuration Guide](docs/CONFIGURATION_GUIDE.md)**         | Comprehensive guide to Hydra configuration, CLI overrides, and best practices. | -                       |
 | **[Constants Module](docs/CONSTANTS_MODULE.md)**               | System-wide constants, problem definitions, and enum types.                    | `logic/src/utils/`      |
 | **[Data Module](docs/DATA_MODULE.md)**                         | Dataset generation, loading utilities, and data augmentation.                  | `logic/src/data/`       |
-| **[Environments Module](docs/ENVS_MODULE.md)**                 | Problem environments (VRPP, WCVRP, SCWCVRP) and state management.              | `logic/src/pipeline/learning/envs/`       |
+| **[Environments Module](docs/ENVS_MODULE.md)**                 | Problem environments (VRPP, WCVRP, SCWCVRP) and state management.              | `logic/src/envs/`       |
 | **[Interfaces Module](docs/INTERFACES_MODULE.md)**             | Abstract base classes, protocols, and type definitions.                        | `logic/src/interfaces/` |
 | **[Models Module](docs/MODELS_MODULE.md)**                     | Neural architectures, encoders, decoders, and network components.              | `logic/src/models/`     |
 | **[Pipeline Module](docs/PIPELINE_MODULE.md)**                 | Training, evaluation, simulation orchestration, and RL algorithms.             | `logic/src/pipeline/`   |

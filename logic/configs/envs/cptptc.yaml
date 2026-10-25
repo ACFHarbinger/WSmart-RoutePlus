@@ -11,7 +11,7 @@
 #   - Both constraints hold simultaneously. The vehicle may return to the
 #     depot and start a new trip within the same period; the episode ends
 #     once nothing is reachable even with a freshly reset capacity AND
-#     time budget. See logic/src/pipeline/learning/envs/routing/cptptc.py.
+#     time budget. See logic/src/envs/routing/cptptc.py.
 #   - "Team" is one vehicle, multiple trips here -- not a concurrent fleet.
 #     See docs/moon/roadmaps/new_features.md §E.8 for the true-fleet variant.
 #

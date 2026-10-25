@@ -2,8 +2,8 @@
 
 import pytest
 import torch
-from logic.src.pipeline.learning.envs import CPTPTWTC, PROBLEMS, get_env
-from logic.src.pipeline.learning.envs.cptptwtc import CPTPTWTCEnv, CPTPTWTCGenerator, time_window_violations
+from logic.src.envs import CPTPTWTC, PROBLEMS, get_env
+from logic.src.envs.cptptwtc import CPTPTWTCEnv, CPTPTWTCGenerator, time_window_violations
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

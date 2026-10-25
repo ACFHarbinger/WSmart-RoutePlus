@@ -36,8 +36,8 @@ def test_context_embedders_multi_instance_beam_expansion():
 
 def test_attention_model_policy_no_dummy_step_accumulation():
     """Verify that finished instances do not accumulate log_p and entropy indefinitely."""
+    from logic.src.envs.cptp import CPTPEnv
     from logic.src.models.core.attention_model.policy import AttentionModelPolicy
-    from logic.src.pipeline.learning.envs.cptp import CPTPEnv
 
     env = CPTPEnv(generator_params={"num_loc": 6})
     policy = AttentionModelPolicy(env_name=env.name, embed_dim=16, n_heads=2, n_encode_layers=1)
@@ -55,8 +55,8 @@ def test_attention_model_policy_no_dummy_step_accumulation():
 
 def test_attention_model_policy_teacher_forcing_bounds_check():
     """Verify teacher forcing does not raise IndexError when trajectory exceeds actions length."""
+    from logic.src.envs.cptp import CPTPEnv
     from logic.src.models.core.attention_model.policy import AttentionModelPolicy
-    from logic.src.pipeline.learning.envs.cptp import CPTPEnv
 
     env = CPTPEnv(generator_params={"num_loc": 6})
     policy = AttentionModelPolicy(env_name=env.name, embed_dim=16, n_heads=2, n_encode_layers=1)
@@ -119,7 +119,7 @@ def test_parse_hydra_config_preserves_decoder_settings():
 
 def test_base_problem_beam_search_propose_expansions_unpacking():
     """Verify BaseProblem.beam_search propose_expansions returns (parent, action, score) triplet."""
-    from logic.src.pipeline.learning.envs.base.problem import BaseProblem
+    from logic.src.envs.base.problem import BaseProblem
     from tensordict import TensorDict
 
     class DummyModel:

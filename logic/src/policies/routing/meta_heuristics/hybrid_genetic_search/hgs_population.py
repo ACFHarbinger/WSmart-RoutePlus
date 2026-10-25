@@ -11,7 +11,7 @@ extraction. Moved unchanged from ``hgs.py``, which re-exports the constants.
 
 from typing import Dict, List, Optional, Tuple
 
-from logic.src.pipeline.learning.envs.common.expand_pool import current_expand_pool
+from logic.src.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators.crossover_recombination import route_profit_gpx_crossover
 
 from .evolution import _extract_edges, evaluate, update_biased_fitness

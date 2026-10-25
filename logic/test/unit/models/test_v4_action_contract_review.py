@@ -2,7 +2,7 @@
 
 import pytest
 import torch
-from logic.src.pipeline.learning.envs.tsp_kopt import TSPkoptEnv
+from logic.src.envs.tsp_kopt import TSPkoptEnv
 from tensordict import TensorDict
 
 

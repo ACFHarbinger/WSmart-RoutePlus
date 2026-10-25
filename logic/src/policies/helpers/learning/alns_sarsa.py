@@ -25,7 +25,7 @@ from typing import Any, Deque, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from logic.src.pipeline.learning.envs.common.expand_pool import current_expand_pool
+from logic.src.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.learning.agents.td_learning import SarsaAgent
 from logic.src.policies.helpers.learning.alns_sarsa_destroy import (
     ALNSSARSADestroyMixin as ALNSSARSADestroyMixin,

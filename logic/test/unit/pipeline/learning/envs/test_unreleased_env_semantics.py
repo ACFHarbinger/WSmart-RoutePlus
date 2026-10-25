@@ -7,9 +7,9 @@ generators. Seeded rollouts of every env were also replayed step by step against
 
 import pytest
 import torch
-from logic.src.pipeline.learning.envs import get_env
-from logic.src.pipeline.learning.envs.op import OPEnv
-from logic.src.pipeline.learning.envs.pdp import PDPEnv
+from logic.src.envs import get_env
+from logic.src.envs.op import OPEnv
+from logic.src.envs.pdp import PDPEnv
 from tensordict import TensorDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

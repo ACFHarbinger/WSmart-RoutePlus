@@ -29,8 +29,8 @@ def test_half_logits_match_float32_log_probability_and_gradient(strategy, dtype)
 
 
 def test_half_teacher_forcing_rare_action_matches_log_softmax(monkeypatch):
+    from logic.src.envs.cptp import CPTPEnv
     from logic.src.models.core.attention_model.policy import AttentionModelPolicy
-    from logic.src.pipeline.learning.envs.cptp import CPTPEnv
 
     env = CPTPEnv(generator_params={"num_loc": 2})
     policy = AttentionModelPolicy(env_name="cptp", embed_dim=16, n_heads=2, n_encode_layers=1)

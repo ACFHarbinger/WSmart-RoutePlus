@@ -7,7 +7,7 @@ Attributes:
 
 Example:
     >>> from logic.src.pipeline.learning.core import ImitationLearning
-    >>> from logic.src.pipeline.learning.envs import COEnv
+    >>> from logic.src.envs import COEnv
     >>> from logic.src.models import COPolicy
     >>> env = COEnv()
     >>> agent = COPolicy(env)

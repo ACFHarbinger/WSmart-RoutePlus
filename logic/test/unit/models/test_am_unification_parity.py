@@ -17,10 +17,10 @@ from typing import Any, Dict
 
 import pytest
 import torch
+from logic.src.envs.ptp import PTPEnv
 from logic.src.models.core.attention_model import AttentionModel, AttentionModelPolicy
 from logic.src.models.core.moe import MoEAttentionModel
 from logic.src.models.core.temporal_attention_model import TemporalAttentionModel
-from logic.src.pipeline.learning.envs.ptp import PTPEnv
 from logic.src.utils.model.loader import load_model
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

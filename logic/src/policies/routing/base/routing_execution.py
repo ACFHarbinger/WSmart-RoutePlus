@@ -12,8 +12,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
+from logic.src.envs.common.expand_pool import current_expand_pool
 from logic.src.interfaces.context.search_context import ConstructionMetrics, SearchContext, merge_context
-from logic.src.pipeline.learning.envs.common.expand_pool import current_expand_pool
 from logic.src.tracking.core.run import get_active_run
 
 

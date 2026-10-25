@@ -158,7 +158,7 @@ def _eval_dataset(
             if model.problem.NAME in ("cptp", "cptptc"):
                 # Multi-trip problems: keep the trailing depot-return marker
                 # (cptptc is single-vehicle-multi-trip, same shape as cptp's
-                # per-trip capacity resets -- see logic/src/pipeline/learning/envs/cptptc.py)
+                # per-trip capacity resets -- see logic/src/envs/cptptc.py)
                 seq = np.trim_zeros(seq).tolist() + [0]
             elif model.problem.NAME == "ptp":
                 seq = np.trim_zeros(seq).tolist()

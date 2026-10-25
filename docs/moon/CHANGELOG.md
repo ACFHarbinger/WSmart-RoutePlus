@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Claude: environments and their configs move up a level (`2026-10-25`)
+
+- **`logic/src/pipeline/learning/envs` is now `logic/src/envs`**: `logic.src.pipeline.learning.envs.<x>` becomes `logic.src.envs.<x>` (hard break). The tests stay under `logic/test/unit/pipeline/learning/envs/`.
+- **`logic/src/configs/learning/envs` is now `logic/src/configs/envs`**: `from logic.src.configs.envs import EnvConfig, GraphConfig, ObjectiveConfig`. `logic.src.configs.learning` no longer re-exports the environment configs; `from logic.src.configs import EnvConfig` still works.
+- **`logic/src/configs/learning/core/` is folded into `logic/src/configs/learning/`**: `configs.learning.core.ppo` becomes `configs.learning.ppo`, and `from logic.src.configs.learning import RLConfig` (and the algorithm configs) is unchanged.
+- The release builder checks problem modules under `logic/src/envs/`; `logic/release.yaml`, the docs, notebooks and `docs/api` (regenerated) follow the new paths.
+
 ### Claude: Studio keeps running in the background when its window is closed (`2026-10-24`)
 
 #### Added

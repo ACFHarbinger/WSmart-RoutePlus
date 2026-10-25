@@ -9,7 +9,7 @@ pytestmark = [pytest.mark.unit]
 
 def test_cptptc_check_done_explicit_stop_and_exhaustion():
     """Verify CPTPTCEnv._check_done respects explicit finished flag and exhausted customer actions."""
-    from logic.src.pipeline.learning.envs.cptptc import CPTPTCEnv
+    from logic.src.envs.cptptc import CPTPTCEnv
 
     env = CPTPTCEnv(generator_params={"num_loc": 5})
     td = env.reset(batch_size=[2])
@@ -49,7 +49,7 @@ def test_statistical_gamma_scaling():
 
 def test_ptp_generate_has_max_waste():
     """Verify PTPEnv._generate includes max_waste tensor of ones."""
-    from logic.src.pipeline.learning.envs.ptp import PTPGenerator
+    from logic.src.envs.ptp import PTPGenerator
 
     gen = PTPGenerator(num_loc=10)
     td = gen(batch_size=[4])
@@ -60,7 +60,7 @@ def test_ptp_generate_has_max_waste():
 
 def test_op_depot_prepending_for_partial_tour():
     """Verify OP.evaluate_tour prepends depot 0 to prize_all when customer indexing requires it."""
-    from logic.src.pipeline.learning.envs.op import OP
+    from logic.src.envs.op import OP
 
     # Customer prize only (length 4, customers 1..4)
     prize = torch.tensor([[10.0, 20.0, 30.0, 40.0]])
@@ -77,7 +77,7 @@ def test_op_depot_prepending_for_partial_tour():
 
 def test_pctsp_depot_prepending_for_partial_tour():
     """Verify PCTSP.evaluate_tour prepends depot 0 to penalty when indexing requires it."""
-    from logic.src.pipeline.learning.envs.pctsp import PCTSP
+    from logic.src.envs.pctsp import PCTSP
 
     penalty = torch.tensor([[5.0, 15.0, 25.0, 35.0]])
     locs = torch.rand(1, 4, 2)
@@ -92,7 +92,7 @@ def test_pctsp_depot_prepending_for_partial_tour():
 
 def test_problem_get_tour_length_batched_matrix():
     """Verify BaseProblem.get_tour_length correctly looks up distances from batched 3D dist_matrix."""
-    from logic.src.pipeline.learning.envs.base.problem import BaseProblem
+    from logic.src.envs.base.problem import BaseProblem
 
     # 2 instances, 4 nodes (0 is depot, 1, 2, 3)
     dm = torch.tensor(
@@ -124,7 +124,7 @@ def test_problem_get_tour_length_batched_matrix():
 
 def test_routing_env_step_vectorized_dm_lookup():
     """Verify RoutingEnv._step indexes distance from tensordict['dm'] in a vectorized fashion."""
-    from logic.src.pipeline.learning.envs.cptp import CPTPEnv
+    from logic.src.envs.cptp import CPTPEnv
 
     env = CPTPEnv(generator_params={"num_loc": 3})
     td = env.reset(batch_size=[2])

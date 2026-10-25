@@ -2,8 +2,8 @@
 
 import pytest
 import torch
-from logic.src.pipeline.learning.envs import PTPGenerator
-from logic.src.pipeline.learning.envs.cptp import CPTPEnv
+from logic.src.envs import PTPGenerator
+from logic.src.envs.cptp import CPTPEnv
 from logic.src.pipeline.simulations.repository import load_area_and_waste_type_params
 from tensordict import TensorDict
 

@@ -2,9 +2,9 @@
 
 import pytest
 import torch
+from logic.src.envs.tsp_kopt import TSPkoptEnv
 from logic.src.models.core.n2s.decoder import N2SDecoder
 from logic.src.models.core.n2s.policy import N2SPolicy, create_feasible_pdp_solution, validate_pdp_solution
-from logic.src.pipeline.learning.envs.tsp_kopt import TSPkoptEnv
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

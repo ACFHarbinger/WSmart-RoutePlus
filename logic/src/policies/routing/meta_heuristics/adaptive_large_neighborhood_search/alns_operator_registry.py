@@ -9,7 +9,7 @@ the configuration, in their cost-only and profit-aware variants. Moved unchanged
 
 from typing import Callable, Dict, List, Tuple
 
-from logic.src.pipeline.learning.envs.common.expand_pool import current_expand_pool
+from logic.src.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators import (
     cluster_profit_removal,
     cluster_removal,

@@ -172,7 +172,7 @@ class NeuOptPolicy(ImprovementPolicy):
         Returns:
             dict[str, Any]: Results including reward, log_likelihood, and actions.
         """
-        from logic.src.pipeline.learning.envs import get_env
+        from logic.src.envs import get_env
         from logic.src.utils.decoding import batchify, unbatchify
 
         if env is None:

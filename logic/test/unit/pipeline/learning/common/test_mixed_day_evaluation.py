@@ -4,8 +4,8 @@ from types import SimpleNamespace
 
 import pytest
 import torch
+from logic.src.envs.cptp import CPTPEnv
 from logic.src.pipeline.learning.common.base.steps import StepMixin
-from logic.src.pipeline.learning.envs.cptp import CPTPEnv
 from tensordict import TensorDict
 
 
