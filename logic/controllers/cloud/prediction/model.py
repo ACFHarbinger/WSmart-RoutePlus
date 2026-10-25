@@ -4,7 +4,7 @@
 percentile, scikit-learn) on the logarithm of a cell's wall time, with one-hot
 routing algorithm, packing variant, improver, distribution and area, and numeric
 network size and horizon. The bundled table (``runtime_training.csv``, built by
-``tools/build_runtime_training.py``) holds the paper's 810 runs on one laptop:
+``logic/cloud/build_runtime_training.py``) holds the paper's 810 runs on one laptop:
 210 cells timed by the rerun drivers and 600 whose wall time is their policy time
 plus the measured simulator overhead. Completed cloud tasks can be added
 (:func:`.history.cloud_records`).

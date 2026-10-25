@@ -274,8 +274,18 @@ def compare_daily_certificates(baseline: Dict[str, Any], candidate: Dict[str, An
     return Verdict(True, "Every sample/day incumbent and certified bound agrees")
 
 
-_FLOAT_KPIS = {"overflows", "kg", "ncol", "kg_lost", "km", "kg/km", "profit",
-               "time_spent", "days_simulated", "collection_days"}
+_FLOAT_KPIS = {
+    "overflows",
+    "kg",
+    "ncol",
+    "kg_lost",
+    "km",
+    "kg/km",
+    "profit",
+    "time_spent",
+    "days_simulated",
+    "collection_days",
+}
 
 
 def _canonical_quantities(row: Dict[str, Any]) -> None:
@@ -327,7 +337,9 @@ def canonical_gate_log(log: Dict[str, Any]) -> Dict[str, Any]:
         if horizons:
             values = list(horizons.values())
             mean = sum(values) / len(values)
-            row.setdefault("days_simulated", mean if section == "mean" else
-                           math.sqrt(sum((value - mean)**2 for value in values) / len(values)))
+            row.setdefault(
+                "days_simulated",
+                mean if section == "mean" else math.sqrt(sum((value - mean) ** 2 for value in values) / len(values)),
+            )
         _canonical_legacy_metrics(row)
     return result

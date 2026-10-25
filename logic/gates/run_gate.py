@@ -15,7 +15,7 @@ Heavy subcommands refuse to run until ``.agent/cache/train-logs/chain.log``
 shows ``sim chain done`` and take ``~/.cache/wsr-review/heavy.lock``
 (non-blocking; one heavy job at a time). ``calibrate`` additionally refuses
 unless the code tree equals ``BASELINE_COMMIT`` plus the exact source-hashed
-optional-routing adapter amendment (see ``tools/gates/BASELINE.md``).
+optional-routing adapter amendment (see ``logic/gates/BASELINE.md``).
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ from typing import Any, Dict, List
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from tools.gates.cells import (  # noqa: E402
+from logic.gates.cells import (  # noqa: E402
     BASELINE_AMENDMENTS,
     BASELINE_COMMIT,
     CALIBRATION_REPEATS,
@@ -41,7 +41,7 @@ from tools.gates.cells import (  # noqa: E402
     GATE_A_SIM,
     cell_policy_entry,
 )
-from tools.gates.compare import (  # noqa: E402
+from logic.gates.compare import (  # noqa: E402
     canonical_gate_log,
     check_repeats_identical,
     compare_daily_certificates,
@@ -354,7 +354,7 @@ def cmd_gate_b(args: argparse.Namespace) -> None:
 
 
 def _load_policy_log(results_dir: str, constructor: str) -> Dict[str, Any]:
-    from tools.gates.cells import get_cell
+    from logic.gates.cells import get_cell
 
     token = get_cell(constructor)["policy"].lower()
     matches = [
@@ -371,7 +371,7 @@ def _load_policy_log(results_dir: str, constructor: str) -> Dict[str, Any]:
 
 
 def _log_kpis(log: Dict[str, Any]) -> Dict[str, float]:
-    from tools.gates.compare import extract_cell_kpis
+    from logic.gates.compare import extract_cell_kpis
 
     samples = log.get("samples", {})
     if not isinstance(samples, dict) or not samples:

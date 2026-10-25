@@ -36,7 +36,7 @@ _ENGINE_KEYS = ("gurobi", "ortools", "custom")
 def _unwrap_engine_section(source: Any) -> Dict[str, Any]:
     """Unwrap a policy-name or engine wrapper into a plain parameter mapping."""
     if isinstance(source, (ListConfig, list)):
-        raise TypeError("policy YAML must be a mapping after P-13; run tools/convert_policy_yaml.py")
+        raise TypeError("policy YAML must be a mapping after P-13; run logic/migration/convert_policy_yaml.py")
     if isinstance(source, (DictConfig, ListConfig)) or OmegaConf.is_config(source):
         source = OmegaConf.to_container(source, resolve=True)
     if not isinstance(source, dict):
@@ -51,7 +51,7 @@ def _unwrap_engine_section(source: Any) -> Dict[str, Any]:
             section = inner
             continue
         if isinstance(inner, list):
-            raise TypeError("policy YAML must be a mapping after P-13; run tools/convert_policy_yaml.py")
+            raise TypeError("policy YAML must be a mapping after P-13; run logic/migration/convert_policy_yaml.py")
         break
     for engine in _ENGINE_KEYS:
         inner = section.get(engine)
@@ -305,7 +305,7 @@ class BaseRoutingPolicy(RoutingExecutionMixin, PolicyVizMixin, IRoutingAlgorithm
             if hasattr(runtime_overrides, "items"):
                 runtime_overrides = _unwrap_engine_section(runtime_overrides)
             elif isinstance(runtime_overrides, list):
-                raise TypeError("policy YAML must be a mapping after P-13; run tools/convert_policy_yaml.py")
+                raise TypeError("policy YAML must be a mapping after P-13; run logic/migration/convert_policy_yaml.py")
             else:
                 runtime_overrides = {}
             policy_config = {**asdict(self._config), **runtime_overrides}
@@ -318,7 +318,7 @@ class BaseRoutingPolicy(RoutingExecutionMixin, PolicyVizMixin, IRoutingAlgorithm
             if hasattr(policy_section, "items"):
                 policy_config = _unwrap_engine_section(policy_section)
             elif isinstance(policy_section, list):
-                raise TypeError("policy YAML must be a mapping after P-13; run tools/convert_policy_yaml.py")
+                raise TypeError("policy YAML must be a mapping after P-13; run logic/migration/convert_policy_yaml.py")
             else:
                 policy_config = {}
             # Ensure seed from context also makes it into the untyped path if missing

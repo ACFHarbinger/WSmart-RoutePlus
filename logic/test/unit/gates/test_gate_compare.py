@@ -14,8 +14,8 @@ pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
 
-from tools.gates.cells import GATE_A_CELLS, cell_policy_entry, get_cell  # noqa: E402
-from tools.gates.compare import (  # noqa: E402
+from logic.gates.cells import GATE_A_CELLS, cell_policy_entry, get_cell  # noqa: E402
+from logic.gates.compare import (  # noqa: E402
     CERT_TOL,
     check_repeats_identical,
     compare_certificates,
@@ -182,14 +182,14 @@ def test_calibration_rejects_insufficient_or_nonfinite_evidence():
 def test_gate_a_cannot_pass_empty_sweeps(tmp_path):
     from argparse import Namespace
 
-    from tools.gates.run_gate import cmd_gate_a
+    from logic.gates.run_gate import cmd_gate_a
 
     with pytest.raises(SystemExit, match="FAILED"):
         cmd_gate_a(Namespace(baseline=str(tmp_path), candidate=str(tmp_path)))
 
 
 def test_missing_bound_is_not_fabricated():
-    from tools.gates.run_gate import _bound
+    from logic.gates.run_gate import _bound
 
     with pytest.raises(KeyError):
         _bound({"samples": {"s0": {"profit": 10}}})
@@ -198,7 +198,7 @@ def test_missing_bound_is_not_fabricated():
 def test_log_lookup_finds_nested_lowercase_policy_and_rejects_duplicates(tmp_path):
     import json
 
-    from tools.gates.run_gate import _load_policy_log
+    from logic.gates.run_gate import _load_policy_log
 
     nested = tmp_path / "5days" / "riomaior100" / "emp"
     nested.mkdir(parents=True)
@@ -213,7 +213,7 @@ def test_log_lookup_finds_nested_lowercase_policy_and_rejects_duplicates(tmp_pat
 def test_heavy_lock_is_retained(monkeypatch, tmp_path):
     import fcntl
 
-    from tools.gates import run_gate
+    from logic.gates import run_gate
 
     monkeypatch.setattr(run_gate, "HEAVY_LOCK", str(tmp_path / "heavy.lock"))
     monkeypatch.setattr(run_gate, "_HEAVY_LOCK_HANDLE", None)
@@ -230,8 +230,8 @@ def test_gate_b_rejects_empty_candidates(tmp_path):
     import json
     from argparse import Namespace
 
-    from tools.gates.cells import BASELINE_AMENDMENTS, BASELINE_COMMIT
-    from tools.gates.run_gate import cmd_gate_b
+    from logic.gates.cells import BASELINE_AMENDMENTS, BASELINE_COMMIT
+    from logic.gates.run_gate import cmd_gate_b
 
     archive = tmp_path / "archive.csv"
     candidate = tmp_path / "candidate.csv"
@@ -248,7 +248,7 @@ def test_gate_b_rejects_empty_candidates(tmp_path):
 def test_failed_samples_cannot_pass_as_identical_artifacts(tmp_path):
     import json
 
-    from tools.gates.run_gate import _load_policy_log
+    from logic.gates.run_gate import _load_policy_log
 
     path = tmp_path / "log_alns_1N.json"
     log = _log([0])
@@ -261,7 +261,7 @@ def test_failed_samples_cannot_pass_as_identical_artifacts(tmp_path):
 def test_chain_gate_reads_shared_checkout_log_from_a_worktree(monkeypatch, tmp_path):
     import subprocess
 
-    from tools.gates import run_gate
+    from logic.gates import run_gate
 
     common = tmp_path / "shared" / ".git"
     common.mkdir(parents=True)
@@ -282,7 +282,7 @@ def test_sans_cell_has_a_real_work_budget():
 
 
 def test_legacy_schema_normalization_preserves_physical_differences():
-    from tools.gates.compare import canonical_gate_log
+    from logic.gates.compare import canonical_gate_log
 
     legacy = {
         "samples": {"0": {"kg": 4.0, "profit": 2.0, "days": 1, "reward": 100.0}},
@@ -308,7 +308,7 @@ def test_legacy_schema_normalization_preserves_physical_differences():
 
 
 def test_schema_normalization_rejects_conflicting_legacy_day_counts():
-    from tools.gates.compare import canonical_gate_log
+    from logic.gates.compare import canonical_gate_log
 
     with pytest.raises(ValueError, match="Conflicting"):
         canonical_gate_log({"daily": {"0": {"day": [1]}}, "samples": {"0": {"days": 1, "collection_days": 2}}})

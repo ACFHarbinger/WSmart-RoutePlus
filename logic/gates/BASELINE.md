@@ -5,7 +5,7 @@ of `../wsr-baseline`. Do not use that checkout's older copy of the harness.
 
 The reference is `d82170cf0` (original `a5eb27eec` plus the default-off CVRP
 solution-limit knob), **with one explicit adapter amendment**. Apply
-`tools/gates/baseline-vrpp-dispatch.patch` in the baseline checkout. It is
+`logic/gates/baseline-vrpp-dispatch.patch` in the baseline checkout. It is
 already applied in the shared `../wsr-baseline` worktree. No solver loop,
 acceptance rule or optimization budget is changed.
 

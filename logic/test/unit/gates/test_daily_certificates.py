@@ -3,13 +3,13 @@
 import copy
 
 import pytest
+from logic.gates.compare import compare_daily_certificates
 from logic.src.pipeline.simulations.reporting import (
     current_solver_certificate,
     note_root_bound,
     note_solver_incumbent,
     reset_solver_status,
 )
-from tools.gates.compare import compare_daily_certificates
 
 
 def _log():

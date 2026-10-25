@@ -17,7 +17,7 @@ last params.py is gone, replace the list with a ban on any ``*Params`` symbol.
 
 Usage::
 
-    python tools/check_params_refs.py
+    python logic/validation/check_params_refs.py
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ import sys
 from pathlib import Path
 from typing import List, Tuple
 
-REPO = Path(__file__).resolve().parents[1]
+REPO = Path(__file__).resolve().parents[2]
 LOGIC_SRC = REPO / "logic" / "src"
 
 # Deleted params classes (WP-04, WP-05). Extend per work package; see module docstring.

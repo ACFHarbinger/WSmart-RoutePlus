@@ -60,7 +60,7 @@ def _to_plain_mapping(cfg: Any) -> Dict[str, Any]:
     except Exception:
         pass
     if isinstance(cfg, list):
-        raise TypeError("policy YAML must be a mapping after P-13; run tools/convert_policy_yaml.py")
+        raise TypeError("policy YAML must be a mapping after P-13; run logic/migration/convert_policy_yaml.py")
     if isinstance(cfg, Mapping):
         return dict(cfg)
     return {}
@@ -109,7 +109,7 @@ def _as_policy_mapping(cfg: Any) -> dict:
             curr = dict(inner)
             continue
         if isinstance(inner, list):
-            raise TypeError("policy YAML must be a mapping after P-13; run tools/convert_policy_yaml.py")
+            raise TypeError("policy YAML must be a mapping after P-13; run logic/migration/convert_policy_yaml.py")
         break
 
     out = dict(curr)

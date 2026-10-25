@@ -2,7 +2,7 @@
 
 Usage::
 
-    python tools/build_runtime_training.py \\
+    python logic/cloud/build_runtime_training.py \\
         --ctl ~/Repositories/Doc/wsr-package/cptp-rerun/ctl ~/Repositories/Doc/wsr-package/acohh-rerun/ctl \\
         --summary docs/private/global/simulation/rerun-2026-10-19 \\
         --out logic/controllers/cloud/prediction/runtime_training.csv
@@ -90,7 +90,9 @@ def summary_rows(summary_dir: Path) -> List[Tuple[Dict[str, object], float]]:
     """``(row without wall time, policy seconds)`` for every summary run."""
     out = []
     for horizon, name in ((30, "simulation_summary.csv"), (90, "simulation_summary_90d.csv")):
-        for r in csv.DictReader(open(summary_dir / name)):
+        with open(summary_dir / name, newline="") as fh:
+            rows = list(csv.DictReader(fh))
+        for r in rows:
             packing = PACKING.get(
                 r["strategy"] + r["cf"] + r["sl_var"], (r["strategy"] + r["cf"] + r["sl_var"]).lower()
             )

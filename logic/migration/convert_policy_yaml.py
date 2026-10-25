@@ -27,7 +27,7 @@ except ImportError:  # pragma: no cover
     CommentedSeq = list  # type: ignore[misc, assignment]
     _HAS_RUAMEL = False
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 POLICIES = ROOT / "logic" / "configs" / "policies"
 OTHER = POLICIES / "other"
 HPO_JOBS = ROOT / "logic" / "src" / "pipeline" / "simulations" / "hpo" / "routing"
@@ -41,9 +41,7 @@ PACKING_FIELD_REMAP: Dict[str, str] = {
     "strategies": "combined_strategies",
 }
 
-SIDE_KEYS = frozenset(
-    {"packing", "route_improvement", "acceptance_criteria", "acceptance_criterion", "strategy"}
-)
+SIDE_KEYS = frozenset({"packing", "route_improvement", "acceptance_criteria", "acceptance_criterion", "strategy"})
 
 
 def _is_single_key_map_list(node: Any) -> bool:

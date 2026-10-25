@@ -17,6 +17,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Claude: the repository scripts move from `tools/` into `logic/` (`2026-10-25`)
+
+- **`tools/gates/` is now `logic/gates/`** (`from logic.gates.compare import ...`; `python logic/gates/run_gate.py`).
+- The scripts at the top of `tools/` move to the `logic/` subdirectory of their kind (hard break; run them from the repository root):
+  - `logic/gen/`: `gen_api_docs.py`, `gen_registry_manifests.py`;
+  - `logic/validation/`: `check_hpo_jobs.py`, `check_params_refs.py`, `check_pure_move.py`, `audit_param_usage.py`;
+  - `logic/migration/` (new package): `migrate_unreleased_params.py`, `apply_wp03_renames.py`, `convert_policy_yaml.py`, `convert_sim_outputs.py`, `trim_docstrings.py`;
+  - `logic/cloud/`: `build_runtime_training.py` (the cloud runner's runtime table).
+- CI (`check_hpo_jobs`, `check_params_refs`), the generated-file headers, error messages, docs and tests follow. `tools/`'s subdirectories (justfiles, agent, app, ...) stay where they are.
+
 ### Claude: simulator module renames; the day loop's random streams and problem flags move into `pipeline.py` (`2026-10-25`)
 
 - **`logic/src/pipeline/simulations/day_setup.py` is merged into `logic/src/pipeline/simulations/pipeline.py`**: `shared_env_seed`, `policy_seed`, `seed_policy_rng`, `apply_shared_bin_rng` and `per_trip_shift` are now imported from `logic.src.pipeline.simulations.pipeline` (hard break). The day loop and the collection, time-constraint and logging actions follow.

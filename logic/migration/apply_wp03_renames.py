@@ -6,7 +6,7 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 SKIP_DIR_NAMES = {
     ".git",
@@ -48,8 +48,8 @@ REPLACEMENTS = [
     ("results_routing", "results_routing"),
     ("SearchPhase.PACKING", "SearchPhase.PACKING"),
     ("SearchPhase.ROUTING", "SearchPhase.ROUTING"),
-    ("SELECTION = \"selection\"", "PACKING = \"packing\""),
-    ("CONSTRUCTION = \"construction\"", "ROUTING = \"routing\""),
+    ('SELECTION = "selection"', 'PACKING = "packing"'),
+    ('CONSTRUCTION = "construction"', 'ROUTING = "routing"'),
     ("PackingContext", "PackingContext"),
     ("packing_context.py", "packing_context.py"),
     ("packing_context", "packing_context"),
@@ -59,16 +59,16 @@ REPLACEMENTS = [
     ("def pack(", "def pack("),
     ("pack", "pack"),
     ("other/pk_", "other/pk_"),
-    ("file_prefix=\"ms_\"", "file_prefix=\"pk_\""),
+    ('file_prefix="ms_"', 'file_prefix="pk_"'),
     ("file_prefix='pk_'", "file_prefix='pk_'"),
-    ("configs_dir, \"ms_\"", "configs_dir, \"pk_\""),
+    ('configs_dir, "ms_"', 'configs_dir, "pk_"'),
     ("configs_dir, 'pk_'", "configs_dir, 'pk_'"),
     ("prefixed ``pk_``", "prefixed ``pk_``"),
     ("pk_yaml", "pk_yaml"),
     ("pk_*.yaml", "pk_*.yaml"),
-    ("glob(\"ms_", "glob(\"pk_"),
+    ('glob("ms_', 'glob("pk_'),
     ("glob('pk_", "glob('pk_"),
-    ("f\"ms_{", "f\"pk_{"),
+    ('f"ms_{', 'f"pk_{'),
     ("f'pk_{", "f'pk_{"),
 ]
 

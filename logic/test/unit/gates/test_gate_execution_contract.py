@@ -6,13 +6,13 @@ import subprocess
 
 import pytest
 from hydra.core.override_parser.overrides_parser import OverridesParser
-from tools.gates import capture
-from tools.gates.cells import GATE_A_CELLS, cell_policy_entry
-from tools.gates.run_gate import _hydra_value, cell_dotlist
+from logic.gates import capture
+from logic.gates.cells import GATE_A_CELLS, cell_policy_entry
+from logic.gates.run_gate import _hydra_value, cell_dotlist
 
 
 def test_calibration_reference_requires_exact_amendment(tmp_path, monkeypatch):
-    from tools.gates import run_gate
+    from logic.gates import run_gate
 
     def git(*args):
         return subprocess.check_output(["git", *args], cwd=tmp_path, text=True).strip()
