@@ -2,7 +2,7 @@
 
 import pytest
 import torch
-from logic.src.pipeline.learning.envs.cptptc import CPTPTC, CPTPTCEnv, CPTPTCGenerator
+from logic.src.envs.cptptc import CPTPTC, CPTPTCEnv, CPTPTCGenerator
 from tensordict import TensorDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -106,7 +106,7 @@ class TestCTOPEnvironment:
         environment -- _reset_instance fell back to
         get_default_temporal_params() regardless of what was requested.
         """
-        from logic.src.pipeline.learning.envs import get_env
+        from logic.src.envs import get_env
 
         env = get_env("cptptc", num_loc=5, shift_hours=3.5, avg_speed_kmh=40.0)
         assert isinstance(env.generator, CPTPTCGenerator)

@@ -491,7 +491,7 @@ from logic.src.policies.last_minute import LastMinute
 policy = LastMinute(threshold=0.9)  # Trigger at 90% full
 ```
 
-### 3.4 Problem Environments (`logic/src/pipeline/learning/envs/`)
+### 3.4 Problem Environments (`logic/src/envs/`)
 
 #### VRPP (`envs/vrpp.py`)
 
@@ -1241,8 +1241,8 @@ python main.py test_sim --policies my_heuristic --size 20 --days 31
 **Step 1: Define Problem Class**
 
 ```python
-# logic/src/pipeline/learning/envs/my_problem.py
-from logic.src.pipeline.learning.envs.base import RL4COEnvBase
+# logic/src/envs/my_problem.py
+from logic.src.envs.base import RL4COEnvBase
 
 class MyProblem(BaseProblem):
     NAME = 'my_problem'
@@ -1264,7 +1264,7 @@ class MyProblem(BaseProblem):
 **Step 2: Add State Definitions**
 
 ```python
-# logic/src/pipeline/learning/envs/my_problem.py (continued)
+# logic/src/envs/my_problem.py (continued)
 # States are now embedded in the environment class
 
 class StateMyProblem(BaseState):

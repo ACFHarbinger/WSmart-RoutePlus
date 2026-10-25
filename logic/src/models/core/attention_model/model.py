@@ -29,12 +29,12 @@ from logic.src.constants.models import (
     FEED_FORWARD_EXPANSION,
     TANH_CLIPPING,
 )
+from logic.src.envs.base.base import RL4COEnvBase
 from logic.src.interfaces.tensor_dict_like import ITensorDictLike
 from logic.src.models.core.attention_model.decoding import DecodingMixin
 from logic.src.models.core.attention_model.policy import AttentionModelPolicy
 from logic.src.models.subnets.embeddings import get_init_embedding
 from logic.src.models.subnets.factories import NeuralComponentFactory
-from logic.src.pipeline.learning.envs.base.base import RL4COEnvBase
 from logic.src.utils.functions.problem import is_ptp_problem, is_tsp_problem
 
 

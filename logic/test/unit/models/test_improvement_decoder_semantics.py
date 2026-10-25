@@ -9,12 +9,12 @@ from unittest.mock import patch
 
 import pytest
 import torch
+from logic.src.envs.tsp_kopt import TSPkoptEnv
 from logic.src.models.core.dact.encoder import DACTEncoder
 from logic.src.models.core.n2s.decoder import N2SDecoder
 from logic.src.models.core.n2s.policy import N2SPolicy, execute_n2s_request_move
 from logic.src.models.core.neuopt.decoder import NeuOptDecoder
 from logic.src.models.core.neuopt.policy import NeuOptPolicy, execute_neuopt_basis_sequence
-from logic.src.pipeline.learning.envs.tsp_kopt import TSPkoptEnv
 from tensordict import TensorDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

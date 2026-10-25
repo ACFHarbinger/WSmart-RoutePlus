@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import torch
 from logic.src.configs import Config
-from logic.src.configs.learning.envs.graph import GraphConfig
+from logic.src.configs.envs.graph import GraphConfig
 from logic.src.configs.tasks.sim import SimConfig
 from logic.src.pipeline.features.test import run_simulator_test as run_sim_test_func
 from logic.src.pipeline.features.test import simulator_testing

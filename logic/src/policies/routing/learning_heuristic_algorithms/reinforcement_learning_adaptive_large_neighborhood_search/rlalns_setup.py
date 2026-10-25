@@ -1,6 +1,6 @@
 """Destroy/repair operator wiring and RL agent construction for RL-ALNS, mixed into RLALNSSolver as RLALNSSetupMixin."""
 
-from logic.src.pipeline.learning.envs.common.expand_pool import current_expand_pool
+from logic.src.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.learning.agents.bandits import (
     DiscountedUCBBandit as DiscountedUCBAgent,
 )

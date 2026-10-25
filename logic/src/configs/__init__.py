@@ -32,7 +32,7 @@ Example:
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 
-from .learning.envs import EnvConfig, GraphConfig, ObjectiveConfig
+from .envs import EnvConfig, GraphConfig, ObjectiveConfig
 from .learning import RLConfig
 from .models import DecoderConfig, DecodingConfig, EncoderConfig, ModelConfig, OptimConfig
 from .policies.packing import PackingConfig

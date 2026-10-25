@@ -9,7 +9,7 @@ the best-insertion-cost scoring and the random-walk exploration move.
 import copy
 from typing import List, Set
 
-from logic.src.pipeline.learning.envs.common.expand_pool import current_expand_pool
+from logic.src.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators import greedy_insertion, greedy_profit_insertion, random_removal
 
 

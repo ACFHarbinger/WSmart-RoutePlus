@@ -8,7 +8,7 @@ before its local search descent.
 
 from typing import List
 
-from logic.src.pipeline.learning.envs.common.expand_pool import current_expand_pool
+from logic.src.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators.search_heuristics.destroy_repair_llh import (
     llh_cluster_greedy,
     llh_random_greedy,

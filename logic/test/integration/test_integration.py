@@ -8,9 +8,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 import torch
 from logic.src.configs import Config
-from logic.src.configs.learning.envs.graph import GraphConfig
+from logic.src.configs.envs.graph import GraphConfig
+from logic.src.envs import PTP
 from logic.src.pipeline.features.train import run_training
-from logic.src.pipeline.learning.envs import PTP
 from logic.src.pipeline.simulations.simulator import sequential_simulations
 from logic.src.policies.routing.base.registry import RoutingAlgorithmRegistry
 from omegaconf import OmegaConf

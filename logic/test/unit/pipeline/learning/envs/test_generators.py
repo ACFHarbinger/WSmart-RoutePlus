@@ -2,7 +2,7 @@
 
 import pytest
 import torch
-from logic.src.pipeline.learning.envs import (
+from logic.src.envs import (
     GENERATOR_REGISTRY,
     PTPGenerator,
     TSPGenerator,
@@ -121,7 +121,7 @@ def test_get_generator():
 @pytest.mark.parametrize("name", sorted(GENERATOR_REGISTRY))
 def test_env_builds_instances_with_the_registry_generator(name):
     """One generator class per problem: the env and ``get_generator`` agree."""
-    from logic.src.pipeline.learning.envs import get_env
+    from logic.src.envs import get_env
 
     env = get_env(name, num_loc=10)
     assert type(env.generator) is GENERATOR_REGISTRY[name]

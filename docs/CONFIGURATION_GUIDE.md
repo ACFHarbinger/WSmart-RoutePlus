@@ -1423,7 +1423,7 @@ python main.py meta_train \
 
 - **Config Loaders:** `logic/src/utils/configs/config_loader.py`
 - **Model Factory:** `logic/src/utils/infrastructure/setup_sims.py`
-- **Environment Factory:** `logic/src/pipeline/learning/envs/`
+- **Environment Factory:** `logic/src/envs/`
 - **Policy Factory:** `logic/src/policies/adapters.py`
 
 ---

@@ -273,7 +273,7 @@ config = Config(
 
 ## 4. Environment Configurations
 
-**Directory**: `logic/src/configs/learning/envs/`
+**Directory**: `logic/src/configs/envs/`
 **Purpose**: Define problem physics, graph structure, data generation, and optimization objectives
 
 ### EnvConfig
@@ -1978,7 +1978,7 @@ config = Config(
 from logic.src.configs import Config
 
 # Environment configs
-from logic.src.configs.learning.envs import EnvConfig, GraphConfig, DataConfig, ObjectiveConfig
+from logic.src.configs.envs import EnvConfig, GraphConfig, DataConfig, ObjectiveConfig
 
 # Model configs
 from logic.src.configs.models import (

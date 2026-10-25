@@ -13,7 +13,7 @@
 #     once nothing is reachable even with a freshly reset capacity AND
 #     time budget. Every bin also has a time window: an early vehicle waits, service starts no later than
 #     the window closes, and the vehicle is back before the day (the depot window) ends.
-#     See logic/src/pipeline/learning/envs/cptptwtc.py.
+#     See logic/src/envs/cptptwtc.py.
 #   - "Team" is one vehicle, multiple trips here -- not a concurrent fleet.
 #     See docs/moon/roadmaps/new_features.md §E.8 for the true-fleet variant.
 #

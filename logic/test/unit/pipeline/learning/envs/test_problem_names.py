@@ -1,11 +1,11 @@
 """The problem names are ptp, cptp and cptptc; the former names are rejected (no aliases)."""
 
 import pytest
+from logic.src.envs import ENV_TARGETS, GENERATOR_REGISTRY, PROBLEMS, get_env
 from logic.src.models.subnets.embeddings import INIT_EMBEDDING_REGISTRY, get_init_embedding
 from logic.src.models.subnets.embeddings.context import CONTEXT_EMBEDDING_REGISTRY
 from logic.src.models.subnets.embeddings.edges import EDGE_EMBEDDING_REGISTRY
 from logic.src.models.subnets.embeddings.state import STATE_EMBEDDING_REGISTRY
-from logic.src.pipeline.learning.envs import ENV_TARGETS, GENERATOR_REGISTRY, PROBLEMS, get_env
 from logic.src.utils.model.problem_factory import load_problem
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

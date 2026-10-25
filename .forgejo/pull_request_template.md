@@ -6,7 +6,7 @@ Closes #
 <!-- Check every area this PR changes. -->
 - [ ] `logic/src/policies` (routing algorithms, selection strategies, improvers, acceptance criteria, operators)
 - [ ] `logic/src/models` (neural models)
-- [ ] `logic/src/pipeline` / `logic/src/pipeline/learning/envs` / `logic/src/data` (simulation, training/eval pipeline, environments)
+- [ ] `logic/src/pipeline` / `logic/src/envs` / `logic/src/data` (simulation, training/eval pipeline, environments)
 - [ ] `logic/configs` (Hydra configs)
 - [ ] `app/` (WSmart-Route Studio, Tauri/React)
 - [ ] `docs/` (documentation, roadmaps, changelog)

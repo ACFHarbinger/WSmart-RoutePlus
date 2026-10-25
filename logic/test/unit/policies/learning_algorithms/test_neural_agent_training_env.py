@@ -2,7 +2,7 @@
 
 import pytest
 import torch
-from logic.src.pipeline.learning.envs.cptp import CPTPEnv
+from logic.src.envs.cptp import CPTPEnv
 from logic.src.policies.routing.learning_algorithms.neural_agent.agent import NeuralAgent
 from tensordict import TensorDict
 

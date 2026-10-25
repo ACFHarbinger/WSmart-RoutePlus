@@ -2,7 +2,7 @@
 
 import pytest
 import torch
-from logic.src.pipeline.learning.envs.cptp import CPTPEnv
+from logic.src.envs.cptp import CPTPEnv
 from tensordict import TensorDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

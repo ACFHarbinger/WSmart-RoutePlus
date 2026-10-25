@@ -14,7 +14,7 @@ import math
 from contextvars import ContextVar
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
-from logic.src.pipeline.learning.envs.common.metrics import (
+from logic.src.envs.common.metrics import (
     DEFAULT_METRICS,
     METRICS,
     MetricSummary,

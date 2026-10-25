@@ -5,8 +5,8 @@ from unittest.mock import MagicMock
 import pytest
 import torch
 import torch.nn as nn
+from logic.src.envs.base import RL4COEnvBase
 from logic.src.pipeline.learning.core.a2c import A2C
-from logic.src.pipeline.learning.envs.base import RL4COEnvBase
 from tensordict import TensorDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

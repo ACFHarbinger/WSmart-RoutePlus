@@ -27,7 +27,7 @@ def test_eval_objective_preserves_zero_and_defaults_only_none(reward, expected, 
     eval_graph = {"num_loc": 2, "n_samples": 2}
     if per_eval_graph:
         eval_graph["reward"] = reward
-    with patch("logic.src.pipeline.learning.envs.get_env", return_value=SimpleNamespace(generator=None)) as factory:
+    with patch("logic.src.envs.get_env", return_value=SimpleNamespace(generator=None)) as factory:
         _create_eval_env_and_gen(cfg, eval_graph)
     kwargs = factory.call_args.kwargs
     assert (kwargs["cost_weight"], kwargs["waste_weight"]) == expected

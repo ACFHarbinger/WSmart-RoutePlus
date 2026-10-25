@@ -102,7 +102,7 @@ def test_released_specs_import_without_torch():
     code = (
         "import sys\n"
         "sys.modules['torch'] = None\n"
-        "from logic.src.pipeline.learning.envs.spec import PROBLEMS\n"
+        "from logic.src.envs.spec import PROBLEMS\n"
         "ptp = PROBLEMS.get('ptp')\n"
         "cvrp = PROBLEMS.get('cvrp')\n"
         "cptptc = PROBLEMS.get('cptptc')\n"
@@ -129,7 +129,7 @@ def test_improvement_cannot_follow_repair_or_collection(steps):
 
 
 def test_invalid_pipeline_does_not_change_rng_or_expand_pool(monkeypatch):
-    from logic.src.pipeline.learning.envs.common.expand_pool import current_expand_pool
+    from logic.src.envs.common.expand_pool import current_expand_pool
     from logic.src.pipeline.simulations.day_context import SimulationDayContext, run_day
 
     bins = SimpleNamespace(rng="unchanged")
@@ -142,8 +142,8 @@ def test_invalid_pipeline_does_not_change_rng_or_expand_pool(monkeypatch):
 
 
 def test_neural_import_does_not_replace_classical_spec():
-    from logic.src.pipeline.learning.envs.spec import PROBLEMS
-    from logic.src.pipeline.learning.envs.cptptc import CPTPTC_SPEC
+    from logic.src.envs.cptptc import CPTPTC_SPEC
+    from logic.src.envs.spec import PROBLEMS
 
     assert PROBLEMS.get("cptptc") is CPTPTC_SPEC
     assert CPTPTC_SPEC.per_trip_shift is True

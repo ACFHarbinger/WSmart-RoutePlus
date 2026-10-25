@@ -11,7 +11,7 @@ import torch
 import torch.nn.functional as F
 from tensordict import TensorDict
 
-from logic.src.pipeline.learning.envs.base.base import RL4COEnvBase
+from logic.src.envs.base.base import RL4COEnvBase
 
 
 class N2SDecoderForwardMixin:
