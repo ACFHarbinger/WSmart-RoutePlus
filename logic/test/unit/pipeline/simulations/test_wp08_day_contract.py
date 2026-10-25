@@ -29,7 +29,7 @@ def test_logging_before_collection_is_rejected():
 
 def test_two_policies_share_the_fill_rng(monkeypatch):
     """Policy identity does not reseed the bin generator."""
-    from logic.src.pipeline.simulations.day_context import SimulationDayContext, run_day
+    from logic.src.pipeline.simulations.sim_day import SimulationDayContext, run_day
 
     seen = {}
 
@@ -60,7 +60,7 @@ def test_two_policies_share_the_fill_rng(monkeypatch):
 def test_daily_record_drops_reward_and_splits_day_counts():
     """Executed days report profit, days_simulated, and collection_days."""
     import pandas as pd
-    from logic.src.pipeline.simulations.day_context import get_daily_results
+    from logic.src.pipeline.simulations.sim_day import get_daily_results
 
     coords = pd.DataFrame({"ID": [0, 11, 12]})
     full = get_daily_results(10, 2, 4, [0, 1, 2, 0], 3, 1, 0.5, coords, 6, 0.2)
@@ -130,7 +130,7 @@ def test_improvement_cannot_follow_repair_or_collection(steps):
 
 def test_invalid_pipeline_does_not_change_rng_or_expand_pool(monkeypatch):
     from logic.src.envs.common.expand_pool import current_expand_pool
-    from logic.src.pipeline.simulations.day_context import SimulationDayContext, run_day
+    from logic.src.pipeline.simulations.sim_day import SimulationDayContext, run_day
 
     bins = SimpleNamespace(rng="unchanged")
     ctx = SimulationDayContext(problem="cvrp", bins=bins, day_pipeline=["logging", "collection"])

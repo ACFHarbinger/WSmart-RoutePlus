@@ -414,7 +414,7 @@ for key in ("swc_tcf", "bpc", "alns", "sans", "hgs", "psoma", "aco_hh", "pg_clns
     assert ROUTING.get(key) is not None, f"released routing key {key} does not resolve"
 assert "na" in ROUTING.names(), "released neural policy is not declared"
 assert ROUTING.get("hgs_alns") is None, "unreleased routing key resolves"
-import logic.src.pipeline.simulations.simulator  # noqa: F401
+import logic.src.pipeline.simulations.manager  # noqa: F401
 from logic.submodules.wsmart_bin_analysis import GridBase  # noqa: F401
 
 assert "torch" not in sys.modules

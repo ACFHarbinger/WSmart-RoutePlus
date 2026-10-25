@@ -2,7 +2,7 @@
 
 import pandas as pd
 import pytest
-from logic.src.pipeline.simulations.day_context import get_daily_results
+from logic.src.pipeline.simulations.sim_day import get_daily_results
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

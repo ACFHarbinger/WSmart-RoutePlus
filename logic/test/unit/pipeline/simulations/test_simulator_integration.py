@@ -3,7 +3,7 @@
 
 import unittest.mock as mock
 
-import logic.src.pipeline.simulations.simulator as simulator
+import logic.src.pipeline.simulations.manager as simulator
 import numpy as np
 import pytest
 import torch

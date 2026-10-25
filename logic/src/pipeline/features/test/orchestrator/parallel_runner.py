@@ -117,7 +117,7 @@ def run_parallel_simulations(
 
     # Create multiprocessing pool (same start method as the Manager and the counter above)
     mp.set_start_method(pool_start_method(sim, device), force=True)
-    from logic.src.pipeline.simulations.simulator import init_single_sim_worker
+    from logic.src.pipeline.simulations.manager import init_single_sim_worker
 
     pool = Pool(
         processes=n_cores,
@@ -218,7 +218,7 @@ def execute_and_monitor_tasks(
 
         log_tmp[pol_name].append(list(result.values())[0])
 
-    from logic.src.pipeline.simulations.simulator import single_simulation
+    from logic.src.pipeline.simulations.manager import single_simulation
 
     tasks = []
     for arg_tup in args:

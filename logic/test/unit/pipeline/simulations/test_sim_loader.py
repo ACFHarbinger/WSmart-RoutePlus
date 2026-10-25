@@ -6,13 +6,13 @@ from unittest.mock import patch
 
 import pandas as pd
 import pytest
-from logic.src.pipeline.simulations.day_context import SimulationDayContext
 from logic.src.pipeline.simulations.repository import (
     FileSystemRepository,
     load_depot,
     load_indices,
     load_simulator_data,
 )
+from logic.src.pipeline.simulations.sim_day import SimulationDayContext
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

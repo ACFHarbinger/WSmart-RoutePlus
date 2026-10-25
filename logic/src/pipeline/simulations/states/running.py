@@ -31,7 +31,7 @@ except ImportError:
     DataLineageCallback = None  # type: ignore[assignment,misc]
 
 from logic.src.pipeline.simulations.checkpoints import CheckpointError, checkpoint_manager
-from logic.src.pipeline.simulations.day_context import SimulationDayContext, run_day
+from logic.src.pipeline.simulations.sim_day import SimulationDayContext, run_day
 from logic.src.pipeline.simulations.states.base.base import SimState
 from logic.src.pipeline.simulations.states.finishing import FinishingState
 from logic.src.tracking.logging.modules.summary_display import final_simulation_summary

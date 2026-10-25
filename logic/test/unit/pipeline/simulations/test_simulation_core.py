@@ -1,7 +1,7 @@
 import pytest
 import torch  # noqa: F401
 from logic.src.pipeline.simulations.checkpoints import CheckpointError
-from logic.src.pipeline.simulations.simulator import sequential_simulations, single_simulation
+from logic.src.pipeline.simulations.manager import sequential_simulations, single_simulation
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
@@ -14,7 +14,7 @@ class TestSimulation:
         """Test a single simulation run successfully."""
         lock, counter = mock_lock_counter
         # Mock globals for workers manually
-        import logic.src.pipeline.simulations.simulator as sim
+        import logic.src.pipeline.simulations.manager as sim
 
         sim._lock = lock
         sim._counter = counter
@@ -32,7 +32,7 @@ class TestSimulation:
     def test_single_simulation_checkpoint_error(self, wsr_opts, mock_torch_device, mock_lock_counter, mocker):
         """Test error handling for broken checkpoints."""
         lock, counter = mock_lock_counter
-        import logic.src.pipeline.simulations.simulator as sim
+        import logic.src.pipeline.simulations.manager as sim
 
         sim._lock = lock
         sim._counter = counter
@@ -56,7 +56,7 @@ class TestSimulation:
         cfg.sim.graph.n_samples = 2
         cfg.sim.full_policies = ["pol1"]
         cfg.sim.policies = ["pol1"]
-        mocker.patch("logic.src.pipeline.simulations.simulator.ROOT_DIR", str(tmp_path))
+        mocker.patch("logic.src.pipeline.simulations.manager.ROOT_DIR", str(tmp_path))
         mocker.patch("logic.src.tracking.logging.modules.storage.log_to_json")
 
         mocker.patch(

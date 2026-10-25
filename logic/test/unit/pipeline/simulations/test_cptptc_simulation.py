@@ -18,7 +18,7 @@ from logic.src.constants.simulation import PROBLEMS
 from logic.src.pipeline.features.test.engine import _validate_sim_config
 from logic.src.pipeline.features.test.validation import validate_sim_config
 from logic.src.pipeline.simulations.actions.collection import CollectAction
-from logic.src.pipeline.simulations.day_context import SimulationDayContext, get_daily_results
+from logic.src.pipeline.simulations.sim_day import SimulationDayContext, get_daily_results
 from logic.src.utils.routing.tours import get_multi_tour
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

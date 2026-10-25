@@ -39,9 +39,9 @@ from logic.src.pipeline.features.test.orchestrator.parallel_runner import (
     pool_start_method,
     run_parallel_simulations,
 )
+from logic.src.pipeline.simulations.manager import sequential_simulations
+from logic.src.pipeline.simulations.progress import display_log_metrics
 from logic.src.pipeline.simulations.repository import load_indices
-from logic.src.pipeline.simulations.simulator import sequential_simulations
-from logic.src.pipeline.simulations.simulator_progress import display_log_metrics
 from logic.src.tracking.logging.logger_writer import LoggerWriter, setup_logger_redirection
 from logic.src.tracking.logging.modules.analysis import output_stats, runs_per_policy
 from logic.src.tracking.logging.modules.gui import send_final_output_to_gui

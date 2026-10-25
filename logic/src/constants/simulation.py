@@ -3,7 +3,7 @@ Simulation and Physics constants.
 
 This module defines physical constants, problem constraints, and metric definitions
 for the WSmart+ Route simulation engine. Used by:
-- logic/src/pipeline/simulations/simulator.py (multi-day simulation orchestrator)
+- logic/src/pipeline/simulations/manager.py (multi-day simulation orchestrator)
 - logic/src/envs/*.py (problem environment physics)
 - logic/src/data/generators/*.py (instance generation)
 

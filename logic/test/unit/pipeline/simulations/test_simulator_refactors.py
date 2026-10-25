@@ -6,8 +6,8 @@ import numpy as np
 import pytest
 import torch
 from logic.src.pipeline.simulations.actions.routing import RoutingAction
-from logic.src.pipeline.simulations.simulator import sequential_simulations
-from logic.src.pipeline.simulations.simulator_progress import display_log_metrics
+from logic.src.pipeline.simulations.manager import sequential_simulations
+from logic.src.pipeline.simulations.progress import display_log_metrics
 from logic.src.pipeline.simulations.states import FinishingState, SimulationContext
 from logic.test.unit.pipeline.simulations.test_simulator_robustness import _orch_cfg
 from logic.test.unit.pipeline.simulations.test_states import _make_test_cfg
@@ -117,7 +117,7 @@ def ctx_vars():
     return {"lock": MagicMock(), "counter": MagicMock(), "overall_progress": MagicMock(), "tqdm_pos": 0}
 
 
-@patch("logic.src.pipeline.simulations.simulator.SimulationContext")
+@patch("logic.src.pipeline.simulations.manager.SimulationContext")
 def test_sequential_loop_does_not_write_mean(mock_context, tmp_path):
     """The sequential loop keeps the in-memory mean and does not write it."""
     cfg = _orch_cfg()
@@ -136,8 +136,8 @@ def test_sequential_loop_does_not_write_mean(mock_context, tmp_path):
     mock_context.return_value.run.side_effect = _run
 
     with (
-        patch("logic.src.pipeline.simulations.simulator.ROOT_DIR", str(tmp_path)),
-        patch("logic.src.pipeline.simulations.simulator_progress.update_policy_log_section") as mock_write,
+        patch("logic.src.pipeline.simulations.manager.ROOT_DIR", str(tmp_path)),
+        patch("logic.src.pipeline.simulations.progress.update_policy_log_section") as mock_write,
     ):
         log, log_std, failed = sequential_simulations(
             cfg, torch.device("cpu"), [None, None], [[0, 1]], "weights", lock=None
@@ -157,12 +157,12 @@ def test_display_log_metrics_is_the_mean_writer(tmp_path):
         sections.append(section)
 
     with (
-        patch("logic.src.pipeline.simulations.simulator_progress.ROOT_DIR", str(tmp_path)),
+        patch("logic.src.pipeline.simulations.progress.ROOT_DIR", str(tmp_path)),
         patch(
-            "logic.src.pipeline.simulations.simulator_progress.update_policy_log_section",
+            "logic.src.pipeline.simulations.progress.update_policy_log_section",
             side_effect=_capture,
         ),
-        patch("logic.src.pipeline.simulations.simulator_progress.display_simulation_summary_table"),
+        patch("logic.src.pipeline.simulations.progress.display_simulation_summary_table"),
     ):
         display_log_metrics(
             "test_out",

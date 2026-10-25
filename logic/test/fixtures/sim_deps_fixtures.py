@@ -17,8 +17,8 @@ def mock_sim_dependencies(mocker, tmp_path, mock_bins_instance):
     """
     # 1. Patch ROOT_DIR in both modules to ensure consistency
     mocker.patch("logic.src.pipeline.simulations.states.base.context.ROOT_DIR", str(tmp_path))
-    mocker.patch("logic.src.pipeline.simulations.simulator.ROOT_DIR", str(tmp_path))
-    mocker.patch("logic.src.pipeline.simulations.simulator_progress.ROOT_DIR", str(tmp_path))
+    mocker.patch("logic.src.pipeline.simulations.manager.ROOT_DIR", str(tmp_path))
+    mocker.patch("logic.src.pipeline.simulations.progress.ROOT_DIR", str(tmp_path))
 
     # 2. Mock loader functions
     mock_depot = pd.DataFrame({"ID": [0], "Lat": [40], "Lng": [-8], "Stock": [0], "Accum_Rate": [0]})
@@ -130,7 +130,7 @@ def mock_sim_dependencies(mocker, tmp_path, mock_bins_instance):
         "logic.src.pipeline.simulations.states.finishing.update_policy_log_section", mock_update_policy_log_section
     )
     mocker.patch(
-        "logic.src.pipeline.simulations.simulator_progress.update_policy_log_section", mock_update_policy_log_section
+        "logic.src.pipeline.simulations.progress.update_policy_log_section", mock_update_policy_log_section
     )
     mock_save_excel = mocker.patch("logic.src.pipeline.simulations.states.finishing.save_matrix_to_excel")
     mocker.patch("time.perf_counter", return_value=1.0)

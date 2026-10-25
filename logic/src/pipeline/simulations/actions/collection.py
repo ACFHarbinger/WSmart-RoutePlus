@@ -153,7 +153,7 @@ class CollectAction(SimulationAction):
         time_spent_h = driving_time_h + service_time_total_h
 
         # CPTPTC validates each trip against the shift. Other problems keep the tour.
-        from logic.src.pipeline.simulations.day_setup import per_trip_shift
+        from logic.src.pipeline.simulations.pipeline import per_trip_shift
 
         _vehicle_capacity = getattr(context, "vehicle_capacity", None)
         capacity_pct = float(_vehicle_capacity) if _vehicle_capacity is not None else float("inf")

@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Claude: simulator module renames; the day loop's random streams and problem flags move into `pipeline.py` (`2026-10-25`)
+
+- **`logic/src/pipeline/simulations/day_setup.py` is merged into `logic/src/pipeline/simulations/pipeline.py`**: `shared_env_seed`, `policy_seed`, `seed_policy_rng`, `apply_shared_bin_rng` and `per_trip_shift` are now imported from `logic.src.pipeline.simulations.pipeline` (hard break). The day loop and the collection, time-constraint and logging actions follow.
+- **Renamed in `logic/src/pipeline/simulations/`** (hard break): `day_context.py` → `sim_day.py` (`run_day`, `SimulationDayContext`), `simulator.py` → `manager.py` (`sequential_simulations`, `single_simulation`, ...), and `simulator_progress.py` → `progress.py` (`ProgressUpdater`, `SimpleCounter`). Imports, mock targets, docs and notebooks follow; `docs/api` is regenerated.
+
 ### Claude: environments and their configs move up a level (`2026-10-25`)
 
 - **`logic/src/pipeline/learning/envs` is now `logic/src/envs`**: `logic.src.pipeline.learning.envs.<x>` becomes `logic.src.envs.<x>` (hard break). The tests stay under `logic/test/unit/pipeline/learning/envs/`.
