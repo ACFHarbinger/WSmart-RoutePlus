@@ -3,7 +3,8 @@
 Attributes:
     REPO: Repository root.
     STAGES: Stage name -> registry manifest file.
-    INDEXED_INITS: Package inits whose eager re-exports are indexed, not followed.
+    INDEXED_INITS: Package inits whose eager re-exports are indexed, not followed (every init
+        when the manifest sets ``index_all_inits``).
     compute_closure: Every module reachable from the released stage keys and infrastructure seeds.
     release_tests: The curated tests whose imports stay inside the closure.
 
@@ -14,12 +15,15 @@ Example:
 from __future__ import annotations
 
 import ast
+import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
-REPO = Path(__file__).resolve().parents[2]
+# The source tree the release is built from: the repository, or (for a manifest with an overlay
+# or patches) the prepared copy that build_release.py points WSR_BUILD_SOURCE at.
+REPO = Path(os.environ.get("WSR_BUILD_SOURCE") or Path(__file__).resolve().parents[2]).resolve()
 
 
 LOGIC = REPO / "logic"
@@ -85,14 +89,68 @@ def eager_targets(path: Path, root: Path) -> Dict[str, str]:
         if not module.startswith("logic"):
             continue
         for alias in node.names:
+            if alias.name == "*":
+                # A star re-export serves every public top-level name of its module.
+                star_file = module_to_file(module, root)
+                if star_file is not None:
+                    for name in _public_names(star_file):
+                        targets.setdefault(name, module)
+                continue
             targets[alias.asname or alias.name] = module
     return targets
 
 
-def package_index(path: Path, module: str, root: Path) -> Dict[str, str]:
+def _public_names(path: Path) -> Set[str]:
+    """Names ``from <module> import *`` binds: ``__all__`` if literal, else the public top-level names."""
+    tree = ast.parse(path.read_text())
+    names: Set[str] = set()
+    for node in tree.body:
+        is_all = isinstance(node, ast.Assign) and any(
+            isinstance(t, ast.Name) and t.id == "__all__" for t in node.targets
+        )
+        if is_all and isinstance(node.value, (ast.List, ast.Tuple)):
+            return {e.value for e in node.value.elts if isinstance(e, ast.Constant)}
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            names.add(node.name)
+        elif isinstance(node, ast.Assign):
+            names.update(t.id for t in node.targets if isinstance(t, ast.Name))
+        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            names.add(node.target.id)
+        elif isinstance(node, (ast.Import, ast.ImportFrom)):
+            names.update((a.asname or a.name).split(".")[0] for a in node.names if a.name != "*")
+    return {name for name in names if not name.startswith("_")}
+
+
+def used_init_imports(path: Path, root: Path) -> Set[str]:
+    """The module-level imports of a package init that an indexed init still follows.
+
+    An indexed init does not follow its top-level re-exports (``from .x import A`` with ``A``
+    unused in the init), but it follows the names the init itself uses (a dataclass field type,
+    a call) and every import nested in a module-level ``try``/``if`` block.
+    """
+    tree = ast.parse(path.read_text())
+    used = {node.id for node in ast.walk(tree) if isinstance(node, ast.Name)}
+    pkg = _package_of(path, root)
+    skip: Set[str] = set()
+    for node in tree.body:
+        if not isinstance(node, ast.ImportFrom):
+            continue
+        if node.level == 0:
+            module = node.module or ""
+        else:
+            up = pkg[: len(pkg) - (node.level - 1)]
+            module = ".".join(up + ([node.module] if node.module else []))
+        unused = [a for a in node.names if a.name != "*" and (a.asname or a.name) not in used]
+        skip.update(f"{module}.{a.name}" for a in unused)
+        if len(unused) == len(node.names):
+            skip.add(module)
+    return {dep for dep in imports_of(path, root).module_level if dep not in skip}
+
+
+def package_index(path: Path, module: str, root: Path, index_all: bool = False) -> Dict[str, str]:
     """Name -> target module served by a package init: its lazy map, plus eager re-exports if indexed."""
     index = lazy_targets(path)
-    if module in INDEXED_INITS:
+    if index_all or module in INDEXED_INITS:
         index.update(eager_targets(path, root))
     return index
 
@@ -200,18 +258,41 @@ def imports_of(path: Path, root: Path) -> Imports:
     return result
 
 
+_OPTIONAL_IMPORT_ERRORS = {"ImportError", "ModuleNotFoundError"}
+
+
+def _guards_import(handler: ast.ExceptHandler) -> bool:
+    """Whether an ``except`` clause catches a failed import."""
+    kinds = handler.type.elts if isinstance(handler.type, ast.Tuple) else [handler.type]
+    return any(isinstance(kind, ast.Name) and kind.id in _OPTIONAL_IMPORT_ERRORS for kind in kinds)
+
+
 def _is_deferred(tree: ast.Module, target: ast.AST) -> bool:
+    """Whether an import runs only on demand: in a function, under ``TYPE_CHECKING``, or in a ``try`` catching ImportError."""
     for node in ast.walk(tree):
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             for inner in ast.walk(node):
                 if inner is target:
                     return True
+        type_checking = isinstance(node, ast.If) and isinstance(node.test, ast.Name) and node.test.id == "TYPE_CHECKING"
+        if type_checking and any(sub is target for stmt in node.body for sub in ast.walk(stmt)):
+            return True
+        if isinstance(node, ast.Try) and any(_guards_import(handler) for handler in node.handlers):
+            for inner in node.body:
+                if any(sub is target for sub in ast.walk(inner)):
+                    return True
     return False
 
 
-def compute_closure(manifest: dict) -> Tuple[Set[Path], List[str]]:  # noqa: C901
-    """Keep the module-level import closure of the seeds minus exclusions."""
+def compute_closure(manifest: dict, why: Optional[Dict[str, str]] = None) -> Tuple[Set[Path], List[str]]:  # noqa: C901
+    """Keep the module-level import closure of the seeds minus exclusions.
+
+    ``why``, when given, is filled with kept module -> the module that pulled it in ("" for a seed).
+    """
     excluded = tuple(manifest["excluded_packages"])
+    # ``index_all_inits``: index every package init like INDEXED_INITS, so a package kept for one
+    # submodule does not ship every module its init re-exports (the minimal package).
+    index_all = bool(manifest.get("index_all_inits", False))
     stage_entries = {stage: parse_registry_manifest(path) for stage, path in STAGES.items()}
     seeds: Set[str] = set(manifest["infrastructure"])
     for stage, keys in manifest["stages"].items():
@@ -232,6 +313,7 @@ def compute_closure(manifest: dict) -> Tuple[Set[Path], List[str]]:  # noqa: C90
             if module_to_file(candidate, REPO) is None:
                 continue
             if candidate not in kept_modules and not candidate.startswith(excluded):
+                origin.setdefault(candidate, f"{module} (ancestor package)")
                 queue.append(candidate)
             if candidate in kept_modules:
                 continue
@@ -246,6 +328,7 @@ def compute_closure(manifest: dict) -> Tuple[Set[Path], List[str]]:  # noqa: C90
     surface: Set[str] = set()
 
     queue: List[str] = list(seeds)
+    origin: Dict[str, str] = {seed: "" for seed in seeds}
     while queue:
         module = queue.pop()
         root = trimmed(module, REPO)
@@ -254,6 +337,8 @@ def compute_closure(manifest: dict) -> Tuple[Set[Path], List[str]]:  # noqa: C90
         if root.startswith(excluded):
             continue
         kept_modules.add(root)
+        if why is not None:
+            why[root] = origin.get(module, origin.get(root, "?"))
         # The module's ancestor packages ship too (skeleton), and their eager
         # imports are part of the closure.
         enqueue(root)
@@ -271,10 +356,12 @@ def compute_closure(manifest: dict) -> Tuple[Set[Path], List[str]]:  # noqa: C90
             # A lazy map is indexed, not followed: a target ships only when a kept
             # module imports its name (below). Following every entry would ship
             # every architecture and algorithm behind the facades (Q-12).
-            lazy_index[root] = package_index(path, root, REPO)
+            lazy_index[root] = package_index(path, root, REPO, index_all)
             surface.update(trimmed(dep, REPO) for dep in imports.deferred)
             if root in INDEXED_INITS:
                 pending = sorted(deferred)
+            elif index_all:
+                pending = sorted(deferred | used_init_imports(path, REPO))
         for dep in pending:
             root_dep = trimmed(dep, REPO)
             if not root_dep:
@@ -285,15 +372,28 @@ def compute_closure(manifest: dict) -> Tuple[Set[Path], List[str]]:  # noqa: C90
             if module_to_file(dep, REPO) is None and dep != root_dep:
                 name = dep[len(root_dep) + 1 :]
                 if "." not in name:
-                    if root_dep not in lazy_index:
-                        package_path = module_to_file(root_dep, REPO)
-                        lazy_index[root_dep] = (
-                            package_index(package_path, root_dep, REPO) if package_path is not None else {}
-                        )
-                    target = lazy_index.get(root_dep, {}).get(name)
-                    if target and target not in kept_modules:
-                        surface.add(trimmed(target, REPO))
-                        queue.append(target)
+                    package, target = root_dep, None
+                    # Follow a name re-exported through several package inits to its defining module.
+                    for _ in range(8):
+                        if package not in lazy_index:
+                            package_path = module_to_file(package, REPO)
+                            lazy_index[package] = (
+                                package_index(package_path, package, REPO, index_all)
+                                if package_path is not None
+                                else {}
+                            )
+                        found = lazy_index.get(package, {}).get(name)
+                        if not found:
+                            break
+                        target = found
+                        if found not in kept_modules:
+                            surface.add(trimmed(found, REPO))
+                            origin.setdefault(found, f"{root} (name {name})")
+                            queue.append(found)
+                        found_path = module_to_file(found, REPO)
+                        if found_path is None or found_path.name != "__init__.py" or found == package:
+                            break
+                        package = found
             if root_dep.startswith(excluded):
                 if path.name != "__init__.py" and dep not in deferred:
                     if root in surface:
@@ -303,6 +403,10 @@ def compute_closure(manifest: dict) -> Tuple[Set[Path], List[str]]:  # noqa: C90
                             f"imports excluded {root_dep} (path unavailable in the release)"
                         )
                         break
+                    violation = f"{path.relative_to(REPO)}: imports excluded {root_dep} at module level"
+                    if manifest.get("_violations") is not None:
+                        manifest["_violations"].append(violation)
+                        continue
                     raise SystemExit(
                         f"kept file {path} imports excluded package {root_dep!r} at module "
                         "level; move the import into a function, or extend the manifest"
@@ -310,6 +414,7 @@ def compute_closure(manifest: dict) -> Tuple[Set[Path], List[str]]:  # noqa: C90
                 notes.append(f"excluded {root_dep} stays out of the release ({path.name})")
                 continue
             if root_dep not in kept_modules:
+                origin.setdefault(root_dep, root + (" (deferred)" if dep in deferred else ""))
                 queue.append(root_dep)
 
     files: Set[Path] = set()
@@ -317,9 +422,11 @@ def compute_closure(manifest: dict) -> Tuple[Set[Path], List[str]]:  # noqa: C90
         path = module_to_file(module, REPO)
         if path is not None:
             files.add(path)
-    # The _manifest.py files always ship (filtered to released keys).
-    for stage_path in STAGES.values():
-        files.add(stage_path)
+    # The _manifest.py files ship (filtered to released keys), except a stage the manifest lists
+    # with no keys at all: its registry does not ship either.
+    for stage, stage_path in STAGES.items():
+        if manifest["stages"].get(stage, None) != []:
+            files.add(stage_path)
     return files, notes
 
 

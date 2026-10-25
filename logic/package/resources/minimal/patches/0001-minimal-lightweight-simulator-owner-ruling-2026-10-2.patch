@@ -1,0 +1,2473 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: minimal <minimal@localhost>
+Date: Sun, 25 Oct 2026 16:02:31 +0000
+Subject: [PATCH] minimal: lightweight simulator (owner ruling 2026-10-25)
+
+No experiment tracking (result writers move to utils/results, the logger to utils/pylogger,
+the in-process policy recorder to utils/policy/state_recorder), no ZenML, policy tags,
+vectorized policies, route improvement, acceptance-criteria package, time constraints, time
+windows, HRL manager, GUI stream, failure analysis or Thompson rewards. Training builds the
+plain Attention Model with REINFORCE and no mandatory selector. Only modules that ship are
+edited.
+---
+ .../policy_swc_tcf.yaml                       |   3 -
+ .../learning_algorithms/policy_na.yaml        |   1 -
+ .../meta_heuristics/policy_pg_clns.yaml       |   3 -
+ .../routing/meta_heuristics/policy_sans.yaml  |  11 -
+ logic/controllers/hydra_dispatch.py           |  34 +---
+ logic/controllers/jobs/pipeline_runner.py     |  78 +------
+ logic/src/data/processor/transforms.py        |   2 +-
+ .../callbacks/simulation/policy_summary.py    |   2 +-
+ .../simulation/simulation_display.py          |   2 +-
+ logic/src/pipeline/features/base.py           |   2 +-
+ logic/src/pipeline/features/test/engine.py    | 167 +--------------
+ .../features/test/orchestrator/__init__.py    |  30 +--
+ .../test/orchestrator/results_handler.py      |   2 +-
+ logic/src/pipeline/features/train/engine.py   | 191 +++---------------
+ .../pipeline/features/train/engine_setup.py   |  29 ---
+ .../features/train/model_factory/builder.py   |  84 +-------
+ .../src/pipeline/learning/common/base/data.py |   2 +-
+ .../pipeline/learning/common/base/module.py   |   2 +-
+ .../pipeline/learning/common/base/steps.py    |   2 +-
+ .../learning/common/baselines/base.py         |   2 +-
+ .../learning/common/baselines/rollout.py      |   2 +-
+ logic/src/pipeline/learning/common/epoch.py   |   2 +-
+ .../pipeline/learning/common/pbrs_wrapper.py  |   2 +-
+ logic/src/pipeline/learning/common/trainer.py |  28 ---
+ .../simulations/actions/collection.py         |  23 ---
+ .../pipeline/simulations/actions/logging.py   |  51 -----
+ .../pipeline/simulations/actions/routing.py   |  13 +-
+ logic/src/pipeline/simulations/manager.py     |   4 +-
+ logic/src/pipeline/simulations/pipeline.py    |  14 +-
+ logic/src/pipeline/simulations/progress.py    |   4 +-
+ .../simulations/states/base/context.py        |   2 +-
+ .../pipeline/simulations/states/finishing.py  |   4 +-
+ .../simulations/states/initializing.py        |  46 +----
+ .../pipeline/simulations/states/running.py    |   2 +-
+ logic/src/policies/packing/last_minute.py     |   6 -
+ logic/src/policies/packing/lookahead.py       |   7 -
+ logic/src/policies/packing/service_level.py   |   7 -
+ .../routing/base/base_routing_policy.py       |   2 +-
+ .../routing/base/routing_execution.py         |  35 ----
+ .../policy_swc_tcf.py                         |   8 -
+ .../learning_algorithms/neural_agent/batch.py |   3 +-
+ .../neural_agent/policy_na.py                 |  82 +-------
+ .../neural_agent/simulation.py                |   3 +-
+ .../aco.py                                    |   2 +-
+ .../lns.py                                    |   2 +-
+ .../local_search.py                           |   2 +-
+ .../pg_clns.py                                |   2 +-
+ .../dispatcher.py                             |   2 -
+ .../heuristics/sans.py                        |   2 +-
+ logic/src/utils/model/loader.py               |   6 +-
+ .../policy/state_recorder.py}                 |   2 +-
+ .../{tracking/logging => utils}/pylogger.py   |  14 +-
+ .../modules => utils/results}/analysis.py     |   4 +-
+ .../results}/analysis_results.py              |   2 +-
+ .../results}/analysis_slug.py                 |   2 +-
+ .../results}/logger_writer.py                 |   0
+ .../modules => utils/results}/storage.py      |   2 +-
+ .../results}/summary_display.py               |   0
+ .../test_issue_41_solver_status.py            |   2 +-
+ .../simulations/test_simulation_core.py       |   2 +-
+ .../unit/tracking/test_policy_telemetry_db.py |   2 +-
+ .../unit/tracking/test_policy_viz_emit.py     |   2 +-
+ .../unit/tracking/test_summary_table_width.py |   2 +-
+ .../utils/logging/modules/test_storage.py     |   4 +-
+ .../utils/logging/test_basic_log_utils.py     |   2 +-
+ .../test/unit/utils/logging/test_log_utils.py |  24 +--
+ 66 files changed, 128 insertions(+), 955 deletions(-)
+ rename logic/src/{tracking/viz_mixin.py => utils/policy/state_recorder.py} (99%)
+ rename logic/src/{tracking/logging => utils}/pylogger.py (81%)
+ rename logic/src/{tracking/logging/modules => utils/results}/analysis.py (99%)
+ rename logic/src/{tracking/logging/modules => utils/results}/analysis_results.py (99%)
+ rename logic/src/{tracking/logging/modules => utils/results}/analysis_slug.py (98%)
+ rename logic/src/{tracking/logging => utils/results}/logger_writer.py (100%)
+ rename logic/src/{tracking/logging/modules => utils/results}/storage.py (99%)
+ rename logic/src/{tracking/logging/modules => utils/results}/summary_display.py (100%)
+
+diff --git a/logic/configs/policies/routing/exact_and_decomposition_solvers/policy_swc_tcf.yaml b/logic/configs/policies/routing/exact_and_decomposition_solvers/policy_swc_tcf.yaml
+index 6b7ce26..fab19b1 100644
+--- a/logic/configs/policies/routing/exact_and_decomposition_solvers/policy_swc_tcf.yaml
++++ b/logic/configs/policies/routing/exact_and_decomposition_solvers/policy_swc_tcf.yaml
+@@ -9,6 +9,3 @@ swc_tcf:
+       - last_minute_cf70
+       - last_minute_cf90
+     time_limit: 60.0
+-    route_improvement:
+-      other/route_improvement/ri_cls.yaml:
+-      - default
+diff --git a/logic/configs/policies/routing/learning_algorithms/policy_na.yaml b/logic/configs/policies/routing/learning_algorithms/policy_na.yaml
+index ca4e6b9..4076ac8 100644
+--- a/logic/configs/policies/routing/learning_algorithms/policy_na.yaml
++++ b/logic/configs/policies/routing/learning_algorithms/policy_na.yaml
+@@ -9,4 +9,3 @@ na:
+     packing:
+       other/packing/pk_lookahead.yaml:
+       - lookahead
+-    route_improvement: []
+diff --git a/logic/configs/policies/routing/meta_heuristics/policy_pg_clns.yaml b/logic/configs/policies/routing/meta_heuristics/policy_pg_clns.yaml
+index 3571ced..3d8fad1 100644
+--- a/logic/configs/policies/routing/meta_heuristics/policy_pg_clns.yaml
++++ b/logic/configs/policies/routing/meta_heuristics/policy_pg_clns.yaml
+@@ -34,6 +34,3 @@ pg_clns:
+       other/packing/pk_last_minute.yaml:
+       - last_minute_cf70
+       - last_minute_cf90
+-    route_improvement:
+-      other/route_improvement/ri_cls.yaml:
+-      - default
+diff --git a/logic/configs/policies/routing/meta_heuristics/policy_sans.yaml b/logic/configs/policies/routing/meta_heuristics/policy_sans.yaml
+index 0c1e780..2691074 100644
+--- a/logic/configs/policies/routing/meta_heuristics/policy_sans.yaml
++++ b/logic/configs/policies/routing/meta_heuristics/policy_sans.yaml
+@@ -13,9 +13,6 @@ sans:
+       other/packing/pk_last_minute.yaml:
+       - last_minute_cf70
+       - last_minute_cf90
+-    route_improvement:
+-      other/route_improvement/ri_cls.yaml:
+-      - default
+   og_a:
+     engine: og
+     combination:
+@@ -31,9 +28,6 @@ sans:
+       other/packing/pk_last_minute.yaml:
+       - last_minute_cf70
+       - last_minute_cf90
+-    route_improvement:
+-      other/route_improvement/ri_cls.yaml:
+-      - default
+   og_b:
+     engine: og
+     combination:
+@@ -49,9 +43,6 @@ sans:
+       other/packing/pk_last_minute.yaml:
+       - last_minute_cf70
+       - last_minute_cf90
+-    route_improvement:
+-      other/route_improvement/ri_cls.yaml:
+-      - default
+ lac:
+   a:
+     engine: og
+@@ -68,7 +59,6 @@ lac:
+       other/packing/pk_last_minute.yaml:
+       - last_minute_cf70
+       - last_minute_cf90
+-    route_improvement: []
+   b:
+     engine: og
+     combination:
+@@ -84,4 +74,3 @@ lac:
+       other/packing/pk_last_minute.yaml:
+       - last_minute_cf70
+       - last_minute_cf90
+-    route_improvement: []
+diff --git a/logic/controllers/hydra_dispatch.py b/logic/controllers/hydra_dispatch.py
+index 5f22df3..a5cb440 100644
+--- a/logic/controllers/hydra_dispatch.py
++++ b/logic/controllers/hydra_dispatch.py
+@@ -7,17 +7,13 @@ dispatch table.
+ 
+ Supported tasks
+ ---------------
+-- ``train`` / ``meta_train`` / ``hpo`` → :func:`~logic.controllers.jobs.pipeline_runner.run_training`
+-- ``eval``                              → :func:`~logic.controllers.jobs.pipeline_runner.run_evaluation`
+-- ``test_sim`` / ``hpo_sim``            → :func:`~logic.controllers.jobs.pipeline_runner.run_simulation`
+-- ``gen_data``                          → :func:`~logic.controllers.jobs.pipeline_runner.run_data_generation`
++- ``train``    → :func:`~logic.controllers.jobs.pipeline_runner.run_training`
++- ``test_sim`` → :func:`~logic.controllers.jobs.pipeline_runner.run_simulation`
+ 
+ Example::
+ 
+     python main.py train model=am env.name=ptp env.num_loc=50
+-    python main.py eval eval.model_path=./weights/best.pt
+     python main.py test_sim sim.days=31
+-    python main.py gen_data data.problem=ptp
+ """
+ 
+ import hydra
+@@ -29,9 +25,9 @@ from logic.src.constants import CONFIGS_DIR
+ cs = ConfigStore.instance()
+ cs.store(name="config", node=Config)
+ 
+-_TRAINING_TASKS = frozenset({"train", "meta_train", "hpo"})
+-_SIM_TASKS = frozenset({"test_sim", "hpo_sim", "sim_hpo"})
+-_TASK_ALIASES = {"evaluation": "eval", "sim_hpo": "hpo_sim"}
++_TRAINING_TASKS = frozenset({"train"})
++_SIM_TASKS = frozenset({"test_sim"})
++_TASK_ALIASES: dict = {}
+ 
+ 
+ def _run_task(cfg: Config) -> float:
+@@ -53,20 +49,12 @@ def _run_task(cfg: Config) -> float:
+ 
+         return run_training(cfg)
+ 
+-    if task == "eval":
+-        from logic.controllers.jobs.pipeline_runner import run_evaluation
+-
+-        return run_evaluation(cfg)
+ 
+     if task in _SIM_TASKS:
+         from logic.controllers.jobs.pipeline_runner import run_simulation
+ 
+         return run_simulation(cfg)
+ 
+-    if task == "gen_data":
+-        from logic.controllers.jobs.pipeline_runner import run_data_generation
+-
+-        return run_data_generation(cfg)
+ 
+     raise ValueError(f"Unknown task: {task!r}")
+ 
+@@ -83,14 +71,4 @@ def hydra_entry_point(cfg: Config) -> float:
+     Returns:
+         Scalar result of the executed task.
+     """
+-    if cfg.tracking.profile:
+-        from logic.src.tracking.profiling import start_global_profiling, stop_global_profiling
+-
+-        start_global_profiling(log_dir=cfg.tracking.log_dir)
+-
+-    try:
+-        return _run_task(cfg)
+-    finally:
+-        if cfg.tracking.profile:
+-            # pyrefly: ignore [unbound-name]
+-            stop_global_profiling()
++    return _run_task(cfg)
+diff --git a/logic/controllers/jobs/pipeline_runner.py b/logic/controllers/jobs/pipeline_runner.py
+index b734f44..139a31b 100644
+--- a/logic/controllers/jobs/pipeline_runner.py
++++ b/logic/controllers/jobs/pipeline_runner.py
+@@ -2,9 +2,8 @@
+ 
+ Unified entry point for all configuration-driven pipeline execution tasks:
+ 
+-- Neural model training and evaluation: ``train``, ``meta_train``, ``hpo``, ``eval``
+-- Simulation engine execution: ``test_sim``, ``hpo_sim`` / ``sim_hpo``
+-- Dataset generation: ``gen_data``
++- Neural model training: ``train``
++- Simulation engine execution: ``test_sim``
+ 
+ Hydra drives configuration for all tasks in this module; the underlying business
+ logic is implemented in the corresponding feature pipelines.
+@@ -12,9 +11,7 @@ logic is implemented in the corresponding feature pipelines.
+ Example::
+ 
+     python main.py train model=am env.name=ptp env.num_loc=50
+-    python main.py eval eval.model_path=./weights/best.pt
+     python main.py test_sim sim.days=31 sim.policies=regular,gurobi,alns
+-    python main.py gen_data data.problem=ptp data.graph_sizes=[50]
+ """
+ 
+ from typing import Any, List
+@@ -34,8 +31,8 @@ _ROOT_KEYS: List[str] = [
+     "tracking",
+ ]
+ 
+-_TRAINING_TASKS = frozenset({"train", "meta_train", "hpo"})
+-_SIM_TASKS = frozenset({"test_sim", "hpo_sim", "sim_hpo"})
++_TRAINING_TASKS = frozenset({"train"})
++_SIM_TASKS = frozenset({"test_sim"})
+ 
+ # ---------------------------------------------------------------------------
+ # Internal helpers
+@@ -87,32 +84,9 @@ def run_training(cfg: Any) -> float:
+             filter_keys=_ROOT_KEYS + ["env", "model", "train", "rl", "optim"],  # type: ignore[arg-type]
+         )
+ 
+-    if cfg.hpo.n_trials > 0:
+-        # Imported here: HPO is not part of the 1.0.0 release, which prunes run_hpo.
+-        from logic.src.pipeline.features.train import run_hpo
+-
+-        return run_hpo(cfg)
+     return _train(cfg)
+ 
+ 
+-def run_evaluation(cfg: Any) -> float:
+-    """Run model evaluation.
+-
+-    Args:
+-        cfg: Hydra ``Config`` object (structured config).
+-
+-    Returns:
+-        0.0 on success.
+-    """
+-    from logic.src.pipeline.features.eval import run_evaluate_model
+-
+-    if cfg.tracking.verbose:
+-        _print_config(cfg, "EVALUATION", filter_keys=_ROOT_KEYS + ["eval"])  # type: ignore[arg-type]
+-
+-    run_evaluate_model(cfg)
+-    return 0.0
+-
+-
+ # ---------------------------------------------------------------------------
+ # Simulation & Data Generation
+ # ---------------------------------------------------------------------------
+@@ -145,48 +119,4 @@ def run_simulation(cfg: Any) -> float:
+         run_simulator_test(cfg)
+         return 0.0
+ 
+-    if task in ("hpo_sim", "sim_hpo"):
+-        from logic.src.pipeline.simulations.hpo.hpo_handler import run_hpo_sim
+-
+-        if cfg.tracking.verbose:
+-            _print_config(cfg, "SIMULATION HPO", filter_keys=_ROOT_KEYS + ["hpo_sim"])  # type: ignore[arg-type]
+-        run_hpo_sim(cfg)
+-        return 0.0
+-
+     raise ValueError(f"Unknown simulation task: {task!r}")
+-
+-
+-def run_data_generation(cfg: Any) -> float:
+-    """Generate datasets for training, validation, or testing.
+-
+-    Initialises the WSmart+ tracking run, calls the dataset generator, and
+-    records whether that operation completed or failed.
+-
+-    Args:
+-        cfg: Hydra ``Config`` object (structured config).
+-
+-    Returns:
+-        0.0 on success.
+-    """
+-    import logic.src.tracking as wst
+-    from logic.src.data.generators import generate_datasets
+-
+-    if cfg.tracking.verbose:
+-        _print_config(cfg, "DATA GENERATION", filter_keys=_ROOT_KEYS + ["data"])  # type: ignore[arg-type]
+-
+-    experiment_name = cfg.experiment_name or f"gen_data_{cfg.data.problem}"
+-    wst.init(experiment_name=experiment_name)
+-    try:
+-        generate_datasets(cfg)
+-    except Exception:
+-        run = wst.get_active_run()
+-        if run is not None:
+-            run.set_tag("status", "failed")
+-            run.flush()
+-        raise
+-    else:
+-        run = wst.get_active_run()
+-        if run is not None:
+-            run.set_tag("status", "completed")
+-            run.flush()
+-    return 0.0
+diff --git a/logic/src/data/processor/transforms.py b/logic/src/data/processor/transforms.py
+index b1818c7..1a0f385 100644
+--- a/logic/src/data/processor/transforms.py
++++ b/logic/src/data/processor/transforms.py
+@@ -28,7 +28,7 @@ from typing import Callable, List, Optional, Union
+ import torch
+ from tensordict import TensorDict
+ 
+-from logic.src.tracking.logging.pylogger import get_pylogger
++from logic.src.utils.pylogger import get_pylogger
+ 
+ log = get_pylogger(__name__)
+ 
+diff --git a/logic/src/pipeline/callbacks/simulation/policy_summary.py b/logic/src/pipeline/callbacks/simulation/policy_summary.py
+index 6753bb2..c5f1fd9 100644
+--- a/logic/src/pipeline/callbacks/simulation/policy_summary.py
++++ b/logic/src/pipeline/callbacks/simulation/policy_summary.py
+@@ -25,7 +25,7 @@ from logic.src.configs import Config, PackingConfig
+ from logic.src.constants import CONFIGS_DIR
+ from logic.src.interfaces import ITraversable
+ from logic.src.pipeline.simulations.actions.policy_config import _as_policy_mapping
+-from logic.src.tracking.logging.logger_writer import LoggerWriter
++from logic.src.utils.results.logger_writer import LoggerWriter
+ from logic.src.utils.configs.config_loader import load_config
+ from logic.src.utils.configs.policy_files import policy_file
+ 
+diff --git a/logic/src/pipeline/callbacks/simulation/simulation_display.py b/logic/src/pipeline/callbacks/simulation/simulation_display.py
+index 8aa3779..0a21041 100644
+--- a/logic/src/pipeline/callbacks/simulation/simulation_display.py
++++ b/logic/src/pipeline/callbacks/simulation/simulation_display.py
+@@ -38,7 +38,7 @@ from rich.table import Table
+ from rich.text import Text
+ 
+ from logic.src.constants import SIM_METRICS
+-from logic.src.tracking.logging.logger_writer import LoggerWriter
++from logic.src.utils.results.logger_writer import LoggerWriter
+ 
+ 
+ class SimulationDisplayCallback:
+diff --git a/logic/src/pipeline/features/base.py b/logic/src/pipeline/features/base.py
+index 02468cc..30d09a9 100644
+--- a/logic/src/pipeline/features/base.py
++++ b/logic/src/pipeline/features/base.py
+@@ -27,7 +27,7 @@ from typing import Any, Dict
+ from omegaconf import DictConfig, ListConfig, OmegaConf
+ 
+ from logic.src.interfaces import ITraversable
+-from logic.src.tracking.logging.pylogger import get_pylogger
++from logic.src.utils.pylogger import get_pylogger
+ 
+ logger = get_pylogger(__name__)
+ 
+diff --git a/logic/src/pipeline/features/test/engine.py b/logic/src/pipeline/features/test/engine.py
+index e1c1533..f37b086 100644
+--- a/logic/src/pipeline/features/test/engine.py
++++ b/logic/src/pipeline/features/test/engine.py
+@@ -8,26 +8,21 @@ Attributes:
+     _check_data_availability: Verify that the dataset files exist.
+     _resolve_dataset: Infer the dataset filename based on the area and other parameters.
+     _ensure_directories: Ensure that all required directories exist, creating them if necessary.
+-    _log_sim_params: Log simulation parameters to WSTracker.
+     _log_policy_metrics: Create and log the expanded policy metrics dictionary.
+     _extract_policy_name: Extract the base policy name from an expanded configuration.
+     _create_variant_metrics: Create a structured metrics dictionary for a specific policy variant.
+-    _run_sim_via_zenml: Rerun simulation via ZenML.
+ 
+ Example:
+     >>> from logic.src.pipeline.features.test import run_simulator_test
+     >>> run_simulator_test(config)
+ """
+ 
+-import contextlib
+ import os
+ import random
+-from typing import Any, Dict, List, Optional
+ 
+ import numpy as np
+ 
+ import logic.src.constants as udef
+-import logic.src.tracking as wst
+ from logic.src.configs import Config
+ from logic.src.pipeline.features.test.config import expand_policy_configs
+ from logic.src.pipeline.features.test.orchestrator import simulator_testing
+@@ -36,17 +31,12 @@ from logic.src.pipeline.simulations.repository import (
+     load_simulator_data,
+     set_repository_from_path,
+ )
+-from logic.src.tracking.logging.pylogger import get_pylogger
+-
+-try:
+-    from logic.src.tracking.integrations.zenml_bridge import configure_zenml_stack
+-except ImportError:
+-    configure_zenml_stack = None  # type: ignore[assignment]
++from logic.src.utils.pylogger import get_pylogger
+ 
+ logger = get_pylogger(__name__)
+ 
+ 
+-def run_simulator_test(cfg: Config, sinks: Optional[List[Any]] = None) -> None:
++def run_simulator_test(cfg: Config) -> None:
+     """
+     Main entry point for the WSmart+ Route simulator test engine.
+ 
+@@ -61,18 +51,7 @@ def run_simulator_test(cfg: Config, sinks: Optional[List[Any]] = None) -> None:
+     Args:
+         cfg: Root Hydra configuration object containing ``cfg.sim`` with
+             simulation parameters, policy settings, and environment metadata.
+-        sinks: Optional list of tracking sinks (e.g. :class:`ZenMLBridge`)
+-            to attach to the WSTracker run. When ``None`` (the default),
+-            :class:`MLflowBridge` is auto-attached if
+-            ``cfg.tracking.mlflow_enabled`` is ``True``.
+     """
+-    # ----- ZenML dispatch (opt-in) -----
+-    tracking = getattr(cfg, "tracking", None)
+-    zenml_enabled = bool(getattr(tracking, "zenml_enabled", False))
+-    if zenml_enabled and sinks is None:
+-        _run_sim_via_zenml(cfg)
+-        return
+-
+     _validate_sim_config(cfg)
+ 
+     sim = cfg.sim
+@@ -107,56 +86,9 @@ def run_simulator_test(cfg: Config, sinks: Optional[List[Any]] = None) -> None:
+             use_cuda = False
+         device = torch.device("cpu" if not use_cuda else f"cuda:{torch.cuda.device_count() - 1}")
+ 
+-    # --- Centralised experiment tracking ---
+-    experiment_name = f"sim-{sim.graph.area}-{sim.graph.num_loc}bins-{sim.graph.n_days}days"
+-    tracker = wst.init(experiment_name=experiment_name)
+-    policy_names = [p if not isinstance(p, dict) else list(p.keys())[0] for p in sim.full_policies]
+-    run_tags = {
+-        "area": sim.graph.area,
+-        "num_loc": str(sim.graph.num_loc),
+-        "days": str(sim.graph.n_days),
+-        "n_samples": str(sim.graph.n_samples),
+-        "policies": ",".join(policy_names),
+-        "seed": str(sim.seed),
+-        "distribution": sim.data_distribution,
+-    }
+-
+-    run = tracker.start_run(experiment_name, run_type="simulation", tags=run_tags)
+-    run.__enter__()
+-
+-    # Log full simulation config and per-policy settings
+-    _log_sim_params(run, cfg)
+-
+-    # ----- Attach secondary sinks -----
+-    if sinks is not None:
+-        for sink in sinks:
+-            run.add_sink(sink)
+-    else:
+-        # Auto-attach MLflowBridge when running outside ZenML
+-        mlflow_enabled = bool(getattr(tracking, "mlflow_enabled", False))
+-        if mlflow_enabled:
+-            with contextlib.suppress(Exception):
+-                wst.MLflowBridge.attach(
+-                    run,
+-                    mlflow_tracking_uri=str(getattr(tracking, "mlflow_tracking_uri", "mlruns")),
+-                    experiment_name=str(getattr(tracking, "mlflow_experiment_name", "wsmart-route")),
+-                    run_name=run.run_id[:8],
+-                    tags=run_tags,
+-                )
+-
+-    # Log simulation data directory baseline hashes for change detection
+-    try:
+-        data_dir = os.path.join(udef.ROOT_DIR, "data", "simulator")
+-        if os.path.isdir(data_dir):
+-            wst.FilesystemTracker(run).scan_directory(data_dir)
+-    except Exception:
+-        pass
+-
+     try:
+         simulator_testing(cfg, data_size, device)
+-        run.__exit__(None, None, None)
+     except Exception as e:
+-        run.__exit__(type(e), e, e.__traceback__)
+         raise Exception(f"failed to execute WSmart+ Route simulations due to {repr(e)}") from e
+ 
+ 
+@@ -239,98 +171,3 @@ def _ensure_directories(cfg: Config) -> None:
+         raise Exception(
+             f"directories to save WSR simulator test output files do not exist and could not be created: {e}"
+         ) from e
+-
+-
+-# ---------------------------------------------------------------------------
+-# Parameter logging
+-# ---------------------------------------------------------------------------
+-
+-
+-def _log_sim_params(run: wst.Run, cfg: Config) -> None:
+-    """Log simulation configuration and per-policy settings as run parameters.
+-
+-    Captures the full ``cfg.sim`` scalar fields and each policy's config dict
+-    so that every run is fully reproducible from the tracking DB alone.
+-
+-    Args:
+-        run: Active WSTracker run to receive the parameters.
+-        cfg: Root Hydra config object.
+-    """
+-    sim = cfg.sim
+-
+-    params: Dict[str, Any] = {
+-        "sim.graph.n_days": sim.graph.n_days,
+-        "sim.graph.n_samples": sim.graph.n_samples,
+-        "sim.seed": sim.seed,
+-        "sim.data_distribution": sim.data_distribution,
+-        "sim.graph.area": sim.graph.area,
+-        "sim.graph.num_loc": sim.graph.num_loc,
+-        "sim.graph.waste_type": sim.graph.waste_type,
+-        "sim.cpu_cores": sim.cpu_cores,
+-        "sim.checkpoint_dir": str(getattr(sim, "checkpoint_dir", "")),
+-        "sim.output_dir": str(getattr(sim, "output_dir", "")),
+-    }
+-
+-    # Per-policy configuration
+-    for pol in getattr(sim, "full_policies", []):
+-        if isinstance(pol, dict):
+-            for name, pol_cfg in pol.items():
+-                with contextlib.suppress(Exception):
+-                    if hasattr(pol_cfg, "items"):
+-                        for k, v in pol_cfg.items():
+-                            params[f"policy.{name}.{k}"] = v
+-                    else:
+-                        params[f"policy.{name}"] = str(pol_cfg)
+-        else:
+-            params[f"policy.{pol}"] = True
+-
+-    # External dataset path (if provided)
+-    load_ds = getattr(sim.graph, "load_dataset", None)
+-    if load_ds:
+-        params["load_dataset"] = str(load_ds)
+-        with contextlib.suppress(Exception):
+-            run.log_dataset_event(
+-                "load",
+-                file_path=str(load_ds),
+-                metadata={
+-                    "variable_name": "load_dataset",
+-                    "source_file": "features/test/engine.py",
+-                    "source_line": 297,
+-                },
+-            )
+-
+-    run.log_params(params)
+-
+-
+-# ---------------------------------------------------------------------------
+-# ZenML dispatch
+-# ---------------------------------------------------------------------------
+-
+-
+-def _run_sim_via_zenml(cfg: Config) -> None:
+-    """Dispatch simulation testing to the ZenML simulation pipeline.
+-
+-    Called when ``cfg.tracking.zenml_enabled`` is ``True`` and no external
+-    sinks were injected (i.e. the call originates from the CLI).
+-
+-    Args:
+-        cfg: Config.
+-    """
+-    tracking = getattr(cfg, "tracking", None)
+-    mlflow_uri = str(getattr(tracking, "mlflow_tracking_uri", "mlruns"))
+-    stack_name = str(getattr(tracking, "zenml_stack_name", "wsmart-route-stack"))
+-
+-    if configure_zenml_stack is None or not configure_zenml_stack(mlflow_uri, stack_name=stack_name):
+-        logger.warning("ZenML stack configuration failed — falling back to direct simulation.")
+-        run_simulator_test(cfg, sinks=[])
+-        return
+-
+-    try:
+-        from logic.src.pipeline.features.test.zenml_sim_pipeline import (
+-            simulation_pipeline,
+-        )
+-
+-        simulation_pipeline(cfg)
+-    except Exception as exc:
+-        logger.warning(f"ZenML simulation pipeline failed — falling back to direct simulation: {exc}")
+-        run_simulator_test(cfg, sinks=[])
+diff --git a/logic/src/pipeline/features/test/orchestrator/__init__.py b/logic/src/pipeline/features/test/orchestrator/__init__.py
+index f58c114..fb16f18 100644
+--- a/logic/src/pipeline/features/test/orchestrator/__init__.py
++++ b/logic/src/pipeline/features/test/orchestrator/__init__.py
+@@ -28,7 +28,6 @@ from loguru import logger
+ from omegaconf import OmegaConf
+ 
+ import logic.src.constants as udef
+-import logic.src.tracking as wst
+ from logic.src.configs import Config
+ from logic.src.constants.paths import CONFIGS_DIR
+ from logic.src.pipeline.callbacks import PolicySummaryCallback
+@@ -42,9 +41,8 @@ from logic.src.pipeline.features.test.orchestrator.parallel_runner import (
+ from logic.src.pipeline.simulations.manager import sequential_simulations
+ from logic.src.pipeline.simulations.progress import display_log_metrics
+ from logic.src.pipeline.simulations.repository import load_indices
+-from logic.src.tracking.logging.logger_writer import LoggerWriter, setup_logger_redirection
+-from logic.src.tracking.logging.modules.analysis import output_stats, runs_per_policy
+-from logic.src.tracking.logging.modules.gui import send_final_output_to_gui
++from logic.src.utils.results.logger_writer import LoggerWriter, setup_logger_redirection
++from logic.src.utils.results.analysis import output_stats, runs_per_policy
+ from logic.src.utils.configs.policy_files import policy_file
+ 
+ __all__ = [
+@@ -53,14 +51,12 @@ __all__ = [
+     "setup_logger_redirection",
+     "runs_per_policy",
+     "output_stats",
+-    "send_final_output_to_gui",
+     "display_log_metrics",
+     "sequential_simulations",
+     "load_indices",
+     "run_parallel_simulations",
+     "Config",
+     "udef",
+-    "wst",
+     "PolicySummaryCallback",
+     "run_parallel_simulations",
+     "load_indices",
+@@ -68,7 +64,6 @@ __all__ = [
+     "sequential_simulations",
+     "output_stats",
+     "runs_per_policy",
+-    "send_final_output_to_gui",
+     "LoggerWriter",
+     "setup_logger_redirection",
+     "logger",
+@@ -299,13 +294,9 @@ def simulator_testing(cfg: Config, data_size: int, device: Any) -> None:  # noqa
+ 
+         weights_path = os.path.join(udef.ROOT_DIR, "model_weights")
+ 
+-        # Extract active tracking context so parallel workers can attach to the
+-        # parent run.  Sequential workers run in the same process and already
+-        # inherit get_active_run() directly.
+-        _active_run = wst.get_active_run()
+-        _tracker = wst.get_tracker()
+-        tracking_uri: Optional[str] = _tracker.tracking_uri if _tracker is not None else None
+-        tracking_run_id: Optional[str] = _active_run.run_id if _active_run is not None else None
++        # The minimal package has no experiment tracking to hand to the workers.
++        tracking_uri: Optional[str] = None
++        tracking_run_id: Optional[str] = None
+ 
+         if n_cores > 1:
+             log, log_std, _failed_log = run_parallel_simulations(
+@@ -329,17 +320,6 @@ def simulator_testing(cfg: Config, data_size: int, device: Any) -> None:  # noqa
+                 cfg, device, indices, sample_idx_ls, weights_path, lock, shared_metrics, task_count
+             )
+ 
+-        # pyrefly: ignore [no-matching-overload]
+-        realtime_log_path = os.path.join(
+-            udef.ROOT_DIR,
+-            sim.output_dir,
+-            f"{sim.graph.n_days}days",
+-            f"{sim.graph.area}{sim.graph.num_loc}_{sim.graph.waste_type}",
+-            sim.data_distribution,
+-            sim.run_name,
+-            f"log_realtime_{sim.data_distribution}_{sim.graph.n_samples}N.jsonl",
+-        )
+-        send_final_output_to_gui(log, log_std, sim.graph.n_samples, policies, realtime_log_path)
+ 
+         display_log_metrics(
+             sim.output_dir,
+diff --git a/logic/src/pipeline/features/test/orchestrator/results_handler.py b/logic/src/pipeline/features/test/orchestrator/results_handler.py
+index cb365de..b874afe 100644
+--- a/logic/src/pipeline/features/test/orchestrator/results_handler.py
++++ b/logic/src/pipeline/features/test/orchestrator/results_handler.py
+@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional, Tuple
+ import logic.src.constants as udef
+ from logic.src.configs import Config
+ from logic.src.pipeline.simulations.naming import policy_result_key
+-from logic.src.tracking.logging.modules.analysis import output_stats
++from logic.src.utils.results.analysis import output_stats
+ 
+ try:
+     from logic.src.tracking.core.run import get_active_run
+diff --git a/logic/src/pipeline/features/train/engine.py b/logic/src/pipeline/features/train/engine.py
+index 08c9b54..8fc11e1 100644
+--- a/logic/src/pipeline/features/train/engine.py
++++ b/logic/src/pipeline/features/train/engine.py
+@@ -7,11 +7,8 @@ Attributes:
+     _run_curriculum_stages: Orchestrate sequential curriculum training stages.
+     _run_single_stage: Execute one training stage and return (val_reward, state_dict).
+     _build_stage_config: Build a stage-specific config with updated graph settings.
+-    _run_training_via_zenml: Run training through the ZenML pipeline.
+     _build_experiment_name: Derive a human-readable experiment name from the Hydra config.
+     _build_callbacks: Instantiate training callbacks from Hydra config.
+-    _log_training_params: Log training configuration parameters.
+-    _track_val_dataset: Track the validation dataset if available.
+ 
+ Example:
+     >>> from logic.src.pipeline.features.train.engine import run_training
+@@ -21,25 +18,17 @@ Example:
+ 
+ from __future__ import annotations
+ 
+-import contextlib
+ import os
+-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, cast
++from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, cast
+ 
+ import torch
+ from pytorch_lightning import seed_everything
+ from pytorch_lightning.loggers import CSVLogger
+ 
+-import logic.src.pipeline.features.train.zenml_train_pipeline as zenml_train_pipeline_module
+-import logic.src.tracking as wst
+ from logic.src.configs import Config
+ from logic.src.pipeline.features.train.model_factory.builder import create_model
+ from logic.src.pipeline.learning.common.trainer import WSTrainer
+-from logic.src.tracking.logging.pylogger import get_pylogger
+-
+-try:
+-    from logic.src.tracking.integrations.zenml_bridge import configure_zenml_stack
+-except ImportError:
+-    configure_zenml_stack = None  # type: ignore[assignment]
++from logic.src.utils.pylogger import get_pylogger
+ 
+ from .engine_setup import (
+     _build_callbacks as _build_callbacks,
+@@ -53,9 +42,6 @@ from .engine_setup import (
+ from .engine_setup import (
+     _get_primary_graph as _get_primary_graph,
+ )
+-from .engine_setup import (
+-    _log_training_params as _log_training_params,
+-)
+ 
+ if TYPE_CHECKING:
+     from logic.src.pipeline.learning.common.base.module import RL4COLitModule
+@@ -69,7 +55,6 @@ logger = get_pylogger(__name__)
+ 
+ def _run_single_stage(
+     cfg: Any,
+-    sinks: Optional[List[Any]],
+     prev_state_dict: Optional[Dict[str, Any]] = None,
+     save_final: bool = True,
+ ) -> Tuple[float, Optional[Dict[str, Any]]]:
+@@ -77,7 +62,6 @@ def _run_single_stage(
+ 
+     Args:
+         cfg: Root configuration for this stage.
+-        sinks: Optional list of tracking sinks.
+         prev_state_dict: State dict from the previous curriculum stage for warm-starting.
+         save_final: Whether to save the final model weights on this stage.
+ 
+@@ -124,104 +108,38 @@ def _run_single_stage(
+         tracking_cfg=cfg.tracking,
+     )
+ 
+-    experiment_name = cfg.experiment_name or _build_experiment_name(cfg)
+-    tracker = wst.init(experiment_name=experiment_name)
++    # train.resume continues an interrupted run from a Lightning checkpoint: weights,
++    # optimizer, epoch counter and, for time training, the carried bin fill.
++    resume = getattr(cfg.train, "resume", None) or None
++    if resume:
++        logger.info("Resuming training from checkpoint: %s", resume)
++    trainer.fit(model, ckpt_path=resume)
++
++    # Reload best checkpoint so state_dict carries optimal weights into the next
++    # curriculum stage (or into the final save), not just the last training epoch.
++    ckpt_path = getattr(getattr(trainer, "checkpoint_callback", None), "best_model_path", None)
++    if ckpt_path and os.path.exists(ckpt_path):
++        try:
++            ckpt = torch.load(ckpt_path, map_location="cpu", weights_only=False)
++            model.load_state_dict(ckpt.get("state_dict", ckpt), strict=False)
++            logger.info("Loaded best checkpoint for state handoff: %s", ckpt_path)
++        except Exception as exc:
++            logger.warning("Could not reload best checkpoint (%s); using last-epoch weights.", exc)
++
++    if save_final and cfg.train.final_model_path:
++        logger.info("Saving final model weights to: %s", cfg.train.final_model_path)
++        model.save_weights(cfg.train.final_model_path)
++        logger.info("Final model weights saved successfully.")
++    elif not cfg.train.final_model_path:
++        logger.info("No final_model_path provided, skipping weight saving.")
++
++    val_reward = trainer.callback_metrics.get("val/reward", torch.tensor(0.0)).item()
++    return val_reward, model.state_dict()
+ 
+-    task_cfg = getattr(cfg, getattr(cfg, "task", "train"), cfg)
+-    env_cfg = getattr(task_cfg, "env", getattr(cfg, "env", None))
+-    policy_cfg = getattr(task_cfg, "policy", task_cfg)
+-    model_cfg = getattr(policy_cfg, "model", getattr(cfg, "model", None))
+-
+-    run_tags = {
+-        "algorithm": str(getattr(cfg.rl, "algorithm", "")),
+-        "model": str(getattr(model_cfg, "name", getattr(cfg, "model_name", "")) if model_cfg else ""),
+-        "problem": str(getattr(env_cfg, "name", "") if env_cfg else ""),
+-        "num_loc": str(getattr(env_cfg, "num_loc", "") if env_cfg else _get_primary_graph(cfg, "num_loc", "")),
+-        "seed": str(cfg.seed),
+-    }
+-    run = tracker.start_run(experiment_name, run_type="training", tags=run_tags)
+-    run.__enter__()
+-
+-    if sinks is not None:
+-        for sink in sinks:
+-            run.add_sink(sink)
+-    else:
+-        mlflow_enabled = bool(getattr(getattr(cfg, "tracking", None), "mlflow_enabled", False))
+-        if mlflow_enabled:
+-            with contextlib.suppress(Exception):
+-                tracking = getattr(cfg, "tracking", None)
+-                wst.MLflowBridge.attach(
+-                    run,
+-                    mlflow_tracking_uri=str(getattr(tracking, "mlflow_tracking_uri", "mlruns")),
+-                    experiment_name=str(getattr(tracking, "mlflow_experiment_name", "wsmart-route")),
+-                    run_name=run.run_id[:8],
+-                    tags=run_tags,
+-                )
+-
+-    try:
+-        _log_training_params(run, cfg)
+-
+-        val_ds = getattr(cfg.train, "val_dataset", None)
+-        if val_ds and os.path.exists(val_ds):
+-            run.log_dataset_event(
+-                "load",
+-                file_path=val_ds,
+-                metadata={
+-                    "variable_name": "val_ds",
+-                    "source_file": "features/train/engine.py",
+-                    "source_line": 151,
+-                },
+-            )
+-            run.watch_file(val_ds)
+-
+-        # train.resume continues an interrupted run from a Lightning checkpoint: weights,
+-        # optimizer, epoch counter and, for time training, the carried bin fill.
+-        resume = getattr(cfg.train, "resume", None) or None
+-        if resume:
+-            logger.info("Resuming training from checkpoint: %s", resume)
+-        # train.init_fill_from starts time training from the bin fill stored in another run's
+-        # checkpoint (e.g. RL continuing the days after imitation); a resumed checkpoint's fill wins.
+-        init_fill = getattr(cfg.train, "init_fill_from", None) or None
+-        if init_fill and not resume:
+-            saved = torch.load(init_fill, map_location="cpu", weights_only=False).get("time_training_fill")
+-            if saved is None:
+-                raise ValueError(f"train.init_fill_from={init_fill} has no time-training fill")
+-            model._resume_fill = saved
+-            logger.info("Starting the bin fill from checkpoint: %s", init_fill)
+-        trainer.fit(model, ckpt_path=resume)
+-
+-        # Reload best checkpoint so state_dict carries optimal weights into the next
+-        # curriculum stage (or into the final save), not just the last training epoch.
+-        ckpt_path = getattr(getattr(trainer, "checkpoint_callback", None), "best_model_path", None)
+-        if ckpt_path and os.path.exists(ckpt_path):
+-            try:
+-                ckpt = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+-                model.load_state_dict(ckpt.get("state_dict", ckpt), strict=False)
+-                logger.info("Loaded best checkpoint for state handoff: %s", ckpt_path)
+-            except Exception as exc:
+-                logger.warning("Could not reload best checkpoint (%s); using last-epoch weights.", exc)
+-
+-        if save_final and cfg.train.final_model_path:
+-            logger.info("Saving final model weights to: %s", cfg.train.final_model_path)
+-            model.save_weights(cfg.train.final_model_path)
+-            logger.info("Final model weights saved successfully.")
+-            run.log_artifact(cfg.train.final_model_path, artifact_type="model")
+-        elif not cfg.train.final_model_path:
+-            logger.info("No final_model_path provided, skipping weight saving.")
+-
+-        val_reward = trainer.callback_metrics.get("val/reward", torch.tensor(0.0)).item()
+-        run.log_metric("best/val_reward", val_reward)
+-        run.__exit__(None, None, None)
+-        return val_reward, model.state_dict()
+-
+-    except Exception as exc:
+-        run.__exit__(type(exc), exc, exc.__traceback__)
+-        raise
+ 
+ 
+ def _run_curriculum_stages(
+     cfg: Any,
+-    sinks: Optional[List[Any]],
+     curriculum_graphs: list,
+ ) -> float:
+     """Orchestrate sequential curriculum training.
+@@ -231,7 +149,6 @@ def _run_curriculum_stages(
+ 
+     Args:
+         cfg: Root Hydra configuration.
+-        sinks: Optional tracking sinks.
+         curriculum_graphs: Ordered list of graph config entries from train.curriculum_graphs.
+ 
+     Returns:
+@@ -252,7 +169,6 @@ def _run_curriculum_stages(
+         stage_cfg = _build_stage_config(cfg, graph_cfg, stage_idx=i)
+         final_reward, state_dict = _run_single_stage(
+             stage_cfg,
+-            sinks,
+             prev_state_dict=prev_state_dict,
+             save_final=is_last,
+         )
+@@ -261,69 +177,26 @@ def _run_curriculum_stages(
+     return final_reward
+ 
+ 
+-def run_training(cfg: Config, sinks: Optional[List[Any]] = None) -> float:
++def run_training(cfg: Config) -> float:
+     """Run model training, dispatching to curriculum if configured.
+ 
+     Args:
+         cfg: Root Hydra configuration object.
+-        sinks: Optional list of tracking sinks (e.g. :class:`ZenMLBridge`)
+-            to attach to the WSTracker run. When ``None`` (the default),
+-            :class:`MLflowBridge` is auto-attached if
+-            ``cfg.tracking.mlflow_enabled`` is ``True``.
+ 
+     Returns:
+         Validation reward from the best epoch (or final curriculum stage).
+     """
+-    # ZenML dispatch (opt-in)
+-    tracking = getattr(cfg, "tracking", None)
+-    zenml_enabled = bool(getattr(tracking, "zenml_enabled", False))
+-    if zenml_enabled and sinks is None:
+-        return _run_training_via_zenml(cfg)
+-
+     # Curriculum dispatch
+     task_cfg = getattr(cfg, getattr(cfg, "task", "train"), cfg)
+     env_cfg = getattr(task_cfg, "env", getattr(cfg, "env", None))
+     curriculum_graphs = list(getattr(env_cfg, "curriculum_graphs", None) or [])
+     if len(curriculum_graphs) > 1:
+         logger.info(f"Curriculum learning enabled: {len(curriculum_graphs)} stage(s).")
+-        return _run_curriculum_stages(cfg, sinks, curriculum_graphs)
++        return _run_curriculum_stages(cfg, curriculum_graphs)
+ 
+     # Single-stage training: build a stage config from curriculum_graphs[0] when available
+     # so that env.graph is always populated (env.graph was removed from EnvConfig schema).
+     stage_cfg = _build_stage_config(cfg, curriculum_graphs[0], stage_idx=0) if curriculum_graphs else cfg
+-    val_reward, _ = _run_single_stage(stage_cfg, sinks, save_final=True)
++    val_reward, _ = _run_single_stage(stage_cfg, save_final=True)
+     return val_reward
+ 
+-
+-
+-# ---------------------------------------------------------------------------
+-# ZenML dispatch
+-# ---------------------------------------------------------------------------
+-
+-
+-def _run_training_via_zenml(cfg: Config) -> float:
+-    """Dispatch training to the ZenML training pipeline.
+-
+-    Called when ``cfg.tracking.zenml_enabled`` is ``True`` and no external
+-    sinks were injected (i.e. the call originates from the CLI, not from
+-    inside a ZenML step).
+-
+-    Args:
+-        cfg: Root configuration object.
+-
+-    Returns:
+-        Best validation reward returned by the ZenML pipeline.
+-    """
+-    tracking = getattr(cfg, "tracking", None)
+-    mlflow_uri = str(getattr(tracking, "mlflow_tracking_uri", "mlruns"))
+-    stack_name = str(getattr(tracking, "zenml_stack_name", "wsmart-route-stack"))
+-
+-    if configure_zenml_stack is None or not configure_zenml_stack(mlflow_uri, stack_name=stack_name):
+-        logger.warning("ZenML stack configuration failed — falling back to direct training.")
+-        return run_training(cfg, sinks=[])
+-    try:
+-        result = zenml_train_pipeline_module.training_pipeline(cfg)
+-        return result if isinstance(result, float) else 0.0
+-    except Exception as exc:
+-        logger.warning(f"ZenML training pipeline failed — falling back to direct training: {exc}")
+-        return run_training(cfg, sinks=[])
+diff --git a/logic/src/pipeline/features/train/engine_setup.py b/logic/src/pipeline/features/train/engine_setup.py
+index 8bc9067..2f935e0 100644
+--- a/logic/src/pipeline/features/train/engine_setup.py
++++ b/logic/src/pipeline/features/train/engine_setup.py
+@@ -9,18 +9,11 @@ import contextlib
+ from typing import Any, Dict, Optional
+ 
+ import hydra
+-import omegaconf
+ from omegaconf import OmegaConf
+ 
+-import logic.src.tracking as wst
+ from logic.src.interfaces import ITraversable
+ from logic.src.pipeline.callbacks import SpeedMonitor
+ 
+-try:
+-    from logic.src.tracking.integrations.zenml_bridge import configure_zenml_stack
+-except ImportError:
+-    configure_zenml_stack = None  # type: ignore[assignment]
+-
+ 
+ def _build_experiment_name(cfg: Any) -> str:
+     """Derive a human-readable experiment name from the Hydra config.
+@@ -216,25 +209,3 @@ def _build_stage_config(cfg: Any, graph_cfg: Any, stage_idx: Optional[int] = Non
+ 
+     return OmegaConf.create(raw)
+ 
+-
+-def _log_training_params(run: wst.Run, cfg: Any) -> None:
+-    """Flatten and log relevant config sections as run parameters.
+-
+-    Args:
+-        run: WSTracker run object.
+-        cfg: Root configuration object.
+-    """
+-    sections = {}
+-    for attr in ("train", "rl", "env", "model"):
+-        section = getattr(cfg, attr, None)
+-        if section is None:
+-            continue
+-        try:
+-            sections[attr] = omegaconf.OmegaConf.to_container(section, resolve=True)
+-        except Exception:
+-            with contextlib.suppress(Exception):
+-                sections[attr] = {k: getattr(section, k) for k in dir(section) if not k.startswith("_")}
+-
+-    sections["seed"] = cfg.seed
+-    sections["experiment_name"] = getattr(cfg, "experiment_name", "")
+-    run.log_params(sections)
+diff --git a/logic/src/pipeline/features/train/model_factory/builder.py b/logic/src/pipeline/features/train/model_factory/builder.py
+index 570700b..6035679 100644
+--- a/logic/src/pipeline/features/train/model_factory/builder.py
++++ b/logic/src/pipeline/features/train/model_factory/builder.py
+@@ -18,8 +18,7 @@ from logic.src.envs import get_env
+ from logic.src.interfaces import IEnv, ITraversable
+ from logic.src.pipeline.features.base import deep_sanitize, flatten_config_dict, remap_legacy_keys
+ from logic.src.pipeline.learning.core.reinforce import REINFORCE
+-from logic.src.policies.vectorized.packing.factory import create_selector_from_config
+-from logic.src.tracking.logging.pylogger import get_pylogger
++from logic.src.utils.pylogger import get_pylogger
+ 
+ try:
+     from logic.src.tracking.core.run import get_active_run
+@@ -31,7 +30,7 @@ from logic.src.utils.registry import import_target
+ from .registry import get_algorithm_factory
+ 
+ if TYPE_CHECKING:
+-    from logic.src.models.common.autoregressive.policy import AutoregressivePolicy
++    pass
+ 
+ logger = get_pylogger(__name__)
+ 
+@@ -75,15 +74,6 @@ def create_model(cfg: Config) -> pl.LightningModule:
+     else:
+         model = REINFORCE(**common_kwargs)
+ 
+-    if getattr(cfg.meta_rl, "use_meta", False):
+-        from logic.src.pipeline.learning.meta.module import MetaRLModule
+-
+-        model = MetaRLModule(
+-            agent=model,
+-            meta_lr=cfg.meta_rl.meta_lr,
+-            history_length=cfg.meta_rl.meta_history_length,
+-            hidden_size=cfg.meta_rl.meta_hidden_dim,
+-        )
+ 
+     env_cfg, _, model_cfg = _resolve_configs(cfg)
+     with contextlib.suppress(Exception):
+@@ -212,7 +202,6 @@ def _init_environment(cfg: Config) -> IEnv:
+     return get_env(env_name, **env_kwargs)
+ 
+ 
+-_HYBRID = "logic.src.models.core.hybrid_attention_model.hybrid_neural_heuristic_policy:NeuralHeuristicHybrid"
+ 
+ 
+ def _init_policy(cfg: Config, env: Any):
+@@ -227,23 +216,8 @@ def _init_policy(cfg: Config, env: Any):
+     """
+     env_cfg, _, model_cfg = _resolve_configs(cfg)
+ 
+-    # Model name -> "module:class"; only the chosen class is imported.
+-    policy_map = {
+-        "am": "logic.src.models.core.attention_model.policy:AttentionModelPolicy",
+-        "moe": "logic.src.models.core.moe.policy:MoEPolicy",
+-        "deep_decoder": "logic.src.models.core.attention_model.deep_decoder_policy:DeepDecoderPolicy",
+-        "temporal": "logic.src.models.core.temporal_attention_model.policy:TemporalAMPolicy",
+-        "pointer": "logic.src.models.core.pointer_network.policy:PointerNetworkPolicy",
+-        "symnco": "logic.src.models.core.attention_model.symnco_policy:SymNCOPolicy",
+-        "alns": "logic.src.policies.vectorized.routing.alns:VectorizedALNS",
+-        "hgs": "logic.src.policies.vectorized.routing.hgs:VectorizedHGS",
+-        "hgs_alns": "logic.src.policies.vectorized.routing.hgs_alns:VectorizedHGSALNS",
+-        "hybrid": _HYBRID,
+-        "hybrid_two_stage": "logic.src.models.core.hybrid_attention_model.hybrid_two_step_policy:HybridTwoStagePolicy",
+-    }
+-
+-    if getattr(model_cfg, "name", "") == "hybrid":
+-        return _init_hybrid_policy(cfg)
++    # The minimal package ships the Attention Model only.
++    policy_map = {"am": "logic.src.models.core.attention_model.policy:AttentionModelPolicy"}
+ 
+     # Flatten ModelConfig for policy initialization
+     policy_kwargs: Dict[str, Any] = {"env_name": getattr(env_cfg, "name", "ptp") if env_cfg else "ptp"}
+@@ -287,46 +261,6 @@ def _init_policy(cfg: Config, env: Any):
+     return import_target(policy_map[getattr(model_cfg, "name", "am") if model_cfg else "am"])(**policy_kwargs)
+ 
+ 
+-def _init_hybrid_policy(cfg: Config):
+-    """Special handling for hybrid construction-refinement policy.
+-
+-    Args:
+-        cfg: Root configuration object.
+-
+-    Returns:
+-        Initialized hybrid policy.
+-    """
+-    env_cfg, _, _ = _resolve_configs(cfg)
+-
+-    # 1. Neural construction policy
+-    neural_cfg = cast(Any, cfg).copy()  # Simplified copy
+-    task = getattr(neural_cfg, "task", "train")
+-    task_cfg = getattr(neural_cfg, task, neural_cfg)
+-    policy_cfg = getattr(task_cfg, "policy", task_cfg)
+-    if hasattr(policy_cfg, "model"):
+-        policy_cfg.model.name = "am"
+-
+-    neural_policy = cast("AutoregressivePolicy", create_model(cast(Config, neural_cfg)).policy)
+-
+-    # 2. Heuristic refinement policy
+-
+-    ref_strategy = getattr(cfg.rl, "refinement_strategy", "alns")
+-    ref_time = getattr(cfg.rl, "refinement_time_limit", 5.0)
+-    ref_iters = getattr(cfg.rl, "refinement_iterations", 500)
+-    max_v = getattr(cfg.rl, "max_vehicles", 0)
+-    env_name = getattr(env_cfg, "name", "ptp") if env_cfg else "ptp"
+-
+-    if ref_strategy == "alns":
+-        heuristic_policy = import_target("logic.src.policies.vectorized.routing.alns:VectorizedALNS")(
+-            env_name=env_name, time_limit=ref_time, max_iterations=ref_iters, max_vehicles=max_v
+-        )
+-    else:
+-        heuristic_policy = import_target("logic.src.policies.vectorized.routing.hgs:VectorizedHGS")(
+-            env_name=env_name, time_limit=ref_time, max_iterations=ref_iters
+-        )
+-    return import_target(_HYBRID)(neural_policy=neural_policy, heuristic_policy=heuristic_policy)
+-
+-
+ def _config_to_dict(obj: Any) -> Dict[str, Any]:
+     """Convert config object (dataclass or DictConfig) to dict.
+ 
+@@ -424,12 +358,6 @@ def _prepare_rl_kwargs(cfg: Config, env: Any, policy: Any):
+     for key in ["lr_critic", "lr_critic_value"]:
+         common_kwargs.pop(key, None)
+ 
+-    # Mandatory selector
+-    mandatory_selector = None
+-    packing = getattr(policy_cfg, "packing", getattr(cfg, "packing", None))
+-    if packing is not None:
+-        mandatory_selector = create_selector_from_config(packing)
+-        if mandatory_selector:
+-            logger.info(f"Mandatory selector created: {packing.strategy}")
+-    common_kwargs["mandatory_selector"] = mandatory_selector
++    # The minimal package trains without a mandatory selector.
++    common_kwargs["mandatory_selector"] = None
+     return common_kwargs
+diff --git a/logic/src/pipeline/learning/common/base/data.py b/logic/src/pipeline/learning/common/base/data.py
+index 7cc0d08..94ed2a6 100644
+--- a/logic/src/pipeline/learning/common/base/data.py
++++ b/logic/src/pipeline/learning/common/base/data.py
+@@ -18,7 +18,7 @@ from torch.utils.data import DataLoader
+ 
+ from logic.src.data.datasets import TensorDictDataset
+ from logic.src.pipeline.learning.common.epoch import accumulate_initial_fill
+-from logic.src.tracking.logging.pylogger import get_pylogger
++from logic.src.utils.pylogger import get_pylogger
+ from logic.src.utils.data.td_utils import tensordict_collate_fn
+ 
+ if TYPE_CHECKING:
+diff --git a/logic/src/pipeline/learning/common/base/module.py b/logic/src/pipeline/learning/common/base/module.py
+index 3521178..0fa67e3 100644
+--- a/logic/src/pipeline/learning/common/base/module.py
++++ b/logic/src/pipeline/learning/common/base/module.py
+@@ -22,7 +22,7 @@ from omegaconf import OmegaConf
+ from logic.src.pipeline.learning.common.baselines import WarmupBaseline, get_baseline
+ from logic.src.pipeline.learning.common.epoch import apply_time_step, prepare_epoch, regenerate_dataset
+ from logic.src.pipeline.learning.common.pbrs_wrapper import PBRSShaper
+-from logic.src.tracking.logging.pylogger import get_pylogger
++from logic.src.utils.pylogger import get_pylogger
+ 
+ from .data import DataMixin, _cfg_get, _task_env_cfg
+ from .optimization import OptimizationMixin
+diff --git a/logic/src/pipeline/learning/common/base/steps.py b/logic/src/pipeline/learning/common/base/steps.py
+index 79e5e48..6b48879 100644
+--- a/logic/src/pipeline/learning/common/base/steps.py
++++ b/logic/src/pipeline/learning/common/base/steps.py
+@@ -19,7 +19,7 @@ from tensordict import TensorDict
+ from logic.src.constants.metrics import METRIC_MAPPING
+ from logic.src.interfaces import ITraversable
+ from logic.src.pipeline.learning.common.pbrs_wrapper import PBRSShaper
+-from logic.src.tracking.logging.pylogger import get_pylogger
++from logic.src.utils.pylogger import get_pylogger
+ from logic.src.utils.data.temporal import select_instance_day
+ from logic.src.utils.functions.rl import ensure_tensordict
+ 
+diff --git a/logic/src/pipeline/learning/common/baselines/base.py b/logic/src/pipeline/learning/common/baselines/base.py
+index 0f67c2c..9f8c4e0 100644
+--- a/logic/src/pipeline/learning/common/baselines/base.py
++++ b/logic/src/pipeline/learning/common/baselines/base.py
+@@ -19,7 +19,7 @@ from torch import nn
+ 
+ from logic.src.data.datasets import BaselineDataset
+ from logic.src.interfaces import ITensorDictLike
+-from logic.src.tracking.logging.pylogger import get_pylogger
++from logic.src.utils.pylogger import get_pylogger
+ 
+ logger = get_pylogger(__name__)
+ 
+diff --git a/logic/src/pipeline/learning/common/baselines/rollout.py b/logic/src/pipeline/learning/common/baselines/rollout.py
+index 6916841..a80bd90 100644
+--- a/logic/src/pipeline/learning/common/baselines/rollout.py
++++ b/logic/src/pipeline/learning/common/baselines/rollout.py
+@@ -26,7 +26,7 @@ from torch.utils.data import DataLoader, Dataset
+ 
+ from logic.src.constants.routing import DEFAULT_ROLLOUT_BATCH_SIZE
+ from logic.src.data.datasets import BaselineDataset, TensorDictDataset, tensordict_collate_fn
+-from logic.src.tracking.logging.pylogger import get_pylogger
++from logic.src.utils.pylogger import get_pylogger
+ from logic.src.utils.data.rl_utils import safe_td_copy
+ from logic.src.utils.functions.rl import ensure_tensordict
+ 
+diff --git a/logic/src/pipeline/learning/common/epoch.py b/logic/src/pipeline/learning/common/epoch.py
+index 147dd30..ca4b6e7 100644
+--- a/logic/src/pipeline/learning/common/epoch.py
++++ b/logic/src/pipeline/learning/common/epoch.py
+@@ -35,7 +35,7 @@ from torch import nn
+ from torch.utils.data import Dataset
+ 
+ from logic.src.data.datasets import TensorDictDataset
+-from logic.src.tracking.logging.pylogger import get_pylogger
++from logic.src.utils.pylogger import get_pylogger
+ 
+ logger = get_pylogger(__name__)
+ 
+diff --git a/logic/src/pipeline/learning/common/pbrs_wrapper.py b/logic/src/pipeline/learning/common/pbrs_wrapper.py
+index 55093b0..7939b9f 100644
+--- a/logic/src/pipeline/learning/common/pbrs_wrapper.py
++++ b/logic/src/pipeline/learning/common/pbrs_wrapper.py
+@@ -45,7 +45,7 @@ from typing import Callable, Optional, Tuple
+ import torch
+ from tensordict import TensorDict
+ 
+-from logic.src.tracking.logging.pylogger import get_pylogger
++from logic.src.utils.pylogger import get_pylogger
+ 
+ logger = get_pylogger(__name__)
+ 
+diff --git a/logic/src/pipeline/learning/common/trainer.py b/logic/src/pipeline/learning/common/trainer.py
+index 858e2dc..d14554f 100644
+--- a/logic/src/pipeline/learning/common/trainer.py
++++ b/logic/src/pipeline/learning/common/trainer.py
+@@ -29,13 +29,9 @@ from pytorch_lightning.callbacks import (
+ from pytorch_lightning.loggers import Logger, WandbLogger
+ 
+ from logic.src.pipeline.callbacks import (
+-    AttentionHeatmapCallback,
+-    GPUMemoryMonitor,
+     ModelSummaryCallback,
+     TrainingDisplayCallback,
+-    TrainingHealthCallback,
+ )
+-from logic.src.tracking.integrations.lightning import TrackingCallback
+ 
+ try:
+     from pytorch_lightning.loggers import TensorBoardLogger
+@@ -242,30 +238,6 @@ class WSTrainer(pl.Trainer):
+         if ModelSummaryCallback not in callback_types:
+             callbacks.append(ModelSummaryCallback())
+ 
+-        # Add tracking callback (no-op when no active run is registered)
+-        if TrackingCallback not in callback_types:
+-            callbacks.append(TrackingCallback(tracking_cfg=getattr(self, "_tracking_cfg", None)))
+-
+-        # Training health guardrails (§A.4) — Studio Training Monitor ingest
+-        if TrainingHealthCallback not in callback_types:
+-            callbacks.append(TrainingHealthCallback())
+-
+-        # GPU memory monitoring (§F.2)
+-        if GPUMemoryMonitor not in callback_types and torch.cuda.is_available():
+-            callbacks.append(GPUMemoryMonitor())
+-
+-        # Attention heatmaps to WandB / TensorBoard (§A.2 Option C)
+-        tracking_cfg = getattr(self, "_tracking_cfg", None)
+-        if (
+-            AttentionHeatmapCallback not in callback_types
+-            and tracking_cfg is not None
+-            and (
+-                getattr(tracking_cfg, "log_attention", False)
+-                or getattr(tracking_cfg, "log_attention_heatmaps", False)
+-            )
+-        ):
+-            callbacks.append(AttentionHeatmapCallback(tracking_cfg=tracking_cfg))
+-
+         return callbacks
+ 
+     def _create_default_logger(
+diff --git a/logic/src/pipeline/simulations/actions/collection.py b/logic/src/pipeline/simulations/actions/collection.py
+index c67a3d3..d428741 100644
+--- a/logic/src/pipeline/simulations/actions/collection.py
++++ b/logic/src/pipeline/simulations/actions/collection.py
+@@ -66,28 +66,6 @@ def capacity_report(tour: List[int], bins: Any, capacity_pct: float) -> Tuple[Li
+     return loads_pct, loads_kg, violations
+ 
+ 
+-def _record_thompson_reward(context: Any, profit: float) -> None:
+-    """Update the Thompson posterior with this day's profit.
+-
+-    ``pack`` only samples. Nothing else called ``record_reward``, so every
+-    later day redrew the prior. The winner name is stored on the packing
+-    search context.
+-    """
+-    search = getattr(context, "search_context", None)
+-    metrics = getattr(search, "selection_metrics", None) or {}
+-    winner = metrics.get("winner")
+-    if not isinstance(winner, str) or not winner:
+-        return
+-    from logic.src.policies.packing.dispatcher_thompson import ThompsonDispatcher
+-
+-    ThompsonDispatcher.record_reward(
+-        winner,
+-        reward=float(profit),
+-        success_prob=1.0 if profit > 0 else 0.0,
+-        state_path=metrics.get("dispatcher_state_path"),
+-    )
+-
+-
+ class CollectAction(SimulationAction):
+     """
+     Processes waste collection from bins visited in the tour.
+@@ -215,4 +193,3 @@ class CollectAction(SimulationAction):
+         context.profit = profit
+         context.time_spent = time_spent_h
+         context.metrics_phase = "final"
+-        _record_thompson_reward(context, profit)
+diff --git a/logic/src/pipeline/simulations/actions/logging.py b/logic/src/pipeline/simulations/actions/logging.py
+index e264c4d..2f9b271 100644
+--- a/logic/src/pipeline/simulations/actions/logging.py
++++ b/logic/src/pipeline/simulations/actions/logging.py
+@@ -17,10 +17,6 @@ from rich.table import Table
+ 
+ from logic.src.pipeline.simulations.actions.base import SimulationAction, bind_context
+ from logic.src.pipeline.simulations.daily import get_daily_results
+-from logic.src.tracking.integrations.simulation import get_sim_tracker
+-from logic.src.tracking.logging.modules.failure_analyzer import FailureAnalyzer
+-from logic.src.tracking.logging.modules.failure_emit import emit_sim_failure_summary
+-from logic.src.tracking.logging.modules.gui import send_daily_output_to_gui
+ 
+ 
+ class LogAction(SimulationAction):
+@@ -95,20 +91,6 @@ class LogAction(SimulationAction):
+         proof = current_solver_certificate()
+         dlog["solver_certificate"] = proof
+ 
+-        failure_summary = FailureAnalyzer().analyze(
+-            new_overflows=new_overflows,
+-            sum_lost=sum_lost,
+-            profit=profit,
+-            fill=getattr(context, "fill", bins.real_c),
+-            total_fill=getattr(context, "total_fill", bins.c),
+-            bins_means=bins.means,
+-            bins_real_c=bins.real_c,
+-            tour=tour,
+-            collected=getattr(context, "collected", None),
+-            coords=coords,
+-            mandatory=getattr(context, "mandatory", None),
+-        )
+-        dlog["failure_analysis"] = failure_summary
+         dlog["trip_loads_kg"] = getattr(context, "trip_loads_kg", [])
+         dlog["capacity_violations"] = int(getattr(context, "capacity_violations", 0))
+         dlog["capacity_splits"] = int(getattr(context, "capacity_splits", 0))
+@@ -168,36 +150,3 @@ class LogAction(SimulationAction):
+                 console.print(table)
+         else:
+             console.print(table)
+-
+-        send_daily_output_to_gui(
+-            dlog,
+-            policy_name,
+-            context.sample_id,
+-            day,
+-            context.total_fill,
+-            context.collected,
+-            bins.real_c,
+-            context.realtime_log_path,
+-            tour,
+-            coords,
+-            context.lock,
+-            mandatory=getattr(context, "mandatory", None),
+-            failure_analysis=failure_summary,
+-        )
+-
+-        emit_sim_failure_summary(
+-            failure_summary,
+-            policy_name,
+-            context.sample_id,
+-            day,
+-            context.realtime_log_path,
+-            getattr(context, "lock", None),
+-        )
+-
+-        # Forward day-level metrics to the centralised tracker (no-op if no run active)
+-        sim_tracker = get_sim_tracker(context.policy_name, context.sample_id)
+-        if sim_tracker is not None:
+-            sim_tracker.log_day(
+-                day,
+-                {key: dlog[key] for key in ("profit", "ncol", "kg", "overflows", "km", "kg_lost", "time")},
+-            )
+diff --git a/logic/src/pipeline/simulations/actions/routing.py b/logic/src/pipeline/simulations/actions/routing.py
+index f039cce..bbdff14 100644
+--- a/logic/src/pipeline/simulations/actions/routing.py
++++ b/logic/src/pipeline/simulations/actions/routing.py
+@@ -188,18 +188,7 @@ class RoutingAction(SimulationAction):
+ 
+             start_time = time.perf_counter()
+             # 3. Unpack adapter results: tour represents global bin IDs
+-            from logic.src.tracking.logging.modules.policy_viz_emit import PolicyVizStreamSession
+-
+-            viz_policy = str(
+-                getattr(context, "display_name", None) or getattr(context, "policy_name", None) or full_policy
+-            )
+-            viz_sample = int(getattr(context, "sample_id", 0))
+-            viz_day = int(getattr(context, "day", 0))
+-            viz_log = getattr(context, "realtime_log_path", None)
+-            viz_lock = getattr(context, "lock", None)
+-
+-            with PolicyVizStreamSession(adapter, viz_policy, viz_sample, viz_day, viz_log, viz_lock):
+-                results = adapter.execute(**context.as_kwargs())
++            results = adapter.execute(**context.as_kwargs())
+             tour, _, _, extra_output, updated_multi_day = results
+             elapsed_time = time.perf_counter() - start_time
+ 
+diff --git a/logic/src/pipeline/simulations/manager.py b/logic/src/pipeline/simulations/manager.py
+index cf72657..84b9125 100644
+--- a/logic/src/pipeline/simulations/manager.py
++++ b/logic/src/pipeline/simulations/manager.py
+@@ -59,8 +59,8 @@ from omegaconf import DictConfig
+ from logic.src.constants import ROOT_DIR, SIM_METRICS
+ from logic.src.pipeline.simulations.naming import policy_result_key
+ from logic.src.pipeline.simulations.repository import set_repository_from_path
+-from logic.src.tracking.logging.logger_writer import setup_logger_redirection
+-from logic.src.tracking.logging.modules.analysis import output_stats
++from logic.src.utils.results.logger_writer import setup_logger_redirection
++from logic.src.utils.results.analysis import output_stats
+ 
+ try:
+     import logic.src.tracking as wst
+diff --git a/logic/src/pipeline/simulations/pipeline.py b/logic/src/pipeline/simulations/pipeline.py
+index 9abf227..874d550 100644
+--- a/logic/src/pipeline/simulations/pipeline.py
++++ b/logic/src/pipeline/simulations/pipeline.py
+@@ -1,6 +1,6 @@
+ """Validated day pipeline and the per-day inputs of the day loop.
+ 
+-The default order is fill, packing, routing, improvement, repair, collection,
++The default order is fill, packing, routing, collection,
+ then logging. A configured order may drop a step. It may not run a step before
+ the step that produces its inputs, and it may not treat a preliminary route
+ metric as final. Validation fails before any action runs.
+@@ -29,8 +29,6 @@ ACTION_NAMES: Tuple[str, ...] = (
+     "fill",
+     "packing",
+     "routing",
+-    "route_improvement",
+-    "time_constraints",
+     "collection",
+     "logging",
+ )
+@@ -43,13 +41,7 @@ _ORDER: Tuple[Tuple[str, str], ...] = (
+     ("fill", "routing"),
+     ("fill", "collection"),
+     ("packing", "routing"),
+-    ("routing", "route_improvement"),
+-    ("route_improvement", "time_constraints"),
+-    ("route_improvement", "collection"),
+-    ("route_improvement", "logging"),
+-    ("routing", "time_constraints"),
+     ("routing", "collection"),
+-    ("time_constraints", "collection"),
+     ("collection", "logging"),
+ )
+ 
+@@ -88,17 +80,13 @@ def _registry() -> Dict[str, Type[SimulationAction]]:
+         FillAction,
+         LogAction,
+         PackingAction,
+-        RouteImprovementAction,
+         RoutingAction,
+     )
+-    from logic.src.pipeline.simulations.actions.time_constraints import TimeConstraintAction
+ 
+     return {
+         "fill": FillAction,
+         "packing": PackingAction,
+         "routing": RoutingAction,
+-        "route_improvement": RouteImprovementAction,
+-        "time_constraints": TimeConstraintAction,
+         "collection": CollectAction,
+         "logging": LogAction,
+     }
+diff --git a/logic/src/pipeline/simulations/progress.py b/logic/src/pipeline/simulations/progress.py
+index 99cf9cf..1d60a7e 100644
+--- a/logic/src/pipeline/simulations/progress.py
++++ b/logic/src/pipeline/simulations/progress.py
+@@ -13,8 +13,8 @@ import os
+ from typing import Any, Dict, List, Optional, Union
+ 
+ from logic.src.constants import ROOT_DIR, SIM_METRICS
+-from logic.src.tracking.logging.modules.storage import update_policy_log_section
+-from logic.src.tracking.logging.modules.summary_display import display_simulation_summary_table
++from logic.src.utils.results.storage import update_policy_log_section
++from logic.src.utils.results.summary_display import display_simulation_summary_table
+ 
+ 
+ def display_log_metrics(
+diff --git a/logic/src/pipeline/simulations/states/base/context.py b/logic/src/pipeline/simulations/states/base/context.py
+index 6dd414f..d616339 100644
+--- a/logic/src/pipeline/simulations/states/base/context.py
++++ b/logic/src/pipeline/simulations/states/base/context.py
+@@ -28,7 +28,7 @@ from logic.src.constants import (
+ )
+ from logic.src.pipeline.simulations.states.base.base import SimState
+ from logic.src.pipeline.simulations.states.initializing import InitializingState
+-from logic.src.tracking.logging.pylogger import get_pylogger
++from logic.src.utils.pylogger import get_pylogger
+ 
+ if TYPE_CHECKING:
+     import torch
+diff --git a/logic/src/pipeline/simulations/states/finishing.py b/logic/src/pipeline/simulations/states/finishing.py
+index a784eaa..9d10584 100644
+--- a/logic/src/pipeline/simulations/states/finishing.py
++++ b/logic/src/pipeline/simulations/states/finishing.py
+@@ -24,8 +24,8 @@ import numpy as np
+ 
+ from logic.src.constants import SIM_METRICS
+ from logic.src.data.processor import save_matrix_to_excel
+-from logic.src.tracking.logging.modules.storage import update_policy_log_section
+-from logic.src.tracking.logging.modules.summary_display import (
++from logic.src.utils.results.storage import update_policy_log_section
++from logic.src.utils.results.summary_display import (
+     display_per_policy_simulation_summary,
+     display_simulation_summary_table,
+ )
+diff --git a/logic/src/pipeline/simulations/states/initializing.py b/logic/src/pipeline/simulations/states/initializing.py
+index 8b9565c..d5acebd 100644
+--- a/logic/src/pipeline/simulations/states/initializing.py
++++ b/logic/src/pipeline/simulations/states/initializing.py
+@@ -25,7 +25,6 @@ import numpy as np
+ from loguru import logger
+ 
+ from logic.src.constants import DAY_METRICS
+-from logic.src.constants.paths import CONFIGS_DIR
+ from logic.src.data.processor import (
+     process_data,
+     process_model_data,
+@@ -38,19 +37,17 @@ from logic.src.pipeline.simulations.checkpoints import SimulationCheckpoint
+ from logic.src.pipeline.simulations.repository import (
+     load_area_and_waste_type_params,
+     load_temporal_params,
+-    load_time_windows,
+ )
+ from logic.src.pipeline.simulations.states.base.base import SimState
+ from logic.src.pipeline.simulations.states.running import RunningState
+-from logic.src.tracking.logging.logger_writer import setup_logger_redirection
+-from logic.src.tracking.logging.modules.storage import setup_system_logger
+ from logic.src.utils.configs.config_loader import load_config
++from logic.src.utils.configs.policy_files import policy_file
+ from logic.src.utils.data.loader import load_grid_base
+ from logic.src.utils.infrastructure.setup_env import setup_env
+-from logic.src.utils.infrastructure.setup_manager import setup_hrl_manager
+ from logic.src.utils.infrastructure.setup_sims import get_graph_config
+ from logic.src.utils.infrastructure.setup_worker import setup_model
+-from logic.src.utils.configs.policy_files import policy_file
++from logic.src.utils.results.logger_writer import setup_logger_redirection
++from logic.src.utils.results.storage import setup_system_logger
+ 
+ if TYPE_CHECKING:
+     from logic.src.pipeline.simulations.states.base.base import SimulationContext
+@@ -106,19 +103,6 @@ class InitializingState(SimState):
+         else:
+             self._initialize_new_state(ctx, data, bins_coordinates, depot)
+ 
+-        # Rebuild on both new and resumed runs, using the restored node order.
+-        if sim.problem.lower() == "cptptc" or getattr(graph, "tm_filepath", None):
+-            assert ctx.dist_tup is not None
+-            ctx.shift_hours, ctx.time_matrix, ctx.service_time_h = load_temporal_params(
+-                coords=ctx.coords,
+-                distance_matrix=ctx.dist_tup[0],
+-                tm_filepath=getattr(graph, "tm_filepath", None),
+-                shift_hours=ctx.shift_hours,
+-                avg_speed_kmh=ctx.avg_speed_kmh,
+-                service_time_h=ctx.service_time_h,
+-                time_unit=getattr(graph, "time_matrix_unit", "seconds"),
+-            )
+-
+         logger.info(f"Initialization complete. Transitioning to RunningState for {ctx.pol_name} policy.")
+         ctx.transition_to(RunningState())
+ 
+@@ -248,19 +232,8 @@ class InitializingState(SimState):
+         ctx.shift_hours = shift_hours
+         ctx.avg_speed_kmh = avg_speed_kmh
+         ctx.service_time_h = service_time_h
+-
+-        tw_source = (
+-            getattr(sim, "time_windows", None)
+-            or getattr(graph, "time_windows", None)
+-            or getattr(sim, "time_window_filepath", None)
+-            or getattr(graph, "time_window_filepath", None)
+-            or getattr(sim, "time_window_pattern", None)
+-            or getattr(graph, "time_window_pattern", None)
+-        )
+-        if tw_source is not None:
+-            ctx.time_windows = load_time_windows(source=tw_source, n_days=graph.n_days)
+-        else:
+-            ctx.time_windows = None
++        # The minimal package has no time windows.
++        ctx.time_windows = None
+ 
+     def _load_checkpoint_if_needed(self, ctx: SimulationContext) -> Tuple[Optional[Any], int]:
+         """
+@@ -335,14 +308,7 @@ class InitializingState(SimState):
+                 temp,
+                 strat,
+             )
+-            ctx.hrl_manager = setup_hrl_manager(
+-                ctx.cfg.sim,
+-                ctx.device,
+-                configs,
+-                policy=ctx.pol_name,
+-                base_path=ctx.model_weights_path,
+-                worker_model=ctx.model_env,
+-            )
++            ctx.hrl_manager = None
+             self.configs = configs
+         elif "swc" in model_name:
+             ctx.model_env = setup_env(
+diff --git a/logic/src/pipeline/simulations/states/running.py b/logic/src/pipeline/simulations/states/running.py
+index 955881b..de554c4 100644
+--- a/logic/src/pipeline/simulations/states/running.py
++++ b/logic/src/pipeline/simulations/states/running.py
+@@ -34,7 +34,7 @@ from logic.src.pipeline.simulations.checkpoints import CheckpointError, checkpoi
+ from logic.src.pipeline.simulations.daily import SimulationDayContext, run_day
+ from logic.src.pipeline.simulations.states.base.base import SimState
+ from logic.src.pipeline.simulations.states.finishing import FinishingState
+-from logic.src.tracking.logging.modules.summary_display import final_simulation_summary
++from logic.src.utils.results.summary_display import final_simulation_summary
+ from logic.src.utils.infrastructure.setup_sims import get_graph_config
+ 
+ if TYPE_CHECKING:
+diff --git a/logic/src/policies/packing/last_minute.py b/logic/src/policies/packing/last_minute.py
+index 5d3a6e8..c334abe 100644
+--- a/logic/src/policies/packing/last_minute.py
++++ b/logic/src/policies/packing/last_minute.py
+@@ -11,20 +11,14 @@ import sys
+ from contextlib import suppress
+ from typing import List, Tuple
+ 
+-from logic.src.enums import PolicyTag
+ from logic.src.interfaces.context import PackingContext, SearchContext
+ from logic.src.interfaces.packing import IPackingAlgorithm
+-from logic.src.utils.registry import ALL
+ 
+ from .base import PackingRegistry
+ from .spec import last_minute as last_minute_rule
+ from .spec import selected_ids
+ 
+ 
+-@ALL.register(
+-    PolicyTag.PACKING,
+-    PolicyTag.HEURISTIC,
+-)
+ @PackingRegistry.register("last_minute")
+ class LastMinuteSelection(IPackingAlgorithm):
+     """Collect if current fill >= threshold (both percent of capacity)."""
+diff --git a/logic/src/policies/packing/lookahead.py b/logic/src/policies/packing/lookahead.py
+index dffa58b..c114dce 100644
+--- a/logic/src/policies/packing/lookahead.py
++++ b/logic/src/policies/packing/lookahead.py
+@@ -8,21 +8,14 @@ Attributes:
+ 
+ from typing import List, Tuple
+ 
+-from logic.src.enums import PolicyTag
+ from logic.src.interfaces.context import PackingContext, SearchContext
+ from logic.src.interfaces.packing import IPackingAlgorithm
+ from logic.src.policies.packing.base.registry import PackingRegistry
+-from logic.src.utils.registry import ALL
+ 
+ from .spec import lookahead as lookahead_rule
+ from .spec import selected_ids
+ 
+ 
+-@ALL.register(
+-    PolicyTag.PACKING,
+-    PolicyTag.HEURISTIC,
+-    PolicyTag.MULTI_PERIOD,
+-)
+ @PackingRegistry.register("lookahead")
+ class LookaheadSelection(IPackingAlgorithm):
+     """Collect today's overflows plus bins that overflow before the next trip."""
+diff --git a/logic/src/policies/packing/service_level.py b/logic/src/policies/packing/service_level.py
+index 5192976..3260884 100644
+--- a/logic/src/policies/packing/service_level.py
++++ b/logic/src/policies/packing/service_level.py
+@@ -8,21 +8,14 @@ Attributes:
+ 
+ from typing import List, Tuple
+ 
+-from logic.src.enums import PolicyTag
+ from logic.src.interfaces.context import PackingContext, SearchContext
+ from logic.src.interfaces.packing import IPackingAlgorithm
+ from logic.src.policies.packing.base import PackingRegistry
+-from logic.src.utils.registry import ALL
+ 
+ from .spec import selected_ids
+ from .spec import service_level as service_level_rule
+ 
+ 
+-@ALL.register(
+-    PolicyTag.PACKING,
+-    PolicyTag.HEURISTIC,
+-    PolicyTag.STOCHASTIC,
+-)
+ @PackingRegistry.register("service_level")
+ class ServiceLevelSelection(IPackingAlgorithm):
+     """Collect bins whose worst-case linear projection reaches capacity."""
+diff --git a/logic/src/policies/routing/base/base_routing_policy.py b/logic/src/policies/routing/base/base_routing_policy.py
+index b5998ce..9470f38 100644
+--- a/logic/src/policies/routing/base/base_routing_policy.py
++++ b/logic/src/policies/routing/base/base_routing_policy.py
+@@ -26,7 +26,7 @@ from omegaconf import DictConfig, ListConfig, OmegaConf
+ from logic.src.interfaces.routing_algorithm import IRoutingAlgorithm
+ from logic.src.pipeline.simulations.repository import load_area_and_waste_type_params
+ from logic.src.policies.routing.base.routing_execution import RoutingExecutionMixin
+-from logic.src.tracking.viz_mixin import PolicyVizMixin
++from logic.src.utils.policy.state_recorder import PolicyVizMixin
+ 
+ _STAGE_KEYS = frozenset({"packing", "route_improvement", "acceptance_criteria", "acceptance_criterion"})
+ _RUNTIME_KEYS = _STAGE_KEYS | {"seed"}
+diff --git a/logic/src/policies/routing/base/routing_execution.py b/logic/src/policies/routing/base/routing_execution.py
+index 8225461..d67c69d 100644
+--- a/logic/src/policies/routing/base/routing_execution.py
++++ b/logic/src/policies/routing/base/routing_execution.py
+@@ -14,7 +14,6 @@ import numpy as np
+ 
+ from logic.src.envs.common.expand_pool import current_expand_pool
+ from logic.src.interfaces.context.search_context import ConstructionMetrics, SearchContext, merge_context
+-from logic.src.tracking.core.run import get_active_run
+ 
+ 
+ class RoutingExecutionMixin:
+@@ -113,39 +112,6 @@ class RoutingExecutionMixin:
+ 
+         return get_route_cost(distance_matrix, tour)
+ 
+-    def _log_solver_params(self, values: Dict[str, Any], context: Dict[str, Any]) -> None:
+-        """Log the resolved solver parameters to the active tracking run.
+-
+-        Captures the full merged ``values`` dict (area defaults + YAML config +
+-        runtime overrides) as run params, namespaced under the policy name.
+-        Only logs once per adapter instance to avoid per-day duplication.
+-
+-        Args:
+-            values: Merged solver configuration dict from ``_load_area_params``.
+-            context: Simulation day context kwargs.
+-
+-        """
+-
+-        if getattr(self, "_params_logged", False):
+-            return
+-        self._params_logged = True
+-
+-        run = get_active_run()
+-        if run is None:
+-            return
+-
+-        policy_name = context.get("policy_name", self._get_config_key())
+-        sample_id = context.get("sample_id", 0)
+-        prefix = f"policy_params/{policy_name}/s{sample_id}"
+-
+-        params: Dict[str, Any] = {}
+-        for k, v in values.items():
+-            if isinstance(v, (int, float, str, bool, type(None))):
+-                params[f"{prefix}/{k}"] = v
+-
+-        if params:
+-            run.log_params(params)
+-
+     def execute(
+         self, **kwargs: Any
+     ) -> Tuple[Union[List[int], List[List[int]]], float, float, Optional[SearchContext], Optional[Any]]:
+@@ -199,7 +165,6 @@ class RoutingExecutionMixin:
+ 
+         # 3. Load parameters
+         capacity, revenue, cost_unit, values = self._load_area_params(area, waste_type, config)
+-        self._log_solver_params(values, kwargs)
+         # 4. Create subset problem
+         # use_all_bins=True (VRPP mode) allows the solver to CONSIDER all bins,
+         # but only forcefully visit the mandatory list (mandatory_nodes).
+diff --git a/logic/src/policies/routing/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/policy_swc_tcf.py b/logic/src/policies/routing/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/policy_swc_tcf.py
+index fdb9023..5ead2bf 100644
+--- a/logic/src/policies/routing/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/policy_swc_tcf.py
++++ b/logic/src/policies/routing/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/policy_swc_tcf.py
+@@ -13,21 +13,13 @@ from __future__ import annotations
+ from typing import Any, Dict, Optional, Tuple, Type, Union
+ 
+ from logic.src.configs.policies import SWCTCFConfig
+-from logic.src.enums import PolicyTag
+ from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
+ from logic.src.policies.routing.base.generic_policy import GenericRoutingPolicy
+ from logic.src.policies.routing.base.sub_problem import SubProblem
+-from logic.src.utils.registry import ALL
+ 
+ from .dispatcher import run_swc_tcf_optimizer
+ 
+ 
+-@ALL.register(
+-    PolicyTag.EXACT,
+-    PolicyTag.MATH_PROGRAMMING,
+-    PolicyTag.SOLVER,
+-    PolicyTag.PROFIT_AWARE,
+-)
+ @RoutingAlgorithmRegistry.register("swc_tcf")
+ class SWCTCFPolicy(GenericRoutingPolicy):
+     r"""Smart Waste Collection - Two-Commodity Flow (SWC-TCF) policy adapter.
+diff --git a/logic/src/policies/routing/learning_algorithms/neural_agent/batch.py b/logic/src/policies/routing/learning_algorithms/neural_agent/batch.py
+index d82c874..fb41a4a 100644
+--- a/logic/src/policies/routing/learning_algorithms/neural_agent/batch.py
++++ b/logic/src/policies/routing/learning_algorithms/neural_agent/batch.py
+@@ -16,7 +16,6 @@ from __future__ import annotations
+ 
+ import torch
+ 
+-from logic.src.tracking.hooks import add_attention_hooks
+ 
+ 
+ class BatchMixin:
+@@ -57,7 +56,7 @@ class BatchMixin:
+                 - ret_dict: Dictionary with 'overflows', 'kg', 'waste', 'km'
+                 - output_dict: Dictionary with 'attention_weights', 'graph_masks'
+         """
+-        hook_data = add_attention_hooks(self.model.encoder)  # type: ignore[attr-defined]
++        hook_data: dict = {"handles": [], "weights": [], "masks": []}
+         try:
+             return self._batch_sim(input, dist_matrix, hook_data, hrl_manager, waste_history, threshold, mask_threshold)
+         finally:
+diff --git a/logic/src/policies/routing/learning_algorithms/neural_agent/policy_na.py b/logic/src/policies/routing/learning_algorithms/neural_agent/policy_na.py
+index 8599ad4..7c0cbd9 100644
+--- a/logic/src/policies/routing/learning_algorithms/neural_agent/policy_na.py
++++ b/logic/src/policies/routing/learning_algorithms/neural_agent/policy_na.py
+@@ -18,14 +18,10 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type
+ 
+ import torch
+ 
+-from logic.src.enums import PolicyTag
+ from logic.src.interfaces.context.search_context import SearchContext
+-from logic.src.policies.vectorized.packing import get_vectorized_selector
+ from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
+ from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
+-from logic.src.tracking.core.run import get_active_run
+ from logic.src.utils.functions import move_to
+-from logic.src.utils.registry import ALL
+ 
+ if TYPE_CHECKING:
+     from logic.src.interfaces.context.multi_day_context import MultiDayContext
+@@ -35,13 +31,6 @@ from logic.src.configs.policies.routing.learning_algorithms.na import NeuralAgen
+ from .agent import NeuralAgent
+ 
+ 
+-@ALL.register(
+-    PolicyTag.REINFORCEMENT_LEARNING,
+-    PolicyTag.NEURAL_COMBINATORIAL_OPTIMIZATION,
+-    PolicyTag.ROUTING,
+-    PolicyTag.PROFIT_AWARE,
+-    PolicyTag.GPU_ACCELERATED,
+-)
+ @RoutingAlgorithmRegistry.register("na")
+ class NeuralAgentPolicy(BaseRoutingPolicy):
+     """
+@@ -184,7 +173,6 @@ class NeuralAgentPolicy(BaseRoutingPolicy):
+                 - search_context (Optional[SearchContext]): Context for tracking search metrics.
+                 - multi_day_context (Optional[MultiDayContext]): Context for inter-day propagation.
+                 - mandatory (Optional): Explicit list or mask of mandatory nodes.
+-                - selector_name (Optional): Name of a vectorized mandatory selector.
+                 - selector_threshold (Optional): Threshold for the mandatory selector.
+ 
+         Returns:
+@@ -263,7 +251,6 @@ class NeuralAgentPolicy(BaseRoutingPolicy):
+         )
+ 
+         # Log parameters
+-        self._log_params(kwargs, cost_weights)
+ 
+         # Compute profit: collected revenue - travel cost
+         visited = {n for n in tour if n != 0}
+@@ -285,32 +272,6 @@ class NeuralAgentPolicy(BaseRoutingPolicy):
+ 
+         return tour, cost, profit, kwargs.get("search_context"), kwargs.get("multi_day_context")
+ 
+-    def _log_params(self, context: Dict[str, Any], cost_weights: Dict[str, float]) -> None:
+-        """Log neural policy parameters to the active tracking run.
+-
+-        Args:
+-            context: Context for neural execution.
+-            cost_weights: Cost weights for the neural policy.
+-
+-        """
+-        if self._params_logged:
+-            return
+-        self._params_logged = True
+-
+-        run = get_active_run()
+-        if run is None:
+-            return
+-
+-        policy_name = context.get("policy_name", "na")
+-        sample_id = context.get("sample_id", 0)
+-        prefix = f"policy_params/{policy_name}/s{sample_id}"
+-
+-        params: Dict[str, Any] = {f"{prefix}/{k}": v for k, v in cost_weights.items()}
+-        params[f"{prefix}/selector_name"] = context.get("selector_name")
+-        params[f"{prefix}/selector_threshold"] = context.get("selector_threshold", 0.7)
+-
+-        run.log_params(params)
+-
+     def _get_mandatory_mask(
+         self,
+         kwargs: dict,
+@@ -337,48 +298,7 @@ class NeuralAgentPolicy(BaseRoutingPolicy):
+         if mandatory is not None:
+             return self._convert_mandatory_to_mask(mandatory, bins, device)
+ 
+-        # Check for selector-based selection
+-        selector_name = kwargs.get("selector_name")
+-        if selector_name is None:
+-            return None
+-
+-        selector_threshold = kwargs.get("selector_threshold", 0.7)
+-        current_day = kwargs.get("current_day", 1)
+-
+-        # Get current fill levels as tensor
+-        fill_levels = torch.as_tensor(bins.c, dtype=torch.float32, device=device) / 100.0
+-        fill_levels = fill_levels.unsqueeze(0)  # (1, N)
+-
+-        # Prepend depot (fill=0)
+-        depot_fill = torch.zeros(1, 1, dtype=torch.float32, device=device)
+-        fill_levels_with_depot = torch.cat([depot_fill, fill_levels], dim=1)  # (1, N+1)
+-
+-        # Get selector and compute mandatory
+-        try:
+-            selector = get_vectorized_selector(selector_name, threshold=selector_threshold)
+-        except ValueError:
+-            return None
+-
+-        # Prepare selector kwargs
+-        selector_kwargs = {
+-            "threshold": selector_threshold,
+-            "current_day": torch.tensor(current_day, device=device),
+-        }
+-
+-        # Add accumulation rates if available
+-        if hasattr(bins, "rate") and bins.rate is not None:
+-            rates = torch.as_tensor(bins.rate, dtype=torch.float32, device=device) / 100.0
+-            rates = rates.unsqueeze(0)
+-            depot_rate = torch.zeros(1, 1, dtype=torch.float32, device=device)
+-            selector_kwargs["accumulation_rates"] = torch.cat([depot_rate, rates], dim=1)
+-
+-        # Add profit vars for revenue selector
+-        if profit_vars is not None:
+-            selector_kwargs["revenue_kg"] = profit_vars.get("revenue_kg", 1.0)
+-            selector_kwargs["bin_capacity"] = profit_vars.get("bin_capacity", 1.0)
+-
+-        mandatory_mask = selector.select(fill_levels_with_depot, **selector_kwargs)
+-        return mandatory_mask
++        return None
+ 
+     def _convert_mandatory_to_mask(
+         self,
+diff --git a/logic/src/policies/routing/learning_algorithms/neural_agent/simulation.py b/logic/src/policies/routing/learning_algorithms/neural_agent/simulation.py
+index 00c2bbe..562cb35 100644
+--- a/logic/src/policies/routing/learning_algorithms/neural_agent/simulation.py
++++ b/logic/src/policies/routing/learning_algorithms/neural_agent/simulation.py
+@@ -21,7 +21,6 @@ import torch
+ if TYPE_CHECKING:
+     from logic.src.configs.policies.routing.learning_algorithms.na import NeuralAgentConfig
+ 
+-from logic.src.tracking.hooks.attention_hooks import add_attention_hooks
+ from logic.src.utils.decoding.beam_search import _beam_search
+ from logic.src.utils.decoding.decoding_utils import backtrack
+ from logic.src.utils.routing.tours import (
+@@ -65,7 +64,7 @@ class SimulationMixin:
+             Tuple of (routes, cost, profit).
+         """
+         edges, dist_matrix = graph
+-        hook_data = add_attention_hooks(self.model.encoder)  # type: ignore[attr-defined]
++        hook_data: dict = {"handles": [], "weights": [], "masks": []}
+ 
+         # Check mandatory: if provided and empty (no bins to visit), skip routing
+         if mandatory is not None:
+diff --git a/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/aco.py b/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/aco.py
+index da6d9f7..ca3e73d 100644
+--- a/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/aco.py
++++ b/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/aco.py
+@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
+ import numpy as np
+ 
+ from logic.src.configs.policies.routing.meta_heuristics.aco_ks import KSparseACOConfig
+-from logic.src.tracking.viz_mixin import PolicyVizMixin
++from logic.src.utils.policy.state_recorder import PolicyVizMixin
+ 
+ from .construction import SolutionConstructor
+ from .local_search import ACOLocalSearch
+diff --git a/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/lns.py b/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/lns.py
+index 6de1e49..a07615a 100644
+--- a/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/lns.py
++++ b/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/lns.py
+@@ -44,7 +44,7 @@ from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.engine
+ from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.weight_updates import (
+     EmaWeightUpdate,
+ )
+-from logic.src.tracking.viz_mixin import PolicyVizMixin
++from logic.src.utils.policy.state_recorder import PolicyVizMixin
+ 
+ 
+ class LNSSolver(LNSBase, PolicyVizMixin):
+diff --git a/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/local_search.py b/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/local_search.py
+index 2730702..ae44e28 100644
+--- a/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/local_search.py
++++ b/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/local_search.py
+@@ -30,7 +30,7 @@ from logic.src.policies.helpers.operators.inter_route_local_search.swap_star imp
+ from logic.src.policies.helpers.operators.intra_route_local_search.k_opt import move_2opt_intra, move_3opt_intra
+ from logic.src.policies.helpers.operators.intra_route_local_search.relocate import move_or_opt, move_relocate
+ from logic.src.policies.helpers.operators.intra_route_local_search.swap import move_swap
+-from logic.src.tracking.viz_mixin import PolicyVizMixin
++from logic.src.utils.policy.state_recorder import PolicyVizMixin
+ 
+ 
+ class LocalSearch(PolicyVizMixin, ABC):
+diff --git a/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/pg_clns.py b/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/pg_clns.py
+index 789f27a..1e3ee36 100644
+--- a/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/pg_clns.py
++++ b/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/pg_clns.py
+@@ -24,7 +24,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
+ 
+ from logic.src.configs.policies.routing.meta_heuristics.pg_clns import PGCLNSConfig
+ from logic.src.policies.routing.base.sub_problem import SubProblem, coerce_config
+-from logic.src.tracking.viz_mixin import PolicyVizMixin
++from logic.src.utils.policy.state_recorder import PolicyVizMixin
+ 
+ from .aco import ACOSolver
+ from .lns import LNSSolver
+diff --git a/logic/src/policies/routing/meta_heuristics/simulated_annealing_neighborhood_search/dispatcher.py b/logic/src/policies/routing/meta_heuristics/simulated_annealing_neighborhood_search/dispatcher.py
+index 9507daf..3f25cbe 100644
+--- a/logic/src/policies/routing/meta_heuristics/simulated_annealing_neighborhood_search/dispatcher.py
++++ b/logic/src/policies/routing/meta_heuristics/simulated_annealing_neighborhood_search/dispatcher.py
+@@ -106,7 +106,6 @@ def execute_new(
+ 
+     # Load area parameters
+     Q, R, C, values = policy._load_area_params(area, waste_type, config)
+-    policy._log_solver_params(values, kwargs)
+ 
+     # Q and R are in percentage points of one bin (capacity in %, revenue in EUR per %), and
+     # compute_profit loads stock * V * B / 100. V * B = 100 keeps those units, like execute_og's
+@@ -210,7 +209,6 @@ def execute_og(
+ 
+     # Load area parameters
+     Q, R, C, area_values = policy._load_area_params(area, waste_type, config)
+-    policy._log_solver_params(area_values, kwargs)
+ 
+     # The base contract uses percentage points for fill/capacity and euros
+     # per percentage point for revenue. Legacy helpers multiply E*B; identity
+diff --git a/logic/src/policies/routing/meta_heuristics/simulated_annealing_neighborhood_search/heuristics/sans.py b/logic/src/policies/routing/meta_heuristics/simulated_annealing_neighborhood_search/heuristics/sans.py
+index 95cde4d..59b4139 100644
+--- a/logic/src/policies/routing/meta_heuristics/simulated_annealing_neighborhood_search/heuristics/sans.py
++++ b/logic/src/policies/routing/meta_heuristics/simulated_annealing_neighborhood_search/heuristics/sans.py
+@@ -32,7 +32,7 @@ from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood
+ from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.heuristics.sans_state import (
+     compute_profit,
+ )
+-from logic.src.tracking.viz_mixin import PolicyStateRecorder
++from logic.src.utils.policy.state_recorder import PolicyStateRecorder
+ 
+ 
+ def _initialize_solution_state(
+diff --git a/logic/src/utils/model/loader.py b/logic/src/utils/model/loader.py
+index dad5916..02f1df0 100644
+--- a/logic/src/utils/model/loader.py
++++ b/logic/src/utils/model/loader.py
+@@ -76,7 +76,7 @@ def load_model(path: str, epoch: Optional[int] = None) -> Tuple[nn.Module, Dict[
+     if not args:
+         raise ValueError("Could not find hyperparameters in directory: {}".format(path))
+ 
+-    from logic.src.models import AttentionModel, TemporalAttentionModel
++    from logic.src.models import AttentionModel
+ 
+     problem = load_problem(args["problem"])
+ 
+@@ -93,7 +93,9 @@ def load_model(path: str, epoch: Optional[int] = None) -> Tuple[nn.Module, Dict[
+     decoder_type = args.get("decoder_type", "glimpse")
+ 
+     # Use TemporalAttentionModel only for 'tam', otherwise AttentionModel
+-    model_class = TemporalAttentionModel if args.get("model") == "tam" else AttentionModel
++    if args.get("model") == "tam":
++        raise ValueError("the temporal attention model is not part of the minimal package")
++    model_class = AttentionModel
+     # AttentionModel reads normalization/activation only from the structured configs;
+     # the flat kwargs below are kept for older call sites but are not consumed.
+     norm_config = NormalizationConfig(
+diff --git a/logic/src/tracking/viz_mixin.py b/logic/src/utils/policy/state_recorder.py
+similarity index 99%
+rename from logic/src/tracking/viz_mixin.py
+rename to logic/src/utils/policy/state_recorder.py
+index e3f2174..bffc96f 100644
+--- a/logic/src/tracking/viz_mixin.py
++++ b/logic/src/utils/policy/state_recorder.py
+@@ -3,7 +3,7 @@
+ Provides lightweight, zero-overhead state recording for classical and
+ heuristic policies. Import :class:`PolicyVizMixin` and add it as a
+ mixin base-class to any policy that should expose iteration data to the
+-Streamlit dashboard.
++in-process policy telemetry.
+ 
+ Attributes:
+     PolicyStateRecorder: Fixed-capacity ring-buffer for per-iteration policy telemetry.
+diff --git a/logic/src/tracking/logging/pylogger.py b/logic/src/utils/pylogger.py
+similarity index 81%
+rename from logic/src/tracking/logging/pylogger.py
+rename to logic/src/utils/pylogger.py
+index 1f0fe5a..a2b26fb 100644
+--- a/logic/src/tracking/logging/pylogger.py
++++ b/logic/src/utils/pylogger.py
+@@ -3,14 +3,13 @@
+ This module provides a specialized logger initialization that is compatible with
+ distributed training environments. It ensures that logs are only emitted from
+ the primary process (rank zero) to prevent terminal output clutter and
+-multiplication. It also optionally integrates with structured JSON logging if a
+-file path is provided.
++multiplication. A file path adds a plain file handler.
+ 
+ Attributes:
+     get_pylogger: Primary utility for initializing rank-zero-only loggers.
+ 
+ Example:
+-    >>> from logic.src.tracking.logging.pylogger import get_pylogger
++    >>> from logic.src.utils.pylogger import get_pylogger
+     >>> logger = get_pylogger(__name__)
+     >>> logger.info("This message only appears once on rank zero.")
+ """
+@@ -23,7 +22,6 @@ import sys
+ from functools import wraps
+ from typing import Any, Callable, Optional
+ 
+-from logic.src.tracking.logging.structured_logging import get_structured_logger as _get_structured
+ 
+ 
+ def rank_zero_only(fn: Callable[..., Any]) -> Callable[..., Any]:
+@@ -51,14 +49,14 @@ def get_pylogger(name: str = __name__, log_file: Optional[str] = None) -> loggin
+ 
+     Args:
+         name: The name used for the logger instance. Defaults to the module name.
+-        log_file: Optional path to a log file. If provided, enables structured
+-            JSON logging to that file. Defaults to None.
++        log_file: Optional path to a log file. If provided, enables logging to that file. Defaults to None.
+ 
+     Returns:
+         logging.Logger: The configured rank-zero-safe logger.
+     """
+-    # If log_file is provided, use structured logger setup first
+-    logger = _get_structured(name=name, log_file=log_file) if log_file else logging.getLogger(name)
++    logger = logging.getLogger(name)
++    if log_file and not any(getattr(h, "baseFilename", None) == os.path.abspath(log_file) for h in logger.handlers):
++        logger.addHandler(logging.FileHandler(log_file))
+ 
+     # this ensures all logging levels get marked with the rank zero decorator
+     # otherwise logs would get multiplied for each GPU process in multi-GPU setup
+diff --git a/logic/src/tracking/logging/modules/analysis.py b/logic/src/utils/results/analysis.py
+similarity index 99%
+rename from logic/src/tracking/logging/modules/analysis.py
+rename to logic/src/utils/results/analysis.py
+index ca2927d..d0e488d 100644
+--- a/logic/src/tracking/logging/modules/analysis.py
++++ b/logic/src/utils/results/analysis.py
+@@ -18,7 +18,7 @@ Attributes:
+     final_simulation_summary: Print a formatted per-policy summary table.
+ 
+ Example:
+-    >>> from logic.src.tracking.logging.modules.analysis import load_log_dict
++    >>> from logic.src.utils.results.analysis import load_log_dict
+     >>> db = load_log_dict("/path/to/project", "output")
+     >>> db.filter(packing="lookahead", n_bins=100).mean_metrics()
+ """
+@@ -32,7 +32,7 @@ import threading
+ from typing import Any, Dict, List, Optional, Tuple, cast
+ 
+ import logic.src.constants as udef
+-from logic.src.tracking.logging.modules.storage import update_policy_log_section
++from logic.src.utils.results.storage import update_policy_log_section
+ from logic.src.utils.input.files import compose_dirpath, read_json
+ 
+ from .analysis_results import (
+diff --git a/logic/src/tracking/logging/modules/analysis_results.py b/logic/src/utils/results/analysis_results.py
+similarity index 99%
+rename from logic/src/tracking/logging/modules/analysis_results.py
+rename to logic/src/utils/results/analysis_results.py
+index 1fdce0b..47a4c61 100644
+--- a/logic/src/tracking/logging/modules/analysis_results.py
++++ b/logic/src/utils/results/analysis_results.py
+@@ -1,6 +1,6 @@
+ """Queryable ResultsDB container for simulation logs.
+ 
+-Moved from ``logic.src.tracking.logging.modules.analysis``.
++Moved from ``logic.src.utils.results.analysis``.
+ """
+ 
+ from typing import Any, Dict, List, Optional, Union
+diff --git a/logic/src/tracking/logging/modules/analysis_slug.py b/logic/src/utils/results/analysis_slug.py
+similarity index 98%
+rename from logic/src/tracking/logging/modules/analysis_slug.py
+rename to logic/src/utils/results/analysis_slug.py
+index c36c1c6..c41f691 100644
+--- a/logic/src/tracking/logging/modules/analysis_slug.py
++++ b/logic/src/utils/results/analysis_slug.py
+@@ -1,6 +1,6 @@
+ """Policy-slug parsing for simulation log analysis.
+ 
+-Moved from ``logic.src.tracking.logging.modules.analysis``.
++Moved from ``logic.src.utils.results.analysis``.
+ """
+ 
+ from typing import Dict, List, Optional
+diff --git a/logic/src/tracking/logging/logger_writer.py b/logic/src/utils/results/logger_writer.py
+similarity index 100%
+rename from logic/src/tracking/logging/logger_writer.py
+rename to logic/src/utils/results/logger_writer.py
+diff --git a/logic/src/tracking/logging/modules/storage.py b/logic/src/utils/results/storage.py
+similarity index 99%
+rename from logic/src/tracking/logging/modules/storage.py
+rename to logic/src/utils/results/storage.py
+index 6d620f4..568c29b 100644
+--- a/logic/src/tracking/logging/modules/storage.py
++++ b/logic/src/utils/results/storage.py
+@@ -14,7 +14,7 @@ Attributes:
+     update_log: Appends new results to an existing structured log.
+ 
+ Example:
+-    >>> from logic.src.tracking.logging.modules import storage
++    >>> from logic.src.utils.results import storage
+     >>> storage.log_to_json("results.json", ["km", "kg"], {"greedy": [10, 5]})
+ """
+ 
+diff --git a/logic/src/tracking/logging/modules/summary_display.py b/logic/src/utils/results/summary_display.py
+similarity index 100%
+rename from logic/src/tracking/logging/modules/summary_display.py
+rename to logic/src/utils/results/summary_display.py
+diff --git a/logic/test/unit/pipeline/simulations/test_issue_41_solver_status.py b/logic/test/unit/pipeline/simulations/test_issue_41_solver_status.py
+index 19b908d..0396c93 100644
+--- a/logic/test/unit/pipeline/simulations/test_issue_41_solver_status.py
++++ b/logic/test/unit/pipeline/simulations/test_issue_41_solver_status.py
+@@ -9,7 +9,7 @@ from logic.src.pipeline.simulations.reporting import (
+     reset_solver_status,
+ )
+ from logic.src.pipeline.simulations.daily import get_daily_results, record_aborted_day, resolve_solver_status
+-from logic.src.tracking.logging.modules.summary_display import daily_row_is_visible
++from logic.src.utils.results.summary_display import daily_row_is_visible
+ 
+ pytestmark = [pytest.mark.unit, pytest.mark.fast]
+ 
+diff --git a/logic/test/unit/pipeline/simulations/test_simulation_core.py b/logic/test/unit/pipeline/simulations/test_simulation_core.py
+index fd214a2..0939f2b 100644
+--- a/logic/test/unit/pipeline/simulations/test_simulation_core.py
++++ b/logic/test/unit/pipeline/simulations/test_simulation_core.py
+@@ -57,7 +57,7 @@ class TestSimulation:
+         cfg.sim.full_policies = ["pol1"]
+         cfg.sim.policies = ["pol1"]
+         mocker.patch("logic.src.pipeline.simulations.manager.ROOT_DIR", str(tmp_path))
+-        mocker.patch("logic.src.tracking.logging.modules.storage.log_to_json")
++        mocker.patch("logic.src.utils.results.storage.log_to_json")
+ 
+         mocker.patch(
+             "logic.src.pipeline.simulations.states.base.context.SimulationContext.run",
+diff --git a/logic/test/unit/tracking/test_policy_telemetry_db.py b/logic/test/unit/tracking/test_policy_telemetry_db.py
+index 6b23874..f8c4953 100644
+--- a/logic/test/unit/tracking/test_policy_telemetry_db.py
++++ b/logic/test/unit/tracking/test_policy_telemetry_db.py
+@@ -8,7 +8,7 @@ from logic.src.tracking.logging.modules.policy_viz_emit import (
+     POLICY_VIZ_MARKER,
+     maybe_emit_policy_viz,
+ )
+-from logic.src.tracking.viz_mixin import PolicyVizMixin
++from logic.src.utils.policy.state_recorder import PolicyVizMixin
+ 
+ pytestmark = [pytest.mark.unit, pytest.mark.fast]
+ 
+diff --git a/logic/test/unit/tracking/test_policy_viz_emit.py b/logic/test/unit/tracking/test_policy_viz_emit.py
+index aee1ae8..ec6e9e8 100644
+--- a/logic/test/unit/tracking/test_policy_viz_emit.py
++++ b/logic/test/unit/tracking/test_policy_viz_emit.py
+@@ -12,7 +12,7 @@ from logic.src.tracking.logging.modules.policy_viz_emit import (
+     maybe_emit_policy_viz,
+     send_policy_viz_to_gui,
+ )
+-from logic.src.tracking.viz_mixin import PolicyVizMixin
++from logic.src.utils.policy.state_recorder import PolicyVizMixin
+ 
+ pytestmark = [pytest.mark.unit, pytest.mark.slow]
+ 
+diff --git a/logic/test/unit/tracking/test_summary_table_width.py b/logic/test/unit/tracking/test_summary_table_width.py
+index ad9df4c..6242639 100644
+--- a/logic/test/unit/tracking/test_summary_table_width.py
++++ b/logic/test/unit/tracking/test_summary_table_width.py
+@@ -2,7 +2,7 @@
+ 
+ import pytest
+ 
+-from logic.src.tracking.logging.modules.summary_display import display_simulation_summary_table
++from logic.src.utils.results.summary_display import display_simulation_summary_table
+ 
+ pytestmark = [pytest.mark.unit, pytest.mark.fast]
+ 
+diff --git a/logic/test/unit/utils/logging/modules/test_storage.py b/logic/test/unit/utils/logging/modules/test_storage.py
+index b446e18..97691ba 100644
+--- a/logic/test/unit/utils/logging/modules/test_storage.py
++++ b/logic/test/unit/utils/logging/modules/test_storage.py
+@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
+ 
+ import numpy as np
+ import pytest
+-from logic.src.tracking.logging.modules.storage import (
++from logic.src.utils.results.storage import (
+     _convert_numpy,
+     _sort_log,
+     log_to_json,
+@@ -127,7 +127,7 @@ def test_update_log(tmp_path):
+     assert loaded[0]["p1"]["c"] == 1
+     assert loaded[0]["p2"]["v"] == 10
+ 
+-@patch("logic.src.tracking.logging.modules.storage.logger")
++@patch("logic.src.utils.results.storage.logger")
+ def test_setup_system_logger(mock_logger):
+     """Test system logger configuration."""
+     setup_system_logger("test.log")
+diff --git a/logic/test/unit/utils/logging/test_basic_log_utils.py b/logic/test/unit/utils/logging/test_basic_log_utils.py
+index 1cdc23e..42691a3 100644
+--- a/logic/test/unit/utils/logging/test_basic_log_utils.py
++++ b/logic/test/unit/utils/logging/test_basic_log_utils.py
+@@ -2,7 +2,7 @@
+ 
+ import numpy as np
+ import pytest
+-from logic.src.tracking.logging.modules.storage import _convert_numpy, _sort_log
++from logic.src.utils.results.storage import _convert_numpy, _sort_log
+ 
+ pytestmark = [pytest.mark.unit, pytest.mark.fast]
+ 
+diff --git a/logic/test/unit/utils/logging/test_log_utils.py b/logic/test/unit/utils/logging/test_log_utils.py
+index 8a7654b..d17deac 100644
+--- a/logic/test/unit/utils/logging/test_log_utils.py
++++ b/logic/test/unit/utils/logging/test_log_utils.py
+@@ -4,9 +4,9 @@ from unittest.mock import MagicMock, patch
+ import pandas as pd
+ import pytest
+ import torch
+-from logic.src.tracking.logging.modules.analysis import output_stats, runs_per_policy
++from logic.src.utils.results.analysis import output_stats, runs_per_policy
+ from logic.src.tracking.logging.modules.metrics import log_epoch, log_values
+-from logic.src.tracking.logging.modules.storage import log_to_json, log_to_json2
++from logic.src.utils.results.storage import log_to_json, log_to_json2
+ from logic.src.tracking.logging.structured_logging import log_training
+ from omegaconf import OmegaConf
+ 
+@@ -50,8 +50,8 @@ class TestLogUtils:
+             )
+         assert mock_wandb.called
+ 
+-    @patch("logic.src.tracking.logging.modules.storage.os.path.isfile")
+-    @patch("logic.src.tracking.logging.modules.storage.read_json")
++    @patch("logic.src.utils.results.storage.os.path.isfile")
++    @patch("logic.src.utils.results.storage.read_json")
+     @patch("builtins.open", new_callable=MagicMock)
+     @patch("json.dump")
+     def test_log_to_json(self, mock_dump, mock_open, mock_read, mock_isfile):
+@@ -60,14 +60,14 @@ class TestLogUtils:
+         mock_read.return_value = {"runs": []}
+         mock_open.return_value.__enter__.return_value = MagicMock()
+         with (
+-            patch("logic.src.tracking.logging.modules.storage._sort_log"),
++            patch("logic.src.utils.results.storage._sort_log"),
+         ):
+             res = log_to_json("path.json", ["val"], {"key": [1]}, sort_log_flag=True)
+             assert res is not None
+             assert mock_dump.called
+ 
+-    @patch("logic.src.tracking.logging.modules.storage.os.path.isfile")
+-    @patch("logic.src.tracking.logging.modules.storage.read_json")
++    @patch("logic.src.utils.results.storage.os.path.isfile")
++    @patch("logic.src.utils.results.storage.read_json")
+     @patch("builtins.open", new_callable=MagicMock)
+     @patch("json.dump")
+     def test_log_to_json2(self, mock_dump, mock_open, mock_read, mock_isfile):
+@@ -109,9 +109,9 @@ class TestLogUtils:
+         assert mock_wandb.called
+         assert tb_logger.add_scalar.called
+ 
+-    @patch("logic.src.tracking.logging.modules.analysis.os.path.isfile", return_value=True)
+-    @patch("logic.src.tracking.logging.modules.analysis.read_json")
+-    @patch("logic.src.tracking.logging.modules.analysis.update_policy_log_section")
++    @patch("logic.src.utils.results.analysis.os.path.isfile", return_value=True)
++    @patch("logic.src.utils.results.analysis.read_json")
++    @patch("logic.src.utils.results.analysis.update_policy_log_section")
+     def test_output_stats(self, mock_update_section, mock_read, mock_isfile):
+         """Test output_stats function."""
+         mock_read.return_value = {
+@@ -140,8 +140,8 @@ class TestLogUtils:
+         assert isinstance(std, dict)
+         assert mock_update_section.called
+ 
+-    @patch("logic.src.tracking.logging.modules.analysis.os.path.exists")
+-    @patch("logic.src.tracking.logging.modules.analysis.read_json")
++    @patch("logic.src.utils.results.analysis.os.path.exists")
++    @patch("logic.src.utils.results.analysis.read_json")
+     def test_runs_per_policy(self, mock_read, mock_exists):
+         """Test runs_per_policy function."""
+         mock_exists.return_value = True
