@@ -23,8 +23,12 @@ from typing import List, Optional, Set, Tuple
 from logic.package.release_closure import (
     ENTRY_RE,
     REPO,
+    _guards_import,
+    _is_deferred,
     _package_of,
+    eager_targets,
     imports_of,
+    lazy_targets,
     module_to_file,
     parse_registry_manifest,
     trimmed,
@@ -108,26 +112,32 @@ def drop_pruned_init_imports(path: Path, staged_modules: Set[str], out: Path) ->
     root = out
     tree = ast.parse(path.read_text())
     remove_spans: List[Tuple[int, int]] = []
+    rewrite_spans: List[tuple] = []
     for node in tree.body:
-        if isinstance(node, ast.Import):
-            targets = [alias.name for alias in node.names]
-        elif isinstance(node, ast.ImportFrom):
-            if node.level == 0:
-                base = (node.module or "").split(".")
-                targets = [".".join(base + [alias.name]) for alias in node.names]
-                if node.module:
-                    targets.append(node.module)
-            else:
-                pkg = _package_of(path, root)
-                up = pkg[: len(pkg) - (node.level - 1)]
-                base = up + ([node.module] if node.module else [])
-                targets = [".".join(base + [alias.name]) for alias in node.names]
-                targets.append(".".join(base))
-        else:
+        targets = _import_targets(node, path, root)
+        if targets is None:
             continue
+        if isinstance(node, ast.ImportFrom) and len(node.names) > 1:
+            kept_aliases = [
+                alias
+                for alias, target in zip(node.names, targets, strict=False)
+                if _import_resolves(target, staged_modules, out)
+            ]
+            if 0 < len(kept_aliases) < len(node.names):
+                rewrite_spans.append((node.lineno, node.end_lineno, kept_aliases, node))
+                dropped.extend(
+                    f"{path.relative_to(out)}: import {target}"
+                    for alias, target in zip(node.names, targets, strict=False)
+                    if alias not in kept_aliases
+                )
+                continue
         for target in targets:
             if not target.startswith("logic"):
                 continue
+            if isinstance(node, ast.ImportFrom) and not _import_resolves(target, staged_modules, out):
+                remove_spans.append((node.lineno, node.end_lineno))
+                dropped.append(f"{path.relative_to(out)}: import {target}")
+                break
             # A target that maps to a dev file (submodule import) must exist
             # staged under its full name; anything else resolves by prefix.
             if module_to_file(target, REPO) is not None:
@@ -138,13 +148,75 @@ def drop_pruned_init_imports(path: Path, staged_modules: Set[str], out: Path) ->
                 remove_spans.append((node.lineno, node.end_lineno))
                 dropped.append(f"{path.relative_to(out)}: import {target}")
                 break
-    if remove_spans:
+    if remove_spans or rewrite_spans:
         lines = path.read_text().splitlines(keepends=True)
-        for start, end in sorted(remove_spans, reverse=True):
-            del lines[start - 1 : end]
+        edits = [(start, end, None, None) for start, end in remove_spans] + rewrite_spans
+        for start, end, aliases, node in sorted(edits, key=lambda edit: edit[0], reverse=True):
+            replacement = []
+            if aliases is not None:
+                stmt = ast.ImportFrom(module=node.module, names=aliases, level=node.level)
+                replacement = [ast.unparse(stmt) + "\n"]
+            lines[start - 1 : end] = replacement
         path.write_text("".join(lines))
         drop_unbound_exports(path)
+        _check_no_dangling_names(path, tree)
     return dropped
+
+
+def _check_no_dangling_names(path: Path, original: ast.Module) -> None:
+    """Fail when pruning removed an import whose name the init still uses (a NameError at run time)."""
+    pruned = ast.parse(path.read_text())
+    lost = _bound_names(original) - _bound_names(pruned)
+    used = {node.id for node in ast.walk(pruned) if isinstance(node, ast.Name)}
+    if lost & used:
+        raise SystemExit(f"{path}: pruned imports of {sorted(lost & used)}, which the module still uses")
+
+
+def _import_targets(node: ast.stmt, path: Path, root: Path) -> Optional[List[str]]:
+    """Dotted targets of an import statement (one per alias, then the from-module); None for other nodes."""
+    if isinstance(node, ast.Import):
+        return [alias.name for alias in node.names]
+    if not isinstance(node, ast.ImportFrom):
+        return None
+    if node.level == 0:
+        base = (node.module or "").split(".")
+        targets = [".".join(base + [alias.name]) for alias in node.names]
+        if node.module:
+            targets.append(node.module)
+        return targets
+    pkg = _package_of(path, root)
+    up = pkg[: len(pkg) - (node.level - 1)]
+    base = up + ([node.module] if node.module else [])
+    return [".".join(base + [alias.name]) for alias in node.names] + [".".join(base)]
+
+
+def _import_resolves(target: str, staged_modules: Set[str], out: Path) -> bool:
+    """Whether ``from <pkg> import <name>`` (as ``<pkg>.<name>``) still resolves in the staged tree.
+
+    The name is a staged submodule, or a name the staged package init binds (its own pruned
+    imports already removed: inits are processed deepest first).
+    """
+    if not target.startswith("logic"):
+        return True
+    if target in staged_modules:
+        return True
+    if module_to_file(target, REPO) is not None:
+        return False  # a real module that did not ship
+    package, _, name = target.rpartition(".")
+    if package not in staged_modules:
+        return False
+    init = out / Path(*package.split(".")) / "__init__.py"
+    if not init.is_file():
+        # ``from <module> import <name>``: the name must be bound in that module.
+        module_file = (out / Path(*package.split("."))).with_suffix(".py")
+        if not module_file.is_file():
+            return False
+        tree = ast.parse(module_file.read_text())
+        return name == "*" or name in _bound_names(tree) or name in eager_targets(module_file, out)
+    if name == "*" or name in _bound_names(ast.parse(init.read_text())) or name in eager_targets(init, out):
+        return True
+    lazy = lazy_targets(init).get(name)  # served by the package's lazy map
+    return lazy is not None and trimmed(lazy, out) in staged_modules
 
 
 ATTRIBUTE_LINE_RE = re.compile(r"^    ([A-Za-z_][A-Za-z0-9_]*): ")
@@ -165,21 +237,36 @@ def _bound_names(tree: ast.Module) -> Set[str]:
     return bound
 
 
-def _unbound_all_lines(path: Path, tree: ast.Module, bound: Set[str]) -> Set[int]:
-    """Line indexes of ``__all__`` entries (one per line) that name unbound names."""
-    lines: Set[int] = set()
+def _all_node(tree: ast.Module) -> Optional[ast.Assign]:
+    """The module's literal ``__all__ = [...]`` assignment, if any."""
     for node in tree.body:
-        if not (
+        if (
             isinstance(node, ast.Assign)
             and any(isinstance(target, ast.Name) and target.id == "__all__" for target in node.targets)
             and isinstance(node.value, (ast.List, ast.Tuple))
         ):
-            continue
-        for element in node.value.elts:
-            if isinstance(element, ast.Constant) and element.value not in bound:
-                if element.lineno in (node.lineno, node.end_lineno) or element.lineno != element.end_lineno:
-                    raise SystemExit(f"{path}: __all__ entry {element.value!r} is not on a line of its own")
-                lines.add(element.lineno - 1)
+            return node
+    return None
+
+
+def _rewrite_all(lines: List[str], node: ast.Assign, bound: Set[str]) -> List[str]:
+    """``lines`` with the ``__all__`` assignment rewritten one name per line, keeping only bound names."""
+    names = [e.value for e in node.value.elts if isinstance(e, ast.Constant) and e.value in bound]
+    block = ["__all__ = [\n", *(f'    "{name}",\n' for name in names), "]\n"]
+    return lines[: node.lineno - 1] + block + lines[node.end_lineno :]
+
+
+def _unbound_all_lines(path: Path, tree: ast.Module, bound: Set[str]) -> Optional[Set[int]]:
+    """Line indexes of ``__all__`` entries that name unbound names; None when the list must be rewritten."""
+    node = _all_node(tree)
+    lines: Set[int] = set()
+    if node is None:
+        return lines
+    for element in node.value.elts:
+        if isinstance(element, ast.Constant) and element.value not in bound:
+            if element.lineno in (node.lineno, node.end_lineno) or element.lineno != element.end_lineno:
+                return None  # entries share lines: rewrite the whole list
+            lines.add(element.lineno - 1)
     return lines
 
 
@@ -207,9 +294,15 @@ def drop_unbound_exports(path: Path) -> None:
     tree = ast.parse(path.read_text())
     lines = path.read_text().splitlines(keepends=True)
     bound = _bound_names(tree)
-    drop = _unbound_all_lines(path, tree, bound) | _unbound_attribute_lines(tree, lines, bound)
+    all_lines = _unbound_all_lines(path, tree, bound)
+    drop = (all_lines or set()) | _unbound_attribute_lines(tree, lines, bound)
     if drop:
-        path.write_text("".join(line for index, line in enumerate(lines) if index not in drop))
+        lines = [line if index not in drop else None for index, line in enumerate(lines)]
+    if all_lines is None:
+        node = _all_node(tree)
+        lines = _rewrite_all([line if line is not None else "" for line in lines], node, bound)
+    if drop or all_lines is None:
+        path.write_text("".join(line for line in lines if line is not None))
 
 
 def write_release_conftest(source: Path, out: Path) -> List[str]:
@@ -380,8 +473,84 @@ def verify_staged(out: Path, staged_modules: Set[str]) -> List[str]:
                     f"{path.relative_to(out)}: deferred import {dep} of a pruned module "
                     "(code path unavailable in the release)"
                 )
+    for problem in unresolved_names(out, staged_modules):
+        if problem.startswith("module-level"):
+            errors.append(problem)
     for staged_manifest in (out / "logic").rglob("_manifest.py"):
         for key, target in parse_registry_manifest(staged_manifest).items():
             if trimmed(target.split(":")[0], out) not in staged_modules:
                 errors.append(f"{staged_manifest.name}: key {key!r} target {target} escapes the tree")
     return errors
+
+
+def _in_type_checking(tree: ast.Module, target: ast.AST) -> bool:
+    """Whether ``target`` sits in an ``if TYPE_CHECKING:`` block."""
+    for node in ast.walk(tree):
+        guarded = isinstance(node, ast.If) and isinstance(node.test, ast.Name) and node.test.id == "TYPE_CHECKING"
+        if guarded and any(sub is target for stmt in node.body for sub in ast.walk(stmt)):
+            return True
+    return False
+
+
+def unresolved_names(out: Path, staged_modules: Set[str]) -> List[str]:
+    """``from <staged pkg> import <name>`` statements whose name no longer exists in the staged tree.
+
+    Module-level ones fail on import; deferred ones (in a function or an ImportError guard) fail
+    only when that code path runs, which is expected for an excluded feature but worth reading.
+    """
+    problems: List[str] = []
+    for path in sorted((out / "logic").rglob("*.py")):
+        if "test" in path.relative_to(out).parts[:2]:
+            continue
+        tree = ast.parse(path.read_text())
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.ImportFrom) or _in_type_checking(tree, node):
+                continue
+            targets = _import_targets(node, path, out) or []
+            base = targets[-1] if targets else ""
+            if not base.startswith("logic") or base not in staged_modules:
+                continue
+            for target in targets[:-1]:
+                if not _import_resolves(target, staged_modules, out):
+                    kind = "deferred" if _is_deferred(tree, node) else "module-level"
+                    problems.append(f"{kind} import of the pruned name {target} in {path.relative_to(out)}")
+    return problems
+
+
+def unguarded_missing_imports(out: Path, staged_modules: Set[str]) -> List[str]:
+    """Imports of ``logic`` modules missing from the staged tree that nothing guards.
+
+    Module-level ones fail verification elsewhere; these are the function-level ones not inside
+    a ``try`` that catches ImportError (nor under ``TYPE_CHECKING``): code paths that raise
+    ModuleNotFoundError when they run. Each one should be unreachable in the package.
+    """
+    problems: List[str] = []
+    for path in sorted((out / "logic").rglob("*.py")):
+        if "test" in path.relative_to(out).parts[:2]:
+            continue
+        tree = ast.parse(path.read_text())
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom):
+                targets = [(_import_targets(node, path, out) or [""])[-1]]
+            elif isinstance(node, ast.Import):
+                targets = [alias.name for alias in node.names]
+            else:
+                continue
+            for target in targets:
+                if not target.startswith("logic") or target in staged_modules:
+                    continue
+                if _in_type_checking(tree, node) or _guarded_by_import_error(tree, node):
+                    continue
+                problems.append(
+                    f"unguarded import of the pruned module {target} in {path.relative_to(out)}:{node.lineno}"
+                )
+    return problems
+
+
+def _guarded_by_import_error(tree: ast.Module, target: ast.AST) -> bool:
+    """Whether ``target`` sits in the body of a ``try`` that catches ImportError."""
+    for node in ast.walk(tree):
+        guards = isinstance(node, ast.Try) and any(_guards_import(handler) for handler in node.handlers)
+        if guards and any(sub is target for stmt in node.body for sub in ast.walk(stmt)):
+            return True
+    return False

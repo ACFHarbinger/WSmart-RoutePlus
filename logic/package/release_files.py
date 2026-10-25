@@ -92,7 +92,9 @@ def write_release_pyproject(manifest: dict, out: Path) -> None:
         lines.append(f'requires-python = "{requires_python}"')
     dropped = {norm_name(name) for name in manifest.get("dropped_requirements", [])}
     deps = [pin_to_tested(dep) for dep in deps if norm_name(dep) not in dropped]
-    extras = {group: [pin_to_tested(dep) for dep in reqs if norm_name(dep) not in dropped] for group, reqs in extras.items()}
+    extras = {
+        group: [pin_to_tested(dep) for dep in reqs if norm_name(dep) not in dropped] for group, reqs in extras.items()
+    }
     lines.append("# Versions pinned to the environment the release was built and tested in.")
     lines.append("dependencies = [")
     lines += [f'    "{dep}",' for dep in deps]
@@ -110,7 +112,7 @@ def write_release_pyproject(manifest: dict, out: Path) -> None:
     lines += ["", *pytest_ini_section(LOGIC.parent / "pyproject.toml")]
     (out / "pyproject.toml").write_text("\n".join(lines) + "\n")
     if manifest.get("python", {}).get("version"):
-        (out / ".python-version").write_text(f'{manifest["python"]["version"]}\n')
+        (out / ".python-version").write_text(f"{manifest['python']['version']}\n")
 
 
 def norm_name(requirement: str) -> str:
@@ -162,7 +164,9 @@ def released_stage_configs(manifest: dict, policies_dir: Path) -> Set[str]:
     return keep
 
 
-POLICY_DEFAULT_RE = re.compile(r"^\s*-\s*/policies(?:/([A-Za-z0-9_/]+))?@p\.[A-Za-z0-9_]+:\s*(policy_[A-Za-z0-9_]+)\s*$")
+POLICY_DEFAULT_RE = re.compile(
+    r"^\s*-\s*/policies(?:/([A-Za-z0-9_/]+))?@p\.[A-Za-z0-9_]+:\s*(policy_[A-Za-z0-9_]+)\s*$"
+)
 
 
 def prune_policy_defaults(task_yaml: Path, policies_dir: Path) -> int:

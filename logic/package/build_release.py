@@ -30,11 +30,12 @@ BB/BC/BPC acronyms; the Studio app keeps its own display-name map.
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 if not __package__:
     # Script-style invocation: python logic/package/build_release.py
@@ -61,6 +62,8 @@ from logic.package.release_staging import (
     filter_lazy_map,
     filter_manifest_file,
     import_sweep,
+    unguarded_missing_imports,
+    unresolved_names,
     validate_release_tests,
     verify_staged,
     write_release_conftest,
@@ -76,12 +79,20 @@ STAGED_TOPS = ("src", "configs", "controllers")
 # --------------------------------------------------------------------------- #
 
 
-def load_manifest() -> dict:
-    """Parse ``logic/release.yaml`` and return its plain-dict form."""
+DEFAULT_MANIFEST = LOGIC / "release.yaml"
+
+
+def load_manifest(path: Optional[Path] = None) -> dict:
+    """Parse a release manifest (default ``logic/release.yaml``) and return its plain-dict form.
+
+    ``_path`` records the file, so the build stages it and resolves its overlay and patches.
+    """
     import yaml
 
-    with (LOGIC / "release.yaml").open() as fh:
+    path = Path(path or DEFAULT_MANIFEST).resolve()
+    with path.open() as fh:
         manifest = yaml.safe_load(fh)
+    manifest["_path"] = str(path)
     for section in ("version", "problems", "stages", "infrastructure"):
         if section not in manifest:
             raise SystemExit(f"release.yaml: missing required section {section!r}")
@@ -229,7 +240,7 @@ def run_build(  # noqa: C901
             dest = out / "logic" / rel
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(path, dest)
-    shutil.copy2(LOGIC / "release.yaml", out / "logic" / "release.yaml")
+    shutil.copy2(manifest.get("_path", DEFAULT_MANIFEST), out / "logic" / "release.yaml")
     # logic must be a regular package in the staging tree; without __init__.py
     # it degrades to a namespace package and loses to any other installed copy.
     shutil.copy2(LOGIC / "__init__.py", out / "logic" / "__init__.py")
@@ -290,7 +301,8 @@ def run_build(  # noqa: C901
 
     # --- lazy maps and eager init imports -------------------------------- #
     staged_modules = staged_module_names(out)
-    for staged in sorted((out / "logic").rglob("__init__.py")):
+    # Deepest first: an init's re-exports are checked against the already pruned inits below it.
+    for staged in sorted((out / "logic").rglob("__init__.py"), key=lambda p: (-len(p.parts), str(p))):
         notes += filter_lazy_map(staged, staged_modules, out)
         notes += drop_pruned_init_imports(staged, staged_modules, out)
 
@@ -339,13 +351,16 @@ def run_build(  # noqa: C901
         (test_out / "release_tests.excluded.txt").write_text(
             "# Not shipped: these tests fail in the release tree (they need excluded code, the repository's\n"
             "# tools/ or main.py, or behaviour the release leaves out). First failure per file:\n"
-            + "\n".join(failures) + "\n"
+            + "\n".join(failures)
+            + "\n"
         )
         notes.append(f"{len(failures)} test files dropped: they fail in the release tree")
 
     # --- verification ----------------------------------------------------- #
     staged_modules = staged_module_names(out)
     errors = verify_staged(out, staged_modules)
+    notes += [p for p in unresolved_names(out, staged_modules) if p.startswith("deferred")]
+    notes += unguarded_missing_imports(out, staged_modules)
     staged_py = list((out / "logic").rglob("*.py"))
     lines = sum(len(p.read_text().splitlines()) for p in staged_py)
     print(
@@ -479,6 +494,87 @@ def run_smoke(out: Path) -> int:
     return 0
 
 
+def prepare_source(manifest: dict, source: Path, tracked: Optional[List[str]] = None) -> Path:
+    """Copy the tracked source to ``source`` and apply the manifest's overlay, deletions and patches.
+
+    The overlay directory holds files added to or replacing the source at the same relative
+    path; ``delete`` lists source paths to remove; patches are ``git format-patch`` files (applied with ``git apply``
+    in name order) that fail the build when they no longer apply. Returns the prepared root.
+    """
+    base = Path(manifest["_path"]).parent
+    if source.exists():
+        shutil.rmtree(source)
+    source.mkdir(parents=True)
+    if tracked is None:  # every tracked file, submodules included
+        listing = subprocess.run(
+            ["git", "ls-files", "-z", "--recurse-submodules"], cwd=REPO, capture_output=True, check=True
+        ).stdout.decode()
+        tracked = [rel for rel in listing.split("\0") if rel]
+    for rel in tracked:
+        src = REPO / rel
+        if src.is_file() and not src.is_symlink():
+            dest = source / rel
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dest)
+    overlay = base / manifest["overlay"] if manifest.get("overlay") else None
+    if overlay is not None and overlay.is_dir():
+        for src in sorted(overlay.rglob("*")):
+            if src.is_file() and "__pycache__" not in src.parts:
+                dest = source / src.relative_to(overlay)
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src, dest)
+    for deleted in manifest.get("delete", []):
+        target = source / deleted
+        if target.is_dir():
+            shutil.rmtree(target)
+        elif target.exists():
+            target.unlink()
+    patches = base / manifest["patches"] if manifest.get("patches") else None
+    if patches is not None and patches.is_dir():
+        for patch in sorted(patches.glob("*.patch")):
+            result = subprocess.run(
+                ["git", "apply", "--whitespace=nowarn", str(patch)], cwd=source, capture_output=True, text=True
+            )
+            if result.returncode != 0:
+                raise SystemExit(f"patch {patch.name} does not apply:\n{result.stdout}{result.stderr}")
+    return source
+
+
+def run_violations(manifest: dict) -> int:
+    """List every kept module-level import of an excluded package (what a profile still has to patch)."""
+    manifest["_violations"] = []
+    _, notes = compute_closure(manifest)
+    # A module reached through a package's public surface whose chain hard-imports an excluded
+    # package is dropped, not reported; for a profile that is a feature silently lost.
+    dropped = [note for note in notes if note.startswith("surface module")]
+    found = sorted(set(manifest["_violations"])) + sorted(set(dropped))
+    for violation in found:
+        print(violation)
+    print(f"{len(found)} module-level imports of excluded packages or dropped surface modules")
+    return 1 if found else 0
+
+
+def run_why(manifest: dict, target: str) -> int:
+    """Print, for each kept module under ``target``, the chain of modules that pulls it in."""
+    why: Dict[str, str] = {}
+    compute_closure(manifest, why)
+    hits = sorted(module for module in why if module == target or module.startswith(target + "."))
+    if not hits:
+        print(f"{target}: not in the release")
+        return 1
+    for module in hits:
+        chain, current = [module], why[module]
+        while current and len(chain) < 40:
+            chain.append(current)
+            current = why.get(current.split(" ")[0], "")
+        print(
+            "  <- ".join(chain[:1])
+            + "".join(f"\n    <- {link}" for link in chain[1:])
+            + ("\n    <- (seed)" if not current else "")
+        )
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--check", action="store_true", help="validate the manifest against the tree")
@@ -497,8 +593,30 @@ def main() -> int:
         "--test-data", metavar="DIR", help="the package data folder, linked in as data/ while the tests run"
     )
     parser.add_argument("--smoke", metavar="DIR", help="torch-free smoke test against a built tree")
+    parser.add_argument(
+        "--why", metavar="MODULE", help="print the import chain that ships MODULE (or a package prefix)"
+    )
+    parser.add_argument("--manifest", metavar="YAML", help="release manifest (default logic/release.yaml)")
+    parser.add_argument(
+        "--source-dir",
+        metavar="DIR",
+        help="where a manifest with an overlay or patches prepares its source (default ~/.cache/wsr-build/<name>)",
+    )
+    parser.add_argument("--violations", action="store_true", help="list kept module-level imports of excluded packages")
     args = parser.parse_args()
-    manifest = load_manifest()
+    manifest = load_manifest(Path(args.manifest) if args.manifest else None)
+    changes_source = manifest.get("overlay") or manifest.get("patches") or manifest.get("delete")
+    if changes_source and not os.environ.get("WSR_BUILD_SOURCE"):
+        name = manifest.get("name", Path(manifest["_path"]).parent.name)
+        source = Path(args.source_dir or Path.home() / ".cache" / "wsr-build" / str(name)).resolve()
+        prepare_source(manifest, source)
+        print(f"prepared source: {source}")
+        env = dict(os.environ, WSR_BUILD_SOURCE=str(source))
+        return subprocess.run([sys.executable, *sys.argv], env=env).returncode
+    if args.violations:
+        return run_violations(manifest)
+    if args.why:
+        return run_why(manifest, args.why)
     if args.check:
         return run_check(manifest)
     if args.build:

@@ -255,3 +255,95 @@ def test_pruned_init_drops_the_exports_and_docstring_lines_of_removed_names(tmp_
     text = path.read_text()
     assert "Drop" not in text
     assert '    "Keep",' in text and "    Keep: Kept." in text and ">>> 1" in text
+
+
+def _tree(root, files):
+    for name, text in files.items():
+        path = root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text)
+
+
+def _point_closure_at(monkeypatch, root):
+    monkeypatch.setattr(closure, "REPO", root)
+    monkeypatch.setattr(closure, "LOGIC", root / "logic")
+    monkeypatch.setattr(closure, "STAGES", {})
+
+
+def test_index_all_inits_ships_only_used_reexports_and_follows_names_the_init_uses(tmp_path, monkeypatch):
+    _tree(
+        tmp_path,
+        {
+            "logic/__init__.py": "",
+            "logic/src/__init__.py": "",
+            "logic/src/pkg/__init__.py": "from .used import Used\nfrom .unused import Unused\nfrom .core import Core\n"
+            "DEFAULT = Core()\n",
+            "logic/src/pkg/used.py": "class Used: pass\n",
+            "logic/src/pkg/unused.py": "class Unused: pass\n",
+            "logic/src/pkg/core.py": "class Core: pass\n",
+            "logic/src/entry.py": "from logic.src.pkg import Used\n",
+        },
+    )
+    _point_closure_at(monkeypatch, tmp_path)
+    manifest = {"stages": {}, "infrastructure": ["logic.src.entry"], "excluded_packages": [], "index_all_inits": True}
+    kept = {path.relative_to(tmp_path).as_posix() for path in builder.compute_closure(manifest)[0]}
+    assert {"logic/src/pkg/used.py", "logic/src/pkg/core.py"} <= kept
+    assert "logic/src/pkg/unused.py" not in kept
+
+
+def test_import_error_guard_and_type_checking_make_an_excluded_import_optional(tmp_path, monkeypatch):
+    _tree(
+        tmp_path,
+        {
+            "logic/__init__.py": "",
+            "logic/src/__init__.py": "",
+            "logic/src/extra/__init__.py": "",
+            "logic/src/entry.py": "from typing import TYPE_CHECKING\n"
+            "try:\n    from logic.src.extra import thing\nexcept ImportError:\n    thing = None\n"
+            "if TYPE_CHECKING:\n    from logic.src.extra import Other\n",
+        },
+    )
+    _point_closure_at(monkeypatch, tmp_path)
+    manifest = {"stages": {}, "infrastructure": ["logic.src.entry"], "excluded_packages": ["logic.src.extra"]}
+    kept = {path.relative_to(tmp_path).as_posix() for path in builder.compute_closure(manifest)[0]}
+    assert "logic/src/entry.py" in kept and "logic/src/extra/__init__.py" not in kept
+
+
+def test_a_stage_listed_without_keys_does_not_ship_its_manifest(tmp_path, monkeypatch):
+    _tree(tmp_path, {"logic/__init__.py": "", "logic/src/__init__.py": "", "logic/src/entry.py": ""})
+    _point_closure_at(monkeypatch, tmp_path)
+    stage = tmp_path / "logic/src/stage/_manifest.py"
+    _tree(tmp_path, {"logic/src/stage/_manifest.py": "ENTRIES = {}\n"})
+    monkeypatch.setattr(closure, "STAGES", {"improvement": stage})
+    base = {"infrastructure": ["logic.src.entry"], "excluded_packages": []}
+    assert stage in builder.compute_closure({**base, "stages": {}})[0]
+    assert stage not in builder.compute_closure({**base, "stages": {"improvement": []}})[0]
+
+
+def test_unguarded_imports_of_pruned_modules_are_reported(tmp_path):
+    from logic.package import release_staging as staging
+
+    _tree(
+        tmp_path,
+        {
+            "logic/src/run.py": "def go():\n    from logic.src.gone import x\n"
+            "def safe():\n    try:\n        from logic.src.gone import y\n    except ImportError:\n        pass\n",
+        },
+    )
+    problems = staging.unguarded_missing_imports(tmp_path, {"logic", "logic.src", "logic.src.run"})
+    assert len(problems) == 1 and "logic.src.gone" in problems[0] and "run.py:2" in problems[0]
+
+
+def test_a_profile_manifest_applies_its_patches_to_a_copy_of_the_tracked_source(tmp_path):
+    manifest_dir = tmp_path / "resources"
+    patches = manifest_dir / "p"
+    patches.mkdir(parents=True)
+    (patches / "0001.patch").write_text(
+        "diff --git a/PATCHED.txt b/PATCHED.txt\nnew file mode 100644\n--- /dev/null\n+++ b/PATCHED.txt\n"
+        "@@ -0,0 +1 @@\n+patched\n"
+    )
+    manifest = {"_path": str(manifest_dir / "m.yaml"), "patches": "p"}
+    source = builder.prepare_source(manifest, tmp_path / "source", tracked=["logic/package/build_release.py"])
+    assert (source / "PATCHED.txt").read_text() == "patched\n"
+    assert (source / "logic" / "package" / "build_release.py").is_file()
+    assert not (builder.REPO / "PATCHED.txt").exists()

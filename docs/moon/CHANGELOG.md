@@ -17,6 +17,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Claude: the minimal package is built by the release builder from a profile (`2026-10-25`)
+
+- **`logic/package/resources/minimal.yaml`** (owner ruling 2026-10-25) builds a lightweight simulator. It ships SANS, PG-CLNS, the Attention Model and Gurobi SWC-TCF for routing, and last-minute, lookahead and service-level for packing. Problems PTP and CPTP; tasks `test_sim` and `train` (REINFORCE only, existing datasets only). It has no route improvement, acceptance criteria, time windows or constraints, tracking, policy tags, vectorized policies, HPO, meta-learning, imitation, eval or data generation. Build with `python logic/package/build_release.py --manifest logic/package/resources/minimal.yaml --build DIR`. The full release (`logic/release.yaml`) builds unchanged: the staged tree is identical file for file.
+- **Builder features:**
+  - `--manifest`;
+  - profile `patches:` (`git format-patch` files in `resources/minimal/patches/`, applied by `git apply` to a copy of the tracked source; `WSR_BUILD_SOURCE`), plus an optional `overlay:` and `delete:`;
+  - `index_all_inits` (package inits are indexed, not followed; names re-exported through several inits and star imports resolve);
+  - `--why MODULE` (the import chain that ships a module);
+  - `--violations` (module-level imports of excluded packages and silently dropped surface modules).
+- **Import handling:**
+  - imports under `TYPE_CHECKING` or in a `try` that catches ImportError count as optional;
+  - a stage listed with no keys does not ship its registry manifest.
+- **Staging:**
+  - prunes init imports name by name (deepest first) and rewrites `__all__` lists of any layout;
+  - fails when a pruned init still uses a dropped name;
+  - notes deferred imports of pruned names and unguarded imports of pruned modules.
+
 ### Claude: the repository scripts move from `tools/` into `logic/` (`2026-10-25`)
 
 - **`tools/gates/` is now `logic/gates/`** (`from logic.gates.compare import ...`; `python logic/gates/run_gate.py`).

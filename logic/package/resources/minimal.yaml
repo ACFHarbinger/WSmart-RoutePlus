@@ -1,0 +1,115 @@
+# WSmart-Route minimal package manifest: a lightweight simulator that loads existing data,
+# trains the plain Attention Model with REINFORCE, and simulates with four routing and three
+# packing algorithms. Build: python logic/package/build_release.py --manifest logic/package/resources/minimal.yaml --build DIR
+#
+# Owner rulings (2026-10-25): routing SANS, PG-CLNS, AM (na) and SWC-TCF; packing last-minute,
+# lookahead and service-level; no route improvement, no acceptance-criteria package, no
+# time windows or time constraints, no tracking; results need not match the paper.
+#
+# Code that must change for the package lives in minimal/patches/ (git format-patch files against
+# main, applied in name order; an optional overlay: directory adds or replaces whole files); the
+# builder applies them to a copy of the tracked source before computing the closure.
+
+version: "1.0.2"
+name: minimal
+
+python:
+  requires: ">=3.10,<3.13"
+  version: "3.12"
+
+dropped_requirements:
+  - torch-scatter
+  - torch-sparse
+
+problems:
+  - ptp
+  - cptp
+
+stages:
+  routing:
+    - swc_tcf
+    - sans
+    - pg_clns
+    - na
+  packing:
+    - last_minute
+    - lookahead
+    - service_level
+  # Listed empty: these stages and their registries do not ship.
+  route_improvement: []
+  acceptance: []
+  packing_and_routing: []
+
+patches: minimal/patches
+
+# Index every package init instead of following its re-exports.
+index_all_inits: true
+
+infrastructure:
+  - logic.src.pipeline.simulations
+  - logic.src.pipeline.features.test
+  - logic.src.pipeline.features.train
+  - logic.src.pipeline.learning.core.reinforce
+  - logic.src.models.core.attention_model
+  - logic.src.models.subnets.factories.attention   # the GAT encoder factory, loaded by string target in utils/model/loader.py
+  - logic.src.envs.base.routing
+  - logic.src.envs.ptp
+  - logic.src.envs.cptp
+  - logic.src.models.common.policy_contract
+  - logic.controllers.hydra_dispatch
+
+tasks:
+  - test_sim
+  - train
+
+excluded_packages:
+  - logic.benchmark
+  - logic.cloud
+  - logic.controllers.cloud
+  - logic.controllers.cli
+  - logic.controllers.parser_dispatch
+  - logic.test
+  - logic.src.tracking
+  - logic.src.enums
+  - logic.src.policies.route_improvement
+  - logic.src.policies.acceptance_criteria
+  - logic.src.policies.packing_and_routing
+  - logic.src.policies.vectorized
+  - logic.src.pipeline.simulations.hpo
+  - logic.src.pipeline.learning.hpo
+  - logic.src.pipeline.learning.meta
+  - logic.src.pipeline.learning.core.imitation
+  - logic.src.pipeline.features.eval
+  - logic.src.pipeline.features.train.hpo
+  - logic.src.pipeline.simulations.actions.route_improvement
+  - logic.src.pipeline.simulations.actions.time_constraints
+  - logic.src.utils.plotting
+  - logic.src.utils.security
+  - logic.src.models.core.temporal_attention_model
+  - logic.src.models.meta
+  - logic.src.data.datasets.web
+  - logic.src.data.time                               # time windows, schedules, travel-time matrices
+  - logic.src.data.generators                         # the package loads existing datasets only
+  - logic.src.policies.packing.dispatcher_thompson
+  - logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.ortools_wrapper   # SWC-TCF runs on Gurobi only
+  - logic.src.envs.cptptc
+  - logic.src.envs.cptptwtc
+  - logic.src.utils.infrastructure.setup_manager     # HRL manager setup
+  - logic.src.pipeline.callbacks.pytorch.attention_heatmaps
+  - logic.src.pipeline.callbacks.pytorch.training_health
+  - logic.src.pipeline.callbacks.pytorch.gpu_memory_monitor
+  - logic.src.pipeline.callbacks.pytorch.hpo_health
+  - logic.src.pipeline.callbacks.pytorch.reptile
+
+dependency_extras:
+  solvers:
+    - gurobipy
+    - pyomo
+  core:
+    - plotext>=5.3.2,<6
+  neural:
+    - lightning>=2.6.1
+  test:
+    - pytest>=8.4.2
+    - pytest-mock>=3.15.1
+    - hypothesis>=6.141.1
