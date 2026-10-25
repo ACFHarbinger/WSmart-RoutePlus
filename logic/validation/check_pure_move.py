@@ -2,7 +2,7 @@
 
 Usage::
 
-    python tools/check_pure_move.py BASE_REV [HEAD_REV] [--paths logic/src ...]
+    python logic/validation/check_pure_move.py BASE_REV [HEAD_REV] [--paths logic/src ...]
 
 For every Python file under ``--paths`` at ``BASE_REV``, each top-level function,
 class and assignment is compared, by name and by source text, with the

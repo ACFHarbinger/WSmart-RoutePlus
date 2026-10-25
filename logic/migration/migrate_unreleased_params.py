@@ -22,8 +22,8 @@ they are the hand-fix queue for the Q-8b decision point.
 
 Usage::
 
-    python tools/migrate_unreleased_params.py --plan    # report, no changes
-    python tools/migrate_unreleased_params.py --apply   # migrate + report
+    python logic/migration/migrate_unreleased_params.py --plan    # report, no changes
+    python logic/migration/migrate_unreleased_params.py --apply   # migrate + report
 """
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-REPO = Path(__file__).resolve().parents[1]
+REPO = Path(__file__).resolve().parents[2]
 LOGIC = REPO / "logic"
 POLICIES = LOGIC / "src" / "policies"
 CONFIGS = LOGIC / "src" / "configs" / "policies"

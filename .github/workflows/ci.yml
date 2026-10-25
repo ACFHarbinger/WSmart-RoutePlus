@@ -44,10 +44,10 @@ jobs:
         run: uv run ruff check . --fix
 
       - name: HPO job key-liveness check (P-56)
-        run: uv run python tools/check_hpo_jobs.py --check
+        run: uv run python logic/validation/check_hpo_jobs.py --check
 
       - name: Deleted Params reference check (P-52)
-        run: uv run python tools/check_params_refs.py
+        run: uv run python logic/validation/check_params_refs.py
 
       - name: Security Scan
         # Continue on error since vulnerabilities might be present; goal is visibility first

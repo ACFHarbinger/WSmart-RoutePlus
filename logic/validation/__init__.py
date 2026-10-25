@@ -5,7 +5,11 @@ Provides static-analysis scripts for code quality and codebase health checks.
 Scripts are run via the ``tools/validation/justfile`` recipes.
 
 Attributes:
+    audit_param_usage.py        — Audit the usage of every policy config field (P-55)
     check_circular_imports.py   — Detect circular import chains (Tarjan's SCC)
+    check_hpo_jobs.py           — Check the simulator HPO job files against the policy configs
+    check_params_refs.py        — Ban references to deleted policy Params classes
+    check_pure_move.py          — Check that a refactor only moved code
     check_embedded_languages.py — Find embedded non-Python languages in source
     check_interface_compliance.py — Verify ABC/Protocol implementation contracts
     check_multi_classes.py      — Detect multiple top-level classes per file

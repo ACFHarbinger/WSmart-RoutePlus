@@ -15,8 +15,8 @@ information the signature does not.
 
 Usage::
 
-    python tools/trim_docstrings.py --check   # report only, exit 1 if trimmable
-    python tools/trim_docstrings.py --apply   # trim in place
+    python logic/migration/trim_docstrings.py --check   # report only, exit 1 if trimmable
+    python logic/migration/trim_docstrings.py --apply   # trim in place
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ import sys
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-REPO = Path(__file__).resolve().parents[1]
+REPO = Path(__file__).resolve().parents[2]
 SCOPE = REPO / "logic" / "src"
 # Pinned submodule: its content belongs to its own repository and must stay clean.
 SUBMODULE = REPO / "logic" / "submodules" / "WSmart-Bin-Analysis"

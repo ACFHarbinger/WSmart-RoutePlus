@@ -17,8 +17,8 @@ RQ-mistral-2):
 
 Usage::
 
-    python tools/check_hpo_jobs.py --check
-    python tools/check_hpo_jobs.py --convert
+    python logic/validation/check_hpo_jobs.py --check
+    python logic/validation/check_hpo_jobs.py --convert
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ from dataclasses import fields
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-REPO = Path(__file__).resolve().parents[1]
+REPO = Path(__file__).resolve().parents[2]
 # Direct CLI execution puts tools/, rather than the repository, on sys.path.
 if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))

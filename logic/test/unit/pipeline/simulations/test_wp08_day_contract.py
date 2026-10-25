@@ -79,7 +79,7 @@ def test_converter_maps_days_and_drops_reward(tmp_path):
     """The archive tool writes a new tree and leaves the source unchanged."""
     import json
 
-    from tools.convert_sim_outputs import convert_tree
+    from logic.migration.convert_sim_outputs import convert_tree
 
     source = tmp_path / "in"
     dest = tmp_path / "out"
@@ -150,7 +150,7 @@ def test_neural_import_does_not_replace_classical_spec():
 
 
 def test_converter_daily_horizons_and_std_are_not_whole_run_horizons():
-    from tools.convert_sim_outputs import _convert_payload
+    from logic.migration.convert_sim_outputs import _convert_payload
 
     payload = {
         "samples": {"0": {"days": 2, "kg": 10}},
@@ -167,7 +167,7 @@ def test_converter_daily_horizons_and_std_are_not_whole_run_horizons():
 
 
 def test_converter_refuses_overlapping_trees(tmp_path):
-    from tools.convert_sim_outputs import convert_tree
+    from logic.migration.convert_sim_outputs import convert_tree
 
     with pytest.raises(ValueError, match="overlap"):
         convert_tree(str(tmp_path), str(tmp_path / "converted"), 31)
