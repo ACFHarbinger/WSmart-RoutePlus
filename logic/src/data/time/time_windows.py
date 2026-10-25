@@ -59,7 +59,7 @@ def _resolve_time_window_file(filepath: Union[str, Path]) -> Path:
 
 def _detect_series(df: pd.DataFrame, resolved: Path) -> Tuple[pd.Series, pd.Series]:
     """Detect day and availability series from a loaded DataFrame."""
-    possible_day_names = {"day", "simulation_day", "sim_day", "date", "step", "idx", "day_id"}
+    possible_day_names = {"day", "simulation_day", "sim_day", "daily", "date", "step", "idx", "day_id"}
     possible_bool_names = {
         "routing_allowed",
         "allowed",

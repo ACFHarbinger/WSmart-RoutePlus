@@ -8,7 +8,7 @@ Attributes:
     SimulationDayContext: Represents the context of a single simulation day.
 
 Example:
-    >>> from logic.src.pipeline.simulations.sim_day import SimulationDayContext
+    >>> from logic.src.pipeline.simulations.daily import SimulationDayContext
     >>> context = SimulationDayContext(graph_size=51)
     >>> context.graph_size
     51

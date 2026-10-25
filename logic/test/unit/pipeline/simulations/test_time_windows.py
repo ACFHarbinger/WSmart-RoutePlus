@@ -14,7 +14,7 @@ from logic.src.data.time.time_windows import (
     load_time_windows_file,
 )
 from logic.src.pipeline.simulations.repository import load_time_windows as repo_load_time_windows
-from logic.src.pipeline.simulations.sim_day import SimulationDayContext, run_day
+from logic.src.pipeline.simulations.daily import SimulationDayContext, run_day
 from logic.src.pipeline.simulations.states.initializing import InitializingState
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

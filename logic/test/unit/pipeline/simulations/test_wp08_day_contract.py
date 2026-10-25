@@ -1,12 +1,16 @@
 """WP-08 day-loop contract: shared fills, KPI keys, pipeline order, torch-free specs."""
 
 import os
-import subprocess
 import sys
+import json
+import subprocess
+import pandas as pd
 from types import SimpleNamespace
 
 import pytest
+from logic.migration.convert_sim_outputs import convert_tree
 from logic.src.pipeline.simulations.pipeline import PipelineError, resolve_pipeline
+from logic.src.pipeline.simulations.daily import SimulationDayContext, run_day, get_daily_results
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
@@ -29,8 +33,6 @@ def test_logging_before_collection_is_rejected():
 
 def test_two_policies_share_the_fill_rng(monkeypatch):
     """Policy identity does not reseed the bin generator."""
-    from logic.src.pipeline.simulations.sim_day import SimulationDayContext, run_day
-
     seen = {}
 
     class RecordFill:
@@ -59,9 +61,6 @@ def test_two_policies_share_the_fill_rng(monkeypatch):
 
 def test_daily_record_drops_reward_and_splits_day_counts():
     """Executed days report profit, days_simulated, and collection_days."""
-    import pandas as pd
-    from logic.src.pipeline.simulations.sim_day import get_daily_results
-
     coords = pd.DataFrame({"ID": [0, 11, 12]})
     full = get_daily_results(10, 2, 4, [0, 1, 2, 0], 3, 1, 0.5, coords, 6, 0.2)
     assert "reward" not in full
@@ -77,10 +76,6 @@ def test_daily_record_drops_reward_and_splits_day_counts():
 
 def test_converter_maps_days_and_drops_reward(tmp_path):
     """The archive tool writes a new tree and leaves the source unchanged."""
-    import json
-
-    from logic.migration.convert_sim_outputs import convert_tree
-
     source = tmp_path / "in"
     dest = tmp_path / "out"
     source.mkdir()
@@ -130,7 +125,6 @@ def test_improvement_cannot_follow_repair_or_collection(steps):
 
 def test_invalid_pipeline_does_not_change_rng_or_expand_pool(monkeypatch):
     from logic.src.envs.common.expand_pool import current_expand_pool
-    from logic.src.pipeline.simulations.sim_day import SimulationDayContext, run_day
 
     bins = SimpleNamespace(rng="unchanged")
     ctx = SimulationDayContext(problem="cvrp", bins=bins, day_pipeline=["logging", "collection"])
@@ -167,7 +161,5 @@ def test_converter_daily_horizons_and_std_are_not_whole_run_horizons():
 
 
 def test_converter_refuses_overlapping_trees(tmp_path):
-    from logic.migration.convert_sim_outputs import convert_tree
-
     with pytest.raises(ValueError, match="overlap"):
         convert_tree(str(tmp_path), str(tmp_path / "converted"), 31)
