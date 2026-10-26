@@ -49,7 +49,7 @@ pub fn c_order_offset(shape: &[usize], indices: &[usize]) -> Result<usize, Strin
 }
 
 pub fn read_f64_plane(bytes: &[u8], itemsize: usize) -> Result<Vec<f64>, String> {
-    if bytes.len() % itemsize != 0 {
+    if !bytes.len().is_multiple_of(itemsize) {
         return Err("Mmap plane byte length is not aligned to dtype width".to_string());
     }
     let count = bytes.len() / itemsize;
@@ -148,10 +148,13 @@ pub fn npz_entry_loc(entry: &ZipFile<'_>) -> NpzNpyEntryLoc {
     }
 }
 
+pub type PlaneSlice = (Vec<usize>, Vec<usize>, Vec<f64>);
+pub type PlaneSliceWithFlag = (Vec<usize>, Vec<usize>, Vec<f64>, bool);
+
 pub fn load_plane_from_npy_bytes(
     raw: &[u8],
     indices: &[usize],
-) -> Result<(Vec<usize>, Vec<usize>, Vec<f64>), String> {
+) -> Result<PlaneSlice, String> {
     let (shape, dtype, data_offset) = parse_npy_header(raw)?;
     let itemsize = itemsize_from_descr(&dtype)?;
     let rows = *shape.get(shape.len().saturating_sub(2)).unwrap_or(&0);
@@ -174,7 +177,7 @@ pub fn load_npz_plane_decompress(
     path: &Path,
     key: &str,
     indices: &[usize],
-) -> Result<(Vec<usize>, Vec<usize>, Vec<f64>, bool), String> {
+) -> Result<PlaneSliceWithFlag, String> {
     let loc = resolve_npz_npy_entry(path, key)?;
     if loc.uncompressed_size <= MMAP_THRESHOLD_BYTES {
         return Err("NPZ entry below decompress-slice threshold".to_string());
@@ -195,7 +198,7 @@ pub fn load_npz_plane_mmap(
     path: &Path,
     key: &str,
     indices: &[usize],
-) -> Result<(Vec<usize>, Vec<usize>, Vec<f64>, bool), String> {
+) -> Result<PlaneSliceWithFlag, String> {
     let loc = resolve_npz_npy_entry(path, key)?;
     if loc.compression != CompressionMethod::Stored {
         return Err("NPZ entry is compressed — mmap slice unavailable".to_string());
@@ -371,8 +374,8 @@ pub fn downsample_2d(
     }
     let stride_r = (rows / max_dim).max(1);
     let stride_c = (cols / max_dim).max(1);
-    let out_rows = (rows + stride_r - 1) / stride_r;
-    let out_cols = (cols + stride_c - 1) / stride_c;
+    let out_rows = rows.div_ceil(stride_r);
+    let out_cols = cols.div_ceil(stride_c);
     let mut grid = vec![vec![0.0; out_cols]; out_rows];
     for (oi, r) in (0..rows).step_by(stride_r).enumerate() {
         for (oj, c) in (0..cols).step_by(stride_c).enumerate() {

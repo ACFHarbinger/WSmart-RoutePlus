@@ -19,7 +19,8 @@
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
-    "tauri:build:linux": "tauri build --bundles deb,appimage"
+    "tauri:build:linux": "tauri build --bundles deb,appimage",
+    "postinstall": "node -e \"const fs=require('fs'),p='node_modules/@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js.map';if(!fs.existsSync(p)&&fs.existsSync('node_modules/@duckdb/duckdb-wasm/dist'))fs.writeFileSync(p,JSON.stringify({version:3,file:'duckdb-browser-mvp.worker.js',sources:[],mappings:''}))\""
   },
   "dependencies": {
     "@deck.gl/core": "^9.3.6",

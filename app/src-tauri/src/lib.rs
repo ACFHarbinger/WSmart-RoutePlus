@@ -1,7 +1,7 @@
 mod background;
 mod commands;
 #[cfg(target_os = "linux")]
-mod host_env;
+pub(crate) mod host_env;
 
 use commands::{
     algorithms, arrow, cloud, corpus, data, hpo, mlflow, policies, process, sim_watcher, system,

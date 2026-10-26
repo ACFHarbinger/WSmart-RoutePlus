@@ -43,6 +43,9 @@ pub fn show_main_window<R: Runtime>(app: &AppHandle<R>) {
 /// Create the tray icon with Show and Quit; on failure, closing the window quits.
 pub fn setup_tray<R: Runtime>(app: &AppHandle<R>) {
     #[cfg(target_os = "linux")]
+    crate::host_env::silence_appindicator_deprecation();
+
+    #[cfg(target_os = "linux")]
     if !appindicator_available() {
         return disable_background(app, "libayatana-appindicator3 is not installed");
     }

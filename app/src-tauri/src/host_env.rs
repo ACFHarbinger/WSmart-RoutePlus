@@ -75,6 +75,8 @@ fn running_from_snap() -> bool {
 
 /// Apply the cleanup. A binary that itself lives under `/snap` is left alone.
 pub fn prepare() {
+    silence_appindicator_deprecation();
+
     if running_from_snap() {
         return;
     }
@@ -98,6 +100,48 @@ pub fn prepare() {
             }
         } else {
             std::env::remove_var("GTK_MODULES");
+        }
+    }
+}
+
+unsafe extern "C" fn noop_glib_log_handler(
+    _log_domain: *const std::ffi::c_char,
+    _log_level: i32,
+    _message: *const std::ffi::c_char,
+    _user_data: *mut std::ffi::c_void,
+) {
+}
+
+/// Suppress the runtime deprecation warning emitted by `libayatana-appindicator`:
+/// "libayatana-appindicator is deprecated. Please use libayatana-appindicator-glib in newly written code."
+pub fn silence_appindicator_deprecation() {
+    type GLogFunc = unsafe extern "C" fn(
+        *const std::ffi::c_char,
+        i32,
+        *const std::ffi::c_char,
+        *mut std::ffi::c_void,
+    );
+    type GLogSetHandler = unsafe extern "C" fn(
+        *const std::ffi::c_char,
+        i32,
+        GLogFunc,
+        *mut std::ffi::c_void,
+    ) -> u32;
+
+    unsafe {
+        if let Ok(glib) = libloading::Library::new("libglib-2.0.so.0") {
+            if let Ok(set_handler) = glib.get::<GLogSetHandler>(b"g_log_set_handler\0") {
+                let domain = b"libayatana-appindicator\0";
+                // 0xFF covers all log levels including G_LOG_LEVEL_WARNING (16)
+                let log_levels = 0xFF;
+                set_handler(
+                    domain.as_ptr().cast(),
+                    log_levels,
+                    noop_glib_log_handler,
+                    std::ptr::null_mut(),
+                );
+                std::mem::forget(glib);
+            }
         }
     }
 }
