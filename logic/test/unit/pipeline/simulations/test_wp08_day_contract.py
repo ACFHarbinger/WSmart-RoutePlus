@@ -26,22 +26,35 @@ def test_default_pipeline_order():
     assert names[-1] == "LogAction"
 
 
-def test_pipeline_resolution_is_cached(monkeypatch):
-    """Repeated days reuse the validated action classes."""
+def test_pipeline_validation_is_cached_but_classes_come_from_the_registry(monkeypatch):
+    """Repeated days skip the dependency check, yet a replaced action class is still used."""
     from logic.src.pipeline.simulations import pipeline as pipeline_module
 
-    original = pipeline_module._registry
+    original_declared = pipeline_module._declared
     calls = {"count": 0}
 
-    def counted_registry():
+    def counted_declared(*args, **kwargs):
         calls["count"] += 1
-        return original()
+        return original_declared(*args, **kwargs)
 
-    monkeypatch.setattr(pipeline_module, "_registry", counted_registry)
-    pipeline_module._PIPELINE_CACHE.clear()
+    monkeypatch.setattr(pipeline_module, "_declared", counted_declared)
+    pipeline_module._VALIDATED.clear()
+    first = resolve_pipeline(None)
+    checks = calls["count"]
+    assert checks > 0
     resolve_pipeline(None)
-    resolve_pipeline(None)
-    assert calls["count"] == 1
+    assert calls["count"] == checks
+
+    original_registry = pipeline_module._registry
+    replacement = type("ReplacedFill", (first[0],), {})
+
+    def patched_registry():
+        registry = dict(original_registry())
+        registry[pipeline_module.DEFAULT_PIPELINE[0]] = replacement
+        return registry
+
+    monkeypatch.setattr(pipeline_module, "_registry", patched_registry)
+    assert resolve_pipeline(None)[0] is replacement
 
 
 def test_cumulative_metric_sums_survive_replaced_lists():
