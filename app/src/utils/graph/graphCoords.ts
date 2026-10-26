@@ -136,17 +136,31 @@ function guiIdToNodeIdx(id: number): number {
 }
 
 export function enrichSimDayData(data: SimDayData, coordTable: CoordRow[]): SimDayData {
-  if (!data.all_bin_coords?.length || !coordTable.length) return data;
+  if (!coordTable.length) return data;
 
-  const enrichedBins: BinCoord[] = data.all_bin_coords.map((bin) => {
-    if (bin.lat != null && bin.lng != null) return bin;
-    const nodeIdx = guiIdToNodeIdx(bin.id);
-    const coord = coordTable[nodeIdx];
-    if (!coord) return bin;
-    return { ...bin, lat: coord.lat, lng: coord.lng };
-  });
+  let allBins: BinCoord[] | undefined = data.all_bin_coords;
+  if (!allBins || allBins.length === 0) {
+    // Synthesize all_bin_coords from coordTable: index 0 is depot (id: -1), 1..N are bins (id: 0..N-1)
+    allBins = [];
+    if (coordTable[0]) {
+      allBins.push({ id: -1, lat: coordTable[0].lat, lng: coordTable[0].lng });
+    }
+    const numBins = data.bin_state_c?.length ?? (coordTable.length - 1);
+    const maxIdx = Math.min(numBins, coordTable.length - 1);
+    for (let i = 1; i <= maxIdx; i++) {
+      allBins.push({ id: i - 1, lat: coordTable[i].lat, lng: coordTable[i].lng });
+    }
+  } else {
+    allBins = allBins.map((bin) => {
+      if (bin.lat != null && bin.lng != null) return bin;
+      const nodeIdx = guiIdToNodeIdx(bin.id);
+      const coord = coordTable[nodeIdx];
+      if (!coord) return bin;
+      return { ...bin, lat: coord.lat, lng: coord.lng };
+    });
+  }
 
-  return { ...data, all_bin_coords: enrichedBins };
+  return { ...data, all_bin_coords: allBins };
 }
 
 export function enrichEntriesWithGraphCoords(
@@ -187,8 +201,8 @@ export function guessGraphPreset(
   if (path.includes("100")) return "rm-100";
 
   if (entries?.length) {
-    const day1 = entries.find((e) => e.day === 1 && e.data.all_bin_coords?.length);
-    const n = day1?.data.all_bin_coords?.filter((b) => b.id >= 0).length ?? 0;
+    const day1 = entries.find((e) => e.day === 1 && (e.data.all_bin_coords?.length || e.data.bin_state_c?.length));
+    const n = day1?.data.all_bin_coords?.filter((b) => b.id >= 0).length ?? day1?.data.bin_state_c?.length ?? 0;
     if (n >= 320) return "ffz-350";
     if (n >= 150) return "rm-170";
     if (n >= 80) return "rm-100";
