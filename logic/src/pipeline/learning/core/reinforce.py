@@ -54,7 +54,6 @@ class REINFORCE(RL4COLitModule):
         self,
         entropy_weight: float = 0.0,
         max_grad_norm: float = 1.0,
-        lr_critic: float = 1e-4,
         normalize_advantage: bool = False,
         **kwargs,
     ):
@@ -64,7 +63,6 @@ class REINFORCE(RL4COLitModule):
         Args:
             entropy_weight: Weight for the entropy bonus (default: 0.0).
             max_grad_norm: Maximum gradient norm for clipping (default: 1.0).
-            lr_critic: Learning rate for the critic optimizer (default: 1e-4).
             normalize_advantage: Divide the advantage by its batch standard deviation. The
                 reward scale then no longer decides how much the entropy bonus weighs: with
                 rewards in the hundreds the bonus is otherwise negligible and the policy can
