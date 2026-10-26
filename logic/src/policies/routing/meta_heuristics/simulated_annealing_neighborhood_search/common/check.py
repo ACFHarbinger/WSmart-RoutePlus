@@ -40,23 +40,20 @@ def check_bins_overflowing_feasibility(data, routes_list, number_of_bins, perc_b
     Returns:
         str: 'pass' if feasible, 'fail' otherwise.
     """
-    bins_overflowing = []
-    for _index, row in data.iterrows():
-        if row["Stock"] + row["Accum_Rate"] >= E * B:
-            bins_overflowing.append(row["#bin"])
+    threshold = E * B
+    mask = (data["Stock"] + data["Accum_Rate"]) >= threshold
+    if "#bin" in data.columns:
+        overflowing_bins = set(data.loc[mask, "#bin"])
+    else:
+        overflowing_bins = set(data.index[mask])
 
-    number_bins_overflowing = len(bins_overflowing)
+    number_bins_overflowing = len(overflowing_bins)
     check = number_bins_overflowing - number_of_bins * perc_bins_can_overflow
-    overflowing_bins_in_routes = []
-    for i in bins_overflowing:
-        if any(i in a for a in routes_list):
-            overflowing_bins_in_routes.append(1)
-        else:
-            overflowing_bins_in_routes.append(0)
 
-    total_ovf_bins_in_routes = sum(overflowing_bins_in_routes)
-    status = "pass" if total_ovf_bins_in_routes >= check else "fail"
-    return status
+    visited = {node for route in routes_list for node in route}
+    total_ovf_bins_in_routes = len(overflowing_bins & visited)
+
+    return "pass" if total_ovf_bins_in_routes >= check else "fail"
 
 
 # Check route admissibility

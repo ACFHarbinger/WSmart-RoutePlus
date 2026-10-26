@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Simulation corpus scenes (`2026-10-28`, [#175](https://github.com/ACFHarbinger/WSmart-Route/issues/175), [#176](https://github.com/ACFHarbinger/WSmart-Route/issues/176), [#177](https://github.com/ACFHarbinger/WSmart-Route/issues/177), [#178](https://github.com/ACFHarbinger/WSmart-Route/issues/178), [#179](https://github.com/ACFHarbinger/WSmart-Route/issues/179))
 
+### SANS feasibility check (`2026-10-26`)
+
+- `check_bins_overflowing_feasibility` builds the overflowing-bin set once and counts the overlap with the visited bins, instead of scanning every route for every bin.
+
 - **Scan.** Simulation Summary can add result folders or a single JSON file. A Tauri command walks the trees off the WebView. Every JSON file under a run directory is one run. One chosen file is a partial run. Failed files stay listed and do not drop the rest. A missing metric stays a gap.
 - **Controls.** The user selects runs to merge, hides a run, filters by metric, day, policy, and city, and sets the baseline by pinning a run or typing a number. The day range filters the new scenes only.
 - **Scenes.** Policy orbit, diverging bars, metric flow, and a day-by-bin field support PNG export and copying the table. The globe draws runs that have coordinates. A run without coordinates uses a generated layout labeled as generated.
