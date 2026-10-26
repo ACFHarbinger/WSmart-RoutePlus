@@ -111,7 +111,9 @@ def _declared(action: Type[SimulationAction], name: str) -> Tuple[str, ...]:
     return ()
 
 
-_PIPELINE_CACHE: Dict[Tuple[str, ...], Tuple[Type[SimulationAction], ...]] = {}
+# Step-name sequences already validated. Only the check is cached; the classes come from the
+# registry on every call, so a replaced action class (as tests patch them) is always used.
+_VALIDATED: Set[Tuple[str, ...]] = set()
 
 
 def resolve_pipeline(names: Optional[Sequence[str]] = None) -> List[Type[SimulationAction]]:
@@ -119,15 +121,14 @@ def resolve_pipeline(names: Optional[Sequence[str]] = None) -> List[Type[Simulat
 
     ``names`` None selects the default pipeline. An unknown name, a repeated
     name, or a dependency cycle against the declared reads/writes fails here.
-    Successfully validated pipelines are cached by their step names.
+    The validation of a step sequence runs once and is cached by the step names.
     """
     key = tuple(DEFAULT_PIPELINE if names is None else names)
-    cached = _PIPELINE_CACHE.get(key)
-    if cached is not None:
-        return list(cached)
+    registry = _registry()
+    if key in _VALIDATED:
+        return [registry[name] for name in key]
 
     selected = list(key)
-    registry = _registry()
     unknown = [name for name in selected if name not in registry]
     if unknown:
         raise PipelineError(f"Unknown day-pipeline step(s): {unknown}. Known: {list(ACTION_NAMES)}")
@@ -164,9 +165,8 @@ def resolve_pipeline(names: Optional[Sequence[str]] = None) -> List[Type[Simulat
         # A later mutation invalidates a previously finalized field.
         finalized.difference_update(writes)
         finalized.update(finalizes)
-    resolved = tuple(registry[name] for name in selected)
-    _PIPELINE_CACHE[key] = resolved
-    return list(resolved)
+    _VALIDATED.add(key)
+    return [registry[name] for name in selected]
 
 
 # ---------------------------------------------------------------------------
