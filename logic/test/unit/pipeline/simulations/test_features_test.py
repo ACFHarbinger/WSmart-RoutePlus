@@ -13,7 +13,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 
-def _make_sim_cfg(**overrides):
+def _make_sim_cfg(tmp_path, **overrides):
     """Build a minimal Config for testing orchestrator."""
     graph = GraphConfig(
         area="mixrmbac",
@@ -26,7 +26,7 @@ def _make_sim_cfg(**overrides):
         data_distribution="unif",
         days=1,
         seed=42,
-        output_dir="test_out",
+        output_dir=str(tmp_path / "test_out"),
         n_samples=1,
         resume=False,
         cpu_cores=1,
@@ -42,9 +42,9 @@ def _make_sim_cfg(**overrides):
     return cfg
 
 
-def test_simulator_testing_single_core():
+def test_simulator_testing_single_core(tmp_path):
     """Verify simulation testing orchestration on a single core."""
-    cfg = _make_sim_cfg()
+    cfg = _make_sim_cfg(tmp_path)
     device = torch.device("cpu")
 
     with patch("logic.src.pipeline.features.test.orchestrator.sequential_simulations") as mock_seq, patch(
@@ -57,9 +57,9 @@ def test_simulator_testing_single_core():
         assert mock_seq.called
 
 
-def test_simulator_testing_multi_core():
+def test_simulator_testing_multi_core(tmp_path):
     """Verify multi-core simulation testing flow with process pool mocking."""
-    cfg = _make_sim_cfg(cpu_cores=2, n_samples=2)
+    cfg = _make_sim_cfg(tmp_path, cpu_cores=2, n_samples=2)
     cfg.sim.graph.n_samples = 2
     device = torch.device("cpu")
 
