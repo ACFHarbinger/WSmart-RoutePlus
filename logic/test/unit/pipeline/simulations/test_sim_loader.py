@@ -19,11 +19,9 @@ pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 def test_simulation_day_context_mapping():
     """Test SimulationDayContext dataclass and Mapping interface."""
-    ctx = SimulationDayContext(graph_size=10, full_policy="test_policy", day=5)
+    ctx = SimulationDayContext(full_policy="test_policy", day=5)
 
     # Access via attributes
-    assert ctx.graph_size == 10
-
     assert ctx.full_policy == "test_policy"
     assert ctx.day == 5
     ctx.cost = 15.0

@@ -103,7 +103,6 @@ def mock_sim_dependencies(mocker, tmp_path, mock_bins_instance):
     mock_return_ctx.bins = mock_bins_instance
     mock_return_ctx.overflows = 0
     mock_return_ctx.daily_log = mock_dlog
-    mock_return_ctx.output_dict = {}
     mock_return_ctx.cached = None
 
     mock_run_day = mocker.patch(  # CAPTURE the mock object here

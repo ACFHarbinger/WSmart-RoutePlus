@@ -9,15 +9,15 @@ Attributes:
 
 Example:
     >>> from logic.src.pipeline.simulations.daily import SimulationDayContext
-    >>> context = SimulationDayContext(graph_size=51)
-    >>> context.graph_size
-    51
+    >>> context = SimulationDayContext(day=1)
+    >>> context.day
+    1
 """
 
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, fields
+from dataclasses import dataclass
 from multiprocessing.synchronize import Lock
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union, cast
 
@@ -37,14 +37,12 @@ class SimulationDayContext:
     Context object encapsulating the state of a simulation day.
 
     Attributes:
-        graph_size: Total nodes in the problem graph, **including** the depot (= num_loc + 1).
         full_policy: Full string identifier of the policy (e.g., 'policy_regular3_gamma1').
         policy_name: Name of the policy.
         bins: The Bins object managing waste levels.
         new_data: DataFrame containing new data for the day.
         coords: DataFrame containing node coordinates.
         distance_matrix: Matrix of distances between nodes.
-        distpath_tup: Tuple (dist_matrix, paths, dm_tensor, distC).
         distancesC: Integer distance matrix (numpy).
         paths_between_states: Precomputed paths.
         dm_tensor: Tensor version of distance matrix.
@@ -74,7 +72,6 @@ class SimulationDayContext:
 
         # Mutable attributes added during run_day
         daily_log: Dictionary for daily logs.
-        output_dict: Dictionary for output results.
         tour: The generated tour.
         cost: The cost of the route.
         profit: The profit from collection.
@@ -91,14 +88,12 @@ class SimulationDayContext:
     """
 
     # Required/Core Fields
-    graph_size: int = 0
     full_policy: str = ""
     policy_name: str = ""
     bins: Optional[Bins] = None
     new_data: Optional[pd.DataFrame] = None
     coords: Optional[pd.DataFrame] = None
     distance_matrix: Optional[Union[np.ndarray, List[List[float]]]] = None
-    distpath_tup: Tuple[Any, ...] = (None, None, None, None)
     distancesC: Optional[np.ndarray] = None
     paths_between_states: Optional[Dict[Tuple[int, int], List[int]]] = None
     dm_tensor: Any = None
@@ -136,7 +131,6 @@ class SimulationDayContext:
 
     # Optional/Mutable Fields
     daily_log: Optional[Dict[str, Any]] = None
-    output_dict: Optional[Dict[str, Any]] = None
     tour: Optional[List[int]] = None
     cost: float = 0.0
     profit: float = 0.0
@@ -166,63 +160,14 @@ class SimulationDayContext:
     day_pipeline: Optional[List[str]] = None
     problem_spec: Any = None
 
-    @property
-    def field_names(self):
-        """Returns the names of all fields in the dataclass.
-
-        Returns:
-            List of field names.
-        """
-        return [f.name for f in fields(self)]
-
     def as_kwargs(self) -> Dict[str, Any]:
         """Field values for ``adapter.execute``, including attributes set during the day."""
-        data = {item.name: getattr(self, item.name) for item in fields(self)}
-        data.update(self.__dict__)
-        return data
+        return dict(self.__dict__)
 
     def __post_init__(self):
         """Initialize any derived or default state if needed."""
         if self.config is None:
             self.config = {}
-
-
-def set_daily_waste(
-    model_data: Dict[str, Any],
-    waste: np.ndarray,
-    device: Any,
-    fill: Optional[np.ndarray] = None,
-) -> Dict[str, Any]:
-    """Update neural model input with current bin waste levels.
-
-    PyTorch is imported here so the classical day loop can import this module
-    without a neural stack. Callers that pass a device already have tensors.
-
-    Args:
-        model_data: Dictionary of model input tensors.
-        waste: Array of current waste levels for all bins.
-        device: Target torch device.
-        fill: Array of current fill levels for all bins.
-
-    Returns:
-        Updated model_data dictionary moved to the target device.
-    """
-    import torch
-
-    waste_tensor = torch.as_tensor(waste, dtype=torch.float32).unsqueeze(0).div(100.0)
-    if device.type == "cuda":
-        waste_tensor = waste_tensor.pin_memory()
-    model_data["waste"] = waste_tensor
-
-    if "fill_history" in model_data and fill is not None:
-        fill_tensor = torch.as_tensor(fill, dtype=torch.float32).unsqueeze(0).div(100.0)
-        if device.type == "cuda":
-            fill_tensor = fill_tensor.pin_memory()
-        model_data["current_fill"] = fill_tensor
-
-    from logic.src.utils.functions import move_to
-
-    return move_to(model_data, device, non_blocking=True)
 
 
 def resolve_solver_status(

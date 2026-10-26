@@ -266,7 +266,6 @@ class TestRunningState:
         mock_day_ctx.bins = ctx.bins
         mock_day_ctx.overflows = 0
         mock_day_ctx.daily_log = {"profit": 10.0}
-        mock_day_ctx.output_dict = {}
         mock_day_ctx.cached = []
         mock_run_day.return_value = mock_day_ctx
 

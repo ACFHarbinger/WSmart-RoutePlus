@@ -110,7 +110,6 @@ def make_day_context():
             kwargs.setdefault("policy_name", p_simple)
 
         defaults = {
-            "graph_size": 3,
             "full_policy": "regular_lvl3_cvrp_ortools_gamma1",
 
             "policy_name": "regular_lvl3_cvrp_ortools",
@@ -118,7 +117,6 @@ def make_day_context():
             "new_data": MagicMock(),
             "coords": MagicMock(),
             "distance_matrix": MagicMock(),
-            "distpath_tup": (None, None, None, None),
             "distancesC": MagicMock(),
             "paths_between_states": MagicMock(),
             "dm_tensor": MagicMock(),

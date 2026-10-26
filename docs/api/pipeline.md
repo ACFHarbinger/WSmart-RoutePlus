@@ -940,7 +940,6 @@ File-based implementation of SimulationRepository.
 Simulation state encapsulation and consolidation.
 
 - **class `SimulationDayContext`** — Context object encapsulating the state of a simulation day.
-- `set_daily_waste()` — Update neural model input with current bin waste levels.
 - `resolve_solver_status()` — Choose the status string written for one day.
 - `record_aborted_day()` — Write one daily record before a routing algorithm exception leaves the day.
 - `get_daily_results()` — Format one executed day.

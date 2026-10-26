@@ -83,7 +83,6 @@ def test_resume_clock_adds_stored_elapsed(mock_cp_manager, mock_run_day, ctx_var
     mock_day_ctx.bins = ctx.bins
     mock_day_ctx.overflows = 0
     mock_day_ctx.daily_log = {"profit": 10.0}
-    mock_day_ctx.output_dict = {}
     mock_day_ctx.cached = []
 
     def _advance(_day_ctx):

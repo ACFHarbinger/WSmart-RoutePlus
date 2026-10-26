@@ -189,7 +189,6 @@ def test_run_day_on_blocked_day():
     dist_matrix = np.zeros((4, 4))
 
     context = SimulationDayContext(
-        graph_size=4,
         policy_name="test_policy",
         bins=bins,
         coords=coords,
