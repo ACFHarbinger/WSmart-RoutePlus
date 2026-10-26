@@ -14,9 +14,27 @@ edited.
  .../learning_algorithms/policy_na.yaml        |   1 -
  .../meta_heuristics/policy_pg_clns.yaml       |   3 -
  .../routing/meta_heuristics/policy_sans.yaml  |  11 -
+ logic/configs/tasks/test_sim.yaml             |  13 +-
+ logic/configs/tasks/train.yaml                |  39 ----
  logic/controllers/hydra_dispatch.py           |  34 +---
  logic/controllers/jobs/pipeline_runner.py     |  78 +------
+ logic/src/configs/envs/env.py                 |  23 +--
+ logic/src/configs/envs/graph.py               |   5 +-
+ logic/src/configs/learning/__init__.py        |  38 +---
+ .../routing/meta_heuristics/aco_ks.py         |  25 ---
+ logic/src/configs/tasks/data.py               |   2 +-
+ logic/src/configs/tasks/sim.py                |   5 +-
+ logic/src/constants/simulation.py             |   1 -
+ logic/src/data/__init__.py                    |   4 -
+ .../data/datasets/simulation/gen_dataset.py   |  26 +--
+ logic/src/data/processor/mapper.py            |   2 +-
  logic/src/data/processor/transforms.py        |   2 +-
+ logic/src/envs/__init__.py                    |  18 +-
+ logic/src/envs/common/released_specs.py       |  20 +-
+ logic/src/envs/ptp.py                         |  21 +-
+ logic/src/envs/spec.py                        |   7 -
+ .../src/models/subnets/embeddings/__init__.py |   4 -
+ .../subnets/embeddings/context/__init__.py    |   2 -
  .../callbacks/simulation/policy_summary.py    |   2 +-
  .../simulation/simulation_display.py          |   2 +-
  logic/src/pipeline/features/base.py           |   2 +-
@@ -37,29 +55,39 @@ edited.
  .../simulations/actions/collection.py         |  23 ---
  .../pipeline/simulations/actions/logging.py   |  51 -----
  .../pipeline/simulations/actions/routing.py   |  13 +-
+ logic/src/pipeline/simulations/daily.py       |  58 ------
  logic/src/pipeline/simulations/manager.py     |   4 +-
- logic/src/pipeline/simulations/pipeline.py    |  14 +-
+ logic/src/pipeline/simulations/pipeline.py    |  16 +-
  logic/src/pipeline/simulations/progress.py    |   4 +-
- .../simulations/states/base/context.py        |   2 +-
+ .../simulations/repository/__init__.py        |  23 ---
+ .../pipeline/simulations/repository/base.py   |  35 +---
+ .../simulations/states/base/context.py        |   3 +-
  .../pipeline/simulations/states/finishing.py  |   4 +-
- .../simulations/states/initializing.py        |  46 +----
- .../pipeline/simulations/states/running.py    |   2 +-
+ .../simulations/states/initializing.py        |  44 +---
+ .../pipeline/simulations/states/running.py    |   6 +-
+ logic/src/policies/packing/base/registry.py   |   4 +-
  logic/src/policies/packing/last_minute.py     |   6 -
  logic/src/policies/packing/lookahead.py       |   7 -
  logic/src/policies/packing/service_level.py   |   7 -
  .../routing/base/base_routing_policy.py       |   2 +-
+ logic/src/policies/routing/base/registry.py   |   4 +-
  .../routing/base/routing_execution.py         |  35 ----
+ .../dispatcher.py                             |  66 +-----
  .../policy_swc_tcf.py                         |   8 -
  .../learning_algorithms/neural_agent/batch.py |   3 +-
  .../neural_agent/policy_na.py                 |  82 +-------
  .../neural_agent/simulation.py                |   3 +-
  .../aco.py                                    |   2 +-
- .../lns.py                                    |   2 +-
+ .../lns.py                                    |  10 +-
+ .../lns_acceptance.py}                        |   2 +-
+ .../lns_engine.py}                            |   0
+ .../lns_weights.py}                           |   2 +-
  .../local_search.py                           |   2 +-
  .../pg_clns.py                                |   2 +-
  .../dispatcher.py                             |   2 -
  .../heuristics/sans.py                        |   2 +-
  logic/src/utils/model/loader.py               |   6 +-
+ logic/src/utils/model/problem_factory.py      |   3 -
  .../policy/state_recorder.py}                 |   2 +-
  .../{tracking/logging => utils}/pylogger.py   |  14 +-
  .../modules => utils/results}/analysis.py     |   4 +-
@@ -68,6 +96,9 @@ edited.
  .../results}/logger_writer.py                 |   0
  .../modules => utils/results}/storage.py      |   2 +-
  .../results}/summary_display.py               |   0
+ logic/test/fixtures/data_fixtures.py          |   6 +-
+ logic/test/fixtures/day_fixtures.py           |  27 ++-
+ logic/test/fixtures/model_fixtures.py         |  95 ---------
  .../test_issue_41_solver_status.py            |   2 +-
  .../simulations/test_simulation_core.py       |   2 +-
  .../unit/tracking/test_policy_telemetry_db.py |   2 +-
@@ -76,7 +107,10 @@ edited.
  .../utils/logging/modules/test_storage.py     |   4 +-
  .../utils/logging/test_basic_log_utils.py     |   2 +-
  .../test/unit/utils/logging/test_log_utils.py |  24 +--
- 66 files changed, 128 insertions(+), 955 deletions(-)
+ 97 files changed, 196 insertions(+), 1480 deletions(-)
+ rename logic/src/policies/routing/meta_heuristics/{large_neighborhood_search/acceptance.py => pheromone_guided_cooperative_large_neighborhood_search/lns_acceptance.py} (96%)
+ rename logic/src/policies/routing/meta_heuristics/{large_neighborhood_search/engine.py => pheromone_guided_cooperative_large_neighborhood_search/lns_engine.py} (100%)
+ rename logic/src/policies/routing/meta_heuristics/{large_neighborhood_search/weight_updates.py => pheromone_guided_cooperative_large_neighborhood_search/lns_weights.py} (97%)
  rename logic/src/{tracking/viz_mixin.py => utils/policy/state_recorder.py} (99%)
  rename logic/src/{tracking/logging => utils}/pylogger.py (81%)
  rename logic/src/{tracking/logging/modules => utils/results}/analysis.py (99%)
@@ -164,6 +198,93 @@ index 0c1e780..2691074 100644
        - last_minute_cf70
        - last_minute_cf90
 -    route_improvement: []
+diff --git a/logic/configs/tasks/test_sim.yaml b/logic/configs/tasks/test_sim.yaml
+index d6a96fb..30b1ee6 100644
+--- a/logic/configs/tasks/test_sim.yaml
++++ b/logic/configs/tasks/test_sim.yaml
+@@ -4,13 +4,7 @@
+ # =============================================================================
+ # Configuration for multi-day waste collection simulation testing.
+ # =============================================================================
+-# Used by: python main.py test_sim
+-# CPTPTC:    python main.py test_sim sim.problem=cptptc
+-#          Time budget is a *problem-level* constraint, not a per-policy
+-#          flag. Loads shift_hours/avg_speed_kmh/service_time_h via
+-#          load_temporal_params() in InitializingState and enforces both
+-#          capacity and T_max after improvement and before collection.
+-#          Configure budgets on sim and the matrix path on sim.graph.
++# Used by: python . test_sim (problems: ptp, cptp)
+ # =============================================================================
+ 
+ defaults:
+@@ -115,11 +109,10 @@ sim:
+   cpu_cores: 0
+   n_vehicles: 0
+   no_cuda: false
+-  problem: "ptp" # ptp | cptp | cptptc
+-  shift_hours: 7.0 # CPTPTC per depot-to-depot trip, including return and service
++  problem: "ptp" # ptp | cptp
++  shift_hours: 7.0 # Shift time of the shared env base (PTP and CPTP do not enforce it)
+   avg_speed_kmh: 35.0 # Uniform fallback for every bin and depot leg
+   service_time_h: 0.025
+-  time_windows: null # Optional routing time windows: CSV/Excel path or [start_day, days_after, interval_between]
+   # CPTPTC keeps this file's graph/policy lists; only the problem tag changes.
+   #   python main.py test_sim sim.problem=cptptc
+   # Do not flip the committed default -- the paper's 30-day factorial is ptp.
+diff --git a/logic/configs/tasks/train.yaml b/logic/configs/tasks/train.yaml
+index d94f2f6..d11e41b 100644
+--- a/logic/configs/tasks/train.yaml
++++ b/logic/configs/tasks/train.yaml
+@@ -17,8 +17,6 @@
+ 
+ defaults:
+   # The paper's (and the 1.0.0 release's) expert; hgs_alns stays available in main.
+-  - /models/policies@rl.imitation.policy_config: profitable_nn
+-  - /models/policies@rl.adaptive_imitation.policy_config: profitable_nn
+   - /envs@train.env: ptp
+   - _self_
+   - override /tracking: train
+@@ -178,40 +176,3 @@ rl:
+   use_pbrs: false # Set to true to enable PBRS during training
+   pbrs_shaping_weight: 1.0 # Scale factor applied to F before adding to R_base
+   pbrs_potential: "ptp" # Potential function key ('ptp'; others log a warning)
+-
+-  # =============================================================================
+-  # Algorithm-Specific Configurations
+-  # =============================================================================
+-
+-  # PPO (Proximal Policy Optimization)
+-  ppo:
+-    inner_epochs: 7 # Number of PPO update epochs per batch
+-    eps_clip: 0.2 # Clipping parameter for PPO objective
+-
+-  # Imitation Learning
+-  imitation:
+-    # Expert policy configuration loaded from defaults: /models/policies/profitable_nn
+-    # Override via CLI: models/policies@rl.imitation.policy_config=hgs_alns
+-    # policy_config is populated by defaults list (see top of file)
+-    loss_fn: "nll" # Loss function. Options: nll, weighted_nll, kl, reverse_kl, js
+-    # Whose routes empty the bins between time-training days. Options:
+-    # - "model": the model's sampled rollout (trained the paper models)
+-    # - "expert": the expert's tours; the model rollout is skipped
+-    fill_from: "model"
+-    # Directory of the expert solve cache (profitable_nn only), e.g. data/cache/expert/cptp100_emp.
+-    expert_cache: null
+-    # Only fill the expert cache, without training (needs fill_from=expert and expert_cache).
+-    precompute: false
+-
+-  # Adaptive Imitation Learning (IL → RL)
+-  adaptive_imitation:
+-    # Expert policy configuration loaded from defaults: /models/policies/profitable_nn
+-    # Override via CLI: models/policies@rl.adaptive_imitation.policy_config=hgs_alns
+-    # policy_config is populated by defaults list (see top of file)
+-    il_weight: 1.0 # Initial imitation loss weight (1.0 = pure IL, 0.0 = pure RL)
+-    il_decay: 0.95 # IL weight decay per epoch (gradual transition to RL)
+-    patience: 5 # Epochs to wait before decaying IL weight if no improvement
+-    threshold: 0.0001 # Improvement threshold (lowered from 0.05 due to small reward scale)
+-    decay_step: 1 # Step size for IL weight decay
+-    epsilon: 1.0e-6 # Minimum IL weight (prevents complete IL shutdown)
+-    loss_fn: "weighted_nll" # Loss function. Options: nll, weighted_nll, kl, reverse_kl
 diff --git a/logic/controllers/hydra_dispatch.py b/logic/controllers/hydra_dispatch.py
 index 5f22df3..a5cb440 100644
 --- a/logic/controllers/hydra_dispatch.py
@@ -357,6 +478,296 @@ index b734f44..139a31b 100644
 -            run.set_tag("status", "completed")
 -            run.flush()
 -    return 0.0
+diff --git a/logic/src/configs/envs/env.py b/logic/src/configs/envs/env.py
+index 4a4f77f..c13cc62 100644
+--- a/logic/src/configs/envs/env.py
++++ b/logic/src/configs/envs/env.py
+@@ -26,19 +26,13 @@ class EnvConfig:
+     ``curriculum_graphs`` acts as the primary training graph.
+ 
+     Attributes:
+-        name: Name of the environment (e.g., 'ptp', 'cptp', 'cptptc').
++        name: Name of the environment ('ptp' or 'cptp').
+         min_loc: Minimum coordinate value.
+         max_loc: Maximum coordinate value.
+-        capacity: Vehicle capacity (optional). For ``cptptc`` this is the same
+-            per-trip vehicle capacity as CPTP; it is not replaced by the
+-            time budget.
+-        shift_hours: Optional per-trip time budget in hours (``cptptc`` only).
+-            ``None`` falls through to ``SimulationRepository.get_temporal_params()``.
+-        avg_speed_kmh: Optional average driving speed in km/h (``cptptc`` only).
+-        service_time_h: Optional per-bin service time in hours (``cptptc`` only).
+-        day_hours: Optional working-day length in hours; the depot's time window (``cptptwtc`` only).
+-        tw_min_width_h: Optional shortest bin time window in hours (``cptptwtc`` only).
+-        tw_max_width_h: Optional longest bin time window in hours (``cptptwtc`` only).
++        capacity: Vehicle capacity (optional, CPTP).
++        shift_hours: Unused by PTP and CPTP (the shared env base reads it when set).
++        avg_speed_kmh: Unused by PTP and CPTP.
++        service_time_h: Unused by PTP and CPTP.
+         distance_method: Optional distance computation method for meta-RL envs.
+         curriculum_graphs: Ordered list of graphs for sequential curriculum
+             learning. The **first entry** is used for single-stage training.
+@@ -52,15 +46,10 @@ class EnvConfig:
+     min_loc: float = 0.0
+     max_loc: float = 1.0
+     capacity: Optional[float] = None
+-    # cptptc temporal resource (ignored by every other problem; None = use
+-    # SimulationRepository.get_temporal_params() when the env actually reads them)
++    # Temporal resource of the shared env base; PTP and CPTP leave it unset.
+     shift_hours: Optional[float] = None
+     avg_speed_kmh: Optional[float] = None
+     service_time_h: Optional[float] = None
+-    # cptptwtc time windows (ignored by every other problem; None = the generator's defaults)
+-    day_hours: Optional[float] = None
+-    tw_min_width_h: Optional[float] = None
+-    tw_max_width_h: Optional[float] = None
+     # Data distribution and generation
+     data_distribution: Optional[str] = None
+     min_fill: float = 0.0
+diff --git a/logic/src/configs/envs/graph.py b/logic/src/configs/envs/graph.py
+index b1c36b7..25539b9 100644
+--- a/logic/src/configs/envs/graph.py
++++ b/logic/src/configs/envs/graph.py
+@@ -12,7 +12,7 @@ Example:
+ """
+ 
+ from dataclasses import dataclass, field
+-from typing import Any, Optional, Union
++from typing import Optional, Union
+ 
+ from .objective import ObjectiveConfig
+ 
+@@ -53,9 +53,6 @@ class GraphConfig:
+     dm_filepath: Optional[str] = None
+     tm_filepath: Optional[str] = None
+     time_matrix_unit: str = "seconds"
+-    time_windows: Optional[Any] = None
+-    time_window_filepath: Optional[str] = None
+-    time_window_pattern: Optional[Any] = None
+     save_updated_dm: Optional[str] = None
+     edge_threshold: Union[float, int, str] = "0"
+     edge_method: Optional[str] = None
+diff --git a/logic/src/configs/learning/__init__.py b/logic/src/configs/learning/__init__.py
+index be95029..e10a35a 100644
+--- a/logic/src/configs/learning/__init__.py
++++ b/logic/src/configs/learning/__init__.py
+@@ -1,19 +1,10 @@
+ """Learning algorithm configuration.
+ 
+-``RLConfig`` is the training-loop configuration. Algorithm dataclasses sit in this
+-package (imitation experts use the simulator policy configs). The environment
++``RLConfig`` is the training-loop configuration. The minimal package trains with REINFORCE only. The environment
+ configs are in ``logic.src.configs.envs``.
+ 
+ Attributes:
+     RLConfig: Configuration for RL algorithms.
+-    PPOConfig: Configuration for PPO.
+-    SAPOConfig: Configuration for SAPO.
+-    GRPOConfig: Configuration for GRPO.
+-    POMOConfig: Configuration for POMO.
+-    SymNCOConfig: Configuration for SymNCO.
+-    ImitationConfig: Configuration for imitation learning.
+-    GDPOConfig: Configuration for GDPO.
+-    AdaptiveImitationConfig: Configuration for adaptive imitation.
+ 
+ Example:
+     RLConfig(
+@@ -24,16 +15,8 @@ Example:
+     )
+ """
+ 
+-from dataclasses import dataclass, field
++from dataclasses import dataclass
+ 
+-from .adaptive_imitation import AdaptiveImitationConfig
+-from .gdpo import GDPOConfig
+-from .grpo import GRPOConfig
+-from .imitation import ImitationConfig
+-from .pomo import POMOConfig
+-from .ppo import PPOConfig
+-from .sapo import SAPOConfig
+-from .symnco import SymNCOConfig
+ 
+ 
+ @dataclass
+@@ -74,25 +57,8 @@ class RLConfig:
+     """Potential function key. Currently supported: 'ptp'. Others log a warning
+     and fall back to zero shaping."""
+ 
+-    # Algorithm specific sub-configs
+-    ppo: PPOConfig = field(default_factory=PPOConfig)
+-    sapo: SAPOConfig = field(default_factory=SAPOConfig)
+-    grpo: GRPOConfig = field(default_factory=GRPOConfig)
+-    pomo: POMOConfig = field(default_factory=POMOConfig)
+-    symnco: SymNCOConfig = field(default_factory=SymNCOConfig)
+-    imitation: ImitationConfig = field(default_factory=ImitationConfig)
+-    gdpo: GDPOConfig = field(default_factory=GDPOConfig)
+-    adaptive_imitation: AdaptiveImitationConfig = field(default_factory=AdaptiveImitationConfig)
+ 
+ 
+ __all__ = [
+     "RLConfig",
+-    "PPOConfig",
+-    "SAPOConfig",
+-    "GRPOConfig",
+-    "POMOConfig",
+-    "SymNCOConfig",
+-    "ImitationConfig",
+-    "GDPOConfig",
+-    "AdaptiveImitationConfig",
+ ]
+diff --git a/logic/src/configs/policies/routing/meta_heuristics/aco_ks.py b/logic/src/configs/policies/routing/meta_heuristics/aco_ks.py
+index 1ce3d5f..48a8ca8 100644
+--- a/logic/src/configs/policies/routing/meta_heuristics/aco_ks.py
++++ b/logic/src/configs/policies/routing/meta_heuristics/aco_ks.py
+@@ -115,29 +115,4 @@ class KSparseACOConfig:
+ 
+         params = cls(**kwargs)
+ 
+-        # Handle Acceptance Criterion Injection
+-        from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
+-
+-        acceptance_cfg = (
+-            raw_data.get("acceptance_criterion")
+-            if isinstance(config, dict)
+-            else getattr(config, "acceptance_criterion", None)
+-        )
+-        if acceptance_cfg:
+-            # acceptance_cfg might be a dict or a Config object
+-            if hasattr(acceptance_cfg, "method"):
+-                name = acceptance_cfg.method
+-                params_cfg = getattr(acceptance_cfg, "params", {})
+-            else:
+-                name = acceptance_cfg.get("method", "oi")
+-                params_cfg = acceptance_cfg.get("params", {})
+-
+-            params.acceptance_criterion = AcceptanceCriterionFactory.create(
+-                name=name,
+-                config=params_cfg,
+-            )
+-        else:
+-            # Default to oi (only improving) for standard ACO
+-            params.acceptance_criterion = AcceptanceCriterionFactory.create(name="oi")
+-
+         return params
+diff --git a/logic/src/configs/tasks/data.py b/logic/src/configs/tasks/data.py
+index e9ed819..9e9c51d 100644
+--- a/logic/src/configs/tasks/data.py
++++ b/logic/src/configs/tasks/data.py
+@@ -36,7 +36,7 @@ class DataConfig:
+         name: Name to identify dataset. For training data, this will result in .td files.
+         filename: Filename of the dataset to create (ignores datadir).
+         data_dir: Create datasets in data.
+-        problem: Problem type selection. Should be 'ptp', 'cptp', 'cptptc'
++        problem: Problem type selection. Should be 'ptp' or 'cptp'
+             or 'all'.
+         mu: Mean of Gaussian noise (implies Gaussian noise generation if set).
+         sigma: Variance of Gaussian noise.
+diff --git a/logic/src/configs/tasks/sim.py b/logic/src/configs/tasks/sim.py
+index 10585b5..d84b5b6 100644
+--- a/logic/src/configs/tasks/sim.py
++++ b/logic/src/configs/tasks/sim.py
+@@ -48,7 +48,7 @@ class SimConfig:
+         policies: List of policy configurations to test on the WSR simulator.
+         full_policies: Expanded policy names after config expansion (populated at runtime).
+         data_distribution: Distribution to generate the bins daily waste fill.
+-        problem: Problem variant to simulate (e.g. 'ptp', 'cptp', 'cptptc').
++        problem: Problem variant to simulate ('ptp' or 'cptp').
+         days: Number of days to run the simulation for.
+         seed: Random seed.
+         output_dir: Name of WSR simulator test output directory.
+@@ -79,9 +79,6 @@ class SimConfig:
+     shift_hours: float = 7.0
+     avg_speed_kmh: float = 35.0
+     service_time_h: float = 1.5 / 60.0
+-    time_windows: Optional[Any] = None
+-    time_window_filepath: Optional[str] = None
+-    time_window_pattern: Optional[Any] = None
+     days: int = 31
+     seed: int = 42
+     output_dir: str = "output"
+diff --git a/logic/src/constants/simulation.py b/logic/src/constants/simulation.py
+index 83f9567..63a250b 100644
+--- a/logic/src/constants/simulation.py
++++ b/logic/src/constants/simulation.py
+@@ -138,5 +138,4 @@ VEHICLE_CAPACITY: float = 200.0  # kg (default for synthetic instances)
+ PROBLEMS: List[str] = [
+     "ptp",  # Profitable Tour Problem (maximize profit - cost)
+     "cptp",  # Capacitated Profitable Tour Problem (adds the vehicle capacity constraint)
+-    "cptptc",  # Capacitated Profitable Tour Problem with Time Constraints (capacity + shift time budget)
+ ]
+diff --git a/logic/src/data/__init__.py b/logic/src/data/__init__.py
+index e40a5bd..706230b 100644
+--- a/logic/src/data/__init__.py
++++ b/logic/src/data/__init__.py
+@@ -20,10 +20,6 @@ from typing import Any
+ 
+ 
+ def __getattr__(name: str) -> Any:
+-    if name == "generate_datasets":
+-        from .generators.datasets import generate_datasets
+-
+-        return generate_datasets
+     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+ 
+ 
+diff --git a/logic/src/data/datasets/simulation/gen_dataset.py b/logic/src/data/datasets/simulation/gen_dataset.py
+index b28806b..9cd72cb 100644
+--- a/logic/src/data/datasets/simulation/gen_dataset.py
++++ b/logic/src/data/datasets/simulation/gen_dataset.py
+@@ -17,7 +17,7 @@ Example:
+     ...     break
+ """
+ 
+-from typing import Any, Dict, Optional, Tuple
++from typing import Any, Dict, Optional
+ 
+ import numpy as np
+ 
+@@ -140,28 +140,8 @@ class GenerativeDataset(SimulationDataset):
+         }
+ 
+     def _generate_waste_days(self) -> np.ndarray:
+-        """Generate waste values for all simulation days.
+-
+-        Returns:
+-            np.ndarray: Waste array of shape ``(n_days, n_bins)``.
+-        """
+-        from logic.src.data.generators.waste import generate_waste
+-
+-        # Build graph tuple expected by generate_waste (batch_size=1 format)
+-        graph: Tuple[np.ndarray, np.ndarray] = (
+-            self.depot[None, :],  # (1, coord_dim)
+-            self.locs[None, :, :],  # (1, n_bins, coord_dim)
+-        )
+-
+-        samples = []
+-        for _ in range(self.n_samples):
+-            waste_day = generate_waste(
+-                self.n_bins, self.distribution, graph, dataset_size=self.n_days, grid=self.grid, rng=self.rng
+-            )
+-            waste_day = np.clip(np.asarray(waste_day) * self.max_waste, 0, self.max_waste)
+-            samples.append(waste_day)
+-
+-        return np.array(samples)  # (n_samples, n_days, n_bins)
++        """Not available: the minimal package simulates on existing datasets only."""
++        raise RuntimeError("the minimal package does not generate waste data; set sim.graph.load_dataset")
+ 
+     def _apply_noise(self, waste: np.ndarray) -> np.ndarray:
+         """Apply Gaussian sensor noise to waste values.
+diff --git a/logic/src/data/processor/mapper.py b/logic/src/data/processor/mapper.py
+index fd2b5b0..6ef678f 100644
+--- a/logic/src/data/processor/mapper.py
++++ b/logic/src/data/processor/mapper.py
+@@ -219,7 +219,7 @@ class SimulationDataMapper:
+             "waste": torch.zeros(problem_size),
+         }
+ 
+-        if configs.get("problem") in ["ptp", "cptp", "cptptc"]:
++        if configs.get("problem") in ["ptp", "cptp"]:
+             model_data["max_waste"] = torch.as_tensor(MAX_WASTE, dtype=torch.float32)
+         elif "problem" in configs:
+             raise ValueError(f"Unknown problem: {configs['problem']}")
 diff --git a/logic/src/data/processor/transforms.py b/logic/src/data/processor/transforms.py
 index b1818c7..1a0f385 100644
 --- a/logic/src/data/processor/transforms.py
@@ -370,6 +781,204 @@ index b1818c7..1a0f385 100644
  
  log = get_pylogger(__name__)
  
+diff --git a/logic/src/envs/__init__.py b/logic/src/envs/__init__.py
+index b279145..f9eb6d5 100644
+--- a/logic/src/envs/__init__.py
++++ b/logic/src/envs/__init__.py
+@@ -28,26 +28,20 @@ from typing import Any, Dict
+ 
+ from logic.src.utils.registry import import_target, lazy_getattr
+ 
+-_PROBLEMS = ("ptp", "cptp", "cptptc", "cptptwtc", "cvrp", "tsp", "atsp", "op", "pctsp", "spctsp", "pdp", "irp", "thop")
+-_CLASS_PREFIX = {name: name.upper() for name in _PROBLEMS} | {"thop": "ThOP"}
+-# Problems whose generator lives in envs/generators/<name>.py (their env and task stay in envs/<name>.py).
+-_SPLIT = ("irp", "thop")
++_PROBLEMS = ("ptp", "cptp")
++_CLASS_PREFIX = {name: name.upper() for name in _PROBLEMS}
+ 
+ 
+ def _module(name: str, part: str) -> str:
+-    if name in _SPLIT and part == "generator":
+-        return f"logic.src.envs.generators.{name}"
+     return f"logic.src.envs.{name}"
+ 
+ 
+ ENV_TARGETS: Dict[str, str] = {
+     **{name: f"{_module(name, 'env')}:{_CLASS_PREFIX[name]}Env" for name in _PROBLEMS},
+-    "tsp_kopt": "logic.src.envs.tsp_kopt:TSPkoptEnv",
+ }
+ 
+ GENERATOR_TARGETS: Dict[str, str] = {
+-    **{name: f"{_module(name, 'generator')}:{_CLASS_PREFIX[name]}Generator" for name in _PROBLEMS if name != "spctsp"},
+-    "spctsp": "logic.src.envs.pctsp:PCTSPGenerator",  # SPCTSP reuses the PCTSP generator
++    **{name: f"{_module(name, 'generator')}:{_CLASS_PREFIX[name]}Generator" for name in _PROBLEMS},
+ }
+ 
+ _TARGETS: Dict[str, str] = {
+@@ -56,23 +50,19 @@ _TARGETS: Dict[str, str] = {
+     "REVENUE_KG": "logic.src.constants.tasks:REVENUE_KG",
+     "VEHICLE_CAPACITY": "logic.src.constants.tasks:VEHICLE_CAPACITY",
+     "RL4COEnvBase": "logic.src.envs.base.base:RL4COEnvBase",
+-    "ImprovementEnvBase": "logic.src.envs.base.improvement:ImprovementEnvBase",
+     "RoutingEnv": "logic.src.envs.base.routing:RoutingEnv",
+     "Resource": "logic.src.envs.base.resources:Resource",
+     "LoadResource": "logic.src.envs.base.resources:LoadResource",
+     "ShiftTimeResource": "logic.src.envs.base.resources:ShiftTimeResource",
+-    "TimeWindowResource": "logic.src.envs.base.resources:TimeWindowResource",
+     "Generator": "logic.src.envs.base.generator:Generator",
+     "RoutingGenerator": "logic.src.envs.base.generator:RoutingGenerator",
+     "BaseProblem": "logic.src.envs.base.problem:BaseProblem",
+     "ProblemSpec": "logic.src.envs.spec:ProblemSpec",
+     "ProblemRegistry": "logic.src.envs.spec:ProblemRegistry",
+     "PROBLEMS": "logic.src.envs.spec:PROBLEMS",
+-    "TSPkoptEnv": "logic.src.envs.tsp_kopt:TSPkoptEnv",
+-    "SPCTSPGenerator": "logic.src.envs.spctsp:SPCTSPGenerator",
+     **{f"{_CLASS_PREFIX[n]}Env": ENV_TARGETS[n] for n in _PROBLEMS},
+     **{_CLASS_PREFIX[n]: f"logic.src.envs.{n}:{_CLASS_PREFIX[n]}" for n in _PROBLEMS},
+-    **{f"{_CLASS_PREFIX[n]}Generator": GENERATOR_TARGETS[n] for n in _PROBLEMS if n != "spctsp"},
++    **{f"{_CLASS_PREFIX[n]}Generator": GENERATOR_TARGETS[n] for n in _PROBLEMS},
+ }
+ 
+ 
+diff --git a/logic/src/envs/common/released_specs.py b/logic/src/envs/common/released_specs.py
+index 3393962..9889700 100644
+--- a/logic/src/envs/common/released_specs.py
++++ b/logic/src/envs/common/released_specs.py
+@@ -7,7 +7,7 @@ Importing this module does not import PyTorch or a neural environment.
+ from typing import Optional
+ 
+ from logic.src.envs.common.metrics import DEFAULT_METRICS
+-from logic.src.envs.common.objectives import distance_objective, profit_objective
++from logic.src.envs.common.objectives import profit_objective
+ from logic.src.envs.spec import ProblemSpec
+ 
+ PTP_SPEC = ProblemSpec(
+@@ -24,23 +24,7 @@ CPTP_SPEC = ProblemSpec(
+     env_target="logic.src.envs.cptp:CPTPEnv",
+     expand_pool=True,
+ )
+-CPTPTC_SPEC = ProblemSpec(
+-    name="cptptc",
+-    objective=profit_objective,
+-    metrics=DEFAULT_METRICS + ("time_spent",),
+-    env_target="logic.src.envs.cptptc:CPTPTCEnv",
+-    expand_pool=True,
+-    per_trip_shift=True,
+-)
+-CVRP_SPEC = ProblemSpec(
+-    name="cvrp",
+-    objective=distance_objective,
+-    metrics=DEFAULT_METRICS,
+-    env_target="logic.src.envs.cvrp:CVRPEnv",
+-    expand_pool=False,
+-)
+-
+-_RELEASED = {spec.name: spec for spec in (PTP_SPEC, CPTP_SPEC, CPTPTC_SPEC, CVRP_SPEC)}
++_RELEASED = {spec.name: spec for spec in (PTP_SPEC, CPTP_SPEC)}
+ 
+ 
+ def released_spec(name: str) -> Optional[ProblemSpec]:
+diff --git a/logic/src/envs/ptp.py b/logic/src/envs/ptp.py
+index 82764af..12a2e8b 100644
+--- a/logic/src/envs/ptp.py
++++ b/logic/src/envs/ptp.py
+@@ -8,10 +8,8 @@ The module also holds ``PTPGenerator``, the problem's instance generator.
+ 
+ from __future__ import annotations
+ 
+-import math
+ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+ 
+-import numpy as np
+ import torch
+ from tensordict import TensorDict
+ 
+@@ -184,23 +182,8 @@ class PTPGenerator(RoutingGenerator):
+         return torch.empty(size, device=self.device).uniform_(self.min_waste, self.max_waste)
+ 
+     def _sample_waste(self, batch_size: Tuple[int, ...], locs: torch.Tensor, depot: torch.Tensor) -> torch.Tensor:
+-        """Waste from :func:`generate_waste` (empirical grid or a named distribution)."""
+-        from logic.src.data.generators.waste import generate_waste
+-
+-        bs = math.prod(batch_size) if batch_size else 1
+-        coords = (depot.reshape(bs, 2), locs.reshape(bs, self.num_loc, 2))
+-        waste = generate_waste(
+-            self.num_loc,
+-            self.waste_distribution,
+-            coords,
+-            bs,
+-            grid=self.grid,
+-            rng=self.rng,
+-            sample_method="sample_array",
+-        )
+-        if isinstance(waste, np.ndarray):
+-            waste = torch.from_numpy(waste).float()
+-        return waste.to(self.device).view(*batch_size, self.num_loc)
++        """Not available: the minimal package trains on existing ``.td`` datasets only."""
++        raise RuntimeError("the minimal package does not generate training data; set load_dataset to a .td file")
+ 
+ 
+ class PTPEnv(RoutingEnv):
+diff --git a/logic/src/envs/spec.py b/logic/src/envs/spec.py
+index ff6de0d..c81a075 100644
+--- a/logic/src/envs/spec.py
++++ b/logic/src/envs/spec.py
+@@ -92,13 +92,6 @@ PROBLEMS = ProblemRegistry(
+     {
+         "ptp": "logic.src.envs.common.released_specs:PTP_SPEC",
+         "cptp": "logic.src.envs.common.released_specs:CPTP_SPEC",
+-        "cptptc": "logic.src.envs.common.released_specs:CPTPTC_SPEC",
+-        "cvrp": "logic.src.envs.common.released_specs:CVRP_SPEC",
+-        **{
+-            name: f"logic.src.envs.{name}:{name.upper()}_SPEC"
+-            for name in ("cptptwtc", "tsp", "atsp", "op", "pctsp", "spctsp", "pdp", "irp")
+-        },
+-        "thop": "logic.src.envs.thop:ThOP_SPEC",
+     }
+ )
+ 
+diff --git a/logic/src/models/subnets/embeddings/__init__.py b/logic/src/models/subnets/embeddings/__init__.py
+index 813b70a..2cbca28 100644
+--- a/logic/src/models/subnets/embeddings/__init__.py
++++ b/logic/src/models/subnets/embeddings/__init__.py
+@@ -21,7 +21,6 @@ from typing import Any, Dict
+ from torch import nn
+ 
+ from logic.src.models.subnets.embeddings.cptp import CPTPInitEmbedding
+-from logic.src.models.subnets.embeddings.cptptwtc import CPTPTWTCInitEmbedding
+ from logic.src.models.subnets.embeddings.ptp import PTPInitEmbedding
+ 
+ from .context import (
+@@ -57,8 +56,6 @@ from .static import StaticEmbedding
+ INIT_EMBEDDING_REGISTRY: Dict[str, Any] = {
+     "ptp": PTPInitEmbedding,
+     "cptp": CPTPInitEmbedding,
+-    "cptptc": CPTPInitEmbedding,
+-    "cptptwtc": CPTPTWTCInitEmbedding,
+ }
+ 
+ DYNAMIC_EMBEDDING_REGISTRY: Dict[str, Any] = {
+@@ -91,7 +88,6 @@ def get_init_embedding(env_name: str, embed_dim: int = 128, **kwargs: Any) -> nn
+ __all__: list[str] = [
+     "PTPInitEmbedding",
+     "CPTPInitEmbedding",
+-    "CPTPTWTCInitEmbedding",
+     "EnvState",
+     "PTPState",
+     "CPTPState",
+diff --git a/logic/src/models/subnets/embeddings/context/__init__.py b/logic/src/models/subnets/embeddings/context/__init__.py
+index 60a850f..2f2f83a 100644
+--- a/logic/src/models/subnets/embeddings/context/__init__.py
++++ b/logic/src/models/subnets/embeddings/context/__init__.py
+@@ -24,8 +24,6 @@ from .ptp import PTPContextEmbedder
+ CONTEXT_EMBEDDING_REGISTRY: Dict[str, Any] = {
+     "ptp": PTPContextEmbedder,
+     "cptp": CPTPContextEmbedder,
+-    "cptptc": CPTPContextEmbedder,
+-    "cptptwtc": CPTPContextEmbedder,
+ }
+ 
+ __all__: list[str] = [
 diff --git a/logic/src/pipeline/callbacks/simulation/policy_summary.py b/logic/src/pipeline/callbacks/simulation/policy_summary.py
 index 6753bb2..c5f1fd9 100644
 --- a/logic/src/pipeline/callbacks/simulation/policy_summary.py
@@ -1480,6 +2089,89 @@ index f039cce..bbdff14 100644
              tour, _, _, extra_output, updated_multi_day = results
              elapsed_time = time.perf_counter() - start_time
  
+diff --git a/logic/src/pipeline/simulations/daily.py b/logic/src/pipeline/simulations/daily.py
+index 68f3e0a..9dfd234 100644
+--- a/logic/src/pipeline/simulations/daily.py
++++ b/logic/src/pipeline/simulations/daily.py
+@@ -131,8 +131,6 @@ class SimulationDayContext:
+     avg_speed_kmh: float = 35.0
+     service_time_h: float = 1.5 / 60.0
+     vehicle_capacity: float = 100.0
+-    time_windows: Optional[Any] = None
+-    routing_allowed: bool = True
+ 
+     # Optional/Mutable Fields
+     daily_log: Optional[Dict[str, Any]] = None
+@@ -386,60 +384,6 @@ def get_daily_results(
+     return dlog
+ 
+ 
+-def _run_non_routing_day(
+-    context: SimulationDayContext,
+-    commands: List[Any],
+-    log_actions: List[Any],
+-    token: Any,
+-) -> SimulationDayContext:
+-    """Execute a simulation day where routing is prohibited by time window constraints."""
+-    from logic.src.envs.common.expand_pool import reset_expand_pool
+-    from logic.src.pipeline.simulations.pipeline import apply_shared_bin_rng, shared_env_seed
+-
+-    wall_start = time.perf_counter()
+-    reset_solver_status()
+-    context.solver_status = "no_routing"
+-    context.metrics_phase = "unset"
+-
+-    sample_id = getattr(context, "sample_id", 0)
+-    try:
+-        sample_id = int(sample_id)
+-    except (TypeError, ValueError):
+-        sample_id = 0
+-    env_seed = shared_env_seed(context.seed, sample_id, context.day)
+-    apply_shared_bin_rng(context.bins, env_seed)
+-
+-    try:
+-        for command in commands:
+-            if command.__class__.__name__ == "FillAction":
+-                command.execute(context)
+-
+-        context.tour = [0]
+-        context.cost = 0.0
+-        context.profit = 0.0
+-        context.ncol = 0
+-        context.total_collected = 0.0
+-        if getattr(context, "bins", None) is not None:
+-            context.collected = np.zeros(context.bins.n)
+-        else:
+-            context.collected = None
+-        context.mandatory = []
+-        context.time = 0.0
+-        context.time_spent = 0.0
+-        context.solver_status = "no_routing"
+-        context.metrics_phase = "final"
+-
+-        for command in log_actions:
+-            context.day_wall_time = time.perf_counter() - wall_start
+-            command.execute(context)
+-    finally:
+-        context.day_wall_time = time.perf_counter() - wall_start
+-        if isinstance(context.daily_log, dict):
+-            context.daily_log["day_wall_time"] = context.day_wall_time
+-        reset_expand_pool(token)
+-    return context
+-
+-
+ def run_day(context: SimulationDayContext) -> SimulationDayContext:
+     """Run one validated day.
+ 
+@@ -498,8 +442,6 @@ def run_day(context: SimulationDayContext) -> SimulationDayContext:
+     context.problem_spec = spec
+     token = set_expand_pool(bool(spec.expand_pool))
+ 
+-    if not getattr(context, "routing_allowed", True):
+-        return _run_non_routing_day(context, commands, log_actions, token)
+ 
+     wall_start = time.perf_counter()
+     policy_time = 0.0
 diff --git a/logic/src/pipeline/simulations/manager.py b/logic/src/pipeline/simulations/manager.py
 index cf72657..84b9125 100644
 --- a/logic/src/pipeline/simulations/manager.py
@@ -1496,7 +2188,7 @@ index cf72657..84b9125 100644
  try:
      import logic.src.tracking as wst
 diff --git a/logic/src/pipeline/simulations/pipeline.py b/logic/src/pipeline/simulations/pipeline.py
-index 9abf227..874d550 100644
+index 9abf227..fe42731 100644
 --- a/logic/src/pipeline/simulations/pipeline.py
 +++ b/logic/src/pipeline/simulations/pipeline.py
 @@ -1,6 +1,6 @@
@@ -1530,7 +2222,16 @@ index 9abf227..874d550 100644
      ("collection", "logging"),
  )
  
-@@ -88,17 +80,13 @@ def _registry() -> Dict[str, Type[SimulationAction]]:
+@@ -75,8 +67,6 @@ _PROVIDED = frozenset(
+         "seed",
+         "n_vehicles",
+         "graph_size",
+-        "time_windows",
+-        "routing_allowed",
+     }
+ )
+ 
+@@ -88,17 +78,13 @@ def _registry() -> Dict[str, Type[SimulationAction]]:
          FillAction,
          LogAction,
          PackingAction,
@@ -1563,8 +2264,92 @@ index 99cf9cf..1d60a7e 100644
  
  
  def display_log_metrics(
+diff --git a/logic/src/pipeline/simulations/repository/__init__.py b/logic/src/pipeline/simulations/repository/__init__.py
+index bd5489f..42948e4 100644
+--- a/logic/src/pipeline/simulations/repository/__init__.py
++++ b/logic/src/pipeline/simulations/repository/__init__.py
+@@ -290,28 +290,6 @@ def load_temporal_params(**kwargs):
+     return params
+ 
+ 
+-def load_time_windows(**kwargs):
+-    """
+-    Convenience wrapper to load time-window schedule from the repository.
+-
+-    Returns:
+-        Optional TimeWindowSchedule instance. See
+-        SimulationRepository.get_time_window_params.
+-    """
+-    schedule = SimulationRepository.get_time_window_params(**kwargs)
+-    with contextlib.suppress(Exception):
+-        run = get_active_run() if get_active_run is not None else None
+-        if run is not None and schedule is not None:
+-            run.log_params(
+-                {
+-                    "data.time_windows_active": True,
+-                    "data.time_windows_n_days": schedule.n_days,
+-                    "data.time_windows_blocked_count": len(schedule.blocked_days),
+-                }
+-            )
+-    return schedule
+-
+-
+ __all__ = [
+     "SimulationRepository",
+     "FileSystemRepository",
+@@ -323,5 +301,4 @@ __all__ = [
+     "load_simulator_data",
+     "load_area_and_waste_type_params",
+     "load_temporal_params",
+-    "load_time_windows",
+ ]
+diff --git a/logic/src/pipeline/simulations/repository/base.py b/logic/src/pipeline/simulations/repository/base.py
+index 59a6ad1..d7e5c86 100644
+--- a/logic/src/pipeline/simulations/repository/base.py
++++ b/logic/src/pipeline/simulations/repository/base.py
+@@ -193,39 +193,6 @@ class SimulationRepository(ABC):
+             raise ValueError("avg_speed_kmh must be finite and positive")
+         if not np.isfinite(service_time_h) or service_time_h < 0:
+             raise ValueError("service_time_h must be finite and nonnegative")
+-        if coords is not None and distance_matrix is not None:
+-            from logic.src.data.time.travel_matrix import compute_time_matrix
+-
+-            return (
+-                shift_hours,
+-                compute_time_matrix(coords, distance_matrix, tm_filepath, avg_speed_kmh, time_unit),
+-                service_time_h,
+-            )
+         if coords is not None or distance_matrix is not None or tm_filepath is not None:
+-            raise ValueError("Travel-time loading requires both coordinates and distances")
++            raise ValueError("the minimal package has no travel-time matrices")
+         return (shift_hours, avg_speed_kmh, service_time_h)
+-
+-    @staticmethod
+-    def get_time_window_params(
+-        source: Optional[Any] = None,
+-        n_days: Optional[int] = None,
+-        **kwargs: Any,
+-    ) -> Optional[Any]:
+-        """Retrieves the time-window schedule for simulation days.
+-
+-        Returns a TimeWindowSchedule defining day-level routing availability,
+-        or None if no time-window constraints are active.
+-
+-        Args:
+-            source: Path to CSV/Excel file, 3-parameter pattern, dict, or schedule.
+-            n_days: Total days in the simulation horizon.
+-            **kwargs: Additional pattern parameters (start_day, days_after, interval_between).
+-
+-        Returns:
+-            Optional TimeWindowSchedule instance.
+-        """
+-        if source is None and not kwargs:
+-            return None
+-        from logic.src.data.time.time_windows import load_time_windows
+-
+-        return load_time_windows(source=source, n_days=n_days, **kwargs)
 diff --git a/logic/src/pipeline/simulations/states/base/context.py b/logic/src/pipeline/simulations/states/base/context.py
-index 6dd414f..d616339 100644
+index 6dd414f..040d059 100644
 --- a/logic/src/pipeline/simulations/states/base/context.py
 +++ b/logic/src/pipeline/simulations/states/base/context.py
 @@ -28,7 +28,7 @@ from logic.src.constants import (
@@ -1576,6 +2361,14 @@ index 6dd414f..d616339 100644
  
  if TYPE_CHECKING:
      import torch
+@@ -177,7 +177,6 @@ class SimulationContext:
+         self.time_matrix: Optional[np.ndarray] = None
+         self.avg_speed_kmh: float = 35.0
+         self.service_time_h: float = 1.5 / 60.0
+-        self.time_windows: Optional[Any] = None
+         self.transition_to(InitializingState())
+ 
+     def transition_to(self, state: Optional[SimState]) -> None:
 diff --git a/logic/src/pipeline/simulations/states/finishing.py b/logic/src/pipeline/simulations/states/finishing.py
 index a784eaa..9d10584 100644
 --- a/logic/src/pipeline/simulations/states/finishing.py
@@ -1592,7 +2385,7 @@ index a784eaa..9d10584 100644
      display_simulation_summary_table,
  )
 diff --git a/logic/src/pipeline/simulations/states/initializing.py b/logic/src/pipeline/simulations/states/initializing.py
-index 8b9565c..d5acebd 100644
+index 8b9565c..c54c481 100644
 --- a/logic/src/pipeline/simulations/states/initializing.py
 +++ b/logic/src/pipeline/simulations/states/initializing.py
 @@ -25,7 +25,6 @@ import numpy as np
@@ -1646,11 +2439,10 @@ index 8b9565c..d5acebd 100644
          logger.info(f"Initialization complete. Transitioning to RunningState for {ctx.pol_name} policy.")
          ctx.transition_to(RunningState())
  
-@@ -248,19 +232,8 @@ class InitializingState(SimState):
-         ctx.shift_hours = shift_hours
+@@ -249,19 +233,6 @@ class InitializingState(SimState):
          ctx.avg_speed_kmh = avg_speed_kmh
          ctx.service_time_h = service_time_h
--
+ 
 -        tw_source = (
 -            getattr(sim, "time_windows", None)
 -            or getattr(graph, "time_windows", None)
@@ -1663,12 +2455,11 @@ index 8b9565c..d5acebd 100644
 -            ctx.time_windows = load_time_windows(source=tw_source, n_days=graph.n_days)
 -        else:
 -            ctx.time_windows = None
-+        # The minimal package has no time windows.
-+        ctx.time_windows = None
- 
+-
      def _load_checkpoint_if_needed(self, ctx: SimulationContext) -> Tuple[Optional[Any], int]:
          """
-@@ -335,14 +308,7 @@ class InitializingState(SimState):
+ 
+@@ -335,14 +306,7 @@ class InitializingState(SimState):
                  temp,
                  strat,
              )
@@ -1685,18 +2476,53 @@ index 8b9565c..d5acebd 100644
          elif "swc" in model_name:
              ctx.model_env = setup_env(
 diff --git a/logic/src/pipeline/simulations/states/running.py b/logic/src/pipeline/simulations/states/running.py
-index 955881b..de554c4 100644
+index 955881b..2cd214d 100644
 --- a/logic/src/pipeline/simulations/states/running.py
 +++ b/logic/src/pipeline/simulations/states/running.py
-@@ -34,7 +34,7 @@ from logic.src.pipeline.simulations.checkpoints import CheckpointError, checkpoi
+@@ -34,8 +34,8 @@ from logic.src.pipeline.simulations.checkpoints import CheckpointError, checkpoi
  from logic.src.pipeline.simulations.daily import SimulationDayContext, run_day
  from logic.src.pipeline.simulations.states.base.base import SimState
  from logic.src.pipeline.simulations.states.finishing import FinishingState
 -from logic.src.tracking.logging.modules.summary_display import final_simulation_summary
-+from logic.src.utils.results.summary_display import final_simulation_summary
  from logic.src.utils.infrastructure.setup_sims import get_graph_config
++from logic.src.utils.results.summary_display import final_simulation_summary
  
  if TYPE_CHECKING:
+     from .base import SimulationContext
+@@ -216,8 +216,6 @@ class RunningState(SimState):
+         (distance_matrix, paths_between_states, dm_tensor, distancesC) = ctx.dist_tup
+ 
+         display_name = getattr(ctx, "display_name", ctx.pol_name)
+-        time_windows = getattr(ctx, "time_windows", None)
+-        routing_allowed = True if time_windows is None else time_windows.is_routing_allowed(day)
+ 
+         return SimulationDayContext(
+             graph_size=sim.graph.num_loc,
+@@ -262,8 +260,6 @@ class RunningState(SimState):
+             vehicle_capacity=float(
+                 getattr(ctx, "vehicle_capacity", 100.0) if getattr(ctx, "vehicle_capacity", None) is not None else 100.0
+             ),
+-            time_windows=time_windows,
+-            routing_allowed=routing_allowed,
+         )
+ 
+     def _update_ctx_from_day_context(self, ctx, day_context):
+diff --git a/logic/src/policies/packing/base/registry.py b/logic/src/policies/packing/base/registry.py
+index 273b148..1dc7217 100644
+--- a/logic/src/policies/packing/base/registry.py
++++ b/logic/src/policies/packing/base/registry.py
+@@ -1,9 +1,9 @@
+ """Packing registry alias for the shared ``PACKING`` instance."""
+ 
+-from logic.src.policies.packing._manifest import load as _load_manifest
++from logic._manifest import load as _load_manifest
+ from logic.src.utils.registry import PACKING
+ 
+-_load_manifest()
++_load_manifest("packing")
+ 
+ PackingRegistry = PACKING
+ 
 diff --git a/logic/src/policies/packing/last_minute.py b/logic/src/policies/packing/last_minute.py
 index 5d3a6e8..c334abe 100644
 --- a/logic/src/policies/packing/last_minute.py
@@ -1787,6 +2613,22 @@ index b5998ce..9470f38 100644
  
  _STAGE_KEYS = frozenset({"packing", "route_improvement", "acceptance_criteria", "acceptance_criterion"})
  _RUNTIME_KEYS = _STAGE_KEYS | {"seed"}
+diff --git a/logic/src/policies/routing/base/registry.py b/logic/src/policies/routing/base/registry.py
+index 9829365..32d3c93 100644
+--- a/logic/src/policies/routing/base/registry.py
++++ b/logic/src/policies/routing/base/registry.py
+@@ -1,9 +1,9 @@
+ """Routing registry alias for the shared ``ROUTING`` instance."""
+ 
+-from logic.src.policies.routing._manifest import load as _load_manifest
++from logic._manifest import load as _load_manifest
+ from logic.src.utils.registry import ROUTING
+ 
+-_load_manifest()
++_load_manifest("routing")
+ 
+ RoutingAlgorithmRegistry = ROUTING
+ 
 diff --git a/logic/src/policies/routing/base/routing_execution.py b/logic/src/policies/routing/base/routing_execution.py
 index 8225461..d67c69d 100644
 --- a/logic/src/policies/routing/base/routing_execution.py
@@ -1847,6 +2689,86 @@ index 8225461..d67c69d 100644
          # 4. Create subset problem
          # use_all_bins=True (VRPP mode) allows the solver to CONSIDER all bins,
          # but only forcefully visit the mandatory list (mandatory_nodes).
+diff --git a/logic/src/policies/routing/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/dispatcher.py b/logic/src/policies/routing/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/dispatcher.py
+index c17f5c3..37cbbe3 100644
+--- a/logic/src/policies/routing/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/dispatcher.py
++++ b/logic/src/policies/routing/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/dispatcher.py
+@@ -61,71 +61,13 @@ def run_swc_tcf_optimizer(
+     number_vehicles = int(problem.n_vehicles) if problem.n_vehicles and int(problem.n_vehicles) > 0 else 0
+     time_limit = float(config.time_limit)  # int() turned sub-second budgets into "no limit"
+     framework = config.framework
+-    optimizer = config.engine
+     seed = int(config.seed) if config.seed is not None else 42
+     dual_values = problem.dual_values
+ 
+-    # Map solver names to the exact casing required by the respective frameworks
+-    if framework == "ortools":
+-        # OR-Tools requires uppercase identifiers (e.g., 'GUROBI', 'SCIP', 'HIGHS')
+-        ortools_backend = optimizer.upper()
+-        if ortools_backend not in ["GUROBI", "SCIP", "HIGHS", "CPLEX"]:
+-            raise ValueError(f"Unsupported OR-Tools backend: '{ortools_backend}'")
+-        # Imported here so a build that ships only some frameworks can drop the others' modules.
+-        from .ortools_wrapper import _run_ortools_tcf_optimizer
+-
+-
+-        result = _run_ortools_tcf_optimizer(
+-            bins=amounts,
+-            distance_matrix=distance_matrix,
+-            values=values,
+-            binsids=binsids,
+-            mandatory_nodes=mandatory_nodes,
+-            number_vehicles=number_vehicles,
+-            time_limit=time_limit,
+-            solver_id=ortools_backend,
+-            seed=seed,
+-            dual_values=dual_values,
+-        )
+-        # Fallback to native Gurobi if OR-Tools wrapper failed (likely due to missing linkage/license)
+-        if ortools_backend == "GUROBI" and result[0] == [0, 0] and result[1] == 0.0:
+-            return _run_gurobi_optimizer(
+-                bins=amounts,
+-                distance_matrix=distance_matrix,
+-                env=None,
+-                values={k: float(v) if isinstance(v, (int, float)) else v for k, v in values.items()},
+-                binsids=binsids,
+-                mandatory=mandatory_nodes,
+-                number_vehicles=number_vehicles,
+-                time_limit=time_limit,
+-                seed=seed,
+-                dual_values=dual_values,
+-                cfg=cfg,
+-            )
+-        return result
+-
+-    elif framework == "pyomo":
+-        # Pyomo requires lowercase identifiers (e.g., 'gurobi', 'scip', 'appsi_highs')
+-        pyomo_backend = optimizer.lower()
+-        if pyomo_backend not in ["gurobi", "scip", "appsi_highs", "highs"]:
+-            raise ValueError(f"Unsupported Pyomo backend: '{pyomo_backend}'")
+-        from .pyomo_wrapper import _run_pyomo_tcf_optimizer
+-
+-
+-        return _run_pyomo_tcf_optimizer(
+-            bins=amounts,
+-            distance_matrix=distance_matrix,
+-            values=values,
+-            binsids=binsids,
+-            mandatory_nodes=mandatory_nodes,
+-            number_vehicles=number_vehicles,
+-            time_limit=time_limit,
+-            solver_id="appsi_highs" if pyomo_backend == "highs" else pyomo_backend,
+-            seed=seed,
+-            dual_values=dual_values,
+-        )
+-
+-    elif framework in ["gurobi", "native"]:
++    # The minimal package runs SWC-TCF on Gurobi only.
++    if framework not in ["gurobi", "native"]:
++        raise ValueError(f"SWC-TCF framework {framework!r} is not part of the minimal package (use gurobi)")
++    if True:
+         # Direct Gurobi delegation (bypass OR-Tools/Pyomo abstractions)
+         # Note: This requires gurobipy to be installed and license available.
+         return _run_gurobi_optimizer(
 diff --git a/logic/src/policies/routing/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/policy_swc_tcf.py b/logic/src/policies/routing/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/policy_swc_tcf.py
 index fdb9023..5ead2bf 100644
 --- a/logic/src/policies/routing/exact_and_decomposition_solvers/smart_waste_collection_two_commodity_flow/policy_swc_tcf.py
@@ -2061,11 +2983,30 @@ index da6d9f7..ca3e73d 100644
  from .construction import SolutionConstructor
  from .local_search import ACOLocalSearch
 diff --git a/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/lns.py b/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/lns.py
-index 6de1e49..a07615a 100644
+index 6de1e49..8588ab0 100644
 --- a/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/lns.py
 +++ b/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/lns.py
-@@ -44,7 +44,7 @@ from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.engine
- from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.weight_updates import (
+@@ -2,7 +2,7 @@
+ Large Neighborhood Search (LNS) policy module.
+ 
+ This module provides the PG-CLNS coaching LNS. The solver builds on the
+-shared :class:`~logic.src.policies.routing.meta_heuristics.large_neighborhood_search.engine.LNSBase`
++shared :class:`~logic.src.policies.routing.meta_heuristics.pheromone_guided_cooperative_large_neighborhood_search.lns_engine.LNSBase`
+ loop skeleton (WP-11 P-31) and the shared destroy and repair operators of
+ ``logic/src/policies/helpers/operators`` (owner ruling 2026-10-24; the 1.0.2
+ release keeps the PG-CLNS operators the paper ran on). PG-CLNS-specific
+@@ -37,14 +37,14 @@ from logic.src.policies.helpers.operators.destroy_ruin.worst import worst_remova
+ from logic.src.policies.helpers.operators.recreate_repair.greedy import greedy_profit_insertion
+ from logic.src.policies.helpers.operators.recreate_repair.regret_profit import regret_2_profit_insertion
+ from logic.src.policies.routing.base.sub_problem import SubProblem, coerce_config
+-from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.acceptance import (
++from logic.src.policies.routing.meta_heuristics.pheromone_guided_cooperative_large_neighborhood_search.lns_acceptance import (
+     LegacySAAcceptance,
+ )
+-from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.engine import LNSBase
+-from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.weight_updates import (
++from logic.src.policies.routing.meta_heuristics.pheromone_guided_cooperative_large_neighborhood_search.lns_engine import LNSBase
++from logic.src.policies.routing.meta_heuristics.pheromone_guided_cooperative_large_neighborhood_search.lns_weights import (
      EmaWeightUpdate,
  )
 -from logic.src.tracking.viz_mixin import PolicyVizMixin
@@ -2073,6 +3014,42 @@ index 6de1e49..a07615a 100644
  
  
  class LNSSolver(LNSBase, PolicyVizMixin):
+diff --git a/logic/src/policies/routing/meta_heuristics/large_neighborhood_search/acceptance.py b/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/lns_acceptance.py
+similarity index 96%
+rename from logic/src/policies/routing/meta_heuristics/large_neighborhood_search/acceptance.py
+rename to logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/lns_acceptance.py
+index 7109d2b..e978940 100644
+--- a/logic/src/policies/routing/meta_heuristics/large_neighborhood_search/acceptance.py
++++ b/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/lns_acceptance.py
+@@ -6,7 +6,7 @@ Attributes:
+ 
+ Example:
+     >>> import random
+-    >>> from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.acceptance import (
++    >>> from logic.src.policies.routing.meta_heuristics.pheromone_guided_cooperative_large_neighborhood_search.lns_acceptance import (
+     ...     LegacySAAcceptance,
+     ... )
+     >>> criterion = LegacySAAcceptance(start_temp=100.0, cooling_rate=0.95, rng=random.Random(0))
+diff --git a/logic/src/policies/routing/meta_heuristics/large_neighborhood_search/engine.py b/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/lns_engine.py
+similarity index 100%
+rename from logic/src/policies/routing/meta_heuristics/large_neighborhood_search/engine.py
+rename to logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/lns_engine.py
+diff --git a/logic/src/policies/routing/meta_heuristics/large_neighborhood_search/weight_updates.py b/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/lns_weights.py
+similarity index 97%
+rename from logic/src/policies/routing/meta_heuristics/large_neighborhood_search/weight_updates.py
+rename to logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/lns_weights.py
+index 6be4169..dfe0a29 100644
+--- a/logic/src/policies/routing/meta_heuristics/large_neighborhood_search/weight_updates.py
++++ b/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/lns_weights.py
+@@ -9,7 +9,7 @@ Attributes:
+     EmaWeightUpdate: Per-iteration exponential moving average used by PG-CLNS.
+ 
+ Example:
+-    >>> from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.weight_updates import (
++    >>> from logic.src.policies.routing.meta_heuristics.pheromone_guided_cooperative_large_neighborhood_search.lns_weights import (
+     ...     RopkePisingerSegments,
+     ... )
+     >>> weights = [1.0, 1.0]
 diff --git a/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/local_search.py b/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/local_search.py
 index 2730702..ae44e28 100644
 --- a/logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search/local_search.py
@@ -2156,6 +3133,20 @@ index dad5916..02f1df0 100644
      # AttentionModel reads normalization/activation only from the structured configs;
      # the flat kwargs below are kept for older call sites but are not consumed.
      norm_config = NormalizationConfig(
+diff --git a/logic/src/utils/model/problem_factory.py b/logic/src/utils/model/problem_factory.py
+index ca48230..1ee871c 100644
+--- a/logic/src/utils/model/problem_factory.py
++++ b/logic/src/utils/model/problem_factory.py
+@@ -10,9 +10,6 @@ from typing import Any, Type
+ _PROBLEM_CLASSES = {
+     "ptp": "PTP",
+     "cptp": "CPTP",
+-    "cptptc": "CPTPTC",
+-    "cptptwtc": "CPTPTWTC",
+-    "cvrp": "CVRP",
+ }
+ 
+ 
 diff --git a/logic/src/tracking/viz_mixin.py b/logic/src/utils/policy/state_recorder.py
 similarity index 99%
 rename from logic/src/tracking/viz_mixin.py
@@ -2302,6 +3293,189 @@ diff --git a/logic/src/tracking/logging/modules/summary_display.py b/logic/src/u
 similarity index 100%
 rename from logic/src/tracking/logging/modules/summary_display.py
 rename to logic/src/utils/results/summary_display.py
+diff --git a/logic/test/fixtures/data_fixtures.py b/logic/test/fixtures/data_fixtures.py
+index 3b10f6b..fd01e70 100644
+--- a/logic/test/fixtures/data_fixtures.py
++++ b/logic/test/fixtures/data_fixtures.py
+@@ -65,7 +65,11 @@ def sample_config_file(temp_data_dir):
+ @pytest.fixture(autouse=True)
+ def mock_dependencies(mocker):
+     """Mocks all external data generation and saving dependencies."""
+-    # Mock the save utilities
++    # Mock the save utilities (the minimal package ships no dataset generators)
++    import importlib.util
++
++    if importlib.util.find_spec("logic.src.data.generators") is None:
++        return
+     mocker.patch("logic.src.data.generators.datasets.save_td_dataset", return_value=None)
+     mocker.patch("logic.src.data.generators.datasets.save_simulation_dataset", return_value=None)
+ 
+diff --git a/logic/test/fixtures/day_fixtures.py b/logic/test/fixtures/day_fixtures.py
+index 3f2476c..b1f03ed 100644
+--- a/logic/test/fixtures/day_fixtures.py
++++ b/logic/test/fixtures/day_fixtures.py
+@@ -11,6 +11,21 @@ import torch
+ from logic.src.pipeline.simulations.daily import SimulationDayContext
+ 
+ 
++def _patch_if_present(mocker, target, **kwargs):
++    """Patch ``target`` when its module and attribute exist (the minimal package removes some)."""
++    import importlib
++    from unittest.mock import MagicMock
++
++    module_name, _, attr = target.rpartition(".")
++    try:
++        module = importlib.import_module(module_name)
++    except ImportError:
++        return MagicMock()
++    if not hasattr(module, attr):
++        return MagicMock()
++    return mocker.patch(target, **kwargs)
++
++
+ @pytest.fixture
+ def mock_run_day_deps(mocker):
+     """
+@@ -79,9 +94,13 @@ def mock_run_day_deps(mocker):
+         real_distancesC,  # Real int matrix
+     )
+ 
+-    mocker.patch("logic.src.pipeline.simulations.actions.logging.send_daily_output_to_gui")
++    _patch_if_present(mocker, "logic.src.pipeline.simulations.actions.logging.send_daily_output_to_gui")
+     mocker.patch("logic.src.utils.routing.tours.get_route_cost", return_value=50.0)
+-    mocker.patch("logic.src.policies.routing.other_algorithms.travelling_salesman_problem.tsp.find_route", return_value=[0, 1, 0])
++    _patch_if_present(
++        mocker,
++        "logic.src.policies.routing.other_algorithms.travelling_salesman_problem.tsp.find_route",
++        return_value=[0, 1, 0],
++    )
+ 
+     return {
+         "bins": mock_bins,
+@@ -92,7 +111,9 @@ def mock_run_day_deps(mocker):
+         "coords": mock_coords,
+         "distance_matrix": real_dist_matrix,
+         "distancesC": real_distancesC,
+-        "mock_send_output": mocker.patch("logic.src.pipeline.simulations.actions.logging.send_daily_output_to_gui"),
++        "mock_send_output": _patch_if_present(
++            mocker, "logic.src.pipeline.simulations.actions.logging.send_daily_output_to_gui"
++        ),
+     }
+ 
+ @pytest.fixture
+diff --git a/logic/test/fixtures/model_fixtures.py b/logic/test/fixtures/model_fixtures.py
+index 59b9f82..259cdd0 100644
+--- a/logic/test/fixtures/model_fixtures.py
++++ b/logic/test/fixtures/model_fixtures.py
+@@ -7,8 +7,6 @@ from unittest.mock import MagicMock
+ import pytest
+ import torch
+ from logic.src.models.core.attention_model import AttentionModel
+-from logic.src.models.core.temporal_attention_model.model import TemporalAttentionModel
+-from logic.src.models.meta.hrl_manager import MandatoryManager
+ from logic.src.models.subnets.decoders.glimpse.decoder import GlimpseDecoder
+ from logic.src.models.subnets.factories.base import NeuralComponentFactory
+ 
+@@ -81,99 +79,6 @@ def am_setup(mocker):
+     return model
+ 
+ 
+-@pytest.fixture
+-def gat_lstm_setup():
+-    """Fixture for MandatoryManager"""
+-    manager = MandatoryManager(
+-        input_dim_static=2,
+-        input_dim_dynamic=10,
+-        hidden_dim=32,
+-        lstm_hidden=16,
+-        num_layers_gat=1,
+-        n_heads=4,
+-        dropout=0.1,
+-        device="cpu",
+-    )
+-    return manager
+-
+-
+-@pytest.fixture
+-def tam_setup(mocker):
+-    """Fixture for TemporalAttentionModel"""
+-    mock_problem = mocker.MagicMock()
+-    mock_problem.NAME = "ptp"  # To trigger temporal features
+-    mock_problem.evaluate_tour.return_value = {"cost": torch.zeros(1), "reward": torch.zeros(1), "length": torch.zeros(1), "waste": torch.zeros(1), "overflows": torch.zeros(1)}
+-    mock_problem.get_costs.return_value = (torch.zeros(1), {}, None)
+-
+-    mock_encoder = mocker.MagicMock()
+-    mock_encoder.embed_dim = 128
+-    mock_encoder.hidden_dim = 128
+-
+-    def mock_enc_fwd(x, edges=None, **kwargs):
+-        """Mock encoder forward pass."""
+-        batch, n, dim = x.size()
+-        return torch.zeros(batch, n, 128)
+-
+-    mock_encoder.side_effect = mock_enc_fwd
+-
+-    class MockActivationFunction(torch.nn.Module):
+-        """Mock activation function."""
+-
+-        def __init__(self, *args, **kwargs):
+-            """Initialize mock activation function."""
+-            super().__init__()
+-
+-        def forward(self, x):
+-            """Mock forward pass."""
+-            return x
+-
+-    mocker.patch("logic.src.models.subnets.modules.ActivationFunction", new=MockActivationFunction)
+-
+-    # Patch where used in TAM model module
+-    mocker.patch("logic.src.models.core.temporal_attention_model.model.LongShortTermMemoryFillPredictor", autospec=False)
+-    mock_grfp_cls = mocker.patch("logic.src.models.core.temporal_attention_model.model.GatedRecurrentUnitFillPredictor", autospec=False)
+-
+-    mock_grfp = mock_grfp_cls.return_value
+-
+-    def mock_grfp_fwd(x, h=None):
+-        """Mock GRFP forward pass."""
+-        return torch.zeros(x.shape[0], 1)
+-
+-    mock_grfp.side_effect = mock_grfp_fwd
+-
+-    # Mock Factory for TAM
+-    class MockTAMFactory(NeuralComponentFactory):
+-        """Mock factory for TAM components."""
+-
+-        def create_encoder(self, norm_config=None, activation_config=None, **kwargs):
+-            """Create mock encoder."""
+-            return mock_encoder
+-
+-        def create_decoder(self, decoder_type="attention", norm_config=None, activation_config=None, **kwargs):
+-            """Create mock decoder."""
+-            """Create mock decoder."""
+-            m_dec = mocker.MagicMock(spec=GlimpseDecoder)
+-            # Return log_p, pi, cost, td (4 values)
+-            m_dec.forward.side_effect = lambda input, embeddings, *args, **kwargs: (
+-                torch.zeros(1),
+-                torch.zeros(1),
+-                torch.zeros(1),
+-                None,
+-            )
+-            return m_dec
+-
+-    model = TemporalAttentionModel(
+-        embed_dim=128,
+-        hidden_dim=128,
+-        problem=mock_problem,
+-        component_factory=MockTAMFactory(),
+-        n_encode_layers=1,
+-        n_heads=8,
+-        temporal_horizon=5,
+-    )
+-    return model
+-
+-
+ @pytest.fixture
+ def mock_train_model(mocker, mock_torch_device):
+     """
 diff --git a/logic/test/unit/pipeline/simulations/test_issue_41_solver_status.py b/logic/test/unit/pipeline/simulations/test_issue_41_solver_status.py
 index 19b908d..0396c93 100644
 --- a/logic/test/unit/pipeline/simulations/test_issue_41_solver_status.py

@@ -62,11 +62,13 @@ from logic.package.release_staging import (
     filter_lazy_map,
     filter_manifest_file,
     import_sweep,
+    prune_unreferenced,
     unguarded_missing_imports,
     unresolved_names,
     validate_release_tests,
     verify_staged,
     write_release_conftest,
+    write_single_manifest,
 )
 
 # logic/ subtrees that ship in the release. Anything else (benchmark, cloud,
@@ -273,6 +275,9 @@ def run_build(  # noqa: C901
         staged_manifest = out / "logic" / rel
         if staged_manifest.is_file():
             notes += filter_manifest_file(staged_manifest, set(manifest["stages"].get(stage, ())))
+    if manifest.get("single_manifest"):
+        stage_files = {stage: out / "logic" / path.relative_to(LOGIC) for stage, path in STAGES.items()}
+        notes += write_single_manifest(out, stage_files)
 
     # --- package configs: released YAML only ----------------------------- #
     routing = set(manifest["stages"].get("routing", ()))
@@ -306,6 +311,10 @@ def run_build(  # noqa: C901
         notes += filter_lazy_map(staged, staged_modules, out)
         notes += drop_pruned_init_imports(staged, staged_modules, out)
 
+    # --- dead code: definitions nothing references (profiles that ask for it) #
+    if manifest.get("prune_unreferenced"):
+        notes += prune_unreferenced(out, set(manifest.get("keep_names", [])))
+
     # --- excluded packages: drop the data files their pruned code read ----- #
     for excluded in manifest["excluded_packages"]:
         folder = out / Path(*excluded.split("."))
@@ -317,6 +326,13 @@ def run_build(  # noqa: C901
     removed_tasks = prune_task_configs(out / "logic" / "configs" / "tasks", manifest["tasks"])
     if removed_tasks:
         notes.append(f"configs/tasks: dropped the unreleased task configs {', '.join(removed_tasks)}")
+
+    # --- env configs: only the profile's problems (profiles that ask for it) - #
+    if manifest.get("only_problem_env_configs"):
+        for env_yaml in sorted((out / "logic" / "configs" / "envs").glob("*.yaml")):
+            if env_yaml.stem not in manifest["problems"]:
+                env_yaml.unlink()
+                notes.append(f"configs/envs: dropped {env_yaml.name} (not a {manifest.get('name', 'release')} problem)")
 
     # --- task defaults: drop the policy groups that do not ship ------------ #
     for task_yaml in sorted((out / "logic" / "configs" / "tasks").glob("*.yaml")):

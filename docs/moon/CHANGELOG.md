@@ -33,6 +33,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - prunes init imports name by name (deepest first) and rewrites `__all__` lists of any layout;
   - fails when a pruned init still uses a dropped name;
   - notes deferred imports of pruned names and unguarded imports of pruned modules.
+- **Dead-code pass** (`prune_unreferenced`, with `keep_names` for names dispatched at run time): removes functions, classes, methods and pure constant assignments that no shipped code or YAML names outside their own body (tests, docstrings, `__all__` and imports do not count), then the imports and modules this empties. Methods of classes rooted in an external base (Lightning, TorchRL, `nn.Module`), and of their in-tree mixins, are kept, as are abstract method names.
+- **`single_manifest`** writes one generated `logic/_manifest.py` (`ENTRIES`, `REGISTRIES`, `load(stage)`) instead of a `_manifest.py` per registry; **`only_problem_env_configs`** ships only the env configs of the listed problems.
+- The minimal patch drops the `large_neighborhood_search` package (PG-CLNS keeps its acceptance, engine and weights as `lns_acceptance`, `lns_engine` and `lns_weights`), every problem but PTP and CPTP, and SWC-TCF's OR-Tools and Pyomo branches. The delivery is 433 code files (55,022 lines) and 100 test files, versus 979 code files before. Every routing algorithm passes `test_sim` with each packing strategy on CPTP and with last-minute packing on PTP, and REINFORCE training passes on both problems.
+- Grok takes over the remaining pruning: `.agent/tasks/grok-minimal-package-2026-10-25.md`.
 
 ### Claude: the repository scripts move from `tools/` into `logic/` (`2026-10-25`)
 
