@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Simulation corpus scenes (`2026-10-28`, [#175](https://github.com/ACFHarbinger/WSmart-Route/issues/175), [#176](https://github.com/ACFHarbinger/WSmart-Route/issues/176), [#177](https://github.com/ACFHarbinger/WSmart-Route/issues/177), [#178](https://github.com/ACFHarbinger/WSmart-Route/issues/178), [#179](https://github.com/ACFHarbinger/WSmart-Route/issues/179))
 
+### SWC-TCF uses the directed formulation (`2026-10-26`)
+
+- `policy_swc_tcf.yaml` sets `formulation: directed` and `no_solution_time_factor: 9.0`. Each used arc is charged its own directed distance. `formulation: paper` remains the undirected model.
+
 ### SANS feasibility check (`2026-10-26`)
 
 - `check_bins_overflowing_feasibility` builds the overflowing-bin set once and counts the overlap with the visited bins, instead of scanning every route for every bin.
