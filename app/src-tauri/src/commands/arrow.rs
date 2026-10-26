@@ -10,7 +10,7 @@ use arrow::datatypes::{DataType, Field, Schema};
 use arrow::ipc::writer::FileWriter;
 use serde::Serialize;
 
-use crate::commands::sim_watcher::{parse_day_log_line, DayLogEntry};
+use crate::commands::sim_watcher::DayLogEntry;
 
 #[derive(Debug, Serialize)]
 pub struct ArrowIpcFile {
@@ -209,13 +209,12 @@ pub fn write_csv_arrow_sidecar(csv_path: &str, arrow_path: &PathBuf) -> Result<u
     Ok(row_count)
 }
 
-/// Write an Arrow IPC sidecar for a simulation JSONL log (§G.8).
+/// Write an Arrow IPC sidecar for a simulation log or directory (§G.8).
 pub fn write_simulation_log_arrow_sidecar(
     log_path: &str,
     arrow_path: &PathBuf,
 ) -> Result<usize, String> {
-    let content = fs::read_to_string(log_path).map_err(|e| e.to_string())?;
-    let entries: Vec<DayLogEntry> = content.lines().filter_map(parse_day_log_line).collect();
+    let entries = crate::commands::data::load_simulation_log(log_path.to_string())?;
     if entries.is_empty() {
         return Err("No simulation log entries found".to_string());
     }
@@ -254,8 +253,7 @@ pub fn csv_to_arrow_ipc(path: String) -> Result<ArrowIpcFile, String> {
 #[tauri::command]
 pub fn simulation_log_to_arrow_ipc(path: String) -> Result<ArrowIpcFile, String> {
     let start = Instant::now();
-    let content = fs::read_to_string(&path).map_err(|e| e.to_string())?;
-    let entries: Vec<DayLogEntry> = content.lines().filter_map(parse_day_log_line).collect();
+    let entries = crate::commands::data::load_simulation_log(path)?;
     if entries.is_empty() {
         return Err("No simulation log entries found".to_string());
     }
@@ -284,5 +282,5 @@ pub fn read_binary_file(path: String) -> Result<Vec<u8>, String> {
 
 #[tauri::command]
 pub fn path_exists(path: String) -> bool {
-    std::path::Path::new(&path).is_file()
+    std::path::Path::new(&path).exists()
 }

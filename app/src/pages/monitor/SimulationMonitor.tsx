@@ -4,10 +4,10 @@
  * Uses `useSimThrottle` (2 Hz visibility-aware throttle), `StalenessDot`,
  * `useLoadedRunStore` synchronization, and optional hexagonal spatial density overlay.
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
-import { FolderOpen, RefreshCw } from "lucide-react";
+import { FolderOpen, FolderTree, RefreshCw } from "lucide-react";
 import { GlobalFilterBar } from "../../components/layout/GlobalFilterBar";
 import { StalenessDot } from "../../components/ui/telemetry/status";
 import { useSimWatcher } from "../../hooks/process/useSimWatcher";
@@ -39,7 +39,7 @@ import { useSimMonitorMapRoutes } from "../../components/monitor/sim/useSimMonit
 import { CorpusRouteMap } from "../../components/analysis/summary/corpus/CorpusRouteMap";
 import { applyCorpusMapFrame } from "../../utils/corpus/monitorRoutes";
 import { corpusMapFrame } from "../../utils/corpus/routeFrame";
-import type { DayLogEntry, PolicyVizEntry, SimFailureEntry } from "../../types";
+import type { DayLogEntry, PolicyVizEntry, SimFailureEntry, SimulationDirectoryCatalog } from "../../types";
 
 export function SimulationMonitor() {
   const {
@@ -180,18 +180,85 @@ export function SimulationMonitor() {
     ]
   );
 
+  const [catalog, setCatalog] = useState<SimulationDirectoryCatalog | null>(null);
+  const [selectedRunKey, setSelectedRunKey] = useState<string | null>(null);
+
+  const loadDirectory = useCallback(
+    async (dirPath: string) => {
+      try {
+        const cat = await invoke<SimulationDirectoryCatalog>("scan_simulation_directory", {
+          dirPath,
+        });
+        if (!cat.runs || cat.runs.length === 0) {
+          toast.error("No simulation logs found in directory", { description: dirPath });
+          return;
+        }
+        setCatalog(cat);
+        const firstRun = cat.runs[0];
+        setSelectedRunKey(firstRun.key);
+        await loadLogFile(firstRun.key);
+        toast.success(`Loaded catalog: ${cat.runs.length} run(s), ${cat.total_logs} log(s)`);
+      } catch (err) {
+        toast.error("Failed to scan simulation directory", { description: String(err) });
+      }
+    },
+    [loadLogFile]
+  );
+
   const openLog = useCallback(async () => {
     const path = (await open({
-      filters: [{ name: "JSONL Logs", extensions: ["jsonl", "log", "txt"] }],
+      filters: [
+        { name: "Simulation Logs", extensions: ["json", "jsonl", "log", "txt"] },
+        { name: "All Files", extensions: ["*"] },
+      ],
     })) as string | null;
     if (!path) return;
+    setCatalog(null);
+    setSelectedRunKey(null);
     await loadLogFile(path);
   }, [loadLogFile]);
 
+  const openDirectory = useCallback(async () => {
+    const selected = (await open({
+      directory: true,
+      multiple: false,
+    })) as string | null;
+    if (!selected) return;
+    await loadDirectory(selected);
+  }, [loadDirectory]);
+
+  const handleRunChange = useCallback(
+    async (runKey: string) => {
+      setSelectedRunKey(runKey);
+      if (runKey === "__ALL__" && catalog) {
+        await loadLogFile(catalog.root_dir);
+      } else {
+        await loadLogFile(runKey);
+      }
+    },
+    [catalog, loadLogFile]
+  );
+
   useEffect(() => {
     if (pendingLogPath) {
-      void loadLogFile(pendingLogPath, false);
+      const p = pendingLogPath;
       setPendingLogPath(null);
+      invoke<boolean>("path_exists", { path: p }).then((exists) => {
+        if (!exists) return;
+        invoke<SimulationDirectoryCatalog>("scan_simulation_directory", { dirPath: p })
+          .then((cat) => {
+            if (cat.runs && cat.runs.length > 0) {
+              setCatalog(cat);
+              setSelectedRunKey(cat.runs[0].key);
+              void loadLogFile(cat.runs[0].key, false);
+            } else {
+              void loadLogFile(p, false);
+            }
+          })
+          .catch(() => {
+            void loadLogFile(p, false);
+          });
+      });
     }
   }, [pendingLogPath, setPendingLogPath, loadLogFile]);
 
@@ -208,11 +275,37 @@ export function SimulationMonitor() {
   const [showHexDensity, setShowHexDensity] = useState(false);
   const [duckdbProfitRange, setDuckdbProfitRange] = useState<[number, number] | null>(null);
 
+  const lastEnrichedPathRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (!activeLogPath || !entries.length) return;
     const guessed = guessGraphPreset(activeLogPath, entries);
     if (guessed) setGraphPreset(guessed);
   }, [activeLogPath, entries]);
+
+  // Attempt auto-enrich if projectRoot is set and coordinates not yet loaded
+  useEffect(() => {
+    if (!projectRoot || !entries.length || !activeLogPath) return;
+    if (lastEnrichedPathRef.current === activeLogPath) return;
+
+    const day1 = entries.find((e) => e.day === 1);
+    const hasAnyCoords = day1?.data.all_bin_coords?.some((b) => b.lat != null && b.lng != null);
+    if (hasAnyCoords) {
+      lastEnrichedPathRef.current = activeLogPath;
+      return;
+    }
+
+    const presetId = guessGraphPreset(activeLogPath, entries) ?? graphPreset;
+    loadGraphCoordinates(projectRoot, presetId, selectedSample ?? 0)
+      .then((table) => {
+        loadEntries(enrichEntriesWithGraphCoords(entries, table));
+        setRouteMapMode("deckgl");
+        lastEnrichedPathRef.current = activeLogPath;
+      })
+      .catch((err) => {
+        console.warn("Auto-enrich graph coordinates skipped:", err);
+      });
+  }, [projectRoot, activeLogPath, entries, graphPreset, selectedSample, loadEntries]);
 
   const applyGraphCoords = useCallback(async () => {
     if (!projectRoot) {
@@ -355,6 +448,39 @@ export function SimulationMonitor() {
           Open Log File
         </button>
 
+        <button onClick={openDirectory} className="btn-secondary flex items-center gap-2">
+          <FolderTree size={14} />
+          Open Directory
+        </button>
+
+        {catalog && catalog.runs.length > 1 && (
+          <div className="flex items-center gap-1.5 bg-canvas-subtle px-2 py-1 rounded border border-border-default">
+            <span className="text-xs text-canvas-muted whitespace-nowrap">Run:</span>
+            <select
+              className="select-base text-xs py-0.5 px-2 max-w-xs truncate"
+              value={selectedRunKey ?? ""}
+              onChange={(e) => void handleRunChange(e.target.value)}
+              title={selectedRunKey ?? "Select run"}
+            >
+              <option value="__ALL__">All Runs ({catalog.runs.length})</option>
+              {catalog.runs.map((r) => (
+                <option key={r.key} value={r.key} title={r.label}>
+                  {r.label} ({r.logs.length} log{r.logs.length === 1 ? "" : "s"})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {catalog && catalog.runs.length === 1 && (
+          <span
+            className="text-xs bg-canvas-subtle text-canvas-muted px-2 py-1 rounded border border-border-default truncate max-w-xs"
+            title={catalog.runs[0].key}
+          >
+            {catalog.runs[0].label} ({catalog.runs[0].logs.length} log{catalog.runs[0].logs.length === 1 ? "" : "s"})
+          </span>
+        )}
+
         {isWatching && <StalenessDot lastEventAt={lastEventAt} />}
 
         {watchPath && (
@@ -423,9 +549,9 @@ export function SimulationMonitor() {
 
       {!displayEntry && playbackDay == null && (
         <div className="flex flex-col items-center justify-center h-64 text-canvas-muted gap-3">
-          <p className="text-sm">Open a simulation log file to begin monitoring.</p>
+          <p className="text-sm">Open a simulation log file or directory to begin monitoring.</p>
           <p className="text-xs">
-            The watcher streams new days in real-time as the simulation runs.
+            Supports single log files (*.json, *.jsonl) or standard simulation directory hierarchies (&lt;days&gt;days/&lt;region&gt;&lt;bins&gt;_[waste]/[dist/]&lt;run&gt;/).
           </p>
         </div>
       )}

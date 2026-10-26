@@ -57,6 +57,7 @@ pub fn run() {
             arrow::path_exists,
             data::load_simulation_log,
             corpus::scan_simulation_corpus,
+            data::scan_simulation_directory,
             data::load_policy_viz_log,
             data::load_sim_failure_log,
             data::load_training_health_log,

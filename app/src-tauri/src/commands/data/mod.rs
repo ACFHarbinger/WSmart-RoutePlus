@@ -3,14 +3,12 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
 
-use crate::commands::sim_watcher::{
-    parse_day_log_line, parse_policy_viz_line, parse_sim_failure_line, DayLogEntry, PolicyVizEntry,
-    SimFailureEntry,
-};
+use crate::commands::sim_watcher::{parse_policy_viz_line, DayLogEntry, PolicyVizEntry, SimFailureEntry};
 
 pub mod bundle;
 pub mod files;
 pub mod parquet;
+pub mod sim_log;
 
 #[cfg(test)]
 mod tests;
@@ -18,6 +16,7 @@ mod tests;
 pub use bundle::*;
 pub use files::*;
 pub use parquet::*;
+pub use sim_log::SimulationDirectoryCatalog;
 
 /// Matches the `CsvFile` TypeScript interface in DataExplorer.tsx
 #[derive(Debug, Serialize, Deserialize)]
@@ -92,13 +91,52 @@ pub fn parse_attention_viz_line(line: &str) -> Option<AttentionVizEntry> {
 
 #[tauri::command]
 pub fn load_simulation_log(path: String) -> Result<Vec<DayLogEntry>, String> {
-    let content = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
-    let entries: Vec<DayLogEntry> = content.lines().filter_map(parse_day_log_line).collect();
-    Ok(entries)
+    let p = Path::new(&path);
+    if !p.exists() {
+        return Err(format!("File or directory not found: {path}"));
+    }
+    if p.is_dir() {
+        let files = sim_log::find_simulation_logs_in_dir(p)?;
+        if files.is_empty() {
+            return Err(format!("No simulation logs found under directory: {path}"));
+        }
+        let mut all_entries = Vec::new();
+        for file in files {
+            if let Ok(entries) = sim_log::load_single_simulation_log(&file) {
+                all_entries.extend(entries);
+            }
+        }
+        all_entries.sort_by(|a, b| {
+            a.policy
+                .cmp(&b.policy)
+                .then(a.sample_id.cmp(&b.sample_id))
+                .then(a.day.cmp(&b.day))
+        });
+        return Ok(all_entries);
+    }
+    sim_log::load_single_simulation_log(p)
 }
 
 #[tauri::command]
 pub fn load_policy_viz_log(path: String) -> Result<Vec<PolicyVizEntry>, String> {
+    let p = Path::new(&path);
+    if !p.exists() {
+        return Ok(vec![]);
+    }
+    if p.is_dir() {
+        let files = sim_log::find_simulation_logs_in_dir(p)?;
+        let mut all_viz = Vec::new();
+        for file in files {
+            if let Ok(content) = std::fs::read_to_string(&file) {
+                let entries: Vec<PolicyVizEntry> = content
+                    .lines()
+                    .filter_map(parse_policy_viz_line)
+                    .collect();
+                all_viz.extend(entries);
+            }
+        }
+        return Ok(all_viz);
+    }
     let content = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
     let entries: Vec<PolicyVizEntry> = content.lines().filter_map(parse_policy_viz_line).collect();
     Ok(entries)
@@ -106,10 +144,30 @@ pub fn load_policy_viz_log(path: String) -> Result<Vec<PolicyVizEntry>, String> 
 
 #[tauri::command]
 pub fn load_sim_failure_log(path: String) -> Result<Vec<SimFailureEntry>, String> {
-    let content = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
-    let entries: Vec<SimFailureEntry> =
-        content.lines().filter_map(parse_sim_failure_line).collect();
-    Ok(entries)
+    let p = Path::new(&path);
+    if !p.exists() {
+        return Ok(vec![]);
+    }
+    if p.is_dir() {
+        let files = sim_log::find_simulation_logs_in_dir(p)?;
+        let mut all_failures = Vec::new();
+        for file in files {
+            if let Ok(entries) = sim_log::load_single_sim_failure_log(&file) {
+                all_failures.extend(entries);
+            }
+        }
+        return Ok(all_failures);
+    }
+    sim_log::load_single_sim_failure_log(p)
+}
+
+#[tauri::command]
+pub fn scan_simulation_directory(dir_path: String) -> Result<SimulationDirectoryCatalog, String> {
+    let p = Path::new(&dir_path);
+    if !p.is_dir() {
+        return Err(format!("Path is not a directory: {dir_path}"));
+    }
+    sim_log::scan_simulation_directory_tree(p)
 }
 
 #[tauri::command]

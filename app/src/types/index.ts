@@ -67,6 +67,40 @@ export interface DayLogEntry {
   data: SimDayData;
 }
 
+// ── Discovered simulation logs & directory catalogs ─────────────────────────
+
+export interface DiscoveredSimulationLog {
+  path: string;
+  filename: string;
+  format: "json" | "jsonl" | "unknown";
+  policy: string;
+  days?: number;
+  region?: string;
+  num_bins?: number;
+  waste_type?: string;
+  distribution?: string;
+  run_name?: string;
+  num_instances?: number;
+}
+
+export interface DiscoveredSimulationRun {
+  key: string;
+  label: string;
+  days?: number;
+  region?: string;
+  num_bins?: number;
+  waste_type?: string;
+  distribution?: string;
+  run_name?: string;
+  logs: DiscoveredSimulationLog[];
+}
+
+export interface SimulationDirectoryCatalog {
+  root_dir: string;
+  total_logs: number;
+  runs: DiscoveredSimulationRun[];
+}
+
 // ── Policy telemetry (PolicyVizMixin → Studio §A.3) ─────────────────────────
 
 export type PolicyVizType = "alns" | "hgs" | "aco" | "ils" | "selector" | "generic";
