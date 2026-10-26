@@ -40,6 +40,8 @@ from logic.src.utils.infrastructure.setup_sims import get_graph_config
 if TYPE_CHECKING:
     from .base import SimulationContext
 
+_CUMULATIVE_METRICS = frozenset(METRICS) - {"kg/km"}
+
 
 def pad_model_ls(model_tup: Optional[tuple]) -> tuple:
     """Return at least three model slots.
@@ -154,12 +156,12 @@ class RunningState(SimState):
                 # The day loop logged the aborted day before raising. Keep that
                 # row so the failure result still carries the mandatory set.
                 if day_context.daily_log is not None:
-                    self._update_metrics(ctx, day, day_context.output_dict, day_context.daily_log)
+                    self._update_metrics(ctx, day, day_context.daily_log)
                 raise
             ctx.execution_time = time.perf_counter() - ctx.tic
 
             self._update_ctx_from_day_context(ctx, day_context)
-            cum_metrics = self._update_metrics(ctx, day, day_context.output_dict, day_context.daily_log)
+            cum_metrics = self._update_metrics(ctx, day, day_context.daily_log)
             if lineage:
                 lineage.on_step_end(day_context, day)
 
@@ -179,6 +181,10 @@ class RunningState(SimState):
         Returns:
             Dictionary containing resolved configuration for the current day.
         """
+        cached = getattr(ctx, "_policy_config_cache", None)
+        if cached is not None:
+            return dict(cached)
+
         current_policy_config = {}  # type: ignore[var-annotated]
 
         # 1. START WITH GLOBAL CONFIGS (mandatory, route_improvement)
@@ -198,7 +204,8 @@ class RunningState(SimState):
         if ctx.pol_cfg and isinstance(ctx.pol_cfg, (dict, Mapping)):
             current_policy_config.update(dict(ctx.pol_cfg))
 
-        return current_policy_config
+        ctx._policy_config_cache = current_policy_config
+        return dict(current_policy_config)
 
     def _create_day_context(self, ctx, day, current_policy_config, realtime_log_path):
         """
@@ -220,7 +227,6 @@ class RunningState(SimState):
         routing_allowed = True if time_windows is None else time_windows.is_routing_allowed(day)
 
         return SimulationDayContext(
-            graph_size=sim.graph.num_loc,
             full_policy=ctx.pol_name,
             policy_name=ctx.pol_name,
             display_name=display_name,  # pyrefly: ignore [bad-argument-type]
@@ -236,7 +242,6 @@ class RunningState(SimState):
             area=sim.graph.area,
             realtime_log_path=realtime_log_path,
             waste_type=sim.graph.waste_type,
-            distpath_tup=ctx.dist_tup,
             distance_matrix=distance_matrix,
             distancesC=distancesC,
             paths_between_states=paths_between_states,
@@ -282,23 +287,43 @@ class RunningState(SimState):
             with ctx.counter.get_lock():
                 ctx.counter.value += 1
 
-    def _update_metrics(self, ctx, day, output_dict, dlog) -> Dict[str, float]:
+    def _update_metrics(self, ctx, day, dlog) -> Dict[str, float]:
         """
         Args:
             ctx: The simulation context object.
             day: Current simulation day.
-            output_dict: Output dictionary from the policy.
             dlog: Daily log dictionary.
         """
         if dlog is not None:
+            daily_log = ctx.daily_log
+            sums = ctx._metric_sums
+            list_ids = ctx._metric_list_ids
+            list_lengths = ctx._metric_list_lengths
+
+            if not ctx._metric_sums_ready:
+                for key, values in daily_log.items():
+                    list_ids[key] = id(values)
+                    list_lengths[key] = len(values)
+                    if key in _CUMULATIVE_METRICS:
+                        sums[key] = sum(values)
+                ctx._metric_sums_ready = True
+
             for key, val in dlog.items():
-                if key not in ctx.daily_log:
-                    ctx.daily_log[key] = []
-                ctx.daily_log[key].append(val)
+                if key not in daily_log:
+                    daily_log[key] = []
+                values = daily_log[key]
+                if key in _CUMULATIVE_METRICS:
+                    if key in sums and list_ids.get(key) == id(values) and list_lengths.get(key) == len(values):
+                        sums[key] += val
+                    else:
+                        sums[key] = sum(values) + val
+                values.append(val)
+                list_ids[key] = id(values)
+                list_lengths[key] = len(values)
 
             if ctx.shared_metrics is not None:
                 cumulative_metrics = {
-                    k: sum(v) for k, v in (ctx.daily_log or {}).items() if k in METRICS and k != "kg/km"
+                    k: sums[k] for k, v in daily_log.items() if k in _CUMULATIVE_METRICS and k in sums
                 }
                 ctx.shared_metrics[f"{ctx.pol_name}_{ctx.sample_id}"] = {
                     "day": day,

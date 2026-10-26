@@ -11,6 +11,7 @@ import pytest
 from logic.migration.convert_sim_outputs import convert_tree
 from logic.src.pipeline.simulations.daily import SimulationDayContext, get_daily_results, run_day
 from logic.src.pipeline.simulations.pipeline import PipelineError, resolve_pipeline
+from logic.src.pipeline.simulations.states.running import RunningState
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
@@ -23,6 +24,64 @@ def test_default_pipeline_order():
     assert names.index("PackingAction") < names.index("RoutingAction")
     assert names.index("RoutingAction") < names.index("RouteImprovementAction")
     assert names[-1] == "LogAction"
+
+
+def test_pipeline_resolution_is_cached(monkeypatch):
+    """Repeated days reuse the validated action classes."""
+    from logic.src.pipeline.simulations import pipeline as pipeline_module
+
+    original = pipeline_module._registry
+    calls = {"count": 0}
+
+    def counted_registry():
+        calls["count"] += 1
+        return original()
+
+    monkeypatch.setattr(pipeline_module, "_registry", counted_registry)
+    pipeline_module._PIPELINE_CACHE.clear()
+    resolve_pipeline(None)
+    resolve_pipeline(None)
+    assert calls["count"] == 1
+
+
+def test_cumulative_metric_sums_survive_replaced_lists():
+    """Running KPI sums match a full re-sum, including a rebuilt daily list."""
+    ctx = SimpleNamespace(
+        daily_log={"profit": [1.0], "km": [2.0], "kg/km": [1.0, 1.0]},
+        shared_metrics={},
+        pol_name="test",
+        sample_id=0,
+        _metric_sums={},
+        _metric_list_ids={},
+        _metric_list_lengths={},
+        _metric_sums_ready=False,
+    )
+    state = RunningState()
+
+    state._update_metrics(ctx, 1, {"profit": 2.0, "km": 3.0, "kg/km": 9.0})
+    assert ctx.shared_metrics["test_0"]["metrics"] == {"profit": 3.0, "km": 5.0}
+
+    ctx.daily_log["profit"] = [10.0]
+    state._update_metrics(ctx, 2, {"profit": 4.0, "km": 1.0, "kg/km": 9.0})
+    assert ctx.shared_metrics["test_0"]["metrics"] == {"profit": 14.0, "km": 6.0}
+
+
+def test_policy_config_is_built_once_per_context():
+    """Top-level changes to a day config do not alter the cached base."""
+    ctx = SimpleNamespace(
+        config={"packing": {"enabled": True}, "policy_x": {"alpha": 1}},
+        pol_id_orig="policy_x",
+        pol_cfg={"beta": 2},
+        _policy_config_cache=None,
+    )
+    state = RunningState()
+
+    first = state._get_current_policy_config(ctx)
+    assert first == {"packing": {"enabled": True}, "alpha": 1, "beta": 2}
+    first["alpha"] = 99
+
+    second = state._get_current_policy_config(ctx)
+    assert second == {"packing": {"enabled": True}, "alpha": 1, "beta": 2}
 
 
 def test_logging_before_collection_is_rejected():

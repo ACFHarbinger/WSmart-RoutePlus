@@ -168,10 +168,14 @@ class SimulationContext:
         self.overflows: int = 0
         self.current_collection_day: int = 0
         self.daily_log: Optional[Dict[str, List[Any]]] = None
-        self.attention_dict: Dict[str, List[Any]] = {}
+        self._metric_sums: Dict[str, Any] = {}
+        self._metric_list_ids: Dict[str, int] = {}
+        self._metric_list_lengths: Dict[str, int] = {}
+        self._metric_sums_ready: bool = False
         self.execution_time: float = 0
         self.tic: float = 0
         self.config: Optional[Dict[str, Any]] = None
+        self._policy_config_cache: Optional[Dict[str, Any]] = None
         self.vehicle_capacity: Optional[float] = None
         self.shift_hours: float = 7.0
         self.time_matrix: Optional[np.ndarray] = None

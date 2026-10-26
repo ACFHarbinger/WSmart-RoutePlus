@@ -101,7 +101,6 @@ class TestSimulatorIntegration:
             ctx.overflows = 0
             ctx.execution_time = 0.1
             ctx.model_tup = (None, None)
-            ctx.output_dict = {}
             ctx.daily_log = {}
 
         deps["init_new_state"].side_effect = mock_init_new_state

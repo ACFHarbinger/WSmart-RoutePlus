@@ -74,7 +74,6 @@ _PROVIDED = frozenset(
         "sample_id",
         "seed",
         "n_vehicles",
-        "graph_size",
         "time_windows",
         "routing_allowed",
     }
@@ -112,13 +111,22 @@ def _declared(action: Type[SimulationAction], name: str) -> Tuple[str, ...]:
     return ()
 
 
+_PIPELINE_CACHE: Dict[Tuple[str, ...], Tuple[Type[SimulationAction], ...]] = {}
+
+
 def resolve_pipeline(names: Optional[Sequence[str]] = None) -> List[Type[SimulationAction]]:
     """Return action classes in a validated order.
 
     ``names`` None selects the default pipeline. An unknown name, a repeated
     name, or a dependency cycle against the declared reads/writes fails here.
+    Successfully validated pipelines are cached by their step names.
     """
-    selected = list(DEFAULT_PIPELINE if names is None else names)
+    key = tuple(DEFAULT_PIPELINE if names is None else names)
+    cached = _PIPELINE_CACHE.get(key)
+    if cached is not None:
+        return list(cached)
+
+    selected = list(key)
     registry = _registry()
     unknown = [name for name in selected if name not in registry]
     if unknown:
@@ -156,7 +164,9 @@ def resolve_pipeline(names: Optional[Sequence[str]] = None) -> List[Type[Simulat
         # A later mutation invalidates a previously finalized field.
         finalized.difference_update(writes)
         finalized.update(finalizes)
-    return [registry[name] for name in selected]
+    resolved = tuple(registry[name] for name in selected)
+    _PIPELINE_CACHE[key] = resolved
+    return list(resolved)
 
 
 # ---------------------------------------------------------------------------
