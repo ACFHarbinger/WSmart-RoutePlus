@@ -25,6 +25,9 @@ problems:
   - ptp
   - cptp
 
+# Ship configs/envs/<problem>.yaml for these problems only.
+only_problem_env_configs: true
+
 stages:
   routing:
     - swc_tcf
@@ -44,6 +47,14 @@ patches: minimal/patches
 
 # Index every package init instead of following its re-exports.
 index_all_inits: true
+
+# Delete the functions, classes and methods no shipped code or config references (dead code).
+# keep_names lists definitions reached only through names built at run time.
+prune_unreferenced: true
+
+# One logic/_manifest.py with a submanifest per stage instead of a _manifest.py per stage.
+single_manifest: true
+keep_names: []
 
 infrastructure:
   - logic.src.pipeline.simulations
@@ -104,7 +115,7 @@ excluded_packages:
 dependency_extras:
   solvers:
     - gurobipy
-    - pyomo
+
   core:
     - plotext>=5.3.2,<6
   neural:
