@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Simulation corpus scenes (`2026-10-28`, [#175](https://github.com/ACFHarbinger/WSmart-Route/issues/175), [#176](https://github.com/ACFHarbinger/WSmart-Route/issues/176), [#177](https://github.com/ACFHarbinger/WSmart-Route/issues/177), [#178](https://github.com/ACFHarbinger/WSmart-Route/issues/178), [#179](https://github.com/ACFHarbinger/WSmart-Route/issues/179))
 
+### Studio startup errors (`2026-10-26`)
+
+- The HPO study list returns an empty list when the Optuna SQLite file is missing, and load and export catch the database error.
+- Linux launch attaches a no-op handler for the deprecated AppIndicator log domain.
+- The Vite config serves a DuckDB worker sourcemap, and `app/package.json` writes that file after install.
+
 ### SWC-TCF uses the directed formulation (`2026-10-26`)
 
 - `policy_swc_tcf.yaml` sets `formulation: directed` and `no_solution_time_factor: 9.0`. Each used arc is charged its own directed distance. `formulation: paper` remains the undirected model.

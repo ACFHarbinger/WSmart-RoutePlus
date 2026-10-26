@@ -33,15 +33,26 @@ pub struct OptunaStudyData {
 }
 
 const LIST_STUDIES_SCRIPT: &str = r#"
-import json, sys
+import json, sys, os
 try:
     import optuna
 except ImportError:
     print(json.dumps({"error": "optuna not installed"}))
     sys.exit(0)
 storage = sys.argv[1]
+if storage.startswith("sqlite:///"):
+    path = storage[len("sqlite:///"):]
+    if "?" in path:
+        path = path.split("?", 1)[0]
+    if path != ":memory:" and not os.path.exists(path):
+        print(json.dumps([]))
+        sys.exit(0)
 optuna.logging.set_verbosity(optuna.logging.WARNING)
-summaries = optuna.study.get_all_study_summaries(storage=storage)
+try:
+    summaries = optuna.study.get_all_study_summaries(storage=storage)
+except Exception:
+    print(json.dumps([]))
+    sys.exit(0)
 out = []
 for s in summaries:
     # Re-load each study briefly for complete count and best value
@@ -66,7 +77,7 @@ print(json.dumps(out))
 "#;
 
 const LOAD_STUDY_SCRIPT: &str = r#"
-import json, sys
+import json, sys, os
 try:
     import optuna
     from optuna.importance import FanovaImportanceEvaluator
@@ -74,8 +85,19 @@ except ImportError:
     print(json.dumps({"error": "optuna not installed"}))
     sys.exit(0)
 storage, name = sys.argv[1], sys.argv[2]
+if storage.startswith("sqlite:///"):
+    path = storage[len("sqlite:///"):]
+    if "?" in path:
+        path = path.split("?", 1)[0]
+    if path != ":memory:" and not os.path.exists(path):
+        print(json.dumps({"error": f"Database file not found: {path}"}))
+        sys.exit(0)
 optuna.logging.set_verbosity(optuna.logging.WARNING)
-study = optuna.load_study(study_name=name, storage=storage)
+try:
+    study = optuna.load_study(study_name=name, storage=storage)
+except Exception as e:
+    print(json.dumps({"error": str(e)}))
+    sys.exit(0)
 trials = []
 for t in study.trials:
     trials.append({
@@ -170,7 +192,18 @@ except ImportError as exc:
     sys.exit(0)
 storage, name, output_dir = sys.argv[1], sys.argv[2], sys.argv[3]
 output_dir = output_dir if output_dir else None
-report_dir = export_optuna_study_from_storage(storage, name, output_dir=output_dir)
+if storage.startswith("sqlite:///"):
+    path = storage[len("sqlite:///"):]
+    if "?" in path:
+        path = path.split("?", 1)[0]
+    if path != ":memory:" and not os.path.exists(path):
+        print(json.dumps({"error": f"Database file not found: {path}"}))
+        sys.exit(0)
+try:
+    report_dir = export_optuna_study_from_storage(storage, name, output_dir=output_dir)
+except Exception as exc:
+    print(json.dumps({"error": str(exc)}))
+    sys.exit(0)
 files = []
 n_complete = 0
 if report_dir and os.path.isdir(report_dir):

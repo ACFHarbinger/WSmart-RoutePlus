@@ -34,7 +34,7 @@ build:
 
 # Type-check the TypeScript frontend without emitting files
 check:
-    npm --prefix app exec -- tsc --noEmit
+    npm --prefix app exec -- tsc --noEmit -p app/tsconfig.json
 
 # Check the Rust backend for errors without producing a binary (fast)
 check-rust:
