@@ -21,5 +21,8 @@ _LAZY = {
 
 
 
+__all__ = list(_LAZY)  # pyrefly: ignore[unresolvable-dunder-all]  # lazy re-exports; resolved through __getattr__
+
+
 def __getattr__(name: str) -> Any:
     return lazy_getattr(globals(), _LAZY, name)

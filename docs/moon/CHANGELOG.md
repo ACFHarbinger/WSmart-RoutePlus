@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Environments.** Narrowed the optional `TensorDict` fields and distance matrices in `envs/base/{base,ops,routing,problem,resources,generator}.py`; `RoutingEnv` overrides now use the `RL4COEnvBase` signatures. `envs/common/metrics.py` asserts the ratio-metric dependencies that `Metric.__post_init__` already enforces.
 - **Models.** Declared the mixin attributes the glimpse decoder uses, typed the attention-model config arguments and `load_state_dict` mapping, and typed the embedding context accessors and PTP initial features.
-- **Utilities and results.** Guarded `load_grid_base`'s optional indices, typed the TensorDict state wrapper accessors, narrowed the `read_json` path and fixed the Gurobi licence parsing. Removed `__all__` lists built from lazy maps because static analyzers cannot resolve them; the names stay available through the package `__getattr__`.
+- **Utilities and results.** Guarded `load_grid_base`'s optional indices, typed the TensorDict state wrapper accessors, narrowed the `read_json` path and fixed the Gurobi licence parsing. Kept the lazy package `__all__` exports resolvable with reasoned static-analysis markers; the embeddings `__all__` was dropped because the minimal builder prunes the imports it lists.
 
 ### Claude: the minimal package is built by the release builder from a profile (`2026-10-25`)
 
