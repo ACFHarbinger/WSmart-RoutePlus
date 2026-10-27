@@ -214,6 +214,17 @@ fn test_keychain_validation_empty_inputs() {
 }
 
 #[test]
+fn test_poller_spawn_outside_tokio_context() {
+    // This thread has no Tokio reactor, matching a sync command on the GTK thread.
+    let (tx, rx) = std::sync::mpsc::channel();
+    super::poller::spawn_watcher(async move {
+        let _ = tx.send(());
+    });
+    rx.recv_timeout(std::time::Duration::from_secs(5))
+        .expect("watcher task did not start");
+}
+
+#[test]
 fn test_poller_registration_lifecycle() {
     let poller = super::poller::LocalJobPoller::new();
     assert!(poller.watched_jobs().is_empty());

@@ -101,8 +101,12 @@ impl CloudJobWatcher for LocalJobPoller {
         let registry = Arc::clone(&self.active_watchers);
         let task_job_id = job_id.clone();
 
-        tokio::spawn(async move {
-            let mut ticker = tokio::time::interval(tokio::time::Duration::from_millis(safe_interval));
+        // Sync Tauri commands on Linux run inside WebKit's URI-scheme callback.
+        // That thread has no Tokio context, so `tokio::spawn` panics here and the
+        // process aborts because the callback cannot unwind.
+        spawn_watcher(async move {
+            let mut ticker =
+                tokio::time::interval(tokio::time::Duration::from_millis(safe_interval));
             // A slow poll delays the next one instead of triggering a burst of catch-up polls.
             ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
 
@@ -180,6 +184,17 @@ impl CloudJobWatcher for LocalJobPoller {
             .map(|g| g.keys().cloned().collect())
             .unwrap_or_default()
     }
+}
+
+/// Spawn a watcher on Tauri's runtime.
+///
+/// Safe to call from a thread that is not inside a Tokio runtime. `tokio::spawn`
+/// is not: it requires a current reactor and panics on the GTK main thread.
+pub(super) fn spawn_watcher<F>(task: F)
+where
+    F: std::future::Future<Output = ()> + Send + 'static,
+{
+    tauri::async_runtime::spawn(task);
 }
 
 static GLOBAL_POLLER: OnceLock<LocalJobPoller> = OnceLock::new();
