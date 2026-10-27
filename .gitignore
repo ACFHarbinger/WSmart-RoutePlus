@@ -464,6 +464,7 @@ test_logs/
 test_tracking/
 
 # Large output files
+Qoutputs/
 checkpoints/
 assets/output/**/*.jsonl
 assets/tracking/tracking.db
