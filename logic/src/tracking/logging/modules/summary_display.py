@@ -172,7 +172,7 @@ def daily_row_is_visible(km_val: float, mandatory: Any, solver_status: Any) -> b
 def display_per_policy_simulation_summary(  # noqa: C901
     pol_name: str,
     sample_id: int,
-    aggregate_metrics: List[float],
+    aggregate_metrics: Dict[str, Any],
     daily_log: Dict[str, List[Any]],
     title_prefix: str = "Results for",
     lock: Optional[Any] = None,

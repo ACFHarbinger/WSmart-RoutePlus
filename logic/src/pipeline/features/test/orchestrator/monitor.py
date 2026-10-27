@@ -43,7 +43,7 @@ def initialize_simulation_display(
     return display
 
 
-def process_display_updates(
+def process_display_updates(  # noqa: C901 - one flat dashboard-refresh pipeline; slicing it would split the shared_metrics/log_tmp contract
     display: SimulationDisplayCallback,
     shared_metrics: dict,
     log_tmp: dict,

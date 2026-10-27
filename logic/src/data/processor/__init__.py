@@ -45,7 +45,22 @@ _LAZY = {
     "setup_dist_path_tup": "logic.src.data.processor.setup:setup_dist_path_tup",
 }
 
-__all__ = list(_LAZY)
+__all__ = [
+    "convert_to_dict",
+    "get_df_types",
+    "process_indices",
+    "sample_df",
+    "save_matrix_to_excel",
+    "setup_df",
+    "sort_dataframe",
+    "format_coordinates",
+    "SimulationDataMapper",
+    "process_coordinates",
+    "process_data",
+    "process_model_data",
+    "setup_basedata",
+    "setup_dist_path_tup",
+]
 
 
 def __getattr__(name):

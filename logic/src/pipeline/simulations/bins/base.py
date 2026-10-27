@@ -18,7 +18,7 @@ live in the :class:`~logic.src.pipeline.simulations.bins.filling.BinsFillingMixi
 
 import contextlib
 import os
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional, Union, cast
 
 import numpy as np
 import pandas
@@ -152,6 +152,7 @@ class Bins(BinsFillingMixin):
                 self.grid = None  # type: ignore[assignment]
 
         if sample_dist == "emp":
+            assert self.grid is not None, "empirical sampling requires a loaded grid"
             self.dist_param1 = self.grid.get_mean_rate()
             self.dist_param2 = self.grid.get_var_rate()
         else:
@@ -195,7 +196,7 @@ class Bins(BinsFillingMixin):
             )
 
         with contextlib.suppress(Exception):
-            run = get_active_run()
+            run = get_active_run() if get_active_run is not None else None
             if run is not None:
                 run.log_params(
                     {
@@ -227,13 +228,13 @@ class Bins(BinsFillingMixin):
         if "ID" in data.columns:
             data = data[data["ID"] != 0].reset_index(drop=True)
 
-        self.means = np.maximum(data["Mean"].values.astype(np.float64), 0)
-        self.std = np.maximum(data["StD"].values.astype(np.float64), 0)
-        self.day_count = np.maximum(data.at[0, "Count"].astype(np.int64), 0)
+        self.means = np.maximum(np.asarray(data["Mean"], dtype=np.float64), 0)
+        self.std = np.maximum(np.asarray(data["StD"], dtype=np.float64), 0)
+        self.day_count = max(int(cast(Any, data.at[0, "Count"])), 0)
         self.square_diff = (self.std**2) * (self.day_count - 1)
         self.start_with_fill = True
         with contextlib.suppress(Exception):
-            run = get_active_run()
+            run = get_active_run() if get_active_run is not None else None
             if run is not None:
                 run.log_params(
                     {

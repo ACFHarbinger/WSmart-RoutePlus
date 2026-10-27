@@ -58,15 +58,16 @@ class WarmupBaseline(Baseline):
             kwargs: Additional keyword arguments.
         """
         super().__init__()
-        self.baseline = baseline
+        self.baseline: Baseline = baseline
         self.warmup_epochs = bl_warmup_epochs if bl_warmup_epochs is not None else warmup_epochs
         self.warmup_baseline = ExponentialBaseline(beta=beta, exp_beta=exp_beta)
         self.alpha = 0.0
 
     def configure_comparison(self, env: Any, sample_size: int, seed: int = 0) -> None:
         """Forward private comparison setup to a rollout target, if present."""
-        if hasattr(self.baseline, "configure_comparison"):
-            self.baseline.configure_comparison(env, sample_size, seed)
+        configure_comparison = getattr(self.baseline, "configure_comparison", None)
+        if configure_comparison is not None:
+            configure_comparison(env, sample_size, seed)
 
     def eval(self, td: TensorDict, reward: torch.Tensor, env: Optional[Any] = None) -> torch.Tensor:  # type: ignore[override]
         """

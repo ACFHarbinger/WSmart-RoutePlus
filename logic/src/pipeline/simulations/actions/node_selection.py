@@ -12,7 +12,6 @@ Example:
     >>> # action.execute(context)
 """
 
-import os
 from dataclasses import asdict
 from typing import Any, Dict, List, cast
 
@@ -20,7 +19,6 @@ import numpy as np
 
 from logic.src.configs import PackingConfig
 from logic.src.constants import MAX_CAPACITY_PERCENT
-from logic.src.constants.paths import CONFIGS_DIR
 from logic.src.interfaces import IBinContainer, ITraversable
 from logic.src.interfaces.context.search_context import SearchContext
 from logic.src.pipeline.simulations.actions.policy_config import (
@@ -36,6 +34,7 @@ from logic.src.pipeline.simulations.actions.policy_config import (
 )
 from logic.src.policies.packing import PackingContext, PackingFactory
 from logic.src.utils.configs.config_loader import load_config
+from logic.src.utils.configs.policy_files import policy_file
 
 from .base import (
     SimulationAction,
@@ -45,7 +44,6 @@ from .base import (
     _set_live_capture_meta,
     bind_context,
 )
-from logic.src.utils.configs.policy_files import policy_file
 
 
 def _packing_coordinates(bins: Any, context: Any) -> Any:

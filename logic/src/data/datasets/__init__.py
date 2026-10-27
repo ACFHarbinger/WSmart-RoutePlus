@@ -49,7 +49,19 @@ _LAZY = {
     "HtmlSimulationDataset": "logic.src.data.datasets.web.html_sim_dataset:HtmlSimulationDataset",
 }
 
-__all__ = list(_LAZY)
+__all__ = [
+    "td_kwargs",
+    "tensordict_collate_fn",
+    "BaselineDataset",
+    "TensorDictDataset",
+    "GenerativeDataset",
+    "NumpyPickleDataset",
+    "NumpyDictDataset",
+    "PandasCsvDataset",
+    "PandasExcelDataset",
+    "SimulationDataset",
+    "HtmlSimulationDataset",
+]
 
 
 def __getattr__(name):

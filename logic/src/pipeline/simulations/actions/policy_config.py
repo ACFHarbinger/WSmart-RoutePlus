@@ -6,9 +6,9 @@ acceptance-criterion config into a policy config, plus ``_live_ac_payload``. Mov
 unchanged from ``base.py``, which re-exports every name.
 """
 
-import os
 from dataclasses import asdict, is_dataclass
 from typing import Any, Dict, List, Mapping, Optional, Tuple
+
 from logic.src.utils.configs.policy_files import policy_file
 
 
@@ -222,7 +222,6 @@ def _load_policy_yaml_section(file_key: str, variant: str) -> Dict[str, Any]:
     Returns:
         The selected section as a plain dict (empty if the file cannot be read).
     """
-    from logic.src.constants.paths import CONFIGS_DIR
     from logic.src.utils.configs.config_loader import load_config
 
     fpath = str(policy_file(file_key))

@@ -56,7 +56,7 @@ def expand_policy_configs(cfg: Config) -> None:  # noqa: C901
 
     for item in resolved_policies:
         if isinstance(item, dict) and len(item) == 1:
-            pol_name = list(item.keys())[0]
+            pol_name = str(list(item.keys())[0])
             custom_overrides = item[pol_name]
         else:
             pol_name = str(item)
@@ -94,6 +94,7 @@ def expand_policy_configs(cfg: Config) -> None:  # noqa: C901
             _is_resolved_variant = bool(
                 _override_keys & {"engine", "packing", "route_improvement", "time_limit", "params"}
             )
+            final_cfg: Any
             if custom_overrides and _is_resolved_variant:
                 # Use the resolved variant config directly, wrapped under the policy name key
                 final_cfg = {pol_name: copy.deepcopy(dict(custom_overrides))}

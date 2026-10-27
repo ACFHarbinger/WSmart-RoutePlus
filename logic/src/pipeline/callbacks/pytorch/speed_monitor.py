@@ -185,4 +185,4 @@ class SpeedMonitor(Callback):
         Returns:
             bool: True if logging should occur, False otherwise.
         """
-        return (trainer.global_step + 1) % trainer.log_every_n_steps == 0 or trainer.should_stop
+        return (trainer.global_step + 1) % getattr(trainer, "log_every_n_steps", 1) == 0 or trainer.should_stop

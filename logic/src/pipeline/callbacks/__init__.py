@@ -32,7 +32,17 @@ _LAZY = {
     "SimulationDisplayCallback": "logic.src.pipeline.callbacks.simulation.simulation_display:SimulationDisplayCallback",
 }
 
-__all__ = list(_LAZY)
+__all__ = [
+    "AttentionHeatmapCallback",
+    "GPUMemoryMonitor",
+    "HpoHealthMetricsCallback",
+    "ModelSummaryCallback",
+    "SpeedMonitor",
+    "TrainingDisplayCallback",
+    "TrainingHealthCallback",
+    "PolicySummaryCallback",
+    "SimulationDisplayCallback",
+]
 
 
 def __getattr__(name):
