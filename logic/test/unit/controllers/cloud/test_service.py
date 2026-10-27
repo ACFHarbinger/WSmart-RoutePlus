@@ -192,7 +192,7 @@ FAKE_MAIN = textwrap.dedent(
 
 @pytest.mark.unit
 def test_cli_runs_a_manifest_end_to_end_and_resumes_a_killed_task(tmp_path, monkeypatch):
-    from logic.controllers.cli import registry
+    from logic.controllers.cli.base import registry
     from logic.controllers.cloud import cli
 
     repo = tmp_path / "repo"

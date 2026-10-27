@@ -5,13 +5,13 @@ Attributes:
     get_parser: Returns the main ConfigsParser with all subcommands registered.
 
 Example:
-    >>> from logic.controllers.cli.registry import get_parser
+    >>> from logic.controllers.cli.base.registry import get_parser
     >>> parser = get_parser()
     >>> parser.parse_args(["test_suite", "-v"])
     Namespace(command='test_suite', verbose=True, ...)
 """
 
-from logic.controllers.cli.base import ConfigsParser
+from logic.controllers.cli.base.parser import ConfigsParser
 from logic.controllers.cli.bench_parser import add_benchmark_args
 from logic.controllers.cli.cloud_parser import add_cloud_args
 from logic.controllers.cli.drive_parser import add_drive_sync_args
@@ -85,8 +85,6 @@ def get_parser() -> ConfigsParser:
     add_cloud_args(cloud_parser)
 
     # TUI
-    from logic.controllers.cli.inspect_parser import add_list_policy_modules_args, add_trace_policy_args
-
     add_trace_policy_args(
         subparsers.add_parser("trace_policy", help="Write an execution trace for one routing solve")
     )
