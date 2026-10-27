@@ -68,7 +68,10 @@ class SansGeometricAcceptance(IAcceptanceCriterion):
         Returns:
             Tuple of (accepted, metrics). ``delta`` is candidate minus current.
         """
-        delta = candidate_obj - current_obj
+        # Scalars are the SANS profit. A sequence uses its first entry, same as LegacySAAcceptance.
+        current = float(current_obj) if isinstance(current_obj, (int, float)) else float(current_obj[0])
+        candidate = float(candidate_obj) if isinstance(candidate_obj, (int, float)) else float(candidate_obj[0])
+        delta = candidate - current
         if delta > 0:
             return True, {"accepted": True, "delta": delta, "temperature": self.T}
         try:
