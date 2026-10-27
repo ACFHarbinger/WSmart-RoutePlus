@@ -90,8 +90,8 @@ LEARNED_KEY = "AM"
 STATIC_KEY = "CVRP"
 
 
-#: The summary vintage the paper reads: the 2026-10-13 classical rows plus the Attention Model's.
-DEFAULT_SUMMARY_DIR = REPO_ROOT / "docs/private/global/simulation/rerun-2026-10-16"
+#: The summary vintage the paper reads: rerun-2026-10-19 plus the directed SWC-TCF rows (rerun-2026-10-26).
+DEFAULT_SUMMARY_DIR = REPO_ROOT / "docs/private/global/simulation/rerun-2026-10-26"
 
 
 #: Columns that are populated only for the strategies that have variants (``cf``
