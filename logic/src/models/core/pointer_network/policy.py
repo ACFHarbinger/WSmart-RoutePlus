@@ -14,7 +14,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 import torch
 from tensordict import TensorDict
@@ -84,8 +84,8 @@ class PointerNetworkPolicy(AutoregressivePolicy):
                 - log_likelihood: cumulative path log probabilities [B].
                 - actions: selected node indices [B, SeqLen].
         """
-        batch_size, graph_size, _ = td["locs"].size()
-        inputs = td["locs"]
+        inputs = cast(torch.Tensor, td["locs"])  # TensorDict values are a tensor union
+        batch_size, graph_size, _ = inputs.size()
 
         # 1. Custom recurrent embedding projection
         embedded_inputs = torch.mm(

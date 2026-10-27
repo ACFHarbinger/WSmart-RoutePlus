@@ -14,7 +14,7 @@ Example:
 """
 
 from dataclasses import dataclass
-from typing import Any, List, Optional
+from typing import Any, List, Optional, cast
 
 from logic.src.configs.policies.packing.dispatch import PackingConfig
 from logic.src.configs.policies.route_improvement import RouteImprovingConfig
@@ -127,8 +127,8 @@ class MuKappaLambdaESConfig:
             kappa=getattr(config, "kappa", 7),
             lambda_=getattr(config, "lambda_", 100),
             rho=getattr(config, "rho", 2),
-            tau_local=getattr(config, "tau_local", 1.0 / (2.0**0.5)),
-            tau_global=getattr(config, "tau_global", 1.0 / (2.0 * (2.0**0.5))),
+            tau_local=cast(float, getattr(config, "tau_local", 1.0 / (2.0**0.5))),
+            tau_global=cast(float, getattr(config, "tau_global", 1.0 / (2.0 * (2.0**0.5)))),
             initial_sigma=getattr(config, "initial_sigma", 1.0),
             recombination_type=getattr(config, "recombination_type", "intermediate"),
             max_iterations=getattr(config, "max_iterations", 1000),

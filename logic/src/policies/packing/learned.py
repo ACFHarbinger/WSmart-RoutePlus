@@ -16,7 +16,7 @@ Example:
 """
 
 import os
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple, cast
 
 import joblib
 import numpy as np
@@ -131,16 +131,17 @@ class LearnedSelection(IPackingAlgorithm):
             else getattr(context, "learned_threshold", 0.5)
         )
 
+        model = cast(Any, self._model)  # None still fails at the call; the checker cannot see the load
         if self._model_type == "sklearn":
-            if hasattr(self._model, "predict_proba"):
-                probs = self._model.predict_proba(features)[:, 1]
+            if hasattr(model, "predict_proba"):
+                probs = model.predict_proba(features)[:, 1]
             else:
-                probs = self._model.predict(features)
+                probs = model.predict(features)
         elif self._model_type == "torch":
             with torch.no_grad():
                 input_tensor = torch.from_numpy(features).float()
                 # Assuming the model returns probabilities or logits
-                output = self._model(input_tensor)
+                output = model(input_tensor)
                 if output.shape[-1] > 1:
                     probs = torch.softmax(output, dim=-1)[:, 1].numpy()
                 else:

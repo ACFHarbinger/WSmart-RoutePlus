@@ -14,11 +14,14 @@ from __future__ import annotations
 import json
 import shutil
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Tuple, cast
 
 try:
-    from ruamel.yaml import YAML
-    from ruamel.yaml.comments import CommentedMap, CommentedSeq
+    from ruamel.yaml import YAML  # pyrefly: ignore[missing-import]  # optional ruamel dependency
+    from ruamel.yaml.comments import (  # pyrefly: ignore[missing-import]  # optional ruamel dependency
+        CommentedMap,
+        CommentedSeq,
+    )
 
     _HAS_RUAMEL = True
 except ImportError:  # pragma: no cover
@@ -108,7 +111,7 @@ def convert_node(node: Any) -> Any:
 
 def _yaml_loader() -> Any:
     if _HAS_RUAMEL:
-        yaml = YAML()
+        yaml = cast(Any, YAML)()  # None when ruamel is not installed
         yaml.preserve_quotes = True
         yaml.width = 120
         yaml.indent(mapping=2, sequence=4, offset=2)

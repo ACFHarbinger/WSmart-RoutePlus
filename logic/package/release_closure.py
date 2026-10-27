@@ -19,7 +19,7 @@ import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
 # The source tree the release is built from: the repository, or (for a manifest with an overlay
 # or patches) the prepared copy that build_release.py points WSR_BUILD_SOURCE at.
@@ -62,7 +62,7 @@ def lazy_targets(path: Path) -> Dict[str, str]:
         )
         if any(isinstance(target, ast.Name) and target.id == "_LAZY" for target in targets):
             try:
-                value = ast.literal_eval(node.value)
+                value = ast.literal_eval(cast(Any, node).value)  # Assign and AnnAssign both store the map
             except (ValueError, TypeError):
                 continue
             if isinstance(value, dict):
@@ -82,7 +82,7 @@ def eager_targets(path: Path, root: Path) -> Dict[str, str]:
         if not isinstance(node, ast.ImportFrom) or node.module is None and node.level == 0:
             continue
         if node.level == 0:
-            module = node.module
+            module = cast(str, node.module)  # None modules are skipped above
         else:
             up = pkg[: len(pkg) - (node.level - 1)]
             module = ".".join(up + ([node.module] if node.module else []))
@@ -109,7 +109,7 @@ def _public_names(path: Path) -> Set[str]:
             isinstance(t, ast.Name) and t.id == "__all__" for t in node.targets
         )
         if is_all and isinstance(node.value, (ast.List, ast.Tuple)):
-            return {e.value for e in node.value.elts if isinstance(e, ast.Constant)}
+            return {cast(str, e.value) for e in node.value.elts if isinstance(e, ast.Constant)}
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
             names.add(node.name)
         elif isinstance(node, ast.Assign):
@@ -275,7 +275,7 @@ def _is_deferred(tree: ast.Module, target: ast.AST) -> bool:
                 if inner is target:
                     return True
         type_checking = isinstance(node, ast.If) and isinstance(node.test, ast.Name) and node.test.id == "TYPE_CHECKING"
-        if type_checking and any(sub is target for stmt in node.body for sub in ast.walk(stmt)):
+        if type_checking and any(sub is target for stmt in cast(ast.If, node).body for sub in ast.walk(stmt)):
             return True
         if isinstance(node, ast.Try) and any(_guards_import(handler) for handler in node.handlers):
             for inner in node.body:

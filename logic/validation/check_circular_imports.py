@@ -29,7 +29,7 @@ import ast
 import os
 import sys
 from pathlib import Path
-from typing import Dict, Iterator, List, Optional, Set, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Set, Tuple, cast
 
 SKIP_DIRS = {".git", "__pycache__", "venv", ".venv", "node_modules", "dist", "build"}
 
@@ -307,7 +307,7 @@ def generate_html(cycles: List[List[str]], graph: Dict[str, Set[str]], output: P
         output: Path to the output HTML file.
     """
     cycle_nodes = {m for cycle in cycles for m in cycle}
-    net = Network(height="800px", width="100%", directed=True, notebook=False)
+    net = cast(Any, Network)(height="800px", width="100%", directed=True, notebook=False)
     net.set_options(
         '{"physics":{"stabilization":{"iterations":200}},"edges":{"arrows":{"to":{"enabled":true,"scaleFactor":0.5}}}}'
     )

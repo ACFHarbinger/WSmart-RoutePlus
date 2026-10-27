@@ -91,7 +91,7 @@ class NDSBRKGAConfig:
             NDSBRKGAConfig: Populated parameter instance.
         """
 
-        def _get(attr: str, default):  # type: ignore[no-untyped-def]
+        def _get(attr: str, default: Any) -> Any:
             if isinstance(config, dict):
                 return config.get(attr, default)
             return getattr(config, attr, default)

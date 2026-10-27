@@ -18,7 +18,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
 from logic.package.release_closure import (
     ENTRY_RE,
@@ -139,7 +139,7 @@ def filter_lazy_map(path: Path, staged_modules: Set[str], out: Path) -> List[str
         if not any(isinstance(target, ast.Name) and target.id == "_LAZY" for target in targets):
             continue
         try:
-            mapping = ast.literal_eval(node.value)
+            mapping = ast.literal_eval(cast(Any, node).value)  # Assign and AnnAssign both store the map
         except (ValueError, TypeError):
             continue
         if not isinstance(mapping, dict):
@@ -201,7 +201,7 @@ def drop_pruned_init_imports(path: Path, staged_modules: Set[str], out: Path) ->
             if not target.startswith("logic"):
                 continue
             if isinstance(node, ast.ImportFrom) and not _import_resolves(target, staged_modules, out):
-                remove_spans.append((node.lineno, node.end_lineno))
+                remove_spans.append((node.lineno, cast(int, node.end_lineno)))
                 dropped.append(f"{path.relative_to(out)}: import {target}")
                 break
             # A target that maps to a dev file (submodule import) must exist
@@ -211,7 +211,7 @@ def drop_pruned_init_imports(path: Path, staged_modules: Set[str], out: Path) ->
             else:
                 resolved = trimmed(target, out)
             if resolved not in staged_modules:
-                remove_spans.append((node.lineno, node.end_lineno))
+                remove_spans.append((node.lineno, cast(int, node.end_lineno)))
                 dropped.append(f"{path.relative_to(out)}: import {target}")
                 break
     if remove_spans or rewrite_spans:
@@ -220,7 +220,8 @@ def drop_pruned_init_imports(path: Path, staged_modules: Set[str], out: Path) ->
         for start, end, aliases, node in sorted(edits, key=lambda edit: edit[0], reverse=True):
             replacement = []
             if aliases is not None:
-                stmt = ast.ImportFrom(module=node.module, names=aliases, level=node.level)
+                imported = cast(ast.ImportFrom, node)  # rewrite rows always carry the import
+                stmt = ast.ImportFrom(module=imported.module, names=aliases, level=imported.level)
                 replacement = [ast.unparse(stmt) + "\n"]
             lines[start - 1 : end] = replacement
         path.write_text("".join(lines))
@@ -317,7 +318,9 @@ def _all_node(tree: ast.Module) -> Optional[ast.Assign]:
 
 def _rewrite_all(lines: List[str], node: ast.Assign, bound: Set[str]) -> List[str]:
     """``lines`` with the ``__all__`` assignment rewritten one name per line, keeping only bound names."""
-    names = [e.value for e in node.value.elts if isinstance(e, ast.Constant) and e.value in bound]
+    names = [
+        e.value for e in cast(ast.List, node.value).elts if isinstance(e, ast.Constant) and e.value in bound
+    ]
     block = ["__all__ = [\n", *(f'    "{name}",\n' for name in names), "]\n"]
     return lines[: node.lineno - 1] + block + lines[node.end_lineno :]
 
@@ -328,7 +331,7 @@ def _unbound_all_lines(path: Path, tree: ast.Module, bound: Set[str]) -> Optiona
     lines: Set[int] = set()
     if node is None:
         return lines
-    for element in node.value.elts:
+    for element in cast(ast.List, node.value).elts:  # __all__ is a list or tuple of names
         if isinstance(element, ast.Constant) and element.value not in bound:
             if element.lineno in (node.lineno, node.end_lineno) or element.lineno != element.end_lineno:
                 return None  # entries share lines: rewrite the whole list
@@ -342,7 +345,7 @@ def _unbound_attribute_lines(tree: ast.Module, lines: List[str], bound: Set[str]
         return set()
     drop: Set[int] = set()
     in_attributes = False
-    for index in range(tree.body[0].lineno - 1, tree.body[0].end_lineno):
+    for index in range(tree.body[0].lineno - 1, cast(int, tree.body[0].end_lineno)):
         text = lines[index].rstrip("\n")
         if text.strip() == "Attributes:":
             in_attributes = True
@@ -366,7 +369,7 @@ def drop_unbound_exports(path: Path) -> None:
         lines = [line if index not in drop else None for index, line in enumerate(lines)]
     if all_lines is None:
         node = _all_node(tree)
-        lines = _rewrite_all([line if line is not None else "" for line in lines], node, bound)
+        lines = _rewrite_all([line if line is not None else "" for line in lines], cast(ast.Assign, node), bound)
     if drop or all_lines is None:
         path.write_text("".join(line for line in lines if line is not None))
 
@@ -553,7 +556,7 @@ def _in_type_checking(tree: ast.Module, target: ast.AST) -> bool:
     """Whether ``target`` sits in an ``if TYPE_CHECKING:`` block."""
     for node in ast.walk(tree):
         guarded = isinstance(node, ast.If) and isinstance(node.test, ast.Name) and node.test.id == "TYPE_CHECKING"
-        if guarded and any(sub is target for stmt in node.body for sub in ast.walk(stmt)):
+        if guarded and any(sub is target for stmt in cast(ast.If, node).body for sub in ast.walk(stmt)):
             return True
     return False
 
@@ -652,7 +655,7 @@ def _reference_counts(tree: ast.Module) -> Dict[str, int]:
     skip = _docstring_nodes(tree)
     all_node = _all_node(tree)
     if all_node is not None:
-        skip.update(id(element) for element in all_node.value.elts)
+        skip.update(id(element) for element in cast(ast.List, all_node.value).elts)
     counts: Dict[str, int] = {}
 
     def add(name: str) -> None:
@@ -769,7 +772,8 @@ def _dead_spans(
         inside = _reference_counts(ast.Module(body=[node], type_ignores=[])).get(name, 0)  # type: ignore[list-item]
         if totals.get(name, 0) - inside > 0:
             continue
-        spans.append((node.lineno, node.end_lineno or node.lineno, f"{path.relative_to(out)}: {name}"))
+        located = cast(ast.stmt, node)  # prunable definitions are statements
+        spans.append((located.lineno, located.end_lineno or located.lineno, f"{path.relative_to(out)}: {name}"))
         if owner is not None:
             owners[id(owner)] = owner
     # A method inside a class that is itself deleted goes with the class.
@@ -814,10 +818,10 @@ def _reference_totals(trees: Dict[Path, ast.Module], base: Dict[str, int]) -> Tu
     stack = list(rooted)
     while stack:
         for node in classes.get(stack.pop(), []):
-            for base in _base_names(node):
-                if base in classes and base not in facing:
-                    facing.add(base)
-                    stack.append(base)
+            for parent_name in _base_names(node):
+                if parent_name in classes and parent_name not in facing:
+                    facing.add(parent_name)
+                    stack.append(parent_name)
     framework_called: Set[str] = set()
     for name, nodes in classes.items():
         for node in nodes:

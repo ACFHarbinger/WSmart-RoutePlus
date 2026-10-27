@@ -24,7 +24,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Tuple
+from typing import Any, Tuple, cast
 
 import torch
 import torch.nn.functional as F
@@ -232,15 +232,19 @@ class DACTEncoder(ImprovementEncoder):
                 - g: Refined positional feature embeddings [B, N, d].
         """
         # 1. Initialize node aspect (h)
-        depot = td["depot"].unsqueeze(1) if td["depot"].dim() == 2 else td["depot"]
-        locs = td["locs"]
+        depot_raw = cast(torch.Tensor, td["depot"])  # TensorDict values are a tensor union
+        depot = depot_raw.unsqueeze(1) if depot_raw.dim() == 2 else depot_raw
+        locs = cast(torch.Tensor, td["locs"])  # TensorDict values are a tensor union
         nodes = torch.cat([depot, locs], dim=1)  # [B, N, 2]
         h = self.node_init(nodes)  # [B, N, d]
         bs, n, _ = nodes.shape
 
         # 2. Initialize positional aspect (g)
         if "solution" in td.keys():
-            pos_coords = self._compute_cyclic_positions(td["solution"], n)
+            pos_coords = self._compute_cyclic_positions(
+                cast(torch.Tensor, td["solution"]),  # TensorDict values are a tensor union
+                n,
+            )
         else:
             identity_tour = torch.arange(n, device=h.device).unsqueeze(0).expand(bs, -1)
             pos_coords = self._compute_cyclic_positions(identity_tour, n)

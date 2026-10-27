@@ -222,7 +222,7 @@ class HierarchicalNeuralAgentPolicy(BaseMultiPeriodRoutingPolicy):
             if mandatory_today:
                 routes = greedy_insertion(
                     routes=[],
-                    removed_nodes=list(mandatory_today),
+                    removed_nodes=list(cast(List[int], mandatory_today)),
                     dist_matrix=sub_dist_matrix,
                     wastes=rolling_wastes,
                     capacity=capacity,

@@ -17,8 +17,9 @@ import sys
 from contextvars import ContextVar
 from functools import wraps
 from pathlib import Path
+from typing import Any, Dict, Optional, cast
 
-_PROOF = ContextVar("gate_baseline_bpc_proof", default=None)
+_PROOF: ContextVar[Optional[Dict[str, Any]]] = ContextVar("gate_baseline_bpc_proof", default=None)
 
 
 class _RootProofFilter(logging.Filter):
@@ -61,7 +62,7 @@ def install_legacy_observer() -> bool:
     )
     original = module.run_bpc
     fingerprint_path = Path(__file__).resolve().parents[2] / "logic/src/utils/routing/problem_fingerprint.py"
-    spec = importlib.util.spec_from_file_location("gate_problem_fingerprint", fingerprint_path)
+    spec = cast(Any, importlib.util.spec_from_file_location("gate_problem_fingerprint", fingerprint_path))
     fingerprint_module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(fingerprint_module)
     fingerprint = fingerprint_module.problem_fingerprint
@@ -90,8 +91,8 @@ def install_legacy_observer() -> bool:
             _PROOF.set(None)
         return result
 
-    module.run_bpc = observed_solve
-    policy.run_bpc = observed_solve
+    cast(Any, module).run_bpc = observed_solve  # ModuleType has no declared run_bpc
+    cast(Any, policy).run_bpc = observed_solve  # ModuleType has no declared run_bpc
     cg_logger = logging.getLogger("logic.src.policies.helpers.solvers_and_matheuristics.search.column_generation")
     cg_logger.setLevel(logging.INFO)
     cg_logger.addFilter(_RootProofFilter())

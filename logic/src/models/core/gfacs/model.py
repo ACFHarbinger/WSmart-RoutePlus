@@ -124,7 +124,7 @@ class GFACS(nn.Module):
         Returns:
             Dict[str, Any]: Policy results including actions and rewards.
         """
-        env = env or self.env
+        env = cast(Any, env) or cast(Any, self.env)  # env may be an unset module attribute
         return self.policy(td, env, phase=phase, **kwargs)
 
     @property
@@ -226,7 +226,10 @@ class GFACS(nn.Module):
             log_b_p = -scipy.special.gammaln(n_routes + 1) - n_multinode_routes * math.log(2)
             from logic.src.utils.decoding import unbatchify
 
-            return unbatchify(torch.from_numpy(log_b_p).to(actions.device), n_ants)
+            return cast(
+                torch.Tensor,
+                unbatchify(torch.from_numpy(log_b_p).to(actions.device), n_ants),
+            )  # unbatchify returns a tensor for tensor input
         elif self.env.name in ("op", "pctsp", "ptp"):
             return torch.tensor(math.log(1 / 2))
         else:

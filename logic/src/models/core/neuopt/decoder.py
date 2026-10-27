@@ -30,7 +30,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union, cast
 
 import torch
 import torch.nn.functional as F
@@ -221,7 +221,7 @@ class NeuOptDecoder(ImprovementDecoder):
             torch.Tensor: Successor node indices [B].
         """
         if "solution" in td.keys():
-            sol = td["solution"]
+            sol = cast(torch.Tensor, td["solution"])  # TensorDict values are a tensor union
             if sol.size(1) == n:
                 # Find position of x1 in sol
                 sol_pos = torch.zeros(bs, n, dtype=torch.long, device=x1.device)
@@ -258,7 +258,7 @@ class NeuOptDecoder(ImprovementDecoder):
             xj = self._get_tour_successor(td, x1, bs, n)
 
         if "solution" in td.keys():
-            sol = td["solution"]
+            sol = cast(torch.Tensor, td["solution"])  # TensorDict values are a tensor union
             if sol.size(1) == n:
                 sol_pos = torch.zeros(bs, n, dtype=torch.long, device=device)
                 positions = torch.arange(n, device=device).unsqueeze(0).expand(bs, -1)
@@ -301,7 +301,7 @@ class NeuOptDecoder(ImprovementDecoder):
         h = embeddings[0] if isinstance(embeddings, (tuple, list)) else embeddings
         bs, n, d = h.shape
         strategy = kwargs.get("strategy", "greedy")
-        K = kwargs.get("k_basis", self.k_basis)
+        K = cast(int, kwargs.get("k_basis", self.k_basis))  # basis-move count is an int
 
         # 1. Initialize hidden states with mean-pooled graph embedding (Eq. 2)
         q0 = h.mean(dim=1)  # [B, d]

@@ -19,7 +19,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Iterator, List, cast
+from typing import Any, Iterator, List
 
 import torch
 from tensordict import TensorDict
@@ -66,7 +66,7 @@ class TSPAdapter(SubproblemAdapter):
     def _extract_subproblems(self) -> None:
         """Parses unique partition IDs to build localized SubproblemMapping objects."""
         for batch_idx in range(self.batch_size):
-            coords = cast(torch.Tensor, self.coordinates)[batch_idx]  # coordinates are stored as a tensor
+            coords = self.coordinates[batch_idx]  # coordinates are stored as a tensor
             actions = self.partition_actions[batch_idx]
 
             # Group nodes by partition

@@ -13,7 +13,7 @@ Example:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional
 
 from logic.src.configs.policies.routing.meta_heuristics.abc import ABCConfig
 
@@ -60,7 +60,7 @@ class FILOConfig(ABCConfig):
     svc_size: int = 50
     n_cw: int = 100
     local_search_iterations: int = 500
-    seed: int = 42
+    seed: Optional[int] = 42
     profit_aware_operators: bool = False
     route_min_sa_temp: float = 1.0
 

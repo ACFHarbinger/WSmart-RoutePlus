@@ -169,18 +169,19 @@ class RayTuneHPO(BaseHPO):
             with contextlib.suppress(Exception):
                 val_reward = float(objective_fn(trial_cfg))
 
-            ray_train.report({"val_reward": val_reward})
+            cast(Any, ray_train).report({"val_reward": val_reward})
 
         gpu_per_trial = 1.0 if self.cfg.device == "cuda" else 0.0
         cpu_per_trial = max(1, self.cfg.hpo.cpu_cores)
+        tune_mod = cast(Any, tune)  # None when Ray is not installed
 
-        tuner = tune.Tuner(
-            tune.with_resources(
+        tuner = tune_mod.Tuner(
+            tune_mod.with_resources(
                 trainable,
                 resources={"cpu": cpu_per_trial, "gpu": gpu_per_trial},
             ),
             param_space=ray_space,
-            tune_config=tune.TuneConfig(
+            tune_config=tune_mod.TuneConfig(
                 scheduler=scheduler,
                 search_alg=search_alg,
                 num_samples=self.cfg.hpo.num_samples,
@@ -190,8 +191,11 @@ class RayTuneHPO(BaseHPO):
             ),
             run_config=cast(Any, ray.train.RunConfig(  # ray.train and ray.tune alias the same RunConfig
                 storage_path=getattr(self.cfg.tracking, "ray_tune_storage_path", "ray_results"),
-                failure_config=ray.train.FailureConfig(
-                    max_failures=self.cfg.hpo.max_failures,
+                failure_config=cast(  # air FailureConfig vs train.v2 FailureConfig alias
+                    Any,
+                    ray.train.FailureConfig(
+                        max_failures=self.cfg.hpo.max_failures,
+                    ),
                 ),
                 callbacks=run_callbacks,
             )),
@@ -230,20 +234,21 @@ class RayTuneHPO(BaseHPO):
             Ray tune param space.
         """
         space: Dict[str, Any] = {}
+        rt_mod = cast(Any, rt)  # None when Ray is not installed
         for name, spec in self.search_space.items():
             ptype = spec["type"]
             if ptype == "float":
                 if spec.get("log", False):
-                    space[name] = rt.loguniform(spec["low"], spec["high"])
+                    space[name] = rt_mod.loguniform(spec["low"], spec["high"])
                 elif spec.get("step") is not None:
                     # Quantised uniform — approximate with quniform
-                    space[name] = rt.quniform(spec["low"], spec["high"], spec["step"])
+                    space[name] = rt_mod.quniform(spec["low"], spec["high"], spec["step"])
                 else:
-                    space[name] = rt.uniform(spec["low"], spec["high"])
+                    space[name] = rt_mod.uniform(spec["low"], spec["high"])
             elif ptype == "int":
-                space[name] = rt.randint(spec["low"], spec["high"] + 1)
+                space[name] = rt_mod.randint(spec["low"], spec["high"] + 1)
             elif ptype == "categorical":
-                space[name] = rt.choice(spec["choices"])
+                space[name] = rt_mod.choice(spec["choices"])
             else:
                 raise ValueError(f"Unknown param type '{ptype}' for '{name}'")
         return space
@@ -262,8 +267,9 @@ class RayTuneHPO(BaseHPO):
         max_t = self.cfg.hpo.n_epochs_per_trial
         grace = max(1, max_t // self.cfg.hpo.reduction_factor)
 
+        asha_scheduler = cast(Any, ASHAScheduler)  # None when Ray is not installed
         if name == "asha":
-            return ASHAScheduler(
+            return asha_scheduler(
                 max_t=max_t,
                 grace_period=grace,
                 reduction_factor=self.cfg.hpo.reduction_factor,
@@ -278,14 +284,14 @@ class RayTuneHPO(BaseHPO):
                 else:
                     hyperparam_mutations[param_name] = [spec["low"], spec["high"]]
 
-            return PopulationBasedTraining(
+            return cast(Any, PopulationBasedTraining)(
                 time_attr="training_iteration",
                 perturbation_interval=self.cfg.hpo.interval_steps,
                 hyperparam_mutations=hyperparam_mutations,
             )
 
         if name == "bohb":
-            return HyperBandForBOHB(
+            return cast(Any, HyperBandForBOHB)(
                 time_attr="training_iteration",
                 max_t=max_t,
                 reduction_factor=self.cfg.hpo.reduction_factor,
@@ -293,7 +299,7 @@ class RayTuneHPO(BaseHPO):
 
         # Fallback: ASHA
 
-        return ASHAScheduler(max_t=max_t, grace_period=grace)
+        return asha_scheduler(max_t=max_t, grace_period=grace)
 
     def _build_search_alg(self) -> Optional[Any]:
         """Return a search algorithm compatible with the chosen scheduler.
@@ -304,7 +310,7 @@ class RayTuneHPO(BaseHPO):
         if self._scheduler_name == "bohb":
             # BOHB requires the TuneBOHB search algorithm
             with contextlib.suppress(ImportError):
-                return TuneBOHB(seed=self.cfg.seed)
+                return cast(Any, TuneBOHB)(seed=self.cfg.seed)
         return None
 
     # ------------------------------------------------------------------
@@ -327,7 +333,7 @@ class RayTuneHPO(BaseHPO):
 
         with contextlib.suppress(ImportError, Exception):
             callbacks.append(
-                MLflowLoggerCallback(
+                cast(Any, MLflowLoggerCallback)(
                     tracking_uri=mlflow_uri,
                     experiment_name=mlflow_exp or "wsmart-route-hpo",
                     save_artifact=True,

@@ -7,6 +7,7 @@ and solution quality (reward) for neural and classical solvers.
 """
 
 import time
+from typing import Any, cast
 
 import pandas as pd
 import torch
@@ -40,14 +41,14 @@ def benchmark(problem="ptp", sizes=None, num_instances=16):
         print(f"\n--- Problem Size: {graph_size} ---")
 
         # Prepare environment config
-        cfg = Config()
+        cfg = cast(Any, Config())  # root Config has no typed env field
         cfg.env = EnvConfig(name=problem)
         cfg.env.curriculum_graphs[0].num_loc = graph_size
         cfg.train = TrainConfig(batch_size=num_instances)
 
         # Generate generic batch
         # We create a dummy model just to get the env and generator
-        dummy_model = create_model(cfg)
+        dummy_model = cast(Any, create_model(cfg))  # LightningModule stubs omit env/policy
         env = dummy_model.env
         td = env.reset(batch_size=[num_instances])
 
@@ -58,7 +59,7 @@ def benchmark(problem="ptp", sizes=None, num_instances=16):
             cfg.model = ModelConfig(name=p_name)
 
             try:
-                model = create_model(cfg)
+                model = cast(Any, create_model(cfg))  # LightningModule stubs omit policy
                 model.eval()
 
                 # Warmup

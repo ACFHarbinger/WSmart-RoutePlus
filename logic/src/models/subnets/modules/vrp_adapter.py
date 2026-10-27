@@ -70,7 +70,7 @@ class VRPAdapter(SubproblemAdapter):
     def _extract_subproblems(self) -> None:
         """Extracts subproblems and ensures each receives a depot at index 0."""
         for batch_idx in range(self.batch_size):
-            coords = cast(torch.Tensor, self.coordinates)[batch_idx]  # coordinates are stored as a tensor
+            coords = self.coordinates[batch_idx]  # coordinates are stored as a tensor
             actions = self.partition_actions[batch_idx]
 
             # First node is assumed to be the depot

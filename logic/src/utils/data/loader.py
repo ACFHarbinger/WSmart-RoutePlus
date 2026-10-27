@@ -252,7 +252,9 @@ def load_grid_base(
     """
     from logic.src.constants.paths import ROOT_DIR
     from logic.src.constants.waste import COUNTY_ALIASES
-    from logic.submodules.wsmart_bin_analysis import GridBase
+    from logic.submodules.wsmart_bin_analysis import (  # pyrefly: ignore[missing-import]  # submodule is not on the checker path
+        GridBase,
+    )
 
     if data_dir is None:
         data_dir = os.path.join(ROOT_DIR, "data", "simulator")
@@ -321,4 +323,6 @@ def load_grid_base(
 # --- Logic Strategy Imports (Below function definitions) ---
 
 if TYPE_CHECKING:
-    from logic.submodules.wsmart_bin_analysis import GridBase
+    from logic.submodules.wsmart_bin_analysis import (  # pyrefly: ignore[missing-import]  # submodule is not on the checker path
+        GridBase,
+    )
