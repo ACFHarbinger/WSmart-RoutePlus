@@ -57,6 +57,7 @@ class ResourceSampler:
         self._psutil = psutil
         self.workdir = Path(workdir)
         self.clock = clock
+        self.root: Optional[Any]
         try:
             self.root = psutil.Process(pid)
         except psutil.NoSuchProcess:

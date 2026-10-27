@@ -8,6 +8,7 @@ The provisioning lifecycle remains in vm.py and provisioning.py.
 import base64
 import json
 import shlex
+from typing import Optional
 from urllib.parse import quote
 
 from logic.controllers.cloud.interfaces import LaunchSpec
@@ -15,6 +16,10 @@ from logic.controllers.cloud.interfaces import LaunchSpec
 
 class AzureVmBootstrapMixin:
     """Bootstrap methods composed into AzureVmBackend."""
+
+    ssh_public_key: Optional[str]
+    vault_name: str
+    identity_id: str
 
     def _get_or_generate_ssh_key(self) -> str:
         """Return configured SSH public key or generate a throwaway key."""

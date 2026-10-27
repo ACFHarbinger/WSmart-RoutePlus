@@ -2,12 +2,21 @@
 
 import json
 import uuid
+from contextlib import AbstractContextManager
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Protocol, cast
 
 from logic.controllers.cloud.interfaces import CapacityError, ControlPlane, LaunchSpec
 from logic.controllers.cloud.model import TaskState
 from logic.controllers.cloud.providers.azure.orphan_queue import write_json
+
+
+class _AzureProvisionOps(Protocol):
+    """Methods supplied by the composed VM backend. Not a runtime base."""
+
+    def _orphan_lock(self) -> AbstractContextManager[None]: ...
+
+    def _teardown_failed_submit(self, rg: str, vm_name: str, nic_name: str) -> None: ...
 
 
 class AzureProvisioningMixin:
@@ -20,6 +29,10 @@ class AzureProvisioningMixin:
 
     _recovery_cp: Optional[ControlPlane] = None
     _recovery_scope: Optional[str] = None
+    orphan_file: Path
+    subscription_id: str
+    profile: str
+    resource_group: str
 
     @property
     def provision_file(self) -> Path:
@@ -59,14 +72,14 @@ class AzureProvisioningMixin:
             "lease_owner": launch.task.lease_owner,
             "handle": handle,
         }
-        with self._orphan_lock():
+        with cast(_AzureProvisionOps, self)._orphan_lock():
             records = self._load_provisions()
             records.append(record)
             write_json(self.provision_file, records)
         return token
 
     def _forget_provision(self, token: str) -> None:
-        with self._orphan_lock():
+        with cast(_AzureProvisionOps, self)._orphan_lock():
             write_json(self.provision_file, [record for record in self._load_provisions() if record["token"] != token])
 
     def confirm_provision(self, handle: str) -> None:
@@ -93,7 +106,7 @@ class AzureProvisioningMixin:
         """
         if self._recovery_cp is None:
             return
-        with self._orphan_lock():
+        with cast(_AzureProvisionOps, self)._orphan_lock():
             records = self._load_provisions()
         for record in records:
             if (
@@ -118,6 +131,8 @@ class AzureProvisioningMixin:
             ):
                 continue
             # Unique names ensure this intent cannot address a newer owner's VM.
-            self._teardown_failed_submit(record["resource_group"], record["vm_name"], record["nic_name"])
+            cast(_AzureProvisionOps, self)._teardown_failed_submit(
+                record["resource_group"], record["vm_name"], record["nic_name"]
+            )
             # Failed deletions have been durably transferred into the cleanup queue.
             self._forget_provision(record["token"])

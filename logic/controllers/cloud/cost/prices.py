@@ -21,7 +21,7 @@ import importlib
 import json
 import time
 from pathlib import Path
-from typing import Callable, Dict, Optional, Protocol, Tuple
+from typing import Callable, Dict, Optional, Protocol, Tuple, cast
 
 Rates = Dict[str, Tuple[float, float]]  # machine type -> (on-demand, spot) USD/h
 
@@ -64,7 +64,9 @@ class PriceTable:
         except ImportError:
             return None
         lookup = getattr(module, "price_per_hour", None)
-        return lookup(machine_type, region, spot) if callable(lookup) else None
+        if not callable(lookup):
+            return None
+        return cast(Optional[float], lookup(machine_type, region, spot))
 
     def update(self, provider: str, region: str, fetcher: PriceFetcher) -> int:
         """Replace a provider region's overrides with ``fetcher``'s prices; returns how many were stored."""
@@ -90,4 +92,4 @@ def provider_fetcher(provider: str) -> Optional[PriceFetcher]:
     except ImportError:
         return None
     fetch = getattr(module, "fetch_prices", None)
-    return fetch if callable(fetch) else None
+    return cast(PriceFetcher, fetch) if callable(fetch) else None

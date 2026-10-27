@@ -22,14 +22,15 @@ from __future__ import annotations
 import inspect
 import json
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Callable, Dict, cast
 
 from logic.controllers.cloud.model import ComputeKind, Provider
 
 
 def backend_kwargs(cls: type, offered: Dict[str, Any]) -> Dict[str, Any]:
     """The subset of ``offered`` that ``cls.__init__`` takes (all of it if it takes ``**kwargs``)."""
-    parameters = inspect.signature(cls.__init__).parameters
+    init = cast(Callable[..., Any], cast(Any, cls).__init__)
+    parameters = inspect.signature(init).parameters
     if any(p.kind == inspect.Parameter.VAR_KEYWORD for p in parameters.values()):
         return dict(offered)
     return {k: v for k, v in offered.items() if k in parameters and v is not None}
@@ -86,7 +87,8 @@ def profile_service(profile: Any, root: Path, project_root: Path) -> Any:
         from logic.controllers.cloud.scheduler import PoolPolicy
 
         data = json.loads(pool_file.read_text())
-        pool = PoolPolicy(**{**data, "target": parse_target(data["target"])})
+        fields = cast(Dict[str, Any], {**data, "target": parse_target(data["target"])})
+        pool = PoolPolicy(**fields)
     service = CloudService(
         control_plane=cp,
         store=store,

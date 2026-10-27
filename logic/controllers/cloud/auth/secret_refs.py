@@ -33,22 +33,22 @@ Resolver = Callable[[ParseResult], str]
 
 
 def _akv(ref: ParseResult) -> str:
-    from azure.identity import DefaultAzureCredential
-    from azure.keyvault.secrets import SecretClient
+    from azure.identity import DefaultAzureCredential  # pyrefly: ignore[missing-import]  # optional cloud SDK
+    from azure.keyvault.secrets import SecretClient  # pyrefly: ignore[missing-import]  # optional cloud SDK
 
     client = SecretClient(vault_url=f"https://{ref.netloc}.vault.azure.net", credential=DefaultAzureCredential())
     return client.get_secret(ref.path.strip("/")).value
 
 
 def _awssm(ref: ParseResult) -> str:
-    import boto3
+    import boto3  # pyrefly: ignore[missing-import]  # optional cloud SDK
 
     client = boto3.client("secretsmanager", region_name=ref.netloc)
     return client.get_secret_value(SecretId=ref.path.strip("/"))["SecretString"]
 
 
 def _gcpsm(ref: ParseResult) -> str:
-    from google.cloud import secretmanager
+    from google.cloud import secretmanager  # pyrefly: ignore[missing-module-attribute]  # optional cloud SDK
 
     client = secretmanager.SecretManagerServiceClient()
     name = f"projects/{ref.netloc}/secrets/{ref.path.strip('/')}/versions/latest"

@@ -24,7 +24,7 @@ def resource_name(launch: LaunchSpec) -> str:
     return re.sub(r"[^a-z0-9-]", "-", raw)[:63].rstrip("-")
 
 
-def _label(value: str) -> str:
+def _label(value: Any) -> str:
     return re.sub(r"[^a-z0-9_-]", "_", str(value).lower())[:63]
 
 

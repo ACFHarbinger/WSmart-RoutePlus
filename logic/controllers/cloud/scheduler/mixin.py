@@ -20,9 +20,9 @@ from __future__ import annotations
 
 import contextlib
 import math
-from typing import Dict, List, Optional, Sequence
+from typing import Callable, Dict, List, Optional, Sequence, Tuple, cast
 
-from logic.controllers.cloud.interfaces import CapacityError, ComputeBackend
+from logic.controllers.cloud.interfaces import CapacityError, ComputeBackend, ControlPlane
 from logic.controllers.cloud.model import (
     ACTIVE,
     ComputeKind,
@@ -43,7 +43,18 @@ class SchedulerMixin:
     """Placement, priorities and auto-scaling; needs the service's ``cp``, ``backends``, ``clock``,
     ``_launch``, ``_set``, ``_event``, ``_owns_placing`` and ``_get_price_per_hour``."""
 
+    # Annotations only: CloudService.__init__ and its other mixins own these at runtime.
     health: TargetHealth
+    cp: ControlPlane
+    backends: Dict[Tuple[Provider, ComputeKind], ComputeBackend]
+    clock: Callable[[], float]
+    job_accrued: Callable[[JobRecord, Sequence[TaskRecord]], float]
+    month_accrued: Callable[[float], float]
+    cancel: Callable[[str], None]
+    _event: Callable[..., None]
+    _set: Callable[..., TaskRecord]
+    _owns_placing: Callable[[TaskRecord], bool]
+    _get_price_per_hour: Callable[..., Optional[float]]
 
     # Targets --------------------------------------------------------------
 
@@ -78,7 +89,11 @@ class SchedulerMixin:
             for task in tasks:
                 if task.state in ACTIVE and task.placement in mine:
                     mine[task.placement] += 1
-            free = sum(max(0, q - running.get(t.key(), 0)) for t, q in zip(targets_of(job.spec), quotas, strict=True))
+            # max_tasks is Optional; the all() check above does not narrow the list elements.
+            free = sum(
+                max(0, cast(int, q) - running.get(t.key(), 0))
+                for t, q in zip(targets_of(job.spec), quotas, strict=True)
+            )
             cap = min(cap, sum(mine.values()) + free)
         budget = job.spec.resources.budget_usd
         if budget is not None:

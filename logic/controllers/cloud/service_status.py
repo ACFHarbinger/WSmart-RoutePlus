@@ -7,8 +7,9 @@ Attributes:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, cast
 
+from logic.controllers.cloud.interfaces import ComputeBackend, ControlPlane
 from logic.controllers.cloud.model import (
     ACTIVE,
     CellSpec,
@@ -41,6 +42,10 @@ def extract_policy_from_cell(cell: CellSpec) -> Optional[str]:
 class ServiceStatusMixin:
     """Read-only job views of :class:`.service.CloudService`; needs ``cp``, ``backends`` and ``clock``."""
 
+    cp: ControlPlane
+    backends: Dict[Tuple[Provider, ComputeKind], ComputeBackend]
+    clock: Callable[[], float]
+
     def _get_price_per_hour(self, spec: JobSpec, spot: bool) -> Optional[float]:
         prices = getattr(self, "prices", None)  # CR-10 price table: overrides first, then static tables
         if prices is not None:
@@ -65,7 +70,7 @@ class ServiceStatusMixin:
             mod = importlib.import_module(f"logic.controllers.cloud.providers.{prov}.pricing")
             fn = getattr(mod, "price_per_hour", None)
             if callable(fn):
-                return fn(spec.resources.machine_type, spec.resources.region, spot)
+                return cast(Optional[float], fn(spec.resources.machine_type, spec.resources.region, spot))
         except Exception:
             pass
         return None

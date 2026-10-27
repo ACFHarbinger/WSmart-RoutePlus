@@ -47,7 +47,7 @@ def _not_found(exc: Exception) -> bool:
     return getattr(exc, "code", None) == 404 or type(exc).__name__ == "NotFound" or isinstance(exc, KeyError)
 
 
-def exit_key(job_id: str, task_id: str, attempt: int) -> str:
+def exit_key(job_id: str, task_id: str, attempt: Any) -> str:
     return f"work/{job_id}/{task_id}/attempt-{attempt}.exit"
 
 

@@ -21,7 +21,7 @@ class MsrestTokenCredentialAdapter:
         self._resource = resource
 
     def signed_session(self, session: Any = None) -> Any:
-        import requests
+        import requests  # type: ignore[import-untyped]  # requests has no stubs
 
         session = session or requests.Session()
         scope = self._resource if self._resource.endswith("/.default") else f"{self._resource.rstrip('/')}/.default"
@@ -56,7 +56,7 @@ def make_azure_credential(profile: str = "default", credentials: Optional[Any] =
         except Exception:
             pass
 
-    from azure.identity import DefaultAzureCredential
+    from azure.identity import DefaultAzureCredential  # pyrefly: ignore[missing-import]  # optional Azure SDK
 
     return DefaultAzureCredential()
 
@@ -68,7 +68,7 @@ def make_blob_service_client(
     profile: str = "default",
 ) -> Any:
     """Create Azure BlobServiceClient lazily."""
-    from azure.storage.blob import BlobServiceClient
+    from azure.storage.blob import BlobServiceClient  # pyrefly: ignore[missing-import]  # optional Azure SDK
 
     cred = credential or credentials
     if cred is not None and hasattr(cred, "azure_credential"):
@@ -87,7 +87,7 @@ def make_secret_client(
     profile: str = "default",
 ) -> Any:
     """Create Azure KeyVault SecretClient lazily."""
-    from azure.keyvault.secrets import SecretClient
+    from azure.keyvault.secrets import SecretClient  # pyrefly: ignore[missing-import]  # optional Azure SDK
 
     cred = credential or credentials
     if cred is not None and hasattr(cred, "azure_credential"):
@@ -105,7 +105,7 @@ def make_batch_service_client(
     profile: str = "default",
 ) -> Any:
     """Create Azure BatchServiceClient lazily."""
-    from azure.batch import BatchServiceClient
+    from azure.batch import BatchServiceClient  # pyrefly: ignore[missing-import]  # optional Azure SDK
 
     cred = credential or credentials
     if cred is not None and hasattr(cred, "azure_credential"):
@@ -126,7 +126,7 @@ def make_container_apps_client(
     profile: str = "default",
 ) -> Any:
     """Create Azure ContainerAppsAPIClient lazily."""
-    from azure.mgmt.appcontainers import ContainerAppsAPIClient
+    from azure.mgmt.appcontainers import ContainerAppsAPIClient  # pyrefly: ignore[missing-import]  # optional Azure SDK
 
     cred = credential or credentials
     if cred is not None and hasattr(cred, "azure_credential"):
@@ -144,7 +144,7 @@ def make_compute_management_client(
     profile: str = "default",
 ) -> Any:
     """Create Azure ComputeManagementClient lazily."""
-    from azure.mgmt.compute import ComputeManagementClient
+    from azure.mgmt.compute import ComputeManagementClient  # pyrefly: ignore[missing-import]  # optional Azure SDK
 
     cred = credential or credentials
     if cred is not None and hasattr(cred, "azure_credential"):
@@ -162,7 +162,7 @@ def make_network_management_client(
     profile: str = "default",
 ) -> Any:
     """Create Azure NetworkManagementClient lazily."""
-    from azure.mgmt.network import NetworkManagementClient
+    from azure.mgmt.network import NetworkManagementClient  # pyrefly: ignore[missing-import]  # optional Azure SDK
 
     cred = credential or credentials
     if cred is not None and hasattr(cred, "azure_credential"):

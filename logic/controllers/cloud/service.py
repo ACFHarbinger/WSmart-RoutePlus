@@ -24,7 +24,7 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
 from logic.controllers.cloud.cost.budget import BudgetPolicy, CostMixin
 from logic.controllers.cloud.interfaces import (
@@ -93,6 +93,8 @@ class CloudService(ServiceStatusMixin, ServiceLaunchMixin, CostMixin, SchedulerM
             providers' static prices.
         budget: CR-10 monthly cap and warning fractions; None means no monthly cap.
     """
+
+    skipped_backends: Dict[str, str]
 
     def __init__(
         self,
@@ -270,7 +272,7 @@ class CloudService(ServiceStatusMixin, ServiceLaunchMixin, CostMixin, SchedulerM
             changes += 1
             active += 1
             if self.pool_mode:
-                my_active += 1
+                my_active += 1  # pyrefly: ignore[unbound-name]  # assigned in the pool_mode branch above
                 can_lease = (active < parallelism) and (my_active < self.pool_slots)
             else:
                 can_lease = active < parallelism
@@ -288,7 +290,7 @@ class CloudService(ServiceStatusMixin, ServiceLaunchMixin, CostMixin, SchedulerM
                 return backend.submit(self._launch(view, task))
         return backend.submit(self._launch(view, task))
 
-    def _owns_placing(self, task: TaskRecord) -> bool:
+    def _owns_placing(self, task: TaskRecord) -> bool:  # pyrefly: ignore[bad-override]  # mixin annotates a bound callable
         current = self.cp.get_task(task.task_id)
         return (
             current.state == TaskState.PLACING
@@ -351,7 +353,7 @@ class CloudService(ServiceStatusMixin, ServiceLaunchMixin, CostMixin, SchedulerM
             return 1
         return self._fail(job, task, status.message or "failed")
 
-    def _ensure_running(self, task: TaskRecord) -> TaskRecord:
+    def _ensure_running(self, task: TaskRecord) -> TaskRecord:  # pyrefly: ignore[bad-override]  # mixin annotates a bound callable
         """Attempts that finished before a poll saw them run still pass through ``running``."""
         return self._set(task, TaskState.RUNNING) if task.state == TaskState.STARTING else task
 
@@ -423,7 +425,7 @@ class CloudService(ServiceStatusMixin, ServiceLaunchMixin, CostMixin, SchedulerM
 
     # Management (status, metrics and price hints are in ServiceStatusMixin) ----------
 
-    def cancel(self, job_id: str) -> None:
+    def cancel(self, job_id: str) -> None:  # pyrefly: ignore[bad-override]  # mixin annotates a bound callable
         """Cancel a job: queued tasks never start, running attempts are stopped at the next tick."""
         self.cp.request_cancel(job_id)
         self._event(job_id, "cancel_requested")
@@ -461,7 +463,7 @@ class CloudService(ServiceStatusMixin, ServiceLaunchMixin, CostMixin, SchedulerM
 
 
 def _last_activity(backend: ComputeBackend, handle: str) -> Optional[float]:
-    activity = getattr(backend, "last_activity", None)
+    activity = cast(Optional[Callable[[str], Optional[float]]], getattr(backend, "last_activity", None))
     return activity(handle) if callable(activity) else None
 
 

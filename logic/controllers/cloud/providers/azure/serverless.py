@@ -73,7 +73,7 @@ class ContainerAppsJobsBackend(ComputeBackend):
     @property
     def logs_client(self) -> Any:
         if self._logs_client is None and self.workspace_id:
-            from azure.monitor.query import LogsQueryClient
+            from azure.monitor.query import LogsQueryClient  # pyrefly: ignore[missing-import]  # optional Azure SDK
 
             from logic.controllers.cloud.providers.azure._sdk import make_azure_credential
 

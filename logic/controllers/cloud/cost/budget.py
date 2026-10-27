@@ -32,10 +32,11 @@ from __future__ import annotations
 
 import datetime as _dt
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Optional, Protocol, Sequence, Tuple, cast
 
 from logic.controllers.cloud.cost.estimate import CostEstimate, estimate_job
-from logic.controllers.cloud.model import ACTIVE, JobRecord, JobSpec, Provider, TaskRecord, TaskState
+from logic.controllers.cloud.interfaces import ControlPlane
+from logic.controllers.cloud.model import ACTIVE, Event, JobRecord, JobSpec, Provider, TaskRecord, TaskState
 
 ACCRUAL_SECONDS = 60.0
 
@@ -61,12 +62,57 @@ def _month(at: Optional[float]) -> str:
     return _dt.datetime.fromtimestamp(at or 0.0, tz=_dt.timezone.utc).strftime("%Y-%m")
 
 
+class _Predict(Protocol):
+    """``CloudService.predict``."""
+
+    def __call__(self, spec: JobSpec) -> Optional[List[Any]]: ...
+
+
+class _PricePerHour(Protocol):
+    """``ServiceStatusMixin._get_price_per_hour``."""
+
+    def __call__(self, spec: JobSpec, spot: bool) -> Optional[float]: ...
+
+
+class _TaskDurationAndCost(Protocol):
+    """``ServiceStatusMixin._task_duration_and_cost``."""
+
+    def __call__(
+        self,
+        task: TaskRecord,
+        events: Sequence[Event],
+        price_per_hour: Optional[float],
+        provider: Provider,
+    ) -> Tuple[Optional[float], Optional[float]]: ...
+
+
+class _EmitEvent(Protocol):
+    """``CloudService._event``."""
+
+    def __call__(
+        self, job_id: str, kind: str, task_id: Optional[str] = ..., data: Optional[Dict[str, Any]] = ...
+    ) -> None: ...
+
+
+class _CancelJob(Protocol):
+    """``CloudService.cancel``."""
+
+    def __call__(self, job_id: str) -> None: ...
+
+
 class CostMixin:
     """Estimates, caps and accrual; needs ``cp``, ``clock``, ``predict``, ``cancel``, ``_event``,
     ``_get_price_per_hour``, ``_task_duration_and_cost`` and an optional ``budget``."""
 
     budget: Optional[BudgetPolicy] = None
     _cost_written: Dict[str, Any]
+    cp: ControlPlane  # CloudService.__init__
+    clock: Callable[[], float]  # CloudService.__init__
+    predict: _Predict
+    _get_price_per_hour: _PricePerHour
+    _task_duration_and_cost: _TaskDurationAndCost
+    _event: _EmitEvent
+    cancel: _CancelJob
 
     # Estimates ------------------------------------------------------------
 
@@ -111,7 +157,7 @@ class CostMixin:
 
     def _task_costs(
         self, job: JobRecord, tasks: Sequence[TaskRecord]
-    ) -> Dict[str, Tuple[Optional[float], Optional[float], float]]:
+    ) -> Dict[str, Tuple[Optional[float], Optional[float], Optional[float]]]:
         """``task_id -> (elapsed seconds, accrued USD, USD/h)`` from the scheduler's attempt history."""
         task_spec = getattr(self, "_task_spec", None)  # CR-09: a placed attempt is priced at its target
         events: Dict[str, List[Any]] = {}
@@ -177,13 +223,15 @@ class CostMixin:
                 continue
             last = written.get(task.task_id)
             final = task.state not in ACTIVE
-            if (final and last != "final") or (not final and (last is None or now - last >= ACCRUAL_SECONDS)):
+            if (final and last != "final") or (
+                not final and (last is None or now - cast(float, last) >= ACCRUAL_SECONDS)
+            ):
                 record = {
                     "at": now,
                     "kind": "cost",
                     "accrued_usd": accrued,
                     "rate_usd_h": rate,
-                    "elapsed_s": round(elapsed, 1),
+                    "elapsed_s": round(cast(float, elapsed), 1),  # accrued implies a measured duration
                 }
                 self.cp.put_metrics(task.task_id, [record])
                 written[task.task_id] = "final" if final else now

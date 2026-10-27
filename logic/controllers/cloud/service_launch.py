@@ -7,14 +7,27 @@ Attributes:
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING, Optional
 
-from logic.controllers.cloud.interfaces import LaunchSpec
-from logic.controllers.cloud.model import GurobiMode, JobRecord, Provider, TaskRecord
+from logic.controllers.cloud.interfaces import ComputeBackend, LaunchSpec
+from logic.controllers.cloud.model import GurobiMode, JobRecord, JobSpec, Provider, TaskRecord
 from logic.controllers.cloud.runtime import entry_script
+
+if TYPE_CHECKING:
+    from logic.controllers.cloud.service import RemoteConfig
 
 
 class ServiceLaunchMixin:
     """What a backend is asked to start; needs the service's ``python``, ``remote``, ``_backend`` and ``task_dir``."""
+
+    python: str
+    remote: Optional[RemoteConfig]
+
+    if TYPE_CHECKING:
+
+        def task_dir(self, task: TaskRecord) -> Path: ...
+
+        def _backend(self, spec: JobSpec) -> ComputeBackend: ...
 
     def _launch(self, job: JobRecord, task: TaskRecord) -> LaunchSpec:
         if Provider(job.spec.provider) != Provider.LOCAL:

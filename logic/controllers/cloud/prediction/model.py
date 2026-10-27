@@ -35,7 +35,7 @@ import statistics
 from dataclasses import asdict, dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, cast
 
 from logic.controllers.cloud.model import CellSpec
 from logic.controllers.cloud.prediction.features import CATEGORICAL, NUMERIC, cell_features
@@ -210,9 +210,10 @@ class RuntimePredictor:
         ape, inside, abs_err = [], 0, []
         for row, q in zip(test, quantiles, strict=True):
             actual = float(row["wall_seconds"])
-            ape.append(abs(q[1] - actual) / actual)
-            abs_err.append(abs(q[1] - actual))
-            inside += q[0] <= actual <= q[2]
+            quantiles_s = cast(List[float], q)  # holdout rows are sized training records the model can score
+            ape.append(abs(quantiles_s[1] - actual) / actual)
+            abs_err.append(abs(quantiles_s[1] - actual))
+            inside += quantiles_s[0] <= actual <= quantiles_s[2]
         return {
             "train_rows": len(train),
             "holdout": len(test),
