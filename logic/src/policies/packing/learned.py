@@ -133,10 +133,9 @@ class LearnedSelection(IPackingAlgorithm):
 
         model = cast(Any, self._model)  # None still fails at the call; the checker cannot see the load
         if self._model_type == "sklearn":
-            if hasattr(model, "predict_proba"):
-                probs = model.predict_proba(features)[:, 1]
-            else:
-                probs = model.predict(features)
+            probs = (
+                model.predict_proba(features)[:, 1] if hasattr(model, "predict_proba") else model.predict(features)
+            )
         elif self._model_type == "torch":
             with torch.no_grad():
                 input_tensor = torch.from_numpy(features).float()
