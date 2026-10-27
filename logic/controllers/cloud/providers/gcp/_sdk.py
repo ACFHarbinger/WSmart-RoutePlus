@@ -14,7 +14,7 @@ Attributes:
 from __future__ import annotations
 
 import importlib
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 # service -> (module, class) of the GAPIC client
 _CLIENTS = {
@@ -26,17 +26,28 @@ _CLIENTS = {
 }
 
 
-def client(service: str, credentials: Any = None) -> Any:
+def client(service: str, credentials: Any = None, project: Optional[str] = None) -> Any:
     """A Google Cloud client for ``service`` (see ``_CLIENTS``), with ``credentials`` or ADC.
 
     ``credentials`` may be a :class:`~logic.controllers.cloud.auth.credentials.ProviderCredentials`
     (its ``gcp_credentials()`` is used) or a ``google.auth`` credentials object.
+
+    ``project`` is the GCP project id. Storage needs it: omitting it makes
+    ``storage.Client`` raise ``OSError`` when Application Default Credentials are a
+    user login with no quota project and ``GOOGLE_CLOUD_PROJECT`` is unset. The
+    same id is sent as the quota project so those calls are billed to it.
     """
     creds = credentials.gcp_credentials() if hasattr(credentials, "gcp_credentials") else credentials
     if service == "storage":
         from google.cloud import storage
 
-        return storage.Client(credentials=creds)
+        kwargs: Dict[str, Any] = {}
+        if creds is not None:
+            kwargs["credentials"] = creds
+        if project:
+            kwargs["project"] = project
+            kwargs["client_options"] = {"quota_project_id": project}
+        return storage.Client(**kwargs)
     module, name = _CLIENTS[service]
     cls = getattr(importlib.import_module(module), name)
     return cls(credentials=creds) if creds is not None else cls()

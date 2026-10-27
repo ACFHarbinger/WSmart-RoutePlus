@@ -28,18 +28,28 @@ class GcsObjectStore(ObjectStore):
         prefix: Key prefix inside the bucket.
         client: A ``google.cloud.storage.Client`` (tests inject a fake).
         credentials: ProviderCredentials or google.auth credentials (default: ADC).
+        project: GCP project id passed to the client. Required for user ADC that
+            carries no quota project (Studio's ``--json`` path does not export one).
     """
 
-    def __init__(self, bucket: str, prefix: str = "", client: Any = None, credentials: Any = None) -> None:
+    def __init__(
+        self,
+        bucket: str,
+        prefix: str = "",
+        client: Any = None,
+        credentials: Any = None,
+        project: Optional[str] = None,
+    ) -> None:
         self.bucket_name = bucket
         self.prefix = prefix.strip("/") + ("/" if prefix.strip("/") else "")
         self.credentials = credentials
+        self.project = project
         self._client = client
 
     @property
     def client(self) -> Any:
         if self._client is None:
-            self._client = make_client("storage", self.credentials)
+            self._client = make_client("storage", self.credentials, project=self.project)
         return self._client
 
     def _blob(self, key: str) -> Any:
@@ -80,9 +90,17 @@ class GcsObjectStore(ObjectStore):
                 raise
 
 
-def store_from_uri(parsed: Any, client: Optional[Any] = None, credentials: Any = None) -> GcsObjectStore:
+def store_from_uri(
+    parsed: Any, client: Optional[Any] = None, credentials: Any = None, project: Optional[str] = None
+) -> GcsObjectStore:
     """A store from a parsed ``gs://bucket/prefix`` URI."""
-    return GcsObjectStore(bucket=parsed.netloc, prefix=parsed.path.lstrip("/"), client=client, credentials=credentials)
+    return GcsObjectStore(
+        bucket=parsed.netloc,
+        prefix=parsed.path.lstrip("/"),
+        client=client,
+        credentials=credentials,
+        project=project,
+    )
 
 
 __all__ = ["GcsObjectStore", "store_from_uri"]
