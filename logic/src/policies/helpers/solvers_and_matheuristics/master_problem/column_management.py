@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, FrozenSet, List, Optional, Set, Tuple, Union, cast
 
 import gurobipy as gp
 from gurobipy import GRB
@@ -16,6 +16,32 @@ logger = logging.getLogger(__name__)
 
 class MasterColumnManagementMixin:
     """Relocated column management methods."""
+
+    model: Optional[gp.Model]
+    routes: List[Route]
+    lambda_vars: List[gp.Var]
+    vehicle_limit: Optional[int]
+    capacity: float
+    wastes: Dict[int, float]
+    column_deletion_enabled: bool
+    global_column_pool: List[Route]
+    _route_signatures: Set[Tuple[int, ...]]
+    active_capacity_cuts: Dict[FrozenSet[int], gp.Constr]
+    active_sec_cuts: Dict[FrozenSet[int], gp.Constr]
+    active_sec_cuts_local: Dict[FrozenSet[int], gp.Constr]
+    active_sri_cuts: Dict[FrozenSet[int], gp.Constr]
+    active_lci_cuts: Dict[FrozenSet[int], gp.Constr]
+    active_lci_arcs: Dict[FrozenSet[int], Optional[Tuple[int, int]]]
+    active_lci_node_alphas: Dict[FrozenSet[int], Dict[int, float]]
+    active_edge_clique_cuts: Dict[Tuple[int, int], Tuple[gp.Constr, Dict[int, float]]]
+    active_multistar_cuts: Dict[FrozenSet[int], gp.Constr]
+    dual_node_coverage: Dict[int, float]
+    dual_vehicle_limit: float
+    dual_capacity_cuts: Dict[FrozenSet[int], float]
+    dual_sri_cuts: Dict[FrozenSet[int], float]
+    dual_lci_cuts: Dict[FrozenSet[int], float]
+    dual_edge_clique_cuts: Dict[Tuple[int, int], float]
+    dual_multistar_cuts: Dict[FrozenSet[int], float]
 
     def add_route(self, route: Route) -> bool:
         """Add a route (column) to the master problem.
@@ -222,7 +248,9 @@ class MasterColumnManagementMixin:
             return {}
 
         # node_duals: include vehicle_limit dual under its own key
-        node_duals = dict(self.dual_node_coverage)
+        node_duals: Dict[Union[int, str], float] = cast(
+            Dict[Union[int, str], float], dict(self.dual_node_coverage)
+        )
         fleet_dual = self.dual_vehicle_limit if self.dual_vehicle_limit > 1e-9 else 0.0
         if fleet_dual > 0.0:
             node_duals["vehicle_limit"] = fleet_dual

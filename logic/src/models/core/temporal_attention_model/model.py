@@ -179,14 +179,14 @@ class TemporalAttentionModel(AttentionModel):
             nn.Linear(embed_dim, embed_dim),
         )
 
-    def _get_initial_embeddings(self, input: Dict[str, torch.Tensor]) -> Tuple[torch.Tensor, Optional[Any]]:
+    def _get_initial_embeddings(self, td: Dict[str, torch.Tensor]) -> Tuple[torch.Tensor, Optional[Any]]:
         """Processes static and temporal features into fused initial embeddings.
 
         Identifies 'fill_history' in the input, predicts next-day fill levels,
         and combines these latents with the spatial projections.
 
         Args:
-            input: Key-tensor mapping of instance data including node history.
+            td: Key-tensor mapping of instance data including node history.
 
         Returns:
             Tuple[torch.Tensor, Optional[Any]]:
@@ -195,13 +195,13 @@ class TemporalAttentionModel(AttentionModel):
         """
         # 1. Base spatial/constant feature projection
         embed = self.init_embedding
-        base_embeddings = getattr(embed, "init_node_embeddings", embed)(input)
+        base_embeddings = getattr(embed, "init_node_embeddings", embed)(td)
 
-        if "fill_history" not in input or not self.predict_future:
+        if "fill_history" not in td or not self.predict_future:
             return base_embeddings, None
 
         # 2. Extract and reshape history: [batch, graph, horizon, 1]
-        fill_history = input["fill_history"]
+        fill_history = td["fill_history"]
         batch_size, graph_size, _ = fill_history.size()
         reshaped_history = fill_history.view(batch_size * graph_size, self.temporal_horizon, 1)
 
@@ -219,7 +219,7 @@ class TemporalAttentionModel(AttentionModel):
         combined_embeddings = self.combine_embeddings(torch.cat((base_embeddings, fill_embeddings), dim=-1))
         return combined_embeddings, None
 
-    def forward(
+    def forward(  # type: ignore[override]  # pyrefly: ignore[bad-override]  # TAM forward keeps the historical input signature
         self,
         input: Dict[str, torch.Tensor],
         env: Optional[Any] = None,

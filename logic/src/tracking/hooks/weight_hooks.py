@@ -22,7 +22,7 @@ Example:
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
 import torch
 from torch import nn
@@ -294,7 +294,7 @@ def detect_weight_symmetry_breaking(
             weight = module.weight.data
 
             # Check if weights have sufficient variance
-            std = weight.std().item()
+            std = cast(Any, weight).std().item()
             symmetry_status[name] = std > threshold
 
     return symmetry_status

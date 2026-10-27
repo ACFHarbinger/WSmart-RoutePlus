@@ -22,7 +22,7 @@ import pandas as pd
 try:
     from bs4 import BeautifulSoup
 except ImportError:  # optional extra; dashboard parsing is not on the sim path
-    BeautifulSoup = None
+    BeautifulSoup = None  # type: ignore[misc,assignment]  # bs4 is an optional extra
 
 
 # ---------------------------------------------------------------------------

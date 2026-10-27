@@ -83,17 +83,17 @@ def _apply_stringing_op(
         Tuple[List[int], float]: (new_route, delta_profit).
     """
     if string_type in (2, 4):
-        i, j, k, l = params
+        i, j, k, label = params
         if profit_mode:
             if string_type == 2:
                 return apply_type_ii_s_profit(
-                    route, node, i, j, k, l, dist_matrix, wastes, capacity, R, C, current_load
+                    route, node, i, j, k, label, dist_matrix, wastes, capacity, R, C, current_load
                 )
-            return apply_type_iv_s_profit(route, node, i, j, k, l, dist_matrix, wastes, capacity, R, C, current_load)
+            return apply_type_iv_s_profit(route, node, i, j, k, label, dist_matrix, wastes, capacity, R, C, current_load)
         new_route = (
-            apply_type_ii_s(route, node, i, j, k, l, current_load)
+            apply_type_ii_s(route, node, i, j, k, label, current_load)
             if string_type == 2
-            else apply_type_iv_s(route, node, i, j, k, l, current_load)
+            else apply_type_iv_s(route, node, i, j, k, label, current_load)
         )
         return new_route, 0.0
 
@@ -171,8 +171,8 @@ def _try_string_insertion(
                 valid_l = [p for p in valid_positions if p not in (i, j, k)]
                 if not valid_l:
                     continue
-                l = rng.choice(valid_l)
-                params: Tuple[int, ...] = (i, j, k, l)
+                label = rng.choice(valid_l)
+                params: Tuple[int, ...] = (i, j, k, label)
             else:
                 params = (i, j, k)  # type: ignore[assignment]
 
@@ -270,11 +270,11 @@ def _try_string_insertion_deterministic(  # noqa: C901
                                 continue
                             # v_l from N_p(v_{j+1})
                             for v_l in p_neighbors_jp1:
-                                l = target_route.index(v_l)
-                                if l in (i, j, k):
+                                label = target_route.index(v_l)
+                                if label in (i, j, k):
                                     continue
 
-                                params: Tuple[int, ...] = (i, j, k, l)
+                                params: Tuple[int, ...] = (i, j, k, label)
                                 new_route, val = _apply_stringing_op(
                                     target_route,
                                     node,

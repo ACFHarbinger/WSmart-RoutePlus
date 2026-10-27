@@ -19,7 +19,7 @@ Reference:
 """
 
 import random
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, cast
 
 import numpy as np
 
@@ -275,6 +275,6 @@ class SolutionConstructor:
         chosen_idx = np.searchsorted(cumsum, r)
 
         # searchsorted can occasionally return out of bounds due to float precision
-        chosen_idx = min(chosen_idx, len(selection_pool) - 1)
+        chosen_idx = min(cast(int, chosen_idx), len(selection_pool) - 1)
 
         return selection_pool[chosen_idx]

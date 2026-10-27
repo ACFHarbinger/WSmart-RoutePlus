@@ -42,7 +42,7 @@ class CPTPEnv(PTPEnv):
 
     def __init__(
         self,
-        generator: Optional[CPTPGenerator] = None,
+        generator: Optional[PTPGenerator] = None,
         generator_params: Optional[dict] = None,
         waste_weight: float = 1.0,
         cost_weight: float = 1.0,

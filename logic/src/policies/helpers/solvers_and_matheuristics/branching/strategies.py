@@ -223,13 +223,14 @@ class HierarchicalStrongBranching:
             return candidates_p0[0]
 
         # Phase 1: evaluate by restricted LP (no column generation)
+        active: Any = master
 
-        parent_obj = master.model.ObjVal if master.model.Status == 2 else 0.0  # GRB.OPTIMAL=2
+        parent_obj = active.model.ObjVal if active.model.Status == 2 else 0.0  # GRB.OPTIMAL=2
 
         def _eval_y_branch(node: int, forced: bool) -> float:
             """Temporarily fix node visitation and re-solve restricted master."""
             disabled = []
-            for idx, var in enumerate(master.lambda_vars):
+            for idx, var in enumerate(active.lambda_vars):
                 if var.UB < 0.5:
                     continue
                 has_node = node in routes[idx].node_coverage
@@ -239,8 +240,8 @@ class HierarchicalStrongBranching:
                     var.UB = 0.0
                     disabled.append(var)
             try:
-                master.model.optimize()
-                obj = master.model.ObjVal if master.model.Status == 2 else -float("inf")
+                active.model.optimize()
+                obj = active.model.ObjVal if active.model.Status == 2 else -float("inf")
             except Exception:
                 obj = -float("inf")
             for var in disabled:

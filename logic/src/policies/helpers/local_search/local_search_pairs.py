@@ -10,11 +10,49 @@ Moved unchanged from ``local_search_base.py``.
 from __future__ import annotations
 
 import math
-from typing import Optional, Set, Tuple
+from random import Random
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Set, Tuple, cast
+
+import numpy as np
 
 
 class LocalSearchPairMixin:
     """Pair evaluation and route bookkeeping methods of :class:`LocalSearch` (moved unchanged from ``local_search_base.py``)."""
+
+    # Attribute types from LocalSearch.__init__. Move callables are not runtime
+    # defs: LocalSearchMovesMixin is later in the MRO and owns those methods.
+    routes: List[List[int]]
+    node_map: Dict[int, Tuple[int, int]]
+    route_loads: List[float]
+    route_sectors: Dict[int, Optional[Tuple[float, float]]]
+    top_insertions: Dict[int, Dict[int, List[Tuple[float, int]]]]
+    neighbors: Dict[int, List[int]]
+    x_coords: np.ndarray
+    y_coords: np.ndarray
+    random: Random
+    params: Any
+    _target_neighborhood: str
+    _move_drop: Callable[[int, int, int], bool]
+    _move_unrouted_insert: Callable[[int, int, int], bool]
+    _move_relocate: Callable[[int, int, int, int, int, int], bool]
+    _move_swap: Callable[[int, int, int, int, int, int], bool]
+    _move_swap_star: Callable[[int, int, int, int, int, int], bool]
+    _move_2opt_star: Callable[[int, int, int, int, int, int], bool]
+    _move_2opt_intra: Callable[[int, int, int, int, int, int], bool]
+    _move_cross: Callable[[int, int, int, int, int, int], bool]
+    _move_shift_2_0: Callable[[int, int, int, int], bool]
+    _move_swap_2_1: Callable[[int, int, int, int], bool]
+    _move_swap_2_2: Callable[[int, int, int, int], bool]
+    _move_or_opt: Callable[[int, int, int], bool]
+    _move_3opt_intra: Callable[[int, int, int, int, int, int, Random], bool]
+
+    if TYPE_CHECKING:
+
+        def _should_try_operator(self, op_name: str) -> bool: ...
+
+        def _calc_load_fresh(self, r: List[int]) -> float: ...
+
+        def _compute_top_insertions(self, route_idx: Optional[int] = None) -> None: ...
 
     def _polar_sector(self, route_idx: int) -> Optional[Tuple[float, float]]:
         """
@@ -115,8 +153,8 @@ class LocalSearchPairMixin:
             r_u, p_u = u_loc
             return self._should_try_operator("unrouted_insert") and self._move_unrouted_insert(v, r_u, p_u)
 
-        r_u, p_u = u_loc  # type: ignore[misc]
-        r_v, p_v = v_loc  # type: ignore[misc]
+        r_u, p_u = cast(Tuple[int, int], u_loc)
+        r_v, p_v = cast(Tuple[int, int], v_loc)
 
         if r_u != r_v:
             return self._process_inter_route(u, v, r_u, p_u, r_v, p_v)

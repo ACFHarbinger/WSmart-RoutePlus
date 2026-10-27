@@ -28,11 +28,11 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import numpy as np
 import torch
-from tensordict import TensorDict
+from tensordict import TensorDict, TensorDictBase
 
 from logic.src.configs.policies.vectorized.routing.profitable_nn import ProfitableNNConfig
 from logic.src.envs.base.base import RL4COEnvBase
@@ -275,5 +275,5 @@ class ProfitableNearestNeighbourPolicy(torch.nn.Module):
             cur = env.reset(td.clone())
             for i in range(actions.size(1)):
                 cur["action"] = actions[:, i]
-                cur = env.step(cur)["next"]
+                cur = cast(TensorDictBase, env.step(cur)["next"])
             return env.get_reward(cur, actions)

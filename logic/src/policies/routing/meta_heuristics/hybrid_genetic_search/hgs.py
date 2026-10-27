@@ -23,7 +23,7 @@ constants, re-exported here) and best-solution extraction live in ``hgs_populati
 
 import random
 import time
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from logic.src.configs.policies.routing.meta_heuristics.hgs import HGSConfig
 from logic.src.envs.common.expand_pool import current_expand_pool
@@ -148,7 +148,7 @@ class HGSSolver(HGSPopulationMixin):
             )
         else:
             self.acceptance_criterion = AcceptanceCriterionFactory.create(name="oi")
-        self.params.acceptance_criterion = self.acceptance_criterion
+        self.params.acceptance_criterion = cast(Any, self.acceptance_criterion)
 
         # Per-subpopulation diversity distance caches, keyed by (ind_a.serial, ind_b.serial).
         # Maintained across iterations; entries are evicted precisely when an individual

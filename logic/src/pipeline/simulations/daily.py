@@ -19,7 +19,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, fields
 from multiprocessing.synchronize import Lock
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union, cast
 
 if TYPE_CHECKING:
     from logic.src.pipeline.simulations.bins import Bins
@@ -364,9 +364,9 @@ def get_daily_results(
         collection_day=is_collection,
     )
     if economics is not None and not empty:
-        dlog: Dict[str, Any] = outcome.metrics(economics)
+        dlog = cast(Dict[str, Any], outcome.metrics(economics))
     else:
-        dlog = outcome.metrics(Economics(revenue_kg=0.0, cost_km=0.0))
+        dlog = cast(Dict[str, Any], outcome.metrics(Economics(revenue_kg=0.0, cost_km=0.0)))
         dlog["profit"] = 0.0 if empty else float(profit)
     dlog["kg/km"] = (dlog["kg"] / dlog["km"]) if dlog["km"] > 0 else 0.0
     dlog["day"] = day
@@ -420,7 +420,7 @@ def _run_non_routing_day(
         context.ncol = 0
         context.total_collected = 0.0
         if getattr(context, "bins", None) is not None:
-            context.collected = np.zeros(context.bins.n)
+            context.collected = np.zeros(cast("Bins", context.bins).n)
         else:
             context.collected = None
         context.mandatory = []
@@ -466,7 +466,7 @@ def run_day(context: SimulationDayContext) -> SimulationDayContext:
     # Validate the selected pipeline before reseeding or mutating simulation state.
     configured = context.day_pipeline
     if configured is None and hasattr(context.config, "get"):
-        configured = context.config.get("day_pipeline")
+        configured = cast(Any, context.config).get("day_pipeline")
     classes = resolve_pipeline(configured)
     commands = [cls() for cls in classes]
     log_actions = [cmd for cmd in commands if cmd.writes and "daily_log" in cmd.writes]

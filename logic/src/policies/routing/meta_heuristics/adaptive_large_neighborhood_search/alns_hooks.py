@@ -8,15 +8,34 @@ per-iteration bookkeeping) and the core loop helpers (noise, weight updates, seg
 Moved unchanged from ``alns.py``.
 """
 
-from typing import Any, List, Tuple
+import random
+from typing import Any, Callable, List, Set, Tuple
 
+import numpy as np
+
+from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
 from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.engine import (
     MIN_REMOVAL_LOWER_BOUND,
+)
+from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.weight_updates import (
+    RopkePisingerSegments,
 )
 
 
 class ALNSHooksMixin:
     """LNSBase hooks and core loop helpers of :class:`ALNSSolver` (moved unchanged from ``alns.py``)."""
+
+    # Provided by ALNSSolver.__init__; annotations only.
+    params: ALNSConfig
+    cfg: ALNSConfig
+    n_nodes: int
+    dist_matrix: np.ndarray
+    random: random.Random
+    segment_size: int
+    visited_solutions: Set[Tuple[Tuple[int, ...], ...]]
+    acceptance_criterion: Any
+    _viz_record: Callable[..., None]
+    _weights: RopkePisingerSegments
 
     # ------------------------------------------------------------------
     # LNSBase semantic hooks (ALNS flavour)

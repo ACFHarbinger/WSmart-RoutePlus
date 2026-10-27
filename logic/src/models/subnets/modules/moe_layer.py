@@ -17,7 +17,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Optional, Tuple
+from typing import Any, Optional, Tuple, cast
 
 import torch
 from torch import nn
@@ -179,7 +179,7 @@ class MoE(nn.Module):
         threshold_positions_if_out = threshold_positions_if_in - 1
         threshold_if_out = torch.unsqueeze(torch.gather(top_values_flat, 0, threshold_positions_if_out), 1)
 
-        normal = Normal(self.mean, self.std)
+        normal = Normal(cast(torch.Tensor, self.mean), cast(torch.Tensor, self.std))
         prob_if_in = normal.cdf((clean_values - threshold_if_in) / noise_stddev)
         prob_if_out = normal.cdf((clean_values - threshold_if_out) / noise_stddev)
         prob = torch.where(is_in, prob_if_in, prob_if_out)
@@ -224,7 +224,14 @@ class MoE(nn.Module):
         gates = zeros.scatter(-1, top_k_indices, top_k_gates)  # Non-topk elements are 0
 
         if self.noisy_gating and self.k < self.num_experts and train:
-            load = (self._prob_in_top_k(clean_logits, noisy_logits, noise_stddev, top_logits)).sum(0)
+            load = (
+                self._prob_in_top_k(
+                    clean_logits,
+                    cast(torch.Tensor, noisy_logits),
+                    cast(torch.Tensor, noise_stddev),
+                    top_logits,
+                )
+            ).sum(0)
         else:
             load = self._gates_to_load(gates)
         return gates, load

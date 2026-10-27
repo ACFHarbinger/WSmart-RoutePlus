@@ -9,19 +9,50 @@ update, feasibility and objective evaluation. Moved unchanged from ``hyper_aco.p
 
 import copy
 import math
+import random
 import time
-from typing import List, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 import numpy as np
+
+from logic.src.configs.policies.routing.hyper_heuristics.aco_hh import HyperHeuristicACOConfig
 
 from .hyper_operators import (
     HYPER_OPERATORS,
     HyperOperatorContext,
 )
 
+if TYPE_CHECKING:
+    from logic.src.policies.routing.meta_heuristics.ant_colony_optimization_k_sparse.pheromones import (
+        SparsePheromoneTau,
+    )
+
 
 class HyperACOPheromoneMixin:
     """Sequence construction, pheromone and evaluation helpers of :class:`HyperHeuristicACO` (moved unchanged from ``hyper_aco.py``)."""
+
+    # Provided by HyperHeuristicACO.__init__; annotations only.
+    cfg: HyperHeuristicACOConfig
+    random: random.Random
+    np_rng: np.random.Generator
+    dist_matrix: np.ndarray
+    wastes: Dict[int, float]
+    capacity: float
+    R: float
+    C: float
+    mandatory_nodes: List[int]
+    n_operators: int
+    operator_names: List[str]
+    op_to_idx: Dict[str, int]
+    sequence_length: int
+    tau: np.ndarray
+    eta: np.ndarray
+    edge_count: np.ndarray
+    pv: float
+    initial_pv: float
+    Z: float
+    Z_alpha: float
+    pheromone: "SparsePheromoneTau"
 
     # ------------------------------------------------------------------
     # Bootstrap insertion portfolio
@@ -224,21 +255,21 @@ class HyperACOPheromoneMixin:
 
     def _update_incumbent(
         self,
-        ant_results: List[Tuple[List[List[int]], float, float, List[str], int, int]],
+        results: List[Any],
         best_routes: List[List[int]],
         best_objective: float,
     ) -> Tuple[List[List[int]], float, bool]:
         """Replace the incumbent with this iteration's best plan that is feasible at the real capacity.
 
         Args:
-            ant_results: Per-ant results ``(routes, start_obj, final_obj, sequence, ant_idx, start_idx)``.
+            results: Per-ant results ``(routes, start_obj, final_obj, sequence, ant_idx, start_idx)``.
             best_routes: Current incumbent routes.
             best_objective: Routing cost of the incumbent (``inf`` if none is feasible yet).
 
         Returns:
             Tuple of (incumbent routes, incumbent cost, whether it improved).
         """
-        feasible = [r for r in ant_results if self._is_feasible(r[0])]
+        feasible = [r for r in results if self._is_feasible(r[0])]
         if not feasible:
             return best_routes, best_objective, False
         cand_routes = min(feasible, key=lambda r: r[2])[0]
@@ -275,7 +306,7 @@ class HyperACOPheromoneMixin:
             float: Penalised objective value.
         """
         routing_cost = self._calculate_routing_cost(routes)
-        num_violations = sum(1 for r in routes if sum(self.wastes.get(n, 0) for n in r) > self.capacity)
+        num_violations = sum((1 for r in routes if sum(self.wastes.get(n, 0) for n in r) > self.capacity), 0)
         return routing_cost + (self.pv * num_violations)
 
     def _evaporate_pheromones(self) -> None:

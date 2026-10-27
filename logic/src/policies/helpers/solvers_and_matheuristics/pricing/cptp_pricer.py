@@ -41,7 +41,7 @@ from __future__ import annotations
 import logging
 import time
 from collections import Counter
-from typing import Any, Callable, Dict, FrozenSet, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, FrozenSet, List, Optional, Set, Tuple, cast
 
 import numpy as np
 
@@ -94,7 +94,7 @@ class CPTPPricingSolver(RCSPPSolver):
         self._base_cost = ((d + d.T) / 2.0)[iu] * self.C
         self._edge_index = {(int(i), int(j)): k for k, (i, j) in enumerate(self._edges)}
         self._demands = np.array([0.0] + [float(self.wastes.get(i, 0.0)) for i in range(1, self.n_nodes + 1)])
-        self.stats: Counter = Counter()
+        self.stats: Dict[str, float] = cast(Dict[str, float], Counter())
         self.is_known_column: Callable[[Tuple[int, ...]], bool] = lambda _sig: False
 
     # The labelling DP is replaced by a CPTP solve whenever the call is representable.
@@ -236,7 +236,9 @@ class CPTPPricingSolver(RCSPPSolver):
             self.last_max_rc = float(route.reduced_cost)  # type: ignore[arg-type]
         else:
             self.pricing_status = PricingStatus.TIMED_OUT if not optimal else PricingStatus.HEURISTIC
-            bound_rc = -float(result.bound) - self.vehicle_dual if self.symmetric else float(route.reduced_cost)
+            bound_rc = (
+                -float(result.bound) - self.vehicle_dual if self.symmetric else float(cast(float, route.reduced_cost))
+            )
             self.last_max_rc = max(float(route.reduced_cost), bound_rc)  # type: ignore[arg-type]
         if route.reduced_cost <= 0:  # type: ignore[operator]
             return []

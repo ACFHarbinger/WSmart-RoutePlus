@@ -128,6 +128,7 @@ def decrypt_file_data(
 
     # Try to decode as UTF-8 for backward compatibility with text data
     # If decoding fails, return raw bytes for binary data
+    decrypted_data: Union[str, bytes]
     try:
         decrypted_data = decrypted_bytes.decode("utf-8")
     except UnicodeDecodeError:

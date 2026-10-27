@@ -31,7 +31,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import fields
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import gurobipy as gp
 import numpy as np
@@ -161,6 +161,7 @@ def _options(cfg: Union[SWCTCFConfig, Dict[str, Any]]) -> Dict[str, Any]:
     """
     if isinstance(cfg, dict):
         cfg = _structured_load(SWCTCFConfig, _unwrap_engine_section(cfg))
+    cfg = cast(SWCTCFConfig, cfg)
     formulation = str(cfg.formulation).strip().lower()
     if formulation not in ("paper", "directed"):
         raise ValueError("formulation must be 'paper' or 'directed'")

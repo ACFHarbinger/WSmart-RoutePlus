@@ -18,7 +18,7 @@ _LAZY = {
     "policy_ss_hh": "logic.src.policies.routing.hyper_heuristics.sequence_based_selection_hyper_heuristic.policy_ss_hh",
 }
 
-__all__ = list(_LAZY)
+__all__ = list(_LAZY)  # pyrefly: ignore[unresolvable-dunder-all]  # lazy re-exports; resolved through __getattr__
 
 
 def __getattr__(name: str) -> Any:

@@ -29,7 +29,7 @@ _LAZY = {
     "ZenMLBridge": "logic.src.tracking.integrations.zenml_bridge:ZenMLBridge",
 }
 
-__all__ = list(_LAZY)
+__all__ = list(_LAZY)  # pyrefly: ignore[unresolvable-dunder-all]  # lazy re-exports; resolved through __getattr__
 
 
 def __getattr__(name):

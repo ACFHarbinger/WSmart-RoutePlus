@@ -12,6 +12,7 @@ Example:
 """
 
 import random
+from typing import Any, List, Optional, Tuple
 
 import numpy as np
 
@@ -44,7 +45,7 @@ def local_search(  # noqa: C901
     bins_cannot_removed: list[int],
     rng: random.Random,
     np_rng: np.random.Generator,
-) -> list[list[int]]:
+) -> Tuple[Any, Any, Optional[int], Optional[int], List[int], List[int], List[int], List[int], List[int], List[int]]:
     """
     Perform a multi-operator local search on the routing solution.
 
@@ -92,15 +93,15 @@ def local_search(  # noqa: C901
     # the probability vector from the procedure list.
     weights = np.array([0.0 if name.startswith("Add route") else 1.0 for name in procedures])
     chosen_procedure = np_rng.choice(procedures, p=weights / weights.sum())
-    bin_to_remove = None
-    bin_to_add = None
-    bins_to_remove_random = []
-    bins_to_remove_consecutive = []
-    bins_to_add_random = []
-    bins_to_add_consecutive = []
-    bins_random = []
-    bins_consecutive = []
-    chosen_n = 1
+    bin_to_remove: Optional[int] = None
+    bin_to_add: Optional[int] = None
+    bins_to_remove_random: List[int] = []
+    bins_to_remove_consecutive: List[int] = []
+    bins_to_add_random: List[int] = []
+    bins_to_add_consecutive: List[int] = []
+    bins_random: List[int] = []
+    bins_consecutive: List[int] = []
+    chosen_n: Any = 1
     if chosen_procedure.startswith("Move") or chosen_procedure.startswith("Swap"):
         if "n" not in chosen_procedure:
             # simple move/swap

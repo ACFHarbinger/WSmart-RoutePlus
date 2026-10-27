@@ -12,7 +12,9 @@ from __future__ import annotations
 import heapq
 import logging
 import time
-from typing import Dict, FrozenSet, List, Optional, Set, Tuple
+from typing import Callable, Dict, FrozenSet, List, Optional, Set, Tuple
+
+import numpy as np
 
 from logic.src.policies.helpers.solvers_and_matheuristics.common.route import Route
 from logic.src.policies.helpers.solvers_and_matheuristics.pricing.labels import Label
@@ -27,6 +29,32 @@ logger = logging.getLogger(__name__)
 
 class RCSPPLabelingMixin:
     """Label-correcting algorithm, label extension and depot closing of :class:`RCSPPSolver`."""
+
+    # Attributes live on RCSPPSolver; declared here so the mixin type-checks.
+    is_farkas: bool
+    depot: int
+    use_ng_routes: bool
+    n_nodes: int
+    max_labels: int
+    labels_generated: int
+    labels_dominated: int
+    _current_timeout: float
+    _timed_out: bool
+    fixed_arcs: Set[Tuple[int, int]]
+    bounds_to: np.ndarray
+    _sorted_neighbors: Dict[int, List[int]]
+    cost_matrix: np.ndarray
+    C: float
+    vehicle_dual: float
+    wastes: Dict[int, float]
+    capacity: float
+    node_prizes: Optional[Dict[int, float]]
+    R: float
+    dual_values: Dict[int, float]
+    ng_neighborhoods: Dict[int, Set[int]]
+    pricing_status: PricingStatus
+    last_max_rc: float
+    _compute_route_details: Callable[[List[int]], Route]
 
     def _label_correcting_algorithm(  # noqa: C901
         self,

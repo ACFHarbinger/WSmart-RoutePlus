@@ -219,9 +219,8 @@ class GaussianMixture(BaseDistribution):
             Any: Description of return value.
         """
         if isinstance(coords, torch.Tensor):
-            t_coords = cast(torch.Tensor, coords)
-            coords_min = torch.amin(t_coords, dim=0, keepdim=True)
-            coords_max = torch.amax(t_coords, dim=0, keepdim=True)
+            coords_min = torch.amin(coords, dim=0, keepdim=True)
+            coords_max = torch.amax(coords, dim=0, keepdim=True)
         else:
             coords_min = coords.min(axis=0, keepdims=True)
             coords_max = coords.max(axis=0, keepdims=True)
@@ -239,9 +238,8 @@ class GaussianMixture(BaseDistribution):
             Any: Description of return value.
         """
         if isinstance(coords, torch.Tensor):
-            t_coords = cast(torch.Tensor, coords)
-            coords_min = torch.amin(t_coords, dim=1, keepdim=True)
-            coords_max = torch.amax(t_coords, dim=1, keepdim=True)
+            coords_min = torch.amin(coords, dim=1, keepdim=True)
+            coords_max = torch.amax(coords, dim=1, keepdim=True)
         else:
             coords_min = coords.min(axis=1, keepdims=True)
             coords_max = coords.max(axis=1, keepdims=True)

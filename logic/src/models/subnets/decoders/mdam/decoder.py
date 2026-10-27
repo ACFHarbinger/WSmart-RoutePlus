@@ -285,7 +285,7 @@ class MDAMDecoder(nn.Module):
 
             # Step environment
             td.set("action", action)
-            td = env.step(td)["next"]
+            td = cast(TensorDict, env.step(td)["next"])
 
             outputs.append(logprobs[:, 0, :])
             actions.append(action)

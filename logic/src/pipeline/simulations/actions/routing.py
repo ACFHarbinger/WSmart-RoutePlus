@@ -14,7 +14,7 @@ Example:
 
 import random
 import time
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional, cast
 
 import numpy as np
 from omegaconf import DictConfig, OmegaConf
@@ -84,6 +84,7 @@ class RoutingAction(SimulationAction):
             raw_cfg = OmegaConf.to_container(raw_cfg, resolve=True)
             context.config = raw_cfg
 
+        raw_cfg = cast(Dict[str, Any], raw_cfg)
         raw_cfg["seed"] = seed
 
         # RE-SEED GLOBAL STATE BEFORE EXECUTION
@@ -217,7 +218,7 @@ class RoutingAction(SimulationAction):
             context.cost = raw_km
             context.extra_output = extra_output
             context.time = elapsed_time  # construction only; run_day replaces it with the full policy time
-            context.solver_status = resolve_solver_status(current_solver_status(), tour)
+            context.solver_status = resolve_solver_status(current_solver_status(), cast(Optional[List[int]], tour))
             context.metrics_phase = "preliminary"
             # Preserve updated multi-day state for the next simulation day
             context.multi_day_context = updated_multi_day

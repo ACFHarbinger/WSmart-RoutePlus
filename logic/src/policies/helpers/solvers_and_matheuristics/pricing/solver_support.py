@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, Dict, FrozenSet, List, Set, Tuple
+from typing import TYPE_CHECKING, Any, Dict, FrozenSet, List, Optional, Set, Tuple
 
 import numpy as np
 
@@ -17,6 +17,21 @@ logger = logging.getLogger(__name__)
 
 class RCSPPSolverSupportMixin:
     """Relocated solver support methods."""
+
+    # Attributes live on RCSPPSolver; declared here so the mixin type-checks.
+    is_farkas: bool
+    n_nodes: int
+    node_prizes: Optional[Dict[int, float]]
+    wastes: Dict[int, float]
+    R: float
+    cost_matrix: np.ndarray
+    depot: int
+    C: float
+    capacity: float
+    vehicle_dual: float
+    bounds_to: np.ndarray
+    bounds_from: np.ndarray
+    dual_values: Dict[int, float]
 
     def _heuristic_pricing(
         self,

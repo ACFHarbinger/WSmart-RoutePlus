@@ -26,7 +26,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Optional, cast
 
 import torch
 import torch.nn.functional as F
@@ -137,7 +137,7 @@ def unbatchify(td: TensorDict | torch.Tensor, num_repeats: int) -> TensorDict | 
 
     batch_size = td.batch_size[0] // num_repeats
     indices = torch.arange(0, batch_size * num_repeats, num_repeats, device=td.device)
-    return td[indices]
+    return cast(TensorDict, td[indices])
 
 
 def gather_by_index(src: torch.Tensor, idx: torch.Tensor, dim: int = 1) -> torch.Tensor:

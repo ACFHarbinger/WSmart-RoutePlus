@@ -27,7 +27,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 from omegaconf import OmegaConf
 
@@ -160,7 +160,8 @@ def training_pipeline(cfg: Any) -> float:
     # 2. Extract the best validation reward from the run metadata
     # This assumes your pipeline logs a 'best_val_reward' in one of its steps
     try:
-        run = Client().get_pipeline_run(run_response.id)
+        client_cls = cast(Any, Client)
+        run = client_cls().get_pipeline_run(run_response.id)
 
         # Access the specific step
         eval_step = run.steps["evaluator_step"]

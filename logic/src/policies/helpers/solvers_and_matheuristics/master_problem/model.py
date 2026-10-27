@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import contextlib
 import logging
-from typing import TYPE_CHECKING, Any, Dict, FrozenSet, List, Optional, Set, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, FrozenSet, List, Optional, Set, Tuple, Union, cast
 
 import gurobipy as gp
 import numpy as np
@@ -194,7 +194,7 @@ class VRPPMasterProblem(
         self.dual_edge_clique_cuts: Dict[Tuple[int, int], float] = {}
         self.dual_multistar_cuts: Dict[FrozenSet[int], float] = {}
 
-        self.farkas_duals: Dict[str, Dict[Any, float]] = {}
+        self.farkas_duals: Dict[str, Any] = {}
 
         self.column_deletion_enabled: bool = True
         self.strict_set_partitioning: bool = True
@@ -336,12 +336,12 @@ class VRPPMasterProblem(
             # mandatory node with no usable column gets -1, so negate the ray once.
             farkas_node_duals: Dict[Union[int, str], float] = {}
             for node in range(1, self.n_nodes + 1):
-                constr = self.model.getConstrByName(f"coverage_{node}")
+                constr = cast(gp.Model, self.model).getConstrByName(f"coverage_{node}")
                 if constr is not None:
                     farkas_node_duals[node] = -constr.FarkasDual
 
             if self.vehicle_limit is not None:
-                constr = self.model.getConstrByName("vehicle_limit")
+                constr = cast(gp.Model, self.model).getConstrByName("vehicle_limit")
                 if constr is not None:
                     farkas_node_duals["vehicle_limit"] = -constr.FarkasDual
 
@@ -370,7 +370,7 @@ class VRPPMasterProblem(
         """
         self.dual_node_coverage = {}
         for node in range(1, self.n_nodes + 1):
-            constr = self.model.getConstrByName(f"coverage_{node}")
+            constr = cast(gp.Model, self.model).getConstrByName(f"coverage_{node}")
             if constr is not None:
                 with contextlib.suppress(gp.GurobiError):
                     # Set Partitioning (==) allows unrestricted duals. Set Packing (<=) restricts to >= 0.
@@ -381,7 +381,7 @@ class VRPPMasterProblem(
 
         self.dual_vehicle_limit = 0.0
         if self.vehicle_limit is not None:
-            constr = self.model.getConstrByName("vehicle_limit")
+            constr = cast(gp.Model, self.model).getConstrByName("vehicle_limit")
             if constr is not None:
                 with contextlib.suppress(gp.GurobiError):
                     self.dual_vehicle_limit = max(0.0, constr.Pi)

@@ -54,7 +54,7 @@ def preview_changes(
     key1, key2 = input_keys
     has_2_keys = key1 is not None and key2 is not None
     key_value: Union[str, int, float, None] = None
-    input2_name: str = ""
+    input2_name: Optional[str] = ""
 
     if has_2_keys:
         has_2_inputs = True
@@ -135,7 +135,7 @@ def preview_file_changes(
     key1, key2 = input_keys
     has_2_keys = key1 is not None and key2 is not None
     key_value: Union[str, int, float, None] = None
-    input2_name: str = ""
+    input2_name: Optional[str] = ""
 
     if has_2_keys:
         has_2_inputs = True

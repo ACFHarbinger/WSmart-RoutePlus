@@ -17,7 +17,7 @@ Example:
 from __future__ import annotations
 
 from abc import ABC
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, cast
 
 import torch
 from tensordict import TensorDict
@@ -174,7 +174,7 @@ class NonAutoregressivePolicy(nn.Module, ABC):
                 td = batchify(td, num_starts)
 
             if heatmap.size(0) != td.size(0):
-                heatmap = batchify(heatmap, num_starts)
+                heatmap = cast(torch.Tensor, batchify(cast(Any, heatmap), num_starts))
 
         if self.decoder is None:
             raise ValueError("common_decoding requires a decoder to be set")

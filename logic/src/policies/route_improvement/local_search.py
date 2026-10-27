@@ -12,7 +12,7 @@ Example:
 """
 
 import time
-from typing import Any, Callable, List, Tuple
+from typing import Any, Callable, Dict, List, Tuple, cast
 
 from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.search_context import ImprovementMetrics
@@ -69,7 +69,7 @@ class ClassicalLocalSearchRouteImprover(IRouteImprovement):
             return tour, {"algorithm": "ClassicalLocalSearchRouteImprover"}
 
         # Get parameters from config (via kwargs) with fallbacks
-        max_iter = kwargs.get("iterations", kwargs.get("n_iterations", self.config.get("iterations", 500)))
+        max_iter = cast(int, kwargs.get("iterations", kwargs.get("n_iterations", self.config.get("iterations", 500))))
         operator_name = kwargs.get("ls_operator", kwargs.get("operator_name", self.config.get("ls_operator", "2opt")))
         seed = kwargs.get("seed", self.config.get("seed", 42))
         time_limit = kwargs.get("time_limit", self.config.get("time_limit"))
@@ -84,10 +84,10 @@ class ClassicalLocalSearchRouteImprover(IRouteImprovement):
             pass
 
         # Problem parameters
-        wastes = kwargs.get("wastes", self.config.get("wastes", {}))
-        capacity = kwargs.get("capacity", self.config.get("capacity", float("inf")))
-        R = kwargs.get("R", self.config.get("R", 1.0))
-        C = kwargs.get("C", self.config.get("C", 1.0))
+        wastes = cast(Dict[int, float], kwargs.get("wastes", self.config.get("wastes", {})))
+        capacity = cast(float, kwargs.get("capacity", self.config.get("capacity", float("inf"))))
+        R = cast(float, kwargs.get("R", self.config.get("R", 1.0)))
+        C = cast(float, kwargs.get("C", self.config.get("C", 1.0)))
 
         dist_matrix = to_numpy(distance_matrix)
 

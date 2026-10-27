@@ -10,7 +10,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import List
+from typing import List, Optional, Tuple, cast
 
 from torch import nn
 
@@ -162,7 +162,7 @@ class MoEMultiHeadAttentionLayer(MultiHeadAttentionLayerBase):
                 self.threshold,
                 self.replacement_value,
                 self.n_params,
-                self.uniform_range,
+                cast(Optional[Tuple[float, float]], self.uniform_range),
                 num_experts=self.num_experts,
                 k=self.k,
                 noisy_gating=self.noisy_gating,

@@ -26,7 +26,7 @@ Examples:
 
 import copy
 import random
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
 import numpy as np
 
@@ -228,8 +228,8 @@ class LNSSolver(LNSBase, PolicyVizMixin):
         params = spec.get("params", {}) if isinstance(spec, dict) else spec.params
         read = params.get if isinstance(params, dict) else lambda key: getattr(params, key)
         self.acceptance_criterion = LegacySAAcceptance(
-            start_temp=read("initial_temp"),
-            cooling_rate=read("alpha"),
+            start_temp=cast(float, read("initial_temp")),
+            cooling_rate=cast(float, read("alpha")),
             rng=self.random,
         )
 

@@ -9,13 +9,19 @@ generation and its bandit signals, the coverage- and margin-driven penalty adapt
 extraction. Moved unchanged from ``hgs.py``, which re-exports the constants.
 """
 
-from typing import Dict, List, Optional, Tuple
+import random
+from typing import Any, Dict, List, Optional, Tuple
 
+import numpy as np
+
+from logic.src.configs.policies.routing.meta_heuristics.hgs import HGSConfig
 from logic.src.envs.common.expand_pool import current_expand_pool
+from logic.src.policies.helpers.local_search.local_search_hgs import HGSLocalSearch
 from logic.src.policies.helpers.operators.crossover_recombination import route_profit_gpx_crossover
 
 from .evolution import _extract_edges, evaluate, update_biased_fitness
 from .individual import Individual
+from .split import LinearSplit
 
 # Penalty-adaptation constants
 _MIN_PENALTY = 0.05
@@ -31,6 +37,24 @@ _TARGET_MARGIN = 0.10  # 10% net margin
 
 class HGSPopulationMixin:
     """Population, selection, offspring, penalty and extraction methods of :class:`HGSSolver` (moved unchanged from ``hgs.py``)."""
+
+    # Provided by HGSSolver.__init__; annotations only, no runtime defaults.
+    params: HGSConfig
+    nodes: List[int]
+    random: random.Random
+    split_manager: LinearSplit
+    ls: HGSLocalSearch
+    d: np.ndarray
+    wastes: Dict[int, float]
+    Q: float
+    R: float
+    C: float
+    mandatory_nodes: List[int]
+    _feas_cache: Dict[Any, Any]
+    _infeas_cache: Dict[Any, Any]
+    _offspring_coverage: List[float]
+    _offspring_margin: List[float]
+    _offspring_feasibility: List[bool]
 
     # ------------------------------------------------------------------
     # Internal helpers

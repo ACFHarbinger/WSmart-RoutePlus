@@ -7,8 +7,12 @@ the configuration, in their cost-only and profit-aware variants. Moved unchanged
 ``alns.py``.
 """
 
-from typing import Callable, Dict, List, Tuple
+import random
+from typing import Callable, Dict, List, Optional, Tuple
 
+import numpy as np
+
+from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
 from logic.src.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators import (
     cluster_profit_removal,
@@ -37,6 +41,20 @@ from logic.src.policies.helpers.operators import (
 
 class ALNSOperatorRegistryMixin:
     """Destroy and repair operator registry builders of :class:`ALNSSolver` (moved unchanged from ``alns.py``)."""
+
+    # Provided by ALNSSolver.__init__; annotations only.
+    params: ALNSConfig
+    profit_aware_operators: bool
+    extended_operators: bool
+    random: random.Random
+    np_random: np.random.Generator
+    dist_matrix: np.ndarray
+    wastes: Dict[int, float]
+    R: float
+    C: float
+    capacity: float
+    mandatory_nodes: Optional[List[int]]
+    nodes: List[int]
 
     # ------------------------------------------------------------------
     # Operator registry builders

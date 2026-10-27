@@ -2,8 +2,6 @@
 
 from typing import Any
 
-from logic.src.utils.registry import lazy_getattr
-
 _LAZY = {
     "exact_and_decomposition_solvers": "logic.src.policies.routing.exact_and_decomposition_solvers",
     "hyper_heuristics": "logic.src.policies.routing.hyper_heuristics",

@@ -154,6 +154,7 @@ def _eval_dataset(
 
     results: List[Dict[str, Any]] = []
     for i, (seq, reward) in enumerate(zip(sequences_best, rewards_best, strict=False)):
+        batch_i: Any = {}
         if seq is not None:
             if model.problem.NAME in ("cptp", "cptptc"):
                 # Multi-trip problems: keep the trailing depot-return marker
@@ -170,7 +171,6 @@ def _eval_dataset(
             seq_tensor = torch.tensor(seq, device=device).unsqueeze(0)
             instance = dataset[i]
             instance_obj: object = instance
-            batch_i: Any
             if isinstance(instance_obj, (list, tuple)):
                 batch_i = {k: v.unsqueeze(0).to(device) for k, v in zip(["locs"], instance_obj, strict=False)}
             elif isinstance(instance_obj, ITraversable):

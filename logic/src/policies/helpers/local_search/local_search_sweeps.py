@@ -44,7 +44,7 @@ operators stay here.
 """
 
 from types import SimpleNamespace
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, cast
 
 import numpy as np
 
@@ -264,7 +264,9 @@ class SweepLocalSearch(SweepExchangeMixin, SweepRouteMixin, LocalSearch):
             bool: True if an improving move was found and applied, False otherwise.
         """
         old_routes = self.get_routes()
-        new_routes = apply_lns(old_routes, self.d, self.waste, self.Q, self.R, self.C, self.random)
+        new_routes = apply_lns(
+            old_routes, cast(np.ndarray, self.d), self.waste, self.Q, self.R, self.C, self.random
+        )
         if new_routes != old_routes:
             self.set_routes(new_routes)
             return True
@@ -281,7 +283,7 @@ class SweepLocalSearch(SweepExchangeMixin, SweepRouteMixin, LocalSearch):
             bool: True if an improving move was found and applied, False otherwise.
         """
         old_routes = self.get_routes()
-        new_routes = apply_ges(old_routes, self.d, self.waste, self.Q, self.random)
+        new_routes = apply_ges(old_routes, cast(np.ndarray, self.d), self.waste, self.Q, self.random)
         if new_routes != old_routes:
             self.set_routes(new_routes)
             return True

@@ -11,6 +11,7 @@ unrouted-insert and drop moves. Moved unchanged from ``local_search_base.py``.
 from __future__ import annotations
 
 import random
+from typing import TYPE_CHECKING, Callable, Dict, List, Set, Tuple
 
 from logic.src.policies.helpers.operators.inter_route_local_search import (
     move_2opt_star,
@@ -32,6 +33,22 @@ from logic.src.policies.helpers.operators.intra_route_local_search import (
 
 class LocalSearchMovesMixin:
     """Move-operator wrappers of :class:`LocalSearch` (moved unchanged from ``local_search_base.py``)."""
+
+    # Attribute types from LocalSearch.__init__. Load/map callables stay
+    # annotations: LocalSearchPairMixin is earlier in the MRO and owns them.
+    routes: List[List[int]]
+    waste: Dict[int, float]
+    top_insertions: Dict[int, Dict[int, List[Tuple[float, int]]]]
+    mandatory_nodes: Set[int]
+    C: float
+    Q: float
+    R: float
+    _get_load_cached: Callable[[int], float]
+    _update_map: Callable[[Set[int]], None]
+
+    if TYPE_CHECKING:
+
+        def get_dist(self, i: int, j: int) -> float: ...
 
     def _move_relocate(self, u: int, v: int, r_u: int, p_u: int, r_v: int, p_v: int) -> bool:
         """Relocate a node to a new position.

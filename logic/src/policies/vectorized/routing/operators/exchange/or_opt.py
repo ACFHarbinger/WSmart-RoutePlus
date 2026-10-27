@@ -268,6 +268,7 @@ def _find_best_insertions(
         )
 
         if has_cap:
+            assert caps is not None
             feasible = chain_wastes <= caps.unsqueeze(1)  # type: ignore[operator]
             ins_cost = torch.where(feasible, ins_cost, torch.tensor(float("inf"), device=device))
 

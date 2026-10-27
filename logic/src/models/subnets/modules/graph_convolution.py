@@ -18,6 +18,7 @@ Example:
 from __future__ import annotations
 
 import math
+from typing import Any, cast
 
 import torch
 from torch import nn
@@ -28,7 +29,7 @@ try:
     PYG_AVAILABLE = True
 except (ImportError, OSError):
     PYG_AVAILABLE = False
-    scatter = None
+    scatter = None  # type: ignore[assignment]  # optional torch_geometric import fallback
 
 
 class GraphConvolution(nn.Module):
@@ -114,7 +115,7 @@ class GraphConvolution(nn.Module):
             unique_targets = batch_offset + expanded_target
 
             # Use scatter to aggregate messages to targets
-            flat_output = scatter(
+            flat_output = cast(Any, scatter)(
                 messages,
                 unique_targets,
                 dim=0,

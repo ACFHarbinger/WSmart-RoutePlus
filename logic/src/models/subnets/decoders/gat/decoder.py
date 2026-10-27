@@ -48,6 +48,8 @@ class DeepGATDecoder(nn.Module):
         project_step_context (nn.Linear): Linear projection for step-specific context.
     """
 
+    project_step_context: nn.Module
+
     def __init__(
         self,
         embed_dim: int,

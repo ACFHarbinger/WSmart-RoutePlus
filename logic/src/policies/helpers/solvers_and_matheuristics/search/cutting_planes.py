@@ -44,7 +44,7 @@ Example:
     >>> cuts_added = engine.separate_and_add_cuts(master, max_cuts=10)
 """
 
-from typing import List, Optional
+from typing import Any, List, Optional
 
 import numpy as np
 
@@ -128,7 +128,7 @@ def create_cutting_plane_engine(  # noqa: C901
     dist_matrix: Optional[np.ndarray] = None,
     route_budget: float = float("inf"),
     max_subset: int = 50,
-    **kwargs: dict,
+    **kwargs: Any,
 ) -> CuttingPlaneEngine:
     """Factory function to create cutting plane engines.
 
@@ -179,7 +179,7 @@ def create_cutting_plane_engine(  # noqa: C901
         max_subset = kwargs.get("max_subset_size", 5)
         return LimitedMemoryRank1CutEngine(v_model, max_subset_size=max_subset)
     elif engine_name in ("all", "composite"):
-        engines = []
+        engines: List[CuttingPlaneEngine] = []
         if sep_engine is not None:
             engines.append(RoundedCapacityCutEngine(v_model, sep_engine))
         engines.append(SubsetRowCutEngine(v_model))  # type: ignore[arg-type]

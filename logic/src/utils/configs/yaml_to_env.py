@@ -15,7 +15,7 @@ Example:
 
 import os
 import sys
-from typing import Any
+from typing import Any, Dict, cast
 
 import yaml
 
@@ -122,7 +122,7 @@ def deep_merge(target: dict, source: dict) -> dict:
             and target.get(key) is not None
             and isinstance(target.get(key), ITraversable)
         ):
-            deep_merge(target[key], value) # pyrefly: ignore [bad-argument-type]
+            deep_merge(target[key], cast(Dict[Any, Any], value))  # YAML merge value is a dict
         else:
             target[key] = value
     return target

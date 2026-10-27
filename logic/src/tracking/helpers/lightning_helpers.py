@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import contextlib
 import os
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, cast
 
 import pytorch_lightning as pl
 import torch
@@ -61,7 +61,7 @@ except ImportError:
     plot_attention_heatmaps = None  # type: ignore[assignment]
 
 try:
-    from logic.src.tracking.logging.visualization.embeddings import (
+    from logic.src.tracking.logging.visualization.embeddings import (  # pyrefly: ignore[missing-import]  # optional viz module is not in this package
         log_weight_distributions,
         project_node_embeddings,
     )
@@ -70,7 +70,9 @@ except ImportError:
     project_node_embeddings = None  # type: ignore[assignment]
 
 try:
-    from logic.src.tracking.logging.visualization.landscape import plot_loss_landscape
+    from logic.src.tracking.logging.visualization.landscape import (  # pyrefly: ignore[missing-import]  # optional viz module is not in this package
+        plot_loss_landscape,
+    )
 except ImportError:
     plot_loss_landscape = None  # type: ignore[assignment]
 
@@ -125,7 +127,7 @@ def register_monitoring_hooks(
 
     if _opt(cfg, "log_gradients"):
         try:
-            hook_data["gradient"] = add_gradient_monitoring_hooks(pl_module)
+            hook_data["gradient"] = cast(Callable[..., Any], add_gradient_monitoring_hooks)(pl_module)
         except Exception:
             logger.debug("Failed to register gradient hooks", exc_info=True)
 
@@ -137,13 +139,15 @@ def register_monitoring_hooks(
 
     if _opt(cfg, "log_weights"):
         try:
-            hook_data["weight"] = add_weight_distribution_monitor(pl_module)
+            hook_data["weight"] = cast(Callable[..., Any], add_weight_distribution_monitor)(pl_module)
         except Exception:
             logger.debug("Failed to register weight hooks", exc_info=True)
 
     if _opt(cfg, "nan_guard"):
         try:
-            hook_data["nan_guard"] = add_gradient_nan_detector_hook(pl_module, raise_on_nan=True)
+            hook_data["nan_guard"] = cast(Callable[..., Any], add_gradient_nan_detector_hook)(
+                pl_module, raise_on_nan=True
+            )
         except Exception:
             logger.debug("Failed to register NaN guard hooks", exc_info=True)
 
@@ -167,7 +171,9 @@ def log_hook_stats_to_run(run: Any, epoch: int, hook_data: Dict[str, Any]) -> No
     # Activation stats
     if "activation" in hook_data:
         try:
-            stats = compute_activation_statistics(hook_data["activation"].get("statistics", {}))
+            stats = cast(Callable[..., Any], compute_activation_statistics)(
+                hook_data["activation"].get("statistics", {})
+            )
             for name, stat in stats.items():
                 for k, v in stat.items():
                     if isinstance(v, (int, float)):

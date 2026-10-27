@@ -82,9 +82,9 @@ def test_type_ii_unstringing():
     i = 3
     k = 5
     j = 7
-    l = 8
+    label = 8
 
-    new_route = apply_type_ii_us(route, i, j, k, l)
+    new_route = apply_type_ii_us(route, i, j, k, label)
     expected = [0, 1, 2, 5, 4, 7, 6, 8, 0]
 
     assert new_route == expected, f"Expected {expected}, got {new_route}"
@@ -153,10 +153,10 @@ def test_type_iv_unstringing():
     route = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
     i = 9
     j = 2
-    l = 5
+    label = 5
     k = 7
 
-    new_route = apply_type_iv_us(route, i, j, k, l)
+    new_route = apply_type_iv_us(route, i, j, k, label)
     expected = [0, 1, 5, 6, 7, 8, 4, 3, 2, 0]
 
     assert new_route == expected, f"Expected {expected}, got {new_route}"

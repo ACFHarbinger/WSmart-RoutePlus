@@ -20,9 +20,9 @@ def test_geni_type_i_reconnection():
     i = 1 # v_i = 1
     j = 3 # v_j = 3
     k = 5 # v_k = 5
-    l = -1
+    label = -1
 
-    new_route = _apply_geni_move(route, u, i, j, k, l, "TYPE_I")
+    new_route = _apply_geni_move(route, u, i, j, k, label, "TYPE_I")
     # Expected: [0, 1, 6, 3, 2, 5, 4, 0] -> without depots: [1, 6, 3, 2, 5, 4]
     expected = [1, 6, 3, 2, 5, 4]
     assert new_route == expected
@@ -33,11 +33,11 @@ def test_geni_type_ii_reconnection():
     route = [1, 2, 3, 4, 5, 6, 7]
     # full: [0, 1, 2, 3, 4, 5, 6, 7, 0]
     i = 1 # v_i = 1
-    l = 3 # v_l = 3
+    label = 3 # v_l = 3
     j = 5 # v_j = 5
     k = 7 # v_k = 7
 
-    new_route = _apply_geni_move(route, u, i, j, k, l, "TYPE_II")
+    new_route = _apply_geni_move(route, u, i, j, k, label, "TYPE_II")
     # New Expected: [0, 1, 8, 5, 4, 3, 6, 2, 7, 0] -> [1, 8, 5, 4, 3, 6, 2, 7]
     expected = [1, 8, 5, 4, 3, 6, 2, 7]
     assert new_route == expected

@@ -120,7 +120,7 @@ class MasterProblemSupport(Protocol):
     prev_dual_vehicle_limit: float
     prev_dual_capacity_cuts: Dict[FrozenSet[int], float]
     prev_dual_sri_cuts: Dict[FrozenSet[int], float]
-    farkas_duals: Dict[str, Dict[Any, float]]
+    farkas_duals: Dict[str, Any]
 
     column_deletion_enabled: bool
     strict_set_partitioning: bool
@@ -165,7 +165,7 @@ class MasterProblemSupport(Protocol):
         """
         ...
 
-    def add_route(self, route: Route) -> None:
+    def add_route(self, route: Route) -> bool:
         """Adds a new route (column) to the RMP.
 
         Args:
@@ -315,6 +315,17 @@ class MasterProblemSupport(Protocol):
 
         Returns:
             bool: True if the cut was successfully added.
+        """
+        ...
+
+    def _find_customer_components(self, arc_flow: Dict[Tuple[int, int], float]) -> List[Set[int]]:
+        """Connected components of customer nodes in a fractional support graph.
+
+        Args:
+            arc_flow: Mapping of edges to their fractional flow values.
+
+        Returns:
+            List[Set[int]]: Node ids in each customer component.
         """
         ...
 

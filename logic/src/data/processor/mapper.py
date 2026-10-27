@@ -62,7 +62,7 @@ class SimulationDataMapper:
         """
         df = df.sort_values(by=metric_tosort, ascending=ascending_order)
         columns = [metric_tosort] + [col for col in df.columns if col != metric_tosort]
-        return cast(pd.DataFrame, df[columns])
+        return df[columns]
 
     def get_df_types(self, df: pd.DataFrame, prec: str = "32") -> Dict[str, str]:
         """Infers and maps column data types to specific precisions.
@@ -85,7 +85,7 @@ class SimulationDataMapper:
             else:
                 new_type = str(val)
             df_types[key] = new_type
-        return df_types
+        return cast(Dict[str, str], df_types)
 
     def setup_df(
         self,
@@ -106,7 +106,8 @@ class SimulationDataMapper:
             DataFrame containing merged and sorted data.
         """
         df = df.loc[:, col_names].copy()
-        df.loc[-1] = depot.loc[0, col_names].values
+        depot_row = cast(Any, depot).loc[0, col_names]
+        cast(Any, df).loc[-1] = depot_row.values
         df.index = df.index + 1
         df = df.sort_index()
         if index_name is None:

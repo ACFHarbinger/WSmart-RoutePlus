@@ -8,10 +8,10 @@ The module also holds ``CPTPTCGenerator``, the problem's instance generator.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Sequence, Union
+from typing import Any, Dict, Optional, Sequence, Union, cast
 
 import torch
-from tensordict import TensorDict
+from tensordict import TensorDict, TensorDictBase
 
 from logic.src.constants.temporal import get_default_temporal_params
 from logic.src.envs.base.resources import LoadResource, ShiftTimeResource
@@ -123,12 +123,12 @@ class CPTPTCEnv(CPTPEnv):
         )
         self.resources = (LoadResource(), ShiftTimeResource())
 
-    def _check_done(self, tensordict: TensorDict) -> torch.Tensor:
+    def _check_done(self, tensordict: TensorDictBase) -> torch.Tensor:
         """End at the depot once explicit stop triggers or customer actions are exhausted."""
-        current = tensordict["current_node"].reshape(-1)
-        step = tensordict["i"].reshape(-1)
+        current = cast(torch.Tensor, tensordict["current_node"]).reshape(-1)
+        step = cast(torch.Tensor, tensordict["i"]).reshape(-1)
         exhausted = (current == 0) & (step > 0) & ~self._get_action_mask(tensordict)[:, 1:].any(dim=1)
-        finished = tensordict.get("finished", torch.zeros_like(current, dtype=torch.bool))
+        finished = cast(torch.Tensor, tensordict.get("finished", torch.zeros_like(current, dtype=torch.bool)))
         return finished | exhausted
 
 

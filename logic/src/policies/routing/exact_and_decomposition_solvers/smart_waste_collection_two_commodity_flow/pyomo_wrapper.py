@@ -9,7 +9,7 @@ Example:
     >>> res = _run_pyomo_tcf_optimizer(bins, dist, values, ids, mandatory)
 """
 
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import numpy as np
 import pyomo.environ as pyo
@@ -28,7 +28,7 @@ def _run_pyomo_tcf_optimizer(  # noqa: C901
     binsids: List[int],
     mandatory_nodes: List[int],
     number_vehicles: int = 1,
-    time_limit: int = 60,
+    time_limit: float = 60,
     solver_id: str = "scip",
     seed: int = 42,
     dual_values: Optional[Dict[int, float]] = None,
@@ -60,12 +60,12 @@ def _run_pyomo_tcf_optimizer(  # noqa: C901
     valid_arcs = d.valid_arcs
 
     # 2. Pyomo Model Initialization
-    model = pyo.ConcreteModel(name="SWC_TCF_Pyomo")
+    model = cast(Any, pyo.ConcreteModel(name="SWC_TCF_Pyomo"))
     model.V = pyo.Set(initialize=nodes)
     model.V_real = pyo.Set(initialize=nodes_real)
 
     # Arc set from the shared preparation (same predicate the filter applied).
-    model.A = pyo.Set(within=model.V * model.V, initialize=valid_arcs)
+    model.A = pyo.Set(within=cast(Any, model.V) * cast(Any, model.V), initialize=valid_arcs)
 
     # Variables
     model.x = pyo.Var(model.A, within=pyo.Binary)
@@ -124,21 +124,28 @@ def _run_pyomo_tcf_optimizer(  # noqa: C901
 
     model.flow_empty = pyo.Constraint(model.V_real, rule=flow_empty_rule)
 
+    # Pyomo component types do not model algebraic expressions; the objects are unchanged.
+    flow_f = cast(Any, model.f)
+    flow_g = cast(Any, model.g)
+    flow_h = cast(Any, model.h)
+    flow_x = cast(Any, model.x)
+    nodes_real_set = cast(Any, model.V_real)
+    arcs = cast(Any, model.A)
+    fleet = cast(Any, model.k_var)
     model.depot_waste_in = pyo.Constraint(
-        expr=sum(model.f[i, 0] for i in model.V_real if (i, 0) in model.A)
-        == sum(S_dict[i] * model.g[i] for i in model.V_real)
+        expr=sum(flow_f[i, 0] for i in nodes_real_set if (i, 0) in arcs) == sum(S_dict[i] * flow_g[i] for i in nodes_real_set)
     )
     model.depot_empty_out = pyo.Constraint(
-        expr=sum(model.h[0, j] for j in model.V_real if (0, j) in model.A) == Q * model.k_var
+        expr=sum(flow_h[0, j] for j in nodes_real_set if (0, j) in arcs) == Q * fleet
     )
-    depot_out_arcs = [j for j in model.V_real if (0, j) in model.A]
+    depot_out_arcs = [j for j in nodes_real_set if (0, j) in arcs]
     if depot_out_arcs:
-        model.depot_waste_out = pyo.Constraint(expr=sum(model.f[0, j] for j in depot_out_arcs) == 0)
+        model.depot_waste_out = pyo.Constraint(expr=sum(flow_f[0, j] for j in depot_out_arcs) == 0)
     # With no depot arcs (all cut by MAX_ARC_DISTANCE_KM) the balance is 0 == 0, which pyomo rejects as a
     # trivial Boolean; skipping it leaves the model infeasible or empty, like the native backends.
 
     model.vehicle_count = pyo.Constraint(
-        expr=sum(model.x[0, j] for j in model.V_real if (0, j) in model.A) == model.k_var
+        expr=sum(flow_x[0, j] for j in nodes_real_set if (0, j) in arcs) == fleet
     )
 
     def route_in_rule(m, j):
@@ -173,7 +180,7 @@ def _run_pyomo_tcf_optimizer(  # noqa: C901
     model.forced_visits = pyo.ConstraintList()
     for i in nodes_real:
         if criticos_dict[i] or S_dict[i] >= psi * 100:
-            model.forced_visits.add(model.g[i] == 1)
+            cast(Any, model.forced_visits).add(flow_g[i] == 1)
 
     # 4. Objective Function
     def obj_rule(m):
@@ -223,7 +230,7 @@ def _run_pyomo_tcf_optimizer(  # noqa: C901
             and res.solver.status != pyo.SolverStatus.error
         )
         # A time limit hit before any incumbent reports maxTimeLimit with no solution to load.
-        return status_ok and len(getattr(res, "solution", [])) > 0
+        return status_ok and len(cast(Any, getattr(res, "solution", []))) > 0
 
     from logic.src.pipeline.simulations.reporting import format_backend_status, note_solver_status
 
@@ -247,12 +254,14 @@ def _run_pyomo_tcf_optimizer(  # noqa: C901
             print(f"[WARN] Pyomo TCF ({solver_id}): no loadable incumbent ({exc}).")
     if loaded:
 
-        arcos_ativos = [(i, j) for (i, j) in model.A if pyo.value(model.x[i, j]) > 0.5]
+        solved_arcs = cast(Any, model.A)
+        solved_x = cast(Any, model.x)
+        arcos_ativos = [(i, j) for (i, j) in solved_arcs if cast(float, pyo.value(solved_x[i, j])) > 0.5]
         route = extract_depot_delimited_route(arcos_ativos, d.id_map)
 
         profit = pyo.value(model.obj)
-        cost = sum([pyo.value(model.x[i, j]) * distance_matrix[i][j] for i, j in model.A])
-        return route, profit, cost
+        cost = sum([cast(float, pyo.value(solved_x[i, j])) * distance_matrix[i][j] for i, j in solved_arcs])
+        return cast(Tuple[List[int], float, float], (route, profit, cost))
 
     print(f"[WARN] Pyomo TCF ({solver_id}) could not find a feasible solution.")
     return [0, 0], 0.0, 0.0

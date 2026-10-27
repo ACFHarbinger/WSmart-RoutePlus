@@ -15,7 +15,7 @@ Example:
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional, Union, cast
 
 import torch
 from torch import nn
@@ -121,5 +121,6 @@ class EdgeEmbedding(nn.Module):
             graph_data.append(graph)
 
         batch = Batch.from_data_list(graph_data)
-        batch.edge_attr = self.edge_embed(batch.edge_attr)
+        graph_batch = cast(Any, batch)
+        graph_batch.edge_attr = self.edge_embed(graph_batch.edge_attr)
         return batch

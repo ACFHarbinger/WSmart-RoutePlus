@@ -19,13 +19,12 @@ import os
 import random
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple, cast
 
 import numpy as np
 from loguru import logger
 
 from logic.src.constants import DAY_METRICS
-from logic.src.constants.paths import CONFIGS_DIR
 from logic.src.data.processor import (
     process_data,
     process_model_data,
@@ -109,7 +108,7 @@ class InitializingState(SimState):
         # Rebuild on both new and resumed runs, using the restored node order.
         if sim.problem.lower() == "cptptc" or getattr(graph, "tm_filepath", None):
             assert ctx.dist_tup is not None
-            ctx.shift_hours, ctx.time_matrix, ctx.service_time_h = load_temporal_params(
+            shift_hours, time_matrix, service_time_h = load_temporal_params(
                 coords=ctx.coords,
                 distance_matrix=ctx.dist_tup[0],
                 tm_filepath=getattr(graph, "tm_filepath", None),
@@ -118,6 +117,10 @@ class InitializingState(SimState):
                 service_time_h=ctx.service_time_h,
                 time_unit=getattr(graph, "time_matrix_unit", "seconds"),
             )
+            # Matrix inputs: the middle value is a travel-time matrix, not a speed.
+            ctx.shift_hours = shift_hours
+            ctx.time_matrix = cast(np.ndarray, time_matrix)
+            ctx.service_time_h = service_time_h
 
         logger.info(f"Initialization complete. Transitioning to RunningState for {ctx.pol_name} policy.")
         ctx.transition_to(RunningState())
@@ -246,7 +249,8 @@ class InitializingState(SimState):
             service_time_h=getattr(sim, "service_time_h", 1.5 / 60.0),
         )
         ctx.shift_hours = shift_hours
-        ctx.avg_speed_kmh = avg_speed_kmh
+        # No matrix inputs: the middle value is the scalar speed.
+        ctx.avg_speed_kmh = cast(float, avg_speed_kmh)
         ctx.service_time_h = service_time_h
 
         tw_source = (
@@ -286,8 +290,12 @@ class InitializingState(SimState):
         """
         # If policy config was not correctly loaded in __init__ (common when passing paths in config_path)
         # we re-link it here from the correctly loaded context config registry.
-        if (not ctx.pol_cfg or not isinstance(ctx.pol_cfg, dict)) and ctx.pol_id_orig in ctx.config:  # pyrefly: ignore [not-iterable]
-            ctx.pol_cfg = ctx.config[ctx.pol_id_orig]  # pyrefly: ignore [unsupported-operation]
+        if (
+            ctx.config is not None
+            and (not ctx.pol_cfg or not isinstance(ctx.pol_cfg, dict))
+            and ctx.pol_id_orig in ctx.config
+        ):
+            ctx.pol_cfg = ctx.config[ctx.pol_id_orig]
 
         model_name = ""
         if isinstance(ctx.pol_cfg, dict) and "model" in ctx.pol_cfg:

@@ -9,7 +9,7 @@ Example:
     >>> # action.execute(context)
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 from rich import box
 from rich.console import Console
@@ -99,8 +99,8 @@ class LogAction(SimulationAction):
             new_overflows=new_overflows,
             sum_lost=sum_lost,
             profit=profit,
-            fill=getattr(context, "fill", bins.real_c),
-            total_fill=getattr(context, "total_fill", bins.c),
+            fill=cast(Any, getattr(context, "fill", bins.real_c)),
+            total_fill=cast(Any, getattr(context, "total_fill", bins.c)),
             bins_means=bins.means,
             bins_real_c=bins.real_c,
             tour=tour,
@@ -113,7 +113,7 @@ class LogAction(SimulationAction):
         dlog["capacity_violations"] = int(getattr(context, "capacity_violations", 0))
         dlog["capacity_splits"] = int(getattr(context, "capacity_splits", 0))
         context.daily_log = dlog
-        policy_name = getattr(context, "display_name", context.policy_name)
+        policy_name = cast(str, getattr(context, "display_name", context.policy_name))
 
         # Pretty terminal output
         console = Console()

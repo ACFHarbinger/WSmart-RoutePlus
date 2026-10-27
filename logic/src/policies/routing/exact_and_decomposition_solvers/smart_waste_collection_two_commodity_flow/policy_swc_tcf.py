@@ -10,7 +10,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 from logic.src.configs.policies import SWCTCFConfig
 from logic.src.enums import PolicyTag
@@ -85,8 +85,8 @@ class SWCTCFPolicy(GenericRoutingPolicy):
         marker so multi-route days keep their route boundaries.
         """
         raw_route, profit, cost = result
-        routes = []
-        current = []
+        routes: List[List[int]] = []
+        current: List[int] = []
         for node in raw_route:
             if node == 0:
                 if current:

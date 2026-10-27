@@ -19,7 +19,7 @@ import os
 import time
 from collections.abc import Mapping
 from multiprocessing.synchronize import Lock
-from typing import TYPE_CHECKING, Dict, Optional, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
 
 from loguru import logger
 
@@ -116,7 +116,7 @@ class RunningState(SimState):
                 for index in range(len(kg_rows)):
                     record = {}
                     for key in SIM_METRICS:
-                        column = ctx.daily_log.get(key)
+                        column = cast(Dict[str, List[Any]], ctx.daily_log).get(key)
                         if isinstance(column, list) and index < len(column):
                             record[key] = column[index]
                     records.append(record)

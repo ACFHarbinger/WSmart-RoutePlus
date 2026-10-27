@@ -27,7 +27,7 @@ Example:
     >>> visited, obj, dist = solve_uncapacitated_op(dm, w, lam=0.5, R=1.0, C=0.1)
 """
 
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, cast
 
 import gurobipy as gp
 import networkx as nx
@@ -66,7 +66,9 @@ def _op_dfj_callback(model: gp.Model, where: int) -> None:
     for component in nx.connected_components(G):
         if 0 not in component and len(component) >= 2:
             rest = set(range(num_nodes)) - component
-            outgoing = [x_vars[i, j] for i in component for j in rest if (i, j) in x_vars]
+            outgoing = [
+                x_vars[cast(Tuple[int, int], (i, j))] for i in component for j in rest if (i, j) in x_vars
+            ]
             if outgoing:
                 model.cbLazy(quicksum(outgoing) >= 1)
 
@@ -129,7 +131,7 @@ def solve_uncapacitated_op(
     # Build reduced problem over {depot=0} ∪ eligible
     active_nodes = [0] + eligible
     n = len(active_nodes)
-    local_idx = {g: l for l, g in enumerate(active_nodes)}
+    local_idx = {g: label for label, g in enumerate(active_nodes)}
 
     local_dm = np.zeros((n, n))
     for li, gi in enumerate(active_nodes):

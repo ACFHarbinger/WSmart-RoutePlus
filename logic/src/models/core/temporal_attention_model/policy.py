@@ -15,7 +15,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, cast
 
 import torch
 from tensordict import TensorDict
@@ -102,13 +102,14 @@ class TemporalAMPolicy(AttentionModelPolicy):
             nn.Linear(embed_dim, embed_dim),
         )
 
-    def forward(
+    def forward(  # type: ignore[override]  # TAM rollout signature predates the constructive/autoregressive bases
         self,
         td: TensorDict,
         env: RL4COEnvBase,
         strategy: str = "sampling",
         num_starts: int = 1,
         actions: Optional[torch.Tensor] = None,
+        start_nodes: Optional[torch.Tensor] = None,
         **kwargs: Any,
     ) -> Dict[str, Any]:
         """Performs constructive decoding with proactive state estimation.
@@ -119,6 +120,7 @@ class TemporalAMPolicy(AttentionModelPolicy):
             strategy: Decoding strategy identifier (e.g., "sampling").
             num_starts: Number of parallel construction starts.
             actions: Optional pre-defined actions for teacher forcing.
+            start_nodes: Optional forced first-action indices accepted by AttentionModelPolicy.
             kwargs: Additional keyword arguments.
 
         Returns:
@@ -137,7 +139,7 @@ class TemporalAMPolicy(AttentionModelPolicy):
             )
 
         # 2. Predict next-state features from history
-        fill_history = td["fill_history"]  # [batch, nodes, horizon, 1]
+        fill_history = cast(torch.Tensor, td["fill_history"])  # [batch, nodes, horizon, 1]
         batch_size, num_nodes, horizon, _ = fill_history.size()
 
         h_flat = fill_history.view(batch_size * num_nodes, horizon, 1)
@@ -191,7 +193,7 @@ class TemporalAMPolicy(AttentionModelPolicy):
 
             # Step environment
             td["action"] = action
-            td = env.step(td)["next"].clone()
+            td = cast(TensorDict, env.step(td)["next"]).clone()
 
             log_likelihood = log_likelihood + log_p
             output_actions.append(action)

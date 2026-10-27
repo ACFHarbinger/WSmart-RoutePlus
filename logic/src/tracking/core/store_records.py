@@ -8,13 +8,30 @@ from __future__ import annotations
 import json
 import sqlite3
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, ContextManager, Dict, List, Optional, Protocol, Tuple, TypeVar
+
+if TYPE_CHECKING:
+
+    class _RecordHost(Protocol):
+        """Attributes provided by TrackingStoreConnectionMixin."""
+
+        queries: Dict[str, str]
+
+        def _conn(self) -> ContextManager[sqlite3.Connection]: ...
+
+        def _apply_schema(self) -> None: ...
+
+        def _now(self) -> str: ...
+
+    _RecT = TypeVar("_RecT", bound=_RecordHost)
 
 
 class TrackingStoreRecordMixin:
     """Moved methods of :class:`TrackingStore`."""
 
-    def set_tag(self, run_id: str, key: str, value: str) -> None:
+    queries: Dict[str, str]
+
+    def set_tag(self: _RecT, run_id: str, key: str, value: str) -> None:
         """Records a metadata tag for a run.
 
         Args:
@@ -25,7 +42,7 @@ class TrackingStoreRecordMixin:
         with self._conn() as conn:
             conn.execute(self.queries["insert_tag"], (run_id, key, value))
 
-    def set_tags(self, run_id: str, tags: Dict[str, str]) -> None:
+    def set_tags(self: _RecT, run_id: str, tags: Dict[str, str]) -> None:
         """Records multiple metadata tags for a run in a single transaction.
 
         Args:
@@ -35,7 +52,7 @@ class TrackingStoreRecordMixin:
         with self._conn() as conn:
             conn.executemany(self.queries["insert_tag"], [(run_id, k, str(v)) for k, v in tags.items()])
 
-    def get_tags(self, run_id: str) -> Dict[str, str]:
+    def get_tags(self: _RecT, run_id: str) -> Dict[str, str]:
         """Retrieves all tags associated with a run.
 
         Args:
@@ -48,7 +65,7 @@ class TrackingStoreRecordMixin:
             rows = conn.execute(self.queries["get_tags"], (run_id,)).fetchall()
             return {r["key"]: r["value"] for r in rows}
 
-    def log_param(self, run_id: str, key: str, value: Any) -> None:
+    def log_param(self: _RecT, run_id: str, key: str, value: Any) -> None:
         """Records a configuration parameter.
 
         Args:
@@ -59,7 +76,7 @@ class TrackingStoreRecordMixin:
         with self._conn() as conn:
             conn.execute(self.queries["insert_param"], (run_id, key, _safe_json_dumps(value)))
 
-    def log_params(self, run_id: str, params: Dict[str, Any]) -> None:
+    def log_params(self: _RecT, run_id: str, params: Dict[str, Any]) -> None:
         """Records multiple configuration parameters in a single transaction.
 
         Args:
@@ -81,7 +98,7 @@ class TrackingStoreRecordMixin:
             else:
                 raise
 
-    def get_params(self, run_id: str) -> Dict[str, Any]:
+    def get_params(self: _RecT, run_id: str) -> Dict[str, Any]:
         """Retrieves all configuration parameters associated with a run.
 
         Args:
@@ -94,7 +111,7 @@ class TrackingStoreRecordMixin:
             rows = conn.execute(self.queries["get_params"], (run_id,)).fetchall()
             return {r["key"]: json.loads(r["value"]) for r in rows}
 
-    def log_metric(self, run_id: str, key: str, value: float, step: int = 0) -> None:
+    def log_metric(self: _RecT, run_id: str, key: str, value: float, step: int = 0) -> None:
         """Records a single scalar metric value.
 
         Args:
@@ -106,7 +123,7 @@ class TrackingStoreRecordMixin:
         with self._conn() as conn:
             conn.execute(self.queries["insert_metric"], (run_id, key, float(value), step, self._now()))
 
-    def log_metrics_batch(self, run_id: str, metrics: List[Tuple[str, float, int]]) -> None:
+    def log_metrics_batch(self: _RecT, run_id: str, metrics: List[Tuple[str, float, int]]) -> None:
         """Records a batch of metric values for improved performance.
 
         Args:
@@ -127,7 +144,7 @@ class TrackingStoreRecordMixin:
             else:
                 raise
 
-    def get_metric_history(self, run_id: str, key: str) -> List[Dict[str, Any]]:
+    def get_metric_history(self: _RecT, run_id: str, key: str) -> List[Dict[str, Any]]:
         """Retrieves the full evolution history for a specific metric.
 
         Args:
@@ -141,7 +158,7 @@ class TrackingStoreRecordMixin:
             rows = conn.execute(self.queries["get_metric_history"], (run_id, key)).fetchall()
             return [dict(r) for r in rows]
 
-    def get_latest_metrics(self, run_id: str) -> Dict[str, float]:
+    def get_latest_metrics(self: _RecT, run_id: str) -> Dict[str, float]:
         """Retrieves the most recent value for every metric logged in a run.
 
         Args:
@@ -155,7 +172,7 @@ class TrackingStoreRecordMixin:
             return {r["key"]: r["value"] for r in rows}
 
     def log_artifact(
-        self,
+        self: _RecT,
         run_id: str,
         name: str,
         path: str,
@@ -207,7 +224,7 @@ class TrackingStoreRecordMixin:
             else:
                 raise
 
-    def get_artifacts(self, run_id: str, artifact_type: Optional[str] = None) -> List[Dict[str, Any]]:
+    def get_artifacts(self: _RecT, run_id: str, artifact_type: Optional[str] = None) -> List[Dict[str, Any]]:
         """Retrieves the metadata for artifacts registered in a run.
 
         Args:
@@ -227,7 +244,7 @@ class TrackingStoreRecordMixin:
             return [dict(r) for r in rows]
 
     def log_dataset_event(
-        self,
+        self: _RecT,
         run_id: str,
         event_type: str,
         file_path: Optional[str] = None,
@@ -265,7 +282,7 @@ class TrackingStoreRecordMixin:
                 ),
             )
 
-    def get_dataset_events(self, run_id: str) -> List[Dict[str, Any]]:
+    def get_dataset_events(self: _RecT, run_id: str) -> List[Dict[str, Any]]:
         """Retrieves the data-lifecycle events for a specific run.
 
         Args:
@@ -279,7 +296,7 @@ class TrackingStoreRecordMixin:
             return [dict(r) for r in rows]
 
     def log_run_event(
-        self, run_id: str, kind: str, data: Optional[Dict[str, Any]] = None, at: Optional[float] = None
+        self: _RecT, run_id: str, kind: str, data: Optional[Dict[str, Any]] = None, at: Optional[float] = None
     ) -> None:
         """Records a lifecycle event of a run.
 
@@ -295,7 +312,7 @@ class TrackingStoreRecordMixin:
                 (run_id, kind, _safe_json_dumps(data or {}), float(time.time() if at is None else at)),
             )
 
-    def get_run_events(self, run_id: str) -> List[Dict[str, Any]]:
+    def get_run_events(self: _RecT, run_id: str) -> List[Dict[str, Any]]:
         """Returns a run's lifecycle events, oldest first.
 
         Args:
@@ -308,7 +325,7 @@ class TrackingStoreRecordMixin:
             rows = conn.execute(self.queries["get_run_events"], (run_id,)).fetchall()
         return [{"kind": r[0], "data": json.loads(r[1] or "{}"), "timestamp": r[2]} for r in rows]
 
-    def clear_run_data(self, run_id: str) -> None:
+    def clear_run_data(self: _RecT, run_id: str) -> None:
         """Deletes a run's metrics and events, so an import can be repeated.
 
         Args:

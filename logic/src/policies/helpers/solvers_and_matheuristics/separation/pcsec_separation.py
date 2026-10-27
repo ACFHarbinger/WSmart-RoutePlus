@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Set
+from typing import TYPE_CHECKING, Dict, List, Optional, Protocol, Set, cast
 
 import networkx as nx
 import numpy as np
@@ -14,9 +14,21 @@ from logic.src.policies.helpers.solvers_and_matheuristics.separation.inequality 
     PCSubtourEliminationCut,
 )
 
+if TYPE_CHECKING:
+    from logic.src.policies.helpers.solvers_and_matheuristics.vrpp_model import VRPPModel
+
+
+class _PCSECSepOps(Protocol):
+    """Methods implemented on SeparationEngine and used by this mixin."""
+
+    def _get_cut_value(self, node_set: Set[int], x_vals: np.ndarray) -> float: ...
+
 
 class PCSECSeparationMixin:
     """Relocated pcsec separation methods."""
+
+    model: VRPPModel
+    pool: List[Inequality]
 
     def _separate_pcsec_exact(self, x_vals: np.ndarray, y_vals: Optional[np.ndarray], root_node: bool = False) -> None:
         """Exact prize-collecting subtour separation using minimum cut (max-flow).
@@ -217,7 +229,7 @@ class PCSECSeparationMixin:
                 if gsec_rhs <= 0.0:
                     continue
 
-                cut_val = self._get_cut_value(new_component, x_vals)
+                cut_val = cast(_PCSECSepOps, self)._get_cut_value(new_component, x_vals)
                 violation = gsec_rhs - cut_val
 
                 if violation > 0.01:
@@ -261,7 +273,7 @@ class PCSECSeparationMixin:
                     best_j, max_yj = max(y_out, key=lambda x: x[1])
 
             # Recalculate violation for each form (2.1, 2.2, 2.3)
-            cut_val = self._get_cut_value(s_set, x_vals)
+            cut_val = cast(_PCSECSepOps, self)._get_cut_value(s_set, x_vals)
 
             # Form 2.3: sum x_e >= 2(yi + yj - 1)
             vio_2_3 = (2.0 * (max_yi + max_yj - 1.0) - cut_val) if y_vals is not None else (2.0 - cut_val)

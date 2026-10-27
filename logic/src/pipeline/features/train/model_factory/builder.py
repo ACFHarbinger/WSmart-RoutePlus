@@ -279,7 +279,7 @@ def _init_policy(cfg: Config, env: Any):
         model_items = model_cfg.items() if isinstance(model_cfg, (DictConfig, dict)) else vars(model_cfg).items()
         for k, v in model_items:
             if k not in ["encoder", "decoder", "name"]:
-                policy_kwargs[k] = v
+                policy_kwargs[cast(str, k)] = v
 
     for key in ["lr_critic", "lr_critic_value"]:
         policy_kwargs.pop(key, None)

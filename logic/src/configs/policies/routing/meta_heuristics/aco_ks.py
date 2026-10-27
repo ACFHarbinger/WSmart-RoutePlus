@@ -20,6 +20,7 @@ from logic.src.configs.policies.packing.dispatch import PackingConfig
 
 from logic.src.configs.policies.acceptance_criteria import AcceptanceConfig
 from logic.src.configs.policies.route_improvement import RouteImprovingConfig
+from logic.src.interfaces.acceptance_criterion import IAcceptanceCriterion
 
 
 @dataclass
@@ -64,7 +65,9 @@ class KSparseACOConfig:
     elitist_weight: float = 1.0
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
-    acceptance_criterion: AcceptanceConfig = field(default_factory=lambda: AcceptanceConfig(method="oi"))
+    acceptance_criterion: Optional[Union[AcceptanceConfig, IAcceptanceCriterion]] = field(
+        default_factory=lambda: AcceptanceConfig(method="oi")
+    )
     profit_aware_operators: bool = False
 
     def __post_init__(self) -> None:

@@ -77,12 +77,12 @@ def _apply_unstring_op(
         Tuple[List[int], float]: (new_route, delta_profit).
     """
     if unstring_type in (2, 4):
-        i, j, k, l = params
+        i, j, k, label = params
         if profit_mode:
             if unstring_type == 2:
-                return apply_type_ii_us_profit(route, i, j, k, l, dist_matrix, wastes, R, C)
-            return apply_type_iv_us_profit(route, i, j, k, l, dist_matrix, wastes, R, C)
-        new_route = apply_type_ii_us(route, i, j, k, l) if unstring_type == 2 else apply_type_iv_us(route, i, j, k, l)
+                return apply_type_ii_us_profit(route, i, j, k, label, dist_matrix, wastes, R, C)
+            return apply_type_iv_us_profit(route, i, j, k, label, dist_matrix, wastes, R, C)
+        new_route = apply_type_ii_us(route, i, j, k, label) if unstring_type == 2 else apply_type_iv_us(route, i, j, k, label)
         return new_route, 0.0
 
     i, j, k = params
@@ -158,8 +158,8 @@ def _try_unstring_removal(
                     valid_k = [p for p in valid_positions if p != j]
                     k = rng.choice(valid_k)
                     valid_l = [p for p in valid_positions if p not in (j, k)]
-                    l = rng.choice(valid_l)
-                    params = (curr_i, j, k, l)  # type: ignore[assignment]
+                    label = rng.choice(valid_l)
+                    params = (curr_i, j, k, label)  # type: ignore[assignment]
 
                 new_route, val = _apply_unstring_op(
                     target_route, unstring_type, params, dist_matrix, wastes, R, C, profit_mode
@@ -266,8 +266,8 @@ def _try_unstring_removal_deterministic(  # noqa: C901
                         )
 
                         for v_l in p_neighbors_v_k_plus_1:
-                            l = target_route.index(v_l)
-                            params = (curr_i, j, k, l)  # type: ignore[assignment]
+                            label = target_route.index(v_l)
+                            params = (curr_i, j, k, label)  # type: ignore[assignment]
                             new_route, val = _apply_unstring_op(
                                 target_route, unstring_type, params, dist_matrix, wastes, R, C, profit_mode
                             )

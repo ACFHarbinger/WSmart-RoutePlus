@@ -223,7 +223,7 @@ class RuntimeDataTracker:
         for name, tensor in fields.items():
             if isinstance(tensor, np.ndarray):
                 t = tensor.astype(np.float32, copy=False)
-                entry = {"shape": list(t.shape), "numel": t.size}
+                entry: Dict[str, Any] = {"shape": list(t.shape), "numel": t.size}
                 if t.size:
                     entry.update(
                         mean=round(float(t.mean()), 6),
@@ -236,7 +236,7 @@ class RuntimeDataTracker:
             t = tensor.float().detach()
             shape: List[int] = [d for d in t.shape]
             try:
-                entry: Dict[str, Any] = {
+                entry = {
                     "shape": shape,
                     "numel": t.numel(),
                     "mean": round(t.mean().item(), 6),

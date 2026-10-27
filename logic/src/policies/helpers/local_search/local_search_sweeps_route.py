@@ -6,6 +6,9 @@
 Moved unchanged from ``local_search_sweeps.py``.
 """
 
+from random import Random
+from typing import List
+
 from logic.src.policies.helpers.operators.inter_route_local_search import (
     move_2opt_star,
     move_swap_star,
@@ -19,6 +22,10 @@ from logic.src.policies.helpers.operators.intra_route_local_search import (
 
 class SweepRouteMixin:
     """Route-operator sweeps of :class:`SweepLocalSearch` (moved unchanged from ``local_search_sweeps.py``)."""
+
+    # From LocalSearch.__init__ / SweepLocalSearch state. Annotation only.
+    routes: List[List[int]]
+    random: Random
 
     # ===== Route Operators =====
 

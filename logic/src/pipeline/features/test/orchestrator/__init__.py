@@ -17,7 +17,6 @@ import contextlib
 import copy
 import multiprocessing as mp
 import os
-import shutil
 import signal
 import sys
 from datetime import datetime
@@ -30,7 +29,6 @@ from omegaconf import OmegaConf
 import logic.src.constants as udef
 import logic.src.tracking as wst
 from logic.src.configs import Config
-from logic.src.constants.paths import CONFIGS_DIR
 from logic.src.pipeline.callbacks import PolicySummaryCallback
 
 # Local imports from modular components
@@ -126,23 +124,19 @@ def _generate_pruned_config(cfg: Config, root_dir: str) -> str:
     """Generate a pruned YAML config with only task-relevant sections and expanded policy refs."""
     import yaml
 
-    full = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=False)  # type: ignore[arg-type]
-    sim = full.get("sim", {})  # pyrefly: ignore [missing-attribute]
+    loaded = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=False)  # type: ignore[arg-type]
+    full = loaded if isinstance(loaded, dict) else {}
+    sim = full.get("sim", {})
     active_policies: List[str] = sim.get("policies", []) or []
 
     pruned: dict = {}
     for key in ("task", "seed", "device", "start", "run_name"):
-        # pyrefly: ignore [not-iterable]
         if key in full:
-            # pyrefly: ignore [bad-index, unsupported-operation]
             pruned[key] = full[key]
     for section in ("sim", "tracking"):
-        # pyrefly: ignore [not-iterable]
         if section in full:
-            # pyrefly: ignore [bad-index, unsupported-operation]
             pruned[section] = copy.deepcopy(full[section])
 
-    # pyrefly: ignore [missing-attribute]
     p_full = full.get("p", {})
     p_pruned = {}
     for pol_name in active_policies:
@@ -218,7 +212,7 @@ def simulator_testing(cfg: Config, data_size: int, device: Any) -> None:  # noqa
         # ── Config snapshot ─────────────────────────────────────────────────────
         # Persist the fully-resolved Hydra config (including all CLI overrides)
         # into the results directory so every run is self-contained.
-        # pyrefly: ignore [no-matching-overload]
+        _run_name = sim.run_name or ""
         _snapshot_dir = os.path.join(
             udef.ROOT_DIR,
             sim.output_dir,
@@ -227,7 +221,7 @@ def simulator_testing(cfg: Config, data_size: int, device: Any) -> None:  # noqa
             if sim.graph.waste_type
             else f"{sim.graph.area}{sim.graph.num_loc}",
             sim.data_distribution,
-            sim.run_name,
+            _run_name,
         )
         try:
             os.makedirs(_snapshot_dir, exist_ok=True)
@@ -329,14 +323,14 @@ def simulator_testing(cfg: Config, data_size: int, device: Any) -> None:  # noqa
                 cfg, device, indices, sample_idx_ls, weights_path, lock, shared_metrics, task_count
             )
 
-        # pyrefly: ignore [no-matching-overload]
+        _run_name = sim.run_name or ""
         realtime_log_path = os.path.join(
             udef.ROOT_DIR,
             sim.output_dir,
             f"{sim.graph.n_days}days",
             f"{sim.graph.area}{sim.graph.num_loc}_{sim.graph.waste_type}",
             sim.data_distribution,
-            sim.run_name,
+            _run_name,
             f"log_realtime_{sim.data_distribution}_{sim.graph.n_samples}N.jsonl",
         )
         send_final_output_to_gui(log, log_std, sim.graph.n_samples, policies, realtime_log_path)

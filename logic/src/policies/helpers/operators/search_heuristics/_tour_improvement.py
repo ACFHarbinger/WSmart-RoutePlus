@@ -341,9 +341,9 @@ def _try_4opt_move(
     d = distance_matrix
     curr_c = get_cost(curr_tour, d)
 
-    for l in range(k + 2, nodes_count):
-        t7 = curr_tour[l]
-        t8 = curr_tour[l + 1]
+    for label in range(k + 2, nodes_count):
+        t7 = curr_tour[label]
+        t8 = curr_tour[label + 1]
 
         gains = _4opt_gains(t1, t2, t3, t4, t5, t6, t7, t8, d)
 
@@ -362,8 +362,8 @@ def _try_4opt_move(
             A = curr_tour[: i + 1]
             B = curr_tour[i + 1 : j + 1]
             C = curr_tour[j + 1 : k + 1]
-            D = curr_tour[k + 1 : l + 1]
-            E = curr_tour[l + 1 :]
+            D = curr_tour[k + 1 : label + 1]
+            E = curr_tour[label + 1 :]
 
             if best_case == 0:
                 # case 0: double-bridge A+C+B+D+E → t1-t5, t6-t3, t4-t7, t2-t8
@@ -389,7 +389,7 @@ def _try_5opt_move(
     i: int,
     j: int,
     k: int,
-    l: int,
+    label: int,
     t1: int,
     t2: int,
     t3: int,
@@ -415,7 +415,7 @@ def _try_5opt_move(
         i: Break-point position of the first cut.
         j: Break-point position of the second cut.
         k: Break-point position of the third cut.
-        l: Break-point position of the fourth cut.
+        label: Break-point position of the fourth cut.
         t1: First endpoint of first edge.
         t2: Second endpoint of first edge.
         t3: First endpoint of second edge.
@@ -434,7 +434,7 @@ def _try_5opt_move(
     d = distance_matrix
     curr_c = get_cost(curr_tour, d)
 
-    for m in range(l + 2, nodes_count):
+    for m in range(label + 2, nodes_count):
         t9 = curr_tour[m]
         t10 = curr_tour[m + 1]
 
@@ -455,8 +455,8 @@ def _try_5opt_move(
             A = curr_tour[: i + 1]
             B = curr_tour[i + 1 : j + 1]
             C = curr_tour[j + 1 : k + 1]
-            D = curr_tour[k + 1 : l + 1]
-            E = curr_tour[l + 1 : m + 1]
+            D = curr_tour[k + 1 : label + 1]
+            E = curr_tour[label + 1 : m + 1]
             F = curr_tour[m + 1 :]
 
             if best_case == 0:

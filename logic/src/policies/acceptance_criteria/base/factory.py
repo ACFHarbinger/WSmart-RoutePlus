@@ -69,4 +69,6 @@ class AcceptanceCriterionFactory:
             method, params = spec.get("method", "oi"), spec.get("params")
         else:
             method, params = spec.method, getattr(spec, "params", None)
-        return cls.create(_ALIASES.get(method, method), config=params)
+        name = _ALIASES.get(method, method)
+        assert isinstance(name, str)
+        return cls.create(name, config=params)

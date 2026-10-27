@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from logic.src.utils.registry import JOINT
 
-ENTRIES = {
+ENTRIES: dict[str, str] = {
     'jgo': 'logic.src.policies.packing_and_routing.joint_greedy_orienteering.policy_jgo:JointGreedyPolicy',
     'jsa': 'logic.src.policies.packing_and_routing.joint_simulated_annealing.policy_jsa:JointSAPolicy',
     'nds_brkga': 'logic.src.policies.packing_and_routing.non_dominated_sorting_biased_random_key_genetic_algorithm.policy_nds_brkga:NDSBRKGAPolicy',

@@ -31,6 +31,8 @@ class EnvState(nn.Module):
         project_context (Optional[nn.Linear]): Layer to project raw state features.
     """
 
+    project_context: Optional[nn.Linear]
+
     def __init__(self, embed_dim: int, step_context_dim: int = 0, node_dim: int = 0) -> None:
         """Initializes EnvState.
 
@@ -44,7 +46,7 @@ class EnvState(nn.Module):
         if step_context_dim > 0:
             self.project_context = nn.Linear(step_context_dim, embed_dim)
         else:
-            self.project_context: Optional[nn.Module] = None
+            self.project_context = None
 
     def forward(self, embeddings: torch.Tensor, td: Any) -> torch.Tensor:
         """Combines current node embedding with projected state features.

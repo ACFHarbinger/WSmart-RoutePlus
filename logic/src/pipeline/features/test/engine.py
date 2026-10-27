@@ -22,7 +22,7 @@ Example:
 import contextlib
 import os
 import random
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import numpy as np
 
@@ -148,7 +148,7 @@ def run_simulator_test(cfg: Config, sinks: Optional[List[Any]] = None) -> None:
     try:
         data_dir = os.path.join(udef.ROOT_DIR, "data", "simulator")
         if os.path.isdir(data_dir):
-            wst.FilesystemTracker(run).scan_directory(data_dir)
+            cast(Any, wst.FilesystemTracker(run)).scan_directory(data_dir)
     except Exception:
         pass
 
@@ -229,7 +229,7 @@ def _ensure_directories(cfg: Config) -> None:
             f"{sim.graph.n_days}days",
             f"{sim.graph.area}{sim.graph.num_loc}_{sim.graph.waste_type}",
             sim.data_distribution,
-            sim.run_name,
+            cast(str, sim.run_name),
         )
         os.makedirs(parent_dir, exist_ok=True)
         os.makedirs(os.path.join(parent_dir, "fill_history"), exist_ok=True)
