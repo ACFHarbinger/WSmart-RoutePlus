@@ -19,7 +19,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import torch
 from torch import nn
@@ -71,7 +71,8 @@ class DynamicHyperConnection(nn.Module):
         and zero for cross-stream mixing at initialization to improve convergence.
         """
         # Set weights to near-zero so bias dominates at initialization
-        nn.init.uniform_(self.predictor[-1].weight, -0.0001, 0.0001)
+        output_layer = cast(nn.Linear, self.predictor[-1])
+        nn.init.uniform_(output_layer.weight, -0.0001, 0.0001)
 
         n = self.n
         # Width Mixer (A_r) target: Flattened Identity Matrix
@@ -80,7 +81,7 @@ class DynamicHyperConnection(nn.Module):
         target_others = torch.zeros(2 * n)
 
         initial_bias = torch.cat([target_width, target_others])
-        self.predictor[-1].bias.data.copy_(initial_bias)
+        output_layer.bias.data.copy_(initial_bias)
 
     def forward(self, H: torch.Tensor, *args: Any, **kwargs: Any) -> torch.Tensor:
         """Applies context-dependent mixing to input streams.

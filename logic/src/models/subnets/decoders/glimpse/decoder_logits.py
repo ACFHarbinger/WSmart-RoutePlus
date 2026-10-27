@@ -9,6 +9,7 @@ import math
 from typing import Any, Optional, Tuple, Union
 
 import torch
+from torch import nn
 
 from logic.src.models.subnets.decoders.common import AttentionDecoderCache
 from logic.src.models.subnets.decoders.glimpse.attention import make_heads, one_to_many_logits
@@ -16,6 +17,13 @@ from logic.src.models.subnets.decoders.glimpse.attention import make_heads, one_
 
 class GlimpseDecoderLogitsMixin:
     """Moved methods of :class:`GlimpseDecoder`."""
+
+    project_node_embeddings: nn.Linear
+    project_step_context: nn.Module
+    context_embedding: Optional[nn.Module]
+    n_heads: int
+    tanh_clipping: float
+    embed_dim: int
 
     def _precompute(self, embeddings: torch.Tensor, num_steps: int = 1) -> AttentionDecoderCache:
         """Precompute K, V for the attention mechanism.

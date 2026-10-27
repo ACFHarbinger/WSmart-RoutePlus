@@ -15,7 +15,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union, cast
 
 import torch
 from tensordict import TensorDict
@@ -46,8 +46,8 @@ class AttentionModelPolicy(AutoregressivePolicy):
         embed_dim (int): feature vector dimensionality.
     """
 
-    encoder: GraphAttentionEncoder
-    decoder: GlimpseDecoder
+    encoder: GraphAttentionEncoder  # pyrefly: ignore[bad-override]  # concrete class of the parent module attribute
+    decoder: GlimpseDecoder  # pyrefly: ignore[bad-override]  # concrete class of the parent module attribute
 
     def __init__(
         self,
@@ -220,7 +220,8 @@ class AttentionModelPolicy(AutoregressivePolicy):
             if actions is not None and step_idx >= actions.size(1):
                 break
 
-            active = ~td["done"].squeeze(-1) if td["done"].dim() > 1 else ~td["done"]
+            done = cast(torch.Tensor, td["done"])
+            active = ~done.squeeze(-1) if done.dim() > 1 else ~done
 
             if actions is not None:
                 # Teacher forcing
@@ -241,7 +242,7 @@ class AttentionModelPolicy(AutoregressivePolicy):
 
             # Update state
             td["action"] = action
-            td = env.step(td)["next"].clone()
+            td = cast(TensorDict, env.step(td)["next"]).clone()
 
             # update log likelihood for active instances only
             log_likelihood = log_likelihood + (log_p * active.float())

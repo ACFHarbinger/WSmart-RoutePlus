@@ -19,7 +19,10 @@ from dotenv import dotenv_values
 import logic.src.constants as udef
 
 try:
-    from logic.src.utils.security import decrypt_file_data, load_key
+    from logic.src.utils.security import (  # pyrefly: ignore[missing-import]  # security utils are excluded from the minimal package
+        decrypt_file_data,
+        load_key,
+    )
     _SECURITY_AVAILABLE = True
 except ImportError:
     _SECURITY_AVAILABLE = False
@@ -65,6 +68,8 @@ def setup_env(
                 else:
                     with open(gplic_path, "r") as gp_file:
                         data = gp_file.read()
+                if isinstance(data, bytes):
+                    data = data.decode()
                 params = {
                     line.split("=")[0]: convert_int(line.split("=")[1]) for line in data.split("\n") if "=" in line
                 }

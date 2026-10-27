@@ -11,7 +11,7 @@ Example:
     tensor([[False,  True], [ True, False]])
 """
 
-from typing import Optional
+from typing import Optional, cast
 
 import torch
 from tensordict import TensorDict
@@ -71,7 +71,7 @@ class TensorDictStateWrapper:
         # AttentionDecoder expects mask where True means INVALID (masked out).
         # So we invert it.
         if "action_mask" in self.td.keys():
-            mask = ~self.td["action_mask"]
+            mask = ~cast(torch.Tensor, self.td["action_mask"])
             if mask.dim() == 2:
                 mask = mask.unsqueeze(1)
             return mask
@@ -93,7 +93,7 @@ class TensorDictStateWrapper:
         Returns:
             The current node.
         """
-        return self.td["current_node"].long()
+        return cast(torch.Tensor, self.td["current_node"]).long()
 
     def get_current_profit(self) -> torch.Tensor:
         """
@@ -103,7 +103,10 @@ class TensorDictStateWrapper:
             The cumulative collected waste.
         """
         # This is used for context embedding.
-        val = self.td.get("collected_waste", torch.zeros(self.td.batch_size, device=self.td.device))
+        val = cast(
+            torch.Tensor,
+            self.td.get("collected_waste", torch.zeros(self.td.batch_size, device=self.td.device)),
+        )
         if val.dim() == 1:
             val = val.unsqueeze(-1)
         return val
@@ -134,7 +137,7 @@ class TensorDictStateWrapper:
             True if all instances are finished, False otherwise.
         """
         if "done" in self.td.keys():
-            return self.td["done"].all().item()
+            return bool(cast(torch.Tensor, self.td["done"]).all().item())
         return False
 
     def __getitem__(self, key):
@@ -147,7 +150,7 @@ class TensorDictStateWrapper:
         Returns:
             The indexed state.
         """
-        return TensorDictStateWrapper(self.td[key], self.problem_name, self.env)
+        return TensorDictStateWrapper(cast(TensorDict, self.td[key]), self.problem_name, self.env)
 
     def construct_solutions(self, actions: torch.Tensor) -> torch.Tensor:
         """Return the node-index sequence reconstructed by beam backtracking."""

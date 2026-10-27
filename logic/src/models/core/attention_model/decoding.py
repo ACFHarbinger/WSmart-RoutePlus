@@ -31,6 +31,13 @@ class DecodingMixin:
         temp (Optional[float]): Softmax temperature for sampling diversity.
     """
 
+    problem: Any
+    decoder: Any
+
+    def forward(self, *args: Any, **kwargs: Any) -> Any:
+        """Provided by the concrete model."""
+        raise NotImplementedError
+
     def __init__(self) -> None:
         """Initializes the decoding mixin state."""
         self.strategy: str = "greedy"

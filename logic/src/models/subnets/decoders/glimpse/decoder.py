@@ -118,10 +118,10 @@ class GlimpseDecoder(GlimpseDecoderLogitsMixin, GlimpseDecoderInnerMixin, nn.Mod
             env_name = getattr(self.problem, "name", getattr(self.problem, "NAME", "tsp")).lower()
 
         if env_name in CONTEXT_EMBEDDING_REGISTRY:
-            self.context_embedding = CONTEXT_EMBEDDING_REGISTRY[env_name](
+            self.context_embedding: Optional[nn.Module] = CONTEXT_EMBEDDING_REGISTRY[env_name](
                 embed_dim=embed_dim, temporal_horizon=kwargs.get("temporal_horizon", 0)
             )
-            self.project_step_context = nn.Identity()
+            self.project_step_context: nn.Module = nn.Identity()
             self.step_context_dim = self.context_embedding.step_context_dim
         else:
             self.context_embedding = None

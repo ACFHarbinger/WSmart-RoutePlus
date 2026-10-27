@@ -15,6 +15,26 @@ from logic.src.models.subnets.decoders.common import AttentionDecoderCache
 class GlimpseDecoderInnerMixin:
     """Moved methods of :class:`GlimpseDecoder`."""
 
+    problem: Any
+    strategy: Optional[str]
+    generator: torch.Generator
+    seed: int
+
+    def _precompute(self, embeddings: torch.Tensor, num_steps: int = 1) -> AttentionDecoderCache:
+        """Provided by :class:`GlimpseDecoderLogitsMixin`."""
+        raise NotImplementedError
+
+    def _get_log_p(
+        self,
+        fixed: AttentionDecoderCache,
+        state: Any,
+        normalize: bool = True,
+        mask_val: float = float("-inf"),
+        mask: Optional[torch.Tensor] = None,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Provided by :class:`GlimpseDecoderLogitsMixin`."""
+        raise NotImplementedError
+
     def _inner(
         self,
         nodes: Union[torch.Tensor, Dict[str, torch.Tensor]],

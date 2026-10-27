@@ -137,7 +137,7 @@ class Registry:
             return lambda obj: obj
 
         def decorator(obj: Any) -> Any:
-            key = (resolved_name or getattr(obj, "__name__", str(obj))).lower()
+            key = str(resolved_name or getattr(obj, "__name__", None) or obj).lower()
             self._bind(key, obj=obj, tags=set(extra_tags), config=config)
             return obj
 

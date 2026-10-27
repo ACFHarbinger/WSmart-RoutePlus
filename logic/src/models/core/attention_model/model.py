@@ -16,7 +16,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Union, cast
 
 import torch
 import torch.utils.checkpoint
@@ -111,10 +111,10 @@ class AttentionModel(AttentionModelPolicy, DecodingMixin):
         if norm_config is None:
             norm_config = NormalizationConfig(
                 norm_type=kwargs.get("normalization", "batch"),
-                learn_affine=kwargs.get("norm_learn_affine", kwargs.get("learn_affine", True)),
-                track_stats=kwargs.get("norm_track_stats", kwargs.get("track_stats", False)),
-                epsilon=kwargs.get("norm_eps_alpha", kwargs.get("epsilon_alpha", 1e-5)),
-                momentum=kwargs.get("norm_momentum_beta", kwargs.get("momentum_beta", 0.1)),
+                learn_affine=bool(kwargs.get("norm_learn_affine", kwargs.get("learn_affine", True))),
+                track_stats=bool(kwargs.get("norm_track_stats", kwargs.get("track_stats", False))),
+                epsilon=float(cast(Any, kwargs.get("norm_eps_alpha", kwargs.get("epsilon_alpha", 1e-5)))),
+                momentum=float(cast(Any, kwargs.get("norm_momentum_beta", kwargs.get("momentum_beta", 0.1)))),
                 k_lrnorm=kwargs.get("lrnorm_k", 1),
                 n_groups=kwargs.get("gnorm_groups", 1),
             )
@@ -174,14 +174,14 @@ class AttentionModel(AttentionModelPolicy, DecodingMixin):
                 decoder_type=decoder_type,
             )
             if isinstance(enc, nn.Module) or enc is None:
-                self.encoder = enc
+                self.encoder = cast(Any, enc)
             else:
                 if "encoder" in self._modules:
                     del self._modules["encoder"]
                 self.__dict__["encoder"] = enc
 
             if isinstance(dec, nn.Module) or dec is None:
-                self.decoder = dec
+                self.decoder = cast(Any, dec)
             else:
                 if "decoder" in self._modules:
                     del self._modules["decoder"]
@@ -208,13 +208,14 @@ class AttentionModel(AttentionModelPolicy, DecodingMixin):
         )
         range_val = kwargs.get("af_uniform_range", kwargs.get("af_urange"))
         return ActivationConfig(
-            name=kwargs.get("activation_function", kwargs.get("activation", defaults.name)),
+            name=cast(str, kwargs.get("activation_function", kwargs.get("activation", defaults.name))),
             param=kwargs.get("af_param", defaults.param),
             threshold=kwargs.get("af_threshold", defaults.threshold),
-            replacement_value=kwargs.get(
-                "af_replacement_value", kwargs.get("af_replacement", defaults.replacement_value)
+            replacement_value=cast(
+                float,
+                kwargs.get("af_replacement_value", kwargs.get("af_replacement", defaults.replacement_value)),
             ),
-            n_params=kwargs.get("af_num_params", kwargs.get("af_nparams", defaults.n_params)),
+            n_params=cast(int, kwargs.get("af_num_params", kwargs.get("af_nparams", defaults.n_params))),
             range=list(range_val) if isinstance(range_val, (list, tuple)) else defaults.range,
         )
 
@@ -229,16 +230,16 @@ class AttentionModel(AttentionModelPolicy, DecodingMixin):
         # Legacy checkpoints projected concatenated depots with the node layer.
         # Keep this compatibility behavior local to AttentionModel.
         if hasattr(self.init_embedding, "legacy_depot_projection"):
-            self.init_embedding.legacy_depot_projection = True
+            self.init_embedding.legacy_depot_projection = True  # type: ignore[assignment]  # pyrefly: ignore[bad-argument-type]  # dynamic legacy flag
 
     @property
     def is_ptp(self) -> bool:
         """Determines if the model is configured for Profitable Tour Problem."""
         return is_ptp_problem(self.problem)
 
-    def _get_initial_embeddings(self, input: Any) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
+    def _get_initial_embeddings(self, td: Any) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
         """Processes raw instance data into initial node embeddings."""
-        res = self.init_embedding(input)
+        res = self.init_embedding(td)
         if isinstance(res, tuple):
             return res
         return res, None
@@ -294,8 +295,8 @@ class AttentionModel(AttentionModelPolicy, DecodingMixin):
         # 1. RL4CO environment execution
         if env is not None and isinstance(env, RL4COEnvBase):
             if not isinstance(td, TensorDict):
-                batch_size = td.get("locs", td.get("loc", td.get("depot"))).size(0)
-                td_tensor = TensorDict(td, batch_size=[batch_size])
+                batch_size = cast(torch.Tensor, td.get("locs", td.get("loc", td.get("depot")))).size(0)
+                td_tensor = TensorDict(cast(Any, td), batch_size=[batch_size])
             else:
                 td_tensor = td
             out = super().forward(
@@ -429,7 +430,7 @@ class AttentionModel(AttentionModelPolicy, DecodingMixin):
 
     def load_state_dict(
         self,
-        state_dict: Dict[str, Any],
+        state_dict: Mapping[str, Any],
         strict: bool = True,
         assign: bool = False,
     ) -> Any:

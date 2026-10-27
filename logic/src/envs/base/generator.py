@@ -124,8 +124,9 @@ class Generator(ABC):
             kwargs["data_dir"] = self.data_dir
         if hasattr(self, "indices"):
             kwargs["indices"] = self.indices
-        if getattr(self, "dm_filepath", None):
-            kwargs["dm_filepath"] = self.dm_filepath
+        dm_filepath = getattr(self, "dm_filepath", None)
+        if dm_filepath:
+            kwargs["dm_filepath"] = dm_filepath
 
         # For PTP:
         if hasattr(self, "min_waste"):
@@ -383,8 +384,8 @@ class RoutingGenerator(Generator):
         self.depot_type = depot_type
         self.dm_filepath = dm_filepath
 
-    def _generate(self, batch_size: Sequence[int]) -> TensorDict:
-        bs = tuple(batch_size) if isinstance(batch_size, (list, tuple)) else (batch_size,)
+    def _generate(self, batch_size: Union[int, Sequence[int]]) -> TensorDict:
+        bs = (batch_size,) if isinstance(batch_size, int) else tuple(batch_size)
         locs = self._generate_locations(bs, self.num_loc)
         depot = self._generate_depot(bs)
         td = TensorDict({"locs": locs, "depot": depot}, batch_size=list(bs), device=self.device)

@@ -19,7 +19,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import torch
 from torch import nn
@@ -104,7 +104,7 @@ class CPTPContextEmbedder(PTPContextEmbedder):
         )
 
         # Gather shared state tensors
-        td = getattr(state, "td", state)
+        td = cast(Any, getattr(state, "td", state))
         waste = td.get("waste", None)  # [B, N] or [B, N-1]
         visited = td.get("visited", None)  # [B, N]
         locs = td.get("locs", None)  # [B, N, 2]

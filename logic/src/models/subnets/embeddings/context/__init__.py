@@ -28,10 +28,3 @@ CONTEXT_EMBEDDING_REGISTRY: Dict[str, Any] = {
     "cptptwtc": CPTPContextEmbedder,
 }
 
-__all__: list[str] = [
-    "ContextEmbedder",
-    "CPTPContextEmbedder",
-    "GenericContextEmbedder",
-    "PTPContextEmbedder",
-    "CONTEXT_EMBEDDING_REGISTRY",
-]

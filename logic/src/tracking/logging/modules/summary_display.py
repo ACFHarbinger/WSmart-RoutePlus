@@ -55,7 +55,7 @@ def final_simulation_summary(log: Dict[str, Any], policy: str, n_samples: int) -
 
 def display_simulation_summary_table(  # noqa: C901
     log: Dict[str, Any],
-    title: str = "Simulation Summary",
+    title: Optional[str] = "Simulation Summary",
     lock: Optional[Any] = None,
 ) -> None:
     """Display a pretty comparative table of simulation results for multiple policies.
