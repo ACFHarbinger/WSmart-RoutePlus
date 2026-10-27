@@ -15,7 +15,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import torch
 from tensordict import TensorDict
@@ -25,6 +25,7 @@ from logic.src.configs.models.normalization import NormalizationConfig
 from logic.src.data.processor.transforms import batchify
 from logic.src.envs.base.base import RL4COEnvBase
 from logic.src.models.common.autoregressive.policy import AutoregressivePolicy
+from logic.src.models.core.attention_model.trace import make_tracer
 from logic.src.models.subnets.decoders.glimpse.decoder import GlimpseDecoder
 from logic.src.models.subnets.embeddings import get_init_embedding
 from logic.src.models.subnets.encoders.gat import GraphAttentionEncoder
@@ -132,6 +133,30 @@ class AttentionModelPolicy(AutoregressivePolicy):
         probs = torch.softmax(masked_logits, dim=-1)
         return torch.log(probs.gather(1, action.unsqueeze(-1)) + 1e-10).squeeze(-1)
 
+    def _step_action(
+        self,
+        step_idx: int,
+        actions: Optional[torch.Tensor],
+        start_nodes: Optional[torch.Tensor],
+        logits: torch.Tensor,
+        valid_mask: torch.Tensor,
+        strategy: str,
+        active: torch.Tensor,
+        device: torch.device,
+    ) -> Tuple[torch.Tensor, torch.Tensor, Optional[torch.Tensor]]:
+        """Resolve next action, log probability, and step entropy contribution."""
+        if actions is not None:
+            action = actions[:, step_idx]
+            log_p = self._forced_action_log_prob(logits, valid_mask, action)
+            return action, log_p, None
+        if step_idx == 0 and start_nodes is not None:
+            action = start_nodes.to(device)
+            log_p = self._forced_action_log_prob(logits, valid_mask, action)
+            return action, log_p, None
+        action, log_p, entropy_step = self._select_action(logits, valid_mask, strategy)
+        entropy_term = (entropy_step * active.float()) if isinstance(entropy_step, torch.Tensor) else None
+        return action, log_p, entropy_term
+
     def forward(  # type: ignore[override]
         self,
         td: TensorDict,
@@ -173,6 +198,8 @@ class AttentionModelPolicy(AutoregressivePolicy):
         init_embeds_raw = self._get_initial_embeddings(td)
         init_embeds = init_embeds_raw[0] if isinstance(init_embeds_raw, tuple) else init_embeds_raw
 
+        tracer = make_tracer(self, td, init_embeds, strategy, kwargs)
+
         # 2. Encoder
         edges = td.get("edges", None)
         if self.encoder is None:
@@ -192,7 +219,7 @@ class AttentionModelPolicy(AutoregressivePolicy):
         # 5. Decoding Loop
         log_likelihood: Union[int, float, torch.Tensor] = 0
         entropy: Union[int, float, torch.Tensor] = 0
-        output_actions = []
+        output_actions: List[torch.Tensor] = []
         step_idx = 0
 
         # Assuming environment is already reset
@@ -223,22 +250,13 @@ class AttentionModelPolicy(AutoregressivePolicy):
             done = cast(torch.Tensor, td["done"])
             active = ~done.squeeze(-1) if done.dim() > 1 else ~done
 
-            if actions is not None:
-                # Teacher forcing
-                action = actions[:, step_idx]
-                # Compute log_prob of this action
-                log_p = self._forced_action_log_prob(logits, valid_mask, action)
-            elif step_idx == 0 and start_nodes is not None:
-                # Forced start node (POMO mandatory-only mode): pin first action to
-                # the pre-selected mandatory node while still computing log_p from
-                # the decoder distribution so that gradients flow correctly.
-                action = start_nodes.to(td.device)
-                log_p = self._forced_action_log_prob(logits, valid_mask, action)
-            else:
-                # Select action
-                action, log_p, entropy_step = self._select_action(logits, valid_mask, strategy)
-                if isinstance(entropy_step, torch.Tensor):
-                    entropy = entropy + (entropy_step * active.float())
+            action, log_p, entropy_step = self._step_action(
+                step_idx, actions, start_nodes, logits, valid_mask, strategy, active, td.device
+            )
+            if entropy_step is not None:
+                entropy = entropy + entropy_step
+
+            tracer.record_step(step_idx, action, mask, log_p, output_actions)
 
             # Update state
             td["action"] = action
@@ -270,6 +288,8 @@ class AttentionModelPolicy(AutoregressivePolicy):
             "entropy": entropy,
             "td": td,
         }
+
+        tracer.finalize(output_actions, reward, out)
 
         if kwargs.get("return_init_embeds", False):
             out["init_embeds"] = init_embeds

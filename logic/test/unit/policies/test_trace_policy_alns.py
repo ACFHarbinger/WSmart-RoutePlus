@@ -27,6 +27,9 @@ def test_traced_alns_matches_untraced_solve():
     assert routes_equal(plain.routes, traced.routes)
     assert plain.profit == pytest.approx(traced.profit)
     assert document["final"]["routes"] == [list(route) for route in traced.routes]
-    assert document["events"][1]["interior"] == "not_instrumented"
+    assert document["events"][1]["name"] == "alns"
+    assert document["events"][1]["kind"] == "stage"
+    assert "interior" not in document["events"][1]
+    assert "oi" in {event["name"] for event in document["events"]}
     assert document["policies"]["acceptance"] == "oi"
     assert document["policies"]["packing"] == "regular"

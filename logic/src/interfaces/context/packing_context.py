@@ -127,3 +127,7 @@ class PackingContext:
     # --- Filter-and-Fan ---
     ff_filter_width: int = 0  # 0 = auto (max(5, n_bins // 3))
     ff_fan_depth: int = 3  # number of add/remove sweep passes
+
+    # --- Execution Trace ---
+    trace: Optional[Any] = None
+    trace_parent_id: Optional[str] = None

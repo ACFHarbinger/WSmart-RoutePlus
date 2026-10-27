@@ -18,6 +18,7 @@ import numpy as np
 from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.search_context import ImprovementMetrics
 from logic.src.interfaces.route_improvement import IRouteImprovement
+from logic.src.tracking.execution_trace import solution_record
 from logic.src.utils.registry import ALL
 
 from .base import RouteImproverRegistry
@@ -66,6 +67,8 @@ class FastTSPRouteImprover(IRouteImprovement):
         if not routes:
             return tour, {"algorithm": "FastTSPRouteImprover"}
 
+        routes_before = [r[:] for r in routes]
+
         from logic.src.policies.routing.other_algorithms.travelling_salesman_problem.tsp import (
             find_route,
         )
@@ -87,4 +90,21 @@ class FastTSPRouteImprover(IRouteImprovement):
             else:
                 refined_routes.append(trip)
 
-        return assemble_tour(refined_routes), {"algorithm": "FastTSPRouteImprover"}
+        refined_tour = assemble_tour(refined_routes)
+        trace = kwargs.get("trace")
+        if trace is not None:
+            parent_id = kwargs.get("parent_id")
+            if parent_id is None and trace.events:
+                parent_id = trace.events[-1]["id"]
+            changed = bool(refined_tour != tour)
+            trace.add(
+                name="fast_tsp",
+                kind="operator",
+                parent_id=parent_id,
+                changed_solution=changed,
+                arguments={"time_limit": kwargs.get("time_limit", self.config.get("time_limit", 2.0))},
+                before=solution_record(routes_before),
+                after=solution_record(refined_routes),
+            )
+
+        return refined_tour, {"algorithm": "FastTSPRouteImprover"}

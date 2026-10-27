@@ -157,6 +157,7 @@ class ALNSHooksMixin:
         new_profit: float,
         best_profit: float,
         iteration: int,
+        **kwargs: Any,
     ) -> bool:
         """Acceptance decision via the injected criterion (hill-climb when None).
 
@@ -165,6 +166,7 @@ class ALNSHooksMixin:
             new_profit: Profit of the candidate solution.
             best_profit: Best profit found so far.
             iteration: Current iteration index.
+            kwargs: Extra context forwarded to criterion.accept.
 
         Returns:
             True if the candidate is accepted.
@@ -177,6 +179,7 @@ class ALNSHooksMixin:
             f_best=best_profit,
             iteration=iteration,
             max_iterations=self.params.max_iterations,
+            **kwargs,
         )
         return accept
 
