@@ -426,9 +426,21 @@ class CloudService(ServiceStatusMixin, ServiceLaunchMixin, CostMixin, SchedulerM
     # Management (status, metrics and price hints are in ServiceStatusMixin) ----------
 
     def cancel(self, job_id: str) -> None:  # pyrefly: ignore[bad-override]  # mixin annotates a bound callable
-        """Cancel a job: queued tasks never start, running attempts are stopped at the next tick."""
+        """Cancel a job now: queued tasks never start, and live attempts are stopped.
+
+        Stopping cannot wait for a later worker tick. Studio calls this directly,
+        and the worker that would have applied the flag may already have exited.
+        """
         self.cp.request_cancel(job_id)
         self._event(job_id, "cancel_requested")
+        job = self.cp.get_job(job_id)
+        for task in self.cp.list_tasks(job_id):
+            if task.state == TaskState.QUEUED:
+                self._set(task, TaskState.CANCELLED, finished_at=self.clock(), message="cancelled")
+            elif task.state in ACTIVE and task.backend_handle:
+                backend = self._task_backend(job, task)
+                backend.cancel(task.backend_handle)
+                self._poll(job, self.cp.get_task(task.task_id), backend)
 
     def retry(self, job_id: str) -> int:
         """Requeue a job's failed and cancelled tasks (they resume from their checkpoints)."""

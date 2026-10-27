@@ -72,7 +72,11 @@ class SchedulerMixin:
 
     def _task_backend(self, job: JobRecord, task: TaskRecord) -> ComputeBackend:
         target = self._task_target(job, task)
-        return self.backends[(Provider(target.provider), ComputeKind(target.compute))]
+        key = (Provider(target.provider), ComputeKind(target.compute))
+        try:
+            return self.backends[key]
+        except KeyError:
+            raise ValueError(f"no backend for {key[0].value}/{key[1].value}") from None
 
     @staticmethod
     def _by_priority(jobs: Sequence[JobRecord]) -> List[JobRecord]:

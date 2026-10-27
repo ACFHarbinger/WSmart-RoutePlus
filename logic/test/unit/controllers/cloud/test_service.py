@@ -140,6 +140,10 @@ def test_cancel_and_manual_retry(tmp_path):
     job = service.submit(_spec(n=2, max_parallel=1))
     service.tick()
     service.cancel(job.job_id)
+    # The click itself stops the running attempt. It does not wait for a worker tick.
+    status = service.status(job.job_id)
+    assert status["state"] == "cancelled"
+    assert sorted(t["state"] for t in status["tasks"]) == ["cancelled", "cancelled"]
     status = _drain(service, job.job_id)
     assert status["state"] == "cancelled"
     assert sorted(t["state"] for t in status["tasks"]) == ["cancelled", "cancelled"]
