@@ -10,7 +10,9 @@ _LAZY = {
     "NeuralAgentPolicy": "logic.src.policies.routing.learning_algorithms.neural_agent.policy_na:NeuralAgentPolicy",
 }
 
-__all__ = list(_LAZY)
+__all__ = [
+    "NeuralAgentPolicy",
+]
 
 
 def __getattr__(name: str) -> Any:

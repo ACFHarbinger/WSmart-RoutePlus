@@ -66,11 +66,11 @@ def compute_profit(
     current_cost = compute_total_cost(solution, distance_matrix, id_to_index)
 
     # Calculate STRICT SIMULATOR PROFIT (Route 0 Only + Capacity Cutoff)
-    real_kg = 0
+    real_kg: float = 0.0
     collected_mandatory = set()
     if len(solution) > 0 and len(solution[0]) > 2:
         route0 = solution[0]
-        current_load = 0
+        current_load: float = 0.0
         for b in route0:
             if b == 0:
                 continue

@@ -72,7 +72,9 @@ def run_swc_tcf_optimizer(
         if ortools_backend not in ["GUROBI", "SCIP", "HIGHS", "CPLEX"]:
             raise ValueError(f"Unsupported OR-Tools backend: '{ortools_backend}'")
         # Imported here so a build that ships only some frameworks can drop the others' modules.
-        from .ortools_wrapper import _run_ortools_tcf_optimizer
+        from .ortools_wrapper import (  # type: ignore[import-not-found]  # optional solver framework not included in minimal package
+            _run_ortools_tcf_optimizer,
+        )
 
 
         result = _run_ortools_tcf_optimizer(
@@ -109,7 +111,9 @@ def run_swc_tcf_optimizer(
         pyomo_backend = optimizer.lower()
         if pyomo_backend not in ["gurobi", "scip", "appsi_highs", "highs"]:
             raise ValueError(f"Unsupported Pyomo backend: '{pyomo_backend}'")
-        from .pyomo_wrapper import _run_pyomo_tcf_optimizer
+        from .pyomo_wrapper import (  # type: ignore[import-not-found]  # optional solver framework not included in minimal package
+            _run_pyomo_tcf_optimizer,
+        )
 
 
         return _run_pyomo_tcf_optimizer(

@@ -15,7 +15,16 @@ _LAZY = {
     "other_algorithms": "logic.src.policies.routing.other_algorithms",
 }
 
-__all__ = list(_LAZY)
+__all__ = [
+    "exact_and_decomposition_solvers",
+    "hyper_heuristics",
+    "learning_algorithms",
+    "learning_heuristic_algorithms",
+    "learning_matheuristic_algorithms",
+    "matheuristics",
+    "meta_heuristics",
+    "other_algorithms",
+]
 
 
 def __getattr__(name: str) -> Any:
