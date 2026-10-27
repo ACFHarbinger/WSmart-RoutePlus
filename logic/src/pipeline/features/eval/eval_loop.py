@@ -76,6 +76,20 @@ def _build_eval_kwargs(cfg: Config) -> Dict[str, Any]:
     return result
 
 
+def _decoded_sequence(problem_name: str, seq: Any) -> Any:
+    """Turn a padded evaluator sequence into the problem's tour, or None when it is empty."""
+    if seq is None:
+        return None
+    if problem_name in ("cptp", "cptptc"):
+        # Multi-trip problems: keep the trailing depot-return marker
+        # (cptptc is single-vehicle-multi-trip, same shape as cptp's
+        # per-trip capacity resets -- see logic/src/envs/cptptc.py)
+        return np.trim_zeros(seq).tolist() + [0]
+    if problem_name == "ptp":
+        return np.trim_zeros(seq).tolist()
+    raise AssertionError("Unknown problem: {}".format(problem_name))
+
+
 def _eval_dataset(
     model: Any,
     dataset: Dataset,
@@ -155,17 +169,7 @@ def _eval_dataset(
     results: List[Dict[str, Any]] = []
     for i, (seq, reward) in enumerate(zip(sequences_best, rewards_best, strict=False)):
         batch_i: Any = {}
-        if seq is not None:
-            if model.problem.NAME in ("cptp", "cptptc"):
-                # Multi-trip problems: keep the trailing depot-return marker
-                # (cptptc is single-vehicle-multi-trip, same shape as cptp's
-                # per-trip capacity resets -- see logic/src/envs/cptptc.py)
-                seq = np.trim_zeros(seq).tolist() + [0]
-            elif model.problem.NAME == "ptp":
-                seq = np.trim_zeros(seq).tolist()
-            else:
-                seq = None
-                raise AssertionError("Unknown problem: {}".format(model.problem.NAME))
+        seq = _decoded_sequence(model.problem.NAME, seq)
 
         if seq is not None:
             seq_tensor = torch.tensor(seq, device=device).unsqueeze(0)

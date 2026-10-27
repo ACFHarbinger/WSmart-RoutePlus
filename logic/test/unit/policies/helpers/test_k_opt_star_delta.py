@@ -12,7 +12,7 @@ from logic.test.unit.policies.matheuristics.test_ils_rvnd_sp_paper import MockLo
 
 def _route_cost(dist, route):
     path = [0, *route, 0]
-    return float(sum(dist[a, b] for a, b in zip(path, path[1:])))
+    return float(sum(dist[a, b] for a, b in zip(path, path[1:], strict=False)))  # one edge per consecutive pair
 
 
 def _total(dist, routes):

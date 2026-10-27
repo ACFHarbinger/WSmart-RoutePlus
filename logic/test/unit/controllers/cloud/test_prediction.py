@@ -107,7 +107,7 @@ def _finished_job(cp, job_id, cells, machine, walls, peaks_mb=None):
     spec = JobSpec(name=job_id, cells=cells, resources=Resources(machine_type=machine))
     tasks = [TaskRecord(task_id=f"{job_id}-{i}", job_id=job_id, cell=c) for i, c in enumerate(cells)]
     cp.create_job(JobRecord(job_id=job_id, spec=spec), tasks)
-    for i, (task, wall) in enumerate(zip(tasks, walls)):
+    for i, (task, wall) in enumerate(zip(tasks, walls, strict=True)):
         _succeed(cp, task.task_id, 1000.0, 1000.0 + wall)
         if peaks_mb:
             cp.put_metrics(task.task_id, [{"at": 1001.0, "kind": "resource", "memory_rss_mb": peaks_mb[i]}])
