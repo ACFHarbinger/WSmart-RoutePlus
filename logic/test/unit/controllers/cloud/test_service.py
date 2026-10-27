@@ -456,3 +456,68 @@ def test_profile_service_builds_the_providers_backends(tmp_path, monkeypatch):
         {"cloud_command": "status", "profile": "gcp-test", "root": str(tmp_path / "root"), "json": True}
     )
     assert status == []
+
+
+def test_monitored_service_loads_backends_for_the_control_plane(tmp_path, monkeypatch):
+    """Studio cancels and reads logs without --profile, so the root's plane must have its backends."""
+    from logic.controllers.cloud import cli
+    from logic.controllers.cloud.providers.gcp import GcpBatchBackend
+
+    root = tmp_path / "outputs" / "cloud"
+    root.mkdir(parents=True)
+    plane = f"sqlite://{tmp_path / 'cp.db'}"
+    (root / "control_plane.uri").write_text(plane + "\n")
+    (root / "store.uri").write_text(f"file://{tmp_path / 'store'}\n")
+    config = tmp_path / "cloud.yaml"
+    config.write_text(
+        "profiles:\n"
+        "  gcp-test:\n"
+        "    provider: gcp\n"
+        "    compute: batch\n"
+        "    region: europe-west1\n"
+        f"    control_plane: {plane}\n"
+        f"    store: file://{tmp_path / 'store'}\n"
+        "    backend_options:\n"
+        "      project: my-project\n"
+    )
+    monkeypatch.setenv("WSR_CLOUD_CONFIG", str(config))
+    service = cli.monitored_service(root, tmp_path)
+    batch = service.backends[(Provider.GCP, ComputeKind.BATCH)]
+    assert isinstance(batch, GcpBatchBackend)
+    assert batch.project == "my-project"
+
+
+def test_monitored_service_attaches_the_gcp_project_to_the_store(tmp_path, monkeypatch):
+    """User ADC has no project. Studio's store must carry the profile's project anyway."""
+    from logic.controllers.cloud import cli
+    from logic.controllers.cloud.auth.config import Profile
+    from logic.controllers.cloud.profile_service import gcp_project_id
+    from logic.controllers.cloud.providers.gcp import GcsObjectStore
+
+    root = tmp_path / "outputs" / "cloud"
+    root.mkdir(parents=True)
+    plane = f"sqlite://{tmp_path / 'cp.db'}"
+    (root / "control_plane.uri").write_text(plane + "\n")
+    (root / "store.uri").write_text("gs://bucket/prefix\n")
+    config = tmp_path / "cloud.yaml"
+    config.write_text(
+        "profiles:\n"
+        "  gcp-test:\n"
+        "    provider: gcp\n"
+        "    compute: batch\n"
+        "    region: europe-west1\n"
+        f"    control_plane: {plane}\n"
+        "    store: gs://bucket/prefix\n"
+        "    backend_options:\n"
+        "      project: my-project\n"
+    )
+    monkeypatch.setenv("WSR_CLOUD_CONFIG", str(config))
+    service = cli.monitored_service(root, tmp_path)
+    assert isinstance(service.store, GcsObjectStore)
+    assert service.store.project == "my-project"
+    batch = service.backends[(Provider.GCP, ComputeKind.BATCH)]
+    assert batch.log_store.project == "my-project"
+    named = Profile(name="p", provider="gcp", control_plane="firestore://from-the-uri", store="gs://b/p")
+    assert gcp_project_id(named) == "from-the-uri"
+    named.backend_options = {"project": "explicit"}
+    assert gcp_project_id(named) == "explicit"

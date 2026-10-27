@@ -8,6 +8,7 @@ Attributes:
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, cast
@@ -58,6 +59,72 @@ def pool_worker_service(root: Path, project_root: Path, slots: int) -> CloudServ
         remote=remote,
         pool_mode=True,
         pool_slots=slots,
+    )
+
+
+CONTROL_PLANE_FILE = "control_plane.uri"
+STORE_FILE = "store.uri"
+
+
+def _uri_file(root: Path, name: str) -> Optional[str]:
+    path = root / name
+    if not path.is_file():
+        return None
+    text = path.read_text(encoding="utf-8").strip()
+    return text or None
+
+
+def resolve_control_plane_uri(root: Path) -> Optional[str]:
+    """Control-plane URI for a state root, or None for the local SQLite file.
+
+    ``WSR_CLOUD_CONTROL_PLANE`` wins. Otherwise ``<root>/control_plane.uri`` (one
+    line, no secrets) is what a Firebase or Supabase prototype writes so the
+    Studio, pointed at that root, polls the same plane.
+    """
+    return os.environ.get("WSR_CLOUD_CONTROL_PLANE") or _uri_file(root, CONTROL_PLANE_FILE)
+
+
+def resolve_store_uri(root: Path, control_plane_uri: Optional[str]) -> Optional[str]:
+    """Object-store URI, or None for ``<root>/objects`` when no control plane is set."""
+    if control_plane_uri is None:
+        return None
+    return os.environ.get("WSR_CLOUD_STORE") or _uri_file(root, STORE_FILE)
+
+
+def monitored_service(root: Path, project_root: Optional[Path] = None) -> CloudService:
+    """The service Studio and ``__main__.py`` should poll for ``root``.
+
+    A root with ``control_plane.uri`` uses that plane. Profiles whose control
+    plane is that URI also contribute their compute backends, so cancel and
+    logs can reach the machines the jobs actually run on. The matching
+    profile's GCP project is attached to the object store: Studio does not
+    pass ``--profile`` or ``GOOGLE_CLOUD_PROJECT``, and user ADC often has
+    no project. Every other root uses the SQLite local profile.
+    """
+    root = Path(root)
+    project_root = Path(project_root) if project_root else REPO_ROOT
+    control_uri = resolve_control_plane_uri(root)
+    if control_uri is None:
+        return local_service(root, project_root)
+    from logic.controllers.cloud.auth.config import load_profiles
+    from logic.controllers.cloud.profile_service import backends_for_profile, bind_store_project, gcp_project_id
+    from logic.controllers.cloud.profiles import control_plane_from_uri, store_from_uri
+
+    store_uri = resolve_store_uri(root, control_uri) or f"file://{(root / 'objects').resolve()}"
+    secrets = EnvSecretStore(prefix="WSR_SECRET_")
+    backends = {(Provider.LOCAL, ComputeKind.PROCESS): LocalProcessBackend(cwd=project_root, secrets=secrets)}
+    project = None
+    for profile in load_profiles().values():
+        if profile.control_plane == control_uri:
+            backends.update(backends_for_profile(profile))
+            project = project or gcp_project_id(profile)
+    store = store_from_uri(store_uri)
+    bind_store_project(store, project)
+    return CloudService(
+        control_plane=control_plane_from_uri(control_uri),
+        store=store,
+        backends=backends,
+        workroot=root / "work",
     )
 
 
@@ -504,5 +571,5 @@ def run_cloud(opts: Dict[str, Any]) -> Any:
         opts["_profile"] = profiles[opts["profile"]]
         service = profile_service(opts["_profile"], root, project_root)
     else:
-        service = local_service(root, project_root)
+        service = monitored_service(root, project_root)
     return _COMMANDS[command](_Context(opts, root, project_root, service))
