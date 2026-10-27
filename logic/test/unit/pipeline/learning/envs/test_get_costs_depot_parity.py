@@ -7,8 +7,11 @@ Addresses Issue #61 design item:
   and preventing customer index shift.
 """
 
+from typing import Any, Dict, cast
+
 import pytest
 import torch
+from logic.src.envs.base.generator import Generator
 from logic.src.envs.base.problem import BaseProblem
 from logic.src.envs.cptp import CPTP
 from logic.src.envs.ptp import PTP, PTPEnv
@@ -66,21 +69,24 @@ def test_ptp_get_costs_width_n_vs_n1_parity() -> None:
 def test_ptp_get_costs_no_customer_shift_on_reset_tensordict() -> None:
     """Calling get_costs on a reset TensorDict must not shift customer indices."""
     env = PTPEnv(num_loc=5, batch_size=[1])
-    td_raw = env.generator(1)
+    generator = cast(Generator, env.generator)  # PTPEnv always installs a generator
+    td_raw = generator(1)
     # Distinct waste values for each customer: 10, 20, 30, 40, 50
     td_raw["waste"] = torch.tensor([[10.0, 20.0, 30.0, 40.0, 50.0]])
     td_raw["max_waste"] = torch.tensor([100.0])
 
     td_reset = env.reset(td_raw.clone())
+    # evaluate_tour is annotated as a dict but accepts the reset TensorDict mapping.
+    reset_batch = cast(Dict[str, Any], td_reset)
 
     # Tour visiting specifically customer 1: must collect exactly 10.0 (not depot 0.0)
     pi_c1 = torch.tensor([[0, 1, 0]])
-    c_dict_c1 = PTP.evaluate_tour(td_reset, pi_c1, cw_dict=None)
+    c_dict_c1 = PTP.evaluate_tour(reset_batch, pi_c1, cw_dict=None)
     assert c_dict_c1["waste"].item() == pytest.approx(10.0)
 
     # Tour visiting specifically customer 5 (last customer): must collect 50.0 (not customer 4's 40.0)
     pi_c5 = torch.tensor([[0, 5, 0]])
-    c_dict_c5 = PTP.evaluate_tour(td_reset, pi_c5, cw_dict=None)
+    c_dict_c5 = PTP.evaluate_tour(reset_batch, pi_c5, cw_dict=None)
     assert c_dict_c5["waste"].item() == pytest.approx(50.0)
 
 

@@ -1,5 +1,7 @@
 """Capacity and action-shape physics for CPTP."""
 
+from typing import cast
+
 import pytest
 import torch
 from logic.src.envs.cptp import CPTPEnv
@@ -28,7 +30,7 @@ def test_cptp_remaining_capacity_never_goes_negative() -> None:
     )
 
     next_td = env._step_instance(td)
+    remaining = cast(torch.Tensor, next_td["remaining_capacity"])
 
-    assert next_td["remaining_capacity"].item() == pytest.approx(0.0)
-    assert next_td["remaining_capacity"].item() >= 0.0
-
+    assert remaining.item() == pytest.approx(0.0)
+    assert remaining.item() >= 0.0

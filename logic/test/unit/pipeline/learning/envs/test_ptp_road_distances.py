@@ -1,11 +1,13 @@
 """Real-network instances are costed in road km; on-the-fly capacity follows the simulator."""
 
+from typing import cast
+
 import pytest
 import torch
 from logic.src.envs import PTPGenerator
 from logic.src.envs.cptp import CPTPEnv
 from logic.src.pipeline.simulations.repository import load_area_and_waste_type_params
-from tensordict import TensorDict
+from tensordict import TensorDict, TensorDictBase
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
@@ -47,14 +49,14 @@ def _env(dm_filepath=None) -> CPTPEnv:
 
 def test_tour_length_uses_road_km_in_dataset_bin_order(tmp_path) -> None:
     env = _env(_matrix_file(tmp_path))
-    td = env.reset(_instances([[11.0, 22.0, 33.0], [33.0, 22.0, 11.0]]))
+    td: TensorDictBase = env.reset(_instances([[11.0, 22.0, 33.0], [33.0, 22.0, 11.0]]))
 
     for action in ([1, 1], [2, 2], [0, 0]):
         td["action"] = torch.tensor(action)
-        td = env.step(td)["next"]
+        td = cast(TensorDictBase, env.step(td)["next"])  # successor is stored under "next"
 
     # Instance 0: depot -> 11 -> 22 -> depot = 10 + 7 + 21. Instance 1: depot -> 33 -> 22 -> depot.
-    assert td["tour_length"].tolist() == pytest.approx([38.0, 57.0])
+    assert cast(torch.Tensor, td["tour_length"]).tolist() == pytest.approx([38.0, 57.0])
 
 
 def test_instances_without_bin_ids_keep_euclidean_lengths(tmp_path) -> None:

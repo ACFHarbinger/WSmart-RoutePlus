@@ -13,16 +13,21 @@ from tensordict import TensorDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
+_EMBED_DIM = 32
+_HIDDEN_DIM = 64
+_N_ENCODE_LAYERS = 2
+_N_HEADS = 4
+
 _ARGS = {
     "problem": None,
     "model": "am",
     "encoder": "gat",
-    "embed_dim": 32,
-    "hidden_dim": 64,
-    "n_encode_layers": 2,
+    "embed_dim": _EMBED_DIM,
+    "hidden_dim": _HIDDEN_DIM,
+    "n_encode_layers": _N_ENCODE_LAYERS,
     "n_encode_sublayers": 1,
     "n_decode_layers": 2,
-    "n_heads": 4,
+    "n_heads": _N_HEADS,
     "normalization": "layer",
     "tanh_clipping": 10.0,
     "learn_affine": True,
@@ -61,10 +66,10 @@ def test_reloaded_policy_decodes_the_trained_routes(tmp_path, env_name, env_clas
     torch.manual_seed(11)
     policy = AttentionModelPolicy(
         env_name,
-        embed_dim=_ARGS["embed_dim"],
-        hidden_dim=_ARGS["hidden_dim"],
-        n_encode_layers=_ARGS["n_encode_layers"],
-        n_heads=_ARGS["n_heads"],
+        embed_dim=_EMBED_DIM,
+        hidden_dim=_HIDDEN_DIM,
+        n_encode_layers=_N_ENCODE_LAYERS,
+        n_heads=_N_HEADS,
         norm_config=NormalizationConfig(norm_type="layer"),
         activation_config=ActivationConfig(name="gelu"),
         dropout_rate=0.0,

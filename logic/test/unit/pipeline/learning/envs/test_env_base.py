@@ -1,14 +1,13 @@
 """Tests for RL4COEnvBase."""
 
+from typing import cast
+
 import pytest
 import torch
 from logic.src.envs.base import RL4COEnvBase
-from tensordict import TensorDict
+from tensordict import TensorDict, TensorDictBase
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
-
-
-
 
 
 class ConcreteEnv(RL4COEnvBase):
@@ -24,12 +23,14 @@ class ConcreteEnv(RL4COEnvBase):
     def _get_action_mask(self, tensordict):
         return torch.ones((*tensordict.batch_size, 5), dtype=torch.bool)
 
-    def _step(self, td: TensorDict) -> TensorDict:
+    def _step(self, tensordict: TensorDictBase) -> TensorDictBase:
         """Perform a transition in the environment."""
-        td["i"] = td["i"] + 1
-        td["current_node"] = td["action"].unsqueeze(-1)
-        td["reward"] = self._get_reward(td, td["action"])
-        return td
+        step_index = cast(torch.Tensor, tensordict["i"]) + 1
+        tensordict["i"] = step_index
+        action = cast(torch.Tensor, tensordict["action"])
+        tensordict["current_node"] = action.unsqueeze(-1)
+        tensordict["reward"] = self._get_reward(tensordict, action)
+        return tensordict
 
 
 def test_env_base_init():
@@ -46,8 +47,8 @@ def test_env_base_reset():
 
     out_td = env.reset(td)
     assert out_td.batch_size == torch.Size([2])
-    assert "visited" in out_td.keys()   # type: ignore[not-iterable]
-    assert "action_mask" in out_td.keys()   # type: ignore[not-iterable]
+    assert "visited" in out_td.keys()  # type: ignore[not-iterable]
+    assert "action_mask" in out_td.keys()  # type: ignore[not-iterable]
     assert out_td["i"].sum() == 0
 
 
@@ -69,6 +70,6 @@ def test_env_base_step():
     td["action"] = torch.tensor([1, 2], dtype=torch.long)
 
     next_td = env._step(td)
-    assert next_td["i"].tolist() == [1, 1]
-    assert next_td["current_node"].flatten().tolist() == [1, 2]
-    assert "reward" in next_td.keys()   # type: ignore[not-iterable]
+    assert cast(torch.Tensor, next_td["i"]).tolist() == [1, 1]
+    assert cast(torch.Tensor, next_td["current_node"]).flatten().tolist() == [1, 2]
+    assert "reward" in next_td.keys()  # type: ignore[not-iterable]
