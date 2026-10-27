@@ -111,27 +111,26 @@ from logic.gen.paper_figures import (
     fig_scale,
     fig_strategy_tradeoff,
 )
-from logic.gen.paper_networks import fig_networks
-from logic.gen.report_utils import apply_theme, load_json, load_theme
-
-from .paper_latex_tables import (
+from logic.gen.paper_latex_tables import (
     table_excluded as table_excluded,
 )
-from .paper_latex_tables import (
+from logic.gen.paper_latex_tables import (
     table_horizon as table_horizon,
 )
-from .paper_latex_tables import (
+from logic.gen.paper_latex_tables import (
     table_improvers as table_improvers,
 )
-from .paper_latex_tables import (
+from logic.gen.paper_latex_tables import (
     table_routing as table_routing,
 )
-from .paper_latex_tables import (
+from logic.gen.paper_latex_tables import (
     table_scenarios as table_scenarios,
 )
-from .paper_latex_tables import (
+from logic.gen.paper_latex_tables import (
     table_strategies as table_strategies,
 )
+from logic.gen.paper_networks import fig_networks
+from logic.gen.report_utils import apply_theme, load_json, load_theme
 
 # --------------------------------------------------------------------------- #
 # Loading

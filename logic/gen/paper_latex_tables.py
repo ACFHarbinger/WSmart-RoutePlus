@@ -176,6 +176,13 @@ def horizon_rows(paired: pd.DataFrame, cfg: dict) -> list[dict]:
     return rows
 
 
+def matched_text(pairs: int, n90: int) -> str:
+    """The sentence of the horizon note that says how many 90-day runs have a 30-day match."""
+    if pairs == n90:
+        return f"All {n90} classical 90-day runs have a matched 30-day counterpart."
+    return f"{pairs} of the {n90} classical 90-day runs have a matched 30-day counterpart."
+
+
 def table_horizon(paired: pd.DataFrame, cfg: dict, learned_paired: pd.DataFrame, n90: int) -> str:
     """Paired 30d-vs-90d comparison, per routing algorithm, on matched configurations."""
     if paired.empty:
@@ -195,7 +202,7 @@ def table_horizon(paired: pd.DataFrame, cfg: dict, learned_paired: pd.DataFrame,
         size=r"\footnotesize",
         rows=horizon_rows(paired, cfg),
         blocks=blocks,
-        note=cfg["notes"]["horizon"].format(pairs=len(paired), n90=n90),
+        note=cfg["notes"]["horizon"].format(matched=matched_text(len(paired), n90)),
     )
 
 
