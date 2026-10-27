@@ -70,7 +70,7 @@ export interface DayLogEntry {
 // ── Discovered simulation logs & directory catalogs ─────────────────────────
 
 export interface DiscoveredSimulationLog {
-  path: string;
+  path?: string;
   filename: string;
   format: "json" | "jsonl" | "unknown";
   policy: string;
