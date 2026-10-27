@@ -486,7 +486,7 @@ class AzureVmBackend(AzureProvisioningMixin, AzureVmOrphanQueueMixin, AzureVmBoo
                     url = str(content)
                     if url.startswith("http://") or url.startswith("https://"):
                         try:
-                            import requests
+                            import requests  # type: ignore[import-untyped]  # requests has no stubs
 
                             resp = requests.get(url, timeout=10)
                             if resp.status_code == 200:

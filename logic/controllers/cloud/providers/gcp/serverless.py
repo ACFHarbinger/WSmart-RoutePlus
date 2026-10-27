@@ -14,7 +14,7 @@ Attributes:
 from __future__ import annotations
 
 import contextlib
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from logic.controllers.cloud.interfaces import (
     AttemptState,
@@ -112,7 +112,7 @@ class CloudRunJobsBackend(ComputeBackend):
     def job(self, launch: LaunchSpec) -> Dict[str, Any]:
         """The Cloud Run ``Job`` resource for ``launch`` (a dict the client accepts)."""
         r = launch.resources
-        env = [{"name": k, "value": str(v)} for k, v in sorted(launch.env.items())]
+        env: List[Dict[str, Any]] = [{"name": k, "value": str(v)} for k, v in sorted(launch.env.items())]
         env += [
             {
                 "name": var,

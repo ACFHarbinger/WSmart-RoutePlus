@@ -125,7 +125,7 @@ class KeychainSecretStore(SecretStore):
 
     def __init__(self, backend: Any = None) -> None:
         if backend is None:
-            import keyring
+            import keyring  # pyrefly: ignore[missing-import]  # optional cloud SDK
 
             backend = keyring
         self.backend = backend
@@ -192,10 +192,10 @@ class ProviderCredentials:
     def azure_credential(self) -> Any:
         """An ``azure.identity`` credential."""
         if self.source == "cli":
-            from azure.identity import DefaultAzureCredential
+            from azure.identity import DefaultAzureCredential  # pyrefly: ignore[missing-import]  # optional cloud SDK
 
             return DefaultAzureCredential()
-        from azure.identity import ClientSecretCredential
+        from azure.identity import ClientSecretCredential  # pyrefly: ignore[missing-import]  # optional cloud SDK
 
         key = self._key()
         return ClientSecretCredential(key["tenant_id"], key["client_id"], key["client_secret"])

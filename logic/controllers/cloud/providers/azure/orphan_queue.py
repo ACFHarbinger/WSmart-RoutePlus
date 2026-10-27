@@ -10,7 +10,7 @@ import tempfile
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional
+from typing import Any, Dict, Generator, List, Optional, Protocol, cast
 
 
 def write_json(path: Path, records: List[Dict[str, Any]]) -> None:
@@ -40,6 +40,16 @@ def write_json(path: Path, records: List[Dict[str, Any]]) -> None:
             temporary.unlink(missing_ok=True)
 
 
+class _AzureVmCleanup(Protocol):
+    """Deletion helpers supplied by AzureVmBackend. Not a runtime base."""
+
+    def _delete_vm_resource(self, rg: str, vm_name: str) -> None: ...
+
+    def _cleanup_nic_in_rg(self, rg: str, nic_name: str) -> None: ...
+
+    def _is_not_found(self, exc: Exception) -> bool: ...
+
+
 class AzureVmOrphanQueueMixin:
     """Persistent cleanup queue shared by the VM backend's submit and poll paths."""
 
@@ -49,7 +59,7 @@ class AzureVmOrphanQueueMixin:
     resource_group: str
 
     @contextmanager
-    def _orphan_lock(self) -> Iterator[None]:
+    def _orphan_lock(self) -> Generator[None, None, None]:
         import fcntl
 
         self.orphan_file.parent.mkdir(parents=True, exist_ok=True)
@@ -137,15 +147,16 @@ class AzureVmOrphanQueueMixin:
                     continue
 
                 success = False
+                cleanup = cast(_AzureVmCleanup, self)
                 try:
                     if kind == "vm":
-                        self._delete_vm_resource(rg, name)
+                        cleanup._delete_vm_resource(rg, name)
                         success = True
                     elif kind == "nic":
-                        self._cleanup_nic_in_rg(rg, name)
+                        cleanup._cleanup_nic_in_rg(rg, name)
                         success = True
                 except Exception as exc:
-                    if self._is_not_found(exc):
+                    if cleanup._is_not_found(exc):
                         success = True
                     else:
                         record["attempts"] = record.get("attempts", 0) + 1

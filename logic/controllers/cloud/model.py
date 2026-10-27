@@ -30,7 +30,7 @@ import time
 import uuid
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, cast
 
 
 class Provider(str, Enum):
@@ -392,7 +392,12 @@ def spec_from_dict(data: Dict[str, Any]) -> JobSpec:
     data["gurobi"] = GurobiMode(data["gurobi"])
     data["resources"] = Resources(**data["resources"])
     data["placement"] = [
-        PlacementTarget(**{**t, "provider": Provider(t["provider"]), "compute": ComputeKind(t["compute"])})
+        PlacementTarget(
+            **cast(
+                Dict[str, Any],
+                {**t, "provider": Provider(t["provider"]), "compute": ComputeKind(t["compute"])},
+            )
+        )
         for t in data.get("placement") or []
     ]
     return JobSpec(**data)

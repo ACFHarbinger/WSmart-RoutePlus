@@ -28,7 +28,7 @@ import os
 import re
 import shlex
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 from logic.controllers.cloud.model import (
     CellSpec,
@@ -145,7 +145,12 @@ def _job_fields(data: Dict[str, Any]) -> Dict[str, Any]:
             fields[name] = data[name]
     if "placement" in data:  # CR-09: [{"provider": "gcp", "compute": "batch", "max_tasks": 8, ...}, ...]
         fields["placement"] = [
-            PlacementTarget(**{**t, "provider": Provider(t["provider"]), "compute": ComputeKind(t["compute"])})
+            PlacementTarget(
+                **cast(
+                    Dict[str, Any],
+                    {**t, "provider": Provider(t["provider"]), "compute": ComputeKind(t["compute"])},
+                )
+            )
             for t in data["placement"]
         ]
     return fields

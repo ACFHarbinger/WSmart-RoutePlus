@@ -48,7 +48,7 @@ class AcrImageRegistry(ImageRegistry):
     @property
     def client(self) -> Any:
         if self._client is None:
-            from azure.containerregistry import ContainerRegistryClient
+            from azure.containerregistry import ContainerRegistryClient  # pyrefly: ignore[missing-import]  # optional
 
             from logic.controllers.cloud.providers.azure._sdk import make_azure_credential
 

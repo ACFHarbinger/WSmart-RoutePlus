@@ -26,7 +26,7 @@ def make_boto3_client(
     Returns:
         boto3 client instance.
     """
-    import boto3
+    import boto3  # pyrefly: ignore[missing-import]  # optional cloud SDK
 
     kwargs: dict[str, Any] = {}
     if credentials is not None:

@@ -2,14 +2,14 @@
 
 import threading
 from contextlib import contextmanager
-from typing import Iterator
+from typing import Generator, cast
 
 from logic.controllers.cloud.interfaces import CapacityError, ControlPlane
 from logic.controllers.cloud.model import TaskRecord
 
 
 @contextmanager
-def renew_provisioning_lease(cp: ControlPlane, task: TaskRecord, seconds: float) -> Iterator[None]:
+def renew_provisioning_lease(cp: ControlPlane, task: TaskRecord, seconds: float) -> Generator[None, None, None]:
     """Renew while submit blocks; a lost lease prevents successful scheduler handoff."""
     if not task.lease_owner:
         yield
@@ -20,7 +20,7 @@ def renew_provisioning_lease(cp: ControlPlane, task: TaskRecord, seconds: float)
     def renew() -> None:
         while not stop.wait(seconds / 3):
             try:
-                if not cp.renew_lease(task.task_id, task.lease_owner, seconds):
+                if not cp.renew_lease(task.task_id, cast(str, task.lease_owner), seconds):
                     raise CapacityError("Provisioning lease no longer belongs to this scheduler")
             except Exception as exc:
                 errors.append(exc)

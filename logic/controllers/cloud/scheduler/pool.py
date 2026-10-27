@@ -25,9 +25,9 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
-from logic.controllers.cloud.interfaces import AttemptState, LaunchSpec
+from logic.controllers.cloud.interfaces import AttemptState, ComputeBackend, ControlPlane, LaunchSpec
 from logic.controllers.cloud.model import (
     ACTIVE,
     CellSpec,
@@ -73,7 +73,17 @@ class PoolPolicy:
 class PoolMixin:
     """Pool coordination for :class:`.service.CloudService`."""
 
+    # Annotations only: CloudService.__init__ and its other mixins own these at runtime.
     pool: Optional[PoolPolicy] = None
+    cp: ControlPlane
+    clock: Callable[[], float]
+    owner: str
+    pool_mode: bool
+    backends: Dict[Tuple[Provider, ComputeKind], ComputeBackend]
+    _pool_workers: Dict[str, float]
+    _event: Callable[..., None]
+    _fail: Callable[..., int]
+    _ensure_running: Callable[[TaskRecord], TaskRecord]
 
     def _pool_heartbeat(self, tasks: Sequence[TaskRecord]) -> None:
         """A pool worker vouches for its running tasks every tick."""

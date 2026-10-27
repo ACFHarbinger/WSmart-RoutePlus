@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, cast
 
 from logic.controllers.cloud.local.backend import LocalProcessBackend
 from logic.controllers.cloud.local.control_plane import SQLiteControlPlane
@@ -80,7 +80,8 @@ def local_service(root: Path, project_root: Optional[Path] = None) -> CloudServi
         from logic.controllers.cloud.scheduler import PoolPolicy
 
         data = json.loads(pool_file.read_text())
-        pool = PoolPolicy(**{**data, "target": parse_target(data["target"])})
+        fields = cast(Dict[str, Any], {**data, "target": parse_target(data["target"])})
+        pool = PoolPolicy(**fields)
 
     def predictor():
         from logic.controllers.cloud.prediction import fitted_predictor
@@ -321,8 +322,9 @@ def _cost(ctx: _Context) -> Any:
     opts, service = ctx.opts, ctx.service
     action = opts["cost_command"]
     if action == "prices":
-        price = service.prices.price_per_hour(opts["provider"], opts["machine_type"], opts.get("region"), False)
-        spot = service.prices.price_per_hour(opts["provider"], opts["machine_type"], opts.get("region"), True)
+        prices = cast(Any, service.prices)  # None still fails at price_per_hour
+        price = prices.price_per_hour(opts["provider"], opts["machine_type"], opts.get("region"), False)
+        spot = prices.price_per_hour(opts["provider"], opts["machine_type"], opts.get("region"), True)
         payload = {
             "provider": opts["provider"],
             "machine_type": opts["machine_type"],
@@ -365,6 +367,7 @@ def _cost(ctx: _Context) -> Any:
     if estimate is None:
         _print(opts, None, "no estimate (no runtime predictor)")
         return None
+    predictions = cast(Any, predictions)  # None still fails when the cells are read
     payload = estimate.to_dict()
     payload.update(
         cost_usd=estimate.mid,
