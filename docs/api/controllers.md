@@ -86,7 +86,7 @@ CLI parser for output artefact operations.
 - `add_excel_summary_args()` — Register ``excel_summary`` arguments on *parser*.
 - `main()` — Standalone CLI entry point with ``clean`` / ``excel`` subcommands.
 
-### `logic.controllers.cli.registry`
+### `logic.controllers.cli.base.registry`
 
 Centralized registry for the WSmart+ Route CLI parser.
 

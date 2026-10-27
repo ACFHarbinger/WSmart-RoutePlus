@@ -923,7 +923,7 @@ just studio
 | File                                | Purpose            |
 | ----------------------------------- | ------------------ |
 | `main.py`                           | Entry point        |
-| `logic/controllers/cli/registry.py`         | Command dispatcher |
+| `logic/controllers/cli/base/registry.py`    | Command dispatcher |
 | `logic/src/models/model_factory.py` | Model creation     |
 | `logic/src/policies/adapters.py`    | Policy creation    |
 | `pyproject.toml`                    | Project config     |

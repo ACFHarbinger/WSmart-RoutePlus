@@ -93,7 +93,7 @@ def test_missing_rclone_is_reported(repo, drive, monkeypatch):
 
 def test_sync_drive_command_parses_and_runs(repo, drive, tmp_path):
     from logic.cloud.cli import run_sync
-    from logic.controllers.cli.registry import get_parser
+    from logic.controllers.cli.base.registry import get_parser
 
     (repo / "outputs" / "simulations").mkdir(parents=True)
     (repo / "assets" / "tracking").mkdir(parents=True)

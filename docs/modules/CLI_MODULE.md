@@ -72,10 +72,10 @@ main.py
 ```
 logic/controllers/cli/
 ├── __init__.py              # Unified entry point (parse_params)
-├── registry.py              # Central parser registration
 │
 ├── base/                    # Base parser components
 │   ├── __init__.py
+│   ├── registry.py          # Central parser registration
 │   ├── parser.py            # ConfigsParser class
 │   ├── lowercase_action.py  # LowercaseAction
 │   ├── store_dict_key.py    # StoreDictKeyPair
@@ -771,7 +771,7 @@ python main.py benchmark --subset solvers --device cuda --output results.json
 
 ## 5. Central Registry
 
-**File**: `registry.py`
+**File**: `base/registry.py`
 
 Centralized parser registration that creates and configures the main parser with all subcommands.
 
@@ -1033,7 +1033,7 @@ def validate_new_command_args(args):
     return args
 ```
 
-**Step 2**: Register in `registry.py`
+**Step 2**: Register in `base/registry.py`
 
 ```python
 from logic.controllers.cli.new_command_parser import add_new_command_args
@@ -1276,7 +1276,7 @@ from logic.controllers.cli.fs_parser import add_files_args, validate_file_system
 from logic.controllers.cli.ts_parser import add_test_suite_args, validate_test_suite_args
 
 # Registry
-from logic.controllers.cli.registry import get_parser
+from logic.controllers.cli.base.registry import get_parser
 ```
 
 ### Command Summary
@@ -1318,7 +1318,7 @@ from logic.controllers.cli.registry import get_parser
 | File                              | Lines | Description                     |
 | --------------------------------- | ----- | ------------------------------- |
 | `__init__.py`                     | 49    | Main entry point (parse_params) |
-| `registry.py`                     | 38    | Central parser registration     |
+| `base/registry.py`                | 38    | Central parser registration     |
 | `base/parser.py`                  | 134   | ConfigsParser class             |
 | `base/lowercase_action.py`        | 34    | LowercaseAction                 |
 | `base/store_dict_key.py`          | 47    | StoreDictKeyPair                |

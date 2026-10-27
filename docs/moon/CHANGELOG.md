@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Trace.** `python main.py trace_policy` writes schema version 1 for one ALNS solve. The search interior is marked `not_instrumented`. On the same seed the traced tours and profit match a solve that does not build a trace.
 - **Catalog.** `python main.py list_policy_modules` lists registered packing, routing, route improvement, and acceptance ids, plus on-disk modules, operator families, separation helpers, and the shipped model config ids. A target that fails to import stays in the document with `error` set.
 
+### CLI registry location (`2026-10-27`)
+
+- The command registry lives in `logic/controllers/cli/base/registry.py`.
+
 ### DeepSeek: minimal-package type cleanup for models, environments and utilities (`2026-10-27`, [#163](https://github.com/ACFHarbinger/WSmart-Route/issues/163))
 
 - **Environments.** Narrowed the optional `TensorDict` fields and distance matrices in `envs/base/{base,ops,routing,problem,resources,generator}.py`; `RoutingEnv` overrides now use the `RL4COEnvBase` signatures. `envs/common/metrics.py` asserts the ratio-metric dependencies that `Metric.__post_init__` already enforces.
