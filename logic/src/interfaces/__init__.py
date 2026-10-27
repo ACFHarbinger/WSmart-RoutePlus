@@ -29,7 +29,7 @@ _LAZY = {
     "SolutionContext": "logic.src.interfaces.context.solution_context:SolutionContext",
 }
 
-__all__ = list(_LAZY)
+__all__ = list(_LAZY)  # pyrefly: ignore[unresolvable-dunder-all]  # lazy re-exports; resolved through __getattr__
 
 
 def __getattr__(name: str) -> Any:
