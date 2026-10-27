@@ -38,6 +38,40 @@ def _secrets():
     return GcpSecretManagerStore("proj", client=FakeSecretManagerClient())
 
 
+def test_gcs_store_passes_its_project_to_the_client(monkeypatch):
+    seen = {}
+
+    def fake(service, credentials=None, project=None):
+        seen["service"] = service
+        seen["credentials"] = credentials
+        seen["project"] = project
+        return object()
+
+    monkeypatch.setattr("logic.controllers.cloud.providers.gcp.storage.make_client", fake)
+    store = GcsObjectStore("bucket", project="my-project")
+    assert store.client is not None
+    assert seen == {"service": "storage", "credentials": None, "project": "my-project"}
+
+
+def test_storage_client_pins_project_and_quota_project(monkeypatch):
+    pytest.importorskip("google.cloud.storage")
+    captured = {}
+
+    class _Client:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    import google.cloud.storage as gcs
+
+    monkeypatch.setattr(gcs, "Client", _Client)
+    from logic.controllers.cloud.providers.gcp._sdk import client
+
+    client("storage", project="my-project")
+    assert captured["project"] == "my-project"
+    assert captured["client_options"] == {"quota_project_id": "my-project"}
+    assert "credentials" not in captured
+
+
 def _batch(**kw):
     return GcpBatchBackend(
         project="proj", region="europe-west1", client=kw.pop("client", FakeBatchClient()), secrets=_secrets(), **kw
