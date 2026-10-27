@@ -25,6 +25,9 @@ pub struct DiscoveredSimulationLog {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DiscoveredSimulationRun {
+    /// Directory that holds this run's logs, or the first log path when they do not share one.
+    /// Serialized as `key` because the monitor loads that value with `load_simulation_log`.
+    #[serde(rename = "key")]
     pub id: String,
     pub label: String,
     pub days: Option<i32>,
@@ -38,6 +41,8 @@ pub struct DiscoveredSimulationRun {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SimulationDirectoryCatalog {
+    /// Scanned directory. Serialized as `root_dir` for the monitor's "all runs" load.
+    #[serde(rename = "root_dir")]
     pub root_path: String,
     pub total_logs: usize,
     pub runs: Vec<DiscoveredSimulationRun>,
@@ -249,6 +254,25 @@ pub fn find_simulation_logs_in_dir(dir: &Path) -> Result<Vec<PathBuf>, String> {
     Ok(logs)
 }
 
+/// Path passed to `load_simulation_log` for one discovered run.
+fn run_log_path(run: &DiscoveredSimulationRun) -> String {
+    let mut parents = run
+        .logs
+        .iter()
+        .filter_map(|log| Path::new(&log.path).parent().map(|parent| parent.to_path_buf()));
+    let Some(first) = parents.next() else {
+        return String::new();
+    };
+    if parents.all(|parent| parent == first) {
+        first.to_string_lossy().into_owned()
+    } else {
+        run.logs
+            .first()
+            .map(|log| log.path.clone())
+            .unwrap_or_default()
+    }
+}
+
 /// Scan a simulation directory tree and construct a catalog grouped into runs.
 pub fn scan_simulation_directory_tree(dir: &Path) -> Result<SimulationDirectoryCatalog, String> {
     let files = find_simulation_logs_in_dir(dir)?;
@@ -313,6 +337,7 @@ pub fn scan_simulation_directory_tree(dir: &Path) -> Result<SimulationDirectoryC
     for run in &mut runs {
         let n_pol = run.logs.len();
         run.label = format!("{} ({} {})", run.label, n_pol, if n_pol == 1 { "policy" } else { "policies" });
+        run.id = run_log_path(run);
     }
 
     Ok(SimulationDirectoryCatalog {

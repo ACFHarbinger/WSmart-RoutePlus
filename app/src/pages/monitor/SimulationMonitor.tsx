@@ -39,7 +39,24 @@ import { useSimMonitorMapRoutes } from "../../components/monitor/sim/useSimMonit
 import { CorpusRouteMap } from "../../components/analysis/summary/corpus/CorpusRouteMap";
 import { applyCorpusMapFrame } from "../../utils/corpus/monitorRoutes";
 import { corpusMapFrame } from "../../utils/corpus/routeFrame";
-import type { DayLogEntry, PolicyVizEntry, SimFailureEntry, SimulationDirectoryCatalog } from "../../types";
+import type {
+  DayLogEntry,
+  DiscoveredSimulationRun,
+  PolicyVizEntry,
+  SimFailureEntry,
+  SimulationDirectoryCatalog,
+} from "../../types";
+
+/** Catalog `key` is the run directory. Older payloads only have each log's `path`. */
+function simulationRunPath(run: DiscoveredSimulationRun, rootDir: string): string {
+  if (run.key) return run.key;
+  const logPath = run.logs.find((log) => log.path)?.path;
+  if (logPath) return logPath;
+  if (!rootDir) {
+    throw new Error("No simulation log path to load");
+  }
+  return rootDir;
+}
 
 export function SimulationMonitor() {
   const {
@@ -138,6 +155,9 @@ export function SimulationMonitor() {
 
   const loadLogFile = useCallback(
     async (path: string, watch = true) => {
+      if (!path) {
+        throw new Error("No simulation log path to load");
+      }
       reset();
       const [historical, vizHistorical, failureHistorical] = await Promise.all([
         invoke<DayLogEntry[]>("load_simulation_log", { path }),
@@ -195,8 +215,9 @@ export function SimulationMonitor() {
         }
         setCatalog(cat);
         const firstRun = cat.runs[0];
-        setSelectedRunKey(firstRun.key);
-        await loadLogFile(firstRun.key);
+        const runPath = simulationRunPath(firstRun, cat.root_dir);
+        setSelectedRunKey(runPath);
+        await loadLogFile(runPath);
         toast.success(`Loaded catalog: ${cat.runs.length} run(s), ${cat.total_logs} log(s)`);
       } catch (err) {
         toast.error("Failed to scan simulation directory", { description: String(err) });
@@ -232,7 +253,7 @@ export function SimulationMonitor() {
       setSelectedRunKey(runKey);
       if (runKey === "__ALL__" && catalog) {
         await loadLogFile(catalog.root_dir);
-      } else {
+      } else if (runKey) {
         await loadLogFile(runKey);
       }
     },
@@ -249,8 +270,9 @@ export function SimulationMonitor() {
           .then((cat) => {
             if (cat.runs && cat.runs.length > 0) {
               setCatalog(cat);
-              setSelectedRunKey(cat.runs[0].key);
-              void loadLogFile(cat.runs[0].key, false);
+              const runPath = simulationRunPath(cat.runs[0], cat.root_dir);
+              setSelectedRunKey(runPath);
+              void loadLogFile(runPath, false);
             } else {
               void loadLogFile(p, false);
             }
