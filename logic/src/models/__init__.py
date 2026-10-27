@@ -41,6 +41,9 @@ _LAZY = {
 
 
 
+__all__ = list(_LAZY)  # pyrefly: ignore[unresolvable-dunder-all]  # lazy re-exports; resolved through __getattr__
+
+
 def __getattr__(name: str) -> Any:
     if name in ("common", "core", "meta", "subnets"):
         import importlib

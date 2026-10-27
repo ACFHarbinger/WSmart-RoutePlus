@@ -118,3 +118,11 @@ def __getattr__(name: str) -> Any:
     return lazy_getattr(globals(), _TARGETS, name)
 
 
+__all__ = [  # pyrefly: ignore[unresolvable-dunder-all]  # lazy targets are resolved at run time
+    "ENV_TARGETS",
+    "GENERATOR_REGISTRY",
+    "GENERATOR_TARGETS",
+    "get_env",
+    "get_generator",
+    *_TARGETS,
+]
