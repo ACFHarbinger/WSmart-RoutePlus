@@ -52,7 +52,25 @@ _LAZY = {
     "FPTASKnapsackSelection": "logic.src.policies.packing.fptas_knapsack:FPTASKnapsackSelection",
 }
 
-__all__ = ["PackingFactory", "PackingRegistry", *list(_LAZY)]
+__all__ = [
+    "PackingFactory",
+    "PackingRegistry",
+    "IPackingAlgorithm",
+    "PackingContext",
+    "VectorizedSelector",
+    "LastMinuteSelector",
+    "RegularSelector",
+    "LookaheadSelector",
+    "RevenueSelector",
+    "ServiceLevelSelector",
+    "CombinedSelector",
+    "get_vectorized_selector",
+    "create_selector_from_config",
+    "LastMinuteSelection",
+    "RegularSelection",
+    "LookaheadSelection",
+    "ServiceLevelSelection",
+]
 
 
 def __getattr__(name: str) -> Any:
