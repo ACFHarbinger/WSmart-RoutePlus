@@ -4,6 +4,7 @@ import pytest
 import torch
 import torch.nn as nn
 from logic.src.models.core.attention_model.policy import AttentionModelPolicy
+from logic.src.models.subnets.encoders.common import MultiHeadAttentionLayerBase
 from logic.src.policies.routing.learning_algorithms.neural_agent.policy_na import (
     NeuralAgentPolicy,
 )
@@ -30,8 +31,9 @@ def test_b_gemini_01_normalization_forwarded_to_gat_encoder() -> None:
         n_encode_layers=2,
         normalization="layer",
     )
-    # The encoder layers should use LayerNorm, not BatchNorm1d
+    # ModuleList elements are nn.Module; the GAT layer is what holds Normalization.
     first_layer = policy.encoder.layers[0]
+    assert isinstance(first_layer, MultiHeadAttentionLayerBase)
     norm1 = first_layer.norm1.normalizer
     norm2 = first_layer.norm2.normalizer
     assert isinstance(norm1, nn.LayerNorm), f"Expected LayerNorm, got {type(norm1)}"
@@ -44,7 +46,9 @@ def test_b_gemini_01_normalization_forwarded_to_gat_encoder() -> None:
         n_encode_layers=2,
         normalization="batch",
     )
-    norm1_batch = policy_batch.encoder.layers[0].norm1.normalizer
+    batch_layer = policy_batch.encoder.layers[0]
+    assert isinstance(batch_layer, MultiHeadAttentionLayerBase)
+    norm1_batch = batch_layer.norm1.normalizer
     assert isinstance(norm1_batch, nn.BatchNorm1d), f"Expected BatchNorm1d, got {type(norm1_batch)}"
 
 
@@ -57,10 +61,11 @@ def test_b_gemini_02_empty_mandatory_returns_depot_loop() -> None:
     graph = (None, None)
     # mandatory tensor with 5 nodes, all False (empty mandatory set)
     mandatory = torch.zeros(5, dtype=torch.bool)
+    # Source types distC as a tensor; 0003-issue162-routing-type-fixes.patch also accepts a float in the built copy.
     result = agent.compute_simulator_day(
         input={},
         graph=graph,
-        distC=1.0,
+        distC=torch.zeros(()),
         profit_vars={},
         waste_history=None,
         cost_weights=None,

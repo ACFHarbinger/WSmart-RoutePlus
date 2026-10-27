@@ -1,6 +1,7 @@
 """Native TCF resource limits and native-model lifetime regressions."""
 
 from types import SimpleNamespace
+from typing import Any, Dict, cast
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -17,7 +18,7 @@ class Expr:
 
     X = 0.0
 
-    def __add__(self, other):
+    def __add__(self, other: object) -> "Expr":
         return self
 
     __radd__ = __add__
@@ -25,8 +26,11 @@ class Expr:
     __rsub__ = __add__
     __mul__ = __add__
     __rmul__ = __add__
-    __eq__ = __add__
     __le__ = __add__
+
+    def __eq__(self, other: object) -> bool:
+        # Gurobi LinExpr equality builds a constraint expression; object.__eq__ is typed as bool.
+        return cast(bool, self)
 
 
 @pytest.fixture
@@ -164,7 +168,8 @@ def test_omegaconf_policy_resources_reach_native_model(model, monkeypatch):
 
     monkeypatch.setattr(base_routing_policy, "load_area_and_waste_type_params", lambda *a: (100, 1, 1, 1, 1))
     monkeypatch.setattr(repository, "load_temporal_params", lambda: (8, 40, 0.1))
-    _, _, _, values = policy._load_area_params("test", "plastic", config)
+    # Source annotates dict; the DictConfig still flows through at runtime (0004 only declares the same dict).
+    _, _, _, values = policy._load_area_params("test", "plastic", cast(Dict[str, Any], config))
     policy._run_solver(np.array([[0.0, 1.0], [1.0, 0.0]]), {1: 50.0}, 100.0, 1.0, 1.0, values, [])
     assert model.Params.Threads == 1
     assert model.Params.SoftMemLimit == 0.5

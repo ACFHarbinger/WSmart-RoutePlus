@@ -1,5 +1,7 @@
 """The simulator decodes neural routes in the training environment, with the simulator's capacity."""
 
+from typing import Any, Dict, Optional, cast
+
 import pytest
 import torch
 from logic.src.envs.cptp import CPTPEnv
@@ -17,20 +19,23 @@ class _RecordingModel(torch.nn.Module):
     env_name = "cptp"
     problem = None
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.encoder = torch.nn.Identity()
         self.calls = []
 
-    def forward(self, td, env=None, strategy=None, **kwargs):
+    def forward(self, td: Any, env: CPTPEnv, strategy: Optional[str] = None, **kwargs: Any) -> Dict[str, Any]:
         self.calls.append((td.clone(), env))
         actions = []
         while not td["done"].all():
             mask = td["action_mask"]
-            action = torch.where(mask[:, 1:].any(-1), mask[:, 1:].float().argmax(-1) + 1, torch.zeros_like(td["i"].view(-1)))
+            action = torch.where(
+                mask[:, 1:].any(-1), mask[:, 1:].float().argmax(-1) + 1, torch.zeros_like(td["i"].view(-1))
+            )
             actions.append(action)
             td["action"] = action
-            td = env.step(td)["next"]
+            # Keep the stepped state untyped so the decoder loop matches the unannotated model forward.
+            td = cast(Any, env.step(td)["next"])
         return {"actions": torch.stack(actions, 1)}
 
 
