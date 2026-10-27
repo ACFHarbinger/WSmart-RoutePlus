@@ -2,9 +2,11 @@
 # trains the plain Attention Model with REINFORCE, and simulates with four routing and three
 # packing algorithms. Build: python logic/package/build_release.py --manifest logic/package/resources/minimal.yaml --build DIR
 #
-# Owner rulings (2026-10-25): routing SANS, PG-CLNS, AM (na) and SWC-TCF; packing last-minute,
-# lookahead and service-level; no route improvement, no acceptance-criteria package, no
-# time windows or time constraints, no tracking; results need not match the paper.
+# Owner rulings (2026-10-25, PG-CLNS restated 2026-10-26): routing SANS, PG-CLNS, AM (na) and
+# SWC-TCF; packing last-minute, lookahead and service-level; no route improvement, no
+# acceptance-criteria stage (BMC and only-improving stay out; the criteria SANS and PG-CLNS
+# call ship because those routers import them), no time windows or time constraints, no
+# tracking. PG-CLNS uses the v1.0.2 private operators.
 #
 # Code that must change for the package lives in minimal/patches/ (git format-patch files against
 # main, applied in name order; an optional overlay: directory adds or replaces whole files); the
@@ -83,7 +85,6 @@ excluded_packages:
   - logic.src.tracking
   - logic.src.enums
   - logic.src.policies.route_improvement
-  - logic.src.policies.acceptance_criteria
   - logic.src.policies.packing_and_routing
   - logic.src.policies.vectorized
   - logic.src.pipeline.simulations.hpo

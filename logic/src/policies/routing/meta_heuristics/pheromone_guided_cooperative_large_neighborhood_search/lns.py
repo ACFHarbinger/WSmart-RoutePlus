@@ -31,15 +31,13 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 import numpy as np
 
 from logic.src.configs.policies.routing.meta_heuristics.pg_clns import PGCLNSLNSConfig
+from logic.src.policies.acceptance_criteria.legacy_sa import LegacySAAcceptance
 from logic.src.policies.helpers.operators.destroy_ruin.cluster import cluster_removal
 from logic.src.policies.helpers.operators.destroy_ruin.random import random_removal
 from logic.src.policies.helpers.operators.destroy_ruin.worst import worst_removal
 from logic.src.policies.helpers.operators.recreate_repair.greedy import greedy_profit_insertion
 from logic.src.policies.helpers.operators.recreate_repair.regret_profit import regret_2_profit_insertion
 from logic.src.policies.routing.base.sub_problem import SubProblem, coerce_config
-from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.acceptance import (
-    LegacySAAcceptance,
-)
 from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.engine import LNSBase
 from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.weight_updates import (
     EmaWeightUpdate,

@@ -35,7 +35,6 @@ Example:
     []
 """
 
-import math
 import random
 import time
 from copy import deepcopy
@@ -44,6 +43,7 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
+from logic.src.policies.acceptance_criteria.power_cooling import PowerCoolingAcceptance
 from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.common.check import (
     check_bins_overflowing_feasibility,
     check_solution_admissibility,
@@ -108,6 +108,7 @@ def run_annealing_loop(
     )
 
     routes_list = deepcopy(initial_solution)
+    acceptance = PowerCoolingAcceptance(np_rng=np_rng)
     tic = time.perf_counter()
 
     for i in range(1, number_iterations + 1):
@@ -147,13 +148,19 @@ def run_annealing_loop(
         _ = check_solution_admissibility(routes_list, removed_bins, n_bins)
 
         if status == "pass":
-            delta = current_sol_profit - previous_sol_profit
-            if delta >= 0:
+            accepted, metrics = acceptance.accept(
+                current_obj=previous_sol_profit,
+                candidate_obj=current_sol_profit,
+                iteration=i,
+                t_initial=T_initial,
+                t_param=T_param,
+            )
+            if accepted:
                 previous_sol = deepcopy(routes_list)
                 previous_sol_profit = current_sol_profit
 
                 # Update removed bins set based on accepted move
-                if delta == 0:
+                if metrics["delta"] == 0:
                     _update_removed_bins(
                         chosen_procedure,
                         removed_bins,
@@ -167,23 +174,18 @@ def run_annealing_loop(
                         bins_consecutive,
                     )
             else:
-                T = T_initial / (i**T_param)
-                if T > 0 and math.exp(delta / T) >= np_rng.uniform(0, 1):
-                    previous_sol = deepcopy(routes_list)
-                    previous_sol_profit = current_sol_profit
-                else:
-                    _rollback_removed_bins(
-                        chosen_procedure,
-                        removed_bins,
-                        bin_to_remove,
-                        bin_to_add,
-                        bins_to_remove_random,
-                        bins_to_remove_consecutive,
-                        bins_to_add_random,
-                        bins_to_add_consecutive,
-                        bins_random,
-                        bins_consecutive,
-                    )
+                _rollback_removed_bins(
+                    chosen_procedure,
+                    removed_bins,
+                    bin_to_remove,
+                    bin_to_add,
+                    bins_to_remove_random,
+                    bins_to_remove_consecutive,
+                    bins_to_add_random,
+                    bins_to_add_consecutive,
+                    bins_random,
+                    bins_consecutive,
+                )
         else:
             _rollback_removed_bins(
                 chosen_procedure,

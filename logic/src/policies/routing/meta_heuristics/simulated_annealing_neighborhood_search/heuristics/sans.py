@@ -16,13 +16,13 @@ Example:
 """
 
 import copy
-import math
 import random
 import time
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
+from logic.src.policies.acceptance_criteria.sans_geometric import SansGeometricAcceptance
 from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.common.routes import (
     uncross_arcs_in_sans_routes,
 )
@@ -164,14 +164,14 @@ def improved_simulated_annealing(  # noqa: C901
     last_distance = current_cost
 
     no_improvement_count = 0
-    T = T_init
+    acceptance = SansGeometricAcceptance(start_temp=T_init, cooling_rate=alpha, rng=rng)
     moves = 0
 
     def _budget_spent() -> bool:
         return 0 < max_iterations <= moves
 
     # --- 2. MAIN SIMULATED ANNEALING LOOP ---
-    while T_min < T and not _budget_spent():
+    while T_min < acceptance.T and not _budget_spent():
         if time.perf_counter() - start_time > time_limit:
             if verbose:
                 print("[DEBUG] Time limit reached.")
@@ -243,18 +243,7 @@ def improved_simulated_annealing(  # noqa: C901
                 stocks,
             )
 
-            delta = new_profit - current_profit
-
-            # Acceptance
-            accept = False
-            if delta > 0:
-                accept = True
-            else:
-                try:
-                    p = math.exp(delta / T)
-                except OverflowError:
-                    p = 0
-                accept = rng.random() < p
+            accept, _ = acceptance.accept(current_obj=current_profit, candidate_obj=new_profit)
 
             if accept:
                 current_solution = new_solution
@@ -274,13 +263,13 @@ def improved_simulated_annealing(  # noqa: C901
             else:
                 no_improvement_count += 1
 
-        T = T * alpha
+        acceptance.step()
         if verbose:
-            print(f"Temperature cooled to {T:.4f}")
+            print(f"Temperature cooled to {acceptance.T:.4f}")
 
         if recorder is not None:
             recorder.record(
-                temperature=T,
+                temperature=acceptance.T,
                 best_profit=best_profit,
                 current_profit=current_profit,
                 no_improvement_count=no_improvement_count,
@@ -289,7 +278,7 @@ def improved_simulated_annealing(  # noqa: C901
         if no_improvement_count > 500:
             if verbose:
                 print("\n[INFO] Rehearing temperature.")
-            T = T_init
+            acceptance.T = T_init
             no_improvement_count = 0
 
     best_solution = [r for r in best_solution if len(r) > 2]

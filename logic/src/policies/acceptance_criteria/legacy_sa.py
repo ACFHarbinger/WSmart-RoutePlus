@@ -1,14 +1,11 @@
-"""Acceptance criteria for the shared LNS engine (WP-11 P-31).
+"""Pre-P-31 PG-CLNS simulated-annealing acceptance.
 
 Attributes:
-    LegacySAAcceptance: The pre-P-11 inline simulated-annealing acceptance of the
-        PG-CLNS LNS, packaged behind :class:`IAcceptanceCriterion`.
+    LegacySAAcceptance: Geometric SA that draws from the solver's own random stream.
 
 Example:
     >>> import random
-    >>> from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.acceptance import (
-    ...     LegacySAAcceptance,
-    ... )
+    >>> from logic.src.policies.acceptance_criteria.legacy_sa import LegacySAAcceptance
     >>> criterion = LegacySAAcceptance(start_temp=100.0, cooling_rate=0.95, rng=random.Random(0))
 """
 
