@@ -20,6 +20,26 @@ import numpy as np
 from logic.src.envs.common.expand_pool import current_expand_pool
 
 
+def _drop_over_capacity(dq: Deque[Tuple[int, float]], cum_load: List[float], min_load: float) -> None:
+    """Drop deque heads whose load cannot reach the current node."""
+    while dq:
+        idx = dq[0][0]
+        if cum_load[idx] < min_load - 1e-5:
+            dq.popleft()
+        else:
+            break
+
+
+def _push_monotone_term(dq: Deque[Tuple[int, float]], j_new: int, term: float) -> None:
+    """Keep the deque decreasing in the split reduced cost."""
+    while dq:
+        if dq[-1][1] <= term:
+            dq.pop()
+        else:
+            break
+    dq.append((j_new, term))
+
+
 class LinearSplit:
     """
     Linear-time Split algorithm for decoding giant tours into routes.
@@ -323,12 +343,7 @@ class LinearSplit:
 
             for i in range(1, n + 1):
                 min_load = cum_load[i] - cap
-                while dq:
-                    idx = dq[0][0]
-                    if cum_load[idx] < min_load - 1e-5:
-                        dq.popleft()
-                    else:
-                        break
+                _drop_over_capacity(dq, cum_load, min_load)
 
                 if dq:
                     best_j, best_A = dq[0]
@@ -347,12 +362,7 @@ class LinearSplit:
                     if V_prev[j_new] > -float("inf"):
                         idx_next = i + 1
                         term = V_prev[j_new] - cum_rev[j_new] + C_cost * (cum_dist[idx_next] - d_0_x[idx_next])
-                        while dq:
-                            if dq[-1][1] <= term:
-                                dq.pop()
-                            else:
-                                break
-                        dq.append((j_new, term))
+                        _push_monotone_term(dq, j_new, term)
 
             if V_curr[n] > best_profit:
                 best_profit = V_curr[n]

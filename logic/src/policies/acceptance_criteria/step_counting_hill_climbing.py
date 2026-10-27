@@ -76,10 +76,9 @@ class StepCountingHillClimbing(IAcceptanceCriterion):
         current_obj = cast(float, current_obj)
         candidate_obj = cast(float, candidate_obj)
         # Accept if the candidate is better than the frozen bound
-        if self.maximization:
-            _accepted = bool(candidate_obj >= self.bound)
-        else:
-            _accepted = bool(candidate_obj <= self.bound)
+        _accepted = (
+            bool(candidate_obj >= self.bound) if self.maximization else bool(candidate_obj <= self.bound)
+        )
         return _accepted, {
             "accepted": _accepted,
             "delta": candidate_obj - current_obj,

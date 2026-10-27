@@ -67,6 +67,71 @@ logger = get_pylogger(__name__)
 
 
 
+def _prepare_stage_model(cfg: Any, prev_state_dict: Optional[Dict[str, Any]]) -> Any:
+    """Build the stage model and warm-start it from the previous curriculum weights."""
+    if torch.cuda.is_available() and cfg.train.precision in ("16-mixed", "bf16-mixed"):
+        torch.set_float32_matmul_precision("medium")
+
+    model = cast("RL4COLitModule", create_model(cfg))
+    if prev_state_dict is not None:
+        try:
+            model.load_state_dict(prev_state_dict, strict=False)
+            logger.info("Curriculum warm-start: loaded weights from previous stage.")
+        except Exception as exc:
+            logger.warning(f"Curriculum warm-start failed (continuing from scratch): {exc}")
+    return model
+
+
+def _attach_run_sinks(run: Any, cfg: Any, sinks: Optional[List[Any]], run_tags: Dict[str, str]) -> None:
+    """Attach caller sinks, or the optional MLflow bridge when none were passed."""
+    if sinks is not None:
+        for sink in sinks:
+            run.add_sink(sink)
+        return
+    mlflow_enabled = bool(getattr(getattr(cfg, "tracking", None), "mlflow_enabled", False))
+    if mlflow_enabled:
+        with contextlib.suppress(Exception):
+            tracking = getattr(cfg, "tracking", None)
+            wst.MLflowBridge.attach(
+                run,
+                mlflow_tracking_uri=str(getattr(tracking, "mlflow_tracking_uri", "mlruns")),
+                experiment_name=str(getattr(tracking, "mlflow_experiment_name", "wsmart-route")),
+                run_name=run.run_id[:8],
+                tags=run_tags,
+            )
+
+
+def _carry_bin_fill(cfg: Any, model: Any, resume: Optional[str]) -> None:
+    """Start time training from a stored bin fill unless a resume checkpoint already has one."""
+    init_fill = getattr(cfg.train, "init_fill_from", None) or None
+    if init_fill and not resume:
+        saved = torch.load(init_fill, map_location="cpu", weights_only=False).get("time_training_fill")
+        if saved is None:
+            raise ValueError(f"train.init_fill_from={init_fill} has no time-training fill")
+        model._resume_fill = saved
+        logger.info("Starting the bin fill from checkpoint: %s", init_fill)
+
+
+def _publish_stage_weights(cfg: Any, trainer: Any, model: Any, run: Any, save_final: bool) -> None:
+    """Reload the best checkpoint and save the stage weights when a path is configured."""
+    ckpt_path = getattr(getattr(trainer, "checkpoint_callback", None), "best_model_path", None)
+    if ckpt_path and os.path.exists(ckpt_path):
+        try:
+            ckpt = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+            model.load_state_dict(ckpt.get("state_dict", ckpt), strict=False)
+            logger.info("Loaded best checkpoint for state handoff: %s", ckpt_path)
+        except Exception as exc:
+            logger.warning("Could not reload best checkpoint (%s); using last-epoch weights.", exc)
+
+    if save_final and cfg.train.final_model_path:
+        logger.info("Saving final model weights to: %s", cfg.train.final_model_path)
+        model.save_weights(cfg.train.final_model_path)
+        logger.info("Final model weights saved successfully.")
+        run.log_artifact(cfg.train.final_model_path, artifact_type="model")
+    elif not cfg.train.final_model_path:
+        logger.info("No final_model_path provided, skipping weight saving.")
+
+
 def _run_single_stage(
     cfg: Any,
     sinks: Optional[List[Any]],
@@ -89,19 +154,7 @@ def _run_single_stage(
     # Ensure log directory exists
     os.makedirs(cfg.tracking.log_dir or "logs", exist_ok=True)
 
-    if torch.cuda.is_available() and cfg.train.precision in ("16-mixed", "bf16-mixed"):
-        torch.set_float32_matmul_precision("medium")
-
-    model_raw = create_model(cfg)
-    model = cast("RL4COLitModule", model_raw)
-
-    # Warm-start from the previous curriculum stage
-    if prev_state_dict is not None:
-        try:
-            model.load_state_dict(prev_state_dict, strict=False)
-            logger.info("Curriculum warm-start: loaded weights from previous stage.")
-        except Exception as exc:
-            logger.warning(f"Curriculum warm-start failed (continuing from scratch): {exc}")
+    model = _prepare_stage_model(cfg, prev_state_dict)
 
     callbacks = _build_callbacks(cfg)
     trainer = WSTrainer(
@@ -141,22 +194,7 @@ def _run_single_stage(
     }
     run = tracker.start_run(experiment_name, run_type="training", tags=run_tags)
     run.__enter__()
-
-    if sinks is not None:
-        for sink in sinks:
-            run.add_sink(sink)
-    else:
-        mlflow_enabled = bool(getattr(getattr(cfg, "tracking", None), "mlflow_enabled", False))
-        if mlflow_enabled:
-            with contextlib.suppress(Exception):
-                tracking = getattr(cfg, "tracking", None)
-                wst.MLflowBridge.attach(
-                    run,
-                    mlflow_tracking_uri=str(getattr(tracking, "mlflow_tracking_uri", "mlruns")),
-                    experiment_name=str(getattr(tracking, "mlflow_experiment_name", "wsmart-route")),
-                    run_name=run.run_id[:8],
-                    tags=run_tags,
-                )
+    _attach_run_sinks(run, cfg, sinks, run_tags)
 
     try:
         _log_training_params(run, cfg)
@@ -169,7 +207,7 @@ def _run_single_stage(
                 metadata={
                     "variable_name": "val_ds",
                     "source_file": "features/train/engine.py",
-                    "source_line": 151,
+                    "source_line": 204,
                 },
             )
             run.watch_file(val_ds)
@@ -181,33 +219,12 @@ def _run_single_stage(
             logger.info("Resuming training from checkpoint: %s", resume)
         # train.init_fill_from starts time training from the bin fill stored in another run's
         # checkpoint (e.g. RL continuing the days after imitation); a resumed checkpoint's fill wins.
-        init_fill = getattr(cfg.train, "init_fill_from", None) or None
-        if init_fill and not resume:
-            saved = torch.load(init_fill, map_location="cpu", weights_only=False).get("time_training_fill")
-            if saved is None:
-                raise ValueError(f"train.init_fill_from={init_fill} has no time-training fill")
-            model._resume_fill = saved
-            logger.info("Starting the bin fill from checkpoint: %s", init_fill)
+        _carry_bin_fill(cfg, model, resume)
         trainer.fit(model, ckpt_path=resume)
 
         # Reload best checkpoint so state_dict carries optimal weights into the next
         # curriculum stage (or into the final save), not just the last training epoch.
-        ckpt_path = getattr(getattr(trainer, "checkpoint_callback", None), "best_model_path", None)
-        if ckpt_path and os.path.exists(ckpt_path):
-            try:
-                ckpt = torch.load(ckpt_path, map_location="cpu", weights_only=False)
-                model.load_state_dict(ckpt.get("state_dict", ckpt), strict=False)
-                logger.info("Loaded best checkpoint for state handoff: %s", ckpt_path)
-            except Exception as exc:
-                logger.warning("Could not reload best checkpoint (%s); using last-epoch weights.", exc)
-
-        if save_final and cfg.train.final_model_path:
-            logger.info("Saving final model weights to: %s", cfg.train.final_model_path)
-            model.save_weights(cfg.train.final_model_path)
-            logger.info("Final model weights saved successfully.")
-            run.log_artifact(cfg.train.final_model_path, artifact_type="model")
-        elif not cfg.train.final_model_path:
-            logger.info("No final_model_path provided, skipping weight saving.")
+        _publish_stage_weights(cfg, trainer, model, run, save_final)
 
         val_reward = trainer.callback_metrics.get("val/reward", torch.tensor(0.0)).item()
         run.log_metric("best/val_reward", val_reward)

@@ -158,6 +158,31 @@ def module_bindings(mod: Module, modules: Dict[str, Module]) -> Dict[str, str]:
     return bindings
 
 
+def _record_dynamic_use(
+    node: ast.AST, bindings: Dict[str, str], modules: Dict[str, Module], dynamic: Set[str]
+) -> None:
+    """Record a module whose name is read by a dynamic call or ``__dict__`` walk."""
+    if isinstance(node, ast.Call):
+        func = node.func.attr if isinstance(node.func, ast.Attribute) else getattr(node.func, "id", "")
+        args = [a.id for a in node.args if isinstance(a, ast.Name)]
+        if func in DYNAMIC_CALLS | {"getattr", "hasattr"} and args and args[0] in bindings:
+            dynamic.add(bindings[args[0]])
+        if (
+            func == "import_module"
+            and node.args
+            and isinstance(node.args[0], ast.Constant)
+            and str(node.args[0].value) in modules
+        ):
+            dynamic.add(str(node.args[0].value))
+    elif (
+        isinstance(node, ast.Attribute)
+        and node.attr == "__dict__"
+        and isinstance(node.value, ast.Name)
+        and node.value.id in bindings
+    ):
+        dynamic.add(bindings[node.value.id])
+
+
 def dynamic_modules(modules: Dict[str, Module]) -> Set[str]:
     """Modules whose namespace some code enumerates or reads by name."""
     dynamic: Set[str] = set()
@@ -175,17 +200,7 @@ def dynamic_modules(modules: Dict[str, Module]) -> Set[str]:
                     if alias.name in modules:
                         bindings[alias.asname or alias.name.split(".")[0]] = alias.name if alias.asname else alias.name.split(".")[0]
         for node in ast.walk(mod.tree):
-            if isinstance(node, ast.Call):
-                func = node.func.attr if isinstance(node.func, ast.Attribute) else getattr(node.func, "id", "")
-                args = [a.id for a in node.args if isinstance(a, ast.Name)]
-                if func in DYNAMIC_CALLS | {"getattr", "hasattr"} and args and args[0] in bindings:
-                    dynamic.add(bindings[args[0]])
-                if func == "import_module" and node.args and isinstance(node.args[0], ast.Constant):
-                    if str(node.args[0].value) in modules:
-                        dynamic.add(str(node.args[0].value))
-            elif isinstance(node, ast.Attribute) and node.attr == "__dict__" and isinstance(node.value, ast.Name):
-                if node.value.id in bindings:
-                    dynamic.add(bindings[node.value.id])
+            _record_dynamic_use(node, bindings, modules, dynamic)
     return dynamic
 
 

@@ -68,7 +68,7 @@ def _line(points):
 
 
 def _tour_cost(dm, tour):
-    return float(sum(dm[a, b] for a, b in zip(tour[:-1], tour[1:])))
+    return float(sum(dm[a, b] for a, b in zip(tour[:-1], tour[1:], strict=True)))
 
 
 # ---------------------------------------------------------------------------

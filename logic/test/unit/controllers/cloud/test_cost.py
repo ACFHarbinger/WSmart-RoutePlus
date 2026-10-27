@@ -117,7 +117,7 @@ def test_running_job_accrues_warns_and_is_stopped_at_its_cap(tmp_path):
     assert task.state == TaskState.CANCELLED
     costs = [r for r in service.cp.get_metrics(task.task_id) if r["kind"] == "cost"]
     assert costs and costs[-1]["rate_usd_h"] == 3600.0
-    assert all(b["at"] - a["at"] >= 60.0 for a, b in zip(costs[:-2], costs[1:-1]))  # rate-limited while running
+    assert all(b["at"] - a["at"] >= 60.0 for a, b in zip(costs[:-2], costs[1:-1], strict=True))  # rate-limited while running
     events = service.cp.list_events(job.job_id)
     assert sorted(e.data["fraction"] for e in events if e.kind == "budget_warning") == [0.5, 0.8, 0.95]
     stops = [e.data for e in events if e.kind == "budget_stop"]
