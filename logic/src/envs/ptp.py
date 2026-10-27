@@ -9,7 +9,7 @@ The module also holds ``PTPGenerator``, the problem's instance generator.
 from __future__ import annotations
 
 import math
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union, cast
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
@@ -148,6 +148,8 @@ class PTPGenerator(RoutingGenerator):
                 capacity: [*B]               — vehicle capacity
                 max_waste: [*B]             — max waste per vehicle
         """
+        from typing import cast
+
         td = super()._generate(batch_size)
         bs = tuple(td.batch_size)
         td["waste"] = self._generate_fill_levels(bs, cast(torch.Tensor, td["locs"]), cast(torch.Tensor, td["depot"]))
