@@ -15,6 +15,9 @@ The cost, budget and pool settings come from the local state directory
 Attributes:
     profile_service: The service for a profile.
     backend_kwargs: Keyword arguments a backend class accepts.
+    gcp_project_id: The project id a profile already names.
+    bind_store_project: Attach that project to a GCS store.
+    store_for_profile: The profile's store with that project attached.
 """
 
 from __future__ import annotations
@@ -22,7 +25,7 @@ from __future__ import annotations
 import inspect
 import json
 from pathlib import Path
-from typing import Any, Callable, Dict, cast
+from typing import Any, Callable, Dict, Optional, cast
 
 from logic.controllers.cloud.model import ComputeKind, Provider
 
@@ -36,18 +39,85 @@ def backend_kwargs(cls: type, offered: Dict[str, Any]) -> Dict[str, Any]:
     return {k: v for k, v in offered.items() if k in parameters and v is not None}
 
 
+def gcp_project_id(profile: Any) -> Optional[str]:
+    """The GCP project a profile already names.
+
+    ``backend_options.project`` wins. A ``firestore://<project>`` control plane
+    names the same project when that option is absent. User Application Default
+    Credentials often carry neither a project nor a quota project, and Studio
+    does not set ``GOOGLE_CLOUD_PROJECT``.
+    """
+    from urllib.parse import urlparse
+
+    options = getattr(profile, "backend_options", None) or {}
+    project = options.get("project")
+    if isinstance(project, str) and project.strip():
+        return project.strip()
+    parsed = urlparse(str(getattr(profile, "control_plane", "") or ""))
+    if parsed.scheme == "firestore" and parsed.netloc:
+        return parsed.netloc
+    return None
+
+
+def bind_store_project(store: Any, project: Optional[str]) -> None:
+    """Point a GCS store at ``project`` so its client can be built from user ADC."""
+    if project and hasattr(store, "project"):
+        store.project = project
+
+
+def store_for_profile(profile: Any) -> Any:
+    """The profile's object store, with its GCP project attached when it has one."""
+    from logic.controllers.cloud.profiles import store_from_uri
+
+    store = store_from_uri(profile.store)
+    bind_store_project(store, gcp_project_id(profile))
+    return store
+
+
+def backends_for_profile(profile: Any) -> Dict[Any, Any]:
+    """The provider backends a profile can construct (every compute kind it accepts).
+
+    A kind whose constructor rejects the profile's settings is left out. Local
+    processes are not included; the caller adds that backend itself.
+    """
+    import importlib
+
+    from logic.controllers.cloud.providers import BACKENDS
+
+    store = store_for_profile(profile)
+    offered = {
+        "credentials": profile.provider_credentials(),
+        "region": profile.region,
+        "log_store": store,  # the task runtime uploads attempt logs here
+        "status_store": store,  # self-deleting VMs write their exit codes here (GCP)
+        **dict(getattr(profile, "backend_options", None) or {}),
+    }
+    provider = Provider(profile.provider)
+    backends: Dict[Any, Any] = {}
+    for (target_provider, kind), target in BACKENDS.items():
+        if target_provider != provider:
+            continue
+        module, _, name = target.partition(":")
+        cls = getattr(importlib.import_module(module), name)
+        try:
+            backends[(target_provider, kind)] = cls(**backend_kwargs(cls, offered))
+        except (TypeError, ValueError):  # a kind this profile cannot configure is simply not offered
+            continue
+    return backends
+
+
 def profile_service(profile: Any, root: Path, project_root: Path) -> Any:
     """A :class:`.service.CloudService` for ``profile`` (see the module docstring)."""
     from logic.controllers.cloud.cost import BudgetPolicy, PriceTable
     from logic.controllers.cloud.local import LocalProcessBackend
     from logic.controllers.cloud.local.object_store import EnvSecretStore
-    from logic.controllers.cloud.profiles import control_plane_from_uri, store_from_uri
+    from logic.controllers.cloud.profiles import control_plane_from_uri
     from logic.controllers.cloud.providers import BACKENDS
     from logic.controllers.cloud.service import CloudService
 
     root = Path(root)
     cp = control_plane_from_uri(profile.control_plane)
-    store = store_from_uri(profile.store)
+    store = store_for_profile(profile)
     credentials = profile.provider_credentials()
     offered = {
         "credentials": credentials,
