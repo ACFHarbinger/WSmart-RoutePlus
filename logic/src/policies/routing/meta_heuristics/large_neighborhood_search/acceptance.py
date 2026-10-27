@@ -71,7 +71,9 @@ class LegacySAAcceptance(IAcceptanceCriterion):
         Returns:
             Tuple of (accepted, metrics).
         """
-        delta = float(current_obj) - float(candidate_obj)
+        curr = float(current_obj) if isinstance(current_obj, (int, float)) else float(current_obj[0])
+        cand = float(candidate_obj) if isinstance(candidate_obj, (int, float)) else float(candidate_obj[0])
+        delta = curr - cand
         if delta < -1e-6:
             return True, {"accepted": True, "delta": delta, "temperature": self.T}
         prob = math.exp(-delta / self.T) if self.T > 0 else 0

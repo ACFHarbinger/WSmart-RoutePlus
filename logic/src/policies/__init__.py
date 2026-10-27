@@ -42,7 +42,37 @@ _LAZY = {
     "JointGreedyConfig": "logic.src.policies.packing_and_routing.joint_greedy_orienteering.policy_jgo:JointGreedyConfig",
 }
 
-__all__ = list(_LAZY)
+__all__ = [
+    "IRoutingAlgorithm",
+    "RoutingAlgorithmFactory",
+    "RoutingAlgorithmRegistry",
+    "run_alns",
+    "find_routes",
+    "find_routes_ortools",
+    "GIHHSolver",
+    "GIHHConfig",
+    "run_hgs",
+    "HGSRRSolver",
+    "HGSRRConfig",
+    "NeuralAgent",
+    "find_route",
+    "MuPlusLambdaESSolver",
+    "MuPlusLambdaESConfig",
+    "DistancePSOSolver",
+    "DistancePSOConfig",
+    "DESolver",
+    "DEConfig",
+    "MuCommaLambdaESSolver",
+    "MuCommaLambdaESConfig",
+    "HybridMemeticLargeNeighborhoodSearchSolver",
+    "HybridMemeticLargeNeighborhoodSearchParams",
+    "MemeticAlgorithmIslandModelSolver",
+    "MemeticAlgorithmIslandModelConfig",
+    "MemeticAlgorithmToleranceBasedSelectionSolver",
+    "MemeticAlgorithmToleranceBasedSelectionConfig",
+    "MemeticAlgorithmDualPopulationSolver",
+    "MemeticAlgorithmDualPopulationConfig",
+]
 
 
 def __getattr__(name: str) -> Any:

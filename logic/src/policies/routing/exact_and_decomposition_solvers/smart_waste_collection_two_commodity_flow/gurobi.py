@@ -194,7 +194,7 @@ def _run_gurobi_optimizer(  # noqa: C901
     binsids: List[int],
     mandatory: List[int],
     number_vehicles: int = 1,
-    time_limit: int = 60,
+    time_limit: float = 60.0,
     seed: int = 42,
     dual_values: Optional[Dict[int, float]] = None,
     default_feastol: bool = False,
@@ -227,20 +227,23 @@ def _run_gurobi_optimizer(  # noqa: C901
             - cost: The total travel cost of the solution.
     """
     # Standardize cfg to SWCTCFConfig (P-10: the typed config is the only parameter layer).
+    swc_cfg: SWCTCFConfig
     if cfg is None:
-        cfg = _config_from_values(values)
+        swc_cfg = _config_from_values(values)
     elif isinstance(cfg, dict):
-        cfg = _structured_load(SWCTCFConfig, _unwrap_engine_section(cfg))
+        swc_cfg = _structured_load(SWCTCFConfig, _unwrap_engine_section(cfg))
+    else:
+        swc_cfg = cfg
 
     # Validate before allocating a native model. sim.cpu_cores controls worker
     # processes, not Gurobi's per-solve thread count.
-    threads = float(cfg.gurobi_threads)
-    memory_gb = float(cfg.gurobi_soft_mem_limit_gb)
+    threads = float(swc_cfg.gurobi_threads)
+    memory_gb = float(swc_cfg.gurobi_soft_mem_limit_gb)
     if not math.isfinite(threads) or threads < 1 or not threads.is_integer():
         raise ValueError("gurobi_threads must be a positive integer")
     if not math.isfinite(memory_gb) or memory_gb <= 0:
         raise ValueError("gurobi_soft_mem_limit_gb must be positive and finite")
-    options = _options(cfg)
+    options = _options(swc_cfg)
 
     # Shared preparation (identical across all three backends).
     d = build_tcf_data(bins, distance_matrix, values, binsids, mandatory, number_vehicles)

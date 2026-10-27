@@ -99,7 +99,7 @@ class TestHMLNSBehaviorChange:
 
         # Old behavior: check if profit > 0
         if best_profit > 0:
-            scale = best_profit
+            _scale = best_profit
             would_calibrate = True
         else:
             would_calibrate = False

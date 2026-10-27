@@ -52,7 +52,13 @@ _LAZY = {
     "policy_vpl": "logic.src.policies.routing.meta_heuristics.volleyball_premier_league.policy_vpl",
 }
 
-__all__ = list(_LAZY)
+__all__ = [
+    "policy_alns",
+    "policy_hgs",
+    "policy_psoma",
+    "policy_pg_clns",
+    "policy_sans",
+]
 
 
 def __getattr__(name: str) -> Any:
