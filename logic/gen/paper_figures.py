@@ -12,6 +12,7 @@ Example:
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -47,7 +48,11 @@ def fig_pareto(clean: pd.DataFrame, horizon: int, out: Path, colors: dict, cfg: 
         # Points are annotated in place rather than via a legend: eight labels in
         # a legend box would cover the front on a figure this small.
         ax.annotate(
-            display_name(name, cfg), (row.overflows, row.kgkm), textcoords="offset points", xytext=(7, 4), fontsize=8
+            display_name(cast(str, name), cfg),
+            (row.overflows, row.kgkm),
+            textcoords="offset points",
+            xytext=(7, 4),
+            fontsize=8,
         )
     front = pareto_front(agg)
     ax.plot(

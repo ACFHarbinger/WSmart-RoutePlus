@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import cast
 
 import numpy as np
 import pandas as pd
@@ -161,7 +162,7 @@ def horizon_rows(paired: pd.DataFrame, cfg: dict) -> list[dict]:
     for constructor, grp in paired.groupby("constructor"):
         rows.append(
             {
-                "label": tex_escape(display_name(constructor, cfg)),
+                "label": tex_escape(display_name(cast(str, constructor), cfg)),
                 "cells": [
                     f"{len(grp)}",
                     fmt(grp[("kgkm", 30)].mean(), 2),

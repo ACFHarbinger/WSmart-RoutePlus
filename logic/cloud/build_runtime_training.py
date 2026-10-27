@@ -26,7 +26,7 @@ import json
 import re
 import statistics
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, cast
 
 COLUMNS = [
     "policy",
@@ -131,7 +131,8 @@ def main() -> None:
     for w in walls:
         key = (w["horizon"], w["area"], w["size"], w["distribution"], w["improver"], w["packing"], w["policy"])
         if key in by_key:
-            overhead.setdefault((w["horizon"], w["size"]), []).append(w["wall_seconds"] - by_key[key])
+            pair = (cast(int, w["horizon"]), cast(int, w["size"]))
+            overhead.setdefault(pair, []).append(cast(float, w["wall_seconds"]) - by_key[key])
     median_overhead = {k: statistics.median(v) for k, v in overhead.items()}
     timed = {
         (w["horizon"], w["area"], w["size"], w["distribution"], w["improver"], w["packing"], w["policy"]) for w in walls
@@ -149,7 +150,8 @@ def main() -> None:
         )
         if key in timed:
             continue  # the direct wall time is already in the table
-        row["wall_seconds"] = round(policy_seconds + median_overhead.get((row["horizon"], row["size"]), 0.0), 1)
+        pair = (cast(int, row["horizon"]), cast(int, row["size"]))
+        row["wall_seconds"] = round(policy_seconds + median_overhead.get(pair, 0.0), 1)
         rows.append(row)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with open(args.out, "w", newline="") as handle:
