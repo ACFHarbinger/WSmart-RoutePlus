@@ -13,7 +13,7 @@ Example:
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union, cast
 
 if TYPE_CHECKING:
     from logic.src.configs.tracking import TrackingConfig
@@ -141,7 +141,8 @@ class WSTrainer(pl.Trainer):
         if strategy is None and auto_ddp:
             n_devices = devices if isinstance(devices, int) else torch.cuda.device_count()
             if n_devices > 1:
-                strategy = DDPStrategy(find_unused_parameters=True)
+                # Import fallback assigns None; the class is present when Lightning imports.
+                strategy = cast(Any, DDPStrategy)(find_unused_parameters=True)
 
         if strategy is None:
             strategy = "auto"
@@ -294,4 +295,5 @@ class WSTrainer(pl.Trainer):
             # Fall back to TensorBoard if WandB not available or network fails
             # We don't use pl.logger here because it might not be fully setup, but loguru is safe
             logger.warning(f"WandB initialization failed, falling back to TensorBoard: {e}")
-            return TensorBoardLogger(logs_dir or "logs", name="")
+            # Import fallback assigns None; the class is present when Lightning imports.
+            return cast(Any, TensorBoardLogger)(logs_dir or "logs", name="")

@@ -74,10 +74,12 @@ class StepMixin:
             return td
 
         # Get fill levels from the TensorDict
-        fill_levels = None
+        fill_levels: Optional[torch.Tensor] = None
         for key in ["waste", "fill_level"]:
             if key in td.keys():
-                fill_levels = td[key]
+                candidate = td[key]
+                if isinstance(candidate, torch.Tensor):
+                    fill_levels = candidate
                 break
 
         if fill_levels is None:
@@ -93,7 +95,8 @@ class StepMixin:
             waste_3d = fill_levels
             n_days_avail = waste_3d.shape[1]
 
-            current_day_t = td.get("current_day", None)
+            current_day_raw = td.get("current_day", None)
+            current_day_t = current_day_raw if isinstance(current_day_raw, torch.Tensor) else None
 
             # Compute mean positive day-over-day accumulation rate when no
             # explicit rate key is present in the TensorDict.
@@ -138,7 +141,7 @@ class StepMixin:
             fill_levels = _with_depot(fill_levels)
             for key in ("accumulation_rates", "std_deviations"):
                 val = selector_kwargs.get(key)
-                if torch.is_tensor(val) and val.shape[-1] == num_loc:
+                if isinstance(val, torch.Tensor) and val.shape[-1] == num_loc:
                     selector_kwargs[key] = _with_depot(val)
 
         mandatory_mask = self.mandatory_selector.select(fill_levels, **selector_kwargs)
@@ -158,7 +161,7 @@ class StepMixin:
     @abstractmethod
     def calculate_loss(
         self,
-        td: TensorDict,
+        td: Optional[TensorDict],
         out: dict,
         batch_idx: int,
         env: Optional[IEnv] = None,
@@ -231,7 +234,7 @@ class StepMixin:
         if self.mandatory_selector is not None:
             td = self._apply_packing(td)
 
-        td = _env.reset(td)
+        td = cast(TensorDict, _env.reset(td))
 
         # --- PBRS: record Φ(s₀) immediately after reset ----------------------
         # self._pbrs is set by the training engine when cfg.rl.use_pbrs=True.
@@ -247,7 +250,8 @@ class StepMixin:
         model_rollout = out.get("source") != "expert"
 
         # Get updated td from rollout (if available)
-        final_td = out.get("td", td)
+        final_candidate = out.get("td", td)
+        final_td = cast(TensorDict, td if final_candidate is None else final_candidate)
 
         # --- PBRS: apply shaping bonus to training reward --------------------
         # Anti-pattern guard: we log R_base to {phase}/reward (unchanged) so
@@ -283,7 +287,8 @@ class StepMixin:
         # Log reward.  When PBRS is active we log R_base (not the shaped value)
         # to keep the metric comparable with non-PBRS runs and prevent leakage
         # of the shaping signal into evaluation dashboards.
-        reward_for_log = out.get("reward_base", out["reward"]) if phase == "train" else out["reward"]
+        logged_reward = out.get("reward_base", out["reward"]) if phase == "train" else out["reward"]
+        reward_for_log = cast(torch.Tensor, logged_reward)
         batch_size = reward_for_log.shape[0]
         if not model_rollout:
             # The expert's reward is logged by the loss as train/expert_reward; there is no model
@@ -310,7 +315,7 @@ class StepMixin:
                     val = final_td[k]
                     break
 
-            if val is not None:
+            if isinstance(val, torch.Tensor):
                 # Handle negative cost/overflow convention
                 if (log_key in ["cost", "overflows", "initial_overflows"]) and val.mean() < 0:
                     val = -val

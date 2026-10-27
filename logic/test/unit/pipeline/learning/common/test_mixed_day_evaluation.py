@@ -1,6 +1,7 @@
 """Evaluation day blocks may share a batch and must retain each row's day."""
 
 from types import SimpleNamespace
+from typing import cast
 
 import pytest
 import torch
@@ -42,8 +43,8 @@ def test_reset_and_packing_select_each_instances_day(days, expected, consumer):
     model = SimpleNamespace(env=env, mandatory_selector=ThresholdSelector())
     expected_waste = torch.cat([torch.zeros(2, 1), torch.tensor(expected)], dim=1)
     if consumer == "packing":
-        packed = StepMixin._apply_packing(model, td)
-        assert torch.equal(packed["mandatory"], expected_waste > 0.5)
+        packed = StepMixin._apply_packing(cast(StepMixin, model), td)
+        assert torch.equal(cast(torch.Tensor, packed["mandatory"]), expected_waste > 0.5)
     else:
         reset = env.reset(td)
         torch.testing.assert_close(reset["waste"], expected_waste)

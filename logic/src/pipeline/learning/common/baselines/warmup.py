@@ -69,7 +69,7 @@ class WarmupBaseline(Baseline):
         if configure_comparison is not None:
             configure_comparison(env, sample_size, seed)
 
-    def eval(self, td: TensorDict, reward: torch.Tensor, env: Optional[Any] = None) -> torch.Tensor:  # type: ignore[override]
+    def eval(self, td: Optional[TensorDict], reward: torch.Tensor, env: Optional[Any] = None) -> torch.Tensor:  # type: ignore[override]
         """
         Compute blended baseline value based on warmup progress.
 

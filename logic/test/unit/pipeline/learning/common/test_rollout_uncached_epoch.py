@@ -1,6 +1,7 @@
 """Skipping an unused cache preserves live baselines, RNG and policy gradients."""
 
 import copy
+from typing import Any, cast
 
 import pytest
 import torch
@@ -48,7 +49,7 @@ def test_uncached_epoch_preserves_rng_values_actions_and_gradients(packed):
         # Same source rows as Lightning's already-constructed DataLoader; wrapped
         # values are discarded before shared_step on later reloads as well.
         if precompute:
-            batch = TensorDict({"data": dataset.data, "baseline": prepared.baseline}, batch_size=[4])
+            batch = TensorDict({"data": dataset.data, "baseline": cast(Any, prepared).baseline}, batch_size=[4])
         else:
             batch = dataset.data
         loss = module.training_step(batch, 0)
@@ -66,7 +67,10 @@ def test_uncached_epoch_preserves_rng_values_actions_and_gradients(packed):
     for left, right in zip(old[:4], new[:4], strict=True):
         assert torch.equal(left, right)
     for left, right in zip(old[4], new[4], strict=True):
-        assert (left is None and right is None) or torch.equal(left, right)
+        if isinstance(left, torch.Tensor) and isinstance(right, torch.Tensor):
+            assert torch.equal(left, right)
+        else:
+            assert left is None and right is None
 
 
 def test_custom_policy_keeps_explicit_cache_contract():

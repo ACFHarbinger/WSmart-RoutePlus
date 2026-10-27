@@ -1,5 +1,6 @@
 
 
+from typing import cast
 from unittest.mock import MagicMock
 
 import pytest
@@ -52,8 +53,8 @@ class TestTimeTraining:
         # Apply time step from day 0 to day 1
         apply_time_step(dataset, actions, day=0, env=MagicMock())
 
-        new_waste = td["waste"]
-        current_day = td["current_day"]
+        new_waste = cast(torch.Tensor, td["waste"])
+        current_day = cast(torch.Tensor, td["current_day"])
 
         # Check day updated
         assert current_day[0].item() == 1
@@ -122,7 +123,7 @@ class TestTimeTraining:
 
         apply_time_step(dataset, actions, day=0, env=env)
 
-        new_waste = td["waste"]
+        new_waste = cast(torch.Tensor, td["waste"])
 
         # Ensure generator was called
         assert env.generator.called
@@ -142,7 +143,7 @@ class TestTimeTraining:
         model.train_time = True
 
         prepare_epoch(model, MagicMock(), MagicMock(), dataset, epoch=5, phase="train")
-        assert td["current_day"].item() == 5
+        assert cast(torch.Tensor, td["current_day"]).item() == 5
 
     def test_prepare_epoch_no_time_metadata(self):
         # Test that current_day is NOT injected when train_time is False

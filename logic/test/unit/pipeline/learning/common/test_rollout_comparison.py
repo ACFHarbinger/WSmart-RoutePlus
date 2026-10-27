@@ -1,6 +1,7 @@
 """Promotion lifecycle regressions: validation is never a training decision pool."""
 
 from types import SimpleNamespace
+from typing import Any, cast
 from unittest.mock import patch
 
 import numpy as np
@@ -74,11 +75,15 @@ def test_seeded_refresh_and_global_rng_isolation():
     a, b = RolloutBaseline(policy), RolloutBaseline(policy)
     a.configure_comparison(env, 3, 123)
     b.configure_comparison(env, 3, 123)
-    assert torch.equal(a.comparison_dataset.data["x"], b.comparison_dataset.data["x"])
-    assert torch.equal(a._generate_comparison(1).data["x"], b._generate_comparison(1).data["x"])
-    assert not torch.equal(a.comparison_dataset.data["x"], a._generate_comparison(1).data["x"])
+    assert torch.equal(cast(torch.Tensor, a.comparison_dataset.data["x"]), cast(torch.Tensor, b.comparison_dataset.data["x"]))
+    assert torch.equal(
+        cast(torch.Tensor, a._generate_comparison(1).data["x"]), cast(torch.Tensor, b._generate_comparison(1).data["x"])
+    )
+    assert not torch.equal(
+        cast(torch.Tensor, a.comparison_dataset.data["x"]), cast(torch.Tensor, a._generate_comparison(1).data["x"])
+    )
     assert torch.equal(state, torch.random.get_rng_state())
-    assert np.array_equal(numpy_state[1], np.random.get_state()[1])
+    assert np.array_equal(cast(Any, numpy_state)[1], cast(Any, np.random.get_state())[1])
 
 
 @pytest.mark.parametrize("warmup", [0, 2])
@@ -99,14 +104,17 @@ def test_multigraph_reporting_is_separate_and_worse_candidate_rejected(warmup):
         model.setup("fit")
     baseline = model.baseline.baseline if isinstance(model.baseline, WarmupBaseline) else model.baseline
     assert model.val_dataset is None
+    assert model.val_datasets is not None
     reporting = model.val_datasets[0]
-    assert len(reporting) == 5 and len(baseline.comparison_dataset) == 3
-    assert baseline.comparison_env.name == "ptp"
+    comparison_dataset = cast(Any, baseline.comparison_dataset)
+    comparison_env = cast(Any, baseline.comparison_env)
+    assert len(reporting) == 5 and len(comparison_dataset) == 3
+    assert comparison_env.name == "ptp"
     frozen = baseline.baseline_policy
     with patch.object(baseline, "_rollout", side_effect=[torch.zeros(3), torch.ones(3)]):
         model.on_train_epoch_end()
     assert baseline.baseline_policy is frozen
-    assert model.val_datasets[0] is reporting
+    assert model.val_datasets is not None and model.val_datasets[0] is reporting
 
 
 def test_invalid_rewards_and_failed_generation_do_not_promote():
@@ -139,7 +147,10 @@ def test_checkpoint_restores_comparison_identity(load_before_setup):
     with patch.object(restored, "_rollout", side_effect=[torch.zeros(3), torch.ones(3)]):
         restored.epoch_callback(policy, 0)
     assert restored.comparison_generation == 3
-    assert torch.equal(original.comparison_dataset.data["x"], restored.comparison_dataset.data["x"])
+    assert torch.equal(
+        cast(torch.Tensor, original.comparison_dataset.data["x"]),
+        cast(torch.Tensor, restored.comparison_dataset.data["x"]),
+    )
     old_checkpoint = {k: v for k, v in original.state_dict().items() if k != "_extra_state"}
     restored.load_state_dict(old_checkpoint, strict=True)
 
@@ -166,8 +177,8 @@ def test_real_ptp_pool_and_greedy_rollout():
     policy = AttentionModelPolicy(env_name="ptp", embed_dim=16, hidden_dim=32, n_encode_layers=1, n_heads=2)
     baseline = RolloutBaseline(policy)
     baseline.configure_comparison(env, 3, seed=123)
-    data = baseline.comparison_dataset.data.clone()
+    data = cast(torch.Tensor, baseline.comparison_dataset.data["locs"]).clone()
     rewards = baseline._rollout(baseline.baseline_policy, baseline.comparison_dataset, baseline.comparison_env)
     assert rewards.shape == (3,)
     assert torch.isfinite(rewards).all()
-    assert torch.equal(data["locs"], baseline.comparison_dataset.data["locs"])
+    assert torch.equal(data, cast(torch.Tensor, baseline.comparison_dataset.data["locs"]))

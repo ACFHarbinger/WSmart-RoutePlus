@@ -27,7 +27,7 @@ Example:
     >>> metrics = compute_validation_metrics(out, batch, env)
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import torch
 from tensordict import TensorDict
@@ -290,16 +290,18 @@ def _get_next_day_waste(
         generator = torch.Generator(device=device)
 
     full_key = f"_{key}_full"
-    if full_key in td.keys() and td[full_key].dim() == 3:
+    full_series = cast(torch.Tensor, td[full_key]) if full_key in td.keys() else None
+    day_series = cast(torch.Tensor, td[key]) if key in td.keys() else None
+    if full_series is not None and full_series.dim() == 3:
         # Use the sequence stored in the hidden key
-        total_days = td[full_key].shape[1]
+        total_days = full_series.shape[1]
         next_day_idx = min(day + 1, total_days - 1)
-        next_day_waste = td[full_key][:, next_day_idx, :]
-    elif key in td.keys() and td[key].dim() == 3:
+        next_day_waste = full_series[:, next_day_idx, :]
+    elif day_series is not None and day_series.dim() == 3:
         # Pre-generated 3D dataset: [bs, num_days, num_loc]
-        total_days = td[key].shape[1]
+        total_days = day_series.shape[1]
         next_day_idx = min(day + 1, total_days - 1)
-        next_day_waste = td[key][:, next_day_idx, :]
+        next_day_waste = day_series[:, next_day_idx, :]
     elif hasattr(env, "generator"):
         # On-the-fly dataset (2D waste)
         gen = env.generator
@@ -307,7 +309,7 @@ def _get_next_day_waste(
             # Generate raw fill levels for the next step (following builder logic)
             if hasattr(gen, "to"):
                 gen = gen.to("cpu")
-            fresh_fill = gen._generate_fill_levels([batch_size]).to(device)
+            fresh_fill = cast(torch.Tensor, gen._generate_fill_levels([batch_size]).to(device))
 
             next_day_waste = fresh_fill
         except Exception as e:
@@ -394,19 +396,21 @@ def apply_time_step(
     batch_size = td.batch_size[0]
     # num_nodes = number of customer nodes (excluding depot).
     # Subtract 1 only when locs already includes the depot as first entry.
-    locs = td["locs"]
-    depot = td.get("depot", None)
+    locs = cast(torch.Tensor, td["locs"])
+    depot_raw = td.get("depot", None)
+    depot = depot_raw if isinstance(depot_raw, torch.Tensor) else None
     locs_includes_depot = (
         depot is not None and locs.shape[1] > 1 and torch.allclose(locs[:1, 0, :], depot[:1, :], atol=1e-3)
     )
     num_nodes = locs.shape[1] - 1 if locs_includes_depot else locs.shape[1]
-    device = td.device
+    device_raw = td.device
+    device = device_raw if device_raw is not None else torch.device("cpu")
 
     key = "waste" if "waste" in list(td.keys()) else "fill_level"
     if key not in td.keys():
         return dataset
 
-    current_fill = td[key]
+    current_fill = cast(torch.Tensor, td[key])
 
     # If the fill is 3D, it's likely a fresh dataset load.
     # We move it to a hidden key and use the current day's slice for the 2D state.
@@ -437,13 +441,20 @@ def apply_time_step(
     # 5. Redraw a share of the instances so the states keep a spread of waste levels
     full_key = f"_{key}_full"
     n_refreshed = 0
-    if refresh_fraction > 0.0 and full_key in td.keys() and td[full_key].dim() == 3 and new_fill.dim() == 2:
-        if new_fill.shape[-1] == td[full_key].shape[-1]:
-            new_fill, chosen = refresh_fill(new_fill, td[full_key], refresh_fraction, refresh_max_days, day)
-            n_refreshed = int(chosen.sum())
+    full_waste = cast(torch.Tensor, td[full_key]) if full_key in td.keys() else None
+    if (
+        refresh_fraction > 0.0
+        and full_waste is not None
+        and full_waste.dim() == 3
+        and new_fill.dim() == 2
+        and new_fill.shape[-1] == full_waste.shape[-1]
+    ):
+        new_fill, chosen = refresh_fill(new_fill, full_waste, refresh_fraction, refresh_max_days, day)
+        n_refreshed = int(chosen.sum())
 
     td[key] = new_fill
-    if "waste" in td.keys() and key != "waste" and td["waste"].dim() == 2:
+    waste_now = cast(torch.Tensor, td["waste"]) if "waste" in td.keys() else None
+    if key != "waste" and waste_now is not None and waste_now.dim() == 2:
         td["waste"] = new_fill
 
     # Always ensure current_day is set

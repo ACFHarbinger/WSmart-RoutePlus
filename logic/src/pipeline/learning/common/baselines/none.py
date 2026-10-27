@@ -33,7 +33,7 @@ class NoBaseline(Baseline):
         """
         super().__init__()
 
-    def eval(self, td: TensorDict, reward: torch.Tensor, env: Optional[Any] = None) -> torch.Tensor:  # type: ignore[override]
+    def eval(self, td: Optional[TensorDict], reward: torch.Tensor, env: Optional[Any] = None) -> torch.Tensor:  # type: ignore[override]
         """
         Return zero baseline (no variance reduction).
 

@@ -78,7 +78,7 @@ class REINFORCE(RL4COLitModule):
 
     def calculate_loss(
         self,
-        td: TensorDict,
+        td: Optional[TensorDict],
         out: dict,
         batch_idx: int,
         env: Optional["IEnv"] = None,
