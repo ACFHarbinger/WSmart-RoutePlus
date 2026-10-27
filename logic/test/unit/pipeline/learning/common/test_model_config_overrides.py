@@ -1,6 +1,7 @@
 """Model constructor settings must survive Hydra's mapping representation."""
 
 from types import SimpleNamespace
+from typing import Any, cast
 from unittest.mock import patch
 
 import pytest
@@ -28,7 +29,7 @@ def test_top_level_model_settings_reach_constructor(hydra, settings):
         )
 
     with patch("logic.src.pipeline.features.train.model_factory.builder.import_target") as resolve:
-        _init_policy(cfg, None)
+        _init_policy(cast(Any, cfg), None)
 
     kwargs = resolve.return_value.call_args.kwargs
     assert kwargs == {"env_name": "cptp", **{k: v for k, v in settings.items() if k != "name"}}

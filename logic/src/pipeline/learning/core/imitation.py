@@ -166,7 +166,7 @@ class ImitationLearning(RL4COLitModule):
 
     def calculate_loss(
         self,
-        td: TensorDict,
+        td: Optional[TensorDict],
         out: dict,
         batch_idx: int,
         env: Any = None,
@@ -190,6 +190,8 @@ class ImitationLearning(RL4COLitModule):
                 out[key] = out[key].detach()
 
         # 1. Generate Expert Solutions (already done by the step when fill_from="expert")
+        if td is None:
+            raise ValueError("ImitationLearning requires a TensorDict")
         expert_out = out if out.get("source") == "expert" else self._expert_solve(td)
         expert_actions = expert_out["actions"]
         if self.precompute:

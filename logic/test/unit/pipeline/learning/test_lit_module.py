@@ -8,6 +8,7 @@ import pytest
 import torch
 from logic.src.pipeline.learning.common.base import RL4COLitModule
 from tensordict import TensorDict
+from torch.utils.data import DataLoader
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
@@ -115,4 +116,5 @@ class TestRL4COLitModule:
         assert train_loader.batch_size == 2
 
         val_loader = model.val_dataloader()
+        assert isinstance(val_loader, DataLoader)
         assert val_loader.batch_size == 2

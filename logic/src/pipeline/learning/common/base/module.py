@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 import os
 from abc import ABC
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
 
 import pytorch_lightning as pl
 import torch
@@ -32,7 +32,6 @@ if TYPE_CHECKING:
     from logic.src.configs import Config
     from logic.src.interfaces.env import IEnv
     from logic.src.interfaces.policy import IPolicy
-    from logic.src.policies.vectorized.packing import VectorizedSelector
 
 logger = get_pylogger(__name__)
 
@@ -64,7 +63,7 @@ class RL4COLitModule(DataMixin, OptimizationMixin, StepMixin, pl.LightningModule
         num_workers: int = 4,
         persistent_workers: bool = True,
         pin_memory: bool = False,
-        mandatory_selector: Optional[VectorizedSelector] = None,
+        mandatory_selector: Optional[Any] = None,
         **kwargs,
     ):
         """
@@ -112,7 +111,8 @@ class RL4COLitModule(DataMixin, OptimizationMixin, StepMixin, pl.LightningModule
         # Config initialization
         self.cfg = kwargs.get("cfg")
         if isinstance(self.cfg, dict):
-            self.cfg = OmegaConf.create(self.cfg)
+            # OmegaConf.create returns DictConfig, which is the runtime form of this Hydra cfg.
+            self.cfg = cast(Any, OmegaConf.create(self.cfg))
 
         self.val_dataset_path = val_dataset_path
         self.train_dataset_path = kwargs.get("train_dataset_path")

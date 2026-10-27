@@ -36,7 +36,7 @@ class Baseline(nn.Module, ABC):
         super().__init__()
 
     @abstractmethod
-    def eval(self, td: TensorDict, reward: torch.Tensor, env: Optional[Any] = None) -> torch.Tensor:  # type: ignore[override]
+    def eval(self, td: Optional[TensorDict], reward: torch.Tensor, env: Optional[Any] = None) -> torch.Tensor:  # type: ignore[override]
         """Compute baseline value.
 
         Args:

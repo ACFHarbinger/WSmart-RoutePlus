@@ -43,7 +43,7 @@ class ExponentialBaseline(Baseline):
         self.beta = exp_beta if exp_beta is not None else beta
         self.running_mean: Optional[torch.Tensor] = None
 
-    def eval(self, td: TensorDict, reward: torch.Tensor, env: Optional[Any] = None) -> torch.Tensor:  # type: ignore[override]
+    def eval(self, td: Optional[TensorDict], reward: torch.Tensor, env: Optional[Any] = None) -> torch.Tensor:  # type: ignore[override]
         """
         Compute baseline value using exponential moving average.
 

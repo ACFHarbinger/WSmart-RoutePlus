@@ -44,7 +44,7 @@ class CriticBaseline(Baseline):
         super().__init__()
         self.critic = critic
 
-    def eval(self, td: TensorDict, reward: torch.Tensor, env: Optional[Any] = None) -> torch.Tensor:  # type: ignore[override]
+    def eval(self, td: Optional[TensorDict], reward: torch.Tensor, env: Optional[Any] = None) -> torch.Tensor:  # type: ignore[override]
         """
         Compute baseline value using learned critic.
 
@@ -58,6 +58,8 @@ class CriticBaseline(Baseline):
         """
         if self.critic is None:
             return torch.zeros_like(reward)
+        if td is None:
+            raise ValueError("CriticBaseline requires a TensorDict")
 
         td = ensure_tensordict(td, next(iter(self.critic.parameters())).device)
         return self.critic(td).squeeze(-1)

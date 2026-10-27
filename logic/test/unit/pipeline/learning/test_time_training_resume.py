@@ -1,6 +1,7 @@
 """A resumed time-training run continues from the bin fill stored in its checkpoint."""
 
 import types
+from typing import cast
 
 import pytest
 import torch
@@ -64,4 +65,4 @@ def test_training_day_is_the_start_day_plus_the_epoch(start_day, epoch, day) -> 
         cfg=types.SimpleNamespace(task="train", train=types.SimpleNamespace(env=types.SimpleNamespace(graph=graph))),
         current_epoch=epoch,
     )
-    assert RL4COLitModule._time_training_day(mod) == day
+    assert RL4COLitModule._time_training_day(cast(RL4COLitModule, mod)) == day

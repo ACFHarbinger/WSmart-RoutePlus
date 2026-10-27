@@ -1,5 +1,7 @@
 """Multi-day datasets can start from a spread of bin states."""
 
+from typing import cast
+
 import pytest
 import torch
 from logic.src.pipeline.learning.common.epoch import accumulate_initial_fill
@@ -23,8 +25,9 @@ def test_instances_start_with_one_to_max_days_of_waste() -> None:
 def test_fill_is_capped_at_a_full_bin_and_days_at_the_dataset_length() -> None:
     td = accumulate_initial_fill(_dataset(days=5), max_days=50)
 
-    assert td["waste"].max().item() == pytest.approx(1.0)
-    assert td["waste"][4, 0].item() == pytest.approx(1.0)
+    waste = cast(torch.Tensor, td["waste"])
+    assert waste.max().item() == pytest.approx(1.0)
+    assert waste[4, 0].item() == pytest.approx(1.0)
 
 
 @pytest.mark.parametrize("max_days", [0, 1])

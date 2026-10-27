@@ -1,6 +1,7 @@
 """Dataset/batch parity for both supported greedy policy interfaces."""
 
 from types import SimpleNamespace
+from typing import cast
 
 import pytest
 import torch
@@ -25,7 +26,7 @@ class LegacyPolicy(ModernPolicy):
     def set_strategy(self, strategy):
         self.strategy = strategy
 
-    def forward(self, td):
+    def forward(self, td):  # pyrefly: ignore[bad-override] - legacy policies take only td and return a reward tuple
         assert self.strategy == "greedy"
         return td["x"].squeeze(-1) * self.weight, torch.zeros(len(td))
 
@@ -41,7 +42,7 @@ def test_batch_dataset_parity_with_partial_last_batch(policy_class):
     dataset_rewards = baseline._rollout_dataset(policy, TensorDictDataset(data), env)
     assert torch.equal(batch_rewards, torch.tensor([2.0, 4.0, 6.0]))
     assert torch.equal(dataset_rewards, batch_rewards)
-    assert torch.equal(data["x"], original["x"])
+    assert torch.equal(cast(torch.Tensor, data["x"]), cast(torch.Tensor, original["x"]))
     assert not batch_rewards.requires_grad and not dataset_rewards.requires_grad
 
 

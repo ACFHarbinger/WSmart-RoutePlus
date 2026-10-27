@@ -2,9 +2,8 @@
 
 import pytest
 import torch
-from pytorch_lightning.core.optimizer import _configure_optimizers, _configure_schedulers_automatic_opt
-
 from logic.src.pipeline.learning.common.base.optimization import OptimizationMixin
+from pytorch_lightning.core.optimizer import _configure_optimizers, _configure_schedulers_automatic_opt
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
@@ -34,7 +33,9 @@ def test_plateau_monitors_validation_reward_and_maximizes_it():
 
 def test_plateau_respects_an_explicit_monitor_and_mode():
     (config,) = _lightning_configs(_Module("plateau", {"monitor": "val/cost", "mode": "min"}))
-    assert config.monitor == "val/cost" and config.scheduler.mode == "min"
+    scheduler = config.scheduler
+    assert isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau)
+    assert config.monitor == "val/cost" and scheduler.mode == "min"
 
 
 def test_other_schedulers_are_unchanged():

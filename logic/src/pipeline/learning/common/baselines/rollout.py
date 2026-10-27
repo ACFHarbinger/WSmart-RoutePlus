@@ -49,6 +49,14 @@ class RolloutBaseline(Baseline):
         bl_alpha: Significance level for T-test.
     """
 
+    comparison_dataset: Any
+    comparison_env: Any
+    comparison_seed: int
+    comparison_generation: int
+    comparison_size: int
+    baseline_policy: Any
+    _comparison_restored: bool
+
     def __init__(
         self,
         policy: Optional[nn.Module] = None,
@@ -88,9 +96,9 @@ class RolloutBaseline(Baseline):
         Args:
             policy: Policy to use as initial baseline (will be copied).
         """
-        self.baseline_policy = copy.deepcopy(policy)  # type: ignore[assignment]
+        self.baseline_policy = copy.deepcopy(policy)
         if self.baseline_policy is not None:
-            self.baseline_policy.eval()  # type: ignore[misc]
+            self.baseline_policy.eval()
             for param in self.baseline_policy.parameters():
                 param.requires_grad = False
 
@@ -132,7 +140,7 @@ class RolloutBaseline(Baseline):
         state_dict.setdefault(prefix + "_extra_state", {})
         super()._load_from_state_dict(state_dict, prefix, *args, **kwargs)
 
-    def _generate_comparison(self, generation: int) -> Dataset:
+    def _generate_comparison(self, generation: int) -> TensorDictDataset:
         """Generate reproducibly without consuming the training RNG streams."""
         generator = copy.deepcopy(self.comparison_env.generator)
         seed = self.comparison_seed + generation
@@ -152,7 +160,7 @@ class RolloutBaseline(Baseline):
         finally:
             random.setstate(py_state)
             np.random.set_state(np_state)
-        return TensorDictDataset(data)
+        return TensorDictDataset(cast(TensorDict, data))
 
     def train(self, mode: bool = True) -> RolloutBaseline:
         """Override train to keep baseline_policy in eval mode.
@@ -247,7 +255,7 @@ class RolloutBaseline(Baseline):
                     # Repeat the first element to pad safely
                     padding = td_data[0].expand(pad_size)
                     padding_safe = safe_td_copy(padding)
-                    td_data = torch.cat([td_data, padding_safe], 0)
+                    td_data = cast(TensorDict, torch.cat(cast(Any, [td_data, padding_safe]), 0))
 
                 out = self._invoke_greedy(policy, td_data, env)
 
@@ -310,8 +318,9 @@ class RolloutBaseline(Baseline):
         ):
             return self.wrap_dataset(dataset, env=env)
         batch_size = DEFAULT_ROLLOUT_BATCH_SIZE
-        if len(env.batch_size) > 0:
-            batch_size = int(env.batch_size[0])
+        env_batch = getattr(env, "batch_size", None)
+        if env_batch is not None and len(env_batch) > 0:
+            batch_size = int(env_batch[0])
         # Match the iterator initialization in _rollout_dataset; do not decode.
         iter(DataLoader(dataset, batch_size=batch_size, collate_fn=tensordict_collate_fn, num_workers=0))
         return dataset
