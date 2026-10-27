@@ -14,6 +14,8 @@ Supported commands
 - ``"update_ms"`` / ``"update_ri"``     → :func:`~logic.controllers.jobs.ops_runner.run_target_update`
 - ``"sync_drive"``                    → :func:`~logic.cloud.cli.run_sync` (rclone copy to or from Google Drive)
 - ``"cloud"``                         → :func:`~logic.controllers.cloud.cli.run_cloud` (cloud runner jobs)
+- ``"trace_policy"``                  → :func:`~logic.controllers.cli.inspect_parser.run_trace_policy`
+- ``"list_policy_modules"``           → :func:`~logic.controllers.cli.inspect_parser.run_list_policy_modules`
 
 Example::
 
@@ -115,7 +117,12 @@ def parser_entry_point(
             run_file_system(opts, inner_comm)
 
         else:
-            if not (comm == "cloud" and opts.get("json")):  # keep JSON output parseable for the Studio
+            # cloud --json, the trace path, and the catalog document must stay parseable.
+            quiet_stdout = (comm == "cloud" and opts.get("json")) or comm in {
+                "trace_policy",
+                "list_policy_modules",
+            }
+            if not quiet_stdout:
                 _pretty_print_args(comm, opts)
 
             if comm == "benchmark":
@@ -132,6 +139,14 @@ def parser_entry_point(
                 from logic.controllers.cloud.cli import run_cloud
 
                 run_cloud(opts)
+            elif comm == "trace_policy":
+                from logic.controllers.cli.inspect_parser import run_trace_policy
+
+                run_trace_policy(opts)
+            elif comm == "list_policy_modules":
+                from logic.controllers.cli.inspect_parser import run_list_policy_modules
+
+                run_list_policy_modules(opts)
             else:
                 assert comm == "test_suite"
                 run_test_suite(opts)
