@@ -10,18 +10,15 @@ Attributes:
     MIN_REMOVAL_LOWER_BOUND: Named lower bound for the classic ALNS removal count.
     RopkePisingerSegments: Segment-based weight update (classic ALNS).
     EmaWeightUpdate: Per-iteration exponential moving-average weight update (PG-CLNS).
-    LegacySAAcceptance: Pre-P-11 inline simulated-annealing acceptance (PG-CLNS).
 
 """
 
-from .acceptance import LegacySAAcceptance
 from .engine import MIN_REMOVAL_LOWER_BOUND, LNSBase
 from .weight_updates import EmaWeightUpdate, RopkePisingerSegments
 
 __all__ = [
     "LNSBase",
     "MIN_REMOVAL_LOWER_BOUND",
-    "LegacySAAcceptance",
     "RopkePisingerSegments",
     "EmaWeightUpdate",
 ]
