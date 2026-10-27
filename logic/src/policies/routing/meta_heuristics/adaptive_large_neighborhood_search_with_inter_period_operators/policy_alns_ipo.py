@@ -12,7 +12,7 @@ Example:
 """
 
 from dataclasses import asdict
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union, cast
 
 from logic.src.configs.policies.routing.meta_heuristics.alns_ipo import ALNSIPOConfig
 from logic.src.interfaces.context.multi_day_context import MultiDayContext
@@ -97,12 +97,13 @@ class ALNSInterPeriodOperatorsPolicy(BaseMultiPeriodRoutingPolicy):
         # Initialize type-safe Params
         params = ALNSIPOConfig.from_config(asdict(self.config))  # type: ignore[arg-type]
 
-        if params.acceptance_criterion is None:
+        params_dyn = cast(Any, params)
+        if params_dyn.acceptance_criterion is None:
             from logic.src.policies.acceptance_criteria.base.factory import (
                 AcceptanceCriterionFactory,
             )
 
-            params.acceptance_criterion = AcceptanceCriterionFactory.create(
+            params_dyn.acceptance_criterion = AcceptanceCriterionFactory.create(
                 name="bmc",
                 initial_temp=params.start_temp,
                 alpha=params.cooling_rate,

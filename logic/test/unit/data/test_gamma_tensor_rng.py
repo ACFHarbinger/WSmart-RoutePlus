@@ -2,7 +2,6 @@
 
 import pytest
 import torch
-
 from logic.src.data.distributions import Gamma
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

@@ -19,7 +19,7 @@ Example:
 
 import logging
 from pathlib import Path
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import numpy as np
 import torch
@@ -195,20 +195,29 @@ class LearnedRouteImprover(IRouteImprovement):
 
         # Parameters
         weights_path = Path(
-            kwargs.get(
-                "learned_weights_path",
-                self.config.get("learned_weights_path", str(self.DEFAULT_WEIGHTS_PATH)),
+            cast(
+                str,
+                kwargs.get(
+                    "learned_weights_path",
+                    self.config.get("learned_weights_path", str(self.DEFAULT_WEIGHTS_PATH)),
+                ),
             )
         )
-        max_iterations = kwargs.get("learned_max_iter", self.config.get("learned_max_iter", 100))
-        min_improvement = kwargs.get("learned_min_improvement", self.config.get("learned_min_improvement", 1e-4))
-        neighborhood_size = kwargs.get("learned_neighborhood_size", self.config.get("learned_neighborhood_size", 20))
+        max_iterations = cast(int, kwargs.get("learned_max_iter", self.config.get("learned_max_iter", 100)))
+        min_improvement = cast(
+            float,
+            kwargs.get("learned_min_improvement", self.config.get("learned_min_improvement", 1e-4)),
+        )
+        neighborhood_size = cast(
+            int,
+            kwargs.get("learned_neighborhood_size", self.config.get("learned_neighborhood_size", 20)),
+        )
 
         # Problem parameters
-        wastes = kwargs.get("wastes", self.config.get("wastes", {}))
-        capacity = kwargs.get("capacity", self.config.get("capacity", float("inf")))
-        cost_per_km = kwargs.get("cost_per_km", self.config.get("cost_per_km", 0.0))
-        revenue_kg = kwargs.get("revenue_kg", self.config.get("revenue_kg", 0.0))
+        wastes = cast(Dict[int, float], kwargs.get("wastes", self.config.get("wastes", {})))
+        capacity = cast(float, kwargs.get("capacity", self.config.get("capacity", float("inf"))))
+        cost_per_km = cast(float, kwargs.get("cost_per_km", self.config.get("cost_per_km", 0.0)))
+        revenue_kg = cast(float, kwargs.get("revenue_kg", self.config.get("revenue_kg", 0.0)))
         mandatory_nodes = resolve_mandatory_nodes(kwargs, self.config)
 
         dm = to_numpy(distance_matrix)

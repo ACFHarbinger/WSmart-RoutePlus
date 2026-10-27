@@ -391,7 +391,7 @@ class ALNSSARSASolver(ALNSSARSARepairMixin, ALNSSARSADestroyMixin):
             return 0.0
 
         std_size = np.std(sizes)
-        cv = std_size / mean_size
+        cv = float(std_size / mean_size)
 
         # Normalize to [0, 1]
         return min(1.0, cv)

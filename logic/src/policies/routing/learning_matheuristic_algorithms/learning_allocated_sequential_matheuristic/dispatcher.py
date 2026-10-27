@@ -80,11 +80,11 @@ def _get_rl_controller(params: LASMPipelineConfig) -> RLController:
 # ---------------------------------------------------------------------------
 
 
-def _import_alns_stage() -> Optional[Callable[[Any, Any, Any, Any, Any, Any, Any, Any], Optional[Any]]]:
+def _import_alns_stage() -> Optional[Callable[..., Any]]:
     """Import ALNS stage with fallback.
 
     Returns:
-        Optional[Callable[[Any, Any, Any, Any, Any, Any, Any, Any], Optional[Any]]]: The ALNS stage function.
+        Optional[Callable[..., Any]]: The ALNS stage function.
     """
     try:
         from logic.src.policies.routing.matheuristics.exact_guided_heuristic.stage_alns import run_alns_stage
@@ -94,11 +94,11 @@ def _import_alns_stage() -> Optional[Callable[[Any, Any, Any, Any, Any, Any, Any
         return None
 
 
-def _import_bpc_stage() -> Optional[Callable[[Any, Any, Any, Any, Any, Any, Any, Any], Optional[Any]]]:
+def _import_bpc_stage() -> Optional[Callable[..., Any]]:
     """Import BPC stage with fallback.
 
     Returns:
-        Optional[Callable[[Any, Any, Any, Any, Any, Any, Any, Any], Optional[Any]]]: The BPC stage function.
+        Optional[Callable[..., Any]]: The BPC stage function.
     """
     try:
         from logic.src.policies.routing.matheuristics.exact_guided_heuristic.stage_bpc import run_bpc_stage
@@ -108,11 +108,11 @@ def _import_bpc_stage() -> Optional[Callable[[Any, Any, Any, Any, Any, Any, Any,
         return None
 
 
-def _import_sp_stage() -> Optional[Callable[[Any, Any, Any, Any, Any, Any, Any, Any], Optional[Any]]]:
+def _import_sp_stage() -> Callable[..., Any]:
     """Import SP stage with fallback.
 
     Returns:
-        Optional[Callable[[Any, Any, Any, Any, Any, Any, Any, Any], Optional[Any]]]: The SP stage function.
+        Callable[..., Any]: The SP stage function. Always returns a callable, with a greedy fallback.
     """
     try:
         from logic.src.policies.routing.matheuristics.exact_guided_heuristic.stage_sp import run_sp_stage

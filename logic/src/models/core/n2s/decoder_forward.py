@@ -5,7 +5,7 @@ Moved from ``logic.src.models.core.n2s.decoder``.
 
 from __future__ import annotations
 
-from typing import Any, Tuple, Union
+from typing import Any, Callable, Tuple, Union
 
 import torch
 import torch.nn.functional as F
@@ -16,6 +16,25 @@ from logic.src.envs.base.base import RL4COEnvBase
 
 class N2SDecoderForwardMixin:
     """Moved methods of :class:`N2SDecoder`."""
+
+    num_heads: int
+    head_dim: int
+    scale: float
+    tanh_clipping: float
+    W_h_local: Any
+    W_h_global: Any
+    project_q_lambda: Any
+    project_k_lambda: Any
+    project_qp: Any
+    project_kp: Any
+    project_qs: Any
+    project_ks: Any
+    mlp_lambda: Any
+    mlp_mu: Any
+    generator: Any
+    _get_tour_neighbors: Callable[..., Any]
+    _resolve_partner_ids: Callable[..., Any]
+    _identify_delivery_nodes: Callable[..., Any]
 
     def forward(
         self,

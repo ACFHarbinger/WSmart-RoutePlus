@@ -121,7 +121,7 @@ class PolyNet(nn.Module):
         Returns:
             Dict[str, Any]: Metrics and outputs from the step.
         """
-        td = self.env.reset(batch)
+        td = cast(TensorDict, self.env.reset(batch))  # reset returns TensorDictBase
         num_solutions = self.k if phase == "train" else self.val_num_solutions
 
         # Augmentation logic: expand batch via symmetric transformations
@@ -165,15 +165,17 @@ class PolyNet(nn.Module):
         Returns:
             Dict[str, Any]: result updated with 'loss' and 'max_reward'.
         """
-        reward = reward if reward is not None else policy_out["reward"]
-        log_likelihood = log_likelihood if log_likelihood is not None else policy_out["log_likelihood"]
+        reward = reward if reward is not None else cast(torch.Tensor, policy_out["reward"])
+        log_likelihood = (
+            log_likelihood if log_likelihood is not None else cast(torch.Tensor, policy_out["log_likelihood"])
+        )
 
         # Ensure multi-path shape: [Batch, K]
         if reward.dim() == 1:
             from logic.src.utils.decoding import unbatchify
 
-            reward = unbatchify(reward, self.k)
-            log_likelihood = unbatchify(log_likelihood, self.k)
+            reward = cast(torch.Tensor, unbatchify(reward, self.k))
+            log_likelihood = cast(torch.Tensor, unbatchify(log_likelihood, self.k))
 
         # Shared instance-wise baseline (mean of population)
         baseline = reward.mean(dim=-1, keepdim=True)

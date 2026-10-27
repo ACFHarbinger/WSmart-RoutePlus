@@ -42,7 +42,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple, cast
 
 import torch
 import torch.nn.functional as F
@@ -206,8 +206,9 @@ class HRLIRPModule(HRLModule):
         B = td.batch_size[0] if td.batch_size else 1
         N = td["locs"].shape[1]
 
-        fill_levels: torch.Tensor = td.get("demand", torch.zeros(B, N, device=device)).float().clone()
-        capacity = float(td.get("capacity", torch.tensor(1.0)).mean())
+        demand = cast(torch.Tensor, td.get("demand", torch.zeros(B, N, device=device)))
+        fill_levels: torch.Tensor = demand.float().clone()
+        capacity = float(cast(torch.Tensor, td.get("capacity", torch.tensor(1.0))).mean())
 
         rewards_per_day: List[torch.Tensor] = []
         log_probs_per_day: List[torch.Tensor] = []
@@ -219,7 +220,7 @@ class HRLIRPModule(HRLModule):
             # Manager: build observation and select mandatory nodes
             mgr_obs = torch.cat(
                 [
-                    td["locs"].view(B, -1),
+                    cast(torch.Tensor, td["locs"]).view(B, -1),
                     fill_levels,
                     day_fraction,
                 ],

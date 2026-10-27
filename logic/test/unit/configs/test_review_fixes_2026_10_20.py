@@ -3,12 +3,11 @@
 import argparse
 from pathlib import Path
 
+import logic.controllers.hydra_dispatch  # noqa: F401  registers the Config schema as "config"
 import pytest
 from hydra import compose, initialize_config_dir
 from hydra.core.global_hydra import GlobalHydra
 from omegaconf import OmegaConf
-
-import logic.controllers.hydra_dispatch  # noqa: F401  registers the Config schema as "config"
 
 pytestmark = [pytest.mark.unit]
 

@@ -10,7 +10,7 @@ Example:
 
 import math
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
 import numpy as np
 
@@ -64,7 +64,7 @@ class SASolver(LocalSearch):
             C=C,
             params=params,
         )
-        self.mandatory_nodes = mandatory_nodes or []
+        self.mandatory_nodes = cast(Set[int], mandatory_nodes or [])
         self.nodes = list(range(1, len(dist_matrix)))
         self.thermal_log: List[Dict[str, Any]] = []
         self.acceptance_criterion = params.acceptance_criterion
@@ -93,14 +93,15 @@ class SASolver(LocalSearch):
             Total distance traveled.
         """
         total = 0.0
+        dist = cast(np.ndarray, self.d)
         for route in routes:
             if not route:
                 continue
             prev = 0
             for node in route:
-                total += self.d[prev, node]
+                total += dist[prev, node]
                 prev = node
-            total += self.d[prev, 0]
+            total += dist[prev, 0]
         return total
 
     def _get_affected_arcs(
@@ -164,7 +165,8 @@ class SASolver(LocalSearch):
         Returns:
             Change in profit.
         """
-        dist_delta = sum(self.d[i, j] for i, j in inserted) - sum(self.d[i, j] for i, j in removed)
+        dist = cast(np.ndarray, self.d)
+        dist_delta = sum(dist[i, j] for i, j in inserted) - sum(dist[i, j] for i, j in removed)
         return -dist_delta * self.C
 
     def _perturb(self, current_routes: List[List[int]], T: float, T_0: float) -> Tuple[str, List[List[int]], float]:
@@ -179,6 +181,8 @@ class SASolver(LocalSearch):
             Tuple of (operator_name, new_solution, profit_delta).
         """
         roll = self.random.random()
+        dist = cast(np.ndarray, self.d)
+        mandatory = cast(List[int], self.mandatory_nodes)
         if roll < 0.1:
             op = "ruin_recreate"
             n_remove = max(1, int((T / T_0) * (len(self.nodes) // 5)))
@@ -190,29 +194,29 @@ class SASolver(LocalSearch):
                 new_sol = greedy_profit_insertion(
                     partial,
                     removed,
-                    self.d,
+                    dist,
                     self.waste,
                     self.Q,
                     self.R,
                     self.C,
-                    mandatory_nodes=self.mandatory_nodes,
+                    mandatory_nodes=mandatory,
                     expand_pool=current_expand_pool(),
                 )
             else:
                 new_sol = greedy_insertion(
                     partial,
                     removed,
-                    self.d,
+                    dist,
                     self.waste,
                     self.Q,
-                    mandatory_nodes=self.mandatory_nodes,
+                    mandatory_nodes=mandatory,
                     expand_pool=current_expand_pool(),
                 )
             return op, new_sol, self._evaluate(new_sol) - self._evaluate(current_routes)
 
         active_nodes = [n for r in current_routes for n in r]
         if not active_nodes:
-            new_sol = build_greedy_routes(self.d, self.waste, self.Q, self.R, self.C, self.mandatory_nodes, self.random)
+            new_sol = build_greedy_routes(dist, self.waste, self.Q, self.R, self.C, mandatory, self.random)
             return "reinit", new_sol, self._evaluate(new_sol)
 
         u = self.random.choice(active_nodes)
@@ -254,7 +258,7 @@ class SASolver(LocalSearch):
             rev_gain = (self.waste.get(v, 0) - self.waste.get(u, 0)) * self.R
             u_prev = copied[r_u][p_u - 1] if p_u > 0 else 0
             u_next = copied[r_u][p_u + 1] if p_u < len(copied[r_u]) - 1 else 0
-            dist_change = (self.d[u_prev, v] + self.d[v, u_next]) - (self.d[u_prev, u] + self.d[u, u_next])
+            dist_change = (dist[u_prev, v] + dist[v, u_next]) - (dist[u_prev, u] + dist[u, u_next])
             copied[r_u][p_u] = v
             return op, copied, rev_gain - (dist_change * self.C)
 
@@ -315,7 +319,13 @@ class SASolver(LocalSearch):
                 current_routes = [list(r) for r in initial_solution]
             else:
                 current_routes = build_greedy_routes(
-                    self.d, self.waste, self.Q, self.R, self.C, self.mandatory_nodes, self.random
+                    cast(np.ndarray, self.d),
+                    self.waste,
+                    self.Q,
+                    self.R,
+                    self.C,
+                    cast(List[int], self.mandatory_nodes),
+                    self.random,
                 )
 
             self.routes = current_routes

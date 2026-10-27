@@ -17,7 +17,7 @@ Example:
 from __future__ import annotations
 
 import inspect
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import torch
 from tensordict import TensorDict
@@ -201,6 +201,7 @@ class HybridTwoStagePolicy(AutoregressivePolicy):
                 - init_choice_idx: Algorithm category selected per instance [B].
 
         """
+        td = cast(Any, td)  # TensorDict values are a tensor union
         batch_size = td.size(0)
         device = td["locs"].device
 
@@ -217,11 +218,12 @@ class HybridTwoStagePolicy(AutoregressivePolicy):
 
         if self.aco_model is None:
             self.aco_model = VectorizedTourACOPolicy(
-                env_name=self.env_name,
-                embed_dim=self.encoder.embed_dim,
+                env_name=cast(str, self.env_name),  # env name is set by the parent policy
+                embed_dim=cast(Any, self.encoder).embed_dim,
                 **kwargs,  # type: ignore[arg-type]
             )
 
+        solver: Any
         for algo_idx, algo_name in enumerate(self.INIT_ALGOS):
             mask = init_choice_idx == algo_idx
             if not mask.any():
@@ -277,6 +279,7 @@ class HybridTwoStagePolicy(AutoregressivePolicy):
                 - updated_removed_nodes: new buffer state.
                 - log_prob: selection likelihood per instance.
         """
+        td = cast(Any, td)  # TensorDict values are a tensor union
         batch_size = td.size(0)
         device = td.device
         op_logits, _ = self.improvement_decoder(td, embeddings, env)
@@ -290,7 +293,7 @@ class HybridTwoStagePolicy(AutoregressivePolicy):
             log_p = torch.log(probs.gather(1, op_idx.unsqueeze(-1)) + 1e-10).squeeze(-1)
 
         next_tours = current_tours.clone()
-        updated_removed_nodes_list = [None] * batch_size
+        updated_removed_nodes_list: List[Any] = [None] * batch_size
 
         for o_i, operator_fn in enumerate(self.OPERATORS):
             mask = op_idx == o_i
@@ -328,7 +331,8 @@ class HybridTwoStagePolicy(AutoregressivePolicy):
             if sub_indices.dim() == 0:
                 sub_indices = sub_indices.unsqueeze(0)
             for i, idx in enumerate(sub_indices):
-                updated_removed_nodes_list[idx.item()] = new_sub_removed[i]
+                slot = cast(int, idx.item())  # batch index is an int
+                updated_removed_nodes_list[slot] = new_sub_removed[i]
 
         return (
             next_tours,
@@ -357,7 +361,7 @@ class HybridTwoStagePolicy(AutoregressivePolicy):
             Tuple[torch.Tensor, torch.Tensor]: (modified tours, new removed nodes).
         """
         sig = inspect.signature(operator_fn)
-        valid_kwargs = {}
+        valid_kwargs: Dict[str, Any] = {}
         if "max_iterations" in sig.parameters:
             valid_kwargs["max_iterations"] = 5
         if "n_remove" in sig.parameters:
@@ -417,6 +421,7 @@ class HybridTwoStagePolicy(AutoregressivePolicy):
         Returns:
             Dict[str, Any]: Result map with final reward, actions, and audit data.
         """
+        td = cast(Any, td)  # TensorDict values are a tensor union
         # Phase 1: Contextual Encoding
         init_embeds = self.init_embedding(td)
         embeddings = self.encoder(init_embeds)  # type: ignore[misc]

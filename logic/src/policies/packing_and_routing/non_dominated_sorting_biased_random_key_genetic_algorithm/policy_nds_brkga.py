@@ -12,7 +12,7 @@ Example:
 """
 
 import time
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union, cast
 
 import numpy as np
 
@@ -134,7 +134,7 @@ class NDSBRKGAPolicy(BaseJointPolicy):
             max_fill=float(values.get("max_fill", 100.0)),
             n_vehicles=int(kwargs.get("n_vehicles", 1)),
             scenario_tree=kwargs.get("scenario_tree"),
-            mandatory_override=[mandatory_nodes] if mandatory_nodes else None,
+            mandatory_override=cast(Optional[List[int]], [mandatory_nodes] if mandatory_nodes else None),
         )
 
         _, routes, profit, cost = self.solve_joint(context)

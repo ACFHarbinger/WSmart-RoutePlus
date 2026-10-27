@@ -70,6 +70,9 @@ class LagrangianState:
         The trust weight on insertion-cost oracle, annealed over iterations.
     """
 
+    n_bins: int
+    horizon: int
+    lambdas: np.ndarray = field(init=False)  # (N, T)
     x_K: np.ndarray = field(init=False)  # (N, T), from the knapsack side
     x_R: np.ndarray = field(init=False)  # (N, T), from the routing side
 
@@ -85,10 +88,10 @@ class LagrangianState:
         --------
         None
         """
-        self.lambdas = np.zeros((self.n_bins, self.horizon), dtype=float)
-        self.x_K = np.zeros((self.n_bins, self.horizon), dtype=float)
-        self.x_R = np.zeros((self.n_bins, self.horizon), dtype=float)
-        self.gamma = np.ones(self.horizon, dtype=float)
+        self.lambdas = np.zeros((self.n_bins, self.horizon), dtype=float)  # type: ignore[type-var]  # numpy stubs reject builtin float dtype
+        self.x_K = np.zeros((self.n_bins, self.horizon), dtype=float)  # type: ignore[type-var]  # numpy stubs reject builtin float dtype
+        self.x_R = np.zeros((self.n_bins, self.horizon), dtype=float)  # type: ignore[type-var]  # numpy stubs reject builtin float dtype
+        self.gamma = np.ones(self.horizon, dtype=float)  # type: ignore[type-var]  # numpy stubs reject builtin float dtype
 
     def snapshot(self) -> Dict[str, np.ndarray]:
         """Returns a copy of the current state tensors.

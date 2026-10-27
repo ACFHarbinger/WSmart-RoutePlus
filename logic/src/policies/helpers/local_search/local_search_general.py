@@ -17,7 +17,7 @@ Example:
     >>> print(f"Improved cost: {solution.cost}")
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import numpy as np
 
@@ -61,7 +61,7 @@ class GeneralLocalSearch(LocalSearch):
             params: Hyperparameters and configuration.
             neighbors: Precomputed granular neighbors. Defaults to None.
         """
-        super().__init__(dist_matrix, waste, capacity, R, C, params, neighbors)
+        super().__init__(dist_matrix, waste, capacity, R, C, params, cast(Optional[List[int]], neighbors))
 
     def optimize(self, solution: List[List[int]], target_neighborhood: Optional[str] = None) -> List[List[int]]:
         """Apply local search operators to the solution.

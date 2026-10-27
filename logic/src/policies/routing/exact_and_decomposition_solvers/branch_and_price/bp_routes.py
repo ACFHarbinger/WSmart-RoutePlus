@@ -2,6 +2,9 @@
 
 from typing import Any, Dict, List, Optional, Set, Tuple, Union, cast
 
+import numpy as np
+
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.bp import BPConfig
 from logic.src.policies.helpers.solvers_and_matheuristics import (
     AnyBranchingConstraint,
     RCSPPSolver,
@@ -14,6 +17,15 @@ from .pricing_subproblem import PricingSubproblem
 
 class BranchAndPriceRoutesMixin:
     """Relocated bp routes methods."""
+
+    # Declared by BranchAndPriceSolver.__init__; annotation only.
+    params: BPConfig
+    mandatory_nodes: Set[int]
+    depot: int
+    wastes: Dict[int, float]
+    capacity: float
+    cost_matrix: np.ndarray
+    num_columns_generated: int
 
     def _call_pricing(
         self,

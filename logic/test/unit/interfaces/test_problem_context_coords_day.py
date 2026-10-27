@@ -5,7 +5,6 @@ from types import SimpleNamespace
 import numpy as np
 import pandas as pd
 import pytest
-
 from logic.src.interfaces.context.problem_context import ProblemContext
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

@@ -231,7 +231,7 @@ class BranchAndPriceSolver(BranchAndPriceRoutesMixin, BranchAndPriceSearchMixin)
         Returns:
             VRPPMasterProblem: The initialized RMP.
         """
-        return VRPPMasterProblem(
+        return VRPPMasterProblem(  # type: ignore[abstract]  # protocol attrs BIG_M and prev_dual_* are not set in this constructor
             n_nodes=self.n_nodes,
             mandatory_nodes=self.mandatory_nodes,
             cost_matrix=self.cost_matrix,

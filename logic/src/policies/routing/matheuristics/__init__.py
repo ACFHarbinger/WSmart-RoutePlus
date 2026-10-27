@@ -21,7 +21,7 @@ _LAZY = {
     "policy_tpks": "logic.src.policies.routing.matheuristics.two_phase_kernel_search.policy_tpks",
 }
 
-__all__ = list(_LAZY)
+__all__ = list(_LAZY)  # pyrefly: ignore[unresolvable-dunder-all]  # lazy re-exports; resolved through __getattr__
 
 
 def __getattr__(name: str) -> Any:

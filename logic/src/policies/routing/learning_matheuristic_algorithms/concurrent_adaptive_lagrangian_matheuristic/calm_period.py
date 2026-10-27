@@ -9,10 +9,12 @@ from dataclasses import (
 )
 from typing import (
     Any,
+    Callable,
     Dict,
     List,
     Optional,
     Tuple,
+    cast,
 )
 
 import numpy as np
@@ -89,6 +91,21 @@ class _RunState:
 
 
 class CALMPeriodMixin:
+    """Outer iteration. Sibling methods and ``params`` live on ``CALMPolicy``."""
+
+    params: Any
+    horizon: int
+    _should_stop: Callable[..., bool]
+    _build_context: Callable[..., np.ndarray]
+    _solve_selection_layer: Callable[..., Any]
+    _assemble_x_K: Callable[..., np.ndarray]
+    _solve_routing_layer: Callable[..., Any]
+    _generate_cuts: Callable[..., Any]
+    _compute_full_lagrangian: Callable[..., Any]
+    _assemble_primal: Callable[..., Any]
+    _log_iter: Callable[..., None]
+    _package_solution: Callable[..., Any]
+
     # ------------------------------------------------------------------
     # Main entry point
     # ------------------------------------------------------------------
@@ -132,7 +149,7 @@ class CALMPeriodMixin:
             )
 
             # Publish x_K to the coordinator.
-            x_K = self._assemble_x_K(selection_results, n_bins=problem.n, horizon=self.horizon)
+            x_K = self._assemble_x_K(selection_results, n_bins=cast(int, cast(Any, problem).n), horizon=self.horizon)
             state.coordinator.set_knapsack_selection(x_K)
 
             routing_results = self._solve_routing_layer(
@@ -235,21 +252,20 @@ class CALMPeriodMixin:
         # Build the lookahead tables (V, rho, early_regret, expected_fill).
         valuator = LookaheadValuator(lookahead_params)
         current_wastes = problem.wastes
-        bin_stats = {
+        bin_stats_raw: Dict[str, Any] = {
             "means": getattr(problem, "fill_means", None),
             "stds": getattr(problem, "fill_stds", None),
         }
-        if bin_stats["means"] is None:
-            # Fall back to mean = 0 (pure static-fill scenarios).
-            bin_stats = None
+        # Fall back to mean = 0 (pure static-fill scenarios) when means are absent.
+        bin_stats: Optional[Dict[str, Any]] = None if bin_stats_raw["means"] is None else bin_stats_raw
         tables = valuator.compute(
-            current_wastes=current_wastes,
-            bin_stats=bin_stats,
+            current_wastes=cast(Any, current_wastes),
+            bin_stats=cast(Any, bin_stats),
             truth_generator=getattr(problem, "truth_generator", None),
         )
         scenario_tree = valuator.get_scenario_tree()
 
-        n_bins = problem.n
+        n_bins = cast(int, cast(Any, problem).n)
         horizon = self.horizon
 
         # Shared infrastructure.

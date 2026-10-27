@@ -15,7 +15,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 from torch import nn
 
@@ -84,5 +84,5 @@ class N2S(nn.Module):
         Returns:
             Dict[str, Any]: Improvement results containing actions and weights.
         """
-        env = env or self.env
+        env = cast(Any, env) or cast(Any, self.env)  # env may be an unset module attribute
         return self.policy(td, env, strategy=strategy, **kwargs)

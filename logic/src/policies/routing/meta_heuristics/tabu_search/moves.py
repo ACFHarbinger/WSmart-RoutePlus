@@ -8,8 +8,12 @@ Example:
 """
 
 import copy
-from typing import Any, List, Sequence, Tuple
+import random
+from typing import Any, Callable, Dict, List, Sequence, Tuple
 
+import numpy as np
+
+from logic.src.configs.policies.routing.meta_heuristics.ts import TSConfig
 from logic.src.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators.destroy_ruin import (
     cluster_removal,
@@ -31,6 +35,19 @@ from logic.src.policies.routing.meta_heuristics.tabu_search.ls_adapter import TS
 
 class TSMoveGenerationMixin:
     """Swap, relocate and 2-opt candidate moves and the low-level heuristics of :class:`TSSolver`."""
+
+    # Provided by TSSolver.__init__; annotations only.
+    dist_matrix: np.ndarray
+    wastes: Dict[int, float]
+    capacity: float
+    R: float
+    C: float
+    params: TSConfig
+    mandatory_nodes: List[int]
+    nodes: List[int]
+    random: random.Random
+    iteration: int
+    _llh_pool: List[Callable[[List[List[int]], int], List[List[int]]]]
 
     def _generate_candidates(self, routes: List[List[int]]) -> Sequence[Tuple[List[List[int]], Tuple[str, Any]]]:
         """

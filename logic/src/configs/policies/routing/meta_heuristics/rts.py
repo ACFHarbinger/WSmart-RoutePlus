@@ -14,9 +14,10 @@ Example:
 """
 
 from dataclasses import dataclass, field
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union
 
 from logic.src.configs.policies.acceptance_criteria import AcceptanceConfig, AspirationConfig
+from logic.src.interfaces.acceptance_criterion import IAcceptanceCriterion
 
 
 @dataclass
@@ -53,7 +54,7 @@ class RTSConfig:
     profit_aware_operators: bool = False
     packing: Optional[List[Any]] = field(default_factory=list)
     route_improvement: Optional[List[Any]] = field(default_factory=list)
-    acceptance_criterion: AcceptanceConfig = field(
+    acceptance_criterion: Optional[Union[AcceptanceConfig, IAcceptanceCriterion]] = field(
         default_factory=lambda: AcceptanceConfig(method="ac", params=AspirationConfig())
     )
 

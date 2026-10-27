@@ -18,15 +18,15 @@ Examples:
     100.0
 """
 
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union, cast
 
 import numpy as np
 
+from logic.src.configs.policies.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
+from logic.src.configs.policies.helpers.learning.reinforcement_learning import RLConfig
+from logic.src.configs.policies.routing.learning_heuristic_algorithms.rl_hvpl import RLHVPLConfig
 from logic.src.configs.policies.routing.meta_heuristics.aco_ks import KSparseACOConfig
 from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
-from logic.src.configs.policies.helpers.learning.reinforcement_learning import RLConfig
-from logic.src.configs.policies.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
-from logic.src.configs.policies.routing.learning_heuristic_algorithms.rl_hvpl import RLHVPLConfig
 from logic.src.enums import PolicyTag
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
@@ -149,7 +149,7 @@ class RLHVPLPolicy(BaseRoutingPolicy):
             seed=seed,
         )
 
-        alns_params = ALNSConfig(
+        alns_params = cast(Any, ALNSConfig)(
             max_iterations=values.get("alns_iterations", 200),
             acceptance_criterion=AcceptanceConfig(
                 method="bmc",

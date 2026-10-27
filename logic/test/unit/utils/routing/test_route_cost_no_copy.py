@@ -2,7 +2,6 @@
 
 import numpy as np
 import pytest
-
 from logic.src.utils.routing.tours import get_route_cost
 
 

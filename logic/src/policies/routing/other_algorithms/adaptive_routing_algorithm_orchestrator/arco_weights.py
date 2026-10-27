@@ -7,13 +7,23 @@ per-step marginal rewards, the multiplicative weight decay, and the
 sigmoid reward helper.
 """
 
+import random
 from typing import List, Optional
 
 import numpy as np
 
+from logic.src.configs.policies.routing.other_algorithms.arco import ARCOConfig
+
 
 class ARCOWeightsMixin:
     """Adaptive sequence selection and EMA weight updates for ARCO."""
+
+    params: ARCOConfig
+    _n: int
+    _w_first: Optional[np.ndarray]
+    _W: Optional[np.ndarray]
+    _call_counts: Optional[np.ndarray]
+    _rng: random.Random
 
     # ------------------------------------------------------------------
     # Adaptive sequence selection

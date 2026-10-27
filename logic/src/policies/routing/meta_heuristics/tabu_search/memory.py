@@ -8,8 +8,12 @@ Example:
 """
 
 import copy
-from typing import Any, List, Tuple
+import random
+from typing import TYPE_CHECKING, Any, Callable, DefaultDict, Deque, Dict, List, Tuple
 
+import numpy as np
+
+from logic.src.configs.policies.routing.meta_heuristics.ts import TSConfig
 from logic.src.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators.recreate_repair import (
     greedy_insertion,
@@ -20,6 +24,28 @@ from logic.src.policies.helpers.operators.solution_initialization.greedy_si impo
 
 class TSMemoryMixin:
     """Short-term (tabu list) and long-term (frequency, elite pool) memory of :class:`TSSolver`."""
+
+    # Provided by TSSolver.__init__; annotations only.
+    dist_matrix: np.ndarray
+    wastes: Dict[int, float]
+    capacity: float
+    R: float
+    C: float
+    params: TSConfig
+    mandatory_nodes: List[int]
+    nodes: List[int]
+    random: random.Random
+    tabu_list: Deque[Tuple[str, Any, int]]
+    node_frequency: DefaultDict[int, int]
+    move_frequency: DefaultDict[Tuple[str, Any], int]
+    elite_solutions: List[Tuple[List[List[int]], float]]
+    iteration: int
+    iterations_since_improvement: int
+    _llh_pool: List[Callable[[List[List[int]], int], List[List[int]]]]
+
+    if TYPE_CHECKING:
+
+        def _evaluate(self, routes: List[List[int]]) -> float: ...
 
     def _is_tabu(self, move_desc: Tuple[str, Any]) -> bool:
         """Check if a move is currently tabu.

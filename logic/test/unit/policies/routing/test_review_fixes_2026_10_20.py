@@ -4,7 +4,6 @@ from types import SimpleNamespace
 
 import numpy as np
 import pytest
-
 from logic.src.interfaces.context.problem_context import ProblemContext
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -94,8 +93,8 @@ def test_joint_policies_are_in_the_routing_manifest(key: str) -> None:
 
 
 def test_joint_base_unpacks_the_area_parameter_tuple(monkeypatch) -> None:
-    from logic.src.policies.packing_and_routing.base import base_joint_policy as bj
     from logic.src.pipeline.simulations import repository
+    from logic.src.policies.packing_and_routing.base import base_joint_policy as bj
 
     monkeypatch.setattr(
         repository, "load_area_and_waste_type_params", lambda area, waste: (80.0, 0.5, 20.0, 1.2, 2.5)
@@ -118,8 +117,8 @@ def test_joint_base_unpacks_the_area_parameter_tuple(monkeypatch) -> None:
 
 @pytest.mark.parametrize("n_vehicles, expected", [(None, 1), (0, 0), (3, 3)])
 def test_joint_base_accepts_an_explicit_none_fleet(monkeypatch, n_vehicles, expected) -> None:
-    from logic.src.policies.packing_and_routing.base import base_joint_policy as bj
     from logic.src.pipeline.simulations import repository
+    from logic.src.policies.packing_and_routing.base import base_joint_policy as bj
 
     monkeypatch.setattr(
         repository, "load_area_and_waste_type_params", lambda area, waste: (80.0, 0.5, 20.0, 1.2, 2.5)

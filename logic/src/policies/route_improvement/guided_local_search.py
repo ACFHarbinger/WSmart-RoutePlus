@@ -9,7 +9,7 @@ Example:
     >>> tour, metrics = improver.process([0, 1, 2, 0], gls_iterations=10)
 """
 
-from typing import Any, List, Tuple
+from typing import Any, Dict, List, Tuple, cast
 
 import numpy as np
 
@@ -68,18 +68,18 @@ class GuidedLocalSearchRouteImprover(IRouteImprovement):
             return tour, {"algorithm": "GuidedLocalSearchRouteImprover"}
 
         # Parameters
-        gls_iterations = kwargs.get("gls_iterations", self.config.get("gls_iterations", 20))
-        inner_iterations = kwargs.get("gls_inner_iterations", self.config.get("gls_inner_iterations", 50))
-        lambda_factor_weight = kwargs.get("gls_lambda_factor", self.config.get("gls_lambda_factor", 0.1))
-        penalty_decay = kwargs.get("gls_penalty_decay", self.config.get("gls_penalty_decay", 1.0))
-        base_op_name = kwargs.get("gls_base_operator", self.config.get("gls_base_operator", "or_opt"))
-        seed = kwargs.get("seed", self.config.get("seed", 42))
+        gls_iterations = cast(int, kwargs.get("gls_iterations", self.config.get("gls_iterations", 20)))
+        inner_iterations = cast(int, kwargs.get("gls_inner_iterations", self.config.get("gls_inner_iterations", 50)))
+        lambda_factor_weight = cast(float, kwargs.get("gls_lambda_factor", self.config.get("gls_lambda_factor", 0.1)))
+        penalty_decay = cast(float, kwargs.get("gls_penalty_decay", self.config.get("gls_penalty_decay", 1.0)))
+        base_op_name = cast(str, kwargs.get("gls_base_operator", self.config.get("gls_base_operator", "or_opt")))
+        seed = cast(int, kwargs.get("seed", self.config.get("seed", 42)))
 
         # Problem parameters
-        wastes = kwargs.get("wastes", self.config.get("wastes", {}))
-        capacity = kwargs.get("capacity", self.config.get("capacity", float("inf")))
-        R = kwargs.get("R", self.config.get("R", 1.0))
-        C = kwargs.get("C", self.config.get("C", 1.0))
+        wastes = cast(Dict[int, float], kwargs.get("wastes", self.config.get("wastes", {})))
+        capacity = cast(float, kwargs.get("capacity", self.config.get("capacity", float("inf"))))
+        R = cast(float, kwargs.get("R", self.config.get("R", 1.0)))
+        C = cast(float, kwargs.get("C", self.config.get("C", 1.0)))
 
         # Convert distance matrix to numpy
         dm = to_numpy(distance_matrix)

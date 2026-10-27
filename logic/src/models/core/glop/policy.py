@@ -16,7 +16,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Literal, Optional, Union
+from typing import Any, Callable, Dict, Literal, Optional, Union, cast
 
 import torch
 from tensordict import TensorDict
@@ -224,7 +224,7 @@ class GLOPPolicy(NonAutoregressivePolicy):
             current = tour[-1]
             dists = torch.cdist(coords[current : current + 1], coords).squeeze(0)
             dists[visited] = float("inf")
-            nearest = dists.argmin().item()
+            nearest = cast(int, dists.argmin().item())  # 0-dim index is an int
             tour.append(nearest)  # type: ignore
             visited[nearest] = True
 

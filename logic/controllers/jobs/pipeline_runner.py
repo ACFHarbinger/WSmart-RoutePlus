@@ -17,7 +17,7 @@ Example::
     python main.py gen_data data.problem=ptp data.graph_sizes=[50]
 """
 
-from typing import Any, List
+from typing import Any, Callable, List, cast
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -91,7 +91,8 @@ def run_training(cfg: Any) -> float:
         # Imported here: HPO is not part of the 1.0.0 release, which prunes run_hpo.
         from logic.src.pipeline.features.train import run_hpo
 
-        return run_hpo(cfg)
+        # Lazy export; the name is Any until the HPO module is loaded.
+        return cast(Callable[[Any], Any], run_hpo)(cfg)
     return _train(cfg)
 
 

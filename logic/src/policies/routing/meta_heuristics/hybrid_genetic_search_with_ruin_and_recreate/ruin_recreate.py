@@ -338,7 +338,7 @@ class RuinRecreateOperator:
         # Call the operator
         try:
             # We use kwargs to match different operator signatures
-            kwargs = {
+            kwargs: Dict[str, Any] = {
                 "routes": routes,
                 "n_remove": n_remove,
                 "dist_matrix": self.dist_matrix,
@@ -412,7 +412,7 @@ class RuinRecreateOperator:
         # Call the operator
         try:
             # Common parameters for all operators
-            kwargs = {
+            kwargs: Dict[str, Any] = {
                 "routes": routes,
                 "removed_nodes": removed_nodes,
                 "dist_matrix": self.dist_matrix,

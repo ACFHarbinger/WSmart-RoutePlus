@@ -30,7 +30,7 @@ Example:
 
 import contextlib
 import traceback
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 import optuna
 import torch
@@ -336,6 +336,7 @@ def _mlflow_hpo_run(
     # Setup phase — safe to catch and fall back to None                   #
     # ------------------------------------------------------------------ #
     mlflow_run = None
+    active_run: Any = None
     try:
         if mlflow is not None:
             mlflow.set_experiment(experiment_name)
@@ -343,7 +344,7 @@ def _mlflow_hpo_run(
                 "task": "hpo",
                 "method": cfg.hpo.method,
                 "n_trials": str(cfg.hpo.n_trials or cfg.hpo.num_samples),
-                "problem": str(getattr(cfg.env, "name", "")),
+                "problem": str(getattr(cast(Any, cfg).env, "name", "")),  # composed config exposes env
             }
             mlflow_run = mlflow.start_run(run_name=f"hpo-{cfg.hpo.method}", tags=hpo_tags)
             active_run = mlflow_run.__enter__()
@@ -353,10 +354,14 @@ def _mlflow_hpo_run(
                         "hpo.method": cfg.hpo.method,
                         "hpo.n_epochs_per_trial": cfg.hpo.n_epochs_per_trial,
                         "hpo.num_samples": cfg.hpo.num_samples,
-                        "env.name": str(getattr(cfg.env, "name", "")),
+                        "env.name": str(getattr(cast(Any, cfg).env, "name", "")),
                         "env.graph.num_loc": str(
-                            getattr(getattr(cfg.env, "graph", {}), "num_loc", None)
-                            or getattr((getattr(cfg.env, "curriculum_graphs", [{}]) or [{}])[0], "num_loc", "")
+                            getattr(getattr(cast(Any, cfg).env, "graph", {}), "num_loc", None)
+                            or getattr(
+                                (getattr(cast(Any, cfg).env, "curriculum_graphs", [{}]) or [{}])[0],
+                                "num_loc",
+                                "",
+                            )
                         ),
                     }
                 )
@@ -372,7 +377,8 @@ def _mlflow_hpo_run(
         yield active_run
     finally:
         with contextlib.suppress(Exception):
-            mlflow_run.__exit__(None, None, None)
+            if mlflow_run is not None:
+                mlflow_run.__exit__(None, None, None)
 
 
 # ---------------------------------------------------------------------------

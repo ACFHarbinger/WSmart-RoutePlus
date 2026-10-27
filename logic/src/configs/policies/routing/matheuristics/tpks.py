@@ -6,6 +6,7 @@ Moved from the policy's ``params.py`` by the WP-06 scripted migration(Q-8b): the
 from __future__ import annotations
 
 from dataclasses import dataclass, fields
+from typing import Any
 
 
 @dataclass
@@ -54,6 +55,38 @@ class TpksConfig:
     seed: int = 42
     engine: str = "gurobi"
 
+
+    @classmethod
+    def from_config(cls, config: Any) -> "TpksConfig":
+        """Create TpksConfig from a configuration object or dictionary.
+
+        Args:
+            config: Configuration object or dict with TPKS parameter attributes.
+
+        Returns:
+            TpksConfig: Populated parameter dataclass.
+        """
+        if isinstance(config, dict):
+            return cls(**{k: v for k, v in config.items() if k in {f.name for f in fields(cls)}})
+
+        return cls(
+            phase1_kernel_size=getattr(config, "phase1_kernel_size", 30),
+            phase1_bucket_size=getattr(config, "phase1_bucket_size", 15),
+            phase1_time_fraction=getattr(config, "phase1_time_fraction", 0.35),
+            phase1_mip_node_limit=getattr(config, "phase1_mip_node_limit", 2000),
+            phase2_bucket_size_easy=getattr(config, "phase2_bucket_size_easy", 30),
+            phase2_bucket_size_normal=getattr(config, "phase2_bucket_size_normal", 15),
+            phase2_time_limit_per_bucket=getattr(config, "phase2_time_limit_per_bucket", 15.0),
+            max_buckets=getattr(config, "max_buckets", 20),
+            t_easy=getattr(config, "t_easy", 8.0),
+            epsilon=getattr(config, "epsilon", 0.1),
+            time_limit=getattr(config, "time_limit", 300.0),
+            mip_gap=getattr(config, "mip_gap", 0.01),
+            mip_limit_nodes=getattr(config, "mip_limit_nodes", 10000),
+            initial_kernel_size=getattr(config, "initial_kernel_size", 50),
+            seed=getattr(config, "seed", 42),
+            engine=getattr(config, "engine", "gurobi"),
+        )
 
     def to_dict(self):
         """Converts the parameter dataclass into a standard Python dictionary.

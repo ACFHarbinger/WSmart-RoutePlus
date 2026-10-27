@@ -7,9 +7,12 @@ from concurrent.futures import (
     as_completed,
 )
 from typing import (
+    Any,
+    Callable,
     Dict,
     List,
     Tuple,
+    cast,
 )
 
 import numpy as np
@@ -32,6 +35,13 @@ from .selection import (
 
 
 class CALMLayerMixin:
+    """Per-period layers. ``params`` and helpers live on ``CALMPolicy``."""
+
+    params: Any
+    horizon: int
+    _predict_mandatory_nodes_for_horizon: Callable[..., Any]
+    _stockout_penalty_estimate: Callable[..., float]
+
     # ------------------------------------------------------------------
     # Selection layer
     # ------------------------------------------------------------------
@@ -88,10 +98,10 @@ class CALMLayerMixin:
 
             result = solve_selection_period(
                 period=t,
-                dist_matrix=problem.dist_matrix,
+                dist_matrix=cast(Any, problem).dist_matrix,
                 revenue_eff=revenue_eff,
                 capacity=problem.capacity,
-                routing_cost_unit=problem.cost_unit,
+                routing_cost_unit=cast(float, cast(Any, problem).cost_unit),
                 mandatory_nodes=mandatory_map.get(t, []),
                 tpks_params=tpks_params,
                 hard_fix_bins=hard_fix_bins_this_period,
@@ -131,8 +141,8 @@ class CALMLayerMixin:
         def _worker(sr: SelectionResult) -> RoutingResult:
             return evaluate_period(
                 selection_result=sr,
-                dist_matrix=problem.dist_matrix,
-                n_bins=problem.n,
+                dist_matrix=cast(Any, problem).dist_matrix,
+                n_bins=cast(int, cast(Any, problem).n),
                 V_column=V[:, sr.period],
                 lambdas_column=lambdas_snapshot[:, sr.period],
                 oracle=state.oracle,
@@ -189,7 +199,7 @@ class CALMLayerMixin:
             if strategy == "lifted":
                 out[sr.period] = generate_lifted_cuts(
                     result=sr,
-                    dist_matrix=problem.dist_matrix,
+                    dist_matrix=cast(Any, problem).dist_matrix,
                     revenue_eff=revenue_eff_col,
                 )
             elif strategy == "pareto":
@@ -200,7 +210,7 @@ class CALMLayerMixin:
                 hist.append(sr)
                 out[sr.period] = generate_pareto_cuts(
                     results=hist,
-                    dist_matrix=problem.dist_matrix,
+                    dist_matrix=cast(Any, problem).dist_matrix,
                     revenue_eff=revenue_eff_col,
                 )
         return out
@@ -225,7 +235,7 @@ class CALMLayerMixin:
             Tuple[float, bool]: The primal value and whether it's an improvement.
         """
         V = state.tables.V
-        cost_unit = problem.cost_unit
+        cost_unit = cast(float, cast(Any, problem).cost_unit)
         total = 0.0
         for t in range(self.horizon):
             inc = state.oracle.get_incumbent(t)
@@ -233,7 +243,10 @@ class CALMLayerMixin:
                 continue
             sel = [b for b in inc.tour if b != 0]
             sel = sorted(set(sel))
-            idx = np.array([b - 1 for b in sel if 1 <= b <= problem.n], dtype=int)
+            idx = np.array(  # type: ignore[type-var]  # numpy stubs reject builtin int dtype
+                [b - 1 for b in sel if 1 <= b <= cast(int, cast(Any, problem).n)],
+                dtype=int,
+            )
             prize = float(np.sum(V[idx, t])) if idx.size else 0.0
             total += prize - cost_unit * inc.cost
 

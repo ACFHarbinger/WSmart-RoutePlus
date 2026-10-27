@@ -10,7 +10,7 @@ _LAZY = {
     "policy_rl_gd_hh": "logic.src.policies.routing.learning_heuristic_algorithms.reinforcement_learning_great_deluge_hyper_heuristic.policy_rl_gd_hh",
 }
 
-__all__ = list(_LAZY)
+__all__ = list(_LAZY)  # pyrefly: ignore[unresolvable-dunder-all]  # lazy re-exports resolved through __getattr__
 
 
 def __getattr__(name: str) -> Any:

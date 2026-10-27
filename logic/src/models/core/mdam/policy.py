@@ -104,7 +104,7 @@ class MDAMPolicy(AutoregressivePolicy):
         self.val_strategy = val_strategy
         self.test_strategy = test_strategy
 
-    def forward(
+    def forward(  # type: ignore[override]  # pyrefly: ignore[bad-override]  # parent forward has no phase argument
         self,
         td: TensorDict,
         env: RL4COEnvBase,

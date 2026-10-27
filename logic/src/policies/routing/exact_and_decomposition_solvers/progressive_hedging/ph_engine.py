@@ -34,7 +34,7 @@ Example:
 
 import logging
 from dataclasses import asdict, is_dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import numpy as np
 
@@ -189,13 +189,12 @@ class ProgressiveHedgingEngine:
                 # Dispatch to sub-solver via _run_solver to bypass the execute()
                 # interface which requires bins/area context unavailable here.
                 # Prizes are already in monetary units, so revenue=1.0 prevents double-scaling.
-                sub_solver = RoutingAlgorithmFactory.get_adapter(self.sub_solver_name)
+                sub_solver = cast(Any, RoutingAlgorithmFactory.get_adapter(self.sub_solver_name))
+                cfg_obj = sub_solver.config
                 values: Dict[str, Any] = (
-                    asdict(sub_solver.config)
-                    if sub_solver.config is not None and is_dataclass(sub_solver.config)
-                    else {}
+                    asdict(cast(Any, cfg_obj)) if cfg_obj is not None and is_dataclass(cfg_obj) else {}
                 )
-                routes, solver_profit, _dist_cost = sub_solver._run_solver(  # type: ignore[union-attr]
+                routes, solver_profit, _dist_cost = sub_solver._run_solver(
                     sub_dist_matrix=sub_dist_matrix,
                     sub_wastes=node_prizes[0],
                     capacity=capacity,

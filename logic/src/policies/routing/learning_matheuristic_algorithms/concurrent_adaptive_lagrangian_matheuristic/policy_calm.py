@@ -58,7 +58,7 @@ Outer-iteration state and the period loop live in ``calm_period``. Selection, ro
 from __future__ import annotations
 
 import time
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, cast
 
 import numpy as np
 
@@ -168,7 +168,7 @@ class CALMPolicy(CALMPeriodMixin, CALMLayerMixin, BaseMultiPeriodRoutingPolicy):
         cap = self.params.lookahead.capacity_cap
         penalty = 0.0
         expected_fill_final = state.tables.expected_fill[:, -1]
-        for i in range(problem.n):
+        for i in range(cast(int, cast(Any, problem).n)):
             bin_id = i + 1  # 1-based
             if bin_id in visited_any:
                 continue
@@ -283,7 +283,7 @@ class CALMPolicy(CALMPeriodMixin, CALMLayerMixin, BaseMultiPeriodRoutingPolicy):
         total_selected = 0
         for sel in state.best_per_period_selection.values():
             total_selected += len(sel)
-        frac_selected = total_selected / max(1, problem.n * self.horizon)
+        frac_selected = total_selected / max(1, cast(int, cast(Any, problem).n) * self.horizon)
 
         # Fraction of periods where current expected fill has saturated somewhere.
         ef = state.tables.expected_fill  # (N, T+1)
@@ -375,11 +375,14 @@ class CALMPolicy(CALMPeriodMixin, CALMLayerMixin, BaseMultiPeriodRoutingPolicy):
         today_selection = state.best_per_period_selection.get(0, [])
         # Profit for today's route.
         V = state.tables.V
-        today_idx = np.array([b - 1 for b in today_selection if 1 <= b <= problem.n], dtype=int)
+        today_idx = np.array(  # type: ignore[type-var]  # numpy stubs reject builtin int dtype
+            [b - 1 for b in today_selection if 1 <= b <= cast(int, cast(Any, problem).n)],
+            dtype=int,
+        )
         today_prize = float(np.sum(V[today_idx, 0])) if today_idx.size else 0.0
-        today_profit = today_prize - problem.cost_unit * today_cost
+        today_profit = today_prize - cast(float, cast(Any, problem).cost_unit) * today_cost
 
-        solution = SolutionContext(
+        solution = cast(Any, SolutionContext)(
             routes=[list(today_tour)],
             total_cost=today_cost,
             total_profit=today_profit,

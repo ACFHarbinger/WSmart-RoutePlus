@@ -44,12 +44,12 @@ from logic.src.pipeline.simulations.states.running import RunningState
 from logic.src.tracking.logging.logger_writer import setup_logger_redirection
 from logic.src.tracking.logging.modules.storage import setup_system_logger
 from logic.src.utils.configs.config_loader import load_config
+from logic.src.utils.configs.policy_files import policy_file
 from logic.src.utils.data.loader import load_grid_base
 from logic.src.utils.infrastructure.setup_env import setup_env
 from logic.src.utils.infrastructure.setup_manager import setup_hrl_manager
 from logic.src.utils.infrastructure.setup_sims import get_graph_config
 from logic.src.utils.infrastructure.setup_worker import setup_model
-from logic.src.utils.configs.policy_files import policy_file
 
 if TYPE_CHECKING:
     from logic.src.pipeline.simulations.states.base.base import SimulationContext

@@ -12,7 +12,7 @@ Example:
     >>> refined_tour, metrics = improver.process(tour, distance_matrix=dm)
 """
 
-from typing import Any, List, Tuple
+from typing import Any, Dict, List, Tuple, cast
 
 from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.search_context import ImprovementMetrics
@@ -67,11 +67,11 @@ class DPRouteReoptRouteImprover(IRouteImprovement):
         if distance_matrix is None or not tour:
             return tour, {"algorithm": "DPRouteReoptRouteImprover"}
 
-        wastes = kwargs.get("wastes", self.config.get("wastes", {}))
-        capacity = kwargs.get("capacity", self.config.get("capacity", float("inf")))
-        cost_per_km = kwargs.get("cost_per_km", self.config.get("cost_per_km", 0.0))
-        revenue_kg = kwargs.get("revenue_kg", self.config.get("revenue_kg", 0.0))
-        dp_max_nodes = kwargs.get("dp_max_nodes", self.config.get("dp_max_nodes", 20))
+        wastes = cast(Dict[int, float], kwargs.get("wastes", self.config.get("wastes", {})))
+        capacity = cast(float, kwargs.get("capacity", self.config.get("capacity", float("inf"))))
+        cost_per_km = cast(float, kwargs.get("cost_per_km", self.config.get("cost_per_km", 0.0)))
+        revenue_kg = cast(float, kwargs.get("revenue_kg", self.config.get("revenue_kg", 0.0)))
+        dp_max_nodes = cast(int, kwargs.get("dp_max_nodes", self.config.get("dp_max_nodes", 20)))
 
         dm = to_numpy(distance_matrix)
 

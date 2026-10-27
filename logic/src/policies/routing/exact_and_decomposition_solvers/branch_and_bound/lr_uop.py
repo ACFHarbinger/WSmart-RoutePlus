@@ -67,7 +67,7 @@ import heapq
 import itertools
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
 import numpy as np
 
@@ -256,7 +256,7 @@ def run_bb_lr_uop(
             forced_in=node.forced_in,
             forced_out=node.forced_out,
             time_limit=op_tl,
-            seed=params.seed,
+            seed=cast(int, params.seed),
             env=env,
             recorder=recorder,
         )

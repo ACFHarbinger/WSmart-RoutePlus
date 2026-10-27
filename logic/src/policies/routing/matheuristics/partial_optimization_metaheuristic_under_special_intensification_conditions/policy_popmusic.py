@@ -9,7 +9,7 @@ Example:
     >>> routes, cost, profit, info = popmusic.run_solver(dist_matrix, wastes, capacity, revenue, cost_unit, values, mandatory_nodes)
 """
 
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any, Dict, List, Optional, Tuple, Type, cast
 
 from logic.src.configs.policies.routing.matheuristics.popmusic import POPMUSICConfig
 from logic.src.enums import PolicyTag
@@ -125,7 +125,8 @@ class POPMUSICPolicy(BaseRoutingPolicy):
         params = POPMUSICConfig.from_config(self.config)
 
         # 2. Enforce deterministic behavior (override seed if provided in kwargs)
-        seed = kwargs.get("seed", params.seed)
+        raw_seed = kwargs.get("seed", params.seed)
+        seed = cast(int, raw_seed)  # None stays None; do not substitute the solver default
 
         # 3. Call the core matheuristic solver with granular parameter extraction
         routes, total_routing_cost, profit, info = run_popmusic(

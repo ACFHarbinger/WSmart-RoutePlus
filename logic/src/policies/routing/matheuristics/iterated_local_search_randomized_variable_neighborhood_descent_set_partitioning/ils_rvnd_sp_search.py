@@ -8,9 +8,12 @@ combined back into it by inheritance.
 
 import copy
 import time
-from typing import Callable, List, Optional, Set, Tuple
+from random import Random
+from typing import TYPE_CHECKING, Callable, List, Optional, Set, Tuple
 
+from logic.src.configs.policies.routing.matheuristics.ils_rvnd_sp import ILSRVNDSPConfig
 from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
+from logic.src.policies.helpers.local_search.local_search_general import GeneralLocalSearch
 from logic.src.policies.routing.matheuristics.iterated_local_search_randomized_variable_neighborhood_descent_set_partitioning.rvnd import (
     RVND,
 )
@@ -18,6 +21,21 @@ from logic.src.policies.routing.matheuristics.iterated_local_search_randomized_v
 
 class ILSRVNDSPSearchMixin:
     """ILS-RVND search loop, perturbation, strategies and RVND operator creation."""
+
+    # Instance state and helpers are assigned on ILSRVNDSPSolver; declared here for the mixin.
+    params: ILSRVNDSPConfig
+    random: Random
+    route_pool: Set[Tuple[int, ...]]
+    n_nodes: int
+    ls_manager: GeneralLocalSearch
+    if TYPE_CHECKING:
+        # Implemented on ILSRVNDSPSolver; declared so this mixin can call them.
+        def calculate_profit(self, routes: List[List[int]]) -> float: ...
+        def build_initial_solution(self) -> List[List[int]]: ...
+        def solve_set_partitioning(
+            self, pool: Optional[Set[Tuple[int, ...]]] = None
+        ) -> Tuple[List[List[int]], float, float]: ...
+        def _add_to_pool(self, routes: List[List[int]], pool: Optional[Set[Tuple[int, ...]]] = None) -> None: ...
 
     def _perturb(self, routes: List[List[int]]) -> List[List[int]]:
         """Random perturbation for ILS as specified in Subramanian et al. (2013).

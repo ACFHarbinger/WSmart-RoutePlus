@@ -13,7 +13,7 @@ Example:
     >>> best_tour, metrics = improver.process(tour, distance_matrix=dm, sa_iterations=1000)
 """
 
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, cast
 
 import numpy as np
 
@@ -73,14 +73,14 @@ class SimulatedAnnealingRouteImprover(IRouteImprovement):
             return tour, {"algorithm": "SimulatedAnnealingRouteImprover"}
 
         # Parameters
-        iterations = kwargs.get("sa_iterations", self.config.get("sa_iterations", 5000))
-        t_init = kwargs.get("sa_t_init", self.config.get("sa_t_init", 10.0))
-        cooling = kwargs.get("sa_cooling", self.config.get("sa_cooling", 0.999))
-        seed = kwargs.get("seed", self.config.get("seed", 42))
+        iterations = cast(int, kwargs.get("sa_iterations", self.config.get("sa_iterations", 5000)))
+        t_init = cast(float, kwargs.get("sa_t_init", self.config.get("sa_t_init", 10.0)))
+        cooling = cast(float, kwargs.get("sa_cooling", self.config.get("sa_cooling", 0.999)))
+        seed = cast(int, kwargs.get("seed", self.config.get("seed", 42)))
 
         # Problem parameters
-        wastes = kwargs.get("wastes", self.config.get("wastes", {}))
-        capacity = kwargs.get("capacity", self.config.get("capacity", float("inf")))
+        wastes = cast(Dict[int, float], kwargs.get("wastes", self.config.get("wastes", {})))
+        capacity = cast(float, kwargs.get("capacity", self.config.get("capacity", float("inf"))))
 
         dm = to_numpy(distance_matrix)
 

@@ -27,10 +27,9 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from logic.src.configs.policies.packing.dispatch import PackingConfig
-
+from logic.src.configs.policies.route_improvement import RouteImprovingConfig
 from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
 from logic.src.configs.policies.routing.meta_heuristics.hgs import HGSConfig
-from logic.src.configs.policies.route_improvement import RouteImprovingConfig
 from logic.src.configs.policies.routing.other_algorithms.tsp import TSPConfig
 
 

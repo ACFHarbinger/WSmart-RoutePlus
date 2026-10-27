@@ -15,7 +15,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 import torch
 from tensordict import TensorDict
@@ -163,8 +163,8 @@ class GLOP(nn.Module):
         # Group by sample dimensions
         from logic.src.utils.decoding import unbatchify
 
-        reward_flat = unbatchify(reward_val, self.n_samples)
-        log_prob_flat = unbatchify(log_prob, self.n_samples)
+        reward_flat = cast(torch.Tensor, unbatchify(reward_val, self.n_samples))
+        log_prob_flat = cast(torch.Tensor, unbatchify(log_prob, self.n_samples))
 
         # Mean-centered policy gradient
         advantage = reward_flat - reward_flat.mean(dim=-1, keepdim=True)

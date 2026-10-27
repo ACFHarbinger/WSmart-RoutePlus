@@ -1,7 +1,6 @@
 """Summary tables keep their metric columns when stdout is not a terminal."""
 
 import pytest
-
 from logic.src.tracking.logging.modules.summary_display import display_simulation_summary_table
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

@@ -119,7 +119,7 @@ class A2C(RL4COLitModule):
 
     def calculate_loss(
         self,
-        td: TensorDict,
+        td: Optional[TensorDict],
         out: dict,
         batch_idx: int,
         env: Optional[IEnv] = None,
@@ -136,6 +136,7 @@ class A2C(RL4COLitModule):
         Returns:
             Weighted combination of policy gradient, value, and entropy losses.
         """
+        td = cast(TensorDict, td)  # parent accepts None; callers pass a batch
         reward = out["reward"]
         log_likelihood = out["log_likelihood"]
 

@@ -15,7 +15,11 @@ from logic.src.configs.policies import (
 from logic.src.configs.policies.route_improvement import RandomLocalSearchPostConfig
 from logic.src.configs.policies.vectorized.routing.profitable_nn import ProfitableNNConfig
 from logic.src.policies.vectorized.routing.shared import routes as rs
-from logic.src.policies.vectorized.routing.shared.factory import EXPERT_TARGETS, create_expert_policy, load_expert_policy_cls
+from logic.src.policies.vectorized.routing.shared.factory import (
+    EXPERT_TARGETS,
+    create_expert_policy,
+    load_expert_policy_cls,
+)
 from logic.src.policies.vectorized.routing.shared.vrpp import parse_instance, profit_split
 from tensordict import TensorDict
 

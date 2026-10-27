@@ -9,7 +9,7 @@ Example:
 """
 
 from dataclasses import asdict
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union, cast
 
 import numpy as np
 
@@ -84,7 +84,7 @@ class PSOPolicyAdapter(BaseMultiPeriodRoutingPolicy):
             velocity_max=values.get("velocity_max", 0.5),
             max_iterations=values.get("max_iterations", 500),
             time_limit=values.get("time_limit", 60.0),
-            profit_aware_operators=values.get("profit_aware_operators", False),
+            profit_aware_operators=cast(bool, values.get("profit_aware_operators", False)),
             seed=values.get("seed", 42),
         )
 

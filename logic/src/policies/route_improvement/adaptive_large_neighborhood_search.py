@@ -14,7 +14,7 @@ Example:
 
 import pickle
 import random
-from typing import Any, List, Tuple
+from typing import Any, Dict, List, Tuple, cast
 
 from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.search_context import ImprovementMetrics
@@ -81,21 +81,21 @@ class AdaptiveLargeNeighborhoodSearchRouteImprover(IRouteImprovement):
             return tour, {"algorithm": "AdaptiveLargeNeighborhoodSearchRouteImprover"}
 
         # Parameters
-        iterations = kwargs.get("alns_iterations", self.config.get("alns_iterations", 200))
-        ruin_fraction = kwargs.get("ruin_fraction", self.config.get("ruin_fraction", 0.2))
+        iterations = cast(int, kwargs.get("alns_iterations", self.config.get("alns_iterations", 200)))
+        ruin_fraction = cast(float, kwargs.get("ruin_fraction", self.config.get("ruin_fraction", 0.2)))
         warm_start_path = kwargs.get("alns_bandit_warm_start_path", self.config.get("alns_bandit_warm_start_path"))
-        seed = kwargs.get("seed", self.config.get("seed", 42))
+        seed = cast(int, kwargs.get("seed", self.config.get("seed", 42)))
 
         # Operator parameters
-        p = kwargs.get("p", self.config.get("p", 1.0))
-        noise = kwargs.get("noise", self.config.get("noise", 0.0))
-        repair_k = kwargs.get("repair_k", self.config.get("repair_k", 2))
+        p = cast(float, kwargs.get("p", self.config.get("p", 1.0)))
+        noise = cast(float, kwargs.get("noise", self.config.get("noise", 0.0)))
+        repair_k = cast(int, kwargs.get("repair_k", self.config.get("repair_k", 2)))
 
         # Problem parameters
-        wastes = kwargs.get("wastes", self.config.get("wastes", {}))
-        capacity = kwargs.get("capacity", self.config.get("capacity", float("inf")))
-        cost_per_km = kwargs.get("cost_per_km", self.config.get("cost_per_km", 0.0))
-        revenue_kg = kwargs.get("revenue_kg", self.config.get("revenue_kg", 0.0))
+        wastes = cast(Dict[int, float], kwargs.get("wastes", self.config.get("wastes", {})))
+        capacity = cast(float, kwargs.get("capacity", self.config.get("capacity", float("inf"))))
+        cost_per_km = cast(float, kwargs.get("cost_per_km", self.config.get("cost_per_km", 0.0)))
+        revenue_kg = cast(float, kwargs.get("revenue_kg", self.config.get("revenue_kg", 0.0)))
 
         # Mandatory nodes resolution
         mandatory_nodes = resolve_mandatory_nodes(kwargs, self.config)
@@ -117,10 +117,17 @@ class AdaptiveLargeNeighborhoodSearchRouteImprover(IRouteImprovement):
             best_cost = current_cost
 
             # Initialize Bandits with configurable canonical operator names
-            ruin_ops = kwargs.get(
-                "alns_ruin_ops", self.config.get("alns_ruin_ops", ["random", "worst", "shaw", "cluster"])
+            ruin_ops = cast(
+                List[str],
+                kwargs.get(
+                    "alns_ruin_ops",
+                    self.config.get("alns_ruin_ops", ["random", "worst", "shaw", "cluster"]),
+                ),
             )
-            repair_ops_raw = kwargs.get("alns_repair_ops", self.config.get("alns_repair_ops", ["greedy", "regret"]))
+            repair_ops_raw = cast(
+                List[str],
+                kwargs.get("alns_repair_ops", self.config.get("alns_repair_ops", ["greedy", "regret"])),
+            )
 
             # Profit-aware upgrade for repair candidates
             repair_ops = [upgrade_repair_op_to_profit(op, revenue_kg, cost_per_km) for op in repair_ops_raw]

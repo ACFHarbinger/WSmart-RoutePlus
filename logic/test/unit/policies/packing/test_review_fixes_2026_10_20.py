@@ -4,7 +4,6 @@ from types import SimpleNamespace
 
 import numpy as np
 import pytest
-
 from logic.src.interfaces.context import PackingContext, SearchContext
 from logic.src.pipeline.simulations.actions.collection import CollectAction
 from logic.src.pipeline.simulations.actions.node_selection import PackingAction

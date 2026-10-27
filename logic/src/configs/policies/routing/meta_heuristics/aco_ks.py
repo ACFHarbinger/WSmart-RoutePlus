@@ -16,9 +16,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
 
-from logic.src.configs.policies.packing.dispatch import PackingConfig
-
 from logic.src.configs.policies.acceptance_criteria import AcceptanceConfig
+from logic.src.configs.policies.packing.dispatch import PackingConfig
 from logic.src.configs.policies.route_improvement import RouteImprovingConfig
 from logic.src.interfaces.acceptance_criterion import IAcceptanceCriterion
 

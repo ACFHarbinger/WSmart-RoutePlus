@@ -155,8 +155,8 @@ def test_alns_from_config_consumes_injected_bmc_on_attrdict() -> None:
 
 
 def test_hgs_from_config_consumes_injected_oi() -> None:
-    from logic.src.configs.policies.routing.meta_heuristics.hgs import HGSConfig
     from logic.src.configs.policies.acceptance_criteria import OnlyImprovingConfig
+    from logic.src.configs.policies.routing.meta_heuristics.hgs import HGSConfig
     from logic.src.policies.acceptance_criteria.only_improving import OnlyImproving
     from logic.src.policies.routing.base.sub_problem import build_subproblem
     from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.hgs import HGSSolver

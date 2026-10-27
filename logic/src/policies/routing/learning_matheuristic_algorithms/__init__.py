@@ -9,7 +9,7 @@ _LAZY = {
     "policy_calm": "logic.src.policies.routing.learning_matheuristic_algorithms.concurrent_adaptive_lagrangian_matheuristic.policy_calm",
 }
 
-__all__ = list(_LAZY)
+__all__ = list(_LAZY)  # pyrefly: ignore[unresolvable-dunder-all]  # lazy re-exports resolved through __getattr__
 
 
 def __getattr__(name: str) -> Any:

@@ -14,7 +14,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 from logic.src.models.core.attention_model import AttentionModel
 from logic.src.models.subnets.factories import MoEComponentFactory
@@ -88,4 +88,4 @@ class MoEAttentionModel(AttentionModel):
         Returns:
             int: Number of expert modules.
         """
-        return self.encoder.num_experts if hasattr(self.encoder, "num_experts") else 0
+        return cast(int, self.encoder.num_experts if hasattr(self.encoder, "num_experts") else 0)

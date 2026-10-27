@@ -13,7 +13,7 @@ Example:
 """
 
 import os
-from typing import Any, cast
+from typing import Any, Optional, cast
 
 import googlemaps
 import numpy as np
@@ -62,7 +62,7 @@ class GoogleMapsStrategy(DistanceStrategy):
                     "Install it or provide GOOGLE_API_KEY directly in the .env file."
                 )
             sym_key = load_key(kwargs["symkey_name"], kwargs["env_filename"])
-            api_key = decrypt_file_data(sym_key, kwargs["gapik_file"])
+            api_key = cast(Optional[str], decrypt_file_data(sym_key, kwargs["gapik_file"]))  # decrypted key text
         elif api_key == "" and self._eval_kwarg("gapik_file", kwargs):
             with open(kwargs["gapik_file"], "r") as gapik_file:
                 api_key = gapik_file.read()

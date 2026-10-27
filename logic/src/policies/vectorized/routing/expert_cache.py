@@ -36,7 +36,10 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from logic.src.policies.vectorized.routing.profitable_nearest_neighbour import EXPERT_VERSION, ProfitableNearestNeighbourPolicy
+from logic.src.policies.vectorized.routing.profitable_nearest_neighbour import (
+    EXPERT_VERSION,
+    ProfitableNearestNeighbourPolicy,
+)
 from logic.src.tracking.logging.pylogger import get_pylogger
 
 logger = get_pylogger(__name__)

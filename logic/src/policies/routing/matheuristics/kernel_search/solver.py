@@ -28,7 +28,7 @@ Example:
 """
 
 import random
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
 import gurobipy as gp
 import numpy as np
@@ -267,7 +267,7 @@ def _reconstruct_tour(
     # 1. Extract activated edges
     active_edges = []
     for (i, j), var in x.items():
-        val = getattr(var, "X", var)
+        val = cast(float, getattr(var, "X", var))
         if val > 0.5:
             active_edges.append((i, j))
 

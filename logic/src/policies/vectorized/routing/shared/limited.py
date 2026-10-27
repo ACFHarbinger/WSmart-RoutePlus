@@ -13,7 +13,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Tuple
+from typing import List, Tuple
 
 import torch
 
@@ -31,7 +31,7 @@ def vectorized_split_limited(
     d_0_i: torch.Tensor,
     d_i_0: torch.Tensor,
     giant_tours: torch.Tensor,
-) -> Tuple[torch.Tensor, torch.Tensor]:
+) -> Tuple[List[List[int]], torch.Tensor]:
     """Limited split using K-step updates (dynamic programming).
 
     Constrains the solution to use at most `max_vehicles` routes by iterating

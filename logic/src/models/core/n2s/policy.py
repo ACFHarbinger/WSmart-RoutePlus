@@ -13,7 +13,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 import torch
 from tensordict import TensorDict
@@ -219,8 +219,9 @@ class N2SPolicy(ImprovementPolicy):
         kwargs: dict[str, Any],
     ) -> None:
         """Sets up and validates the initial precedence-feasible PDP tour."""
-        partner_ids = self.decoder._resolve_partner_ids(td, bs, n, device, kwargs)
-        is_delivery, _ = self.decoder._identify_delivery_nodes(
+        decoder = cast(Any, self.decoder)  # parent types the decoder as optional
+        partner_ids = decoder._resolve_partner_ids(td, bs, n, device, kwargs)
+        is_delivery, _ = decoder._identify_delivery_nodes(
             None, partner_ids, bs, n, device, td=td, validate_solution=False
         )
         node_indices = torch.arange(n, device=device).unsqueeze(0).expand(bs, -1)
@@ -294,7 +295,14 @@ class N2SPolicy(ImprovementPolicy):
             n = 21
 
         self._setup_initial_pdp_solution(
-            td, caller_had_solution, caller_solution, has_explicit_pdp, bs, n, device, kwargs
+            td,
+            caller_had_solution,
+            caller_solution,
+            has_explicit_pdp,
+            bs,
+            n,
+            cast(torch.device, device),  # td.device is a device-like value
+            kwargs,
         )
 
         if num_starts > 1:

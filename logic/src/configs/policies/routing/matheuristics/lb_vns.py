@@ -14,11 +14,10 @@ Example:
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 from logic.src.configs.policies.acceptance_criteria import AcceptanceConfig
 from logic.src.configs.policies.packing.dispatch import PackingConfig
-
 from logic.src.configs.policies.route_improvement import RouteImprovingConfig
 
 
@@ -105,7 +104,9 @@ class LocalBranchingVNSConfig:
 
         if self.acceptance_criterion is None:
             # Standard VNS uses Improving-Only acceptance
-            self.acceptance_criterion = AcceptanceCriterionFactory.create(name="oi")
+            self.acceptance_criterion = cast(  # pyrefly: ignore[bad-assignment]  # declared AcceptanceConfig; factory returns the runtime criterion
+                AcceptanceConfig, AcceptanceCriterionFactory.create(name="oi")
+            )
 
     @classmethod
     def from_config(cls, config: Any) -> "LocalBranchingVNSConfig":
@@ -139,13 +140,16 @@ class LocalBranchingVNSConfig:
 
         acceptance_cfg = getattr(config, "acceptance_criterion", None)
         if acceptance_cfg:
-            params.acceptance_criterion = AcceptanceCriterionFactory.create(
-                name=acceptance_cfg.method,
-                config=acceptance_cfg.params,
+            params.acceptance_criterion = cast(
+                AcceptanceConfig,
+                AcceptanceCriterionFactory.create(
+                    name=acceptance_cfg.method,
+                    config=acceptance_cfg.params,
+                ),
             )
         else:
             # Default to only_improving for standard VNS
-            params.acceptance_criterion = AcceptanceCriterionFactory.create(name="oi")
+            params.acceptance_criterion = cast(AcceptanceConfig, AcceptanceCriterionFactory.create(name="oi"))
 
         return params
 

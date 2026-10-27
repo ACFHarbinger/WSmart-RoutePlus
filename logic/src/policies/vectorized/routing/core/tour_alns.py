@@ -19,7 +19,7 @@ VRPP expert counterpart of the simulator solver lives in the parent package.
 from __future__ import annotations
 
 import time
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import torch
 
@@ -140,7 +140,7 @@ class VectorizedTourALNS(PolicyVizMixin):
         max_vehicles: int = 0,
         start_temp: float = 0.5,
         cooling_rate: float = 0.9995,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> Tuple[List[List[int]], torch.Tensor]:
         """Optimizes the provided solutions using adaptive search.
 
         Employs a split-and-solve strategy:

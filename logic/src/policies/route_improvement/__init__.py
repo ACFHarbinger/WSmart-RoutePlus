@@ -41,7 +41,7 @@ _LAZY = {
     "SetPartitioningPolishRouteImprover": "logic.src.policies.route_improvement.set_partitioning_polish:SetPartitioningPolishRouteImprover",
 }
 
-__all__ = ["RouteImproverRegistry", "RouteImproverFactory", *list(_LAZY)]
+__all__ = ["RouteImproverRegistry", "RouteImproverFactory", *list(_LAZY)]  # pyrefly: ignore[unresolvable-dunder-all]  # splat of the lazy export map
 
 
 def __getattr__(name: str) -> Any:

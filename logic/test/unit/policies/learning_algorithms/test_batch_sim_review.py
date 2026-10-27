@@ -4,9 +4,8 @@ from types import SimpleNamespace
 
 import pytest
 import torch
-from torch import nn
-
 from logic.src.policies.routing.learning_algorithms.neural_agent.agent import NeuralAgent
+from torch import nn
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

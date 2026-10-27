@@ -14,7 +14,7 @@ Example:
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 import optuna
 import torch
@@ -220,7 +220,7 @@ class PolicyHPOBase(ABC):
             choices = spec["choices"]
             # Optuna requires hashable choices; convert lists → tuples for sampling.
             hashable_choices = [tuple(c) if isinstance(c, list) else c for c in choices]
-            sampled = trial.suggest_categorical(name, hashable_choices)
+            sampled = trial.suggest_categorical(name, cast(Any, hashable_choices))  # optuna choice stubs are too narrow
             # Restore original type for the caller.
             return list(sampled) if isinstance(sampled, tuple) else sampled
         else:
@@ -280,12 +280,13 @@ class PolicyHPOBase(ABC):
         if method == "botorch":
             try:
                 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-                return BoTorchSampler(
+                sampler = cast(Any, BoTorchSampler)(  # installed sampler accepts n_ei_candidates
                     seed=seed,
                     n_startup_trials=20,  # Burn-in phase (LHS)
                     n_ei_candidates=24,  # Candidates for acquisition maximization
                     device=device,
                 )
+                return cast(optuna.samplers.BaseSampler, sampler)
             except ImportError as exc:
                 raise ImportError(
                     "method='botorch' requires the 'optuna-integration[botorch]' package. "

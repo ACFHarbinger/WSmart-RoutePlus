@@ -1,13 +1,16 @@
 """master callbacks methods relocated from master_problem."""
 
-from typing import Any, List
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.ils_bd import IntegerLShapedBendersConfig
 from logic.src.policies.helpers.solvers_and_matheuristics import (
     CapacityCut,
     PCSubtourEliminationCut,
+    SeparationEngine,
 )
+from logic.src.policies.helpers.solvers_and_matheuristics.vrpp_model import VRPPModel
 
 try:
     import gurobipy as gp
@@ -22,6 +25,15 @@ except ImportError:
 
 class MasterCallbacksMixin:
     """Relocated master callbacks methods."""
+
+    # Declared by MasterProblem.__init__; annotation only.
+    model: VRPPModel
+    params: IntegerLShapedBendersConfig
+    separator: SeparationEngine
+    stats: Dict[str, float]
+    _gurobi_model: Optional[Any]
+    _x_vars: Dict[Tuple[int, int], Any]
+    _y_vars: Dict[int, Any]
 
     def _lazy_constraint_callback(self, model: Any, where: int) -> None:
         """Gurobi lazy/user cut callback for SEC and RCC separation.

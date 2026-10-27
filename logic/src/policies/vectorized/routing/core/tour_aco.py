@@ -16,7 +16,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import torch
 from tensordict import TensorDict
@@ -156,7 +156,7 @@ class VectorizedTourACOPolicy(AutoregressivePolicy, PolicyVizMixin):
         batch_size = td.batch_size[0]
         device = td.device if td.device is not None else td["locs"].device
 
-        locs = td["locs"]
+        locs = cast(torch.Tensor, td["locs"])
         if locs.dim() == 3 and locs.shape[-1] == 2:
             diff = locs.unsqueeze(2) - locs.unsqueeze(1)
             dist_matrix = torch.sqrt((diff**2).sum(dim=-1))

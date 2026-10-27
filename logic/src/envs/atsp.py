@@ -5,7 +5,7 @@ The module also holds ``ATSPGenerator``, the problem's instance generator.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, cast
 
 import torch
 from tensordict import TensorDict, TensorDictBase
@@ -123,7 +123,9 @@ class ATSPEnv(RoutingEnv):
 
     # Dynamics of the pre-WP-07 envs/routing/atsp.py, kept verbatim (review CR-12, Q-8b).
 
-    def _reset_instance(self, td: TensorDict) -> TensorDict:
+    def _reset_instance(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDict
+    ) -> TensorDict:
         """Initialise ATSP episode state.
 
         Args:
@@ -156,7 +158,9 @@ class ATSPEnv(RoutingEnv):
 
         return td
 
-    def _step(self, td: TensorDict) -> TensorDict:
+    def _step(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDict
+    ) -> TensorDict:
         """Delegate to OpsMixin._step, which calls _step_instance.
 
         Args:
@@ -165,9 +169,11 @@ class ATSPEnv(RoutingEnv):
         Returns:
             Updated TensorDict or tensor containing the result.
         """
-        return OpsMixin._step(self, td)
+        return cast(TensorDict, OpsMixin._step(self, td))  # mixin returns TensorDictBase
 
-    def _step_instance(self, td: TensorDict) -> TensorDict:
+    def _step_instance(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDict
+    ) -> TensorDict:
         """
         Execute one ATSP action.
 
@@ -179,6 +185,7 @@ class ATSPEnv(RoutingEnv):
         Returns:
             Updated TensorDict or tensor containing the result.
         """
+        td = cast(Any, td)  # TensorDict values are a tensor union
         action = td["action"]
         if action.dim() > 1:
             action = action.squeeze(-1)
@@ -204,9 +211,11 @@ class ATSPEnv(RoutingEnv):
         td["current_node"] = action
         td["tour"] = torch.cat([td["tour"], action.unsqueeze(-1)], dim=-1)
 
-        return td
+        return cast(TensorDict, td)
 
-    def _check_done(self, td: TensorDict) -> torch.Tensor:
+    def _check_done(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDict
+    ) -> torch.Tensor:
         """Done when all N nodes have been visited.
 
         Args:
@@ -215,9 +224,12 @@ class ATSPEnv(RoutingEnv):
         Returns:
             Updated TensorDict or tensor containing the result.
         """
-        return td["visited"].all(dim=-1)
+        td = cast(Any, td)  # TensorDict values are a tensor union
+        return cast(torch.Tensor, td["visited"].all(dim=-1))
 
-    def _get_action_mask(self, td: TensorDict) -> torch.Tensor:
+    def _get_action_mask(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDict
+    ) -> torch.Tensor:
         """All unvisited nodes are valid actions.
 
         Args:
@@ -226,9 +238,12 @@ class ATSPEnv(RoutingEnv):
         Returns:
             Updated TensorDict or tensor containing the result.
         """
-        return ~td["visited"]
+        td = cast(Any, td)  # TensorDict values are a tensor union
+        return cast(torch.Tensor, ~td["visited"])
 
-    def _get_reward(self, td: TensorDictBase, actions: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def _get_reward(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDictBase, actions: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
         """
         Reward = -(accumulated tour cost + closing edge cost).
 
@@ -241,6 +256,7 @@ class ATSPEnv(RoutingEnv):
         Returns:
             Updated TensorDict or tensor containing the result.
         """
+        td = cast(Any, td)  # TensorDict values are a tensor union
         cost_matrix = td["cost_matrix"]
         bs = td.batch_size
         flat_bs = bs.numel() if len(bs) > 0 else 1
@@ -258,7 +274,7 @@ class ATSPEnv(RoutingEnv):
         closing = flat_cost[batch_idx, current.reshape(flat_bs), first.reshape(flat_bs)].reshape(*bs)
 
         total = td["tour_length"] + closing
-        return -total
+        return cast(torch.Tensor, -total)
 
 
 class ATSP(BaseProblem):

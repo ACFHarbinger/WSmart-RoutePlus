@@ -41,7 +41,7 @@ import logging
 import multiprocessing as mp
 import os
 import warnings
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import Any, Callable, List, Optional, Tuple, Union, cast
 
 import optuna
 from omegaconf import OmegaConf
@@ -187,7 +187,7 @@ class HPOSimulationHandler:
 
     def get_objective(
         self, lock: Any, data_size: int
-    ) -> Callable[[optuna.Trial], Union[float, List[float], Tuple[float]]]:
+    ) -> Callable[[optuna.Trial], Union[float, List[float], Tuple[float, ...]]]:
         """Creates the Optuna objective closure.
 
         Args:
@@ -199,9 +199,12 @@ class HPOSimulationHandler:
             Callable[[optuna.Trial], Union[float, List[float]]]: Optuna objective closure.
         """
 
-        def objective_fn(trial: optuna.Trial) -> Union[float, List[float]]:
+        def objective_fn(trial: optuna.Trial) -> Union[float, List[float], Tuple[float, ...]]:
             # Use the existing functional objective but wrapped in the class state.
-            return objective(trial, self.cfg, data_size, lock)  # pyrefly: ignore [bad-return]
+            return cast(
+                Union[float, List[float], Tuple[float, ...]],
+                objective(trial, self.cfg, data_size, lock),
+            )
 
         return objective_fn
 
@@ -223,7 +226,7 @@ class HPOSimulationHandler:
             evaluator = FanovaImportanceEvaluator(n_trees=64, max_depth=64)
 
             def target_fn(t: FrozenTrial) -> float:
-                return float(t.values[target_idx] if t.values else t.value)  # pyrefly: ignore [bad-argument-type]
+                return float(cast(Any, t.values[target_idx] if t.values else t.value))  # trial value is optional
 
             importances = optuna.importance.get_param_importances(self.study, evaluator=evaluator, target=target_fn)
 
@@ -453,7 +456,7 @@ def run_hpo_sim(cfg: Config) -> Union[float, List[float]]:
             run.set_tag("mode", "single_objective")
             run.flush()
 
-        return best_value  # pyrefly: ignore [bad-return]
+        return cast(float, best_value)  # trial value is optional in the stubs
 
 
 # ---------------------------------------------------------------------------

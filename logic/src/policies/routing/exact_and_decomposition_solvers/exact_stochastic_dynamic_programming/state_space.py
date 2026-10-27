@@ -42,6 +42,7 @@ class StateSpaceManager:
         # Build 1D transition probabilities for a single bin
         self._build_bin_transitions(max_fill_rate)
 
+    def get_all_states(self) -> List[Tuple[int, ...]]:
         """Return a list of all possible discrete state tuples.
 
         Returns:

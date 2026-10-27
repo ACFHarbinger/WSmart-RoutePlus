@@ -25,7 +25,7 @@ Example:
 
 import time
 from random import Random
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union, cast
 
 import numpy as np
 
@@ -194,7 +194,7 @@ class LKH3Policy(BaseRoutingPolicy):
                 recorder=self._viz,
                 np_rng=np_rng,
                 rng=rng,
-                seed=seed,
+                seed=cast(int, seed),  # None stays None; the callee default applies only when the argument is omitted
                 dynamic_topology_discovery=params.dynamic_topology_discovery,
                 native_prize_collecting=params.native_prize_collecting,
             )

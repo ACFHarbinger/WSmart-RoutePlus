@@ -5,7 +5,7 @@ The module also holds ``OPGenerator``, the problem's instance generator.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Optional, Sequence, Union
+from typing import Any, Callable, Dict, Optional, Sequence, Union, cast
 
 import torch
 from tensordict import TensorDict
@@ -90,11 +90,11 @@ class OPGenerator(RoutingGenerator):
         Returns:
             TensorDict with ``locs``, ``depot``, ``prize`` and ``max_length``.
         """
-        td = super()._generate(batch_size)
+        td = cast(Any, super()._generate(batch_size))  # TensorDict values are a tensor union
         bs = tuple(td.batch_size)
         td["prize"] = self._generate_prize(bs, td["locs"], td["depot"])
         td["max_length"] = torch.full(bs, self.max_length, device=self.device)
-        return td
+        return cast(TensorDict, td)
 
     def _generate_prize(self, batch_size: tuple[int, ...], locs: torch.Tensor, depot: torch.Tensor) -> torch.Tensor:
         """Prizes ``[*B, num_loc]`` for ``prize_type``."""
@@ -143,11 +143,14 @@ class OPEnv(RoutingEnv):
     # offered only if the tour can reach it and still return within ``max_length``,
     # and the reward is the collected prize.
 
-    def _reset_instance(self, tensordict: TensorDict) -> TensorDict:
+    def _reset_instance(  # pyrefly: ignore[bad-override]  # parent parameter is TensorDictBase
+        self, tensordict: TensorDict
+    ) -> TensorDict:
+        tensordict = cast(Any, tensordict)  # TensorDict values are a tensor union
         if "visited" in tensordict.keys():
-            return tensordict
+            return cast(TensorDict, tensordict)
         prize = tensordict["prize"]
-        tensordict = super()._reset_instance(tensordict)
+        tensordict = cast(Any, super()._reset_instance(tensordict))  # TensorDict values are a tensor union
         locs = tensordict["locs"]
         if prize.shape[-1] == locs.shape[-2] - 1:
             prize = torch.cat([torch.zeros_like(prize[..., :1]), prize], dim=-1)
@@ -159,16 +162,21 @@ class OPEnv(RoutingEnv):
         dist_to_depot = (locs[..., 0:1, :] - locs).norm(p=2, dim=-1)
         tensordict["max_length"] = max_length.unsqueeze(-1) - dist_to_depot - 1e-6
         tensordict["current_total_prize"] = torch.zeros(*tensordict.batch_size, device=tensordict.device)
-        return tensordict
+        return cast(TensorDict, tensordict)
 
-    def _step_instance(self, tensordict: TensorDict) -> TensorDict:
-        tensordict = super()._step_instance(tensordict)
+    def _step_instance(  # pyrefly: ignore[bad-override]  # parent parameter is TensorDictBase
+        self, tensordict: TensorDict
+    ) -> TensorDict:
+        tensordict = cast(Any, super()._step_instance(tensordict))  # TensorDict values are a tensor union
         action = as_batch_nodes(tensordict["action"])
         prize_here = tensordict["prize"].gather(-1, action.unsqueeze(-1)).squeeze(-1)
         tensordict["current_total_prize"] = tensordict["current_total_prize"] + prize_here
-        return tensordict
+        return cast(TensorDict, tensordict)
 
-    def _get_action_mask(self, tensordict: TensorDict) -> torch.Tensor:
+    def _get_action_mask(  # pyrefly: ignore[bad-override]  # parent parameter is TensorDictBase
+        self, tensordict: TensorDict
+    ) -> torch.Tensor:
+        tensordict = cast(Any, tensordict)  # TensorDict values are a tensor union
         current = tensordict["current_node"].squeeze(-1)
         locs = tensordict["locs"]
         current_loc = locs.gather(1, current[:, None, None].expand(-1, -1, 2)).squeeze(1)
@@ -176,10 +184,13 @@ class OPEnv(RoutingEnv):
         exceeds_budget = tensordict["tour_length"].unsqueeze(-1) + dist_current_to_node > tensordict["max_length"]
         mask = ~(tensordict["visited"] | exceeds_budget)
         mask[..., 0] = True
-        return mask
+        return cast(torch.Tensor, mask)
 
-    def _get_reward(self, tensordict: TensorDict, actions: Optional[torch.Tensor] = None) -> torch.Tensor:
-        return tensordict["current_total_prize"]
+    def _get_reward(  # pyrefly: ignore[bad-override]  # parent parameter is TensorDictBase
+        self, tensordict: TensorDict, actions: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
+        tensordict = cast(Any, tensordict)  # TensorDict values are a tensor union
+        return cast(torch.Tensor, tensordict["current_total_prize"])
 
 
 class OP(BaseProblem):

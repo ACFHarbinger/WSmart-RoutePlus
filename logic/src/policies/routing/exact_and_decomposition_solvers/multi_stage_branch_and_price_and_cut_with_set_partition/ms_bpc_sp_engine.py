@@ -129,7 +129,7 @@ References:
 import logging
 import time
 import warnings
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any, Dict, List, Optional, Set, Union, cast
 
 from logic.src.configs.policies.routing.exact_and_decomposition_solvers.ms_bpc_sp import MSBPCSPConfig
 from logic.src.policies.helpers.solvers_and_matheuristics import (
@@ -238,7 +238,7 @@ def run_ms_bpc_sp(  # noqa: C901
     n_nodes = len(dist_matrix) - 1
     m_set = mandatory_indices
 
-    params = cfg
+    params = cast(MSBPCSPConfig, cfg)
 
     # Configuration
     # Extract parameters from the typed config
@@ -285,7 +285,7 @@ def run_ms_bpc_sp(  # noqa: C901
         dist_matrix, wastes, m_set, selected_nodes
     )
 
-    master = VRPPMasterProblem(
+    master = VRPPMasterProblem(  # type: ignore[abstract]  # protocol attrs BIG_M and prev_dual_* are not set in this constructor
         n_nodes=k_nodes,
         mandatory_nodes=red_mandatory,
         cost_matrix=red_dist,

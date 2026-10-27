@@ -99,7 +99,7 @@ class DeepACOPolicy(NonAutoregressivePolicy):
             **kwargs,
         )
 
-    def forward(
+    def forward(  # type: ignore[override]  # pyrefly: ignore[bad-override]  # parent allows optional env and strategy
         self,
         td: TensorDict,
         env: RL4COEnvBase,

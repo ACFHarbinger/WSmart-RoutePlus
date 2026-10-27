@@ -17,6 +17,10 @@ from .tree import (
 
 
 class GPHHConstructionMixin:
+    # Provided by GPHHSolver.__init__; annotations only.
+    capacity: float
+    R: float
+
     # ------------------------------------------------------------------
     # Constructive solution building
     # ------------------------------------------------------------------

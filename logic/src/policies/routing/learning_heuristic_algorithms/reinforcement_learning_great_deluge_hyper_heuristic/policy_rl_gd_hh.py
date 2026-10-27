@@ -19,7 +19,7 @@ Example:
     >>> print(solution)
 """
 
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union, cast
 
 import numpy as np
 
@@ -155,7 +155,7 @@ class RLGDHHPolicy(BaseRoutingPolicy):
             initial_utility=float(values.get("initial_utility", 30.0)),
             profit_aware_operators=values.get("profit_aware_operators", False),
             seed=values.get("seed", 42),
-            acceptance_criterion=gd_criterion,  # Inject the properly configured GD instance
+            acceptance_criterion=cast(Any, gd_criterion),  # Inject the properly configured GD instance
         )
 
         # 3. Solver Initialization

@@ -7,7 +7,10 @@ phase that injects diversity from the reserve population.
 """
 
 import copy
-from typing import List, Tuple
+import random
+from typing import Dict, List, Tuple
+
+import numpy as np
 
 from logic.src.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators import (
@@ -15,10 +18,23 @@ from logic.src.policies.helpers.operators import (
     greedy_profit_insertion,
     random_removal,
 )
+from logic.src.policies.routing.meta_heuristics.hybrid_memetic_large_neighborhood_search.params import (
+    HybridMemeticLargeNeighborhoodSearchParams,
+)
 
 
 class HMLNSEvolutionMixin:
     """HGS evolution, substitution and survival-selection operators."""
+
+    # Provided by HybridMemeticLargeNeighborhoodSearchSolver.__init__; annotations only.
+    params: HybridMemeticLargeNeighborhoodSearchParams
+    random: random.Random
+    wastes: Dict[int, float]
+    mandatory_nodes: List[int]
+    dist_matrix: np.ndarray
+    capacity: float
+    R: float
+    C: float
 
     # ------------------------------------------------------------------
     # Private: Phase 2 - HGS Evolution

@@ -15,7 +15,7 @@ Example:
 
 import logging
 import random
-from typing import Any, List, Set, Tuple
+from typing import Any, Dict, List, Set, Tuple, cast
 
 from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.search_context import ImprovementMetrics
@@ -123,22 +123,22 @@ class SetPartitioningRouteImprover(IRouteImprovement):
             return tour, {"algorithm": "SetPartitioningRouteImprover"}
 
         # Pool-construction parameters
-        n_perturbations = kwargs.get("sp_n_perturbations", self.config.get("sp_n_perturbations", 20))
+        n_perturbations = cast(int, kwargs.get("sp_n_perturbations", self.config.get("sp_n_perturbations", 20)))
         include_dp_variants = kwargs.get("sp_include_dp", self.config.get("sp_include_dp", True))
-        dp_max_nodes = kwargs.get("dp_max_nodes", self.config.get("dp_max_nodes", 20))
-        ruin_fraction = kwargs.get("ruin_fraction", self.config.get("ruin_fraction", 0.2))
-        destroy_op = kwargs.get("destroy_op", self.config.get("destroy_op", "random"))
-        repair_op_raw = kwargs.get("repair_op", self.config.get("repair_op", "greedy"))
+        dp_max_nodes = cast(int, kwargs.get("dp_max_nodes", self.config.get("dp_max_nodes", 20)))
+        ruin_fraction = cast(float, kwargs.get("ruin_fraction", self.config.get("ruin_fraction", 0.2)))
+        destroy_op = cast(str, kwargs.get("destroy_op", self.config.get("destroy_op", "random")))
+        repair_op_raw = cast(str, kwargs.get("repair_op", self.config.get("repair_op", "greedy")))
 
         # Solver parameters
-        time_limit = kwargs.get("sp_time_limit", self.config.get("sp_time_limit", 60.0))
-        seed = kwargs.get("seed", self.config.get("seed", 42))
+        time_limit = cast(float, kwargs.get("sp_time_limit", self.config.get("sp_time_limit", 60.0)))
+        seed = cast(int, kwargs.get("seed", self.config.get("seed", 42)))
 
         # Problem parameters
-        wastes = kwargs.get("wastes", self.config.get("wastes", {}))
-        capacity = kwargs.get("capacity", self.config.get("capacity", float("inf")))
-        cost_per_km = kwargs.get("cost_per_km", self.config.get("cost_per_km", 0.0))
-        revenue_kg = kwargs.get("revenue_kg", self.config.get("revenue_kg", 0.0))
+        wastes = cast(Dict[int, float], kwargs.get("wastes", self.config.get("wastes", {})))
+        capacity = cast(float, kwargs.get("capacity", self.config.get("capacity", float("inf"))))
+        cost_per_km = cast(float, kwargs.get("cost_per_km", self.config.get("cost_per_km", 0.0)))
+        revenue_kg = cast(float, kwargs.get("revenue_kg", self.config.get("revenue_kg", 0.0)))
         mandatory_nodes = resolve_mandatory_nodes(kwargs, self.config)
 
         repair_op = upgrade_repair_op_to_profit(repair_op_raw, revenue_kg, cost_per_km)

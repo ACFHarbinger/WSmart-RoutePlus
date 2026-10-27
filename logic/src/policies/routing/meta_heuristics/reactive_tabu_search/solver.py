@@ -115,7 +115,7 @@ class RTSSolver(RTSLLHOperatorsMixin):
 
         # Setup modular acceptance criterion (Aspiration folding)
         assert self.params.acceptance_criterion is not None
-        self.params.acceptance_criterion.setup(profit)
+        cast(Any, self.params.acceptance_criterion).setup(profit)
 
         tenure = self.params.initial_tenure
         # Tabu list: deque of (llh_idx, solution_hash) pairs

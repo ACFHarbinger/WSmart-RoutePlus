@@ -18,7 +18,7 @@ Example:
 
 import logging
 import random
-from typing import Any, List, Tuple
+from typing import Any, Dict, List, Tuple, cast
 
 from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.search_context import ImprovementMetrics
@@ -75,11 +75,11 @@ class MIPLNSRouteImprover(IRouteImprovement):
         if dm is None or not tour:
             return tour, {"algorithm": "MIPLNSRouteImprover"}
 
-        wastes = kwargs.get("wastes", self.config.get("wastes", {}))
-        capacity = kwargs.get("capacity", self.config.get("capacity", float("inf")))
-        iterations = kwargs.get("iterations", self.config.get("iterations", 5))
-        ruin_pct = kwargs.get("ruin_fraction", self.config.get("ruin_fraction", 0.2))
-        seed = kwargs.get("seed", self.config.get("seed", 42))
+        wastes = cast(Dict[int, float], kwargs.get("wastes", self.config.get("wastes", {})))
+        capacity = cast(float, kwargs.get("capacity", self.config.get("capacity", float("inf"))))
+        iterations = cast(int, kwargs.get("iterations", self.config.get("iterations", 5)))
+        ruin_pct = cast(float, kwargs.get("ruin_fraction", self.config.get("ruin_fraction", 0.2)))
+        seed = cast(int, kwargs.get("seed", self.config.get("seed", 42)))
         rng = random.Random(seed)
 
         current_tour = [n for n in tour]

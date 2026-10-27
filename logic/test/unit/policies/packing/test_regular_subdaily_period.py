@@ -3,7 +3,6 @@
 import numpy as np
 import pytest
 import torch
-
 from logic.src.policies.packing import spec
 from logic.src.policies.vectorized.packing import spec as vspec
 

@@ -5,8 +5,12 @@ ruin-and-recreate operators (random/worst/cluster/shaw/string removal
 paired with greedy or regret-2 insertion) that make up the RTS LLH pool.
 """
 
-from typing import List
+import random
+from typing import Dict, List
 
+import numpy as np
+
+from logic.src.configs.policies.routing.meta_heuristics.rts import RTSConfig
 from logic.src.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators import (
     cluster_removal,
@@ -25,6 +29,17 @@ from logic.src.policies.helpers.operators import (
 
 class RTSLLHOperatorsMixin:
     """LLH ruin-and-recreate operators for the RTS solver."""
+
+    # Provided by RTSSolver.__init__; annotations only.
+    dist_matrix: np.ndarray
+    wastes: Dict[int, float]
+    capacity: float
+    R: float
+    C: float
+    params: RTSConfig
+    mandatory_nodes: List[int]
+    nodes: List[int]
+    random: random.Random
 
     # ------------------------------------------------------------------
     # LLH pool

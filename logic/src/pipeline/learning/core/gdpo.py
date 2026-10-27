@@ -18,7 +18,7 @@ Example:
     GDPO(env=<GDPOEnv>, policy=<GDPOPPOAgent>, baseline='rollout', baseline_kwargs={'val_dataset': 'val', 'update_every': 10, 'use_rollouts': True}, actor_optimizer='adam', actor_lr=0.0001, critic_optimizer='adam', critic_lr=0.001, entropy_coef=0.01, value_loss_coef=0.5, normalize_advantage=True, enable_checkpointing=True)
 """
 
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, cast
 
 import torch
 from tensordict import TensorDict
@@ -84,7 +84,7 @@ class GDPO(REINFORCE):
 
     def calculate_loss(
         self,
-        td: TensorDict,
+        td: Optional[TensorDict],
         out: dict,
         batch_idx: int,
         env: Optional["IEnv"] = None,
@@ -101,11 +101,12 @@ class GDPO(REINFORCE):
         Returns:
             GDPO loss.
         """
-        log_likelihood = out["log_likelihood"]
+        td = cast(TensorDict, td)  # parent accepts None; callers pass a batch
+        log_likelihood = cast(torch.Tensor, out["log_likelihood"])
 
         # 1. Collect Rewards
         # Shape: [batch_size, num_objectives]
-        rewards_list = []
+        rewards_list: List[torch.Tensor] = []
         for key in self.objective_keys:
             # We assume the environment has populated these keys in 'td' or 'out'
             # Usually rewards are in 'out' for the current step/episode end
@@ -120,10 +121,10 @@ class GDPO(REINFORCE):
                 # Warning could be useful, but for now 0.
                 val = torch.zeros_like(out["reward"])
 
-            rewards_list.append(val)
+            rewards_list.append(cast(torch.Tensor, val))  # reward entries are tensors
 
         # Stack: [batch_size, num_objectives]
-        raw_rewards = torch.stack(rewards_list, dim=1)
+        raw_rewards = cast(torch.Tensor, torch.stack(rewards_list, dim=1))
 
         # 2. Decoupled Normalization (Group = Batch)
         # Calculate mean and std for each objective independently across the batch
@@ -154,7 +155,10 @@ class GDPO(REINFORCE):
 
         # 4. Weighted Aggregation
         # Sum over objectives: [batch_size]
-        aggregated_advantage = (normalized_advantages * self.weights_tensor).sum(dim=1)
+        aggregated_advantage = cast(
+            torch.Tensor,
+            (normalized_advantages * self.weights_tensor).sum(dim=1),
+        )
 
         # 5. Optional Re-normalization of the final scalar
         if self.renormalize_aggregated:
@@ -175,6 +179,7 @@ class GDPO(REINFORCE):
         self.log("train/log_likelihood", log_likelihood.mean(), sync_dist=True)
         if self.entropy_weight > 0 and "entropy" in out:
             self.log("train/entropy", out["entropy"].mean(), sync_dist=True)
+        normalized_advantages = cast(torch.Tensor, normalized_advantages)  # objective rows are tensors
         for i, key in enumerate(self.objective_keys):
             self.log(f"train/gdpo_{key}_raw_mean", raw_rewards[:, i].mean(), sync_dist=True)
             self.log(

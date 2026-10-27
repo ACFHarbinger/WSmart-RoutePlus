@@ -2,7 +2,6 @@
 
 import numpy as np
 import pytest
-
 from logic.src.policies.helpers.operators.improvement_descent import steepest_two_opt as mod
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

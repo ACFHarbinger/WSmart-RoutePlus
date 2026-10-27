@@ -22,7 +22,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Optional, cast
 
 import torch
 from pytorch_lightning.core.optimizer import LightningOptimizer
@@ -98,7 +98,7 @@ class PPO(RL4COLitModule):
 
     def calculate_loss(
         self,
-        td: TensorDict,
+        td: Optional[TensorDict],
         out: dict,
         batch_idx: int,
         env: Any = None,
@@ -115,6 +115,7 @@ class PPO(RL4COLitModule):
         Returns:
             A zero tensor (actual loss is calculated in training_step).
         """
+        td = cast(TensorDict, td)  # parent accepts None; callers pass a batch
         return torch.tensor(0.0, device=td.device)
 
     def training_step(self, batch: TensorDict, batch_idx: int):
@@ -243,12 +244,13 @@ class PPO(RL4COLitModule):
 
         # PPO diagnostics (from last mini-batch)
         with torch.no_grad():
-            clip_fraction = ((ratio - 1.0).abs() > self.eps_clip).float().mean()
-            approx_kl = (sub_td["logprobs"] - new_log_p).mean()
+            exceeded = (ratio - 1.0).abs() > self.eps_clip  # pyrefly: ignore[unbound-name]  # set in PPO loop
+            clip_fraction = exceeded.float().mean()
+            approx_kl = (sub_td["logprobs"] - new_log_p).mean()  # pyrefly: ignore[unbound-name]  # set in the PPO loop
         self.log("train/clip_fraction", clip_fraction)
         self.log("train/approx_kl", approx_kl)
-        self.log("train/ratio", ratio.mean())
-        if self.entropy_weight > 0 and "entropy" in new_out:
+        self.log("train/ratio", ratio.mean())  # pyrefly: ignore[unbound-name]  # set in the PPO loop
+        if self.entropy_weight > 0 and "entropy" in new_out:  # pyrefly: ignore[unbound-name]  # set in the PPO loop
             self.log("train/entropy", new_out["entropy"].mean())
 
         return loss

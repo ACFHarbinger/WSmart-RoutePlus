@@ -24,7 +24,7 @@ Attributes:
 from __future__ import annotations
 
 import time
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, Callable, List, Optional, Set, Tuple
 
 import torch
 
@@ -158,7 +158,7 @@ class VectorizedALNSEngine:
         d_ct = torch.zeros(B, nD, device=dev)
         r_ct = torch.zeros(B, nR, device=dev)
         rf = float(cfg.reaction_factor)
-        visited_sets = [set() for _ in range(B)]
+        visited_sets: List[Set[Any]] = [set() for _ in range(B)]
         for b, h in enumerate(hash_rows(S)):
             visited_sets[b].add(h)
         acc = BatchedAcceptance(cfg.acceptance_criterion, B)

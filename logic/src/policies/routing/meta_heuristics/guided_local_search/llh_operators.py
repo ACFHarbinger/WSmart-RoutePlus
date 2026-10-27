@@ -7,8 +7,12 @@ with greedy or regret-2 insertion) that GLS selects from in its inner loop.
 
 from __future__ import annotations
 
-from typing import List
+import random
+from typing import Dict, List
 
+import numpy as np
+
+from logic.src.configs.policies.routing.meta_heuristics.gls import GLSConfig
 from logic.src.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators import (
     cluster_removal,
@@ -24,6 +28,18 @@ from logic.src.policies.helpers.operators import (
 
 class GLSLLHOperatorsMixin:
     """LLH ruin-and-recreate operators for the G-LNS solver."""
+
+    # Provided by GLSSolver.__init__; annotations only.
+    dist_matrix: np.ndarray
+    wastes: Dict[int, float]
+    capacity: float
+    R: float
+    C: float
+    params: GLSConfig
+    mandatory_nodes: List[int]
+    nodes: List[int]
+    random: random.Random
+    penalties: np.ndarray
 
     def _llh0(self, routes: List[List[int]], n: int) -> List[List[int]]:
         """Random removal + Greedy insertion.

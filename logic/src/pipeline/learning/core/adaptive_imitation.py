@@ -17,7 +17,7 @@ Example:
 from __future__ import annotations
 
 import json
-from typing import Any, Dict
+from typing import Any, Dict, Optional, cast
 
 import torch
 from tensordict import TensorDict
@@ -169,17 +169,21 @@ class AdaptiveImitation(REINFORCE):
         """
         # Iterate over all keys in the TensorDict and keep only Tensors
         # to ensure we break any nesting or recursive structures.
-        safe_data = {}
+        safe_data: Dict[str, torch.Tensor] = {}
         for key in td.keys():
             val = td.get(key)
             if isinstance(val, torch.Tensor):
-                safe_data[key] = val
+                cast(Any, safe_data)[key] = val  # keep tensor entries only
 
-        return TensorDict(safe_data, batch_size=td.batch_size, device=td.device)
+        return TensorDict(
+            cast(Any, safe_data),  # TensorDict accepts a plain tensor map
+            batch_size=td.batch_size,
+            device=td.device,
+        )
 
     def calculate_loss(  # noqa: C901
         self,
-        td: TensorDict,
+        td: Optional[TensorDict],
         out: dict,
         batch_idx: int,
         env: Any = None,  # Accept env to match RL4COLitModule.shared_step
@@ -198,6 +202,7 @@ class AdaptiveImitation(REINFORCE):
         """
         # 1. RL Loss (REINFORCE)
         # Note: This computes advantage, baseline, etc.
+        td = cast(TensorDict, td)  # parent accepts None; callers pass a batch
         rl_loss = super().calculate_loss(td, out, batch_idx, env=env)
 
         # 2. Imitation Loss (Cross Entropy)

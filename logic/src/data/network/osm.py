@@ -14,7 +14,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-import requests
+import requests  # type: ignore[import-untyped]  # requests has no stubs
 
 from .base import DistanceStrategy
 

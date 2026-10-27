@@ -1,5 +1,11 @@
 """Destroy/repair operator wiring and RL agent construction for RL-ALNS, mixed into RLALNSSolver as RLALNSSetupMixin."""
 
+import random
+from typing import Any, Dict, List
+
+import numpy as np
+
+from logic.src.configs.policies.routing.learning_heuristic_algorithms.rl_alns import RLALNSConfig
 from logic.src.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.learning.agents.bandits import (
     DiscountedUCBBandit as DiscountedUCBAgent,
@@ -41,6 +47,22 @@ from logic.src.policies.helpers.operators.destroy_ruin.string import string_remo
 
 
 class RLALNSSetupMixin:
+    """Operator and agent setup. Attributes are assigned by ``RLALNSSolver``."""
+
+    params: RLALNSConfig
+    dist_matrix: np.ndarray
+    wastes: Dict[int, float]
+    capacity: float
+    R: float
+    C: float
+    mandatory_nodes: List[int]
+    random: random.Random
+    np_random: np.random.Generator
+    nodes: List[int]
+    n_actions: int
+    destroy_ops: List[Any]
+    repair_ops: List[Any]
+
     def _init_operators(self) -> None:
         """
         Initialize the portfolio of destroy and repair operators.

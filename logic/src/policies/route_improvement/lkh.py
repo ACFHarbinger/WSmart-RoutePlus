@@ -9,7 +9,7 @@ Example:
     >>> refined_tour, metrics = improver.process(tour, max_iterations=200)
 """
 
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, cast
 
 import numpy as np
 
@@ -93,9 +93,9 @@ class LinKernighanHelsgaunRouteImprover(IRouteImprovement):
             sub_tour_indices = [node_to_idx[0]] + [node_to_idx[node] for node in trip] + [node_to_idx[0]]
 
             # 6. Execute LKH
-            max_iterations = kwargs.get("max_iterations", self.config.get("max_iterations", 1000))
-            max_k = kwargs.get("max_k", self.config.get("max_k", 3))
-            seed = kwargs.get("seed", self.config.get("seed", 42))
+            max_iterations = cast(int, kwargs.get("max_iterations", self.config.get("max_iterations", 1000)))
+            max_k = cast(int, kwargs.get("max_k", self.config.get("max_k", 3)))
+            seed = cast(int, kwargs.get("seed", self.config.get("seed", 42)))
 
             try:
                 optimized_indices, _, _ = solve_lkh1(

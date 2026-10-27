@@ -42,6 +42,7 @@ class COPEvaluator:
         self.cost_cache: Dict[FrozenSet[int], float] = {}
         self._precompute_all_subsets()
 
+    def _precompute_all_subsets(self) -> None:
         """Precomputes the TSP tour cost (starting and ending at depot 0)
         for every possible subset of customer nodes {1, ..., V-1}.
 

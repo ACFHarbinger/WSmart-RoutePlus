@@ -5,7 +5,7 @@ Moved from ``logic.src.models.core.n2s.decoder``.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, cast
 
 import torch
 from tensordict import TensorDict
@@ -33,7 +33,7 @@ class N2SDecoderPartnersMixin:
             Tuple[torch.Tensor, torch.Tensor]: (pred_idx [B, N], succ_idx [B, N]).
         """
         if "solution" in td.keys():
-            sol = td["solution"]  # [B, N]
+            sol = cast(torch.Tensor, td["solution"])  # [B, N] TensorDict values are a tensor union
             if sol.size(1) == n:
                 prev_nodes = sol.roll(shifts=1, dims=1)
                 next_nodes = sol.roll(shifts=-1, dims=1)
@@ -77,17 +77,17 @@ class N2SDecoderPartnersMixin:
     ) -> torch.Tensor:
         """Resolves request partner mapping across requests in PDP or TSP."""
         if "partner_ids" in td.keys():
-            p = td["partner_ids"]
+            p = cast(torch.Tensor, td["partner_ids"])  # TensorDict values are a tensor union
             if p.dim() == 1:
                 p = p.unsqueeze(0).expand(bs, -1)
             return self._validate_partner_ids(p, bs, n, device)
         if "partners" in td.keys():
-            p = td["partners"]
+            p = cast(torch.Tensor, td["partners"])  # TensorDict values are a tensor union
             if p.dim() == 1:
                 p = p.unsqueeze(0).expand(bs, -1)
             return self._validate_partner_ids(p, bs, n, device)
         if "delivery" in td.keys():
-            p = td["delivery"]
+            p = cast(torch.Tensor, td["delivery"])  # TensorDict values are a tensor union
             if p.dim() == 1:
                 p = p.unsqueeze(0).expand(bs, -1)
             return self._validate_partner_ids(p, bs, n, device)
@@ -133,14 +133,15 @@ class N2SDecoderPartnersMixin:
         node_indices = torch.arange(n, device=device).unsqueeze(0).expand(bs, -1)
         is_depot = (partner_ids == node_indices) | (node_indices == 0)
 
+        state = cast(Any, td)  # TensorDict values are a tensor union
         if td is not None and ("is_delivery" in td.keys() or "delivery_mask" in td.keys()):
             deliv_key = "is_delivery" if "is_delivery" in td.keys() else "delivery_mask"
-            is_delivery = td[deliv_key].to(dtype=torch.bool, device=device)
+            is_delivery = cast(torch.Tensor, state[deliv_key]).to(dtype=torch.bool, device=device)
             if is_delivery.dim() == 1:
                 is_delivery = is_delivery.unsqueeze(0).expand(bs, -1)
         elif td is not None and ("is_pickup" in td.keys() or "pickup_mask" in td.keys()):
             pick_key = "is_pickup" if "is_pickup" in td.keys() else "pickup_mask"
-            is_pickup = td[pick_key].to(dtype=torch.bool, device=device)
+            is_pickup = cast(torch.Tensor, state[pick_key]).to(dtype=torch.bool, device=device)
             if is_pickup.dim() == 1:
                 is_pickup = is_pickup.unsqueeze(0).expand(bs, -1)
             is_delivery = ~is_pickup & ~is_depot
@@ -175,4 +176,4 @@ class N2SDecoderPartnersMixin:
                         f"delivery {d0} (pos {int(pos_delivery[b0, p0])})"
                     )
 
-        return is_delivery, sol_pos
+        return cast(torch.Tensor, is_delivery), sol_pos

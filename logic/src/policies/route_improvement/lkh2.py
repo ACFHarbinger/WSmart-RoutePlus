@@ -10,7 +10,7 @@ Example:
     >>> refined_tour, metrics = improver.process(tour, max_iterations=200)
 """
 
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, cast
 
 import numpy as np
 
@@ -89,9 +89,9 @@ class LinKernighanHelsgaunTwoRouteImprover(IRouteImprovement):
             return tour, {"algorithm": _algo}
 
         # 3. Solver parameters
-        max_iterations = kwargs.get("max_iterations", self.config.get("max_iterations", 200))
-        max_k = kwargs.get("max_k", self.config.get("max_k", 5))
-        seed = kwargs.get("seed", self.config.get("seed", 42))
+        max_iterations = cast(int, kwargs.get("max_iterations", self.config.get("max_iterations", 200)))
+        max_k = cast(int, kwargs.get("max_k", self.config.get("max_k", 5)))
+        seed = cast(int, kwargs.get("seed", self.config.get("seed", 42)))
 
         refined_routes = []
         for trip in routes:
