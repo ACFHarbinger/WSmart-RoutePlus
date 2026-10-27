@@ -16,6 +16,7 @@ from logic.controllers.cli.bench_parser import add_benchmark_args
 from logic.controllers.cli.cloud_parser import add_cloud_args
 from logic.controllers.cli.drive_parser import add_drive_sync_args
 from logic.controllers.cli.fs_parser import add_files_args
+from logic.controllers.cli.inspect_parser import add_list_policy_modules_args, add_trace_policy_args
 from logic.controllers.cli.out_parser import add_excel_summary_args, add_output_args
 from logic.controllers.cli.tgt_parser import add_ms_update_args, add_ri_update_args
 from logic.controllers.cli.ts_parser import add_test_suite_args
@@ -84,4 +85,13 @@ def get_parser() -> ConfigsParser:
     add_cloud_args(cloud_parser)
 
     # TUI
+    from logic.controllers.cli.inspect_parser import add_list_policy_modules_args, add_trace_policy_args
+
+    add_trace_policy_args(
+        subparsers.add_parser("trace_policy", help="Write an execution trace for one routing solve")
+    )
+    add_list_policy_modules_args(
+        subparsers.add_parser("list_policy_modules", help="Write the policy and model catalog as JSON")
+    )
+
     return parser

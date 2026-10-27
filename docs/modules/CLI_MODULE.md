@@ -1286,6 +1286,8 @@ from logic.controllers.cli.registry import get_parser
 | `file_system` | File operations        | `python main.py file_system update --target ... ` |
 | `test_suite`  | Run tests              | `python main.py test_suite -m test_models`        |
 | `benchmark`   | Performance benchmarks | `python main.py benchmark --subset neural`        |
+| `trace_policy` | Write one ALNS execution trace | `python main.py trace_policy --problem ptp --graph-size 5 --seed 1 --acceptance oi --output /tmp/alns-trace.json` |
+| `list_policy_modules` | Write the policy and model catalog | `python main.py list_policy_modules --output /tmp/catalog.json` |
 
 ### File System Sub-commands
 
