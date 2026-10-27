@@ -11,7 +11,7 @@ Example:
     {'weight1': 0.5, 'weight2': 0.5}
 """
 
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import torch
 from torch import nn
@@ -205,7 +205,7 @@ class RewardWeightOptimizer(WeightAdjustmentStrategy):
         if features:
             features = torch.stack(features).to(self.device)  # type: ignore[assignment]
             targets = torch.tensor(targets, dtype=torch.float32).to(self.device)  # type: ignore[assignment]
-            return features, targets
+            return features, targets  # type: ignore[return-value]  # stacked feature and target tensors
 
         return None, 0
 
@@ -227,7 +227,7 @@ class RewardWeightOptimizer(WeightAdjustmentStrategy):
         pred_weights = torch.clamp(pred_weights, self.min_weights, self.max_weights)
 
         weights_variance = torch.var(pred_weights, dim=0, unbiased=False).sum()
-        reward_pred = -targets
+        reward_pred = -cast(torch.Tensor, targets)  # targets are the reward tensor after the empty check
 
         alpha = 0.8
         loss = alpha * reward_pred.mean() + (1 - alpha) * weights_variance

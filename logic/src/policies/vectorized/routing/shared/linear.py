@@ -14,7 +14,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Optional, Tuple, Union, cast
+from typing import List, Optional, Tuple, Union, cast
 
 import torch
 
@@ -29,7 +29,7 @@ def vectorized_linear_split(
     vehicle_capacity: Union[float, torch.Tensor],
     max_len: Optional[int] = None,
     max_vehicles: Optional[int] = None,
-) -> Tuple[torch.Tensor, torch.Tensor]:
+) -> Tuple[List[List[int]], torch.Tensor]:
     """Partitions giant tours into feasible routes using shortest paths.
 
     Computes the optimal segmentation of node sequences into routes subject to

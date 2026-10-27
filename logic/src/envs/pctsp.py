@@ -5,7 +5,7 @@ The module also holds ``PCTSPGenerator``, the problem's instance generator.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Callable, Dict, Optional, Union, cast
 
 import torch
 from tensordict import TensorDict, TensorDictBase
@@ -184,7 +184,9 @@ class PCTSPEnv(RoutingEnv):
 
     # Dynamics of the pre-WP-07 envs/routing/pctsp.py, kept verbatim (review CR-12, Q-8b).
 
-    def _reset_instance(self, td: TensorDict) -> TensorDict:
+    def _reset_instance(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDict
+    ) -> TensorDict:
         """Initialize PCTSP episode state.
 
         Args:
@@ -193,10 +195,11 @@ class PCTSPEnv(RoutingEnv):
         Returns:
             TensorDict: Initialized PCTSP state with per-episode mutable fields.
         """
+        td = cast(Any, td)  # TensorDict values are a tensor union
         if self.generator is None:
             raise ValueError(f"Generator for {self.NAME} is not initialized. Initialize with an instance first.")
         if "visited" in td.keys():
-            return td
+            return cast(TensorDict, td)
 
         device = td.device
         bs = td.batch_size
@@ -237,9 +240,11 @@ class PCTSPEnv(RoutingEnv):
         td["terminated"] = torch.zeros(*bs, dtype=torch.bool, device=device)
         td["truncated"] = torch.zeros(*bs, dtype=torch.bool, device=device)
 
-        return td
+        return cast(TensorDict, td)
 
-    def _step(self, td: TensorDict) -> TensorDict:
+    def _step(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDict
+    ) -> TensorDict:
         """Execute one step in the environment.
 
         Args:
@@ -248,9 +253,11 @@ class PCTSPEnv(RoutingEnv):
         Returns:
             TensorDict: Updated TensorDict with new state and reward information.
         """
-        return OpsMixin._step(self, td)
+        return cast(TensorDict, OpsMixin._step(self, td))  # mixin returns TensorDictBase
 
-    def _step_instance(self, td: TensorDict) -> TensorDict:
+    def _step_instance(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDict
+    ) -> TensorDict:
         """
         Execute one PCTSP action.
 
@@ -263,6 +270,7 @@ class PCTSPEnv(RoutingEnv):
         Returns:
             TensorDict: Updated TensorDict with new state and reward information.
         """
+        td = cast(Any, td)  # TensorDict values are a tensor union
         action = td["action"]
         if action.dim() > 1:
             action = action.squeeze(-1)
@@ -291,9 +299,11 @@ class PCTSPEnv(RoutingEnv):
         td["current_node"] = action
         td["tour"] = torch.cat([td["tour"], action.unsqueeze(-1)], dim=-1)
 
-        return td
+        return cast(TensorDict, td)
 
-    def _check_done(self, td: TensorDict) -> torch.Tensor:
+    def _check_done(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDict
+    ) -> torch.Tensor:
         """Done when agent returns to depot after at least one step.
 
         Args:
@@ -302,13 +312,16 @@ class PCTSPEnv(RoutingEnv):
         Returns:
             BoolTensor [*B] — True for completed episodes.
         """
+        td = cast(Any, td)  # TensorDict values are a tensor union
         current = td["current_node"]
         if current.dim() > 1:
             current = current.squeeze(-1)
         step = td["i"].squeeze(-1) if td["i"].dim() > 1 else td["i"]
-        return (current == 0) & (step > 0)
+        return cast(torch.Tensor, (current == 0) & (step > 0))
 
-    def _get_action_mask(self, td: TensorDict) -> torch.Tensor:
+    def _get_action_mask(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDict
+    ) -> torch.Tensor:
         """
         Depot (index 0) is blocked until the agent has collected at least
         ``prize_required`` total prize, unless all customers are visited.
@@ -321,6 +334,7 @@ class PCTSPEnv(RoutingEnv):
         Returns:
             BoolTensor [*B, num_nodes] — True indicates a selectable action.
         """
+        td = cast(Any, td)  # TensorDict values are a tensor union
         visited = td["visited"]  # [B, N+1]
         # Also mask out nodes reachable from an already-done episode (depot visited)
         depot_done = visited[..., 0:1]  # [B, 1]
@@ -332,9 +346,11 @@ class PCTSPEnv(RoutingEnv):
         depot_open = prize_met | all_visited
         mask[..., 0] = depot_open
 
-        return mask
+        return cast(torch.Tensor, mask)
 
-    def _get_reward(self, td: TensorDictBase, actions: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def _get_reward(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDictBase, actions: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
         """Compute reward for PCTSP: saved_penalties - (tour_length + remaining_penalties).
 
         ``saved_penalties`` are the penalties of visited customer nodes.
@@ -350,6 +366,7 @@ class PCTSPEnv(RoutingEnv):
         Returns:
             torch.Tensor: Scalar reward per batch element, shape ``(batch,)``.
         """
+        td = cast(Any, td)  # TensorDict values are a tensor union
         penalty = td["penalty"]  # [B, N+1] with depot=0
 
         # OpsMixin._step passes the single step's action; only a [batch, steps] sequence is gathered.
@@ -362,7 +379,7 @@ class PCTSPEnv(RoutingEnv):
             saved_pen = penalty[..., 1:].sum(-1) - td["cur_total_penalty"]
             remaining_pen = td["cur_total_penalty"]
 
-        return saved_pen - (td["tour_length"] + remaining_pen)
+        return cast(torch.Tensor, saved_pen - (td["tour_length"] + remaining_pen))
 
 
 class PCTSP(BaseProblem):

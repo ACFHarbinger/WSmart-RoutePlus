@@ -18,7 +18,6 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from logic.src.configs.policies.helpers.learning.reinforcement_learning import RLConfig
-
 from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
 
 

@@ -42,12 +42,10 @@ Attributes:
 
 from .policy_link_updater import (
     list_available_packing_strategies,
-    list_strategy_keys,
-    update_packing,
-)
-from .policy_link_updater import (
     list_available_ri_improvers,
     list_improver_keys,
+    list_strategy_keys,
+    update_packing,
     update_route_improvement,
 )
 

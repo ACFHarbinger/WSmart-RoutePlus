@@ -6,7 +6,10 @@ and are combined back into it by inheritance.
 
 from __future__ import annotations
 
-from typing import Callable, List, Tuple
+from random import Random
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Set, Tuple
+
+import numpy as np
 
 from logic.src.policies.helpers.operators.destroy_ruin.route import (
     route_profit_removal,
@@ -24,6 +27,57 @@ from logic.src.policies.helpers.operators.perturbation_shaking.genetic_transform
 
 class LKH3ALNSSelectionMixin:
     """Operator selection, worst-route selection, perturbation, history and elite pool."""
+
+    # Instance state is assigned by LKH3_ALNS.__init__; declared here for the mixin.
+    distance_matrix: np.ndarray
+    wastes: Dict[int, float]
+    capacity: float
+    revenue: float
+    cost_unit: float
+    R: float
+    C: float
+    profit_aware_operators: bool
+    mandatory_nodes: Set[int]
+    coords: Optional[np.ndarray]
+    rng: Random
+    history: Dict[int, float]
+    elite_pool: List[List[List[int]]]
+    max_pool_size: int
+    destroy_weights: np.ndarray
+    repair_weights: np.ndarray
+    destroy_calls: np.ndarray
+    repair_calls: np.ndarray
+    perturb_operator_weights: List[float]
+    if TYPE_CHECKING:
+        # Implemented on LKH3ALNSOperatorsMixin; declared so this mixin can call them.
+        def _wrap_historical_removal(
+            self, routes: List[List[int]], n_remove: int
+        ) -> Tuple[List[List[int]], List[int]]: ...
+        def _wrap_neighbor_removal(
+            self, routes: List[List[int]], n_remove: int
+        ) -> Tuple[List[List[int]], List[int]]: ...
+        def _wrap_sector_removal(
+            self, routes: List[List[int]], n_remove: int
+        ) -> Tuple[List[List[int]], List[int]]: ...
+        def _wrap_historical_profit_removal(
+            self, routes: List[List[int]], n_remove: int
+        ) -> Tuple[List[List[int]], List[int]]: ...
+        def _wrap_neighbor_profit_removal(
+            self, routes: List[List[int]], n_remove: int
+        ) -> Tuple[List[List[int]], List[int]]: ...
+        def _wrap_sector_profit_removal(
+            self, routes: List[List[int]], n_remove: int
+        ) -> Tuple[List[List[int]], List[int]]: ...
+        def _wrap_savings_insertion(self, routes: List[List[int]], removed_nodes: List[int]) -> List[List[int]]: ...
+        def _wrap_deep_insertion(self, routes: List[List[int]], removed_nodes: List[int]) -> List[List[int]]: ...
+        def _wrap_nearest_insertion(self, routes: List[List[int]], removed_nodes: List[int]) -> List[List[int]]: ...
+        def _wrap_savings_profit_insertion(
+            self, routes: List[List[int]], removed_nodes: List[int]
+        ) -> List[List[int]]: ...
+        def _wrap_deep_profit_insertion(self, routes: List[List[int]], removed_nodes: List[int]) -> List[List[int]]: ...
+        def _wrap_nearest_profit_insertion(
+            self, routes: List[List[int]], removed_nodes: List[int]
+        ) -> List[List[int]]: ...
 
     def _select_destroy_operator(self) -> Callable[[List[List[int]], int], Tuple[List[List[int]], List[int]]]:
         """Select a destroy operator via ALNS roulette wheel.

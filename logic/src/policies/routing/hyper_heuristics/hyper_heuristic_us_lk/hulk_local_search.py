@@ -1,14 +1,26 @@
 """Intra-route local search moves (2-opt, 3-opt, swap, relocate) for HULK, mixed into HULKOperators as HULKLocalSearchMixin."""
 
+import random
 from typing import (
+    Dict,
     List,
     Tuple,
 )
+
+import numpy as np
 
 from .solution import Solution
 
 
 class HULKLocalSearchMixin:
+    # Provided by HULKOperators.__init__; annotations only.
+    dist_matrix: np.ndarray
+    wastes: Dict[int, float]
+    capacity: float
+    R: float
+    C: float
+    rng: random.Random
+
     def _simple_2_opt(self, route: List[int]) -> Tuple[List[int], bool]:
         """
         Simple 2-opt implementation.

@@ -7,13 +7,21 @@ Example:
     >>> class BranchAndCutSolver(BCLagrangianMixin, BCCutSeparationMixin): ...
 """
 
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
+
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.bc import BCConfig
+from logic.src.policies.helpers.solvers_and_matheuristics.vrpp_model import VRPPModel
 
 
 class BCLagrangianMixin:
     """Lagrangian k-tree bound computed before the MIP of :class:`BranchAndCutSolver`."""
+
+    # Declared by BranchAndCutSolver.__init__; annotation only.
+    params: BCConfig
+    model: VRPPModel
+    x_vars: Dict[Tuple[int, int], Any]
 
     def _pre_optimize_lagrangian(self) -> List[Set[int]]:  # noqa: C901
         """Root Node Strengthening via Lagrangian Relaxation.

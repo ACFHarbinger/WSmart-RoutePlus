@@ -241,11 +241,11 @@ def run_popmusic(  # noqa: C901
     # Remap G_cluster indices to state slot indices — O(p * k)
     if G_cluster:
         for cluster_idx, neighbor_clusters in G_cluster.items():
-            slot = cluster_to_slot.get(cluster_idx)
-            if slot is None:
+            mapped_slot: Optional[int] = cluster_to_slot.get(cluster_idx)
+            if mapped_slot is None:
                 continue
             neighbor_slots = [cluster_to_slot[nc] for nc in neighbor_clusters if nc in cluster_to_slot]
-            state.G[slot] = neighbor_slots
+            state.G[mapped_slot] = neighbor_slots
     else:
         # Legacy fallback: build G from initial centroids using geometric d_prox — O(p^2)
         active_slots = sorted(state.active)

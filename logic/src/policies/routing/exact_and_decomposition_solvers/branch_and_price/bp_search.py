@@ -1,8 +1,9 @@
 """bp search methods relocated from bp."""
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple
 
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.bp import BPConfig
 from logic.src.policies.helpers.solvers_and_matheuristics import (
     AnyBranchingConstraint,
     BranchAndBoundTree,
@@ -17,6 +18,47 @@ from .pricing_subproblem import PricingSubproblem
 
 class BranchAndPriceSearchMixin:
     """Relocated bp search methods."""
+
+    # Declared by BranchAndPriceSolver.__init__; annotation only.
+    params: BPConfig
+    n_nodes: int
+    mandatory_nodes: Set[int]
+    num_iterations: int
+    num_columns_generated: int
+    lp_bound: float
+    ip_solution: float
+    proven_optimal: bool
+    tree: Optional[BranchAndBoundTree]
+
+    if TYPE_CHECKING:
+
+        def _make_master(self) -> VRPPMasterProblem: ...
+
+        def _make_pricing(self) -> Tuple[PricingSubproblem, Optional[RCSPPSolver]]: ...
+
+        def _generate_initial_routes(self, pricing: Any) -> List[Route]: ...
+
+        def _is_integer_solution(self, route_values: Dict[int, float], tol: float = 1e-5) -> bool: ...
+
+        def _routes_to_tour(self, routes: List[Route]) -> List[int]: ...
+
+        def _get_statistics(self) -> Dict[str, Any]: ...
+
+        def _build_master_for_node(self, node: BranchNode, routes: List[Route]) -> VRPPMasterProblem: ...
+
+        def _call_pricing(
+            self,
+            pricing: Any,
+            dual_values: Dict[Any, float],
+            constraints: Optional[List[AnyBranchingConstraint]],
+        ) -> List[Tuple[List[int], float]]: ...
+
+        def _add_routes_to_master(
+            self,
+            master: VRPPMasterProblem,
+            pricing: Any,
+            new_routes: List[Tuple[List[int], float]],
+        ) -> None: ...
 
     def _solve_without_branching(self) -> Tuple[List[int], float, Dict[str, Any]]:
         """Solve with column generation followed by a direct MIP solve.

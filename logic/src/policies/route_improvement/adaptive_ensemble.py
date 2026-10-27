@@ -14,7 +14,7 @@ Example:
 """
 
 import random
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, cast
 
 from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.search_context import ImprovementMetrics
@@ -64,12 +64,15 @@ class AdaptiveEnsembleRouteImprover(IRouteImprovement):
         if dm is None or not tour:
             return tour, {"algorithm": "AdaptiveEnsembleRouteImprover"}
 
-        algorithms = kwargs.get(
+        algorithms = cast(
+            List[str],
+            kwargs.get(
             "phases", self.config.get("phases", ["steepest_two_opt", "ruin_recreate", "cross_exchange"])
+        ),
         )
-        max_iterations = kwargs.get("iterations", self.config.get("iterations", 50))
-        reaction_factor = kwargs.get("reaction_factor", self.config.get("reaction_factor", 0.1))
-        seed = kwargs.get("seed", self.config.get("seed", 42))
+        max_iterations = cast(int, kwargs.get("iterations", self.config.get("iterations", 50)))
+        reaction_factor = cast(float, kwargs.get("reaction_factor", self.config.get("reaction_factor", 0.1)))
+        seed = cast(int, kwargs.get("seed", self.config.get("seed", 42)))
 
         rng = random.Random(seed)
 

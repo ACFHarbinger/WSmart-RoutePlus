@@ -6,7 +6,7 @@ The module holds ``ThOPEnv`` and ``ThOP``; the instance generator ``ThOPGenerato
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, cast
 
 import torch
 from tensordict import TensorDict, TensorDictBase
@@ -39,7 +39,9 @@ class ThOPEnv(RoutingEnv):
 
     # Dynamics of the pre-WP-07 envs/routing/thop.py, kept verbatim (review CR-12, Q-8b).
 
-    def _reset_instance(self, td: TensorDict) -> TensorDict:
+    def _reset_instance(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDict
+    ) -> TensorDict:
         """Initialise ThOP episode state from a generated instance.
 
         Args:
@@ -73,7 +75,9 @@ class ThOPEnv(RoutingEnv):
 
         return td
 
-    def _step(self, td: TensorDict) -> TensorDict:
+    def _step(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDict
+    ) -> TensorDict:
         """Execute action and update state for ThOP.
 
         Args:
@@ -87,9 +91,11 @@ class ThOPEnv(RoutingEnv):
                 ``item_picked``, ``current_city``, ``tour``, ``tour_length``,
                 ``reward``, ``terminated``, and ``truncated`` fields.
         """
-        return OpsMixin._step(self, td)
+        return cast(TensorDict, OpsMixin._step(self, td))  # mixin returns TensorDictBase
 
-    def _step_instance(self, td: TensorDict) -> TensorDict:
+    def _step_instance(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDict
+    ) -> TensorDict:
         """
         Execute one ThOP action.
 
@@ -109,6 +115,7 @@ class ThOPEnv(RoutingEnv):
                 ``item_picked``, ``current_city``, ``tour``, ``tour_length``,
                 ``reward``, ``terminated``, and ``truncated`` fields.
         """
+        td = cast(Any, td)  # TensorDict values are a tensor union
         action = td["action"]
         if action.dim() > 1:
             action = action.squeeze(-1)
@@ -158,9 +165,11 @@ class ThOPEnv(RoutingEnv):
 
         td["tour"] = torch.cat([td["tour"], action.unsqueeze(-1)], dim=-1)
 
-        return td
+        return cast(TensorDict, td)
 
-    def _check_done(self, td: TensorDict) -> torch.Tensor:
+    def _check_done(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDict
+    ) -> torch.Tensor:
         """Episode ends when the thief returns to the depot (city 0) after ≥1 step.
 
         Args:
@@ -169,11 +178,14 @@ class ThOPEnv(RoutingEnv):
         Returns:
             torch.Tensor: Boolean tensor of shape ``(batch,)`` indicating terminated episodes.
         """
+        td = cast(Any, td)  # TensorDict values are a tensor union
         i_raw = td.get("i", torch.zeros(td.batch_size, dtype=torch.long, device=td.device))
         step = i_raw.squeeze(-1) if i_raw.dim() > 1 else i_raw
-        return (td["current_city"] == 0) & (step > 0)
+        return cast(torch.Tensor, (td["current_city"] == 0) & (step > 0))
 
-    def _get_action_mask(self, td: TensorDict) -> torch.Tensor:
+    def _get_action_mask(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDict
+    ) -> torch.Tensor:
         """
         Compute the valid-action mask of shape ``[B, num_items + 1]``.
 
@@ -193,6 +205,7 @@ class ThOPEnv(RoutingEnv):
             torch.Tensor: Boolean mask of shape ``[batch, num_items + 1]`` where
                 ``True`` indicates a valid action.
         """
+        td = cast(Any, td)  # TensorDict values are a tensor union
         locs = td["locs"]  # [B, n+1, 2]
         item_city = td["item_city"]  # [B, m]
         item_weights = td["item_weights"]  # [B, m]
@@ -263,7 +276,9 @@ class ThOPEnv(RoutingEnv):
         # Full mask: [B, m+1]
         return torch.cat([depot_valid.unsqueeze(-1), item_mask], dim=-1)
 
-    def _get_reward(self, td: TensorDictBase, actions: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def _get_reward(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDictBase, actions: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
         """Total profit of all items collected during the episode.
 
         Args:
@@ -274,7 +289,8 @@ class ThOPEnv(RoutingEnv):
         Returns:
             torch.Tensor: Total profit per batch element, shape ``(batch,)``.
         """
-        return (td["item_profits"] * td["item_picked"].float()).sum(dim=-1)
+        td = cast(Any, td)  # TensorDict values are a tensor union
+        return cast(torch.Tensor, (td["item_profits"] * td["item_picked"].float()).sum(dim=-1))
 
 
 # Default time-budget table (mirrors the OP max-length table)

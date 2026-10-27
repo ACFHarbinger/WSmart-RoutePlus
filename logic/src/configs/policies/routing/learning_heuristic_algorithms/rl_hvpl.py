@@ -20,10 +20,10 @@ Example:
 from dataclasses import dataclass, field
 from typing import Any, List, Optional, Tuple
 
+from logic.src.configs.policies.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
+from logic.src.configs.policies.helpers.learning.reinforcement_learning import RLConfig
 from logic.src.configs.policies.routing.meta_heuristics.aco_ks import KSparseACOConfig
 from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
-from logic.src.configs.policies.helpers.learning.reinforcement_learning import RLConfig
-from logic.src.configs.policies.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
 
 
 @dataclass

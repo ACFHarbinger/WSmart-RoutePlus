@@ -36,7 +36,9 @@ Note:
 """
 
 import random
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, cast
+
+import numpy as np
 
 from logic.src.policies.helpers.local_search.local_search_base import LocalSearch
 from logic.src.policies.helpers.local_search.local_search_filo_operators import (
@@ -119,7 +121,7 @@ class FILOLocalSearch(LocalSearch, FILOOperatorsMixin):
     # Tier-2: Recursive Ejection Chain (depth up to n_EC)
     # ------------------------------------------------------------------
 
-    def _try_ejection_chain(self, active_nodes: Set[int]) -> bool:  # type: ignore[override]
+    def _try_ejection_chain(self, active_nodes: Set[int]) -> bool:  # type: ignore[override]  # FILO takes active nodes, not a route index
         """Attempt a recursive ejection chain from an SVC vertex.
 
         Args:
@@ -165,7 +167,8 @@ class FILOLocalSearch(LocalSearch, FILOOperatorsMixin):
         route_i = self.routes[ri]
         prev_i = route_i[pi - 1] if pi > 0 else 0
         nxt_i = route_i[pi + 1] if pi < len(route_i) - 1 else 0
-        removal_saving = self.d[prev_i, u] + self.d[u, nxt_i] - self.d[prev_i, nxt_i]
+        d = cast(np.ndarray, self.d)  # matrix is present when FILO indexes distances
+        removal_saving = d[prev_i, u] + d[u, nxt_i] - d[prev_i, nxt_i]
 
         # Phase 1: Try direct insertion (improving)
         best_cost, best_ins = float("inf"), None
@@ -178,7 +181,7 @@ class FILOLocalSearch(LocalSearch, FILOOperatorsMixin):
             for pj in range(len(route_j) + 1):
                 prev = route_j[pj - 1] if pj > 0 else 0
                 nxt = route_j[pj] if pj < len(route_j) else 0
-                cost = self.d[prev, u] + self.d[u, nxt] - self.d[prev, nxt]
+                cost = d[prev, u] + d[u, nxt] - d[prev, nxt]
                 if cost < best_cost:
                     best_cost, best_ins = cost, (rj, pj)
 
@@ -205,8 +208,8 @@ class FILOLocalSearch(LocalSearch, FILOOperatorsMixin):
 
             prev_v = self.routes[v_ri][v_pi - 1] if v_pi > 0 else 0
             nxt_v = self.routes[v_ri][v_pi + 1] if v_pi < len(self.routes[v_ri]) - 1 else 0
-            old_v_cost = self.d[prev_v, v] + self.d[v, nxt_v]
-            new_u_cost = self.d[prev_v, u] + self.d[u, nxt_v]
+            old_v_cost = d[prev_v, v] + d[v, nxt_v]
+            new_u_cost = d[prev_v, u] + d[u, nxt_v]
             local_delta = (new_u_cost - old_v_cost - removal_saving) * self.C
 
             if local_delta < 1e-6:
@@ -243,6 +246,7 @@ class FILOLocalSearch(LocalSearch, FILOOperatorsMixin):
             bool: True if a move was made, False otherwise.
         """
         w_v = self.waste.get(v, 0.0)
+        d = cast(np.ndarray, self.d)  # matrix is present when FILO indexes distances
 
         # Phase A: Direct feasible insertion
         best_cost, best_ins = float("inf"), None
@@ -253,7 +257,7 @@ class FILOLocalSearch(LocalSearch, FILOOperatorsMixin):
             for pj in range(len(route_j) + 1):
                 prev = route_j[pj - 1] if pj > 0 else 0
                 nxt = route_j[pj] if pj < len(route_j) else 0
-                cost = self.d[prev, v] + self.d[v, nxt] - self.d[prev, nxt]
+                cost = d[prev, v] + d[v, nxt] - d[prev, nxt]
                 if cost < best_cost:
                     best_cost, best_ins = cost, (rj, pj)
 

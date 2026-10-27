@@ -12,7 +12,7 @@ Example:
     >>> best_tour, metrics = improver.process(tour, distance_matrix=dm)
 """
 
-from typing import Any, List, Tuple
+from typing import Any, Dict, List, Tuple, cast
 
 from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.search_context import ImprovementMetrics
@@ -66,11 +66,11 @@ class NodeExchangeSteepestRouteImprover(IRouteImprovement):
         if distance_matrix is None or not tour:
             return tour, {"algorithm": "NodeExchangeSteepestRouteImprover"}
 
-        wastes = kwargs.get("wastes", self.config.get("wastes", {}))
-        capacity = kwargs.get("capacity", self.config.get("capacity", float("inf")))
-        cost_per_km = kwargs.get("cost_per_km", self.config.get("cost_per_km", 0.0))
-        revenue_kg = kwargs.get("revenue_kg", self.config.get("revenue_kg", 0.0))
-        max_iter = kwargs.get("max_iter", self.config.get("max_iter", 500))
+        wastes = cast(Dict[int, float], kwargs.get("wastes", self.config.get("wastes", {})))
+        capacity = cast(float, kwargs.get("capacity", self.config.get("capacity", float("inf"))))
+        cost_per_km = cast(float, kwargs.get("cost_per_km", self.config.get("cost_per_km", 0.0)))
+        revenue_kg = cast(float, kwargs.get("revenue_kg", self.config.get("revenue_kg", 0.0)))
+        max_iter = cast(int, kwargs.get("max_iter", self.config.get("max_iter", 500)))
 
         dm = to_numpy(distance_matrix)
 

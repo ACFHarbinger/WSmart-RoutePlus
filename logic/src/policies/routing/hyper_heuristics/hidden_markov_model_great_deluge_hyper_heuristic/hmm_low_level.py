@@ -1,7 +1,11 @@
 """Low-level heuristic moves for the HMM-GD hyper-heuristic, mixed into HMMGDHHSolver as HMMLowLevelMixin."""
 
-from typing import List
+import random
+from typing import Dict, List
 
+import numpy as np
+
+from logic.src.configs.policies.routing.hyper_heuristics.hmm_gd_hh import HMMGDHHConfig
 from logic.src.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators import (
     cluster_removal,
@@ -19,6 +23,17 @@ from logic.src.policies.helpers.operators import (
 
 
 class HMMLowLevelMixin:
+    # Provided by HMMGDHHSolver.__init__; annotations only.
+    params: HMMGDHHConfig
+    dist_matrix: np.ndarray
+    wastes: Dict[int, float]
+    capacity: float
+    R: float
+    C: float
+    mandatory_nodes: List[int]
+    nodes: List[int]
+    random: random.Random
+
     # ------------------------------------------------------------------
     # Forward Algorithm helpers (REMOVED: Old Gaussian PDF logic)
     # ------------------------------------------------------------------

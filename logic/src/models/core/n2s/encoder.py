@@ -14,7 +14,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import torch
 from tensordict import TensorDict
@@ -80,8 +80,8 @@ class N2SEncoder(ImprovementEncoder):
             torch.Tensor: Boolean mask where True indicates an excluded neighbor [B, N, N].
         """
         # locs: [bs, n, 2]
-        depot = td["depot"].unsqueeze(1)
-        customers = td["locs"]
+        depot = cast(torch.Tensor, td["depot"]).unsqueeze(1)  # TensorDict values are a tensor union
+        customers = cast(torch.Tensor, td["locs"])
         locs = torch.cat([depot, customers], dim=1)
 
         # dist: [bs, n, n]
@@ -109,8 +109,8 @@ class N2SEncoder(ImprovementEncoder):
             torch.Tensor: Refined node embeddings [B, N, embed_dim].
         """
         # Initial embedding (coords)
-        depot = td["depot"].unsqueeze(1)
-        customers = td["locs"]
+        depot = cast(torch.Tensor, td["depot"]).unsqueeze(1)  # TensorDict values are a tensor union
+        customers = cast(torch.Tensor, td["locs"])
         h_raw = torch.cat([depot, customers], dim=1)  # [bs, n, 2]
 
         h = self.init_proj(h_raw)

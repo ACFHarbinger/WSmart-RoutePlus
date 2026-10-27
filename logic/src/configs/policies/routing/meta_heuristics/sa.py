@@ -26,12 +26,12 @@ Example:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, List, Optional
-
-from logic.src.configs.policies.packing.dispatch import PackingConfig
+from typing import Any, List, Optional, Union
 
 from logic.src.configs.policies.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
+from logic.src.configs.policies.packing.dispatch import PackingConfig
 from logic.src.configs.policies.route_improvement import RouteImprovingConfig
+from logic.src.interfaces.acceptance_criterion import IAcceptanceCriterion
 
 
 @dataclass
@@ -65,7 +65,7 @@ class SAConfig:
     profit_aware_operators: bool = False
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
-    acceptance_criterion: AcceptanceConfig = field(
+    acceptance_criterion: Optional[Union[AcceptanceConfig, IAcceptanceCriterion]] = field(
         default_factory=lambda: AcceptanceConfig(
             method="bmc", params=BoltzmannAcceptanceConfig(initial_temp=100.0, alpha=0.95)
         )

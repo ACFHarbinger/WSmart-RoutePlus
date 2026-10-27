@@ -12,7 +12,7 @@ Example:
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import torch
 import torch.nn as nn
@@ -126,7 +126,7 @@ class NeuralSelectorRouteImprover(IRouteImprovement):
         if dm is None or not tour:
             return tour, {"algorithm": "NeuralSelectorRouteImprover"}
 
-        max_iterations = kwargs.get("iterations", self.config.get("iterations", 50))
+        max_iterations = cast(int, kwargs.get("iterations", self.config.get("iterations", 50)))
 
         current_tour = [n for n in tour]
         best_tour = [n for n in tour]

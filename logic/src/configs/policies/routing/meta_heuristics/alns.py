@@ -14,9 +14,8 @@ Example:
 from dataclasses import dataclass, field
 from typing import List, Optional
 
-from logic.src.configs.policies.packing.dispatch import PackingConfig
-
 from logic.src.configs.policies.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
+from logic.src.configs.policies.packing.dispatch import PackingConfig
 from logic.src.configs.policies.route_improvement import RouteImprovingConfig
 
 

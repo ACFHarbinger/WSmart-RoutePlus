@@ -16,7 +16,7 @@ Example:
 from __future__ import annotations
 
 from functools import partial
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, cast
 
 import torch
 from tensordict import TensorDict
@@ -67,7 +67,7 @@ def mdam_rollout(
             Best rewards found across decoders.
         """
         with torch.inference_mode():
-            batch = env.reset(batch.to(device))
+            batch = cast(TensorDict, env.reset(batch.to(device)))  # reset returns TensorDictBase
             result = model(batch, env, strategy="greedy")
             # Baseline is the best realization among decoders
             return result["reward"].max(dim=1).values

@@ -49,6 +49,14 @@ except (ImportError, OSError):
     SparseTensor = Any
 
 
+MessagePassing = cast(Any, MessagePassing)  # optional torch_geometric base
+_gcn_norm: Any = gcn_norm  # optional torch_geometric helper
+_glorot: Any = glorot  # optional torch_geometric helper
+_zeros: Any = zeros  # optional torch_geometric helper
+_add_remaining_self_loops: Any = add_remaining_self_loops  # optional torch_geometric helper
+_scatter: Any = scatter  # optional torch_geometric helper
+
+
 # Adapted from https://github.com/shyam196/egc
 class EfficientGraphConvolution(MessagePassing):
     """Efficient Graph Convolution (EGC) with multiple aggregators.
@@ -142,10 +150,10 @@ class EfficientGraphConvolution(MessagePassing):
 
     def reset_parameters(self) -> None:
         """Resets the learnable weights using Glorot/zeros initialization."""
-        glorot(self.bases_weight)
+        _glorot(self.bases_weight)
         self.comb_weight.reset_parameters()
         if self.bias is not None:
-            zeros(self.bias)
+            _zeros(self.bias)
         self._cached_adj_t = None
         self._cached_edge_index = None
 
@@ -223,7 +231,7 @@ class EfficientGraphConvolution(MessagePassing):
         if "symnorm" in self.aggregators:
             if isinstance(edge_index, Tensor):
                 if self._cached_edge_index is None:
-                    edge_index, sw = gcn_norm(
+                    edge_index, sw = _gcn_norm(
                         edge_index,
                         num_nodes=num_nodes,
                         add_self_loops=self.add_self_loops,
@@ -236,7 +244,7 @@ class EfficientGraphConvolution(MessagePassing):
 
             if self._cached_adj_t is None:
                 st_edge_index = cast(torch_sparse.SparseTensor, edge_index)
-                adj_t = gcn_norm(st_edge_index, num_nodes=num_nodes, add_self_loops=self.add_self_loops)
+                adj_t = _gcn_norm(st_edge_index, num_nodes=num_nodes, add_self_loops=self.add_self_loops)
                 if self.cached:
                     self._cached_adj_t = cast(SparseTensor, adj_t)
                 return cast(Adj, adj_t), None
@@ -246,7 +254,7 @@ class EfficientGraphConvolution(MessagePassing):
         if self.add_self_loops:
             if isinstance(edge_index, Tensor):
                 if self._cached_edge_index is None:
-                    edge_index, _ = add_remaining_self_loops(edge_index)
+                    edge_index, _ = _add_remaining_self_loops(edge_index)
                     if self.cached:
                         self._cached_edge_index = (edge_index, None)
                     return edge_index, None
@@ -324,19 +332,19 @@ class EfficientGraphConvolution(MessagePassing):
             ValueError: If an unknown aggregator name is provided.
         """
         if aggregator == "sum":
-            return scatter(inputs, index, 0, dim_size, reduce="sum")
+            return _scatter(inputs, index, 0, dim_size, reduce="sum")
         if aggregator == "symnorm":
             assert symnorm_weight is not None
-            return scatter(inputs * symnorm_weight.unsqueeze(-1), index, 0, dim_size, reduce="sum")
+            return _scatter(inputs * symnorm_weight.unsqueeze(-1), index, 0, dim_size, reduce="sum")
         if aggregator == "mean":
-            return scatter(inputs, index, 0, dim_size, reduce="mean")
+            return _scatter(inputs, index, 0, dim_size, reduce="mean")
         if aggregator == "min":
-            return scatter(inputs, index, 0, dim_size, reduce="min")
+            return _scatter(inputs, index, 0, dim_size, reduce="min")
         if aggregator == "max":
-            return scatter(inputs, index, 0, dim_size, reduce="max")
+            return _scatter(inputs, index, 0, dim_size, reduce="max")
         if aggregator in {"var", "std"}:
-            mean = scatter(inputs, index, 0, dim_size, reduce="mean")
-            mean_squares = scatter(inputs * inputs, index, 0, dim_size, reduce="mean")
+            mean = _scatter(inputs, index, 0, dim_size, reduce="mean")
+            mean_squares = _scatter(inputs * inputs, index, 0, dim_size, reduce="mean")
             out = mean_squares - mean * mean
             if aggregator == "std":
                 out = torch.sqrt(torch.relu(out) + 1e-5)

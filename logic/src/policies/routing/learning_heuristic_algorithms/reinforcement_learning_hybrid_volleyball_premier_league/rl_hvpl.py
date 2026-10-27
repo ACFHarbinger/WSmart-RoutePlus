@@ -33,7 +33,7 @@ Examples:
 
 import copy
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import numpy as np
 
@@ -112,7 +112,7 @@ class RLHVPLSolver:
                 cost_unit=C,
                 mandatory_nodes=mandatory_nodes or [],
             ),
-            params.aco_params,
+            cast(Any, params.aco_params),
         )
         self.pheromone = self.aco_solver.pheromone
 
@@ -213,7 +213,7 @@ class RLHVPLSolver:
                 best_cost=best_cost,
                 iter_best_profit=iter_best_profit,
                 population_size=len(population),
-                aco_epsilon=self.aco_solver.agent.epsilon,
+                aco_epsilon=cast(Any, self.aco_solver).agent.epsilon,
                 alns_epsilon=self.alns_solver.agent.epsilon,
             )
 

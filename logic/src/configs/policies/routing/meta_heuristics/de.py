@@ -14,10 +14,9 @@ Example:
 """
 
 from dataclasses import dataclass
-from typing import Any, List, Optional
+from typing import Any, List, Optional, cast
 
 from logic.src.configs.policies.packing.dispatch import PackingConfig
-
 from logic.src.configs.policies.route_improvement import RouteImprovingConfig
 
 
@@ -89,7 +88,7 @@ class DEConfig:
             An instance of DEConfig.
         """
         return cls(
-            pop_size=getattr(config, "pop_size", None),
+            pop_size=cast(int, getattr(config, "pop_size", None)),
             mutation_factor=getattr(config, "mutation_factor", 0.8),
             crossover_rate=getattr(config, "crossover_rate", 0.9),
             n_removal=getattr(config, "n_removal", 3),

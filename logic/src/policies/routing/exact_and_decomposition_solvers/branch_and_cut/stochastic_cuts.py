@@ -1,9 +1,11 @@
 """stochastic cuts methods relocated from cut_callbacks."""
 
 import warnings
-from typing import Any
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
+
+from logic.src.policies.helpers.solvers_and_matheuristics.vrpp_model import VRPPModel
 
 try:
     import gurobipy as gp
@@ -26,6 +28,14 @@ except ImportError:
 
 class StochasticCutsMixin:
     """Relocated stochastic cuts methods."""
+
+    # Declared by BranchAndCutSolver.__init__; annotation only.
+    model: VRPPModel
+    x_vars: Dict[Tuple[int, int], Any]
+    y_vars: Dict[int, Any]
+    stats: Dict[str, Any]
+    scenarios: Optional[List[Dict[int, float]]]
+    q_vars: Dict[int, Any]
 
     def _separate_stochastic_capacity_cuts(self, model, x_vals: np.ndarray, y_vals: np.ndarray, is_integer: bool):
         """Separate Stochastic Capacity Inequalities (SIRP).

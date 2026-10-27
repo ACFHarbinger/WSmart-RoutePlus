@@ -11,7 +11,7 @@ Example:
     >>> best_tour, metrics = improver.process(tour, distance_matrix=dm)
 """
 
-from typing import Any, List, Tuple
+from typing import Any, Dict, List, Tuple, cast
 
 from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.search_context import ImprovementMetrics
@@ -64,15 +64,18 @@ class OrOptRouteImprover(IRouteImprovement):
             return tour, {"algorithm": "OrOptRouteImprover"}
 
         # Parameters
-        chain_len = kwargs.get("chain_len", self.config.get("chain_len", 2))
-        iterations = kwargs.get("iterations", kwargs.get("max_iterations", self.config.get("iterations", 500)))
-        seed = kwargs.get("seed", self.config.get("seed", 42))
+        chain_len = cast(int, kwargs.get("chain_len", self.config.get("chain_len", 2)))
+        iterations = cast(
+            int,
+            kwargs.get("iterations", kwargs.get("max_iterations", self.config.get("iterations", 500))),
+        )
+        seed = cast(int, kwargs.get("seed", self.config.get("seed", 42)))
 
         # Problem parameters
-        wastes = kwargs.get("wastes", self.config.get("wastes", {}))
-        capacity = kwargs.get("capacity", self.config.get("capacity", float("inf")))
-        R = kwargs.get("R", self.config.get("R", 1.0))
-        C = kwargs.get("C", self.config.get("C", 1.0))
+        wastes = cast(Dict[int, float], kwargs.get("wastes", self.config.get("wastes", {})))
+        capacity = cast(float, kwargs.get("capacity", self.config.get("capacity", float("inf"))))
+        R = cast(float, kwargs.get("R", self.config.get("R", 1.0)))
+        C = cast(float, kwargs.get("C", self.config.get("C", 1.0)))
 
         # Convert distance matrix to numpy
         dm = to_numpy(distance_matrix)

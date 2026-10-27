@@ -1,9 +1,9 @@
 import numpy as np
 import pytest
 from logic.src.configs.policies import HyperHeuristicACOConfig
+from logic.src.configs.policies.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
 from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
 from logic.src.configs.policies.routing.meta_heuristics.hvpl import HVPLConfig
-from logic.src.configs.policies.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
 from logic.src.policies.routing.meta_heuristics.hybrid_volleyball_premier_league.solver import HVPLSolver
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

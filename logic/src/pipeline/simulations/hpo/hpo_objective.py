@@ -5,7 +5,7 @@ Moved from ``logic.src.pipeline.simulations.hpo.hpo_handler``.
 
 import logging
 import os
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import optuna
 import torch
@@ -217,7 +217,7 @@ def objective(  # noqa: C901
             sample_idx_ls=sample_idx_ls,
             model_weights_path="",
             lock=lock,
-            callback=iterative_callback,  # pyrefly: ignore [bad-argument-type]
+            callback=cast(Any, iterative_callback),  # sequential_simulations callback stub omits the day
         )
 
         if not log:

@@ -18,7 +18,7 @@ Example:
     >>> print(f"Metrics: {metrics}")
 """
 
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union, cast
 
 import numpy as np
 import torch
@@ -81,7 +81,7 @@ class HierarchicalNeuralAgentPolicy(BaseMultiPeriodRoutingPolicy):
             config: Configuration for the HNA policy.
         """
         super().__init__(config)
-        self.params = self._effective_config(config)
+        self.params = self._effective_config(cast(Dict[str, Any], config))
         self._module: Optional[Any] = None  # loaded lazily from checkpoint
         self._module_loaded: bool = False
 

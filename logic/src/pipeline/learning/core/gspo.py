@@ -22,7 +22,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Optional, cast
 
 import torch
 from pytorch_lightning.core.optimizer import LightningOptimizer
@@ -294,7 +294,7 @@ class GSPO(PPO):
 
     def calculate_loss(  # noqa: ARG002
         self,
-        td: TensorDict,
+        td: Optional[TensorDict],
         out: dict,
         batch_idx: int,
         env: Any = None,
@@ -312,4 +312,5 @@ class GSPO(PPO):
         Returns:
             0.0 (dummy value)
         """
+        td = cast(TensorDict, td)  # parent accepts None; callers pass a batch
         return torch.tensor(0.0, device=td.device)

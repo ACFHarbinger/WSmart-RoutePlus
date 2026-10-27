@@ -24,7 +24,7 @@ Attributes:
 
 from __future__ import annotations
 
-from typing import Optional, Tuple
+from typing import Callable, Optional, Tuple, cast
 
 import torch
 
@@ -128,17 +128,20 @@ def sweep(
     Returns:
         Tuple of (new state, improved flags ``[B]``).
     """
-    fn = {
-        "relocate": _relocate,
-        "swap": _swap,
-        "two_opt": _two_opt,
-        "two_opt_star": _two_opt_star,
-        "swap_star": _swap_star,
-        "three_opt": _three_opt,
-        "or_opt": _or_opt,
-        "relocate_chain": _relocate_chain,
-        "cross_exchange": _cross_exchange,
-    }[name]
+    fn = cast(
+        Callable[..., Tuple[torch.Tensor, torch.Tensor]],
+        {
+            "relocate": _relocate,
+            "swap": _swap,
+            "two_opt": _two_opt,
+            "two_opt_star": _two_opt_star,
+            "swap_star": _swap_star,
+            "three_opt": _three_opt,
+            "or_opt": _or_opt,
+            "relocate_chain": _relocate_chain,
+            "cross_exchange": _cross_exchange,
+        }[name],
+    )
     T = _Tables(state, inst)
     if name == "three_opt":
         S, imp = fn(T, inst, gen)

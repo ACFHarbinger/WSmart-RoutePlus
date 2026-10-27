@@ -1,7 +1,7 @@
 """In-house branch-and-price route improvement method."""
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import numpy as np
 
@@ -10,6 +10,8 @@ logger = logging.getLogger(__name__)
 
 class BranchPriceInhouseMixin:
     """Relocated branch price inhouse methods."""
+
+    config: Dict[str, Any]  # set by the owning route improver
 
     def _solve_inhouse(
         self,
@@ -47,72 +49,86 @@ class BranchPriceInhouseMixin:
         # Note: use_exact_pricing defaults to True here because a route improver
         # called once per episode should use the high-quality pricer, even though
         # the solver's own default is False (for speed inside inner loops).
-        max_iterations = (
+        max_iterations = cast(
+            int,
             kwargs.get("bp_max_iterations", 0)
             if kwargs.get("bp_max_iterations") is not None
             else self.config.get("bp_max_iterations", 100)
         )
-        max_routes_per_iteration = (
+        max_routes_per_iteration = cast(
+            int,
             kwargs.get("bp_max_routes_per_iteration", 0)
             if kwargs.get("bp_max_routes_per_iteration") is not None
             else self.config.get("bp_max_routes_per_iteration", 10)
         )
-        optimality_gap = (
+        optimality_gap = cast(
+            float,
             kwargs.get("bp_optimality_gap", 0.0)
             if kwargs.get("bp_optimality_gap") is not None
             else self.config.get("bp_optimality_gap", 1e-4)
         )
-        branching_strategy = (
+        branching_strategy = cast(
+            str,
             kwargs.get("bp_branching_strategy", "")
             if kwargs.get("bp_branching_strategy") is not None
             else self.config.get("bp_branching_strategy", "edge")
         )
-        max_branch_nodes = (
+        max_branch_nodes = cast(
+            int,
             kwargs.get("bp_max_branch_nodes", 0)
             if kwargs.get("bp_max_branch_nodes") is not None
             else self.config.get("bp_max_branch_nodes", 1000)
         )
-        use_exact_pricing = (
+        use_exact_pricing = cast(
+            bool,
             kwargs.get("bp_use_exact_pricing", False)
             if kwargs.get("bp_use_exact_pricing") is not None
             else self.config.get("bp_use_exact_pricing", True)
         )
-        use_ng_routes = (
+        use_ng_routes = cast(
+            bool,
             kwargs.get("bp_use_ng_routes", False)
             if kwargs.get("bp_use_ng_routes") is not None
             else self.config.get("bp_use_ng_routes", True)
         )
-        ng_neighborhood_size = (
+        ng_neighborhood_size = cast(
+            int,
             kwargs.get("bp_ng_neighborhood_size", 0)
             if kwargs.get("bp_ng_neighborhood_size") is not None
             else self.config.get("bp_ng_neighborhood_size", 8)
         )
-        tree_search_strategy = (
+        tree_search_strategy = cast(
+            str,
             kwargs.get("bp_tree_search_strategy", "")
             if kwargs.get("bp_tree_search_strategy") is not None
             else self.config.get("bp_tree_search_strategy", "best_first")
         )
-        vehicle_limit = (
+        vehicle_limit = cast(
+            int,
             kwargs.get("bp_vehicle_limit", 0)
             if kwargs.get("bp_vehicle_limit") is not None
             else self.config.get("bp_vehicle_limit", 0)
         )
-        cleanup_frequency = (
+        cleanup_frequency = cast(
+            int,
             kwargs.get("bp_cleanup_frequency", 0)
             if kwargs.get("bp_cleanup_frequency") is not None
             else self.config.get("bp_cleanup_frequency", 20)
         )
-        cleanup_threshold = (
+        cleanup_threshold = cast(
+            float,
             kwargs.get("bp_cleanup_threshold", 0.0)
             if kwargs.get("bp_cleanup_threshold") is not None
             else self.config.get("bp_cleanup_threshold", -100.0)
         )
-        early_termination_gap = (
+        early_termination_gap = cast(
+            float,
             kwargs.get("bp_early_termination_gap", 0.0)
             if kwargs.get("bp_early_termination_gap") is not None
             else self.config.get("bp_early_termination_gap", 1e-3)
         )
-        allow_heuristic_ryan_foster = (
+        allow_heuristic_ryan_foster = cast(
+            bool,
             kwargs.get("bp_allow_heuristic_ryan_foster", False)
             if kwargs.get("bp_allow_heuristic_ryan_foster") is not None
             else self.config.get("bp_allow_heuristic_ryan_foster", False)

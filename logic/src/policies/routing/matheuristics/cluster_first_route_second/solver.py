@@ -31,7 +31,7 @@ Example:
 """
 
 import math
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import numpy as np
 import pandas as pd
@@ -406,13 +406,13 @@ def _select_initial_seeds(
         if not sector.empty:
             if seed_criterion == "distance":
                 # VFJ Method a: Select the furthest node from depot
-                seed_idx = int(sector.loc[sector["dist"].idxmax(), "idx"])
+                seed_idx = int(cast(Any, sector.loc[sector["dist"].idxmax(), "idx"]))
             else:  # seed_criterion == "demand"
                 # VFJ Method b: Select the node with maximum demand (waste)
                 # Add waste column to sector for selection
                 sector_with_waste = sector.copy()
                 sector_with_waste["waste"] = sector_with_waste["idx"].map(lambda x: wastes.get(x, 0.0))  # type: ignore[union-attr]
-                seed_idx = int(sector_with_waste.loc[sector_with_waste["waste"].idxmax(), "idx"])
+                seed_idx = int(cast(Any, sector_with_waste.loc[sector_with_waste["waste"].idxmax(), "idx"]))
 
             seeds.append(seed_idx)
 

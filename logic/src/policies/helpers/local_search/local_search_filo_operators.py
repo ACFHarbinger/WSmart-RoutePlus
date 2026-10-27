@@ -4,13 +4,31 @@ This module provides the move evaluation and operator mixin for the FILO local s
 """
 
 import random
-from typing import List, Set
+from typing import TYPE_CHECKING, Any, Dict, List, Set, Tuple
 
 K_NEIGHBORS: int = 20  # Max neighbor fan-out per vertex
 
 
 class FILOOperatorsMixin:
     """Tier-1 move evaluation and gain calculation mixin for FILOLocalSearch."""
+
+    # From LocalSearch.__init__ and FILOLocalSearch.__init__. Annotation only.
+    # d is Any: LocalSearch infers ndarray | None, and a narrower type conflicts across bases.
+    routes: List[List[int]]
+    d: Any
+    C: float
+    Q: float
+    waste: Dict[int, float]
+    neighbors: Dict[int, List[int]]
+    _node_gamma: Dict[int, float]
+    _route_loads: List[float]
+    node_to_route_pos: Dict[int, Tuple[int, int]]
+
+    if TYPE_CHECKING:
+
+        def _find_node(self, u: int) -> Tuple[int, int]: ...
+
+        def _rebuild_route_positions(self, ri: int) -> None: ...
 
     def _get_gain_relocate(self, u: int, ri: int, pi: int, rj: int, pj: int) -> float:
         """Cost delta for moving *u* from route *ri* to position *pj* in *rj*.

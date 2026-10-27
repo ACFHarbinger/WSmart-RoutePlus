@@ -1,9 +1,7 @@
 """_check_budget without an estimate reads the month's committed spend once."""
 
 import pytest
-
 from logic.controllers.cloud.cost import BudgetExceeded, BudgetPolicy
-
 from logic.test.unit.controllers.cloud.test_cost import _service, _spec
 
 pytestmark = [pytest.mark.unit]

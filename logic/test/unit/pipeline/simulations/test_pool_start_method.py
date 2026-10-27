@@ -3,7 +3,6 @@
 from types import SimpleNamespace
 
 import pytest
-
 from logic.src.pipeline.features.test.orchestrator import parallel_runner
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

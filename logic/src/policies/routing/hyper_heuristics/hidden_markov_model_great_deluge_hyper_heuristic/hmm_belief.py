@@ -1,5 +1,7 @@
 """Observation alphabet and hidden-state belief updates for the HMM-GD hyper-heuristic, mixed into HMMGDHHSolver as HMMBeliefMixin."""
 
+import random
+
 import numpy as np
 
 # Discrete Observation Alphabet (Onsem et al. 2014, Section 5.1)
@@ -12,6 +14,19 @@ _N_OBS = 5
 
 
 class HMMBeliefMixin:
+    # Provided by HMMGDHHSolver.__init__; annotations only.
+    t: int
+    n_states: int
+    n_llh: int
+    alpha: float
+    gamma: float
+    random: random.Random
+    _A: np.ndarray
+    _B: np.ndarray
+    _belief: np.ndarray
+    _expected_profit: np.ndarray
+    _profit_counts: np.ndarray
+
     # ------------------------------------------------------------------
     # HHaaHMM Logic
     # ------------------------------------------------------------------

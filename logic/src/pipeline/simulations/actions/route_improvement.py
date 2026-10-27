@@ -27,6 +27,7 @@ from logic.src.pipeline.simulations.actions.policy_config import (
 )
 from logic.src.policies.route_improvement import RouteImproverFactory
 from logic.src.utils.configs.config_loader import load_config
+from logic.src.utils.configs.policy_files import policy_file
 from logic.src.utils.routing.tours import get_route_cost
 
 from .base import (
@@ -36,7 +37,6 @@ from .base import (
     _set_live_capture_meta,
     bind_context,
 )
-from logic.src.utils.configs.policy_files import policy_file
 
 
 def _stops(tour: Any) -> list:

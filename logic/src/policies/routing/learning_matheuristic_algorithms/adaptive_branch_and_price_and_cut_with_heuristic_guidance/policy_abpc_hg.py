@@ -10,7 +10,7 @@ Examples:
     >>> policy.run(problem_context)
 """
 
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any, Dict, List, Optional, Tuple, Type, cast
 
 from logic.src.configs.policies.routing.learning_matheuristic_algorithms.abpc_hg import ABPCHGConfig
 from logic.src.enums import PolicyTag
@@ -140,7 +140,9 @@ class ABPCHGPolicy(BaseMultiPeriodRoutingPolicy):
             config: Configuration for the policy.
         """
         super().__init__(config)
-        self.params: ABPCHGConfig = self._effective_config(config) if config is not None else ABPCHGConfig()
+        self.params: ABPCHGConfig = (
+            cast(ABPCHGConfig, self._effective_config(cast(Any, config))) if config is not None else ABPCHGConfig()
+        )
         self.gamma: float = self.params.gamma
         # Externally injectable trained GNN model for MLBranchingStrategy.
         # Set to a loaded model before solving to activate learned branching.

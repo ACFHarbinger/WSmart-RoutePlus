@@ -50,7 +50,7 @@ from __future__ import annotations
 
 import contextlib
 import copy
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, cast
 
 from logic.src.configs import Config
 
@@ -188,13 +188,13 @@ class RayTuneHPO(BaseHPO):
                 mode="max",
                 max_concurrent_trials=self.cfg.hpo.max_conc,
             ),
-            run_config=ray.train.RunConfig(
+            run_config=cast(Any, ray.train.RunConfig(  # ray.train and ray.tune alias the same RunConfig
                 storage_path=getattr(self.cfg.tracking, "ray_tune_storage_path", "ray_results"),
                 failure_config=ray.train.FailureConfig(
                     max_failures=self.cfg.hpo.max_failures,
                 ),
                 callbacks=run_callbacks,
-            ),
+            )),
         )
 
         results = tuner.fit()

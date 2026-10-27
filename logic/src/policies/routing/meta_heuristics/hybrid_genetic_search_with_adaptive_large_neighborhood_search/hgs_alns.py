@@ -14,7 +14,7 @@ Example:
 """
 
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple, cast
 
 import numpy as np
 
@@ -131,7 +131,11 @@ class HGSALNSSolver(HGSSolver):
                 break
             it += 1
             # 2. Selection & Crossover
-            p1, p2 = self._select_parents(population)
+            select_parents = cast(
+                Callable[[List[Individual]], Tuple[Individual, Individual]],
+                self._select_parents,
+            )
+            p1, p2 = select_parents(population)
             child = ordered_crossover(p1, p2)
 
             # 3. Hybrid Education (Mutation with ALNS)

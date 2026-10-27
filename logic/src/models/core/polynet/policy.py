@@ -15,7 +15,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 from tensordict import TensorDict
 from torch import nn
@@ -105,8 +105,8 @@ class PolyNetPolicy(AutoregressivePolicy):
 
         super().__init__(
             env_name=env_name,
-            encoder=encoder,
-            decoder=decoder,
+            encoder=cast(Any, encoder),  # concrete encoder stands in for the autoregressive base
+            decoder=cast(Any, decoder),
         )
 
         self.k = k

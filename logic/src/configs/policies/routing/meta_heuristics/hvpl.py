@@ -19,11 +19,10 @@ Example:
 from dataclasses import dataclass, field
 from typing import Any, List, Optional
 
-from logic.src.configs.policies.routing.hyper_heuristics.aco_hh import HyperHeuristicACOConfig
-from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
 from logic.src.configs.policies.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
-
+from logic.src.configs.policies.routing.hyper_heuristics.aco_hh import HyperHeuristicACOConfig
 from logic.src.configs.policies.routing.meta_heuristics.aco_ks import KSparseACOConfig
+from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
 
 
 @dataclass

@@ -129,7 +129,7 @@ class BranchAndCutSolver(BCLagrangianMixin, BCCutSeparationMixin):
         )
 
         # Statistics
-        self.stats = {
+        self.stats: Dict[str, Any] = {
             "total_cuts": 0,
             "sec_cuts": 0,
             "capacity_cuts": 0,
@@ -259,7 +259,7 @@ class BranchAndCutSolver(BCLagrangianMixin, BCCutSeparationMixin):
         travel_cost = gp.quicksum(self.model.get_edge_cost(i, j) * self.x_vars[(i, j)] for i, j in self.model.edges)
 
         if self.params.use_saa and self.scenarios:
-            self.q_vars = {}
+            self.q_vars: Dict[int, Any] = {}
             num_s = len(self.scenarios)
             recourse_cost_expr = 0.0
 

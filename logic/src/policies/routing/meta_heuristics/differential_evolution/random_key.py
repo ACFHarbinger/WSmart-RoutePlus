@@ -7,7 +7,8 @@ continuous Random Key vectors.
 
 from __future__ import annotations
 
-from typing import List
+import random
+from typing import Dict, List
 
 import numpy as np
 
@@ -16,6 +17,18 @@ from logic.src.policies.helpers.operators.solution_initialization.greedy_si impo
 
 class DERandomKeyMixin:
     r"""Random Key population initialization, encoding and decoding for DE."""
+
+    # Provided by DESolver.__init__; annotations only.
+    pop_size: int
+    n_nodes: int
+    dist_matrix: np.ndarray
+    wastes: Dict[int, float]
+    capacity: float
+    R: float
+    C: float
+    mandatory_nodes: List[int]
+    py_rng: random.Random
+    rng: np.random.RandomState
 
     def _initialize_population(self) -> np.ndarray:
         """Initialize population as continuous Random Key vectors.

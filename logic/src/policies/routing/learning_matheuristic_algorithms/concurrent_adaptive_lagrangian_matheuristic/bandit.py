@@ -50,7 +50,7 @@ Examples:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import numpy as np
 
@@ -111,7 +111,7 @@ class LinUCBBandit:
         self._arms: List[BanditArm] = []
         self._build_arms()
         # Shuffle arm order once to avoid systematic tiebreak bias.
-        self.rng.shuffle(self._arms)
+        self.rng.shuffle(cast(Any, self._arms))  # Generator.shuffle stubs are array-only
         self._arm_index: Dict[Tuple[str, str], int] = {
             (a.engine, a.cut_strategy): idx for idx, a in enumerate(self._arms)
         }

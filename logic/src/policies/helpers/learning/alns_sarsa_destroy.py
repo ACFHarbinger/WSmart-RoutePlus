@@ -3,7 +3,10 @@
 This module provides the destruction operator mixin for the ALNS-SARSA solver.
 """
 
-from typing import List, Tuple
+from random import Random
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple
+
+import numpy as np
 
 from logic.src.policies.helpers.operators.destroy_ruin import (
     cluster_removal as cluster_removal_op,
@@ -30,6 +33,27 @@ from logic.src.policies.helpers.operators.destroy_ruin import (
 
 class ALNSSARSADestroyMixin:
     """Destroy operators of :class:`ALNSSARSASolver`."""
+
+    # Attribute types from ALNSSARSASolver.__init__. Annotation only.
+    # Unstring methods are owned by ALNSSARSARepairMixin (earlier in the MRO).
+    dist_matrix: np.ndarray
+    wastes: Dict[int, float]
+    R: float
+    C: float
+    nodes: List[int]
+    params: Any
+    profit_aware_operators: bool
+    random: Random
+
+    if TYPE_CHECKING:
+
+        def _unstring_type_i(self, routes: List[List[int]], n: int) -> Tuple[List[List[int]], List[int]]: ...
+
+        def _unstring_type_ii(self, routes: List[List[int]], n: int) -> Tuple[List[List[int]], List[int]]: ...
+
+        def _unstring_type_iii(self, routes: List[List[int]], n: int) -> Tuple[List[List[int]], List[int]]: ...
+
+        def _unstring_type_iv(self, routes: List[List[int]], n: int) -> Tuple[List[List[int]], List[int]]: ...
 
     def _init_destroy_operators(self):
         """Initialize all destroy operators, including standard and unstringing ones."""

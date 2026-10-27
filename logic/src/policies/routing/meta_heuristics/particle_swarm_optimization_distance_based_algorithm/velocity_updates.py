@@ -7,14 +7,30 @@ the best-insertion-cost scoring and the random-walk exploration move.
 """
 
 import copy
-from typing import List, Set
+import random
+from typing import Dict, List, Set
 
+import numpy as np
+
+from logic.src.configs.policies.routing.meta_heuristics.psoda import DistancePSOConfig
 from logic.src.envs.common.expand_pool import current_expand_pool
+from logic.src.policies.helpers.local_search.local_search_general import GeneralLocalSearch
 from logic.src.policies.helpers.operators import greedy_insertion, greedy_profit_insertion, random_removal
 
 
 class PSOVelocityUpdateMixin:
     """PSO velocity/position updates, insertion scoring and random walk."""
+
+    # Provided by DistancePSOSolver.__init__; annotations only.
+    random: random.Random
+    params: DistancePSOConfig
+    wastes: Dict[int, float]
+    R: float
+    dist_matrix: np.ndarray
+    capacity: float
+    C: float
+    mandatory_nodes: List[int]
+    ls: GeneralLocalSearch
 
     # ------------------------------------------------------------------
     # PSO Velocity Update Methods

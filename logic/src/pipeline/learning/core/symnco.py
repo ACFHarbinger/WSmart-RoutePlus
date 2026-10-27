@@ -22,6 +22,8 @@ Example:
 
 from __future__ import annotations
 
+from typing import cast
+
 import torch
 from tensordict import TensorDict
 
@@ -72,7 +74,7 @@ class SymNCO(POMO):
         self.alpha = alpha
         self.beta = beta
 
-    def shared_step(
+    def shared_step(  # type: ignore[override]  # parent StepMixin batch is a broader mapping
         self,
         batch: TensorDict,
         batch_idx: int,
@@ -89,7 +91,7 @@ class SymNCO(POMO):
         Returns:
             Dictionary containing training losses and metrics.
         """
-        td = self.env.reset(batch)
+        td = cast(TensorDict, self.env.reset(batch))  # reset returns TensorDictBase
         bs = td.batch_size[0]
 
         # Determine number of starts

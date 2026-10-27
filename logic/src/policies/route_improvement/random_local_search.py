@@ -12,7 +12,7 @@ Example:
     >>> best_tour, metrics = improver.process(tour, distance_matrix=dm, iterations=100)
 """
 
-from typing import Any, Callable, List, Tuple
+from typing import Any, Callable, Dict, List, Tuple, cast
 
 import numpy as np
 
@@ -71,8 +71,13 @@ class RandomLocalSearchRouteImprover(IRouteImprovement):
             return tour, {"algorithm": "RandomLocalSearchRouteImprover"}
 
         # Get parameters from config (via kwargs) with fallbacks
-        n_iterations = kwargs.get("iterations", kwargs.get("n_iterations", self.config.get("iterations", 500)))
-        op_probs = kwargs.get(
+        n_iterations = cast(
+            int,
+            kwargs.get("iterations", kwargs.get("n_iterations", self.config.get("iterations", 500))),
+        )
+        op_probs = cast(
+            Dict[str, float],
+            kwargs.get(
             "params",
             kwargs.get(
                 "op_probs",
@@ -89,13 +94,14 @@ class RandomLocalSearchRouteImprover(IRouteImprovement):
                     },
                 ),
             ),
+        ),
         )
 
-        seed = kwargs.get("seed", self.config.get("seed", 42))
-        wastes = kwargs.get("wastes", self.config.get("wastes", {}))
-        capacity = kwargs.get("capacity", self.config.get("capacity", float("inf")))
-        R = kwargs.get("R", self.config.get("R", 1.0))
-        C = kwargs.get("C", self.config.get("C", 1.0))
+        seed = cast(int, kwargs.get("seed", self.config.get("seed", 42)))
+        wastes = cast(Dict[int, float], kwargs.get("wastes", self.config.get("wastes", {})))
+        capacity = cast(float, kwargs.get("capacity", self.config.get("capacity", float("inf"))))
+        R = cast(float, kwargs.get("R", self.config.get("R", 1.0)))
+        C = cast(float, kwargs.get("C", self.config.get("C", 1.0)))
 
         dist_matrix = to_numpy(distance_matrix)
 

@@ -14,7 +14,7 @@ Example:
 """
 
 import logging
-from typing import Any, List, Tuple
+from typing import Any, Dict, List, Tuple, cast
 
 from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.search_context import ImprovementMetrics
@@ -105,15 +105,15 @@ class FixAndOptimizeRouteImprover(IRouteImprovement):
 
         # Sub-MIP parameters
         n_free = kwargs.get("fo_n_free", self.config.get("fo_n_free"))  # None -> use fraction
-        free_fraction = kwargs.get("fo_free_fraction", self.config.get("fo_free_fraction", 0.30))
-        time_limit = kwargs.get("fo_time_limit", self.config.get("fo_time_limit", 30.0))
-        seed = kwargs.get("seed", self.config.get("seed", 42))
+        free_fraction = cast(float, kwargs.get("fo_free_fraction", self.config.get("fo_free_fraction", 0.30)))
+        time_limit = cast(float, kwargs.get("fo_time_limit", self.config.get("fo_time_limit", 30.0)))
+        seed = cast(int, kwargs.get("seed", self.config.get("seed", 42)))
 
         # Problem parameters
-        wastes = kwargs.get("wastes", self.config.get("wastes", {}))
-        capacity = kwargs.get("capacity", self.config.get("capacity", float("inf")))
-        cost_per_km = kwargs.get("cost_per_km", self.config.get("cost_per_km", 0.0))
-        revenue_kg = kwargs.get("revenue_kg", self.config.get("revenue_kg", 0.0))
+        wastes = cast(Dict[int, float], kwargs.get("wastes", self.config.get("wastes", {})))
+        capacity = cast(float, kwargs.get("capacity", self.config.get("capacity", float("inf"))))
+        cost_per_km = cast(float, kwargs.get("cost_per_km", self.config.get("cost_per_km", 0.0)))
+        revenue_kg = cast(float, kwargs.get("revenue_kg", self.config.get("revenue_kg", 0.0)))
         mandatory_nodes = resolve_mandatory_nodes(kwargs, self.config)
 
         dm = to_numpy(distance_matrix)

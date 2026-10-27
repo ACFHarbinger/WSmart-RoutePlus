@@ -1,16 +1,16 @@
 """WP-08 day-loop contract: shared fills, KPI keys, pipeline order, torch-free specs."""
 
-import os
-import sys
 import json
+import os
 import subprocess
-import pandas as pd
+import sys
 from types import SimpleNamespace
 
+import pandas as pd
 import pytest
 from logic.migration.convert_sim_outputs import convert_tree
+from logic.src.pipeline.simulations.daily import SimulationDayContext, get_daily_results, run_day
 from logic.src.pipeline.simulations.pipeline import PipelineError, resolve_pipeline
-from logic.src.pipeline.simulations.daily import SimulationDayContext, run_day, get_daily_results
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

@@ -12,9 +12,16 @@ from typing import Tuple
 
 import numpy as np
 
+from logic.src.configs.policies.routing.meta_heuristics.de import DEConfig
+
 
 class DEOperatorsMixin:
     r"""Continuous DE mutation, crossover and boundary-handling operators."""
+
+    # Provided by DESolver.__init__; annotations only.
+    rng: np.random.RandomState
+    params: DEConfig
+    n_nodes: int
 
     def _generate_mutation_indices(self, pop_size: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Pure NumPy implementation of 3 mutually exclusive random indices for all i.

@@ -3,6 +3,7 @@
 import logging
 from typing import (
     Any,
+    Callable,
     Dict,
     List,
     Optional,
@@ -23,6 +24,28 @@ logger = logging.getLogger(__name__)
 
 
 class TemporalBendersGurobiMixin:
+    """Gurobi loop. State is assigned by ``TemporalBendersCoordinator``."""
+
+    tree: Any
+    ph_loop: Optional[Any]
+    dive_heuristic: Optional[Any]
+    fix_optimizer: Optional[Any]
+    prize_engine: Any
+    capacity: float
+    revenue: float
+    cost_unit: float
+    max_iterations: int
+    convergence_tol: float
+    max_visits_per_bin: int
+    gurobi_master_time_limit: float
+    gurobi_sub_time_limit: float
+    gurobi_mip_gap: float
+    gurobi_output_flag: bool
+    subproblem_relax: bool
+    _estimate_theta_upper_bound: Callable[..., float]
+    _add_cut: Callable[..., None]
+    _get_scenario_prizes: Callable[..., Any]
+
     # ------------------------------------------------------------------ #
     # Gurobi Benders Loop                                                  #
     # ------------------------------------------------------------------ #

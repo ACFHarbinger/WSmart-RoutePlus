@@ -74,7 +74,7 @@ def _setup_bb_model(
     mandatory_indices: Set[int],
     time_limit: float = 60.0,
     mip_gap: float = 0.01,
-    seed: int = 42,
+    seed: Optional[int] = 42,
     env: Optional[gp.Env] = None,
 ) -> Tuple[gp.Model, Dict[Tuple[int, int], gp.Var], Dict[int, gp.Var]]:
     """Set up the Gurobi model for VRPP.

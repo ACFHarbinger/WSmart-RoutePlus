@@ -46,7 +46,7 @@ def _write_plotly_figure(fig: Any, stem: str, report_dir: str) -> List[str]:
     written.append(html_path)
 
     try:
-        import kaleido  # noqa: F401
+        import kaleido  # noqa: F401  # pyrefly: ignore[missing-import]  # optional plot export
 
         png_path = os.path.join(report_dir, f"{stem}.png")
         fig.write_image(png_path, scale=2)

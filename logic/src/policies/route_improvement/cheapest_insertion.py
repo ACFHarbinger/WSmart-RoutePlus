@@ -11,7 +11,7 @@ Example:
     >>> refined_tour, metrics = improver.process(tour, distance_matrix=dm)
 """
 
-from typing import Any, List, Tuple
+from typing import Any, Dict, List, Tuple, cast
 
 from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.search_context import ImprovementMetrics
@@ -70,10 +70,10 @@ class CheapestInsertionRouteImprover(IRouteImprovement):
             return tour, {"algorithm": "CheapestInsertionRouteImprover"}
 
         # Problem parameters
-        wastes = kwargs.get("wastes", self.config.get("wastes", {}))
-        capacity = kwargs.get("capacity", self.config.get("capacity", float("inf")))
-        cost_per_km = kwargs.get("cost_per_km", self.config.get("cost_per_km", 0.0))
-        revenue_kg = kwargs.get("revenue_kg", self.config.get("revenue_kg", 0.0))
+        wastes = cast(Dict[int, float], kwargs.get("wastes", self.config.get("wastes", {})))
+        capacity = cast(float, kwargs.get("capacity", self.config.get("capacity", float("inf"))))
+        cost_per_km = cast(float, kwargs.get("cost_per_km", self.config.get("cost_per_km", 0.0)))
+        revenue_kg = cast(float, kwargs.get("revenue_kg", self.config.get("revenue_kg", 0.0)))
 
         # Mandatory nodes resolution
         mandatory_nodes = resolve_mandatory_nodes(kwargs, self.config)
@@ -82,7 +82,7 @@ class CheapestInsertionRouteImprover(IRouteImprovement):
         dm = to_numpy(distance_matrix)
 
         # Identify unselected bins
-        n_bins = kwargs.get("n_bins", dm.shape[0] - 1)
+        n_bins = cast(int, kwargs.get("n_bins", dm.shape[0] - 1))
         selected = set(tour) - {0}
         unselected = sorted(list(set(range(1, n_bins + 1)) - selected))
 

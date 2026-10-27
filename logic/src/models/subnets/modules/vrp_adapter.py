@@ -19,7 +19,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Iterator, List, Optional
+from typing import Any, Iterator, List, Optional, cast
 
 import torch
 from tensordict import TensorDict
@@ -62,14 +62,15 @@ class VRPAdapter(SubproblemAdapter):
         """
         super().__init__(td, partition_actions, subprob_batch_size)
 
-        self.capacity = capacity or td.get("vehicle_capacity", torch.tensor(1.0)).item()
+        capacity_value = cast(torch.Tensor, td.get("vehicle_capacity", torch.tensor(1.0)))
+        self.capacity = capacity or capacity_value.item()
         self._subproblems: List[SubproblemMapping] = []
         self._extract_subproblems()
 
     def _extract_subproblems(self) -> None:
         """Extracts subproblems and ensures each receives a depot at index 0."""
         for batch_idx in range(self.batch_size):
-            coords = self.coordinates[batch_idx]
+            coords = cast(torch.Tensor, self.coordinates)[batch_idx]  # coordinates are stored as a tensor
             actions = self.partition_actions[batch_idx]
 
             # First node is assumed to be the depot

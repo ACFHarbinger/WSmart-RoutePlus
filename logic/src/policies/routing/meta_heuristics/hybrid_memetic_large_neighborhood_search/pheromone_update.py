@@ -6,11 +6,21 @@ elitist blending), the per-edge pheromone deposit, the stagnation restart
 and the elite-pool maintenance of the memetic layer.
 """
 
-from typing import List
+from typing import List, Tuple
+
+from logic.src.policies.routing.meta_heuristics.hybrid_memetic_large_neighborhood_search.params import MACOParams
+from logic.src.policies.routing.meta_heuristics.hybrid_memetic_large_neighborhood_search.pheromones import (
+    SparsePheromoneTau,
+)
 
 
 class MACOPheromoneUpdateMixin:
     r"""Global pheromone update, deposit, restart and elite-pool upkeep."""
+
+    # Provided by MemeticACOSolver.__init__; annotations only.
+    params: MACOParams
+    pheromone: SparsePheromoneTau
+    elite_pool: List[Tuple[float, List[List[int]]]]
 
     # ====================================================================== #
     # Pheromone management                                                     #

@@ -1,10 +1,32 @@
 """pricing greedy methods relocated from pricing_subproblem."""
 
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple
+
+import numpy as np
 
 
 class PricingGreedyMixin:
     """Relocated pricing greedy methods."""
+
+    # Declared by PricingSubproblem.__init__; annotation only.
+    n_nodes: int
+    cost_matrix: np.ndarray
+    wastes: Dict[int, float]
+    capacity: float
+    R: float
+    C: float
+    mandatory_nodes: Set[int]
+    depot: int
+
+    if TYPE_CHECKING:
+
+        def _compute_reduced_cost(
+            self,
+            route: List[int],
+            dual_values: Dict[int, float],
+            capacity_cut_duals: Optional[Dict[Any, float]] = None,
+            node_prizes: Optional[Dict[int, float]] = None,
+        ) -> float: ...
 
     def _evaluate_candidate_insertion(
         self,

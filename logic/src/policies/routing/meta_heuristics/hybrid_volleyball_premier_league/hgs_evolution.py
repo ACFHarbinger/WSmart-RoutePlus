@@ -7,8 +7,12 @@ phase that injects diversity from the passive reserve population.
 """
 
 import copy
-from typing import List, Tuple
+import random
+from typing import Dict, List, Tuple
 
+import numpy as np
+
+from logic.src.configs.policies.routing.meta_heuristics.hvpl import HVPLConfig
 from logic.src.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators import (
     greedy_insertion,
@@ -19,6 +23,16 @@ from logic.src.policies.helpers.operators import (
 
 class HVPLEvolutionMixin:
     """HGS evolution, substitution and survival-selection operators."""
+
+    # Provided by HVPLSolver.__init__; annotations only.
+    params: HVPLConfig
+    random: random.Random
+    wastes: Dict[int, float]
+    mandatory_nodes: List[int]
+    dist_matrix: np.ndarray
+    capacity: float
+    R: float
+    C: float
 
     # ------------------------------------------------------------------
     # Private: Phase 2 - HGS Evolution

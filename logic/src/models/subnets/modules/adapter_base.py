@@ -18,7 +18,7 @@ Example:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Iterator
+from typing import Iterator, cast
 
 import torch
 from tensordict import TensorDict
@@ -63,7 +63,7 @@ class SubproblemAdapter(ABC):
         self.subprob_batch_size = subprob_batch_size
 
         # Store original coordinates
-        self.coordinates = td.get("locs", td.get("locations"))
+        self.coordinates = cast(torch.Tensor, td.get("locs", td.get("locations")))  # locs key holds coordinates
         self.batch_size = self.coordinates.size(0)
 
         # Initialize storage for final actions

@@ -21,7 +21,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import cast
+from typing import Any, List, cast
 
 import pytorch_lightning as pl
 import torch
@@ -97,20 +97,22 @@ class HRLModule(pl.LightningModule):
 
         # --- 1. Collection Phase ---
         td = self.env.reset(batch)
+        state = cast(Any, td)  # TensorDict values are a tensor union
 
         # Prepare inputs for manager
-        static = td["locs"]
+        static = cast(torch.Tensor, state["locs"])
+        waste = cast(torch.Tensor, state["waste"])
         if "waste_history" in td.keys():
-            dynamic = td["waste_history"]
+            dynamic = cast(torch.Tensor, state["waste_history"])
         elif "fill_history" in td.keys():
-            dynamic = td["fill_history"]
+            dynamic = cast(torch.Tensor, state["fill_history"])
         else:
-            dynamic = td["waste"].unsqueeze(-1).expand(-1, -1, 10)
+            dynamic = waste.unsqueeze(-1).expand(-1, -1, 10)
 
         global_features = torch.stack(
             [
-                td["waste"].mean(dim=1),
-                td["waste"].max(dim=1)[0],
+                waste.mean(dim=1),
+                waste.max(dim=1)[0],
             ],
             dim=-1,
         )
@@ -126,18 +128,18 @@ class HRLModule(pl.LightningModule):
         total_reward = torch.zeros(td.batch_size, device=td.device)
 
         if len(dispatch_indices) > 0:
-            td_worker = td[dispatch_indices]
+            td_worker = cast(Any, td)[dispatch_indices]  # sliced state stays a TensorDict
             # Apply manager's packing to the TensorDict
             # mandatory = True means bin must be collected
             mandatory_mask = mandatory_action[dispatch_indices].bool()
             # Depot (index 0) should never be mandatory
-            mandatory_mask[:, 0] = False
+            mandatory_mask[:, 0] = False  # pyrefly: ignore[unsupported-operation]  # clear the depot column
             td_worker["mandatory"] = mandatory_mask
             out_worker = self.worker(td_worker, self.env)
             total_reward[dispatch_indices] = out_worker["reward"]
 
         # Store rewards in manager buffer (assuming 1-step horizon for now)
-        self.manager.rewards.append(total_reward)
+        self.manager.rewards.append(cast(float, total_reward))  # buffer annotation is list[float]
 
         # Log metrics
         self.log("train/manager_gate_rate", gate_action.float().mean())
@@ -149,10 +151,11 @@ class HRLModule(pl.LightningModule):
 
         # Prepare Tensors from Buffer
         # For now we handle single-step (T=1), but structure allows accumulation if we loops
-        T = len(self.manager.rewards)
-        B = self.manager.rewards[0].size(0)
+        reward_buf = cast(List[torch.Tensor], self.manager.rewards)  # values are reward tensors
+        T = len(reward_buf)
+        B = reward_buf[0].size(0)
 
-        rewards_tensor = torch.stack(self.manager.rewards)  # (T, B)
+        rewards_tensor = torch.stack(reward_buf)  # (T, B)
         # Compute Returns (G_t)
         returns_tensor = torch.zeros_like(rewards_tensor)
         running_return = torch.zeros(B, device=self.device)
@@ -166,7 +169,7 @@ class HRLModule(pl.LightningModule):
         # Assuming select_action populated these
         old_states_static = torch.cat(self.manager.states_static)
         old_states_dynamic = torch.cat(self.manager.states_dynamic)
-        old_states_global = torch.cat(self.manager.states_global)
+        old_states_global = torch.cat(cast(List[torch.Tensor], self.manager.states_global))
         old_mandatory_actions = torch.cat(self.manager.actions_mandatory)
         old_gate_actions = torch.cat(self.manager.actions_gate)
         old_log_probs_mandatory = torch.cat(self.manager.log_probs_mandatory)
@@ -241,13 +244,14 @@ class HRLModule(pl.LightningModule):
 
         # Log detailed HRL metrics (from last PPO epoch)
         self.log("train/manager_loss", mean_loss / self.ppo_epochs)
-        self.log("train/manager_actor_loss", actor_loss)
-        self.log("train/manager_value_loss", value_loss)
-        self.log("train/manager_entropy", entropy)
+        self.log("train/manager_actor_loss", actor_loss)  # pyrefly: ignore[unbound-name]  # set in the PPO loop
+        self.log("train/manager_value_loss", value_loss)  # pyrefly: ignore[unbound-name]  # set in the PPO loop
+        self.log("train/manager_entropy", entropy)  # pyrefly: ignore[unbound-name]  # set in the PPO loop
         self.log("train/manager_advantage", advantages.mean())
         self.log("train/manager_credit_weight", credit_weight.mean())
         with torch.no_grad():
-            clip_fraction = ((ratio - 1.0).abs() > self.clip_eps).float().mean()
+            exceeded = (ratio - 1.0).abs() > self.clip_eps  # pyrefly: ignore[unbound-name]  # set in PPO loop
+            clip_fraction = exceeded.float().mean()
         self.log("train/manager_clip_fraction", clip_fraction)
 
     def configure_optimizers(self):

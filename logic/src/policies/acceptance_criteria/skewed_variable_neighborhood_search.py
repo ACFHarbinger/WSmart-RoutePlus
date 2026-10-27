@@ -95,6 +95,8 @@ class SkewedVNSAcceptance(IAcceptanceCriterion):
                 - accepted (bool): True if candidate satisfies SVNS condition.
                 - metrics (AcceptanceMetrics): Performance metadata.
         """
+        current_obj = cast(float, current_obj)
+        candidate_obj = cast(float, candidate_obj)
         if self.maximization:
             if candidate_obj > current_obj:
                 _accepted = bool(True)

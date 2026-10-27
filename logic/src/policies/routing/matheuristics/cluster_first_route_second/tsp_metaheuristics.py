@@ -34,7 +34,7 @@ Example:
 
 import random
 import time
-from typing import List, Optional
+from typing import List, Optional, TypedDict
 
 import numpy as np
 
@@ -42,6 +42,14 @@ from logic.src.policies.routing.matheuristics.cluster_first_route_second.tsp_loc
     _calculate_tour_distance,
     _get_swap_operators,
 )
+
+
+class _Particle(TypedDict):
+    """One VTPSO particle: current tour, personal best, and that best's length."""
+
+    pos: List[int]
+    pbest: List[int]
+    pbest_dist: float
 
 
 def find_route_pso(
@@ -85,7 +93,7 @@ def find_route_pso(
     customers = [node for node in cluster if node != 0]
 
     # Initialize particles
-    particles = []
+    particles: List[_Particle] = []
     for _ in range(n_particles):
         perm = np.random.permutation(customers).tolist()
         tour = [0] + perm + [0]

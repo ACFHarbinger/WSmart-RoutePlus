@@ -6,7 +6,7 @@ The module holds ``IRPEnv`` and ``IRP``; the instance generator ``IRPGenerator``
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, cast
 
 import torch
 from tensordict import TensorDict, TensorDictBase
@@ -46,7 +46,9 @@ class IRPEnv(RoutingEnv):
 
     # Dynamics of the pre-WP-07 envs/routing/irp.py, kept verbatim (review CR-12, Q-8b).
 
-    def _reset_instance(self, td: TensorDict) -> TensorDict:
+    def _reset_instance(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDict
+    ) -> TensorDict:
         """
         Initialise per-episode state from a raw problem instance.
 
@@ -72,8 +74,9 @@ class IRPEnv(RoutingEnv):
         Returns:
             TensorDict: Initialized IRP state with per-episode mutable fields.
         """
+        td = cast(Any, td)  # TensorDict values are a tensor union
         if "current_node" in td.keys():
-            return td
+            return cast(TensorDict, td)
 
         if self.generator is None:
             raise ValueError("Generator is not initialized.")
@@ -132,9 +135,11 @@ class IRPEnv(RoutingEnv):
         td["total_holding_cost"] = torch.zeros(*bs, dtype=torch.float32, device=device)
         td["total_stockout"] = torch.zeros(*bs, dtype=torch.float32, device=device)
 
-        return td
+        return cast(TensorDict, td)
 
-    def _step(self, td: TensorDict) -> TensorDict:
+    def _step(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDict
+    ) -> TensorDict:
         """Execute one step in the environment.
 
         Args:
@@ -143,9 +148,11 @@ class IRPEnv(RoutingEnv):
         Returns:
             TensorDict: Updated TensorDict with new state and reward information.
         """
-        return OpsMixin._step(self, td)
+        return cast(TensorDict, OpsMixin._step(self, td))  # mixin returns TensorDictBase
 
-    def _step_instance(self, td: TensorDict) -> TensorDict:
+    def _step_instance(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDict
+    ) -> TensorDict:
         """
         Execute one routing action and handle IRP-specific state transitions.
 
@@ -168,6 +175,7 @@ class IRPEnv(RoutingEnv):
         Returns:
             TensorDict: Updated TensorDict with new state and reward information.
         """
+        td = cast(Any, td)  # TensorDict values are a tensor union
         action = td["action"]
         if action.dim() > 1:
             action = action.squeeze(-1)
@@ -188,7 +196,7 @@ class IRPEnv(RoutingEnv):
         period_end = at_depot & from_customer & within_horizon  # [*B]
 
         # Base routing update: distance, visited, current_node, tour
-        td = super()._step_instance(td)
+        td = cast(Any, super()._step_instance(td))  # TensorDict values are a tensor union
 
         # Override current_node shape (base sets [*B, 1]; keep [*B])
         cn = td["current_node"]
@@ -276,9 +284,11 @@ class IRPEnv(RoutingEnv):
             pe_expand_nodes = period_end.unsqueeze(-1).expand_as(td["visited"])
             td["visited"] = torch.where(pe_expand_nodes, new_visited, td["visited"])
 
-        return td
+        return cast(TensorDict, td)
 
-    def _check_done(self, td: TensorDict) -> torch.Tensor:
+    def _check_done(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDict
+    ) -> torch.Tensor:
         """
         Episode terminates when *current_period* reaches the planning horizon T.
 
@@ -291,13 +301,16 @@ class IRPEnv(RoutingEnv):
         Returns:
             BoolTensor [*B] — True for completed episodes.
         """
+        td = cast(Any, td)  # TensorDict values are a tensor union
         done = td["current_period"] >= self.num_periods
         try:
-            return done.reshape(td.batch_size)
+            return cast(torch.Tensor, done.reshape(td.batch_size))
         except Exception:
-            return done.flatten().reshape(td.batch_size)
+            return cast(torch.Tensor, done.flatten().reshape(td.batch_size))
 
-    def _get_action_mask(self, td: TensorDict) -> torch.Tensor:
+    def _get_action_mask(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDict
+    ) -> torch.Tensor:
         """
         Compute the boolean action mask for the current state.
 
@@ -320,6 +333,7 @@ class IRPEnv(RoutingEnv):
             BoolTensor [*B, num_nodes] — True indicates a selectable action.
         """
         # Base: unvisited nodes
+        td = cast(Any, td)  # TensorDict values are a tensor union
         mask = ~td["visited"]  # [*B, N+1]
 
         # ---- Customer feasibility ----
@@ -342,9 +356,11 @@ class IRPEnv(RoutingEnv):
             done_expand = done.unsqueeze(-1).expand(*td.batch_size, mask.shape[-1] - 1)
             mask[..., 1:] = mask[..., 1:] & ~done_expand
 
-        return mask
+        return cast(torch.Tensor, mask)
 
-    def _get_reward(self, td: TensorDictBase, actions: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def _get_reward(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDictBase, actions: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
         """
         Compute the IRP episode reward (dense — meaningful at terminal step).
 
@@ -368,6 +384,7 @@ class IRPEnv(RoutingEnv):
             Tensor [*B] — scalar reward per batch instance.
         """
         # ---- Routing cost ----
+        td = cast(Any, td)  # TensorDict values are a tensor union
         routing_cost = td["tour_length"].clone()  # [*B]
 
         # Guard: if episode ends while not at depot, add the residual return dist
@@ -405,7 +422,7 @@ class IRPEnv(RoutingEnv):
         if reward.dim() == 0:
             reward = reward.unsqueeze(0)
 
-        return reward.view(td.batch_size)
+        return cast(torch.Tensor, reward.view(td.batch_size))
 
 
 class IRP(BaseProblem):

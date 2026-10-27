@@ -11,13 +11,13 @@ Example:
     >>> routes, profit, cost = policy.run(state)
 """
 
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union, cast
 
 import numpy as np
 
 from logic.src.configs.policies import HybridMemeticLargeNeighborhoodSearchConfig
-from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
 from logic.src.configs.policies.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
+from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
 from logic.src.policies.routing.base.base_routing_policy import BaseRoutingPolicy
 from logic.src.policies.routing.base.factory import RoutingAlgorithmRegistry
 
@@ -141,7 +141,7 @@ class HybridMemeticLargeNeighborhoodSearchPolicy(BaseRoutingPolicy):
 
         # Get ALNS config
         alns_config = values.get("alns") or {}
-        alns_params = ALNSConfig(
+        alns_params = cast(Callable[..., ALNSConfig], ALNSConfig)(
             max_iterations=alns_config.get("max_iterations", 500),
             acceptance_criterion=AcceptanceConfig(
                 method="bmc",

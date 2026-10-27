@@ -4,8 +4,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
-from logic.src.pipeline.simulations.manager import single_simulation
 from logic.src.pipeline.simulations.daily import run_day
+from logic.src.pipeline.simulations.manager import single_simulation
 from logic.src.pipeline.simulations.states import InitializingState, SimulationContext
 from omegaconf import OmegaConf
 

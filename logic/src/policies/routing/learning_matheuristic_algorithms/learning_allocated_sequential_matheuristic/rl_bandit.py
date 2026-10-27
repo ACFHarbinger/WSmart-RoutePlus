@@ -195,7 +195,7 @@ class _SlidingWindowStats:
         """
         self._n = n_arms
         self._win = window
-        self._buf: List[List[Tuple[int, float]]] = [[] for _ in range(n_arms)]
+        self._buf: List[List[Tuple[float, float]]] = [[] for _ in range(n_arms)]
 
     def update(self, arm: int, reward: float) -> None:
         """Update sliding window with reward.

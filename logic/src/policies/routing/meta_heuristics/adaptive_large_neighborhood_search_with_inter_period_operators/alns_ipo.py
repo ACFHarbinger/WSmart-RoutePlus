@@ -50,7 +50,7 @@ Computers & Operations Research, 39(11), 2537–2548.
 from __future__ import annotations
 
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
 import numpy as np
 
@@ -119,7 +119,8 @@ class ALNSSolverIPO(ALNSHorizonSupportMixin, ALNSSolver):
             mandatory_nodes: Nodes that must be visited on Day 0.
             recorder: Optional policy state recorder.
         """
-        super().__init__(
+        parent_init = cast(Callable[..., None], super().__init__)
+        parent_init(
             dist_matrix=dist_matrix,
             wastes=wastes,
             capacity=capacity,
@@ -307,7 +308,7 @@ class ALNSSolverIPO(ALNSHorizonSupportMixin, ALNSSolver):
             if is_inter_period:
                 # 1. Inter-period destroy
                 destroy_op = self.destroy_ops[d_idx]
-                n_remove_nodes = self.random.randint(1, max(1, self.params.min_removal))
+                n_remove_nodes = self.random.randint(1, max(1, cast(ALNSIPOConfig, self.params).min_removal))
                 new_horizon_candidate, removed = destroy_op(
                     [[[*r] for r in day] for day in current_horizon], n_remove_nodes
                 )
@@ -352,7 +353,7 @@ class ALNSSolverIPO(ALNSHorizonSupportMixin, ALNSSolver):
             if not is_inter_period:
                 r_idx = self.select_operator(self.repair_weights[: self.ip_repair_start])
 
-            self._update_weights(d_idx, r_idx, score)
+            self._update_weights(d_idx, r_idx, score)  # pyrefly: ignore[unbound-name]  # set in both inter-period branches
             if (_it + 1) % self.segment_size == 0:
                 self._end_segment()
 

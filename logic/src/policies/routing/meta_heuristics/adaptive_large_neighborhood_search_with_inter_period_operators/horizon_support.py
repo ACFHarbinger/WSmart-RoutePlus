@@ -8,8 +8,13 @@ single-day operators inside the horizon search.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Tuple
+import random
+from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
+import numpy as np
+
+from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
+from logic.src.configs.policies.routing.meta_heuristics.alns_ipo import ALNSIPOConfig
 from logic.src.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators import (
     build_greedy_routes,
@@ -21,6 +26,24 @@ from logic.src.policies.helpers.operators import (
 
 class ALNSHorizonSupportMixin:
     r"""Horizon solution construction and evaluation for the ALNS-IPO solver."""
+
+    # Provided by ALNSSolverIPO.__init__ and ALNSSolver.__init__; annotations only.
+    horizon: int
+    dist_matrix: np.ndarray
+    wastes: Dict[int, float]
+    capacity: float
+    R: float
+    C: float
+    mandatory_nodes: Optional[List[int]]
+    random: random.Random
+    calculate_cost: Callable[[List[List[int]]], float]
+    _scenario_tree: Any
+    stockout_penalty: float
+    forward_looking_depth: int
+    inventory_lambda: float
+    destroy_ops: List[Callable[..., Any]]
+    params: ALNSConfig
+    profit_aware_operators: bool
 
     # ------------------------------------------------------------------
     # Helper: build initial horizon solution
@@ -121,8 +144,9 @@ class ALNSHorizonSupportMixin:
         if n_nodes == 0:
             return day_routes, []
 
-        lower = min(n_nodes, self.params.min_removal)
-        upper = min(n_nodes, self.params.max_removal_cap, max(lower, int(n_nodes * self.params.max_removal_pct)))
+        ipo_params = cast(ALNSIPOConfig, self.params)
+        lower = min(n_nodes, ipo_params.min_removal)
+        upper = min(n_nodes, self.params.max_removal_cap, max(lower, int(n_nodes * ipo_params.max_removal_pct)))
         upper = max(upper, lower)
         n_rem = self.random.randint(lower, upper)
 

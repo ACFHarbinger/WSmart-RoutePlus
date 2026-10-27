@@ -15,7 +15,6 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 from logic.src.configs.policies.packing.dispatch import PackingConfig
-
 from logic.src.configs.policies.route_improvement import RouteImprovingConfig
 
 

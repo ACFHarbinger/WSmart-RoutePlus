@@ -22,7 +22,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Callable, Optional, Union
+from typing import Callable, Optional, Union, cast
 
 import torch
 from tensordict import TensorDict
@@ -138,12 +138,13 @@ class POMO(REINFORCE):
                     return n_start, start_nodes
 
         # Fallback: standard POMO start resolution
-        n_start = self.num_starts
-        if n_start is None:
-            n_start = self.env.get_num_starts(td) if hasattr(self.env, "get_num_starts") else td["locs"].shape[1]
-        return n_start, None
+        n_start_fallback: Optional[int] = self.num_starts
+        if n_start_fallback is None:
+            located = self.env.get_num_starts(td) if hasattr(self.env, "get_num_starts") else td["locs"].shape[1]
+            n_start_fallback = cast(int, located)  # start count is an int
+        return n_start_fallback, None
 
-    def shared_step(
+    def shared_step(  # type: ignore[override]  # pyrefly: ignore[bad-override]  # parent batch is TensorDict or dict
         self,
         batch: TensorDict,
         batch_idx: int,
@@ -160,7 +161,7 @@ class POMO(REINFORCE):
         Returns:
             Dictionary containing loss and other metrics.
         """
-        td = self.env.reset(batch)
+        td = cast(TensorDict, self.env.reset(batch))  # reset returns TensorDictBase
         bs = td.batch_size[0]
 
         # Determine number of starts and optional forced start nodes
@@ -170,7 +171,7 @@ class POMO(REINFORCE):
         # but RL4CO allows it. We'll follow RL4CO: training = no aug, unless specified)
         n_aug = self.num_augment if phase != "train" else 1
         if phase != "train" and self.augmentation is not None:
-            td = self.augmentation(td)
+            td = cast(TensorDict, self.augmentation(td))  # augmentation returns TensorDictBase
 
         # Run policy with multi-start
         out = self.policy(

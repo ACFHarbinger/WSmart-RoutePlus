@@ -10,15 +10,33 @@ Example:
 from __future__ import annotations
 
 import logging
-from typing import List, Optional, Tuple
+from random import Random
+from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
+
+from logic.src.tracking.viz_mixin import PolicyStateRecorder
 
 logger = logging.getLogger(__name__)
 
 
 class LKH3ALNSRoutingMixin:
     """Initial solution, LKH-3 routing and route costing of :class:`LKH3_ALNS`."""
+
+    # Instance state is assigned by LKH3_ALNS.__init__; declared here for the mixin.
+    distance_matrix: np.ndarray
+    wastes: Dict[int, float]
+    capacity: float
+    revenue: float
+    cost_unit: float
+    profit_aware_operators: bool
+    mandatory_nodes: Set[int]
+    seed: int
+    rng: Random
+    np_rng: np.random.Generator
+    max_pool_size: int
+    global_alpha: Optional[np.ndarray]
+    _viz: Optional[PolicyStateRecorder]
 
     def _initialize_solution(
         self,

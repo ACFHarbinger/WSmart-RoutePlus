@@ -2,9 +2,8 @@
 
 import pytest
 import torch
-from torch import nn
-
 from logic.src.models.core.attention_model import AttentionModel
+from torch import nn
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

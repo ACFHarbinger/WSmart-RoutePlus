@@ -9,13 +9,15 @@ Example:
 Parts are relocated to stochastic_cuts.
 """
 
-from typing import Any, List
+from typing import Any, List, Set, Tuple
 
 import numpy as np
 
+from logic.src.configs.policies.routing.exact_and_decomposition_solvers.bc import BCConfig
 from logic.src.policies.helpers.solvers_and_matheuristics import (
     CapacityCut,
     PCSubtourEliminationCut,
+    SeparationEngine,
 )
 
 from .stochastic_cuts import StochasticCutsMixin
@@ -41,6 +43,12 @@ except ImportError:
 
 class BCCutSeparationMixin(StochasticCutsMixin):
     """Lazy/user cut separation inside the Gurobi callback of :class:`BranchAndCutSolver`."""
+
+    # Declared by BranchAndCutSolver.__init__; annotation only.
+    params: BCConfig
+    separator: SeparationEngine
+    _cut_pool: List[Any]
+    _cut_signatures: Set[Tuple[Any, ...]]
 
     def _lazy_constraint_callback(self, model, where):
         """Gurobi callback for Optimized Branch-and-Cut.

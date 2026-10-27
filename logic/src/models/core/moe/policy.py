@@ -74,7 +74,7 @@ class MoEPolicy(AttentionModelPolicy):
 
         # Overwrite encoder with MoE version
         self.encoder = cast(
-            MoEGraphAttentionEncoder,
+            Any,  # attribute is typed as the base encoder
             MoEGraphAttentionEncoder(
                 n_heads=n_heads,
                 embed_dim=embed_dim,

@@ -1,7 +1,11 @@
 """Low-level heuristic moves for the sequence-based selection hyper-heuristic, mixed into SSHHSolver as SSHHLowLevelMixin."""
 
-from typing import List
+import random
+from typing import Dict, List
 
+import numpy as np
+
+from logic.src.configs.policies.routing.hyper_heuristics.ss_hh import SSHHConfig
 from logic.src.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators import (
     cluster_removal,
@@ -19,6 +23,17 @@ from logic.src.policies.helpers.operators import (
 
 
 class SSHHLowLevelMixin:
+    # Provided by SSHHSolver.__init__; annotations only.
+    params: SSHHConfig
+    dist_matrix: np.ndarray
+    wastes: Dict[int, float]
+    capacity: float
+    R: float
+    C: float
+    mandatory_nodes: List[int]
+    nodes: List[int]
+    random: random.Random
+
     # ------------------------------------------------------------------
     # LLH pool
     # ------------------------------------------------------------------

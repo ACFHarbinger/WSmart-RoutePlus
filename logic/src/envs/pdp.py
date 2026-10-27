@@ -5,7 +5,7 @@ The module also holds ``PDPGenerator``, the problem's instance generator.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Callable, Dict, Optional, Sequence, Union, cast
 
 import torch
 from tensordict import TensorDict
@@ -69,7 +69,7 @@ class PDPGenerator(RoutingGenerator):
             **kwargs,
         )
 
-    def _generate(self, batch_size: Union[int, tuple[int, ...]]) -> TensorDict:
+    def _generate(self, batch_size: Union[int, Sequence[int]]) -> TensorDict:
         """Generate a batch of PDP instances: ``locs``, ``depot`` and ``capacity``."""
         td = super()._generate(batch_size)
         td["capacity"] = torch.full(tuple(td.batch_size), 1.0, device=self.device)
@@ -109,7 +109,9 @@ class PDPEnv(RoutingEnv):
     # its pickup, the depot is never an action, and the day ends when every
     # customer is served. The reward is minus the closed tour length.
 
-    def _reset_instance(self, tensordict: TensorDict) -> TensorDict:
+    def _reset_instance(  # pyrefly: ignore[bad-override]  # parent parameter is TensorDictBase
+        self, tensordict: TensorDict
+    ) -> TensorDict:
         if "visited" in tensordict.keys():
             return tensordict
         tensordict = super()._reset_instance(tensordict)
@@ -128,8 +130,10 @@ class PDPEnv(RoutingEnv):
         tensordict["available"] = available
         return tensordict
 
-    def _step_instance(self, tensordict: TensorDict) -> TensorDict:
-        tensordict = super()._step_instance(tensordict)
+    def _step_instance(  # pyrefly: ignore[bad-override]  # parent parameter is TensorDictBase
+        self, tensordict: TensorDict
+    ) -> TensorDict:
+        tensordict = cast(Any, super()._step_instance(tensordict))  # TensorDict values are a tensor union
         action = as_batch_nodes(tensordict["action"])
         num_loc = tensordict["locs"].shape[-2] - 1
         k = num_loc // 2
@@ -137,13 +141,19 @@ class PDPEnv(RoutingEnv):
         # Visiting pickup i unlocks delivery i + k.
         unlocked = (action + k) % (num_loc + 1)
         tensordict["to_deliver"] = tensordict["to_deliver"].scatter(-1, unlocked.unsqueeze(-1), True)
-        return tensordict
+        return cast(TensorDict, tensordict)
 
-    def _get_action_mask(self, tensordict: TensorDict) -> torch.Tensor:
-        return tensordict["available"] & tensordict["to_deliver"]
+    def _get_action_mask(  # pyrefly: ignore[bad-override]  # parent parameter is TensorDictBase
+        self, tensordict: TensorDict
+    ) -> torch.Tensor:
+        tensordict = cast(Any, tensordict)  # TensorDict values are a tensor union
+        return cast(torch.Tensor, tensordict["available"] & tensordict["to_deliver"])
 
-    def _check_done(self, tensordict: TensorDict) -> torch.Tensor:
-        return ~tensordict["available"][..., 1:].any(dim=-1)
+    def _check_done(  # pyrefly: ignore[bad-override]  # parent parameter is TensorDictBase
+        self, tensordict: TensorDict
+    ) -> torch.Tensor:
+        tensordict = cast(Any, tensordict)  # TensorDict values are a tensor union
+        return cast(torch.Tensor, ~tensordict["available"][..., 1:].any(dim=-1))
 
 
 class PDP(BaseProblem):

@@ -4,10 +4,9 @@ from types import SimpleNamespace
 
 import numpy as np
 import pytest
-
-from logic.src.policies.routing.meta_heuristics.tabu_search.solver import TSSolver
 from logic.src.configs.policies.routing.meta_heuristics.ts import TSConfig
 from logic.src.policies.acceptance_criteria.base.factory import AcceptanceCriterionFactory
+from logic.src.policies.routing.meta_heuristics.tabu_search.solver import TSSolver
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

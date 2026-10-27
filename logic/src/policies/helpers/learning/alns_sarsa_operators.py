@@ -7,7 +7,10 @@ Example:
     >>> class ALNSSARSASolver(ALNSSARSARepairMixin): ...
 """
 
-from typing import List, Tuple
+from random import Random
+from typing import Any, Dict, List, Tuple
+
+import numpy as np
 
 from logic.src.policies.helpers.operators.generalized_insertion_and_deletion import (
     stringing_insertion,
@@ -48,6 +51,18 @@ from .alns_perturbation_context import ALNSPerturbationContext
 
 class ALNSSARSARepairMixin:
     """Repair, unstringing and perturbation operators of :class:`ALNSSARSASolver`."""
+
+    # Attribute types from ALNSSARSASolver.__init__. Annotation only.
+    dist_matrix: np.ndarray
+    wastes: Dict[int, float]
+    capacity: float
+    R: float
+    C: float
+    mandatory_nodes: List[int]
+    expand_pool: bool
+    profit_aware_operators: bool
+    random: Random
+    params: Any
 
     def _repair_greedy(self, routes: List[List[int]], removed: List[int]) -> List[List[int]]:
         """Greedy insertion.

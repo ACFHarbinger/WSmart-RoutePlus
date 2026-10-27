@@ -34,8 +34,8 @@ import gurobipy as gp
 import numpy as np
 from gurobipy import GRB
 
-from logic.src.configs.policies.routing.meta_heuristics.aco_ks import KSparseACOConfig
 from logic.src.configs.policies.routing.matheuristics.ils_rvnd_sp import ILSRVNDSPConfig
+from logic.src.configs.policies.routing.meta_heuristics.aco_ks import KSparseACOConfig
 from logic.src.policies.helpers.local_search.local_search_general import (
     GeneralLocalSearch,
 )

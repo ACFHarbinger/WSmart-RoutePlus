@@ -423,7 +423,7 @@ class ScenarioTreeExtensiveFormEngine:
         Returns:
             Dict[int, Any]: A flat map of EngineNode objects.
         """
-        flat = {}
+        flat: Dict[int, Any] = {}
         counter = [0]
 
         def traverse(sim_node, parent_id=None):

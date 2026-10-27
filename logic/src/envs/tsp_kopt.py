@@ -15,7 +15,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Optional, Union
+from typing import Any, Optional, Union, cast
 
 import torch
 from tensordict import TensorDict
@@ -60,7 +60,9 @@ class TSPkoptEnv(ImprovementEnvBase):
 
         super().__init__(generator, generator_params, device, **kwargs)
 
-    def _step(self, td: TensorDict) -> TensorDict:
+    def _step(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDict
+    ) -> TensorDict:
         """Execute step via OpsMixin implementation.
 
         Args:
@@ -71,9 +73,11 @@ class TSPkoptEnv(ImprovementEnvBase):
         """
         from logic.src.envs.base.ops import OpsMixin
 
-        return OpsMixin._step(self, td)
+        return cast(TensorDict, OpsMixin._step(self, td))  # mixin returns TensorDictBase
 
-    def _get_action_mask(self, td: TensorDict) -> torch.Tensor:
+    def _get_action_mask(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDict
+    ) -> torch.Tensor:
         """For improvement moves, all nodes are typically valid targets.
         Return a mask that allows all nodes.
 
@@ -113,7 +117,9 @@ class TSPkoptEnv(ImprovementEnvBase):
 
         return full_tour
 
-    def _step_instance(self, td: TensorDict) -> TensorDict:
+    def _step_instance(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDict
+    ) -> TensorDict:
         """Apply a 2-opt local search move to the solution.
 
         Action contract:
@@ -132,6 +138,7 @@ class TSPkoptEnv(ImprovementEnvBase):
         Returns:
             TensorDict: Updated state with the modified 'solution'.
         """
+        td = cast(Any, td)  # TensorDict values are a tensor union
         action = td["action"]  # [batch, 2]
         solution = td["solution"]
 
@@ -143,6 +150,7 @@ class TSPkoptEnv(ImprovementEnvBase):
             raise ValueError("2-opt actions must contain integer node IDs or positions")
         i, j = action[:, 0], action[:, 1]
         is_pos_val = td.get("action_is_position", None)
+        modes: Any  # Tensor flags or a per-batch bool list
         if isinstance(is_pos_val, torch.Tensor):
             modes = is_pos_val.reshape(-1)
             if modes.numel() not in (1, solution.size(0)):
@@ -176,9 +184,11 @@ class TSPkoptEnv(ImprovementEnvBase):
                 new_solution[b, idx_i + 1 : idx_j + 1] = solution[b, idx_i + 1 : idx_j + 1].flip(0)
 
         td["solution"] = new_solution
-        return td
+        return cast(TensorDict, td)
 
-    def _get_reward(self, td: TensorDict, actions: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def _get_reward(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDict, actions: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
         """Return negative tour length of current solution.
 
         Args:
@@ -188,6 +198,7 @@ class TSPkoptEnv(ImprovementEnvBase):
         Returns:
             torch.Tensor: Negative tour length.
         """
+        td = cast(Any, td)  # TensorDict values are a tensor union
         solution = td["solution"]
 
         depot = td["depot"]
@@ -200,7 +211,7 @@ class TSPkoptEnv(ImprovementEnvBase):
         # Total distance: sum segments + closed loop
         length = (d[:, 1:] - d[:, :-1]).norm(p=2, dim=-1).sum(1) + (d[:, -1] - d[:, 0]).norm(p=2, dim=-1)
 
-        return -length
+        return cast(torch.Tensor, -length)
 
     def _get_initial_reward(self, td: TensorDict) -> torch.Tensor:
         """Compute reward for initial solution.
@@ -213,7 +224,9 @@ class TSPkoptEnv(ImprovementEnvBase):
         """
         return self._get_reward(td)
 
-    def _check_done(self, td: TensorDict) -> torch.Tensor:
+    def _check_done(  # pyrefly: ignore[bad-param-name-override]  # parent parameter is tensordict
+        self, td: TensorDict
+    ) -> torch.Tensor:
         """
         Usually improvement continues for fixed steps or until converge.
 
@@ -225,6 +238,7 @@ class TSPkoptEnv(ImprovementEnvBase):
         Returns:
             torch.Tensor: Done mask.
         """
+        td = cast(Any, td)  # TensorDict values are a tensor union
         if "max_steps" in td.keys():
-            return td["i"] >= td["max_steps"]
+            return cast(torch.Tensor, td["i"] >= td["max_steps"])
         return torch.zeros(td.batch_size, dtype=torch.bool, device=self.device)

@@ -14,7 +14,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Optional, Tuple
+from typing import Any, Optional, Tuple, cast
 
 import torch
 
@@ -115,4 +115,4 @@ class MoETemporalAttentionModel(TemporalAttentionModel):
         Returns:
             int: expert module count.
         """
-        return self.encoder.num_experts if hasattr(self.encoder, "num_experts") else 0
+        return cast(int, self.encoder.num_experts if hasattr(self.encoder, "num_experts") else 0)

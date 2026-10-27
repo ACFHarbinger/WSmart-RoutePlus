@@ -6,8 +6,12 @@ ruin-and-recreate moves of increasing severity) that VNS perturbs with
 before its local search descent.
 """
 
-from typing import List
+import random
+from typing import Dict, List
 
+import numpy as np
+
+from logic.src.configs.policies.routing.meta_heuristics.vns import VNSConfig
 from logic.src.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.operators.search_heuristics.destroy_repair_llh import (
     llh_cluster_greedy,
@@ -19,6 +23,17 @@ from logic.src.policies.helpers.operators.search_heuristics.destroy_repair_llh i
 
 class VNSShakingMixin:
     """Shaking neighborhoods N_1 ... N_5 for the VNS solver."""
+
+    # Provided by VNSSolver.__init__; annotations only.
+    dist_matrix: np.ndarray
+    wastes: Dict[int, float]
+    capacity: float
+    R: float
+    C: float
+    params: VNSConfig
+    mandatory_nodes: List[int]
+    nodes: List[int]
+    random: random.Random
 
     # ------------------------------------------------------------------
     # Shaking neighborhoods (N_1 ... N_5, increasing severity)

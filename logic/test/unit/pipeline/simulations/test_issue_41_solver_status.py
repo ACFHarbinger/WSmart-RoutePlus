@@ -2,13 +2,13 @@
 
 import pandas as pd
 import pytest
+from logic.src.pipeline.simulations.daily import get_daily_results, record_aborted_day, resolve_solver_status
 from logic.src.pipeline.simulations.reporting import (
     current_solver_status,
     format_backend_status,
     note_solver_status,
     reset_solver_status,
 )
-from logic.src.pipeline.simulations.daily import get_daily_results, record_aborted_day, resolve_solver_status
 from logic.src.tracking.logging.modules.summary_display import daily_row_is_visible
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]

@@ -1,7 +1,8 @@
 """mtz branching methods relocated from mtz."""
 
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
+import gurobipy as gp
 from gurobipy import GRB
 
 from logic.src.policies.helpers.solvers_and_matheuristics.common.node import Node
@@ -9,6 +10,17 @@ from logic.src.policies.helpers.solvers_and_matheuristics.common.node import Nod
 
 class MTZBranchingMixin:
     """Relocated mtz branching methods."""
+
+    # Declared by BBSolver.__init__; annotation only.
+    x: Dict[Tuple[int, int], gp.Var]
+    y: Dict[int, gp.Var]
+    u: Dict[int, gp.Var]
+    mandatory_indices: Set[int]
+    wastes: Dict[int, float]
+    capacity: float
+    model: Optional[gp.Model]
+    branching_strategy: str
+    strong_branching_limit: int
 
     def _evaluate_node(self, node: Node) -> float:
         """

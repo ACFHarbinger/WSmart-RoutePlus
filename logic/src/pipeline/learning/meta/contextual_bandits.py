@@ -14,7 +14,7 @@ Example:
 import math
 import random
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import numpy as np
 import torch
@@ -183,7 +183,7 @@ class WeightContextualBandit(WeightAdjustmentStrategy):
         else:
             selected_idx = self._select_epsilon_greedy(context_key)
 
-        self.current_config_idx = selected_idx
+        self.current_config_idx = cast(int, selected_idx)  # arm index is an int
         self.current_config = self.weight_configs[selected_idx]
 
         return self.current_config

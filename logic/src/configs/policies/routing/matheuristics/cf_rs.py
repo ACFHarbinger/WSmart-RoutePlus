@@ -15,10 +15,9 @@ Example:
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from logic.src.configs.policies.packing.dispatch import PackingConfig
-
 from logic.src.configs.policies.route_improvement import RouteImprovingConfig
 
 
@@ -117,7 +116,7 @@ class CFRSConfig:
             return cls(**{k: v for k, v in config.items() if k in {f.name for f in fields(cls)}})
 
         return cls(
-            num_clusters=getattr(config, "num_clusters", None),
+            num_clusters=cast(int, getattr(config, "num_clusters", None)),
             assignment_method=getattr(config, "assignment_method", "angular"),
             route_optimizer=getattr(config, "route_optimizer", "lkh"),
             strict_fleet=getattr(config, "strict_fleet", True),
