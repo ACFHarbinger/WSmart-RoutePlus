@@ -229,7 +229,7 @@ class SimulationAction(ABC):
     """
 
     @abstractmethod
-    def execute(self, context: Dict[str, Any]) -> None:
+    def execute(self, context: Any) -> None:
         """
         Executes the action and updates the context in-place.
 

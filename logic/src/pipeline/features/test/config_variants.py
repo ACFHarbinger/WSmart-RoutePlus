@@ -5,13 +5,12 @@ Moved from ``logic.src.pipeline.features.test.config``.
 
 import copy
 import os
-
-from logic.src.utils.configs.policy_files import find_policy_file
 from typing import Any, Dict, List, Tuple, cast
 
 import logic.src.constants as udef
 from logic.src.interfaces import ITraversable
 from logic.src.utils.configs.config_loader import load_config
+from logic.src.utils.configs.policy_files import find_policy_file
 
 
 def _resolve_policy_cfg_path(pol_name: str) -> str:
@@ -29,7 +28,6 @@ def _resolve_policy_cfg_path(pol_name: str) -> str:
     canonical = os.path.join(udef.CONFIGS_DIR, "policies")
     custom = os.environ.get("WSR_POLICY_CONFIG_DIR", "")
     # Search custom dir first (contains job-specific patched copies), then canonical.
-    search_dirs = [d for d in [custom, canonical] if d]
 
     def _check_dirs(filename: str) -> str:
         # The job-specific dir holds flat copies; the canonical tree is organised by category.
@@ -230,7 +228,7 @@ def _parse_inner_components(
     for idx, item in enumerate(inner_cfg_list):
         item_obj: object = item
         if isinstance(item_obj, ITraversable) or hasattr(item_obj, "items"):
-            item_dict = dict(item_obj)
+            item_dict = dict(cast(Any, item_obj))
             if "packing" in item_dict:
                 ms_list = item_dict["packing"]
                 ms_idx = idx
@@ -284,7 +282,7 @@ def _expand_dict_ms_list(ms_list: Any) -> List[Any]:
             else:
                 expanded.append(item)
         return expanded
-    return ms_list if ms_list else []
+    return cast(List[Any], ms_list) if ms_list else []
 
 
 def _clean_id(path_or_str: Any, prefix: str) -> str:

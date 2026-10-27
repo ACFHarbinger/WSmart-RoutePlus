@@ -10,11 +10,14 @@ callers, so each pair stays in one class.
 
 import contextlib
 import math
-from typing import List, Optional, Tuple
+from typing import TYPE_CHECKING, List, Optional, Tuple
 
 import numpy as np
 
 from logic.src.constants import MAX_CAPACITY_PERCENT
+
+if TYPE_CHECKING:
+    from logic.src.data.datasets import SimulationDataset
 
 try:
     from logic.src.tracking.core.run import get_active_run
@@ -25,6 +28,45 @@ from logic.src.pipeline.simulations.bins.prediction import calculate_frequency_a
 
 class BinsFillingMixin:
     """Waste sampling, filling, collection and fill-distribution methods of :class:`Bins` (moved unchanged from ``base.py``)."""
+
+    # State and helpers supplied by the concrete :class:`Bins` class in ``base.py``.
+    n: int
+    noise_mean: float
+    noise_variance: float
+    rng: np.random.Generator
+    revenue: float
+    density: float
+    expenses: float
+    volume: float
+    c: np.ndarray
+    real_c: np.ndarray
+    means: np.ndarray
+    std: np.ndarray
+    day_count: int
+    square_diff: np.ndarray
+    start_with_fill: bool
+    lost: np.ndarray
+    inoverflow: np.ndarray
+    collected: np.ndarray
+    ncollections: np.ndarray
+    history: List[np.ndarray]
+    level_history: List[np.ndarray]
+    travel: float
+    profit: float
+    ndays: int
+    collectdays: np.ndarray
+    collectlevl: np.ndarray
+    waste_dataset: Optional["SimulationDataset"]
+    waste_fills: np.ndarray
+    noisy_waste_fills: np.ndarray
+    distribution: str
+    dist_param1: np.ndarray
+    dist_param2: np.ndarray
+
+    if TYPE_CHECKING:
+        def is_stochastic(self) -> bool: ...
+
+        def _require_external_stats_rows(self, horizon: int) -> None: ...
 
     def __get_stdev(self):
         """Computes current standard deviation.
@@ -59,7 +101,7 @@ class BinsFillingMixin:
             self.level_history.append(self.c.copy())
 
         with contextlib.suppress(Exception):
-            run = get_active_run()
+            run = get_active_run() if get_active_run is not None else None
             if run is not None:
                 n_days = int(self.waste_fills.shape[0]) if hasattr(self.waste_fills, "shape") else 0
                 run.log_params(
@@ -245,7 +287,7 @@ class BinsFillingMixin:
             th = __set_param([10])
         self.__setDistribution(k, th)
         with contextlib.suppress(Exception):
-            run = get_active_run()
+            run = get_active_run() if get_active_run is not None else None
             if run is not None:
                 run.log_params(
                     {

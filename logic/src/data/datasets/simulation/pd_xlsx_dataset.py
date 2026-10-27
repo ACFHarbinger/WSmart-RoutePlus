@@ -132,7 +132,7 @@ class PandasExcelDataset(SimulationDataset):
         bins_df = df.iloc[1:]
 
         depot_coords = np.array([depot["Lat"], depot["Lng"]], dtype=np.float64)
-        locs = bins_df[["Lat", "Lng"]].values.astype(np.float64)
+        locs = np.asarray(bins_df[["Lat", "Lng"]].values, dtype=np.float64)
 
         day_cols = sorted(
             [c for c in df.columns if isinstance(c, str) and c.startswith("Day ")],
@@ -144,11 +144,11 @@ class PandasExcelDataset(SimulationDataset):
         )
 
         # waste shape: (n_days, n_bins) — depot row excluded
-        waste = bins_df[day_cols].values.astype(np.float64).T
-        noisy_waste = bins_df[noisy_cols].values.astype(np.float64).T if noisy_cols else waste
+        waste = np.asarray(bins_df[day_cols].values, dtype=np.float64).T
+        noisy_waste = np.asarray(bins_df[noisy_cols].values, dtype=np.float64).T if noisy_cols else waste
 
         if "Max Fill" in df.columns:
-            max_waste = bins_df["Max Fill"].values.astype(np.float64)
+            max_waste = np.asarray(bins_df["Max Fill"].values, dtype=np.float64)
         else:
             max_waste = np.full(len(bins_df), MAX_CAPACITY_PERCENT, dtype=np.float64)
 

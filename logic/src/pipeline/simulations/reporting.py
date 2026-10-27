@@ -12,7 +12,7 @@ all-failed cell has no numeric estimate.
 
 import math
 from contextvars import ContextVar
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, cast
 
 from logic.src.envs.common.metrics import (
     DEFAULT_METRICS,
@@ -92,13 +92,13 @@ def format_backend_status(backend: str, code: object) -> str:
     """
     if backend == "gurobi":
         try:
-            number = int(code)  # type: ignore[arg-type]
+            number = int(cast(Any, code))
         except (TypeError, ValueError):
             return f"gurobi:{code}"
         return f"gurobi:{GUROBI_STATUS_NAMES.get(number, str(number))}"
     if backend == "ortools":
         try:
-            number = int(code)  # type: ignore[arg-type]
+            number = int(cast(Any, code))
         except (TypeError, ValueError):
             return f"ortools:{code}"
         return f"ortools:{ORTOOLS_STATUS_NAMES.get(number, str(number))}"
