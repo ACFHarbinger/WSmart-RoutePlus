@@ -9,15 +9,11 @@ Example:
 
 import contextlib
 import os
-from typing import TYPE_CHECKING, Optional, Union
+from typing import Optional, Union
 
 import numpy as np
 
 from logic.src.constants import DATASET_EXTENSIONS, ROOT_DIR
-
-if TYPE_CHECKING:
-    from logic.src.data.datasets import NumpyDictDataset, PandasCsvDataset, PandasExcelDataset
-
 
 from .base import SimulationRepository
 from .dataset import DatasetRepository
@@ -234,12 +230,13 @@ def load_simulator_data(data_dir, number_of_bins, area="Rio Maior", waste_type=N
             )
             stock_tensor = np.asarray(data["Stock"].values, dtype=np.float32)
             rate_tensor = np.asarray(data["Accum_Rate"].values, dtype=np.float32)
-            RuntimeDataTracker(run).on_load(
-                {"stock": stock_tensor, "accum_rate": rate_tensor},
-                shape=stock_tensor.shape,
-                metadata={"area": str(area), "waste_type": str(waste_type) if waste_type else "all"},
-                log_event=False,
-            )
+            if RuntimeDataTracker is not None:
+                RuntimeDataTracker(run).on_load(
+                    {"stock": stock_tensor, "accum_rate": rate_tensor},
+                    shape=stock_tensor.shape,
+                    metadata={"area": str(area), "waste_type": str(waste_type) if waste_type else "all"},
+                    log_event=False,
+                )
     return data, bins_coordinates
 
 

@@ -20,7 +20,7 @@ from logic.src.policies.helpers.operators.generalized_insertion_and_deletion._ro
 )
 
 
-def apply_type_iv_us(route: List[int], i: int, j: int, k: int, l: int) -> List[int]:
+def apply_type_iv_us(route: List[int], i: int, j: int, k: int, label: int) -> List[int]:
     """
     Apply Type IV Unstringing move.
 
@@ -47,7 +47,7 @@ def apply_type_iv_us(route: List[int], i: int, j: int, k: int, l: int) -> List[i
         i: Index of V_i.
         j: Index of node V_j.
         k: Index of node V_k.
-        l: Index of node V_l.
+        label: Index of node V_l.
 
     Returns:
         List[int]: Modified tour.
@@ -64,7 +64,7 @@ def apply_type_iv_us(route: List[int], i: int, j: int, k: int, l: int) -> List[i
 
     v_j = route[j]
     v_k = route[k]
-    v_l = route[l]
+    v_l = route[label]
 
     # Find indices in the route (without V_i)
     try:
@@ -100,7 +100,7 @@ def apply_type_iv_us_profit(
     i: int,
     j: int,
     k: int,
-    l: int,
+    label: int,
     dist_matrix: np.ndarray,
     wastes: Dict[int, float],
     R: float,
@@ -114,7 +114,7 @@ def apply_type_iv_us_profit(
         i: Index of V_i.
         j: Index of node V_j.
         k: Index of node V_k.
-        l: Index of node V_l.
+        label: Index of node V_l.
         dist_matrix: Distance matrix.
         wastes: Waste levels.
         R: Revenue multiplier.
@@ -131,8 +131,8 @@ def apply_type_iv_us_profit(
     v_ip1 = work_route[(i + 1) % n_work]
     v_jm1 = work_route[(j - 1) % n_work]
     v_j = work_route[j]
-    v_lm1 = work_route[(l - 1) % n_work]
-    v_l = work_route[l]
+    v_lm1 = work_route[(label - 1) % n_work]
+    v_l = work_route[label]
     v_k = work_route[k]
     v_kp1 = work_route[(k + 1) % n_work]
 
@@ -154,4 +154,4 @@ def apply_type_iv_us_profit(
 
     delta_profit = delta_rev - delta_cost * C
 
-    return apply_type_iv_us(route, i, j, k, l), float(delta_profit)
+    return apply_type_iv_us(route, i, j, k, label), float(delta_profit)

@@ -11,7 +11,7 @@ Example:
 """
 
 import math
-from typing import List, Optional, Tuple, Union, cast
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -106,7 +106,7 @@ class Gamma(BaseDistribution):
             np.ndarray: Sampled values
         """
         if rng is None:
-            rng = cast(np.random.Generator, np.random.default_rng())
+            rng = np.random.default_rng()
 
         if self.option is not None:
             alpha_pattern, theta_pattern = GAMMA_PRESETS[self.option]

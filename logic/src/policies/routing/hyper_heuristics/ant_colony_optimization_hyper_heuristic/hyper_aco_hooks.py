@@ -11,10 +11,11 @@ tracking, learning accumulation and the result), together with the per-ant
 import copy
 import math
 import time
-from typing import List, NamedTuple, Tuple
+from typing import Any, Callable, Dict, List, NamedTuple, Tuple
 
 import numpy as np
 
+from logic.src.configs.policies.routing.hyper_heuristics.aco_hh import HyperHeuristicACOConfig
 from logic.src.policies.routing.base.sub_problem import SolveResult
 
 from .hyper_operators import (
@@ -40,6 +41,27 @@ def _elitism_sync_count(n_ants: int, elitism_ratio: float) -> int:
 
 class HyperACOSearchHooksMixin:
     """HyperHeuristicSearch hooks of :class:`HyperHeuristicACO` (moved unchanged from ``hyper_aco.py``)."""
+
+    # Provided by HyperHeuristicACO.__init__ and HyperACOPheromoneMixin; annotations only.
+    cfg: HyperHeuristicACOConfig
+    initial_solution: List[List[int]]
+    n_operators: int
+    operator_names: List[str]
+    capacity: float
+    pv: float
+    initial_pv: float
+    eta: np.ndarray
+    wastes: Dict[int, float]
+    R: float
+    C: float
+    _ant_positions: List[int]
+    _calculate_routing_cost: Callable[[List[List[int]]], float]
+    _is_feasible: Callable[[List[List[int]]], bool]
+    _evaluate_objective: Callable[[List[List[int]]], float]
+    _make_context: Callable[..., Any]
+    build_solution: Callable[..., Tuple[List[List[int]], List[str], np.ndarray, int]]
+    _deposit_pheromones: Callable[[List[Any]], None]
+    _evaporate_pheromones: Callable[[], None]
 
     # ------------------------------------------------------------------
     # HyperHeuristicSearch hooks (P-35)

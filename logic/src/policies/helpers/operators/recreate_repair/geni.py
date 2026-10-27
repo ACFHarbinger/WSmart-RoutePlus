@@ -64,7 +64,7 @@ def _get_rev_cost(forward_cost: np.ndarray, backward_cost: np.ndarray, start: in
     return new_cost - old_cost
 
 
-def _apply_geni_move(route: List[int], u: int, i: int, j: int, k: int, l: int, m_type: str) -> List[int]:
+def _apply_geni_move(route: List[int], u: int, i: int, j: int, k: int, label: int, m_type: str) -> List[int]:
     """Applies the exact structural reconnections for GENI insertions.
 
     Args:
@@ -73,7 +73,7 @@ def _apply_geni_move(route: List[int], u: int, i: int, j: int, k: int, l: int, m
         i: First insertion index.
         j: Second insertion index.
         k: Third insertion index.
-        l: Fourth insertion index.
+        label: Fourth insertion index.
         m_type: Type of move ("SIMPLE", "TYPE_I", or "TYPE_II").
 
     Returns:
@@ -92,7 +92,7 @@ def _apply_geni_move(route: List[int], u: int, i: int, j: int, k: int, l: int, m
         # Phase 2: Correct Type II path (exactly two reversals)
         # Deletes (v_i, v_{i+1}), (v_{l-1}, v_l), (v_j, v_{j+1}), (v_{k-1}, v_k)
         # Sequence: P1 + [u] + P3A_rev (v_j..v_l) + P3B (v_{j+1}..v_{k-1}) + P2_rev (v_{l-1}..v_{i+1}) + P4 (v_k..)
-        new_full = full[: i + 1] + [u] + full[l : j + 1][::-1] + full[j + 1 : k] + full[i + 1 : l][::-1] + full[k:]
+        new_full = full[: i + 1] + [u] + full[label : j + 1][::-1] + full[j + 1 : k] + full[i + 1 : label][::-1] + full[k:]
     else:
         new_full = full
 
@@ -204,7 +204,7 @@ def _evaluate_route(  # noqa: C901
             # 3. TYPE II (4-opt)
             # ordering: i < l < j < k
             candidate_l = [idx for idx in range(i + 2, j)]
-            for l in candidate_l:
+            for label in candidate_l:
                 # v_k in N_p(v_{i+1})
                 v_ip1 = full[i + 1]
                 p_neighbors_ip1 = get_p_neighborhood(v_ip1, full, dist_matrix, neighborhood_size)
@@ -218,11 +218,11 @@ def _evaluate_route(  # noqa: C901
                     # Phase 3 logic also applied here for consistency
                     v_jp1 = full[j + 1]
                     p_neighbors_jp1 = get_p_neighborhood(v_jp1, full, dist_matrix, neighborhood_size)
-                    if full[l] not in p_neighbors_jp1:
+                    if full[label] not in p_neighbors_jp1:
                         continue
 
-                    rev_cost_s2 = _get_rev_cost(forward_cost, backward_cost, i + 1, l)  # Reverse v_{i+1}...v_{l-1}
-                    rev_cost_s3a = _get_rev_cost(forward_cost, backward_cost, l, j + 1)  # Reverse v_l...v_j
+                    rev_cost_s2 = _get_rev_cost(forward_cost, backward_cost, i + 1, label)  # Reverse v_{i+1}...v_{l-1}
+                    rev_cost_s3a = _get_rev_cost(forward_cost, backward_cost, label, j + 1)  # Reverse v_l...v_j
 
                     # Phase 2 Corrections:
                     # Deletions: (v_i, v_{i+1}), (v_{l-1}, v_l), (v_j, v_{j+1}), (v_{k-1}, v_k)
@@ -230,11 +230,11 @@ def _evaluate_route(  # noqa: C901
                     delta_ii = (
                         dist_matrix[full[i], u]
                         + dist_matrix[u, full[j]]
-                        + dist_matrix[full[l], full[j + 1]]
-                        + dist_matrix[full[k - 1], full[l - 1]]
+                        + dist_matrix[full[label], full[j + 1]]
+                        + dist_matrix[full[k - 1], full[label - 1]]
                         + dist_matrix[full[i + 1], full[k]]
                         - dist_matrix[full[i], full[i + 1]]
-                        - dist_matrix[full[l - 1], full[l]]
+                        - dist_matrix[full[label - 1], full[label]]
                         - dist_matrix[full[j], full[j + 1]]
                         - dist_matrix[full[k - 1], full[k]]
                         + rev_cost_s2
@@ -244,7 +244,7 @@ def _evaluate_route(  # noqa: C901
                     if (is_profit and val_ii > best_val and (is_man or val_ii >= -1e-4)) or (
                         not is_profit and val_ii < best_val
                     ):
-                        best_val, best_move = val_ii, (i, j, k, l, "TYPE_II")
+                        best_val, best_move = val_ii, (i, j, k, label, "TYPE_II")
 
     return best_val, best_move
 
@@ -381,13 +381,13 @@ def geni_insertion(
             best_delta, best_move = new_cost, (len(routes), 0, 0, 0, 0, "NEW", False)
 
         if best_move:
-            r_idx, i, j, k, l, m_type, is_rev = best_move
+            r_idx, i, j, k, label, m_type, is_rev = best_move
             if m_type == "NEW":
                 routes.append([u])
                 loads.append(u_waste)
             else:
                 target_route = routes[r_idx][::-1] if is_rev else routes[r_idx]
-                routes[r_idx] = _apply_geni_move(target_route, u, i, j, k, l, m_type)
+                routes[r_idx] = _apply_geni_move(target_route, u, i, j, k, label, m_type)
                 loads[r_idx] += u_waste
         elif u in mandatory_set:
             routes.append([u])
@@ -467,13 +467,13 @@ def geni_profit_insertion(
             best_profit, best_move = new_profit, (len(routes), 0, 0, 0, 0, "NEW", False)
 
         if best_move:
-            r_idx, i, j, k, l, m_type, is_rev = best_move
+            r_idx, i, j, k, label, m_type, is_rev = best_move
             if m_type == "NEW":
                 routes.append([u])
                 loads.append(u_waste)
             else:
                 target_route = routes[r_idx][::-1] if is_rev else routes[r_idx]
-                routes[r_idx] = _apply_geni_move(target_route, u, i, j, k, l, m_type)
+                routes[r_idx] = _apply_geni_move(target_route, u, i, j, k, label, m_type)
                 loads[r_idx] += u_waste
         elif u in mandatory_set:
             routes.append([u])

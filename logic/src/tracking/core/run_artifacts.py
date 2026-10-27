@@ -7,24 +7,32 @@ from __future__ import annotations
 
 import contextlib
 import os
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, TypeVar
 
 from logic.src.tracking.validation.hashing import hash_file
 
 if TYPE_CHECKING:
-    from .run import Run
+    from logic.src.tracking.core.store import TrackingStore
+
+_ArtT = TypeVar("_ArtT", bound="RunArtifactMixin")
 
 
 class RunArtifactMixin:
     """Moved methods of :class:`Run`."""
 
+    run_id: str
+    _store: "TrackingStore"
+    _closed: bool
+    _sinks: List[Any]
+    _file_hashes: Dict[str, str]
+
     def log_artifact(
-        self,
+        self: _ArtT,
         path: str,
         name: Optional[str] = None,
         artifact_type: str = "file",
         metadata: Optional[Dict[str, Any]] = None,
-    ) -> "Run":
+    ) -> _ArtT:
         """Registers a local file as an artifact of this run.
 
         Args:
@@ -53,10 +61,10 @@ class RunArtifactMixin:
         return self
 
     def log_artifacts_dir(
-        self,
+        self: _ArtT,
         dir_path: str,
         artifact_type: str = "file",
-    ) -> "Run":
+    ) -> _ArtT:
         """Registers every file in a directory as an artifact.
 
         Note: This is non-recursive.
@@ -77,12 +85,12 @@ class RunArtifactMixin:
         return self
 
     def log_dataset_event(
-        self,
+        self: _ArtT,
         event_type: str,
         file_path: Optional[str] = None,
         shape: Optional[Tuple[int, ...]] = None,
         metadata: Optional[Dict[str, Any]] = None,
-    ) -> "Run":
+    ) -> _ArtT:
         """Records a data-lifecycle event (e.g., loading, mutation).
 
         Args:
@@ -119,7 +127,7 @@ class RunArtifactMixin:
         )
         return self
 
-    def watch_file(self, file_path: str) -> "Run":
+    def watch_file(self: _ArtT, file_path: str) -> _ArtT:
         """Registers the current SHA-256 of a file for change detection.
 
         Args:

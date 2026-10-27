@@ -22,7 +22,6 @@ from rich.console import Console
 from rich.table import Table
 
 from logic.src.configs import Config, PackingConfig
-from logic.src.constants import CONFIGS_DIR
 from logic.src.interfaces import ITraversable
 from logic.src.pipeline.simulations.actions.policy_config import _as_policy_mapping
 from logic.src.tracking.logging.logger_writer import LoggerWriter
@@ -249,11 +248,11 @@ class PolicySummaryCallback:
         """
         strategy = config.strategy
         if strategy == "regular":
-            return f"(freq={config.regular.frequency})"
+            return f"(freq={config.regular.threshold})"
         if strategy == "revenue":
             return f"(thresh={config.revenue.revenue_threshold})"
         if strategy == "service_level":
-            return f"(cf={config.service_level.confidence_factor})"
+            return f"(cf={config.service_level.threshold})"
         if strategy == "deadline":
             return f"(horizon={config.deadline.horizon_days}, t={config.deadline.threshold})"
         if strategy == "multi_day_prob":
@@ -261,7 +260,7 @@ class PolicySummaryCallback:
         if strategy == "last_minute":
             return f"(t={config.last_minute.threshold})"
         if strategy == "lookahead":
-            return f"(t={config.lookahead.threshold})"
+            return f"(t={config.lookahead.current_collection_day})"
         if strategy == "pareto_front":
             return f"(t={config.pareto_front.threshold})"
         if strategy == "profit_per_km":
@@ -319,7 +318,8 @@ class PolicySummaryCallback:
             item_obj: object = item
             # Handle new dict format: {"other/route_improvement/ri_ftsp.yaml": "default"} or {"other/route_improvement/ri_ftsp.yaml": ["default"]}
             if (isinstance(item_obj, dict) or hasattr(item_obj, "items")) and not isinstance(item_obj, str):
-                item_dict = dict(item_obj.items()) if hasattr(item_obj, "items") else dict(item_obj)
+                mapped = cast(Any, item_obj)
+                item_dict = dict(mapped.items()) if hasattr(mapped, "items") else dict(mapped)
                 if len(item_dict) == 1:
                     file_key, variant_val = next(iter(item_dict.items()))
                     file_key = str(file_key)
@@ -413,7 +413,8 @@ class PolicySummaryCallback:
             item_obj: object = item
             # Handle new dict format: {"other/acceptance_criteria/ac_oi.yaml": "oi"} or {"other/acceptance_criteria/ac_oi.yaml": ["oi"]}
             if (isinstance(item_obj, dict) or hasattr(item_obj, "items")) and not isinstance(item_obj, str):
-                item_dict = dict(item_obj.items()) if hasattr(item_obj, "items") else dict(item_obj)
+                mapped = cast(Any, item_obj)
+                item_dict = dict(mapped.items()) if hasattr(mapped, "items") else dict(mapped)
                 if len(item_dict) == 1:
                     file_key, variant_val = next(iter(item_dict.items()))
                     file_key = str(file_key)

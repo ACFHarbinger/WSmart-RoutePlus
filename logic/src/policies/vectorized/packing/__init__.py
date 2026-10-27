@@ -16,7 +16,7 @@ _LAZY = {
     "create_selector_from_config": "logic.src.policies.vectorized.packing.factory:create_selector_from_config",
 }
 
-__all__ = list(_LAZY)
+__all__ = list(_LAZY)  # pyrefly: ignore[unresolvable-dunder-all]  # lazy re-exports; resolved through __getattr__
 
 
 def __getattr__(name: str) -> Any:

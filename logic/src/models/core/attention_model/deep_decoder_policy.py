@@ -15,7 +15,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from logic.src.models.core.attention_model.policy import AttentionModelPolicy
 from logic.src.models.subnets.decoders.gat import DeepGATDecoder
@@ -34,8 +34,6 @@ class DeepDecoderPolicy(AttentionModelPolicy):
         decoder (DeepGATDecoder): Multi-layer sequential constructor.
         init_embedding (nn.Module): Problem-specific latent projection.
     """
-
-    decoder: DeepGATDecoder
 
     def __init__(
         self,
@@ -73,12 +71,16 @@ class DeepDecoderPolicy(AttentionModelPolicy):
             **kwargs,
         )
 
-        self.decoder = DeepGATDecoder(
-            embed_dim=embed_dim,
-            hidden_dim=hidden_dim,
-            n_heads=n_heads,
-            n_layers=n_decode_layers,
-            normalization=normalization,
-            dropout_rate=dropout_rate,
-            **kwargs,
+        # Deep GAT replaces the glimpse decoder declared on AttentionModelPolicy.
+        self.decoder = cast(
+            Any,
+            DeepGATDecoder(
+                embed_dim=embed_dim,
+                hidden_dim=hidden_dim,
+                n_heads=n_heads,
+                n_layers=n_decode_layers,
+                normalization=normalization,
+                dropout_rate=dropout_rate,
+                **kwargs,
+            ),
         )

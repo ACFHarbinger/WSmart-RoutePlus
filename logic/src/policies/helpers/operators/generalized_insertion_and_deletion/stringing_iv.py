@@ -21,7 +21,7 @@ from logic.src.policies.helpers.operators.generalized_insertion_and_deletion._ro
 )
 
 
-def apply_type_iv_s(route: List[int], x: int, i: int, j: int, k: int, l: int, current_load: float) -> List[int]:
+def apply_type_iv_s(route: List[int], x: int, i: int, j: int, k: int, label: int, current_load: float) -> List[int]:
     """
     Apply Type IV Stringing move.
 
@@ -37,7 +37,7 @@ def apply_type_iv_s(route: List[int], x: int, i: int, j: int, k: int, l: int, cu
         i: Index of node V_i (start of first reversal).
         j: Index of node V_j (end of second reversal + 1).
         k: Index of node V_k (reconnection point).
-        l: Index of node V_l (split point between reversals).
+        label: Index of node V_l (split point between reversals).
         current_load: Pre-calculated current weight of the route.
 
     Returns:
@@ -51,7 +51,7 @@ def apply_type_iv_s(route: List[int], x: int, i: int, j: int, k: int, l: int, cu
     # Validate constraints
     val_k = route[k]
     val_j = route[j]
-    val_l = route[l]
+    val_l = route[label]
     val_i = route[i]
 
     if val_k in (val_j, route[(j + 1) % n_work]):
@@ -121,7 +121,7 @@ def apply_type_iv_s_profit(
     i: int,
     j: int,
     k: int,
-    l: int,
+    label: int,
     dist_matrix: np.ndarray,
     wastes: Dict[int, float],
     current_load: float,
@@ -138,7 +138,7 @@ def apply_type_iv_s_profit(
         i: Index of node V_i.
         j: Index of node V_j.
         k: Index of node V_k.
-        l: Index of node V_l.
+        label: Index of node V_l.
         dist_matrix: Distance matrix.
         wastes: Waste levels.
         current_load: Pre-calculated current weight of the route.
@@ -154,8 +154,8 @@ def apply_type_iv_s_profit(
     # Identifiers
     v_i = work_route[i]
     v_ip1 = work_route[(i + 1) % n_work]
-    v_l = work_route[l]
-    v_lp1 = work_route[(l + 1) % n_work]
+    v_l = work_route[label]
+    v_lp1 = work_route[(label + 1) % n_work]
     v_jm1 = work_route[(j - 1) % n_work]
     v_j = work_route[j]
     v_jp1 = work_route[(j + 1) % n_work]
@@ -163,7 +163,7 @@ def apply_type_iv_s_profit(
     # Constraints
     if route[k] in (route[j], route[(j + 1) % n_work]):
         return route, -float("inf")
-    if route[l] in (route[i], route[(i + 1) % n_work]):
+    if route[label] in (route[i], route[(i + 1) % n_work]):
         return route, -float("inf")
 
     # Feasibility
@@ -190,4 +190,4 @@ def apply_type_iv_s_profit(
 
     delta_profit = delta_rev - delta_cost * C
 
-    return apply_type_iv_s(route, x, i, j, k, l, current_load), float(delta_profit)
+    return apply_type_iv_s(route, x, i, j, k, label, current_load), float(delta_profit)

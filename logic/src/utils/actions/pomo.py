@@ -29,7 +29,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Optional, cast
 
 import torch
 from tensordict import TensorDict
@@ -90,8 +90,8 @@ def select_start_nodes_by_distance(
     Returns:
         Selected start node indices [batch * num_starts].
     """
-    locs = td["locs"] if "locs" in td.keys() else td["loc"]
-    depot = td["depot"]
+    locs = cast(torch.Tensor, td["locs"] if "locs" in td.keys() else td["loc"])
+    depot = cast(torch.Tensor, td["depot"])
 
     # Calculate distance from depot
     # depot: [batch, 2], locs: [batch, n, 2]

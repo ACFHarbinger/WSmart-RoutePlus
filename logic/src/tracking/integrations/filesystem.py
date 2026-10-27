@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import hashlib
 import os
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, cast
 
 if TYPE_CHECKING:
     from logic.src.tracking.core.run import Run
@@ -67,7 +67,7 @@ class FilesystemTracker:
         if metadata:
             meta.update(metadata)
 
-        self._run.log_dataset_event(
+        cast(Any, self._run).log_dataset_event(
             event_type="load",
             file_path=path,
             file_hash=file_hash,
@@ -104,7 +104,7 @@ class FilesystemTracker:
         if metadata:
             meta.update(metadata)
 
-        self._run.log_dataset_event(
+        cast(Any, self._run).log_dataset_event(
             event_type="save",
             file_path=path,
             file_hash=file_hash,

@@ -23,7 +23,7 @@ Example:
 """
 
 import math
-from typing import Callable, List, Optional, Union
+from typing import Any, Callable, List, Optional, Union, cast
 
 import torch
 from tensordict import TensorDict
@@ -260,16 +260,16 @@ class StateAugmentation:
         for feat in self.feats:
             init_aug_feat = None
             if self.first_aug_identity:
-                init_aug_feat = td_aug[feat][idx].clone()
+                init_aug_feat = cast(torch.Tensor, td_aug[feat][idx]).clone()
 
             # Apply transformation
-            aug_feat = self.augmentation(td_aug[feat], num_augment=self.num_augment)
+            aug_feat = cast(Any, self.augmentation)(cast(torch.Tensor, td_aug[feat]), num_augment=self.num_augment)
 
             if self.normalize:
                 aug_feat = min_max_normalize(aug_feat)
 
             if self.first_aug_identity and init_aug_feat is not None:
-                aug_feat[idx] = init_aug_feat
+                cast(torch.Tensor, aug_feat)[idx] = init_aug_feat
 
             td_aug[feat] = aug_feat
 

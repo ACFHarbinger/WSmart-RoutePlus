@@ -15,7 +15,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any, Dict, List, Optional, Tuple, Type, cast
 
 import torch
 import torch.nn.functional as F
@@ -307,8 +307,8 @@ class MandatoryManager(nn.Module):
     def _initialize_head_weights(self) -> None:
         """Biases initial dispatch decisions to promote exploration of routing paths."""
         with torch.no_grad():
-            self.gate_head.net[-1].bias.fill_(0)
-            self.mandatory_head.net[-1].bias.fill_(0)
+            cast(torch.Tensor, self.gate_head.net[-1].bias).fill_(0)
+            cast(torch.Tensor, self.mandatory_head.net[-1].bias).fill_(0)
 
     def clear_memory(self) -> None:
         """Flushes PPO trajectory buffers after an update."""

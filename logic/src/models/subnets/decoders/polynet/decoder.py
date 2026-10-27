@@ -14,7 +14,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Tuple, Union
+from typing import Any, Tuple, Union, cast
 
 import torch
 from tensordict import TensorDict
@@ -162,7 +162,7 @@ class PolyNetDecoder(nn.Module):
 
             # Step environment
             td.set("action", action)
-            td = env.step(td)["next"]
+            td = cast(TensorDict, env.step(td)["next"])
 
         # Stack outputs
         log_likelihood = torch.stack(outputs, dim=1).sum(dim=1)
@@ -252,4 +252,4 @@ class PolyNetDecoder(nn.Module):
             attn_mask=mask,
         )
 
-        return logits.squeeze(1), mask
+        return logits.squeeze(1), cast(torch.Tensor, mask)

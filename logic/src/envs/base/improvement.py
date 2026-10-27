@@ -17,9 +17,10 @@ Example:
 from __future__ import annotations
 
 from abc import abstractmethod
+from typing import cast
 
 import torch
-from tensordict import TensorDict
+from tensordict import TensorDict, TensorDictBase
 
 from .base import RL4COEnvBase
 
@@ -50,17 +51,17 @@ class ImprovementEnvBase(RL4COEnvBase):
         """
         raise NotImplementedError
 
-    def _reset_instance(self, td: TensorDict) -> TensorDict:
+    def _reset_instance(self, tensordict: TensorDictBase) -> TensorDictBase:
         """
         Reset with initial solution generation.
 
         Args:
-            td: TensorDict containing the state.
+            tensordict: TensorDict containing the state.
 
         Returns:
             TensorDict: The reset environment.
         """
         # Generate initial solution
-        td["solution"] = self._get_initial_solution(td)
+        tensordict["solution"] = self._get_initial_solution(cast(TensorDict, tensordict))
 
-        return td
+        return tensordict

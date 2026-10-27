@@ -28,7 +28,7 @@ def _run_ortools_tcf_optimizer(  # noqa: C901
     binsids: List[int],
     mandatory_nodes: List[int],
     number_vehicles: int = 1,
-    time_limit: int = 60,
+    time_limit: float = 60,
     solver_id: str = "SCIP",  # Can be 'GUROBI', 'SCIP', 'HIGHS', 'CPLEX'
     seed: int = 42,
     dual_values: Optional[Dict[int, float]] = None,

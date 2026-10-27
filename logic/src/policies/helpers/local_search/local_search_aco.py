@@ -17,7 +17,7 @@ Example:
     >>> print(f"Improved cost: {solution.cost}")
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import numpy as np
 
@@ -78,7 +78,8 @@ class ACOLocalSearch(LocalSearch):
         Returns:
             float: Distance between node i and node j.
         """
-        return float(np.linalg.norm(self.node_coords[i] - self.node_coords[j]))
+        coords = cast(np.ndarray, self.node_coords)
+        return float(np.linalg.norm(coords[i] - coords[j]))
 
     def calculate_route_cost(self, route: List[int]) -> float:
         """Calculate the cost of a route.

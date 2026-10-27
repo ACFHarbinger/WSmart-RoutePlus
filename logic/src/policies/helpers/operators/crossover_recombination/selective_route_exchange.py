@@ -244,6 +244,7 @@ def selective_route_exchange_crossover(
         return _get_individual_class()(p1.giant_tour[:])
 
     # 2. Select initial P1 routes and merge P2 non-conflicting routes
+    assert dist_matrix is not None and wastes is not None
     child_routes, child_nodes = _select_initial_child_routes(p1, rng, dist_matrix, wastes, R, C)
     p2_unassigned = _merge_non_conflicting_p2_routes(p2, child_routes, child_nodes)
 

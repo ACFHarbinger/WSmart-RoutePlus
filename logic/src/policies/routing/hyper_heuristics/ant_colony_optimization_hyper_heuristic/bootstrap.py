@@ -7,8 +7,12 @@ Example:
     >>> class HyperHeuristicACO(ACOBootstrapMixin, HyperHeuristicSearch): ...
 """
 
-from typing import List
+import random
+from typing import Dict, List
 
+import numpy as np
+
+from logic.src.configs.policies.routing.hyper_heuristics.aco_hh import HyperHeuristicACOConfig
 from logic.src.policies.helpers.operators import (
     bb_insertion,
     bb_profit_insertion,
@@ -37,6 +41,15 @@ from logic.src.policies.helpers.operators import (
 
 class ACOBootstrapMixin:
     """Standard and profit-aware bootstrap of :class:`HyperHeuristicACO`."""
+
+    # Provided by HyperHeuristicACO.__init__; annotations only.
+    cfg: HyperHeuristicACOConfig
+    random: random.Random
+    dist_matrix: np.ndarray
+    wastes: Dict[int, float]
+    capacity: float
+    R: float
+    C: float
 
     def _bootstrap(
         self,

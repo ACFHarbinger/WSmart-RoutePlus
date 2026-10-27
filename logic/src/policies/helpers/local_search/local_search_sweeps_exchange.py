@@ -7,6 +7,8 @@ and exchange chains over the current routes of
 Moved unchanged from ``local_search_sweeps.py``.
 """
 
+from typing import List
+
 from logic.src.policies.helpers.operators.inter_route_local_search import (
     cross_exchange,
 )
@@ -17,6 +19,9 @@ from logic.src.policies.helpers.operators.intra_route_local_search import (
 
 class SweepExchangeMixin:
     """Exchange-operator sweeps of :class:`SweepLocalSearch` (moved unchanged from ``local_search_sweeps.py``)."""
+
+    # From LocalSearch.__init__. Annotation only.
+    routes: List[List[int]]
 
     # ===== Exchange Operators =====
 

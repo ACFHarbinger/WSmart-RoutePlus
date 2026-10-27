@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import random
 from abc import ABC
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 import torch
 from tensordict import TensorDict
@@ -151,7 +151,7 @@ class ImprovementPolicy(nn.Module, ABC):
         # Initial solution generation (done by env.reset)
         from logic.src.utils.decoding import batchify, unbatchify
 
-        td = env.reset(td)
+        td = cast(TensorDict, env.reset(td))
 
         # Batch for multiple starts if requested
         if num_starts > 1:
@@ -181,7 +181,7 @@ class ImprovementPolicy(nn.Module, ABC):
 
             # 3. Apply move
             td.set("action", move)
-            td = env.step(td)["next"]
+            td = cast(TensorDict, env.step(td)["next"])
 
             log_probs.append(log_p)
             actions.append(move)
@@ -201,7 +201,7 @@ class ImprovementPolicy(nn.Module, ABC):
         # Unbatch if multiple starts
         if num_starts > 1:
             out["reward"] = unbatchify(out["reward"], num_starts)
-            out["log_likelihood"] = unbatchify(out["log_likelihood"], num_starts)
+            out["log_likelihood"] = cast(torch.Tensor, unbatchify(out["log_likelihood"], num_starts))
             if return_actions:
                 out["actions"] = unbatchify(out["actions"], num_starts)
 

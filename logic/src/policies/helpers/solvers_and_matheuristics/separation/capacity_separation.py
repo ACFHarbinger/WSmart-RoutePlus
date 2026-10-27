@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import TYPE_CHECKING, List, Optional, Protocol, Set, cast
 
 import networkx as nx
 import numpy as np
@@ -11,11 +11,26 @@ from scipy.sparse.csgraph import maximum_flow
 
 from logic.src.policies.helpers.solvers_and_matheuristics.separation.inequality import (
     CapacityCut,
+    Inequality,
 )
+
+if TYPE_CHECKING:
+    from logic.src.policies.helpers.solvers_and_matheuristics.vrpp_model import VRPPModel
+
+
+class _CapacitySepOps(Protocol):
+    """Methods implemented on SeparationEngine and used by this mixin."""
+
+    def _extract_min_cut(self, capacity: np.ndarray, flow: np.ndarray, source: int, sink: int) -> Set[int]: ...
+
+    def _get_cut_value(self, node_set: Set[int], x_vals: np.ndarray) -> float: ...
 
 
 class CapacitySeparationMixin:
     """Relocated capacity separation methods."""
+
+    model: VRPPModel
+    pool: List[Inequality]
 
     def _separate_capacity_cuts(self, x_vals: np.ndarray, y_vals: Optional[np.ndarray]) -> None:
         """Separate capacity inequalities using demand-based clustering.
@@ -157,7 +172,9 @@ class CapacitySeparationMixin:
                 break
             try:
                 flow_result = maximum_flow(csr_matrix(adj), source_node, sink)
-                source_side = self._extract_min_cut(adj, flow_result.flow.toarray(), source_node, sink)
+                source_side = cast(_CapacitySepOps, self)._extract_min_cut(
+                    adj, flow_result.flow.toarray(), source_node, sink
+                )
                 cut_set = set(range(self.model.n_nodes)) - source_side
             except Exception:
                 # Padberg-Rinaldi Min-Cut Fallback
@@ -188,7 +205,7 @@ class CapacitySeparationMixin:
             if min_vehicles < 1:
                 continue
 
-            cut_val = self._get_cut_value(cut_set, x_vals)
+            cut_val = cast(_CapacitySepOps, self)._get_cut_value(cut_set, x_vals)
             required_val = 2.0 * min_vehicles
 
             violation = required_val - cut_val

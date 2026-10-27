@@ -14,7 +14,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import List
+from typing import Any, List, cast
 
 import torch
 from torch_geometric.data import Batch, Data
@@ -91,5 +91,6 @@ class CPTPEdgeEmbedding(EdgeEmbedding):
             graph_data.append(graph)
 
         batch = Batch.from_data_list(graph_data)
-        batch.edge_attr = self.edge_embed(batch.edge_attr)
+        graph_batch = cast(Any, batch)
+        graph_batch.edge_attr = self.edge_embed(graph_batch.edge_attr)
         return batch

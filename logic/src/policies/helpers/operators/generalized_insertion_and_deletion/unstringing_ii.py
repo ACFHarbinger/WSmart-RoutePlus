@@ -21,7 +21,7 @@ from logic.src.policies.helpers.operators.generalized_insertion_and_deletion._ro
 )
 
 
-def apply_type_ii_us(route: List[int], i: int, j: int, k: int, l: int) -> List[int]:
+def apply_type_ii_us(route: List[int], i: int, j: int, k: int, label: int) -> List[int]:
     """
     Apply Type II Unstringing move.
 
@@ -47,7 +47,7 @@ def apply_type_ii_us(route: List[int], i: int, j: int, k: int, l: int) -> List[i
         i: Index of V_i.
         j: Index of neighbor node j.
         k: Index of neighbor node k.
-        l: Index of neighbor node l.
+        label: Index of neighbor node l.
 
     Returns:
         List[int]: Modified tour.
@@ -59,7 +59,7 @@ def apply_type_ii_us(route: List[int], i: int, j: int, k: int, l: int) -> List[i
 
     v_j = route[j]
     v_k = route[k]
-    v_l = route[l]
+    v_l = route[label]
 
     try:
         j_new = rot_route.index(v_j)
@@ -100,7 +100,7 @@ def apply_type_ii_us_profit(
     i: int,
     j: int,
     k: int,
-    l: int,
+    label: int,
     dist_matrix: np.ndarray,
     wastes: Dict[int, float],
     R: float,
@@ -114,7 +114,7 @@ def apply_type_ii_us_profit(
         i: Index of V_i.
         j: Index of neighbor node j.
         k: Index of neighbor node k.
-        l: Index of neighbor node l.
+        label: Index of neighbor node l.
         dist_matrix: Distance matrix.
         wastes: Waste levels.
         R: Revenue multiplier.
@@ -136,8 +136,8 @@ def apply_type_ii_us_profit(
     v_jp1 = work_route[(j + 1) % n_work]
     v_k = work_route[k]
     v_kp1 = work_route[(k + 1) % n_work]
-    v_l = work_route[l]
-    v_lp1 = work_route[(l + 1) % n_work]
+    v_l = work_route[label]
+    v_lp1 = work_route[(label + 1) % n_work]
 
     # Delta Cost
     # Deletes: (V_{i-1}, V_i), (V_i, V_{i+1}), (V_k, V_{k+1}), (V_j, V_{j+1}), (V_l, V_{l+1})
@@ -157,4 +157,4 @@ def apply_type_ii_us_profit(
 
     delta_profit = delta_rev - delta_cost * C
 
-    return apply_type_ii_us(route, i, j, k, l), float(delta_profit)
+    return apply_type_ii_us(route, i, j, k, label), float(delta_profit)

@@ -136,13 +136,13 @@ class GatedGraphConvolution(nn.Module):
         h = Uh + self.aggregate(Vh, mask, gates)  # B x V x H
 
         # Normalize node features
-        h = self.norm_h(h) if self.norm_h else h
+        h = self.norm_h(h) if self.norm_h is not None else h
 
         # Normalize edge features
         batch_size, nodes_v, _, hidden_dim = e.shape
         e = (
             self.norm_e(e.view(batch_size, -1, hidden_dim)).view(batch_size, nodes_v, nodes_v, hidden_dim)
-            if self.norm_e
+            if self.norm_e is not None
             else e
         )
 

@@ -22,7 +22,7 @@ Example:
 """
 
 from pathlib import Path
-from typing import Any, Dict, Mapping, Optional, Tuple, Union
+from typing import Any, Dict, Mapping, Optional, Tuple, Union, cast
 
 import pandas as pd
 
@@ -179,7 +179,7 @@ def _parse_pattern_mapping(source: Mapping, n_days: Optional[int], **kwargs: Any
         )
     if "filepath" in source or "file" in source:
         fp = source.get("filepath") or source.get("file")
-        return load_time_windows_file(fp, n_days=n_days)
+        return load_time_windows_file(cast(Union[str, Path], fp), n_days=n_days)
     return None
 
 
@@ -201,7 +201,7 @@ def load_time_windows(
     if source is None:
         if "filepath" in kwargs or "file" in kwargs:
             fp = kwargs.get("filepath") or kwargs.get("file")
-            return load_time_windows_file(fp, n_days=n_days)
+            return load_time_windows_file(cast(Union[str, Path], fp), n_days=n_days)
         if all(k in kwargs for k in ("start_day", "days_after", "interval_between")):
             horizon = n_days if n_days is not None else int(kwargs.get("n_days", 31))
             return build_time_window_pattern(

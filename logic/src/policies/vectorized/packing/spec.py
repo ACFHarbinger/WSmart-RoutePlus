@@ -129,6 +129,7 @@ def lookahead(
     valid = initial & (rates > 0)
     has_valid = valid.any(dim=1)
 
+    day_bc: Union[float, torch.Tensor]
     if isinstance(current_collection_day, torch.Tensor):
         day_bc = (
             current_collection_day.unsqueeze(1).to(dtype=fill_levels.dtype, device=fill_levels.device)

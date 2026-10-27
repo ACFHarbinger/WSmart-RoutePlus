@@ -21,7 +21,7 @@ Example:
     builder.build()
 """
 
-from typing import Optional
+from typing import Any, Optional, cast
 
 import numpy as np
 import pandas as pd
@@ -280,7 +280,7 @@ class VRPInstanceBuilder:
 
         # Tile node_ids to match dataset_size (bs, n_nodes) - exclude depot (index 0)
         node_ids_val = node_ids.values if hasattr(node_ids, "values") else node_ids
-        tiled_node_ids = np.tile(node_ids_val[1:], (self._dataset_size, 1))
+        tiled_node_ids = np.tile(cast(np.ndarray, node_ids_val)[1:], (self._dataset_size, 1))
 
         return {
             "depot": np.flip(depot, axis=-1) if depot.shape[-1] == 2 else depot,
@@ -356,7 +356,7 @@ class VRPInstanceBuilder:
                 {"day_hours": torch.full((bs,), DEFAULT_DAY_HOURS, device=device), "tw_early": early, "tw_late": late}
             )
 
-        return TensorDict(td_data, batch_size=[bs], device=device)
+        return TensorDict(cast(Any, td_data), batch_size=[bs], device=device)
 
     def _vehicle_cap_percent(self) -> float:
         """Vehicle capacity in percent of one full bin.

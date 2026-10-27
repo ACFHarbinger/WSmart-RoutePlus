@@ -8,7 +8,7 @@ Attributes:
 import contextlib
 import random
 from collections.abc import Sequence
-from typing import Any, List, Optional
+from typing import Any, List, Optional, cast
 
 import numpy as np
 import torch
@@ -68,7 +68,7 @@ def run_evaluate_model(cfg: Config, sinks: Optional[List[Any]] = None) -> None:
     elif isinstance(bw, Sequence) and not isinstance(bw, str):  # list, tuple or OmegaConf ListConfig
         beam_widths = [int(w) for w in bw]
     else:
-        beam_widths = [bw]
+        beam_widths = [cast(int, bw)]
 
     # --- Centralised experiment tracking ---
     model_path = ev.policy.model.load_path if ev.policy else "unknown"

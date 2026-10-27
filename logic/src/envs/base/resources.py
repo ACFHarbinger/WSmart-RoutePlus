@@ -118,15 +118,16 @@ class LoadResource(Resource):
             remaining_capacity = cast(torch.Tensor, state["remaining_capacity"])
             capacity = cast(torch.Tensor, state["capacity"])
             new_remaining = (remaining_capacity - demand_at_node).clamp(min=0.0)
-            state["remaining_capacity"] = torch.where(at_depot, capacity, new_remaining)
+            updated_remaining = torch.where(at_depot, capacity, new_remaining)
+            state["remaining_capacity"] = updated_remaining
             used = (
                 cast(torch.Tensor, state["used_capacity"])
                 if "used_capacity" in state.keys()
-                else (capacity - remaining_capacity)
+                else (capacity - updated_remaining)
             )
             new_used = used + demand_at_node
             state["used_capacity"] = torch.where(at_depot, torch.zeros_like(new_used), new_used)
-            state["collected"] = capacity - remaining_capacity
+            state["collected"] = capacity - updated_remaining
         elif isinstance(state, dict):
             at_depot = bool(action == 0)
             demand_arr: Any = state.get(self.demand_key, state.get("waste", state.get("demand", [])))
@@ -332,10 +333,12 @@ class TimeWindowResource(Resource):
             return state
         bs = state.batch_size[0] if len(state.batch_size) > 0 else 1
         device = state.device
-        n_nodes = state["locs"].size(-2)
-        day = state.get("day_hours", torch.full((bs,), self.default_day_hours, device=device))
-        early = state.get("tw_early", torch.zeros(bs, n_nodes - 1, device=device))
-        late = state.get("tw_late", day.unsqueeze(-1).expand(bs, n_nodes - 1).clone())
+        n_nodes = int(cast(torch.Tensor, state["locs"]).size(-2))
+        day = cast(torch.Tensor, state.get("day_hours", torch.full((bs,), self.default_day_hours, device=device)))
+        early = cast(torch.Tensor, state.get("tw_early", torch.zeros(bs, n_nodes - 1, device=device)))
+        late = cast(
+            torch.Tensor, state.get("tw_late", day.unsqueeze(-1).expand(bs, n_nodes - 1).clone())
+        )
         if early.size(-1) == n_nodes - 1:  # windows of the bins only: the depot is open all day
             early = torch.cat([torch.zeros(bs, 1, device=device), early], dim=-1)
             late = torch.cat([day.unsqueeze(-1), late], dim=-1)
@@ -348,14 +351,20 @@ class TimeWindowResource(Resource):
     def _travel_time_from_current(self, state: TensorDictBase) -> Tuple[torch.Tensor, torch.Tensor]:
         """Travel times (h) from the current node to every node, and from every node to the depot."""
         current = as_batch_nodes(
-            state.get("current_node", torch.zeros(state.batch_size[0], 1, dtype=torch.long, device=state.device))
+            cast(
+                torch.Tensor,
+                state.get(
+                    "current_node",
+                    torch.zeros(state.batch_size[0], 1, dtype=torch.long, device=state.device),
+                ),
+            )
         )
-        locs = state["locs"]
-        time_matrix = state.get("time_matrix", None)
+        locs = cast(torch.Tensor, state["locs"])
+        time_matrix = cast(Optional[torch.Tensor], state.get("time_matrix", None))
         if time_matrix is not None:
             to_node = time_matrix.gather(1, current[:, None, None].expand(-1, -1, time_matrix.size(-1))).squeeze(1)
             return to_node, time_matrix[:, :, 0]
-        dm = state.get("dm", None)
+        dm = cast(Optional[torch.Tensor], state.get("dm", None))
         if dm is None:
             current_loc = locs.gather(1, current[:, None, None].expand(-1, -1, 2)).squeeze(1)
             dist_to_node = (locs - current_loc.unsqueeze(1)).norm(p=2, dim=-1)
@@ -363,8 +372,11 @@ class TimeWindowResource(Resource):
         else:
             dist_to_node = dm.gather(1, current[:, None, None].expand(-1, -1, dm.size(-1))).squeeze(1)
             dist_to_depot = dm[:, :, 0]
-        speed = state.get(
-            "avg_speed_kmh", torch.full((locs.size(0),), self.default_avg_speed_kmh, device=locs.device)
+        speed = cast(
+            torch.Tensor,
+            state.get(
+                "avg_speed_kmh", torch.full((locs.size(0),), self.default_avg_speed_kmh, device=locs.device)
+            ),
         ).unsqueeze(-1)
         return dist_to_node / speed, dist_to_depot / speed
 
@@ -375,14 +387,22 @@ class TimeWindowResource(Resource):
         device = state.device
         act = action.reshape(-1)
         at_depot = is_depot.reshape(-1) if torch.is_tensor(is_depot) else torch.full((bs,), bool(is_depot), device=device)
-        speed = state.get("avg_speed_kmh", torch.full((bs,), self.default_avg_speed_kmh, device=device))
-        travel = state.get("step_distance", torch.zeros(bs, device=device)) / speed
-        time_matrix = state.get("time_matrix", None)
+        speed = cast(
+            torch.Tensor, state.get("avg_speed_kmh", torch.full((bs,), self.default_avg_speed_kmh, device=device))
+        )
+        travel = cast(torch.Tensor, state.get("step_distance", torch.zeros(bs, device=device))) / speed
+        time_matrix = cast(Optional[torch.Tensor], state.get("time_matrix", None))
         if time_matrix is not None and "prev_node" in state.keys():
-            travel = time_matrix[torch.arange(bs, device=device), state["prev_node"].reshape(-1), act]
+            prev_node = cast(torch.Tensor, state["prev_node"]).reshape(-1)
+            travel = time_matrix[torch.arange(bs, device=device), prev_node, act]
         rows = torch.arange(bs, device=device)
-        start = torch.maximum(state["current_time"] + travel, state["tw_early"][rows, act])
-        service = state.get("service_time_h", torch.full((bs,), self.default_service_time_h, device=device))
+        current_time = cast(torch.Tensor, state["current_time"])
+        tw_early = cast(torch.Tensor, state["tw_early"])
+        start = torch.maximum(current_time + travel, tw_early[rows, act])
+        service = cast(
+            torch.Tensor,
+            state.get("service_time_h", torch.full((bs,), self.default_service_time_h, device=device)),
+        )
         state["current_time"] = start + torch.where(at_depot, torch.zeros_like(service), service)
         return state
 
@@ -390,12 +410,18 @@ class TimeWindowResource(Resource):
         if not isinstance(state, (TensorDict, TensorDictBase)):
             return False
         to_node, to_depot = self._travel_time_from_current(state)
-        start = torch.maximum(state["current_time"].unsqueeze(-1) + to_node, state["tw_early"])
-        service = state.get(
-            "service_time_h", torch.full((to_node.size(0),), self.default_service_time_h, device=to_node.device)
+        current_time = cast(torch.Tensor, state["current_time"])
+        tw_early = cast(torch.Tensor, state["tw_early"])
+        tw_late = cast(torch.Tensor, state["tw_late"])
+        start = torch.maximum(current_time.unsqueeze(-1) + to_node, tw_early)
+        service = cast(
+            torch.Tensor,
+            state.get(
+                "service_time_h", torch.full((to_node.size(0),), self.default_service_time_h, device=to_node.device)
+            ),
         ).unsqueeze(-1)
-        late = start > state["tw_late"] + 1e-6
-        no_way_home = start + service + to_depot > state["tw_late"][:, :1] + 1e-6
+        late = start > tw_late + 1e-6
+        no_way_home = start + service + to_depot > tw_late[:, :1] + 1e-6
         blocked = late | no_way_home
         blocked[:, 0] = False
         return blocked

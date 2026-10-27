@@ -7,16 +7,27 @@ from __future__ import annotations
 
 import contextlib
 import math
-from typing import TYPE_CHECKING, Any, Dict, Optional
+import threading
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, TypeVar
 
 if TYPE_CHECKING:
-    from .run import Run
+    from logic.src.tracking.core.store import TrackingStore
+
+_RunT = TypeVar("_RunT", bound="RunLoggingMixin")
 
 
 class RunLoggingMixin:
     """Moved methods of :class:`Run`."""
 
-    def add_sink(self, sink: Any) -> "Run":
+    run_id: str
+    _store: "TrackingStore"
+    _closed: bool
+    _sinks: List[Any]
+    _buffer_lock: threading.Lock
+    _metric_buffer: List[Tuple[str, float, int]]
+    _buffer_size: int
+
+    def add_sink(self: _RunT, sink: Any) -> _RunT:
         """Attaches a secondary logging sink to this run.
 
         The sink receives forwarded calls for every metric, param, and
@@ -33,7 +44,7 @@ class RunLoggingMixin:
         self._sinks.append(sink)
         return self
 
-    def set_tag(self, key: str, value: Any) -> "Run":
+    def set_tag(self: _RunT, key: str, value: Any) -> _RunT:
         """Attaches a metadata tag to this run.
 
         Args:
@@ -47,7 +58,7 @@ class RunLoggingMixin:
             self._store.set_tag(self.run_id, key, str(value))
         return self
 
-    def set_tags(self, tags: Dict[str, Any]) -> "Run":
+    def set_tags(self: _RunT, tags: Dict[str, Any]) -> _RunT:
         """Attaches multiple metadata tags to this run.
 
         Args:
@@ -60,7 +71,7 @@ class RunLoggingMixin:
             self._store.set_tags(self.run_id, {k: str(v) for k, v in tags.items()})
         return self
 
-    def log_param(self, key: str, value: Any) -> "Run":
+    def log_param(self: _RunT, key: str, value: Any) -> _RunT:
         """Records a single configuration parameter.
 
         Args:
@@ -74,7 +85,7 @@ class RunLoggingMixin:
             self._store.log_param(self.run_id, key, value)
         return self
 
-    def log_params(self, params: Dict[str, Any]) -> "Run":
+    def log_params(self: _RunT, params: Dict[str, Any]) -> _RunT:
         """Records multiple configuration parameters, flattening nested dicts.
 
         Args:
@@ -91,7 +102,7 @@ class RunLoggingMixin:
                     sink.log_params(flat)
         return self
 
-    def log_metric(self, key: str, value: Any, step: int = 0) -> "Run":
+    def log_metric(self: _RunT, key: str, value: Any, step: int = 0) -> _RunT:
         """Logs a single scalar metric value.
 
         Args:
@@ -116,7 +127,7 @@ class RunLoggingMixin:
                 sink.log_metric(key, fval, step)
         return self
 
-    def log_metrics(self, metrics: Dict[str, Any], step: int = 0) -> "Run":
+    def log_metrics(self: _RunT, metrics: Dict[str, Any], step: int = 0) -> _RunT:
         """Logs a dictionary of scalar metric values.
 
         Args:
@@ -137,7 +148,7 @@ class RunLoggingMixin:
                 self._flush_metrics_locked()
         return self
 
-    def flush(self) -> "Run":
+    def flush(self: _RunT) -> _RunT:
         """Force-flushes any buffered metrics to the storage backend.
 
         Returns:
@@ -147,7 +158,7 @@ class RunLoggingMixin:
             self._flush_metrics_locked()
         return self
 
-    def _flush_metrics_locked(self) -> None:
+    def _flush_metrics_locked(self: _RunT) -> None:
         """Internal helper to flush the metric buffer.
 
         Caller must hold `_buffer_lock`.

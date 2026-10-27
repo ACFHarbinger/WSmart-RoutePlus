@@ -21,7 +21,7 @@ Example:
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
 import torch
 from torch import nn
@@ -147,7 +147,7 @@ def add_dead_neuron_detector_hook(
 
     for name, module in model.named_modules():
         if isinstance(module, layer_types) and name:
-            handle = module.register_forward_hook(dead_neuron_hook(name, threshold))
+            handle = cast(nn.Module, module).register_forward_hook(dead_neuron_hook(name, threshold))
             handles.append(handle)
 
     return {
@@ -206,7 +206,7 @@ def add_activation_statistics_hook(
 
     for name, module in model.named_modules():
         if isinstance(module, layer_types) and name:
-            handle = module.register_forward_hook(stats_hook(name))
+            handle = cast(nn.Module, module).register_forward_hook(stats_hook(name))
             handles.append(handle)
 
     return {"statistics": dict(statistics), "handles": handles}
@@ -287,7 +287,7 @@ def add_activation_sparsity_hook(
 
     for name, module in model.named_modules():
         if isinstance(module, layer_types) and name:
-            handle = module.register_forward_hook(sparsity_hook(name, threshold))
+            handle = cast(nn.Module, module).register_forward_hook(sparsity_hook(name, threshold))
             handles.append(handle)
 
     return {"sparsity": dict(sparsity_stats), "handles": handles}

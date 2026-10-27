@@ -14,6 +14,8 @@ Example:
 
 from __future__ import annotations
 
+from typing import Any
+
 import torch
 
 from logic.src.tracking.hooks import add_attention_hooks
@@ -26,6 +28,10 @@ class BatchMixin:
     Attributes:
         None
     """
+
+    # Provided by NeuralAgent.__init__; annotations only.
+    model: Any
+    problem: Any
 
     def compute_batch_sim(
         self,

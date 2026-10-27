@@ -14,7 +14,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, cast
 
 import torch
 
@@ -36,6 +36,10 @@ class SimulationMixin:
     Attributes:
         None
     """
+
+    # Provided by NeuralAgent.__init__; annotations only.
+    model: Any
+    problem: Any
 
     def compute_simulator_day(  # noqa: C901
         self,
@@ -240,9 +244,9 @@ class SimulationMixin:
                     cost_weights=cost_weights,
                 )
             if isinstance(out, dict):
-                pi = out.get("actions")
+                pi = cast(Any, out.get("actions"))
                 if pi is None:
-                    pi = out.get("pi")
+                    pi = cast(Any, out.get("pi"))
             else:
                 # Handle tuple output from model
                 _, pi, _, _ = out
@@ -350,7 +354,7 @@ class SimulationMixin:
             mandatory = mandatory.unsqueeze(0)
         return mandatory[:, 1:].any() if mandatory.size(1) > 1 else mandatory.any()
 
-    def _prepare_temporal_features(self, input_for_model: Dict[str, Any], waste_history: torch.Tensor):
+    def _prepare_temporal_features(self, input_for_model: Dict[str, Any], waste_history: Optional[torch.Tensor]):
         """Populates temporal features (fill1, fill2, ...) based on waste history.
 
         Args:

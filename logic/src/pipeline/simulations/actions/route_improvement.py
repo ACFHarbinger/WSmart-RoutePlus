@@ -12,13 +12,11 @@ Example:
     >>> # action.execute(context)
 """
 
-import os
 from typing import Any, Dict
 
 from loguru import logger
 
 from logic.src.configs import RouteImprovingConfig
-from logic.src.constants.paths import CONFIGS_DIR
 from logic.src.interfaces import ITraversable
 from logic.src.pipeline.simulations.actions.policy_config import (
     _as_plain_dict,
@@ -141,7 +139,7 @@ class RouteImprovementAction(SimulationAction):
         # Legacy handling for strings/files
         return self._create_legacy_processors(entry, context, RouteImproverFactory)
 
-    def _create_legacy_processors(self, item: Any, context: Dict[str, Any], factory) -> list:  # noqa: C901
+    def _create_legacy_processors(self, item: Any, context: Any, factory) -> list:  # noqa: C901
         """Handle legacy string/file configuration for processors.
 
         Args:
@@ -194,7 +192,8 @@ class RouteImprovementAction(SimulationAction):
                     if hasattr(variant_val, "__iter__") and not isinstance(variant_val, str):
                         try:
                             v_list = list(variant_val)
-                            variant_val = v_list[0] if v_list else None
+                            raw_variant: Any = v_list[0] if v_list else None
+                            variant_val = str(raw_variant) if raw_variant is not None else ""
                         except Exception:
                             pass
                     variant_val = str(variant_val) if variant_val is not None else ""
@@ -272,9 +271,9 @@ class RouteImprovementAction(SimulationAction):
 
                 for k, v in cfg.items():
                     pp_name = k
-                    v_obj: object = v
-                    if isinstance(v_obj, ITraversable):
-                        for _k, _v in v_obj.items():
+                    v_mapped: object = v
+                    if isinstance(v_mapped, ITraversable):
+                        for _k, _v in v_mapped.items():
                             setattr(context, _k, _v)
             except (OSError, ValueError) as e:
                 logger.warning(f"Error loading route_improvement config {item}: {e}")
@@ -291,7 +290,7 @@ class RouteImprovementAction(SimulationAction):
             logger.warning(f"Failed to create route improver {pp_name}: {e}")
             return []
 
-    def _apply_processors(self, processors: list, context: Dict[str, Any]) -> None:
+    def _apply_processors(self, processors: list, context: Any) -> None:
         """Apply a list of processors to the tour in the context.
 
         Args:

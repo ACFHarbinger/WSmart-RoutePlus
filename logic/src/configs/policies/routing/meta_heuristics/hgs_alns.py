@@ -12,7 +12,7 @@ Example:
 """
 
 from dataclasses import dataclass, field
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from logic.src.configs.policies.routing.meta_heuristics.alns import ALNSConfig
 from logic.src.configs.policies.routing.meta_heuristics.hgs import HGSConfig
@@ -55,15 +55,18 @@ class HGSALNSConfig:
             hgs = HGSConfig(**hgs)
         if isinstance(alns, Mapping):
             alns = ALNSConfig(**alns)
-        values = {
-            item.name: read(item.name, item.default)
-            for item in fields(cls)
-            if item.name not in {"hgs", "alns", "packing", "route_improvement"}
-        }
+        values = cast(
+            Dict[str, Any],
+            {
+                item.name: read(item.name, item.default)
+                for item in fields(cls)
+                if item.name not in {"hgs", "alns", "packing", "route_improvement"}
+            },
+        )
         return cls(
             hgs=hgs or HGSConfig(),
             alns=alns or ALNSConfig(),
-            packing=read("packing", []),
-            route_improvement=read("route_improvement", []),
+            packing=cast(List[str], read("packing", [])),
+            route_improvement=cast(List[Any], read("route_improvement", [])),
             **values,
         )

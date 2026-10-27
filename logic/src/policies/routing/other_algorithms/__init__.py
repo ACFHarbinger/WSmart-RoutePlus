@@ -11,7 +11,7 @@ _LAZY = {
     "policy_tsp": "logic.src.policies.routing.other_algorithms.travelling_salesman_problem.policy_tsp",
 }
 
-__all__ = list(_LAZY)
+__all__ = list(_LAZY)  # pyrefly: ignore[unresolvable-dunder-all]  # lazy re-exports; resolved through __getattr__
 
 
 def __getattr__(name: str) -> Any:

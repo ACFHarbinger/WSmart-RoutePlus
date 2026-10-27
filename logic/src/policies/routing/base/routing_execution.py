@@ -8,7 +8,7 @@ problem, mapping the tour back to global bin ids, computing the cost and logging
 solver parameters. Moved unchanged from ``base_routing_policy.py``.
 """
 
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import numpy as np
 
@@ -134,7 +134,7 @@ class RoutingExecutionMixin:
         if run is None:
             return
 
-        policy_name = context.get("policy_name", self._get_config_key())
+        policy_name = context.get("policy_name", cast(Any, self)._get_config_key())
         sample_id = context.get("sample_id", 0)
         prefix = f"policy_params/{policy_name}/s{sample_id}"
 
@@ -185,8 +185,11 @@ class RoutingExecutionMixin:
         if incoming_ctx is None:
             incoming_ctx = SearchContext.initialize()
 
+        # Subclass hooks live on BaseRoutingPolicy; the mixin only calls them.
+        host = cast(Any, self)
+
         # 1. Validate
-        early_result = self._validate_mandatory(mandatory)
+        early_result = host._validate_mandatory(mandatory)
         if early_result is not None:
             return early_result[0], early_result[1], 0.0, incoming_ctx, multi_day_ctx
 
@@ -198,7 +201,7 @@ class RoutingExecutionMixin:
         waste_type = kwargs.get("waste_type", "plastic")
 
         # 3. Load parameters
-        capacity, revenue, cost_unit, values = self._load_area_params(area, waste_type, config)
+        capacity, revenue, cost_unit, values = host._load_area_params(area, waste_type, config)
         self._log_solver_params(values, kwargs)
         # 4. Create subset problem
         # use_all_bins=True (VRPP mode) allows the solver to CONSIDER all bins,
@@ -257,7 +260,7 @@ class RoutingExecutionMixin:
                 y_coords = None
 
         # 5. Run solver (subclass-specific)
-        routes, profit, _ = self._run_solver(
+        routes, profit, _ = host._run_solver(
             sub_dist_matrix,
             sub_wastes,
             capacity,

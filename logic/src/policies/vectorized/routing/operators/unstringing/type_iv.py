@@ -75,8 +75,8 @@ def vectorized_type_iv_unstringing(
             best_delta, best_move = _find_best_type_iv_move(tour, dist, valid_indices, sample_size, device, generator)
 
             if best_move is not None:
-                i, j, l, k = best_move
-                tours[b] = _apply_type_iv_move(tour, i, j, l, k)
+                i, j, label, k = best_move
+                tours[b] = _apply_type_iv_move(tour, i, j, label, k)
                 improved_any = True
 
         if not improved_any:
@@ -129,19 +129,19 @@ def _find_best_type_iv_move(
             continue
 
         for js, ls, ks in zip(j_s, l_s, k_s, strict=False):
-            j, l, k = (
+            j, label, k = (
                 int(valid_indices[js].item()),
                 int(valid_indices[ls].item()),
                 int(valid_indices[ks].item()),
             )
-            delta = _evaluate_type_iv_move(tour, dist, i, j, l, k, N)
+            delta = _evaluate_type_iv_move(tour, dist, i, j, label, k, N)
             if delta < best_delta - IMPROVEMENT_EPSILON:
-                best_delta, best_move = delta, (i, j, l, k)
+                best_delta, best_move = delta, (i, j, label, k)
 
     return best_delta, best_move
 
 
-def _evaluate_type_iv_move(tour: torch.Tensor, dist: torch.Tensor, i: int, j: int, l: int, k: int, N: int) -> float:
+def _evaluate_type_iv_move(tour: torch.Tensor, dist: torch.Tensor, i: int, j: int, label: int, k: int, N: int) -> float:
     """Calculates the delta cost for a specific Type IV move.
 
     Args:
@@ -149,7 +149,7 @@ def _evaluate_type_iv_move(tour: torch.Tensor, dist: torch.Tensor, i: int, j: in
         dist: Pairwise distance weights.
         i: Target position for the unstrung node.
         j: First break point segment split.
-        l: Second break point segment split.
+        label: Second break point segment split.
         k: Third break point segment split.
         N: Tour length metadata.
 
@@ -162,7 +162,7 @@ def _evaluate_type_iv_move(tour: torch.Tensor, dist: torch.Tensor, i: int, j: in
         int(tour[(i + 1) % N].item()),
     )
     v_jp, v_j = int(tour[j - 1 if j > 0 else N - 1].item()), int(tour[j].item())
-    v_lp, v_l = int(tour[l - 1 if l > 0 else N - 1].item()), int(tour[l].item())
+    v_lp, v_l = int(tour[label - 1 if label > 0 else N - 1].item()), int(tour[label].item())
     v_k, v_kn = int(tour[k].item()), int(tour[(k + 1) % N].item())
 
     # Pattern IV removal of node Vi
@@ -171,14 +171,14 @@ def _evaluate_type_iv_move(tour: torch.Tensor, dist: torch.Tensor, i: int, j: in
     return float((ins - rem).item())
 
 
-def _apply_type_iv_move(tour: torch.Tensor, i: int, j: int, l: int, k: int) -> torch.Tensor:
+def _apply_type_iv_move(tour: torch.Tensor, i: int, j: int, label: int, k: int) -> torch.Tensor:
     """Applies a Type IV unstringing move to the tour.
 
     Args:
         tour: Original node sequences.
         i: Position of the node to move.
         j: First segment break coordinate.
-        l: Second segment break coordinate.
+        label: Second segment break coordinate.
         k: Third segment break coordinate.
 
     Returns:
@@ -190,14 +190,14 @@ def _apply_type_iv_move(tour: torch.Tensor, i: int, j: int, l: int, k: int) -> t
     i_prev, i_next = (i - 1) if i > 0 else (n - 1), (i + 1) % n
     _j_prev, _l_prev, k_next = (
         (j - 1) if j > 0 else (n - 1),
-        (l - 1) if l > 0 else (n - 1),
+        (label - 1) if label > 0 else (n - 1),
         (k + 1) % n,
     )
 
     # Segments
     sc = tl[i_next:j] if i_next <= j - 1 else tl[i_next:] + tl[:j]
-    sd = tl[l : k + 1] if l <= k else tl[l:] + tl[: k + 1]
-    sa = tl[j:l] if j <= l - 1 else tl[j:] + tl[:l]
+    sd = tl[label : k + 1] if label <= k else tl[label:] + tl[: k + 1]
+    sa = tl[j:label] if j <= label - 1 else tl[j:] + tl[:label]
     # Remainder
     rem = tl[k_next : i_prev + 1] if k_next <= i_prev else tl[k_next:] + tl[: i_prev + 1]
 

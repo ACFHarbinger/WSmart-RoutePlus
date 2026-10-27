@@ -14,7 +14,7 @@ Example:
 """
 
 from dataclasses import fields
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, cast
 
 import torch
 
@@ -66,7 +66,7 @@ class NeuralAgentPolicy(BaseRoutingPolicy):
 
                 config = OmegaConf.to_container(config, resolve=True)
             except Exception:
-                config = dict(config.items())
+                config = dict(cast(Any, config).items())
         super().__init__(config)
         self._params_logged = False
 
@@ -103,16 +103,17 @@ class NeuralAgentPolicy(BaseRoutingPolicy):
         params = NeuralAgentConfig.from_config(policy_section)
         # Preserve the public flat dataclass form as well as nested YAML decoding.
         # Explicit nested settings retain precedence when both forms are present.
-        if hasattr(policy_section, "get"):
-            nested = policy_section.get("decoding")
-            model = policy_section.get("model", {})
+        section = cast(Any, policy_section)
+        if hasattr(section, "get"):
+            nested = section.get("decoding")
+            model = section.get("model", {})
             if not nested and hasattr(model, "get"):
                 decoder = model.get("decoder", {})
                 nested = decoder.get("decoding") if hasattr(decoder, "get") else None
             if not nested:
                 for key in ("decoding_strategy", "beam_width", "reward_weight", "length_penalty_alpha"):
-                    if key in policy_section:
-                        setattr(params, key, policy_section[key])
+                    if key in section:
+                        setattr(params, key, section[key])
         seed = raw_config.get("seed", params.seed) if hasattr(raw_config, "get") else params.seed
         if seed is not None:
             params.seed = int(seed)

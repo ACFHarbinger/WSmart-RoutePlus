@@ -66,6 +66,7 @@ def apply_ges(  # noqa: C901
             best_cost = float("inf")
             # Find best insertion position across all routes (ignoring capacity)
             best_route_idx = -1
+            best_pos = 0
             for r_idx, route in enumerate(new_routes):
                 for pos in range(len(route) + 1):
                     prev = route[pos - 1] if pos > 0 else 0

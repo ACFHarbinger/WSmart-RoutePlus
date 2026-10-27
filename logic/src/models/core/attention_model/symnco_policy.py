@@ -57,13 +57,14 @@ class SymNCOPolicy(AttentionModelPolicy):
                 nn.Linear(embed_dim, embed_dim),
             )
 
-    def forward(
+    def forward(  # type: ignore[override]  # multi-start signature is wider than ConstructivePolicy.forward
         self,
         td: TensorDict,
-        env: Any,
+        env: Any = None,
         strategy: str = "sampling",
         num_starts: int = 1,
         actions: Optional[torch.Tensor] = None,
+        start_nodes: Optional[torch.Tensor] = None,
         **kwargs: Any,
     ) -> Dict[str, Any]:
         """Executes decoding and computes projection embeddings.
@@ -81,7 +82,15 @@ class SymNCOPolicy(AttentionModelPolicy):
         """
         # Ensure initial embeddings are returned for the projection head
         kwargs["return_init_embeds"] = True
-        out = super().forward(td, env, strategy=strategy, num_starts=num_starts, actions=actions, **kwargs)
+        out = super().forward(
+            td,
+            env,
+            strategy=strategy,
+            num_starts=num_starts,
+            actions=actions,
+            start_nodes=start_nodes,
+            **kwargs,
+        )
 
         if self.use_projection_head:
             # Project the raw features [batch, nodes, dim]

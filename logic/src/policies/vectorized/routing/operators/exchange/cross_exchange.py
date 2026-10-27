@@ -295,7 +295,8 @@ def _check_cross_capacity(
     r_a_dem = wastes[b, tour[r_a_s:r_a_e]].sum()
     r_b_dem = wastes[b, tour[r_b_s:r_b_e]].sum()
 
-    return (r_a_dem - dem_a + dem_b <= capacities[b]) and (r_b_dem - dem_b + dem_a <= capacities[b])
+    # Caller uses this only as a truth value (`not`), so collapse the 0-dim comparison.
+    return bool((r_a_dem - dem_a + dem_b <= capacities[b]) and (r_b_dem - dem_b + dem_a <= capacities[b]))
 
 
 def _compute_cross_delta(

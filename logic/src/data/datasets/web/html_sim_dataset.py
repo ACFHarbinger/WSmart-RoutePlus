@@ -6,7 +6,7 @@ projects bin waste fill levels based on current fill and daily accumulation rate
 and structures the data to conform to the ``SimulationDataset`` interface.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 import numpy as np
 
@@ -102,8 +102,8 @@ class HtmlSimulationDataset(SimulationDataset):
 
         # Project waste fill levels for each day over n_days
         # Formula: fill_d = np.clip(Fill_Pct + Acum_Rate_Pct * d, 0.0, MAX_CAPACITY_PERCENT)
-        fill_pct = df["Fill_Pct"].values.astype(np.float64)
-        acum_rate_pct = df["Acum_Rate_Pct"].values.astype(np.float64)
+        fill_pct = cast(np.ndarray, df["Fill_Pct"].values).astype(np.float64)
+        acum_rate_pct = cast(np.ndarray, df["Acum_Rate_Pct"].values).astype(np.float64)
 
         waste_list = []
         for d in range(n_days):

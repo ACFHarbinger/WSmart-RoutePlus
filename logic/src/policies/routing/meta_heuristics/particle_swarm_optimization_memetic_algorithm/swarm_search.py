@@ -8,15 +8,45 @@ its swap, insert and inverse neighbourhood operators. Moved unchanged from ``sol
 """
 
 import copy
-from typing import Callable, List, Tuple
+import random
+from typing import Any, Callable, List, Tuple
 
 import numpy as np
+
+from logic.src.configs.policies.routing.meta_heuristics.psoma import PSOMAConfig
+from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search.split import LinearSplit
 
 from .particle import PSOMAParticle
 
 
 class PSOMASwarmSearchMixin:
     """Swarm, evaluation and SA local-search helpers of :class:`PSOMASolver` (moved unchanged from ``solver.py``)."""
+
+    # Provided by PSOMASolver.__init__ / PopulationSearch; annotations only.
+    params: PSOMAConfig
+    n_nodes: int
+    clients: List[int]
+    dist_matrix: np.ndarray
+    biased_dist_matrix: np.ndarray
+    C: float
+    random: random.Random
+    np_rng: np.random.Generator
+    split_solver: LinearSplit
+    acceptance_criterion: Any
+    metropolis_steps: int
+    operators: List[Callable[..., Any]]
+    probabilities: np.ndarray
+    rewards: np.ndarray
+    swarm: List[PSOMAParticle]
+    gbest_X: np.ndarray
+    gbest_giant_tour: np.ndarray
+    gbest_mapping: np.ndarray
+    gbest_routes: List[List[int]]
+    gbest_profit: float
+    best_routes: List[List[int]]
+    best_profit: float
+    _out_of_time: Callable[[], bool]
+    _update_probabilities: Callable[[], None]
 
     # ------------------------------------------------------------------
     # Private helpers

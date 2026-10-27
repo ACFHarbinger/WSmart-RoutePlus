@@ -48,7 +48,7 @@ import statistics
 import sys
 import time
 import traceback
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Protocol, Tuple, Union, cast
 
 if TYPE_CHECKING:
     import torch
@@ -77,6 +77,30 @@ from .states import SimulationContext
 
 if TYPE_CHECKING:
     from logic.src.configs import Config
+
+
+class _ComposedOutputStats(Protocol):
+    """``output_stats`` after ``compose_dirpath`` rewrites the directory arguments."""
+
+    def __call__(
+        self,
+        home_dir: str,
+        ndays: int,
+        nbins: Union[int, List[int]],
+        output_dir: str,
+        area: str,
+        waste_type: str = ...,
+        data_distribution: str = ...,
+        run_name: str = ...,
+        *args: Any,
+        nsamples: int = ...,
+        policies: Optional[List[str]] = ...,
+        keys: Optional[List[str]] = ...,
+        lock: Optional[Any] = ...,
+        **kwargs: Any,
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        """Call the decorated statistics writer."""
+        ...
 
 
 # Create global variables/placeholders for parallel workers
@@ -126,12 +150,13 @@ def init_single_sim_worker(
         seed = cfg.sim.seed
         random.seed(seed)
         np.random.seed(seed)
+        torch_mod: Any
         try:
-            import torch
+            import torch as torch_mod
         except ImportError:
-            torch = None
-        if torch is not None:
-            torch.manual_seed(seed)
+            torch_mod = None
+        if torch_mod is not None:
+            torch_mod.manual_seed(seed)
 
     # Initialize simulation repository in the worker process
     if cfg is not None:
@@ -388,19 +413,19 @@ def sequential_simulations(  # noqa: C901
 
         if sim.graph.n_samples >= 1:
             if sim.resume:
-                res_log, res_std = output_stats(
+                res_log, res_std = cast(_ComposedOutputStats, output_stats)(
                     str(ROOT_DIR),
                     sim.graph.n_days,
                     sim.graph.num_loc,
-                    sim.output_dir,  # pyrefly: ignore [bad-argument-type]
+                    sim.output_dir,
                     sim.graph.area,
                     sim.graph.waste_type,
-                    sim.data_distribution,  # pyrefly: ignore [bad-argument-type]
-                    _run_name,  # pyrefly: ignore [bad-argument-count]
-                    nsamples=sim.graph.n_samples,  # pyrefly: ignore [bad-keyword-argument]
-                    policies=[pol_name],  # pyrefly: ignore [bad-keyword-argument]
-                    keys=SIM_METRICS,  # pyrefly: ignore [bad-keyword-argument]
-                    lock=lock,  # pyrefly: ignore [bad-keyword-argument]
+                    sim.data_distribution,
+                    _run_name,
+                    nsamples=sim.graph.n_samples,
+                    policies=[pol_name],
+                    keys=SIM_METRICS,
+                    lock=lock,
                 )
                 if res_log:
                     log.update(res_log)

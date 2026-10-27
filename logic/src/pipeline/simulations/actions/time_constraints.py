@@ -1,10 +1,11 @@
 """Make the final route vehicle-feasible after construction and improvement (CPTPTC: also shift-feasible)."""
 
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 import numpy as np
 
+from logic.src.pipeline.simulations.daily import SimulationDayContext
 from logic.src.utils.routing.tours import get_multi_tour
 
 from .base import SimulationAction, bind_context
@@ -35,7 +36,7 @@ class TimeConstraintAction(SimulationAction):
         from logic.src.pipeline.simulations.pipeline import per_trip_shift
 
         if not per_trip_shift(context):
-            self._split_over_capacity_trips(context)
+            self._split_over_capacity_trips(cast(SimulationDayContext, context))
             return
         tour = getattr(context, "tour", None)
         context.tour = get_multi_tour(
@@ -50,7 +51,7 @@ class TimeConstraintAction(SimulationAction):
         )
 
     @staticmethod
-    def _split_over_capacity_trips(context: Dict[str, Any]) -> None:
+    def _split_over_capacity_trips(context: SimulationDayContext) -> None:
         """Split every trip whose true load exceeds the vehicle capacity (non-CPTPTC problems)."""
         tour = getattr(context, "tour", None)
         capacity = getattr(context, "vehicle_capacity", None)
@@ -71,7 +72,7 @@ class TimeConstraintAction(SimulationAction):
         framed = framed if framed[-1] == 0 else framed + [0]
         try:
             load = np.asarray(bins.real_c, dtype=float)
-            split = get_multi_tour(framed, load, float(capacity), context.distance_matrix)
+            split = get_multi_tour(framed, load, float(capacity), cast(np.ndarray, context.distance_matrix))
         except (AttributeError, IndexError, TypeError, ValueError) as exc:  # never lose the day's route
             logger.warning("capacity split skipped: %s", exc)
             return

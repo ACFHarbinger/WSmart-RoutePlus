@@ -228,7 +228,7 @@ class ALNSSolver(ALNSOperatorRegistryMixin, ALNSHooksMixin, LNSBase):
         self.weight_learning_rate = self._weights.weight_learning_rate
 
         # Visited solutions tracking (Ropke & Pisinger 2005, Section 3.3)
-        self.visited_solutions: Set[Tuple[int, ...]] = set()
+        self.visited_solutions: Set[Tuple[Tuple[int, ...], ...]] = set()
 
         # Acceptance Criterion Injection - fresh per-solve instance (P-11)
         from logic.src.policies.acceptance_criteria.base.factory import (

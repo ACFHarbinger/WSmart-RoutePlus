@@ -8,7 +8,7 @@ The module also holds ``CVRPGenerator``, the problem's instance generator.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Optional, Sequence, Union
+from typing import Any, Callable, Dict, Optional, Sequence, Union, cast
 
 import torch
 from tensordict import TensorDict
@@ -201,8 +201,9 @@ def evaluate_cvrp_tour(
     if locs is not None:
         if locs.dim() == 2:
             locs = locs.unsqueeze(0).expand(bs, -1, -1)
+        demand_like = cast(torch.Tensor, dataset.get("demand", locs))
         if depot is not None and (
-            locs.size(1) == dataset.get("demand", locs).size(-1)
+            locs.size(1) == demand_like.size(-1)
             and not torch.allclose(locs[:, 0, :], depot if depot.dim() == 2 else depot.unsqueeze(0), atol=1e-4)
         ):
             depot_2d = depot.unsqueeze(1) if depot.dim() == 2 else depot.unsqueeze(0).unsqueeze(1)

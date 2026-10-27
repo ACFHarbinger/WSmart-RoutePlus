@@ -26,7 +26,7 @@ Irnich, Desaulniers, Desrosiers, Hadjar (2010) EJOR 211(1):75-87 — arc fixing.
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple
+from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple, cast
 
 from logic.src.policies.helpers.solvers_and_matheuristics.branching import AnyBranchingConstraint
 from logic.src.policies.helpers.solvers_and_matheuristics.common import Route
@@ -203,7 +203,7 @@ def solve_farkas_pricing_step(
     # Use the Farkas ray of the infeasible LP (master.farkas_duals); the regular
     # dual accessor still holds the previous optimal LP's duals.
     dual_info = farkas_duals or getattr(master, "farkas_duals", None) or master.get_reduced_cost_coefficients()
-    farkas_duals: Dict[int, float] = dual_info.get("node_duals", {})
+    node_duals: Dict[int, float] = dual_info.get("node_duals", {})
     rcc_duals: Dict = dual_info.get("rcc_duals", {})
 
     forced_nodes: Set[int] = set()
@@ -228,7 +228,7 @@ def solve_farkas_pricing_step(
 
     # Build the composite dual dict that solve() accepts as a single arg
     farkas_dual_dict: Dict[str, Any] = {
-        "node_duals": farkas_duals,
+        "node_duals": node_duals,
         "rcc_duals": rcc_duals,
         "sri_duals": {},
         "edge_clique_duals": {},
@@ -252,7 +252,7 @@ def solve_farkas_pricing_step(
     added = 0
     exhausted = True
     for route in routes:
-        farkas_weight = sum(farkas_duals.get(v, 0.0) for v in route.nodes)
+        farkas_weight = sum(node_duals.get(v, 0.0) for v in route.nodes)
         if farkas_weight > _FARKAS_TOL and master.add_route(route):
             added += 1
             exhausted = False
@@ -359,21 +359,19 @@ def solve_pricing_step(
         "rcc_duals": rcc_duals,
         "sri_duals": sri_duals,
     }
-    solver_kwargs = dict(
+    routes = pricing_solver.solve(
         dual_values=dual_dict,
         max_routes=max_routes,
         branching_constraints=branching_constraints,
         forced_nodes=forced_nodes,
-        rf_conflicts=rf_conflicts,
+        rf_conflicts=cast(Optional[Dict[int, Set[int]]], rf_conflicts),
         exact_mode=exact_mode,
         timeout=timeout,
     )
 
-    routes = pricing_solver.solve(**solver_kwargs)
-
     added = 0
     for route in routes:
-        if route.reduced_cost > rc_tolerance:  # noqa: SIM102
+        if cast(float, route.reduced_cost) > rc_tolerance:  # noqa: SIM102
             if master.add_route(route):
                 added += 1
 

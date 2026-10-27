@@ -282,7 +282,9 @@ class RCSPPSolver(RCSPPSolverSupportMixin, RCSPPLabelingMixin):
             rcc_duals = capacity_cut_duals or {}
             sri_duals = sri_cut_duals or {}
             edge_clique_duals = edge_clique_cut_duals or {}
-            v_dual = node_duals.get("vehicle_limit", 0.0) if isinstance(node_duals, dict) else 0.0
+            v_dual = (
+                cast(Dict[Any, Any], node_duals).get("vehicle_limit", 0.0) if isinstance(node_duals, dict) else 0.0
+            )
             self.vehicle_dual = float(v_dual or 0.0)
             lci_duals_raw = {}
             lci_node_alphas_raw = {}
@@ -307,7 +309,7 @@ class RCSPPSolver(RCSPPSolverSupportMixin, RCSPPLabelingMixin):
         self.labels_dominated = 0
         self.labels_infeasible = 0
         self.last_max_rc = -float("inf")
-        self.dual_values = node_duals
+        self.dual_values = cast(Dict[int, float], node_duals)
         self.is_farkas = is_farkas
         self.forced_nodes = forced_nodes or set()
         self.rf_conflicts = rf_conflicts or {}
@@ -339,9 +341,11 @@ class RCSPPSolver(RCSPPSolverSupportMixin, RCSPPLabelingMixin):
             self.node_reduced_costs = {}
             for n in range(1, self.n_nodes + 1):
                 rev = self.node_prizes.get(n, 0.0) if self.node_prizes is not None else self.wastes.get(n, 0.0) * self.R
-                self.node_reduced_costs[n] = rev - node_duals.get(n, 0.0)
+                self.node_reduced_costs[n] = rev - cast(Dict[Any, Any], node_duals).get(n, 0.0)
         else:
-            self.node_reduced_costs = {n: node_duals.get(n, 0.0) for n in range(1, self.n_nodes + 1)}
+            self.node_reduced_costs = {
+                n: cast(Dict[Any, Any], node_duals).get(n, 0.0) for n in range(1, self.n_nodes + 1)
+            }
 
         # 5. Constraints
         constraints: List[Any] = branching_constraints or []

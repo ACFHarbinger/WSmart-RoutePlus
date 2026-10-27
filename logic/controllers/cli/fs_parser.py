@@ -315,8 +315,8 @@ if __name__ == "__main__":
     )
     add_files_args(_parser)
     try:
-        parsed_args = _parser.parse_process_args(sys.argv[1:], "file_system")
-        comm, opts = validate_file_system_args(parsed_args)  # pyrefly: ignore [bad-argument-type]
+        _parsed_comm, parsed_opts = _parser.parse_process_args(sys.argv[1:], "file_system")
+        comm, opts = validate_file_system_args(parsed_opts)
         if comm == "update":
             update_file_system_entries(opts)
         elif comm == "delete":

@@ -72,6 +72,7 @@ class SANSPolicy(BaseRoutingPolicy):
         mandatory: List[int],
         distance_matrix: Any,
         bins: Any,
+        use_all_bins: bool = True,
         **kwargs: Any,
     ) -> Tuple[np.ndarray, Dict[int, float], List[int], List[int]]:
         """Create subset problem for SANS.
@@ -161,8 +162,8 @@ class SANSPolicy(BaseRoutingPolicy):
         # Convert tour (flat list) to routes (list of lists)
         # Tour format: [0, node1, node2, ..., 0, node3, node4, ..., 0]
         # No index mapping needed since local == global
-        routes = []
-        current_route = []
+        routes: List[List[int]] = []
+        current_route: List[int] = []
         for node in tour:
             if node == 0:
                 if current_route:

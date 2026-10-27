@@ -14,7 +14,7 @@ Example:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Tuple
+from typing import Any, Optional, Tuple, cast
 
 import torch
 from tensordict import TensorDict
@@ -190,7 +190,7 @@ class DecodingStrategy(ABC):
         log_likelihood = log_likelihood.gather(1, best_idx.unsqueeze(-1)).squeeze(-1)
 
         # Unbatchify td
-        td = unbatchify(td, num_starts)
+        td = cast(TensorDict, unbatchify(td, num_starts))
 
         return log_likelihood, actions, td
 

@@ -20,7 +20,7 @@ Reference:
 """
 
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import numpy as np
 from scipy.spatial.ckdtree import cKDTree
@@ -92,7 +92,7 @@ class KSparseACOSolver:
         self.nodes = list(range(1, self.n_nodes))
 
         # Build spatial index for O(N log N) nearest neighbor queries
-        self.tree = cKDTree(self.node_coords)
+        self.tree = cast(Any, cKDTree)(self.node_coords)
 
         # Build candidate lists efficiently without an N x N matrix
         self.candidate_lists = self._build_candidate_lists()
@@ -348,8 +348,8 @@ class KSparseACOSolver:
         for route in routes:
             if not route:
                 continue
-            total += np.linalg.norm(self.node_coords[0] - self.node_coords[route[0]])
+            total += cast(float, np.linalg.norm(self.node_coords[0] - self.node_coords[route[0]]))
             for k in range(len(route) - 1):
-                total += np.linalg.norm(self.node_coords[route[k]] - self.node_coords[route[k + 1]])
-            total += np.linalg.norm(self.node_coords[route[-1]] - self.node_coords[0])
+                total += cast(float, np.linalg.norm(self.node_coords[route[k]] - self.node_coords[route[k + 1]]))
+            total += cast(float, np.linalg.norm(self.node_coords[route[-1]] - self.node_coords[0]))
         return float(total)

@@ -103,24 +103,25 @@ class ACOSolver(PolicyVizMixin):
         with np.errstate(divide="ignore", invalid="ignore"):
             self.eta = np.where(dist_matrix > 0, 1.0 / dist_matrix, 0.0)
 
-        # Compute initial pheromone based on nearest neighbor heuristic
-        if params.tau_0 is None:
+        # Compute initial pheromone based on nearest neighbor heuristic.
+        # ``cfg`` is the coerced KSparseACOConfig; the raw ``params`` argument may be a dict.
+        if cfg.tau_0 is None:
             nn_cost = self._nearest_neighbor_cost()
-            self.tau_0 = 1.0 / (self.n_nodes * nn_cost) if nn_cost > 0 else params.tau_max
+            self.tau_0 = 1.0 / (self.n_nodes * nn_cost) if nn_cost > 0 else cfg.tau_max
         else:
-            self.tau_0 = params.tau_0
+            self.tau_0 = cfg.tau_0
 
         # Initialize pheromone matrix
         self.pheromone = PheromoneTau(
             self.n_nodes,
-            params.k_sparse,
+            cfg.k_sparse,
             self.tau_0,
-            params.tau_min,
-            params.tau_max,
+            cfg.tau_min,
+            cfg.tau_max,
         )
 
         # Initialize Local Search
-        self.ls = ACOLocalSearch(dist_matrix, wastes, capacity, R, C, params, seed=seed)
+        self.ls = ACOLocalSearch(dist_matrix, wastes, capacity, R, C, cfg, seed=seed)
 
         # Build candidate lists (k-nearest neighbors for each node)
         self.candidate_lists = self._build_candidate_lists()
@@ -134,7 +135,7 @@ class ACOSolver(PolicyVizMixin):
             self.eta,
             self.candidate_lists,
             self.nodes,
-            params,
+            cfg,
             self.tau_0,
             R=self.R,
             C=self.C,

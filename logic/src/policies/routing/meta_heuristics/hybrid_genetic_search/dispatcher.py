@@ -53,7 +53,10 @@ def run_hgs(
 
     if getattr(config, "engine", "custom") == "pyvrp":
         vals = cfg if isinstance(cfg, dict) else dataclasses.asdict(config)
-        return solve_pyvrp(dist_matrix, problem.wastes, problem.capacity, problem.revenue, problem.cost_unit, vals)
+        routes, profit, cost = solve_pyvrp(
+            dist_matrix, problem.wastes, problem.capacity, problem.revenue, problem.cost_unit, vals
+        )
+        return SolveResult(routes, profit, cost)
 
     if len(dist_matrix) <= 1:
         return SolveResult([], 0.0, 0.0)
@@ -71,4 +74,4 @@ def run_hgs(
             return SolveResult([], 0.0, 0.0)
 
     solver = HGSSolver(problem, config)
-    return solver.solve()
+    return SolveResult(*solver.solve())

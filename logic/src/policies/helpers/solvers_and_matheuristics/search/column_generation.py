@@ -22,7 +22,7 @@ from __future__ import annotations
 import logging
 import time
 import warnings
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 from gurobipy import GRB
 
@@ -294,10 +294,12 @@ def column_generation_loop(  # noqa: C901
 
             _elapsed = time.perf_counter() - start_time
             _remaining = max(0.1, time_limit - _elapsed) if time_limit is not None and time_limit > 0 else None
-            _rem_t = (
+            # Earlier branch binds _rem_t to float; this value is float | None at runtime.
+            _rem_t = cast(
+                float,
                 min(_remaining, time_limit * 0.40)
                 if _remaining is not None and time_limit is not None and time_limit > 0 and node_depth == 0
-                else _remaining
+                else _remaining,
             )
             added, pricing_exhausted = solve_pricing_step(
                 master,

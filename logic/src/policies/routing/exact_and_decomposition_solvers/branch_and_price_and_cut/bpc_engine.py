@@ -127,7 +127,7 @@ References:
 import logging
 import time
 import warnings
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, cast
 
 from logic.src.configs.policies.routing.exact_and_decomposition_solvers.bpc import BPCConfig
 from logic.src.policies.helpers.solvers_and_matheuristics.branching import BranchAndBoundTree
@@ -213,6 +213,7 @@ def run_bpc(  # noqa: C901
         cfg = BPCConfig()
     elif isinstance(cfg, dict):
         cfg = _structured_load(BPCConfig, _unwrap_engine_section(cfg))
+    cfg = cast(BPCConfig, cfg)
 
     # Unpack the SubProblem value object (P-30 contract).
     dist_matrix = problem.dist_matrix
@@ -257,7 +258,7 @@ def run_bpc(  # noqa: C901
     red_wastes = wastes
     red_mandatory = m_set
 
-    master = VRPPMasterProblem(
+    master = VRPPMasterProblem(  # type: ignore[abstract]  # abstract attrs come from master mixins, not this call site
         n_nodes=k_nodes,
         mandatory_nodes=red_mandatory,
         cost_matrix=red_dist,
@@ -292,8 +293,9 @@ def run_bpc(  # noqa: C901
     )
 
     master.build_model(initial_columns)
-    if hasattr(pricing_solver, "is_known_column"):
-        pricing_solver.is_known_column = lambda sig: sig in master._route_signatures
+    priced = cast(Any, pricing_solver)
+    if hasattr(priced, "is_known_column"):
+        priced.is_known_column = lambda sig: sig in master._route_signatures
     master.column_deletion_enabled = True
 
     # 2.1 Initialize 2-Phase Method
@@ -351,8 +353,9 @@ def run_bpc(  # noqa: C901
         options=BPCSearchOptions(),
     )
 
-    if getattr(pricing_solver, "stats", None):
-        logger.info(f"[BPC] CPTP pricing stats: {dict(pricing_solver.stats)}")
+    pricing_stats = getattr(priced, "stats", None)
+    if pricing_stats:
+        logger.info(f"[BPC] CPTP pricing stats: {dict(pricing_stats)}")
 
     # 6. Extract best integer solution
     if bb_tree.best_integer_node is None:
@@ -366,7 +369,7 @@ def run_bpc(  # noqa: C901
         source = "greedy"
         try:
             _apply_branching_to_master(master, [], branching_strategy_name)
-            master.model.Params.TimeLimit = max(1.0, min(10.0, 0.1 * time_limit if time_limit > 0 else 10.0))
+            cast(Any, master.model).Params.TimeLimit = max(1.0, min(10.0, 0.1 * time_limit if time_limit > 0 else 10.0))
             ip_obj, ip_routes = master.solve_ip()
             if ip_routes and ip_obj > fallback_profit + 1e-9:
                 fallback_routes, fallback_profit = [list(r.nodes) for r in ip_routes], float(ip_obj)
