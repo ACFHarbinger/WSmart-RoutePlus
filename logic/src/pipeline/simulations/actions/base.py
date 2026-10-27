@@ -20,7 +20,7 @@ from abc import ABC, abstractmethod
 from contextlib import suppress
 from contextvars import ContextVar
 from dataclasses import asdict, is_dataclass
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 
 class _AttrDict(dict):
@@ -225,8 +225,10 @@ class SimulationAction(ABC):
     a shared context dictionary and modifies it in-place with its outputs.
 
     Attributes:
-        None
+        writes: Context fields this action assigns. Empty when a subclass declares none.
     """
+
+    writes: Tuple[str, ...] = ()
 
     @abstractmethod
     def execute(self, context: Any) -> None:

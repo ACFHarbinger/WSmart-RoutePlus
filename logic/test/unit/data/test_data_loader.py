@@ -1,5 +1,7 @@
 """Tests for data_utils.py."""
 
+from typing import cast
+
 import pytest
 import torch
 from logic.src.utils.data.loader import check_extension, collate_fn, load_td_dataset, save_td_dataset
@@ -25,7 +27,7 @@ def test_save_load_td_dataset(tmp_path):
     save_td_dataset(td, path)
 
     loaded = load_td_dataset(path)
-    assert torch.allclose(td["a"], loaded["a"])
+    assert torch.allclose(cast(torch.Tensor, td["a"]), cast(torch.Tensor, loaded["a"]))
 
 
 def test_collate_fn():
