@@ -11,8 +11,9 @@ import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, cast
+from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
+from logic.controllers.cloud.interfaces import ComputeBackend
 from logic.controllers.cloud.local.backend import LocalProcessBackend
 from logic.controllers.cloud.local.control_plane import SQLiteControlPlane
 from logic.controllers.cloud.local.object_store import EnvSecretStore, FilesystemObjectStore
@@ -112,7 +113,9 @@ def monitored_service(root: Path, project_root: Optional[Path] = None) -> CloudS
 
     store_uri = resolve_store_uri(root, control_uri) or f"file://{(root / 'objects').resolve()}"
     secrets = EnvSecretStore(prefix="WSR_SECRET_")
-    backends = {(Provider.LOCAL, ComputeKind.PROCESS): LocalProcessBackend(cwd=project_root, secrets=secrets)}
+    backends: Dict[Tuple[Provider, ComputeKind], ComputeBackend] = {
+        (Provider.LOCAL, ComputeKind.PROCESS): LocalProcessBackend(cwd=project_root, secrets=secrets)
+    }
     project = None
     for profile in load_profiles().values():
         if profile.control_plane == control_uri:
