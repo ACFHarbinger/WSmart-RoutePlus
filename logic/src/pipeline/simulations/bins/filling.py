@@ -20,7 +20,9 @@ if TYPE_CHECKING:
     from logic.src.data.datasets import SimulationDataset
 
 try:
-    from logic.src.tracking.core.run import get_active_run
+    from logic.src.tracking.core.run import (  # pyrefly: ignore[missing-import]  # tracking is excluded from the minimal package
+        get_active_run,
+    )
 except ImportError:
     get_active_run = None  # type: ignore[assignment]
 from logic.src.pipeline.simulations.bins.prediction import calculate_frequency_and_level_vectorized

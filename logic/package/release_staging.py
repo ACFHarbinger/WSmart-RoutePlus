@@ -160,8 +160,13 @@ def filter_lazy_map(path: Path, staged_modules: Set[str], out: Path) -> List[str
                 kept[key] = value
             else:
                 dropped.append(f"{path.relative_to(out)}: lazy {key} -> {target}")
+        if isinstance(node, ast.AnnAssign) and node.annotation is not None:
+            annotation = ast.get_source_segment(source, node.annotation) or "Dict[str, str]"
+            rendered = f"_LAZY: {annotation} = {kept!r}\n"
+        else:
+            rendered = "_LAZY = " + repr(kept) + "\n"
         lines = source.splitlines(keepends=True)
-        lines[node.lineno - 1 : node.end_lineno] = ["_LAZY = " + repr(kept) + "\n"]
+        lines[node.lineno - 1 : node.end_lineno] = [rendered]
         path.write_text("".join(lines))
         return dropped
     return []

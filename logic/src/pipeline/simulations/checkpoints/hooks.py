@@ -20,7 +20,9 @@ from typing import Any, Callable, Dict, Optional
 from loguru import logger
 
 try:
-    from logic.src.tracking.core.run import get_active_run
+    from logic.src.tracking.core.run import (  # pyrefly: ignore[missing-import]  # tracking is excluded from the minimal package
+        get_active_run,
+    )
 except ImportError:
     get_active_run = None  # type: ignore[assignment,misc]
 

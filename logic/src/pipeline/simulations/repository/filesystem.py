@@ -25,7 +25,9 @@ import logic.src.constants as udef
 from .base import SimulationRepository
 
 try:
-    from logic.src.tracking.core.run import get_active_run
+    from logic.src.tracking.core.run import (  # pyrefly: ignore[missing-import]  # tracking is excluded from the minimal package
+        get_active_run,
+    )
 except ImportError:
     get_active_run = None  # type: ignore[assignment]
 

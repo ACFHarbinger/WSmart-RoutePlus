@@ -5,7 +5,7 @@ Attributes:
 
 """
 
-from typing import Any
+from typing import Any, Dict
 
 from hydra.core.config_store import ConfigStore
 
@@ -19,7 +19,7 @@ from .engine import run_training
 from .model_factory import create_model
 
 # HPO is not released (Q-6); it loads only when called.
-_LAZY = {"run_hpo": "logic.src.pipeline.features.train.hpo:run_hpo"}
+_LAZY: Dict[str, str] = {"run_hpo": "logic.src.pipeline.features.train.hpo:run_hpo"}
 
 # Register configuration for Hydra
 cs = ConfigStore.instance()

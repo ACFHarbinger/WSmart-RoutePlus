@@ -36,7 +36,9 @@ from logic.src.pipeline.simulations.repository import load_area_and_waste_type_p
 from logic.src.utils.data.loader import load_grid_base
 
 try:
-    from logic.src.tracking.core.run import get_active_run
+    from logic.src.tracking.core.run import (  # pyrefly: ignore[missing-import]  # tracking is excluded from the minimal package
+        get_active_run,
+    )
 except ImportError:
     get_active_run = None  # type: ignore[assignment]
 

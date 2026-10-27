@@ -21,7 +21,9 @@ from logic.src.constants import ROOT_DIR
 from logic.src.data.network import compute_distance_matrix
 
 try:
-    from logic.src.tracking.core.run import get_active_run
+    from logic.src.tracking.core.run import (  # pyrefly: ignore[missing-import]  # tracking is excluded from the minimal package
+        get_active_run,
+    )
 except ImportError:
     get_active_run = None  # type: ignore[assignment]
 from logic.src.utils.graph.network_utils import apply_edges, get_paths_between_states
