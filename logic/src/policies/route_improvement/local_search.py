@@ -12,15 +12,42 @@ Example:
 """
 
 import time
-from typing import Any, Callable, Dict, List, Tuple, cast
+from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
 from logic.src.enums import PolicyTag
 from logic.src.interfaces.context.search_context import ImprovementMetrics
 from logic.src.interfaces.route_improvement import IRouteImprovement
+from logic.src.tracking.execution_trace import solution_record
 from logic.src.utils.registry import ALL
 
 from .base import RouteImproverRegistry
 from .common.helpers import assemble_tour, split_tour, to_numpy
+
+
+def _record_ls_trace(
+    trace: Any,
+    parent_id: Optional[str],
+    operator_name: Any,
+    max_iter: int,
+    time_limit: Any,
+    routes_before: List[List[int]],
+    refined_routes: List[List[int]],
+) -> None:
+    if trace is None:
+        return
+    resolved_parent = parent_id or (trace.events[-1]["id"] if trace.events else None)
+    args: Dict[str, Any] = {"operator": str(operator_name), "iterations": max_iter}
+    if time_limit is not None:
+        args["time_limit"] = time_limit
+    trace.add(
+        name="classical_local_search",
+        kind="operator",
+        parent_id=resolved_parent,
+        changed_solution=bool(refined_routes != routes_before),
+        arguments=args,
+        before=solution_record(routes_before),
+        after=solution_record(refined_routes),
+    )
 
 
 @ALL.register(
@@ -98,6 +125,10 @@ class ClassicalLocalSearchRouteImprover(IRouteImprovement):
         if not routes:
             return tour, {"algorithm": "ClassicalLocalSearchRouteImprover"}
 
+        routes_before = [r[:] for r in routes]
+        trace = kwargs.get("trace")
+        parent_id = kwargs.get("parent_id")
+
         # Case 1: Mathematical programming and exact intensification solvers
         Mapping = {
             "dp_reopt": "DP_REOPT_PROFIT",
@@ -112,6 +143,7 @@ class ClassicalLocalSearchRouteImprover(IRouteImprovement):
             op_fn = INTENSIFICATION_OPERATORS[op_key]
             try:
                 refined_routes = op_fn(routes, dist_matrix, wastes, capacity, R=R, C=C, max_iter=max_iter)  # type: ignore[operator]
+                _record_ls_trace(trace, parent_id, operator_name, max_iter, None, routes_before, refined_routes)
                 return assemble_tour(refined_routes), {
                     "algorithm": "ClassicalLocalSearchRouteImprover",
                     "ls_operator": str(operator_name),
@@ -153,7 +185,9 @@ class ClassicalLocalSearchRouteImprover(IRouteImprovement):
                         break  # restart search from simplest operator
                 if not improved:
                     break  # local optimum with respect to all operators reached
-            return assemble_tour(ls.get_routes()), {
+            refined_routes = ls.get_routes()
+            _record_ls_trace(trace, parent_id, operator_name, max_iter, time_limit, routes_before, refined_routes)
+            return assemble_tour(refined_routes), {
                 "algorithm": "ClassicalLocalSearchRouteImprover",
                 "ls_operator": str(operator_name),
                 "iterations": max_iter,

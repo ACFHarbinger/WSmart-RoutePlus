@@ -239,6 +239,7 @@ class LNSSolver(LNSBase, PolicyVizMixin):
         new_profit: float,
         best_profit: float,
         iteration: int,
+        **kwargs: Any,
     ) -> bool:
         """SA acceptance decision (draws from the solver's ``random`` stream).
 
@@ -247,10 +248,13 @@ class LNSSolver(LNSBase, PolicyVizMixin):
             new_profit: Profit of the candidate solution.
             best_profit: Best profit found so far (unused).
             iteration: Current iteration index (unused).
+            kwargs: Optional trace context from the shared loop. This criterion
+                does not read it and does not draw an extra random number.
 
         Returns:
             True if the candidate is accepted.
         """
+        del kwargs
         accepted, _ = self.acceptance_criterion.accept(current_obj=current_profit, candidate_obj=new_profit)
         return accepted
 

@@ -26,6 +26,8 @@ from .ortools_wrapper import run_alns_ortools
 def run_alns(
     problem: SubProblem,
     cfg: Optional[Union[ALNSConfig, Dict[str, Any]]] = None,
+    trace: Optional[Any] = None,
+    trace_parent_id: Optional[str] = None,
 ) -> SolveResult:
     """Main ALNS entry point with dispatching to different algorithm variants.
 
@@ -35,6 +37,8 @@ def run_alns(
         cfg: ALNSConfig dataclass or dictionary of parameters and config.
             ``engine`` selects the variant: "custom" (default), "package"
             (external ``alns`` package) or "ortools".
+        trace: Optional execution trace to record search events into.
+        trace_parent_id: Optional parent event id for trace events.
 
     Returns:
         SolveResult: Best routes, profit, and cost.
@@ -63,4 +67,8 @@ def run_alns(
 
     # Default: Custom internal ALNS solver
     solver = ALNSSolver(problem, config)
-    return SolveResult(*solver.solve())
+    effective_trace = trace if trace is not None else getattr(problem, "trace", None)
+    effective_parent_id = (
+        trace_parent_id if trace_parent_id is not None else getattr(problem, "trace_parent_id", None)
+    )
+    return SolveResult(*solver.solve(trace=effective_trace, parent_id=effective_parent_id))

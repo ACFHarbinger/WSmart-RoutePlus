@@ -236,6 +236,9 @@ class ALNSSolver(ALNSOperatorRegistryMixin, ALNSHooksMixin, LNSBase):
         )
 
         self.acceptance_criterion = AcceptanceCriterionFactory.build(self.cfg.acceptance_criterion)
+        self.trace = getattr(problem, "trace", None) or getattr(config, "trace", None)
+        self.trace_parent_id = getattr(problem, "trace_parent_id", None) or getattr(config, "trace_parent_id", None)
+        self.policy_name = "alns"
 
     # Removed _calculate_dynamic_start_temp in favor of criterion.setup()
 

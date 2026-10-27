@@ -15,10 +15,12 @@ from .deep_decoder_policy import DeepDecoderPolicy as DeepDecoderPolicy
 from .model import AttentionModel as AttentionModel
 from .policy import AttentionModelPolicy as AttentionModelPolicy
 from .symnco_policy import SymNCOPolicy as SymNCOPolicy
+from .trace import build_attention_model_trace as build_attention_model_trace
 
 __all__ = [
     "AttentionModel",
     "AttentionModelPolicy",
     "DeepDecoderPolicy",
     "SymNCOPolicy",
+    "build_attention_model_trace",
 ]

@@ -25,6 +25,7 @@ import time
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from logic.src.policies.helpers.operators import build_greedy_routes
+from logic.src.tracking.execution_trace import solution_record
 
 __all__ = ["LNSBase", "MIN_REMOVAL_LOWER_BOUND"]
 
@@ -181,6 +182,7 @@ class LNSBase:
         new_profit: float,
         best_profit: float,
         iteration: int,
+        **kwargs: Any,
     ) -> bool:
         """Decide whether the candidate solution is accepted.
 
@@ -189,6 +191,7 @@ class LNSBase:
             new_profit: Profit of the candidate solution.
             best_profit: Best profit found so far.
             iteration: Current iteration index.
+            kwargs: Extra context for acceptance (e.g. trace, routes).
 
         Returns:
             True if the candidate is accepted.
@@ -287,7 +290,14 @@ class LNSBase:
         best_profit = best_rev - best_cost
         return current_routes, best_routes, best_profit, best_cost
 
-    def _select_and_apply_operators(self, current_routes: List[List[int]]) -> Tuple[List[List[int]], int, int]:
+    def _select_and_apply_operators(
+        self,
+        current_routes: List[List[int]],
+        trace: Optional[Any] = None,
+        stage_id: Optional[str] = None,
+        iteration: int = 0,
+        current_profit: float = 0.0,
+    ) -> Tuple[List[List[int]], int, int]:
         """Select and apply one destroy + one repair operator.
 
         Repair operators are selected via roulette-wheel (Eq. 20); clean and
@@ -295,6 +305,10 @@ class LNSBase:
 
         Args:
             current_routes: The current solution routes.
+            trace: Optional execution trace to record operator events.
+            stage_id: Parent stage event id on the trace.
+            iteration: Current iteration index.
+            current_profit: Objective profit before operator application.
 
         Returns:
             Tuple containing (new_routes, destroy_idx, repair_idx).
@@ -315,8 +329,48 @@ class LNSBase:
         # The adaptive weight mechanism controls how often noisy slots are chosen.
         noise_val = self._get_noise() if self.repair_noisy[r_idx] else 0.0
 
-        new_routes, removed = destroy_op(self._snapshot_routes(current_routes), n_remove)
-        new_routes = repair_op(new_routes, removed, noise_val)
+        ruined_routes, removed = destroy_op(self._snapshot_routes(current_routes), n_remove)
+        if trace is not None:
+            destroy_name = (
+                self.destroy_names[d_idx]
+                if hasattr(self, "destroy_names") and d_idx < len(self.destroy_names)
+                else getattr(destroy_op, "__name__", f"destroy_{d_idx}")
+            )
+            ruined_cost = self.calculate_cost(ruined_routes)
+            ruined_rev = sum(self.wastes.get(node_idx, 0) * self.R for route in ruined_routes for node_idx in route)
+            ruined_profit = ruined_rev - ruined_cost
+            trace.add(
+                name=destroy_name,
+                kind="operator",
+                parent_id=stage_id,
+                changed_solution=bool(removed),
+                arguments={"iteration": iteration, "n_remove": n_remove, "removed": [int(x) for x in removed]},
+                before=solution_record(current_routes, objective=current_profit),
+                after=solution_record(ruined_routes, objective=ruined_profit),
+            )
+        else:
+            ruined_profit = 0.0
+
+        new_routes = repair_op(ruined_routes, removed, noise_val)
+        if trace is not None:
+            repair_name = (
+                self.repair_names[r_idx]
+                if hasattr(self, "repair_names") and r_idx < len(self.repair_names)
+                else getattr(repair_op, "__name__", f"repair_{r_idx}")
+            )
+            new_cost = self.calculate_cost(new_routes)
+            new_rev = sum(self.wastes.get(node_idx, 0) * self.R for route in new_routes for node_idx in route)
+            new_profit = new_rev - new_cost
+            trace.add(
+                name=repair_name,
+                kind="operator",
+                parent_id=stage_id,
+                changed_solution=(new_routes != ruined_routes),
+                arguments={"iteration": iteration, "noise": float(noise_val)},
+                before=solution_record(ruined_routes, objective=ruined_profit),
+                after=solution_record(new_routes, objective=new_profit),
+            )
+
         return new_routes, d_idx, r_idx
 
     def _update_weights(self, d_idx: int, r_idx: int, score: float) -> None:
@@ -333,19 +387,73 @@ class LNSBase:
     # Main solve loop
     # ------------------------------------------------------------------
 
-    def solve(self, initial_solution: Optional[List[List[int]]] = None) -> Tuple[List[List[int]], float, float]:
+    def solve(
+        self,
+        initial_solution: Optional[List[List[int]]] = None,
+        trace: Optional[Any] = None,
+        parent_id: Optional[str] = None,
+    ) -> Tuple[List[List[int]], float, float]:
         """Run the LNS loop.
 
         Args:
             initial_solution: Optional starting solution. If None, the constructive
                 heuristic builds one.
+            trace: Optional ExecutionTrace to record events into.
+            parent_id: Optional parent event id for trace events.
 
         Returns:
             Tuple of (best_routes, best_profit, best_cost).
         """
+        effective_trace = (
+            trace
+            if trace is not None
+            else getattr(self, "trace", None) or getattr(getattr(self, "problem", None), "trace", None)
+        )
+        effective_parent = (
+            parent_id
+            if parent_id is not None
+            else getattr(self, "trace_parent_id", None) or getattr(getattr(self, "problem", None), "trace_parent_id", None)
+        )
+
+        stage_id: Optional[str] = None
+        if effective_trace is not None:
+            if effective_parent is None and effective_trace.events:
+                effective_parent = effective_trace.events[0]["id"]
+            if effective_parent is not None:
+                matches = [e for e in effective_trace.events if e["id"] == effective_parent]
+                if matches and matches[0]["kind"] == "stage":
+                    stage_id = effective_parent
+                else:
+                    policy_name = getattr(self, "policy_name", "alns")
+                    stage_id = effective_trace.add(name=policy_name, kind="stage", parent_id=effective_parent)
+            else:
+                input_id = effective_trace.add(name="instance", kind="input")
+                policy_name = getattr(self, "policy_name", "alns")
+                stage_id = effective_trace.add(name=policy_name, kind="stage", parent_id=input_id)
+
         start_time = time.perf_counter()
         current_routes, best_routes, best_profit, best_cost = self._initialize_solve(initial_solution)
         current_profit = best_profit
+
+        if effective_trace is not None:
+            effective_trace.add(
+                name="initial_solution",
+                kind="operator",
+                parent_id=stage_id,
+                changed_solution=True,
+                arguments={},
+                before=solution_record([], objective=0.0),
+                after=solution_record(best_routes, objective=best_profit),
+            )
+            effective_trace.add(
+                name="incumbent",
+                kind="incumbent",
+                parent_id=stage_id,
+                changed_solution=True,
+                arguments={"profit": float(best_profit), "cost": float(best_cost)},
+                before=solution_record([], objective=0.0),
+                after=solution_record(best_routes, objective=best_profit),
+            )
 
         self._prepare_search(best_routes, current_profit)
 
@@ -353,7 +461,13 @@ class LNSBase:
             if self.params.time_limit > 0 and time.perf_counter() - start_time > self.params.time_limit:
                 break
 
-            new_routes, d_idx, r_idx = self._select_and_apply_operators(current_routes)
+            new_routes, d_idx, r_idx = self._select_and_apply_operators(
+                current_routes,
+                trace=effective_trace,
+                stage_id=stage_id,
+                iteration=_it,
+                current_profit=current_profit,
+            )
             new_cost = self.calculate_cost(new_routes)
             new_rev = sum(self.wastes.get(node_idx, 0) * self.R for route in new_routes for node_idx in route)
             new_profit = new_rev - new_cost
@@ -361,11 +475,54 @@ class LNSBase:
             new_hash = self._hash_solution(new_routes)
             is_new_solution = self._track_and_check_new(new_hash)
 
-            accepted = self._accept_move(current_profit, new_profit, best_profit, _it)
+            events_len_before = len(effective_trace.events) if effective_trace is not None else 0
+            accepted = self._accept_move(
+                current_profit,
+                new_profit,
+                best_profit,
+                _it,
+                trace=effective_trace,
+                parent_id=stage_id,
+                current_routes=current_routes,
+                candidate_routes=new_routes,
+            )
+            if effective_trace is not None and len(effective_trace.events) == events_len_before:
+                crit_name = "acceptance"
+                if hasattr(self, "cfg") and hasattr(self.cfg, "acceptance_criterion"):
+                    ac = self.cfg.acceptance_criterion
+                    crit_name = ac if isinstance(ac, str) else getattr(ac, "method", "acceptance")
+                effective_trace.add(
+                    name=str(crit_name),
+                    kind="operator",
+                    parent_id=stage_id,
+                    changed_solution=accepted,
+                    arguments={
+                        "accepted": accepted,
+                        "iteration": _it,
+                        "current_profit": float(current_profit),
+                        "candidate_profit": float(new_profit),
+                        "delta": float(new_profit - current_profit),
+                    },
+                    before=solution_record(current_routes, objective=current_profit),
+                    after=solution_record(
+                        new_routes if accepted else current_routes,
+                        objective=new_profit if accepted else current_profit,
+                    ),
+                )
 
             score = self._scoring(new_profit, best_profit, current_profit, accepted, is_new_solution)
 
             if new_profit > best_profit + 1e-6:
+                if effective_trace is not None:
+                    effective_trace.add(
+                        name="incumbent",
+                        kind="incumbent",
+                        parent_id=stage_id,
+                        changed_solution=True,
+                        arguments={"iteration": _it, "profit": float(new_profit), "cost": float(new_cost)},
+                        before=solution_record(best_routes, objective=best_profit),
+                        after=solution_record(new_routes, objective=new_profit),
+                    )
                 best_routes = self._snapshot_routes(new_routes)
                 best_profit = new_profit
                 best_cost = new_cost
@@ -397,5 +554,8 @@ class LNSBase:
                 accepted=accepted,
                 score=score,
             )
+
+        if effective_trace is not None:
+            effective_trace.set_final(best_routes, objective=best_profit)
 
         return best_routes, best_profit, best_cost

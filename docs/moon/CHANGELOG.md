@@ -19,8 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Studio algorithm trace and module catalog (`2026-10-27`, [#168](https://github.com/ACFHarbinger/WSmart-Route/issues/168), [#169](https://github.com/ACFHarbinger/WSmart-Route/issues/169))
 
-- **Trace.** `python main.py trace_policy` writes schema version 1 for one ALNS solve. The search interior is marked `not_instrumented`. On the same seed the traced tours and profit match a solve that does not build a trace.
+- **Trace.** `python main.py trace_policy` writes schema version 1 for one ALNS solve. The search records the initial solution, each destroy and repair operator, acceptance, and incumbent updates. On the same seed the traced tours and profit match a solve that does not build a trace.
 - **Catalog.** `python main.py list_policy_modules` lists registered packing, routing, route improvement, and acceptance ids, plus on-disk modules, operator families, separation helpers, and the shipped model config ids. A target that fails to import stays in the document with `error` set.
+- **Attention-model trace.** An opt-in CPU forward records the encoder, the decoder, and each decoding step. Masked nodes stay masked. `WeightAdjustmentRNN` is not treated as a route decoder. A forward with no trace does not allocate one.
 
 ### CLI registry location (`2026-10-27`)
 

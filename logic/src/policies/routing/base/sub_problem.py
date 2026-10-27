@@ -68,6 +68,8 @@ class SubProblem:
         "node_coords",
         "recorder",
         "dual_values",
+        "trace",
+        "trace_parent_id",
     )
 
     def __init__(
@@ -87,6 +89,8 @@ class SubProblem:
         node_coords: Optional[np.ndarray] = None,
         recorder: Any = None,
         dual_values: Any = None,
+        trace: Any = None,
+        trace_parent_id: Optional[str] = None,
     ) -> None:
         self.dist_matrix = dist_matrix
         self.wastes = wastes
@@ -103,6 +107,8 @@ class SubProblem:
         self.node_coords = node_coords
         self.recorder = recorder
         self.dual_values = dual_values
+        self.trace = trace
+        self.trace_parent_id = trace_parent_id
 
     def __repr__(self) -> str:
         n = 0 if self.dist_matrix is None else len(self.dist_matrix)
@@ -138,6 +144,8 @@ def build_subproblem(
         "node_coords",
         "recorder",
         "dual_values",
+        "trace",
+        "trace_parent_id",
     }
     filtered = {key: value for key, value in extras.items() if key in allowed and value is not None}
     return SubProblem(

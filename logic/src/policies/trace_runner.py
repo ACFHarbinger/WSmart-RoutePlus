@@ -1,8 +1,9 @@
 """Run one registered routing policy and write an execution trace.
 
-Schema issue #168 proves the file shape on ALNS. Other routing ids are named
-in the document and marked ``not_instrumented``; they are not solved here.
-Search-operator events belong to issue #174.
+Schema issue #168 proves the file shape on ALNS. The ALNS search records
+destroy, repair, acceptance, and incumbent events when a trace is passed.
+Other routing ids are named in the document and marked ``not_instrumented``;
+they are not solved here.
 """
 
 from typing import Any, Dict, Optional, Sequence, Tuple
@@ -72,10 +73,10 @@ def build_alns_trace(
     route_improvement: Optional[str] = None,
     max_iterations: int = 20,
 ) -> Tuple[ExecutionTrace, SolveResult]:
-    """Solve ALNS once and wrap the input and the final routes in a trace.
+    """Solve ALNS once and record the search on ``trace``.
 
-    The search interior is one ``not_instrumented`` stage. A second call with
-    the same arguments and no trace uses :func:`solve_alns` and must match.
+    The solver receives the trace. A call with the same arguments and no trace
+    uses :func:`solve_alns` and must return the same tours and profit.
     """
     if problem not in PROBLEMS:
         raise ValueError(f"unknown problem {problem!r}")
@@ -100,8 +101,22 @@ def build_alns_trace(
         kind="input",
         arguments={"n_nodes": graph_size, "n_customers": graph_size - 1},
     )
-    trace.mark_uninstrumented("alns", parent_id=input_id)
-    result = solve_alns(dist, wastes, seed, acceptance, max_iterations)
+    subproblem = build_subproblem(
+        dist,
+        wastes,
+        capacity=10.0,
+        revenue=1.0,
+        cost_unit=1.0,
+        trace=trace,
+        trace_parent_id=input_id,
+    )
+    config = ALNSConfig(
+        seed=seed,
+        max_iterations=max_iterations,
+        acceptance_criterion=_acceptance(acceptance),
+        time_limit=30.0,
+    )
+    result = run_alns(subproblem, config)
     final = solution_record(result.routes, objective=result.profit)
     trace.add(
         name="routes",
