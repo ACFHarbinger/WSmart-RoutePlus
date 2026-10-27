@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 import pytest
 import torch
@@ -21,9 +21,16 @@ from logic.src.envs.ptp import PTPEnv
 from logic.src.models.core.attention_model import AttentionModel, AttentionModelPolicy
 from logic.src.models.core.moe import MoEAttentionModel
 from logic.src.models.core.temporal_attention_model import TemporalAttentionModel
+from logic.src.models.subnets.embeddings.ptp import PTPInitEmbedding
 from logic.src.utils.model.loader import load_model
+from torch import nn
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
+
+
+def _ptp_embedding(module: nn.Module) -> PTPInitEmbedding:
+    """get_init_embedding is typed as nn.Module; ptp and cptp both install PTPInitEmbedding."""
+    return cast(PTPInitEmbedding, module)
 
 
 def _build_test_models(seed: int = 42) -> tuple[AttentionModelPolicy, AttentionModel]:
@@ -52,7 +59,7 @@ def _build_test_models(seed: int = 42) -> tuple[AttentionModelPolicy, AttentionM
 
     # Compare decoding under the same explicit legacy embedding mode.
     # The canonical default has its own historical projection regression test.
-    policy.init_embedding.legacy_depot_projection = True
+    _ptp_embedding(policy.init_embedding).legacy_depot_projection = True
 
     # Sync weights exactly
     model.load_state_dict(policy.state_dict(), strict=True)
@@ -255,10 +262,12 @@ def test_used_model_can_be_copied_for_rollout_baseline():
     cloned = copy.deepcopy(model)
 
     assert cloned.init_embedding is not model.init_embedding
-    before = model.init_embedding.node_embed.weight.detach().clone()
+    source = _ptp_embedding(model.init_embedding)
+    clone_embed = _ptp_embedding(cloned.init_embedding)
+    before = source.node_embed.weight.detach().clone()
     with torch.no_grad():
-        cloned.init_embedding.node_embed.weight.add_(1.0)
-    assert torch.equal(model.init_embedding.node_embed.weight, before)
+        clone_embed.node_embed.weight.add_(1.0)
+    assert torch.equal(source.node_embed.weight, before)
 
 
 def test_tam_forward_calls_temporal_embedding_override():
@@ -291,7 +300,7 @@ def test_depot_embedding_parity_concatenated_and_separate():
     torch.manual_seed(123)
     old = PTPContextEmbedder(8, temporal_horizon=0)
     new = PTPInitEmbedding(8, legacy_depot_projection=True)
-    new.node_embed.load_state_dict(old.init_embed.state_dict())
+    new.node_embed.load_state_dict(cast(nn.Linear, old.init_embed).state_dict())
     new.depot_embed.load_state_dict(old.init_embed_depot.state_dict())
 
     # 1. Concatenated input (e.g. from environment)
@@ -345,8 +354,9 @@ def test_nonzero_temporal_horizon_projection_shape():
     horizon_model = AttentionModel(
         embed_dim=8, hidden_dim=16, problem="ptp", n_heads=2, n_encode_layers=1, temporal_horizon=3
     )
-    old_shape = tuple(PTPContextEmbedder(8, temporal_horizon=3).init_embed.weight.shape)
-    new_shape = tuple(horizon_model.init_embedding.node_embed.weight.shape)
+    old_linear = cast(nn.Linear, PTPContextEmbedder(8, temporal_horizon=3).init_embed)
+    old_shape = tuple(old_linear.weight.shape)
+    new_shape = tuple(_ptp_embedding(horizon_model.init_embedding).node_embed.weight.shape)
     assert old_shape == new_shape == (8, 6), f"Shape mismatch: old={old_shape}, new={new_shape}"
 
 
@@ -354,7 +364,7 @@ def test_nonzero_temporal_horizon_projection_shape():
 def test_canonical_policy_preserves_historical_depot_projection(env_name):
     """Checkpoint weights retain the canonical depot projection for every shared embedder."""
     policy = AttentionModelPolicy(env_name=env_name, embed_dim=8, hidden_dim=16, n_heads=2, n_encode_layers=1)
-    embedding = policy.init_embedding
+    embedding = _ptp_embedding(policy.init_embedding)
     td = {
         "locs": torch.tensor([[[0.0, 0.0], [1.0, 1.0]]]),
         "waste": torch.tensor([[0.0, 1.0]]),
@@ -380,8 +390,9 @@ def test_legacy_model_retains_context_embedding_projection(env_name, horizon):
     model = AttentionModel(
         embed_dim=8, hidden_dim=16, problem=env_name, n_heads=2, n_encode_layers=1, temporal_horizon=horizon
     )
-    model.init_embedding.node_embed.load_state_dict(old.init_embed.state_dict())
-    model.init_embedding.depot_embed.load_state_dict(old.init_embed_depot.state_dict())
+    embed = _ptp_embedding(model.init_embedding)
+    embed.node_embed.load_state_dict(cast(nn.Linear, old.init_embed).state_dict())
+    embed.depot_embed.load_state_dict(old.init_embed_depot.state_dict())
     for separate in (False, True):
         td = {
             "locs": torch.tensor([[[0.0, 0.0], [1.0, 1.0]]]),
@@ -431,7 +442,7 @@ def test_legacy_factory_preserves_activation_defaults_and_explicit_overrides():
                 n_heads=2,
                 n_encode_layers=1,
                 component_factory=factory,
-                **kwargs,
+                **cast(Any, kwargs),  # case dicts mix str, float, list, and ActivationConfig
             )
         assert encoder.call_args.kwargs["activation_config"] == expected
         if not kwargs:
