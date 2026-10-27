@@ -37,7 +37,7 @@ import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Set, Tuple
+from typing import Dict, Iterable, List, Optional, Set, Tuple, cast
 
 SCAN_ROOTS = ("logic", "main.py", "__main__.py")
 SKIP_PARTS = {"__pycache__", "submodules", "legacy", "archive", "node_modules", ".venv", "html", "target"}
@@ -296,7 +296,7 @@ def _rewrite_imports(mod: Module, moves: Dict[Tuple[str, str], str], drop: Set[s
                 keep.append(alias)
         if not changed:
             continue
-        indent = re.match(r"\s*", lines[node.lineno - 1]).group(0)
+        indent = cast(re.Match, re.match(r"\s*", lines[node.lineno - 1])).group(0)  # \s* always matches
         source_module = ("." * node.level + (node.module or "")) if node.level else (node.module or "")
         out = []
         if keep:

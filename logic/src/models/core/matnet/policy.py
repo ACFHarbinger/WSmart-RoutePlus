@@ -43,8 +43,8 @@ class MatNetPolicy(AutoregressivePolicy):
         embed_dim (int): feature vector size.
     """
 
-    encoder: MatNetEncoder
-    decoder: MatNetDecoder
+    encoder: MatNetEncoder  # pyrefly: ignore[bad-override]  # concrete class of the parent module attribute
+    decoder: MatNetDecoder  # pyrefly: ignore[bad-override]  # concrete class of the parent module attribute
 
     def __init__(
         self,

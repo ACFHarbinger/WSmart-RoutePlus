@@ -15,7 +15,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 import torch
 from tensordict import TensorDict
@@ -134,7 +134,7 @@ class DACT(nn.Module):
         Returns:
             Dict[str, Any]: Fully processed results including loss if training.
         """
-        td = self.env.reset(batch)
+        td = cast(TensorDict, self.env.reset(batch))  # reset returns TensorDictBase
         out = self.policy(td, self.env, phase=phase)
 
         if phase == "train":

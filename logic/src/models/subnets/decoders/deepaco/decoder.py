@@ -13,7 +13,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Dict, Tuple, Union
+from typing import Any, Dict, Tuple, Union, cast
 
 import torch
 from tensordict import TensorDict
@@ -126,16 +126,19 @@ class ACODecoder(NonAutoregressiveDecoder):
                 - logits: Edge selection logits [batch, num_nodes].
                 - mask: Valid action mask [batch, num_nodes].
         """
-        current_node = td.get(
-            "current_node",
-            torch.zeros(td.batch_size, dtype=torch.long, device=heatmap.device),
-        )
+        current_node = cast(
+            torch.Tensor,
+            td.get(
+                "current_node",
+                torch.zeros(td.batch_size, dtype=torch.long, device=heatmap.device),
+            ),
+        )  # current node is a tensor index
         # heatmap: [batch, n, n]
         logits = heatmap.gather(
             1,
             current_node.view(-1, 1, 1).expand(-1, 1, heatmap.size(-1)),
         ).squeeze(1)
-        return logits, td["mask"]
+        return logits, cast(torch.Tensor, td["mask"])  # TensorDict values are a tensor union
 
     def construct(
         self,
@@ -176,6 +179,10 @@ class ACODecoder(NonAutoregressiveDecoder):
 
         # Run ants
         if return_all:
+            ant_result = cast(
+                Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor],
+                self._run_ants(prob_matrix, dist_matrix, td, env, return_all=True),
+            )  # return_all=True selects the 6-tuple branch
             (
                 all_tours,
                 all_costs,
@@ -183,9 +190,7 @@ class ACODecoder(NonAutoregressiveDecoder):
                 best_tours,
                 best_costs,
                 _,
-            ) = self._run_ants(  # type: ignore[misc]
-                prob_matrix, dist_matrix, td, env, return_all=True
-            )
+            ) = ant_result
 
             # Optional local search
             out = {

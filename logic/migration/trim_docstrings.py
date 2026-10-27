@@ -26,7 +26,7 @@ import ast
 import re
 import sys
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, cast
 
 REPO = Path(__file__).resolve().parents[2]
 SCOPE = REPO / "logic" / "src"
@@ -41,13 +41,14 @@ TYPED_ARG_RE = re.compile(r"^(\s*)([A-Za-z_][\w]*)\s*\(([^)]*)\)\s*:\s*(.+)$")
 
 def docstring_node(tree: ast.AST) -> Optional[Tuple[int, int]]:
     """Line span of a module docstring, or None."""
+    module = cast(ast.Module, tree)  # callers pass ast.parse results
     if (
-        tree.body
-        and isinstance(tree.body[0], ast.Expr)
-        and isinstance(tree.body[0].value, ast.Constant)
-        and isinstance(tree.body[0].value.value, str)
+        module.body
+        and isinstance(module.body[0], ast.Expr)
+        and isinstance(module.body[0].value, ast.Constant)
+        and isinstance(module.body[0].value.value, str)
     ):
-        return (tree.body[0].lineno, tree.body[0].end_lineno)
+        return (module.body[0].lineno, cast(int, module.body[0].end_lineno))
     return None
 
 
@@ -125,7 +126,9 @@ def trim_file(path: Path) -> Tuple[Optional[str], int]:
             body = getattr(candidate, "body", None)
             if not body or not isinstance(body[0], ast.Expr) or not isinstance(body[0].value, ast.Constant):
                 continue
-            trimmed_body, delta, did_change = trim_sections(new_lines, body[0].lineno, body[0].end_lineno)
+            trimmed_body, delta, did_change = trim_sections(
+                new_lines, body[0].lineno, cast(int, body[0].end_lineno)
+            )
             if delta or did_change:
                 new_lines = trimmed_body
                 removed += delta

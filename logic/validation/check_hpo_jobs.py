@@ -31,7 +31,7 @@ import re
 import sys
 from dataclasses import fields
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 REPO = Path(__file__).resolve().parents[2]
 # Direct CLI execution puts tools/, rather than the repository, on sys.path.
@@ -156,7 +156,7 @@ def _defaults_equal(job_default: Any, config_default: Any) -> bool:
     if isinstance(config_default, type) and config_default is not None:
         return False  # dataclasses field default sentinel (MISSING): treat as unequal
     try:
-        return bool(job_default == config_default) or abs(float(job_default) - float(config_default)) < 1e-12
+        return bool(job_default == config_default) or abs(float(job_default) - float(cast(Any, config_default))) < 1e-12
     except (TypeError, ValueError):
         return bool(job_default == config_default)
 

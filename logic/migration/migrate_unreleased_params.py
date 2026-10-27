@@ -33,7 +33,7 @@ import ast
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, cast
 
 REPO = Path(__file__).resolve().parents[2]
 LOGIC = REPO / "logic"
@@ -63,7 +63,8 @@ def is_dataclass(node: ast.ClassDef) -> bool:
 
 
 def dataclasses_of(tree: ast.AST) -> List[ast.ClassDef]:
-    return [n for n in tree.body if isinstance(n, ast.ClassDef) and is_dataclass(n)]
+    body = cast(ast.Module, tree).body  # callers pass ast.parse results
+    return [n for n in body if isinstance(n, ast.ClassDef) and is_dataclass(n)]
 
 
 def dataclasses_anywhere(tree: ast.AST) -> List[ast.ClassDef]:
@@ -220,7 +221,7 @@ def merge_fields_into_config(record: dict, report: List[str]) -> bool:
             insert_line = stmt.lineno
             break
     if insert_line is None:
-        insert_line = config_node.end_lineno + 1
+        insert_line = cast(int, config_node.end_lineno) + 1  # parsed class always has an end line
     out = config_text.splitlines()
     out[insert_line - 1 : insert_line - 1] = new_fields
     # Carry the params module's top-level imports for the appended field types:
@@ -232,11 +233,13 @@ def merge_fields_into_config(record: dict, report: List[str]) -> bool:
     regular = [imp for imp in imports if not imp.startswith("from __future__")]
     if future or regular:
         tree = ast.parse("\n".join(out))
-        docstring_end = tree.body[0].end_lineno if tree.body and isinstance(tree.body[0], ast.Expr) else 0
+        docstring_end = (
+            cast(int, tree.body[0].end_lineno) if tree.body and isinstance(tree.body[0], ast.Expr) else 0
+        )
         last_import_end = docstring_end
         for node in tree.body:
             if isinstance(node, (ast.Import, ast.ImportFrom)):
-                last_import_end = node.end_lineno
+                last_import_end = cast(int, node.end_lineno)  # import statements always have an end line
             elif isinstance(node, ast.Expr) and tree.body and node is tree.body[0]:
                 continue
             else:
@@ -267,16 +270,16 @@ def create_config_from_params(record: dict, report: List[str]) -> bool:
                     start = stmt.lineno
                     for dec in stmt.decorator_list:
                         start = min(start, dec.lineno)
-                    spans.append((start, stmt.end_lineno))
+                    spans.append((start, cast(int, stmt.end_lineno)))  # function statements always have an end line
     # Strip the params module's own docstring and imports: the generated file
     # gets a fresh header, and the imports are re-added cleanly below.
     module_spans: List[Tuple[int, int]] = list(spans)
     body_first = record["tree"].body[0]
     if isinstance(body_first, ast.Expr):
-        module_spans.append((body_first.lineno, body_first.end_lineno))
+        module_spans.append((body_first.lineno, cast(int, body_first.end_lineno)))
     for node in record["tree"].body:
         if isinstance(node, (ast.Import, ast.ImportFrom)):
-            module_spans.append((node.lineno, node.end_lineno))
+            module_spans.append((node.lineno, cast(int, node.end_lineno)))
     body_lines = [
         line for lineno, line in enumerate(lines, 1) if not any(start <= lineno <= end for start, end in module_spans)
     ]

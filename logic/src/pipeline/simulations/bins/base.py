@@ -44,7 +44,9 @@ except ImportError:
 
 from logic.src.pipeline.simulations.bins.filling import BinsFillingMixin
 from logic.src.pipeline.simulations.bins.prediction import predict_days_to_overflow
-from logic.submodules.wsmart_bin_analysis import GridBase
+from logic.submodules.wsmart_bin_analysis import (  # pyrefly: ignore[missing-import]  # submodule is not on the checker path
+    GridBase,
+)
 
 
 class Bins(BinsFillingMixin):

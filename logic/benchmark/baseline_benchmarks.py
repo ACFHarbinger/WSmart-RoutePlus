@@ -5,7 +5,7 @@ Extends benchmark_ls.py to include multi-vehicle solvers and parity checks.
 """
 
 import time
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 import numpy as np
 import torch
@@ -156,7 +156,7 @@ def benchmark_cvrp_solvers(num_nodes: int = 50, n_vehicles: int = 5, seed: int =
     """Benchmark PyVRP vs OR-Tools."""
     print(f"[*] Benchmarking CVRP Solvers (nodes={num_nodes}, vehicles={n_vehicles})...")
 
-    np_rng = np.random.default_rng(seed)
+    np_rng = cast(Any, np.random.default_rng(seed))  # Generator stubs omit RandomState.randint
     dist_mat = np_rng.randint(10, 100, size=(num_nodes + 1, num_nodes + 1))
     np.fill_diagonal(dist_mat, 0)
     wastes = np_rng.randint(5, 20, size=num_nodes)

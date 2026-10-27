@@ -16,7 +16,7 @@ import ast
 import os
 import sys
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set, Tuple, cast
 
 try:
     from rich.console import Console
@@ -98,15 +98,16 @@ def get_factory_line_ranges(tree: ast.AST) -> List[Tuple[int, int]]:
     Returns:
         A list of tuples, where each tuple contains the start and end line numbers of a Factory class.
     """
-    ranges = []
+    ranges: List[Tuple[int, int]] = []
     for node in ast.walk(tree):
         if isinstance(node, ast.ClassDef) and "Factory" in node.name:
             start = node.lineno
             # end_lineno is Python 3.8+. Fallback to walking children if not available.
-            if hasattr(node, "end_lineno"):
+            if isinstance(node.end_lineno, int):
                 end = node.end_lineno
             else:
-                end = max((n.lineno for n in ast.walk(node) if hasattr(n, "lineno")), default=start)
+                numbered = [cast(int, n.lineno) for n in ast.walk(node) if hasattr(n, "lineno")]
+                end = max(numbered) if numbered else start
             ranges.append((start, end))
     return ranges
 

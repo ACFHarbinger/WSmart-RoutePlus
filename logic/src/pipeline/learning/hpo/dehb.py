@@ -21,7 +21,7 @@ Example:
 """
 
 import time
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, cast
 
 from dehb import DEHB
 
@@ -106,7 +106,8 @@ class DifferentialEvolutionHyperband(BaseHPO):
         best_config, best_score = self._dehb.get_incumbents()
 
         if hasattr(best_config, "get_dictionary"):
-            best_config = best_config.get_dictionary()
+            # ConfigSpace Configuration is a Mapping; dict() replaces deprecated get_dictionary().
+            best_config = dict(cast(Any, best_config))
 
         # Store for external inspection
         self.best_config = best_config

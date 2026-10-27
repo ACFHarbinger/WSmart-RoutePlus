@@ -32,7 +32,7 @@ import ast
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, cast
 
 REPO = Path(__file__).resolve().parents[2]
 SRC = REPO / "logic" / "src"
@@ -105,7 +105,7 @@ def strip_docstrings(text: str) -> str:
                 and isinstance(body[0].value, ast.Constant)
                 and isinstance(body[0].value.value, str)
             ):
-                spans.append((body[0].lineno, body[0].end_lineno))
+                spans.append((body[0].lineno, cast(int, body[0].end_lineno)))  # docstring expr always has an end line
     for start_line, end_line in spans:
         for lineno in range(start_line, min(end_line, len(lines)) + 1):
             lines[lineno - 1] = ""

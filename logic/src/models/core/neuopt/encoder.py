@@ -87,8 +87,8 @@ class NeuOptEncoder(ImprovementEncoder):
         Returns:
             torch.Tensor: Encoded node embeddings [B, N, embed_dim].
         """
-        depot = td["depot"].unsqueeze(1)
-        customers = td["locs"]
+        depot = cast(torch.Tensor, td["depot"]).unsqueeze(1)  # TensorDict values are a tensor union
+        customers = cast(torch.Tensor, td["locs"])  # TensorDict values are a tensor union
         h = torch.cat([depot, customers], dim=1)  # [bs, n, 2]
 
         h = self.init_proj(h)

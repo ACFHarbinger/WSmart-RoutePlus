@@ -14,7 +14,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Tuple
+from typing import Any, Tuple, cast
 
 import torch
 from tensordict import TensorDict
@@ -61,10 +61,13 @@ class SimpleNARDecoder(NonAutoregressiveDecoder):
                 and the current selection mask.
         """
         # Current node
-        current_node = td.get(
-            "current_node",
-            torch.zeros(td.batch_size, dtype=torch.long, device=heatmap.device),
-        )
+        current_node = cast(
+            torch.Tensor,
+            td.get(
+                "current_node",
+                torch.zeros(td.batch_size, dtype=torch.long, device=heatmap.device),
+            ),
+        )  # current node is a tensor index
 
         if heatmap.dim() == 3:
             # Edge-based heatmap: [batch, num_nodes, num_nodes]
@@ -74,4 +77,4 @@ class SimpleNARDecoder(NonAutoregressiveDecoder):
             # Node-based heatmap: [batch, num_nodes]
             logits = heatmap
 
-        return logits, td["mask"]
+        return logits, cast(torch.Tensor, td["mask"])  # TensorDict values are a tensor union

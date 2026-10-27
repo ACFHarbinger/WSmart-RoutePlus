@@ -40,7 +40,7 @@ import ast
 import os
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
 SKIP_DIRS = {".git", "__pycache__", "venv", ".venv", "node_modules", "dist", "build"}
 
@@ -274,7 +274,7 @@ def generate_html(
     if depth > 0:
         display_graph, _ = condense_to_packages(graph, depth)
 
-    net = Network(height="900px", width="100%", directed=True, notebook=False)
+    net = cast(Any, Network)(height="900px", width="100%", directed=True, notebook=False)
     net.set_options(
         '{"physics":{"barnesHut":{"gravitationalConstant":-5000,"springLength":150}},'
         '"edges":{"arrows":{"to":{"enabled":true,"scaleFactor":0.4}},'

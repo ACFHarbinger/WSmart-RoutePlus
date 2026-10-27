@@ -17,7 +17,7 @@ import argparse
 import ast
 import os
 from collections import defaultdict
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 try:
     from pyvis.network import Network  # noqa: F401
@@ -49,8 +49,8 @@ class ASTScopeVisitor(ast.NodeVisitor):
         """
         Initialize the ASTScopeVisitor.
         """
-        self.tree: Dict[str, Union[str, List[Dict[str, List[str]]]]] = {"name": "<module>", "children": []}
-        self.stack: List[Dict[str, Union[str, List[Dict[str, List[str]]]]]] = [self.tree]
+        self.tree: Dict[str, Any] = {"name": "<module>", "children": []}
+        self.stack: List[Dict[str, Any]] = [self.tree]
 
         self.imports_grouped: Dict[str, List[str]] = defaultdict(list)
         self.imports_direct: List[str] = []
@@ -59,7 +59,7 @@ class ASTScopeVisitor(ast.NodeVisitor):
         self.flat_defs: Set[str] = set()
         self.seen_in_scope: Set[Tuple[int, str]] = set()
 
-    def _add_node(self, name: str) -> Optional[Dict[str, List[Dict[str, List[str]]]]]:
+    def _add_node(self, name: str) -> Optional[Dict[str, Any]]:
         """
         Add a node to the graph.
 
@@ -73,7 +73,7 @@ class ASTScopeVisitor(ast.NodeVisitor):
         scope_key = id(self.stack[-1])
         sig = (scope_key, name)
         if sig not in self.seen_in_scope:
-            node = {"name": name, "children": []}
+            node: Dict[str, Any] = {"name": name, "children": []}
             self.stack[-1]["children"].append(node)
             self.seen_in_scope.add(sig)
             return node

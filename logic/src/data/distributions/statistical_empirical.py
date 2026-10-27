@@ -21,7 +21,9 @@ import pandas
 import torch
 
 if TYPE_CHECKING:
-    from logic.submodules.wsmart_bin_analysis import GridBase
+    from logic.submodules.wsmart_bin_analysis import (  # pyrefly: ignore[missing-import]  # submodule is not on the checker path
+        GridBase,
+    )
 
 from .base import BaseDistribution
 

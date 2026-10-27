@@ -176,4 +176,4 @@ class N2SDecoderPartnersMixin:
                         f"delivery {d0} (pos {int(pos_delivery[b0, p0])})"
                     )
 
-        return cast(torch.Tensor, is_delivery), sol_pos
+        return is_delivery, sol_pos
