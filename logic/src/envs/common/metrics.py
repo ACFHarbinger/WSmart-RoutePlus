@@ -111,8 +111,11 @@ class MetricRegistry(Mapping[str, Metric]):
         """Evaluate one day's KPI; absent physical quantities are errors."""
         metric = self[name]
         if metric.aggregate == "ratio_of_sums":
-            numerator = self.value(metric.numerator, day)
-            denominator = self.value(metric.denominator, day)
+            numerator_name = metric.numerator
+            denominator_name = metric.denominator
+            assert numerator_name is not None and denominator_name is not None
+            numerator = self.value(numerator_name, day)
+            denominator = self.value(denominator_name, day)
             value = numerator / denominator if denominator > 0 else 0.0
             if not math.isfinite(value):
                 raise ValueError(f"Non-finite value for {name!r}")
@@ -132,15 +135,21 @@ class MetricRegistry(Mapping[str, Metric]):
         for name in tuple(selected):
             metric = self[name]
             if metric.aggregate == "ratio_of_sums":
-                for dependency in (metric.numerator, metric.denominator):
+                numerator_name = metric.numerator
+                denominator_name = metric.denominator
+                assert numerator_name is not None and denominator_name is not None
+                for dependency in (numerator_name, denominator_name):
                     if dependency not in selected:
                         selected.append(dependency)
         result: Dict[str, float] = {}
         for name in selected:
             metric = self[name]
             if metric.aggregate == "ratio_of_sums":
-                numerator = sum(self.value(metric.numerator, day) for day in records)
-                denominator = sum(self.value(metric.denominator, day) for day in records)
+                numerator_name = metric.numerator
+                denominator_name = metric.denominator
+                assert numerator_name is not None and denominator_name is not None
+                numerator = sum(self.value(numerator_name, day) for day in records)
+                denominator = sum(self.value(denominator_name, day) for day in records)
                 result[name] = numerator / denominator if denominator > 0 else 0.0
             else:
                 values = [self.value(name, day) for day in records]
@@ -225,5 +234,7 @@ def summarize_samples(
         means[name] = statistics.mean(values) if values else None
         stds[name] = statistics.stdev(values) if len(values) > 1 else (0.0 if values else None)
         if metric.aggregate == "ratio_of_sums":
-            defined[name] = sum(sample.metrics[metric.denominator] > 0 for sample in successful)
+            denominator_name = metric.denominator
+            assert denominator_name is not None
+            defined[name] = sum(sample.metrics[denominator_name] > 0 for sample in successful)
     return MetricSummary(means, stds, len(successful), len(records) - len(successful), defined)

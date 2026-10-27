@@ -15,7 +15,7 @@ Example:
     get_adj_osm(coords, size, args)
 """
 
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, cast
 
 import networkx as nx
 import numpy as np
@@ -206,12 +206,15 @@ def get_adj_osm(coords: Any, size: int, args: list, add_depot: bool = True, nega
         )
 
     G, *args = args
+    assert ox is not None
     assert isinstance(G, nx.MultiDiGraph)
     df = coords.copy() if coords.shape[0] == size else coords.copy().drop(index=1)
     assert df.shape[0] == size
 
     df["OSM_Node"] = df.apply(lambda row: ox.distance.nearest_nodes(G, row["Lng"], row["Lat"]), axis=1)
-    adj_matrix = nx.to_numpy_array(G, nodelist=df["OSM_Node"], dtype=int)
+    adj_matrix = nx.to_numpy_array(  # pyrefly: ignore[no-matching-overload]  # networkx dispatcher stub rejects list[Any]
+        G, nodelist=cast(list[Any], df["OSM_Node"].tolist()), dtype=int
+    )
 
     if add_depot:
         adj_matrix = np.pad(adj_matrix, ((1, 0), (1, 0)), mode="constant", constant_values=1)

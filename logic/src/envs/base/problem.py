@@ -10,10 +10,9 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 import torch
-import torch.nn as nn
 from tensordict import TensorDict
 
 from logic.src.envs import get_env
@@ -140,11 +139,10 @@ class BaseProblem:
         if pi.size(-1) <= 1:
             return torch.zeros(pi.size(0), device=pi.device)
 
-        use_dist_matrix = dist_matrix is not None and isinstance(dist_matrix, torch.Tensor)
-        if use_dist_matrix:
+        if dist_matrix is not None and isinstance(dist_matrix, torch.Tensor):
             # Simple distance matrix lookup
-            if dist_matrix.dim() == 2:  # type: ignore[union-attr]
-                dist_matrix = dist_matrix.unsqueeze(0)  # type: ignore[union-attr]
+            if dist_matrix.dim() == 2:
+                dist_matrix = dist_matrix.unsqueeze(0)
             if dist_matrix.size(0) == 1 and pi.size(0) > 1:
                 dist_matrix = dist_matrix.expand(pi.size(0), -1, -1)
             batch_size = pi.size(0)
@@ -195,7 +193,7 @@ class BaseProblem:
         input: Union[ITraversable, TensorDict],
         beam_size: int,
         cost_weights: Union[torch.Tensor, List[float], float, Dict[str, float]],
-        model: Optional[nn.Module] = None,
+        model: Optional[Any] = None,
         **kwargs: Any,
     ) -> TensorDict:
         """Beam search bridge.
@@ -236,7 +234,7 @@ class BaseProblem:
 
         # Note: make_state is problem-specific, must be implemented by subclasses
         state = cls.make_state(input, cost_weights=cost_weights, **kwargs)
-        return beam_search_func(state, beam_size, propose_expansions)
+        return cast(TensorDict, beam_search_func(state, beam_size, propose_expansions))
 
     @classmethod
     def make_state(
@@ -323,8 +321,8 @@ class BaseProblem:
             n = int(num_samples or 1)
             env = get_env(cls.NAME, num_loc=int(kwargs.get("size") or 20), batch_size=torch.Size([n]))
             td = env.generator(n) if hasattr(env, "generator") else env.reset()
-            data = {k: _to_tensor(v) for k, v in td.items() if torch.is_tensor(v)}
-            return _InstanceDataset(data)
+            generated_data = {k: _to_tensor(v) for k, v in td.items() if torch.is_tensor(v)}
+            return _InstanceDataset(generated_data)
 
         path = filename if os.path.isabs(filename) or os.path.exists(filename) else os.path.join(ROOT_DIR, filename)
         if not os.path.exists(path):
@@ -412,7 +410,7 @@ class BaseProblem:
                 td_data[target_key] = cls._batch_tensor(v, bs)
             else:
                 td_data[k] = v
-        return TensorDict(td_data, batch_size=[bs], device=device)
+        return TensorDict(cast(Any, td_data), batch_size=[bs], device=device)
 
     @staticmethod
     def _map_key(k: str) -> str:

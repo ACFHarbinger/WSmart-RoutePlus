@@ -29,7 +29,7 @@ import contextlib
 import json
 import os
 import pickle
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -268,9 +268,15 @@ def load_grid_base(
     else:
         waste_csv, info_csv = f"out_rate_crude[{src_area}].csv", f"out_info[{src_area}].csv"
 
-    # Handle nested list of indices (list of lists)
-    if isinstance(indices, list) and len(indices) > 0 and isinstance(indices[0], list):
-        indices = indices[0]
+    # Handle nested list of indices (list of lists) and the absent-index case.
+    if indices is None:
+        index_list: List[Any] = []
+    elif isinstance(indices, list) and len(indices) > 0 and isinstance(indices[0], list):
+        index_list = indices[0]
+    elif isinstance(indices, np.ndarray):
+        index_list = indices.tolist()
+    else:
+        index_list = list(indices)
 
     # Read info file to map indices to IDs
     info_path = os.path.join(data_dir, "coordinates", info_csv)
@@ -280,16 +286,16 @@ def load_grid_base(
         info_df = pd.read_csv(info_path)
         # Heuristic: if all indices are within bounds of info_df, treat them as indices
         try:
-            if all(isinstance(i, (int, np.integer)) and 0 <= i < len(info_df) for i in indices):
-                real_ids = info_df.iloc[indices]["ID"].tolist()
+            if all(isinstance(i, (int, np.integer)) and 0 <= i < len(info_df) for i in index_list):
+                real_ids = info_df.iloc[cast(List[int], index_list)]["ID"].tolist()
             else:
-                real_ids = [str(i) for i in indices]
+                real_ids = [str(i) for i in index_list]
         except (TypeError, IndexError, ValueError):
             # Fallback if indices are not list-like or other issues
-            real_ids = [str(i) for i in indices]
+            real_ids = [str(i) for i in index_list]
     else:
         # Fallback if no info file, treat indices as IDs
-        real_ids = [str(i) for i in indices]
+        real_ids = [str(i) for i in index_list]
 
     # Check ID type in waste csv to ensure correct matching
     waste_path = os.path.join(data_dir, "bins_waste", waste_csv)

@@ -46,7 +46,6 @@ _LAZY = {
     "TensorDictStateWrapper": "logic.src.utils.data.td_state_wrapper:TensorDictStateWrapper",
 }
 
-__all__ = list(_LAZY)
 
 
 def __getattr__(name):

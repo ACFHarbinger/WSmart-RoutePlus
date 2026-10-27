@@ -195,7 +195,7 @@ def load_model(path: str, epoch: Optional[int] = None) -> Tuple[nn.Module, Dict[
     # for old "model" checkpoints; with that left on, the trained depot weights are ignored and
     # the loaded network decodes different routes than the one that was trained.
     init_embedding = getattr(model, "init_embedding", None)
-    if "model" not in data and hasattr(init_embedding, "legacy_depot_projection"):
+    if "model" not in data and init_embedding is not None and hasattr(init_embedding, "legacy_depot_projection"):
         init_embedding.legacy_depot_projection = False
 
     rel_model_filename = model_filename.replace(os.path.expanduser("~"), "~")
@@ -372,7 +372,7 @@ def _load_hyperparameters(path: str) -> Dict[str, Any]:
 
     if os.path.exists(config_yaml_path) or os.path.exists(hparapk_yaml_path):
         yaml_path = config_yaml_path if os.path.exists(config_yaml_path) else hparapk_yaml_path
-        cfg = OmegaConf.load(yaml_path)
+        cfg: Any = OmegaConf.load(yaml_path)
 
         if "train" in cfg and "model" not in cfg:
             # Root Hydra config written next to trained weights: lift the training

@@ -19,7 +19,7 @@ from .batch import BatchMixin
 from .ops import OpsMixin
 
 
-class RL4COEnvBase(BatchMixin, OpsMixin, EnvBase, ABC):
+class RL4COEnvBase(BatchMixin, OpsMixin, EnvBase, ABC):  # pyrefly: ignore[inconsistent-inheritance]  # torchrl EnvBase declares spec fields as methods
     """
     Base environment class for combinatorial optimization problems.
 
@@ -83,7 +83,7 @@ class RL4COEnvBase(BatchMixin, OpsMixin, EnvBase, ABC):
         super().__init__(**env_base_kwargs)
 
         # Manually set check_env_specs AFTER super init to avoid TypeError in 0.3.1
-        self.check_env_specs = False
+        self.check_env_specs = False  # pyrefly: ignore[bad-assignment]  # torchrl EnvBase declares this as a method
 
         # Manually set check_env_specs if provided (bypass strict checks in reset)
         self.check_env_specs = kwargs.get("check_env_specs", False)
@@ -114,12 +114,12 @@ class RL4COEnvBase(BatchMixin, OpsMixin, EnvBase, ABC):
         return f"{self.__class__.__name__}(name={self.name}, device={self.device})"
 
     @abstractmethod
-    def _reset_instance(self, td: TensorDictBase) -> TensorDictBase:
+    def _reset_instance(self, tensordict: TensorDictBase) -> TensorDictBase:
         """
         Reset the environment for a specific problem instance.
 
         Args:
-            td: TensorDict containing the state.
+            tensordict: TensorDict containing the state.
 
         Returns:
             TensorDictBase: The reset environment.
@@ -127,11 +127,11 @@ class RL4COEnvBase(BatchMixin, OpsMixin, EnvBase, ABC):
         pass
 
     @abstractmethod
-    def _step(self, td: TensorDictBase) -> TensorDictBase:
+    def _step(self, tensordict: TensorDictBase) -> TensorDictBase:
         """Perform a transition in the environment.
 
         Args:
-            td: TensorDict containing the state.
+            tensordict: TensorDict containing the state.
 
         Returns:
             TensorDictBase: The environment after the transition.
@@ -139,12 +139,12 @@ class RL4COEnvBase(BatchMixin, OpsMixin, EnvBase, ABC):
         pass
 
     @abstractmethod
-    def _get_reward(self, td: TensorDictBase, actions: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def _get_reward(self, tensordict: TensorDictBase, actions: Optional[torch.Tensor] = None) -> torch.Tensor:
         """
         Compute the reward for a specific action sequence.
 
         Args:
-            td: TensorDict containing the state.
+            tensordict: TensorDict containing the state.
             actions: Optional tensor of actions.
 
         Returns:
@@ -153,12 +153,12 @@ class RL4COEnvBase(BatchMixin, OpsMixin, EnvBase, ABC):
         pass
 
     @abstractmethod
-    def _get_action_mask(self, td: TensorDictBase) -> torch.Tensor:
+    def _get_action_mask(self, tensordict: TensorDictBase) -> torch.Tensor:
         """
         Return the valid action mask for the current state.
 
         Args:
-            td: TensorDict containing the state.
+            tensordict: TensorDict containing the state.
 
         Returns:
             torch.Tensor: The action mask for the given state.

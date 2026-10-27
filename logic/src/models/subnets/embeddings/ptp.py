@@ -14,7 +14,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Dict, Union
+from typing import Any, Dict, Union, cast
 
 import torch
 from tensordict import TensorDict
@@ -72,8 +72,9 @@ class PTPInitEmbedding(nn.Module):
             locs = td.get("loc") if hasattr(td, "get") else None
         if locs is None:
             locs = td["locs"]
-        depot = td["depot"]
-        waste = td.get("waste") if hasattr(td, "get") else None
+        locs = cast(torch.Tensor, locs)
+        depot = cast(torch.Tensor, td["depot"])
+        waste = cast(Any, td.get("waste") if hasattr(td, "get") else None)
         batch_size = td.batch_size[0] if isinstance(td, TensorDict) else locs.size(0)
         device = td.device if isinstance(td, TensorDict) else locs.device
 
@@ -82,7 +83,11 @@ class PTPInitEmbedding(nn.Module):
         elif waste.dim() == 1:
             waste = waste.unsqueeze(0)
 
-        node_features_list: list[torch.Tensor] = [locs, waste.unsqueeze(-1), *self._extra_node_features(td, locs, waste)]
+        node_features_list: list[torch.Tensor] = [
+            locs,
+            waste.unsqueeze(-1),
+            *self._extra_node_features(td, locs, cast(torch.Tensor, waste)),
+        ]
         if self.temporal_horizon > 0 and temporal_features:
             temp_feat = td.get("temporal_features") if hasattr(td, "get") else None
             if temp_feat is not None:
@@ -101,8 +106,9 @@ class PTPInitEmbedding(nn.Module):
 
         # Check if locs already contains depot (e.g. RL4CO environments)
         # or if depot is separate (legacy problem instances)
-        depot_in_locs = locs.size(1) == waste.size(1) + 1 or (
-            locs.size(1) == waste.size(1) and torch.allclose(locs[:, 0, :], depot, atol=1e-4)
+        depot_in_locs = locs.size(1) == cast(torch.Tensor, waste).size(1) + 1 or (
+            locs.size(1) == cast(torch.Tensor, waste).size(1)
+            and torch.allclose(locs[:, 0, :], depot, atol=1e-4)
         )
 
         if not depot_in_locs:

@@ -115,8 +115,8 @@ def get_beam_search_results(beams: list[BatchBeam], final_state: Any) -> tuple:
     # Backtracking Phase:
     # 1. Gather all actions and parents taken at each step.
     # First state has no actions/parents and should be omitted when backtracking.
-    actions = [beam.action for beam in beams[1:]]
-    parents = [beam.parent for beam in beams[1:]]
+    actions = [beam.action for beam in beams[1:] if beam.action is not None]
+    parents = [beam.parent for beam in beams[1:] if beam.parent is not None]
 
     # 2. Use the backtrack utility to resolve the sequence for each candidate in the top-k.
     # 3. Use the environment state to convert these action sequences into a problem-specific solution format.

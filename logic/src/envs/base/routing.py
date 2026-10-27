@@ -15,7 +15,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Optional, Sequence, Tuple, Union
+from typing import Any, Optional, Sequence, Tuple, Union, cast
 
 import torch
 from tensordict import TensorDict, TensorDictBase
@@ -73,11 +73,11 @@ class RoutingEnv(RL4COEnvBase):
         self._road_cache: dict[tuple[int, ...], torch.Tensor] = {}
         self._road_lookup: Optional[torch.Tensor] = None
 
-    def _attach_road_distances(self, tensordict: TensorDict) -> None:
+    def _attach_road_distances(self, tensordict: TensorDictBase) -> None:
         """Add road distance matrix ``dm`` (km) for instances built on real network topology."""
         if self.dm_filepath is None or "dm" in tensordict.keys() or "node_ids" not in tensordict.keys():
             return
-        node_ids = tensordict["node_ids"]
+        node_ids = cast(torch.Tensor, tensordict["node_ids"])
         if node_ids.dim() != 2 or node_ids.shape[-1] != tensordict["locs"].shape[-2] - 1:
             return
 
@@ -110,16 +110,17 @@ class RoutingEnv(RL4COEnvBase):
 
         bs = tensordict.batch_size[0]
         device = tensordict.device
+        road_lookup = self._road_lookup
         if bool((node_ids == node_ids[:1]).all()):
             dm = submatrix(node_ids[0]).to(device).unsqueeze(0).expand(bs, -1, -1)
         elif (
-            getattr(self, "_road_lookup", None) is not None
+            road_lookup is not None
             and 0 in self._road_ids
-            and node_ids.max().item() < len(self._road_lookup)
+            and node_ids.max().item() < len(road_lookup)
             and node_ids.min().item() >= 0
         ):
             depot_pos = self._road_ids[0]
-            lookup = self._road_lookup.to(node_ids.device)
+            lookup = road_lookup.to(node_ids.device)
             cust_pos = lookup[node_ids.long()]
             if (cust_pos < 0).any():
                 dm = torch.stack([submatrix(row) for row in node_ids]).to(device)
@@ -132,16 +133,16 @@ class RoutingEnv(RL4COEnvBase):
             dm = torch.stack([submatrix(row) for row in node_ids]).to(device)
         tensordict["dm"] = dm
 
-    def _reset_instance(self, tensordict: TensorDict) -> TensorDict:
+    def _reset_instance(self, tensordict: TensorDictBase) -> TensorDict:
         """Initialize the routing state with depot prepending, tracking fields, and resources."""
         if "visited" in tensordict.keys():
-            return tensordict
+            return cast(TensorDict, tensordict)
 
         device = tensordict.device
         bs = tensordict.batch_size
 
-        locs = tensordict["locs"]
-        waste = tensordict.get("waste", tensordict.get("demand", None))
+        locs = cast(torch.Tensor, tensordict["locs"])
+        waste = cast(Optional[torch.Tensor], tensordict.get("waste", tensordict.get("demand", None)))
 
         # Handle multi-day 3D waste tensors
         if waste is not None and waste.dim() > 2:
@@ -157,19 +158,19 @@ class RoutingEnv(RL4COEnvBase):
             elif (
                 gen_n is not None
                 and locs.shape[-2] == gen_n
-                or not torch.allclose(locs[..., 0, :], tensordict["depot"], atol=1e-4)
+                or not torch.allclose(locs[..., 0, :], cast(torch.Tensor, tensordict["depot"]), atol=1e-4)
             ):
                 needs_prepend = True
 
         if needs_prepend:
-            tensordict["locs"] = torch.cat([tensordict["depot"].unsqueeze(1), locs], dim=1)
+            tensordict["locs"] = torch.cat([cast(torch.Tensor, tensordict["depot"]).unsqueeze(1), locs], dim=1)
             locs = tensordict["locs"]
             if waste is not None:
                 tensordict["waste"] = torch.cat([torch.zeros(*bs, 1, device=device), waste], dim=1)
         elif waste is not None and waste.shape[-1] == locs.shape[-2] - 1:
             tensordict["waste"] = torch.cat([torch.zeros(*bs, 1, device=device), waste], dim=1)
 
-        num_nodes = tensordict["locs"].shape[-2]
+        num_nodes = locs.shape[-2]
 
         tensordict["current_node"] = torch.zeros(*bs, 1, dtype=torch.long, device=device)
         tensordict["visited"] = torch.zeros(*bs, num_nodes, dtype=torch.bool, device=device)
@@ -188,25 +189,25 @@ class RoutingEnv(RL4COEnvBase):
         for res in self.resources:
             res.reset(tensordict)
 
-        return tensordict
+        return cast(TensorDict, tensordict)
 
-    def _step(self, tensordict: TensorDict) -> TensorDict:
+    def _step(self, tensordict: TensorDictBase) -> TensorDictBase:
         return OpsMixin._step(self, tensordict)
 
-    def _step_instance(self, tensordict: TensorDict) -> TensorDict:
+    def _step_instance(self, tensordict: TensorDictBase) -> TensorDict:
         """Forward-only routing step updating elementarity, distance, and resources."""
-        action = as_batch_nodes(tensordict["action"])
-        current = as_batch_nodes(tensordict.get("current_node", torch.zeros_like(action)))
+        action = as_batch_nodes(cast(torch.Tensor, tensordict["action"]))
+        current = as_batch_nodes(cast(torch.Tensor, tensordict.get("current_node", torch.zeros_like(action))))
 
         is_depot = action == 0
         was_at_depot = current == 0
 
-        finished = tensordict.get("finished", torch.zeros_like(is_depot, dtype=torch.bool))
+        finished = cast(torch.Tensor, tensordict.get("finished", torch.zeros_like(is_depot, dtype=torch.bool)))
         if self.explicit_stop:
             finished = finished | (is_depot & was_at_depot)
 
-        locs = tensordict["locs"]
-        dm = tensordict.get("dm", None)
+        locs = cast(torch.Tensor, tensordict["locs"])
+        dm = cast(Optional[torch.Tensor], tensordict.get("dm", None))
         if dm is not None:
             distance = dm[torch.arange(locs.size(0), device=locs.device), current, action]
         else:
@@ -216,41 +217,43 @@ class RoutingEnv(RL4COEnvBase):
 
         tensordict["step_distance"] = distance
         tensordict["prev_node"] = current.clone()
-        tensordict["tour_length"] = tensordict["tour_length"] + distance
-        tensordict["visited"] = tensordict["visited"].scatter(1, action.unsqueeze(-1), True)
+        tensordict["tour_length"] = cast(torch.Tensor, tensordict["tour_length"]) + distance
+        tensordict["visited"] = cast(torch.Tensor, tensordict["visited"]).scatter(1, action.unsqueeze(-1), True)
         tensordict["current_node"] = action.unsqueeze(-1)
-        tensordict["tour"] = torch.cat([tensordict["tour"], action.unsqueeze(-1)], dim=-1)
+        tensordict["tour"] = torch.cat([cast(torch.Tensor, tensordict["tour"]), action.unsqueeze(-1)], dim=-1)
         tensordict["finished"] = finished
 
-        waste = tensordict.get("waste", tensordict.get("demand", None))
+        waste = cast(Optional[torch.Tensor], tensordict.get("waste", tensordict.get("demand", None)))
         if waste is not None:
             if waste.dim() > 1:
                 idx = action.unsqueeze(-1) if action.dim() == 1 else action
                 waste_at_node = waste.gather(1, idx).squeeze(-1)
             else:
                 waste_at_node = waste
-            tensordict["collected_waste"] = tensordict["collected_waste"] + waste_at_node * (~is_depot).float()
+            tensordict["collected_waste"] = (
+                cast(torch.Tensor, tensordict["collected_waste"]) + waste_at_node * (~is_depot).float()
+            )
 
         # Step all registered resources
         for res in self.resources:
             res.step(tensordict, action, is_depot)
 
-        return tensordict
+        return cast(TensorDict, tensordict)
 
-    def _get_action_mask(self, tensordict: TensorDict) -> torch.Tensor:
+    def _get_action_mask(self, tensordict: TensorDictBase) -> torch.Tensor:
         """Compute action feasibility mask respecting elementarity and resource limits."""
         # Unvisited customer mask
-        mask = ~tensordict["visited"].clone()
+        mask = ~cast(torch.Tensor, tensordict["visited"]).clone()
 
         # Apply resource constraints
         for res in self.resources:
             exceeds = res.exceeds_limit(tensordict)
             mask = mask & ~exceeds
 
-        waste = tensordict.get("waste", tensordict.get("demand", None))
+        waste = cast(Optional[torch.Tensor], tensordict.get("waste", tensordict.get("demand", None)))
         if self.mask_empty_bins and waste is not None:
             keep = waste > 0
-            pending = tensordict.get("mandatory", None)
+            pending = cast(Optional[torch.Tensor], tensordict.get("mandatory", None))
             if pending is not None:
                 if pending.size(-1) == keep.size(-1) - 1:
                     pending = torch.cat([torch.zeros_like(pending[:, :1], dtype=torch.bool), pending], dim=1)
@@ -259,7 +262,7 @@ class RoutingEnv(RL4COEnvBase):
             mask = mask & keep
 
         # Mandatory logic for waste collection
-        mandatory = tensordict.get("mandatory", None)
+        mandatory = cast(Optional[torch.Tensor], tensordict.get("mandatory", None))
         if mandatory is not None:
             if mandatory.size(-1) == mask.size(-1) - 1:
                 mandatory = torch.cat([torch.zeros_like(mandatory[:, :1], dtype=torch.bool), mandatory], dim=1)
@@ -268,7 +271,7 @@ class RoutingEnv(RL4COEnvBase):
             mask[:, 0] = ~has_pending
         elif self.require_all_customers:
             # CVRP: depot is valid unless already at depot with unserved feasible customers
-            at_depot = tensordict["current_node"].squeeze(-1) == 0
+            at_depot = cast(torch.Tensor, tensordict["current_node"]).squeeze(-1) == 0
             has_valid_cust = mask[:, 1:].any(dim=-1)
             mask[:, 0] = ~(at_depot & has_valid_cust)
         else:
@@ -276,37 +279,37 @@ class RoutingEnv(RL4COEnvBase):
             mask[:, 0] = True
 
         # Finished routes stay at depot
-        finished = tensordict.get("finished", None)
+        finished = cast(Optional[torch.Tensor], tensordict.get("finished", None))
         if self.explicit_stop and finished is not None:
             mask[finished, 1:] = False
             mask[finished, 0] = True
 
         return mask
 
-    def _check_done(self, tensordict: TensorDict) -> torch.Tensor:
+    def _check_done(self, tensordict: TensorDictBase) -> torch.Tensor:
         """Check episode termination."""
-        current = tensordict["current_node"].reshape(-1)
-        step = tensordict["i"].reshape(-1)
+        current = cast(torch.Tensor, tensordict["current_node"]).reshape(-1)
+        step = cast(torch.Tensor, tensordict["i"]).reshape(-1)
         if self.require_all_customers:
-            all_cust_done = tensordict["visited"][..., 1:].all(dim=-1)
+            all_cust_done = cast(torch.Tensor, tensordict["visited"])[..., 1:].all(dim=-1)
             at_depot = current == 0
             return all_cust_done & at_depot & (step > 0)
 
         if self.explicit_stop:
-            mask = tensordict.get("action_mask", None)
+            mask = cast(Optional[torch.Tensor], tensordict.get("action_mask", None))
             if mask is None:
                 mask = self._get_action_mask(tensordict)
             exhausted = (current == 0) & (step > 0) & ~mask[:, 1:].any(dim=1)
-            return tensordict["finished"] | exhausted
+            return cast(torch.Tensor, tensordict["finished"]) | exhausted
 
         return (current == 0) & (step > 0)
 
     def _get_reward(self, tensordict: TensorDictBase, actions: Optional[torch.Tensor] = None) -> torch.Tensor:
         """Compute episode reward with closing return-to-depot leg."""
-        cost = tensordict["tour_length"]
-        current = tensordict["current_node"].squeeze(-1)
-        locs = tensordict["locs"]
-        dm = tensordict.get("dm", None)
+        cost = cast(torch.Tensor, tensordict["tour_length"])
+        current = cast(torch.Tensor, tensordict["current_node"]).squeeze(-1)
+        locs = cast(torch.Tensor, tensordict["locs"])
+        dm = cast(Optional[torch.Tensor], tensordict.get("dm", None))
 
         if dm is not None:
             return_dist = dm[torch.arange(locs.size(0), device=locs.device), current, 0]
@@ -321,7 +324,7 @@ class RoutingEnv(RL4COEnvBase):
         if self.require_all_customers:
             return distance_objective(total_cost)
 
-        waste = tensordict.get("collected_waste", torch.zeros_like(total_cost))
+        waste = cast(torch.Tensor, tensordict.get("collected_waste", torch.zeros_like(total_cost)))
         tensordict["reward_waste"] = waste
         tensordict["reward_cost"] = -total_cost
 

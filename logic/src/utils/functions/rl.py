@@ -18,7 +18,7 @@ Example:
     TensorDict(source={'a': Tensor([1, 2], device='cuda:0')}, batch_size=[2], device=None, [REPR_INFO])
 """
 
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, cast
 
 import torch
 from tensordict import TensorDict
@@ -57,7 +57,7 @@ def ensure_tensordict(batch: Union[Dict[str, Any], TensorDict], device: Optional
                         bs = [first_val.shape[0]] if first_val.ndim > 0 else []
                     else:
                         bs = [len(first_val)] if hasattr(first_val, "__len__") else []
-                    td = TensorDict(data, batch_size=bs)
+                    td = TensorDict(cast(Any, data), batch_size=bs)
                 else:
                     td = TensorDict({}, batch_size=[0])
         elif any(isinstance(v, (torch.Tensor, TensorDict)) for v in batch.values()):
@@ -67,11 +67,11 @@ def ensure_tensordict(batch: Union[Dict[str, Any], TensorDict], device: Optional
                 bs = [first_val.shape[0]] if first_val.ndim > 0 else []
             else:
                 bs = [len(first_val)] if hasattr(first_val, "__len__") else []
-            td = TensorDict(batch, batch_size=bs)
+            td = TensorDict(cast(Any, batch), batch_size=bs)
         else:
             # Non-tensor dict, wrap it
             bs = [len(batch)] if hasattr(batch, "__len__") else []
-            td = TensorDict({"data": batch}, batch_size=bs)
+            td = TensorDict(cast(Any, {"data": batch}), batch_size=bs)
 
     # 3. Handle ITensorDictLike protocol (e.g. state wrappers)
     elif isinstance(batch, ITensorDictLike):
@@ -87,7 +87,7 @@ def ensure_tensordict(batch: Union[Dict[str, Any], TensorDict], device: Optional
     # 4. Fallback for other types
     else:
         bs = [len(batch)] if hasattr(batch, "__len__") else []
-        td = TensorDict({"data": batch}, batch_size=bs)
+        td = TensorDict(cast(Any, {"data": batch}), batch_size=bs)
 
     if device is not None:
         td = td.to(device)

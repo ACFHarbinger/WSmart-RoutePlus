@@ -366,6 +366,7 @@ def runs_per_policy(  # noqa: C901
                                 break
                 if pol_log_path is None:
                     continue
+            assert pol_log_path is not None
             try:
                 pol_data = cast(Dict[str, Any], read_json(pol_log_path, lock))
             except Exception:

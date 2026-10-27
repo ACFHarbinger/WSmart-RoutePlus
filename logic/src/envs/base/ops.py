@@ -166,7 +166,7 @@ class OpsMixin:
         td_next = self._step_instance(td_next)
 
         # Update common fields in the next state
-        td_next["i"] = tensordict["i"] + 1
+        td_next["i"] = cast(torch.Tensor, tensordict["i"]) + 1
         td_next["action_mask"] = self._get_action_mask(td_next)
         done = self._check_done(td_next)
 
@@ -251,7 +251,7 @@ class OpsMixin:
         for i in range(pi.size(1)):
             curr_td["action"] = pi[:, i]
             result = self.step(curr_td)
-            curr_td = result["next"]
+            curr_td = cast(TensorDictBase, result["next"])
 
         reward = self.get_reward(curr_td, pi)
         cost = -reward
@@ -275,16 +275,16 @@ class OpsMixin:
         Returns:
             TensorDict: The next state.
         """
-        action = as_batch_nodes(tensordict["action"])
-        current = as_batch_nodes(tensordict.get("current_node", torch.zeros_like(action)))
+        action = as_batch_nodes(cast(torch.Tensor, tensordict["action"]))
+        current = as_batch_nodes(cast(torch.Tensor, tensordict.get("current_node", torch.zeros_like(action))))
 
-        locs = tensordict["locs"]
+        locs = cast(torch.Tensor, tensordict["locs"])
 
         # Compute distance traveled
         current_loc = locs.gather(1, current[:, None, None].expand(-1, -1, 2)).squeeze(1)
         next_loc = locs.gather(1, action[:, None, None].expand(-1, -1, 2)).squeeze(1)
 
-        dm = tensordict.get("dm", None)
+        dm = cast(Optional[torch.Tensor], tensordict.get("dm", None))
         if dm is not None:
             # Use road distance matrix: dm[batch, current, action]
             distance = dm.gather(1, current[:, None, None].expand(-1, -1, dm.shape[-1])).squeeze(1)
@@ -293,10 +293,12 @@ class OpsMixin:
             distance = torch.norm(next_loc - current_loc, dim=-1)
 
         # Update tour length
-        tensordict["tour_length"] = tensordict.get("tour_length", torch.zeros_like(distance)) + distance
+        tensordict["tour_length"] = (
+            cast(torch.Tensor, tensordict.get("tour_length", torch.zeros_like(distance))) + distance
+        )
 
         # Update visited
-        tensordict["visited"] = tensordict["visited"].scatter(1, action.unsqueeze(-1), True)
+        tensordict["visited"] = cast(torch.Tensor, tensordict["visited"]).scatter(1, action.unsqueeze(-1), True)
 
         # Update current node
         tensordict["current_node"] = action.unsqueeze(-1)
@@ -306,7 +308,7 @@ class OpsMixin:
         if "tour" not in tensordict.keys():
             tensordict["tour"] = action.unsqueeze(-1)
         else:
-            tensordict["tour"] = torch.cat([tensordict["tour"], action.unsqueeze(-1)], dim=-1)
+            tensordict["tour"] = torch.cat([cast(torch.Tensor, tensordict["tour"]), action.unsqueeze(-1)], dim=-1)
 
         return tensordict
 

@@ -16,7 +16,7 @@ Example:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Tuple
+from typing import Any, Optional, Tuple, cast
 
 import numpy as np
 import torch
@@ -93,7 +93,8 @@ class LoadResource(Resource):
             state["collected_waste"] = torch.zeros(bs, dtype=torch.float32, device=device)
             state["collected"] = state["collected_waste"]
         elif isinstance(state, dict):
-            cap_val = float(state.get(self.limit_key, state.get("capacity", 100.0)))
+            cap_raw: Any = state.get(self.limit_key, state.get("capacity", 100.0))
+            cap_val = float(cap_raw)
             state["capacity"] = cap_val
             state["remaining_capacity"] = cap_val
             state["used_capacity"] = 0.0
@@ -111,22 +112,24 @@ class LoadResource(Resource):
                 else:
                     demand_at_node = demand
             else:
-                demand_at_node = torch.zeros_like(state["remaining_capacity"])
+                demand_at_node = torch.zeros_like(cast(torch.Tensor, state["remaining_capacity"]))
 
             at_depot = is_depot.reshape(-1) if torch.is_tensor(is_depot) else is_depot
-            new_remaining = (state["remaining_capacity"] - demand_at_node).clamp(min=0.0)
-            state["remaining_capacity"] = torch.where(at_depot, state["capacity"], new_remaining)
+            remaining_capacity = cast(torch.Tensor, state["remaining_capacity"])
+            capacity = cast(torch.Tensor, state["capacity"])
+            new_remaining = (remaining_capacity - demand_at_node).clamp(min=0.0)
+            state["remaining_capacity"] = torch.where(at_depot, capacity, new_remaining)
             used = (
-                state["used_capacity"]
+                cast(torch.Tensor, state["used_capacity"])
                 if "used_capacity" in state.keys()
-                else (state["capacity"] - state["remaining_capacity"])
+                else (capacity - remaining_capacity)
             )
             new_used = used + demand_at_node
             state["used_capacity"] = torch.where(at_depot, torch.zeros_like(new_used), new_used)
-            state["collected"] = state["capacity"] - state["remaining_capacity"]
+            state["collected"] = capacity - remaining_capacity
         elif isinstance(state, dict):
             at_depot = bool(action == 0)
-            demand_arr = state.get(self.demand_key, state.get("waste", state.get("demand", [])))
+            demand_arr: Any = state.get(self.demand_key, state.get("waste", state.get("demand", [])))
             val = float(demand_arr[action]) if len(demand_arr) > action else 0.0
             if at_depot:
                 state["remaining_capacity"] = state["capacity"]
@@ -140,10 +143,10 @@ class LoadResource(Resource):
 
     def exceeds_limit(self, state: Any) -> Any:
         if isinstance(state, (TensorDict, TensorDictBase)):
-            demand = state.get(self.demand_key, state.get("waste", state.get("demand", None)))
+            demand = cast(Optional[torch.Tensor], state.get(self.demand_key, state.get("waste", state.get("demand", None))))
             if demand is None:
                 return torch.zeros(state.batch_size[0], 1, dtype=torch.bool, device=state.device)
-            remaining = state["remaining_capacity"]
+            remaining = cast(torch.Tensor, state["remaining_capacity"])
             rem_2d = remaining.unsqueeze(-1) if remaining.dim() == 1 else remaining
             return demand > rem_2d + 1e-5
         elif isinstance(state, dict):
@@ -175,20 +178,29 @@ class ShiftTimeResource(Resource):
         if isinstance(state, (TensorDict, TensorDictBase)):
             bs = state.batch_size[0] if len(state.batch_size) > 0 else 1
             device = state.device
-            shift = state.get("shift_hours", torch.full((bs,), self.default_shift_hours, device=device))
-            speed = state.get("avg_speed_kmh", torch.full((bs,), self.default_avg_speed_kmh, device=device))
-            service = state.get("service_time_h", torch.full((bs,), self.default_service_time_h, device=device))
+            shift = cast(
+                torch.Tensor,
+                state.get("shift_hours", torch.full((bs,), self.default_shift_hours, device=device)),
+            )
+            speed = cast(
+                torch.Tensor,
+                state.get("avg_speed_kmh", torch.full((bs,), self.default_avg_speed_kmh, device=device)),
+            )
+            service = cast(
+                torch.Tensor,
+                state.get("service_time_h", torch.full((bs,), self.default_service_time_h, device=device)),
+            )
             state["shift_hours"] = shift
             state["avg_speed_kmh"] = speed
             state["service_time_h"] = service
             state["remaining_time"] = shift.clone()
             state["time_spent"] = torch.zeros(bs, device=device)
         elif isinstance(state, dict):
-            shift = float(state.get("shift_hours", self.default_shift_hours))
-            state["shift_hours"] = shift
+            shift_val = float(state.get("shift_hours", self.default_shift_hours))
+            state["shift_hours"] = shift_val
             state["avg_speed_kmh"] = float(state.get("avg_speed_kmh", self.default_avg_speed_kmh))
             state["service_time_h"] = float(state.get("service_time_h", self.default_service_time_h))
-            state["remaining_time"] = shift
+            state["remaining_time"] = shift_val
             state["time_spent"] = 0.0
         return state
 
@@ -198,28 +210,38 @@ class ShiftTimeResource(Resource):
             device = state.device
             at_depot = is_depot.reshape(-1) if torch.is_tensor(is_depot) else is_depot
 
-            step_distance = state.get("step_distance", torch.zeros(bs, device=device))
-            speed = state.get("avg_speed_kmh", torch.full((bs,), self.default_avg_speed_kmh, device=device))
+            step_distance = cast(torch.Tensor, state.get("step_distance", torch.zeros(bs, device=device)))
+            speed = cast(
+                torch.Tensor,
+                state.get("avg_speed_kmh", torch.full((bs,), self.default_avg_speed_kmh, device=device)),
+            )
             step_travel_time = step_distance / speed
 
-            time_matrix = state.get("time_matrix", None)
+            time_matrix = cast(Optional[torch.Tensor], state.get("time_matrix", None))
             if time_matrix is not None and "prev_node" in state.keys():
-                prev = state["prev_node"].reshape(-1)
+                prev = cast(torch.Tensor, state["prev_node"]).reshape(-1)
                 act = action.reshape(-1)
                 step_travel_time = time_matrix[torch.arange(bs, device=device), prev, act]
 
-            service = state.get("service_time_h", torch.full((bs,), self.default_service_time_h, device=device))
+            service = cast(
+                torch.Tensor,
+                state.get("service_time_h", torch.full((bs,), self.default_service_time_h, device=device)),
+            )
             step_service_time = torch.where(at_depot, torch.zeros_like(step_travel_time), service)
             step_time = step_travel_time + step_service_time
 
-            state["time_spent"] = state.get("time_spent", torch.zeros_like(step_time)) + step_time
-            rem_after = state["remaining_time"] - step_time
-            state["remaining_time"] = torch.where(at_depot, state["shift_hours"], rem_after)
+            state["time_spent"] = (
+                cast(torch.Tensor, state.get("time_spent", torch.zeros_like(step_time))) + step_time
+            )
+            rem_after = cast(torch.Tensor, state["remaining_time"]) - step_time
+            state["remaining_time"] = torch.where(
+                at_depot, cast(torch.Tensor, state["shift_hours"]), rem_after
+            )
         elif isinstance(state, dict):
             at_depot = bool(action == 0)
             dist = float(state.get("step_distance", 0.0))
-            speed = float(state.get("avg_speed_kmh", self.default_avg_speed_kmh))
-            travel_t = dist / speed
+            speed_val = float(state.get("avg_speed_kmh", self.default_avg_speed_kmh))
+            travel_t = dist / speed_val
             service_t = 0.0 if at_depot else float(state.get("service_time_h", self.default_service_time_h))
             total_t = travel_t + service_t
             state["time_spent"] = state.get("time_spent", 0.0) + total_t
@@ -232,17 +254,23 @@ class ShiftTimeResource(Resource):
     def exceeds_limit(self, state: Any) -> Any:
         if isinstance(state, (TensorDict, TensorDictBase)):
             current = as_batch_nodes(
-                state.get("current_node", torch.zeros(state.batch_size[0], 1, dtype=torch.long, device=state.device))
+                cast(
+                    torch.Tensor,
+                    state.get(
+                        "current_node",
+                        torch.zeros(state.batch_size[0], 1, dtype=torch.long, device=state.device),
+                    ),
+                )
             )
-            locs = state["locs"]
-            time_matrix = state.get("time_matrix", None)
+            locs = cast(torch.Tensor, state["locs"])
+            time_matrix = cast(Optional[torch.Tensor], state.get("time_matrix", None))
             if time_matrix is not None:
                 time_curr_to_node = time_matrix.gather(
                     1, current[:, None, None].expand(-1, -1, time_matrix.size(-1))
                 ).squeeze(1)
                 time_node_to_depot = time_matrix[:, :, 0]
             else:
-                dm = state.get("dm", None)
+                dm = cast(Optional[torch.Tensor], state.get("dm", None))
                 if dm is None:
                     current_loc = locs.gather(1, current[:, None, None].expand(-1, -1, 2)).squeeze(1)
                     dist_curr_to_node = (locs - current_loc.unsqueeze(1)).norm(p=2, dim=-1)
@@ -251,20 +279,26 @@ class ShiftTimeResource(Resource):
                     dist_curr_to_node = dm.gather(1, current[:, None, None].expand(-1, -1, dm.size(-1))).squeeze(1)
                     dist_node_to_depot = dm[:, :, 0]
 
-                avg_speed = state.get(
-                    "avg_speed_kmh", torch.full((locs.size(0),), self.default_avg_speed_kmh, device=locs.device)
+                avg_speed = cast(
+                    torch.Tensor,
+                    state.get(
+                        "avg_speed_kmh", torch.full((locs.size(0),), self.default_avg_speed_kmh, device=locs.device)
+                    ),
                 ).unsqueeze(-1)
                 time_curr_to_node = dist_curr_to_node / avg_speed
                 time_node_to_depot = dist_node_to_depot / avg_speed
 
-            service_time = state.get(
-                "service_time_h", torch.full((locs.size(0),), self.default_service_time_h, device=locs.device)
+            service_time = cast(
+                torch.Tensor,
+                state.get(
+                    "service_time_h", torch.full((locs.size(0),), self.default_service_time_h, device=locs.device)
+                ),
             ).unsqueeze(-1)
             service_at_nodes = service_time.expand(-1, locs.size(1)).clone()
             service_at_nodes[:, 0] = 0.0
 
             total_trip_time_needed = time_curr_to_node + service_at_nodes + time_node_to_depot
-            remaining_time = state["remaining_time"].unsqueeze(-1)
+            remaining_time = cast(torch.Tensor, state["remaining_time"]).unsqueeze(-1)
             return total_trip_time_needed > remaining_time + 1e-6
         return False
 
