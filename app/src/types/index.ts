@@ -415,6 +415,7 @@ export type AppMode =
   | "data_explorer"     // Data Explorer            — logic/src/ui/pages/data_explorer.py
   | "experiment_tracker"// Experiment Tracker       — logic/src/ui/pages/experiment_tracker.py
   | "algorithms"        // Algorithms Registry      — logic/src/ui/pages/algorithms.py
+  | "algorithm_visualizer" // Execution trace       — pages/algorithms/visualizer
   | "hpo_tracker"       // HPO Tracker              — logic/src/ui/pages/hpo_tracker.py
   | "cloud_analysis"    // Cloud Analysis Dashboard — CR-16 (§J.1)
   // Studio-only modes
@@ -422,6 +423,7 @@ export type AppMode =
   | "cloud_monitor"     // Cloud Job Monitor        — CR-15 (§J.1)
   | "cloud_launcher"    // Cloud Launcher           — CR-14 (§J.1)
   | "sim_launcher"      // Simulation Launcher      — §G.9
+  | "algorithm_builder" // Algorithm builder        — pages/algorithms/builder
   | "training_hub"      // Training & HPO Hub       — §G.10
   | "data_gen"          // Data Generation Wizard   — §G.11
   | "config_editor"     // Configuration Editor     — §G.13
@@ -444,3 +446,4 @@ export interface NavItem {
 }
 
 export * from "./cloud";
+export * from "./algorithms";

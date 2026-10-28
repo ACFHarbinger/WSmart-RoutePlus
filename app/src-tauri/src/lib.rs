@@ -4,8 +4,8 @@ mod commands;
 mod host_env;
 
 use commands::{
-    arrow, cloud, data, hpo, mlflow, policies, process, sim_watcher, system, telemetry, tensor,
-    zenml,
+    algorithms, arrow, cloud, data, hpo, mlflow, policies, process, sim_watcher, system, telemetry,
+    tensor, zenml,
 };
 
 #[cfg(desktop)]
@@ -93,6 +93,8 @@ pub fn run() {
             process::list_processes,
             // Policy registry
             policies::list_sim_policies,
+            algorithms::list_policy_modules,
+            algorithms::trace_policy,
             // Optuna HPO
             hpo::list_optuna_studies,
             hpo::load_optuna_study,

@@ -1,12 +1,13 @@
+pub mod algorithms;
 pub mod arrow;
+pub mod cloud;
 pub mod data;
-pub mod tensor;
 pub mod hpo;
 pub mod mlflow;
-pub mod zenml;
 pub mod policies;
 pub mod process;
 pub mod sim_watcher;
 pub mod system;
 pub mod telemetry;
-pub mod cloud;
+pub mod tensor;
+pub mod zenml;

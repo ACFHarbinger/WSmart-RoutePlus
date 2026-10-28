@@ -12,6 +12,7 @@ import {
   Layers,
   LineChart,
   Map,
+  Network,
   Table2,
   Play,
   Settings,
@@ -22,6 +23,7 @@ import {
   ClipboardList,
   Presentation,
   Wrench,
+  Workflow,
 } from "lucide-react";
 import { useAppStore } from "../../store/app";
 import { useLayoutStore } from "../../store/layout";
@@ -38,6 +40,7 @@ export const NAV: NavSection[] = [
     label: "Run",
     items: [
       { mode: "sim_launcher", label: "Simulation Launcher" },
+      { mode: "algorithm_builder", label: "Algorithm Builder" },
       { mode: "training_hub", label: "Training & HPO Hub" },
       { mode: "data_gen", label: "Data Generation" },
       { mode: "eval_runner", label: "Evaluation Runner" },
@@ -62,6 +65,7 @@ export const NAV: NavSection[] = [
       { mode: "experiment_tracker", label: "Experiment Tracker", streamlitEquivalent: "experiment_tracker" },
       { mode: "hpo_tracker", label: "HPO Tracker", streamlitEquivalent: "hpo_tracker" },
       { mode: "algorithms", label: "Algorithm Registry", streamlitEquivalent: "algorithms" },
+      { mode: "algorithm_visualizer", label: "Algorithm Visualizer" },
       { mode: "cloud_analysis", label: "Cloud Analysis" },
     ],
   },
@@ -107,8 +111,10 @@ const ICON: Record<AppMode, React.ReactNode> = {
   data_explorer: <Database size={15} />,
   experiment_tracker: <GitBranch size={15} />,
   algorithms: <Bot size={15} />,
+  algorithm_visualizer: <Network size={15} />,
   hpo_tracker: <Sliders size={15} />,
   sim_launcher: <Play size={15} />,
+  algorithm_builder: <Workflow size={15} />,
   cloud_launcher: <Cloud size={15} />,
   training_hub: <Cpu size={15} />,
   data_gen: <FlaskConical size={15} />,

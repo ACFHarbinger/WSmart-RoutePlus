@@ -54,6 +54,16 @@ const ExperimentTracker = lazy(() =>
 const AlgorithmComparison = lazy(() =>
   import("./pages/analysis/AlgorithmComparison").then((m) => ({ default: m.AlgorithmComparison }))
 );
+const AlgorithmVisualizer = lazy(() =>
+  import("./pages/algorithms/visualizer/AlgorithmVisualizer").then((m) => ({
+    default: m.AlgorithmVisualizer,
+  }))
+);
+const AlgorithmBuilder = lazy(() =>
+  import("./pages/algorithms/builder/AlgorithmBuilder").then((m) => ({
+    default: m.AlgorithmBuilder,
+  }))
+);
 const HPOTracker = lazy(() =>
   import("./pages/analysis/HPOTracker").then((m) => ({ default: m.HPOTracker }))
 );
@@ -123,6 +133,8 @@ function renderPage(mode: AppMode) {
       return <ExperimentTracker />;
     case "algorithms":
       return <AlgorithmComparison />;
+    case "algorithm_visualizer":
+      return <AlgorithmVisualizer />;
     case "hpo_tracker":
       return <HPOTracker />;
     case "process_monitor":
@@ -135,6 +147,8 @@ function renderPage(mode: AppMode) {
       return <CloudAnalysis />;
     case "sim_launcher":
       return <SimulationLauncher />;
+    case "algorithm_builder":
+      return <AlgorithmBuilder />;
     case "training_hub":
       return <TrainingHub />;
     case "data_gen":

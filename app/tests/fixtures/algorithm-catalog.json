@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "packing": [
+    {
+      "id": "regular",
+      "display_name": "regular",
+      "family": "packing",
+      "status": "registered",
+      "target": "logic.src.policies.packing.regular",
+      "stages": ["input", "output"],
+      "consumes": ["instance"],
+      "produces": ["selected_nodes"]
+    },
+    {
+      "id": "last_minute",
+      "display_name": "last_minute",
+      "family": "packing",
+      "status": "registered",
+      "target": "logic.src.policies.packing.last_minute",
+      "stages": ["input", "output"],
+      "consumes": ["instance"],
+      "produces": ["selected_nodes"]
+    },
+    {
+      "id": "broken_pack",
+      "display_name": "broken_pack",
+      "family": "packing",
+      "status": "registered",
+      "target": "logic.src.policies.packing.missing",
+      "stages": [],
+      "consumes": ["instance"],
+      "produces": ["selected_nodes"],
+      "error": "ImportError: fixture module missing"
+    }
+  ],
+  "routing": [
+    {
+      "id": "alns",
+      "display_name": "alns",
+      "family": "routing",
+      "status": "registered",
+      "target": "logic.src.policies.routing.alns",
+      "stages": ["input", "initial_solution", "destroy", "repair", "acceptance", "incumbent", "output"],
+      "consumes": ["instance"],
+      "produces": ["routes"]
+    },
+    {
+      "id": "bpc",
+      "display_name": "bpc",
+      "family": "routing",
+      "status": "registered",
+      "target": "logic.src.policies.routing.bpc",
+      "stages": ["input", "output"],
+      "consumes": ["instance"],
+      "produces": ["routes"]
+    }
+  ],
+  "route_improvement": [
+    {
+      "id": "classical_local_search",
+      "display_name": "classical_local_search",
+      "family": "route_improvement",
+      "status": "registered",
+      "target": "logic.src.policies.route_improvement.classical_local_search",
+      "stages": ["input", "output"],
+      "consumes": ["routes"],
+      "produces": ["routes"]
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "oi",
+      "display_name": "oi",
+      "family": "acceptance",
+      "status": "registered",
+      "target": "logic.src.policies.acceptance_criteria.oi",
+      "stages": ["input", "output"],
+      "consumes": ["incumbent", "candidate"],
+      "produces": ["decision"]
+    }
+  ],
+  "operators": [
+    {
+      "id": "destroy_ruin",
+      "display_name": "destroy_ruin",
+      "family": "operator",
+      "status": "present",
+      "target": "logic.src.policies.helpers.operators.destroy_ruin",
+      "stages": [],
+      "consumes": ["routes"],
+      "produces": ["routes"],
+      "operators": ["random_removal"]
+    }
+  ],
+  "separation": [
+    {
+      "id": "capacity_separation",
+      "display_name": "capacity_separation",
+      "family": "separation",
+      "status": "present",
+      "target": "logic.src.policies.helpers.solvers_and_matheuristics.separation.capacity_separation",
+      "stages": [],
+      "consumes": ["lp_solution"],
+      "produces": ["inequality"]
+    }
+  ],
+  "models": [
+    {
+      "id": "am",
+      "display_name": "am",
+      "family": "model",
+      "status": "shipped",
+      "target": "logic.src.models.core.attention_model:AttentionModel",
+      "role": "routing_model",
+      "stages": ["input", "encoder", "decoder", "output"],
+      "consumes": ["instance"],
+      "produces": ["routes"]
+    },
+    {
+      "id": "WeightAdjustmentRNN",
+      "display_name": "WeightAdjustmentRNN",
+      "family": "model",
+      "status": "present",
+      "target": "logic.src.models.meta.weight_adjustment_rnn:WeightAdjustmentRNN",
+      "role": "reward_weight_adjustment",
+      "stages": [],
+      "consumes": ["reward"],
+      "produces": ["weights"]
+    }
+  ]
+}
