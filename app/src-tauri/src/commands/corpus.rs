@@ -33,6 +33,9 @@ pub struct CorpusDay {
     pub lat: Option<f64>,
     pub lon: Option<f64>,
     pub bins: Vec<CorpusBin>,
+    pub tour: Vec<i64>,
+    pub tour_indices: Vec<i64>,
+    pub route_bins: Vec<CorpusRouteBin>,
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -311,6 +314,9 @@ fn day_from_payload(payload: &Value, policy: Option<String>, day: Option<Number>
         lat,
         lon,
         bins,
+        tour: obj.map(corpus_route::tour_of).unwrap_or_default(),
+        tour_indices: obj.map(corpus_route::tour_indices_of).unwrap_or_default(),
+        route_bins: obj.map(corpus_route::route_bins_of).unwrap_or_default(),
     }
 }
 
@@ -403,41 +409,16 @@ fn resolve_lat_lon(obj: &Map<String, Value>) -> (Option<f64>, Option<f64>) {
     let mean = obj
         .get("all_bin_coords")
         .and_then(Value::as_array)
-        .map(|items| mean_of_array(items))
+        .map(|items| corpus_route::mean_of_array(items))
         .filter(|pair| pair.0.is_some() && pair.1.is_some())
         .or_else(|| {
             obj.get("bins")
                 .and_then(Value::as_array)
-                .map(|items| mean_of_array(items))
+                .map(|items| corpus_route::mean_of_array(items))
         });
     match mean {
         Some((Some(mean_lat), Some(mean_lon))) => (Some(mean_lat), Some(mean_lon)),
         _ => (lat, lon),
-    }
-}
-
-fn mean_of_array(items: &[Value]) -> (Option<f64>, Option<f64>) {
-    let mut sum_lat = 0.0;
-    let mut sum_lon = 0.0;
-    let mut count = 0.0;
-    for item in items {
-        let Some(obj) = item.as_object() else {
-            continue;
-        };
-        let Some(lat) = first_f64(obj, &["lat", "latitude"]) else {
-            continue;
-        };
-        let Some(lon) = first_f64(obj, &["lng", "lon", "longitude"]) else {
-            continue;
-        };
-        sum_lat += lat;
-        sum_lon += lon;
-        count += 1.0;
-    }
-    if count == 0.0 {
-        (None, None)
-    } else {
-        (Some(sum_lat / count), Some(sum_lon / count))
     }
 }
 
@@ -488,6 +469,9 @@ fn id_string(value: &Value) -> Option<String> {
         _ => None,
     }
 }
+
+#[path = "corpus_route.rs"] mod corpus_route;
+pub use corpus_route::CorpusRouteBin;
 
 #[cfg(test)]
 #[path = "corpus_tests.rs"]

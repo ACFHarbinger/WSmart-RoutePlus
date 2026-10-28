@@ -41,6 +41,13 @@ export interface CorpusBin {
   fill: number | null;
 }
 
+/** One stop coordinate the route map can draw. */
+export interface CorpusRouteBin {
+  id: number;
+  lat: number | null;
+  lon: number | null;
+}
+
 /** One day row inside a simulation JSON or JSONL file. Missing metrics stay absent. */
 export interface CorpusDay {
   day: number | null;
@@ -52,6 +59,12 @@ export interface CorpusDay {
   lat: number | null;
   lon: number | null;
   bins: CorpusBin[];
+  /** Raw tour node ids. Empty when the file has no tour. */
+  tour: number[];
+  /** Customer indices already split from the depot. Empty when absent. */
+  tourIndices: number[];
+  /** Bin coordinates for the route map. Empty when the file has none. */
+  routeBins: CorpusRouteBin[];
 }
 
 export interface CorpusFileRecord {
@@ -98,6 +111,8 @@ export interface CorpusFilters {
   policies: string[];
   /** Empty means every city. */
   cities: string[];
+  /** When set, scenes and the route map show this day inside the day range. */
+  playbackDay: number | null;
   baselineMode: "run" | "value";
   pinnedRunId: string | null;
   typedBaseline: number | null;
@@ -119,6 +134,9 @@ export interface CorpusSeriesPoint {
   lat: number | null;
   lon: number | null;
   bins: CorpusBin[];
+  tour: number[];
+  tourIndices: number[];
+  routeBins: CorpusRouteBin[];
   hasCoordinates: boolean;
 }
 

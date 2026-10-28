@@ -144,6 +144,9 @@ fn scan_simulation_day_log_reads_profit_only() {
     assert_eq!(day.metrics.len(), 1);
     assert_eq!(day.kg_lost, Some(1.5));
     assert!(day.bins.is_empty());
+    assert!(day.tour.is_empty());
+    assert!(day.tour_indices.is_empty());
+    assert!(day.route_bins.is_empty());
 }
 
 #[test]
@@ -183,4 +186,104 @@ fn scan_simulation_empty_directory() {
     assert_eq!(result.skipped, 0);
     assert!(result.failed.is_empty());
     assert_eq!(result.roots.len(), 1);
+}
+
+#[test]
+fn scan_simulation_reads_tour_and_route_bins() {
+    let scratch = Scratch::new("route");
+    let run = scratch.path().join("run");
+    fs::create_dir(&run).unwrap();
+    fs::write(
+        run.join("tour.json"),
+        r#"{
+            "day": 1,
+            "profit": 8,
+            "tour": [0, 2, 0],
+            "tour_indices": [2],
+            "all_bin_coords": [{"id": 1, "lat": 41.1, "lng": -8.6}]
+        }"#,
+    )
+    .unwrap();
+    fs::write(
+        run.join("shapes.json"),
+        r#"{
+            "profit": 1,
+            "tour": [{"id": 0}, {"bin_id": -1}, {"binId": "4"}],
+            "tourIndices": [1, -1],
+            "bins": [
+                {"id": "4", "latitude": 10, "longitude": 20},
+                {"bin_id": 5, "fill": 0.2}
+            ]
+        }"#,
+    )
+    .unwrap();
+    fs::write(run.join("profit.json"), r#"{"profit": 4}"#).unwrap();
+    fs::write(
+        run.join("days.jsonl"),
+        "GUI_DAY_LOG_START:alns,0,2,{\"tour\":[0,-1,0],\"all_bin_coords\":[{\"id\":-1,\"lat\":41.1,\"lng\":-8.6}]}\n",
+    )
+    .unwrap();
+
+    let result = scan_roots(vec![run.to_string_lossy().to_string()]);
+    assert_eq!(result.kept, 4);
+    assert!(result.failed.is_empty());
+
+    let tour_day = &result
+        .files
+        .iter()
+        .find(|file| file.path.ends_with("tour.json"))
+        .unwrap()
+        .days[0];
+    assert_eq!(tour_day.tour, vec![0, 2, 0]);
+    assert_eq!(tour_day.tour_indices, vec![2]);
+    assert_eq!(tour_day.route_bins.len(), 1);
+    assert_eq!(tour_day.route_bins[0].id, 1);
+    assert_eq!(tour_day.route_bins[0].lat, Some(41.1));
+    assert_eq!(tour_day.route_bins[0].lon, Some(-8.6));
+    let encoded = serde_json::to_value(tour_day).unwrap();
+    assert_eq!(encoded["tour"], serde_json::json!([0, 2, 0]));
+    assert_eq!(encoded["tourIndices"], serde_json::json!([2]));
+    assert_eq!(encoded["routeBins"][0]["lat"].as_f64(), Some(41.1));
+    assert_eq!(encoded["routeBins"][0]["lon"].as_f64(), Some(-8.6));
+    assert!(encoded.get("route_bins").is_none());
+    assert!(encoded.get("tour_indices").is_none());
+
+    let shapes = &result
+        .files
+        .iter()
+        .find(|file| file.path.ends_with("shapes.json"))
+        .unwrap()
+        .days[0];
+    assert_eq!(shapes.tour, vec![0, -1, 4]);
+    assert_eq!(shapes.tour_indices, vec![1, -1]);
+    assert_eq!(shapes.route_bins.len(), 1);
+    assert_eq!(shapes.route_bins[0].id, 4);
+    assert_eq!(shapes.route_bins[0].lat, Some(10.0));
+    assert_eq!(shapes.route_bins[0].lon, Some(20.0));
+
+    let profit = &result
+        .files
+        .iter()
+        .find(|file| file.path.ends_with("profit.json"))
+        .unwrap()
+        .days[0];
+    assert!(profit.tour.is_empty());
+    assert!(profit.tour_indices.is_empty());
+    assert!(profit.route_bins.is_empty());
+    assert_eq!(
+        profit.metrics.get("profit").and_then(serde_json::Value::as_i64),
+        Some(4)
+    );
+
+    let logged = &result
+        .files
+        .iter()
+        .find(|file| file.path.ends_with("days.jsonl"))
+        .unwrap()
+        .days[0];
+    assert_eq!(logged.tour, vec![0, -1, 0]);
+    assert_eq!(logged.route_bins.len(), 1);
+    assert_eq!(logged.route_bins[0].id, -1);
+    assert_eq!(logged.route_bins[0].lat, Some(41.1));
+    assert_eq!(logged.route_bins[0].lon, Some(-8.6));
 }
