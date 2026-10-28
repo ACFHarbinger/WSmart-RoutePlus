@@ -16,6 +16,7 @@ Supported commands
 - ``"cloud"``                         → :func:`~logic.controllers.cloud.cli.run_cloud` (cloud runner jobs)
 - ``"trace_policy"``                  → :func:`~logic.controllers.cli.inspect_parser.run_trace_policy`
 - ``"list_policy_modules"``           → :func:`~logic.controllers.cli.inspect_parser.run_list_policy_modules`
+- ``"tracking_db"``                    → :func:`~logic.src.tracking.database.__main__.main`
 
 Example::
 
@@ -147,6 +148,10 @@ def parser_entry_point(
                 from logic.controllers.cli.inspect_parser import run_list_policy_modules
 
                 run_list_policy_modules(opts)
+            elif comm == "tracking_db":
+                from logic.src.tracking.database.__main__ import main as run_tracking_db
+
+                run_tracking_db(opts.get("tracking_args", []))
             else:
                 assert comm == "test_suite"
                 run_test_suite(opts)

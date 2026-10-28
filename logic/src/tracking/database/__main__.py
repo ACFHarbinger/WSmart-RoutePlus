@@ -12,6 +12,7 @@ Example:
 """
 
 import argparse
+from typing import Optional, Sequence
 
 from logic.src.tracking.database import (
     clean_database,
@@ -24,7 +25,7 @@ from logic.src.tracking.database import (
 )
 
 
-def main() -> None:
+def main(argv: Optional[Sequence[str]] = None) -> None:
     """Parses command-line arguments and executes the requested database command.
 
     Supported subcommands:
@@ -65,7 +66,7 @@ def main() -> None:
     p_export.add_argument("--latest", action="store_true")
     p_export.add_argument("--output", "-o", default="", metavar="FILE")
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.command == "inspect":
         inspect_database()

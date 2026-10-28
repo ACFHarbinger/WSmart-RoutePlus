@@ -96,6 +96,14 @@ def main() -> None:
             hydra_entry_point()
             return
 
+    # The tracking database CLI owns its nested subcommands and forwards
+    # ``--help`` unchanged, so hand it the remaining argv before argparse sees it.
+    if len(sys.argv) > 1 and sys.argv[1] == "tracking_db":
+        from logic.src.tracking.database.__main__ import main as tracking_main
+
+        tracking_main(sys.argv[2:])
+        return
+
     parser_entry_point(parse_params())
 
 

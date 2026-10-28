@@ -11,6 +11,8 @@ Example:
     Namespace(command='test_suite', verbose=True, ...)
 """
 
+import argparse
+
 from logic.controllers.cli.base.parser import ConfigsParser
 from logic.controllers.cli.bench_parser import add_benchmark_args
 from logic.controllers.cli.cloud_parser import add_cloud_args
@@ -83,6 +85,11 @@ def get_parser() -> ConfigsParser:
     # Cloud runner: submit, monitor and manage simulation jobs (local, GCP, AWS, Azure)
     cloud_parser = subparsers.add_parser("cloud", help="Run simulation jobs on the cloud runner")
     add_cloud_args(cloud_parser)
+
+    # Tracking database maintenance. The sub-command grammar lives in
+    # logic/src/tracking/database/__main__.py; REMAINDER keeps it in one place.
+    tracking_parser = subparsers.add_parser("tracking_db", help="Manage the tracking database")
+    tracking_parser.add_argument("tracking_args", nargs=argparse.REMAINDER, help=argparse.SUPPRESS)
 
     # TUI
     add_trace_policy_args(
