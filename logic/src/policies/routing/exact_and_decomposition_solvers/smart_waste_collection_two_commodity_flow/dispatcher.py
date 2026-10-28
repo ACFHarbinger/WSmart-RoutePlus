@@ -14,7 +14,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 
@@ -91,7 +91,7 @@ def run_swc_tcf_optimizer(
         )
         # Fallback to native Gurobi if OR-Tools wrapper failed (likely due to missing linkage/license)
         if ortools_backend == "GUROBI" and result[0] == [0, 0] and result[1] == 0.0:
-            return _run_gurobi_optimizer(
+            result = _run_gurobi_optimizer(
                 bins=amounts,
                 distance_matrix=distance_matrix,
                 env=None,
@@ -104,7 +104,6 @@ def run_swc_tcf_optimizer(
                 dual_values=dual_values,
                 cfg=cfg,
             )
-        return result
 
     elif framework == "pyomo":
         # Pyomo requires lowercase identifiers (e.g., 'gurobi', 'scip', 'appsi_highs')
@@ -116,7 +115,7 @@ def run_swc_tcf_optimizer(
         )
 
 
-        return _run_pyomo_tcf_optimizer(
+        result = _run_pyomo_tcf_optimizer(
             bins=amounts,
             distance_matrix=distance_matrix,
             values=values,
@@ -132,7 +131,7 @@ def run_swc_tcf_optimizer(
     elif framework in ["gurobi", "native"]:
         # Direct Gurobi delegation (bypass OR-Tools/Pyomo abstractions)
         # Note: This requires gurobipy to be installed and license available.
-        return _run_gurobi_optimizer(
+        result = _run_gurobi_optimizer(
             bins=amounts,
             distance_matrix=distance_matrix,
             env=None,  # Use default environment
@@ -157,3 +156,27 @@ def run_swc_tcf_optimizer(
         raise ValueError(
             f"Unknown optimization framework: '{framework}'. Use 'ortools:<solver>', 'pyomo:<solver>', or 'gurobi'/'native'."
         )
+
+    trace = getattr(problem, "trace", None)
+    if trace is not None:
+        from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import close_solver
+
+        parent = getattr(problem, "trace_parent_id", None)
+        if parent is None:
+            parent = trace.events[0]["id"] if trace.events else trace.add(name="instance", kind="input")
+        stage_id = trace.add(name="swc_tcf", kind="stage", parent_id=parent)
+        trace.mark_uninstrumented("swc_tcf_separation", parent_id=stage_id)
+        raw_route, profit, _cost = result
+        routes: List[List[int]] = []
+        current: List[int] = []
+        for node in raw_route:
+            if node == 0:
+                if current:
+                    routes.append(current)
+                    current = []
+            else:
+                current.append(int(node))
+        if current:
+            routes.append(current)
+        close_solver(trace, stage_id, routes, float(profit))
+    return result

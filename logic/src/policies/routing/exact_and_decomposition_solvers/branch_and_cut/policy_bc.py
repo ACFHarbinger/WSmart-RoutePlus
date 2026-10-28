@@ -150,6 +150,9 @@ class BranchAndCutPolicy(BaseRoutingPolicy):
             model=model,
             params=params,
         )
+        if kwargs.get("trace") is not None:
+            solver.trace = kwargs.get("trace")
+            solver.trace_parent_id = kwargs.get("trace_parent_id")
 
         # Solve
         routes, profit, stats = solver.solve()

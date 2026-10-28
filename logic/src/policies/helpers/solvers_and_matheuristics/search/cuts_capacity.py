@@ -146,6 +146,10 @@ class RoundedCapacityCutEngine(CuttingPlaneEngine):
                 # only when S consists of mandatory bins (it removed the optimum on a
                 # 5-node instance where the best plan serves 2 of the 5 bins).
                 if not set(node_set) <= set(master.mandatory_nodes):
+                    if getattr(master, "_exec_trace", None) is not None:
+                        from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import emit_cut
+
+                        emit_cut(master, "capacity", frozenset(node_set), False)
                     continue
                 if master.add_capacity_cut(node_set, ineq.rhs):
                     added_cuts += 1

@@ -64,6 +64,17 @@ from logic.src.utils.registry import ALL
 from .ils_bd_engine import IntegerLShapedEngine
 
 
+def _bind_trace(engine: Any, problem: Any) -> None:
+    """Attach an opt-in trace. No-op, and no trace import, when the problem is untraced."""
+    trace = getattr(problem, "trace", None)
+    extra = getattr(problem, "extra", None)
+    if trace is None and not (isinstance(extra, dict) and extra.get("trace") is not None):
+        return
+    from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import bind_engine_trace
+
+    bind_engine_trace(engine, problem)
+
+
 @ALL.register(
     PolicyTag.EXACT,
     PolicyTag.DECOMPOSITION,
@@ -191,6 +202,7 @@ class IntegerLShapedPolicy(BaseMultiPeriodRoutingPolicy):
 
         # Invoke Multi-Period Engine
         engine = IntegerLShapedEngine(model=vrpp_model, params=params)
+        _bind_trace(engine, problem)
 
         # Extract inventory context for multi-period constraints
         init_inv = None

@@ -168,6 +168,37 @@ class BranchAndPriceSolver(BranchAndPriceRoutesMixin, BranchAndPriceSearchMixin)
     # Top-level solve
     # ------------------------------------------------------------------
 
+    def _open_bp_trace(self) -> None:
+        """Open a branch-and-price stage. No-op when this solve is untraced."""
+        trace = getattr(self, "trace", None)
+        if trace is None or getattr(self, "_trace_stage", None) is not None:
+            return
+        parent = getattr(self, "trace_parent_id", None)
+        if parent is None:
+            parent = trace.events[0]["id"] if trace.events else trace.add(name="instance", kind="input")
+        self._trace_stage = trace.add(name="bp", kind="stage", parent_id=parent)
+
+    def _close_bp_trace(self, result: Tuple[List[int], float, Dict[str, Any]]) -> None:
+        """Record the returned tour. No-op when this solve is untraced."""
+        trace = getattr(self, "trace", None)
+        if trace is None:
+            return
+        from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import close_solver
+
+        tour, profit, _stats = result
+        routes: List[List[int]] = []
+        current: List[int] = []
+        for node in tour:
+            if node == 0:
+                if current:
+                    routes.append(current)
+                    current = []
+            else:
+                current.append(int(node))
+        if current:
+            routes.append(current)
+        close_solver(trace, getattr(self, "_trace_stage", None), routes, profit)
+
     def solve(self) -> Tuple[List[int], float, Dict[str, Any]]:
         """Solves the VRPP using Branch-and-Price.
 
@@ -180,9 +211,13 @@ class BranchAndPriceSolver(BranchAndPriceRoutesMixin, BranchAndPriceSearchMixin)
         # Use the full B&P tree for all branching strategies.
         # _solve_without_branching is kept as a fast path only when
         # branching_strategy is explicitly set to "none" or similar sentinel.
+        self._open_bp_trace()
         if self.params.branching_strategy in ("edge", "ryan_foster", "divergence", "multi_edge_partition"):
-            return self._solve_with_branching()  # type: ignore[return-value]
-        return self._solve_without_branching()
+            result = self._solve_with_branching()  # type: ignore[return-value]
+        else:
+            result = self._solve_without_branching()
+        self._close_bp_trace(result)
+        return result
 
     # ------------------------------------------------------------------
     # Solve without branching (column generation + direct IP)

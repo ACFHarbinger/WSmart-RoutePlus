@@ -105,9 +105,17 @@ def run_bb_optimizer(
         params = BBConfig()
 
     formulation = params.formulation
+    trace = kwargs.get("trace")
+    stage_id = None
+    if trace is not None:
+        parent = kwargs.get("trace_parent_id")
+        if parent is None:
+            parent = trace.events[0]["id"] if trace.events else trace.add(name="instance", kind="input")
+        stage_id = trace.add(name="bb", kind="stage", parent_id=parent)
+        trace.mark_uninstrumented(f"bb_{formulation}", parent_id=stage_id)
 
     if formulation == "mtz":
-        return run_bb_mtz(
+        result = run_bb_mtz(
             dist_matrix=dist_matrix,
             wastes=wastes,
             capacity=capacity,
@@ -119,7 +127,7 @@ def run_bb_optimizer(
             recorder=recorder,
         )
     elif formulation == "dfj":
-        return run_bb_dfj(
+        result = run_bb_dfj(
             dist_matrix=dist_matrix,
             wastes=wastes,
             capacity=capacity,
@@ -131,7 +139,7 @@ def run_bb_optimizer(
             recorder=recorder,
         )
     elif formulation == "lr_uop":
-        return run_bb_lr_uop(
+        result = run_bb_lr_uop(
             dist_matrix=dist_matrix,
             wastes=wastes,
             capacity=capacity,
@@ -149,3 +157,9 @@ def run_bb_optimizer(
             f"Use 'mtz' for compact MTZ formulation, 'dfj' for lazy DFJ cuts, "
             f"or 'lr_uop' for Lagrangian Relaxation with uncapacitated OP bounding."
         )
+    if trace is not None:
+        from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import close_solver
+
+        routes, objective = result
+        close_solver(trace, stage_id, routes, objective)
+    return result

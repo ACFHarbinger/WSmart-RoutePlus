@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Exact solver traces (`2026-10-28`, [#170](https://github.com/ACFHarbinger/WSmart-Route/issues/170))
+
+- An opt-in trace on branch-and-price-and-cut records phase I/II, Farkas and ordinary pricing, injected columns with reduced cost, cuts, node bounds, branch decisions, and the Lagrangian bound after column generation. Branch-and-cut, branch-and-price, branch-and-bound, integer L-shaped, and logic-based Benders record the events their loops already compute. A solve with no trace does not allocate one, and a traced run keeps the untraced routes and objective.
+- Two-commodity flow records the returned route and marks native separation `not_instrumented`. Branch-and-bound MTZ, DFJ, and LR-UOP, plus the multi-stage regret-2 and set-partition phases, stay `not_instrumented`. CVRP stays a heuristic and is not in this lane.
+
 ### Studio algorithm trace and module catalog (`2026-10-27`, [#168](https://github.com/ACFHarbinger/WSmart-Route/issues/168), [#169](https://github.com/ACFHarbinger/WSmart-Route/issues/169))
 
 - **Trace.** `python main.py trace_policy` writes schema version 1 for one ALNS solve. The search records the initial solution, each destroy and repair operator, acceptance, and incumbent updates. On the same seed the traced tours and profit match a solve that does not build a trace.

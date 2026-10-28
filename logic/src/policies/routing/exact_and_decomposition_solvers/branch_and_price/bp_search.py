@@ -19,6 +19,29 @@ from .pricing_subproblem import PricingSubproblem
 class BranchAndPriceSearchMixin:
     """Relocated bp search methods."""
 
+    def _bind_bp_master(self, master: VRPPMasterProblem) -> None:
+        """Point master cut/column notes at this solve. No-op when untraced."""
+        trace = getattr(self, "trace", None)
+        if trace is None:
+            return
+        from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import attach_master
+
+        stage = getattr(self, "_trace_stage", None)
+        attach_master(master, trace, stage)
+        parent = getattr(self, "_trace_node", None) or stage
+        master._exec_trace_parent = parent
+        master._exec_trace_node = parent
+
+    def _note_bp_pricing(self, n_added: int) -> None:
+        """Record one ordinary pricing step. No-op when untraced."""
+        trace = getattr(self, "trace", None)
+        if trace is None:
+            return
+        from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import emit_pricing_on
+
+        parent = getattr(self, "_trace_node", None) or getattr(self, "_trace_stage", None)
+        emit_pricing_on(trace, parent, "ordinary", 2, n_added, node_id=parent)
+
     # Declared by BranchAndPriceSolver.__init__; annotation only.
     params: BPConfig
     n_nodes: int
@@ -71,6 +94,7 @@ class BranchAndPriceSearchMixin:
 
         initial_routes = self._generate_initial_routes(heuristic_pricing)
         master.build_model(initial_routes)
+        self._bind_bp_master(master)
 
         lp_obj, route_values = self._column_generation(master, (heuristic_pricing, exact_pricing))
         self.lp_bound = lp_obj
@@ -83,7 +107,7 @@ class BranchAndPriceSearchMixin:
         self.ip_solution = ip_obj
         return self._routes_to_tour(selected), ip_obj, self._get_statistics()
 
-    def _solve_with_branching(self) -> Tuple[List[int], Optional[float], Dict[str, Any]]:
+    def _solve_with_branching(self) -> Tuple[List[int], Optional[float], Dict[str, Any]]:  # noqa: C901
         """Solve using the configured branching strategy in a B&B tree.
 
         Returns:
@@ -95,6 +119,13 @@ class BranchAndPriceSearchMixin:
             search_strategy=self.params.tree_search_strategy,
         )
 
+        if getattr(self, "trace", None) is not None:
+            self._trace_node = self.trace.add(
+                name="node",
+                kind="stage",
+                parent_id=getattr(self, "_trace_stage", None),
+                arguments={"depth": 0, "node_id": 0},
+            )
         root_lp, root_values, root_routes = self._solve_node(self.tree.root)
         self.tree.root.route_values = root_values
         self.tree.root.routes = root_routes
@@ -116,6 +147,13 @@ class BranchAndPriceSearchMixin:
             node = self.tree.get_next_node()
             if node is None:
                 break
+            if getattr(self, "trace", None) is not None:
+                self._trace_node = self.trace.add(
+                    name="node",
+                    kind="stage",
+                    parent_id=getattr(self, "_trace_stage", None),
+                    arguments={"depth": int(node.depth), "node_id": int(self.tree.nodes_explored)},
+                )
 
             if (
                 self.tree.best_integer_solution is not None
@@ -140,6 +178,15 @@ class BranchAndPriceSearchMixin:
                 if self.tree.update_incumbent(node, lp_obj):
                     self.ip_solution = lp_obj
                     self.tree.prune_by_bound()
+                    if getattr(self, "trace", None) is not None:
+                        from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import emit_incumbent
+
+                        selected_nodes = [
+                            list(routes[i].nodes)
+                            for i, value in route_values.items()
+                            if value > 0.5 and i < len(routes)
+                        ]
+                        emit_incumbent(self.trace, getattr(self, "_trace_node", None), selected_nodes, lp_obj)
                 continue
 
             result = self.tree.branch(node, routes, route_values, mandatory_nodes=self.mandatory_nodes)
@@ -161,6 +208,14 @@ class BranchAndPriceSearchMixin:
                         self.tree.prune_by_bound()
             else:
                 left_child, right_child = result
+                if getattr(self, "trace", None) is not None:
+                    from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import emit_branch
+
+                    holder = type("_Holder", (), {})()
+                    holder._exec_trace = self.trace
+                    holder._exec_trace_node = getattr(self, "_trace_node", None)
+                    holder._exec_trace_parent = getattr(self, "_trace_node", None)
+                    emit_branch(holder, left_child, right_child)
                 self.tree.add_node(left_child)
                 self.tree.add_node(right_child)
 
@@ -198,6 +253,7 @@ class BranchAndPriceSearchMixin:
             A 3-tuple containing (lp_objective, route_values, routes).
         """
         master = self._make_master()
+        self._bind_bp_master(master)
         constraints = node.get_all_constraints()
         heuristic_pricing, exact_pricing = self._make_pricing()
 
@@ -228,6 +284,10 @@ class BranchAndPriceSearchMixin:
                         master, (heuristic_pricing, exact_pricing), node, constraints
                     )
                     node.lp_bound = min(lp_obj, best_bound)
+            if getattr(self, "trace", None) is not None and node.depth == 0:
+                from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import emit_node_bound
+
+                emit_node_bound(master, 0, float(lp_obj), None, root=True)
         except RuntimeError:
             return None, {}, []
 
@@ -249,6 +309,8 @@ class BranchAndPriceSearchMixin:
         """
         heuristic_pricer, exact_pricer = pricing
         last_basis: Optional[Tuple[List[int], List[int]]] = None
+        self._bind_bp_master(master)
+        noted_root = False
 
         for i in range(self.params.max_iterations):
             self.num_iterations += 1
@@ -258,17 +320,25 @@ class BranchAndPriceSearchMixin:
 
             lp_obj, route_values = master.solve_lp_relaxation()
             last_basis = master.save_basis()
+            if not noted_root:
+                noted_root = True
+                if getattr(self, "trace", None) is not None:
+                    from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import emit_node_bound
+
+                    emit_node_bound(master, 0, float(lp_obj), None, root=True)
 
             dual_values = master.get_reduced_cost_coefficients()
 
             # 1. Try heuristic pricer first (Two-Phase Pricing)
             new_routes = self._call_pricing(heuristic_pricer, dual_values, constraints=None)  # type: ignore[arg-type]
+            self._note_bp_pricing(0 if not new_routes else len(new_routes))
 
             # 2. Fallback to exact pricer if heuristic fails
             if (
                 not new_routes or max(rc for _, rc in new_routes) < self.params.optimality_gap
             ) and exact_pricer is not None:
                 new_routes = self._call_pricing(exact_pricer, dual_values, constraints=None)  # type: ignore[arg-type]
+            self._note_bp_pricing(0 if not new_routes else len(new_routes))
 
             if not new_routes:
                 break
@@ -315,6 +385,7 @@ class BranchAndPriceSearchMixin:
         heuristic_pricer, exact_pricer = pricing
         best_lagrangian = float("inf")
         last_basis: Optional[Tuple[List[int], List[int]]] = None
+        self._bind_bp_master(master)
 
         for i in range(self.params.max_iterations):
             self.num_iterations += 1
@@ -327,12 +398,14 @@ class BranchAndPriceSearchMixin:
 
             # 1. Try heuristic pricer first (Two-Phase Pricing)
             new_routes = self._call_pricing(heuristic_pricer, dual_values, constraints=constraints)  # type: ignore[arg-type]
+            self._note_bp_pricing(0 if not new_routes else len(new_routes))
 
             # 2. Fallback to exact pricer if heuristic fails
             if (
                 not new_routes or max(rc for _, rc in new_routes) < self.params.optimality_gap
             ) and exact_pricer is not None:
                 new_routes = self._call_pricing(exact_pricer, dual_values, constraints=constraints)  # type: ignore[arg-type]
+            self._note_bp_pricing(0 if not new_routes else len(new_routes))
 
             if not new_routes:
                 break
@@ -365,8 +438,11 @@ class BranchAndPriceSearchMixin:
             if abs(lp_obj - lagrangian_bound) < self.params.early_termination_gap:
                 break
 
-            for route, _ in feasible:
-                master.add_route(route)
+            for route, reduced_cost in feasible:
+                if master.add_route(route) and getattr(self, "trace", None) is not None:
+                    from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import emit_column
+
+                    emit_column(master, route.nodes, reduced_cost, "ordinary", 2)
             self.num_columns_generated += len(feasible)
 
             # Task 3: Column Pool Management

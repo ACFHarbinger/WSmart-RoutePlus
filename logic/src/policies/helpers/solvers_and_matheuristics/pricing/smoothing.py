@@ -30,6 +30,7 @@ from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple, cast
 
 from logic.src.policies.helpers.solvers_and_matheuristics.branching import AnyBranchingConstraint
 from logic.src.policies.helpers.solvers_and_matheuristics.common import Route
+from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import emit_column, emit_pricing
 from logic.src.policies.helpers.solvers_and_matheuristics.master_problem import VRPPMasterProblem
 from logic.src.policies.helpers.solvers_and_matheuristics.pricing.solver import RCSPPSolver
 from logic.src.policies.helpers.solvers_and_matheuristics.search.cutting_planes import CuttingPlaneEngine
@@ -256,6 +257,11 @@ def solve_farkas_pricing_step(
         if farkas_weight > _FARKAS_TOL and master.add_route(route):
             added += 1
             exhausted = False
+            if getattr(master, "_exec_trace", None) is not None:
+                emit_column(master, route.nodes, farkas_weight, "farkas", 1)
+
+    if getattr(master, "_exec_trace", None) is not None:
+        emit_pricing(master, "farkas", 1, added)
 
     if strict_certification:
         # Explicit certification: only an exhaustive solve with no timeout and
@@ -370,10 +376,16 @@ def solve_pricing_step(
     )
 
     added = 0
+    phase = int(getattr(master, "phase", 2))
     for route in routes:
-        if cast(float, route.reduced_cost) > rc_tolerance:  # noqa: SIM102
-            if master.add_route(route):
-                added += 1
+        reduced_cost = cast(float, route.reduced_cost)
+        if reduced_cost > rc_tolerance and master.add_route(route):  # noqa: SIM102
+            added += 1
+            if getattr(master, "_exec_trace", None) is not None:
+                emit_column(master, route.nodes, reduced_cost, "ordinary", phase)
+
+    if getattr(master, "_exec_trace", None) is not None:
+        emit_pricing(master, "ordinary", phase, added)
 
     if strict_certification:
         # Explicit pricing certification: only an EXHAUSTIVE solve that didn't

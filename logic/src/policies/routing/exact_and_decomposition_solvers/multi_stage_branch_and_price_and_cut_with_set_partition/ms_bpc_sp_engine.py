@@ -136,6 +136,13 @@ from logic.src.policies.helpers.solvers_and_matheuristics import (
     RCSPPSolver,
     VRPPMasterProblem,
 )
+from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import (
+    attach_master,
+    begin_solver,
+    close_solver,
+    detach_master,
+    emit_phase,
+)
 from logic.src.policies.helpers.solvers_and_matheuristics.master_problem.warm_start import greedy_warm_start_columns
 from logic.src.policies.helpers.solvers_and_matheuristics.search.bpc_options import (
     total_travel_cost as _total_travel_cost,
@@ -340,6 +347,11 @@ def run_ms_bpc_sp(  # noqa: C901
     else:
         master.set_phase(2)
 
+    trace, stage_id = begin_solver(problem, "ms_bpc_sp")
+    attach_master(master, trace, stage_id)
+    if trace is not None:
+        emit_phase(master, master.phase, "farkas" if master.phase == 1 else "ordinary")
+
     bb_tree, cut_engine = _build_tree_and_cuts(
         k_nodes, red_dist, red_wastes, capacity, R, C, red_mandatory, params, cutting_planes_name
     )
@@ -352,7 +364,8 @@ def run_ms_bpc_sp(  # noqa: C901
     # 6. Shared B&B walk (P-33 / RQ-kimi-2). Knapsack + remap stay above;
     # Phase 3/5 + empty-result retries stay below. MS certificates stay on
     # MSBPCSPConfig defaults and these flags (not BPCConfig).
-    nodes_explored = search_bpc_tree(
+    try:
+        nodes_explored = search_bpc_tree(
         master=master,
         pricing_solver=pricing_solver,
         cut_engine=cut_engine,
@@ -377,7 +390,9 @@ def run_ms_bpc_sp(  # noqa: C901
             lr_requires_vehicle_limit=False,
             scale_lr_by_vehicle_limit=False,
         ),
-    )
+        )
+    finally:
+        detach_master(master)
 
     # 6. Extract best integer solution — always proceed to Phase 3 regardless
     bpc_routes_orig, bpc_cost = _best_bpc_solution(bb_tree, master, pricing_solver, initial_routes_nodes, local_to_orig)
@@ -400,6 +415,8 @@ def run_ms_bpc_sp(  # noqa: C901
         f"n_nodes={n_nodes}, m_set_size={len(m_set)}."
     )
     if phase3_budget > 0.5:
+        if trace is not None:
+            trace.mark_uninstrumented("phase_3_regret2", parent_id=stage_id)
         final_routes, final_cost = _regret2_insertion(
             final_routes,
             final_cost,
@@ -421,6 +438,8 @@ def run_ms_bpc_sp(  # noqa: C901
     phase5_budget = max(0.0, (time_limit if time_limit > 0 else 60.0) - phase5_elapsed)
 
     if phase5_budget > 2.0:
+        if trace is not None:
+            trace.mark_uninstrumented("phase_5_set_partition", parent_id=stage_id)
         final_routes, final_cost = _set_partition_merge(
             master.routes,
             local_to_orig,
@@ -454,6 +473,7 @@ def run_ms_bpc_sp(  # noqa: C901
         _keep_all_nodes,
     )
     if fallback_result is not None:
+        close_solver(trace, stage_id, fallback_result.routes, fallback_result.profit)
         return fallback_result
 
     if recorder:
@@ -464,6 +484,7 @@ def run_ms_bpc_sp(  # noqa: C901
             n_routes=len(final_routes),
         )
 
+    close_solver(trace, stage_id, final_routes, final_cost)
     return SolveResult(
         routes=final_routes,
         profit=final_cost,

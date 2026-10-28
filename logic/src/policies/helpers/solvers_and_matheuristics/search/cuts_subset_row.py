@@ -177,6 +177,10 @@ class SubsetRowCutEngine(CuttingPlaneEngine):
             # Task 9: Check similarity using content-mapped vectors
             active_sri_vecs = list(master.global_cut_pool.active_sri_vectors.values())
             if not self._is_orthogonal_content(coeff_dict, active_sri_vecs, threshold):
+                if getattr(master, "_exec_trace", None) is not None:
+                    from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import emit_cut
+
+                    emit_cut(master, "sri", node_set, False)
                 return False
 
             return master.add_subset_row_cut(list(node_set))

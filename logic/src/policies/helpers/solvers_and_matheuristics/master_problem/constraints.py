@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
-from typing import TYPE_CHECKING, Dict, FrozenSet, List, Optional, Set, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, FrozenSet, List, Optional, Set, Tuple, Union
 
 import gurobipy as gp
 
@@ -24,6 +24,15 @@ if TYPE_CHECKING:
     from .problem_support import MasterProblemSupport
 
 logger = logging.getLogger(__name__)
+
+
+def _cut_decision(master: Any, cut_type: str, cut_id: Any, accepted: bool) -> bool:
+    """Return ``accepted`` and, only when a trace is bound, record the cut."""
+    if getattr(master, "_exec_trace", None) is not None:
+        from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import emit_cut
+
+        emit_cut(master, cut_type, cut_id, accepted)
+    return accepted
 
 
 class VRPPMasterProblemConstraintsMixin(MasterConnectivityConstraintsMixin):
@@ -70,7 +79,7 @@ class VRPPMasterProblemConstraintsMixin(MasterConnectivityConstraintsMixin):
         key = edge_tuple
 
         if key in self.active_edge_clique_cuts:
-            return False
+            return _cut_decision(self, "edge_clique", edge_tuple, False)
 
         lhs = gp.LinExpr()
         found_columns = False
@@ -91,14 +100,14 @@ class VRPPMasterProblemConstraintsMixin(MasterConnectivityConstraintsMixin):
                 found_columns = True
 
         if not found_columns:
-            return False
+            return _cut_decision(self, "edge_clique", edge_tuple, False)
 
         constr = self.model.addConstr(lhs <= rhs, name=f"Edge_Clique_{edge_tuple[0]}_{edge_tuple[1]}")
         stored_coeffs = coefficients if coefficients is not None else {}
         self.active_edge_clique_cuts[key] = (constr, stored_coeffs)
         self.global_cut_pool.add_cut("edge_clique", edge_tuple)
         self.model.update()
-        return True
+        return _cut_decision(self, "edge_clique", edge_tuple, True)
 
     def add_subset_row_cut(
         self: MasterProblemSupport,
@@ -127,7 +136,7 @@ class VRPPMasterProblemConstraintsMixin(MasterConnectivityConstraintsMixin):
         nodes = sorted(node_set)
         subset_frozenset = frozenset(nodes)
         if subset_frozenset in self.active_sri_cuts:
-            return False
+            return _cut_decision(self, "sri", subset_frozenset, False)
 
         cut_name = f"SRI_{nodes[0]}_{nodes[1]}_{nodes[2]}"
 
@@ -146,14 +155,14 @@ class VRPPMasterProblemConstraintsMixin(MasterConnectivityConstraintsMixin):
                 found_columns = True
 
         if not found_columns:
-            return False
+            return _cut_decision(self, "sri", subset_frozenset, False)
 
         new_cut = self.model.addConstr(lhs <= 1.0, name=cut_name)
         self.active_sri_cuts[subset_frozenset] = new_cut
         # Archiving to Global Pool (SRIs are globally valid); store vector for orthogonality checks
         self.global_cut_pool.add_cut("sri", (subset_frozenset, coeff_dict))
         self.model.update()
-        return True
+        return _cut_decision(self, "sri", subset_frozenset, True)
 
     def add_capacity_cut(
         self: MasterProblemSupport,
@@ -188,7 +197,7 @@ class VRPPMasterProblemConstraintsMixin(MasterConnectivityConstraintsMixin):
         node_set = frozenset(node_list)
         if node_set in self.active_capacity_cuts:
             # Already have this cut
-            return False
+            return _cut_decision(self, "capacity", node_set, False)
 
         # Build column-based representation of the cut
         lhs = gp.LinExpr()
@@ -207,7 +216,7 @@ class VRPPMasterProblemConstraintsMixin(MasterConnectivityConstraintsMixin):
 
         if self.model is not None:
             self.model.update()
-        return True
+        return _cut_decision(self, "capacity", node_set, True)
 
     def add_lci_cut(
         self: MasterProblemSupport,
@@ -257,7 +266,7 @@ class VRPPMasterProblemConstraintsMixin(MasterConnectivityConstraintsMixin):
 
         node_set = frozenset(node_list)
         if node_set in self.active_lci_cuts:
-            return False
+            return _cut_decision(self, "lci", node_set, False)
 
         lhs = gp.LinExpr()
         for idx, coeff in coefficients.items():
@@ -265,7 +274,7 @@ class VRPPMasterProblemConstraintsMixin(MasterConnectivityConstraintsMixin):
                 lhs += coeff * self.lambda_vars[idx]
 
         if lhs.size() == 0:
-            return False
+            return _cut_decision(self, "lci", node_set, False)
 
         name = f"lci_{abs(hash(node_set))}"
         constr = self.model.addConstr(lhs <= rhs, name=name)
@@ -279,7 +288,7 @@ class VRPPMasterProblemConstraintsMixin(MasterConnectivityConstraintsMixin):
         self.global_cut_pool.add_cut("lci", (node_set, rhs, coefficients, effective_node_alphas, arc))
         if self.model is not None:
             self.model.update()
-        return True
+        return _cut_decision(self, "lci", node_set, True)
 
     def add_multistar_cut(
         self: "MasterProblemSupport",
@@ -310,7 +319,7 @@ class VRPPMasterProblemConstraintsMixin(MasterConnectivityConstraintsMixin):
 
         node_set = frozenset(node_list)
         if node_set in self.active_multistar_cuts:
-            return False
+            return _cut_decision(self, "multistar", node_set, False)
 
         lhs = gp.LinExpr()
         for idx, coeff in coefficients.items():
@@ -318,7 +327,7 @@ class VRPPMasterProblemConstraintsMixin(MasterConnectivityConstraintsMixin):
                 lhs += coeff * self.lambda_vars[idx]
 
         if lhs.size() == 0:
-            return False
+            return _cut_decision(self, "multistar", node_set, False)
 
         name = f"multistar_{abs(hash(node_set))}"
         constr = self.model.addConstr(lhs <= 0.0, name=name)
@@ -327,7 +336,7 @@ class VRPPMasterProblemConstraintsMixin(MasterConnectivityConstraintsMixin):
         # shared master object, which is never rebuilt mid-search.
         self.global_cut_pool.add_cut("multistar", (node_set, coefficients))
         self.model.update()
-        return True
+        return _cut_decision(self, "multistar", node_set, True)
 
     def add_set_packing_capacity_cut(self: MasterProblemSupport, node_list: List[int], rhs: float) -> bool:
         """
@@ -352,7 +361,7 @@ class VRPPMasterProblemConstraintsMixin(MasterConnectivityConstraintsMixin):
         node_set = frozenset(node_list)
         if node_set in self.active_rcc_cuts:
             # Already have this cut
-            return False
+            return _cut_decision(self, "capacity", node_set, False)
 
         # Build column-based representation of the cut
         lhs = gp.LinExpr()
@@ -365,4 +374,4 @@ class VRPPMasterProblemConstraintsMixin(MasterConnectivityConstraintsMixin):
         constr = self.model.addConstr(lhs >= rhs, name=name)
         self.active_rcc_cuts[node_set] = constr
         self.model.update()
-        return True
+        return _cut_decision(self, "capacity", node_set, True)

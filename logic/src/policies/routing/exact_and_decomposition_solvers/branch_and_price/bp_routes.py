@@ -134,10 +134,13 @@ class BranchAndPriceRoutesMixin:
             pricing: The pricing solver used to compute route metadata.
             new_routes: List of (path, reduced_cost) pairs to add.
         """
-        for route_nodes, _ in new_routes:
+        for route_nodes, reduced_cost in new_routes:
             cost, revenue, load, cov = pricing.compute_route_details(route_nodes)
             route = Route(nodes=route_nodes, cost=cost, revenue=revenue, load=load, node_coverage=cov)
-            master.add_route(route)
+            if master.add_route(route) and getattr(master, "_exec_trace", None) is not None:
+                from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import emit_column
+
+                emit_column(master, route.nodes, reduced_cost, "ordinary", 2)
             self.num_columns_generated += 1
 
     def _routes_to_tour(self, routes: List[Route]) -> List[int]:

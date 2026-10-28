@@ -9,7 +9,7 @@ Example:
 Parts are relocated to stochastic_cuts.
 """
 
-from typing import Any, List, Set, Tuple
+from typing import Any, List, Optional, Set, Tuple
 
 import numpy as np
 
@@ -49,6 +49,32 @@ class BCCutSeparationMixin(StochasticCutsMixin):
     separator: SeparationEngine
     _cut_pool: List[Any]
     _cut_signatures: Set[Tuple[Any, ...]]
+
+    def _bc_trace_stage(self) -> Optional[str]:
+        """Solver stage id, or None when this solve is not traced."""
+        trace = getattr(self, "trace", None)
+        if trace is None:
+            return None
+        stage = getattr(self, "_trace_stage", None)
+        if stage is not None:
+            return stage
+        parent = getattr(self, "trace_parent_id", None)
+        if parent is None:
+            parent = trace.events[0]["id"] if trace.events else trace.add(name="instance", kind="input")
+        stage = trace.add(name="bc", kind="stage", parent_id=parent)
+        self._trace_stage = stage
+        return stage
+
+    def _record_separated_cut(self, cut_type: str, cut_id: Any, accepted: bool, node_id: Optional[int] = None) -> None:
+        """Record one cut the callback added or rejected. No-op without a trace."""
+        trace = getattr(self, "trace", None)
+        if trace is None:
+            return
+        from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import emit_cut_on
+
+        stage = self._bc_trace_stage()
+        parent = getattr(self, "_trace_node", None) or stage
+        emit_cut_on(trace, parent, cut_type, cut_id, accepted, node_id=node_id if node_id is not None else parent)
 
     def _lazy_constraint_callback(self, model, where):
         """Gurobi callback for Optimized Branch-and-Cut.
@@ -211,6 +237,19 @@ class BCCutSeparationMixin(StochasticCutsMixin):
         """
         # Get current node count (depth indicator)
         node_count = model.cbGet(GRB.Callback.MIPNODE_NODCNT)
+        if getattr(self, "trace", None) is not None:
+            stage = self._bc_trace_stage()
+            bound = None
+            try:
+                bound = float(model.cbGet(GRB.Callback.MIPNODE_OBJBND))
+            except Exception:
+                bound = None
+            self._trace_node = self.trace.add(
+                name="root_lp" if int(node_count) == 0 else "node",
+                kind="stage" if int(node_count) != 0 else "operator",
+                parent_id=stage,
+                arguments={"node_id": int(node_count), "bound": bound, "depth": int(node_count)},
+            )
 
         # Get fractional solution values using bulk API extraction
         # Performance Optimization: Bulk cbGetNodeRel() is O(n) vs O(n²) for loop-based extraction
@@ -297,6 +336,9 @@ class BCCutSeparationMixin(StochasticCutsMixin):
                 yi = self.y_vars[cut.node_i]
                 yj = self.y_vars.get(cut.node_j, 1.0)
                 model.cbLazy(gp.quicksum(edge_vars) >= 2 * (yi + yj - 1.0))
+            self._record_separated_cut("sec", cut.node_set, True)
+        elif getattr(self, "trace", None) is not None:
+            self._record_separated_cut("sec", cut.node_set, False)
 
     def _add_capacity_cut_lazy(self, model, cut: CapacityCut):
         """Add a capacity cut as a lazy constraint (integer callback).
@@ -313,6 +355,9 @@ class BCCutSeparationMixin(StochasticCutsMixin):
 
         if edge_vars:
             model.cbLazy(gp.quicksum(edge_vars) >= cut.rhs)
+            self._record_separated_cut("capacity", cut.node_set, True)
+        elif getattr(self, "trace", None) is not None:
+            self._record_separated_cut("capacity", cut.node_set, False)
 
     def _add_pcsec_user(self, model, cut: PCSubtourEliminationCut):
         """Add a prize-collecting subtour elimination cut (PC-SEC) as a user cut.
@@ -338,6 +383,9 @@ class BCCutSeparationMixin(StochasticCutsMixin):
                 yi = self.y_vars[cut.node_i]
                 yj = self.y_vars.get(cut.node_j, 1.0)
                 model.cbCut(gp.quicksum(edge_vars) >= 2 * (yi + yj - 1.0))
+            self._record_separated_cut("sec", cut.node_set, True)
+        elif getattr(self, "trace", None) is not None:
+            self._record_separated_cut("sec", cut.node_set, False)
 
     def _add_capacity_cut_user(self, model, cut: CapacityCut):
         """Add a capacity cut as a user cut (fractional callback).
@@ -354,3 +402,6 @@ class BCCutSeparationMixin(StochasticCutsMixin):
 
         if edge_vars:
             model.cbCut(gp.quicksum(edge_vars) >= cut.rhs)
+            self._record_separated_cut("capacity", cut.node_set, True)
+        elif getattr(self, "trace", None) is not None:
+            self._record_separated_cut("capacity", cut.node_set, False)

@@ -66,6 +66,16 @@ from logic.src.policies.helpers.solvers_and_matheuristics.branching.pruning impo
 from logic.src.policies.helpers.solvers_and_matheuristics.branching.pruning import (
     perform_strong_branching as _perform_strong_branching,
 )
+from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import (
+    emit_branch,
+    emit_incumbent,
+    emit_node,
+    emit_node_bound,
+    selected_route_nodes,
+)
+from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import (
+    emit_column as _emit_column,
+)
 from logic.src.policies.helpers.solvers_and_matheuristics.lagrangian_relaxation.pre_pruning import (
     compute_lr_bound_at_node as _compute_lr_bound_at_node,
 )
@@ -153,6 +163,8 @@ def search_bpc_tree(  # noqa: C901
 
         nodes_explored += 1
         bb_tree.record_explored()
+        if getattr(master, "_exec_trace", None) is not None:
+            emit_node(master, current_node.depth, nodes_explored)
 
         master.remove_local_cuts()
         branching_constraints = current_node.get_all_constraints()
@@ -234,7 +246,15 @@ def search_bpc_tree(  # noqa: C901
                                 master.get_reduced_cost_coefficients(),
                             )
                             if _seed_rc > cfg.rc_tolerance:
-                                master.add_route(_seed_route)
+                                _seeded = master.add_route(_seed_route)
+                                if _seeded and getattr(master, "_exec_trace", None) is not None:
+                                    _emit_column(
+                                        master,
+                                        _seed_route.nodes,
+                                        _seed_rc,
+                                        "ordinary",
+                                        int(getattr(master, "phase", 2)),
+                                    )
                                 logger.debug(
                                     f"[LR Warm-Start] Seeded column from UOP at λ*={_lam_star:.4f}, "
                                     f"rc={_seed_rc:.4f}, nodes={_seed_nodes}."
@@ -293,7 +313,13 @@ def search_bpc_tree(  # noqa: C901
                         current_node.is_integer = True
                         current_node.ip_solution = lp_obj
                         current_node.route_values = route_values
-                        bb_tree.update_incumbent(current_node, lp_obj)
+                        if bb_tree.update_incumbent(current_node, lp_obj) and getattr(master, "_exec_trace", None) is not None:
+                            emit_incumbent(
+                                master._exec_trace,
+                                master._exec_trace_node,
+                                selected_route_nodes(master, route_values),
+                                lp_obj,
+                            )
                     else:
                         try:
                             _rem_ip = (
@@ -315,7 +341,15 @@ def search_bpc_tree(  # noqa: C901
                                 current_node.is_integer = True
                                 current_node.ip_solution = ip_obj
                                 current_node.route_values = selected_indices
-                                bb_tree.update_incumbent(current_node, ip_obj)
+                                if bb_tree.update_incumbent(current_node, ip_obj) and getattr(
+                                    master, "_exec_trace", None
+                                ) is not None:
+                                    emit_incumbent(
+                                        master._exec_trace,
+                                        master._exec_trace_node,
+                                        selected_route_nodes(master, selected_indices),
+                                        ip_obj,
+                                    )
                         except Exception as e:
                             logger.debug(f"IP solve at incomplete node failed: {e}")
                     break
@@ -341,6 +375,8 @@ def search_bpc_tree(  # noqa: C901
 
         current_node.lp_bound = lp_obj
         current_node.route_values = route_values
+        if getattr(master, "_exec_trace", None) is not None:
+            emit_node_bound(master, current_node.depth, lp_obj, bb_tree.best_integer_solution, root=False)
 
         if bb_tree.best_integer_solution is not None:
             stats = bb_tree.get_statistics()
@@ -370,7 +406,13 @@ def search_bpc_tree(  # noqa: C901
         if _is_solution_integer(master.routes, route_values, require_elementary=options.require_elementary):
             current_node.is_integer = True
             current_node.ip_solution = lp_obj
-            bb_tree.update_incumbent(current_node, lp_obj)
+            if bb_tree.update_incumbent(current_node, lp_obj) and getattr(master, "_exec_trace", None) is not None:
+                emit_incumbent(
+                    master._exec_trace,
+                    master._exec_trace_node,
+                    selected_route_nodes(master, route_values),
+                    lp_obj,
+                )
             bb_tree.prune_by_bound()
             continue
 
@@ -452,6 +494,8 @@ def search_bpc_tree(  # noqa: C901
             children = (left_child, right_child)
 
         left_child, right_child = children
+        if getattr(master, "_exec_trace", None) is not None:
+            emit_branch(master, left_child, right_child)
         use_paper_ordering = (
             getattr(cfg, "prefer_shorter_path_dfs", True)
             and branching_strategy_name == "divergence"

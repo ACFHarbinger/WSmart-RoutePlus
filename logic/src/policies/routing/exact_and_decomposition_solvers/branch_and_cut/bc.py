@@ -229,6 +229,28 @@ class BranchAndCutSolver(BCLagrangianMixin, BCCutSeparationMixin):
         self.stats["mip_gap"] = self.gurobi_model.MIPGap if self.gurobi_model.SolCount > 0 else 1.0
         self.stats["nodes_explored"] = int(self.gurobi_model.NodeCount)
 
+        if getattr(self, "trace", None) is not None:
+            from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import close_solver
+
+            stage = self._bc_trace_stage()
+            mip_bound = None
+            try:
+                if self.gurobi_model.SolCount > 0:
+                    mip_bound = float(self.gurobi_model.ObjBound)
+            except Exception:
+                mip_bound = None
+            self.trace.add(
+                name="mip",
+                kind="stage",
+                parent_id=stage,
+                arguments={
+                    "nodes": int(self.gurobi_model.NodeCount),
+                    "bound": mip_bound,
+                    "incumbent": float(profit),
+                },
+            )
+            close_solver(self.trace, stage, routes, profit)
+
         return routes, profit, self.stats  # type: ignore[return-value]
 
     def _build_initial_model(self):

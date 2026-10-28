@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Dict, FrozenSet, List, Set, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, FrozenSet, List, Set, Tuple, Union
 
 import gurobipy as gp
 import numpy as np
@@ -13,6 +13,15 @@ if TYPE_CHECKING:
     from .problem_support import MasterProblemSupport
 
 logger = logging.getLogger(__name__)
+
+
+def _cut_decision(master: Any, cut_type: str, cut_id: Any, accepted: bool) -> bool:
+    """Return ``accepted`` and, only when a trace is bound, record the cut."""
+    if getattr(master, "_exec_trace", None) is not None:
+        from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import emit_cut
+
+        emit_cut(master, cut_type, cut_id, accepted)
+    return accepted
 
 
 class MasterConnectivityConstraintsMixin:
@@ -50,7 +59,7 @@ class MasterConnectivityConstraintsMixin:
         registry = self.active_sec_cuts if global_cut else self.active_sec_cuts_local
 
         if node_set in registry:
-            return False
+            return _cut_decision(self, "sec", node_set, False)
 
         lhs = gp.LinExpr()
         for idx, route in enumerate(self.routes):
@@ -77,7 +86,7 @@ class MasterConnectivityConstraintsMixin:
             self.global_cut_pool.add_cut("sec_2.1", node_set)
 
         self.model.update()
-        return True
+        return _cut_decision(self, "sec", node_set, True)
 
     def _count_crossings(self: MasterProblemSupport, route: Route, node_set: FrozenSet[int]) -> int:
         """Counts how many times a route crosses the boundary δ(S).

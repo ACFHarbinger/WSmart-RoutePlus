@@ -63,7 +63,7 @@ class LBBDEngine:
 
         self.stats = {"iterations": 0, "cuts_added": 0, "converged": False, "solve_time": 0.0}
 
-    def solve(self) -> Tuple[List[List[List[int]]], float, Dict[str, Any]]:
+    def solve(self) -> Tuple[List[List[List[int]]], float, Dict[str, Any]]:  # noqa: C901
         """Runs the LBBD algorithm.
 
         Returns:
@@ -72,6 +72,14 @@ class LBBDEngine:
                 - total_expected_profit: Total expected profit from the solution.
                 - stats: Execution statistics and iterations.
         """
+        trace = getattr(self, "trace", None)
+        stage_id = None
+        if trace is not None:
+            parent = getattr(self, "trace_parent_id", None)
+            if parent is None:
+                parent = trace.events[0]["id"] if trace.events else trace.add(name="instance", kind="input")
+            stage_id = trace.add(name="lbbd", kind="stage", parent_id=parent)
+
         start_time = time.time()
         self.master.build(self.tree, self.config.stochastic_master)
 
@@ -106,11 +114,21 @@ class LBBDEngine:
                         self.master.add_nogood_cut(d, nodes_in_d)
                         self.stats["cuts_added"] += 1
                         converged = False
+                        if trace is not None:
+                            from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import emit_cut_on
+
+                            cut_id = "day" + str(d) + ":" + ",".join(str(int(node)) for node in nodes_in_d)
+                            emit_cut_on(trace, stage_id, "nogood", cut_id, True)
                 elif dist > thetas[d] + 1e-4 and self.config.use_optimality_cuts:
                     # Add Optimality cut
                     self.master.add_optimality_cut(d, nodes_in_d, dist)
                     self.stats["cuts_added"] += 1
                     converged = False
+                    if trace is not None:
+                        from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import emit_cut_on
+
+                        cut_id = "day" + str(d) + ":" + ",".join(str(int(node)) for node in nodes_in_d)
+                        emit_cut_on(trace, stage_id, "benders_optimality", cut_id, True)
 
             # Update best plan
             full_plan = current_plan
@@ -129,4 +147,14 @@ class LBBDEngine:
         if self.master.model.SolCount > 0:  # type: ignore[union-attr]
             total_profit = self.master.model.ObjVal  # type: ignore[union-attr]
 
+        if trace is not None:
+            from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import close_solver
+
+            flat: List[List[int]] = []
+            for day_plan in full_plan:
+                for route in day_plan:
+                    nodes = [int(node) for node in route if int(node) != 0]
+                    if nodes:
+                        flat.append(nodes)
+            close_solver(trace, stage_id, flat, total_profit)
         return full_plan, total_profit, self.stats
