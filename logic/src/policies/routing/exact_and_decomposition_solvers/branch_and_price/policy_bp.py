@@ -161,6 +161,9 @@ class BranchAndPricePolicy(BaseRoutingPolicy):
             mandatory_nodes=set(mandatory),
             params=params,
         )
+        if kwargs.get("trace") is not None:
+            solver.trace = kwargs.get("trace")
+            solver.trace_parent_id = kwargs.get("trace_parent_id")
 
         flat_tour, profit, _stats = solver.solve()
 
@@ -236,6 +239,9 @@ class BranchAndPricePolicy(BaseRoutingPolicy):
             mandatory_nodes=mandatory_set,
             params=params,
         )
+        if kwargs.get("trace") is not None:
+            solver.trace = kwargs.get("trace")
+            solver.trace_parent_id = kwargs.get("trace_parent_id")
 
         tour, profit, statistics = solver.solve()
 

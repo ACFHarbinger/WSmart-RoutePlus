@@ -127,8 +127,24 @@ class IntegerLShapedEngine:
                 - profit: Calculated net profit.
                 - stats: Execution statistics and solver metadata.
         """
+        trace = getattr(self, "trace", None)
+        stage_id = None
         if not GUROBI_AVAILABLE:
+            if trace is not None:
+                from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import note_unavailable
+
+                parent = getattr(self, "trace_parent_id", None)
+                if parent is None:
+                    parent = trace.events[0]["id"] if trace.events else trace.add(name="instance", kind="input")
+                stage_id = trace.add(name="ils", kind="stage", parent_id=parent)
+                note_unavailable(trace, "gurobi", parent_id=stage_id)
             raise ImportError("Gurobi (gurobipy) is required for the Integer L-Shaped solver. ")
+
+        if trace is not None:
+            parent = getattr(self, "trace_parent_id", None)
+            if parent is None:
+                parent = trace.events[0]["id"] if trace.events else trace.add(name="instance", kind="input")
+            stage_id = trace.add(name="ils", kind="stage", parent_id=parent)
 
         t_start = time.perf_counter()
 
@@ -268,6 +284,10 @@ class IntegerLShapedEngine:
             # ---- 2d. Add Benders optimality cut -------------------------
             master.add_optimality_cut(e=e, d=d)
             self.stats["benders_cuts_added"] += 1
+            if trace is not None:
+                from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import emit_cut_on
+
+                emit_cut_on(trace, stage_id, "benders_optimality", f"iter{iteration}", True)
 
         # ------------------------------------------------------------------
         # Step 3: Finalise statistics
@@ -281,6 +301,10 @@ class IntegerLShapedEngine:
             self.stats["collection_plan"] = master.get_collection_plan()
             self.stats["horizon"] = self.params.horizon
 
+        if trace is not None:
+            from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import close_solver
+
+            close_solver(trace, stage_id, best_routes, best_profit)
         return best_routes, best_y_hat, best_profit, self.stats
 
     # ------------------------------------------------------------------

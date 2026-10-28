@@ -147,6 +147,8 @@ class BranchAndBoundPolicy(BaseRoutingPolicy):
             mandatory_indices=mandatory_indices,
             env=kwargs.get("model_env"),
             recorder=kwargs.get("recorder"),
+            trace=kwargs.get("trace"),
+            trace_parent_id=kwargs.get("trace_parent_id"),
         )
 
         # Internal Profit Calculation: Revenue - Distance Cost

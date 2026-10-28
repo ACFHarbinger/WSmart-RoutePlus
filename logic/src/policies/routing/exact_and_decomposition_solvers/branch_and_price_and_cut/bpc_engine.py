@@ -134,6 +134,13 @@ from logic.src.policies.helpers.solvers_and_matheuristics.branching import Branc
 from logic.src.policies.helpers.solvers_and_matheuristics.branching.pruning import (
     apply_branching_to_master as _apply_branching_to_master,
 )
+from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import (
+    attach_master,
+    begin_solver,
+    close_solver,
+    detach_master,
+    emit_phase,
+)
 from logic.src.policies.helpers.solvers_and_matheuristics.master_problem import VRPPMasterProblem
 from logic.src.policies.helpers.solvers_and_matheuristics.master_problem.warm_start import greedy_warm_start_columns
 from logic.src.policies.helpers.solvers_and_matheuristics.search.bpc_options import (
@@ -305,6 +312,11 @@ def run_bpc(  # noqa: C901
     else:
         master.set_phase(2)
 
+    trace, stage_id = begin_solver(problem, "bpc")
+    attach_master(master, trace, stage_id)
+    if trace is not None:
+        emit_phase(master, master.phase, "farkas" if master.phase == 1 else "ordinary")
+
     # 3. Initialize pricing and separation — use REDUCED instance throughout
     # pricing_solver is already initialized above on red_dist/red_wastes — reuse it.
     n_total_nodes = k_nodes + 1  # VRPPModel counts total nodes including depot (index 0)
@@ -332,26 +344,29 @@ def run_bpc(  # noqa: C901
 
     # 6. Shared B&B walk (P-33). Setup above stays BPC-specific (full instance,
     # Rank-1 supplemental cuts). Extraction below stays BPC-specific.
-    nodes_explored = search_bpc_tree(
-        master=master,
-        pricing_solver=pricing_solver,
-        cut_engine=cut_engine,
-        bb_tree=bb_tree,
-        cfg=cfg,
-        branching_strategy_name=branching_strategy_name,
-        time_limit=time_limit,
-        start_time=start_time,
-        red_dist=red_dist,
-        red_wastes=red_wastes,
-        capacity=capacity,
-        R=R,
-        C=C,
-        m_set=m_set,
-        env=env,
-        recorder=recorder,
-        k_nodes=k_nodes,
-        options=BPCSearchOptions(),
-    )
+    try:
+        nodes_explored = search_bpc_tree(
+            master=master,
+            pricing_solver=pricing_solver,
+            cut_engine=cut_engine,
+            bb_tree=bb_tree,
+            cfg=cfg,
+            branching_strategy_name=branching_strategy_name,
+            time_limit=time_limit,
+            start_time=start_time,
+            red_dist=red_dist,
+            red_wastes=red_wastes,
+            capacity=capacity,
+            R=R,
+            C=C,
+            m_set=m_set,
+            env=env,
+            recorder=recorder,
+            k_nodes=k_nodes,
+            options=BPCSearchOptions(),
+        )
+    finally:
+        detach_master(master)
 
     pricing_stats = getattr(priced, "stats", None)
     if pricing_stats:
@@ -379,6 +394,7 @@ def run_bpc(  # noqa: C901
         # The day log records the fallback, so its frequency is countable.
         note_solver_status(f"bpc:fallback_{source}")
         note_solver_incumbent(fallback_profit)
+        close_solver(trace, stage_id, fallback_routes, fallback_profit)
         return SolveResult(
             routes=fallback_routes,
             profit=fallback_profit,
@@ -405,6 +421,7 @@ def run_bpc(  # noqa: C901
         )
 
     note_solver_incumbent(final_cost)
+    close_solver(trace, stage_id, final_routes, final_cost)
     return SolveResult(
         routes=final_routes,
         profit=final_cost,

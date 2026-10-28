@@ -84,6 +84,8 @@ class GenericRoutingPolicy(BaseRoutingPolicy):
             node_coords=kwargs.get("node_coords"),
             recorder=kwargs.get("recorder"),
             dual_values=kwargs.get("dual_values"),
+            trace=kwargs.get("trace"),
+            trace_parent_id=kwargs.get("trace_parent_id"),
         )
 
     def _solve(self, problem: SubProblem, cfg: Any) -> Any:

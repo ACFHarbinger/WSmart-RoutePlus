@@ -29,6 +29,17 @@ if TYPE_CHECKING:
 from .lbbd_engine import LBBDEngine
 
 
+def _bind_trace(engine: Any, problem: Any) -> None:
+    """Attach an opt-in trace. No-op, and no trace import, when the problem is untraced."""
+    trace = getattr(problem, "trace", None)
+    extra = getattr(problem, "extra", None)
+    if trace is None and not (isinstance(extra, dict) and extra.get("trace") is not None):
+        return
+    from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import bind_engine_trace
+
+    bind_engine_trace(engine, problem)
+
+
 @ALL.register(
     PolicyTag.EXACT,
     PolicyTag.DECOMPOSITION,
@@ -100,6 +111,7 @@ class LBBDPolicy(BaseMultiPeriodRoutingPolicy):
             tree=tree,
             capacity=problem.capacity,
         )
+        _bind_trace(engine, problem)
 
         # Solve for the full horizon T
         full_plan, profit, stats = engine.solve()

@@ -34,6 +34,11 @@ from logic.src.policies.helpers.solvers_and_matheuristics.branching.pruning impo
 from logic.src.policies.helpers.solvers_and_matheuristics.branching.pruning import (
     apply_branching_to_master as _apply_branching_to_master,
 )
+from logic.src.policies.helpers.solvers_and_matheuristics.exact_trace import (
+    emit_lagrangian,
+    emit_node_bound,
+    emit_phase,
+)
 from logic.src.policies.helpers.solvers_and_matheuristics.master_problem import VRPPMasterProblem
 from logic.src.policies.helpers.solvers_and_matheuristics.pricing import RCSPPSolver
 from logic.src.policies.helpers.solvers_and_matheuristics.pricing.smoothing import (
@@ -142,6 +147,7 @@ def column_generation_loop(  # noqa: C901
     # Task 3: Fix Lagrangian default.
     # If no fleet limit is active, the worst-case number of vehicles is n_nodes.
     fleet_size: int = vehicle_limit if vehicle_limit is not None else master.n_nodes
+    noted_root_lp = False
 
     # Strict elementarity for branched/SRI nodes, then the must-use arc conflict check.
     n_elementary, added_elem = _prepare_node_relaxation(master, pricing_solver, branching_constraints)
@@ -266,6 +272,8 @@ def column_generation_loop(  # noqa: C901
                 # so the LP correctly maximises route profits going forward.
                 if master.phase == 1 and master.model is not None and master.model.Status == GRB.OPTIMAL:
                     master.set_phase(2)
+                    if getattr(master, "_exec_trace", None) is not None:
+                        emit_phase(master, 2, "ordinary")
                     logger.info(
                         "Phase I complete — LP feasibility restored (GRB.OPTIMAL). "
                         "Switching to Phase II (profit maximization)."
@@ -291,6 +299,11 @@ def column_generation_loop(  # noqa: C901
                 else:
                     converged = True
                 break
+
+            if node_depth == 0 and not noted_root_lp:
+                noted_root_lp = True
+                if getattr(master, "_exec_trace", None) is not None:
+                    emit_node_bound(master, 0, float(obj_val), incumbent_value, root=True)
 
             _elapsed = time.perf_counter() - start_time
             _remaining = max(0.1, time_limit - _elapsed) if time_limit is not None and time_limit > 0 else None
@@ -424,6 +437,8 @@ def column_generation_loop(  # noqa: C901
                 note_root_bound(float(lagrangian_ub))
 
             logger.info(f"CG Iter {_iteration}: RMP={obj_val:.4f}, max_rc={max_rc:.6f}, z_UB={lagrangian_ub:.4f}")
+            if getattr(master, "_exec_trace", None) is not None:
+                emit_lagrangian(master, float(lagrangian_ub), float(obj_val), float(max_rc), float(incumbent_value))
 
             if lagrangian_ub < incumbent_value - 1e-6:
                 logger.info(f"Exact Pruning: z_UB {lagrangian_ub:.4f} < Incumbent {incumbent_value:.4f}")
