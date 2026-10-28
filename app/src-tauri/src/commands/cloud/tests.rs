@@ -104,7 +104,10 @@ fn test_parse_worker_tick_fixture() {
 fn test_keychain_account_key_convention() {
     assert_eq!(make_account_key("GCP", "default"), "gcp/default");
     assert_eq!(make_account_key("  aws ", " prod_1  "), "aws/prod_1");
-    assert_eq!(make_account_key("Azure", "staging-cluster"), "azure/staging-cluster");
+    assert_eq!(
+        make_account_key("Azure", "staging-cluster"),
+        "azure/staging-cluster"
+    );
 }
 
 #[test]
@@ -114,8 +117,7 @@ fn test_file_sha256_verification() {
         .unwrap_or_default()
         .as_nanos();
     let path = std::env::temp_dir().join(format!("wsr_cloud_test_{unique}.txt"));
-    std::fs::write(&path, b"WSmart-Route Cloud Runner verification test")
-        .expect("write test file");
+    std::fs::write(&path, b"WSmart-Route Cloud Runner verification test").expect("write test file");
 
     let hash = super::download::compute_file_sha256(&path).expect("hash");
     assert_eq!(hash.len(), 64);

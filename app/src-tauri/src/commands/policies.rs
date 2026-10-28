@@ -36,9 +36,9 @@ pub fn list_sim_policies(project_root: String) -> Result<Vec<SimPolicyEntry>, St
             continue;
         };
         let after_prefix = &trimmed[at_idx + "@p.".len()..];
-        let colon_idx = after_prefix.find(':').ok_or_else(|| {
-            format!("Malformed policy line in test_sim.yaml: {trimmed}")
-        })?;
+        let colon_idx = after_prefix
+            .find(':')
+            .ok_or_else(|| format!("Malformed policy line in test_sim.yaml: {trimmed}"))?;
         let id = after_prefix[..colon_idx].trim().to_string();
         let config_key = after_prefix[colon_idx + 1..].trim().to_string();
         if !id.is_empty() {

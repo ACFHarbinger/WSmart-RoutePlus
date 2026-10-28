@@ -131,8 +131,8 @@ fn run_python_json(
         });
     }
 
-    let value: serde_json::Value =
-        serde_json::from_str(&stdout).map_err(|e| format!("Invalid JSON from Python: {e}\n{stdout}"))?;
+    let value: serde_json::Value = serde_json::from_str(&stdout)
+        .map_err(|e| format!("Invalid JSON from Python: {e}\n{stdout}"))?;
 
     if let Some(err) = value.get("error").and_then(|v| v.as_str()) {
         return Err(err.to_string());

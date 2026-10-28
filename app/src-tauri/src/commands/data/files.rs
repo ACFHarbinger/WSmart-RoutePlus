@@ -23,10 +23,7 @@ fn base64_decode(input: &str) -> Result<Vec<u8>, String> {
             _ => Err(format!("invalid base64 byte {c}")),
         }
     }
-    let clean: Vec<u8> = input
-        .bytes()
-        .filter(|b| !b" \t\r\n".contains(b))
-        .collect();
+    let clean: Vec<u8> = input.bytes().filter(|b| !b" \t\r\n".contains(b)).collect();
     let stripped: &[u8] = {
         let mut end = clean.len();
         while end > 0 && clean[end - 1] == b'=' {

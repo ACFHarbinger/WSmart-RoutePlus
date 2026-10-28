@@ -185,10 +185,7 @@ pub async fn spawn_python_process(
 
         let (status, code) = match exit_status {
             Some(s) if s.success() => (ProcessStatus::Completed, Some(0)),
-            Some(s) => (
-                ProcessStatus::Failed,
-                s.code(),
-            ),
+            Some(s) => (ProcessStatus::Failed, s.code()),
             None => (ProcessStatus::Cancelled, None),
         };
 
@@ -199,7 +196,11 @@ pub async fn spawn_python_process(
 
         let _ = task_app.emit(
             "process:status",
-            StatusUpdate { id: task_id, status, exit_code: code },
+            StatusUpdate {
+                id: task_id,
+                status,
+                exit_code: code,
+            },
         );
     });
 
@@ -219,12 +220,7 @@ pub fn cancel_process(id: String) -> Result<(), String> {
 
 #[tauri::command]
 pub fn list_processes() -> Vec<String> {
-    registry()
-        .lock()
-        .unwrap()
-        .keys()
-        .cloned()
-        .collect()
+    registry().lock().unwrap().keys().cloned().collect()
 }
 
 /// Resolve the Python executable to use for spawning subprocesses.

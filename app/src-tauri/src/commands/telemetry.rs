@@ -99,8 +99,7 @@ fn run_python_json(
         });
     }
 
-    serde_json::from_str(&stdout)
-        .map_err(|e| format!("Invalid JSON from Python: {e}\n{stdout}"))
+    serde_json::from_str(&stdout).map_err(|e| format!("Invalid JSON from Python: {e}\n{stdout}"))
 }
 
 /// Load cross-run policy telemetry rows from ``assets/telemetry.db``.

@@ -125,7 +125,9 @@ fn push_opt_f64(builder: &mut Float64Builder, value: Option<f64>) {
 }
 
 fn column_is_numeric(values: &[String]) -> bool {
-    values.iter().all(|v| v.trim().is_empty() || v.parse::<f64>().is_ok())
+    values
+        .iter()
+        .all(|v| v.trim().is_empty() || v.parse::<f64>().is_ok())
 }
 
 fn csv_to_batch(path: &str) -> Result<RecordBatch, String> {
@@ -213,10 +215,7 @@ pub fn write_simulation_log_arrow_sidecar(
     arrow_path: &PathBuf,
 ) -> Result<usize, String> {
     let content = fs::read_to_string(log_path).map_err(|e| e.to_string())?;
-    let entries: Vec<DayLogEntry> = content
-        .lines()
-        .filter_map(parse_day_log_line)
-        .collect();
+    let entries: Vec<DayLogEntry> = content.lines().filter_map(parse_day_log_line).collect();
     if entries.is_empty() {
         return Err("No simulation log entries found".to_string());
     }
@@ -229,7 +228,11 @@ pub fn write_simulation_log_arrow_sidecar(
     Ok(row_count)
 }
 
-pub fn export_batch(batch: &RecordBatch, label: &str, start: Instant) -> Result<ArrowIpcFile, String> {
+pub fn export_batch(
+    batch: &RecordBatch,
+    label: &str,
+    start: Instant,
+) -> Result<ArrowIpcFile, String> {
     let path = arrow_temp_path(label)?;
     write_ipc_file(batch, &path)?;
     let rust_ms = start.elapsed().as_millis() as u64;
@@ -252,10 +255,7 @@ pub fn csv_to_arrow_ipc(path: String) -> Result<ArrowIpcFile, String> {
 pub fn simulation_log_to_arrow_ipc(path: String) -> Result<ArrowIpcFile, String> {
     let start = Instant::now();
     let content = fs::read_to_string(&path).map_err(|e| e.to_string())?;
-    let entries: Vec<DayLogEntry> = content
-        .lines()
-        .filter_map(parse_day_log_line)
-        .collect();
+    let entries: Vec<DayLogEntry> = content.lines().filter_map(parse_day_log_line).collect();
     if entries.is_empty() {
         return Err("No simulation log entries found".to_string());
     }

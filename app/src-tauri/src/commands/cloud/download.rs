@@ -11,8 +11,8 @@ use super::models::{CloudDownloadProgressEvent, CloudDownloadResult};
 
 /// Compute the hex-encoded SHA-256 digest of a local file.
 pub fn compute_file_sha256(path: &Path) -> Result<String, String> {
-    let mut file = File::open(path)
-        .map_err(|e| format!("Failed to open file '{}': {e}", path.display()))?;
+    let mut file =
+        File::open(path).map_err(|e| format!("Failed to open file '{}': {e}", path.display()))?;
     let mut hasher = Sha256::new();
     let mut buffer = [0u8; 64 * 1024];
 
