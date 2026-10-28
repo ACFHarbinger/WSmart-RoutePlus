@@ -76,9 +76,10 @@ function mean(values: readonly number[]): number | null {
 }
 
 function passesDay(day: CorpusDay, filters: CorpusFilters): boolean {
-  if (day.day == null) return filters.dayMin == null && filters.dayMax == null;
+  if (day.day == null) return filters.dayMin == null && filters.dayMax == null && filters.playbackDay == null;
   if (filters.dayMin != null && day.day < filters.dayMin) return false;
   if (filters.dayMax != null && day.day > filters.dayMax) return false;
+  if (filters.playbackDay != null && day.day !== filters.playbackDay) return false;
   return true;
 }
 
@@ -105,6 +106,9 @@ function pointFromDay(run: CorpusRun, day: CorpusDay, metric: CorpusMetric): Cor
     lat: finite(day.lat) ? day.lat : null,
     lon: finite(day.lon) ? day.lon : null,
     bins: day.bins,
+    tour: day.tour,
+    tourIndices: day.tourIndices,
+    routeBins: day.routeBins,
     hasCoordinates: dayHasCoordinates(day),
   };
 }

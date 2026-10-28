@@ -37,6 +37,9 @@ function point(
     lat: null,
     lon: null,
     bins: [],
+    tour: [],
+    tourIndices: [],
+    routeBins: [],
     hasCoordinates: false,
     ...partial,
   };

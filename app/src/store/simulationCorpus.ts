@@ -24,6 +24,8 @@ export interface SimulationCorpusState {
   dayMax: number | null;
   policies: string[];
   cities: string[];
+  playbackDay: number | null;
+  playbackPlaying: boolean;
   baselineMode: "run" | "value";
   pinnedRunId: string | null;
   typedBaseline: number | null;
@@ -35,6 +37,8 @@ export interface SimulationCorpusState {
   setDayRange: (dayMin: number | null, dayMax: number | null) => void;
   setPolicies: (policies: string[]) => void;
   setCities: (cities: string[]) => void;
+  setPlaybackDay: (playbackDay: number | null) => void;
+  setPlaybackPlaying: (playbackPlaying: boolean) => void;
   setBaselineMode: (baselineMode: "run" | "value") => void;
   setPinnedRunId: (pinnedRunId: string | null) => void;
   setTypedBaseline: (typedBaseline: number | null) => void;
@@ -70,6 +74,7 @@ function corpusFilters(state: Pick<SimulationCorpusState, keyof CorpusFilters>):
     dayMax: state.dayMax,
     policies: state.policies,
     cities: state.cities,
+    playbackDay: state.playbackDay,
     baselineMode: state.baselineMode,
     pinnedRunId: state.pinnedRunId,
     typedBaseline: state.typedBaseline,
@@ -113,6 +118,8 @@ export const useSimulationCorpusStore = create<SimulationCorpusState>((set, get)
     dayMax: null,
     policies: [],
     cities: [],
+    playbackDay: null,
+    playbackPlaying: false,
     baselineMode: "run",
     pinnedRunId: null,
     typedBaseline: null,
@@ -135,6 +142,8 @@ export const useSimulationCorpusStore = create<SimulationCorpusState>((set, get)
     setDayRange: (dayMin, dayMax) => set({ dayMin, dayMax }),
     setPolicies: (policies) => set({ policies }),
     setCities: (cities) => set({ cities }),
+    setPlaybackDay: (playbackDay) => set({ playbackDay }),
+    setPlaybackPlaying: (playbackPlaying) => set({ playbackPlaying }),
     setBaselineMode: (baselineMode) => set({ baselineMode }),
     setPinnedRunId: (pinnedRunId) => set({ pinnedRunId }),
     setTypedBaseline: (typedBaseline) => set({ typedBaseline }),
@@ -143,7 +152,7 @@ export const useSimulationCorpusStore = create<SimulationCorpusState>((set, get)
   };
 });
 
-/** Scene snapshot. `view` stays null until a scan exists. Day filters do not touch the monitor map. */
+/** Scene snapshot. `view` stays null until a scan exists. `playbackDay` also selects the route map day. */
 export function useCorpusSceneState(): {
   view: CorpusView | null;
   metric: CorpusMetric;
@@ -160,6 +169,7 @@ export function useCorpusSceneState(): {
   const dayMax = useSimulationCorpusStore((state) => state.dayMax);
   const policies = useSimulationCorpusStore((state) => state.policies);
   const cities = useSimulationCorpusStore((state) => state.cities);
+  const playbackDay = useSimulationCorpusStore((state) => state.playbackDay);
   const baselineMode = useSimulationCorpusStore((state) => state.baselineMode);
   const pinnedRunId = useSimulationCorpusStore((state) => state.pinnedRunId);
   const typedBaseline = useSimulationCorpusStore((state) => state.typedBaseline);
@@ -176,6 +186,7 @@ export function useCorpusSceneState(): {
         dayMax,
         policies,
         cities,
+        playbackDay,
         baselineMode,
         pinnedRunId,
         typedBaseline,
@@ -190,6 +201,7 @@ export function useCorpusSceneState(): {
     dayMax,
     policies,
     cities,
+    playbackDay,
     baselineMode,
     pinnedRunId,
     typedBaseline,
