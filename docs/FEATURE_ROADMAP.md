@@ -671,10 +671,10 @@ Phases 3-7 (docs, types, architecture, deps, tooling) can proceed in parallel wi
 
 ## Progress Log
 
-### 2026-10-28 (Simulation corpus scenes, planned)
+### 2026-10-28 (Simulation corpus scenes)
 
-- 📋 Filed §G.21 and GitHub [#175](https://github.com/ACFHarbinger/WSmart-Route/issues/175)–[#180](https://github.com/ACFHarbinger/WSmart-Route/issues/180). Simulation Summary will load one JSON file, one run directory, or selected runs under a scenario, then compare them in orbit, diverging-bar, flow, dot-field, globe, and hex scenes.
-- 📋 Baseline is a pinned run or a typed number. A run with no coordinates gets a generated layout labeled as generated. Day playback on the existing route map is [#180](https://github.com/ACFHarbinger/WSmart-Route/issues/180) and is the next round.
+- ✅ Simulation Summary loads one JSON file, one run directory, or selected runs under a scenario, and compares them in orbit, diverging-bar, flow, dot-field, globe, and hex scenes ([#175](https://github.com/ACFHarbinger/WSmart-Route/issues/175)–[#179](https://github.com/ACFHarbinger/WSmart-Route/issues/179)).
+- ✅ The baseline is a pinned run or a typed number. A run with no coordinates gets a generated layout labeled as generated. Day playback on the existing route map stays open as [#180](https://github.com/ACFHarbinger/WSmart-Route/issues/180).
 
 ### 2026-10-24 (Studio Telemetry & Operations Research Overhaul)
 

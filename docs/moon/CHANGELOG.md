@@ -17,9 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Simulation corpus scenes (planned, `2026-10-28`, [#175](https://github.com/ACFHarbinger/WSmart-Route/issues/175))
+### Simulation corpus scenes (`2026-10-28`, [#175](https://github.com/ACFHarbinger/WSmart-Route/issues/175), [#176](https://github.com/ACFHarbinger/WSmart-Route/issues/176), [#177](https://github.com/ACFHarbinger/WSmart-Route/issues/177), [#178](https://github.com/ACFHarbinger/WSmart-Route/issues/178), [#179](https://github.com/ACFHarbinger/WSmart-Route/issues/179))
 
-- §G.21 files the Simulation Summary corpus scenes. A user will load one JSON file, one run directory, or selected runs under a scenario and compare them on orbit, bar, flow, dot, globe, and hex scenes. The baseline is a pinned run or a typed number. A run without coordinates uses a generated layout labeled as generated. Playing the day on the existing route map is [#180](https://github.com/ACFHarbinger/WSmart-Route/issues/180) and is the next round.
+- **Scan.** Simulation Summary can add result folders or a single JSON file. A Tauri command walks the trees off the WebView. Every JSON file under a run directory is one run. One chosen file is a partial run. Failed files stay listed and do not drop the rest. A missing metric stays a gap.
+- **Controls.** The user selects runs to merge, hides a run, filters by metric, day, policy, and city, and sets the baseline by pinning a run or typing a number. The day range filters the new scenes only.
+- **Scenes.** Policy orbit, diverging bars, metric flow, and a day-by-bin field support PNG export and copying the table. The globe draws runs that have coordinates. A run without coordinates uses a generated layout labeled as generated. Playing the day on the existing route map is [#180](https://github.com/ACFHarbinger/WSmart-Route/issues/180) and is the next round.
 
 ### Algorithm visualizer and builder (`2026-10-28`, [#167](https://github.com/ACFHarbinger/WSmart-Route/issues/167), [#173](https://github.com/ACFHarbinger/WSmart-Route/issues/173))
 

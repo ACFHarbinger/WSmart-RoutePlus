@@ -23,7 +23,7 @@ dot-matrix heatmap and direction-scaled radar (V3); 5-task workflow sitemap and 
 decomposition of 34 grandfathered files >500 LoC (V5–V8); and synchronization with live Python problem
 names (`ptp`/`cptp`/`cptptc`/`cvrp`) and models (`deep_decoder`). See [`studio.md`](roadmaps/studio.md#g20--phase-20-nocorion-telemetry--operations-research-overhaul-slices-v0v8-).
 
-Simulation corpus scenes filed on 2026-10-28 under §G.21 ([#175](https://github.com/ACFHarbinger/WSmart-Route/issues/175)).
+Simulation corpus scenes landed on 2026-10-28 under §G.21 ([#175](https://github.com/ACFHarbinger/WSmart-Route/issues/175)–[#179](https://github.com/ACFHarbinger/WSmart-Route/issues/179)).
 Simulation Summary loads one JSON file, one run directory, or a merged set of runs under a scenario.
 The baseline is a pinned run or a typed number. Coordinates draw on the globe; a run without them uses a generated layout labeled as generated.
 Playing that day on the existing route map is [#180](https://github.com/ACFHarbinger/WSmart-Route/issues/180) and waits for the next round.

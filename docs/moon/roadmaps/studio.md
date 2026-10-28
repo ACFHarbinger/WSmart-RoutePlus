@@ -933,7 +933,7 @@ Source files ported from: `logic/src/ui/pages/experiment_tracker.py`, `logic/src
 
 ---
 
-### §G.21 — Phase 21: Simulation Corpus Scenes on Simulation Summary 📋
+### §G.21 — Phase 21: Simulation Corpus Scenes on Simulation Summary 🚧
 
 > **Tracking**: parent [#175](https://github.com/ACFHarbinger/WSmart-Route/issues/175). Children [#176](https://github.com/ACFHarbinger/WSmart-Route/issues/176)–[#179](https://github.com/ACFHarbinger/WSmart-Route/issues/179) are this round. [#180](https://github.com/ACFHarbinger/WSmart-Route/issues/180) is the next round. Filed 2026-10-28 from the ORION layout references. The scenes use WSmart metrics (profit, kg, km, cost, overflows, kg/km). They do not copy the ORION chrome or the sample sales figures.
 
@@ -941,32 +941,32 @@ Source files ported from: `logic/src/ui/pages/experiment_tracker.py`, `logic/src
 
 #### §G.21.0 — Corpus scan (#176)
 
-- [ ] "Add result folders" on Simulation Summary picks one or more parent directories.
-- [ ] A Tauri command walks each tree off the WebView and collects simulation JSON and JSONL. The WebView receives a catalog of runs.
-- [ ] One run is every simulation JSON file under a run-name directory. One chosen JSON file is a partial run and can be visualized on its own.
-- [ ] Several selected runs under one scenario directory merge into one comparison corpus.
-- [ ] The scan reports kept, skipped, and failed counts. A failed file stays listed with its reason and does not drop the rest. An empty folder or a folder of non-JSON files shows an empty corpus.
+- [x] "Add result folders" on Simulation Summary picks one or more parent directories.
+- [x] A Tauri command walks each tree off the WebView and collects simulation JSON and JSONL. The WebView receives a catalog of runs.
+- [x] One run is every simulation JSON file under a run-name directory. One chosen JSON file is a partial run and can be visualized on its own.
+- [x] Several selected runs under one scenario directory merge into one comparison corpus.
+- [x] The scan reports kept, skipped, and failed counts. A failed file stays listed with its reason and does not drop the rest. An empty folder or a folder of non-JSON files shows an empty corpus.
 
 #### §G.21.1 — Baseline and filters (#177)
 
-- [ ] A shared strip sets the metric, the day range, the policy, and the city. The day slider filters the new scenes only.
-- [ ] The baseline is a pinned run or a numeric value the user types. Missing metric values stay gaps.
-- [ ] Hide and reload drop or refresh a loaded folder without leaving Simulation Summary.
-- [ ] Cross-highlight: selecting a policy, city, or run marks the same series on every open scene.
+- [x] A shared strip sets the metric, the day range, the policy, and the city. The day slider filters the new scenes only.
+- [x] The baseline is a pinned run or a numeric value the user types. Missing metric values stay gaps.
+- [x] Hide and reload drop or refresh a loaded folder without leaving Simulation Summary.
+- [x] Cross-highlight: selecting a policy, city, or run marks the same series on every open scene.
 
 #### §G.21.2 — 2D scenes (#178)
 
-- [ ] Policy orbit: bubble size is the selected metric.
-- [ ] Diverging bars against the pinned run or the typed baseline.
-- [ ] Metric-flow ribbons: kg into served, lost, and overflow, or a city split by policy.
-- [ ] Day-by-bin dot field. A day-level log draws one dot per day and says so.
-- [ ] Each scene can export a PNG and copy its table. `prefers-reduced-motion` skips autoplay. Each new file stays at or under 500 lines. A missing metric is a gap.
+- [x] Policy orbit: bubble size is the selected metric.
+- [x] Diverging bars against the pinned run or the typed baseline.
+- [x] Metric-flow ribbons: kg into served, lost, and overflow, or a city split by policy.
+- [x] Day-by-bin dot field. A day-level log draws one dot per day and says so.
+- [x] Each scene can export a PNG and copy its table. `prefers-reduced-motion` skips autoplay. Each new file stays at or under 500 lines. A missing metric is a gap.
 
 #### §G.21.3 — Globe and hex map (#179)
 
-- [ ] The geographic globe draws only runs that have real coordinates, with arcs for the same policy across cities or against the pinned baseline.
-- [ ] A run with no coordinates uses a generated layout, labeled as generated. That layout is not drawn on the geographic globe as if it were real.
-- [ ] The globe canvas unmounts when the user leaves Simulation Summary.
+- [x] The geographic globe draws only runs that have real coordinates, with arcs for the same policy across cities or against the pinned baseline.
+- [x] A run with no coordinates uses a generated layout, labeled as generated. That layout is not drawn on the geographic globe as if it were real.
+- [x] The globe canvas unmounts when the user leaves Simulation Summary.
 
 #### §G.21.4 — Next round: route-map playback (#180)
 
@@ -1043,7 +1043,7 @@ Phase 18 →  Phase 1, Phase 17 (builds on analytics dashboard and training runs
 | §G.17 | Training Monitor | Medium | Very High | P1 ✅ |
 | §G.18 | Experiment & HPO Tracker | High | High | P2 ✅ |
 | §G.20 | NOC/Orion Telemetry & OR Overhaul (V0–V8) | High | Very High | P0 📋 |
-| §G.21 | Simulation corpus scenes on Simulation Summary | High | Very High | P1 📋 |
+| §G.21 | Simulation corpus scenes on Simulation Summary | High | Very High | P1 🚧 |
 
 ---
 
