@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Tracking database CLI (`2026-10-26`)
+
+- `python main.py tracking_db` forwards the remaining arguments to the tracking database commands.
+
 ### Simulation corpus scenes (`2026-10-28`, [#175](https://github.com/ACFHarbinger/WSmart-Route/issues/175), [#176](https://github.com/ACFHarbinger/WSmart-Route/issues/176), [#177](https://github.com/ACFHarbinger/WSmart-Route/issues/177), [#178](https://github.com/ACFHarbinger/WSmart-Route/issues/178), [#179](https://github.com/ACFHarbinger/WSmart-Route/issues/179))
 
 ### Simulation monitor directories (`2026-10-26`, [#158](https://github.com/ACFHarbinger/WSmart-Route/issues/158))

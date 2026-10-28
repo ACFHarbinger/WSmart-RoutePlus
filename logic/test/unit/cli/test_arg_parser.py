@@ -266,3 +266,58 @@ class TestFileSystemCommand:
             command, args_dict = parse_params()
             assert command == ("file_system", "update")
             assert args_dict["input_keys"] == ["key1", "key2", "key3"]
+
+
+class TestTrackingDatabaseCommand:
+    """Test the tracking database CLI registration on main.py."""
+
+    @pytest.mark.arg_parser
+    def test_tracking_db_parser_captures_subcommand_args(self):
+        from logic.controllers.cli.base.registry import get_parser
+
+        command, opts = get_parser().parse_process_args(
+            ["tracking_db", "stats", "--experiment", "AM-VRPP-50"]
+        )
+
+        assert command == "tracking_db"
+        assert opts["tracking_args"] == ["stats", "--experiment", "AM-VRPP-50"]
+
+    @pytest.mark.arg_parser
+    def test_tracking_db_dispatch_forwards_args(self, monkeypatch):
+        from logic.controllers.parser_dispatch import parser_entry_point
+
+        calls = []
+        monkeypatch.setattr(
+            "logic.src.tracking.database.__main__.main",
+            lambda argv: calls.append(argv),
+        )
+
+        parser_entry_point(("tracking_db", {"tracking_args": ["inspect"]}))
+
+        assert calls == [["inspect"]]
+
+    @pytest.mark.arg_parser
+    def test_tracking_db_main_forwards_argv(self):
+        from unittest.mock import patch
+
+        from logic.src.tracking.database.__main__ import main as tracking_main
+
+        with patch("logic.src.tracking.database.__main__.stats_database") as stats:
+            tracking_main(["stats", "--experiment", "AM-VRPP-50"])
+
+        stats.assert_called_once_with("AM-VRPP-50")
+
+    @pytest.mark.arg_parser
+    def test_main_routes_tracking_db(self, monkeypatch):
+        import main as entry_point
+
+        calls = []
+        monkeypatch.setattr(
+            "logic.src.tracking.database.__main__.main",
+            lambda argv: calls.append(argv),
+        )
+        monkeypatch.setattr(sys, "argv", ["main.py", "tracking_db", "stats", "--experiment", "AM"])
+
+        entry_point.main()
+
+        assert calls == [["stats", "--experiment", "AM"]]
