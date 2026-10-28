@@ -4,8 +4,8 @@ mod commands;
 mod host_env;
 
 use commands::{
-    algorithms, arrow, cloud, data, hpo, mlflow, policies, process, sim_watcher, system, telemetry,
-    tensor, zenml,
+    algorithms, arrow, cloud, corpus, data, hpo, mlflow, policies, process, sim_watcher, system,
+    telemetry, tensor, zenml,
 };
 
 #[cfg(desktop)]
@@ -56,6 +56,7 @@ pub fn run() {
             arrow::read_binary_file,
             arrow::path_exists,
             data::load_simulation_log,
+            corpus::scan_simulation_corpus,
             data::load_policy_viz_log,
             data::load_sim_failure_log,
             data::load_training_health_log,
