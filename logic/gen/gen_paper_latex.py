@@ -111,27 +111,32 @@ from logic.gen.paper_figures import (
     fig_scale,
     fig_strategy_tradeoff,
 )
-from logic.gen.paper_networks import fig_networks
-from logic.gen.report_utils import apply_theme, load_json, load_theme
-
-from .paper_latex_tables import (
+from logic.gen.paper_latex_tables import (
     table_excluded as table_excluded,
 )
-from .paper_latex_tables import (
+from logic.gen.paper_latex_tables import (
     table_horizon as table_horizon,
 )
-from .paper_latex_tables import (
+from logic.gen.paper_latex_tables import (
     table_improvers as table_improvers,
 )
-from .paper_latex_tables import (
+from logic.gen.paper_latex_tables import (
+    table_packing_steps as table_packing_steps,
+)
+from logic.gen.paper_latex_tables import (
     table_routing as table_routing,
 )
-from .paper_latex_tables import (
+from logic.gen.paper_latex_tables import (
     table_scenarios as table_scenarios,
 )
-from .paper_latex_tables import (
+from logic.gen.paper_latex_tables import (
     table_strategies as table_strategies,
 )
+from logic.gen.paper_latex_tables import (
+    table_swc_directed as table_swc_directed,
+)
+from logic.gen.paper_networks import fig_networks
+from logic.gen.report_utils import apply_theme, load_json, load_theme
 
 # --------------------------------------------------------------------------- #
 # Loading
@@ -215,6 +220,12 @@ def main() -> None:
     ap.add_argument(
         "--primary-horizon", type=int, default=30, help="horizon whose grid is complete and therefore leads the results"
     )
+    ap.add_argument(
+        "--superseded-summary-dir",
+        type=Path,
+        default=REPO_ROOT / cfg["paths"]["superseded_swc_dir"],
+        help="vintage holding the superseded undirected SWC-TCF runs (directed-vs-undirected table)",
+    )
     ap.add_argument("--force", action="store_true", help="overwrite existing output")
     ap.add_argument("--tables-only", action="store_true")
     ap.add_argument("--figures-only", action="store_true")
@@ -256,6 +267,14 @@ def main() -> None:
             args.force,
         )
         write(args.tables_dir / "results_scenarios.tex", table_scenarios(clean, horizon, cfg, learned), args.force)
+        write(args.tables_dir / "results_packing_steps.tex", table_packing_steps(clean, cfg, horizon), args.force)
+        old = load_horizons(
+            {
+                30: args.superseded_summary_dir / "simulation_summary.csv",
+                90: args.superseded_summary_dir / "simulation_summary_90d.csv",
+            }
+        )
+        write(args.tables_dir / "results_swc_directed.tex", table_swc_directed(clean, old, cfg), args.force)
         excluded = table_excluded(degenerate, cfg)
         if excluded:
             write(args.tables_dir / "results_excluded.tex", excluded, args.force)
