@@ -18,6 +18,7 @@ import { useRecentHandoff } from "../../hooks/files/useRecentHandoff";
 import { useGlobalFiltersStore } from "../../store/filters";
 import { useProcessStore } from "../../store/process";
 import { useSimStore, uniquePolicies, uniqueSamples, filterEntries } from "../../store/sim";
+import { useCorpusSceneState, useSimulationCorpusStore } from "../../store/simulationCorpus";
 import { OpenPathToolbar } from "../../components/common/OpenPathToolbar";
 import {
   enrichEntriesWithGraphCoords,
@@ -35,6 +36,9 @@ import { SimMonitorMapSection } from "../../components/monitor/sim/SimMonitorMap
 import { SimMonitorAdvancedPanels, SimMonitorKpiSection } from "../../components/monitor/sim/SimMonitorDetailPanels";
 import { SimMonitorChartPolicySelector, SimMonitorDayScrubber } from "../../components/monitor/sim/SimMonitorHeaderControls";
 import { useSimMonitorMapRoutes } from "../../components/monitor/sim/useSimMonitorMapRoutes";
+import { CorpusRouteMap } from "../../components/analysis/summary/corpus/CorpusRouteMap";
+import { applyCorpusMapFrame } from "../../utils/corpus/monitorRoutes";
+import { corpusMapFrame } from "../../utils/corpus/routeFrame";
 import type { DayLogEntry, PolicyVizEntry, SimFailureEntry } from "../../types";
 
 export function SimulationMonitor() {
@@ -282,6 +286,18 @@ export function SimulationMonitor() {
     [policies]
   );
 
+  const playbackDay = useSimulationCorpusStore((state) => state.playbackDay);
+  const playbackPlaying = useSimulationCorpusStore((state) => state.playbackPlaying);
+  const { view: corpusView } = useCorpusSceneState();
+  const frame = useMemo(
+    () => (corpusView == null ? null : corpusMapFrame(corpusView, playbackDay)),
+    [corpusView, playbackDay]
+  );
+  const corpusOverride = useMemo(
+    () => (playbackDay != null && frame != null && frame.routes.length > 0 ? frame.routes : null),
+    [playbackDay, frame]
+  );
+
   const { mapRoutes, mapHasFailureData } = useSimMonitorMapRoutes({
     entries,
     displayDay,
@@ -294,7 +310,10 @@ export function SimulationMonitor() {
     setMapPolicies,
     setMapLayout,
     setRouteMapMode,
+    corpusOverride,
   });
+
+  const applied = applyCorpusMapFrame(mapRoutes, frame, playbackDay);
 
   useEffect(() => {
     if (!isPlaying || dayRange.max <= dayRange.min) return;
@@ -402,7 +421,7 @@ export function SimulationMonitor() {
         toggleChartPolicy={toggleChartPolicy}
       />
 
-      {!displayEntry && (
+      {!displayEntry && playbackDay == null && (
         <div className="flex flex-col items-center justify-center h-64 text-canvas-muted gap-3">
           <p className="text-sm">Open a simulation log file to begin monitoring.</p>
           <p className="text-xs">
@@ -410,6 +429,8 @@ export function SimulationMonitor() {
           </p>
         </div>
       )}
+
+      {!displayEntry && playbackDay != null && <CorpusRouteMap />}
 
       {displayEntry && (
         <>
@@ -433,7 +454,8 @@ export function SimulationMonitor() {
             policies={policies}
             activeMapPolicies={activeMapPolicies}
             toggleMapPolicy={toggleMapPolicy}
-            mapRoutes={mapRoutes}
+            mapRoutes={applied.routes}
+            mapReason={applied.reason}
             mapLayout={mapLayout}
             setMapLayout={setMapLayout}
             hasGeoCoords={hasGeoCoords}
@@ -453,7 +475,7 @@ export function SimulationMonitor() {
             setShowHexDensity={setShowHexDensity}
             routeMapMode={routeMapMode}
             setRouteMapMode={setRouteMapMode}
-            isPlaying={isPlaying}
+            isPlaying={isPlaying || (playbackPlaying && applied.driven)}
             playbackSpeed={playbackSpeed}
             displayDay={displayDay}
             displayEntry={displayEntry}

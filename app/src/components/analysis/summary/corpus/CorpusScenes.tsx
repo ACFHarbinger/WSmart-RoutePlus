@@ -1,4 +1,6 @@
 import { useCorpusSceneState } from "../../../../store/simulationCorpus";
+import { CorpusPlayback } from "./CorpusPlayback";
+import { CorpusRouteMap } from "./CorpusRouteMap";
 import { DayBinFieldScene } from "./scenes/DayBinFieldScene";
 import { DivergingBarsScene } from "./scenes/DivergingBarsScene";
 import { MetricFlowScene } from "./scenes/MetricFlowScene";
@@ -13,6 +15,8 @@ export function CorpusScenes() {
   const scene = { view, metric, highlight, onHighlight: setHighlight };
   return (
     <div className="space-y-4" data-testid="corpus-scenes">
+      <CorpusPlayback />
+      <CorpusRouteMap />
       <PolicyOrbitScene {...scene} />
       <DivergingBarsScene {...scene} />
       <MetricFlowScene {...scene} />
