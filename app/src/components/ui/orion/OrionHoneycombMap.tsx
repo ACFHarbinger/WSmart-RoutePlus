@@ -166,14 +166,18 @@ export const OrionHoneycombMap: React.FC<OrionHoneycombMapProps> = ({
               const isSelected = activeZoneId === zone.id;
               const isHovered = hoveredZoneId === zone.id;
               const color = STATUS_COLOR[zone.status];
+              const fillIsGap = zone.metrics?.fill === "gap";
               const fillOpacity = zone.status === "idle" ? 0.35 : 0.7;
+              const fillLabel = fillIsGap
+                ? "fill not measured"
+                : `${(zone.fillRatio * 100).toFixed(0)}% fill`;
 
               return (
                 <g
                   key={zone.id}
                   role="button"
                   tabIndex={0}
-                  aria-label={`${zone.label}: ${(zone.fillRatio * 100).toFixed(0)}% fill`}
+                  aria-label={`${zone.label}: ${fillLabel}`}
                   aria-pressed={isSelected}
                   onClick={() => {
                     setActiveZoneId(zone.id);

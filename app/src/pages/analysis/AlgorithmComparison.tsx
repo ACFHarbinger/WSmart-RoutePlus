@@ -7,9 +7,13 @@ import ReactECharts from "echarts-for-react";
 import type EChartsReact from "echarts-for-react";
 import { Map } from "lucide-react";
 import { SubtabBar } from "../../components/ui/telemetry/SubtabBar";
-import { OrionRadarChart, type RadarPolicyCohortEntry } from "../../components/ui/orion/OrionRadarChart";
+import { OrionRadarChart } from "../../components/ui/orion/OrionRadarChart";
 import { OrionOrbitalBubbleChart } from "../../components/ui/orion/OrionOrbitalBubbleChart";
-import { getSampleRoutingOrionData } from "../../components/ui/orion";
+import {
+  orionPolicySubtitle,
+  policyProfitBubbles,
+  radarCohortFromLog,
+} from "../../utils/analysis/algorithmOrion";
 import { PolicyTelemetryTrendsPanel } from "../../components/analysis/telemetry/PolicyTelemetryTrendsPanel";
 import { SqlQueryPanel } from "../../components/analysis/explorer/SqlQueryPanel";
 import { OpenPathToolbar } from "../../components/common/OpenPathToolbar";
@@ -78,7 +82,6 @@ export function AlgorithmComparison() {
   const logScale = useGlobalFiltersStore((s) => s.logScale);
   const [showErrorBars, setShowErrorBars] = useState(false);
   const [subtab, setSubtab] = useState<"charts" | "orion">("charts");
-  const sampleData = useMemo(() => getSampleRoutingOrionData(), []);
 
   useEffect(() => {
     if (!duckdbReady || !watchPath) return;
@@ -94,6 +97,8 @@ export function AlgorithmComparison() {
     [entries, policy, sampleId]
   );
   const policies = useMemo(() => [...new Set(filtered.map((e) => e.policy))], [filtered]);
+  const orionCohort = useMemo(() => radarCohortFromLog(filtered), [filtered]);
+  const orionBubbles = useMemo(() => policyProfitBubbles(filtered), [filtered]);
 
   const radarOption = useMemo(() => {
     const metricMeans: Record<string, Record<string, number>> = {};
@@ -228,30 +233,30 @@ export function AlgorithmComparison() {
 
       {subtab === "orion" ? (
         <div className="space-y-4">
-          <OrionRadarChart
-            cohort={
-              policies.length > 0
-                ? policies.map((p) => {
-                    const pEntries = filtered.filter((e) => e.policy === p);
-                    const means: Record<string, number> = {};
-                    METRICS.forEach(({ key }) => {
-                      const vals = pEntries.map((e) => (e.data as Record<string, number>)[key] ?? 0);
-                      means[key] = mean(vals);
-                    });
-                    return { policy: p, means } as RadarPolicyCohortEntry;
-                  })
-                : sampleData.radarCohort
-            }
-            title="Direction-Aware Multi-Objective Policy Radar"
-            subtitle="Comparing Gurobi, HGS, ALNS, AM, TAM, DDAM on Multi-Objective Frontier"
-            height={340}
-          />
-          <OrionOrbitalBubbleChart
-            bubbles={sampleData.orbitalBubbles}
-            title="Pareto Optimal Policy Frontiers & Runtime Gap Clusters"
-            subtitle="Concentric orbital distribution of solver configurations and neural rollouts"
-            height={340}
-          />
+          {orionCohort.length === 0 ? (
+            <p className="text-sm text-canvas-muted">
+              This log has no policy metrics for the radar.
+            </p>
+          ) : (
+            <OrionRadarChart
+              cohort={orionCohort}
+              title="Direction-Aware Multi-Objective Policy Radar"
+              subtitle={orionPolicySubtitle(orionCohort.map((entry) => entry.policy))}
+              height={340}
+            />
+          )}
+          {orionBubbles.length === 0 ? (
+            <p className="text-sm text-canvas-muted">
+              This log has no profit values for the orbital chart.
+            </p>
+          ) : (
+            <OrionOrbitalBubbleChart
+              bubbles={orionBubbles}
+              title="Policy profit"
+              subtitle="Bubble size is profit. A policy with no profit is omitted."
+              height={340}
+            />
+          )}
         </div>
       ) : (
         <>

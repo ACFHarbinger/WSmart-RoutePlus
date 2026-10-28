@@ -10,11 +10,7 @@ import { GlobalFilterBar } from "../../components/layout/GlobalFilterBar";
 import { OpenPathToolbar } from "../../components/common/OpenPathToolbar";
 import { LoadedRunRow } from "../../components/common/LoadedRunRow";
 import { SubtabBar } from "../../components/ui/telemetry/SubtabBar";
-import {
-  OrionDotMatrixHeatmap,
-  OrionHoneycombMap,
-  getSampleRoutingOrionData,
-} from "../../components/ui/orion";
+import { OrionDotMatrixHeatmap } from "../../components/ui/orion";
 import {
   formatPipelineTimingBadge,
   portfolioRunLabel,
@@ -33,6 +29,7 @@ import {
 } from "../../components/analysis/summary/SummaryPortfolioSections";
 import { CorpusScenes } from "../../components/analysis/summary/corpus/CorpusScenes";
 import { CorpusStrip } from "../../components/analysis/summary/corpus/CorpusStrip";
+import { SummaryHoneycomb } from "../../components/analysis/summary/SummaryHoneycomb";
 import {
   SUMMARY_SIM_TABLE,
   useSimulationSummaryController,
@@ -212,13 +209,7 @@ export function SimulationSummary() {
                 showRouteDiff={c.showRouteDiff}
                 setShowRouteDiff={c.setShowRouteDiff}
               />
-              <OrionHoneycombMap
-                zones={getSampleRoutingOrionData().honeycombZones}
-                trajectories={getSampleRoutingOrionData().zoneTrajectories}
-                title="Regional Waste Zone Honeycomb Matrix & Tour Corridors"
-                subtitle="Spatial bin fill density & vehicle tour trajectories across collection sectors"
-                height={340}
-              />
+              <SummaryHoneycomb entries={c.filteredEntries} />
             </div>
           )}
 
