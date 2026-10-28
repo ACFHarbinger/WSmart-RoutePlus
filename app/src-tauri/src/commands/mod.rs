@@ -1,6 +1,7 @@
 pub mod algorithms;
 pub mod arrow;
 pub mod cloud;
+pub mod corpus;
 pub mod data;
 pub mod hpo;
 pub mod mlflow;
