@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Simulation Summary, City Comparison, and Algorithm Comparison no longer draw the ORION sample honeycomb, radar, or profit bubbles. Summary bins and city cells come from the open log or corpus. A view with no coordinates uses a generated layout and says so. A missing fill stays a gap, and an idle cell says "fill not measured". A policy with no finite profit is left off the orbital chart.
 - `SimulationMonitor.tsx` is a facade under 500 lines. Log loading, the toolbar, graph coordinates, and policy visibility moved beside it. Corpus day playback on the route map is unchanged.
+- `sim_log.rs` stays under 500 lines. Filename helpers and its tests moved to sibling files. The `sim_log::` paths are unchanged.
 
 ### Tracking database CLI (`2026-10-26`)
 

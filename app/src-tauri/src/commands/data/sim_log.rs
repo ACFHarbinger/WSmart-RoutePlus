@@ -7,6 +7,13 @@ use crate::commands::sim_watcher::{
     parse_day_log_line, parse_sim_failure_line, DayLogEntry, SimFailureEntry,
 };
 
+#[path = "sim_log_names.rs"]
+mod names;
+pub use names::{
+    extract_instance_count_from_filename, extract_policy_name_from_filename, is_known_distribution,
+    is_simulation_log_file,
+};
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DiscoveredSimulationLog {
     pub path: String,
@@ -46,86 +53,6 @@ pub struct SimulationDirectoryCatalog {
     pub root_path: String,
     pub total_logs: usize,
     pub runs: Vec<DiscoveredSimulationRun>,
-}
-
-/// Known stochastic waste fill rate distributions used in the simulator.
-pub fn is_known_distribution(s: &str) -> bool {
-    let lower = s.to_lowercase();
-    matches!(
-        lower.as_str(),
-        "emp"
-            | "empirical"
-            | "gamma1"
-            | "gamma2"
-            | "gamma3"
-            | "gamma"
-            | "poisson"
-            | "normal"
-            | "gaussian"
-            | "uniform"
-            | "beta"
-            | "weibull"
-            | "lognormal"
-    )
-}
-
-/// Extract clean policy name from a log filename (e.g. `log_last_minute_cf90_bpc_custom_ftsp_1N.json`
-/// -> `last_minute_cf90_bpc_custom_ftsp`).
-pub fn extract_policy_name_from_filename(filename: &str) -> String {
-    let mut stem = filename;
-    if let Some(pos) = stem.rfind('.') {
-        stem = &stem[..pos];
-    }
-    if let Some(stripped) = stem.strip_prefix("log_") {
-        stem = stripped;
-    }
-    // Strip trailing _<digits>N (e.g. _1N, _10N)
-    if let Some(idx) = stem.rfind('_') {
-        let suffix = &stem[idx + 1..];
-        if suffix.ends_with('N') && suffix[..suffix.len() - 1].chars().all(|c| c.is_ascii_digit()) {
-            stem = &stem[..idx];
-        }
-    }
-    if stem.is_empty() {
-        "simulation_policy".to_string()
-    } else {
-        stem.to_string()
-    }
-}
-
-/// Extract sample instance count N from filename (e.g. `log_alns_10N.json` -> 10).
-pub fn extract_instance_count_from_filename(filename: &str) -> Option<i32> {
-    let mut stem = filename;
-    if let Some(pos) = stem.rfind('.') {
-        stem = &stem[..pos];
-    }
-    if let Some(idx) = stem.rfind('_') {
-        let suffix = &stem[idx + 1..];
-        if let Some(num_str) = suffix.strip_suffix('N') {
-            if let Ok(n) = num_str.parse::<i32>() {
-                return Some(n);
-            }
-        }
-    }
-    None
-}
-
-/// Check if a path corresponds to a simulation log file.
-pub fn is_simulation_log_file(path: &Path) -> bool {
-    let filename = match path.file_name().and_then(|f| f.to_str()) {
-        Some(f) => f.to_lowercase(),
-        None => return false,
-    };
-    if filename.starts_with('.') {
-        return false;
-    }
-    if filename.ends_with(".jsonl") {
-        return true;
-    }
-    if filename.ends_with(".json") && (filename.starts_with("log_") || filename.contains("_n.json")) {
-        return true;
-    }
-    false
 }
 
 /// Parse simulation directory metadata according to the standard simulator hierarchy:
@@ -511,83 +438,5 @@ pub fn load_single_sim_failure_log(path: &Path) -> Result<Vec<SimFailureEntry>, 
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_extract_policy_name_from_filename() {
-        assert_eq!(
-            extract_policy_name_from_filename("log_last_minute_cf90_bpc_custom_ftsp_1N.json"),
-            "last_minute_cf90_bpc_custom_ftsp"
-        );
-        assert_eq!(
-            extract_policy_name_from_filename("log_alns_custom_10N.json"),
-            "alns_custom"
-        );
-        assert_eq!(
-            extract_policy_name_from_filename("log_greedy.json"),
-            "greedy"
-        );
-        assert_eq!(
-            extract_policy_name_from_filename("log_realtime_emp_1N.jsonl"),
-            "realtime_emp"
-        );
-    }
-
-    #[test]
-    fn test_extract_sim_hierarchy_metadata() {
-        let p = Path::new("outputs/simulations-cptp/90days/figueiradafoz350_plastic/gamma3/lm_ftsp/log_last_minute_cf90_bpc_custom_ftsp_1N.json");
-        let meta = extract_sim_hierarchy_metadata(p, None);
-        assert_eq!(meta.days, Some(90));
-        assert_eq!(meta.region.as_deref(), Some("figueiradafoz"));
-        assert_eq!(meta.num_bins, Some(350));
-        assert_eq!(meta.waste_type.as_deref(), Some("plastic"));
-        assert_eq!(meta.distribution.as_deref(), Some("gamma3"));
-        assert_eq!(meta.run_name.as_deref(), Some("lm_ftsp"));
-        assert_eq!(meta.policy, "last_minute_cf90_bpc_custom_ftsp");
-        assert_eq!(meta.num_instances, Some(1));
-    }
-
-    #[test]
-    fn test_extract_sim_hierarchy_metadata_no_distribution() {
-        let p = Path::new("outputs/simulations/30days/riomaior100_all/run_greedy/log_greedy_1N.json");
-        let meta = extract_sim_hierarchy_metadata(p, None);
-        assert_eq!(meta.days, Some(30));
-        assert_eq!(meta.region.as_deref(), Some("riomaior"));
-        assert_eq!(meta.num_bins, Some(100));
-        assert_eq!(meta.waste_type.as_deref(), Some("all"));
-        assert_eq!(meta.distribution, None);
-        assert_eq!(meta.run_name.as_deref(), Some("run_greedy"));
-        assert_eq!(meta.policy, "greedy");
-        assert_eq!(meta.num_instances, Some(1));
-    }
-
-    #[test]
-    fn test_parse_simulation_json_log_mock() {
-        let json_text = r#"{
-            "samples": { "0": { "profit": 100.0 } },
-            "daily": {
-                "0": {
-                    "day": [1, 2],
-                    "overflows": [0.0, 1.0],
-                    "kg": [50.0, 75.0],
-                    "km": [10.0, 15.0],
-                    "profit": [20.0, 30.0],
-                    "tour": [[0, 1, 2], [0, 2]]
-                }
-            }
-        }"#;
-
-        let entries = parse_simulation_json_log(json_text, Some(Path::new("log_alns_1N.json"))).unwrap();
-        assert_eq!(entries.len(), 2);
-        assert_eq!(entries[0].policy, "alns");
-        assert_eq!(entries[0].sample_id, 0);
-        assert_eq!(entries[0].day, 1);
-        assert_eq!(entries[0].data["kg"], 50.0);
-        assert_eq!(entries[0].data["tour_indices"], serde_json::json!([0, 1]));
-
-        assert_eq!(entries[1].day, 2);
-        assert_eq!(entries[1].data["kg"], 75.0);
-        assert_eq!(entries[1].data["tour_indices"], serde_json::json!([1]));
-    }
-}
+#[path = "sim_log_tests.rs"]
+mod tests;
